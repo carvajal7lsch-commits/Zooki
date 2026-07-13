@@ -1,37 +1,24 @@
 version: '3.8'
-
 services:
   web:
     build: .
-    ports:
-      - "8080:80"
-    volumes:
-      # Montamos la carpeta local (solo para desarrollo, en prod ya está dentro del container).
-      # Si prefieres que funcione 100% con los archivos dentro de la imagen, puedes quitar esta línea:
-      - .:/var/www/html/Zooki
+    container_name: zooki_web
     env_file:
       - .env
     depends_on:
       - db
     restart: always
-
   db:
     image: mysql:8.0
-    ports:
-      - "3306:3306"
+    container_name: zooki_db
     environment:
-      MYSQL_ROOT_PASSWORD: root_password_segura # Puedes cambiarla o poner ${MYSQL_ROOT_PASSWORD} en .env
+      MYSQL_ROOT_PASSWORD: root_password_segura
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
     volumes:
-      # Volumen para persistir los datos de la base de datos
       - db_data:/var/lib/mysql
-      # Inicializa la DB usando los .sql (solo ocurre la primera vez que se crea el volumen)
       - ./database:/docker-entrypoint-initdb.d
     restart: always
-
-
-
 volumes:
   db_data:
