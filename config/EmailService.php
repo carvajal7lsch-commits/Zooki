@@ -76,48 +76,137 @@ class EmailService {
     }
     
     private function generarPlantillaCredenciales($nombre, $documento, $password) {
-        return "
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #0052FF 0%, #003bbb 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                .header h1 { margin: 0; font-size: 24px; }
-                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-                .credentials { background: white; padding: 20px; border-left: 4px solid #0052FF; margin: 20px 0; border-radius: 5px; }
-                .credentials p { margin: 10px 0; font-size: 16px; }
-                .credentials strong { color: #0052FF; }
-                .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h1>🐾 Bienvenido a Zooki</h1>
-                </div>
-                <div class='content'>
-                    <p>Hola <strong>$nombre</strong>,</p>
-                    <p>Tu cuenta ha sido creada exitosamente en el sistema veterinario Zooki. A continuación te presentamos tus credenciales de acceso:</p>
+        $envFile = __DIR__ . '/../.env';
+        $appUrl = 'https://zooki.secarvajal.com/index.php';
+        if (file_exists($envFile)) {
+            $env = parse_ini_file($envFile);
+            if (isset($env['APP_URL'])) {
+                $appUrl = rtrim($env['APP_URL'], '/') . '/index.php';
+            }
+        }
+
+        $contenido = '
+        <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+          Tu cuenta ha sido creada exitosamente en el sistema veterinario Zooki. A continuación te presentamos tus credenciales de acceso:
+        </p>
+        
+        <div style="background-color:#f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 15px; color: #1d1c1d;"><strong>📋 Documento:</strong> ' . htmlspecialchars($documento) . '</p>
+            <p style="margin: 0; font-size: 15px; color: #1d1c1d;"><strong>🔑 Contraseña:</strong> ' . htmlspecialchars($password) . '</p>
+        </div>
+        
+        <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+          <strong>⚠️ Importante:</strong> Por motivos de seguridad, te sugerimos cambiar tu contraseña en tu primer inicio de sesión.
+        </p>';
+
+        return $this->obtenerPlantillaBaseHTML($nombre, 'Tus credenciales de acceso', $contenido, 'Acceder a Zooki', $appUrl);
+    }
+
+    public function obtenerPlantillaBaseHTML($nombre, $titulo, $contenidoHtml, $ctaTexto = null, $ctaEnlace = null) {
+        $envFile = __DIR__ . '/../.env';
+        $appUrl = 'https://zooki.secarvajal.com/';
+        if (file_exists($envFile)) {
+            $env = parse_ini_file($envFile);
+            if (isset($env['APP_URL'])) {
+                $appUrl = rtrim($env['APP_URL'], '/');
+            }
+        }
+        
+        $ctaHtml = '';
+        if ($ctaTexto && $ctaEnlace) {
+            $ctaHtml = '
+            <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:28px 0">
+              <tbody>
+                <tr>
+                  <td>
+                    <a href="' . $ctaEnlace . '" style="line-height:22px;text-decoration:none;display:inline-block;max-width:100%;mso-padding-alt:0px;background-color:#0052ff;border-radius:4px;color:#ffffff;font-size:15px;font-weight:700;text-align:center;padding:12px 24px;" target="_blank">
+                      <span style="max-width:100%;display:inline-block;line-height:120%;">
+                        ' . $ctaTexto . '
+                      </span>
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>';
+        }
+
+        return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html dir="ltr" lang="es">
+  <head>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+    <meta name="x-apple-disable-message-reformatting" />
+  </head>
+  <body style="background-color:#ffffff">
+    <table border="0" width="100%" cellpadding="0" cellspacing="0" role="presentation" align="center">
+      <tbody>
+        <tr>
+          <td style=\'background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif\'>
+            <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width:37.5em;margin:0 auto;padding:40px 20px 64px 20px;width:600px">
+              <tbody>
+                <tr style="width:100%">
+                  <td>
+                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:32px;text-align:left">
+                      <tbody>
+                        <tr>
+                          <td>
+                            <table border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+                              <tr>
+                                <td style="vertical-align:middle;padding-right:0px">
+                                  <img alt="Zooki Icon" height="36" src="https://zooki.secarvajal.com/img/icon_blue.png" style="display:block;outline:none;border:none;text-decoration:none;height:auto" width="36" />
+                                </td>
+                                <td style="vertical-align:middle">
+                                  <img alt="Zooki logotipo" src="https://zooki.secarvajal.com/img/logotipo.png" style="display:block;outline:none;border:none;text-decoration:none;margin:-15px 0 -15px -10px;height:auto" width="110" />
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                     
-                    <div class='credentials'>
-                        <p><strong>📋 Documento:</strong> $documento</p>
-                        <p><strong>🔑 Contraseña:</strong> $password</p>
-                    </div>
+                    <h1 style="color:#1d1c1d;font-size:36px;font-weight:800;letter-spacing:-1.2px;line-height:42px;margin:0 0 20px 0">
+                      ' . $titulo . '
+                    </h1>
                     
-                    <p><strong>⚠️ Importante:</strong> Por seguridad, te recomendamos cambiar tu contraseña en tu primer inicio de sesión.</p>
+                    <p style="font-size:20px;line-height:28px;color:#1d1c1d;margin:0 0 24px 0;">
+                      Hola, ' . htmlspecialchars($nombre) . '.
+                    </p>
                     
-                    <p>Para acceder al sistema, visita el siguiente enlace:</p>
-                    <p><a href='http://localhost/Zooki/public/index.php' style='color: #0052FF; text-decoration: none; font-weight: bold;'>Acceder a Zooki</a></p>
+                    ' . $contenidoHtml . '
                     
-                    <div class='footer'>
-                        <p>Este es un correo automático, por favor no respondas.</p>
-                        <p>© 2024 Zooki - Sistema Veterinario</p>
-                    </div>
-                </div>
-            </div>
-        </body>
-        </html>
-        ";
+                    ' . $ctaHtml . '
+                    
+                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-top:1px solid #dddddd;margin:32px 0 24px 0">
+                      <tbody>
+                        <tr>
+                          <td></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    
+                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="text-align:left">
+                      <tbody>
+                        <tr>
+                          <td>
+                            <p style="font-size:13px;line-height:18px;color:#868686;margin:0 0 8px 0;">
+                              Enviado con 💙 por el equipo de Zooki<br />Zooki Inc. · Gestión y Cuidado Veterinario
+                            </p>
+                            <p style="font-size:11px;line-height:16px;color:#b0b0b0;margin:0;">
+                              Si tienes alguna duda o consideras que esto es un error de seguridad, por favor comunícate con nuestro soporte administrativo.
+                            </p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>';
     }
 }

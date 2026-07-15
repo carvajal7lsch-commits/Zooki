@@ -8,18 +8,17 @@
     <!-- Fuentes e iconos -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="image/png" href="../public/img/icon_blue.png">
+    <link rel="icon" type="image/png" href="img/icon_blue.png">
 
     <!-- Librerías externas -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Estilos del sistema -->
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="../public/css/pill-sidebar.css">
-    <link rel="stylesheet" href="../public/css/dark-mode.css">
+    <link rel="stylesheet" href="css/pill-sidebar.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
 </head>
 <body>
@@ -30,7 +29,7 @@
         <!-- ══ PILL SIDEBAR ════════════════════════════════════════════════════ -->
         <nav class="pill-sidebar">
             <a href="index.php?action=reception_dashboard" class="pill-logo" style="margin-bottom: 1.5rem; text-decoration: none;">
-                <img src="../public/img/logo.png" alt="Zooki" style="width: 65px; height: auto; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <img src="img/logo.png" alt="Zooki" style="width: 65px; height: auto; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             </a>
 
             <div class="pill-nav">
@@ -99,7 +98,7 @@
         const ZOOKI_ROLE = 3;
     </script>
     <script src="js/dashboard.js"></script>
-    <script src="../public/js/csrf.js"></script>
-    <script src="../public/js/extras.js"></script>
+    <script src="js/csrf.js"></script>
+    <script src="js/extras.js"></script>
 </body>
 </html>

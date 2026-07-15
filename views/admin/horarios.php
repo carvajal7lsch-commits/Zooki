@@ -883,7 +883,7 @@ input:checked + .slider:before {
 .tp-btn-ok:hover { background: rgba(0, 82, 255, 0.1); }
 </style>
 
-<script src="../public/js/time-picker.js"></script>
+<script src="js/time-picker.js"></script>
 <script>
 let timePickers = [];
 

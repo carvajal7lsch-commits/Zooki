@@ -5,7 +5,7 @@ $estadoActual = strtolower($cita['estado'] ?? 'pendiente');
 $foto = !empty($mascota['url_foto']) ? $mascota['url_foto'] : 'https://ui-avatars.com/api/?name='.urlencode($mascota['nombre'] ?? 'M').'&background=e0e0e0&color=555';
 function edad($fn){ if(empty($fn)) return 'Desconocida'; $d=(new DateTime())->diff(new DateTime($fn)); if($d->y) return $d->y.' año'.($d->y>1?'s':''); if($d->m) return $d->m.' mes'.($d->m>1?'es':''); return 'Recién nacido'; }
 ?>
-<link rel="stylesheet" href="../../public/css/medical-module.css">
+<link rel="stylesheet" href="css/medical-module.css">
 <div class="animate__animated animate__fadeIn atencion-wrapper">
 
 <div class="atencion-header">

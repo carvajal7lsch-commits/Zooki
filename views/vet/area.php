@@ -24,7 +24,7 @@ $fecha_banner = mb_strtoupper(strftime("%A, %d DE %B %Y"));
         </div>
     </div>
     <div class="hero-image">
-        <img src="../public/img/pets.png" alt="Mascotas" onerror="this.src='../public/img/hero-puppy.png';">
+        <img src="img/pets.png" alt="Mascotas" onerror="this.src='img/hero-puppy.png';">
     </div>
 </div>
 

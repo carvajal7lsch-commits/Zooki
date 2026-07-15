@@ -4,11 +4,25 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ---
 
-## 📌 Guía de la Primera Versión Estable (v1.0.0)
+## Historial de Versiones
+
+### Versión 1.1.0 (Actual)
+Esta versión introduce una renovación completa del canal de comunicación por correo electrónico, mejoras críticas de estabilidad en entornos locales de desarrollo y optimizaciones en la seguridad de autenticación.
+
+*   **Rediseño de Correos estilo Slack:** Todas las notificaciones por correo (restablecimiento de contraseña, bienvenida con credenciales y recordatorios de citas/vacunas) se actualizaron a una maquetación moderna de estilo Slack.
+*   **Centralización de Plantillas HTML:** Se implementó `EmailService::obtenerPlantillaBaseHTML()` para unificar el header y el footer con el logotipo oficial, reduciendo la duplicación de código.
+*   **Enlaces Absolutos Dinámicos:** Integración de la variable `APP_URL` en el archivo `.env` para construir enlaces seguros y absolutos tanto en local como en producción.
+*   **Seguridad de Contraseñas (Reset & Registro):** Incorporación del medidor de seguridad, bloqueo de submit inseguro y botón de ojo de visibilidad para contraseñas.
+*   **Corrección de Dobles Bordes y Padding:** Solución al error visual de herencia de inputs que producía un doble borde y recortaba la primera letra en las pantallas y modales de autenticación.
+*   **Conexión Tolerante a Fallos:** Optimización del tiempo de respuesta DNS en Windows para bases de datos locales y fallback inteligente de credenciales (Docker/XAMPP).
+
+---
+
+## Guía de la Primera Versión Estable (v1.0.0)
 
 Esta primera versión establece el núcleo de autenticación y acceso seguro al sistema. Se centra en proveer una experiencia de usuario (UX) sumamente fluida y atractiva mediante un diseño basado en Bento Grid, garantizando al mismo tiempo los más altos estándares de seguridad web.
 
-### 🌟 Funcionalidades Implementadas en v1.0.0
+### Funcionalidades Implementadas en v1.0.0
 *   **Bento Grid Collage:** Interfaz visual premium inspirada en cuadrículas de estilo bento, adaptable y con animaciones de entrada.
 *   **Animación de Flip Container:** Transición interactiva en 3D para alternar entre el formulario de inicio de sesión (Login) y el formulario de creación de cuenta (Registro) sin recargar la página.
 *   **Google OAuth Integrado:** Autenticación rápida a través del SDK oficial de Google (Google Identity Services).
@@ -20,7 +34,7 @@ Esta primera versión establece el núcleo de autenticación y acceso seguro al 
 
 ---
 
-## 🛠️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 El proyecto está construido bajo una arquitectura **MVC (Modelo-Vista-Controlador)** con PHP puro:
 
@@ -49,7 +63,7 @@ graph TD
 
 ---
 
-## ⚙️ Guía de Instalación y Configuración
+## Guía de Instalación y Configuración
 
 ### Requisitos del Sistema
 *   Servidor web Apache o Nginx.
@@ -82,7 +96,7 @@ graph TD
 4.  **Importar la Base de Datos:**
     Importa el esquema SQL inicial ubicado en `database/schema.sql` (si está presente) en tu servidor MySQL.
 
-## 🗄️ Modelo de Base de Datos
+## Modelo de Base de Datos
 
 Zooki cuenta con un esquema relacional estructurado en MySQL para garantizar la integridad y auditoría de la información clínica. Las tablas principales se dividen en:
 
@@ -109,7 +123,7 @@ Zooki cuenta con un esquema relacional estructurado en MySQL para garantizar la 
 
 ---
 
-## 🧩 Principios de Diseño (SOLID)
+## Principios de Diseño (SOLID)
 
 El diseño arquitectónico de Zooki cubre de forma parcial los principios **SOLID** para asegurar un código mantenible a medida que el sistema escala, adaptándolos pragmáticamente a un entorno PHP nativo rápido:
 
@@ -117,7 +131,7 @@ El diseño arquitectónico de Zooki cubre de forma parcial los principios **SOLI
 *   **Abierto/Cerrado (OCP):** Modularidad en el enrutamiento centralizado que permite agregar nuevas rutas de controladores sin modificar la estructura del despachador inicial.
 *   *Nota:* Para mantener la ligereza y rapidez en las operaciones CRUD, ciertos flujos de bases de datos y controladores acoplan directamente lógica para evitar sobrecarga de abstracciones innecesarias.
 
-## 📌 Esquema de Versionamiento (Zooki SemVer)
+## Esquema de Versionamiento (Zooki SemVer)
 
 Zooki utiliza un esquema de versionamiento semántico adaptado a la distribución de componentes del sistema: **`X.Y.Z`**
 

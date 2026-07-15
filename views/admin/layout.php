@@ -141,7 +141,7 @@
         const ZOOKI_ROLE = 1;
     </script>
     <script src="js/dashboard.js"></script>
-    <script src="../public/js/csrf.js"></script>
-    <script src="../public/js/extras.js"></script>
+    <script src="js/csrf.js"></script>
+    <script src="js/extras.js"></script>
 </body>
 </html>

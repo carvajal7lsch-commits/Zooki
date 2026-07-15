@@ -14,7 +14,7 @@ $errorMessage = $errorMessage ?? '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restablecer contraseña - Zooki</title>
-    <link rel="icon" type="image/png" href="../public/img/favicon.png">
+    <link rel="icon" type="image/png" href="img/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -48,15 +48,25 @@ $errorMessage = $errorMessage ?? '';
                     <label for="newPassword">Nueva contraseña</label>
                     <div class="input-wrapper">
                         <i class="ri-shield-keyhole-line"></i>
-                        <input type="password" id="newPassword" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
+                        <input type="password" id="newPassword" name="password" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="toggle-password" id="toggleNewPassword" tabindex="-1">
+                            <i class="ri-eye-off-line"></i>
+                        </button>
                     </div>
+                    <div class="password-meter-container">
+                        <div class="password-meter" id="passwordMeter"></div>
+                    </div>
+                    <span class="validation-msg" id="passwordValidationMsg">Mínimo 6 caracteres (letras y números)</span>
                 </div>
 
                 <div class="input-group">
                     <label for="confirmPassword">Confirmar contraseña</label>
                     <div class="input-wrapper">
                         <i class="ri-check-double-line"></i>
-                        <input type="password" id="confirmPassword" name="password_confirmation" placeholder="Repite tu contraseña" required minlength="8" autocomplete="new-password">
+                        <input type="password" id="confirmPassword" name="password_confirmation" placeholder="Repite tu contraseña" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="toggle-password" id="toggleConfirmPassword" tabindex="-1">
+                            <i class="ri-eye-off-line"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -84,9 +94,92 @@ $errorMessage = $errorMessage ?? '';
         document.addEventListener('DOMContentLoaded', () => {
             const resetForm = document.querySelector('#resetPasswordForm');
             const submitBtn = document.querySelector('#resetSubmitBtn');
+            const newPassword = document.querySelector('#newPassword');
+            const confirmPassword = document.querySelector('#confirmPassword');
+            const toggleNewPassword = document.querySelector('#toggleNewPassword');
+            const toggleConfirmPassword = document.querySelector('#toggleConfirmPassword');
+            const passwordMeter = document.getElementById('passwordMeter');
+            const passwordValidationMsg = document.getElementById('passwordValidationMsg');
 
             if (!resetForm) {
                 return;
+            }
+
+            let isPasswordValid = false;
+
+            function updateSubmitButton() {
+                if (isPasswordValid) {
+                    submitBtn.disabled = false;
+                } else {
+                    submitBtn.disabled = true;
+                }
+            }
+
+            // Deshabilitar por defecto para forzar contraseña válida
+            submitBtn.disabled = true;
+
+            // Ojo de visibilidad: nueva contraseña
+            if (toggleNewPassword && newPassword) {
+                toggleNewPassword.addEventListener('click', function () {
+                    const type = newPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+                    newPassword.setAttribute('type', type);
+                    this.innerHTML = type === 'password'
+                        ? '<i class="ri-eye-off-line"></i>'
+                        : '<i class="ri-eye-line"></i>';
+                });
+            }
+
+            // Ojo de visibilidad: confirmar contraseña
+            if (toggleConfirmPassword && confirmPassword) {
+                toggleConfirmPassword.addEventListener('click', function () {
+                    const type = confirmPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+                    confirmPassword.setAttribute('type', type);
+                    this.innerHTML = type === 'password'
+                        ? '<i class="ri-eye-off-line"></i>'
+                        : '<i class="ri-eye-line"></i>';
+                });
+            }
+
+            // Medidor de fuerza
+            if (newPassword && passwordMeter && passwordValidationMsg) {
+                newPassword.addEventListener('input', function() {
+                    const val = this.value;
+                    let strength = 0;
+                    
+                    passwordMeter.className = 'password-meter';
+                    
+                    if (val.length === 0) {
+                        passwordValidationMsg.textContent = "Mínimo 6 caracteres";
+                        passwordValidationMsg.className = "validation-msg";
+                        isPasswordValid = false;
+                        updateSubmitButton();
+                        return;
+                    }
+
+                    if (val.length >= 6) strength++;
+                    if (/[A-Z]/.test(val) || /[a-z]/.test(val)) strength++;
+                    if (/[0-9]/.test(val)) strength++;
+                    if (/[^A-Za-z0-9]/.test(val)) strength++;
+                    if (val.length >= 10) strength++;
+
+                    if (strength <= 2) {
+                        passwordMeter.classList.add('weak');
+                        passwordValidationMsg.textContent = "Débil: Agrega letras y números";
+                        passwordValidationMsg.className = "validation-msg error";
+                        isPasswordValid = false;
+                    } else if (strength === 3 || strength === 4) {
+                        passwordMeter.classList.add('medium');
+                        passwordValidationMsg.textContent = "Media: Contraseña aceptable ✅";
+                        passwordValidationMsg.className = "validation-msg success";
+                        isPasswordValid = true;
+                    } else {
+                        passwordMeter.classList.add('strong');
+                        passwordValidationMsg.textContent = "Fuerte: Excelente ✅";
+                        passwordValidationMsg.className = "validation-msg success";
+                        isPasswordValid = true;
+                    }
+                    updateSubmitButton();
+                });
             }
 
             resetForm.addEventListener('submit', async (event) => {
@@ -229,13 +322,33 @@ $errorMessage = $errorMessage ?? '';
             border-color: #5560FF;
             box-shadow: 0 0 0 4px rgba(85, 96, 255, 0.12);
         }
-        .reset-form input {
+        .reset-form .input-wrapper input {
             flex: 1;
-            border: none;
-            background: transparent;
-            outline: none;
+            border: none !important;
+            background: transparent !important;
+            outline: none !important;
             font-size: 1rem;
             color: #0f172a;
+            padding: 0 0 0 6px !important;
+            box-shadow: none !important;
+        }
+        .reset-form .input-wrapper input:focus {
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+        .toggle-password {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s ease;
+        }
+        .toggle-password:hover {
+            color: #5560FF;
         }
         .btn-primary {
             width: 100%;

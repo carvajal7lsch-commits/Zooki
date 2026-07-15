@@ -952,11 +952,14 @@ body::after {
     color: var(--text-secondary);
 }
 
-#resetRequestForm input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    outline: none;
+#resetRequestForm input,
+.modal-card .input-wrapper input {
+    flex: 1 !important;
+    border: none !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    padding-left: 6px !important;
     font-size: 1rem;
     color: #0f172a;
 }

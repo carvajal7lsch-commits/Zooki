@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="icon" type="image/png" href="../../public/img/icon_blue.png">
+    <link rel="icon" type="image/png" href="img/icon_blue.png">
 
     <!-- Librerías externas -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -17,12 +17,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Estilos del sistema -->
-    <link rel="stylesheet" href="../../public/css/styles.css">
-    <link rel="stylesheet" href="../../public/css/dashboard.css">
-    <link rel="stylesheet" href="../../public/css/usuarios.css">
-    <link rel="stylesheet" href="../../public/css/medical-module.css?v=6">
-    <link rel="stylesheet" href="../../public/css/pill-sidebar.css">
-    <link rel="stylesheet" href="../../public/css/dark-mode.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/usuarios.css">
+    <link rel="stylesheet" href="css/medical-module.css?v=6">
+    <link rel="stylesheet" href="css/pill-sidebar.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
 </head>
 <body>
@@ -33,7 +33,7 @@
         <!-- ══ PILL SIDEBAR ════════════════════════════════════════════════════ -->
         <nav class="pill-sidebar">
             <a href="index.php?action=vet_area" class="pill-logo mb-2">
-                <img src="../../public/img/logo_conlema.png" alt="Zooki" class="logo-sidebar-img">
+                <img src="img/logo_conlema.png" alt="Zooki" class="logo-sidebar-img">
             </a>
 
             <div class="pill-nav">
@@ -142,9 +142,9 @@
     <script>
         const ZOOKI_ROLE = 2;
     </script>
-    <script src="../../public/js/dashboard.js"></script>
-    <script src="../../public/js/medical-module.js?v=11"></script>
-    <script src="../../public/js/csrf.js"></script>
-    <script src="../../public/js/extras.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/medical-module.js?v=11"></script>
+    <script src="js/csrf.js"></script>
+    <script src="js/extras.js"></script>
 </body>
 </html>

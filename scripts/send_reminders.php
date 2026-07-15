@@ -13,6 +13,7 @@ use PHPMailer\PHPMailer\Exception;
 
 $database = new Database();
 $db = $database->getConnection();
+$emailService = new EmailService();
 
 echo "Iniciando envío de recordatorios...\n";
 
@@ -50,25 +51,32 @@ foreach ($citasManana as $c) {
     $horaStr = substr($c['hora'], 0, 5);
     $asunto = "Recordatorio de cita: {$c['mascota_nombre']} - {$fechaStr} {$horaStr}";
 
-    $cuerpo = "
-    <div style='font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;'>
-        <div style='background-color: #0C66E4; padding: 20px; text-align: center; color: white;'>
-            <h2>Recordatorio de Cita - Zooki</h2>
-        </div>
-        <div style='padding: 20px;'>
-            <p>Hola <strong>{$c['prop_nombre']}</strong>,</p>
-            <p>Te recordamos que tienes una cita programada para <strong>mañana</strong> con tu mascota <strong>{$c['mascota_nombre']}</strong>.</p>
-            <div style='background-color: #f8fafc; padding: 15px; border-left: 4px solid #0C66E4; margin: 20px 0;'>
-                <p style='margin: 5px 0;'><strong>Fecha:</strong> {$fechaStr}</p>
-                <p style='margin: 5px 0;'><strong>Hora:</strong> {$horaStr}</p>
-                <p style='margin: 5px 0;'><strong>Motivo:</strong> {$c['motivo']}</p>
-                <p style='margin: 5px 0;'><strong>Veterinario:</strong> Dr(a). {$c['vet_nombre']}</p>
-            </div>
-            <p>Por favor llega puntual. Si necesitas reprogramar, contáctanos con anticipación.</p>
-            <br>
-            <p>Atentamente,<br><strong>El equipo de Zooki</strong></p>
-        </div>
-    </div>";
+    $contenidoHtml = '
+    <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+      Te recordamos que tienes una cita programada para <strong>mañana</strong> con tu mascota <strong>' . htmlspecialchars($c['mascota_nombre']) . '</strong>.
+    </p>
+    
+    <div style="background-color:#f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #1d1c1d;"><strong>📅 Fecha:</strong> ' . htmlspecialchars($fechaStr) . '</p>
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #1d1c1d;"><strong>⏰ Hora:</strong> ' . htmlspecialchars($horaStr) . '</p>
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #1d1c1d;"><strong>❓ Motivo:</strong> ' . htmlspecialchars($c['motivo']) . '</p>
+        <p style="margin: 0; font-size: 15px; color: #1d1c1d;"><strong>🩺 Veterinario:</strong> Dr(a). ' . htmlspecialchars($c['vet_nombre']) . '</p>
+    </div>
+    
+    <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+      Por favor llega puntual. Si necesitas reprogramar, contáctanos con anticipación.
+    </p>';
+
+    $envFile = dirname(__DIR__) . '/.env';
+    $appUrl = 'https://zooki.secarvajal.com/index.php';
+    if (file_exists($envFile)) {
+        $env = parse_ini_file($envFile);
+        if (isset($env['APP_URL'])) {
+            $appUrl = rtrim($env['APP_URL'], '/') . '/index.php';
+        }
+    }
+
+    $cuerpo = $emailService->obtenerPlantillaBaseHTML($c['prop_nombre'], 'Recordatorio de Cita', $contenidoHtml, 'Ver mis citas', $appUrl);
 
     $enviado = $emailService->enviarCorreoPersonalizado($c['email'], $c['prop_nombre'], $asunto, $cuerpo);
     $estado = $enviado ? 'enviado' : 'error';
@@ -117,8 +125,6 @@ if (count($recordatorios) === 0 && count($citasManana) === 0) {
     exit;
 }
 
-$emailService = new EmailService();
-
 foreach ($recordatorios as $v) {
     $fecha_prox = new DateTime($v['fecha_proxima']);
     $hoy = new DateTime();
@@ -148,25 +154,30 @@ foreach ($recordatorios as $v) {
     $asunto = "Recordatorio de $tipo_texto: " . $v['mascota_nombre'];
 
     // Plantilla HTML
-    $cuerpo = "
-    <div style='font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;'>
-        <div style='background-color: #0f172a; padding: 20px; text-align: center; color: white;'>
-            <h2>Clínica Veterinaria Zooki 🐾</h2>
-        </div>
-        <div style='padding: 20px;'>
-            <p>Hola <strong>{$v['prop_nombre']}</strong>,</p>
-            <p>Te recordamos que el próximo procedimiento médico para tu mascota <strong>{$v['mascota_nombre']}</strong> está programado para pronto.</p>
+    $contenidoHtml = '
+    <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+      Te recordamos que el próximo procedimiento médico para tu mascota <strong>' . htmlspecialchars($v['mascota_nombre']) . '</strong> está programado para pronto.
+    </p>
+    
+    <div style="background-color:#f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #1d1c1d;"><strong>💉 Procedimiento:</strong> ' . htmlspecialchars($v['nombre_item']) . '</p>
+        <p style="margin: 0; font-size: 15px; color: #1d1c1d;"><strong>📅 Fecha Programada:</strong> ' . htmlspecialchars($fecha_prox->format('d/m/Y')) . '</p>
+    </div>
+    
+    <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+      Por favor, comunícate con nosotros para agendar la cita y mantener a ' . htmlspecialchars($v['mascota_nombre']) . ' protegido(a).
+    </p>';
 
-            <div style='background-color: #f8fafc; padding: 15px; border-left: 4px solid #3b82f6; margin: 20px 0;'>
-                <p style='margin: 5px 0;'><strong>Procedimiento:</strong> {$v['nombre_item']}</p>
-                <p style='margin: 5px 0;'><strong>Fecha Programada:</strong> " . $fecha_prox->format('d/m/Y') . "</p>
-            </div>
+    $envFile = dirname(__DIR__) . '/.env';
+    $appUrl = 'https://zooki.secarvajal.com/index.php';
+    if (file_exists($envFile)) {
+        $env = parse_ini_file($envFile);
+        if (isset($env['APP_URL'])) {
+            $appUrl = rtrim($env['APP_URL'], '/') . '/index.php';
+        }
+    }
 
-            <p>Por favor, comunícate con nosotros para agendar la cita y mantener a {$v['mascota_nombre']} protegido(a).</p>
-            <br>
-            <p>Atentamente,<br><strong>El equipo de Zooki</strong></p>
-        </div>
-    </div>";
+    $cuerpo = $emailService->obtenerPlantillaBaseHTML($v['prop_nombre'], 'Recordatorio de ' . $tipo_texto, $contenidoHtml, 'Agendar Cita', $appUrl);
 
     // Intentar enviar usando EmailService
     $enviado = $emailService->enviarCorreoPersonalizado($v['email'], $v['prop_nombre'], $asunto, $cuerpo);

@@ -415,17 +415,33 @@ class AuthController {
 
     private function buildResetLink(int $tokenId, string $tokenPlano): string
     {
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
-        $directory = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
-        $path = ($directory && $directory !== '.') ? $directory . '/index.php' : '/index.php';
+        // Cargar APP_URL del archivo .env si está configurado
+        $appUrl = null;
+        $envFile = __DIR__ . '/../.env';
+        if (file_exists($envFile)) {
+            $env = parse_ini_file($envFile);
+            $appUrl = $env['APP_URL'] ?? null;
+        }
 
         $query = http_build_query([
             'action' => 'reset_password',
             'id' => $tokenId,
             'token' => $tokenPlano,
         ]);
+
+        if (!empty($appUrl)) {
+            $baseUrl = rtrim($appUrl, '/');
+            if (!str_ends_with($baseUrl, 'index.php')) {
+                $baseUrl .= '/index.php';
+            }
+            return sprintf('%s?%s', $baseUrl, $query);
+        }
+
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
+        $directory = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+        $path = ($directory && $directory !== '.') ? $directory . '/index.php' : '/index.php';
 
         return sprintf('%s://%s%s?%s', $scheme, $host, $path, $query);
     }
@@ -436,44 +452,183 @@ class AuthController {
             ? sprintf('%d hora%s', $expiraEnMinutos / 60, $expiraEnMinutos / 60 > 1 ? 's' : '')
             : sprintf('%d minutos', $expiraEnMinutos);
 
-        return "
-        <html>
-            <head>
-                <meta charset='UTF-8'>
-                <style>
-                    body { font-family: 'Inter', Arial, sans-serif; background-color: #f5f7fb; color: #0f172a; margin: 0; padding: 0; }
-                    .wrapper { max-width: 540px; margin: 0 auto; padding: 24px; }
-                    .card { background-color: #ffffff; border-radius: 16px; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08); overflow: hidden; }
-                    .card-header { background: linear-gradient(135deg, #5560FF 0%, #3B82F6 100%); padding: 32px; color: #ffffff; }
-                    .card-header h1 { margin: 0; font-size: 24px; letter-spacing: -0.02em; }
-                    .card-body { padding: 32px; }
-                    .card-body p { line-height: 1.6; margin: 12px 0; }
-                    .cta { display: inline-block; margin-top: 24px; padding: 14px 24px; background: #0ea5e9; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 12px; }
-                    .cta:hover { background: #0284c7; }
-                    .token { background: #f8fafc; padding: 16px; border-radius: 12px; margin-top: 16px; border: 1px solid rgba(148, 163, 184, 0.3); font-size: 14px; }
-                    .footer { margin-top: 24px; font-size: 12px; color: #64748b; text-align: center; }
-                </style>
-            </head>
-            <body>
-                <div class='wrapper'>
-                    <div class='card'>
-                        <div class='card-header'>
-                            <h1>Restablecer contraseña</h1>
-                        </div>
-                        <div class='card-body'>
-                            <p>Hola <strong>{$nombre}</strong>,</p>
-                            <p>Recibimos una solicitud para restablecer tu contraseña de Zooki. Puedes hacerlo haciendo clic en el siguiente botón:</p>
-                            <p><a href='{$enlace}' class='cta'>Crear nueva contraseña</a></p>
-                            <p>Por seguridad, este enlace expirará en {$expiraTexto}. Si no solicitaste este cambio, puedes ignorar este mensaje y tu contraseña permanecerá igual.</p>
-                            <div class='token'>Si el botón no funciona, copia y pega el siguiente enlace en tu navegador:<br><br>{$enlace}</div>
-                            <p>¡Gracias por confiar en Zooki! 🐾</p>
-                        </div>
-                    </div>
-                    <p class='footer'>Este es un correo automático, por favor no respondas.<br>© " . date('Y') . " Zooki - Sistema Veterinario</p>
-                </div>
-            </body>
-        </html>
-        ";
+        return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html dir="ltr" lang="es">
+  <head>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+    <meta name="x-apple-disable-message-reformatting" />
+  </head>
+  <body style="background-color:#ffffff">
+    <div
+      style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0"
+      data-skip-in-text="true">
+      Restablece tu contraseña de Zooki
+    </div>
+    <table
+      border="0"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      role="presentation"
+      align="center">
+      <tbody>
+        <tr>
+          <td
+            style=\'background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif\'>
+            <table
+              align="center"
+              width="100%"
+              border="0"
+              cellpadding="0"
+              cellspacing="0"
+              role="presentation"
+              style="max-width:37.5em;margin:0 auto;padding:40px 20px 64px 20px;width:600px">
+              <tbody>
+                <tr style="width:100%">
+                  <td>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      style="margin-bottom:32px;text-align:left">
+                      <tbody>
+                        <tr>
+                          <td>
+                            <table
+                              border="0"
+                              cellpadding="0"
+                              cellspacing="0"
+                              style="border-collapse:collapse">
+                              <tr>
+                                <td
+                                  style="vertical-align:middle;padding-right:0px">
+                                  <img
+                                    alt="Zooki Icon"
+                                    height="36"
+                                    src="https://zooki.secarvajal.com/img/icon_blue.png"
+                                    style="display:block;outline:none;border:none;text-decoration:none;height:auto"
+                                    width="36" />
+                                </td>
+                                <td style="vertical-align:middle">
+                                  <img
+                                    alt="Zooki logotipo"
+                                    src="https://zooki.secarvajal.com/img/logotipo.png"
+                                    style="display:block;outline:none;border:none;text-decoration:none;margin:-15px 0 -15px -10px;height:auto"
+                                    width="110" />
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <h1
+                      style="color:#1d1c1d;font-size:36px;font-weight:800;letter-spacing:-1.2px;line-height:42px;margin:0 0 20px 0">
+                      Restablecer tu contraseña
+                    </h1>
+                    <p
+                      style="font-size:20px;line-height:28px;color:#1d1c1d;margin:0 0 24px 0;margin-top:0;margin-right:0;margin-bottom:24px;margin-left:0">
+                      Hola,
+                      ' . htmlspecialchars($nombre) . '. Has solicitado cambiar la
+                      contraseña para acceder a tu panel de control.
+                    </p>
+                    <p
+                      style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;margin-top:0;margin-right:0;margin-bottom:16px;margin-left:0">
+                      Para completar el proceso de restablecimiento, haz clic en
+                      el siguiente botón:
+                    </p>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      style="margin:28px 0">
+                      <tbody>
+                        <tr>
+                          <td>
+                            <a
+                              href="' . $enlace . '"
+                              style="line-height:22px;text-decoration:none;display:inline-block;max-width:100%;mso-padding-alt:0px;background-color:#0052ff;border-radius:4px;color:#ffffff;font-size:15px;font-weight:700;text-align:center;padding:12px 24px;padding-top:12px;padding-right:24px;padding-bottom:12px;padding-left:24px"
+                              target="_blank"
+                              ><span><!--[if mso]><i style="mso-font-width:400%;mso-text-raise:18" hidden>&#8202;&#8202;&#8202;</i><![endif]--></span><span
+                                style="max-width:100%;display:inline-block;line-height:120%;mso-padding-alt:0px;mso-text-raise:9px"
+                                >Restablecer contraseña</span><span><!--[if mso]><i style="mso-font-width:400%" hidden>&#8202;&#8202;&#8202;&#8203;</i><![endif]--></span></a>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p
+                      style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;margin-top:0;margin-right:0;margin-bottom:16px;margin-left:0">
+                      Si el botón no funciona o no responde, puedes copiar y
+                      pegar la siguiente dirección en tu navegador:<br /><a
+                        href="' . $enlace . '"
+                        style="color:#1264a3;text-decoration-line:none;text-decoration:none;word-break:break-all;font-size:14px"
+                        target="_blank"
+                        >' . $enlace . '</a
+                      >
+                    </p>
+                    <p
+                      style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;margin-top:0;margin-right:0;margin-bottom:16px;margin-left:0">
+                      Por motivos de seguridad, este enlace es temporal y
+                      expirará en ' . $expiraTexto . '. Si no has sido tú quien solicitó
+                      este cambio, puedes ignorar este mensaje de forma segura y
+                      tu contraseña seguirá siendo la misma.
+                    </p>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      style="border-top:1px solid #dddddd;margin:32px 0 24px 0">
+                      <tbody>
+                        <tr>
+                          <td></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      style="text-align:left">
+                      <tbody>
+                        <tr>
+                          <td>
+                            <p
+                              style="font-size:13px;line-height:18px;color:#868686;margin:0 0 8px 0;margin-top:0;margin-right:0;margin-bottom:8px;margin-left:0">
+                              Enviado con 💙 por el equipo de Zooki<br />Zooki
+                              Inc. · Gestión y Cuidado Veterinario
+                            </p>
+                            <p
+                              style="font-size:11px;line-height:16px;color:#b0b0b0;margin:0;margin-top:0;margin-bottom:0;margin-left:0;margin-right:0">
+                              Si tienes alguna duda o consideras que esto es un
+                              error de seguridad, por favor comunícate con
+                              nuestro soporte administrativo.
+                            </p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>';
     }
 
     public function checkDocumentAjax()

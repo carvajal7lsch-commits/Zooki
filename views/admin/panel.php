@@ -46,7 +46,7 @@ $fecha_banner = mb_strtoupper(strftime("%A, %d DE %B %Y"));
     </div>
     <div class="hero-image">
         <!-- El usuario debe guardar su imagen sin fondo como mascotas_hero.png en la carpeta public/img -->
-        <img src="../public/img/pets.png" alt="Mascotas" onerror="this.src='../public/img/hero-puppy.png';">
+        <img src="img/pets.png" alt="Mascotas" onerror="this.src='img/hero-puppy.png';">
     </div>
 </div>
 
