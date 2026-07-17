@@ -28,7 +28,8 @@ class Security {
         'get_laboratorios_ajax', 'get_productos_ajax', 'get_vacunas_por_especie_ajax',
         'listar_pendientes_vacunas_ajax', 'listar_pendientes_desparasitaciones_ajax',
         'get_auditoria_ajax', 'buscar_global_ajax',
-        'portal_get_tipos_cita_ajax', 'portal_get_vets_ajax', 'portal_get_horas_ajax', 'portal_agendar_cita_ajax'
+        'portal_get_tipos_cita_ajax', 'portal_get_vets_ajax', 'portal_get_horas_ajax', 'portal_agendar_cita_ajax',
+        'get_notificaciones_ajax', 'ver_detalle_mascota_propietario_ajax'
     ];
 
     /**
