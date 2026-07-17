@@ -481,17 +481,36 @@ class CitaController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_cita = $_POST['id_cita'];
 
-            // Verificar permisos: veterinarios solo pueden cancelar sus propias citas
-            if (isset($_SESSION['usuario_id_rol']) && $_SESSION['usuario_id_rol'] == 2) {
-                // Es veterinario, verificar que la cita le pertenezca
-                $cita_actual = $this->model->getById($id_cita);
-                if (!$cita_actual) {
-                    echo json_encode(['success' => false, 'message' => 'Cita no encontrada.']);
-                    exit;
-                }
-                if ($cita_actual['doc_veterinario'] !== $_SESSION['usuario_doc']) {
-                    echo json_encode(['success' => false, 'message' => 'No tienes permiso para cancelar esta cita. Solo puedes cancelar tus propias citas.']);
-                    exit;
+            // Verificar permisos:
+            if (isset($_SESSION['usuario_id_rol'])) {
+                $rolUsuario = (int)$_SESSION['usuario_id_rol'];
+                $docSesion = $_SESSION['usuario_doc'] ?? null;
+                
+                if ($rolUsuario == 2) {
+                    // Es veterinario, verificar que la cita le pertenezca
+                    $cita_actual = $this->model->getById($id_cita);
+                    if (!$cita_actual) {
+                        echo json_encode(['success' => false, 'message' => 'Cita no encontrada.']);
+                        exit;
+                    }
+                    if ($cita_actual['doc_veterinario'] !== $docSesion) {
+                        echo json_encode(['success' => false, 'message' => 'No tienes permiso para cancelar esta cita. Solo puedes cancelar tus propias citas.']);
+                        exit;
+                    }
+                } elseif ($rolUsuario == 4) {
+                    // Es propietario, verificar que la mascota de la cita le pertenezca
+                    $cita_actual = $this->model->getById($id_cita);
+                    if (!$cita_actual) {
+                        echo json_encode(['success' => false, 'message' => 'Cita no encontrada.']);
+                        exit;
+                    }
+                    require_once '../models/Mascota.php';
+                    $mascotaModel = new Mascota($this->db);
+                    $mascota = $mascotaModel->getById($cita_actual['id_mascota']);
+                    if (!$mascota || $mascota['doc_propietario'] !== $docSesion) {
+                        echo json_encode(['success' => false, 'message' => 'No tienes permiso para cancelar esta cita. Esta mascota no te pertenece.']);
+                        exit;
+                    }
                 }
             }
 

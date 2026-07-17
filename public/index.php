@@ -373,6 +373,24 @@ switch ($action) {
         $controller->verDetalleMascotaAjax();
         break;
 
+    case "portal_get_vets_ajax":
+        require_once "../controllers/CitaController.php";
+        $controller = new CitaController();
+        $controller->listarVeterinariosAjax();
+        break;
+
+    case "portal_get_tipos_cita_ajax":
+        require_once "../controllers/CitaController.php";
+        $controller = new CitaController();
+        $controller->listarTiposCitaAjax();
+        break;
+
+    case "portal_agendar_cita_ajax":
+        require_once "../controllers/CitaController.php";
+        $controller = new CitaController();
+        $controller->registrarAjax();
+        break;
+
     case "listar_mascotas":
         if (!isset($_SESSION["usuario_doc"])) {
             header("Location: index.php?action=login");

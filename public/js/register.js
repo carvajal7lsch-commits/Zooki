@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await response.json();
             
-            if (data.exists) {
+            if (data.extra && data.extra.exists) {
                 docValidationMsg.innerHTML = '<i class="ri-close-circle-line"></i> Documento ya registrado';
                 docValidationMsg.className = "validation-msg error";
                 isDocumentValid = false;
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await response.json();
             
-            if (data.exists) {
+            if (data.extra && data.extra.exists) {
                 emailValidationMsg.innerHTML = '<i class="ri-close-circle-line"></i> Correo ya registrado';
                 emailValidationMsg.className = "validation-msg error";
                 isEmailValid = false;

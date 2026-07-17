@@ -1,389 +1,859 @@
 /* ═══════════════════════════════════════════════════════════
-   ZOOKI — Portal del propietario (Opción A: consumer / app)
-   Marca alineada con la clínica, UX distinta al dashboard
+   ZOOKI — Módulo del Propietario (Rediseño Estilo App Móvil)
+   Alineado con los colores de la marca, UX premium, responsiva
    ═══════════════════════════════════════════════════════════ */
 
 :root {
-    --z-primary: #5560FF;
-    --z-primary-dark: #434CE0;
-    --z-primary-soft: #EEF0FF;
+    --z-primary: #0052FF;
+    --z-primary-dark: #0044d6;
+    --z-primary-soft: rgba(0, 82, 255, 0.08);
+    --z-purple-light: #F3EEFF;
+    --z-purple: #8B5CF6;
     --z-success: #10B981;
-    --z-success-soft: #D1FAE5;
+    --z-success-soft: #ECFDF5;
     --z-warning: #F59E0B;
-    --z-warning-soft: #FEF3C7;
+    --z-warning-soft: #FFFBEB;
     --z-danger: #EF4444;
-    --z-bg: #F3F4F9;
+    --z-danger-soft: #FEF2F2;
+    --z-bg: #FAF9FF;
     --z-surface: #FFFFFF;
-    --z-text: #172B4D;
-    --z-text-muted: #626F86;
-    --z-border: #DFE1E6;
+    --z-text: #0F172A;
+    --z-text-muted: #64748B;
+    --z-border: #E2E8F0;
+    --z-radius-lg: 24px;
     --z-radius: 16px;
-    --z-radius-sm: 10px;
-    --z-shadow: 0 4px 20px rgba(23, 43, 77, 0.06);
-    --z-shadow-lg: 0 20px 50px rgba(23, 43, 77, 0.12);
+    --z-radius-sm: 12px;
+    --z-shadow: 0 10px 25px -5px rgba(0, 82, 255, 0.08), 0 8px 10px -6px rgba(0, 82, 255, 0.05);
+    --z-shadow-lg: 0 20px 40px -4px rgba(15, 23, 42, 0.1);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
 
-.portal-body {
+body.portal-body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: radial-gradient(circle at top right, #E8EAFF 0%, var(--z-bg) 45%, #F8FAFF 100%);
+    background-color: #E2E6FF;
+    background-image: radial-gradient(at 0% 0%, rgba(0, 82, 255, 0.15) 0px, transparent 50%),
+                      radial-gradient(at 50% 0%, rgba(0, 82, 255, 0.08) 0px, transparent 50%);
     color: var(--z-text);
-    line-height: 1.55;
+    line-height: 1.5;
     min-height: 100vh;
+    display: flex;
+    justify-content: center;
 }
 
-/* ── Header ── */
-.portal-header {
-    background: var(--z-surface);
-    border-bottom: 1px solid var(--z-border);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+/* Contenedor tipo Celular/App en escritorio, fluido en móvil */
+.portal-main {
+    width: 100%;
+    max-width: 480px;
+    background: var(--z-bg);
+    min-height: 100vh;
+    box-shadow: 0 0 100px rgba(9, 10, 32, 0.12);
+    position: relative;
+    padding: 1.5rem 1.25rem 90px; /* Margen inferior para el navbar */
+    display: flex;
+    flex-direction: column;
 }
 
-.portal-header-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0.85rem 1.25rem;
+/* ── Pantallas del Navbar (Tabs) ── */
+.app-screen {
+    display: none;
+    animation: screenFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.app-screen.active {
+    display: block;
+}
+
+@keyframes screenFade {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Cabecera del Usuario (Home) ── */
+.home-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    margin-bottom: 1.75rem;
 }
 
-.portal-brand {
+.user-profile-summary {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    text-decoration: none;
-    color: inherit;
+    gap: 0.85rem;
 }
 
-.portal-brand-icon {
-    width: 40px;
-    height: 40px;
-    background: var(--z-primary-soft);
-    color: var(--z-primary);
-    border-radius: 12px;
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+    color: #ffffff;
+    font-size: 1.15rem;
+    font-weight: 700;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 3px solid #ffffff;
+    box-shadow: var(--z-shadow);
+}
+
+.user-info-text span {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--z-text-muted);
+}
+
+.user-info-text h3 {
     font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--z-text);
 }
 
-.portal-brand-text {
+.header-actions {
+    position: relative;
+}
+
+.bell-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    color: var(--z-text);
     display: flex;
-    flex-direction: column;
-    line-height: 1.2;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
 }
 
-.portal-brand-text strong {
+.bell-btn:hover {
+    background: var(--z-primary-soft);
+}
+
+.bell-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--z-danger);
+    border-radius: 50%;
+    border: 1px solid #ffffff;
+}
+
+/* ── Sección de Carrusel de Mascotas (Patient History) ── */
+.section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.section-title-row h2 {
     font-size: 1.05rem;
     font-weight: 800;
     color: var(--z-text);
 }
 
-.portal-brand-text small {
-    font-size: 0.72rem;
-    color: var(--z-text-muted);
-    font-weight: 500;
+.section-title-row .see-all {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--z-primary);
+    text-decoration: none;
 }
 
-.portal-user {
+.pet-carousel {
     display: flex;
+    gap: 1.1rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 0.25rem 0.25rem 1rem;
+    margin-bottom: 1.5rem;
+    scrollbar-width: none; /* Firefox */
+}
+
+.pet-carousel::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.pet-carousel-item {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
-.portal-user-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--z-text-muted);
-}
-
-.portal-logout {
-    width: 38px;
-    height: 38px;
+.pet-avatar-wrapper {
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
-    background: var(--z-bg);
-    color: var(--z-text-muted);
+    padding: 3px;
+    background: #ffffff;
+    border: 2px solid var(--z-border);
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.pet-carousel-item:hover .pet-avatar-wrapper {
+    border-color: var(--z-primary);
+    transform: scale(1.05);
+}
+
+.pet-avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #F1F5F9;
+}
+
+.pet-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    transition: background 0.2s, color 0.2s;
+    font-size: 1.5rem;
 }
 
-.portal-logout:hover {
-    background: #FFEDEB;
-    color: var(--z-danger);
-}
-
-/* ── Main ── */
-.portal-main {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 1.75rem 1.25rem 3rem;
-}
-
-.portal-footer {
-    text-align: center;
-    padding: 1.5rem;
+.pet-carousel-name {
     font-size: 0.8rem;
-    color: var(--z-text-muted);
+    font-weight: 600;
+    color: var(--z-text);
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* ── Hero ── */
-.portal-hero {
+/* ── Tarjeta "Próxima Cita" (Today Patient) ── */
+.appointment-banner {
     background: var(--z-surface);
     border: 1px solid var(--z-border);
-    border-radius: 20px;
-    padding: 1.75rem 1.5rem;
-    margin-bottom: 2rem;
+    border-radius: var(--z-radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
     box-shadow: var(--z-shadow);
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 1.5rem;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
 }
 
-.portal-hero-kicker {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--z-primary);
-    margin-bottom: 0.35rem;
-}
-
-.portal-hero h1 {
-    font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 800;
-    color: var(--z-text);
-    margin-bottom: 0.5rem;
-}
-
-.portal-hero-desc {
-    color: var(--z-text-muted);
-    font-size: 0.95rem;
-    max-width: 480px;
-}
-
-.portal-hero-stats {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.portal-stat {
-    background: var(--z-bg);
-    border: 1px solid var(--z-border);
-    border-radius: var(--z-radius-sm);
-    padding: 0.85rem 1.1rem;
-    min-width: 90px;
-    text-align: center;
-}
-
-.portal-stat--accent {
-    background: var(--z-primary-soft);
+.appointment-banner:hover {
     border-color: #C5CAFF;
 }
 
-.portal-stat-value {
-    display: block;
-    font-size: 1.5rem;
+.appointment-banner::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: var(--z-primary);
+}
+
+.app-banner-info {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.app-banner-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: var(--z-radius);
+    object-fit: cover;
+    border: 1px solid var(--z-border);
+}
+
+.app-banner-details h4 {
+    font-size: 0.95rem;
     font-weight: 800;
     color: var(--z-text);
-    line-height: 1.2;
 }
 
-.portal-stat--accent .portal-stat-value {
+.app-banner-details p {
+    font-size: 0.78rem;
+    color: var(--z-text-muted);
+}
+
+.app-banner-schedule {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.schedule-badge {
+    background: var(--z-primary-soft);
     color: var(--z-primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
 }
 
-.portal-stat-label {
-    font-size: 0.72rem;
+.schedule-time {
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--z-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
 }
 
-/* ── Section ── */
-.portal-section-head {
+.appointment-banner-empty {
+    background: var(--z-surface);
+    border: 1px dashed var(--z-border);
+    border-radius: var(--z-radius-lg);
+    padding: 1.75rem;
+    text-align: center;
+    color: var(--z-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+}
+
+.appointment-banner-empty i {
+    font-size: 1.75rem;
+    color: var(--z-primary);
+    opacity: 0.6;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* ── Accesos Rápidos (Servicios en Home) ── */
+.home-services-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.home-service-card {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1.15rem;
+    text-align: left;
+    box-shadow: var(--z-shadow);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.home-service-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--z-primary);
+}
+
+.service-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.service-card-icon.consultation { background-color: var(--z-primary-soft); color: var(--z-primary); }
+.service-card-icon.vaccines { background-color: var(--z-success-soft); color: var(--z-success); }
+.service-card-icon.deworming { background-color: var(--z-warning-soft); color: var(--z-warning); }
+.service-card-icon.history { background-color: var(--z-purple-light); color: var(--z-purple); }
+
+.home-service-card h3 {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--z-text);
+}
+
+.home-service-card p {
+    font-size: 0.72rem;
+    color: var(--z-text-muted);
+}
+
+/* ── Banner de Seguridad ── */
+.clinic-ad-banner {
+    background: linear-gradient(135deg, #0052FF 0%, #8B5CF6 100%);
+    border-radius: var(--z-radius-lg);
+    padding: 1.25rem 1.5rem;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(0, 82, 255, 0.25);
+    margin-top: auto;
+}
+
+.clinic-ad-text h4 {
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.clinic-ad-text p {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.clinic-ad-icon {
+    font-size: 2.25rem;
+    opacity: 0.85;
+}
+
+/* ── Pestaña: Servicios / Explorar (Explore) ── */
+.search-container {
     margin-bottom: 1.25rem;
 }
 
-.portal-section-head h2 {
-    font-size: 1.15rem;
+.search-input-wrapper {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--z-shadow);
+}
+
+.search-input-wrapper i {
+    color: var(--z-text-muted);
+}
+
+.search-input-wrapper input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--z-text);
+}
+
+.services-list-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
+}
+
+.service-row-item {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--z-shadow);
+}
+
+.service-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.service-row-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--z-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+.service-row-details h4 {
+    font-size: 0.88rem;
     font-weight: 800;
     color: var(--z-text);
 }
 
-.portal-section-head p {
-    font-size: 0.88rem;
+.service-row-details p {
+    font-size: 0.72rem;
     color: var(--z-text-muted);
-    margin-top: 0.2rem;
 }
 
-/* ── Empty ── */
-.portal-empty {
-    text-align: center;
-    padding: 4rem 1.5rem;
-    background: var(--z-surface);
-    border: 1px dashed var(--z-border);
-    border-radius: var(--z-radius);
-}
-
-.portal-empty-icon {
-    width: 72px;
-    height: 72px;
-    margin: 0 auto 1.25rem;
+.btn-service-action {
     background: var(--z-primary-soft);
     color: var(--z-primary);
+    border: none;
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--z-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-service-action:hover {
+    background: var(--z-primary);
+    color: #ffffff;
+}
+
+/* ── Panel Veterinarios (Explore) ── */
+.vets-scroll-row {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 0.25rem 0.25rem 1rem;
+    scrollbar-width: none;
+}
+
+.vets-scroll-row::-webkit-scrollbar {
+    display: none;
+}
+
+.vet-card-item {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1.15rem;
+    text-align: center;
+    box-shadow: var(--z-shadow);
+    width: 150px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.vet-photo-circle {
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--z-primary-soft);
+    background: #F1F5F9;
+}
+
+.vet-card-item h4 {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--z-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.vet-card-item p {
+    font-size: 0.7rem;
+    color: var(--z-text-muted);
+    line-height: 1.2;
+}
+
+/* ── Pestaña: Alertas/Recordatorios (Notifications) ── */
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.notification-card {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1.15rem;
+    display: flex;
+    gap: 0.85rem;
+    box-shadow: var(--z-shadow);
+    transition: transform 0.2s;
+}
+
+.notification-card:hover {
+    transform: translateY(-1px);
+}
+
+.notification-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.75rem;
-}
-
-.portal-empty h2 {
     font-size: 1.2rem;
-    margin-bottom: 0.5rem;
+    flex-shrink: 0;
 }
 
-.portal-empty p {
+.notification-icon.vacuna { background-color: var(--z-success-soft); color: var(--z-success); }
+.notification-icon.desparasitacion { background-color: var(--z-warning-soft); color: var(--z-warning); }
+.notification-icon.cita { background-color: var(--z-primary-soft); color: var(--z-primary); }
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-content h4 {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--z-text);
+    margin-bottom: 0.15rem;
+}
+
+.notification-content p {
+    font-size: 0.78rem;
     color: var(--z-text-muted);
-    max-width: 360px;
-    margin: 0 auto;
+    margin-bottom: 0.35rem;
 }
 
-/* ── Pet cards ── */
-.portal-pet-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.25rem;
+.notification-date {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--z-primary);
+    background-color: var(--z-primary-soft);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
 }
 
-.portal-pet-card {
+.notification-card-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--z-text-muted);
+    font-size: 0.88rem;
+}
+
+.notification-card-empty i {
+    font-size: 2.25rem;
+    color: var(--z-text-muted);
+    opacity: 0.35;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* ── Pestaña: Mi Cuenta (Account) ── */
+.profile-card {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-lg);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: var(--z-shadow);
+    margin-bottom: 1.5rem;
+}
+
+.profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+    color: #ffffff;
+    font-size: 2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    border: 4px solid var(--z-primary-soft);
+}
+
+.profile-card h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--z-text);
+}
+
+.profile-card p {
+    font-size: 0.85rem;
+    color: var(--z-text-muted);
+}
+
+.profile-details-list {
     background: var(--z-surface);
     border: 1px solid var(--z-border);
     border-radius: var(--z-radius);
     overflow: hidden;
     box-shadow: var(--z-shadow);
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.profile-detail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--z-border);
+}
+
+.profile-detail-row:last-child {
+    border-bottom: none;
+}
+
+.profile-detail-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--z-text-muted);
+}
+
+.profile-detail-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--z-text);
+}
+
+.profile-actions-list {
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
 }
 
-.portal-pet-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--z-shadow-lg);
-    border-color: #C5CAFF;
+.btn-profile-action {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1rem 1.25rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--z-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--z-shadow);
+    transition: background 0.2s, color 0.2s;
 }
 
-.portal-pet-card:focus-visible {
-    outline: 2px solid var(--z-primary);
-    outline-offset: 2px;
+.btn-profile-action:hover {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
-.portal-pet-card-photo {
-    height: 160px;
-    background: linear-gradient(145deg, #F7F8F9 0%, #EEF0FF 100%);
-    overflow: hidden;
+.btn-profile-action.logout-btn {
+    border-color: #FCA5A5;
+    color: var(--z-danger);
 }
 
-.portal-pet-card-photo img {
+.btn-profile-action.logout-btn:hover {
+    background: var(--z-danger-soft);
+    color: var(--z-danger);
+}
+
+/* ── Barra de Navegación Inferior (Mobile Nav) ── */
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    max-width: 480px;
+    height: 76px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--z-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    z-index: 99;
 }
 
-.portal-pet-card-placeholder {
+.mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    border: none;
+    background: transparent;
+    color: var(--z-text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.65rem;
+    font-weight: 700;
+    transition: color 0.2s;
     height: 100%;
+}
+
+.mobile-nav-item i {
+    font-size: 1.45rem;
+    transition: transform 0.2s;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item.active {
+    color: var(--z-primary);
+}
+
+.mobile-nav-item.active i {
+    transform: scale(1.1);
+}
+
+/* Botón central de agendar cita */
+.mobile-nav-item--center {
+    position: relative;
+    height: auto;
+}
+
+.center-fab-button {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 8px 20px rgba(0, 82, 255, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3rem;
-    color: #C5CAFF;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transform: translateY(-24px);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 4px solid var(--z-bg);
 }
 
-.portal-pet-card-body {
-    padding: 1.15rem 1.2rem 0.75rem;
-    flex: 1;
+.center-fab-button:hover {
+    transform: translateY(-26px) scale(1.05);
+    box-shadow: 0 10px 24px rgba(0, 82, 255, 0.45);
 }
 
-.portal-pet-card-body h3 {
-    font-size: 1.2rem;
-    font-weight: 800;
-    margin-bottom: 0.2rem;
-}
-
-.portal-pet-meta {
-    font-size: 0.85rem;
-    color: var(--z-text-muted);
-    margin-bottom: 0.5rem;
-}
-
-.portal-pet-hc {
-    display: inline-block;
-    font-size: 0.72rem;
+.center-fab-label {
+    position: absolute;
+    bottom: 8px;
+    font-size: 0.65rem;
     font-weight: 700;
-    color: var(--z-primary);
-    background: var(--z-primary-soft);
-    padding: 0.2rem 0.55rem;
-    border-radius: 6px;
-    margin-bottom: 0.75rem;
-}
-
-.portal-pet-next {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    font-size: 0.82rem;
-    color: var(--z-text);
-    background: var(--z-success-soft);
-    border: 1px solid #A7F3D0;
-    padding: 0.55rem 0.65rem;
-    border-radius: var(--z-radius-sm);
-}
-
-.portal-pet-next i {
-    color: var(--z-success);
-    margin-top: 2px;
-}
-
-.portal-pet-next--muted {
-    background: var(--z-bg);
-    border-color: var(--z-border);
     color: var(--z-text-muted);
 }
 
-.portal-pet-next--muted i {
-    color: var(--z-text-muted);
-}
-
-.portal-pet-card-action {
-    padding: 0.85rem 1.2rem;
-    border-top: 1px solid var(--z-border);
-    font-size: 0.85rem;
-    font-weight: 700;
+.mobile-nav-item.active + .center-fab-label {
     color: var(--z-primary);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.4rem;
 }
 
-/* ── Drawer ── */
+/* ── Panel Lateral / Drawer de Detalles de Mascota ── */
 .portal-drawer-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 200;
     opacity: 0;
     visibility: hidden;
@@ -397,38 +867,42 @@
 
 .portal-drawer {
     position: fixed;
-    top: 0;
-    right: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 100%);
     width: 100%;
     max-width: 480px;
-    height: 100vh;
-    height: 100dvh;
+    height: 85vh;
+    height: 85dvh;
     background: var(--z-surface);
     z-index: 201;
     display: flex;
     flex-direction: column;
-    transform: translateX(100%);
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: -12px 0 40px rgba(0,0,0,0.1);
+    border-top-left-radius: var(--z-radius-lg);
+    border-top-right-radius: var(--z-radius-lg);
+    box-shadow: 0 -15px 40px rgba(15, 23, 42, 0.15);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
 }
 
 .portal-drawer.is-open {
-    transform: translateX(0);
+    transform: translate(-50%, 0);
 }
 
+/* Encabezado del Drawer */
 .portal-drawer-header {
     display: flex;
     align-items: center;
     gap: 0.65rem;
-    padding: 1rem 1rem 1rem 0.75rem;
+    padding: 1.25rem 1.25rem 1rem;
     border-bottom: 1px solid var(--z-border);
     flex-shrink: 0;
 }
 
 .portal-drawer-back,
 .portal-drawer-close {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     border: none;
     background: var(--z-bg);
     border-radius: 50%;
@@ -452,8 +926,9 @@
 }
 
 .portal-drawer-title-wrap h2 {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 800;
+    color: var(--z-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -464,8 +939,9 @@
     color: var(--z-text-muted);
 }
 
+/* Resumen Ficha Técnica Mascota */
 .portal-drawer-summary {
-    padding: 1rem 1.25rem;
+    padding: 1.15rem;
     background: var(--z-bg);
     border-bottom: 1px solid var(--z-border);
     flex-shrink: 0;
@@ -473,20 +949,21 @@
 
 .portal-summary-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.65rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
 }
 
 .portal-summary-item {
     background: var(--z-surface);
     border: 1px solid var(--z-border);
     border-radius: var(--z-radius-sm);
-    padding: 0.65rem 0.75rem;
+    padding: 0.65rem 0.5rem;
+    text-align: center;
 }
 
 .portal-summary-item span {
     display: block;
-    font-size: 0.68rem;
+    font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -495,48 +972,64 @@
 }
 
 .portal-summary-item strong {
-    font-size: 0.88rem;
+    font-size: 0.78rem;
+    font-weight: 800;
     color: var(--z-text);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* ── Tabs ── */
+/* Tabs del Drawer */
 .portal-drawer-tabs {
     display: flex;
-    gap: 0.35rem;
-    padding: 0.65rem 1rem;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
     background: var(--z-bg);
     border-bottom: 1px solid var(--z-border);
     flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.portal-drawer-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .portal-tab {
-    flex: 1;
+    flex: 0 0 auto;
     border: none;
     background: transparent;
     font-family: inherit;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: var(--z-text-muted);
-    padding: 0.6rem 0.4rem;
+    padding: 0.6rem 0.65rem;
     border-radius: var(--z-radius-sm);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
+    gap: 0.3rem;
     transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+    min-width: 90px;
 }
 
 .portal-tab.active {
     background: var(--z-surface);
     color: var(--z-primary);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 6px rgba(85, 96, 255, 0.08);
 }
 
+/* Cuerpo del Drawer */
 .portal-drawer-body {
     flex: 1;
     overflow-y: auto;
     padding: 1.25rem;
+    background: var(--z-bg);
     -webkit-overflow-scrolling: touch;
 }
 
@@ -549,12 +1042,7 @@
     animation: portalFadeIn 0.25s ease;
 }
 
-@keyframes portalFadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ── Timeline historial ── */
+/* Historial Timeline */
 .portal-timeline {
     border-left: 2px solid var(--z-border);
     margin-left: 8px;
@@ -580,124 +1068,144 @@
 }
 
 .portal-timeline-date {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--z-primary);
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.25rem;
 }
 
 .portal-timeline-card {
-    background: var(--z-bg);
+    background: var(--z-surface);
     border: 1px solid var(--z-border);
-    border-radius: var(--z-radius-sm);
+    border-radius: var(--z-radius);
     padding: 1rem;
+    box-shadow: var(--z-shadow);
+}
+
+.portal-timeline-card.accordion-card {
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.portal-timeline-card.accordion-card.active {
+    border-color: var(--z-primary);
+    box-shadow: 0 6px 15px rgba(0, 82, 255, 0.08);
 }
 
 .portal-timeline-card h4 {
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: 0.9rem;
+    font-weight: 800;
     margin-bottom: 0.5rem;
     color: var(--z-text);
 }
 
 .portal-timeline-card p {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--z-text-muted);
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.25rem;
 }
 
-.portal-timeline-card p:last-child {
-    margin-bottom: 0;
-}
-
-/* ── List items (citas / vacunas) ── */
+/* List Items del Drawer (Vacunas, Citas, Desparasitaciones) */
 .portal-list-item {
     display: flex;
     gap: 0.85rem;
     padding: 1rem;
-    background: var(--z-bg);
+    background: var(--z-surface);
     border: 1px solid var(--z-border);
-    border-radius: var(--z-radius-sm);
-    margin-bottom: 0.65rem;
+    border-radius: var(--z-radius);
+    margin-bottom: 0.75rem;
+    box-shadow: var(--z-shadow);
+    align-items: center;
 }
 
 .portal-list-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     flex-shrink: 0;
 }
 
-.portal-list-icon--cita {
-    background: var(--z-primary-soft);
-    color: var(--z-primary);
-}
+.portal-list-icon--cita { background-color: var(--z-primary-soft); color: var(--z-primary); }
+.portal-list-icon--vacuna { background-color: var(--z-success-soft); color: var(--z-success); }
+.portal-list-icon--desparasitacion { background-color: var(--z-warning-soft); color: var(--z-warning); }
 
-.portal-list-icon--vacuna {
-    background: var(--z-success-soft);
-    color: #047857;
+.portal-list-body {
+    flex: 1;
 }
 
 .portal-list-body strong {
     display: block;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     color: var(--z-text);
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.15rem;
 }
 
 .portal-list-body p {
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     color: var(--z-text-muted);
-    margin: 0;
 }
 
 .portal-list-body .portal-badge {
     display: inline-block;
     margin-top: 0.35rem;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    padding: 0.2rem 0.5rem;
+    padding: 0.15rem 0.45rem;
     border-radius: 6px;
     text-transform: capitalize;
 }
 
-.portal-badge--confirmada { background: var(--z-success-soft); color: #047857; }
-.portal-badge--pendiente { background: var(--z-warning-soft); color: #B45309; }
-.portal-badge--completada { background: #E0E7FF; color: #3730A3; }
-.portal-badge--cancelada { background: #FEE2E2; color: #B91C1C; }
+.portal-badge--confirmada { background: var(--z-success-soft); color: var(--z-success); }
+.portal-badge--pendiente { background: var(--z-warning-soft); color: var(--z-warning); }
+.portal-badge--completada { background: var(--z-primary-soft); color: var(--z-primary); }
+.portal-badge--cancelada { background: var(--z-danger-soft); color: var(--z-danger); }
 
-.portal-empty-inline {
-    text-align: center;
-    padding: 2rem 1rem;
-    color: var(--z-text-muted);
-    font-size: 0.9rem;
+/* Ajustes Responsive Generales */
+@media (max-width: 480px) {
+    body.portal-body {
+        background: var(--z-bg);
+    }
+    .portal-main {
+        box-shadow: none;
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
 }
 
-.portal-empty-inline i {
-    display: block;
-    font-size: 2rem;
+/* ── Estados Vacíos (Empty States) ── */
+.portal-empty-inline,
+.notification-card-empty,
+.appointment-banner-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    background: var(--z-surface);
+    border: 1.5px dashed rgba(85, 96, 255, 0.25);
+    border-radius: var(--z-radius);
+    color: var(--z-text-muted);
+    margin: 1rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.portal-empty-inline i,
+.notification-card-empty i,
+.appointment-banner-empty i {
+    font-size: 2.5rem;
+    color: rgba(85, 96, 255, 0.5);
     margin-bottom: 0.75rem;
-    opacity: 0.35;
 }
 
-.portal-loading {
-    text-align: center;
-    padding: 2rem;
-    color: var(--z-text-muted);
+.portal-empty-inline p,
+.notification-card-empty p,
+.appointment-banner-empty p {
     font-size: 0.9rem;
-}
-
-/* ── Responsive ── */
-@media (max-width: 600px) {
-    .portal-main { padding: 1.25rem 1rem 2.5rem; }
-    .portal-hero { padding: 1.25rem 1rem; }
-    .portal-hero-stats { width: 100%; }
-    .portal-stat { flex: 1; }
-    .portal-user-name { display: none; }
-    .portal-drawer { max-width: 100%; }
-    .portal-pet-grid { grid-template-columns: 1fr; }
+    line-height: 1.4;
+    margin: 0;
+    font-weight: 500;
 }

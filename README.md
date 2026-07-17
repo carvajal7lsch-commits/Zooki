@@ -6,7 +6,7 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.1.0 (Actual)
+### Versión 1.1.0
 Esta versión introduce una renovación completa del canal de comunicación por correo electrónico, mejoras críticas de estabilidad en entornos locales de desarrollo y optimizaciones en la seguridad de autenticación.
 
 *   **Rediseño de Correos estilo Slack:** Todas las notificaciones por correo (restablecimiento de contraseña, bienvenida con credenciales y recordatorios de citas/vacunas) se actualizaron a una maquetación moderna de estilo Slack.
@@ -16,6 +16,34 @@ Esta versión introduce una renovación completa del canal de comunicación por 
 *   **Corrección de Dobles Bordes y Padding:** Solución al error visual de herencia de inputs que producía un doble borde y recortaba la primera letra en las pantallas y modales de autenticación.
 *   **Conexión Tolerante a Fallos:** Optimización del tiempo de respuesta DNS en Windows para bases de datos locales y fallback inteligente de credenciales (Docker/XAMPP).
 
+## Versión 1.2.0 (Actual)
+
+### UI/UX Frontend
+- Rediseño completo del Portal de Propietario con apariencia inspirada en aplicaciones móviles.
+- Implementación de barra de navegación inferior (Bottom Navigation Bar).
+- Incorporación de carrusel de mascotas para una experiencia más dinámica.
+- Actualización de la paleta de colores con un diseño más limpio y moderno.
+
+### Módulo de Citas
+- Agregadas las rutas AJAX faltantes en `index.php`:
+  - `portal_get_vets_ajax`
+  - `portal_get_tipos_cita_ajax`
+  - `portal_agendar_cita_ajax`
+- Los propietarios ahora pueden agendar citas directamente desde el portal.
+
+### Seguridad y Gestión de Perfil
+- Eliminado el modal de cambio de contraseña.
+- Implementado un menú desplegable en la sección **Mi Cuenta** para gestionar opciones del perfil.
+- Añadida validación de seguridad en tiempo real mediante una barra de fortaleza de contraseña.
+- Actualizado el modelo `Usuario.php` para obtener y mostrar correctamente:
+  - Correo electrónico del propietario.
+  - Número de teléfono del propietario.
+
+### Corrección de Errores (Bug Fixes)
+- Corregido un Error 500 en el sistema de notificaciones:
+  - Ajuste de las claves de sesión `usuario_doc` y `usuario_id_rol`.
+  - Corrección de la ruta absoluta hacia la base de datos en `NotificacionInterna.php`.
+- Mejorada la visualización de estados vacíos (sin citas, sin vacunas, etc.) mediante componentes tipo tarjeta, eliminando la presentación en texto plano.
 ---
 
 ## Guía de la Primera Versión Estable (v1.0.0)

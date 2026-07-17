@@ -14,7 +14,7 @@ class Usuario
     public function getUserByDocumento($documento)
     {
         $query =
-            "SELECT u.documento, u.tipo_documento, u.nombre_completo, u.password, u.estado, u.id_rol, r.nombre_rol as rol, u.debe_cambiar_password
+            "SELECT u.documento, u.tipo_documento, u.nombre_completo, u.password, u.estado, u.id_rol, r.nombre_rol as rol, u.debe_cambiar_password, u.email, u.telefono
                   FROM " .
             $this->table_name .
             " u

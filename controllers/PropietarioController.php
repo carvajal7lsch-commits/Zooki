@@ -5,6 +5,7 @@ require_once '../models/Cita.php';
 require_once '../models/Vacuna.php';
 require_once '../models/Consulta.php';
 require_once '../models/Usuario.php';
+require_once '../models/Desparasitacion.php';
 
 class PropietarioController {
     private $db;
@@ -12,6 +13,8 @@ class PropietarioController {
     private $citaModel;
     private $vacunaModel;
     private $consultaModel;
+    private $desparasitacionModel;
+    private $usuarioModel;
 
     public function __construct() {
         $database = new Database();
@@ -20,6 +23,7 @@ class PropietarioController {
         $this->citaModel = new Cita($this->db);
         $this->vacunaModel = new Vacuna($this->db);
         $this->consultaModel = new Consulta($this->db);
+        $this->desparasitacionModel = new Desparasitacion($this->db);
         $this->usuarioModel = new Usuario($this->db);
     }
 
@@ -85,6 +89,9 @@ class PropietarioController {
 
         $nombre = $_SESSION['usuario_nombre'] ?? 'Propietario';
         $primer_nombre = explode(' ', trim($nombre))[0];
+        
+        // Obtener más detalles del usuario (correo, teléfono)
+        $usuarioData = $this->usuarioModel->getUserByDocumento($doc_propietario);
 
         $view = '../views/portal/index.php';
         require_once '../views/portal/layout.php';
@@ -113,6 +120,13 @@ class PropietarioController {
         $historial = $this->consultaModel->findByMascota($id_mascota);
         $citas = $this->citaModel->getByMascota($id_mascota);
         $vacunas = $this->vacunaModel->findByMascota($id_mascota);
+        $desparasitaciones = $this->desparasitacionModel->findByMascota($id_mascota);
+
+        // Adjuntar archivos a cada consulta en el historial
+        foreach ($historial as &$h) {
+            $h['archivos'] = $this->consultaModel->getArchivosByConsulta($h['id_consulta']);
+        }
+        unset($h);
 
         $mascota['especie'] = $mascota['nombre_especie'] ?? '';
         $mascota['raza'] = $mascota['nombre_raza'] ?? '';
@@ -122,7 +136,8 @@ class PropietarioController {
             'mascota' => $mascota,
             'historial' => $historial,
             'citas' => $citas,
-            'vacunas' => $vacunas
+            'vacunas' => $vacunas,
+            'desparasitaciones' => $desparasitaciones
         ]);
         exit();
     }

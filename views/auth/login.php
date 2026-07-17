@@ -77,9 +77,9 @@ if (file_exists($envFile)) {
                                 <?php require_once __DIR__ . '/../../helpers/Csrf.php'; Csrf::field('login'); ?>
                                 
                                 <div class="input-group">
-                                    <label for="documento">E-mail / Documento</label>
+                                    <label for="documento">Documento de Identidad</label>
                                     <div class="input-wrapper">
-                                        <input type="text" id="documento" name="documento" placeholder="Entre con su e-mail / documento" required autocomplete="username" pattern="[0-9]+" maxlength="15">
+                                        <input type="text" id="documento" name="documento" placeholder="Ingrese su número de documento" required autocomplete="username" pattern="[0-9]+" maxlength="15">
                                     </div>
                                 </div>
                                 <div class="input-group">
