@@ -35,8 +35,8 @@ class Vacuna {
     public function getPendientesSemana() {
         $query = "SELECT v.*, m.nombre as nombre_mascota, u.nombre_completo as propietario 
                   FROM " . $this->table_name . " v
-                  JOIN Mascotas m ON v.id_mascota = m.id_mascota
-                  JOIN Usuarios u ON m.doc_propietario = u.documento
+                  JOIN mascotas m ON v.id_mascota = m.id_mascota
+                  JOIN usuarios u ON m.doc_propietario = u.documento
                   WHERE v.fecha_proxima_dosis BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
                   ORDER BY v.fecha_proxima_dosis ASC";
         $stmt = $this->conn->prepare($query);
@@ -53,7 +53,7 @@ class Vacuna {
                     COUNT(*) as total,
                     GROUP_CONCAT(DISTINCT m.nombre SEPARATOR ', ') as mascotas
                   FROM " . $this->table_name . " v
-                  JOIN Mascotas m ON v.id_mascota = m.id_mascota
+                  JOIN mascotas m ON v.id_mascota = m.id_mascota
                   JOIN especies e ON m.id_especie = e.id_especie
                   WHERE v.fecha_proxima_dosis BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
                   GROUP BY DATE(v.fecha_proxima_dosis), e.id_especie, e.nombre_especie

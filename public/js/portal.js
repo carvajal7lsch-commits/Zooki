@@ -299,19 +299,25 @@ async function submitChangePasswordPortal() {
 }
 
 function openDrawer() {
-    document.getElementById('portalDrawerOverlay').classList.add('is-open');
-    document.getElementById('portalDrawer').classList.add('is-open');
-    document.getElementById('portalDrawerOverlay').setAttribute('aria-hidden', 'false');
-    document.getElementById('portalDrawer').setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
+    // Desactivar todas las pantallas del portal
+    document.querySelectorAll('.app-screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+    // Activar la pantalla de detalle de mascota
+    const detailScreen = document.getElementById('screen-pet-detail');
+    if (detailScreen) {
+        detailScreen.classList.add('active');
+    }
+    // Desactivar los botones del nav inferior para indicar subnivel
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function cerrarDrawer() {
-    document.getElementById('portalDrawerOverlay').classList.remove('is-open');
-    document.getElementById('portalDrawer').classList.remove('is-open');
-    document.getElementById('portalDrawerOverlay').setAttribute('aria-hidden', 'true');
-    document.getElementById('portalDrawer').setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+    // Regresar a la pantalla de Inicio
+    switchTab('home');
 }
 
 function showTab(tabId, btn) {
@@ -419,6 +425,7 @@ async function verDetalle(id) {
         }
 
         const m = res.mascota;
+        window.activePetData = m;
         
         const photoUrl = m.url_foto ? 'uploads/mascotas/' + m.url_foto : null;
         let avatarHtml = '';
@@ -562,10 +569,233 @@ async function verDetalle(id) {
     }
 }
 
+/* --- Centralización de Modales con Principios SOLID (SRP) --- */
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.style.display = 'flex';
+    // Forzar reflow para que la transición CSS se ejecute correctamente
+    modal.offsetHeight; 
+    modal.classList.add('is-open');
+    const drawer = modal.querySelector('.portal-drawer');
+    if (drawer) drawer.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    const drawer = modal.querySelector('.portal-drawer');
+    if (drawer) drawer.classList.remove('is-open');
+    modal.classList.remove('is-open');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        if (!document.querySelector('.portal-drawer-overlay.is-open')) {
+            document.body.style.overflow = '';
+        }
+    }, 300);
+}
+
 /* Lógica de Agendamiento desde el Portal (HU-26) */
 document.addEventListener('DOMContentLoaded', () => {
     // Al iniciar, cargar el contador de notificaciones de la campana
     loadPortalAlerts();
+
+    // Inicializar Flatpickr personalizado (estilo Win11) para fecha de nacimiento de mascotas y agendamiento
+    if (typeof flatpickr !== 'undefined') {
+        try {
+            let currentLocale = "es";
+            if (flatpickr.l10ns && flatpickr.l10ns.es) {
+                currentLocale = flatpickr.l10ns.es;
+                if (currentLocale.weekdays) {
+                    currentLocale.weekdays.shorthand = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
+                }
+            }
+
+            // Función para renderizar el selector estilo Win11 en el calendario
+            const makeWin11Calendar = function(instance) {
+                const header = instance.monthNav.querySelector('.flatpickr-current-month');
+                if (header) {
+                    header.title = 'Seleccionar Mes/Año';
+                    header.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const nav = instance.calendarContainer.querySelector('.fp-win11-nav');
+                        if (nav) {
+                            nav.classList.toggle('active');
+                            const isNavActive = nav.classList.contains('active');
+                            instance.calendarContainer.querySelector('.flatpickr-prev-month').style.visibility = isNavActive ? 'hidden' : 'visible';
+                            instance.calendarContainer.querySelector('.flatpickr-next-month').style.visibility = isNavActive ? 'hidden' : 'visible';
+                            if (isNavActive) nav._renderMonthsView();
+                        }
+                    });
+                }
+
+                const nav = document.createElement('div');
+                nav.className = 'fp-win11-nav';
+                
+                const navHeader = document.createElement('div');
+                navHeader.className = 'win11-header';
+                const navTitle = document.createElement('button');
+                navTitle.className = 'win11-title';
+                navTitle.type = 'button';
+                navHeader.appendChild(navTitle);
+                nav.appendChild(navHeader);
+
+                const navContent = document.createElement('div');
+                navContent.className = 'win11-content';
+                
+                const monthsGrid = document.createElement('div');
+                monthsGrid.className = 'win11-grid';
+                
+                const yearsGrid = document.createElement('div');
+                yearsGrid.className = 'win11-grid win11-years';
+                yearsGrid.style.display = 'none';
+
+                navContent.appendChild(monthsGrid);
+                navContent.appendChild(yearsGrid);
+                nav.appendChild(navContent);
+                
+                instance.calendarContainer.appendChild(nav);
+
+                let currentView = 'months'; 
+                let viewYear = instance.currentYear;
+                const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+                function renderMonthsView() {
+                    currentView = 'months';
+                    monthsGrid.style.display = 'grid';
+                    yearsGrid.style.display = 'none';
+                    navTitle.innerText = viewYear;
+                    
+                    monthsGrid.innerHTML = '';
+                    const today = new Date();
+                    const currentY = today.getFullYear();
+                    const currentM = today.getMonth();
+                    
+                    monthNames.forEach((m, i) => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'win11-btn';
+                        
+                        if (instance.currentYear === viewYear && instance.currentMonth === i) btn.classList.add('active');
+                        
+                        // Validar límites del minDate y maxDate configurados
+                        const minD = instance.config.minDate;
+                        const maxD = instance.config.maxDate;
+                        
+                        let isAllowed = true;
+                        if (maxD && (viewYear > maxD.getFullYear() || (viewYear === maxD.getFullYear() && i > maxD.getMonth()))) {
+                            isAllowed = false;
+                        }
+                        if (minD && (viewYear < minD.getFullYear() || (viewYear === minD.getFullYear() && i < minD.getMonth()))) {
+                            isAllowed = false;
+                        }
+
+                        if (!isAllowed) {
+                            btn.classList.add('disabled');
+                            btn.disabled = true;
+                        }
+                        
+                        btn.innerText = m;
+                        
+                        if (!btn.disabled) {
+                            btn.onclick = (e) => {
+                                e.stopPropagation();
+                                instance.changeYear(viewYear);
+                                instance.changeMonth(i);
+                                nav.classList.remove('active');
+                                instance.calendarContainer.querySelector('.flatpickr-prev-month').style.visibility = 'visible';
+                                instance.calendarContainer.querySelector('.flatpickr-next-month').style.visibility = 'visible';
+                            };
+                        }
+                        monthsGrid.appendChild(btn);
+                    });
+                }
+
+                function renderYearsView() {
+                    currentView = 'years';
+                    monthsGrid.style.display = 'none';
+                    yearsGrid.style.display = 'grid';
+                    
+                    yearsGrid.innerHTML = '';
+                    const today = new Date();
+                    const currentY = today.getFullYear();
+                    
+                    const minD = instance.config.minDate;
+                    const maxD = instance.config.maxDate;
+                    
+                    const startY = minD ? minD.getFullYear() : currentY - 100;
+                    const endY = maxD ? maxD.getFullYear() : currentY + 10;
+                    
+                    for (let y = endY; y >= startY; y--) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'win11-btn';
+                        if (y === viewYear) btn.classList.add('active');
+                        btn.innerText = y;
+                        btn.onclick = (e) => {
+                            e.stopPropagation();
+                            viewYear = y;
+                            renderMonthsView();
+                        };
+                        yearsGrid.appendChild(btn);
+                    }
+                    
+                    setTimeout(() => {
+                        const activeBtn = yearsGrid.querySelector('.active');
+                        if (activeBtn) activeBtn.scrollIntoView({ block: 'center' });
+                    }, 10);
+                }
+
+                nav._renderMonthsView = renderMonthsView;
+                navTitle.onclick = (e) => {
+                    e.stopPropagation();
+                    if (currentView === 'months') {
+                        renderYearsView();
+                    } else {
+                        renderMonthsView();
+                    }
+                };
+            };
+
+            // 1. Inicializar para campos de fecha de nacimiento (históricos)
+            flatpickr("input[name='fecha_nacimiento'].flatpickr-date", {
+                locale: currentLocale,
+                dateFormat: "Y-m-d",
+                maxDate: "today",
+                disableMobile: true,
+                altInput: true,
+                altFormat: "Y-m-d",
+                monthSelectorType: "static",
+                onReady: function(selectedDates, dateStr, instance) {
+                    makeWin11Calendar(instance);
+                }
+            });
+
+            // 2. Inicializar para campo de agendamiento de citas (futuro)
+            flatpickr("#booking_fecha", {
+                locale: currentLocale,
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                disableMobile: true,
+                altInput: true,
+                altFormat: "Y-m-d",
+                monthSelectorType: "static",
+                onChange: function(selectedDates, dateStr, instance) {
+                    // Disparar carga de horas disponibles al cambiar fecha
+                    if (typeof cargarHoras === "function") {
+                        cargarHoras();
+                    }
+                },
+                onReady: function(selectedDates, dateStr, instance) {
+                    makeWin11Calendar(instance);
+                }
+            });
+
+        } catch (e) {
+            console.error("Error inicializando Flatpickr:", e);
+        }
+    }
 
     const bookingModal = document.getElementById('portalBookingModal');
     const openBtns = document.querySelectorAll('#btnOpenBookingModal');
@@ -580,7 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para abrir
     const abrirBooking = async () => {
-        bookingModal.style.display = 'flex';
+        openModal('portalBookingModal');
         form.reset();
         horaSelect.innerHTML = '<option value="">Elige fecha...</option>';
 
@@ -609,17 +839,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Registrar clicks en todos los botones de abrir (incluyendo el central flotante)
     openBtns.forEach(btn => btn.addEventListener('click', abrirBooking));
 
-    closeBtn.addEventListener('click', () => {
-        bookingModal.style.display = 'none';
-    });
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            closeModal('portalBookingModal');
+        });
+    }
 
     bookingModal.addEventListener('click', (e) => {
         if (e.target === bookingModal) {
-            bookingModal.style.display = 'none';
+            closeModal('portalBookingModal');
         }
     });
 
-    // Cargar horas disponibles al elegir veterinario o fecha
+    // Cargar horas disponibles al elegir veterinario o fecha (Intersección con sugerencias libres de veterinario)
     const cargarHoras = async () => {
         const vet = vetSelect.value;
         const fecha = dateInput.value;
@@ -632,14 +864,29 @@ document.addEventListener('DOMContentLoaded', () => {
         horaSelect.innerHTML = '<option value="">Cargando horas...</option>';
 
         try {
-            const url = `index.php?action=get_horas_disponibles_ajax&doc_veterinario=${vet}&fecha=${fecha}&duracion_minutos=${duracion}`;
-            const res = await (await fetch(url)).json();
+            // Petición 1: Horas laborables de la clínica
+            const resClinica = await fetch(`index.php?action=get_horas_disponibles_ajax&fecha=${fecha}&intervalo=${duracion}`);
+            const dataClinica = await resClinica.json();
 
-            if (res.success && res.horas && res.horas.length > 0) {
-                horaSelect.innerHTML = '<option value="">Selecciona hora...</option>';
-                res.horas.forEach(h => {
-                    horaSelect.innerHTML += `<option value="${h}">${h}</option>`;
-                });
+            // Petición 2: Horarios libres del veterinario (sugerencias sin colisiones)
+            const resVet = await fetch(`index.php?action=get_sugerencias_horario_ajax&doc_veterinario=${vet}&fecha=${fecha}&duracion_minutos=${duracion}`);
+            const dataVet = await resVet.json();
+
+            if (dataClinica.success && dataVet.success) {
+                const horasLaborales = dataClinica.horas || [];
+                const sugerenciasVet = dataVet.sugerencias || [];
+
+                // Intersectar ambas listas
+                const horasDisponibles = horasLaborales.filter(h => sugerenciasVet.includes(h));
+
+                if (horasDisponibles.length > 0) {
+                    horaSelect.innerHTML = '<option value="">Selecciona hora...</option>';
+                    horasDisponibles.forEach(h => {
+                        horaSelect.innerHTML += `<option value="${h}">${h}</option>`;
+                    });
+                } else {
+                    horaSelect.innerHTML = '<option value="">Sin horarios disponibles</option>';
+                }
             } else {
                 horaSelect.innerHTML = '<option value="">Sin horarios disponibles</option>';
             }
@@ -672,6 +919,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })).json();
 
             if (res.success) {
+                closeModal('portalBookingModal');
                 if (res.id_cita) {
                     const mailFd = new FormData();
                     mailFd.append('id_cita', res.id_cita);
@@ -767,3 +1015,253 @@ async function cancelarCitaPortal(idCita) {
         }
     }
 }
+
+/* --- Gestión de Mascotas desde el Portal (Registro y Edición) --- */
+document.addEventListener('DOMContentLoaded', () => {
+    const addPetModal = document.getElementById('portalAddPetModal');
+    const editPetModal = document.getElementById('portalEditPetModal');
+    const openAddBtn = document.getElementById('btnOpenAddPetModal');
+    const closeAddBtn = document.getElementById('btnCloseAddPetModal');
+    const closeEditBtn = document.getElementById('btnCloseEditPetModal');
+    const editProfileBtn = document.getElementById('btnEditPetProfile');
+
+    const addForm = document.getElementById('portalAddPetForm');
+    const editForm = document.getElementById('portalEditPetForm');
+
+    const addEspecieSelect = document.getElementById('add_pet_especie');
+    const editEspecieSelect = document.getElementById('edit_pet_especie');
+    const addRazaSelect = document.getElementById('add_pet_raza');
+    const editRazaSelect = document.getElementById('edit_pet_raza');
+
+    let especiesCache = [];
+    let coloresCache = [];
+
+    // Cargar Catálogos Iniciales (Especies y Colores)
+    const cargarCatalogos = async () => {
+        try {
+            if (especiesCache.length === 0) {
+                especiesCache = await (await fetch('index.php?action=listar_especies_ajax')).json();
+            }
+            if (coloresCache.length === 0) {
+                coloresCache = await (await fetch('index.php?action=listar_colores_ajax')).json();
+            }
+
+            // Llenar selectores de especie
+            [addEspecieSelect, editEspecieSelect].forEach(sel => {
+                if (sel && sel.options.length <= 1) {
+                    sel.innerHTML = '<option value="">Selecciona...</option>';
+                    especiesCache.forEach(esp => {
+                        sel.innerHTML += `<option value="${esp.id_especie}">${escapeHtml(esp.nombre_especie)}</option>`;
+                    });
+                }
+            });
+
+            // Llenar contenedores de colores
+            ['add_colores_container', 'edit_colores_container'].forEach(cid => {
+                const container = document.getElementById(cid);
+                if (container && container.children.length === 0) {
+                    container.innerHTML = '';
+                    coloresCache.forEach(col => {
+                        container.innerHTML += `
+                        <label class="color-pill-checkbox" style="display:inline-flex; align-items:center; background:#f1f5f9; padding:0.35rem 0.65rem; border-radius:12px; font-size:0.75rem; color:#475569; cursor:pointer; font-weight:600; border:1px solid #e2e8f0; user-select:none; margin: 2px;">
+                            <input type="checkbox" name="colores[]" value="${col.id_color}" style="margin-right:0.35rem;">
+                            ${escapeHtml(col.nombre_color)}
+                        </label>`;
+                    });
+                }
+            });
+        } catch (e) {
+            console.error('Error al cargar catálogos:', e);
+        }
+    };
+
+    // Filtrar razas dinámicamente
+    const cargarRazas = async (idEspecie, targetSelect, selectedId = null) => {
+        if (!idEspecie) {
+            targetSelect.innerHTML = '<option value="">Seleccione especie...</option>';
+            return;
+        }
+        try {
+            const razas = await (await fetch(`index.php?action=listar_razas_ajax&id_especie=${idEspecie}`)).json();
+            targetSelect.innerHTML = '<option value="">Selecciona raza...</option>';
+            razas.forEach(r => {
+                const sel = (selectedId && selectedId == r.id_raza) ? 'selected' : '';
+                targetSelect.innerHTML += `<option value="${r.id_raza}" ${sel}>${escapeHtml(r.nombre_raza)}</option>`;
+            });
+            targetSelect.innerHTML += `<option value="Otra">Otra / No listada</option>`;
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    // Eventos Especie -> Razas
+    if (addEspecieSelect) {
+        addEspecieSelect.addEventListener('change', (e) => {
+            cargarRazas(e.target.value, addRazaSelect);
+            document.getElementById('add_nueva_raza_wrapper').style.display = 'none';
+        });
+    }
+    if (editEspecieSelect) {
+        editEspecieSelect.addEventListener('change', (e) => {
+            cargarRazas(e.target.value, editRazaSelect);
+            document.getElementById('edit_nueva_raza_wrapper').style.display = 'none';
+        });
+    }
+
+    // Eventos Raza -> Mostrar input nueva raza si elige 'Otra'
+    if (addRazaSelect) {
+        addRazaSelect.addEventListener('change', (e) => {
+            document.getElementById('add_nueva_raza_wrapper').style.display = e.target.value === 'Otra' ? 'block' : 'none';
+        });
+    }
+    if (editRazaSelect) {
+        editRazaSelect.addEventListener('change', (e) => {
+            document.getElementById('edit_nueva_raza_wrapper').style.display = e.target.value === 'Otra' ? 'block' : 'none';
+        });
+    }
+
+    // Abrir Modal Registrar
+    if (openAddBtn) {
+        openAddBtn.addEventListener('click', async () => {
+            openModal('portalAddPetModal');
+            addForm.reset();
+            document.getElementById('add_nueva_raza_wrapper').style.display = 'none';
+            await cargarCatalogos();
+        });
+    }
+
+    // Abrir Modal Editar
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', async () => {
+            const pet = window.activePetData;
+            if (!pet) return;
+
+            openModal('portalEditPetModal');
+            editForm.reset();
+            document.getElementById('edit_nueva_raza_wrapper').style.display = 'none';
+            
+            await cargarCatalogos();
+
+            // Rellenar datos
+            document.getElementById('edit_pet_id').value = pet.id_mascota;
+            document.getElementById('edit_pet_nombre').value = pet.nombre;
+            document.getElementById('edit_pet_sexo').value = pet.sexo;
+            document.getElementById('edit_pet_peso').value = pet.peso;
+            document.getElementById('edit_pet_nacimiento').value = pet.fecha_nacimiento || '';
+
+            // Seleccionar especie y cargar sus razas
+            editEspecieSelect.value = pet.id_especie;
+            await cargarRazas(pet.id_especie, editRazaSelect, pet.id_raza);
+
+            // Rellenar colores seleccionados
+            const petColoresIds = pet.colores_ids ? pet.colores_ids.split(',') : [];
+            const colorChecks = editForm.querySelectorAll('input[name="colores[]"]');
+            colorChecks.forEach(chk => {
+                chk.checked = petColoresIds.includes(chk.value);
+            });
+        });
+    }
+
+    // Cerrar Modales
+    if (closeAddBtn) closeAddBtn.addEventListener('click', () => closeModal('portalAddPetModal'));
+    if (closeEditBtn) closeEditBtn.addEventListener('click', () => closeModal('portalEditPetModal'));
+
+    if (addPetModal) {
+        addPetModal.addEventListener('click', (e) => {
+            if (e.target === addPetModal) closeModal('portalAddPetModal');
+        });
+    }
+    if (editPetModal) {
+        editPetModal.addEventListener('click', (e) => {
+            if (e.target === editPetModal) closeModal('portalEditPetModal');
+        });
+    }
+
+    // Procesar Registro de Mascota
+    if (addForm) {
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = addForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.querySelector('span').textContent = 'Registrando...';
+
+            try {
+                const fd = new FormData(addForm);
+                const res = await (await fetch('index.php?action=portal_registrar_mascota_ajax', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })).json();
+
+                if (res.success) {
+                    closeModal('portalAddPetModal');
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Mascota Registrada!',
+                        text: 'Tu nuevo compañero ha sido registrado exitosamente.',
+                        confirmButtonColor: '#5560FF'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: res.message || 'No se pudo completar el registro.',
+                        confirmButtonColor: '#5560FF'
+                    });
+                    submitBtn.disabled = false;
+                    submitBtn.querySelector('span').textContent = 'Registrar Mascota';
+                }
+            } catch (err) {
+                console.error(err);
+                submitBtn.disabled = false;
+                submitBtn.querySelector('span').textContent = 'Registrar Mascota';
+            }
+        });
+    }
+
+    // Procesar Edición de Mascota
+    if (editForm) {
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = editForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.querySelector('span').textContent = 'Guardando...';
+
+            try {
+                const fd = new FormData(editForm);
+                const res = await (await fetch('index.php?action=portal_actualizar_mascota_ajax', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })).json();
+
+                if (res.success) {
+                    closeModal('portalEditPetModal');
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Cambios Guardados!',
+                        text: 'La información de tu mascota ha sido actualizada.',
+                        confirmButtonColor: '#5560FF'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: res.message || 'No se pudo actualizar la mascota.',
+                        confirmButtonColor: '#5560FF'
+                    });
+                    submitBtn.disabled = false;
+                    submitBtn.querySelector('span').textContent = 'Guardar Cambios';
+                }
+            } catch (err) {
+                console.error(err);
+                submitBtn.disabled = false;
+                submitBtn.querySelector('span').textContent = 'Guardar Cambios';
+            }
+        });
+    }
+});

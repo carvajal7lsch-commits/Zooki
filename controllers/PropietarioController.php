@@ -141,5 +141,172 @@ class PropietarioController {
         ]);
         exit();
     }
+
+    public function registrarMascotaAjax() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['usuario_id_rol']) || $_SESSION['usuario_id_rol'] != 4) {
+            echo json_encode(['success' => false, 'message' => 'No autorizado']);
+            exit();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $nombre = trim($_POST['nombre']);
+            $especie = $_POST['especie'];
+            $peso = trim($_POST['peso']);
+            $doc_propietario = $_SESSION['usuario_doc'];
+
+            if (empty($nombre) || empty($especie) || empty($peso)) {
+                echo json_encode(['success' => false, 'message' => 'Faltan datos obligatorios']);
+                exit();
+            }
+
+            $foto_nombre = null;
+            if (isset($_FILES['foto']) && $_FILES['foto']['error'] != UPLOAD_ERR_NO_FILE) {
+                if ($_FILES['foto']['error'] != UPLOAD_ERR_OK) {
+                    echo json_encode(['success' => false, 'message' => 'Error al subir la foto de perfil.']);
+                    exit();
+                }
+
+                $allowed = ['jpg', 'jpeg', 'png'];
+                $ext = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
+                if (!in_array($ext, $allowed)) {
+                    echo json_encode(['success' => false, 'message' => 'Solo se permiten imágenes JPG o PNG.']);
+                    exit();
+                }
+
+                if ($_FILES['foto']['size'] > 5 * 1024 * 1024) {
+                    echo json_encode(['success' => false, 'message' => 'La foto no debe superar los 5MB.']);
+                    exit();
+                }
+
+                $foto_nombre = time() . '_' . str_replace(' ', '_', $nombre) . '.' . $ext;
+                $target_dir = '../public/uploads/mascotas/';
+                if (!is_dir($target_dir)) {
+                    mkdir($target_dir, 0777, true);
+                }
+                if (!move_uploaded_file($_FILES['foto']['tmp_name'], $target_dir . $foto_nombre)) {
+                    echo json_encode(['success' => false, 'message' => 'Error al guardar la foto de perfil en el servidor.']);
+                    exit();
+                }
+            }
+
+            $id_raza = $_POST['raza'];
+            if ($id_raza === 'Otra' && !empty($_POST['nueva_raza'])) {
+                $id_raza = $this->mascotaModel->insertRaza($especie, $_POST['nueva_raza']);
+            }
+
+            $data = [
+                'numero_historia_clinica' => '',
+                'doc_propietario' => $doc_propietario,
+                'nombre' => $nombre,
+                'id_especie' => $especie,
+                'id_raza' => $id_raza,
+                'fecha_nacimiento' => !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : null,
+                'peso' => $peso,
+                'sexo' => $_POST['sexo'],
+                'color' => '',
+                'url_foto' => $foto_nombre
+            ];
+
+            $newId = $this->mascotaModel->insert($data);
+            if ($newId) {
+                $colores = $_POST['colores'] ?? [];
+                $this->mascotaModel->saveColores($newId, $colores);
+                echo json_encode(['success' => true]);
+                exit();
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Error al guardar en base de datos.']);
+                exit();
+            }
+        }
+    }
+
+    public function actualizarMascotaAjax() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['usuario_id_rol']) || $_SESSION['usuario_id_rol'] != 4) {
+            echo json_encode(['success' => false, 'message' => 'No autorizado']);
+            exit();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $id = $_POST['id_mascota'];
+            $doc_propietario = $_SESSION['usuario_doc'];
+
+            $oldData = $this->mascotaModel->getById($id);
+            if (!$oldData || $oldData['doc_propietario'] !== $doc_propietario) {
+                echo json_encode(['success' => false, 'message' => 'Acceso denegado. Esta mascota no le pertenece.']);
+                exit();
+            }
+
+            $id_raza = $_POST['raza'];
+            if ($id_raza === 'Otra' && !empty($_POST['nueva_raza'])) {
+                $id_raza = $this->mascotaModel->insertRaza($_POST['especie'], $_POST['nueva_raza']);
+            }
+
+            $newData = [
+                'id_mascota' => $id,
+                'nombre' => trim($_POST['nombre']),
+                'id_especie' => $_POST['especie'],
+                'id_raza' => $id_raza,
+                'fecha_nacimiento' => !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : ($oldData['fecha_nacimiento'] ?? null),
+                'peso' => trim($_POST['peso']),
+                'sexo' => $_POST['sexo'],
+                'estado' => $oldData['estado'] ?? 1, // Mantener el estado actual
+                'url_foto' => $oldData['url_foto'] ?? null
+            ];
+
+            if (isset($_FILES['foto']) && $_FILES['foto']['error'] != UPLOAD_ERR_NO_FILE) {
+                if ($_FILES['foto']['error'] != UPLOAD_ERR_OK) {
+                    echo json_encode(['success' => false, 'message' => 'Error al subir la nueva foto de perfil.']);
+                    exit();
+                }
+
+                $allowed = ['jpg', 'jpeg', 'png'];
+                $ext = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
+                if (!in_array($ext, $allowed)) {
+                    echo json_encode(['success' => false, 'message' => 'Solo se permiten imágenes JPG o PNG.']);
+                    exit();
+                }
+
+                if ($_FILES['foto']['size'] > 5 * 1024 * 1024) {
+                    echo json_encode(['success' => false, 'message' => 'La foto no debe superar los 5MB.']);
+                    exit();
+                }
+
+                $foto_nombre = time() . '_' . str_replace(' ', '_', $newData['nombre']) . '.' . $ext;
+                $target_dir = '../public/uploads/mascotas/';
+                if (!is_dir($target_dir)) {
+                    mkdir($target_dir, 0777, true);
+                }
+                if (move_uploaded_file($_FILES['foto']['tmp_name'], $target_dir . $foto_nombre)) {
+                    $newData['url_foto'] = $foto_nombre;
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Error al guardar la nueva foto en el servidor.']);
+                    exit();
+                }
+            }
+
+            if ($this->mascotaModel->update($newData)) {
+                $colores = $_POST['colores'] ?? [];
+                $this->mascotaModel->saveColores($id, $colores);
+
+                // Auditoría de cambios
+                $campos = ['nombre', 'id_especie', 'id_raza', 'peso', 'sexo'];
+                foreach ($campos as $c) {
+                    if (isset($oldData[$c]) && isset($newData[$c]) && $oldData[$c] != $newData[$c]) {
+                        $this->mascotaModel->registrarAuditoria($id, $doc_propietario, $c, $oldData[$c], $newData[$c]);
+                    }
+                }
+
+                echo json_encode(['success' => true]);
+                exit();
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Error al actualizar la mascota.']);
+                exit();
+            }
+        }
+    }
 }
 ?>

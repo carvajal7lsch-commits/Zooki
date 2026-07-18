@@ -1209,3 +1209,274 @@ body.portal-body {
     margin: 0;
     font-weight: 500;
 }
+
+/* --- Calendario Personalizado Win11 para Flatpickr --- */
+.fp-win11-nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(5px);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    padding: 15px;
+    border-radius: 20px;
+    box-sizing: border-box;
+}
+.fp-win11-nav.active {
+    display: flex;
+}
+.win11-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.win11-title {
+    background: transparent;
+    border: none;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 4px 8px;
+    transition: background 0.2s;
+    text-transform: capitalize;
+}
+.win11-title:hover {
+    background: #f1f5f9;
+    color: #0052FF;
+}
+.win11-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+.win11-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    height: 100%;
+}
+.win11-years {
+    overflow-y: auto;
+    height: 100%;
+    max-height: 100%;
+    padding-right: 5px;
+}
+.win11-years::-webkit-scrollbar { width: 4px; }
+.win11-years::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.win11-btn {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.win11-btn:hover {
+    background: #e0e7ff;
+    color: #0052FF;
+    border-color: #0052FF;
+}
+.win11-btn.active {
+    background: #0052FF;
+    color: white;
+    border-color: #0052FF;
+    box-shadow: 0 4px 10px rgba(0, 82, 255, 0.3);
+}
+.win11-btn.disabled {
+    color: #cbd5e1;
+    cursor: not-allowed;
+    background: transparent;
+    border-color: transparent;
+}
+.win11-btn.disabled:hover {
+    background: transparent;
+    color: #cbd5e1;
+}
+
+/* Estilos para el input visible generado por Flatpickr (altInput) */
+.search-input-wrapper input.flatpickr-date,
+.search-input-wrapper input.flatpickr-input {
+    border: none !important;
+    background: transparent !important;
+    width: 100% !important;
+    outline: none !important;
+    font-family: inherit !important;
+    font-size: 0.85rem !important;
+    color: inherit !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* --- Estilos Adicionales de Flatpickr del Panel Administrativo --- */
+.flatpickr-calendar {
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 10px 15px -5px rgba(0, 0, 0, 0.05) !important;
+    border: none !important;
+    border-radius: 20px !important;
+    z-index: 99999 !important;
+    padding: 15px 10px !important;
+    background: #ffffff !important;
+    font-family: inherit !important;
+    width: 290px !important;
+}
+.flatpickr-months {
+    margin-bottom: 20px !important;
+    align-items: center !important;
+    position: relative !important;
+}
+.flatpickr-current-month {
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    padding: 5px 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    border-radius: 8px !important;
+    width: 55%;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin: 0 !important;
+}
+.flatpickr-current-month:hover {
+    background: #f1f5f9 !important;
+}
+.flatpickr-current-month * {
+    pointer-events: none !important;
+}
+.flatpickr-current-month .numInputWrapper {
+    width: 6ch !important;
+}
+.flatpickr-current-month input.cur-year {
+    font-weight: 800 !important;
+    font-size: 1.15rem !important;
+    border: none !important;
+}
+.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month {
+    background: #f8fafc !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    top: 10px !important;
+    height: 34px !important;
+    width: 34px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+}
+.flatpickr-months .flatpickr-prev-month {
+    left: 15px !important;
+}
+.flatpickr-months .flatpickr-next-month {
+    right: 15px !important;
+}
+.flatpickr-months .flatpickr-prev-month:hover, .flatpickr-months .flatpickr-next-month:hover {
+    background: #e2e8f0 !important;
+    transform: scale(1.05) !important;
+}
+.flatpickr-months .flatpickr-prev-month svg, .flatpickr-months .flatpickr-next-month svg {
+    width: 12px !important;
+    height: 12px !important;
+    fill: #334155 !important;
+}
+.flatpickr-innerContainer, .flatpickr-rContainer {
+    width: 100% !important;
+}
+.flatpickr-innerContainer {
+    border-top: 1px solid #f1f5f9 !important;
+    padding-top: 15px !important;
+}
+.flatpickr-weekdaycontainer {
+    margin-bottom: 15px !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    justify-items: center !important;
+}
+.flatpickr-weekday {
+    color: #64748b !important;
+    font-weight: 700 !important;
+    font-size: 0.7rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    width: 100% !important;
+    text-align: center !important;
+}
+.flatpickr-days {
+    width: 100% !important;
+}
+.dayContainer {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    justify-items: center !important;
+    gap: 4px 0 !important;
+}
+.flatpickr-day {
+    width: 34px !important;
+    max-width: 34px !important;
+    height: 34px !important;
+    line-height: 34px !important;
+    border-radius: 50% !important;
+    color: #334155 !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    border: none !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+}
+.flatpickr-day.selected {
+    background: #0052FF !important;
+    border-color: #0052FF !important;
+    color: white !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 82, 255, 0.3) !important;
+}
+.flatpickr-day:hover:not(.selected):not(.flatpickr-disabled) {
+    background: #e0e7ff !important;
+    color: #0052FF !important;
+}
+.flatpickr-day.today {
+    border: 2px solid #e2e8f0 !important;
+}
+.flatpickr-day.today:hover {
+    border-color: #0052FF !important;
+}
+.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+    background: transparent !important;
+    border: none !important;
+}
+.flatpickr-day.flatpickr-disabled:not(.nextMonthDay):not(.prevMonthDay) {
+    background: #f1f5f9 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+}
+.flatpickr-day.nextMonthDay:nth-child(29),
+.flatpickr-day.nextMonthDay:nth-child(29) ~ .flatpickr-day,
+.flatpickr-day.nextMonthDay:nth-child(36),
+.flatpickr-day.nextMonthDay:nth-child(36) ~ .flatpickr-day {
+    display: none !important;
+}

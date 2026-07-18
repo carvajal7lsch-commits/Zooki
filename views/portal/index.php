@@ -48,7 +48,12 @@ foreach ($mascotas as $m) {
     <!-- Carrusel horizontal de Mascotas (Patient History) -->
     <div class="section-title-row">
         <h2>Mis Compañeros</h2>
-        <span class="see-all"><?php echo $total_mascotas; ?> en total</span>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <button id="btnOpenAddPetModal" type="button" style="background: var(--z-primary-soft); color: var(--z-primary); border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.15rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05);" title="Registrar Nueva Mascota">
+                <i class="ri-add-line"></i>
+            </button>
+            <span class="see-all"><?php echo $total_mascotas; ?> en total</span>
+        </div>
     </div>
 
     <?php if (empty($mascotas)): ?>
@@ -322,40 +327,39 @@ foreach ($mascotas as $m) {
     </button>
 </nav>
 
-<!-- Panel lateral / Drawer de Detalles de Mascota -->
-<div id="portalDrawerOverlay" class="portal-drawer-overlay" onclick="cerrarDrawer()" aria-hidden="true"></div>
-<aside id="portalDrawer" class="portal-drawer" aria-hidden="true" aria-labelledby="drawerPetTitle">
-    <div class="portal-drawer-header">
-        <button type="button" class="portal-drawer-back" onclick="cerrarDrawer()" aria-label="Volver">
+<!-- Pantalla de Detalles de Mascota (screen-pet-detail) -->
+<div id="screen-pet-detail" class="app-screen" style="padding-bottom: 90px;">
+    <div class="portal-drawer-header" style="display: flex; align-items: center; gap: 0.65rem; padding: 1.25rem 0 1rem; border-bottom: 1px solid var(--z-border); flex-shrink: 0;">
+        <button type="button" class="portal-drawer-back" onclick="cerrarDrawer()" aria-label="Volver" style="width: 38px; height: 38px; border: none; background: var(--z-bg); border-radius: 50%; color: var(--z-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
             <i class="ri-arrow-left-line"></i>
         </button>
-        <div class="portal-drawer-title-wrap">
-            <h2 id="drawerPetTitle">—</h2>
-            <p id="drawerPetSubtitle"></p>
+        <div class="portal-drawer-title-wrap" style="flex: 1; min-width: 0;">
+            <h2 id="drawerPetTitle" style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">—</h2>
+            <p id="drawerPetSubtitle" style="margin: 0; font-size: 0.75rem; color: var(--z-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></p>
         </div>
-        <button type="button" class="portal-drawer-close" onclick="cerrarDrawer()" aria-label="Cerrar">
-            <i class="ri-close-line"></i>
+        <button type="button" id="btnEditPetProfile" style="background: var(--z-primary-soft); color: var(--z-primary); border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; margin-left: auto;" title="Editar Perfil de Mascota">
+            <i class="ri-edit-line"></i>
         </button>
     </div>
 
-    <div id="drawerPetSummary" class="portal-drawer-summary"></div>
+    <div id="drawerPetSummary" class="portal-drawer-summary" style="margin-top: 1rem;"></div>
 
-    <nav class="portal-drawer-tabs" role="tablist">
-        <button type="button" class="portal-tab active" data-tab="historial" role="tab" aria-selected="true">
-            <i class="ri-history-line"></i> Historial
+    <nav class="portal-drawer-tabs" role="tablist" style="margin-top: 1rem; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--z-bg-light); padding: 4px; border-radius: 14px; gap: 4px;">
+        <button type="button" class="portal-tab active" data-tab="historial" role="tab" aria-selected="true" style="padding: 0.65rem 0.25rem; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: none; background: transparent; color: var(--z-text-muted); border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+            <i class="ri-history-line" style="font-size: 1rem; margin-bottom: 2px;"></i> Historial
         </button>
-        <button type="button" class="portal-tab" data-tab="citas" role="tab" aria-selected="false">
-            <i class="ri-calendar-line"></i> Citas
+        <button type="button" class="portal-tab" data-tab="citas" role="tab" aria-selected="false" style="padding: 0.65rem 0.25rem; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: none; background: transparent; color: var(--z-text-muted); border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+            <i class="ri-calendar-line" style="font-size: 1rem; margin-bottom: 2px;"></i> Citas
         </button>
-        <button type="button" class="portal-tab" data-tab="vacunas" role="tab" aria-selected="false">
-            <i class="ri-syringe-line"></i> Vacunas
+        <button type="button" class="portal-tab" data-tab="vacunas" role="tab" aria-selected="false" style="padding: 0.65rem 0.25rem; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: none; background: transparent; color: var(--z-text-muted); border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+            <i class="ri-syringe-line" style="font-size: 1rem; margin-bottom: 2px;"></i> Vacunas
         </button>
-        <button type="button" class="portal-tab" data-tab="desparasitaciones" role="tab" aria-selected="false">
-            <i class="ri-capsule-line"></i> Desparasit.
+        <button type="button" class="portal-tab" data-tab="desparasitaciones" role="tab" aria-selected="false" style="padding: 0.65rem 0.25rem; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: none; background: transparent; color: var(--z-text-muted); border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+            <i class="ri-capsule-line" style="font-size: 1rem; margin-bottom: 2px;"></i> Desparasit.
         </button>
     </nav>
 
-    <div class="portal-drawer-body">
+    <div class="portal-drawer-body" style="margin-top: 1rem;">
         <div id="tab-historial" class="portal-tab-panel active" role="tabpanel">
             <div id="historialContent" class="portal-loading">Cargando historial…</div>
         </div>
@@ -369,78 +373,289 @@ foreach ($mascotas as $m) {
             <div id="desparasitacionesContent"></div>
         </div>
     </div>
-</aside>
+</div>
 
 <!-- Modal para Agendar Cita desde el Portal -->
-<div id="portalBookingModal" class="portal-drawer-overlay" style="display: none; align-items: center; justify-content: center; padding: 1.5rem;">
-    <div class="portal-drawer" style="position: relative; transform: none; height: auto; bottom: auto; left: auto; width: min(420px, 100%); border-radius: 24px; padding: 1.75rem; box-shadow: var(--z-shadow-lg);">
-        <button type="button" id="btnCloseBookingModal" style="position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="ri-close-line"></i></button>
-        <h3 style="margin-top: 0; color: #0f172a; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-weight: 800;"><i class="ri-calendar-event-line" style="color: var(--z-primary);"></i> Agendar Nueva Cita</h3>
-        <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.8rem;">Elige a tu compañero y el horario de tu preferencia.</p>
-        
-        <form id="portalBookingForm" style="display: flex; flex-direction: column; gap: 0.85rem;">
-            <div class="input-group">
-                <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Seleccionar Mascota</label>
-                <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
-                    <i class="ri-baidu-line" style="color: #64748b;"></i>
-                    <select name="id_mascota" id="booking_mascota" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
-                        <option value="">Selecciona...</option>
-                        <?php foreach ($mascotas as $m): ?>
-                            <option value="<?php echo (int)$m['id_mascota']; ?>"><?php echo htmlspecialchars($m['nombre']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+<div id="portalBookingModal" class="portal-drawer-overlay" style="display: none; z-index: 10000;">
+    <div class="portal-drawer">
+        <div class="portal-drawer-header" style="display: flex; align-items: center; gap: 0.65rem; padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid var(--z-border); flex-shrink: 0;">
+            <button type="button" id="btnCloseBookingModal" class="portal-drawer-back" aria-label="Volver" style="width: 38px; height: 38px; border: none; background: var(--z-bg); border-radius: 50%; color: var(--z-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i class="ri-arrow-left-line"></i>
+            </button>
+            <div class="portal-drawer-title-wrap" style="flex: 1; min-width: 0;">
+                <h2 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;"><i class="ri-calendar-event-line" style="color: var(--z-primary);"></i> Agendar Nueva Cita</h2>
+                <p style="margin: 0; font-size: 0.75rem; color: var(--z-text-muted);">Elige a tu compañero y el horario de tu preferencia.</p>
             </div>
-
-            <div class="input-group">
-                <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Tipo de Cita</label>
-                <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
-                    <i class="ri-briefcase-line" style="color: #64748b;"></i>
-                    <select name="id_tipo_cita" id="booking_tipo_cita" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
-                        <option value="">Cargando tipos de cita...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Seleccionar Veterinario</label>
-                <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
-                    <i class="ri-user-md-line" style="color: #64748b;"></i>
-                    <select name="doc_veterinario" id="booking_veterinario" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
-                        <option value="">Selecciona veterinario...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+        </div>
+        <div class="portal-drawer-body" style="padding-top: 1rem;">
+            <form id="portalBookingForm" style="display: flex; flex-direction: column; gap: 0.85rem;">
                 <div class="input-group">
-                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Fecha</label>
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Seleccionar Mascota</label>
                     <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
-                        <input type="date" name="fecha" id="booking_fecha" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Hora</label>
-                    <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
-                        <select name="hora" id="booking_hora" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
-                            <option value="">Elige fecha...</option>
+                        <i class="ri-baidu-line" style="color: #64748b;"></i>
+                        <select name="id_mascota" id="booking_mascota" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                            <option value="">Selecciona...</option>
+                            <?php foreach ($mascotas as $m): ?>
+                                <option value="<?php echo (int)$m['id_mascota']; ?>"><?php echo htmlspecialchars($m['nombre']); ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
-            </div>
 
-            <div class="input-group">
-                <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Motivo de la Cita</label>
-                <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
-                    <textarea name="motivo" id="booking_motivo" required placeholder="Escribe el motivo..." style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; resize: none; height: 50px; font-size: 0.85rem;"></textarea>
+                <div class="input-group">
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Tipo de Cita</label>
+                    <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                        <i class="ri-briefcase-line" style="color: #64748b;"></i>
+                        <select name="id_tipo_cita" id="booking_tipo_cita" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                            <option value="">Cargando tipos de cita...</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%); color: #ffffff; width: 100%; border: none; border-radius: 14px; padding: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem; box-shadow: 0 8px 20px rgba(0, 82, 255, 0.2); margin-top: 0.5rem;">
-                <span>Confirmar Cita</span>
-                <i class="ri-calendar-check-line"></i>
-            </button>
-        </form>
+                <div class="input-group">
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Seleccionar Veterinario</label>
+                    <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                        <i class="ri-user-md-line" style="color: #64748b;"></i>
+                        <select name="doc_veterinario" id="booking_veterinario" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                            <option value="">Selecciona veterinario...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Fecha</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25); display: flex; align-items: center;">
+                            <i class="ri-calendar-line" style="color: #64748b; margin-right: 0.35rem;"></i>
+                            <input type="text" class="flatpickr-date" name="fecha" id="booking_fecha" required placeholder="Seleccione fecha..." style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Hora</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <select name="hora" id="booking_hora" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                                <option value="">Elige fecha...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Motivo de la Cita</label>
+                    <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                        <textarea name="motivo" id="booking_motivo" required placeholder="Escribe el motivo..." style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; resize: none; height: 50px; font-size: 0.85rem;"></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%); color: #ffffff; width: 100%; border: none; border-radius: 14px; padding: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem; box-shadow: 0 8px 20px rgba(0, 82, 255, 0.2); margin-top: 0.5rem;">
+                    <span>Confirmar Cita</span>
+                    <i class="ri-calendar-check-line"></i>
+                </button>
+            </form>
+        </div>
     </div>
 </div>
+
+<!-- Modal para Registrar Nueva Mascota -->
+<div id="portalAddPetModal" class="portal-drawer-overlay" style="display: none; z-index: 10000;">
+    <div class="portal-drawer">
+        <div class="portal-drawer-header" style="display: flex; align-items: center; gap: 0.65rem; padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid var(--z-border); flex-shrink: 0;">
+            <button type="button" id="btnCloseAddPetModal" class="portal-drawer-back" aria-label="Volver" style="width: 38px; height: 38px; border: none; background: var(--z-bg); border-radius: 50%; color: var(--z-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i class="ri-arrow-left-line"></i>
+            </button>
+            <div class="portal-drawer-title-wrap" style="flex: 1; min-width: 0;">
+                <h2 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;"><i class="ri-baidu-line" style="color: var(--z-primary);"></i> Registrar Mascota</h2>
+                <p style="margin: 0; font-size: 0.75rem; color: var(--z-text-muted);">Agrega un nuevo compañero a tu cuenta.</p>
+            </div>
+        </div>
+        <div class="portal-drawer-body" style="padding-top: 1rem;">
+            <form id="portalAddPetForm" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Nombre de la Mascota *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <input type="text" name="nombre" required placeholder="Ej: Toby" style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Fecha de Nacimiento</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25); display: flex; align-items: center;">
+                            <i class="ri-calendar-line" style="color: #64748b; margin-right: 0.35rem;"></i>
+                            <input type="text" class="flatpickr-date" name="fecha_nacimiento" placeholder="Seleccione fecha..." style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Especie *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <select name="especie" id="add_pet_especie" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                                <option value="">Selecciona...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Raza *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <select name="raza" id="add_pet_raza" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                                <option value="">Escribe especie...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="add_nueva_raza_wrapper" class="input-group" style="display: none;">
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">¿Cuál Raza? *</label>
+                    <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                        <input type="text" name="nueva_raza" id="add_nueva_raza" placeholder="Nombre de la nueva raza" style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Sexo *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <select name="sexo" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                                <option value="Macho">Macho</option>
+                                <option value="Hembra">Hembra</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Peso (kg) *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <input type="number" step="0.01" name="peso" required placeholder="Ej: 8.5" style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Colores Base</label>
+                    <div id="add_colores_container" style="display: flex; flex-wrap: wrap; gap: 0.4rem; max-height: 120px; overflow-y: auto; padding: 0.25rem;">
+                        <!-- Se carga dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Foto de Perfil</label>
+                    <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                        <input type="file" name="foto" accept="image/*" style="font-size: 0.8rem; width: 100%;">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%); color: #ffffff; width: 100%; border: none; border-radius: 14px; padding: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem; box-shadow: 0 8px 20px rgba(0, 82, 255, 0.2); margin-top: 0.5rem;">
+                    <span>Registrar Mascota</span>
+                    <i class="ri-check-line"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Mascota Existente -->
+<div id="portalEditPetModal" class="portal-drawer-overlay" style="display: none; z-index: 10000;">
+    <div class="portal-drawer">
+        <div class="portal-drawer-header" style="display: flex; align-items: center; gap: 0.65rem; padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid var(--z-border); flex-shrink: 0;">
+            <button type="button" id="btnCloseEditPetModal" class="portal-drawer-back" aria-label="Volver" style="width: 38px; height: 38px; border: none; background: var(--z-bg); border-radius: 50%; color: var(--z-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i class="ri-arrow-left-line"></i>
+            </button>
+            <div class="portal-drawer-title-wrap" style="flex: 1; min-width: 0;">
+                <h2 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;"><i class="ri-edit-line" style="color: var(--z-primary);"></i> Editar Mascota</h2>
+                <p style="margin: 0; font-size: 0.75rem; color: var(--z-text-muted);">Personaliza y actualiza la información de tu mascota.</p>
+            </div>
+        </div>
+        <div class="portal-drawer-body" style="padding-top: 1rem;">
+            <form id="portalEditPetForm" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <input type="hidden" name="id_mascota" id="edit_pet_id">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Nombre de la Mascota *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <input type="text" name="nombre" id="edit_pet_nombre" required placeholder="Ej: Toby" style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Fecha de Nacimiento</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25); display: flex; align-items: center;">
+                            <i class="ri-calendar-line" style="color: #64748b; margin-right: 0.35rem;"></i>
+                            <input type="text" class="flatpickr-date" name="fecha_nacimiento" id="edit_pet_nacimiento" placeholder="Seleccione fecha..." style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Especie *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <select name="especie" id="edit_pet_especie" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                                <option value="">Selecciona...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Raza *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <select name="raza" id="edit_pet_raza" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                                <option value="">Escribe especie...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="edit_nueva_raza_wrapper" class="input-group" style="display: none;">
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">¿Cuál Raza? *</label>
+                    <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                        <input type="text" name="nueva_raza" id="edit_nueva_raza" placeholder="Nombre de la nueva raza" style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Sexo *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <select name="sexo" id="edit_pet_sexo" required style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                                <option value="Macho">Macho</option>
+                                <option value="Hembra">Hembra</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Peso (kg) *</label>
+                        <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                            <input type="number" step="0.01" name="peso" id="edit_pet_peso" required placeholder="Ej: 8.5" style="border: none; background: transparent; width: 100%; outline: none; font-family: inherit; font-size: 0.85rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Colores Base</label>
+                    <div id="edit_colores_container" style="display: flex; flex-wrap: wrap; gap: 0.4rem; max-height: 120px; overflow-y: auto; padding: 0.25rem;">
+                        <!-- Se carga dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label style="font-weight: 700; color: #0f172a; margin-bottom: 0.4rem; display: block; font-size: 0.8rem;">Nueva Foto (Opcional)</label>
+                    <div class="search-input-wrapper" style="padding: 0.65rem 0.85rem; border-color: rgba(85,96,255,0.25);">
+                        <input type="file" name="foto" accept="image/*" style="font-size: 0.8rem; width: 100%;">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%); color: #ffffff; width: 100%; border: none; border-radius: 14px; padding: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem; box-shadow: 0 8px 20px rgba(0, 82, 255, 0.2); margin-top: 0.5rem;">
+                    <span>Guardar Cambios</span>
+                    <i class="ri-check-line"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+

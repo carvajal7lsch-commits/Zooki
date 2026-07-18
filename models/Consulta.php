@@ -62,10 +62,10 @@ class Consulta {
                          p.nombre_completo as nombre_propietario,
                          u.nombre_completo as veterinario 
                   FROM " . $this->table_name . " c
-                  JOIN Mascotas m ON c.id_mascota = m.id_mascota
+                  JOIN mascotas m ON c.id_mascota = m.id_mascota
                   JOIN especies e ON m.id_especie = e.id_especie
-                  JOIN Usuarios p ON m.doc_propietario = p.documento
-                  JOIN Usuarios u ON c.doc_veterinario = u.documento
+                  JOIN usuarios p ON m.doc_propietario = p.documento
+                  JOIN usuarios u ON c.doc_veterinario = u.documento
                   ORDER BY c.fecha_hora DESC";
         
         $stmt = $this->conn->prepare($query);
@@ -78,7 +78,7 @@ class Consulta {
     public function findByMascota($id_mascota) {
         $query = "SELECT c.*, u.nombre_completo as veterinario 
                   FROM " . $this->table_name . " c
-                  JOIN Usuarios u ON c.doc_veterinario = u.documento
+                  JOIN usuarios u ON c.doc_veterinario = u.documento
                   WHERE c.id_mascota = :id 
                   ORDER BY c.fecha_hora DESC";
         

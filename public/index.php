@@ -373,6 +373,18 @@ switch ($action) {
         $controller->verDetalleMascotaAjax();
         break;
 
+    case "portal_registrar_mascota_ajax":
+        require_once "../controllers/PropietarioController.php";
+        $controller = new PropietarioController();
+        $controller->registrarMascotaAjax();
+        break;
+
+    case "portal_actualizar_mascota_ajax":
+        require_once "../controllers/PropietarioController.php";
+        $controller = new PropietarioController();
+        $controller->actualizarMascotaAjax();
+        break;
+
     case "portal_get_vets_ajax":
         require_once "../controllers/CitaController.php";
         $controller = new CitaController();
