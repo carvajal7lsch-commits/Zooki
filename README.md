@@ -2,56 +2,54 @@
 
 Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión integral de clínicas veterinarias. Facilita la administración de pacientes (mascotas), historias clínicas, citas, y ofrece autenticación nativa segura e inicio de sesión integrado mediante Google Identity Services.
 
----
-
 ## Historial de Versiones
 
-### Versión 1.3.0 (Actual)
+### Versión 1.4.0 (Actual)
+Esta versión se enfoca en resolver fallas visuales de adaptabilidad móvil (responsive), optimizaciones críticas en la entrega y renderizado de correos electrónicos, y la mejora de la experiencia de usuario en la gestión de contraseñas.
+
+*   **Incrustación de Imágenes CID (Emailing):** Las imágenes del logotipo y del ícono de Zooki ahora se adjuntan directamente en el cuerpo del correo como imágenes incrustadas usando CID (`cid:zooki_icon_blue`, `cid:zooki_logotipo`). Esto garantiza la carga inmediata y evita el bloqueo de imágenes externas en gestores de correo como Gmail y Outlook.
+*   **Correos de Bienvenida Automáticos:** Implementación del envío inmediato de un correo de bienvenida a los nuevos usuarios al registrarse, tanto por el flujo tradicional de correo como al completar el registro con Google.
+*   **Autenticación Inteligente en Perfil:** Se añadió la detección del método de inicio de sesión (`google` o `password`). Si un usuario ingresó con Google, se oculta el campo de "Contraseña Actual" en su perfil (ya que carece de ella), permitiéndole establecer una nueva contraseña de forma directa.
+*   **Seguridad y Corrección en Cambio de Clave:** Se añadió la validación de la contraseña actual en el backend para usuarios que ingresaron con credenciales normales. Además, se solucionó un error que impedía guardar los cambios de contraseña voluntaria desde el perfil.
+*   **Correcciones Visuales (UI/UX):**
+    *   **Bordes de Inputs en Google Modal:** Se agregaron bordes consistentes e iconos visibles en los campos del modal de completar registro de Google.
+    *   **Control de Desbordamiento:** Se implementó `word-break: break-all` y `min-width: 0` para evitar que correos electrónicos largos desborden la tarjeta de perfil del propietario o la tarjeta del modal de Google.
+
+### Versión 1.3.0
 *   **Gestión Autónoma de Mascotas por el Propietario:**
-    - Botón de agregar mascota (`+`) en el panel de inicio del portal del propietario.
-    - Botón de editar perfil de mascota en la barra del drawer de detalles.
-    - Integración de formularios móviles e intuitivos de registro y edición que admiten: foto de perfil (con limitación a 5MB, JPG/PNG), especie, raza (incluida creación dinámica con opción "Otra"), sexo, peso, fecha de nacimiento y selección múltiple de colores base (tipo tags/pills).
-    - Métodos y rutas seguras en el backend (`portal_registrar_mascota_ajax` y `portal_actualizar_mascota_ajax`) que aseguran que el dueño en sesión solo pueda crear o modificar mascotas de su pertenencia.
+    *   Botón de agregar mascota (+) en el panel de inicio del portal del propietario.
+    *   Botón de editar perfil de mascota en la barra del drawer de detalles.
+    *   Integración de formularios móviles e intuitivos de registro y edición que admiten: foto de perfil (con limitación a 5MB, JPG/PNG), especie, raza (incluida creación dinámica con opción "Otra"), sexo, peso, fecha de nacimiento y selección múltiple de colores base (tipo tags/pills).
+    *   Métodos y rutas seguras en el backend (`portal_registrar_mascota_ajax` y `portal_actualizar_mascota_ajax`) que aseguran que el dueño en sesión solo pueda crear o modificar mascotas de su pertenencia.
 *   **Agendamiento de Citas Inteligente:**
-    - Modificación de la carga de horas disponibles en el formulario de citas del propietario.
-    - Integración de los endpoints `get_horas_disponibles_ajax` y `get_sugerencias_horario_ajax` para intersectar las horas hábiles de la clínica con la disponibilidad del veterinario. De esta manera, el propietario solo ve y puede agendar horas libres reales, evitando el solapamiento.
-*   **Corrección de Bug en Carga de Datos de Mascotas (Entornos Unix/Linux):** Se solventó un error crítico de producción en el portal del propietario donde no se podían cargar los detalles de las mascotas. La causa raíz radicaba en la sensibilidad a mayúsculas/minúsculas de los nombres de tablas SQL en sistemas Linux (ej. referencias de `Mascotas` y `Usuarios` que debían ser estrictamente `mascotas` y `usuarios` en minúsculas).
+    *   Modificación de la carga de horas disponibles en el formulario de citas del propietario.
+    *   Integración de los endpoints `get_horas_disponibles_ajax` y `get_sugerencias_horario_ajax` para intersectar las horas hábiles de la clínica con la disponibilidad del veterinario. De esta manera, el propietario solo ve y puede agendar horas libres reales, evitando el solapamiento.
+*   **Corrección de Bug en Carga de Datos de Mascotas (Entornos Unix/Linux):** Se solventó un error crítico de producción en el portal del propietario donde no se podían cargar los detalles de las mascotas. La causa raíz radicaba en la sensibilidad a mayúsculas/minúsculas de los nombres de tablas SQL en sistemas Linux (ej. referencias de Mascotas y Usuarios que debían ser estrictamente mascotas y usuarios en minúsculas).
 *   **Estandarización de Consultas SQL:** Se normalizaron y corrigieron las consultas en los siguientes modelos y controladores:
-    *   `models/Vacuna.php`
-    *   `models/Usuario.php`
-    *   `models/Consulta.php`
-    *   `controllers/VacunaController.php`
-    *   `controllers/ConsultaController.php`
-    *   `controllers/CitaController.php`
+    *   Vacuna.php
+    *   Usuario.php
+    *   Consulta.php
+    *   VacunaController.php
+    *   ConsultaController.php
+    *   CitaController.php
 
 ### Versión 1.2.0
-
-### UI/UX Frontend
-- Rediseño completo del Portal de Propietario con apariencia inspirada en aplicaciones móviles.
-- Implementación de barra de navegación inferior (Bottom Navigation Bar).
-- Incorporación de carrusel de mascotas para una experiencia más dinámica.
-- Actualización de la paleta de colores con un diseño más limpio y moderno.
-
-### Módulo de Citas
-- Agregadas las rutas AJAX faltantes en `index.php`:
-  - `portal_get_vets_ajax`
-  - `portal_get_tipos_cita_ajax`
-  - `portal_agendar_cita_ajax`
-- Los propietarios ahora pueden agendar citas directamente desde el portal.
-
-### Seguridad y Gestión de Perfil
-- Eliminado el modal de cambio de contraseña.
-- Implementado un menú desplegable en la sección **Mi Cuenta** para gestionar opciones del perfil.
-- Añadida validación de seguridad en tiempo real mediante una barra de fortaleza de contraseña.
-- Actualizado el modelo `Usuario.php` para obtener y mostrar correctamente:
-  - Correo electrónico del propietario.
-  - Número de teléfono del propietario.
-
-### Corrección de Errores (Bug Fixes)
-- Corregido un Error 500 en el sistema de notificaciones:
-  - Ajuste de las claves de sesión `usuario_doc` y `usuario_id_rol`.
-  - Corrección de la ruta absoluta hacia la base de datos en `NotificacionInterna.php`.
-- Mejorada la visualización de estados vacíos (sin citas, sin vacunas, etc.) mediante componentes tipo tarjeta, eliminando la presentación en texto plano.
+*   **UI/UX Frontend:**
+    *   Rediseño completo del Portal de Propietario con apariencia inspirada en aplicaciones móviles.
+    *   Implementación de barra de navegación inferior (Bottom Navigation Bar).
+    *   Incorporación de carrusel de mascotas para una experiencia más dinámica.
+    *   Actualización de la paleta de colores con un diseño más limpio y moderno.
+*   **Módulo de Citas:**
+    *   Agregadas las rutas AJAX faltantes en `index.php`: `portal_get_vets_ajax`, `portal_get_tipos_cita_ajax`, `portal_agendar_cita_ajax`.
+    *   Los propietarios ahora pueden agendar citas directamente desde el portal.
+*   **Seguridad y Gestión de Perfil:**
+    *   Eliminado el modal de cambio de contraseña.
+    *   Implementado un menú desplegable en la sección **Mi Cuenta** para gestionar opciones del perfil.
+    *   Añadida validación de seguridad en tiempo real mediante una barra de fortaleza de contraseña.
+    *   Actualizado el modelo `Usuario.php` para obtener y mostrar correctamente: Correo electrónico del propietario y número de teléfono del propietario.
+*   **Corrección de Errores (Bug Fixes):**
+    *   Corregido un Error 500 en el sistema de notificaciones: Ajuste de las claves de sesión `usuario_doc` y `usuario_id_rol` y corrección de la ruta absoluta hacia la base de datos en `NotificacionInterna.php`.
+    *   Mejorada la visualización de estados vacíos (sin citas, sin vacunas, etc.) mediante componentes tipo tarjeta, eliminando la presentación en texto plano.
 
 ### Versión 1.1.0
 Esta versión introduce una renovación completa del canal de comunicación por correo electrónico, mejoras críticas de estabilidad en entornos locales de desarrollo y optimizaciones en la seguridad de autenticación.
@@ -62,6 +60,7 @@ Esta versión introduce una renovación completa del canal de comunicación por 
 *   **Seguridad de Contraseñas (Reset & Registro):** Incorporación del medidor de seguridad, bloqueo de submit inseguro y botón de ojo de visibilidad para contraseñas.
 *   **Corrección de Dobles Bordes y Padding:** Solución al error visual de herencia de inputs que producía un doble borde y recortaba la primera letra en las pantallas y modales de autenticación.
 *   **Conexión Tolerante a Fallos:** Optimización del tiempo de respuesta DNS en Windows para bases de datos locales y fallback inteligente de credenciales (Docker/XAMPP).
+
 ---
 
 ## Guía de la Primera Versión Estable (v1.0.0)

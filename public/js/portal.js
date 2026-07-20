@@ -235,7 +235,8 @@ function validarFuerzaPasswordPortal() {
 }
 
 async function submitChangePasswordPortal() {
-    const current = document.getElementById('portal_current_password').value;
+    const currentEl = document.getElementById('portal_current_password');
+    const current = currentEl ? currentEl.value : '';
     const pwd = document.getElementById('portal_new_password').value;
     const confirmPwd = document.getElementById('portal_confirm_password').value;
 

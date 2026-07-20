@@ -39,6 +39,20 @@ class EmailService {
         $this->mail->Port = $smtpPort;
         $this->mail->CharSet = 'UTF-8';
         $this->mail->setFrom($smtpFrom, 'Zooki - Sistema Veterinario');
+
+        // Incrustar imágenes locales usando CID (Content-ID) para que carguen de inmediato
+        $iconPath = dirname(__DIR__) . '/public/img/icon_blue.png';
+        $logoPath = dirname(__DIR__) . '/public/img/logotipo.png';
+        try {
+            if (file_exists($iconPath)) {
+                $this->mail->addEmbeddedImage($iconPath, 'zooki_icon_blue');
+            }
+            if (file_exists($logoPath)) {
+                $this->mail->addEmbeddedImage($logoPath, 'zooki_logotipo');
+            }
+        } catch (Exception $e) {
+            error_log("Error al incrustar imágenes en EmailService: " . $e->getMessage());
+        }
     }
     
     public function enviarCredencialesUsuario($email, $nombre, $documento, $password) {
@@ -53,6 +67,38 @@ class EmailService {
             return true;
         } catch (Exception $e) {
             error_log("Error al enviar correo: " . $this->mail->ErrorInfo);
+            return false;
+        }
+    }
+
+    public function enviarCorreoBienvenida($email, $nombre) {
+        try {
+            $this->mail->addAddress($email, $nombre);
+            $this->mail->Subject = '¡Bienvenido a Zooki!';
+            
+            $envFile = __DIR__ . '/../.env';
+            $appUrl = 'https://zooki.secarvajal.com/index.php';
+            if (file_exists($envFile)) {
+                $env = parse_ini_file($envFile);
+                if (isset($env['APP_URL'])) {
+                    $appUrl = rtrim($env['APP_URL'], '/') . '/index.php';
+                }
+            }
+
+            $contenido = '
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              Nos alegra muchísimo que te hayas unido a Zooki. A partir de ahora podrás agendar citas, ver el historial de tus mascotas, vacunas, desparasitaciones y mucho más desde la comodidad de tu celular.
+            </p>
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              Tu compañero peludo está en las mejores manos. Si tienes alguna duda, escríbenos directamente.
+            </p>';
+
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, '¡Te damos la bienvenida a Zooki!', $contenido, 'Ir a mi Portal', $appUrl);
+            $this->mail->isHTML(true);
+            $this->mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log("Error al enviar correo de bienvenida: " . $this->mail->ErrorInfo);
             return false;
         }
     }
@@ -152,10 +198,10 @@ class EmailService {
                             <table border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
                               <tr>
                                 <td style="vertical-align:middle;padding-right:0px">
-                                  <img alt="Zooki Icon" height="36" src="https://zooki.secarvajal.com/img/icon_blue.png" style="display:block;outline:none;border:none;text-decoration:none;height:auto" width="36" />
+                                  <img alt="Zooki Icon" height="36" src="cid:zooki_icon_blue" style="display:block;outline:none;border:none;text-decoration:none;height:auto" width="36" />
                                 </td>
                                 <td style="vertical-align:middle">
-                                  <img alt="Zooki logotipo" src="https://zooki.secarvajal.com/img/logotipo.png" style="display:block;outline:none;border:none;text-decoration:none;margin:-15px 0 -15px -10px;height:auto" width="110" />
+                                  <img alt="Zooki logotipo" src="cid:zooki_logotipo" style="display:block;outline:none;border:none;text-decoration:none;margin:-15px 0 -15px -10px;height:auto" width="110" />
                                 </td>
                               </tr>
                             </table>

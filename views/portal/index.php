@@ -264,12 +264,14 @@ foreach ($mascotas as $m) {
         
         <div id="passwordChangeSection" class="password-change-collapse" style="display: none; padding: 1rem; background: var(--z-bg-light); border-radius: 12px; margin-top: -0.5rem; margin-bottom: 1rem;">
             <form id="portalChangePasswordForm" onsubmit="event.preventDefault(); submitChangePasswordPortal();">
+                <?php if (($_SESSION['login_method'] ?? 'password') !== 'google'): ?>
                 <div class="input-group" style="margin-bottom: 0.8rem;">
                     <label style="font-weight: 600; font-size: 0.8rem; color: var(--z-text-main);">Contraseña Actual</label>
                     <div class="search-input-wrapper" style="padding: 0.5rem 0.8rem; border-color: rgba(85,96,255,0.25);">
                         <input type="password" name="current_password" id="portal_current_password" required style="border:none; background:transparent; width:100%; outline:none; color: var(--z-text-main);" placeholder="Tu contraseña actual">
                     </div>
                 </div>
+                <?php endif; ?>
                 <div class="input-group" style="margin-bottom: 0.8rem;">
                     <label style="font-weight: 600; font-size: 0.8rem; color: var(--z-text-main);">Nueva Contraseña</label>
                     <div class="search-input-wrapper" style="padding: 0.5rem 0.8rem; border-color: rgba(85,96,255,0.25);">

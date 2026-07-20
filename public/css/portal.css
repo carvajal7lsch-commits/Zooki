@@ -696,6 +696,7 @@ body.portal-body {
     justify-content: space-between;
     padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--z-border);
+    gap: 1rem;
 }
 
 .profile-detail-row:last-child {
@@ -708,12 +709,16 @@ body.portal-body {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--z-text-muted);
+    flex-shrink: 0;
 }
 
 .profile-detail-value {
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--z-text);
+    word-break: break-all;
+    text-align: right;
+    min-width: 0;
 }
 
 .profile-actions-list {

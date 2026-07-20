@@ -60,6 +60,7 @@ class AuthController {
                     $_SESSION['usuario_rol'] = $user['rol'];
                     $_SESSION['usuario_id_rol'] = $user['id_rol'];
                     $_SESSION['debe_cambiar_password'] = isset($user['debe_cambiar_password']) ? $user['debe_cambiar_password'] : 0;
+                    $_SESSION['login_method'] = 'password';
 
                     // Verificar si debe cambiar contraseña
                     if (isset($user['debe_cambiar_password']) && $user['debe_cambiar_password'] == 1) {
@@ -284,12 +285,27 @@ class AuthController {
     public function cambiarPasswordAjax() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             try {
-                $nuevaPassword = $_POST['nueva_password'] ?? '';
+                $nuevaPassword = $_POST['nueva_password'] ?? $_POST['password_nueva'] ?? '';
                 $documento = $_SESSION['usuario_doc'] ?? '';
+                $loginMethod = $_SESSION['login_method'] ?? 'password';
 
                 if (empty($nuevaPassword) || strlen($nuevaPassword) < 6) {
                     echo json_encode(['success' => false, 'message' => 'La contraseña debe tener al menos 6 caracteres']);
                     exit;
+                }
+
+                // Si no se inició sesión con Google, validar la contraseña actual
+                if ($loginMethod !== 'google') {
+                    $passwordActual = $_POST['password_actual'] ?? '';
+                    if (empty($passwordActual)) {
+                        echo json_encode(['success' => false, 'message' => 'La contraseña actual es requerida']);
+                        exit;
+                    }
+                    $user = $this->usuarioModel->getUserByDocumento($documento);
+                    if (!$user || !password_verify($passwordActual, $user['password'])) {
+                        echo json_encode(['success' => false, 'message' => 'La contraseña actual es incorrecta']);
+                        exit;
+                    }
                 }
 
                 $passwordHash = password_hash($nuevaPassword, PASSWORD_DEFAULT);
@@ -298,6 +314,9 @@ class AuthController {
                     // Actualizar debe_cambiar_password a 0
                     $this->usuarioModel->updateDebeCambiarPassword($documento, 0);
                     
+                    // Si el usuario configuró una contraseña por primera vez, cambiamos a 'password'
+                    $_SESSION['login_method'] = 'password';
+
                     echo json_encode(['success' => true, 'message' => 'Contraseña actualizada exitosamente']);
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Error al actualizar la contraseña']);
@@ -378,6 +397,10 @@ class AuthController {
             ];
 
             if ($this->usuarioModel->create($data)) {
+                // Enviar correo de bienvenida
+                $this->emailService->limpiarDirecciones();
+                $this->emailService->enviarCorreoBienvenida($email, $nombre_completo);
+
                 // Login automático del usuario registrado
                 $user = $this->usuarioModel->getUserByDocumento($documento);
                 $_SESSION['usuario_doc'] = $user['documento'];
@@ -385,6 +408,7 @@ class AuthController {
                 $_SESSION['usuario_rol'] = $user['rol'];
                 $_SESSION['usuario_id_rol'] = $user['id_rol'];
                 $_SESSION['debe_cambiar_password'] = 0;
+                $_SESSION['login_method'] = 'password';
 
                 // Auditoría: auto-registro
                 $this->auditoria->log(
@@ -508,14 +532,14 @@ class AuthController {
                                   <img
                                     alt="Zooki Icon"
                                     height="36"
-                                    src="https://zooki.secarvajal.com/img/icon_blue.png"
+                                    src="cid:zooki_icon_blue"
                                     style="display:block;outline:none;border:none;text-decoration:none;height:auto"
                                     width="36" />
                                 </td>
                                 <td style="vertical-align:middle">
                                   <img
                                     alt="Zooki logotipo"
-                                    src="https://zooki.secarvajal.com/img/logotipo.png"
+                                    src="cid:zooki_logotipo"
                                     style="display:block;outline:none;border:none;text-decoration:none;margin:-15px 0 -15px -10px;height:auto"
                                     width="110" />
                                 </td>
@@ -709,6 +733,7 @@ class AuthController {
                 $_SESSION['usuario_doc'] = $user['documento'];
                 $_SESSION['usuario_nombre'] = $user['nombre_completo'];
                 $_SESSION['usuario_id_rol'] = $user['id_rol'];
+                $_SESSION['login_method'] = 'google';
 
                 $this->auditoria->log($user['documento'], 'Login via Google', 'Usuario', $user['documento'], null);
 
@@ -773,6 +798,10 @@ class AuthController {
             ];
 
             if ($this->usuarioModel->create($data)) {
+                // Enviar correo de bienvenida
+                $this->emailService->limpiarDirecciones();
+                $this->emailService->enviarCorreoBienvenida($data['email'], $data['nombre_completo']);
+
                 // Eliminar sesión temporal de registro
                 unset($_SESSION['google_pending_register']);
 
@@ -780,6 +809,7 @@ class AuthController {
                 $_SESSION['usuario_doc'] = $documento;
                 $_SESSION['usuario_nombre'] = $data['nombre_completo'];
                 $_SESSION['usuario_id_rol'] = 4;
+                $_SESSION['login_method'] = 'google';
 
                 $this->auditoria->log($documento, 'Registro via Google', 'Usuario', $documento, null);
 
