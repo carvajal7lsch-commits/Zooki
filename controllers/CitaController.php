@@ -828,7 +828,7 @@ class CitaController {
                        m.nombre as mascota_nombre, u.nombre_completo as propietario_nombre,
                        v.nombre_completo as veterinario_nombre
                        FROM citas c
-                       JOIN Mascotas m ON c.id_mascota = m.id_mascota
+                       JOIN mascotas m ON c.id_mascota = m.id_mascota
                        JOIN usuarios u ON m.doc_propietario = u.documento
                        JOIN usuarios v ON c.doc_veterinario = v.documento
                        WHERE c.fecha BETWEEN :inicio AND :fin

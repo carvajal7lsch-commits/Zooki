@@ -173,7 +173,7 @@ class ConsultaController {
         
         try {
             // Mascotas
-            $stmt = $this->db->query("SELECT COUNT(*) FROM Mascotas WHERE estado = 1");
+            $stmt = $this->db->query("SELECT COUNT(*) FROM mascotas WHERE estado = 1");
             $pacientes = $stmt->fetchColumn();
 
             // Clientes (Propietarios)

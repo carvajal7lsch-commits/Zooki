@@ -76,7 +76,7 @@ class Usuario
                   FROM " .
             $this->table_name .
             " u
-                  LEFT JOIN Mascotas m ON u.documento = m.doc_propietario AND m.estado = 1
+                  LEFT JOIN mascotas m ON u.documento = m.doc_propietario AND m.estado = 1
                   WHERE u.id_rol = 4
                   GROUP BY u.documento
                   ORDER BY u.nombre_completo";

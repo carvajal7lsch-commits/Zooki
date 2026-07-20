@@ -43,7 +43,7 @@ class VacunaController {
     public function getVacunasPorEspecieAjax() {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id_mascota'])) {
             // Obtener la especie de la mascota
-            $query = "SELECT id_especie FROM Mascotas WHERE id_mascota = :id";
+            $query = "SELECT id_especie FROM mascotas WHERE id_mascota = :id";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id', $_GET['id_mascota']);
             $stmt->execute();
@@ -74,7 +74,7 @@ class VacunaController {
             }
 
             // Obtener la especie de la mascota
-            $query = "SELECT id_especie FROM Mascotas WHERE id_mascota = :id";
+            $query = "SELECT id_especie FROM mascotas WHERE id_mascota = :id";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id', $id_mascota);
             $stmt->execute();
