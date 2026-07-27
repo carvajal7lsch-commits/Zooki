@@ -4,7 +4,21 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.5.0 (Actual)
+### Versión 1.6.0 (Actual)
+Esta versión optimiza la experiencia de usuario del portal del propietario incorporando un Calendario de Salud interactivo con filtros, la visualización de la ficha clínica detallada de consultas, la exportación de registros de salud a PDF, y la edición autónoma de su información de contacto.
+
+*   **Edición Autónoma de Datos de Contacto:** Añadido un formulario colapsable en la vista de perfil que permite al propietario actualizar de manera segura su correo y teléfono a través de peticiones AJAX, con validaciones de formato y comprobación de correo en uso.
+*   **Ficha Clínica y Recetario en Detalle de Cita:** Al presionar una cita completada, se realiza una consulta AJAX para recuperar e ilustrar en un Bottom Sheet nativo premium los signos vitales, motivo de consulta, diagnóstico, plan de tratamiento y la receta de medicamentos. Si la cita fue completada sin detalles médicos, se muestra un estado explicativo y claro.
+*   **Filtro Rápido de Mascotas (Pet Chips):** Implementación de una barra horizontal de botones ("chips") con fotos miniatura de cada mascota para filtrar interactivamente las citas y el calendario de salud en un clic.
+*   **Calendario Mensual de Salud (Win11 Overlay):** Cuadrícula mensual interactiva basada en CSS Grid que señala los días con eventos mediante puntos de color. Sustitución de selectores nativos por un panel overlay interactivo para elegir mes y año con límite estático en 2020 y dinámico en el año en curso.
+*   **Leyenda e Interactividad en Calendario:** Incorporación de una leyenda descriptiva de colores (Azul para citas, Verde para vacunas, Amarillo para controles) y soporte para listar citas cliqueables dentro de la cronología al filtrar por fecha.
+*   **Timeline de Salud Dividida:** Segmentación lógica de los registros médicos entre próximas dosis programadas (con indicador de días restantes: *"Faltan X días"*, *"¡Hoy!"*, o *"Vencido hace X días"*) e historial clínico aplicado.
+*   **Exportar Ficha de Salud en PDF:** Botón optimizado para imprimir con estilos membretados dedicados (`@media print`) permitiendo al dueño descargar la cartilla de salud oficial de la mascota como PDF.
+*   **Corrección de Desfase de Mes en Flatpickr:** Corrección del error en la selección de meses de nacimiento/citas que desplazaba los meses seleccionados al omitir el parámetro de offset en la API interna de Flatpickr (`changeMonth(i, false)`).
+*   **Remoción de Servicio Obsoleto:** Eliminación del servicio no disponible "Grooming & Higiene" de la vista exploradora para alinear el catálogo con los servicios reales de la clínica.
+*   **Corrección en Edición de Mascota:** Solución al bug que impedía guardar cambios en la información de una mascota debido a la falta del campo `'color'` en el payload AJAX enviado al modelo.
+
+### Versión 1.5.0
 Esta versión incluye optimizaciones mayores en el flujo de agendamiento y notificaciones de citas, la incorporación de interfaces móviles personalizadas nativas, y correcciones de adaptabilidad en vistas de autenticación.
 
 *   **Modales Estilo TikTok (Action Sheets):** Implementación de una interfaz de Bottom Sheet/Drawer nativa y fluida (`showTikTokModal`) para móviles en el portal del propietario. Reemplaza los modales de SweetAlert y alertas de navegador en la confirmación de citas, advertencias de duplicidad y cancelación de citas.

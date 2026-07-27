@@ -1703,3 +1703,58 @@ body.portal-body {
     color: var(--z-primary);
     font-weight: 700;
 }
+
+/* --- ESTILOS DE CALENDARIO, FILTROS Y TIMELINE (V1.6.0) --- */
+.pet-chip {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pet-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(85, 96, 255, 0.1);
+}
+
+.pet-chip.active {
+    background: var(--z-primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(0, 82, 255, 0.25);
+}
+
+.pet-chip.active .pet-chip-photo {
+    border: 1.5px solid #ffffff;
+}
+
+.cal-day-cell {
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.cal-day-cell:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1 !important;
+}
+
+.btn-cal-prev, .btn-cal-next {
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-cal-prev:hover, .btn-cal-next:hover {
+    background-color: var(--z-primary-soft);
+    transform: scale(1.08);
+}
+
+.btn-export-pdf {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-export-pdf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(85, 96, 255, 0.35) !important;
+}
+
