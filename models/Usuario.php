@@ -258,5 +258,15 @@ class Usuario
         $stmt->bindParam(":doc", $documento);
         return $stmt->execute();
     }
+
+    public function updateContactInfo($documento, $email, $telefono)
+    {
+        $query = "UPDATE " . $this->table_name . " SET email = :email, telefono = :tel WHERE documento = :doc";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":email", $email);
+        $stmt->bindParam(":tel", $telefono);
+        $stmt->bindParam(":doc", $documento);
+        return $stmt->execute();
+    }
 }
 ?>

@@ -301,6 +301,7 @@ class PropietarioController {
                 'fecha_nacimiento' => !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : ($oldData['fecha_nacimiento'] ?? null),
                 'peso' => trim($_POST['peso']),
                 'sexo' => $_POST['sexo'],
+                'color' => $oldData['color'] ?? '',
                 'estado' => $oldData['estado'] ?? 1, // Mantener el estado actual
                 'url_foto' => $oldData['url_foto'] ?? null
             ];
@@ -356,5 +357,150 @@ class PropietarioController {
             }
         }
     }
+
+    public function getDetalleCitaClinicaAjax() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['usuario_id_rol']) || $_SESSION['usuario_id_rol'] != 4) {
+            echo json_encode(['success' => false, 'message' => 'No autorizado']);
+            exit();
+        }
+
+        $id_cita = $_GET['id_cita'] ?? null;
+        if (!$id_cita) {
+            echo json_encode(['success' => false, 'message' => 'ID de cita requerido']);
+            exit();
+        }
+
+        $cita = $this->citaModel->getById($id_cita);
+        if (!$cita) {
+            echo json_encode(['success' => false, 'message' => 'Cita no encontrada']);
+            exit();
+        }
+
+        $mascota = $this->mascotaModel->getById($cita['id_mascota']);
+        if (!$mascota || $mascota['doc_propietario'] !== $_SESSION['usuario_doc']) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+            exit();
+        }
+
+        $tipoInfo = null;
+        if (!empty($cita['id_tipo_cita'])) {
+            $tipoInfo = $this->citaModel->getTipoCitaById($cita['id_tipo_cita']);
+        }
+        $nombreTipo = $tipoInfo ? ($tipoInfo['nombre_tipo'] ?? $tipoInfo['nombre'] ?? 'Consulta') : 'Consulta';
+
+        $response = [
+            'success' => true,
+            'cita' => [
+                'id_cita' => $cita['id_cita'],
+                'fecha' => $cita['fecha'],
+                'hora' => $cita['hora'],
+                'estado' => $cita['estado'],
+                'nombre_mascota' => $mascota['nombre'],
+                'foto_mascota' => $mascota['url_foto'] ? 'uploads/mascotas/' . $mascota['url_foto'] : null,
+                'nombre_tipo' => $nombreTipo,
+                'veterinario' => $cita['veterinario_nombre'] ?? 'Veterinario'
+            ],
+            'consulta' => null,
+            'tratamientos' => []
+        ];
+
+        if ($cita['estado'] === 'completada') {
+            $consulta = $this->consultaModel->findByCita($id_cita);
+            if ($consulta) {
+                $response['consulta'] = [
+                    'motivo_consulta' => $consulta['motivo_consulta'],
+                    'anamnesis' => $consulta['anamnesis'],
+                    'peso' => $consulta['peso'],
+                    'temperatura' => $consulta['temperatura'],
+                    'frecuencia_cardiaca' => $consulta['frecuencia_cardiaca'],
+                    'diagnostico' => $consulta['diagnostico'],
+                    'plan_tratamiento' => $consulta['plan_tratamiento'],
+                    'fecha_hora' => $consulta['fecha_hora']
+                ];
+
+                require_once __DIR__ . '/../models/Tratamiento.php';
+                $tratamientoModel = new Tratamiento($this->db);
+                $response['tratamientos'] = $tratamientoModel->findByConsulta($consulta['id_consulta']);
+            }
+        }
+
+        echo json_encode($response);
+        exit();
+    }
+
+    public function imprimirHistorial() {
+        if (!isset($_SESSION['usuario_id_rol']) || $_SESSION['usuario_id_rol'] != 4) {
+            header("Location: index.php?action=login");
+            exit();
+        }
+
+        $id_mascota = $_GET['id_mascota'] ?? null;
+        if (!$id_mascota) {
+            echo "Mascota no especificada.";
+            exit();
+        }
+
+        $mascota = $this->mascotaModel->getById($id_mascota);
+        if (!$mascota || $mascota['doc_propietario'] !== $_SESSION['usuario_doc']) {
+            echo "Acceso denegado o mascota no encontrada.";
+            exit();
+        }
+
+        $vacunas = $this->vacunaModel->findByMascota($id_mascota) ?: [];
+        $desparasitaciones = $this->desparasitacionModel->findByMascota($id_mascota) ?: [];
+        $consultas = $this->consultaModel->findByMascota($id_mascota) ?: [];
+
+        require_once __DIR__ . '/../views/portal/imprimir_historial.php';
+    }
+
+    public function actualizarDatosContactoAjax() {
+        header('Content-Type: application/json');
+
+        if (!isset($_SESSION['usuario_id_rol']) || $_SESSION['usuario_id_rol'] != 4) {
+            echo json_encode(['success' => false, 'message' => 'No autorizado']);
+            exit();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+            exit();
+        }
+
+        $email = trim($_POST['email'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
+        $documento = $_SESSION['usuario_doc'];
+
+        if (empty($email) || empty($telefono)) {
+            echo json_encode(['success' => false, 'message' => 'El correo y el teléfono son requeridos.']);
+            exit();
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['success' => false, 'message' => 'El correo electrónico no es válido.']);
+            exit();
+        }
+
+        $existente = $this->usuarioModel->getUserByEmailExcluding($email, $documento);
+        if ($existente) {
+            echo json_encode(['success' => false, 'message' => 'El correo electrónico ya está registrado por otro usuario.']);
+            exit();
+        }
+
+        if ($this->usuarioModel->updateContactInfo($documento, $email, $telefono)) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Datos de contacto actualizados correctamente.',
+                'email' => $email,
+                'telefono' => $telefono
+            ]);
+            exit();
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error al guardar los datos de contacto.']);
+            exit();
+        }
+    }
 }
 ?>
+

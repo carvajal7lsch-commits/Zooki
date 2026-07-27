@@ -193,16 +193,6 @@ foreach ($mascotas as $m) {
             </div>
             <button class="btn-service-action" onclick="document.getElementById('btnOpenBookingModal').click()">Agendar</button>
         </div>
-        <div class="service-row-item" data-name="grooming baño peluqueria higiene corte">
-            <div class="service-row-meta">
-                <div class="service-row-icon" style="background-color: var(--z-purple-light); color: var(--z-purple);"><i class="ri-scissors-cut-line"></i></div>
-                <div class="service-row-details">
-                    <h4>Grooming & Higiene</h4>
-                    <p>Baño y corte especializado</p>
-                </div>
-            </div>
-            <button class="btn-service-action" onclick="document.getElementById('btnOpenBookingModal').click()">Agendar</button>
-        </div>
     </div>
 
     <!-- Carrusel de Veterinarios -->
@@ -218,6 +208,25 @@ foreach ($mascotas as $m) {
 <div id="screen-agenda" class="app-screen">
     <div class="section-title-row">
         <h2>Mi Agenda de Salud</h2>
+    </div>
+
+    <!-- Selector rápido de mascotas (Pet Chips) -->
+    <div class="pet-filter-chips-wrapper" style="margin-bottom: 1.25rem; overflow-x: auto; white-space: nowrap; padding: 4px 4px 8px; -webkit-overflow-scrolling: touch; display: flex; gap: 0.65rem;">
+        <button type="button" class="pet-chip active" data-pet-id="all" style="border: none; background: #e2e8f0; color: #475569; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;">
+            <span>Todas</span>
+        </button>
+        <?php foreach ($mascotas as $m): ?>
+            <button type="button" class="pet-chip" data-pet-id="<?php echo (int)$m['id_mascota']; ?>" style="border: none; background: #f1f5f9; color: #64748b; padding: 0.45rem 1rem 0.45rem 0.45rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.45rem;">
+                <div class="pet-chip-photo" style="width: 24px; height: 24px; border-radius: 50%; overflow: hidden; background: #cbd5e1; display: flex; align-items: center; justify-content: center;">
+                    <?php if ($m['url_foto']): ?>
+                        <img src="uploads/mascotas/<?php echo htmlspecialchars($m['url_foto']); ?>" alt="<?php echo htmlspecialchars($m['nombre']); ?>" style="width:100%; height:100%; object-fit:cover;">
+                    <?php else: ?>
+                        <i class="fas fa-dog" style="font-size:0.75rem; color:#fff;"></i>
+                    <?php endif; ?>
+                </div>
+                <span><?php echo htmlspecialchars($m['nombre']); ?></span>
+            </button>
+        <?php endforeach; ?>
     </div>
     
     <div class="agenda-card">
@@ -239,9 +248,9 @@ foreach ($mascotas as $m) {
                     <p>No tienes citas agendadas.</p>
                 </div>
             <?php else: ?>
-                <div class="agenda-list scrollable-list">
+                <div class="agenda-list scrollable-list" id="citasListContainer">
                     <?php foreach ($todas_citas as $c): ?>
-                        <div class="agenda-list-item">
+                        <div class="agenda-list-item" data-pet-id="<?php echo (int)$c['id_mascota']; ?>" style="cursor: pointer;" onclick="if(!event.target.classList.contains('btn-cancel-agenda')) mostrarDetalleCita(<?php echo (int)$c['id_cita']; ?>)">
                             <div class="agenda-pet-photo">
                                 <?php if ($c['foto_mascota']): ?>
                                     <img src="<?php echo $c['foto_mascota']; ?>" alt="<?php echo htmlspecialchars($c['nombre_mascota']); ?>">
@@ -259,7 +268,7 @@ foreach ($mascotas as $m) {
                                     <span class="status-badge status-active">Activa</span>
                                     <button type="button" class="btn-cancel-agenda" data-id="<?php echo (int)$c['id_cita']; ?>">Cancelar</button>
                                 <?php else: ?>
-                                    <span class="status-badge status-inactive"><?php echo htmlspecialchars($c['estado']); ?></span>
+                                    <span class="status-badge status-inactive" style="<?php echo $c['estado'] === 'completada' ? 'background:var(--z-success-soft);color:var(--z-success);' : ''; ?>"><?php echo htmlspecialchars($c['estado']); ?></span>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -270,69 +279,127 @@ foreach ($mascotas as $m) {
 
         <!-- Contenedor 2: Calendario de Salud -->
         <div id="agenda-salud" class="agenda-tab-content">
-            <?php 
-            $cronologia_salud = [];
-            if (is_array($todas_vacunas)) {
-                foreach ($todas_vacunas as $v) {
-                    $cronologia_salud[] = [
-                        'tipo' => 'vacuna',
-                        'nombre_mascota' => $v['nombre_mascota'],
-                        'foto_mascota' => $v['foto_mascota'],
-                        'titulo' => $v['nombre_vacuna'],
-                        'detalle' => 'Dosis: ' . $v['dosis'],
-                        'fecha' => $v['fecha_aplicacion'],
-                        'proxima' => ($v['fecha_proxima'] !== '0000-00-00') ? $v['fecha_proxima'] : null
-                    ];
-                }
-            }
-            if (is_array($todas_desparasitaciones)) {
-                foreach ($todas_desparasitaciones as $d) {
-                    $cronologia_salud[] = [
-                        'tipo' => 'control',
-                        'nombre_mascota' => $d['nombre_mascota'],
-                        'foto_mascota' => $d['foto_mascota'],
-                        'titulo' => $d['producto'],
-                        'detalle' => 'Dosis: ' . $d['dosis'],
-                        'fecha' => $d['fecha_aplicacion'],
-                        'proxima' => ($d['fecha_proxima'] !== '0000-00-00') ? $d['fecha_proxima'] : null
-                    ];
-                }
-            }
-            usort($cronologia_salud, function($a, $b) {
-                return strtotime($b['fecha']) - strtotime($a['fecha']);
-            });
-            ?>
+            <!-- Cuadrícula Mensual del Calendario -->
+            <div class="mini-calendar-wrapper" style="margin-bottom: 1.25rem; border: 1px solid var(--z-border); padding: 1rem; border-radius: 16px; background: #fff; position: relative; overflow: hidden;">
+                <div class="mini-calendar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <button type="button" class="btn-cal-prev" id="btnPrevMonth" style="background: none; border: none; font-size: 1.1rem; color: var(--z-primary); cursor: pointer; padding: 4px;"><i class="ri-arrow-left-s-line"></i></button>
+                    <button type="button" id="calMonthTitle" style="border: none; background: transparent; font-size: 0.88rem; font-weight: 800; color: #0f172a; cursor: pointer; padding: 4px; font-family: inherit; border-radius: 8px; transition: background 0.2s;">—</button>
+                    <button type="button" class="btn-cal-next" id="btnNextMonth" style="background: none; border: none; font-size: 1.1rem; color: var(--z-primary); cursor: pointer; padding: 4px;"><i class="ri-arrow-right-s-line"></i></button>
+                </div>
+                <div class="mini-calendar-days" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.65rem; font-weight: 700; color: var(--z-text-muted); margin-bottom: 0.35rem;">
+                    <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+                </div>
+                <div id="miniCalendarGrid" class="mini-calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;">
+                    <!-- Se carga dinámicamente -->
+                </div>
 
-            <?php if (empty($cronologia_salud)): ?>
-                <div class="agenda-empty-state">
-                    <i class="ri-heart-pulse-line"></i>
-                    <p>No tienes registros de vacunas o controles.</p>
-                </div>
-            <?php else: ?>
-                <div class="agenda-list scrollable-list">
-                    <?php foreach ($cronologia_salud as $item): ?>
-                        <div class="agenda-list-item">
-                            <div class="agenda-icon-wrap <?php echo $item['tipo'] === 'vacuna' ? 'bg-vacuna' : 'bg-control'; ?>">
-                                <i class="<?php echo $item['tipo'] === 'vacuna' ? 'ri-syringe-line' : 'ri-capsule-line'; ?>"></i>
-                            </div>
-                            <div class="agenda-item-info">
-                                <h4><?php echo htmlspecialchars($item['nombre_mascota']); ?></h4>
-                                <p class="agenda-item-type"><?php echo htmlspecialchars($item['titulo']); ?> · <?php echo htmlspecialchars($item['detalle']); ?></p>
-                                <span class="agenda-item-date"><?php echo $item['tipo'] === 'vacuna' ? 'Vacuna aplicada' : 'Control realizado'; ?>: <?php echo date('d/m/Y', strtotime($item['fecha'])); ?></span>
-                            </div>
-                            <?php if ($item['proxima']): ?>
-                                <div class="agenda-item-next">
-                                    <span class="next-label">Próxima</span>
-                                    <span class="next-date"><?php echo date('d/m/Y', strtotime($item['proxima'])); ?></span>
-                                </div>
-                            <?php endif; ?>
+                <!-- Panel de selección de mes/año estilo Win11 (Overlay) -->
+                <div id="calWin11Nav" class="fp-win11-nav" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #ffffff; z-index: 10; padding: 1rem; flex-direction: column; border-radius: 16px;">
+                    <div class="win11-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-shrink: 0;">
+                        <button type="button" id="calWin11Title" class="win11-title" style="border: none; background: transparent; font-size: 0.88rem; font-weight: 800; color: #0f172a; cursor: pointer; font-family: inherit; padding: 4px; border-radius: 8px;">2026</button>
+                    </div>
+                    <div class="win11-content" style="flex: 1; overflow-y: auto;">
+                        <div id="calWin11MonthsGrid" class="win11-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                            <!-- Meses Ene-Dic -->
                         </div>
-                    <?php endforeach; ?>
+                        <div id="calWin11YearsGrid" class="win11-grid win11-years" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                            <!-- Años -->
+                        </div>
+                    </div>
                 </div>
-            <?php endif; ?>
+
+                <!-- Leyenda de colores del Calendario -->
+                <div class="mini-calendar-legend" style="display: flex; justify-content: center; gap: 0.85rem; margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px dashed var(--z-border); font-size: 0.68rem; font-weight: 700; color: var(--z-text-muted);">
+                    <span style="display: inline-flex; align-items: center; gap: 0.25rem;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--z-primary); display: inline-block;"></span> Citas</span>
+                    <span style="display: inline-flex; align-items: center; gap: 0.25rem;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--z-success); display: inline-block;"></span> Vacunas</span>
+                    <span style="display: inline-flex; align-items: center; gap: 0.25rem;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--z-warning); display: inline-block;"></span> Controles</span>
+                </div>
+                
+                <div id="calendarFilterAlert" style="display: none; background: var(--z-primary-soft); padding: 0.5rem 0.75rem; border-radius: 10px; font-size: 0.75rem; color: var(--z-primary); font-weight: 700; margin-top: 0.75rem; align-items: center; justify-content: space-between;">
+                    <span>Filtrado por fecha seleccionada</span>
+                    <button type="button" id="btnResetDateFilter" style="background: none; border: none; color: var(--z-primary); font-weight: 800; cursor: pointer; text-decoration: underline; padding: 0; font-family: inherit;">Ver todos</button>
+                </div>
+            </div>
+
+            <!-- Bloque 1: Próximas Dosis / Alertas Preventivas -->
+            <div id="agenda-salud-proximas" style="margin-bottom: 1.5rem;">
+                <h4 style="font-size: 0.75rem; font-weight: 800; color: var(--z-primary); text-transform: uppercase; margin: 0 0 0.65rem; letter-spacing: 0.5px;">Próximas Dosis / Recordatorios</h4>
+                <div class="agenda-list" id="saludProximasList">
+                    <!-- Se renderiza por JS -->
+                </div>
+            </div>
+
+            <!-- Bloque 2: Historial Clínico (Completados) -->
+            <div id="agenda-salud-historial">
+                <h4 style="font-size: 0.75rem; font-weight: 800; color: #475569; text-transform: uppercase; margin: 0 0 0.65rem; letter-spacing: 0.5px;">Historial Clínico (Aplicados)</h4>
+                <div class="agenda-list" id="saludHistorialList">
+                    <!-- Se renderiza por JS -->
+                </div>
+            </div>
+
+            <!-- Botón Exportar PDF -->
+            <a href="#" id="btnImprimirHistorial" class="btn-export-pdf" style="display: none; justify-content: center; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.85rem; border-radius: 14px; font-size: 0.82rem; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%); margin-top: 1.5rem; text-align: center; box-shadow: 0 4px 12px rgba(85, 96, 255, 0.2);">
+                <i class="ri-printer-line" style="font-size:1.1rem; vertical-align: middle;"></i> <span>Exportar Ficha de Salud en PDF</span>
+            </a>
         </div>
     </div>
 </div>
+
+<script>
+    window.portalAgendaEventos = <?php 
+        $eventos_js = [];
+        if (is_array($todas_citas)) {
+            foreach ($todas_citas as $c) {
+                $eventos_js[] = [
+                    'tipo' => 'cita',
+                    'id_cita' => $c['id_cita'],
+                    'id_mascota' => $c['id_mascota'],
+                    'nombre_mascota' => $c['nombre_mascota'],
+                    'foto_mascota' => $c['foto_mascota'],
+                    'titulo' => $c['nombre_tipo'] ?? 'Consulta',
+                    'detalle' => $c['nombre_completo'] ?? 'Veterinario',
+                    'fecha' => $c['fecha'],
+                    'hora' => substr($c['hora'], 0, 5),
+                    'estado' => $c['estado'],
+                    'proxima' => null
+                ];
+            }
+        }
+        if (is_array($todas_vacunas)) {
+            foreach ($todas_vacunas as $v) {
+                $eventos_js[] = [
+                    'tipo' => 'vacuna',
+                    'id_mascota' => $v['id_mascota'],
+                    'nombre_mascota' => $v['nombre_mascota'],
+                    'foto_mascota' => $v['foto_mascota'],
+                    'titulo' => $v['nombre_vacuna'],
+                    'detalle' => 'Dosis: ' . $v['dosis'],
+                    'fecha' => $v['fecha_aplicacion'],
+                    'hora' => null,
+                    'estado' => 'aplicada',
+                    'proxima' => ($v['fecha_proxima'] !== '0000-00-00') ? $v['fecha_proxima'] : null
+                ];
+            }
+        }
+        if (is_array($todas_desparasitaciones)) {
+            foreach ($todas_desparasitaciones as $d) {
+                $eventos_js[] = [
+                    'tipo' => 'control',
+                    'id_mascota' => $d['id_mascota'],
+                    'nombre_mascota' => $d['nombre_mascota'],
+                    'foto_mascota' => $d['foto_mascota'],
+                    'titulo' => $d['producto'],
+                    'detalle' => 'Dosis: ' . $d['dosis'],
+                    'fecha' => $d['fecha_aplicacion'],
+                    'hora' => null,
+                    'estado' => 'aplicado',
+                    'proxima' => ($d['fecha_proxima'] !== '0000-00-00') ? $d['fecha_proxima'] : null
+                ];
+            }
+        }
+        echo json_encode($eventos_js);
+    ?>;
+</script>
 
 <!-- ══ SCREEN: RECORDATORIOS (NOTIFICATIONS) ════════════════════════ -->
 <div id="screen-notifications" class="app-screen">
@@ -364,15 +431,46 @@ foreach ($mascotas as $m) {
         </div>
         <div class="profile-detail-row">
             <span class="profile-detail-label">Correo</span>
-            <span class="profile-detail-value"><?php echo htmlspecialchars($usuarioData['email'] ?? 'No registrado'); ?></span>
+            <span class="profile-detail-value" id="profileEmailVal"><?php echo htmlspecialchars($usuarioData['email'] ?? 'No registrado'); ?></span>
         </div>
         <div class="profile-detail-row">
             <span class="profile-detail-label">Teléfono</span>
-            <span class="profile-detail-value"><?php echo htmlspecialchars($usuarioData['telefono'] ?? 'No registrado'); ?></span>
+            <span class="profile-detail-value" id="profilePhoneVal"><?php echo htmlspecialchars($usuarioData['telefono'] ?? 'No registrado'); ?></span>
         </div>
         <div class="profile-detail-row">
             <span class="profile-detail-label">Rol</span>
             <span class="profile-detail-value">Cliente</span>
+        </div>
+    </div>
+
+    <!-- Editar Datos de Contacto -->
+    <div class="profile-actions-list" style="margin-bottom: 0.75rem;">
+        <button type="button" class="btn-profile-action" onclick="toggleContactEditPortal()">
+            <span><i class="ri-user-edit-line" style="margin-right: 0.5rem; vertical-align: middle;"></i> Editar Datos de Contacto</span>
+            <i class="ri-arrow-down-s-line" id="iconToggleContact"></i>
+        </button>
+        
+        <div id="contactEditSection" class="password-change-collapse" style="display: none; padding: 1rem; background: var(--z-bg-light); border-radius: 12px; margin-top: -0.5rem; margin-bottom: 1rem;">
+            <form id="portalContactEditForm" onsubmit="event.preventDefault(); submitContactEditPortal();">
+                <div class="input-group" style="margin-bottom: 0.8rem;">
+                    <label style="font-weight: 600; font-size: 0.8rem; color: var(--z-text-main); display:block; margin-bottom:0.4rem;">Correo Electrónico *</label>
+                    <div class="search-input-wrapper" style="padding: 0.5rem 0.8rem; border-color: rgba(85,96,255,0.25); display: flex; align-items: center; background: #fff; border-radius: 12px; border: 1px solid var(--z-border);">
+                        <i class="ri-mail-line" style="color: #64748b; margin-right: 0.5rem;"></i>
+                        <input type="email" name="email" id="portal_contact_email" required style="border:none; background:transparent; width:100%; outline:none; color: var(--z-text-main); font-family: inherit; font-size: 0.85rem;" placeholder="ejemplo@correo.com" value="<?php echo htmlspecialchars($usuarioData['email'] ?? ''); ?>">
+                    </div>
+                </div>
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600; font-size: 0.8rem; color: var(--z-text-main); display:block; margin-bottom:0.4rem;">Teléfono de Contacto *</label>
+                    <div class="search-input-wrapper" style="padding: 0.5rem 0.8rem; border-color: rgba(85,96,255,0.25); display: flex; align-items: center; background: #fff; border-radius: 12px; border: 1px solid var(--z-border);">
+                        <i class="ri-phone-line" style="color: #64748b; margin-right: 0.5rem;"></i>
+                        <input type="text" name="telefono" id="portal_contact_phone" required style="border:none; background:transparent; width:100%; outline:none; color: var(--z-text-main); font-family: inherit; font-size: 0.85rem;" placeholder="Tu número de teléfono" value="<?php echo htmlspecialchars($usuarioData['telefono'] ?? ''); ?>">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="btnSubmitContactEdit" style="background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%); color: #ffffff; width: 100%; border: none; border-radius: 12px; padding: 0.65rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem;">
+                    <span>Guardar Cambios</span>
+                    <i class="ri-check-line"></i>
+                </button>
+            </form>
         </div>
     </div>
 
@@ -439,10 +537,11 @@ foreach ($mascotas as $m) {
         <span class="center-fab-label">Agendar</span>
     </div>
 
-    <button type="button" class="mobile-nav-item" id="nav-notifications" onclick="switchTab('notifications')">
-        <i class="ri-notification-3-line"></i>
-        <span>Alertas</span>
+    <button type="button" class="mobile-nav-item" id="nav-agenda" onclick="switchTab('agenda')">
+        <i class="ri-calendar-todo-line"></i>
+        <span>Agenda</span>
     </button>
+
     <button type="button" class="mobile-nav-item" id="nav-account" onclick="switchTab('account')">
         <i class="ri-user-3-line"></i>
         <span>Perfil</span>
@@ -780,4 +879,99 @@ foreach ($mascotas as $m) {
         </div>
     </div>
 </div>
+
+<!-- Modal para Ver Detalles de Cita y Ficha Clínica -->
+<div id="portalCitaDetalleModal" class="portal-drawer-overlay" style="display: none; z-index: 10000;">
+    <div class="portal-drawer" style="max-width: 500px;">
+        <div class="portal-drawer-header" style="display: flex; align-items: center; gap: 0.65rem; padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid var(--z-border); flex-shrink: 0;">
+            <button type="button" id="btnCloseCitaDetalleModal" class="portal-drawer-back" aria-label="Volver" style="width: 38px; height: 38px; border: none; background: var(--z-bg); border-radius: 50%; color: var(--z-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i class="ri-arrow-left-line"></i>
+            </button>
+            <div class="portal-drawer-title-wrap" style="flex: 1; min-width: 0;">
+                <h2 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 800; display: flex; align-items: center; gap: 0.5rem;"><i class="ri-heart-pulse-fill" style="color: var(--z-primary);"></i> Detalle de la Cita</h2>
+                <p style="margin: 0; font-size: 0.75rem; color: var(--z-text-muted);">Información y resultado clínico de la consulta.</p>
+            </div>
+        </div>
+        <div class="portal-drawer-body" style="padding-top: 1rem; max-height: 75vh; overflow-y: auto;">
+            <!-- Información general de la cita -->
+            <div class="appointment-general-info" style="background: var(--z-bg-light); border-radius: 16px; padding: 1rem; border: 1px solid var(--z-border); display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--z-text-muted);" id="detCitaTipo">CONSULTA GENERAL</span>
+                    <span class="status-badge" id="detCitaEstado" style="font-size: 0.65rem;">Completada</span>
+                </div>
+                <div style="font-size: 0.9rem; color: #0f172a; font-weight: 800; margin-top: 0.25rem;">
+                    Mascota: <span id="detCitaMascota" style="font-weight: 500;">Toby</span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--z-text-muted);">
+                    Veterinario: <span id="detCitaVet" style="color: #0f172a; font-weight: 600;">Dr(a). Andrés Pérez</span>
+                </div>
+                <div style="font-size: 0.82rem; color: var(--z-primary); font-weight: 700; margin-top: 0.15rem; display: flex; align-items: center; gap: 0.35rem;">
+                    <i class="ri-calendar-line"></i> <span id="detCitaFechaHora">24/07/2026 · 10:30</span>
+                </div>
+            </div>
+
+            <!-- Ficha clínica (si está completada) -->
+            <div id="detCitaClinicaArea" style="display: none;">
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 1.5rem 0 0.75rem; border-bottom: 2px solid var(--z-border); padding-bottom: 0.35rem;">
+                    <i class="ri-folder-shield-2-line" style="color: var(--z-success); vertical-align: middle; margin-right: 0.35rem;"></i>Resultado Clínico
+                </h3>
+                
+                <!-- Signos vitales y peso -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.65rem; text-align: center;">
+                        <span style="display: block; font-size: 0.65rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Peso</span>
+                        <strong id="detClinicaPeso" style="font-size: 0.9rem; color: #0f172a;">8.5 kg</strong>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.65rem; text-align: center;">
+                        <span style="display: block; font-size: 0.65rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Temp</span>
+                        <strong id="detClinicaTemp" style="font-size: 0.9rem; color: #0f172a;">38.5 °C</strong>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.65rem; text-align: center;">
+                        <span style="display: block; font-size: 0.65rem; font-weight: 700; color: #64748b; text-transform: uppercase;">F. Cardiaca</span>
+                        <strong id="detClinicaFc" style="font-size: 0.9rem; color: #0f172a;">110 lpm</strong>
+                    </div>
+                </div>
+
+                <!-- Detalles Clínicos -->
+                <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div>
+                        <label style="font-weight: 800; font-size: 0.75rem; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Motivo de Consulta</label>
+                        <p id="detClinicaMotivo" style="margin: 0; font-size: 0.85rem; color: #334155; background: #f8fafc; padding: 0.65rem 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0; line-height: 1.4;"></p>
+                    </div>
+
+                    <div>
+                        <label style="font-weight: 800; font-size: 0.75rem; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Anamnesis / Observaciones</label>
+                        <p id="detClinicaAnamnesis" style="margin: 0; font-size: 0.85rem; color: #334155; background: #f8fafc; padding: 0.65rem 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0; line-height: 1.4;"></p>
+                    </div>
+
+                    <div>
+                        <label style="font-weight: 800; font-size: 0.75rem; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Diagnóstico</label>
+                        <p id="detClinicaDiagnostico" style="margin: 0; font-size: 0.85rem; color: #0f172a; font-weight: 700; background: #fffbeb; padding: 0.75rem 0.85rem; border-radius: 12px; border: 1px solid #fde68a; line-height: 1.4;"></p>
+                    </div>
+
+                    <div>
+                        <label style="font-weight: 800; font-size: 0.75rem; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Plan de Tratamiento</label>
+                        <p id="detClinicaPlan" style="margin: 0; font-size: 0.85rem; color: #334155; background: #f8fafc; padding: 0.65rem 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0; line-height: 1.4;"></p>
+                    </div>
+                </div>
+
+                <!-- Receta Médica / Medicamentos -->
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 1.5rem 0 0.75rem; border-bottom: 2px solid var(--z-border); padding-bottom: 0.35rem;">
+                    <i class="ri-capsule-fill" style="color: var(--z-primary); vertical-align: middle; margin-right: 0.35rem;"></i>Receta de Medicamentos
+                </h3>
+                <div id="detClinicaTratamientosList" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <!-- Se carga dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Si no está completada -->
+            <div id="detCitaSinClinica" style="display: block; text-align: center; padding: 2rem 1rem; color: var(--z-text-muted); background: #f8fafc; border-radius: 16px; border: 1px dotted #cbd5e1; margin-top: 1rem;">
+                <i class="ri-health-book-line" id="detSinClinicaIcon" style="font-size: 2.2rem; opacity: 0.4; display: block; margin-bottom: 0.5rem; color: var(--z-primary);"></i>
+                <p style="margin: 0; font-size: 0.82rem; font-weight: 600;" id="detSinClinicaTitle">Esta cita aún no ha sido atendida.</p>
+                <p style="margin: 4px 0 0; font-size: 0.75rem; opacity: 0.8;" id="detSinClinicaDesc">Cuando el veterinario finalice la consulta, aquí podrás visualizar la historia clínica, diagnóstico y medicamentos recetados.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 

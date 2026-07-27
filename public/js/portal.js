@@ -161,6 +161,100 @@ async function loadPortalAlerts() {
     }
 }
 
+/* Editar Datos de Contacto Inline */
+function toggleContactEditPortal() {
+    const section = document.getElementById('contactEditSection');
+    const icon = document.getElementById('iconToggleContact');
+    if (section) {
+        if (section.style.display === 'none' || section.style.display === '') {
+            section.style.display = 'block';
+            if (icon) icon.className = 'ri-arrow-up-s-line';
+            if (typeof section.animate === 'function') {
+                section.animate([
+                    { opacity: 0, transform: 'translateY(-10px)' },
+                    { opacity: 1, transform: 'translateY(0)' }
+                ], { duration: 300, easing: 'ease-out' });
+            }
+        } else {
+            section.style.display = 'none';
+            if (icon) icon.className = 'ri-arrow-down-s-line';
+        }
+    }
+}
+
+async function submitContactEditPortal() {
+    const email = document.getElementById('portal_contact_email').value.trim();
+    const phone = document.getElementById('portal_contact_phone').value.trim();
+
+    if (!email || !phone) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Campos requeridos',
+            text: 'Por favor complete todos los campos.',
+            confirmButtonColor: '#5560FF'
+        });
+        return;
+    }
+
+    const btn = document.getElementById('btnSubmitContactEdit');
+    const btnText = btn ? btn.querySelector('span') : null;
+    
+    if (btn && btnText) {
+        btn.disabled = true;
+        btnText.textContent = 'Actualizando...';
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('telefono', phone);
+
+        const res = await (await fetch('index.php?action=portal_actualizar_datos_contacto_ajax', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })).json();
+
+        if (res.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: res.message || 'Datos de contacto actualizados correctamente.',
+                confirmButtonColor: '#5560FF'
+            });
+            
+            const emailSpan = document.getElementById('profileEmailVal');
+            const phoneSpan = document.getElementById('profilePhoneVal');
+            if (emailSpan) emailSpan.textContent = res.email;
+            if (phoneSpan) phoneSpan.textContent = res.telefono;
+
+            toggleContactEditPortal();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: res.message || 'No se pudieron actualizar los datos.',
+                confirmButtonColor: '#5560FF'
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Red',
+            text: 'No se pudo conectar con el servidor.',
+            confirmButtonColor: '#5560FF'
+        });
+    } finally {
+        if (btn && btnText) {
+            btn.disabled = false;
+            btnText.textContent = 'Guardar Cambios';
+        }
+    }
+}
+
 /* Cambiar Contraseña del Propietario mediante Swal */
 /* Cambio de Contraseña Inline */
 function togglePasswordChangePortal() {
@@ -692,6 +786,7 @@ function showTikTokModal({ title, message, isConfirm, onConfirm, onCancel }) {
             color: #64748b;
             line-height: 1.45;
             font-family: inherit;
+            white-space: pre-line;
         `;
         container.appendChild(msgEl);
     }
@@ -784,6 +879,398 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAgendaSalud.addEventListener('click', () => {
             switchAgendaTab('agenda-salud', btnAgendaSalud);
         });
+    }
+
+    // --- LÓGICA COMPLETA DE CALENDARIO, FILTROS Y TIMELINE (V1.6.0) ---
+    let selectedPetId = 'all';
+    let selectedCalendarDate = null; // Formato YYYY-MM-DD
+    const today = new Date();
+    let currentCalMonth = today.getMonth(); // 0-11
+    let currentCalYear = today.getFullYear();
+
+    const chips = document.querySelectorAll('.pet-chip');
+    const printBtn = document.getElementById('btnImprimirHistorial');
+
+    // Nombres de meses en español
+    const monthNames = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    // Cargar listas filtradas de salud (Vacunas y Controles)
+    const renderSaludLists = () => {
+        const proximasList = document.getElementById('saludProximasList');
+        const historialList = document.getElementById('saludHistorialList');
+        const proximasContainer = document.getElementById('agenda-salud-proximas');
+        if (!proximasList || !historialList) return;
+
+        const eventos = window.portalAgendaEventos || [];
+        
+        // Filtrar por mascota y por fecha si aplica
+        let filtrados = eventos.filter(e => {
+            const matchPet = (selectedPetId === 'all' || e.id_mascota == selectedPetId);
+            let matchDate = true;
+            if (selectedCalendarDate) {
+                matchDate = (e.fecha === selectedCalendarDate || e.proxima === selectedCalendarDate);
+            }
+            return matchPet && matchDate;
+        });
+
+        let htmlProximas = '';
+        let htmlHistorial = '';
+
+        filtrados.forEach(e => {
+            if (e.tipo === 'cita') {
+                const statusStyle = e.estado === 'completada' ? 'background:var(--z-success-soft);color:var(--z-success);' : (e.estado === 'programada' ? 'background:var(--z-primary-soft);color:var(--z-primary);' : '');
+                htmlHistorial += `
+                <div class="agenda-list-item" style="cursor: pointer; border-left: 3px solid var(--z-primary);" onclick="mostrarDetalleCita(${e.id_cita})">
+                    <div class="agenda-icon-wrap" style="background:var(--z-primary-soft); color:var(--z-primary); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="ri-calendar-event-line"></i>
+                    </div>
+                    <div class="agenda-item-info" style="margin-left:0.75rem;">
+                        <h4>${escapeHtml(e.nombre_mascota)}</h4>
+                        <p class="agenda-item-type">Cita: <strong>${escapeHtml(e.titulo)}</strong> · ${escapeHtml(e.detalle)}</p>
+                        <span class="agenda-item-date">Fecha: ${formatFecha(e.fecha)} · Hora: ${escapeHtml(e.hora)}</span>
+                    </div>
+                    <div class="agenda-item-actions" style="margin-left: auto; display: flex; align-items: center;">
+                        <span class="status-badge" style="${statusStyle}">${escapeHtml(e.estado)}</span>
+                    </div>
+                </div>`;
+                return;
+            }
+
+            const isVacuna = e.tipo === 'vacuna';
+            const iconClass = isVacuna ? 'ri-syringe-line' : 'ri-capsule-line';
+            const bgClass = isVacuna ? 'bg-vacuna' : 'bg-control';
+            
+            // Si tiene fecha de próxima dosis y es en el futuro/hoy, va a próximas dosis
+            if (e.proxima) {
+                const diffTime = new Date(e.proxima + 'T12:00:00') - new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                let badgeText = '';
+                let badgeStyle = 'background:#f1f5f9; color:#475569;';
+                if (diffDays > 0) {
+                    badgeText = `Faltan ${diffDays} días`;
+                    badgeStyle = 'background:var(--z-primary-soft); color:var(--z-primary);';
+                } else if (diffDays === 0) {
+                    badgeText = '¡Hoy!';
+                    badgeStyle = 'background:var(--z-success-soft); color:var(--z-success);';
+                } else {
+                    badgeText = `Vencido hace ${Math.abs(diffDays)} días`;
+                    badgeStyle = 'background:var(--z-danger-soft); color:var(--z-danger);';
+                }
+
+                htmlProximas += `
+                <div class="agenda-list-item">
+                    <div class="agenda-icon-wrap ${bgClass}">
+                        <i class="${iconClass}"></i>
+                    </div>
+                    <div class="agenda-item-info">
+                        <h4>${escapeHtml(e.nombre_mascota)}</h4>
+                        <p class="agenda-item-type">Siguiente dosis: <strong>${escapeHtml(e.titulo)}</strong> · ${escapeHtml(e.detalle)}</p>
+                        <span class="agenda-item-date" style="color:var(--z-text-muted);">Última aplicación: ${formatFecha(e.fecha)}</span>
+                    </div>
+                    <div class="agenda-item-next" style="text-align:right;">
+                        <span class="status-badge" style="${badgeStyle} font-weight:700;">${badgeText}</span>
+                        <span class="next-date" style="display:block; font-size:0.7rem; margin-top:4px;">${formatFecha(e.proxima)}</span>
+                    </div>
+                </div>`;
+            }
+
+            // Historial (aplicación pasada)
+            htmlHistorial += `
+            <div class="agenda-list-item">
+                <div class="agenda-icon-wrap ${bgClass}">
+                    <i class="${iconClass}"></i>
+                </div>
+                <div class="agenda-item-info">
+                    <h4>${escapeHtml(e.nombre_mascota)}</h4>
+                    <p class="agenda-item-type">${escapeHtml(e.titulo)} · ${escapeHtml(e.detalle)}</p>
+                    <span class="agenda-item-date">${isVacuna ? 'Vacuna aplicada' : 'Control realizado'}: ${formatFecha(e.fecha)}</span>
+                </div>
+            </div>`;
+        });
+
+        // Cargar listas
+        proximasContainer.style.display = htmlProximas ? 'block' : 'none';
+        proximasList.innerHTML = htmlProximas;
+        historialList.innerHTML = htmlHistorial || '<div class="agenda-empty-state"><p>No hay historial registrado.</p></div>';
+    };
+
+    // --- NAVEGADOR DE MES/AÑO PERSONALIZADO ESTILO WIN11 (V1.6.0) ---
+    const calWin11Nav = document.getElementById('calWin11Nav');
+    const calMonthTitle = document.getElementById('calMonthTitle');
+    const calWin11Title = document.getElementById('calWin11Title');
+    const calWin11MonthsGrid = document.getElementById('calWin11MonthsGrid');
+    const calWin11YearsGrid = document.getElementById('calWin11YearsGrid');
+
+    let calWin11View = 'months'; // 'months' or 'years'
+    let calWin11ViewYear = currentCalYear;
+
+    const shortMonthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+    const renderCalWin11Months = () => {
+        if (!calWin11MonthsGrid) return;
+        calWin11View = 'months';
+        calWin11MonthsGrid.style.display = 'grid';
+        calWin11YearsGrid.style.display = 'none';
+        calWin11Title.textContent = calWin11ViewYear;
+
+        calWin11MonthsGrid.innerHTML = '';
+        shortMonthNames.forEach((name, idx) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'win11-btn';
+            if (currentCalYear === calWin11ViewYear && currentCalMonth === idx) {
+                btn.classList.add('active');
+            }
+            btn.textContent = name;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentCalMonth = idx;
+                currentCalYear = calWin11ViewYear;
+                calWin11Nav.style.display = 'none';
+                renderMiniCalendar();
+            });
+            calWin11MonthsGrid.appendChild(btn);
+        });
+    };
+
+    const renderCalWin11Years = () => {
+        if (!calWin11YearsGrid) return;
+        calWin11View = 'years';
+        calWin11MonthsGrid.style.display = 'none';
+        calWin11YearsGrid.style.display = 'grid';
+        
+        const startYear = 2020;
+        const thisYear = new Date().getFullYear();
+        calWin11Title.textContent = `${startYear} - ${thisYear}`;
+
+        calWin11YearsGrid.innerHTML = '';
+        for (let y = startYear; y <= thisYear; y++) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'win11-btn';
+            if (currentCalYear === y) {
+                btn.classList.add('active');
+            }
+            btn.textContent = y;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                calWin11ViewYear = y;
+                renderCalWin11Months();
+            });
+            calWin11YearsGrid.appendChild(btn);
+        }
+    };
+
+    if (calMonthTitle && calWin11Nav) {
+        calMonthTitle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            calWin11ViewYear = currentCalYear;
+            calWin11Nav.style.display = 'flex';
+            renderCalWin11Months();
+        });
+
+        calWin11Title.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (calWin11View === 'months') {
+                renderCalWin11Years();
+            } else {
+                renderCalWin11Months();
+            }
+        });
+        
+        // Clic fuera del nav para cerrarlo
+        document.addEventListener('click', (e) => {
+            if (calWin11Nav.style.display === 'flex' && !calWin11Nav.contains(e.target)) {
+                calWin11Nav.style.display = 'none';
+            }
+        });
+    }
+
+    // Renderizar Cuadrícula del Calendario
+    const renderMiniCalendar = () => {
+        const grid = document.getElementById('miniCalendarGrid');
+        const title = document.getElementById('calMonthTitle');
+        if (!grid) return;
+
+        if (title) {
+            title.textContent = `${monthNames[currentCalMonth]} ${currentCalYear}`;
+        }
+
+        // Obtener datos del mes
+        const firstDayIndex = new Date(currentCalYear, currentCalMonth, 1).getDay();
+        const totalDays = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+
+        let html = '';
+
+        // Rellenar días en blanco del mes anterior
+        for (let i = 0; i < firstDayIndex; i++) {
+            html += `<div style="height:36px;"></div>`;
+        }
+
+        // Eventos para verificar
+        const eventos = window.portalAgendaEventos || [];
+
+        // Rellenar días del mes actual
+        for (let day = 1; day <= totalDays; day++) {
+            const dateStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // Buscar eventos en este día
+            const eventosDia = eventos.filter(e => {
+                const matchPet = (selectedPetId === 'all' || e.id_mascota == selectedPetId);
+                const matchDate = (e.fecha === dateStr || e.proxima === dateStr);
+                return matchPet && matchDate;
+            });
+
+            // Verificar tipos de eventos para dibujar puntos
+            const tieneCita = eventosDia.some(e => e.tipo === 'cita');
+            const tieneVacuna = eventosDia.some(e => e.tipo === 'vacuna');
+            const tieneControl = eventosDia.some(e => e.tipo === 'control');
+
+            let dotsHtml = '';
+            if (tieneCita) dotsHtml += `<span style="width:4px; height:4px; border-radius:50%; background:var(--z-primary);"></span>`;
+            if (tieneVacuna) dotsHtml += `<span style="width:4px; height:4px; border-radius:50%; background:var(--z-success);"></span>`;
+            if (tieneControl) dotsHtml += `<span style="width:4px; height:4px; border-radius:50%; background:var(--z-warning);"></span>`;
+
+            const isSelected = selectedCalendarDate === dateStr ? 'background:var(--z-primary-soft); color:var(--z-primary); font-weight:800; border:1.5px solid var(--z-primary);' : '';
+            const cursorStyle = eventosDia.length > 0 ? 'cursor:pointer;' : 'opacity:0.85;';
+
+            html += `
+            <div class="cal-day-cell" data-date="${dateStr}" style="height:36px; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.75rem; color:#0f172a; position:relative; font-weight:600; border:1px solid #f1f5f9; ${isSelected} ${cursorStyle}">
+                <span>${day}</span>
+                <div style="display:flex; gap:2px; position:absolute; bottom:3px;">${dotsHtml}</div>
+            </div>`;
+        }
+
+        grid.innerHTML = html;
+
+        // Agregar clics a celdas con eventos
+        grid.querySelectorAll('.cal-day-cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                const date = cell.dataset.date;
+                
+                // Si ya está seleccionada, resetear filtro de fecha
+                if (selectedCalendarDate === date) {
+                    resetCalendarDateFilter();
+                } else {
+                    selectedCalendarDate = date;
+                    document.getElementById('calendarFilterAlert').style.display = 'flex';
+                    renderMiniCalendar();
+                    renderSaludLists();
+                }
+            });
+        });
+    };
+
+    // Resetear filtro de fecha del calendario
+    window.resetCalendarDateFilter = () => {
+        selectedCalendarDate = null;
+        document.getElementById('calendarFilterAlert').style.display = 'none';
+        renderMiniCalendar();
+        renderSaludLists();
+    };
+
+    const resetBtn = document.getElementById('btnResetDateFilter');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetCalendarDateFilter);
+    }
+
+    // Navegar meses
+    const prevMonthBtn = document.getElementById('btnPrevMonth');
+    const nextMonthBtn = document.getElementById('btnNextMonth');
+    if (prevMonthBtn && nextMonthBtn) {
+        prevMonthBtn.addEventListener('click', () => {
+            currentCalMonth--;
+            if (currentCalMonth < 0) {
+                currentCalMonth = 11;
+                currentCalYear--;
+            }
+            renderMiniCalendar();
+        });
+        nextMonthBtn.addEventListener('click', () => {
+            const thisYear = new Date().getFullYear();
+            currentCalMonth++;
+            if (currentCalMonth > 11) {
+                if (currentCalYear < thisYear) {
+                    currentCalMonth = 0;
+                    currentCalYear++;
+                } else {
+                    currentCalMonth = 11; // Quedarse en diciembre de este año
+                }
+            }
+            renderMiniCalendar();
+        });
+    }
+
+    // Filtrar Citas por Mascota
+    const filterCitas = () => {
+        const citasContainer = document.getElementById('citasListContainer');
+        if (!citasContainer) return;
+
+        let visibleCount = 0;
+        citasContainer.querySelectorAll('.agenda-list-item').forEach(item => {
+            if (selectedPetId === 'all' || item.dataset.petId == selectedPetId) {
+                item.style.display = 'flex';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Mostrar estado vacío si no hay citas de esta mascota
+        const emptyState = citasContainer.parentElement.querySelector('.agenda-empty-state');
+        if (visibleCount === 0) {
+            if (!emptyState) {
+                const div = document.createElement('div');
+                div.className = 'agenda-empty-state temp-empty';
+                div.innerHTML = `<i class="ri-calendar-line"></i><p>No hay citas de esta mascota.</p>`;
+                citasContainer.style.display = 'none';
+                citasContainer.parentElement.appendChild(div);
+            }
+        } else {
+            citasContainer.style.display = 'flex';
+            const temp = citasContainer.parentElement.querySelector('.temp-empty');
+            if (temp) temp.remove();
+        }
+    };
+
+    // Registrar Clics en Chips de Mascota
+    chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            chips.forEach(c => {
+                c.classList.remove('active');
+                c.style.background = '#f1f5f9';
+                c.style.color = '#64748b';
+            });
+            chip.classList.add('active');
+            chip.style.background = 'var(--z-primary)';
+            chip.style.color = '#fff';
+
+            selectedPetId = chip.dataset.petId;
+
+            // Mostrar/Ocultar botón de Imprimir Historial
+            if (printBtn) {
+                if (selectedPetId === 'all') {
+                    printBtn.style.display = 'none';
+                } else {
+                    printBtn.style.display = 'flex';
+                    printBtn.href = `index.php?action=portal_imprimir_historial&id_mascota=${selectedPetId}`;
+                }
+            }
+
+            // Filtrar ambos módulos
+            filterCitas();
+            resetCalendarDateFilter();
+        });
+    });
+
+    // Cargar datos por primera vez al abrir
+    if (document.getElementById('agenda-salud')) {
+        renderMiniCalendar();
+        renderSaludLists();
     }
 
     // Attach cancellation event listeners to all cancel buttons in the Agenda
@@ -897,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             btn.onclick = (e) => {
                                 e.stopPropagation();
                                 instance.changeYear(viewYear);
-                                instance.changeMonth(i);
+                                instance.changeMonth(i, false);
                                 nav.classList.remove('active');
                                 instance.calendarContainer.querySelector('.flatpickr-prev-month').style.visibility = 'visible';
                                 instance.calendarContainer.querySelector('.flatpickr-next-month').style.visibility = 'visible';
@@ -1375,6 +1862,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cerrar Modales
     if (closeAddBtn) closeAddBtn.addEventListener('click', () => closeModal('portalAddPetModal'));
     if (closeEditBtn) closeEditBtn.addEventListener('click', () => closeModal('portalEditPetModal'));
+    
+    const closeDetalleCitaBtn = document.getElementById('btnCloseCitaDetalleModal');
+    if (closeDetalleCitaBtn) {
+        closeDetalleCitaBtn.addEventListener('click', () => closeModal('portalCitaDetalleModal'));
+    }
 
     if (addPetModal) {
         addPetModal.addEventListener('click', (e) => {
@@ -1384,6 +1876,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editPetModal) {
         editPetModal.addEventListener('click', (e) => {
             if (e.target === editPetModal) closeModal('portalEditPetModal');
+        });
+    }
+    const citaDetalleModal = document.getElementById('portalCitaDetalleModal');
+    if (citaDetalleModal) {
+        citaDetalleModal.addEventListener('click', (e) => {
+            if (e.target === citaDetalleModal) closeModal('portalCitaDetalleModal');
         });
     }
 
@@ -1475,3 +1973,124 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+/* Mostrar detalles de una cita */
+async function mostrarDetalleCita(idCita) {
+    try {
+        const res = await (await fetch(`index.php?action=portal_get_detalle_cita_clinica_ajax&id_cita=${idCita}`)).json();
+        if (!res.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: res.message || 'No se pudo cargar la información de la cita.',
+                confirmButtonColor: '#5560FF'
+            });
+            return;
+        }
+
+        const cita = res.cita;
+        const consulta = res.consulta;
+        const tratamientos = res.tratamientos;
+
+        // Rellenar información general
+        document.getElementById('detCitaTipo').textContent = cita.nombre_tipo.toUpperCase();
+        document.getElementById('detCitaMascota').textContent = cita.nombre_mascota;
+        document.getElementById('detCitaVet').textContent = `Dr(a). ${cita.veterinario}`;
+        document.getElementById('detCitaFechaHora').textContent = `${formatFecha(cita.fecha)} · ${cita.hora.substring(0, 5)}`;
+
+        // Rellenar Badge de Estado
+        const badge = document.getElementById('detCitaEstado');
+        badge.className = 'status-badge';
+        if (cita.estado === 'programada') {
+            badge.style.backgroundColor = 'var(--z-primary-soft)';
+            badge.style.color = 'var(--z-primary)';
+            badge.textContent = 'Activa';
+        } else if (cita.estado === 'completada') {
+            badge.style.backgroundColor = 'var(--z-success-soft)';
+            badge.style.color = 'var(--z-success)';
+            badge.textContent = 'Completada';
+        } else {
+            badge.style.backgroundColor = 'var(--z-danger-soft)';
+            badge.style.color = 'var(--z-danger)';
+            badge.textContent = cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1);
+        }
+
+        // Mostrar u ocultar sección clínica
+        const clinicaArea = document.getElementById('detCitaClinicaArea');
+        const sinClinicaArea = document.getElementById('detCitaSinClinica');
+
+        if (cita.estado === 'completada' && consulta) {
+            clinicaArea.style.display = 'block';
+            sinClinicaArea.style.display = 'none';
+
+            // Cargar datos de la consulta
+            document.getElementById('detClinicaPeso').textContent = `${consulta.peso || '—'} kg`;
+            document.getElementById('detClinicaTemp').textContent = `${consulta.temperatura || '—'} °C`;
+            document.getElementById('detClinicaFc').textContent = `${consulta.frecuencia_cardiaca || '—'} lpm`;
+            document.getElementById('detClinicaMotivo').textContent = consulta.motivo_consulta || '—';
+            document.getElementById('detClinicaAnamnesis').textContent = consulta.anamnesis || '—';
+            document.getElementById('detClinicaDiagnostico').textContent = consulta.diagnostico || '—';
+            document.getElementById('detClinicaPlan').textContent = consulta.plan_tratamiento || '—';
+
+            // Cargar tratamientos
+            const tratamientosList = document.getElementById('detClinicaTratamientosList');
+            tratamientosList.innerHTML = '';
+            if (tratamientos && tratamientos.length > 0) {
+                tratamientos.forEach(t => {
+                    tratamientosList.innerHTML += `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; margin-top: 0.25rem;">
+                        <div style="font-weight: 800; color: var(--z-primary); font-size: 0.85rem;">💊 ${escapeHtml(t.medicamento)}</div>
+                        <div style="font-size: 0.78rem; color: #475569; margin-top: 0.25rem;">
+                            <strong>Dosis:</strong> ${escapeHtml(t.dosis)} · <strong>Vía:</strong> ${escapeHtml(t.via_administracion)}
+                        </div>
+                        <div style="font-size: 0.78rem; color: #475569; margin-top: 0.15rem;">
+                            <strong>Duración:</strong> ${escapeHtml(t.duracion)}
+                        </div>
+                        ${t.observaciones ? `<div style="font-size: 0.75rem; color: #64748b; margin-top: 0.35rem; font-style: italic; border-top: 1px dotted #cbd5e1; padding-top: 0.35rem;">Nota: ${escapeHtml(t.observaciones)}</div>` : ''}
+                    </div>`;
+                });
+            } else {
+                tratamientosList.innerHTML = '<p style="margin:0; font-size:0.8rem; color:#64748b; font-style:italic;">No se recetaron medicamentos.</p>';
+            }
+        } else {
+            clinicaArea.style.display = 'none';
+            sinClinicaArea.style.display = 'block';
+
+            const titleEl = document.getElementById('detSinClinicaTitle');
+            const descEl = document.getElementById('detSinClinicaDesc');
+            const iconEl = document.getElementById('detSinClinicaIcon');
+
+            if (titleEl && descEl && iconEl) {
+                if (cita.estado === 'completada') {
+                    iconEl.className = 'ri-checkbox-circle-line';
+                    iconEl.style.color = 'var(--z-success)';
+                    titleEl.textContent = 'Cita completada sin ficha.';
+                    descEl.textContent = 'Esta cita se realizó con éxito, pero no se registraron observaciones clínicas adicionales ni recetas de medicamentos.';
+                } else if (cita.estado === 'cancelada') {
+                    iconEl.className = 'ri-close-circle-line';
+                    iconEl.style.color = 'var(--z-danger)';
+                    titleEl.textContent = 'Cita cancelada.';
+                    descEl.textContent = 'Esta cita fue cancelada y no generó historial clínico.';
+                } else {
+                    iconEl.className = 'ri-health-book-line';
+                    iconEl.style.color = 'var(--z-primary)';
+                    titleEl.textContent = 'Esta cita aún no ha sido atendida.';
+                    descEl.textContent = 'Cuando el veterinario finalice la consulta, aquí podrás visualizar la historia clínica, diagnóstico y medicamentos recetados.';
+                }
+            }
+        }
+
+        // Abrir Drawer de Detalles
+        openModal('portalCitaDetalleModal');
+    } catch (e) {
+        console.error(e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Red',
+            text: 'No se pudo conectar con el servidor para traer los detalles.',
+            confirmButtonColor: '#5560FF'
+        });
+    }
+}
+
+
