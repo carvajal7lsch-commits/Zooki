@@ -63,8 +63,6 @@ scratch/
 *.min.css.map
 
 # Archivos de prueba
-test/
-tests/
 *.test.php
 *.spec.php
 
