@@ -1,0 +1,571 @@
+/* ── Layout: Calendar + Day Events Card ── */
+.calendar-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 16px;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .calendar-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Day Events Card (Estilo Sidebar Mockup) ── */
+.day-events-card {
+    background: #fff;
+    border: 1px solid var(--zooki-border);
+    border-radius: var(--zooki-radius);
+    box-shadow: var(--zooki-shadow);
+    overflow: hidden;
+    height: fit-content;
+    max-height: 600px;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 16px;
+}
+
+.day-events-header {
+    padding: 14px 16px 12px;
+    background: #fff;
+    border-bottom: 1px solid var(--zooki-border);
+}
+
+.day-events-header h3 {
+    margin: 0 0 2px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--google-text-dark);
+    font-family: 'Inter', sans-serif;
+}
+
+.day-events-header .day-events-date-sub {
+    font-size: 0.78rem;
+    color: var(--zooki-blue);
+    font-weight: 600;
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.day-events-list {
+    padding: 12px 0;
+    overflow-y: auto;
+    flex: 1;
+    max-height: 460px;
+    background-color: #fff;
+}
+
+.day-events-empty {
+    text-align: center;
+    color: var(--google-text-light);
+    font-size: 0.85rem;
+    padding: 40px 16px;
+    margin: 0;
+}
+
+/* ── Section labels dentro del card ── */
+.day-events-section-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #374151;
+    padding: 6px 18px 4px;
+    margin-top: 4px;
+}
+
+.day-events-section-label .dot-section {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.day-events-section-label .dot-section.blue {
+    background: var(--zooki-blue);
+}
+
+.day-events-section-label .dot-section.green {
+    background: #16a34a;
+}
+
+/* ── Day Event Item (card estilo mockup) ── */
+.day-event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: background 0.12s;
+    background: #fff;
+}
+
+.day-event-item:hover { background: #f9fafb; }
+.day-event-item:last-child { border-bottom: none; }
+
+/* Avatar de mascota */
+.day-event-item::before {
+    content: '';
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e0e7ff;
+    flex-shrink: 0;
+    display: block;
+    margin-top: 2px;
+}
+
+/* Fallback avatar icon via background */
+.day-event-item.tipo-cita::before        { background: #dbeafe url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231d4ed8'%3E%3Cpath d='M4.5 6.375a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0ZM14.25 8.625a3.375 3.375 0 1 1 6.75 0 3.375 3.375 0 0 1-6.75 0ZM1.5 19.125a7.125 7.125 0 0 1 14.25 0v.003l-.001.119a.75.75 0 0 1-.363.63 13.067 13.067 0 0 1-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 0 1-.364-.63l-.001-.122ZM17.25 19.128l-.001.144a2.25 2.25 0 0 1-.233.96 10.088 10.088 0 0 0 5.06-1.01.75.75 0 0 0 .42-.643 4.875 4.875 0 0 0-6.957-4.611 8.586 8.586 0 0 1 1.71 5.157v.003Z'/%3E%3C/svg%3E") center/18px no-repeat; }
+.day-event-item.tipo-vacunacion::before  { background: #dcfce7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2315803d'%3E%3Cpath d='m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z'/%3E%3C/svg%3E") center/18px no-repeat; }
+.day-event-item.tipo-desparasitacion::before { background: #fef9c3 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a16207'%3E%3Cpath fill-rule='evenodd' d='M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5Z' clip-rule='evenodd'/%3E%3C/svg%3E") center/18px no-repeat; }
+
+/* Contenido del item */
+.day-event-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.day-event-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 3px;
+    gap: 6px;
+}
+
+.day-event-time {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1a56db;
+    flex-shrink: 0;
+}
+
+/* Badge de estado (Confirmada / Pendiente) */
+.day-event-type {
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.day-event-type.cita            { background: #dbeafe; color: #1d4ed8; }
+.day-event-type.vacunacion      { background: #dcfce7; color: #15803d; }
+.day-event-type.desparasitacion { background: #fef9c3; color: #a16207; }
+
+/* Estado badge — colores según estado, el texto lo pone JS */
+.day-event-item.estado-confirmada  .day-event-type { background: #dcfce7; color: #15803d; }
+.day-event-item.estado-pendiente   .day-event-type { background: #fef9c3; color: #92400e; }
+.day-event-item.estado-en_curso    .day-event-type { background: #dbeafe; color: #1d4ed8; }
+.day-event-item.estado-completada  .day-event-type { background: #f0fdf4; color: #15803d; }
+.day-event-item.estado-cancelada   .day-event-type { background: #fee2e2; color: #b91c1c; }
+
+.day-event-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.day-event-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.day-event-detail {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.day-event-detail i {
+    color: #9ca3af;
+    font-size: 0.65rem;
+    width: 11px;
+    flex-shrink: 0;
+}
+
+.day-event-detail.estado { display: none; }
+
+.day-event-vet {
+    font-weight: 500;
+    color: #374151;
+}
+
+/* ── Cita Detalle Card ── */
+.cita-detalle-card {
+    background: #fff;
+    border: 1px solid var(--google-gray-border);
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.cita-detalle-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.cita-detalle-type {
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.cita-detalle-type.cita {
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+.cita-detalle-type.vacunacion {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.cita-detalle-type.desparasitacion {
+    background: #fef7e0;
+    color: #b06000;
+}
+
+.cita-detalle-time {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--google-blue);
+    background: #e8f0fe;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.cita-detalle-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--google-text-dark);
+    margin: 0 0 12px 0;
+}
+
+.cita-detalle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.cita-detalle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--google-text-dark);
+}
+
+.cita-detalle-row i {
+    color: var(--google-text-light);
+    font-size: 0.8rem;
+    width: 16px;
+}
+
+.btn-volver {
+    width: 100%;
+    padding: 8px 12px;
+    background: #fff;
+    color: var(--google-text-dark);
+    border: 1px solid var(--google-gray-border);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 0.1s;
+}
+
+.btn-volver:hover {
+    background-color: #f8f9fa;
+}
+
+/* ── Cita Detalle Actions ── */
+.cita-detalle-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.btn-accion {
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: filter 0.1s;
+}
+
+.btn-reprogramar {
+    background: var(--google-blue);
+    color: white;
+}
+
+.btn-reprogramar:hover {
+    filter: brightness(0.9);
+}
+
+.btn-cancelar {
+    background: #d93025;
+    color: white;
+}
+
+.btn-cancelar:hover {
+    filter: brightness(0.9);
+}
+
+/* ── Day Events Footer ── */
+.day-events-footer {
+    padding: 12px 16px;
+    background: #fff;
+    border-top: 1px solid var(--zooki-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-agendar-cita {
+    flex: 1;
+    padding: 9px 16px;
+    background: var(--zooki-blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-family: inherit;
+    transition: background-color 0.15s;
+}
+
+.btn-agendar-cita:hover {
+    background-color: #1447b0;
+}
+
+.btn-ver-notas {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    background: #fff;
+    color: #374151;
+    border: 1px solid var(--zooki-border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    transition: background-color 0.15s;
+}
+
+.btn-ver-notas:hover {
+    background: #f9fafb;
+}
+
+/* ════════════════════════════════════════
+   MODAL COMPATIBILIDAD GOOGLE
+   ════════════════════════════════════════ */
+.cita-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(32, 33, 36, 0.6); z-index: 2000;
+    align-items: center; justify-content: center; padding: 1rem;
+    backdrop-filter: none; opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.cita-modal-overlay.is-open { display: flex; opacity: 1; }
+
+.cita-modal {
+    background: #fff; border-radius: 8px;
+    box-shadow: 0 12px 36px 16px rgba(0,0,0,0.22);
+    width: 100%; max-width: 500px; max-height: 90vh;
+    display: flex; flex-direction: column;
+    transform: scale(0.9);
+    transition: transform 0.15s ease;
+    overflow: hidden;
+}
+.cita-modal-overlay.is-open .cita-modal { transform: scale(1); }
+
+.cita-modal-header { padding: 16px 24px; border-bottom: none; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.cita-modal-header-left { display: flex; align-items: center; gap: 12px; }
+.cita-modal-icon { width: 36px; height: 36px; background: #e8f0fe; color: var(--google-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+.cita-modal-title { margin: 0; font-size: 1.15rem; font-weight: 400; color: var(--google-text-dark); font-family: 'Google Sans', sans-serif; }
+.cita-modal-subtitle { margin: 2px 0 0; font-size: 0.8rem; color: var(--google-text-light); }
+.cita-modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: transparent; color: var(--google-text-light); cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: background-color 0.1s; }
+.cita-modal-close:hover { background-color: #f1f3f4; color: var(--google-text-dark); }
+
+.cita-modal-body { flex: 1; overflow-y: auto; padding: 0 24px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.cita-modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.cita-field { display: flex; flex-direction: column; gap: 6px; }
+.cita-label { font-size: 0.75rem; font-weight: 500; color: var(--google-text-light); text-transform: capitalize; letter-spacing: normal; }
+.cita-label i { display: none; }
+
+.cita-input, .cita-select {
+    width: 100%; box-sizing: border-box; padding: 8px 12px;
+    background: #fff; border: 1px solid var(--google-gray-border); border-radius: 4px;
+    font-family: inherit; font-size: 0.875rem; color: var(--google-text-dark);
+    transition: border-color 0.1s; outline: none;
+}
+.cita-input:focus, .cita-select:focus { border-color: var(--google-blue); }
+.cita-input[readonly] { background: var(--google-gray-bg); border-color: var(--google-gray-border); cursor: default; }
+
+.cita-duracion-badge { display: none; align-items: center; gap: 6px; margin-top: 4px; font-size: 0.75rem; color: var(--google-text-light); }
+.cita-duracion-badge.visible { display: flex; }
+.cita-duracion-badge span { background: #e8f0fe; color: var(--google-blue); border-radius: 4px; padding: 2px 6px; font-weight: 500; }
+
+.slots-btn { width: 100%; padding: 8px; background: transparent; color: var(--google-blue); border: 1px solid var(--google-gray-border); border-radius: 4px; font-family: inherit; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background-color 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.slots-btn:hover { background-color: #f8f9fa; }
+
+.slots-container { display: none; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.slots-container.visible { display: flex; }
+
+.slot-chip { padding: 4px 12px; background: #fff; color: var(--google-text-dark); border: 1px solid var(--google-gray-border); border-radius: 16px; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.1s; }
+.slot-chip:hover { background-color: #f1f3f4; }
+.slot-chip.selected { background: var(--google-blue); color: white; border-color: var(--google-blue); }
+
+.cita-modal-footer { padding: 16px 24px; border-top: none; display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+.btn-modal-cancel { width: auto; flex: none; padding: 8px 16px; background: #fff; color: var(--google-text-dark); border: 1px solid var(--google-gray-border); border-radius: 4px; font-family: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 0.1s; }
+.btn-modal-cancel:hover { background-color: #f8f9fa; }
+.btn-modal-submit { width: auto; flex: none; padding: 8px 24px; background: var(--google-blue); color: white; border: none; border-radius: 4px; font-family: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 0.1s; box-shadow: none; }
+.btn-modal-submit:hover { background-color: #185abc; box-shadow: none; transform: none; }
+.btn-modal-submit:active { transform: none; }
+
+/* ── Day Past Error Highlight & Shake ── */
+.day-past-error {
+    background-color: #fce8e6 !important;
+    animation: shake 0.4s ease-in-out;
+    border: 1px solid #d93025 !important;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+/* ── Leyenda de Estados de Citas ── */
+.control-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 0.9rem;
+    margin-top: 0.1rem;
+}
+
+.estado-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 0.85rem;
+    align-items: center;
+}
+
+.leyenda-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+}
+
+.leyenda-item:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.leyenda-item .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Soft Badges for Each Status */
+.leyenda-item.status-pendiente {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+}
+.leyenda-item.status-pendiente .dot {
+    background: #d97706;
+    box-shadow: 0 0 6px rgba(217, 119, 6, 0.6);
+}
+
+.leyenda-item.status-confirmada {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+.leyenda-item.status-confirmada .dot {
+    background: #10b981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.leyenda-item.status-en-curso {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+.leyenda-item.status-en-curso .dot {
+    background: #3b82f6;
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
+}
+
+.leyenda-item.status-completada {
+    background: #f0fdf4;
+    color: #15803d;
+    border-color: #bbf7d0;
+}
+.leyenda-item.status-completada .dot {
+    background: #16a34a;
+    box-shadow: 0 0 6px rgba(22, 163, 74, 0.6);
+}
+
+.leyenda-item.status-cancelada {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+.leyenda-item.status-cancelada .dot {
+    background: #ef4444;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+

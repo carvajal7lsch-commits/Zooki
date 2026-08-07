@@ -1,0 +1,712 @@
+/* ================================================================
+     MÓDULO GESTIÓN DE PERSONAL — Zooki v2
+     ================================================================ */
+
+/* Filtros de rol */
+.role-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.role-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  border-radius: 50px;
+  border: 1.5px solid var(--border-color);
+  background: white;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.role-tab:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(85, 96, 255, 0.05);
+}
+
+.role-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(85, 96, 255, 0.25);
+}
+
+.role-tab.active .role-tab-count {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.role-tab-count {
+  background: var(--bg-main);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 50px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Toggle Switch de estado */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 23px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #cbd5e1;
+  border-radius: 23px;
+  transition: 0.3s ease;
+  cursor: pointer;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.toggle-switch input:checked+.toggle-slider {
+  background: var(--primary);
+}
+
+.toggle-switch input:checked+.toggle-slider::before {
+  transform: translateX(19px);
+}
+
+.toggle-switch:hover .toggle-slider {
+  filter: brightness(0.95);
+}
+
+/* Avatares por rol */
+.staff-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Cards de usuario — rediseño */
+.user-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.user-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  border-color: rgba(85, 96, 255, 0.15);
+}
+
+.user-card-header {
+  padding: 1.5rem 1.5rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.user-card-avatar-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.status-dot.active {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.status-dot.inactive {
+  background: #cbd5e1;
+}
+
+.user-card-body {
+  padding: 0 1.5rem 1rem;
+  flex: 1;
+}
+
+.user-card-body h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem 0;
+}
+
+.user-card-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  text-transform: capitalize;
+}
+
+.user-card-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.user-card-contact span {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-card-contact i {
+  width: 14px;
+  color: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.user-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.5rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  background: rgba(248, 250, 255, 0.5);
+}
+
+/* Tabla mejorada */
+.data-table .staff-row td {
+  vertical-align: middle;
+}
+
+.staff-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.staff-name-info strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.staff-name-info small {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.staff-contact-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.staff-contact-cell span {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.staff-contact-cell i {
+  width: 14px;
+  color: #cbd5e1;
+}
+
+/* Modal secciones */
+.modal-section-title {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  padding: 0.5rem 0 0.75rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--bg-main);
+  grid-column: span 2;
+}
+
+.modal-section-title:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .users-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+/* ----------------------------------------------------
+   Veterea Dashboard Panel Styles
+   ---------------------------------------------------- */
+.overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.overview-title h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.overview-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-secondary {
+  background: white;
+  border: 1px solid var(--border-color);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid transparent;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.stat-card.primary {
+  background: linear-gradient(135deg, #0052FF 0%, #003bbb 100%);
+  color: white;
+  box-shadow: 0 10px 20px rgba(0, 82, 255, 0.2);
+}
+
+.sc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.stat-card.primary .sc-header {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sc-header i {
+  background: var(--bg-main);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--text-primary);
+}
+
+.stat-card.primary .sc-header i {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.sc-body {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.sc-body h2 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.stat-card.primary .sc-body h2 {
+  color: white;
+}
+
+.sc-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50px;
+}
+
+.sc-badge.positive {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+.stat-card.primary .sc-badge.positive {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.sc-footer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.stat-card.primary .sc-footer {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.stat-card.dashed {
+  background: transparent;
+  border: 2px dashed #CBD5E1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stat-card.dashed:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.add-metric {
+  text-align: center;
+  color: var(--text-secondary);
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.am-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 1fr;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.grid-col-left,
+.grid-col-center,
+.grid-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.panel-card {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-soft);
+  min-width: 0;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.today-schedule {
+  padding: 0.5rem 0;
+  height: 220px !important;
+  overflow-y: auto;
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.schedule-item:last-child {
+  border-bottom: none;
+}
+
+.schedule-item:hover {
+  background: var(--bg-surface);
+}
+
+.schedule-time {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.875rem;
+  min-width: 70px;
+}
+
+.schedule-info {
+  flex: 1;
+  margin-left: 1rem;
+}
+
+.schedule-pet {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.schedule-type {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.schedule-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+
+.card-header-flex h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-header-flex h3 i {
+  color: var(--text-secondary);
+}
+
+.btn-view-all {
+  background: white;
+  border: 1px solid var(--border-color);
+  padding: 0.3rem 0.8rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.schedule-item:last-child {
+  border-bottom: none;
+}
+
+.schedule-time {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 40px;
+}
+
+.schedule-info {
+  background: var(--input-bg);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  flex: 1;
+  border-left: 4px solid var(--primary);
+}
+
+.schedule-info.orange {
+  border-left-color: var(--warning);
+}
+
+.schedule-info.green {
+  border-left-color: var(--secondary);
+}
+
+.schedule-info strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 0.2rem;
+}
+
+.schedule-info span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.alert-card {
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  border-radius: 12px;
+  padding: 0.8rem;
+}
+
+.alert-card.warning {
+  background: #FFFBEB;
+  border-color: #FCD34D;
+}
+
+.alert-card-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.alert-card-val {
+  font-size: 0.75rem;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.alert-card.warning .alert-card-val {
+  color: var(--warning);
+}
+
+.ranking-vets {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vet-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.vet-item img {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.vet-info {
+  flex: 1;
+}
+
+.vet-info strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.vet-info span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+

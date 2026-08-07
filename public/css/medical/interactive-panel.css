@@ -1,0 +1,178 @@
+/* =========================================
+   NUEVOS ESTILOS PARA INTERACTIVE PET DASHBOARD
+   ========================================= */
+
+.dash-sidebar .dash-tab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: none;
+    border-left: 4px solid transparent;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-secondary);
+    background: transparent;
+    gap: 0.6rem;
+    text-align: left;
+    outline: none;
+}
+
+.dash-sidebar .dash-tab-btn i {
+    width: 18px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+.dash-sidebar .dash-tab-btn:hover {
+    background: #f1f5f9;
+    color: var(--text-main);
+}
+
+.dash-sidebar .dash-tab-btn:hover i {
+    color: var(--primary);
+}
+
+/* â”€â”€ Drawer (Panel Lateral) â”€â”€ */
+.drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.drawer-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    max-width: 480px;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--modal-bg);
+    z-index: 201;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.1);
+}
+
+.drawer.is-open {
+    transform: translateX(0);
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 1rem 1rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.drawer-back,
+.drawer-close {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #f1f5f9;
+    border-radius: 50%;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.drawer-close:hover {
+    background: #FFEDEB;
+    color: var(--danger);
+}
+
+.drawer-title-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.drawer-title-wrap h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.drawer-title-wrap p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+}
+
+.drawer-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.drawer-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.drawer-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.drawer-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.dash-sidebar .dash-tab-btn.active {
+    background: white;
+    color: var(--primary);
+    border-left-color: var(--primary);
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.06);
+}
+
+.dash-sidebar .dash-tab-btn.active i {
+    color: var(--primary);
+}
+
+.dash-badge-count {
+    background: var(--primary-soft);
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    margin-left: auto;
+    transition: all 0.2s;
+}
+
+.dash-sidebar .dash-tab-btn.active .dash-badge-count {
+    background: var(--primary);
+    color: white;
+}
+
