@@ -4,8 +4,16 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.6.0 (Actual)
+### Versión 1.7.0 (Actual)
+Esta versión implementa las recomendaciones de aseguramiento de calidad y mantenibilidad del sistema:
+*   **Pruebas Automatizadas (PHPUnit):** Suite de pruebas unitarias y de integración que validan el flujo de autenticación, el helper de tokens CSRF, el middleware de Rate Limiting y las reglas críticas de negocio para evitar solapamiento de horarios en citas.
+*   **Integración Continua (CI):** Configuración de un pipeline en GitHub Actions (`.github/workflows/ci.yml`) que verifica sintaxis PHP, instala dependencias y corre las pruebas automáticamente en cada push o pull request.
+*   **Modularización de Estilos CSS:** Refactorización y división de las hojas de estilo más extensas (`medical-module.css`, `dashboard.css` y `calendario.css`) en sub-módulos atómicos ordenados por responsabilidad en directorios dedicados, simplificando el mantenimiento mediante directivas `@import`.
+*   **Auditoría de Seguridad y Credenciales:** Verificación y documentación formal del estado ficticio de las credenciales de prueba en `EmailService.example.php`, actualizando su diseño HTML al formato Slack-style unificado.
+
+### Versión 1.6.0
 Esta versión optimiza la experiencia de usuario del portal del propietario incorporando un Calendario de Salud interactivo con filtros, la visualización de la ficha clínica detallada de consultas, la exportación de registros de salud a PDF, y la edición autónoma de su información de contacto.
+
 
 *   **Edición Autónoma de Datos de Contacto:** Añadido un formulario colapsable en la vista de perfil que permite al propietario actualizar de manera segura su correo y teléfono a través de peticiones AJAX, con validaciones de formato y comprobación de correo en uso.
 *   **Ficha Clínica y Recetario en Detalle de Cita:** Al presionar una cita completada, se realiza una consulta AJAX para recuperar e ilustrar en un Bottom Sheet nativo premium los signos vitales, motivo de consulta, diagnóstico, plan de tratamiento y la receta de medicamentos. Si la cita fue completada sin detalles médicos, se muestra un estado explicativo y claro.

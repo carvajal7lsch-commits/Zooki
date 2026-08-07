@@ -1,0 +1,574 @@
+/* ── Drawers (Cita Panel Lateral) ── */
+.drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 1500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.drawer-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 480px;
+    max-width: 95vw;
+    background: white;
+    z-index: 1501;
+    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border-left: 1px solid #e2e8f0;
+}
+
+.drawer-header {
+    padding: 1.5rem 1.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    background: white;
+}
+
+.drawer-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.drawer-icon-box {
+    width: 36px;
+    height: 36px;
+    background: #E9F2FF;
+    color: #0C66E4;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drawer-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #172B4D;
+}
+
+.drawer-subtitle {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #626F86;
+}
+
+.drawer-close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #f1f5f9;
+    color: #626F86;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.drawer-close-btn:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem 1.75rem;
+}
+
+.drawer-field {
+    margin-bottom: 1.25rem;
+}
+
+.drawer-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #626F86;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.drawer-label i {
+    margin-right: 0.4rem;
+    color: #0C66E4;
+}
+
+.drawer-input-readonly {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem 1rem;
+    background: #E9ECEF;
+    border: 1.5px solid #DFE1E6;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: #495057;
+    cursor: not-allowed;
+}
+
+.drawer-input-time {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem 1rem;
+    background: #EFF2F5;
+    border: 1.5px solid #DFE1E6;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: #44546F;
+    cursor: default;
+    outline: none;
+}
+
+.drawer-info-helper {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    color: #626F86;
+}
+
+.drawer-info-helper i {
+    color: #579DFF;
+}
+
+.drawer-btn-search {
+    width: 100%;
+    padding: 0.6rem;
+    background: #F0F9FF;
+    color: #0C66E4;
+    border: 1.5px solid #BAE6FD;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.drawer-btn-search:hover {
+    background: #E0F2FE;
+}
+
+.drawer-sugerencias-box {
+    margin-top: 0.5rem;
+    display: none;
+}
+
+.drawer-sugerencias-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.drawer-btn-submit {
+    width: 100%;
+    padding: 0.85rem;
+    background: #0C66E4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.drawer-btn-submit:hover {
+    background: #0055CC;
+}
+
+
+/* ── Modal Reprogramar Cita ── */
+.modal-reprog-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    z-index: 2100;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    flex-direction: column;
+}
+
+.modal-reprog-container {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-reprog-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #F1F5F9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.modal-reprog-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-reprog-icon {
+    width: 38px;
+    height: 38px;
+    background: #FEF3C7;
+    color: #D97706;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.modal-reprog-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #172B4D;
+}
+
+.modal-reprog-subtitle {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #626F86;
+}
+
+.modal-reprog-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #F1F5F9;
+    color: #626F86;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-reprog-close:hover {
+    background: #EF4444;
+    color: white;
+}
+
+.modal-reprog-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modal-reprog-error {
+    display: none;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-size: 0.83rem;
+    color: #991B1B;
+    font-weight: 600;
+}
+
+.modal-reprog-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #626F86;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 0.4rem;
+}
+
+.modal-reprog-label i {
+    color: #0C66E4;
+    margin-right: 0.3rem;
+}
+
+.modal-reprog-select, .modal-reprog-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 0.9rem;
+    background: #F7F8F9;
+    border: 1.5px solid #DFE1E6;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: #172B4D;
+    outline: none;
+}
+
+.modal-reprog-duracion {
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    color: #626F86;
+}
+
+.modal-reprog-duracion-val {
+    background: #E9F2FF;
+    color: #0C66E4;
+    border-radius: 20px;
+    padding: 0.15rem 0.55rem;
+    font-weight: 700;
+}
+
+.modal-reprog-btn-slots {
+    width: 100%;
+    padding: 0.6rem;
+    background: #F0F9FF;
+    color: #0C66E4;
+    border: 1.5px solid #BAE6FD;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.modal-reprog-btn-slots:hover {
+    background: #E0F2FE;
+}
+
+.modal-reprog-slots-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.75rem;
+}
+
+.modal-reprog-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #F1F5F9;
+    display: flex;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.modal-reprog-btn-cancel {
+    flex: 1;
+    padding: 0.75rem;
+    background: white;
+    color: #44546F;
+    border: 1.5px solid #DFE1E6;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-reprog-btn-cancel:hover {
+    background: #F7F8F9;
+}
+
+.modal-reprog-btn-confirm {
+    flex: 2;
+    padding: 0.75rem;
+    background: linear-gradient(135deg,#F59E0B 0%,#D97706 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 8px rgba(245,158,11,0.3);
+}
+
+.modal-reprog-btn-confirm:hover {
+    background: linear-gradient(135deg,#D97706 0%,#B45309 100%);
+}
+
+
+/* ── Event Popover ── */
+.event-popover-custom {
+    display: none;
+    position: absolute;
+    z-index: 3000;
+    width: 280px;
+    background: white;
+    border: 1px solid #DFE1E6;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    overflow: hidden;
+}
+
+.popover-custom-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: #F7F8F9;
+    border-bottom: 1px solid #DFE1E6;
+}
+
+.popover-custom-tipo {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+}
+
+.popover-custom-close {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: #626F86;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.popover-custom-close:hover {
+    background: #FFEDEB;
+    color: #EF4444;
+}
+
+.popover-custom-body {
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.popover-custom-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: #172B4D;
+}
+
+.popover-custom-row i {
+    color: #579DFF;
+    margin-top: 2px;
+    flex-shrink: 0;
+    width: 14px;
+}
+
+.popover-custom-row.popover-estado-row i {
+    font-size: 0.6rem;
+}
+
+.popover-custom-estado-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 20px;
+}
+
+.popover-custom-footer {
+    padding: 0.65rem 1rem;
+    border-top: 1px solid #F1F5F9;
+}
+
+.popover-custom-btn-detail {
+    width: 100%;
+    padding: 0.55rem;
+    background: #E9F2FF;
+    color: #0C66E4;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.popover-custom-btn-detail:hover {
+    background: #0C66E4;
+    color: white;
+}
+
+
+/* ── Reprog Slot Chips ── */
+.reprog-slot-chip {
+    padding: 0.35rem 0.75rem;
+    background: #FEF3C7;
+    color: #D97706;
+    border: 1.5px solid #FDE68A;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reprog-slot-chip:hover,
+.reprog-slot-chip.selected {
+    background: #F59E0B;
+    color: white;
+    border-color: #F59E0B;
+}
+

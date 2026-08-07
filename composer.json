@@ -1,5 +1,9 @@
 {
     "require": {
         "phpmailer/phpmailer": "^7.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
     }
 }
+
