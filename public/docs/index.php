@@ -11,6 +11,16 @@ $docs_map = [
     'mer'     => __DIR__ . '/../../MER.md'
 ];
 
+// Obtener versión actual de Zooki desde README.md de manera dinámica
+$zooki_version = '1.7.1'; // Fallback
+$readme_path = $docs_map['readme'];
+if (file_exists($readme_path)) {
+    $readme_content = file_get_contents($readme_path);
+    if (preg_match('/###\s+Versi[oó]n\s+([\d\.]+)/i', $readme_content, $matches)) {
+        $zooki_version = $matches[1];
+    }
+}
+
 // Endpoint API para retornar el contenido Markdown de forma asíncrona
 if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
     $doc_id = $_GET['id'] ?? 'readme';
@@ -80,7 +90,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
             <i class="fa-solid fa-bars"></i>
         </button>
         <div class="mobile-logo">
-            <i class="fa-solid fa-paw brand-icon"></i>
+            <img src="../img/icon_blue.png" alt="Zooki Logo" class="brand-logo-img-mobile">
             <span>Zooki Docs</span>
         </div>
         <div class="placeholder-btn"></div>
@@ -91,7 +101,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
         <!-- Barra Lateral Izquierda (Navegación) -->
         <aside class="sidebar" id="sidebar-nav">
             <div class="sidebar-brand">
-                <i class="fa-solid fa-paw brand-icon"></i>
+                <img src="../img/icon_blue.png" alt="Zooki Logo" class="brand-logo-img">
                 <div class="brand-text">
                     <h1>Zooki</h1>
                     <span>Documentación Oficial</span>
@@ -158,7 +168,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
             </nav>
             
             <div class="sidebar-footer">
-                <p>Zooki v1.6.0 &copy; 2026</p>
+                <p>Zooki v<?php echo htmlspecialchars($zooki_version); ?> &copy; 2026</p>
                 <div class="footer-links">
                     <a href="../../" title="Ir al Sistema Zooki"><i class="fa-solid fa-arrow-left"></i> Volver a Zooki</a>
                 </div>

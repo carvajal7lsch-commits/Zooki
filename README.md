@@ -4,7 +4,14 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.7.0 (Actual)
+### Versión 1.7.1 (Actual)
+Esta versión implementa la primera versión beta de la landing page para el proyecto Zooki:
+*   **Landing Page (Beta):** Creación de una página de inicio moderna y responsiva basada en los colores, tipografía e identidad visual de la marca.
+*   **Acceso Directo a la Documentación:** Enlace directo integrado en la navegación para acceder de forma rápida y sencilla al portal de documentación del sistema.
+*   **Inicio de Sesión Unificado:** Botón de llamado a la acción (CTA) para redirigir a los usuarios al portal de login.
+*   **Separación de Lógica y SOLID:** Creación de un controlador dedicado `LandingController` y segregación de estilos CSS en `landing.css`, asegurando un código limpio y mantenible.
+
+### Versión 1.7.0
 Esta versión implementa las recomendaciones de aseguramiento de calidad y mantenibilidad del sistema:
 *   **Pruebas Automatizadas (PHPUnit):** Suite de pruebas unitarias y de integración que validan el flujo de autenticación, el helper de tokens CSRF, el middleware de Rate Limiting y las reglas críticas de negocio para evitar solapamiento de horarios en citas.
 *   **Integración Continua (CI):** Configuración de un pipeline en GitHub Actions (`.github/workflows/ci.yml`) que verifica sintaxis PHP, instala dependencias y corre las pruebas automáticamente en cada push o pull request.
