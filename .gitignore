@@ -114,6 +114,4 @@ webpack-stats.json
 # Archivos específicos del proyecto que no se suben
 ZOOKI_REGLAS.md
 temp_login.php
-backlog-zooki.md
-ERS.md
-FichaTecnica_Zooki.md
+
