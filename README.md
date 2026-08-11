@@ -4,7 +4,11 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.7.1 (Actual)
+### Versión 1.7.2 (Actual)
+Esta versión corrige la visualización y compatibilidad del portal de documentación del sistema:
+*   **Conversión de Tablas Grid a Markdown Estándar:** Migración de la Ficha Técnica (`FichaTecnica_Zooki.md`) y de los Requisitos (`ERS.md`) de formato grid a tablas estándar GFM, eliminando residuos de caracteres y garantizando un renderizado visual perfecto en el portal.
+
+### Versión 1.7.1
 Esta versión implementa la primera versión beta de la landing page para el proyecto Zooki:
 *   **Landing Page (Beta):** Creación de una página de inicio moderna y responsiva basada en los colores, tipografía e identidad visual de la marca.
 *   **Acceso Directo a la Documentación:** Enlace directo integrado en la navegación para acceder de forma rápida y sencilla al portal de documentación del sistema.

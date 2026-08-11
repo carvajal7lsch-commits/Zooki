@@ -2,38 +2,19 @@
 
 ***Sistema de Gestión Clínica para Veterinarias***
 
-+---------------------+------------------------------------------------+
-| > **Nombre del      | > Zooki -- App de Registro y Seguimiento de    |
-| > Proyecto**        | > Mascotas                                     |
-+=====================+================================================+
-| > **Propuesta N°**  | > 16 -- Competencia 220501094                  |
-+---------------------+------------------------------------------------+
-| > **Sector**        | > Salud Animal / Tecnología                    |
-+---------------------+------------------------------------------------+
-| > **Tipo de         | > Aplicación Web (SaaS)                        |
-| > Software**        |                                                |
-+---------------------+------------------------------------------------+
-| > **Institución**   | > SENA -- Centro Tecnológico de la Amazonia    |
-+---------------------+------------------------------------------------+
-| > **Programa        | > Análisis y Desarrollo de Software (ADSO)     |
-| > Formativo**       |                                                |
-+---------------------+------------------------------------------------+
-| > **Ficha**         | > 3142784                                      |
-+---------------------+------------------------------------------------+
-| > **Metodología**   | > Scrum + Tablero Kanban                       |
-+---------------------+------------------------------------------------+
-| > **N° de Sprints** | > 4 Sprints × 1 semana                         |
-+---------------------+------------------------------------------------+
-| > **Fecha de Inicio | > Abril 2026                                   |
-| > Estimada**        |                                                |
-+---------------------+------------------------------------------------+
-| > **Fecha de        | > Mayo 2026                                    |
-| > Entrega           |                                                |
-| > Estimada**        |                                                |
-+---------------------+------------------------------------------------+
-| > **Versión del     | > 1.0.0 -- Abril 2026                          |
-| > Documento**       |                                                |
-+---------------------+------------------------------------------------+
+| **Nombre del Proyecto** | Zooki -- App de Registro y Seguimiento de Mascotas |
+| --- | --- |
+| **Propuesta N°** | 16 -- Competencia 220501094 |
+| **Sector** | Salud Animal / Tecnología |
+| **Tipo de Software** | Aplicación Web (SaaS) |
+| **Institución** | SENA -- Centro Tecnológico de la Amazonia |
+| **Programa Formativo** | Análisis y Desarrollo de Software (ADSO) |
+| **Ficha** | 3142784 |
+| **Metodología** | Scrum + Tablero Kanban |
+| **N° de Sprints** | 4 Sprints × 1 semana |
+| **Fecha de Inicio Estimada** | Abril 2026 |
+| **Fecha de Entrega Estimada** | Mayo 2026 |
+| **Versión del Documento** | 1.0.0 -- Abril 2026 |
 
 # Descripción General del Proyecto
 
@@ -48,19 +29,12 @@
 > recordatorios de vacunación y desparasitación, gestiona la agenda de
 > citas y habilita un portal digital para los propietarios de mascotas.
 
-+-----------------------------------------------------------------------+
-| > **Problema que Resuelve**                                           |
-+=======================================================================+
-| -   Historias clínicas en papel → pérdida de datos y trazabilidad     |
-|     nula.                                                             |
-+-----------------------------------------------------------------------+
-| -   Propietarios olvidan fechas de vacunación y desparasitación.      |
-+-----------------------------------------------------------------------+
-| -   La clínica no tiene mecanismos de seguimiento proactivo ni        |
-|     fidelización.                                                     |
-+-----------------------------------------------------------------------+
-| -   No hay respaldo ni acceso remoto a la información del paciente.   |
-+-----------------------------------------------------------------------+
+| **Problema que Resuelve** |
+| --- |
+| - Historias clínicas en papel → pérdida de datos y trazabilidad nula. |
+| - Propietarios olvidan fechas de vacunación y desparasitación. |
+| - La clínica no tiene mecanismos de seguimiento proactivo ni fidelización. |
+| - No hay respaldo ni acceso remoto a la información del paciente. |
 
 ## Objetivo General
 
@@ -95,138 +69,32 @@
 > La siguiente tabla presenta las tecnologías propuestas para el
 > desarrollo de Zooki, organizadas por capa de la arquitectura.
 
-+-----------+---------------+----------+------------------------------+
-| **Capa**  | >             | > *      | **Justificación**            |
-|           |  **Tecnología | *Versión |                              |
-|           | > /           | > Refe   |                              |
-|           | >             | rencia** |                              |
-|           | Herramienta** |          |                              |
-+===========+===============+==========+==============================+
-| > **F     | > HTML5 +     | >        | > Estructura semántica y     |
-| rontend** | > CSS3        | Estándar | > estilos nativos del        |
-|           |               | > actual | > navegador. Sin             |
-|           |               |          | > dependencias externas;     |
-|           |               |          | > control total sobre el     |
-|           |               |          | > diseño.                    |
-+-----------+---------------+----------+------------------------------+
-|           | > JavaScript  | Nativo   | > Lógica del cliente con     |
-|           | > (ES6+)      |          | > módulos ES6, fetch API     |
-|           |               |          | > para peticiones al backend |
-|           |               |          | > y manipulación del DOM.    |
-+-----------+---------------+----------+------------------------------+
-|           | > CSS Grid +  | Nativo   | > Diseño responsivo sin      |
-|           | > Flexbox     |          | > necesidad de frameworks    |
-|           |               |          | > externos; layouts          |
-|           |               |          | > adaptativos para           |
-|           |               |          | > escritorio, tablet y       |
-|           |               |          | > móvil.                     |
-+-----------+---------------+----------+------------------------------+
-|           | > Fetch API / | Nativo   | > Comunicación asíncrona con |
-|           | > X           |          | > el backend PHP sin         |
-|           | MLHttpRequest |          | > librerías adicionales.     |
-+-----------+---------------+----------+------------------------------+
-| > **      | > PHP nativo  | 8.2+     | > Lenguaje del servidor con  |
-| Backend** |               |          | > arquitectura MVC           |
-|           |               |          | > implementada a mano.       |
-|           |               |          | > Dominio previo del equipo; |
-|           |               |          | > sin curva de aprendizaje   |
-|           |               |          | > de frameworks.             |
-+-----------+---------------+----------+------------------------------+
-|           | > PDO (PHP    | >        | > Capa de abstracción para   |
-|           | > Data        | Incluido | > consultas MySQL con        |
-|           | >             | > en PHP | > soporte de sentencias      |
-|           | > Objects)    |          | > preparadas; previene       |
-|           |               |          | > inyección SQL.             |
-+-----------+---------------+----------+------------------------------+
-|           | > Sesiones    | Nativo   | > Control de autenticación y |
-|           | > PHP + JWT   |          | > sesiones de usuario para   |
-|           | > manual      |          | > el panel administrativo y  |
-|           |               |          | > el portal del propietario. |
-+-----------+---------------+----------+------------------------------+
-|           | > PHPMailer   | 6.x      | > Librería liviana para      |
-|           |               |          | > envío de correos           |
-|           |               |          | > transaccionales vía SMTP:  |
-|           |               |          | > confirmaciones de cita y   |
-|           |               |          | > recordatorios.             |
-+-----------+---------------+----------+------------------------------+
-|           | > cURL (PHP)  | >        | > Integración con la API de  |
-|           |               | Incluido | > WhatsApp Business y        |
-|           |               | > en PHP | > cualquier servicio externo |
-|           |               |          | > mediante peticiones HTTP.  |
-+-----------+---------------+----------+------------------------------+
-|           | > Cron Jobs   | Linux    | > Tareas programadas en el   |
-|           | > del         | Cron     | > servidor propio para el    |
-|           | > servidor    |          | > envío automático de        |
-|           |               |          | > recordatorios de vacunas y |
-|           |               |          | > citas.                     |
-+-----------+---------------+----------+------------------------------+
-| > **Base  | > MySQL       | 8.x      | > Motor relacional robusto   |
-| > de      |               |          | > con soporte completo de    |
-| > Datos** |               |          | > integridad referencial,    |
-|           |               |          | > transacciones y índices.   |
-+-----------+---------------+----------+------------------------------+
-|           | > Consultas   | ---      | > Control total sobre las    |
-|           | > SQL nativas |          | > consultas sin abstracción  |
-|           | > vía PDO     |          | > de ORM; mayor comprensión  |
-|           |               |          | > del modelo de datos.       |
-+-----------+---------------+----------+------------------------------+
+| **Capa** | **Tecnología / Herramienta** | * *Versió Refe rencia** | **Justificación** |
+| --- | --- | --- | --- |
+| **F rontend** | HTML5 + CSS3 | Estándar actual | Estructura semántica y estilos nativos del navegador. Sin dependencias externas; control total sobre el diseño. |
+|  | JavaScript (ES6+) | Nativo | Lógica del cliente con módulos ES6, fetch API para peticiones al backend y manipulación del DOM. |
+|  | CSS Grid + Flexbox | Nativo | Diseño responsivo sin necesidad de frameworks externos; layouts adaptativos para escritorio, tablet y móvil. |
+|  | Fetch API / X MLHttpRequest | Nativo | Comunicación asíncrona co el backend PHP sin librerías adicionales. |
+| ** Backend** | PHP nativo | 8.2+ | Lenguaje del servidor con arquitectura MVC implementada a mano. Dominio previo del equipo; sin curva de aprendizaje de frameworks. |
+|  | PDO (PHP Data Objects) | Incluido en PHP | Capa de abstracción para consultas MySQL con soporte de sentencias preparadas; previene inyección SQL. |
+|  | Sesiones PHP + JWT manual | Nativo | Control de autenticación y sesiones de usuario para el panel administrativo y el portal del propietario. |
+|  | PHPMailer | 6.x | Librería liviana para envío de correos transaccionales vía SMTP: confirmaciones de cita y recordatorios. |
+|  | cURL (PHP) | Incluido en PHP | Integración con la API de WhatsApp Business y cualquier servicio externo mediante peticiones HTTP. |
+|  | Cron Jobs del servidor | Linux Cron | Tareas programadas en el servidor propio para el envío automático de recordatorios de vacunas y citas. |
+| **Base de Datos** | MySQL | 8.x | Motor relacional robusto con soporte completo de integridad referencial, transacciones y índices. |
+|  | Consultas SQL nativas vía PDO | --- | Control total sobre las consultas sin abstracción de ORM; mayor comprensión del modelo de datos. |
 
-+-----------+---------------+----------+------------------------------+
-| **Capa**  | >             | > *      | **Justificación**            |
-|           |  **Tecnología | *Versión |                              |
-|           | > /           | > Refe   |                              |
-|           | >             | rencia** |                              |
-|           | Herramienta** |          |                              |
-+===========+===============+==========+==============================+
-| > **Alma  | > Sistema de  | ---      | > Almacenamiento de imágenes |
-| cenamient | > archivos    |          | > y archivos clínicos        |
-| > o**     | > del         |          | > directamente en el         |
-|           | > servidor    |          | > servidor propio con        |
-|           |               |          | > control de acceso por PHP. |
-+-----------+---------------+----------+------------------------------+
-| > **S     | > Apache /    | > 2.4 /  | > Servidor web del equipo    |
-| ervidor** | > Nginx       | > 1.x    | > propio. Apache con         |
-|           |               |          | >                            |
-|           |               |          | > .htaccess para reescritura |
-|           |               |          | > de URLs limpias y control  |
-|           |               |          | > de acceso a carpetas.      |
-+-----------+---------------+----------+------------------------------+
-|           | > PHP-FPM     | 8.2+     | > Procesamiento eficiente de |
-|           |               |          | > scripts PHP en el          |
-|           |               |          | > servidor; configuración de |
-|           |               |          | > límites de subida de       |
-|           |               |          | > archivos.                  |
-+-----------+---------------+----------+------------------------------+
-| >         | > PHPMailer + | 6.x      | > Correos transaccionales    |
-| **Notific | > SMTP propio |          | > enviados desde el servidor |
-| aciones** |               |          | > usando cuenta SMTP         |
-|           |               |          | > configurada.               |
-+-----------+---------------+----------+------------------------------+
-|           | > WhatsApp    | Cloud    | > Envío de recordatorios vía |
-|           | > Business    | API      | > API de Meta usando cURL    |
-|           | > API (cURL)  |          | > desde PHP; plantillas de   |
-|           |               |          | > mensajes aprobadas.        |
-+-----------+---------------+----------+------------------------------+
-| > *       | > Git +       | ---      | > Control de versiones con   |
-| *DevOps** | > GitHub      |          | > ramas por sprint y pull    |
-|           |               |          | > requests para revisión de  |
-|           |               |          | > código.                    |
-+-----------+---------------+----------+------------------------------+
-|           | > FTP / SSH   | ---      | > Despliegue directo al      |
-|           | > al servidor |          | > servidor del equipo        |
-|           | > propio      |          | > mediante SSH o FTP seguro  |
-|           |               |          | > (SFTP).                    |
-+-----------+---------------+----------+------------------------------+
-| > **      | > Jira /      | ---      | > Tablero Kanban para        |
-| Gestión** | > Trello      |          | > gestión de sprints,        |
-|           |               |          | > backlog y seguimiento de   |
-|           |               |          | > tareas.                    |
-+-----------+---------------+----------+------------------------------+
-|           | > Figma       | ---      | > Diseño de prototipos y     |
-|           |               |          | > wireframes de alta         |
-|           |               |          | > fidelidad antes del Sprint |
-|           |               |          | > 1.                         |
-+-----------+---------------+----------+------------------------------+
+| **Capa** | **Tecnología / Herramienta** | * *Versió Refe rencia** | **Justificación** |
+| --- | --- | --- | --- |
+| **Alma cenamient o** | Sistema de archivos del servidor | --- | Almacenamiento de imágenes y archivos clínicos directamente en el servidor propio con control de acceso por PHP. |
+| **S ervidor** | Apache / Nginx | 2.4 / 1.x | Servidor web del equipo propio. Apache con .htaccess para reescritura de URLs limpias y control de acceso a carpetas. |
+|  | PHP-FPM | 8.2+ | Procesamiento eficiente de scripts PHP en el servidor; configuración de límites de subida de archivos. |
+| **Notific aciones** | PHPMailer + SMTP propio | 6.x | Correos transaccionales enviados desde el servidor usando cuenta SMTP configurada. |
+|  | WhatsApp Business API (cURL) | Cloud API | Envío de recordatorios ví API de Meta usando cURL desde PHP; plantillas de mensajes aprobadas. |
+| * *DevOps** | Git + GitHub | --- | Control de versiones con ramas por sprint y pull requests para revisión de código. |
+|  | FTP / SSH al servidor propio | --- | Despliegue directo al servidor del equipo mediante SSH o FTP seguro (SFTP). |
+| ** Gestión** | Jira / Trello | --- | Tablero Kanban para gestión de sprints, backlog y seguimiento de tareas. |
+|  | Figma | --- | Diseño de prototipos y wireframes de alta fidelidad antes del Sprint 1. |
 
 # Arquitectura del Sistema
 
@@ -235,31 +103,10 @@
 > backend PHP mediante peticiones HTTP, que a su vez interactúa con
 > MySQL usando PDO.
 
-+------------------+---------------------------------------------------+
-| > **Capa de      | > Vistas HTML con CSS propio para diseño          |
-| > Presentación   | > responsivo (Grid + Flexbox). Dos contextos: (1) |
-| > (Frontend --   | > Panel administrativo para                       |
-| > HTML + CSS +   | > veterinario/recepcionista, (2) Portal externo   |
-| > JS)**          | > para propietarios. JavaScript nativo (ES6+) con |
-|                  | > Fetch API para comunicación asíncrona con el    |
-|                  | > backend.                                        |
-+==================+===================================================+
-| > **Capa de      | > Arquitectura MVC implementada a mano con PHP    |
-| > Lógica de      | > puro. Módulos: Auth (sesiones), Mascotas,       |
-| > Negocio        | > Historia Clínica, Agenda, Notificaciones,       |
-| > (Backend --    | > Reportes. Cron Jobs del servidor para envío     |
-| > PHP 8.2        | > automático de recordatorios. PHPMailer para     |
-| > nativo)**      | > correos y cURL para integración con WhatsApp    |
-|                  | > Business API.                                   |
-+------------------+---------------------------------------------------+
-| > **Capa de      | > Base de datos relacional MySQL con consultas    |
-| > Datos (MySQL + | > SQL nativas vía PDO y sentencias preparadas.    |
-| > PDO)**         | > Entidades principales: Usuario, Propietario,    |
-|                  | > Mascota, Consulta, Vacuna, Cita. Archivos       |
-|                  | > clínicos almacenados en carpeta protegida del   |
-|                  | > servidor propio. Backups programados con Cron   |
-|                  | > Job + mysqldump.                                |
-+------------------+---------------------------------------------------+
+| **Capa de Presentación (Frontend -- HTML + CSS + JS)** | Vistas HTML con CSS propio para diseño responsivo (Grid + Flexbox). Dos contextos: (1) Panel administrativo para veterinario/recepcionista, (2) Portal externo para propietarios. JavaScript nativo (ES6+) con Fetch API para comunicación asíncrona con el backend. |
+| --- | --- |
+| **Capa de Lógica de Negocio (Backend -- PHP 8.2 nativo)** | Arquitectura MVC implementada a mano con PHP puro. Módulos: Auth (sesiones), Mascotas, Historia Clínica, Agenda, Notificaciones, Reportes. Cron Jobs del servidor para envío automático de recordatorios. PHPMailer para correos y cURL para integración con WhatsApp Business API. |
+| **Capa de Datos (MySQL + PDO)** | Base de datos relacional MySQL con consultas SQL nativas vía PDO y sentencias preparadas. Entidades principales: Usuario, Propietario, Mascota, Consulta, Vacuna, Cita. Archivos clínicos almacenados en carpeta protegida del servidor propio. Backups programados con Cron Job + mysqldump. |
 
 ## Flujo de Comunicación
 
@@ -271,252 +118,76 @@
 
 ## Patrones de Diseño Aplicados
 
-+-----------------+-----------------------------------------------------+
-| **Patrón**      | **Aplicación en VetTrack Pro**                      |
-+=================+=====================================================+
-| > **MVC**       | > Carpetas separadas: /models (consultas PDO),      |
-|                 | > /controllers (lógica), /views (HTML+PHP).         |
-+-----------------+-----------------------------------------------------+
-| > **Front       | > Archivo index.php como punto de entrada único;    |
-| > Controller**  | > enrutamiento manual por parámetros GET.           |
-+-----------------+-----------------------------------------------------+
-| > **DAO (Data   | > Clases PHP por entidad (MascotaDAO, ConsultaDAO)  |
-| > Access        | > que encapsulan todas las consultas SQL.           |
-| > Object)**     |                                                     |
-+-----------------+-----------------------------------------------------+
-| > **Singleton** | > Instancia única de conexión PDO reutilizada en    |
-|                 | > toda la aplicación.                               |
-+-----------------+-----------------------------------------------------+
-| > **Template    | > Plantillas PHP base (header, footer, sidebar)     |
-| > Method**      | > incluidas en cada vista para consistencia visual. |
-+-----------------+-----------------------------------------------------+
+| **Patrón** | **Aplicación en VetTrack Pro** |
+| --- | --- |
+| **MVC** | Carpetas separadas: /models (consultas PDO), /controllers (lógica), /views (HTML+PHP). |
+| **Front Controller** | Archivo index.php como punto de entrada único; enrutamiento manual por parámetros GET. |
+| **DAO (Data Access Object)** | Clases PHP por entidad (MascotaDAO, ConsultaDAO) que encapsulan todas las consultas SQL. |
+| **Singleton** | Instancia única de conexión PDO reutilizada en toda la aplicación. |
+| **Template Method** | Plantillas PHP base (header, footer, sidebar) incluidas en cada vista para consistencia visual. |
 
 # Equipo de Trabajo
 
-+-----------+------------+-----------------------------------+---------+
-| > **Rol   | > **Perfil | > **Responsabilidades             | **Dedic |
-| > Scrum** | > /        | > Principales**                   | ación** |
-|           | > Res      |                                   |         |
-|           | ponsable** |                                   |         |
-+===========+============+===================================+=========+
-| >         | >          | > Define y prioriza el Product    | >       |
-| **Product | Instructor | > Backlog. Valida los entregables | Parcial |
-| > Owner** | > SENA     | > de cada Sprint Review.          | > (revi |
-|           |            | > Representa al cliente           | siones) |
-|           |            | > (veterinaria).                  |         |
-+-----------+------------+-----------------------------------+---------+
-| > **Scrum | > Líder    | > Facilita las ceremonias Scrum.  | C       |
-| >         | > del      | > Elimina impedimentos. Garantiza | ompleta |
-|  Master** | > equipo   | > adherencia a la metodología y   |         |
-|           | > ADSO     | > calidad del proceso.            |         |
-+-----------+------------+-----------------------------------+---------+
-| > **Dev   | > Aprendiz | > Desarrollo de vistas            | C       |
-| > --      | > ADSO     | > HTML/CSS/JS. Diseño responsivo  | ompleta |
-| > F       |            | > del panel administrativo y      |         |
-| rontend** |            | > portal del propietario.         |         |
-+-----------+------------+-----------------------------------+---------+
-| > **Dev   | > Aprendiz | > Desarrollo del backend PHP con  | C       |
-| > --      | > ADSO     | > arquitectura MVC. Lógica de     | ompleta |
-| >         |            | > negocio, autenticación por      |         |
-| Backend** |            | > sesiones, Cron Jobs y           |         |
-|           |            | > PHPMailer.                      |         |
-+-----------+------------+-----------------------------------+---------+
-| > **Dev   | > Aprendiz | > Diseño del modelo relacional    | C       |
-| > -- BD & | > ADSO     | > MySQL. Clases DAO con PDO.      | ompleta |
-| >         |            | > Configuración del servidor      |         |
-|  DevOps** |            | > Apache/Nginx y despliegue vía   |         |
-|           |            | > SSH/FTP.                        |         |
-+-----------+------------+-----------------------------------+---------+
-| > **QA /  | > Aprendiz | > Diseño y ejecución de casos de  | >       |
-| >         | > ADSO     | > prueba funcionales y no         | Parcial |
-|  Tester** |            | > funcionales. Reporte y          | >       |
-|           |            | > seguimiento de bugs.            | (Sprint |
-|           |            |                                   | > 3-4)  |
-+-----------+------------+-----------------------------------+---------+
+| **Rol Scrum** | **Perfil / Res ponsable** | **Responsabilidades Principales** | **Dedic ación** |
+| --- | --- | --- | --- |
+| **Product Owner** | Instructor SENA | Define y prioriza el Product Backlog. Valida los entregables de cada Sprint Review. Representa al cliente (veterinaria). | Parcial (revi siones) |
+| **Scrum Master** | Líder del equipo ADSO | Facilita las ceremonias Scrum. Elimina impedimentos. Garantiza adherencia a la metodología y calidad del proceso. | C ompleta |
+| **Dev -- F rontend** | Aprendiz ADSO | Desarrollo de vistas HTML/CSS/JS. Diseño responsivo del panel administrativo y portal del propietario. | C ompleta |
+| **Dev -- Backend** | Aprendiz ADSO | Desarrollo del backend PHP con arquitectura MVC. Lógica de negocio, autenticación por sesiones, Cron Jobs y PHPMailer. | C ompleta |
+| **Dev -- BD & DevOps** | Aprendiz ADSO | Diseño del modelo relacional MySQL. Clases DAO con PDO. Configuración del servidor Apache/Nginx y despliegue vía SSH/FTP. | C ompleta |
+| **QA / Tester** | Aprendiz ADSO | Diseño y ejecución de casos de prueba funcionales y no funcionales. Reporte y seguimiento de bugs. | Parcial (Sprint 3-4) |
 
 ## Ceremonias Scrum
 
-+---------------+------------------------------------------------------+
-| >             | > **Descripción y Duración**                         |
-| **Ceremonia** |                                                      |
-+===============+======================================================+
-| > **Sprint    | > Inicio de cada sprint. Se seleccionan las          |
-| > Planning**  | > historias del backlog y se definen las tareas.     |
-|               | > Duración: 1 hora.                                  |
-+---------------+------------------------------------------------------+
-| > **Daily     | > Reunión diaria de 15 minutos. Cada miembro         |
-| > Standup**   | > responde: ¿Qué hice ayer? ¿Qué haré hoy? ¿Hay      |
-|               | > impedimentos?                                      |
-+---------------+------------------------------------------------------+
-| > **Sprint    | > Demostración del incremento funcional al Product   |
-| > Review**    | > Owner al final de cada sprint. Duración: 30        |
-|               | > minutos.                                           |
-+---------------+------------------------------------------------------+
-| > **Sprint    | Análisis de lo que funcionó, lo que falló y acciones |
-| > Re          | de mejora. Duración: 30 minutos.                     |
-| trospective** |                                                      |
-+---------------+------------------------------------------------------+
+| **Ceremonia** | **Descripción y Duración** |
+| --- | --- |
+| **Sprint Planning** | Inicio de cada sprint. Se seleccionan las historias del backlog y se definen las tareas. Duración: 1 hora. |
+| **Daily Standup** | Reunión diaria de 15 minutos. Cada miembro responde: ¿Qué hice ayer? ¿Qué haré hoy? ¿Hay impedimentos? |
+| **Sprint Review** | Demostración del incremento funcional al Product Owner al final de cada sprint. Duración: 30 minutos. |
+| **Sprint Re trospective** | Análisis de lo que funcionó, lo que falló y accion de mejora. Duración: 30 minutos. |
 
 # Cronograma de Desarrollo
 
 > El proyecto se divide en cuatro sprints de una semana, con entregables
 > funcionales al final de cada iteración.
 
-+------+------+--------------+-----------------------+---------------+
-| **   | **   | > **Módulo / | > **Actividades       | > *           |
-| Spri | Sema | > Enfoque**  | > Clave**             | *Entregable** |
-| nt** | na** |              |                       |               |
-+======+======+==============+=======================+===============+
-| **Sp | 1    | > Registro   | -   Diseño BD y       | > App con     |
-| rint |      | > de         |     modelo ER • CRUD  | > registro y  |
-| 1**  |      | > Mascotas y |     mascotas y        | > búsqueda    |
-|      |      | >            |     propietarios •    | > funcional   |
-|      |      | Propietarios |     Autenticación JWT |               |
-|      |      |              |     • Búsqueda en     |               |
-|      |      |              |     tiempo real •     |               |
-|      |      |              |     Pruebas unitarias |               |
-|      |      |              |     módulo 1          |               |
-+------+------+--------------+-----------------------+---------------+
-| **Sp | 2    | > Historia   | -   Módulo de         | > Historia    |
-| rint |      | > Clínica y  |     consultas •       | > clínica con |
-| 2**  |      | > Consultas  |     Registro de       | > adjuntos    |
-|      |      |              |     tratamientos •    | > operativa   |
-|      |      |              |     Subida de         |               |
-|      |      |              |     archivos clínicos |               |
-|      |      |              |     • Vista           |               |
-|      |      |              |     cronológica       |               |
-|      |      |              |     historial         |               |
-|      |      |              |                       |               |
-|      |      |              | -   Pruebas           |               |
-|      |      |              |     > integración     |               |
-+------+------+--------------+-----------------------+---------------+
-| **Sp | 3    | >            | -   Módulo de         | > Alertas     |
-| rint |      |  Calendario, |     vacunación •      | > automáticas |
-| 3**  |      | > Vacunas y  |     Desparasitación   | > enviándose  |
-|      |      | > R          |     programada • Cron | >             |
-|      |      | ecordatorios |     Jobs en servidor  | correctamente |
-|      |      |              |     • Integración     |               |
-|      |      |              |     PHPMailer (email) |               |
-|      |      |              |     • Integración     |               |
-|      |      |              |     WhatsApp API      |               |
-|      |      |              |     (cURL)            |               |
-+------+------+--------------+-----------------------+---------------+
-| **Sp | 4    | > Portal     | -   Agenda de citas • | > Sistema     |
-| rint |      | >            |     Portal externo    | > completo    |
-| 4**  |      | Propietario, |     propietario •     | > desplegado  |
-|      |      | > Citas y    |     Generación        | > y validado  |
-|      |      | > Reportes   |     reportes PDF •    |               |
-|      |      |              |     Pruebas de        |               |
-|      |      |              |     aceptación (UAT)  |               |
-|      |      |              |     • Despliegue en   |               |
-|      |      |              |     producción        |               |
-+------+------+--------------+-----------------------+---------------+
+| ** Spri nt** | ** Sema na** | **Módulo / Enfoque** | **Actividades Clave** | * *Entregable** |
+| --- | --- | --- | --- | --- |
+| **Sp rint 1** | 1 | Registro de Mascotas y Propietarios | - Diseño BD y modelo ER • CRUD mascotas y propietarios • Autenticación JWT • Búsqueda en tiempo real • Pruebas unitarias módulo 1 | App con registro y búsqueda funcional |
+| **Sp rint 2** | 2 | Historia Clínica y Consultas | - Módulo de consultas • Registro de tratamientos • Subida de archivos clínicos • Vista cronológica historial - Pruebas integración | Historia clínica adjuntos operativa |
+| **Sp rint 3** | 3 | Calendario, Vacunas y R ecordatorios | - Módulo de vacunación • Desparasitación programada • Cro Jobs en servidor • Integración PHPMailer (email) • Integración WhatsApp API (cURL) | Alertas automáti enviándose correctamente |
+| **Sp rint 4** | 4 | Portal Propietario, Citas y Reportes | - Agenda de citas � Portal externo propietario • Generación reportes PDF • Pruebas de aceptación (UAT) • Despliegue en producción | Sistema completo desplegado y validado |
 
 ## Hitos del Proyecto
 
-+------+-------------+-------+---------------------------------------+
-| **Hi | >           | **Sem | > **Criterio de Completitud**         |
-| to** |  **Nombre** | ana** |                                       |
-+======+=============+=======+=======================================+
-| H-01 | > **Fin     | Sem.  | > CRUD de mascotas funcional,         |
-|      | > Sprint    | 1     | > autenticación operativa             |
-|      | > 1**       |       |                                       |
-+------+-------------+-------+---------------------------------------+
-| H-02 | > **Fin     | Sem.  | > Historia clínica con archivos       |
-|      | > Sprint    | 2     | > adjuntos                            |
-|      | > 2**       |       |                                       |
-+------+-------------+-------+---------------------------------------+
-| H-03 | > **Fin     | Sem.  | > Recordatorios automáticos probados  |
-|      | > Sprint    | 3     | > en producción                       |
-|      | > 3**       |       |                                       |
-+------+-------------+-------+---------------------------------------+
-| H-04 | > **Fin     | Sem.  | > Sistema completo, UAT aprobada,     |
-|      | > Sprint    | 4     | > entregado al PO                     |
-|      | > 4**       |       |                                       |
-+------+-------------+-------+---------------------------------------+
+| **Hi to** | **Nombre** | **Sem ana** | **Criterio de Completitud** |
+| --- | --- | --- | --- |
+| H-01 | **Fin Sprint 1** | Sem. 1 | CRUD de mascotas funcional, autenticación operativa |
+| H-02 | **Fin Sprint 2** | Sem. 2 | Historia clínica con archivos adjuntos |
+| H-03 | **Fin Sprint 3** | Sem. 3 | Recordatorios automáticos probados en producción |
+| H-04 | **Fin Sprint 4** | Sem. 4 | Sistema completo, UAT aprobada, entregado al PO |
 
 # Análisis de Riesgos
 
 > Se identificaron los principales riesgos del proyecto, evaluados por
 > probabilidad e impacto, con sus respectivas estrategias de mitigación.
 
-+----+----------------+----+------+-----+----------------------------+
-| ** | > *            | *  | >    | **N | > **Estrategia de          |
-| ID | *Descripción** | *P |  **I | ive | > Mitigación**             |
-| ** |                | ro | mpac | l** |                            |
-|    |                | b. | to** |     |                            |
-|    |                | ** |      |     |                            |
-+====+================+====+======+=====+============================+
-| R- | > Retrasos en  | ** | **Al | **  | > Dividir tareas en        |
-| 01 | > el           | Al | to** | Crí | > subtareas ≤ 4 horas en   |
-|    | >              | ta |      | tic | > el Sprint Planning.      |
-|    | > desarrollo   | ** |      | o** | > Revisar velocidad del    |
-|    | > por          |    |      |     | > equipo en Daily.         |
-|    | >              |    |      |     |                            |
-|    |  subestimación |    |      |     |                            |
-|    | > de tareas    |    |      |     |                            |
-+----+----------------+----+------+-----+----------------------------+
-| R- | > Integración  | *  | **Al | **  | > Preparar cuenta de       |
-| 02 | > con WhatsApp | *M | to** | Alt | > prueba con anticipación. |
-|    | > Business API | ed |      | o** | > Tener email como canal   |
-|    | > denegada o   | ia |      |     | > alternativo confirmado   |
-|    | > demorada     | ** |      |     | > desde Sprint 1.          |
-+----+----------------+----+------+-----+----------------------------+
-| R- | > Pérdida de   | ** | > *  | **  | > Configurar backups       |
-| 03 | > datos por    | Ba | *Muy | Alt | > diarios automatizados    |
-|    | > falla en el  | ja | > Al | o** | > desde el Sprint 1.       |
-|    | > servidor de  | ** | to** |     | > Probar restauración en   |
-|    | > BD           |    |      |     | > Sprint 3.                |
-+----+----------------+----+------+-----+----------------------------+
-| R- | > Baja         | *  | **Al | **  | > Involucrar al usuario    |
-| 04 | > adopción por | *M | to** | Alt | > real desde Sprint 2 para |
-|    | > parte del    | ed |      | o** | > validaciones tempranas.  |
-|    | > veterinario  | ia |      |     | > Diseñar UI lo más        |
-|    | > (resistencia | ** |      |     | > intuitiva posible.       |
-|    | > al cambio)   |    |      |     |                            |
-+----+----------------+----+------+-----+----------------------------+
-| R- | > Vu           | ** | > *  | **  | > Implementar RBAC desde   |
-| 05 | lnerabilidades | Ba | *Muy | Alt | > Sprint 1. Auditoría de   |
-|    | > de seguridad | ja | > Al | o** | > rutas en Sprint 2.       |
-|    | > (acceso no   | ** | to** |     | > Pruebas de penetración   |
-|    | > autorizado a |    |      |     | > básicas en Sprint 4.     |
-|    | > historias    |    |      |     |                            |
-|    | > clínicas)    |    |      |     |                            |
-+----+----------------+----+------+-----+----------------------------+
-| R- | > Problemas de | ** | *    | **M | > Definir navegadores      |
-| 06 | >              | Ba | *Med | edi | > soportados en Sprint 1.  |
-|    | compatibilidad | ja | io** | o** | > Pruebas cross-browser al |
-|    | > entre        | ** |      |     | > final de cada sprint.    |
-|    | > navegadores  |    |      |     |                            |
-+----+----------------+----+------+-----+----------------------------+
-| R- | > Carga        | ** | *    | **M | > Limitar tamaño de        |
-| 07 | > excesiva de  | Ba | *Med | edi | > archivo a 10 MB.         |
-|    | > archivos     | ja | io** | o** | > Configurar               |
-|    | > clínicos     | ** |      |     | > upload_max_filesize y    |
-|    | >              |    |      |     | > post_max_size en php.ini |
-|    | > colapsa el   |    |      |     | > desde Sprint 2.          |
-|    | >              |    |      |     |                            |
-|    | >              |    |      |     |                            |
-|    | almacenamiento |    |      |     |                            |
-+----+----------------+----+------+-----+----------------------------+
-| R- | > Cambio de    | *  | **Al | **  | > Gestionar cambios solo   |
-| 08 | > requisitos a | *M | to** | Alt | > entre sprints a través   |
-|    | > mitad del    | ed |      | o** | > del Product Owner.       |
-|    | > proyecto     | ia |      |     | > Congelar requisitos al   |
-|    |                | ** |      |     | > inicio de cada sprint.   |
-+----+----------------+----+------+-----+----------------------------+
+| ** ID ** | * *Descripción** | * *P ro b. ** | **I mpac to** | **N ive l** | **Estrategia de Mitigación** |
+| --- | --- | --- | --- | --- | --- |
+| R- 01 | Retrasos en el desarrollo por subestimación de tareas | ** Al ta ** | **Al to** | ** Crí tic o** | Dividir tareas en subtareas ≤ 4 horas en el Sprint Planning. Revisar velocidad del equipo en Daily. |
+| R- 02 | Integración con WhatsApp Business API denegada o demorada | * *M ed ia ** | **Al to** | ** Alt o** | Preparar cuenta de prueba con anticipación. Tener email como canal alternativo confirmado desde Sprint 1. |
+| R- 03 | Pérdida de datos por falla en el servidor de BD | ** Ba ja ** | * *Muy Al to** | ** Alt o** | Configurar backups diarios automatizados desde el Sprint 1. Probar restauración en Sprint 3. |
+| R- 04 | Baja adopción por parte del veterinario (resistencia al cambio) | * *M ed ia ** | **Al to** | ** Alt o** | Involucrar al usuario real desde Sprint 2 para validaciones tempranas. Diseñar UI lo más intuitiva posible. |
+| R- 05 | Vu lnerabilidades de seguridad (acceso no autorizado a historias clínicas) | ** Ba ja ** | * *Muy Al to** | ** Alt o** | Implementar RBAC desde Sprint 1. Auditoría de rutas en Sprint 2. Pruebas de penetración básicas en Sprint 4. |
+| R- 06 | Problemas de compatibilidad entre navegadores | ** Ba ja ** | * *Med io** | **M edi o** | Definir navegadores soportados en Sprint 1. Pruebas cross-browser al final de cada sprint. |
+| R- 07 | Carga excesiva de archivos clínicos colapsa el almacenamiento | ** Ba ja ** | * *Med io** | **M edi o** | Limitar tamaño de archivo a 10 MB. Configurar upload_max_filesize y post_max_size en php.ini desde Sprint 2. |
+| R- 08 | Cambio de requisitos a mitad del proyecto | * *M ed ia ** | **Al to** | ** Alt o** | Gestionar cambios solo entre sprints a través del Product Owner. Congelar requisitos al inicio de cada sprint. |
 
-+-----------------------------------------------------------------------+
-| > **Leyenda de Niveles de Riesgo**                                    |
-+=======================================================================+
-| -   Crítico / Alto: Requiere plan de acción inmediato y seguimiento   |
-|     semanal.                                                          |
-+-----------------------------------------------------------------------+
-| -   Medio: Monitorear en cada Sprint Review; activar plan si aumenta  |
-|     probabilidad.                                                     |
-+-----------------------------------------------------------------------+
-| -   Bajo: Registrar y revisar al final de cada sprint.                |
-+-----------------------------------------------------------------------+
+| **Leyenda de Niveles de Riesgo** |
+| --- |
+| - Crítico / Alto: Requiere plan de acción inmediato y seguimiento semanal. |
+| - Medio: Monitorear en cada Sprint Review; activar plan si aumenta probabilidad. |
+| - Bajo: Registrar y revisar al final de cada sprint. |
 
 # Presupuesto Estimado
 
@@ -527,66 +198,27 @@
 
 ## Recurso Humano
 
-+--------------+-------+-------+-----+-------+-----------+-----------+
-| **Rol**      | *     | > *   | **  | > **  | >         | > **Valor |
-|              | *N°** | *Hora | Spr | Total |  **Tarifa | > Total   |
-|              |       | s/Spr | int | > Ho  | > Ref.    | > (COP)** |
-|              | **    | >     | s** | ras** | >         |           |
-|              | Perso | int** |     |       | (COP/h)** |           |
-|              | nas** |       |     |       |           |           |
-+==============+=======+=======+=====+=======+===========+===========+
-| > Scrum      | 1     | 10    | 4   | 40    | \$ 25.000 | \$        |
-| > Master     |       |       |     |       |           | 1.000.000 |
-+--------------+-------+-------+-----+-------+-----------+-----------+
-| > D          | 1     | 40    | 4   | 160   | \$ 20.000 | \$        |
-| esarrollador |       |       |     |       |           | 3.200.000 |
-| > Frontend   |       |       |     |       |           |           |
-+--------------+-------+-------+-----+-------+-----------+-----------+
-| > D          | 1     | 40    | 4   | 160   | \$ 20.000 | \$        |
-| esarrollador |       |       |     |       |           | 3.200.000 |
-| > Backend    |       |       |     |       |           |           |
-+--------------+-------+-------+-----+-------+-----------+-----------+
-| > Dev BD &   | 1     | 30    | 4   | 120   | \$ 20.000 | \$        |
-| > DevOps     |       |       |     |       |           | 2.400.000 |
-+--------------+-------+-------+-----+-------+-----------+-----------+
-| > QA /       | 1     | 20    | 2   | 40    | \$ 18.000 | \$        |
-| > Tester     |       |       |     |       |           | 720.000   |
-+--------------+-------+-------+-----+-------+-----------+-----------+
-| > **TOTAL    |       |       |     | 520 h |           | \$        |
-| > RECURSO    |       |       |     |       |           | 1         |
-| > HUMANO**   |       |       |     |       |           | 0.520.000 |
-+--------------+-------+-------+-----+-------+-----------+-----------+
+| **Rol** | * *N°** ** Perso nas** | * *Hora s/Spr int** | ** Spr int s** | ** Total Ho ras** | **Tarifa Ref. (COP/h)** | **Valor Total (COP)** |
+| --- | --- | --- | --- | --- | --- | --- |
+| Scrum Master | 1 | 10 | 4 | 40 | \$ 25.000 | \$ 1.000.000 |
+| D esarrollador Frontend | 1 | 40 | 4 | 160 | \$ 20.000 | \$ 3.200.000 |
+| D esarrollador Backend | 1 | 40 | 4 | 160 | \$ 20.000 | \$ 3.200.000 |
+| Dev BD & DevOps | 1 | 30 | 4 | 120 | \$ 20.000 | \$ 2.400.000 |
+| QA / Tester | 1 | 20 | 2 | 40 | \$ 18.000 | \$ 720.000 |
+| **TOTAL RECURSO HUMANO** |  |  |  | 520 h |  | \$ 1 0.520.000 |
 
 ## Infraestructura y Herramientas
 
-+----------------------+--------------+------------+------+----------+
-| > **Recurso /        | **Plan /     | > **Costo  | *    | **Total  |
-| > Servicio**         | Tier**       | > Mensual  | *Mes | (COP)**  |
-|                      |              | > (COP)**  | es** |          |
-+======================+==============+============+======+==========+
-| > Servidor propio    | Inf          | \$ 0       | 1    | \$ 0     |
-| > (hosting)          | raestructura |            |      |          |
-|                      | propia       |            |      |          |
-+----------------------+--------------+------------+------+----------+
-| > MySQL (BD)         | Incluido en  | \$ 0       | 1    | \$ 0     |
-|                      | servidor     |            |      |          |
-+----------------------+--------------+------------+------+----------+
-| > Cloudinary         | Free (25 GB) | \$ 0       | 1    | \$ 0     |
-| > (almacenamiento)   |              |            |      |          |
-+----------------------+--------------+------------+------+----------+
-| > PHPMailer (email)  | Open source  | \$ 0       | 1    | \$ 0     |
-+----------------------+--------------+------------+------+----------+
-| > WhatsApp Business  | Cloud API    | Variable\* | 1    | \~ \$    |
-| > API                | (Meta)       |            |      | 15.000   |
-+----------------------+--------------+------------+------+----------+
-| > GitHub             | Free         | \$ 0       | 1    | \$ 0     |
-| > (repositorio)      |              |            |      |          |
-+----------------------+--------------+------------+------+----------+
-| > Figma (diseño UI)  | Free         | \$ 0       | 1    | \$ 0     |
-+----------------------+--------------+------------+------+----------+
-| > **TOTAL            |              |            |      | \~ \$    |
-| > INFRAESTRUCTURA**  |              |            |      | 40.000   |
-+----------------------+--------------+------------+------+----------+
+| **Recurso / Servicio** | **Plan / Tier** | **Costo Mensual (COP)** | * *Mes es** | **Total (COP)** |
+| --- | --- | --- | --- | --- |
+| Servidor propio (hosting) | Inf raestructura propia | \$ 0 | 1 | \$ 0 |
+| MySQL (BD) | Incluido en servidor | \$ 0 | 1 | \$ 0 |
+| Cloudinary (almacenamiento) | Free (25 GB) | \$ 0 | 1 | \$ 0 |
+| PHPMailer (email) | Open source | \$ 0 | 1 | \$ 0 |
+| WhatsApp Business API | Cloud API (Meta) | Variable\* | 1 | \~ \$ 15.000 |
+| GitHub (repositorio) | Free | \$ 0 | 1 | \$ 0 |
+| Figma (diseño UI) | Free | \$ 0 | 1 | \$ 0 |
+| **TOTAL INFRAESTRUCTURA** |  |  |  | \~ \$ 40.000 |
 
 > \* Costo aproximado basado en 200 mensajes de prueba en el mes de
 > desarrollo.
@@ -595,77 +227,34 @@
 
 ##  {#section .unnumbered}
 
-+-------------------+--------------+-----------------------------------+
-| **Categoría**     | > **Valor    | **Observación**                   |
-|                   | > Estimado   |                                   |
-|                   | > (COP)**    |                                   |
-+===================+==============+===================================+
-| > **Recurso       | \$           | > Valorado a tarifas junior de    |
-| > Humano          | 10.520.000   | > mercado. En contexto SENA es    |
-| > (referencial)** |              | > sin costo directo.              |
-+-------------------+--------------+-----------------------------------+
-| >                 | \~ \$ 40.000 | > Servicios cloud con planes      |
-| **Infraestructura |              | > gratuitos para prototipo        |
-| > y               |              | > académico.                      |
-| > Herramientas**  |              |                                   |
-+-------------------+--------------+-----------------------------------+
-| **Imprevistos     | \~ \$        | > Reserva para contingencias      |
-| (10%)**           | 1.056.000    | > técnicas o de infraestructura.  |
-+-------------------+--------------+-----------------------------------+
-| **TOTAL GENERAL** | \~ \$        | > Presupuesto referencial para    |
-|                   | 11.616.000   | > presentación del proyecto       |
-|                   |              | > formativo.                      |
-+-------------------+--------------+-----------------------------------+
+| **Categoría** | **Valor Estimado (COP)** | **Observación** |
+| --- | --- | --- |
+| **Recurso Humano (referencial)** | \$ 10.520.000 | Valorado a tarifas junior de mercado. En contexto SENA es sin costo directo. |
+| **Infraestructura y Herramientas** | \~ \$ 40.000 | Servicios cloud con planes gratuitos para prototipo académico. |
+| **Imprevistos (10%)** | \~ \$ 1.056.000 | Reserva para contingencias técnicas o de infraestructura. |
+| **TOTAL GENERAL** | \~ \$ 11.616.000 | Presupuesto referencial para presentación del proyecto formativo. |
 
 # Resultados Esperados e Impacto
 
-+-----------------------------------------------------------------------+
-| > **Impacto Esperado en la Clínica Veterinaria**                      |
-+=======================================================================+
-| -   Reducción del 90% en el uso de papel para gestión de historias    |
-|     clínicas.                                                         |
-+-----------------------------------------------------------------------+
-| -   Disminución de citas y vacunaciones olvidadas gracias a           |
-|     recordatorios automáticos.                                        |
-+-----------------------------------------------------------------------+
-| -   Mayor fidelización de propietarios mediante el portal de acceso a |
-|     fichas digitales.                                                 |
-+-----------------------------------------------------------------------+
-| -   Trazabilidad completa de la salud de cada paciente desde su       |
-|     primera consulta.                                                 |
-+-----------------------------------------------------------------------+
-| -   Ahorro de tiempo en búsqueda y consulta de información vs.        |
-|     gestión manual.                                                   |
-+-----------------------------------------------------------------------+
+| **Impacto Esperado en la Clínica Veterinaria** |
+| --- |
+| - Reducción del 90% en el uso de papel para gestión de historias clínicas. |
+| - Disminución de citas y vacunaciones olvidadas gracias a recordatorios automáticos. |
+| - Mayor fidelización de propietarios mediante el portal de acceso a fichas digitales. |
+| - Trazabilidad completa de la salud de cada paciente desde su primera consulta. |
+| - Ahorro de tiempo en búsqueda y consulta de información vs. gestión manual. |
 
 ## Indicadores de Éxito
 
-+-----------------+-----------------------------------------------------+
-| > **Indicador** | **Meta al Finalizar el Sprint 4**                   |
-+=================+=====================================================+
-| > **RF Alta     | > 100% de los 11 requisitos funcionales de alta     |
-| >               | > prioridad.                                        |
-| implementados** |                                                     |
-+-----------------+-----------------------------------------------------+
-| > **RNF Alta    | > 100% de los 6 requisitos no funcionales de alta   |
-| >               | > prioridad.                                        |
-| implementados** |                                                     |
-+-----------------+-----------------------------------------------------+
-| > **Cobertura   | > Mínimo 60% de cobertura unitaria en backend.      |
-| > de pruebas**  |                                                     |
-+-----------------+-----------------------------------------------------+
-| > **Tiempo de   | > \< 3 segundos para búsquedas y consultas con red  |
-| > respuesta**   | > ≥ 5 Mbps.                                         |
-+-----------------+-----------------------------------------------------+
-| > **D           | > ≥ 95% en horario de operación durante la semana   |
-| isponibilidad** | > de UAT.                                           |
-+-----------------+-----------------------------------------------------+
-| >               | > Usuario nuevo registra mascota y agenda cita en   |
-|  **Usabilidad** | > \< 10 minutos.                                    |
-+-----------------+-----------------------------------------------------+
-| > **Defectos    | > 0 defectos Severity 1 abiertos en entrega final.  |
-| > críticos**    |                                                     |
-+-----------------+-----------------------------------------------------+
+| **Indicador** | **Meta al Finalizar el Sprint 4** |
+| --- | --- |
+| **RF Alta implementados** | 100% de los 11 requisitos funcionales de alta prioridad. |
+| **RNF Alta implementados** | 100% de los 6 requisitos no funcionales de alta prioridad. |
+| **Cobertura de pruebas** | Mínimo 60% de cobertura unitaria en backend. |
+| **Tiempo de respuesta** | \< 3 segundos para búsquedas y consultas con red ≥ 5 Mbps. |
+| **D isponibilidad** | ≥ 95% en horario de operación durante la semana de UAT. |
+| **Usabilidad** | Usuario nuevo registra mascota y agenda cita en \< 10 minutos. |
+| **Defectos críticos** | 0 defectos Severity 1 abiertos en entrega final. |
 
 ## Entregables Finales del Proyecto
 

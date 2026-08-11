@@ -20,7 +20,7 @@ Proyecto: Zooki- Propuesta 16 -- App Registro y Seguimiento de Mascotas
   **Fecha**    **Revisión**   **Autor**                 **Verificado dep.
                                                         calidad.**
   ------------ -------------- ------------------------- ---------------------------
-  27/04/2026   1.0            Juan Sebastian Carvajal   
+  27/04/2026   1.0            Juan Sebastian Carvajal
 
   ---------------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ Documento validado por las partes en fecha:
   -----------------------------------------------------------------------
   Por el cliente                      Por la empresa suministradora
   ----------------------------------- -----------------------------------
-                                      
+
 
   Fdo. D./ Dña                        Fdo. D./Dña
   -----------------------------------------------------------------------
@@ -178,7 +178,7 @@ abarca:
                         sistema web
 
   Información de        Carvajal7lsch@gmail.com
-  contacto              
+  contacto
 
   Aprobación            Responsable de validar la versión final del
                         sistema y entregar el documento de requisitos.
@@ -251,63 +251,19 @@ abarca:
 > fichas en cartón, agendas físicas y la ausencia total de mecanismos de
 > seguimiento proactivo al paciente animal.
 
-+-----------------------------------------------------------------------+
-| **Contexto Del problema**                                             |
-+=======================================================================+
-| -   **Ubicación:** Clínicas veterinarias de pequeña escala en Neiva,  |
-|     Huila, Colombia.                                                  |
-+-----------------------------------------------------------------------+
-| -   **Problema central:** Historias clínicas en papel → pérdida de    |
-|     información y trazabilidad nula.                                  |
-+-----------------------------------------------------------------------+
-| -   **Consecuencia directa:** Los propietarios olvidan fechas de      |
-|     vacunación y desparasitación.                                     |
-+-----------------------------------------------------------------------+
-| -   **Impacto en el negocio:** La veterinaria pierde oportunidades de |
-|     seguimiento y fidelización                                        |
-+-----------------------------------------------------------------------+
-| -   **Solución propuesta:** Aplicación web con recordatorios          |
-|     automáticos y portal del propietario.                             |
-+-----------------------------------------------------------------------+
+| **Contexto Del problema** |
+| --- |
+| - **Ubicación:** Clínicas veterinarias de pequeña escala en Neiva Huila, Colombia. |
+| - **Problema central:** Historias clínicas en papel → pérdida de información y trazabilidad nula. |
+| - **Consecuencia directa:** Los propietarios olvidan fechas de vacunación y desparasitación. |
+| - **Impacto en el negocio:** La veterinaria pierde oportunidades de seguimiento y fidelización |
+| - **Solución propuesta:** Aplicación web con recordatorios automáticos y portal del propietario. |
 
 ## Funciones principales
 
-+-----------------------+------------------------+---------------------+
-| ■ **Gestión de        | ■ **Historia Clínica** | **■ Agenda          |
-| Pacientes**           |                        | Inteligente**       |
-|                       | -   Consultas y        |                     |
-| -   Registro de       |     diagnósticos       | -   Citas con       |
-|     mascotas y        |                        |     disponibilidad  |
-|     propietarios      | -   Tratamientos y     |                     |
-|                       |     medicamentos       | -   Calendario de   |
-| -   Fotografía y      |                        |     vacunas         |
-|     datos biométricos | -   Archivos clínicos  |                     |
-|                       |     (imágenes)         | -   Desparasitación |
-| -   Búsqueda en       |                        |     programada      |
-|     tiempo real       | ```{=html}             |                     |
-|                       | <!-- -->               | ```{=html}          |
-| -   Ficha completa    | ```                    | <!-- -->            |
-|     del propietario   | -   Trazabilidad de    | ```                 |
-|                       |     atenciones         | -   Recordatorios   |
-|                       |                        |     automáticos     |
-+=======================+========================+=====================+
-| ■ **Notificaciones**  | ■ **Portal             | **■ Reportes**      |
-|                       | Propietario**          |                     |
-| -   Envío por email   |                        | -   Pacientes por   |
-|                       | -   Acceso a ficha     |     especie         |
-| -   Mensajes WhatsApp |     digital            |                     |
-|                       |                        | -   Citas del       |
-| -   Alertas           | -   Historial de       |     período         |
-|     configurables     |     consultas          |                     |
-|                       |                        | -   Vacunaciones    |
-| -   Historial de      | -   Próximas citas     |     pendientes      |
-|     envíos            |                        |                     |
-|                       | ```{=html}             | -   Exportación PDF |
-|                       | <!-- -->               |                     |
-|                       | ```                    |                     |
-|                       | -   Descarga de        |                     |
-|                       |     documentos         |                     |
-+-----------------------+------------------------+---------------------+
+| ■ **Gestión de Pacientes** - Registro de mascotas y propietarios - Fotografía y datos biométricos - Búsqueda en tiempo real - Ficha completa del propietario | ■ **Historia Clín - Consultas y diagnósticos - Tratamientos y medicamentos - Archivos clínicos (imágenes) ```{=html} <!-- --> ``` - Trazabilidad de atenciones | ca** **■ Agenda Inteligente** - Citas con disponibilidad - Calendario de vacunas - Desparasitació programada ```{=html} <!-- --> ``` - Recordatorios automáticos |
+| --- | --- | --- |
+| ■ **Notificaciones** - Envío por email - Mensajes WhatsApp - Alertas configurables - Historial de envíos | ■ **Portal Propietario** - Acceso a ficha digital - Historial de consultas - Próximas citas ```{=html} <!-- --> ``` - Descarga de documentos | **■ Reportes** - Pacientes por especie - Citas del período - Vacunaciones pendientes - Exportación PDF |
 
 ## Características de los usuarios
 
@@ -389,7 +345,7 @@ abarca:
   (S3/Cloudinary)**    y tiempo de expiración.
 
   **Navegadores        Chrome ≥ 90, Firefox ≥ 88, Edge ≥ 90, Safari ≥ 14.
-  soportados**         
+  soportados**
 
   **Base de datos**    MySQL/PostgreSQL o MongoDB, según decisión del
                        equipo en Sprint 1.
@@ -406,31 +362,31 @@ abarca:
   **RF-01**   El sistema debe permitir     **Alta**        Registro aparece en
               registrar una mascota con:                   búsqueda con todos los
               nombre, especie, raza, fecha                 campos correctos.
-              de nacimiento, peso, sexo,                   
-              color y fotografía                           
-              principal.                                   
+              de nacimiento, peso, sexo,
+              color y fotografía
+              principal.
 
   **RF-02**   Cada mascota debe vincularse **Alta**        No es posible guardar una
               a un propietario con: nombre                 mascota sin propietario
               completo, documento,                         asignado.
-              dirección, teléfono, correo                  
-              y WhatsApp (opcional).                       
+              dirección, teléfono, correo
+              y WhatsApp (opcional).
 
   **RF-03**   Permitir actualizar datos de **Alta**        Auditoría de cambios
               la ficha registrando                         visible en la ficha.
-              automáticamente fecha y                      
-              usuario del cambio.                          
+              automáticamente fecha y
+              usuario del cambio.
 
   **RF-04**   Buscar mascotas por nombre,  **Alta**        Resultados en \< 2 s con
               propietario, número de                       mínimo 3 caracteres
               documento o ficha interna,                   ingresados.
-              con resultados en tiempo                     
-              real.                                        
+              con resultados en tiempo
+              real.
 
   **RF-05**   Registrar múltiples mascotas **Media**       Desde el perfil del
               para un mismo propietario,                   propietario se listan
               visualizadas agrupadas en su                 todas sus mascotas.
-              perfil.                                      
+              perfil.
 
   **RF-06**   Marcar mascota como inactiva **Media**       Mascota inactiva no
               (fallecida/retirada) sin                     aparece en búsquedas
@@ -447,29 +403,29 @@ abarca:
   **RF-07**   Registrar consultas con:     **Alta**        Consulta visible en
               fecha/hora, motivo,                          historial cronológico de
               anamnesis, examen físico                     la mascota.
-              (peso, temperatura, FC),                     
-              diagnóstico y plan de                        
-              tratamiento.                                 
+              (peso, temperatura, FC),
+              diagnóstico y plan de
+              tratamiento.
 
   **RF-08**   Adjuntar archivos clínicos   **Alta**        Archivos se almacenan y
               (JPG, PNG, PDF) de máximo 10                 son descargables desde la
               MB por archivo en cada                       consulta.
-              consulta.                                    
+              consulta.
 
   **RF-09**   Registrar tratamientos con:  **Alta**        Tratamiento queda
               medicamento, dosis, vía de                   vinculado a la consulta.
-              administración, duración y                   
-              observaciones.                               
+              administración, duración y
+              observaciones.
 
   **RF-10**   Generar número de historia   **Media**       Número no se repite en
               clínica único y consecutivo                  toda la base de datos.
-              por mascota en su primera                    
-              consulta.                                    
+              por mascota en su primera
+              consulta.
 
   **RF-11**   Visualizar resumen           **Media**       Vista carga en \< 3 s para
               cronológico de todas las                     historiales de hasta 100
               consultas en una vista única                 consultas.
-              con acordeón expandible.                     
+              con acordeón expandible.
   -----------------------------------------------------------------------------------
 
 ### Módulo 3: Calendario de Vacunación y Recordatorios (Sprint 3)
@@ -486,25 +442,25 @@ abarca:
   **RF-13**   Enviar recordatorios         **Alta**        Correos recibidos en inbox
               automáticos por email al                     con datos correctos sin
               propietario 7 días y 1 día                   caer en spam.
-              antes del vencimiento de                     
-              vacuna o desparasitación.                    
+              antes del vencimiento de
+              vacuna o desparasitación.
 
   **RF-14**   Enviar recordatorios         **Alta**        Mensaje entregado
               opcionales vía WhatsApp                      correctamente en cuenta de
               Business API con el mismo                    prueba.
-              contenido del correo.                        
+              contenido del correo.
 
   **RF-15**   Panel de control con         **Media**       Panel muestra datos
               vacunaciones pendientes de                   correctos vs. base de
               la semana, agrupadas por día                 datos.
-              y especie.                                   
+              y especie.
 
   **RF-16**   Registrar esquema de         **Media**       Alertas se generan según
               desparasitación                              la periodicidad
               (interna/externa) con                        configurada.
-              periodicidad configurable                    
-              (mensual, trimestral,                        
-              semestral).                                  
+              periodicidad configurable
+              (mensual, trimestral,
+              semestral).
   -----------------------------------------------------------------------------------
 
 ### Módulo 4: Agenda de Citas y Portal del Propietario (Sprint 4)
@@ -516,33 +472,33 @@ abarca:
   **RF-17**   Agendar citas con: fecha,    **Alta**        No permite doble cita al
               hora, mascota, motivo y                      mismo veterinario en el
               veterinario asignado,                        mismo horario.
-              verificando disponibilidad                   
-              automáticamente.                             
+              verificando disponibilidad
+              automáticamente.
 
   **RF-18**   Enviar confirmación          **Alta**        Correo de confirmación
               automática de la cita al                     recibido en \< 5 minutos
               propietario por correo en el                 con datos correctos.
-              momento de su creación.                      
+              momento de su creación.
 
   **RF-19**   Portal web con credenciales  **Alta**        Propietario solo ve sus
               propias para el propietario:                 mascotas; acceso a datos
               ficha de mascota(s),                         de terceros devuelve 403.
-              historial, citas y                           
-              calendario de vacunas.                       
+              historial, citas y
+              calendario de vacunas.
 
   **RF-20**   Cancelar o reprogramar       **Media**       Propietario recibe
               citas, notificando                           notificación de cambio en
               automáticamente al                           \< 5 minutos.
-              propietario.                                 
+              propietario.
 
   **RF-21**   Generar reportes exportables **Media**       PDF descargado contiene
               en PDF: listado de                           datos fidedignos.
-              pacientes, citas del período                 
-              y vacunaciones pendientes.                   
+              pacientes, citas del período
+              y vacunaciones pendientes.
 
   **RF-22**   Permitir el auto-registro de  **Alta**        El propietario puede crearse
               propietarios y el agendado                   cuenta de forma autónoma y
-              de citas directamente desde                  agendar citas desde su 
+              de citas directamente desde                  agendar citas desde su
               su propio portal.                            propia sesión.
   -----------------------------------------------------------------------------------
 
@@ -557,12 +513,12 @@ abarca:
   **RNF-01**   El tiempo de respuesta para  **Alta**        Prueba de carga con JMeter
                consultas y búsquedas no                     a 10 usuarios
                debe superar los 3 segundos                  concurrentes.
-               con red ≥ 5 Mbps.                            
+               con red ≥ 5 Mbps.
 
   **RNF-02**   El sistema debe soportar al  **Media**       . Prueba de 20 usuarios
                menos 20 usuarios                            simultáneos sin errores
                concurrentes sin degradación                 HTTP 5xx.
-               visible.                                     
+               visible.
   ------------------------------------------------------------------------------------
 
 ### Seguridad y Privacidad
@@ -574,7 +530,7 @@ abarca:
   **RNF-03**   Comunicación cifrada con     **Alta**        Headers confirman HTTPS
                HTTPS (TLS 1.2+).                            activo; contraseñas no
                Contraseñas almacenadas con                  legibles en BD.
-               hashing bcrypt + salt.                       
+               hashing bcrypt + salt.
 
   **RNF-04**   Control de acceso basado en  **Alta**        Usuario \'Propietario\' no
                roles (RBAC): veterinario,                   accede a rutas de
@@ -583,14 +539,14 @@ abarca:
 
   **RNF-05**   Archivos clínicos            **Alta**        URL directa sin token
                almacenados con acceso solo                  devuelve error 401.
-               para usuarios autenticados y                 
-               autorizados.                                 
+               para usuarios autenticados y
+               autorizados.
 
   **RNF-06**   Log de auditoría de          **Media**       Log muestra entradas
                operaciones críticas:                        correctas tras operaciones
                creación, edición y                          de prueba.
-               eliminación de registros,                    
-               con usuario, fecha e IP                      
+               eliminación de registros,
+               con usuario, fecha e IP
   ------------------------------------------------------------------------------------
 
 ### Usabilidad y accesibilidad
@@ -602,17 +558,17 @@ abarca:
   **RNF-07**   Interfaz responsiva:         **Alta**        Prueba visual en Chrome
                escritorio (≥1024px), tablet                 DevTools sin superposición
                (768--1023px) y móvil                        de elementos.
-               (320--767px).                                
+               (320--767px).
 
   **RNF-08**   Usuario nuevo capaz de       **Media**       Prueba con 3 usuarios
                registrar una mascota y                      reales; tiempo promedio \<
                agendar cita en \< 10                        10 min.
-               minutos sin asistencia.                      
+               minutos sin asistencia.
 
   **RNF-09**   Mensajes de error en español **Media**       Ningún error muestra texto
                colombiano, descriptivos y                   en inglés o códigos
                con acción correctiva                        técnicos al usuario final.
-               propuesta.                                   
+               propuesta.
   ------------------------------------------------------------------------------------
 
 ### Confiabilidad y Disponibilidad
@@ -624,12 +580,12 @@ abarca:
   **RNF-10**   Disponibilidad mínima del    **Alta**        Monitoreo de uptime
                95% en horario de operación                  durante el período de
                (lunes a sábado, 7:00 a.m.                   pruebas del Sprint 4.
-               -- 8:00 p.m.).                               
+               -- 8:00 p.m.).
 
   **RNF-11**   Copias de seguridad          **Alta**        Verificación de backups
                automáticas de la BD cada 24                 tras 72 horas de operación
                horas en servicio externo al                 continua.
-               servidor principal.                          
+               servidor principal.
   ------------------------------------------------------------------------------------
 
 ### Mantenibilidad y Portabilidad
@@ -646,7 +602,7 @@ abarca:
   **RNF-13**   Sistema desplegable en       **Media**       Despliegue exitoso en
                entornos de desarrollo y                     ambos entornos sin
                producción usando variables                  modificar código fuente.
-               de entorno.                                  
+               de entorno.
   ------------------------------------------------------------------------------------
 
 # Apéndices
@@ -658,35 +614,35 @@ abarca:
                     de Uso**          Principal**       Relacionados**
   ----------------- ----------------- ----------------- ------------------
   CU-01             Registrar mascota Vet. /            RF-01, RF-02
-                    y propietario     Recepcionista     
+                    y propietario     Recepcionista
 
   CU-02             Actualizar ficha  Veterinario       RF-03, RF-06
-                    de mascota                          
+                    de mascota
 
   CU-03             Buscar paciente   Vet. /            RF-04
-                                      Recepcionista     
+                                      Recepcionista
 
   CU-04             Registrar         Veterinario       RF-07, RF-08,
                     consulta clínica                    RF-09, RF-10
 
   CU-05             Ver historia      Veterinario       RF-11
-                    clínica completa                    
+                    clínica completa
 
   CU-06             Registrar         Veterinario       RF-12, RF-15
-                    vacunación                          
+                    vacunación
 
   CU-07             Enviar            Sistema           RF-13, RF-14
-                    recordatorio                        
-                    automático                          
+                    recordatorio
+                    automático
 
   CU-08             Agendar cita      Recep. /          RF-17, RF-18
-                                      Veterinario       
+                                      Veterinario
 
   CU-09             Cancelar o        Vet. /            RF-20
-                    reprogramar cita  Recepcionista     
+                    reprogramar cita  Recepcionista
 
   CU-10             Acceder al portal Propietario       RF-19
-                    del propietario                     
+                    del propietario
 
   CU-11             Generar reporte   Veterinario       RF-21
   ------------------------------------------------------------------------
@@ -695,7 +651,7 @@ abarca:
 
   ------------------------------------------------------------------------
   **Sprint**        **Nombre**        **Requisitos      **Entregable**
-                                      Cubiertos**       
+                                      Cubiertos**
   ----------------- ----------------- ----------------- ------------------
   Sprint 1          Registro de       RF-01 a RF-06 ·   CRUD de mascotas y
                     mascotas y        RNF-03, RNF-04,   propietarios +
