@@ -7,7 +7,7 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 // Este es el Front Controller, el único archivo al que el usuario accede directamente.
-$action = isset($_GET["action"]) ? $_GET["action"] : "login";
+$action = isset($_GET["action"]) ? $_GET["action"] : "landing";
 
 // Middleware de seguridad global: CSRF + Rate Limiting + Session AJAX
 require_once "../helpers/Security.php";
@@ -15,6 +15,12 @@ Security::check($action);
 
 // Enrutador básico
 switch ($action) {
+    case "landing":
+        require_once "../controllers/LandingController.php";
+        $controller = new LandingController();
+        $controller->index();
+        break;
+
     case "login":
         require_once "../controllers/AuthController.php";
         $controller = new AuthController();

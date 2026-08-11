@@ -107,6 +107,20 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
+.brand-logo-img {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.15));
+}
+
+.brand-logo-img-mobile {
+    max-height: 24px;
+    width: auto;
+    object-fit: contain;
+    margin-right: 8px;
+}
+
 .brand-icon {
     font-size: 28px;
     color: var(--accent);
