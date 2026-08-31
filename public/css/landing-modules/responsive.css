@@ -1,0 +1,247 @@
+/* ============================================================
+   ZOOKI LANDING · ADAPTABILIDAD
+   Puntos de quiebre ordenados de mayor a menor ancho.
+   ============================================================ */
+
+/* ---------- Portatiles pequenos y tablets horizontales ---------- */
+@media (max-width: 1080px) {
+    :root {
+        --lp-section-y: 5rem;
+    }
+
+    .lp-nav__menu {
+        gap: 1.4rem;
+    }
+
+    .lp-hero__grid {
+        gap: 2.5rem;
+    }
+
+    .lp-hero__halo {
+        width: 340px;
+        height: 340px;
+    }
+
+    .lp-hero__ring {
+        width: 410px;
+        height: 410px;
+    }
+
+    .lp-roles__panel.is-active {
+        gap: 2.5rem;
+    }
+}
+
+/* ---------- Tablets: se activa el menu lateral ---------- */
+@media (max-width: 992px) {
+    .lp-nav__menu,
+    .lp-nav__docs,
+    .lp-nav__actions .lp-btn {
+        display: none;
+    }
+
+    .lp-nav__toggle {
+        display: inline-flex;
+    }
+
+    /* El hero pasa a una sola columna con el texto centrado. */
+    .lp-hero {
+        padding-top: calc(var(--lp-nav-height) + 3rem);
+        text-align: center;
+    }
+
+    .lp-hero__grid {
+        grid-template-columns: 1fr;
+        gap: 3.5rem;
+    }
+
+    /* Centrado en columna unica: los margenes automaticos de flex se encargan. */
+    .lp-hero__content {
+        align-items: center;
+    }
+
+    .lp-hero__subtitle {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .lp-hero__ctas,
+    .lp-hero__trust {
+        justify-content: center;
+    }
+
+    .lp-hero__visual {
+        min-height: 400px;
+        order: -1;
+    }
+
+    /* Apilado, el hero ya excede la pantalla: la senal de scroll sobra. */
+    .lp-hero__scroll {
+        display: none;
+    }
+
+    .lp-hero__pet {
+        max-width: 320px;
+    }
+
+    .lp-chip--vacuna   { left: 0; top: 8%; }
+    .lp-chip--cita     { right: 0; bottom: 24%; }
+    .lp-chip--historia { left: 4%; bottom: 2%; }
+
+    /* Problema/solucion se apila y la flecha gira. */
+    .lp-compare {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .lp-compare__arrow {
+        transform: rotate(90deg);
+        margin: 0 auto;
+    }
+
+    .lp-bento {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .lp-roles__panel.is-active {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .lp-roles__figure {
+        order: -1;
+        min-height: 280px;
+    }
+
+    /* Los pasos pasan a dos filas y se retira la linea guia. */
+    .lp-steps {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2.5rem 1.5rem;
+    }
+
+    .lp-steps::before {
+        display: none;
+    }
+
+    .lp-patients {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+        margin-inline: auto;
+    }
+
+    .lp-security__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .lp-footer__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2.5rem;
+    }
+}
+
+/* ---------- Moviles ---------- */
+@media (max-width: 640px) {
+    :root {
+        --lp-section-y: 4rem;
+    }
+
+    .lp-container {
+        padding: 0 1.15rem;
+    }
+
+    .lp-section-head {
+        margin-bottom: 2.5rem;
+    }
+
+    .lp-hero__ctas .lp-btn {
+        width: 100%;
+    }
+
+    .lp-hero__visual {
+        min-height: 330px;
+    }
+
+    .lp-hero__pet {
+        max-width: 250px;
+    }
+
+    .lp-hero__halo {
+        width: 265px;
+        height: 265px;
+    }
+
+    .lp-hero__ring {
+        width: 320px;
+        height: 320px;
+    }
+
+    /* Las fichas flotantes se reducen para no tapar la ilustracion. */
+    .lp-chip {
+        padding: 0.55rem 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .lp-chip__icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+
+    .lp-chip__label {
+        font-size: 0.62rem;
+    }
+
+    .lp-chip__value {
+        font-size: 0.8rem;
+    }
+
+    .lp-chip--historia {
+        display: none;
+    }
+
+    .lp-compare__card {
+        padding: 1.75rem 1.35rem;
+    }
+
+    .lp-bento,
+    .lp-steps,
+    .lp-security__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lp-bento__card,
+    .lp-security__card {
+        padding: 1.6rem;
+    }
+
+    .lp-roles__tabs {
+        border-radius: var(--lp-radius-lg);
+        padding: 0.35rem;
+    }
+
+    .lp-roles__tab {
+        flex: 1 1 45%;
+        font-size: 0.85rem;
+        padding: 0.6rem 0.5rem;
+    }
+
+    .lp-faq__question {
+        font-size: 0.96rem;
+        padding: 1.15rem 1.2rem;
+    }
+
+    .lp-faq__answer p {
+        padding: 0 1.2rem 1.25rem;
+        font-size: 0.93rem;
+    }
+
+    .lp-footer__grid {
+        grid-template-columns: 1fr;
+        gap: 2.25rem;
+    }
+
+    .lp-footer__bottom {
+        flex-direction: column;
+        text-align: center;
+    }
+}

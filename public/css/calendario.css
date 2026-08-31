@@ -3,7 +3,7 @@
    Automatically generated modular imports to reduce complexity.
 */
 
-@import url('calendar-modules/base.css');
-@import url('calendar-modules/sidebar-cards.css');
-@import url('calendar-modules/drawers-modals.css');
-@import url('calendar-modules/mockup-redesign.css');
+@import url('calendar-modules/base.css?v=7');
+@import url('calendar-modules/sidebar-cards.css?v=7');
+@import url('calendar-modules/drawers-modals.css?v=7');
+@import url('calendar-modules/mockup-redesign.css?v=7');

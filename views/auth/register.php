@@ -110,6 +110,13 @@ if(isset($_SESSION['usuario_doc'])) {
                         </div>
                     </div>
 
+                    <label class="consent-check">
+                        <input type="checkbox" name="acepta_datos" value="1" required>
+                        <span>
+                            Autorizo el tratamiento de mis datos personales conforme a la
+                            <a href="index.php?action=privacidad" target="_blank" rel="noopener">Política de Tratamiento de Datos</a>.
+                        </span>
+                    </label>
                     <button type="submit" class="btn-primary" style="margin-bottom: 1rem;">
                         <span>Registrarse</span>
                     </button>

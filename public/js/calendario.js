@@ -1331,6 +1331,18 @@ async function reprogramarCita(idCita) {
 // ═══════════════════════════════════════════════════
 const modalModoAgendamiento = 'normal';
 
+function format12h(time24) {
+    if (!time24) return '';
+    const parts = time24.split(':');
+    if (parts.length < 2) return time24;
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1];
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 should be 12
+    return `${hours}:${minutes} ${ampm}`;
+}
+
 function mostrarErrorModal(mensaje) {
     const container = document.getElementById('modal_error_container');
     const message = document.getElementById('modal_error_message');
@@ -1378,7 +1390,11 @@ function abrirCitaModal(date) {
 
     // Resetear slots
     const slotsC = document.getElementById('modal_slots_container');
-    if (slotsC) { slotsC.classList.remove('visible'); slotsC.innerHTML = ''; }
+    if (slotsC) {
+        slotsC.classList.remove('visible');
+        slotsC.innerHTML = '<span style="font-size:0.82rem;color:#626F86;padding:0.25rem 0;">Selecciona un tipo de cita para ver horarios disponibles.</span>';
+        slotsC.classList.add('visible');
+    }
 
     ocultarErrorModal();
 
@@ -1483,16 +1499,31 @@ function onModalTipoCitaChange() {
     if (sel.value) {
         const opt = sel.options[sel.selectedIndex];
         const dur = opt.dataset.duracion || '';
-        valor.textContent = dur;
-        hidden.value = dur;
-        badge.classList.add('visible');
+        if (valor) valor.textContent = dur;
+        if (hidden) hidden.value = dur;
+        if (badge) badge.classList.add('visible');
     } else {
-        badge.classList.remove('visible');
-        hidden.value = '';
+        if (badge) badge.classList.remove('visible');
+        if (hidden) hidden.value = '';
     }
     // Limpiar slots al cambiar tipo
-    document.getElementById('modal_slots_container').classList.remove('visible');
-    document.getElementById('modal_slots_container').innerHTML = '';
+    const slotsC = document.getElementById('modal_slots_container');
+    if (slotsC) {
+        slotsC.classList.remove('visible');
+        slotsC.innerHTML = '<span style="font-size:0.82rem;color:#626F86;padding:0.25rem 0;">Selecciona un tipo de cita para ver horarios disponibles.</span>';
+        slotsC.classList.add('visible');
+    }
+    limpiarHoraSeleccionada();
+
+    // Auto-cargar slots si ya tenemos vet
+    const esVet = isUsuarioVeterinario();
+    const vet = esVet
+        ? document.getElementById('modal_veterinario_hidden')?.value
+        : document.getElementById('modal_veterinario')?.value;
+    
+    if (vet && sel && sel.value) {
+        cargarSlotsModal();
+    }
 }
 
 async function cargarSelectsModal() {
@@ -1504,12 +1535,25 @@ async function cargarSelectsModal() {
         const docUsuario = getUsuarioDoc();
 
         if (esVet) {
-            // Vet: mostrar chip, ocultar select
+            // Vet: mostrar chip, ocultar select (se oculta el chip para liberar espacio)
             const match = vets.find(v => v.documento === docUsuario);
-            document.getElementById('cm_vet_display').textContent = match ? match.nombre_completo : 'Mi agenda';
+            const vetName = match ? match.nombre_completo : 'Mi agenda';
             document.getElementById('modal_veterinario_hidden').value = docUsuario;
-            document.getElementById('cm_vet_chip').style.display = 'flex';
+            document.getElementById('cm_vet_chip').style.display = 'none';
             document.getElementById('cm_vet_select_wrap').style.display = 'none';
+
+            // Ocultar la fila .cm-info-row en la vista del veterinario para optimizar espacio vertical
+            const infoRow = document.querySelector('.cm-info-row');
+            if (infoRow) infoRow.style.display = 'none';
+
+            // Agregar el nombre del veterinario al subtítulo del modal
+            const label = document.getElementById('citaModalFechaLabel');
+            if (label) {
+                const text = label.textContent;
+                if (!text.includes('• Vet:')) {
+                    label.textContent = `${text} • Vet: ${vetName}`;
+                }
+            }
         } else {
             // Recepcionista/Staff: mostrar select
             const vetSel = document.getElementById('modal_veterinario');
@@ -1524,6 +1568,10 @@ async function cargarSelectsModal() {
             }
             document.getElementById('cm_vet_chip').style.display = 'none';
             document.getElementById('cm_vet_select_wrap').style.display = 'flex';
+
+            // Mostrar la fila de información para recepción ya que contiene el select
+            const infoRow = document.querySelector('.cm-info-row');
+            if (infoRow) infoRow.style.display = 'flex';
         }
     } catch(e) { console.error('Error vets:', e); }
 
@@ -1575,28 +1623,50 @@ function seleccionarTipoCita(card) {
     document.getElementById('modal_duracion_badge').style.display = 'flex';
     // Limpiar slots al cambiar tipo
     const slotsC = document.getElementById('modal_slots_container');
-    if (slotsC) { slotsC.classList.remove('visible'); slotsC.innerHTML = ''; }
+    if (slotsC) {
+        slotsC.classList.remove('visible');
+        slotsC.innerHTML = '<span style="font-size:0.82rem;color:#626F86;padding:0.25rem 0;">Selecciona un tipo de cita para ver horarios disponibles.</span>';
+        slotsC.classList.add('visible');
+    }
     limpiarHoraSeleccionada();
+
+    // Auto-cargar slots si ya tenemos vet
+    const esVet = isUsuarioVeterinario();
+    const vet = esVet
+        ? document.getElementById('modal_veterinario_hidden')?.value
+        : document.getElementById('modal_veterinario')?.value;
+    
+    if (vet) {
+        cargarSlotsModal();
+    }
 }
 
 async function cargarSlotsModal() {
     // Obtener vet desde chip (veterinario) o select (recepcionista)
     const esVet = isUsuarioVeterinario();
     const vet = esVet
-        ? document.getElementById('modal_veterinario_hidden').value
+        ? document.getElementById('modal_veterinario_hidden')?.value
         : document.getElementById('modal_veterinario')?.value;
-    const fecha = document.getElementById('modal_fecha').value;
-    const tipo = document.getElementById('modal_tipo_cita').value;
-    const duracion = document.getElementById('modal_duracion_minutos').value;
+    const fecha = document.getElementById('modal_fecha')?.value;
+    const tipo = document.getElementById('modal_tipo_cita')?.value;
+    const duracion = document.getElementById('modal_duracion_minutos')?.value;
 
     if (!vet || !fecha || !tipo || !duracion) {
-        mostrarErrorModal('Selecciona veterinario y tipo de cita primero.');
+        // Retorno silencioso si no se han completado los datos para auto-carga
         return;
     }
 
     const btn = document.getElementById('modal_btn_slots');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+    }
+
+    const container = document.getElementById('modal_slots_container');
+    if (container) {
+        container.innerHTML = '<div style="font-size:0.85rem;color:#626F86;padding:0.5rem 0;display:flex;align-items:center;gap:0.5rem;"><i class="fas fa-spinner fa-spin"></i> Cargando horarios disponibles...</div>';
+        container.classList.add('visible');
+    }
     ocultarErrorModal();
 
     try {
@@ -1608,11 +1678,14 @@ async function cargarSlotsModal() {
         const horariosData = await horariosRes.json();
         
         if (!horariosData.success || !horariosData.horas || horariosData.horas.length === 0) {
-            const container = document.getElementById('modal_slots_container');
-            container.innerHTML = '<span style="font-size:0.8rem;color:#626F86;padding:0.25rem 0;">El día seleccionado no es laborable o no hay horarios configurados.</span>';
-            container.classList.add('visible');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-search"></i> Ver horarios libres';
+            if (container) {
+                container.innerHTML = '<span style="font-size:0.8rem;color:#626F86;padding:0.25rem 0;">El día seleccionado no es laborable o no hay horarios configurados.</span>';
+                container.classList.add('visible');
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-search"></i> Ver horarios libres';
+            }
             return;
         }
 
@@ -1621,8 +1694,7 @@ async function cargarSlotsModal() {
             `index.php?action=get_sugerencias_horario_ajax&doc_veterinario=${vet}&fecha=${fecha}&duracion_minutos=${duracion}&modo=${modalModoAgendamiento}`
         );
         const data = await res.json();
-        const container = document.getElementById('modal_slots_container');
-        container.innerHTML = '';
+        if (container) container.innerHTML = '';
 
         // Filtrar sugerencias para mostrar solo las horas que están en el horario laboral
         const horasLaborales = horariosData.horas || [];
@@ -1643,7 +1715,7 @@ async function cargarSlotsModal() {
                 const chip = document.createElement('button');
                 chip.type = 'button';
                 chip.className = 'slot-chip';
-                chip.textContent = hora;
+                chip.textContent = format12h(hora);
                 chip.onclick = function() {
                     document.getElementById('modal_hora').value = hora;
                     document.querySelectorAll('.slot-chip').forEach(c => c.classList.remove('selected'));
@@ -1651,22 +1723,24 @@ async function cargarSlotsModal() {
                     // Mostrar chip de hora seleccionada
                     const wrap = document.getElementById('cm_hora_chip_wrap');
                     const chipText = document.getElementById('cm_hora_chip_text');
-                    if (wrap && chipText) { chipText.textContent = hora; wrap.style.display = 'flex'; }
+                    if (wrap && chipText) { chipText.textContent = format12h(hora); wrap.style.display = 'flex'; }
                     ocultarErrorModal();
                 };
-                container.appendChild(chip);
+                if (container) container.appendChild(chip);
             });
         } else {
             console.warn('Sin sugerencias de horario para la fecha', fecha, 'duración', duracion, 'respuesta:', data, 'horarios configurados:', horasLaborales);
-            container.innerHTML = '<span style="font-size:0.8rem;color:#626F86;padding:0.25rem 0;">No hay horarios disponibles para esta fecha dentro del horario laboral.</span>';
+            if (container) container.innerHTML = '<span style="font-size:0.8rem;color:#626F86;padding:0.25rem 0;">No hay horarios disponibles para esta fecha dentro del horario laboral.</span>';
         }
-        container.classList.add('visible');
+        if (container) container.classList.add('visible');
     } catch(e) {
         console.error('Error slots:', e);
         mostrarErrorModal('Error al cargar horarios disponibles. Intenta nuevamente.');
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-search"></i> Ver horarios libres';
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search"></i> Ver horarios libres';
+        }
     }
 }
 
@@ -1674,7 +1748,7 @@ async function crearCitaModal(e) {
     e.preventDefault();
     const hora = document.getElementById('modal_hora').value;
     if (!hora) {
-        mostrarErrorModal('Debes seleccionar un horario disponible antes de agendar la cita. Haz clic en "Ver horarios libres" y elige un slot.');
+        mostrarErrorModal('Debes seleccionar uno de los horarios disponibles antes de agendar la cita.');
         return;
     }
     const data = {
@@ -2167,7 +2241,7 @@ async function cargarSlotsReprogramar() {
                 const chip = document.createElement('button');
                 chip.type = 'button';
                 chip.className = 'reprog-slot-chip';
-                chip.textContent = hora;
+                chip.textContent = format12h(hora);
                 chip.onclick = function() {
                     document.getElementById('reprogramar_hora').value = hora;
                     container.querySelectorAll('.reprog-slot-chip').forEach(c => c.classList.remove('selected'));
@@ -2225,4 +2299,28 @@ async function confirmarReprogramacion() {
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Confirmar reprogramación'; }
     }
+}
+
+// Mover modales/drawers al final de document.body para evitar conflictos de z-index y contexto de apilamiento CSS
+function moverModalesAlBody() {
+    const idsToMove = [
+        'citaModalOverlay',
+        'citaDrawerOverlay',
+        'citaDrawer',
+        'detalleCitaDrawerOverlay',
+        'detalleCitaDrawer',
+        'reprogramarModalOverlay'
+    ];
+    idsToMove.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.parentNode !== document.body) {
+            document.body.appendChild(el);
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', moverModalesAlBody);
+} else {
+    moverModalesAlBody();
 }

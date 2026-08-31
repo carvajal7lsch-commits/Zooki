@@ -33,8 +33,8 @@ class AuthController {
 
             // Rate limiting: máximo 5 intentos cada 15 minutos
             if (!Security::checkRateLimit()) {
-                header("Location: index.php?action=login");
-                exit;
+                $this->redirectWithError("Demasiados intentos fallidos. Espera 15 minutos antes de volver a intentarlo.");
+                return;
             }
 
             // Limpiamos los datos de entrada
@@ -356,6 +356,15 @@ class AuthController {
                 exit();
             }
 
+            // La Ley 1581 de 2012 exige autorización previa, expresa e informada del
+            // titular. El atributo `required` del navegador se puede eludir, así que la
+            // ausencia de consentimiento debe bloquear el registro también aquí.
+            if (empty($_POST['acepta_datos'])) {
+                $_SESSION['error_register'] = "Debes autorizar el tratamiento de tus datos personales para crear la cuenta.";
+                header("Location: index.php?action=login");
+                exit();
+            }
+
             if ($password !== $confirm_password) {
                 $_SESSION['error_register'] = "Las contraseñas no coinciden.";
                 header("Location: index.php?action=login");
@@ -433,7 +442,9 @@ class AuthController {
 
     private function redirectWithError($message) {
         $_SESSION['error_login'] = $message;
-        header("Location: index.php");
+        // Debe incluir la accion: `index.php` a secas resuelve a la landing y
+        // expulsaria al usuario de la pantalla de login con el error pendiente.
+        header("Location: index.php?action=login");
         exit();
     }
 

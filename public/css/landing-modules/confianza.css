@@ -1,0 +1,141 @@
+/* ============================================================
+   ZOOKI LANDING · CONFIANZA
+   Seguridad y cumplimiento y preguntas frecuentes.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. SEGURIDAD Y CUMPLIMIENTO (seccion oscura)
+   ------------------------------------------------------------ */
+.lp-security {
+    position: relative;
+    overflow: hidden;
+}
+
+.lp-security::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(800px 420px at 15% 0%, rgba(0, 82, 255, 0.28), transparent 60%),
+        radial-gradient(700px 400px at 88% 100%, rgba(14, 165, 233, 0.18), transparent 60%);
+    pointer-events: none;
+}
+
+.lp-security > .lp-container {
+    position: relative;
+    z-index: 1;
+}
+
+.lp-security__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.lp-security__card {
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: var(--lp-radius-lg);
+    padding: 1.35rem;
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.lp-security__card:hover {
+    background: rgba(255, 255, 255, 0.075);
+    border-color: rgba(127, 166, 255, 0.35);
+    transform: translateY(-3px);
+}
+
+.lp-security__icon {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #7FA6FF;
+    background: rgba(127, 166, 255, 0.14);
+    border-radius: var(--lp-radius-md);
+    margin-bottom: 0.75rem;
+}
+
+.lp-security__title {
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+}
+
+.lp-security__text {
+    font-size: 0.89rem;
+    line-height: 1.5;
+    color: var(--lp-text-on-dark-muted);
+}
+
+/* ------------------------------------------------------------
+   2. PREGUNTAS FRECUENTES
+   ------------------------------------------------------------ */
+.lp-faq {
+    max-width: 820px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.lp-faq__item {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-lg);
+    overflow: hidden;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.lp-faq__item.is-open {
+    border-color: rgba(0, 82, 255, 0.30);
+    box-shadow: var(--lp-shadow-md);
+}
+
+.lp-faq__question {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    text-align: left;
+    font-family: var(--lp-font-display);
+    font-size: 0.99rem;
+    font-weight: 600;
+    color: var(--lp-text);
+    background: transparent;
+    border: none;
+    padding: 1rem 1.35rem;
+    cursor: pointer;
+}
+
+.lp-faq__question:hover {
+    color: var(--lp-primary);
+}
+
+.lp-faq__chevron {
+    flex-shrink: 0;
+    font-size: 1.3rem;
+    color: var(--lp-primary);
+    transition: transform 0.3s ease;
+}
+
+.lp-faq__item.is-open .lp-faq__chevron {
+    transform: rotate(180deg);
+}
+
+/* La altura se anima desde landing.js midiendo el contenido real. */
+.lp-faq__answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lp-faq__answer p {
+    padding: 0 1.35rem 1.15rem;
+    font-size: 0.93rem;
+    line-height: 1.6;
+    color: var(--lp-text-soft);
+}

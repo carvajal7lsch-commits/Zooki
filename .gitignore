@@ -111,6 +111,12 @@ webpack-stats.json
 /public/storage
 /storage/*.sqlite
 
+# Fuente editable del MER exportada desde drawDB (~230 MB).
+# No es un SVG vectorial sino un volcado del DOM con estilos en línea, y
+# supera el límite de 100 MB de GitHub. El diagrama publicado vive ahora
+# como bloque Mermaid dentro de MER.md.
+public/img/MER_zooki.svg
+
 # Archivos específicos del proyecto que no se suben
 ZOOKI_REGLAS.md
 temp_login.php

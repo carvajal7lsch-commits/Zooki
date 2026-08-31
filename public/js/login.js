@@ -243,15 +243,48 @@ document.addEventListener('DOMContentLoaded', () => {
         authFlipper.classList.add('flipped');
     }
 
-    // ── Cargar documento y contraseña guardados si existen ──
-    const savedDoc = localStorage.getItem('zooki_remember_doc');
-    const savedPass = localStorage.getItem('zooki_remember_pass');
-    if (savedDoc && documentoInput) {
-        documentoInput.value = savedDoc;
-        if (rememberMeCheckbox) rememberMeCheckbox.checked = true;
+    // ── Recordarme: solo el documento, nunca la contraseña ──
+    // El almacenamiento del navegador no es un lugar seguro para credenciales:
+    // es legible por cualquier script de la página y por quien abra las
+    // herramientas de desarrollo en un equipo compartido.
+    // La preferencia se guarda aparte del documento: si se marcara solo el
+    // documento, activar la casilla antes de escribir nada guardaría una cadena
+    // vacía y la casilla volvería a aparecer desmarcada.
+    const REMEMBER_FLAG_KEY = 'zooki_remember';
+    const REMEMBER_DOC_KEY = 'zooki_remember_doc';
+
+    // Purga contraseñas guardadas por versiones anteriores de este archivo.
+    localStorage.removeItem('zooki_remember_pass');
+
+    if (rememberMeCheckbox && localStorage.getItem(REMEMBER_FLAG_KEY) === '1') {
+        rememberMeCheckbox.checked = true;
+
+        const savedDoc = localStorage.getItem(REMEMBER_DOC_KEY);
+        if (savedDoc && documentoInput) {
+            documentoInput.value = savedDoc;
+        }
     }
-    if (savedPass && password) {
-        password.value = savedPass;
+
+    // El estado se guarda al instante, no solo al enviar el formulario: antes
+    // se perdía si el usuario marcaba la casilla y abandonaba la página.
+    const guardarPreferenciaRecordarme = () => {
+        if (!rememberMeCheckbox) return;
+        if (rememberMeCheckbox.checked) {
+            localStorage.setItem(REMEMBER_FLAG_KEY, '1');
+            localStorage.setItem(REMEMBER_DOC_KEY, documentoInput ? documentoInput.value : '');
+        } else {
+            localStorage.removeItem(REMEMBER_FLAG_KEY);
+            localStorage.removeItem(REMEMBER_DOC_KEY);
+        }
+    };
+
+    if (rememberMeCheckbox) {
+        rememberMeCheckbox.addEventListener('change', guardarPreferenciaRecordarme);
+    }
+
+    // Mantiene sincronizado el documento mientras se escribe con la casilla activa.
+    if (documentoInput) {
+        documentoInput.addEventListener('input', guardarPreferenciaRecordarme);
     }
 
     // ── Mostrar / ocultar contraseña ──
@@ -268,14 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Lógica al enviar el formulario ──
     if (loginForm && loginBtn) {
         loginForm.addEventListener('submit', function () {
-            // Guardar / eliminar documento y contraseña según checkbox "Recordarme"
-            if (rememberMeCheckbox && rememberMeCheckbox.checked) {
-                localStorage.setItem('zooki_remember_doc', documentoInput.value);
-                localStorage.setItem('zooki_remember_pass', password.value);
-            } else {
-                localStorage.removeItem('zooki_remember_doc');
-                localStorage.removeItem('zooki_remember_pass');
-            }
+            // Deja registrado el documento definitivo al enviar el formulario.
+            guardarPreferenciaRecordarme();
 
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span>Ingresando...</span> <i class="ri-loader-4-line animate-spin"></i>';

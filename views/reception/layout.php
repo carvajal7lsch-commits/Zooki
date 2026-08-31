@@ -17,6 +17,7 @@
 
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/usuarios.css">
     <link rel="stylesheet" href="css/pill-sidebar.css">
     <link rel="stylesheet" href="css/dark-mode.css">
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">

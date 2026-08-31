@@ -54,10 +54,16 @@ if (file_exists($envFile)) {
     <div class="login-container">
         <!-- Lado del Formulario (IZQUIERDO — como en la referencia Vet da Cidade) -->
         <div class="login-form-area animate__animated animate__fadeIn">
-            <!-- Marca (Logo) -->
-            <div class="login-brand">
-                <img src="img/icon_blue.png" alt="Zooki Logo" class="brand-logo" draggable="false">
-                <span class="brand-text">Zooki</span>
+            <!-- Marca y regreso a la landing -->
+            <div class="login-topbar">
+                <a href="index.php" class="login-brand" aria-label="Zooki, ir al inicio">
+                    <img src="img/icon_blue.png" alt="" class="brand-logo" draggable="false">
+                    <span class="brand-text">Zooki</span>
+                </a>
+                <a href="index.php" class="login-back">
+                    <i class="ri-arrow-left-line" aria-hidden="true"></i>
+                    <span>Volver al inicio</span>
+                </a>
             </div>
             <div class="flip-container">
                 <div class="flipper" id="authFlipper">
@@ -194,6 +200,13 @@ if (file_exists($envFile)) {
                                         </div>
                                     </div>
                                 </div>
+                                <label class="consent-check">
+                                    <input type="checkbox" name="acepta_datos" id="aceptaDatos" value="1" required>
+                                    <span>
+                                        Autorizo el tratamiento de mis datos personales conforme a la
+                                        <a href="index.php?action=privacidad" target="_blank" rel="noopener">Política de Tratamiento de Datos</a>.
+                                    </span>
+                                </label>
                                 <button type="submit" class="btn-primary">
                                     <span>Registrarse</span>
                                 </button>

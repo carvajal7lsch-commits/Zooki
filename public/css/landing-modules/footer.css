@@ -1,0 +1,126 @@
+/* ============================================================
+   ZOOKI LANDING · PIE DE PAGINA
+   ============================================================ */
+
+.lp-footer {
+    background: var(--lp-dark);
+    color: var(--lp-text-on-dark-muted);
+    padding: 3rem 0 0;
+}
+
+.lp-footer__grid {
+    display: grid;
+    /* La columna Legal necesita mas ancho: sus enlaces llevan etiqueta. */
+    grid-template-columns: 1.5fr 0.85fr 1.15fr 1.15fr;
+    gap: 2.5rem;
+    padding-bottom: 2.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.lp-footer__brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+}
+
+.lp-footer__brand-img {
+    height: 36px;
+    width: auto;
+}
+
+.lp-footer__brand-name {
+    font-family: var(--lp-font-display);
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #FFFFFF;
+}
+
+.lp-footer__tagline {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    max-width: 20rem;
+    margin-bottom: 1rem;
+}
+
+.lp-footer__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.lp-footer__meta li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+}
+
+.lp-footer__meta i {
+    color: #7FA6FF;
+    font-size: 1.05rem;
+}
+
+.lp-footer__title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    margin-bottom: 0.9rem;
+}
+
+.lp-footer__links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.lp-footer__links a {
+    font-size: 0.93rem;
+    color: var(--lp-text-on-dark-muted);
+    transition: color 0.2s ease, padding-left 0.2s ease;
+}
+
+.lp-footer__links a:hover {
+    color: #FFFFFF;
+    padding-left: 4px;
+}
+
+/* Recurso anunciado pero aun no publicado. */
+.lp-footer__soon {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.5rem;
+    font-size: 0.93rem;
+    line-height: 1.4;
+    color: rgba(154, 168, 204, 0.65);
+    cursor: default;
+}
+
+.lp-footer__soon span {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--lp-warning);
+    background: rgba(245, 158, 11, 0.14);
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--lp-radius-pill);
+}
+
+.lp-footer__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1.15rem 0 1.5rem;
+    font-size: 0.85rem;
+}
+
+.lp-footer__credit {
+    color: rgba(154, 168, 204, 0.75);
+}

@@ -1,0 +1,271 @@
+/* ============================================================
+   ZOOKI LANDING · PAGINAS LEGALES
+   Documentos de texto largo (privacidad, terminos, cookies).
+   Reutilizan la barra de navegacion y el pie de la landing.
+   ============================================================ */
+
+.lp-legal {
+    padding-top: calc(var(--lp-nav-height) + 2.5rem);
+    padding-bottom: 4rem;
+    background:
+        radial-gradient(900px 400px at 80% 0%, rgba(0, 82, 255, 0.06), transparent 60%),
+        var(--lp-surface);
+}
+
+/* ---------- Encabezado del documento ---------- */
+.lp-legal__header {
+    max-width: 760px;
+    margin: 0 auto 2.5rem;
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--lp-border);
+}
+
+.lp-legal__title {
+    font-size: clamp(1.8rem, 1.2rem + 2vw, 2.5rem);
+    margin-bottom: 0.75rem;
+}
+
+.lp-legal__lead {
+    font-size: 1.02rem;
+    line-height: 1.65;
+    color: var(--lp-text-soft);
+    margin-bottom: 1.25rem;
+}
+
+/* Metadatos: vigencia y version del documento. */
+.lp-legal__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+}
+
+.lp-legal__meta li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--lp-text-soft);
+    background: var(--lp-surface-alt);
+    border: 1px solid var(--lp-border);
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--lp-radius-pill);
+}
+
+.lp-legal__meta i {
+    color: var(--lp-primary);
+    font-size: 0.95rem;
+}
+
+/* ---------- Cuerpo con indice lateral ---------- */
+.lp-legal__layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 3rem;
+    align-items: start;
+    max-width: 1060px;
+    margin: 0 auto;
+}
+
+.lp-legal__toc {
+    position: sticky;
+    top: calc(var(--lp-nav-height) + 1.5rem);
+    background: var(--lp-surface-alt);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-lg);
+    padding: 1.25rem;
+}
+
+.lp-legal__toc-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lp-text-muted);
+    margin-bottom: 0.85rem;
+}
+
+.lp-legal__toc ol {
+    list-style: none;
+    counter-reset: toc;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.lp-legal__toc a {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: var(--lp-text-soft);
+    transition: color 0.2s ease;
+}
+
+.lp-legal__toc a::before {
+    counter-increment: toc;
+    content: counter(toc) ".";
+    color: var(--lp-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-legal__toc a:hover {
+    color: var(--lp-primary);
+}
+
+/* ---------- Texto del documento ---------- */
+.lp-legal__doc {
+    max-width: 72ch;
+    counter-reset: seccion;
+}
+
+.lp-legal__doc section {
+    margin-bottom: 2.5rem;
+    scroll-margin-top: calc(var(--lp-nav-height) + 1.5rem);
+}
+
+.lp-legal__doc h2 {
+    display: flex;
+    gap: 0.6rem;
+    font-size: 1.25rem;
+    margin-bottom: 0.85rem;
+}
+
+.lp-legal__doc h2::before {
+    counter-increment: seccion;
+    content: counter(seccion) ".";
+    color: var(--lp-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-legal__doc h3 {
+    font-size: 1rem;
+    margin: 1.5rem 0 0.6rem;
+    color: var(--lp-text);
+}
+
+.lp-legal__doc p {
+    font-size: 0.97rem;
+    line-height: 1.75;
+    color: var(--lp-text-soft);
+    margin-bottom: 0.9rem;
+}
+
+.lp-legal__doc strong {
+    color: var(--lp-text);
+    font-weight: 600;
+}
+
+.lp-legal__doc a {
+    color: var(--lp-primary);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.lp-legal__doc a:hover {
+    color: var(--lp-primary-hover);
+}
+
+/* Listas del documento, con vinieta propia. */
+.lp-legal__doc ul {
+    display: grid;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+.lp-legal__doc ul li {
+    position: relative;
+    padding-left: 1.2rem;
+    font-size: 0.97rem;
+    line-height: 1.7;
+    color: var(--lp-text-soft);
+}
+
+.lp-legal__doc ul li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.65em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lp-primary);
+}
+
+/* Bloque destacado para avisos y plazos legales. */
+.lp-legal__note {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    background: var(--lp-surface-alt);
+    border: 1px solid var(--lp-border);
+    border-left: 4px solid var(--lp-primary);
+    border-radius: var(--lp-radius-md);
+    padding: 1.15rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.lp-legal__note i {
+    font-size: 1.2rem;
+    color: var(--lp-primary);
+    line-height: 1.4;
+}
+
+.lp-legal__note p {
+    margin-bottom: 0;
+    font-size: 0.93rem;
+}
+
+/* Definiciones (termino + significado). */
+.lp-legal__defs {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.lp-legal__defs div {
+    padding-left: 1rem;
+    border-left: 2px solid var(--lp-border);
+}
+
+.lp-legal__defs dt {
+    font-weight: 600;
+    color: var(--lp-text);
+    font-size: 0.95rem;
+    margin-bottom: 0.15rem;
+}
+
+.lp-legal__defs dd {
+    margin: 0;
+    font-size: 0.94rem;
+    line-height: 1.65;
+    color: var(--lp-text-soft);
+}
+
+/* ---------- Adaptabilidad ---------- */
+@media (max-width: 900px) {
+    .lp-legal__layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    /* El indice deja de ser fijo y pasa a encabezar el documento. */
+    .lp-legal__toc {
+        position: static;
+    }
+}
+
+@media (max-width: 640px) {
+    .lp-legal {
+        padding-top: calc(var(--lp-nav-height) + 1.5rem);
+    }
+
+    .lp-legal__doc h2 {
+        font-size: 1.12rem;
+    }
+
+    .lp-legal__note {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+    }
+}

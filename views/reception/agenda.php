@@ -1,8 +1,11 @@
-﻿<?php
+<?php
 // views/citas/calendario.php
 ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css">
-<link rel="stylesheet" href="css/calendario.css">
+<link rel="stylesheet" href="css/calendar-modules/sidebar-cards.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/calendar-modules/drawers-modals.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/calendar-modules/mockup-redesign.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/calendario.css?v=<?= time() ?>">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 <div class="animate__animated animate__fadeIn">
@@ -60,7 +63,7 @@
 <!-- ══════════════════════════════════════════════
      MODAL — Agendar Cita (Cell Click)
      ══════════════════════════════════════════════ -->
-<div id="citaModalOverlay" class="cita-modal-overlay" onclick="handleModalOverlayClick(event)">
+<div id="citaModalOverlay" class="users-modal cita-modal-overlay" onclick="handleModalOverlayClick(event)">
     <div class="cita-modal" role="dialog" aria-modal="true" aria-labelledby="citaModalTitle">
 
         <!-- Header -->
@@ -93,77 +96,81 @@
 
                 <!-- Fecha (readonly) -->
                 <div class="cita-field">
-                    <label class="cita-label" for="modal_fecha">
-                        <i class="far fa-calendar-alt"></i> Fecha
-                    </label>
-                    <input type="date" id="modal_fecha" name="fecha" class="cita-input" readonly required>
+                    <label class="cita-label" for="modal_fecha">Fecha</label>
+                    <div class="input-wrapper">
+                        <i class="far fa-calendar-alt field-icon"></i>
+                        <input type="date" id="modal_fecha" name="fecha" class="cita-input" readonly required>
+                    </div>
                 </div>
 
                 <!-- Fila: Veterinario + Mascota -->
                 <div class="cita-modal-row">
                     <div class="cita-field">
-                        <label class="cita-label" for="modal_veterinario">
-                            <i class="fas fa-user-md"></i> Veterinario
-                        </label>
-                        <select id="modal_veterinario" name="doc_veterinario" class="cita-select" required>
-                            <option value="">Seleccione...</option>
-                        </select>
+                        <label class="cita-label" for="modal_veterinario">Veterinario</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user-md field-icon"></i>
+                            <select id="modal_veterinario" name="doc_veterinario" class="cita-select" required onchange="cargarSlotsModal()">
+                                <option value="">Seleccione...</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="cita-field">
-                        <label class="cita-label" for="modal_mascota">
-                            <i class="fas fa-paw"></i> Mascota
-                        </label>
-                        <select id="modal_mascota" name="id_mascota" class="cita-select" required>
-                            <option value="">Seleccione...</option>
-                        </select>
+                        <label class="cita-label" for="modal_mascota">Mascota</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-paw field-icon"></i>
+                            <select id="modal_mascota" name="id_mascota" class="cita-select" required>
+                                <option value="">Seleccione...</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Fila: Tipo de cita + Hora -->
                 <div class="cita-modal-row">
                     <div class="cita-field">
-                        <label class="cita-label" for="modal_tipo_cita">
-                            <i class="fas fa-tag"></i> Tipo de Cita
-                        </label>
-                        <select id="modal_tipo_cita" name="id_tipo_cita" class="cita-select" required onchange="onModalTipoCitaChange()">
-                            <option value="">Seleccione...</option>
-                        </select>
+                        <label class="cita-label" for="modal_tipo_cita">Tipo de Cita</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-tag field-icon"></i>
+                            <select id="modal_tipo_cita" name="id_tipo_cita" class="cita-select" required onchange="onModalTipoCitaChange()">
+                                <option value="">Seleccione...</option>
+                            </select>
+                        </div>
                         <div class="cita-duracion-badge" id="modal_duracion_badge">
                             <i class="fas fa-clock"></i>
                             Duración: <span id="modal_duracion_valor">--</span> min
                         </div>
                     </div>
                     <div class="cita-field">
-                        <label class="cita-label" for="modal_hora">
-                            <i class="far fa-clock"></i> Hora
-                        </label>
-                        <input type="time" id="modal_hora" name="hora" class="cita-input" readonly
-                            placeholder="Selecciona un horario disponible"
-                            title="Selecciona un horario disponible de la lista">
+                        <label class="cita-label" for="modal_hora">Hora</label>
+                        <div class="input-wrapper">
+                            <i class="far fa-clock field-icon"></i>
+                            <input type="time" id="modal_hora" name="hora" class="cita-input" readonly
+                                placeholder="Selecciona un horario disponible"
+                                title="Selecciona un horario disponible de la lista">
+                        </div>
                         <small style="font-size:0.7rem; color:#626F86; margin-top:0.2rem; display:flex; align-items:center; gap:0.3rem;">
                             <i class="fas fa-info-circle" style="color:#579DFF;"></i>
-                            Selecciona un horario disponible haciendo clic en "Ver horarios libres"
+                            Selecciona un horario disponible haciendo clic en la lista de abajo
                         </small>
                     </div>
                 </div>
 
                 <!-- Motivo -->
                 <div class="cita-field">
-                    <label class="cita-label" for="modal_motivo">
-                        <i class="fas fa-comment-medical"></i> Motivo
-                    </label>
-                    <input type="text" id="modal_motivo" name="motivo" class="cita-input"
-                        placeholder="Ej. Vacunación anual, control de peso...">
+                    <label class="cita-label" for="modal_motivo">Motivo</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-comment-medical field-icon"></i>
+                        <input type="text" id="modal_motivo" name="motivo" class="cita-input"
+                            placeholder="Ej. Vacunación anual, control de peso...">
+                    </div>
                 </div>
-
-
 
                 <!-- Horarios disponibles -->
                 <div class="cita-field">
                     <label class="cita-label">
-                        <i class="fas fa-lightbulb"></i> Horarios Disponibles
+                        Horarios Disponibles
                     </label>
-                    <button type="button" class="slots-btn" id="modal_btn_slots" onclick="cargarSlotsModal()">
+                    <button type="button" class="slots-btn" id="modal_btn_slots" onclick="cargarSlotsModal()" style="display: none;">
                         <i class="fas fa-search"></i> Ver horarios libres
                     </button>
                     <div class="slots-container" id="modal_slots_container"></div>
@@ -319,30 +326,33 @@
 
             <!-- Veterinario -->
             <div>
-                <label class="modal-reprog-label">
-                    <i class="fas fa-user-md"></i>Veterinario
-                </label>
-                <select id="reprogramar_veterinario" class="modal-reprog-select">
-                    <option value="">Seleccione veterinario...</option>
-                </select>
+                <label class="modal-reprog-label">Veterinario</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user-md field-icon"></i>
+                    <select id="reprogramar_veterinario" class="modal-reprog-select">
+                        <option value="">Seleccione veterinario...</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Fecha -->
             <div>
-                <label class="modal-reprog-label">
-                    <i class="far fa-calendar-alt"></i>Nueva Fecha
-                </label>
-                <input type="date" id="reprogramar_fecha" class="modal-reprog-input">
+                <label class="modal-reprog-label">Nueva Fecha</label>
+                <div class="input-wrapper">
+                    <i class="far fa-calendar-alt field-icon"></i>
+                    <input type="date" id="reprogramar_fecha" class="modal-reprog-input">
+                </div>
             </div>
 
             <!-- Tipo de cita -->
             <div>
-                <label class="modal-reprog-label">
-                    <i class="fas fa-tag"></i>Tipo de Cita
-                </label>
-                <select id="reprogramar_tipo_cita" onchange="actualizarDuracionReprogramar()" class="modal-reprog-select">
-                    <option value="">Seleccione tipo...</option>
-                </select>
+                <label class="modal-reprog-label">Tipo de Cita</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-tag field-icon"></i>
+                    <select id="reprogramar_tipo_cita" onchange="actualizarDuracionReprogramar()" class="modal-reprog-select">
+                        <option value="">Seleccione tipo...</option>
+                    </select>
+                </div>
                 <div id="reprogramar_duracion_badge" class="modal-reprog-duracion">
                     <i class="fas fa-clock"></i> Duración estimada:
                     <span id="reprogramar_duracion_valor" class="modal-reprog-duracion-val">—</span> min
@@ -419,4 +429,4 @@
   const USER_ROL = <?= (int)($_SESSION['usuario_id_rol'] ?? 0) ?>;
   const USER_DOC = <?= json_encode($_SESSION['usuario_doc'] ?? '') ?>;
 </script>
-<script src="js/calendario.js"></script>
+<script src="js/calendario.js?v=<?= time() ?>"></script>

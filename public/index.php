@@ -21,6 +21,24 @@ switch ($action) {
         $controller->index();
         break;
 
+    case "privacidad":
+        require_once "../controllers/LandingController.php";
+        $controller = new LandingController();
+        $controller->privacidad();
+        break;
+
+    case "terminos":
+        require_once "../controllers/LandingController.php";
+        $controller = new LandingController();
+        $controller->terminos();
+        break;
+
+    case "cookies":
+        require_once "../controllers/LandingController.php";
+        $controller = new LandingController();
+        $controller->cookies();
+        break;
+
     case "login":
         require_once "../controllers/AuthController.php";
         $controller = new AuthController();

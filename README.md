@@ -4,7 +4,31 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.7.2 (Actual)
+### Versión 1.7.3 (Actual)
+Reconstrucción completa de la landing page pública, que hasta ahora era una beta de cuatro bloques, e incorporación de las páginas legales del sistema.
+
+**Landing page**
+*   **Nueva arquitectura de 8 secciones:** Hero, contraste problema/solución con el recorrido de puesta en marcha, módulos, perfiles de usuario, pacientes, seguridad, preguntas frecuentes y pie de página. La vista se dividió en parciales de responsabilidad única bajo `views/landing/partials/`, y `landing.css` pasó a ser un agregador de `@import` sobre `public/css/landing-modules/`, siguiendo el patrón ya usado en calendario y dashboard.
+*   **Independencia de la aplicación privada:** La landing dejó de importar `styles.css` (27 KB de estilos internos) y define su propio sistema de tokens de marca, reduciendo peso y acoplamiento.
+*   **Densidad optimizada:** Siete de las once secciones originales superaban el alto de un portátil, obligando a hacer scroll dentro de cada una. Tras comprimir el espaciado, acortar los textos y fusionar las secciones ligeras, la página pasó de 9.642 px a 5.402 px de alto (**-44%**) y cada sección entra completa en una pantalla.
+*   **Interacción y accesibilidad:** Nuevo `public/js/landing.js` sin código en línea: menú móvil, estado del header al hacer scroll, resaltado de la sección activa, aparición progresiva con `IntersectionObserver`, pestañas con patrón ARIA y acordeón. Incluye enlace de salto al contenido, foco visible y soporte de `prefers-reduced-motion`.
+*   **Identidad visual:** Paleta unificada en azul (el acento verde heredado de `--secondary` se sustituyó por un azul cielo) y hero a pantalla completa mediante `min-height: 100svh`, con señal de scroll para evitar el efecto de falso fondo. Los perfiles de usuario se ilustran con mini interfaces construidas en CSS que representan lo que ve cada rol, en lugar de fotografías decorativas.
+*   **SEO y metadatos sociales:** Meta descripción, `canonical`, Open Graph, Twitter Card, `theme-color`, `apple-touch-icon` y datos estructurados JSON-LD de tipo `SoftwareApplication`.
+
+**Páginas legales**
+*   **Política de Tratamiento de Datos Personales** (`?action=privacidad`): estructurada según el artículo 2.2.2.25.3.1 del Decreto 1074 de 2015, con los plazos de los artículos 14 y 15 de la Ley 1581 de 2012. Distingue entre Responsable y Encargado del Tratamiento, previendo que la clínica que adopte Zooki pasará a ser la Responsable.
+*   **Términos de Uso** (`?action=terminos`) **y Política de Cookies** (`?action=cookies`): los términos declaran que el sistema está en desarrollo y delimitan la responsabilidad clínica conforme a la Ley 576 de 2000; la política de cookies enumera el inventario real auditado sobre el código. No se incorpora banner de consentimiento porque el sistema no fija cookies no esenciales, decisión documentada en el propio texto.
+*   **Autorización expresa en el registro:** Casilla de consentimiento en los dos formularios de registro, validada en el servidor —el atributo `required` del navegador es eludible— como exige el artículo 9 de la Ley 1581 de 2012.
+
+**Correcciones**
+*   **Navegación móvil inexistente:** El CSS anterior ocultaba el navbar por completo bajo 1024 px sin ofrecer alternativa, dejando a los usuarios móviles sin ninguna navegación. Se implementó un menú lateral con capa oscura, cierre por `Escape` y bloqueo de scroll.
+*   **Contraseñas en el almacenamiento del navegador:** La casilla «Recuérdame» guardaba la contraseña en texto plano en `localStorage` y la reinyectaba en el formulario. Se eliminó ese almacenamiento, se añadió la purga de las credenciales ya guardadas por la versión anterior, y la preferencia pasó a persistirse al marcarla y no solo al enviar el formulario.
+*   **Redirección tras un login fallido:** `redirectWithError()` apuntaba a `index.php` sin parámetro `action`, que el front controller resuelve como `landing`; cualquier credencial incorrecta expulsaba al usuario a la portada con el mensaje pendiente en sesión. Se corrigió la ruta, se añadió aviso al bloqueo por intentos y un enlace de regreso a la landing desde la pantalla de acceso.
+*   **Variables CSS inexistentes:** Una auditoría detectó tres referencias a variables no definidas, que invalidaban silenciosamente sus declaraciones: `--primary-dark` teñía la marca del login del color de enlace visitado del navegador, y `--border` impedía que se dibujaran las líneas del separador. Queda pendiente `--z-bg-light` en `portal.css`.
+*   **Contraste en botones:** El reset `.landing-body a { color: inherit }` prevalecía por especificidad sobre `.lp-btn--primary`, de modo que los botones azules heredaban el texto oscuro del body. Resuelto acotando el reset con `:where()`, igual que en el de imágenes.
+*   **Versionado de assets:** Nueva clase `config/App.php` que centraliza la versión del producto y reemplaza el cache-busting con `time()`, el cual invalidaba la caché del navegador en cada petición.
+
+### Versión 1.7.2
 Esta versión corrige la visualización y compatibilidad del portal de documentación del sistema:
 *   **Conversión de Tablas Grid a Markdown Estándar:** Migración de la Ficha Técnica (`FichaTecnica_Zooki.md`) y de los Requisitos (`ERS.md`) de formato grid a tablas estándar GFM, eliminando residuos de caracteres y garantizando un renderizado visual perfecto en el portal.
 
