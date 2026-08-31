@@ -506,27 +506,30 @@
     margin-bottom: 16px;
 }
 .cm-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 6px;
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
 }
-.cm-label i { color: #64748b; }
+.cm-label i { display: none; }
 .cm-input {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    transition: border-color 0.2s;
+    width: 100%; box-sizing: border-box; padding: 0.85rem 1rem 0.85rem 2.75rem;
+    background: #ffffff; border: 1.5px solid var(--border-color, #e2e8f0); border-radius: 12px;
+    font-family: inherit; font-size: 0.95rem; color: #0f172a;
+    transition: all 0.3s ease; outline: none;
+}
+.cm-input:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
 }
 .cm-input:focus {
-    border-color: #1a56db;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    border-color: var(--primary, #0c66e4);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(0, 82, 255, 0.1);
+    transform: translateY(-2px);
 }
 
 /* Buscador Mascota en vivo */
@@ -534,11 +537,20 @@
     position: relative;
 }
 .cm-search-input {
-    width: 100%;
-    padding: 10px 14px 10px 36px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    width: 100%; box-sizing: border-box; padding: 0.85rem 1rem 0.85rem 2.75rem;
+    background: #ffffff; border: 1.5px solid var(--border-color, #e2e8f0); border-radius: 12px;
+    font-family: inherit; font-size: 0.95rem; color: #0f172a;
+    transition: all 0.3s ease; outline: none;
+}
+.cm-search-input:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+}
+.cm-search-input:focus {
+    border-color: var(--primary, #0c66e4);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(0, 82, 255, 0.1);
+    transform: translateY(-2px);
 }
 .cm-search-icon {
     position: absolute;
@@ -608,50 +620,59 @@
     gap: 8px;
 }
 .cm-tipo-card {
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 10px;
+    border: 1.5px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    padding: 12px 10px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 6px;
+    gap: 8px;
     background: white;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .cm-tipo-card:hover {
     border-color: #cbd5e1;
     background: #f8fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 .cm-tipo-card.selected {
-    border-color: #1a56db;
-    background: #eff6ff;
-    box-shadow: 0 0 0 1px #1a56db;
+    border-color: var(--primary, #0c66e4);
+    background: var(--primary-soft, #e8f0fe);
+    box-shadow: 0 0 0 1px var(--primary, #0c66e4);
+    transform: translateY(-2px);
 }
 .cm-tipo-card i {
-    font-size: 1.3rem;
-    color: #64748b;
-    transition: color 0.2s;
+    font-size: 1.4rem;
+    color: #94a3b8;
+    transition: all 0.3s ease;
 }
-.cm-tipo-card.selected i { color: #1a56db; }
+.cm-tipo-card:hover i {
+    color: var(--primary, #0c66e4);
+}
+.cm-tipo-card.selected i { color: var(--primary, #0c66e4); }
 .cm-tipo-nombre {
     font-size: 0.75rem;
     font-weight: 700;
-    color: #334155;
-    line-height: 1.1;
+    color: #475569;
+    line-height: 1.2;
+    transition: color 0.3s;
 }
-.cm-tipo-card.selected .cm-tipo-nombre { color: #1e3a8a; }
+.cm-tipo-card:hover .cm-tipo-nombre { color: #0f172a; }
+.cm-tipo-card.selected .cm-tipo-nombre { color: #0f172a; }
 .cm-tipo-dur {
     font-size: 0.65rem;
     color: #64748b;
     background: #f1f5f9;
     padding: 2px 6px;
     border-radius: 12px;
+    transition: all 0.3s;
 }
 .cm-tipo-card.selected .cm-tipo-dur {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--primary, #0c66e4);
+    color: white;
 }
 
 .cm-duracion-chip {

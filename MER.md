@@ -4,46 +4,187 @@ Este documento describe la estructura y relaciones de la base de datos relaciona
 
 ---
 
-## Diagrama Entidad-Relación (Mermaid)
+## Diagrama Entidad-Relación
 
-El siguiente diagrama ilustra las tablas del sistema y sus relaciones lógicas:
+El siguiente diagrama describe las tablas del sistema y sus relaciones. Está escrito en Mermaid, por lo que se versiona junto al código y se renderiza de forma nítida a cualquier nivel de zoom.
+
+Las líneas continuas representan relaciones con clave foránea declarada; las punteadas, vínculos lógicos que el esquema no obliga a nivel de base de datos.
 
 ```mermaid
 erDiagram
-    roles ||--o{ usuarios : "contiene"
-    usuarios ||--o{ mascotas : "propietario_de"
-    usuarios ||--o{ citas : "atiende"
-    usuarios ||--o{ consultas : "diagnostica"
-    usuarios ||--o{ notificaciones : "recibe"
-    usuarios ||--o{ notificaciones_internas : "recibe_interna"
-    usuarios ||--o{ password_resets : "solicita"
-    usuarios ||--o{ auditoria_mascotas : "audita_mascota"
+    roles {
+        int id_rol PK
+        varchar nombre_rol
+    }
+    usuarios {
+        varchar documento PK
+        int id_rol FK
+        varchar nombre_completo
+        varchar email
+        tinyint estado
+    }
+    password_resets {
+        int id PK
+        varchar usuario_documento FK
+        varchar token
+        datetime expira
+    }
+    especies {
+        int id_especie PK
+        varchar nombre_especie
+    }
+    razas {
+        int id_raza PK
+        int id_especie FK
+        varchar nombre_raza
+    }
+    colores_base {
+        int id_color PK
+        varchar nombre_color
+    }
+    mascotas {
+        int id_mascota PK
+        varchar numero_historia_clinica
+        varchar doc_propietario FK
+        int id_especie FK
+        int id_raza FK
+        varchar nombre
+        decimal peso
+        enum sexo
+    }
+    mascota_colores {
+        int id PK
+        int id_mascota FK
+        int id_color FK
+    }
+    tipos_cita {
+        int id_tipo_cita PK
+        varchar nombre_tipo
+        int duracion_minutos
+    }
+    citas {
+        int id_cita PK
+        int id_mascota FK
+        varchar doc_veterinario FK
+        int id_tipo_cita
+        date fecha
+        time hora
+        varchar estado
+    }
+    consultas {
+        int id_consulta PK
+        int id_mascota FK
+        varchar doc_veterinario FK
+        int id_cita FK
+        text diagnostico
+        text plan_tratamiento
+    }
+    tratamientos {
+        int id_tratamiento PK
+        int id_consulta FK
+        varchar medicamento
+        varchar dosis
+    }
+    archivos_clinicos {
+        int id_archivo PK
+        int id_consulta FK
+        varchar nombre_archivo
+        varchar ruta
+    }
+    vacunas_base {
+        int id_vacuna_base PK
+        varchar nombre_vacuna
+    }
+    especie_vacunas {
+        int id PK
+        int id_especie FK
+        int id_vacuna_base FK
+    }
+    vacunas {
+        int id_vacuna PK
+        int id_mascota FK
+        varchar nombre_vacuna
+        date fecha_aplicacion
+        date fecha_proxima_dosis
+    }
+    desparasitaciones {
+        int id_desparasitacion PK
+        int id_mascota FK
+        varchar tipo
+        date fecha_aplicacion
+        date fecha_proxima
+    }
+    laboratorios_base {
+        int id_laboratorio PK
+        varchar nombre_laboratorio
+    }
+    productos_desparasitacion_base {
+        int id_producto PK
+        varchar nombre_producto
+    }
+    notificaciones {
+        int id_notificacion PK
+        varchar doc_propietario FK
+        varchar mensaje
+        tinyint leida
+    }
+    notificaciones_internas {
+        int id PK
+        varchar doc_usuario FK
+        int id_rol_destino FK
+        varchar mensaje
+    }
+    auditoria_mascotas {
+        int id_auditoria PK
+        int id_mascota FK
+        varchar usuario_doc FK
+        varchar campo_modificado
+        text valor_anterior
+        text valor_nuevo
+    }
+    auditoria_sistema {
+        int id_auditoria PK
+        varchar usuario_doc
+        varchar accion
+        varchar tabla_afectada
+        text datos_anteriores
+        text datos_nuevos
+    }
+    horarios_clinica {
+        int id PK
+        varchar dia_semana
+        tinyint activo
+    }
 
-    roles ||--o{ notificaciones_internas : "notifica_por_rol"
+    roles     ||--o{ usuarios                : "define el perfil de"
+    usuarios  ||--o{ password_resets         : "solicita"
+    usuarios  ||--o{ mascotas                : "es propietario de"
+    especies  ||--o{ razas                   : "agrupa"
+    especies  ||--o{ mascotas                : "clasifica"
+    razas     ||--o{ mascotas                : "clasifica"
+    mascotas  ||--o{ mascota_colores         : "tiene"
+    colores_base ||--o{ mascota_colores      : "compone"
+    mascotas  ||--o{ citas                   : "es agendada en"
+    usuarios  ||--o{ citas                   : "atiende como veterinario"
+    mascotas  ||--o{ consultas               : "recibe"
+    usuarios  ||--o{ consultas               : "registra como veterinario"
+    citas     ||--o| consultas               : "origina"
+    consultas ||--o{ tratamientos            : "receta"
+    consultas ||--o{ archivos_clinicos       : "adjunta"
+    mascotas  ||--o{ vacunas                 : "recibe"
+    mascotas  ||--o{ desparasitaciones       : "recibe"
+    especies  ||--o{ especie_vacunas         : "requiere"
+    vacunas_base ||--o{ especie_vacunas      : "aplica a"
+    usuarios  ||--o{ notificaciones          : "recibe"
+    usuarios  ||--o{ notificaciones_internas : "recibe"
+    roles     ||--o{ notificaciones_internas : "segmenta"
+    mascotas  ||--o{ auditoria_mascotas      : "genera"
+    usuarios  ||--o{ auditoria_mascotas      : "ejecuta"
 
-    especies ||--o{ razas : "clasifica"
-    especies ||--o{ mascotas : "especie_de"
-    especies ||--o{ especie_vacunas : "aplica_a"
-
-    razas ||--o{ mascotas : "raza_de"
-
-    mascotas ||--o{ citas : "agenda"
-    mascotas ||--o{ consultas : "asiste_a"
-    mascotas ||--o{ vacunas : "recibe_vacuna"
-    mascotas ||--o{ desparasitaciones : "recibe_desparasitacion"
-    mascotas ||--o{ mascota_colores : "tiene_color"
-    mascotas ||--o{ auditoria_mascotas : "audita"
-
-    colores_base ||--o{ mascota_colores : "asociado_a"
-
-    vacunas_base ||--o{ especie_vacunas : "define"
-
-    tipos_cita ||--o{ citas : "clasifica_cita"
-
-    citas ||--o| consultas : "se_convierte_en"
-
-    consultas ||--o{ tratamientos : "prescribe"
-    consultas ||--o{ archivos_clinicos : "adjunta_archivo"
+    tipos_cita ||..o{ citas                  : "define duracion (sin FK)"
+    usuarios   ||..o{ auditoria_sistema      : "ejecuta (sin FK)"
+    laboratorios_base ||..o{ vacunas         : "catalogo por nombre"
+    productos_desparasitacion_base ||..o{ desparasitaciones : "catalogo por nombre"
 ```
 
 ---
@@ -75,3 +216,9 @@ erDiagram
 ### 5. Auditoría y Control
 *   **auditoria_mascotas**: Log de cambios específicos sobre las fichas de las mascotas (quién modificó, qué campo, valor anterior y nuevo).
 *   **auditoria_sistema**: Historial de seguridad y operaciones del sistema completo, registrando acciones (`LOGIN`, `LOGOUT`, `INSERT`, `UPDATE`, `DELETE`) con los payloads JSON de datos anteriores y nuevos para una auditoría forense íntegra.
+
+### 6. Configuración y Parámetros
+*   **horarios_clinica**: Define los horarios de atención y bloques de disponibilidad (mañana y tarde) por día de la semana para la gestión de citas.
+*   **laboratorios_base**: Catálogo de laboratorios farmacéuticos fabricantes de vacunas y medicamentos.
+*   **productos_desparasitacion_base**: Catálogo parametrizado de productos desparasitantes disponibles, clasificados por tipo (interna, externa o ambas).
+

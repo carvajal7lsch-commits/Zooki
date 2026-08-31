@@ -3,8 +3,8 @@
    Automatically generated modular imports to reduce complexity.
 */
 
-@import url('medical/base.css');
-@import url('medical/interactive-panel.css');
-@import url('medical/timeline.css');
-@import url('medical/consultas.css');
-@import url('medical/forms-modals.css');
+@import url('medical/base.css?v=7');
+@import url('medical/interactive-panel.css?v=7');
+@import url('medical/timeline.css?v=7');
+@import url('medical/consultas.css?v=7');
+@import url('medical/forms-modals.css?v=7');

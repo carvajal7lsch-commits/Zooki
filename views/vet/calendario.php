@@ -2,7 +2,10 @@
 // views/citas/calendario.php
 ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css">
-<link rel="stylesheet" href="css/calendario.css">
+<link rel="stylesheet" href="css/calendar-modules/sidebar-cards.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/calendar-modules/drawers-modals.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/calendar-modules/mockup-redesign.css?v=<?= time() ?>">
+<link rel="stylesheet" href="css/calendario.css?v=<?= time() ?>">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 <div class="animate__animated animate__fadeIn">
@@ -95,7 +98,7 @@
 <!-- ══════════════════════════════════════════════
      MODAL — Agendar Cita (Cell Click)
      ══════════════════════════════════════════════ -->
-<div id="citaModalOverlay" class="cita-modal-overlay" onclick="handleModalOverlayClick(event)">
+<div id="citaModalOverlay" class="users-modal cita-modal-overlay" onclick="handleModalOverlayClick(event)">
     <div class="cita-modal" role="dialog" aria-modal="true" aria-labelledby="citaModalTitle">
 
         <!-- Header -->
@@ -129,7 +132,7 @@
                 <!-- Fila info compacta: Fecha + Veterinario -->
                 <div class="cm-info-row">
                     <!-- Chip de Fecha -->
-                    <div class="cm-chip">
+                    <div class="cm-chip" style="display: none;">
                         <i class="far fa-calendar-alt cm-chip-icon"></i>
                         <div class="cm-chip-text">
                             <span class="cm-chip-label">Fecha</span>
@@ -149,7 +152,7 @@
                     </div>
                     <div class="cm-vet-select-wrap" id="cm_vet_select_wrap" style="display:none;">
                         <label class="cm-mini-label"><i class="fas fa-user-md"></i> Veterinario</label>
-                        <select id="modal_veterinario" name="doc_veterinario" class="cm-select-compact">
+                        <select id="modal_veterinario" name="doc_veterinario" class="cm-select-compact" onchange="cargarSlotsModal()">
                             <option value="">Seleccione...</option>
                         </select>
                     </div>
@@ -157,13 +160,13 @@
 
                 <!-- Búsqueda de Mascota -->
                 <div class="cm-field">
-                    <label class="cm-label"><i class="fas fa-paw"></i> Mascota</label>
-                    <div class="cm-search-wrap" id="cm_mascota_wrap">
+                    <label class="cm-label">Mascota</label>
+                    <div class="input-wrapper" id="cm_mascota_wrap">
+                        <i class="fas fa-search field-icon"></i>
                         <input type="text" id="cm_mascota_search" class="cm-search-input"
                                placeholder="Buscar por nombre de mascota..."
                                autocomplete="off"
                                oninput="filtrarMascotas(this.value)">
-                        <i class="fas fa-search cm-search-icon"></i>
                         <div class="cm-search-dropdown" id="cm_mascota_dropdown"></div>
                     </div>
                     <div class="cm-selected-chip" id="cm_mascota_chip" style="display:none;">
@@ -178,7 +181,7 @@
 
                 <!-- Tipo de Cita — cards -->
                 <div class="cm-field">
-                    <label class="cm-label"><i class="fas fa-tag"></i> Tipo de Cita</label>
+                    <label class="cm-label">Tipo de Cita</label>
                     <div class="cm-tipo-grid" id="cm_tipo_grid">
                         <p class="cm-loading-text"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
                     </div>
@@ -191,9 +194,12 @@
 
                 <!-- Motivo -->
                 <div class="cm-field">
-                    <label class="cm-label"><i class="fas fa-comment-medical"></i> Motivo <span style="color:#94a3b8;font-weight:400;">(opcional)</span></label>
-                    <input type="text" id="modal_motivo" name="motivo" class="cm-input"
-                        placeholder="Ej. Vacunación anual, control de peso...">
+                    <label class="cm-label">Motivo <span style="color:#94a3b8;font-weight:400;">(opcional)</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-comment-medical field-icon"></i>
+                        <input type="text" id="modal_motivo" name="motivo" class="cm-input"
+                            placeholder="Ej. Vacunación anual, control de peso...">
+                    </div>
                 </div>
 
                 <!-- Horario seleccionado (chip, oculto hasta seleccionar) -->
@@ -208,8 +214,8 @@
 
                 <!-- Horarios disponibles -->
                 <div class="cm-field">
-                    <label class="cm-label"><i class="fas fa-lightbulb" style="color:#F59E0B;"></i> Horarios Disponibles</label>
-                    <button type="button" class="slots-btn" id="modal_btn_slots" onclick="cargarSlotsModal()">
+                    <label class="cm-label">Horarios Disponibles</label>
+                    <button type="button" class="slots-btn" id="modal_btn_slots" onclick="cargarSlotsModal()" style="display: none;">
                         <i class="fas fa-search"></i> Ver horarios libres
                     </button>
                     <div class="slots-container" id="modal_slots_container"></div>
@@ -362,30 +368,33 @@
 
             <!-- Veterinario -->
             <div>
-                <label class="modal-reprog-label">
-                    <i class="fas fa-user-md"></i>Veterinario
-                </label>
-                <select id="reprogramar_veterinario" class="modal-reprog-select">
-                    <option value="">Seleccione veterinario...</option>
-                </select>
+                <label class="modal-reprog-label">Veterinario</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user-md field-icon"></i>
+                    <select id="reprogramar_veterinario" class="modal-reprog-select">
+                        <option value="">Seleccione veterinario...</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Fecha -->
             <div>
-                <label class="modal-reprog-label">
-                    <i class="far fa-calendar-alt"></i>Nueva Fecha
-                </label>
-                <input type="date" id="reprogramar_fecha" class="modal-reprog-input">
+                <label class="modal-reprog-label">Nueva Fecha</label>
+                <div class="input-wrapper">
+                    <i class="far fa-calendar-alt field-icon"></i>
+                    <input type="date" id="reprogramar_fecha" class="modal-reprog-input">
+                </div>
             </div>
 
             <!-- Tipo de cita -->
             <div>
-                <label class="modal-reprog-label">
-                    <i class="fas fa-tag"></i>Tipo de Cita
-                </label>
-                <select id="reprogramar_tipo_cita" onchange="actualizarDuracionReprogramar()" class="modal-reprog-select">
-                    <option value="">Seleccione tipo...</option>
-                </select>
+                <label class="modal-reprog-label">Tipo de Cita</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-tag field-icon"></i>
+                    <select id="reprogramar_tipo_cita" onchange="actualizarDuracionReprogramar()" class="modal-reprog-select">
+                        <option value="">Seleccione tipo...</option>
+                    </select>
+                </div>
                 <div id="reprogramar_duracion_badge" class="modal-reprog-duracion">
                     <i class="fas fa-clock"></i> Duración estimada:
                     <span id="reprogramar_duracion_valor" class="modal-reprog-duracion-val">—</span> min
@@ -462,7 +471,7 @@
   const USER_ROL = <?= (int)($_SESSION['usuario_id_rol'] ?? 0) ?>;
   const USER_DOC = <?= json_encode($_SESSION['usuario_doc'] ?? '') ?>;
 </script>
-<script src="js/calendario.js"></script>
+<script src="js/calendario.js?v=<?= time() ?>"></script>
 
 <script>
 // ── View Tabs (Mes / Semana / Día) ──

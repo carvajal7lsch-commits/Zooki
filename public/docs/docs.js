@@ -98,11 +98,20 @@ A continuación, puedes profundizar en las especificaciones del sistema:
             }
 
             // Renderizar Markdown usando Marked
-            docRenderArea.innerHTML = marked.parse(renderedMarkdown);
+            let htmlContent = marked.parse(renderedMarkdown);
+            
+            // Corregir rutas de imágenes y enlaces de "public/img/" a "../img/" para el portal SPA
+            htmlContent = htmlContent.replace(/src="public\/img\//g, 'src="../img/');
+            htmlContent = htmlContent.replace(/href="public\/img\//g, 'href="../img/');
+            
+            docRenderArea.innerHTML = htmlContent;
             
             // Post-procesamiento para Mermaid y TOC
             await processMermaidDiagrams();
             generateTOC();
+            
+            // Inicializar visor de diagramas interactivo si existe en la página
+            initSvgViewer();
             
             // Limpiar buscador si tenía datos
             searchInput.value = '';
@@ -409,5 +418,213 @@ A continuación, puedes profundizar en las especificaciones del sistema:
     printBtn.addEventListener('click', () => {
         window.print();
     });
+
+    // ═══════════════════════════════════════════════════════════════
+    // VISOR INTERACTIVO DE SVG (Zoom y Pan)
+    // ═══════════════════════════════════════════════════════════════
+    function initSvgViewer() {
+        const viewport = document.getElementById('svg-viewport');
+        const panContainer = document.getElementById('svg-pan-container');
+        const svgObject = document.getElementById('mer-svg-object');
+        
+        const btnZoomIn = document.getElementById('btn-zoom-in');
+        const btnZoomOut = document.getElementById('btn-zoom-out');
+        const btnZoomReset = document.getElementById('btn-zoom-reset');
+        const btnFullscreen = document.getElementById('btn-fullscreen');
+        const zoomPercent = document.getElementById('zoom-percent');
+        
+        if (!viewport || !panContainer || !svgObject) return;
+        
+        let scale = 1.0;
+        const minScale = 0.1;
+        const maxScale = 8.0;
+        const baseWidth = 2500; // Ancho base en px para alta resolución
+        let baseHeight = 1500;  // Fallback inicial
+        
+        // Obtener la relación de aspecto de la imagen para cambiar el alto de forma síncrona
+        function initDimensions() {
+            if (svgObject.naturalWidth && svgObject.naturalHeight) {
+                const aspect = svgObject.naturalHeight / svgObject.naturalWidth;
+                baseHeight = baseWidth * aspect;
+                updateScale();
+            }
+        }
+        
+        if (svgObject.complete) {
+            initDimensions();
+        } else {
+            svgObject.addEventListener('load', initDimensions);
+        }
+        
+        // Aplicar escala inicial
+        updateScale();
+        
+        function updateScale() {
+            panContainer.style.width = (baseWidth * scale) + 'px';
+            panContainer.style.height = (baseHeight * scale) + 'px';
+            if (zoomPercent) {
+                zoomPercent.textContent = Math.round(scale * 100) + '%';
+            }
+        }
+        
+        function zoomFromCenter(zoomIn) {
+            const oldScale = scale;
+            let newScale = scale;
+            
+            if (zoomIn) {
+                if (scale < maxScale) {
+                    newScale = Math.min(maxScale, scale + 0.25);
+                }
+            } else {
+                if (scale > minScale) {
+                    newScale = Math.max(minScale, scale - 0.25);
+                }
+            }
+            
+            if (newScale !== oldScale) {
+                const centerX = viewport.clientWidth / 2;
+                const centerY = viewport.clientHeight / 2;
+                
+                const contentX = centerX + viewport.scrollLeft;
+                const contentY = centerY + viewport.scrollTop;
+                
+                scale = newScale;
+                updateScale();
+                
+                const ratio = newScale / oldScale;
+                viewport.scrollLeft = contentX * ratio - centerX;
+                viewport.scrollTop = contentY * ratio - centerY;
+            }
+        }
+        
+        // Zoom In (Acercar)
+        if (btnZoomIn) {
+            btnZoomIn.addEventListener('click', () => {
+                zoomFromCenter(true);
+            });
+        }
+        
+        // Zoom Out (Alejar)
+        if (btnZoomOut) {
+            btnZoomOut.addEventListener('click', () => {
+                zoomFromCenter(false);
+            });
+        }
+        
+        // Reset Zoom (Restaurar)
+        if (btnZoomReset) {
+            btnZoomReset.addEventListener('click', () => {
+                scale = 1.0;
+                updateScale();
+                // Centrar scroll en el viewport
+                viewport.scrollLeft = (panContainer.clientWidth - viewport.clientWidth) / 2;
+                viewport.scrollTop = (panContainer.clientHeight - viewport.clientHeight) / 2;
+            });
+        }
+        
+        // Fullscreen Toggle (Pantalla completa)
+        if (btnFullscreen) {
+            btnFullscreen.addEventListener('click', () => {
+                const viewerCard = viewport.closest('.svg-viewer-card');
+                if (!viewerCard) return;
+                
+                if (!document.fullscreenElement) {
+                    viewerCard.requestFullscreen().then(() => {
+                        viewerCard.classList.add('fullscreen-mode');
+                    }).catch(err => {
+                        console.error(`Error al activar pantalla completa: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+        }
+        
+        // Escuchar evento de salida de pantalla completa
+        document.addEventListener('fullscreenchange', () => {
+            const viewerCard = viewport.closest('.svg-viewer-card');
+            if (viewerCard && !document.fullscreenElement) {
+                viewerCard.classList.remove('fullscreen-mode');
+            }
+        });
+        
+        // ── Drag to Pan (Arrastrar para navegar) ──
+        let isDown = false;
+        let startX, startY;
+        let scrollLeft, scrollTop;
+        
+        viewport.addEventListener('mousedown', (e) => {
+            // Evitar conflicto si se hace clic en botones de control o toolbar
+            if (e.target.closest('.viewer-btn') || e.target.closest('.svg-viewer-toolbar')) return;
+            
+            isDown = true;
+            viewport.classList.add('grabbing');
+            
+            startX = e.pageX - viewport.offsetLeft;
+            startY = e.pageY - viewport.offsetTop;
+            scrollLeft = viewport.scrollLeft;
+            scrollTop = viewport.scrollTop;
+        });
+        
+        viewport.addEventListener('mouseleave', () => {
+            isDown = false;
+            viewport.classList.remove('grabbing');
+        });
+        
+        viewport.addEventListener('mouseup', () => {
+            isDown = false;
+            viewport.classList.remove('grabbing');
+        });
+        
+        viewport.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - viewport.offsetLeft;
+            const y = e.pageY - viewport.offsetTop;
+            const walkX = (x - startX) * 1.5; // multiplicador de velocidad
+            const walkY = (y - startY) * 1.5;
+            viewport.scrollLeft = scrollLeft - walkX;
+            viewport.scrollTop = scrollTop - walkY;
+        });
+        
+        // Zoom directo con la rueda del ratón (centrado bajo el cursor)
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            // 1. Obtener coordenadas del mouse dentro del viewport
+            const rect = viewport.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // 2. Calcular la posición correspondiente en el contenido con scrollbar
+            const contentX = mouseX + viewport.scrollLeft;
+            const contentY = mouseY + viewport.scrollTop;
+            
+            const oldScale = scale;
+            let newScale = scale;
+            
+            if (e.deltaY < 0) {
+                // Zoom In (Acercar)
+                if (scale < maxScale) {
+                    newScale = Math.min(maxScale, scale + 0.25);
+                }
+            } else {
+                // Zoom Out (Alejar)
+                if (scale > minScale) {
+                    newScale = Math.max(minScale, scale - 0.25);
+                }
+            }
+            
+            if (newScale !== oldScale) {
+                scale = newScale;
+                updateScale();
+                
+                // 3. Ajustar el scroll del viewport para que el punto bajo el mouse permanezca estático
+                const ratio = newScale / oldScale;
+                viewport.scrollLeft = contentX * ratio - mouseX;
+                viewport.scrollTop = contentY * ratio - mouseY;
+            }
+        }, { passive: false });
+    }
 
 });

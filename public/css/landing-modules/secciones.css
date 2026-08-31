@@ -1,0 +1,715 @@
+/* ============================================================
+   ZOOKI LANDING · SECCIONES DE CONTENIDO
+   Problema/solucion, modulos (bento), roles, pasos y pacientes.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. PROBLEMA -> SOLUCION
+   ------------------------------------------------------------ */
+.lp-compare {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+.lp-compare__card {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-xl);
+    padding: 1.5rem 1.6rem;
+    box-shadow: var(--lp-shadow-sm);
+}
+
+.lp-compare__card--after {
+    border-color: rgba(0, 82, 255, 0.28);
+    box-shadow: var(--lp-shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Barra superior de acento en la tarjeta de solucion. */
+.lp-compare__card--after::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--lp-primary), var(--lp-accent));
+}
+
+.lp-compare__head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.9rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--lp-border);
+}
+
+.lp-compare__tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--lp-radius-pill);
+}
+
+.lp-compare__tag--before {
+    color: var(--lp-danger);
+    background: var(--lp-danger-soft);
+}
+
+.lp-compare__tag--after {
+    color: var(--lp-primary);
+    background: var(--lp-primary-soft);
+}
+
+.lp-compare__title {
+    font-size: 1.2rem;
+}
+
+.lp-compare__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.lp-compare__list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    font-size: 0.93rem;
+    line-height: 1.5;
+    color: var(--lp-text-soft);
+}
+
+.lp-compare__list i {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    font-size: 1.15rem;
+}
+
+.lp-compare__card--before i {
+    color: var(--lp-danger);
+}
+
+.lp-compare__card--after i {
+    color: var(--lp-accent);
+}
+
+.lp-compare__card--after .lp-compare__list li {
+    color: var(--lp-text);
+    font-weight: 500;
+}
+
+/* Flecha divisoria entre las dos tarjetas. */
+.lp-compare__arrow {
+    align-self: center;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--lp-primary);
+    color: #FFFFFF;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    box-shadow: var(--lp-shadow-primary);
+}
+
+/* ------------------------------------------------------------
+   2. MODULOS (BENTO)
+   ------------------------------------------------------------ */
+.lp-bento {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.lp-bento__card {
+    position: relative;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-lg);
+    padding: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.lp-bento__card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0, 82, 255, 0.30);
+    box-shadow: var(--lp-shadow-lg);
+}
+
+/* La tarjeta principal se distingue por color y por su listado de etiquetas,
+   no por tamano: con seis tarjetas en tres columnas, una rejilla pareja de
+   3x2 es la unica que no deja huecos ni espacios muertos. */
+.lp-bento__card--featured {
+    border-color: rgba(0, 82, 255, 0.22);
+    background:
+        radial-gradient(600px 320px at 85% 0%, rgba(0, 82, 255, 0.09), transparent 68%),
+        var(--lp-surface);
+}
+
+.lp-bento__icon {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    border-radius: var(--lp-radius-md);
+    background: var(--lp-primary-soft);
+    color: var(--lp-primary);
+    margin-bottom: 0.85rem;
+}
+
+.lp-bento__icon--accent {
+    background: var(--lp-accent-soft);
+    color: var(--lp-accent);
+}
+
+.lp-bento__icon--amber {
+    background: var(--lp-warning-soft);
+    color: var(--lp-warning);
+}
+
+.lp-bento__title {
+    font-size: 1.08rem;
+    margin-bottom: 0.4rem;
+}
+
+.lp-bento__text {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--lp-text-soft);
+}
+
+/* Etiquetas de detalle dentro de la tarjeta destacada. */
+.lp-bento__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+}
+
+.lp-bento__tags li {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--lp-text-soft);
+    background: var(--lp-surface-alt);
+    border: 1px solid var(--lp-border);
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--lp-radius-pill);
+}
+
+/* ------------------------------------------------------------
+   3. ROLES (PESTANAS)
+   ------------------------------------------------------------ */
+.lp-roles__tabs {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    max-width: 700px;
+    margin: 0 auto 1.75rem;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-pill);
+    padding: 0.4rem;
+    box-shadow: var(--lp-shadow-sm);
+}
+
+.lp-roles__tab {
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--lp-font-body);
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--lp-text-soft);
+    background: transparent;
+    border: none;
+    padding: 0.7rem 1.1rem;
+    border-radius: var(--lp-radius-pill);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.lp-roles__tab:hover {
+    color: var(--lp-primary);
+}
+
+.lp-roles__tab.is-active {
+    background: var(--lp-primary);
+    color: #FFFFFF;
+    box-shadow: var(--lp-shadow-primary);
+}
+
+.lp-roles__panel {
+    display: none;
+}
+
+.lp-roles__panel.is-active {
+    display: grid;
+    grid-template-columns: 1fr 0.8fr;
+    gap: 2.5rem;
+    align-items: center;
+    animation: lp-fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes lp-fade-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.lp-roles__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lp-primary);
+    margin-bottom: 0.85rem;
+}
+
+.lp-roles__title {
+    font-size: clamp(1.35rem, 1.05rem + 1.1vw, 1.75rem);
+    margin-bottom: 0.65rem;
+}
+
+.lp-roles__text {
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: var(--lp-text-soft);
+    margin-bottom: 1.15rem;
+}
+
+.lp-roles__list {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.lp-roles__list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.97rem;
+    color: var(--lp-text);
+}
+
+.lp-roles__list i {
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+    color: var(--lp-accent);
+    font-size: 1.1rem;
+}
+
+/* Escenario donde se apoya la mini interfaz de cada rol. */
+.lp-roles__figure {
+    position: relative;
+    border-radius: var(--lp-radius-xl);
+    padding: 1.5rem;
+    background: linear-gradient(160deg, rgba(0, 82, 255, 0.10), rgba(14, 165, 233, 0.12));
+    border: 1px solid var(--lp-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+    overflow: hidden;
+}
+
+/* ------------------------------------------------------------
+   MINI INTERFACES ILUSTRATIVAS
+   Representan lo que ve cada rol dentro del sistema. Son
+   decorativas (`aria-hidden`) y no muestran datos reales: su
+   funcion es sostener el argumento de la seccion, que promete
+   ensenar lo que alcanza cada perfil.
+   ------------------------------------------------------------ */
+.lp-ui {
+    width: 100%;
+    max-width: 310px;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-md);
+    box-shadow: var(--lp-shadow-lg);
+    overflow: hidden;
+}
+
+/* Variante estrecha para el portal del propietario, que es movil. */
+.lp-ui--phone {
+    max-width: 215px;
+    border-radius: var(--lp-radius-lg);
+}
+
+.lp-ui__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.7rem;
+    background: var(--lp-surface-alt);
+    border-bottom: 1px solid var(--lp-border);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--lp-text-muted);
+}
+
+.lp-ui__dots {
+    display: flex;
+    gap: 0.22rem;
+}
+
+.lp-ui__dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lp-border-strong);
+}
+
+.lp-ui__body {
+    padding: 0.8rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.lp-ui__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.lp-ui__name {
+    font-family: var(--lp-font-display);
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--lp-text);
+}
+
+.lp-ui__label {
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--lp-text-muted);
+}
+
+.lp-ui__chip {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.18rem 0.5rem;
+    border-radius: var(--lp-radius-pill);
+    white-space: nowrap;
+}
+
+.lp-ui__chip--blue  { background: var(--lp-primary-soft); color: var(--lp-primary); }
+.lp-ui__chip--accent{ background: var(--lp-accent-soft);  color: var(--lp-accent); }
+.lp-ui__chip--warn  { background: var(--lp-warning-soft); color: var(--lp-warning); }
+.lp-ui__chip--muted { background: var(--lp-surface-alt);  color: var(--lp-text-muted); }
+
+/* Filas de dato: etiqueta a la izquierda, valor a la derecha. */
+.lp-ui__rows {
+    display: grid;
+    gap: 0.3rem;
+}
+
+.lp-ui__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.76rem;
+    padding-top: 0.3rem;
+    border-top: 1px dashed var(--lp-border);
+}
+
+.lp-ui__row:first-child {
+    padding-top: 0;
+    border-top: none;
+}
+
+.lp-ui__k { color: var(--lp-text-muted); }
+.lp-ui__v { font-weight: 600; color: var(--lp-text); }
+
+/* Franjas horarias de la agenda. */
+.lp-ui__slots {
+    display: grid;
+    gap: 0.28rem;
+}
+
+.lp-ui__slot {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.73rem;
+    padding: 0.32rem 0.45rem;
+    border-radius: var(--lp-radius-sm);
+    background: var(--lp-surface-alt);
+    border-left: 3px solid var(--lp-primary);
+    color: var(--lp-text);
+}
+
+.lp-ui__slot--free {
+    border-left-color: var(--lp-border-strong);
+    color: var(--lp-text-muted);
+}
+
+/* Franja bloqueada: es la prueba visual de la regla anti-solapamiento. */
+.lp-ui__slot--blocked {
+    border-left-color: var(--lp-danger);
+    background: var(--lp-danger-soft);
+    color: var(--lp-danger);
+    font-weight: 600;
+}
+
+.lp-ui__time {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: inherit;
+    opacity: 0.75;
+}
+
+/* Listado de usuarios del panel de administracion. */
+.lp-ui__people {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.lp-ui__person {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+}
+
+.lp-ui__avatar {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--lp-primary-soft);
+    color: var(--lp-primary);
+    font-size: 0.62rem;
+    font-weight: 700;
+}
+
+.lp-ui__person-name {
+    flex: 1;
+    color: var(--lp-text);
+    font-weight: 500;
+}
+
+/* Boton simulado del portal del propietario. */
+.lp-ui__cta {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    background: var(--lp-primary);
+    padding: 0.45rem;
+    border-radius: var(--lp-radius-sm);
+}
+
+/* ------------------------------------------------------------
+   4. COMO FUNCIONA (PASOS, anidado en Problema -> Solucion)
+   ------------------------------------------------------------ */
+.lp-steps-block {
+    margin-top: 2.25rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--lp-border-strong);
+}
+
+.lp-steps-title {
+    text-align: center;
+    font-size: 1.15rem;
+    color: var(--lp-text-soft);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.lp-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    position: relative;
+}
+
+/* Linea guia que conecta los pasos en escritorio. */
+.lp-steps::before {
+    content: "";
+    position: absolute;
+    top: 23px;
+    left: 12.5%;
+    right: 12.5%;
+    height: 2px;
+    background: repeating-linear-gradient(90deg,
+        var(--lp-border-strong) 0 8px, transparent 8px 16px);
+    z-index: 0;
+}
+
+.lp-step {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+}
+
+.lp-step__number {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--lp-font-display);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--lp-primary);
+    background: var(--lp-surface);
+    border: 2px solid var(--lp-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 0 6px var(--lp-surface-alt);
+}
+
+.lp-step__title {
+    font-size: 1rem;
+    margin-bottom: 0.35rem;
+}
+
+.lp-step__text {
+    font-size: 0.89rem;
+    line-height: 1.5;
+    color: var(--lp-text-soft);
+}
+
+/* ------------------------------------------------------------
+   5. PACIENTES (GALERIA ILUSTRADA)
+   ------------------------------------------------------------ */
+.lp-patients {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.lp-patient {
+    position: relative;
+    border-radius: var(--lp-radius-xl);
+    overflow: hidden;
+    background: linear-gradient(170deg, var(--lp-surface-sunken), #FFFFFF);
+    border: 1px solid var(--lp-border);
+    padding: 1.25rem 1.25rem 1.25rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.lp-patient:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--lp-shadow-lg);
+}
+
+.lp-patient__media {
+    height: 145px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin-bottom: 0.9rem;
+}
+
+.lp-patient__img {
+    max-height: 145px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 16px 24px rgba(10, 27, 77, 0.20));
+}
+
+/* Mini ficha clinica sobre la ilustracion. */
+.lp-patient__card {
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-md);
+    padding: 0.9rem 1rem;
+    box-shadow: var(--lp-shadow-md);
+}
+
+.lp-patient__name {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+}
+
+.lp-patient__name h3 {
+    font-size: 1.05rem;
+}
+
+.lp-patient__species {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--lp-primary);
+    background: var(--lp-primary-soft);
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--lp-radius-pill);
+    white-space: nowrap;
+}
+
+.lp-patient__rows {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.lp-patient__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.83rem;
+    padding-top: 0.4rem;
+    border-top: 1px dashed var(--lp-border);
+}
+
+.lp-patient__row:first-child {
+    padding-top: 0;
+    border-top: none;
+}
+
+.lp-patient__row dt {
+    color: var(--lp-text-muted);
+}
+
+.lp-patient__row dd {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    color: var(--lp-text);
+}
+
+.lp-patient__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.lp-patient__dot--accent { background: var(--lp-accent); }
+.lp-patient__dot--blue  { background: var(--lp-primary); }
+.lp-patient__dot--amber { background: var(--lp-warning); }

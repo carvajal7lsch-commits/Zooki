@@ -1,0 +1,257 @@
+/* ============================================================
+   ZOOKI LANDING · NAVEGACION
+   Barra fija con efecto vidrio y menu lateral (drawer) en movil.
+   ============================================================ */
+
+.lp-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: var(--lp-nav-height);
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-bottom: 1px solid transparent;
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Estado aplicado por landing.js cuando el usuario baja del hero. */
+.lp-header.is-scrolled {
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom-color: var(--lp-border);
+    box-shadow: 0 4px 20px -12px rgba(10, 27, 77, 0.35);
+}
+
+.lp-nav {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+/* ---------- Marca ---------- */
+.lp-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+.lp-brand__img {
+    height: 36px;
+    width: auto;
+    object-fit: contain;
+}
+
+.lp-brand__name {
+    font-family: var(--lp-font-display);
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--lp-primary-deep);
+}
+
+/* ---------- Enlaces de escritorio ---------- */
+.lp-nav__menu {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-left: auto;
+}
+
+.lp-nav__link {
+    position: relative;
+    font-size: 0.94rem;
+    font-weight: 500;
+    color: var(--lp-text-soft);
+    padding: 0.25rem 0;
+    transition: color 0.2s ease;
+}
+
+.lp-nav__link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -4px;
+    height: 2px;
+    width: 0;
+    background: var(--lp-primary);
+    border-radius: 2px;
+    transition: width 0.25s ease;
+}
+
+.lp-nav__link:hover,
+.lp-nav__link.is-active {
+    color: var(--lp-primary);
+}
+
+.lp-nav__link:hover::after,
+.lp-nav__link.is-active::after {
+    width: 100%;
+}
+
+/* ---------- Acciones ---------- */
+.lp-nav__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.lp-nav__docs {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--lp-primary);
+    background: var(--lp-primary-soft);
+    padding: 0.55rem 1rem;
+    border-radius: var(--lp-radius-md);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.lp-nav__docs:hover {
+    background: var(--lp-primary);
+    color: #FFFFFF;
+}
+
+/* ---------- Boton hamburguesa (solo movil) ---------- */
+.lp-nav__toggle {
+    display: none;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--lp-border-strong);
+    border-radius: var(--lp-radius-md);
+    color: var(--lp-primary-deep);
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.lp-nav__toggle:hover {
+    background: var(--lp-primary-soft);
+    border-color: var(--lp-primary);
+}
+
+/* ---------- Drawer movil ---------- */
+.lp-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(340px, 86vw);
+    z-index: 1200;
+    background: var(--lp-surface);
+    box-shadow: -20px 0 60px -30px rgba(10, 27, 77, 0.55);
+    padding: 1.25rem 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s;
+}
+
+.lp-drawer.is-open {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+.lp-drawer__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--lp-border);
+}
+
+.lp-drawer__close {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--lp-surface-alt);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-md);
+    color: var(--lp-text-soft);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.lp-drawer__close:hover {
+    background: var(--lp-danger-soft);
+    color: var(--lp-danger);
+}
+
+.lp-drawer__menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1.75rem;
+}
+
+.lp-drawer__link {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--lp-text);
+    padding: 0.85rem 0.9rem;
+    border-radius: var(--lp-radius-md);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.lp-drawer__link i {
+    font-size: 1.2rem;
+    color: var(--lp-primary);
+    width: 1.4rem;
+    text-align: center;
+}
+
+.lp-drawer__link:hover {
+    background: var(--lp-primary-soft);
+    color: var(--lp-primary);
+}
+
+.lp-drawer__actions {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lp-drawer__foot {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--lp-text-muted);
+    text-align: center;
+}
+
+/* Capa oscura detras del drawer. */
+.lp-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(11, 21, 51, 0.45);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lp-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+}
