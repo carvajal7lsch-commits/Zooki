@@ -240,6 +240,32 @@ if (file_exists($envFile)) {
                                     Registrarse con Google
                                 </button>
                             </form>
+
+                            <!-- Pantalla de espera del registro (HU-36). Reemplaza al
+                                 formulario sin recargar la pagina: la cuenta ya quedo
+                                 creada y solo falta que el usuario abra el enlace del
+                                 correo. En cuanto lo haga, el sondeo lo lleva al portal. -->
+                            <div class="registro-espera" id="registroEspera" hidden>
+                                <div class="registro-espera-icono">
+                                    <i class="ri-mail-send-line"></i>
+                                    <span class="registro-espera-spinner" aria-hidden="true"></span>
+                                </div>
+                                <h3>Revisa tu correo</h3>
+                                <p class="registro-espera-texto">
+                                    Enviamos un enlace de confirmación a
+                                    <strong id="registroEsperaEmail"></strong>.
+                                    Ábrelo para activar tu cuenta; esta página continúa sola.
+                                </p>
+                                <p class="registro-espera-estado" id="registroEsperaEstado" role="status" aria-live="polite">
+                                    Esperando la confirmación…
+                                </p>
+                                <p class="registro-espera-ayuda">
+                                    Si no lo ves, revisa la carpeta de spam. El enlace vence en 24 horas.
+                                </p>
+                                <button type="button" class="btn-secondary" id="registroEsperaVolver">
+                                    Volver al inicio de sesión
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
