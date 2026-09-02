@@ -27,6 +27,7 @@ composer.lock
 
 # Archivos de IDE y editores
 .vscode/
+.claude/
 .idea/
 *.swp
 *.swo
@@ -121,3 +122,7 @@ public/img/MER_zooki.svg
 ZOOKI_REGLAS.md
 temp_login.php
 
+
+# Análisis de vulnerabilidades: documenta riesgos sin corregir de un sistema
+# en producción. Nunca debe publicarse en el repositorio ni en el portal.
+AnalisisVaciosDiseno.md

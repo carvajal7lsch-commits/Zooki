@@ -4,34 +4,104 @@
    1. VARIABLES Y TOKENS DE DISEÑO
    ═══════════════════════════════════════════════════════════════ */
 :root {
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-heading: 'Outfit', var(--font-sans);
-    --font-mono: 'Fira Code', monospace;
+    /* Le dice al navegador que la interfaz es oscura, para que dibuje sus
+       scrollbars nativos en variante oscura. Sin esto los asumía claros y
+       el track salía blanco, lo que cantaba dentro del panel del índice. */
+    color-scheme: dark;
 
-    /* Colores del Tema Oscuro Premium */
-    --bg-main: #0b0f14;
-    --bg-sidebar: #11151d;
-    --bg-card: #161c27;
-    --bg-card-hover: #1e2635;
-    --bg-code: #161b22;
-    --border-color: rgba(255, 255, 255, 0.06);
-    --border-highlight: rgba(59, 130, 246, 0.2);
-    
+    /* Mismo stack tipográfico que Factus (Astro Starlight): fuentes del
+       sistema, sin webfonts. En Windows resuelve a Segoe UI / Consolas.
+       Además evita la petición a Google Fonts y funciona sin conexión. */
+    --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+                 "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    --font-heading: var(--font-sans);
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                 "Liberation Mono", "Courier New", monospace;
+
+    /* Colores del Tema Oscuro Premium, calibrados con los tonos reales
+       tomados de Factus: #23262F para el navbar/chrome (más claro, para que
+       la navegación se distinga) y #17181C para el área de lectura interna
+       (más oscura, pero lejos del casi-negro puro de antes: #0b0f14). Esa
+       combinación anterior (contenido MÁS oscuro que el sidebar, y ambos
+       casi negros) era la causa de que costara leer en sesiones largas. */
+    --bg-main: #17181c;
+    --bg-sidebar: #23262f;
+    --bg-card: #22242b;
+    --bg-card-hover: #2a2e37;
+    --bg-code: #1c1e24;
+    --border-color: rgba(255, 255, 255, 0.09);
+    --border-highlight: rgba(59, 130, 246, 0.25);
+
     --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #627289;
-    
+    --text-secondary: #a3b0c2;
+    --text-muted: #6d7c92;
+
     --accent: #3b82f6;
     --accent-hover: #60a5fa;
     --accent-glow: rgba(59, 130, 246, 0.15);
     --accent-glow-strong: rgba(59, 130, 246, 0.3);
-    
+    /* Pastilla del ítem activo del sidebar, estilo Factus: un lavanda claro
+       con texto oscuro encima (invierte el brillo respecto al resto del
+       sidebar oscuro) en vez de un azul sólido con texto blanco. Este efecto
+       de "chip claro sobre chrome oscuro" solo funciona en tema oscuro; en
+       tema claro se sobrescribe más abajo por un botón azul sólido normal. */
+    --accent-solid: #c7d2fe;
+    --accent-solid-text: #1e1b4b;
+
+    /* Fondos de componentes con color propio (diagramas), separados de
+       --bg-main/--bg-card para poder invertirlos limpiamente en tema claro */
+    --bg-diagram: #22242b;
+    --bg-viewport: #17181c;
+
+    /* Contorno del recuadro de la tecla "/" en el buscador: blanco marcado
+       sobre el navbar oscuro (se invierte en tema claro más abajo). */
+    --kbd-outline: #ffffff;
+
     /* Layout */
-    --sidebar-width: 280px;
-    --toc-width: 240px;
+    --sidebar-width: 304px;
+    --toc-width: 300px;
+    --topbar-height: 64px; /* Header superior de escritorio */
     --header-height: 0px; /* Sólo aplica en móvil */
     --transition-speed: 0.25s;
     --border-radius: 12px;
+}
+
+/* Tema Claro: se activa con [data-theme="light"] en <html>, aplicado antes
+   del primer pintado por el script anti-parpadeo en el <head>. Replica cada
+   token del tema oscuro; --accent* se mantiene igual (color de marca),
+   salvo el ligero ajuste de --accent para contraste AA sobre fondo blanco. */
+:root[data-theme="light"] {
+    color-scheme: light;
+
+    --bg-main: #f8fafc;
+    --bg-sidebar: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f1f5f9;
+    --bg-code: #f1f5f9;
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-highlight: rgba(37, 99, 235, 0.25);
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-glow: rgba(37, 99, 235, 0.12);
+    --accent-glow-strong: rgba(37, 99, 235, 0.25);
+
+    /* El chip lavanda-sobre-oscuro de Factus no tiene contraste en un
+       sidebar ya claro: en tema claro el ítem activo vuelve a ser un botón
+       azul sólido con texto blanco, el patrón estándar en fondos claros. */
+    --accent-solid: #2563eb;
+    --accent-solid-text: #ffffff;
+
+    --bg-diagram: #f8fafc;
+    --bg-viewport: #eef2f7;
+
+    /* En fondo claro un contorno blanco sería invisible: se usa el color
+       de texto principal para conservar el mismo nivel de contraste. */
+    --kbd-outline: #0f172a;
 }
 
 /* Reset y Base */
@@ -55,25 +125,44 @@ body {
     overflow-x: hidden;
 }
 
-/* Personalización del Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-::-webkit-scrollbar-track {
-    background: var(--bg-main);
-}
-::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--accent);
-}
+/* Sin personalización del scrollbar: se usa el del navegador. El thumb
+   anterior (blanco al 10%) casi desaparecía sobre el fondo oscuro. */
 
 /* ═══════════════════════════════════════════════════════════════
    2. ESTRUCTURA Y LAYOUT
    ═══════════════════════════════════════════════════════════════ */
+/* Header Superior (Escritorio): logo, búsqueda global y tema.
+   Ocupa todo el ancho, por encima de las tres columnas. */
+.app-topbar {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: var(--topbar-height);
+    padding: 0 24px;
+    background-color: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 120;
+}
+
+/* Separado del logo pero a la izquierda del centro: el margen izquierdo es
+   proporcional al ancho de la ventana y el derecho absorbe el resto. */
+.app-topbar .global-search-btn {
+    width: 280px;
+    flex-shrink: 0;
+    margin-left: 12vw;
+    margin-right: auto;
+}
+
+.app-topbar .theme-toggle-btn {
+    flex-shrink: 0;
+    width: auto;
+    margin-bottom: 0;
+}
+
 .app-container {
     display: flex;
     min-height: 100vh;
@@ -92,19 +181,18 @@ body {
     display: flex;
     flex-direction: column;
     position: fixed;
-    top: 0;
+    top: var(--topbar-height);
     bottom: 0;
     left: 0;
     z-index: 100;
     transition: transform var(--transition-speed) ease;
 }
 
-.sidebar-brand {
-    padding: 24px;
+.topbar-brand {
     display: flex;
     align-items: center;
     gap: 12px;
-    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .brand-logo-img {
@@ -135,65 +223,52 @@ body {
     line-height: 1.1;
 }
 
-.brand-text span {
-    font-size: 11px;
-    color: var(--text-muted);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-/* Buscador */
-.search-box {
-    padding: 16px 20px;
-    position: relative;
-}
-
-.search-icon {
-    position: absolute;
-    left: 32px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 14px;
-    transition: color var(--transition-speed);
-}
-
-.search-box input {
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.03);
+/* Disparador de la búsqueda global (Ctrl+K) — vive en el header superior */
+.global-search-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    /* Mismo tono que el área de lectura (--bg-main), para que el buscador
+       se lea como un hueco sobre el navbar, que es más claro (--bg-sidebar). */
+    background-color: var(--bg-main);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 10px 16px 10px 38px;
-    color: var(--text-primary);
+    padding: 8px 12px;
+    color: var(--text-muted);
     font-family: var(--font-sans);
-    font-size: 13.5px;
-    outline: none;
+    font-size: 13px;
+    cursor: pointer;
     transition: all var(--transition-speed);
 }
 
-.search-box input:focus {
-    border-color: var(--accent);
-    background-color: rgba(255, 255, 255, 0.05);
-    box-shadow: 0 0 10px var(--accent-glow);
+.global-search-btn span {
+    flex: 1;
+    text-align: left;
+    color: var(--text-secondary);
 }
 
-.search-box input:focus + .search-icon {
-    color: var(--accent);
-}
-
-.clear-btn {
-    position: absolute;
-    right: 32px;
-    top: 50%;
-    transform: translateY(-50%);
+/* Indicador del atajo: recuadro pequeño y minimalista con la tecla "/".
+   Solo contorno, sin relleno, con línea marcada para que se note. */
+.global-search-btn kbd {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+    line-height: 1;
+    color: var(--kbd-outline);
     background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 14px;
+    border: 1px solid var(--kbd-outline);
+    border-radius: 4px;
 }
-.clear-btn:hover {
+
+.global-search-btn:hover {
+    border-color: var(--accent);
     color: var(--text-primary);
+    box-shadow: 0 0 10px var(--accent-glow);
 }
 
 /* Menú de Navegación */
@@ -204,12 +279,12 @@ body {
 }
 
 .menu-section {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 .menu-section-title {
     display: block;
-    padding: 0 12px 8px 12px;
+    padding: 0 12px 6px 12px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
@@ -224,23 +299,17 @@ body {
 .menu-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
+    padding: 7px 14px;
     color: var(--text-secondary);
     text-decoration: none;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
-    transition: all var(--transition-speed) ease;
-    margin-bottom: 2px;
-}
-
-.menu-icon {
-    font-size: 15px;
-    width: 20px;
-    text-align: center;
-    color: var(--text-muted);
-    transition: color var(--transition-speed);
+    /* Solo color y fondo: con `all`, cualquier cambio de caja (bordes,
+       padding) se animaba y el ítem parecía escalarse al activarse. */
+    transition: color var(--transition-speed) ease,
+                background-color var(--transition-speed) ease;
+    margin-bottom: 1px;
 }
 
 .menu-item:hover {
@@ -248,19 +317,120 @@ body {
     background-color: rgba(255, 255, 255, 0.02);
 }
 
-.menu-item:hover .menu-icon {
-    color: var(--text-secondary);
-}
-
+/* Sin borde: la pastilla vive en .menu-item-row. Un borde aquí sumaba 2px
+   al alto del ítem activo y lo desplazaba respecto de los inactivos. */
 .menu-item.active {
-    color: var(--text-primary);
-    background-color: rgba(59, 130, 246, 0.08);
-    border: 1px solid var(--border-highlight);
-    box-shadow: inset 0 0 8px rgba(59, 130, 246, 0.05);
+    color: var(--accent-solid-text);
+    background-color: var(--accent-solid);
 }
 
-.menu-item.active .menu-icon {
-    color: var(--accent);
+/* Sub-navegación colapsable (secciones H2 de cada documento).
+   El resaltado (hover / activo) vive en la FILA, no en el enlace, para que
+   la pastilla cubra también el chevron y ambos se lean como una sola pieza. */
+.menu-item-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1px;
+    border-radius: 8px;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.menu-item-row .menu-item {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+    background-color: transparent;
+}
+
+.menu-item-row:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.menu-item-row:hover .menu-item {
+    color: var(--text-primary);
+    background-color: transparent;
+}
+
+.menu-item-row.active {
+    background-color: var(--accent-solid);
+}
+
+.menu-item-row.active .menu-item,
+.menu-item-row.active .menu-item.active {
+    background-color: transparent;
+    color: var(--accent-solid-text);
+}
+
+.menu-item-row.active .submenu-toggle {
+    color: var(--accent-solid-text);
+}
+
+.submenu-toggle {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 11px;
+    transition: all var(--transition-speed);
+}
+
+.submenu-toggle:hover {
+    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.submenu-toggle i {
+    transition: transform var(--transition-speed);
+}
+
+li.expanded .menu-item-row .submenu-toggle i {
+    transform: rotate(90deg);
+}
+
+.submenu {
+    list-style: none;
+    max-height: 0;
+    overflow: hidden;
+    padding-left: 30px;
+    border-left: 1px solid var(--border-color);
+    margin: 0 0 0 26px;
+    transition: max-height var(--transition-speed) ease;
+}
+
+li.expanded > .submenu {
+    max-height: 2000px;
+}
+
+.submenu-item {
+    display: block;
+    padding: 4px 10px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12.5px;
+    line-height: 1.4;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all var(--transition-speed);
+}
+
+.submenu-item:hover {
+    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.submenu-item.active {
+    color: var(--accent-solid-text);
+    font-weight: 600;
+    background-color: var(--accent-solid);
 }
 
 .sidebar-footer {
@@ -268,6 +438,30 @@ body {
     border-top: 1px solid var(--border-color);
     font-size: 12px;
     color: var(--text-muted);
+}
+
+/* Toggle de tema claro/oscuro */
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 12px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.theme-toggle-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
 }
 
 .footer-links {
@@ -288,59 +482,11 @@ body {
 .main-content {
     margin-left: var(--sidebar-width);
     margin-right: var(--toc-width);
+    margin-top: var(--topbar-height);
     flex: 1;
     min-width: 0; /* Previene desbordamiento en flex */
     padding: 40px;
     min-height: 100vh;
-}
-
-/* Cabecera de Contenido */
-.content-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 20px;
-    margin-bottom: 40px;
-}
-
-.breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.breadcrumb .separator {
-    font-size: 10px;
-}
-
-.breadcrumb span.active {
-    color: var(--text-primary);
-}
-
-.theme-btn {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all var(--transition-speed);
-}
-
-.theme-btn:hover {
-    color: var(--text-primary);
-    border-color: var(--text-secondary);
-    background-color: var(--bg-card-hover);
 }
 
 /* Contenedor del documento */
@@ -376,53 +522,56 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* Tabla de Contenido (TOC) - Barra Derecha */
+/* Tabla de Contenido (TOC) - Barra Derecha.
+   direction: rtl mueve su scrollbar al borde izquierdo del contenedor, para
+   que no quede pegada a la barra de scroll general de la página. El
+   contenido interno vuelve a ltr para que el texto se lea normal. */
 .toc-sidebar {
     width: var(--toc-width);
     position: fixed;
-    top: 0;
+    top: var(--topbar-height);
     bottom: 0;
     right: 0;
-    padding: 40px 24px;
+    padding: 22px 24px 40px 24px;
     border-left: 1px solid var(--border-color);
     overflow-y: auto;
+    direction: rtl;
 }
 
 .toc-container {
     position: sticky;
-    top: 40px;
+    top: 0;
+    direction: ltr;
 }
 
 .toc-title {
     font-family: var(--font-heading);
-    font-size: 13px;
+    font-size: 18px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
     color: var(--text-primary);
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 .toc-list {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
+/* Sin borde ni cambio de padding entre estados: el ítem activo solo cambia
+   de color, para que la lista no se desplace al hacer scroll. */
 .toc-item {
-    font-size: 13px;
+    font-size: 13.5px;
     color: var(--text-secondary);
     text-decoration: none;
     display: block;
-    line-height: 1.4;
+    line-height: 1.45;
     transition: color var(--transition-speed);
-    padding-left: 0;
-    border-left: 2px solid transparent;
 }
 
 .toc-item.indent-1 {
-    padding-left: 12px;
+    padding-left: 20px;
 }
 
 .toc-item:hover {
@@ -430,10 +579,7 @@ body {
 }
 
 .toc-item.active {
-    color: var(--accent);
-    border-left-color: var(--accent);
-    padding-left: 8px;
-    font-weight: 500;
+    color: var(--accent-hover);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -455,6 +601,10 @@ body {
     margin-top: 32px;
     margin-bottom: 16px;
     line-height: 1.25;
+    /* El header superior es fijo y tapa los primeros 64px de la ventana.
+       Sin este margen de scroll, al saltar a una sección desde el índice o
+       desde un enlace #doc--slug el encabezado quedaba oculto detrás de él. */
+    scroll-margin-top: calc(var(--topbar-height) + 20px);
 }
 
 .markdown-body h1 {
@@ -656,7 +806,7 @@ body {
 
 /* Contenedores de Mermaid para evitar saltos o colores rotos */
 .mermaid {
-    background-color: #11151c;
+    background-color: var(--bg-diagram);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: 20px;
@@ -679,6 +829,331 @@ mark {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   PALETA DE BÚSQUEDA GLOBAL (Ctrl+K)
+   ═══════════════════════════════════════════════════════════════ */
+.command-palette-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    padding: 12vh 20px 20px 20px;
+}
+
+.command-palette-overlay.visible {
+    display: flex;
+    justify-content: center;
+    /* flex-start evita que el align-items:stretch por defecto estire la
+       paleta a todo el alto del overlay cuando hay pocos resultados. */
+    align-items: flex-start;
+}
+
+.command-palette {
+    width: 100%;
+    max-width: 620px;
+    max-height: 70vh;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Campo de búsqueda: caja propia con borde, que se enciende en azul al
+   tener el foco (el input siempre lo tiene mientras la paleta está abierta). */
+.cp-search-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 14px;
+    padding: 12px 14px;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.cp-search-box:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.cp-search-icon {
+    font-size: 18px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.cp-search-box input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 16px;
+}
+
+.cp-search-box input::placeholder {
+    color: var(--text-muted);
+}
+
+.cp-clear-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.cp-clear-btn:hover {
+    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* El display:flex de arriba pisa el display:none que el navegador aplica a
+   [hidden], así que hay que restituirlo explícitamente. */
+.cp-clear-btn[hidden] {
+    display: none;
+}
+
+/* Sin flex-grow: la paleta se ajusta al alto de sus resultados en vez de
+   estirarse siempre hasta el máximo, igual que en la referencia. */
+.cp-results {
+    overflow-y: auto;
+    padding: 0 8px 8px 8px;
+}
+
+.cp-empty {
+    padding: 28px 24px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13.5px;
+}
+
+/* Pie con los atajos de teclado y la atribución del motor de búsqueda */
+.cp-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+}
+
+.cp-hints {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+.cp-hints span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.cp-hints kbd {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    line-height: 1;
+    color: var(--text-secondary);
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 6px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.cp-attribution {
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+/* Azul de marca de Algolia, requerido junto a la atribución del plan gratuito */
+.cp-algolia {
+    color: #5468ff;
+    font-weight: 700;
+}
+
+.cp-group {
+    margin-bottom: 8px;
+}
+
+.cp-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+/* Cada resultado es una tarjeta con fondo propio: ícono en recuadro,
+   título y, debajo, el extracto del contenido donde cayó la coincidencia. */
+.cp-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-family: var(--font-sans);
+    line-height: 1.4;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--transition-speed), border-color var(--transition-speed);
+}
+
+.cp-item-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.cp-item-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cp-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cp-item-desc {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Botón para quitar una búsqueda del historial de recientes */
+.cp-remove-recent {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.cp-remove-recent:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+}
+
+.cp-result-item:hover .cp-remove-recent,
+.cp-result-item.selected .cp-remove-recent {
+    color: var(--accent-solid-text);
+}
+
+.cp-result-item:hover .cp-remove-recent:hover,
+.cp-result-item.selected .cp-remove-recent:hover {
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+/* La flecha ↵ solo se muestra en el resultado resaltado, indicando que
+   Enter lo abrirá. */
+.cp-item-enter {
+    flex-shrink: 0;
+    font-size: 15px;
+    opacity: 0;
+    transition: opacity var(--transition-speed);
+}
+
+.cp-result-item:hover,
+.cp-result-item.selected {
+    background-color: var(--accent-solid);
+    border-color: var(--accent-solid);
+}
+
+.cp-result-item:hover .cp-item-title,
+.cp-result-item.selected .cp-item-title,
+.cp-result-item:hover .cp-item-desc,
+.cp-result-item.selected .cp-item-desc,
+.cp-result-item:hover .cp-item-enter,
+.cp-result-item.selected .cp-item-enter {
+    color: var(--accent-solid-text);
+}
+
+.cp-result-item:hover .cp-item-enter,
+.cp-result-item.selected .cp-item-enter {
+    opacity: 0.75;
+}
+
+.cp-result-item:hover .cp-item-icon,
+.cp-result-item.selected .cp-item-icon {
+    background-color: rgba(255, 255, 255, 0.35);
+    border-color: transparent;
+    color: var(--accent-solid-text);
+}
+
+.cp-result-item mark {
+    background-color: rgba(234, 179, 8, 0.35);
+    color: inherit;
+}
+
+/* Sobre la pastilla lavanda, el resaltado amarillo no contrasta: se cambia
+   por negrita con el mismo color de texto. */
+.cp-result-item:hover mark,
+.cp-result-item.selected mark {
+    background-color: transparent;
+    font-weight: 700;
+    color: var(--accent-solid-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════
    4. ADAPTABILIDAD (RESPONSIVE)
    ═══════════════════════════════════════════════════════════════ */
 
@@ -698,11 +1173,15 @@ mark {
     :root {
         --header-height: 60px;
     }
-    
+
+    .app-topbar {
+        display: none;
+    }
+
     .app-container {
         flex-direction: column;
     }
-    
+
     .mobile-header {
         display: flex;
         justify-content: space-between;
@@ -741,16 +1220,13 @@ mark {
         padding: 8px;
     }
     
-    .placeholder-btn {
-        width: 36px;
-    }
-
     .sidebar {
         transform: translateX(-100%);
         top: 0;
         bottom: 0;
         height: 100vh;
         width: var(--sidebar-width);
+        max-width: 88vw;
         box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
     }
     
@@ -780,18 +1256,6 @@ mark {
         padding: 24px 16px;
     }
     
-    .content-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-    
-    .theme-btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
     .markdown-body h1 {
         font-size: 26px;
     }
@@ -806,11 +1270,12 @@ mark {
         color: black !important;
     }
     
+    .app-topbar,
     .sidebar,
     .toc-sidebar,
-    .content-header,
     .mobile-header,
-    .sidebar-overlay {
+    .sidebar-overlay,
+    .command-palette-overlay {
         display: none !important;
     }
     
@@ -950,13 +1415,11 @@ mark {
     width: 100%;
     height: 600px;
     overflow: auto;
-    background-color: #0b0f14;
+    background-color: var(--bg-viewport);
     position: relative;
     cursor: grab;
     user-select: none;
     -webkit-user-select: none;
-    scrollbar-color: rgba(255, 255, 255, 0.1) rgba(0, 0, 0, 0.2);
-    scrollbar-width: thin;
     display: flex;
 }
 
