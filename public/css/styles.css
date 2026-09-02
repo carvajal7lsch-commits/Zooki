@@ -325,6 +325,24 @@ body.login-page {
     font-size: 1.25rem;
 }
 
+/* Alerta de Exito (confirmacion de correo, HU-36) */
+.alert-success {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #ECFDF5;
+    color: #047857;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #047857;
+    font-size: 0.9rem;
+}
+
+.alert-success i {
+    font-size: 1.25rem;
+}
+
 /* Radial decorations (body pseudo-elements) */
 body::before {
     content: '';

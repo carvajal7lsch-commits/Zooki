@@ -359,8 +359,8 @@ $totalStaff = count($usuarios);
                     <label>Contraseña</label>
                     <div class="password-wrapper">
                         <input type="password" name="password" id="user_pass" required
-                               minlength="6" maxlength="50"
-                               placeholder="Mínimo 6 caracteres"
+                               minlength="8" maxlength="72"
+                               placeholder="Mínimo 8 caracteres, con mayúscula, minúscula y número"
                                style="padding-right:3.5rem;">
                         <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility()">
                             <i class="far fa-eye"></i>
@@ -579,7 +579,10 @@ function validateField(id) {
     }
     if (id === 'user_email'  && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { showError(id, 'Email no válido.'); return false; }
     if (id === 'user_tel'    && val.length < 7)  { showError(id, 'Mínimo 7 dígitos.'); return false; }
-    if (id === 'user_pass'   && !isEdit && val.length < 6) { showError(id, 'Mínimo 6 caracteres.'); return false; }
+    if (id === 'user_pass'   && !isEdit) {
+        const motivoPwd = window.motivoPasswordInvalida(val);
+        if (motivoPwd !== null) { showError(id, motivoPwd + '.'); return false; }
+    }
     return true;
 }
 

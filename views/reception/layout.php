@@ -98,6 +98,7 @@
     <script>
         const ZOOKI_ROLE = 3;
     </script>
+    <script src="js/password-policy.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/csrf.js"></script>
     <script src="js/extras.js"></script>

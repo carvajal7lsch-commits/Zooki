@@ -1064,8 +1064,8 @@ document.querySelectorAll('input[name="estado_clientes"]').forEach(radio => radi
                     <div class="input-group" style="grid-column: span 2;" id="user_pass_group">
                         <label>Contraseña <span style="font-size: 0.75rem; color: #6B7280; font-weight: normal;">(Se asignará automáticamente al crear usuario)</span></label>
                         <div class="password-wrapper">
-                            <input type="password" name="password" id="user_pass" minlength="6" maxlength="50"
-                                   placeholder="Mínimo 6 caracteres"
+                            <input type="password" name="password" id="user_pass" minlength="8" maxlength="72"
+                                   placeholder="Mínimo 8 caracteres, con mayúscula, minúscula y número"
                                    oninput="validarPassword(this)">
                             <button type="button" class="toggle-password-btn" onclick="togglePasswordUsuario()">
                                 <i class="far fa-eye"></i>
@@ -1362,12 +1362,13 @@ function validarPassword(input) {
     const errorSpan = input.parentElement.parentElement.querySelector('.error-message');
     if (!errorSpan) return;
     
-    if (value.length > 0 && value.length < 6) {
-        errorSpan.textContent = 'La contraseña debe tener al menos 6 caracteres';
+    const motivoPwd = value.length > 0 ? window.motivoPasswordInvalida(value) : null;
+    if (motivoPwd !== null) {
+        errorSpan.textContent = motivoPwd;
         errorSpan.style.display = 'block';
         input.classList.add('error');
-    } else if (value.length > 50) {
-        errorSpan.textContent = 'La contraseña no puede tener más de 50 caracteres';
+    } else if (value.length > 72) {
+        errorSpan.textContent = 'La contraseña no puede tener más de 72 caracteres';
         errorSpan.style.display = 'block';
         input.classList.add('error');
     } else {

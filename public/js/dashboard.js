@@ -774,7 +774,8 @@ function abrirPersonalizarPerfil(e) {
                 <div class="pwd-modal-body">
                     <div class="pwd-input-group">
                         <label>Nueva Contraseña</label>
-                        <input type="password" id="swal-new-pwd" class="pwd-input" placeholder="Mínimo 6 caracteres">
+                        <input type="password" id="swal-new-pwd" class="pwd-input" placeholder="Mínimo 8 caracteres, con mayúscula, minúscula y número">
+                        <small id="swal-pwd-feedback" style="display:block;margin-top:6px;font-size:0.8rem;min-height:1.1em;" role="status" aria-live="polite"></small>
                     </div>
                     <div class="pwd-input-group">
                         <label>Confirmar Contraseña</label>
@@ -799,6 +800,22 @@ function abrirPersonalizarPerfil(e) {
         },
         width: '500px',
         didOpen: () => {
+            // Aviso mientras se escribe: antes el usuario solo se enteraba de
+            // que su contrasena no servia al pulsar "Actualizar".
+            const campoNuevo = document.getElementById('swal-new-pwd');
+            const aviso = document.getElementById('swal-pwd-feedback');
+            if (campoNuevo && aviso) {
+                campoNuevo.addEventListener('input', function () {
+                    if (this.value === '') {
+                        aviso.textContent = '';
+                        return;
+                    }
+                    const motivo = window.motivoPasswordInvalida(this.value);
+                    aviso.textContent = motivo === null ? 'Contraseña válida' : motivo;
+                    aviso.style.color = motivo === null ? '#047857' : '#DC2626';
+                });
+            }
+
             document.getElementById('hidden-confirm-btn').addEventListener('click', () => {
                 const pwd1 = document.getElementById('swal-new-pwd').value;
                 const pwd2 = document.getElementById('swal-conf-pwd').value;
@@ -810,8 +827,9 @@ function abrirPersonalizarPerfil(e) {
                     Swal.showValidationMessage('Las contraseñas no coinciden');
                     return;
                 }
-                if (pwd1.length < 6) {
-                    Swal.showValidationMessage('La contraseña debe tener al menos 6 caracteres');
+                const motivoPwd = window.motivoPasswordInvalida(pwd1);
+                if (motivoPwd !== null) {
+                    Swal.showValidationMessage(motivoPwd);
                     return;
                 }
                 Swal.resetValidationMessage();

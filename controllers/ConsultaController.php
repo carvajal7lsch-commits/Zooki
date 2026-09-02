@@ -5,6 +5,7 @@ require_once '../models/Mascota.php';
 require_once '../models/Tratamiento.php';
 require_once '../models/Vacuna.php';
 require_once '../models/Desparasitacion.php';
+require_once '../helpers/ValidadorClinico.php';
 
 class ConsultaController {
     private $db;
@@ -49,23 +50,70 @@ class ConsultaController {
                 exit;
             }
             
-            // Validaciones básicas
-            if (empty($_POST['diagnostico'])) {
+            // HU-35: la mascota debe existir y estar activa antes de colgarle
+            // nada. Sin esto, un id_mascota inventado creaba una consulta
+            // huerfana o reventaba contra la llave foranea.
+            $idMascota = ValidadorClinico::id($_POST['id_mascota'] ?? null);
+            if ($idMascota === null || $this->mascotaModel->getPropietarioSiActiva($idMascota) === null) {
+                echo json_encode(['success' => false, 'message' => 'La mascota indicada no existe o está inactiva']);
+                exit;
+            }
+
+            // RN-202: una consulta no se guarda sin diagnóstico.
+            $diagnostico = ValidadorClinico::textoRequerido($_POST['diagnostico'] ?? null, 5000);
+            if ($diagnostico === null) {
                 echo json_encode(['success' => false, 'message' => 'El diagnóstico es obligatorio']);
                 exit;
             }
 
+            // RN-203: la cita es opcional, pero si viene debe ser de ESTA
+            // mascota; si no, la consulta quedaría atada a la cita de otra.
+            $idCita = null;
+            if (!empty($_POST['id_cita'])) {
+                $idCita = ValidadorClinico::id($_POST['id_cita']);
+                if ($idCita === null || !$this->citaPerteneceAMascota($idCita, $idMascota)) {
+                    echo json_encode(['success' => false, 'message' => 'La cita indicada no corresponde a esta mascota']);
+                    exit;
+                }
+            }
+
+            // Signos vitales: se aceptan solo dentro de rangos plausibles. Un
+            // valor fuera de rango es un error de digitación, y guardarlo
+            // ensucia la historia clínica de forma permanente (RN-206).
+            $signos = [
+                'peso' => [$_POST['peso'] ?? null, ValidadorClinico::PESO_MIN, ValidadorClinico::PESO_MAX, 'El peso debe estar entre 0.01 y 200 kg'],
+                'temperatura' => [$_POST['temperatura'] ?? null, ValidadorClinico::TEMP_MIN, ValidadorClinico::TEMP_MAX, 'La temperatura debe estar entre 25 y 45 °C'],
+            ];
+            $valores = [];
+            foreach ($signos as $campo => [$crudo, $min, $max, $mensaje]) {
+                if ($crudo === null || $crudo === '') { $valores[$campo] = null; continue; }
+                $valores[$campo] = ValidadorClinico::decimal($crudo, $min, $max);
+                if ($valores[$campo] === null) {
+                    echo json_encode(['success' => false, 'message' => $mensaje]);
+                    exit;
+                }
+            }
+
+            $frecuencia = null;
+            if (!empty($_POST['frecuencia_cardiaca'])) {
+                $frecuencia = ValidadorClinico::entero($_POST['frecuencia_cardiaca'], ValidadorClinico::FC_MIN, ValidadorClinico::FC_MAX);
+                if ($frecuencia === null) {
+                    echo json_encode(['success' => false, 'message' => 'La frecuencia cardíaca debe estar entre 10 y 400 lpm']);
+                    exit;
+                }
+            }
+
             $data = [
-                'id_mascota' => $_POST['id_mascota'],
-                'id_cita' => (!empty($_POST['id_cita'])) ? $_POST['id_cita'] : null,
+                'id_mascota' => $idMascota,
+                'id_cita' => $idCita,
                 'doc_veterinario' => $_SESSION['usuario_doc'],
-                'motivo_consulta' => trim($_POST['motivo']),
-                'anamnesis' => trim($_POST['anamnesis']),
-                'peso' => (!empty($_POST['peso'])) ? $_POST['peso'] : null,
-                'temperatura' => (!empty($_POST['temperatura'])) ? $_POST['temperatura'] : null,
-                'frecuencia_cardiaca' => (!empty($_POST['frecuencia_cardiaca'])) ? $_POST['frecuencia_cardiaca'] : null,
-                'diagnostico' => trim($_POST['diagnostico']),
-                'plan_tratamiento' => trim($_POST['plan_tratamiento'])
+                'motivo_consulta' => ValidadorClinico::textoOpcional($_POST['motivo'] ?? null, 5000),
+                'anamnesis' => ValidadorClinico::textoOpcional($_POST['anamnesis'] ?? null, 5000),
+                'peso' => $valores['peso'],
+                'temperatura' => $valores['temperatura'],
+                'frecuencia_cardiaca' => $frecuencia,
+                'diagnostico' => $diagnostico,
+                'plan_tratamiento' => ValidadorClinico::textoOpcional($_POST['plan_tratamiento'] ?? null, 5000)
             ];
 
             $res = $this->consultaModel->insert($data);
@@ -203,6 +251,22 @@ class ConsultaController {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
         exit();
+    }
+
+    /**
+     * HU-35 / RN-203: la cita que origina la consulta tiene que ser de la
+     * misma mascota. Sin esta comprobación se podía adjuntar una consulta a
+     * la cita de otro paciente pasando un id_cita cualquiera.
+     */
+    private function citaPerteneceAMascota($idCita, $idMascota) {
+        $stmt = $this->db->prepare(
+            "SELECT 1 FROM citas WHERE id_cita = :cita AND id_mascota = :mascota"
+        );
+        $stmt->bindValue(':cita', (int) $idCita, PDO::PARAM_INT);
+        $stmt->bindValue(':mascota', (int) $idMascota, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (bool) $stmt->fetchColumn();
     }
 }
 ?>
