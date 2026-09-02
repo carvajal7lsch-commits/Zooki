@@ -10,19 +10,18 @@ if(isset($_SESSION['usuario_doc'])) {
 }
 // Configuración básica de página
 $pageTitle = "Iniciar Sesión - Zooki";
-// Extraer GOOGLE_CLIENT_ID desde .env
+// Extraer GOOGLE_CLIENT_ID desde .env.
+// Se usa parse_ini_file (igual que Database.php) en lugar de partir las
+// líneas a mano: el parser manual solo hacía trim de espacios y dejaba las
+// comillas dentro del valor cuando el .env venía escrito como
+// GOOGLE_CLIENT_ID="...", que es como lo genera Dokploy. Ese valor llegaba
+// con comillas al frontend y Google rechazaba el client_id
+// (error flowName=GeneralOAuthFlow).
 $envFile = __DIR__ . '/../../.env';
 $googleClientId = '';
 if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
-        $parts = explode('=', $line, 2);
-        if (count($parts) == 2 && trim($parts[0]) === 'GOOGLE_CLIENT_ID') {
-            $googleClientId = trim($parts[1]);
-            break;
-        }
-    }
+    $env = parse_ini_file($envFile) ?: [];
+    $googleClientId = trim($env['GOOGLE_CLIENT_ID'] ?? '');
 }
 ?>
 <!DOCTYPE html>
