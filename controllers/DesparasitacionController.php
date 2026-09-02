@@ -1,26 +1,70 @@
 <?php
 require_once '../config/Database.php';
 require_once '../models/Desparasitacion.php';
+require_once '../models/Mascota.php';
+require_once '../helpers/ValidadorClinico.php';
 
 class DesparasitacionController {
     private $db;
     private $model;
+    private $mascotaModel;
+
+    /** Valores admitidos por los ENUM de la tabla `desparasitaciones`. */
+    private const TIPOS = ['interna', 'externa'];
+    private const PERIODICIDADES = ['mensual', 'trimestral', 'semestral'];
 
     public function __construct() {
         $database = new Database();
         $this->db = $database->getConnection();
         $this->model = new Desparasitacion($this->db);
+        $this->mascotaModel = new Mascota($this->db);
     }
 
     public function registrarAjax() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+
+            // HU-35: sin esta comprobación se podía registrar una
+            // desparasitación contra un id_mascota inexistente.
+            $idMascota = ValidadorClinico::id($_POST['id_mascota'] ?? null);
+            if ($idMascota === null || $this->mascotaModel->getPropietarioSiActiva($idMascota) === null) {
+                echo json_encode(['success' => false, 'message' => 'La mascota indicada no existe o está inactiva']);
+                exit;
+            }
+
+            // Los ENUM de MySQL rechazan en silencio (guardan ''), así que el
+            // valor se valida aquí contra la lista real de la columna.
+            $tipo = ValidadorClinico::opcion($_POST['tipo'] ?? null, self::TIPOS);
+            if ($tipo === null) {
+                echo json_encode(['success' => false, 'message' => 'El tipo de desparasitación debe ser interna o externa']);
+                exit;
+            }
+
+            $periodicidad = ValidadorClinico::opcion($_POST['periodicidad'] ?? null, self::PERIODICIDADES);
+            if ($periodicidad === null) {
+                echo json_encode(['success' => false, 'message' => 'La periodicidad debe ser mensual, trimestral o semestral']);
+                exit;
+            }
+
+            $producto = ValidadorClinico::textoRequerido($_POST['producto'] ?? null, 150);
+            if ($producto === null) {
+                echo json_encode(['success' => false, 'message' => 'El producto es obligatorio']);
+                exit;
+            }
+
+            $fechaAplicacion = ValidadorClinico::fechaNoFutura($_POST['fecha_aplicacion'] ?? null);
+            if ($fechaAplicacion === null) {
+                echo json_encode(['success' => false, 'message' => 'La fecha de aplicación no es válida o está en el futuro']);
+                exit;
+            }
+
             $data = [
-                'id_mascota' => $_POST['id_mascota'],
-                'tipo' => $_POST['tipo'],
-                'producto' => $_POST['producto'],
-                'periodicidad' => $_POST['periodicidad'],
-                'fecha_aplicacion' => $_POST['fecha_aplicacion'],
-                'observaciones' => $_POST['observaciones']
+                'id_mascota' => $idMascota,
+                'tipo' => $tipo,
+                'producto' => $producto,
+                'periodicidad' => $periodicidad,
+                'fecha_aplicacion' => $fechaAplicacion,
+                'observaciones' => ValidadorClinico::textoOpcional($_POST['observaciones'] ?? null, 5000)
             ];
 
             if ($this->model->insert($data)) {

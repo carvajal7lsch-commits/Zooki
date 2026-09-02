@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/password-policy.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -135,18 +136,29 @@
         <form id="changePasswordForm" onsubmit="cambiarPassword(event)">
             <div class="form-group">
                 <label for="nueva_password">Nueva Contraseña</label>
-                <input type="password" id="nueva_password" name="nueva_password" required minlength="6" placeholder="Mínimo 6 caracteres">
+                <div class="input-con-ojito">
+                    <input type="password" id="nueva_password" name="nueva_password" required minlength="8" maxlength="72" placeholder="Mínimo 8 caracteres, con mayúscula, minúscula y número">
+                    <button type="button" class="ojito" data-ojito="nueva_password" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <small id="pwdFeedback" class="pwd-feedback" role="status" aria-live="polite"></small>
             </div>
 
             <div class="form-group">
                 <label for="confirmar_password">Confirmar Contraseña</label>
-                <input type="password" id="confirmar_password" name="confirmar_password" required minlength="6" placeholder="Repite tu nueva contraseña">
+                <div class="input-con-ojito">
+                    <input type="password" id="confirmar_password" name="confirmar_password" required minlength="8" maxlength="72" placeholder="Repite tu nueva contraseña">
+                    <button type="button" class="ojito" data-ojito="confirmar_password" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="password-requirements">
                 <h4>Requisitos de contraseña:</h4>
                 <ul>
-                    <li>Mínimo 6 caracteres</li>
+                    <li>Mínimo 8 caracteres, con mayúscula, minúscula y número</li>
                     <li>Recomendado: usar letras, números y símbolos</li>
                 </ul>
             </div>
@@ -157,6 +169,56 @@
         </form>
     </div>
 
+    <style>
+        /* Aviso en vivo de la politica de contrasenas (RN-G10) */
+        .pwd-feedback { display: block; margin-top: 6px; font-size: 0.8rem; min-height: 1.1em; }
+        /* Ojito dentro del campo. Esta vista tiene su CSS propio, no usa
+           styles.css, por eso .toggle-password de alla no le sirve. */
+        .input-con-ojito { position: relative; }
+        .input-con-ojito input { padding-right: 2.75rem; }
+        .ojito {
+            position: absolute; right: 0.9rem; top: 50%; transform: translateY(-50%);
+            background: none; border: none; padding: 0; cursor: pointer;
+            color: #6B7280; font-size: 1rem; line-height: 1;
+            display: flex; align-items: center;
+        }
+        .ojito:hover { color: #0052FF; }
+        .pwd-feedback.error { color: #DC2626; }
+        .pwd-feedback.ok    { color: #047857; }
+    </style>
+    <script>
+        // Aviso mientras se escribe: antes el usuario solo se enteraba de que
+        // su contrasena no servia al pulsar el boton.
+        document.addEventListener('DOMContentLoaded', function () {
+            var campo = document.getElementById('nueva_password');
+            var aviso = document.getElementById('pwdFeedback');
+            if (!campo || !aviso) return;
+
+            document.querySelectorAll('.ojito[data-ojito]').forEach(function (boton) {
+                boton.addEventListener('click', function () {
+                    var input = document.getElementById(this.dataset.ojito);
+                    if (!input) return;
+                    var visible = input.getAttribute('type') === 'password';
+                    input.setAttribute('type', visible ? 'text' : 'password');
+                    this.setAttribute('aria-pressed', visible ? 'true' : 'false');
+                    this.innerHTML = visible
+                        ? '<i class="fas fa-eye"></i>'
+                        : '<i class="fas fa-eye-slash"></i>';
+                });
+            });
+
+            campo.addEventListener('input', function () {
+                if (this.value === '') {
+                    aviso.textContent = '';
+                    aviso.className = 'pwd-feedback';
+                    return;
+                }
+                var motivo = window.motivoPasswordInvalida(this.value);
+                aviso.textContent = motivo === null ? 'Contraseña válida' : motivo;
+                aviso.className = 'pwd-feedback ' + (motivo === null ? 'ok' : 'error');
+            });
+        });
+    </script>
     <script>
         async function cambiarPassword(event) {
             event.preventDefault();
@@ -174,11 +236,12 @@
                 return;
             }
 
-            if (nuevaPassword.length < 6) {
+            const motivoPwd = window.motivoPasswordInvalida(nuevaPassword);
+            if (motivoPwd !== null) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'La contraseña debe tener al menos 6 caracteres',
+                    text: motivoPwd,
                     confirmButtonColor: '#0052FF'
                 });
                 return;

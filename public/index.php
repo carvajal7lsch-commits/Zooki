@@ -51,6 +51,12 @@ switch ($action) {
         $controller->register();
         break;
 
+    case "verificar_email":
+        require_once "../controllers/AuthController.php";
+        $controller = new AuthController();
+        $controller->verificarEmail();
+        break;
+
     case "process_register":
         require_once "../controllers/AuthController.php";
         $controller = new AuthController();

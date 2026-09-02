@@ -10,6 +10,12 @@ class SecurityTest extends TestCase
     {
         $_SESSION = [];
         $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+
+        // Estas pruebas cubren la capa de sesion. Se desactiva el almacen en
+        // base de datos que agrego HU-38 para que no toquen la base real ni
+        // arrastren bloqueos de una corrida a la siguiente; esa capa tiene su
+        // propia suite en tests/Integration/IntentoLoginTest.php.
+        Security::definirAlmacenDeIntentos(null);
     }
 
     public function testCheckRateLimitAllowsInitially()

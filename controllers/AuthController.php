@@ -3,14 +3,19 @@
 require_once '../config/Database.php';
 require_once '../models/Usuario.php';
 require_once '../models/PasswordReset.php';
+require_once '../models/VerificacionEmail.php';
 require_once '../models/Auditoria.php';
 require_once '../config/EmailService.php';
 require_once '../helpers/Csrf.php';
+require_once '../helpers/Security.php';
+require_once '../helpers/GoogleToken.php';
+require_once '../helpers/PoliticaPassword.php';
 
 class AuthController {
     private $db;
     private $usuarioModel;
     private $passwordResetModel;
+    private $verificacionEmailModel;
     private $emailService;
     private $auditoria;
 
@@ -19,6 +24,7 @@ class AuthController {
         $this->db = $database->getConnection();
         $this->usuarioModel = new Usuario($this->db);
         $this->passwordResetModel = new PasswordReset($this->db);
+        $this->verificacionEmailModel = new VerificacionEmail($this->db);
         $this->emailService = new EmailService();
         $this->auditoria = new Auditoria($this->db);
     }
@@ -31,15 +37,16 @@ class AuthController {
                 return;
             }
 
-            // Rate limiting: máximo 5 intentos cada 15 minutos
-            if (!Security::checkRateLimit()) {
+            // Limpiamos los datos de entrada
+            $documento = trim($_POST['documento'] ?? '');
+            $password = trim($_POST['password'] ?? '');
+
+            // Rate limiting: se evalúa por IP y por cuenta (HU-38). Necesita el
+            // documento, por eso va después de leer el POST y no antes.
+            if (!Security::checkRateLimit($documento)) {
                 $this->redirectWithError("Demasiados intentos fallidos. Espera 15 minutos antes de volver a intentarlo.");
                 return;
             }
-
-            // Limpiamos los datos de entrada
-            $documento = trim($_POST['documento']);
-            $password = trim($_POST['password']);
 
             if (empty($documento) || empty($password)) {
                 $this->redirectWithError("Por favor, ingrese documento y contraseña.");
@@ -53,6 +60,17 @@ class AuthController {
             // NOTA: Para las pruebas iniciales, si guardas la contraseña en texto plano en la BD,
             // esto fallará. Deberás usar password_hash() al insertar usuarios.
             if ($user && password_verify($password, $user['password'])) {
+                // HU-36 (VD-SEG-08): la cuenta no sirve hasta verificar el correo.
+                // Este mensaje SI es especifico, a diferencia del resto: solo se
+                // llega aqui despues de acertar la contrasena, asi que no le
+                // sirve a quien enumera usuarios, y el interesado no tiene otra
+                // forma de enterarse de que le falta abrir el enlace.
+                if ($this->verificacionEmailModel->hayPendiente($user['documento'])) {
+                    Security::recordFailedLogin($documento);
+                    $this->redirectWithError("Debes verificar tu correo antes de iniciar sesion. Revisa el enlace que te enviamos.");
+                    return;
+                }
+
                 if ($user['estado'] == 1) {
                     // Login exitoso: creamos las variables de sesión
                     $_SESSION['usuario_doc'] = $user['documento'];
@@ -69,7 +87,7 @@ class AuthController {
                     }
 
                     // Resetear rate limiting tras login exitoso
-                    Security::resetRateLimit();
+                    Security::resetRateLimit($documento);
 
                     // Auditoría: login exitoso
                     $this->auditoria->log(
@@ -106,11 +124,16 @@ class AuthController {
                         null,
                         'Intento de login fallido: cuenta inactiva'
                     );
-                    Security::recordFailedLogin();
-                    $this->redirectWithError("Su cuenta está inactiva. Contacte al administrador.");
+                    Security::recordFailedLogin($documento);
+                    // HU-38 (VD-SEG-06): el mensaje es el mismo que el de
+                    // credenciales incorrectas. Decir "su cuenta está inactiva"
+                    // confirmaba que el documento existe en el sistema, que es
+                    // justo lo que busca quien enumera usuarios. El motivo real
+                    // queda en auditoría, donde el administrador sí lo ve.
+                    $this->redirectWithError("Documento o contraseña incorrectos.");
                 }
             } else {
-                Security::recordFailedLogin();
+                Security::recordFailedLogin($documento);
                 // Auditoría: login fallido (credenciales incorrectas)
                 $this->auditoria->log(
                     $documento,
@@ -223,13 +246,20 @@ class AuthController {
                 $this->jsonResponse(false, 'Las contraseñas no coinciden.');
             }
 
-            if (strlen($password) < 8) {
-                $this->jsonResponse(false, 'La contraseña debe tener al menos 8 caracteres.');
-            }
-
+            // Primero el token: si el enlace no vale, no hay nada que validar.
             $reset = $this->passwordResetModel->findById($tokenId);
             if (!$reset || (int)$reset['used'] === 1 || !password_verify($tokenPlano, $reset['token_hash'])) {
                 $this->jsonResponse(false, 'El enlace para restablecer la contraseña no es válido o ya fue utilizado.');
+            }
+
+            // HU-36: la misma politica de todos los flujos, contrastada ademas
+            // con los datos del titular que ya conocemos por el token.
+            $motivo = PoliticaPassword::validar($password, [
+                $reset['usuario_documento'] ?? '',
+                $reset['email'] ?? '',
+            ]);
+            if ($motivo !== null) {
+                $this->jsonResponse(false, $motivo);
             }
 
             $expira = new DateTime($reset['expires_at']);
@@ -289,8 +319,15 @@ class AuthController {
                 $documento = $_SESSION['usuario_doc'] ?? '';
                 $loginMethod = $_SESSION['login_method'] ?? 'password';
 
-                if (empty($nuevaPassword) || strlen($nuevaPassword) < 6) {
-                    echo json_encode(['success' => false, 'message' => 'La contraseña debe tener al menos 6 caracteres']);
+                // HU-36: misma politica que el registro y el restablecimiento.
+                $usuarioActual = $this->usuarioModel->getUserByDocumento($documento);
+                $motivo = PoliticaPassword::validar($nuevaPassword, [
+                    $documento,
+                    $usuarioActual['nombre_completo'] ?? '',
+                    $usuarioActual['email'] ?? '',
+                ]);
+                if ($motivo !== null) {
+                    echo json_encode(['success' => false, 'message' => $motivo]);
                     exit;
                 }
 
@@ -371,8 +408,11 @@ class AuthController {
                 exit();
             }
 
-            if (strlen($password) < 6) {
-                $_SESSION['error_register'] = "La contraseña debe tener al menos 6 caracteres.";
+            // HU-36: el registro era el flujo mas debil (6 caracteres, sin
+            // complejidad) y por tanto el que definia la politica real.
+            $motivoPassword = PoliticaPassword::validar($password, [$documento, $nombre_completo, $email]);
+            if ($motivoPassword !== null) {
+                $_SESSION['error_register'] = $motivoPassword;
                 header("Location: index.php?action=login");
                 exit();
             }
@@ -406,31 +446,43 @@ class AuthController {
             ];
 
             if ($this->usuarioModel->create($data)) {
-                // Enviar correo de bienvenida
+                // HU-36 (VD-SEG-08). Antes esto iniciaba sesión de una vez, así
+                // que cualquiera podía registrarse con el correo de otra persona
+                // y quedar dentro. Ahora la cuenta queda pendiente hasta que se
+                // abra el enlace que llega a ese buzón.
+                $tokenPlano = bin2hex(random_bytes(32));
+                $tokenHash = password_hash($tokenPlano, PASSWORD_DEFAULT);
+                $expira = (new DateTime('+24 hours'))->format('Y-m-d H:i:s');
+                $verificacionId = $this->verificacionEmailModel->crear($documento, $email, $tokenHash, $expira);
+
                 $this->emailService->limpiarDirecciones();
-                $this->emailService->enviarCorreoBienvenida($email, $nombre_completo);
 
-                // Login automático del usuario registrado
-                $user = $this->usuarioModel->getUserByDocumento($documento);
-                $_SESSION['usuario_doc'] = $user['documento'];
-                $_SESSION['usuario_nombre'] = $user['nombre_completo'];
-                $_SESSION['usuario_rol'] = $user['rol'];
-                $_SESSION['usuario_id_rol'] = $user['id_rol'];
-                $_SESSION['debe_cambiar_password'] = 0;
-                $_SESSION['login_method'] = 'password';
+                if ($verificacionId > 0) {
+                    $enlace = $this->buildVerificacionLink($verificacionId, $tokenPlano);
+                    $this->emailService->enviarCorreoPersonalizado(
+                        $email,
+                        $nombre_completo,
+                        'Confirma tu correo en Zooki',
+                        $this->renderVerificacionEmail($nombre_completo, $enlace)
+                    );
+                } else {
+                    // Sin tabla de verificaciones no hay nada pendiente que
+                    // confirmar; se conserva el correo de bienvenida de siempre.
+                    $this->emailService->enviarCorreoBienvenida($email, $nombre_completo);
+                }
 
-                // Auditoría: auto-registro
                 $this->auditoria->log(
                     $documento,
-                    'LOGIN',
+                    'INSERT',
                     'usuarios',
                     $documento,
                     null,
-                    ['rol' => $user['rol'], 'id_rol' => $user['id_rol']],
-                    'Auto-registro e inicio de sesión automático'
+                    ['id_rol' => 4],
+                    'Auto-registro, pendiente de verificar correo'
                 );
 
-                header("Location: index.php?action=portal_propietario");
+                $_SESSION['success_register'] = "Cuenta creada. Te enviamos un correo a $email para confirmar tu dirección; ábrelo para poder iniciar sesión.";
+                header("Location: index.php?action=login");
                 exit();
             } else {
                 $_SESSION['error_register'] = "Ocurrió un error al procesar el registro. Intenta más tarde.";
@@ -448,7 +500,97 @@ class AuthController {
         exit();
     }
 
+    /**
+     * HU-36 (VD-SEG-08) — Endpoint publico que confirma el correo. Es publico
+     * a proposito: quien lo abre todavia no puede iniciar sesion, que es
+     * justamente lo que viene a habilitar.
+     */
+    public function verificarEmail()
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $tokenPlano = $_GET['token'] ?? '';
+
+        // Mensaje unico para todos los fallos: no se distingue "no existe" de
+        // "ya usado" ni de "vencido", para no confirmar que un id es real.
+        $mensajeError = 'El enlace de confirmacion no es valido o ya fue utilizado.';
+
+        if ($id <= 0 || $tokenPlano === '') {
+            $_SESSION['error_login'] = $mensajeError;
+            header('Location: index.php?action=login');
+            exit();
+        }
+
+        $verificacion = $this->verificacionEmailModel->buscarPorId($id);
+
+        if (!$verificacion
+            || (int) $verificacion['used'] === 1
+            || strtotime($verificacion['expires_at']) <= time()
+            || !password_verify($tokenPlano, $verificacion['token_hash'])) {
+            $_SESSION['error_login'] = $mensajeError;
+            header('Location: index.php?action=login');
+            exit();
+        }
+
+        $this->verificacionEmailModel->marcarUsada($id);
+
+        $this->auditoria->log(
+            $verificacion['usuario_documento'],
+            'UPDATE',
+            'usuarios',
+            $verificacion['usuario_documento'],
+            null,
+            null,
+            'Correo electronico confirmado'
+        );
+
+        // Recien ahora se da la bienvenida: antes no habia certeza de que el
+        // buzon fuera del titular.
+        $usuario = $this->usuarioModel->getUserByDocumento($verificacion['usuario_documento']);
+        if ($usuario) {
+            $this->emailService->limpiarDirecciones();
+            $this->emailService->enviarCorreoBienvenida($verificacion['email'], $usuario['nombre_completo']);
+        }
+
+        $_SESSION['success_register'] = 'Tu correo quedo confirmado. Ya puedes iniciar sesion.';
+        header('Location: index.php?action=login');
+        exit();
+    }
+
+    private function buildVerificacionLink(int $id, string $tokenPlano): string
+    {
+        return $this->buildEnlaceDeAccion('verificar_email', $id, $tokenPlano);
+    }
+
+    private function renderVerificacionEmail(string $nombre, string $enlace): string
+    {
+        $nombreSeguro = htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
+        $enlaceSeguro = htmlspecialchars($enlace, ENT_QUOTES, 'UTF-8');
+
+        return <<<HTML
+<div style="font-family: Arial, Helvetica, sans-serif; color: #1f2937; line-height: 1.6;">
+    <h2 style="color: #0052ff;">Confirma tu correo</h2>
+    <p>Hola $nombreSeguro,</p>
+    <p>Creaste una cuenta en Zooki con esta direccion. Para poder iniciar sesion, confirma que el correo es tuyo:</p>
+    <p style="margin: 28px 0;">
+        <a href="$enlaceSeguro" style="background:#0052ff;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Confirmar mi correo</a>
+    </p>
+    <p style="font-size: 13px; color: #6b7280;">El enlace vence en 24 horas.</p>
+    <p style="font-size: 13px; color: #6b7280;">Si no fuiste tu quien se registro, ignora este mensaje: sin confirmar, la cuenta no se puede usar.</p>
+</div>
+HTML;
+    }
+
     private function buildResetLink(int $tokenId, string $tokenPlano): string
+    {
+        return $this->buildEnlaceDeAccion('reset_password', $tokenId, $tokenPlano);
+    }
+
+    /**
+     * Arma un enlace absoluto a una accion con id y token. Lo comparten el
+     * restablecimiento de contrasena y la confirmacion de correo (HU-36), que
+     * necesitan exactamente la misma URL con distinta accion.
+     */
+    private function buildEnlaceDeAccion(string $action, int $id, string $tokenPlano): string
     {
         // Cargar APP_URL del archivo .env si está configurado
         $appUrl = null;
@@ -459,8 +601,8 @@ class AuthController {
         }
 
         $query = http_build_query([
-            'action' => 'reset_password',
-            'id' => $tokenId,
+            'action' => $action,
+            'id' => $id,
             'token' => $tokenPlano,
         ]);
 
@@ -669,6 +811,13 @@ class AuthController {
     public function checkDocumentAjax()
     {
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            // HU-38 (VD-SEG-06): el formulario de registro necesita avisar si
+            // el documento ya está tomado, así que el endpoint no puede dejar
+            // de responder. Lo que se corta es el uso masivo: a mano nadie
+            // llega al límite, un script que enumere sí.
+            if (!Security::checkVerificationLimit()) {
+                $this->jsonResponse(false, "Demasiadas verificaciones. Inténtalo más tarde.");
+            }
             $documento = trim($_POST['documento'] ?? '');
             if (empty($documento)) {
                 $this->jsonResponse(false, "Documento vacío.");
@@ -681,6 +830,10 @@ class AuthController {
     public function checkEmailAjax()
     {
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            // Mismo límite que checkDocumentAjax (HU-38, VD-SEG-06).
+            if (!Security::checkVerificationLimit()) {
+                $this->jsonResponse(false, "Demasiadas verificaciones. Inténtalo más tarde.");
+            }
             $email = trim(strtolower($_POST['email'] ?? ''));
             if (empty($email)) {
                 $this->jsonResponse(false, "Email vacío.");
@@ -701,34 +854,39 @@ class AuthController {
                 return;
             }
 
-            // Obtener perfil del usuario dependiendo del tipo de token
-            if (!empty($accessToken)) {
-                $url = 'https://www.googleapis.com/oauth2/v3/userinfo?access_token=' . $accessToken;
-            } else {
-                $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . $credential;
-            }
+            // HU-36 (VD-SEG-10). Antes se pedía el perfil a Google y bastaba un
+            // HTTP 200. Eso confirma que el token es de Google, pero no que sea
+            // PARA Zooki: un token emitido para otra aplicación pasaba igual, y
+            // con él se entraba a la cuenta de cualquier usuario. Ahora se
+            // consulta tokeninfo (que sí devuelve `aud`) y se compara contra
+            // nuestro client_id antes de mirar el correo.
+            $esIdToken = empty($accessToken);
+            $token = $esIdToken ? $credential : $accessToken;
 
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($httpCode !== 200) {
+            $payload = GoogleToken::consultar($token, $esIdToken);
+            if ($payload === null) {
                 $this->jsonResponse(false, "No se pudo validar el token con Google.");
                 return;
             }
 
-            $payload = json_decode($response, true);
-            
-            // Validar que el token tenga un email
-            if (!isset($payload['email'])) {
-                $this->jsonResponse(false, "No se pudo obtener el email de Google.");
+            $motivo = GoogleToken::motivoDeRechazo($payload, GoogleToken::clientId(), $esIdToken);
+            if ($motivo !== null) {
+                // Al cliente se le responde en genérico (HU-38); el motivo real
+                // queda en el log del servidor para poder diagnosticar.
+                error_log('HU-36: token de Google rechazado - ' . $motivo);
+                $this->jsonResponse(false, "No se pudo validar el token con Google.");
                 return;
             }
 
             $email = trim(strtolower($payload['email']));
             $nombre_completo = $payload['name'] ?? '';
+
+            // tokeninfo no siempre trae el nombre; para el access_token se
+            // completa con el perfil, que ya sabemos que pertenece a Zooki.
+            if ($nombre_completo === '' && !$esIdToken) {
+                $perfil = GoogleToken::perfil($accessToken);
+                $nombre_completo = $perfil['name'] ?? '';
+            }
 
             // Buscar si el usuario ya existe en nuestra base de datos
             $user = $this->usuarioModel->getUserDetailsByEmail($email);
@@ -744,6 +902,17 @@ class AuthController {
                 $_SESSION['usuario_doc'] = $user['documento'];
                 $_SESSION['usuario_nombre'] = $user['nombre_completo'];
                 $_SESSION['usuario_id_rol'] = $user['id_rol'];
+                // El login por contraseña guarda también el nombre del rol y
+                // varias vistas lo consultan (UsuarioController::listar lo usa
+                // para dejar entrar al listado). Al no guardarlo aquí, un
+                // administrador que entrara con Google quedaba fuera de su
+                // propio panel de usuarios.
+                $_SESSION['usuario_rol'] = [
+                    1 => 'administrador',
+                    2 => 'veterinario',
+                    3 => 'recepcionista',
+                    4 => 'propietario',
+                ][(int) $user['id_rol']] ?? '';
                 $_SESSION['login_method'] = 'google';
 
                 $this->auditoria->log($user['documento'], 'Login via Google', 'Usuario', $user['documento'], null);

@@ -98,14 +98,21 @@ if(isset($_SESSION['usuario_doc'])) {
                         <div class="input-group input-group-no-margin">
                             <label for="password">Contraseña</label>
                             <div class="input-wrapper">
-                                <input type="password" id="password" name="password" placeholder="••••••••" required maxlength="50">
+                                <input type="password" id="password" name="password" placeholder="••••••••" required minlength="8" maxlength="72">
+                                <button type="button" class="toggle-password" data-ojito="password" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
+                                    <i class="ri-eye-off-line"></i>
+                                </button>
                             </div>
+                            <small id="regPwdFeedback" style="display:block;margin-top:6px;font-size:0.8rem;min-height:1.1em;" role="status" aria-live="polite"></small>
                         </div>
 
                         <div class="input-group input-group-no-margin">
                             <label for="confirm_password">Confirmar</label>
                             <div class="input-wrapper">
-                                <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required maxlength="50">
+                                <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required minlength="8" maxlength="72">
+                                <button type="button" class="toggle-password" data-ojito="confirm_password" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
+                                    <i class="ri-eye-off-line"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -185,6 +192,40 @@ if(isset($_SESSION['usuario_doc'])) {
     </div>
 
     <!-- Cargar script externo de registro cumpliendo con zooki_reglas.md -->
+    <script src="js/password-policy.js"></script>
+    <script>
+        // Aviso en vivo de la politica (RN-G10). Esta vista no comparte los
+        // ids de register.js, asi que lleva su propio enganche minimo.
+        document.addEventListener('DOMContentLoaded', function () {
+            var campo = document.getElementById('password');
+            var aviso = document.getElementById('regPwdFeedback');
+            if (!campo || !aviso) return;
+
+            // Ojito: mismo comportamiento que en el resto de formularios.
+            document.querySelectorAll('.toggle-password[data-ojito]').forEach(function (boton) {
+                boton.addEventListener('click', function () {
+                    var input = document.getElementById(this.dataset.ojito);
+                    if (!input) return;
+                    var visible = input.getAttribute('type') === 'password';
+                    input.setAttribute('type', visible ? 'text' : 'password');
+                    this.setAttribute('aria-pressed', visible ? 'true' : 'false');
+                    this.innerHTML = visible
+                        ? '<i class="ri-eye-line"></i>'
+                        : '<i class="ri-eye-off-line"></i>';
+                });
+            });
+
+            campo.addEventListener('input', function () {
+                if (this.value === '') {
+                    aviso.textContent = '';
+                    return;
+                }
+                var motivo = window.motivoPasswordInvalida(this.value);
+                aviso.textContent = motivo === null ? 'Contraseña válida' : motivo;
+                aviso.style.color = motivo === null ? '#047857' : '#DC2626';
+            });
+        });
+    </script>
     <script src="js/register.js"></script>
 </body>
 </html>

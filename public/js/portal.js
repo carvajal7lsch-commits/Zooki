@@ -283,17 +283,27 @@ function validarFuerzaPasswordPortal() {
     const matchText = document.getElementById('portal_pwd_match_text');
     const btn = document.getElementById('portal_btn_change_pwd');
     
+    // La politica compartida decide primero (RN-G10): no tiene sentido pintar
+    // la barra de verde si el servidor va a rechazar la contrasena.
+    const motivo = window.motivoPasswordInvalida
+        ? window.motivoPasswordInvalida(pwd)
+        : (pwd.length >= 8 ? null : 'Mínimo 8 caracteres');
+    const cumple = motivo === null;
+
     let strength = 0;
-    
-    if (pwd.length >= 8) strength += 25;
-    if (pwd.match(/[A-Z]/)) strength += 25;
-    if (pwd.match(/[0-9]/)) strength += 25;
-    if (pwd.match(/[^A-Za-z0-9]/)) strength += 25;
+    if (cumple) {
+        strength = 75;
+        if (pwd.match(/[^A-Za-z0-9]/)) strength += 25;   // simbolos
+    } else if (pwd.length > 0) {
+        strength = 25;
+    }
 
     bar.style.width = strength + '%';
-    if (strength <= 25) {
+    if (!cumple) {
         bar.style.background = 'var(--z-danger)';
-        text.textContent = 'Débil: Mínimo 8 caracteres, una mayúscula y un número.';
+        text.textContent = pwd.length === 0
+            ? 'Mínimo 8 caracteres, con mayúscula, minúscula y número.'
+            : motivo + '.';
         text.style.color = 'var(--z-danger)';
     } else if (strength <= 75) {
         bar.style.background = 'var(--z-warning)';
@@ -319,7 +329,7 @@ function validarFuerzaPasswordPortal() {
         match = false;
     }
     
-    if (strength >= 75 && match && pwd.length >= 8) {
+    if (cumple && match) {
         btn.disabled = false;
         btn.style.opacity = '1';
     } else {

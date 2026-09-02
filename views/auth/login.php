@@ -71,6 +71,13 @@ if (file_exists($envFile)) {
                         <div class="form-wrapper animate__animated animate__fadeIn">
                             <h2>Iniciar sesión</h2>
                             <p class="form-subtitle">¡Bienvenido de vuelta! Accede a tu cuenta para continuar.</p>
+                            <!-- Confirmacion de correo / registro (HU-36) -->
+                            <?php if(isset($_SESSION['success_register'])): ?>
+                                <div class="alert-success">
+                                    <i class="ri-checkbox-circle-line"></i>
+                                    <span><?php echo htmlspecialchars($_SESSION['success_register'], ENT_QUOTES, 'UTF-8'); unset($_SESSION['success_register']); ?></span>
+                                </div>
+                            <?php endif; ?>
                             <!-- Mostrar errores de login si existen -->
                             <?php if(isset($_SESSION['error_login'])): ?>
                                 <div class="alert-error animate__animated animate__shakeX">
@@ -90,7 +97,7 @@ if (file_exists($envFile)) {
                                 <div class="input-group">
                                     <label for="password">Contraseña</label>
                                     <div class="input-wrapper">
-                                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" maxlength="50">
+                                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" maxlength="72">
                                         <button type="button" class="toggle-password" id="togglePassword" tabindex="-1">
                                             <i class="ri-eye-off-line"></i>
                                         </button>
@@ -185,17 +192,23 @@ if (file_exists($envFile)) {
                                     <div class="input-group">
                                         <label for="password_reg">Contraseña</label>
                                         <div class="input-wrapper">
-                                            <input type="password" id="password_reg" name="password" placeholder="••••••••" required maxlength="50" autocomplete="new-password">
+                                            <input type="password" id="password_reg" name="password" placeholder="••••••••" required minlength="8" maxlength="72" autocomplete="new-password">
+                                            <button type="button" class="toggle-password" id="togglePasswordReg" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
+                                                <i class="ri-eye-off-line"></i>
+                                            </button>
                                         </div>
                                         <div class="password-meter-container">
                                             <div class="password-meter" id="passwordMeter"></div>
                                         </div>
-                                        <span class="validation-msg" id="passwordValidationMsg">Mínimo 6 caracteres (letras y números)</span>
+                                        <span class="validation-msg" id="passwordValidationMsg">Mínimo 8 caracteres, con mayúscula, minúscula y número</span>
                                     </div>
                                     <div class="input-group">
                                         <label for="confirm_password">Confirmar</label>
                                         <div class="input-wrapper">
-                                            <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required maxlength="50" autocomplete="new-password">
+                                            <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required minlength="8" maxlength="72" autocomplete="new-password">
+                                            <button type="button" class="toggle-password" id="toggleConfirmPasswordReg" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
+                                                <i class="ri-eye-off-line"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -350,6 +363,7 @@ if (file_exists($envFile)) {
         </div>
     </div>
     <!-- JS externo — ZOOKI_REGLAS: cero JS en línea -->
+    <script src="js/password-policy.js?v=<?php echo time(); ?>"></script>
     <script src="js/login.js?v=<?php echo time(); ?>"></script>
     <script src="js/register.js?v=<?php echo time(); ?>"></script>
     

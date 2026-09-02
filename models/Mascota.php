@@ -255,5 +255,38 @@ class Mascota {
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
+
+    /**
+     * HU-35: confirma que la mascota exista y siga activa antes de colgarle un
+     * registro clinico. Devuelve el documento del propietario (lo necesita
+     * RN-G02 para el portal) o null si la mascota no existe o esta inactiva.
+     *
+     * Es una consulta propia y no getById() porque aqui solo interesa la
+     * existencia: getById() hace cinco JOIN y un GROUP BY para armar la ficha
+     * completa, y ademas no filtra por estado.
+     */
+    public function getPropietarioSiActiva($id_mascota) {
+        // Se rechaza lo que no sea un entero positivo en vez de dejar que el
+        // cast lo convierta: (int)"1 OR 1=1" da 1, asi que un identificador
+        // basura devolveria los datos de la mascota 1 como si nada. No es una
+        // via de inyeccion (la consulta va preparada), pero si un acierto por
+        // accidente que el llamador no espera.
+        if (!is_numeric($id_mascota) || floor($id_mascota + 0) != $id_mascota + 0) {
+            return null;
+        }
+        $id_mascota = (int) $id_mascota;
+        if ($id_mascota <= 0) {
+            return null;
+        }
+
+        $query = "SELECT doc_propietario FROM " . $this->table_name . "
+                  WHERE id_mascota = :id AND estado = 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':id', $id_mascota, PDO::PARAM_INT);
+        $stmt->execute();
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $fila ? $fila['doc_propietario'] : null;
+    }
 }
 ?>

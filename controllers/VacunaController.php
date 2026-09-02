@@ -1,27 +1,64 @@
 <?php
 require_once '../config/Database.php';
 require_once '../models/Vacuna.php';
+require_once '../models/Mascota.php';
+require_once '../helpers/ValidadorClinico.php';
 
 class VacunaController {
     private $db;
     private $vacunaModel;
+    private $mascotaModel;
 
     public function __construct() {
         $database = new Database();
         $this->db = $database->getConnection();
         $this->vacunaModel = new Vacuna($this->db);
+        $this->mascotaModel = new Mascota($this->db);
     }
 
     public function registrarAjax() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+
+            // HU-35: la mascota debe existir y estar activa. Antes se insertaba
+            // lo que llegara en $_POST sin comprobar absolutamente nada.
+            $idMascota = ValidadorClinico::id($_POST['id_mascota'] ?? null);
+            if ($idMascota === null || $this->mascotaModel->getPropietarioSiActiva($idMascota) === null) {
+                echo json_encode(['success' => false, 'message' => 'La mascota indicada no existe o está inactiva']);
+                exit;
+            }
+
+            $nombreVacuna = ValidadorClinico::textoRequerido($_POST['nombre_vacuna'] ?? null, 150);
+            if ($nombreVacuna === null) {
+                echo json_encode(['success' => false, 'message' => 'El nombre de la vacuna es obligatorio']);
+                exit;
+            }
+
+            // No se puede aplicar una vacuna en el futuro.
+            $fechaAplicacion = ValidadorClinico::fechaNoFutura($_POST['fecha_aplicacion'] ?? null);
+            if ($fechaAplicacion === null) {
+                echo json_encode(['success' => false, 'message' => 'La fecha de aplicación no es válida o está en el futuro']);
+                exit;
+            }
+
+            // La próxima dosis sí es futura, pero nunca anterior a la aplicación.
+            $fechaProxima = null;
+            if (!empty($_POST['fecha_proxima'])) {
+                $fechaProxima = ValidadorClinico::fecha($_POST['fecha_proxima']);
+                if ($fechaProxima === null || $fechaProxima < $fechaAplicacion) {
+                    echo json_encode(['success' => false, 'message' => 'La fecha de próxima dosis no es válida o es anterior a la aplicación']);
+                    exit;
+                }
+            }
+
             $data = [
-                'id_mascota' => $_POST['id_mascota'],
-                'nombre_vacuna' => $_POST['nombre_vacuna'],
-                'laboratorio' => $_POST['laboratorio'],
-                'lote' => $_POST['lote'],
-                'fecha_aplicacion' => $_POST['fecha_aplicacion'],
-                'fecha_proxima_dosis' => !empty($_POST['fecha_proxima']) ? $_POST['fecha_proxima'] : null,
-                'observaciones' => $_POST['observaciones']
+                'id_mascota' => $idMascota,
+                'nombre_vacuna' => $nombreVacuna,
+                'laboratorio' => ValidadorClinico::textoOpcional($_POST['laboratorio'] ?? null, 150),
+                'lote' => ValidadorClinico::textoOpcional($_POST['lote'] ?? null, 100),
+                'fecha_aplicacion' => $fechaAplicacion,
+                'fecha_proxima_dosis' => $fechaProxima,
+                'observaciones' => ValidadorClinico::textoOpcional($_POST['observaciones'] ?? null, 5000)
             ];
 
             if ($this->vacunaModel->insert($data)) {

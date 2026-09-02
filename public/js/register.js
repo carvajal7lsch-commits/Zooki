@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('password_reg');
     const confirmPasswordInput = document.getElementById('confirm_password');
     const emailInput = document.getElementById('email_reg');
+
+    // Este script es de la pestana de registro de login.php. La vista suelta
+    // views/auth/register.php no tiene estos ids, y sin esta guarda el primer
+    // addEventListener sobre null tumbaba el script entero en esa pagina.
+    if (!registerForm || !documentoInput || !passwordInput || !emailInput) return;
+
     const submitBtn = registerForm.querySelector('button[type="submit"]');
 
     const docValidationMsg = document.getElementById('docValidationMsg');
@@ -117,6 +123,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     emailInput.addEventListener('input', (e) => checkEmail(e.target.value));
 
+    // ── Mostrar / ocultar contraseña ──
+    // Mismo patrón que el campo de inicio de sesión (login.js) y el de
+    // restablecimiento, para que el ojito se comporte igual en todo el sistema.
+    [
+        ['togglePasswordReg', passwordInput],
+        ['toggleConfirmPasswordReg', confirmPasswordInput]
+    ].forEach(function ([idBoton, campo]) {
+        const boton = document.getElementById(idBoton);
+        if (!boton || !campo) return;
+
+        boton.addEventListener('click', function () {
+            const visible = campo.getAttribute('type') === 'password';
+            campo.setAttribute('type', visible ? 'text' : 'password');
+            this.setAttribute('aria-pressed', visible ? 'true' : 'false');
+            this.innerHTML = visible
+                ? '<i class="ri-eye-line"></i>'
+                : '<i class="ri-eye-off-line"></i>';
+        });
+    });
+
     // ── Medidor de Fuerza de Contraseña ──
     passwordInput.addEventListener('input', function() {
         const password = this.value;
@@ -126,26 +152,36 @@ document.addEventListener('DOMContentLoaded', () => {
         passwordMeter.className = 'password-meter';
         
         if (password.length === 0) {
-            passwordValidationMsg.textContent = "Mínimo 6 caracteres";
+            passwordValidationMsg.textContent = "Mínimo 8 caracteres, con mayúscula, minúscula y número";
             passwordValidationMsg.className = "validation-msg";
             isPasswordValid = false;
             updateSubmitButton();
             return;
         }
 
-        // Checklist de seguridad
-        if (password.length >= 6) strength++; // Min length
-        if (/[A-Z]/.test(password) || /[a-z]/.test(password)) strength++; // Has letters
-        if (/[0-9]/.test(password)) strength++; // Has numbers
-        if (/[^A-Za-z0-9]/.test(password)) strength++; // Has special chars
-        if (password.length >= 10) strength++; // Bonus length
+        // La política manda antes que el medidor: de nada sirve marcar
+        // "Fuerte" una contraseña que el servidor va a rechazar. Ej: "Password1"
+        // cumple la forma (8 + mayúscula + minúscula + número) pero está entre
+        // las primeras de cualquier diccionario.
+        const motivo = window.motivoPasswordInvalida
+            ? window.motivoPasswordInvalida(password)
+            : null;
 
-        if (strength <= 2) {
+        if (motivo !== null) {
             passwordMeter.classList.add('weak');
-            passwordValidationMsg.textContent = "Débil: Agrega letras y números";
+            passwordValidationMsg.textContent = motivo;
             passwordValidationMsg.className = "validation-msg error";
-            isPasswordValid = false; // Bloquear si es débil
-        } else if (strength === 3 || strength === 4) {
+            isPasswordValid = false;
+            updateSubmitButton();
+            return;
+        }
+
+        // Ya cumple; el medidor solo indica cuánto margen tiene por encima.
+        strength = 3;
+        if (/[^A-Za-z0-9]/.test(password)) strength++; // Símbolos
+        if (password.length >= 12) strength++;         // Longitud extra
+
+        if (strength === 3 || strength === 4) {
             passwordMeter.classList.add('medium');
             passwordValidationMsg.textContent = "Media: Contraseña aceptable ✅";
             passwordValidationMsg.className = "validation-msg success";

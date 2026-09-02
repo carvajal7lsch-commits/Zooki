@@ -246,6 +246,61 @@ class Usuario
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * IDs de todos los roles existentes. Se usa como lista blanca para validar
+     * el id_rol que llega por POST (VD-SEG-01): sin esto se podia grabar
+     * cualquier valor, incluido un rol inexistente.
+     */
+    public function getAllRoleIds()
+    {
+        $query = "SELECT id_rol FROM roles";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return array_map("intval", $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /**
+     * Cuenta los administradores activos del sistema. Sirve para impedir que
+     * se desactive o degrade al ultimo (VD-SEG-02), lo que dejaria el sistema
+     * sin ningun acceso administrativo.
+     */
+    public function contarAdminsActivos()
+    {
+        $query =
+            "SELECT COUNT(*) FROM " .
+            $this->table_name .
+            " WHERE id_rol = 1 AND estado = 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * VD-SEG-01: el id_rol recibido debe corresponder a un rol existente.
+     */
+    public function esRolValido($idRol): bool
+    {
+        return in_array((int) $idRol, $this->getAllRoleIds(), true);
+    }
+
+    /**
+     * VD-SEG-02: indica si este documento es el unico administrador activo
+     * que queda. Desactivarlo o quitarle el rol dejaria el sistema sin
+     * ningun acceso administrativo.
+     */
+    public function esUltimoAdminActivo($documento): bool
+    {
+        $actual = $this->getById($documento);
+        if (!$actual) {
+            return false;
+        }
+        $esAdminActivo = (int) $actual["id_rol"] === 1 && (int) $actual["estado"] === 1;
+        if (!$esAdminActivo) {
+            return false;
+        }
+        return $this->contarAdminsActivos() <= 1;
+    }
+
     // Actualizar solo el estado del usuario
     public function updateStatus($documento, $estado)
     {

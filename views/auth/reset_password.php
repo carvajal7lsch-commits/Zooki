@@ -21,6 +21,7 @@ $errorMessage = $errorMessage ?? '';
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/password-policy.js"></script>
 </head>
 <body class="login-page reset-page">
     <div class="reset-wrapper">
@@ -48,7 +49,7 @@ $errorMessage = $errorMessage ?? '';
                     <label for="newPassword">Nueva contraseña</label>
                     <div class="input-wrapper">
                         <i class="ri-shield-keyhole-line"></i>
-                        <input type="password" id="newPassword" name="password" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+                        <input type="password" id="newPassword" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
                         <button type="button" class="toggle-password" id="toggleNewPassword" tabindex="-1">
                             <i class="ri-eye-off-line"></i>
                         </button>
@@ -56,14 +57,14 @@ $errorMessage = $errorMessage ?? '';
                     <div class="password-meter-container">
                         <div class="password-meter" id="passwordMeter"></div>
                     </div>
-                    <span class="validation-msg" id="passwordValidationMsg">Mínimo 6 caracteres (letras y números)</span>
+                    <span class="validation-msg" id="passwordValidationMsg">Mínimo 8 caracteres, con mayúscula, minúscula y número</span>
                 </div>
 
                 <div class="input-group">
                     <label for="confirmPassword">Confirmar contraseña</label>
                     <div class="input-wrapper">
                         <i class="ri-check-double-line"></i>
-                        <input type="password" id="confirmPassword" name="password_confirmation" placeholder="Repite tu contraseña" required minlength="6" autocomplete="new-password">
+                        <input type="password" id="confirmPassword" name="password_confirmation" placeholder="Repite tu contraseña" required minlength="8" autocomplete="new-password">
                         <button type="button" class="toggle-password" id="toggleConfirmPassword" tabindex="-1">
                             <i class="ri-eye-off-line"></i>
                         </button>
@@ -149,25 +150,31 @@ $errorMessage = $errorMessage ?? '';
                     passwordMeter.className = 'password-meter';
                     
                     if (val.length === 0) {
-                        passwordValidationMsg.textContent = "Mínimo 6 caracteres";
+                        passwordValidationMsg.textContent = "Mínimo 8 caracteres, con mayúscula, minúscula y número";
                         passwordValidationMsg.className = "validation-msg";
                         isPasswordValid = false;
                         updateSubmitButton();
                         return;
                     }
 
-                    if (val.length >= 6) strength++;
-                    if (/[A-Z]/.test(val) || /[a-z]/.test(val)) strength++;
-                    if (/[0-9]/.test(val)) strength++;
-                    if (/[^A-Za-z0-9]/.test(val)) strength++;
-                    if (val.length >= 10) strength++;
-
-                    if (strength <= 2) {
+                    // La politica compartida decide (RN-G10). Antes este
+                    // contador daba "Fuerte" a claves que el servidor rechaza,
+                    // y ademas seguia midiendo con el minimo viejo de 6.
+                    const motivo = window.motivoPasswordInvalida(val);
+                    if (motivo !== null) {
                         passwordMeter.classList.add('weak');
-                        passwordValidationMsg.textContent = "Débil: Agrega letras y números";
+                        passwordValidationMsg.textContent = motivo;
                         passwordValidationMsg.className = "validation-msg error";
                         isPasswordValid = false;
-                    } else if (strength === 3 || strength === 4) {
+                        updateSubmitButton();
+                        return;
+                    }
+
+                    strength = 3;
+                    if (/[^A-Za-z0-9]/.test(val)) strength++;
+                    if (val.length >= 12) strength++;
+
+                    if (strength === 3 || strength === 4) {
                         passwordMeter.classList.add('medium');
                         passwordValidationMsg.textContent = "Media: Contraseña aceptable ✅";
                         passwordValidationMsg.className = "validation-msg success";

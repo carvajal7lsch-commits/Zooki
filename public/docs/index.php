@@ -2,21 +2,25 @@
 // index.php - Portal de Documentación de Zooki
 session_start();
 
-// Configuración de archivos de documentación permitidos (evita Directory Traversal)
-$docs_map = [
-    'readme'  => __DIR__ . '/../../README.md',
-    'ers'     => __DIR__ . '/../../ERS.md',
-    'ficha'   => __DIR__ . '/../../FichaTecnica_Zooki.md',
-    'backlog' => __DIR__ . '/../../backlog-zooki.md',
-    'mer'     => __DIR__ . '/../../MER.md'
-];
+// Catálogo de documentos, slugs y extracción de encabezados: lógica
+// compartida con scripts/algolia_index.php para que un mismo encabezado
+// genere el mismo slug en el sidebar, en el ancla del DOM y en Algolia.
+require_once __DIR__ . '/../../helpers/DocsIndex.php';
+require_once __DIR__ . '/../../config/Algolia.php';
+require_once __DIR__ . '/../../config/App.php';
 
-// Obtener versión actual de Zooki desde README.md de manera dinámica
-$zooki_version = '1.7.1'; // Fallback
+// Archivos de documentación permitidos (evita Directory Traversal)
+$docs_map = DocsIndex::docsMap();
+
+// Obtener versión actual de Zooki desde README.md de manera dinámica.
+// El patrón lleva el modificador /u: sin él, la clase [oó] compara byte a byte
+// y la "ó" (dos bytes en UTF-8) nunca casaba, así que el portal mostraba
+// siempre el valor de respaldo en lugar de la versión real del README.
+$zooki_version = App::VERSION; // Respaldo: la versión declarada en el código
 $readme_path = $docs_map['readme'];
 if (file_exists($readme_path)) {
     $readme_content = file_get_contents($readme_path);
-    if (preg_match('/###\s+Versi[oó]n\s+([\d\.]+)/i', $readme_content, $matches)) {
+    if (preg_match('/###\s+Versi[oó]n\s+([\d\.]+)/iu', $readme_content, $matches)) {
         $zooki_version = $matches[1];
     }
 }
@@ -42,6 +46,31 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
         exit();
     }
 }
+
+// Endpoint API: índice de navegación (títulos + encabezados H2/H3 con slug)
+// de los 9 documentos, en una sola respuesta, para construir el sidebar
+// colapsable y la búsqueda global sin tener que descargar el Markdown
+// completo de cada documento por adelantado.
+if (isset($_GET['action']) && $_GET['action'] === 'get_index') {
+    $index = [];
+
+    foreach ($docs_map as $doc_id => $file_path) {
+        $title = '';
+        $headings = [];
+
+        if (file_exists($file_path)) {
+            $content = file_get_contents($file_path);
+            $title = DocsIndex::extractTitle($content);
+            $headings = DocsIndex::extractHeadings($content);
+        }
+
+        $index[$doc_id] = ['title' => $title, 'headings' => $headings];
+    }
+
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($index, JSON_UNESCAPED_UNICODE);
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -50,39 +79,57 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zooki - Portal de Documentación Oficial</title>
     
-    <!-- Google Fonts: Outfit (Brand & Headings) + Inter (Body Text) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    
+    <!-- Sin Google Fonts: el portal usa las fuentes del sistema
+         (mismo stack que Factus), definidas en docs.css -->
+
     <!-- FontAwesome para Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Estilos Oficiales del Portal -->
     <link rel="stylesheet" href="docs.css">
-    
+
+    <!-- Aplicar el tema guardado antes del primer pintado, para evitar parpadeo -->
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('zooki-docs-theme') === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch (e) { /* localStorage no disponible: se mantiene el tema oscuro por defecto */ }
+        })();
+    </script>
+
     <!-- Librería Marked para procesar Markdown en Frontend -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
+
     <!-- Librería Mermaid para renderizar diagramas en tiempo real -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        // Inicializar Mermaid configurado para tema oscuro
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: 'dark',
-            themeVariables: {
-                background: '#1e1e24',
-                primaryColor: '#3b82f6',
-                primaryTextColor: '#f3f4f6',
-                lineColor: '#4b5563',
-                secondaryColor: '#1f2937',
-                tertiaryColor: '#111827'
-            }
-        });
-    </script>
+    <!-- La inicialización de Mermaid depende del tema activo (claro/oscuro)
+         y se hace desde docs.js (applyMermaidTheme), no aquí, para poder
+         reinicializarse cuando el usuario cambia de tema. -->
 </head>
-<body class="dark-theme">
+<body>
+
+    <!-- Header Superior (Escritorio): logo, búsqueda global y tema -->
+    <header class="app-topbar">
+        <div class="topbar-brand">
+            <img src="../img/icon_blue.png" alt="Zooki Logo" class="brand-logo-img">
+            <div class="brand-text">
+                <h1>Zooki</h1>
+            </div>
+        </div>
+
+        <button id="global-search-trigger" class="global-search-btn" type="button" title="Buscar (Ctrl + K o /)">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Buscar</span>
+            <kbd aria-label="Atajo: tecla barra">/</kbd>
+        </button>
+
+        <button id="theme-toggle" class="theme-toggle-btn" type="button" title="Cambiar tema">
+            <i class="fa-solid fa-sun"></i>
+            <span>Claro</span>
+        </button>
+    </header>
 
     <!-- Header Móvil -->
     <header class="mobile-header">
@@ -93,37 +140,21 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
             <img src="../img/icon_blue.png" alt="Zooki Logo" class="brand-logo-img-mobile">
             <span>Zooki Docs</span>
         </div>
-        <div class="placeholder-btn"></div>
+        <button id="mobile-search-trigger" class="icon-btn" aria-label="Buscar en la documentación">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
     </header>
 
     <div class="app-container">
-        
+
         <!-- Barra Lateral Izquierda (Navegación) -->
         <aside class="sidebar" id="sidebar-nav">
-            <div class="sidebar-brand">
-                <img src="../img/icon_blue.png" alt="Zooki Logo" class="brand-logo-img">
-                <div class="brand-text">
-                    <h1>Zooki</h1>
-                    <span>Documentación Oficial</span>
-                </div>
-            </div>
-            
-            <!-- Buscador Integrado -->
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="doc-search" placeholder="Buscar en la página..." autocomplete="off">
-                <button id="clear-search" class="clear-btn" style="display: none;">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            
             <nav class="sidebar-menu">
                 <div class="menu-section">
                     <span class="menu-section-title">Primeros Pasos</span>
                     <ul>
                         <li>
                             <a href="#readme" class="menu-item active" data-doc="readme">
-                                <i class="fa-solid fa-house-chimney menu-icon"></i>
                                 <span>Inicio / Sinopsis</span>
                             </a>
                         </li>
@@ -131,18 +162,31 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
                 </div>
                 
                 <div class="menu-section">
-                    <span class="menu-section-title">Especificaciones</span>
+                    <span class="menu-section-title">Análisis y Especificación</span>
                     <ul>
                         <li>
                             <a href="#ficha" class="menu-item" data-doc="ficha">
-                                <i class="fa-solid fa-file-invoice menu-icon"></i>
                                 <span>Ficha Técnica</span>
                             </a>
                         </li>
                         <li>
                             <a href="#ers" class="menu-item" data-doc="ers">
-                                <i class="fa-solid fa-clipboard-list menu-icon"></i>
                                 <span>Requisitos (ERS)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#reglas" class="menu-item" data-doc="reglas">
+                                <span>Reglas de Negocio</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#hu" class="menu-item" data-doc="hu">
+                                <span>Historias de Usuario</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#re" class="menu-item" data-doc="re">
+                                <span>Requisitos Específicos</span>
                             </a>
                         </li>
                     </ul>
@@ -153,14 +197,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
                     <ul>
                         <li>
                             <a href="#mer" class="menu-item" data-doc="mer">
-                                <i class="fa-solid fa-diagram-project menu-icon"></i>
                                 <span>Modelo Entidad-Relación</span>
                             </a>
                         </li>
                         <li>
                             <a href="#backlog" class="menu-item" data-doc="backlog">
-                                <i class="fa-solid fa-list-check menu-icon"></i>
-                                <span>Historias de Usuario / Backlog</span>
+                                <span>Backlog (Jira)</span>
                             </a>
                         </li>
                     </ul>
@@ -180,19 +222,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
 
         <!-- Área de Contenido Principal -->
         <main class="main-content">
-            <div class="content-header">
-                <div class="breadcrumb">
-                    <span id="breadcrumb-parent">Primeros Pasos</span>
-                    <i class="fa-solid fa-chevron-right separator"></i>
-                    <span id="breadcrumb-current" class="active">Inicio / Sinopsis</span>
-                </div>
-                <div class="header-actions">
-                    <button class="theme-btn" id="print-doc" title="Imprimir o Exportar PDF">
-                        <i class="fa-solid fa-print"></i> Imprimir / PDF
-                    </button>
-                </div>
-            </div>
-
             <!-- Contenedor del documento renderizado -->
             <article class="document-container">
                 <div class="loading-overlay" id="loading-spinner" style="display: none;">
@@ -216,6 +245,39 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_doc') {
         </aside>
 
     </div>
+
+    <!-- Paleta de búsqueda global (Ctrl+K) -->
+    <div class="command-palette-overlay" id="command-palette-overlay">
+        <div class="command-palette" id="command-palette" role="dialog" aria-label="Búsqueda en toda la documentación">
+            <div class="cp-search-box">
+                <i class="fa-solid fa-magnifying-glass cp-search-icon"></i>
+                <input type="text" id="cp-input" placeholder="Buscar" autocomplete="off"
+                       role="combobox" aria-expanded="true" aria-controls="cp-results" aria-autocomplete="list">
+                <button type="button" id="cp-clear" class="cp-clear-btn" aria-label="Limpiar búsqueda" hidden>
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="cp-results" id="cp-results" role="listbox"></div>
+            <div class="cp-footer">
+                <div class="cp-hints">
+                    <span><kbd>&crarr;</kbd> para seleccionar</span>
+                    <span><kbd>&darr;</kbd><kbd>&uarr;</kbd> para navegar</span>
+                    <span><kbd>esc</kbd> para cerrar</span>
+                </div>
+                <div class="cp-attribution" id="cp-attribution"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuración de Algolia para el buscador. Solo se expone la llave
+         de SOLO BÚSQUEDA (diseñada para el navegador); la de administración
+         nunca sale de la CLI. Si no hay credenciales, el objeto queda nulo
+         y docs.js usa automáticamente el buscador local. -->
+    <script>
+        window.ZOOKI_ALGOLIA = <?php echo Algolia::isEnabled()
+            ? json_encode(Algolia::publicConfig(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP)
+            : 'null'; ?>;
+    </script>
 
     <!-- Script de control principal -->
     <script src="docs.js"></script>
