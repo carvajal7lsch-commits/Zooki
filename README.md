@@ -4,7 +4,28 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.7.3 (Actual)
+### Versión 1.8.0 (Actual)
+Endurecimiento de la seguridad del sistema y nuevo portal de documentación con búsqueda.
+
+**Seguridad**
+*   **Autorización central por rol (HU-32):** `Security::validateRole` aplica una matriz acción → roles en el front controller, antes del enrutador, cubriendo las 108 acciones no públicas. Un endpoint invocado directamente queda tan protegido como uno llamado desde la interfaz. Cierra 20 endpoints de lectura que respondían sin sesión alguna, entre ellos el listado de propietarios.
+*   **Escalada de privilegios y último administrador (HU-33):** el rol asignable se valida contra la tabla `roles` y no se puede degradar ni desactivar al único administrador activo.
+*   **Registros clínicos (HU-35):** consulta, vacunación y desparasitación exigen rol veterinario, verifican que la mascota exista y esté activa, validan que la cita vinculada sea del mismo paciente y rechazan fechas futuras, enumerados inválidos y signos vitales fuera de rango.
+*   **Contraseñas, correo y Google (HU-36):** política única de contraseñas (mínimo 8 con mayúscula, minúscula y número, más lista de bloqueo, patrones triviales y datos del titular); el auto-registro ya no inicia sesión solo y exige confirmar el correo; el login con Google valida `aud` e `iss` contra el client_id propio, lo que impedía usar un token emitido para otra aplicación.
+*   **Límite de intentos y enumeración (HU-38):** el contador pasó de `$_SESSION` a la tabla `intentos_login`, con límite por IP y por cuenta, de modo que descartar la cookie ya no lo reinicia. Los mensajes de login son idénticos exista o no la cuenta.
+
+**Portal de documentación**
+*   **Rediseño de la navegación:** barra superior con buscador global, submenús colapsables generados desde los encabezados de cada documento, tabla de contenidos lateral y tema claro/oscuro.
+*   **Búsqueda con Algolia:** paleta de comandos (Ctrl + K o `/`) sobre los ocho documentos publicados, con respaldo automático al buscador local si no hay credenciales.
+*   **Anclas estables:** los encabezados generan slugs deterministas compartidos entre PHP y JavaScript, lo que permite enlazar una sección concreta (`#documento--seccion`).
+
+**Base de datos**
+*   Dos tablas nuevas: `intentos_login` y `verificaciones_email` (`database/04_*.sql` y `database/05_*.sql`).
+
+**Pruebas**
+*   La suite pasa de 26 a 90 pruebas (460 aserciones), con cobertura nueva sobre la matriz de autorización, la validación clínica, la política de contraseñas, los tokens de Google y el contador de intentos.
+
+### Versión 1.7.3
 Reconstrucción completa de la landing page pública, que hasta ahora era una beta de cuatro bloques, e incorporación de las páginas legales del sistema.
 
 **Landing page**
