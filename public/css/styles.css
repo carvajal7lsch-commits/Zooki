@@ -505,6 +505,75 @@ body::after {
     color: var(--primary);
 }
 
+/* ── Pantalla de espera del registro (HU-36) ── */
+.registro-espera {
+    text-align: center;
+    padding: 1.5rem 0.5rem 0.5rem;
+}
+
+.registro-espera-icono {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 1.25rem;
+    border-radius: 50%;
+    background-color: #EFF4FF;
+    color: var(--primary);
+    font-size: 1.9rem;
+}
+
+/* El anillo gira mientras se espera la confirmacion. */
+.registro-espera-spinner {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: var(--primary);
+    animation: registro-espera-giro 0.9s linear infinite;
+}
+
+@keyframes registro-espera-giro {
+    to { transform: rotate(360deg); }
+}
+
+/* Quien prefiera menos movimiento ve el anillo quieto, no parpadeando. */
+@media (prefers-reduced-motion: reduce) {
+    .registro-espera-spinner { animation: none; opacity: 0.45; }
+}
+
+.registro-espera h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.35rem;
+    color: var(--text-primary);
+}
+
+.registro-espera-texto {
+    margin: 0 auto 1rem;
+    max-width: 22rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.registro-espera-estado {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.registro-espera-estado.ok { color: #047857; }
+.registro-espera-estado.error { color: #DC2626; }
+
+.registro-espera-ayuda {
+    margin: 0 0 1.5rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
 /* ── Form Options (Remember / Forgot) ── */
 .form-options {
     display: flex;

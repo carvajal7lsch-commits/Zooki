@@ -103,6 +103,53 @@ class EmailService {
         }
     }
 
+    /**
+     * HU-36 — Confirmacion del correo en el auto-registro.
+     * Usa la misma plantilla base que la bienvenida y las credenciales, para
+     * que el logo, la tipografia y el pie sean identicos en todos los envios.
+     */
+    public function enviarCorreoVerificacion($email, $nombre, $enlace, $horasVigencia = 24) {
+        try {
+            $this->mail->addAddress($email, $nombre);
+            $this->mail->Subject = 'Confirma tu correo en Zooki';
+
+            $contenido = '
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              Creaste una cuenta en Zooki con esta dirección de correo. Solo falta un paso: confirmar que el buzón es tuyo para poder iniciar sesión.
+            </p>
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              El enlace estará disponible durante las próximas <strong>' . (int) $horasVigencia . ' horas</strong>.
+            </p>';
+
+            $cierre = '
+            <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
+              Si no fuiste tú quien se registró, puedes ignorar este mensaje: sin confirmar, la cuenta no se puede usar.
+            </p>';
+
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML(
+                $nombre,
+                'Confirma tu correo',
+                $contenido . $cierre,
+                'Confirmar mi correo',
+                $enlace
+            );
+            $this->mail->AltBody = "Hola $nombre,
+
+Confirma tu correo para activar tu cuenta de Zooki:
+$enlace
+
+El enlace vence en $horasVigencia horas.
+
+Si no fuiste tú, ignora este mensaje.";
+            $this->mail->isHTML(true);
+            $this->mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log("Error al enviar correo de verificacion: " . $this->mail->ErrorInfo);
+            return false;
+        }
+    }
+
     public function enviarCorreoPersonalizado($email, $nombre, $asunto, $cuerpoHTML) {
         try {
             $this->mail->addAddress($email, $nombre);

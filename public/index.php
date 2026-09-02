@@ -51,6 +51,12 @@ switch ($action) {
         $controller->register();
         break;
 
+    case "estado_verificacion_ajax":
+        require_once "../controllers/AuthController.php";
+        $controller = new AuthController();
+        $controller->estadoVerificacionAjax();
+        break;
+
     case "verificar_email":
         require_once "../controllers/AuthController.php";
         $controller = new AuthController();

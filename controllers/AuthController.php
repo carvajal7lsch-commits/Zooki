@@ -372,9 +372,7 @@ class AuthController {
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Validar token CSRF
             if (!Csrf::validate('register')) {
-                $_SESSION['error_register'] = "Token de seguridad inválido. Por favor intenta de nuevo.";
-                header("Location: index.php?action=login");
-                exit();
+                $this->respuestaRegistro(false, "Token de seguridad inválido. Por favor intenta de nuevo.");
             }
 
             // Limpiar datos
@@ -388,47 +386,35 @@ class AuthController {
 
             // Validaciones básicas del servidor
             if (empty($tipo_documento) || empty($documento) || empty($nombre_completo) || empty($telefono) || empty($email) || empty($password)) {
-                $_SESSION['error_register'] = "Todos los campos son obligatorios.";
-                header("Location: index.php?action=login");
-                exit();
+                $this->respuestaRegistro(false, "Todos los campos son obligatorios.");
             }
 
             // La Ley 1581 de 2012 exige autorización previa, expresa e informada del
             // titular. El atributo `required` del navegador se puede eludir, así que la
             // ausencia de consentimiento debe bloquear el registro también aquí.
             if (empty($_POST['acepta_datos'])) {
-                $_SESSION['error_register'] = "Debes autorizar el tratamiento de tus datos personales para crear la cuenta.";
-                header("Location: index.php?action=login");
-                exit();
+                $this->respuestaRegistro(false, "Debes autorizar el tratamiento de tus datos personales para crear la cuenta.");
             }
 
             if ($password !== $confirm_password) {
-                $_SESSION['error_register'] = "Las contraseñas no coinciden.";
-                header("Location: index.php?action=login");
-                exit();
+                $this->respuestaRegistro(false, "Las contraseñas no coinciden.");
             }
 
             // HU-36: el registro era el flujo mas debil (6 caracteres, sin
             // complejidad) y por tanto el que definia la politica real.
             $motivoPassword = PoliticaPassword::validar($password, [$documento, $nombre_completo, $email]);
             if ($motivoPassword !== null) {
-                $_SESSION['error_register'] = $motivoPassword;
-                header("Location: index.php?action=login");
-                exit();
+                $this->respuestaRegistro(false, $motivoPassword);
             }
 
             // Verificar si el documento ya está registrado
             if ($this->usuarioModel->getById($documento)) {
-                $_SESSION['error_register'] = "El documento ya está registrado en el sistema.";
-                header("Location: index.php?action=login");
-                exit();
+                $this->respuestaRegistro(false, "El documento ya está registrado en el sistema.");
             }
 
             // Verificar si el correo ya está registrado
             if ($this->usuarioModel->getUserByEmail($email)) {
-                $_SESSION['error_register'] = "El correo electrónico ya está registrado.";
-                header("Location: index.php?action=login");
-                exit();
+                $this->respuestaRegistro(false, "El correo electrónico ya está registrado.");
             }
 
             // Registrar usuario con rol 4 (propietario)
@@ -459,12 +445,7 @@ class AuthController {
 
                 if ($verificacionId > 0) {
                     $enlace = $this->buildVerificacionLink($verificacionId, $tokenPlano);
-                    $this->emailService->enviarCorreoPersonalizado(
-                        $email,
-                        $nombre_completo,
-                        'Confirma tu correo en Zooki',
-                        $this->renderVerificacionEmail($nombre_completo, $enlace)
-                    );
+                    $this->emailService->enviarCorreoVerificacion($email, $nombre_completo, $enlace, 24);
                 } else {
                     // Sin tabla de verificaciones no hay nada pendiente que
                     // confirmar; se conserva el correo de bienvenida de siempre.
@@ -481,13 +462,22 @@ class AuthController {
                     'Auto-registro, pendiente de verificar correo'
                 );
 
-                $_SESSION['success_register'] = "Cuenta creada. Te enviamos un correo a $email para confirmar tu dirección; ábrelo para poder iniciar sesión.";
-                header("Location: index.php?action=login");
-                exit();
+                // La pagina de registro se queda esperando la confirmacion en vez
+                // de recargar: aqui se guarda a quien hay que vigilar, para que
+                // el sondeo no pueda preguntar por una cuenta ajena.
+                $_SESSION['registro_pendiente'] = [
+                    'documento' => $documento,
+                    'email' => $email,
+                    'desde' => time(),
+                ];
+
+                $this->respuestaRegistro(
+                    true,
+                    "Cuenta creada. Te enviamos un correo a $email para confirmar tu dirección.",
+                    ['email' => $email, 'esperando_confirmacion' => $verificacionId > 0]
+                );
             } else {
-                $_SESSION['error_register'] = "Ocurrió un error al procesar el registro. Intenta más tarde.";
-                header("Location: index.php?action=login");
-                exit();
+                $this->respuestaRegistro(false, "Ocurrió un error al procesar el registro. Intenta más tarde.");
             }
         }
     }
@@ -497,6 +487,98 @@ class AuthController {
         // Debe incluir la accion: `index.php` a secas resuelve a la landing y
         // expulsaria al usuario de la pantalla de login con el error pendiente.
         header("Location: index.php?action=login");
+        exit();
+    }
+
+    /**
+     * Punto unico de salida del registro. Si la peticion viene por AJAX
+     * responde JSON y la pagina se queda donde esta; si no, conserva el
+     * comportamiento de siempre (mensaje en sesion y vuelta al login), para
+     * que el formulario siga funcionando sin JavaScript.
+     */
+    private function respuestaRegistro(bool $ok, string $mensaje, array $extra = []): void
+    {
+        if ($this->esPeticionAjax()) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(array_merge(['success' => $ok, 'message' => $mensaje], $extra));
+            exit();
+        }
+
+        $_SESSION[$ok ? 'success_register' : 'error_register'] = $mensaje;
+        header('Location: index.php?action=login');
+        exit();
+    }
+
+    private function esPeticionAjax(): bool
+    {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+
+    /**
+     * Sondeo que usa la pantalla de espera del registro para saber si el
+     * usuario ya abrio el enlace del correo.
+     *
+     * Solo consulta la verificacion guardada en la sesion de quien acaba de
+     * registrarse: no recibe ningun identificador por parametro, asi que no
+     * sirve para preguntar por cuentas ajenas.
+     */
+    public function estadoVerificacionAjax()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $pendiente = $_SESSION['registro_pendiente'] ?? null;
+        if (!$pendiente) {
+            // Puede que el enlace se abriera en otra pestana del mismo
+            // navegador y esa ya haya iniciado la sesion.
+            if (!empty($_SESSION['usuario_doc'])) {
+                echo json_encode(['estado' => 'confirmado', 'redirect' => 'index.php?action=portal_propietario']);
+                exit();
+            }
+            echo json_encode(['estado' => 'sin_registro']);
+            exit();
+        }
+
+        // Corta el sondeo pasadas 24 horas, lo mismo que dura el enlace.
+        if (time() - (int) $pendiente['desde'] > 86400) {
+            unset($_SESSION['registro_pendiente']);
+            echo json_encode(['estado' => 'expirado']);
+            exit();
+        }
+
+        if ($this->verificacionEmailModel->hayPendiente($pendiente['documento'])) {
+            echo json_encode(['estado' => 'pendiente']);
+            exit();
+        }
+
+        // Confirmado: el correo quedo demostrado, asi que se abre la sesion
+        // sin pedir la contrasena otra vez.
+        $usuario = $this->usuarioModel->getUserByDocumento($pendiente['documento']);
+        unset($_SESSION['registro_pendiente']);
+
+        if (!$usuario || (int) $usuario['estado'] !== 1) {
+            echo json_encode(['estado' => 'sin_registro']);
+            exit();
+        }
+
+        $_SESSION['usuario_doc'] = $usuario['documento'];
+        $_SESSION['usuario_nombre'] = $usuario['nombre_completo'];
+        $_SESSION['usuario_rol'] = $usuario['rol'];
+        $_SESSION['usuario_id_rol'] = $usuario['id_rol'];
+        $_SESSION['debe_cambiar_password'] = 0;
+        $_SESSION['login_method'] = 'password';
+
+        $this->auditoria->log(
+            $usuario['documento'],
+            'LOGIN',
+            'usuarios',
+            $usuario['documento'],
+            null,
+            ['rol' => $usuario['rol'], 'id_rol' => $usuario['id_rol']],
+            'Inicio de sesion tras confirmar el correo'
+        );
+
+        echo json_encode(['estado' => 'confirmado', 'redirect' => 'index.php?action=portal_propietario']);
         exit();
     }
 
@@ -512,7 +594,7 @@ class AuthController {
 
         // Mensaje unico para todos los fallos: no se distingue "no existe" de
         // "ya usado" ni de "vencido", para no confirmar que un id es real.
-        $mensajeError = 'El enlace de confirmacion no es valido o ya fue utilizado.';
+        $mensajeError = 'El enlace de confirmación no es válido o ya fue utilizado.';
 
         if ($id <= 0 || $tokenPlano === '') {
             $_SESSION['error_login'] = $mensajeError;
@@ -551,7 +633,24 @@ class AuthController {
             $this->emailService->enviarCorreoBienvenida($verificacion['email'], $usuario['nombre_completo']);
         }
 
-        $_SESSION['success_register'] = 'Tu correo quedo confirmado. Ya puedes iniciar sesion.';
+        // Si quien abre el enlace es el mismo navegador que se acaba de
+        // registrar, ya no tiene sentido mandarlo al login: el correo quedo
+        // demostrado, asi que entra directo a su portal.
+        $pendiente = $_SESSION['registro_pendiente'] ?? null;
+        if ($usuario && $pendiente && $pendiente['documento'] === $verificacion['usuario_documento']) {
+            unset($_SESSION['registro_pendiente']);
+            $_SESSION['usuario_doc'] = $usuario['documento'];
+            $_SESSION['usuario_nombre'] = $usuario['nombre_completo'];
+            $_SESSION['usuario_rol'] = $usuario['rol'];
+            $_SESSION['usuario_id_rol'] = $usuario['id_rol'];
+            $_SESSION['debe_cambiar_password'] = 0;
+            $_SESSION['login_method'] = 'password';
+
+            header('Location: index.php?action=portal_propietario');
+            exit();
+        }
+
+        $_SESSION['success_register'] = 'Tu correo quedó confirmado. Ya puedes iniciar sesión.';
         header('Location: index.php?action=login');
         exit();
     }
@@ -559,25 +658,6 @@ class AuthController {
     private function buildVerificacionLink(int $id, string $tokenPlano): string
     {
         return $this->buildEnlaceDeAccion('verificar_email', $id, $tokenPlano);
-    }
-
-    private function renderVerificacionEmail(string $nombre, string $enlace): string
-    {
-        $nombreSeguro = htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
-        $enlaceSeguro = htmlspecialchars($enlace, ENT_QUOTES, 'UTF-8');
-
-        return <<<HTML
-<div style="font-family: Arial, Helvetica, sans-serif; color: #1f2937; line-height: 1.6;">
-    <h2 style="color: #0052ff;">Confirma tu correo</h2>
-    <p>Hola $nombreSeguro,</p>
-    <p>Creaste una cuenta en Zooki con esta direccion. Para poder iniciar sesion, confirma que el correo es tuyo:</p>
-    <p style="margin: 28px 0;">
-        <a href="$enlaceSeguro" style="background:#0052ff;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Confirmar mi correo</a>
-    </p>
-    <p style="font-size: 13px; color: #6b7280;">El enlace vence en 24 horas.</p>
-    <p style="font-size: 13px; color: #6b7280;">Si no fuiste tu quien se registro, ignora este mensaje: sin confirmar, la cuenta no se puede usar.</p>
-</div>
-HTML;
     }
 
     private function buildResetLink(int $tokenId, string $tokenPlano): string
