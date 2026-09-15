@@ -18,11 +18,20 @@
 
     <!-- Estilos del sistema -->
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/dashboard.css?v=3">
     <link rel="stylesheet" href="css/usuarios.css">
-    <link rel="stylesheet" href="css/medical-module.css?v=6">
+    <link rel="stylesheet" href="css/medical-module.css?v=11">
     <link rel="stylesheet" href="css/pill-sidebar.css">
+    <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
+    <link rel="stylesheet" href="css/perfil.css?v=1">
+    <?php endif; ?>
     <link rel="stylesheet" href="css/dark-mode.css">
+    <?php if (($_GET['action'] ?? '') === 'vet_agenda'): ?>
+    <link rel="stylesheet" href="css/calendario.css?v=12">
+    <?php endif; ?>
+    <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
+    <link rel="stylesheet" href="css/atencion.css?v=1">
+    <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
 </head>
 <body>
@@ -32,8 +41,8 @@
 
         <!-- ══ PILL SIDEBAR ════════════════════════════════════════════════════ -->
         <nav class="pill-sidebar">
-            <a href="index.php?action=vet_area" class="pill-logo mb-2">
-                <img src="img/logo_conlema.png" alt="Zooki" class="logo-sidebar-img">
+            <a href="index.php?action=vet_area" class="pill-logo" title="Ir al inicio">
+                <img src="img/icon_blue.png" alt="Zooki" class="pill-logo-img">
             </a>
 
             <div class="pill-nav">
@@ -62,6 +71,7 @@
                 <?= pillNavLink("index.php?action=vet_consultas", "fa-file-medical-alt", $__action === "vet_consultas", "Consultas Médicas") ?>
                 <?= pillNavLink("index.php?action=vet_pacientes", "fa-paw", $__action === "vet_pacientes", "Pacientes") ?>
                 <?= pillNavLink("index.php?action=vet_agenda", "fa-calendar-alt", $__action === "vet_agenda", "Calendario") ?>
+                <?= pillNavLink("index.php?action=mi_perfil", "fa-user-circle", $__action === "mi_perfil", "Mi perfil") ?>
             </div>
 
             <div class="pill-divider"></div>
@@ -82,7 +92,9 @@
                             'vet_area' => 'Dashboard General',
                             'vet_consultas' => '',
                             'vet_pacientes' => '',
-                            'vet_agenda' => 'Calendario'
+                            'vet_agenda' => 'Calendario',
+                            'vet_atencion' => '',
+                            'mi_perfil' => 'Mi perfil'
                         ];
                         $currentTitle = $moduleTitles[$__action] ?? 'Panel Veterinario';
                     ?>
@@ -98,6 +110,10 @@
                             <div class="notif-header">
                                 <h3>Alertas Clínicas</h3>
                                 <span id="notifCount">0 nuevas</span>
+                                <!-- HU-45: marcar todas como leidas -->
+                                <button type="button" class="notif-mark-all" id="notifMarkAll" hidden>
+                                    <i class="fas fa-check-double"></i> Marcar todas
+                                </button>
                             </div>
                             <div id="pendingVaccinesList" class="notif-body"></div>
                         </div>
@@ -108,18 +124,13 @@
                     </button>
 
                     <div class="header-user-wrapper">
-                        <div class="header-user" title="<?= htmlspecialchars($__adminNombre) ?>" onclick="toggleProfileMenu()">
+                        <a class="header-user" href="index.php?action=mi_perfil" title="Mi perfil">
                             <div class="header-user__avatar"><?= htmlspecialchars($__adminIniciales) ?></div>
                             <div class="header-user__info">
                                 <span class="header-user__name"><?= htmlspecialchars(explode(" ", trim($__adminNombre))[0]) ?></span>
                                 <span class="header-user__role">Veterinario</span>
                             </div>
-                        </div>
-                        <div class="profile-dropdown" id="profileDropdown" style="display:none;">
-                            <a href="#" onclick="abrirPersonalizarPerfil(event)"><i class="fas fa-lock"></i> Cambiar Contraseña</a>
-                            <div class="profile-dropdown-divider"></div>
-                            <a href="index.php?action=logout" class="text-danger"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </header>
@@ -142,10 +153,15 @@
     <script>
         const ZOOKI_ROLE = 2;
     </script>
+    <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
+    <script src="js/avisos.js"></script>
     <script src="js/password-policy.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/medical-module.js?v=11"></script>
+    <script src="js/dashboard.js?v=5"></script>
+    <script src="js/medical-module.js?v=14"></script>
     <script src="js/csrf.js"></script>
     <script src="js/extras.js"></script>
+    <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
+    <script src="js/atencion.js?v=1"></script>
+    <?php endif; ?>
 </body>
 </html>
