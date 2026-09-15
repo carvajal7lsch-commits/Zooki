@@ -20,13 +20,13 @@ class DocsIndex
 
         return [
             'readme'   => $root . '/README.md',
-            'ficha'    => $root . '/FichaTecnica_Zooki.md',
-            'ers'      => $root . '/ERS.md',
-            'reglas'   => $root . '/ReglasNegocio.md',
-            'hu'       => $root . '/HistoriasUsuario.md',
-            're'       => $root . '/RequisitosEspecificos.md',
-            'mer'      => $root . '/MER.md',
-            'backlog'  => $root . '/backlog-zooki.md',
+            'ficha'    => $root . '/documentacion/FichaTecnica_Zooki.md',
+            'ers'      => $root . '/documentacion/ERS.md',
+            'reglas'   => $root . '/documentacion/ReglasNegocio.md',
+            'hu'       => $root . '/documentacion/HistoriasUsuario.md',
+            're'       => $root . '/documentacion/RequisitosEspecificos.md',
+            'mer'      => $root . '/documentacion/MER.md',
+            'backlog'  => $root . '/documentacion/backlog-zooki.md',
             // AnalisisVaciosDiseno.md NO se publica: documenta vulnerabilidades
             // sin corregir de un sistema en producción. Exponerlo sería
             // entregarle a un atacante el mapa de los riesgos actuales.

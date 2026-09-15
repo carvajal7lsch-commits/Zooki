@@ -70,7 +70,7 @@ foreach (DocsIndex::docsMap() as $docId => $filePath) {
 }
 
 if (!$records) {
-    fwrite(STDERR, "\nERROR: no se generó ningún registro. ¿Están los .md en la raíz?\n");
+    fwrite(STDERR, "\nERROR: no se generó ningún registro. ¿Están los .md en documentacion/?\n");
     exit(1);
 }
 
