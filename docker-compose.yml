@@ -7,6 +7,11 @@ services:
       - .env
     depends_on:
       - db
+    # Las fotos de mascotas y los adjuntos clinicos no van en git ni en la
+    # imagen: sin este volumen se pierden en cada reconstruccion y la base
+    # queda apuntando a archivos que ya no existen.
+    volumes:
+      - uploads:/var/www/html/Zooki/public/uploads
     restart: always
   db:
     image: mysql:8.0
@@ -22,3 +27,4 @@ services:
     restart: always
 volumes:
   db_data:
+  uploads:

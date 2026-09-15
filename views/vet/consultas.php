@@ -35,8 +35,9 @@
 
         <div class="header-actions">
             <?php if ($_SESSION["usuario_id_rol"] == 2): ?>
-            <button class="btn-primary" onclick="openNewConsultationFlow()">
-                <i class="fas fa-plus"></i> Nueva Consulta
+            <?php // HU-56 / RN-208: las citas se atienden desde el calendario; esto es para urgencias. ?>
+            <button class="btn-primary" onclick="openNewConsultationFlow()" title="Para urgencias o pacientes que llegan sin cita. Las citas se atienden desde el calendario.">
+                <i class="fas fa-ambulance"></i> Atención sin cita
             </button>
             <?php endif; ?>
         </div>
@@ -160,10 +161,16 @@
 <div id="modalSelectPetConsulta" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3><i class="fas fa-search"></i> Buscar Paciente</h3>
+            <h3><i class="fas fa-ambulance"></i> Atención sin cita</h3>
             <span class="close" onclick="closeModal('modalSelectPetConsulta')">&times;</span>
         </div>
         <div class="modal-body">
+            <p class="consulta-sin-cita-aviso">
+                <i class="fas fa-info-circle"></i>
+                Úsala para urgencias o pacientes que llegan sin cita. Si el paciente tiene cita,
+                atiéndelo desde el <a href="index.php?action=vet_agenda">calendario</a> con
+                <strong>Iniciar atención</strong>: así la consulta queda ligada a su cita.
+            </p>
             <div class="input-group full m-0">
                 <label>Buscar por nombre de mascota o dueño</label>
                 <div class="premium-search-container">
@@ -398,6 +405,7 @@ function renderizarGrid(consultas) {
             </div>
 
             <div class="consultation-footer-actions" onclick="event.stopPropagation();">
+                ${c.id_cita ? '' : '<span class="consultation-sin-cita-badge" title="Registrada sin cita (urgencia o imprevisto)"><i class="fas fa-ambulance"></i> Sin cita</span>'}
                 <button class="btn-icon premium history" onclick="viewFullConsultationByIndex(${index})" title="Ver Detalle">
                     <i class="fas fa-eye"></i>
                 </button>

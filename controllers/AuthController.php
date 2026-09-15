@@ -37,9 +37,12 @@ class AuthController {
                 return;
             }
 
-            // Limpiamos los datos de entrada
+            // Limpiamos los datos de entrada. T-21: al documento si se le
+            // recorta el espacio sobrante, pero a la contrasena no: recortarla
+            // altera en silencio lo que el usuario escribio y deja fuera
+            // cualquier clave que empiece o termine en espacio.
             $documento = trim($_POST['documento'] ?? '');
-            $password = trim($_POST['password'] ?? '');
+            $password = $_POST['password'] ?? '';
 
             // Rate limiting: se evalúa por IP y por cuenta (HU-38). Necesita el
             // documento, por eso va después de leer el POST y no antes.
@@ -56,9 +59,7 @@ class AuthController {
             // Buscamos al usuario en la base de datos
             $user = $this->usuarioModel->getUserByDocumento($documento);
 
-            // Verificamos si existe y si la contraseña coincide (usando password_verify para hashes)
-            // NOTA: Para las pruebas iniciales, si guardas la contraseña en texto plano en la BD,
-            // esto fallará. Deberás usar password_hash() al insertar usuarios.
+            // Verificamos si existe y si la contraseña coincide.
             if ($user && password_verify($password, $user['password'])) {
                 // HU-36 (VD-SEG-08): la cuenta no sirve hasta verificar el correo.
                 // Este mensaje SI es especifico, a diferencia del resto: solo se
@@ -72,6 +73,18 @@ class AuthController {
                 }
 
                 if ($user['estado'] == 1) {
+                    // T-02: identificador de sesion nuevo al elevar privilegios.
+                    // Sin esto, un id de sesion fijado por un tercero antes del
+                    // login seguia siendo valido despues, ya autenticado
+                    // (session fixation).
+                    session_regenerate_id(true);
+
+                    // Resetear rate limiting tras login exitoso. T-22: va antes
+                    // de cualquier redireccion; cuando estaba mas abajo, el
+                    // usuario con contrasena temporal salia por el `return` y
+                    // sus intentos fallidos previos nunca se limpiaban.
+                    Security::resetRateLimit($documento);
+
                     // Login exitoso: creamos las variables de sesión
                     $_SESSION['usuario_doc'] = $user['documento'];
                     $_SESSION['usuario_nombre'] = $user['nombre_completo'];
@@ -80,14 +93,13 @@ class AuthController {
                     $_SESSION['debe_cambiar_password'] = isset($user['debe_cambiar_password']) ? $user['debe_cambiar_password'] : 0;
                     $_SESSION['login_method'] = 'password';
 
-                    // Verificar si debe cambiar contraseña
+                    // Verificar si debe cambiar contraseña. El bloqueo real lo
+                    // aplica Security::validatePasswordTemporal() en cada
+                    // peticion (T-05); esto solo lleva al formulario.
                     if (isset($user['debe_cambiar_password']) && $user['debe_cambiar_password'] == 1) {
                         header("Location: index.php?action=cambiar_password");
                         exit();
                     }
-
-                    // Resetear rate limiting tras login exitoso
-                    Security::resetRateLimit($documento);
 
                     // Auditoría: login exitoso
                     $this->auditoria->log(
@@ -307,8 +319,16 @@ class AuthController {
                 'Cierre de sesión'
             );
         }
+        // T-02: no basta con destruir $_SESSION; hay que invalidar tambien la
+        // cookie en el navegador para que el id de sesion no se pueda reutilizar.
+        $_SESSION = [];
+        if (ini_get('session.use_cookies')) {
+            $p = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
+        }
         session_destroy();
-        header("Location: index.php");
+        // Sin action el front controller resuelve "landing": hay que nombrar el login.
+        header("Location: index.php?action=login");
         exit();
     }
 
@@ -317,7 +337,6 @@ class AuthController {
             try {
                 $nuevaPassword = $_POST['nueva_password'] ?? $_POST['password_nueva'] ?? '';
                 $documento = $_SESSION['usuario_doc'] ?? '';
-                $loginMethod = $_SESSION['login_method'] ?? 'password';
 
                 // HU-36: misma politica que el registro y el restablecimiento.
                 $usuarioActual = $this->usuarioModel->getUserByDocumento($documento);
@@ -331,8 +350,12 @@ class AuthController {
                     exit;
                 }
 
-                // Si no se inició sesión con Google, validar la contraseña actual
-                if ($loginMethod !== 'google') {
+                // HU-39: se pide la contraseña actual salvo si la cuenta nunca tuvo
+                // una que su dueño conozca (creada con Google, con una contraseña
+                // aleatoria). Antes se decidía por cómo se había iniciado sesión:
+                // bastaba entrar con Google para cambiarla sin conocer la actual.
+                $esCuentaGoogle = (int) ($usuarioActual['password_definida'] ?? 1) === 0;
+                if (!$esCuentaGoogle) {
                     $passwordActual = $_POST['password_actual'] ?? '';
                     if (empty($passwordActual)) {
                         echo json_encode(['success' => false, 'message' => 'La contraseña actual es requerida']);
@@ -350,7 +373,14 @@ class AuthController {
                 if ($this->usuarioModel->updatePassword($documento, $passwordHash)) {
                     // Actualizar debe_cambiar_password a 0
                     $this->usuarioModel->updateDebeCambiarPassword($documento, 0);
-                    
+
+                    // T-05: hay que bajar tambien el indicador en la sesion. Si
+                    // solo se actualiza la base de datos, el bloqueo de
+                    // Security::validatePasswordTemporal() sigue activo durante
+                    // toda la sesion y el usuario queda encerrado en este
+                    // formulario despues de haber cambiado la clave.
+                    $_SESSION['debe_cambiar_password'] = 0;
+
                     // Si el usuario configuró una contraseña por primera vez, cambiamos a 'password'
                     $_SESSION['login_method'] = 'password';
 
@@ -359,7 +389,9 @@ class AuthController {
                     echo json_encode(['success' => false, 'message' => 'Error al actualizar la contraseña']);
                 }
             } catch (Exception $e) {
-                echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+                // T-04: el detalle tecnico va al log, nunca al cliente.
+                error_log('Error al cambiar contrasena: ' . $e->getMessage());
+                echo json_encode(['success' => false, 'message' => 'No se pudo actualizar la contraseña. Intenta nuevamente.']);
             }
         }
     }
@@ -561,6 +593,7 @@ class AuthController {
             exit();
         }
 
+        session_regenerate_id(true); // T-02
         $_SESSION['usuario_doc'] = $usuario['documento'];
         $_SESSION['usuario_nombre'] = $usuario['nombre_completo'];
         $_SESSION['usuario_rol'] = $usuario['rol'];
@@ -639,6 +672,7 @@ class AuthController {
         $pendiente = $_SESSION['registro_pendiente'] ?? null;
         if ($usuario && $pendiente && $pendiente['documento'] === $verificacion['usuario_documento']) {
             unset($_SESSION['registro_pendiente']);
+            session_regenerate_id(true); // T-02
             $_SESSION['usuario_doc'] = $usuario['documento'];
             $_SESSION['usuario_nombre'] = $usuario['nombre_completo'];
             $_SESSION['usuario_rol'] = $usuario['rol'];
@@ -979,6 +1013,7 @@ class AuthController {
                 }
 
                 // Iniciar sesión
+                session_regenerate_id(true); // T-02
                 $_SESSION['usuario_doc'] = $user['documento'];
                 $_SESSION['usuario_nombre'] = $user['nombre_completo'];
                 $_SESSION['usuario_id_rol'] = $user['id_rol'];
@@ -995,7 +1030,7 @@ class AuthController {
                 ][(int) $user['id_rol']] ?? '';
                 $_SESSION['login_method'] = 'google';
 
-                $this->auditoria->log($user['documento'], 'Login via Google', 'Usuario', $user['documento'], null);
+                $this->auditoria->log($user['documento'], 'LOGIN', 'usuarios', $user['documento'], null, null, 'Inicio de sesion con Google');
 
                 $this->jsonResponse(true, "Login exitoso", ['action' => 'login', 'redirect' => 'index.php?action=dashboard']);
             } else {
@@ -1054,7 +1089,8 @@ class AuthController {
                 'password' => $dummyPassword,
                 'id_rol' => 4, // Cliente
                 'estado' => 1,
-                'debe_cambiar_password' => 0
+                'debe_cambiar_password' => 0,
+                'password_definida' => 0 // la contraseña aleatoria no la conoce nadie
             ];
 
             if ($this->usuarioModel->create($data)) {
@@ -1066,12 +1102,15 @@ class AuthController {
                 unset($_SESSION['google_pending_register']);
 
                 // Iniciar sesión
+                session_regenerate_id(true); // T-02
                 $_SESSION['usuario_doc'] = $documento;
                 $_SESSION['usuario_nombre'] = $data['nombre_completo'];
                 $_SESSION['usuario_id_rol'] = 4;
+                $_SESSION['usuario_rol'] = 'propietario';
+                $_SESSION['debe_cambiar_password'] = 0;
                 $_SESSION['login_method'] = 'google';
 
-                $this->auditoria->log($documento, 'Registro via Google', 'Usuario', $documento, null);
+                $this->auditoria->log($documento, 'INSERT', 'usuarios', $documento, null, ['id_rol' => 4], 'Registro con Google');
 
                 $this->jsonResponse(true, "Registro exitoso", ['action' => 'login', 'redirect' => 'index.php?action=dashboard']);
             } else {

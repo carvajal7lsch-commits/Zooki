@@ -240,16 +240,18 @@
                             </div>
                         </div>
 
-                        <div class="dossier-pets-grid" id="dossierPetsScroll">
-                            <!-- Cards de mascotas se cargarán vía JS -->
+                        <!-- Carrusel de mascotas: las flechas van sobre las tarjetas y
+                             solo aparecen cuando hay más mascotas hacia ese lado. -->
+                        <div class="pets-carousel">
+                            <button type="button" class="pets-carousel__nav pets-carousel__nav--prev" id="dossierPetsPrev" onclick="moverCarruselMascotas(-1)" aria-label="Mascotas anteriores" hidden><i class="fas fa-chevron-left"></i></button>
+                            <div class="dossier-pets-grid" id="dossierPetsScroll">
+                                <!-- Cards de mascotas se cargarán vía JS -->
+                            </div>
+                            <button type="button" class="pets-carousel__nav pets-carousel__nav--next" id="dossierPetsNext" onclick="moverCarruselMascotas(1)" aria-label="Más mascotas" hidden><i class="fas fa-chevron-right"></i></button>
                         </div>
 
                         <div class="patients-footer">
                             <span class="patients-count" id="dossierPetsCount">Mostrando 0 pacientes asociados</span>
-                            <div class="patients-pagination">
-                                <button class="btn-icon-light"><i class="fas fa-chevron-left"></i></button>
-                                <button class="btn-icon-light"><i class="fas fa-chevron-right"></i></button>
-                            </div>
                         </div>
                     </div>
 
@@ -287,7 +289,7 @@
                                 <div class="dossier-pet-info-grid">
                                     <!-- Foto del paciente -->
                                     <div class="pos-relative">
-                                        <img id="dashPetPhoto" src="img/default-pet.png" class="dossier-pet-photo">
+                                        <img id="dashPetPhoto" src="img/default-pet.svg" class="dossier-pet-photo" alt="">
                                         <div id="dashPetStatus" class="dash-pet-status"></div>
                                     </div>
 
@@ -369,13 +371,10 @@
                             <?php foreach ($mascotas as $m): ?>
                                 <tr data-id="<?php echo $m["id_mascota"]; ?>" data-estado="<?php echo $m["estado"]; ?>">
                                     <td>
-                                        <img src="<?php echo $m["url_foto"]
-                                            ? "uploads/mascotas/" .
-                                                $m["url_foto"]
-                                            : "img/default-pet.png"; ?>"
+                                        <img src="<?php echo htmlspecialchars($m["url_foto"] ? "uploads/mascotas/" . rawurlencode($m["url_foto"]) : "img/default-pet.svg"); ?>"
                                              class="table-thumb"
                                              onclick="viewImage(this.src)"
-                                             onerror="this.src='https://ui-avatars.com/api/?name=Pet&background=random'">
+                                             onerror="this.onerror=null;this.src='img/default-pet.svg'">
                                     </td>
                                     <td class="pet-name-cell">
                                         <div class="cell-info">
@@ -429,9 +428,12 @@
                                     </td>
                                     <td>
                                         <div class="action-buttons">
-                                            <button onclick="viewMedicalHistory(<?php echo $m['id_mascota']; ?>, '<?php echo $m['nombre']; ?>')" class="btn-icon history" title="Ver Historial Clínico">
+                                            <?php // RN-102: sin HC (aún no tiene consultas) no hay historial que abrir. ?>
+                                            <?php if (!empty($m['numero_historia_clinica'])): ?>
+                                            <button onclick="viewMedicalHistory(<?php echo (int) $m['id_mascota']; ?>, <?php echo htmlspecialchars(json_encode($m['nombre']), ENT_QUOTES); ?>)" class="btn-icon history" title="Ver Historial Clínico">
                                                 <i class="fas fa-notes-medical"></i>
                                             </button>
+                                            <?php endif; ?>
 
                                             <button onclick="editPet(<?php echo $m['id_mascota']; ?>)" class="btn-icon edit" title="Editar Mascota">
                                                 <i class="fas fa-edit"></i>
@@ -457,10 +459,10 @@
                 <?php foreach ($mascotas as $m): ?>
                     <div class="client-card person-card pet-card" data-id="<?php echo $m["id_mascota"]; ?>" data-species="<?php echo $m["nombre_especie"]; ?>" data-estado="<?php echo $m["estado"]; ?>">
                         <div class="card-header-mini">
-                            <div class="avatar-mini cursor-pointer" onclick="viewPetInDossier('<?php echo $m['doc_propietario']; ?>', <?php echo $m['id_mascota']; ?>, '<?php echo addslashes($m['nombre']); ?>')">
-                                <img src="<?php echo $m["url_foto"] ? "uploads/mascotas/" . $m["url_foto"] : "img/default-pet.png"; ?>" 
+                            <div class="avatar-mini cursor-pointer" onclick="viewPetInDossier(<?php echo htmlspecialchars(json_encode($m['doc_propietario']), ENT_QUOTES); ?>, <?php echo (int) $m['id_mascota']; ?>)">
+                                <img src="<?php echo htmlspecialchars($m["url_foto"] ? "uploads/mascotas/" . rawurlencode($m["url_foto"]) : "img/default-pet.svg"); ?>"
                                      alt="<?php echo htmlspecialchars($m["nombre"]); ?>"
-                                     onerror="this.src='https://ui-avatars.com/api/?name=Pet&background=random'">
+                                     onerror="this.onerror=null;this.src='img/default-pet.svg'">
                             </div>
                             <div class="status-indicator">
                                 <label class="toggle-switch" title="<?php echo $m['estado'] == 1 ? 'Mascota Activa (Clic para desactivar)' : 'Mascota Inactiva (Clic para activar)'; ?>">
@@ -469,7 +471,7 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="card-body-mini cursor-pointer" onclick="viewPetInDossier('<?php echo $m['doc_propietario']; ?>', <?php echo $m['id_mascota']; ?>, '<?php echo addslashes($m['nombre']); ?>')">
+                        <div class="card-body-mini cursor-pointer" onclick="viewPetInDossier(<?php echo htmlspecialchars(json_encode($m['doc_propietario']), ENT_QUOTES); ?>, <?php echo (int) $m['id_mascota']; ?>)">
                             <h3 class="card-title-mini"><?php echo htmlspecialchars($m["nombre"]); ?></h3>
                             <div class="card-tags-mini">
                                 <?php if($m['estado'] == 0): ?>
@@ -480,17 +482,19 @@
                             </div>
                             <div class="card-contact-mini">
                                 <span class="contact-text-mini"><i class="bi bi-person"></i> <?php echo htmlspecialchars($m["propietario_nombre"]); ?></span>
-                                <span class="contact-text-mini"><i class="bi bi-file-medical"></i> HC: <?php echo htmlspecialchars($m["numero_historia_clinica"]); ?></span>
+                                <span class="contact-text-mini"><i class="bi bi-file-medical"></i> HC: <?php echo htmlspecialchars($m["numero_historia_clinica"] ?: 'Sin asignar'); ?></span>
                             </div>
                         </div>
                         <div class="card-footer-mini">
                             <button class="action-btn-mini" onclick="editPet(<?php echo $m['id_mascota']; ?>)" title="Editar">
                                 <i class="bi bi-pencil-fill"></i>
                             </button>
-                            <button class="action-btn-mini" onclick="viewMedicalHistory(<?php echo $m['id_mascota']; ?>, '<?php echo addslashes($m['nombre']); ?>')" title="Ver Historial Clínico">
+                            <?php if (!empty($m['numero_historia_clinica'])): ?>
+                            <button class="action-btn-mini" onclick="viewMedicalHistory(<?php echo (int) $m['id_mascota']; ?>, <?php echo htmlspecialchars(json_encode($m['nombre']), ENT_QUOTES); ?>)" title="Ver Historial Clínico">
                                 <i class="bi bi-file-earmark-medical-fill"></i>
                             </button>
-                            <button class="action-btn-mini" onclick="viewPetInDossier('<?php echo $m['doc_propietario']; ?>', <?php echo $m['id_mascota']; ?>, '<?php echo addslashes($m['nombre']); ?>')" title="Ver Expediente">
+                            <?php endif; ?>
+                            <button class="action-btn-mini" onclick="viewPetInDossier(<?php echo htmlspecialchars(json_encode($m['doc_propietario']), ENT_QUOTES); ?>, <?php echo (int) $m['id_mascota']; ?>)" title="Ver Expediente">
                                 <i class="bi bi-eye-fill"></i>
                             </button>
                         </div>

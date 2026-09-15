@@ -1,5 +1,29 @@
 <?php
+// T-07: la cookie de sesion se configura ANTES de abrirla, si no los flags no
+// aplican. HttpOnly la esconde de JavaScript, SameSite=Lax corta el CSRF por
+// navegacion de terceros y Secure se activa solo bajo HTTPS para no romper el
+// desarrollo local por HTTP.
+$esHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path'     => '/',
+    'httponly' => true,
+    'secure'   => $esHttps,
+    'samesite' => 'Lax',
+]);
+
 session_start();
+
+// TR-04: cabeceras de seguridad para toda respuesta. Se emiten aqui, en el
+// front controller, para que ninguna vista pueda olvidarlas.
+header('X-Frame-Options: SAMEORIGIN');          // clickjacking sobre el panel
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+if ($esHttps) {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
 
 // Configurar manejo de errores para que no se muestre HTML en respuestas AJAX
 error_reporting(E_ALL);
@@ -138,12 +162,6 @@ switch ($action) {
         require_once "../controllers/AuthController.php";
         $controller = new AuthController();
         $controller->logout();
-        break;
-
-    case "get_dashboard_stats_ajax":
-        require_once "../controllers/ConsultaController.php"; // Or create a specific dashboard controller
-        $controller = new ConsultaController();
-        $controller->getDashboardStatsAjax();
         break;
 
     // ═══════════════════════════════════════════════════════════════
@@ -873,6 +891,18 @@ switch ($action) {
         $controller = new CitaController();
         $controller->confirmarAjax();
         break;
+    case "marcar_no_asistio_ajax":
+        require_once "../controllers/CitaController.php";
+        $controller = new CitaController();
+        $controller->marcarNoAsistioAjax();
+        break;
+
+    // RN-411: el veterinario cierra sin consulta una atención abierta.
+    case "cerrar_sin_consulta_ajax":
+        require_once "../controllers/CitaController.php";
+        $controller = new CitaController();
+        $controller->cerrarSinConsultaAjax();
+        break;
 
     // RUTAS SPRINT 5: GESTIÓN DE USUARIOS (ADMIN)
     case "listar_usuarios":
@@ -956,6 +986,34 @@ switch ($action) {
         require_once "../controllers/UsuarioController.php";
         $controller = new UsuarioController();
         $controller->cambiarEstadoAjax();
+        break;
+
+    // HU-42: panel "Mi perfil" del personal (el propietario tiene el suyo en el portal).
+    case "mi_perfil":
+        require_once "../controllers/PerfilController.php";
+        $controller = new PerfilController();
+        $controller->mostrar();
+        break;
+
+    // HU-42: perfil propio, disponible para los cuatro roles.
+    case "get_mi_perfil_ajax":
+        require_once "../controllers/PerfilController.php";
+        $controller = new PerfilController();
+        $controller->verAjax();
+        break;
+
+    case "actualizar_mi_perfil_ajax":
+        require_once "../controllers/PerfilController.php";
+        $controller = new PerfilController();
+        $controller->actualizarAjax();
+        break;
+
+    // HU-54: restablecer la contrasena de un usuario. El control de rol lo
+    // aplica la matriz de Security, no hace falta repetirlo aqui.
+    case "resetear_password_usuario_ajax":
+        require_once "../controllers/UsuarioController.php";
+        $controller = new UsuarioController();
+        $controller->resetearPasswordAjax();
         break;
 
     case "verificar_documento_ajax":

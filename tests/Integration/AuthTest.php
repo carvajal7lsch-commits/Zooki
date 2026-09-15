@@ -30,6 +30,7 @@ class AuthTest extends TestCase
                 estado INTEGER,
                 id_rol INTEGER,
                 debe_cambiar_password INTEGER DEFAULT 0,
+                password_definida INTEGER DEFAULT 1,
                 email TEXT,
                 telefono TEXT,
                 FOREIGN KEY(id_rol) REFERENCES roles(id_rol)

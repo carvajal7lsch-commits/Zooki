@@ -126,6 +126,22 @@ class AutorizacionRolTest extends TestCase
         }
     }
 
+    /**
+     * RN-408 — Atender una cita (iniciarla, cerrarla o marcarla como no
+     * asistida) es solo del veterinario. Recepción y administración podían
+     * iniciarla y la cita quedaba "en curso" sin nadie que la atendiera,
+     * porque la pantalla de atención nunca fue suya.
+     */
+    public function testSoloElVeterinarioAtiendeLasCitas()
+    {
+        foreach (['iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax', 'cerrar_sin_consulta_ajax', 'vet_atencion'] as $accion) {
+            $this->assertTrue($this->permite($accion, self::VETERINARIO), "$accion deberia permitir al veterinario");
+            foreach ([self::ADMIN, self::RECEPCIONISTA, self::PROPIETARIO] as $rol) {
+                $this->assertFalse($this->permite($accion, $rol), "$accion no deberia permitir al rol $rol");
+            }
+        }
+    }
+
     public function testSoloElAdministradorGestionaUsuarios()
     {
         foreach (['registrar_usuario_ajax', 'actualizar_usuario_ajax', 'cambiar_estado_usuario_ajax', 'get_usuario_ajax'] as $accion) {
@@ -167,6 +183,15 @@ class AutorizacionRolTest extends TestCase
 
         $this->assertTrue($this->permite('portal_propietario', self::PROPIETARIO));
         $this->assertTrue($this->permite('portal_agendar_cita_ajax', self::PROPIETARIO));
+    }
+
+    /** HU-42 — El panel "Mi perfil" es del personal; el propietario usa el suyo en el portal. */
+    public function testElPanelMiPerfilEsDelPersonal()
+    {
+        foreach ([self::ADMIN, self::VETERINARIO, self::RECEPCIONISTA] as $rol) {
+            $this->assertTrue($this->permite('mi_perfil', $rol), "mi_perfil deberia permitir al rol $rol");
+        }
+        $this->assertFalse($this->permite('mi_perfil', self::PROPIETARIO));
     }
 
     /**
@@ -217,5 +242,63 @@ class AutorizacionRolTest extends TestCase
 
         $_SESSION = ['usuario_rol' => 'inventado'];
         $this->assertNull($metodo->invoke(null), 'Un rol desconocido no se resuelve');
+    }
+
+    /**
+     * HU-54 — Restablecer la contrasena de un usuario es exclusivo del
+     * administrador ("Solo el administrador puede hacerlo").
+     */
+    public function testSoloElAdministradorRestableceContrasenasAjenas()
+    {
+        $this->assertTrue($this->permite('resetear_password_usuario_ajax', self::ADMIN));
+
+        foreach ([self::VETERINARIO, self::RECEPCIONISTA, self::PROPIETARIO] as $rol) {
+            $this->assertFalse(
+                $this->permite('resetear_password_usuario_ajax', $rol),
+                "El rol $rol no debe poder restablecer contrasenas ajenas"
+            );
+        }
+    }
+
+    /**
+     * T-15 — La matriz se aplica denegando por defecto. Antes una accion sin
+     * entrada se dejaba pasar, asi que agregar una ruta al enrutador y olvidar
+     * registrarla aqui la dejaba abierta a cualquier sesion, en silencio.
+     *
+     * Se comprueba sobre el codigo fuente porque validateRole() termina en
+     * exit() y no se puede ejercitar dentro del runner.
+     */
+    public function testUnaAccionSinEntradaEnLaMatrizSeDeniega()
+    {
+        $fuente = file_get_contents(__DIR__ . '/../../helpers/Security.php');
+
+        $this->assertStringNotContainsString(
+            'if ($permitidos === null) return;',
+            $fuente,
+            'La matriz no debe dejar pasar una accion sin entrada (fail-open)'
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/if \(\$permitidos === null\) \{.*?denegar\(/s',
+            $fuente,
+            'Una accion sin entrada en la matriz debe terminar en denegar()'
+        );
+    }
+
+    /**
+     * T-05 — Con una contrasena temporal pendiente solo se puede cambiarla o
+     * salir; ninguna accion de negocio queda disponible.
+     */
+    public function testConPasswordTemporalSoloSePuedeCambiarlaOSalir()
+    {
+        $prop = new ReflectionProperty('Security', 'accionesConPasswordTemporal');
+        $prop->setAccessible(true);
+        $permitidas = $prop->getValue();
+
+        sort($permitidas);
+        $this->assertSame(
+            ['cambiar_password', 'cambiar_password_ajax', 'logout'],
+            $permitidas
+        );
     }
 }

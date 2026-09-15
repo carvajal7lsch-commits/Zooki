@@ -53,7 +53,7 @@ Este documento reúne las reglas de negocio de Zooki: las políticas, restriccio
 | RN-205 | Una consulta puede tener múltiples tratamientos y múltiples archivos adjuntos. | Estructura | Aplicada |
 | RN-206 | La historia clínica es acumulativa: los registros no se borran, se conservan en orden cronológico. | Restricción | Aplicada |
 | RN-207 | Un acto clínico (consulta, vacunación o desparasitación) solo puede registrarse sobre una mascota existente y activa. Una mascota dada de baja conserva su historia clínica pero no admite registros nuevos. | Restricción | Aplicada |
-| RN-208 | La atención clínica no está restringida al veterinario asignado en la cita: cualquier veterinario puede registrar actos clínicos sobre cualquier mascota activa. Se descarta exigir cita previa porque bloquearía urgencias sin cita, cambios de turno y reasignaciones. La trazabilidad se conserva porque cada registro guarda el documento del veterinario que lo realizó. | Estructura | Aplicada |
+| RN-208 | La atención clínica no está restringida al veterinario asignado en la cita: cualquier veterinario puede registrar actos clínicos sobre cualquier mascota activa. Se descarta exigir cita previa porque bloquearía urgencias sin cita, cambios de turno y reasignaciones. La trazabilidad se conserva porque cada registro guarda el documento del veterinario que lo realizó. La consulta ligada a una cita sí la registra el veterinario asignado a esa cita (RN-408): si la atiende otro, el administrador reasigna la cita o se usa la atención sin cita. | Estructura | Aplicada |
 
 ## Módulo 3 — Vacunación, desparasitación y recordatorios
 
@@ -75,9 +75,13 @@ Este documento reúne las reglas de negocio de Zooki: las políticas, restriccio
 | RN-402 | Las citas solo pueden agendarse dentro del horario de atención configurado de la clínica. | Restricción | Aplicada |
 | RN-403 | Cada tipo de cita tiene una duración base que determina el bloque de tiempo que ocupa en la agenda. | Cálculo | Aplicada |
 | RN-404 | Al crear una cita se envía una confirmación por correo al propietario de forma inmediata; un fallo en el envío no interrumpe el agendado. | Proceso | Aplicada |
-| RN-405 | Una cita no se elimina: cambia de estado (programada, cancelada o completada). Al cancelarla o reprogramarla se notifica automáticamente al propietario. | Restricción | Aplicada |
-| RN-406 | Solo una cita en estado "programada" puede marcarse como completada; al completarla puede vincularse la consulta clínica registrada. | Restricción | Aplicada |
+| RN-405 | Una cita no se elimina: cambia de estado (pendiente, confirmada, en curso, completada, cancelada, no asistió, sin cerrar o cerrada sin consulta). Solo una cita pendiente o confirmada se puede cancelar o reprogramar, y al hacerlo se notifica automáticamente al propietario. | Restricción | Aplicada |
+| RN-406 | Una cita se completa únicamente al registrar su consulta, en la misma operación: no existe una cita completada sin consulta. Solo se completa una cita en curso o sin cerrar. | Restricción | Aplicada |
 | RN-407 | El propietario puede auto-registrarse y agendar citas para sus mascotas desde su portal, respetando las mismas reglas de disponibilidad y horario. | Proceso | Aplicada |
+| RN-408 | La atención de una cita la inicia y la cierra solo el veterinario asignado, y solo el día de la cita, desde 15 minutos antes de su hora. Una atención iniciada se puede retomar en cualquier momento hasta registrar su consulta. Administración y recepción no atienden citas. | Restricción | Aplicada |
+| RN-409 | Una cita pendiente o confirmada cuya hora ya pasó puede marcarse como "no asistió" por el veterinario asignado. Deja de ocupar su espacio en la agenda y cuenta para el ausentismo. | Proceso | Aplicada |
+| RN-410 | Si una atención sigue en curso 10 minutos después de la hora de fin de la cita, el sistema avisa al veterinario asignado por correo y en sus notificaciones, una sola vez. Si al terminar el día de la cita sigue abierta, pasa a "sin cerrar" y se le avisa de nuevo. Una atención sin cerrar se completa registrando su consulta. | Proceso | Aplicada |
+| RN-411 | El veterinario asignado puede cerrar sin consulta una atención en curso o sin cerrar, con un motivo obligatorio que queda en auditoría. Pasa a "cerrada sin consulta": no se reabre, no cuenta como inasistencia y libera su horario. | Restricción | Aplicada |
 
 ## Módulo 5 — Configuración y catálogos
 
@@ -90,4 +94,4 @@ Este documento reúne las reglas de negocio de Zooki: las políticas, restriccio
 
 ## Resumen
 
-El catálogo reúne **46 reglas de negocio**. Frente al sistema actual (v1.8.0): **45 aplicadas** y **1 futura** (RN-307, WhatsApp). A partir de este catálogo se elaboran las Historias de Usuario (cada una referencia las reglas que la condicionan) y de ahí los requisitos específicos.
+El catálogo reúne **48 reglas de negocio**. Frente al sistema actual (v1.9.0): **47 aplicadas** y **1 futura** (RN-307, WhatsApp). A partir de este catálogo se elaboran las Historias de Usuario (cada una referencia las reglas que la condicionan) y de ahí los requisitos específicos.

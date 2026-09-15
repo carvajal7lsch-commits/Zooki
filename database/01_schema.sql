@@ -300,7 +300,12 @@ CREATE TABLE `citas` (
   `motivo` varchar(255) NOT NULL,
   `id_tipo_cita` int(11) DEFAULT NULL,
   `duracion_minutos` int(11) DEFAULT NULL,
-  `estado` enum('pendiente','confirmada','cancelada','completada') DEFAULT 'pendiente',
+  `estado` enum('pendiente','confirmada','en_curso','cancelada','completada','no_asistio','sin_cerrar','cerrada_sin_consulta') DEFAULT 'pendiente',
+  `slot_activo` tinyint(1) GENERATED ALWAYS AS (CASE WHEN `estado` IN ('cancelada','no_asistio','cerrada_sin_consulta') THEN NULL ELSE 1 END) STORED,
+  `hora_inicio_real` datetime DEFAULT NULL,
+  `hora_fin_real` datetime DEFAULT NULL,
+  `aviso_atencion_abierta` datetime DEFAULT NULL,
+  `motivo_cierre` varchar(255) DEFAULT NULL,
   `observaciones` text DEFAULT NULL,
   `fecha_registro` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -368,8 +373,10 @@ CREATE TABLE `consultas` (
   `peso` decimal(5,2) DEFAULT NULL,
   `temperatura` decimal(4,1) DEFAULT NULL,
   `frecuencia_cardiaca` int(11) DEFAULT NULL,
+  `frecuencia_respiratoria` int(11) DEFAULT NULL,
   `diagnostico` text NOT NULL,
-  `plan_tratamiento` text NOT NULL
+  `plan_tratamiento` text NOT NULL,
+  `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -832,6 +839,7 @@ CREATE TABLE `usuarios` (
   `telefono` varchar(20) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
+  `password_definida` tinyint(1) NOT NULL DEFAULT 1,
   `id_rol` int(11) DEFAULT NULL,
   `estado` tinyint(4) DEFAULT 1,
   `debe_cambiar_password` tinyint(1) DEFAULT 0,
@@ -952,7 +960,9 @@ ALTER TABLE `auditoria_sistema`
 --
 ALTER TABLE `citas`
   ADD PRIMARY KEY (`id_cita`),
-  ADD UNIQUE KEY `unique_cita_vet` (`doc_veterinario`,`fecha`,`hora`),
+  -- Solo las citas activas ocupan el horario: slot_activo es NULL en las
+  -- canceladas y en "no asistió", y un índice único admite varios NULL.
+  ADD UNIQUE KEY `uq_cita_vet_activa` (`doc_veterinario`,`fecha`,`hora`,`slot_activo`),
   ADD KEY `id_mascota` (`id_mascota`),
   ADD KEY `idx_tipo_cita` (`id_tipo_cita`),
   ADD KEY `idx_veterinario_fecha_hora` (`doc_veterinario`,`fecha`,`hora`),

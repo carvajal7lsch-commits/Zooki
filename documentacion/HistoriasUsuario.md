@@ -91,6 +91,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 **Reglas de negocio:** RN-G06, RN-G07 · **Dependencias:** HU-17
 
+> _Nota: `PerfilController` sirve a los cuatro roles; el sujeto sale siempre de la sesión, nunca del POST (RN-G02). Hasta v1.8.0 solo el propietario podía editar sus datos, desde su portal: administrador, veterinario y recepcionista no tenían ninguna vista de perfil. El documento, el nombre y el rol son de solo lectura; dejar el rol editable sería la escalada de privilegios que corrigió HU-33. Desde v1.8.0 el personal entra por «Mi perfil» en el menú del avatar a un panel propio (`index.php?action=mi_perfil`) con sus datos, el contacto editable y el cambio de contraseña (HU-39)._
+
 ### HU-45 — Gestionar mis notificaciones internas
 
 | Prioridad | Estado | Estimación | Origen |
@@ -105,8 +107,11 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Veo la lista de notificaciones recientes.
 - Puedo marcar una o todas como leídas.
 - Solo veo las notificaciones dirigidas a mi rol o usuario.
+- Como veterinario, recibo un aviso cuando una atención mía sigue abierta después de su hora de fin y cuando queda sin cerrar al terminar el día (RN-410).
 
-**Reglas de negocio:** RN-G02 · **Dependencias:** HU-17
+**Reglas de negocio:** RN-G02, RN-410 · **Dependencias:** HU-17
+
+> _Nota: el marcado individual comprueba el destinatario antes de escribir (`NotificacionInterna::perteneceA`); sin eso, cualquier sesión válida podía marcar la notificación de otra persona enviando un id cualquiera, porque los cuatro roles tienen permitida la acción. El marcado masivo existía como endpoint desde el principio pero ningún archivo del front lo invocaba._
 
 ### HU-22 — Gestión de usuarios del sistema
 
@@ -124,6 +129,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Cambio de contraseña con validación de fortaleza.
 
 **Reglas de negocio:** RN-G08, RN-501 · **Dependencias:** HU-17
+
+> _Nota: al crear el usuario, la contraseña que escriba el administrador pasa por `PoliticaPassword`; si la deja vacía se genera una temporal aleatoria que también la cumple. Para un usuario ya existente, el restablecimiento lo cubre HU-54. Los campos del formulario se validan además en el backend (obligatoriedad, formato de correo, documento numérico y tipo de documento de una lista cerrada), no solo en el navegador._
 
 ### HU-24 — Logs de auditoría y seguridad
 
@@ -158,6 +165,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Registro de la ejecución en el log del sistema.
 
 **Reglas de negocio:** RN-504 · **Dependencias:** —
+
+> _Nota: `scripts/backup.php` toma las credenciales del `.env` (antes estaban escritas en el propio archivo con `root` y contraseña vacía) y se las pasa a `mysqldump` por un fichero temporal con permisos 0600, no por `--password=`, que es visible en `ps` para cualquier usuario del servidor. El destino se configura con `BACKUP_DIR` para poder apuntar a un volumen externo, como pide el criterio. La programación cada 24 h está versionada en `scripts/zooki.cron`._
 
 ### HU-32 — Autorización central por rol (RBAC real)
 
@@ -236,7 +245,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Pendiente | 3 pts | Deseable |
+| Media | Implementada | 3 pts | Deseable |
 
 > Como administrador, quiero restablecer la contraseña de un usuario desde el panel para ayudarlo cuando no puede acceder a su cuenta.
 
@@ -249,7 +258,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 **Reglas de negocio:** RN-G08, RN-501, RN-G05 · **Dependencias:** HU-22
 
-> _Nota: Función deseable propuesta (no construida)._
+> _Nota: `UsuarioController::resetearPasswordAjax()` genera una contraseña temporal que cumple la política (RN-G10), la envía por correo y marca `debe_cambiar_password`. La obligación de cambiarla la hace cumplir `Security::validatePasswordTemporal()` en cada petición, no solo en la redirección posterior al login. El acceso es exclusivo del administrador por la matriz de autorización y la acción queda en auditoría._
 
 ## Módulo 1 — Mascotas y propietarios
 
@@ -338,6 +347,24 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 **Reglas de negocio:** RN-201, RN-202, RN-203 · **Dependencias:** HU-01
 
+### HU-56 — Atención clínica sin cita (urgencias)
+
+| Prioridad | Estado | Estimación | Origen |
+|---|---|---|---|
+| Media | Implementada | 3 pts | Revisión del módulo de consultas |
+
+> Como veterinario, quiero registrar la atención de un paciente que llega sin cita (una urgencia o un imprevisto) para que quede en su historia clínica igual que cualquier otra consulta.
+
+**Criterios de aceptación:**
+
+- El flujo normal es por cita: desde el calendario se inicia la atención y la consulta queda ligada a la cita (HU-19, HU-27).
+- En Consultas Médicas, el botón «Atención sin cita» permite buscar al paciente (HU-03) y registrar la consulta sin cita asociada.
+- La pantalla explica cuándo usarlo y remite al calendario si el paciente tiene cita.
+- Se exigen los mismos datos que en HU-05 (motivo y diagnóstico) y, si es su primera consulta, se asigna el número de historia clínica (RN-102).
+- En el listado de consultas, las registradas sin cita se distinguen con la etiqueta «Sin cita».
+
+**Reglas de negocio:** RN-102, RN-203, RN-208 · **Dependencias:** HU-03, HU-05
+
 ### HU-06 — Adjuntar archivos clínicos
 
 | Prioridad | Estado | Estimación | Origen |
@@ -355,6 +382,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Se pueden adjuntar múltiples archivos por consulta.
 
 **Reglas de negocio:** RN-204, RN-205 · **Dependencias:** HU-05
+
+> _Nota: la descarga pasa siempre por `public/ver_archivo.php`, que comprueba el rol y, para un propietario, que la mascota sea suya (RN-G02). El `.htaccess` de la carpeta es una segunda barrera, no la principal: solo cubre Apache con AllowOverride activo. El formato se valida por el contenido del archivo, no por la extensión del nombre que envía el cliente, y al servirlo el `Content-Type` sale de una lista cerrada._
 
 ### HU-07 — Registrar tratamiento
 
@@ -394,7 +423,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Pendiente | 5 pts | VD-HC-01/02 |
+| Alta | Implementada | 5 pts | VD-HC-01/02 |
 
 > Como veterinario, quiero que al registrar una consulta todo se guarde de forma atómica y se me informe si algún adjunto fue rechazado, para no perder evidencia clínica sin darme cuenta.
 
@@ -406,7 +435,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 **Reglas de negocio:** RN-204, RN-206 · **Dependencias:** HU-05
 
-> _Nota: Deriva del análisis de vacíos (VD-HC-01/02)._
+> _Nota: Deriva del análisis de vacíos (VD-HC-01/02). Consulta, número de historia clínica, adjuntos y tratamientos se escriben en una sola transacción; si algo falla se deshace todo y además se borran los archivos ya movidos, porque el sistema de archivos no participa del rollback. Los adjuntos se revisan **antes** de abrir la transacción: si alguno no es aceptable no se guarda nada y la respuesta detalla qué archivo falló y por qué (`adjuntos_rechazados`), que el formulario muestra en una lista. Antes se descartaban en silencio dentro del bucle y la respuesta seguía diciendo "registrada correctamente con sus adjuntos"._
 
 ### HU-35 — Validación y control de acceso en registros clínicos y de mascota
 
@@ -560,14 +589,15 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 |---|---|---|---|
 | Media | Implementada | 5 pts | ZOOK-18 |
 
-> Como veterinario o recepcionista, quiero cancelar o reprogramar una cita para mantener la agenda actualizada.
+> Como veterinario o administrador, quiero cancelar o reprogramar una cita para mantener la agenda actualizada.
 
 **Criterios de aceptación:**
 
-- Se puede cancelar o cambiar la fecha/hora de una cita.
+- Se puede cancelar o cambiar la fecha/hora de una cita pendiente o confirmada, a un momento que no haya pasado.
+- El veterinario gestiona sus propias citas; el administrador, cualquiera, y puede reasignar el veterinario.
 - Al cambiar, se notifica al propietario por correo.
 - Las canceladas quedan con estado cancelada.
-- No se puede reprogramar a un horario ya ocupado.
+- No se puede reprogramar a un horario ocupado del veterinario ni que se cruce con otra cita de la mascota.
 
 **Reglas de negocio:** RN-405 · **Dependencias:** HU-13
 
@@ -577,16 +607,24 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 |---|---|---|---|
 | Media | Implementada | 2 pts | ZOOK-24 |
 
-> Como veterinario o recepcionista, quiero marcar una cita como completada para llevar el control de atenciones realizadas y liberar la agenda.
+> Como veterinario, quiero que la cita quede completada al registrar su consulta para llevar el control de atenciones realizadas y liberar la agenda.
 
 **Criterios de aceptación:**
 
-- Estado adicional "completada" en la cita.
-- Solo las citas "programada"/"en curso" pueden completarse.
-- Al completar, se vincula opcionalmente la consulta registrada.
+- La atención se inicia desde el calendario, solo por el veterinario asignado y solo el día de la cita, desde 15 minutos antes de su hora.
+- Solo una cita "en curso" o "sin cerrar" puede completarse.
+- La cita se completa al guardar su consulta, en la misma operación: no hay citas completadas sin consulta.
+- Una atención iniciada y no finalizada se retoma con «Continuar atención», aunque sea de un día anterior.
+- Si la atención sigue abierta 10 minutos después de la hora de fin, recibo un aviso por correo y en mis notificaciones.
+- Al terminar el día, una atención abierta pasa a "sin cerrar"; la cierro registrando la consulta o sin consulta, con un motivo.
+- Una atención cerrada sin consulta no se reabre y libera su horario.
 - La cita completada aparece en el historial del día pero no en la agenda futura.
 
-**Reglas de negocio:** RN-406 · **Dependencias:** HU-13
+**Reglas de negocio:** RN-406, RN-408, RN-410, RN-411 · **Dependencias:** HU-13, HU-05
+
+> _Nota: hasta v1.8.0 la cita se completaba con un botón aparte, sin consulta, y la podían iniciar recepción y administración. Como la pantalla de atención es solo del veterinario, esas citas quedaban "en curso" sin nadie que las atendiera, y una cita de un día anterior perdía todos los botones del calendario. Ver el Módulo 4 de `AuditoriaModulos.md`._
+
+> _Nota: desde v1.9.0 una atención ya no queda abierta indefinidamente. Si el veterinario salía sin terminar, la cita seguía "en curso" para siempre sin que nadie se enterara. Ahora se avisa a los 10 minutos de la hora de fin (`VigilanteAtenciones`, también como tarea programada en `scripts/vigilar_atenciones.php`), pasa a "sin cerrar" al terminar el día y se puede cerrar sin consulta con motivo. Además, la atención solo se inicia desde 15 minutos antes de la hora de la cita, para no abrir por error la de un paciente que aún no llega._
 
 ### HU-21 — Confirmación automática de cita por correo
 
@@ -609,9 +647,9 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Pendiente | 8 pts | VD-AGN-01 |
+| Alta | Parcial | 8 pts | VD-AGN-01 |
 
-> Como veterinario o recepcionista, quiero registrar la hora real de inicio y fin de cada atención y que el sistema detecte los retrasos, para que la agenda coincida con la realidad y no se acumulen los choques.
+> Como veterinario, quiero registrar la hora real de inicio y fin de cada atención y que el sistema detecte los retrasos, para que la agenda coincida con la realidad y no se acumulen los choques.
 
 **Criterios de aceptación:**
 
@@ -621,7 +659,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 **Reglas de negocio:** RN-401 · **Dependencias:** HU-19
 
-> _Nota: Deriva del análisis de vacíos (VD-AGN-01): el caso del calendario con retrasos en cascada._
+> _Nota: Deriva del análisis de vacíos (VD-AGN-01): el caso del calendario con retrasos en cascada. En v1.9.0 se cumple el primer criterio: `hora_inicio_real` y `hora_fin_real` (migración 09) se sellan al iniciar la atención y al guardar la consulta que completa la cita. Siguen pendientes la detección del exceso de duración y el aviso de corrimiento a las citas siguientes._
 
 ### HU-28 — Buffer configurable entre citas
 
@@ -645,19 +683,20 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Pendiente | 3 pts | VD-AGN-07 |
+| Media | Parcial | 3 pts | VD-AGN-07 |
 
-> Como recepcionista o veterinario, quiero marcar una cita como "no asistió" para liberar el espacio y medir el ausentismo.
+> Como veterinario, quiero marcar una cita como "no asistió" para liberar el espacio y medir el ausentismo.
 
 **Criterios de aceptación:**
 
 - Existe el estado "no asistió".
+- Lo marca el veterinario asignado, y solo cuando la hora de la cita ya pasó.
 - Una cita marcada así libera el espacio.
 - Se puede reportar la tasa de ausentismo.
 
-**Reglas de negocio:** RN-405 · **Dependencias:** HU-13
+**Reglas de negocio:** RN-405, RN-409 · **Dependencias:** HU-13
 
-> _Nota: Deriva del análisis de vacíos (VD-AGN-07)._
+> _Nota: Deriva del análisis de vacíos (VD-AGN-07). En v1.9.0 se implementaron el estado `no_asistio` (migración 09), el botón «No asistió» del calendario y la liberación del espacio en toda la lógica de disponibilidad. Falta un reporte propio de la tasa de ausentismo: por ahora las inasistencias solo se ven en la gráfica «Mis citas» del panel del veterinario (últimos 30 días)._
 
 ### HU-30 — Bloqueos de agenda del veterinario y días no laborables
 
@@ -806,7 +845,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Pendiente | 5 pts | Deseable |
+| Alta | Parcial | 5 pts | Deseable |
 
 > Como propietario, quiero cancelar o reprogramar mis propias citas desde el portal para gestionar mi tiempo sin tener que llamar a la clínica.
 
@@ -820,7 +859,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 **Reglas de negocio:** RN-405, RN-401, RN-G02 · **Dependencias:** HU-26
 
-> _Nota: Función deseable propuesta (hoy el portal solo agenda, no cancela ni reprograma)._
+> _Nota: Función deseable propuesta. Desde v1.9.0 el propietario cancela sus citas pendientes o confirmadas desde el portal: el botón existía, pero el portal buscaba un estado «programada» que no existe y nunca lo mostraba (M4-07). Siguen pendientes reprogramar desde el portal y el registro del cambio en auditoría._
 
 ### HU-52 — Centro de notificaciones del propietario
 

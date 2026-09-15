@@ -37,6 +37,9 @@ class EmailService {
         $this->mail->Password = $smtpPass;
         $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $this->mail->Port = $smtpPort;
+        // PHPMailer espera por defecto hasta 300 s si el servidor SMTP no
+        // responde; con 10 s un correo caído no deja procesos colgados.
+        $this->mail->Timeout = 10;
         $this->mail->CharSet = 'UTF-8';
         $this->mail->setFrom($smtpFrom, 'Zooki - Sistema Veterinario');
 

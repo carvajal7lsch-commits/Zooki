@@ -3,8 +3,55 @@
 class Auditoria {
     private $db;
 
+    /**
+     * Proxies de confianza cuyo X-Forwarded-For si se acepta. Se leen de
+     * TRUSTED_PROXIES en .env (lista separada por comas). Vacio = no se
+     * confia en ninguno.
+     */
+    private static ?array $proxiesConfiables = null;
+
     public function __construct($db) {
         $this->db = $db;
+    }
+
+    /**
+     * IP real del cliente para el registro de auditoria (RN-G05).
+     *
+     * T-08 — Antes se tomaba X-Forwarded-For siempre que viniera, sin mirar
+     * quien la enviaba. Como es una cabecera que pone el propio cliente,
+     * cualquiera podia escribir en el log de seguridad la IP que quisiera,
+     * incluida la de otra persona. Ahora solo se acepta si la peticion llega
+     * desde un proxy declarado como confiable; en cualquier otro caso vale la
+     * IP de la conexion, que no se puede falsificar.
+     */
+    private static function ipCliente(): string {
+        $remota = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+
+        if (self::$proxiesConfiables === null) {
+            $envFile = __DIR__ . '/../.env';
+            $lista = '';
+            if (file_exists($envFile)) {
+                $env = parse_ini_file($envFile);
+                $lista = $env['TRUSTED_PROXIES'] ?? '';
+            }
+            self::$proxiesConfiables = array_filter(array_map('trim', explode(',', $lista)));
+        }
+
+        if (!in_array($remota, self::$proxiesConfiables, true)) {
+            return $remota;
+        }
+
+        // Detras de un proxy confiable, el cliente original es la primera
+        // entrada de la cadena. Se valida que sea una IP real.
+        $cadena = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+        foreach (explode(',', $cadena) as $candidata) {
+            $candidata = trim($candidata);
+            if (filter_var($candidata, FILTER_VALIDATE_IP)) {
+                return $candidata;
+            }
+        }
+
+        return $remota;
     }
 
     /**
@@ -29,10 +76,7 @@ class Auditoria {
         $descripcion = null
     ) {
         try {
-            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-            if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-            }
+            $ip = self::ipCliente();
 
             $stmt = $this->db->prepare("
                 INSERT INTO auditoria_sistema

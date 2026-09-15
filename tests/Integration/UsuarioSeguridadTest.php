@@ -32,10 +32,15 @@ class UsuarioSeguridadTest extends TestCase
         $this->db->exec("
             CREATE TABLE usuarios (
                 documento TEXT PRIMARY KEY,
+                tipo_documento TEXT DEFAULT 'CC',
                 nombre_completo TEXT,
+                telefono TEXT,
                 email TEXT,
+                password TEXT,
                 id_rol INTEGER,
-                estado INTEGER
+                estado INTEGER,
+                debe_cambiar_password INTEGER DEFAULT 0,
+                password_definida INTEGER DEFAULT 1
             )
         ");
 

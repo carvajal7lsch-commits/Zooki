@@ -302,3 +302,29 @@
         display: none !important;
     }
 }
+
+/* Logo: el ícono de marca, del mismo ancho que los íconos del menú. Antes era
+   el logo con lema recortado a la fuerza con clip-path. */
+.pill-logo-img {
+    width: 48px;
+    height: 48px;
+    display: block;
+    border-radius: 12px;
+    box-shadow: 0 6px 14px -6px rgba(0, 82, 255, 0.55);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pill-logo:hover .pill-logo-img {
+    transform: translateY(-1px) scale(1.04);
+    box-shadow: 0 10px 18px -8px rgba(0, 82, 255, 0.6);
+}
+
+.pill-logo:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+    border-radius: 14px;
+}
+
+@media (max-width: 768px) {
+    .pill-logo-img { width: 40px; height: 40px; border-radius: 10px; }
+}

@@ -355,11 +355,16 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-19.1 | El sistema debe permitir completar solo citas programada/en curso. | Restricción | Solo una cita en curso/programada se completa. | Media |
-| RE-19.2 | El sistema debe vincular opcionalmente la consulta al completar. | Funcional | Se puede vincular la consulta registrada. | Baja |
+| RE-19.1 | El sistema debe permitir completar solo citas en curso. | Restricción | Una cita en curso o sin cerrar se completa; una pendiente, confirmada, cancelada, no asistida o cerrada sin consulta, no. | Media |
+| RE-19.2 | El sistema debe completar la cita al registrar su consulta, en la misma transacción. | Funcional | Guardar la consulta deja la cita completada; si algo falla no queda ninguna de las dos. | Alta |
 | RE-19.3 | El sistema debe excluir las completadas de la agenda futura. | Funcional | Una completada no aparece en la agenda futura. | Media |
+| RE-19.4 | El sistema debe permitir iniciar la atención solo al veterinario asignado, el día de la cita y desde 15 minutos antes de su hora. | Restricción | Otro rol, otro veterinario, otra fecha o una hora anterior son rechazados. | Alta |
+| RE-19.5 | El sistema debe permitir retomar una atención en curso. | Funcional | Una cita en curso ofrece «Continuar atención» aunque sea de otro día. | Alta |
+| RE-19.6 | El sistema debe avisar al veterinario cuando una atención sigue en curso 10 minutos después de su hora de fin. | Funcional | Llega un correo y una notificación interna, una sola vez por cita. | Alta |
+| RE-19.7 | El sistema debe pasar a "sin cerrar" las atenciones que siguen en curso al terminar el día de la cita. | Funcional | Al día siguiente la cita aparece como «Sin cerrar» y el veterinario recibe un aviso. | Alta |
+| RE-19.8 | El sistema debe permitir al veterinario asignado cerrar sin consulta una atención en curso o sin cerrar, con motivo obligatorio. | Funcional | La cita pasa a «Cerrada sin consulta», el motivo queda en auditoría y el horario se libera. | Media |
 
-**Reglas de negocio:** RN-406
+**Reglas de negocio:** RN-406, RN-408, RN-410, RN-411
 
 ### HU-21 — Confirmación automática de cita por correo
 

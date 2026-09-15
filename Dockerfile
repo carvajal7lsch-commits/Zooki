@@ -22,5 +22,10 @@ COPY . .
 # Instalar dependencias de PHP (si existe el archivo composer.json)
 RUN if [ -f "composer.json" ]; then composer install --no-dev --optimize-autoloader; fi
 
+# Las carpetas de archivos subidos deben existir en la imagen: el volumen
+# "uploads" hereda su dueño al crearse, y si no existen nace de root y Apache
+# no puede escribir en él.
+RUN mkdir -p public/uploads/mascotas public/uploads/clinicos
+
 # Configurar permisos para que el servidor web pueda leer/escribir
 RUN chown -R www-data:www-data /var/www/html/Zooki

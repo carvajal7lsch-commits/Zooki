@@ -1279,6 +1279,22 @@ body::after {
     position: relative;
 }
 
+/* HU-42 — Avatar de recepcion. Antes llevaba los estilos en un style="..."
+   dentro del HTML y no abria ningun menu (ZOOKI_REGLAS 1). */
+.header-user__photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.15s ease;
+}
+
+.header-user__photo:hover {
+    border-color: #5560ff;
+}
+
 /* Profile Password Change Modal */
 .pwd-modal-header {
     background: linear-gradient(135deg, #0052FF 0%, #5560FF 100%);

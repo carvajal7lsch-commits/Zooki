@@ -264,11 +264,13 @@ foreach ($mascotas as $m) {
                                 <span class="agenda-item-date"><?php echo date('d/m/Y', strtotime($c['fecha'])); ?> · <?php echo substr($c['hora'], 0, 5); ?></span>
                             </div>
                             <div class="agenda-item-actions">
-                                <?php if ($c['estado'] === 'programada'): ?>
+                                <?php // "programada" no existe en la base: los estados abiertos son pendiente y confirmada. ?>
+                                <?php if (in_array($c['estado'], ['pendiente', 'confirmada'], true)): ?>
                                     <span class="status-badge status-active">Activa</span>
                                     <button type="button" class="btn-cancel-agenda" data-id="<?php echo (int)$c['id_cita']; ?>">Cancelar</button>
                                 <?php else: ?>
-                                    <span class="status-badge status-inactive" style="<?php echo $c['estado'] === 'completada' ? 'background:var(--z-success-soft);color:var(--z-success);' : ''; ?>"><?php echo htmlspecialchars($c['estado']); ?></span>
+                                    <?php $etiquetaEstado = ['en_curso' => 'En atención', 'completada' => 'Completada', 'cancelada' => 'Cancelada', 'no_asistio' => 'No asistió', 'sin_cerrar' => 'En atención', 'cerrada_sin_consulta' => 'Cerrada'][$c['estado']] ?? ucfirst($c['estado']); ?>
+                                    <span class="status-badge status-inactive" style="<?php echo $c['estado'] === 'completada' ? 'background:var(--z-success-soft);color:var(--z-success);' : ''; ?>"><?php echo htmlspecialchars($etiquetaEstado); ?></span>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -482,7 +484,8 @@ foreach ($mascotas as $m) {
         
         <div id="passwordChangeSection" class="password-change-collapse" style="display: none; padding: 1rem; background: var(--z-bg-light); border-radius: 12px; margin-top: -0.5rem; margin-bottom: 1rem;">
             <form id="portalChangePasswordForm" onsubmit="event.preventDefault(); submitChangePasswordPortal();">
-                <?php if (($_SESSION['login_method'] ?? 'password') !== 'google'): ?>
+                <?php // HU-39: se pide la actual si la cuenta tiene una contraseña conocida ?>
+                <?php if ((int) ($usuarioData['password_definida'] ?? 1) === 1): ?>
                 <div class="input-group" style="margin-bottom: 0.8rem;">
                     <label style="font-weight: 600; font-size: 0.8rem; color: var(--z-text-main);">Contraseña Actual</label>
                     <div class="search-input-wrapper" style="padding: 0.5rem 0.8rem; border-color: rgba(85,96,255,0.25);">

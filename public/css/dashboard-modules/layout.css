@@ -177,7 +177,11 @@ body {
   flex-direction: column;
   min-width: 0;
   overflow-x: hidden;
-  animation: pageFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* Sin "forwards": dejaba aplicado para siempre el transform final, y un
+     transform convierte a .main-content en un contexto de apilamiento propio.
+     Ningún modal ni drawer de dentro podía pasar por encima de la barra
+     lateral (z-index 1000), que quedaba sin oscurecer. El final es igual. */
+  animation: pageFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes pageFadeIn {
@@ -617,10 +621,149 @@ body {
   border-radius: 50px;
 }
 
+/* HU-45 — Marcar todas como leidas. El header pasa a envolver porque ahora
+   lleva tres elementos y en pantallas estrechas no caben en una linea. */
+.notif-header {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.notif-mark-all {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #0052ff;
+  background: transparent;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 50px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.notif-mark-all:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.notif-mark-all:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.notif-mark-all i {
+  font-size: 0.7rem;
+}
+
 .notif-body {
   max-height: 400px;
   overflow-y: auto;
-  padding: 1rem;
+  padding: 0.5rem;
+}
+
+/* Items del dropdown de notificaciones. Antes reutilizaban las clases de las
+   alertas de vacunas (.vaccine-alert-item / .v-icon), con fondo amarillo de
+   "vacuna pendiente" detrás de cualquier ícono. */
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+.notif-item + .notif-item {
+  margin-top: 2px;
+}
+
+.notif-item:hover {
+  background: #f8fafc;
+}
+
+.notif-item.is-unread {
+  background: #f5f8ff;
+}
+
+.notif-item.is-unread:hover {
+  background: #eef3ff;
+}
+
+.notif-item__icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.notif-item__icon.tipo-nueva { background: #eaf1ff; color: #0052ff; }
+.notif-item__icon.tipo-reprogramada { background: #fff7e6; color: #d97706; }
+.notif-item__icon.tipo-cancelada { background: #fdecec; color: #dc2626; }
+
+.notif-item__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-item__title {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notif-item.is-unread .notif-item__title {
+  font-weight: 700;
+}
+
+.notif-item__msg {
+  margin-top: 2px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #475569;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notif-item__time {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.notif-item__dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #0052ff;
+}
+
+.notif-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.notif-empty i {
+  display: block;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
 }
 
 /* Cards and Tables */
@@ -1301,3 +1444,14 @@ body {
    ZOOKI v2 — Role-Based Dashboard Styles
    ================================================================ */
 
+/* El chip de usuario del encabezado es un enlace directo a "Mi perfil"; antes
+   abría un menú con "Mi perfil" y "Cambiar contraseña", que ya viven ahí. */
+a.header-user {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.header-user:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}

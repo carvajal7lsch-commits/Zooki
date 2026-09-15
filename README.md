@@ -4,7 +4,80 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.8.0 (Actual)
+### Versión 1.9.0 (Actual)
+Auditoría de cierre de los módulos de acceso, mascotas e historia clínica, y nueva pantalla de atención de citas para el veterinario.
+
+**Seguridad**
+*   **Aislamiento de datos por usuario:** las notificaciones y los adjuntos clínicos verifican a quién pertenecen. Antes cualquier sesión podía marcar notificaciones ajenas o descargar adjuntos de otras mascotas.
+*   **Sesión reforzada:** se regenera el identificador de sesión al autenticarse, la cookie usa `HttpOnly`, `SameSite` y `Secure`, se envían cabeceras de seguridad HTTP y la cookie se elimina al cerrar sesión.
+*   **Contraseñas temporales obligatorias:** mientras no se cambie, una contraseña temporal solo da acceso al formulario de cambio. Los propietarios registrados por el personal reciben una temporal por correo en lugar de usar su número de documento.
+*   **Datos sensibles:** el hash de la contraseña ya no llega al navegador, los errores técnicos no se muestran al cliente y la auditoría solo acepta la IP reenviada por proxies de confianza (`TRUSTED_PROXIES`).
+*   **Subida de archivos:** fotos y adjuntos se validan por su contenido y no por la extensión, y el nombre del archivo lo genera el servidor.
+*   **Autorización cerrada por defecto:** se deniega cualquier acción que no figure en la matriz de roles.
+
+**Acceso y perfil**
+*   **Perfil propio para los cuatro roles (HU-42):** administrador, veterinario y recepcionista pueden consultar y editar sus datos de contacto y cambiar su contraseña.
+*   **Notificaciones (HU-45):** botón para marcar todas como leídas en los paneles internos.
+*   **Restablecimiento de contraseña (HU-54):** el administrador puede generar una contraseña temporal para un usuario, que se envía por correo.
+*   **Mi perfil en el menú lateral:** el personal entra a su perfil desde el menú o desde su nombre en la cabecera, que ya no despliega una lista. El logo del menú usa el ícono azul de la marca.
+*   **Contraseña actual al cambiarla:** se exige siempre que la cuenta tenga una contraseña conocida (`password_definida`). Las cuentas creadas con Google no la tienen, así que definen la primera sin ese paso.
+*   **Correcciones:** cerrar sesión lleva al inicio de sesión en lugar de la landing page, y el interruptor para activar o desactivar colaboradores del panel de personal vuelve a funcionar. El registro y el inicio de sesión con Google vuelven a quedar en la auditoría, que los rechazaba por usar una acción fuera de su catálogo.
+
+**Mascotas y propietarios**
+*   **Validación en el servidor:** documentos y correos únicos, los siete campos obligatorios de la mascota y la raza acorde a la especie (RN-106).
+*   **Integridad:** el registro y la edición se hacen en una transacción, la auditoría cubre todos los campos de la ficha (incluido el cambio de propietario) y ya no se crean razas duplicadas.
+*   **Carrusel de mascotas:** cuando un propietario tiene muchas mascotas, sus tarjetas se recorren con flechas en lugar de salirse del contenedor.
+
+**Historia clínica**
+*   **Registro atómico (HU-34):** consulta, número de historia clínica, adjuntos y tratamientos se guardan juntos o no se guarda nada. Los adjuntos rechazados se informan uno por uno.
+*   **Adjuntos:** se corrigió la apertura de los adjuntos clínicos, que no funcionaba ni en el área del veterinario ni en el portal.
+*   **Atención sin cita (HU-56):** registro de consultas de urgencia desde Consultas Médicas, identificadas en el listado con la etiqueta «Sin cita».
+*   **Consulta:** se guardan la frecuencia respiratoria y las observaciones, y el historial carga con un número fijo de consultas SQL sin importar cuántas entradas tenga.
+
+**Pantalla de atención de la cita**
+*   **Rediseño:** vista sin scroll organizada en pestañas (Consulta, Vacuna, Desparasitación e Historial). El botón «Finalizar atención» guarda la consulta y completa la cita en un solo paso.
+*   **Resumen clínico:** última consulta, último peso, edad y vacunas o desparasitaciones vencidas o próximas a vencer.
+*   **Estado «en curso»:** se corrigió este estado de las citas, que no existía en la base de datos y hacía desaparecer la cita de la agenda al iniciar la atención.
+
+**Agenda de citas**
+*   **Flujo de atención (RN-406, RN-408):** solo el veterinario asignado inicia la atención, el día de la cita y desde 15 minutos antes de su hora. La cita se completa al guardar su consulta, en la misma transacción, así que ya no existen citas completadas sin consulta. Una atención iniciada se retoma con «Continuar atención», aunque sea de un día anterior.
+*   **Atenciones sin cerrar (RN-410, HU-45):** 10 minutos después de la hora de fin, si la atención sigue abierta, el veterinario recibe un aviso en la campana y por correo. Al terminar el día la cita pasa a «Sin cerrar». La revisión corre al cargar el calendario y con `scripts/vigilar_atenciones.php` cada 5 minutos.
+*   **Cerrar sin consulta (RN-411):** el veterinario puede cerrar una atención iniciada por error indicando el motivo. La cita queda «Cerrada sin consulta», el motivo se audita y el horario se libera.
+*   **Horario liberado:** una cita cancelada, no asistida o cerrada sin consulta ya no bloquea su horario. Antes agendar en ese horario respondía «Error de conexión».
+*   **Estado «No asistió» (HU-29):** el veterinario lo marca cuando la hora de la cita ya pasó, y el espacio queda libre en la agenda.
+*   **Hora real de atención (HU-27):** se registra la hora real de inicio y de fin de cada atención.
+*   **Reglas de cancelación y reprogramación:** solo aplican a citas pendientes o confirmadas, y la reprogramación no admite un momento pasado. El veterinario puede reprogramar sus citas, lo que antes el servidor le negaba. El administrador puede reasignar el veterinario. Confirmar una cita cancelada ya no la reactiva.
+*   **Agendamiento:** se rechazan las fechas pasadas y los formatos inválidos, y el propietario solo puede agendar citas para sus propias mascotas.
+*   **Portal del propietario:** sus citas activas vuelven a mostrarse como «Activa» con la opción de cancelar. El portal buscaba un estado «programada» que no existe en la base de datos.
+*   **Calendario:** un solo panel de detalle con las mismas reglas del servidor. Se eliminaron un segundo panel que fallaba al abrirse y cuatro métodos del controlador que no tenían ruta.
+*   **Rediseño del calendario:** se marcan el día actual y los días pasados, el panel lateral tiene dos estados (lista del día y detalle de la cita), los colores de estado salen de una sola fuente y el modal «Agendar cita» cabe sin scroll. Se quitó el botón de imprimir, que no hacía nada.
+
+**Notificaciones**
+*   **Vigencia de las notificaciones:** las de citas caducan a la hora de la cita y se retiran al cancelarla, reprogramarla o atenderla.
+*   **Confirmación de citas:** el calendario ya no se queda cargando mientras se envía el correo.
+
+**Interfaz**
+*   **Avisos unificados:** SweetAlert2 reemplaza los `alert()` nativos en los cuatro paneles, a través de `public/js/avisos.js`.
+*   **Imagen por defecto:** las mascotas sin foto muestran una imagen local.
+
+**Infraestructura y base de datos**
+*   **Respaldos:** toman las credenciales del `.env`, admiten un destino externo configurable (`BACKUP_DIR`) y su programación queda en `scripts/zooki.cron`.
+*   **Docker:** volumen `uploads` para conservar fotos y adjuntos al reconstruir el contenedor.
+*   **Migraciones:** siete nuevas (`database/06_*.sql` a `database/12_*.sql`) para la vigencia de las notificaciones, los estados `en_curso`, `no_asistio`, `sin_cerrar` y `cerrada_sin_consulta` de las citas, la hora real de atención, los nuevos campos de la consulta, el horario único solo entre citas activas y la columna `password_definida`. Todas se pueden ejecutar más de una vez.
+*   **Docker:** la imagen crea las carpetas de `uploads` para que el volumen nazca con permisos de Apache.
+*   **Documentación:** los documentos del proyecto pasan a la carpeta `documentacion/`; en la raíz queda el README.
+*   **`.env`:** PHP lo lee con `parse_ini_file`, así que un paréntesis en un comentario invalida el archivo completo. `.env.example` quedó corregido y advierte de ello.
+
+**Despliegue de la v1.9.0 (Dokploy)**
+1.  Respaldar la base de datos y ejecutar las migraciones `06` a `12` en orden sobre el contenedor de MySQL, antes de desplegar el código.
+2.  Agregar al Environment `APP_URL`, `TZ`, `BACKUP_RETENCION_DIAS` y `TRUSTED_PROXIES`, sin paréntesis ni comillas en los comentarios.
+3.  Marcar con `password_definida = 0` las cuentas que se registraron con Google.
+4.  Desplegar y crear en Dokploy los Schedules del servicio `web`: `php /var/www/html/Zooki/scripts/vigilar_atenciones.php` cada 5 minutos y `php /var/www/html/Zooki/scripts/send_reminders.php` a las 7:00.
+
+**Pruebas**
+*   La suite pasa de 90 a 144 pruebas (608 aserciones).
+
+### Versión 1.8.0
 Endurecimiento de la seguridad del sistema y nuevo portal de documentación con búsqueda.
 
 **Seguridad**
@@ -13,6 +86,9 @@ Endurecimiento de la seguridad del sistema y nuevo portal de documentación con 
 *   **Registros clínicos (HU-35):** consulta, vacunación y desparasitación exigen rol veterinario, verifican que la mascota exista y esté activa, validan que la cita vinculada sea del mismo paciente y rechazan fechas futuras, enumerados inválidos y signos vitales fuera de rango.
 *   **Contraseñas, correo y Google (HU-36):** política única de contraseñas (mínimo 8 con mayúscula, minúscula y número, más lista de bloqueo, patrones triviales y datos del titular); el auto-registro ya no inicia sesión solo y exige confirmar el correo; el login con Google valida `aud` e `iss` contra el client_id propio, lo que impedía usar un token emitido para otra aplicación.
 *   **Límite de intentos y enumeración (HU-38):** el contador pasó de `$_SESSION` a la tabla `intentos_login`, con límite por IP y por cuenta, de modo que descartar la cookie ya no lo reinicia. Los mensajes de login son idénticos exista o no la cuenta.
+
+**Registro**
+*   **Espera de la confirmación sin recargar:** el formulario de registro se envía por `fetch` y muestra una pantalla de espera que consulta `estado_verificacion_ajax` cada 4 segundos. Cuando el usuario abre el enlace del correo, la pestaña original entra sola al portal. Los errores de validación ya no expulsan del formulario y se conservan los datos escritos. El correo de verificación usa la plantilla común de `EmailService`.
 
 **Portal de documentación**
 *   **Rediseño de la navegación:** barra superior con buscador global, submenús colapsables generados desde los encabezados de cada documento, tabla de contenidos lateral y tema claro/oscuro.

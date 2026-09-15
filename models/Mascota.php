@@ -158,6 +158,31 @@ class Mascota {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * M1-12 — Estas dos busquedas por nombre vivian como SQL suelto dentro de
+     * MascotaController. La capa de datos es responsabilidad del modelo
+     * (ZOOKI_REGLAS 1 y 2.1); el controlador solo debe orquestar.
+     */
+    public function buscarEspeciePorNombre($nombre) {
+        $stmt = $this->conn->prepare(
+            "SELECT id_especie FROM especies WHERE LOWER(nombre_especie) = LOWER(:nom) LIMIT 1"
+        );
+        $stmt->execute([':nom' => trim($nombre)]);
+        $id = $stmt->fetchColumn();
+
+        return $id === false ? null : (int) $id;
+    }
+
+    public function buscarColorPorNombre($nombre) {
+        $stmt = $this->conn->prepare(
+            "SELECT id_color FROM colores_base WHERE LOWER(nombre_color) = LOWER(:nom) LIMIT 1"
+        );
+        $stmt->execute([':nom' => trim($nombre)]);
+        $id = $stmt->fetchColumn();
+
+        return $id === false ? null : (int) $id;
+    }
+
     // Insertar nueva especie
     public function insertEspecie($nombre_especie) {
         $query = "INSERT INTO especies (nombre_especie) VALUES (:nom)";
@@ -185,30 +210,107 @@ class Mascota {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id_esp', $id_especie);
         $stmt->bindParam(':nom', $nombre_raza);
-        
+
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
         }
         return false;
     }
 
+    /**
+     * M1-10 (RN-106) — Devuelve la raza si ya existe para esa especie, y solo
+     * la crea si no. Las especies y los colores ya comprobaban duplicados de
+     * forma insensible a mayusculas; las razas no, asi que cada vez que
+     * alguien escribia "Labrador" en el campo de raza nueva se creaba otra
+     * entrada repetida en el catalogo.
+     */
+    public function obtenerOCrearRaza($id_especie, $nombre_raza) {
+        $nombre_raza = trim($nombre_raza);
+
+        $stmt = $this->conn->prepare(
+            "SELECT id_raza FROM razas
+             WHERE id_especie = :id_esp AND LOWER(nombre_raza) = LOWER(:nom)
+             LIMIT 1"
+        );
+        $stmt->execute([':id_esp' => $id_especie, ':nom' => $nombre_raza]);
+        $existente = $stmt->fetchColumn();
+
+        if ($existente !== false) {
+            return (int) $existente;
+        }
+
+        return (int) $this->insertRaza($id_especie, $nombre_raza);
+    }
+
+    /**
+     * RN-106 — La raza seleccionada debe corresponder a la especie de la
+     * mascota. Antes el id_raza se tomaba crudo del POST, asi que nada impedia
+     * registrar un gato de raza "Pastor Aleman".
+     */
+    public function razaPerteneceAEspecie($id_raza, $id_especie): bool {
+        $stmt = $this->conn->prepare(
+            "SELECT 1 FROM razas WHERE id_raza = :id_raza AND id_especie = :id_esp LIMIT 1"
+        );
+        $stmt->execute([':id_raza' => (int) $id_raza, ':id_esp' => (int) $id_especie]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * RN-101 — El documento tiene que corresponder a un usuario existente con
+     * rol propietario. Antes solo se comprobaba que el campo no viniera vacio:
+     * un documento inexistente llegaba hasta la clave foranea y reventaba con
+     * una excepcion sin capturar.
+     */
+    public function esPropietarioValido($doc_propietario): bool {
+        $stmt = $this->conn->prepare(
+            "SELECT 1 FROM usuarios WHERE documento = :doc AND id_rol = 4 LIMIT 1"
+        );
+        $stmt->execute([':doc' => $doc_propietario]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /** Estado actual de la mascota, o null si no existe. */
+    public function getEstado($id_mascota): ?int {
+        $stmt = $this->conn->prepare(
+            "SELECT estado FROM " . $this->table_name . " WHERE id_mascota = :id"
+        );
+        $stmt->execute([':id' => (int) $id_mascota]);
+        $estado = $stmt->fetchColumn();
+
+        return $estado === false ? null : (int) $estado;
+    }
+
+    /**
+     * HU-03 — Busqueda de pacientes por nombre de mascota, nombre del
+     * propietario o documento. `m.estado = 1` cumple RN-105: las mascotas
+     * inactivas no salen en las busquedas activas.
+     *
+     * M1-22 — Se quitaron los dos JOIN de colores y el GROUP_CONCAT/GROUP BY
+     * que obligaban. Ningun consumidor de esta busqueda usa los colores: solo
+     * pinta nombre, especie, propietario y foto. Eran dos joins y una
+     * agrupacion en cada pulsacion de tecla, y el criterio pide resultados en
+     * menos de 2 segundos.
+     *
+     * Se seleccionan columnas explicitas en vez de `m.*`, que arrastraba la
+     * fila entera para mostrar cuatro campos.
+     */
     public function search($term) {
-        $query = "SELECT m.*, u.nombre_completo as propietario_nombre,
-                         e.nombre_especie, r.nombre_raza,
-                         GROUP_CONCAT(cb.nombre_color SEPARATOR ', ') as colores_nombres
+        $query = "SELECT m.id_mascota, m.nombre, m.url_foto, m.numero_historia_clinica,
+                         u.nombre_completo as propietario_nombre, u.documento as propietario_documento,
+                         e.nombre_especie, r.nombre_raza
                   FROM " . $this->table_name . " m
                   LEFT JOIN usuarios u ON m.doc_propietario = u.documento
                   LEFT JOIN especies e ON m.id_especie = e.id_especie
                   LEFT JOIN razas r ON m.id_raza = r.id_raza
-                  LEFT JOIN mascota_colores mc ON m.id_mascota = mc.id_mascota
-                  LEFT JOIN colores_base cb ON mc.id_color = cb.id_color
-                  WHERE (m.nombre LIKE :term1 
-                     OR u.nombre_completo LIKE :term2 
+                  WHERE (m.nombre LIKE :term1
+                     OR u.nombre_completo LIKE :term2
                      OR u.documento LIKE :term3)
                   AND m.estado = 1
-                  GROUP BY m.id_mascota
+                  ORDER BY m.nombre
                   LIMIT 10";
-        
+
         $stmt = $this->conn->prepare($query);
         $likeTerm = "%$term%";
         $stmt->bindParam(':term1', $likeTerm);

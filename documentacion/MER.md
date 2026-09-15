@@ -70,6 +70,8 @@ erDiagram
         date fecha
         time hora
         varchar estado
+        datetime hora_inicio_real
+        datetime hora_fin_real
     }
     consultas {
         int id_consulta PK

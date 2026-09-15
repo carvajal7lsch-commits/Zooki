@@ -30,5 +30,26 @@ class Tratamiento {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * HU-08 / M2-10 — Tratamientos de varias consultas de una sola vez, para
+     * que el historial no dispare una consulta por cada entrada.
+     */
+    public function findByConsultas(array $ids) {
+        if (empty($ids)) return [];
+
+        $marcas = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->conn->prepare(
+            "SELECT * FROM " . $this->table_name . " WHERE id_consulta IN ($marcas) ORDER BY id_tratamiento"
+        );
+        $stmt->execute(array_map('intval', $ids));
+
+        $porConsulta = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            $porConsulta[(int) $fila['id_consulta']][] = $fila;
+        }
+
+        return $porConsulta;
+    }
 }
 ?>

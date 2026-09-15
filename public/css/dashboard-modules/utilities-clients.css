@@ -490,20 +490,6 @@ textarea.dense-input {
 }
 
 /* ── Estilos Componentes Globales (Header, Logo, Perfil) ────────────────── */
-.logo-sidebar-img {
-    width: 75px;
-    height: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
-    transition: transform 0.3s ease;
-    clip-path: inset(0 0 18% 0);
-    margin-bottom: -15px;
-}
-
-.logo-sidebar-img:hover {
-    transform: scale(1.05);
-}
-
 .user-profile-img {
     width: 40px;
     height: 40px;

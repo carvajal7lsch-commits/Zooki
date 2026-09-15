@@ -7,9 +7,6 @@ class DashboardController
 
     public function __construct()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
         $database = new Database();
         $this->db = $database->getConnection();
     }

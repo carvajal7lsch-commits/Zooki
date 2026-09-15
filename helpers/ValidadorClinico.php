@@ -21,6 +21,8 @@ class ValidadorClinico
     public const TEMP_MAX = 45.0;       // decimal(4,1)
     public const FC_MIN   = 10;
     public const FC_MAX   = 400;
+    public const FR_MIN   = 5;
+    public const FR_MAX   = 150;
 
     /**
      * Identificador de fila: entero estrictamente positivo.

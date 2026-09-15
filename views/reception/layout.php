@@ -16,9 +16,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/dashboard.css?v=3">
     <link rel="stylesheet" href="css/usuarios.css">
     <link rel="stylesheet" href="css/pill-sidebar.css">
+    <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
+    <link rel="stylesheet" href="css/perfil.css?v=1">
+    <?php endif; ?>
     <link rel="stylesheet" href="css/dark-mode.css">
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
 </head>
@@ -29,8 +32,8 @@
 
         <!-- ══ PILL SIDEBAR ════════════════════════════════════════════════════ -->
         <nav class="pill-sidebar">
-            <a href="index.php?action=reception_dashboard" class="pill-logo" style="margin-bottom: 1.5rem; text-decoration: none;">
-                <img src="img/logo.png" alt="Zooki" style="width: 65px; height: auto; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <a href="index.php?action=reception_dashboard" class="pill-logo" title="Ir al inicio">
+                <img src="img/icon_blue.png" alt="Zooki" class="pill-logo-img">
             </a>
 
             <div class="pill-nav">
@@ -47,6 +50,7 @@
                 <?= pillNavLink("index.php?action=reception_agenda", "fa-calendar-alt", $__action === "reception_agenda") ?>
                 <?= pillNavLink("index.php?action=reception_nueva_cita", "fa-plus-circle", $__action === "reception_nueva_cita") ?>
                 <?= pillNavLink("index.php?action=reception_pacientes", "fa-paw", $__action === "reception_pacientes") ?>
+                <?= pillNavLink("index.php?action=mi_perfil", "fa-user-circle", $__action === "mi_perfil") ?>
             </div>
 
             <div class="pill-divider"></div>
@@ -71,12 +75,21 @@
                             <div class="notif-header">
                                 <h3>Notificaciones</h3>
                                 <span id="notifCount">0 nuevas</span>
+                                <!-- HU-45: marcar todas como leidas -->
+                                <button type="button" class="notif-mark-all" id="notifMarkAll" hidden>
+                                    <i class="fas fa-check-double"></i> Marcar todas
+                                </button>
                             </div>
                             <div id="pendingVaccinesList" class="notif-body"></div>
                         </div>
                     </div>
-                    <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($_SESSION["usuario_nombre"]); ?>&background=F59E0B&color=fff"
-                         style="width:40px;height:40px;border-radius:50%;flex-shrink:0;" alt="Perfil">
+                    <!-- HU-42/HU-39: recepcion tenia aqui una imagen estatica,
+                         sin acceso a su perfil ni al cambio de contrasena. -->
+                    <div class="header-user-wrapper">
+                        <a href="index.php?action=mi_perfil" title="Mi perfil"><img src="https://ui-avatars.com/api/?name=<?php echo urlencode($_SESSION["usuario_nombre"]); ?>&background=F59E0B&color=fff"
+                             class="header-user__photo"
+                             title="<?php echo htmlspecialchars($_SESSION["usuario_nombre"]); ?>" alt="Perfil"></a>
+                    </div>
                 </div>
             </header>
 
@@ -98,8 +111,10 @@
     <script>
         const ZOOKI_ROLE = 3;
     </script>
+    <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
+    <script src="js/avisos.js"></script>
     <script src="js/password-policy.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/dashboard.js?v=5"></script>
     <script src="js/csrf.js"></script>
     <script src="js/extras.js"></script>
 </body>

@@ -46,7 +46,7 @@ class Cita {
         $query = "SELECT hora, hora_fin, duracion_minutos FROM " . $this->table_name . "
                   WHERE doc_veterinario = :doc_vet
                   AND fecha = :fecha
-                  AND estado != 'cancelada'";
+                  AND estado NOT IN ('cancelada', 'no_asistio', 'cerrada_sin_consulta')";
 
         if ($id_cita_excluir) {
             $query .= " AND id_cita != :id_cita_excluir";
@@ -87,7 +87,7 @@ class Cita {
         $query = "SELECT hora, hora_fin, duracion_minutos FROM " . $this->table_name . "
                   WHERE id_mascota = :id_mascota
                   AND fecha = :fecha
-                  AND estado != 'cancelada'";
+                  AND estado NOT IN ('cancelada', 'no_asistio', 'cerrada_sin_consulta')";
 
         if ($id_cita_excluir) {
             $query .= " AND id_cita != :id_cita_excluir";
@@ -160,7 +160,7 @@ class Cita {
         $query = "SELECT hora, hora_fin, duracion_minutos as dur FROM " . $this->table_name . "
                   WHERE doc_veterinario = :doc_vet
                   AND fecha = :fecha
-                  AND estado != 'cancelada'";
+                  AND estado NOT IN ('cancelada', 'no_asistio', 'cerrada_sin_consulta')";
         if ($id_cita_excluir) {
             $query .= " AND id_cita != :id_cita_excluir";
         }
@@ -331,7 +331,114 @@ class Cita {
         return $row ?: null;
     }
 
+    // Valores del ENUM de citas.estado (database/07, 09 y 12).
+    public const ESTADOS = ['pendiente', 'confirmada', 'en_curso', 'cancelada', 'completada', 'no_asistio', 'sin_cerrar', 'cerrada_sin_consulta'];
+
+    // Estados en los que la cita todavía no se ha resuelto: desde aquí se
+    // puede iniciar, cancelar, reprogramar o marcar como no asistida.
+    public const ESTADOS_ABIERTOS = ['pendiente', 'confirmada'];
+
+    // RN-410: atenciones iniciadas que todavía no se cierran. Desde aquí se
+    // retoma la atención, se registra la consulta o se cierra sin consulta.
+    public const ESTADOS_EN_ATENCION = ['en_curso', 'sin_cerrar'];
+
+    /**
+     * RN-408 / HU-27 — Inicia la atención y sella la hora real de inicio.
+     * El WHERE exige que la cita siga abierta: si se canceló entre tanto, o se
+     * inicia dos veces desde dos pestañas, no se pisa el estado.
+     */
+    public function iniciarAtencion($id_cita, string $ahora): bool {
+        return $this->transicion($id_cita, self::ESTADOS_ABIERTOS, "estado = 'en_curso', hora_inicio_real = :ahora", [':ahora' => $ahora]);
+    }
+
+    /**
+     * RN-406 / HU-27 — Completa una cita en curso y sella la hora real de fin.
+     * RN-410: también una que quedó sin cerrar, para no perder su consulta.
+     */
+    public function completarAtencion($id_cita, string $ahora): bool {
+        return $this->transicion($id_cita, self::ESTADOS_EN_ATENCION, "estado = 'completada', hora_fin_real = :ahora", [':ahora' => $ahora]);
+    }
+
+    /** RN-409 / HU-29 — El paciente no llegó: la cita deja de ocupar la agenda. */
+    public function marcarNoAsistio($id_cita): bool {
+        return $this->transicion($id_cita, self::ESTADOS_ABIERTOS, "estado = 'no_asistio'", []);
+    }
+
+    /** RN-410 — Terminado el día, una atención que sigue en curso queda "sin cerrar". */
+    public function marcarSinCerrar($id_cita): bool {
+        return $this->transicion($id_cita, ['en_curso'], "estado = 'sin_cerrar'", []);
+    }
+
+    /**
+     * RN-411 — El veterinario cierra sin consulta una atención abierta, con su
+     * motivo. La cita no se reabre y deja libre su horario.
+     */
+    public function cerrarSinConsulta($id_cita, string $motivo, string $ahora): bool {
+        return $this->transicion(
+            $id_cita,
+            self::ESTADOS_EN_ATENCION,
+            "estado = 'cerrada_sin_consulta', motivo_cierre = :motivo, hora_fin_real = :ahora",
+            [':motivo' => $motivo, ':ahora' => $ahora]
+        );
+    }
+
+    /**
+     * RN-410 — Sella el aviso de "atención abierta". Solo escribe si el aviso
+     * no se había enviado: si la tarea programada y el calendario revisan a la
+     * vez, uno solo lo reclama y lo envía.
+     */
+    public function sellarAvisoAtencionAbierta($id_cita, string $ahora): bool {
+        $stmt = $this->conn->prepare(
+            "UPDATE " . $this->table_name . " SET aviso_atencion_abierta = :ahora
+             WHERE id_cita = :id_cita AND estado = 'en_curso' AND aviso_atencion_abierta IS NULL"
+        );
+        $stmt->execute([':ahora' => $ahora, ':id_cita' => (int) $id_cita]);
+        return $stmt->rowCount() === 1;
+    }
+
+    /** RN-410 — Atenciones en curso, con lo necesario para avisar al veterinario. */
+    public function getAtencionesEnCurso(): array {
+        $query = "SELECT c.id_cita, c.fecha, c.hora, c.hora_fin, c.duracion_minutos, c.estado,
+                         c.aviso_atencion_abierta, c.doc_veterinario, m.nombre AS mascota_nombre,
+                         v.nombre_completo AS veterinario_nombre, v.email AS veterinario_email
+                  FROM " . $this->table_name . " c
+                  LEFT JOIN mascotas m ON m.id_mascota = c.id_mascota
+                  LEFT JOIN usuarios v ON v.documento = c.doc_veterinario
+                  WHERE c.estado = 'en_curso'";
+        return $this->conn->query($query)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Cambia el estado solo si la cita está en uno de los estados de origen.
+     * Devuelve false si no se tocó ninguna fila: la cita no existe o ya no
+     * estaba en un estado desde el que se permite ese cambio.
+     */
+    private function transicion($id_cita, array $desde, string $set, array $params): bool {
+        $marcadores = [];
+        foreach (array_values($desde) as $i => $estado) {
+            $marcadores[] = ':desde' . $i;
+            $params[':desde' . $i] = $estado;
+        }
+        $params[':id_cita'] = (int) $id_cita;
+
+        $query = "UPDATE " . $this->table_name . " SET " . $set
+               . " WHERE id_cita = :id_cita AND estado IN (" . implode(', ', $marcadores) . ")";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute($params);
+        return $stmt->rowCount() === 1;
+    }
+
+    /**
+     * Un estado fuera del ENUM se rechaza aquí: MySQL sin modo estricto no da
+     * error, guarda una cadena vacía, y así fue como "en_curso" dejaba citas
+     * sin estado y sin forma de completarlas.
+     */
     public function cambiarEstado($id_cita, $estado) {
+        if (!in_array($estado, self::ESTADOS, true)) {
+            error_log('Estado de cita no válido: ' . var_export($estado, true));
+            return false;
+        }
+
         $query = "UPDATE " . $this->table_name . " SET estado = :estado WHERE id_cita = :id_cita";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id_cita', $id_cita);

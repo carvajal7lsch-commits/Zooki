@@ -5,10 +5,8 @@ class NotificacionController {
     
     private $notificacionModel;
 
+    // T-18: la sesion ya la abre el front controller (public/index.php).
     public function __construct() {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
         $this->notificacionModel = new NotificacionInterna();
     }
 
@@ -43,19 +41,33 @@ class NotificacionController {
     public function marcarLeida() {
         header('Content-Type: application/json');
 
-        if (!isset($_SESSION['usuario_doc'])) {
+        if (!isset($_SESSION['usuario_doc']) || !isset($_SESSION['usuario_id_rol'])) {
+            http_response_code(401);
             echo json_encode(['success' => false, 'message' => 'No autorizado']);
             exit;
         }
 
         $id_notificacion = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
-        if ($id_notificacion > 0) {
-            $success = $this->notificacionModel->marcarLeida($id_notificacion);
-            echo json_encode(['success' => $success]);
-        } else {
+        if ($id_notificacion <= 0) {
             echo json_encode(['success' => false, 'message' => 'ID inválido']);
+            exit;
         }
+
+        $doc_usuario = $_SESSION['usuario_doc'];
+        $id_rol = $_SESSION['usuario_id_rol'];
+
+        // T-01 (RN-G02): la notificación tiene que ir dirigida a este usuario
+        // o a su rol. Sin esta comprobación bastaba enviar cualquier id para
+        // marcar como leída la notificación de otra persona.
+        if (!$this->notificacionModel->perteneceA($id_notificacion, $doc_usuario, $id_rol)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'No tienes acceso a esta notificación.']);
+            exit;
+        }
+
+        $success = $this->notificacionModel->marcarLeida($id_notificacion, $doc_usuario, $id_rol);
+        echo json_encode(['success' => $success]);
         exit;
     }
 

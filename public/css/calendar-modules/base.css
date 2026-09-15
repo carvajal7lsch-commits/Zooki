@@ -1,528 +1,248 @@
 /* ═══════════════════════════════════════════
-   ZOOKI CALENDAR — Mockup-Matched Theme
+   ZOOKI AGENDA — Tokens y tema de FullCalendar
    ═══════════════════════════════════════════ */
 
 :root {
-    --cal-day-row-height: 100px;
-    --cal-visible-rows: 4;
-    --cal-scrollbar-gutter: 8px;
-    --cal-viewport-extra: 0px;
-    --google-blue: #1a73e8;
-    --google-gray-border: #e5e7eb;
-    --google-gray-bg: #f9fafb;
-    --google-text-dark: #111827;
-    --google-text-light: #6b7280;
-    /* Zooki brand */
-    --zooki-blue: #1a56db;
-    --zooki-blue-light: #eff6ff;
-    --zooki-surface: #ffffff;
-    --zooki-border: #e5e7eb;
-    --zooki-radius: 12px;
-    --zooki-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --cal-primary: var(--primary, #0052FF);
+    --cal-primary-hover: var(--primary-hover, #0044D6);
+    --cal-primary-soft: #EBF1FF;
+    --cal-primary-tint: rgba(0, 82, 255, 0.045);
+    --cal-text: #0F172A;
+    --cal-text-2: #475569;
+    --cal-text-3: #94A3B8;
+    --cal-border: #E2E8F0;
+    --cal-border-soft: #EEF2F6;
+    --cal-surface: #FFFFFF;
+    --cal-muted-bg: #F8FAFC;
+    --cal-past-bg: #F6F8FA;
+    --cal-past-stripes: repeating-linear-gradient(135deg, transparent 0 7px, rgba(148, 163, 184, 0.12) 7px 8px);
+    --cal-radius: 14px;
+    --cal-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+
+    /* Estados de cita y tipos de evento. Es la única definición de estos
+       colores: la leyenda, el calendario, el panel y los modales los leen de
+       aquí a través de los atributos data-estado y data-tipo. Antes estaban
+       repetidos en cuatro sitios, cada uno con valores distintos. */
+    --estado-pendiente-fg: #92400E;   --estado-pendiente-bg: #FEF3C7;   --estado-pendiente-dot: #F59E0B;
+    --estado-confirmada-fg: #1E40AF;  --estado-confirmada-bg: #DBEAFE;  --estado-confirmada-dot: #0052FF;
+    --estado-en_curso-fg: #3730A3;    --estado-en_curso-bg: #E0E7FF;    --estado-en_curso-dot: #6366F1;
+    --estado-completada-fg: #065F46;  --estado-completada-bg: #D1FAE5;  --estado-completada-dot: #10B981;
+    --estado-cancelada-fg: #991B1B;   --estado-cancelada-bg: #FEE2E2;   --estado-cancelada-dot: #EF4444;
+    --estado-no_asistio-fg: #475569;  --estado-no_asistio-bg: #F1F5F9;  --estado-no_asistio-dot: #94A3B8;
+    --estado-sin_cerrar-fg: #9F1239;  --estado-sin_cerrar-bg: #FFE4E6;  --estado-sin_cerrar-dot: #E11D48;
+    --estado-cerrada_sin_consulta-fg: #334155; --estado-cerrada_sin_consulta-bg: #E2E8F0; --estado-cerrada_sin_consulta-dot: #64748B;
+    --tipo-cita-fg: #1E40AF;            --tipo-cita-bg: #DBEAFE;            --tipo-cita-dot: #0052FF;
+    --tipo-vacunacion-fg: #115E59;      --tipo-vacunacion-bg: #CCFBF1;      --tipo-vacunacion-dot: #14B8A6;
+    --tipo-desparasitacion-fg: #5B21B6; --tipo-desparasitacion-bg: #EDE9FE; --tipo-desparasitacion-dot: #8B5CF6;
 }
 
-.calendar-page-wrapper {
-    margin: 0 auto;
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
-    box-sizing: border-box;
+[data-estado="pendiente"]  { --e-fg: var(--estado-pendiente-fg);  --e-bg: var(--estado-pendiente-bg);  --e-dot: var(--estado-pendiente-dot); }
+[data-estado="confirmada"] { --e-fg: var(--estado-confirmada-fg); --e-bg: var(--estado-confirmada-bg); --e-dot: var(--estado-confirmada-dot); }
+[data-estado="en_curso"]   { --e-fg: var(--estado-en_curso-fg);   --e-bg: var(--estado-en_curso-bg);   --e-dot: var(--estado-en_curso-dot); }
+[data-estado="completada"] { --e-fg: var(--estado-completada-fg); --e-bg: var(--estado-completada-bg); --e-dot: var(--estado-completada-dot); }
+[data-estado="cancelada"]  { --e-fg: var(--estado-cancelada-fg);  --e-bg: var(--estado-cancelada-bg);  --e-dot: var(--estado-cancelada-dot); }
+[data-estado="no_asistio"] { --e-fg: var(--estado-no_asistio-fg); --e-bg: var(--estado-no_asistio-bg); --e-dot: var(--estado-no_asistio-dot); }
+[data-estado="sin_cerrar"] { --e-fg: var(--estado-sin_cerrar-fg); --e-bg: var(--estado-sin_cerrar-bg); --e-dot: var(--estado-sin_cerrar-dot); }
+[data-estado="cerrada_sin_consulta"] { --e-fg: var(--estado-cerrada_sin_consulta-fg); --e-bg: var(--estado-cerrada_sin_consulta-bg); --e-dot: var(--estado-cerrada_sin_consulta-dot); }
+[data-tipo="cita"]            { --e-fg: var(--tipo-cita-fg);            --e-bg: var(--tipo-cita-bg);            --e-dot: var(--tipo-cita-dot); }
+[data-tipo="vacunacion"]      { --e-fg: var(--tipo-vacunacion-fg);      --e-bg: var(--tipo-vacunacion-bg);      --e-dot: var(--tipo-vacunacion-dot); }
+[data-tipo="desparasitacion"] { --e-fg: var(--tipo-desparasitacion-fg); --e-bg: var(--tipo-desparasitacion-bg); --e-dot: var(--tipo-desparasitacion-dot); }
+
+/* ── Tema general ── */
+.agenda .fc {
+    --fc-border-color: var(--cal-border-soft);
+    --fc-today-bg-color: var(--cal-primary-tint);
+    --fc-now-indicator-color: var(--cal-primary);
+    --fc-page-bg-color: var(--cal-surface);
+    --fc-neutral-bg-color: var(--cal-muted-bg);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 0.85rem;
+    color: var(--cal-text);
 }
 
-.calendar-container {
-    background: #fff;
-    border-radius: var(--zooki-radius);
-    border: 1px solid var(--zooki-border);
-    overflow: hidden;
-    box-shadow: var(--zooki-shadow);
-    box-sizing: border-box;
+.agenda .fc-theme-standard .fc-scrollgrid { border: 0; }
+
+/* ── Cabecera de días de la semana ── */
+.agenda .fc .fc-col-header-cell {
+    padding: 10px 4px;
+    background: var(--cal-surface);
+    border-bottom: 1px solid var(--cal-border);
 }
 
-.calendar-container .fc {
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-#calendar { min-height: 0; }
-
-.calendar-container.is-month-view .fc-scrollgrid,
-.calendar-container .fc-dayGridMonth-view .fc-scrollgrid {
-    width: 100% !important;
-    border: none !important;
-}
-
-.calendar-container.is-month-view .fc-scrollgrid-sync-table,
-.calendar-container .fc-dayGridMonth-view .fc-scrollgrid-sync-table {
-    width: 100% !important;
-    table-layout: fixed;
-}
-
-.fc {
-    font-family: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 0.875rem;
-}
-
-/* ── Toolbar ── */
-.fc .fc-header-toolbar {
-    margin: 0 !important;
-    padding: 12px 20px;
-    background: #fff;
-    border-bottom: 1px solid var(--zooki-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-}
-
-.fc .fc-toolbar-title {
-    font-size: 1.1rem;
+.agenda .fc .fc-col-header-cell-cushion {
+    font-size: 0.72rem;
     font-weight: 600;
-    color: var(--google-text-dark);
-    text-transform: capitalize;
-    font-family: 'Inter', sans-serif;
-    letter-spacing: -0.01em;
+    color: var(--cal-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-decoration: none;
 }
 
-.fc .fc-button {
-    background: #fff !important;
-    border: 1px solid var(--zooki-border) !important;
-    color: var(--google-text-dark) !important;
-    font-weight: 500 !important;
-    font-size: 0.8rem !important;
-    padding: 6px 14px !important;
-    border-radius: 8px !important;
-    text-transform: capitalize !important;
-    box-shadow: none !important;
-    transition: background 0.1s ease;
-    line-height: 1.5 !important;
+.agenda .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion { color: var(--cal-primary); }
+
+/* ── Celdas del mes ── */
+.agenda .fc .fc-daygrid-day {
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.fc .fc-button:hover {
-    background: #f8f9fa !important;
-    border-color: #dadce0 !important;
+.agenda .fc .fc-daygrid-day:hover { background-color: #F5F8FF; }
+
+.agenda .fc .fc-daygrid-day-top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 6px 2px 8px;
 }
 
-.fc .fc-button:active,
-.fc .fc-button-active {
-    background: #f1f3f4 !important;
-    border-color: #dadce0 !important;
-    color: var(--google-blue) !important;
-}
-
-.fc .fc-prev-button,
-.fc .fc-next-button {
-    border: 1px solid var(--zooki-border) !important;
-    background: #fff !important;
-    border-radius: 8px !important;
-    width: 32px;
-    height: 32px;
-    padding: 0 !important;
+.agenda .fc .fc-daygrid-day-number {
+    width: 26px;
+    height: 26px;
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-}
-
-.fc .fc-prev-button:hover,
-.fc .fc-next-button:hover {
-    background: var(--google-gray-bg) !important;
-}
-
-.fc .fc-today-button {
-    font-weight: 500 !important;
-    border-radius: 4px !important;
-    margin-left: 8px !important;
-}
-
-.fc .fc-button-group {
-    background: #fff;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.fc .fc-button-group .fc-button {
-    border-radius: 0 !important;
-    margin: 0 !important;
-}
-
-.fc .fc-button-group .fc-button:first-child { border-radius: 4px 0 0 4px !important; }
-.fc .fc-button-group .fc-button:last-child  { border-radius: 0 4px 4px 0 !important; border-left: none !important; }
-
-/* ── Column Header (Días de la semana) ── */
-.fc .fc-col-header { background: #fff; }
-
-.fc .fc-col-header-cell {
-    border: 1px solid var(--google-gray-border);
-    border-top: none;
-    border-left: none;
-    padding: 8px 4px !important;
-}
-
-.fc .fc-col-header-cell:last-child {
-    border-right: none;
-}
-
-.fc .fc-col-header-cell-cushion {
-    font-size: 0.72rem;
+    border-radius: 50%;
+    font-size: 0.78rem;
     font-weight: 500;
-    color: var(--google-text-light);
-    text-transform: uppercase;
-    text-decoration: none !important;
-    letter-spacing: 0.08em;
+    color: var(--cal-text);
+    text-decoration: none;
 }
 
-/* ── Day Cells (Cuadrícula del Mes) ── */
-.fc .fc-daygrid-day {
-    border: 1px solid var(--google-gray-border);
-    border-top: none;
-    border-left: none;
+/* Hoy: círculo azul sólido en el número y un tinte suave en la celda. */
+.agenda .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    background: var(--cal-primary);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0, 82, 255, 0.35);
 }
 
-.fc .fc-daygrid-day:last-child {
-    border-right: none;
+/* Días pasados: no se pueden agendar, solo consultar. El rayado los separa
+   de un vistazo de los días disponibles, sin depender solo del color. */
+.agenda .fc .fc-daygrid-day.fc-day-past,
+.agenda .fc .fc-daygrid-day.fc-day-past:hover {
+    background-color: var(--cal-past-bg);
+    background-image: var(--cal-past-stripes);
+    cursor: default;
 }
 
-.fc .fc-daygrid-day:hover { background: transparent; }
+.agenda .fc .fc-day-past .fc-daygrid-day-number { color: var(--cal-text-3); }
 
-.fc .fc-daygrid-day-frame {
-    min-height: var(--cal-day-row-height);
-    height: var(--cal-day-row-height);
-    max-height: var(--cal-day-row-height);
-    padding: 0 !important;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    position: relative;
-}
+/* Días del mes anterior o siguiente */
+.agenda .fc .fc-day-other .fc-daygrid-day-number { color: #CBD5E1; }
 
-.fc .fc-daygrid-day-top {
-    padding: 4px 4px 2px 4px !important;
-    flex-direction: column-reverse !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    width: 100%;
-    box-sizing: border-box;
-    position: relative;
-    gap: 4px;
-}
+/* Día que muestra el panel lateral */
+.agenda .fc .fc-daygrid-day.is-selected { box-shadow: inset 0 0 0 2px var(--cal-primary); }
+.agenda .fc .fc-daygrid-day.fc-day-past.is-selected { box-shadow: inset 0 0 0 2px var(--cal-text-3); }
 
+/* Botón "+" para agendar desde la celda (solo hoy y días futuros) */
 .fc-day-add-btn {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 24px; height: 24px; min-width: 24px;
-    border: none; border-radius: 50%;
-    background: #fff; color: var(--google-blue);
-    cursor: pointer; display: flex;
-    align-items: center; justify-content: center;
-    font-size: 0.8rem; line-height: 1;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--cal-primary);
+    color: #fff;
+    font-size: 0.68rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
     opacity: 0;
-    z-index: 10;
+    transform: scale(0.85);
     transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
 }
 
-.fc .fc-daygrid-day:hover .fc-day-add-btn { opacity: 1; }
-.fc-day-add-btn:hover { background: #f8f9fa; transform: scale(1.08); }
+.agenda .fc .fc-daygrid-day:hover .fc-day-add-btn,
+.fc-day-add-btn:focus-visible { opacity: 1; transform: scale(1); }
+.fc-day-add-btn:hover { background: var(--cal-primary-hover); }
 
-.fc .fc-daygrid-day-number {
-    font-size: 0.75rem; font-weight: 500; color: var(--google-text-dark);
-    text-decoration: none !important; padding: 0 !important;
-    width: 24px; height: 24px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.1s ease;
-    line-height: 1;
-}
+/* ── Eventos ── */
+.agenda .fc .fc-daygrid-day-events { margin: 0 0 4px; }
+.agenda .fc .fc-daygrid-event-harness { margin-top: 2px; }
 
-.fc .fc-daygrid-day-number:hover { background: var(--google-gray-bg); }
-
-.fc .fc-day-today { background: transparent !important; }
-.fc .fc-day-today .fc-daygrid-day-number { background: var(--google-blue); color: #fff !important; font-weight: 500; }
-
-.fc .fc-day-other { background: #fff; }
-.fc .fc-day-other .fc-daygrid-day-number { color: #c3c4c7; }
-
-/* ── Events estilo Google Calendar ── */
-.fc .fc-daygrid-day-events {
-    padding: 2px 4px !important;
-    margin-top: 0 !important;
-    flex: 1;
-    overflow-y: auto !important;
-}
-
-/* Fix for FullCalendar Popover background */
-.fc .fc-popover {
-    background-color: #fff !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-    border: 1px solid var(--zooki-border) !important;
-    z-index: 9999 !important;
-}
-.fc .fc-popover-header {
-    background-color: #f8f9fa !important;
-    padding: 8px 12px !important;
-    border-bottom: 1px solid var(--zooki-border) !important;
-    border-radius: 8px 8px 0 0 !important;
-}
-.fc .fc-popover-body {
-    padding: 8px !important;
-    background-color: #fff !important;
-    border-radius: 0 0 8px 8px !important;
-}
-
-.fc .fc-daygrid-event-harness { margin-bottom: 2px !important; }
-
-.fc-daygrid-event {
-    border-radius: 4px !important;
-    padding: 3px 8px !important;
-    font-size: 0.75rem !important;
-    line-height: 1.3 !important;
-    border: none !important;
-    margin: 0 !important;
-    cursor: pointer;
-    transition: background-color 0.1s ease, filter 0.1s ease;
-}
-
-.fc-daygrid-event:hover { filter: brightness(0.95); }
-.fc-daygrid-event .fc-event-main { padding: 0 !important; }
-.fc-daygrid-event .fc-event-title {
-    white-space: nowrap; overflow: hidden;
-    text-overflow: ellipsis; display: block; font-weight: 500;
-}
-
-.fc .fc-daygrid-event-dot { display: none !important; }
-
-/* ── Google Calendar Pastel Event Colors ── */
-.event-cita {
-    background: #e8f0fe !important;
-    color: #1a73e8 !important;
-    border-left: 3px solid #1a73e8 !important;
-}
-
-.event-cita-pendiente {
-    background: #fff7d6 !important;
-    color: #946f00 !important;
-    border-left: 3px solid #946f00 !important;
-}
-
-.event-cita-confirmada {
-    background: #e3fcef !important;
-    color: #006644 !important;
-    border-left: 3px solid #006644 !important;
-}
-
-.event-cita-encurso {
-    background: #e0f2fe !important;
-    color: #0369a1 !important;
-    border-left: 3px solid #0284c7 !important;
-}
-
-.event-cita-completada {
-    background: #f0fdf4 !important;
-    color: #15803d !important;
-    border-left: 3px solid #15803d !important;
-}
-
-.event-cita-cancelada {
-    background: #ffede9 !important;
-    color: #c2410c !important;
-    border-left: 3px solid #c2410c !important;
-    text-decoration: line-through;
-}
-
-.event-vacunacion {
-    background: #e6f4ea !important;
-    color: #137333 !important;
-    border-left: 3px solid #137333 !important;
-}
-
-.event-desparasitacion {
-    background: #fef7e0 !important;
-    color: #b06000 !important;
-    border-left: 3px solid #f29900 !important;
-}
-
-.event-urgencia {
-    background: #fce8e6 !important;
-    color: #c5221f !important;
-    border-left: 3px solid #d93025 !important;
-}
-
-.event-pendiente {
-    background: #f1f3f4 !important;
-    color: #5f6368 !important;
-    border-left: 3px solid #5f6368 !important;
-}
-
-/* ── Agenda Control Bar ── */
-.agenda-control-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 12px 0;
-    margin-bottom: 14px;
-    background: transparent;
-}
-
-.control-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.control-center {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.control-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-/* ── View Tabs (Mes / Semana / Día) ── */
-.view-tab-group {
-    display: inline-flex;
-    background: #f1f5f9;
-    border-radius: 8px;
-    padding: 3px;
-    gap: 2px;
-}
-
-.view-tab {
-    padding: 5px 14px;
+.agenda .fc .fc-event {
+    border: 0;
+    border-left: 3px solid var(--e-dot, var(--cal-primary));
+    background: var(--e-bg, var(--cal-primary-soft));
+    color: var(--e-fg, #1E40AF);
     border-radius: 6px;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    font-size: 0.82rem;
-    font-weight: 600;
+    box-shadow: none;
     cursor: pointer;
-    transition: all 0.15s ease;
-    font-family: inherit;
 }
 
-.view-tab.active,
-.view-tab:hover {
-    background: #fff;
-    color: var(--zooki-blue);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
+.agenda .fc .fc-event .fc-event-main,
+.agenda .fc .fc-event .fc-event-title,
+.agenda .fc .fc-event .fc-event-time { color: inherit; }
 
-/* ── Filter Checkboxes (Mostrar:) ── */
-.filter-label {
-    font-size: 0.78rem;
+.agenda .fc .fc-daygrid-event {
+    margin: 0 6px !important;
+    padding: 2px 6px;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: #64748b;
-    letter-spacing: 0.2px;
+}
+
+.agenda .fc .fc-event-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.filter-check-group {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 5px 10px;
-    border-radius: 7px;
-    border: 1px solid #e2e8f0;
-    background: #fff;
-    color: #475569;
+.agenda .fc .fc-event:hover { filter: brightness(0.97); }
+.agenda .fc .fc-event-past { opacity: 0.6; }
+.agenda .fc .fc-event[data-estado="cancelada"] .fc-event-title { text-decoration: line-through; }
+
+.agenda .fc .fc-daygrid-more-link {
+    margin: 2px 6px 0;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--cal-text-2);
+}
+
+.agenda .fc .fc-daygrid-more-link:hover {
+    background: var(--cal-muted-bg);
+    color: var(--cal-primary);
+    text-decoration: none;
+}
+
+/* ── Vistas de semana y día ── */
+.agenda .fc .fc-timegrid-slot { height: 2.4em; }
+
+.agenda .fc .fc-timegrid-slot-label-cushion,
+.agenda .fc .fc-timegrid-axis-cushion {
+    font-size: 0.72rem;
+    color: var(--cal-text-3);
+}
+
+.agenda .fc .fc-timegrid-col.fc-day-past {
+    background-color: var(--cal-past-bg);
+    background-image: var(--cal-past-stripes);
+}
+
+.agenda .fc .fc-timegrid-event {
+    padding: 2px 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.agenda .fc .fc-timegrid-now-indicator-line { border-width: 2px 0 0; }
+
+/* ── Popover nativo de "+N más" ── */
+.fc .fc-popover {
+    border: 1px solid var(--cal-border);
+    border-radius: 12px;
+    box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.2);
+    overflow: hidden;
+    z-index: 900;
+}
+
+.fc .fc-popover-header {
+    padding: 8px 12px;
+    background: var(--cal-muted-bg);
     font-size: 0.8rem;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    font-family: inherit;
-    user-select: none;
 }
 
-.filter-check-group:hover {
-    border-color: #cbd5e1;
-    background: #f8fafc;
-}
-
-.filter-check-group input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
-    margin: 0;
-    cursor: pointer;
-    accent-color: var(--zooki-blue);
-}
-
-.filter-check-group input[type="checkbox"].check-citas {
-    accent-color: #1a56db;
-}
-
-.filter-check-group input[type="checkbox"].check-vacunas {
-    accent-color: #16a34a;
-}
-
-.filter-check-group input[type="checkbox"].check-desparasitacion {
-    accent-color: #b45309;
-}
-
-/* Legacy filter-btn kept for JS compatibility */
-.filter-btn {
-    display: none;
-}
-.filter-btn.active {
-    display: none;
-}
-
-/* ── Custom Select styling ── */
-.select-wrapper {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-}
-
-.filter-vet-select {
-    padding: 6px 28px 6px 10px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #334155;
-    background: #fff;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    min-width: 160px;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    outline: none;
-    font-family: inherit;
-}
-
-.filter-vet-select:hover {
-    border-color: #93c5fd;
-}
-
-.filter-vet-select:focus {
-    border-color: var(--zooki-blue);
-    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
-}
-
-.select-wrapper .select-arrow {
-    position: absolute;
-    right: 9px;
-    pointer-events: none;
-    color: #94a3b8;
-    font-size: 0.65rem;
-}
-
-/* ── "+N más" link ── */
-.fc .fc-daygrid-more-link {
-    font-size: 0.73rem; font-weight: 500; color: var(--google-text-light);
-    padding: 2px 6px; border-radius: 4px;
-    transition: background-color 0.15s ease;
-    margin-top: 1px;
-}
-.fc .fc-daygrid-more-link:hover { background: var(--google-gray-bg); color: var(--google-text-dark); }
-
+.fc .fc-popover-body { padding: 8px 6px; }

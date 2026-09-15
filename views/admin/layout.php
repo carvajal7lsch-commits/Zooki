@@ -18,9 +18,12 @@
 
     <!-- Estilos del sistema -->
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/dashboard.css?v=3">
     <link rel="stylesheet" href="css/usuarios.css">
     <link rel="stylesheet" href="css/pill-sidebar.css">
+    <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
+    <link rel="stylesheet" href="css/perfil.css?v=1">
+    <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
 </head>
 <body>
@@ -30,8 +33,8 @@
 
         <!-- ══ PILL SIDEBAR ════════════════════════════════════════════════════ -->
         <nav class="pill-sidebar">
-            <a href="index.php?action=admin_panel" class="pill-logo mb-1 text-decoration-none">
-                <img src="img/logo_conlema.png" alt="Zooki" class="logo-sidebar-img">
+            <a href="index.php?action=admin_panel" class="pill-logo" title="Ir al inicio">
+                <img src="img/icon_blue.png" alt="Zooki" class="pill-logo-img">
             </a>
 
             <div class="pill-nav">
@@ -62,6 +65,7 @@
                 <?php // echo pillNavLink("index.php?action=admin_reportes", "fa-chart-pie", $__action === "admin_reportes"); ?>
                 <?php // echo pillNavLink("index.php?action=admin_auditoria", "fa-shield-alt", $__action === "admin_auditoria"); ?>
                 <?= pillNavLink("index.php?action=admin_configuracion", "fa-cog", $__action === "admin_configuracion") ?>
+                <?= pillNavLink("index.php?action=mi_perfil", "fa-user-circle", $__action === "mi_perfil") ?>
             </div>
 
             <div class="pill-divider"></div>
@@ -86,6 +90,7 @@
                             case "admin_configuracion": $tituloModulo = "Configuración"; break;
                             case "admin_auditoria": $tituloModulo = "Auditoría"; break;
                             case "admin_panel": $tituloModulo = "Dashboard"; break;
+                            case "mi_perfil": $tituloModulo = "Mi perfil"; break;
                             default: $tituloModulo = "Zooki"; break;
                         }
                     ?>
@@ -101,23 +106,22 @@
                             <div class="notif-header">
                                 <h3>Notificaciones</h3>
                                 <span id="notifCount">0 nuevas</span>
+                                <!-- HU-45: marcar todas como leidas -->
+                                <button type="button" class="notif-mark-all" id="notifMarkAll" hidden>
+                                    <i class="fas fa-check-double"></i> Marcar todas
+                                </button>
                             </div>
                             <div id="pendingVaccinesList" class="notif-body"></div>
                         </div>
                     </div>
                     <div class="header-user-wrapper">
-                        <div class="header-user" title="<?= htmlspecialchars($__adminNombre) ?>" onclick="toggleProfileMenu()">
+                        <a class="header-user" href="index.php?action=mi_perfil" title="Mi perfil">
                             <div class="header-user__avatar"><?= htmlspecialchars($__adminIniciales) ?></div>
                             <div class="header-user__info">
                                 <span class="header-user__name"><?= htmlspecialchars(explode(" ", trim($__adminNombre))[0]) ?></span>
                                 <span class="header-user__role"><?= htmlspecialchars($__adminRol) ?></span>
                             </div>
-                        </div>
-                        <div class="profile-dropdown" id="profileDropdown" style="display:none;">
-                            <a href="#" onclick="abrirPersonalizarPerfil(event)"><i class="fas fa-lock"></i> Cambiar Contraseña</a>
-                            <div class="profile-dropdown-divider"></div>
-                            <a href="index.php?action=logout" class="text-danger"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </header>
@@ -140,8 +144,10 @@
     <script>
         const ZOOKI_ROLE = 1;
     </script>
+    <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
+    <script src="js/avisos.js"></script>
     <script src="js/password-policy.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/dashboard.js?v=5"></script>
     <script src="js/csrf.js"></script>
     <script src="js/extras.js"></script>
 </body>

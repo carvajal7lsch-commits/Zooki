@@ -1,9 +1,11 @@
-/* 
-   ZOOKI MODULAR STYLESHEET
-   Automatically generated modular imports to reduce complexity.
+/*
+   ZOOKI — Agenda
+   Agregador de módulos, mismo patrón que dashboard y landing:
+   - base:   tokens (colores de estado incluidos) y tema de FullCalendar
+   - agenda: barra superior, leyenda, panel del día, botones y avisos
+   - modals: modales de agendar y reprogramar, y el selector de horarios
 */
 
-@import url('calendar-modules/base.css?v=7');
-@import url('calendar-modules/sidebar-cards.css?v=7');
-@import url('calendar-modules/drawers-modals.css?v=7');
-@import url('calendar-modules/mockup-redesign.css?v=7');
+@import url('calendar-modules/base.css?v=12');
+@import url('calendar-modules/agenda.css?v=12');
+@import url('calendar-modules/modals.css?v=12');
