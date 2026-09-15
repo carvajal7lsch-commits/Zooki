@@ -381,6 +381,10 @@ class AuthController {
                     // formulario despues de haber cambiado la clave.
                     $_SESSION['debe_cambiar_password'] = 0;
 
+                    // RN-G05 / HU-42: el cambio de contraseña queda en la
+                    // actividad de la cuenta, sin guardar la contraseña.
+                    $this->auditoria->log($documento, 'UPDATE', 'usuarios', $documento, null, null, 'Cambio de contraseña');
+
                     // Si el usuario configuró una contraseña por primera vez, cambiamos a 'password'
                     $_SESSION['login_method'] = 'password';
 

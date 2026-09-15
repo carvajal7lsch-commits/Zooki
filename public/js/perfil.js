@@ -2,10 +2,8 @@
  * HU-42 / HU-39 — Panel "Mi perfil" del personal.
  *
  * Datos de contacto: actualizar_mi_perfil_ajax (el sujeto sale de la sesión).
- * Contraseña: cambiar_password_ajax. Al personal siempre se le pide la actual,
- * aunque haya entrado con Google (HU-39). El menú del avatar llamaba a
- * "actualizar_password_ajax", una ruta que no existía, así que el personal no
- * podía cambiar su contraseña.
+ * Contraseña: cambiar_password_ajax. Se pide la actual solo si la cuenta ya
+ * tiene una contraseña conocida (password_definida, HU-39).
  */
 (function () {
     function mensaje(el, texto, tipo) {
@@ -73,30 +71,67 @@
 
     // ── Contraseña ──
     const formPwd = document.getElementById('perfilPasswordForm');
-    const actual = document.getElementById('perfilPwdActual');
+    const actual = document.getElementById('perfilPwdActual');   // no existe si la cuenta no tiene contraseña
     const nueva = document.getElementById('perfilPwdNueva');
     const confirmar = document.getElementById('perfilPwdConfirmar');
     const feedback = document.getElementById('perfilPwdFeedback');
+    const coincide = document.getElementById('perfilPwdCoincide');
     const btnPwd = document.getElementById('perfilPasswordGuardar');
     const msgPwd = document.getElementById('perfilPasswordMsg');
-    const ayuda = feedback.textContent;
+    const textoBoton = btnPwd.textContent;
 
     // password-policy.js se carga después de esta vista; se consulta al usarlo.
     const motivoInvalida = valor => (typeof window.motivoPasswordInvalida === 'function'
         ? window.motivoPasswordInvalida(valor) : null);
 
-    function pintarAyuda() {
-        if (!nueva.value) {
-            feedback.textContent = ayuda;
-            feedback.className = 'perfil-field__hint';
-            return;
-        }
-        const motivo = motivoInvalida(nueva.value);
-        feedback.textContent = motivo || 'Contraseña válida.';
-        feedback.className = 'perfil-field__hint ' + (motivo ? 'is-error' : 'is-ok');
+    // Los mismos requisitos de helpers/PoliticaPassword.php, marcados al escribir.
+    const REQUISITOS = {
+        longitud: v => v.length >= 8,
+        mayuscula: v => /[A-ZÁÉÍÓÚÑ]/.test(v),
+        minuscula: v => /[a-záéíóúñ]/.test(v),
+        numero: v => /\d/.test(v),
+    };
+    const itemsRequisito = document.querySelectorAll('[data-requisito]');
+
+    function pintarRequisitos() {
+        const valor = nueva.value;
+        let todos = true;
+        itemsRequisito.forEach(li => {
+            const cumple = REQUISITOS[li.dataset.requisito](valor);
+            li.classList.toggle('is-ok', cumple);
+            if (!cumple) todos = false;
+        });
+        // Con los requisitos básicos cumplidos, la política aún puede rechazarla
+        // (contraseña común o con tus datos): eso se explica debajo.
+        const motivo = valor && todos ? motivoInvalida(valor) : null;
+        feedback.textContent = motivo || '';
+        feedback.className = 'perfil-field__hint' + (motivo ? ' is-error' : '');
     }
 
-    nueva.addEventListener('input', () => { pintarAyuda(); mensaje(msgPwd, ''); });
+    function pintarCoincidencia() {
+        if (!confirmar.value) {
+            coincide.textContent = '';
+            coincide.className = 'perfil-field__hint';
+            return;
+        }
+        const iguales = confirmar.value === nueva.value;
+        coincide.textContent = iguales ? 'Las contraseñas coinciden.' : 'Las contraseñas no coinciden.';
+        coincide.className = 'perfil-field__hint ' + (iguales ? 'is-ok' : 'is-error');
+    }
+
+    nueva.addEventListener('input', () => { pintarRequisitos(); pintarCoincidencia(); mensaje(msgPwd, ''); });
+    confirmar.addEventListener('input', () => { pintarCoincidencia(); mensaje(msgPwd, ''); });
+
+    // Mostrar u ocultar cada contraseña.
+    formPwd.querySelectorAll('[data-ver]').forEach(boton => boton.addEventListener('click', () => {
+        const campo = document.getElementById(boton.dataset.ver);
+        const mostrar = campo.type === 'password';
+        campo.type = mostrar ? 'text' : 'password';
+        boton.setAttribute('aria-pressed', String(mostrar));
+        boton.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+        boton.innerHTML = `<i class="far ${mostrar ? 'fa-eye-slash' : 'fa-eye'}"></i>`;
+        campo.focus();
+    }));
 
     formPwd.addEventListener('submit', async e => {
         e.preventDefault();
@@ -133,14 +168,19 @@
                 return;
             }
             formPwd.reset();
-            pintarAyuda();
-            mensaje(msgPwd, 'Contraseña actualizada.', 'ok');
+            formPwd.querySelectorAll('input').forEach(i => { i.type = 'password'; });
+            pintarRequisitos();
+            pintarCoincidencia();
+            mensaje(msgPwd, actual ? 'Contraseña actualizada.' : 'Contraseña creada.', 'ok');
+            // La cuenta ya tiene contraseña: desde ahora se pide la actual (HU-39),
+            // así que se recarga para mostrar ese campo.
+            if (!actual) setTimeout(() => window.location.reload(), 1200);
         } catch (err) {
             console.error('Perfil:', err);
             mensaje(msgPwd, 'Error de conexión. Intenta nuevamente.', 'error');
         } finally {
             btnPwd.disabled = false;
-            btnPwd.textContent = 'Actualizar contraseña';
+            btnPwd.textContent = textoBoton;
         }
     });
 

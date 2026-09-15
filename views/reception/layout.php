@@ -16,11 +16,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css?v=3">
+    <link rel="stylesheet" href="css/dashboard.css?v=4">
     <link rel="stylesheet" href="css/usuarios.css">
     <link rel="stylesheet" href="css/pill-sidebar.css">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
-    <link rel="stylesheet" href="css/perfil.css?v=1">
+    <link rel="stylesheet" href="css/perfil.css?v=2">
     <?php endif; ?>
     <link rel="stylesheet" href="css/dark-mode.css">
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">

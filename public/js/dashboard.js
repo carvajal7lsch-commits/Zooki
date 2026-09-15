@@ -96,18 +96,14 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(modal);
   });
 
-  if (typeof ZOOKI_ROLE === "undefined") return;
+  // Los paneles del administrador y del veterinario llegan pintados desde el
+  // servidor (PanelController); estas cargas solo sirven a recepcion.
+  if (typeof ZOOKI_ROLE === "undefined" || ZOOKI_ROLE !== 3) return;
 
   loadRoleStats();
   loadChartsData();
-
-  if (ZOOKI_ROLE === 1 || ZOOKI_ROLE === 2) {
-    loadAgenda();
-  }
-  if (ZOOKI_ROLE === 3) {
-    loadTimeline();
-    startCountdown();
-  }
+  loadTimeline();
+  startCountdown();
 });
 
 // ── KPI Stats ────────────────────────────────────────────────────────────

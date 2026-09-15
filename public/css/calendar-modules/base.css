@@ -1,3 +1,5 @@
+@import url("../estados-cita.css?v=1");
+
 /* ═══════════════════════════════════════════
    ZOOKI AGENDA — Tokens y tema de FullCalendar
    ═══════════════════════════════════════════ */
@@ -18,35 +20,7 @@
     --cal-past-stripes: repeating-linear-gradient(135deg, transparent 0 7px, rgba(148, 163, 184, 0.12) 7px 8px);
     --cal-radius: 14px;
     --cal-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
-
-    /* Estados de cita y tipos de evento. Es la única definición de estos
-       colores: la leyenda, el calendario, el panel y los modales los leen de
-       aquí a través de los atributos data-estado y data-tipo. Antes estaban
-       repetidos en cuatro sitios, cada uno con valores distintos. */
-    --estado-pendiente-fg: #92400E;   --estado-pendiente-bg: #FEF3C7;   --estado-pendiente-dot: #F59E0B;
-    --estado-confirmada-fg: #1E40AF;  --estado-confirmada-bg: #DBEAFE;  --estado-confirmada-dot: #0052FF;
-    --estado-en_curso-fg: #3730A3;    --estado-en_curso-bg: #E0E7FF;    --estado-en_curso-dot: #6366F1;
-    --estado-completada-fg: #065F46;  --estado-completada-bg: #D1FAE5;  --estado-completada-dot: #10B981;
-    --estado-cancelada-fg: #991B1B;   --estado-cancelada-bg: #FEE2E2;   --estado-cancelada-dot: #EF4444;
-    --estado-no_asistio-fg: #475569;  --estado-no_asistio-bg: #F1F5F9;  --estado-no_asistio-dot: #94A3B8;
-    --estado-sin_cerrar-fg: #9F1239;  --estado-sin_cerrar-bg: #FFE4E6;  --estado-sin_cerrar-dot: #E11D48;
-    --estado-cerrada_sin_consulta-fg: #334155; --estado-cerrada_sin_consulta-bg: #E2E8F0; --estado-cerrada_sin_consulta-dot: #64748B;
-    --tipo-cita-fg: #1E40AF;            --tipo-cita-bg: #DBEAFE;            --tipo-cita-dot: #0052FF;
-    --tipo-vacunacion-fg: #115E59;      --tipo-vacunacion-bg: #CCFBF1;      --tipo-vacunacion-dot: #14B8A6;
-    --tipo-desparasitacion-fg: #5B21B6; --tipo-desparasitacion-bg: #EDE9FE; --tipo-desparasitacion-dot: #8B5CF6;
 }
-
-[data-estado="pendiente"]  { --e-fg: var(--estado-pendiente-fg);  --e-bg: var(--estado-pendiente-bg);  --e-dot: var(--estado-pendiente-dot); }
-[data-estado="confirmada"] { --e-fg: var(--estado-confirmada-fg); --e-bg: var(--estado-confirmada-bg); --e-dot: var(--estado-confirmada-dot); }
-[data-estado="en_curso"]   { --e-fg: var(--estado-en_curso-fg);   --e-bg: var(--estado-en_curso-bg);   --e-dot: var(--estado-en_curso-dot); }
-[data-estado="completada"] { --e-fg: var(--estado-completada-fg); --e-bg: var(--estado-completada-bg); --e-dot: var(--estado-completada-dot); }
-[data-estado="cancelada"]  { --e-fg: var(--estado-cancelada-fg);  --e-bg: var(--estado-cancelada-bg);  --e-dot: var(--estado-cancelada-dot); }
-[data-estado="no_asistio"] { --e-fg: var(--estado-no_asistio-fg); --e-bg: var(--estado-no_asistio-bg); --e-dot: var(--estado-no_asistio-dot); }
-[data-estado="sin_cerrar"] { --e-fg: var(--estado-sin_cerrar-fg); --e-bg: var(--estado-sin_cerrar-bg); --e-dot: var(--estado-sin_cerrar-dot); }
-[data-estado="cerrada_sin_consulta"] { --e-fg: var(--estado-cerrada_sin_consulta-fg); --e-bg: var(--estado-cerrada_sin_consulta-bg); --e-dot: var(--estado-cerrada_sin_consulta-dot); }
-[data-tipo="cita"]            { --e-fg: var(--tipo-cita-fg);            --e-bg: var(--tipo-cita-bg);            --e-dot: var(--tipo-cita-dot); }
-[data-tipo="vacunacion"]      { --e-fg: var(--tipo-vacunacion-fg);      --e-bg: var(--tipo-vacunacion-bg);      --e-dot: var(--tipo-vacunacion-dot); }
-[data-tipo="desparasitacion"] { --e-fg: var(--tipo-desparasitacion-fg); --e-bg: var(--tipo-desparasitacion-bg); --e-dot: var(--tipo-desparasitacion-dot); }
 
 /* ── Tema general ── */
 .agenda .fc {

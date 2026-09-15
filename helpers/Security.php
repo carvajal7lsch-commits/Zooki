@@ -140,7 +140,7 @@ class Security {
             'marcar_todas_notificaciones_leidas_ajax',
             // HU-42: el perfil propio lo consulta y edita cualquier rol; el
             // sujeto sale de la sesion, nunca del POST.
-            'get_mi_perfil_ajax', 'actualizar_mi_perfil_ajax',
+            'actualizar_mi_perfil_ajax',
         ] as $a) { $matriz[$a] = $todos; }
 
         // HU-42: el panel "Mi perfil" es del personal; el propietario tiene el
@@ -154,12 +154,11 @@ class Security {
             'cancelar_cita_ajax', 'enviar_email_ajax',
         ] as $a) { $matriz[$a] = $todos; }
 
-        // Administracion: usuarios, auditoria, configuracion y reportes.
+        // Administracion: usuarios, auditoria y configuracion.
         foreach ([
-            'admin_panel', 'admin_usuarios', 'admin_pacientes', 'admin_nuevo_paciente',
-            'admin_editar_paciente', 'admin_personal', 'admin_estadisticas', 'admin_citas',
-            'admin_reportes', 'admin_auditoria', 'admin_configuracion',
-            'listar_usuarios', 'registrar_usuario_ajax', 'actualizar_usuario_ajax',
+            'admin_panel', 'admin_usuarios', 'admin_citas',
+            'admin_auditoria', 'admin_configuracion',
+            'registrar_usuario_ajax', 'actualizar_usuario_ajax',
             'get_usuario_ajax', 'cambiar_estado_usuario_ajax',
             'resetear_password_usuario_ajax',
             'get_auditoria_ajax', 'listar_todas_citas_ajax',
@@ -171,8 +170,7 @@ class Security {
         // exclusivo del rol Veterinario, ni siquiera el administrador entra.
         // Coincide con la comprobacion en linea que el enrutador ya hacia.
         foreach ([
-            'vet_area', 'vet_atencion', 'vet_consultas', 'vet_nueva_consulta',
-            'vet_pacientes', 'vet_agenda', 'vet_historial',
+            'vet_area', 'vet_atencion', 'vet_consultas', 'vet_pacientes', 'vet_agenda',
             'registrar_consulta_ajax', 'registrar_vacuna_ajax',
             'registrar_desparasitacion_ajax', 'registrar_nueva_vacuna_ajax',
             'registrar_nuevo_laboratorio_ajax',
@@ -185,26 +183,23 @@ class Security {
         ] as $a) { $matriz[$a] = $soloVet; }
 
         // Consulta de informacion clinica: el administrador si la necesita
-        // para auditoria y reportes, recepcion no.
+        // para auditoria, recepcion no.
         foreach ([
-            'listar_consultas', 'listar_historial_ajax',
+            'listar_historial_ajax',
             'get_laboratorios_ajax', 'get_productos_desparasitacion_ajax',
-            'get_vacunas_por_especie_ajax', 'listar_vacunas_pendientes_ajax',
-            'listar_desparasitaciones_pendientes_ajax', 'get_vacunas_pendientes_panel_ajax',
+            'get_vacunas_por_especie_ajax',
         ] as $a) { $matriz[$a] = $clinico; }
 
         // Personal de la clinica: recepcion, pacientes, propietarios y citas.
         foreach ([
             'reception_dashboard', 'reception_agenda', 'reception_nueva_cita',
-            'reception_pacientes', 'reception_nuevo_paciente', 'calendario',
-            'listar_mascotas', 'nueva_mascota', 'editar_mascota', 'guardar_mascota',
-            'actualizar_mascota', 'buscar_mascotas', 'guardar_mascota_ajax',
+            'reception_pacientes', 'reception_nuevo_paciente',
+            'nueva_mascota', 'actualizar_mascota', 'buscar_mascotas', 'guardar_mascota_ajax',
             'actualizar_mascota_ajax', 'cambiar_estado_mascota_ajax', 'get_mascota_ajax',
             'listar_mascotas_ajax', 'listar_mascotas_propietario_ajax',
-            'nuevo_propietario', 'guardar_propietario', 'guardar_propietario_ajax',
+            'nuevo_propietario', 'guardar_propietario_ajax',
             'listar_propietarios_ajax', 'get_propietario_ajax', 'actualizar_propietario_ajax',
-            'registrar_color_ajax',
-            'registrar_cita_ajax', 'listar_citas_ajax', 'listar_calendario_ajax',
+            'registrar_cita_ajax', 'listar_citas_ajax',
             'get_cita_ajax', 'reprogramar_cita_ajax', 'confirmar_cita_ajax',
             'listar_veterinarios_ajax', 'listar_tipos_cita_ajax',
             'get_charts_data_ajax', 'get_role_stats_ajax', 'get_timeline_ajax',

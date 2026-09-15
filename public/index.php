@@ -172,6 +172,8 @@ switch ($action) {
             header("Location: index.php?action=login");
             exit();
         }
+        require_once "../controllers/PanelController.php";
+        $panel = (new PanelController())->datosAdministrador();
         require_once "../views/admin/layout.php";
         break;
 
@@ -184,69 +186,12 @@ switch ($action) {
         require_once "../views/admin/layout.php";
         break;
 
-    case "admin_pacientes":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        $content_view = "../views/admin/clientes.php";
-        require_once "../views/admin/layout.php";
-        break;
-
-    case "admin_nuevo_paciente":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        // Redirigir al listado de pacientes
-        header("Location: index.php?action=admin_pacientes");
-        exit();
-
-    case "admin_editar_paciente":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        require_once "../controllers/MascotaController.php";
-        $controller = new MascotaController();
-        $mascota = $controller->editar();
-        $content_view = "../views/admin/editar_paciente.php";
-        require_once "../views/admin/layout.php";
-        break;
-
-    case "admin_personal":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        // Redirigir a la vista unificada de usuarios
-        header("Location: index.php?action=admin_pacientes");
-        exit();
-
-    case "admin_estadisticas":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        // Redirigir al panel principal (son lo mismo)
-        header("Location: index.php?action=admin_panel");
-        exit();
-
     case "admin_citas":
         if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
             header("Location: index.php?action=login");
             exit();
         }
         $content_view = "../views/admin/citas.php";
-        require_once "../views/admin/layout.php";
-        break;
-
-    case "admin_reportes":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        $content_view = "../views/admin/reportes.php";
         require_once "../views/admin/layout.php";
         break;
 
@@ -278,6 +223,8 @@ switch ($action) {
             header("Location: index.php?action=login");
             exit();
         }
+        require_once "../controllers/PanelController.php";
+        $panel = (new PanelController())->datosVeterinario($_SESSION["usuario_doc"]);
         require_once "../views/vet/layout.php";
         break;
 
@@ -303,15 +250,6 @@ switch ($action) {
         require_once "../views/vet/layout.php";
         break;
 
-    case "vet_nueva_consulta":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 2) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        $content_view = "../views/vet/modal_consulta.php";
-        require_once "../views/vet/layout.php";
-        break;
-
     case "vet_pacientes":
         if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 2) {
             header("Location: index.php?action=login");
@@ -330,18 +268,6 @@ switch ($action) {
             exit();
         }
         $content_view = "../views/vet/calendario.php";
-        require_once "../views/vet/layout.php";
-        break;
-
-    case "vet_historial":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 2) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        require_once "../controllers/ConsultaController.php";
-        $controller = new ConsultaController();
-        $controller->listar();
-        $content_view = "../views/vet/consultas.php";
         require_once "../views/vet/layout.php";
         break;
 
@@ -477,23 +403,6 @@ switch ($action) {
         $controller->registrarAjax();
         break;
 
-    case "listar_mascotas":
-        if (!isset($_SESSION["usuario_doc"])) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        // Redirigir según rol
-        if ($_SESSION["usuario_id_rol"] == 1) {
-            header("Location: index.php?action=admin_pacientes");
-        } elseif ($_SESSION["usuario_id_rol"] == 2) {
-            header("Location: index.php?action=vet_pacientes");
-        } elseif ($_SESSION["usuario_id_rol"] == 3) {
-            header("Location: index.php?action=reception_pacientes");
-        } else {
-            header("Location: index.php?action=dashboard");
-        }
-        exit();
-
     case "nueva_mascota":
         if (!isset($_SESSION["usuario_doc"])) {
             header("Location: index.php?action=login");
@@ -503,41 +412,13 @@ switch ($action) {
         if ($_SESSION["usuario_id_rol"] == 2) {
             header("Location: index.php?action=vet_pacientes");
         } elseif ($_SESSION["usuario_id_rol"] == 1) {
-            header("Location: index.php?action=admin_pacientes");
+            header("Location: index.php?action=admin_usuarios");
         } elseif ($_SESSION["usuario_id_rol"] == 3) {
             header("Location: index.php?action=reception_pacientes");
         } else {
             header("Location: index.php?action=dashboard");
         }
         exit();
-
-    case "editar_mascota":
-        if (!isset($_SESSION["usuario_doc"])) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        // Redirigir según rol
-        if ($_SESSION["usuario_id_rol"] == 1) {
-            require_once "../controllers/MascotaController.php";
-            $controller = new MascotaController();
-            $mascota = $controller->editar();
-            $content_view = "../views/admin/editar_paciente.php";
-            require_once "../views/admin/layout.php";
-        } else {
-            header("Location: index.php?action=dashboard");
-            exit();
-        }
-        break;
-
-    case "guardar_mascota":
-        if ($_SESSION["usuario_id_rol"] == 2) {
-            header("Location: index.php?action=dashboard");
-            exit();
-        }
-        require_once "../controllers/MascotaController.php";
-        $controller = new MascotaController();
-        $controller->registrar();
-        break;
 
     case "actualizar_mascota":
         require_once "../controllers/MascotaController.php";
@@ -556,23 +437,13 @@ switch ($action) {
         }
         // Redirigir según rol
         if ($_SESSION["usuario_id_rol"] == 1) {
-            header("Location: index.php?action=admin_pacientes");
+            header("Location: index.php?action=admin_usuarios");
         } elseif ($_SESSION["usuario_id_rol"] == 3) {
             header("Location: index.php?action=reception_pacientes");
         } else {
             $content_view = "../views/admin/propietario_registro.php";
             require_once "../views/dashboard/index.php";
         }
-        break;
-
-    case "guardar_propietario":
-        if ($_SESSION["usuario_id_rol"] == 2) {
-            header("Location: index.php?action=dashboard");
-            exit();
-        }
-        require_once "../controllers/PropietarioController.php";
-        $controller = new PropietarioController();
-        $controller->registrar();
         break;
 
     case "guardar_propietario_ajax":
@@ -650,29 +521,7 @@ switch ($action) {
         $controller = new MascotaController();
         $controller->listarColoresAjax();
         break;
-    case "registrar_color_ajax":
-        require_once "../controllers/MascotaController.php";
-        $controller = new MascotaController();
-        $controller->registrarColorAjax();
-        break;
-
     // RUTAS SPRINT 2: CONSULTAS MÉDICAS
-    case "listar_consultas":
-        if (!isset($_SESSION["usuario_doc"])) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        // Redirigir según rol
-        if ($_SESSION["usuario_id_rol"] == 2) {
-            header("Location: index.php?action=vet_consultas");
-        } elseif ($_SESSION["usuario_id_rol"] == 1) {
-            header("Location: index.php?action=admin_panel");
-        } else {
-            require_once "../controllers/ConsultaController.php";
-            $controller = new ConsultaController();
-            $controller->listar();
-        }
-        exit();
     case "registrar_consulta_ajax":
         if (
             !isset($_SESSION["usuario_doc"]) ||
@@ -710,11 +559,6 @@ switch ($action) {
         $controller = new VacunaController();
         $controller->registrarAjax();
         break;
-    case "listar_vacunas_pendientes_ajax":
-        require_once "../controllers/VacunaController.php";
-        $controller = new VacunaController();
-        $controller->listarPendientesAjax();
-        break;
     case "get_vacunas_por_especie_ajax":
         require_once "../controllers/VacunaController.php";
         $controller = new VacunaController();
@@ -741,11 +585,6 @@ switch ($action) {
         $controller->getLaboratoriosAjax();
         break;
 
-    case "get_vacunas_pendientes_panel_ajax":
-        require_once "../controllers/VacunaController.php";
-        $controller = new VacunaController();
-        $controller->getVacunasPendientesPanelAjax();
-        break;
     case "registrar_nuevo_laboratorio_ajax":
         if (
             !isset($_SESSION["usuario_doc"]) ||
@@ -777,11 +616,6 @@ switch ($action) {
         require_once "../controllers/DesparasitacionController.php";
         $controller = new DesparasitacionController();
         $controller->registrarAjax();
-        break;
-    case "listar_desparasitaciones_pendientes_ajax":
-        require_once "../controllers/DesparasitacionController.php";
-        $controller = new DesparasitacionController();
-        $controller->listarPendientesAjax();
         break;
     case "get_productos_desparasitacion_ajax":
         require_once "../controllers/DesparasitacionController.php";
@@ -825,27 +659,6 @@ switch ($action) {
         $controller = new CitaController();
         $controller->listarTodasCitasAjax();
         break;
-    case "listar_calendario_ajax":
-        require_once "../controllers/CitaController.php";
-        $controller = new CitaController();
-        $controller->listarCalendarioAjax();
-        break;
-    case "calendario":
-        if (!isset($_SESSION["usuario_doc"])) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        // Redirigir según rol
-        if ($_SESSION["usuario_id_rol"] == 1) {
-            header("Location: index.php?action=admin_citas");
-        } elseif ($_SESSION["usuario_id_rol"] == 2) {
-            header("Location: index.php?action=vet_agenda");
-        } elseif ($_SESSION["usuario_id_rol"] == 3) {
-            header("Location: index.php?action=reception_agenda");
-        } else {
-            header("Location: index.php?action=portal_propietario");
-        }
-        exit();
     case "listar_veterinarios_ajax":
         require_once "../controllers/CitaController.php";
         $controller = new CitaController();
@@ -905,17 +718,6 @@ switch ($action) {
         break;
 
     // RUTAS SPRINT 5: GESTIÓN DE USUARIOS (ADMIN)
-    case "listar_usuarios":
-        if (
-            !isset($_SESSION["usuario_doc"]) ||
-            $_SESSION["usuario_rol"] != "administrador"
-        ) {
-            header("Location: index.php?action=dashboard");
-            exit();
-        }
-        header("Location: index.php?action=admin_personal");
-        exit();
-
     case "registrar_usuario_ajax":
         try {
             if (
@@ -996,12 +798,6 @@ switch ($action) {
         break;
 
     // HU-42: perfil propio, disponible para los cuatro roles.
-    case "get_mi_perfil_ajax":
-        require_once "../controllers/PerfilController.php";
-        $controller = new PerfilController();
-        $controller->verAjax();
-        break;
-
     case "actualizar_mi_perfil_ajax":
         require_once "../controllers/PerfilController.php";
         $controller = new PerfilController();

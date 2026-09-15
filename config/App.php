@@ -6,7 +6,7 @@
  */
 class App {
     /** Versión actual del sistema (sincronizada con el historial del README). */
-    const VERSION = '1.9.0';
+    const VERSION = '1.9.1';
 
     /** Nombre comercial del producto. */
     const NAME = 'Zooki';

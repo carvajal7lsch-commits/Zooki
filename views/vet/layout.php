@@ -18,12 +18,12 @@
 
     <!-- Estilos del sistema -->
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css?v=3">
+    <link rel="stylesheet" href="css/dashboard.css?v=4">
     <link rel="stylesheet" href="css/usuarios.css">
     <link rel="stylesheet" href="css/medical-module.css?v=11">
     <link rel="stylesheet" href="css/pill-sidebar.css">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
-    <link rel="stylesheet" href="css/perfil.css?v=1">
+    <link rel="stylesheet" href="css/perfil.css?v=2">
     <?php endif; ?>
     <link rel="stylesheet" href="css/dark-mode.css">
     <?php if (($_GET['action'] ?? '') === 'vet_agenda'): ?>
@@ -31,6 +31,9 @@
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
     <link rel="stylesheet" href="css/atencion.css?v=1">
+    <?php endif; ?>
+    <?php if (!isset($content_view)): ?>
+    <link rel="stylesheet" href="css/panel.css?v=2">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
 </head>
@@ -89,7 +92,7 @@
                 <div class="header-left">
                     <?php 
                         $moduleTitles = [
-                            'vet_area' => 'Dashboard General',
+                            'vet_area' => 'Dashboard',
                             'vet_consultas' => '',
                             'vet_pacientes' => '',
                             'vet_agenda' => 'Calendario',
@@ -157,9 +160,12 @@
     <script src="js/avisos.js"></script>
     <script src="js/password-policy.js"></script>
     <script src="js/dashboard.js?v=5"></script>
-    <script src="js/medical-module.js?v=14"></script>
+    <script src="js/medical-module.js?v=15"></script>
     <script src="js/csrf.js"></script>
     <script src="js/extras.js"></script>
+    <?php if (!isset($content_view)): ?>
+    <script src="js/panel-vet.js?v=1"></script>
+    <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
     <script src="js/atencion.js?v=1"></script>
     <?php endif; ?>

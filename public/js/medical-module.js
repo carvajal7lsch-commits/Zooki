@@ -479,6 +479,15 @@ async function pedirJson(url) {
  * ficha: tres pantallas seguidas. Ahora los datos se piden a la vez y la
  * vista cambia una sola vez, con la ficha ya pintada.
  */
+// Enlace directo a la ficha desde los paneles de inicio:
+// index.php?action=vet_pacientes&propietario=DOC&mascota=ID
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const doc = params.get('propietario');
+    if (!doc || !document.getElementById('dossierView')) return;
+    viewPetInDossier(doc, params.get('mascota'));
+});
+
 function viewPetInDossier(doc, petId) {
     return openOwnerDossier(doc, { petId });
 }

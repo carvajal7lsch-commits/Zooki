@@ -18,13 +18,19 @@
 
     <!-- Estilos del sistema -->
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/dashboard.css?v=3">
+    <link rel="stylesheet" href="css/dashboard.css?v=4">
     <link rel="stylesheet" href="css/usuarios.css">
     <link rel="stylesheet" href="css/pill-sidebar.css">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
-    <link rel="stylesheet" href="css/perfil.css?v=1">
+    <link rel="stylesheet" href="css/perfil.css?v=2">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
+    <?php if (($_GET['action'] ?? '') === 'admin_configuracion'): ?>
+    <link rel="stylesheet" href="css/horarios.css?v=1">
+    <?php endif; ?>
+    <?php if (!isset($content_view)): ?>
+    <link rel="stylesheet" href="css/panel.css?v=2">
+    <?php endif; ?>
 </head>
 <body>
     <div id="global-loader"><div class="spinner"></div></div>
@@ -62,7 +68,6 @@
                 <?= pillNavLink("index.php?action=admin_panel", "fa-th-large", $__action === "admin_panel") ?>
                 <?= pillNavLink("index.php?action=admin_usuarios", "fa-users", $__action === "admin_usuarios") ?>
                 <?= pillNavLink("index.php?action=admin_citas", "fa-calendar-alt", $__action === "admin_citas") ?>
-                <?php // echo pillNavLink("index.php?action=admin_reportes", "fa-chart-pie", $__action === "admin_reportes"); ?>
                 <?php // echo pillNavLink("index.php?action=admin_auditoria", "fa-shield-alt", $__action === "admin_auditoria"); ?>
                 <?= pillNavLink("index.php?action=admin_configuracion", "fa-cog", $__action === "admin_configuracion") ?>
                 <?= pillNavLink("index.php?action=mi_perfil", "fa-user-circle", $__action === "mi_perfil") ?>
@@ -86,7 +91,6 @@
                         switch($__action) {
                             case "admin_usuarios": $tituloModulo = ""; break;
                             case "admin_citas": $tituloModulo = ""; break;
-                            case "admin_reportes": $tituloModulo = "Reportes"; break;
                             case "admin_configuracion": $tituloModulo = "Configuración"; break;
                             case "admin_auditoria": $tituloModulo = "Auditoría"; break;
                             case "admin_panel": $tituloModulo = "Dashboard"; break;
@@ -150,5 +154,8 @@
     <script src="js/dashboard.js?v=5"></script>
     <script src="js/csrf.js"></script>
     <script src="js/extras.js"></script>
+    <?php if (!isset($content_view)): ?>
+    <script src="js/panel-admin.js?v=1"></script>
+    <?php endif; ?>
 </body>
 </html>

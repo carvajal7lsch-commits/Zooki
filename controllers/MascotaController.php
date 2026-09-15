@@ -16,79 +16,6 @@ class MascotaController {
         $this->usuarioModel = new Usuario($this->db);
     }
 
-    public function registrar() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // Validaciones básicas
-            $nombre = trim($_POST['nombre']);
-            $especie = $_POST['especie'];
-            $doc_propietario = trim($_POST['doc_propietario']);
-            $peso = trim($_POST['peso']);
-
-            if (empty($nombre) || empty($especie) || empty($doc_propietario) || empty($peso)) {
-                $this->redirectWithError("Por favor complete los campos obligatorios (*).");
-            }
-
-            // IMPORTANTE: El HC ya no se genera al registrar la mascota (Sprint 2)
-            $hc = "";
-
-            // Verificar si el propietario existe
-            $propietario = $this->usuarioModel->getUserByDocumento($doc_propietario);
-            if (!$propietario) {
-                $this->redirectWithError("El propietario con documento $doc_propietario no está registrado.");
-            }
-
-            // Manejo de la foto. M1-02/M1-14: se delega en el mismo metodo que
-            // usan las rutas AJAX, que genera el nombre del archivo en el
-            // servidor y valida el contenido real de la imagen.
-            $foto_nombre = $this->procesarFotoMascota($nombre, $errorFoto);
-            if ($foto_nombre === false) {
-                $this->redirectWithError($errorFoto);
-            }
-
-            // Preparar datos para el modelo
-            $data = [
-                'numero_historia_clinica' => $hc,
-                'doc_propietario' => $doc_propietario,
-                'nombre' => $nombre,
-                'id_especie' => $_POST['especie'],
-                'id_raza' => $_POST['raza'],
-                'fecha_nacimiento' => !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : null,
-                'peso' => $peso,
-                'sexo' => $_POST['sexo'],
-                'color' => '', // Legacy temporal
-                'url_foto' => $foto_nombre
-            ];
-
-            $newId = $this->mascotaModel->insert($data);
-            if ($newId) {
-                // Guardar Colores (Relación Muchos a Muchos)
-                $colores = $_POST['colores'] ?? [];
-                $this->mascotaModel->saveColores($newId, $colores);
-
-                $_SESSION['success_message'] = "¡Mascota registrada con éxito!";
-                header("Location: index.php?action=dashboard");
-                exit();
-            } else {
-                $this->redirectWithError("Error al guardar en la base de datos.");
-            }
-        }
-    }
-
-    public function editar() {
-        $id = $_GET['id'] ?? null;
-        if (!$id) {
-            header("Location: index.php?action=dashboard");
-            exit();
-        }
-
-        $mascota = $this->mascotaModel->getById($id);
-        if (!$mascota) {
-            $this->redirectWithError("Mascota no encontrada.");
-        }
-
-        return $mascota;
-    }
-
     public function actualizar() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $id = $_POST['id_mascota'];
@@ -610,32 +537,6 @@ class MascotaController {
         header('Content-Type: application/json');
         echo json_encode($colores);
         exit;
-    }
-
-    public function registrarColorAjax() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $nombre = trim((string) ($_POST['nombre_color'] ?? ''));
-            if (empty($nombre)) {
-                echo json_encode(['success' => false, 'message' => 'El nombre del color no puede estar vacío.']);
-                exit;
-            }
-
-            // M1-12: la consulta vive en el modelo, no aqui.
-            $existente = $this->mascotaModel->buscarColorPorNombre($nombre);
-            if ($existente !== null) {
-                echo json_encode(['success' => true, 'id_color' => $existente, 'nombre_color' => $nombre]);
-                exit;
-            }
-
-            $id = $this->mascotaModel->insertColor($nombre);
-            if ($id) {
-                echo json_encode(['success' => true, 'id_color' => $id, 'nombre_color' => $nombre]);
-                exit;
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Error al guardar el color en la base de datos.']);
-                exit;
-            }
-        }
     }
 
     /**

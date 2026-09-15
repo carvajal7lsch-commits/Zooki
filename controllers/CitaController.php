@@ -385,59 +385,6 @@ class CitaController {
         exit;
     }
 
-    public function listarCalendarioAjax() {
-        require_once '../models/Vacuna.php';
-        require_once '../models/Desparasitacion.php';
-        
-        $fecha_inicio = date('Y-m-d');
-        $fecha_fin = date('Y-m-d', strtotime('+30 days'));
-        
-        if (isset($_GET['inicio']) && isset($_GET['fin'])) {
-            $fecha_inicio = $_GET['inicio'];
-            $fecha_fin = $_GET['fin'];
-        }
-
-        $vacunaModel = new Vacuna($this->db);
-        $desparasitacionModel = new Desparasitacion($this->db);
-
-        // Obtener vacunaciones en el rango de fechas
-        $queryVacunas = "SELECT v.id_vacuna as id, v.fecha_proxima_dosis as fecha, 'vacunacion' as tipo, 
-                        v.nombre_vacuna as motivo, m.nombre as mascota_nombre, u.nombre_completo as propietario_nombre,
-                        v.fecha_proxima_dosis as fecha_proxima_dosis
-                        FROM vacunas v
-                        JOIN mascotas m ON v.id_mascota = m.id_mascota
-                        JOIN usuarios u ON m.doc_propietario = u.documento
-                        WHERE v.fecha_proxima_dosis BETWEEN :inicio AND :fin
-                        ORDER BY v.fecha_proxima_dosis ASC";
-        $stmtVacunas = $this->db->prepare($queryVacunas);
-        $stmtVacunas->bindParam(':inicio', $fecha_inicio);
-        $stmtVacunas->bindParam(':fin', $fecha_fin);
-        $stmtVacunas->execute();
-        $vacunas = $stmtVacunas->fetchAll(PDO::FETCH_ASSOC);
-
-        // Obtener desparasitaciones en el rango de fechas
-        $queryDesparasitaciones = "SELECT d.id_desparasitacion as id, d.fecha_proxima as fecha, 'desparasitacion' as tipo,
-                                  CONCAT(d.tipo, ' - ', d.producto) as motivo, m.nombre as mascota_nombre, u.nombre_completo as propietario_nombre,
-                                  d.fecha_proxima as fecha_proxima_dosis
-                                  FROM desparasitaciones d
-                                  JOIN mascotas m ON d.id_mascota = m.id_mascota
-                                  JOIN usuarios u ON m.doc_propietario = u.documento
-                                  WHERE d.fecha_proxima BETWEEN :inicio AND :fin
-                                  ORDER BY d.fecha_proxima ASC";
-        $stmtDesparasitaciones = $this->db->prepare($queryDesparasitaciones);
-        $stmtDesparasitaciones->bindParam(':inicio', $fecha_inicio);
-        $stmtDesparasitaciones->bindParam(':fin', $fecha_fin);
-        $stmtDesparasitaciones->execute();
-        $desparasitaciones = $stmtDesparasitaciones->fetchAll(PDO::FETCH_ASSOC);
-
-        // Combinar ambos resultados
-        $eventos = array_merge($vacunas, $desparasitaciones);
-        
-        header('Content-Type: application/json');
-        echo json_encode($eventos);
-        exit;
-    }
-
     public function listarVeterinariosAjax() {
         $query = "SELECT documento, nombre_completo FROM usuarios WHERE id_rol = 2 AND estado = 1"; // Asumiendo que 2 es Veterinario
         $stmt = $this->db->prepare($query);

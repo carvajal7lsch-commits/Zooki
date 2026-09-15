@@ -198,6 +198,34 @@ class Auditoria {
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
+    /**
+     * HU-42: actividad reciente de la propia cuenta, de la más nueva a la más
+     * antigua: accesos, intentos fallidos y cambios sobre la cuenta.
+     */
+    public function actividadDeCuenta(string $documento, int $limite = 8): array {
+        $limite = max(1, min(50, $limite));
+        $stmt = $this->db->prepare(
+            "SELECT fecha_hora, accion, ip_address, descripcion
+             FROM auditoria_sistema
+             WHERE usuario_doc = ?
+               AND (accion IN ('LOGIN', 'LOGIN_FAIL')
+                    OR (accion = 'UPDATE' AND tabla_afectada = 'usuarios' AND registro_id = ?))
+             ORDER BY fecha_hora DESC, id_auditoria DESC
+             LIMIT $limite"
+        );
+        $stmt->execute([$documento, $documento]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** Intentos de acceso fallidos a la cuenta desde una fecha (hora de la base). */
+    public function contarAccesosFallidos(string $documento, string $desde): int {
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) FROM auditoria_sistema WHERE usuario_doc = ? AND accion = 'LOGIN_FAIL' AND fecha_hora >= ?"
+        );
+        $stmt->execute([$documento, $desde]);
+        return (int) $stmt->fetchColumn();
+    }
+
     public function getDistinctTablas() {
         $stmt = $this->db->query("SELECT DISTINCT tabla_afectada FROM auditoria_sistema WHERE tabla_afectada IS NOT NULL ORDER BY tabla_afectada");
         return $stmt->fetchAll(PDO::FETCH_COLUMN);

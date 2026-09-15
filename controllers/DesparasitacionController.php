@@ -76,13 +76,6 @@ class DesparasitacionController {
         }
     }
 
-    public function listarPendientesAjax() {
-        $pendientes = $this->model->getPendientesSemana();
-        header('Content-Type: application/json');
-        echo json_encode($pendientes);
-        exit;
-    }
-
     public function registrarNuevoProductoAjax() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nombre_producto = trim($_POST['nombre_producto']);

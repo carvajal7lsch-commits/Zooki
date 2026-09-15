@@ -105,6 +105,15 @@ class Usuario
      * al navegador. Quien necesite verificar la contrasena debe usar
      * getUserByDocumento(), que si la trae y no se expone nunca.
      */
+    /** HU-42: fecha en que se creó la cuenta, para «Miembro desde». */
+    public function getFechaRegistro($documento): ?string
+    {
+        $stmt = $this->conn->prepare("SELECT fecha_registro FROM " . $this->table_name . " WHERE documento = :doc");
+        $stmt->execute([':doc' => $documento]);
+        $fecha = $stmt->fetchColumn();
+        return $fecha ? (string) $fecha : null;
+    }
+
     public function getById($documento)
     {
         $query =

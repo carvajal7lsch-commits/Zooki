@@ -176,7 +176,9 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  overflow-x: hidden;
+  /* clip y no hidden: hidden convierte a .main-content en un contenedor con
+     scroll propio, y aparecía una segunda barra junto a la del navegador. */
+  overflow-x: clip;
   /* Sin "forwards": dejaba aplicado para siempre el transform final, y un
      transform convierte a .main-content en un contexto de apilamiento propio.
      Ningún modal ni drawer de dentro podía pasar por encima de la barra
@@ -187,12 +189,10 @@ body {
 @keyframes pageFadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -200,14 +200,16 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 1rem 2.5rem;
   background: transparent;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  margin-left: 1.5rem;
+  /* Sin margen: el titulo queda alineado con el borde del contenido,
+     que usa el mismo padding lateral que la cabecera (2.5rem). */
+  margin-left: 0;
 }
 
 .top-header-title {
