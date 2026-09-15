@@ -3,7 +3,7 @@
    Automatically generated modular imports to reduce complexity.
 */
 
-@import url('dashboard-modules/layout.css');
+@import url('dashboard-modules/layout.css?v=3');
 @import url('dashboard-modules/bento-kpi.css');
 @import url('dashboard-modules/users.css');
 @import url('dashboard-modules/vet-panel.css');

@@ -83,7 +83,11 @@ $nombre = explode(" ", trim($_SESSION["usuario_nombre"]))[0];
                 <option value="">Todos</option>
                 <option value="pendiente">Pendiente</option>
                 <option value="confirmada">Confirmada</option>
+                <option value="en_curso">En curso</option>
                 <option value="completada">Completada</option>
+                <option value="no_asistio">No asistió</option>
+                <option value="sin_cerrar">Sin cerrar</option>
+                <option value="cerrada_sin_consulta">Cerrada sin consulta</option>
                 <option value="cancelada">Cancelada</option>
             </select>
         </div>
@@ -381,7 +385,11 @@ function renderizarKanban(citas, vetFiltro) {
     const STATE_COLORS = {
         pendiente: '#F59E0B',
         confirmada: '#5560FF',
+        en_curso: '#0EA5E9',
         completada: '#10B981',
+        no_asistio: '#94A3B8',
+        sin_cerrar: '#E11D48',
+        cerrada_sin_consulta: '#64748B',
         cancelada: '#EF4444'
     };
     
