@@ -603,6 +603,53 @@
     transform: translateY(-50%) !important;
     color: #94a3b8 !important;
 }
+/* Resultados del buscador de "Atención sin cita". El contenedor lleva la
+   clase genérica .suggestions-list, que es un desplegable absoluto y oculto
+   por defecto (pensado para autocompletar dentro de un formulario): los
+   resultados llegaban pero nunca se veían. Aquí es una lista fija del modal. */
+#consultaPetSuggestions {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    max-height: 340px;
+    border: none;
+    box-shadow: none;
+}
+
+.consulta-sin-cita-aviso {
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+    color: #9a3412;
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+.consulta-sin-cita-aviso a {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.consulta-sin-cita-aviso a:hover {
+    text-decoration: underline;
+}
+
+.consultation-sin-cita-badge {
+    margin-right: auto;
+    align-self: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #c2410c;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
 .premium-search-input-modal {
     width: 100% !important;
     padding: 0.75rem 1rem 0.75rem 2.75rem !important;

@@ -15,21 +15,11 @@ class Security {
     ];
 
     /**
-     * Lista de acciones AJAX que requieren sesión activa
+     * Acciones que un usuario con contrasena temporal si puede ejecutar
+     * (T-05). Todo lo demas queda bloqueado hasta que la cambie.
      */
-    private static array $ajaxActions = [
-        'registrar_usuario_ajax', 'actualizar_usuario_ajax', 'cambiar_estado_usuario_ajax',
-        'registrar_cita_ajax', 'confirmar_cita_ajax', 'cancelar_cita_ajax',
-        'reprogramar_cita_ajax', 'iniciar_cita_ajax', 'completar_cita_ajax',
-        'registrar_consulta_ajax', 'registrar_vacuna_ajax', 'registrar_desparasitacion_ajax',
-        'get_pendientes_ajax', 'get_timeline_ajax', 'get_vacunas_pendientes_panel_ajax',
-        'registrar_nueva_vacuna_ajax', 'registrar_nuevo_laboratorio_ajax',
-        'registrar_nuevo_producto_ajax', 'actualizar_mascota_ajax',
-        'get_laboratorios_ajax', 'get_productos_ajax', 'get_vacunas_por_especie_ajax',
-        'listar_pendientes_vacunas_ajax', 'listar_pendientes_desparasitaciones_ajax',
-        'get_auditoria_ajax', 'buscar_global_ajax',
-        'portal_get_tipos_cita_ajax', 'portal_get_vets_ajax', 'portal_get_horas_ajax', 'portal_agendar_cita_ajax',
-        'get_notificaciones_ajax', 'ver_detalle_mascota_propietario_ajax'
+    private static array $accionesConPasswordTemporal = [
+        'cambiar_password', 'cambiar_password_ajax', 'logout',
     ];
 
     /**
@@ -51,23 +41,43 @@ class Security {
      * Ejecuta todas las validaciones de seguridad según el contexto.
      */
     public static function check(string $action): void {
-        self::validateAjaxSession($action);
         self::validateRole($action);
+        self::validatePasswordTemporal($action);
         self::validateCsrf($action);
     }
 
     /**
-     * Valida que las peticiones AJAX tengan sesión activa.
+     * T-05 — Un usuario con contrasena temporal (debe_cambiar_password = 1) no
+     * puede operar el sistema. Antes solo se le redirigia al formulario justo
+     * despues del login: bastaba escribir otra URL para saltarselo, y la clave
+     * enviada por correo seguia siendo valida de forma indefinida. El control
+     * vive aqui, en el front controller, asi que cubre tambien los endpoints
+     * AJAX invocados directamente.
      */
-    private static function validateAjaxSession(string $action): void {
-        if (!in_array($action, self::$ajaxActions, true)) return;
+    private static function validatePasswordTemporal(string $action): void {
+        if (empty($_SESSION['usuario_doc'])) return;
+        if (empty($_SESSION['debe_cambiar_password'])) return;
+        if (in_array($action, self::$accionesConPasswordTemporal, true)) return;
+        if (in_array($action, self::$publicActions, true)) return;
 
-        if (empty($_SESSION['usuario_doc'])) {
+        $mensaje = 'Debes cambiar tu contrasena temporal antes de continuar.';
+
+        // No se reutiliza denegar(): su rama 403 redirige al dashboard, que
+        // aqui tambien esta bloqueado y provocaria un bucle de redirecciones.
+        if (self::isAjax() || str_ends_with($action, '_ajax')) {
             header('Content-Type: application/json');
-            http_response_code(401);
-            echo json_encode(['success' => false, 'message' => 'Sesión expirada. Inicia sesión nuevamente.']);
+            http_response_code(403);
+            echo json_encode([
+                'success'  => false,
+                'message'  => $mensaje,
+                'redirect' => 'index.php?action=cambiar_password',
+            ]);
             exit;
         }
+
+        $_SESSION['error'] = $mensaje;
+        header('Location: index.php?action=cambiar_password');
+        exit;
     }
 
     /**
@@ -128,7 +138,14 @@ class Security {
             'dashboard', 'logout', 'cambiar_password', 'cambiar_password_ajax',
             'get_notificaciones_ajax', 'marcar_notificacion_leida_ajax',
             'marcar_todas_notificaciones_leidas_ajax',
+            // HU-42: el perfil propio lo consulta y edita cualquier rol; el
+            // sujeto sale de la sesion, nunca del POST.
+            'get_mi_perfil_ajax', 'actualizar_mi_perfil_ajax',
         ] as $a) { $matriz[$a] = $todos; }
+
+        // HU-42: el panel "Mi perfil" es del personal; el propietario tiene el
+        // suyo en el portal.
+        $matriz['mi_perfil'] = $staff;
 
         // Catalogos y agenda que el portal del propietario tambien consume.
         foreach ([
@@ -144,7 +161,8 @@ class Security {
             'admin_reportes', 'admin_auditoria', 'admin_configuracion',
             'listar_usuarios', 'registrar_usuario_ajax', 'actualizar_usuario_ajax',
             'get_usuario_ajax', 'cambiar_estado_usuario_ajax',
-            'get_auditoria_ajax', 'get_dashboard_stats_ajax', 'listar_todas_citas_ajax',
+            'resetear_password_usuario_ajax',
+            'get_auditoria_ajax', 'listar_todas_citas_ajax',
             'get_horarios_clinica_ajax', 'guardar_horarios_clinica_ajax',
             'restaurar_horarios_defecto_ajax',
         ] as $a) { $matriz[$a] = $admin; }
@@ -159,6 +177,11 @@ class Security {
             'registrar_desparasitacion_ajax', 'registrar_nueva_vacuna_ajax',
             'registrar_nuevo_laboratorio_ajax',
             'registrar_nuevo_producto_desparasitacion_ajax',
+            // RN-408: atender una cita (iniciarla, cerrarla o marcarla como no
+            // asistida) es del veterinario asignado. Recepción y administración
+            // podían iniciarla, pero la pantalla de atención es solo del
+            // veterinario: la cita quedaba "en curso" sin que nadie la atendiera.
+            'iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax', 'cerrar_sin_consulta_ajax',
         ] as $a) { $matriz[$a] = $soloVet; }
 
         // Consulta de informacion clinica: el administrador si la necesita
@@ -182,8 +205,7 @@ class Security {
             'listar_propietarios_ajax', 'get_propietario_ajax', 'actualizar_propietario_ajax',
             'registrar_color_ajax',
             'registrar_cita_ajax', 'listar_citas_ajax', 'listar_calendario_ajax',
-            'get_cita_ajax', 'reprogramar_cita_ajax', 'iniciar_cita_ajax',
-            'completar_cita_ajax', 'confirmar_cita_ajax',
+            'get_cita_ajax', 'reprogramar_cita_ajax', 'confirmar_cita_ajax',
             'listar_veterinarios_ajax', 'listar_tipos_cita_ajax',
             'get_charts_data_ajax', 'get_role_stats_ajax', 'get_timeline_ajax',
             'get_pendientes_ajax',
@@ -233,11 +255,19 @@ class Security {
 
         $permitidos = self::actionRoles()[$action] ?? null;
 
-        // Accion no registrada en la matriz: se deja pasar para no interferir
-        // con el `default` del enrutador, que ya responde a rutas inexistentes.
-        // Todo endpoint real del enrutador esta cubierto arriba; si se agrega
-        // uno nuevo, hay que registrarlo aqui.
-        if ($permitidos === null) return;
+        // T-15 — Se deniega por defecto. Antes una accion ausente de la matriz
+        // pasaba sin control: bastaba agregar una ruta al enrutador y olvidarse
+        // de registrarla aqui para dejarla abierta a cualquier sesion, en
+        // silencio. Ahora el olvido se nota de inmediato y falla del lado
+        // seguro. Las rutas inexistentes las sigue atendiendo el `default` del
+        // enrutador, pero solo para usuarios ya autenticados.
+        if ($permitidos === null) {
+            if (self::rolActual() === null) {
+                self::denegar($action, 401, 'Sesion expirada. Inicia sesion nuevamente.');
+            }
+            error_log(sprintf('RBAC: accion "%s" sin entrada en la matriz de autorizacion', $action));
+            self::denegar($action, 403, 'No tienes permisos para realizar esta accion.');
+        }
 
         $rol = self::rolActual();
 

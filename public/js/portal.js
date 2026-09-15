@@ -1,11 +1,6 @@
 /* Portal del propietario — Zooki (Rediseño Estilo App Móvil) */
 
-function escapeHtml(str) {
-    if (str == null) return '';
-    const div = document.createElement('div');
-    div.textContent = String(str);
-    return div.innerHTML;
-}
+// escapeHtml() vive en avisos.js, que este layout carga antes (DRY).
 
 function formatFecha(dateStr) {
     if (!dateStr) return '—';
@@ -524,7 +519,7 @@ async function verDetalle(id) {
     try {
         const res = await (await fetch(`index.php?action=ver_detalle_mascota_propietario_ajax&id_mascota=${id}`)).json();
         if (!res.success) {
-            alert(res.message || 'Error al obtener detalles');
+            zookiAviso(res.message || 'No se pudieron obtener los detalles.');
             cerrarDrawer();
             return;
         }
@@ -561,7 +556,11 @@ async function verDetalle(id) {
                     filesHtml += `<strong style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 0.25rem;">Archivos adjuntos:</strong>`;
                     h.archivos.forEach(file => {
                         filesHtml += `
-                        <a href="${escapeHtml(file.ruta_archivo)}" target="_blank" class="portal-file-link" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--z-primary); text-decoration: none; margin-right: 1rem; background: rgba(0,82,255,0.05); padding: 0.25rem 0.5rem; border-radius: 6px; transition: background 0.2s;">
+                        <!-- M2-05: enlazaba ruta_archivo directo (uploads/clinicos/...),
+                             saltandose el control de acceso. Solo lo frenaba el .htaccess,
+                             que cubre Apache con AllowOverride y nada mas. Ahora pasa por
+                             ver_archivo.php, que verifica que la mascota sea del dueno. -->
+                        <a href="ver_archivo.php?id=${encodeURIComponent(file.id_archivo)}" target="_blank" class="portal-file-link" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--z-primary); text-decoration: none; margin-right: 1rem; background: rgba(0,82,255,0.05); padding: 0.25rem 0.5rem; border-radius: 6px; transition: background 0.2s;">
                             <i class="ri-file-pdf-line"></i> ${escapeHtml(file.nombre_original)}
                         </a>`;
                     });
@@ -669,7 +668,7 @@ async function verDetalle(id) {
 
     } catch (e) {
         console.error(e);
-        alert('Error al cargar los datos de la mascota');
+        zookiAviso('No se pudieron cargar los datos de la mascota.');
         cerrarDrawer();
     }
 }
@@ -931,7 +930,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filtrados.forEach(e => {
             if (e.tipo === 'cita') {
-                const statusStyle = e.estado === 'completada' ? 'background:var(--z-success-soft);color:var(--z-success);' : (e.estado === 'programada' ? 'background:var(--z-primary-soft);color:var(--z-primary);' : '');
+                const statusStyle = e.estado === 'completada' ? 'background:var(--z-success-soft);color:var(--z-success);' : (['pendiente', 'confirmada'].includes(e.estado) ? 'background:var(--z-primary-soft);color:var(--z-primary);' : '');
                 htmlHistorial += `
                 <div class="agenda-list-item" style="cursor: pointer; border-left: 3px solid var(--z-primary);" onclick="mostrarDetalleCita(${e.id_cita})">
                     <div class="agenda-icon-wrap" style="background:var(--z-primary-soft); color:var(--z-primary); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
@@ -2011,14 +2010,20 @@ async function mostrarDetalleCita(idCita) {
         // Rellenar Badge de Estado
         const badge = document.getElementById('detCitaEstado');
         badge.className = 'status-badge';
-        if (cita.estado === 'programada') {
+        // "programada" no existe en la base: los estados reales son
+        // pendiente/confirmada, así que ninguna cita salía como activa.
+        if (['pendiente', 'confirmada', 'en_curso'].includes(cita.estado)) {
             badge.style.backgroundColor = 'var(--z-primary-soft)';
             badge.style.color = 'var(--z-primary)';
-            badge.textContent = 'Activa';
+            badge.textContent = cita.estado === 'en_curso' ? 'En atención' : 'Activa';
         } else if (cita.estado === 'completada') {
             badge.style.backgroundColor = 'var(--z-success-soft)';
             badge.style.color = 'var(--z-success)';
             badge.textContent = 'Completada';
+        } else if (cita.estado === 'no_asistio') {
+            badge.style.backgroundColor = '#F1F5F9';
+            badge.style.color = '#64748B';
+            badge.textContent = 'No asistió';
         } else {
             badge.style.backgroundColor = 'var(--z-danger-soft)';
             badge.style.color = 'var(--z-danger)';

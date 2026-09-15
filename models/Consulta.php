@@ -22,8 +22,8 @@ class Consulta {
     // Registrar nueva consulta
     public function insert($data) {
         $query = "INSERT INTO " . $this->table_name . " 
-                  (id_cita, id_mascota, doc_veterinario, fecha_hora, motivo_consulta, anamnesis, peso, temperatura, frecuencia_cardiaca, diagnostico, plan_tratamiento) 
-                  VALUES (:id_cita, :id_mascota, :doc_veterinario, NOW(), :motivo, :anamnesis, :peso, :temperatura, :fc, :diagnostico, :plan)";
+                  (id_cita, id_mascota, doc_veterinario, fecha_hora, motivo_consulta, anamnesis, peso, temperatura, frecuencia_cardiaca, frecuencia_respiratoria, diagnostico, plan_tratamiento, observaciones)
+                  VALUES (:id_cita, :id_mascota, :doc_veterinario, NOW(), :motivo, :anamnesis, :peso, :temperatura, :fc, :fr, :diagnostico, :plan, :observaciones)";
         
         $stmt = $this->conn->prepare($query);
 
@@ -36,8 +36,10 @@ class Consulta {
         $stmt->bindParam(':peso', $data['peso']);
         $stmt->bindParam(':temperatura', $data['temperatura']);
         $stmt->bindParam(':fc', $data['frecuencia_cardiaca']);
+        $stmt->bindValue(':fr', $data['frecuencia_respiratoria'] ?? null);
         $stmt->bindParam(':diagnostico', $data['diagnostico']);
         $stmt->bindParam(':plan', $data['plan_tratamiento']);
+        $stmt->bindValue(':observaciones', $data['observaciones'] ?? '');
 
         if($stmt->execute()) {
             return $this->conn->lastInsertId();
@@ -122,6 +124,57 @@ class Consulta {
         $stmt->bindParam(':id', $id_consulta);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Datos de un adjunto junto con el dueño de la mascota a la que pertenece.
+     *
+     * M2-04 (RN-204 / RN-G02) — Sirve para decidir si quien pide el archivo
+     * tiene derecho a verlo. Antes ver_archivo.php aceptaba un nombre de
+     * archivo suelto y lo servía a cualquier sesión válida, sin mirar de quién
+     * era la mascota: un propietario podía leer los adjuntos de pacientes
+     * ajenos, y los nombres eran adivinables porque seguían el patrón
+     * CLI_{id_consulta}_{timestamp}_{i}.
+     */
+    public function getArchivoConDueno($id_archivo) {
+        $query = "SELECT a.id_archivo, a.id_consulta, a.nombre_original, a.nombre_servidor,
+                         a.extension, a.tipo_archivo,
+                         c.id_mascota, m.doc_propietario
+                  FROM archivos_clinicos a
+                  JOIN " . $this->table_name . " c ON a.id_consulta = c.id_consulta
+                  JOIN mascotas m ON c.id_mascota = m.id_mascota
+                  WHERE a.id_archivo = :id
+                  LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':id', (int) $id_archivo, PDO::PARAM_INT);
+        $stmt->execute();
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $fila === false ? null : $fila;
+    }
+
+    /**
+     * HU-08 / M2-10 — Adjuntos de varias consultas en una sola consulta SQL.
+     *
+     * El historial los pedía consulta por consulta: con 100 consultas eran 100
+     * viajes a la base solo para los archivos, y el criterio pide cargar en
+     * menos de 3 segundos.
+     */
+    public function getArchivosDeConsultas(array $ids) {
+        if (empty($ids)) return [];
+
+        $marcas = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->conn->prepare(
+            "SELECT * FROM archivos_clinicos WHERE id_consulta IN ($marcas) ORDER BY id_archivo"
+        );
+        $stmt->execute(array_map('intval', $ids));
+
+        $porConsulta = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            $porConsulta[(int) $fila['id_consulta']][] = $fila;
+        }
+
+        return $porConsulta;
     }
 }
 ?>

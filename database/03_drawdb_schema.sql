@@ -44,7 +44,9 @@ CREATE TABLE `citas` (
   `motivo` varchar(255) NOT NULL,
   `id_tipo_cita` int(11) DEFAULT NULL,
   `duracion_minutos` int(11) DEFAULT NULL,
-  `estado` enum('pendiente','confirmada','cancelada','completada') DEFAULT 'pendiente',
+  `estado` enum('pendiente','confirmada','en_curso','cancelada','completada','no_asistio') DEFAULT 'pendiente',
+  `hora_inicio_real` datetime DEFAULT NULL,
+  `hora_fin_real` datetime DEFAULT NULL,
   `observaciones` text DEFAULT NULL,
   `fecha_registro` datetime DEFAULT current_timestamp()
 );
@@ -65,8 +67,10 @@ CREATE TABLE `consultas` (
   `peso` decimal(5,2) DEFAULT NULL,
   `temperatura` decimal(4,1) DEFAULT NULL,
   `frecuencia_cardiaca` int(11) DEFAULT NULL,
+  `frecuencia_respiratoria` int(11) DEFAULT NULL,
   `diagnostico` text NOT NULL,
-  `plan_tratamiento` text NOT NULL
+  `plan_tratamiento` text NOT NULL,
+  `observaciones` text DEFAULT NULL
 );
 
 CREATE TABLE `desparasitaciones` (
