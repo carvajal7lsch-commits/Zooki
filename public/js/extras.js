@@ -1,8 +1,6 @@
 /**
- * Extras: Notificaciones Push del Navegador + Dark Mode Toggle
+ * Extras: Notificaciones Push del Navegador
  */
-
-
 
 // ── NOTIFICACIONES PUSH ─────────────────────────────────
 (function(){
