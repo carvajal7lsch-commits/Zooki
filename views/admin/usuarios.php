@@ -465,8 +465,10 @@ async function editUser(doc) {
         
         if (!res || !res.documento) {
             console.error('Error al cargar usuario:', res);
-            const errorMsg = res && res.error ? res.error : 'No se pudieron cargar los datos del usuario';
-            Swal.fire('Error', `${errorMsg}. Documento: ${doc}`, 'error');
+            // T-04: el backend ya no devuelve detalles tecnicos; se muestra su
+            // mensaje si viene, y si no, uno generico.
+            const errorMsg = (res && res.message) || 'No se pudieron cargar los datos del usuario';
+            Swal.fire('Error', errorMsg, 'error');
             return;
         }
 

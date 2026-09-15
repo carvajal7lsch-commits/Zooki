@@ -14,7 +14,7 @@ class Usuario
     public function getUserByDocumento($documento)
     {
         $query =
-            "SELECT u.documento, u.tipo_documento, u.nombre_completo, u.password, u.estado, u.id_rol, r.nombre_rol as rol, u.debe_cambiar_password, u.email, u.telefono
+            "SELECT u.documento, u.tipo_documento, u.nombre_completo, u.password, u.estado, u.id_rol, r.nombre_rol as rol, u.debe_cambiar_password, u.password_definida, u.email, u.telefono
                   FROM " .
             $this->table_name .
             " u
@@ -98,10 +98,19 @@ class Usuario
     }
 
     // Obtener un usuario por documento de forma simple
+    /**
+     * T-03 — Columnas explicitas en vez de `SELECT *`. El comodin arrastraba
+     * la columna `password`, y como el resultado se serializa tal cual en
+     * getUsuarioAjax, el hash bcrypt de cualquier usuario terminaba viajando
+     * al navegador. Quien necesite verificar la contrasena debe usar
+     * getUserByDocumento(), que si la trae y no se expone nunca.
+     */
     public function getById($documento)
     {
         $query =
-            "SELECT * FROM " . $this->table_name . " WHERE documento = :doc";
+            "SELECT documento, tipo_documento, nombre_completo, telefono, email,
+                    estado, id_rol, debe_cambiar_password, password_definida
+             FROM " . $this->table_name . " WHERE documento = :doc";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":doc", $documento);
         $stmt->execute();
@@ -111,14 +120,8 @@ class Usuario
     // Actualizar datos del usuario
     public function update($data)
     {
-        // Debug: Log de los datos recibidos
-        error_log("Update usuario - documento: " . $data["documento"] . ", original_doc: " . $data["original_doc"]);
-        error_log("Comparación documento == original_doc: " . ($data["documento"] == $data["original_doc"] ? "true" : "false"));
-        error_log("Comparación documento === original_doc: " . ($data["documento"] === $data["original_doc"] ? "true" : "false"));
-        
         // Si el documento no cambió, no intentar actualizarlo (evita error de clave foránea)
         if ($data["documento"] == $data["original_doc"]) {
-            error_log("Documento no cambió, actualizando sin cambiar documento");
             $query =
                 "UPDATE " .
                 $this->table_name .
@@ -165,8 +168,8 @@ class Usuario
         $query =
             "INSERT INTO " .
             $this->table_name .
-            " (documento, tipo_documento, nombre_completo, telefono, email, password, id_rol, estado, debe_cambiar_password)
-                  VALUES (:documento, :tipo_documento, :nombre_completo, :telefono, :email, :password, :id_rol, :estado, :debe_cambiar_password)";
+            " (documento, tipo_documento, nombre_completo, telefono, email, password, id_rol, estado, debe_cambiar_password, password_definida)
+                  VALUES (:documento, :tipo_documento, :nombre_completo, :telefono, :email, :password, :id_rol, :estado, :debe_cambiar_password, :password_definida)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -184,6 +187,7 @@ class Usuario
         $id_rol = $data["id_rol"];
         $estado = isset($data["estado"]) ? $data["estado"] : 1;
         $debe_cambiar_password = isset($data["debe_cambiar_password"]) ? $data["debe_cambiar_password"] : 0;
+        $password_definida = isset($data["password_definida"]) ? (int) $data["password_definida"] : 1;
 
         // Bind
         $stmt->bindParam(":documento", $documento);
@@ -195,6 +199,7 @@ class Usuario
         $stmt->bindParam(":id_rol", $id_rol);
         $stmt->bindParam(":estado", $estado);
         $stmt->bindParam(":debe_cambiar_password", $debe_cambiar_password);
+        $stmt->bindParam(":password_definida", $password_definida);
 
         if ($stmt->execute()) {
             return true;
@@ -204,7 +209,7 @@ class Usuario
 
     // Actualizar contraseña del usuario
     public function updatePassword($documento, $passwordHash) {
-        $query = "UPDATE " . $this->table_name . " SET password = :password WHERE documento = :documento";
+        $query = "UPDATE " . $this->table_name . " SET password = :password, password_definida = 1 WHERE documento = :documento";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":password", $passwordHash);
         $stmt->bindParam(":documento", $documento);

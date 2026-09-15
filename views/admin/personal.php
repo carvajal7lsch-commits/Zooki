@@ -193,6 +193,13 @@ $totalStaff = count($usuarios);
                                 title="Editar colaborador">
                             <i class="far fa-edit"></i>
                         </button>
+                        <!-- HU-54: restablecer contrasena -->
+                        <button class="btn-icon-square js-reset-password"
+                                data-documento="<?= htmlspecialchars($u["documento"]) ?>"
+                                data-nombre="<?= htmlspecialchars($u["nombre_completo"]) ?>"
+                                title="Restablecer contraseña">
+                            <i class="fas fa-key"></i>
+                        </button>
                     </td>
                 </tr>
                 <?php
@@ -273,6 +280,13 @@ $totalStaff = count($usuarios);
                         onclick="editarUsuario('<?= $u["documento"] ?>')"
                         title="Editar">
                     <i class="far fa-edit"></i>
+                </button>
+                <!-- HU-54: restablecer contrasena -->
+                <button class="btn-icon-square js-reset-password"
+                        data-documento="<?= htmlspecialchars($u["documento"]) ?>"
+                        data-nombre="<?= htmlspecialchars($u["nombre_completo"]) ?>"
+                        title="Restablecer contraseña">
+                    <i class="fas fa-key"></i>
                 </button>
             </div>
         </div>
@@ -488,9 +502,16 @@ async function toggleUserStatus(doc, newStatus) {
 
     if (result.isConfirmed) {
         try {
-            const res = await (await fetch(
-                `index.php?action=cambiar_estado_usuario_ajax&documento=${doc}&estado=${newStatus}`
-            )).json();
+            // T-26: iba por GET con los datos en la query string, pero el
+            // controlador solo atiende POST y lee $_POST, asi que la peticion
+            // no hacia nada y la respuesta vacia reventaba en .json().
+            const fd = new FormData();
+            fd.append('documento', doc);
+            fd.append('estado', newStatus);
+
+            const res = await (await fetch('index.php?action=cambiar_estado_usuario_ajax', {
+                method: 'POST', body: fd
+            })).json();
 
             if (res.success) {
                 Swal.fire({
@@ -624,8 +645,11 @@ async function guardarUsuario(e) {
 /* ── Editar usuario ────────────────────────────────────────── */
 async function editarUsuario(doc) {
     try {
-        const res = await (await fetch(`index.php?action=get_usuario_ajax&documento=${doc}`)).json();
-        if (!res) return;
+        const res = await (await fetch(`index.php?action=get_usuario_ajax&documento=${encodeURIComponent(doc)}`)).json();
+        if (!res || !res.documento) {
+            Swal.fire({ title: 'Error', text: (res && res.message) || 'No se pudieron cargar los datos del colaborador.', icon: 'error', confirmButtonColor: '#EF4444' });
+            return;
+        }
 
         document.getElementById('modalTitle').innerHTML =
             '<i class="far fa-edit" style="color:#5560FF;"></i> Editar Colaborador';
@@ -649,7 +673,53 @@ async function editarUsuario(doc) {
         document.getElementById('modalUsuario').style.display = 'flex';
     } catch(e) {
         console.error(e);
-        alert('Error al cargar los datos del colaborador.', 'error');
+        // TR-02: SweetAlert2 en vez del alert() nativo, que ademas se estaba
+        // llamando con dos argumentos como si fuera un toast.
+        Swal.fire({ title: 'Error', text: 'No se pudieron cargar los datos del colaborador.', icon: 'error', confirmButtonColor: '#EF4444' });
     }
 }
+
+/* ── HU-54: restablecer la contrasena de un colaborador ─────── */
+document.addEventListener('click', async (e) => {
+    const boton = e.target.closest('.js-reset-password');
+    if (!boton) return;
+
+    const documento = boton.dataset.documento;
+    const nombre    = boton.dataset.nombre;
+
+    const confirmacion = await Swal.fire({
+        title: '¿Restablecer contraseña?',
+        html: `Se generará una contraseña temporal para <strong>${nombre}</strong> y se enviará a su correo.<br><br>Deberá cambiarla la próxima vez que inicie sesión.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, restablecer',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#5560FF',
+        cancelButtonColor: '#94A3B8'
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    boton.disabled = true;
+    try {
+        const fd = new FormData();
+        fd.append('documento', documento);
+
+        const res = await (await fetch('index.php?action=resetear_password_usuario_ajax', {
+            method: 'POST', body: fd
+        })).json();
+
+        Swal.fire({
+            title: res.success ? 'Contraseña restablecida' : 'No se pudo restablecer',
+            text: res.message,
+            icon: res.success ? 'success' : 'error',
+            confirmButtonColor: res.success ? '#5560FF' : '#EF4444'
+        });
+    } catch (err) {
+        console.error(err);
+        Swal.fire({ title: 'Error', text: 'No se pudo restablecer la contraseña.', icon: 'error', confirmButtonColor: '#EF4444' });
+    } finally {
+        boton.disabled = false;
+    }
+});
 </script>

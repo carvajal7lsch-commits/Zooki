@@ -100,6 +100,49 @@ class PoliticaPassword
     }
 
     /** Texto para los formularios, para no repetirlo en cada vista. */
+    /**
+     * Contrasena temporal aleatoria que cumple la politica (RN-G10).
+     *
+     * Vive aqui y no en un controlador porque la usan dos flujos distintos:
+     * el alta de un usuario por el administrador y el alta de un propietario
+     * desde recepcion. Antes solo existia en UsuarioController, y el registro
+     * de propietarios acababa usando el numero de documento como contrasena,
+     * que es justo lo que RN-G10 prohibe.
+     *
+     * Se omiten los caracteres que se confunden al dictarlos o copiarlos de un
+     * correo: l/I/1 y o/O/0.
+     */
+    public static function generarTemporal(int $intentos = 0): string
+    {
+        $minusculas = 'abcdefghijkmnpqrstuvwxyz';
+        $mayusculas = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $numeros    = '23456789';
+
+        // Se garantiza al menos un caracter de cada clase que exige la politica.
+        $clave = [
+            $minusculas[random_int(0, strlen($minusculas) - 1)],
+            $mayusculas[random_int(0, strlen($mayusculas) - 1)],
+            $numeros[random_int(0, strlen($numeros) - 1)],
+        ];
+
+        $todos = $minusculas . $mayusculas . $numeros;
+        for ($i = count($clave); $i < 12; $i++) {
+            $clave[] = $todos[random_int(0, strlen($todos) - 1)];
+        }
+
+        shuffle($clave);
+        $generada = implode('', $clave);
+
+        // La politica rechaza secuencias, repeticiones y claves de la lista
+        // comun: al azar eso puede salir, asi que se reintenta en vez de
+        // entregar una temporal que el propio sistema no aceptaria.
+        if (!self::esValida($generada) && $intentos < 20) {
+            return self::generarTemporal($intentos + 1);
+        }
+
+        return $generada;
+    }
+
     public static function descripcion(): string
     {
         return 'Mínimo ' . self::MINIMO . ' caracteres, con mayúscula, minúscula y número. '
