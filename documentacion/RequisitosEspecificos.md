@@ -283,6 +283,7 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | RE-10.2 | El correo debe incluir mascota, tipo y fecha. | Funcional | El correo contiene esos datos. | Media |
 | RE-10.3 | El sistema no debe enviar si el propietario no tiene correo. | Restricción | Sin correo, no se envía. | Media |
 | RE-10.4 | El sistema debe registrar cada envío. | Funcional | Cada envío queda registrado con su estado. | Media |
+| RE-10.5 | El sistema debe ejecutar el envío de recordatorios con una tarea programada una vez al día, a las 7:00 en la zona horaria de la clínica. | Integración | Los correos del día salen en la mañana sin que nadie los dispare a mano. | Media |
 
 **Reglas de negocio:** RN-303, RN-304, RN-305
 
@@ -363,6 +364,7 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | RE-19.6 | El sistema debe avisar al veterinario cuando una atención sigue en curso 10 minutos después de su hora de fin. | Funcional | Llega un correo y una notificación interna, una sola vez por cita. | Alta |
 | RE-19.7 | El sistema debe pasar a "sin cerrar" las atenciones que siguen en curso al terminar el día de la cita. | Funcional | Al día siguiente la cita aparece como «Sin cerrar» y el veterinario recibe un aviso. | Alta |
 | RE-19.8 | El sistema debe permitir al veterinario asignado cerrar sin consulta una atención en curso o sin cerrar, con motivo obligatorio. | Funcional | La cita pasa a «Cerrada sin consulta», el motivo queda en auditoría y el horario se libera. | Media |
+| RE-19.9 | El sistema debe revisar las atenciones abiertas con una tarea programada al menos cada 5 minutos, además de al cargar el calendario. | Integración | Sin que nadie abra el calendario, el aviso llega a más tardar 15 minutos después de la hora de fin. | Alta |
 
 **Reglas de negocio:** RN-406, RN-408, RN-410, RN-411
 

@@ -489,6 +489,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Incluye nombre de la mascota, tipo y fecha.
 - No se envía si el propietario no tiene correo.
 - Queda registro del envío en la base de datos.
+- El envío corre solo una vez al día, a las 7:00 hora de la clínica.
 
 **Reglas de negocio:** RN-303, RN-304, RN-305 · **Dependencias:** HU-09
 
@@ -617,6 +618,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Una atención iniciada y no finalizada se retoma con «Continuar atención», aunque sea de un día anterior.
 - Si la atención sigue abierta 10 minutos después de la hora de fin, recibo un aviso por correo y en mis notificaciones.
 - Al terminar el día, una atención abierta pasa a "sin cerrar"; la cierro registrando la consulta o sin consulta, con un motivo.
+- La revisión de atenciones abiertas corre sola cada 5 minutos, así que el aviso llega aunque nadie abra el calendario.
 - Una atención cerrada sin consulta no se reabre y libera su horario.
 - La cita completada aparece en el historial del día pero no en la agenda futura.
 
