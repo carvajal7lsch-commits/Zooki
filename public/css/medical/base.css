@@ -174,7 +174,9 @@
 /* Dossier Compact Layout - Propietario + Mascotas Horizontal */
 .dossier-layout-grid {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    /* minmax(0, …): con 1fr la columna crecía con las tarjetas de mascotas
+       y el expediente se salía de la pantalla. */
+    grid-template-columns: 300px minmax(0, 1fr);
     gap: 1.25rem;
     align-items: start;
     width: 100%;
@@ -339,12 +341,15 @@
 .patients-card {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .patients-header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     margin-bottom: 1rem;
     flex-wrap: wrap;
     gap: 1rem;
@@ -387,31 +392,27 @@
 .patients-filters-area {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.75rem;
 }
 
+/* Carrusel: se desplaza con las flechas del pie, una página por clic, y
+   cada tarjeta encaja al inicio. La barra de scroll queda oculta. */
 .dossier-pets-grid {
     display: flex;
     gap: 1rem;
     overflow-x: auto;
-    padding-bottom: 0.75rem;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding-bottom: 0.25rem;
     margin-bottom: 0.75rem;
 }
 
-.dossier-pets-grid::-webkit-scrollbar {
-    height: 6px;
-}
-.dossier-pets-grid::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-}
-.dossier-pets-grid::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
+.dossier-pets-grid::-webkit-scrollbar { display: none; }
 
 .pet-dossier-card {
     flex: 0 0 260px;
+    scroll-snap-align: start;
     background: #f8fafc;
     border-radius: 16px;
     padding: 1rem;
@@ -1346,6 +1347,12 @@
     display: block;
 }
 
+/*
+ * Las columnas usan minmax(0, 1fr) y no 1fr a secas: 1fr tiene como minimo el
+ * ancho de su contenido, y un nombre largo (con white-space: nowrap) ensanchaba
+ * su columna entera. Con minimo 0 todas miden lo mismo y el texto se recorta
+ * con puntos suspensivos.
+ */
 .pets-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
@@ -1357,9 +1364,13 @@
     gap: 1rem;
 }
 
+.pets-grid > * {
+    min-width: 0;
+}
+
 @media (min-width: 1200px) {
     .pets-grid, #ownersGrid.pets-grid {
-        grid-template-columns: repeat(6, 1fr) !important;
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
     }
 }
 
@@ -2275,3 +2286,43 @@
     }
 }
 
+/* ── Carrusel de mascotas: flechas sobre las tarjetas ──
+   Solo se muestra la flecha del lado en el que hay más mascotas. */
+.pets-carousel {
+    position: relative;
+}
+
+.pets-carousel__nav {
+    position: absolute;
+    top: calc(50% - 0.375rem);
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #E2E8F0;
+    border-radius: 50%;
+    background: #fff;
+    color: #0F172A;
+    font-size: 0.8rem;
+    box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.25);
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.pets-carousel__nav:hover {
+    color: var(--primary, #0052FF);
+    border-color: #BFD3FF;
+    transform: translateY(-50%) scale(1.06);
+}
+
+.pets-carousel__nav:focus-visible {
+    outline: 2px solid var(--primary, #0052FF);
+    outline-offset: 2px;
+}
+
+.pets-carousel__nav[hidden] { display: none; }
+.pets-carousel__nav--prev { left: 8px; }
+.pets-carousel__nav--next { right: 8px; }
