@@ -45,7 +45,14 @@ Thumbs.db
 *~
 *.old
 
+# Respaldos de la base de datos (HU-23). Si BACKUP_DIR no apunta a un volumen
+# externo, los dumps caen en ./backups: contienen la historia clinica completa
+# y no pueden acabar versionados nunca.
+/backups/
+*.sql.gz
+
 # Archivos de logs de errores
+/logs/
 error.log
 error_log
 *.error.log
@@ -119,10 +126,10 @@ webpack-stats.json
 public/img/MER_zooki.svg
 
 # Archivos específicos del proyecto que no se suben
-ZOOKI_REGLAS.md
+documentacion/ZOOKI_REGLAS.md
 temp_login.php
 
 
 # Análisis de vulnerabilidades: documenta riesgos sin corregir de un sistema
 # en producción. Nunca debe publicarse en el repositorio ni en el portal.
-AnalisisVaciosDiseno.md
+documentacion/AnalisisVaciosDiseno.md

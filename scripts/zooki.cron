@@ -1,0 +1,33 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Tareas programadas de Zooki
+#
+# Este archivo es la definicion versionada de la automatizacion del sistema.
+# Antes las dos tareas solo existian como un comentario dentro de cada script,
+# asi que no habia forma de comprobar que estuvieran realmente programadas.
+#
+# Instalar en el servidor:
+#   crontab scripts/zooki.cron
+# Comprobar que quedo activo:
+#   crontab -l
+#
+# En Windows, crear las mismas tareas con el Programador de tareas
+# (Task Scheduler) apuntando a php.exe con la misma ruta de script.
+#
+# Ajusta RUTA_ZOOKI a la ruta real del proyecto en el servidor.
+# ─────────────────────────────────────────────────────────────────────────────
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# RN-504 / HU-23 — Respaldo de la base de datos cada 24 horas.
+# El destino y la retencion se configuran con BACKUP_DIR y
+# BACKUP_RETENCION_DIAS en el .env; el resultado queda en logs/backup.log.
+0 3 * * * cd /RUTA_ZOOKI && php scripts/backup.php >> logs/backup.log 2>&1
+
+# RN-303 / HU-10 — Recordatorios de vacunacion, desparasitacion y citas.
+# Se ejecuta por la manana para que el correo llegue en horario util.
+0 7 * * * cd /RUTA_ZOOKI && php scripts/send_reminders.php >> logs/recordatorios.log 2>&1
+
+# RN-410 — Avisa de las atenciones que siguen abiertas 10 minutos despues de
+# su hora de fin y pasa a "sin cerrar" las que terminaron el dia abiertas.
+*/5 * * * * cd /RUTA_ZOOKI && php scripts/vigilar_atenciones.php >> logs/atenciones.log 2>&1
