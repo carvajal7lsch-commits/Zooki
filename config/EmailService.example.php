@@ -19,16 +19,16 @@ class EmailService {
 
         // Configuración del servidor SMTP (Valores ficticios de ejemplo)
         $this->mail->isSMTP();
-        $this->mail->Host = 'smtp.gmail.com'; 
+        $this->mail->Host = 'smtp-relay.sendinblue.com';
         $this->mail->SMTPAuth = true;
-        $this->mail->Username = 'TU_CORREO@gmail.com'; 
-        $this->mail->Password = 'TU_CONTRASEÑA_DE_APLICACION'; 
+        $this->mail->Username = 'TU_LOGIN@smtp-brevo.com';
+        $this->mail->Password = 'TU_CLAVE_SMTP_DE_BREVO';
         $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $this->mail->Port = 587;
 
         // Configuración general
         $this->mail->CharSet = 'UTF-8';
-        $this->mail->setFrom('TU_CORREO@gmail.com', 'Zooki - Sistema Veterinario');
+        $this->mail->setFrom('no-reply@TU_DOMINIO', 'Zooki - Sistema Veterinario');
     }
     
     public function enviarCredencialesUsuario($email, $nombre, $documento, $password) {

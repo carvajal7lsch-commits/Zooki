@@ -95,7 +95,7 @@ Gestión de pacientes; historia clínica; agenda inteligente con horarios config
 ### 2.5 Suposiciones y dependencias
 
 - El servidor propio (VPS Linux con Docker) está disponible con Apache/Nginx + PHP-FPM 8.2 y MySQL 8 operativos.
-- Existe una cuenta SMTP válida (Gmail con contraseña de aplicación) para el envío de correos mediante PHPMailer.
+- Existe una cuenta SMTP válida (Brevo, con el dominio `zooki.secarvajal.com` autenticado por DKIM y DMARC) para el envío de correos mediante PHPMailer desde `no-reply@zooki.secarvajal.com`.
 - Las credenciales de Google Cloud (cliente OAuth 2.0) están configuradas para el login federado.
 - Los propietarios disponen de un correo válido para recibir credenciales, confirmaciones y recordatorios.
 - El navegador soporta JavaScript ES6+ y peticiones asíncronas (Fetch API).
