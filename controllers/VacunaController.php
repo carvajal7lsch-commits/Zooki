@@ -70,13 +70,6 @@ class VacunaController {
         }
     }
 
-    public function listarPendientesAjax() {
-        $pendientes = $this->vacunaModel->getPendientesSemana();
-        header('Content-Type: application/json');
-        echo json_encode($pendientes);
-        exit;
-    }
-
     public function getVacunasPorEspecieAjax() {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id_mascota'])) {
             // Obtener la especie de la mascota
@@ -188,35 +181,5 @@ class VacunaController {
         exit;
     }
 
-    // HU-20: Panel de vacunaciones pendientes agrupadas por día y especie
-    public function getVacunasPendientesPanelAjax() {
-        header('Content-Type: application/json');
-        try {
-            $grupos = $this->vacunaModel->getPendientesPorDiaYEspecie();
-            
-            // Organizar por día para el frontend
-            $porDia = [];
-            foreach ($grupos as $g) {
-                $fecha = $g['fecha'];
-                if (!isset($porDia[$fecha])) {
-                    $porDia[$fecha] = [
-                        'fecha' => $fecha,
-                        'dia_semana' => $g['dia_semana'],
-                        'especies' => []
-                    ];
-                }
-                $porDia[$fecha]['especies'][] = [
-                    'especie' => $g['especie'],
-                    'total' => (int)$g['total'],
-                    'mascotas' => $g['mascotas']
-                ];
-            }
-            
-            echo json_encode(['success' => true, 'pendientes' => array_values($porDia)]);
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        }
-        exit;
-    }
 }
 ?>

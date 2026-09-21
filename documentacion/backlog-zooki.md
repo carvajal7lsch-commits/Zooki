@@ -327,7 +327,7 @@
 - Script `send_reminders.php` que consulta vacunas próximas y envía emails.
 - Plantilla HTML del correo de recordatorio.
 - Tabla `notificaciones` para log de envíos.
-- Configurar Cron Job: `0 8 * * * php /ruta/send_reminders.php`.
+- Configurar Cron Job: `0 7 * * * php /ruta/send_reminders.php`.
 
 ---
 

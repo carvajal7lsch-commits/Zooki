@@ -843,6 +843,11 @@
     padding: 0 1.5rem 2rem 1.5rem;
   }
 
+  .top-header {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
   .bento-3eq {
     grid-template-columns: 1fr;
   }

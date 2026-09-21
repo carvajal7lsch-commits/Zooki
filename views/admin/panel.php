@@ -1,218 +1,187 @@
 <?php
-$nombre = explode(" ", trim($_SESSION["usuario_nombre"]))[0];
+/**
+ * Panel de inicio del administrador: la operación de la clínica hoy (HU-57).
+ * Los datos llegan de PanelController::datosAdministrador() en $panel.
+ */
+require_once __DIR__ . '/../../helpers/ResumenPanel.php';
+
+if (!isset($panel)) {
+    require_once __DIR__ . '/../../controllers/PanelController.php';
+    $panel = (new PanelController())->datosAdministrador();
+}
+
+$e = fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+$cont = $panel['contadores'];
+$pend = $panel['pendientes'];
+$variacion = $panel['variacion_consultas'];
+
+// Grupo de cada estado para los filtros de la lista de citas.
+$grupoEstado = [
+    'pendiente' => 'por_atender', 'confirmada' => 'por_atender', 'en_curso' => 'por_atender', 'sin_cerrar' => 'por_atender',
+    'completada' => 'cerradas', 'cerrada_sin_consulta' => 'cerradas',
+    'cancelada' => 'no_atendidas', 'no_asistio' => 'no_atendidas',
+];
+
+$totalSinCerrar = array_sum($pend['sin_cerrar']);
+$totalEnCursoOtroDia = array_sum($pend['en_curso_otro_dia']);
+$listaVets = fn(array $porVet) => implode(', ', array_map(
+    fn($n, $v) => $e(ResumenPanel::primerNombre($v)) . " ($n)",
+    $porVet,
+    array_keys($porVet)
+));
 ?>
+<div class="panel panel--admin">
 
-<?php
-setlocale(LC_TIME, 'es_ES.UTF-8', 'es_CO.UTF-8', 'spanish');
-$fecha_banner = mb_strtoupper(strftime("%A, %d DE %B %Y"));
-?>
-
-<style>
-/* Reducir el tamaño de los KPIs en el Dashboard Principal */
-.stats-row .stat-card {
-    padding: 1rem 1.2rem !important;
-}
-.stats-row .sc-header i {
-    width: 30px !important;
-    height: 30px !important;
-    font-size: 0.85rem !important;
-}
-.stats-row .sc-body h2 {
-    font-size: 1.6rem !important;
-    margin: 0.2rem 0 !important;
-}
-.stats-row .sc-footer {
-    font-size: 0.7rem !important;
-    margin-top: 0.3rem !important;
-}
-.stats-row .add-metric strong {
-    font-size: 1.4rem !important;
-}
-</style>
-
-<div class="hero-banner animate__animated animate__fadeInDown">
-    <div class="hero-content">
-        <div class="hero-date"><?= $fecha_banner ?></div>
-        <h1 class="hero-title">Resumen del Panel</h1>
-        <div class="hero-stats">
-            <span class="hero-greeting">Bienvenido, <?= htmlspecialchars($nombre) ?></span>
-            <span style="opacity: 0.5; font-size: 0.8rem;">•</span>
-            <div class="hero-badges">
-                <span class="hero-badge"><i class="fas fa-check-circle"></i> <span id="hero-clientes-activos">14</span> clientes activos</span>
-                <span class="hero-badge inactivos"><i class="fas fa-exclamation-circle"></i> <span id="hero-inactivos">2</span> inactivos</span>
-                <span class="hero-badge"><i class="fas fa-box"></i> <span id="hero-productos">19</span> productos activos</span>
-            </div>
+    <header class="panel-cabecera">
+        <div>
+            <p class="panel-cabecera__fecha"><?= $e(ucfirst($panel['fecha'])) ?></p>
+            <h2 class="panel-cabecera__titulo">Hoy en la clínica</h2>
         </div>
-    </div>
-    <div class="hero-image">
-        <!-- El usuario debe guardar su imagen sin fondo como mascotas_hero.png en la carpeta public/img -->
-        <img src="img/pets.png" alt="Mascotas" onerror="this.src='img/hero-puppy.png';">
-    </div>
-</div>
-
-<!-- Contenedor principal de Layout (Gráficos Izquierda, KPIs Derecha) -->
-<div class="panel-grid-main">
-
-    <!-- Lado Izquierdo: Gráficos y Tablas -->
-    <div class="panel-grid-top animate__animated animate__fadeInUp animate__delay-1s">
-        <!-- Gráfico de Flujo de Citas -->
-        <div class="panel-card">
-            <div class="card-header-flex">
-                <h3><i class="fas fa-chart-line"></i> Flujo de Citas</h3>
-            </div>
-            <div class="panel-chart-lg">
-                <canvas id="chart-citas-mes"></canvas>
-            </div>
+        <div class="panel-cabecera__acciones">
+            <a class="panel-btn panel-btn--sec" href="index.php?action=admin_usuarios"><i class="fas fa-users"></i> Usuarios</a>
+            <a class="panel-btn panel-btn--pri" href="index.php?action=admin_citas"><i class="far fa-calendar-alt"></i> Gestión de citas</a>
         </div>
+    </header>
 
-        <!-- 2. Citas de Hoy -->
-        <div class="panel-card agenda-timeline-card">
-            <div class="card-header-flex">
-                <h3><i class="far fa-calendar-check"></i> Citas de Hoy</h3>
-                <a href="index.php?action=admin_citas" class="btn-view-all">Ver Todas</a>
-            </div>
-            <div id="todayAppointments" class="today-appointments custom-scroll" style="overflow-y: auto; max-height: 190px; padding-right: 0.5rem;">
-                <div class="loader-small" style="margin: 1.5rem auto;"></div>
-            </div>
+    <div class="panel-contadores">
+        <div class="panel-contador">
+            <span class="panel-contador__valor"><?= (int) $cont['citas'] ?></span>
+            <span class="panel-contador__etiqueta">Citas hoy</span>
         </div>
-        <!-- 3. Por Especie (Alineado con los otros dos) -->
-        <div class="panel-card animate__animated animate__fadeInUp animate__delay-1s">
-            <div class="card-header-flex">
-                <h3><i class="fas fa-paw"></i> Especies</h3>
-            </div>
-            <div class="panel-chart-sm">
-                <canvas id="chart-especies"></canvas>
-            </div>
-            <div id="especies-legend" style="margin-top:1rem; display:flex; flex-wrap: wrap; justify-content:center; gap:1rem; font-size:0.75rem;"></div>
+        <div class="panel-contador">
+            <span class="panel-contador__valor"><?= (int) $cont['atendidas'] ?></span>
+            <span class="panel-contador__etiqueta">Atendidas</span>
         </div>
-
-    </div>
-
-    <!-- Lado Derecho: Contenedor Vertical para KPIs y Dona -->
-    <div style="display: flex; flex-direction: column; gap: 2rem;">
-        
-        <!-- KPIs (Cuadrícula 2x2 compacta) -->
-        <div class="stats-row animate__animated animate__fadeInUp" style="display: grid !important; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            
-            <!-- 1. Total Active Patients -->
-            <div class="stat-card primary" style="min-height: 100px;">
-                <div class="sc-header">
-                    <i class="fas fa-paw"></i>
-                    <span>Pacientes Activos</span>
-                </div>
-                <div class="sc-body">
-                    <h2 id="stat-pacientes">—</h2>
-                    <span class="sc-badge positive">+4.2%</span>
-                </div>
-                <p class="sc-footer">Mascotas activas</p>
-            </div>
-
-            <!-- 2. Appointments -->
-            <div class="stat-card" style="min-height: 100px;">
-                <div class="sc-header">
-                    <i class="fas fa-calendar-check" style="background:rgba(0,0,0,0.05); color:var(--text-primary);"></i>
-                    <span style="color:var(--text-primary);">Citas Hoy</span>
-                </div>
-                <div class="sc-body">
-                    <h2 id="stat-citas-hoy" style="color:var(--text-primary);">—</h2>
-                    <span class="sc-badge positive" style="background:rgba(16,185,129,0.1); color:#10B981;">Hoy</span>
-                </div>
-                <p class="sc-footer">Pacientes programados</p>
-            </div>
-
-            <!-- 3. Clientes -->
-            <div class="stat-card" style="min-height: 100px;">
-                <div class="sc-header">
-                    <i class="fas fa-users" style="background:rgba(0,0,0,0.05); color:var(--text-primary);"></i>
-                    <span style="color:var(--text-primary);">Clientes</span>
-                </div>
-                <div class="sc-body">
-                    <h2 id="stat-clientes" style="color:var(--text-primary);">—</h2>
-                    <span class="sc-badge positive" style="background:rgba(16,185,129,0.1); color:#10B981;">+1.5%</span>
-                </div>
-                <p class="sc-footer">Dueños registrados</p>
-            </div>
-
-            <!-- 4. Consultas Mes -->
-            <div class="stat-card dashed" onclick="window.location.href='index.php?action=admin_reportes'" style="min-height: 100px; display: flex; align-items: center; justify-content: center;">
-                <div class="add-metric">
-                    <div class="am-icon"><i class="fas fa-stethoscope"></i></div>
-                    <span>Consultas Mes</span>
-                    <strong id="stat-consultas" style="font-size:1.5rem; color:var(--text-primary); margin-top:0.3rem;">—</strong>
-                </div>
-            </div>
-
+        <div class="panel-contador">
+            <span class="panel-contador__valor"><?= (int) $cont['no_asistio'] ?></span>
+            <span class="panel-contador__etiqueta">No asistieron</span>
+        </div>
+        <div class="panel-contador">
+            <span class="panel-contador__valor"><?= (int) $panel['consultas_mes'] ?></span>
+            <span class="panel-contador__etiqueta">Consultas del mes</span>
+            <?php if ($variacion === null): ?>
+                <span class="panel-contador__nota">Sin datos de <?= $e($panel['mes_anterior']) ?> para comparar</span>
+            <?php else: ?>
+                <span class="panel-contador__nota" data-tendencia="<?= $variacion > 0 ? 'sube' : ($variacion < 0 ? 'baja' : 'igual') ?>">
+                    <i class="fas <?= $variacion > 0 ? 'fa-arrow-up' : ($variacion < 0 ? 'fa-arrow-down' : 'fa-equals') ?>"></i>
+                    <?= abs($variacion) ?> % vs. mismo periodo de <?= $e($panel['mes_anterior']) ?>
+                </span>
+            <?php endif; ?>
         </div>
     </div>
 
-</div>
+    <div class="panel-cuerpo">
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Cargar todas las citas del día usando el endpoint existente
-    fetch('index.php?action=get_timeline_ajax')
-        .then(response => response.json())
-        .then(res => {
-            const appointmentsContainer = document.getElementById('todayAppointments');
-            
-            if (!res.success || !res.citas || res.citas.length === 0) {
-                appointmentsContainer.innerHTML = '<div class="schedule-empty">No hay citas programadas para hoy</div>';
-                return;
-            }
+        <!-- Citas de hoy -->
+        <section class="panel-card panel-card--llena" aria-labelledby="tituloCitas">
+            <div class="panel-card__cabecera">
+                <h3 class="panel-card__titulo" id="tituloCitas">Citas de hoy</h3>
+                <a class="panel-enlace" href="index.php?action=admin_citas">Gestionar citas <i class="fas fa-chevron-right"></i></a>
+            </div>
+            <?php if (!$panel['citas']): ?>
+                <p class="panel-vacio">No hay citas agendadas para hoy.</p>
+            <?php else: ?>
+                <div class="panel-filtros" role="group" aria-label="Filtrar citas">
+                    <button type="button" class="panel-filtro is-activo" data-filtro="todas" aria-pressed="true">Todas</button>
+                    <button type="button" class="panel-filtro" data-filtro="por_atender" aria-pressed="false">Por atender</button>
+                    <button type="button" class="panel-filtro" data-filtro="cerradas" aria-pressed="false">Atendidas</button>
+                    <button type="button" class="panel-filtro" data-filtro="no_atendidas" aria-pressed="false">Canceladas y no asistidas</button>
+                </div>
+                <ul class="panel-lista panel-desplazable" id="panelCitasHoy">
+                    <?php foreach ($panel['citas'] as $c): ?>
+                        <li class="panel-fila" data-grupo="<?= $e($grupoEstado[$c['estado']] ?? 'por_atender') ?>">
+                            <span class="panel-fila__hora"><?= $e(ResumenPanel::hora($c['hora'])) ?></span>
+                            <div class="panel-fila__info">
+                                <span class="panel-fila__titulo"><?= $e($c['mascota']) ?> <span class="panel-texto-sec">· <?= $e($c['tipo']) ?></span></span>
+                                <span class="panel-texto-sec"><?= $e($c['propietario']) ?> · Dr(a). <?= $e(ResumenPanel::primerNombre($c['veterinario'])) ?></span>
+                            </div>
+                            <span class="panel-badge" data-estado="<?= $e($c['estado']) ?>"><?= $e(ResumenPanel::etiquetaEstado($c['estado'])) ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <p class="panel-vacio" id="panelCitasVacio" hidden>No hay citas en este filtro.</p>
+            <?php endif; ?>
+        </section>
 
-            const STATE_COLORS = {
-                pendiente: '#F59E0B',
-                confirmada: '#5560FF',
-                completada: '#10B981',
-                cancelada: '#EF4444'
-            };
-            const STATE_LABELS = {
-                pendiente: 'Pendiente',
-                confirmada: 'Confirmada',
-                completada: 'Completada',
-                cancelada: 'Cancelada'
-            };
+        <div class="panel-col">
 
-            const appointmentsHTML = `
-                <table class="data-table" style="font-size: 0.85rem;">
-                    <thead>
-                        <tr>
-                            <th>Hora</th>
-                            <th>Mascota</th>
-                            <th>Propietario</th>
-                            <th>Veterinario</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
+            <!-- Carga de cada veterinario -->
+            <section class="panel-card panel-card--acotada" aria-labelledby="tituloCarga">
+                <h3 class="panel-card__titulo" id="tituloCarga">Agenda por veterinario</h3>
+                <?php if (!$panel['carga']): ?>
+                    <p class="panel-vacio">No hay veterinarios activos.</p>
+                <?php else: ?>
+                    <ul class="panel-carga panel-desplazable">
+                        <?php foreach ($panel['carga'] as $v):
+                            $total = (int) $v['total'];
+                            $atendidas = (int) $v['atendidas'];
+                            $pct = $total > 0 ? round($atendidas / $total * 100) : 0; ?>
+                            <li class="panel-carga__fila">
+                                <span class="panel-carga__nombre"><?= $e($v['veterinario']) ?></span>
+                                <span class="panel-carga__barra" role="img" aria-label="<?= $atendidas ?> de <?= $total ?> citas atendidas">
+                                    <span class="panel-carga__progreso" style="--pct: <?= $pct ?>%"></span>
+                                </span>
+                                <span class="panel-carga__valor"><?= $total === 0 ? 'Sin citas' : "$atendidas / $total" ?></span>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </section>
+
+            <!-- Tendencia de asistencia -->
+            <section class="panel-card panel-card--llena" aria-labelledby="tituloTendencia">
+                <h3 class="panel-card__titulo" id="tituloTendencia">Asistencia de los últimos 6 meses</h3>
+                <div class="panel-grafica">
+                    <canvas id="panelTendencia" data-serie="<?= $e(json_encode($panel['tendencia'], JSON_UNESCAPED_UNICODE)) ?>" aria-describedby="tablaTendencia"></canvas>
+                </div>
+                <table class="panel-sr" id="tablaTendencia">
+                    <caption>Citas atendidas y no asistidas por mes</caption>
+                    <thead><tr><th scope="col">Mes</th><th scope="col">Atendidas</th><th scope="col">No asistieron</th></tr></thead>
                     <tbody>
-                        ${res.citas.map(cita => {
-                            const time = cita.hora ? cita.hora.substring(0, 5) : '—';
-                            const petName = cita.mascota_nombre || 'Mascota';
-                            const ownerName = cita.propietario_nombre || '—';
-                            const vetName = cita.veterinario_nombre ? cita.veterinario_nombre.split(' ')[0] : '—';
-                            const estado = cita.estado || 'pendiente';
-                            const stateColor = STATE_COLORS[estado] || '#6B7280';
-                            const stateLabel = STATE_LABELS[estado] || estado;
-                            
-                            return `
-                                <tr>
-                                    <td><strong>${time}</strong></td>
-                                    <td>${petName}</td>
-                                    <td>${ownerName}</td>
-                                    <td>Dr. ${vetName}</td>
-                                    <td><span style="background: ${stateColor}20; color: ${stateColor}; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${stateLabel}</span></td>
-                                </tr>
-                            `;
-                        }).join('')}
+                        <?php foreach ($panel['tendencia'] as $m): ?>
+                            <tr><th scope="row"><?= $e($m['etiqueta']) ?></th><td><?= (int) $m['atendidas'] ?></td><td><?= (int) $m['no_asistidas'] ?></td></tr>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
-            `;
+            </section>
+        </div>
 
-            appointmentsContainer.innerHTML = appointmentsHTML;
-        })
-        .catch(error => {
-            console.error('Error cargando citas:', error);
-            document.getElementById('todayAppointments').innerHTML = '<div class="schedule-empty">Error al cargar las citas</div>';
-        });
-});
-</script>
+        <!-- Pendientes de la operación -->
+        <section class="panel-card panel-card--llena" aria-labelledby="tituloPendientesAdmin">
+            <h3 class="panel-card__titulo" id="tituloPendientesAdmin">Pendientes</h3>
+            <ul class="panel-pendientes panel-desplazable">
+                <li class="panel-pendiente" data-nivel="<?= $totalSinCerrar ? 'alerta' : 'ok' ?>">
+                    <span class="panel-pendiente__valor"><?= $totalSinCerrar ?></span>
+                    <div>
+                        <p class="panel-pendiente__titulo">Atenciones sin cerrar</p>
+                        <p class="panel-texto-sec"><?= $totalSinCerrar ? 'Debe cerrarlas su veterinario: ' . $listaVets($pend['sin_cerrar']) : 'Ninguna.' ?></p>
+                    </div>
+                </li>
+                <?php if ($totalEnCursoOtroDia): ?>
+                    <li class="panel-pendiente" data-nivel="aviso">
+                        <span class="panel-pendiente__valor"><?= $totalEnCursoOtroDia ?></span>
+                        <div>
+                            <p class="panel-pendiente__titulo">Atenciones abiertas de días anteriores</p>
+                            <p class="panel-texto-sec"><?= $listaVets($pend['en_curso_otro_dia']) ?></p>
+                        </div>
+                    </li>
+                <?php endif; ?>
+                <li class="panel-pendiente" data-nivel="<?= $pend['sin_marcar'] ? 'aviso' : 'ok' ?>">
+                    <span class="panel-pendiente__valor"><?= (int) $pend['sin_marcar'] ?></span>
+                    <div>
+                        <p class="panel-pendiente__titulo">Citas pasadas sin marcar</p>
+                        <p class="panel-texto-sec">Ya pasó su hora y no se atendieron ni se marcaron como no asistidas (últimos 30 días).</p>
+                    </div>
+                </li>
+                <li class="panel-pendiente" data-nivel="<?= $pend['por_confirmar'] ? 'aviso' : 'ok' ?>">
+                    <span class="panel-pendiente__valor"><?= (int) $pend['por_confirmar'] ?></span>
+                    <div>
+                        <p class="panel-pendiente__titulo">Citas por confirmar</p>
+                        <p class="panel-texto-sec">Pendientes en los próximos 7 días.</p>
+                    </div>
+                </li>
+            </ul>
+            <a class="panel-enlace" href="index.php?action=admin_citas">Revisar en Gestión de citas <i class="fas fa-chevron-right"></i></a>
+        </section>
+    </div>
+</div>

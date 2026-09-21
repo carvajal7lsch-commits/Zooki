@@ -143,29 +143,6 @@ class PropietarioController {
             : 'Propietario registrado, pero no se pudo enviar el correo con sus credenciales.'];
     }
 
-    public function registrar() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $error = $this->validarDatosPropietario($_POST, $datos);
-            if ($error !== null) {
-                $_SESSION['error_message'] = $error;
-                header("Location: index.php?action=nuevo_propietario");
-                exit();
-            }
-
-            try {
-                [$ok, $mensaje] = $this->crearPropietario($datos);
-            } catch (Exception $e) {
-                error_log('Error al registrar propietario: ' . $e->getMessage());
-                $ok = false;
-                $mensaje = 'No se pudo registrar el propietario. Intenta nuevamente.';
-            }
-
-            $_SESSION[$ok ? 'success_message' : 'error_message'] = $mensaje;
-            header("Location: index.php?action=nuevo_propietario");
-            exit();
-        }
-    }
-
     public function registrarAjax() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             header('Content-Type: application/json');

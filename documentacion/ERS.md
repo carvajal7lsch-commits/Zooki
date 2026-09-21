@@ -292,7 +292,7 @@ El modelo relacional de Zooki está compuesto por **24 tablas** en MySQL 8, en s
 | RF-F01 (ex RF-14) | Recordatorios por WhatsApp | Futuro | No implementado — roadmap (§2.6) |
 | RF-17, RF-18, RF-20, RF-22 | Agenda y portal | Implementado | CitaController, HorarioClinicaController, views/portal |
 | RF-19, RF-23, RF-24 | Acceso y portal del propietario | Implementado | AuthController, PasswordReset, login con Google |
-| RF-21 | Reportes PDF | Implementado | views/admin/reportes.php |
+| RF-21 | Reportes PDF | Retirado en v1.9.1 | Indicadores en el panel del administrador (HU-57) |
 | RF-25, RF-26, RF-27 | Notificaciones, horarios y catálogos | Implementado | NotificacionController, HorarioClinicaController |
 | RNF-03, RNF-04, RNF-14, RNF-15 | Seguridad | Implementado | helpers/Security.php, helpers/Csrf.php, PDO, password_hash |
 | RNF-06 | Auditoría | Implementado | models/Auditoria, auditoria_sistema, auditoria_mascotas |

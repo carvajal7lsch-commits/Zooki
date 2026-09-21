@@ -1,6 +1,6 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 2.1** · 55 historias de usuario organizadas por módulos · SENA ADSO — Ficha 3142784
+> **Revisión 2.1** · 57 historias de usuario organizadas por módulos · SENA ADSO — Ficha 3142784
 
 Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) → Requisito específico (RE)**. Origen: `ZOOK-xx` (backlog Jira), `Nuevo` (funcionalidad ya existente ahora documentada), `VD-xxx` (derivada del análisis de vacíos), `Deseable` (función propuesta aún no construida).
 
@@ -88,10 +88,14 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Puedo actualizar teléfono y correo.
 - El correo nuevo se valida como único.
 - El cambio persiste y se refleja de inmediato.
+- Veo desde cuándo existe mi cuenta, mi acceso anterior y mi actividad reciente: accesos, intentos fallidos y cambios, con fecha e IP.
+- Si hubo intentos fallidos en los últimos 30 días, se me avisa.
 
-**Reglas de negocio:** RN-G06, RN-G07 · **Dependencias:** HU-17
+**Reglas de negocio:** RN-G05, RN-G06, RN-G07 · **Dependencias:** HU-17, HU-24
 
 > _Nota: `PerfilController` sirve a los cuatro roles; el sujeto sale siempre de la sesión, nunca del POST (RN-G02). Hasta v1.8.0 solo el propietario podía editar sus datos, desde su portal: administrador, veterinario y recepcionista no tenían ninguna vista de perfil. El documento, el nombre y el rol son de solo lectura; dejar el rol editable sería la escalada de privilegios que corrigió HU-33. Desde v1.8.0 el personal entra por «Mi perfil» en el menú del avatar a un panel propio (`index.php?action=mi_perfil`) con sus datos, el contacto editable y el cambio de contraseña (HU-39)._
+
+> _Nota: desde v1.9.1 el panel ocupa la pantalla completa en tres columnas (contacto, contraseña y actividad reciente) bajo un encabezado con los datos de la cuenta. La contraseña actual solo se pide si la cuenta ya tiene una (`password_definida`); las creadas con Google ven «Crear contraseña». El cambio de contraseña no quedaba en la auditoría y ahora sí. Las fechas de la auditoría se convierten a la hora de la clínica, porque la base en Docker guarda en UTC._
 
 ### HU-45 — Gestionar mis notificaciones internas
 
@@ -489,6 +493,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Incluye nombre de la mascota, tipo y fecha.
 - No se envía si el propietario no tiene correo.
 - Queda registro del envío en la base de datos.
+- El envío corre solo una vez al día, a las 7:00 hora de la clínica.
 
 **Reglas de negocio:** RN-303, RN-304, RN-305 · **Dependencias:** HU-09
 
@@ -544,6 +549,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Un clic lleva a la ficha de la mascota.
 
 **Reglas de negocio:** RN-301 · **Dependencias:** HU-09
+
+> _Nota: desde v1.9.1 el panel del veterinario muestra las vacunas y desparasitaciones de sus propios pacientes (RE-18.4), agrupadas por día con contador y con enlace a la ficha. La agrupación por especie no se muestra en el panel._
 
 ### HU-37 — Robustez de los recordatorios automáticos
 
@@ -617,6 +624,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Una atención iniciada y no finalizada se retoma con «Continuar atención», aunque sea de un día anterior.
 - Si la atención sigue abierta 10 minutos después de la hora de fin, recibo un aviso por correo y en mis notificaciones.
 - Al terminar el día, una atención abierta pasa a "sin cerrar"; la cierro registrando la consulta o sin consulta, con un motivo.
+- La revisión de atenciones abiertas corre sola cada 5 minutos, así que el aviso llega aunque nadie abra el calendario.
 - Una atención cerrada sin consulta no se reabre y libera su horario.
 - La cita completada aparece en el historial del día pero no en la agenda futura.
 
@@ -896,14 +904,40 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Accesos rápidos a funciones frecuentes.
 - Carga en menos de 3 segundos.
 - Datos filtrados según el usuario.
+- Destaca el siguiente paciente con el botón para iniciar o continuar la atención, habilitado desde 15 minutos antes de la cita.
+- Lista las atenciones sin cerrar o abiertas de días anteriores, cada una con acceso para cerrarla.
+- No muestra datos de ejemplo: sin información, se ve un estado vacío.
 
-**Reglas de negocio:** RN-G01 · **Dependencias:** HU-17
+**Reglas de negocio:** RN-G01, RN-408, RN-410 · **Dependencias:** HU-17
+
+> _Nota: hasta v1.9.0 el panel mezclaba gráficas con datos inventados cuando no había información, la agenda de hoy mostraba las citas de todos los veterinarios y el "hoy" se calculaba en UTC. Desde v1.9.1 el panel se pinta en el servidor con la hora de la clínica (`PanelController`) y responde a "¿qué tengo que hacer ahora?"._
+
+### HU-57 — Panel de operación del administrador
+
+| Prioridad | Estado | Estimación | Origen |
+|---|---|---|---|
+| Alta | Implementada | 5 pts | Rediseño v1.9.1 |
+
+> Como administrador, quiero ver al iniciar sesión cómo va la operación de la clínica hoy y qué queda pendiente, para actuar a tiempo sin revisar módulo por módulo.
+
+**Criterios de aceptación:**
+
+- Muestra citas de hoy, atendidas, no asistidas y consultas del mes comparadas con el mismo periodo del mes anterior.
+- Muestra la carga del día por veterinario activo.
+- Lista las citas de hoy con filtro por estado.
+- Señala las atenciones sin cerrar por veterinario, las citas pasadas sin marcar y las citas por confirmar de los próximos 7 días.
+- Grafica las citas atendidas y no asistidas de los últimos 6 meses.
+- No muestra datos de ejemplo ni valores fijos.
+
+**Reglas de negocio:** RN-G01, RN-409, RN-410 · **Dependencias:** HU-18, HU-19
 
 ### HU-16 — Generar reportes en PDF
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Implementada | 5 pts | ZOOK-20 |
+| Media | Retirada | 5 pts | ZOOK-20 |
+
+> _Nota: en v1.9.1 se eliminó el módulo de reportes (`views/admin/reportes.php` y la ruta `admin_reportes`). Ya no estaba en el menú y solo imprimía la página desde el navegador. Los indicadores de operación del administrador pasaron a su panel de inicio (HU-57)._
 
 > Como veterinario, quiero generar reportes exportables en PDF para tener resúmenes de la actividad de la clínica.
 
@@ -969,6 +1003,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - La agenda respeta la configuración.
 
 **Reglas de negocio:** RN-503, RN-501 · **Dependencias:** HU-17
+
+> _Nota: desde v1.9.1 la pantalla muestra una fila por día con sus bloques de mañana y tarde, las horas de cada día y un resumen de la semana (días abiertos, horas totales y el horario de hoy). Los días cerrados se leen «Cerrado» en lugar de rangos vacíos y el estado del guardado automático está siempre visible. El CSS y el JS salieron de la vista a `public/css/horarios.css` y `public/js/horarios.js`, con las mismas validaciones y el mismo selector de horas._
 
 ### HU-44 — Gestionar los catálogos del sistema
 

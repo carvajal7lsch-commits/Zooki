@@ -57,13 +57,28 @@ class HorarioClinicaController
             $horarios = $_POST["horarios"] ?? [];
             
             foreach ($horarios as $dia_semana => $horario) {
-                $activo = $horario["activo"] ?? 0;
-                $morningActivo   = $horario["morning_activo"]   ?? 1;
-                $afternoonActivo = $horario["afternoon_activo"] ?? 1;
-                $morningInicio = $horario["morning_inicio"] ?? null;
-                $morningFin = $horario["morning_fin"] ?? null;
-                $afternoonInicio = $horario["afternoon_inicio"] ?? null;
-                $afternoonFin = $horario["afternoon_fin"] ?? null;
+                $activo = (int) ($horario["activo"] ?? 0) === 1 ? 1 : 0;
+                // Un día cerrado no tiene bloques activos. La tabla exige horas
+                // válidas a todo bloque activo (chk_morning / chk_afternoon), sin
+                // mirar el día, y un bloque encendido en un día cerrado la rompía.
+                $morningActivo   = $activo === 1 && (int) ($horario["morning_activo"] ?? 1) === 1 ? 1 : 0;
+                $afternoonActivo = $activo === 1 && (int) ($horario["afternoon_activo"] ?? 1) === 1 ? 1 : 0;
+                // Las horas vacías llegaban como el texto "null" y MySQL las guardaba como 00:00.
+                $hora = static fn($v) => (is_string($v) && preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $v)) ? $v : null;
+                $morningInicio = $hora($horario["morning_inicio"] ?? null);
+                $morningFin = $hora($horario["morning_fin"] ?? null);
+                $afternoonInicio = $hora($horario["afternoon_inicio"] ?? null);
+                $afternoonFin = $hora($horario["afternoon_fin"] ?? null);
+
+                $nombresDia = [1 => 'lunes', 2 => 'martes', 3 => 'miércoles', 4 => 'jueves', 5 => 'viernes', 6 => 'sábado', 7 => 'domingo'];
+                $nombreDia = $nombresDia[(int) $dia_semana] ?? 'día';
+                if (($morningActivo === 1 && (!$morningInicio || !$morningFin)) || ($afternoonActivo === 1 && (!$afternoonInicio || !$afternoonFin))) {
+                    echo json_encode([
+                        "success" => false,
+                        "message" => "Completa la hora de inicio y de fin de los bloques activos del $nombreDia.",
+                    ]);
+                    exit();
+                }
                 
                 // Validar bloques de mañana (6:00 AM - 11:59 AM) - solo si el bloque está activo
                 if ($activo == 1 && $morningActivo == 1 && $morningInicio && $morningFin) {
@@ -158,9 +173,11 @@ class HorarioClinicaController
             
             echo json_encode(["success" => true, "message" => "Horarios guardados correctamente"]);
         } catch (Exception $e) {
+            // T-04: el detalle técnico va al log, nunca al cliente.
+            error_log('Error guardando horarios: ' . $e->getMessage());
             echo json_encode([
                 "success" => false,
-                "message" => $e->getMessage(),
+                "message" => "No se pudo guardar el horario. Revisa que las horas de los bloques activos sean válidas.",
             ]);
         }
         exit();

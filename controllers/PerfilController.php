@@ -33,48 +33,57 @@ class PerfilController
         $this->auditoria = new Auditoria($this->db);
     }
 
+    /**
+     * HU-42: miembro desde, acceso anterior, intentos fallidos de los últimos
+     * 30 días y actividad reciente, todo en hora de la clínica. Si la
+     * auditoría falla, el perfil se muestra igual, sin esa sección.
+     */
+    private function resumenDeCuenta(string $documento): array
+    {
+        require_once __DIR__ . '/../helpers/ActividadCuenta.php';
+        $ahora = new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
+        $resumen = ['miembro_desde' => null, 'acceso_anterior' => null, 'fallidos_30' => 0, 'actividad' => [], 'disponible' => false];
+
+        try {
+            $desfase = ActividadCuenta::normalizarDesfase(
+                (string) $this->db->query("SELECT TIMEDIFF(NOW(), UTC_TIMESTAMP())")->fetchColumn()
+            );
+
+            $registro = $this->usuario->getFechaRegistro($documento);
+            if ($registro) {
+                $resumen['miembro_desde'] = ActividadCuenta::mesYAnio(ActividadCuenta::aHoraClinica($registro, $desfase));
+            }
+
+            $accesos = 0;
+            foreach ($this->auditoria->actividadDeCuenta($documento, 8) as $fila) {
+                $fecha = ActividadCuenta::aHoraClinica($fila['fecha_hora'], $desfase);
+                $item = ActividadCuenta::describir($fila) + [
+                    'momento' => ActividadCuenta::momento($fecha, $ahora),
+                    'ip' => $fila['ip_address'] ?? '',
+                ];
+                // El acceso más reciente es la sesión actual; el anterior es el segundo.
+                if ($item['tipo'] === 'acceso' && ++$accesos === 2) {
+                    $resumen['acceso_anterior'] = $item['momento'];
+                }
+                $resumen['actividad'][] = $item;
+            }
+
+            $desdeBd = $ahora->modify('-30 days')->setTimezone(new DateTimeZone($desfase))->format('Y-m-d H:i:s');
+            $resumen['fallidos_30'] = $this->auditoria->contarAccesosFallidos($documento, $desdeBd);
+            $resumen['disponible'] = true;
+        } catch (Throwable $e) {
+            error_log('Perfil: no se pudo leer la actividad de la cuenta: ' . $e->getMessage());
+        }
+
+        return $resumen;
+    }
+
     /** Documento del usuario en sesion, o null si no hay sesion. */
     private function documentoEnSesion(): ?string
     {
         $doc = $_SESSION['usuario_doc'] ?? '';
 
         return $doc !== '' ? (string) $doc : null;
-    }
-
-    /** Devuelve los datos de la cuenta propia. */
-    public function verAjax(): void
-    {
-        header('Content-Type: application/json');
-
-        $documento = $this->documentoEnSesion();
-        if ($documento === null) {
-            http_response_code(401);
-            echo json_encode(['success' => false, 'message' => 'Sesion expirada.']);
-            return;
-        }
-
-        try {
-            $datos = $this->usuario->getById($documento);
-            if (!$datos) {
-                echo json_encode(['success' => false, 'message' => 'No se encontro tu perfil.']);
-                return;
-            }
-
-            echo json_encode([
-                'success' => true,
-                'perfil' => [
-                    'documento'       => $datos['documento'],
-                    'tipo_documento'  => $datos['tipo_documento'],
-                    'nombre_completo' => $datos['nombre_completo'],
-                    'email'           => $datos['email'],
-                    'telefono'        => $datos['telefono'],
-                    'rol'             => $_SESSION['usuario_rol'] ?? '',
-                ],
-            ]);
-        } catch (Exception $e) {
-            error_log('Error al consultar perfil: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'No se pudo cargar tu perfil.']);
-        }
     }
 
     /**
@@ -184,6 +193,9 @@ class PerfilController
 
         $rolNombre    = $roles[$idRol];
         $cuentaGoogle = ($_SESSION['login_method'] ?? 'password') === 'google';
+        // HU-39: sin contraseña conocida (cuenta creada con Google) no se pide la actual.
+        $pideActual   = (int) ($perfil['password_definida'] ?? 1) === 1;
+        $cuenta       = $this->resumenDeCuenta($documento);
         $content_view = __DIR__ . '/../views/perfil/index.php';
         require __DIR__ . '/../views/' . $layouts[$idRol] . '/layout.php';
     }

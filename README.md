@@ -4,7 +4,39 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.9.0 (Actual)
+### Versión 1.9.1 (Actual)
+Rediseño de las pantallas de inicio, de «Mi perfil» y de la configuración de horarios, y limpieza de módulos que ya no se usaban.
+
+**Panel de inicio del veterinario (HU-18, HU-20)**
+*   **«Mi día»:** flyer de bienvenida con las citas de hoy, las atendidas y las que faltan; tarjeta del siguiente paciente con el botón para iniciar o continuar la atención, habilitado desde 15 minutos antes de la cita (RN-408).
+*   **Su agenda, no la de todos:** antes mostraba las citas de todos los veterinarios, lo que incumplía el criterio de HU-18.
+*   **Atenciones sin cerrar** (RN-410) y **vacunas y desparasitaciones de sus pacientes** agrupadas por día, con enlace a la ficha.
+
+**Panel de inicio del administrador (HU-57, nueva)**
+*   Citas de hoy, atendidas, no asistidas y consultas del mes comparadas con el mismo periodo del mes anterior.
+*   Carga del día por veterinario, citas de hoy con filtro por estado y pendientes de la operación: atenciones sin cerrar, citas pasadas sin marcar y citas por confirmar.
+*   Una sola gráfica: asistencia de los últimos 6 meses.
+
+**Mi perfil (HU-42, HU-39)**
+*   **Actividad reciente de la cuenta:** accesos, intentos fallidos y cambios, con fecha e IP, y aviso si hubo intentos fallidos en los últimos 30 días.
+*   La contraseña actual solo se pide si la cuenta ya tiene una; las creadas con Google ven «Crear contraseña».
+*   Requisitos de la contraseña marcados al escribir y botón para ver lo escrito.
+*   El cambio de contraseña ahora queda en la auditoría, y el registro y el inicio de sesión con Google vuelven a registrarse: usaban una acción fuera del catálogo y la base los rechazaba.
+
+**Configuración de horarios (HU-43)**
+*   Una fila por día con sus bloques, las horas de cada día y un resumen de la semana; los días cerrados se leen «Cerrado».
+*   Se corrigió el guardado: un día cerrado ya no envía bloques activos, que rompían la restricción `chk_afternoon` de la base.
+
+**Correcciones y limpieza**
+*   **Sin datos de ejemplo:** los paneles ya no inventan valores cuando no hay información, y el «hoy» usa la hora de la clínica y no la del servidor.
+*   **Módulo de reportes eliminado** (HU-16 retirada), junto con 14 rutas, 4 vistas y 9 métodos de controlador que ninguna pantalla usaba.
+*   **Interfaz:** los títulos de la cabecera quedaron alineados con el contenido y desapareció la barra de scroll que parpadeaba al cargar cada módulo.
+*   El CSS y el JS de las pantallas rediseñadas salieron de las vistas a sus propios archivos.
+
+**Pruebas**
+*   Cuatro suites nuevas: `ResumenPanelTest`, `PanelTest`, `ActividadCuentaTest` y `ActividadCuentaAuditoriaTest`.
+
+### Versión 1.9.0
 Auditoría de cierre de los módulos de acceso, mascotas e historia clínica, y nueva pantalla de atención de citas para el veterinario.
 
 **Seguridad**

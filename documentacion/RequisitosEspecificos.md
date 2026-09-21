@@ -56,6 +56,9 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | RE-42.1 | El sistema debe mostrar los datos del perfil del usuario. | Funcional | El usuario ve sus datos actuales. | Media |
 | RE-42.2 | El sistema debe permitir actualizar teléfono y correo. | Funcional | Los cambios se guardan y se reflejan. | Media |
 | RE-42.3 | El sistema debe validar la unicidad del nuevo correo. | Validación | Un correo ya usado por otra cuenta es rechazado. | Media |
+| RE-42.4 | El sistema debe mostrar la actividad reciente de la cuenta: accesos, intentos fallidos y cambios, con fecha en hora de la clínica e IP. | Seguridad | Solo aparecen eventos de la propia cuenta y los intentos fallidos se destacan. | Media |
+| RE-42.5 | El sistema debe registrar en auditoría el cambio de contraseña, sin guardar la contraseña. | Seguridad | Tras cambiarla, el evento aparece en la actividad. | Alta |
+| RE-42.6 | El formulario de contraseña debe mostrar los requisitos de la política mientras se escribe y permitir ver lo escrito. | Usabilidad | Cada requisito se marca al cumplirse y la confirmación avisa si no coincide. | Baja |
 
 **Reglas de negocio:** RN-G06, RN-G07
 
@@ -283,6 +286,7 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | RE-10.2 | El correo debe incluir mascota, tipo y fecha. | Funcional | El correo contiene esos datos. | Media |
 | RE-10.3 | El sistema no debe enviar si el propietario no tiene correo. | Restricción | Sin correo, no se envía. | Media |
 | RE-10.4 | El sistema debe registrar cada envío. | Funcional | Cada envío queda registrado con su estado. | Media |
+| RE-10.5 | El sistema debe ejecutar el envío de recordatorios con una tarea programada una vez al día, a las 7:00 en la zona horaria de la clínica. | Integración | Los correos del día salen en la mañana sin que nadie los dispare a mano. | Media |
 
 **Reglas de negocio:** RN-303, RN-304, RN-305
 
@@ -363,6 +367,7 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | RE-19.6 | El sistema debe avisar al veterinario cuando una atención sigue en curso 10 minutos después de su hora de fin. | Funcional | Llega un correo y una notificación interna, una sola vez por cita. | Alta |
 | RE-19.7 | El sistema debe pasar a "sin cerrar" las atenciones que siguen en curso al terminar el día de la cita. | Funcional | Al día siguiente la cita aparece como «Sin cerrar» y el veterinario recibe un aviso. | Alta |
 | RE-19.8 | El sistema debe permitir al veterinario asignado cerrar sin consulta una atención en curso o sin cerrar, con motivo obligatorio. | Funcional | La cita pasa a «Cerrada sin consulta», el motivo queda en auditoría y el horario se libera. | Media |
+| RE-19.9 | El sistema debe revisar las atenciones abiertas con una tarea programada al menos cada 5 minutos, además de al cargar el calendario. | Integración | Sin que nadie abra el calendario, el aviso llega a más tardar 15 minutos después de la hora de fin. | Alta |
 
 **Reglas de negocio:** RN-406, RN-408, RN-410, RN-411
 
@@ -525,8 +530,22 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | RE-18.2 | El sistema debe ofrecer accesos rápidos a funciones frecuentes. | Usabilidad | Los accesos llevan a las funciones correctas. | Media |
 | RE-18.3 | El dashboard debe cargar en menos de 3 s. | Rendimiento | Carga en menos de 3 s. | Media |
 | RE-18.4 | El sistema debe filtrar los datos según el usuario. | Seguridad | Cada usuario ve solo lo que le corresponde. | Alta |
+| RE-18.5 | El panel del veterinario debe destacar el siguiente paciente con la acción disponible: iniciar, esperar la ventana de inicio o continuar. | Usabilidad | El botón respeta la ventana de 15 minutos de RN-408 y se habilita sin recargar. | Alta |
+| RE-18.6 | El panel del veterinario debe listar sus atenciones sin cerrar o abiertas de días anteriores. | Funcional | Cada una lleva a la pantalla de atención para cerrarla. | Alta |
+| RE-18.7 | El panel no debe mostrar datos de ejemplo ni valores fijos. | Restricción | Sin datos, el panel muestra un estado vacío. | Alta |
 
-**Reglas de negocio:** RN-G01
+**Reglas de negocio:** RN-G01, RN-408, RN-410
+
+### HU-57 — Panel de operación del administrador
+
+| ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
+|---|---|---|---|---|
+| RE-57.1 | El sistema debe mostrar las citas del día, atendidas, no asistidas y consultas del mes comparadas con el mismo periodo del mes anterior. | Funcional | Los valores coinciden con la base de datos en la zona horaria de la clínica. | Alta |
+| RE-57.2 | El sistema debe mostrar la carga del día por veterinario activo. | Funcional | Aparecen todos los veterinarios activos, incluso sin citas. | Media |
+| RE-57.3 | El sistema debe listar los pendientes de la operación: atenciones sin cerrar por veterinario, citas pasadas sin marcar y citas por confirmar. | Funcional | Cada conteo coincide con los estados de las citas. | Alta |
+| RE-57.4 | El sistema debe graficar las citas atendidas y no asistidas de los últimos 6 meses. | Funcional | Los meses sin citas aparecen en cero y los datos tienen una tabla accesible. | Media |
+
+**Reglas de negocio:** RN-G01, RN-409, RN-410
 
 ### HU-16 — Generar reportes en PDF
 
@@ -612,7 +631,7 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | HU-39 | RN-G03 | RE-39.1, RE-39.2, RE-39.3 |
 | HU-40 | RN-G04 | RE-40.1, RE-40.2, RE-40.3, RE-40.4 |
 | HU-41 | RN-G01, RN-G05 | RE-41.1, RE-41.2, RE-41.3 |
-| HU-42 | RN-G06, RN-G07 | RE-42.1, RE-42.2, RE-42.3 |
+| HU-42 | RN-G06, RN-G07 | RE-42.1, RE-42.2, RE-42.3, RE-42.4, RE-42.5, RE-42.6 |
 | HU-45 | RN-G02 | RE-45.1, RE-45.2, RE-45.3, RE-45.4 |
 | HU-22 | RN-G08, RN-501 | RE-22.1, RE-22.2, RE-22.3, RE-22.4 |
 | HU-24 | RN-G05 | RE-24.1, RE-24.2, RE-24.3, RE-24.4 |
@@ -655,7 +674,8 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | HU-47 | RN-206, RN-G02 | RE-47.1, RE-47.2, RE-47.3 |
 | HU-50 | RN-405, RN-401, RN-G02 | RE-50.1, RE-50.2, RE-50.3, RE-50.4 |
 | HU-52 | RN-G02 | RE-52.1, RE-52.2, RE-52.3, RE-52.4 |
-| HU-18 | RN-G01 | RE-18.1, RE-18.2, RE-18.3, RE-18.4 |
+| HU-18 | RN-G01, RN-408, RN-410 | RE-18.1, RE-18.2, RE-18.3, RE-18.4, RE-18.5, RE-18.6, RE-18.7 |
+| HU-57 | RN-G01, RN-409, RN-410 | RE-57.1, RE-57.2, RE-57.3, RE-57.4 |
 | HU-16 | RN-501 | RE-16.1, RE-16.2, RE-16.3, RE-16.4 |
 | HU-48 | RN-501 | RE-48.1, RE-48.2, RE-48.3 |
 | HU-55 | RN-501 | RE-55.1, RE-55.2, RE-55.3 |
