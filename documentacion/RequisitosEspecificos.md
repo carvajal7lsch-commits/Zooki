@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 2.1** · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 2.2** · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de aceptación** verificable.
 
@@ -99,8 +99,8 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-23.1 | El sistema debe ejecutar un mysqldump y comprimir el archivo. | Funcional | Se genera un respaldo comprimido y no vacío. | Media |
-| RE-23.2 | El sistema debe programar el respaldo cada 24 horas por cron. | Integración | El cron ejecuta el respaldo diariamente. | Media |
+| RE-23.1 | El sistema debe volcar la base de datos y comprimir el archivo. | Funcional | Se genera un respaldo comprimido y no vacío que se puede restaurar en una base vacía. | Media |
+| RE-23.2 | El sistema debe programar el respaldo cada 24 horas con una tarea programada. | Integración | La tarea (Schedule de Dokploy en producción) ejecuta el respaldo diariamente. | Media |
 | RE-23.3 | El sistema debe almacenar el respaldo en un directorio externo. | Restricción | El respaldo queda en el directorio externo configurado. | Media |
 | RE-23.4 | El sistema debe retener/rotar los últimos respaldos. | Funcional | Los respaldos antiguos se eliminan según la rotación. | Baja |
 
@@ -325,10 +325,11 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-37.1 | El sistema debe usar una ventana de fechas con marca de enviado que recupere los no enviados. | Robustez | Si el cron falla un día, al siguiente se recuperan. | Media |
-| RE-37.2 | El sistema debe reintentar los envíos fallidos. | Robustez | Un fallo transitorio se reintenta. | Media |
+| RE-37.2 | El sistema debe reintentar los envíos fallidos, hasta 3 intentos por aviso. | Robustez | Un aviso con estado de error se vuelve a enviar en la siguiente ejecución; tras 3 fallos, no. | Media |
 | RE-37.3 | El sistema debe usar la zona horaria de la clínica en los cálculos. | Robustez | El límite de día es correcto para la clínica. | Media |
+| RE-37.4 | El sistema no debe recordar dosis de mascotas inactivas ni dosis ya renovadas. | Restricción | Una mascota inactiva, o una dosis con una aplicación posterior de la misma vacuna o del mismo tipo de desparasitación, no genera correo. | Media |
 
-**Reglas de negocio:** RN-303, RN-305
+**Reglas de negocio:** RN-303, RN-304, RN-305
 
 ## Módulo 4 — Agenda de citas
 
@@ -661,7 +662,7 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | HU-11 | RN-307 | RE-11.1, RE-11.2, RE-11.3 |
 | HU-12 | RN-302 | RE-12.1, RE-12.2, RE-12.3 |
 | HU-20 | RN-301 | RE-20.1, RE-20.2, RE-20.3 |
-| HU-37 | RN-303, RN-305 | RE-37.1, RE-37.2, RE-37.3 |
+| HU-37 | RN-303, RN-304, RN-305 | RE-37.1, RE-37.2, RE-37.3, RE-37.4 |
 | HU-13 | RN-401, RN-402, RN-403, RN-404 | RE-13.1, RE-13.2, RE-13.3, RE-13.4, RE-13.5 |
 | HU-14 | RN-405 | RE-14.1, RE-14.2, RE-14.3, RE-14.4 |
 | HU-19 | RN-406 | RE-19.1, RE-19.2, RE-19.3 |

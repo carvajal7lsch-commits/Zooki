@@ -1,13 +1,14 @@
 # Especificación de Requisitos de Software (ERS) — Proyecto Zooki
 
-> **Revisión 2.0** · Conforme al estándar IEEE Std 830-1998 · Propuesta 16 — App de Registro y Seguimiento de Mascotas · SENA ADSO — Ficha 3142784
+> **Revisión 2.1** · Conforme al estándar IEEE Std 830-1998 · Propuesta 16 — App de Registro y Seguimiento de Mascotas · SENA ADSO — Ficha 3142784
 
 | Fecha | Revisión | Autor |
 |---|---|---|
 | 27/04/2026 | 1.0 | Juan Sebastián Carvajal Ome |
 | 31/08/2026 | 2.0 | Juan Sebastián Carvajal Ome |
+| 22/09/2026 | 2.1 | Juan Sebastián Carvajal Ome |
 
-**Historial de revisiones.** La revisión 1.0 fue la línea base sobre el plan de cuatro sprints (abril 2026). La **revisión 2.0** alinea el documento con el sistema realmente construido (v1.8.0): corrige inconsistencias, fija el stack definitivo (sesiones PHP, MySQL 8, almacenamiento en servidor propio, correo transaccional), documenta las funcionalidades incorporadas (autenticación con Google, notificaciones internas, auditoría, catálogos, horarios de clínica), reclasifica WhatsApp como trabajo futuro y añade las secciones IEEE 830 de suposiciones/dependencias, requisitos futuros y diccionario de datos.
+**Historial de revisiones.** La revisión 1.0 fue la línea base sobre el plan de cuatro sprints (abril 2026). La **revisión 2.0** alinea el documento con el sistema realmente construido (v1.8.0): corrige inconsistencias, fija el stack definitivo (sesiones PHP, MySQL 8, almacenamiento en servidor propio, correo transaccional), documenta las funcionalidades incorporadas (autenticación con Google, notificaciones internas, auditoría, catálogos, horarios de clínica), reclasifica WhatsApp como trabajo futuro y añade las secciones IEEE 830 de suposiciones/dependencias, requisitos futuros y diccionario de datos. La **revisión 2.1** actualiza el modelo de datos y la trazabilidad a la v1.11.0, y marca como diferidos los requisitos de agenda y catálogos que se rehacen con el cambio de arquitectura.
 
 ## 1. Introducción
 
@@ -257,13 +258,15 @@ No forman parte de la línea base entregada; se registran para preservar la traz
 
 ### 4.2 Modelo de datos y diccionario de datos
 
-El modelo relacional de Zooki está compuesto por **24 tablas** en MySQL 8, en seis dominios funcionales. El diagrama entidad-relación completo se versiona junto al código (ver documento **Modelo Entidad-Relación**).
+El modelo relacional de Zooki está compuesto por **27 tablas** en MySQL 8, en seis dominios funcionales. El diagrama entidad-relación completo se versiona junto al código (ver documento **Modelo Entidad-Relación**).
 
 | Entidad (tabla) | Descripción y atributos clave |
 |---|---|
 | roles | Roles del sistema: 1 Administrador, 2 Veterinario, 3 Recepcionista, 4 Propietario. |
 | usuarios | Datos personales, credenciales cifradas o UID de Google, rol y estado. (documento PK, id_rol FK) |
 | password_resets | Tokens temporales de recuperación de contraseña. |
+| verificaciones_email | Tokens de verificación del correo en el auto-registro. |
+| intentos_login | Intentos fallidos de inicio de sesión y bloqueo temporal (rate limiting). |
 | especies / razas | Catálogos taxonómicos; una raza pertenece a una especie. |
 | colores_base / mascota_colores | Catálogo de colores y relación N:M con las mascotas. |
 | mascotas | Ficha del paciente. (id_mascota PK, numero_historia_clinica, doc_propietario FK, id_especie FK, id_raza FK) |
@@ -280,23 +283,25 @@ El modelo relacional de Zooki está compuesto por **24 tablas** en MySQL 8, en s
 | auditoria_mascotas | Log de cambios sobre fichas de mascotas. |
 | auditoria_sistema | Auditoría forense del sistema con payloads JSON. |
 | horarios_clinica | Bloques de atención por día de la semana. |
+| schema_migraciones | Migraciones aplicadas en la base; la crea y mantiene `scripts/migrar.php`. |
 
-### 4.3 Trazabilidad requisitos – implementación (v1.8.0)
+### 4.3 Trazabilidad requisitos – implementación (v1.11.0)
 
 | Requisitos | Módulo | Estado | Evidencia en el código |
 |---|---|---|---|
 | RF-01 a RF-06, RF-28 | Mascotas y propietarios | Implementado | MascotaController, PropietarioController, auditoria_mascotas |
 | RF-07 a RF-11 | Historia clínica | Implementado | ConsultaController, models/Consulta, Tratamiento, archivos_clinicos |
 | RF-12, RF-15, RF-16 | Vacunación y desparasitación | Implementado | VacunaController, DesparasitacionController |
-| RF-13 | Recordatorios por correo | Implementado | scripts/send_reminders.php, PHPMailer |
+| RF-13 | Recordatorios por correo | Implementado | scripts/send_reminders.php, models/Recordatorio.php, PHPMailer |
 | RF-F01 (ex RF-14) | Recordatorios por WhatsApp | Futuro | No implementado — roadmap (§2.6) |
-| RF-17, RF-18, RF-20, RF-22 | Agenda y portal | Implementado | CitaController, HorarioClinicaController, views/portal |
+| RF-17, RF-18, RF-20, RF-22 | Agenda y portal | Implementado, con HU-27 a HU-31 y HU-50 diferidas | CitaController, HorarioClinicaController, views/portal |
 | RF-19, RF-23, RF-24 | Acceso y portal del propietario | Implementado | AuthController, PasswordReset, login con Google |
 | RF-21 | Reportes PDF | Retirado en v1.9.1 | Indicadores en el panel del administrador (HU-57) |
-| RF-25, RF-26, RF-27 | Notificaciones, horarios y catálogos | Implementado | NotificacionController, HorarioClinicaController |
+| RF-25, RF-26 | Notificaciones y horarios | Implementado | NotificacionController, HorarioClinicaController |
+| RF-27 | Catálogos | Parcial, diferido (HU-44) | Solo se agregan vacunas, laboratorios y productos al registrar; no hay pantalla de catálogos |
 | RNF-03, RNF-04, RNF-14, RNF-15 | Seguridad | Implementado | helpers/Security.php, helpers/Csrf.php, PDO, password_hash |
 | RNF-06 | Auditoría | Implementado | models/Auditoria, auditoria_sistema, auditoria_mascotas |
-| RNF-11 | Respaldos | Implementado | scripts/backup.php + cron |
+| RNF-11 | Respaldos | Implementado | scripts/backup.php, models/Respaldo.php, Schedule de Dokploy y volumen `respaldos` |
 | RNF-12, RNF-13 | Pruebas y despliegue | Implementado | tests/ (PHPUnit), CI, Docker |
 
 ### 4.4 Criterios de aceptación global

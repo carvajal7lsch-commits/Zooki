@@ -1,8 +1,10 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 2.1** · 57 historias de usuario organizadas por módulos · SENA ADSO — Ficha 3142784
+> **Revisión 2.2** · 57 historias de usuario organizadas por módulos · SENA ADSO — Ficha 3142784
 
 Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) → Requisito específico (RE)**. Origen: `ZOOK-xx` (backlog Jira), `Nuevo` (funcionalidad ya existente ahora documentada), `VD-xxx` (derivada del análisis de vacíos), `Deseable` (función propuesta aún no construida).
+
+Estado **diferida**: historia de agenda, consultas o catálogos que no se completa en la versión 1.x porque ese módulo se rehace con el cambio de arquitectura. Conserva sus criterios y se retoma allí.
 
 ## Módulo T — Acceso, seguridad y administración
 
@@ -163,14 +165,16 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 **Criterios de aceptación:**
 
-- Script que ejecuta mysqldump y comprime el archivo.
-- Copia almacenada en un directorio externo al servidor principal.
+- Script que vuelca la base de datos y comprime el archivo.
+- Copia almacenada en un directorio externo al contenedor de la aplicación.
 - Retención de los últimos respaldos (rotación automática).
 - Registro de la ejecución en el log del sistema.
 
 **Reglas de negocio:** RN-504 · **Dependencias:** —
 
 > _Nota: `scripts/backup.php` toma las credenciales del `.env` (antes estaban escritas en el propio archivo con `root` y contraseña vacía) y se las pasa a `mysqldump` por un fichero temporal con permisos 0600, no por `--password=`, que es visible en `ps` para cualquier usuario del servidor. El destino se configura con `BACKUP_DIR` para poder apuntar a un volumen externo, como pide el criterio. La programación cada 24 h está versionada en `scripts/zooki.cron`._
+
+> _Nota: hasta v1.10.1 el respaldo no corría en producción. Dependía de `mysqldump`, que la imagen `php:8.2-apache` no trae, y no había Schedule en Dokploy ni volumen para guardarlo. Desde v1.11.0 el volcado se hace con PDO (`models/Respaldo.php`), en una sola instantánea y sin las columnas generadas, que MySQL rechaza al restaurar. Se guarda en el volumen `respaldos` (`BACKUP_DIR=/var/backups/zooki`) y se programa con un Schedule de Dokploy. Se verificó volcando la base y restaurándola en otra: las mismas filas en las 26 tablas._
 
 ### HU-32 — Autorización central por rol (RBAC real)
 
@@ -537,7 +541,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Implementada | 3 pts | ZOOK-25 |
+| Media | Parcial (diferida) | 3 pts | ZOOK-25 |
 
 > Como veterinario, quiero ver un panel con las vacunaciones pendientes de la semana agrupadas por día y especie para planificar la agenda.
 
@@ -552,23 +556,28 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 > _Nota: desde v1.9.1 el panel del veterinario muestra las vacunas y desparasitaciones de sus propios pacientes (RE-18.4), agrupadas por día con contador y con enlace a la ficha. La agrupación por especie no se muestra en el panel._
 
+> _Nota: diferida en v1.11.0. Falta la agrupación por especie (RE-20.2); el panel se rehace con la nueva arquitectura._
+
 ### HU-37 — Robustez de los recordatorios automáticos
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Pendiente | 3 pts | VD-REM-01/02/03 |
+| Media | Implementada | 3 pts | VD-REM-01/02/03 |
 
 > Como sistema, quiero que los recordatorios se envíen de forma confiable aunque el cron falle un día, con reintentos y zona horaria correcta, para no dejar a los propietarios sin aviso.
 
 **Criterios de aceptación:**
 
 - Se usa una ventana de fechas con marca de enviado que recupera los no enviados.
-- Los envíos fallidos se reintentan.
+- Los envíos fallidos se reintentan, hasta 3 intentos por aviso.
 - El cálculo de fechas usa la zona horaria de la clínica.
+- No se recuerdan dosis de mascotas inactivas ni dosis que ya se renovaron.
 
-**Reglas de negocio:** RN-303, RN-305 · **Dependencias:** HU-10
+**Reglas de negocio:** RN-303, RN-304, RN-305 · **Dependencias:** HU-10
 
 > _Nota: Deriva del análisis de vacíos (VD-REM-01/02/03)._
+
+> _Nota: implementada en v1.11.0. Antes se buscaban fechas exactas (hoy + 7 y hoy + 1), así que un día sin tarea perdía esos avisos. Además, un envío fallido quedaba registrado con estado `error` y la revisión de duplicados lo encontraba, así que nunca se reintentaba. Ahora el primer aviso cubre del día 7 al 2 y el último, el día anterior y el mismo día (`helpers/VentanaRecordatorio.php`). Solo cuenta como enviado un registro `enviado`, y el «hoy» se calcula en la zona de la clínica, no con `CURDATE()`. La selección vive en `models/Recordatorio.php`, que también excluye las mascotas inactivas y las dosis con una aplicación posterior de la misma vacuna o del mismo tipo de desparasitación._
 
 ## Módulo 4 — Agenda de citas
 
@@ -655,7 +664,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial | 8 pts | VD-AGN-01 |
+| Alta | Parcial (diferida) | 8 pts | VD-AGN-01 |
 
 > Como veterinario, quiero registrar la hora real de inicio y fin de cada atención y que el sistema detecte los retrasos, para que la agenda coincida con la realidad y no se acumulen los choques.
 
@@ -669,11 +678,13 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 > _Nota: Deriva del análisis de vacíos (VD-AGN-01): el caso del calendario con retrasos en cascada. En v1.9.0 se cumple el primer criterio: `hora_inicio_real` y `hora_fin_real` (migración 09) se sellan al iniciar la atención y al guardar la consulta que completa la cita. Siguen pendientes la detección del exceso de duración y el aviso de corrimiento a las citas siguientes._
 
+> _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura. Faltan RE-27.2 y RE-27.3._
+
 ### HU-28 — Buffer configurable entre citas
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Pendiente | 3 pts | VD-AGN-02 |
+| Media | Pendiente (diferida) | 3 pts | VD-AGN-02 |
 
 > Como administrador, quiero definir un tiempo de amortiguación entre citas para absorber pequeños retrasos sin generar choques.
 
@@ -687,11 +698,13 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 > _Nota: Deriva del análisis de vacíos (VD-AGN-02)._
 
+> _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura._
+
 ### HU-29 — Estado "no asistió" y ausentismo
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Parcial | 3 pts | VD-AGN-07 |
+| Media | Parcial (diferida) | 3 pts | VD-AGN-07 |
 
 > Como veterinario, quiero marcar una cita como "no asistió" para liberar el espacio y medir el ausentismo.
 
@@ -706,11 +719,13 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 > _Nota: Deriva del análisis de vacíos (VD-AGN-07). En v1.9.0 se implementaron el estado `no_asistio` (migración 09), el botón «No asistió» del calendario y la liberación del espacio en toda la lógica de disponibilidad. Falta un reporte propio de la tasa de ausentismo: por ahora las inasistencias solo se ven en la gráfica «Mis citas» del panel del veterinario (últimos 30 días)._
 
+> _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura. Falta RE-29.3 (tasa de ausentismo)._
+
 ### HU-30 — Bloqueos de agenda del veterinario y días no laborables
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Pendiente | 5 pts | VD-AGN-08 |
+| Alta | Pendiente (diferida) | 5 pts | VD-AGN-08 |
 
 > Como administrador, quiero registrar bloqueos del veterinario (almuerzo, permiso, incapacidad) y días festivos o cierres, para que no se agenden citas en esos periodos.
 
@@ -724,11 +739,13 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 > _Nota: Deriva del análisis de vacíos (VD-AGN-08)._
 
+> _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura._
+
 ### HU-31 — Endurecer la validación de disponibilidad
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial | 5 pts | VD-AGN-03/04/05/06 |
+| Alta | Parcial (diferida) | 5 pts | VD-AGN-03/04/05/06 |
 
 > Como responsable del sistema, quiero que toda validación de disponibilidad se haga en el backend, con una sola fuente de horario que respete la duración y sin condición de carrera, para impedir citas inválidas o dobles.
 
@@ -742,11 +759,13 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 > _Nota: Deriva del análisis de vacíos (VD-AGN-03/04/05/06)._
 
+> _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura. Estado en v1.10.1: las sugerencias de horario recorren un horario fijo de 08:00 a 18:00 en lugar de `horarios_clinica` (RE-31.1); `validarHorarioLaboral` solo mira la hora de inicio, no la duración, e ignora los bloques desactivados que conservan sus horas (RE-31.2); el índice `uq_cita_vet_activa` impide dos citas que empiezan a la misma hora, pero no dos reservas simultáneas que se solapan con distinta hora de inicio (RE-31.3)._
+
 ### HU-51 — Confirmar asistencia a la cita desde el recordatorio
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Pendiente | 3 pts | Deseable |
+| Media | Pendiente (diferida) | 3 pts | Deseable |
 
 > Como propietario, quiero confirmar o declinar mi asistencia desde el recordatorio de la cita para que la clínica sepa con anticipación si asistiré.
 
@@ -758,6 +777,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - La respuesta queda registrada.
 
 **Reglas de negocio:** RN-404, RN-405 · **Dependencias:** HU-21, HU-10
+
+> _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura._
 
 > _Nota: Función deseable propuesta (no construida)._
 
@@ -860,7 +881,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial | 5 pts | Deseable |
+| Alta | Parcial (diferida) | 5 pts | Deseable |
 
 > Como propietario, quiero cancelar o reprogramar mis propias citas desde el portal para gestionar mi tiempo sin tener que llamar a la clínica.
 
@@ -875,6 +896,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 **Reglas de negocio:** RN-405, RN-401, RN-G02 · **Dependencias:** HU-26
 
 > _Nota: Función deseable propuesta. Desde v1.9.0 el propietario cancela sus citas pendientes o confirmadas desde el portal: el botón existía, pero el portal buscaba un estado «programada» que no existe y nunca lo mostraba (M4-07). Siguen pendientes reprogramar desde el portal y el registro del cambio en auditoría._
+
+> _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura. Faltan RE-50.2 (reprogramar desde el portal) y RE-50.4 (la cancelación avisa a la clínica pero no queda en `auditoria_sistema`)._
 
 ### HU-52 — Centro de notificaciones del propietario
 
@@ -1017,7 +1040,7 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Implementada | 3 pts | Nuevo |
+| Media | Parcial (diferida) | 3 pts | Nuevo |
 
 > Como administrador o veterinario, quiero gestionar los catálogos (especies, razas, colores, vacunas base, laboratorios, productos) para que los formularios ofrezcan opciones actualizadas.
 
@@ -1029,11 +1052,13 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 
 **Reglas de negocio:** RN-502 · **Dependencias:** HU-17
 
+> _Nota: sobre-declarada hasta v1.10.1 y diferida en v1.11.0. No existe una pantalla de catálogos: «Configuración» solo tiene los horarios. Especies, razas y colores no se pueden crear. Vacunas, laboratorios y productos solo los crea el veterinario al registrar el acto clínico. Queda por decidir quién gestiona los catálogos: RN-501 dice solo el administrador, esta HU dice administrador o veterinario y la matriz de permisos hoy se lo da solo al veterinario._
+
 ### HU-53 — Parámetros del sistema configurables
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Pendiente | 5 pts | Deseable |
+| Media | Pendiente (diferida) | 5 pts | Deseable |
 
 > Como administrador, quiero configurar parámetros del sistema (duración de cita por defecto, buffer entre citas, ventanas de recordatorio) para adaptar el comportamiento sin tocar el código.
 
@@ -1046,6 +1071,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 **Reglas de negocio:** RN-403, RN-303, RN-503 · **Dependencias:** HU-43
 
 > _Nota: Función deseable propuesta; sería el hogar natural del buffer (HU-28) y las ventanas de recordatorio (HU-37)._
+
+> _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura._
 
 ## Módulo 8 — Público e institucional
 
