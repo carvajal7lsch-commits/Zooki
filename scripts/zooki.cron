@@ -5,7 +5,12 @@
 # Antes las dos tareas solo existian como un comentario dentro de cada script,
 # asi que no habia forma de comprobar que estuvieran realmente programadas.
 #
-# Instalar en el servidor:
+# En produccion NO se usa este archivo: el contenedor web no tiene cron y las
+# tres tareas se crean como Schedules de Dokploy sobre el servicio web, con
+# los mismos comandos y horarios (ver README, despliegue de la v1.11.0).
+# Las horas son de la zona del contenedor, por eso TZ debe ser America/Bogota.
+#
+# Instalar en un servidor propio:
 #   crontab scripts/zooki.cron
 # Comprobar que quedo activo:
 #   crontab -l

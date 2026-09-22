@@ -27,6 +27,11 @@ RUN if [ -f "composer.json" ]; then composer install --no-dev --optimize-autoloa
 # no puede escribir en él.
 RUN mkdir -p public/uploads/mascotas public/uploads/clinicos
 
+# Destino de los respaldos (HU-23): lo cubre el volumen "respaldos" de
+# docker-compose.yml y se configura con BACKUP_DIR. Existe en la imagen por la
+# misma razón que uploads: si no, el volumen nace de root.
+RUN mkdir -p /var/backups/zooki && chown www-data:www-data /var/backups/zooki
+
 # Configurar permisos para que el servidor web pueda leer/escribir
 RUN chown -R www-data:www-data /var/www/html/Zooki
 

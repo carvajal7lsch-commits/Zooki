@@ -10,14 +10,20 @@ services:
     # Las fotos de mascotas y los adjuntos clinicos no van en git ni en la
     # imagen: sin este volumen se pierden en cada reconstruccion y la base
     # queda apuntando a archivos que ya no existen.
+    # Los respaldos (HU-23) tampoco pueden vivir dentro del contenedor: se
+    # borrarian con cada despliegue. BACKUP_DIR debe apuntar a esta ruta.
     volumes:
       - uploads:/var/www/html/Zooki/public/uploads
+      - respaldos:/var/backups/zooki
     restart: always
   db:
     image: mysql:8.0
     container_name: zooki_db
     environment:
-      MYSQL_ROOT_PASSWORD: root_password_segura
+      # La clave de root sale del .env: no se escribe en un archivo versionado.
+      # MySQL solo la usa al crear la base; cambiarla aqui no cambia la de una
+      # base que ya existe.
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
@@ -28,3 +34,4 @@ services:
 volumes:
   db_data:
   uploads:
+  respaldos:
