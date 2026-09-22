@@ -29,3 +29,9 @@ RUN mkdir -p public/uploads/mascotas public/uploads/clinicos
 
 # Configurar permisos para que el servidor web pueda leer/escribir
 RUN chown -R www-data:www-data /var/www/html/Zooki
+
+# Al arrancar, aplica las migraciones de database/ que falten y luego inicia
+# Apache (docker/iniciar.sh). El sed quita los CRLF por si el archivo se editó
+# en Windows: con ellos /bin/sh no puede ejecutarlo.
+RUN sed -i 's/\r$//' docker/iniciar.sh && chmod +x docker/iniciar.sh
+CMD ["/var/www/html/Zooki/docker/iniciar.sh"]

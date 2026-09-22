@@ -95,7 +95,7 @@ Auditoría de cierre de los módulos de acceso, mascotas e historia clínica, y 
 **Infraestructura y base de datos**
 *   **Respaldos:** toman las credenciales del `.env`, admiten un destino externo configurable (`BACKUP_DIR`) y su programación queda en `scripts/zooki.cron`.
 *   **Docker:** volumen `uploads` para conservar fotos y adjuntos al reconstruir el contenedor.
-*   **Migraciones:** siete nuevas (`database/06_*.sql` a `database/12_*.sql`) para la vigencia de las notificaciones, los estados `en_curso`, `no_asistio`, `sin_cerrar` y `cerrada_sin_consulta` de las citas, la hora real de atención, los nuevos campos de la consulta, el horario único solo entre citas activas y la columna `password_definida`. Todas se pueden ejecutar más de una vez.
+*   **Migraciones:** siete nuevas (`database/06_*.sql` a `database/12_*.sql`) para la vigencia de las notificaciones, los estados `en_curso`, `no_asistio`, `sin_cerrar` y `cerrada_sin_consulta` de las citas, la hora real de atención, los nuevos campos de la consulta, el horario único solo entre citas activas y la columna `password_definida`. La 06, la 07 y la 09 no se pueden repetir (ver «Migraciones de la base de datos»).
 *   **Docker:** la imagen crea las carpetas de `uploads` para que el volumen nazca con permisos de Apache.
 *   **Documentación:** los documentos del proyecto pasan a la carpeta `documentacion/`; en la raíz queda el README.
 *   **`.env`:** PHP lo lee con `parse_ini_file`, así que un paréntesis en un comentario invalida el archivo completo. `.env.example` quedó corregido y advierte de ello.
@@ -336,7 +336,17 @@ graph TD
     Se recomienda configurar un Host Virtual que apunte al directorio `public/` del proyecto para el correcto funcionamiento de las rutas relativas.
 
 4.  **Importar la Base de Datos:**
-    Importa el esquema SQL inicial ubicado en `database/schema.sql` (si está presente) en tu servidor MySQL.
+    Importa el esquema SQL inicial ubicado en `database/01_schema.sql` en tu servidor MySQL y luego aplica las migraciones con `php scripts/migrar.php`.
+
+## Migraciones de la base de datos
+
+Las migraciones son los archivos `database/NN_nombre.sql` con número 04 o mayor. **En el servidor se aplican solas:** al arrancar, el contenedor `web` ejecuta `docker/iniciar.sh`, que corre `scripts/migrar.php` y después inicia Apache. Como Dokploy reconstruye el contenedor en cada despliegue, basta con subir el archivo `.sql` nuevo junto con el código.
+
+*   **Registro:** cada migración aplicada queda en la tabla `schema_migraciones`, así que ninguna se repite.
+*   **Línea base:** las migraciones 04 a 12 se aplicaron a mano antes de que existiera el registro, y la 06, la 07 y la 09 **no** se pueden repetir: la 07 y la 09 redefinen los estados de las citas con la lista de su época y borrarían `sin_cerrar` y `cerrada_sin_consulta`. La primera vez que el migrador corre en una base que ya tiene el esquema, las anota como aplicadas sin ejecutarlas.
+*   **Si una falla:** se detiene ahí, no la anota (se reintenta en el siguiente arranque) y Apache arranca igual para no tumbar el sitio. El error aparece en los logs del contenedor en Dokploy con el prefijo `[migraciones] ERROR`.
+*   **En local:** `php scripts/migrar.php` aplica las que falten; con `--revisar` solo muestra cuáles aplicaría.
+*   **Al escribir una migración nueva:** usa el número siguiente y hazla repetible (comprueba si la columna o la fila ya existe antes de crearla, como en `database/13_razas_portal.sql`). En una instalación nueva, MySQL ejecuta todos los `.sql` al crear la base y luego el migrador vuelve a correr las posteriores a la 12.
 
 ## Modelo de Base de Datos
 
