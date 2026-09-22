@@ -1,6 +1,6 @@
 # Auditoría por Módulos — Proyecto Zooki
 
-> **Revisión 1.4** · Auditoría de cierre previa a la entrega · SENA ADSO — Ficha 3142784
+> **Revisión 1.5** · Auditoría de cierre previa a la entrega · SENA ADSO — Ficha 3142784
 > Base auditada: rama `release/v1.8.0`, commit `98f9177`. El Módulo 4 se revisó sobre los cambios de v1.9.0.
 
 Registro de hallazgos módulo por módulo. Cada módulo se revisa contra cuatro ejes:
@@ -26,8 +26,8 @@ Registro de hallazgos módulo por módulo. Cada módulo se revisa contra cuatro 
 | T — Acceso, seguridad y administración | ✅ **Cerrado** | 27 | 7 | 26 |
 | 1 — Mascotas y propietarios | ✅ **Cerrado** | 22 | 3 | 20 |
 | 2 — Historia clínica | ✅ **Cerrado** | 15 | 5 | 15 |
-| 3 — Vacunación y recordatorios | ⬜ Pendiente | — | — | — |
-| 4 — Agenda de citas | ✅ **Cerrado** | 23 | 7 | 19 |
+| 3 — Vacunación y recordatorios | ◐ Parcial (recordatorios, v1.11.0) | 5 | 1 | 4 |
+| 4 — Agenda de citas | ✅ **Cerrado** | 23 | 7 | 20 |
 | 5 — Portal del propietario | ⬜ Pendiente | — | — | — |
 | 6 — Dashboard y reportes | ⬜ Pendiente | — | — | — |
 | 7 — Configuración del sistema | ⬜ Pendiente | — | — | — |
@@ -48,6 +48,8 @@ Afectan a todo el sistema; se listan aparte para no repetirlos en cada módulo.
 | `style="..."` en línea | **692** |
 | `onclick=` / `onchange=` / `onsubmit=` | **230** |
 | Bloques `<script>` embebidos | **29** |
+
+> **Conteo en v1.11.0:** 319 `style=`, 248 `onclick=`/`onchange=`/`onsubmit=` y 19 bloques `<script>`. Los estilos bajaron a menos de la mitad, sobre todo por el portal (v1.10.0), pero los manejadores en línea **subieron** de 230 a 248. El peor foco pasó a ser [views/reception/pacientes.php](../views/reception/pacientes.php), con 110 `style=`. Queda para la arquitectura nueva.
 
 Peores focos: [views/admin/auditoria.php](../views/admin/auditoria.php) (53 `style=`), [views/admin/usuarios.php](../views/admin/usuarios.php) (32 `onclick=`).
 
@@ -466,7 +468,7 @@ Pruebas añadidas: [tests/Integration/ConsultaHistorialTest.php](../tests/Integr
 **HU cubiertas:** HU-13 (agendar), HU-14 (cancelar o reprogramar), HU-19 (completar), HU-21 (confirmación por correo), HU-27 (*era Pendiente*), HU-29 (*era Pendiente*). Relacionadas: HU-28, HU-30, HU-31, HU-50.
 **RN aplicables:** RN-401 … RN-409, RN-208, RN-G02.
 
-Estado: **23 hallazgos: 19 corregidos, 2 parciales, 1 aceptado y 1 abierto**. HU-27, HU-29 y HU-50 pasan de Pendiente a Parcial.
+Estado: **23 hallazgos: 20 corregidos, 2 parciales y 1 aceptado** (M4-20 se cerró en v1.9.1). HU-27, HU-29 y HU-50 pasan de Pendiente a Parcial.
 
 > **Origen de la revisión.** El detonante fue un reporte de uso: una cita iniciada a las 10:15 seguía «en curso» horas después. No era un caso aislado. En la base local había tres citas de junio atascadas en ese estado, tres citas completadas sin consulta y nueve citas pasadas, pendientes o confirmadas, que nadie cerró.
 
@@ -560,7 +562,7 @@ El portal comparaba con el estado `programada` en tres sitios, y ese estado no e
 | M4-17 | `listarTiposCitaAjax` devolvía `$e->getMessage()` al cliente y escribía el catálogo completo en el log en cada llamada; `listarSemanaAjax` escribía en el log en cada carga del calendario. | ✅ | Mensaje genérico y sin logs de depuración. |
 | M4-18 | El dashboard, la línea de tiempo y el panel de citas del administrador no conocían los estados `en_curso` ni `no_asistio`. | ✅ | Etiquetas, colores y filtro. |
 | M4-19 | El marcado del segundo panel (`detalleCitaDrawer`) sigue en las vistas, ya sin uso. | ⚠️ Aceptado | Es marcado inerte; se retira con la limpieza de TR-01. |
-| M4-20 | Las citas en curso de días anteriores no aparecen en el panel del veterinario, que solo muestra las de hoy: hay que buscarlas en el calendario. | Abierto | Conviene un aviso de «atenciones sin cerrar» en el dashboard. |
+| M4-20 | Las citas en curso de días anteriores no aparecen en el panel del veterinario, que solo muestra las de hoy: hay que buscarlas en el calendario. | ✅ | Resuelto en v1.9.1: el panel del veterinario lista sus atenciones abiertas y sin cerrar de cualquier día (`Panel::atencionesAbiertas`, HU-18). |
 | M4-22 | `DOC` — RN-405, RN-406 y RE-19.1 hablaban del estado «programada», que no existe (VD-AGN-09). | ✅ | Se usan los estados reales. |
 | M4-23 | `DOC` — RN-208 («cualquier veterinario atiende cualquier mascota») parecía contradecir la nueva RN-408. | ✅ | RN-208 aclara que la consulta de una cita la registra su veterinario; si la atiende otro, el administrador reasigna la cita (M4-12) o se usa la atención sin cita. |
 
@@ -584,8 +586,8 @@ Las correcciones no tocan los registros ya guardados. En la base local quedan tr
 |---|---|---|---|---|---|
 | Alta | 7 | 7 | 0 | 0 | 0 |
 | Media | 9 | 7 | 2 | 0 | 0 |
-| Baja | 7 | 5 | 0 | 1 | 1 |
-| **Total** | **23** | **19** | **2** | **1** | **1** |
+| Baja | 7 | 6 | 0 | 1 | 0 |
+| **Total** | **23** | **20** | **2** | **1** | **0** |
 
 ### Verificación
 
@@ -599,3 +601,21 @@ Las correcciones no tocan los registros ya guardados. En la base local quedan tr
 Pruebas añadidas: [tests/Integration/CitaEstadoTest.php](../tests/Integration/CitaEstadoTest.php), reescrita con 9 casos (transiciones permitidas, sellos de hora, doble inicio, «no asistió» y liberación del espacio), y `testSoloElVeterinarioAtiendeLasCitas` en la prueba de autorización.
 
 **Veredicto:** el módulo no tenía un flujo de estados definido, y eso explica casi todos los hallazgos. Cada pantalla decidía por su cuenta qué se podía hacer con una cita, y el servidor aceptaba cualquier transición. Los cuatro primeros altos son el mismo problema visto desde lugares distintos: una atención se podía empezar sin poder terminarla, y dar por terminada sin haberla hecho. Ahora el flujo está escrito, lo aplica el servidor y la documentación dice lo mismo que el código.
+
+---
+
+# Cierre de v1.11.0 — recordatorios y respaldos
+
+Revisión previa al cambio de arquitectura. La agenda, las consultas y los catálogos quedan fuera: se rehacen en la arquitectura nueva y sus historias pendientes pasan a estado **diferida** (HU-20, HU-27 a HU-31, HU-44, HU-50, HU-51 y HU-53). El resto del Módulo 3 (registro de vacunas y desparasitaciones) no se revisó.
+
+| ID | Hallazgo | Estado | Resolución |
+|---|---|---|---|
+| M3-01 | **Alta** — El respaldo diario no corría en producción: `backup.php` usaba `mysqldump`, que la imagen `php:8.2-apache` no trae, y no había Schedule ni volumen. HU-23 figuraba como implementada. | ✅ | Volcado con PDO (`models/Respaldo.php`) en una sola instantánea, volumen `respaldos` y Schedule en Dokploy. Verificado con una restauración completa en otra base. |
+| M3-02 | Un recordatorio que fallaba no se reintentaba nunca: el registro con estado `error` contaba como ya enviado. | ✅ | Solo cuenta como enviado un registro `enviado`; hasta 3 intentos (RE-37.2). |
+| M3-03 | Los recordatorios buscaban fechas exactas: un día sin tarea perdía los avisos de ese día. | ✅ | Ventana por aviso (RE-37.1, `VentanaRecordatorio`). |
+| M3-04 | Las fechas salían de `CURDATE()`, que depende de la zona del servidor de base de datos. | ✅ | «Hoy» en la zona de la clínica (RE-37.3). |
+| M3-05 | Se enviaban recordatorios de mascotas inactivas y de dosis ya renovadas. | ✅ | Excluidas en la consulta (RE-37.4). |
+
+Además, `docker-compose.yml` tenía escrita la contraseña de root de MySQL; ahora sale de `DB_ROOT_PASS` en el `.env`.
+
+Pruebas añadidas: [tests/Unit/VentanaRecordatorioTest.php](../tests/Unit/VentanaRecordatorioTest.php) y [tests/Integration/RecordatorioTest.php](../tests/Integration/RecordatorioTest.php). La suite queda en 212 pruebas y 813 aserciones.

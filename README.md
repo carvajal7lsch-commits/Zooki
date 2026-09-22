@@ -4,7 +4,38 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.10.1 (Actual)
+### Versión 1.11.0 (Actual)
+Cierre de la versión estable antes del cambio de arquitectura: respaldos que funcionan en producción, recordatorios que no se pierden y documentación alineada con el código.
+
+**Respaldos (HU-23)**
+*   **Ya corren en producción.** El respaldo dependía de `mysqldump`, que la imagen del contenedor no trae, así que no se estaba respaldando nada. Ahora el volcado se hace con PDO (`models/Respaldo.php`): una sola instantánea de la base, comprimida en `.sql.gz`, sin las columnas calculadas, que MySQL rechaza al restaurar.
+*   Se guardan en el volumen nuevo `respaldos` (`/var/backups/zooki`), que sobrevive a cada despliegue.
+*   Se verificó restaurando un respaldo en una base vacía: las mismas filas en las 26 tablas.
+
+**Recordatorios automáticos (HU-37)**
+*   **Un envío fallido se reintenta**, hasta 3 veces. Antes quedaba registrado con error y no se volvía a intentar nunca.
+*   **Un día sin tarea ya no pierde avisos:** el primer recordatorio sale entre 7 y 2 días antes, y el último, el día anterior o el mismo día.
+*   Las fechas se calculan con la hora de la clínica, no con la del servidor de base de datos.
+*   No se envían recordatorios de mascotas inactivas ni de dosis que ya se renovaron.
+
+**Seguridad**
+*   La contraseña de root de MySQL salió de `docker-compose.yml` al `.env` (`DB_ROOT_PASS`).
+
+**Documentación**
+*   Historias de agenda, consultas y catálogos pasan a estado «diferida»: se completan con la nueva arquitectura. HU-44 (catálogos) y HU-20 (panel de vacunas) estaban marcadas como implementadas sin cumplir todos sus criterios.
+*   El MER y el ERS reflejan las migraciones 04 a 13 y las 27 tablas; se corrigió la entidad `notificaciones`, que no correspondía con la tabla real.
+*   Plan del cierre en `specs/cierre-version-estable.md`.
+
+**Despliegue de la v1.11.0 (Dokploy)**
+1.  Agregar al Environment `DB_ROOT_PASS` con la **misma** clave de root que tiene hoy la base (la que estaba escrita en `docker-compose.yml`, si nunca se cambió), y `BACKUP_DIR=/var/backups/zooki`. MySQL solo usa esa variable al crear una base nueva: no cambia la clave de la actual.
+2.  Desplegar. El volumen `respaldos` se crea solo.
+3.  Crear en Dokploy el Schedule del servicio `web`: `php /var/www/html/Zooki/scripts/backup.php` a las 3:00. Ejecutarlo una vez a mano y revisar que el log diga `[BACKUP OK]`.
+4.  Comprobar que siguen los Schedules de `send_reminders.php` (7:00) y `vigilar_atenciones.php` (cada 5 minutos), y que `TZ` sea `America/Bogota`.
+
+**Pruebas**
+*   Dos suites nuevas: `VentanaRecordatorioTest` y `RecordatorioTest`. La suite pasa a 212 pruebas (813 aserciones).
+
+### Versión 1.10.1
 Corrección de las vacunas y desparasitaciones en la agenda de salud y en el PDF del portal.
 
 *   **Vacunas en «Próximas dosis»:** el portal leía columnas que la tabla `vacunas` no tiene (`dosis` y `fecha_proxima`; la real es `fecha_proxima_dosis`), así que las vacunas nunca salían en «Próximas dosis» ni en el calendario de salud, y cada carga dejaba avisos de PHP en el log.

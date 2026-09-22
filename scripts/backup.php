@@ -1,38 +1,30 @@
 <?php
 /**
- * Script de backup automático de base de datos (HU-23)
- * 
+ * Respaldo automático de la base de datos (HU-23, RN-504).
+ *
  * Uso:
  *   php scripts/backup.php
- * 
- * Cron job recomendado (diario a las 3:00 AM):
- *   0 3 * * * cd /ruta/al/proyecto && php scripts/backup.php >> logs/backup.log 2>&1
+ *
+ * Corre una vez al día: en producción con un Schedule de Dokploy sobre el
+ * servicio web, en un servidor propio con scripts/zooki.cron.
  */
 
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Respaldo.php';
+
 // T-06 — Las credenciales salen de .env, la misma fuente que usa
-// config/Database.php. Antes estaban escritas aqui (root, sin contrasena):
-// quedaban versionadas en git y el respaldo fallaba en cualquier entorno donde
-// la clave real no fuera vacia, que es justo el de produccion.
+// config/Database.php, que es quien abre la conexión.
 $envFile = __DIR__ . '/../.env';
 $env = file_exists($envFile) ? parse_ini_file($envFile) : [];
 
-$dbHost = $env['DB_HOST'] ?? 'localhost';
 $dbName = $env['DB_NAME'] ?? 'zooki_db';
-$dbUser = $env['DB_USER'] ?? 'root';
-$dbPass = $env['DB_PASS'] ?? '';
-
-// Igual que Database.php: el host 'db' es el de Docker y no resuelve fuera.
-if ($dbHost === 'db' && (PHP_OS_FAMILY === 'Windows' || gethostbyname('db') === 'db')) {
-    $dbHost = '127.0.0.1';
-}
 
 // T-12 (HU-23) — El destino se configura con BACKUP_DIR para poder apuntar a
-// un volumen o unidad de red fuera del servidor de aplicacion, como pide el
-// criterio. El directorio dentro del proyecto queda solo como ultimo recurso.
+// un volumen o unidad de red fuera del contenedor de la aplicación. El
+// directorio dentro del proyecto queda solo como último recurso.
 $backupDir = $env['BACKUP_DIR'] ?? (__DIR__ . '/../backups');
 $retencionDias = (int) ($env['BACKUP_RETENCION_DIAS'] ?? 7);
 
-// Crear directorio de backups si no existe
 if (!is_dir($backupDir)) {
     if (!mkdir($backupDir, 0755, true)) {
         error_log("[BACKUP ERROR] No se pudo crear el directorio: $backupDir");
@@ -41,79 +33,39 @@ if (!is_dir($backupDir)) {
 }
 
 $fecha = date('Y-m-d_H-i-s');
-$archivoSql = "$backupDir/{$dbName}_{$fecha}.sql";
-$archivoGz = "$archivoSql.gz";
+$archivoGz = "$backupDir/{$dbName}_{$fecha}.sql.gz";
 
-// 1. Ejecutar mysqldump
-//
-// T-06 — La contrasena viaja por un fichero temporal con permisos 0600, no por
-// --password=: los argumentos de un proceso son visibles para cualquier
-// usuario del servidor con un simple `ps`.
-$cnf = tempnam(sys_get_temp_dir(), 'zooki_bk_');
-if ($cnf === false) {
-    error_log('[BACKUP ERROR] No se pudo crear el archivo temporal de credenciales');
+// 1. Volcar la base de datos
+$db = (new Database())->getConnection();
+if (!$db) {
+    error_log('[BACKUP ERROR] No se pudo conectar a la base de datos');
     exit(1);
 }
-chmod($cnf, 0600);
-file_put_contents($cnf, sprintf(
-    "[client]\nhost=%s\nuser=%s\npassword=%s\n",
-    $dbHost,
-    $dbUser,
-    $dbPass
-));
 
-$command = sprintf(
-    'mysqldump --defaults-extra-file=%s --single-transaction --routines --triggers %s > %s 2>&1',
-    escapeshellarg($cnf),
-    escapeshellarg($dbName),
-    escapeshellarg($archivoSql)
-);
-
-exec($command, $output, $returnCode);
-
-// El fichero de credenciales se borra pase lo que pase, incluso si el dump fallo.
-unlink($cnf);
-
-if ($returnCode !== 0) {
-    $errorMsg = implode("\n", $output);
-    error_log("[BACKUP ERROR] mysqldump falló: $errorMsg");
-    if (file_exists($archivoSql)) {
-        unlink($archivoSql);
+try {
+    $tablas = (new Respaldo($db))->volcar($archivoGz);
+} catch (Throwable $e) {
+    error_log('[BACKUP ERROR] Falló el volcado: ' . $e->getMessage());
+    if (file_exists($archivoGz)) {
+        unlink($archivoGz);
     }
     exit(1);
 }
 
-// 2. Verificar que el dump no esté vacío o corrupto
-$tamano = filesize($archivoSql);
-if ($tamano === false || $tamano < 1024) {
-    error_log("[BACKUP ERROR] El archivo SQL generado está vacío o es muy pequeño ($tamano bytes)");
-    unlink($archivoSql);
+// 2. Verificar que el archivo se pueda leer y traiga el esquema
+$muestra = '';
+$gz = gzopen($archivoGz, 'rb');
+if ($gz !== false) {
+    $muestra = gzread($gz, 20000);
+    gzclose($gz);
+}
+if ($tablas === 0 || strpos($muestra, 'CREATE TABLE') === false) {
+    error_log("[BACKUP ERROR] El respaldo generado está vacío o corrupto ($tablas tablas)");
+    unlink($archivoGz);
     exit(1);
 }
 
-// Validar que contenga al menos una sentencia CREATE TABLE
-$contenidoMuestra = file_get_contents($archivoSql, false, null, 0, 5000);
-if (strpos($contenidoMuestra, 'CREATE TABLE') === false) {
-    error_log("[BACKUP ERROR] El archivo SQL no contiene sentencias CREATE TABLE. Posiblemente corrupto.");
-    unlink($archivoSql);
-    exit(1);
-}
-
-// 3. Comprimir con gzip
-$commandGz = sprintf('gzip -f %s 2>&1', escapeshellarg($archivoSql));
-exec($commandGz, $outputGz, $returnCodeGz);
-
-if ($returnCodeGz !== 0 || !file_exists($archivoGz)) {
-    error_log("[BACKUP ERROR] Falló la compresión gzip. Se conserva el archivo SQL sin comprimir.");
-    $archivoFinal = $archivoSql; // Conservar sin comprimir si gzip falla
-    $ratio = 0.0;
-} else {
-    $archivoFinal = $archivoGz;
-    // T-20: el ratio se calculaba y no se usaba; ahora va al log del respaldo.
-    $ratio = round((1 - (filesize($archivoGz) / $tamano)) * 100, 1);
-}
-
-// 4. Rotación: eliminar backups con más de 7 días
+// 3. Rotación: eliminar respaldos más viejos que la retención
 $eliminados = 0;
 foreach (glob("$backupDir/{$dbName}_*.sql*") as $archivo) {
     $edadDias = (time() - filemtime($archivo)) / 86400;
@@ -124,23 +76,21 @@ foreach (glob("$backupDir/{$dbName}_*.sql*") as $archivo) {
     }
 }
 
-// 5. Registrar resultado
-$tamanoFinal = filesize($archivoFinal);
+// 4. Registrar resultado
 $msg = sprintf(
-    "[BACKUP OK] %s | Destino: %s | Archivo: %s | Tamaño: %s (-%s%%) | SQL original: %s | Eliminados antiguos: %d",
+    "[BACKUP OK] %s | Destino: %s | Archivo: %s | Tablas: %d | Tamaño: %s | Eliminados antiguos: %d",
     date('Y-m-d H:i:s'),
     $backupDir,
-    basename($archivoFinal),
-    formatoBytes($tamanoFinal),
-    $ratio,
-    formatoBytes($tamano),
+    basename($archivoGz),
+    $tablas,
+    formatoBytes(filesize($archivoGz)),
     $eliminados
 );
 error_log($msg);
 echo $msg . PHP_EOL;
 
-// 6. Guardar también en un log específico de backups. El log vive siempre en
-// el proyecto, aunque BACKUP_DIR apunte a un volumen externo (T-12).
+// El log vive siempre en el proyecto, aunque BACKUP_DIR apunte a un volumen
+// externo (T-12).
 $logFile = __DIR__ . '/../logs/backup.log';
 $logDir = dirname($logFile);
 if (!is_dir($logDir)) {

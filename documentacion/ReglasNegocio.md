@@ -1,6 +1,6 @@
 # Reglas de Negocio — Proyecto Zooki
 
-> **Revisión 1.0** · Catálogo de reglas por módulos · SENA ADSO — Ficha 3142784
+> **Revisión 1.1** · Catálogo de reglas por módulos · SENA ADSO — Ficha 3142784
 
 Este documento reúne las reglas de negocio de Zooki: las políticas, restricciones y cálculos que rigen el comportamiento del dominio (gestión clínica veterinaria), con independencia de la tecnología con que se implementen. Es la base de la que se derivan las Historias de Usuario y los Requisitos específicos. Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) → Requisito específico (RE)**.
 
@@ -10,7 +10,7 @@ Este documento reúne las reglas de negocio de Zooki: las políticas, restriccio
 
 **Tipos de regla:** `Restricción` (condición que el sistema hace cumplir), `Cálculo` (deriva un valor), `Proceso` (comportamiento automático), `Estructura` (hecho o relación del dominio).
 
-**Estados:** `Aplicada` (se cumple en la v1.8.0), `Futuro` (evolución prevista), `Por confirmar` (verificar en el código).
+**Estados:** `Aplicada` (se cumple en la versión actual), `Parcial` (se cumple con una excepción que se indica), `Futuro` (evolución prevista), `Por confirmar` (verificar en el código).
 
 ## Transversales — Acceso, seguridad y datos
 
@@ -63,7 +63,7 @@ Este documento reúne las reglas de negocio de Zooki: las políticas, restriccio
 | RN-302 | La desparasitación tiene una periodicidad configurable (mensual, trimestral o semestral) y la fecha de la próxima aplicación se calcula automáticamente. | Cálculo | Aplicada |
 | RN-303 | Los recordatorios de vacunación y desparasitación se envían por correo al propietario 7 días y 1 día antes del vencimiento. | Proceso | Aplicada |
 | RN-304 | No se envía recordatorio si el propietario no tiene un correo electrónico registrado. | Restricción | Aplicada |
-| RN-305 | Cada envío de recordatorio se registra (fecha, destinatario, tipo); un envío fallido se marca con estado fallido. | Proceso | Aplicada |
+| RN-305 | Cada envío de recordatorio se registra (fecha, destinatario, tipo); un envío fallido se marca con estado de error y se reintenta hasta 3 veces (RE-37.2). | Proceso | Aplicada |
 | RN-306 | El catálogo de vacunas aplica por especie: una vacuna base corresponde a determinadas especies. | Restricción | Aplicada |
 | RN-307 | El recordatorio por WhatsApp es un canal adicional previsto para una evolución futura; el canal operativo actual es el correo electrónico. | Proceso | Futuro |
 
@@ -71,8 +71,8 @@ Este documento reúne las reglas de negocio de Zooki: las políticas, restriccio
 
 | ID | Regla de negocio | Tipo | Estado |
 |---|---|---|---|
-| RN-401 | No pueden existir dos citas para el mismo veterinario en el mismo horario (no se permiten solapamientos). | Restricción | Aplicada |
-| RN-402 | Las citas solo pueden agendarse dentro del horario de atención configurado de la clínica. | Restricción | Aplicada |
+| RN-401 | No pueden existir dos citas para el mismo veterinario en el mismo horario (no se permiten solapamientos). | Restricción | Parcial: dos reservas simultáneas que se solapan sin empezar a la misma hora no se bloquean (HU-31, diferida) |
+| RN-402 | Las citas solo pueden agendarse dentro del horario de atención configurado de la clínica. | Restricción | Parcial: se valida la hora de inicio, no la duración (HU-31, diferida) |
 | RN-403 | Cada tipo de cita tiene una duración base que determina el bloque de tiempo que ocupa en la agenda. | Cálculo | Aplicada |
 | RN-404 | Al crear una cita se envía una confirmación por correo al propietario de forma inmediata; un fallo en el envío no interrumpe el agendado. | Proceso | Aplicada |
 | RN-405 | Una cita no se elimina: cambia de estado (pendiente, confirmada, en curso, completada, cancelada, no asistió, sin cerrar o cerrada sin consulta). Solo una cita pendiente o confirmada se puede cancelar o reprogramar, y al hacerlo se notifica automáticamente al propietario. | Restricción | Aplicada |
