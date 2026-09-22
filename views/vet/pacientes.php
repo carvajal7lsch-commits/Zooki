@@ -477,7 +477,7 @@
                                 <?php if($m['estado'] == 0): ?>
                                     <span class="tag-mini"><i class="bi bi-moon-stars"></i> Inactivo</span>
                                 <?php endif; ?>
-                                <span class="tag-mini"><i class="fas fa-paw"></i> <?php echo htmlspecialchars($m["nombre_especie"]); ?> • <?php echo htmlspecialchars($m["nombre_raza"] ?? 'Sin Raza'); ?></span>
+                                <span class="tag-mini"><i class="fas fa-paw"></i> <?php echo htmlspecialchars($m["nombre_especie"]); ?> • <?php echo htmlspecialchars($m["nombre_raza"] ?? 'Sin Raza'); ?><?php if (!empty($m['raza_indicada'])): ?> (indicó «<?php echo htmlspecialchars($m['raza_indicada']); ?>»)<?php endif; ?></span>
                                 <span class="tag-mini"><i class="fas fa-venus-mars"></i> <?php echo htmlspecialchars($m["sexo"]); ?></span>
                             </div>
                             <div class="card-contact-mini">

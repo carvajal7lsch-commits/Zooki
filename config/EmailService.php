@@ -15,18 +15,18 @@ class EmailService {
         $envFile = __DIR__ . '/../.env';
         if (file_exists($envFile)) {
             $env = parse_ini_file($envFile);
-            $smtpHost = $env['SMTP_HOST'] ?? 'smtp.gmail.com';
+            $smtpHost = $env['SMTP_HOST'] ?? 'smtp-relay.sendinblue.com';
             $smtpPort = $env['SMTP_PORT'] ?? 587;
-            $smtpUser = $env['SMTP_USER'] ?? 'TU_CORREO@gmail.com';
-            $smtpPass = $env['SMTP_PASS'] ?? 'TU_CONTRASEÑA_DE_APLICACION';
-            $smtpFrom = $env['SMTP_FROM'] ?? 'TU_CORREO@gmail.com';
+            $smtpUser = $env['SMTP_USER'] ?? 'TU_LOGIN@smtp-brevo.com';
+            $smtpPass = $env['SMTP_PASS'] ?? 'TU_CLAVE_SMTP_DE_BREVO';
+            $smtpFrom = $env['SMTP_FROM'] ?? 'no-reply@TU_DOMINIO';
         } else {
             // Valores por defecto (requieren configuración manual)
-            $smtpHost = 'smtp.gmail.com';
+            $smtpHost = 'smtp-relay.sendinblue.com';
             $smtpPort = 587;
-            $smtpUser = 'TU_CORREO@gmail.com'; // Cambiar por tu correo
-            $smtpPass = 'TU_CONTRASEÑA_DE_APLICACION'; // Cambiar por tu app password
-            $smtpFrom = 'TU_CORREO@gmail.com';
+            $smtpUser = 'TU_LOGIN@smtp-brevo.com'; // Login SMTP de Brevo
+            $smtpPass = 'TU_CLAVE_SMTP_DE_BREVO'; // Clave SMTP de Brevo
+            $smtpFrom = 'no-reply@TU_DOMINIO';
         }
 
         // Configuración del servidor SMTP

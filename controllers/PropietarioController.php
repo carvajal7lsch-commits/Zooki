@@ -236,6 +236,20 @@ class PropietarioController {
         // Obtener más detalles del usuario (correo, teléfono)
         $usuarioData = $this->usuarioModel->getUserByDocumento($doc_propietario);
 
+        // Horario real de la clínica (HU-43) en lugar del banner de «24 horas».
+        require_once '../helpers/HorarioAtencion.php';
+        try {
+            $filas = $this->db->query("SELECT * FROM horarios_clinica ORDER BY dia_semana ASC")->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            error_log('Portal: no se pudo leer el horario de la clínica: ' . $e->getMessage());
+            $filas = [];
+        }
+        $horario_semana = HorarioAtencion::semana($filas);
+        $horario_ahora = HorarioAtencion::ahora($horario_semana, new DateTimeImmutable('now'));
+
+        // Especies del formulario de mascota, en la página: sin llamadas extra al abrirlo.
+        $catalogo_especies = $this->mascotaModel->getEspecies();
+
         $view = '../views/portal/index.php';
         require_once '../views/portal/layout.php';
     }
@@ -273,6 +287,10 @@ class PropietarioController {
 
         $mascota['especie'] = $mascota['nombre_especie'] ?? '';
         $mascota['raza'] = $mascota['nombre_raza'] ?? '';
+        // HU-15: la raza que escribió el propietario se muestra hasta que la clínica la confirme.
+        if (!empty($mascota['raza_indicada'])) {
+            $mascota['raza'] = $mascota['raza_indicada'] . ' (por confirmar)';
+        }
 
         echo json_encode([
             'success' => true,
@@ -285,172 +303,161 @@ class PropietarioController {
         exit();
     }
 
+    /**
+     * Valida lo que manda el formulario de mascota del portal (RE-15.9):
+     * formato (ValidadorMascota) y que especie y raza existan. El color no
+     * lo pide el portal: lo registra la clínica en la consulta.
+     * El propietario ya no crea razas: si la suya no está, elige la criolla
+     * o «Sin raza definida» y la clínica la ajusta en la consulta.
+     *
+     * @return array{datos: array<string, mixed>, error: ?string}
+     */
+    private function validarMascotaPortal(): array {
+        require_once '../helpers/ValidadorMascota.php';
+        $hoy = new DateTimeImmutable('today', new DateTimeZone('America/Bogota'));
+        $resultado = ValidadorMascota::validar($_POST, $hoy);
+        if ($resultado['error']) {
+            return $resultado;
+        }
+        $datos = $resultado['datos'];
+
+        if (!$this->mascotaModel->especieExiste($datos['especie'])) {
+            return ['datos' => [], 'error' => 'Elige la especie de la lista.'];
+        }
+        if ($datos['raza'] === null) {
+            // «Mi raza no está en la lista»: queda como «Sin raza definida» más lo que escribió.
+            $datos['raza'] = $this->mascotaModel->idSinRazaDefinida($datos['especie']);
+            if ($datos['raza'] === null) {
+                return ['datos' => [], 'error' => 'Esta especie todavía no permite indicar otra raza. Elige la más parecida y avísale a la clínica en la consulta.'];
+            }
+        } elseif (!$this->mascotaModel->razaEsDeEspecie($datos['raza'], $datos['especie'])) {
+            return ['datos' => [], 'error' => 'Elige una raza de la lista para esa especie.'];
+        }
+        return ['datos' => $datos, 'error' => null];
+    }
+
+    private function responder(bool $ok, string $mensaje = ''): void {
+        echo json_encode($mensaje === '' ? ['success' => $ok] : ['success' => $ok, 'message' => $mensaje]);
+        exit();
+    }
+
     public function registrarMascotaAjax() {
         header('Content-Type: application/json');
-        
+
         if (!isset($_SESSION['usuario_id_rol']) || $_SESSION['usuario_id_rol'] != 4) {
-            echo json_encode(['success' => false, 'message' => 'No autorizado']);
-            exit();
+            $this->responder(false, 'No autorizado');
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responder(false, 'Método no permitido');
         }
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $nombre = trim($_POST['nombre']);
-            $especie = $_POST['especie'];
-            $peso = trim($_POST['peso']);
-            $doc_propietario = $_SESSION['usuario_doc'];
-
-            if (empty($nombre) || empty($especie) || empty($peso)) {
-                echo json_encode(['success' => false, 'message' => 'Faltan datos obligatorios']);
-                exit();
-            }
-
-            $foto_nombre = null;
-            if (isset($_FILES['foto']) && $_FILES['foto']['error'] != UPLOAD_ERR_NO_FILE) {
-                if ($_FILES['foto']['error'] != UPLOAD_ERR_OK) {
-                    echo json_encode(['success' => false, 'message' => 'Error al subir la foto de perfil.']);
-                    exit();
-                }
-
-                $allowed = ['jpg', 'jpeg', 'png'];
-                $ext = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
-                if (!in_array($ext, $allowed)) {
-                    echo json_encode(['success' => false, 'message' => 'Solo se permiten imágenes JPG o PNG.']);
-                    exit();
-                }
-
-                if ($_FILES['foto']['size'] > 5 * 1024 * 1024) {
-                    echo json_encode(['success' => false, 'message' => 'La foto no debe superar los 5MB.']);
-                    exit();
-                }
-
-                $foto_nombre = time() . '_' . str_replace(' ', '_', $nombre) . '.' . $ext;
-                $target_dir = '../public/uploads/mascotas/';
-                if (!is_dir($target_dir)) {
-                    mkdir($target_dir, 0777, true);
-                }
-                if (!move_uploaded_file($_FILES['foto']['tmp_name'], $target_dir . $foto_nombre)) {
-                    echo json_encode(['success' => false, 'message' => 'Error al guardar la foto de perfil en el servidor.']);
-                    exit();
-                }
-            }
-
-            $id_raza = $_POST['raza'];
-            if ($id_raza === 'Otra' && !empty($_POST['nueva_raza'])) {
-                $id_raza = $this->mascotaModel->insertRaza($especie, $_POST['nueva_raza']);
-            }
-
-            $data = [
-                'numero_historia_clinica' => '',
-                'doc_propietario' => $doc_propietario,
-                'nombre' => $nombre,
-                'id_especie' => $especie,
-                'id_raza' => $id_raza,
-                'fecha_nacimiento' => !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : null,
-                'peso' => $peso,
-                'sexo' => $_POST['sexo'],
-                'color' => '',
-                'url_foto' => $foto_nombre
-            ];
-
-            $newId = $this->mascotaModel->insert($data);
-            if ($newId) {
-                $colores = $_POST['colores'] ?? [];
-                $this->mascotaModel->saveColores($newId, $colores);
-                echo json_encode(['success' => true]);
-                exit();
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Error al guardar en base de datos.']);
-                exit();
-            }
+        ['datos' => $datos, 'error' => $error] = $this->validarMascotaPortal();
+        if ($error) {
+            $this->responder(false, $error);
         }
+
+        require_once '../helpers/FotoMascota.php';
+        $foto = FotoMascota::guardar($_FILES['foto'] ?? null, $datos['nombre'], $errorFoto);
+        if ($foto === false) {
+            $this->responder(false, $errorFoto);
+        }
+
+        $newId = $this->mascotaModel->insert([
+            'numero_historia_clinica' => '',
+            'doc_propietario' => $_SESSION['usuario_doc'],
+            'nombre' => $datos['nombre'],
+            'id_especie' => $datos['especie'],
+            'id_raza' => $datos['raza'],
+            'fecha_nacimiento' => $datos['fecha_nacimiento'],
+            'peso' => $datos['peso'],
+            'sexo' => $datos['sexo'],
+            'color' => '',
+            'url_foto' => $foto
+        ]);
+
+        if (!$newId) {
+            // La foto ya se había guardado: no dejarla huérfana.
+            if ($foto) {
+                FotoMascota::eliminarAnterior($foto, '');
+            }
+            $this->responder(false, 'Error al guardar en base de datos.');
+        }
+
+        $this->mascotaModel->guardarRazaIndicada((int) $newId, $datos['raza_indicada']);
+        $this->responder(true);
     }
 
     public function actualizarMascotaAjax() {
         header('Content-Type: application/json');
-        
+
         if (!isset($_SESSION['usuario_id_rol']) || $_SESSION['usuario_id_rol'] != 4) {
-            echo json_encode(['success' => false, 'message' => 'No autorizado']);
-            exit();
+            $this->responder(false, 'No autorizado');
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responder(false, 'Método no permitido');
         }
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $id = $_POST['id_mascota'];
-            $doc_propietario = $_SESSION['usuario_doc'];
+        $id = (string) ($_POST['id_mascota'] ?? '');
+        $doc_propietario = $_SESSION['usuario_doc'];
 
-            $oldData = $this->mascotaModel->getById($id);
-            if (!$oldData || $oldData['doc_propietario'] !== $doc_propietario) {
-                echo json_encode(['success' => false, 'message' => 'Acceso denegado. Esta mascota no le pertenece.']);
-                exit();
+        $oldData = ctype_digit($id) ? $this->mascotaModel->getById((int) $id) : null;
+        if (!$oldData || $oldData['doc_propietario'] !== $doc_propietario) {
+            $this->responder(false, 'Acceso denegado. Esta mascota no le pertenece.');
+        }
+
+        ['datos' => $datos, 'error' => $error] = $this->validarMascotaPortal();
+        if ($error) {
+            $this->responder(false, $error);
+        }
+
+        $newData = [
+            'id_mascota' => (int) $id,
+            'nombre' => $datos['nombre'],
+            'id_especie' => $datos['especie'],
+            'id_raza' => $datos['raza'],
+            // Sin fecha en el formulario se conserva la que tenía.
+            'fecha_nacimiento' => $datos['fecha_nacimiento'] ?? ($oldData['fecha_nacimiento'] ?? null),
+            'peso' => $datos['peso'],
+            'sexo' => $datos['sexo'],
+            'color' => $oldData['color'] ?? '',
+            'estado' => $oldData['estado'] ?? 1, // Mantener el estado actual
+            'url_foto' => $oldData['url_foto'] ?? null
+        ];
+
+        require_once '../helpers/FotoMascota.php';
+        $foto = FotoMascota::guardar($_FILES['foto'] ?? null, $datos['nombre'], $errorFoto);
+        if ($foto === false) {
+            $this->responder(false, $errorFoto);
+        }
+        if ($foto) {
+            $newData['url_foto'] = $foto;
+        }
+
+        if (!$this->mascotaModel->update($newData)) {
+            if ($foto) {
+                FotoMascota::eliminarAnterior($foto, '');
             }
+            $this->responder(false, 'Error al actualizar la mascota.');
+        }
 
-            $id_raza = $_POST['raza'];
-            if ($id_raza === 'Otra' && !empty($_POST['nueva_raza'])) {
-                $id_raza = $this->mascotaModel->insertRaza($_POST['especie'], $_POST['nueva_raza']);
-            }
+        // La foto anterior solo se borra cuando la nueva ya quedó guardada.
+        if ($foto) {
+            FotoMascota::eliminarAnterior($oldData['url_foto'] ?? null, $foto);
+        }
+        $this->mascotaModel->guardarRazaIndicada((int) $id, $datos['raza_indicada']);
 
-            $newData = [
-                'id_mascota' => $id,
-                'nombre' => trim($_POST['nombre']),
-                'id_especie' => $_POST['especie'],
-                'id_raza' => $id_raza,
-                'fecha_nacimiento' => !empty($_POST['fecha_nacimiento']) ? $_POST['fecha_nacimiento'] : ($oldData['fecha_nacimiento'] ?? null),
-                'peso' => trim($_POST['peso']),
-                'sexo' => $_POST['sexo'],
-                'color' => $oldData['color'] ?? '',
-                'estado' => $oldData['estado'] ?? 1, // Mantener el estado actual
-                'url_foto' => $oldData['url_foto'] ?? null
-            ];
+        // Los colores no se tocan: los registra la clínica. Antes, guardar
+        // desde el portal sin marcar ninguno borraba los que tenía.
 
-            if (isset($_FILES['foto']) && $_FILES['foto']['error'] != UPLOAD_ERR_NO_FILE) {
-                if ($_FILES['foto']['error'] != UPLOAD_ERR_OK) {
-                    echo json_encode(['success' => false, 'message' => 'Error al subir la nueva foto de perfil.']);
-                    exit();
-                }
-
-                $allowed = ['jpg', 'jpeg', 'png'];
-                $ext = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
-                if (!in_array($ext, $allowed)) {
-                    echo json_encode(['success' => false, 'message' => 'Solo se permiten imágenes JPG o PNG.']);
-                    exit();
-                }
-
-                if ($_FILES['foto']['size'] > 5 * 1024 * 1024) {
-                    echo json_encode(['success' => false, 'message' => 'La foto no debe superar los 5MB.']);
-                    exit();
-                }
-
-                $foto_nombre = time() . '_' . str_replace(' ', '_', $newData['nombre']) . '.' . $ext;
-                $target_dir = '../public/uploads/mascotas/';
-                if (!is_dir($target_dir)) {
-                    mkdir($target_dir, 0777, true);
-                }
-                if (move_uploaded_file($_FILES['foto']['tmp_name'], $target_dir . $foto_nombre)) {
-                    $newData['url_foto'] = $foto_nombre;
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Error al guardar la nueva foto en el servidor.']);
-                    exit();
-                }
-            }
-
-            if ($this->mascotaModel->update($newData)) {
-                $colores = $_POST['colores'] ?? [];
-                $this->mascotaModel->saveColores($id, $colores);
-
-                // Auditoría de cambios
-                $campos = ['nombre', 'id_especie', 'id_raza', 'peso', 'sexo'];
-                foreach ($campos as $c) {
-                    if (isset($oldData[$c]) && isset($newData[$c]) && $oldData[$c] != $newData[$c]) {
-                        $this->mascotaModel->registrarAuditoria($id, $doc_propietario, $c, $oldData[$c], $newData[$c]);
-                    }
-                }
-
-                echo json_encode(['success' => true]);
-                exit();
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Error al actualizar la mascota.']);
-                exit();
+        // Auditoría de cambios
+        $campos = ['nombre', 'id_especie', 'id_raza', 'peso', 'sexo'];
+        foreach ($campos as $c) {
+            if (isset($oldData[$c]) && isset($newData[$c]) && $oldData[$c] != $newData[$c]) {
+                $this->mascotaModel->registrarAuditoria((int) $id, $doc_propietario, $c, $oldData[$c], $newData[$c]);
             }
         }
+
+        $this->responder(true);
     }
 
     public function getDetalleCitaClinicaAjax() {
@@ -572,8 +579,15 @@ class PropietarioController {
             exit();
         }
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (mb_strlen($email) > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             echo json_encode(['success' => false, 'message' => 'El correo electrónico no es válido.']);
+            exit();
+        }
+
+        // La misma regla del registro de propietarios (validarDatosPropietario).
+        $telefono = preg_replace('/\s+/', ' ', $telefono);
+        if (!preg_match('/^[0-9+\s-]{7,20}$/', $telefono)) {
+            echo json_encode(['success' => false, 'message' => 'El teléfono solo puede tener números, espacios, + y guiones (de 7 a 20 caracteres).']);
             exit();
         }
 

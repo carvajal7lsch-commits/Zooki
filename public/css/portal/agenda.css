@@ -1,0 +1,487 @@
+/* ═══════════════════════════════════════════════════════════
+   Portal · Agenda de salud
+   Móvil y tablet: pestañas «Mis citas» / «Calendario de salud».
+   Escritorio: las dos columnas a la vez, sin pestañas.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Filtro por mascota ── */
+.pet-filter-chips-wrapper {
+    display: flex;
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+    padding: 4px 4px 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pet-filter-chips-wrapper::-webkit-scrollbar { display: none; }
+
+.pet-chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 36px;
+    border: none;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    background: #F1F5F9;
+    color: #64748B;
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pet-chip--foto { padding: 0.35rem 1rem 0.35rem 0.4rem; }
+
+.pet-chip-photo {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #CBD5E1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pet-chip-photo img { width: 100%; height: 100%; object-fit: cover; }
+.pet-chip-photo i { font-size: 0.75rem; color: #ffffff; }
+
+.pet-chip.active {
+    background: var(--z-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 82, 255, 0.25);
+}
+
+.pet-chip.active .pet-chip-photo { border: 1.5px solid #ffffff; }
+
+/* ── Tarjeta y pestañas ── */
+.agenda-card {
+    background: var(--z-surface);
+    border-radius: 20px;
+    padding: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--z-border);
+    margin-bottom: 1.5rem;
+}
+
+.agenda-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--z-bg-light);
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.agenda-tab-btn {
+    flex: 1;
+    border: none;
+    padding: 0.65rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    background: transparent;
+    color: var(--z-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.agenda-tab-btn.active {
+    background: #ffffff;
+    color: var(--z-primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.agenda-tab-content { display: none; }
+.agenda-tab-content.active { display: block; }
+
+/* Solo en escritorio, donde no hay pestañas. */
+.agenda-col-title { display: none; }
+
+.agenda-empty-state {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    color: var(--z-text-muted);
+}
+
+.agenda-empty-state i {
+    font-size: 2rem;
+    opacity: 0.4;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.agenda-empty-state p { font-size: 0.82rem; }
+
+/* ── Listas ── */
+.agenda-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.scrollable-list {
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.agenda-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--z-bg-light);
+    border-radius: 12px;
+    border: 1px solid var(--z-border);
+}
+
+.agenda-list-item--accion {
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.agenda-list-item--cita { border-left: 3px solid var(--z-primary); }
+
+.agenda-pet-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--z-primary-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.agenda-pet-photo img { width: 100%; height: 100%; object-fit: cover; }
+.agenda-pet-photo i { color: var(--z-primary); }
+
+.agenda-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.agenda-item-info h3 {
+    font-size: 0.85rem;
+    color: #0F172A;
+    font-weight: 700;
+}
+
+.agenda-item-type {
+    margin: 2px 0 0;
+    font-size: 0.72rem;
+    color: var(--z-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.agenda-item-date {
+    font-size: 0.7rem;
+    color: var(--z-primary);
+    font-weight: 600;
+    display: block;
+    margin-top: 2px;
+}
+
+.agenda-item-date--suave { color: var(--z-text-muted); }
+
+.agenda-item-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.btn-cancel-agenda {
+    background: none;
+    border: none;
+    color: var(--z-danger);
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-height: 28px;
+    padding: 0.2rem 0;
+}
+
+.agenda-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+.agenda-icon-wrap.bg-vacuna { background: var(--z-success-soft); color: var(--z-success); }
+.agenda-icon-wrap.bg-control { background: var(--z-warning-soft); color: var(--z-warning); }
+
+.agenda-item-next {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.agenda-item-next .next-date {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.7rem;
+    color: var(--z-primary);
+    font-weight: 700;
+}
+
+/* ── Calendario de salud ── */
+.mini-calendar-wrapper {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    border: 1px solid var(--z-border);
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.mini-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.btn-cal-prev,
+.btn-cal-next {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    color: var(--z-primary);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.mini-calendar-title {
+    border: none;
+    background: transparent;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #0F172A;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.mini-calendar-days,
+.mini-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.mini-calendar-days {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--z-text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.mini-calendar-grid { gap: 6px; }
+
+.cal-day-cell {
+    position: relative;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid #F1F5F9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0F172A;
+    opacity: 0.85;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.cal-day-cell--vacia { border: none; }
+.cal-day-cell.tiene-eventos { cursor: pointer; opacity: 1; }
+
+.cal-day-cell.is-selected {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-weight: 800;
+    border: 1.5px solid var(--z-primary);
+    opacity: 1;
+}
+
+.cal-day-dots {
+    position: absolute;
+    bottom: 3px;
+    display: flex;
+    gap: 2px;
+}
+
+.cal-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--z-primary);
+}
+
+.cal-day-dots .cal-dot { width: 4px; height: 4px; }
+.cal-dot--vacuna { background: var(--z-success); }
+.cal-dot--control { background: var(--z-warning); }
+
+.mini-calendar-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: 0.75rem;
+    padding-top: 0.65rem;
+    border-top: 1px dashed var(--z-border);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--z-text-muted);
+}
+
+.mini-calendar-legend > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Selector de mes y año dentro del calendario */
+.mini-calendar-wrapper .mini-calendar-nav {
+    background: #ffffff;
+    z-index: 10;
+    padding: 1rem;
+    border-radius: 16px;
+    backdrop-filter: none;
+}
+
+.mini-calendar-wrapper .mini-calendar-nav .win11-header { flex-shrink: 0; margin-bottom: 0.75rem; }
+.mini-calendar-wrapper .mini-calendar-nav .win11-content { overflow-y: auto; }
+.mini-calendar-nav .mini-calendar-nav__grid { grid-template-columns: repeat(3, 1fr); height: auto; }
+.mini-calendar-nav .win11-years { display: none; }
+
+.calendar-filter-alert {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.agenda-salud-bloque { margin-bottom: 1.5rem; }
+.agenda-salud-bloque:last-of-type { margin-bottom: 0; }
+
+.agenda-salud-titulo {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 0.65rem;
+}
+
+.agenda-salud-titulo--proximas { color: var(--z-primary); }
+
+.btn-export-pdf {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding: 0.85rem;
+    border-radius: 14px;
+    text-decoration: none;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+    box-shadow: 0 4px 12px rgba(85, 96, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-export-pdf i { font-size: 1.1rem; }
+
+@media (hover: hover) {
+    .pet-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(85, 96, 255, 0.1); }
+    .agenda-list-item--accion:hover { border-color: #C5CAFF; background: #ffffff; }
+    .cal-day-cell.tiene-eventos:hover:not(.is-selected) { background: #F1F5F9; border-color: #CBD5E1; }
+    .btn-cal-prev:hover,
+    .btn-cal-next:hover { background-color: var(--z-primary-soft); transform: scale(1.08); }
+    .mini-calendar-title:hover { background: #F1F5F9; }
+    .btn-export-pdf:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(85, 96, 255, 0.35); }
+}
+
+/* ── Tablet ── */
+@media (min-width: 768px) {
+    .agenda-card { padding: 1.5rem; }
+    .pet-filter-chips-wrapper { flex-wrap: wrap; overflow: visible; white-space: normal; }
+    .cal-day-cell { height: 44px; font-size: 0.82rem; }
+    .mini-calendar-days { font-size: 0.72rem; }
+    .agenda-tab-btn { font-size: 0.85rem; }
+}
+
+/* ── Escritorio: las dos columnas a la vez ── */
+@media (min-width: 1024px) {
+    .agenda-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        gap: 0 2rem;
+        padding: 1.75rem;
+    }
+
+    .agenda-tabs { display: none; }
+
+    .agenda-tab-content,
+    .agenda-tab-content.active { display: block; }
+
+    #agenda-salud {
+        border-left: 1px solid var(--z-border);
+        padding-left: 2rem;
+    }
+
+    .agenda-col-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+
+    .agenda-col-title i { color: var(--z-primary); }
+
+    .scrollable-list { max-height: max(420px, calc(100dvh - 300px)); }
+}
+
+.mini-calendar-nav .win11-title { font-size: 0.88rem; }

@@ -451,7 +451,12 @@ Cada requisito (RE-<HU>.<n>) incluye su tipo, su prioridad y su **criterio de ac
 | RE-15.2 | El sistema debe mostrar únicamente las mascotas del propietario. | Restricción | Solo ve sus mascotas. | Alta |
 | RE-15.3 | El sistema debe mostrar ficha, historial, próximas citas y vacunas. | Funcional | Ve toda su información. | Media |
 | RE-15.4 | El sistema debe devolver 403 ante datos de terceros. | Seguridad | Acceder a datos ajenos devuelve 403. | Alta |
-| RE-15.5 | El portal debe ser responsivo para móvil. | Usabilidad | Se ve correctamente en móvil. | Media |
+| RE-15.5 | El portal debe adaptarse a móvil (320–767 px), tablet (768–1023 px) y escritorio (≥ 1024 px), según RNF-07. | Usabilidad | Sin desbordes ni superposiciones en 360, 390, 768, 820, 1024, 1280 y 1440 px; en móvil y tablet se navega con la barra inferior y en escritorio con el menú lateral. | Media |
+| RE-15.6 | Cada sección del portal debe tener su propia dirección. | Usabilidad | El botón «atrás» del navegador vuelve a la sección anterior, cierra la ventana abierta y la recarga conserva la sección. | Media |
+| RE-15.7 | El portal debe mostrar el horario real de atención de la clínica (HU-43). | Funcional | Indica si la clínica está abierta en este momento, cuándo cierra o cuándo vuelve a abrir, y el horario de la semana. | Media |
+| RE-15.8 | El portal debe poder usarse con teclado y permitir ampliar la pantalla. | Usabilidad | El zoom no está bloqueado; las ventanas se cierran con Esc y el foco no sale de ellas mientras están abiertas. | Media |
+| RE-15.9 | El servidor debe validar los datos de mascota que registra o edita el propietario. | Seguridad | Nombre de 1 a 50 caracteres (letras, números, espacio, punto, guion, apóstrofo); especie y raza del catálogo y la raza de esa especie; sexo Macho o Hembra; peso mayor que 0 y hasta 150 kg; nacimiento no futuro ni de más de 40 años; foto JPG o PNG real de hasta 5 MB con nombre generado por el servidor. El propietario no crea razas: si la suya no está, la elige como mestiza («Criollo»), «No sé la raza» o «Mi raza no está en la lista» y la escribe; queda como «Sin raza definida» con la raza indicada, que el personal ve en la ficha, la atención y la lista de pacientes y se borra cuando el personal asigna una raza. Tampoco registra el color: el color lo anota la clínica en la consulta y el portal no lo modifica. | Alta |
+| RE-15.10 | Al agendar, el portal solo debe ofrecer días y horas en que se puede atender. | Usabilidad | Los días sin atención en toda la jornada y los pasados no se pueden elegir; los horarios salen en botones de mañana y tarde cuando ya hay tipo, veterinario y día, y el botón de confirmar se habilita al completar todo. | Media |
 
 **Reglas de negocio:** RN-G02
 

@@ -4,7 +4,40 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.9.1 (Actual)
+### Versión 1.10.0 (Actual)
+Portal del propietario adaptado a móvil, tablet y escritorio, formularios del portal validados en el servidor, correo por Brevo y migraciones que se aplican solas al desplegar.
+
+**Portal del propietario en cualquier pantalla (HU-15, RNF-07)**
+*   **Tres tamaños:** barra inferior en móvil y tablet; menú lateral en escritorio (≥ 1024 px). En escritorio, Inicio, la agenda, la ficha de la mascota y el perfil se reparten en columnas.
+*   **Navegación con dirección propia** (`#agenda`, `#perfil`, `#mascota-12`): el botón «atrás» vuelve a la sección anterior o cierra la ventana abierta, y la recarga conserva la sección.
+*   **Horario real de la clínica** en Inicio (si está abierta ahora y el horario de la semana), en lugar del banner fijo de «24 horas», que no era cierto.
+*   **Accesibilidad:** el zoom ya no está bloqueado, las ventanas se cierran con Esc y el foco no sale de ellas, y todas las tarjetas se abren con el teclado.
+*   Los estilos se dividieron en módulos (`public/css/portal/`) y la vista quedó sin estilos en línea.
+
+**Formularios del portal (RE-15.9, RE-15.10)**
+*   **Validación en el servidor:** nombre, especie, raza de esa especie, sexo, peso y fecha de nacimiento; el teléfono de contacto y el motivo de la cita también se revisan.
+*   **Foto segura:** el portal tenía una copia vieja de la subida de fotos que armaba el nombre del archivo con el de la mascota (una mascota llamada `../../algo` escribía fuera de la carpeta) y solo miraba la extensión. Ahora usa el mismo `helpers/FotoMascota.php` que el panel del personal.
+*   **Razas:** el propietario ya no crea razas con texto libre. Si la suya no está, elige «Criollo» (mestiza), «No sé la raza» o «Mi raza no está en la lista» y la escribe; el personal la ve en la ficha, la atención y la lista de pacientes como raza indicada por el propietario.
+*   **Más claros:** campos obligatorios marcados con `*` y opcionales con «(opcional)», sexo con dos botones y vista previa de la foto actual y de la nueva.
+*   **Color:** lo registra la clínica en la consulta. Antes, guardar una edición desde el portal borraba los colores que había puesto la clínica.
+*   **Agendar cita:** calendario siempre visible con los días sin atención bloqueados, horarios libres en botones de mañana y tarde, un texto que dice qué falta elegir y el botón de confirmar habilitado solo cuando todo está completo.
+
+**Correo**
+*   Los correos del sistema salen por Brevo desde `no-reply@zooki.secarvajal.com` con el dominio autenticado (DKIM y DMARC), en lugar de una cuenta de Gmail.
+
+**Despliegue**
+*   **Migraciones automáticas:** al arrancar, el contenedor web aplica las migraciones pendientes y las anota en `schema_migraciones` (ver «Migraciones de la base de datos»). Ya no hay que entrar al servidor a correrlas.
+*   **Migración nueva:** `database/13_razas_portal.sql` (columna `raza_indicada` y la raza «Sin raza definida» en todas las especies). Se aplica sola en el primer despliegue.
+
+**Correcciones**
+*   La próxima cita del portal decía «Confirmada» aunque estuviera pendiente, y el estado «sin cerrar» se mostraba como «Sin_cerrar».
+*   Esc llevaba a Inicio desde cualquier pantalla, aunque hubiera una ventana abierta.
+*   La raza de la mascota se escapaba dos veces (una «&» salía como «&amp;amp;»), dos íconos no existían y la variable `--z-bg-light` no estaba definida.
+
+**Pruebas**
+*   Dos suites nuevas: `HorarioAtencionTest` y `ValidadorMascotaTest`.
+
+### Versión 1.9.1
 Rediseño de las pantallas de inicio, de «Mi perfil» y de la configuración de horarios, y limpieza de módulos que ya no se usaban.
 
 **Panel de inicio del veterinario (HU-18, HU-20)**
@@ -95,7 +128,7 @@ Auditoría de cierre de los módulos de acceso, mascotas e historia clínica, y 
 **Infraestructura y base de datos**
 *   **Respaldos:** toman las credenciales del `.env`, admiten un destino externo configurable (`BACKUP_DIR`) y su programación queda en `scripts/zooki.cron`.
 *   **Docker:** volumen `uploads` para conservar fotos y adjuntos al reconstruir el contenedor.
-*   **Migraciones:** siete nuevas (`database/06_*.sql` a `database/12_*.sql`) para la vigencia de las notificaciones, los estados `en_curso`, `no_asistio`, `sin_cerrar` y `cerrada_sin_consulta` de las citas, la hora real de atención, los nuevos campos de la consulta, el horario único solo entre citas activas y la columna `password_definida`. Todas se pueden ejecutar más de una vez.
+*   **Migraciones:** siete nuevas (`database/06_*.sql` a `database/12_*.sql`) para la vigencia de las notificaciones, los estados `en_curso`, `no_asistio`, `sin_cerrar` y `cerrada_sin_consulta` de las citas, la hora real de atención, los nuevos campos de la consulta, el horario único solo entre citas activas y la columna `password_definida`. La 06, la 07 y la 09 no se pueden repetir (ver «Migraciones de la base de datos»).
 *   **Docker:** la imagen crea las carpetas de `uploads` para que el volumen nazca con permisos de Apache.
 *   **Documentación:** los documentos del proyecto pasan a la carpeta `documentacion/`; en la raíz queda el README.
 *   **`.env`:** PHP lo lee con `parse_ini_file`, así que un paréntesis en un comentario invalida el archivo completo. `.env.example` quedó corregido y advierte de ello.
@@ -336,7 +369,17 @@ graph TD
     Se recomienda configurar un Host Virtual que apunte al directorio `public/` del proyecto para el correcto funcionamiento de las rutas relativas.
 
 4.  **Importar la Base de Datos:**
-    Importa el esquema SQL inicial ubicado en `database/schema.sql` (si está presente) en tu servidor MySQL.
+    Importa el esquema SQL inicial ubicado en `database/01_schema.sql` en tu servidor MySQL y luego aplica las migraciones con `php scripts/migrar.php`.
+
+## Migraciones de la base de datos
+
+Las migraciones son los archivos `database/NN_nombre.sql` con número 04 o mayor. **En el servidor se aplican solas:** al arrancar, el contenedor `web` ejecuta `docker/iniciar.sh`, que corre `scripts/migrar.php` y después inicia Apache. Como Dokploy reconstruye el contenedor en cada despliegue, basta con subir el archivo `.sql` nuevo junto con el código.
+
+*   **Registro:** cada migración aplicada queda en la tabla `schema_migraciones`, así que ninguna se repite.
+*   **Línea base:** las migraciones 04 a 12 se aplicaron a mano antes de que existiera el registro, y la 06, la 07 y la 09 **no** se pueden repetir: la 07 y la 09 redefinen los estados de las citas con la lista de su época y borrarían `sin_cerrar` y `cerrada_sin_consulta`. La primera vez que el migrador corre en una base que ya tiene el esquema, las anota como aplicadas sin ejecutarlas.
+*   **Si una falla:** se detiene ahí, no la anota (se reintenta en el siguiente arranque) y Apache arranca igual para no tumbar el sitio. El error aparece en los logs del contenedor en Dokploy con el prefijo `[migraciones] ERROR`.
+*   **En local:** `php scripts/migrar.php` aplica las que falten; con `--revisar` solo muestra cuáles aplicaría.
+*   **Al escribir una migración nueva:** usa el número siguiente y hazla repetible (comprueba si la columna o la fila ya existe antes de crearla, como en `database/13_razas_portal.sql`). En una instalación nueva, MySQL ejecuta todos los `.sql` al crear la base y luego el migrador vuelve a correr las posteriores a la 12.
 
 ## Modelo de Base de Datos
 

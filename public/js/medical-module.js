@@ -462,6 +462,12 @@ function usarFotoPorDefecto(img) {
     img.src = FOTO_MASCOTA_DEFECTO;
 }
 
+/** HU-15: la raza, más la que escribió el propietario si no estaba en la lista. */
+function razaConIndicada(nombre, indicada, porDefecto = '---') {
+    const base = nombre || porDefecto;
+    return indicada ? `${base} (el propietario indicó «${indicada}»)` : base;
+}
+
 function escaparTexto(valor) {
     return String(valor ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -611,7 +617,7 @@ function renderOwnerDossier(owner, pets) {
                 <img src="${escaparTexto(fotoMascotaUrl(m.url_foto))}" class="pet-dossier-card-photo" alt="">
                 <div class="pet-dossier-card-info">
                     <h4 class="pet-dossier-card-name">${escaparTexto(m.nombre)}</h4>
-                    <p class="pet-dossier-card-species">${escaparTexto(m.especie)} • ${escaparTexto(m.raza || 'Mestizo')}</p>
+                    <p class="pet-dossier-card-species">${escaparTexto(m.especie)} • ${escaparTexto(razaConIndicada(m.raza, m.raza_indicada, 'Mestizo'))}</p>
                 </div>
             </div>
             <div class="pet-dossier-card-grid">
@@ -1753,7 +1759,7 @@ function renderPetDashboard(data, id) {
     }
 
     document.getElementById('dashPetEspecie').innerText = m.nombre_especie || '---';
-    document.getElementById('dashPetRaza').innerText = m.nombre_raza || '---';
+    document.getElementById('dashPetRaza').innerText = razaConIndicada(m.nombre_raza, m.raza_indicada);
     document.getElementById('dashPetSexo').innerText = m.sexo || '---';
     document.getElementById('dashPetPeso').innerText = m.peso ? m.peso + ' Kg' : '---';
     document.getElementById('dashPetHC').innerText = m.numero_historia_clinica || 'Sin asignar';
@@ -1910,7 +1916,7 @@ async function printMedicalHistory(id, nombre) {
                 <h1>Historia Clínica: ${nombre}</h1>
                 <div class="meta">
                     <strong>HC N°:</strong> ${data.mascota.numero_historia_clinica || '---'} <br>
-                    <strong>Especie/Raza:</strong> ${data.mascota.nombre_especie} - ${data.mascota.nombre_raza || '---'} <br>
+                    <strong>Especie/Raza:</strong> ${escaparTexto(data.mascota.nombre_especie)} - ${escaparTexto(razaConIndicada(data.mascota.nombre_raza, data.mascota.raza_indicada))} <br>
                     <strong>Propietario:</strong> ${data.mascota.propietario_nombre}
                 </div>
         `;

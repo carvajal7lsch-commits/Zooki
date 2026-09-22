@@ -1,0 +1,179 @@
+/* ═══════════════════════════════════════════════════════════
+   Portal · Mi perfil
+   Móvil: una columna. Desde tablet: datos a la izquierda,
+   acciones (contacto, contraseña, salir) a la derecha.
+   ═══════════════════════════════════════════════════════════ */
+
+.profile-card {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-lg);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: var(--z-shadow);
+    margin-bottom: 1.5rem;
+}
+
+.profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+    color: #ffffff;
+    font-size: 2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    border: 4px solid var(--z-primary-soft);
+}
+
+.profile-card h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--z-text);
+    overflow-wrap: anywhere;
+}
+
+.profile-card p {
+    font-size: 0.85rem;
+    color: var(--z-text-muted);
+}
+
+.profile-details-list {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    overflow: hidden;
+    box-shadow: var(--z-shadow);
+    margin-bottom: 1.5rem;
+}
+
+.profile-detail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--z-border);
+    gap: 1rem;
+}
+
+.profile-detail-row:last-child { border-bottom: none; }
+
+.profile-detail-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--z-text-muted);
+    flex-shrink: 0;
+}
+
+.profile-detail-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--z-text);
+    overflow-wrap: anywhere;
+    text-align: right;
+    min-width: 0;
+}
+
+.profile-actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.btn-profile-action {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--z-text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    box-shadow: var(--z-shadow);
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-profile-action > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-profile-action.logout-btn {
+    border-color: #FCA5A5;
+    color: var(--z-danger);
+}
+
+/* Secciones que se abren (contacto y contraseña); portal.js cambia su display. */
+.password-change-collapse {
+    display: none;
+    padding: 1rem;
+    background: var(--z-bg-light);
+    border-radius: 12px;
+    margin-top: -0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.password-change-collapse .search-input-wrapper.campo { background: #ffffff; }
+
+.password-strength-meter {
+    margin-top: 5px;
+    height: 4px;
+    background: #E2E8F0;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.password-strength-meter > div {
+    height: 100%;
+    width: 0;
+    transition: all 0.3s ease;
+}
+
+.password-strength-text {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.7rem;
+    color: #64748B;
+}
+
+.password-match-text {
+    display: none;
+    margin-top: 4px;
+    font-size: 0.7rem;
+    color: var(--z-danger);
+}
+
+@media (hover: hover) {
+    .btn-profile-action:hover { background: var(--z-primary-soft); color: var(--z-primary); }
+    .btn-profile-action.logout-btn:hover { background: var(--z-danger-soft); color: var(--z-danger); }
+}
+
+/* ── Tablet y escritorio ── */
+@media (min-width: 768px) {
+    .account-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .account-grid__datos .profile-details-list { margin-bottom: 0; }
+}
+
+@media (min-width: 1024px) {
+    .account-grid {
+        grid-template-columns: 360px minmax(0, 560px);
+        gap: 2rem;
+    }
+}
