@@ -52,7 +52,7 @@ $hoyIso = date('Y-m-d');
                 <img src="<?= $e($fotoMascota) ?>" alt="" class="paciente__foto" id="atencionFoto">
                 <div>
                     <h2><?= $e($mascota['nombre'] ?? 'Sin nombre') ?></h2>
-                    <p><?= $e($mascota['nombre_especie'] ?? '') ?><?= !empty($mascota['nombre_raza']) ? ' · ' . $e($mascota['nombre_raza']) : '' ?></p>
+                    <p><?= $e($mascota['nombre_especie'] ?? '') ?><?= !empty($mascota['nombre_raza']) ? ' · ' . $e($mascota['nombre_raza']) : '' ?><?php // HU-15: raza que el propietario escribió porque no estaba en la lista ?><?= !empty($mascota['raza_indicada']) ? ' · el propietario indicó «' . $e($mascota['raza_indicada']) . '»' : '' ?></p>
                 </div>
             </div>
 

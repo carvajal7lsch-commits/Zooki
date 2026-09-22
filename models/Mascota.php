@@ -328,6 +328,41 @@ class Mascota {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function especieExiste(int $id_especie): bool {
+        $stmt = $this->conn->prepare("SELECT 1 FROM especies WHERE id_especie = ?");
+        $stmt->execute([$id_especie]);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /** Id de «Sin raza definida» de la especie (database/13_razas_portal.sql), o null si falta. */
+    public function idSinRazaDefinida(int $id_especie): ?int {
+        $stmt = $this->conn->prepare("SELECT id_raza FROM razas WHERE id_especie = ? AND nombre_raza = 'Sin raza definida' LIMIT 1");
+        $stmt->execute([$id_especie]);
+        $id = $stmt->fetchColumn();
+        return $id === false ? null : (int) $id;
+    }
+
+    /**
+     * Raza que escribió el propietario porque no estaba en la lista; la ve el
+     * personal para confirmarla. null la borra (se eligió una raza del catálogo).
+     */
+    public function guardarRazaIndicada(int $id_mascota, ?string $raza): bool {
+        try {
+            $stmt = $this->conn->prepare("UPDATE mascotas SET raza_indicada = ? WHERE id_mascota = ?");
+            return $stmt->execute([$raza, $id_mascota]);
+        } catch (PDOException $e) {
+            error_log('raza_indicada sin la migración 13: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /** La raza existe y es de esa especie (el formulario podría mandar una de otra). */
+    public function razaEsDeEspecie(int $id_raza, int $id_especie): bool {
+        $stmt = $this->conn->prepare("SELECT 1 FROM razas WHERE id_raza = ? AND id_especie = ?");
+        $stmt->execute([$id_raza, $id_especie]);
+        return (bool) $stmt->fetchColumn();
+    }
+
     public function insertColor($nombre_color) {
         $query = "INSERT INTO colores_base (nombre_color) VALUES (:nom)";
         $stmt = $this->conn->prepare($query);

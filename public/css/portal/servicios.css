@@ -1,0 +1,253 @@
+/* ═══════════════════════════════════════════════════════════
+   Portal · Servicios y Recordatorios
+   ═══════════════════════════════════════════════════════════ */
+
+.search-container { margin-bottom: 1.25rem; }
+
+/* ── Servicios ── */
+.services-list-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
+}
+
+.service-row-item {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    box-shadow: var(--z-shadow);
+}
+
+.service-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.service-row-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--z-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+.service-row-icon--vacuna { background-color: var(--z-success-soft); color: var(--z-success); }
+.service-row-icon--control { background-color: var(--z-warning-soft); color: var(--z-warning); }
+
+.service-row-details h2 {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--z-text);
+}
+
+.service-row-details p {
+    font-size: 0.72rem;
+    color: var(--z-text-muted);
+}
+
+.btn-service-action {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    border: none;
+    padding: 0.5rem 0.95rem;
+    min-height: 36px;
+    border-radius: var(--z-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* ── Veterinarios ── */
+.vets-scroll-row {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding: 0.25rem 0.25rem 1rem;
+    scrollbar-width: none;
+}
+
+.vets-scroll-row::-webkit-scrollbar { display: none; }
+
+.vet-card-item {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1.15rem;
+    text-align: center;
+    box-shadow: var(--z-shadow);
+    width: 150px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.vet-photo-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--z-primary-soft);
+    background: #F1F5F9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--z-primary);
+    font-size: 1.25rem;
+}
+
+.vet-card-item h3 {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--z-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.vet-card-item p {
+    font-size: 0.7rem;
+    color: var(--z-text-muted);
+    line-height: 1.2;
+}
+
+/* ── Recordatorios ── */
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.notification-card {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1.15rem;
+    display: flex;
+    gap: 0.85rem;
+    box-shadow: var(--z-shadow);
+    transition: transform 0.2s;
+}
+
+.notification-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.notification-icon.vacuna { background-color: var(--z-success-soft); color: var(--z-success); }
+.notification-icon.desparasitacion { background-color: var(--z-warning-soft); color: var(--z-warning); }
+.notification-icon.cita { background-color: var(--z-primary-soft); color: var(--z-primary); }
+
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-content h3 {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--z-text);
+    margin-bottom: 0.15rem;
+}
+
+.notification-content p {
+    font-size: 0.78rem;
+    color: var(--z-text-muted);
+    margin-bottom: 0.35rem;
+    overflow-wrap: anywhere;
+}
+
+.notification-date {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--z-primary);
+    background-color: var(--z-primary-soft);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+}
+
+.notification-card-empty {
+    padding: 3rem 1.5rem;
+    font-size: 0.88rem;
+}
+
+@media (hover: hover) {
+    .btn-service-action:hover { background: var(--z-primary); color: #ffffff; }
+    .notification-card:hover { transform: translateY(-1px); }
+}
+
+/* ── Tablet ── */
+@media (min-width: 768px) {
+    .services-list-vertical {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .service-row-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .service-row-meta { align-items: flex-start; flex-direction: column; gap: 0.75rem; }
+    .service-row-details h2 { font-size: 0.95rem; }
+    .service-row-details p { font-size: 0.78rem; }
+
+    .vets-scroll-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        overflow: visible;
+        padding: 0;
+    }
+
+    .vet-card-item { width: auto; }
+
+    .notifications-list,
+    .search-container { max-width: 720px; }
+}
+
+/* ── Escritorio ── */
+@media (min-width: 1024px) {
+    .search-container { max-width: 520px; }
+
+    .notifications-list {
+        max-width: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 1rem;
+    }
+
+    /* Un solo estado vacío ocupa todo el ancho. */
+    .notifications-list > .notification-card-empty { grid-column: 1 / -1; }
+}
+
+/* «Cargando…» o «Sin veterinarios» ocupan toda la fila de la cuadrícula. */
+.vets-scroll-row > .notification-card-empty { grid-column: 1 / -1; width: 100%; }

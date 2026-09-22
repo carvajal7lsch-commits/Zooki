@@ -518,7 +518,7 @@
                             <p class="species" style="margin-bottom: 0.25rem;">
                                 <i class="fas fa-paw"></i> <?php echo $m[
                                     "nombre_especie"
-                                ]; ?> • <?php echo $m["nombre_raza"]; ?>
+                                ]; ?> • <?php echo htmlspecialchars($m["nombre_raza"] ?? ''); ?><?php if (!empty($m['raza_indicada'])): ?> (indicó «<?php echo htmlspecialchars($m['raza_indicada']); ?>»)<?php endif; ?>
                             </p>
                             <p style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500; margin-bottom: 1rem;">
                                 <i class="fas fa-venus-mars"></i> <?php echo $m[

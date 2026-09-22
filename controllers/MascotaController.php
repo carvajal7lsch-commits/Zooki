@@ -3,6 +3,7 @@
 require_once '../config/Database.php';
 require_once '../models/Mascota.php';
 require_once '../models/Usuario.php';
+require_once '../helpers/FotoMascota.php';
 
 class MascotaController {
     private $db;
@@ -56,6 +57,11 @@ class MascotaController {
                     if ($oldData[$campo] != $newData[$campo]) {
                         $this->mascotaModel->registrarAuditoria($id, $_SESSION['usuario_doc'], $campo, $oldData[$campo], $newData[$campo]);
                     }
+                }
+
+                // HU-15: si el personal cambia la raza, la que indicó el propietario ya quedó resuelta.
+                if ($oldData['id_raza'] != $newData['id_raza']) {
+                    $this->mascotaModel->guardarRazaIndicada((int) $id, null);
                 }
 
                 // Actualizar colores
@@ -200,6 +206,11 @@ class MascotaController {
 
                 if (!$this->mascotaModel->update($newData)) {
                     throw new RuntimeException('No se pudo actualizar la mascota.');
+                }
+
+                // HU-15: si el personal cambia la raza, la que indicó el propietario ya quedó resuelta.
+                if (($oldData['id_raza'] ?? null) != ($newData['id_raza'] ?? null)) {
+                    $this->mascotaModel->guardarRazaIndicada((int) $id, null);
                 }
 
                 $this->mascotaModel->saveColores($id, $datos['colores']);
@@ -615,105 +626,13 @@ class MascotaController {
         }
     }
 
-    /**
-     * Procesa la foto de una mascota y devuelve el nombre del archivo guardado.
-     *
-     * Devuelve null si no se envio ninguna foto. Si algo falla, deja el motivo
-     * en $error y devuelve false.
-     *
-     * M1-14 — Estas ~45 lineas estaban copiadas identicas en registrarAjax() y
-     * actualizarAjax(); cualquier correccion habia que aplicarla dos veces.
-     *
-     * M1-02 — El nombre del archivo se construia con
-     * `time() . '_' . str_replace(' ', '_', $nombre) . '.' . $ext`, y ese
-     * str_replace solo toca los espacios: las barras y los puntos pasaban tal
-     * cual. Una mascota llamada `../../evil` escribia el archivo fuera de
-     * public/uploads/mascotas/. Ahora el nombre lo genera el servidor y del
-     * nombre de la mascota solo se conservan letras, digitos y guiones.
-     *
-     * M1-06 — Ya no basta con que la extension diga .jpg: se comprueba que el
-     * archivo sea realmente una imagen y la extension se deduce del tipo real,
-     * no de lo que mande el cliente.
-     */
+    /** La foto la guarda helpers/FotoMascota.php, compartido con el portal del propietario. */
     private function procesarFotoMascota(string $nombreMascota, ?string &$error) {
-        $error = null;
-
-        if (!isset($_FILES['foto']) || $_FILES['foto']['error'] === UPLOAD_ERR_NO_FILE) {
-            return null;
-        }
-
-        if ($_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
-            $motivos = [
-                UPLOAD_ERR_INI_SIZE   => 'La foto excede el límite máximo de tamaño de archivo (5MB).',
-                UPLOAD_ERR_FORM_SIZE  => 'La foto excede el límite máximo de tamaño de archivo (5MB).',
-                UPLOAD_ERR_PARTIAL    => 'El archivo se subió solo parcialmente.',
-                UPLOAD_ERR_NO_TMP_DIR => 'Falta una carpeta temporal en el servidor.',
-                UPLOAD_ERR_CANT_WRITE => 'No se pudo escribir el archivo en el disco.',
-                UPLOAD_ERR_EXTENSION  => 'Una extensión de PHP detuvo la subida del archivo.',
-            ];
-            $error = $motivos[$_FILES['foto']['error']] ?? 'Error al subir el archivo.';
-            return false;
-        }
-
-        if ($_FILES['foto']['size'] > 5 * 1024 * 1024) {
-            $error = 'La foto no debe superar los 5MB.';
-            return false;
-        }
-
-        // El tipo sale del contenido, no del nombre ni del Content-Type que
-        // manda el navegador, que el cliente controla por completo.
-        $info = @getimagesize($_FILES['foto']['tmp_name']);
-        $extensionPorTipo = [
-            IMAGETYPE_JPEG => 'jpg',
-            IMAGETYPE_PNG  => 'png',
-        ];
-        if ($info === false || !isset($extensionPorTipo[$info[2]])) {
-            $error = 'Solo se permiten imágenes en formato JPG o PNG.';
-            return false;
-        }
-        $ext = $extensionPorTipo[$info[2]];
-
-        // Del nombre de la mascota solo sobrevive lo que sea seguro en una ruta.
-        $etiqueta = preg_replace('/[^A-Za-z0-9_-]/', '', str_replace(' ', '_', $nombreMascota));
-        $etiqueta = substr($etiqueta, 0, 40);
-        if ($etiqueta === '') {
-            $etiqueta = 'mascota';
-        }
-
-        $nombreArchivo = time() . '_' . bin2hex(random_bytes(4)) . '_' . $etiqueta . '.' . $ext;
-
-        $destino = __DIR__ . '/../public/uploads/mascotas/';
-        if (!is_dir($destino) && !mkdir($destino, 0755, true) && !is_dir($destino)) {
-            $error = 'No se pudo preparar la carpeta de imágenes en el servidor.';
-            return false;
-        }
-
-        if (!move_uploaded_file($_FILES['foto']['tmp_name'], $destino . $nombreArchivo)) {
-            $error = 'Error al guardar la imagen en el servidor. Verifique permisos.';
-            return false;
-        }
-
-        return $nombreArchivo;
+        return FotoMascota::guardar($_FILES['foto'] ?? null, $nombreMascota, $error);
     }
 
-    /**
-     * Borra la foto que acaba de quedar reemplazada (M1-16).
-     *
-     * Solo se toca el nombre base del archivo dentro de la carpeta de subidas:
-     * si el valor guardado en base de datos trajera separadores de ruta (como
-     * podia pasar antes de M1-02), basename() los descarta y el borrado nunca
-     * sale de esa carpeta. Un fallo aqui no es motivo para deshacer nada: la
-     * ficha ya se guardo bien.
-     */
     private function eliminarFotoAnterior(?string $anterior, string $nueva): void {
-        if ($anterior === null || $anterior === '' || $anterior === $nueva) {
-            return;
-        }
-
-        $ruta = __DIR__ . '/../public/uploads/mascotas/' . basename($anterior);
-        if (is_file($ruta) && !@unlink($ruta)) {
-            error_log('No se pudo borrar la foto anterior de la mascota: ' . $ruta);
-        }
+        FotoMascota::eliminarAnterior($anterior, $nueva);
     }
 
     private function redirectWithError($message) {

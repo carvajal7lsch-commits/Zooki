@@ -777,9 +777,16 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 - Solo veo las mascotas vinculadas a mi cuenta.
 - Veo ficha, historial, próximas citas y calendario de vacunas.
 - No tengo acceso a datos de otros propietarios (403).
-- Interfaz responsiva optimizada para móvil.
+- Interfaz que se adapta a móvil, tablet y escritorio (RNF-07): barra inferior en móvil y tablet, menú lateral en escritorio.
+- El botón «atrás» del navegador me devuelve a la sección anterior y cierra la ventana que tenga abierta.
+- Veo si la clínica está abierta ahora y su horario de la semana.
+- Los formularios indican qué campos son obligatorios y cuáles opcionales.
+- Al registrar o editar una mascota elijo la raza del catálogo; si no está, indico que es mestiza, que no la sé o la escribo para que la clínica la confirme, y veo la foto antes de guardarla. El color lo registra la clínica en la consulta.
+- Al agendar no puedo elegir días en que la clínica no atiende, y los horarios libres aparecen en botones cuando ya elegí tipo, veterinario y día.
 
-**Reglas de negocio:** RN-G02 · **Dependencias:** HU-17
+> **Nota:** el portal mostraba un banner fijo de «Médicos calificados las 24 horas del día», que no correspondía al horario configurado en HU-43. Se reemplazó por el horario real.
+
+**Reglas de negocio:** RN-G02 · **Dependencias:** HU-17, HU-43
 
 ### HU-25 — Auto-registro de propietario
 

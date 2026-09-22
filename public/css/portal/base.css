@@ -1,0 +1,407 @@
+/* ═══════════════════════════════════════════════════════════
+   ZOOKI — Portal del propietario · Base
+   Tokens, estructura de la página y piezas comunes.
+
+   Rangos de RNF-07:
+     móvil      < 768 px   barra inferior, hojas que suben desde abajo
+     tablet   768–1023 px  barra inferior, contenido a todo el ancho,
+                           ventanas centradas
+     escritorio ≥ 1024 px  menú lateral, contenido en columnas
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+    --z-primary: #0052FF;
+    --z-primary-dark: #0044d6;
+    --z-primary-soft: rgba(0, 82, 255, 0.08);
+    --z-purple-light: #F3EEFF;
+    --z-purple: #8B5CF6;
+    --z-success: #10B981;
+    --z-success-soft: #ECFDF5;
+    --z-warning: #F59E0B;
+    --z-warning-soft: #FFFBEB;
+    --z-danger: #EF4444;
+    --z-danger-soft: #FEF2F2;
+    --z-bg: #FAF9FF;
+    /* Se usaban sin estar definidas: los fondos quedaban transparentes. */
+    --z-bg-light: #F1F5F9;
+    --z-text-main: #0F172A;
+    --z-surface: #FFFFFF;
+    --z-text: #0F172A;
+    --z-text-muted: #64748B;
+    --z-border: #E2E8F0;
+    --z-radius-lg: 24px;
+    --z-radius: 16px;
+    --z-radius-sm: 12px;
+    --z-shadow: 0 10px 25px -5px rgba(0, 82, 255, 0.08), 0 8px 10px -6px rgba(0, 82, 255, 0.05);
+    --z-shadow-lg: 0 20px 40px -4px rgba(15, 23, 42, 0.1);
+
+    --nav-h: 76px;
+    --rail-w: 248px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --gutter: 1.25rem;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.portal-body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--z-bg);
+    background-image: radial-gradient(at 0% 0%, rgba(0, 82, 255, 0.07) 0px, transparent 45%);
+    background-attachment: fixed;
+    color: var(--z-text);
+    line-height: 1.5;
+    min-height: 100vh;
+    min-height: 100dvh;
+    -webkit-text-size-adjust: 100%;
+}
+
+img { max-width: 100%; }
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+    color: inherit;
+}
+
+button { cursor: pointer; }
+
+/* ── Estructura ── */
+.portal-shell { min-height: 100dvh; }
+
+.portal-main {
+    width: 100%;
+    padding: 1.5rem var(--gutter) calc(var(--nav-h) + var(--safe-bottom) + 1.5rem);
+    padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+}
+
+.app-screen {
+    display: none;
+    animation: screenFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.app-screen.active { display: block; }
+
+@keyframes screenFade {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes portalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ── Títulos de sección ── */
+.section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.section-title-row h1,
+.section-title-row h2 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--z-text);
+}
+
+.section-title-row__acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title-row .see-all {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--z-primary);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.portal-oculto { display: none; }
+
+/* ── Botones ── */
+.btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 14px;
+    padding: 0.85rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 8px 20px rgba(0, 82, 255, 0.2);
+    margin-top: 0.5rem;
+    transition: opacity 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-primary--compacto {
+    border-radius: 12px;
+    padding: 0.65rem;
+    font-size: 0.85rem;
+    box-shadow: none;
+    margin-top: 0;
+}
+
+.btn-icono {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-icono--suave {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.btn-enlace {
+    background: none;
+    border: none;
+    color: var(--z-primary);
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 0.25rem 0;
+}
+
+/* ── Formularios ── */
+.portal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.portal-form__fila {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+}
+
+.portal-label {
+    display: block;
+    font-weight: 700;
+    color: var(--z-text);
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+}
+
+.search-input-wrapper {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--z-shadow);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input-wrapper i {
+    color: var(--z-text-muted);
+    flex-shrink: 0;
+}
+
+.search-input-wrapper input,
+.search-input-wrapper select,
+.search-input-wrapper textarea {
+    border: none;
+    background: transparent;
+    width: 100%;
+    min-width: 0;
+    outline: none;
+    font-size: 0.9rem;
+    color: var(--z-text);
+}
+
+.search-input-wrapper textarea { resize: none; }
+
+/* Campo de formulario: el mismo contenedor, más compacto. */
+.search-input-wrapper.campo {
+    padding: 0.65rem 0.85rem;
+    border-color: rgba(85, 96, 255, 0.25);
+    border-radius: 12px;
+    box-shadow: none;
+}
+
+.search-input-wrapper.campo input,
+.search-input-wrapper.campo select,
+.search-input-wrapper.campo textarea {
+    font-size: 0.85rem;
+}
+
+.search-input-wrapper:focus-within {
+    border-color: var(--z-primary);
+    box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.12);
+}
+
+.campo-archivo { font-size: 0.8rem; }
+
+/* iOS amplía la pantalla al enfocar un campo con letra menor a 16 px. */
+@media (pointer: coarse) {
+    .search-input-wrapper input,
+    .search-input-wrapper select,
+    .search-input-wrapper textarea,
+    .search-input-wrapper.campo input,
+    .search-input-wrapper.campo select,
+    .search-input-wrapper.campo textarea {
+        font-size: 16px;
+    }
+}
+
+/* ── Estados vacíos ── */
+.portal-empty-inline,
+.notification-card-empty,
+.appointment-banner-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    background: var(--z-surface);
+    border: 1.5px dashed rgba(85, 96, 255, 0.25);
+    border-radius: var(--z-radius);
+    color: var(--z-text-muted);
+    margin: 1rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.portal-empty-inline i,
+.notification-card-empty i,
+.appointment-banner-empty i {
+    font-size: 2.5rem;
+    color: rgba(85, 96, 255, 0.5);
+    margin-bottom: 0.5rem;
+}
+
+.portal-empty-inline p,
+.notification-card-empty p,
+.appointment-banner-empty p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.portal-loading {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--z-text-muted);
+    font-size: 0.85rem;
+}
+
+/* ── Etiquetas de estado ── */
+.status-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-badge.status-active { background: var(--z-success-soft); color: var(--z-success); }
+.status-badge.status-inactive { background: var(--z-danger-soft); color: var(--z-danger); text-transform: capitalize; }
+.status-badge.status-done { background: var(--z-success-soft); color: var(--z-success); }
+.status-badge--abierta { background: var(--z-primary-soft); color: var(--z-primary); }
+.status-badge--completada { background: var(--z-success-soft); color: var(--z-success); }
+.status-badge--no-asistio { background: #F1F5F9; color: #64748B; }
+.status-badge--cancelada { background: var(--z-danger-soft); color: var(--z-danger); }
+.status-badge--pendiente-dosis { background: #F1F5F9; color: #475569; }
+
+/* ── Foco visible para teclado ── */
+:where(button, a, [role="button"], [tabindex="0"], summary, input, select, textarea):focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.search-input-wrapper :where(input, select, textarea):focus-visible { outline: none; }
+
+/* ── Tablet ── */
+@media (min-width: 768px) {
+    :root { --gutter: 2rem; }
+
+    .portal-main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding-top: 2rem;
+    }
+
+    .section-title-row h1,
+    .section-title-row h2 { font-size: 1.15rem; }
+}
+
+/* ── Escritorio ── */
+@media (min-width: 1024px) {
+    :root { --gutter: 2.5rem; }
+
+    .portal-shell {
+        display: grid;
+        grid-template-columns: var(--rail-w) minmax(0, 1fr);
+    }
+
+    .portal-main {
+        max-width: 1200px;
+        padding-top: 2.25rem;
+        padding-bottom: 3rem;
+    }
+
+    .section-title-row h1 { font-size: 1.4rem; }
+}
+
+@media (min-width: 1440px) {
+    :root { --rail-w: 272px; }
+    .portal-main { max-width: 1280px; }
+}
+
+/* ── Menos movimiento si el equipo lo pide ── */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

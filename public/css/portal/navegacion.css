@@ -1,0 +1,254 @@
+/* ═══════════════════════════════════════════════════════════
+   Portal · Navegación
+   Barra inferior en móvil y tablet; menú lateral en escritorio.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Menú lateral (solo escritorio) ── */
+.portal-rail { display: none; }
+
+@media (min-width: 1024px) {
+    .portal-rail {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 1.75rem 1.25rem 1.25rem;
+        background: var(--z-surface);
+        border-right: 1px solid var(--z-border);
+        overflow-y: auto;
+    }
+
+    .portal-rail__marca {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0 0.5rem;
+        color: var(--z-text);
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        text-decoration: none;
+    }
+
+    .portal-rail__marca img {
+        width: 36px;
+        height: 36px;
+    }
+
+    .portal-rail__agendar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: none;
+        border-radius: 14px;
+        padding: 0.85rem 1rem;
+        background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+        color: #ffffff;
+        font-size: 0.9rem;
+        font-weight: 700;
+        box-shadow: 0 8px 20px rgba(0, 82, 255, 0.22);
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .portal-rail__agendar i { font-size: 1.1rem; }
+
+    .portal-rail__nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .portal-rail__item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 0.85rem;
+        background: transparent;
+        color: var(--z-text-muted);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-align: left;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .portal-rail__item i { font-size: 1.25rem; }
+
+    .portal-rail__item.active {
+        background: var(--z-primary-soft);
+        color: var(--z-primary);
+    }
+
+    .portal-rail__punto {
+        margin-left: auto;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--z-danger);
+    }
+
+    .portal-rail__usuario {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.85rem 0.5rem 0;
+        border-top: 1px solid var(--z-border);
+    }
+
+    .portal-rail__avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+        color: #ffffff;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .portal-rail__nombre {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.82rem;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .portal-rail__salir {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--z-text-muted);
+        font-size: 1.1rem;
+        text-decoration: none;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    @media (hover: hover) {
+        .portal-rail__agendar:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0, 82, 255, 0.3); }
+        .portal-rail__item:hover:not(.active) { background: var(--z-bg-light); color: var(--z-text); }
+        .portal-rail__salir:hover { background: var(--z-danger-soft); color: var(--z-danger); }
+    }
+}
+
+/* ── Barra inferior (móvil y tablet) ── */
+.mobile-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--nav-h) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--z-border);
+    z-index: 99;
+}
+
+.mobile-nav__items {
+    height: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mobile-nav-item {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    border: none;
+    background: transparent;
+    color: var(--z-text-muted);
+    font-size: 0.65rem;
+    font-weight: 700;
+    transition: color 0.2s;
+}
+
+.mobile-nav-item i {
+    font-size: 1.45rem;
+    transition: transform 0.2s;
+}
+
+.mobile-nav-item.active { color: var(--z-primary); }
+.mobile-nav-item.active i { transform: scale(1.1); }
+
+/* Botón central de agendar cita */
+.mobile-nav-item--center {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: center;
+}
+
+.center-fab-button {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+    color: #ffffff;
+    border: 4px solid var(--z-bg);
+    box-shadow: 0 8px 20px rgba(0, 82, 255, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transform: translateY(-24px);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.center-fab-label {
+    position: absolute;
+    bottom: 8px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--z-text-muted);
+}
+
+@media (hover: hover) {
+    .mobile-nav-item:hover { color: var(--z-primary); }
+    .center-fab-button:hover {
+        transform: translateY(-26px) scale(1.05);
+        box-shadow: 0 10px 24px rgba(0, 82, 255, 0.45);
+    }
+}
+
+/* Celular acostado: la barra roba poca altura. */
+@media (max-height: 480px) and (orientation: landscape) and (max-width: 1023px) {
+    :root { --nav-h: 56px; }
+
+    .mobile-nav-item { flex-direction: row; gap: 0.4rem; font-size: 0.7rem; }
+    .mobile-nav-item i { font-size: 1.2rem; }
+    .center-fab-button { width: 44px; height: 44px; font-size: 1.2rem; border-width: 3px; transform: translateY(-10px); }
+    .center-fab-label { display: none; }
+}
+
+@media (min-width: 1024px) {
+    .mobile-nav { display: none; }
+}

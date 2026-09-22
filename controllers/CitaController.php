@@ -66,10 +66,21 @@ class CitaController {
                 exit;
             }
 
+            $data['motivo'] = trim((string) $data['motivo']);
+            if (mb_strlen($data['motivo']) > 255) {
+                echo json_encode(['success' => false, 'message' => 'El motivo no puede tener más de 255 caracteres.']);
+                exit;
+            }
+
             // RN-G02: el propietario solo agenda para sus mascotas. El portal le
             // ofrece solo las suyas, pero el servidor no lo comprobaba: con un
             // id_mascota ajeno se agendaba una cita a nombre de otro dueño.
             if ((int) ($_SESSION['usuario_id_rol'] ?? 0) === 4) {
+                // Con un tipo inexistente la cita se guardaba con 30 minutos por defecto.
+                if (empty($tipo_cita)) {
+                    echo json_encode(['success' => false, 'message' => 'Elige el tipo de cita de la lista.']);
+                    exit;
+                }
                 require_once '../models/Mascota.php';
                 $mascotaCita = (new Mascota($this->db))->getById($data['id_mascota']);
                 if (!$mascotaCita || $mascotaCita['doc_propietario'] !== ($_SESSION['usuario_doc'] ?? null)) {

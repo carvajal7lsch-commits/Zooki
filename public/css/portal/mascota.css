@@ -1,0 +1,389 @@
+/* ═══════════════════════════════════════════════════════════
+   Portal · Detalle de mascota
+   Móvil y tablet: ficha arriba, pestañas debajo.
+   Escritorio: ficha fija a la izquierda, pestañas a la derecha.
+   ═══════════════════════════════════════════════════════════ */
+
+.pet-detail__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.25rem 0 1rem;
+    border-bottom: 1px solid var(--z-border);
+}
+
+.pet-detail__titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0F172A;
+    min-width: 0;
+}
+
+.pet-detail__titulo span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pet-detail__subtitulo {
+    font-size: 0.75rem;
+    color: var(--z-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pet-detail__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--z-primary-soft);
+    flex-shrink: 0;
+}
+
+.pet-detail__avatar--vacio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-size: 1rem;
+}
+
+.pet-detail__layout { margin-top: 1rem; }
+
+/* ── Ficha ── */
+.portal-drawer-summary {
+    padding: 1rem;
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    box-shadow: var(--z-shadow);
+}
+
+.portal-drawer-summary:empty { display: none; }
+
+.portal-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.portal-summary-item {
+    background: var(--z-bg);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-sm);
+    padding: 0.65rem 0.5rem;
+    text-align: center;
+    min-width: 0;
+}
+
+.portal-summary-item span {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--z-text-muted);
+    margin-bottom: 0.15rem;
+}
+
+/* «5 años, 6 meses» pasa a dos líneas en lugar de cortarse. */
+.portal-summary-item strong {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--z-text);
+    overflow-wrap: anywhere;
+}
+
+/* ── Pestañas ── */
+.portal-drawer-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-top: 1rem;
+    padding: 4px;
+    background: var(--z-bg-light);
+    border-radius: 14px;
+}
+
+.portal-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 52px;
+    padding: 0.55rem 0.25rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--z-text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
+}
+
+.portal-tab i { font-size: 1rem; }
+
+.portal-tab.active {
+    background: var(--z-surface);
+    color: var(--z-primary);
+    box-shadow: 0 2px 6px rgba(85, 96, 255, 0.08);
+}
+
+.texto-largo { display: none; }
+
+.pet-detail__paneles { margin-top: 1rem; }
+
+.portal-tab-panel { display: none; }
+
+.portal-tab-panel.active {
+    display: block;
+    animation: portalFadeIn 0.25s ease;
+}
+
+/* ── Historial ── */
+.portal-timeline {
+    border-left: 2px solid var(--z-border);
+    margin-left: 8px;
+    padding-left: 1.25rem;
+}
+
+.portal-timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.portal-timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.45rem;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--z-primary);
+    border: 2px solid var(--z-surface);
+    box-shadow: 0 0 0 2px var(--z-primary-soft);
+}
+
+.portal-timeline-date {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--z-primary);
+    margin-bottom: 0.25rem;
+}
+
+.portal-timeline-card {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    padding: 1rem;
+    box-shadow: var(--z-shadow);
+}
+
+.portal-timeline-card.accordion-card {
+    cursor: pointer;
+    transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.portal-timeline-card.accordion-card.active {
+    border-color: var(--z-primary);
+    box-shadow: 0 6px 15px rgba(0, 82, 255, 0.08);
+}
+
+.accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.accordion-header h3 {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--z-text);
+}
+
+.accordion-icon {
+    font-size: 1.25rem;
+    color: var(--z-text-muted);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.portal-timeline-card.active .accordion-icon { transform: rotate(180deg); }
+
+.accordion-body {
+    display: none;
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--z-border);
+    padding-top: 0.75rem;
+}
+
+.portal-timeline-card.active .accordion-body { display: block; }
+
+.accordion-body p {
+    font-size: 0.8rem;
+    color: var(--z-text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.portal-timeline-files {
+    margin-top: 0.75rem;
+    border-top: 1px dashed rgba(0, 0, 0, 0.1);
+    padding-top: 0.5rem;
+}
+
+.portal-timeline-files strong {
+    display: block;
+    font-size: 0.8rem;
+    color: #64748B;
+    margin-bottom: 0.25rem;
+}
+
+.portal-file-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0.75rem 0.35rem 0;
+    padding: 0.3rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--z-primary);
+    text-decoration: none;
+    background: rgba(0, 82, 255, 0.05);
+    overflow-wrap: anywhere;
+    transition: background 0.2s;
+}
+
+/* ── Citas, vacunas y desparasitaciones ── */
+.portal-list-item {
+    display: flex;
+    gap: 0.85rem;
+    padding: 1rem;
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    margin-bottom: 0.75rem;
+    box-shadow: var(--z-shadow);
+    align-items: center;
+}
+
+.portal-list-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.portal-list-icon--cita { background-color: var(--z-primary-soft); color: var(--z-primary); }
+.portal-list-icon--vacuna { background-color: var(--z-success-soft); color: var(--z-success); }
+.portal-list-icon--desparasitacion { background-color: var(--z-warning-soft); color: var(--z-warning); }
+
+.portal-list-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.portal-list-body strong {
+    display: block;
+    font-size: 0.88rem;
+    color: var(--z-text);
+    margin-bottom: 0.15rem;
+}
+
+.portal-list-body p {
+    font-size: 0.75rem;
+    color: var(--z-text-muted);
+}
+
+.portal-list-body .portal-proxima { color: var(--z-primary); font-weight: 600; }
+.portal-list-body .portal-proxima--control { color: #B45309; }
+
+.portal-list-body .portal-badge {
+    display: inline-block;
+    margin-top: 0.35rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    text-transform: capitalize;
+}
+
+.portal-badge--confirmada { background: var(--z-success-soft); color: var(--z-success); }
+.portal-badge--pendiente { background: var(--z-warning-soft); color: var(--z-warning); }
+.portal-badge--completada { background: var(--z-primary-soft); color: var(--z-primary); }
+.portal-badge--cancelada { background: var(--z-danger-soft); color: var(--z-danger); }
+
+.portal-btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    min-height: 32px;
+    padding: 0.25rem 0.75rem;
+    background: none;
+    border: 1px solid var(--z-danger);
+    border-radius: 8px;
+    color: var(--z-danger);
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+@media (hover: hover) {
+    .portal-file-link:hover { background: rgba(0, 82, 255, 0.1); }
+    .portal-btn-cancel:hover { background: var(--z-danger-soft); }
+}
+
+/* ── Tablet ── */
+@media (min-width: 768px) {
+    .pet-detail__titulo { font-size: 1.35rem; }
+    .pet-detail__avatar { width: 44px; height: 44px; }
+
+    .portal-tab {
+        flex-direction: row;
+        gap: 0.4rem;
+        min-height: 44px;
+        font-size: 0.82rem;
+    }
+
+    .texto-largo { display: inline; }
+    .texto-corto { display: none; }
+}
+
+/* ── Escritorio ── */
+@media (min-width: 1024px) {
+    .pet-detail__layout {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 1.75rem;
+        align-items: start;
+        margin-top: 1.5rem;
+    }
+
+    .pet-detail__ficha {
+        position: sticky;
+        top: 2.25rem;
+    }
+
+    .portal-summary-grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
+    .portal-summary-item { padding: 0.85rem 0.5rem; }
+    .portal-summary-item span { font-size: 0.65rem; }
+    .portal-summary-item strong { font-size: 0.9rem; }
+
+    .portal-drawer-tabs { margin-top: 0; }
+}

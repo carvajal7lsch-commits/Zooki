@@ -1,0 +1,396 @@
+/* ═══════════════════════════════════════════════════════════
+   Portal · Formularios de mascota y de agendar cita
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Obligatorio / opcional ── */
+.portal-requerido {
+    color: var(--z-danger);
+    font-weight: 800;
+}
+
+.portal-opcional {
+    color: var(--z-text-muted);
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.portal-form__leyenda {
+    font-size: 0.75rem;
+    color: var(--z-text-muted);
+}
+
+.portal-ayuda {
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: var(--z-text-muted);
+}
+
+/* La ayuda de la raza va debajo de la fila de dos columnas. */
+.portal-ayuda--fila { margin-top: -0.45rem; }
+
+.portal-label--sub {
+    margin-top: 0.85rem;
+    font-size: 0.75rem;
+}
+
+.search-input-wrapper select:disabled {
+    color: var(--z-text-muted);
+    cursor: not-allowed;
+}
+
+/* Campo que el navegador marcó como inválido después de intentar enviar. */
+.portal-form.intentado .search-input-wrapper:has(:invalid) {
+    border-color: var(--z-danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+/* ── Sexo: dos botones (siempre son dos opciones) ── */
+.segmento-campo { border: none; min-width: 0; }
+
+.segmento {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgba(85, 96, 255, 0.25);
+    border-radius: 12px;
+    background: var(--z-bg-light);
+}
+
+.segmento__opcion { position: relative; }
+
+/* El radio sigue recibiendo el foco y el teclado (flechas), pero no se ve. */
+.segmento__opcion input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.segmento__opcion span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 38px;
+    border-radius: 9px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--z-text-muted);
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.segmento__opcion input:checked + span {
+    background: #ffffff;
+    color: var(--z-primary);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.segmento__opcion input:focus-visible + span {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 1px;
+}
+
+.portal-form.intentado .segmento:has(input:invalid) {
+    border-color: var(--z-danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+@media (hover: hover) {
+    .segmento__opcion input:not(:checked):hover + span { color: var(--z-text); }
+}
+
+/* ── Foto con vista previa ── */
+.foto-campo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border: 1px dashed rgba(85, 96, 255, 0.35);
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.foto-campo__vista {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-size: 1.6rem;
+}
+
+.foto-campo__vista img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.foto-campo__acciones {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.foto-campo__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.foto-campo__boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    min-height: 36px;
+    border-radius: 10px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.foto-campo__input:focus-visible + .foto-campo__boton {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.foto-campo__quitar { font-size: 0.75rem; }
+.foto-campo__ayuda { margin-top: 0; }
+.foto-campo__ayuda.is-error { color: var(--z-danger); font-weight: 600; }
+
+@media (hover: hover) {
+    .foto-campo__boton:hover { background: var(--z-primary); color: #ffffff; }
+}
+
+/* ── Agendar cita ── */
+.booking__columnas {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.booking__datos,
+.booking__agenda {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+/* Flatpickr dibuja el calendario junto a este campo, que no hace falta ver. */
+.booking__fecha {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.booking .flatpickr-calendar.inline {
+    width: 100% !important;
+    max-width: 360px;
+    margin: 0 auto;
+    padding: 12px 8px !important;
+    border: 1px solid var(--z-border) !important;
+    box-shadow: none !important;
+    border-radius: 16px !important;
+    z-index: auto !important;
+}
+
+.booking .flatpickr-calendar.inline .flatpickr-day { width: 38px !important; max-width: 38px !important; height: 38px !important; line-height: 38px !important; }
+
+/* Días sin atención: tachados además de grises, para no depender solo del color. */
+.booking .flatpickr-day.flatpickr-disabled:not(.prevMonthDay):not(.nextMonthDay) {
+    text-decoration: line-through;
+    text-decoration-color: #CBD5E1;
+}
+
+/* Horarios libres: los mismos botones del panel del personal (calendar-modules/modals.css). */
+.slot-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 150px;
+}
+
+.slot-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 22px;
+    border: 1px dashed #CBD5E1;
+    border-radius: 12px;
+    background: #ffffff;
+    text-align: center;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--z-text-muted);
+}
+
+.slot-state i { font-size: 1.4rem; color: #94A3B8; }
+.slot-state p { max-width: 260px; }
+
+.slot-tabs {
+    align-self: flex-start;
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    background: #E8EDF3;
+    border-radius: 10px;
+}
+
+.slot-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    min-height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--z-text-muted);
+}
+
+.slot-tab span { font-weight: 500; color: #94A3B8; }
+
+.slot-tab.is-active {
+    background: #ffffff;
+    color: var(--z-text);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.slot-caption {
+    font-size: 0.8rem;
+    color: var(--z-text-muted);
+}
+
+.slot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: start;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.slot-chip {
+    height: 40px;
+    border: 1px solid var(--z-border);
+    border-radius: 9px;
+    background: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--z-text);
+    font-variant-numeric: tabular-nums;
+    transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+}
+
+.slot-chip.is-selected {
+    background: var(--z-primary);
+    border-color: var(--z-primary);
+    color: #ffffff;
+}
+
+.slot-skeleton {
+    height: 40px;
+    border-radius: 9px;
+    background: linear-gradient(90deg, #E8EDF3, #F4F6F9, #E8EDF3);
+    background-size: 200% 100%;
+    animation: slotBrillo 1.2s ease-in-out infinite;
+}
+
+@keyframes slotBrillo {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+@media (hover: hover) {
+    .slot-chip:hover:not(.is-selected) { border-color: var(--z-primary); color: var(--z-primary); }
+}
+
+.booking__pie {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+}
+
+.booking__resumen {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--z-text);
+}
+
+.booking__resumen:empty { display: none; }
+.booking__resumen i { color: var(--z-primary); margin-right: 0.25rem; }
+
+/* ── Tablet y escritorio: dos columnas como en el panel del personal ── */
+@media (min-width: 768px) {
+    .portal-drawer.portal-drawer--ancho { width: min(900px, 100%); }
+
+    .booking__columnas {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 1.5rem;
+    }
+
+    .booking__agenda {
+        padding-left: 1.5rem;
+        border-left: 1px solid var(--z-border);
+    }
+
+    .slot-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .booking__pie {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--z-border);
+    }
+
+    .booking__pie .btn-primary {
+        width: auto;
+        min-width: 220px;
+        margin-top: 0;
+        padding-inline: 1.5rem;
+    }
+}
+
+/* El atributo hidden (pestaña Mañana/Tarde) debe ganarle al display: grid. */
+.slot-grid[hidden] { display: none; }
+
+/* El mes del calendario en línea usa todo el ancho: con el 55% del selector
+   de fechas general, «Septiembre 2026» se cortaba en el celular. */
+.booking .flatpickr-calendar.inline .flatpickr-current-month {
+    width: auto !important;
+    min-width: 60%;
+    font-size: 1rem !important;
+}
+
+/* Celular angosto: una columna, para que etiquetas y ayudas no se corten. */
+@media (max-width: 479px) {
+    .portal-form__fila { grid-template-columns: 1fr; }
+    .portal-ayuda--fila { margin-top: -0.5rem; }
+}

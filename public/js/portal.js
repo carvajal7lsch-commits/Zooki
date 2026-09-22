@@ -21,32 +21,69 @@ function formatFechaHora(dateStr) {
     });
 }
 
+// Estados de la cita como los ve el propietario; los mismos de views/portal/index.php.
+// Para él, "sin cerrar" sigue siendo una atención en curso.
+const ESTADOS_CITA_PROPIETARIO = {
+    pendiente: 'Activa', confirmada: 'Activa', en_curso: 'En atención', sin_cerrar: 'En atención',
+    completada: 'Completada', cancelada: 'Cancelada', no_asistio: 'No asistió', cerrada_sin_consulta: 'Cerrada'
+};
+
+function etiquetaEstadoCita(estado) {
+    if (ESTADOS_CITA_PROPIETARIO[estado]) return ESTADOS_CITA_PROPIETARIO[estado];
+    return estado ? (estado.charAt(0).toUpperCase() + estado.slice(1)).replace(/_/g, ' ') : '—';
+}
+
+function claseEstadoCita(estado) {
+    if (['pendiente', 'confirmada', 'en_curso', 'sin_cerrar'].includes(estado)) return 'status-badge--abierta';
+    if (estado === 'completada') return 'status-badge--completada';
+    if (['no_asistio', 'cerrada_sin_consulta'].includes(estado)) return 'status-badge--no-asistio';
+    return 'status-badge--cancelada';
+}
+
 function badgeEstado(estado) {
     const e = (estado || 'pendiente').toLowerCase();
     return `<span class="portal-badge portal-badge--${escapeHtml(e)}">${escapeHtml(estado || 'pendiente')}</span>`;
 }
 
-/* Navegación Inferior (Tabs/Pantallas) */
-function switchTab(tabId) {
-    // Desactivar todas las pantallas
-    document.querySelectorAll('.app-screen').forEach(screen => {
-        screen.classList.remove('active');
+/* ── Navegación entre secciones ──
+   Cada sección tiene su dirección (#agenda, #perfil…) para que el botón
+   «atrás» del navegador y la recarga de la página respeten dónde estaba. */
+const SECCIONES_URL = { home: 'inicio', explore: 'servicios', agenda: 'agenda', notifications: 'recordatorios', account: 'perfil' };
+
+function seccionDesdeHash(hash) {
+    const limpio = (hash || '').replace(/^#/, '');
+    const mascota = limpio.match(/^mascota-(\d+)$/);
+    if (mascota) return { mascota: Number(mascota[1]) };
+    const tab = Object.keys(SECCIONES_URL).find(k => SECCIONES_URL[k] === limpio);
+    return { tab: tab || 'home' };
+}
+
+function marcarNavegacion(tabId) {
+    // El menú lateral y la barra inferior comparten data-nav.
+    document.querySelectorAll('.mobile-nav-item[data-nav], .portal-rail__item[data-nav]').forEach(item => {
+        const activo = item.dataset.nav === tabId;
+        item.classList.toggle('active', activo);
+        if (activo) item.setAttribute('aria-current', 'page');
+        else item.removeAttribute('aria-current');
     });
+}
 
-    // Activar la seleccionada
-    const targetScreen = document.getElementById(`screen-${tabId}`);
-    if (targetScreen) {
-        targetScreen.classList.add('active');
-    }
+function mostrarPantalla(id) {
+    document.querySelectorAll('.app-screen').forEach(screen => screen.classList.remove('active'));
+    const pantalla = document.getElementById(id);
+    if (pantalla) pantalla.classList.add('active');
+    window.scrollTo({ top: 0 });
+}
 
-    // Actualizar estados del navbar inferior
-    document.querySelectorAll('.mobile-nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
+function switchTab(tabId, opciones = {}) {
+    if (!document.getElementById(`screen-${tabId}`)) tabId = 'home';
+    mostrarPantalla(`screen-${tabId}`);
+    marcarNavegacion(tabId);
 
-    const activeNavItem = document.getElementById(`nav-${tabId}`);
-    if (activeNavItem) {
-        activeNavItem.classList.add('active');
+    if (opciones.historial !== false) {
+        const url = '#' + SECCIONES_URL[tabId];
+        if (opciones.reemplazar) history.replaceState({ zkTab: tabId }, '', url);
+        else if (location.hash !== url) history.pushState({ zkTab: tabId }, '', url);
     }
 
     // Si entramos a Notificaciones/Alertas o Explorar, refrescar datos dinámicamente
@@ -56,6 +93,43 @@ function switchTab(tabId) {
         loadVetsExplore();
     }
 }
+
+// Botones de navegación (menú lateral, barra inferior, campana, accesos rápidos).
+document.addEventListener('click', (e) => {
+    const destino = e.target.closest('[data-nav]');
+    if (destino) {
+        e.preventDefault();
+        switchTab(destino.dataset.nav);
+    }
+});
+
+// Las tarjetas con role="button" responden a Enter y Espacio como un botón.
+document.addEventListener('keydown', (e) => {
+    const tarjeta = e.target.closest('[role="button"][tabindex="0"]');
+    if (tarjeta && tarjeta === e.target && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        tarjeta.click();
+    }
+});
+
+window.addEventListener('popstate', (e) => {
+    // Con una ventana abierta, «atrás» solo la cierra.
+    const abierta = document.querySelector('.portal-drawer-overlay.is-open');
+    if (abierta && !(e.state && e.state.zkModal === abierta.id)) {
+        cerrarVentana(abierta.id);
+        return;
+    }
+    const destino = seccionDesdeHash(location.hash);
+    if (destino.mascota) verDetalle(destino.mascota, { historial: false });
+    else switchTab(destino.tab, { historial: false });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const destino = seccionDesdeHash(location.hash);
+    if (destino.mascota) verDetalle(destino.mascota, { historial: false });
+    else if (destino.tab !== 'home') switchTab(destino.tab, { historial: false });
+    history.replaceState(destino.mascota ? { zkMascota: destino.mascota } : { zkTab: destino.tab }, '', location.hash || '#inicio');
+});
 
 /* Buscar/Filtrar Servicios en la pestaña Explorar */
 function filtrarServicios(query) {
@@ -87,10 +161,8 @@ async function loadVetsExplore() {
             const iniciales = escapeHtml(v.nombre_completo.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase());
             html += `
             <div class="vet-card-item">
-                <div class="vet-photo-circle" style="display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--z-primary); font-size: 1.25rem;">
-                    ${iniciales}
-                </div>
-                <h4>Dr(a). ${escapeHtml(v.nombre_completo.split(' ')[0])}</h4>
+                <div class="vet-photo-circle" aria-hidden="true">${iniciales}</div>
+                <h3>Dr(a). ${escapeHtml(v.nombre_completo.split(' ')[0])}</h3>
                 <p>Médico Veterinario</p>
             </div>`;
         });
@@ -101,10 +173,17 @@ async function loadVetsExplore() {
     }
 }
 
+/** La campana (móvil y tablet) y el punto del menú lateral (escritorio) se encienden juntos. */
+function mostrarAvisoAlertas(hayNuevas) {
+    const campana = document.getElementById('bellBadgeAlert');
+    const puntoMenu = document.querySelector('[data-badge-alertas]');
+    if (campana) campana.style.display = hayNuevas ? 'block' : 'none';
+    if (puntoMenu) puntoMenu.hidden = !hayNuevas;
+}
+
 /* Cargar Alertas y Notificaciones */
 async function loadPortalAlerts() {
     const listEl = document.getElementById('portalAlertsList');
-    const bellBadge = document.getElementById('bellBadgeAlert');
     if (!listEl) return;
 
     try {
@@ -115,13 +194,11 @@ async function loadPortalAlerts() {
                     <i class="ri-notification-off-line"></i>
                     <p>No tienes alertas médicas o recordatorios programados en este momento.</p>
                 </div>`;
-            if (bellBadge) bellBadge.style.display = 'none';
+            mostrarAvisoAlertas(false);
             return;
         }
 
-        if (bellBadge) {
-            bellBadge.style.display = res.no_leidas > 0 ? 'block' : 'none';
-        }
+        mostrarAvisoAlertas(res.no_leidas > 0);
 
         let html = '';
         res.notificaciones.forEach(n => {
@@ -139,7 +216,7 @@ async function loadPortalAlerts() {
             <div class="notification-card">
                 <div class="notification-icon ${typeClass}"><i class="${iconClass}"></i></div>
                 <div class="notification-content">
-                    <h4>${escapeHtml(n.titulo)}</h4>
+                    <h3>${escapeHtml(n.titulo)}</h3>
                     <p>${escapeHtml(n.mensaje)}</p>
                     <span class="notification-date">${escapeHtml(n.fecha_creacion)}</span>
                 </div>
@@ -324,13 +401,7 @@ function validarFuerzaPasswordPortal() {
         match = false;
     }
     
-    if (cumple && match) {
-        btn.disabled = false;
-        btn.style.opacity = '1';
-    } else {
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-    }
+    btn.disabled = !(cumple && match);
 }
 
 async function submitChangePasswordPortal() {
@@ -394,30 +465,20 @@ async function submitChangePasswordPortal() {
         });
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Actualizar Contraseña';
+        btn.innerHTML = 'Actualizar contraseña';
     }
 }
 
 function openDrawer() {
-    // Desactivar todas las pantallas del portal
-    document.querySelectorAll('.app-screen').forEach(screen => {
-        screen.classList.remove('active');
-    });
-    // Activar la pantalla de detalle de mascota
-    const detailScreen = document.getElementById('screen-pet-detail');
-    if (detailScreen) {
-        detailScreen.classList.add('active');
-    }
-    // Desactivar los botones del nav inferior para indicar subnivel
-    document.querySelectorAll('.mobile-nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    mostrarPantalla('screen-pet-detail');
+    // La ficha es un subnivel de Inicio.
+    marcarNavegacion('home');
 }
 
 function cerrarDrawer() {
-    // Regresar a la pantalla de Inicio
-    switchTab('home');
+    // Si se llegó desde el portal, «volver» es lo mismo que el botón atrás.
+    if (history.state && history.state.zkDentro) history.back();
+    else switchTab('home', { reemplazar: true });
 }
 
 function showTab(tabId, btn) {
@@ -440,8 +501,13 @@ document.querySelectorAll('.portal-tab').forEach(btn => {
     btn.addEventListener('click', () => showTab(btn.dataset.tab, btn));
 });
 
+// Esc cierra la ventana abierta; si no hay ninguna, sale de la ficha de la mascota.
+// Antes volvía a Inicio desde cualquier pantalla, aunque hubiera una ventana abierta.
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') cerrarDrawer();
+    if (e.key !== 'Escape' || document.getElementById('tiktok-micro-modal')) return;
+    const abierta = document.querySelector('.portal-drawer-overlay.is-open');
+    if (abierta) closeModal(abierta.id);
+    else if (document.getElementById('screen-pet-detail')?.classList.contains('active')) cerrarDrawer();
 });
 
 function calcularEdad(fechaNacimiento) {
@@ -491,21 +557,13 @@ function renderSummary(mascota) {
 }
 
 function toggleAccordion(card) {
-    const body = card.querySelector('.accordion-body');
-    const icon = card.querySelector('.accordion-icon');
-    if (body.style.display === 'none') {
-        body.style.display = 'block';
-        icon.style.transform = 'rotate(180deg)';
-        card.classList.add('active');
-    } else {
-        body.style.display = 'none';
-        icon.style.transform = 'rotate(0deg)';
-        card.classList.remove('active');
-    }
+    const abierta = card.classList.toggle('active');
+    card.setAttribute('aria-expanded', abierta ? 'true' : 'false');
 }
 
-async function verDetalle(id) {
+async function verDetalle(id, opciones = {}) {
     openDrawer();
+    if (opciones.historial !== false) history.pushState({ zkMascota: id, zkDentro: true }, '', `#mascota-${id}`);
     showTab('historial', document.querySelector('.portal-tab[data-tab="historial"]'));
 
     document.getElementById('drawerPetTitle').innerHTML = 'Cargando…';
@@ -520,31 +578,28 @@ async function verDetalle(id) {
         const res = await (await fetch(`index.php?action=ver_detalle_mascota_propietario_ajax&id_mascota=${id}`)).json();
         if (!res.success) {
             zookiAviso(res.message || 'No se pudieron obtener los detalles.');
-            cerrarDrawer();
+            switchTab('home', { reemplazar: true });
             return;
         }
 
         const m = res.mascota;
         window.activePetData = m;
         
-        const photoUrl = m.url_foto ? 'uploads/mascotas/' + m.url_foto : null;
-        let avatarHtml = '';
-        if (photoUrl) {
-            avatarHtml = `<img src="${photoUrl}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--z-primary-soft); margin-right: 0.5rem; vertical-align: middle;">`;
-        } else {
-            avatarHtml = `<div style="width: 38px; height: 38px; border-radius: 50%; background: var(--z-primary-soft); color: var(--z-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; margin-right: 0.5rem; vertical-align: middle;"><i class="ri-baidu-line"></i></div>`;
-        }
-        
-        document.getElementById('drawerPetTitle').innerHTML = `${avatarHtml}<span style="vertical-align: middle;">${escapeHtml(m.nombre)}</span>`;
-        document.getElementById('drawerPetSubtitle').textContent = `${escapeHtml(m.especie)} · ${escapeHtml(m.raza)}`;
-        
+        const avatarHtml = m.url_foto
+            ? `<img src="uploads/mascotas/${escapeHtml(m.url_foto)}" alt="" class="pet-detail__avatar">`
+            : `<span class="pet-detail__avatar pet-detail__avatar--vacio" aria-hidden="true"><i class="ri-baidu-line"></i></span>`;
+
+        document.getElementById('drawerPetTitle').innerHTML = `${avatarHtml}<span>${escapeHtml(m.nombre)}</span>`;
+        // textContent ya escapa: con escapeHtml encima, «&» salía como «&amp;».
+        document.getElementById('drawerPetSubtitle').textContent = `${m.especie} · ${m.raza}`;
+
         renderSummary(m);
 
         // Historial
         if (!res.historial.length) {
             document.getElementById('historialContent').innerHTML = `
                 <div class="portal-empty-inline">
-                     <i class="ri-heart-pulse-line" style="font-size: 2rem; opacity: 0.35; display: block; margin-bottom: 0.5rem;"></i>
+                     <i class="ri-heart-pulse-line" aria-hidden="true"></i>
                      <p>Aún no hay consultas registradas para ${escapeHtml(m.nombre)}.</p>
                 </div>`;
         } else {
@@ -552,16 +607,15 @@ async function verDetalle(id) {
             res.historial.forEach(h => {
                 let filesHtml = '';
                 if (h.archivos && h.archivos.length > 0) {
-                    filesHtml += `<div class="portal-timeline-files" style="margin-top: 0.75rem; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 0.5rem;">`;
-                    filesHtml += `<strong style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 0.25rem;">Archivos adjuntos:</strong>`;
+                    filesHtml += `<div class="portal-timeline-files"><strong>Archivos adjuntos:</strong>`;
                     h.archivos.forEach(file => {
                         filesHtml += `
                         <!-- M2-05: enlazaba ruta_archivo directo (uploads/clinicos/...),
                              saltandose el control de acceso. Solo lo frenaba el .htaccess,
                              que cubre Apache con AllowOverride y nada mas. Ahora pasa por
                              ver_archivo.php, que verifica que la mascota sea del dueno. -->
-                        <a href="ver_archivo.php?id=${encodeURIComponent(file.id_archivo)}" target="_blank" class="portal-file-link" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--z-primary); text-decoration: none; margin-right: 1rem; background: rgba(0,82,255,0.05); padding: 0.25rem 0.5rem; border-radius: 6px; transition: background 0.2s;">
-                            <i class="ri-file-pdf-line"></i> ${escapeHtml(file.nombre_original)}
+                        <a href="ver_archivo.php?id=${encodeURIComponent(file.id_archivo)}" target="_blank" rel="noopener" class="portal-file-link" onclick="event.stopPropagation()">
+                            <i class="ri-file-pdf-line" aria-hidden="true"></i> ${escapeHtml(file.nombre_original)}
                         </a>`;
                     });
                     filesHtml += `</div>`;
@@ -570,15 +624,15 @@ async function verDetalle(id) {
                 html += `
                 <div class="portal-timeline-item">
                     <div class="portal-timeline-date">${formatFechaHora(h.fecha_hora)}</div>
-                    <div class="portal-timeline-card accordion-card" onclick="toggleAccordion(this)" style="cursor: pointer;">
-                        <div class="accordion-header" style="display: flex; align-items: center; justify-content: space-between;">
-                            <h4 style="margin: 0; font-size: 0.9rem; font-weight: 800; color: var(--z-text);">${escapeHtml(h.motivo_consulta)}</h4>
-                            <i class="ri-arrow-down-s-line accordion-icon" style="font-size: 1.25rem; transition: transform 0.2s; color: var(--z-text-muted);"></i>
+                    <div class="portal-timeline-card accordion-card" role="button" tabindex="0" aria-expanded="false" onclick="toggleAccordion(this)">
+                        <div class="accordion-header">
+                            <h3>${escapeHtml(h.motivo_consulta)}</h3>
+                            <i class="ri-arrow-down-s-line accordion-icon" aria-hidden="true"></i>
                         </div>
-                        <div class="accordion-body" style="display: none; margin-top: 0.75rem; border-top: 1px solid var(--z-border); padding-top: 0.75rem;">
-                            <p style="font-size: 0.8rem; color: var(--z-text-muted); margin-bottom: 0.35rem;"><strong>Diagnóstico:</strong> ${escapeHtml(h.diagnostico)}</p>
-                            <p style="font-size: 0.8rem; color: var(--z-text-muted); margin-bottom: 0.35rem;"><strong>Tratamiento:</strong> ${escapeHtml(h.plan_tratamiento)}</p>
-                            <p style="font-size: 0.8rem; color: var(--z-text-muted); margin-bottom: 0.35rem;"><strong>Veterinario:</strong> ${escapeHtml(h.veterinario)}</p>
+                        <div class="accordion-body">
+                            <p><strong>Diagnóstico:</strong> ${escapeHtml(h.diagnostico)}</p>
+                            <p><strong>Tratamiento:</strong> ${escapeHtml(h.plan_tratamiento)}</p>
+                            <p><strong>Veterinario:</strong> ${escapeHtml(h.veterinario)}</p>
                             ${filesHtml}
                         </div>
                     </div>
@@ -592,7 +646,7 @@ async function verDetalle(id) {
         if (!res.citas.length) {
             document.getElementById('citasContent').innerHTML = `
                 <div class="portal-empty-inline">
-                    <i class="ri-calendar-line" style="font-size: 2rem; opacity: 0.35; display: block; margin-bottom: 0.5rem;"></i>
+                    <i class="ri-calendar-line" aria-hidden="true"></i>
                     <p>No hay citas programadas.</p>
                 </div>`;
         } else {
@@ -600,7 +654,7 @@ async function verDetalle(id) {
             res.citas.forEach(c => {
                 let cancelBtn = '';
                 if (c.estado === 'pendiente' || c.estado === 'confirmada' || c.estado === 'programada') {
-                    cancelBtn = `<button type="button" class="portal-btn-cancel" onclick="cancelarCitaPortal(${c.id_cita})" style="margin-top: 0.5rem; background: none; border: 1px solid #ef4444; color: #ef4444; padding: 0.25rem 0.75rem; border-radius: 8px; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 500; transition: all 0.2s;"><i class="ri-close-circle-line"></i> Cancelar Cita</button>`;
+                    cancelBtn = `<button type="button" class="portal-btn-cancel" onclick="cancelarCitaPortal(${c.id_cita})"><i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita</button>`;
                 }
 
                 html += `
@@ -622,7 +676,7 @@ async function verDetalle(id) {
         if (!res.vacunas.length) {
             document.getElementById('vacunasContent').innerHTML = `
                 <div class="portal-empty-inline">
-                    <i class="ri-syringe-line" style="font-size: 2rem; opacity: 0.35; display: block; margin-bottom: 0.5rem;"></i>
+                    <i class="ri-syringe-line" aria-hidden="true"></i>
                     <p>No hay vacunas registradas.</p>
                 </div>`;
         } else {
@@ -634,7 +688,7 @@ async function verDetalle(id) {
                     <div class="portal-list-body">
                         <strong>${escapeHtml(v.nombre_vacuna)}</strong>
                         <p>Aplicada: ${formatFecha(v.fecha_aplicacion)}</p>
-                        ${v.fecha_proxima_dosis ? `<p style="color:var(--z-primary);font-weight:600;">Próxima dosis: ${formatFecha(v.fecha_proxima_dosis)}</p>` : ''}
+                        ${v.fecha_proxima_dosis ? `<p class="portal-proxima">Próxima dosis: ${formatFecha(v.fecha_proxima_dosis)}</p>` : ''}
                         ${v.laboratorio ? `<p>Laboratorio: ${escapeHtml(v.laboratorio)}</p>` : ''}
                     </div>
                 </div>`;
@@ -646,7 +700,7 @@ async function verDetalle(id) {
         if (!res.desparasitaciones || !res.desparasitaciones.length) {
             document.getElementById('desparasitacionesContent').innerHTML = `
                 <div class="portal-empty-inline">
-                    <i class="ri-capsule-line" style="font-size: 2rem; opacity: 0.35; display: block; margin-bottom: 0.5rem;"></i>
+                    <i class="ri-capsule-line" aria-hidden="true"></i>
                     <p>No hay desparasitaciones registradas.</p>
                 </div>`;
         } else {
@@ -658,7 +712,7 @@ async function verDetalle(id) {
                     <div class="portal-list-body">
                         <strong>${escapeHtml(d.producto)} (${escapeHtml(d.tipo)})</strong>
                         <p>Aplicada: ${formatFecha(d.fecha_aplicacion)}</p>
-                        ${d.fecha_proxima ? `<p style="color:rgb(245, 158, 11);font-weight:600;">Próxima dosis: ${formatFecha(d.fecha_proxima)} (${escapeHtml(d.periodicidad)})</p>` : ''}
+                        ${d.fecha_proxima ? `<p class="portal-proxima portal-proxima--control">Próxima dosis: ${formatFecha(d.fecha_proxima)} (${escapeHtml(d.periodicidad)})</p>` : ''}
                         ${d.observaciones ? `<p>Observaciones: ${escapeHtml(d.observaciones)}</p>` : ''}
                     </div>
                 </div>`;
@@ -669,28 +723,45 @@ async function verDetalle(id) {
     } catch (e) {
         console.error(e);
         zookiAviso('No se pudieron cargar los datos de la mascota.');
-        cerrarDrawer();
+        switchTab('home', { reemplazar: true });
     }
 }
 
 /* --- Centralización de Modales con Principios SOLID (SRP) --- */
+// Quién abrió cada ventana, para devolverle el foco al cerrarla.
+const focoPrevio = {};
+
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
+    focoPrevio[modalId] = document.activeElement;
     modal.style.display = 'flex';
     // Forzar reflow para que la transición CSS se ejecute correctamente
-    modal.offsetHeight; 
+    modal.offsetHeight;
     modal.classList.add('is-open');
     const drawer = modal.querySelector('.portal-drawer');
-    if (drawer) drawer.classList.add('is-open');
+    if (drawer) {
+        drawer.classList.add('is-open');
+        // El foco va a la ventana y no al primer campo: en el celular eso abriría el teclado.
+        drawer.setAttribute('tabindex', '-1');
+        drawer.focus({ preventScroll: true });
+    }
     document.body.style.overflow = 'hidden';
+    // Una entrada en el historial: «atrás» en el celular cierra la ventana.
+    if (!(history.state && history.state.zkModal === modalId)) {
+        history.pushState({ ...(history.state || {}), zkModal: modalId }, '', location.hash);
+    }
 }
-function closeModal(modalId) {
+
+/** Cierra la ventana sin tocar el historial (lo usa el botón atrás). */
+function cerrarVentana(modalId) {
     const modal = document.getElementById(modalId);
-    if (!modal) return;
+    if (!modal || !modal.classList.contains('is-open')) return;
     const drawer = modal.querySelector('.portal-drawer');
     if (drawer) drawer.classList.remove('is-open');
     modal.classList.remove('is-open');
+    const previo = focoPrevio[modalId];
+    if (previo && document.contains(previo)) previo.focus({ preventScroll: true });
     setTimeout(() => {
         modal.style.display = 'none';
         if (!document.querySelector('.portal-drawer-overlay.is-open')) {
@@ -699,186 +770,137 @@ function closeModal(modalId) {
     }, 300);
 }
 
-// Función para cambiar de pestaña en el panel "Mi Agenda de Salud" del Home
-function switchAgendaTab(tabId, btn) {
-    // Ocultar todos los contenidos
-    document.querySelectorAll('.agenda-tab-content').forEach(el => {
-        el.style.display = 'none';
-    });
-    // Mostrar el seleccionado
-    const target = document.getElementById(tabId);
-    if (target) target.style.display = 'block';
-
-    // Desactivar todos los botones
-    document.querySelectorAll('.agenda-tab-btn').forEach(b => {
-        b.style.background = 'transparent';
-        b.style.color = 'var(--z-text-muted)';
-        b.style.boxShadow = 'none';
-    });
-
-    // Activar el botón seleccionado
-    if (btn) {
-        btn.style.background = '#ffffff';
-        btn.style.color = 'var(--z-primary)';
-        btn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.05)';
+function closeModal(modalId) {
+    if (history.state && history.state.zkModal === modalId) {
+        // Deshace la entrada que abrió la ventana; popstate la cierra.
+        history.back();
+    } else {
+        cerrarVentana(modalId);
     }
 }
 
-// Función para mostrar modales tipo Bottom Sheet minimalistas (Estilo Tik Tok) en el Portal
+// Tab no se sale de la ventana abierta.
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const drawer = document.querySelector('.portal-drawer-overlay.is-open .portal-drawer');
+    if (!drawer) return;
+    const enfocables = [...drawer.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+        .filter(el => !el.disabled && el.offsetParent !== null);
+    if (!enfocables.length) return;
+    const primero = enfocables[0];
+    const ultimo = enfocables[enfocables.length - 1];
+    if (e.shiftKey && (document.activeElement === primero || document.activeElement === drawer)) {
+        e.preventDefault();
+        ultimo.focus();
+    } else if (!e.shiftKey && document.activeElement === ultimo) {
+        e.preventDefault();
+        primero.focus();
+    }
+});
+
+// Pestañas de «Mi agenda de salud». En escritorio las dos columnas se ven a la vez (agenda.css).
+function switchAgendaTab(tabId, btn) {
+    document.querySelectorAll('.agenda-tab-content').forEach(el => {
+        el.classList.toggle('active', el.id === tabId);
+    });
+    document.querySelectorAll('.agenda-tab-btn').forEach(b => {
+        const activo = b === btn;
+        b.classList.toggle('active', activo);
+        b.setAttribute('aria-selected', activo ? 'true' : 'false');
+    });
+}
+
+// Aviso breve del portal (confirmar, cancelar, errores). Hoja que sube desde
+// abajo en el celular y ventana centrada desde tablet; estilos en ventanas.css.
 function showTikTokModal({ title, message, isConfirm, onConfirm, onCancel }) {
     const existing = document.getElementById('tiktok-micro-modal');
     if (existing) existing.remove();
+    const focoAnterior = document.activeElement;
 
     const overlay = document.createElement('div');
     overlay.id = 'tiktok-micro-modal';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(15, 23, 42, 0.45);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        z-index: 100000;
-        opacity: 0;
-        transition: opacity 0.25s ease;
-    `;
+    overlay.className = 'zk-sheet';
 
-    const container = document.createElement('div');
-    container.style.cssText = `
-        background: #ffffff;
-        width: 100%;
-        max-width: 480px;
-        border-radius: 28px 28px 0 0;
-        padding: 1.25rem 1.5rem 2.25rem;
-        box-sizing: border-box;
-        transform: translateY(100%);
-        transition: transform 0.3s cubic-bezier(0.34, 1.3, 0.64, 1);
-        text-align: center;
-        box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
-    `;
+    const panel = document.createElement('div');
+    panel.className = 'zk-sheet__panel';
+    panel.setAttribute('role', isConfirm ? 'alertdialog' : 'dialog');
+    panel.setAttribute('aria-modal', 'true');
 
-    // Barra superior decorativa del Drawer
-    const handle = document.createElement('div');
-    handle.style.cssText = `
-        width: 36px;
-        height: 4px;
-        background: #e2e8f0;
-        border-radius: 2px;
-        margin: 0 auto 1.25rem;
-    `;
-    container.appendChild(handle);
+    const asa = document.createElement('div');
+    asa.className = 'zk-sheet__asa';
+    panel.appendChild(asa);
 
     if (title) {
-        const titleEl = document.createElement('h4');
+        const titleEl = document.createElement('h2');
+        titleEl.className = 'zk-sheet__titulo';
+        titleEl.id = 'zkSheetTitulo';
         titleEl.textContent = title;
-        titleEl.style.cssText = `
-            margin: 0 0 0.5rem;
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: #0f172a;
-            font-family: inherit;
-        `;
-        container.appendChild(titleEl);
+        panel.appendChild(titleEl);
+        panel.setAttribute('aria-labelledby', titleEl.id);
     }
 
     if (message) {
         const msgEl = document.createElement('p');
+        msgEl.className = 'zk-sheet__mensaje';
         msgEl.textContent = message;
-        msgEl.style.cssText = `
-            margin: 0 0 1.5rem;
-            font-size: 0.88rem;
-            color: #64748b;
-            line-height: 1.45;
-            font-family: inherit;
-            white-space: pre-line;
-        `;
-        container.appendChild(msgEl);
+        panel.appendChild(msgEl);
     }
 
-    const btnWrapper = document.createElement('div');
-    btnWrapper.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 0.65rem;
-    `;
+    const acciones = document.createElement('div');
+    acciones.className = 'zk-sheet__acciones';
+
+    const close = () => {
+        document.removeEventListener('keydown', alTeclear);
+        overlay.classList.remove('is-open');
+        setTimeout(() => overlay.remove(), 250);
+        if (focoAnterior && document.contains(focoAnterior)) focoAnterior.focus({ preventScroll: true });
+    };
 
     const mainBtn = document.createElement('button');
+    mainBtn.type = 'button';
+    mainBtn.className = 'zk-sheet__btn zk-sheet__btn--principal';
     mainBtn.textContent = isConfirm ? 'Sí, continuar' : 'Entendido';
-    mainBtn.style.cssText = `
-        width: 100%;
-        background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
-        color: #ffffff;
-        border: none;
-        border-radius: 14px;
-        padding: 0.85rem;
-        font-weight: 700;
-        font-size: 0.9rem;
-        cursor: pointer;
-        outline: none;
-        box-shadow: 0 4px 12px rgba(0, 82, 255, 0.15);
-        font-family: inherit;
-    `;
     mainBtn.onclick = () => {
         close();
         if (onConfirm) onConfirm();
     };
-    btnWrapper.appendChild(mainBtn);
+    acciones.appendChild(mainBtn);
 
+    let cancelBtn = null;
     if (isConfirm) {
-        const cancelBtn = document.createElement('button');
+        cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'zk-sheet__btn zk-sheet__btn--secundario';
         cancelBtn.textContent = 'No, cancelar';
-        cancelBtn.style.cssText = `
-            width: 100%;
-            background: #f1f5f9;
-            color: #475569;
-            border: none;
-            border-radius: 14px;
-            padding: 0.85rem;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            outline: none;
-            font-family: inherit;
-        `;
         cancelBtn.onclick = () => {
             close();
             if (onCancel) onCancel();
         };
-        btnWrapper.appendChild(cancelBtn);
+        acciones.appendChild(cancelBtn);
     }
 
-    container.appendChild(btnWrapper);
-    overlay.appendChild(container);
+    // Esc equivale a «No» en una confirmación y a «Entendido» en un aviso.
+    const alTeclear = (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            (cancelBtn || mainBtn).click();
+        }
+    };
+    document.addEventListener('keydown', alTeclear);
+
+    panel.appendChild(acciones);
+    overlay.appendChild(panel);
     document.body.appendChild(overlay);
 
     // Animar entrada
     setTimeout(() => {
-        overlay.style.opacity = '1';
-        container.style.transform = 'translateY(0)';
+        overlay.classList.add('is-open');
+        mainBtn.focus({ preventScroll: true });
     }, 15);
-
-    const close = () => {
-        overlay.style.opacity = '0';
-        container.style.transform = 'translateY(100%)';
-        setTimeout(() => overlay.remove(), 250);
-    };
 }
 
 /* Lógica de Agendamiento desde el Portal (HU-26) */
 document.addEventListener('DOMContentLoaded', () => {
-    // Registración de navegación de Agenda
-    const navAgenda = document.getElementById('nav-agenda');
-    if (navAgenda) {
-        navAgenda.addEventListener('click', () => {
-            switchTab('agenda');
-        });
-    }
-
     const btnAgendaCitas = document.getElementById('btn-agenda-citas');
     const btnAgendaSalud = document.getElementById('btn-agenda-salud');
     if (btnAgendaCitas && btnAgendaSalud) {
@@ -930,19 +952,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filtrados.forEach(e => {
             if (e.tipo === 'cita') {
-                const statusStyle = e.estado === 'completada' ? 'background:var(--z-success-soft);color:var(--z-success);' : (['pendiente', 'confirmada'].includes(e.estado) ? 'background:var(--z-primary-soft);color:var(--z-primary);' : '');
                 htmlHistorial += `
-                <div class="agenda-list-item" style="cursor: pointer; border-left: 3px solid var(--z-primary);" onclick="mostrarDetalleCita(${e.id_cita})">
-                    <div class="agenda-icon-wrap" style="background:var(--z-primary-soft); color:var(--z-primary); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                        <i class="ri-calendar-event-line"></i>
-                    </div>
-                    <div class="agenda-item-info" style="margin-left:0.75rem;">
-                        <h4>${escapeHtml(e.nombre_mascota)}</h4>
+                <div class="agenda-list-item agenda-list-item--accion agenda-list-item--cita" role="button" tabindex="0" onclick="mostrarDetalleCita(${Number(e.id_cita)})">
+                    <div class="agenda-icon-wrap"><i class="ri-calendar-event-line" aria-hidden="true"></i></div>
+                    <div class="agenda-item-info">
+                        <h3>${escapeHtml(e.nombre_mascota)}</h3>
                         <p class="agenda-item-type">Cita: <strong>${escapeHtml(e.titulo)}</strong> · ${escapeHtml(e.detalle)}</p>
                         <span class="agenda-item-date">Fecha: ${formatFecha(e.fecha)} · Hora: ${escapeHtml(e.hora)}</span>
                     </div>
-                    <div class="agenda-item-actions" style="margin-left: auto; display: flex; align-items: center;">
-                        <span class="status-badge" style="${statusStyle}">${escapeHtml(e.estado)}</span>
+                    <div class="agenda-item-actions">
+                        <span class="status-badge ${claseEstadoCita(e.estado)}">${escapeHtml(etiquetaEstadoCita(e.estado))}</span>
                     </div>
                 </div>`;
                 return;
@@ -951,38 +970,38 @@ document.addEventListener('DOMContentLoaded', () => {
             const isVacuna = e.tipo === 'vacuna';
             const iconClass = isVacuna ? 'ri-syringe-line' : 'ri-capsule-line';
             const bgClass = isVacuna ? 'bg-vacuna' : 'bg-control';
-            
+
             // Si tiene fecha de próxima dosis y es en el futuro/hoy, va a próximas dosis
             if (e.proxima) {
                 const diffTime = new Date(e.proxima + 'T12:00:00') - new Date(today.getFullYear(), today.getMonth(), today.getDate());
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 let badgeText = '';
-                let badgeStyle = 'background:#f1f5f9; color:#475569;';
+                let badgeClase = 'status-badge--pendiente-dosis';
                 if (diffDays > 0) {
                     badgeText = `Faltan ${diffDays} días`;
-                    badgeStyle = 'background:var(--z-primary-soft); color:var(--z-primary);';
+                    badgeClase = 'status-badge--abierta';
                 } else if (diffDays === 0) {
                     badgeText = '¡Hoy!';
-                    badgeStyle = 'background:var(--z-success-soft); color:var(--z-success);';
+                    badgeClase = 'status-badge--completada';
                 } else {
                     badgeText = `Vencido hace ${Math.abs(diffDays)} días`;
-                    badgeStyle = 'background:var(--z-danger-soft); color:var(--z-danger);';
+                    badgeClase = 'status-badge--cancelada';
                 }
 
                 htmlProximas += `
                 <div class="agenda-list-item">
                     <div class="agenda-icon-wrap ${bgClass}">
-                        <i class="${iconClass}"></i>
+                        <i class="${iconClass}" aria-hidden="true"></i>
                     </div>
                     <div class="agenda-item-info">
-                        <h4>${escapeHtml(e.nombre_mascota)}</h4>
+                        <h3>${escapeHtml(e.nombre_mascota)}</h3>
                         <p class="agenda-item-type">Siguiente dosis: <strong>${escapeHtml(e.titulo)}</strong> · ${escapeHtml(e.detalle)}</p>
-                        <span class="agenda-item-date" style="color:var(--z-text-muted);">Última aplicación: ${formatFecha(e.fecha)}</span>
+                        <span class="agenda-item-date agenda-item-date--suave">Última aplicación: ${formatFecha(e.fecha)}</span>
                     </div>
-                    <div class="agenda-item-next" style="text-align:right;">
-                        <span class="status-badge" style="${badgeStyle} font-weight:700;">${badgeText}</span>
-                        <span class="next-date" style="display:block; font-size:0.7rem; margin-top:4px;">${formatFecha(e.proxima)}</span>
+                    <div class="agenda-item-next">
+                        <span class="status-badge ${badgeClase}">${badgeText}</span>
+                        <span class="next-date">${formatFecha(e.proxima)}</span>
                     </div>
                 </div>`;
             }
@@ -991,10 +1010,10 @@ document.addEventListener('DOMContentLoaded', () => {
             htmlHistorial += `
             <div class="agenda-list-item">
                 <div class="agenda-icon-wrap ${bgClass}">
-                    <i class="${iconClass}"></i>
+                    <i class="${iconClass}" aria-hidden="true"></i>
                 </div>
                 <div class="agenda-item-info">
-                    <h4>${escapeHtml(e.nombre_mascota)}</h4>
+                    <h3>${escapeHtml(e.nombre_mascota)}</h3>
                     <p class="agenda-item-type">${escapeHtml(e.titulo)} · ${escapeHtml(e.detalle)}</p>
                     <span class="agenda-item-date">${isVacuna ? 'Vacuna aplicada' : 'Control realizado'}: ${formatFecha(e.fecha)}</span>
                 </div>
@@ -1117,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Rellenar días en blanco del mes anterior
         for (let i = 0; i < firstDayIndex; i++) {
-            html += `<div style="height:36px;"></div>`;
+            html += `<div class="cal-day-cell cal-day-cell--vacia" aria-hidden="true"></div>`;
         }
 
         // Eventos para verificar
@@ -1126,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Rellenar días del mes actual
         for (let day = 1; day <= totalDays; day++) {
             const dateStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
+
             // Buscar eventos en este día
             const eventosDia = eventos.filter(e => {
                 const matchPet = (selectedPetId === 'all' || e.id_mascota == selectedPetId);
@@ -1134,30 +1153,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 return matchPet && matchDate;
             });
 
-            // Verificar tipos de eventos para dibujar puntos
-            const tieneCita = eventosDia.some(e => e.tipo === 'cita');
-            const tieneVacuna = eventosDia.some(e => e.tipo === 'vacuna');
-            const tieneControl = eventosDia.some(e => e.tipo === 'control');
-
+            // Un punto por cada tipo de evento del día
             let dotsHtml = '';
-            if (tieneCita) dotsHtml += `<span style="width:4px; height:4px; border-radius:50%; background:var(--z-primary);"></span>`;
-            if (tieneVacuna) dotsHtml += `<span style="width:4px; height:4px; border-radius:50%; background:var(--z-success);"></span>`;
-            if (tieneControl) dotsHtml += `<span style="width:4px; height:4px; border-radius:50%; background:var(--z-warning);"></span>`;
+            if (eventosDia.some(e => e.tipo === 'cita')) dotsHtml += '<span class="cal-dot"></span>';
+            if (eventosDia.some(e => e.tipo === 'vacuna')) dotsHtml += '<span class="cal-dot cal-dot--vacuna"></span>';
+            if (eventosDia.some(e => e.tipo === 'control')) dotsHtml += '<span class="cal-dot cal-dot--control"></span>';
 
-            const isSelected = selectedCalendarDate === dateStr ? 'background:var(--z-primary-soft); color:var(--z-primary); font-weight:800; border:1.5px solid var(--z-primary);' : '';
-            const cursorStyle = eventosDia.length > 0 ? 'cursor:pointer;' : 'opacity:0.85;';
+            const clases = ['cal-day-cell'];
+            if (eventosDia.length > 0) clases.push('tiene-eventos');
+            if (selectedCalendarDate === dateStr) clases.push('is-selected');
+            const accesible = eventosDia.length > 0
+                ? ` role="button" tabindex="0" aria-pressed="${selectedCalendarDate === dateStr}" aria-label="${day} de ${monthNames[currentCalMonth]}: ${eventosDia.length} evento${eventosDia.length > 1 ? 's' : ''}"`
+                : '';
 
             html += `
-            <div class="cal-day-cell" data-date="${dateStr}" style="height:36px; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.75rem; color:#0f172a; position:relative; font-weight:600; border:1px solid #f1f5f9; ${isSelected} ${cursorStyle}">
+            <div class="${clases.join(' ')}" data-date="${dateStr}"${accesible}>
                 <span>${day}</span>
-                <div style="display:flex; gap:2px; position:absolute; bottom:3px;">${dotsHtml}</div>
+                <div class="cal-day-dots">${dotsHtml}</div>
             </div>`;
         }
 
         grid.innerHTML = html;
 
         // Agregar clics a celdas con eventos
-        grid.querySelectorAll('.cal-day-cell').forEach(cell => {
+        grid.querySelectorAll('.cal-day-cell[data-date]').forEach(cell => {
             cell.addEventListener('click', () => {
                 const date = cell.dataset.date;
                 
@@ -1250,13 +1269,9 @@ document.addEventListener('DOMContentLoaded', () => {
     chips.forEach(chip => {
         chip.addEventListener('click', () => {
             chips.forEach(c => {
-                c.classList.remove('active');
-                c.style.background = '#f1f5f9';
-                c.style.color = '#64748b';
+                c.classList.toggle('active', c === chip);
+                c.setAttribute('aria-pressed', c === chip ? 'true' : 'false');
             });
-            chip.classList.add('active');
-            chip.style.background = 'var(--z-primary)';
-            chip.style.color = '#fff';
 
             selectedPetId = chip.dataset.petId;
 
@@ -1449,153 +1464,247 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             };
 
-            // 1. Inicializar para campos de fecha de nacimiento (históricos)
+            // 1. Fecha de nacimiento: hasta hoy y no más de 40 años atrás (ValidadorMascota).
+            const hace40 = new Date();
+            hace40.setFullYear(hace40.getFullYear() - 40);
             flatpickr("input[name='fecha_nacimiento'].flatpickr-date", {
                 locale: currentLocale,
                 dateFormat: "Y-m-d",
+                minDate: hace40,
                 maxDate: "today",
                 disableMobile: true,
                 altInput: true,
-                altFormat: "Y-m-d",
+                altFormat: "j M Y",
                 monthSelectorType: "static",
                 onReady: function(selectedDates, dateStr, instance) {
                     makeWin11Calendar(instance);
                 }
             });
 
-            // 2. Inicializar para campo de agendamiento de citas (futuro)
-            flatpickr("#booking_fecha", {
-                locale: currentLocale,
-                dateFormat: "Y-m-d",
-                minDate: "today",
-                disableMobile: true,
-                altInput: true,
-                altFormat: "Y-m-d",
-                monthSelectorType: "static",
-                onChange: function(selectedDates, dateStr, instance) {
-                    // Disparar carga de horas disponibles al cambiar fecha
-                    if (typeof cargarHoras === "function") {
-                        cargarHoras();
-                    }
-                },
-                onReady: function(selectedDates, dateStr, instance) {
-                    makeWin11Calendar(instance);
-                }
-            });
+            // 2. El calendario de agendar lo crea su propio bloque, más abajo.
+            window.zkLocale = currentLocale;
+            window.zkMesesAnios = makeWin11Calendar;
 
         } catch (e) {
             console.error("Error inicializando Flatpickr:", e);
         }
     }
 
+    // ── Agendar cita (HU-26): el mismo flujo del panel del personal ──
+    // Datos a la izquierda; día y horarios libres a la derecha. Los horarios
+    // aparecen cuando ya hay tipo, veterinario y día, y mientras tanto el
+    // panel dice qué falta (antes quedaba «Elige fecha…» sin explicar nada).
     const bookingModal = document.getElementById('portalBookingModal');
-    const openBtns = document.querySelectorAll('#btnOpenBookingModal');
-    const closeBtn = document.getElementById('btnCloseBookingModal');
     const form = document.getElementById('portalBookingForm');
+    if (!bookingModal || !form) return;
+
+    const closeBtn = document.getElementById('btnCloseBookingModal');
+    const mascotaSelect = document.getElementById('booking_mascota');
     const tipoCitaSelect = document.getElementById('booking_tipo_cita');
     const vetSelect = document.getElementById('booking_veterinario');
     const dateInput = document.getElementById('booking_fecha');
-    const horaSelect = document.getElementById('booking_hora');
+    const horaInput = document.getElementById('booking_hora');
+    const slots = document.getElementById('booking_slots');
+    const resumen = document.getElementById('booking_resumen');
+    const confirmar = document.getElementById('booking_confirmar');
+    // Días sin atención en toda la jornada (1 = lunes … 7 = domingo), desde Configuración de horarios.
+    const diasCerrados = JSON.parse(form.dataset.diasCerrados || '[]');
+    let turno = 0; // si el usuario cambia algo mientras cargan los horarios, se ignora la respuesta vieja
+    let catalogosListos = false;
 
-    if (!bookingModal) return;
+    const minutosDe = h => { const [hh, mm] = h.split(':').map(Number); return hh * 60 + mm; };
+    const hora12 = h => { const [hh, mm] = h.split(':').map(Number); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a. m.' : 'p. m.'}`; };
+    const hoyIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+    const enLista = partes => partes.length > 1 ? `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}` : partes[0];
+    const textoOpcion = sel => (sel.selectedOptions[0] ? sel.selectedOptions[0].textContent.trim() : '');
 
-    // Función para abrir
-    const abrirBooking = async () => {
-        openModal('portalBookingModal');
-        form.reset();
-        horaSelect.innerHTML = '<option value="">Elige fecha...</option>';
+    const calendario = typeof flatpickr !== 'undefined' ? flatpickr(dateInput, {
+        locale: window.zkLocale || 'es',
+        dateFormat: 'Y-m-d',
+        minDate: 'today',
+        inline: true,
+        disableMobile: true,
+        monthSelectorType: 'static',
+        disable: [d => diasCerrados.includes(d.getDay() === 0 ? 7 : d.getDay())],
+        onChange: () => cargarHoras(),
+        onReady: (fechas, texto, instancia) => { if (window.zkMesesAnios) window.zkMesesAnios(instancia); }
+    }) : null;
 
-        try {
-            // Cargar tipos de cita
-            const resTipos = await (await fetch('index.php?action=portal_get_tipos_cita_ajax')).json();
-            if (resTipos.success) {
-                tipoCitaSelect.innerHTML = '<option value="">Selecciona...</option>';
-                resTipos.tipos.forEach(t => {
-                    tipoCitaSelect.innerHTML += `<option value="${t.id_tipo_cita}" data-duracion="${t.duracion_minutos}">${escapeHtml(t.nombre_tipo)} (${t.duracion_minutos} min)</option>`;
-                });
-            }
-
-            // Cargar veterinarios
-            const resVets = await (await fetch('index.php?action=portal_get_vets_ajax')).json();
-            vetSelect.innerHTML = '<option value="">Selecciona...</option>';
-            resVets.forEach(v => {
-                vetSelect.innerHTML += `<option value="${v.documento}">Dr(a). ${escapeHtml(v.nombre_completo)}</option>`;
-            });
-
-        } catch (e) {
-            console.error('Error al cargar catálogos:', e);
+    function estadoSlots(tipo, texto = '') {
+        if (tipo === 'cargando') {
+            slots.innerHTML = `<div class="slot-grid">${'<span class="slot-skeleton"></span>'.repeat(8)}</div>`;
+            return;
         }
-    };
-
-    // Registrar clicks en todos los botones de abrir (incluyendo el central flotante)
-    openBtns.forEach(btn => btn.addEventListener('click', abrirBooking));
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            closeModal('portalBookingModal');
-        });
+        const icono = tipo === 'guia' ? 'ri-time-line' : 'ri-calendar-close-line';
+        slots.innerHTML = `<div class="slot-state"><i class="${icono}" aria-hidden="true"></i><p>${escapeHtml(texto)}</p></div>`;
     }
 
-    bookingModal.addEventListener('click', (e) => {
-        if (e.target === bookingModal) {
-            closeModal('portalBookingModal');
+    function textoGuia() {
+        const faltan = [];
+        if (!tipoCitaSelect.value) faltan.push('el tipo de cita');
+        if (!vetSelect.value) faltan.push('el veterinario');
+        if (!dateInput.value) faltan.push('el día');
+        return faltan.length ? `Elige ${enLista(faltan)} para ver los horarios libres.` : '';
+    }
+
+    /** Horarios repartidos en Mañana y Tarde, como en el panel del personal. */
+    function renderSlots(horas) {
+        const grupos = [
+            ['manana', 'Mañana', horas.filter(h => minutosDe(h) < 720)],
+            ['tarde', 'Tarde', horas.filter(h => minutosDe(h) >= 720)]
+        ].filter(([, , hs]) => hs.length);
+
+        const cabecera = grupos.length > 1
+            ? `<div class="slot-tabs" role="tablist">${grupos.map(([clave, nombre, hs], i) =>
+                `<button type="button" role="tab" class="slot-tab${i ? '' : ' is-active'}" data-franja="${clave}" aria-selected="${!i}">${nombre} <span>${hs.length}</span></button>`
+              ).join('')}</div>`
+            : `<p class="slot-caption">${grupos[0][1]} · ${grupos[0][2].length} ${grupos[0][2].length === 1 ? 'horario libre' : 'horarios libres'}</p>`;
+
+        slots.innerHTML = cabecera + grupos.map(([clave, , hs], i) =>
+            `<div class="slot-grid" data-franja="${clave}"${i ? ' hidden' : ''}>${hs.map(h =>
+                `<button type="button" class="slot-chip" data-hora="${escapeHtml(h)}" aria-pressed="false">${escapeHtml(hora12(h))}</button>`
+            ).join('')}</div>`
+        ).join('');
+    }
+
+    slots.addEventListener('click', (e) => {
+        const tab = e.target.closest('.slot-tab');
+        if (tab) {
+            slots.querySelectorAll('.slot-tab').forEach(t => {
+                t.classList.toggle('is-active', t === tab);
+                t.setAttribute('aria-selected', String(t === tab));
+            });
+            slots.querySelectorAll('.slot-grid').forEach(g => { g.hidden = g.dataset.franja !== tab.dataset.franja; });
+            return;
+        }
+        const chip = e.target.closest('.slot-chip');
+        if (chip) {
+            slots.querySelectorAll('.slot-chip').forEach(c => {
+                c.classList.toggle('is-selected', c === chip);
+                c.setAttribute('aria-pressed', String(c === chip));
+            });
+            horaInput.value = chip.dataset.hora;
+            actualizarResumen();
         }
     });
 
-    // Cargar horas disponibles al elegir veterinario o fecha (Intersección con sugerencias libres de veterinario)
-    const cargarHoras = async () => {
-        const vet = vetSelect.value;
+    async function cargarHoras() {
+        horaInput.value = '';
+        actualizarResumen();
+
+        const guia = textoGuia();
+        if (guia) {
+            estadoSlots('guia', guia);
+            return;
+        }
+
         const fecha = dateInput.value;
-        const tipoCita = tipoCitaSelect.value;
-
-        if (!vet || !fecha || !tipoCita) return;
-
-        const duracion = tipoCitaSelect.options[tipoCitaSelect.selectedIndex].dataset.duracion || 30;
-
-        horaSelect.innerHTML = '<option value="">Cargando horas...</option>';
+        const vet = vetSelect.value;
+        const duracion = (tipoCitaSelect.selectedOptions[0] && tipoCitaSelect.selectedOptions[0].dataset.duracion) || 30;
+        const miTurno = ++turno;
+        estadoSlots('cargando');
 
         try {
-            // Petición 1: Horas laborables de la clínica
-            const resClinica = await fetch(`index.php?action=get_horas_disponibles_ajax&fecha=${fecha}&intervalo=${duracion}`);
-            const dataClinica = await resClinica.json();
+            // Horas de la clínica ese día ∩ huecos libres del veterinario.
+            const [clinica, agendaVet] = await Promise.all([
+                fetch(`index.php?action=get_horas_disponibles_ajax&fecha=${encodeURIComponent(fecha)}&intervalo=${encodeURIComponent(duracion)}`).then(r => r.json()),
+                fetch(`index.php?action=get_sugerencias_horario_ajax&doc_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${encodeURIComponent(duracion)}`).then(r => r.json())
+            ]);
+            if (miTurno !== turno) return;
 
-            // Petición 2: Horarios libres del veterinario (sugerencias sin colisiones)
-            const resVet = await fetch(`index.php?action=get_sugerencias_horario_ajax&doc_veterinario=${vet}&fecha=${fecha}&duracion_minutos=${duracion}`);
-            const dataVet = await resVet.json();
-
-            if (dataClinica.success && dataVet.success) {
-                const horasLaborales = dataClinica.horas || [];
-                const sugerenciasVet = dataVet.sugerencias || [];
-
-                // Intersectar ambas listas
-                const horasDisponibles = horasLaborales.filter(h => sugerenciasVet.includes(h));
-
-                if (horasDisponibles.length > 0) {
-                    horaSelect.innerHTML = '<option value="">Selecciona hora...</option>';
-                    horasDisponibles.forEach(h => {
-                        horaSelect.innerHTML += `<option value="${h}">${h}</option>`;
-                    });
-                } else {
-                    horaSelect.innerHTML = '<option value="">Sin horarios disponibles</option>';
-                }
-            } else {
-                horaSelect.innerHTML = '<option value="">Sin horarios disponibles</option>';
+            if (!clinica.success || !agendaVet.success) {
+                estadoSlots('vacio', 'No se pudieron cargar los horarios. Intenta de nuevo.');
+                return;
             }
+            const horasClinica = clinica.horas || [];
+            if (!horasClinica.length) {
+                estadoSlots('vacio', 'La clínica no atiende ese día. Elige otro día.');
+                return;
+            }
+            const libresVet = agendaVet.sugerencias || [];
+            let horas = horasClinica.filter(h => libresVet.includes(h));
+            // Hoy no se ofrecen horas que ya pasaron.
+            if (fecha === hoyIso()) {
+                const ahora = new Date();
+                const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+                horas = horas.filter(h => minutosDe(h) > minutosAhora);
+            }
+            if (!horas.length) {
+                estadoSlots('vacio', 'Ya no quedan horarios libres ese día con este veterinario. Prueba otro día u otro veterinario.');
+                return;
+            }
+            renderSlots(horas);
         } catch (e) {
             console.error(e);
-            horaSelect.innerHTML = '<option value="">Error al cargar horas</option>';
+            if (miTurno === turno) estadoSlots('vacio', 'No se pudieron cargar los horarios. Revisa tu conexión e intenta de nuevo.');
         }
+    }
+
+    function actualizarResumen() {
+        const listo = mascotaSelect.value && tipoCitaSelect.value && vetSelect.value && dateInput.value && horaInput.value;
+        confirmar.disabled = !listo;
+        if (!listo) {
+            resumen.textContent = '';
+            return;
+        }
+        const dia = calendario && calendario.selectedDates[0]
+            ? calendario.selectedDates[0].toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+            : dateInput.value;
+        resumen.innerHTML = `<i class="ri-checkbox-circle-line" aria-hidden="true"></i>${escapeHtml(textoOpcion(mascotaSelect))} · ${escapeHtml(textoOpcion(tipoCitaSelect))} con ${escapeHtml(textoOpcion(vetSelect))} · ${escapeHtml(dia)}, ${escapeHtml(hora12(horaInput.value))}`;
+    }
+
+    async function cargarCatalogos() {
+        try {
+            const [resTipos, resVets] = await Promise.all([
+                fetch('index.php?action=portal_get_tipos_cita_ajax').then(r => r.json()),
+                fetch('index.php?action=portal_get_vets_ajax').then(r => r.json())
+            ]);
+            tipoCitaSelect.innerHTML = '<option value="">Selecciona…</option>' + (resTipos.success ? resTipos.tipos : []).map(t =>
+                `<option value="${Number(t.id_tipo_cita)}" data-duracion="${Number(t.duracion_minutos)}">${escapeHtml(t.nombre_tipo)} (${Number(t.duracion_minutos)} min)</option>`
+            ).join('');
+            vetSelect.innerHTML = '<option value="">Selecciona…</option>' + (Array.isArray(resVets) ? resVets : []).map(v =>
+                `<option value="${escapeHtml(v.documento)}">Dr(a). ${escapeHtml(v.nombre_completo)}</option>`
+            ).join('');
+            catalogosListos = true;
+        } catch (e) {
+            console.error('Error al cargar catálogos:', e);
+            tipoCitaSelect.innerHTML = vetSelect.innerHTML = '<option value="">No se pudo cargar. Cierra y vuelve a abrir.</option>';
+        }
+    }
+
+    const abrirBooking = async () => {
+        form.reset();
+        horaInput.value = '';
+        if (calendario) calendario.clear();
+        // Con una sola mascota no hay nada que elegir.
+        if (mascotaSelect.options.length === 2) mascotaSelect.selectedIndex = 1;
+        openModal('portalBookingModal');
+
+        if (mascotaSelect.options.length === 1) {
+            estadoSlots('vacio', 'Primero registra una mascota desde Inicio para poder agendarle una cita.');
+            return;
+        }
+        if (!catalogosListos) await cargarCatalogos();
+        cargarHoras();
     };
 
-    vetSelect.addEventListener('change', cargarHoras);
-    dateInput.addEventListener('change', cargarHoras);
+    // Todos los botones de agendar: menú lateral, barra inferior, accesos y servicios.
+    document.querySelectorAll('[data-agendar]').forEach(btn => btn.addEventListener('click', abrirBooking));
+    if (closeBtn) closeBtn.addEventListener('click', () => closeModal('portalBookingModal'));
+    bookingModal.addEventListener('click', (e) => {
+        if (e.target === bookingModal) closeModal('portalBookingModal');
+    });
+
+    mascotaSelect.addEventListener('change', actualizarResumen);
     tipoCitaSelect.addEventListener('change', cargarHoras);
+    vetSelect.addEventListener('change', cargarHoras);
 
-    // Procesar formulario
-
-    // Procesar formulario
     const enviarFormulario = async (ignoreWarning = false) => {
-        const submitBtn = form.querySelector('button[type="submit"]');
+        const submitBtn = confirmar;
+        const reactivar = () => {
+            submitBtn.querySelector('span').textContent = 'Confirmar cita';
+            actualizarResumen();
+        };
         submitBtn.disabled = true;
         submitBtn.querySelector('span').textContent = 'Agendando...';
 
@@ -1640,10 +1749,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     onConfirm: () => {
                         enviarFormulario(true); // Re-submit ignoring warning
                     },
-                    onCancel: () => {
-                        submitBtn.disabled = false;
-                        submitBtn.querySelector('span').textContent = 'Confirmar Cita';
-                    }
+                    onCancel: reactivar
                 });
             } else {
                 showTikTokModal({
@@ -1651,8 +1757,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     message: res.message || 'Inténtalo nuevamente.',
                     isConfirm: false,
                     onConfirm: () => {
-                        submitBtn.disabled = false;
-                        submitBtn.querySelector('span').textContent = 'Confirmar Cita';
+                        reactivar();
+                        // El horario pudo ocuparse mientras tanto: se vuelven a pedir.
+                        cargarHoras();
                     }
                 });
             }
@@ -1662,16 +1769,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: 'Error de Red',
                 message: 'No pudimos conectarnos con el servidor. Inténtalo más tarde.',
                 isConfirm: false,
-                onConfirm: () => {
-                    submitBtn.disabled = false;
-                    submitBtn.querySelector('span').textContent = 'Confirmar Cita';
-                }
+                onConfirm: reactivar
             });
         }
     };
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
+        if (confirmar.disabled) return;
         enviarFormulario(false);
     });
 });
@@ -1722,265 +1827,249 @@ function cancelarCitaPortal(idCita) {
     });
 }
 
-/* --- Gestión de Mascotas desde el Portal (Registro y Edición) --- */
+/* --- Gestión de Mascotas desde el Portal (Registro y Edición) ---
+   Las especies vienen en la página (views/portal/index.php); las razas se
+   piden por especie. El propietario ya no crea razas: si la suya no está,
+   elige la criolla o «Sin raza definida». El color lo registra la clínica. */
 document.addEventListener('DOMContentLoaded', () => {
     const addPetModal = document.getElementById('portalAddPetModal');
     const editPetModal = document.getElementById('portalEditPetModal');
-    const openAddBtn = document.getElementById('btnOpenAddPetModal');
-    const closeAddBtn = document.getElementById('btnCloseAddPetModal');
-    const closeEditBtn = document.getElementById('btnCloseEditPetModal');
-    const editProfileBtn = document.getElementById('btnEditPetProfile');
-
     const addForm = document.getElementById('portalAddPetForm');
     const editForm = document.getElementById('portalEditPetForm');
+    if (!addForm || !editForm) return;
 
-    const addEspecieSelect = document.getElementById('add_pet_especie');
-    const editEspecieSelect = document.getElementById('edit_pet_especie');
-    const addRazaSelect = document.getElementById('add_pet_raza');
-    const editRazaSelect = document.getElementById('edit_pet_raza');
+    const MAX_FOTO = 5 * 1024 * 1024; // FotoMascota::MAX_BYTES
+    const TIPOS_FOTO = ['image/jpeg', 'image/png'];
 
-    let especiesCache = [];
-    let coloresCache = [];
+    const campo = (form, nombre) => form.querySelector(`[name="${nombre}"]`);
 
-    // Cargar Catálogos Iniciales (Especies y Colores)
-    const cargarCatalogos = async () => {
-        try {
-            if (especiesCache.length === 0) {
-                especiesCache = await (await fetch('index.php?action=listar_especies_ajax')).json();
-            }
-            if (coloresCache.length === 0) {
-                coloresCache = await (await fetch('index.php?action=listar_colores_ajax')).json();
-            }
+    // ── Razas de la especie elegida ──
+    // Si la raza no está, hay tres salidas claras (al comienzo de la lista):
+    //   · «Criollo» (perros y gatos): es una mezcla.
+    //   · «No sé la raza»: se guarda como «Sin raza definida».
+    //   · «Mi raza no está en la lista…»: la escribe y la clínica la revisa (RE-15.9).
+    const RAZA_OTRA = 'otra'; // ValidadorMascota::RAZA_OTRA
+    const esSinDefinir = nombre => nombre === 'Sin raza definida';
+    const esMestiza = nombre => /criollo|mestizo/i.test(nombre);
 
-            // Llenar selectores de especie
-            [addEspecieSelect, editEspecieSelect].forEach(sel => {
-                if (sel && sel.options.length <= 1) {
-                    sel.innerHTML = '<option value="">Selecciona...</option>';
-                    especiesCache.forEach(esp => {
-                        sel.innerHTML += `<option value="${esp.id_especie}">${escapeHtml(esp.nombre_especie)}</option>`;
-                    });
-                }
-            });
-
-            // Llenar contenedores de colores
-            ['add_colores_container', 'edit_colores_container'].forEach(cid => {
-                const container = document.getElementById(cid);
-                if (container && container.children.length === 0) {
-                    container.innerHTML = '';
-                    coloresCache.forEach(col => {
-                        container.innerHTML += `
-                        <label class="color-pill-checkbox" style="display:inline-flex; align-items:center; background:#f1f5f9; padding:0.35rem 0.65rem; border-radius:12px; font-size:0.75rem; color:#475569; cursor:pointer; font-weight:600; border:1px solid #e2e8f0; user-select:none; margin: 2px;">
-                            <input type="checkbox" name="colores[]" value="${col.id_color}" style="margin-right:0.35rem;">
-                            ${escapeHtml(col.nombre_color)}
-                        </label>`;
-                    });
-                }
-            });
-        } catch (e) {
-            console.error('Error al cargar catálogos:', e);
-        }
+    /** Muestra u oculta «¿Cuál es la raza?»; oculto va deshabilitado, así no se exige ni se envía. */
+    const mostrarRazaOtra = (form, visible, valor = '') => {
+        const grupo = form.querySelector('.raza-otra');
+        const input = campo(form, 'raza_indicada');
+        grupo.hidden = !visible;
+        input.disabled = !visible;
+        input.required = visible;
+        input.value = visible ? valor : '';
     };
 
-    // Filtrar razas dinámicamente
-    const cargarRazas = async (idEspecie, targetSelect, selectedId = null) => {
+    const cargarRazas = async (idEspecie, select, seleccionada = null) => {
+        const ayuda = document.getElementById(`${select.id}_ayuda`);
+        select.disabled = true;
+        if (ayuda) ayuda.hidden = true;
         if (!idEspecie) {
-            targetSelect.innerHTML = '<option value="">Seleccione especie...</option>';
+            select.innerHTML = '<option value="">Primero elige la especie</option>';
             return;
         }
+        select.innerHTML = '<option value="">Cargando razas…</option>';
         try {
-            const razas = await (await fetch(`index.php?action=listar_razas_ajax&id_especie=${idEspecie}`)).json();
-            targetSelect.innerHTML = '<option value="">Selecciona raza...</option>';
-            razas.forEach(r => {
-                const sel = (selectedId && selectedId == r.id_raza) ? 'selected' : '';
-                targetSelect.innerHTML += `<option value="${r.id_raza}" ${sel}>${escapeHtml(r.nombre_raza)}</option>`;
-            });
-            targetSelect.innerHTML += `<option value="Otra">Otra / No listada</option>`;
+            const razas = await (await fetch(`index.php?action=listar_razas_ajax&id_especie=${encodeURIComponent(idEspecie)}`)).json();
+            const marcada = valor => String(seleccionada) === String(valor) ? ' selected' : '';
+            const opcion = (valor, texto) => `<option value="${escapeHtml(String(valor))}"${marcada(valor)}>${escapeHtml(texto)}</option>`;
+
+            const mestizas = razas.filter(r => esMestiza(r.nombre_raza));
+            const sinDefinir = razas.find(r => esSinDefinir(r.nombre_raza));
+            const conocidas = razas.filter(r => !esMestiza(r.nombre_raza) && !esSinDefinir(r.nombre_raza));
+
+            // «Mi raza no está» se guarda como «Sin raza definida»: sin ella (falta la migración 13) no se ofrece.
+            const salidas = [
+                ...mestizas.map(r => opcion(r.id_raza, `${r.nombre_raza} · es una mezcla`)),
+                ...(sinDefinir ? [opcion(sinDefinir.id_raza, 'No sé la raza'), opcion(RAZA_OTRA, 'Mi raza no está en la lista…')] : [])
+            ];
+
+            select.innerHTML = '<option value="">Selecciona…</option>'
+                + (salidas.length ? `<optgroup label="Si no encuentras la raza">${salidas.join('')}</optgroup>` : '')
+                + (conocidas.length ? `<optgroup label="Razas">${conocidas.map(r => opcion(r.id_raza, r.nombre_raza)).join('')}</optgroup>` : '');
+            select.disabled = false;
+
+            if (ayuda && salidas.length) {
+                ayuda.textContent = sinDefinir
+                    ? '¿No la encuentras? Al comienzo de la lista puedes indicar que es mestiza, que no sabes la raza o escribir la tuya.'
+                    : '¿No la encuentras? Al comienzo de la lista puedes indicar que es mestiza.';
+                ayuda.hidden = false;
+            }
         } catch (e) {
             console.error(e);
+            select.innerHTML = '<option value="">No se pudieron cargar las razas</option>';
         }
     };
 
-    // Eventos Especie -> Razas
-    if (addEspecieSelect) {
-        addEspecieSelect.addEventListener('change', (e) => {
-            cargarRazas(e.target.value, addRazaSelect);
-            document.getElementById('add_nueva_raza_wrapper').style.display = 'none';
-        });
-    }
-    if (editEspecieSelect) {
-        editEspecieSelect.addEventListener('change', (e) => {
-            cargarRazas(e.target.value, editRazaSelect);
-            document.getElementById('edit_nueva_raza_wrapper').style.display = 'none';
-        });
-    }
+    // ── Foto: la actual y la elegida ──
+    const pintarFoto = (form, url) => {
+        form.querySelector('.foto-campo__vista').innerHTML = url
+            ? `<img src="${escapeHtml(url)}" alt="">`
+            : '<i class="ri-image-line"></i>';
+    };
 
-    // Eventos Raza -> Mostrar input nueva raza si elige 'Otra'
-    if (addRazaSelect) {
-        addRazaSelect.addEventListener('change', (e) => {
-            document.getElementById('add_nueva_raza_wrapper').style.display = e.target.value === 'Otra' ? 'block' : 'none';
-        });
-    }
-    if (editRazaSelect) {
-        editRazaSelect.addEventListener('change', (e) => {
-            document.getElementById('edit_nueva_raza_wrapper').style.display = e.target.value === 'Otra' ? 'block' : 'none';
-        });
-    }
+    const prepararFoto = (form, urlActual) => {
+        if (form._urlVista) URL.revokeObjectURL(form._urlVista);
+        form._urlVista = null;
+        form.dataset.fotoActual = urlActual || '';
+        campo(form, 'foto').value = '';
+        form.querySelector('.foto-campo__quitar').hidden = true;
+        const ayuda = form.querySelector('.foto-campo__ayuda');
+        ayuda.textContent = urlActual ? 'Esta es la foto actual. JPG o PNG, hasta 5 MB.' : 'JPG o PNG, hasta 5 MB.';
+        ayuda.classList.remove('is-error');
+        pintarFoto(form, urlActual);
+    };
 
-    // Abrir Modal Registrar
+    [addForm, editForm].forEach(form => {
+        form.addEventListener('change', (e) => {
+            const input = e.target;
+
+            if (input.name === 'especie') {
+                mostrarRazaOtra(form, false);
+                cargarRazas(input.value, campo(form, 'raza'));
+            }
+
+            if (input.name === 'raza') {
+                const otra = input.value === RAZA_OTRA;
+                mostrarRazaOtra(form, otra);
+                if (otra) campo(form, 'raza_indicada').focus();
+            }
+
+            if (input.name === 'foto') {
+                const archivo = input.files[0];
+                const ayuda = form.querySelector('.foto-campo__ayuda');
+                if (!archivo) return;
+                // Se revisa aquí para avisar de una vez; el servidor lo vuelve a comprobar.
+                const problema = !TIPOS_FOTO.includes(archivo.type) ? 'Esa foto no es JPG ni PNG. Elige otra.'
+                    : archivo.size > MAX_FOTO ? 'Esa foto pesa más de 5 MB. Elige una más liviana.'
+                    : null;
+                if (problema) {
+                    prepararFoto(form, form.dataset.fotoActual);
+                    ayuda.textContent = problema;
+                    ayuda.classList.add('is-error');
+                    return;
+                }
+                if (form._urlVista) URL.revokeObjectURL(form._urlVista);
+                form._urlVista = URL.createObjectURL(archivo);
+                pintarFoto(form, form._urlVista);
+                ayuda.textContent = `${archivo.name} · se guarda al confirmar.`;
+                ayuda.classList.remove('is-error');
+                form.querySelector('.foto-campo__quitar').hidden = false;
+            }
+        });
+
+        form.querySelector('.foto-campo__quitar').addEventListener('click', () => prepararFoto(form, form.dataset.fotoActual));
+    });
+
+    const limpiarFormulario = (form) => {
+        form.reset();
+        form.classList.remove('intentado');
+        const nacimiento = campo(form, 'fecha_nacimiento');
+        if (nacimiento && nacimiento._flatpickr) nacimiento._flatpickr.clear();
+    };
+
+    // ── Abrir: registrar ──
+    const openAddBtn = document.getElementById('btnOpenAddPetModal');
     if (openAddBtn) {
-        openAddBtn.addEventListener('click', async () => {
+        openAddBtn.addEventListener('click', () => {
+            limpiarFormulario(addForm);
+            cargarRazas('', campo(addForm, 'raza'));
+            mostrarRazaOtra(addForm, false);
+            prepararFoto(addForm, null);
             openModal('portalAddPetModal');
-            addForm.reset();
-            document.getElementById('add_nueva_raza_wrapper').style.display = 'none';
-            await cargarCatalogos();
         });
     }
 
-    // Abrir Modal Editar
+    // ── Abrir: editar, con los datos actuales ──
+    const editProfileBtn = document.getElementById('btnEditPetProfile');
     if (editProfileBtn) {
         editProfileBtn.addEventListener('click', async () => {
             const pet = window.activePetData;
             if (!pet) return;
 
-            openModal('portalEditPetModal');
-            editForm.reset();
-            document.getElementById('edit_nueva_raza_wrapper').style.display = 'none';
-            
-            await cargarCatalogos();
-
-            // Rellenar datos
+            limpiarFormulario(editForm);
             document.getElementById('edit_pet_id').value = pet.id_mascota;
-            document.getElementById('edit_pet_nombre').value = pet.nombre;
-            document.getElementById('edit_pet_sexo').value = pet.sexo;
-            document.getElementById('edit_pet_peso').value = pet.peso;
-            document.getElementById('edit_pet_nacimiento').value = pet.fecha_nacimiento || '';
+            document.getElementById('edit_pet_nombre').value = pet.nombre || '';
+            // Dos botones Macho / Hembra; un «Desconocido» antiguo queda sin marcar.
+            const sexo = editForm.querySelector(`input[name="sexo"][value="${pet.sexo}"]`);
+            if (sexo) sexo.checked = true;
+            document.getElementById('edit_pet_peso').value = pet.peso || '';
+            const nacimiento = document.getElementById('edit_pet_nacimiento');
+            if (nacimiento._flatpickr) nacimiento._flatpickr.setDate(pet.fecha_nacimiento || null, false);
+            else nacimiento.value = pet.fecha_nacimiento || '';
 
-            // Seleccionar especie y cargar sus razas
-            editEspecieSelect.value = pet.id_especie;
-            await cargarRazas(pet.id_especie, editRazaSelect, pet.id_raza);
+            prepararFoto(editForm, pet.url_foto ? 'uploads/mascotas/' + pet.url_foto : null);
 
-            // Rellenar colores seleccionados
-            const petColoresIds = pet.colores_ids ? pet.colores_ids.split(',') : [];
-            const colorChecks = editForm.querySelectorAll('input[name="colores[]"]');
-            colorChecks.forEach(chk => {
-                chk.checked = petColoresIds.includes(chk.value);
+            document.getElementById('edit_pet_especie').value = pet.id_especie;
+            openModal('portalEditPetModal');
+            const conIndicada = Boolean(pet.raza_indicada);
+            mostrarRazaOtra(editForm, conIndicada, pet.raza_indicada || '');
+            await cargarRazas(pet.id_especie, document.getElementById('edit_pet_raza'), conIndicada ? RAZA_OTRA : pet.id_raza);
+        });
+    }
+
+    // ── Cerrar ──
+    document.getElementById('btnCloseAddPetModal')?.addEventListener('click', () => closeModal('portalAddPetModal'));
+    document.getElementById('btnCloseEditPetModal')?.addEventListener('click', () => closeModal('portalEditPetModal'));
+    document.getElementById('btnCloseCitaDetalleModal')?.addEventListener('click', () => closeModal('portalCitaDetalleModal'));
+
+    [addPetModal, editPetModal, document.getElementById('portalCitaDetalleModal')].forEach(modal => {
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal(modal.id);
             });
-        });
-    }
+        }
+    });
 
-    // Cerrar Modales
-    if (closeAddBtn) closeAddBtn.addEventListener('click', () => closeModal('portalAddPetModal'));
-    if (closeEditBtn) closeEditBtn.addEventListener('click', () => closeModal('portalEditPetModal'));
-    
-    const closeDetalleCitaBtn = document.getElementById('btnCloseCitaDetalleModal');
-    if (closeDetalleCitaBtn) {
-        closeDetalleCitaBtn.addEventListener('click', () => closeModal('portalCitaDetalleModal'));
-    }
-
-    if (addPetModal) {
-        addPetModal.addEventListener('click', (e) => {
-            if (e.target === addPetModal) closeModal('portalAddPetModal');
-        });
-    }
-    if (editPetModal) {
-        editPetModal.addEventListener('click', (e) => {
-            if (e.target === editPetModal) closeModal('portalEditPetModal');
-        });
-    }
-    const citaDetalleModal = document.getElementById('portalCitaDetalleModal');
-    if (citaDetalleModal) {
-        citaDetalleModal.addEventListener('click', (e) => {
-            if (e.target === citaDetalleModal) closeModal('portalCitaDetalleModal');
-        });
-    }
-
-    // Procesar Registro de Mascota
-    if (addForm) {
-        addForm.addEventListener('submit', async (e) => {
+    // ── Enviar: primero la validación del navegador, luego el servidor ──
+    const enviarMascota = (form, { accion, modalId, textoBoton, textoEnviando, exito }) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitBtn = addForm.querySelector('button[type="submit"]');
+            form.classList.add('intentado');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
-            submitBtn.querySelector('span').textContent = 'Registrando...';
+            submitBtn.querySelector('span').textContent = textoEnviando;
 
             try {
-                const fd = new FormData(addForm);
-                const res = await (await fetch('index.php?action=portal_registrar_mascota_ajax', {
+                const res = await (await fetch(`index.php?action=${accion}`, {
                     method: 'POST',
-                    body: fd,
+                    body: new FormData(form),
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })).json();
 
                 if (res.success) {
-                    closeModal('portalAddPetModal');
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Mascota Registrada!',
-                        text: 'Tu nuevo compañero ha sido registrado exitosamente.',
-                        confirmButtonColor: '#5560FF'
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: res.message || 'No se pudo completar el registro.',
-                        confirmButtonColor: '#5560FF'
-                    });
-                    submitBtn.disabled = false;
-                    submitBtn.querySelector('span').textContent = 'Registrar Mascota';
+                    closeModal(modalId);
+                    Swal.fire({ icon: 'success', title: exito[0], text: exito[1], confirmButtonColor: '#0052FF' })
+                        .then(() => location.reload());
+                    return;
                 }
+                Swal.fire({ icon: 'error', title: 'Revisa los datos', text: res.message || 'No se pudo guardar.', confirmButtonColor: '#0052FF' });
             } catch (err) {
                 console.error(err);
-                submitBtn.disabled = false;
-                submitBtn.querySelector('span').textContent = 'Registrar Mascota';
+                Swal.fire({ icon: 'error', title: 'Error de red', text: 'No se pudo conectar con el servidor.', confirmButtonColor: '#0052FF' });
             }
+            submitBtn.disabled = false;
+            submitBtn.querySelector('span').textContent = textoBoton;
         });
-    }
+    };
 
-    // Procesar Edición de Mascota
-    if (editForm) {
-        editForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = editForm.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.querySelector('span').textContent = 'Guardando...';
-
-            try {
-                const fd = new FormData(editForm);
-                const res = await (await fetch('index.php?action=portal_actualizar_mascota_ajax', {
-                    method: 'POST',
-                    body: fd,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })).json();
-
-                if (res.success) {
-                    closeModal('portalEditPetModal');
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Cambios Guardados!',
-                        text: 'La información de tu mascota ha sido actualizada.',
-                        confirmButtonColor: '#5560FF'
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: res.message || 'No se pudo actualizar la mascota.',
-                        confirmButtonColor: '#5560FF'
-                    });
-                    submitBtn.disabled = false;
-                    submitBtn.querySelector('span').textContent = 'Guardar Cambios';
-                }
-            } catch (err) {
-                console.error(err);
-                submitBtn.disabled = false;
-                submitBtn.querySelector('span').textContent = 'Guardar Cambios';
-            }
-        });
-    }
+    enviarMascota(addForm, {
+        accion: 'portal_registrar_mascota_ajax', modalId: 'portalAddPetModal',
+        textoBoton: 'Registrar mascota', textoEnviando: 'Registrando...',
+        exito: ['¡Mascota registrada!', 'Tu nuevo compañero ha sido registrado exitosamente.']
+    });
+    enviarMascota(editForm, {
+        accion: 'portal_actualizar_mascota_ajax', modalId: 'portalEditPetModal',
+        textoBoton: 'Guardar cambios', textoEnviando: 'Guardando...',
+        exito: ['¡Cambios guardados!', 'La información de tu mascota ha sido actualizada.']
+    });
 });
 
 /* Mostrar detalles de una cita */
@@ -2009,26 +2098,8 @@ async function mostrarDetalleCita(idCita) {
 
         // Rellenar Badge de Estado
         const badge = document.getElementById('detCitaEstado');
-        badge.className = 'status-badge';
-        // "programada" no existe en la base: los estados reales son
-        // pendiente/confirmada, así que ninguna cita salía como activa.
-        if (['pendiente', 'confirmada', 'en_curso'].includes(cita.estado)) {
-            badge.style.backgroundColor = 'var(--z-primary-soft)';
-            badge.style.color = 'var(--z-primary)';
-            badge.textContent = cita.estado === 'en_curso' ? 'En atención' : 'Activa';
-        } else if (cita.estado === 'completada') {
-            badge.style.backgroundColor = 'var(--z-success-soft)';
-            badge.style.color = 'var(--z-success)';
-            badge.textContent = 'Completada';
-        } else if (cita.estado === 'no_asistio') {
-            badge.style.backgroundColor = '#F1F5F9';
-            badge.style.color = '#64748B';
-            badge.textContent = 'No asistió';
-        } else {
-            badge.style.backgroundColor = 'var(--z-danger-soft)';
-            badge.style.color = 'var(--z-danger)';
-            badge.textContent = cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1);
-        }
+        badge.className = `status-badge ${claseEstadoCita(cita.estado)}`;
+        badge.textContent = etiquetaEstadoCita(cita.estado);
 
         // Mostrar u ocultar sección clínica
         const clinicaArea = document.getElementById('detCitaClinicaArea');
@@ -2053,19 +2124,15 @@ async function mostrarDetalleCita(idCita) {
             if (tratamientos && tratamientos.length > 0) {
                 tratamientos.forEach(t => {
                     tratamientosList.innerHTML += `
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; margin-top: 0.25rem;">
-                        <div style="font-weight: 800; color: var(--z-primary); font-size: 0.85rem;">💊 ${escapeHtml(t.medicamento)}</div>
-                        <div style="font-size: 0.78rem; color: #475569; margin-top: 0.25rem;">
-                            <strong>Dosis:</strong> ${escapeHtml(t.dosis)} · <strong>Vía:</strong> ${escapeHtml(t.via_administracion)}
-                        </div>
-                        <div style="font-size: 0.78rem; color: #475569; margin-top: 0.15rem;">
-                            <strong>Duración:</strong> ${escapeHtml(t.duracion)}
-                        </div>
-                        ${t.observaciones ? `<div style="font-size: 0.75rem; color: #64748b; margin-top: 0.35rem; font-style: italic; border-top: 1px dotted #cbd5e1; padding-top: 0.35rem;">Nota: ${escapeHtml(t.observaciones)}</div>` : ''}
+                    <div class="cita-tratamiento">
+                        <div class="cita-tratamiento__nombre">💊 ${escapeHtml(t.medicamento)}</div>
+                        <div class="cita-tratamiento__dato"><strong>Dosis:</strong> ${escapeHtml(t.dosis)} · <strong>Vía:</strong> ${escapeHtml(t.via_administracion)}</div>
+                        <div class="cita-tratamiento__dato"><strong>Duración:</strong> ${escapeHtml(t.duracion)}</div>
+                        ${t.observaciones ? `<div class="cita-tratamiento__nota">Nota: ${escapeHtml(t.observaciones)}</div>` : ''}
                     </div>`;
                 });
             } else {
-                tratamientosList.innerHTML = '<p style="margin:0; font-size:0.8rem; color:#64748b; font-style:italic;">No se recetaron medicamentos.</p>';
+                tratamientosList.innerHTML = '<p class="cita-tratamientos__vacio">No se recetaron medicamentos.</p>';
             }
         } else {
             clinicaArea.style.display = 'none';
@@ -2077,18 +2144,15 @@ async function mostrarDetalleCita(idCita) {
 
             if (titleEl && descEl && iconEl) {
                 if (cita.estado === 'completada') {
-                    iconEl.className = 'ri-checkbox-circle-line';
-                    iconEl.style.color = 'var(--z-success)';
+                    iconEl.className = 'ri-checkbox-circle-line is-ok';
                     titleEl.textContent = 'Cita completada sin ficha.';
                     descEl.textContent = 'Esta cita se realizó con éxito, pero no se registraron observaciones clínicas adicionales ni recetas de medicamentos.';
                 } else if (cita.estado === 'cancelada') {
-                    iconEl.className = 'ri-close-circle-line';
-                    iconEl.style.color = 'var(--z-danger)';
+                    iconEl.className = 'ri-close-circle-line is-cancelada';
                     titleEl.textContent = 'Cita cancelada.';
                     descEl.textContent = 'Esta cita fue cancelada y no generó historial clínico.';
                 } else {
                     iconEl.className = 'ri-health-book-line';
-                    iconEl.style.color = 'var(--z-primary)';
                     titleEl.textContent = 'Esta cita aún no ha sido atendida.';
                     descEl.textContent = 'Cuando el veterinario finalice la consulta, aquí podrás visualizar la historia clínica, diagnóstico y medicamentos recetados.';
                 }
