@@ -101,9 +101,9 @@ Estos no tienen HU propia. El módulo 3 (vacunación y recordatorios) no se ha a
 - [x] Auditoría: M4-20 cerrado, conteo de TR-01 actualizado y sección de cierre del módulo 3 (M3-01 a M3-05).
 - [x] README v1.11.0 y `config/App.php`.
 
-**Sin decidir**
+**Decidido aparte**
 
-- HU-52 (notificaciones del propietario en el portal) y HU-55 (exportar a Excel/CSV) no son de agenda, pero son funciones nuevas. HU-55 depende de HU-16, que está retirada.
+- [x] HU-52 (notificaciones del propietario en el portal) y HU-55 (exportar a Excel/CSV) pasan a **Futuro**: se construyen en la versión que trae la arquitectura nueva. HU-55 además hay que redefinirla, porque su criterio se apoya en los reportes en PDF de HU-16, que está retirada.
 - La deuda de TR-01 (estilos y manejadores en línea) y TR-05 (front controller) se deja para la arquitectura nueva.
 
 ## 8. Verificación

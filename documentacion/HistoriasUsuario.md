@@ -903,7 +903,7 @@ Estado **diferida**: historia de agenda, consultas o catálogos que no se comple
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Pendiente | 3 pts | Deseable |
+| Media | Pendiente (futuro) | 3 pts | Deseable |
 
 > Como propietario, quiero ver dentro del portal las notificaciones de mi mascota (recordatorios, confirmaciones, cambios de cita) para no depender solo del correo.
 
@@ -919,6 +919,8 @@ Estado **diferida**: historia de agenda, consultas o catálogos que no se comple
 > _Nota: Función deseable propuesta (hoy el propietario solo recibe correo)._
 
 ## Módulo 6 — Dashboard y reportes
+
+> _Nota: pasa a Futuro en v1.11.0. El centro de notificaciones del propietario se construye con la arquitectura nueva; hoy el canal es el correo._
 
 ### HU-18 — Dashboard principal y panel de pendientes
 
@@ -1001,7 +1003,7 @@ Estado **diferida**: historia de agenda, consultas o catálogos que no se comple
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Pendiente | 3 pts | Deseable |
+| Media | Pendiente (futuro) | 3 pts | Deseable |
 
 > Como administrador o veterinario, quiero exportar los reportes también a Excel/CSV además de PDF para analizarlos fuera del sistema.
 
@@ -1016,6 +1018,8 @@ Estado **diferida**: historia de agenda, consultas o catálogos que no se comple
 > _Nota: Función deseable propuesta (hoy los reportes solo salen en PDF)._
 
 ## Módulo 7 — Configuración del sistema
+
+> _Nota: pasa a Futuro en v1.11.0. Su criterio se apoya en los reportes en PDF de HU-16, que se retiró en v1.9.1, así que hay que redefinirla sobre los indicadores que existan en la arquitectura nueva._
 
 ### HU-43 — Configurar los horarios de atención de la clínica
 

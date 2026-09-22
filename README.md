@@ -24,6 +24,7 @@ Cierre de la versión estable antes del cambio de arquitectura: respaldos que fu
 **Documentación**
 *   Historias de agenda, consultas y catálogos pasan a estado «diferida»: se completan con la nueva arquitectura. HU-44 (catálogos) y HU-20 (panel de vacunas) estaban marcadas como implementadas sin cumplir todos sus criterios.
 *   El MER y el ERS reflejan las migraciones 04 a 13 y las 27 tablas; se corrigió la entidad `notificaciones`, que no correspondía con la tabla real.
+*   HU-52 (notificaciones del propietario) y HU-55 (exportar a Excel/CSV) pasan a Futuro: se construyen con la arquitectura nueva.
 *   Plan del cierre en `specs/cierre-version-estable.md`.
 
 **Despliegue de la v1.11.0 (Dokploy)**
