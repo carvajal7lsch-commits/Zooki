@@ -4,7 +4,14 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de Versiones
 
-### Versión 1.10.0 (Actual)
+### Versión 1.10.1 (Actual)
+Corrección de las vacunas y desparasitaciones en la agenda de salud y en el PDF del portal.
+
+*   **Vacunas en «Próximas dosis»:** el portal leía columnas que la tabla `vacunas` no tiene (`dosis` y `fecha_proxima`; la real es `fecha_proxima_dosis`), así que las vacunas nunca salían en «Próximas dosis» ni en el calendario de salud, y cada carga dejaba avisos de PHP en el log.
+*   **Detalle de cada registro:** las vacunas muestran el laboratorio y las desparasitaciones el tipo y la periodicidad, en lugar de una «Dosis» que no existe en ninguna de las dos tablas.
+*   **PDF de la ficha de salud:** la columna «Próxima aplicación» de las vacunas salía siempre vacía; ahora trae la fecha, y la columna «Dosis» pasó a «Laboratorio» y «Tipo».
+
+### Versión 1.10.0
 Portal del propietario adaptado a móvil, tablet y escritorio, formularios del portal validados en el servidor, correo por Brevo y migraciones que se aplican solas al desplegar.
 
 **Portal del propietario en cualquier pantalla (HU-15, RNF-07)**

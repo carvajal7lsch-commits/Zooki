@@ -355,11 +355,14 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
                 'nombre_mascota' => $vac['nombre_mascota'],
                 'foto_mascota' => $vac['foto_mascota'],
                 'titulo' => $vac['nombre_vacuna'],
-                'detalle' => 'Dosis: ' . $vac['dosis'],
+                // La tabla vacunas no tiene «dosis» ni «fecha_proxima» (esas son de
+                // desparasitaciones): con esos nombres las vacunas nunca salían en
+                // «Próximas dosis» y cada carga dejaba avisos de PHP en el log.
+                'detalle' => !empty($vac['laboratorio']) ? 'Laboratorio: ' . $vac['laboratorio'] : 'Sin laboratorio registrado',
                 'fecha' => $vac['fecha_aplicacion'],
                 'hora' => null,
                 'estado' => 'aplicada',
-                'proxima' => ($vac['fecha_proxima'] !== '0000-00-00') ? $vac['fecha_proxima'] : null
+                'proxima' => (!empty($vac['fecha_proxima_dosis']) && $vac['fecha_proxima_dosis'] !== '0000-00-00') ? $vac['fecha_proxima_dosis'] : null
             ];
         }
         foreach ((array) $todas_desparasitaciones as $d) {
@@ -369,7 +372,8 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
                 'nombre_mascota' => $d['nombre_mascota'],
                 'foto_mascota' => $d['foto_mascota'],
                 'titulo' => $d['producto'],
-                'detalle' => 'Dosis: ' . $d['dosis'],
+                // Tampoco hay «dosis» en desparasitaciones: se muestran el tipo y la periodicidad.
+                'detalle' => ucfirst((string) ($d['tipo'] ?? '')) . ' · ' . ($d['periodicidad'] ?? ''),
                 'fecha' => $d['fecha_aplicacion'],
                 'hora' => null,
                 'estado' => 'aplicado',

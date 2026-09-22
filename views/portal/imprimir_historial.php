@@ -248,7 +248,7 @@
             <thead>
                 <tr>
                     <th>Vacuna</th>
-                    <th>Dosis</th>
+                    <th>Laboratorio</th>
                     <th>Fecha Aplicación</th>
                     <th>Próxima Aplicación</th>
                 </tr>
@@ -257,10 +257,10 @@
                 <?php foreach ($vacunas as $v): ?>
                     <tr>
                         <td><strong><?php echo htmlspecialchars($v['nombre_vacuna']); ?></strong></td>
-                        <td><?php echo htmlspecialchars($v['dosis']); ?></td>
+                        <td><?php echo htmlspecialchars($v['laboratorio'] ?: '—'); ?></td>
                         <td><?php echo date('d/m/Y', strtotime($v['fecha_aplicacion'])); ?></td>
                         <td>
-                            <?php echo ($v['fecha_proxima'] && $v['fecha_proxima'] !== '0000-00-00') ? '<strong>' . date('d/m/Y', strtotime($v['fecha_proxima'])) . '</strong>' : '—'; ?>
+                            <?php echo (!empty($v['fecha_proxima_dosis']) && $v['fecha_proxima_dosis'] !== '0000-00-00') ? '<strong>' . date('d/m/Y', strtotime($v['fecha_proxima_dosis'])) . '</strong>' : '—'; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -277,7 +277,7 @@
             <thead>
                 <tr>
                     <th>Producto</th>
-                    <th>Dosis</th>
+                    <th>Tipo</th>
                     <th>Fecha Aplicación</th>
                     <th>Próxima Aplicación</th>
                 </tr>
@@ -286,7 +286,7 @@
                 <?php foreach ($desparasitaciones as $d): ?>
                     <tr>
                         <td><strong><?php echo htmlspecialchars($d['producto']); ?></strong></td>
-                        <td><?php echo htmlspecialchars($d['dosis']); ?></td>
+                        <td><?php echo htmlspecialchars(ucfirst((string) $d['tipo']) . ' · ' . $d['periodicidad']); ?></td>
                         <td><?php echo date('d/m/Y', strtotime($d['fecha_aplicacion'])); ?></td>
                         <td>
                             <?php echo ($d['fecha_proxima'] && $d['fecha_proxima'] !== '0000-00-00') ? '<strong>' . date('d/m/Y', strtotime($d['fecha_proxima'])) . '</strong>' : '—'; ?>
