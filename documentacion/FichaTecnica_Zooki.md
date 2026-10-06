@@ -1,6 +1,6 @@
 # Ficha Técnica del Proyecto — Zooki
 
-> **Revisión 3.0** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
+> **Revisión 3.1** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
 ## Identificación del Proyecto
 
@@ -15,8 +15,8 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | v1.11.0 en producción · **v2.0 en desarrollo** (documentación completa) |
-| Versión del documento | 3.0 — Octubre 2026 |
+| Estado actual | v1.12.0 en producción · **v2.0 en construcción** (especificación aprobada) |
+| Versión del documento | 3.1 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
 
@@ -167,8 +167,8 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 - Código fuente completo en repositorio GitHub con [README técnico](../README.md).
 - Aplicación desplegada en el servidor propio.
 - Base de datos con datos de prueba.
-- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.1).
-- Esta Ficha Técnica del Proyecto (Revisión 3.0).
+- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.2).
+- Esta Ficha Técnica del Proyecto (Revisión 3.1).
 - [Reglas de Negocio](ReglasNegocio.md), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.0) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.0).
 - [Modelo Entidad-Relación](MER.md) y [Modelos y diagramas](Modelos.md) (grafos, procesos, flujos de sistema y componentes) con su maestro draw.io.
 - [Historial de Versiones](HistorialVersiones.md) y documento de [Presupuesto y ROI](PresupuestoROI.md).

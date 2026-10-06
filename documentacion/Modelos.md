@@ -132,7 +132,7 @@ flowchart LR
 
 ## 3. Proceso de negocio — Consulta clínica (con Grafo I)
 
-Actores: Veterinario. Entrada desde una cita del calendario, o sin cita vía el módulo de Atención/Urgencias. El sistema apoya en cada paso; la decisión final es siempre del veterinario.
+Actores: Veterinario. Entrada desde una cita del calendario, o sin cita vía el módulo de Atención/Urgencias. Si la alerta roja se originó en el portal autenticado, ya están identificados el propietario de la sesión y la mascota que seleccionó; la verificación rápida y la ficha provisional corresponden solo a una llegada presencial sin identidad comprobada. El sistema apoya en cada paso; la decisión final es siempre del veterinario.
 
 ```mermaid
 flowchart TD
@@ -144,17 +144,17 @@ flowchart TD
   C -- Si --> D[Iniciar atencion y sellar hora_inicio_real]
   D --> CTX
 
-  B -- "Sin cita / urgencia (modulo Atencion)" --> F{La mascota esta vinculada a la clinica?}
-  F -- Si --> F1[Seleccionar la mascota activa]
+  B -- "Sin cita / urgencia (modulo Atencion)" --> FP{El rojo vino del portal autenticado?}
+  FP -- Si --> FPP["Usar propietario de la sesion y mascota seleccionada;<br/>sin nueva verificacion"]
+  FPP --> CTX
+  FP -- "No: llegada presencial" --> F{Se identifico una ficha existente y se verifico la relacion con su propietario?}
+  F -- Si --> F1["Usar la ficha existente; vincularla a la clinica<br/>si hace falta (RN-110, RN-208)"]
   F1 --> CTX
-  F -- No --> FX{"Ya existe en la plataforma? (buscar por el documento de quien la trae)"}
-  FX -- Si --> FX1["Vincularla a esta clinica al atenderla (RN-110, RN-208)"]
-  FX1 --> CTX
-  FX -- No --> G["Registro rapido de emergencia: nombre, especie, raza o edad de la mascota<br/>y nombre, documento y telefono de quien la trae"]
-  G --> G1["Guardar la mascota con marca 'ficha por completar', a nombre de esa persona<br/>(si no tiene cuenta, queda creada pendiente de activar, §11)"]
+  F -- No --> G["Registro rapido de emergencia: datos disponibles de la mascota<br/>y del acompanante; lo faltante no retrasa la atencion"]
+  G --> G1["Guardar ficha provisional e ingreso con datos disponibles del acompañante;<br/>sin atribuir propiedad ni crear cuenta antes del consentimiento (HU-4.15)"]
   G1 --> CTX
 
-  CTX["Contexto del paciente: especie, raza, edad, alergias y alertas, historia<br/>(consultas de otras clinicas solo si el propietario lo autorizo, RN-113)<br/>+ predisposiciones por raza (Grafo I)"] --> H["Form Consulta: motivo, anamnesis,<br/>examen fisico (peso, temperatura, FC, FR), sintomas"]
+  CTX["Contexto disponible del paciente: especie, raza, edad, alergias y alertas, historia<br/>(consultas de otras clinicas solo si el propietario lo autorizo, RN-113);<br/>los datos desconocidos de una ficha provisional no se inventan"] --> H["Form Consulta: motivo, anamnesis,<br/>examen fisico y sintomas disponibles"]
   H --> I{Campos obligatorios y rangos validos?}
   I -- No --> I1[/"Mensaje: corrige los campos marcados"/]
   I1 --> H
@@ -166,20 +166,14 @@ flowchart TD
   L --> N{"Diagnostico registrado? (RN-202)"}
   N -- No --> N1[/"Mensaje: el diagnostico es obligatorio"/]
   N1 --> L
-  N -- Si --> O[Grafo I sugiere examenes y tratamiento]
-  O --> O2[El veterinario revisa y decide: acepta la sugerencia o define el suyo]
-  O2 --> P["Form Tratamiento: medicamento, dosis,<br/>via, duracion, observaciones"]
+  N -- Si --> P["El veterinario define el tratamiento:<br/>medicamento, dosis, via, duracion, observaciones"]
   P --> Q{"Alergia registrada del paciente, toxico para la especie<br/>o contraindicado por raza? (RN-211)"}
   Q -- Si --> Q1[/"Mensaje de bloqueo: elige otro farmaco"/]
   Q1 --> P
   Q -- No --> R{Interaccion con la medicacion vigente?}
   R -- Si --> R1[Advertencia: el vet confirma o cambia. Queda en auditoria]
-  R -- No --> S[Calcular dosis por peso del examen fisico y especie]
-  R1 --> S
-  S --> T{"Hay condicion que ajuste la dosis? (falla renal/hepatica, preñez)"}
-  T -- Si --> T1[Ajustar o advertir la dosis]
-  T -- No --> U{Agregar otro tratamiento?}
-  T1 --> U
+  R -- No --> U{Agregar otro tratamiento?}
+  R1 --> U
   U -- Si --> P
   U -- No --> AL{"Detecto una alergia o alerta nueva?"}
   AL -- Si --> AL1["Registrarla en las alertas de la mascota<br/>(visible para toda clinica vinculada y en el carnet)"]
@@ -241,7 +235,7 @@ flowchart TD
   MODO -- "Naranja (urgente): sobrecupo" --> TOP{"Queda cupo de sobrecupo en el proximo bloque?<br/>(tope configurable, por defecto 2)"}
   TOP -- No --> TOP1[/"Aviso al personal: tope de sobrecupos alcanzado, decide"/]
   TOP1 --> ZF
-  TOP -- Si --> N1["Ubicar por sobrecupo; si dos compiten,<br/>primero el mas severo y luego el que llego antes"]
+  TOP -- Si --> N1["Ubicar por sobrecupo; entre naranjas, orden de llegada.<br/>El veterinario puede cambiarlo con motivo y auditoria"]
   MODO -- "Amarillo (prioritario): primer espacio" --> Y1[El sistema toma el primer espacio disponible priorizado]
   MODO -- "Verde (no urgente): eleccion" --> VE0{Hay espacios disponibles?}
   VE0 -- No --> VE0a[/"Mensaje: no hay espacios, elige otra fecha o rango"/]
@@ -301,7 +295,7 @@ flowchart TD
 
 ## 6. Proceso de negocio — Atención de urgencia (caso Rojo / llegada directa)
 
-Actores: Veterinario y Propietario (que trae la mascota). Se dispara cuando el Grafo I marca un caso Rojo o cuando llega una urgencia directa a la clínica. El uso inmediato del espacio altera la agenda, por eso enlaza con el reajuste en vivo (§5) y con la consulta (§3).
+Actores: Veterinario y Propietario (o acompañante que trae la mascota). Se dispara cuando el Grafo I marca un caso Rojo desde el portal autenticado o cuando llega una urgencia directa a la clínica. El portal ya conoce al propietario y a la mascota seleccionada; la comprobación presencial solo aplica a la llegada directa. El uso inmediato del espacio altera la agenda, por eso enlaza con el reajuste en vivo (§5) y con la consulta (§3).
 
 ```mermaid
 flowchart TD
@@ -313,10 +307,13 @@ flowchart TD
   E --> E1[Avisar el corrimiento a los afectados]
   PZ -- No --> E2["Asignar al primer veterinario que termine;<br/>informar el tiempo estimado y, si no puede esperar, un servicio 24 horas"]
   E2 --> E1
-  D --> F{La mascota esta registrada?}
-  E1 --> F
-  F -- Si --> F1[Seleccionar la mascota]
-  F -- No --> F2["Registro rapido de emergencia (marca 'ficha por completar')"]
+  D --> O{Origen del caso rojo?}
+  E1 --> O
+  O -- "Portal autenticado" --> FP["Usar propietario de la sesion y mascota seleccionada;<br/>sin repetir verificacion"]
+  FP --> G
+  O -- "Llegada presencial" --> F{La ficha existente y su relacion con el propietario estan verificadas?}
+  F -- Si --> F1["Usar cuenta y ficha existentes;<br/>sin retrasar la atencion"]
+  F -- No --> F2["Crear ficha provisional de emergencia e ingreso del acompanante;<br/>sin crear cuenta ni activar el carnet"]
   F1 --> G[["Consulta clinica via modulo Atencion/Urgencias (§3)"]]
   F2 --> G
   G --> H{{El uso del espacio altera la agenda del dia}}
@@ -363,13 +360,10 @@ flowchart TD
   E -- No --> F[Registrar en auditoria]
   E -- Si --> G[Grafo II busca cobertura: veterinarios con disponibilidad compatible]
   G --> H{Hay veterinario que pueda cubrir?}
-  H -- Si --> I[Proponer la cobertura al veterinario destino]
-  I --> J{El veterinario destino confirma?}
-  J -- Si --> K[Reasignar las citas al veterinario de cobertura]
+  H -- Si --> K[Asignar las citas al veterinario de cobertura sin veto]
   K --> L[Notificar al propietario y a ambos veterinarios]
-  J -- No --> M[Marcar las citas sin cobertura para gestion manual]
-  H -- No --> M
-  M --> N[/"Aviso a la clinica: citas sin cobertura por reprogramar"/]
+  H -- No --> M[Ofrecer otros espacios al propietario y dejar las citas pendientes de reprogramar]
+  M --> N[/"Avisar al propietario y a la clinica que no hubo cobertura"/]
   L --> F
   N --> F
   F --> O([Fin])
@@ -492,7 +486,7 @@ flowchart TD
   MED -- Formulario --> C
   B1 --> C
 
-  C["Capturar datos: nombre, tipo y numero de documento, correo, telefono, contraseña<br/>y aceptacion de la politica de datos (en el alta por el personal no se pide contraseña:<br/>el titular la crea y acepta la politica al activar desde el correo)"] --> D{"Campos validos (formato, contraseña segura, politica aceptada)?"}
+  C["Capturar datos y aceptacion expresa del titular antes de crear la cuenta.<br/>En alta por personal, el titular acepta presencialmente y crea la contraseña al activar;<br/>si no esta presente o no acepta, se remite al autorregistro sin crear cuenta"] --> D{"Campos validos y politica aceptada por el titular?"}
   D -- No --> D1[/"Mensaje: corrige los campos marcados"/]
   D1 --> C
   D -- Si --> E{El correo ya existe en la plataforma?}
@@ -527,7 +521,11 @@ flowchart TD
   GG2 -- Si --> GG3{El correo ya tiene cuenta?}
   GG3 -- Si --> GG4["Vincular Google a esa cuenta (si estaba pendiente, queda verificada<br/>y se anula su contraseña, RN-G21) y ligarla a esta clinica si no lo estaba"]
   GG4 --> AUD
-  GG3 -- No --> GG5["Crear la identidad con nombre, correo y foto de Google<br/>(perfil incompleto, sin verificar correo)"]
+  GG3 -- No --> GGP[Mostrar la politica de datos vigente]
+  GGP --> GGA{Acepta expresamente?}
+  GGA -- No --> GGNA[/"No se crea cuenta ni vinculo"/]
+  GGNA --> ZF
+  GGA -- Si --> GG5["Crear la identidad con nombre, correo y foto de Google<br/>y guardar la prueba de aceptacion; perfil incompleto"]
   GG5 --> GG6["Ligar a esta clinica (propietario_clinica)"]
   GG6 --> GG7[["Completar el perfil (§13.1)"]]
   GG7 --> AUD
@@ -619,7 +617,7 @@ flowchart TD
   P -- Si --> Q["Mostrar sus mascotas (nombre, especie, raza, foto; sin datos clinicos)"]
   Q --> V{Es una de ellas?}
   V -- Si --> W["Vincular la mascota existente a esta clinica (mascota_clinica);<br/>conserva su ficha, carnet y QR"]
-  W --> I
+  W --> K
   V -- No --> G
   P -- No --> G
   E --> G
@@ -627,8 +625,7 @@ flowchart TD
   H -- No --> H1[/"Mensaje: corrige los campos marcados"/]
   H1 --> G
   H -- Si --> J["Guardar la mascota (global, del propietario), vincularla a esta clinica<br/>y generar el carnet con un token aleatorio para el QR"]
-  J --> I["Asignar el numero de historia clinica de esta clinica (si es la primera vez)"]
-  I --> K[Registrar en auditoria]
+  J --> K[Registrar en auditoria]
   K --> ZF
 ```
 
@@ -733,15 +730,15 @@ No es una pantalla aparte que la persona busque: aparece sola apenas termina el 
 
 ```mermaid
 flowchart TD
-  A(["Se dispara al terminar el registro con Google (§11)<br/>y en cada inicio de sesion mientras el perfil siga incompleto (§10)"]) --> B["Pantalla obligatoria: tipo y numero de documento, telefono<br/>y aceptacion de la politica de datos"]
-  B --> C{"Campos completos, formato valido y politica aceptada?"}
+  A(["Se dispara al terminar el registro con Google (§11)<br/>y en cada inicio de sesion mientras el perfil siga incompleto (§10)"]) --> B["Pantalla obligatoria: tipo y numero de documento y telefono"]
+  B --> C{Campos completos y formato valido?}
   C -- No --> C1[/"Mensaje: corrige los campos marcados"/]
   C1 --> B
   C -- Si --> D{El documento ya pertenece a otra cuenta?}
   D -- Si --> D1[/"Mensaje: ese documento ya tiene cuenta; inicia sesion con ella o contacta soporte"/]
   D1 --> D2[Crear el caso para el super-administrador: posible cuenta duplicada]
   D2 --> ZF([Fin: el perfil sigue incompleto])
-  D -- No --> E[Guardar documento y telefono; guardar la prueba de aceptacion de la politica]
+  D -- No --> E[Guardar documento y telefono]
   E --> F[Marcar el perfil como completo]
   F --> G[Registrar en auditoria]
   G --> H([Portal habilitado: registrar mascotas y agendar])

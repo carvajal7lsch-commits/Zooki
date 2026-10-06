@@ -1,12 +1,12 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 3.0** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 de la v2.0) · SENA ADSO — Ficha 3142784
+> **Revisión 3.1** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
 Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) → Requisito específico (RE)**. Origen: `ZOOK-xx` (backlog Jira), `Nuevo` (funcionalidad existente ya documentada), `VD-xxx` (derivada del análisis de vacíos), `Deseable` (propuesta aún no construida), `v2` (derivada de los modelos de proceso de la Fase 2).
 
-Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por construir. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2.0. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma en la v2.0 (ver las notas _v2.0_ de cada una).
+Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir, asignada a v2.0 o v2.1 según el plan de entregas. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma según el plan de entregas.
 
 **Índice de módulos:**
 
@@ -466,8 +466,8 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 **Criterios de aceptación:**
 
 - Desde el enlace o QR de una clínica, o eligiéndola de la lista, puedo continuar con Google; el registro de clínicas y el alta de personal no ofrecen esta opción.
-- Si mi correo es nuevo, se crea mi cuenta con el nombre, el correo y la foto de Google, sin verificar el correo, y quedo vinculado a esa clínica.
-- Antes de usar el portal completo, una pantalla obligatoria me pide el tipo y número de documento, el teléfono y aceptar la política de tratamiento de datos; mientras no la complete, no puedo registrar mascotas ni agendar.
+- Si mi correo es nuevo, antes de crear la cuenta acepto la política de tratamiento de datos; si no acepto, no se guarda la identidad ni el vínculo con la clínica. Al aceptar, se crea la cuenta con el nombre, el correo y la foto de Google, sin verificar de nuevo el correo, y quedo vinculado a esa clínica.
+- Antes de usar el portal completo, una pantalla obligatoria me pide el tipo y número de documento y el teléfono; mientras no la complete, no puedo registrar mascotas ni agendar.
 - Si mi correo ya tiene cuenta, Google se vincula a ella; si estaba pendiente de verificar, queda verificada, se anula la contraseña que tenía y me pide confirmar mis datos.
 - El token de Google se valida contra el client_id de Zooki (RN-G12).
 
@@ -483,7 +483,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 
 **Criterios de aceptación:**
 
-- Todo registro (formulario, Google o alta por el personal) exige aceptar la política; sin aceptación no se crea la cuenta. En el alta por el personal, el titular la acepta al activar su cuenta.
+- Todo registro (formulario, Google o alta por el personal) exige que el titular acepte la política antes de crear la cuenta. En el alta presencial, el personal muestra la política y el titular la acepta directamente; si no está presente o no acepta, no se registra la cuenta y se le remite al autorregistro.
 - Se guarda la prueba: quién, qué versión, por qué medio, cuándo y desde qué IP.
 - Si la política cambia, en el siguiente inicio de sesión se pide aceptar la nueva versión antes de continuar.
 - Revocar la autorización lleva a la solicitud de eliminación de la cuenta (HU-5.14).
@@ -747,7 +747,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 
 - Al prescribir un fármaco, el Grafo I lo cruza con la especie, la raza, las alergias y la medicación vigente del paciente, incluidas las registradas por otras clínicas (RN-113).
 - Si hay contraindicación por especie o raza (toxicidad), la prescripción se **bloquea** con un mensaje para elegir otro fármaco.
-- Si hay interacción con la medicación vigente, se **advierte**: el veterinario confirma o cambia, y la decisión queda en auditoría.
+- Si hay interacción con la medicación vigente, se **advierte**: el veterinario confirma o cambia, y la decisión queda en auditoría. Si la interacción procede de un tratamiento de otra clínica sin autorización de lectura, el aviso es genérico y el veterinario documenta la conciliación con el propietario o solicita autorización antes de confirmar; no se revela el tratamiento protegido.
 - El soporte es de apoyo (RN-209): no receta por sí solo; la decisión final es del veterinario.
 - El conocimiento (relaciones positivas y negativas con signo) es global a la plataforma.
 
@@ -1064,7 +1064,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 > _Nota: Deriva del análisis de vacíos (VD-AGN-07). En v1.9.0 se implementaron el estado `no_asistio` (migración 09), el botón «No asistió» del calendario y la liberación del espacio en toda la lógica de disponibilidad. Falta un reporte propio de la tasa de ausentismo: por ahora las inasistencias solo se ven en la gráfica «Mis citas» del panel del veterinario (últimos 30 días)._
 
 > _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura. Falta RE-4.7.3 (tasa de ausentismo)._
-> _v2.0: la tasa de ausentismo pasa a ser un indicador de las estadísticas del dashboard (HU-6.4)._
+> _v2.1: se completa el reporte propio de la tasa de ausentismo. El estado `no_asistio` y la liberación del espacio ya existen desde v1.9.0 y se conservan al migrar la agenda en v2.0; HU-4.19 depende solo de esa base operativa._
 
 ### HU-4.8 — Bloqueos de agenda del veterinario y días no laborables
 
@@ -1182,7 +1182,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 - Al describir el motivo y los síntomas, el **Grafo I** calcula el nivel de triage (🔴 rojo, 🟠 naranja, 🟡 amarillo, 🟢 verde); el propietario no lo elige.
 - El nivel se calcula según HU-2.11. Si es 🔴, no se verifica el límite del plan (RN-420); en los demás niveles se verifica antes de reservar (HU-0.4).
 - 🔴 **Rojo (crítico):** no se agenda en línea; se avisa y se deriva a atención de urgencia (HU-4.15).
-- 🟠 **Naranja (urgente):** se ubica por **sobrecupo** sobre el próximo bloque del veterinario adecuado, hasta el tope de sobrecupos del bloque; si dos compiten, va primero el más severo y, si empatan, el que llegó antes. Superado el tope, se avisa al personal.
+- 🟠 **Naranja (urgente):** se ubica por **sobrecupo** sobre el próximo bloque del veterinario adecuado, hasta el tope de sobrecupos del bloque. Si dos compiten, va primero el que llegó antes; un veterinario puede cambiar el orden con motivo obligatorio y auditoría. Superado el tope, se avisa al personal.
 - 🟡 **Amarillo (prioritario):** toma el primer espacio disponible priorizado.
 - 🟢 **Verde (no urgente):** el actor elige entre los espacios disponibles; si no hay, se ofrece cambiar de fecha o rango.
 - La disponibilidad se calcula como `horario clínica ∩ horario del veterinario − ausencias`, por duración + margen del tipo de cita (RN-415).
@@ -1224,7 +1224,10 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 - La urgencia no se bloquea por el límite del plan ni por la mora.
 - Si hay un veterinario libre de inmediato, se le asigna; si no, se toma a uno cuya cita en curso sea **pausable** según su tipo de cita, y se avisa el corrimiento a los afectados. La cita pausada se retoma al terminar la urgencia, antes que las siguientes.
 - Si todos están en atención no pausable, la urgencia queda "en espera por prioridad" y la toma el primer veterinario que se libere.
-- Si la mascota no está registrada, se hace un **registro rápido de emergencia** (marca "ficha por completar") a nombre de quien la trae; si esa persona no tiene cuenta, queda creada pendiente de activar.
+- Si el rojo se origina en el **portal autenticado**, se usan el propietario de la sesión y la mascota seleccionada; no se repite la verificación de identidad ni se crea una ficha provisional.
+- Si el paciente **llega físicamente a la clínica**, el personal usa la cuenta y la ficha existentes cuando puede verificar su relación sin retrasar la atención roja.
+- Si en ese ingreso presencial no se puede identificar o vincular con seguridad a la mascota, se crea una **ficha provisional de emergencia** vinculada a la clínica, con los datos disponibles del animal y un ingreso con los datos disponibles de quien lo trae. La ficha queda «por completar», sin carnet público activo y sin crear una cuenta de usuario ni atribuirle la propiedad al acompañante; el límite del plan no bloquea este ingreso rojo.
+- Después de la atención se verifica la titularidad. Si la mascota ya tenía ficha, se consolidan los actos clínicos en ella y se conserva la trazabilidad del ingreso provisional; si es nueva, se completa su ficha y se vincula a la cuenta existente del propietario o se crea una cuenta nueva solo tras su consentimiento (RN-G19). Nada clínico se borra.
 - La atención continúa por el flujo de consulta clínica vía el módulo de Atención/Urgencias (HU-2.2).
 - Como el uso del espacio altera la agenda del día, enlaza con el reajuste en vivo (HU-4.14).
 
@@ -1297,6 +1300,8 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 - En todos los casos la agenda se recalcula y la decisión queda en auditoría.
 
 **Reglas de negocio:** RN-426, RN-408, RN-412 · **Requisitos:** RF-4.14 · **Dependencias:** HU-4.14, HU-4.7
+
+> _La dependencia con HU-4.7 en v2.0 se limita al estado `no_asistio` y a liberar el espacio, ya implementados en v1.9.0. El reporte de ausentismo queda en v2.1._
 
 ---
 ---
@@ -1716,7 +1721,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 **Criterios de aceptación:**
 
 - Puedo agregar entradas a los catálogos de mi clínica.
-- _(v2.0)_ Las especies, razas y colores son catálogos globales de la plataforma: los administra el super-administrador, y una clínica puede proponer una raza que falte (la raza escrita queda como «por confirmar»).
+- _(v2.0)_ Las especies, razas y colores ya son catálogos globales precargados; si falta una raza, se conserva el texto indicado como «por confirmar». En v2.1 el super-administrador gestiona esos catálogos y la clínica puede proponer la raza faltante.
 - Las nuevas entradas aparecen en los formularios correspondientes.
 - Las vacunas base se asocian por especie.
 
@@ -1753,13 +1758,13 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 
 **Criterios de aceptación:**
 
-- Configuro los datos de marca de la clínica: nombre, logo y datos de contacto.
+- Configuro los datos de marca de la clínica: nombre, logo y datos de contacto, incluido el teléfono de urgencias que se muestra cuando la clínica está cerrada.
 - Gestiono los tipos de cita de la clínica, cada uno con su duración, su margen (buffer), insumo del cálculo de disponibilidad (RN-415), y si es **pausable** ante una urgencia (RN-427).
 - Los datos de marca aparecen en el portal, los correos y los documentos de la clínica.
 - Todo es propio de cada clínica (aislamiento por `id_clinica`).
 - Los cambios quedan en auditoría.
 
-**Reglas de negocio:** RN-009, RN-415, RN-701, RN-427 · **Requisitos:** RF-7.1, RF-7.3 · **Dependencias:** HU-0.3
+**Reglas de negocio:** RN-009, RN-415, RN-421, RN-701, RN-427 · **Requisitos:** RF-7.1, RF-7.3 · **Dependencias:** HU-0.3
 
 ### HU-7.5 — Parámetros del sistema configurables
 
@@ -1772,7 +1777,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 **Criterios de aceptación:**
 
 - Puedo definir la duración de cita por defecto y el buffer entre citas.
-- _(v2.0)_ Puedo definir los parámetros de la agenda: tolerancia de llegada tarde, plazo para confirmar una reasignación, umbral de aviso de cambios de hora, tope de sobrecupos por bloque y teléfono de urgencias de la clínica. Cada uno tiene un valor por defecto.
+- _(v2.0)_ La agenda usa valores por defecto para tolerancia de llegada tarde, plazo de confirmación de reasignación, umbral de aviso y tope de sobrecupos. El teléfono de urgencias se captura en los datos de la clínica (HU-7.4). En v2.1 el administrador puede configurar estos parámetros.
 - Los cambios se aplican en la agenda. Los tiempos de los recordatorios se configuran en HU-8.4.
 
 **Reglas de negocio:** RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429 · **Requisitos:** RF-7.5 · **Dependencias:** HU-7.1
@@ -1902,39 +1907,42 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS v2.0 aún por cons
 
 Todo lo especificado en este documento es alcance de la v2 (salvo lo marcado como futuro). Para que lo que se presenta esté completo y funcionando, la construcción se ordena en dos entregas: la **v2.0** reúne lo imprescindible para demostrar el valor del sistema (multi-clínica, los dos grafos, el portal y el carnet QR) y la **v2.1** completa el resto. Una historia en la v2.1 no queda fuera del alcance: queda especificada y planificada para la entrega siguiente.
 
-### Entrega v2.0 — imprescindible para la presentación (27 historias, 151 puntos)
+Dentro de cada entrega, la tabla sigue las dependencias principales: primero el aislamiento y la identidad, después las funciones que los usan. Las historias v1.x que ya funcionan se migran por completo cuando una historia v2 las toca.
+
+### Entrega v2.0 — imprescindible para la presentación (28 historias, 159 puntos)
 
 | Historia | Título | Puntos |
 |---|---|---|
+| HU-T.15 | Aislamiento por clínica y rol super-administrador | 8 |
+| HU-T.16 | Expiración de la sesión por inactividad | 3 |
+| HU-T.17 | Una persona con varios roles: elegir el contexto al iniciar sesión | 5 |
+| HU-T.19 | Aceptar la política de tratamiento de datos | 3 |
+| HU-5.8 | Registrar al propietario como identidad global | 8 |
 | HU-0.1 | Registrar una clínica (self-service) | 8 |
 | HU-0.2 | Verificar el correo y activar la clínica | 3 |
 | HU-0.3 | Panel del super-administrador | 8 |
 | HU-0.4 | Control de límites del plan (freemium) | 5 |
-| HU-T.15 | Aislamiento por clínica y rol super-administrador | 8 |
-| HU-T.16 | Expiración de la sesión por inactividad | 3 |
-| HU-T.17 | Una persona con varios roles: elegir el contexto al iniciar sesión | 5 |
 | HU-T.18 | Registrarme e iniciar sesión con Google (propietario) | 5 |
-| HU-T.19 | Aceptar la política de tratamiento de datos | 3 |
+| HU-5.9 | Iniciar sesión en el portal multi-clínica | 5 |
 | HU-1.5 | Vincular una mascota existente a la clínica | 3 |
+| HU-5.12 | Autorizar a una clínica a ver la historia de otras clínicas | 3 |
+| HU-5.13 | Vincularme o desvincularme de una clínica | 3 |
+| HU-2.10 | Ver la historia compartida de la mascota (multi-clínica) | 5 |
 | HU-2.8 | Sugerencia de diagnósticos probables por síntomas | 8 |
 | HU-2.9 | Alertas de toxicidad e interacción al prescribir | 8 |
-| HU-2.10 | Ver la historia compartida de la mascota (multi-clínica) | 5 |
 | HU-2.11 | Calcular el nivel de triage a partir de los síntomas | 8 |
+| HU-7.4 | Personalizar la clínica: marca y tipos de cita | 5 |
 | HU-4.11 | Configurar el horario recurrente del veterinario | 5 |
+| HU-4.12 | Registrar ausencia del veterinario y gestionar cobertura | 8 |
 | HU-4.13 | Agendar cita con triage de 4 niveles | 8 |
 | HU-4.14 | Reajuste de agenda en vivo (efecto cascada) | 8 |
 | HU-4.15 | Atender una urgencia (triage rojo o llegada directa) | 8 |
 | HU-4.18 | Ajustar el nivel de triage (veterinario) | 3 |
 | HU-4.19 | Manejar la llegada tarde del propietario | 5 |
-| HU-5.8 | Registrar al propietario como identidad global | 8 |
-| HU-5.9 | Iniciar sesión en el portal multi-clínica | 5 |
 | HU-5.10 | Carnet digital de la mascota con QR de emergencia | 5 |
 | HU-5.11 | Acceder al carnet por QR en modo solo lectura | 5 |
-| HU-5.12 | Autorizar a una clínica a ver la historia de otras clínicas | 3 |
-| HU-5.13 | Vincularme o desvincularme de una clínica | 3 |
-| HU-7.4 | Personalizar la clínica: marca y tipos de cita | 5 |
 
-### Entrega v2.1 — completa el alcance (17 historias, 70 puntos)
+### Entrega v2.1 — completa el alcance (16 historias, 62 puntos)
 
 | Historia | Título | Puntos |
 |---|---|---|
@@ -1942,7 +1950,6 @@ Todo lo especificado en este documento es alcance de la v2 (salvo lo marcado com
 | HU-3.5 | Panel de vacunaciones pendientes | 3 |
 | HU-4.7 | Estado "no asistió" y ausentismo | 3 |
 | HU-4.10 | Confirmar asistencia a la cita desde el recordatorio | 3 |
-| HU-4.12 | Registrar ausencia del veterinario y gestionar cobertura | 8 |
 | HU-4.16 | Sugerir veterinario al agendar | 5 |
 | HU-4.17 | Recalcular el triage cuando cambian los síntomas | 3 |
 | HU-5.7 | Centro de notificaciones del propietario | 3 |
@@ -2069,7 +2076,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-418 | HU-2.11 |
 | RN-419 | HU-4.18 |
 | RN-420 | HU-0.4, HU-4.13, HU-4.15 |
-| RN-421 | HU-4.15, HU-7.5 |
+| RN-421 | HU-4.15, HU-7.4, HU-7.5 |
 | RN-422 | HU-4.13, HU-7.5 |
 | RN-423 | HU-4.17 |
 | RN-424 | HU-2.11 |
@@ -2199,4 +2206,3 @@ Puente de trazabilidad: los comentarios del código y los documentos `AuditoriaM
 | HU-8.4 | HU-78 | Tiempos de envío de recordatorios configurables |
 | HU-8.5 | HU-79 | Bitácora de correos y notificaciones |
 | HU-9.1 | HU-49 | Página pública y políticas legales |
-

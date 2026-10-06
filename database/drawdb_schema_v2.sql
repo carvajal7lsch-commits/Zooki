@@ -96,7 +96,7 @@ CREATE TABLE `veterinario_especialidades` (
 
 CREATE TABLE `resenas_veterinario` (
   `id_resena` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `id_cita` int(11) NOT NULL,
+  `id_cita` int(11) NOT NULL UNIQUE,                         -- una reseña por cita (RN-801)
   `id_veterinario` int(11) NOT NULL,
   `id_propietario` int(11) NOT NULL,
   `estrellas` tinyint(4) NOT NULL,
@@ -206,7 +206,8 @@ CREATE TABLE `mascota_clinica` (
   `numero_historia_clinica` varchar(255) DEFAULT NULL,
   `estado` enum('activo','inactivo') NOT NULL DEFAULT 'activo',
   `fecha_vinculo` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id_mascota`, `id_clinica`)
+  PRIMARY KEY (`id_mascota`, `id_clinica`),
+  UNIQUE KEY `uq_mascota_clinica_numero_hc` (`id_clinica`, `numero_historia_clinica`)
 );
 CREATE TABLE `carnet_escaneos` (
   `id_escaneo` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -218,7 +219,8 @@ CREATE TABLE `carnet_escaneos` (
   `notificado` tinyint(1) NOT NULL DEFAULT 0
 );
 -- El propietario es identidad global (usuarios.email único); se vincula a una o varias
--- clínicas por propietario_clinica, previa verificación del correo.
+-- clínicas por propietario_clinica; una cuenta ya verificada que inicia sesión
+-- puede elegir otra clínica sin repetir la verificación del correo (HU-5.13).
 
 -- ---------- Catálogos taxonómicos — GLOBALES ----------
 
@@ -242,21 +244,35 @@ CREATE TABLE `colores_base` (
 
 CREATE TABLE `mascotas` (
   `id_mascota` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `id_propietario` int(11) NOT NULL,
+  `id_propietario` int(11) DEFAULT NULL,                    -- NULL solo mientras se verifica una urgencia provisional (RE-4.15.3)
   `id_clinica_registro` int(11) DEFAULT NULL,
   `token_carnet` char(43) NOT NULL UNIQUE,
   `carnet_activo` tinyint(1) NOT NULL DEFAULT 1,              -- 0 si la mascota se inactiva o el propietario suprime su cuenta
   `token_carnet_fecha` datetime DEFAULT current_timestamp(),
-  `id_especie` int(11) NOT NULL,
-  `id_raza` int(11) NOT NULL,
-  `nombre` varchar(255) NOT NULL,
+  `id_especie` int(11) DEFAULT NULL,                       -- datos faltantes permitidos solo en ficha provisional
+  `id_raza` int(11) DEFAULT NULL,
+  `nombre` varchar(255) DEFAULT NULL,
   `fecha_nacimiento` date DEFAULT NULL,
-  `peso` decimal(5,2) NOT NULL,
+  `peso` decimal(5,2) DEFAULT NULL,
   `sexo` enum('Macho','Hembra','Desconocido') NOT NULL DEFAULT 'Desconocido',
   `esterilizado` tinyint(1) DEFAULT NULL,                     -- NULL = no se sabe; lo usa el triage (RN-416)
   `estado` tinyint(4) NOT NULL DEFAULT 1,
+  `ficha_por_completar` tinyint(1) NOT NULL DEFAULT 0,     -- una urgencia puede atenderse antes de completar identidad y datos
   `url_foto` varchar(255) DEFAULT NULL,
   `raza_indicada` varchar(100) DEFAULT NULL
+);
+
+-- Solo para llegadas presenciales sin ficha verificable a tiempo; el portal usa la mascota de la sesión.
+CREATE TABLE `ingresos_emergencia` (
+  `id_ingreso` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `id_clinica` int(11) NOT NULL,
+  `id_mascota_provisional` int(11) NOT NULL,
+  `id_mascota_final` int(11) DEFAULT NULL,                 -- misma mascota al completar o ficha existente al consolidar
+  `nombre_acompanante` varchar(255) DEFAULT NULL,
+  `documento_acompanante` varchar(20) DEFAULT NULL,
+  `telefono_acompanante` varchar(30) DEFAULT NULL,
+  `estado` enum('pendiente','completado','consolidado') NOT NULL DEFAULT 'pendiente',
+  `fecha_ingreso` datetime NOT NULL DEFAULT current_timestamp()
 );
 
 CREATE TABLE `alertas_medicas` (
@@ -319,8 +335,8 @@ CREATE TABLE `ausencias_veterinario` (
   `id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_veterinario` int(11) NOT NULL,
   `id_clinica` int(11) NOT NULL,
-  `fecha_inicio` date NOT NULL,
-  `fecha_fin` date NOT NULL,
+  `fecha_hora_inicio` datetime NOT NULL,
+  `fecha_hora_fin` datetime NOT NULL,
   `id_cobertura` int(11) DEFAULT NULL,
   `motivo` varchar(255) DEFAULT NULL,
   `fecha_registro` datetime DEFAULT current_timestamp()
@@ -338,10 +354,12 @@ CREATE TABLE `citas` (
   `hora_fin` time DEFAULT NULL,
   `motivo` varchar(255) NOT NULL,
   `duracion_minutos` int(11) DEFAULT NULL,
+  `margen_minutos` int(11) NOT NULL DEFAULT 0,              -- valor del tipo de cita al reservar (RE-4.13.6)
   `prioridad` enum('rojo','naranja','amarillo','verde') NOT NULL DEFAULT 'verde', -- nivel de triage final
   `prioridad_calculada` enum('rojo','naranja','amarillo','verde') DEFAULT NULL, -- nivel del Grafo I antes del ajuste del veterinario
   `motivo_ajuste_prioridad` varchar(255) DEFAULT NULL,       -- obligatorio si prioridad <> prioridad_calculada (RN-419)
   `es_sobrecupo` tinyint(1) NOT NULL DEFAULT 0,              -- cuenta contra clinicas.tope_sobrecupos (RN-422)
+  `orden_sobrecupo` int(11) DEFAULT NULL,                     -- orden persistido; el cambio manual exige motivo y auditoría
   `sintomas_texto` text DEFAULT NULL,                        -- texto libre opcional (RN-424)
   `inicio_sintomas` datetime DEFAULT NULL,                   -- cuándo empezaron o cuándo fue la ingesta del tóxico
   `estado` enum('pendiente','confirmada','en_curso','pausada','sin_cerrar','cancelada','completada','no_asistio') DEFAULT 'pendiente',
@@ -594,6 +612,10 @@ ALTER TABLE `mascotas`
   ADD CONSTRAINT `fk_mascota_especie` FOREIGN KEY (`id_especie`) REFERENCES `especies` (`id_especie`),
   ADD CONSTRAINT `fk_mascota_raza` FOREIGN KEY (`id_raza`) REFERENCES `razas` (`id_raza`),
   ADD CONSTRAINT `mascotas_ibfk_1` FOREIGN KEY (`id_propietario`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `ingresos_emergencia`
+  ADD CONSTRAINT `fk_ingreso_emergencia_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`),
+  ADD CONSTRAINT `fk_ingreso_emergencia_provisional` FOREIGN KEY (`id_mascota_provisional`) REFERENCES `mascotas` (`id_mascota`),
+  ADD CONSTRAINT `fk_ingreso_emergencia_final` FOREIGN KEY (`id_mascota_final`) REFERENCES `mascotas` (`id_mascota`);
 ALTER TABLE `alertas_medicas`
   ADD CONSTRAINT `fk_alerta_mascota` FOREIGN KEY (`id_mascota`) REFERENCES `mascotas` (`id_mascota`),
   ADD CONSTRAINT `fk_alerta_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`),

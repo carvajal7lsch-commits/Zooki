@@ -1,12 +1,12 @@
 # Documento de Visión y Alcance — Zooki v2.0 (Arquitectura SaaS)
 
 **Proyecto:** Zooki — Sistema de gestión clínica veterinaria
-**Documento:** Visión y Alcance del cambio de arquitectura (línea base v1.11.0 → v2.0)
+**Documento:** Visión y Alcance del cambio de arquitectura (línea base v1.12.0 → v2.0)
 **Autor:** Juan Sebastián Carvajal Home
 **Programa:** Tecnología en Análisis y Desarrollo de Software (ADSO) — SENA, Florencia (Caquetá)
 **Mercado objetivo:** Clínicas veterinarias pequeñas en Colombia
 **Estándar de referencia:** ISO/IEC/IEEE 29148:2018
-**Código:** ZOOKI-VIS-ALCANCE · v1.2
+**Código:** ZOOKI-VIS-ALCANCE · v1.3
 
 ---
 
@@ -17,6 +17,7 @@
 | 1.0 | 2026-09-22 | Versión inicial. Define la visión, el alcance aprobado y el impacto del cambio a arquitectura SaaS. | J. S. Carvajal H. |
 | 1.1 | 2026-09-23 | Ajustes tras revisión: los grafos se incluyen en el plan gratuito (con límites de volumen); encuesta de calificación simplificada; descuento por pago anual; incorporación del Estudio de Factibilidad Económica a la hoja de ruta; nota sobre la decisión del stack y sobre el rol recepcionista. | J. S. Carvajal H. |
 | 1.2 | 2026-09-23 | Se confirma la eliminación del rol recepcionista en v2.0 y el mantenimiento del stack actual (PHP 8.2 / MySQL 8). | J. S. Carvajal H. |
+| 1.3 | 2026-10-06 | Línea base v1.12.0; el copiloto clínico y la agenda inteligente se incluyen en el plan gratuito con límites de volumen; `usuarios` y `mascotas` son globales; reparto de la construcción en v2.0 y v2.1; especificación aprobada. | J. S. Carvajal H. |
 
 ---
 
@@ -39,24 +40,24 @@
 
 ## 1. Introducción y propósito
 
-Este documento define la **visión** y el **alcance** del cambio de arquitectura de Zooki, partiendo de la versión estable **v1.11.0** hacia una nueva versión **v2.0** orientada a un modelo **SaaS multi-inquilino (multi-tenant)**.
+Este documento define la **visión** y el **alcance** del cambio de arquitectura de Zooki, partiendo de la versión estable **v1.12.0** hacia una nueva versión **v2.0** orientada a un modelo **SaaS multi-inquilino (multi-tenant)**.
 
 Su propósito es servir como documento maestro de la Fase 0 del proceso de re-documentación: fija qué se va a construir, qué queda dentro y fuera del alcance, y qué impacto tiene el cambio sobre el modelo de datos, los roles y la arquitectura. De este documento se derivan los demás artefactos (ERS actualizado, historias de usuario, reglas de negocio, requisitos específicos y modelos), por lo que ninguno de ellos debe contradecirlo.
 
 ## 2. Contexto y motivación del cambio
 
-Zooki nació como una aplicación web para digitalizar la gestión clínica de veterinarias pequeñas en Neiva (Huila). A la fecha, la versión **v1.11.0** es un sistema estable, en producción, con ocho módulos funcionales, autenticación por sesiones y Google OAuth, historia clínica, agenda de citas, calendario de vacunación, portal del propietario y notificaciones por correo. La documentación actual (ERS Rev. 2.0, 55 historias de usuario, 192 requisitos específicos, 36 reglas de negocio y el modelo entidad-relación) refleja ese estado.
+Zooki nació como una aplicación web para digitalizar la gestión clínica de veterinarias pequeñas en Neiva (Huila). La versión **v1.12.0** es un sistema estable de una sola clínica, con autenticación por sesiones y Google OAuth, historia clínica, agenda de citas, calendario de vacunación, portal del propietario y notificaciones por correo. La especificación actual de la v2 reúne 95 historias de usuario, 418 requisitos específicos y 119 reglas de negocio.
 
 El cambio propuesto responde a dos necesidades:
 
 - **Convertir Zooki en un producto vendible a varias clínicas**, no en una instalación para una sola. Esto exige una arquitectura multi-inquilino y un modelo de negocio por suscripción.
 - **Incorporar un diferenciador técnico real**: dos capacidades basadas en grafos (soporte a la decisión clínica y agendamiento inteligente) que hoy no existen en el software veterinario de pequeña escala.
 
-La versión v1.11.0 se cerró de forma deliberada como línea base estable, dado que el cambio es de gran magnitud y toca el modelo de datos, los roles y prácticamente todos los módulos.
+La v1.12.0 es la línea base de construcción de la v2. El cambio toca el modelo de datos, los roles y prácticamente todos los módulos.
 
 ## 3. Visión del producto
 
-> Zooki v2.0 será una plataforma **SaaS** que cualquier clínica veterinaria pequeña pueda **registrar y probar de forma gratuita**, y que, mediante un plan de pago, desbloquee un **copiloto clínico** y un **agendamiento inteligente** que reducen errores de prescripción y desorganización de la agenda — capacidades ausentes en el software veterinario convencional.
+> Zooki v2.0 será una plataforma **SaaS** que cualquier clínica veterinaria pequeña pueda **registrar y probar de forma gratuita**, incluidos el **copiloto clínico** y el **agendamiento inteligente**. El plan de pago elimina los límites de volumen del plan gratuito.
 
 La propuesta de valor combina una **innovación técnica** (los dos grafos) con una **visión de negocio** (SaaS freemium multi-inquilino), de modo que responde tanto al criterio académico como al comercial.
 
@@ -147,10 +148,10 @@ Tras una consulta **atendida**, el propietario responde una encuesta **muy breve
 
 El cambio es transversal. Los impactos principales:
 
-- **Nueva entidad `clinicas`** y una columna de inquilino (`id_clinica`) en las tablas de negocio (usuarios, mascotas, citas, consultas, vacunas, desparasitaciones, notificaciones, etc.). Toda consulta pasa a **filtrar por clínica**.
-- **Nuevo rol super-administrador** por encima de los roles de clínica (administrador, veterinario y propietario). Además, el rol **recepcionista** de v1.11.0 se **elimina** en v2.0 (depuración). La matriz de roles de `helpers/Security.php` debe incorporar el aislamiento por clínica en cada acción: lo que no está autorizado, se deniega.
+- **Nueva entidad `clinicas`** y una columna de inquilino (`id_clinica`) en los registros propios de cada clínica (citas, consultas, vacunas, desparasitaciones, notificaciones, etc.). `usuarios` y `mascotas` son globales y se vinculan por tablas puente; los catálogos taxonómicos y el Grafo I también son globales. Cada consulta aplica el aislamiento o la excepción de acceso que corresponda.
+- **Nuevo rol super-administrador** por encima de los roles de clínica (administrador y veterinario); el propietario es un rol global vinculado a clínicas. El rol **recepcionista** de v1.12.0 se **elimina** en v2.0. La matriz de roles de `helpers/Security.php` debe incorporar el aislamiento por clínica en cada acción: lo que no está autorizado, se deniega.
 - **Nuevas entidades de negocio SaaS:** `planes`, `suscripciones` (estado, límites, vigencia) y la relación clínica–plan.
-- **Nuevas entidades para los grafos:** `nodos` y `aristas` (con tipo y signo/peso) para el grafo clínico, y la estructura que soporte la propagación y el emparejamiento en el grafo de agenda. Se define si el conocimiento clínico es global (compartido entre clínicas) o configurable por clínica.
+- **Nuevas entidades para los grafos:** `grafo_nodos` y `grafo_aristas` (con tipo y signo/peso) para el conocimiento clínico global; el Grafo II se construye con horarios, citas, ausencias y parámetros de cada clínica, sin persistir el grafo completo.
 - **Nuevas entidades para reputación:** `resenas_veterinario` (atadas a la cita/consulta) y campos de perfil del veterinario.
 - **Migraciones:** cada cambio se implementa como migración `database/NN_nombre.sql` reejecutable, y se actualiza `documentacion/MER.md`.
 
@@ -165,7 +166,7 @@ Estos impactos se detallarán en la Fase 2 (modelos) y la Fase 3 (requisitos).
 | Veterinario | Su clínica: consultas, agenda; perfil calificable | Perfil con reputación |
 | Propietario | Sus mascotas; auto-agenda y califica | Auto-agendamiento y encuesta |
 
-> **Nota:** el rol *recepcionista* (rol 3) está presente en v1.11.0 pero se **elimina en v2.0** (depuración). El diseño queda lo suficientemente escalable para reincorporarlo en el futuro si se requiere.
+> **Nota:** el rol *recepcionista* (rol 3) está presente en v1.12.0 pero se **elimina en v2.0** (depuración). El diseño queda lo suficientemente escalable para reincorporarlo en el futuro si se requiere.
 
 ## 8. Modelo de negocio
 
@@ -191,16 +192,16 @@ El detalle económico (costos de desarrollo a partir de las horas invertidas, co
 
 | Fase | Entregable | Estado |
 |---|---|---|
-| 0 | Documento de Visión y Alcance (este documento) | En revisión |
-| 1 | Esqueleto del ERS actualizado (alineado a ISO/IEC/IEEE 29148:2018) | Pendiente |
-| 2 | Modelos: casos de uso, MER actualizado + modelo de grafos, arquitectura, flujo de agenda | Pendiente |
-| 3 | Requisitos: reglas de negocio, historias de usuario y requisitos específicos + matriz de trazabilidad | Pendiente |
-| 4 | ERS integrado + Ficha técnica actualizada | Pendiente |
-| 4b | Estudio de Factibilidad Económica (costos, ingresos, punto de equilibrio, ROI) | Pendiente |
-| 5 | Implementación del código | Posterior |
+| 0 | Documento de Visión y Alcance (este documento) | Aprobado |
+| 1 | ERS actualizado (ISO/IEC/IEEE 29148:2018) | Aprobado |
+| 2 | Modelos: MER, grafos, arquitectura y flujos | Aprobados |
+| 3 | Reglas de negocio, historias de usuario, requisitos específicos y trazabilidad | Aprobados |
+| 4 | Ficha técnica | Aprobada |
+| 4b | Estudio de Factibilidad Económica | Aprobado |
+| 5 | Construcción de la entrega v2.0 y luego la v2.1 | En curso: módulo M0 (base SaaS, identidad y aislamiento) |
 
 ## 12. Próximos pasos
 
-1. Revisar y aprobar este documento de Visión y Alcance.
-2. Con el alcance aprobado, elaborar el **esqueleto del ERS** bajo ISO/IEC/IEEE 29148:2018 (Fase 1).
-3. Desarrollar los modelos, empezando por el **MER actualizado** con el impacto multi-inquilino y las entidades de los grafos (Fase 2).
+1. Construir la entrega v2.0 por módulos según el plan de historias, empezando por el módulo M0 (base SaaS, identidad y aislamiento).
+2. Completar la v2.1.
+3. Verificar cada entrega con sus requisitos y pruebas de aceptación.
