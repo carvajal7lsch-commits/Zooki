@@ -41,6 +41,9 @@ Thumbs.db
 
 # Archivos de backup
 *.bak
+*.bak_*
+*.bak2_*
+*.bak_dl
 *.backup
 *~
 *.old
