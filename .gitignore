@@ -136,3 +136,6 @@ temp_login.php
 # Análisis de vulnerabilidades: documenta riesgos sin corregir de un sistema
 # en producción. Nunca debe publicarse en el repositorio ni en el portal.
 documentacion/AnalisisVaciosDiseno.md
+
+# Salidas sueltas de sesiones con agentes (no son parte del repositorio)
+Claude outputs/

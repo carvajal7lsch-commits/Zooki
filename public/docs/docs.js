@@ -286,7 +286,7 @@ A continuación, puedes profundizar en las especificaciones del sistema:
     </a>
     <a href="#ers" class="docs-card">
         <h3><i class="fa-solid fa-clipboard-list"></i> Requisitos (ERS)</h3>
-        <p>Especificación IEEE 830: requisitos funcionales y no funcionales, casos de uso, diccionario de datos y trazabilidad.</p>
+        <p>Especificación ISO/IEC/IEEE 29148: requisitos funcionales y no funcionales, casos de uso, diccionario de datos y trazabilidad.</p>
     </a>
     <a href="#reglas" class="docs-card">
         <h3><i class="fa-solid fa-scale-balanced"></i> Reglas de Negocio</h3>
@@ -294,7 +294,7 @@ A continuación, puedes profundizar en las especificaciones del sistema:
     </a>
     <a href="#hu" class="docs-card">
         <h3><i class="fa-solid fa-users"></i> Historias de Usuario</h3>
-        <p>82 historias organizadas por módulos con narrativa, criterios de aceptación, prioridad y estado real de implementación.</p>
+        <p>95 historias organizadas por módulos con narrativa, criterios de aceptación, prioridad y estado real de implementación.</p>
     </a>
     <a href="#re" class="docs-card">
         <h3><i class="fa-solid fa-clipboard-check"></i> Requisitos Específicos</h3>
@@ -310,7 +310,7 @@ A continuación, puedes profundizar en las especificaciones del sistema:
     </a>
     <a href="#historial" class="docs-card">
         <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial de versiones</h3>
-        <p>Registro de versiones (v1.0.0 → v2.0), la primera versión estable y el esquema de versionamiento (SemVer).</p>
+        <p>Registro de versiones publicadas (v1.0.0 → v1.12.0), la primera versión estable y el esquema de versionamiento (SemVer).</p>
     </a>
     <a href="#roi" class="docs-card">
         <h3><i class="fa-solid fa-coins"></i> Presupuesto y ROI</h3>

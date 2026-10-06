@@ -8,7 +8,7 @@ Este documento describe la estructura y relaciones de la base de datos relaciona
 
 Cada clínica es un **inquilino** identificado por `id_clinica`. Las tablas de negocio incorporan esa columna y toda consulta la filtra. Son **globales** (compartidas por todas las clínicas, sin `id_clinica`): los catálogos taxonómicos (`especies`, `razas`, `colores_base`), el catálogo de `planes` y `especialidades`, y el **grafo de conocimiento clínico** (`grafo_nodos`, `grafo_aristas`). El **super-administrador** no pertenece a ninguna clínica (`usuarios.es_super_admin`).
 
-Los **propietarios** también son **identidades globales**: un único registro por persona, con **correo único en toda la plataforma**. Se vinculan a una o varias clínicas mediante la tabla puente **`propietario_clinica`** (previa verificación del correo al ligar a una clínica nueva). Una misma persona puede tener **varios roles**: su rol de propietario (por `propietario_clinica`) y, en cada clínica donde trabaja, un rol de personal (administrador o veterinario) por la tabla **`usuario_clinica`**. Así un veterinario que trabaja en dos clínicas y tiene su propio perro usa una sola cuenta. Las **mascotas** también son **globales**: pertenecen a su propietario, no a una clínica, y se vinculan a cada clínica donde se atienden mediante la tabla puente **`mascota_clinica`** (que guarda además el número de historia clínica de esa clínica). Así una mascota tiene **una sola ficha, un solo carnet y un solo QR** en toda la plataforma. El aislamiento se mantiene en los **registros clínicos**: `consultas`, `vacunas` y `desparasitaciones` llevan el `id_clinica` (y el veterinario) de la clínica que los creó, y solo esa clínica puede modificarlos. Otra clínica vinculada ve siempre las alergias y alertas médicas (`alertas_medicas`), las vacunas y desparasitaciones; las consultas de otras clínicas solo si el propietario la autorizó (`propietario_clinica.autoriza_historia_compartida`). Ver [Reglas de Negocio RN-110 a RN-115](ReglasNegocio.md#módulo-1--mascotas-y-propietarios).
+Los **propietarios** también son **identidades globales**: un único registro por persona, con **correo único en toda la plataforma**. Se vinculan a una o varias clínicas mediante la tabla puente **`propietario_clinica`** (el correo se verifica al crear la cuenta; si ya inició sesión y está verificado, puede elegir otra clínica sin repetir la verificación). Una misma persona puede tener **varios roles**: su rol de propietario (por `propietario_clinica`) y, en cada clínica donde trabaja, un rol de personal (administrador o veterinario) por la tabla **`usuario_clinica`**. Así un veterinario que trabaja en dos clínicas y tiene su propio perro usa una sola cuenta. Las **mascotas** también son **globales**: pertenecen a su propietario, no a una clínica, y se vinculan a cada clínica donde se atienden mediante la tabla puente **`mascota_clinica`** (que guarda además el número de historia clínica de esa clínica). Así una mascota tiene **una sola ficha, un solo carnet y un solo QR** en toda la plataforma. La ficha provisional de urgencia es la excepción temporal: se registra sin propietario verificado y con carnet inactivo hasta completarla o consolidarla (RE-4.15.3). El aislamiento se mantiene en los **registros clínicos**: `consultas`, `vacunas` y `desparasitaciones` llevan el `id_clinica` (y el veterinario) de la clínica que los creó, y solo esa clínica puede modificarlos. Otra clínica vinculada ve siempre las alergias y alertas médicas (`alertas_medicas`), las vacunas y desparasitaciones; las consultas de otras clínicas solo si el propietario la autorizó (`propietario_clinica.autoriza_historia_compartida`). Ver [Reglas de Negocio RN-110 a RN-115](ReglasNegocio.md#módulo-1--mascotas-y-propietarios).
 
 ## Diagrama Entidad-Relación
 
@@ -145,8 +145,8 @@ erDiagram
         int id PK
         int id_veterinario FK
         int id_clinica FK
-        date fecha_inicio
-        date fecha_fin
+        datetime fecha_hora_inicio
+        datetime fecha_hora_fin
         int id_cobertura FK
         varchar motivo
     }
@@ -223,6 +223,7 @@ erDiagram
         int id_clinica_registro FK
         char token_carnet UK
         tinyint carnet_activo
+        tinyint ficha_por_completar
         int id_especie FK
         int id_raza FK
         varchar nombre
@@ -230,6 +231,17 @@ erDiagram
         enum sexo
         tinyint esterilizado
         tinyint estado
+    }
+    ingresos_emergencia {
+        int id_ingreso PK
+        int id_clinica FK
+        int id_mascota_provisional FK
+        int id_mascota_final FK
+        varchar nombre_acompanante
+        varchar documento_acompanante
+        varchar telefono_acompanante
+        enum estado
+        datetime fecha_ingreso
     }
     alertas_medicas {
         int id_alerta PK
@@ -262,10 +274,13 @@ erDiagram
         int id_tipo_cita FK
         date fecha
         time hora
+        int duracion_minutos
+        int margen_minutos
         enum prioridad
         enum prioridad_calculada
         varchar motivo_ajuste_prioridad
         tinyint es_sobrecupo
+        int orden_sobrecupo
         text sintomas_texto
         datetime inicio_sintomas
         enum estado
@@ -410,7 +425,10 @@ erDiagram
     clinicas  ||--o{ auditoria_sistema       : "audita"
 
     roles     ||--o{ usuario_clinica         : "define el rol en la clinica"
-    usuarios  ||--o{ mascotas                : "es propietario de"
+    usuarios  |o--o{ mascotas                : "es propietario de (salvo provisional)"
+    mascotas  ||--o{ ingresos_emergencia     : "ficha provisional"
+    mascotas  |o--o{ ingresos_emergencia     : "ficha final conciliada"
+    clinicas  ||--o{ ingresos_emergencia     : "recibe urgencia"
     usuarios  ||--o| veterinario_perfil      : "tiene perfil"
     usuarios  ||--o{ veterinario_especialidades : "domina"
     especialidades ||--o{ veterinario_especialidades : "clasifica"
@@ -503,20 +521,21 @@ erDiagram
 > El **Grafo II (agenda)** no guarda el grafo: lo construye en tiempo real a partir de `citas` (estado, nivel de triage, horas reales, sobrecupos), `tipos_cita` (duración, margen, pausable), `horarios_clinica`, `horarios_veterinario`, `ausencias_veterinario` y los parámetros de la clínica. Solo persiste lo que debe sobrevivir entre una petición y otra: las reasignaciones que esperan confirmación (`reasignaciones`) y las propuestas de horario (`propuestas_horario`).
 
 ### 5. Pacientes y catálogos taxonómicos
-*   **mascotas**: Ficha **global** del animal, del propietario y no de una clínica (sin `id_clinica`). FKs a `especies`, `razas` y `usuarios` (propietario). `raza_indicada` guarda la raza escrita cuando no está en la lista. `esterilizado` es NULL si no se sabe; el triage lo usa (por ejemplo, una hembra entera con ciertos síntomas sube de nivel, RN-416). `token_carnet` es el token aleatorio (≥ 128 bits) que identifica el carnet público por QR; nunca se usa `id_mascota` en la URL (RN-502). `id_clinica_registro` guarda la clínica que la registró: junto con el propietario, es la única que puede cambiar especie, raza, sexo y fecha de nacimiento (RN-110). `carnet_activo` apaga el carnet sin borrar el token, cuando la mascota se inactiva o su propietario suprime la cuenta (RN-502, RN-G16).
+*   **mascotas**: Ficha **global** del animal, del propietario y no de una clínica (sin `id_clinica`). FKs a `especies`, `razas` y `usuarios` (propietario). En una urgencia roja sin identificación verificable, `id_propietario`, especie, raza, nombre y peso pueden quedar NULL solo con `ficha_por_completar = 1`; la aplicación exige esos datos al completar la ficha ordinaria (RE-4.15.3). `raza_indicada` guarda la raza escrita cuando no está en la lista. `esterilizado` es NULL si no se sabe; el triage lo usa. `token_carnet` es aleatorio (≥ 128 bits) y nunca expone `id_mascota` en la URL (RN-502); el carnet de una ficha provisional permanece inactivo. `id_clinica_registro` guarda la clínica que la registró: junto con el propietario, es la única que puede cambiar especie, raza, sexo y fecha de nacimiento (RN-110). `carnet_activo` apaga el carnet sin borrar el token, cuando la mascota se inactiva o su propietario suprime la cuenta (RN-502, RN-G16).
+*   **ingresos_emergencia**: Guarda el ingreso **presencial** provisional de una urgencia roja con `id_clinica`, la mascota provisional y los datos disponibles del acompañante, sin atribuirle la propiedad ni crearle una cuenta. `id_mascota_final` identifica la misma mascota al completar la ficha o una ficha existente después de verificar su titularidad y consolidar los actos clínicos en una transacción; la ficha provisional queda inactiva y el ingreso conserva la trazabilidad. Un rojo iniciado en el portal autenticado usa el propietario de la sesión y la mascota seleccionada. También en un ingreso presencial con relación verificada se usan los registros existentes: ninguno de esos casos crea un ingreso provisional (RE-4.15.3, RN-G19, RN-420).
 *   **alertas_medicas**: Alergias, condiciones crónicas y medicación continua de la mascota (`tipo`). Cada alerta guarda la clínica y el veterinario que la registró y, si existe, el nodo del Grafo I al que corresponde (`id_nodo`), para que el triage y la prescripción la crucen con el grafo. Es global para la mascota: la ven todas las clínicas vinculadas y el carnet público (RN-113, RN-416, RN-503). Una alerta no se borra: se desactiva (`activa = 0`).
-*   **mascota_clinica**: Tabla puente mascota↔clínica. Se crea al registrar o vincular la mascota en una clínica y guarda el `numero_historia_clinica` de esa clínica (RN-102). Es la base del límite de mascotas del plan.
+*   **mascota_clinica**: Tabla puente mascota↔clínica. Se crea al registrar o vincular la mascota en una clínica; `numero_historia_clinica` se asigna al guardar la primera consulta en esa clínica (RN-102) y es único por `id_clinica`. Es la base del límite de mascotas del plan.
 *   **carnet_escaneos**: Registro de cada escaneo del carnet público: fecha, IP anonimizada (hash) y ubicación solo si quien escanea la comparte. Alimenta el aviso al propietario y el límite de consultas por IP (RN-504, RN-505).
 *   **especies**, **razas**, **colores_base** y **mascota_colores**: Catálogos **globales** de taxonomía y la relación N:M de colores.
 
 ### 6. Operación clínica
-*   **citas**: Agenda por clínica (`id_clinica`). El campo `prioridad` guarda el **nivel de triage de 4 niveles** — 🔴 rojo (crítico), 🟠 naranja (urgente), 🟡 amarillo (prioritario), 🟢 verde (no urgente) — **calculado por el Grafo I** a partir de los síntomas; conserva estados, horas reales y control de solapamientos. `prioridad_calculada` conserva el nivel que dio el Grafo I cuando el veterinario lo ajusta (RN-419); `hora_llegada` registra la llegada del propietario (RN-426); los estados incluyen `sin_cerrar` y `pausada` (RN-427). Los síntomas se guardan de forma estructurada (RN-424): los marcados del catálogo del grafo en `cita_sintomas`, el texto libre en `sintomas_texto` y su comienzo en `inicio_sintomas`. `motivo_ajuste_prioridad` es obligatorio cuando el veterinario cambia el nivel (RN-419) y `es_sobrecupo` marca las citas que cuentan contra el tope de sobrecupos del bloque (RN-422). `id_tipo_cita` pasa a ser clave foránea.
+*   **citas**: Agenda por clínica (`id_clinica`). El campo `prioridad` guarda el **nivel de triage de 4 niveles** — 🔴 rojo (crítico), 🟠 naranja (urgente), 🟡 amarillo (prioritario), 🟢 verde (no urgente) — **calculado por el Grafo I** a partir de los síntomas; conserva estados, horas reales y control de solapamientos. `prioridad_calculada` conserva el nivel que dio el Grafo I cuando el veterinario lo ajusta (RN-419); `hora_llegada` registra la llegada del propietario (RN-426); los estados incluyen `sin_cerrar` y `pausada` (RN-427). Los síntomas se guardan de forma estructurada (RN-424): los marcados del catálogo del grafo en `cita_sintomas`, el texto libre en `sintomas_texto` y su comienzo en `inicio_sintomas`. `motivo_ajuste_prioridad` es obligatorio cuando el veterinario cambia el nivel (RN-419); `es_sobrecupo` marca las citas que cuentan contra el tope de sobrecupos del bloque y `orden_sobrecupo` conserva su posición, inicialmente por llegada y modificable por veterinario con motivo auditado (RN-422). `id_tipo_cita` pasa a ser clave foránea. `duracion_minutos` y `margen_minutos` guardan los valores aplicados al reservar; cambiar después el tipo no altera las citas existentes.
 *   **tipos_cita**: Servicios y su duración base, ahora por clínica. Suma `margen_minutos`: el **colchón (buffer)** por tipo de cita que absorbe los retrasos y alimenta el cálculo de disponibilidad y el reajuste en vivo (Grafo II). `pausable` indica si una cita de ese tipo puede interrumpirse por una urgencia (RN-427).
 *   **horarios_veterinario**: Horario **recurrente** de cada veterinario por clínica (`id_clinica`) y día de la semana (franjas `hora_inicio`–`hora_fin`); un veterinario que trabaja en dos clínicas tiene un horario en cada una, y no pueden chocar entre sí. Lo configura el administrador de esa clínica (RN-706). Reemplaza el supuesto de disponibilidad 24/7: la disponibilidad real es `horario de la clínica ∩ horario del veterinario − ausencias`.
-*   **ausencias_veterinario**: Excepciones por clínica y fecha (permiso, incapacidad, "ese día no vino") que tapan la disponibilidad del veterinario en ese rango. `id_cobertura` es la clave foránea del veterinario que lo reemplaza; así un "intercambio de turnos" queda registrado como **ausencia del titular + cobertura del reemplazo** (reasignación de sus citas). La trazabilidad de quién atendió realmente la da la historia clínica, no la agenda.
+*   **ausencias_veterinario**: Excepciones por clínica y rango de fecha y hora (permiso, incapacidad, "ese día no vino") que tapan la disponibilidad del veterinario en ese rango. `fecha_hora_inicio` es inclusiva y `fecha_hora_fin` exclusiva, en la zona horaria de la clínica; un día completo va de las 00:00 de ese día a las 00:00 del siguiente. `id_cobertura` es la clave foránea del veterinario que lo reemplaza; así un "intercambio de turnos" queda registrado como **ausencia del titular + cobertura del reemplazo** (reasignación de sus citas). La trazabilidad de quién atendió realmente la da la historia clínica, no la agenda.
 *   **propuestas_horario**: Cambios de horario que propone el veterinario (`franjas`), con estado `pendiente`, `aprobada` o `rechazada` y el administrador que la revisó (`id_revisor`). Al aprobarse, las franjas pasan a `horarios_veterinario` y las citas que queden fuera se marcan para reajuste (RN-706).
 *   **reasignaciones**: Cada reasignación en vivo de una cita: veterinario de origen y de destino, plazo para confirmar (`fecha_limite`) y estado (`pendiente`, `aceptada`, `rechazada`, `vencida`). Si vence o se rechaza, se crea la propuesta al siguiente veterinario (RN-428).
-*   **consultas**, **tratamientos**, **archivos_clinicos**: Historia clínica; `consultas` lleva `id_clinica`, y `tratamientos`/`archivos_clinicos` heredan la clínica por su consulta. `consulta_sintomas` guarda los síntomas registrados en la consulta, a partir de los cuales el Grafo I sugiere diagnósticos (RN-210). `tratamientos` enlaza el fármaco con su nodo del grafo (`id_nodo_farmaco`) y guarda `fecha_inicio` y `fecha_fin`: la **medicación vigente** es la de los tratamientos aún no terminados más la medicación continua de `alertas_medicas`, y contra ella se revisan las interacciones al prescribir (RN-211).
+*   **consultas**, **tratamientos**, **archivos_clinicos**: Historia clínica; `consultas` lleva `id_clinica`, y `tratamientos`/`archivos_clinicos` heredan la clínica por su consulta. `consulta_sintomas` guarda los síntomas registrados en la consulta, a partir de los cuales el Grafo I sugiere diagnósticos (RN-210). `tratamientos` enlaza el fármaco con su nodo del grafo (`id_nodo_farmaco`) y guarda `fecha_inicio` y `fecha_fin`: la **medicación vigente** es la de los tratamientos aún no terminados más la medicación continua de `alertas_medicas`. El motor evalúa internamente esa medicación de todas las clínicas para RN-211; sin autorización para ver un tratamiento ajeno, la respuesta solo da una alerta genérica y no expone los datos del tratamiento.
 
 ### 7. Prevención
 *   **vacunas**, **desparasitaciones**: Historial por mascota; cada registro lleva el `id_clinica` y el veterinario que lo aplicó, para mostrar en el carnet y en la historia compartida qué clínica lo hizo (RN-112).

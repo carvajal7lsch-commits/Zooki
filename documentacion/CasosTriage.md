@@ -8,6 +8,8 @@ Esta batería sirve para poner a prueba el triage de 4 niveles antes y después 
 
 > ⚠️ **Validación clínica pendiente.** Los niveles esperados son orientativos para probar el software. Antes de cargar el conocimiento en el Grafo I, un médico veterinario debe revisarlos y ajustarlos. El sistema apoya la decisión; no la reemplaza (RN-209).
 
+**Caso T-20 pendiente:** el motor aplica el valor de reserva 🟡 de RN-418 y solicita revisión inmediata antes de ofrecer un horario. El nivel 🟠 propuesto para el conejo no es una regla automática aprobada: requiere validación de un veterinario con experiencia en esa especie y, si procede, una regla documentada de cobertura para conejos. La batería clínica completa no queda aprobada hasta cerrar esta revisión.
+
 **Niveles:** 🔴 Rojo (crítico: no se agenda, va a urgencias) · 🟠 Naranja (urgente: sobrecupo) · 🟡 Amarillo (prioritario: primer espacio) · 🟢 Verde (no urgente: el actor elige).
 
 ---
@@ -85,7 +87,7 @@ Pares de casos con el mismo texto y distinto paciente: si salen igual, los modif
 
 | ID | Paciente | Lo que escribe el propietario | Nivel | Por qué | Qué pone a prueba |
 |---|---|---|---|---|---|
-| T-20 | Conejo, 2 años | «No ha comido ni ha hecho popó desde ayer» | 🟠 + revisión del personal | En conejos, dejar de comer y de defecar es urgente; el grafo aún no cubre la especie. | Una especie sin cobertura no puede quedar en 🟢 (P6). |
+| T-20 | Conejo, 2 años | «No ha comido ni ha hecho popó desde ayer» | 🟡 + revisión inmediata del personal; 🟠 propuesto, pendiente de validación veterinaria | El grafo aún no cubre conejos: aplica el valor de reserva de RN-418. La falta de apetito y heces exige valoración veterinaria pronta; el color definitivo requiere revisión clínica. | El motor no puede asignar 🟠 sin una regla validada para conejos ni agendar este caso sin revisión humana. |
 | T-21 | Loro | «Respira moviendo mucho la cola y está esponjado» | 🔴 | Dificultad respiratoria: alarma universal (P1). | Las alarmas universales funcionan aunque la especie no tenga cobertura. |
 | T-22 | Perro | «Está raro» | 🟡 + revisión del personal | No hay síntomas reconocibles. | Un texto vago no debe terminar en 🟢 (P6). |
 | T-23 | Gato | «bomita sangre i esta desaido» | 🟠 | Vómito con sangre y decaimiento. | Que tolere errores de ortografía y de dictado por voz. |
@@ -111,7 +113,7 @@ Aquí no se prueba el nivel, sino qué hace el sistema con él.
 | O-01 | Sale 🔴 desde el portal. | No se agenda: se muestra un mensaje de emergencia con el teléfono de la clínica y se notifica a la clínica. | Definido (RN-411, HU-4.15) |
 | O-02 | Sale 🔴 a las 11 p. m., con la clínica cerrada. | No debe prometer atención: avisa que la clínica está cerrada y recomienda acudir a un servicio de urgencias 24 horas. | Definido (RN-421, RF-4.13) |
 | O-03 | Sale 🟠 y no hay espacio. | Sobrecupo en el próximo bloque del veterinario adecuado, con aviso al veterinario. | Definido (HU-4.13) |
-| O-04 | Dos casos 🟠 compiten por el mismo sobrecupo. | Primero el de mayor severidad calculada; si empatan, el que llegó primero. | Definido (RN-422) |
+| O-04 | Dos casos 🟠 compiten por el mismo sobrecupo. | Primero el que llegó antes; un veterinario puede cambiar el orden con motivo y auditoría. | Definido (RN-422) |
 | O-05 | Llegan muchos 🟠 el mismo día. | Un tope de sobrecupos por bloque; al superarlo, se avisa al personal para decidir. | Definido (RN-422) |
 | O-06 | Un propietario agendó en 🟢 para el viernes y el miércoles la mascota empeora. | Al actualizar los síntomas se recalcula el nivel; si sube, la cita se reubica y se avisa. | Definido (RN-423, HU-4.17) |
 | O-07 | El veterinario baja un caso de 🔴 a 🟢. | Se permite con motivo obligatorio y queda en auditoría (P7). | Definido (RN-419, HU-4.18) |

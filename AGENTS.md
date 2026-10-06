@@ -7,9 +7,9 @@ Zooki es un sistema de gestión veterinaria: PHP 8.2 sin framework (MVC propio),
 ## Estado del proyecto
 
 - **El código está en la v1.12.0**: una instalación para una sola clínica. Los usuarios se identifican por su documento, existe el rol recepcionista y las tablas no llevan `id_clinica`.
-- **La especificación ya es la v2.0**: una plataforma SaaS multi-inquilino con dos grafos (soporte a la decisión clínica y agenda inteligente). Está completa en `documentacion/` y es la fuente de verdad.
-- **Se construye la v2 historia por historia**, en el orden del [plan de entregas](documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2): primero la entrega v2.0 (lo imprescindible), luego la v2.1.
-- Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). No se mezcla a medias: cada historia migra por completo lo que toca (datos, modelo, controlador, vista y pruebas).
+- **La especificación ya es la v2**: una plataforma SaaS multi-inquilino con dos grafos (soporte a la decisión clínica y agenda inteligente), repartida entre v2.0 y v2.1. Está en `documentacion/` y es la fuente de verdad.
+- **Se construye la v2 por módulos**, en el orden de dependencias del [plan de entregas](documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2): primero la entrega v2.0 (lo imprescindible), luego la v2.1. Cada módulo agrupa sus HU y RE; el avance y las pruebas se cierran por etapas pequeñas dentro del módulo.
+- Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/drawdb_schema_v2.sql` describen el destino, no son migraciones ejecutables. Las migraciones reales conservan los datos v1 y se aplican en orden de dependencias. Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
 
 ## Mapa de la documentación
 
@@ -44,11 +44,18 @@ No se escribe código sin una especificación que diga qué debe cumplir.
 
 1. **Especificar.** Buscar la HU, sus RE y las RN que cita.
    - Si el cambio no está cubierto, se agrega primero el criterio a la HU y un RE con su criterio de aceptación, y se pide al usuario que lo apruebe.
-2. **Planificar.** Si el cambio toca más de un par de archivos, trae una migración o cambia un flujo, se crea `specs/HU-<módulo>.<n>-nombre.md` a partir de [specs/_plantilla.md](specs/_plantilla.md), con la especificación, el plan (archivos, datos, permisos, riesgos) y las tareas. El usuario aprueba el plan antes de implementar.
-3. **Implementar** siguiendo las tareas y marcándolas al terminar. Si la especificación resulta equivocada, se corrige el documento, no solo el código.
+2. **Planificar por módulo.** Se crea un solo `specs/M<módulo>-nombre.md` (o `specs/M0-T-nombre.md` si la base cruza módulos) a partir de [specs/_plantilla_modulo.md](specs/_plantilla_modulo.md). Enumera las HU, sus RE y RN, dependencias, etapas, migraciones, archivos, permisos, riesgos, pruebas y responsable de cada entrega. Se agrega al avanzar, sin abrir un archivo nuevo por cada HU. El usuario aprueba el plan del módulo antes de implementar; un cambio material de alcance vuelve a su revisión.
+3. **Implementar por etapas verificables.** Cada etapa cierra las HU o los RE que declara y migra completamente lo que toca (datos, modelo, controlador, vista y pruebas). Una migración preparatoria puede agregar y poblar columnas antes del cambio de código, pero no se libera una ruta que lea claves viejas y nuevas de forma inconsistente. Si la especificación resulta equivocada, se corrigen los documentos y el plan, no solo el código.
 4. **Verificar** con la definición de terminado (abajo).
 
-Los cambios pequeños y evidentes (un error tipográfico, un bug de una línea) no necesitan archivo en `specs/`, pero sí citar la HU o el RE que corrigen.
+Un `specs/HU-...md` se reserva para un flujo excepcional que necesite más detalle y enlaza al plan de su módulo; [HU-4.15](specs/HU-4.15-ingreso-emergencia.md) es el primer caso. Los cambios pequeños y evidentes (un error tipográfico, un bug de una línea) no necesitan archivo nuevo en `specs/`, pero sí citar la HU o el RE que corrigen.
+
+### Coordinación entre agentes
+
+- `AGENTS.md` es la regla común; `CLAUDE.md` remite a este archivo. El plan del módulo en `specs/` es el contrato de trabajo y la lista de avances para Codex, Claude y el usuario.
+- Cada etapa tiene **un agente que escribe** y otro que revisa el diff, las pruebas y la trazabilidad sin editar los mismos archivos a la vez. El revisor deja hallazgos con archivo, línea, RE/RN afectado y reproducción; el responsable corrige y vuelve a verificar.
+- El trabajo paralelo solo se asigna a etapas sin dependencias compartidas y en checkouts separados. En un mismo checkout, los agentes trabajan por turnos. Los cambios de base e identidad se integran antes de empezar etapas que dependan de ellos.
+- Los agentes entregan estado, decisiones pendientes y comandos de commit; el usuario hace las ramas, los commits, los push y los tags según las reglas de abajo.
 
 ## Reglas de la v2 que todo código nuevo cumple
 
@@ -91,7 +98,7 @@ node scripts/docs/exportar.mjs                     # regenerarlos (formato de la
 | `database/` | `01_schema.sql` y migraciones `NN_nombre.sql`. |
 | `scripts/` | Tareas programadas (recordatorios, vigilante, respaldo), migrador, índice de Algolia y exportación de documentos. |
 | `tests/Unit`, `tests/Integration` | PHPUnit 10. |
-| `specs/` | Un plan por cambio grande, a partir de `_plantilla.md`. |
+| `specs/` | Un plan por módulo a partir de `_plantilla_modulo.md`; planes `HU-...` solo para flujos excepcionales. |
 
 ## Reglas de código
 
@@ -131,7 +138,7 @@ Un cambio está terminado cuando:
 - [ ] Cada RE nuevo o tocado tiene una prueba (o, si es solo visual, una verificación descrita en el plan), y `vendor/bin/phpunit` pasa completo.
 - [ ] Toda acción nueva está en la matriz de `helpers/Security.php` y filtra por `id_clinica`.
 - [ ] La migración, si hay, se puede correr dos veces y el MER refleja el cambio.
-- [ ] La HU, los RE y el plan de `specs/` reflejan lo que se construyó.
+- [ ] Las HU, los RE y el plan del módulo en `specs/` reflejan lo que se construyó; cada RE de la etapa tiene evidencia de verificación.
 - [ ] Se actualizaron la versión en `config/App.php` y su entrada en `documentacion/HistorialVersiones.md`.
 - [ ] Se entregan al usuario los comandos de commit (ver abajo).
 

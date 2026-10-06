@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.0** · 418 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.1** · 418 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
@@ -70,7 +70,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-0.5.1 | El sistema debe registrar la suscripción mensual o anual, con descuento en la anual. | Funcional | Se registra la periodicidad y el precio. | Media |
-| RE-0.5.2 | En mora, el sistema debe congelar los beneficios de pago (solo lectura) sin borrar datos. | Restricción | Las capas de pago quedan en solo lectura. | Alta |
+| RE-0.5.2 | En mora, el sistema debe aplicar temporalmente los límites del plan gratuito a las acciones nuevas, sin ocultar ni borrar datos. | Restricción | La clínica sigue atendiendo a sus mascotas y consultando su historia; solo se bloquean las altas que superen los límites gratuitos, salvo urgencias rojas. | Alta |
 | RE-0.5.3 | El control de vencimiento debe ejecutarse como tarea programada. | Funcional | El cron marca las suscripciones vencidas. | Media |
 | RE-0.5.4 | El cobro real por pasarela no debe implementarse en esta versión (queda como RF-F.1). | Restricción | Documentado como requisito futuro (RF-F.1). | Baja |
 | RE-0.5.5 | Al bajar al plan gratuito o caer en mora, el sistema no debe ocultar ni borrar datos; solo debe bloquear lo nuevo por encima de los límites del plan gratuito. | Restricción | Una clínica con 40 mascotas que baja al plan gratuito sigue atendiéndolas, pero no puede vincular una nueva. | Alta |
@@ -277,8 +277,8 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-T.18.1 | El registro con Google debe ofrecerse solo a propietarios, desde el enlace o QR de una clínica o eligiéndola de la lista. | Restricción | El formulario de registro de clínica no muestra la opción de Google. | Alta |
-| RE-T.18.2 | Con un correo nuevo, el sistema debe crear la cuenta con el nombre, el correo y la foto de Google, sin verificar el correo, vinculada a la clínica elegida. | Funcional | Tras continuar con Google, la cuenta existe y aparece en la clínica elegida. | Alta |
-| RE-T.18.3 | Mientras el perfil esté incompleto, el sistema debe exigir documento, teléfono y autorización de datos, e impedir registrar mascotas o agendar. | Restricción | Con el perfil incompleto, intentar agendar lleva a la pantalla de completar perfil. | Alta |
+| RE-T.18.2 | Con un correo nuevo, el sistema debe exigir aceptar la política antes de crear la cuenta y vincularla a la clínica elegida; luego guarda el nombre, correo y foto de Google sin pedir nueva verificación del correo. | Funcional | Sin aceptación no existen cuenta ni vínculo; tras aceptarla, la cuenta existe en la clínica elegida y tiene una prueba en `consentimientos_datos`. | Alta |
+| RE-T.18.3 | Mientras el perfil esté incompleto, el sistema debe exigir documento y teléfono e impedir registrar mascotas o agendar. | Restricción | Con el perfil incompleto, intentar agendar lleva a la pantalla de completar perfil. | Alta |
 | RE-T.18.4 | Si el correo ya tiene cuenta, el sistema debe vincular Google a esa cuenta y verificarla si estaba pendiente; al verificar una cuenta pendiente debe anular su contraseña y volver a pedir sus datos. | Seguridad | No se crea una segunda cuenta; una cuenta pendiente queda verificada, la contraseña con la que se creó ya no sirve y el perfil queda por completar. | Alta |
 
 **Reglas de negocio:** RN-G20, RN-G21, RN-G19, RN-G12, RN-109
@@ -287,7 +287,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-T.19.1 | Todo registro debe exigir aceptar la política; sin aceptación no se crea la cuenta. | Restricción | Enviar el registro sin marcar la aceptación se rechaza. | Alta |
+| RE-T.19.1 | Todo registro debe exigir la aceptación expresa del titular antes de crear la cuenta, incluida el alta por el personal. | Restricción | Un registro con Google, formulario o personal sin aceptación previa no crea `usuarios` ni el vínculo con la clínica; el personal no puede aceptar en nombre del titular. | Alta |
 | RE-T.19.2 | El sistema debe guardar la prueba de la aceptación: usuario, versión, medio, fecha e IP. | Seguridad | Cada cuenta nueva tiene su registro en `consentimientos_datos`. | Alta |
 | RE-T.19.3 | Si la política cambia de versión, el sistema debe pedir aceptarla en el siguiente inicio de sesión antes de continuar. | Restricción | Tras publicar una versión nueva, el usuario no entra al panel hasta aceptarla. | Media |
 | RE-T.19.4 | Revocar la autorización debe llevar a la solicitud de eliminación de la cuenta. | Funcional | La opción de revocar abre el flujo de HU-5.14. | Media |
@@ -447,7 +447,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 |---|---|---|---|---|
 | RE-2.9.1 | Al prescribir, el Grafo I debe cruzar el fármaco con la especie, la raza, las alergias y la medicación vigente, incluidas las registradas por otras clínicas. | Funcional | Se evalúa en cada prescripción. | Alta |
 | RE-2.9.2 | Una alergia registrada del paciente a ese fármaco o una contraindicación por especie o raza (toxicidad) debe bloquear la prescripción. | Restricción | Una prescripción tóxica o de un fármaco al que el paciente es alérgico se bloquea. | Alta |
-| RE-2.9.3 | Una interacción con la medicación vigente debe advertirse; el veterinario confirma o cambia y queda en auditoría. | Funcional | Advertencia con registro en auditoría. | Alta |
+| RE-2.9.3 | Una interacción con la medicación vigente debe advertirse; el veterinario confirma o cambia y queda en auditoría. Si el tratamiento que origina la alerta pertenece a otra clínica y no hay autorización de lectura, el motor lo evalúa internamente pero solo emite un aviso genérico; antes de confirmar, el veterinario documenta la conciliación con el propietario o solicita autorización. | Funcional | La alerta detecta la interacción aun sin autorización; ni interfaz ni respuesta AJAX revelan el tratamiento protegido, y la verificación y la decisión quedan en auditoría. | Alta |
 | RE-2.9.4 | El soporte debe ser de apoyo y no recetar por sí solo. | Restricción | La decisión final es del veterinario. | Alta |
 
 **Reglas de negocio:** RN-209, RN-211, RN-212, RN-113
@@ -471,7 +471,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | RE-2.11.2 | El nivel final debe ser el máximo de los síntomas y combinaciones; los datos tranquilizadores no deben bajarlo. | Cálculo | T-04 y T-18 de la batería dan el nivel esperado. | Alta |
 | RE-2.11.3 | Las combinaciones y los modificadores de raza, edad, estado, historial y tiempo deben cambiar el nivel. | Cálculo | Los pares T-09/T-10, T-11/T-12 y T-14/T-16 dan niveles distintos. | Alta |
 | RE-2.11.4 | Las señales de alarma universales deben dar 🔴 en cualquier especie. | Restricción | T-21 (loro con dificultad respiratoria) da 🔴. | Alta |
-| RE-2.11.5 | Sin cobertura o sin síntomas reconocidos, el nivel debe ser 🟡 con la marca «revisión del personal». | Restricción | T-20 y T-22 nunca dan 🟢. | Alta |
+| RE-2.11.5 | Sin cobertura o sin síntomas reconocidos, el cálculo automático debe dar 🟡 con la marca «revisión del personal»; la revisión debe ocurrir antes de asignar espacio cuando el relato sugiera urgencia. | Restricción | T-20 da 🟡 y se deriva a revisión inmediata antes de agendar; T-22 da 🟡 con revisión. Un veterinario podrá ajustar el nivel con motivo conforme a RN-419. | Alta |
 | RE-2.11.6 | Ante una posible enfermedad contagiosa, el sistema debe avisar a la clínica. | Funcional | T-11 genera el aviso de aislamiento. | Media |
 | RE-2.11.7 | La batería de casos de triage debe ejecutarse como prueba automatizada del cálculo. | Verificación | Los 26 casos clínicos coinciden con su nivel esperado o la diferencia queda justificada. | Alta |
 
@@ -670,7 +670,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-4.12.1 | El sistema debe permitir registrar una ausencia por rango que tape la disponibilidad del veterinario. | Funcional | El rango queda bloqueado en la agenda. | Alta |
-| RE-4.12.2 | Un rango inválido debe rechazarse. | Validación | Fechas inválidas se rechazan. | Media |
+| RE-4.12.2 | Un rango de fecha y hora inválido debe rechazarse. | Validación | Se rechazan un fin anterior o igual al inicio y las fechas u horas inválidas; una ausencia de día completo y otra de una franja parcial bloquean exactamente sus respectivos rangos. | Media |
 | RE-4.12.3 | Con citas en el rango, el sistema debe buscar cobertura y asignarlas a un veterinario con disponibilidad (sin veto). | Funcional | Las citas se asignan al de cobertura. | Alta |
 | RE-4.12.4 | Si ningún veterinario puede cubrir, el sistema debe reprogramar las citas con el propietario. | Funcional | Si ningún veterinario tiene espacio compatible, el propietario recibe la propuesta de nuevos horarios y la cita queda pendiente de reprogramar. | Alta |
 | RE-4.12.5 | El sistema debe notificar al propietario y a ambos veterinarios y registrar en auditoría. | Funcional | Al asignar la cobertura llegan los avisos al propietario y a los dos veterinarios, y la auditoría registra el cambio de veterinario. | Media |
@@ -687,7 +687,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | RE-4.13.4 | La disponibilidad debe calcularse como horario de la clínica ∩ horario del veterinario − ausencias, por duración más margen. | Cálculo | Los espacios respetan la fórmula. | Alta |
 | RE-4.13.5 | La reserva debe hacerse con bloqueo y, si el espacio se ocupó, buscar otro. | Restricción | No se crean dos citas en el mismo espacio. | Alta |
 | RE-4.13.6 | Al crear la cita, el sistema debe registrar el tipo, la duración, el margen y la prioridad, notificar y auditar. | Funcional | La cita queda creada y notificada. | Alta |
-| RE-4.13.7 | Cada bloque de un veterinario debe admitir como máximo el número de sobrecupos 🟠 configurado por la clínica (por defecto, 2), con desempate por severidad y luego por orden de llegada. | Restricción | El tercer naranja del bloque no se ubica en él y genera aviso al personal; entre dos naranjas, entra el de mayor severidad. | Alta |
+| RE-4.13.7 | Cada bloque de un veterinario debe admitir como máximo el número de sobrecupos 🟠 configurado por la clínica (por defecto, 2). Entre naranjas se respeta el orden de llegada, salvo cambio motivado por un veterinario y auditado. | Restricción | El tercer naranja del bloque no se ubica en él y genera aviso; entre dos naranjas entra el primero por `fecha_registro`/`id_cita`, y un cambio manual sin motivo se rechaza. | Alta |
 
 **Reglas de negocio:** RN-411, RN-415, RN-401, RN-402, RN-420, RN-422
 
@@ -711,7 +711,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 |---|---|---|---|---|
 | RE-4.15.1 | El sistema debe disparar la urgencia por triage rojo o llegada directa, notificar a la clínica y marcar prioridad máxima. | Funcional | Un caso 🔴 o una llegada directa crea la urgencia con prioridad máxima y la clínica recibe la notificación en el momento. | Alta |
 | RE-4.15.2 | El sistema debe asignar un veterinario libre; si no hay, pausar una cita pausable; si ninguno, dejarla en espera por prioridad. | Funcional | Se asigna según disponibilidad. | Alta |
-| RE-4.15.3 | Si la mascota no está registrada, el sistema debe permitir un registro rápido de emergencia con los datos mínimos de la mascota y de quien la trae (nombre, documento y teléfono). | Funcional | Se crea una ficha «por completar» a nombre de esa persona; si no tenía cuenta, queda creada pendiente de activar. | Media |
+| RE-4.15.3 | En un rojo del portal autenticado, el sistema debe usar la identidad de la sesión y la mascota seleccionada sin volver a verificarlas. En un ingreso presencial, debe usar la cuenta y la ficha existentes si puede verificar su relación sin retrasar la atención; en otro caso debe crear una ficha provisional vinculada a la clínica, sin atribuir propiedad al acompañante ni crear una cuenta. Después debe permitir completar o consolidar la ficha, conservando la trazabilidad. | Funcional | Desde el portal se conservan `id_usuario` e `id_mascota` sin búsqueda adicional. En persona, con relación verificada se reutilizan ambos registros; sin verificación o sin cuenta, la consulta se registra en una mascota «por completar», con carnet inactivo y sin usuario nuevo. El límite del plan no bloquea el ingreso rojo. La conciliación no pierde actos clínicos ni duplica la cuenta. | Media |
 | RE-4.15.4 | La atención debe continuar por el flujo de consulta vía Atención/Urgencias. | Funcional | Enlaza con la consulta clínica. | Alta |
 | RE-4.15.5 | El uso del espacio debe enlazar con el reajuste de agenda en vivo. | Funcional | La agenda del día se reacomoda. | Media |
 | RE-4.15.6 | Un caso 🔴 desde el portal fuera del horario de la clínica debe informar que está cerrada, mostrar su teléfono de urgencias si existe y recomendar un servicio 24 horas. | Funcional | A las 11 p. m. el mensaje no promete atención y muestra la recomendación. | Alta |
@@ -1029,14 +1029,14 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-7.4.1 | El sistema debe permitir configurar la marca de la clínica: nombre, logo y datos de contacto. | Funcional | El nombre, el logo y los datos de contacto guardados se ven en la configuración y en el portal de la clínica. | Media |
+| RE-7.4.1 | El sistema debe permitir configurar la marca de la clínica: nombre, logo y datos de contacto, incluido el teléfono de urgencias. | Funcional | Los datos guardados se ven en la configuración y en el portal; cuando la clínica está cerrada, el aviso de urgencia muestra el teléfono registrado. | Media |
 | RE-7.4.2 | El sistema debe permitir gestionar los tipos de cita con su duración y su margen. | Funcional | Cada tipo tiene duración y margen. | Alta |
 | RE-7.4.3 | El margen del tipo de cita debe ser insumo del cálculo de disponibilidad. | Cálculo | La disponibilidad usa el margen del tipo. | Alta |
 | RE-7.4.4 | La marca debe aparecer en el portal, los correos y los documentos de la clínica. | Funcional | El logo y el nombre de la clínica aparecen en su portal, en sus correos y en los documentos que genera. | Baja |
 | RE-7.4.5 | Todo debe ser propio de cada clínica y quedar en auditoría. | Restricción | Los datos de marca y los tipos de cita de la clínica A no aparecen en la clínica B, y cada cambio queda en auditoría. | Media |
 | RE-7.4.6 | Cada tipo de cita debe indicar si es pausable ante una urgencia. | Funcional | El formulario del tipo de cita tiene la opción y la agenda la respeta. | Media |
 
-**Reglas de negocio:** RN-009, RN-415, RN-701, RN-427
+**Reglas de negocio:** RN-009, RN-415, RN-421, RN-701, RN-427
 
 ### HU-7.5 — Parámetros del sistema configurables
 
@@ -1044,7 +1044,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 |---|---|---|---|---|
 | RE-7.5.1 | El sistema debe permitir configurar la duración de cita por defecto y el buffer entre citas. | Funcional | Los valores se guardan y se aplican. | Media |
 | RE-7.5.2 | El sistema debe aplicar los parámetros en la agenda y en los recordatorios. | Restricción | Agenda y cron usan los parámetros configurados. | Media |
-| RE-7.5.3 | _(v2.0)_ El administrador debe poder configurar la tolerancia de llegada, el plazo de reasignación, el umbral de aviso, el tope de sobrecupos y el teléfono de urgencias, con valores por defecto. | Funcional | Un parámetro sin configurar usa su valor por defecto; al cambiarlo, la agenda lo aplica. | Media |
+| RE-7.5.3 | _(v2.1)_ El administrador debe poder configurar la tolerancia de llegada, el plazo de reasignación, el umbral de aviso, el tope de sobrecupos y el teléfono de urgencias. Los valores por defecto y el teléfono registrado como dato de la clínica funcionan desde v2.0. | Funcional | En v2.0 la agenda aplica los valores por defecto; en v2.1, al cambiarlos desde configuración, aplica los nuevos valores. | Media |
 
 **Reglas de negocio:** RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429
 
@@ -1204,7 +1204,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | HU-7.1 | RN-703, RN-701 | RE-7.1.1, RE-7.1.2, RE-7.1.3, RE-7.1.4 |
 | HU-7.2 | RN-702 | RE-7.2.1, RE-7.2.2, RE-7.2.3 |
 | HU-7.3 | RN-705, RN-009, RN-701 | RE-7.3.1, RE-7.3.2, RE-7.3.3, RE-7.3.4, RE-7.3.5 |
-| HU-7.4 | RN-009, RN-415, RN-701, RN-427 | RE-7.4.1, RE-7.4.2, RE-7.4.3, RE-7.4.4, RE-7.4.5, RE-7.4.6 |
+| HU-7.4 | RN-009, RN-415, RN-421, RN-701, RN-427 | RE-7.4.1, RE-7.4.2, RE-7.4.3, RE-7.4.4, RE-7.4.5, RE-7.4.6 |
 | HU-7.5 | RN-403, RN-303, RN-703, RN-421, RN-422, RN-426, RN-428, RN-429 | RE-7.5.1, RE-7.5.2, RE-7.5.3 |
 | HU-8.1 | RN-801, RN-804, RN-805, RN-G18 | RE-8.1.1, RE-8.1.2, RE-8.1.3, RE-8.1.4, RE-8.1.5, RE-8.1.6, RE-8.1.7 |
 | HU-8.2 | RN-802 | RE-8.2.1, RE-8.2.2 |
@@ -1212,4 +1212,3 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | HU-8.4 | RN-807, RN-303 | RE-8.4.1, RE-8.4.2 |
 | HU-8.5 | RN-808 | RE-8.5.1, RE-8.5.2 |
 | HU-9.1 | RN-G07 | RE-9.1.1, RE-9.1.2, RE-9.1.3 |
-
