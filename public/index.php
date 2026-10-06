@@ -710,7 +710,7 @@ switch ($action) {
         $controller->marcarNoAsistioAjax();
         break;
 
-    // RN-411: el veterinario cierra sin consulta una atención abierta.
+    // RN-410: el veterinario cierra sin consulta una atención abierta.
     case "cerrar_sin_consulta_ajax":
         require_once "../controllers/CitaController.php";
         $controller = new CitaController();

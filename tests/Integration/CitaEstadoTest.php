@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../../models/Cita.php';
 
 /**
- * Estados de una cita (RN-406, RN-408, RN-409, RN-410, RN-411).
+ * Estados de una cita (RN-406, RN-407, RN-408, RN-409, RN-410).
  *
  * Cada transición solo ocurre desde los estados que la permiten: iniciar
  * exige una cita abierta, completar exige una atención iniciada, "no asistió"
@@ -100,7 +100,7 @@ class CitaEstadoTest extends TestCase
         $this->assertSame(self::AHORA, $this->campo('hora_inicio_real'));
     }
 
-    /** RN-409: "no asistió" solo cierra citas que no se empezaron a atender. */
+    /** RN-408: "no asistió" solo cierra citas que no se empezaron a atender. */
     public function testNoAsistioSoloDesdeUnaCitaAbierta(): void
     {
         $this->assertTrue($this->modelo->marcarNoAsistio(1));
@@ -111,7 +111,7 @@ class CitaEstadoTest extends TestCase
         $this->assertSame('en_curso', $this->campo('estado'));
     }
 
-    /** RN-409 / RE-29.2: una cita no asistida deja libre su espacio. */
+    /** RN-408 / RE-29.2: una cita no asistida deja libre su espacio. */
     public function testUnaCitaNoAsistidaLiberaElEspacio(): void
     {
         $this->assertFalse($this->modelo->checkDisponibilidad('V1', '2026-09-10', '10:15', 30));
@@ -127,7 +127,7 @@ class CitaEstadoTest extends TestCase
         $this->assertTrue($this->modelo->checkDisponibilidad('V1', '2026-09-10', '10:15', 30));
     }
 
-    /** RN-410: solo una atención en curso pasa a "sin cerrar". */
+    /** RN-409: solo una atención en curso pasa a "sin cerrar". */
     public function testSoloUnaAtencionEnCursoQuedaSinCerrar(): void
     {
         $this->assertFalse($this->modelo->marcarSinCerrar(1));
@@ -138,7 +138,7 @@ class CitaEstadoTest extends TestCase
         $this->assertSame('sin_cerrar', $this->campo('estado'));
     }
 
-    /** RN-406 / RN-410: una atención que quedó sin cerrar todavía se completa con su consulta. */
+    /** RN-406 / RN-409: una atención que quedó sin cerrar todavía se completa con su consulta. */
     public function testUnaAtencionSinCerrarTodaviaSeCompleta(): void
     {
         $this->ponerEstado('sin_cerrar');
@@ -146,7 +146,7 @@ class CitaEstadoTest extends TestCase
         $this->assertSame('completada', $this->campo('estado'));
     }
 
-    /** RN-411: se cierra sin consulta una atención iniciada, y queda su motivo. */
+    /** RN-410: se cierra sin consulta una atención iniciada, y queda su motivo. */
     public function testCerrarSinConsultaGuardaElMotivo(): void
     {
         foreach (['en_curso', 'sin_cerrar'] as $estado) {
@@ -166,14 +166,14 @@ class CitaEstadoTest extends TestCase
         }
     }
 
-    /** RN-411: una atención cerrada sin consulta libera su horario. */
+    /** RN-410: una atención cerrada sin consulta libera su horario. */
     public function testUnaAtencionCerradaSinConsultaLiberaElEspacio(): void
     {
         $this->ponerEstado('cerrada_sin_consulta');
         $this->assertTrue($this->modelo->checkDisponibilidad('V1', '2026-09-10', '10:15', 30));
     }
 
-    /** RN-410: el aviso de atención abierta se sella una sola vez. */
+    /** RN-409: el aviso de atención abierta se sella una sola vez. */
     public function testElAvisoDeAtencionAbiertaSeSellaUnaVez(): void
     {
         $this->ponerEstado('en_curso');

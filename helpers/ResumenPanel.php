@@ -16,8 +16,8 @@ final class ResumenPanel
 
     /**
      * Acción disponible para el veterinario sobre una cita suya:
-     *  - continuar: la atención está en curso o sin cerrar (RN-406, RN-410).
-     *  - iniciar:   es hoy y ya se alcanzó la ventana de inicio (RN-408).
+     *  - continuar: la atención está en curso o sin cerrar (RN-406, RN-409).
+     *  - iniciar:   es hoy y ya se alcanzó la ventana de inicio (RN-407).
      *  - esperar:   es hoy pero todavía no; 'desde' dice a qué hora se habilita.
      *  - null:      no hay nada que hacer desde el panel.
      */

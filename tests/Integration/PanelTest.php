@@ -88,7 +88,7 @@ class PanelTest extends TestCase
         $this->assertSame(['desparasitacion', 'vacuna'], array_column($r, 'tipo'));
     }
 
-    /** RN-409: una cita pasada sin atender ni marcar queda como pendiente. */
+    /** RN-408: una cita pasada sin atender ni marcar queda como pendiente. */
     public function testCuentaLasCitasPasadasSinMarcar(): void
     {
         $this->cita(1, 'V1', '2026-09-14', '09:00:00', 'confirmada');

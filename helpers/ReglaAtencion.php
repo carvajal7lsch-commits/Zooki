@@ -1,6 +1,6 @@
 <?php
 /**
- * Reglas de tiempo de la atención de una cita (RN-408 y RN-410).
+ * Reglas de tiempo de la atención de una cita (RN-407 y RN-409).
  *
  * Funciones puras: reciben la hora actual en vez de leer el reloj, así se
  * prueban sin base de datos y la tarea programada, el calendario y el
@@ -10,10 +10,10 @@ final class ReglaAtencion
 {
     public const ZONA = 'America/Bogota';
 
-    /** RN-408: la atención se puede iniciar desde 15 minutos antes de la cita. */
+    /** RN-407: la atención se puede iniciar desde 15 minutos antes de la cita. */
     public const MINUTOS_ANTES_DE_INICIAR = 15;
 
-    /** RN-410: margen después de la hora de fin antes de avisar que sigue abierta. */
+    /** RN-409: margen después de la hora de fin antes de avisar que sigue abierta. */
     public const MINUTOS_GRACIA_AVISO = 10;
 
     /** Duración que se asume si la cita no la tiene guardada. */
@@ -31,7 +31,7 @@ final class ReglaAtencion
     }
 
     /**
-     * RN-408: el día de la cita, desde 15 minutos antes de su hora. Después de
+     * RN-407: el día de la cita, desde 15 minutos antes de su hora. Después de
      * la hora se sigue pudiendo iniciar ese día: el paciente puede llegar tarde.
      */
     public static function puedeIniciar(string $fecha, string $hora, DateTimeImmutable $ahora): bool
@@ -53,7 +53,7 @@ final class ReglaAtencion
         return $inicio->modify("+$minutos minutes");
     }
 
-    /** RN-410: la atención sigue en curso 10 minutos después de su hora de fin y aún no se avisó. */
+    /** RN-409: la atención sigue en curso 10 minutos después de su hora de fin y aún no se avisó. */
     public static function debeAvisarAbierta(array $cita, DateTimeImmutable $ahora): bool
     {
         if (($cita['estado'] ?? '') !== 'en_curso' || !empty($cita['aviso_atencion_abierta'])) {
@@ -63,7 +63,7 @@ final class ReglaAtencion
         return $ahora >= $fin->modify('+' . self::MINUTOS_GRACIA_AVISO . ' minutes');
     }
 
-    /** RN-410: terminado el día de la cita, una atención que sigue en curso queda "sin cerrar". */
+    /** RN-409: terminado el día de la cita, una atención que sigue en curso queda "sin cerrar". */
     public static function quedaSinCerrar(array $cita, DateTimeImmutable $ahora): bool
     {
         return ($cita['estado'] ?? '') === 'en_curso' && $cita['fecha'] < $ahora->format('Y-m-d');

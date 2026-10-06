@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../../helpers/ReglaAtencion.php';
 
 /**
- * RN-408 / RN-410 — Reglas de tiempo de la atención de una cita.
+ * RN-407 / RN-409 — Reglas de tiempo de la atención de una cita.
  *
  * Cita de referencia: 10 de septiembre, de 10:00 a 10:30, en curso.
  */
@@ -28,7 +28,7 @@ class ReglaAtencionTest extends TestCase
         ], $cambios);
     }
 
-    /** RN-408: iniciar antes de tiempo permitía abrir por error una atención que aún no llegaba. */
+    /** RN-407: iniciar antes de tiempo permitía abrir por error una atención que aún no llegaba. */
     public function testLaAtencionSeIniciaDesdeQuinceMinutosAntes(): void
     {
         $this->assertFalse(ReglaAtencion::puedeIniciar('2026-09-10', '10:00:00', self::en('2026-09-10 09:44:59')));
@@ -47,7 +47,7 @@ class ReglaAtencionTest extends TestCase
         $this->assertFalse(ReglaAtencion::puedeIniciar('2026-09-11', '00:05:00', self::en('2026-09-10 23:55:00')));
     }
 
-    /** RN-410: el aviso llega 10 minutos después de la hora de fin. */
+    /** RN-409: el aviso llega 10 minutos después de la hora de fin. */
     public function testSeAvisaDiezMinutosDespuesDeLaHoraDeFin(): void
     {
         $this->assertFalse(ReglaAtencion::debeAvisarAbierta(self::cita(), self::en('2026-09-10 10:39:59')));
@@ -77,7 +77,7 @@ class ReglaAtencionTest extends TestCase
         }
     }
 
-    /** RN-410: la atención queda sin cerrar cuando termina el día de la cita, no antes. */
+    /** RN-409: la atención queda sin cerrar cuando termina el día de la cita, no antes. */
     public function testAlTerminarElDiaLaAtencionQuedaSinCerrar(): void
     {
         $this->assertFalse(ReglaAtencion::quedaSinCerrar(self::cita(), self::en('2026-09-10 23:59:59')));

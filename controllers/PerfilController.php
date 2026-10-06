@@ -90,7 +90,7 @@ class PerfilController
      * Actualiza los datos de contacto propios: correo y telefono.
      *
      * El documento, el nombre y el rol no se tocan aqui a proposito. El rol lo
-     * asigna el administrador (RN-501) y dejarlo editable seria justo la
+     * asigna el administrador (RN-701) y dejarlo editable seria justo la
      * escalada de privilegios que corrigio HU-33; el documento identifica al
      * usuario en toda la base y el nombre es un dato de la clinica.
      */

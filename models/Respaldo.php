@@ -1,6 +1,6 @@
 <?php
 /**
- * Volcado SQL de la base de datos con PDO (HU-23, RN-504).
+ * Volcado SQL de la base de datos con PDO (HU-23, RN-704).
  *
  * Reemplaza a mysqldump: la imagen php:8.2-apache no lo trae y el cliente de
  * Debian es el de MariaDB, que no garantiza autenticarse contra MySQL 8

@@ -2,7 +2,7 @@
  * Panel de inicio del veterinario (HU-18).
  *
  * La vista llega pintada desde el servidor; aquí solo se inicia la atención,
- * se habilita el botón cuando llega la ventana de inicio (RN-408) y se
+ * se habilita el botón cuando llega la ventana de inicio (RN-407) y se
  * refrescan los datos al volver a la pestaña después de un rato.
  */
 (() => {
@@ -34,7 +34,7 @@
         }
     }
 
-    // RN-408: el servidor pinta el botón deshabilitado con la hora desde la que
+    // RN-407: el servidor pinta el botón deshabilitado con la hora desde la que
     // se puede iniciar; al llegar esa hora se habilita sin recargar la página.
     function habilitarBotonesListos() {
         const ahora = Date.now();

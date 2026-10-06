@@ -1,7 +1,7 @@
 <?php
 /**
  * Seguridad técnica implementada. Las afirmaciones corresponden a los
- * requisitos RNF-03 a RNF-06 de la ERS. El marco normativo no vive aquí:
+ * requisitos RNF-05 a RNF-08 de la ERS. El marco normativo no vive aquí:
  * su lugar es la política de tratamiento de datos, donde se explica cómo
  * se cumple en lugar de limitarse a enunciarlo.
  */

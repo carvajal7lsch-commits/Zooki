@@ -1,6 +1,6 @@
 <?php
 /**
- * RN-410 — Avisa de las atenciones que quedaron abiertas y pasa a "sin cerrar"
+ * RN-409 — Avisa de las atenciones que quedaron abiertas y pasa a "sin cerrar"
  * las que terminaron el día sin cerrarse.
  *
  * Se programa cada 5 minutos (scripts/zooki.cron o el Programador de tareas de
