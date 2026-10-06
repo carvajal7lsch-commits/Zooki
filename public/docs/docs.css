@@ -1010,6 +1010,17 @@ mark {
     color: var(--text-muted);
 }
 
+/* Marca del grupo del documento abierto, que siempre sale primero. */
+.cp-group-badge {
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+    text-transform: none;
+    color: var(--accent);
+    background: var(--accent-glow);
+}
+
 /* Cada resultado es una tarjeta con fondo propio: ícono en recuadro,
    título y, debajo, el extracto del contenido donde cayó la coincidencia. */
 .cp-result-item {
@@ -1275,7 +1286,9 @@ mark {
     .toc-sidebar,
     .mobile-header,
     .sidebar-overlay,
-    .command-palette-overlay {
+    .command-palette-overlay,
+    .doc-dl-menu,
+    .pdf-preview-overlay {
         display: none !important;
     }
     
@@ -1458,3 +1471,239 @@ mark {
     border-radius: 0;
 }
 
+
+
+/* ===== Visor de diagramas Mermaid (zoom/pan + draw.io) ===== */
+.mmd-viewer{border:1px solid var(--border-color);border-radius:var(--border-radius,12px);overflow:hidden;margin:20px 0;background:var(--bg-card);}
+.mmd-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:7px 10px;border-bottom:1px solid var(--border-color);background:var(--bg-main);font-size:12px;}
+.mmd-toolbar button,.mmd-toolbar a{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);border-radius:7px;padding:4px 9px;cursor:pointer;font-size:12px;line-height:1;text-decoration:none;transition:background .15s,color .15s,border-color .15s;}
+.mmd-toolbar button:hover,.mmd-toolbar a:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.mmd-toolbar .mmd-zoom{min-width:46px;text-align:center;color:var(--text-muted);border:none;background:none;padding:0;}
+.mmd-toolbar .mmd-sep{flex:1 1 auto;}
+.mmd-toolbar .mmd-dl,.mmd-toolbar .mmd-open{border-color:var(--accent);color:var(--accent);}
+.mmd-viewport{position:relative;height:70vh;max-height:720px;overflow:hidden;background:var(--bg-viewport);cursor:grab;}
+.mmd-viewport.grabbing{cursor:grabbing;}
+.mmd-pan{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;}
+.mmd-pan .mermaid{margin:0;}
+.mmd-viewer.fullscreen-mode{width:100vw;height:100vh;border-radius:0;}
+.mmd-viewer.fullscreen-mode .mmd-viewport{height:calc(100vh - 46px);max-height:none;}
+
+/* Visor Mermaid: clic para activar zoom/scroll */
+.mmd-viewport{position:relative;}
+.mmd-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.03);cursor:pointer;z-index:3;transition:opacity .15s;}
+.mmd-hint span{display:inline-flex;align-items:center;gap:.5em;background:var(--bg-card,#fff);border:1px solid var(--border-color,#ddd);color:var(--text-muted,#666);padding:7px 15px;border-radius:999px;font-size:13px;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,.14);} 
+.mmd-viewer.mmd-active .mmd-hint{display:none;}
+.mmd-viewer.mmd-active .mmd-viewport{box-shadow:inset 0 0 0 2px var(--accent,#7c3aed);}
+
+/* ─── Ver y descargar el documento (specs/descargas-documentacion.md) ─── */
+/* Botón de la barra superior: hereda el aspecto de .theme-toggle-btn. */
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.doc-dl-trigger[hidden] {
+    display: none;
+}
+
+.doc-dl-caret {
+    font-size: 9px;
+    opacity: 0.7;
+}
+
+.doc-dl-trigger[aria-expanded="true"] {
+    color: var(--text-primary);
+    border-color: var(--accent);
+}
+
+.mobile-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Menú: uno solo, fijo, colocado por docs.js bajo el botón que lo abrió. */
+.doc-dl-menu {
+    position: fixed;
+    z-index: 130;
+    min-width: 200px;
+    padding: 6px;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.doc-dl-menu[hidden] {
+    display: none;
+}
+
+.doc-dl-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.doc-dl-item i {
+    width: 16px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.doc-dl-item:hover,
+.doc-dl-item:focus-visible {
+    background-color: var(--bg-card-hover);
+    color: var(--text-primary);
+    outline: none;
+}
+
+.doc-dl-item:hover i,
+.doc-dl-item:focus-visible i {
+    color: var(--accent);
+}
+
+/* Vista previa del PDF: modal grande, como la de imprimir. */
+.pdf-preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 210;
+    padding: 24px;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+.pdf-preview-overlay.visible {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+}
+
+body.pdf-preview-open {
+    overflow: hidden;
+}
+
+.pdf-preview {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1100px;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.pdf-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 12px 10px 18px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pdf-preview-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pdf-preview-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.pp-btn,
+.pp-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: none;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.pp-btn {
+    padding: 0 12px;
+}
+
+.pp-icon {
+    width: 32px;
+}
+
+.pp-btn:hover,
+.pp-icon:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
+}
+
+.pp-btn-primary {
+    color: var(--accent-solid-text);
+    background-color: var(--accent-solid);
+    border-color: var(--accent-solid);
+}
+
+.pp-btn-primary:hover {
+    color: var(--accent-solid-text);
+    filter: brightness(0.95);
+}
+
+.pdf-preview-frame {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background-color: var(--bg-main);
+}
+
+/* Tablet: el modal ocupa casi toda la pantalla y los botones de texto
+   quedan solo con su ícono para que quepa el título. */
+@media (max-width: 1023px) {
+    .pdf-preview-overlay {
+        padding: 12px;
+    }
+
+    .pp-btn span {
+        display: none;
+    }
+}
+
+/* Códigos enlazados (RN-411, HU-4.13…): discretos para no recargar el texto. */
+.markdown-body a.doc-ref-codigo {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    font-weight: inherit;
+}
+.markdown-body tr:target, .markdown-body tr.doc-fila-destino {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}

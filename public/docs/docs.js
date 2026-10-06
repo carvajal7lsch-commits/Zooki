@@ -35,7 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
         'hu': { icon: 'fa-users', label: 'Historias de Usuario' },
         're': { icon: 'fa-clipboard-check', label: 'Requisitos Específicos' },
         'mer': { icon: 'fa-diagram-project', label: 'Modelo Entidad-Relación' },
-        'backlog': { icon: 'fa-list-check', label: 'Backlog (Jira)' }
+        'modelos': { icon: 'fa-shapes', label: 'Modelos y Diagramas' },
+        'historial': { icon: 'fa-clock-rotate-left', label: 'Historial de versiones' },
+        'roi': { icon: 'fa-coins', label: 'Presupuesto y ROI' }
     };
 
     // ═══════════════════════════════════════════════════════════════
@@ -89,6 +91,154 @@ document.addEventListener('DOMContentLoaded', () => {
     // Slug pendiente de resaltar en el sidebar una vez el índice de
     // navegación (y por tanto los sub-ítems) exista.
     let pendingSlugToHighlight = null;
+
+    // Documentos con versión descargable (PDF / Word). 'modelos' se excluye
+    // a propósito: su valor está en los diagramas interactivos, no en texto plano.
+    const DOWNLOADABLE = {
+        readme:    'Zooki-Sinopsis',
+        ficha:     'Zooki-FichaTecnica',
+        ers:       'Zooki-ERS',
+        reglas:    'Zooki-ReglasNegocio',
+        hu:        'Zooki-HistoriasUsuario',
+        re:        'Zooki-RequisitosEspecificos',
+        mer:       'Zooki-MER',
+        historial: 'Zooki-HistorialVersiones',
+        roi:       'Zooki-PresupuestoROI'
+    };
+
+    // ── Ver y descargar el documento abierto (specs/descargas-documentacion.md) ──
+    // Los archivos se sirven estáticos desde ./descargas/<id>.(pdf|docx).
+    // El botón vive en la barra superior y no dentro del documento, para que
+    // no se pierda al hacer scroll (DD-1).
+    const dlTriggers = document.querySelectorAll('.doc-dl-trigger');
+    const dlMenu = document.getElementById('doc-dl-menu');
+    const pdfPreview = document.getElementById('pdf-preview');
+    const pdfFrame = document.getElementById('pdf-preview-frame');
+
+    // Mismo corte que el header móvil en docs.css.
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
+
+    function downloadFiles(docId) {
+        const base = DOWNLOADABLE[docId];
+        if (!base) return null;
+        return {
+            pdf: `descargas/${docId}.pdf`,
+            docx: `descargas/${docId}.docx`,
+            pdfName: `${base}.pdf`,
+            docxName: `${base}.docx`
+        };
+    }
+
+    function setDownloadLink(id, href, filename) {
+        const link = document.getElementById(id);
+        if (!link) return;
+        link.href = href;
+        if (filename) link.setAttribute('download', filename);
+    }
+
+    // Muestra el botón solo si el documento tiene versión descargable y
+    // apunta el menú y la vista previa a sus archivos (DD-2).
+    function updateDownloadControls(docId) {
+        const files = downloadFiles(docId);
+        closeDownloadMenu();
+        dlTriggers.forEach(btn => { btn.hidden = !files; });
+        if (!files) return;
+
+        setDownloadLink('doc-dl-pdf', files.pdf, files.pdfName);
+        setDownloadLink('doc-dl-docx', files.docx, files.docxName);
+        setDownloadLink('pdf-preview-pdf', files.pdf, files.pdfName);
+        setDownloadLink('pdf-preview-docx', files.docx, files.docxName);
+        setDownloadLink('pdf-preview-tab', files.pdf, null);
+    }
+
+    function openDownloadMenu(trigger) {
+        if (!dlMenu) return;
+        // El menú es uno solo: se coloca bajo el botón que lo abrió,
+        // alineado a su borde derecho.
+        const rect = trigger.getBoundingClientRect();
+        dlMenu.style.top = `${rect.bottom + 6}px`;
+        dlMenu.style.right = `${Math.max(8, window.innerWidth - rect.right)}px`;
+        dlMenu.hidden = false;
+        trigger.setAttribute('aria-expanded', 'true');
+        const first = dlMenu.querySelector('.doc-dl-item');
+        if (first) first.focus();
+    }
+
+    function closeDownloadMenu() {
+        if (!dlMenu || dlMenu.hidden) return;
+        dlMenu.hidden = true;
+        dlTriggers.forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+    }
+
+    dlTriggers.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (dlMenu && !dlMenu.hidden) {
+                closeDownloadMenu();
+            } else {
+                openDownloadMenu(btn);
+            }
+        });
+    });
+
+    if (dlMenu) {
+        dlMenu.querySelectorAll('a.doc-dl-item').forEach(link => {
+            link.addEventListener('click', closeDownloadMenu);
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (dlMenu && !dlMenu.hidden && !dlMenu.contains(e.target)) closeDownloadMenu();
+    });
+    window.addEventListener('resize', closeDownloadMenu);
+
+    // Vista previa como la de imprimir (DD-3). En móvil los navegadores no
+    // muestran un PDF dentro de un iframe, así que se abre en otra pestaña.
+    function openPdfPreview() {
+        const files = downloadFiles(currentDocId);
+        closeDownloadMenu();
+        if (!files || !pdfPreview || !pdfFrame) return;
+
+        if (mobileQuery.matches) {
+            window.open(files.pdf, '_blank', 'noopener');
+            return;
+        }
+
+        const info = docLabels[currentDocId];
+        document.getElementById('pdf-preview-title').textContent = info ? info.label : files.pdfName;
+        // view=FitH: el PDF ocupa el ancho del modal en vez de verse como una
+        // página pequeña en el centro. Solo se carga al abrir: pesan hasta 1,3 MB.
+        const src = `${files.pdf}#view=FitH`;
+        if (pdfFrame.getAttribute('src') !== src) pdfFrame.setAttribute('src', src);
+
+        pdfPreview.classList.add('visible');
+        document.body.classList.add('pdf-preview-open');
+        document.getElementById('pdf-preview-close').focus();
+    }
+
+    function closePdfPreview() {
+        if (!pdfPreview || !pdfPreview.classList.contains('visible')) return;
+        pdfPreview.classList.remove('visible');
+        document.body.classList.remove('pdf-preview-open');
+    }
+
+    const previewBtn = document.getElementById('doc-dl-preview');
+    if (previewBtn) previewBtn.addEventListener('click', openPdfPreview);
+
+    const previewClose = document.getElementById('pdf-preview-close');
+    if (previewClose) previewClose.addEventListener('click', closePdfPreview);
+
+    if (pdfPreview) {
+        pdfPreview.addEventListener('click', (e) => {
+            if (e.target === pdfPreview) closePdfPreview();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        closeDownloadMenu();
+        closePdfPreview();
+    });
 
     async function loadDocument(docId, targetSlug = null) {
         if (!docId) docId = 'readme';
@@ -144,7 +294,7 @@ A continuación, puedes profundizar en las especificaciones del sistema:
     </a>
     <a href="#hu" class="docs-card">
         <h3><i class="fa-solid fa-users"></i> Historias de Usuario</h3>
-        <p>55 historias por módulos con narrativa, criterios de aceptación, prioridad y estado real de implementación.</p>
+        <p>82 historias organizadas por módulos con narrativa, criterios de aceptación, prioridad y estado real de implementación.</p>
     </a>
     <a href="#re" class="docs-card">
         <h3><i class="fa-solid fa-clipboard-check"></i> Requisitos Específicos</h3>
@@ -154,9 +304,17 @@ A continuación, puedes profundizar en las especificaciones del sistema:
         <h3><i class="fa-solid fa-diagram-project"></i> Modelo Entidad-Relación</h3>
         <p>Estructura de la base de datos MySQL, definición de tablas principales, claves y diagrama interactivo.</p>
     </a>
-    <a href="#backlog" class="docs-card">
-        <h3><i class="fa-solid fa-list-check"></i> Backlog (Jira)</h3>
-        <p>Historias organizadas por sprint con su estado, estimación y trazabilidad hacia el tablero de Jira.</p>
+    <a href="#modelos" class="docs-card">
+        <h3><i class="fa-solid fa-shapes"></i> Modelos y Diagramas</h3>
+        <p>Modelo de los grafos (clínico y de agenda), diagramas de proceso de negocio y flujos del sistema.</p>
+    </a>
+    <a href="#historial" class="docs-card">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial de versiones</h3>
+        <p>Registro de versiones (v1.0.0 → v2.0), la primera versión estable y el esquema de versionamiento (SemVer).</p>
+    </a>
+    <a href="#roi" class="docs-card">
+        <h3><i class="fa-solid fa-coins"></i> Presupuesto y ROI</h3>
+        <p>Inversión del proyecto, valoración de mercado y proyección de retorno del modelo SaaS.</p>
     </a>
 </div>
 `;
@@ -170,6 +328,19 @@ A continuación, puedes profundizar en las especificaciones del sistema:
             htmlContent = htmlContent.replace(/href="public\/img\//g, 'href="../img/');
             
             docRenderArea.innerHTML = htmlContent;
+
+            // Los .md se enlazan entre sí con rutas relativas (ERS.md#seccion)
+            // para que funcionen también en GitHub; aquí se traducen al
+            // enrutador por hash del portal.
+            enlazarDocumentos(docId);
+
+            // Cada código (RN-411, HU-4.13, RF-2.12, RE-0.1.3, RNF-11, CU-10)
+            // lleva a la fila o al encabezado del documento que lo define.
+            marcarFilasConCodigo();
+            enlazarCodigos(docId);
+
+            // Botón de descarga (PDF / Word) del documento actual
+            updateDownloadControls(docId);
             
             // Post-procesamiento para Mermaid y TOC
             await processMermaidDiagrams();
@@ -177,12 +348,13 @@ A continuación, puedes profundizar en las especificaciones del sistema:
 
             // Inicializar visor de diagramas interactivo si existe en la página
             initSvgViewer();
+            initMermaidViewers(docId);
 
             // Si la navegación pedía un encabezado específico (#doc--slug),
             // localizarlo para desplazarnos hacia él en el bloque finally
             // (evita que el scrollTo(top) de abajo lo pise).
             if (targetSlug) {
-                scrollTarget = document.getElementById(targetSlug);
+                scrollTarget = buscarEncabezado(targetSlug);
             }
             updateActiveSubmenuItem(docId, targetSlug);
 
@@ -200,7 +372,11 @@ A continuación, puedes profundizar en las especificaciones del sistema:
             loadingSpinner.style.display = 'none';
             docRenderArea.style.opacity = '1';
             if (scrollTarget) {
-                scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (scrollTarget.tagName === 'TR') {
+                    scrollTarget.classList.add('doc-fila-destino');
+                    setTimeout(() => scrollTarget.classList.remove('doc-fila-destino'), 2500);
+                }
+                scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -448,6 +624,145 @@ A continuación, puedes profundizar en las especificaciones del sistema:
             .replace(/'/g, '&#039;');
     }
 
+    // Archivo .md -> id del documento en el portal (mismo catálogo que
+    // DocsIndex::docsMap). Un .md que no está publicado no tiene destino.
+    const DOC_POR_ARCHIVO = {
+        'readme': 'readme',
+        'fichatecnica_zooki': 'ficha',
+        'ers': 'ers',
+        'reglasnegocio': 'reglas',
+        'historiasusuario': 'hu',
+        'requisitosespecificos': 're',
+        'mer': 'mer',
+        'modelos': 'modelos',
+        'historialversiones': 'historial',
+        'presupuestoroi': 'roi'
+    };
+    const DOCS_PORTAL = Object.values(DOC_POR_ARCHIVO);
+
+    // Convierte los enlaces del documento renderizado al formato del
+    // enrutador: 'ERS.md#4-arquitectura' -> '#ers--4-arquitectura' y
+    // '#seccion' (mismo documento) -> '#docActual--seccion'. Sin esto, un
+    // enlace '#seccion' cae en la ruta por defecto y abre el README.
+    function enlazarDocumentos(docActual) {
+        const patronMd = /^(?:\.{1,2}\/)*(?:documentacion\/)?([A-Za-z0-9_]+)\.md(?:#(.*))?$/i;
+
+        docRenderArea.querySelectorAll('a[href]').forEach((enlace) => {
+            const href = enlace.getAttribute('href');
+            let destino = null;
+            let ancla = '';
+
+            if (href.startsWith('#')) {
+                destino = docActual;
+                ancla = href.slice(1);
+            } else {
+                const m = href.match(patronMd);
+                if (!m) return;
+                destino = DOC_POR_ARCHIVO[m[1].toLowerCase()] || null;
+                ancla = m[2] || '';
+                if (!destino) {
+                    // Documento no publicado en el portal: se deja como texto.
+                    const texto = document.createElement('span');
+                    texto.className = 'doc-ref-sin-enlace';
+                    texto.textContent = enlace.textContent;
+                    enlace.replaceWith(texto);
+                    return;
+                }
+            }
+
+            // Ya viene en formato del portal (#doc--slug o #doc): no tocar.
+            if (href.startsWith('#') && (ancla.includes('--') || DOCS_PORTAL.includes(ancla))) return;
+
+            const slug = ancla ? slugify(decodeURIComponent(ancla)) : '';
+            enlace.setAttribute('href', slug ? `#${destino}--${slug}` : `#${destino}`);
+            enlace.classList.add('doc-ref');
+        });
+    }
+
+    // Documento que define cada familia de códigos.
+    const PATRON_CODIGO = /\b(RNF-\d+|RN-(?:G\d+|\d{3})|RF-(?:[0-9T]|F)\.\d+|RE-[0-9T]+\.\d+\.\d+|HU-[0-9T]+\.\d+|CU-\d+)\b/g;
+    function docDeCodigo(codigo) {
+        if (codigo.startsWith('RNF-') || codigo.startsWith('RF-') || codigo.startsWith('CU-')) return 'ers';
+        if (codigo.startsWith('RN-')) return 'reglas';
+        if (codigo.startsWith('RE-')) return 're';
+        if (codigo.startsWith('HU-')) return 'hu';
+        return null;
+    }
+
+    // Las reglas y los requisitos se definen en filas de tabla, no en
+    // encabezados: la fila cuyo primer campo es un código recibe ese código
+    // como id para que un enlace pueda llevar directo a ella.
+    function marcarFilasConCodigo() {
+        docRenderArea.querySelectorAll('tr').forEach((fila) => {
+            const celda = fila.querySelector('td');
+            if (!celda) return;
+            const m = celda.textContent.trim().match(/^(RNF-\d+|RN-(?:G\d+|\d{3})|RF-(?:[0-9T]|F)\.\d+|RE-[0-9T]+\.\d+\.\d+|CU-\d+)$/);
+            if (m && !document.getElementById(slugify(m[1]))) fila.id = slugify(m[1]);
+        });
+    }
+
+    // Convierte en enlace cada código que aparece en el texto. No toca
+    // encabezados, enlaces, código, diagramas ni la celda que define el
+    // propio código (sería un enlace a sí misma).
+    function enlazarCodigos(docActual) {
+        const omitir = 'a, code, pre, h1, h2, h3, h4, h5, h6, svg, .mermaid, .mmd-viewer';
+        const walker = document.createTreeWalker(docRenderArea, NodeFilter.SHOW_TEXT, {
+            acceptNode(nodo) {
+                if (!nodo.nodeValue || !/(RNF?|RF|RE|HU|CU)-/.test(nodo.nodeValue)) return NodeFilter.FILTER_REJECT;
+                return nodo.parentElement && nodo.parentElement.closest(omitir) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+            }
+        });
+        const nodos = [];
+        while (walker.nextNode()) nodos.push(walker.currentNode);
+
+        nodos.forEach((nodo) => {
+            const texto = nodo.nodeValue;
+            PATRON_CODIGO.lastIndex = 0;
+            if (!PATRON_CODIGO.test(texto)) return;
+            PATRON_CODIGO.lastIndex = 0;
+
+            const fragmento = document.createDocumentFragment();
+            let ultimo = 0;
+            let m;
+            while ((m = PATRON_CODIGO.exec(texto)) !== null) {
+                const codigo = m[1];
+                const destino = docDeCodigo(codigo);
+                const fila = nodo.parentElement.closest('tr');
+                const esDefinicion = destino === docActual && fila && fila.id === slugify(codigo)
+                    && nodo.parentElement.closest('td') === fila.querySelector('td');
+                if (!destino || esDefinicion) continue;
+                fragmento.appendChild(document.createTextNode(texto.slice(ultimo, m.index)));
+                const enlace = document.createElement('a');
+                enlace.href = `#${destino}--${slugify(codigo)}`;
+                enlace.className = 'doc-ref-codigo';
+                enlace.textContent = codigo;
+                fragmento.appendChild(enlace);
+                ultimo = m.index + codigo.length;
+            }
+            if (ultimo === 0) return;
+            fragmento.appendChild(document.createTextNode(texto.slice(ultimo)));
+            nodo.replaceWith(fragmento);
+        });
+    }
+
+    // Busca el encabezado de destino. Las anclas escritas al estilo GitHub
+    // no siempre coinciden con el slug del portal (GitHub borra los puntos:
+    // 'v2.0' -> 'v20'; el portal los cambia por guion: 'v2-0'), así que si
+    // no hay coincidencia exacta se compara ignorando los guiones.
+    function buscarEncabezado(slug) {
+        const exacto = document.getElementById(slug);
+        if (exacto) return exacto;
+        const plano = slug.replace(/-/g, '');
+        const encabezados = docRenderArea.querySelectorAll('h1[id], h2[id], h3[id], h4[id]');
+        for (const h of encabezados) {
+            if (h.id.replace(/-/g, '') === plano) return h;
+        }
+        for (const h of encabezados) {
+            if (h.id.replace(/-/g, '').startsWith(plano)) return h;
+        }
+        return null;
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // 5. ENRUTADOR BASADO EN HASH (Navegación del Historial)
     // ═══════════════════════════════════════════════════════════════
@@ -463,7 +778,7 @@ A continuación, puedes profundizar en las especificaciones del sistema:
         const targetSlug = sepIndex === -1 ? null : rawHash.slice(sepIndex + 2);
 
         // Mapeo de hashes permitidos
-        const validDocs = ['readme', 'ficha', 'ers', 'reglas', 'hu', 're', 'mer', 'backlog'];
+        const validDocs = ['readme', 'ficha', 'ers', 'reglas', 'hu', 're', 'mer', 'modelos', 'historial', 'roi'];
 
         if (validDocs.includes(hash)) {
             loadDocument(hash, targetSlug);
@@ -845,14 +1160,39 @@ A continuación, puedes profundizar en las especificaciones del sistema:
             }
         }
 
-        if (groups === null) {
-            groups = searchLocally(query);
+        // Sin resultados en Algolia también se prueba el buscador local: lee
+        // los .md actuales, así que encuentra lo que el índice aún no tiene
+        // (BD-2, specs/buscador-documentacion.md).
+        if (groups === null || groups.length === 0) {
+            const locales = searchLocally(query);
+            if (groups === null || locales.length > 0) {
+                groups = locales;
+                engine = 'local';
+            }
         }
 
         // Si el usuario siguió escribiendo, esta respuesta ya no sirve.
         if (token !== cpSearchToken) return;
 
-        renderSearchGroups(groups, query, engine);
+        renderSearchGroups(currentDocFirst(groups), query, engine);
+    }
+
+    // Tarjetas por grupo: el documento abierto muestra más porque es donde
+    // el usuario está buscando primero.
+    const MAX_ITEMS_CURRENT_DOC = 8;
+    const MAX_ITEMS_OTHER_DOC = 5;
+
+    function maxItemsFor(docId) {
+        return docId === currentDocId ? MAX_ITEMS_CURRENT_DOC : MAX_ITEMS_OTHER_DOC;
+    }
+
+    // El grupo del documento abierto va primero y marcado; los demás
+    // conservan el orden de relevancia con que llegaron (BD-5).
+    function currentDocFirst(groups) {
+        const current = groups.filter(g => g.docId === currentDocId);
+        const others = groups.filter(g => g.docId !== currentDocId);
+        current.forEach(g => { g.isCurrent = true; });
+        return current.concat(others);
     }
 
     // Consulta el índice de Algolia vía su API REST. No se carga el cliente
@@ -866,6 +1206,9 @@ A continuación, puedes profundizar en las especificaciones del sistema:
             const params = new URLSearchParams({
                 query,
                 hitsPerPage: '20',
+                // Sube los resultados del documento abierto aunque no estén
+                // entre los 20 más relevantes del total (BD-5).
+                optionalFilters: JSON.stringify([`docId:${currentDocId}`]),
                 attributesToSnippet: 'content:30',
                 highlightPreTag: HL_OPEN,
                 highlightPostTag: HL_CLOSE
@@ -907,7 +1250,7 @@ A continuación, puedes profundizar en las especificaciones del sistema:
                 byDoc.set(hit.docId, { docId: hit.docId, items: [] });
             }
             const group = byDoc.get(hit.docId);
-            if (group.items.length >= 5) return;
+            if (group.items.length >= maxItemsFor(hit.docId)) return;
 
             const highlight = hit._highlightResult || {};
             const snippet = hit._snippetResult || {};
@@ -931,56 +1274,107 @@ A continuación, puedes profundizar en las especificaciones del sistema:
         return Array.from(byDoc.values());
     }
 
-    // Búsqueda local de respaldo: títulos de sección (navIndex) y cuerpo de
-    // cada documento (docBodyCache), por coincidencia de subcadena.
-    function searchLocally(query) {
-        const q = query.toLowerCase();
-        const groups = [];
+    // Minúsculas y sin tildes, carácter por carácter: el texto plegado mide
+    // lo mismo que el original, así una posición encontrada en uno sirve
+    // para cortar el extracto del otro.
+    function foldText(text) {
+        return text.replace(/[áéíóúñüÁÉÍÓÚÑÜ]/g, (ch) => ACCENT_MAP[ch] || ch).toLowerCase();
+    }
 
-        Object.keys(navIndex).forEach(docId => {
-            const doc = navIndex[docId];
-            const items = [];
+    // Parte el markdown crudo en secciones H2/H3 con el mismo slug que el
+    // sidebar y Algolia (DocsIndex::extractHeadings). Lo anterior al primer
+    // encabezado queda como sección sin slug: enlaza al inicio del documento.
+    const localSectionsCache = {};
 
-            (doc.headings || [])
-                .filter(h => h.text.toLowerCase().includes(q))
-                .slice(0, 5)
-                .forEach(h => {
-                    items.push({
-                        href: `#${docId}--${h.slug}`,
-                        titleHTML: escapeHTML(h.text),
-                        descHTML: null
-                    });
-                });
+    function splitLocalSections(docId, body) {
+        const cached = localSectionsCache[docId];
+        if (cached && cached.body === body) return cached.sections;
 
-            const body = docBodyCache[docId];
-            if (body) {
-                const idx = body.toLowerCase().indexOf(q);
-                if (idx >= 0) {
-                    const start = Math.max(0, idx - 40);
-                    const end = Math.min(body.length, idx + q.length + 60);
-                    // Quitar ruido de sintaxis Markdown cruda (#, -, |, *, saltos
-                    // de línea) al inicio del fragmento y normalizar espacios,
-                    // ya que el snippet viene del .md sin renderizar.
-                    const before = body.slice(start, idx)
-                        .replace(/\s+/g, ' ')
-                        .replace(/^[#\-|*_\s]+/, '');
-                    const match = body.slice(idx, idx + q.length);
-                    const after = body.slice(idx + q.length, end).replace(/\s+/g, ' ');
-
-                    items.push({
-                        href: `#${docId}`,
-                        titleHTML: escapeHTML(doc.title || docId),
-                        descHTML: `&hellip;${escapeHTML(before)}<mark>${escapeHTML(match)}</mark>${escapeHTML(after)}&hellip;`
-                    });
-                }
-            }
-
-            if (items.length > 0) {
-                groups.push({ docId, items });
+        const slugger = createSlugger();
+        const sections = [{ text: null, slug: null, body: '' }];
+        // Sin /\r?\n/ los .md con CRLF dejan el \r al final y la regex del
+        // encabezado no casa (en JS el punto no acepta \r).
+        body.split(/\r?\n/).forEach(line => {
+            const heading = line.match(/^(#{2,3})[ \t]+(.+?)[ \t]*$/);
+            if (heading) {
+                const text = heading[2].trim();
+                sections.push({ text, slug: slugger(text), body: '' });
+            } else {
+                sections[sections.length - 1].body += line + '\n';
             }
         });
 
-        return groups;
+        sections.forEach(s => {
+            s.foldedText = s.text ? foldText(s.text) : '';
+            s.foldedBody = foldText(s.body);
+        });
+
+        localSectionsCache[docId] = { body, sections };
+        return sections;
+    }
+
+    function localSnippet(body, idx, length) {
+        const start = Math.max(0, idx - 40);
+        const end = Math.min(body.length, idx + length + 60);
+        // Quitar ruido de sintaxis Markdown cruda (#, -, |, *, saltos de
+        // línea) al inicio del fragmento y normalizar espacios, ya que el
+        // snippet viene del .md sin renderizar.
+        const before = body.slice(start, idx)
+            .replace(/\s+/g, ' ')
+            .replace(/^[#\-|*_\s]+/, '');
+        const match = body.slice(idx, idx + length);
+        const after = body.slice(idx + length, end).replace(/\s+/g, ' ');
+
+        return `&hellip;${escapeHTML(before)}<mark>${escapeHTML(match)}</mark>${escapeHTML(after)}&hellip;`;
+    }
+
+    // Búsqueda local de respaldo sobre el markdown de cada documento
+    // (docBodyCache): una tarjeta por sección que coincide, primero las que
+    // coinciden en el título, y enlazada a esa sección (BD-2).
+    function searchLocally(query) {
+        const q = foldText(query.trim());
+        const groups = [];
+        if (!q) return groups;
+
+        Object.keys(navIndex).forEach(docId => {
+            const doc = navIndex[docId];
+            const body = docBodyCache[docId];
+            const byTitle = [];
+            const byBody = [];
+
+            if (body) {
+                splitLocalSections(docId, body).forEach(s => {
+                    const href = s.slug ? `#${docId}--${s.slug}` : `#${docId}`;
+                    const titleHTML = escapeHTML(s.text || doc.title || docId);
+                    const idx = s.foldedBody.indexOf(q);
+                    const descHTML = idx >= 0 ? localSnippet(s.body, idx, q.length) : null;
+
+                    if (s.foldedText.includes(q)) {
+                        byTitle.push({ href, titleHTML, descHTML });
+                    } else if (descHTML) {
+                        byBody.push({ href, titleHTML, descHTML });
+                    }
+                });
+            } else {
+                // El cuerpo todavía se está descargando: al menos los títulos.
+                (doc.headings || [])
+                    .filter(h => foldText(h.text).includes(q))
+                    .forEach(h => byTitle.push({
+                        href: `#${docId}--${h.slug}`,
+                        titleHTML: escapeHTML(h.text),
+                        descHTML: null
+                    }));
+            }
+
+            const items = byTitle.concat(byBody).slice(0, maxItemsFor(docId));
+            if (items.length > 0) {
+                groups.push({ docId, items, hits: byTitle.length * 10 + byBody.length });
+            }
+        });
+
+        // Sin un puntaje de relevancia como el de Algolia, se ordena por
+        // cuántas secciones coinciden, con más peso en los títulos.
+        return groups.sort((a, b) => b.hits - a.hits);
     }
 
     // Pinta en la paleta los resultados ya normalizados, vengan de donde vengan.
@@ -999,7 +1393,8 @@ A continuación, puedes profundizar en las especificaciones del sistema:
 
             const groupEl = document.createElement('div');
             groupEl.className = 'cp-group';
-            groupEl.innerHTML = `<div class="cp-group-title"><i class="fa-solid ${info.icon}"></i> ${escapeHTML(info.label)}</div>`;
+            const badge = group.isCurrent ? ' <span class="cp-group-badge">Esta página</span>' : '';
+            groupEl.innerHTML = `<div class="cp-group-title"><i class="fa-solid ${info.icon}"></i> ${escapeHTML(info.label)}${badge}</div>`;
 
             group.items.forEach(item => {
                 const el = document.createElement('a');
@@ -1028,6 +1423,122 @@ A continuación, puedes profundizar en las especificaciones del sistema:
     // ═══════════════════════════════════════════════════════════════
     // VISOR INTERACTIVO DE SVG (Zoom y Pan)
     // ═══════════════════════════════════════════════════════════════
+    function initMermaidViewers(docId) {
+        const area = document.getElementById('doc-render-area');
+        if (!area) return;
+        const DRAWIO = 'diagramas/zooki-diagramas.drawio';
+        // Mapa: orden de cada diagrama en Modelos.md -> indice de hoja (0-based) en el .drawio maestro
+        // Los flujos del §13 (cuenta y perfil) aún no tienen hoja en el maestro: null abre la primera.
+        const DRAWIO_PAGES = { modelos: [null,0,0,1,2,2,2,2,2,8,8,8,3,3,4,5,6,7,null,null,null,null] };
+        const pageArr = DRAWIO_PAGES[docId] || null;
+        area.querySelectorAll('.mermaid').forEach((mmd, idx) => {
+            if (mmd.dataset.viewerReady) return;
+            const svg = mmd.querySelector('svg');
+            if (!svg) return;
+            mmd.dataset.viewerReady = '1';
+            const pg = pageArr ? pageArr[idx] : null;
+
+            const card = document.createElement('div');
+            card.className = 'mmd-viewer';
+            const bar = document.createElement('div');
+            bar.className = 'mmd-toolbar';
+            bar.innerHTML =
+                '<button type="button" data-a="in" title="Acercar"><i class="fa-solid fa-plus"></i></button>' +
+                '<button type="button" data-a="out" title="Alejar"><i class="fa-solid fa-minus"></i></button>' +
+                '<button type="button" data-a="fit" title="Ajustar al ancho"><i class="fa-solid fa-arrows-left-right-to-line"></i></button>' +
+                '<span class="mmd-zoom">100%</span>' +
+                '<button type="button" data-a="full" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button>' +
+                '<span class="mmd-sep"></span>' +
+                '<a class="mmd-dl" href="' + DRAWIO + '" download title="Descargar el diagrama en formato draw.io"><i class="fa-solid fa-download"></i> .drawio</a>' +
+                '<a class="mmd-open" target="_blank" rel="noopener" title="Abrir en draw.io"><i class="fa-solid fa-up-right-from-square"></i> draw.io</a>';
+            const vp = document.createElement('div');
+            vp.className = 'mmd-viewport';
+            const pan = document.createElement('div');
+            pan.className = 'mmd-pan';
+
+            mmd.parentNode.insertBefore(card, mmd);
+            card.appendChild(bar);
+            card.appendChild(vp);
+            vp.appendChild(pan);
+            pan.appendChild(mmd);
+
+            const hint = document.createElement('div');
+            hint.className = 'mmd-hint';
+            hint.innerHTML = '<span><i class="fa-solid fa-hand-pointer"></i> Haz clic para activar el zoom y el desplazamiento</span>';
+            vp.appendChild(hint);
+            let active = false;
+            function activate() { active = true; card.classList.add('mmd-active'); }
+            function deactivate() { active = false; card.classList.remove('mmd-active'); }
+            vp.addEventListener('click', activate);
+            vp.addEventListener('mouseleave', deactivate);
+
+            let nW = 800, nH = 600;
+            if (svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width) {
+                nW = svg.viewBox.baseVal.width; nH = svg.viewBox.baseVal.height;
+            }
+            svg.setAttribute('width', nW); svg.setAttribute('height', nH);
+            svg.style.maxWidth = 'none'; svg.style.height = 'auto';
+
+            const openA = bar.querySelector('.mmd-open');
+            openA.href = DRAWIO;
+            openA.addEventListener('click', (e) => {
+                e.preventDefault();
+                const w = window.open('about:blank', '_blank');
+                fetch(DRAWIO).then((r) => r.text()).then((xml) => {
+                    const u = 'https://app.diagrams.net/?splash=0&title=Zooki-diagramas' + (pg != null ? '&page=' + pg : '') + '#R' + encodeURIComponent(xml);
+                    if (w) { w.location.href = u; } else { window.open(u, '_blank'); }
+                }).catch(() => { if (w) { w.location.href = DRAWIO; } else { window.open(DRAWIO, '_blank'); } });
+            });
+
+            const zlabel = bar.querySelector('.mmd-zoom');
+            let scale = 1, tx = 0, ty = 0;
+            function apply() { pan.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')'; zlabel.textContent = Math.round(scale * 100) + '%'; }
+            function fit() {
+                const w = vp.clientWidth || 600, h = vp.clientHeight || 400;
+                const s = Math.min((w - 24) / nW, (h - 24) / nH);
+                scale = Math.max(0.05, Math.min(2, s));
+                tx = (w - nW * scale) / 2; if (tx < 0) tx = 0;
+                ty = (h - nH * scale) / 2; if (ty < 0) ty = 10;
+                apply();
+            }
+            function zoomAt(mx, my, factor) {
+                const old = scale;
+                scale = Math.min(8, Math.max(0.1, scale * factor));
+                tx = mx - (mx - tx) * (scale / old);
+                ty = my - (my - ty) * (scale / old);
+                apply();
+            }
+            bar.addEventListener('click', (e) => {
+                const b = e.target.closest('button'); if (!b) return;
+                const a = b.dataset.a;
+                const cx = vp.clientWidth / 2, cy = vp.clientHeight / 2;
+                if (a === 'in') zoomAt(cx, cy, 1.25);
+                else if (a === 'out') zoomAt(cx, cy, 1 / 1.25);
+                else if (a === 'fit') fit();
+                else if (a === 'full') {
+                    if (!document.fullscreenElement) { if (card.requestFullscreen) card.requestFullscreen(); }
+                    else { document.exitFullscreen(); }
+                }
+            });
+            vp.addEventListener('wheel', (e) => {
+                if (!active) return;
+                e.preventDefault();
+                const r = vp.getBoundingClientRect();
+                zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.12 : 1 / 1.12);
+            }, { passive: false });
+            let drag = false, sx = 0, sy = 0;
+            vp.addEventListener('mousedown', (e) => { activate(); drag = true; sx = e.clientX - tx; sy = e.clientY - ty; vp.classList.add('grabbing'); });
+            window.addEventListener('mousemove', (e) => { if (!drag) return; tx = e.clientX - sx; ty = e.clientY - sy; apply(); });
+            window.addEventListener('mouseup', () => { drag = false; vp.classList.remove('grabbing'); });
+            document.addEventListener('fullscreenchange', () => {
+                if (document.fullscreenElement === card) { card.classList.add('fullscreen-mode'); active = true; card.classList.add('mmd-active'); }
+                else card.classList.remove('fullscreen-mode');
+                setTimeout(fit, 60);
+            });
+            requestAnimationFrame(fit);
+        });
+    }
+
     function initSvgViewer() {
         const viewport = document.getElementById('svg-viewport');
         const panContainer = document.getElementById('svg-pan-container');

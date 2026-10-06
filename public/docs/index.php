@@ -86,7 +86,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_index') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Estilos Oficiales del Portal -->
-    <link rel="stylesheet" href="docs.css">
+    <link rel="stylesheet" href="docs.css?v=20261005c">
 
     <!-- Aplicar el tema guardado antes del primer pintado, para evitar parpadeo -->
     <script>
@@ -125,10 +125,22 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_index') {
             <kbd aria-label="Atajo: tecla barra">/</kbd>
         </button>
 
-        <button id="theme-toggle" class="theme-toggle-btn" type="button" title="Cambiar tema">
-            <i class="fa-solid fa-sun"></i>
-            <span>Claro</span>
-        </button>
+        <div class="topbar-actions">
+            <!-- Ver o descargar el documento abierto. docs.js lo oculta en
+                 los documentos sin versión descargable. -->
+            <button id="doc-dl-trigger" class="theme-toggle-btn doc-dl-trigger" type="button"
+                    aria-haspopup="menu" aria-expanded="false" aria-controls="doc-dl-menu"
+                    title="Ver o descargar este documento" hidden>
+                <i class="fa-solid fa-download"></i>
+                <span>Descargar</span>
+                <i class="fa-solid fa-chevron-down doc-dl-caret"></i>
+            </button>
+
+            <button id="theme-toggle" class="theme-toggle-btn" type="button" title="Cambiar tema">
+                <i class="fa-solid fa-sun"></i>
+                <span>Claro</span>
+            </button>
+        </div>
     </header>
 
     <!-- Header Móvil -->
@@ -140,10 +152,31 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_index') {
             <img src="../img/icon_blue.png" alt="Zooki Logo" class="brand-logo-img-mobile">
             <span>Zooki Docs</span>
         </div>
-        <button id="mobile-search-trigger" class="icon-btn" aria-label="Buscar en la documentación">
-            <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
+        <div class="mobile-actions">
+            <button id="mobile-dl-trigger" class="icon-btn doc-dl-trigger" type="button"
+                    aria-haspopup="menu" aria-expanded="false" aria-controls="doc-dl-menu"
+                    aria-label="Ver o descargar este documento" hidden>
+                <i class="fa-solid fa-download"></i>
+            </button>
+            <button id="mobile-search-trigger" class="icon-btn" aria-label="Buscar en la documentación">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </div>
     </header>
+
+    <!-- Menú de descarga: uno solo para la barra superior y el header móvil.
+         docs.js lo coloca bajo el botón que lo abrió. -->
+    <div class="doc-dl-menu" id="doc-dl-menu" role="menu" hidden>
+        <button type="button" class="doc-dl-item" id="doc-dl-preview" role="menuitem">
+            <i class="fa-regular fa-eye"></i> Ver PDF
+        </button>
+        <a class="doc-dl-item" id="doc-dl-pdf" role="menuitem" href="#" download>
+            <i class="fa-regular fa-file-pdf"></i> Descargar PDF
+        </a>
+        <a class="doc-dl-item" id="doc-dl-docx" role="menuitem" href="#" download>
+            <i class="fa-regular fa-file-word"></i> Descargar Word
+        </a>
+    </div>
 
     <div class="app-container">
 
@@ -201,8 +234,18 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_index') {
                             </a>
                         </li>
                         <li>
-                            <a href="#backlog" class="menu-item" data-doc="backlog">
-                                <span>Backlog (Jira)</span>
+                            <a href="#modelos" class="menu-item" data-doc="modelos">
+                                <span>Modelos y Diagramas</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#historial" class="menu-item" data-doc="historial">
+                                <span>Historial de versiones</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#roi" class="menu-item" data-doc="roi">
+                                <span>Presupuesto y ROI</span>
                             </a>
                         </li>
                     </ul>
@@ -269,6 +312,32 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_index') {
         </div>
     </div>
 
+    <!-- Vista previa del PDF del documento abierto, como la de imprimir:
+         usa el visor de PDF del navegador. El src se pone al abrirla. -->
+    <div class="pdf-preview-overlay" id="pdf-preview">
+        <div class="pdf-preview" role="dialog" aria-modal="true" aria-labelledby="pdf-preview-title">
+            <div class="pdf-preview-header">
+                <h2 class="pdf-preview-title" id="pdf-preview-title"></h2>
+                <div class="pdf-preview-actions">
+                    <a class="pp-btn pp-btn-primary" id="pdf-preview-pdf" href="#" download>
+                        <i class="fa-solid fa-download"></i> <span>Descargar PDF</span>
+                    </a>
+                    <a class="pp-btn" id="pdf-preview-docx" href="#" download>
+                        <i class="fa-regular fa-file-word"></i> <span>Word</span>
+                    </a>
+                    <a class="pp-icon" id="pdf-preview-tab" href="#" target="_blank" rel="noopener"
+                       title="Abrir en pestaña nueva" aria-label="Abrir en pestaña nueva">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                    <button type="button" class="pp-icon" id="pdf-preview-close" aria-label="Cerrar vista previa">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <iframe class="pdf-preview-frame" id="pdf-preview-frame" title="Vista previa del PDF"></iframe>
+        </div>
+    </div>
+
     <!-- Configuración de Algolia para el buscador. Solo se expone la llave
          de SOLO BÚSQUEDA (diseñada para el navegador); la de administración
          nunca sale de la CLI. Si no hay credenciales, el objeto queda nulo
@@ -280,6 +349,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_index') {
     </script>
 
     <!-- Script de control principal -->
-    <script src="docs.js"></script>
+    <script src="docs.js?v=20261005c"></script>
 </body>
 </html>

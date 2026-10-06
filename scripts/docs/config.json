@@ -1,0 +1,13 @@
+{
+    "autor": "Juan Sebastián Carvajal Home",
+    "programa": "Tecnología en Análisis y Desarrollo de Software (ADSO)",
+    "institucion": "Servicio Nacional de Aprendizaje (SENA)",
+    "centro": "Centro Tecnológico de la Amazonia",
+    "ciudad": "Florencia, Caquetá",
+    "curso": "Ficha 3142784",
+    "instructor": "Oscar Eduardo Yanguas",
+    "proyecto": "Zooki v2.0",
+    "logo": "public/img/icon_blue.png",
+    "salida": "public/docs/descargas",
+    "excluir": ["modelos"]
+}
