@@ -127,7 +127,7 @@ class AutorizacionRolTest extends TestCase
     }
 
     /**
-     * RN-408 — Atender una cita (iniciarla, cerrarla o marcarla como no
+     * RN-407 — Atender una cita (iniciarla, cerrarla o marcarla como no
      * asistida) es solo del veterinario. Recepción y administración podían
      * iniciarla y la cita quedaba "en curso" sin nadie que la atendiera,
      * porque la pantalla de atención nunca fue suya.

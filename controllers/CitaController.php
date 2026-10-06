@@ -641,7 +641,7 @@ class CitaController {
         $rolUsuario = $_SESSION['usuario_id_rol'] ?? null;
         $docSesion  = $_SESSION['usuario_doc'] ?? null;
 
-        // RN-408: la atención la inicia solo el veterinario asignado.
+        // RN-407: la atención la inicia solo el veterinario asignado.
         if ((int) $rolUsuario !== 2 || empty($docSesion) || $cita['doc_veterinario'] !== $docSesion) {
             echo json_encode(['success' => false, 'message' => 'Solo el veterinario asignado puede iniciar la atención de esta cita.']);
             exit;
@@ -675,7 +675,7 @@ class CitaController {
             exit;
         }
 
-        // RN-408: desde 15 minutos antes de la hora de la cita. Antes se podía
+        // RN-407: desde 15 minutos antes de la hora de la cita. Antes se podía
         // iniciar a cualquier hora del día, y así se abría por error la
         // atención de un paciente que todavía no había llegado.
         if (!ReglaAtencion::puedeIniciar($cita['fecha'], $cita['hora'], $ahora)) {
@@ -785,7 +785,7 @@ class CitaController {
     }
 
     /**
-     * RN-409 / HU-29 — El paciente no llegó. Lo marca el veterinario de la
+     * RN-408 / HU-29 — El paciente no llegó. Lo marca el veterinario de la
      * cita y solo cuando la hora de la cita ya pasó: antes de esa hora no se
      * sabe si va a llegar. La cita deja de ocupar su espacio en la agenda.
      */
@@ -829,7 +829,7 @@ class CitaController {
     }
 
     /**
-     * RN-411 — Cierra sin consulta una atención que no se va a documentar (se
+     * RN-410 — Cierra sin consulta una atención que no se va a documentar (se
      * inició por error, el paciente se retiró...). Solo el veterinario de la
      * cita, con motivo obligatorio, y queda en auditoría. La cita no se reabre:
      * si el paciente vuelve se agenda otra, y su horario ya quedó libre.
@@ -903,7 +903,7 @@ class CitaController {
         exit;
     }
 
-    // RN-410: antes de mostrar la agenda, avisa de las atenciones que siguen
+    // RN-409: antes de mostrar la agenda, avisa de las atenciones que siguen
     // abiertas y pasa a "sin cerrar" las de días anteriores, aunque la tarea
     // programada no esté activa. Un fallo aquí no debe impedir ver la agenda.
     private function revisarAtencionesAbiertas(): void {
@@ -1140,7 +1140,7 @@ class CitaController {
             exit;
         }
 
-        // RN-408: la pantalla de atención es del veterinario asignado. La
+        // RN-407: la pantalla de atención es del veterinario asignado. La
         // matriz ya la limita al rol veterinario; aquí se exige que sea el suyo.
         $rol = (int) ($_SESSION['usuario_id_rol'] ?? 0);
         $doc = $_SESSION['usuario_doc'] ?? '';
@@ -1149,7 +1149,7 @@ class CitaController {
             exit;
         }
 
-        // RN-408: la vista solo ofrece "Iniciar atención" el día de la cita,
+        // RN-407: la vista solo ofrece "Iniciar atención" el día de la cita,
         // desde 15 minutos antes de su hora.
         $esDiaDeLaCita = ReglaAtencion::puedeIniciar($cita['fecha'], $cita['hora'], $this->ahora());
 

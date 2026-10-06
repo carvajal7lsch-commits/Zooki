@@ -195,7 +195,7 @@ class ConsultaController {
 
         // RN-203: la cita es opcional, pero si viene debe ser de ESTA
         // mascota; si no, la consulta quedaría atada a la cita de otra.
-        // RN-406 / RN-408: además tiene que ser del veterinario en sesión y
+        // RN-406 / RN-407: además tiene que ser del veterinario en sesión y
         // estar en curso, porque guardar la consulta es lo que la completa.
         $idCita = null;
         if (!empty($_POST['id_cita'])) {
@@ -209,7 +209,7 @@ class ConsultaController {
                 echo json_encode(['success' => false, 'message' => 'Solo el veterinario asignado puede registrar la consulta de esta cita.']);
                 exit;
             }
-            // RN-410: una atención que quedó sin cerrar también se documenta.
+            // RN-409: una atención que quedó sin cerrar también se documenta.
             if (!in_array($cita['estado'], ['en_curso', 'sin_cerrar'], true)) {
                 echo json_encode(['success' => false, 'message' => 'La atención de esta cita no está en curso. Iníciala desde el calendario.']);
                 exit;

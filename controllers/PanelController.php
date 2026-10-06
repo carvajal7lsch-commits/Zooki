@@ -122,7 +122,7 @@ class PanelController
         return array_map(fn($c) => $c + ['accion' => ResumenPanel::accion($c, $ahora)], $citas);
     }
 
-    // RN-410: el panel es la primera pantalla del día, así que también revisa
+    // RN-409: el panel es la primera pantalla del día, así que también revisa
     // las atenciones abiertas, igual que el calendario. Un fallo no lo tumba.
     private function revisarAtencionesAbiertas(DateTimeImmutable $ahora): void
     {

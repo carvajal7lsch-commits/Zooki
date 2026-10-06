@@ -18,7 +18,7 @@ const ESTADOS_CITA = {
 
 const TIPOS_EVENTO = { cita: 'Cita', vacunacion: 'Vacunación', desparasitacion: 'Desparasitación' };
 
-// RN-408: debe coincidir con ReglaAtencion::MINUTOS_ANTES_DE_INICIAR.
+// RN-407: debe coincidir con ReglaAtencion::MINUTOS_ANTES_DE_INICIAR.
 const MINUTOS_ANTES_DE_INICIAR = 15;
 
 let calendarInstance = null;
@@ -482,7 +482,7 @@ function mostrarDetalleCita(eventId) {
     const estado = p.estado;
     const pasada = esDiaPasado(ev.start);
 
-    // RN-408: iniciar, continuar y marcar "no asistió" son del veterinario de
+    // RN-407: iniciar, continuar y marcar "no asistió" son del veterinario de
     // la cita; confirmar, reprogramar y cancelar también los hace el
     // administrador. Una cita en curso siempre se puede retomar, aunque sea de
     // otro día, para que una atención sin cerrar no quede "en curso" para siempre.
@@ -490,12 +490,12 @@ function mostrarDetalleCita(eventId) {
     const gestiona = esSuCita || (esCita && esAdmin());
     const abierta = ['pendiente', 'confirmada'].includes(estado);
     const enAtencion = ['en_curso', 'sin_cerrar'].includes(estado);
-    // RN-408: se inicia el día de la cita desde 15 minutos antes de su hora.
+    // RN-407: se inicia el día de la cita desde 15 minutos antes de su hora.
     const iniciaDesde = new Date(ev.start.getTime() - MINUTOS_ANTES_DE_INICIAR * 60000);
     const enDiaDeInicio = esSuCita && abierta && esHoy(ev.start);
     const puedeIniciar = enDiaDeInicio && new Date() >= iniciaDesde;
     const esperaInicio = enDiaDeInicio && !puedeIniciar;
-    // RN-410 / RN-411: una atención abierta se documenta o se cierra sin consulta.
+    // RN-409 / RN-410: una atención abierta se documenta o se cierra sin consulta.
     const puedeContinuar = esSuCita && enAtencion;
     const puedeCerrarSinConsulta = esSuCita && enAtencion;
     const puedeNoAsistio = esSuCita && abierta && ev.start <= new Date();
@@ -609,7 +609,7 @@ async function iniciarAtencionCita(idCita) {
     }
 }
 
-// RN-406 / RN-408: desde el calendario no se "completa" una cita; se completa
+// RN-406 / RN-407: desde el calendario no se "completa" una cita; se completa
 // al guardar su consulta en la pantalla de atención.
 function continuarAtencionCita(idCita) {
     window.location.href = `index.php?action=vet_atencion&id_cita=${encodeURIComponent(idCita)}`;
@@ -631,7 +631,7 @@ async function confirmarCita(idCita) {
     }
 }
 
-// RN-409: el paciente no llegó. La cita se cierra y libera su espacio.
+// RN-408: el paciente no llegó. La cita se cierra y libera su espacio.
 async function marcarNoAsistio(idCita) {
     const confirmacion = await Swal.fire({
         title: '¿Marcar como no asistió?',
@@ -683,7 +683,7 @@ async function cancelarCita(idCita) {
     }
 }
 
-// RN-411: cerrar sin consulta una atención que no se va a documentar.
+// RN-410: cerrar sin consulta una atención que no se va a documentar.
 async function cerrarSinConsulta(idCita) {
     const { value: motivo } = await Swal.fire({
         title: 'Cerrar sin consulta',

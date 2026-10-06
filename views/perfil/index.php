@@ -63,7 +63,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 </div>
             </form>
 
-            <!-- Solo lectura a propósito: el rol lo asigna el administrador (RN-501). -->
+            <!-- Solo lectura a propósito: el rol lo asigna el administrador (RN-701). -->
             <p class="perfil-hint"><i class="fas fa-lock"></i> El nombre, el documento y el rol los gestiona el administrador de la clínica.</p>
         </section>
 

@@ -39,7 +39,7 @@ class Panel
         return $this->filas($sql . " ORDER BY c.hora ASC", $params);
     }
 
-    /** RN-410: atenciones iniciadas que siguen sin cerrarse, de cualquier día. */
+    /** RN-409: atenciones iniciadas que siguen sin cerrarse, de cualquier día. */
     public function atencionesAbiertas(?string $docVeterinario = null): array
     {
         $sql = self::SELECT_CITA . " WHERE c.estado IN ('en_curso', 'sin_cerrar')";
@@ -100,7 +100,7 @@ class Panel
     }
 
     /**
-     * RN-409: citas cuya hora ya pasó y siguen pendientes o confirmadas; nadie
+     * RN-408: citas cuya hora ya pasó y siguen pendientes o confirmadas; nadie
      * las atendió ni las marcó como no asistidas.
      */
     public function contarSinMarcar(string $desde, string $hoy, string $horaActual): int

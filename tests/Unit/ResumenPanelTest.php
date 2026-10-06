@@ -27,7 +27,7 @@ class ResumenPanelTest extends TestCase
         $this->assertSame('continuar', ResumenPanel::accion($this->cita('08:00:00', 'sin_cerrar', '2026-09-10'), $ahora)['tipo']);
     }
 
-    /** RN-408: se inicia desde 15 minutos antes; antes se dice desde qué hora. */
+    /** RN-407: se inicia desde 15 minutos antes; antes se dice desde qué hora. */
     public function testLaAtencionSeIniciaDesdeQuinceMinutosAntes(): void
     {
         $cita = $this->cita('10:30:00', 'confirmada');

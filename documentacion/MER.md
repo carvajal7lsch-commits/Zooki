@@ -1,47 +1,208 @@
-# Modelo Entidad-Relación (MER) - Zooki
+# Modelo Entidad-Relación (MER) - Zooki v2.0
 
-Este documento describe la estructura y relaciones de la base de datos relacional de **Zooki**, diseñada para garantizar la integridad referencial, el historial clínico de los pacientes y la auditoría completa de los movimientos del sistema.
+Este documento describe la estructura y relaciones de la base de datos relacional de **Zooki** en su versión **v2.0** (arquitectura SaaS multi-inquilino). El modelo incorpora el aislamiento de datos por clínica (`id_clinica`), el grafo de conocimiento clínico, la suscripción por planes y la reputación de veterinarios, además del historial clínico y la auditoría ya existentes.
 
 ---
 
+## Aislamiento multi-inquilino
+
+Cada clínica es un **inquilino** identificado por `id_clinica`. Las tablas de negocio incorporan esa columna y toda consulta la filtra. Son **globales** (compartidas por todas las clínicas, sin `id_clinica`): los catálogos taxonómicos (`especies`, `razas`, `colores_base`), el catálogo de `planes` y `especialidades`, y el **grafo de conocimiento clínico** (`grafo_nodos`, `grafo_aristas`). El **super-administrador** no pertenece a ninguna clínica (`usuarios.es_super_admin`).
+
+Los **propietarios** también son **identidades globales**: un único registro por persona, con **correo único en toda la plataforma**. Se vinculan a una o varias clínicas mediante la tabla puente **`propietario_clinica`** (previa verificación del correo al ligar a una clínica nueva). Una misma persona puede tener **varios roles**: su rol de propietario (por `propietario_clinica`) y, en cada clínica donde trabaja, un rol de personal (administrador o veterinario) por la tabla **`usuario_clinica`**. Así un veterinario que trabaja en dos clínicas y tiene su propio perro usa una sola cuenta. Las **mascotas** también son **globales**: pertenecen a su propietario, no a una clínica, y se vinculan a cada clínica donde se atienden mediante la tabla puente **`mascota_clinica`** (que guarda además el número de historia clínica de esa clínica). Así una mascota tiene **una sola ficha, un solo carnet y un solo QR** en toda la plataforma. El aislamiento se mantiene en los **registros clínicos**: `consultas`, `vacunas` y `desparasitaciones` llevan el `id_clinica` (y el veterinario) de la clínica que los creó, y solo esa clínica puede modificarlos. Otra clínica vinculada ve siempre las alergias y alertas médicas (`alertas_medicas`), las vacunas y desparasitaciones; las consultas de otras clínicas solo si el propietario la autorizó (`propietario_clinica.autoriza_historia_compartida`). Ver [Reglas de Negocio RN-110 a RN-115](ReglasNegocio.md#módulo-1--mascotas-y-propietarios).
+
 ## Diagrama Entidad-Relación
 
-El siguiente diagrama describe las tablas del sistema y sus relaciones. Está escrito en Mermaid, por lo que se versiona junto al código y se renderiza de forma nítida a cualquier nivel de zoom.
-
-Las líneas continuas representan relaciones con clave foránea declarada; las punteadas, vínculos lógicos que el esquema no obliga a nivel de base de datos.
+Escrito en Mermaid; se versiona junto al código y se renderiza a cualquier nivel de zoom. Las líneas continuas representan relaciones con clave foránea declarada; las punteadas, vínculos lógicos que el esquema no obliga.
 
 ```mermaid
 erDiagram
+    planes {
+        int id_plan PK
+        varchar nombre
+        int precio_mensual
+        int precio_anual
+        int limite_mascotas
+        int limite_citas_mes
+        int limite_personal
+    }
+    clinicas {
+        int id_clinica PK
+        varchar nombre
+        varchar nit UK
+        varchar direccion
+        varchar telefono
+        varchar telefono_urgencias
+        int id_plan FK
+        enum estado
+        int tolerancia_llegada_min
+        int plazo_reasignacion_min
+        int umbral_aviso_min
+        int tope_sobrecupos
+    }
+    suscripciones {
+        int id_suscripcion PK
+        int id_clinica FK
+        int id_plan FK
+        enum estado
+        enum ciclo
+        tinyint al_dia
+        date fecha_inicio
+        date fecha_fin
+    }
+    plantillas_comunicacion {
+        int id_plantilla PK
+        int id_clinica FK
+        varchar tipo
+        varchar asunto
+        text cuerpo
+        int dias_anticipacion
+        time hora_envio
+    }
     roles {
         int id_rol PK
         varchar nombre_rol
     }
     usuarios {
-        varchar documento PK
-        int id_rol FK
+        int id_usuario PK
+        varchar documento UK
         varchar nombre_completo
-        varchar email
+        varchar email UK
+        varchar google_uid UK
+        tinyint perfil_completo
+        tinyint es_super_admin
         tinyint estado
-        tinyint password_definida
+    }
+    consentimientos_datos {
+        int id_consentimiento PK
+        int id_usuario FK
+        varchar version_politica
+        enum medio
+        datetime fecha
+    }
+    usuario_clinica {
+        int id_usuario PK
+        int id_clinica PK
+        int id_rol FK
+        enum estado
+        datetime fecha_vinculo
+    }
+    propietario_clinica {
+        int id_propietario PK
+        int id_clinica PK
+        enum estado
+        datetime fecha_vinculo
+        tinyint autoriza_historia_compartida
+    }
+    mascota_clinica {
+        int id_mascota PK
+        int id_clinica PK
+        varchar numero_historia_clinica
+        enum estado
+        datetime fecha_vinculo
     }
     password_resets {
         int id PK
-        varchar usuario_documento FK
-        varchar token
-        datetime expira
-    }
-    verificaciones_email {
-        int id PK
-        varchar usuario_documento FK
+        int id_usuario FK
         varchar token_hash
         datetime expires_at
         tinyint used
     }
-    intentos_login {
-        int id_intento PK
-        varchar identificador
-        int intentos
-        datetime bloqueado_hasta
+    verificaciones_email {
+        int id PK
+        int id_usuario FK
+        varchar email
+        varchar token_hash
+        datetime expires_at
+        tinyint used
+    }
+    casos_soporte {
+        int id_caso PK
+        enum tipo
+        int id_usuario FK
+        int id_clinica FK
+        text descripcion
+        enum estado
+        datetime fecha
+    }
+    carnet_escaneos {
+        int id_escaneo PK
+        int id_mascota FK
+        datetime fecha
+        char ip_hash
+        decimal latitud
+        decimal longitud
+    }
+    horarios_veterinario {
+        int id PK
+        int id_veterinario FK
+        int id_clinica FK
+        int dia_semana
+        time hora_inicio
+        time hora_fin
+        tinyint activo
+    }
+    ausencias_veterinario {
+        int id PK
+        int id_veterinario FK
+        int id_clinica FK
+        date fecha_inicio
+        date fecha_fin
+        int id_cobertura FK
+        varchar motivo
+    }
+    propuestas_horario {
+        int id_propuesta PK
+        int id_veterinario FK
+        int id_clinica FK
+        json franjas
+        enum estado
+        int id_revisor FK
+        datetime fecha
+    }
+    reasignaciones {
+        int id_reasignacion PK
+        int id_cita FK
+        int id_veterinario_origen FK
+        int id_veterinario_destino FK
+        enum estado
+        datetime fecha_limite
+        datetime fecha_respuesta
+    }
+    especialidades {
+        int id_especialidad PK
+        varchar nombre
+    }
+    veterinario_perfil {
+        int id_veterinario PK
+        text bio
+        varchar url_foto
+    }
+    veterinario_especialidades {
+        int id_veterinario PK
+        int id_especialidad PK
+    }
+    resenas_veterinario {
+        int id_resena PK
+        int id_cita FK
+        int id_veterinario FK
+        int id_propietario FK
+        tinyint estrellas
+        text comentario
+        tinyint oculta
+        datetime fecha
+    }
+    grafo_nodos {
+        int id_nodo PK
+        enum tipo
+        varchar etiqueta
+    }
+    grafo_aristas {
+        int id_arista PK
+        int id_origen FK
+        int id_destino FK
+        varchar tipo_relacion
+        enum signo
+        decimal peso
     }
     especies {
         int id_especie PK
@@ -58,155 +219,238 @@ erDiagram
     }
     mascotas {
         int id_mascota PK
-        varchar numero_historia_clinica
-        varchar doc_propietario FK
+        int id_propietario FK
+        int id_clinica_registro FK
+        char token_carnet UK
+        tinyint carnet_activo
         int id_especie FK
         int id_raza FK
         varchar nombre
         decimal peso
         enum sexo
+        tinyint esterilizado
         tinyint estado
-        varchar raza_indicada
+    }
+    alertas_medicas {
+        int id_alerta PK
+        int id_mascota FK
+        int id_clinica FK
+        int id_veterinario FK
+        enum tipo
+        int id_nodo FK
+        varchar descripcion
+        tinyint activa
+        datetime fecha
     }
     mascota_colores {
-        int id PK
-        int id_mascota FK
-        int id_color FK
+        int id_mascota PK
+        int id_color PK
     }
     tipos_cita {
         int id_tipo_cita PK
+        int id_clinica FK
         varchar nombre_tipo
         int duracion_minutos
+        int margen_minutos
+        tinyint pausable
     }
     citas {
         int id_cita PK
+        int id_clinica FK
         int id_mascota FK
-        varchar doc_veterinario FK
-        int id_tipo_cita
+        int id_veterinario FK
+        int id_tipo_cita FK
         date fecha
         time hora
-        time hora_fin
-        int duracion_minutos
+        enum prioridad
+        enum prioridad_calculada
+        varchar motivo_ajuste_prioridad
+        tinyint es_sobrecupo
+        text sintomas_texto
+        datetime inicio_sintomas
         enum estado
-        tinyint slot_activo
+        datetime hora_llegada
         datetime hora_inicio_real
         datetime hora_fin_real
-        datetime aviso_atencion_abierta
-        varchar motivo_cierre
+    }
+    cita_sintomas {
+        int id_cita PK
+        int id_nodo PK
     }
     consultas {
         int id_consulta PK
+        int id_clinica FK
         int id_mascota FK
-        varchar doc_veterinario FK
+        int id_veterinario FK
         int id_cita FK
         text diagnostico
         text plan_tratamiento
-        int frecuencia_respiratoria
-        text observaciones
+    }
+    consulta_sintomas {
+        int id_consulta PK
+        int id_nodo PK
     }
     tratamientos {
         int id_tratamiento PK
         int id_consulta FK
+        int id_nodo_farmaco FK
         varchar medicamento
         varchar dosis
+        date fecha_inicio
+        date fecha_fin
     }
     archivos_clinicos {
         int id_archivo PK
         int id_consulta FK
-        varchar nombre_archivo
-        varchar ruta
+        varchar nombre_original
+        varchar ruta_archivo
     }
     vacunas_base {
         int id_vacuna_base PK
+        int id_clinica FK
         varchar nombre_vacuna
     }
     especie_vacunas {
-        int id PK
+        int id_especie_vacuna PK
         int id_especie FK
         int id_vacuna_base FK
     }
     vacunas {
         int id_vacuna PK
+        int id_clinica FK
         int id_mascota FK
+        int id_veterinario FK
         varchar nombre_vacuna
         date fecha_aplicacion
         date fecha_proxima_dosis
     }
     desparasitaciones {
         int id_desparasitacion PK
+        int id_clinica FK
         int id_mascota FK
-        varchar tipo
+        int id_veterinario FK
+        enum tipo
         date fecha_aplicacion
         date fecha_proxima
     }
     laboratorios_base {
         int id_laboratorio PK
+        int id_clinica FK
         varchar nombre_laboratorio
     }
     productos_desparasitacion_base {
         int id_producto PK
+        int id_clinica FK
         varchar nombre_producto
     }
     notificaciones {
         int id_notificacion PK
-        varchar doc_propietario FK
+        int id_clinica FK "NULL en avisos de la plataforma"
+        int id_usuario FK
         varchar tipo_entidad
         int id_entidad
-        varchar tipo_notificacion
-        varchar destinatario_email
         enum estado
         datetime fecha_envio
     }
     notificaciones_internas {
         int id PK
-        varchar doc_usuario FK
+        int id_clinica FK
+        int id_usuario FK
         int id_rol_destino FK
-        int id_cita
         varchar tipo
-        varchar mensaje
         tinyint leida
-        datetime vigente_hasta
-    }
-    auditoria_mascotas {
-        int id_auditoria PK
-        int id_mascota FK
-        varchar usuario_doc FK
-        varchar campo_modificado
-        text valor_anterior
-        text valor_nuevo
-    }
-    auditoria_sistema {
-        int id_auditoria PK
-        varchar usuario_doc
-        varchar accion
-        varchar tabla_afectada
-        text datos_anteriores
-        text datos_nuevos
     }
     horarios_clinica {
         int id PK
-        varchar dia_semana
+        int id_clinica FK
+        int dia_semana
         tinyint activo
     }
-    schema_migraciones {
-        varchar archivo PK
-        enum modo
-        datetime aplicada_en
+    auditoria_mascotas {
+        int id_auditoria PK
+        int id_clinica FK
+        int id_mascota FK
+        int id_usuario FK
+        varchar campo_modificado
+    }
+    auditoria_sistema {
+        int id_auditoria PK
+        int id_clinica FK
+        int id_usuario FK
+        enum accion
+        varchar tabla_afectada
     }
 
-    roles     ||--o{ usuarios                : "define el perfil de"
-    usuarios  ||--o{ password_resets         : "solicita"
-    usuarios  ||--o{ verificaciones_email    : "verifica su correo con"
+    planes    ||--o{ clinicas                : "clasifica"
+    planes    ||--o{ suscripciones           : "se contrata en"
+    clinicas  ||--o{ suscripciones           : "tiene"
+    clinicas  ||--o{ usuario_clinica         : "emplea"
+    usuarios  ||--o{ usuario_clinica         : "trabaja en"
+    usuarios  ||--o{ consentimientos_datos    : "acepta la politica"
+    usuarios  ||--o{ password_resets         : "recupera su clave"
+    usuarios  ||--o{ verificaciones_email    : "verifica su correo"
+    usuarios  ||--o{ casos_soporte           : "origina"
+    clinicas  ||--o{ casos_soporte           : "involucra"
+    clinicas  ||--o{ mascota_clinica         : "atiende"
+    mascotas  ||--o{ mascota_clinica         : "se vincula a"
+    clinicas  ||--o{ vacunas                 : "aplica"
+    clinicas  ||--o{ desparasitaciones       : "aplica"
+    mascotas  ||--o{ carnet_escaneos         : "registra escaneos"
+    clinicas  ||--o{ citas                   : "agenda"
+    clinicas  ||--o{ consultas               : "registra"
+    clinicas  ||--o{ tipos_cita              : "configura"
+    clinicas  ||--o{ horarios_clinica        : "define"
+    clinicas  ||--o{ vacunas_base            : "cataloga"
+    clinicas  ||--o{ laboratorios_base       : "cataloga"
+    clinicas  ||--o{ productos_desparasitacion_base : "cataloga"
+    clinicas  ||--o{ notificaciones          : "emite"
+    clinicas  ||--o{ notificaciones_internas : "emite"
+    clinicas  ||--o{ plantillas_comunicacion : "personaliza"
+    clinicas  ||--o{ auditoria_mascotas      : "audita"
+    clinicas  ||--o{ auditoria_sistema       : "audita"
+
+    roles     ||--o{ usuario_clinica         : "define el rol en la clinica"
     usuarios  ||--o{ mascotas                : "es propietario de"
+    usuarios  ||--o| veterinario_perfil      : "tiene perfil"
+    usuarios  ||--o{ veterinario_especialidades : "domina"
+    especialidades ||--o{ veterinario_especialidades : "clasifica"
+    usuarios  ||--o{ resenas_veterinario     : "es calificado en"
+    citas     ||--o| resenas_veterinario     : "origina reseña"
+
+    usuarios  ||--o{ propietario_clinica     : "se vincula (propietario)"
+    clinicas  ||--o{ propietario_clinica     : "vincula propietarios"
+    usuarios  ||--o{ horarios_veterinario    : "tiene horario (vet)"
+    clinicas  ||--o{ horarios_veterinario    : "fija el horario"
+    usuarios  ||--o{ ausencias_veterinario   : "registra ausencia (vet)"
+    clinicas  ||--o{ ausencias_veterinario   : "registra"
+    usuarios  ||--o{ ausencias_veterinario   : "cubre como reemplazo"
+    usuarios  ||--o{ propuestas_horario      : "propone (vet)"
+    clinicas  ||--o{ propuestas_horario      : "recibe"
+    usuarios  ||--o{ propuestas_horario      : "aprueba o rechaza (admin)"
+    citas     ||--o{ reasignaciones          : "se reasigna"
+    usuarios  ||--o{ reasignaciones          : "cede (vet origen)"
+    usuarios  ||--o{ reasignaciones          : "confirma (vet destino)"
+
+    grafo_nodos ||--o{ grafo_aristas         : "es origen de"
+    grafo_nodos ||--o{ grafo_aristas         : "es destino de"
+    grafo_nodos ||--o{ alertas_medicas       : "codifica"
+    grafo_nodos ||--o{ cita_sintomas         : "identifica"
+    grafo_nodos ||--o{ consulta_sintomas     : "identifica"
+    grafo_nodos ||--o{ tratamientos          : "codifica el farmaco"
+
     especies  ||--o{ razas                   : "agrupa"
     especies  ||--o{ mascotas                : "clasifica"
     razas     ||--o{ mascotas                : "clasifica"
     mascotas  ||--o{ mascota_colores         : "tiene"
     colores_base ||--o{ mascota_colores      : "compone"
     mascotas  ||--o{ citas                   : "es agendada en"
+    mascotas  ||--o{ alertas_medicas         : "tiene"
+    clinicas  ||--o{ alertas_medicas         : "registra"
+    usuarios  ||--o{ alertas_medicas         : "registra (vet)"
+    citas     ||--o{ cita_sintomas           : "reporta"
+    consultas ||--o{ consulta_sintomas       : "registra"
     usuarios  ||--o{ citas                   : "atiende como veterinario"
     mascotas  ||--o{ consultas               : "recibe"
-    usuarios  ||--o{ consultas               : "registra como veterinario"
     citas     ||--o| consultas               : "origina"
     consultas ||--o{ tratamientos            : "receta"
     consultas ||--o{ archivos_clinicos       : "adjunta"
@@ -218,55 +462,71 @@ erDiagram
     usuarios  ||--o{ notificaciones_internas : "recibe"
     roles     ||--o{ notificaciones_internas : "segmenta"
     mascotas  ||--o{ auditoria_mascotas      : "genera"
-    usuarios  ||--o{ auditoria_mascotas      : "ejecuta"
 
-    tipos_cita ||..o{ citas                  : "define duracion (sin FK)"
-    usuarios   ||..o{ auditoria_sistema      : "ejecuta (sin FK)"
-    citas      ||..o{ notificaciones_internas : "avisa sobre (sin FK)"
+    tipos_cita ||--o{ citas                  : "define duracion"
     citas      ||..o{ notificaciones         : "recuerda (tipo_entidad, sin FK)"
     vacunas    ||..o{ notificaciones         : "recuerda (tipo_entidad, sin FK)"
-    laboratorios_base ||..o{ vacunas         : "catalogo por nombre"
-    productos_desparasitacion_base ||..o{ desparasitaciones : "catalogo por nombre"
+    usuarios   ||--o{ auditoria_sistema      : "ejecuta"
 ```
 
 ---
 
 ## Detalle de Entidades Principales
 
-### 1. Gestión de Acceso y Usuarios
-*   **roles**: Define los roles de usuario (`1: Administrador`, `2: Veterinario`, `3: Recepcionista`, `4: Propietario`).
-*   **usuarios**: Almacena datos personales, credenciales cifradas (o UID de Google Identity) y estado de activación (`activo`/`inactivo`). Clave foránea: `id_rol` referenciando a `roles`.
-*   **password_resets**: Almacena tokens de recuperación temporales vinculados al documento del usuario.
-*   **verificaciones_email**: Tokens de un solo uso para verificar el correo en el auto-registro; se guarda el hash, no el token.
-*   **intentos_login**: Contador de intentos fallidos por identificador y bloqueo temporal (`bloqueado_hasta`). Sin clave foránea: el identificador puede no corresponder a ningún usuario.
-*   `usuarios.password_definida` indica si la cuenta ya tiene contraseña propia (las creadas con Google no la tienen).
+### 1. Plataforma y suscripción (SaaS) — nuevo
+*   **clinicas**: Cada inquilino de la plataforma; su `id_clinica` aísla los datos. Incluye nombre, `nit` (único, validado con el dígito de verificación de la DIAN; RN-010), dirección, teléfono, logo y el plan vigente. Su `estado` es `pendiente_verificacion` hasta que confirma el correo (RN-002), y luego `activa`, `suspendida` o `baja` (RN-012). Guarda también los parámetros de la agenda, con valores por defecto: `telefono_urgencias` (RN-421), `tope_sobrecupos` (2, RN-422), `tolerancia_llegada_min` (10, RN-426), `plazo_reasignacion_min` (10, RN-428) y `umbral_aviso_min` (15, RN-429).
+*   **planes**: Catálogo **global** de planes (gratuito y profesional) con sus precios (mensual/anual) y límites (`limite_mascotas`, `limite_citas_mes`, `limite_personal`; NULL significa sin límite; RN-003).
+*   **suscripciones**: Estado de la suscripción de cada clínica (`activa`/`suspendida`/`cancelada`), ciclo de cobro, indicador `al_dia` y vigencia.
+*   **plantillas_comunicacion**: Plantillas de correo/notificación por clínica (asunto, cuerpo, formato) y parámetros de envío (días de anticipación, hora). Es la base de las comunicaciones del Módulo 8 (reputación y comunicaciones); la bitácora de envíos reutiliza `notificaciones`.
 
-### 2. Pacientes (Mascotas) y Catálogos
-*   **mascotas**: Ficha del animal (nombre, especie, raza, sexo, peso, fecha de nacimiento, estado). `raza_indicada` guarda la raza que escribió el propietario cuando la suya no estaba en la lista. Claves foráneas referenciando a `especies`, `razas` y `usuarios` (propietario).
-*   **especies** y **razas**: Catálogos dinámicos que restringen los tipos de mascota disponibles y organizan la taxonomía animal.
-*   **colores_base** y **mascota_colores**: Relación de muchos a muchos (`N:M`) para permitir que una mascota posea múltiples colores de pelaje registrados de manera independiente.
+### 2. Acceso y usuarios
+*   **roles**: Perfiles del sistema: `1 Administrador`, `2 Veterinario`, `4 Propietario`, `5 Super-administrador`. **El rol 3 (Recepcionista) se elimina en v2.0.** Los roles 1 y 2 se asignan por clínica en `usuario_clinica`; el 4 lo da el vínculo en `propietario_clinica` y el 5 la marca `usuarios.es_super_admin`. El catálogo conserva el 4 y el 5 para nombrar el contexto activo de la sesión (RN-G01) y para dirigir avisos internos por rol.
+*   **usuarios**: Identidad única de cada persona. Su clave es `id_usuario`, un número que no cambia y no revela datos personales; el **documento** y el **correo** son únicos en toda la plataforma pero son datos corregibles, no la clave. Así el documento puede cambiar (de tarjeta de identidad a cédula, un error de digitación) o anonimizarse (RN-G16) sin tocar las demás tablas, que se relacionan por `id_usuario`. `documento` es NULL mientras una cuenta creada con Google no completa su perfil (`perfil_completo`); `password` es NULL hasta que esa cuenta cree una contraseña; `google_uid` vincula la cuenta de Google. Ya no lleva `id_clinica` ni `id_rol`: los roles se asignan por contexto. `es_super_admin` marca al operador de la plataforma, que no tiene roles de clínica. Al suprimir una cuenta (RN-G16) sus datos personales se reemplazan, `documento`, `email` y `google_uid` quedan en NULL y el `id_usuario` se conserva, por lo que la historia clínica y la auditoría siguen íntegras.
+*   **consentimientos_datos**: Prueba de la autorización de tratamiento de datos (Ley 1581 de 2012 y Decreto 1377 de 2013): quién aceptó, qué versión de la política, por qué medio, cuándo y desde qué IP (RN-G19).
+*   **usuario_clinica**: Roles de personal de una persona en cada clínica (`id_rol`: 1 administrador o 2 veterinario), con su estado. Inactivar a alguien en una clínica no afecta sus otros roles (RN-G08).
+*   **propietario_clinica**: Tabla puente que vincula un propietario (global) con una o varias clínicas. Un propietario se crea una sola vez (correo único) y se liga a cada clínica mediante este registro, previa **verificación del correo** al ligar a una clínica nueva. Esto permite las tres vías de registro (alta por el personal, enlace/QR de la clínica, autoregistro directo eligiendo clínica) sin duplicar la persona ni romper la regla de correo único. `autoriza_historia_compartida` guarda si el propietario permite que esa clínica vea las consultas registradas por otras clínicas (revocable; RN-113).
+*   **password_resets** y **verificaciones_email**: Enlaces de un solo uso, guardados como hash y con vencimiento, ligados a `id_usuario` (antes al documento). `verificaciones_email` guarda el correo que se verifica, así que sirve para el registro y para el cambio de correo: el correo nuevo solo reemplaza al anterior cuando se verifica (RN-G23).
+*   **intentos_login**: Contadores de intentos fallidos, sin clave foránea. La clave del contador lleva prefijo: `ip:<dirección>` para el bloqueo por IP y `cuenta:<id_usuario>` para exigir el CAPTCHA por cuenta (RN-G15). El contador por cuenta usa `id_usuario` y no el documento, porque la persona puede entrar con su documento, su correo o Google y los tres deben sumar al mismo contador.
+*   **casos_soporte**: Casos que pasan al super-administrador: un documento que ya pertenece a otra cuenta (RN-G24), una posible cuenta o clínica duplicada y el abuso del plan gratuito (RN-012). Guarda el tipo, la persona y la clínica involucradas, la descripción y el estado (`abierto`, `resuelto`, `descartado`).
 
-### 3. Operación Clínica
-*   **citas**: Control de agenda veterinaria. Registra la fecha, hora, duración estimada, tipo de cita y veterinario asignado. Estados: `pendiente`, `confirmada`, `en_curso`, `completada`, `cancelada`, `no_asistio`, `sin_cerrar` y `cerrada_sin_consulta`. `hora_inicio_real` y `hora_fin_real` sellan la atención real; `aviso_atencion_abierta` marca que ya se avisó de una atención abierta y `motivo_cierre` guarda por qué se cerró sin consulta. `slot_activo` es una columna calculada (1 si la cita ocupa su horario, NULL si está cancelada, no asistió o se cerró sin consulta) que alimenta el índice único `uq_cita_vet_activa` (veterinario, fecha, hora).
-*   **tipos_cita**: Configura la duración base y nombre de los servicios médicos (`Consulta general`, `Control`, `Vacunación`, `Cirugía`, etc.).
-*   **consultas**: Ficha clínica generada por el veterinario. Almacena anamnesis, constantes fisiológicas (peso, temperatura, frecuencia cardíaca), diagnóstico y plan de tratamiento. Vinculada opcionalmente a una cita previa.
-*   **tratamientos**: Medicamentos recetados, dosis y frecuencia asociados a una consulta médica específica.
-*   **archivos_clinicos**: Indexación de exámenes médicos externos, imágenes de soporte o radiografías vinculadas a la historia clínica.
+### 3. Reputación de veterinarios — nuevo
+*   **especialidades**: Catálogo global de especialidades veterinarias.
+*   **veterinario_perfil**: Datos públicos del veterinario (biografía, foto).
+*   **veterinario_especialidades**: Relación N:M entre veterinarios y especialidades.
+*   **resenas_veterinario**: Calificación (`estrellas` 1–5 y comentario opcional) atada a una **cita atendida**; una reseña por cita. Alimenta el promedio del perfil y el emparejamiento del Grafo II. `oculta` marca una reseña ocultada por moderación del super-administrador; la clínica no puede editarla ni borrarla (RN-804).
 
-### 4. Monitoreo y Prevención
-*   **vacunas**: Historial de vacunas aplicadas a cada mascota con la fecha de aplicación y la próxima dosis obligatoria.
-*   **desparasitaciones**: Control de tratamientos preventivos internos/externos con fecha de próxima aplicación.
-*   **vacunas_base** y **especie_vacunas**: Relación paramétrica que asocia qué vacunas corresponden a qué especies biológicas.
+### 4. Grafo de conocimiento clínico (Grafo I) — nuevo, global
+*   **grafo_nodos**: Conceptos clínicos con su `tipo` (`sintoma`, `diagnostico`, `farmaco`, `especie`, `raza`, `condicion`).
+*   **grafo_aristas**: Relaciones dirigidas entre nodos con `tipo_relacion`, `signo` (`positivo`/`negativo`) y `peso`. Es un **grafo con signo**: lo positivo favorece, lo negativo contraindica o veta. Compartido por todas las clínicas.
+*   Los datos de cada paciente se cruzan con el grafo por cuatro puntos: `alertas_medicas.id_nodo`, `cita_sintomas`, `consulta_sintomas` y `tratamientos.id_nodo_farmaco`. Sin esos enlaces el triage y las advertencias de prescripción no tendrían de dónde leer.
 
-### 5. Auditoría y Control
-*   **auditoria_mascotas**: Log de cambios específicos sobre las fichas de las mascotas (quién modificó, qué campo, valor anterior y nuevo).
-*   **notificaciones**: Registro de cada correo enviado al propietario (recordatorios y confirmaciones). `tipo_entidad` e `id_entidad` señalan la cita, vacuna o desparasitación; `estado` es `enviado` o `error`, y un aviso con error se reintenta hasta 3 veces (RE-37.2).
-*   **notificaciones_internas**: Avisos para el personal, dirigidos a un usuario o a un rol. Los de una cita llevan `id_cita` y caducan en `vigente_hasta`.
-*   **auditoria_sistema**: Historial de seguridad y operaciones del sistema completo, registrando acciones (`LOGIN`, `LOGOUT`, `INSERT`, `UPDATE`, `DELETE`) con los payloads JSON de datos anteriores y nuevos para una auditoría forense íntegra.
+> El **Grafo II (agenda)** no guarda el grafo: lo construye en tiempo real a partir de `citas` (estado, nivel de triage, horas reales, sobrecupos), `tipos_cita` (duración, margen, pausable), `horarios_clinica`, `horarios_veterinario`, `ausencias_veterinario` y los parámetros de la clínica. Solo persiste lo que debe sobrevivir entre una petición y otra: las reasignaciones que esperan confirmación (`reasignaciones`) y las propuestas de horario (`propuestas_horario`).
 
-### 6. Configuración y Parámetros
-*   **schema_migraciones**: Migraciones de `database/` ya aplicadas; la crea y mantiene `scripts/migrar.php` al arrancar el contenedor.
-*   **horarios_clinica**: Define los horarios de atención y bloques de disponibilidad (mañana y tarde) por día de la semana para la gestión de citas.
-*   **laboratorios_base**: Catálogo de laboratorios farmacéuticos fabricantes de vacunas y medicamentos.
-*   **productos_desparasitacion_base**: Catálogo parametrizado de productos desparasitantes disponibles, clasificados por tipo (interna, externa o ambas).
+### 5. Pacientes y catálogos taxonómicos
+*   **mascotas**: Ficha **global** del animal, del propietario y no de una clínica (sin `id_clinica`). FKs a `especies`, `razas` y `usuarios` (propietario). `raza_indicada` guarda la raza escrita cuando no está en la lista. `esterilizado` es NULL si no se sabe; el triage lo usa (por ejemplo, una hembra entera con ciertos síntomas sube de nivel, RN-416). `token_carnet` es el token aleatorio (≥ 128 bits) que identifica el carnet público por QR; nunca se usa `id_mascota` en la URL (RN-502). `id_clinica_registro` guarda la clínica que la registró: junto con el propietario, es la única que puede cambiar especie, raza, sexo y fecha de nacimiento (RN-110). `carnet_activo` apaga el carnet sin borrar el token, cuando la mascota se inactiva o su propietario suprime la cuenta (RN-502, RN-G16).
+*   **alertas_medicas**: Alergias, condiciones crónicas y medicación continua de la mascota (`tipo`). Cada alerta guarda la clínica y el veterinario que la registró y, si existe, el nodo del Grafo I al que corresponde (`id_nodo`), para que el triage y la prescripción la crucen con el grafo. Es global para la mascota: la ven todas las clínicas vinculadas y el carnet público (RN-113, RN-416, RN-503). Una alerta no se borra: se desactiva (`activa = 0`).
+*   **mascota_clinica**: Tabla puente mascota↔clínica. Se crea al registrar o vincular la mascota en una clínica y guarda el `numero_historia_clinica` de esa clínica (RN-102). Es la base del límite de mascotas del plan.
+*   **carnet_escaneos**: Registro de cada escaneo del carnet público: fecha, IP anonimizada (hash) y ubicación solo si quien escanea la comparte. Alimenta el aviso al propietario y el límite de consultas por IP (RN-504, RN-505).
+*   **especies**, **razas**, **colores_base** y **mascota_colores**: Catálogos **globales** de taxonomía y la relación N:M de colores.
 
+### 6. Operación clínica
+*   **citas**: Agenda por clínica (`id_clinica`). El campo `prioridad` guarda el **nivel de triage de 4 niveles** — 🔴 rojo (crítico), 🟠 naranja (urgente), 🟡 amarillo (prioritario), 🟢 verde (no urgente) — **calculado por el Grafo I** a partir de los síntomas; conserva estados, horas reales y control de solapamientos. `prioridad_calculada` conserva el nivel que dio el Grafo I cuando el veterinario lo ajusta (RN-419); `hora_llegada` registra la llegada del propietario (RN-426); los estados incluyen `sin_cerrar` y `pausada` (RN-427). Los síntomas se guardan de forma estructurada (RN-424): los marcados del catálogo del grafo en `cita_sintomas`, el texto libre en `sintomas_texto` y su comienzo en `inicio_sintomas`. `motivo_ajuste_prioridad` es obligatorio cuando el veterinario cambia el nivel (RN-419) y `es_sobrecupo` marca las citas que cuentan contra el tope de sobrecupos del bloque (RN-422). `id_tipo_cita` pasa a ser clave foránea.
+*   **tipos_cita**: Servicios y su duración base, ahora por clínica. Suma `margen_minutos`: el **colchón (buffer)** por tipo de cita que absorbe los retrasos y alimenta el cálculo de disponibilidad y el reajuste en vivo (Grafo II). `pausable` indica si una cita de ese tipo puede interrumpirse por una urgencia (RN-427).
+*   **horarios_veterinario**: Horario **recurrente** de cada veterinario por clínica (`id_clinica`) y día de la semana (franjas `hora_inicio`–`hora_fin`); un veterinario que trabaja en dos clínicas tiene un horario en cada una, y no pueden chocar entre sí. Lo configura el administrador de esa clínica (RN-706). Reemplaza el supuesto de disponibilidad 24/7: la disponibilidad real es `horario de la clínica ∩ horario del veterinario − ausencias`.
+*   **ausencias_veterinario**: Excepciones por clínica y fecha (permiso, incapacidad, "ese día no vino") que tapan la disponibilidad del veterinario en ese rango. `id_cobertura` es la clave foránea del veterinario que lo reemplaza; así un "intercambio de turnos" queda registrado como **ausencia del titular + cobertura del reemplazo** (reasignación de sus citas). La trazabilidad de quién atendió realmente la da la historia clínica, no la agenda.
+*   **propuestas_horario**: Cambios de horario que propone el veterinario (`franjas`), con estado `pendiente`, `aprobada` o `rechazada` y el administrador que la revisó (`id_revisor`). Al aprobarse, las franjas pasan a `horarios_veterinario` y las citas que queden fuera se marcan para reajuste (RN-706).
+*   **reasignaciones**: Cada reasignación en vivo de una cita: veterinario de origen y de destino, plazo para confirmar (`fecha_limite`) y estado (`pendiente`, `aceptada`, `rechazada`, `vencida`). Si vence o se rechaza, se crea la propuesta al siguiente veterinario (RN-428).
+*   **consultas**, **tratamientos**, **archivos_clinicos**: Historia clínica; `consultas` lleva `id_clinica`, y `tratamientos`/`archivos_clinicos` heredan la clínica por su consulta. `consulta_sintomas` guarda los síntomas registrados en la consulta, a partir de los cuales el Grafo I sugiere diagnósticos (RN-210). `tratamientos` enlaza el fármaco con su nodo del grafo (`id_nodo_farmaco`) y guarda `fecha_inicio` y `fecha_fin`: la **medicación vigente** es la de los tratamientos aún no terminados más la medicación continua de `alertas_medicas`, y contra ella se revisan las interacciones al prescribir (RN-211).
+
+### 7. Prevención
+*   **vacunas**, **desparasitaciones**: Historial por mascota; cada registro lleva el `id_clinica` y el veterinario que lo aplicó, para mostrar en el carnet y en la historia compartida qué clínica lo hizo (RN-112).
+*   **vacunas_base**, **especie_vacunas**, **laboratorios_base**, **productos_desparasitacion_base**: Catálogos configurables **por clínica** (`id_clinica`).
+
+### 8. Comunicaciones y auditoría
+*   **notificaciones**: Correos a las personas (`id_usuario`, antes `id_propietario`), por clínica; `estado` (`enviado`/`error`); sirve además de bitácora de envíos (Módulo 8). `id_clinica` es NULL en los avisos de la plataforma que no pertenecen a una clínica: escaneo del carnet, cambio de correo o de documento.
+*   **notificaciones_internas**: Avisos al personal por usuario o rol, por clínica.
+*   **horarios_clinica**: Bloques de atención (mañana/tarde) por día y por clínica.
+*   **auditoria_mascotas**, **auditoria_sistema**: Trazabilidad de cambios y de seguridad, con `id_clinica`. `auditoria_sistema.id_usuario` pasa a ser clave foránea (NULL cuando el intento no corresponde a una cuenta): como las cuentas nunca se borran, solo se anonimizan, la referencia siempre es válida.
+
+### 9. Infraestructura
+*   **schema_migraciones**: Migraciones aplicadas; la mantiene `scripts/migrar.php`. (Sin cambios.)

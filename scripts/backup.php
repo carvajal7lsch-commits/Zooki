@@ -1,6 +1,6 @@
 <?php
 /**
- * Respaldo automático de la base de datos (HU-23, RN-504).
+ * Respaldo automático de la base de datos (HU-23, RN-704).
  *
  * Uso:
  *   php scripts/backup.php

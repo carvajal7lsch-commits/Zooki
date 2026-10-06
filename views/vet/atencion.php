@@ -14,10 +14,10 @@ $estadoLabel = [
 ];
 $estadoActual = strtolower($cita['estado'] ?? 'pendiente');
 $consultaRegistrada = !empty($consultaCita);
-// RN-410: una atención que quedó sin cerrar se sigue documentando igual.
+// RN-409: una atención que quedó sin cerrar se sigue documentando igual.
 $enCurso = in_array($estadoActual, ['en_curso', 'sin_cerrar'], true);
 $abierta = in_array($estadoActual, ['pendiente', 'confirmada'], true);
-// RN-408: se inicia el día de la cita desde 15 minutos antes de su hora
+// RN-407: se inicia el día de la cita desde 15 minutos antes de su hora
 // ($esDiaDeLaCita viene del controlador con esa regla ya aplicada).
 $porIniciar = $abierta && $esDiaDeLaCita;
 $pesoReferencia = $resumenClinico['ultimo_peso'] ?? ($mascota['peso'] ?? null);

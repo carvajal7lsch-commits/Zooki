@@ -338,12 +338,12 @@ class Cita {
     // puede iniciar, cancelar, reprogramar o marcar como no asistida.
     public const ESTADOS_ABIERTOS = ['pendiente', 'confirmada'];
 
-    // RN-410: atenciones iniciadas que todavía no se cierran. Desde aquí se
+    // RN-409: atenciones iniciadas que todavía no se cierran. Desde aquí se
     // retoma la atención, se registra la consulta o se cierra sin consulta.
     public const ESTADOS_EN_ATENCION = ['en_curso', 'sin_cerrar'];
 
     /**
-     * RN-408 / HU-27 — Inicia la atención y sella la hora real de inicio.
+     * RN-407 / HU-27 — Inicia la atención y sella la hora real de inicio.
      * El WHERE exige que la cita siga abierta: si se canceló entre tanto, o se
      * inicia dos veces desde dos pestañas, no se pisa el estado.
      */
@@ -353,24 +353,24 @@ class Cita {
 
     /**
      * RN-406 / HU-27 — Completa una cita en curso y sella la hora real de fin.
-     * RN-410: también una que quedó sin cerrar, para no perder su consulta.
+     * RN-409: también una que quedó sin cerrar, para no perder su consulta.
      */
     public function completarAtencion($id_cita, string $ahora): bool {
         return $this->transicion($id_cita, self::ESTADOS_EN_ATENCION, "estado = 'completada', hora_fin_real = :ahora", [':ahora' => $ahora]);
     }
 
-    /** RN-409 / HU-29 — El paciente no llegó: la cita deja de ocupar la agenda. */
+    /** RN-408 / HU-29 — El paciente no llegó: la cita deja de ocupar la agenda. */
     public function marcarNoAsistio($id_cita): bool {
         return $this->transicion($id_cita, self::ESTADOS_ABIERTOS, "estado = 'no_asistio'", []);
     }
 
-    /** RN-410 — Terminado el día, una atención que sigue en curso queda "sin cerrar". */
+    /** RN-409 — Terminado el día, una atención que sigue en curso queda "sin cerrar". */
     public function marcarSinCerrar($id_cita): bool {
         return $this->transicion($id_cita, ['en_curso'], "estado = 'sin_cerrar'", []);
     }
 
     /**
-     * RN-411 — El veterinario cierra sin consulta una atención abierta, con su
+     * RN-410 — El veterinario cierra sin consulta una atención abierta, con su
      * motivo. La cita no se reabre y deja libre su horario.
      */
     public function cerrarSinConsulta($id_cita, string $motivo, string $ahora): bool {
@@ -383,7 +383,7 @@ class Cita {
     }
 
     /**
-     * RN-410 — Sella el aviso de "atención abierta". Solo escribe si el aviso
+     * RN-409 — Sella el aviso de "atención abierta". Solo escribe si el aviso
      * no se había enviado: si la tarea programada y el calendario revisan a la
      * vez, uno solo lo reclama y lo envía.
      */
@@ -396,7 +396,7 @@ class Cita {
         return $stmt->rowCount() === 1;
     }
 
-    /** RN-410 — Atenciones en curso, con lo necesario para avisar al veterinario. */
+    /** RN-409 — Atenciones en curso, con lo necesario para avisar al veterinario. */
     public function getAtencionesEnCurso(): array {
         $query = "SELECT c.id_cita, c.fecha, c.hora, c.hora_fin, c.duracion_minutos, c.estado,
                          c.aviso_atencion_abierta, c.doc_veterinario, m.nombre AS mascota_nombre,

@@ -21,7 +21,7 @@ $iniciales = $iniciales ?: 'U';
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- RNF-07 / accesibilidad: sin bloquear el zoom; viewport-fit para la muesca del iPhone. -->
+    <!-- RNF-16 / accesibilidad: sin bloquear el zoom; viewport-fit para la muesca del iPhone. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#FAF9FF">
     <title>Mi Mascota | Zooki</title>

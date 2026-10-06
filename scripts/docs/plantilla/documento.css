@@ -1,0 +1,441 @@
+/* Formato de los PDF de la documentación: el de la plantilla de documentos
+   del proyecto (Arial, portada con líneas dobles, ficha del documento,
+   encabezado con logo, título y página, y tablas con cuadrícula), con los
+   rótulos de tablas y figuras de APA 7. Lo pagina el motor de impresión de
+   Chrome; ver specs/exportar-documentos.md (EX-2 a EX-10). */
+
+:root {
+    --fuente: Arial, Helvetica, "Liberation Sans", sans-serif;
+    --fuente-codigo: Consolas, "Courier New", monospace;
+    --texto: #000;
+    --gris-titulo: #595959;
+    --azul: #1f3864;
+    --linea: #404040;
+    --borde-tabla: #7f7f7f;
+    --fondo-encabezado-tabla: #d9d9d9;
+    --enlace: #1f4e8c;
+}
+
+/* ── Página (EX-2 y EX-9): carta, encabezado y pie en las cajas de margen ──
+   El contenido de las cajas (logo, título, revisión, página) lo pone
+   impresion.js porque depende del documento. */
+@page {
+    size: letter;
+    margin: 3.4cm 2.54cm 2.6cm 2.54cm;
+
+    @top-left {
+        margin-bottom: 0.45cm;
+        width: 3.6cm;
+        vertical-align: bottom;
+        padding-bottom: 5pt;
+        border-bottom: 0.75pt solid var(--linea);
+    }
+    @top-center {
+        margin-bottom: 0.45cm;
+        white-space: pre;
+        font: bold 8.5pt var(--fuente);
+        text-align: center;
+        vertical-align: bottom;
+        padding-bottom: 5pt;
+        border-bottom: 0.75pt solid var(--linea);
+    }
+    @top-right {
+        margin-bottom: 0.45cm;
+        width: 3.6cm;
+        white-space: pre;
+        font: 8.5pt var(--fuente);
+        text-align: right;
+        vertical-align: bottom;
+        padding-bottom: 5pt;
+        border-bottom: 0.75pt solid var(--linea);
+    }
+    @bottom-right {
+        margin-top: 0.35cm;
+        font: 8pt var(--fuente);
+        color: var(--azul);
+        text-align: right;
+        vertical-align: top;
+        padding-top: 4pt;
+        border-top: 0.75pt solid var(--linea);
+    }
+}
+
+/* La portada no lleva encabezado ni pie: impresion.js los quita en
+   @page :first, después de ponerlos. */
+
+html {
+    font-family: var(--fuente);
+    font-size: 10.5pt;
+    color: var(--texto);
+}
+
+body {
+    margin: 0;
+}
+
+/* Texto: interlineado de 1,4, espacio entre párrafos, alineado a la izquierda. */
+.contenido p,
+.contenido li {
+    line-height: 1.4;
+}
+
+.contenido p {
+    margin: 0 0 6pt;
+}
+
+.contenido ul,
+.contenido ol {
+    margin: 0 0 6pt;
+    padding-left: 0.9cm;
+}
+
+.contenido li {
+    margin-bottom: 2pt;
+}
+
+.contenido li > p {
+    margin: 0;
+}
+
+.contenido blockquote {
+    margin: 0 0 8pt;
+    padding: 2pt 0 2pt 0.4cm;
+    border-left: 2pt solid #bfbfbf;
+    color: #262626;
+}
+
+.contenido blockquote p {
+    margin-bottom: 4pt;
+}
+
+.contenido hr {
+    display: none;
+}
+
+.contenido a {
+    color: var(--enlace);
+    text-decoration: none;
+}
+
+.contenido code {
+    font-family: var(--fuente-codigo);
+    font-size: 9pt;
+}
+
+.contenido pre {
+    margin: 6pt 0 8pt;
+    padding: 0.25cm 0.35cm;
+    background: #f2f2f2;
+    border: 0.5pt solid #bfbfbf;
+    line-height: 1.3;
+    white-space: pre-wrap;
+    word-break: break-word;
+    break-inside: avoid;
+}
+
+.contenido img {
+    max-width: 100%;
+}
+
+/* ── Títulos (EX-5) ──
+   Tamaños de la plantilla: nivel 1 en 16 pt, nivel 2 en 13 pt, nivel 3 en
+   11,5 pt, todos en negrita. Ninguno queda solo al pie de una hoja. */
+h1, h2, h3, h4, h5 {
+    margin: 0;
+    line-height: 1.25;
+    break-after: avoid;
+    break-inside: avoid;
+}
+
+/* Nivel 1: cada uno empieza hoja. */
+.contenido h2 {
+    font-size: 16pt;
+    font-weight: bold;
+    margin: 0 0 10pt;
+    break-before: page;
+}
+
+.contenido > h2:first-child {
+    break-before: auto;
+}
+
+/* Nivel 2. */
+.contenido h3 {
+    font-size: 13pt;
+    font-weight: bold;
+    margin: 14pt 0 6pt;
+}
+
+/* Nivel 3. */
+.contenido h4 {
+    font-size: 11.5pt;
+    font-weight: bold;
+    margin: 12pt 0 4pt;
+}
+
+/* Nivel 4. */
+.contenido h5 {
+    font-size: 10.5pt;
+    font-weight: bold;
+    font-style: italic;
+    margin: 10pt 0 4pt;
+}
+
+/* ── Portada (EX-3) ── */
+.portada {
+    break-after: page;
+    height: 21.9cm;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.linea-doble {
+    border-top: 2.25pt solid #000;
+    border-bottom: 0.75pt solid #000;
+    height: 2pt;
+}
+
+.portada-bloque {
+    margin-left: 5.2cm;
+    margin-bottom: 5.2cm;
+}
+
+.portada-bloque .linea-doble {
+    margin-bottom: 0.45cm;
+}
+
+.portada-titulo {
+    font-size: 18pt;
+    font-weight: bold;
+    color: var(--gris-titulo);
+    line-height: 1.2;
+    margin-bottom: 0.3cm;
+}
+
+.portada-proyecto {
+    font-size: 11pt;
+    font-weight: bold;
+    color: var(--gris-titulo);
+    margin: 0;
+}
+
+.portada-revision {
+    font-size: 10pt;
+    color: var(--azul);
+    margin: 2pt 0 0;
+}
+
+.portada-autoria {
+    margin-top: 0.9cm;
+    font-size: 9.5pt;
+    color: #404040;
+    line-height: 1.45;
+}
+
+.portada-autoria p {
+    margin: 0;
+}
+
+.portada-pie-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.3cm;
+}
+
+.portada-marca {
+    height: 1.2cm;
+}
+
+.portada-fecha {
+    font-size: 9.5pt;
+    color: var(--azul);
+}
+
+/* ── Ficha del documento (EX-10) ── */
+.ficha {
+    break-after: page;
+}
+
+.ficha-titulo,
+.indice-titulo {
+    font-size: 16pt;
+    font-weight: bold;
+    margin: 0 0 14pt;
+}
+
+.tabla-ficha,
+.tabla-firmas {
+    font-size: 9pt;
+}
+
+.tabla-ficha th,
+.tabla-firmas th {
+    text-align: center;
+}
+
+.ficha-validado {
+    margin: 2.5cm 0 6pt;
+    font-size: 9pt;
+}
+
+.tabla-firmas th,
+.tabla-firmas td {
+    width: 50%;
+}
+
+.tabla-firmas .firma-espacio td {
+    height: 2.2cm;
+}
+
+/* ── Contenido (EX-4) ── */
+.indice {
+    break-after: page;
+}
+
+.indice-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 9.5pt;
+}
+
+.indice-lista .nivel-1 {
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 9pt;
+}
+
+.indice-lista .nivel-2 {
+    padding-left: 0.9cm;
+    margin-top: 3pt;
+}
+
+.indice-lista a {
+    display: flex;
+    align-items: baseline;
+    color: var(--texto);
+    text-decoration: none;
+}
+
+.indice-puntos {
+    flex: 1;
+}
+
+.indice-pagina {
+    min-width: 0.6cm;
+    text-align: right;
+}
+
+/* ── Tablas (EX-6) ──
+   Cuadrícula fina y encabezado gris en negrita, como la plantilla. Encima,
+   el rótulo APA: «Tabla N» en negrita y el título en cursiva. El bloque
+   «rótulo + tabla» no deja el rótulo solo al pie, y una tabla que cabe en
+   una hoja no se parte (impresion.js la marca como .entera tras medirla). */
+.tabla-bloque {
+    margin: 8pt 0 10pt;
+}
+
+.tabla-bloque.entera {
+    break-inside: avoid;
+}
+
+.tabla-rotulo {
+    font-size: 9.5pt;
+    line-height: 1.4;
+    margin-bottom: 3pt;
+    break-after: avoid;
+}
+
+.tabla-num {
+    font-weight: bold;
+}
+
+.tabla-titulo {
+    font-style: italic;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    line-height: 1.3;
+}
+
+/* El encabezado se repite en cada hoja y no queda solo al pie: la primera
+   fila de datos no se separa de él. */
+thead {
+    display: table-header-group;
+}
+
+tbody tr:first-child {
+    break-before: avoid;
+}
+
+th,
+td {
+    border: 0.5pt solid var(--borde-tabla);
+    padding: 3pt 5pt;
+    vertical-align: top;
+    text-align: left;
+}
+
+thead th {
+    font-weight: bold;
+    vertical-align: bottom;
+    background: var(--fondo-encabezado-tabla);
+}
+
+tr {
+    break-inside: avoid;
+}
+
+td.corta,
+th.corta {
+    white-space: nowrap;
+}
+
+/* Lo pone exportar.mjs cuando un título o un rótulo quedó solo al pie. */
+.salto {
+    break-before: page;
+}
+
+/* Enlaces invisibles que hacen de cada título y rótulo un destino del PDF,
+   para que exportar.mjs sepa en qué hoja quedó. */
+.destinos-control {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+}
+
+/* ── Figuras (EX-7) ── */
+.figura {
+    margin: 8pt 0 10pt;
+    break-inside: avoid;
+}
+
+.figura-num {
+    font-weight: bold;
+    font-size: 9.5pt;
+}
+
+.figura-titulo {
+    font-style: italic;
+    font-size: 9.5pt;
+    margin-bottom: 4pt;
+}
+
+.figura-lienzo {
+    text-align: center;
+}
+
+.figura-lienzo svg {
+    max-width: 100%;
+    max-height: 16cm;
+    height: auto;
+}

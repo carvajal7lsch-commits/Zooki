@@ -115,7 +115,7 @@ $botonAccion = function (array $c, bool $compacto = false) use ($e, $atencionUrl
 
         <aside class="panel-col">
 
-            <!-- Atenciones que exigen cierre (RN-410 / RN-411) -->
+            <!-- Atenciones que exigen cierre (RN-409 / RN-410) -->
             <section class="panel-card panel-card--acotada" aria-labelledby="tituloPendientes">
                 <h3 class="panel-card__titulo" id="tituloPendientes">Requiere tu atención</h3>
                 <?php if (!$panel['pendientes']): ?>

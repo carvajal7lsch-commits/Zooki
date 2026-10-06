@@ -1,2 +1,6 @@
+# Normaliza los finales de linea: en el repositorio siempre LF, aunque Windows
+# guarde CRLF. Asi un archivo que solo cambio de final de linea no aparece modificado.
+* text=auto
+
 # Los scripts de shell se ejecutan en Linux (Docker): siempre con LF.
 *.sh text eol=lf

@@ -175,7 +175,7 @@ class Security {
             'registrar_desparasitacion_ajax', 'registrar_nueva_vacuna_ajax',
             'registrar_nuevo_laboratorio_ajax',
             'registrar_nuevo_producto_desparasitacion_ajax',
-            // RN-408: atender una cita (iniciarla, cerrarla o marcarla como no
+            // RN-407: atender una cita (iniciarla, cerrarla o marcarla como no
             // asistida) es del veterinario asignado. Recepción y administración
             // podían iniciarla, pero la pantalla de atención es solo del
             // veterinario: la cita quedaba "en curso" sin que nadie la atendiera.

@@ -4,7 +4,7 @@ require_once __DIR__ . '/../models/Cita.php';
 require_once __DIR__ . '/../models/NotificacionInterna.php';
 
 /**
- * RN-410 — Vigila las atenciones que se quedan abiertas.
+ * RN-409 — Vigila las atenciones que se quedan abiertas.
  *
  * · 10 minutos después de la hora de fin, si la atención sigue en curso, avisa
  *   al veterinario una sola vez, en sus notificaciones y por correo.
