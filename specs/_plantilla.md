@@ -1,4 +1,4 @@
-# HU-NN — Nombre del cambio
+# HU-<módulo>.<n> — Nombre del cambio
 
 > Estado: borrador | aprobado | en curso | terminado
 > Versión prevista: vX.Y.Z · Fecha: AAAA-MM-DD
@@ -13,7 +13,7 @@
 
 | ID | Requisito | Criterio de aceptación |
 |---|---|---|
-| RE-NN.M | El sistema debe… | Dado…, cuando…, entonces… |
+| RE-<módulo>.<n>.<k> | El sistema debe… | Dado…, cuando…, entonces… |
 
 **Reglas de negocio que aplican:** RN-…
 
@@ -31,8 +31,8 @@
 
 - [ ] Documentar HU y RE
 - [ ] …
-- [ ] Pruebas: `tests/…` cubre RE-NN.M
-- [ ] README (sección de versión) y `config/App.php`
+- [ ] Pruebas: `tests/…` cubre RE-<módulo>.<n>.<k>
+- [ ] `documentacion/HistorialVersiones.md` (entrada de la versión) y `config/App.php`
 
 ## 4. Verificación
 

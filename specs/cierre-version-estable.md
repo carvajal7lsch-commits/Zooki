@@ -21,8 +21,8 @@ Los RE no llevan estado propio: heredan el de su HU. Por eso una HU «Implementa
 
 | HU / RN | Qué dice la documentación | Qué hay en el código |
 |---|---|---|
-| **HU-44** Gestionar catálogos (RE-44.x, RN-501, RN-502) | El administrador gestiona especies, razas, colores, vacunas base, laboratorios y productos. | No existe pantalla de catálogos: `admin_configuracion` solo carga `views/admin/horarios.php`. No hay rutas para crear especies, razas ni colores. Vacunas, laboratorios y productos solo se crean de paso al registrar el acto clínico, y la matriz los da **solo al veterinario** (`$soloVet`), al contrario de RN-501, que los reserva al administrador. |
-| **HU-23** Respaldo automático (RNF-11) | Respaldo diario con retención. | `scripts/backup.php` usa `mysqldump`, que la imagen `php:8.2-apache` no trae. El README de v1.9.0 pide crear en Dokploy los Schedules de recordatorios y del vigilante, pero no el de respaldo. Tampoco hay volumen para `BACKUP_DIR`. En producción no se está respaldando. |
+| **HU-44** Gestionar catálogos (RE-44.x, RN-701, RN-702) | El administrador gestiona especies, razas, colores, vacunas base, laboratorios y productos. | No existe pantalla de catálogos: `admin_configuracion` solo carga `views/admin/horarios.php`. No hay rutas para crear especies, razas ni colores. Vacunas, laboratorios y productos solo se crean de paso al registrar el acto clínico, y la matriz los da **solo al veterinario** (`$soloVet`), al contrario de RN-701, que los reserva al administrador. |
+| **HU-23** Respaldo automático (RNF-20) | Respaldo diario con retención. | `scripts/backup.php` usa `mysqldump`, que la imagen `php:8.2-apache` no trae. El README de v1.9.0 pide crear en Dokploy los Schedules de recordatorios y del vigilante, pero no el de respaldo. Tampoco hay volumen para `BACKUP_DIR`. En producción no se está respaldando. |
 | **HU-20** Panel de vacunaciones (RE-20.2) | Agrupa por día **y especie**. | La nota de la HU ya admite que la agrupación por especie no se muestra. El estado debería ser Parcial, o hay que quitar el criterio. |
 | **RN-401 / RN-402** | «Aplicada». | Tienen los huecos de HU-31 (ver §3): la validación de horario no considera la duración y no hay protección contra la doble reserva de horarios que se solapan sin empezar a la misma hora. |
 
@@ -63,9 +63,9 @@ Estos no tienen HU propia. El módulo 3 (vacunación y recordatorios) no se ha a
 | Documento | Problema |
 |---|---|
 | `ERS.md` §4.2 | Dice 24 tablas. Faltan `intentos_login` (migración 04) y `verificaciones_email` (05), y la tabla de control de migraciones. |
-| `ERS.md` §4.3 | Titulada «(v1.8.0)». RF-27 (catálogos) figura como Implementado (ver HU-44). |
+| `ERS.md` §4.3 | Titulada «(v1.8.0)». RF-7.3 (catálogos) figura como Implementado (ver HU-44). |
 | `MER.md` | No refleja las migraciones 09–13: estados `sin_cerrar` y `cerrada_sin_consulta`, `slot_activo`, `raza_indicada`, `password_definida`, columnas de aviso. Tampoco incluye `intentos_login` ni `verificaciones_email`. |
-| `ReglasNegocio.md` | RN-501 (solo el administrador gestiona catálogos) choca con HU-44 («administrador o veterinario») y con la matriz actual (solo veterinario). Hay que elegir una. |
+| `ReglasNegocio.md` | RN-701 (solo el administrador gestiona catálogos) choca con HU-44 («administrador o veterinario») y con la matriz actual (solo veterinario). Hay que elegir una. |
 | `AuditoriaModulos.md` | Los módulos 3, 5, 6, 7 y 8 siguen «Pendiente». M4-20 figura Abierto, pero HU-18 (v1.9.1) ya lista las atenciones sin cerrar: debería cerrarse. TR-01 bajó de 692/230/29 a 319 `style=`, 248 `onclick=`/`onchange=`/`onsubmit=` y 19 `<script>`, y la tabla no está al día. |
 
 ## 7. Alcance acordado y tareas
@@ -96,7 +96,7 @@ Estos no tienen HU propia. El módulo 3 (vacunación y recordatorios) no se ha a
 - [x] HU: estado «diferida» (definido en el encabezado), HU-37 implementada, notas en HU-20, HU-23, HU-27 a HU-31, HU-44, HU-50, HU-51 y HU-53.
 - [x] RE-23.1, RE-23.2, RE-37.2 y RE-37.4, y la matriz de trazabilidad.
 - [x] RN-305 (estado de error y reintento); RN-401 y RN-402 en estado «Parcial».
-- [x] ERS: 27 tablas y trazabilidad v1.11.0, con RF-27 parcial.
+- [x] ERS: 27 tablas y trazabilidad v1.11.0, con RF-7.3 parcial.
 - [x] MER: tablas y columnas de las migraciones 04 a 13; entidad `notificaciones` corregida.
 - [x] Auditoría: M4-20 cerrado, conteo de TR-01 actualizado y sección de cierre del módulo 3 (M3-01 a M3-05).
 - [x] README v1.11.0 y `config/App.php`.

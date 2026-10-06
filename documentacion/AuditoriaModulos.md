@@ -94,7 +94,7 @@ Donde el error tenía consecuencias ya se corrigió: en el Módulo 4, la matriz 
 # Módulo T — Acceso, seguridad y administración
 
 **HU cubiertas:** HU-17, HU-22, HU-23, HU-24, HU-32, HU-33, HU-36, HU-38, HU-39, HU-40, HU-41, HU-42, HU-45, HU-54.
-**RN aplicables:** RN-G01 … RN-G12, RN-501, RN-504.
+**RN aplicables:** RN-G01 … RN-G12, RN-701, RN-704.
 
 ## Lo que sí está bien resuelto
 
@@ -179,7 +179,7 @@ La única ruta existente era `portal_actualizar_datos_contacto_ajax`, **exclusiv
 
 **Corregido:** nuevo [controllers/PerfilController.php](../controllers/PerfilController.php), con responsabilidad única sobre la cuenta propia —administrar usuarios ajenos sigue siendo de `UsuarioController`, que exige rol administrador—. El sujeto sale siempre de `$_SESSION`, nunca del POST. Recepción recibió un menú de perfil real.
 
-> Documento, nombre y rol son de solo lectura a propósito: el rol lo asigna el administrador (RN-501) y dejarlo editable en el perfil propio sería exactamente la escalada de privilegios que corrigió HU-33.
+> Documento, nombre y rol son de solo lectura a propósito: el rol lo asigna el administrador (RN-701) y dejarlo editable en el perfil propio sería exactamente la escalada de privilegios que corrigió HU-33.
 
 #### T-10 — HU-45: "marcar todas como leídas" no existía en la interfaz · `FUN` · **Media** · ✅ Corregido
 
@@ -195,7 +195,7 @@ Se escribía literalmente esa cadena como dato previo, lo que dejaba el log inse
 
 #### T-12 — El respaldo no salía del servidor principal · `FUN` · **Media** · ✅ Corregido
 
-Criterio de HU-23: *"Copia almacenada en un directorio externo al servidor principal"*. Se guardaba en `./backups`, dentro del propio proyecto. Y **RN-504** declara respaldos cada 24 h, pero la automatización solo existía como un comentario.
+Criterio de HU-23: *"Copia almacenada en un directorio externo al servidor principal"*. Se guardaba en `./backups`, dentro del propio proyecto. Y **RN-704** declara respaldos cada 24 h, pero la automatización solo existía como un comentario.
 
 **Corregido:** destino configurable con `BACKUP_DIR`, retención con `BACKUP_RETENCION_DIAS`, y la programación versionada en [scripts/zooki.cron](../scripts/zooki.cron) junto a la de recordatorios. El log de ejecución se queda en el proyecto aunque el destino sea externo.
 
@@ -466,7 +466,7 @@ Pruebas añadidas: [tests/Integration/ConsultaHistorialTest.php](../tests/Integr
 # Módulo 4 — Agenda de citas
 
 **HU cubiertas:** HU-13 (agendar), HU-14 (cancelar o reprogramar), HU-19 (completar), HU-21 (confirmación por correo), HU-27 (*era Pendiente*), HU-29 (*era Pendiente*). Relacionadas: HU-28, HU-30, HU-31, HU-50.
-**RN aplicables:** RN-401 … RN-409, RN-208, RN-G02.
+**RN aplicables:** RN-401 … RN-408, RN-208, RN-G02.
 
 Estado: **23 hallazgos: 20 corregidos, 2 parciales y 1 aceptado** (M4-20 se cerró en v1.9.1). HU-27, HU-29 y HU-50 pasan de Pendiente a Parcial.
 
@@ -508,7 +508,7 @@ La única salida del estado era el botón «Finalizar atención» de la pantalla
 
 La matriz daba `iniciar_cita_ajax` y `completar_cita_ajax` a todo el personal, y el controlador lo repetía (`in_array($rol, [1, 3])`). Pero tras iniciar, la respuesta redirigía a `vet_atencion`, que es solo del veterinario: la cita pasaba a en curso y a quien la había iniciado lo rebotaban. Nadie la estaba atendiendo.
 
-**Corregido:** las tres acciones de atención son exclusivas del veterinario en la matriz, y el servidor exige además que sea el veterinario asignado (RN-408). Prueba: `testSoloElVeterinarioAtiendeLasCitas`.
+**Corregido:** las tres acciones de atención son exclusivas del veterinario en la matriz, y el servidor exige además que sea el veterinario asignado (RN-407). Prueba: `testSoloElVeterinarioAtiendeLasCitas`.
 
 #### M4-03 — Citas completadas sin consulta · `FUN` · **Alta** · ✅ Corregido
 
@@ -548,11 +548,11 @@ El portal comparaba con el estado `programada` en tres sitios, y ese estado no e
 | M4-09 | No existía el estado «no asistió» (VD-AGN-07): una cita a la que nadie vino quedaba pendiente o confirmada ocupando su espacio. | ◐ Parcial | Estado `no_asistio` (migración 09), botón «No asistió» y liberación del espacio en toda la lógica de disponibilidad. Falta el reporte de ausentismo (HU-29). |
 | M4-10 | Confirmar no miraba el estado: confirmar una cita cancelada la reactivaba sin revisar si su horario seguía libre. | ✅ | Solo se confirma una cita pendiente. |
 | M4-11 | Cancelar y reprogramar no miraban el estado ni la fecha: se podía cancelar una cita en curso o completada, o mover una a un momento pasado. Reprogramar tampoco revisaba los solapamientos de la mascota, que agendar sí revisaba. | ✅ | Solo citas pendientes o confirmadas, a un momento futuro y con las dos comprobaciones de solapamiento. |
-| M4-12 | El modal de reprogramar enviaba el veterinario elegido, pero el servidor lo ignoraba en silencio: no había forma de reasignar una cita. | ✅ | El administrador la reasigna, validando que el veterinario exista y esté activo. Es lo que concilia RN-208 con RN-408. |
+| M4-12 | El modal de reprogramar enviaba el veterinario elegido, pero el servidor lo ignoraba en silencio: no había forma de reasignar una cita. | ✅ | El administrador la reasigna, validando que el veterinario exista y esté activo. Es lo que concilia RN-208 con RN-407. |
 | M4-13 | Por la API se podía agendar en una fecha pasada (la hora solo se revisaba si la fecha era hoy) o con una fecha mal formada. | ✅ | Formato y fecha se validan en el servidor. |
 | M4-14 | No se registraba la hora real de atención (VD-AGN-01). | ◐ Parcial | `hora_inicio_real` y `hora_fin_real` se sellan al iniciar y al completar. Faltan la detección de retrasos y el aviso de corrimiento (HU-27). |
 | M4-15 | El calendario tenía dos paneles de detalle con reglas distintas. El segundo ofrecía «Confirmar» sobre citas ya confirmadas y «Marcar como atendida» sobre pendientes, y además leía variables fuera de su ámbito, así que fallaba al abrirse. | ✅ | Queda un solo detalle, con las mismas reglas que el servidor. |
-| M4-21 | `DOC` — HU-19 y RN-406 figuraban como Implementada y Aplicada, pero describían el flujo defectuoso: «Como veterinario **o recepcionista**…» y consulta «opcional». | ✅ | Reescritas, con RE-19.1 a RE-19.5 y las reglas nuevas RN-408 y RN-409. |
+| M4-21 | `DOC` — HU-19 y RN-406 figuraban como Implementada y Aplicada, pero describían el flujo defectuoso: «Como veterinario **o recepcionista**…» y consulta «opcional». | ✅ | Reescritas, con RE-19.1 a RE-19.5 y las reglas nuevas RN-407 y RN-408. |
 
 ### Bajos
 
@@ -564,7 +564,7 @@ El portal comparaba con el estado `programada` en tres sitios, y ese estado no e
 | M4-19 | El marcado del segundo panel (`detalleCitaDrawer`) sigue en las vistas, ya sin uso. | ⚠️ Aceptado | Es marcado inerte; se retira con la limpieza de TR-01. |
 | M4-20 | Las citas en curso de días anteriores no aparecen en el panel del veterinario, que solo muestra las de hoy: hay que buscarlas en el calendario. | ✅ | Resuelto en v1.9.1: el panel del veterinario lista sus atenciones abiertas y sin cerrar de cualquier día (`Panel::atencionesAbiertas`, HU-18). |
 | M4-22 | `DOC` — RN-405, RN-406 y RE-19.1 hablaban del estado «programada», que no existe (VD-AGN-09). | ✅ | Se usan los estados reales. |
-| M4-23 | `DOC` — RN-208 («cualquier veterinario atiende cualquier mascota») parecía contradecir la nueva RN-408. | ✅ | RN-208 aclara que la consulta de una cita la registra su veterinario; si la atiende otro, el administrador reasigna la cita (M4-12) o se usa la atención sin cita. |
+| M4-23 | `DOC` — RN-208 («cualquier veterinario atiende cualquier mascota») parecía contradecir la nueva RN-407. | ✅ | RN-208 aclara que la consulta de una cita la registra su veterinario; si la atiende otro, el administrador reasigna la cita (M4-12) o se usa la atención sin cita. |
 
 ## Lo que sigue abierto del análisis de vacíos
 
