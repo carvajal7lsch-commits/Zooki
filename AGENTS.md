@@ -9,7 +9,7 @@ Zooki es un sistema de gestión veterinaria: PHP 8.2 sin framework (MVC propio),
 - **El código está en la v1.12.0**: una instalación para una sola clínica. Los usuarios se identifican por su documento, existe el rol recepcionista y las tablas no llevan `id_clinica`.
 - **La especificación ya es la v2**: una plataforma SaaS multi-inquilino con dos grafos (soporte a la decisión clínica y agenda inteligente), repartida entre v2.0 y v2.1. Está en `documentacion/` y es la fuente de verdad.
 - **Se construye la v2 por módulos**, en el orden de dependencias del [plan de entregas](documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2): primero la entrega v2.0 (lo imprescindible), luego la v2.1. Cada módulo agrupa sus HU y RE; el avance y las pruebas se cierran por etapas pequeñas dentro del módulo.
-- Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/drawdb_schema_v2.sql` describen el destino, no son migraciones ejecutables. Las migraciones reales conservan los datos v1 y se aplican en orden de dependencias. Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
+- Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/drawdb_schema_v2.sql` describen el destino para drawDB; el esquema ejecutable es `database/01_schema.sql`. Como los datos de la v1 eran solo pruebas, el salto a v2 reinicia la base con un esquema v2 consolidado y datos semilla, sin migrar datos ([plan M0](specs/M0-T-base-saas-identidad.md)). Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
 
 ## Mapa de la documentación
 
@@ -121,7 +121,7 @@ Son las del manifiesto `documentacion/ZOOKI_REGLAS.md` (que no se sube al reposi
 - Al desplegar se aplican solas (`docker/iniciar.sh` → `scripts/migrar.php`). Nunca se pide al usuario que entre al servidor a correrlas.
 - **No se modifican migraciones ya publicadas**: se escribe una nueva.
 - Las tablas y columnas nuevas salen del [MER](documentacion/MER.md). Si hace falta una que no está, primero se agrega al MER y a `database/drawdb_schema_v2.sql` y se avisa al usuario.
-- Pasar de la v1 a la v2 (documento → `id_usuario`, `id_clinica` en las tablas) se hace con migraciones que conservan los datos existentes: la clínica actual pasa a ser la primera clínica de la plataforma.
+- Pasar de la v1 a la v2 (documento → `id_usuario`, `id_clinica` en las tablas) **no migra datos**: los de la v1 eran pruebas. Se reinicia la base con `01_schema.sql` v2 y `02_semilla.sql`, se retiran las migraciones 03–13 (única excepción a no modificar migraciones publicadas) y las nuevas empiezan en `03`. Detalle en el [plan M0](specs/M0-T-base-saas-identidad.md).
 
 ## Mantener la documentación coherente
 
