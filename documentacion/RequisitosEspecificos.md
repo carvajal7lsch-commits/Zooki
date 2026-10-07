@@ -459,7 +459,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 |---|---|---|---|---|
 | RE-2.10.1 | El sistema debe mostrar siempre los datos básicos, las alergias y alertas, y las vacunas y desparasitaciones de todas las clínicas, indicando la clínica de cada registro. | Funcional | Una vacuna aplicada en otra clínica aparece con el nombre de esa clínica. | Alta |
 | RE-2.10.2 | Las consultas, tratamientos y archivos de otra clínica solo deben mostrarse si el propietario autorizó a la clínica que consulta. | Seguridad | Sin autorización no se ve su contenido, ni por la interfaz ni pidiéndolo directamente al servidor (403). | Alta |
-| RE-2.10.3 | Sin autorización, el sistema debe indicar que existe historia en otras clínicas sin mostrar su contenido. | Funcional | Se muestra el aviso y la opción de pedir la autorización al propietario. | Media |
+| RE-2.10.3 | Sin autorización, el sistema no debe revelar que existe historia en otras clínicas. | Seguridad | Ni la interfaz ni la respuesta del servidor incluyen ni mencionan consultas, tratamientos o archivos de otras clínicas; la autorización la da el propietario desde su portal (HU-5.12). | Media |
 | RE-2.10.4 | Los registros de otras clínicas deben ser de solo lectura. | Restricción | Intentar modificar un registro de otra clínica se rechaza (403). | Alta |
 
 **Reglas de negocio:** RN-112, RN-113

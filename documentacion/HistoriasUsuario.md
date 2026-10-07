@@ -645,7 +645,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Reglas de negocio:** RN-204, RN-205 · **Dependencias:** HU-2.1
 
-> _Nota: la descarga pasa siempre por `public/ver_archivo.php`, que comprueba el rol y, para un propietario, que la mascota sea suya (RN-G02). El `.htaccess` de la carpeta es una segunda barrera, no la principal: solo cubre Apache con AllowOverride activo. El formato se valida por el contenido del archivo, no por la extensión del nombre que envía el cliente, y al servirlo el `Content-Type` sale de una lista cerrada._
+> _Nota: la descarga pasa siempre por `public/ver_archivo.php`, que exige sesión y contexto activo (`Security`) y aplica la misma regla que la historia: en una clínica, el adjunto de una consulta visible según RN-113; para un propietario, solo los de sus mascotas (RN-G02). Si no corresponde, responde 403 y queda en auditoría. El `.htaccess` de la carpeta es una segunda barrera, no la principal: solo cubre Apache con AllowOverride activo. El formato se valida por el contenido del archivo, no por la extensión del nombre que envía el cliente, y al servirlo el `Content-Type` sale de una lista cerrada._
 
 ### HU-2.4 — Registrar tratamiento
 
@@ -717,7 +717,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Reglas de negocio:** RN-201, RN-207, RN-208, RN-G02 · **Dependencias:** HU-2.1
 
-> _Nota: Deriva del análisis de vacíos (VD-VAC-01, VD-HC-03, VD-SEG-04). Los tres registros clínicos validan la mascota con `Mascota::getPropietarioSiActiva` y las entradas con `ValidadorClinico` antes de guardar. El permiso sobre la mascota se interpreta según RN-207 y RN-208 para el rol clínico, y según RN-G02 para el propietario en el portal._
+> _Nota: Deriva del análisis de vacíos (VD-VAC-01, VD-HC-03, VD-SEG-04). Los tres registros clínicos exigen una mascota activa y vinculada a la clínica activa (`ModeloHistoria`, v2.0) y validan las entradas con `ValidadorClinico` antes de guardar. El permiso sobre la mascota se interpreta según RN-207 y RN-208 para el rol clínico, y según RN-G02 para el propietario en el portal._
 
 ### HU-2.8 — Sugerencia de diagnósticos probables por síntomas
 
@@ -766,7 +766,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 **Criterios de aceptación:**
 
 - Siempre se muestran los datos básicos, las alergias y alertas médicas, y las vacunas y desparasitaciones de todas las clínicas, cada una con la clínica que la aplicó.
-- Las consultas, tratamientos y archivos de otra clínica solo se muestran si el propietario autorizó a esta clínica (HU-5.12); si no, se indica que hay historia en otras clínicas sin acceso, sin mostrar su contenido.
+- Las consultas, tratamientos y archivos de otra clínica solo se muestran si el propietario autorizó a esta clínica (HU-5.12); si no, no se muestran ni se indica que existan.
 - Los registros de otras clínicas son de solo lectura: solo la clínica que los creó puede modificarlos.
 - El Grafo I usa las alergias y alertas de todas las clínicas al validar una prescripción (HU-2.9).
 

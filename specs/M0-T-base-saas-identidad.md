@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A y B terminadas; C1.7, C2 y C3 implementadas, pendientes de revisión por Claude.
+> Estado: en curso — A y B terminadas; C3 revisada (2026-10-07); C1.7, C2 y C4 implementadas, pendientes de revisión por Claude.
 > Entrega: v2.0 · Fecha: 2026-10-06
 > Reparto vigente (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
 
@@ -91,6 +91,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] C1 — Identidad, contexto activo, autorización en `Security` y retiro del recepcionista ([Anexo C1](#anexo-c1--resultado)). Revisada en C1.6; corrección obligatoria aplicada en C1.7, pendiente de revisión por Claude.
   - [x] C2 — Configuración por clínica: horarios, lectura de catálogos y copia inicial D-1 ([Anexo C2](#anexo-c2--resultado)). Implementada y verificada; pendiente de revisión por Claude.
   - [x] C3 — Mascotas y propietarios del personal ([Anexo C3](#anexo-c3--resultado)). Implementada y verificada; Codex escribe y Claude revisa. El usuario aprobó adelantar de D únicamente la confirmación por correo de una vinculación de propietario existente (RN-109). La aceptación del alta nueva sigue siendo presencial, directa del titular (RE-T.19.1).
+  - [x] C4 — Historia clínica y prevención ([Anexo C4](#anexo-c4--resultado)). Implementada y verificada; Claude Code escribe y Claude revisa. Pendiente de revisión.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -743,3 +744,90 @@ El alta nueva exige presencia y aceptación directa del titular antes de crear l
 1. **Estilo de código.** Parte del código nuevo encadena varias sentencias en una línea (`$stmt=...; if (...) ...;`). AGENTS pide código legible: desde C4, una sentencia por línea y nombres claros. No se reescribe C3 solo por esto; se corrige cuando se toque.
 2. **Descargas del portal.** Se regeneraron HU, RE y MER antes de tiempo. No hace daño; la regeneración completa sigue siendo al cerrar M0.
 3. **Migraciones antes del corte.** Producción aún no tiene la v2, así que `03_` podría haberse plegado en `01_schema.sql`. Se deja como está, porque mantiene al día las bases locales y la del CI; si al llegar a F hay varias, se evalúa consolidarlas.
+
+## Anexo C4 — Resultado
+
+Lo escribió Claude Code; la revisión corresponde a la sesión de revisión de Claude. Se releyeron A.2 (módulos 2 y 3), A.5, A.6, los anexos C1–C3 con sus revisiones, las HU y RE de los módulos 2 y 3, RF-2.4, RF-2.6 y RN-102, RN-112, RN-113, RN-202, RN-206, RN-207, RN-208 y RN-407.
+
+**Decisiones del usuario (2026-10-07).**
+
+1. Sin autorización no se revela que existe historia en otras clínicas. Se ajustaron el criterio de HU-2.10 y RE-2.10.3, que pedían un aviso (sin subir revisión).
+2. El número de historia es correlativo por clínica: `HC-000001`, `HC-000002`…
+3. El veterinario sigue agregando vacunas, laboratorios y productos desde «Otra…», siempre en la clínica activa. Quién gestiona los catálogos se decide con HU-7.2 (RN-701, RN-702).
+4. No existen flujos de edición de registros clínicos. Cada modelo tiene un único `paraModificar()` que devuelve el registro propio o responde 403 con auditoría; no se agregaron pantallas ni rutas.
+
+**Qué se hizo.**
+
+- `models/ModeloHistoria.php` (nuevo) concentra la regla de visibilidad:
+  - la mascota tiene que estar vinculada (activa) a la clínica activa; si no, 403 auditado;
+  - vacunas y desparasitaciones de todas las clínicas, con `clinica_nombre` y `es_propia`;
+  - consultas, tratamientos y archivos propios siempre; los de otra clínica solo si el propietario autorizó a la clínica activa en un vínculo activo.
+- `ModeloClinica::denegarAcceso()` audita y lanza 403 sin distinguir «no existe» de «es de otra clínica».
+- `Consulta`, `Tratamiento`, `ArchivoClinico` (nuevo), `Vacuna` y `Desparasitacion` extienden `ModeloHistoria`. Los controladores ya no tienen SQL. Cada registro guarda `id_clinica` (tratamientos y archivos, la de su consulta) y el `id_usuario` del veterinario.
+- `Consulta::registrar()` valida antes de abrir la transacción: diagnóstico y motivo (RN-202), signos vitales, mascota activa y vinculada (RN-207), y cita de la clínica activa, de la mascota y del veterinario que registra (RN-407). Dentro de la transacción escribe la consulta, los adjuntos, los tratamientos (con `fecha_inicio` obligatoria), completa la cita (RN-406) y asigna el número de historia. Un fallo deshace todo y el controlador borra los archivos ya movidos. Un 403 dentro de la transacción se vuelve a auditar después del rollback.
+- **Número de historia (RF-2.4, RN-102).** Se asigna en la primera consulta de la mascota en la clínica y no cambia después. Las primeras consultas de una clínica se serializan con un candado con nombre (`GET_LOCK`), tomado antes de la transacción y soltado después del commit; el índice único `(id_clinica, numero_historia_clinica)` es la última barrera. Se descartó un `FOR UPDATE` sobre `clinicas`: choca con los bloqueos compartidos que toman las FK al insertar y puede trabar dos primeras consultas entre sí.
+- `public/ver_archivo.php` pasa por `Security::autorizar('ver_archivo')` (acción nueva en la matriz: administrador, veterinario y propietario) y por `ArchivoClinico::paraDescargar()`. En una clínica aplica RN-113; en el portal, solo los adjuntos de las mascotas propias (RN-G02). Lo que no corresponde da 403 auditado.
+- Prevención: registro con clínica y veterinario; pendientes de la semana de la clínica activa (lo que ella aplicó, de mascotas activas y vinculadas); catálogo leído y escrito en la clínica activa (`CatalogoClinica::agregarVacuna/Laboratorio/Producto`, sin duplicar por nombre).
+- `views/vet/consultas.php` queda sin CSS ni JS en línea (`public/js/consultas.js` y clases en `public/css/medical/consultas.css`).
+- `public/js/medical-module.js`: el historial, la ficha y la impresión escapan todo el texto y marcan la clínica de origen. Con la historia compartida, el texto de otra clínica llegaba crudo a `innerHTML`. Cada fila de tratamiento pide la fecha de inicio (hoy por defecto); `atencion.css` suma esa columna.
+- `helpers/RespuestaJson.php` reúne las respuestas JSON de los tres controladores.
+
+**RE y evidencia.**
+
+| Alcance | Prueba |
+|---|---|
+| RE-2.1.1, RN-112: campos, clínica y veterinario | `ConsultaHistorialTest::testRegistrarGuardaClinicaVeterinarioCamposTratamientoYAdjunto`; `PrevencionTest::testLaVacunaGuardaSusDatosLaClinicaYElVeterinario`, `testLaDesparasitacionCalculaLaProximaYGuardaClinicaYVeterinario` |
+| RE-2.1.2, RE-2.2.3, RF-2.4: número único por clínica, una sola vez | `ConsultaHistorialTest::testElNumeroDeHistoriaSeAsignaUnaVezYNoSeRepiteDentroDeLaClinica`; `BaseV2MysqlTest::testC4ElNumeroDeHistoriaSeAsignaBajoCandadoSinRepetirse` |
+| RE-2.1.3 (RN-202), RE-2.2.2 | `ConsultaHistorialTest::testSinDiagnosticoNiMotivoNoSeGuarda` |
+| RE-2.4.1–3: tratamientos con fecha de inicio | `ConsultaHistorialTest::testTratamientoSinFechaInicioSeRechazaSinGuardarNada`, `testElControladorRechazaUnTratamientoSinFechaInicio`, `testAdjuntosYTratamientosLleganAgrupadosPorConsulta` |
+| RE-2.6.1, RE-2.6.3: todo o nada | `ConsultaHistorialTest::testUnFalloAMitadDelRegistroNoDejaDatosParciales`, `testUnErrorDeLaBaseAlGuardarTratamientosDeshaceTodo`, `testElControladorBorraElAdjuntoMovidoSiLaBaseFalla` |
+| RE-2.7.1–3, RN-207, RN-208 | `ConsultaHistorialTest::testUnaMascotaInactivaNoAdmiteConsultaYUnaNoVinculadaDa403`, `testCualquierVeterinarioDeLaClinicaRegistraSinCita`; `PrevencionTest::testMascotaInactivaONoVinculadaNoAdmiteVacunaNiDesparasitacion`, `testElControladorDeVacunasDejaPasarEl403` |
+| RN-407: cita de la clínica activa y del veterinario asignado | `ConsultaHistorialTest::testLaConsultaDeUnaCitaEsDelVeterinarioAsignadoYDeLaClinicaActiva` |
+| RE-2.1.4, RE-2.5.1, RE-2.5.2, RE-2.2.4 | `ConsultaHistorialTest::testElHistorialLlegaConElMasRecientePrimeroYNoMezclaMascotas`, `testElListadoTraeSoloLasConsultasDeLaClinicaActiva` |
+| RE-2.10.1, RE-2.5.4: vacunas y desparasitaciones de todas, con su clínica | `HistoriaCompartidaTest::testBVeLasVacunasYDesparasitacionesDeAConLaClinicaQueLasAplico` |
+| RE-2.10.2, RE-2.10.3: sin autorización no se ve ni se revela; con autorización, sí; al revocar, no | `HistoriaCompartidaTest::testSinAutorizacionBNoVeNiSabeDeLasConsultasDeA`, `testElHistorialPorPeticionDirectaNoRevelaLasConsultasDeA`, `testConAutorizacionBLasVeMarcadasYAlRevocarDejaDeVerlas`, `testUnaAutorizacionDeUnVinculoInactivoNoCuenta` |
+| RE-2.10.4, RN-112: B no modifica nada de A | `HistoriaCompartidaTest::testBNoModificaNingunRegistroDeAYQuedaEnAuditoria`, `testBNoAgregaTratamientosNiAdjuntosAUnaConsultaDeA` |
+| RN-113: mascota no vinculada, 403 | `HistoriaCompartidaTest::testUnaMascotaNoVinculadaNoMuestraNada` |
+| RE-2.3.3: `ver_archivo` con la misma regla | `HistoriaCompartidaTest` (los casos de `paraDescargar`), `testElPropietarioSoloDescargaLosAdjuntosDeSusMascotas`; `AutorizacionRolTest::testVerArchivoEsDeLaClinicaYDelPortalNoDeLaPlataforma`; recorrido HTTP |
+| RE-3.5.1: pendientes de la semana de la clínica activa | `PrevencionTest::testLosPendientesDeLaSemanaSonSoloDeLaClinicaActiva` |
+| Catálogo de la clínica (C2, RN-702) | `PrevencionTest::testLasAltasDelCatalogoQuedanEnLaClinicaActivaSinDuplicar` |
+| Todo lo anterior en el esquema real | `BaseV2MysqlTest::testC4HistoriaClinicaEnElEsquemaReal` |
+
+`ConsultaHistorialTest` se reescribió sobre el fixture de dos clínicas (`DosClinicas::crearHistoriaSqlite()` y `vincularLunaASur()`); `HistoriaCompartidaTest` y `PrevencionTest` son nuevas.
+
+**Verificación.**
+
+| Comando | Resultado |
+|---|---|
+| `vendor/bin/phpunit` | 321 pruebas, 1449 aserciones, 15 saltadas (las de MySQL, sin variable). |
+| Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y `ZOOKI_TEST_MYSQL_DB=zooki_v2_prueba` (MariaDB 10.4.32) | 321 pruebas, 1641 aserciones, sin fallos ni saltadas; `BaseV2MysqlTest` sola: 15 pruebas, 192 aserciones. En la prueba del candado, una segunda sesión lo retiene: la primera consulta desiste sin guardar nada y, al soltarlo, toma `HC-000002`. |
+| `php -l` y `node --check` de lo tocado | Sin errores. |
+
+**Recorrido HTTP** (`php -S` sobre `public/` y `curl` con cookie; en esta sesión no hubo navegador disponible). Base `zooki_v2_prueba` con `datos_prueba.php --si` y Luna vinculada a Norte y Sur por SQL:
+
+- Beto (Norte): tratamiento sin fecha de inicio → 422; consulta con tratamiento y PNG → 200; vacuna → 200; Luna queda con `HC-000001` en Norte y sin número en Sur; descarga su adjunto → 200 `image/png`.
+- Diego (Sur), sin autorización: el historial trae la vacuna con «Clínica Norte (prueba)» y `consultas: []`; el adjunto de Norte → 403.
+- Con `autoriza_historia_compartida = 1` (por SQL; la pantalla es de HU-5.12): Diego ve la consulta de Norte y descarga el adjunto → 200. Tras revocar: `consultas: []` y 403.
+- Sin sesión → 401. Mascota solo de Norte pedida desde Sur → 403. La auditoría de Sur registra los dos 403 del adjunto.
+- `vet_consultas` → 200; el diagnóstico con HTML llega escapado en `data-consultas`. `vet_pacientes` (Diego) → 200.
+
+**Pendientes.**
+
+1. **Pregunta: RN-115 frente al 403.** RN-115, HU-5.13 y RE-5.12.3 dicen que, si el propietario se desvincula, la clínica conserva lo que registró. Con la regla de este encargo, una mascota cuyo vínculo con la clínica pasa a `inactivo` da 403 en todo, incluidos los registros propios. Hoy ningún código desactiva `mascota_clinica`, así que todavía no ocurre. Propuesta: decidirlo con HU-5.13 (C6): con el vínculo inactivo, solo los registros propios, en lectura, sin nada nuevo.
+2. **C5:** `CitaController` sigue con SQL v1 (eventos de vacunas en la agenda por `doc_propietario`, pantalla de atención). `Consulta::registrar()` completa la cita con una actualización acotada por clínica, mascota, veterinario y estado; el resto de la agenda es de C5. La columna de fecha de inicio en `atencion.css` no se probó en esa pantalla.
+3. **C6:** el portal llama a `findByMascota` desde el contexto de propietario y hoy recibe 403: falla cerrado. Quedan la pantalla de autorización (HU-5.12), la historia completa del propietario (RN-114) y el resto de su acceso a adjuntos.
+4. **C7 y C8:** panel y dashboard; recordatorios por correo. Se quitó `Vacuna::getPendientesPorDiaYEspecie()`: no tenía uso y era solo de MySQL. La agrupación por especie de HU-3.5 llega con el dashboard.
+5. **HU-7.2:** quién gestiona los catálogos de la clínica (decisión 3).
+6. **Fuera de C4:** Grafo I, `alertas_medicas` (RE-2.1.5) y RE-3.1.2/3 (calendario y alerta de la próxima dosis).
+7. La fecha y hora de la consulta y los pendientes usan `America/Bogota`, como la v1: `clinicas` no tiene zona horaria.
+8. `views/vet/modal_consulta.php` conserva `onclick` heredados, y la configuración de la sesión está repetida en `index.php` y `ver_archivo.php` (D, RNF-12).
+9. Falta la verificación visual en navegador (móvil, tablet y escritorio) de Consultas, el historial con la marca de clínica y la fila de tratamiento. La hace el usuario.
+10. La versión de publicación y las descargas del portal se actualizan al cerrar M0 (§7).
+
+### C4 — Revisión (2026-10-07)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el diff y en particular `ModeloHistoria` (`exigirMascotaVinculada` y `consultaVisible`): la regla de RN-113 vive en un solo lugar y no revela la existencia de registros ajenos sin autorización. Se valora el escape del texto de otra clínica en el historial (evita inyección entre inquilinos) y el código con una sentencia por línea.
+
+**Decisión del usuario sobre el pendiente 1 (RN-115):** con el vínculo `mascota_clinica` inactivo, la clínica ve **solo sus propios registros, en solo lectura**, y no puede agregar nada nuevo. Se implementa en C6 junto con la desvinculación (HU-5.13).
+
+**Base de pruebas:** `BaseV2MysqlTest` borra y recrea la base indicada en `ZOOKI_TEST_MYSQL_DB`. Desde C5 las pruebas usan su base por defecto (`zooki_test_base_v2`) y **no** `zooki_v2_prueba`, que es la base de trabajo manual del usuario.
