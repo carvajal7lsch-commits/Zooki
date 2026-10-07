@@ -61,6 +61,7 @@
         titulo.textContent = esAlta ? 'Nuevo integrante' : 'Editar integrante';
         soloAlta.hidden = !esAlta;
         aviso.hidden = true;
+        if (esAlta) bloquearIdentidad(false);
         modal.classList.add('is-open');
         form.querySelector('input[name="documento"]').focus();
     }
@@ -69,6 +70,17 @@
         modal.classList.remove('is-open');
         form.reset();
         form.elements.id_usuario.value = '';
+    }
+
+    function bloquearIdentidad(bloquear) {
+        form.elements.documento.readOnly = bloquear;
+        form.elements.email.readOnly = bloquear;
+        form.elements.tipo_documento.disabled = bloquear;
+        form.elements.password.disabled = bloquear;
+        if (bloquear) {
+            aviso.textContent = 'Cuenta con otros vínculos: solo el titular puede cambiar documento, correo y contraseña desde su perfil.';
+            aviso.hidden = false;
+        }
     }
 
     modal.addEventListener('click', (evento) => {
@@ -95,6 +107,7 @@
         form.elements.id_rol.value = String(u.id_rol);
         form.elements.estado.value = String(u.estado);
         abrirModal(false);
+        bloquearIdentidad(!u.identidad_editable);
     }
 
     // RE-T.7.5: si el documento o el correo ya tienen cuenta en Zooki, el
@@ -119,7 +132,9 @@
         if (!form.reportValidity()) return;
 
         const esAlta = form.elements.id_usuario.value === '';
-        const r = await pedir('index.php?action=' + (esAlta ? 'registrar_usuario_ajax' : 'actualizar_usuario_ajax'), new FormData(form));
+        const datos = new FormData(form);
+        datos.set('tipo_documento', form.elements.tipo_documento.value);
+        const r = await pedir('index.php?action=' + (esAlta ? 'registrar_usuario_ajax' : 'actualizar_usuario_ajax'), datos);
         if (r.success) {
             cerrarModal();
             await mensaje('success', r.message);

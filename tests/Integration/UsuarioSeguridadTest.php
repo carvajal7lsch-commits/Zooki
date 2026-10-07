@@ -75,6 +75,95 @@ class UsuarioSeguridadTest extends TestCase
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
+    /** C1.6: vínculo de propietario incluso inactivo impide controlar la cuenta. */
+    public function testIdentidadCompartidaRechazaCambiosYRestablecimiento(): void
+    {
+        $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
+        foreach (['otra_clinica', 'propietario_activo', 'propietario_inactivo'] as $vinculo) {
+            $this->db->exec('DELETE FROM usuario_clinica WHERE id_usuario = 2 AND id_clinica = 2');
+            $this->db->exec('DELETE FROM propietario_clinica WHERE id_propietario = 2');
+            if ($vinculo === 'otra_clinica') {
+                $this->usuario->asignarRolEnClinica(2, 2, Roles::VETERINARIO);
+            } else {
+                $estado = $vinculo === 'propietario_activo' ? 'activo' : 'inactivo';
+                $this->db->prepare('INSERT INTO propietario_clinica (id_propietario,id_clinica,estado) VALUES (2,1,?)')->execute([$estado]);
+            }
+            $antes = $this->usuario->buscarPorId(2);
+            foreach (['documento' => '1000000999', 'email' => 'cambio@zooki.test', 'tipo_documento' => 'CE', 'password' => 'Cambio#2026'] as $campo => $valor) {
+                $_POST = $this->datosDePersonal($antes + ['id_rol' => 2]);
+                $_POST[$campo] = $valor;
+                $this->assertDenegado(fn () => $controlador->actualizarAjax());
+                $this->assertSame($antes, $this->usuario->buscarPorId(2));
+            }
+            $_POST = ['id_usuario' => '2'];
+            $this->assertDenegado(fn () => $controlador->resetearPasswordAjax());
+            $this->assertTrue($this->usuario->verificarPassword(2, DosClinicas::PASSWORD));
+            $_GET = ['id_usuario' => '2'];
+            $this->assertFalse($this->json(fn () => $controlador->getUsuarioAjax())['usuario']['identidad_editable']);
+        }
+        $this->assertSame(15, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion = 'Acceso denegado: modificación de identidad compartida'")->fetchColumn());
+    }
+
+    private function assertDenegado(callable $accion): void
+    {
+        ob_start();
+        try {
+            $accion();
+            $this->fail('Debió rechazar la modificación de la cuenta con 403.');
+        } catch (AccesoDenegado $e) {
+            $this->assertSame(403, $e->codigo());
+        } finally {
+            ob_end_clean();
+        }
+    }
+
+    public function testCuentaExclusivaPermiteCorreoDocumentoYRestablecimiento(): void
+    {
+        $controlador = $this->comoAdmin(1, 1);
+        $_POST = $this->datosDePersonal(['id_usuario' => '2', 'documento' => '1000000999', 'email' => 'nuevo@zooki.test']);
+        $this->assertTrue($this->json(fn () => $controlador->actualizarAjax())['success']);
+        $_POST = ['id_usuario' => '2'];
+        $this->assertTrue($this->json(fn () => $controlador->resetearPasswordAjax())['success']);
+        $this->assertFalse($this->usuario->verificarPassword(2, DosClinicas::PASSWORD));
+        $this->assertSame(1, (int) $this->usuario->buscarPorId(2)['debe_cambiar_password']);
+    }
+
+    public function testPersonaCompartidaPermiteNombreTelefonoRolYEstadoLocal(): void
+    {
+        $controlador = $this->comoAdmin(1, 1);
+        $actual = $this->usuario->buscarPorId(5);
+        $_POST = $this->datosDePersonal($actual);
+        $_POST['nombre_completo'] = 'Nombre corregido';
+        $_POST['telefono'] = '3001234567';
+        $_POST['id_rol'] = '1';
+        $_POST['estado'] = '0';
+        $this->assertTrue($this->json(fn () => $controlador->actualizarAjax())['success']);
+        $this->assertSame('Nombre corregido', $this->usuario->buscarPorId(5)['nombre_completo']);
+        $this->assertSame('inactivo', $this->rolEn(5, 1)['estado']);
+        $this->assertSame('activo', $this->rolEn(5, 2)['estado']);
+    }
+
+    public function testOtroVinculoPersonalInactivoBloqueaIdentidad(): void
+    {
+        $this->usuario->asignarRolEnClinica(2, 2, Roles::VETERINARIO);
+        $this->usuario->cambiarEstadoEnClinica(2, 2, false);
+        $this->assertFalse($this->usuario->identidadEditableEnClinica(2, 1));
+        $controlador = $this->comoAdmin(1, 1);
+        $antes = $this->usuario->buscarPorId(2);
+        foreach (['documento' => '1000000999', 'email' => 'cambio@zooki.test', 'tipo_documento' => 'CE', 'password' => 'Cambio#2026'] as $campo => $valor) {
+            $_POST = $this->datosDePersonal($antes + ['id_rol' => 2]);
+            $_POST[$campo] = $valor;
+            $this->assertDenegado(fn () => $controlador->actualizarAjax());
+            $this->assertSame($antes, $this->usuario->buscarPorId(2));
+        }
+        $_POST = ['id_usuario' => '2'];
+        $this->assertDenegado(fn () => $controlador->resetearPasswordAjax());
+        $this->assertTrue($this->usuario->verificarPassword(2, DosClinicas::PASSWORD));
+        $_GET = ['id_usuario' => '2'];
+        $this->assertFalse($this->json(fn () => $controlador->getUsuarioAjax())['usuario']['identidad_editable']);
+        $this->assertSame(5, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion = 'Acceso denegado: modificación de identidad compartida'")->fetchColumn());
+    }
+
     // ── VD-SEG-01 / B.5 / RE-T.17.5: roles asignables ───────────────────
 
     public function testSoloSeAsignanLosRolesDeClinica(): void

@@ -88,7 +88,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
 - [x] A — Inventario de código por módulo y orden de adaptación ([Anexo A](#anexo-a--inventario-de-código-etapa-a)). Revisado y aprobado; decisiones D-1 a D-9 cerradas (A.7).
 - [x] B — ([Anexo B](#anexo-b--resultado-de-la-etapa-b); revisada, CI con MySQL 8 en verde, B.4 resuelto en B.5) Ajustes de MER/drawdb y de HU-0.2/RE-0.2.5 según A.7; `drawdb_schema_v2.sql` a `database/modelo/`; `01_schema.sql` v2, `02_semilla.sql`, retiro de 03–13, migrador sin línea base con guarda v1 y semilla en cada arranque, `crear_superadmin.php`; prueba en CI con MySQL 8 que carga el esquema desde cero y corre el migrador dos veces; instalación desde cero en MariaDB local; README y AGENTS actualizados en la sección de base de datos.
 - [ ] C — En subetapas C1–C9 (A.5), cada una con revisión y `phpunit` en verde: identidad, contexto, aislamiento, retiro del recepcionista y de «cerrar sin consulta», cierre de los puntos de fuga de A.6; pruebas de dos clínicas.
-  - [x] C1 — Identidad, contexto activo, autorización en `Security` y retiro del recepcionista ([Anexo C1](#anexo-c1--resultado)). Falta la revisión y las respuestas de C1.5.
+  - [x] C1 — Identidad, contexto activo, autorización en `Security` y retiro del recepcionista ([Anexo C1](#anexo-c1--resultado)). Revisada en C1.6; corrección obligatoria aplicada en C1.7, pendiente de revisión por Claude.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -664,3 +664,13 @@ La base `zooki_v2_prueba` quedó cargada con esquema y semilla. No se tocó `zoo
 10. Verificación visual en navegador: la hace el usuario.
 
 **Para D:** el alta de personal todavía envía la contraseña en texto plano por correo (herencia de la v1). Según la especificación, el titular crea su contraseña al activar la cuenta; se corrige en D.
+
+### C1.7 Corrección
+
+Lo escribió Codex; la revisión corresponde a la sesión de revisión de Claude.
+
+Se aplicó la regla aprobada en C1.6, con el ajuste de revisión aprobado por el usuario: documento (incluido su tipo), correo y restablecimiento de contraseña solo se administran para personas exclusivas de la clínica. Cualquier otro vínculo de personal, **activo o inactivo**, o cualquier vínculo de propietario bloquea esos cambios con `AccesoDenegado` (403) y auditoría, antes de modificar datos. Se quitó el filtro por estado: una desactivación temporal en otra clínica no permite tomar el control de la cuenta. El formulario pone documento y correo en solo lectura, deshabilita el tipo y el restablecimiento; nombre, teléfono, rol y estado local siguen editables. Los campos de acceso compartidos no se reescriben al guardar estos últimos.
+
+Pruebas: `UsuarioSeguridadTest` cubre cuenta exclusiva, otra clínica activa, propietario activo/inactivo, petición directa de contraseña, restablecimiento, cambios locales permitidos y otro vínculo personal inactivo. Evidencia de RE-T.15.2, RE-T.15.3 y la regla C1.6; conserva los flujos del titular (RE-T.5.7/8) para D. Suite completa: **278 pruebas, 1055 aserciones, 10 saltadas** (MySQL sin variable). Navegador integrado: comprobados los campos de Elena (solo lectura), el restablecimiento deshabilitado y la clave inicial oculta; la matriz responsive completa sigue a cargo del usuario según C1.6-10. No cambia la versión de publicación: se actualiza al cerrar M0.
+
+**Verificación del ajuste de revisión:** `testOtroVinculoPersonalInactivoBloqueaIdentidad` comprueba rechazo 403 de documento, tipo, correo, contraseña directa y restablecimiento, cinco registros de auditoría, cuenta sin cambios y permiso de vista deshabilitado. Suite después del ajuste: **286 pruebas, 1104 aserciones, sin fallos; 11 saltadas de MySQL sin variable**. La evidencia de base real de C2 que sigue corresponde a la ejecución anterior al ajuste.

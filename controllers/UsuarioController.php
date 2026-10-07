@@ -50,7 +50,10 @@ class UsuarioController {
 
     /** Personal de la clínica activa, para la vista de administración. */
     public function listar(): array {
-        return $this->usuario->personalDeClinica($this->clinica());
+        return array_map(function ($persona) {
+            $persona['identidad_editable'] = $this->usuario->identidadEditableEnClinica((int) $persona['id_usuario'], $this->clinica());
+            return $persona;
+        }, $this->usuario->personalDeClinica($this->clinica()));
     }
 
     /** Propietarios vinculados a la clínica activa (solo lectura en C1). */
@@ -247,6 +250,18 @@ class UsuarioController {
         $idUsuario = (int) $actual['id_usuario'];
         $idClinica = $this->clinica();
 
+        // C1.6: rechazar incluso peticiones directas antes de validar o escribir.
+        if (!$this->usuario->identidadEditableEnClinica($idUsuario, $idClinica)) {
+            foreach (['documento', 'tipo_documento', 'email'] as $campo) {
+                if (isset($_POST[$campo]) && trim((string) $_POST[$campo]) !== (string) $actual[$campo]) {
+                    $this->denegarIdentidadCompartida($idUsuario);
+                }
+            }
+            if (trim((string) ($_POST['password'] ?? '')) !== '') {
+                $this->denegarIdentidadCompartida($idUsuario);
+            }
+        }
+
         $error = $this->validarDatos($_POST, $datos);
         if ($error !== null) {
             $this->responder(false, $error);
@@ -273,7 +288,11 @@ class UsuarioController {
 
         try {
             $this->db->beginTransaction();
-            $this->usuario->actualizarIdentidad($idUsuario, $datos);
+            if ($this->usuario->identidadEditableEnClinica($idUsuario, $idClinica)) {
+                $this->usuario->actualizarIdentidad($idUsuario, $datos);
+            } else {
+                $this->usuario->actualizarDatosPersonal($idUsuario, $datos);
+            }
             $this->usuario->asignarRolEnClinica($idUsuario, $idClinica, $datos['id_rol']);
             if ($datos['estado'] !== 1) {
                 $this->usuario->cambiarEstadoEnClinica($idUsuario, $idClinica, false);
@@ -300,6 +319,7 @@ class UsuarioController {
         header('Content-Type: application/json');
         $fila = $this->personalDeEstaClinica($_GET['id_usuario'] ?? null);
         $fila['estado'] = (int) $fila['estado_clinica'];
+        $fila['identidad_editable'] = $this->usuario->identidadEditableEnClinica((int) $fila['id_usuario'], $this->clinica());
         echo json_encode(['success' => true, 'usuario' => $fila]);
     }
 
@@ -351,6 +371,10 @@ class UsuarioController {
         $persona = $this->personalDeEstaClinica($_POST['id_usuario'] ?? null);
         $idUsuario = (int) $persona['id_usuario'];
 
+        if (!$this->usuario->identidadEditableEnClinica($idUsuario, $this->clinica())) {
+            $this->denegarIdentidadCompartida($idUsuario);
+        }
+
         // Para la contraseña propia está el perfil, que sí pide la actual.
         if ($idUsuario === Contexto::idUsuario()) {
             $this->responder(false, 'Para cambiar tu propia contrasena usa la opcion de tu perfil.');
@@ -399,5 +423,11 @@ class UsuarioController {
             'exists' => true,
             'en_clinica' => $this->usuario->personalEnClinica((int) $persona['id_usuario'], $this->clinica()) !== null,
         ];
+    }
+
+    private function denegarIdentidadCompartida(int $idUsuario): never {
+        $this->auditoria->log(Contexto::idUsuario(), 'OTHER', 'usuarios', $idUsuario,
+            null, null, 'Acceso denegado: modificación de identidad compartida', $this->clinica());
+        throw new AccesoDenegado(403, 'La cuenta tiene otros vínculos. El titular debe corregir sus datos desde su perfil.');
     }
 }

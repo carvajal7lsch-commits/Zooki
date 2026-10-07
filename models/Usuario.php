@@ -126,6 +126,13 @@ class Usuario
             ->execute([$email, $this->nuloSiVacio($telefono), $idUsuario]);
     }
 
+    /** C1.6: los campos de acceso compartidos ni siquiera se reescriben. */
+    public function actualizarDatosPersonal(int $idUsuario, array $datos): bool
+    {
+        return $this->conn->prepare('UPDATE usuarios SET nombre_completo = ?, telefono = ? WHERE id_usuario = ?')
+            ->execute([$datos['nombre_completo'], $this->nuloSiVacio($datos['telefono'] ?? null), $idUsuario]);
+    }
+
     public function actualizarPassword(int $idUsuario, string $hash): bool
     {
         return $this->conn->prepare('UPDATE usuarios SET password = ? WHERE id_usuario = ?')->execute([$hash, $idUsuario]);
@@ -206,6 +213,19 @@ class Usuario
     }
 
     // ── Personal de una clínica (HU-T.7) ──────────────────────────────────
+
+    /** C1.6: no transferir al administrador el control de una cuenta compartida. */
+    public function identidadEditableEnClinica(int $idUsuario, int $idClinica): bool
+    {
+        return $this->uno(
+            "SELECT 1 AS permitido FROM usuario_clinica uc
+             WHERE uc.id_usuario = ? AND uc.id_clinica = ?
+               AND NOT EXISTS (SELECT 1 FROM usuario_clinica otra
+                   WHERE otra.id_usuario = uc.id_usuario AND otra.id_clinica <> uc.id_clinica)
+               AND NOT EXISTS (SELECT 1 FROM propietario_clinica pc WHERE pc.id_propietario = uc.id_usuario)",
+            [$idUsuario, $idClinica]
+        ) !== null;
+    }
 
     /** Personal de la clínica con su rol y su estado en ella. */
     public function personalDeClinica(int $idClinica): array

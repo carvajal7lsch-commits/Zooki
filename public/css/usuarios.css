@@ -1200,6 +1200,11 @@
     display: flex;
 }
 
+/* C1.6: el layout del formulario no debe volver visible la clave de alta al editar. */
+.users-modal [hidden] {
+    display: none !important;
+}
+
 .tab-panel[hidden] {
     display: none;
 }
