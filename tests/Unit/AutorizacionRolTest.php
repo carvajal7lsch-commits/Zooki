@@ -5,19 +5,19 @@ use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../../helpers/Security.php';
 
 /**
- * HU-32 — Autorizacion central por rol (RBAC real), origen VD-SEG-03/04.
+ * HU-T.10 — Autorizacion central por rol (RBAC), sobre el rol del contexto
+ * activo (RN-G18).
  *
- * Se prueba la decision de autorizacion (la matriz accion -> roles), no el
- * corte de la peticion: validateRole() termina en exit() cuando deniega, y
- * exit() no se puede atrapar desde PHPUnit sin matar al propio runner.
- * La matriz es donde vive la regla, asi que es lo que hay que blindar.
+ * Se prueba la matriz accion -> roles, que es donde vive la regla. La
+ * decision completa (sesion, contexto, clinica y CSRF) se prueba en
+ * tests/Integration/SeguridadClinicaTest.php.
  */
 class AutorizacionRolTest extends TestCase
 {
-    private const ADMIN         = 1;
-    private const VETERINARIO   = 2;
-    private const RECEPCIONISTA = 3;
-    private const PROPIETARIO   = 4;
+    private const ADMIN       = Roles::ADMIN;
+    private const VETERINARIO = Roles::VETERINARIO;
+    private const PROPIETARIO = Roles::PROPIETARIO;
+    private const SUPER_ADMIN = Roles::SUPER_ADMIN;
 
     /** Matriz real, leida por reflexion (es privada a proposito). */
     private static function matriz(): array
@@ -28,9 +28,9 @@ class AutorizacionRolTest extends TestCase
         return $metodo->invoke(null);
     }
 
-    private static function publicas(): array
+    private static function lista(string $propiedad): array
     {
-        $prop = new ReflectionProperty('Security', 'publicActions');
+        $prop = new ReflectionProperty('Security', $propiedad);
         $prop->setAccessible(true);
 
         return $prop->getValue();
@@ -54,64 +54,68 @@ class AutorizacionRolTest extends TestCase
     }
 
     /**
-     * Criterio de aceptacion: "Se cubren todos los endpoints AJAX".
-     * Este es el test que importa a largo plazo: si alguien agrega una ruta
-     * al enrutador y olvida asignarle roles, esto falla.
+     * Si alguien agrega una ruta al enrutador y olvida decidir quien la usa,
+     * esto falla: toda accion es publica, sin contexto o de la matriz.
      */
     public function testTodaAccionDelEnrutadorEstaCubierta()
     {
-        $matriz = self::matriz();
-        $publicas = self::publicas();
-        $sinCubrir = [];
-
-        foreach (self::accionesDelEnrutador() as $accion) {
-            if (in_array($accion, $publicas, true)) continue;
-            if (isset($matriz[$accion])) continue;
-            $sinCubrir[] = $accion;
-        }
+        $cubiertas = array_merge(self::lista('publicActions'), self::lista('accionesSinContexto'), array_keys(self::matriz()));
+        $sinCubrir = array_values(array_diff(self::accionesDelEnrutador(), $cubiertas));
 
         $this->assertSame([], $sinCubrir, 'Acciones sin roles asignados: ' . implode(', ', $sinCubrir));
     }
 
-    /** Una accion publica no puede estar tambien en la matriz: seria ambiguo. */
-    public function testNingunaAccionEsPublicaYRestringidaALaVez()
+    /** Una accion no puede estar en dos listas a la vez: seria ambiguo. */
+    public function testNingunaAccionEstaEnDosListas()
     {
-        $ambas = array_intersect(self::publicas(), array_keys(self::matriz()));
+        $publicas = self::lista('publicActions');
+        $sinContexto = self::lista('accionesSinContexto');
+        $matriz = array_keys(self::matriz());
 
-        $this->assertSame([], array_values($ambas), 'Acciones contradictorias: ' . implode(', ', $ambas));
+        $this->assertSame([], array_values(array_intersect($publicas, $matriz)));
+        $this->assertSame([], array_values(array_intersect($publicas, $sinContexto)));
+        $this->assertSame([], array_values(array_intersect($sinContexto, $matriz)));
     }
 
     /** La matriz no debe acumular rutas que ya no existen. */
     public function testLaMatrizNoTieneAccionesFantasma()
     {
-        $fantasma = array_diff(array_keys(self::matriz()), self::accionesDelEnrutador());
+        $fantasma = array_diff(array_merge(array_keys(self::matriz()), self::lista('accionesSinContexto')), self::accionesDelEnrutador());
 
         $this->assertSame([], array_values($fantasma), 'Acciones inexistentes: ' . implode(', ', $fantasma));
     }
 
+    /** B.5 / RE-T.11.2: en la matriz solo existen los roles 1, 2, 4 y 5; el 3 (recepcionista) ya no. */
+    public function testLaMatrizSoloUsaLosRolesDeLaV2()
+    {
+        $roles = array_unique(array_merge(...array_values(self::matriz())));
+        sort($roles);
+
+        $this->assertSame([1, 2, 4, 5], array_values($roles));
+    }
+
+    public function testNoQuedanRutasDelRecepcionista()
+    {
+        $rutas = array_filter(self::accionesDelEnrutador(), fn ($a) => str_starts_with($a, 'reception_'));
+        $this->assertSame([], array_values($rutas));
+        $this->assertFalse(defined('Security::ROL_RECEPCIONISTA'));
+    }
+
     public function testPropietarioNoAccedeAAdministracion()
     {
-        $this->assertFalse($this->permite('admin_usuarios', self::PROPIETARIO));
-        $this->assertFalse($this->permite('registrar_usuario_ajax', self::PROPIETARIO));
-        $this->assertFalse($this->permite('cambiar_estado_usuario_ajax', self::PROPIETARIO));
-        $this->assertFalse($this->permite('get_auditoria_ajax', self::PROPIETARIO));
-        $this->assertFalse($this->permite('guardar_horarios_clinica_ajax', self::PROPIETARIO));
+        foreach (['admin_usuarios', 'registrar_usuario_ajax', 'cambiar_estado_usuario_ajax', 'get_auditoria_ajax', 'guardar_horarios_clinica_ajax'] as $accion) {
+            $this->assertFalse($this->permite($accion, self::PROPIETARIO), $accion);
+        }
     }
 
     public function testPropietarioNoAccedeADatosClinicosNiDeOtrosDuenos()
     {
-        $this->assertFalse($this->permite('registrar_consulta_ajax', self::PROPIETARIO));
-        $this->assertFalse($this->permite('registrar_vacuna_ajax', self::PROPIETARIO));
-        $this->assertFalse($this->permite('listar_historial_ajax', self::PROPIETARIO));
-        $this->assertFalse($this->permite('listar_propietarios_ajax', self::PROPIETARIO));
-        $this->assertFalse($this->permite('listar_mascotas_ajax', self::PROPIETARIO));
+        foreach (['registrar_consulta_ajax', 'registrar_vacuna_ajax', 'listar_historial_ajax', 'listar_propietarios_ajax', 'listar_mascotas_ajax'] as $accion) {
+            $this->assertFalse($this->permite($accion, self::PROPIETARIO), $accion);
+        }
     }
 
-    /**
-     * RN-201: "Solo el rol Veterinario puede registrar consultas clinicas".
-     * Ni recepcion ni el administrador: la regla no admite excepciones, y la
-     * matriz debe decir lo mismo que ya hacia la comprobacion del enrutador.
-     */
+    /** RN-201: solo el veterinario registra actos clinicos; ni el administrador. */
     public function testSoloElVeterinarioRegistraActosClinicos()
     {
         foreach ([
@@ -120,185 +124,119 @@ class AutorizacionRolTest extends TestCase
             'registrar_nuevo_producto_desparasitacion_ajax',
         ] as $accion) {
             $this->assertTrue($this->permite($accion, self::VETERINARIO), "$accion deberia permitir al veterinario");
-            $this->assertFalse($this->permite($accion, self::ADMIN), "$accion no deberia permitir al admin (RN-201)");
-            $this->assertFalse($this->permite($accion, self::RECEPCIONISTA), "$accion no deberia permitir a recepcion");
-            $this->assertFalse($this->permite($accion, self::PROPIETARIO), "$accion no deberia permitir al propietario");
-        }
-    }
-
-    /**
-     * RN-407 — Atender una cita (iniciarla, cerrarla o marcarla como no
-     * asistida) es solo del veterinario. Recepción y administración podían
-     * iniciarla y la cita quedaba "en curso" sin nadie que la atendiera,
-     * porque la pantalla de atención nunca fue suya.
-     */
-    public function testSoloElVeterinarioAtiendeLasCitas()
-    {
-        foreach (['iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax', 'cerrar_sin_consulta_ajax', 'vet_atencion'] as $accion) {
-            $this->assertTrue($this->permite($accion, self::VETERINARIO), "$accion deberia permitir al veterinario");
-            foreach ([self::ADMIN, self::RECEPCIONISTA, self::PROPIETARIO] as $rol) {
+            foreach ([self::ADMIN, self::PROPIETARIO, self::SUPER_ADMIN] as $rol) {
                 $this->assertFalse($this->permite($accion, $rol), "$accion no deberia permitir al rol $rol");
             }
         }
     }
 
-    public function testSoloElAdministradorGestionaUsuarios()
+    /** RN-407: atender una cita es del veterinario. */
+    public function testSoloElVeterinarioAtiendeLasCitas()
     {
-        foreach (['registrar_usuario_ajax', 'actualizar_usuario_ajax', 'cambiar_estado_usuario_ajax', 'get_usuario_ajax'] as $accion) {
-            $this->assertTrue($this->permite($accion, self::ADMIN), "$accion deberia permitir al admin");
-            $this->assertFalse($this->permite($accion, self::VETERINARIO), "$accion no deberia permitir al veterinario");
-            $this->assertFalse($this->permite($accion, self::RECEPCIONISTA), "$accion no deberia permitir a recepcion");
-            $this->assertFalse($this->permite($accion, self::PROPIETARIO), "$accion no deberia permitir al propietario");
+        foreach (['iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax', 'cerrar_sin_consulta_ajax', 'vet_atencion'] as $accion) {
+            $this->assertTrue($this->permite($accion, self::VETERINARIO), "$accion deberia permitir al veterinario");
+            foreach ([self::ADMIN, self::PROPIETARIO, self::SUPER_ADMIN] as $rol) {
+                $this->assertFalse($this->permite($accion, $rol), "$accion no deberia permitir al rol $rol");
+            }
         }
     }
 
-    /** El portal es del dueno: el personal de la clinica no entra por ahi. */
+    /** RE-T.7.2 / RE-T.11.1: solo el administrador de la clinica gestiona su personal. */
+    public function testSoloElAdministradorGestionaUsuarios()
+    {
+        foreach ([
+            'registrar_usuario_ajax', 'actualizar_usuario_ajax', 'cambiar_estado_usuario_ajax',
+            'get_usuario_ajax', 'resetear_password_usuario_ajax', 'verificar_documento_ajax', 'verificar_email_ajax',
+        ] as $accion) {
+            $this->assertTrue($this->permite($accion, self::ADMIN), "$accion deberia permitir al admin");
+            foreach ([self::VETERINARIO, self::PROPIETARIO, self::SUPER_ADMIN] as $rol) {
+                $this->assertFalse($this->permite($accion, $rol), "$accion no deberia permitir al rol $rol");
+            }
+        }
+    }
+
+    /** El portal es del dueno: el personal no entra por ahi (RN-G18). */
     public function testElPersonalNoEntraAlPortalDelPropietario()
     {
         foreach (['portal_propietario', 'portal_agendar_cita_ajax', 'ver_detalle_mascota_propietario_ajax'] as $accion) {
             $this->assertTrue($this->permite($accion, self::PROPIETARIO));
-            $this->assertFalse($this->permite($accion, self::ADMIN));
-            $this->assertFalse($this->permite($accion, self::VETERINARIO));
-            $this->assertFalse($this->permite($accion, self::RECEPCIONISTA));
+            foreach ([self::ADMIN, self::VETERINARIO, self::SUPER_ADMIN] as $rol) {
+                $this->assertFalse($this->permite($accion, $rol), "$accion no deberia permitir al rol $rol");
+            }
         }
     }
 
-    /**
-     * Contrapeso de los tests anteriores: la matriz tiene que seguir dejando
-     * pasar lo que cada rol usa a diario. Un RBAC que rompe la operacion no
-     * sirve de nada.
-     */
+    /** RE-T.15.4 / RN-004: el super-administrador solo tiene la plataforma y su inicio. */
+    public function testElSuperAdministradorSoloTieneLaPlataforma()
+    {
+        $permitidas = array_keys(array_filter(self::matriz(), fn ($roles) => in_array(self::SUPER_ADMIN, $roles, true)));
+        sort($permitidas);
+
+        $this->assertSame(['dashboard', 'plataforma_inicio'], $permitidas);
+    }
+
+    /** Contrapeso: cada rol conserva lo que usa a diario. */
     public function testCadaRolConservaSusAccionesHabituales()
     {
         $this->assertTrue($this->permite('admin_usuarios', self::ADMIN));
         $this->assertTrue($this->permite('get_auditoria_ajax', self::ADMIN));
+        $this->assertTrue($this->permite('registrar_cita_ajax', self::ADMIN));
 
         $this->assertTrue($this->permite('vet_agenda', self::VETERINARIO));
         $this->assertTrue($this->permite('registrar_consulta_ajax', self::VETERINARIO));
-        $this->assertTrue($this->permite('listar_historial_ajax', self::VETERINARIO));
-
-        $this->assertTrue($this->permite('reception_agenda', self::RECEPCIONISTA));
-        $this->assertTrue($this->permite('registrar_cita_ajax', self::RECEPCIONISTA));
-        $this->assertTrue($this->permite('guardar_mascota_ajax', self::RECEPCIONISTA));
+        $this->assertTrue($this->permite('guardar_mascota_ajax', self::VETERINARIO));
 
         $this->assertTrue($this->permite('portal_propietario', self::PROPIETARIO));
         $this->assertTrue($this->permite('portal_agendar_cita_ajax', self::PROPIETARIO));
     }
 
-    /** HU-42 — El panel "Mi perfil" es del personal; el propietario usa el suyo en el portal. */
+    /** HU-T.5: "Mi perfil" es del personal; el propietario usa el suyo en el portal. */
     public function testElPanelMiPerfilEsDelPersonal()
     {
-        foreach ([self::ADMIN, self::VETERINARIO, self::RECEPCIONISTA] as $rol) {
-            $this->assertTrue($this->permite('mi_perfil', $rol), "mi_perfil deberia permitir al rol $rol");
-        }
+        $this->assertTrue($this->permite('mi_perfil', self::ADMIN));
+        $this->assertTrue($this->permite('mi_perfil', self::VETERINARIO));
         $this->assertFalse($this->permite('mi_perfil', self::PROPIETARIO));
     }
 
-    /**
-     * Endpoints que el portal comparte con el personal (catalogos y agenda).
-     * Cerrarlos por rol romperia el agendamiento del propietario en produccion.
-     */
-    public function testLosEndpointsCompartidosSiguenAbiertosATodoRolConSesion()
+    /** Endpoints que el portal comparte con el personal (catalogos, agenda, avisos). */
+    public function testLosEndpointsCompartidosSiguenAbiertosAlPersonalYAlPortal()
     {
         foreach ([
             'listar_especies_ajax', 'listar_razas_ajax', 'listar_colores_ajax',
             'get_horas_disponibles_ajax', 'get_sugerencias_horario_ajax',
-            'cancelar_cita_ajax', 'enviar_email_ajax', 'get_notificaciones_ajax',
-            'cambiar_password_ajax', 'dashboard', 'logout',
+            'cancelar_cita_ajax', 'enviar_email_ajax', 'get_notificaciones_ajax', 'dashboard',
         ] as $accion) {
-            foreach ([self::ADMIN, self::VETERINARIO, self::RECEPCIONISTA, self::PROPIETARIO] as $rol) {
+            foreach ([self::ADMIN, self::VETERINARIO, self::PROPIETARIO] as $rol) {
                 $this->assertTrue($this->permite($accion, $rol), "$accion deberia permitir al rol $rol");
             }
         }
     }
 
+    /** HU-T.17: elegir el contexto, salir y cambiar la contrasena solo exigen identidad. */
+    public function testLasAccionesSinContextoSonLasMinimas()
+    {
+        $sinContexto = self::lista('accionesSinContexto');
+        sort($sinContexto);
+
+        $this->assertSame(['cambiar_contexto', 'cambiar_password', 'cambiar_password_ajax', 'logout', 'seleccionar_contexto'], $sinContexto);
+    }
+
     /** El login y el registro no pueden quedar detras del control de rol. */
     public function testElFlujoPublicoNoQuedaRestringido()
     {
-        $publicas = self::publicas();
+        $publicas = self::lista('publicActions');
 
         foreach (['login', 'register', 'process_register', 'google_login_ajax', 'check_document_ajax', 'solicitar_reset_password_ajax'] as $accion) {
             $this->assertContains($accion, $publicas, "$accion deberia seguir siendo publica");
         }
     }
 
-    /**
-     * Sesiones abiertas antes de este despliegue pueden no tener el id de rol
-     * guardado; el respaldo por nombre evita expulsarlas a todas.
-     */
-    public function testElRolSeResuelvePorNombreCuandoFaltaElId()
-    {
-        $metodo = new ReflectionMethod('Security', 'rolActual');
-        $metodo->setAccessible(true);
-
-        $_SESSION = ['usuario_rol' => 'veterinario'];
-        $this->assertSame(self::VETERINARIO, $metodo->invoke(null));
-
-        $_SESSION = ['usuario_id_rol' => 3, 'usuario_rol' => 'veterinario'];
-        $this->assertSame(self::RECEPCIONISTA, $metodo->invoke(null), 'El id debe ganarle al nombre');
-
-        $_SESSION = [];
-        $this->assertNull($metodo->invoke(null), 'Sin sesion no hay rol');
-
-        $_SESSION = ['usuario_rol' => 'inventado'];
-        $this->assertNull($metodo->invoke(null), 'Un rol desconocido no se resuelve');
-    }
-
-    /**
-     * HU-54 — Restablecer la contrasena de un usuario es exclusivo del
-     * administrador ("Solo el administrador puede hacerlo").
-     */
-    public function testSoloElAdministradorRestableceContrasenasAjenas()
-    {
-        $this->assertTrue($this->permite('resetear_password_usuario_ajax', self::ADMIN));
-
-        foreach ([self::VETERINARIO, self::RECEPCIONISTA, self::PROPIETARIO] as $rol) {
-            $this->assertFalse(
-                $this->permite('resetear_password_usuario_ajax', $rol),
-                "El rol $rol no debe poder restablecer contrasenas ajenas"
-            );
-        }
-    }
-
-    /**
-     * T-15 — La matriz se aplica denegando por defecto. Antes una accion sin
-     * entrada se dejaba pasar, asi que agregar una ruta al enrutador y olvidar
-     * registrarla aqui la dejaba abierta a cualquier sesion, en silencio.
-     *
-     * Se comprueba sobre el codigo fuente porque validateRole() termina en
-     * exit() y no se puede ejercitar dentro del runner.
-     */
-    public function testUnaAccionSinEntradaEnLaMatrizSeDeniega()
-    {
-        $fuente = file_get_contents(__DIR__ . '/../../helpers/Security.php');
-
-        $this->assertStringNotContainsString(
-            'if ($permitidos === null) return;',
-            $fuente,
-            'La matriz no debe dejar pasar una accion sin entrada (fail-open)'
-        );
-
-        $this->assertMatchesRegularExpression(
-            '/if \(\$permitidos === null\) \{.*?denegar\(/s',
-            $fuente,
-            'Una accion sin entrada en la matriz debe terminar en denegar()'
-        );
-    }
-
-    /**
-     * T-05 — Con una contrasena temporal pendiente solo se puede cambiarla o
-     * salir; ninguna accion de negocio queda disponible.
-     */
+    /** T-05: con una contrasena temporal pendiente solo se puede cambiarla o salir. */
     public function testConPasswordTemporalSoloSePuedeCambiarlaOSalir()
     {
-        $prop = new ReflectionProperty('Security', 'accionesConPasswordTemporal');
-        $prop->setAccessible(true);
-        $permitidas = $prop->getValue();
-
+        $permitidas = self::lista('accionesConPasswordTemporal');
         sort($permitidas);
-        $this->assertSame(
-            ['cambiar_password', 'cambiar_password_ajax', 'logout'],
-            $permitidas
-        );
+
+        $this->assertSame(['cambiar_password', 'cambiar_password_ajax', 'logout'], $permitidas);
     }
 }

@@ -4,7 +4,7 @@ if(session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 // Si ya hay una sesión activa, lo mandamos al dashboard
-if(isset($_SESSION['usuario_doc'])) {
+if(isset($_SESSION['id_usuario'])) {
     header("Location: index.php?action=dashboard");
     exit();
 }
@@ -89,9 +89,9 @@ if (file_exists($envFile)) {
                                 <?php require_once __DIR__ . '/../../helpers/Csrf.php'; Csrf::field('login'); ?>
                                 
                                 <div class="input-group">
-                                    <label for="documento">Documento de Identidad</label>
+                                    <label for="identificador">Documento o correo</label>
                                     <div class="input-wrapper">
-                                        <input type="text" id="documento" name="documento" placeholder="Ingrese su número de documento" required autocomplete="username" pattern="[0-9]+" maxlength="15">
+                                        <input type="text" id="identificador" name="identificador" placeholder="Tu número de documento o tu correo" required autocomplete="username" maxlength="255">
                                     </div>
                                 </div>
                                 <div class="input-group">

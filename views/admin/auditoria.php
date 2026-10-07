@@ -1,6 +1,8 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+/**
+ * HU-T.8 — Auditoría de la clínica activa. AuditoriaController entrega $logs,
+ * $total, $page, $acciones, $tablas y $stats_hoy, ya filtrados por clínica.
+ */
 $accionColors = [
     'LOGIN' => '#10B981', 'LOGIN_FAIL' => '#EF4444', 'LOGOUT' => '#64748B',
     'INSERT' => '#0C66E4', 'UPDATE' => '#F59E0B', 'DELETE' => '#EF4444',
@@ -13,9 +15,8 @@ $accionIcons = [
     'VIEW' => 'fa-eye', 'OTHER' => 'fa-cog'
 ];
 
-// Obtener estadísticas de hoy para los KPIs de seguridad
-$stats_hoy = $auditoria->getStats(1);
-if (!is_array($stats_hoy)) {
+// Estadísticas de hoy para los KPIs de seguridad
+if (!isset($stats_hoy) || !is_array($stats_hoy)) {
     $stats_hoy = [];
 }
 $alertas_criticas = ($stats_hoy['DELETE'] ?? 0) + ($stats_hoy['LOGIN_FAIL'] ?? 0);
@@ -85,8 +86,8 @@ if (!isset($logs) || !is_array($logs)) $logs = [];
             <input type="hidden" name="action" value="admin_auditoria">
             
             <div style="display: flex; flex-direction: column; gap: 0.3rem;">
-                <label style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Documento Usuario</label>
-                <input type="text" name="usuario_doc" value="<?=htmlspecialchars($_GET['usuario_doc']??'')?>" placeholder="Buscar..." style="padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;">
+                <label style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Persona</label>
+                <input type="text" name="usuario" value="<?=htmlspecialchars($_GET['usuario']??'')?>" placeholder="Nombre, documento o correo" style="padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;">
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 0.3rem;">
@@ -152,7 +153,7 @@ if (!isset($logs) || !is_array($logs)) $logs = [];
                                     <?= date('d/m/Y H:i', strtotime($log['fecha_hora'])) ?>
                                 </td>
                                 <td style="padding: 1rem; font-size: 0.85rem; font-weight: 600; color: #1e293b;">
-                                    <?= htmlspecialchars($log['usuario_doc'] ?? 'Sistema') ?>
+                                    <?= htmlspecialchars($log['usuario_nombre'] ?? 'Sistema') ?>
                                 </td>
                                 <td style="padding: 1rem;">
                                     <span style="font-size: 0.75rem; font-weight: 800; color: <?= $color ?>; background: <?= $color ?>15; padding: 0.3rem 0.6rem; border-radius: 20px; display: inline-flex; align-items: center; gap: 0.3rem;">
@@ -183,7 +184,7 @@ if (!isset($logs) || !is_array($logs)) $logs = [];
     <?php if($totalPages > 1): ?>
         <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:2rem;">
             <?php for($i=1; $i<=$totalPages; $i++): ?>
-                <a href="index.php?action=admin_auditoria&page=<?=$i?>&usuario_doc=<?=urlencode($_GET['usuario_doc']??'')?>&accion=<?=urlencode($_GET['accion']??'')?>&tabla=<?=urlencode($_GET['tabla']??'')?>&fecha_desde=<?=urlencode($_GET['fecha_desde']??'')?>&fecha_hasta=<?=urlencode($_GET['fecha_hasta']??'')?>"
+                <a href="index.php?action=admin_auditoria&page=<?=$i?>&usuario=<?=urlencode($_GET['usuario']??'')?>&accion=<?=urlencode($_GET['accion']??'')?>&tabla=<?=urlencode($_GET['tabla']??'')?>&fecha_desde=<?=urlencode($_GET['fecha_desde']??'')?>&fecha_hasta=<?=urlencode($_GET['fecha_hasta']??'')?>"
                    style="padding: 0.5rem 0.85rem; border-radius: 8px; font-size: 0.9rem; font-weight: 700; text-decoration: none; transition: all 0.2s;
                           <?= $page==$i ? 'background:#0C66E4; color:white; box-shadow: 0 4px 10px rgba(12, 102, 228, 0.3);' : 'background:white; color:#64748b; border: 1px solid #cbd5e1;' ?>">
                     <?=$i?>

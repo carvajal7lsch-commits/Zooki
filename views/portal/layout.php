@@ -28,6 +28,7 @@ $iniciales = $iniciales ?: 'U';
     <link rel="icon" type="image/png" href="img/icon_blue.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/contexto.css?v=1">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <?php foreach (['base', 'navegacion', 'inicio', 'servicios', 'agenda', 'mascota', 'cuenta', 'ventanas', 'calendario', 'formularios'] as $modulo): ?>
@@ -63,6 +64,7 @@ $iniciales = $iniciales ?: 'U';
         <div class="portal-rail__usuario">
             <span class="portal-rail__avatar" aria-hidden="true"><?= htmlspecialchars($iniciales) ?></span>
             <span class="portal-rail__nombre"><?= htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Propietario') ?></span>
+            <?php include __DIR__ . "/../partials/contexto_actual.php"; ?>
             <a href="index.php?action=logout" class="portal-rail__salir" title="Cerrar sesión" aria-label="Cerrar sesión">
                 <i class="ri-logout-box-r-line" aria-hidden="true"></i>
             </a>

@@ -263,19 +263,9 @@
                         text: 'Tu contraseña ha sido actualizada exitosamente.',
                         confirmButtonColor: '#0052FF'
                     }).then(() => {
-                        // Redirigir según el rol del usuario
-                        const rol = <?php echo $_SESSION['usuario_id_rol'] ?? 0; ?>;
-                        if (rol == 4) {
-                            window.location.href = 'index.php?action=portal_propietario';
-                        } else if (rol == 1) {
-                            window.location.href = 'index.php?action=admin_panel';
-                        } else if (rol == 2) {
-                            window.location.href = 'index.php?action=vet_area';
-                        } else if (rol == 3) {
-                            window.location.href = 'index.php?action=reception_dashboard';
-                        } else {
-                            window.location.href = 'index.php?action=dashboard';
-                        }
+                        // HU-T.17: el inicio lo decide el contexto activo (o el
+                        // selector si todavía no hay uno), no un rol fijo.
+                        window.location.href = 'index.php?action=dashboard';
                     });
                 } else {
                     Swal.fire({

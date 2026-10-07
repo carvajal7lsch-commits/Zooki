@@ -33,11 +33,14 @@ ini_set('log_errors', 1);
 // Este es el Front Controller, el único archivo al que el usuario accede directamente.
 $action = isset($_GET["action"]) ? $_GET["action"] : "landing";
 
-// Middleware de seguridad global: CSRF + Rate Limiting + Session AJAX
+// Seguridad en un solo lugar (HU-T.10, HU-T.15): sesión, contexto activo,
+// rol, clínica y CSRF. Las rutas no repiten comprobaciones de rol.
 require_once "../helpers/Security.php";
 Security::check($action);
 
-// Enrutador básico
+// Enrutador básico. Un controlador que encuentra un recurso de otra clínica
+// lanza AccesoDenegado (Security::denegarRecursoAjeno) y aquí se responde 403.
+try {
 switch ($action) {
     case "landing":
         require_once "../controllers/LandingController.php";
@@ -136,10 +139,6 @@ switch ($action) {
         break;
 
     case "cambiar_password":
-        if (!isset($_SESSION["usuario_doc"])) {
-            header("Location: index.php?action=login");
-            exit();
-        }
         require_once "../views/auth/cambiar_password.php";
         break;
 
@@ -150,10 +149,6 @@ switch ($action) {
         break;
 
     case "admin_configuracion":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
         $content_view = "../views/admin/horarios.php";
         require_once "../views/admin/layout.php";
         break;
@@ -164,85 +159,73 @@ switch ($action) {
         $controller->logout();
         break;
 
+    // HU-T.17: elegir o cambiar el contexto activo sin cerrar sesión.
+    case "seleccionar_contexto":
+        require_once "../controllers/ContextoController.php";
+        (new ContextoController())->mostrar();
+        break;
+
+    case "cambiar_contexto":
+        require_once "../controllers/ContextoController.php";
+        (new ContextoController())->cambiar();
+        break;
+
+    // Página mínima de la plataforma; el panel del super-administrador es de la etapa E.
+    case "plataforma_inicio":
+        require_once "../views/plataforma/inicio.php";
+        break;
+
     // ═══════════════════════════════════════════════════════════════
     // RUTAS ADMIN (id_rol = 1) - Panel de Pacientes
     // ═══════════════════════════════════════════════════════════════
     case "admin_panel":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
         require_once "../controllers/PanelController.php";
         $panel = (new PanelController())->datosAdministrador();
         require_once "../views/admin/layout.php";
         break;
 
     case "admin_usuarios":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
+        require_once "../controllers/UsuarioController.php";
+        $controller = new UsuarioController();
+        $personal = $controller->listar();
+        $propietarios = $controller->listarPropietarios();
         $content_view = "../views/admin/usuarios.php";
         require_once "../views/admin/layout.php";
         break;
 
     case "admin_citas":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
         $content_view = "../views/admin/citas.php";
         require_once "../views/admin/layout.php";
         break;
 
     case "admin_auditoria":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        require_once "../controllers/DashboardController.php";
-        $controller = new DashboardController();
-        $controller->listarAuditoria();
+        require_once "../controllers/AuditoriaController.php";
+        (new AuditoriaController())->listar();
         break;
 
     case "get_auditoria_ajax":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 1) {
-            echo json_encode(["success" => false, "message" => "No autorizado"]);
-            exit();
-        }
-        require_once "../controllers/DashboardController.php";
-        $controller = new DashboardController();
-        $controller->getAuditoriaAjax();
+        require_once "../controllers/AuditoriaController.php";
+        (new AuditoriaController())->listarAjax();
         break;
 
     // ═══════════════════════════════════════════════════════════════
     // RUTAS VETERINARIO (id_rol = 2) - Área Clínica
     // ═══════════════════════════════════════════════════════════════
     case "vet_area":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 2) {
-            header("Location: index.php?action=login");
-            exit();
-        }
+        // PanelController pasa a id_usuario e id_clinica en C7; hasta
+        // entonces recibe el id_usuario del contexto activo.
         require_once "../controllers/PanelController.php";
-        $panel = (new PanelController())->datosVeterinario($_SESSION["usuario_doc"]);
+        $panel = (new PanelController())->datosVeterinario((string) Contexto::idUsuario());
         require_once "../views/vet/layout.php";
         break;
 
     case "vet_atencion":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 2) {
-            header("Location: index.php?action=login");
-            exit();
-        }
         require_once "../controllers/CitaController.php";
         $controller = new CitaController();
         $controller->atencion();
         break;
 
     case "vet_consultas":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 2) {
-            header("Location: index.php?action=login");
-            exit();
-        }
         require_once "../controllers/ConsultaController.php";
         $controller = new ConsultaController();
         $consultas = $controller->listar();
@@ -251,10 +234,6 @@ switch ($action) {
         break;
 
     case "vet_pacientes":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 2) {
-            header("Location: index.php?action=login");
-            exit();
-        }
         require_once "../controllers/MascotaController.php";
         $controller = new MascotaController();
         $mascotas = $controller->listar();
@@ -263,82 +242,16 @@ switch ($action) {
         break;
 
     case "vet_agenda":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 2) {
-            header("Location: index.php?action=login");
-            exit();
-        }
         $content_view = "../views/vet/calendario.php";
         require_once "../views/vet/layout.php";
         break;
 
     // ═══════════════════════════════════════════════════════════════
-    // RUTAS RECEPCIONISTA (id_rol = 3) - Dashboard de Recepción
-    // ═══════════════════════════════════════════════════════════════
-    case "reception_dashboard":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 3) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        require_once "../views/reception/layout.php";
-        break;
-
-    case "reception_agenda":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 3) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        $content_view = "../views/reception/agenda.php";
-        require_once "../views/reception/layout.php";
-        break;
-
-    case "reception_nueva_cita":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 3) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        $content_view = "../views/reception/calendario.php";
-        require_once "../views/reception/layout.php";
-        break;
-
-    case "reception_pacientes":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 3) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        require_once "../controllers/MascotaController.php";
-        $controller = new MascotaController();
-        $mascotas = $controller->listar();
-        $content_view = "../views/reception/pacientes.php";
-        require_once "../views/reception/layout.php";
-        break;
-
-    case "reception_nuevo_paciente":
-        if (!isset($_SESSION["usuario_doc"]) || $_SESSION["usuario_id_rol"] != 3) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        // Redirigir al listado de pacientes
-        header("Location: index.php?action=reception_pacientes");
-        exit();
-
-    // ═══════════════════════════════════════════════════════════════
-    // RUTAS LEGACY (Mantener compatibilidad con rutas antiguas)
+    // INICIO: cada contexto aterriza en su panel (RE-T.1.4)
     // ═══════════════════════════════════════════════════════════════
     case "dashboard":
-        // Redirigir al dashboard correspondiente según rol
-        if (!isset($_SESSION["usuario_doc"])) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        if ($_SESSION["usuario_id_rol"] == 1) {
-            header("Location: index.php?action=admin_panel");
-        } elseif ($_SESSION["usuario_id_rol"] == 2) {
-            header("Location: index.php?action=vet_area");
-        } elseif ($_SESSION["usuario_id_rol"] == 3) {
-            header("Location: index.php?action=reception_dashboard");
-        } elseif ($_SESSION["usuario_id_rol"] == 4) {
-            header("Location: index.php?action=portal_propietario");
-        }
+        // Security ya exigió un contexto activo para llegar aquí.
+        header("Location: index.php?action=" . Contexto::destino(Contexto::actual()));
         exit();
 
     case "portal_propietario":
@@ -404,20 +317,9 @@ switch ($action) {
         break;
 
     case "nueva_mascota":
-        if (!isset($_SESSION["usuario_doc"])) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        // Redirigir según rol
-        if ($_SESSION["usuario_id_rol"] == 2) {
-            header("Location: index.php?action=vet_pacientes");
-        } elseif ($_SESSION["usuario_id_rol"] == 1) {
-            header("Location: index.php?action=admin_usuarios");
-        } elseif ($_SESSION["usuario_id_rol"] == 3) {
-            header("Location: index.php?action=reception_pacientes");
-        } else {
-            header("Location: index.php?action=dashboard");
-        }
+        // Redirigir según el rol del contexto activo
+        $destino = Contexto::rolActivo() === Roles::VETERINARIO ? "vet_pacientes" : "admin_usuarios";
+        header("Location: index.php?action=" . $destino);
         exit();
 
     case "actualizar_mascota":
@@ -427,24 +329,11 @@ switch ($action) {
         break;
 
     case "nuevo_propietario":
-        if (!isset($_SESSION["usuario_doc"])) {
-            header("Location: index.php?action=login");
-            exit();
-        }
-        if ($_SESSION["usuario_id_rol"] == 2) {
-            header("Location: index.php?action=vet_area");
-            exit();
-        }
-        // Redirigir según rol
-        if ($_SESSION["usuario_id_rol"] == 1) {
-            header("Location: index.php?action=admin_usuarios");
-        } elseif ($_SESSION["usuario_id_rol"] == 3) {
-            header("Location: index.php?action=reception_pacientes");
-        } else {
-            $content_view = "../views/admin/propietario_registro.php";
-            require_once "../views/dashboard/index.php";
-        }
-        break;
+        // Redirigir según el rol del contexto activo. La rama que cargaba
+        // vistas inexistentes (propietario_registro, dashboard/index) se retiró.
+        $destino = Contexto::rolActivo() === Roles::ADMIN ? "admin_usuarios" : "vet_area";
+        header("Location: index.php?action=" . $destino);
+        exit();
 
     case "guardar_propietario_ajax":
         require_once "../controllers/PropietarioController.php";
@@ -523,16 +412,6 @@ switch ($action) {
         break;
     // RUTAS SPRINT 2: CONSULTAS MÉDICAS
     case "registrar_consulta_ajax":
-        if (
-            !isset($_SESSION["usuario_doc"]) ||
-            $_SESSION["usuario_id_rol"] != 2
-        ) {
-            echo json_encode([
-                "success" => false,
-                "message" => "No autorizado",
-            ]);
-            exit();
-        }
         require_once "../controllers/ConsultaController.php";
         $controller = new ConsultaController();
         $controller->registrarAjax();
@@ -545,16 +424,6 @@ switch ($action) {
 
     // RUTAS SPRINT 3: VACUNACIÓN Y CALENDARIO
     case "registrar_vacuna_ajax":
-        if (
-            !isset($_SESSION["usuario_doc"]) ||
-            $_SESSION["usuario_id_rol"] != 2
-        ) {
-            echo json_encode([
-                "success" => false,
-                "message" => "No autorizado",
-            ]);
-            exit();
-        }
         require_once "../controllers/VacunaController.php";
         $controller = new VacunaController();
         $controller->registrarAjax();
@@ -565,16 +434,6 @@ switch ($action) {
         $controller->getVacunasPorEspecieAjax();
         break;
     case "registrar_nueva_vacuna_ajax":
-        if (
-            !isset($_SESSION["usuario_doc"]) ||
-            $_SESSION["usuario_id_rol"] != 2
-        ) {
-            echo json_encode([
-                "success" => false,
-                "message" => "No autorizado",
-            ]);
-            exit();
-        }
         require_once "../controllers/VacunaController.php";
         $controller = new VacunaController();
         $controller->registrarNuevaVacunaAjax();
@@ -586,16 +445,6 @@ switch ($action) {
         break;
 
     case "registrar_nuevo_laboratorio_ajax":
-        if (
-            !isset($_SESSION["usuario_doc"]) ||
-            $_SESSION["usuario_id_rol"] != 2
-        ) {
-            echo json_encode([
-                "success" => false,
-                "message" => "No autorizado",
-            ]);
-            exit();
-        }
         require_once "../controllers/VacunaController.php";
         $controller = new VacunaController();
         $controller->registrarNuevoLaboratorioAjax();
@@ -603,16 +452,6 @@ switch ($action) {
 
     // RUTAS DESPARASITACIÓN
     case "registrar_desparasitacion_ajax":
-        if (
-            !isset($_SESSION["usuario_doc"]) ||
-            $_SESSION["usuario_id_rol"] != 2
-        ) {
-            echo json_encode([
-                "success" => false,
-                "message" => "No autorizado",
-            ]);
-            exit();
-        }
         require_once "../controllers/DesparasitacionController.php";
         $controller = new DesparasitacionController();
         $controller->registrarAjax();
@@ -623,16 +462,6 @@ switch ($action) {
         $controller->getProductosAjax();
         break;
     case "registrar_nuevo_producto_desparasitacion_ajax":
-        if (
-            !isset($_SESSION["usuario_doc"]) ||
-            $_SESSION["usuario_id_rol"] != 2
-        ) {
-            echo json_encode([
-                "success" => false,
-                "message" => "No autorizado",
-            ]);
-            exit();
-        }
         require_once "../controllers/DesparasitacionController.php";
         $controller = new DesparasitacionController();
         $controller->registrarNuevoProductoAjax();
@@ -718,73 +547,27 @@ switch ($action) {
         break;
 
     // RUTAS SPRINT 5: GESTIÓN DE USUARIOS (ADMIN)
+    // HU-T.7: el controlador captura sus propios errores y responde un mensaje
+    // genérico (T-04); aquí no se atrapa nada para no tragarse un 403.
     case "registrar_usuario_ajax":
-        try {
-            if (
-                !isset($_SESSION["usuario_doc"]) ||
-                $_SESSION["usuario_id_rol"] != 1
-            ) {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "No autorizado",
-                ]);
-                exit();
-            }
-            require_once "../controllers/UsuarioController.php";
-            $controller = new UsuarioController();
-            $controller->registrarAjax();
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
-        }
+        require_once "../controllers/UsuarioController.php";
+        $controller = new UsuarioController();
+        $controller->registrarAjax();
         break;
 
     case "actualizar_usuario_ajax":
-        try {
-            if (
-                !isset($_SESSION["usuario_doc"]) ||
-                $_SESSION["usuario_id_rol"] != 1
-            ) {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "No autorizado",
-                ]);
-                exit();
-            }
-            require_once "../controllers/UsuarioController.php";
-            $controller = new UsuarioController();
-            $controller->actualizarAjax();
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
-        }
+        require_once "../controllers/UsuarioController.php";
+        $controller = new UsuarioController();
+        $controller->actualizarAjax();
         break;
 
     case "get_usuario_ajax":
-        if (
-            !isset($_SESSION["usuario_doc"]) ||
-            $_SESSION["usuario_id_rol"] != 1
-        ) {
-            echo json_encode([
-                "success" => false,
-                "message" => "No autorizado",
-            ]);
-            exit();
-        }
         require_once "../controllers/UsuarioController.php";
         $controller = new UsuarioController();
         $controller->getUsuarioAjax();
         break;
 
     case "cambiar_estado_usuario_ajax":
-        if (
-            !isset($_SESSION["usuario_doc"]) ||
-            $_SESSION["usuario_id_rol"] != 1
-        ) {
-            echo json_encode([
-                "success" => false,
-                "message" => "No autorizado",
-            ]);
-            exit();
-        }
         require_once "../controllers/UsuarioController.php";
         $controller = new UsuarioController();
         $controller->cambiarEstadoAjax();
@@ -825,40 +608,24 @@ switch ($action) {
         break;
 
     case "get_role_stats_ajax":
-        if (!isset($_SESSION["usuario_doc"])) {
-            echo json_encode(["success" => false]);
-            exit();
-        }
         require_once "../controllers/DashboardController.php";
         $controller = new DashboardController();
         $controller->getStatsAjax();
         break;
 
     case "get_charts_data_ajax":
-        if (!isset($_SESSION["usuario_doc"])) {
-            echo json_encode(["success" => false]);
-            exit();
-        }
         require_once "../controllers/DashboardController.php";
         $controller = new DashboardController();
         $controller->getChartsDataAjax();
         break;
 
     case "get_pendientes_ajax":
-        if (!isset($_SESSION["usuario_doc"])) {
-            echo json_encode(["success" => false]);
-            exit();
-        }
         require_once "../controllers/DashboardController.php";
         $controller = new DashboardController();
         $controller->getPendientesAjax();
         break;
 
     case "get_timeline_ajax":
-        if (!isset($_SESSION["usuario_doc"])) {
-            echo json_encode(["success" => false]);
-            exit();
-        }
         require_once "../controllers/DashboardController.php";
         $controller = new DashboardController();
         $controller->getCitasHoyTimelineAjax();
@@ -910,5 +677,8 @@ switch ($action) {
     default:
         require_once "../views/auth/login.php";
         break;
+}
+} catch (AccesoDenegado $e) {
+    Security::responder($e, $action);
 }
 ?>

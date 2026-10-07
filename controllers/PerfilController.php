@@ -2,18 +2,17 @@
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../models/Auditoria.php';
+require_once __DIR__ . '/../helpers/Contexto.php';
+require_once __DIR__ . '/../helpers/Roles.php';
 
 /**
- * HU-42 — Ver y actualizar mi perfil y datos de contacto.
+ * HU-T.5 — Ver y actualizar mi perfil y datos de contacto.
  *
- * Responsabilidad unica: la cuenta del usuario que esta en sesion. No gestiona
- * usuarios ajenos; eso es de UsuarioController, que exige rol administrador.
- * Aqui el sujeto siempre sale de $_SESSION y nunca del POST, asi que no hay
- * forma de apuntar a la cuenta de otra persona (RN-G02).
- *
- * Sirve a los cuatro roles: hasta ahora solo el propietario podia editar sus
- * datos de contacto, desde su portal, y administrador, veterinario y
- * recepcionista no tenian ninguna vista de perfil.
+ * Responsabilidad unica: la cuenta de la persona que esta en sesion. No
+ * gestiona cuentas ajenas; eso es de UsuarioController, que exige rol
+ * administrador. Aqui el sujeto siempre es el id_usuario de la sesion y nunca
+ * sale del POST, asi que no hay forma de apuntar a la cuenta de otra persona
+ * (RN-G02).
  */
 class PerfilController
 {
@@ -34,11 +33,11 @@ class PerfilController
     }
 
     /**
-     * HU-42: miembro desde, acceso anterior, intentos fallidos de los últimos
+     * HU-T.5: miembro desde, acceso anterior, intentos fallidos de los últimos
      * 30 días y actividad reciente, todo en hora de la clínica. Si la
      * auditoría falla, el perfil se muestra igual, sin esa sección.
      */
-    private function resumenDeCuenta(string $documento): array
+    private function resumenDeCuenta(int $idUsuario): array
     {
         require_once __DIR__ . '/../helpers/ActividadCuenta.php';
         $ahora = new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
@@ -49,13 +48,13 @@ class PerfilController
                 (string) $this->db->query("SELECT TIMEDIFF(NOW(), UTC_TIMESTAMP())")->fetchColumn()
             );
 
-            $registro = $this->usuario->getFechaRegistro($documento);
+            $registro = $this->usuario->getFechaRegistro($idUsuario);
             if ($registro) {
                 $resumen['miembro_desde'] = ActividadCuenta::mesYAnio(ActividadCuenta::aHoraClinica($registro, $desfase));
             }
 
             $accesos = 0;
-            foreach ($this->auditoria->actividadDeCuenta($documento, 8) as $fila) {
+            foreach ($this->auditoria->actividadDeCuenta($idUsuario, 8) as $fila) {
                 $fecha = ActividadCuenta::aHoraClinica($fila['fecha_hora'], $desfase);
                 $item = ActividadCuenta::describir($fila) + [
                     'momento' => ActividadCuenta::momento($fecha, $ahora),
@@ -69,7 +68,7 @@ class PerfilController
             }
 
             $desdeBd = $ahora->modify('-30 days')->setTimezone(new DateTimeZone($desfase))->format('Y-m-d H:i:s');
-            $resumen['fallidos_30'] = $this->auditoria->contarAccesosFallidos($documento, $desdeBd);
+            $resumen['fallidos_30'] = $this->auditoria->contarAccesosFallidos($idUsuario, $desdeBd);
             $resumen['disponible'] = true;
         } catch (Throwable $e) {
             error_log('Perfil: no se pudo leer la actividad de la cuenta: ' . $e->getMessage());
@@ -78,21 +77,13 @@ class PerfilController
         return $resumen;
     }
 
-    /** Documento del usuario en sesion, o null si no hay sesion. */
-    private function documentoEnSesion(): ?string
-    {
-        $doc = $_SESSION['usuario_doc'] ?? '';
-
-        return $doc !== '' ? (string) $doc : null;
-    }
-
     /**
      * Actualiza los datos de contacto propios: correo y telefono.
      *
-     * El documento, el nombre y el rol no se tocan aqui a proposito. El rol lo
-     * asigna el administrador (RN-701) y dejarlo editable seria justo la
-     * escalada de privilegios que corrigio HU-33; el documento identifica al
-     * usuario en toda la base y el nombre es un dato de la clinica.
+     * El documento y el nombre no se tocan aqui a proposito: los corrige el
+     * administrador de la clinica, y la correccion por el propio titular con
+     * verificacion llega con RE-T.5.7 y RE-T.5.8. El rol tampoco: es del
+     * contexto, no de la persona.
      */
     public function actualizarAjax(): void
     {
@@ -103,8 +94,8 @@ class PerfilController
             return;
         }
 
-        $documento = $this->documentoEnSesion();
-        if ($documento === null) {
+        $idUsuario = Contexto::idUsuario();
+        if ($idUsuario === null) {
             http_response_code(401);
             echo json_encode(['success' => false, 'message' => 'Sesion expirada.']);
             return;
@@ -127,40 +118,29 @@ class PerfilController
                 return;
             }
 
-            // RN-G06: el correo es unico en el sistema.
-            if ($this->usuario->getUserByEmailExcluding($email, $documento)) {
+            // RN-G06: el correo es unico en la plataforma (RE-T.5.3).
+            if ($this->usuario->existeEmail($email, $idUsuario)) {
                 echo json_encode(['success' => false, 'message' => 'Ese correo ya esta registrado por otro usuario.']);
                 return;
             }
 
-            $anterior = $this->usuario->getById($documento);
+            $anterior = $this->usuario->buscarPorId($idUsuario);
             if (!$anterior) {
                 echo json_encode(['success' => false, 'message' => 'No se encontro tu perfil.']);
                 return;
             }
 
-            $actualizado = $this->usuario->update([
-                'documento'       => $documento,
-                'original_doc'    => $documento,
-                'tipo_documento'  => $anterior['tipo_documento'],
-                'nombre_completo' => $anterior['nombre_completo'],
-                'telefono'        => $telefono,
-                'email'           => $email,
-                'id_rol'          => $anterior['id_rol'],
-                'estado'          => $anterior['estado'],
-            ]);
-
-            if (!$actualizado) {
+            if (!$this->usuario->actualizarContacto($idUsuario, $email, $telefono)) {
                 echo json_encode(['success' => false, 'message' => 'No se pudieron guardar los cambios.']);
                 return;
             }
 
             // RN-G05: toda edicion queda registrada con datos previos y nuevos.
             $this->auditoria->log(
-                $documento,
+                $idUsuario,
                 'UPDATE',
                 'usuarios',
-                $documento,
+                $idUsuario,
                 ['email' => $anterior['email'], 'telefono' => $anterior['telefono']],
                 ['email' => $email, 'telefono' => $telefono],
                 'Datos de contacto actualizados por el propio usuario'
@@ -174,28 +154,27 @@ class PerfilController
     }
 
     /**
-     * Panel "Mi perfil" del personal (HU-42 y HU-39): datos de la cuenta,
+     * Panel "Mi perfil" del personal (HU-T.5 y HU-T.2): datos de la cuenta,
      * contacto editable y cambio de contraseña. Se pinta dentro del layout del
-     * rol; el propietario tiene su propio perfil en el portal.
+     * rol del contexto activo; el propietario tiene su perfil en el portal.
      */
     public function mostrar(): void
     {
-        $layouts = [1 => 'admin', 2 => 'vet', 3 => 'reception'];
-        $roles   = [1 => 'Administrador', 2 => 'Veterinario', 3 => 'Recepcionista'];
-        $idRol   = (int) ($_SESSION['usuario_id_rol'] ?? 0);
-        $documento = $this->documentoEnSesion();
+        $layouts = [Roles::ADMIN => 'admin', Roles::VETERINARIO => 'vet'];
+        $idRol = (int) Contexto::rolActivo();
+        $idUsuario = Contexto::idUsuario();
 
-        $perfil = ($documento !== null && isset($layouts[$idRol])) ? $this->usuario->getById($documento) : null;
+        $perfil = ($idUsuario !== null && isset($layouts[$idRol])) ? $this->usuario->buscarPorId($idUsuario) : null;
         if (!$perfil) {
             header('Location: index.php?action=dashboard');
             exit;
         }
 
-        $rolNombre    = $roles[$idRol];
-        $cuentaGoogle = ($_SESSION['login_method'] ?? 'password') === 'google';
-        // HU-39: sin contraseña conocida (cuenta creada con Google) no se pide la actual.
-        $pideActual   = (int) ($perfil['password_definida'] ?? 1) === 1;
-        $cuenta       = $this->resumenDeCuenta($documento);
+        $rolNombre    = Roles::nombre($idRol);
+        $cuentaGoogle = (int) $perfil['tiene_google'] === 1 || ($_SESSION['login_method'] ?? 'password') === 'google';
+        // HU-39: sin contraseña (cuenta creada con Google, password NULL) no se pide la actual.
+        $pideActual   = (int) $perfil['tiene_password'] === 1;
+        $cuenta       = $this->resumenDeCuenta($idUsuario);
         $content_view = __DIR__ . '/../views/perfil/index.php';
         require __DIR__ . '/../views/' . $layouts[$idRol] . '/layout.php';
     }

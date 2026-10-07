@@ -25,11 +25,12 @@ class PasswordReset
         return $stmt->execute();
     }
 
-    public function createToken(?string $documento, string $email, string $tokenHash, string $expiresAt): int
+    /** El enlace queda ligado a la persona por id_usuario (MER §2), no por su documento. */
+    public function createToken(?int $idUsuario, string $email, string $tokenHash, string $expiresAt): int
     {
-        $query = "INSERT INTO {$this->table} (usuario_documento, email, token_hash, expires_at) VALUES (:documento, :email, :token_hash, :expires_at)";
+        $query = "INSERT INTO {$this->table} (id_usuario, email, token_hash, expires_at) VALUES (:id_usuario, :email, :token_hash, :expires_at)";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':documento', $documento);
+        $stmt->bindValue(':id_usuario', $idUsuario, $idUsuario === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':token_hash', $tokenHash);
         $stmt->bindParam(':expires_at', $expiresAt);

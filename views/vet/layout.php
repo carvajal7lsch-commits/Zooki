@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="css/usuarios.css">
     <link rel="stylesheet" href="css/medical-module.css?v=11">
     <link rel="stylesheet" href="css/pill-sidebar.css">
+    <link rel="stylesheet" href="css/contexto.css?v=1">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
     <link rel="stylesheet" href="css/perfil.css?v=2">
     <?php endif; ?>
@@ -52,7 +53,7 @@
                 <?php
                 $__action = $_GET["action"] ?? "vet_area";
                 $__adminNombre = $_SESSION["usuario_nombre"] ?? "Veterinario";
-                $__adminRol = $_SESSION["usuario_rol"] ?? "Vet";
+                $__adminRol = Roles::nombre((int) Contexto::rolActivo());
                 $__adminIniciales = "";
                 foreach (array_filter(explode(" ", trim($__adminNombre))) as $__i => $__parte) {
                     if ($__i > 1) {
@@ -104,6 +105,7 @@
                     <h1 class="top-header-title"><?= htmlspecialchars($currentTitle) ?></h1>
                 </div>
                 <div class="header-right">
+                    <?php include __DIR__ . "/../partials/contexto_actual.php"; ?>
                     <div class="notifications-wrapper">
                         <button class="notif-btn" id="notifBell" onclick="toggleNotifications()">
                             <i class="far fa-bell"></i>

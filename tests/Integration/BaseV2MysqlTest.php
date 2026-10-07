@@ -216,6 +216,27 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame(1, $this->contar('usuarios'));
     }
 
+    /**
+     * C1 — El fixture de dos clínicas que usan las pruebas en SQLite también
+     * carga en el esquema real, y los contextos salen iguales: si 01_schema.sql
+     * cambia una columna que el fixture usa, esta prueba lo detecta.
+     */
+    public function testElFixtureDeDosClinicasCargaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/Usuario.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+
+        DosClinicas::poblar($this->db);
+        $usuario = new Usuario($this->db);
+
+        $this->assertSame(['clinica:1:2', 'clinica:2:1', 'propietario'], array_column($usuario->contextosDe(DosClinicas::DOBLE), 'clave'));
+        $this->assertSame(['plataforma'], array_column($usuario->contextosDe(DosClinicas::SUPER_ADMIN), 'clave'));
+        $this->assertSame([1, 2, 5, 8], array_map('intval', array_column($usuario->personalDeClinica(DosClinicas::NORTE), 'id_usuario')));
+        $this->assertSame(1, (int) $usuario->propietariosDeClinica(DosClinicas::NORTE)[1]['num_mascotas']);
+    }
+
     // -----------------------------------------------------------------------
 
     private function migrador(): Migrador

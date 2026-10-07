@@ -2,11 +2,12 @@
 
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/../Support/DosClinicas.php';
 require_once __DIR__ . '/../../models/Auditoria.php';
 
 /**
- * HU-42: la actividad de «Mi perfil» sale de la auditoría y solo muestra lo
- * que corresponde a la propia cuenta.
+ * HU-T.5 y HU-T.8 en la v2: la actividad de «Mi perfil» es de la persona
+ * (id_usuario) y el panel de auditoría solo ve su clínica (RN-G13).
  */
 class ActividadCuentaAuditoriaTest extends TestCase
 {
@@ -15,22 +16,21 @@ class ActividadCuentaAuditoriaTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->db = new PDO('sqlite::memory:');
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->db->exec("CREATE TABLE auditoria_sistema (
-            id_auditoria INTEGER PRIMARY KEY, usuario_doc TEXT, ip_address TEXT, fecha_hora TEXT,
-            accion TEXT, tabla_afectada TEXT, registro_id TEXT, datos_anteriores TEXT, datos_nuevos TEXT, descripcion TEXT)");
+        $_SESSION = [];
+        $this->db = DosClinicas::sqlite();
 
+        // [id_clinica, id_usuario, fecha, accion, tabla, registro, descripcion]
         $filas = [
-            ['U1', '2026-09-10 08:00:00', 'LOGIN', 'usuarios', 'U1', 'Inicio de sesión exitoso'],
-            ['U1', '2026-09-12 09:00:00', 'LOGIN_FAIL', 'usuarios', 'U1', 'Intento de login fallido: credenciales incorrectas'],
-            ['U1', '2026-09-13 10:00:00', 'UPDATE', 'usuarios', 'U1', 'Cambio de contraseña'],
-            ['U1', '2026-09-14 11:00:00', 'UPDATE', 'mascotas', '7', 'Edición de mascota'],
-            ['U1', '2026-09-14 12:00:00', 'LOGOUT', 'usuarios', 'U1', 'Cierre de sesión'],
-            ['U2', '2026-09-15 07:00:00', 'LOGIN', 'usuarios', 'U2', 'Inicio de sesión exitoso'],
-            ['U1', '2026-09-15 07:30:00', 'LOGIN', 'usuarios', 'U1', 'Inicio de sesion con Google'],
+            [null, 1, '2026-09-10 08:00:00', 'LOGIN', 'usuarios', '1', 'Inicio de sesión exitoso'],
+            [null, 1, '2026-09-12 09:00:00', 'LOGIN_FAIL', 'usuarios', '1', 'Intento de login fallido: credenciales incorrectas'],
+            [1, 1, '2026-09-13 10:00:00', 'UPDATE', 'usuarios', '1', 'Cambio de contraseña'],
+            [1, 1, '2026-09-14 11:00:00', 'UPDATE', 'mascotas', '7', 'Edición de mascota'],
+            [1, 1, '2026-09-14 12:00:00', 'LOGOUT', 'usuarios', '1', 'Cierre de sesión'],
+            [null, 2, '2026-09-15 07:00:00', 'LOGIN', 'usuarios', '2', 'Inicio de sesión exitoso'],
+            [null, 1, '2026-09-15 07:30:00', 'LOGIN', 'usuarios', '1', 'Inicio de sesion con Google'],
+            [2, 3, '2026-09-15 08:00:00', 'UPDATE', 'usuarios', '4', 'Personal actualizado'],
         ];
-        $stmt = $this->db->prepare("INSERT INTO auditoria_sistema (usuario_doc, fecha_hora, accion, tabla_afectada, registro_id, descripcion) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $this->db->prepare("INSERT INTO auditoria_sistema (id_clinica, id_usuario, fecha_hora, accion, tabla_afectada, registro_id, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?)");
         foreach ($filas as $fila) {
             $stmt->execute($fila);
         }
@@ -40,23 +40,62 @@ class ActividadCuentaAuditoriaTest extends TestCase
 
     public function testSoloAccesosYCambiosDeLaPropiaCuentaDelMasNuevoAlMasViejo(): void
     {
-        $actividad = $this->auditoria->actividadDeCuenta('U1');
-
         $this->assertSame(
             ['Inicio de sesion con Google', 'Cambio de contraseña', 'Intento de login fallido: credenciales incorrectas', 'Inicio de sesión exitoso'],
-            array_column($actividad, 'descripcion')
+            array_column($this->auditoria->actividadDeCuenta(1), 'descripcion')
         );
     }
 
     public function testRespetaElLimite(): void
     {
-        $this->assertCount(2, $this->auditoria->actividadDeCuenta('U1', 2));
+        $this->assertCount(2, $this->auditoria->actividadDeCuenta(1, 2));
     }
 
     public function testCuentaLosIntentosFallidosDesdeUnaFecha(): void
     {
-        $this->assertSame(1, $this->auditoria->contarAccesosFallidos('U1', '2026-09-01 00:00:00'));
-        $this->assertSame(0, $this->auditoria->contarAccesosFallidos('U1', '2026-09-13 00:00:00'));
-        $this->assertSame(0, $this->auditoria->contarAccesosFallidos('U2', '2026-09-01 00:00:00'));
+        $this->assertSame(1, $this->auditoria->contarAccesosFallidos(1, '2026-09-01 00:00:00'));
+        $this->assertSame(0, $this->auditoria->contarAccesosFallidos(1, '2026-09-13 00:00:00'));
+        $this->assertSame(0, $this->auditoria->contarAccesosFallidos(2, '2026-09-01 00:00:00'));
+    }
+
+    /** RN-G13: el panel de la clínica solo ve sus registros, nunca los de otra ni los de la plataforma. */
+    public function testElPanelSoloVeLaClinicaActiva(): void
+    {
+        $norte = $this->auditoria->getLogs(DosClinicas::NORTE);
+        $this->assertSame(['Cierre de sesión', 'Edición de mascota', 'Cambio de contraseña'], array_column($norte, 'descripcion'));
+        $this->assertSame(3, $this->auditoria->countLogs(DosClinicas::NORTE));
+        $this->assertSame(['Personal actualizado'], array_column($this->auditoria->getLogs(DosClinicas::SUR), 'descripcion'));
+    }
+
+    /** RE-T.8.3: el filtro por persona busca por nombre, documento o correo. */
+    public function testElFiltroPorPersonaUsaNombreDocumentoOCorreo(): void
+    {
+        foreach (['Ana', '1000000001', 'ana@zooki.test'] as $persona) {
+            $this->assertSame(3, $this->auditoria->countLogs(DosClinicas::NORTE, ['usuario' => $persona]), $persona);
+        }
+        $this->assertSame(0, $this->auditoria->countLogs(DosClinicas::NORTE, ['usuario' => 'Carla']));
+        $this->assertSame('Ana Norte', $this->auditoria->getLogs(DosClinicas::NORTE)[0]['usuario_nombre']);
+    }
+
+    /** log() toma la clínica del contexto activo, salvo que se indique otra o ninguna. */
+    public function testElRegistroTomaLaClinicaDelContexto(): void
+    {
+        $_SESSION = ['id_usuario' => 1];
+        Contexto::activar(Contexto::deClinica(DosClinicas::SUR, 'Sur', Roles::ADMIN), 1);
+
+        $this->auditoria->log(3, 'UPDATE', 'usuarios', 4, null, null, 'En el contexto');
+        $this->auditoria->log(3, 'LOGIN', 'usuarios', 3, null, null, 'De la plataforma', null);
+
+        $filas = $this->db->query("SELECT descripcion, id_clinica FROM auditoria_sistema WHERE descripcion IN ('En el contexto', 'De la plataforma') ORDER BY id_auditoria")->fetchAll(PDO::FETCH_KEY_PAIR);
+        $this->assertSame(DosClinicas::SUR, (int) $filas['En el contexto']);
+        $this->assertNull($filas['De la plataforma']);
+    }
+
+    /** El código v1 sin adaptar manda el documento: no se toma como id_usuario de otra persona. */
+    public function testUnDocumentoNoSeConfundeConUnIdUsuario(): void
+    {
+        $this->auditoria->log('1', 'UPDATE', 'x', 1, null, null, 'Llamada v1', null);
+
+        $this->assertNull($this->db->query("SELECT id_usuario FROM auditoria_sistema WHERE descripcion = 'Llamada v1'")->fetchColumn() ?: null);
     }
 }

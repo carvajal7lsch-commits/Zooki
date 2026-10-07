@@ -1,341 +1,345 @@
 <?php
+require_once __DIR__ . '/../helpers/Roles.php';
+require_once __DIR__ . '/../helpers/Contexto.php';
 
+/**
+ * Identidad de las personas (MER §2) y sus roles por clínica.
+ *
+ * La clave es id_usuario. El documento y el correo son únicos en la plataforma
+ * pero son datos corregibles (RN-G06): nada se relaciona por ellos. Los roles
+ * no viven en la persona: el de personal está en usuario_clinica, el de
+ * propietario en propietario_clinica y el de plataforma en es_super_admin.
+ *
+ * Ninguna lectura devuelve la columna password salvo buscarParaLogin(), que
+ * solo usa el inicio de sesión (T-03).
+ */
 class Usuario
 {
-    private $conn;
-    private $table_name = "usuarios";
+    private const COLUMNAS = 'u.id_usuario, u.documento, u.tipo_documento, u.nombre_completo, u.telefono, u.email,
+        u.estado, u.debe_cambiar_password, u.es_super_admin, u.perfil_completo, u.fecha_registro,
+        CASE WHEN u.password IS NULL THEN 0 ELSE 1 END AS tiene_password,
+        CASE WHEN u.google_uid IS NULL THEN 0 ELSE 1 END AS tiene_google';
+
+    public const NOMBRE_MAX = 200;
+    public const DOCUMENTO_MAX = 20;
+    public const TIPOS_DOCUMENTO = ['CC', 'CE', 'TI', 'PP', 'NIT'];
+
+    private PDO $conn;
 
     public function __construct($db)
     {
         $this->conn = $db;
     }
 
-    // Obtener usuario con su nombre de rol
-    public function getUserByDocumento($documento)
+    // ── Identidad ─────────────────────────────────────────────────────────
+
+    public function buscarPorId(int $idUsuario): ?array
     {
-        $query =
-            "SELECT u.documento, u.tipo_documento, u.nombre_completo, u.password, u.estado, u.id_rol, r.nombre_rol as rol, u.debe_cambiar_password, u.password_definida, u.email, u.telefono
-                  FROM " .
-            $this->table_name .
-            " u
-                  JOIN roles r ON u.id_rol = r.id_rol
-                  WHERE u.documento = :documento LIMIT 0,1";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":documento", $documento);
-        $stmt->execute();
-
-        return $stmt->fetch();
+        return $this->uno('SELECT ' . self::COLUMNAS . ' FROM usuarios u WHERE u.id_usuario = ?', [$idUsuario]);
     }
 
-    // Verificar si un email ya existe
-    public function getUserByEmail($email)
+    public function buscarPorDocumento(string $documento): ?array
     {
-        $query =
-            "SELECT documento FROM " .
-            $this->table_name .
-            " WHERE email = :email LIMIT 0,1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":email", $email);
-        $stmt->execute();
-        return $stmt->fetch();
+        return $this->uno('SELECT ' . self::COLUMNAS . ' FROM usuarios u WHERE u.documento = ?', [$documento]);
     }
 
-    public function getUserDetailsByEmail($email)
+    public function buscarPorEmail(string $email): ?array
     {
-        $query =
-            "SELECT documento, nombre_completo, email, estado, id_rol FROM " .
-            $this->table_name .
-            " WHERE email = :email LIMIT 0,1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":email", $email);
-        $stmt->execute();
-        return $stmt->fetch();
+        return $this->uno('SELECT ' . self::COLUMNAS . ' FROM usuarios u WHERE u.email = ?', [$email]);
     }
 
-    // Verificar si un email ya existe (excluyendo un documento específico)
-    public function getUserByEmailExcluding($email, $exclude_documento)
-    {
-        $query =
-            "SELECT documento FROM " .
-            $this->table_name .
-            " WHERE email = :email AND documento != :exclude_doc LIMIT 0,1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":email", $email);
-        $stmt->bindParam(":exclude_doc", $exclude_documento);
-        $stmt->execute();
-        return $stmt->fetch();
-    }
-
-    // Obtener todos los propietarios con el conteo de sus mascotas activas
-    public function getAllOwnersWithPetCount()
-    {
-        $query =
-            "SELECT u.documento, u.tipo_documento, u.nombre_completo, u.telefono, u.email, u.estado,
-                         COUNT(m.id_mascota) as total_mascotas
-                  FROM " .
-            $this->table_name .
-            " u
-                  LEFT JOIN mascotas m ON u.documento = m.doc_propietario AND m.estado = 1
-                  WHERE u.id_rol = 4
-                  GROUP BY u.documento
-                  ORDER BY u.nombre_completo";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Obtener todos los propietarios (rol id_rol = 4) - Legacy (usado en buscadores)
-    public function getAllOwners()
-    {
-        $query =
-            "SELECT documento, tipo_documento, nombre_completo, telefono, email, estado FROM " .
-            $this->table_name .
-            " WHERE id_rol = 4 ORDER BY nombre_completo";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Obtener un usuario por documento de forma simple
     /**
-     * T-03 — Columnas explicitas en vez de `SELECT *`. El comodin arrastraba
-     * la columna `password`, y como el resultado se serializa tal cual en
-     * getUsuarioAjax, el hash bcrypt de cualquier usuario terminaba viajando
-     * al navegador. Quien necesite verificar la contrasena debe usar
-     * getUserByDocumento(), que si la trae y no se expone nunca.
+     * RE-T.1.1 — La persona entra con su documento o con su correo. Es la
+     * única lectura que trae el hash de la contraseña (NULL en las cuentas
+     * de Google que no han creado una).
      */
-    /** HU-42: fecha en que se creó la cuenta, para «Miembro desde». */
-    public function getFechaRegistro($documento): ?string
+    public function buscarParaLogin(string $identificador): ?array
     {
-        $stmt = $this->conn->prepare("SELECT fecha_registro FROM " . $this->table_name . " WHERE documento = :doc");
-        $stmt->execute([':doc' => $documento]);
+        $identificador = trim($identificador);
+        if ($identificador === '') {
+            return null;
+        }
+        $columna = str_contains($identificador, '@') ? 'email' : 'documento';
+        return $this->uno('SELECT ' . self::COLUMNAS . ', u.password FROM usuarios u WHERE u.' . $columna . ' = ?', [$identificador]);
+    }
+
+    /** RN-G06: el documento es único en la plataforma. */
+    public function existeDocumento(string $documento, ?int $excepto = null): bool
+    {
+        $fila = $this->buscarPorDocumento($documento);
+        return $fila !== null && (int) $fila['id_usuario'] !== $excepto;
+    }
+
+    /** RN-G06: el correo es único en la plataforma. */
+    public function existeEmail(string $email, ?int $excepto = null): bool
+    {
+        $fila = $this->buscarPorEmail($email);
+        return $fila !== null && (int) $fila['id_usuario'] !== $excepto;
+    }
+
+    /**
+     * Crea la identidad, sin ningún rol. `password` es el hash, o null en una
+     * cuenta de Google que todavía no tiene contraseña (MER §2).
+     *
+     * @return int id_usuario nuevo
+     */
+    public function crear(array $datos): int
+    {
+        $stmt = $this->conn->prepare(
+            'INSERT INTO usuarios (documento, tipo_documento, nombre_completo, telefono, email, password,
+                                   google_uid, perfil_completo, es_super_admin, estado, debe_cambiar_password)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?)'
+        );
+        $stmt->execute([
+            $this->nuloSiVacio($datos['documento'] ?? null),
+            $this->nuloSiVacio($datos['tipo_documento'] ?? null),
+            $datos['nombre_completo'] ?? null,
+            $this->nuloSiVacio($datos['telefono'] ?? null),
+            $datos['email'] ?? null,
+            $datos['password'] ?? null,
+            $datos['google_uid'] ?? null,
+            isset($datos['perfil_completo']) ? (int) $datos['perfil_completo'] : 1,
+            !empty($datos['debe_cambiar_password']) ? 1 : 0,
+        ]);
+        return (int) $this->conn->lastInsertId();
+    }
+
+    /** Datos de identidad: documento, tipo, nombre, correo y teléfono. */
+    public function actualizarIdentidad(int $idUsuario, array $datos): bool
+    {
+        return $this->conn->prepare(
+            'UPDATE usuarios SET documento = ?, tipo_documento = ?, nombre_completo = ?, email = ?, telefono = ?
+             WHERE id_usuario = ?'
+        )->execute([
+            $datos['documento'],
+            $datos['tipo_documento'],
+            $datos['nombre_completo'],
+            $datos['email'],
+            $this->nuloSiVacio($datos['telefono'] ?? null),
+            $idUsuario,
+        ]);
+    }
+
+    public function actualizarContacto(int $idUsuario, string $email, string $telefono): bool
+    {
+        return $this->conn->prepare('UPDATE usuarios SET email = ?, telefono = ? WHERE id_usuario = ?')
+            ->execute([$email, $this->nuloSiVacio($telefono), $idUsuario]);
+    }
+
+    public function actualizarPassword(int $idUsuario, string $hash): bool
+    {
+        return $this->conn->prepare('UPDATE usuarios SET password = ? WHERE id_usuario = ?')->execute([$hash, $idUsuario]);
+    }
+
+    /** True si la contraseña es la de la cuenta; false también si la cuenta no tiene (Google). */
+    public function verificarPassword(int $idUsuario, string $password): bool
+    {
+        $stmt = $this->conn->prepare('SELECT password FROM usuarios WHERE id_usuario = ?');
+        $stmt->execute([$idUsuario]);
+        $hash = $stmt->fetchColumn();
+        return is_string($hash) && $hash !== '' && password_verify($password, $hash);
+    }
+
+    public function marcarCambioPassword(int $idUsuario, bool $debeCambiar): bool
+    {
+        return $this->conn->prepare('UPDATE usuarios SET debe_cambiar_password = ? WHERE id_usuario = ?')
+            ->execute([$debeCambiar ? 1 : 0, $idUsuario]);
+    }
+
+    /** HU-T.5: fecha en que se creó la cuenta, para «Miembro desde». */
+    public function getFechaRegistro(int $idUsuario): ?string
+    {
+        $stmt = $this->conn->prepare('SELECT fecha_registro FROM usuarios WHERE id_usuario = ?');
+        $stmt->execute([$idUsuario]);
         $fecha = $stmt->fetchColumn();
         return $fecha ? (string) $fecha : null;
     }
 
-    public function getById($documento)
-    {
-        $query =
-            "SELECT documento, tipo_documento, nombre_completo, telefono, email,
-                    estado, id_rol, debe_cambiar_password, password_definida
-             FROM " . $this->table_name . " WHERE documento = :doc";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":doc", $documento);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
+    // ── Contextos (HU-T.17) ───────────────────────────────────────────────
 
-    // Actualizar datos del usuario
-    public function update($data)
+    /**
+     * Contextos en los que puede entrar la persona, o null si la cuenta no
+     * existe o está inactiva.
+     *
+     * · El super-administrador solo tiene la plataforma: no se combina con
+     *   roles de clínica (RN-G01, RE-T.17.5), aunque por error tuviera alguno.
+     * · Personal: cada fila activa de usuario_clinica con rol 1 o 2 en una
+     *   clínica activa.
+     * · Propietario: un solo portal si tiene al menos un vínculo activo.
+     */
+    public function contextosDe(int $idUsuario): ?array
     {
-        // Si el documento no cambió, no intentar actualizarlo (evita error de clave foránea)
-        if ($data["documento"] == $data["original_doc"]) {
-            $query =
-                "UPDATE " .
-                $this->table_name .
-                "
-                  SET tipo_documento = :tipo_doc, nombre_completo = :nombre,
-                      telefono = :tel, email = :email, id_rol = :id_rol, estado = :est
-                  WHERE documento = :doc";
-        } else {
-            // Si el documento cambió, intentar actualizarlo (podría fallar por restricciones de clave foránea)
-            error_log("Documento cambió, intentando actualizar documento también");
-            $query =
-                "UPDATE " .
-                $this->table_name .
-                "
-                  SET documento = :new_doc, tipo_documento = :tipo_doc, nombre_completo = :nombre,
-                      telefono = :tel, email = :email, id_rol = :id_rol, estado = :est
-                  WHERE documento = :old_doc";
+        $persona = $this->uno('SELECT estado, es_super_admin FROM usuarios WHERE id_usuario = ?', [$idUsuario]);
+        if ($persona === null || (int) $persona['estado'] !== 1) {
+            return null;
+        }
+        if ((int) $persona['es_super_admin'] === 1) {
+            return [Contexto::dePlataforma()];
         }
 
-        $stmt = $this->conn->prepare($query);
-        
-        if ($data["documento"] == $data["original_doc"]) {
-            $stmt->bindParam(":doc", $data["documento"]);
-        } else {
-            $stmt->bindParam(":new_doc", $data["documento"]);
-            $stmt->bindParam(":old_doc", $data["original_doc"]);
-        }
-        
-        $stmt->bindParam(":tipo_doc", $data["tipo_documento"]);
-        $stmt->bindParam(":nombre", $data["nombre_completo"]);
-        $stmt->bindParam(":tel", $data["telefono"]);
-        $stmt->bindParam(":email", $data["email"]);
-        $stmt->bindParam(":id_rol", $data["id_rol"]);
-        $stmt->bindParam(":est", $data["estado"]);
-
-        $result = $stmt->execute();
-        error_log("Resultado de update: " . ($result ? "true" : "false"));
-        return $result;
-    }
-
-    // Crear nuevo usuario (con id_rol y nombre_completo)
-    public function create($data)
-    {
-        $query =
-            "INSERT INTO " .
-            $this->table_name .
-            " (documento, tipo_documento, nombre_completo, telefono, email, password, id_rol, estado, debe_cambiar_password, password_definida)
-                  VALUES (:documento, :tipo_documento, :nombre_completo, :telefono, :email, :password, :id_rol, :estado, :debe_cambiar_password, :password_definida)";
-
-        $stmt = $this->conn->prepare($query);
-
-        // Limpieza
-        $documento = htmlspecialchars(strip_tags($data["documento"]));
-        $tipo_doc = htmlspecialchars(
-            strip_tags($data["tipo_documento"] ?? "CC"),
+        $contextos = [];
+        $stmt = $this->conn->prepare(
+            "SELECT uc.id_clinica, uc.id_rol, c.nombre
+             FROM usuario_clinica uc
+             JOIN clinicas c ON c.id_clinica = uc.id_clinica
+             WHERE uc.id_usuario = ? AND uc.estado = 'activo' AND c.estado = 'activa'
+               AND uc.id_rol IN (" . implode(',', Roles::DE_CLINICA) . ")
+             ORDER BY c.nombre, uc.id_rol"
         );
-        $nombre_completo = htmlspecialchars(
-            strip_tags($data["nombre_completo"]),
-        );
-        $telefono = htmlspecialchars(strip_tags($data["telefono"]));
-        $email = htmlspecialchars(strip_tags($data["email"]));
-        $password = $data["password"];
-        $id_rol = $data["id_rol"];
-        $estado = isset($data["estado"]) ? $data["estado"] : 1;
-        $debe_cambiar_password = isset($data["debe_cambiar_password"]) ? $data["debe_cambiar_password"] : 0;
-        $password_definida = isset($data["password_definida"]) ? (int) $data["password_definida"] : 1;
-
-        // Bind
-        $stmt->bindParam(":documento", $documento);
-        $stmt->bindParam(":tipo_documento", $tipo_doc);
-        $stmt->bindParam(":nombre_completo", $nombre_completo);
-        $stmt->bindParam(":telefono", $telefono);
-        $stmt->bindParam(":email", $email);
-        $stmt->bindParam(":password", $password);
-        $stmt->bindParam(":id_rol", $id_rol);
-        $stmt->bindParam(":estado", $estado);
-        $stmt->bindParam(":debe_cambiar_password", $debe_cambiar_password);
-        $stmt->bindParam(":password_definida", $password_definida);
-
-        if ($stmt->execute()) {
-            return true;
+        $stmt->execute([$idUsuario]);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            $contextos[] = Contexto::deClinica((int) $fila['id_clinica'], (string) $fila['nombre'], (int) $fila['id_rol']);
         }
-        return false;
+
+        $stmt = $this->conn->prepare(
+            "SELECT 1 FROM propietario_clinica pc
+             JOIN clinicas c ON c.id_clinica = pc.id_clinica
+             WHERE pc.id_propietario = ? AND pc.estado = 'activo' AND c.estado = 'activa'
+             LIMIT 1"
+        );
+        $stmt->execute([$idUsuario]);
+        if ($stmt->fetchColumn()) {
+            $contextos[] = Contexto::dePropietario();
+        }
+
+        return $contextos;
     }
 
-    // Actualizar contraseña del usuario
-    public function updatePassword($documento, $passwordHash) {
-        $query = "UPDATE " . $this->table_name . " SET password = :password, password_definida = 1 WHERE documento = :documento";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":password", $passwordHash);
-        $stmt->bindParam(":documento", $documento);
-        return $stmt->execute();
-    }
+    // ── Personal de una clínica (HU-T.7) ──────────────────────────────────
 
-    // Actualizar debe_cambiar_password
-    public function updateDebeCambiarPassword($documento, $valor) {
-        $query = "UPDATE " . $this->table_name . " SET debe_cambiar_password = :valor WHERE documento = :documento";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":valor", $valor);
-        $stmt->bindParam(":documento", $documento);
-        return $stmt->execute();
-    }
-
-    // Obtener todos los usuarios del sistema con sus roles
-    public function getAll()
+    /** Personal de la clínica con su rol y su estado en ella. */
+    public function personalDeClinica(int $idClinica): array
     {
-        $query =
-            "SELECT u.documento, u.tipo_documento, u.nombre_completo, u.telefono, u.email, u.estado, u.id_rol, r.nombre_rol
-                  FROM " .
-            $this->table_name .
-            " u
-                  JOIN roles r ON u.id_rol = r.id_rol
-                  WHERE u.id_rol != 4
-                  ORDER BY u.nombre_completo";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
+        $stmt = $this->conn->prepare(
+            'SELECT ' . self::COLUMNAS . ", uc.id_rol, r.nombre_rol,
+                    CASE WHEN uc.estado = 'activo' THEN 1 ELSE 0 END AS estado_clinica
+             FROM usuario_clinica uc
+             JOIN usuarios u ON u.id_usuario = uc.id_usuario
+             JOIN roles r ON r.id_rol = uc.id_rol
+             WHERE uc.id_clinica = ?
+             ORDER BY u.nombre_completo"
+        );
+        $stmt->execute([$idClinica]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Obtener listado de roles (excepto propietario tal vez)
-    public function getRoles()
+    /** La persona como personal de esta clínica, o null si no lo es. */
+    public function personalEnClinica(int $idUsuario, int $idClinica): ?array
     {
-        $query =
-            "SELECT id_rol, nombre_rol FROM roles WHERE id_rol != 4 ORDER BY id_rol";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
+        return $this->uno(
+            'SELECT ' . self::COLUMNAS . ", uc.id_rol,
+                    CASE WHEN uc.estado = 'activo' THEN 1 ELSE 0 END AS estado_clinica
+             FROM usuario_clinica uc
+             JOIN usuarios u ON u.id_usuario = uc.id_usuario
+             WHERE uc.id_usuario = ? AND uc.id_clinica = ?",
+            [$idUsuario, $idClinica]
+        );
+    }
+
+    /**
+     * Propietarios vinculados a la clínica, con cuántas de sus mascotas están
+     * vinculadas a ella. Solo lectura: el alta y la edición de propietarios
+     * llegan con el módulo 1 (C3).
+     */
+    public function propietariosDeClinica(int $idClinica): array
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT u.id_usuario, u.documento, u.tipo_documento, u.nombre_completo, u.telefono, u.email,
+                    CASE WHEN pc.estado = 'activo' THEN 1 ELSE 0 END AS estado_clinica,
+                    (SELECT COUNT(*) FROM mascotas m
+                       JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota AND mc.id_clinica = pc.id_clinica
+                      WHERE m.id_propietario = u.id_usuario AND m.estado = 1) AS num_mascotas
+             FROM propietario_clinica pc
+             JOIN usuarios u ON u.id_usuario = pc.id_propietario
+             WHERE pc.id_clinica = ?
+             ORDER BY u.nombre_completo"
+        );
+        $stmt->execute([$idClinica]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * IDs de todos los roles existentes. Se usa como lista blanca para validar
-     * el id_rol que llega por POST (VD-SEG-01): sin esto se podia grabar
-     * cualquier valor, incluido un rol inexistente.
+     * Asigna (o reactiva) el rol de personal de la persona en la clínica.
+     *
+     * Solo admite los roles de clínica 1 y 2 (B.5): el 4 va por
+     * propietario_clinica y el 5 por es_super_admin. Y no asigna roles de
+     * clínica a un super-administrador (RE-T.17.5).
+     *
+     * @throws InvalidArgumentException si el rol o la persona no lo admiten
      */
-    public function getAllRoleIds()
+    public function asignarRolEnClinica(int $idUsuario, int $idClinica, int $idRol): void
     {
-        $query = "SELECT id_rol FROM roles";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return array_map("intval", $stmt->fetchAll(PDO::FETCH_COLUMN));
+        if (!Roles::esDeClinica($idRol)) {
+            throw new InvalidArgumentException('El rol indicado no es un rol de clínica.');
+        }
+        $persona = $this->uno('SELECT es_super_admin FROM usuarios WHERE id_usuario = ?', [$idUsuario]);
+        if ($persona === null) {
+            throw new InvalidArgumentException('La persona no existe.');
+        }
+        if ((int) $persona['es_super_admin'] === 1) {
+            throw new InvalidArgumentException('Un super-administrador no puede tener roles de clínica.');
+        }
+
+        $existe = $this->uno('SELECT 1 AS hay FROM usuario_clinica WHERE id_usuario = ? AND id_clinica = ?', [$idUsuario, $idClinica]);
+        if ($existe) {
+            $this->conn->prepare("UPDATE usuario_clinica SET id_rol = ?, estado = 'activo' WHERE id_usuario = ? AND id_clinica = ?")
+                ->execute([$idRol, $idUsuario, $idClinica]);
+        } else {
+            $this->conn->prepare("INSERT INTO usuario_clinica (id_usuario, id_clinica, id_rol, estado) VALUES (?, ?, ?, 'activo')")
+                ->execute([$idUsuario, $idClinica, $idRol]);
+        }
     }
 
     /**
-     * Cuenta los administradores activos del sistema. Sirve para impedir que
-     * se desactive o degrade al ultimo (VD-SEG-02), lo que dejaria el sistema
-     * sin ningun acceso administrativo.
+     * RN-G08: inactivar a la persona en una clínica retira su rol en esa
+     * clínica sin tocar su cuenta ni sus otros roles.
      */
-    public function contarAdminsActivos()
+    public function cambiarEstadoEnClinica(int $idUsuario, int $idClinica, bool $activo): bool
     {
-        $query =
-            "SELECT COUNT(*) FROM " .
-            $this->table_name .
-            " WHERE id_rol = 1 AND estado = 1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
+        $stmt = $this->conn->prepare('UPDATE usuario_clinica SET estado = ? WHERE id_usuario = ? AND id_clinica = ?');
+        $stmt->execute([$activo ? 'activo' : 'inactivo', $idUsuario, $idClinica]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /** Administradores activos de la clínica, con la cuenta también activa. */
+    public function contarAdminsActivos(int $idClinica): int
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT COUNT(*) FROM usuario_clinica uc
+             JOIN usuarios u ON u.id_usuario = uc.id_usuario
+             WHERE uc.id_clinica = ? AND uc.id_rol = ? AND uc.estado = 'activo' AND u.estado = 1"
+        );
+        $stmt->execute([$idClinica, Roles::ADMIN]);
         return (int) $stmt->fetchColumn();
     }
 
     /**
-     * VD-SEG-01: el id_rol recibido debe corresponder a un rol existente.
+     * RN-G08 / RE-T.11.3 — Si la persona es el único administrador activo de
+     * la clínica. Se cuenta por clínica: los administradores de otra clínica
+     * no sirven de respaldo.
      */
-    public function esRolValido($idRol): bool
+    public function esUltimoAdminActivo(int $idUsuario, int $idClinica): bool
     {
-        return in_array((int) $idRol, $this->getAllRoleIds(), true);
-    }
-
-    /**
-     * VD-SEG-02: indica si este documento es el unico administrador activo
-     * que queda. Desactivarlo o quitarle el rol dejaria el sistema sin
-     * ningun acceso administrativo.
-     */
-    public function esUltimoAdminActivo($documento): bool
-    {
-        $actual = $this->getById($documento);
-        if (!$actual) {
+        $fila = $this->personalEnClinica($idUsuario, $idClinica);
+        if ($fila === null || (int) $fila['id_rol'] !== Roles::ADMIN || (int) $fila['estado_clinica'] !== 1 || (int) $fila['estado'] !== 1) {
             return false;
         }
-        $esAdminActivo = (int) $actual["id_rol"] === 1 && (int) $actual["estado"] === 1;
-        if (!$esAdminActivo) {
-            return false;
-        }
-        return $this->contarAdminsActivos() <= 1;
+        return $this->contarAdminsActivos($idClinica) <= 1;
     }
 
-    // Actualizar solo el estado del usuario
-    public function updateStatus($documento, $estado)
+    // ── Apoyo ────────────────────────────────────────────────────────────
+
+    private function uno(string $sql, array $params): ?array
     {
-        $query =
-            "UPDATE " .
-            $this->table_name .
-            " SET estado = :est WHERE documento = :doc";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":est", $estado);
-        $stmt->bindParam(":doc", $documento);
-        return $stmt->execute();
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $fila ?: null;
     }
 
-    public function updateContactInfo($documento, $email, $telefono)
+    private function nuloSiVacio($valor): ?string
     {
-        $query = "UPDATE " . $this->table_name . " SET email = :email, telefono = :tel WHERE documento = :doc";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":email", $email);
-        $stmt->bindParam(":tel", $telefono);
-        $stmt->bindParam(":doc", $documento);
-        return $stmt->execute();
+        $valor = $valor === null ? '' : trim((string) $valor);
+        return $valor === '' ? null : $valor;
     }
 }
-?>

@@ -64,7 +64,7 @@ class EmailService {
             $this->mail->Subject = 'Bienvenido a Zooki - Tus credenciales de acceso';
 
             $this->mail->Body = $this->generarPlantillaCredenciales($nombre, $documento, $password);
-            $this->mail->AltBody = "Hola $nombre,\n\nTus credenciales de acceso a Zooki son:\n\nDocumento: $documento\nContraseña: $password\n\nPor seguridad, te recomendamos cambiar tu contraseña en tu primer inicio de sesión.\n\nSaludos,\nEquipo de Zooki";
+            $this->mail->AltBody = "Hola $nombre,\n\nTus credenciales de acceso a Zooki son:\n\nUsuario: tu documento ($documento) o tu correo\nContraseña: $password\n\nPor seguridad, te recomendamos cambiar tu contraseña en tu primer inicio de sesión.\n\nSaludos,\nEquipo de Zooki";
 
             $this->mail->send();
             return true;
@@ -187,7 +187,7 @@ Si no fuiste tú, ignora este mensaje.";
         </p>
         
         <div style="background-color:#f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
-            <p style="margin: 0 0 8px 0; font-size: 15px; color: #1d1c1d;"><strong>📋 Documento:</strong> ' . htmlspecialchars($documento) . '</p>
+            <p style="margin: 0 0 8px 0; font-size: 15px; color: #1d1c1d;"><strong>📋 Usuario:</strong> tu documento (' . htmlspecialchars($documento) . ') o tu correo</p>
             <p style="margin: 0; font-size: 15px; color: #1d1c1d;"><strong>🔑 Contraseña:</strong> ' . htmlspecialchars($password) . '</p>
         </div>
         

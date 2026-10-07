@@ -1195,3 +1195,11 @@
 .iti--container {
     z-index: 99999 !important;
 }
+/* HU-T.7 (C1): el modal se abre con una clase desde js/usuarios.js. */
+.users-modal.is-open {
+    display: flex;
+}
+
+.tab-panel[hidden] {
+    display: none;
+}

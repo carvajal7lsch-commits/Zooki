@@ -137,7 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.querySelector('#password');
     const loginForm = document.querySelector('#loginForm');
     const loginBtn = loginForm ? loginForm.querySelector('button[type="submit"]') : null;
-    const documentoInput = document.querySelector('#documento');
+    // RE-T.1.1: se entra con el documento o con el correo.
+    const documentoInput = document.querySelector('#identificador');
     const rememberMeCheckbox = document.querySelector('#rememberMe');
     const forgotPasswordBtn = document.querySelector('#forgotPasswordBtn');
     const resetModal = document.querySelector('#resetPasswordModal');
@@ -383,12 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── Filtrar solo números en campo documento ──
-    if (documentoInput) {
-        documentoInput.addEventListener('input', function () {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-    }
+    // El campo de acceso ya no filtra a solo números: también admite el correo.
 
 
 

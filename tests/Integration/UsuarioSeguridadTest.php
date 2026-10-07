@@ -2,143 +2,231 @@
 
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/../Support/DosClinicas.php';
 require_once __DIR__ . '/../../models/Usuario.php';
+require_once __DIR__ . '/../../models/Auditoria.php';
+require_once __DIR__ . '/../../controllers/UsuarioController.php';
 
 /**
- * Cubre los dos hallazgos criticos de seguridad del analisis de vacios:
- *   VD-SEG-01  escalada de privilegios por id_rol sin validar
- *   VD-SEG-02  bloqueo total al desactivar/degradar al ultimo administrador
+ * HU-T.7 y HU-T.11 en la v2: el personal vive en usuario_clinica, por clínica.
+ *
+ *   VD-SEG-01  solo se asignan roles de clínica (1 y 2): ni el 3 ni el 5 (B.5, RE-T.11.2)
+ *   VD-SEG-02  el último administrador activo se cuenta por clínica (RE-T.11.3, RN-G08)
+ *   RE-T.17.5  un super-administrador no recibe roles de clínica
+ *   RE-T.7.5   el alta de una persona que ya existe le asigna el rol, sin otra cuenta
  */
 class UsuarioSeguridadTest extends TestCase
 {
-    private $db;
-    private $usuario;
+    private PDO $db;
+    private Usuario $usuario;
 
     protected function setUp(): void
     {
-        $this->db = new PDO('sqlite::memory:');
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        $this->db->exec("
-            CREATE TABLE roles (
-                id_rol INTEGER PRIMARY KEY,
-                nombre_rol TEXT
-            )
-        ");
-        $this->db->exec("
-            INSERT INTO roles (id_rol, nombre_rol) VALUES
-            (1,'administrador'), (2,'veterinario'), (3,'recepcionista'), (4,'propietario')
-        ");
-        $this->db->exec("
-            CREATE TABLE usuarios (
-                documento TEXT PRIMARY KEY,
-                tipo_documento TEXT DEFAULT 'CC',
-                nombre_completo TEXT,
-                telefono TEXT,
-                email TEXT,
-                password TEXT,
-                id_rol INTEGER,
-                estado INTEGER,
-                debe_cambiar_password INTEGER DEFAULT 0,
-                password_definida INTEGER DEFAULT 1
-            )
-        ");
-
+        $this->db = DosClinicas::sqlite();
         $this->usuario = new Usuario($this->db);
+        Security::definirAuditoria(new Auditoria($this->db));
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_POST = [];
+        $_GET = [];
     }
 
-    private function crearUsuario(string $doc, int $rol, int $estado): void
+    protected function tearDown(): void
     {
-        $stmt = $this->db->prepare(
-            "INSERT INTO usuarios (documento, nombre_completo, email, id_rol, estado)
-             VALUES (:d, :n, :e, :r, :s)"
-        );
-        $stmt->execute([
-            ':d' => $doc, ':n' => 'Usuario ' . $doc, ':e' => $doc . '@zooki.test',
-            ':r' => $rol, ':s' => $estado,
-        ]);
+        Security::definirAuditoria(false);
+        $_SESSION = [];
+        $_POST = [];
+        $_GET = [];
     }
 
-    // ── VD-SEG-01 : lista blanca de roles ──────────────────────────────
-
-    public function testRolesExistentesSonValidos(): void
+    /** Sesión de administrador en la clínica indicada. */
+    private function comoAdmin(int $idUsuario, int $idClinica): UsuarioController
     {
-        foreach ([1, 2, 3, 4] as $rol) {
-            $this->assertTrue($this->usuario->esRolValido($rol), "El rol $rol deberia ser valido");
+        $_SESSION = ['id_usuario' => $idUsuario];
+        Contexto::activar(Contexto::deClinica($idClinica, 'Clínica', Roles::ADMIN), 1);
+
+        $correo = new class {
+            public array $enviados = [];
+            public function enviarCredencialesUsuario(...$datos) { $this->enviados[] = $datos; return true; }
+        };
+        return new UsuarioController($this->db, $correo);
+    }
+
+    /** Ejecuta una acción del controlador y devuelve su JSON. */
+    private function json(callable $accion): array
+    {
+        ob_start();
+        $accion();
+        return json_decode((string) ob_get_clean(), true) ?? [];
+    }
+
+    private function datosDePersonal(array $cambios = []): array
+    {
+        return $cambios + [
+            'tipo_documento' => 'CC', 'documento' => '1000000077', 'nombre_completo' => 'Nueva Persona',
+            'email' => 'nueva@zooki.test', 'telefono' => '3001112233', 'id_rol' => '2', 'estado' => '1', 'password' => '',
+        ];
+    }
+
+    private function rolEn(int $idUsuario, int $idClinica): ?array
+    {
+        $stmt = $this->db->prepare('SELECT id_rol, estado FROM usuario_clinica WHERE id_usuario = ? AND id_clinica = ?');
+        $stmt->execute([$idUsuario, $idClinica]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    // ── VD-SEG-01 / B.5 / RE-T.17.5: roles asignables ───────────────────
+
+    public function testSoloSeAsignanLosRolesDeClinica(): void
+    {
+        foreach ([3, 4, 5, 0, 99] as $rol) {
+            try {
+                $this->usuario->asignarRolEnClinica(DosClinicas::PROPIETARIO, DosClinicas::NORTE, $rol);
+                $this->fail("El rol $rol no debía poder asignarse en una clínica");
+            } catch (InvalidArgumentException $e) {
+                $this->assertNull($this->rolEn(DosClinicas::PROPIETARIO, DosClinicas::NORTE));
+            }
         }
+
+        $this->usuario->asignarRolEnClinica(DosClinicas::PROPIETARIO, DosClinicas::NORTE, Roles::VETERINARIO);
+        $this->assertSame(['id_rol' => 2, 'estado' => 'activo'], array_map(fn ($v) => is_numeric($v) ? (int) $v : $v, $this->rolEn(DosClinicas::PROPIETARIO, DosClinicas::NORTE)));
     }
 
-    public function testRolInexistenteEsRechazado(): void
+    public function testElControladorRechazaElRol5YElRol3(): void
     {
-        $this->assertFalse($this->usuario->esRolValido(99));
-        $this->assertFalse($this->usuario->esRolValido(0));
-        $this->assertFalse($this->usuario->esRolValido(-1));
+        $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
+
+        foreach (['5', '3', 'administrador', ''] as $rol) {
+            $_POST = $this->datosDePersonal(['id_rol' => $rol]);
+            $r = $this->json(fn () => $controlador->registrarAjax());
+            $this->assertFalse($r['success'], "El rol '$rol' no debía aceptarse");
+        }
+        $this->assertSame(10, (int) $this->db->query('SELECT COUNT(*) FROM usuarios')->fetchColumn(), 'No se creó ninguna cuenta');
     }
 
-    public function testRolNoNumericoONuloEsRechazado(): void
+    /** RE-T.17.5: a un super-administrador no se le asigna rol de clínica, ni por el modelo ni por el alta. */
+    public function testUnSuperAdministradorNoRecibeRolesDeClinica(): void
     {
-        $this->assertFalse($this->usuario->esRolValido(null));
-        $this->assertFalse($this->usuario->esRolValido('administrador'));
-        $this->assertFalse($this->usuario->esRolValido(''));
+        try {
+            $this->usuario->asignarRolEnClinica(DosClinicas::SUPER_ADMIN, DosClinicas::NORTE, Roles::ADMIN);
+            $this->fail('Debió rechazarse');
+        } catch (InvalidArgumentException $e) {
+            $this->assertNull($this->rolEn(DosClinicas::SUPER_ADMIN, DosClinicas::NORTE));
+        }
+
+        $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
+        $_POST = $this->datosDePersonal(['email' => 'gina@zooki.test', 'documento' => '1000000123']);
+        $r = $this->json(fn () => $controlador->registrarAjax());
+        $this->assertFalse($r['success']);
+        $this->assertNull($this->rolEn(DosClinicas::SUPER_ADMIN, DosClinicas::NORTE));
     }
 
-    // ── VD-SEG-02 : proteccion del ultimo administrador ────────────────
+    // ── Alta de personal (RE-T.7.1, RE-T.7.5) ───────────────────────────
 
-    public function testUnicoAdminActivoEstaProtegido(): void
+    public function testElAltaCreaLaPersonaConSuRolEnLaClinicaActiva(): void
     {
-        $this->crearUsuario('admin1', 1, 1);
-        $this->crearUsuario('vet1', 2, 1);
+        $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
+        $_POST = $this->datosDePersonal();
 
-        $this->assertTrue($this->usuario->esUltimoAdminActivo('admin1'));
+        $r = $this->json(fn () => $controlador->registrarAjax());
+
+        $this->assertTrue($r['success'], $r['message'] ?? '');
+        $nueva = $this->usuario->buscarPorDocumento('1000000077');
+        $this->assertSame(1, (int) $nueva['debe_cambiar_password'], 'Debe cambiar la contraseña al entrar');
+        $this->assertSame(['clinica:1:2'], array_column($this->usuario->contextosDe((int) $nueva['id_usuario']), 'clave'));
     }
 
-    public function testConDosAdminsActivosNingunoEsElUltimo(): void
+    /** RE-T.7.5: un propietario que pasa a ser veterinario conserva una sola cuenta con los dos roles. */
+    public function testElAltaDeUnaPersonaExistenteLeAsignaElRolSinOtraCuenta(): void
     {
-        $this->crearUsuario('admin1', 1, 1);
-        $this->crearUsuario('admin2', 1, 1);
+        $controlador = $this->comoAdmin(DosClinicas::ADMIN_SUR, DosClinicas::SUR);
+        $_POST = $this->datosDePersonal(['documento' => '1000000006', 'email' => 'otro@zooki.test', 'nombre_completo' => 'Otro Nombre']);
 
-        $this->assertFalse($this->usuario->esUltimoAdminActivo('admin1'));
-        $this->assertFalse($this->usuario->esUltimoAdminActivo('admin2'));
+        $r = $this->json(fn () => $controlador->registrarAjax());
+
+        $this->assertTrue($r['success']);
+        $this->assertTrue($r['vinculado']);
+        $this->assertSame(10, (int) $this->db->query('SELECT COUNT(*) FROM usuarios')->fetchColumn(), 'No se creó otra cuenta');
+        $this->assertSame('fabio@zooki.test', $this->usuario->buscarPorId(DosClinicas::PROPIETARIO)['email'], 'Sus datos no se tocan');
+        $this->assertSame(['clinica:2:2', 'propietario'], array_column($this->usuario->contextosDe(DosClinicas::PROPIETARIO), 'clave'));
     }
 
-    public function testAdminInactivoNoCuentaComoRespaldo(): void
+    public function testDocumentoYCorreoDeCuentasDistintasSeRechazan(): void
     {
-        $this->crearUsuario('admin1', 1, 1);
-        $this->crearUsuario('admin2', 1, 0); // desactivado: no puede entrar
+        $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
+        $_POST = $this->datosDePersonal(['documento' => '1000000003', 'email' => 'diego@zooki.test']);
 
-        $this->assertTrue(
-            $this->usuario->esUltimoAdminActivo('admin1'),
-            'Un admin desactivado no debe contar como administrador disponible'
-        );
+        $this->assertFalse($this->json(fn () => $controlador->registrarAjax())['success']);
+        $this->assertNull($this->rolEn(DosClinicas::ADMIN_SUR, DosClinicas::NORTE));
     }
 
-    public function testUsuarioNoAdminNuncaEstaProtegido(): void
-    {
-        $this->crearUsuario('admin1', 1, 1);
-        $this->crearUsuario('vet1', 2, 1);
+    // ── VD-SEG-02: último administrador, por clínica ────────────────────
 
-        $this->assertFalse($this->usuario->esUltimoAdminActivo('vet1'));
+    public function testElUnicoAdministradorActivoDeLaClinicaEstaProtegido(): void
+    {
+        $this->assertTrue($this->usuario->esUltimoAdminActivo(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE));
+        $this->assertSame(1, $this->usuario->contarAdminsActivos(DosClinicas::NORTE));
     }
 
-    public function testAdminYaInactivoNoBloqueaLaOperacion(): void
+    /** Los administradores de otra clínica no sirven de respaldo. */
+    public function testSeCuentaPorClinica(): void
     {
-        $this->crearUsuario('admin1', 1, 0);
+        // Elena es administradora de Sur: no cuenta para Norte.
+        $this->assertTrue($this->usuario->esUltimoAdminActivo(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE));
 
-        $this->assertFalse($this->usuario->esUltimoAdminActivo('admin1'));
+        $this->usuario->asignarRolEnClinica(DosClinicas::VET_NORTE, DosClinicas::NORTE, Roles::ADMIN);
+        $this->assertFalse($this->usuario->esUltimoAdminActivo(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE));
+        $this->assertSame(2, $this->usuario->contarAdminsActivos(DosClinicas::NORTE));
     }
 
-    public function testDocumentoInexistenteNoRompe(): void
+    public function testUnAdministradorConLaCuentaInactivaNoCuentaComoRespaldo(): void
     {
-        $this->assertFalse($this->usuario->esUltimoAdminActivo('no-existe'));
+        $this->usuario->asignarRolEnClinica(DosClinicas::INACTIVO, DosClinicas::NORTE, Roles::ADMIN);
+
+        $this->assertSame(1, $this->usuario->contarAdminsActivos(DosClinicas::NORTE));
+        $this->assertTrue($this->usuario->esUltimoAdminActivo(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE));
     }
 
-    public function testContarAdminsActivosSoloCuentaAdminsHabilitados(): void
+    public function testQuienNoEsAdministradorNuncaEsElUltimo(): void
     {
-        $this->crearUsuario('admin1', 1, 1);
-        $this->crearUsuario('admin2', 1, 1);
-        $this->crearUsuario('admin3', 1, 0);
-        $this->crearUsuario('vet1', 2, 1);
+        $this->assertFalse($this->usuario->esUltimoAdminActivo(DosClinicas::VET_NORTE, DosClinicas::NORTE));
+        $this->assertFalse($this->usuario->esUltimoAdminActivo(999, DosClinicas::NORTE));
+    }
 
-        $this->assertSame(2, $this->usuario->contarAdminsActivos());
+    public function testElControladorNoDesactivaAlUltimoAdministrador(): void
+    {
+        $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
+        $_POST = ['id_usuario' => (string) DosClinicas::ADMIN_NORTE, 'estado' => '0'];
+
+        $this->assertFalse($this->json(fn () => $controlador->cambiarEstadoAjax())['success']);
+        $this->assertSame('activo', $this->rolEn(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE)['estado']);
+    }
+
+    /** RN-G08: inactivar en una clínica no toca la cuenta ni el rol en la otra. */
+    public function testInactivarEnUnaClinicaNoAfectaLaOtra(): void
+    {
+        $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
+        $_POST = ['id_usuario' => (string) DosClinicas::DOBLE, 'estado' => '0'];
+
+        $this->assertTrue($this->json(fn () => $controlador->cambiarEstadoAjax())['success']);
+        $this->assertSame('inactivo', $this->rolEn(DosClinicas::DOBLE, DosClinicas::NORTE)['estado']);
+        $this->assertSame('activo', $this->rolEn(DosClinicas::DOBLE, DosClinicas::SUR)['estado']);
+        $this->assertSame(1, (int) $this->usuario->buscarPorId(DosClinicas::DOBLE)['estado']);
+    }
+
+    /** El documento es un dato editable con unicidad, no la clave: la persona sigue siendo el mismo id. */
+    public function testEditarElDocumentoConservaLaPersona(): void
+    {
+        $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
+        $_POST = $this->datosDePersonal([
+            'id_usuario' => (string) DosClinicas::VET_NORTE, 'documento' => '1000000222',
+            'email' => 'beto@zooki.test', 'nombre_completo' => 'Beto Norte',
+        ]);
+        $this->assertTrue($this->json(fn () => $controlador->actualizarAjax())['success']);
+        $this->assertSame(DosClinicas::VET_NORTE, (int) $this->usuario->buscarPorDocumento('1000000222')['id_usuario']);
+
+        // Un documento que ya es de otra persona no se aplica.
+        $_POST['documento'] = '1000000003';
+        $this->assertFalse($this->json(fn () => $controlador->actualizarAjax())['success']);
     }
 }
