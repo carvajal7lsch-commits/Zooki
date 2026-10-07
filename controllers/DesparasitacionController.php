@@ -1,116 +1,51 @@
 <?php
-require_once '../config/Database.php';
-require_once '../models/Desparasitacion.php';
-require_once '../models/Mascota.php';
-require_once '../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Desparasitacion.php';
+require_once __DIR__ . '/../models/CatalogoClinica.php';
+require_once __DIR__ . '/../helpers/RespuestaJson.php';
 
-class DesparasitacionController {
-    private $db;
-    private $model;
-    private $mascotaModel;
+/** C4: desparasitaciones en la clínica activa (HU-3.4, RN-112, RN-207). */
+class DesparasitacionController
+{
+    private PDO $db;
+    private Desparasitacion $modelo;
+    private CatalogoClinica $catalogo;
 
-    /** Valores admitidos por los ENUM de la tabla `desparasitaciones`. */
-    private const TIPOS = ['interna', 'externa'];
-    private const PERIODICIDADES = ['mensual', 'trimestral', 'semestral'];
-
-    public function __construct() {
-        $database = new Database();
-        $this->db = $database->getConnection();
-        $this->model = new Desparasitacion($this->db);
-        $this->mascotaModel = new Mascota($this->db);
+    public function __construct(?PDO $db = null)
+    {
+        $this->db = $db ?? (new Database())->getConnection();
+        $this->modelo = new Desparasitacion($this->db);
+        $this->catalogo = new CatalogoClinica($this->db);
     }
 
-    public function registrarAjax() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            header('Content-Type: application/json');
-
-            // HU-35: sin esta comprobación se podía registrar una
-            // desparasitación contra un id_mascota inexistente.
-            $idMascota = ValidadorClinico::id($_POST['id_mascota'] ?? null);
-            if ($idMascota === null || $this->mascotaModel->getPropietarioSiActiva($idMascota) === null) {
-                echo json_encode(['success' => false, 'message' => 'La mascota indicada no existe o está inactiva']);
-                exit;
-            }
-
-            // Los ENUM de MySQL rechazan en silencio (guardan ''), así que el
-            // valor se valida aquí contra la lista real de la columna.
-            $tipo = ValidadorClinico::opcion($_POST['tipo'] ?? null, self::TIPOS);
-            if ($tipo === null) {
-                echo json_encode(['success' => false, 'message' => 'El tipo de desparasitación debe ser interna o externa']);
-                exit;
-            }
-
-            $periodicidad = ValidadorClinico::opcion($_POST['periodicidad'] ?? null, self::PERIODICIDADES);
-            if ($periodicidad === null) {
-                echo json_encode(['success' => false, 'message' => 'La periodicidad debe ser mensual, trimestral o semestral']);
-                exit;
-            }
-
-            $producto = ValidadorClinico::textoRequerido($_POST['producto'] ?? null, 150);
-            if ($producto === null) {
-                echo json_encode(['success' => false, 'message' => 'El producto es obligatorio']);
-                exit;
-            }
-
-            $fechaAplicacion = ValidadorClinico::fechaNoFutura($_POST['fecha_aplicacion'] ?? null);
-            if ($fechaAplicacion === null) {
-                echo json_encode(['success' => false, 'message' => 'La fecha de aplicación no es válida o está en el futuro']);
-                exit;
-            }
-
-            $data = [
-                'id_mascota' => $idMascota,
-                'tipo' => $tipo,
-                'producto' => $producto,
-                'periodicidad' => $periodicidad,
-                'fecha_aplicacion' => $fechaAplicacion,
-                'observaciones' => ValidadorClinico::textoOpcional($_POST['observaciones'] ?? null, 5000)
+    public function registrarAjax(): void
+    {
+        RespuestaJson::modificacion(function () {
+            $idDesparasitacion = $this->modelo->registrar($_POST);
+            return [
+                'id_desparasitacion' => $idDesparasitacion,
+                'message' => 'Desparasitación registrada. Próxima dosis calculada.',
             ];
-
-            if ($this->model->insert($data)) {
-                echo json_encode(['success' => true, 'message' => 'Desparasitación registrada. Próxima dosis calculada.']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Error al registrar la desparasitación']);
-            }
-            exit;
-        }
+        }, 'C4 desparasitaciones');
     }
 
-    public function registrarNuevoProductoAjax() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nombre_producto = trim($_POST['nombre_producto']);
-            $tipo = isset($_POST['tipo']) ? trim($_POST['tipo']) : 'interna';
-
-            if (empty($nombre_producto)) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'El nombre del producto es requerido']);
-                exit;
-            }
-
-            $id_producto = $this->model->insertarNuevoProducto($nombre_producto, $tipo);
-
-            if ($id_producto) {
-                header('Content-Type: application/json');
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Producto registrado exitosamente',
-                    'id_producto' => $id_producto,
-                    'nombre_producto' => $nombre_producto
-                ]);
-            } else {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Error al registrar el producto']);
-            }
-            exit;
-        }
+    /** «Otro producto»: se agrega al catálogo de la clínica activa. */
+    public function registrarNuevoProductoAjax(): void
+    {
+        RespuestaJson::modificacion(function () {
+            $nombre = trim((string) ($_POST['nombre_producto'] ?? ''));
+            $tipo = trim((string) ($_POST['tipo'] ?? 'interna'));
+            $idProducto = $this->catalogo->agregarProducto($nombre, $tipo);
+            return [
+                'message' => 'Producto agregado al catálogo de la clínica.',
+                'id_producto' => $idProducto,
+                'nombre_producto' => $nombre,
+            ];
+        }, 'C4 desparasitaciones');
     }
 
-    public function getProductosAjax() {
-        $productos = (new Desparasitacion($this->db))->getProductos();
-
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'productos' => $productos]);
-        exit;
+    public function getProductosAjax(): void
+    {
+        RespuestaJson::enviar(['success' => true, 'productos' => $this->catalogo->productos()]);
     }
 }
-?>

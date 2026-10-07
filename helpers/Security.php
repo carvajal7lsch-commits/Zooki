@@ -320,6 +320,10 @@ class Security {
             'get_vacunas_por_especie_ajax',
         ] as $a) { $matriz[$a] = $clinico; }
 
+        // public/ver_archivo.php: el modelo aplica RN-113 en la clinica y
+        // RN-G02 en el portal; el super-administrador no ve adjuntos (RN-004).
+        $matriz['ver_archivo'] = $todos;
+
         // Personal de la clinica: pacientes, propietarios y citas.
         foreach ([
             'nueva_mascota', 'actualizar_mascota', 'buscar_mascotas', 'guardar_mascota_ajax',

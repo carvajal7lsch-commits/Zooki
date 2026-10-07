@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/dashboard.css?v=4">
     <link rel="stylesheet" href="css/usuarios.css">
-    <link rel="stylesheet" href="css/medical-module.css?v=11">
+    <link rel="stylesheet" href="css/medical-module.css?v=12">
     <link rel="stylesheet" href="css/pill-sidebar.css">
     <link rel="stylesheet" href="css/contexto.css?v=1">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="css/calendario.css?v=12">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
-    <link rel="stylesheet" href="css/atencion.css?v=1">
+    <link rel="stylesheet" href="css/atencion.css?v=2">
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
     <link rel="stylesheet" href="css/panel.css?v=2">
@@ -162,9 +162,12 @@
     <script src="js/avisos.js"></script>
     <script src="js/password-policy.js"></script>
     <script src="js/dashboard.js?v=5"></script>
-    <script src="js/medical-module.js?v=15"></script>
+    <script src="js/medical-module.js?v=16"></script>
     <script src="js/csrf.js"></script>
     <script src="js/extras.js"></script>
+    <?php if (($_GET['action'] ?? '') === 'vet_consultas'): ?>
+    <script src="js/consultas.js?v=1"></script>
+    <?php endif; ?>
     <?php if (!isset($content_view)): ?>
     <script src="js/panel-vet.js?v=1"></script>
     <?php endif; ?>

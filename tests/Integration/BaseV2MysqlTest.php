@@ -334,7 +334,165 @@ class BaseV2MysqlTest extends TestCase
         $_SESSION = [];
     }
 
+    /**
+     * C4 en el esquema real: registro atómico con clínica y veterinario,
+     * número de historia por clínica, RN-113 con y sin autorización y 403
+     * al modificar lo de otra clínica.
+     */
+    public function testC4HistoriaClinicaEnElEsquemaReal(): void
+    {
+        $this->prepararHistoriaClinica();
+        try {
+            $this->comoVeterinario(1, 2);
+            $tratamiento = ['medicamento' => 'Amoxicilina', 'dosis' => '1 ml', 'via_administracion' => 'Oral', 'duracion' => '5 días', 'fecha_inicio' => '2026-10-07'];
+            $guardar = fn (int $idConsulta, array $adjunto, int $indice): array => $this->metadatosDeAdjunto();
+            $consultas = new Consulta($this->db);
+            $idConsulta = $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [$tratamiento], [['nombre' => 'rx.jpg']], $guardar);
+            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
+            $idVacuna = (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'Rabia', 'fecha_aplicacion' => '2026-10-01']);
+            $idArchivo = (int) $this->db->query('SELECT id_archivo FROM archivos_clinicos')->fetchColumn();
+
+            $fila = $this->db->query("SELECT id_clinica, id_veterinario FROM consultas WHERE id_consulta = $idConsulta")->fetch(PDO::FETCH_ASSOC);
+            $this->assertSame([1, 2], [(int) $fila['id_clinica'], (int) $fila['id_veterinario']]);
+            $this->assertSame('HC-000001', $this->numeroHistoria(1, 1));
+
+            // Sin fecha de inicio en un tratamiento no queda nada (RE-2.6.1).
+            unset($tratamiento['fecha_inicio']);
+            try {
+                $consultas->registrar(['id_mascota' => 1, 'motivo' => 'X', 'diagnostico' => 'Y'], [$tratamiento], [], $guardar);
+                $this->fail('Debió rechazar el tratamiento sin fecha de inicio.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('fecha de inicio', $e->getMessage());
+            }
+            $this->assertSame(2, $this->contar('consultas'));
+
+            $this->comoVeterinario(2, 4);
+            $this->assertSame([], $consultas->historialDeMascota(1));
+            $this->assertSame('Clínica Norte', (new Vacuna($this->db))->findByMascota(1)[0]['clinica_nombre']);
+            $this->assertDenegado(fn () => (new ArchivoClinico($this->db))->paraDescargar($idArchivo));
+
+            $this->db->exec('UPDATE propietario_clinica SET autoriza_historia_compartida = 1 WHERE id_propietario = 6 AND id_clinica = 2');
+            $historial = $consultas->historialDeMascota(1);
+            $this->assertCount(2, $historial);
+            $this->assertCount(1, array_merge(...array_column($historial, 'tratamientos')));
+            $this->assertSame('CLI_real.jpg', (new ArchivoClinico($this->db))->paraDescargar($idArchivo)['nombre_servidor']);
+            $this->assertDenegado(fn () => $consultas->paraModificar($idConsulta));
+            $this->assertDenegado(fn () => (new Vacuna($this->db))->paraModificar($idVacuna));
+
+            $this->db->exec('UPDATE propietario_clinica SET autoriza_historia_compartida = 0 WHERE id_propietario = 6 AND id_clinica = 2');
+            $this->assertSame([], $consultas->historialDeMascota(1));
+
+            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
+            $this->assertSame('HC-000001', $this->numeroHistoria(1, 2));
+            $this->assertSame('HC-000001', $this->numeroHistoria(1, 1));
+            $this->assertSame(3, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = 2 AND accion = 'OTHER'")->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /**
+     * RF-2.4: mientras otra sesión asigna un número en la misma clínica, una
+     * primera consulta espera el candado; si no lo obtiene no guarda nada, y
+     * al soltarlo toma el número siguiente sin repetir.
+     */
+    public function testC4ElNumeroDeHistoriaSeAsignaBajoCandadoSinRepetirse(): void
+    {
+        $this->prepararHistoriaClinica();
+        $this->db->exec("INSERT INTO mascotas (id_mascota, id_propietario, id_clinica_registro, token_carnet, nombre, id_especie, estado)
+            VALUES (2, 6, 1, '" . str_repeat('b', 43) . "', 'Kira', 1, 1)");
+        $this->db->exec("INSERT INTO mascota_clinica (id_mascota, id_clinica, estado) VALUES (2, 1, 'activo')");
+        $otraSesion = $this->otraConexion();
+        try {
+            $this->comoVeterinario(1, 2);
+            $sinAdjuntos = fn (): array => [];
+            $consultas = new ConsultaConEsperaCorta($this->db);
+            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+
+            $this->assertSame(1, (int) $otraSesion->query("SELECT GET_LOCK('zooki_numero_hc_1', 0)")->fetchColumn());
+            try {
+                $consultas->registrar(['id_mascota' => 2, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+                $this->fail('Debió esperar el candado de numeración.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('número de historia', $e->getMessage());
+            }
+            $this->assertSame(1, $this->contar('consultas'));
+            $this->assertNull($this->numeroHistoria(2, 1));
+
+            // Una consulta de una mascota que ya tiene número no necesita el candado.
+            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+
+            $otraSesion->query("SELECT RELEASE_LOCK('zooki_numero_hc_1')");
+            $consultas->registrar(['id_mascota' => 2, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+            $this->assertSame('HC-000002', $this->numeroHistoria(2, 1));
+            $this->assertSame(1, (int) $otraSesion->query("SELECT IS_FREE_LOCK('zooki_numero_hc_1')")->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
     // -----------------------------------------------------------------------
+
+    private function prepararHistoriaClinica(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../Support/ConsultaConEsperaCorta.php';
+        require_once __DIR__ . '/../../models/Consulta.php';
+        require_once __DIR__ . '/../../models/Vacuna.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        DosClinicas::completarMascota($this->db);
+        DosClinicas::vincularLunaASur($this->db);
+    }
+
+    private function comoVeterinario(int $clinica, int $idUsuario): void
+    {
+        $_SESSION = ['id_usuario' => $idUsuario];
+        Contexto::activar(Contexto::deClinica($clinica, 'Clínica', Roles::VETERINARIO), 1);
+    }
+
+    private function metadatosDeAdjunto(): array
+    {
+        return [
+            'nombre_original' => 'rx.jpg',
+            'nombre_servidor' => 'CLI_real.jpg',
+            'ruta_archivo' => 'uploads/clinicos/CLI_real.jpg',
+            'tipo_archivo' => 'image/jpeg',
+            'extension' => 'jpg',
+            'tamano_bytes' => 2048,
+        ];
+    }
+
+    private function numeroHistoria(int $mascota, int $clinica): ?string
+    {
+        $numero = $this->db->query("SELECT numero_historia_clinica FROM mascota_clinica WHERE id_mascota = $mascota AND id_clinica = $clinica")->fetchColumn();
+        return $numero === false ? null : $numero;
+    }
+
+    private function assertDenegado(callable $accion): void
+    {
+        try {
+            $accion();
+            $this->fail('Debió responder 403.');
+        } catch (AccesoDenegado $e) {
+            $this->assertSame(403, $e->codigo());
+        }
+    }
+
+    /** Segunda sesión sobre la misma base, para simular otra petición en curso. */
+    private function otraConexion(): PDO
+    {
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
+            getenv('ZOOKI_TEST_MYSQL_HOST'),
+            (int) (getenv('ZOOKI_TEST_MYSQL_PORT') ?: 3306),
+            $this->base
+        );
+        $usuario = getenv('ZOOKI_TEST_MYSQL_USER') ?: 'root';
+        $clave = getenv('ZOOKI_TEST_MYSQL_PASS') ?: '';
+        return new PDO($dsn, $usuario, $clave, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    }
 
     private function migrador(): Migrador
     {

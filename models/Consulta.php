@@ -1,180 +1,387 @@
 <?php
-class Consulta {
-    private $conn;
-    private $table_name = "consultas";
+require_once __DIR__ . '/ModeloHistoria.php';
+require_once __DIR__ . '/ArchivoClinico.php';
+require_once __DIR__ . '/Tratamiento.php';
+require_once __DIR__ . '/../helpers/Transaccion.php';
+require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 
-    public $id_consulta;
-    public $id_mascota;
-    public $doc_veterinario;
-    public $fecha_hora;
-    public $motivo_consulta;
-    public $anamnesis;
-    public $peso;
-    public $temperatura;
-    public $frecuencia_cardiaca;
-    public $diagnostico;
-    public $plan_tratamiento;
+/**
+ * HU-2.1, HU-2.2, HU-2.5 y HU-2.6: consultas de la clínica activa.
+ *
+ * Cada consulta guarda su clínica y el id_usuario del veterinario (RN-112);
+ * la visibilidad entre clínicas sale de ModeloHistoria (RN-113).
+ */
+class Consulta extends ModeloHistoria
+{
+    /** Estados de una cita cuya atención se documenta con la consulta (RN-409). */
+    private const ESTADOS_EN_ATENCION = ['en_curso', 'sin_cerrar'];
 
-    public function __construct($db) {
-        $this->conn = $db;
-    }
+    /** Segundos que se espera el candado de numeración antes de desistir. */
+    protected const ESPERA_CANDADO_HC = 10;
 
-    // Registrar nueva consulta
-    public function insert($data) {
-        $query = "INSERT INTO " . $this->table_name . " 
-                  (id_cita, id_mascota, doc_veterinario, fecha_hora, motivo_consulta, anamnesis, peso, temperatura, frecuencia_cardiaca, frecuencia_respiratoria, diagnostico, plan_tratamiento, observaciones)
-                  VALUES (:id_cita, :id_mascota, :doc_veterinario, NOW(), :motivo, :anamnesis, :peso, :temperatura, :fc, :fr, :diagnostico, :plan, :observaciones)";
-        
-        $stmt = $this->conn->prepare($query);
-
-        $idCita = isset($data['id_cita']) && !empty($data['id_cita']) ? $data['id_cita'] : null;
-        $stmt->bindParam(':id_cita', $idCita);
-        $stmt->bindParam(':id_mascota', $data['id_mascota']);
-        $stmt->bindParam(':doc_veterinario', $data['doc_veterinario']);
-        $stmt->bindParam(':motivo', $data['motivo_consulta']);
-        $stmt->bindParam(':anamnesis', $data['anamnesis']);
-        $stmt->bindParam(':peso', $data['peso']);
-        $stmt->bindParam(':temperatura', $data['temperatura']);
-        $stmt->bindParam(':fc', $data['frecuencia_cardiaca']);
-        $stmt->bindValue(':fr', $data['frecuencia_respiratoria'] ?? null);
-        $stmt->bindParam(':diagnostico', $data['diagnostico']);
-        $stmt->bindParam(':plan', $data['plan_tratamiento']);
-        $stmt->bindValue(':observaciones', $data['observaciones'] ?? '');
-
-        if($stmt->execute()) {
-            return $this->conn->lastInsertId();
+    /**
+     * Registra la consulta con sus adjuntos y tratamientos, todo o nada
+     * (RE-2.6.1). $guardarAdjunto mueve el archivo al disco y devuelve sus
+     * metadatos; si algo falla después, quien llama borra lo movido, porque
+     * el disco no participa del rollback.
+     *
+     * @param callable(int, array, int): array $guardarAdjunto
+     */
+    public function registrar(array $entrada, array $tratamientos, array $adjuntos, callable $guardarAdjunto): int
+    {
+        $idMascota = ValidadorClinico::id($entrada['id_mascota'] ?? null);
+        if ($idMascota === null) {
+            throw new InvalidArgumentException('La mascota indicada no es válida.');
         }
-        return false;
+
+        // Las comprobaciones de acceso van antes de la transacción para que
+        // su auditoría no se pierda con un rollback.
+        $this->exigirMascotaActiva($idMascota);
+        $datos = $this->validar($entrada, $idMascota);
+        if ($datos['id_cita'] !== null) {
+            $this->exigirCitaParaConsulta($datos['id_cita'], $idMascota);
+        }
+        $tratamientosValidos = array_map([Tratamiento::class, 'validar'], $tratamientos);
+
+        $clinica = $this->clinica();
+        $esPrimeraConsulta = $this->numeroHistoria($idMascota, $clinica) === null;
+        if ($esPrimeraConsulta) {
+            $this->tomarCandadoNumeracion($clinica);
+        }
+
+        try {
+            return Transaccion::ejecutar($this->conn, function () use ($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica) {
+                return $this->escribir($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica);
+            });
+        } catch (AccesoDenegado $e) {
+            // La auditoría escrita dentro de la transacción se deshizo con ella.
+            $this->denegarAcceso('mascotas', $idMascota, 'Registro de consulta denegado; no se guardó nada (RN-112, RN-207)');
+        } finally {
+            if ($esPrimeraConsulta) {
+                $this->soltarCandadoNumeracion($clinica);
+            }
+        }
     }
 
-    // Obtener consulta vinculada a una cita
-    public function findByCita($id_cita) {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE id_cita = :id_cita LIMIT 1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_cita', $id_cita);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    // Obtener todas las consultas de la clínica (Global)
-    public function findAll() {
-        $query = "SELECT c.*, 
-                         m.nombre as nombre_mascota, 
-                         e.nombre_especie, 
-                         p.nombre_completo as nombre_propietario,
-                         u.nombre_completo as veterinario 
-                  FROM " . $this->table_name . " c
-                  JOIN mascotas m ON c.id_mascota = m.id_mascota
-                  JOIN especies e ON m.id_especie = e.id_especie
-                  JOIN usuarios p ON m.doc_propietario = p.documento
-                  JOIN usuarios u ON c.doc_veterinario = u.documento
-                  ORDER BY c.fecha_hora DESC";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Obtener historial cronológico de una mascota
-    public function findByMascota($id_mascota) {
-        $query = "SELECT c.*, u.nombre_completo as veterinario 
-                  FROM " . $this->table_name . " c
-                  JOIN usuarios u ON c.doc_veterinario = u.documento
-                  WHERE c.id_mascota = :id 
-                  ORDER BY c.fecha_hora DESC";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id_mascota);
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Verificar si es la primera consulta para generar HC
-    public function countByMascota($id_mascota) {
-        $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " WHERE id_mascota = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id_mascota);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row['total'];
-    }
-    // Guardar metadatos de archivo adjunto
-    public function saveArchivo($data) {
-        $query = "INSERT INTO archivos_clinicos 
-                  (id_consulta, nombre_original, nombre_servidor, ruta_archivo, tipo_archivo, extension, tamano_bytes, descripcion) 
-                  VALUES (:id_consulta, :nombre_orig, :nombre_serv, :ruta, :tipo, :ext, :tamano, :desc)";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_consulta', $data['id_consulta']);
-        $stmt->bindParam(':nombre_orig', $data['nombre_original']);
-        $stmt->bindParam(':nombre_serv', $data['nombre_servidor']);
-        $stmt->bindParam(':ruta', $data['ruta_archivo']);
-        $stmt->bindParam(':tipo', $data['tipo_archivo']);
-        $stmt->bindParam(':ext', $data['extension']);
-        $stmt->bindParam(':tamano', $data['tamano_bytes']);
-        $stmt->bindParam(':desc', $data['descripcion']);
-        
-        return $stmt->execute();
-    }
-    public function getArchivosByConsulta($id_consulta) {
-        $query = "SELECT * FROM archivos_clinicos WHERE id_consulta = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id_consulta);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    /** HU-2.2: consultas de la clínica activa para el listado, la más reciente primero. */
+    public function listarDeLaClinica(): array
+    {
+        $sql = "SELECT c.*, m.nombre AS nombre_mascota, e.nombre_especie,
+                p.nombre_completo AS nombre_propietario, u.nombre_completo AS veterinario
+            FROM consultas c
+            JOIN mascotas m ON m.id_mascota = c.id_mascota
+            JOIN mascota_clinica mc ON mc.id_mascota = c.id_mascota AND mc.id_clinica = c.id_clinica
+            LEFT JOIN especies e ON e.id_especie = m.id_especie
+            LEFT JOIN usuarios p ON p.id_usuario = m.id_propietario
+            JOIN usuarios u ON u.id_usuario = c.id_veterinario
+            WHERE c.id_clinica = ? AND mc.estado = 'activo'
+            ORDER BY c.fecha_hora DESC, c.id_consulta DESC";
+        $consulta = $this->conn->prepare($sql);
+        $consulta->execute([$this->clinica()]);
+        return $consulta->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Datos de un adjunto junto con el dueño de la mascota a la que pertenece.
-     *
-     * M2-04 (RN-204 / RN-G02) — Sirve para decidir si quien pide el archivo
-     * tiene derecho a verlo. Antes ver_archivo.php aceptaba un nombre de
-     * archivo suelto y lo servía a cualquier sesión válida, sin mirar de quién
-     * era la mascota: un propietario podía leer los adjuntos de pacientes
-     * ajenos, y los nombres eran adivinables porque seguían el patrón
-     * CLI_{id_consulta}_{timestamp}_{i}.
+     * RN-206 / RN-113: consultas visibles de la mascota, la más reciente
+     * primero, con la clínica y el veterinario de cada una.
      */
-    public function getArchivoConDueno($id_archivo) {
-        $query = "SELECT a.id_archivo, a.id_consulta, a.nombre_original, a.nombre_servidor,
-                         a.extension, a.tipo_archivo,
-                         c.id_mascota, m.doc_propietario
-                  FROM archivos_clinicos a
-                  JOIN " . $this->table_name . " c ON a.id_consulta = c.id_consulta
-                  JOIN mascotas m ON c.id_mascota = m.id_mascota
-                  WHERE a.id_archivo = :id
-                  LIMIT 1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindValue(':id', (int) $id_archivo, PDO::PARAM_INT);
-        $stmt->execute();
-        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+    public function findByMascota($idMascota): array
+    {
+        $idMascota = (int) $idMascota;
+        $this->exigirMascotaVinculada($idMascota);
 
-        return $fila === false ? null : $fila;
+        [$visible, $parametros] = $this->consultaVisible('c');
+        $sql = "SELECT c.*, u.nombre_completo AS veterinario, cl.nombre AS clinica_nombre
+            FROM consultas c
+            JOIN usuarios u ON u.id_usuario = c.id_veterinario
+            JOIN clinicas cl ON cl.id_clinica = c.id_clinica
+            WHERE c.id_mascota = ? AND $visible
+            ORDER BY c.fecha_hora DESC, c.id_consulta DESC";
+        $consulta = $this->conn->prepare($sql);
+        $consulta->execute([$idMascota, ...$parametros]);
+        return $this->marcarOrigen($consulta->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    /** HU-2.5: historial completo con adjuntos y tratamientos (5 consultas SQL fijas, M2-10). */
+    public function historialDeMascota(int $idMascota): array
+    {
+        $consultas = $this->findByMascota($idMascota);
+        $ids = array_column($consultas, 'id_consulta');
+        $archivos = (new ArchivoClinico($this->conn))->deConsultas($ids);
+        $tratamientos = (new Tratamiento($this->conn))->findByConsultas($ids);
+
+        foreach ($consultas as &$consulta) {
+            $id = (int) $consulta['id_consulta'];
+            $consulta['archivos'] = $archivos[$id] ?? [];
+            $consulta['tratamientos'] = $tratamientos[$id] ?? [];
+        }
+        unset($consulta);
+        return $consultas;
+    }
+
+    /** Consulta de una cita de la clínica activa (una cita genera una sola consulta). */
+    public function findByCita($idCita)
+    {
+        $consulta = $this->conn->prepare('SELECT * FROM consultas WHERE id_cita = ? AND id_clinica = ? LIMIT 1');
+        $consulta->execute([(int) $idCita, $this->clinica()]);
+        return $consulta->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /** RN-112 / RE-2.10.4: punto único por el que pasa cualquier modificación. */
+    public function paraModificar(int $idConsulta): array
+    {
+        $consulta = $this->conn->prepare('SELECT * FROM consultas WHERE id_consulta = ? AND id_clinica = ?');
+        $consulta->execute([$idConsulta, $this->clinica()]);
+        $fila = $consulta->fetch(PDO::FETCH_ASSOC);
+
+        if ($fila === false) {
+            $this->denegarAcceso('consultas', $idConsulta, 'Modificación de una consulta de otra clínica (RN-112)');
+        }
+        return $fila;
+    }
+
+    private function escribir(array $datos, array $tratamientos, array $adjuntos, callable $guardarAdjunto, int $clinica): int
+    {
+        // RN-207: se relee dentro de la transacción, por si la mascota se dio
+        // de baja o se desvinculó mientras se revisaban los adjuntos.
+        $this->exigirMascotaActiva($datos['id_mascota']);
+        $idConsulta = $this->insertar($datos, $clinica);
+
+        $modeloArchivo = new ArchivoClinico($this->conn);
+        foreach ($adjuntos as $indice => $adjunto) {
+            $metadatos = $guardarAdjunto($idConsulta, $adjunto, $indice);
+            $modeloArchivo->insertarEnConsulta($idConsulta, $metadatos);
+        }
+
+        $modeloTratamiento = new Tratamiento($this->conn);
+        foreach ($tratamientos as $tratamiento) {
+            $modeloTratamiento->insertarEnConsulta($idConsulta, $tratamiento);
+        }
+
+        if ($datos['id_cita'] !== null) {
+            $this->completarCita($datos['id_cita'], $datos['id_mascota'], $clinica);
+        }
+
+        $this->asignarNumeroHistoria($datos['id_mascota'], $clinica);
+        return $idConsulta;
+    }
+
+    private function insertar(array $datos, int $clinica): int
+    {
+        $sql = 'INSERT INTO consultas
+            (id_clinica, id_cita, id_mascota, id_veterinario, fecha_hora, motivo_consulta, anamnesis,
+             peso, temperatura, frecuencia_cardiaca, frecuencia_respiratoria, diagnostico, plan_tratamiento, observaciones)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        $this->conn->prepare($sql)->execute([
+            $clinica,
+            $datos['id_cita'],
+            $datos['id_mascota'],
+            $this->veterinarioActual(),
+            $this->ahora(),
+            $datos['motivo_consulta'],
+            $datos['anamnesis'],
+            $datos['peso'],
+            $datos['temperatura'],
+            $datos['frecuencia_cardiaca'],
+            $datos['frecuencia_respiratoria'],
+            $datos['diagnostico'],
+            $datos['plan_tratamiento'],
+            $datos['observaciones'],
+        ]);
+        return (int) $this->conn->lastInsertId();
+    }
+
+    /** RE-2.1.1, RE-2.1.3 (RN-202) y RE-2.2.2: campos de la consulta, validados en el servidor. */
+    private function validar(array $entrada, int $idMascota): array
+    {
+        $diagnostico = ValidadorClinico::textoRequerido($entrada['diagnostico'] ?? null, 5000);
+        if ($diagnostico === null) {
+            throw new InvalidArgumentException('El diagnóstico es obligatorio.');
+        }
+
+        $motivo = ValidadorClinico::textoOpcional($entrada['motivo'] ?? null, 5000);
+        if ($motivo === '') {
+            throw new InvalidArgumentException('El motivo de la consulta es obligatorio.');
+        }
+
+        $idCita = null;
+        if (!empty($entrada['id_cita'])) {
+            $idCita = ValidadorClinico::id($entrada['id_cita']);
+            if ($idCita === null) {
+                throw new InvalidArgumentException('La cita indicada no es válida.');
+            }
+        }
+
+        // Un signo vital fuera de rango es un error de digitación, y
+        // guardarlo ensucia la historia de forma permanente (RN-206).
+        $peso = $this->signoDecimal($entrada['peso'] ?? null, ValidadorClinico::PESO_MIN, ValidadorClinico::PESO_MAX, 'El peso debe estar entre 0.01 y 200 kg.');
+        $temperatura = $this->signoDecimal($entrada['temperatura'] ?? null, ValidadorClinico::TEMP_MIN, ValidadorClinico::TEMP_MAX, 'La temperatura debe estar entre 25 y 45 °C.');
+        $cardiaca = $this->signoEntero($entrada['frecuencia_cardiaca'] ?? null, ValidadorClinico::FC_MIN, ValidadorClinico::FC_MAX, 'La frecuencia cardíaca debe estar entre 10 y 400 lpm.');
+        $respiratoria = $this->signoEntero($entrada['frecuencia_respiratoria'] ?? null, ValidadorClinico::FR_MIN, ValidadorClinico::FR_MAX, 'La frecuencia respiratoria debe estar entre 5 y 150 rpm.');
+
+        return [
+            'id_mascota' => $idMascota,
+            'id_cita' => $idCita,
+            'motivo_consulta' => $motivo,
+            'anamnesis' => ValidadorClinico::textoOpcional($entrada['anamnesis'] ?? null, 5000),
+            'peso' => $peso,
+            'temperatura' => $temperatura,
+            'frecuencia_cardiaca' => $cardiaca,
+            'frecuencia_respiratoria' => $respiratoria,
+            'diagnostico' => $diagnostico,
+            'plan_tratamiento' => ValidadorClinico::textoOpcional($entrada['plan_tratamiento'] ?? null, 5000),
+            'observaciones' => ValidadorClinico::textoOpcional($entrada['observaciones'] ?? null, 5000),
+        ];
+    }
+
+    private function signoDecimal($crudo, float $minimo, float $maximo, string $mensaje): ?float
+    {
+        if ($crudo === null || $crudo === '') {
+            return null;
+        }
+        $valor = ValidadorClinico::decimal($crudo, $minimo, $maximo);
+        if ($valor === null) {
+            throw new InvalidArgumentException($mensaje);
+        }
+        return $valor;
+    }
+
+    private function signoEntero($crudo, int $minimo, int $maximo, string $mensaje): ?int
+    {
+        if ($crudo === null || $crudo === '') {
+            return null;
+        }
+        $valor = ValidadorClinico::entero($crudo, $minimo, $maximo);
+        if ($valor === null) {
+            throw new InvalidArgumentException($mensaje);
+        }
+        return $valor;
     }
 
     /**
-     * HU-08 / M2-10 — Adjuntos de varias consultas en una sola consulta SQL.
-     *
-     * El historial los pedía consulta por consulta: con 100 consultas eran 100
-     * viajes a la base solo para los archivos, y el criterio pide cargar en
-     * menos de 3 segundos.
+     * RN-203 y RN-407: la cita es de la clínica activa, de esta mascota y del
+     * veterinario que registra, y su atención está en curso. Una cita de otra
+     * clínica (o inexistente) da 403 auditado.
      */
-    public function getArchivosDeConsultas(array $ids) {
-        if (empty($ids)) return [];
+    private function exigirCitaParaConsulta(int $idCita, int $idMascota): void
+    {
+        $consulta = $this->conn->prepare('SELECT id_mascota, id_veterinario, estado FROM citas WHERE id_cita = ? AND id_clinica = ?');
+        $consulta->execute([$idCita, $this->clinica()]);
+        $cita = $consulta->fetch(PDO::FETCH_ASSOC);
 
-        $marcas = implode(',', array_fill(0, count($ids), '?'));
-        $stmt = $this->conn->prepare(
-            "SELECT * FROM archivos_clinicos WHERE id_consulta IN ($marcas) ORDER BY id_archivo"
-        );
-        $stmt->execute(array_map('intval', $ids));
+        if ($cita === false) {
+            $this->denegarAcceso('citas', $idCita, 'Consulta ligada a una cita de otra clínica (RN-407)');
+        }
+        if ((int) $cita['id_mascota'] !== $idMascota) {
+            throw new InvalidArgumentException('La cita indicada no corresponde a esta mascota.');
+        }
+        if ((int) $cita['id_veterinario'] !== $this->veterinarioActual()) {
+            throw new InvalidArgumentException('Solo el veterinario asignado puede registrar la consulta de esta cita.');
+        }
+        if ($this->findByCita($idCita)) {
+            throw new InvalidArgumentException('Esta cita ya tiene una consulta registrada.');
+        }
+        if (!in_array($cita['estado'], self::ESTADOS_EN_ATENCION, true)) {
+            throw new InvalidArgumentException('La atención de esta cita no está en curso. Iníciala desde el calendario.');
+        }
+    }
 
-        $porConsulta = [];
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
-            $porConsulta[(int) $fila['id_consulta']][] = $fila;
+    /**
+     * RN-406: la consulta completa su cita en la misma transacción. La
+     * condición repite clínica, mascota, veterinario y estado para que un
+     * cambio entre la revisión y el guardado no complete una cita ajena.
+     * El resto de la agenda se adapta en C5.
+     */
+    private function completarCita(int $idCita, int $idMascota, int $clinica): void
+    {
+        $marcas = implode(',', array_fill(0, count(self::ESTADOS_EN_ATENCION), '?'));
+        $sql = "UPDATE citas SET estado = 'completada', hora_fin_real = ?
+            WHERE id_cita = ? AND id_clinica = ? AND id_mascota = ? AND id_veterinario = ?
+              AND estado IN ($marcas)";
+        $consulta = $this->conn->prepare($sql);
+        $consulta->execute([$this->ahora(), $idCita, $clinica, $idMascota, $this->veterinarioActual(), ...self::ESTADOS_EN_ATENCION]);
+
+        if ($consulta->rowCount() !== 1) {
+            throw new RuntimeException('La cita ' . $idCita . ' dejó de estar en curso antes de guardar la consulta.');
+        }
+    }
+
+    private function numeroHistoria(int $idMascota, int $clinica): ?string
+    {
+        $consulta = $this->conn->prepare('SELECT numero_historia_clinica FROM mascota_clinica WHERE id_mascota = ? AND id_clinica = ?');
+        $consulta->execute([$idMascota, $clinica]);
+        $numero = $consulta->fetchColumn();
+        return $numero === false || $numero === null || $numero === '' ? null : (string) $numero;
+    }
+
+    /**
+     * RF-2.4 / RN-102: el número de historia se asigna en la primera consulta
+     * de la mascota en la clínica, es correlativo por clínica y no cambia
+     * después. El candado de numeración (tomado antes de abrir la
+     * transacción) hace que esta lectura ya vea el último número confirmado;
+     * el índice único (id_clinica, numero) es la última barrera.
+     */
+    private function asignarNumeroHistoria(int $idMascota, int $clinica): void
+    {
+        if ($this->numeroHistoria($idMascota, $clinica) !== null) {
+            return;
         }
 
-        return $porConsulta;
+        $consulta = $this->conn->prepare("SELECT MAX(numero_historia_clinica) FROM mascota_clinica
+            WHERE id_clinica = ? AND numero_historia_clinica LIKE 'HC-______'");
+        $consulta->execute([$clinica]);
+        $ultimo = $consulta->fetchColumn();
+        $siguiente = $ultimo ? (int) substr((string) $ultimo, 3) + 1 : 1;
+        $numero = sprintf('HC-%06d', $siguiente);
+
+        $actualizar = $this->conn->prepare('UPDATE mascota_clinica SET numero_historia_clinica = ?
+            WHERE id_mascota = ? AND id_clinica = ? AND numero_historia_clinica IS NULL');
+        $actualizar->execute([$numero, $idMascota, $clinica]);
+    }
+
+    /**
+     * Serializa las primeras consultas de una clínica. Es un candado con
+     * nombre de MySQL y no un FOR UPDATE: bloquear la fila de clinicas choca
+     * con los bloqueos compartidos que toman las FK al insertar, y contar
+     * con bloqueo de rango puede trabar dos primeras consultas entre sí. Se
+     * toma antes de abrir la transacción y se suelta después del commit, así
+     * la transacción siguiente ya lee el número confirmado. SQLite serializa
+     * las escrituras por sí mismo.
+     */
+    private function tomarCandadoNumeracion(int $clinica): void
+    {
+        if (!$this->esMysql()) {
+            return;
+        }
+        $consulta = $this->conn->prepare('SELECT GET_LOCK(?, ?)');
+        $consulta->execute([$this->nombreCandado($clinica), static::ESPERA_CANDADO_HC]);
+        if ((int) $consulta->fetchColumn() !== 1) {
+            throw new RuntimeException('No se pudo reservar el número de historia clínica: otra consulta lo está asignando.');
+        }
+    }
+
+    private function soltarCandadoNumeracion(int $clinica): void
+    {
+        if (!$this->esMysql()) {
+            return;
+        }
+        $consulta = $this->conn->prepare('SELECT RELEASE_LOCK(?)');
+        $consulta->execute([$this->nombreCandado($clinica)]);
+    }
+
+    private function nombreCandado(int $clinica): string
+    {
+        return 'zooki_numero_hc_' . $clinica;
+    }
+
+    private function esMysql(): bool
+    {
+        return $this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
+    }
+
+    private function ahora(): string
+    {
+        $ahora = new DateTimeImmutable('now', new DateTimeZone('America/Bogota'));
+        return $ahora->format('Y-m-d H:i:s');
     }
 }
-?>

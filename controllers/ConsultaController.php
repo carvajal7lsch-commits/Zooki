@@ -1,486 +1,285 @@
 <?php
-require_once '../config/Database.php';
-require_once '../models/Consulta.php';
-require_once '../models/Mascota.php';
-require_once '../models/Tratamiento.php';
-require_once '../models/Vacuna.php';
-require_once '../models/Desparasitacion.php';
-require_once '../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Consulta.php';
+require_once __DIR__ . '/../models/Mascota.php';
+require_once __DIR__ . '/../models/Vacuna.php';
+require_once __DIR__ . '/../models/Desparasitacion.php';
+require_once __DIR__ . '/../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../helpers/RespuestaJson.php';
 
-class ConsultaController {
-    private $db;
-    private $consultaModel;
-    private $mascotaModel;
-    private $tratamientoModel;
-    private $vacunaModel;
-    private $desparasitacionModel;
+/**
+ * C4: el controlador lee la petición y responde; los modelos aplican la
+ * clínica activa y la visibilidad de la historia (RN-112, RN-113).
+ */
+class ConsultaController
+{
+    private const CARPETA_ADJUNTOS = __DIR__ . '/../public/uploads/clinicos/';
+    private const TAMANO_MAXIMO_ADJUNTO = 10 * 1024 * 1024;
 
-    public function __construct() {
-        $database = new Database();
-        $this->db = $database->getConnection();
+    private PDO $db;
+    private Consulta $consultaModel;
+    private Mascota $mascotaModel;
+    private Vacuna $vacunaModel;
+    private Desparasitacion $desparasitacionModel;
+
+    /** @var callable(string, string): bool mueve un archivo subido; las pruebas lo reemplazan */
+    private $moverArchivo;
+    private string $carpetaAdjuntos;
+
+    /** $moverArchivo y $carpetaAdjuntos existen para las pruebas, que no escriben en public/uploads. */
+    public function __construct(?PDO $db = null, ?callable $moverArchivo = null, ?string $carpetaAdjuntos = null)
+    {
+        $this->db = $db ?? (new Database())->getConnection();
         $this->consultaModel = new Consulta($this->db);
         $this->mascotaModel = new Mascota($this->db);
-        $this->tratamientoModel = new Tratamiento($this->db);
         $this->vacunaModel = new Vacuna($this->db);
         $this->desparasitacionModel = new Desparasitacion($this->db);
+        $this->moverArchivo = $moverArchivo ?? 'move_uploaded_file';
+        $this->carpetaAdjuntos = rtrim($carpetaAdjuntos ?? self::CARPETA_ADJUNTOS, '/\\') . '/';
     }
 
-    // Listado global de consultas
-    public function listar() {
-        if (!isset($_SESSION['usuario_doc'])) {
-            header('Location: index.php?action=login');
-            exit;
+    /** HU-2.2: listado de consultas de la clínica activa. */
+    public function listar(): array
+    {
+        return $this->consultaModel->listarDeLaClinica();
+    }
+
+    /** HU-2.1, HU-2.2 y HU-2.6: registra la consulta con adjuntos y tratamientos, todo o nada. */
+    public function registrarAjax(): void
+    {
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            RespuestaJson::error(405, 'Método no permitido.');
+            return;
         }
-        return $this->consultaModel->findAll();
+
+        // RE-2.6.2: los adjuntos se revisan antes de escribir nada. Si alguno
+        // no sirve no se guarda la consulta y se dice cuál y por qué.
+        [$adjuntos, $rechazados] = $this->revisarAdjuntos();
+        if ($rechazados !== []) {
+            $mensaje = 'No se guardó la consulta porque hay adjuntos que no se pueden aceptar. Corrígelos y vuelve a enviarla.';
+            RespuestaJson::error(422, $mensaje, ['adjuntos_rechazados' => $rechazados]);
+            return;
+        }
+
+        $tratamientos = $this->tratamientosDelFormulario();
+        $movidos = [];
+        $guardarAdjunto = function (int $idConsulta, array $adjunto, int $indice) use (&$movidos): array {
+            return $this->guardarAdjunto($idConsulta, $adjunto, $indice, $movidos);
+        };
+
+        try {
+            $idConsulta = $this->consultaModel->registrar($_POST, $tratamientos, $adjuntos, $guardarAdjunto);
+        } catch (AccesoDenegado $e) {
+            $this->borrarArchivos($movidos);
+            throw $e;
+        } catch (InvalidArgumentException $e) {
+            $this->borrarArchivos($movidos);
+            RespuestaJson::error(422, $e->getMessage());
+            return;
+        } catch (Throwable $e) {
+            // RE-2.6.3: nunca se reporta éxito con datos parciales.
+            $this->borrarArchivos($movidos);
+            error_log('C4: error al registrar la consulta: ' . $e->getMessage());
+            RespuestaJson::error(500, 'No se pudo guardar la consulta. No se registró nada; revisa los datos e inténtalo de nuevo.');
+            return;
+        }
+
+        RespuestaJson::enviar([
+            'success' => true,
+            'id_consulta' => $idConsulta,
+            'adjuntos_guardados' => count($adjuntos),
+            'tratamientos_guardados' => count($tratamientos),
+            'message' => $this->resumenDelRegistro(count($adjuntos), count($tratamientos)),
+        ]);
     }
 
     /**
-     * HU-06 / RN-204 — Revisa los adjuntos ANTES de tocar la base de datos.
-     *
-     * Devuelve [aceptados, rechazados]. Los rechazados llevan el nombre del
-     * archivo y el motivo, uno por uno, porque es lo que pide HU-34: el
-     * veterinario tiene que enterarse de que una radiografía no entró.
-     *
-     * Se valida antes de abrir la transacción a propósito: si un adjunto no
-     * sirve, no se guarda nada y el veterinario corrige y reintenta con la
-     * consulta completa, en vez de descubrir semanas después que la evidencia
-     * no está.
+     * HU-2.5 y HU-2.10: historial de la mascota según lo que la clínica
+     * activa puede ver. Una mascota no vinculada da 403 auditado.
      */
-    private function revisarAdjuntos(): array {
+    public function listarHistorialAjax(): void
+    {
+        $idMascota = ValidadorClinico::id($_GET['id_mascota'] ?? null);
+        if ($idMascota === null) {
+            RespuestaJson::error(422, 'Mascota no válida.');
+            return;
+        }
+
+        try {
+            $respuesta = [
+                'success' => true,
+                'mascota' => $this->mascotaModel->getById($idMascota),
+                'consultas' => $this->consultaModel->historialDeMascota($idMascota),
+                'vacunas' => $this->vacunaModel->findByMascota($idMascota),
+                'desparasitaciones' => $this->desparasitacionModel->findByMascota($idMascota),
+            ];
+        } catch (AccesoDenegado $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            error_log('C4: error al cargar el historial clínico: ' . $e->getMessage());
+            RespuestaJson::error(500, 'No se pudo cargar el historial.');
+            return;
+        }
+
+        RespuestaJson::enviar($respuesta);
+    }
+
+    /**
+     * RE-2.3.1: revisa los adjuntos antes de tocar la base. Devuelve
+     * [aceptados, rechazados]; los rechazados llevan el archivo y el motivo.
+     * El tipo sale del contenido, no del nombre ni del Content-Type.
+     */
+    private function revisarAdjuntos(): array
+    {
         $aceptados = [];
         $rechazados = [];
 
-        if (!isset($_FILES['archivos']) || !is_array($_FILES['archivos']['name'] ?? null)) {
+        $archivos = $_FILES['archivos'] ?? null;
+        if (!is_array($archivos) || !is_array($archivos['name'] ?? null)) {
             return [$aceptados, $rechazados];
         }
 
-        $motivosSubida = [
-            UPLOAD_ERR_INI_SIZE   => 'supera el tamaño máximo que admite el servidor',
-            UPLOAD_ERR_FORM_SIZE  => 'supera el tamaño máximo permitido',
-            UPLOAD_ERR_PARTIAL    => 'se subió incompleto',
+        $motivosDeSubida = [
+            UPLOAD_ERR_INI_SIZE => 'supera el tamaño máximo que admite el servidor',
+            UPLOAD_ERR_FORM_SIZE => 'supera el tamaño máximo permitido',
+            UPLOAD_ERR_PARTIAL => 'se subió incompleto',
             UPLOAD_ERR_NO_TMP_DIR => 'no se pudo guardar: falta la carpeta temporal del servidor',
             UPLOAD_ERR_CANT_WRITE => 'no se pudo escribir en el disco del servidor',
-            UPLOAD_ERR_EXTENSION  => 'fue bloqueado por una extensión del servidor',
+            UPLOAD_ERR_EXTENSION => 'fue bloqueado por una extensión del servidor',
         ];
 
-        // El tipo sale del contenido real, no de la extensión del nombre ni del
-        // Content-Type, que los controla por completo quien sube el archivo.
-        $imagenes = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png'];
-
-        $total = count($_FILES['archivos']['name']);
+        $total = count($archivos['name']);
         for ($i = 0; $i < $total; $i++) {
-            $nombre = $_FILES['archivos']['name'][$i];
-            $error  = $_FILES['archivos']['error'][$i];
+            $nombre = (string) $archivos['name'][$i];
+            $error = (int) $archivos['error'][$i];
 
-            if ($error === UPLOAD_ERR_NO_FILE) continue;
-
+            if ($error === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
             if ($error !== UPLOAD_ERR_OK) {
-                $rechazados[] = ['archivo' => $nombre, 'motivo' => $motivosSubida[$error] ?? 'no se pudo subir'];
+                $rechazados[] = ['archivo' => $nombre, 'motivo' => $motivosDeSubida[$error] ?? 'no se pudo subir'];
                 continue;
             }
 
-            $tmp = $_FILES['archivos']['tmp_name'][$i];
-            $tam = (int) $_FILES['archivos']['size'][$i];
-
-            if ($tam <= 0) {
+            $temporal = $archivos['tmp_name'][$i];
+            $tamano = (int) $archivos['size'][$i];
+            if ($tamano <= 0) {
                 $rechazados[] = ['archivo' => $nombre, 'motivo' => 'está vacío'];
                 continue;
             }
-            if ($tam > 10 * 1024 * 1024) {
+            if ($tamano > self::TAMANO_MAXIMO_ADJUNTO) {
                 $rechazados[] = ['archivo' => $nombre, 'motivo' => 'supera los 10 MB permitidos'];
                 continue;
             }
 
-            $ext = null;
-            $info = @getimagesize($tmp);
-            if ($info !== false && isset($imagenes[$info[2]])) {
-                $ext = $imagenes[$info[2]];
-            } elseif (@file_get_contents($tmp, false, null, 0, 5) === '%PDF-') {
-                $ext = 'pdf';
-            }
-
-            if ($ext === null) {
+            $extension = $this->extensionPorContenido($temporal);
+            if ($extension === null) {
                 $rechazados[] = ['archivo' => $nombre, 'motivo' => 'no es un JPG, PNG ni PDF válido'];
                 continue;
             }
 
             $aceptados[] = [
                 'nombre_original' => mb_substr($nombre, 0, 255),
-                'tmp' => $tmp,
-                'tam' => $tam,
-                'ext' => $ext,
+                'temporal' => $temporal,
+                'tamano' => $tamano,
+                'extension' => $extension,
             ];
         }
 
         return [$aceptados, $rechazados];
     }
 
+    private function extensionPorContenido(string $temporal): ?string
+    {
+        $imagenes = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png'];
+        $imagen = @getimagesize($temporal);
+        if ($imagen !== false && isset($imagenes[$imagen[2]])) {
+            return $imagenes[$imagen[2]];
+        }
+        if (@file_get_contents($temporal, false, null, 0, 5) === '%PDF-') {
+            return 'pdf';
+        }
+        return null;
+    }
+
     /**
-     * HU-07 — Tratamientos prescritos en la consulta.
-     *
-     * M2-08: los campos se leían con `$_POST['med_dosis'][$index]` sin
-     * comprobar que existieran, así que un envío con los arreglos
-     * desalineados generaba avisos de PHP y guardaba tratamientos a medias.
+     * Mueve un adjunto aceptado a la carpeta protegida y devuelve sus
+     * metadatos. El nombre lleva una parte aleatoria para no ser adivinable;
+     * la descarga va siempre por ver_archivo.php (RE-2.3.2).
      */
-    private function revisarTratamientos(?string &$error): array {
-        $error = null;
-        $tratamientos = [];
-
-        $medicamentos = $_POST['med_nombre'] ?? null;
-        if (!is_array($medicamentos)) return $tratamientos;
-
-        foreach ($medicamentos as $i => $medicamento) {
-            $medicamento = trim((string) $medicamento);
-            if ($medicamento === '') continue;
-
-            $dosis    = trim((string) ($_POST['med_dosis'][$i] ?? ''));
-            $via      = trim((string) ($_POST['med_via'][$i] ?? ''));
-            $duracion = trim((string) ($_POST['med_duracion'][$i] ?? ''));
-
-            if ($dosis === '' || $via === '' || $duracion === '') {
-                $error = sprintf(
-                    'El tratamiento "%s" necesita dosis, vía de administración y duración.',
-                    $medicamento
-                );
-                return [];
-            }
-
-            $tratamientos[] = [
-                'medicamento' => mb_substr($medicamento, 0, 150),
-                'dosis' => mb_substr($dosis, 0, 100),
-                'via_administracion' => mb_substr($via, 0, 50),
-                'duracion' => mb_substr($duracion, 0, 100),
-                'observaciones' => mb_substr(trim((string) ($_POST['med_obs'][$i] ?? '')), 0, 500),
-            ];
+    private function guardarAdjunto(int $idConsulta, array $adjunto, int $indice, array &$movidos): array
+    {
+        $carpeta = $this->carpetaAdjuntos;
+        if (!is_dir($carpeta) && !mkdir($carpeta, 0755, true) && !is_dir($carpeta)) {
+            throw new RuntimeException('No se pudo preparar la carpeta de adjuntos.');
         }
 
+        $nombreServidor = sprintf('CLI_%d_%s_%d.%s', $idConsulta, bin2hex(random_bytes(8)), $indice, $adjunto['extension']);
+        $destino = $carpeta . $nombreServidor;
+        if (!($this->moverArchivo)($adjunto['temporal'], $destino)) {
+            throw new RuntimeException('No se pudo guardar el adjunto ' . $adjunto['nombre_original']);
+        }
+        $movidos[] = $destino;
+
+        $tipos = ['pdf' => 'application/pdf', 'png' => 'image/png', 'jpg' => 'image/jpeg'];
+        return [
+            'nombre_original' => $adjunto['nombre_original'],
+            'nombre_servidor' => $nombreServidor,
+            'ruta_archivo' => 'uploads/clinicos/' . $nombreServidor,
+            'tipo_archivo' => $tipos[$adjunto['extension']],
+            'extension' => $adjunto['extension'],
+            'tamano_bytes' => $adjunto['tamano'],
+            'descripcion' => 'Adjunto de consulta',
+        ];
+    }
+
+    /** El disco no participa del rollback: lo movido se borra a mano. */
+    private function borrarArchivos(array $rutas): void
+    {
+        foreach ($rutas as $ruta) {
+            if (is_file($ruta)) {
+                @unlink($ruta);
+            }
+        }
+    }
+
+    /**
+     * HU-2.4: filas de medicamentos del formulario. Una fila sin medicamento
+     * se ignora; las demás las valida Tratamiento::validar (con fecha_inicio).
+     */
+    private function tratamientosDelFormulario(): array
+    {
+        $medicamentos = $_POST['med_nombre'] ?? null;
+        if (!is_array($medicamentos)) {
+            return [];
+        }
+
+        $tratamientos = [];
+        foreach ($medicamentos as $i => $medicamento) {
+            if (trim((string) $medicamento) === '') {
+                continue;
+            }
+            $tratamientos[] = [
+                'medicamento' => (string) $medicamento,
+                'dosis' => $_POST['med_dosis'][$i] ?? null,
+                'via_administracion' => $_POST['med_via'][$i] ?? null,
+                'duracion' => $_POST['med_duracion'][$i] ?? null,
+                'fecha_inicio' => $_POST['med_inicio'][$i] ?? null,
+                'observaciones' => $_POST['med_obs'][$i] ?? null,
+            ];
+        }
         return $tratamientos;
     }
 
-    // Registrar nueva consulta vía AJAX
-    public function registrarAjax() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
-
-        header('Content-Type: application/json');
-
-        // Validar si la sesión está activa (Evita el Fatal Error que rompe el JSON)
-        if (!isset($_SESSION['usuario_doc'])) {
-            echo json_encode(['success' => false, 'message' => 'Tu sesión ha expirado. Por favor, recarga la página e inicia sesión nuevamente.']);
-            exit;
-        }
-
-        // HU-35: la mascota debe existir y estar activa antes de colgarle
-        // nada. Sin esto, un id_mascota inventado creaba una consulta
-        // huerfana o reventaba contra la llave foranea.
-        $idMascota = ValidadorClinico::id($_POST['id_mascota'] ?? null);
-        if ($idMascota === null || $this->mascotaModel->getPropietarioSiActiva($idMascota) === null) {
-            echo json_encode(['success' => false, 'message' => 'La mascota indicada no existe o está inactiva']);
-            exit;
-        }
-
-        // RN-202: una consulta no se guarda sin diagnóstico.
-        $diagnostico = ValidadorClinico::textoRequerido($_POST['diagnostico'] ?? null, 5000);
-        if ($diagnostico === null) {
-            echo json_encode(['success' => false, 'message' => 'El diagnóstico es obligatorio']);
-            exit;
-        }
-
-        // HU-05 / HU-56: el motivo también es obligatorio. Los dos formularios
-        // (atención por cita y atención sin cita) ya lo pedían, pero el
-        // servidor aceptaba la consulta sin él.
-        if (ValidadorClinico::textoOpcional($_POST['motivo'] ?? null, 5000) === '') {
-            echo json_encode(['success' => false, 'message' => 'El motivo de la consulta es obligatorio']);
-            exit;
-        }
-
-        // RN-203: la cita es opcional, pero si viene debe ser de ESTA
-        // mascota; si no, la consulta quedaría atada a la cita de otra.
-        // RN-406 / RN-407: además tiene que ser del veterinario en sesión y
-        // estar en curso, porque guardar la consulta es lo que la completa.
-        $idCita = null;
-        if (!empty($_POST['id_cita'])) {
-            $idCita = ValidadorClinico::id($_POST['id_cita']);
-            $cita = $idCita === null ? null : $this->citaDeLaMascota($idCita, $idMascota);
-            if ($cita === null) {
-                echo json_encode(['success' => false, 'message' => 'La cita indicada no corresponde a esta mascota']);
-                exit;
-            }
-            if ($cita['doc_veterinario'] !== $_SESSION['usuario_doc']) {
-                echo json_encode(['success' => false, 'message' => 'Solo el veterinario asignado puede registrar la consulta de esta cita.']);
-                exit;
-            }
-            // RN-409: una atención que quedó sin cerrar también se documenta.
-            if (!in_array($cita['estado'], ['en_curso', 'sin_cerrar'], true)) {
-                echo json_encode(['success' => false, 'message' => 'La atención de esta cita no está en curso. Iníciala desde el calendario.']);
-                exit;
-            }
-        }
-
-        // Signos vitales: se aceptan solo dentro de rangos plausibles. Un
-        // valor fuera de rango es un error de digitación, y guardarlo
-        // ensucia la historia clínica de forma permanente (RN-206).
-        $signos = [
-            'peso' => [$_POST['peso'] ?? null, ValidadorClinico::PESO_MIN, ValidadorClinico::PESO_MAX, 'El peso debe estar entre 0.01 y 200 kg'],
-            'temperatura' => [$_POST['temperatura'] ?? null, ValidadorClinico::TEMP_MIN, ValidadorClinico::TEMP_MAX, 'La temperatura debe estar entre 25 y 45 °C'],
-        ];
-        $valores = [];
-        foreach ($signos as $campo => [$crudo, $min, $max, $mensaje]) {
-            if ($crudo === null || $crudo === '') { $valores[$campo] = null; continue; }
-            $valores[$campo] = ValidadorClinico::decimal($crudo, $min, $max);
-            if ($valores[$campo] === null) {
-                echo json_encode(['success' => false, 'message' => $mensaje]);
-                exit;
-            }
-        }
-
-        $frecuencia = null;
-        if (!empty($_POST['frecuencia_cardiaca'])) {
-            $frecuencia = ValidadorClinico::entero($_POST['frecuencia_cardiaca'], ValidadorClinico::FC_MIN, ValidadorClinico::FC_MAX);
-            if ($frecuencia === null) {
-                echo json_encode(['success' => false, 'message' => 'La frecuencia cardíaca debe estar entre 10 y 400 lpm']);
-                exit;
-            }
-        }
-
-        $frecuenciaRespiratoria = null;
-        if (!empty($_POST['frecuencia_respiratoria'])) {
-            $frecuenciaRespiratoria = ValidadorClinico::entero($_POST['frecuencia_respiratoria'], ValidadorClinico::FR_MIN, ValidadorClinico::FR_MAX);
-            if ($frecuenciaRespiratoria === null) {
-                echo json_encode(['success' => false, 'message' => 'La frecuencia respiratoria debe estar entre 5 y 150 rpm']);
-                exit;
-            }
-        }
-
-        // Una cita genera una sola consulta (id_cita es UNIQUE): se avisa con
-        // un mensaje claro en vez de dejar que la base rechace el INSERT.
-        if ($idCita !== null && $this->consultaModel->findByCita($idCita)) {
-            echo json_encode(['success' => false, 'message' => 'Esta cita ya tiene una consulta registrada.']);
-            exit;
-        }
-
-        $tratamientos = $this->revisarTratamientos($errorTratamiento);
-        if ($errorTratamiento !== null) {
-            echo json_encode(['success' => false, 'message' => $errorTratamiento]);
-            exit;
-        }
-
-        // HU-34 — Los adjuntos se revisan ANTES de escribir nada. Si alguno no
-        // sirve se rechaza la consulta entera y se dice cuál y por qué: antes
-        // se descartaban en silencio dentro del bucle y la respuesta seguía
-        // diciendo "registrada correctamente con sus adjuntos", aunque no
-        // hubiera entrado ninguno. Perder una radiografía sin enterarse es
-        // peor que tener que reintentar.
-        [$adjuntos, $rechazados] = $this->revisarAdjuntos();
-        if (!empty($rechazados)) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'No se guardó la consulta porque hay adjuntos que no se pueden aceptar. Corrígelos y vuelve a enviarla.',
-                'adjuntos_rechazados' => $rechazados,
-            ]);
-            exit;
-        }
-
-        $data = [
-            'id_mascota' => $idMascota,
-            'id_cita' => $idCita,
-            'doc_veterinario' => $_SESSION['usuario_doc'],
-            'motivo_consulta' => ValidadorClinico::textoOpcional($_POST['motivo'] ?? null, 5000),
-            'anamnesis' => ValidadorClinico::textoOpcional($_POST['anamnesis'] ?? null, 5000),
-            'peso' => $valores['peso'],
-            'temperatura' => $valores['temperatura'],
-            'frecuencia_cardiaca' => $frecuencia,
-            'frecuencia_respiratoria' => $frecuenciaRespiratoria,
-            'diagnostico' => $diagnostico,
-            'plan_tratamiento' => ValidadorClinico::textoOpcional($_POST['plan_tratamiento'] ?? null, 5000),
-            'observaciones' => ValidadorClinico::textoOpcional($_POST['observaciones'] ?? null, 5000)
-        ];
-
-        // HU-34 — Consulta, número de historia clínica, archivos y tratamientos
-        // en una sola transacción. Antes eran cuatro escrituras sueltas: si
-        // fallaba la última, la consulta quedaba guardada a medias y el
-        // veterinario recibía un mensaje de éxito igualmente.
-        $movidos = [];
-        $this->db->beginTransaction();
-
-        try {
-            $idConsulta = $this->consultaModel->insert($data);
-            if (!$idConsulta) {
-                throw new RuntimeException('No se pudo insertar la consulta.');
-            }
-
-            // RN-102 / HU-05: el número de historia clínica se asigna en la
-            // primera consulta y no se reutiliza.
-            $mascota = $this->mascotaModel->getById($idMascota);
-            if (empty($mascota['numero_historia_clinica'])) {
-                $this->mascotaModel->actualizarHC($idMascota, 'HC-' . $idMascota . '-' . date('Y'));
-            }
-
-            $destino = __DIR__ . '/../public/uploads/clinicos/';
-            if (!is_dir($destino) && !mkdir($destino, 0755, true) && !is_dir($destino)) {
-                throw new RuntimeException('No se pudo preparar la carpeta de adjuntos.');
-            }
-
-            foreach ($adjuntos as $i => $adjunto) {
-                $nombreServidor = sprintf(
-                    'CLI_%d_%d_%s_%d.%s',
-                    $idConsulta,
-                    time(),
-                    bin2hex(random_bytes(4)),
-                    $i,
-                    $adjunto['ext']
-                );
-
-                if (!move_uploaded_file($adjunto['tmp'], $destino . $nombreServidor)) {
-                    throw new RuntimeException('No se pudo guardar el adjunto ' . $adjunto['nombre_original']);
-                }
-                $movidos[] = $destino . $nombreServidor;
-
-                $guardado = $this->consultaModel->saveArchivo([
-                    'id_consulta' => $idConsulta,
-                    'nombre_original' => $adjunto['nombre_original'],
-                    'nombre_servidor' => $nombreServidor,
-                    // La ruta se guarda por compatibilidad con los registros
-                    // antiguos, pero la descarga va siempre por ver_archivo.php,
-                    // que es quien comprueba el permiso (M2-05).
-                    'ruta_archivo' => 'uploads/clinicos/' . $nombreServidor,
-                    'tipo_archivo' => $adjunto['ext'] === 'pdf' ? 'application/pdf' : 'image/' . ($adjunto['ext'] === 'png' ? 'png' : 'jpeg'),
-                    'extension' => $adjunto['ext'],
-                    'tamano_bytes' => $adjunto['tam'],
-                    'descripcion' => 'Adjunto de consulta'
-                ]);
-
-                if (!$guardado) {
-                    throw new RuntimeException('No se pudo registrar el adjunto ' . $adjunto['nombre_original']);
-                }
-            }
-
-            foreach ($tratamientos as $tratamiento) {
-                if (!$this->tratamientoModel->insert($tratamiento + ['id_consulta' => $idConsulta])) {
-                    throw new RuntimeException('No se pudo registrar el tratamiento ' . $tratamiento['medicamento']);
-                }
-            }
-
-            // RN-406: la consulta de una cita es lo que la completa, y va en la
-            // misma transacción. Antes eran dos peticiones: si fallaba la
-            // segunda, la consulta quedaba guardada y la cita seguía en curso.
-            if ($idCita !== null) {
-                require_once __DIR__ . '/../models/Cita.php';
-                $ahora = (new DateTimeImmutable('now', new DateTimeZone('America/Bogota')))->format('Y-m-d H:i:s');
-                if (!(new Cita($this->db))->completarAtencion($idCita, $ahora)) {
-                    throw new RuntimeException('La cita ' . $idCita . ' dejó de estar en curso antes de guardar la consulta.');
-                }
-            }
-
-            $this->db->commit();
-        } catch (Throwable $e) {
-            $this->db->rollBack();
-
-            // Los archivos ya movidos se borran a mano: el sistema de archivos
-            // no participa del rollback de la base de datos.
-            foreach ($movidos as $ruta) {
-                if (is_file($ruta)) @unlink($ruta);
-            }
-
-            error_log('Error al registrar consulta: ' . $e->getMessage());
-            echo json_encode([
-                'success' => false,
-                'message' => 'No se pudo guardar la consulta. No se registró nada; revisa los datos e inténtalo de nuevo.',
-            ]);
-            exit;
-        }
-
+    private function resumenDelRegistro(int $adjuntos, int $tratamientos): string
+    {
         $resumen = 'Consulta registrada correctamente';
-        if (!empty($adjuntos)) {
-            $resumen .= sprintf(' con %d adjunto%s', count($adjuntos), count($adjuntos) === 1 ? '' : 's');
+        if ($adjuntos > 0) {
+            $resumen .= sprintf(' con %d adjunto%s', $adjuntos, $adjuntos === 1 ? '' : 's');
         }
-        if (!empty($tratamientos)) {
-            $resumen .= sprintf(' y %d tratamiento%s', count($tratamientos), count($tratamientos) === 1 ? '' : 's');
+        if ($tratamientos > 0) {
+            $resumen .= sprintf(' y %d tratamiento%s', $tratamientos, $tratamientos === 1 ? '' : 's');
         }
-
-        echo json_encode([
-            'success' => true,
-            'id_consulta' => $idConsulta,
-            'adjuntos_guardados' => count($adjuntos),
-            'tratamientos_guardados' => count($tratamientos),
-            'message' => $resumen . '.',
-        ]);
-        exit;
-    }
-
-    /**
-     * HU-08 — Historial clínico completo de una mascota.
-     *
-     * M2-09: sin el parámetro no se emitía ningún cuerpo y el `.json()` del
-     * navegador reventaba sobre una respuesta vacía; con un id inexistente
-     * devolvía `mascota: null` y la vista fallaba al leer sus campos.
-     *
-     * M2-10: los adjuntos y los tratamientos se pedían consulta por consulta.
-     * Con 100 consultas eran 201 viajes a la base de datos, y el criterio pide
-     * cargar en menos de 3 segundos justo para ese tamaño. Ahora son 5
-     * consultas fijas, independientemente del tamaño del historial.
-     */
-    public function listarHistorialAjax() {
-        header('Content-Type: application/json');
-
-        $id = $_GET['id_mascota'] ?? null;
-        if (!ctype_digit((string) $id) || (int) $id <= 0) {
-            echo json_encode(['success' => false, 'message' => 'Mascota no válida.']);
-            exit;
-        }
-        $id = (int) $id;
-
-        try {
-            $mascota = $this->mascotaModel->getById($id);
-            if (!$mascota) {
-                echo json_encode(['success' => false, 'message' => 'La mascota no existe.']);
-                exit;
-            }
-
-            // RN-206: orden cronológico inverso, el más reciente primero.
-            $historial = $this->consultaModel->findByMascota($id);
-
-            $ids = array_column($historial, 'id_consulta');
-            $archivosPorConsulta = $this->consultaModel->getArchivosDeConsultas($ids);
-            $tratamientosPorConsulta = $this->tratamientoModel->findByConsultas($ids);
-
-            foreach ($historial as &$c) {
-                $idc = (int) $c['id_consulta'];
-                $c['archivos'] = $archivosPorConsulta[$idc] ?? [];
-                $c['tratamientos'] = $tratamientosPorConsulta[$idc] ?? [];
-            }
-            unset($c);
-
-            echo json_encode([
-                'success' => true,
-                'mascota' => $mascota,
-                'consultas' => $historial,
-                'vacunas' => $this->vacunaModel->findByMascota($id),
-                'desparasitaciones' => $this->desparasitacionModel->findByMascota($id)
-            ]);
-            exit;
-        } catch (Throwable $e) {
-            error_log('Error al cargar el historial clínico: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'No se pudo cargar el historial.']);
-            exit;
-        }
-    }
-    /**
-     * HU-35 / RN-203: la cita que origina la consulta tiene que ser de la
-     * misma mascota. Sin esta comprobación se podía adjuntar una consulta a
-     * la cita de otro paciente pasando un id_cita cualquiera.
-     *
-     * Devuelve la cita (veterinario y estado, que registrarAjax también
-     * revisa) o null si no existe o es de otra mascota.
-     */
-    private function citaDeLaMascota($idCita, $idMascota) {
-        $stmt = $this->db->prepare(
-            "SELECT id_cita, doc_veterinario, estado FROM citas WHERE id_cita = :cita AND id_mascota = :mascota"
-        );
-        $stmt->bindValue(':cita', (int) $idCita, PDO::PARAM_INT);
-        $stmt->bindValue(':mascota', (int) $idMascota, PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        return $resumen . '.';
     }
 }
-?>

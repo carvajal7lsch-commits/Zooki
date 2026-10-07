@@ -549,7 +549,7 @@
 
 .atencion .treatment-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
     gap: 0.6rem;
     align-items: end;
     padding: 0.7rem;

@@ -1,182 +1,87 @@
 <?php
-require_once '../config/Database.php';
-require_once '../models/Vacuna.php';
-require_once '../models/Mascota.php';
-require_once '../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Vacuna.php';
+require_once __DIR__ . '/../models/Mascota.php';
+require_once __DIR__ . '/../models/CatalogoClinica.php';
+require_once __DIR__ . '/../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../helpers/RespuestaJson.php';
 
-class VacunaController {
-    private $db;
-    private $vacunaModel;
-    private $mascotaModel;
+/** C4: vacunas en la clínica activa (HU-3.1, RN-112, RN-207). */
+class VacunaController
+{
+    private PDO $db;
+    private Vacuna $vacunaModel;
+    private Mascota $mascotaModel;
+    private CatalogoClinica $catalogo;
 
-    public function __construct() {
-        $database = new Database();
-        $this->db = $database->getConnection();
+    public function __construct(?PDO $db = null)
+    {
+        $this->db = $db ?? (new Database())->getConnection();
         $this->vacunaModel = new Vacuna($this->db);
         $this->mascotaModel = new Mascota($this->db);
+        $this->catalogo = new CatalogoClinica($this->db);
     }
 
-    public function registrarAjax() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            header('Content-Type: application/json');
+    public function registrarAjax(): void
+    {
+        RespuestaJson::modificacion(function () {
+            $idVacuna = $this->vacunaModel->registrar($_POST);
+            return ['id_vacuna' => $idVacuna, 'message' => 'Vacuna registrada con éxito.'];
+        }, 'C4 vacunas');
+    }
 
-            // HU-35: la mascota debe existir y estar activa. Antes se insertaba
-            // lo que llegara en $_POST sin comprobar absolutamente nada.
+    /** Vacunas del catálogo de la clínica para la especie de la mascota. */
+    public function getVacunasPorEspecieAjax(): void
+    {
+        $idMascota = ValidadorClinico::id($_GET['id_mascota'] ?? null);
+        if ($idMascota === null) {
+            RespuestaJson::error(422, 'Mascota no válida.');
+            return;
+        }
+
+        $mascota = $this->mascotaModel->getById($idMascota);
+        $vacunas = $this->vacunaModel->getVacunasPorEspecie((int) $mascota['id_especie']);
+        RespuestaJson::enviar(['success' => true, 'vacunas' => $vacunas]);
+    }
+
+    /** «Otra vacuna»: se agrega al catálogo de la clínica activa, para la especie de la mascota. */
+    public function registrarNuevaVacunaAjax(): void
+    {
+        RespuestaJson::modificacion(function () {
             $idMascota = ValidadorClinico::id($_POST['id_mascota'] ?? null);
-            if ($idMascota === null || $this->mascotaModel->getPropietarioSiActiva($idMascota) === null) {
-                echo json_encode(['success' => false, 'message' => 'La mascota indicada no existe o está inactiva']);
-                exit;
+            if ($idMascota === null) {
+                throw new InvalidArgumentException('Mascota no válida.');
             }
+            $mascota = $this->mascotaModel->getById($idMascota);
 
-            $nombreVacuna = ValidadorClinico::textoRequerido($_POST['nombre_vacuna'] ?? null, 150);
-            if ($nombreVacuna === null) {
-                echo json_encode(['success' => false, 'message' => 'El nombre de la vacuna es obligatorio']);
-                exit;
-            }
+            $nombre = trim((string) ($_POST['nombre_vacuna'] ?? ''));
+            $descripcion = trim((string) ($_POST['descripcion'] ?? ''));
+            $idEspecie = (int) $mascota['id_especie'];
+            $idVacunaBase = $this->catalogo->agregarVacuna($nombre, $descripcion === '' ? null : $descripcion, $idEspecie);
 
-            // No se puede aplicar una vacuna en el futuro.
-            $fechaAplicacion = ValidadorClinico::fechaNoFutura($_POST['fecha_aplicacion'] ?? null);
-            if ($fechaAplicacion === null) {
-                echo json_encode(['success' => false, 'message' => 'La fecha de aplicación no es válida o está en el futuro']);
-                exit;
-            }
-
-            // La próxima dosis sí es futura, pero nunca anterior a la aplicación.
-            $fechaProxima = null;
-            if (!empty($_POST['fecha_proxima'])) {
-                $fechaProxima = ValidadorClinico::fecha($_POST['fecha_proxima']);
-                if ($fechaProxima === null || $fechaProxima < $fechaAplicacion) {
-                    echo json_encode(['success' => false, 'message' => 'La fecha de próxima dosis no es válida o es anterior a la aplicación']);
-                    exit;
-                }
-            }
-
-            $data = [
-                'id_mascota' => $idMascota,
-                'nombre_vacuna' => $nombreVacuna,
-                'laboratorio' => ValidadorClinico::textoOpcional($_POST['laboratorio'] ?? null, 150),
-                'lote' => ValidadorClinico::textoOpcional($_POST['lote'] ?? null, 100),
-                'fecha_aplicacion' => $fechaAplicacion,
-                'fecha_proxima_dosis' => $fechaProxima,
-                'observaciones' => ValidadorClinico::textoOpcional($_POST['observaciones'] ?? null, 5000)
+            return [
+                'message' => 'Vacuna agregada al catálogo de la clínica.',
+                'id_vacuna_base' => $idVacunaBase,
+                'nombre_vacuna' => $nombre,
             ];
-
-            if ($this->vacunaModel->insert($data)) {
-                echo json_encode(['success' => true, 'message' => 'Vacuna registrada con éxito']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Error al registrar la vacuna']);
-            }
-            exit;
-        }
+        }, 'C4 vacunas');
     }
 
-    public function getVacunasPorEspecieAjax() {
-        if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id_mascota'])) {
-            // Obtener la especie de la mascota
-            $query = "SELECT id_especie FROM mascotas WHERE id_mascota = :id";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id', $_GET['id_mascota']);
-            $stmt->execute();
-            $mascota = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($mascota) {
-                $vacunas = $this->vacunaModel->getVacunasPorEspecie($mascota['id_especie']);
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'vacunas' => $vacunas]);
-            } else {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Mascota no encontrada']);
-            }
-            exit;
-        }
+    public function registrarNuevoLaboratorioAjax(): void
+    {
+        RespuestaJson::modificacion(function () {
+            $nombre = trim((string) ($_POST['nombre_laboratorio'] ?? ''));
+            $idLaboratorio = $this->catalogo->agregarLaboratorio($nombre);
+            return [
+                'message' => 'Laboratorio agregado al catálogo de la clínica.',
+                'id_laboratorio' => $idLaboratorio,
+                'nombre_laboratorio' => $nombre,
+            ];
+        }, 'C4 vacunas');
     }
 
-    public function registrarNuevaVacunaAjax() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nombre_vacuna = trim($_POST['nombre_vacuna']);
-            $id_mascota = $_POST['id_mascota'];
-            $descripcion = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : null;
-
-            if (empty($nombre_vacuna)) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'El nombre de la vacuna es requerido']);
-                exit;
-            }
-
-            // Obtener la especie de la mascota
-            $query = "SELECT id_especie FROM mascotas WHERE id_mascota = :id";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id', $id_mascota);
-            $stmt->execute();
-            $mascota = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$mascota) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Mascota no encontrada']);
-                exit;
-            }
-
-            // Insertar nueva vacuna
-            $id_vacuna_base = $this->vacunaModel->insertarNuevaVacuna($nombre_vacuna, $descripcion);
-
-            if ($id_vacuna_base) {
-                // Relacionar con la especie
-                if ($this->vacunaModel->relacionarVacunaConEspecie($id_vacuna_base, $mascota['id_especie'])) {
-                    header('Content-Type: application/json');
-                    echo json_encode([
-                        'success' => true,
-                        'message' => 'Vacuna registrada exitosamente',
-                        'id_vacuna_base' => $id_vacuna_base,
-                        'nombre_vacuna' => $nombre_vacuna
-                    ]);
-                } else {
-                    header('Content-Type: application/json');
-                    echo json_encode(['success' => false, 'message' => 'Error al relacionar vacuna con especie']);
-                }
-            } else {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Error al registrar la vacuna']);
-            }
-            exit;
-        }
+    public function getLaboratoriosAjax(): void
+    {
+        RespuestaJson::enviar(['success' => true, 'laboratorios' => $this->catalogo->laboratorios()]);
     }
-
-    public function registrarNuevoLaboratorioAjax() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nombre_laboratorio = trim($_POST['nombre_laboratorio']);
-
-            if (empty($nombre_laboratorio)) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'El nombre del laboratorio es requerido']);
-                exit;
-            }
-
-            // Insertar nuevo laboratorio
-            $id_laboratorio = $this->vacunaModel->insertarNuevoLaboratorio($nombre_laboratorio);
-
-            if ($id_laboratorio) {
-                header('Content-Type: application/json');
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Laboratorio registrado exitosamente',
-                    'id_laboratorio' => $id_laboratorio,
-                    'nombre_laboratorio' => $nombre_laboratorio
-                ]);
-            } else {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Error al registrar el laboratorio']);
-            }
-            exit;
-        }
-    }
-
-    public function getLaboratoriosAjax() {
-        $laboratorios = (new Vacuna($this->db))->getLaboratorios();
-
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'laboratorios' => $laboratorios]);
-        exit;
-    }
-
 }
-?>

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../helpers/Contexto.php';
 require_once __DIR__ . '/../helpers/AccesoDenegado.php';
+require_once __DIR__ . '/Auditoria.php';
 
 /** RNF-11: resolver el alcance en los modelos y fallar cerrado sin contexto. */
 abstract class ModeloClinica
@@ -14,5 +15,19 @@ abstract class ModeloClinica
             throw new AccesoDenegado(403, 'Selecciona un contexto de clínica.');
         }
         return $id;
+    }
+
+    /**
+     * RE-T.15.2: deja el intento en auditoría y responde 403 sin distinguir
+     * «no existe» de «es de otra clínica», para no confirmar ids ajenos.
+     *
+     * Dentro de una transacción la auditoría se deshace con ella: quien
+     * llama vuelve a auditar después del rollback.
+     */
+    protected function denegarAcceso(string $tabla, $idRegistro, string $motivo): never
+    {
+        $auditoria = new Auditoria($this->conn);
+        $auditoria->log(Contexto::idUsuario(), 'OTHER', $tabla, $idRegistro, null, null, $motivo);
+        throw new AccesoDenegado(403, 'No tienes acceso a este registro clínico.');
     }
 }

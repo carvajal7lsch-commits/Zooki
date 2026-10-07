@@ -1098,15 +1098,25 @@ async function saveConsultation(e) {
     }
 }
 
+/** Fecha de hoy en el formato de <input type="date">, en la hora local del navegador. */
+function fechaDeHoy() {
+    const hoy = new Date();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    return `${hoy.getFullYear()}-${mes}-${dia}`;
+}
+
 function addTreatmentRow() {
     const list = document.getElementById('treatmentsList');
     const row = document.createElement('div');
     row.className = 'treatment-row';
+    // RE-2.4.1: cada tratamiento lleva su fecha de inicio (obligatoria en el servidor).
     row.innerHTML = `
         <div class="input-group"><label>Medicamento</label><input type="text" name="med_nombre[]" required></div>
         <div class="input-group"><label>Dosis</label><input type="text" name="med_dosis[]" required></div>
         <div class="input-group"><label>Vía</label><select name="med_via[]"><option value="Oral">Oral</option><option value="Subcutánea">Subcutánea</option></select></div>
         <div class="input-group"><label>Duración</label><input type="text" name="med_duracion[]" required></div>
+        <div class="input-group"><label>Inicio</label><input type="date" name="med_inicio[]" value="${fechaDeHoy()}" required data-etiqueta="la fecha de inicio del tratamiento"></div>
         <button type="button" class="btn-remove-treatment" title="Quitar medicamento"><i class="fas fa-trash"></i></button>
     `;
     // Sin onclick en el HTML (ZOOKI_REGLAS §1).
@@ -1150,6 +1160,52 @@ function avisarAdjuntosRechazados(res) {
     return true;
 }
 
+/**
+ * RE-2.5.4 / RE-2.10.1: un registro de otra clínica lleva el nombre de la
+ * clínica que lo hizo. Lo propio no lleva marca.
+ */
+function etiquetaOrigen(registro) {
+    if (!registro || registro.es_propia !== false) return '';
+    return `<span class="origen-clinica" title="Registrado por otra clínica; solo lectura"><i class="fas fa-hospital"></i> ${escaparTexto(registro.clinica_nombre)}</span>`;
+}
+
+function tablaTratamientos(tratamientos) {
+    if (!Array.isArray(tratamientos) || tratamientos.length === 0) return '';
+    const filas = tratamientos.map(t => `
+        <tr>
+            <td>${escaparTexto(t.medicamento)}</td>
+            <td>${escaparTexto(t.dosis)}</td>
+            <td>${escaparTexto(t.via_administracion)}</td>
+            <td>${escaparTexto(t.duracion)}</td>
+            <td>${t.fecha_inicio ? new Date(t.fecha_inicio + 'T00:00:00').toLocaleDateString() : '---'}</td>
+        </tr>`).join('');
+    return `
+        <div class="clinical-section">
+            <label><i class="fas fa-pills"></i> Tratamiento Prescrito</label>
+            <table class="history-treatment-table">
+                <thead><tr><th>Medicamento</th><th>Dosis</th><th>Vía</th><th>Duración</th><th>Inicio</th></tr></thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>`;
+}
+
+/** La descarga siempre pasa por ver_archivo.php, que aplica la misma regla de visibilidad (RE-2.3.3). */
+function listaAdjuntos(archivos) {
+    if (!Array.isArray(archivos) || archivos.length === 0) return '';
+    const enlaces = archivos.map(archivo => {
+        const esImagen = ['jpg', 'jpeg', 'png'].includes(archivo.extension);
+        return `
+            <a href="ver_archivo.php?id=${encodeURIComponent(archivo.id_archivo)}" target="_blank" rel="noopener" class="history-file-link">
+                <i class="fas ${esImagen ? 'fa-image' : 'fa-file-pdf'}"></i> ${escaparTexto(archivo.nombre_original)}
+            </a>`;
+    }).join('');
+    return `
+        <div class="clinical-section">
+            <label><i class="fas fa-paperclip"></i> Archivos Adjuntos</label>
+            <div class="history-adjuntos">${enlaces}</div>
+        </div>`;
+}
+
 async function viewMedicalHistory(id, nombre) {
     document.getElementById('historyPetName').innerText = nombre;
     const timeline = document.getElementById('historyTimeline');
@@ -1182,7 +1238,7 @@ async function viewMedicalHistory(id, nombre) {
         petSpecie.innerText = m.nombre_especie || '---';
         petAge.innerText = m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : 'Edad desconocida';
 
-        // 2. Resumen de Vacunación
+        // 2. Resumen de Vacunación: las de todas las clínicas (RE-2.10.1)
         if (data.vacunas && data.vacunas.length > 0) {
             data.vacunas.forEach(v => {
                 const vCard = document.createElement('div');
@@ -1192,6 +1248,7 @@ async function viewMedicalHistory(id, nombre) {
                     <div class="vaccine-info">
                         <h5>${escaparTexto(v.nombre_vacuna)}</h5>
                         <span>${new Date(v.fecha_aplicacion).toLocaleDateString()}</span>
+                        ${etiquetaOrigen(v)}
                     </div>
                 `;
                 vaccineList.appendChild(vCard);
@@ -1200,47 +1257,19 @@ async function viewMedicalHistory(id, nombre) {
             vaccineList.innerHTML = '<p class="sub-text">No hay registros de vacunación.</p>';
         }
 
-        // 3. Consultas Clínicas (Línea de Tiempo)
+        // 3. Consultas Clínicas (Línea de Tiempo). Las de otra clínica solo
+        // llegan si el propietario autorizó a esta (RE-2.10.2).
         timeline.innerHTML = '';
         if (data.consultas && data.consultas.length > 0) {
             data.consultas.forEach(c => {
                 const item = document.createElement('div');
                 item.className = 'history-item';
-
-                // Construir HTML de archivos
-                let filesHtml = '';
-                if (c.archivos && c.archivos.length > 0) {
-                    filesHtml = '<div class="clinical-section"><label><i class="fas fa-paperclip"></i> Archivos Adjuntos</label><div style="display:flex; gap:0.5rem; flex-wrap:wrap;">';
-                    c.archivos.forEach(file => {
-                        const isImg = ['jpg', 'jpeg', 'png'].includes(file.extension);
-                        filesHtml += `
-                            <a href="ver_archivo.php?id=${file.id_archivo}" target="_blank" class="history-file-link">
-                                <i class="fas ${isImg ? 'fa-image' : 'fa-file-pdf'}"></i> ${file.nombre_original}
-                            </a>`;
-                    });
-                    filesHtml += '</div></div>';
-                }
-
-                // Construir HTML de tratamientos
-                let treatmentsHtml = '';
-                if (c.tratamientos && c.tratamientos.length > 0) {
-                    treatmentsHtml = `
-                        <div class="clinical-section">
-                            <label><i class="fas fa-pills"></i> Tratamiento Prescrito</label>
-                            <table class="history-treatment-table">
-                                <thead><tr><th>Medicamento</th><th>Dosis</th><th>Vía</th><th>Duración</th></tr></thead>
-                                <tbody>
-                                    ${c.tratamientos.map(t => `<tr><td>${t.medicamento}</td><td>${t.dosis}</td><td>${t.via_administracion}</td><td>${t.duracion}</td></tr>`).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-                }
-
                 item.innerHTML = `
-                    <div class="history-header" onclick="this.parentElement.classList.toggle('active')">
+                    <div class="history-header">
                         <div class="header-main">
-                            <h4>${c.motivo_consulta}</h4>
-                            <span class="vet-badge"><i class="fas fa-user-md"></i> ${c.veterinario}</span>
+                            <h4>${escaparTexto(c.motivo_consulta)}</h4>
+                            <span class="vet-badge"><i class="fas fa-user-md"></i> ${escaparTexto(c.veterinario)}</span>
+                            ${etiquetaOrigen(c)}
                         </div>
                         <div class="header-side">
                             <span class="date">${new Date(c.fecha_hora).toLocaleString()}</span>
@@ -1249,26 +1278,28 @@ async function viewMedicalHistory(id, nombre) {
                     </div>
                     <div class="history-content">
                         <div class="clinical-data-grid">
-                            <div class="clinical-field"><label>Peso</label><span>${c.peso || '--'} Kg</span></div>
-                            <div class="clinical-field"><label>Temp.</label><span>${c.temperatura || '--'} °C</span></div>
-                            <div class="clinical-field"><label>F.C.</label><span>${c.frecuencia_cardiaca || '--'} LPM</span></div>
+                            <div class="clinical-field"><label>Peso</label><span>${escaparTexto(c.peso || '--')} Kg</span></div>
+                            <div class="clinical-field"><label>Temp.</label><span>${escaparTexto(c.temperatura || '--')} °C</span></div>
+                            <div class="clinical-field"><label>F.C.</label><span>${escaparTexto(c.frecuencia_cardiaca || '--')} LPM</span></div>
                         </div>
                         <div class="clinical-section">
                             <label>Anamnesis</label>
-                            <p>${c.anamnesis || 'N/A'}</p>
+                            <p>${escaparTexto(c.anamnesis || 'N/A')}</p>
                         </div>
                         <div class="clinical-section">
                             <label>Diagnóstico Definitivo</label>
-                            <p><strong>${c.diagnostico}</strong></p>
+                            <p><strong>${escaparTexto(c.diagnostico)}</strong></p>
                         </div>
                         <div class="clinical-section">
                             <label>Plan de Manejo</label>
-                            <p>${c.plan_tratamiento || 'N/A'}</p>
+                            <p>${escaparTexto(c.plan_tratamiento || 'N/A')}</p>
                         </div>
-                        ${treatmentsHtml}
-                        ${filesHtml}
+                        ${tablaTratamientos(c.tratamientos)}
+                        ${listaAdjuntos(c.archivos)}
                     </div>
                 `;
+                // Sin onclick en el HTML (ZOOKI_REGLAS §1).
+                item.querySelector('.history-header').addEventListener('click', () => item.classList.toggle('active'));
                 timeline.appendChild(item);
             });
         } else if (m.numero_historia_clinica) {
@@ -1386,7 +1417,7 @@ async function openVaccineModal(id, nombre) {
         if (vacunaSelect && data.success) {
             vacunaSelect.innerHTML = '<option value="">Seleccione una vacuna...</option>';
             data.vacunas.forEach(v => {
-                vacunaSelect.innerHTML += `<option value="${v.nombre_vacuna}">${v.nombre_vacuna}</option>`;
+                vacunaSelect.innerHTML += `<option value="${escaparTexto(v.nombre_vacuna)}">${escaparTexto(v.nombre_vacuna)}</option>`;
             });
             // Agregar opción "Otra" al final
             vacunaSelect.innerHTML += `<option value="Otra">Otra (no está en la lista)</option>`;
@@ -1404,7 +1435,7 @@ async function openVaccineModal(id, nombre) {
         if (laboratorioSelect && data.success) {
             laboratorioSelect.innerHTML = '<option value="">Seleccione laboratorio...</option>';
             data.laboratorios.forEach(l => {
-                laboratorioSelect.innerHTML += `<option value="${l.nombre_laboratorio}">${l.nombre_laboratorio}</option>`;
+                laboratorioSelect.innerHTML += `<option value="${escaparTexto(l.nombre_laboratorio)}">${escaparTexto(l.nombre_laboratorio)}</option>`;
             });
             // Agregar opción "Otro" al final
             laboratorioSelect.innerHTML += `<option value="Otro">Otro (no está en la lista)</option>`;
@@ -1521,7 +1552,7 @@ async function openDewormingModal(id, nombre) {
         if (productoSelect && data.success) {
             productoSelect.innerHTML = '<option value="">Seleccione producto...</option>';
             data.productos.forEach(p => {
-                productoSelect.innerHTML += `<option value="${p.nombre_producto}">${p.nombre_producto} (${p.tipo})</option>`;
+                productoSelect.innerHTML += `<option value="${escaparTexto(p.nombre_producto)}">${escaparTexto(p.nombre_producto)} (${escaparTexto(p.tipo)})</option>`;
             });
             // Agregar opción "Otro" al final
             productoSelect.innerHTML += `<option value="Otro">Otro (no está en la lista)</option>`;
@@ -1731,27 +1762,33 @@ function renderPetDashboard(data, id) {
     if (timelineDiv) {
         const timelineEvents = [];
 
+        // Todo texto de la base se escapa: con la historia compartida
+        // (RN-113) puede venir de otra clínica.
         if (data.consultas) {
             data.consultas.forEach(c => {
+                const cantidadTratamientos = Array.isArray(c.tratamientos) ? c.tratamientos.length : 0;
                 timelineEvents.push({
                     type: 'consulta',
                     date: new Date(c.fecha_hora),
-                    title: `Consulta Clínica`,
-                    subtitle: `Dr. ${c.veterinario}`,
-                    body: `<b>Motivo:</b> ${c.motivo_consulta}<br><b>Diagnóstico:</b> ${c.diagnostico}<br><b>Peso:</b> ${c.peso || '--'} Kg • <b>F.C:</b> ${c.frecuencia_cardiaca || '--'} LPM • <b>Temp:</b> ${c.temperatura || '--'} °C`,
-                    meta: c.tratamientos && c.tratamientos.length > 0 ? `<div style="margin-top:0.4rem; font-size:0.75rem; color:var(--primary); font-weight:700;"><i class="fas fa-pills"></i> Tratamiento prescrito (${c.tratamientos.length} meds)</div>` : ''
+                    title: 'Consulta Clínica',
+                    subtitle: `Dr. ${escaparTexto(c.veterinario)}`,
+                    origen: etiquetaOrigen(c),
+                    body: `<b>Motivo:</b> ${escaparTexto(c.motivo_consulta)}<br><b>Diagnóstico:</b> ${escaparTexto(c.diagnostico)}<br><b>Peso:</b> ${escaparTexto(c.peso || '--')} Kg • <b>F.C:</b> ${escaparTexto(c.frecuencia_cardiaca || '--')} LPM • <b>Temp:</b> ${escaparTexto(c.temperatura || '--')} °C`,
+                    meta: cantidadTratamientos > 0 ? `<div class="timeline-meta-tratamiento"><i class="fas fa-pills"></i> Tratamiento prescrito (${cantidadTratamientos} meds)</div>` : ''
                 });
             });
         }
 
         if (data.vacunas) {
             data.vacunas.forEach(v => {
+                const laboratorio = v.laboratorio ? ` (${escaparTexto(v.laboratorio)})` : '';
                 timelineEvents.push({
                     type: 'vacuna',
                     date: new Date(v.fecha_aplicacion),
-                    title: `Vacuna Aplicada`,
-                    subtitle: `Vacuna: ${v.nombre_vacuna} ${v.laboratorio ? '(' + v.laboratorio + ')' : ''}`,
-                    body: `Aplicación de dosis veterinaria. Lote: ${v.lote || 'N/A'}.<br><b>Próxima dosis programada:</b> ${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : 'N/A'}`
+                    title: 'Vacuna Aplicada',
+                    subtitle: `Vacuna: ${escaparTexto(v.nombre_vacuna)}${laboratorio}`,
+                    origen: etiquetaOrigen(v),
+                    body: `Aplicación de dosis veterinaria. Lote: ${escaparTexto(v.lote || 'N/A')}.<br><b>Próxima dosis programada:</b> ${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : 'N/A'}`
                 });
             });
         }
@@ -1761,9 +1798,10 @@ function renderPetDashboard(data, id) {
                 timelineEvents.push({
                     type: 'desparasitacion',
                     date: new Date(d.fecha_aplicacion),
-                    title: `Control de Parásitos`,
-                    subtitle: `Producto: ${d.producto} (${d.tipo})`,
-                    body: `Control antiparasitario. ${d.observaciones || 'Sin observaciones.'}<br><b>Próxima dosis recomendada:</b> ${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : 'N/A'}`
+                    title: 'Control de Parásitos',
+                    subtitle: `Producto: ${escaparTexto(d.producto)} (${escaparTexto(d.tipo)})`,
+                    origen: etiquetaOrigen(d),
+                    body: `Control antiparasitario. ${escaparTexto(d.observaciones || 'Sin observaciones.')}<br><b>Próxima dosis recomendada:</b> ${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : 'N/A'}`
                 });
             });
         }
@@ -1793,7 +1831,7 @@ function renderPetDashboard(data, id) {
                             ${evt.date.toLocaleDateString()}
                         </div>
                     </div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; margin-bottom:0.3rem;">${evt.subtitle}</div>
+                    <div class="timeline-subtitulo">${evt.subtitle} ${evt.origen || ''}</div>
                     <div class="timeline-body">
                         ${evt.body}
                     </div>
@@ -1841,7 +1879,7 @@ async function printMedicalHistory(id, nombre) {
         let html = `
             <html>
             <head>
-                <title>Historia Clínica - ${nombre}</title>
+                <title>Historia Clínica - ${escaparTexto(nombre)}</title>
                 <style>
                     @page { margin: 15mm; }
                     body { font-family: 'Arial', sans-serif; padding: 0; margin: 0; color: #333; }
@@ -1860,11 +1898,11 @@ async function printMedicalHistory(id, nombre) {
                 </style>
             </head>
             <body>
-                <h1>Historia Clínica: ${nombre}</h1>
+                <h1>Historia Clínica: ${escaparTexto(nombre)}</h1>
                 <div class="meta">
-                    <strong>HC N°:</strong> ${data.mascota.numero_historia_clinica || '---'} <br>
+                    <strong>HC N°:</strong> ${escaparTexto(data.mascota.numero_historia_clinica || '---')} <br>
                     <strong>Especie/Raza:</strong> ${escaparTexto(data.mascota.nombre_especie)} - ${escaparTexto(razaConIndicada(data.mascota.nombre_raza, data.mascota.raza_indicada))} <br>
-                    <strong>Propietario:</strong> ${data.mascota.propietario_nombre}
+                    <strong>Propietario:</strong> ${escaparTexto(data.mascota.propietario_nombre)}
                 </div>
         `;
 
@@ -1872,15 +1910,16 @@ async function printMedicalHistory(id, nombre) {
             html += `<div class="section"><h2>Consultas Clínicas</h2>`;
             data.consultas.forEach(c => {
                 html += `
-                    <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${c.veterinario}</h3>
-                    <p><strong>Motivo:</strong> ${c.motivo_consulta}</p>
-                    <p><strong>Diagnóstico:</strong> ${c.diagnostico}</p>
-                    <p><strong>Peso:</strong> ${c.peso || '--'} Kg | <strong>Temp:</strong> ${c.temperatura || '--'} °C</p>
+                    <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${escaparTexto(c.veterinario)}</h3>
+                    <p><strong>Clínica:</strong> ${escaparTexto(c.clinica_nombre)}</p>
+                    <p><strong>Motivo:</strong> ${escaparTexto(c.motivo_consulta)}</p>
+                    <p><strong>Diagnóstico:</strong> ${escaparTexto(c.diagnostico)}</p>
+                    <p><strong>Peso:</strong> ${escaparTexto(c.peso || '--')} Kg | <strong>Temp:</strong> ${escaparTexto(c.temperatura || '--')} °C</p>
                 `;
                 if (c.tratamientos && c.tratamientos.length > 0) {
                     html += `<ul>`;
                     c.tratamientos.forEach(t => {
-                        html += `<li>${t.medicamento} - ${t.dosis} (${t.frecuencia} por ${t.duracion})</li>`;
+                        html += `<li>${escaparTexto(t.medicamento)} - ${escaparTexto(t.dosis)} (${escaparTexto(t.via_administracion)}, ${escaparTexto(t.duracion)}, desde ${escaparTexto(t.fecha_inicio)})</li>`;
                     });
                     html += `</ul>`;
                 }
@@ -1889,17 +1928,17 @@ async function printMedicalHistory(id, nombre) {
         }
 
         if (data.vacunas && data.vacunas.length > 0) {
-            html += `<div class="section"><h2>Vacunación</h2><table><tr><th>Fecha</th><th>Vacuna</th><th>Próxima Dosis</th></tr>`;
+            html += `<div class="section"><h2>Vacunación</h2><table><tr><th>Fecha</th><th>Vacuna</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.vacunas.forEach(v => {
-                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${v.nombre_vacuna}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${escaparTexto(v.clinica_nombre)}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }
 
         if (data.desparasitaciones && data.desparasitaciones.length > 0) {
-            html += `<div class="section"><h2>Desparasitaciones</h2><table><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Próxima Dosis</th></tr>`;
+            html += `<div class="section"><h2>Desparasitaciones</h2><table><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.desparasitaciones.forEach(d => {
-                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${d.producto}</td><td>${d.tipo}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${escaparTexto(d.clinica_nombre)}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }

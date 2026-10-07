@@ -42,7 +42,12 @@ class AutorizacionRolTest extends TestCase
         $router = file_get_contents(__DIR__ . '/../../public/index.php');
         preg_match_all('/^\s*case\s+"([a-z_0-9]+)"/m', $router, $m);
 
-        return array_values(array_unique($m[1]));
+        // Puntos de entrada aparte del front controller (ver_archivo.php) que
+        // también pasan por la matriz.
+        $aparte = file_get_contents(__DIR__ . '/../../public/ver_archivo.php');
+        preg_match_all("/Security::autorizar\('([a-z_0-9]+)'\)/", $aparte, $entradas);
+
+        return array_values(array_unique(array_merge($m[1], $entradas[1])));
     }
 
     private function permite(string $accion, int $rol): bool
@@ -173,6 +178,15 @@ class AutorizacionRolTest extends TestCase
         sort($permitidas);
 
         $this->assertSame(['dashboard', 'plataforma_inicio'], $permitidas);
+    }
+
+    /** RE-2.3.3 / RN-004: los adjuntos los piden la clínica y el portal; nunca la plataforma. */
+    public function testVerArchivoEsDeLaClinicaYDelPortalNoDeLaPlataforma()
+    {
+        $this->assertTrue($this->permite('ver_archivo', self::ADMIN));
+        $this->assertTrue($this->permite('ver_archivo', self::VETERINARIO));
+        $this->assertTrue($this->permite('ver_archivo', self::PROPIETARIO));
+        $this->assertFalse($this->permite('ver_archivo', self::SUPER_ADMIN));
     }
 
     /** Contrapeso: cada rol conserva lo que usa a diario. */

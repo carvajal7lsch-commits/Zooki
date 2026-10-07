@@ -104,8 +104,9 @@ final class DosClinicas
     public static function crearCatalogosSqlite(PDO $db): void
     {
         $db->exec('PRAGMA foreign_keys = ON');
-        $db->exec('CREATE TABLE especies (id_especie INTEGER PRIMARY KEY)');
-        $db->exec('INSERT INTO especies VALUES (1),(2),(3),(4),(5),(6)');
+        // IF NOT EXISTS: C4 también carga la taxonomía de C3 en la misma base.
+        $db->exec('CREATE TABLE IF NOT EXISTS especies (id_especie INTEGER PRIMARY KEY)');
+        $db->exec('INSERT OR IGNORE INTO especies (id_especie) VALUES (1),(2),(3),(4),(5),(6)');
         $db->exec('CREATE TABLE tipos_cita (id_tipo_cita INTEGER PRIMARY KEY AUTOINCREMENT,
             id_clinica INTEGER NOT NULL REFERENCES clinicas, nombre_tipo TEXT, duracion_minutos INTEGER,
             margen_minutos INTEGER DEFAULT 10, pausable INTEGER DEFAULT 1, descripcion TEXT, color TEXT, activo INTEGER)');
@@ -151,6 +152,52 @@ final class DosClinicas
     {
         $db->exec("UPDATE mascotas SET id_especie=1,id_raza=49,fecha_nacimiento='2022-01-01',peso=8.50,sexo='Hembra' WHERE id_mascota=1");
         $db->exec('INSERT INTO mascota_colores (id_mascota,id_color) VALUES (1,1)');
+    }
+
+    /**
+     * C4: historia clínica y prevención, con las columnas de 01_schema.sql.
+     * Llamar después de crearMascotasSqlite() (usa sus especies y colores).
+     */
+    public static function crearHistoriaSqlite(PDO $db): void
+    {
+        $db->exec('PRAGMA foreign_keys = ON');
+        $db->exec("CREATE TABLE citas (id_cita INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER NOT NULL REFERENCES clinicas,
+            id_mascota INTEGER NOT NULL REFERENCES mascotas, id_veterinario INTEGER NOT NULL REFERENCES usuarios,
+            fecha TEXT NOT NULL, hora TEXT NOT NULL, motivo TEXT NOT NULL, estado TEXT NOT NULL DEFAULT 'pendiente',
+            hora_inicio_real TEXT, hora_fin_real TEXT)");
+        $db->exec('CREATE TABLE consultas (id_consulta INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER NOT NULL REFERENCES clinicas,
+            id_cita INTEGER UNIQUE REFERENCES citas, id_mascota INTEGER NOT NULL REFERENCES mascotas,
+            id_veterinario INTEGER NOT NULL REFERENCES usuarios, fecha_hora TEXT NOT NULL, motivo_consulta TEXT NOT NULL,
+            anamnesis TEXT NOT NULL, peso NUMERIC, temperatura NUMERIC, frecuencia_cardiaca INTEGER,
+            frecuencia_respiratoria INTEGER, diagnostico TEXT NOT NULL, plan_tratamiento TEXT NOT NULL, observaciones TEXT)');
+        $db->exec('CREATE TABLE tratamientos (id_tratamiento INTEGER PRIMARY KEY AUTOINCREMENT, id_consulta INTEGER NOT NULL REFERENCES consultas,
+            id_nodo_farmaco INTEGER, medicamento TEXT NOT NULL, dosis TEXT NOT NULL, via_administracion TEXT NOT NULL,
+            duracion TEXT NOT NULL, fecha_inicio TEXT NOT NULL, fecha_fin TEXT, observaciones TEXT,
+            fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)');
+        $db->exec('CREATE TABLE archivos_clinicos (id_archivo INTEGER PRIMARY KEY AUTOINCREMENT, id_consulta INTEGER NOT NULL REFERENCES consultas,
+            nombre_original TEXT NOT NULL, nombre_servidor TEXT NOT NULL, ruta_archivo TEXT NOT NULL, tipo_archivo TEXT NOT NULL,
+            extension TEXT NOT NULL, tamano_bytes INTEGER NOT NULL, descripcion TEXT, fecha_subida TEXT DEFAULT CURRENT_TIMESTAMP)');
+        $db->exec('CREATE TABLE vacunas (id_vacuna INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER NOT NULL REFERENCES clinicas,
+            id_mascota INTEGER NOT NULL REFERENCES mascotas, id_veterinario INTEGER REFERENCES usuarios, nombre_vacuna TEXT NOT NULL,
+            laboratorio TEXT, lote TEXT, fecha_aplicacion TEXT NOT NULL, fecha_proxima_dosis TEXT, observaciones TEXT,
+            fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)');
+        $db->exec('CREATE TABLE desparasitaciones (id_desparasitacion INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER NOT NULL REFERENCES clinicas,
+            id_mascota INTEGER NOT NULL REFERENCES mascotas, id_veterinario INTEGER REFERENCES usuarios, tipo TEXT NOT NULL,
+            producto TEXT NOT NULL, periodicidad TEXT NOT NULL, fecha_aplicacion TEXT NOT NULL, fecha_proxima TEXT NOT NULL,
+            observaciones TEXT, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)');
+        $db->exec('CREATE UNIQUE INDEX uq_mascota_clinica_numero_hc ON mascota_clinica (id_clinica, numero_historia_clinica)');
+    }
+
+    /**
+     * C4: Fabio también es propietario en Sur y Luna queda vinculada a Sur.
+     * $autoriza es propietario_clinica.autoriza_historia_compartida de Sur
+     * (RN-113). SQL portable: también corre sobre el esquema real.
+     */
+    public static function vincularLunaASur(PDO $db, int $autoriza = 0): void
+    {
+        $db->prepare("INSERT INTO propietario_clinica (id_propietario, id_clinica, estado, autoriza_historia_compartida) VALUES (6, 2, 'activo', ?)")
+            ->execute([$autoriza]);
+        $db->exec("INSERT INTO mascota_clinica (id_mascota, id_clinica, estado) VALUES (1, 2, 'activo')");
     }
 
     /** Datos portables (SQLite y MySQL). Los roles los trae el esquema o la semilla. */
