@@ -1,14 +1,17 @@
 <?php
-require_once '../config/Database.php';
-require_once '../models/Mascota.php';
-require_once '../models/Cita.php';
-require_once '../models/Vacuna.php';
-require_once '../models/Consulta.php';
-require_once '../models/Usuario.php';
-require_once '../models/Desparasitacion.php';
-require_once '../models/Auditoria.php';
-require_once '../config/EmailService.php';
-require_once '../helpers/PoliticaPassword.php';
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Mascota.php';
+require_once __DIR__ . '/../models/Cita.php';
+require_once __DIR__ . '/../models/Vacuna.php';
+require_once __DIR__ . '/../models/Consulta.php';
+require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../models/Desparasitacion.php';
+require_once __DIR__ . '/../models/Auditoria.php';
+require_once __DIR__ . '/../config/EmailService.php';
+require_once __DIR__ . '/../helpers/PoliticaPassword.php';
+require_once __DIR__ . '/../models/PropietarioClinica.php';
+require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
+require_once __DIR__ . '/../helpers/Csrf.php';
 
 class PropietarioController {
     private $db;
@@ -20,9 +23,8 @@ class PropietarioController {
     private $usuarioModel;
     private $auditoria;
 
-    public function __construct() {
-        $database = new Database();
-        $this->db = $database->getConnection();
+    public function __construct(?PDO $db = null, private $enviarCorreo = null) {
+        $this->db = $db ?? (new Database())->getConnection();
         $this->mascotaModel = new Mascota($this->db);
         $this->citaModel = new Cita($this->db);
         $this->vacunaModel = new Vacuna($this->db);
@@ -33,7 +35,7 @@ class PropietarioController {
     }
 
     /**
-     * Valida los datos de alta de un propietario (HU-02).
+     * Valida los datos de alta de un propietario (HU-1.2).
      *
      * M1-03 — Antes no se comprobaba nada: los campos se leian directo de
      * $_POST y el documento o el correo duplicados llegaban hasta la base de
@@ -76,96 +78,83 @@ class PropietarioController {
             return 'El tipo de documento no es valido.';
         }
 
-        // Criterio de HU-02 / RN-G06: ni documento ni correo duplicados.
-        if ($this->usuarioModel->getById($limpios['documento'])) {
+        // RE-1.2.2 / RN-G06: ni documento ni correo duplicados.
+        if ($this->usuarioModel->buscarPorDocumento($limpios['documento'])) {
             return 'Ese documento ya esta registrado en el sistema.';
         }
-        if ($this->usuarioModel->getUserByEmail($limpios['email'])) {
+        if ($this->usuarioModel->buscarPorEmail($limpios['email'])) {
             return 'Ese correo electronico ya esta registrado en el sistema.';
         }
 
         return null;
     }
 
-    /**
-     * Crea el propietario y devuelve [ok, mensaje].
-     *
-     * M1-01 — La contrasena inicial ya no es el numero de documento. RN-G10
-     * prohibe expresamente que la clave contenga el documento del titular, y
-     * ademas el documento aparece en los listados de pacientes y propietarios:
-     * cualquiera del personal que viera esa pantalla podia entrar como
-     * cualquier propietario. Ahora se genera una temporal que cumple la
-     * politica, se envia por correo y queda marcada como obligatoria de
-     * cambiar en el primer ingreso.
-     *
-     * M1-17 — Un solo metodo para las dos rutas (formulario y AJAX), que antes
-     * eran el mismo codigo copiado.
-     */
-    private function crearPropietario(array $datos): array {
-        $temporal = PoliticaPassword::generarTemporal();
-
-        $creado = $this->usuarioModel->create($datos + [
-            'password' => password_hash($temporal, PASSWORD_DEFAULT),
-            'id_rol' => 4,
-            'estado' => 1,
-            'debe_cambiar_password' => 1,
-        ]);
-
-        if (!$creado) {
-            return [false, 'No se pudo registrar el propietario. Intenta nuevamente.'];
-        }
-
-        // RN-G05: el alta queda registrada en auditoria.
-        $this->auditoria->log(
-            $_SESSION['usuario_doc'] ?? 'sistema',
-            'INSERT',
-            'usuarios',
-            $datos['documento'],
-            null,
-            [
-                'nombre_completo' => $datos['nombre_completo'],
-                'email' => $datos['email'],
-                'id_rol' => 4,
-            ],
-            'Propietario registrado por el personal de la clinica'
-        );
-
-        $emailService = new EmailService();
-        $enviado = $emailService->enviarCredencialesUsuario(
-            $datos['email'],
-            $datos['nombre_completo'],
-            $datos['documento'],
-            $temporal
-        );
-
-        return [true, $enviado
-            ? 'Propietario registrado. Se enviaron sus credenciales de acceso al correo indicado.'
-            : 'Propietario registrado, pero no se pudo enviar el correo con sus credenciales.'];
+    public function registrarAjax(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); return; }
+        try {
+            $error=$this->validarDatosPropietario($_POST,$datos);
+            if ($error !== null) throw new InvalidArgumentException($error);
+            // RE-T.19.1: el titular acepta en esta pantalla presencial; no el empleado.
+            $datos['acepta_politica']=(string)($_POST['acepta_politica'] ?? '');
+            $datos['titular_presente']=(string)($_POST['titular_presente'] ?? '');
+            EnlaceCuenta::base(); // Validar destino antes de crear cuenta o tokens.
+            $alta=(new PropietarioClinica($this->db))->registrar($datos,self::versionPolitica(),Auditoria::ipCliente());
+            $enlace=EnlaceCuenta::crear('reset_password',$alta['id_enlace'],$alta['token']);
+            $enviado=$this->correo($datos['email'],$datos['nombre_completo'],'Crea tu contraseña en Zooki',
+                'Tu cuenta fue registrada con tu aceptación presencial. Crea tu contraseña desde este enlace; vence en 24 horas.',$enlace);
+            echo json_encode(['success'=>true,'id_usuario'=>$alta['id_usuario'],'message'=>$enviado
+                ? 'Propietario registrado. Se envió el enlace para crear su contraseña.'
+                : 'Propietario registrado. No se pudo enviar el enlace; el titular puede solicitarlo desde Recuperar contraseña.']);
+        } catch (AccesoDenegado $e) { throw $e; }
+        catch (InvalidArgumentException $e) { http_response_code(422); echo json_encode(['success'=>false,'message'=>$e->getMessage()]); }
+        catch (Throwable $e) { error_log('Alta de propietario: ' . $e->getMessage()); http_response_code(500); echo json_encode(['success'=>false,'message'=>'No se pudo registrar al propietario.']); }
     }
 
-    public function registrarAjax() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            header('Content-Type: application/json');
+    /** La versión identifica el contenido mostrado; la gestión de versiones llega en D. */
+    public static function versionPolitica(): string
+    {
+        return substr(hash_file('sha256',__DIR__ . '/../views/legal/privacidad.php'),0,20);
+    }
 
-            $error = $this->validarDatosPropietario($_POST, $datos);
-            if ($error !== null) {
-                echo json_encode(['success' => false, 'message' => $error]);
-                exit();
-            }
+    private function correo(string $email,string $nombre,string $asunto,string $mensaje,string $enlace): bool
+    {
+        $html='<p>' . htmlspecialchars($mensaje,ENT_QUOTES,'UTF-8') . '</p><p><a href="' .
+            htmlspecialchars($enlace,ENT_QUOTES,'UTF-8') . '">Continuar</a></p>';
+        if ($this->enviarCorreo !== null) return (bool)($this->enviarCorreo)($email,$nombre,$asunto,$html);
+        return (new EmailService())->enviarCorreoPersonalizado($email,$nombre,$asunto,$html);
+    }
 
-            try {
-                [$ok, $mensaje] = $this->crearPropietario($datos);
-            } catch (Exception $e) {
-                // M1-11: sin este catch, la excepcion dejaba el cuerpo vacio y
-                // el navegador reventaba al parsear el JSON.
-                error_log('Error al registrar propietario: ' . $e->getMessage());
-                $ok = false;
-                $mensaje = 'No se pudo registrar el propietario. Intenta nuevamente.';
-            }
+    public function solicitarVinculoAjax(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); return; }
+        try {
+            EnlaceCuenta::base();
+            $solicitud=(new PropietarioClinica($this->db))->solicitarVinculo((string)($_POST['identificador'] ?? ''));
+            $enlace=EnlaceCuenta::crear('confirmar_vinculo_propietario',$solicitud['id_enlace'],$solicitud['token']);
+            $enviado=$this->correo($solicitud['email'],$solicitud['nombre'],'Confirma tu vínculo con ' . $solicitud['clinica'],
+                'El personal de ' . $solicitud['clinica'] . ' solicita vincular tu cuenta. Confirma solo si elegiste atenderte allí. El enlace vence en 24 horas.',$enlace);
+            // Nunca devolver el token ni el enlace al personal que hizo la solicitud.
+            echo json_encode(['success'=>$enviado,'message'=>$enviado
+                ? 'Se envió la solicitud al propietario. Vuelve a buscarlo cuando confirme.'
+                : 'No se pudo enviar el correo. No se creó el vínculo; puedes reintentar.']);
+        } catch (AccesoDenegado $e) { throw $e; }
+        catch (InvalidArgumentException $e) { http_response_code(422); echo json_encode(['success'=>false,'message'=>$e->getMessage()]); }
+        catch (Throwable $e) { error_log('Solicitud de vínculo: ' . $e->getMessage()); http_response_code(500); echo json_encode(['success'=>false,'message'=>'No se pudo solicitar la vinculación.']); }
+    }
 
-            echo json_encode(['success' => $ok, 'message' => $mensaje]);
-            exit();
+    public function confirmarVinculo(): void
+    {
+        $id=(int)($_POST['id'] ?? $_GET['id'] ?? 0);
+        $token=(string)($_POST['token'] ?? $_GET['token'] ?? '');
+        $resultado=null;
+        // GET no consume el enlace: los filtros de correo suelen abrirlo automáticamente.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $resultado=(new PropietarioClinica($this->db))->confirmarVinculo($id,$token);
         }
+        require __DIR__ . '/../views/auth/confirmar_vinculo.php';
     }
 
     public function index() {
@@ -237,7 +226,7 @@ class PropietarioController {
         $usuarioData = $this->usuarioModel->getUserByDocumento($doc_propietario);
 
         // Horario real de la clínica (HU-43) en lugar del banner de «24 horas».
-        require_once '../helpers/HorarioAtencion.php';
+        require_once __DIR__ . '/../helpers/HorarioAtencion.php';
         try {
             $filas = $this->db->query("SELECT * FROM horarios_clinica ORDER BY dia_semana ASC")->fetchAll(PDO::FETCH_ASSOC);
         } catch (Throwable $e) {
@@ -251,7 +240,7 @@ class PropietarioController {
         $catalogo_especies = $this->mascotaModel->getEspecies();
 
         $view = '../views/portal/index.php';
-        require_once '../views/portal/layout.php';
+        require_once __DIR__ . '/../views/portal/layout.php';
     }
 
     public function verDetalleMascotaAjax() {
@@ -313,7 +302,7 @@ class PropietarioController {
      * @return array{datos: array<string, mixed>, error: ?string}
      */
     private function validarMascotaPortal(): array {
-        require_once '../helpers/ValidadorMascota.php';
+        require_once __DIR__ . '/../helpers/ValidadorMascota.php';
         $hoy = new DateTimeImmutable('today', new DateTimeZone('America/Bogota'));
         $resultado = ValidadorMascota::validar($_POST, $hoy);
         if ($resultado['error']) {
@@ -356,7 +345,7 @@ class PropietarioController {
             $this->responder(false, $error);
         }
 
-        require_once '../helpers/FotoMascota.php';
+        require_once __DIR__ . '/../helpers/FotoMascota.php';
         $foto = FotoMascota::guardar($_FILES['foto'] ?? null, $datos['nombre'], $errorFoto);
         if ($foto === false) {
             $this->responder(false, $errorFoto);
@@ -424,7 +413,7 @@ class PropietarioController {
             'url_foto' => $oldData['url_foto'] ?? null
         ];
 
-        require_once '../helpers/FotoMascota.php';
+        require_once __DIR__ . '/../helpers/FotoMascota.php';
         $foto = FotoMascota::guardar($_FILES['foto'] ?? null, $datos['nombre'], $errorFoto);
         if ($foto === false) {
             $this->responder(false, $errorFoto);
@@ -612,4 +601,3 @@ class PropietarioController {
     }
 }
 ?>
-

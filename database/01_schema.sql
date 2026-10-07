@@ -186,6 +186,8 @@ CREATE TABLE `password_resets` (
 CREATE TABLE `verificaciones_email` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `id_usuario` INT NOT NULL,
+  `id_clinica_vinculo` INT DEFAULT NULL,
+  `proposito` VARCHAR(30) NOT NULL DEFAULT 'registro',
   `email` VARCHAR(255) NOT NULL,
   `token_hash` VARCHAR(255) NOT NULL,
   `expires_at` DATETIME NOT NULL,
@@ -193,7 +195,8 @@ CREATE TABLE `verificaciones_email` (
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_verif_pendiente` (`id_usuario`, `used`),
-  CONSTRAINT `fk_verif_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
+  CONSTRAINT `fk_verif_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
+  CONSTRAINT `fk_verif_clinica_vinculo` FOREIGN KEY (`id_clinica_vinculo`) REFERENCES `clinicas` (`id_clinica`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Contadores de intentos fallidos, sin clave foránea. Claves con prefijo:

@@ -315,10 +315,10 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-1.2.1 | El sistema debe exigir nombre, tipo y número de documento, teléfono y correo. | Funcional | Faltar un campo obligatorio impide guardar. | Alta |
-| RE-1.2.2 | El sistema debe validar la unicidad del documento y del correo. | Validación | Un documento o correo duplicado es rechazado. | Alta |
+| RE-1.2.2 | El sistema debe validar la unicidad del documento y del correo; una cuenta existente se busca por coincidencia exacta y se vincula previa confirmación del titular por correo (RN-109). | Validación | Un duplicado no crea otra cuenta. Solicitar vinculación no cambia la identidad ni crea el vínculo; el enlace válido, vigente y de un solo uso crea el vínculo exclusivamente con la clínica solicitada. | Alta |
 | RE-1.2.3 | El sistema debe listar las mascotas del propietario en su perfil. | Funcional | El perfil lista todas sus mascotas. | Media |
 
-**Reglas de negocio:** RN-101, RN-103, RN-G06
+**Reglas de negocio:** RN-101, RN-103, RN-109, RN-G06
 
 ### HU-1.3 — Buscar paciente
 
@@ -1143,7 +1143,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | HU-T.18 | RN-G20, RN-G21, RN-G19, RN-G12, RN-109 | RE-T.18.1, RE-T.18.2, RE-T.18.3, RE-T.18.4 |
 | HU-T.19 | RN-G19, RN-G07, RN-G16 | RE-T.19.1, RE-T.19.2, RE-T.19.3, RE-T.19.4 |
 | HU-1.1 | RN-101, RN-102, RN-106, RN-107, RN-110, RN-111 | RE-1.1.1, RE-1.1.2, RE-1.1.3, RE-1.1.4, RE-1.1.5, RE-1.1.6 |
-| HU-1.2 | RN-101, RN-103, RN-G06 | RE-1.2.1, RE-1.2.2, RE-1.2.3 |
+| HU-1.2 | RN-101, RN-103, RN-109, RN-G06 | RE-1.2.1, RE-1.2.2, RE-1.2.3 |
 | HU-1.3 | RN-105 | RE-1.3.1, RE-1.3.2, RE-1.3.3, RE-1.3.4 |
 | HU-1.4 | RN-104, RN-105, RN-108, RN-110 | RE-1.4.1, RE-1.4.2, RE-1.4.3, RE-1.4.4, RE-1.4.5 |
 | HU-1.5 | RN-003, RN-102, RN-110, RN-111 | RE-1.5.1, RE-1.5.2, RE-1.5.3 |

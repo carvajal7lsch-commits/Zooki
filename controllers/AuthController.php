@@ -578,6 +578,7 @@ class AuthController {
         $verificacion = $this->verificacionEmailModel->buscarPorId($id);
 
         if (!$verificacion
+            || ($verificacion['proposito'] ?? 'registro') !== 'registro'
             || (int) $verificacion['used'] === 1
             || strtotime($verificacion['expires_at']) <= time()
             || !password_verify($tokenPlano, $verificacion['token_hash'])) {

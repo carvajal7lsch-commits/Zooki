@@ -161,6 +161,8 @@ CREATE TABLE `password_resets` (
 CREATE TABLE `verificaciones_email` (
   `id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_usuario` int(11) NOT NULL,
+  `id_clinica_vinculo` INT DEFAULT NULL,
+  `proposito` VARCHAR(30) NOT NULL DEFAULT 'registro',
   `email` varchar(255) NOT NULL,                             -- correo que se verifica (registro o cambio de correo, RN-G23)
   `token_hash` varchar(255) NOT NULL,
   `expires_at` datetime NOT NULL,
@@ -641,7 +643,8 @@ ALTER TABLE `consentimientos_datos`
 ALTER TABLE `password_resets`
   ADD CONSTRAINT `fk_password_resets_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`);
 ALTER TABLE `verificaciones_email`
-  ADD CONSTRAINT `fk_verif_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+  ADD CONSTRAINT `fk_verif_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
+  ADD CONSTRAINT `fk_verif_clinica_vinculo` FOREIGN KEY (`id_clinica_vinculo`) REFERENCES `clinicas` (`id_clinica`);
 ALTER TABLE `casos_soporte`
   ADD CONSTRAINT `fk_caso_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
   ADD CONSTRAINT `fk_caso_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);

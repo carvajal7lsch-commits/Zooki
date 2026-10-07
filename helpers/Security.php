@@ -21,7 +21,8 @@ class Security {
     private static array $publicActions = [
         'landing', 'privacidad', 'terminos', 'cookies', 'login', 'solicitar_reset_password_ajax', 'reset_password',
         'procesar_reset_password_ajax', 'register', 'process_register', 'verificar_email', 'estado_verificacion_ajax',
-        'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax'
+        'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax',
+        'confirmar_vinculo_propietario'
     ];
 
     /**
@@ -89,7 +90,13 @@ class Security {
      */
     public static function autorizar(string $action): void {
         // Las acciones publicas no exigen sesion, contexto ni rol.
-        if (in_array($action, self::$publicActions, true)) return;
+        if (in_array($action, self::$publicActions, true)) {
+            if ($action === 'confirmar_vinculo_propietario' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+                require_once __DIR__ . '/Csrf.php';
+                if (!Csrf::validate()) throw new AccesoDenegado(403,'La sesión del formulario venció. Abre de nuevo el enlace.');
+            }
+            return;
+        }
 
         $idUsuario = Contexto::idUsuario();
         if ($idUsuario === null) {
@@ -320,6 +327,7 @@ class Security {
             'listar_mascotas_ajax', 'listar_mascotas_propietario_ajax',
             'nuevo_propietario', 'guardar_propietario_ajax',
             'listar_propietarios_ajax', 'get_propietario_ajax', 'actualizar_propietario_ajax',
+            'buscar_propietario_exacto_ajax', 'solicitar_vinculo_propietario_ajax', 'vincular_mascota_ajax',
             'registrar_cita_ajax', 'listar_citas_ajax',
             'get_cita_ajax', 'reprogramar_cita_ajax', 'confirmar_cita_ajax',
             'listar_veterinarios_ajax', 'listar_tipos_cita_ajax',

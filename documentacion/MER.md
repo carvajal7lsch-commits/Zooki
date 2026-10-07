@@ -110,6 +110,8 @@ erDiagram
     verificaciones_email {
         int id PK
         int id_usuario FK
+        int id_clinica_vinculo FK
+        varchar proposito
         varchar email
         varchar token_hash
         datetime expires_at
@@ -415,6 +417,7 @@ erDiagram
     usuarios  ||--o{ consentimientos_datos    : "acepta la politica"
     usuarios  ||--o{ password_resets         : "recupera su clave"
     usuarios  ||--o{ verificaciones_email    : "verifica su correo"
+    clinicas  |o--o{ verificaciones_email    : "confirma vinculo del propietario"
     usuarios  ||--o{ casos_soporte           : "origina"
     clinicas  ||--o{ casos_soporte           : "involucra"
     clinicas  ||--o{ mascota_clinica         : "atiende"
@@ -515,7 +518,7 @@ erDiagram
 *   **consentimientos_datos**: Prueba de la autorización de tratamiento de datos (Ley 1581 de 2012 y Decreto 1377 de 2013): quién aceptó, qué versión de la política, por qué medio, cuándo y desde qué IP (RN-G19).
 *   **usuario_clinica**: Roles de personal de una persona en cada clínica (`id_rol`: 1 administrador o 2 veterinario), con su estado. Inactivar a alguien en una clínica no afecta sus otros roles (RN-G08).
 *   **propietario_clinica**: Tabla puente que vincula un propietario (global) con una o varias clínicas. Un propietario se crea una sola vez (correo único) y se liga a cada clínica mediante este registro, previa **verificación del correo** al ligar a una clínica nueva. Esto permite las tres vías de registro (alta por el personal, enlace/QR de la clínica, autoregistro directo eligiendo clínica) sin duplicar la persona ni romper la regla de correo único. `autoriza_historia_compartida` guarda si el propietario permite que esa clínica vea las consultas registradas por otras clínicas (revocable; RN-113).
-*   **password_resets** y **verificaciones_email**: Enlaces de un solo uso, guardados como hash y con vencimiento, ligados a `id_usuario` (antes al documento). `verificaciones_email` guarda el correo que se verifica, así que sirve para el registro y para el cambio de correo: el correo nuevo solo reemplaza al anterior cuando se verifica (RN-G23).
+*   **password_resets** y **verificaciones_email**: Enlaces de un solo uso, guardados como hash y con vencimiento, ligados a `id_usuario` (antes al documento). `verificaciones_email` guarda el correo que se verifica, así que sirve para el registro y para el cambio de correo: el correo nuevo solo reemplaza al anterior cuando se verifica (RN-G23). Para vincular un propietario existente, `proposito = vinculo_clinica` e `id_clinica_vinculo` identifican la solicitud: solo su confirmación crea `propietario_clinica` (RN-109); un enlace de registro no sirve para este fin.
 *   **intentos_login**: Contadores de intentos fallidos, sin clave foránea. La clave del contador (`identificador`, única) lleva prefijo: `ip:<dirección>` para el bloqueo por IP, `cuenta:<id_usuario>` para exigir el CAPTCHA por cuenta (RN-G15) y `chk:<dirección>` para limitar las verificaciones de documento y correo del formulario de registro. El contador por cuenta usa `id_usuario` y no el documento, porque la persona puede entrar con su documento, su correo o Google y los tres deben sumar al mismo contador.
 *   **casos_soporte**: Casos que pasan al super-administrador: un documento que ya pertenece a otra cuenta (RN-G24), una posible cuenta o clínica duplicada y el abuso del plan gratuito (RN-012). Guarda el tipo, la persona y la clínica involucradas, la descripción y el estado (`abierto`, `resuelto`, `descartado`).
 

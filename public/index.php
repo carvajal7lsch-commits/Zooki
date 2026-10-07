@@ -42,6 +42,26 @@ Security::check($action);
 // lanza AccesoDenegado (Security::denegarRecursoAjeno) y aquí se responde 403.
 try {
 switch ($action) {
+    case "confirmar_vinculo_propietario":
+        require_once '../controllers/PropietarioController.php';
+        (new PropietarioController())->confirmarVinculo();
+        break;
+
+    case "solicitar_vinculo_propietario_ajax":
+        require_once '../controllers/PropietarioController.php';
+        (new PropietarioController())->solicitarVinculoAjax();
+        break;
+
+    case "buscar_propietario_exacto_ajax":
+        require_once '../controllers/MascotaController.php';
+        (new MascotaController())->buscarPropietarioExactoAjax();
+        break;
+
+    case "vincular_mascota_ajax":
+        require_once '../controllers/MascotaController.php';
+        (new MascotaController())->vincularMascotaAjax();
+        break;
+
     case "landing":
         require_once "../controllers/LandingController.php";
         $controller = new LandingController();

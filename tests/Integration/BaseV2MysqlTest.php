@@ -105,9 +105,67 @@ class BaseV2MysqlTest extends TestCase
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => [], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
+    }
+
+    /** C3: aislamiento, consentimiento, confirmacion y ficha global en el esquema real. */
+    public function testC3MascotasYConfirmacionEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/Mascota.php';
+        require_once __DIR__ . '/../../models/PropietarioClinica.php';
+        $this->cargar('01_schema.sql'); $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db); DosClinicas::completarMascota($this->db);
+        $_SESSION=['id_usuario'=>4]; Contexto::activar(Contexto::deClinica(2,'Clínica Sur',Roles::VETERINARIO),1);
+        try {
+            $mascotas=new Mascota($this->db); $propietarios=new PropietarioClinica($this->db);
+            $this->assertSame([],$mascotas->getAll());
+            try { $mascotas->getById(1); $this->fail('Debió rechazar'); } catch (AccesoDenegado $e) { $this->assertSame(403,$e->codigo()); }
+            $this->assertNull($propietarios->buscarExacto('fabio@'));
+            $solicitud=$propietarios->solicitarVinculo('fabio@zooki.test');
+            $this->assertFalse($mascotas->esPropietarioValido(6));
+            $this->assertTrue($propietarios->confirmarVinculo($solicitud['id_enlace'],$solicitud['token']));
+            $this->assertFalse($propietarios->confirmarVinculo($solicitud['id_enlace'],$solicitud['token']));
+            $mascotas->vincular(1,6); $mascotas->vincular(1,6);
+            $this->assertSame(1,$this->contar('mascotas')); $this->assertSame(2,$this->contar('mascota_clinica'));
+            try { $mascotas->update(['id_mascota'=>1,'id_especie'=>2]); $this->fail('Debió rechazar'); } catch (AccesoDenegado $e) { $this->assertSame(403,$e->codigo()); }
+            $mascotas->update(['id_mascota'=>1,'peso'=>'9.25']);
+            $this->assertSame('9.25',(string)$mascotas->getById(1)['peso']);
+            $this->assertSame(1,$this->contar('notificaciones'));
+            $datos=['id_propietario'=>6,'nombre'=>'Nueva ficha','id_especie'=>1,'id_raza'=>null,
+                'raza_indicada'=>'Raza por confirmar','fecha_nacimiento'=>'2022-01-01','peso'=>'3.20','sexo'=>'Macho','colores'=>[1,2]];
+            $id=$mascotas->insert($datos); $otra=$mascotas->insert($datos);
+            $this->assertSame(54,$this->contar('razas'));
+            $m=$mascotas->getById($id); $this->assertNull($m['numero_historia_clinica']);
+            $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/D',$m['token_carnet']);
+            $this->assertNotSame($m['token_carnet'],$mascotas->getById($otra)['token_carnet']);
+            $this->assertSame('1,2',$m['colores_ids']);
+            $cuentas=$this->contar('usuarios');
+            $datos=['nombre_completo'=>'Titular Nuevo','tipo_documento'=>'CC','documento'=>'1000000030','telefono'=>'3001234567',
+                'email'=>'nuevo@zooki.test','titular_presente'=>'1','acepta_politica'=>'0'];
+            try { $propietarios->registrar($datos,'politica-1','127.0.0.1'); $this->fail('Debió rechazar'); }
+            catch (InvalidArgumentException $e) { $this->assertNotEmpty($e->getMessage()); }
+            $this->assertSame($cuentas,$this->contar('usuarios'));
+            $datos['acepta_politica']='1'; $alta=$propietarios->registrar($datos,'politica-1','127.0.0.1');
+            $this->assertNull($this->db->query('SELECT password FROM usuarios WHERE id_usuario=' . $alta['id_usuario'])->fetchColumn());
+            $this->assertSame('alta_personal',$this->db->query('SELECT medio FROM consentimientos_datos')->fetchColumn());
+            $this->assertSame(1,$this->contar('password_resets'));
+        } finally { $_SESSION=[]; }
+    }
+
+    public function testMigracionC3ActualizaUnaBaseAnteriorYSePuedeRepetir(): void
+    {
+        $this->cargar('01_schema.sql'); $this->cargar('02_semilla.sql');
+        // Reproduce la forma publicada en B antes de la confirmación adelantada.
+        $this->db->exec('ALTER TABLE verificaciones_email DROP FOREIGN KEY fk_verif_clinica_vinculo');
+        $this->db->exec('ALTER TABLE verificaciones_email DROP COLUMN id_clinica_vinculo, DROP COLUMN proposito');
+        $this->cargar('03_confirmacion_vinculo_propietario.sql');
+        $this->cargar('03_confirmacion_vinculo_propietario.sql');
+        $columnas=$this->db->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='verificaciones_email'")->fetchAll(PDO::FETCH_COLUMN);
+        $this->assertContains('id_clinica_vinculo',$columnas); $this->assertContains('proposito',$columnas);
+        $this->assertSame(1,(int)$this->db->query("SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND CONSTRAINT_NAME='fk_verif_clinica_vinculo'")->fetchColumn());
     }
 
     /** D-5: la semilla solo inserta lo que falta y nunca sobrescribe. */

@@ -31,7 +31,7 @@ class Auditoria {
      * desde un proxy declarado como confiable; en cualquier otro caso vale la
      * IP de la conexion, que no se puede falsificar.
      */
-    private static function ipCliente(): string {
+    public static function ipCliente(): string {
         $remota = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
         if (self::$proxiesConfiables === null) {

@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="css/pacientes.css">
 <?php
 // views/mascotas/listado.php
 ?>
@@ -22,18 +23,18 @@
         <!-- Area: top -->
         <div class="head-top-right">
             <div class="tabs-wrapper">
-                <button onclick="switchModule('owners')" id="tabOwners" class="tab-btn active">
+                <button data-c3-click="evento0" id="tabOwners" class="tab-btn active">
                     <i class="fas fa-users"></i>
                     <span>Propietarios</span>
                 </button>
-                <button onclick="switchModule('pets')" id="tabPets" class="tab-btn">
+                <button data-c3-click="evento1" id="tabPets" class="tab-btn">
                     <i class="fas fa-paw"></i>
                     <span>Mascotas</span>
                 </button>
             </div>
-            
+
             <div class="command-center-actions cc-actions-gap">
-                <button onclick="abrirModalRegistro('propietario')" class="btn-create">
+                <button data-c3-click="evento2" class="btn-create">
                     <i class="fas fa-plus-circle"></i>
                     <span>Nuevo Registro</span>
                 </button>
@@ -45,41 +46,41 @@
             <div class="head-search">
                 <div class="search-input">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="ownerSearch" placeholder="Buscar propietario por nombre, documento o email..." onkeyup="filterOwners()">
+                    <input type="text" id="ownerSearch" placeholder="Buscar propietario por nombre, documento o email..." data-c3-keyup="evento3">
                 </div>
             </div>
             <div class="head-status-filters">
                 <div class="segmented-control" id="filterEstadoPropietarios">
-                    <input type="radio" name="estado_propietarios" id="eprop_todos" value="" checked onchange="filterOwners()">
+                    <input type="radio" name="estado_propietarios" id="eprop_todos" value="" checked data-c3-change="evento4">
                     <label for="eprop_todos">Todos</label>
-                    <input type="radio" name="estado_propietarios" id="eprop_activos" value="1" onchange="filterOwners()">
+                    <input type="radio" name="estado_propietarios" id="eprop_activos" value="1" data-c3-change="evento5">
                     <label for="eprop_activos">Activos</label>
-                    <input type="radio" name="estado_propietarios" id="eprop_inactivos" value="0" onchange="filterOwners()">
+                    <input type="radio" name="estado_propietarios" id="eprop_inactivos" value="0" data-c3-change="evento6">
                     <label for="eprop_inactivos">Inactivos</label>
                 </div>
             </div>
         </div>
 
         <!-- Area: search and status (Filtros Mascotas) -->
-        <div class="users-controls-bar__filters" id="searchRowPets" style="display: none;">
+        <div class="pacientes-estilo-0 users-controls-bar__filters" id="searchRowPets">
             <div class="head-search">
                 <div class="search-input">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="tableSearch" placeholder="Buscar por nombre, dueño o HC..." onkeyup="filterTable()">
+                    <input type="text" id="tableSearch" placeholder="Buscar por nombre, dueño o HC..." data-c3-keyup="evento7">
                 </div>
             </div>
             <div class="head-status-filters">
-                <select onchange="filterTable()" class="command-center-filter-select filter-select">
+                <select data-c3-change="evento8" class="command-center-filter-select filter-select">
                     <option value="">Todas las especies</option>
                     <option value="Canino">Caninos</option>
                     <option value="Felino">Felinos</option>
                 </select>
                 <div class="segmented-control" id="filterEstadoMascotas">
-                    <input type="radio" name="estado_mascotas" id="emasc_todos" value="" checked onchange="filterTable()">
+                    <input type="radio" name="estado_mascotas" id="emasc_todos" value="" data-c3-change="evento9">
                     <label for="emasc_todos">Todos</label>
-                    <input type="radio" name="estado_mascotas" id="emasc_activos" value="1" onchange="filterTable()">
+                    <input type="radio" name="estado_mascotas" id="emasc_activos" value="1" checked data-c3-change="evento10">
                     <label for="emasc_activos">Activos</label>
-                    <input type="radio" name="estado_mascotas" id="emasc_inactivos" value="0" onchange="filterTable()">
+                    <input type="radio" name="estado_mascotas" id="emasc_inactivos" value="0" data-c3-change="evento11">
                     <label for="emasc_inactivos">Inactivos</label>
                 </div>
             </div>
@@ -89,19 +90,19 @@
         <div class="head-view-toggle">
             <!-- Selector de vistas para Propietarios -->
             <div class="view-toggle" id="ownerViewToggle" role="group" aria-label="Tipo de vista">
-                <button type="button" class="view-toggle-btn" onclick="switchOwnerView('list')" id="btnOwnerViewList" title="Vista tabla">
+                <button type="button" class="view-toggle-btn" data-c3-click="evento12" id="btnOwnerViewList" title="Vista tabla">
                     <i class="bi-table"></i>
                 </button>
-                <button type="button" class="view-toggle-btn active" onclick="switchOwnerView('grid')" id="btnOwnerViewGrid" title="Vista cards">
+                <button type="button" class="view-toggle-btn active" data-c3-click="evento13" id="btnOwnerViewGrid" title="Vista cards">
                     <i class="bi-grid"></i>
                 </button>
             </div>
             <!-- Selector de vistas para Mascotas -->
-            <div class="view-toggle" id="petViewToggle" role="group" aria-label="Tipo de vista" style="display: none;">
-                <button type="button" class="view-toggle-btn" onclick="switchView('list')" id="btnViewList" title="Vista tabla">
+            <div class="pacientes-estilo-1 view-toggle" id="petViewToggle" role="group" aria-label="Tipo de vista">
+                <button type="button" class="view-toggle-btn" data-c3-click="evento14" id="btnViewList" title="Vista tabla">
                     <i class="bi-table"></i>
                 </button>
-                <button type="button" class="view-toggle-btn active" onclick="switchView('grid')" id="btnViewGrid" title="Vista cards">
+                <button type="button" class="view-toggle-btn active" data-c3-click="evento15" id="btnViewGrid" title="Vista cards">
                     <i class="bi-grid"></i>
                 </button>
             </div>
@@ -158,10 +159,10 @@
                                 <h3>Propietario</h3>
                             </div>
                             <div class="dossier-card-actions">
-                                <button onclick="editOwnerFromDossier()" class="btn-icon-light" title="Editar Propietario">
+                                <button data-c3-click="evento16" class="btn-icon-light" title="Editar Propietario">
                                     <i class="fas fa-pen"></i>
                                 </button>
-                                <button onclick="hideDossier()" class="btn-icon-light" title="Volver al Directorio">
+                                <button data-c3-click="evento17" class="btn-icon-light" title="Volver al Directorio">
                                     <i class="fas fa-arrow-left"></i>
                                 </button>
                             </div>
@@ -197,15 +198,15 @@
                             <i class="fas fa-bolt"></i> ACCIONES RÁPIDAS
                         </div>
                         <div class="quick-actions-list">
-                            <button onclick="window.location.href='tel:'+document.getElementById('dossierOwnerPhone').innerText" class="btn-quick-action">
+                            <button data-c3-click="evento18" class="btn-quick-action">
                                 <span><i class="fas fa-phone-alt"></i> Llamar Propietario</span>
                                 <i class="fas fa-chevron-right"></i>
                             </button>
-                            <button onclick="window.location.href='mailto:'+document.getElementById('dossierOwnerEmail').innerText" class="btn-quick-action">
+                            <button data-c3-click="evento19" class="btn-quick-action">
                                 <span><i class="fas fa-envelope"></i> Enviar Email</span>
                                 <i class="fas fa-chevron-right"></i>
                             </button>
-                            <button onclick="window.location.href='index.php?action=vet_agenda'" class="btn-quick-action">
+                            <button data-c3-click="evento20" class="btn-quick-action">
                                 <span><i class="far fa-calendar-alt"></i> Agendar Cita</span>
                                 <i class="fas fa-chevron-right"></i>
                             </button>
@@ -215,22 +216,22 @@
 
                 <!-- Columna Derecha: Contenido Principal (Listado o Dashboard) -->
                 <div class="dossier-main-content">
-                    
+
                     <!-- SECCIÓN A: LISTADO DE PACIENTES -->
                     <div class="dossier-card patients-card" id="dossierListSection">
                         <div class="patients-header-row">
                             <div class="patients-title-area">
                                 <h2><i class="fas fa-paw"></i> Pacientes</h2>
-                                <button onclick="addNewPetFromDossier()" class="btn-pill-primary">
+                                <button data-c3-click="evento21" class="btn-pill-primary">
                                     <i class="fas fa-plus"></i> Nuevo
                                 </button>
                             </div>
                             <div class="patients-filters-area">
                                 <div class="search-box-inline">
                                     <i class="fas fa-search"></i>
-                                    <input type="text" id="dossierPetSearch" placeholder="Buscar paciente..." onkeyup="filterDossierPets()">
+                                    <input type="text" id="dossierPetSearch" placeholder="Buscar paciente..." data-c3-keyup="evento22">
                                 </div>
-                                <select id="dossierPetSpeciesFilter" onchange="filterDossierPets()">
+                                <select id="dossierPetSpeciesFilter" data-c3-change="evento23">
                                     <option value="">Todas las especies</option>
                                     <option value="Canino">Caninos</option>
                                     <option value="Felino">Felinos</option>
@@ -243,11 +244,11 @@
                         <!-- Carrusel de mascotas: las flechas van sobre las tarjetas y
                              solo aparecen cuando hay más mascotas hacia ese lado. -->
                         <div class="pets-carousel">
-                            <button type="button" class="pets-carousel__nav pets-carousel__nav--prev" id="dossierPetsPrev" onclick="moverCarruselMascotas(-1)" aria-label="Mascotas anteriores" hidden><i class="fas fa-chevron-left"></i></button>
+                            <button type="button" class="pets-carousel__nav pets-carousel__nav--prev" id="dossierPetsPrev" data-c3-click="evento24" aria-label="Mascotas anteriores" hidden><i class="fas fa-chevron-left"></i></button>
                             <div class="dossier-pets-grid" id="dossierPetsScroll">
                                 <!-- Cards de mascotas se cargarán vía JS -->
                             </div>
-                            <button type="button" class="pets-carousel__nav pets-carousel__nav--next" id="dossierPetsNext" onclick="moverCarruselMascotas(1)" aria-label="Más mascotas" hidden><i class="fas fa-chevron-right"></i></button>
+                            <button type="button" class="pets-carousel__nav pets-carousel__nav--next" id="dossierPetsNext" data-c3-click="evento25" aria-label="Más mascotas" hidden><i class="fas fa-chevron-right"></i></button>
                         </div>
 
                         <div class="patients-footer">
@@ -260,7 +261,7 @@
                         <!-- Header del Dashboard -->
                         <div class="dossier-dashboard-header dossier-dashboard-header-styled">
                             <div class="dossier-dashboard-title">
-                                <button onclick="showPetsListFromDossier()" class="command-center-btn-secondary btn-dossier-back">
+                                <button data-c3-click="evento26" class="command-center-btn-secondary btn-dossier-back">
                                     <i class="fas fa-arrow-left"></i> Volver a Pacientes
                                 </button>
                                 <h4><i class="fas fa-paw"></i> <span id="dashPetName"></span></h4>
@@ -274,10 +275,10 @@
 
                         <!-- Tabs del Dashboard -->
                         <div class="dossier-dashboard-tabs">
-                            <button class="dossier-dashboard-tab active" onclick="switchPetDashTab(event, 'dashGeneral')">
+                            <button class="dossier-dashboard-tab active" data-c3-click="evento27">
                                 <i class="fas fa-info-circle"></i> Información General
                             </button>
-                            <button class="dossier-dashboard-tab" onclick="switchPetDashTab(event, 'dashHistorial')">
+                            <button class="dossier-dashboard-tab" data-c3-click="evento28">
                                 <i class="fas fa-notes-medical"></i> Historia Clínica
                             </button>
                         </div>
@@ -333,7 +334,7 @@
                                     <h5 class="dash-historial-title">
                                         <i class="fas fa-notes-medical icon-primary"></i> Línea de Tiempo Clínica
                                     </h5>
-                                    <button onclick="printMedicalHistory(document.getElementById('dashEditPetBtn').getAttribute('data-id'), document.getElementById('dashPetName').innerText)" class="btn-outline btn-print-history">
+                                    <button data-c3-click="evento29" class="btn-outline btn-print-history">
                                         <i class="fas fa-print"></i> Historial Completo
                                     </button>
                                 </div>
@@ -369,73 +370,73 @@
                     <tbody>
                         <?php if (count($mascotas) > 0): ?>
                             <?php foreach ($mascotas as $m): ?>
-                                <tr data-id="<?php echo $m["id_mascota"]; ?>" data-estado="<?php echo $m["estado"]; ?>">
+                                <tr data-id="<?php echo htmlspecialchars((string)($m["id_mascota"]), ENT_QUOTES, 'UTF-8'); ?>" data-estado="<?php echo htmlspecialchars((string)($m["estado"]), ENT_QUOTES, 'UTF-8'); ?>">
                                     <td>
                                         <img src="<?php echo htmlspecialchars($m["url_foto"] ? "uploads/mascotas/" . rawurlencode($m["url_foto"]) : "img/default-pet.svg"); ?>"
                                              class="table-thumb"
-                                             onclick="viewImage(this.src)"
-                                             onerror="this.onerror=null;this.src='img/default-pet.svg'">
+                                             data-c3-click="evento30"
+                                             data-c3-error="evento31">
                                     </td>
                                     <td class="pet-name-cell">
                                         <div class="cell-info">
-                                            <span class="main-text"><?php echo $m[
+                                            <span class="main-text"><?php echo htmlspecialchars((string)($m[
                                                 "nombre"
-                                            ]; ?></span>
+                                            ]), ENT_QUOTES, 'UTF-8'); ?></span>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="cell-info">
-                                            <span class="main-text"><?php echo $m[
+                                            <span class="main-text"><?php echo htmlspecialchars((string)($m[
                                                 "nombre_especie"
-                                            ]; ?> - <?php echo $m[
+                                            ]), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars((string)($m[
      "nombre_raza"
- ] ?? "N/A"; ?></span>
-                                            <span class="sub-text"><?php echo $m[
+ ] ?? "N/A"), ENT_QUOTES, 'UTF-8'); ?></span>
+                                            <span class="sub-text"><?php echo htmlspecialchars((string)($m[
                                                 "sexo"
-                                            ]; ?></span>
+                                            ]), ENT_QUOTES, 'UTF-8'); ?></span>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="cell-info">
-                                            <span class="main-text"><?php echo $m[
+                                            <span class="main-text"><?php echo htmlspecialchars((string)($m[
                                                 "colores_nombres"
-                                            ] ?? "N/A"; ?></span>
+                                            ] ?? "N/A"), ENT_QUOTES, 'UTF-8'); ?></span>
                                         </div>
                                     </td>
                                     <td class="owner-name-cell">
-                                        <span class="main-text"><?php echo $m[
+                                        <span class="main-text"><?php echo htmlspecialchars((string)($m[
                                             "propietario_nombre"
-                                        ]; ?></span>
-                                        <small style="display:block; color:#666;"><?php echo $m[
-                                            "doc_propietario"
-                                        ]; ?></small>
+                                        ]), ENT_QUOTES, 'UTF-8'); ?></span>
+                                        <small class="pacientes-estilo-2"><?php echo htmlspecialchars((string)($m[
+                                            "propietario_documento"
+                                        ]), ENT_QUOTES, 'UTF-8'); ?></small>
                                     </td>
                                     <td>
-                                        <code class="hc-badge"><?php echo $m[
+                                        <code class="hc-badge"><?php echo htmlspecialchars((string)($m[
                                             "numero_historia_clinica"
-                                        ]; ?></code>
+                                        ]), ENT_QUOTES, 'UTF-8'); ?></code>
                                     </td>
                                     <td>
-                                        <span class="status-badge <?php echo $m[
+                                        <span class="status-badge <?php echo htmlspecialchars((string)($m[
                                             "estado"
                                         ] == 1
                                             ? "active"
-                                            : "inactive"; ?>">
-                                            <?php echo $m["estado"] == 1
+                                            : "inactive"), ENT_QUOTES, 'UTF-8'); ?>">
+                                            <?php echo htmlspecialchars((string)($m["estado"] == 1
                                                 ? "Activo"
-                                                : "Inactivo"; ?>
+                                                : "Inactivo"), ENT_QUOTES, 'UTF-8'); ?>
                                         </span>
                                     </td>
                                     <td>
                                         <div class="action-buttons">
                                             <?php // RN-102: sin HC (aún no tiene consultas) no hay historial que abrir. ?>
                                             <?php if (!empty($m['numero_historia_clinica'])): ?>
-                                            <button onclick="viewMedicalHistory(<?php echo (int) $m['id_mascota']; ?>, <?php echo htmlspecialchars(json_encode($m['nombre']), ENT_QUOTES); ?>)" class="btn-icon history" title="Ver Historial Clínico">
+                                            <button data-c3-click="evento32" data-c3-arg0="<?php echo (int) $m['id_mascota']; ?>" data-c3-arg1="<?php echo htmlspecialchars(json_encode($m['nombre']), ENT_QUOTES); ?>" class="btn-icon history" title="Ver Historial Clínico">
                                                 <i class="fas fa-notes-medical"></i>
                                             </button>
                                             <?php endif; ?>
 
-                                            <button onclick="editPet(<?php echo $m['id_mascota']; ?>)" class="btn-icon edit" title="Editar Mascota">
+                                            <button data-c3-click="evento33" data-c3-arg0="<?php echo htmlspecialchars((string)($m['id_mascota']), ENT_QUOTES, 'UTF-8'); ?>" class="btn-icon edit" title="Editar Mascota">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                         </div>
@@ -457,21 +458,21 @@
         <div id="gridView" class="view-container active">
             <div class="pets-grid" id="petsGrid">
                 <?php foreach ($mascotas as $m): ?>
-                    <div class="client-card person-card pet-card" data-id="<?php echo $m["id_mascota"]; ?>" data-species="<?php echo $m["nombre_especie"]; ?>" data-estado="<?php echo $m["estado"]; ?>">
+                    <div class="client-card person-card pet-card" data-id="<?php echo htmlspecialchars((string)($m["id_mascota"]), ENT_QUOTES, 'UTF-8'); ?>" data-species="<?php echo htmlspecialchars((string)($m["nombre_especie"]), ENT_QUOTES, 'UTF-8'); ?>" data-estado="<?php echo htmlspecialchars((string)($m["estado"]), ENT_QUOTES, 'UTF-8'); ?>">
                         <div class="card-header-mini">
-                            <div class="avatar-mini cursor-pointer" onclick="viewPetInDossier(<?php echo htmlspecialchars(json_encode($m['doc_propietario']), ENT_QUOTES); ?>, <?php echo (int) $m['id_mascota']; ?>)">
+                            <div class="avatar-mini cursor-pointer" data-c3-click="evento34" data-c3-arg0="<?php echo (int) $m['id_mascota']; ?>">
                                 <img src="<?php echo htmlspecialchars($m["url_foto"] ? "uploads/mascotas/" . rawurlencode($m["url_foto"]) : "img/default-pet.svg"); ?>"
                                      alt="<?php echo htmlspecialchars($m["nombre"]); ?>"
-                                     onerror="this.onerror=null;this.src='img/default-pet.svg'">
+                                     data-c3-error="evento35">
                             </div>
                             <div class="status-indicator">
-                                <label class="toggle-switch" title="<?php echo $m['estado'] == 1 ? 'Mascota Activa (Clic para desactivar)' : 'Mascota Inactiva (Clic para activar)'; ?>">
-                                    <input type="checkbox" <?php echo $m['estado'] == 1 ? 'checked' : ''; ?> onchange="togglePetStatus(<?php echo $m['id_mascota']; ?>, this.checked ? 1 : 0)">
+                                <label class="toggle-switch" title="<?php echo htmlspecialchars((string)($m['estado'] == 1 ? 'Mascota Activa (Clic para desactivar)' : 'Mascota Inactiva (Clic para activar)'), ENT_QUOTES, 'UTF-8'); ?>">
+                                    <input type="checkbox" <?php echo htmlspecialchars((string)($m['estado'] == 1 ? 'checked' : ''), ENT_QUOTES, 'UTF-8'); ?> data-c3-change="evento36" data-c3-arg0="<?php echo htmlspecialchars((string)($m['id_mascota']), ENT_QUOTES, 'UTF-8'); ?>">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
                         </div>
-                        <div class="card-body-mini cursor-pointer" onclick="viewPetInDossier(<?php echo htmlspecialchars(json_encode($m['doc_propietario']), ENT_QUOTES); ?>, <?php echo (int) $m['id_mascota']; ?>)">
+                        <div class="card-body-mini cursor-pointer" data-c3-click="evento37" data-c3-arg0="<?php echo (int) $m['id_mascota']; ?>">
                             <h3 class="card-title-mini"><?php echo htmlspecialchars($m["nombre"]); ?></h3>
                             <div class="card-tags-mini">
                                 <?php if($m['estado'] == 0): ?>
@@ -486,15 +487,15 @@
                             </div>
                         </div>
                         <div class="card-footer-mini">
-                            <button class="action-btn-mini" onclick="editPet(<?php echo $m['id_mascota']; ?>)" title="Editar">
+                            <button class="action-btn-mini" data-c3-click="evento38" data-c3-arg0="<?php echo htmlspecialchars((string)($m['id_mascota']), ENT_QUOTES, 'UTF-8'); ?>" title="Editar">
                                 <i class="bi bi-pencil-fill"></i>
                             </button>
                             <?php if (!empty($m['numero_historia_clinica'])): ?>
-                            <button class="action-btn-mini" onclick="viewMedicalHistory(<?php echo (int) $m['id_mascota']; ?>, <?php echo htmlspecialchars(json_encode($m['nombre']), ENT_QUOTES); ?>)" title="Ver Historial Clínico">
+                            <button class="action-btn-mini" data-c3-click="evento39" data-c3-arg0="<?php echo (int) $m['id_mascota']; ?>" data-c3-arg1="<?php echo htmlspecialchars(json_encode($m['nombre']), ENT_QUOTES); ?>" title="Ver Historial Clínico">
                                 <i class="bi bi-file-earmark-medical-fill"></i>
                             </button>
                             <?php endif; ?>
-                            <button class="action-btn-mini" onclick="viewPetInDossier(<?php echo htmlspecialchars(json_encode($m['doc_propietario']), ENT_QUOTES); ?>, <?php echo (int) $m['id_mascota']; ?>)" title="Ver Expediente">
+                            <button class="action-btn-mini" data-c3-click="evento40" data-c3-arg0="<?php echo (int) $m['id_mascota']; ?>" title="Ver Ficha Básica">
                                 <i class="bi bi-eye-fill"></i>
                             </button>
                         </div>
@@ -529,7 +530,7 @@
         <div class="modal-body-tabs">
             <!-- TAB PROPIETARIO -->
             <div id="tabNuevoPropietario" class="modal-tab-content active">
-                <form id="formPropietario" onsubmit="saveOwner(event)">
+                <form id="formPropietario" data-c3-submit="evento41">
                     <div class="users-modal__body">
                         <div class="form-grid">
                             <div class="input-group">
@@ -576,22 +577,16 @@
                                 </div>
                                 <span class="error-message display-none-error"></span>
                             </div>
-                            <div class="input-group">
-                                <label>Estado del Propietario</label>
-                                <div class="flex-center-gap mt-2">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggle_owner_estado" checked class="status-toggle-input" data-target="new_owner_estado" data-text-target="text_owner_estado" data-text-active="Activo en el sistema" data-text-inactive="Inactivo">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                    <span id="text_owner_estado" class="text-success" style="font-size: 0.9rem; font-weight: 500;">Activo en el sistema</span>
-                                </div>
-                                <input type="hidden" name="estado" id="new_owner_estado" value="1">
-                                <span class="error-message display-none-error"></span>
-                            </div>
                         </div>
                     </div>
                     <div class="users-modal__footer">
                         <button type="button" class="btn-modal-secondary close-modal-btn" data-modal="modalNuevoRegistro">Cancelar</button>
+                        <div class="consentimiento-presencial">
+                            <p>Entrega este formulario al titular para que lea la política y acepte directamente.</p>
+                            <a href="index.php?action=privacidad" target="_blank" rel="noopener">Leer política de tratamiento de datos</a>
+                            <label><input type="checkbox" name="titular_presente" value="1" required> Soy el titular y estoy presente.</label>
+                            <label><input type="checkbox" name="acepta_politica" value="1" required> Acepto la política de tratamiento de datos.</label>
+                        </div>
                         <button type="submit" class="btn-modal-primary">
                             <i class="fas fa-check-circle"></i> Registrar Propietario
                         </button>
@@ -601,7 +596,7 @@
 
             <!-- TAB MASCOTA -->
             <div id="tabNuevaMascota" class="modal-tab-content">
-                <form id="formMascota" onsubmit="savePet(event)" enctype="multipart/form-data">
+                <form id="formMascota" data-c3-submit="evento42" enctype="multipart/form-data">
                     <div class="users-modal__body">
                         <div class="form-grid-split">
                             <div class="photo-side">
@@ -611,12 +606,12 @@
                                     <img id="newPreview" src="" class="d-none">
                                     <button type="button" class="btn-clear-img clear-preview-btn d-none" id="btnClearNewImg" data-input="newFoto" data-preview="newPreview" title="Quitar imagen"><i class="fas fa-times"></i></button>
                                 </div>
-                                <input type="file" name="foto" id="newFoto" accept="image/*" class="d-none image-upload-input" data-preview="newPreview" data-clear-btn="btnClearNewImg">
+                                <input type="file" name="foto" id="newFoto" accept="image/jpeg,image/png" class="d-none image-upload-input" data-preview="newPreview" data-clear-btn="btnClearNewImg">
 
                                 <div class="pet-extra-panel mt-1rem">
                                     <div class="input-group">
                                         <label class="m-0"><i class="fas fa-palette"></i> Colores Base</label>
-                                        <select id="newSelectedColoresInput" name="colores[]" style="width: 100%; margin-top: 5px;">
+                                        <select id="newSelectedColoresInput" name="colores[]" multiple required class="pacientes-estilo-4">
                                             <!-- Cargado vía JS -->
                                         </select>
                                     </div>
@@ -627,9 +622,10 @@
                                                 <input type="checkbox" id="toggle_pet_estado" checked class="status-toggle-input" data-target="new_estado" data-text-target="text_pet_estado" data-text-active="Activo" data-text-inactive="Inactivo">
                                                 <span class="toggle-slider"></span>
                                             </label>
-                                            <span id="text_pet_estado" class="text-success" style="font-size: 0.9rem; font-weight: 500;">Activo</span>
+                                            <span id="text_pet_estado" class="pacientes-estilo-5 text-success">Activo</span>
                                         </div>
-                                        <input type="hidden" name="estado" id="new_estado" value="1">
+                                        <input type="hidden" name="estado" id="new_estado" value="1"><label for="new_esterilizado">Esterilización</label>
+        <select name="esterilizado" id="new_esterilizado"><option value="">No se sabe</option><option value="1">Sí</option><option value="0">No</option></select>
                                     </div>
                                 </div>
                             </div>
@@ -640,10 +636,10 @@
                                             <label>Nombre de la Mascota</label>
                                             <div class="input-wrapper">
                                                 <i class="fas fa-paw field-icon"></i>
-                                                <input type="text" name="nombre" id="new_nombre" required placeholder="Ej: Firulais" maxlength="50">
+                                                <input type="text" name="nombre" id="new_nombre" required placeholder="Ej: Firulais" maxlength="<?= ValidadorMascota::NOMBRE_MAX ?>">
                                             </div>
                                         </div>
-                                        
+
                                         <div class="input-group">
                                             <label>Sexo</label>
                                             <div class="input-wrapper">
@@ -661,17 +657,17 @@
                                             <label>Especie</label>
                                             <div class="input-wrapper">
                                                 <i class="fas fa-cat field-icon"></i>
-                                                <select name="especie" id="new_especie" required onchange="loadBreeds(this.value, 'new_raza')">
+                                                <select name="especie" id="new_especie" required data-c3-change="evento43">
                                                     <option value="">Seleccione...</option>
                                                 </select>
                                             </div>
                                         </div>
-                                        
+
                                         <div class="input-group">
                                             <label>Raza</label>
                                             <div class="input-wrapper">
                                                 <i class="fas fa-dna field-icon"></i>
-                                                <select name="raza" id="new_raza" required onchange="checkOtherBreed(this, 'newOtherBreedGroup')">
+                                                <select name="raza" id="new_raza" required data-c3-change="evento44">
                                                     <option value="">Especie primero</option>
                                                 </select>
                                             </div>
@@ -683,24 +679,24 @@
                                             <label>Fecha Nacimiento</label>
                                             <div class="input-wrapper">
                                                 <i class="far fa-calendar-alt field-icon"></i>
-                                                <input type="text" class="flatpickr-date" name="fecha_nacimiento" id="new_fecha_nacimiento" placeholder="Seleccione fecha...">
+                                                <input type="text" class="flatpickr-date" name="fecha_nacimiento" id="new_fecha_nacimiento" required placeholder="Seleccione fecha...">
                                             </div>
                                         </div>
-                                        
+
                                         <div class="input-group">
                                             <label>Peso (Kg)</label>
                                             <div class="input-wrapper">
                                                 <i class="fas fa-weight field-icon"></i>
-                                                <input type="number" step="0.01" name="peso" id="new_peso" required placeholder="Ej: 4.5" min="0.1" max="200" oninput="if(this.value > 200) this.value = 200; if(this.value.length > 5) this.value = this.value.slice(0,5);">
+                                                <input type="number" step="0.01" name="peso" id="new_peso" required placeholder="Ej: 4.5" min="0.1" max="<?= ValidadorMascota::PESO_MAX_KG ?>">
                                             </div>
                                         </div>
                                     </div>
 
                                     <div class="input-group d-none" id="newOtherBreedGroup">
-                                        <label>Especifique la Raza</label>
+                                        <label>Raza por confirmar</label>
                                         <div class="input-wrapper">
                                             <i class="fas fa-tag field-icon"></i>
-                                            <input type="text" name="nueva_raza" id="new_nueva_raza" placeholder="¿Qué raza es?">
+                                            <input type="text" name="raza_indicada" maxlength="<?= ValidadorMascota::RAZA_MAX ?>" id="new_nueva_raza" placeholder="¿Qué raza es?">
                                         </div>
                                     </div>
 
@@ -710,13 +706,15 @@
                                         <label>Vincular Propietario *</label>
                                         <div class="input-wrapper">
                                             <i class="fas fa-search field-icon"></i>
-                                            <input type="text" id="ownerSearchInput" placeholder="Buscar por nombre o documento..." onkeyup="searchOwnersForPet(this.value)" autocomplete="off">
+                                            <input type="text" id="ownerSearchInput" placeholder="Documento o correo completo..."  autocomplete="off">
+                                            <button type="button" id="buscarPropietarioExacto" class="btn-modal-secondary">Buscar coincidencia exacta</button>
                                         </div>
-                                        <input type="hidden" name="doc_propietario" id="petOwnerDoc" required>
+                                        <input type="hidden" name="id_propietario" id="petOwnerDoc" required>
                                         <div id="ownerSuggestions" class="suggestions-list"></div>
+                                        <div id="mascotasExistentes" class="mascotas-existentes" aria-live="polite"></div>
                                         <div id="selectedOwnerInfo" class="selected-badge d-none">
                                             <i class="fas fa-user-check"></i> <span id="selectedOwnerName"></span>
-                                            <i class="fas fa-times-circle close-selected-owner" onclick="clearOwnerSelection()"></i>
+                                            <i class="fas fa-times-circle close-selected-owner" data-c3-click="evento45"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -754,12 +752,12 @@
                             <img id="editPreview" src="" class="d-none">
                             <button type="button" class="btn-clear-img clear-preview-btn d-none" id="btnClearEditImg" data-input="editFoto" data-preview="editPreview" title="Quitar imagen"><i class="fas fa-times"></i></button>
                         </div>
-                        <input type="file" name="foto" id="editFoto" accept="image/*" class="d-none image-upload-input" data-preview="editPreview" data-clear-btn="btnClearEditImg">
+                        <input type="file" name="foto" id="editFoto" accept="image/jpeg,image/png" class="d-none image-upload-input" data-preview="editPreview" data-clear-btn="btnClearEditImg">
 
                         <div class="pet-extra-panel mt-1rem">
                             <div class="input-group">
                                 <label class="m-0"><i class="fas fa-palette"></i> Colores Base</label>
-                                <select id="editSelectedColoresInput" name="colores[]" class="w-100 mt-2">
+                                <select id="editSelectedColoresInput" name="colores[]" multiple required class="w-100 mt-2">
                                     <!-- Cargado vía JS -->
                                 </select>
                             </div>
@@ -770,9 +768,10 @@
                                         <input type="checkbox" id="toggle_edit_pet_estado" class="status-toggle-input" data-target="edit_estado" data-text-target="text_edit_pet_estado" data-text-active="Activo" data-text-inactive="Inactivo">
                                         <span class="toggle-slider"></span>
                                     </label>
-                                    <span id="text_edit_pet_estado" class="text-success" style="font-size: 0.9rem; font-weight: 500;">Activo</span>
+                                    <span id="text_edit_pet_estado" class="pacientes-estilo-6 text-success">Activo</span>
                                 </div>
-                                <input type="hidden" name="estado" id="edit_estado" value="1">
+                                <input type="hidden" name="estado" id="edit_estado" value="1"><label for="edit_esterilizado">Esterilización</label>
+        <select name="esterilizado" id="edit_esterilizado"><option value="">No se sabe</option><option value="1">Sí</option><option value="0">No</option></select>
                             </div>
                         </div>
                     </div>
@@ -783,11 +782,11 @@
                                     <label>Nombre de la Mascota</label>
                                     <div class="input-wrapper">
                                         <i class="fas fa-paw field-icon"></i>
-                                        <input type="text" name="nombre" id="edit_nombre" required maxlength="50" class="validate-name">
+                                        <input type="text" name="nombre" id="edit_nombre" required maxlength="<?= ValidadorMascota::NOMBRE_MAX ?>" class="validate-name">
                                     </div>
                                     <span class="error-message display-none-error"></span>
                                 </div>
-                                
+
                                 <div class="input-group">
                                     <label>Sexo</label>
                                     <div class="input-wrapper">
@@ -811,7 +810,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                
+
                                 <div class="input-group">
                                     <label>Raza</label>
                                     <div class="input-wrapper">
@@ -828,15 +827,15 @@
                                     <label>Fecha Nacimiento</label>
                                     <div class="input-wrapper">
                                         <i class="far fa-calendar-alt field-icon"></i>
-                                        <input type="text" class="flatpickr-date" name="fecha_nacimiento" id="edit_fecha_nac" placeholder="Seleccione fecha..." required>
+                                        <input type="text" class="flatpickr-date" name="fecha_nacimiento" id="edit_fecha_nac" required placeholder="Seleccione fecha...">
                                     </div>
                                 </div>
-                                
+
                                 <div class="input-group">
                                     <label>Peso (Kg)</label>
                                     <div class="input-wrapper">
                                         <i class="fas fa-weight field-icon"></i>
-                                        <input type="number" step="0.01" name="peso" id="edit_peso" required placeholder="0.00">
+                                        <input type="number" step="0.01" name="peso" id="edit_peso" required placeholder="0.00" min="0.01" max="<?= ValidadorMascota::PESO_MAX_KG ?>">
                                     </div>
                                 </div>
                             </div>
@@ -844,27 +843,27 @@
                             <!-- OTRA RAZA -->
                             <div class="form-grid-1-gap d-none" id="editOtherBreedGroup">
                                 <div class="input-group">
-                                    <label>Otra raza o especie <span style="color:#ef4444">*</span></label>
+                                    <label>Raza por confirmar <span class="pacientes-estilo-7">*</span></label>
                                     <div class="input-wrapper no-icon">
-                                        <input type="text" name="nueva_raza" id="edit_nueva_raza" placeholder="¿Qué raza es?">
+                                        <input type="text" name="raza_indicada" maxlength="<?= ValidadorMascota::RAZA_MAX ?>" id="edit_nueva_raza" placeholder="¿Qué raza es?">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- CAMBIAR PROPIETARIO -->
                             <div class="input-group rel-pos">
-                                <label>Cambiar Propietario (Opcional)</label>
+                                <label>Propietario de la mascota</label>
                                 <div class="input-wrapper">
                                     <i class="fas fa-user-edit field-icon"></i>
-                                    <input type="text" id="editOwnerSearchInput" class="owner-search-input" placeholder="Buscar nuevo dueño..." autocomplete="off">
+                                    <input type="text" id="editOwnerSearchInput" readonly aria-label="Propietario de la mascota">
                                 </div>
-                                <input type="hidden" name="doc_propietario" id="edit_petOwnerDoc">
+                                <input type="hidden" name="id_propietario" id="edit_petOwnerDoc">
                                 <div id="editOwnerSuggestions" class="suggestions-list"></div>
                                 <div id="selectedEditOwnerInfo" class="selected-badge d-none">
                                     <div class="flex-center-gap">
                                         <i class="fas fa-user-check"></i> <span id="selectedEditOwnerName"></span>
                                     </div>
-                                    <i class="fas fa-times-circle close-selected-owner"></i>
+
                                 </div>
                             </div>
                         </div>
@@ -883,10 +882,10 @@
 <?php include __DIR__ . "/modal_consulta.php"; ?>
 
 <!-- DRAWER HISTORIAL MÉDICO -->
-<div id="drawerHistorialOverlay" class="drawer-overlay" onclick="closeDrawer('drawerHistorial')"></div>
+<div id="drawerHistorialOverlay" class="drawer-overlay" data-c3-click="evento46"></div>
 <aside id="drawerHistorial" class="drawer">
     <div class="drawer-header">
-        <button type="button" class="drawer-close" onclick="closeDrawer('drawerHistorial')" aria-label="Cerrar">
+        <button type="button" class="drawer-close" data-c3-click="evento47" aria-label="Cerrar">
             <i class="fas fa-times"></i>
         </button>
         <div class="drawer-title-wrap">
@@ -929,14 +928,14 @@
             </button>
         </div>
         <form id="formEditPropietario">
-            <input type="hidden" name="documento_original" id="edit_owner_doc_orig">
+            <input type="hidden" name="id_usuario" id="edit_owner_doc_orig">
             <div class="users-modal__body">
                 <div class="form-grid">
                     <div class="input-group">
                         <label>Tipo Documento</label>
                         <div class="input-wrapper">
                             <i class="far fa-id-card field-icon"></i>
-                            <select name="tipo_documento" id="edit_owner_tipo_doc" required class="validate-select">
+                            <select name="tipo_documento" id="edit_owner_tipo_doc" disabled required class="validate-select">
                                 <option value="CC">Cédula de Ciudadanía</option>
                                 <option value="TI">Tarjeta de Identidad</option>
                                 <option value="CE">Cédula de Extranjería</option>
@@ -972,7 +971,7 @@
                         <label>Email</label>
                         <div class="input-wrapper">
                             <i class="far fa-envelope field-icon"></i>
-                            <input type="email" name="email" id="edit_owner_email" required placeholder="correo@ejemplo.com" maxlength="100" class="validate-email">
+                            <input type="email" name="email" id="edit_owner_email" readonly required placeholder="correo@ejemplo.com" maxlength="100" class="validate-email">
                         </div>
                         <span class="error-message display-none-error"></span>
                     </div>
@@ -983,7 +982,7 @@
                                 <input type="checkbox" id="toggle_edit_owner_estado" class="status-toggle-input" data-target="edit_owner_estado" data-text-target="text_edit_owner_estado" data-text-active="Activo en el sistema" data-text-inactive="Inactivo">
                                 <span class="toggle-slider"></span>
                             </label>
-                            <span id="text_edit_owner_estado" class="text-success" style="font-size: 0.9rem; font-weight: 500;">Activo en el sistema</span>
+                            <span id="text_edit_owner_estado" class="pacientes-estilo-8 text-success">Activo en el sistema</span>
                         </div>
                         <input type="hidden" name="estado" id="edit_owner_estado" value="1">
                         <span class="error-message display-none-error"></span>
@@ -999,10 +998,10 @@
 </div>
 
 <!-- DRAWER REGISTRAR VACUNA -->
-<div id="drawerVacunaOverlay" class="drawer-overlay" onclick="closeDrawer('drawerVacuna')"></div>
+<div id="drawerVacunaOverlay" class="drawer-overlay" data-c3-click="evento48"></div>
 <aside id="drawerVacuna" class="drawer">
     <div class="drawer-header">
-        <button type="button" class="drawer-close" onclick="closeDrawer('drawerVacuna')" aria-label="Cerrar">
+        <button type="button" class="drawer-close" data-c3-click="evento49" aria-label="Cerrar">
             <i class="fas fa-times"></i>
         </button>
         <div class="drawer-title-wrap">
@@ -1010,34 +1009,34 @@
             <p id="vacunaPetName"></p>
         </div>
     </div>
-    <form id="formVacuna" onsubmit="saveVaccine(event)">
+    <form id="formVacuna" data-c3-submit="evento50">
         <input type="hidden" name="id_mascota" id="vacuna_id_mascota">
         <div class="drawer-body">
             <!-- Sección: Información de la Vacuna -->
-            <div style="margin-bottom: 1.5rem;">
-                <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Información de la Vacuna</h4>
+            <div class="pacientes-estilo-9">
+                <h4 class="pacientes-estilo-10">Información de la Vacuna</h4>
                 <div class="form-grid">
                     <div class="input-group full">
                         <label>Nombre de la Vacuna *</label>
-                        <select name="nombre_vacuna" required id="vacunaSelect" onchange="toggleNuevaVacuna(this)">
+                        <select name="nombre_vacuna" required id="vacunaSelect" data-c3-change="evento51">
                             <option value="">Cargando vacunas...</option>
                         </select>
                     </div>
-                    <div class="input-group full" id="nuevaVacunaContainer" style="display: none;">
+                    <div class="pacientes-estilo-11 input-group full" id="nuevaVacunaContainer">
                         <label>Nueva Vacuna (si no está en la lista) *</label>
                         <input type="text" name="nueva_vacuna" id="nuevaVacunaInput" placeholder="Escribe el nombre de la nueva vacuna">
-                        <small style="color: var(--text-muted); font-size: 0.75rem;">Esta vacuna se agregará al catálogo para futuros usos</small>
+                        <small class="pacientes-estilo-12">Esta vacuna se agregará al catálogo para futuros usos</small>
                     </div>
                     <div class="input-group">
                         <label>Laboratorio *</label>
-                        <select name="laboratorio" required id="laboratorioSelect" onchange="toggleNuevoLaboratorio(this)">
+                        <select name="laboratorio" required id="laboratorioSelect" data-c3-change="evento52">
                             <option value="">Seleccione laboratorio...</option>
                         </select>
                     </div>
-                    <div class="input-group" id="nuevoLaboratorioContainer" style="display: none;">
+                    <div class="pacientes-estilo-13 input-group" id="nuevoLaboratorioContainer">
                         <label>Nuevo Laboratorio (si no está en la lista) *</label>
                         <input type="text" name="nuevo_laboratorio" id="nuevoLaboratorioInput" placeholder="Escribe el nombre del nuevo laboratorio">
-                        <small style="color: var(--text-muted); font-size: 0.75rem;">Este laboratorio se agregará al catálogo para futuros usos</small>
+                        <small class="pacientes-estilo-14">Este laboratorio se agregará al catálogo para futuros usos</small>
                     </div>
                     <div class="input-group">
                         <label>Lote *</label>
@@ -1047,8 +1046,8 @@
             </div>
 
             <!-- Sección: Fechas -->
-            <div style="margin-bottom: 1.5rem;">
-                <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Fechas</h4>
+            <div class="pacientes-estilo-15">
+                <h4 class="pacientes-estilo-16">Fechas</h4>
                 <div class="form-grid">
                     <div class="input-group">
                         <label>Fecha Aplicación *</label>
@@ -1065,22 +1064,22 @@
 
             <!-- Sección: Observaciones -->
             <div>
-                <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Observaciones</h4>
+                <h4 class="pacientes-estilo-17">Observaciones</h4>
                 <div class="input-group full">
                     <textarea name="observaciones" rows="2" placeholder="Notas adicionales sobre la vacunación..."></textarea>
                 </div>
             </div>
 
-            <button type="submit" class="btn-primary full-btn" style="margin-top: 1.5rem;">Guardar Registro</button>
+            <button type="submit" class="pacientes-estilo-18 btn-primary full-btn">Guardar Registro</button>
         </div>
     </form>
 </aside>
 
 <!-- DRAWER REGISTRAR DESPARASITACIÓN -->
-<div id="drawerDesparasitacionOverlay" class="drawer-overlay" onclick="closeDrawer('drawerDesparasitacion')"></div>
+<div id="drawerDesparasitacionOverlay" class="drawer-overlay" data-c3-click="evento53"></div>
 <aside id="drawerDesparasitacion" class="drawer">
     <div class="drawer-header">
-        <button type="button" class="drawer-close" onclick="closeDrawer('drawerDesparasitacion')" aria-label="Cerrar">
+        <button type="button" class="drawer-close" data-c3-click="evento54" aria-label="Cerrar">
             <i class="fas fa-times"></i>
         </button>
         <div class="drawer-title-wrap">
@@ -1088,12 +1087,12 @@
             <p id="despPetName"></p>
         </div>
     </div>
-    <form id="formDesparasitacion" onsubmit="saveDeworming(event)">
+    <form id="formDesparasitacion" data-c3-submit="evento55">
         <input type="hidden" name="id_mascota" id="desp_id_mascota">
         <div class="drawer-body">
             <!-- Sección: Tipo y Producto -->
-            <div style="margin-bottom: 1.5rem;">
-                <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Tipo y Producto</h4>
+            <div class="pacientes-estilo-19">
+                <h4 class="pacientes-estilo-20">Tipo y Producto</h4>
                 <div class="form-grid">
                     <div class="input-group">
                         <label>Tipo *</label>
@@ -1104,21 +1103,21 @@
                     </div>
                     <div class="input-group">
                         <label>Producto *</label>
-                        <select name="producto" required id="productoSelect" onchange="toggleNuevoProducto(this)">
+                        <select name="producto" required id="productoSelect" data-c3-change="evento56">
                             <option value="">Seleccione producto...</option>
                         </select>
                     </div>
-                    <div class="input-group full" id="nuevoProductoContainer" style="display: none;">
+                    <div class="pacientes-estilo-21 input-group full" id="nuevoProductoContainer">
                         <label>Nuevo Producto (si no está en la lista) *</label>
                         <input type="text" name="nuevo_producto" id="nuevoProductoInput" placeholder="Escribe el nombre del nuevo producto">
-                        <small style="color: var(--text-muted); font-size: 0.75rem;">Este producto se agregará al catálogo para futuros usos</small>
+                        <small class="pacientes-estilo-22">Este producto se agregará al catálogo para futuros usos</small>
                     </div>
                 </div>
             </div>
 
             <!-- Sección: Periodicidad y Fecha -->
-            <div style="margin-bottom: 1.5rem;">
-                <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Periodicidad y Fecha</h4>
+            <div class="pacientes-estilo-23">
+                <h4 class="pacientes-estilo-24">Periodicidad y Fecha</h4>
                 <div class="form-grid">
                     <div class="input-group">
                         <label>Periodicidad *</label>
@@ -1135,20 +1134,20 @@
                         ); ?>" required>
                     </div>
                 </div>
-                <div style="background: #f0fdf4; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; color: #166534; border: 1px solid #bbf7d0;">
+                <div class="pacientes-estilo-25">
                     <i class="fas fa-info-circle"></i> La fecha de la próxima dosis se calculará automáticamente según la periodicidad.
                 </div>
             </div>
 
             <!-- Sección: Observaciones -->
             <div>
-                <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Observaciones</h4>
+                <h4 class="pacientes-estilo-26">Observaciones</h4>
                 <div class="input-group full">
                     <textarea name="observaciones" rows="2" placeholder="Notas adicionales sobre la desparasitación..."></textarea>
                 </div>
             </div>
 
-            <button type="submit" class="btn-primary full-btn" style="margin-top: 1.5rem;">Guardar Registro</button>
+            <button type="submit" class="pacientes-estilo-27 btn-primary full-btn">Guardar Registro</button>
         </div>
     </form>
 </aside>
@@ -1158,9 +1157,9 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3><i class="far fa-calendar-check"></i> Agendar Cita</h3>
-            <span class="close" onclick="closeModal('modalCita')">&times;</span>
+            <span class="close" data-c3-click="evento57">&times;</span>
         </div>
-        <form id="formCita" onsubmit="saveAppointment(event)">
+        <form id="formCita" data-c3-submit="evento58">
             <input type="hidden" name="id_mascota" id="cita_id_mascota">
             <div class="modal-body">
                 <p class="sub-text">Agendando cita para: <strong id="citaPetName"></strong></p>
@@ -1186,408 +1185,22 @@
                         <input type="text" name="motivo" required placeholder="Ej. Chequeo general, Vacunación, Enfermedad...">
                     </div>
                 </div>
-                <div style="background: #f0fdf4; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.85rem; color: #16a34a;">
+                <div class="pacientes-estilo-28">
                     <i class="fas fa-envelope"></i> Se enviará un correo de confirmación al propietario.
                 </div>
-                <button type="submit" class="btn-primary full-btn" style="margin-top: 1.5rem;">Confirmar Cita</button>
+                <button type="submit" class="pacientes-estilo-29 btn-primary full-btn">Confirmar Cita</button>
             </div>
         </form>
     </div>
 </div>
 
-<div id="lightboxVisor" class="lightbox" onclick="closeLightbox()">
+<div id="lightboxVisor" class="lightbox" data-c3-click="evento59">
     <img src="" alt="Vista previa">
 </div>
 
 <!-- intl-tel-input JS -->
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
-<script>
-let itiNewOwnerPhone;
-let itiEditOwnerPhone;
 
-document.addEventListener('DOMContentLoaded', function() {
-    const newTelInput = document.querySelector("#new_owner_tel");
-    if (newTelInput) {
-        itiNewOwnerPhone = window.intlTelInput(newTelInput, {
-            initialCountry: "co",
-            preferredCountries: ["co", "us", "mx", "es"],
-            nationalMode: false,
-            autoInsertDialCode: true,
-            strictMode: true,
-            dropdownContainer: document.body,
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js"
-        });
-    }
-
-    const editTelInput = document.querySelector("#edit_owner_tel");
-    if (editTelInput) {
-        itiEditOwnerPhone = window.intlTelInput(editTelInput, {
-            initialCountry: "co",
-            preferredCountries: ["co", "us", "mx", "es"],
-            nationalMode: false,
-            autoInsertDialCode: true,
-            strictMode: true,
-            dropdownContainer: document.body,
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js"
-        });
-    }
-});
-
-function checkOtherBreed(select, targetGroupId) {
-    const group = document.getElementById(targetGroupId);
-    if (!group) return;
-    const input = group.querySelector('input');
-    if (select.value === 'Otra' || select.value === 'other') {
-        group.classList.remove('d-none');
-        group.style.display = 'block';
-        if (input) input.required = true;
-    } else {
-        group.classList.add('d-none');
-        group.style.display = 'none';
-        if (input) {
-            input.required = false;
-            input.value = '';
-        }
-    }
-}
-
-function validarSelect(select) {
-    const errorSpan = select.closest('.input-group') ? select.closest('.input-group').querySelector('.error-message') : null;
-    if (!errorSpan) return;
-    
-    if (select.value === '') {
-        errorSpan.textContent = 'Debe seleccionar una opción';
-        errorSpan.style.display = 'block';
-        select.classList.add('error');
-    } else {
-        errorSpan.style.display = 'none';
-        select.classList.remove('error');
-    }
-    
-    if (select.name === 'tipo_documento') {
-        const docInput = select.closest('form') ? select.closest('form').querySelector('input[name="documento"]') : null;
-        if (docInput && docInput.value.length > 0) {
-            validarDocumento(docInput);
-        }
-    }
-}
-
-async function verificarDocumentoExiste(input) {
-    const value = input.value.replace(/[^0-9]/g, '');
-    input.value = value;
-    
-    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
-    if (!errorSpan) return;
-    
-    if (value.length < 5) return;
-    
-    const originalDoc = document.getElementById('edit_owner_doc_orig') ? document.getElementById('edit_owner_doc_orig').value : '';
-    const url = `index.php?action=verificar_documento_ajax&documento=${value}&exclude_doc=${originalDoc}`;
-    
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        if (data.exists) {
-            errorSpan.textContent = 'El documento ya está registrado en el sistema';
-            errorSpan.style.display = 'block';
-            input.classList.add('error');
-        } else {
-            errorSpan.style.display = 'none';
-            input.classList.remove('error');
-        }
-    } catch (e) {
-        console.error('Error al verificar documento:', e);
-    }
-}
-
-async function verificarEmailExiste(input) {
-    const value = input.value;
-    
-    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
-    if (!errorSpan) return;
-    
-    if (!value || !value.includes('@')) return;
-    
-    const originalDoc = document.getElementById('edit_owner_doc_orig') ? document.getElementById('edit_owner_doc_orig').value : '';
-    const url = `index.php?action=verificar_email_ajax&email=${encodeURIComponent(value)}&exclude_doc=${originalDoc}`;
-    
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        if (data.exists) {
-            errorSpan.textContent = 'El correo electrónico ya está registrado en el sistema';
-            errorSpan.style.display = 'block';
-            input.classList.add('error');
-        } else {
-            errorSpan.style.display = 'none';
-            input.classList.remove('error');
-        }
-    } catch (e) {
-        console.error('Error al verificar email:', e);
-    }
-}
-
-function validarDocumento(input) {
-    const form = input.closest('form');
-    let tipoDoc = '';
-    if (form) {
-        const select = form.querySelector('select[name="tipo_documento"]');
-        if (select) tipoDoc = select.value;
-    }
-
-    let value = input.value;
-    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
-    let errorMessage = '';
-
-    if (tipoDoc === 'PP') {
-        value = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        value = value.substring(0, 15);
-        if (value.length > 0 && value.length < 6) errorMessage = 'El pasaporte debe tener al menos 6 caracteres';
-    } else {
-        value = value.replace(/[^0-9]/g, '');
-        if (tipoDoc === 'CC') {
-            value = value.substring(0, 10);
-            if (value.length > 0 && value.length < 5) errorMessage = 'Cédula inválida (muy corta)';
-            else if (value.length === 9) errorMessage = 'Las cédulas en Colombia no tienen 9 dígitos';
-        } else if (tipoDoc === 'TI') {
-            value = value.substring(0, 11);
-            if (value.length > 0 && value.length < 10) errorMessage = 'La TI debe tener 10 u 11 dígitos';
-        } else if (tipoDoc === 'CE') {
-            value = value.substring(0, 7);
-            if (value.length > 0 && value.length < 6) errorMessage = 'La CE debe tener al menos 6 dígitos';
-        } else {
-            value = value.substring(0, 20);
-            if (value.length > 0 && value.length < 5) errorMessage = 'El documento debe tener al menos 5 dígitos';
-        }
-    }
-    
-    input.value = value;
-    
-    if (!errorSpan) return;
-    
-    if (errorMessage) {
-        errorSpan.textContent = errorMessage;
-        errorSpan.style.display = 'block';
-        input.classList.add('error');
-    } else {
-        errorSpan.style.display = 'none';
-        input.classList.remove('error');
-    }
-    
-    if (value.length >= 5) {
-        verificarDocumentoExiste(input);
-    }
-}
-
-function validarNombre(input) {
-    const value = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-    input.value = value;
-    
-    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
-    if (!errorSpan) return;
-    
-    if (value.length > 0 && value.length < 3) {
-        errorSpan.textContent = 'El nombre debe tener al menos 3 caracteres';
-        errorSpan.style.display = 'block';
-        input.classList.add('error');
-    } else if (value.length > 100) {
-        errorSpan.textContent = 'El nombre no puede tener más de 100 caracteres';
-        errorSpan.style.display = 'block';
-        input.classList.add('error');
-    } else {
-        errorSpan.style.display = 'none';
-        input.classList.remove('error');
-    }
-}
-
-function validarEmail(input) {
-    const value = input.value;
-    
-    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
-    if (!errorSpan) return;
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,4}$/;
-    
-    if (value.length > 0 && !emailRegex.test(value)) {
-        errorSpan.textContent = 'Ingrese un correo electrónico válido (ej. usuario@dominio.com)';
-        errorSpan.style.display = 'block';
-        input.classList.add('error');
-    } else if (value.length > 100) {
-        errorSpan.textContent = 'El correo no puede tener más de 100 caracteres';
-        errorSpan.style.display = 'block';
-        input.classList.add('error');
-    } else {
-        errorSpan.style.display = 'none';
-        input.classList.remove('error');
-    }
-    
-    if (emailRegex.test(value) && value.length > 0) {
-        verificarEmailExiste(input);
-    }
-}
-
-function validarTelefono(input) {
-    const filteredValue = input.value.replace(/[^0-9+\s\-\(\)]/g, '');
-    if (filteredValue !== input.value) {
-        input.value = filteredValue;
-    }
-    
-    const inputGroup = input.closest('.input-group');
-    if (!inputGroup) return;
-    
-    const errorSpan = inputGroup.querySelector('.error-message');
-    if (!errorSpan) return;
-    
-    if (input.value.trim() === '') {
-        errorSpan.style.display = 'none';
-        input.classList.remove('error');
-        return;
-    }
-    
-    const isNew = input.id === 'new_owner_tel';
-    const iti = isNew ? itiNewOwnerPhone : itiEditOwnerPhone;
-    
-    if (iti) {
-        if (iti.isValidNumber()) {
-            errorSpan.style.display = 'none';
-            input.classList.remove('error');
-        } else {
-            const errorMsgMap = ["Número inválido", "Código de país inválido", "Demasiado corto", "Demasiado largo", "Número inválido"];
-            const errorCode = iti.getValidationError();
-            const msg = (errorCode >= 0 && errorCode < errorMsgMap.length) ? errorMsgMap[errorCode] : "El número no es válido para este país";
-            errorSpan.textContent = msg;
-            errorSpan.style.display = 'block';
-            input.classList.add('error');
-        }
-    }
-}
-
-async function saveOwner(e) {
-    e.preventDefault();
-    
-    // Validar select tipo doc
-    const tipoDoc = document.getElementById('new_owner_tipo_doc');
-    if (tipoDoc) validarSelect(tipoDoc);
-    
-    // Validar doc
-    const doc = document.getElementById('new_owner_doc');
-    if (doc) validarDocumento(doc);
-    
-    // Validar nombre
-    const nombre = document.getElementById('new_owner_nombre');
-    if (nombre) validarNombre(nombre);
-    
-    // Validar tel
-    const tel = document.getElementById('new_owner_tel');
-    if (tel) validarTelefono(tel);
-    
-    // Validar email
-    const email = document.getElementById('new_owner_email');
-    if (email) validarEmail(email);
-    
-    // Check error spans
-    const hasErrors = Array.from(e.target.querySelectorAll('.error-message')).some(el => el.style.display === 'block');
-    if (hasErrors) {
-        Swal.fire('Atención', 'Por favor, corrija los campos marcados en rojo antes de guardar.', 'warning');
-        return;
-    }
-    
-    const fd = new FormData(e.target);
-    if (itiNewOwnerPhone && itiNewOwnerPhone.isValidNumber()) {
-        fd.set('telefono', itiNewOwnerPhone.getNumber());
-    }
-    
-    try {
-        const res = await (await fetch('index.php?action=guardar_propietario_ajax', { method: 'POST', body: fd })).json();
-        if (res.success) {
-            Swal.fire('¡Listo!', 'Propietario registrado con éxito.', 'success');
-            const input = document.getElementById('petOwnerDoc');
-            if (input) {
-                selectOwner({ documento: fd.get('documento'), nombre_completo: fd.get('nombre_completo') });
-            }
-            if (document.getElementById('modalNuevoRegistro')) {
-                closeModal('modalNuevoRegistro');
-            } else {
-                closeModal('modalPropietario');
-            }
-            e.target.reset();
-            if (itiNewOwnerPhone) itiNewOwnerPhone.setNumber('');
-            loadOwners();
-        } else {
-            Swal.fire('Error', res.message || 'No se pudo registrar', 'error');
-        }
-    } catch (err) {
-        console.error(err);
-        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-    }
-}
-
-async function updateOwner(e) {
-    e.preventDefault();
-    
-    // Validar nombre
-    const nombre = document.getElementById('edit_owner_nombre');
-    if (nombre) validarNombre(nombre);
-    
-    // Validar tel
-    const tel = document.getElementById('edit_owner_tel');
-    if (tel) validarTelefono(tel);
-    
-    // Validar email
-    const email = document.getElementById('edit_owner_email');
-    if (email) validarEmail(email);
-    
-    // Check error spans
-    const hasErrors = Array.from(e.target.querySelectorAll('.error-message')).some(el => el.style.display === 'block');
-    if (hasErrors) {
-        Swal.fire('Atención', 'Por favor, corrija los campos marcados en rojo antes de guardar.', 'warning');
-        return;
-    }
-    
-    const fd = new FormData(e.target);
-    if (itiEditOwnerPhone && itiEditOwnerPhone.isValidNumber()) {
-        fd.set('telefono', itiEditOwnerPhone.getNumber());
-    }
-    
-    try {
-        const res = await (await fetch('index.php?action=actualizar_propietario_ajax', { method: 'POST', body: fd })).json();
-        if (res.success) {
-            Swal.fire('¡Listo!', 'Datos del propietario actualizados correctamente.', 'success');
-            closeModal('modalEditarPropietario');
-            loadOwners();
-            if (currentDossierDoc === fd.get('documento')) {
-                openOwnerDossier(currentDossierDoc);
-            }
-        } else {
-            Swal.fire('Error', res.message || 'No se pudo actualizar', 'error');
-        }
-    } catch (err) {
-        console.error(err);
-        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-    }
-}
-
-// Search owners directory locally using real-time search
-function filterOwners() {
-    const term = document.getElementById('ownerSearch').value.toLowerCase();
-    
-    // Filter grid cards
-    const cards = document.querySelectorAll('#ownerGridView .client-card');
-    cards.forEach(card => {
-        const txt = card.innerText.toLowerCase();
-        card.style.display = txt.includes(term) ? '' : 'none';
-    });
-    
-    // Filter table rows
-    const rows = document.querySelectorAll('#ownersTable tbody tr');
-    rows.forEach(row => {
-        const txt = row.innerText.toLowerCase();
-        row.style.display = txt.includes(term) ? '' : 'none';
-    });
-}
-</script>
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- Select2 JS -->

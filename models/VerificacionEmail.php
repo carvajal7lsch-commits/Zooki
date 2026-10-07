@@ -51,7 +51,7 @@ class VerificacionEmail
     {
         $stmt = $this->conn->prepare(
             "SELECT 1 FROM {$this->table}
-             WHERE id_usuario = :id_usuario AND used = 0 AND expires_at > :ahora
+             WHERE id_usuario = :id_usuario AND proposito = 'registro' AND used = 0 AND expires_at > :ahora
              LIMIT 1"
         );
         $stmt->execute([':id_usuario' => $idUsuario, ':ahora' => date('Y-m-d H:i:s')]);
@@ -80,7 +80,7 @@ class VerificacionEmail
     public function invalidarDe(int $idUsuario): bool
     {
         $stmt = $this->conn->prepare(
-            "UPDATE {$this->table} SET used = 1 WHERE id_usuario = :id_usuario AND used = 0"
+            "UPDATE {$this->table} SET used = 1 WHERE id_usuario = :id_usuario AND proposito = 'registro' AND used = 0"
         );
 
         return $stmt->execute([':id_usuario' => $idUsuario]);

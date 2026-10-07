@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — etapas A y B terminadas; C1 revisada con una corrección pendiente (C1.6); C2 por iniciar
+> Estado: en curso — A y B terminadas; C1.7, C2 y C3 implementadas, pendientes de revisión por Claude.
 > Entrega: v2.0 · Fecha: 2026-10-06
 > Reparto vigente (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
 
@@ -90,6 +90,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
 - [ ] C — En subetapas C1–C9 (A.5), cada una con revisión y `phpunit` en verde: identidad, contexto, aislamiento, retiro del recepcionista y de «cerrar sin consulta», cierre de los puntos de fuga de A.6; pruebas de dos clínicas.
   - [x] C1 — Identidad, contexto activo, autorización en `Security` y retiro del recepcionista ([Anexo C1](#anexo-c1--resultado)). Revisada en C1.6; corrección obligatoria aplicada en C1.7, pendiente de revisión por Claude.
   - [x] C2 — Configuración por clínica: horarios, lectura de catálogos y copia inicial D-1 ([Anexo C2](#anexo-c2--resultado)). Implementada y verificada; pendiente de revisión por Claude.
+  - [x] C3 — Mascotas y propietarios del personal ([Anexo C3](#anexo-c3--resultado)). Implementada y verificada; Codex escribe y Claude revisa. El usuario aprobó adelantar de D únicamente la confirmación por correo de una vinculación de propietario existente (RN-109). La aceptación del alta nueva sigue siendo presencial, directa del titular (RE-T.19.1).
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -702,3 +703,43 @@ Lo escribió Codex; la revisión corresponde a la sesión de revisión de Claude
 **Navegador integrado, dos administradores.** Ana (Norte): horarios iniciales, cerrar lunes, recargar y conservar el lunes cerrado (4 días, 32 horas). Carla (Sur): lunes sigue abierto; cerrar martes y restaurar mediante SweetAlert2; vuelve a 5 días y 40 horas. La consulta final confirma que Norte conserva el lunes cerrado después de la restauración de Sur. También se comprobó la vista protegida de Elena (C1.7). Se entró directamente a `admin_configuracion`: `admin_panel` todavía devuelve el 500 v1 ya documentado para C7.
 
 **Pendientes.** Revisión de Claude; activación HU-0.2 en D; escritura clínica y agenda en C4/C5; portal con selección de clínica en C6; prueba responsive completa a cargo del usuario. HU-T.15 se cierra al terminar C. Versión de publicación y exportaciones al cerrar M0, según sección 7. No se empezó C3.
+
+## Anexo C3 — Resultado
+
+Lo escribió Codex; la revisión corresponde a la sesión de revisión de Claude. Se releyeron A.2 (módulo 1), A.5, A.6, RN-109–113 y las revisiones C1.6/C1.7 y C2 antes de implementar.
+
+**Qué se hizo.** `Mascota` y `PropietarioClinica` resuelven el alcance desde `ModeloClinica`; el personal usa `id_usuario`, `mascota_clinica` y `propietario_clinica`. Una mascota ajena devuelve 403 auditado. El registro crea ficha global, vínculo, colores y token aleatorio de 43 caracteres, sin HC. La vinculación conserva ficha y token; la HC queda para la primera consulta en C4. La taxonomía es de lectura: «otra raza» se guarda en `raza_indicada`, por confirmar, sin insertar razas.
+
+La edición bloquea especie, raza, sexo y nacimiento fuera de la clínica registradora, tanto en pantalla como en el modelo. Relee bajo bloqueo en MySQL y escribe únicamente los campos cambiados; ficha, colores, auditoría y aviso al titular se guardan atómicamente. `AvisoFichaMascota` intenta entregar el correo después del guardado y conserva pendiente/error si falla. No hay eliminación física ni límite del plan en C3.
+
+El alta nueva exige presencia y aceptación directa del titular antes de crear la cuenta; guarda versión del contenido mostrado, fecha e IP en `consentimientos_datos`, medio `alta_personal`. La contraseña queda NULL y se envía un enlace de `PasswordReset`. Para una cuenta existente, el usuario aprobó adelantar únicamente la confirmación por correo: búsqueda exacta, mascotas básicas sin información clínica y vínculo pendiente hasta confirmar. La migración repetible `03_confirmacion_vinculo_propietario.sql` agrega propósito y clínica de destino a `verificaciones_email`; MER, drawDB, esquema y HU/RE reflejan ese ajuste. El token se guarda como hash, vence, es de un solo uso y no se entrega al personal; GET no lo consume y POST exige CSRF. La verificación de registro no consume solicitudes de vínculo ni estas bloquean el login. Los enlaces usan `APP_URL`; el destino alternativo se permite únicamente en localhost, evitando manipulación por `Host`.
+
+**RE y evidencia.**
+
+| Alcance | Prueba / verificación |
+|---|---|
+| RE-T.15.1/5, RN-110: aislamiento y 403 auditado | `MascotaAccesoTest::testLaMascotaDeANoSeVeNiSeEditaDesdeB`, `testPeticionDirectaDelControladorNoOcultaUn403`, `testVinculoConPropietarioAjenoDejaAuditoriaTrasRollback` |
+| RE-1.1.1–5: obligatorios, validación, foto, propietario, listado; RN-502 y colores v2 | `MascotaCatalogoTest::testCamposObligatoriosYLargoSeValidanEnServidor`; `MascotaAccesoTest::testAltaSinPropietarioYFotoInvalidaNoGuardaMascota`, `testRegistrarTokenAleatorioUnicoYColoresSinColumnasV1`; formularios en navegador |
+| RE-1.1.6, RE-1.5.1/2 y auditoría de RE-1.5.3 | `PropietarioClinicaTest::testBusquedaGlobalSoloExactaConMascotasBasicas`; `MascotaAccesoTest::testConfirmarPropietarioYVincularMascotaNoDuplicaNiAsignaHC`; oferta de vincular primero en navegador |
+| RE-1.2.1/2/3: obligatorios, unicidad, confirmación y mascotas propias de la clínica | `PropietarioClinicaTest::testControladorExigeDatosObligatoriosYRechazaDuplicados`, `testSolicitudNoCambiaIdentidadNiBloqueaLoginYSoloConfirmaLaClinicaGuardada`, `testNoConfirmaTokenDeRegistroVencidoCorreoCambiadoNiClinicaSuspendida`; `MascotaAccesoTest::testBusquedaPorMascotaPropietarioYDocumentoYMinimoTresCaracteres` |
+| RE-1.3.1–4: criterios, mínimo tres caracteres, resultados básicos, inactivas | `MascotaAccesoTest::testBusquedaPorMascotaPropietarioYDocumentoYMinimoTresCaracteres`, `testInactivarConservaFichaYNoSaleEnBusquedaActiva`; tiempo local inferior a 2 s, sin prueba de carga |
+| RE-1.4.1–5: protección, auditoría, conservación y aviso | `MascotaAccesoTest::testBSoloEditaDatosNoProtegidosYSeAuditaYNotifica`, `testEdicionDePesoNoEscribeIdentidadNiColores`, `testInactivarConservaFichaYNoSaleEnBusquedaActiva`, `testUnaAuditoriaFallidaDeshaceFichaColoresYNotificacion` |
+| RE-T.19.1/2: aceptación y evidencia; contraseña sin envío | `PropietarioClinicaTest::testAltaSinAceptacionOPresenciaNoCreaCuentaNiVinculoNiToken`, `testAltaConsentidaGuardaPruebaYPasswordResetSinContrasena`, `testControladorEnviaEnlaceSinExponerloAlPersonalNiEnviarPassword` |
+| HU-7.2, RN-702: catálogo global intacto y raza indicada hasta 50 | `MascotaCatalogoTest::testLaTaxonomiaGlobalSeLeeIgualEnAmbasClinicas`, `testRazaIndicadaNoCreaUnaRazaGlobal`, `testRazaDeOtraEspecieYColoresInventadosSeRechazanSinAltaParcial` |
+| Seguridad de la confirmación y compatibilidad real del esquema | `PropietarioClinicaTest::testConfirmacionPublicaPostExigeCsrf`, `EnlaceCuentaTest`; `BaseV2MysqlTest::testC3MascotasYConfirmacionEnElEsquemaReal`, `testMigracionC3ActualizaUnaBaseAnteriorYSePuedeRepetir` |
+
+**Verificación.** Suite completa sin MySQL: **296 pruebas, 1296 aserciones, sin fallos; 13 saltadas por falta de la variable**. Suite final con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y `ZOOKI_TEST_MYSQL_DB=zooki_v2_prueba`, MariaDB 10.4.32: **296 pruebas, 1466 aserciones, sin fallos ni saltadas**, incluyendo las 13 pruebas de `BaseV2MysqlTest`. La migración se ejecutó dos veces sobre una base anterior y sobre el esquema nuevo. Sintaxis PHP/JS y `git diff --check` correctos.
+
+**Navegador, dos veterinarios.** Beto (Norte) ve Luna; Diego (Sur) ve únicamente Milo antes del vínculo. La búsqueda parcial `fabio@` no da resultados; el correo completo devuelve solo los datos básicos de Luna y solicita confirmación. Para comprobar la edición tras confirmar, se consumió una solicitud sintética del fixture mediante el modelo y se vinculó la misma Luna a Sur: aparece sin duplicarla, con identidad deshabilitada y HC sin asignar. Diego guardó peso 9,25 kg; al reabrir, conserva el peso y los campos protegidos bloqueados. Se comprobó también el alta con las dos casillas de consentimiento inicialmente vacías. La entrega real al buzón no se validó: los envíos se cubren con un remitente simulado y el fallo SMTP conserva el aviso para reintento.
+
+**Pendientes.** Revisión de Claude. C4 asigna HC, adapta historial/prevención y verifica RN-112/113 y conservación del historial; C5 adapta reservas; C6 el portal del propietario. El aterrizaje `vet_area` todavía devuelve 500 por `doc_veterinario` v1 (C7): la prueba entra directamente a `vet_pacientes`. Los botones clínicos del expediente mantienen dependencias C4/C5 y no se consideran verificados. D gestiona versiones completas de la política; E aplica el límite pendiente de RE-1.5.3; C8 completa reintentos programados de comunicaciones. Versión de publicación al cerrar M0 (§7). Se regeneraron los PDF y Word de HU/RE/MER, incluidos índice y tablas mediante Word; las otras descargas ya desactualizadas siguen pendientes del cierre de M0. No se empezó C4.
+
+### C3 — Revisión (2026-10-07)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el diff, `Mascota` (alcance por `mascota_clinica`, `vincular()` exige un `propietario_clinica` activo, que solo existe tras la confirmación del titular), la migración `03_confirmacion_vinculo_propietario.sql` (repetible, consulta `information_schema`) y el ajuste de HU-1.2/RE-1.2.2, aprobado por el usuario durante la subetapa y conforme a RN-109. También se verificó en el código que C1.7 bloquea con cualquier otro vínculo de personal, activo o no.
+
+**Observaciones (no bloquean):**
+
+1. **Estilo de código.** Parte del código nuevo encadena varias sentencias en una línea (`$stmt=...; if (...) ...;`). AGENTS pide código legible: desde C4, una sentencia por línea y nombres claros. No se reescribe C3 solo por esto; se corrige cuando se toque.
+2. **Descargas del portal.** Se regeneraron HU, RE y MER antes de tiempo. No hace daño; la regeneración completa sigue siendo al cerrar M0.
+3. **Migraciones antes del corte.** Producción aún no tiene la v2, así que `03_` podría haberse plegado en `01_schema.sql`. Se deja como está, porque mantiene al día las bases locales y la del CI; si al llegar a F hay varias, se evalúa consolidarlas.

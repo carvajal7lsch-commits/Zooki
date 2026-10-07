@@ -528,9 +528,10 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 - Campos obligatorios: nombre, tipo y número de documento, teléfono y correo.
 - No se permiten documentos ni correos duplicados.
+- Si la cuenta ya existe, el personal la busca por documento o correo completo; el vínculo nuevo solo se crea al confirmar el titular desde un enlace enviado a ese correo (RN-109). La solicitud no modifica su identidad ni contraseña.
 - Desde el perfil del propietario se listan todas sus mascotas.
 
-**Reglas de negocio:** RN-101, RN-103, RN-G06 · **Dependencias:** —
+**Reglas de negocio:** RN-101, RN-103, RN-109, RN-G06 · **Dependencias:** —
 
 ### HU-1.3 — Buscar paciente
 
@@ -2031,7 +2032,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-106 | HU-1.1 |
 | RN-107 | HU-1.1 |
 | RN-108 | HU-1.4, HU-5.4 |
-| RN-109 | HU-T.18, HU-5.3, HU-5.8, HU-5.9, HU-5.13 |
+| RN-109 | HU-T.18, HU-1.2, HU-5.3, HU-5.8, HU-5.9, HU-5.13 |
 | RN-110 | HU-1.1, HU-1.4, HU-1.5, HU-5.3, HU-5.10, HU-5.13 |
 | RN-111 | HU-1.1, HU-1.5 |
 | RN-112 | HU-2.10 |

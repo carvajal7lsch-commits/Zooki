@@ -74,6 +74,9 @@ final class DosClinicas
         $db->exec("CREATE TABLE mascotas (
             id_mascota INTEGER PRIMARY KEY AUTOINCREMENT, id_propietario INTEGER, id_clinica_registro INTEGER,
             token_carnet TEXT NOT NULL UNIQUE, nombre TEXT, id_especie INTEGER, id_raza INTEGER,
+            fecha_nacimiento TEXT, peso NUMERIC, sexo TEXT DEFAULT 'Desconocido', esterilizado INTEGER,
+            raza_indicada TEXT, url_foto TEXT, carnet_activo INTEGER DEFAULT 1,
+            ficha_por_completar INTEGER DEFAULT 0,
             estado INTEGER NOT NULL DEFAULT 1)");
         $db->exec("CREATE TABLE mascota_clinica (
             id_mascota INTEGER NOT NULL, id_clinica INTEGER NOT NULL, numero_historia_clinica TEXT,
@@ -92,6 +95,7 @@ final class DosClinicas
             expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP)");
         $db->exec("CREATE TABLE verificaciones_email (
             id INTEGER PRIMARY KEY AUTOINCREMENT, id_usuario INTEGER NOT NULL, email TEXT NOT NULL,
+            id_clinica_vinculo INTEGER, proposito TEXT NOT NULL DEFAULT 'registro',
             token_hash TEXT NOT NULL, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP)");
     }
@@ -119,6 +123,34 @@ final class DosClinicas
             id_clinica INTEGER NOT NULL REFERENCES clinicas, nombre_laboratorio TEXT, estado INTEGER)');
         $db->exec('CREATE TABLE productos_desparasitacion_base (id_producto INTEGER PRIMARY KEY AUTOINCREMENT,
             id_clinica INTEGER NOT NULL REFERENCES clinicas, nombre_producto TEXT, tipo TEXT, estado INTEGER)');
+    }
+
+    /** C3: taxonomía global de lectura y auditoría de la ficha. */
+    public static function crearMascotasSqlite(PDO $db): void
+    {
+        $db->exec('PRAGMA foreign_keys = ON');
+        $db->exec('CREATE TABLE especies (id_especie INTEGER PRIMARY KEY, nombre_especie TEXT)');
+        $db->exec("INSERT INTO especies VALUES (1,'Canino'),(2,'Felino')");
+        $db->exec('CREATE TABLE razas (id_raza INTEGER PRIMARY KEY, id_especie INTEGER REFERENCES especies, nombre_raza TEXT)');
+        $db->exec("INSERT INTO razas VALUES (49,1,'Sin raza definida'),(50,2,'Sin raza definida')");
+        $db->exec('CREATE TABLE colores_base (id_color INTEGER PRIMARY KEY, nombre_color TEXT)');
+        $db->exec("INSERT INTO colores_base VALUES (1,'Negro'),(2,'Blanco')");
+        $db->exec('CREATE TABLE mascota_colores (id_mascota INTEGER REFERENCES mascotas, id_color INTEGER REFERENCES colores_base, PRIMARY KEY(id_mascota,id_color))');
+        $db->exec('CREATE TABLE auditoria_mascotas (id_auditoria INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER REFERENCES clinicas,
+            id_mascota INTEGER REFERENCES mascotas, id_usuario INTEGER REFERENCES usuarios, campo_modificado TEXT,
+            valor_anterior TEXT,valor_nuevo TEXT,fecha_cambio TEXT DEFAULT CURRENT_TIMESTAMP)');
+        $db->exec("CREATE TABLE notificaciones (id_notificacion INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER REFERENCES clinicas,
+            id_usuario INTEGER REFERENCES usuarios,tipo_entidad TEXT,id_entidad INTEGER,destinatario_email TEXT,
+            tipo_notificacion TEXT,asunto TEXT,mensaje TEXT,fecha_envio TEXT DEFAULT CURRENT_TIMESTAMP,estado TEXT DEFAULT 'pendiente')");
+        $db->exec('CREATE TABLE consentimientos_datos (id_consentimiento INTEGER PRIMARY KEY AUTOINCREMENT, id_usuario INTEGER REFERENCES usuarios,
+            version_politica TEXT NOT NULL,medio TEXT NOT NULL,ip_address TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP)');
+        self::completarMascota($db);
+    }
+
+    public static function completarMascota(PDO $db): void
+    {
+        $db->exec("UPDATE mascotas SET id_especie=1,id_raza=49,fecha_nacimiento='2022-01-01',peso=8.50,sexo='Hembra' WHERE id_mascota=1");
+        $db->exec('INSERT INTO mascota_colores (id_mascota,id_color) VALUES (1,1)');
     }
 
     /** Datos portables (SQLite y MySQL). Los roles los trae el esquema o la semilla. */
