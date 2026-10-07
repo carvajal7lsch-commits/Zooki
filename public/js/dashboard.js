@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Los paneles del administrador y del veterinario llegan pintados desde el
-  // servidor (PanelController); estas cargas solo sirven a recepcion.
+  // servidor (PanelController); estas cargas sirven al personal.
   if (typeof ZOOKI_ROLE === "undefined" || ZOOKI_ROLE !== 3) return;
 
   loadRoleStats();
@@ -427,7 +427,7 @@ function renderEstadoHoy(data) {
       .join("");
 }
 
-// ── Timeline (Recepcionista) ──────────────────────────────────────────────
+// ── Timeline del día ──────────────────────────────────────────────
 let _timelineData = [];
 
 async function loadTimeline() {

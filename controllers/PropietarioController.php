@@ -127,7 +127,7 @@ class PropietarioController {
                 'email' => $datos['email'],
                 'id_rol' => 4,
             ],
-            'Propietario registrado desde recepcion'
+            'Propietario registrado por el personal de la clinica'
         );
 
         $emailService = new EmailService();

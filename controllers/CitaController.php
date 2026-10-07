@@ -345,13 +345,13 @@ class CitaController {
         }
 
         // Filtrar por veterinario SOLO si el usuario es veterinario (rol 2)
-        // Admin (rol 1) y Recepcionista (rol 3) pueden ver todas las citas
+        // El administrador (rol 1) ve todas las citas de la clínica
         $doc_veterinario = null;
         if (isset($_SESSION['usuario_id_rol']) && $_SESSION['usuario_id_rol'] == 2) {
             // Rol 2 es Veterinario - solo ver sus propias citas
             $doc_veterinario = $_SESSION['usuario_doc'];
         }
-        // Para admin y recepcionista, $doc_veterinario permanece null (ven todas las citas)
+        // Para el administrador, $doc_veterinario permanece null (ve todas las citas)
 
         // Obtener citas
         $citas = $this->model->getByFecha($fecha_inicio, $fecha_fin, $doc_veterinario);
