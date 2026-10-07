@@ -39,3 +39,98 @@ jobs:
 
     - name: Run PHPUnit Test Suite
       run: vendor/bin/phpunit
+
+  # Plan M0, etapa B: la base v2 se crea desde cero en MySQL 8 (producción)
+  # y el migrador se puede correr dos veces sin cambiar nada.
+  base-v2-mysql:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          # Contenedor desechable del CI: root sin contraseña, así no hay
+          # ninguna clave escrita en el repositorio.
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: zooki_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      MYSQL_CI: mysql -h 127.0.0.1 -P 3306 -u root
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: pdo, pdo_mysql
+        coverage: none
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Cargar 01_schema.sql y 02_semilla.sql en una base vacía
+      run: |
+        $MYSQL_CI zooki_ci < database/01_schema.sql
+        $MYSQL_CI zooki_ci < database/02_semilla.sql
+        test "$($MYSQL_CI -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_ci'")" = "50"
+
+    # config/Database.php lee la conexión de .env; este solo existe en el CI.
+    - name: Configurar la conexión del migrador
+      run: printf 'DB_HOST=127.0.0.1\nDB_NAME=zooki_ci\nDB_USER=root\nDB_PASS=\n' > .env
+
+    - name: Migrador, dos veces seguidas
+      run: |
+        php scripts/migrar.php | tee primera.txt
+        php scripts/migrar.php | tee segunda.txt
+        grep -q "La base está al día" segunda.txt
+
+    - name: Conteos de la semilla (sin duplicados)
+      run: |
+        conteos=$($MYSQL_CI -N zooki_ci -e "SELECT CONCAT_WS(',',
+          (SELECT COUNT(*) FROM roles), (SELECT COUNT(*) FROM planes), (SELECT COUNT(*) FROM especies),
+          (SELECT COUNT(*) FROM razas), (SELECT COUNT(*) FROM colores_base), (SELECT COUNT(*) FROM especialidades),
+          (SELECT COUNT(*) FROM usuarios), (SELECT COUNT(*) FROM clinicas))")
+        echo "roles,planes,especies,razas,colores,especialidades,usuarios,clinicas = $conteos"
+        test "$conteos" = "4,2,6,54,9,0,0,0"
+
+    - name: Pruebas PHPUnit contra MySQL 8
+      env:
+        ZOOKI_TEST_MYSQL_HOST: 127.0.0.1
+        ZOOKI_TEST_MYSQL_USER: root
+      run: vendor/bin/phpunit tests/Integration/BaseV2MysqlTest.php
+
+    # Lo que hace producción con un volumen vacío: MySQL ejecuta los .sql del
+    # primer nivel de database/ al crear la base (docker-compose.yml).
+    - name: Crear la base desde un volumen vacío, como docker-compose
+      run: |
+        docker run -d --name zooki_initdb \
+          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=zooki_init \
+          -v "$PWD/database:/docker-entrypoint-initdb.d:ro" mysql:8.0
+        for i in $(seq 1 60); do
+          if [ "$(docker inspect -f '{{.State.Running}}' zooki_initdb)" != "true" ]; then
+            docker logs zooki_initdb; echo "MySQL no pudo crear la base"; exit 1
+          fi
+          if docker logs zooki_initdb 2>&1 | grep -q "MySQL init process done"; then
+            break
+          fi
+          sleep 3
+        done
+        docker logs zooki_initdb 2>&1 | grep -q "MySQL init process done" || { docker logs zooki_initdb; exit 1; }
+        for i in $(seq 1 20); do
+          docker exec zooki_initdb mysql -u root -e "SELECT 1" >/dev/null 2>&1 && break
+          sleep 3
+        done
+        tablas=$(docker exec zooki_initdb mysql -u root -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_init'")
+        roles=$(docker exec zooki_initdb mysql -u root -N -e "SELECT COUNT(*) FROM zooki_init.roles")
+        echo "tablas=$tablas roles=$roles"
+        test "$tablas" = "50" && test "$roles" = "4"

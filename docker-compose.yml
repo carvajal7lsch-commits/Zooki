@@ -27,6 +27,11 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
+    # Solo con el volumen db_data vacío, MySQL ejecuta en orden alfabético los
+    # .sql del primer nivel de database/: 01_schema.sql, 02_semilla.sql y las
+    # migraciones 03 en adelante. Las subcarpetas no se recorren, por eso el
+    # modelo de drawDB vive en database/modelo/ (ejecutarlo fallaría por
+    # tablas repetidas y abortaría la creación de la base).
     volumes:
       - db_data:/var/lib/mysql
       - ./database:/docker-entrypoint-initdb.d

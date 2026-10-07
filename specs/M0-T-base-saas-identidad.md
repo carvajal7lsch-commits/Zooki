@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — etapa A terminada y revisada; etapa B por iniciar
+> Estado: en curso — etapa A terminada y revisada; etapa B entregada el 2026-10-06, en revisión
 > Entrega: v2.0 · Fecha: 2026-10-06
 > Reparto vigente (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
 
@@ -10,7 +10,7 @@
 
 **Situación v1 (v1.12.0):** `usuarios.documento` es la clave primaria y referencia de otras tablas; `usuarios.id_rol` es un solo papel; existe el rol recepcionista; las tablas no tienen `id_clinica`. Las migraciones llegan a `13_razas_portal.sql`. **Los datos de producción son solo pruebas del usuario**: no hay clínicas, personas ni mascotas reales que conservar (decisión del 2026-10-06).
 
-**Destino v2:** [MER](../documentacion/MER.md), [reglas](../documentacion/ReglasNegocio.md), [requisitos](../documentacion/RequisitosEspecificos.md) y [plan de entregas](../documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2). `database/drawdb_schema_v2.sql` sigue siendo la referencia para drawDB; el esquema ejecutable es el nuevo `database/01_schema.sql`.
+**Destino v2:** [MER](../documentacion/MER.md), [reglas](../documentacion/ReglasNegocio.md), [requisitos](../documentacion/RequisitosEspecificos.md) y [plan de entregas](../documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2). `database/modelo/drawdb_schema_v2.sql` sigue siendo la referencia para drawDB; el esquema ejecutable es el nuevo `database/01_schema.sql`.
 
 **Enfoque:** como no hay datos reales, **no se migran datos v1**. Se reinicia la base con un esquema v2 consolidado y datos semilla, y el código se pasa entero al modelo v2. Esto reemplaza el plan anterior de migración conservadora (relleno de `id_usuario`/`id_clinica`, verificación de huérfanos y línea base de la clínica legada).
 
@@ -26,7 +26,7 @@
 | HU-T.19 | RE-T.19.1–4 | RN-G19, RN-G20 | D | Ninguna cuenta se crea sin la aceptación del titular; prueba con versión, medio, fecha e IP. |
 | HU-5.8 | RE-5.8.1–5 | RN-109, RN-G06 | D | Una identidad global se vincula a las clínicas que elige, sin duplicar el correo ni exponerla a otra clínica. |
 | HU-0.1 | RE-0.1.1–10 | RN-001, RN-002, RN-010, RN-011, RN-G19, RN-G20 | D | Alta pública con NIT válido, CAPTCHA, límites, consentimiento y clínica pendiente. |
-| HU-0.2 | RE-0.2.1–4 | RN-002, RN-003, RN-005, RN-G11 | D | La verificación activa la clínica y asigna el plan gratuito; un enlace vencido no la activa. |
+| HU-0.2 | RE-0.2.1–5 | RN-002, RN-003, RN-005, RN-G11 | D | La verificación activa la clínica y asigna el plan gratuito; un enlace vencido no la activa. |
 | HU-0.3 | RE-0.3.1–5 | RN-004, RN-012, RN-G13, RN-G14 | E | El panel opera sobre clínicas sin abrir historia clínica. **RE-0.3.6 (moderar reseñas) se verifica en v2.1 junto con HU-8.1**, porque en v2.0 aún no existen reseñas. |
 | HU-0.4 | RE-0.4.1–7 | RN-003, RN-005, RN-006, RN-420 | E | Topes gratuitos por clínica; una mascota vinculada cuenta; una urgencia roja nunca se bloquea. |
 
@@ -86,7 +86,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
 
 - [x] Aprobar el plan y cerrar las decisiones.
 - [x] A — Inventario de código por módulo y orden de adaptación ([Anexo A](#anexo-a--inventario-de-código-etapa-a)). Revisado y aprobado; decisiones D-1 a D-9 cerradas (A.7).
-- [ ] B — Ajustes de MER/drawdb y de HU-0.2/RE-0.2.5 según A.7; `drawdb_schema_v2.sql` a `database/modelo/`; `01_schema.sql` v2, `02_semilla.sql`, retiro de 03–13, migrador sin línea base con guarda v1 y semilla en cada arranque, `crear_superadmin.php`; prueba en CI con MySQL 8 que carga el esquema desde cero y corre el migrador dos veces; instalación desde cero en MariaDB local; README y AGENTS actualizados en la sección de base de datos.
+- [x] B — ([Anexo B](#anexo-b--resultado-de-la-etapa-b); falta la revisión, la corrida del CI con MySQL 8 y las preguntas de B.4) Ajustes de MER/drawdb y de HU-0.2/RE-0.2.5 según A.7; `drawdb_schema_v2.sql` a `database/modelo/`; `01_schema.sql` v2, `02_semilla.sql`, retiro de 03–13, migrador sin línea base con guarda v1 y semilla en cada arranque, `crear_superadmin.php`; prueba en CI con MySQL 8 que carga el esquema desde cero y corre el migrador dos veces; instalación desde cero en MariaDB local; README y AGENTS actualizados en la sección de base de datos.
 - [ ] C — En subetapas C1–C9 (A.5), cada una con revisión y `phpunit` en verde: identidad, contexto, aislamiento, retiro del recepcionista y de «cerrar sin consulta», cierre de los puntos de fuga de A.6; pruebas de dos clínicas.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
@@ -433,3 +433,71 @@ C1 va primero porque toda la aplicación lee la identidad y el rol de la sesión
 | Adicional | GitHub Actions suma un servicio MySQL 8 que carga `01_schema.sql` + `02_semilla.sql` desde cero y ejecuta el migrador dos veces; cubre las pruebas del migrador (§4.4) y los riesgos 4 y 5 de A.6. |
 
 **Documentos:** los ajustes que estas decisiones exigen (MER, drawdb, HU-0.2, RE-0.2.5 y las diferencias 1–5 de A.4.1) se hacen durante M0 **sin subir revisión**; la revisión nueva de cada documento se publica una sola vez al cerrar el módulo.
+
+## Anexo B — Resultado de la etapa B
+
+> Hecho el 2026-10-06 sobre `v2/m0` (a partir de `aba0764`) por Claude Code. Falta la revisión de la sesión de revisión y la primera corrida del job de MySQL 8 en GitHub Actions.
+
+### B.1 Qué se hizo
+
+- **Documentos** (sin subir revisión):
+  - MER: D-2 (`citas.ocupa_horario` y `citas.aviso_atencion_abierta`; `notificaciones_internas.id_cita` y `vigente_hasta`, con su relación a `citas`), D-7 y las diferencias 1–5 de A.4.1. `intentos_login` entra al diagrama, con la clave `chk:`. Hay una sección nueva, §10, con los índices y restricciones.
+  - `drawdb_schema_v2.sql` pasa a `database/modelo/` con los mismos cambios: FK de `propietario_clinica`, claves únicas e índices compuestos por `id_clinica`. `ocupa_horario` va ahí como columna simple, para que drawDB la importe.
+  - HU-0.2 suma el criterio de D-1. Se agregan RE-0.2.5 y su fila en la matriz, y los conteos pasan de 418 a 419 en el encabezado de los requisitos y en la Ficha Técnica.
+  - Enlaces actualizados en `AGENTS.md`, `specs/_plantilla_modulo.md`, `specs/HU-4.15-ingreso-emergencia.md` y este plan.
+- **`database/01_schema.sql`:** las 50 tablas, sin datos, en orden de dependencias, con FK en línea, InnoDB y `utf8mb4_general_ci`.
+  - La doble reserva (D-2) se protege con la columna calculada `ocupa_horario` (NULL si la cita está `cancelada` o `no_asistio`, o si es sobrecupo) y `UNIQUE (id_veterinario, fecha, hora, ocupa_horario)`, sin `id_clinica`.
+  - Usa `CREATE TABLE` sin `IF NOT EXISTS` a propósito: sobre una base que ya tiene tablas falla en vez de mezclar esquemas.
+- **`database/02_semilla.sql`:** 4 roles, 2 planes, 6 especies, 54 razas y 9 colores; `especialidades` queda vacía.
+  - Todo con `INSERT IGNORE`, id explícito e índice único por nombre. No hay `ON DUPLICATE KEY UPDATE` ni `REPLACE`.
+  - Los roles conservan los nombres en minúscula que compara el código (`Security::rolActual`, `AuthController`); el 5 se llama `super-administrador`.
+- **Se borraron** `03_drawdb_schema.sql` y las migraciones 04–13.
+- **`helpers/Migrador.php`:**
+  - `PRIMERA = 3`, sin línea base; `schema_migraciones` queda solo con `archivo` y `aplicada_en`.
+  - Se niega sobre una base vacía o v1 (sin `clinicas` o sin `usuarios.id_usuario`) con un mensaje que dice qué hacer.
+  - Aplica `02_semilla.sql` en cada arranque, después de las migraciones.
+  - `scripts/migrar.php` informa de la semilla.
+- **`docker-compose.yml` y `docker/iniciar.sh`:** sin cambio funcional, solo comentarios. MySQL solo ejecuta el primer nivel de `database/` (`01`, `02`, `03…`) e ignora `modelo/`.
+- **Super-administrador:** `scripts/crear_superadmin.php` (solo por consola; sale con 404 fuera de ella) y `helpers/CreadorSuperAdmin.php`.
+  - Valida con `PoliticaPassword` (RN-G10) y se niega si el correo existe.
+  - Crea la cuenta con `es_super_admin = 1`, sin documento ni rol de clínica, y la audita sin clínica, todo en una transacción.
+  - Oculta la contraseña con `stty` (Linux y Docker) o con `Read-Host -AsSecureString` (Windows).
+- **Pruebas:**
+  - `tests/Unit/CreadorSuperAdminTest.php` (5 casos).
+  - `tests/Integration/BaseV2MysqlTest.php` (9 casos contra MySQL o MariaDB): esquema, semilla repetible, migrador dos veces, semilla que no sobrescribe, migración nueva una sola vez, guardas v1 y vacía, doble reserva y super-administrador. Se salta sola sin `ZOOKI_TEST_MYSQL_HOST`.
+- **CI:** job `base-v2-mysql` con un servicio MySQL 8. Carga `01` + `02`, crea un `.env` solo del CI, corre `scripts/migrar.php` dos veces (la segunda debe decir «al día»), compara los conteos `4,2,6,54,9,0,0,0`, corre `BaseV2MysqlTest` y crea la base desde un volumen vacío con `database/` montada en `initdb`, como `docker-compose.yml`.
+- **README y AGENTS:** instalación, migraciones, semilla, super-administrador, modelo de datos v2 y la prueba con MySQL.
+
+### B.2 Cómo se verificó
+
+| Comando | Resultado |
+|---|---|
+| `vendor/bin/phpunit` | 232 pruebas, 906 aserciones, 9 saltadas (las de MySQL, sin variable de entorno). Las 218 anteriores siguen en verde. |
+| `mysql zooki_v2_prueba < database/01_schema.sql` en MariaDB 10.4.32 (XAMPP), base nueva | Sin errores; 50 tablas, todas InnoDB y `utf8mb4_general_ci`. |
+| `02_semilla.sql` dos veces seguidas | Conteos `4,2,6,54,9` en los dos casos; las tildes quedan en UTF-8 (`Café` = `436166C3A9`). |
+| `Migrador` dos veces sobre `zooki_v2_prueba` (mismo código que `scripts/migrar.php`, con la conexión directa para no usar `.env`) | Las dos veces: «La base está al día» y semilla aplicada, sin filas nuevas. |
+| `ZOOKI_TEST_MYSQL_HOST=127.0.0.1 ZOOKI_TEST_MYSQL_DB=zooki_v2_prueba vendor/bin/phpunit tests/Integration/BaseV2MysqlTest.php` | 9 pruebas, 130 aserciones, todas en verde sobre MariaDB 10.4. |
+| `php scripts/crear_superadmin.php` con datos inválidos por tubería | Rechaza contraseñas distintas, una contraseña corta y un correo inválido antes de conectarse a la base (sale con código 1). |
+| Comparación automática de `01_schema.sql` y `database/modelo/drawdb_schema_v2.sql` | Mismas 50 tablas y mismas columnas en cada una. |
+| Comparación de las razas 1–48 con el volcado v1 (`git show HEAD:database/01_schema.sql`) | Idénticas. |
+
+La base `zooki_v2_prueba` quedó cargada con esquema y semilla. No se tocó `zooki_db` ni se leyó `.env`. El MariaDB local, que estaba detenido, se arrancó para la prueba y se volvió a detener.
+
+### B.3 Decisiones de detalle tomadas dentro de A.7 (para la revisión)
+
+- La columna de D-2 se llama `ocupa_horario` (en español, en lugar del `slot_activo` de la v1) y el índice se llama `uq_cita_veterinario_horario`.
+- Hay índices únicos por nombre en los catálogos globales (`planes`, `especies`, `razas` por especie y `colores_base`) para que la semilla no duplique filas (§10 del MER).
+- `notificaciones_internas.id_cita` pasa a ser FK hacia `citas`; en la v1 era solo un índice. Las citas nunca se borran (RN-405).
+- El plan gratuito tiene `precio_anual` NULL: no tiene cobro anual.
+- AGENTS dice ahora que `01_schema.sql` y `02_semilla.sql` solo cambian junto con una migración que lleve el mismo cambio a las bases existentes.
+
+### B.4 Pendiente o dudoso
+
+1. **Posible exposición por web en Docker (urgente, fuera de B).** No hay `.dockerignore` y el `Dockerfile` hace `COPY . .` sin cambiar el `DocumentRoot` (`/var/www/html`). Si Dokploy deja el `.env` en el contexto de construcción, `https://<dominio>/Zooki/.env` podría descargarse, y `scripts/*.php` (migrar, respaldo, recordatorios) podría ejecutarse por web. No se verificó contra producción. Propuesta: comprobar con `curl -I` esas dos rutas y, en una tarea aparte, apuntar el `DocumentRoot` a `public/` y agregar un `.dockerignore`. `crear_superadmin.php` ya se protege.
+2. **Pregunta — consentimiento del super-administrador.** RE-T.19.2 dice que toda cuenta nueva tiene su registro en `consentimientos_datos`, pero el `medio` solo admite `formulario`, `google` o `alta_personal`, y la cuenta se crea por consola. Hoy el script no guarda consentimiento. ¿Se exceptúa al operador de la plataforma, o se agrega un medio (p. ej. `consola`) al MER?
+3. **MySQL 8 no se probó en local** (no hay Docker en el equipo). Lo cubre el job `base-v2-mysql`, que corre al hacer push; su primera corrida es la evidencia que falta.
+4. **Lectura oculta de la contraseña** (`stty` y PowerShell): no se probó en una terminal interactiva. En Windows, una contraseña con tildes podría llegar alterada por la página de códigos de la consola; en producción se usa Docker (Linux).
+5. **`specs/HU-4.15-ingreso-emergencia.md`** sigue diciendo que `ingresos_emergencia` llegará en una «migración nueva y conservadora de datos v1». La tabla ya está en `01_schema.sql`. Solo se corrigió el enlace; el texto se ajusta al planear M4.
+6. **No verificados:** el renderizado Mermaid del MER (se agregó una entidad y un comentario de columna) y la importación en drawDB de las líneas `KEY`/`UNIQUE KEY`. Los resincroniza el usuario.
+7. **Descargas del portal desactualizadas:** `exportar.mjs --revisar` marca readme, ficha, ers, reglas, hu, re, mer, historial y roi (varias ya lo estaban antes de B). Se regeneran al cerrar M0 (§7).
+8. **La aplicación de la rama no funciona** sobre la base nueva hasta terminar C, como se previó (A.5).

@@ -1,14 +1,16 @@
 <?php
 /**
- * Aplica las migraciones de database/ que falten (helpers/Migrador.php).
+ * Aplica las migraciones de database/ que falten y la semilla
+ * (helpers/Migrador.php).
  *
  * En Docker lo corre docker/iniciar.sh cada vez que arranca el contenedor web,
  * es decir, en cada despliegue de Dokploy. A mano:
  *
- *   php scripts/migrar.php            aplica las que falten
- *   php scripts/migrar.php --revisar  solo dice cuáles aplicaría
+ *   php scripts/migrar.php            aplica las que falten y la semilla
+ *   php scripts/migrar.php --revisar  solo dice qué aplicaría
  *
- * Sale con código 1 si no hay conexión o si una migración falla.
+ * Sale con código 1 si no hay conexión, si la base no tiene el esquema v2 o
+ * si una migración falla.
  */
 
 require_once dirname(__DIR__) . '/config/Database.php';
@@ -42,9 +44,9 @@ try {
     exit(1);
 }
 
-if ($hecho['linea_base']) {
-    $registrar(($soloRevisar ? 'Se anotarían' : 'Anotadas') . ' como ya aplicadas (línea base): ' . implode(', ', $hecho['linea_base']));
-}
 $registrar($hecho['ejecutadas']
     ? ($soloRevisar ? 'Se aplicarían: ' : 'Aplicadas: ') . implode(', ', $hecho['ejecutadas'])
     : 'La base está al día.');
+if ($hecho['semilla']) {
+    $registrar(($soloRevisar ? 'Se aplicaría ' : 'Aplicada ') . Migrador::SEMILLA . ' (solo agrega las filas que falten).');
+}

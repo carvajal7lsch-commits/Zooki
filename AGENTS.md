@@ -9,7 +9,7 @@ Zooki es un sistema de gestión veterinaria: PHP 8.2 sin framework (MVC propio),
 - **El código está en la v1.12.0**: una instalación para una sola clínica. Los usuarios se identifican por su documento, existe el rol recepcionista y las tablas no llevan `id_clinica`.
 - **La especificación ya es la v2**: una plataforma SaaS multi-inquilino con dos grafos (soporte a la decisión clínica y agenda inteligente), repartida entre v2.0 y v2.1. Está en `documentacion/` y es la fuente de verdad.
 - **Se construye la v2 por módulos**, en el orden de dependencias del [plan de entregas](documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2): primero la entrega v2.0 (lo imprescindible), luego la v2.1. Cada módulo agrupa sus HU y RE; el avance y las pruebas se cierran por etapas pequeñas dentro del módulo.
-- Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/drawdb_schema_v2.sql` describen el destino para drawDB; el esquema ejecutable es `database/01_schema.sql`. Como los datos de la v1 eran solo pruebas, el salto a v2 reinicia la base con un esquema v2 consolidado y datos semilla, sin migrar datos ([plan M0](specs/M0-T-base-saas-identidad.md)). Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
+- Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/modelo/drawdb_schema_v2.sql` describen el destino para drawDB; el esquema ejecutable es `database/01_schema.sql`. Como los datos de la v1 eran solo pruebas, el salto a v2 reinicia la base con un esquema v2 consolidado y datos semilla, sin migrar datos ([plan M0](specs/M0-T-base-saas-identidad.md)). Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
 
 ## Mapa de la documentación
 
@@ -17,7 +17,7 @@ Zooki es un sistema de gestión veterinaria: PHP 8.2 sin framework (MVC propio),
 |---|---|
 | Qué debe hacer una funcionalidad y cómo se acepta | [HistoriasUsuario.md](documentacion/HistoriasUsuario.md) y [RequisitosEspecificos.md](documentacion/RequisitosEspecificos.md) |
 | Qué reglas no se pueden romper | [ReglasNegocio.md](documentacion/ReglasNegocio.md) |
-| Tablas, columnas y relaciones | [MER.md](documentacion/MER.md) (esquema completo para drawDB en `database/drawdb_schema_v2.sql`, que el migrador no ejecuta) |
+| Tablas, columnas y relaciones | [MER.md](documentacion/MER.md) (esquema para drawDB en `database/modelo/drawdb_schema_v2.sql`; vive en una subcarpeta para que ni MySQL ni el migrador lo ejecuten) |
 | Cómo fluye un proceso (pasos, ramas de error) | [Modelos.md](documentacion/Modelos.md) |
 | Requisitos funcionales y no funcionales (RF, RNF), casos de uso | [ERS.md](documentacion/ERS.md) |
 | Qué nivel de triage debe dar cada caso clínico | `documentacion/CasosTriage.md` (batería de pruebas del Grafo I y de la agenda) |
@@ -74,13 +74,14 @@ composer install                                   # dependencias (PHPMailer, PH
 vendor/bin/phpunit                                 # todas las pruebas
 vendor/bin/phpunit tests/Unit/ValidadorMascotaTest.php   # una sola
 php scripts/migrar.php --revisar                   # qué migraciones faltan en la base local
-php scripts/migrar.php                             # aplicarlas
+php scripts/migrar.php                             # aplicarlas (y la semilla)
+php scripts/crear_superadmin.php                   # crear el super-administrador por consola
 node scripts/docs/exportar.mjs --revisar           # qué PDF/Word del portal están desactualizados
 node scripts/docs/exportar.mjs                     # regenerarlos (formato de la plantilla; necesita PHP, Chrome y Pandoc, y Word para el índice)
 ```
 
 - El usuario trabaja en Windows con PowerShell 5.1: **no existe `&&`**, se encadena con `;`.
-- Las pruebas de integración usan SQLite en memoria, no necesitan la base real.
+- Las pruebas de integración usan SQLite en memoria, no necesitan la base real. La excepción es `tests/Integration/BaseV2MysqlTest.php`, que carga el esquema en MySQL o MariaDB y se salta sola si no existe la variable `ZOOKI_TEST_MYSQL_HOST` (opcionales: `_PORT`, `_USER`, `_PASS` y `_DB`; esa base se borra y se crea en cada prueba). En CI corre contra MySQL 8.
 - Local corre en XAMPP (MariaDB); producción en Docker con Dokploy (MySQL 8).
 
 ## Estructura
@@ -95,7 +96,7 @@ node scripts/docs/exportar.mjs                     # regenerarlos (formato de la
 | `views/` | Solo estructura HTML/PHP, por rol: `admin/`, `vet/`, `portal/`, `auth/`. `reception/` desaparece en la v2. |
 | `public/css/`, `public/js/` | Estilos y scripts, un archivo o módulo por pantalla. |
 | `public/docs/` | Portal de documentación (`docs.js` lista los documentos publicados). |
-| `database/` | `01_schema.sql` y migraciones `NN_nombre.sql`. |
+| `database/` | `01_schema.sql` (esquema v2), `02_semilla.sql` (datos semilla), migraciones `NN_nombre.sql` desde la 03 y `modelo/` (diagrama de drawDB, no ejecutable). |
 | `scripts/` | Tareas programadas (recordatorios, vigilante, respaldo), migrador, índice de Algolia y exportación de documentos. |
 | `tests/Unit`, `tests/Integration` | PHPUnit 10. |
 | `specs/` | Un plan por módulo a partir de `_plantilla_modulo.md`; planes `HU-...` solo para flujos excepcionales. |
@@ -116,12 +117,14 @@ Son las del manifiesto `documentacion/ZOOKI_REGLAS.md` (que no se sube al reposi
 
 ## Base de datos y migraciones
 
-- Una migración nueva es `database/NN_nombre.sql` con el número siguiente, y **debe poder ejecutarse dos veces sin error**. Se consulta `information_schema` antes de crear columnas o índices, y se revisa si la fila ya existe antes de insertarla. Ejemplo: [database/13_razas_portal.sql](database/13_razas_portal.sql).
-- Empieza con `SET NAMES utf8mb4;` si inserta texto con tildes.
+- La base v2 nace de `database/01_schema.sql` (las 50 tablas, sin datos) y `database/02_semilla.sql` (roles, planes y catálogos globales). La v2 **no migra datos** de la v1, que eran pruebas: las migraciones v1 (03–13) se retiraron y el migrador se niega a correr sobre una base v1. Detalle en el [plan M0](specs/M0-T-base-saas-identidad.md).
+- Una migración nueva es `database/NN_nombre.sql` con el número siguiente (la primera es la `03`), y **debe poder ejecutarse dos veces sin error**: en una instalación nueva la corre MySQL al crear el volumen y luego el migrador. Se consulta `information_schema` antes de crear columnas o índices, y se revisa si la fila ya existe antes de insertarla.
+- `02_semilla.sql` se aplica en cada arranque: **solo inserta lo que falta y nunca sobrescribe** (`INSERT IGNORE` con id explícito e índice único; nada de `ON DUPLICATE KEY UPDATE` ni `REPLACE`). Una fila nueva de un catálogo global se agrega ahí con el siguiente id libre, sin cambiar ni reutilizar los existentes.
+- Solo los `.sql` del primer nivel de `database/` se ejecutan; lo que no debe correr nunca (como el modelo de drawDB) va en una subcarpeta.
+- Empieza con `SET NAMES utf8mb4;` si inserta texto con tildes. Las tablas usan InnoDB y `utf8mb4_general_ci`, que existe en MySQL 8 y en MariaDB 10.4.
 - Al desplegar se aplican solas (`docker/iniciar.sh` → `scripts/migrar.php`). Nunca se pide al usuario que entre al servidor a correrlas.
-- **No se modifican migraciones ya publicadas**: se escribe una nueva.
-- Las tablas y columnas nuevas salen del [MER](documentacion/MER.md). Si hace falta una que no está, primero se agrega al MER y a `database/drawdb_schema_v2.sql` y se avisa al usuario.
-- Pasar de la v1 a la v2 (documento → `id_usuario`, `id_clinica` en las tablas) **no migra datos**: los de la v1 eran pruebas. Se reinicia la base con `01_schema.sql` v2 y `02_semilla.sql`, se retiran las migraciones 03–13 (única excepción a no modificar migraciones publicadas) y las nuevas empiezan en `03`. Detalle en el [plan M0](specs/M0-T-base-saas-identidad.md).
+- **No se modifican migraciones ya publicadas**: se escribe una nueva. `01_schema.sql` y `02_semilla.sql` solo cambian junto con una migración que lleve el mismo cambio a las bases existentes.
+- Las tablas y columnas nuevas salen del [MER](documentacion/MER.md). Si hace falta una que no está, primero se agrega al MER y a `database/modelo/drawdb_schema_v2.sql` y se avisa al usuario.
 
 ## Mantener la documentación coherente
 
