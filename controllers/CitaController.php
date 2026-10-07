@@ -1186,12 +1186,7 @@ class CitaController {
         // Tipos de cita para el selector
         $tiposCita = [];
         try {
-            $tableCheck = $this->db->query("SHOW TABLES LIKE 'tipos_cita'");
-            if ($tableCheck && $tableCheck->rowCount() > 0) {
-                $tiposCita = $this->db
-                    ->query("SELECT id_tipo_cita, nombre_tipo, duracion_minutos FROM tipos_cita WHERE estado = 1 ORDER BY nombre_tipo")
-                    ->fetchAll(PDO::FETCH_ASSOC);
-            }
+            $tiposCita = (new Cita($this->db))->getTiposCita();
         } catch (PDOException $ex) {
             $tiposCita = [];
         }

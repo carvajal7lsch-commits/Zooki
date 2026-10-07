@@ -96,6 +96,31 @@ final class DosClinicas
             created_at TEXT DEFAULT CURRENT_TIMESTAMP)");
     }
 
+    /** C2: mismas columnas de los catálogos reales, con FK para probar rollback. */
+    public static function crearCatalogosSqlite(PDO $db): void
+    {
+        $db->exec('PRAGMA foreign_keys = ON');
+        $db->exec('CREATE TABLE especies (id_especie INTEGER PRIMARY KEY)');
+        $db->exec('INSERT INTO especies VALUES (1),(2),(3),(4),(5),(6)');
+        $db->exec('CREATE TABLE tipos_cita (id_tipo_cita INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_clinica INTEGER NOT NULL REFERENCES clinicas, nombre_tipo TEXT, duracion_minutos INTEGER,
+            margen_minutos INTEGER DEFAULT 10, pausable INTEGER DEFAULT 1, descripcion TEXT, color TEXT, activo INTEGER)');
+        $db->exec('CREATE TABLE horarios_clinica (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_clinica INTEGER NOT NULL REFERENCES clinicas, dia_semana INTEGER, activo INTEGER,
+            bloque_morning_activo INTEGER, bloque_afternoon_activo INTEGER, bloque_morning_inicio TEXT,
+            bloque_morning_fin TEXT, bloque_afternoon_inicio TEXT, bloque_afternoon_fin TEXT,
+            UNIQUE(id_clinica,dia_semana))');
+        $db->exec('CREATE TABLE vacunas_base (id_vacuna_base INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_clinica INTEGER NOT NULL REFERENCES clinicas, nombre_vacuna TEXT, descripcion TEXT, estado INTEGER)');
+        $db->exec('CREATE TABLE especie_vacunas (id_especie_vacuna INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_especie INTEGER REFERENCES especies, id_vacuna_base INTEGER REFERENCES vacunas_base,
+            UNIQUE(id_especie,id_vacuna_base))');
+        $db->exec('CREATE TABLE laboratorios_base (id_laboratorio INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_clinica INTEGER NOT NULL REFERENCES clinicas, nombre_laboratorio TEXT, estado INTEGER)');
+        $db->exec('CREATE TABLE productos_desparasitacion_base (id_producto INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_clinica INTEGER NOT NULL REFERENCES clinicas, nombre_producto TEXT, tipo TEXT, estado INTEGER)');
+    }
+
     /** Datos portables (SQLite y MySQL). Los roles los trae el esquema o la semilla. */
     public static function poblar(PDO $db): void
     {

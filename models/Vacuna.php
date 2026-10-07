@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/CatalogoClinica.php';
 class Vacuna {
     private $conn;
     private $table_name = "vacunas";
@@ -64,15 +65,11 @@ class Vacuna {
     }
 
     public function getVacunasPorEspecie($id_especie) {
-        $query = "SELECT vb.id_vacuna_base, vb.nombre_vacuna, vb.descripcion
-                  FROM vacunas_base vb
-                  JOIN especie_vacunas ev ON vb.id_vacuna_base = ev.id_vacuna_base
-                  WHERE ev.id_especie = :id_especie AND vb.estado = 1
-                  ORDER BY vb.nombre_vacuna";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_especie', $id_especie);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return (new CatalogoClinica($this->conn))->vacunasPorEspecie((int) $id_especie);
+    }
+
+    public function getLaboratorios(): array {
+        return (new CatalogoClinica($this->conn))->laboratorios();
     }
 
     public function insertarNuevaVacuna($nombre_vacuna, $descripcion = null) {

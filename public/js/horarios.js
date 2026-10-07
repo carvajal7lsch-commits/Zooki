@@ -289,7 +289,8 @@
         );
         if (!ok) return;
         try {
-            const r = await (await fetch('index.php?action=restaurar_horarios_defecto_ajax', { method: 'POST' })).json();
+            // RE-7.1.3 / RE-T.15.3: el interceptor agrega CSRF al FormData.
+            const r = await (await fetch('index.php?action=restaurar_horarios_defecto_ajax', { method: 'POST', body: new FormData() })).json();
             if (!r.success) {
                 zookiAviso(r.message || 'No se pudo restaurar el horario.');
                 return;

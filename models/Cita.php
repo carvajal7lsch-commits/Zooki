@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/CatalogoClinica.php';
 class Cita {
     private $conn;
     private $table_name = "citas";
@@ -121,30 +122,14 @@ class Cita {
     }
     
     public function getTiposCita() {
-        $query = "SELECT * FROM tipos_cita WHERE activo = 1 ORDER BY duracion_minutos ASC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $tipos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        // Mapear nombre_tipo a nombre para compatibilidad
-        return array_map(function($tipo) {
-            return [
-                'id_tipo_cita' => $tipo['id_tipo_cita'],
-                'nombre' => $tipo['nombre_tipo'] ?? $tipo['nombre'] ?? '',
-                'nombre_tipo' => $tipo['nombre_tipo'] ?? $tipo['nombre'] ?? '',
-                'duracion_minutos' => $tipo['duracion_minutos'],
-                'activo' => $tipo['activo']
-            ];
-        }, $tipos);
+        return array_map(static fn ($tipo) => $tipo + ['nombre' => $tipo['nombre_tipo']],
+            (new CatalogoClinica($this->conn))->tiposCita());
     }
-    
+
     public function getTipoCitaById($id_tipo_cita) {
-        $query = "SELECT * FROM tipos_cita WHERE id_tipo_cita = :id_tipo_cita";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_tipo_cita', $id_tipo_cita);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return (new CatalogoClinica($this->conn))->tipoCita((int) $id_tipo_cita) ?? false;
     }
-    
+
     public function getSugerenciasHorario($doc_veterinario, $fecha, $duracion_minutos, $id_cita_excluir = null) {
         $duracion_minutos = max((int)$duracion_minutos, 1);
 

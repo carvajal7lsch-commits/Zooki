@@ -237,6 +237,45 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame(1, (int) $usuario->propietariosDeClinica(DosClinicas::NORTE)[1]['num_mascotas']);
     }
 
+    /** C2: copia repetible, relaciones reales y restauración aislada en MySQL/MariaDB. */
+    public function testConfiguracionDeDosClinicasEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../helpers/InicializadorClinica.php';
+        require_once __DIR__ . '/../../models/CatalogoClinica.php';
+        require_once __DIR__ . '/../../models/HorarioClinica.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $inicializador = new InicializadorClinica($this->db);
+        $inicializador->copiar(1);
+        $inicializador->copiar(2);
+        $inicializador->copiar(1);
+        $inicializador->copiar(2);
+        foreach (['tipos_cita'=>12,'horarios_clinica'=>14,'vacunas_base'=>30,'especie_vacunas'=>42,
+                  'laboratorios_base'=>22,'productos_desparasitacion_base'=>30] as $tabla=>$cantidad) {
+            $this->assertSame($cantidad, $this->contar($tabla));
+        }
+        $_SESSION = ['id_usuario'=>1];
+        Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+        $catalogo = new CatalogoClinica($this->db);
+        $tipos = $catalogo->tiposCita();
+        $this->assertCount(6, $tipos);
+        $this->assertCount(12, $catalogo->vacunasPorEspecie(1));
+        $horario = new HorarioClinica($this->db);
+        $horario->guardar([[1,1,1,0,'09:00:00','11:00:00',null,null]]);
+        $horario->restaurar();
+        $this->assertSame('08:00:00', $horario->dia(1)['bloque_morning_inicio']);
+        Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::ADMIN), 1);
+        $this->assertNull($catalogo->tipoCita((int) $tipos[0]['id_tipo_cita']));
+        $this->assertSame('08:00:00', $horario->dia(1)['bloque_morning_inicio']);
+        $this->db->beginTransaction();
+        $inicializador->copiar(3);
+        $this->db->rollBack();
+        $this->assertSame(30, $this->contar('vacunas_base'));
+        $_SESSION = [];
+    }
+
     // -----------------------------------------------------------------------
 
     private function migrador(): Migrador

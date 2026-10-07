@@ -106,11 +106,8 @@ class DesparasitacionController {
     }
 
     public function getProductosAjax() {
-        $query = "SELECT id_producto, nombre_producto, tipo FROM productos_desparasitacion_base WHERE estado = 1 ORDER BY nombre_producto";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+        $productos = (new Desparasitacion($this->db))->getProductos();
+
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'productos' => $productos]);
         exit;

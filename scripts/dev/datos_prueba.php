@@ -29,6 +29,7 @@ require_once $raiz . '/config/Database.php';
 require_once $raiz . '/models/Usuario.php';
 require_once $raiz . '/helpers/PoliticaPassword.php';
 require_once $raiz . '/helpers/Roles.php';
+require_once $raiz . '/helpers/InicializadorClinica.php';
 
 function salir(string $mensaje, int $codigo = 1): void
 {
@@ -109,6 +110,7 @@ try {
             $db->prepare("UPDATE clinicas SET estado = 'activa' WHERE id_clinica = ?")->execute([$id]);
         }
         $idClinica[$clave] = (int) $id;
+        (new InicializadorClinica($db))->copiar((int) $id);
     }
 
     foreach (PERSONAS as [$nombre, $documento, $correo, $roles, $propietarioEn, $esSuperAdmin]) {

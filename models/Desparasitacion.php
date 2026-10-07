@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/CatalogoClinica.php';
 class Desparasitacion {
     private $conn;
     private $table_name = "desparasitaciones";
@@ -53,6 +54,10 @@ class Desparasitacion {
         $stmt->bindParam(':id', $id_mascota);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getProductos(): array {
+        return (new CatalogoClinica($this->conn))->productos();
     }
 
     public function insertarNuevoProducto($nombre_producto, $tipo = 'interna') {

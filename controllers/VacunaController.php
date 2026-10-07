@@ -171,11 +171,8 @@ class VacunaController {
     }
 
     public function getLaboratoriosAjax() {
-        $query = "SELECT id_laboratorio, nombre_laboratorio FROM laboratorios_base WHERE estado = 1 ORDER BY nombre_laboratorio";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        $laboratorios = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+        $laboratorios = (new Vacuna($this->db))->getLaboratorios();
+
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'laboratorios' => $laboratorios]);
         exit;

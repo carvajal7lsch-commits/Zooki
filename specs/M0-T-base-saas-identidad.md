@@ -89,6 +89,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
 - [x] B — ([Anexo B](#anexo-b--resultado-de-la-etapa-b); revisada, CI con MySQL 8 en verde, B.4 resuelto en B.5) Ajustes de MER/drawdb y de HU-0.2/RE-0.2.5 según A.7; `drawdb_schema_v2.sql` a `database/modelo/`; `01_schema.sql` v2, `02_semilla.sql`, retiro de 03–13, migrador sin línea base con guarda v1 y semilla en cada arranque, `crear_superadmin.php`; prueba en CI con MySQL 8 que carga el esquema desde cero y corre el migrador dos veces; instalación desde cero en MariaDB local; README y AGENTS actualizados en la sección de base de datos.
 - [ ] C — En subetapas C1–C9 (A.5), cada una con revisión y `phpunit` en verde: identidad, contexto, aislamiento, retiro del recepcionista y de «cerrar sin consulta», cierre de los puntos de fuga de A.6; pruebas de dos clínicas.
   - [x] C1 — Identidad, contexto activo, autorización en `Security` y retiro del recepcionista ([Anexo C1](#anexo-c1--resultado)). Revisada en C1.6; corrección obligatoria aplicada en C1.7, pendiente de revisión por Claude.
+  - [x] C2 — Configuración por clínica: horarios, lectura de catálogos y copia inicial D-1 ([Anexo C2](#anexo-c2--resultado)). Implementada y verificada; pendiente de revisión por Claude.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -674,3 +675,30 @@ Se aplicó la regla aprobada en C1.6, con el ajuste de revisión aprobado por el
 Pruebas: `UsuarioSeguridadTest` cubre cuenta exclusiva, otra clínica activa, propietario activo/inactivo, petición directa de contraseña, restablecimiento, cambios locales permitidos y otro vínculo personal inactivo. Evidencia de RE-T.15.2, RE-T.15.3 y la regla C1.6; conserva los flujos del titular (RE-T.5.7/8) para D. Suite completa: **278 pruebas, 1055 aserciones, 10 saltadas** (MySQL sin variable). Navegador integrado: comprobados los campos de Elena (solo lectura), el restablecimiento deshabilitado y la clave inicial oculta; la matriz responsive completa sigue a cargo del usuario según C1.6-10. No cambia la versión de publicación: se actualiza al cerrar M0.
 
 **Verificación del ajuste de revisión:** `testOtroVinculoPersonalInactivoBloqueaIdentidad` comprueba rechazo 403 de documento, tipo, correo, contraseña directa y restablecimiento, cinco registros de auditoría, cuenta sin cambios y permiso de vista deshabilitado. Suite después del ajuste: **286 pruebas, 1104 aserciones, sin fallos; 11 saltadas de MySQL sin variable**. La evidencia de base real de C2 que sigue corresponde a la ejecución anterior al ajuste.
+
+## Anexo C2 — Resultado
+
+Lo escribió Codex; la revisión corresponde a la sesión de revisión de Claude.
+
+**Qué se hizo.** `HorarioClinicaController` usa `HorarioClinica`, sin SQL directo ni guardas v1; las consultas obtienen la clínica del contexto mediante `ModeloClinica`. Guardar valida todos los días antes de escribir y usa una transacción; restaurar actualiza los siete días exclusivamente de la clínica activa, sin borrar filas. Ambos cambios se auditan. La disponibilidad respeta días y bloques apagados. En el navegador se detectó y corrigió el POST de restauración sin cuerpo: ahora envía `FormData` y el interceptor agrega CSRF.
+
+`CatalogoClinica` centraliza la lectura de tipos de cita (con margen y pausable), vacunas por especie, laboratorios y productos. Los modelos y endpoints de lectura existentes lo utilizan; el selector de tipos de la atención deja el SQL directo con la columna v1 inexistente. No se adaptan aquí los registros clínicos ni las reservas (C4/C5).
+
+`InicializadorClinica` delega la copia en `CopiaCatalogosClinica`; `ValoresInicialesClinica` conserva los valores aprobados de A.4.2 y los siete horarios de la v1. Copia 6 tipos, 7 días, 15 vacunas, 21 relaciones por especie, 11 laboratorios y 15 productos por clínica, reasignando los ids de vacunas. Cada catálogo existente se conserva completo (no se rellena ni sobrescribe un catálogo personalizado). Bloquea la fila de clínica en MySQL para serializar copias simultáneas; usa transacción propia o savepoint si lo llama una transacción exterior. `scripts/dev/datos_prueba.php` lo llama dentro de su transacción para ambas clínicas. No hizo falta cambiar el MER ni agregar una migración.
+
+**RE y evidencia.** En `ConfiguracionClinicaTest`:
+
+| Alcance | Prueba |
+|---|---|
+| RE-T.15.1/5, RNF-11: horarios y catálogos aislados | `testCatalogosSoloSeLeenDesdeLaClinicaActiva`, `testGuardarYRestaurarSoloModificanLaClinicaActiva`, `testSinContextoNoSeLeenCatalogos` |
+| RE-7.1.1/2: bloques y días; validación sin escritura parcial | `testGuardarYRestaurarSoloModificanLaClinicaActiva`, `testDiaInactivoYBloqueApagadoNoOfrecenHoras`, `testValidacionNoGuardaParcialmenteNiAceptaHorasODiasInvalidos` |
+| RE-7.1.3: restauración propia, auditada | `testGuardarYRestaurarSoloModificanLaClinicaActiva`; recorrido en navegador con CSRF |
+| RE-7.1.4: lectura del horario para disponibilidad (integración final de agenda en C5) | `testDiaInactivoYBloqueApagadoNoOfrecenHoras` y validación laboral en `testGuardarYRestaurarSoloModificanLaClinicaActiva` |
+| RE-0.2.5: copia inicial, repetición y rollback (activación HU-0.2 en D) | `testInicializadorNoDuplicaNiSobrescribeCatalogosPropios`, `testCopiaInicialFallaSinDejarDatosParcialesYRespetaTransaccionExterior`; `BaseV2MysqlTest::testConfiguracionDeDosClinicasEnElEsquemaReal` |
+| RE-7.4.2/5/6: lectura aislada de tipos, margen y pausable | `testCatalogosSoloSeLeenDesdeLaClinicaActiva`; la gestión completa y el uso clínico no se cierran en C2 |
+
+**Verificación.** Suite completa con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y `ZOOKI_TEST_MYSQL_DB=zooki_v2_prueba`: **286 pruebas, 1238 aserciones, sin fallos ni saltadas**. `BaseV2MysqlTest` aparte: **11 pruebas, 146 aserciones**, MariaDB 10.4.32. Script de datos de prueba ejecutado dos veces; catálogos sin duplicados.
+
+**Navegador integrado, dos administradores.** Ana (Norte): horarios iniciales, cerrar lunes, recargar y conservar el lunes cerrado (4 días, 32 horas). Carla (Sur): lunes sigue abierto; cerrar martes y restaurar mediante SweetAlert2; vuelve a 5 días y 40 horas. La consulta final confirma que Norte conserva el lunes cerrado después de la restauración de Sur. También se comprobó la vista protegida de Elena (C1.7). Se entró directamente a `admin_configuracion`: `admin_panel` todavía devuelve el 500 v1 ya documentado para C7.
+
+**Pendientes.** Revisión de Claude; activación HU-0.2 en D; escritura clínica y agenda en C4/C5; portal con selección de clínica en C6; prueba responsive completa a cargo del usuario. HU-T.15 se cierra al terminar C. Versión de publicación y exportaciones al cerrar M0, según sección 7. No se empezó C3.
