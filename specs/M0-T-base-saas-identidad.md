@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — etapa A terminada y revisada; etapa B entregada el 2026-10-06, en revisión
+> Estado: en curso — etapas A y B terminadas y revisadas; etapa C1 por iniciar
 > Entrega: v2.0 · Fecha: 2026-10-06
 > Reparto vigente (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
 
@@ -86,12 +86,12 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
 
 - [x] Aprobar el plan y cerrar las decisiones.
 - [x] A — Inventario de código por módulo y orden de adaptación ([Anexo A](#anexo-a--inventario-de-código-etapa-a)). Revisado y aprobado; decisiones D-1 a D-9 cerradas (A.7).
-- [x] B — ([Anexo B](#anexo-b--resultado-de-la-etapa-b); falta la revisión, la corrida del CI con MySQL 8 y las preguntas de B.4) Ajustes de MER/drawdb y de HU-0.2/RE-0.2.5 según A.7; `drawdb_schema_v2.sql` a `database/modelo/`; `01_schema.sql` v2, `02_semilla.sql`, retiro de 03–13, migrador sin línea base con guarda v1 y semilla en cada arranque, `crear_superadmin.php`; prueba en CI con MySQL 8 que carga el esquema desde cero y corre el migrador dos veces; instalación desde cero en MariaDB local; README y AGENTS actualizados en la sección de base de datos.
+- [x] B — ([Anexo B](#anexo-b--resultado-de-la-etapa-b); revisada, CI con MySQL 8 en verde, B.4 resuelto en B.5) Ajustes de MER/drawdb y de HU-0.2/RE-0.2.5 según A.7; `drawdb_schema_v2.sql` a `database/modelo/`; `01_schema.sql` v2, `02_semilla.sql`, retiro de 03–13, migrador sin línea base con guarda v1 y semilla en cada arranque, `crear_superadmin.php`; prueba en CI con MySQL 8 que carga el esquema desde cero y corre el migrador dos veces; instalación desde cero en MariaDB local; README y AGENTS actualizados en la sección de base de datos.
 - [ ] C — En subetapas C1–C9 (A.5), cada una con revisión y `phpunit` en verde: identidad, contexto, aislamiento, retiro del recepcionista y de «cerrar sin consulta», cierre de los puntos de fuga de A.6; pruebas de dos clínicas.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
-- [ ] F — Respaldo, reinicio de la base de producción, despliegue, super-administrador y clínica demo.
+- [ ] F — Respaldo, reinicio de la base de producción, despliegue, super-administrador y clínica demo. Incluye blindar Apache para que solo sirva `public/` y agregar `.dockerignore` (B.5).
 - [ ] Actualizar HU/RE (estado y nota de RE-0.3.6), `config/App.php` e `HistorialVersiones.md` al cerrar; regenerar descargas si cambian documentos publicados.
 - [ ] Entregar al usuario los comandos de commit por etapa para PowerShell; el usuario crea ramas, commits, push y tags.
 
@@ -501,3 +501,16 @@ La base `zooki_v2_prueba` quedó cargada con esquema y semilla. No se tocó `zoo
 6. **No verificados:** el renderizado Mermaid del MER (se agregó una entidad y un comentario de columna) y la importación en drawDB de las líneas `KEY`/`UNIQUE KEY`. Los resincroniza el usuario.
 7. **Descargas del portal desactualizadas:** `exportar.mjs --revisar` marca readme, ficha, ers, reglas, hu, re, mer, historial y roi (varias ya lo estaban antes de B). Se regeneran al cerrar M0 (§7).
 8. **La aplicación de la rama no funciona** sobre la base nueva hasta terminar C, como se previó (A.5).
+
+### B.5 Revisión (2026-10-06)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el diff, `01_schema.sql` (en especial `usuarios`, `clinicas`, `planes` y `citas` con `ocupa_horario`), `02_semilla.sql`, `Migrador`, `CreadorSuperAdmin` y el job de CI. El job `base-v2-mysql` corrió en verde en GitHub Actions (MySQL 8), con lo que queda cubierta la verificación que faltaba en B.4.3.
+
+**Respuestas a B.4:**
+
+1. **Exposición por web:** se comprobó en producción el 2026-10-06. `/` → 200; `/.env` → 404; `/composer.json` → 404; `/../.env` con `--path-as-is` → 400. El proxy solo expone `public/`; no hay fuga. Aun así, en F se blinda Apache (solo `public/` servible) y se agrega `.dockerignore`, para no depender solo del proxy.
+2. **Consentimiento del super-administrador:** confirmado por el usuario el 2026-10-06, por recomendación de la revisión: **queda exento**. Es el operador de la plataforma, no un titular que se registra en el servicio. No se agrega un medio `consola` al MER; al cerrar M0 se aclara la excepción en RE-T.19.2.
+3. **MySQL 8:** cubierto por el CI (punto anterior).
+4–8. Se mantienen como están anotados; se atienden en su momento (F, M4 y el cierre de M0).
+
+**Nota para C1:** el rol 5 (`super-administrador`) existe en `roles`, pero el super-administrador se marca con `usuarios.es_super_admin`. C1 debe impedir que `usuario_clinica` asigne el rol 5 (validación en la aplicación y prueba); los roles de clínica son solo 1 y 2, y el propietario va por `propietario_clinica`.
