@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — etapas A y B terminadas y revisadas; etapa C1 por iniciar
+> Estado: en curso — etapas A y B terminadas; C1 revisada con una corrección pendiente (C1.6); C2 por iniciar
 > Entrega: v2.0 · Fecha: 2026-10-06
 > Reparto vigente (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
 
@@ -88,6 +88,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
 - [x] A — Inventario de código por módulo y orden de adaptación ([Anexo A](#anexo-a--inventario-de-código-etapa-a)). Revisado y aprobado; decisiones D-1 a D-9 cerradas (A.7).
 - [x] B — ([Anexo B](#anexo-b--resultado-de-la-etapa-b); revisada, CI con MySQL 8 en verde, B.4 resuelto en B.5) Ajustes de MER/drawdb y de HU-0.2/RE-0.2.5 según A.7; `drawdb_schema_v2.sql` a `database/modelo/`; `01_schema.sql` v2, `02_semilla.sql`, retiro de 03–13, migrador sin línea base con guarda v1 y semilla en cada arranque, `crear_superadmin.php`; prueba en CI con MySQL 8 que carga el esquema desde cero y corre el migrador dos veces; instalación desde cero en MariaDB local; README y AGENTS actualizados en la sección de base de datos.
 - [ ] C — En subetapas C1–C9 (A.5), cada una con revisión y `phpunit` en verde: identidad, contexto, aislamiento, retiro del recepcionista y de «cerrar sin consulta», cierre de los puntos de fuga de A.6; pruebas de dos clínicas.
+  - [x] C1 — Identidad, contexto activo, autorización en `Security` y retiro del recepcionista ([Anexo C1](#anexo-c1--resultado)). Falta la revisión y las respuestas de C1.5.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -514,3 +515,152 @@ La base `zooki_v2_prueba` quedó cargada con esquema y semilla. No se tocó `zoo
 4–8. Se mantienen como están anotados; se atienden en su momento (F, M4 y el cierre de M0).
 
 **Nota para C1:** el rol 5 (`super-administrador`) existe en `roles`, pero el super-administrador se marca con `usuarios.es_super_admin`. C1 debe impedir que `usuario_clinica` asigne el rol 5 (validación en la aplicación y prueba); los roles de clínica son solo 1 y 2, y el propietario va por `propietario_clinica`.
+
+## Anexo C1 — Resultado
+
+> Hecho el 2026-10-06 sobre `v2/m0` (a partir de `3c7afd9`) por Claude Code. Falta la revisión de la sesión de revisión.
+
+### C1.1 Qué se hizo
+
+**Sesión e identidad.**
+
+- La sesión guarda `id_usuario` y el contexto activo; `usuario_doc` y `usuario_rol` desaparecen.
+- `usuario_id_rol` queda solo como espejo del rol del contexto, para que el código de C2–C9 que todavía lo lee actúe con ese rol y, si no lo reconoce, deniegue. Se retira al terminar C.
+- `helpers/Autenticador.php` decide el inicio de sesión:
+  - Se entra con documento o correo (RE-T.1.1).
+  - Una cuenta de Google (`password` NULL) no entra con ninguna contraseña.
+  - «No existe» y «contraseña incorrecta» dan el mismo mensaje y tardan lo mismo, con un hash señuelo (RN-G15).
+  - El contador por cuenta usa `cuenta:<id_usuario>`.
+- El registro con Google crea la cuenta con `password` NULL y `google_uid`; ya no guarda una contraseña aleatoria.
+- Pasaron a `id_usuario`:
+  - Modelos: `Usuario` (reescrito), `PasswordReset`, `VerificacionEmail` (sin `tablaLista()`, riesgo 6), `Auditoria` (con `id_clinica`; por defecto la del contexto) y `NotificacionInterna`, acotada a la clínica.
+  - Controladores: `AuthController`, `UsuarioController`, `PerfilController` y `NotificacionController`.
+  - Vistas: las de `auth/`, `admin/usuarios`, `admin/auditoria`, los tres layouts y las de landing y legales (solo la comprobación de sesión).
+
+**Contexto activo (HU-T.17).**
+
+- `helpers/Contexto.php`, `controllers/ContextoController.php`, `views/auth/seleccionar_contexto.php` y el indicador «contexto · Cambiar» (`views/partials/contexto_actual.php`) en los layouts de administración, veterinario y portal.
+- Los contextos posibles son: personal por cada fila activa de `usuario_clinica` (roles 1 y 2) en una clínica activa, un único portal si hay algún vínculo activo en `propietario_clinica`, y solo la plataforma si `es_super_admin`.
+- Con un contexto se entra directo; con varios, al selector.
+- Cambiar de contexto regenera la sesión y queda en auditoría con la clínica correspondiente.
+- La clave elegida solo se acepta si está entre los contextos que la base reconoce; si no, 403 y auditoría.
+
+**Autorización en un solo lugar.**
+
+- `Security::autorizar()` lanza `AccesoDenegado`; `check()` y el `try/catch` del front controller lo convierten en JSON o en redirección.
+- Los contextos se recalculan en cada petición: un rol retirado o una cuenta inactivada cortan el acceso en la siguiente petición (RN-G08).
+- La matriz usa los roles 1, 2, 4 y 5. El 3 no existe y el 5 solo tiene `dashboard` y `plataforma_inicio` (RN-004).
+- Una petición que nombra otra `id_clinica` da 403 y se audita. Los recursos sin clínica en la petición pasan por `Security::denegarRecursoAjeno()` o `exigirMismaClinica()`.
+- Se quitaron las 34 guardas manuales de `public/index.php` y los `try/catch` que devolvían mensajes de excepción.
+- La auditoría pasó a `controllers/AuditoriaController.php` y se quitó de `DashboardController`.
+- `plataforma_inicio` es una página mínima, sin datos clínicos.
+
+**Gestión de usuarios (HU-T.7).**
+
+- Alta, edición, estado y restablecimiento por `id_usuario`, dentro de la clínica activa (`usuario_clinica`).
+- El documento es un dato editable con unicidad.
+- El último administrador activo se cuenta por clínica.
+- Solo se aceptan los roles 1 y 2; `Usuario::asignarRolEnClinica()` rechaza también al super-administrador (RE-T.17.5).
+- RE-T.7.5: dar de alta a una persona que ya existe le asigna el rol sin crear otra cuenta.
+- Vista nueva sin CSS ni JS en línea (`public/js/usuarios.js`, con SweetAlert2): pestaña de personal y pestaña de propietarios vinculados, esta en solo lectura.
+
+**Recepcionista.**
+
+- Se borraron `views/reception/` (5 vistas), las rutas `reception_*`, `ROL_RECEPCIONISTA`, su entrada en la matriz, el layout `3 => 'reception'` del perfil, las redirecciones por rol 3 y las pruebas.
+- Se ajustaron comentarios y textos (sin lógica) en `CitaController`, `PropietarioController`, `PoliticaPassword`, `dashboard.js` y `PoliticaPasswordTest`.
+
+**Otros.**
+
+- `scripts/dev/datos_prueba.php`: crea dos clínicas y una persona por cada tipo de contexto (punto 6 del encargo).
+- `tests/Support/DosClinicas.php`: fixture compartido para SQLite que también carga en MySQL.
+- Textos del correo de credenciales («tu documento o tu correo»).
+- Una línea de comandos en AGENTS.
+
+### C1.2 RE cubiertos y su prueba
+
+| RE | Prueba |
+|---|---|
+| RE-T.15.2 (403 y auditoría) | `SeguridadClinicaTest`: `testUnaPeticionAOtraClinicaDa403YQuedaEnAuditoria`, `testElAdministradorNoVeNiModificaPersonalDeOtraClinica`, `testUnaNotificacionDeOtraClinicaDa403` |
+| RE-T.15.3 (rol, CSRF y clínica en cada petición) | `SeguridadClinicaTest` (matriz, CSRF, `id_clinica`), `AutorizacionRolTest` |
+| RE-T.15.4 (super-administrador sin datos clínicos) | `SeguridadClinicaTest::testElSuperAdministradorNoEntraADatosClinicos`, `AutorizacionRolTest::testElSuperAdministradorSoloTieneLaPlataforma` |
+| RE-T.15.5 (centralizado y probado) | `tests/Support/DosClinicas.php` y las pruebas anteriores; `BaseV2MysqlTest::testElFixtureDeDosClinicasCargaEnElEsquemaReal` |
+| RE-T.15.1 (todo filtra por clínica) | **Parcial:** cubierto en lo de C1 (personal, propietarios, auditoría, avisos): `testElListadoDePersonalEsDeLaClinicaActiva`, `ActividadCuentaAuditoriaTest::testElPanelSoloVeLaClinicaActiva`, `NotificacionAccesoTest`. El resto llega en C2–C9. |
+| RE-T.17.1 (una identidad, varios roles) | `ContextoTest::testUnaPersonaTieneSusRolesComoContextosSeparados`, `UsuarioSeguridadTest::testElAltaDeUnaPersonaExistenteLeAsignaElRolSinOtraCuenta` |
+| RE-T.17.2 (selector o entrada directa) | `ContextoTest`, `SeguridadClinicaTest::testSinContextoSeLlevaAlSelector` |
+| RE-T.17.3 (cambiar sin mezclar permisos) | `SeguridadClinicaTest::testDosContextosNoMezclanPermisos`, `testUnContextoRetiradoSeQuitaDeLaSesion` |
+| RE-T.17.5 (super-administrador sin roles de clínica) | `ContextoTest::testElSuperAdministradorSoloTieneLaPlataforma`, `UsuarioSeguridadTest::testUnSuperAdministradorNoRecibeRolesDeClinica` |
+| RE-T.17.4 (no calificarse a sí mismo) | **Pendiente:** depende de las reseñas (HU-8.1, v2.1). |
+| B.5 (rol 5 no asignable; rol 3 no existe) | `UsuarioSeguridadTest::testSoloSeAsignanLosRolesDeClinica`, `testElControladorRechazaElRol5YElRol3`, `AutorizacionRolTest::testLaMatrizSoloUsaLosRolesDeLaV2` |
+| RE-T.1.1, RE-T.1.3, RE-T.1.5 (login) | `AuthTest`: documento, correo, mensaje igual, Google con `password` NULL, cuenta inactiva y correo pendiente |
+| RE-T.7.1, RE-T.7.5, RE-T.11.2, RE-T.11.3 (personal) | `UsuarioSeguridadTest` (alta, vínculo, último administrador por clínica, RN-G08 por clínica, documento editable) |
+
+### C1.3 Cómo se verificó
+
+| Comando | Resultado |
+|---|---|
+| `vendor/bin/phpunit` | 274 pruebas, 1012 aserciones, 10 saltadas (las de MySQL sin variable). Las rehechas: `AuthTest`, `UsuarioSeguridadTest`, `ActividadCuentaAuditoriaTest`, `NotificacionAccesoTest` y `AutorizacionRolTest`; nuevas: `ContextoTest` y `SeguridadClinicaTest`. |
+| `ZOOKI_TEST_MYSQL_HOST=127.0.0.1 ZOOKI_TEST_MYSQL_DB=zooki_v2_prueba vendor/bin/phpunit tests/Integration/BaseV2MysqlTest.php` (MariaDB 10.4.32) | 10 pruebas, 134 aserciones, en verde, incluida la del fixture sobre el esquema real. |
+| `php scripts/dev/datos_prueba.php` (sin y con `--si`, dos veces) | Mostró la base de destino; creó 2 clínicas, 7 personas, 6 roles de personal y 2 vínculos de propietario; la segunda corrida no duplicó nada. |
+| Recorrido HTTP con `php -S` sobre `public/` y `curl` con cookie (no hubo navegador disponible en esta sesión) | Ver abajo. |
+
+**Recorrido HTTP.**
+
+- Ana entra con su documento → `admin_panel`.
+- En `admin_usuarios`, Ana ve el personal de Norte y no el de Sur.
+- Pedir a Carla (Sur) → 403. Pedir con `id_clinica=2` → 403. Desactivar a Diego (Sur) → 403.
+- Desactivarse siendo la última administradora → rechazado. Alta con rol 5 → rechazada.
+- Dar de alta a Fabio, que ya era propietario → queda vinculado sin crear otra cuenta.
+- La auditoría muestra la entrada al contexto y los 3 accesos denegados.
+- Elena entra con su correo → selector con 3 opciones; `dashboard` sin contexto → selector.
+- Elena como administradora de Sur ve el personal de Sur y el enlace «Cambiar». Como propietaria, `admin_usuarios` → redirige. Una clave que no tiene → redirige y se audita. Como veterinaria de Norte, `admin_usuarios` → redirige.
+- Gina → `plataforma_inicio`; el historial clínico → 403.
+- Clave mala y cuenta inexistente → el mismo mensaje.
+- El registro del servidor no mostró avisos ni errores en archivos de C1.
+
+`zooki_v2_prueba` quedó limpia, con esquema y semilla. Para probar a mano: `php scripts/dev/datos_prueba.php --si`, que imprime las contraseñas.
+
+### C1.4 Pantallas de otros módulos que fallan (C2–C9, esperado)
+
+- **Devuelven 500 por consultas v1:** `admin_panel` (C7), `vet_area` (C7), `vet_pacientes` (C3) y `portal_propietario` (C6). `admin_panel` es donde aterriza el administrador al entrar: para seguir, ir a `index.php?action=admin_usuarios`. Desde el portal, el cambio de contexto se hace en `index.php?action=seleccionar_contexto`.
+- **Firmas de C1 que aún llaman con la forma v1:**
+  - `NotificacionInterna::crearParaUsuario` y `crearParaRol` desde `CitaController` y `VigilanteAtenciones` (C5 y C8).
+  - Métodos v1 de `Usuario` desde `MascotaController` y `PropietarioController` (C3 y C6).
+  - `usuario_doc` en `Cita`, `Consulta`, `Dashboard`, `HorarioClinica`, `Mascota`, `Propietario`, `views/vet/{area,calendario}`, `views/portal/index` y `public/ver_archivo.php`. Todas fallan cerrado.
+  - `Auditoria::log()` ignora el documento que mandan esos controladores, para no confundirlo con un `id_usuario`.
+- **Quedan para C9 (cosmético):**
+  - La pestaña «Recepcionista» de `views/landing/partials/roles.php`, y `--role-receptionist` y el avatar de recepción en `styles.css`.
+  - El `onclick` de la campana en los layouts y los estilos en línea heredados de `views/admin/auditoria.php`.
+  - El enlace a la auditoría sigue comentado en el menú de administración desde la v1.
+
+### C1.5 Pendiente o dudoso (preguntas para el usuario)
+
+1. **¿C1 «cierra» HU-T.15?** RE-T.15.1 (todo filtra por clínica) solo queda cumplido en lo que toca C1; el resto llega con C2–C9. Propuesta: HU-T.15 se cierra al terminar C, no en C1.
+2. **RE-T.17.4 (no calificarse a sí mismo)** depende de las reseñas (v2.1). Propuesta: anotarlo como en RE-0.3.6 y verificarlo con HU-8.1.
+3. **El administrador edita datos de una identidad global.** Puede cambiar documento, correo y nombre de alguien de su personal que quizá trabaja en otra clínica o es propietario, y restablecer su contraseña, como en la v1. RE-T.5.7 y RE-T.5.8 piden que el titular corrija su correo y su documento con verificación. ¿Se limita la edición del administrador a quien solo está en su clínica, o se deja así hasta D?
+4. **Visibilidad del inicio de sesión.** `LOGIN` y `LOGIN_FAIL` se guardan sin clínica, porque al entrar aún no hay contexto. El administrador ve en su auditoría las «Entradas al contexto» de su clínica, pero no los intentos fallidos de su personal. ¿Está bien así?
+5. **Clínica no activa.** Una clínica `suspendida` o `baja` no da contexto: su personal queda en «sin acceso». HU-0.5 (v2.1) podría pedir otra cosa para la mora.
+6. **CAPTCHA por cuenta (RE-T.13.5, v2.0)** sigue sin hacerse: tras 5 fallos la cuenta se bloquea 15 minutos, como en la v1, ahora contada por `id_usuario`. No está en el plan M0; ¿en qué etapa entra?
+7. **Enumeración.** `verificar_documento_ajax` y `verificar_email_ajax` le dicen al administrador si un documento o correo ya existe en la plataforma (lo exige RE-T.7.5). `check_document_ajax` y `check_email_ajax` (registro público) siguen como en la v1, con límite por IP.
+8. **Registro sin vínculo.** El autorregistro y el registro con Google crean la identidad sin vínculo: la cuenta entra al selector con «todavía no tiene acceso» hasta HU-5.8 (D). No guardan consentimiento, que es HU-T.19 (D).
+9. **El NIT de los datos de prueba** se guarda como `900123456-8` (con dígito de verificación); el formato definitivo lo fija HU-0.1 (D).
+10. **No se probó en un navegador** (en esta sesión no había ninguno disponible). Falta la verificación visual en móvil, tablet y escritorio del selector, el indicador de contexto y la pantalla de usuarios.
+
+### C1.6 Revisión (2026-10-06)
+
+**Resultado: aprobada con una corrección obligatoria antes de C2.** Claude (sesión de revisión) revisó el diff, `Security::autorizar()`, `Contexto`, el front controller, `public/ver_archivo.php` (falla cerrado: sin `usuario_doc` niega a todos) y el texto del correo de credenciales. Lo más valioso: contextos recalculados en cada petición, autorización solo en la matriz (denegar por defecto) y login sin enumeración.
+
+**Hallazgo (C1.5-3) — robo de cuenta entre clínicas.** Con la identidad global, el administrador de una clínica podía cambiar el correo, el documento o la contraseña de una persona que también trabaja en otra clínica o es propietaria, y quedarse con su cuenta en ambas. **Regla aprobada por el usuario:** el administrador solo edita correo, documento y contraseña (restablecimiento incluido) de quien está vinculado **únicamente** a su clínica (ningún otro `usuario_clinica` activo ni vínculo en `propietario_clinica`). Si tiene otro vínculo, esos campos quedan en solo lectura y los corrige el titular desde su perfil (RE-T.5.7, RE-T.5.8). Nombre, teléfono, rol en la clínica y estado del vínculo siguen siendo editables. Se valida en el servidor, con prueba.
+
+**Respuestas a C1.5 (aprobadas por el usuario):**
+
+1. HU-T.15 se cierra al terminar C, no en C1.
+2. RE-T.17.4 se verifica en v2.1 con HU-8.1, como RE-0.3.6.
+3. Ver el hallazgo.
+4. `LOGIN` y `LOGIN_FAIL` sin clínica: correcto; los ve el super-administrador en el panel de plataforma (E).
+5. Clínica `suspendida` o `baja` sin contexto: correcto por ahora. La mora **no** suspende: aplica los límites del plan gratuito (RE-0.5.2, v2.1).
+6. CAPTCHA por cuenta (RE-T.13.5): entra en D, junto con Cloudflare Turnstile del registro.
+7. Comprobación de existencia de documento o correo para el administrador: se deja (la exige RE-T.7.5); la pública mantiene el límite por IP.
+8. y 9. Registro sin vínculo, consentimiento y formato del NIT: D.
+10. Verificación visual en navegador: la hace el usuario.
+
+**Para D:** el alta de personal todavía envía la contraseña en texto plano por correo (herencia de la v1). Según la especificación, el titular crea su contraseña al activar la cuenta; se corrige en D.

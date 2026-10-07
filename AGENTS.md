@@ -76,6 +76,7 @@ vendor/bin/phpunit tests/Unit/ValidadorMascotaTest.php   # una sola
 php scripts/migrar.php --revisar                   # qué migraciones faltan en la base local
 php scripts/migrar.php                             # aplicarlas (y la semilla)
 php scripts/crear_superadmin.php                   # crear el super-administrador por consola
+php scripts/dev/datos_prueba.php --si              # datos de prueba locales: dos clínicas y una persona por contexto (se niega fuera de una base local)
 node scripts/docs/exportar.mjs --revisar           # qué PDF/Word del portal están desactualizados
 node scripts/docs/exportar.mjs                     # regenerarlos (formato de la plantilla; necesita PHP, Chrome y Pandoc, y Word para el índice)
 ```
