@@ -118,7 +118,7 @@ La línea base de la v1.x se organizó en cuatro sprints de una semana; luego el
 | v1 · Sprints 1–4 | Mascotas, historia clínica, agenda, portal y reportes | Sistema v1.x en producción |
 | v2 · Fase 1 | Visión y alcance; ERS (ISO/IEC/IEEE 29148) | Alcance de la v2.0 fijado |
 | v2 · Fase 2 | Modelos: grafos, procesos de negocio, flujos de sistema y diagrama de componentes | Documento de Modelos y maestro draw.io |
-| v2 · Fase 3 | Reglas de Negocio v2 (119 RN), Historias de Usuario v2 (95 HU) y Requisitos Específicos (418 RE) | Trazabilidad RN → HU → RE completa |
+| v2 · Fase 3 | Reglas de Negocio v2 (119 RN), Historias de Usuario v2 (95 HU) y Requisitos Específicos (419 RE) | Trazabilidad RN → HU → RE completa |
 | v2 · Construcción | Esquema multi-inquilino y módulos v2 | Plataforma SaaS v2.0 |
 
 ## 8. Análisis de Riesgos
@@ -160,7 +160,7 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 
 **v1.11.0 — en producción.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
 
-**v2.0 — en desarrollo (documentación completa).** Está terminada la especificación documentación-primero: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.1), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.0, 119 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.0, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.0, 418 RE). El siguiente paso es la construcción del software v2.0 sobre esta especificación.
+**v2.0 — en desarrollo (documentación completa).** Está terminada la especificación documentación-primero: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.1), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.0, 119 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.0, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.0, 419 RE). El siguiente paso es la construcción del software v2.0 sobre esta especificación.
 
 ## 12. Entregables Finales
 

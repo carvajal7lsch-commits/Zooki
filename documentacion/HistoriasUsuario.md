@@ -60,6 +60,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 - El enlace de verificación vence a las 24 horas (RN-G11).
 - Al verificar dentro del plazo, la clínica pasa a estado "activa", se le asigna el **plan gratuito** y se habilita el rol administrador.
+- En la misma operación, la clínica recibe su copia de los catálogos iniciales: tipos de cita, horarios de atención, vacunas base con las especies a las que aplican, laboratorios y productos de desparasitación. Así puede agendar y registrar desde el primer día; si la activación falla, no queda ninguna copia a medias.
 - Si el plazo expira sin verificar, el registro pendiente se elimina (no deja una clínica fantasma).
 - Tras activar, el administrador inicia sesión y queda acotado a su `id_clinica`.
 - La activación queda registrada en auditoría.

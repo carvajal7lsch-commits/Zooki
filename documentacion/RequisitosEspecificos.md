@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.1** · 418 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.1** · 419 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
@@ -35,6 +35,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | RE-0.2.2 | Al verificar, el sistema debe activar la clínica, asignar el plan gratuito y habilitar el rol administrador. | Funcional | La clínica queda activa con plan gratuito. | Alta |
 | RE-0.2.3 | Si el plazo expira, el sistema debe eliminar el registro pendiente. | Funcional | La clínica pendiente se elimina. | Media |
 | RE-0.2.4 | Tras activar, el administrador debe iniciar sesión acotado a su id_clinica. | Funcional | Entra al ámbito de su clínica. | Alta |
+| RE-0.2.5 | Al activar la clínica, el sistema debe copiarle en la misma transacción los catálogos iniciales por defecto: tipos de cita, horarios de atención, vacunas base con su relación por especie, laboratorios y productos de desparasitación. | Funcional | Una clínica recién activada tiene 6 tipos de cita, 7 días de horario, 15 vacunas base con su relación por especie, 11 laboratorios y 15 productos, todos con su `id_clinica`; si la activación falla no queda ninguna copia parcial, y los catálogos de las demás clínicas no cambian. | Alta |
 
 **Reglas de negocio:** RN-002, RN-003, RN-005, RN-G11
 
@@ -1118,7 +1119,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | HU | Reglas de negocio | Requisitos específicos |
 |---|---|---|
 | HU-0.1 | RN-001, RN-002, RN-010, RN-011, RN-G06, RN-G19, RN-G20 | RE-0.1.1, RE-0.1.2, RE-0.1.3, RE-0.1.4, RE-0.1.5, RE-0.1.6, RE-0.1.7, RE-0.1.8, RE-0.1.9, RE-0.1.10 |
-| HU-0.2 | RN-002, RN-003, RN-005, RN-G11 | RE-0.2.1, RE-0.2.2, RE-0.2.3, RE-0.2.4 |
+| HU-0.2 | RN-002, RN-003, RN-005, RN-G11 | RE-0.2.1, RE-0.2.2, RE-0.2.3, RE-0.2.4, RE-0.2.5 |
 | HU-0.3 | RN-004, RN-012, RN-804, RN-G13, RN-G14 | RE-0.3.1, RE-0.3.2, RE-0.3.3, RE-0.3.4, RE-0.3.5, RE-0.3.6 |
 | HU-0.4 | RN-003, RN-005, RN-006, RN-420 | RE-0.4.1, RE-0.4.2, RE-0.4.3, RE-0.4.4, RE-0.4.5, RE-0.4.6, RE-0.4.7 |
 | HU-0.5 | RN-007, RN-008, RN-013 | RE-0.5.1, RE-0.5.2, RE-0.5.3, RE-0.5.4, RE-0.5.5 |

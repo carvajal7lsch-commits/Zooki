@@ -1,15 +1,21 @@
 -- ============================================================
 -- Zooki v2.0 — Esquema para importar en drawDB
 -- Multi-inquilino (id_clinica), grafos, suscripción y reputación.
--- Estilo alineado a database/03_drawdb_schema.sql
 -- Catálogos taxonómicos y grafo clínico: GLOBALES (sin id_clinica).
+--
+-- Es solo la referencia para el diagrama (documentacion/MER.md). Vive en
+-- database/modelo/ a propósito: ni MySQL al crear el volumen ni el migrador
+-- recorren subcarpetas, y ejecutarlo encima de 01_schema.sql fallaría por
+-- tablas repetidas. El esquema ejecutable es database/01_schema.sql, que
+-- además declara los índices compuestos por id_clinica y calcula
+-- citas.ocupa_horario (aquí va como columna simple para que drawDB la importe).
 -- ============================================================
 
 -- ---------- Plataforma / SaaS (nuevo) ----------
 
 CREATE TABLE `planes` (
   `id_plan` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `nombre` varchar(50) NOT NULL,
+  `nombre` varchar(50) NOT NULL UNIQUE,
   `precio_mensual` int(11) NOT NULL DEFAULT 0,
   `precio_anual` int(11) DEFAULT NULL,
   `limite_mascotas` int(11) DEFAULT NULL,
@@ -44,7 +50,8 @@ CREATE TABLE `suscripciones` (
   `ciclo` enum('mensual','anual') NOT NULL DEFAULT 'mensual',
   `al_dia` tinyint(1) NOT NULL DEFAULT 1,
   `fecha_inicio` date NOT NULL,
-  `fecha_fin` date DEFAULT NULL
+  `fecha_fin` date DEFAULT NULL,
+  KEY `idx_susc_clinica` (`id_clinica`, `estado`)
 );
 
 CREATE TABLE `plantillas_comunicacion` (
@@ -55,7 +62,8 @@ CREATE TABLE `plantillas_comunicacion` (
   `cuerpo` text NOT NULL,
   `dias_anticipacion` int(11) DEFAULT NULL,
   `hora_envio` time DEFAULT NULL,
-  `activo` tinyint(1) NOT NULL DEFAULT 1
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  KEY `idx_plantilla_clinica` (`id_clinica`, `tipo`)
 );
 
 -- ---------- Grafo de conocimiento clínico (Grafo I) — GLOBAL ----------
@@ -110,7 +118,7 @@ CREATE TABLE `resenas_veterinario` (
 
 CREATE TABLE `roles` (
   `id_rol` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `nombre_rol` varchar(50) NOT NULL
+  `nombre_rol` varchar(50) NOT NULL UNIQUE
 );
 -- Datos: 1 Administrador, 2 Veterinario, 4 Propietario, 5 Super-administrador.
 -- El rol 3 (Recepcionista) se elimina en v2.0.
@@ -162,7 +170,7 @@ CREATE TABLE `verificaciones_email` (
 
 CREATE TABLE `intentos_login` (
   `id_intento` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `identificador` varchar(120) NOT NULL UNIQUE,              -- 'ip:<dirección>' o 'cuenta:<id_usuario>' (RN-G15)
+  `identificador` varchar(120) NOT NULL UNIQUE,              -- 'ip:<dirección>', 'cuenta:<id_usuario>' (RN-G15) o 'chk:<dirección>' (verificaciones del registro)
   `intentos` int(11) NOT NULL DEFAULT 0,
   `bloqueado_hasta` datetime DEFAULT NULL,
   `primer_intento` datetime NOT NULL,
@@ -189,7 +197,8 @@ CREATE TABLE `usuario_clinica` (
   `id_rol` int(11) NOT NULL,
   `estado` enum('activo','inactivo') NOT NULL DEFAULT 'activo',
   `fecha_vinculo` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id_usuario`, `id_clinica`)
+  PRIMARY KEY (`id_usuario`, `id_clinica`),
+  KEY `idx_usuario_clinica_rol` (`id_clinica`, `id_rol`, `estado`)
 );
 CREATE TABLE `propietario_clinica` (
   `id_propietario` int(11) NOT NULL,
@@ -198,7 +207,8 @@ CREATE TABLE `propietario_clinica` (
   `fecha_vinculo` datetime DEFAULT current_timestamp(),
   `autoriza_historia_compartida` tinyint(1) NOT NULL DEFAULT 0,
   `fecha_autorizacion` datetime DEFAULT NULL,
-  PRIMARY KEY (`id_propietario`, `id_clinica`)
+  PRIMARY KEY (`id_propietario`, `id_clinica`),
+  KEY `idx_propietario_clinica_estado` (`id_clinica`, `estado`)
 );
 CREATE TABLE `mascota_clinica` (
   `id_mascota` int(11) NOT NULL,
@@ -207,7 +217,8 @@ CREATE TABLE `mascota_clinica` (
   `estado` enum('activo','inactivo') NOT NULL DEFAULT 'activo',
   `fecha_vinculo` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id_mascota`, `id_clinica`),
-  UNIQUE KEY `uq_mascota_clinica_numero_hc` (`id_clinica`, `numero_historia_clinica`)
+  UNIQUE KEY `uq_mascota_clinica_numero_hc` (`id_clinica`, `numero_historia_clinica`),
+  KEY `idx_mascota_clinica_estado` (`id_clinica`, `estado`)
 );
 CREATE TABLE `carnet_escaneos` (
   `id_escaneo` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -226,18 +237,19 @@ CREATE TABLE `carnet_escaneos` (
 
 CREATE TABLE `especies` (
   `id_especie` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `nombre_especie` varchar(50) NOT NULL
+  `nombre_especie` varchar(50) NOT NULL UNIQUE
 );
 
 CREATE TABLE `razas` (
   `id_raza` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_especie` int(11) NOT NULL,
-  `nombre_raza` varchar(50) NOT NULL
+  `nombre_raza` varchar(50) NOT NULL,
+  UNIQUE KEY `uq_raza_especie_nombre` (`id_especie`, `nombre_raza`)
 );
 
 CREATE TABLE `colores_base` (
   `id_color` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `nombre_color` varchar(30) NOT NULL
+  `nombre_color` varchar(30) NOT NULL UNIQUE
 );
 
 -- ---------- Pacientes (con id_clinica) ----------
@@ -259,7 +271,7 @@ CREATE TABLE `mascotas` (
   `estado` tinyint(4) NOT NULL DEFAULT 1,
   `ficha_por_completar` tinyint(1) NOT NULL DEFAULT 0,     -- una urgencia puede atenderse antes de completar identidad y datos
   `url_foto` varchar(255) DEFAULT NULL,
-  `raza_indicada` varchar(100) DEFAULT NULL
+  `raza_indicada` varchar(50) DEFAULT NULL                   -- mismo largo que razas.nombre_raza
 );
 
 -- Solo para llegadas presenciales sin ficha verificable a tiempo; el portal usa la mascota de la sesión.
@@ -272,7 +284,8 @@ CREATE TABLE `ingresos_emergencia` (
   `documento_acompanante` varchar(20) DEFAULT NULL,
   `telefono_acompanante` varchar(30) DEFAULT NULL,
   `estado` enum('pendiente','completado','consolidado') NOT NULL DEFAULT 'pendiente',
-  `fecha_ingreso` datetime NOT NULL DEFAULT current_timestamp()
+  `fecha_ingreso` datetime NOT NULL DEFAULT current_timestamp(),
+  KEY `idx_ingreso_clinica` (`id_clinica`, `estado`)
 );
 
 CREATE TABLE `alertas_medicas` (
@@ -304,7 +317,8 @@ CREATE TABLE `tipos_cita` (
   `pausable` tinyint(1) NOT NULL DEFAULT 1,
   `descripcion` text DEFAULT NULL,
   `color` varchar(20) DEFAULT '#0C66E4',
-  `activo` tinyint(4) DEFAULT 1
+  `activo` tinyint(4) DEFAULT 1,
+  KEY `idx_tipos_cita_clinica` (`id_clinica`, `activo`)
 );
 
 CREATE TABLE `horarios_veterinario` (
@@ -314,7 +328,9 @@ CREATE TABLE `horarios_veterinario` (
   `dia_semana` tinyint(4) NOT NULL,
   `hora_inicio` time NOT NULL,
   `hora_fin` time NOT NULL,
-  `activo` tinyint(4) NOT NULL DEFAULT 1
+  `activo` tinyint(4) NOT NULL DEFAULT 1,
+  KEY `idx_horvet_clinica` (`id_clinica`, `id_veterinario`, `dia_semana`),
+  KEY `idx_horvet_veterinario` (`id_veterinario`, `dia_semana`)
 );
 -- Horario recurrente por veterinario y clínica; disponibilidad = horario clínica ∩ horario vet − ausencias.
 -- Lo configura el administrador; el veterinario propone cambios en propuestas_horario (RN-706).
@@ -328,7 +344,8 @@ CREATE TABLE `propuestas_horario` (
   `id_revisor` int(11) DEFAULT NULL,
   `motivo_rechazo` varchar(255) DEFAULT NULL,
   `fecha` datetime DEFAULT current_timestamp(),
-  `fecha_revision` datetime DEFAULT NULL
+  `fecha_revision` datetime DEFAULT NULL,
+  KEY `idx_prophor_clinica` (`id_clinica`, `estado`)
 );
 
 CREATE TABLE `ausencias_veterinario` (
@@ -339,7 +356,8 @@ CREATE TABLE `ausencias_veterinario` (
   `fecha_hora_fin` datetime NOT NULL,
   `id_cobertura` int(11) DEFAULT NULL,
   `motivo` varchar(255) DEFAULT NULL,
-  `fecha_registro` datetime DEFAULT current_timestamp()
+  `fecha_registro` datetime DEFAULT current_timestamp(),
+  KEY `idx_ausvet_clinica` (`id_clinica`, `id_veterinario`, `fecha_hora_inicio`)
 );
 -- Ausencia del vet; id_cobertura = veterinario que reemplaza (intercambio = ausencia + cobertura).
 
@@ -363,11 +381,16 @@ CREATE TABLE `citas` (
   `sintomas_texto` text DEFAULT NULL,                        -- texto libre opcional (RN-424)
   `inicio_sintomas` datetime DEFAULT NULL,                   -- cuándo empezaron o cuándo fue la ingesta del tóxico
   `estado` enum('pendiente','confirmada','en_curso','pausada','sin_cerrar','cancelada','completada','no_asistio') DEFAULT 'pendiente',
+  `ocupa_horario` tinyint(1) DEFAULT NULL,                   -- calculada en 01_schema.sql: NULL si está libre (cancelada, no_asistio) o es sobrecupo; 1 si ocupa el horario
   `hora_llegada` datetime DEFAULT NULL,
   `hora_inicio_real` datetime DEFAULT NULL,
   `hora_fin_real` datetime DEFAULT NULL,
+  `aviso_atencion_abierta` datetime DEFAULT NULL,            -- cuándo se avisó que la atención seguía abierta (RN-409, una sola vez)
   `observaciones` text DEFAULT NULL,
-  `fecha_registro` datetime DEFAULT current_timestamp()
+  `fecha_registro` datetime DEFAULT current_timestamp(),
+  UNIQUE KEY `uq_cita_veterinario_horario` (`id_veterinario`, `fecha`, `hora`, `ocupa_horario`), -- doble reserva (RN-401), sin id_clinica a propósito
+  KEY `idx_citas_clinica_fecha` (`id_clinica`, `fecha`, `estado`),
+  KEY `idx_citas_clinica_veterinario` (`id_clinica`, `id_veterinario`, `fecha`)
 );
 
 CREATE TABLE `cita_sintomas` (
@@ -384,13 +407,14 @@ CREATE TABLE `reasignaciones` (
   `estado` enum('pendiente','aceptada','rechazada','vencida') NOT NULL DEFAULT 'pendiente',
   `fecha_limite` datetime NOT NULL,                          -- ahora + clinicas.plazo_reasignacion_min (RN-428)
   `fecha_respuesta` datetime DEFAULT NULL,
-  `fecha` datetime DEFAULT current_timestamp()
+  `fecha` datetime DEFAULT current_timestamp(),
+  KEY `idx_reasig_estado` (`estado`, `fecha_limite`)
 );
 
 CREATE TABLE `consultas` (
   `id_consulta` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_clinica` int(11) NOT NULL,
-  `id_cita` int(11) DEFAULT NULL,
+  `id_cita` int(11) DEFAULT NULL UNIQUE,                     -- una consulta por cita
   `id_mascota` int(11) NOT NULL,
   `id_veterinario` int(11) NOT NULL,
   `fecha_hora` datetime NOT NULL,
@@ -402,7 +426,9 @@ CREATE TABLE `consultas` (
   `frecuencia_respiratoria` int(11) DEFAULT NULL,
   `diagnostico` text NOT NULL,
   `plan_tratamiento` text NOT NULL,
-  `observaciones` text DEFAULT NULL
+  `observaciones` text DEFAULT NULL,
+  KEY `idx_consultas_clinica_fecha` (`id_clinica`, `fecha_hora`),
+  KEY `idx_consultas_mascota` (`id_mascota`, `fecha_hora`)
 );
 
 CREATE TABLE `consulta_sintomas` (
@@ -451,7 +477,9 @@ CREATE TABLE `vacunas` (
   `fecha_aplicacion` date NOT NULL,
   `fecha_proxima_dosis` date DEFAULT NULL,
   `observaciones` text DEFAULT NULL,
-  `fecha_registro` datetime DEFAULT current_timestamp()
+  `fecha_registro` datetime DEFAULT current_timestamp(),
+  KEY `idx_vacunas_clinica_proxima` (`id_clinica`, `fecha_proxima_dosis`),
+  KEY `idx_vacunas_mascota` (`id_mascota`, `fecha_aplicacion`)
 );
 
 CREATE TABLE `desparasitaciones` (
@@ -465,7 +493,9 @@ CREATE TABLE `desparasitaciones` (
   `fecha_aplicacion` date NOT NULL,
   `fecha_proxima` date NOT NULL,
   `observaciones` text DEFAULT NULL,
-  `fecha_registro` datetime DEFAULT current_timestamp()
+  `fecha_registro` datetime DEFAULT current_timestamp(),
+  KEY `idx_desp_clinica_proxima` (`id_clinica`, `fecha_proxima`),
+  KEY `idx_desp_mascota` (`id_mascota`, `fecha_aplicacion`)
 );
 
 CREATE TABLE `vacunas_base` (
@@ -473,20 +503,23 @@ CREATE TABLE `vacunas_base` (
   `id_clinica` int(11) NOT NULL,
   `nombre_vacuna` varchar(150) NOT NULL,
   `descripcion` text DEFAULT NULL,
-  `estado` tinyint(4) DEFAULT 1
+  `estado` tinyint(4) DEFAULT 1,
+  KEY `idx_vacbase_clinica` (`id_clinica`, `estado`)
 );
 
 CREATE TABLE `especie_vacunas` (
   `id_especie_vacuna` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_especie` int(11) NOT NULL,
-  `id_vacuna_base` int(11) NOT NULL
+  `id_vacuna_base` int(11) NOT NULL,                         -- hereda la clínica de su vacuna base
+  UNIQUE KEY `uq_especie_vacuna` (`id_especie`, `id_vacuna_base`)
 );
 
 CREATE TABLE `laboratorios_base` (
   `id_laboratorio` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_clinica` int(11) NOT NULL,
   `nombre_laboratorio` varchar(150) NOT NULL,
-  `estado` tinyint(4) DEFAULT 1
+  `estado` tinyint(4) DEFAULT 1,
+  KEY `idx_labbase_clinica` (`id_clinica`, `estado`)
 );
 
 CREATE TABLE `productos_desparasitacion_base` (
@@ -494,7 +527,8 @@ CREATE TABLE `productos_desparasitacion_base` (
   `id_clinica` int(11) NOT NULL,
   `nombre_producto` varchar(150) NOT NULL,
   `tipo` enum('interna','externa','ambas') DEFAULT 'interna',
-  `estado` tinyint(4) DEFAULT 1
+  `estado` tinyint(4) DEFAULT 1,
+  KEY `idx_prodbase_clinica` (`id_clinica`, `estado`)
 );
 
 -- ---------- Comunicaciones y auditoría (con id_clinica) ----------
@@ -510,7 +544,9 @@ CREATE TABLE `notificaciones` (
   `asunto` varchar(255) DEFAULT NULL,
   `mensaje` text DEFAULT NULL,
   `fecha_envio` datetime DEFAULT current_timestamp(),
-  `estado` enum('pendiente','enviado','error') DEFAULT 'pendiente'
+  `estado` enum('pendiente','enviado','error') DEFAULT 'pendiente',
+  KEY `idx_notif_clinica_fecha` (`id_clinica`, `fecha_envio`),
+  KEY `idx_notif_entidad` (`tipo_entidad`, `id_entidad`, `tipo_notificacion`)
 );
 
 CREATE TABLE `notificaciones_internas` (
@@ -522,8 +558,13 @@ CREATE TABLE `notificaciones_internas` (
   `titulo` varchar(255) NOT NULL,
   `mensaje` text NOT NULL,
   `enlace` varchar(255) DEFAULT NULL,
+  `id_cita` int(11) DEFAULT NULL,                            -- cita que originó el aviso; se retira al cancelarla, reprogramarla o atenderla
+  `vigente_hasta` datetime DEFAULT NULL,                     -- desde cuándo deja de mostrarse; NULL = no caduca
   `leida` tinyint(1) DEFAULT 0,
-  `fecha_creacion` datetime DEFAULT current_timestamp()
+  `fecha_creacion` datetime DEFAULT current_timestamp(),
+  KEY `idx_notint_usuario` (`id_clinica`, `id_usuario`, `leida`),
+  KEY `idx_notint_rol` (`id_clinica`, `id_rol_destino`, `leida`),
+  KEY `idx_notint_vigencia` (`vigente_hasta`)
 );
 
 CREATE TABLE `horarios_clinica` (
@@ -536,7 +577,8 @@ CREATE TABLE `horarios_clinica` (
   `bloque_morning_inicio` time DEFAULT NULL,
   `bloque_morning_fin` time DEFAULT NULL,
   `bloque_afternoon_inicio` time DEFAULT NULL,
-  `bloque_afternoon_fin` time DEFAULT NULL
+  `bloque_afternoon_fin` time DEFAULT NULL,
+  UNIQUE KEY `uq_horario_clinica_dia` (`id_clinica`, `dia_semana`)
 );
 
 CREATE TABLE `auditoria_mascotas` (
@@ -547,7 +589,8 @@ CREATE TABLE `auditoria_mascotas` (
   `campo_modificado` varchar(100) DEFAULT NULL,
   `valor_anterior` text DEFAULT NULL,
   `valor_nuevo` text DEFAULT NULL,
-  `fecha_cambio` datetime DEFAULT current_timestamp()
+  `fecha_cambio` datetime DEFAULT current_timestamp(),
+  KEY `idx_audmasc_clinica` (`id_clinica`, `id_mascota`)
 );
 
 CREATE TABLE `auditoria_sistema` (
@@ -561,7 +604,9 @@ CREATE TABLE `auditoria_sistema` (
   `registro_id` varchar(50) DEFAULT NULL,
   `datos_anteriores` longtext DEFAULT NULL,
   `datos_nuevos` longtext DEFAULT NULL,
-  `descripcion` varchar(255) DEFAULT NULL
+  `descripcion` varchar(255) DEFAULT NULL,
+  KEY `idx_audsis_clinica_fecha` (`id_clinica`, `fecha_hora`),
+  KEY `idx_audsis_usuario` (`id_usuario`, `fecha_hora`)
 );
 
 -- ============================================================
@@ -600,6 +645,9 @@ ALTER TABLE `verificaciones_email`
 ALTER TABLE `casos_soporte`
   ADD CONSTRAINT `fk_caso_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
   ADD CONSTRAINT `fk_caso_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
+ALTER TABLE `propietario_clinica`
+  ADD CONSTRAINT `fk_propietario_clinica_usuario` FOREIGN KEY (`id_propietario`) REFERENCES `usuarios` (`id_usuario`),
+  ADD CONSTRAINT `fk_propietario_clinica_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
 ALTER TABLE `razas`
   ADD CONSTRAINT `razas_ibfk_1` FOREIGN KEY (`id_especie`) REFERENCES `especies` (`id_especie`);
 ALTER TABLE `mascota_clinica`
@@ -685,7 +733,8 @@ ALTER TABLE `notificaciones`
 ALTER TABLE `notificaciones_internas`
   ADD CONSTRAINT `fk_notint_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`),
   ADD CONSTRAINT `fk_noti_rol` FOREIGN KEY (`id_rol_destino`) REFERENCES `roles` (`id_rol`),
-  ADD CONSTRAINT `fk_noti_usr` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+  ADD CONSTRAINT `fk_noti_usr` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
+  ADD CONSTRAINT `fk_notint_cita` FOREIGN KEY (`id_cita`) REFERENCES `citas` (`id_cita`);
 ALTER TABLE `horarios_clinica`
   ADD CONSTRAINT `fk_horario_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
 ALTER TABLE `auditoria_mascotas`
