@@ -1329,7 +1329,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - No tengo acceso a datos de otros propietarios (403).
 - Interfaz que se adapta a móvil, tablet y escritorio (RNF-16): barra inferior en móvil y tablet, menú lateral en escritorio.
 - El botón «atrás» del navegador me devuelve a la sección anterior y cierra la ventana que tenga abierta.
-- Veo si la clínica está abierta ahora y su horario de la semana.
+- Veo si la clínica está abierta ahora y su horario de la semana; _(v2.0)_ el de cada clínica a la que estoy vinculado.
 - Los formularios indican qué campos son obligatorios y cuáles opcionales.
 - Al registrar o editar una mascota elijo la raza del catálogo; si no está, indico que es mestiza, que no la sé o la escribo para que la clínica la confirme, y veo la foto antes de guardarla. El color lo registra la clínica en la consulta.
 - Al agendar no puedo elegir días en que la clínica no atiende, y los horarios libres aparecen en botones cuando ya elegí tipo, veterinario y día.

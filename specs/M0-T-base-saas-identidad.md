@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A y B terminadas; C3 y C4 revisadas (2026-10-07); C1.7, C2 y C5 implementadas, pendientes de revisión por Claude.
+> Estado: en curso — A y B terminadas; C3, C4 y C5 revisadas (2026-10-07); C1.7, C2 y C6 implementadas, pendientes de revisión por Claude.
 > Entrega: v2.0 · Fecha: 2026-10-06
 > Reparto vigente (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
 
@@ -92,7 +92,8 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] C2 — Configuración por clínica: horarios, lectura de catálogos y copia inicial D-1 ([Anexo C2](#anexo-c2--resultado)). Implementada y verificada; pendiente de revisión por Claude.
   - [x] C3 — Mascotas y propietarios del personal ([Anexo C3](#anexo-c3--resultado)). Implementada y verificada; Codex escribe y Claude revisa. El usuario aprobó adelantar de D únicamente la confirmación por correo de una vinculación de propietario existente (RN-109). La aceptación del alta nueva sigue siendo presencial, directa del titular (RE-T.19.1).
   - [x] C4 — Historia clínica y prevención ([Anexo C4](#anexo-c4--resultado)). Implementada, verificada y revisada (C4 — Revisión).
-  - [x] C5 — Agenda v1 sobre el modelo v2 y retiro de «cerrar sin consulta» ([Anexo C5](#anexo-c5--resultado)). Implementada y verificada; Claude Code escribe y Claude revisa. Pendiente de revisión.
+  - [x] C5 — Agenda v1 sobre el modelo v2 y retiro de «cerrar sin consulta» ([Anexo C5](#anexo-c5--resultado)). Implementada, verificada y revisada (C5 — Revisión).
+  - [x] C6 — Portal del propietario sobre el modelo v2, HU-5.12, HU-5.13 con RN-115 y arrastre en la agenda ([Anexo C6](#anexo-c6--resultado)). Implementada y verificada; Claude Code escribe y Claude revisa. Pendiente de revisión.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -918,3 +919,95 @@ Quedaron en `zooki_v2_prueba` cuatro citas de prueba: una completada con su cons
 - **Una contraseña con un espacio inicial no entra:** comportamiento correcto. La contraseña no se recorta (el espacio es un carácter válido); el documento y el correo sí se normalizan.
 
 **Alcance de C6 (aprobado por el usuario el 2026-10-07):** además de adaptar el portal, C6 cierra HU-5.12 (autorizar historia compartida) y HU-5.13 (vincularse o desvincularse de una clínica) con la regla de RN-115 de la revisión de C4, porque la desvinculación y la autorización son las que ejercitan desde la interfaz las reglas de C3 y C4.
+
+## Anexo C6 — Resultado
+
+Lo escribió Claude Code; la revisión corresponde a la sesión de revisión de Claude. Se releyeron A.2 (módulo 5), A.5, A.6, los anexos C1–C5 con sus revisiones (la regla de RN-115 de la revisión de C4 y las decisiones de la revisión de C5), las HU y RE del módulo 5, HU-5.12, HU-5.13, RN-109 a RN-115 y RN-G02.
+
+**Decisiones del usuario (2026-10-07).**
+
+1. Los cambios del propietario a la ficha de su mascota se auditan en `auditoria_sistema` (tabla `mascotas`, sin clínica), porque `auditoria_mascotas.id_clinica` es NOT NULL. No hubo cambio de esquema.
+2. En el portal el propietario cambia solo su teléfono. El correo queda de solo lectura hasta que la etapa D agregue su verificación (RE-T.5.7).
+3. El inicio muestra una tarjeta de horario por cada clínica vinculada; al agendar, los días cerrados son los de la clínica elegida. Se ajustaron HU-5.1 y RE-5.1.7 (sin subir revisión).
+4. Desvincularse se rechaza con cualquier cita sin resolver en esa clínica: pendiente, confirmada, en curso o sin cerrar. HU-5.13/RE-5.13.3 ya fijaban el rechazo; la decisión precisa qué citas cuentan.
+
+**Qué se hizo.**
+
+- **Portal sin clínica activa.** `controllers/PortalController.php` (nuevo) atiende el contexto propietario; `PropietarioController` queda con lo del personal (alta presencial y vínculo, C3). Los modelos del propietario extienden `ModeloPropietario` (nuevo): el alcance es la persona y todo lo ajeno da 403 auditado sin clínica (RN-G02).
+  - `MascotaPropietario`: sus mascotas (todas, RN-110), alta sin clínica (se vincula al agendar o al ser atendida, RE-5.13.2) y edición, incluidos especie, raza, sexo y nacimiento, con una fila de auditoría por campo cambiado.
+  - `HistoriaPropietario`: consultas con adjuntos y tratamientos, vacunas, desparasitaciones y citas de todas las clínicas, con la clínica de cada registro (RN-114), aunque ya no esté vinculado a alguna.
+  - `VinculosPropietario`: sus clínicas con su autorización, las disponibles, vincularse, desvincularse y autorizar o revocar la historia compartida. Cada cambio se audita con la clínica afectada.
+- **Elegir una clínica en el portal.** `ModeloClinica::enClinicaDelPropietario()` valida en el modelo, no en el parámetro, que la clínica sea de un vínculo activo del propietario y esté activa (si no, 403 auditado). Devuelve una copia del modelo acotada a esa clínica, que pasa ese alcance a los modelos que usa por dentro (`CatalogoClinica`). Así agendar, tipos, veterinarios, horas y huecos usan las mismas validaciones de C5.
+- **Agendar desde el portal** (`CitaController::agendarDesdePortalAjax`): mascota propia, veterinario de la clínica, horario de la clínica, aviso de otra cita ese día, solapamiento y doble reserva. Si la mascota no está vinculada a esa clínica, se vincula en la misma transacción (RN-110); si la reserva falla, no queda vinculada. Se auditan la cita y el vínculo. Prioridad verde y sin sobrecupo.
+- **RN-115 (revisión de C4).** El estado del vínculo pasó a `ModeloClinica`:
+  - nunca vinculada: 403;
+  - vínculo inactivo: la clínica lee solo sus registros (consultas, tratamientos, archivos, vacunas y desparasitaciones) y no los de otras clínicas, aunque hubiera autorización;
+  - todo registro nuevo exige vínculo activo (403 auditado).
+  - La ficha de solo lectura muestra únicamente nombre, especie, nacimiento y número de historia, sin los datos nuevos del propietario (`Mascota::getParaHistorial`).
+  - El listado de consultas de la clínica incluye las suyas de mascotas desvinculadas, marcadas con `vinculo`.
+- **Interfaz del portal.**
+  - Agendar empieza por la clínica (con una sola, ya elegida).
+  - La historia, las citas y la impresión muestran la clínica de cada registro; solo se ofrece cancelar en clínicas con vínculo activo.
+  - El perfil tiene «Mis clínicas»: interruptor de historia compartida, desvincularse y vincularse a otras.
+  - El documento sale de la base, no de la sesión v1; el correo es de solo lectura.
+  - Los eventos de la agenda pasan del `<script>` en línea a `data-*`. Los `onclick` heredados quedan para C9.
+- **Arrastre en la agenda** (decisión de la revisión de C5). En `calendario.js` se arrastran solo las citas pendientes o confirmadas del propio veterinario, con el mismo endpoint y las mismas validaciones del modal; si el servidor rechaza, la cita vuelve a su lugar. Se quitó `esAdmin()`, que nunca aplicaba.
+
+**RE y evidencia.**
+
+| Alcance | Prueba |
+|---|---|
+| RE-5.1.2, RE-5.1.4, RN-G02: nada de otro propietario (403 auditado) | `PortalPropietarioTest::testElPropietarioNoVeNiTocaNadaDeOtroPropietario`, `testLaFichaDeOtraMascotaPorPeticionDirectaDa403`, `testLosModelosDelPortalSonSoloDelContextoPropietario` |
+| RE-5.1.3, RE-5.9.2, RN-114: historia en todas las clínicas, con su clínica | `PortalPropietarioTest::testVeLaHistoriaDeSuMascotaEnTodasLasClinicasConSuClinica`, `testDesvinculadoDeUnaClinicaSigueViendoSuHistoria` |
+| RE-5.4.1–2, RN-110, RE-5.1.9: edición con auditoría y validación | `PortalPropietarioTest::testEditaEspecieRazaSexoYNacimientoConAuditoria`, `testElControladorValidaLaRazaDeLaEspecie`, `testRegistrarMascotaLaDejaSinClinica` |
+| Decisión 2: solo teléfono | `PortalPropietarioTest::testElPropietarioCambiaSuTelefonoPeroNoSuCorreo` |
+| RE-5.3.1–3, RE-5.3.5, RE-5.9.3/4: agendar en sus clínicas, con la mascota vinculada al agendar | `PortalAgendaTest` (seis casos: clínica no vinculada aunque mande el id, vínculo automático, rollback del vínculo, catálogos de la clínica, mascota ajena y veterinario de otra clínica, horario y doble reserva) |
+| RE-5.12.1/2/4: autorizar y revocar al instante, con auditoría | `VinculosPropietarioTest::testAutorizarYRevocarCambianLoQueVeLaOtraClinicaAlInstante`, `testSoloAutorizaClinicasConVinculoActivo` |
+| RE-5.13.1/2/4: vincularse sin exponer mascotas | `VinculosPropietarioTest::testVincularseAUnaClinicaActivaNoLeExponeSusMascotas` |
+| RE-5.13.3, RE-5.12.3, RN-115: rechazo con citas sin resolver; solo lectura tras desvincularse | `VinculosPropietarioTest::testConCitasSinResolverNoSeDesvincula`, `testTrasDesvincularseLaClinicaLeeSusRegistrosYNoRegistraNadaNuevo`, `testRevincularseYAgendarReactivaLaMascota`; `HistoriaCompartidaTest::testUnaMascotaNuncaVinculadaNoMuestraNada`, `testConElVinculoInactivoLaClinicaSoloLeeLoSuyo` |
+| Arrastre del veterinario con las mismas validaciones | `AgendaPeticionesTest::testElVeterinarioArrastraSuCitaConLasMismasValidaciones` |
+| Todo lo anterior en el esquema real | `BaseV2MysqlTest::testC6PortalEnElEsquemaReal` |
+
+La prueba de C4 `testUnaMascotaNoVinculadaNoMuestraNada` suponía 403 con el vínculo inactivo; se partió en dos según la regla de RN-115.
+
+**Verificación.**
+
+| Comando | Resultado |
+|---|---|
+| `vendor/bin/phpunit` | 358 pruebas, 1617 aserciones, 17 saltadas (las de MySQL, sin variable). |
+| Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32) | 358 pruebas, 1829 aserciones, sin fallos ni saltadas. |
+| `php -l` y `node --check` de lo tocado | Sin errores. |
+
+**Recorrido HTTP con Fabio** (`php -S` y `curl`; sin navegador en esta sesión), sobre `zooki_v2_prueba`:
+
+- `portal_propietario` → 200, con una tarjeta de horario para Norte y otra para Sur, el selector de clínica, «Mis clínicas» y ningún `<script>` en línea.
+- La historia de Luna trae la clínica de cada registro; la ficha de una mascota ajena da 403.
+- Catálogos, horas y huecos de Sur; agenda a Luna en Norte → 200; agenda a Kira en Sur, donde no estaba vinculada → 200 y Kira queda vinculada a Sur. Duración y margen copiados, prioridad verde. Luna en Sur con Diego ya ocupado → 422.
+- Autorizar a Sur: Diego pasa de no ver consultas a ver las de Norte; al revocar, deja de verlas.
+- Desvincularse de Sur con la cita de Kira → 422; tras cancelarla → 200. El vínculo y las mascotas quedan inactivos y la autorización en 0. Diego ve la ficha de Luna en solo lectura y registrar una vacuna da 403; Fabio agendando en Sur con el id → 403. Volver a vincularse → 200.
+- Editar la ficha → solo cambió el peso; teléfono → 200 y el correo enviado se ignora; impresión → 200 con la clínica de cada registro.
+- La auditoría registra cada paso. El registro del servidor no mostró avisos.
+
+Quedan en `zooki_v2_prueba` dos citas nuevas del 9 de octubre (una confirmada en Norte y otra cancelada en Sur); Fabio quedó vinculado otra vez a Sur, pero sus mascotas allí siguen inactivas hasta que agende o las atiendan. No se tocó la cita 5 del 8 de octubre, que ya existía.
+
+**Pendientes.**
+
+1. **Navegador:** falta revisar a mano el portal en móvil, tablet y escritorio (agendar con clínica, «Mis clínicas», historia con su clínica) y el arrastre en la agenda del veterinario.
+2. **Etapa E:** el límite del plan al vincular una mascota agendando (RE-5.3.5 y HU-5.3).
+3. **Etapa D:** el cambio de correo con verificación (RE-T.5.7) y la gestión de la política.
+4. **Fuera de C6:** HU-5.6 (reprogramar desde el portal) sigue diferida; por la decisión de C5, el propietario solo cancela. HU-5.7, HU-5.10 y HU-5.11 (notificaciones del propietario, carnet y QR) son de su módulo.
+5. **C7 y C8:** panel y dashboard; recordatorios por correo por clínica.
+6. **C9:** los `onclick` y `style=` heredados de `views/portal/index.php` e `imprimir_historial.php`.
+7. La versión de publicación y las descargas del portal se actualizan al cerrar M0 (§7).
+
+### C6 — Revisión (2026-10-07)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el diff y en particular `ModeloClinica::enClinicaDelPropietario()`: solo funciona en el contexto propietario, valida en la base que la clínica sea de un vínculo activo suyo y esté activa, y el controlador solo la usa para veterinarios, tipos, horas, sugerencias y la reserva (con la ficha propia comprobada y `Mascota::vincular()`, que exige mascota del propietario y vínculo activo). Las decisiones del usuario 1 a 4 están bien aplicadas, y RN-115 quedó como se aprobó en la revisión de C4.
+
+**Observación para el futuro (no bloquea):** la copia acotada que devuelve `enClinicaDelPropietario()` conserva todos los métodos públicos del modelo, incluidos los de personal (por ejemplo, `Cita::listarRango()`). Hoy ningún controlador los llama sobre esa copia; quien toque el portal no debe hacerlo. Si el portal crece, conviene que esos métodos rechacen la copia del portal.
+
+**Prueba manual del usuario (2026-10-07).** Bien: elegir clínica, «Mis clínicas» (autorizar, revocar, vincularse y desvincularse; el rechazo con citas sin resolver funciona), historia con su clínica, vista en celular y arrastre en la agenda del veterinario. Hallazgos:
+
+1. **Bug (corregido por la revisión):** al agendar, «No se pudieron cargar los horarios» siempre. En `portal.js::cargarHoras()` la desestructuración `const [clinica, agendaVet]` dentro del `try` ocultaba la constante `clinica` (el id elegido) que usan las propias URL, y lanzaba un `ReferenceError` antes de pedir nada. Se renombró a `horasClinica` / `horasDeLaClinica`; `node --check` correcto. El recorrido de C6 no lo detectó porque probó los endpoints con `curl`, no el JS: las pantallas tocadas por cada subetapa necesitan la prueba en navegador del usuario.
+2. **Molestia de uso:** el SweetAlert2 de confirmación al activar o desactivar la historia compartida en cada cambio. Se cambia por un aviso breve no bloqueante (toast de SweetAlert2) en C9. **Decisión del usuario:** SweetAlert2 no se quita del sistema; en C9 se revisan sus usos caso por caso: acciones frecuentes o reversibles pasan a toast, y las destructivas o irreversibles conservan la confirmación.
+3. **Sin indicación de que las citas se pueden arrastrar:** va en el manual de usuario (entregable pendiente) y, por decisión del usuario, una pista visible en la agenda del veterinario (C9).

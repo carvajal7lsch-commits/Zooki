@@ -2,6 +2,18 @@
 
 // escapeHtml() vive en avisos.js, que este layout carga antes (DRY).
 
+/** Eventos de la agenda de salud: llegan en data-eventos de #portalAgendaDatos (sin JS en línea). */
+function eventosDeLaAgenda() {
+    const datos = document.getElementById('portalAgendaDatos');
+    if (!datos) return [];
+    try {
+        return JSON.parse(datos.dataset.eventos || '[]');
+    } catch (e) {
+        console.error('Agenda: datos ilegibles', e);
+        return [];
+    }
+}
+
 function formatFecha(dateStr) {
     if (!dateStr) return '—';
     const d = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T12:00:00');
@@ -163,7 +175,7 @@ async function loadVetsExplore() {
             <div class="vet-card-item">
                 <div class="vet-photo-circle" aria-hidden="true">${iniciales}</div>
                 <h3>Dr(a). ${escapeHtml(v.nombre_completo.split(' ')[0])}</h3>
-                <p>Médico Veterinario</p>
+                <p>${escapeHtml(v.clinica_nombre || 'Médico Veterinario')}</p>
             </div>`;
         });
         listEl.innerHTML = html;
@@ -254,11 +266,11 @@ function toggleContactEditPortal() {
     }
 }
 
+/** Decisión C6: el propietario cambia su teléfono; el correo se cambia con verificación en la etapa D. */
 async function submitContactEditPortal() {
-    const email = document.getElementById('portal_contact_email').value.trim();
     const phone = document.getElementById('portal_contact_phone').value.trim();
 
-    if (!email || !phone) {
+    if (!phone) {
         Swal.fire({
             icon: 'error',
             title: 'Campos requeridos',
@@ -278,7 +290,6 @@ async function submitContactEditPortal() {
 
     try {
         const formData = new FormData();
-        formData.append('email', email);
         formData.append('telefono', phone);
 
         const res = await (await fetch('index.php?action=portal_actualizar_datos_contacto_ajax', {
@@ -297,9 +308,7 @@ async function submitContactEditPortal() {
                 confirmButtonColor: '#5560FF'
             });
             
-            const emailSpan = document.getElementById('profileEmailVal');
             const phoneSpan = document.getElementById('profilePhoneVal');
-            if (emailSpan) emailSpan.textContent = res.email;
             if (phoneSpan) phoneSpan.textContent = res.telefono;
 
             toggleContactEditPortal();
@@ -630,6 +639,7 @@ async function verDetalle(id, opciones = {}) {
                             <i class="ri-arrow-down-s-line accordion-icon" aria-hidden="true"></i>
                         </div>
                         <div class="accordion-body">
+                            <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(h.clinica_nombre)}</p>
                             <p><strong>Diagnóstico:</strong> ${escapeHtml(h.diagnostico)}</p>
                             <p><strong>Tratamiento:</strong> ${escapeHtml(h.plan_tratamiento)}</p>
                             <p><strong>Veterinario:</strong> ${escapeHtml(h.veterinario)}</p>
@@ -652,9 +662,10 @@ async function verDetalle(id, opciones = {}) {
         } else {
             let html = '';
             res.citas.forEach(c => {
+                // Solo se cancela en una clínica con vínculo activo (lo dice el servidor en `cancelable`).
                 let cancelBtn = '';
-                if (c.estado === 'pendiente' || c.estado === 'confirmada' || c.estado === 'programada') {
-                    cancelBtn = `<button type="button" class="portal-btn-cancel" onclick="cancelarCitaPortal(${c.id_cita})"><i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita</button>`;
+                if (c.cancelable) {
+                    cancelBtn = `<button type="button" class="portal-btn-cancel" onclick="cancelarCitaPortal(${Number(c.id_cita)})"><i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita</button>`;
                 }
 
                 html += `
@@ -664,6 +675,7 @@ async function verDetalle(id, opciones = {}) {
                         <strong>${formatFecha(c.fecha)} · ${escapeHtml((c.hora || '').substring(0, 5))}</strong>
                         <p>${escapeHtml(c.motivo)}</p>
                         ${c.veterinario_nombre ? `<p>Veterinario: ${escapeHtml(c.veterinario_nombre)}</p>` : ''}
+                        <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(c.clinica_nombre)}</p>
                         ${badgeEstado(c.estado)}
                         ${cancelBtn}
                     </div>
@@ -690,6 +702,7 @@ async function verDetalle(id, opciones = {}) {
                         <p>Aplicada: ${formatFecha(v.fecha_aplicacion)}</p>
                         ${v.fecha_proxima_dosis ? `<p class="portal-proxima">Próxima dosis: ${formatFecha(v.fecha_proxima_dosis)}</p>` : ''}
                         ${v.laboratorio ? `<p>Laboratorio: ${escapeHtml(v.laboratorio)}</p>` : ''}
+                        <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(v.clinica_nombre)}</p>
                     </div>
                 </div>`;
             });
@@ -714,6 +727,7 @@ async function verDetalle(id, opciones = {}) {
                         <p>Aplicada: ${formatFecha(d.fecha_aplicacion)}</p>
                         ${d.fecha_proxima ? `<p class="portal-proxima portal-proxima--control">Próxima dosis: ${formatFecha(d.fecha_proxima)} (${escapeHtml(d.periodicidad)})</p>` : ''}
                         ${d.observaciones ? `<p>Observaciones: ${escapeHtml(d.observaciones)}</p>` : ''}
+                        <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(d.clinica_nombre)}</p>
                     </div>
                 </div>`;
             });
@@ -935,7 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const proximasContainer = document.getElementById('agenda-salud-proximas');
         if (!proximasList || !historialList) return;
 
-        const eventos = window.portalAgendaEventos || [];
+        const eventos = eventosDeLaAgenda();
         
         // Filtrar por mascota y por fecha si aplica
         let filtrados = eventos.filter(e => {
@@ -1140,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Eventos para verificar
-        const eventos = window.portalAgendaEventos || [];
+        const eventos = eventosDeLaAgenda();
 
         // Rellenar días del mes actual
         for (let day = 1; day <= totalDays; day++) {
@@ -1499,6 +1513,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!bookingModal || !form) return;
 
     const closeBtn = document.getElementById('btnCloseBookingModal');
+    // C6 / RE-5.9.3: primero la clínica, entre las vinculadas; catálogos y horarios son de esa clínica.
+    const clinicaSelect = document.getElementById('booking_clinica');
     const mascotaSelect = document.getElementById('booking_mascota');
     const tipoCitaSelect = document.getElementById('booking_tipo_cita');
     const vetSelect = document.getElementById('booking_veterinario');
@@ -1507,10 +1523,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const slots = document.getElementById('booking_slots');
     const resumen = document.getElementById('booking_resumen');
     const confirmar = document.getElementById('booking_confirmar');
-    // Días sin atención en toda la jornada (1 = lunes … 7 = domingo), desde Configuración de horarios.
-    const diasCerrados = JSON.parse(form.dataset.diasCerrados || '[]');
+    // Días sin atención en toda la jornada de cada clínica (1 = lunes … 7 = domingo).
+    const diasCerradosPorClinica = JSON.parse(form.dataset.diasCerrados || '{}');
+    const diasCerrados = () => diasCerradosPorClinica[clinicaSelect.value] || [];
     let turno = 0; // si el usuario cambia algo mientras cargan los horarios, se ignora la respuesta vieja
-    let catalogosListos = false;
+    const catalogosPorClinica = {};
 
     const minutosDe = h => { const [hh, mm] = h.split(':').map(Number); return hh * 60 + mm; };
     const hora12 = h => { const [hh, mm] = h.split(':').map(Number); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a. m.' : 'p. m.'}`; };
@@ -1525,7 +1542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inline: true,
         disableMobile: true,
         monthSelectorType: 'static',
-        disable: [d => diasCerrados.includes(d.getDay() === 0 ? 7 : d.getDay())],
+        disable: [d => diasCerrados().includes(d.getDay() === 0 ? 7 : d.getDay())],
         onChange: () => cargarHoras(),
         onReady: (fechas, texto, instancia) => { if (window.zkMesesAnios) window.zkMesesAnios(instancia); }
     }) : null;
@@ -1541,6 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function textoGuia() {
         const faltan = [];
+        if (!clinicaSelect.value) faltan.push('la clínica');
         if (!tipoCitaSelect.value) faltan.push('el tipo de cita');
         if (!vetSelect.value) faltan.push('el veterinario');
         if (!dateInput.value) faltan.push('el día');
@@ -1600,29 +1618,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fecha = dateInput.value;
         const vet = vetSelect.value;
+        const clinica = clinicaSelect.value;
         const duracion = (tipoCitaSelect.selectedOptions[0] && tipoCitaSelect.selectedOptions[0].dataset.duracion) || 30;
         const miTurno = ++turno;
         estadoSlots('cargando');
 
         try {
             // Horas de la clínica ese día ∩ huecos libres del veterinario.
-            const [clinica, agendaVet] = await Promise.all([
-                fetch(`index.php?action=get_horas_disponibles_ajax&fecha=${encodeURIComponent(fecha)}&intervalo=${encodeURIComponent(duracion)}`).then(r => r.json()),
-                fetch(`index.php?action=get_sugerencias_horario_ajax&doc_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${encodeURIComponent(duracion)}`).then(r => r.json())
+            const [horasClinica, agendaVet] = await Promise.all([
+                fetch(`index.php?action=portal_get_horas_ajax&id_clinica=${encodeURIComponent(clinica)}&fecha=${encodeURIComponent(fecha)}&intervalo=${encodeURIComponent(duracion)}`).then(r => r.json()),
+                fetch(`index.php?action=portal_get_sugerencias_ajax&id_clinica=${encodeURIComponent(clinica)}&id_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${encodeURIComponent(duracion)}`).then(r => r.json())
             ]);
             if (miTurno !== turno) return;
 
-            if (!clinica.success || !agendaVet.success) {
+            if (!horasClinica.success || !agendaVet.success) {
                 estadoSlots('vacio', 'No se pudieron cargar los horarios. Intenta de nuevo.');
                 return;
             }
-            const horasClinica = clinica.horas || [];
-            if (!horasClinica.length) {
+            const horasDeLaClinica = horasClinica.horas || [];
+            if (!horasDeLaClinica.length) {
                 estadoSlots('vacio', 'La clínica no atiende ese día. Elige otro día.');
                 return;
             }
             const libresVet = agendaVet.sugerencias || [];
-            let horas = horasClinica.filter(h => libresVet.includes(h));
+            let horas = horasDeLaClinica.filter(h => libresVet.includes(h));
             // Hoy no se ofrecen horas que ya pasaron.
             if (fecha === hoyIso()) {
                 const ahora = new Date();
@@ -1641,7 +1660,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function actualizarResumen() {
-        const listo = mascotaSelect.value && tipoCitaSelect.value && vetSelect.value && dateInput.value && horaInput.value;
+        const listo = clinicaSelect.value && mascotaSelect.value && tipoCitaSelect.value && vetSelect.value && dateInput.value && horaInput.value;
         confirmar.disabled = !listo;
         if (!listo) {
             resumen.textContent = '';
@@ -1650,22 +1669,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const dia = calendario && calendario.selectedDates[0]
             ? calendario.selectedDates[0].toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
             : dateInput.value;
-        resumen.innerHTML = `<i class="ri-checkbox-circle-line" aria-hidden="true"></i>${escapeHtml(textoOpcion(mascotaSelect))} · ${escapeHtml(textoOpcion(tipoCitaSelect))} con ${escapeHtml(textoOpcion(vetSelect))} · ${escapeHtml(dia)}, ${escapeHtml(hora12(horaInput.value))}`;
+        resumen.innerHTML = `<i class="ri-checkbox-circle-line" aria-hidden="true"></i>${escapeHtml(textoOpcion(mascotaSelect))} · ${escapeHtml(textoOpcion(tipoCitaSelect))} con ${escapeHtml(textoOpcion(vetSelect))} en ${escapeHtml(textoOpcion(clinicaSelect))} · ${escapeHtml(dia)}, ${escapeHtml(hora12(horaInput.value))}`;
     }
 
+    /** Tipos de cita y veterinarios de la clínica elegida (una vez por clínica). */
     async function cargarCatalogos() {
+        const clinica = clinicaSelect.value;
+        if (!clinica) {
+            tipoCitaSelect.innerHTML = vetSelect.innerHTML = '<option value="">Elige primero la clínica</option>';
+            return;
+        }
         try {
-            const [resTipos, resVets] = await Promise.all([
-                fetch('index.php?action=portal_get_tipos_cita_ajax').then(r => r.json()),
-                fetch('index.php?action=portal_get_vets_ajax').then(r => r.json())
-            ]);
-            tipoCitaSelect.innerHTML = '<option value="">Selecciona…</option>' + (resTipos.success ? resTipos.tipos : []).map(t =>
+            if (!catalogosPorClinica[clinica]) {
+                const [resTipos, resVets] = await Promise.all([
+                    fetch(`index.php?action=portal_get_tipos_cita_ajax&id_clinica=${encodeURIComponent(clinica)}`).then(r => r.json()),
+                    fetch(`index.php?action=portal_get_vets_ajax&id_clinica=${encodeURIComponent(clinica)}`).then(r => r.json())
+                ]);
+                catalogosPorClinica[clinica] = {
+                    tipos: resTipos.success ? resTipos.tipos : [],
+                    veterinarios: Array.isArray(resVets) ? resVets : []
+                };
+            }
+            const { tipos, veterinarios } = catalogosPorClinica[clinica];
+            tipoCitaSelect.innerHTML = '<option value="">Selecciona…</option>' + tipos.map(t =>
                 `<option value="${Number(t.id_tipo_cita)}" data-duracion="${Number(t.duracion_minutos)}">${escapeHtml(t.nombre_tipo)} (${Number(t.duracion_minutos)} min)</option>`
             ).join('');
-            vetSelect.innerHTML = '<option value="">Selecciona…</option>' + (Array.isArray(resVets) ? resVets : []).map(v =>
-                `<option value="${escapeHtml(v.documento)}">Dr(a). ${escapeHtml(v.nombre_completo)}</option>`
+            vetSelect.innerHTML = '<option value="">Selecciona…</option>' + veterinarios.map(v =>
+                `<option value="${Number(v.id_usuario)}">Dr(a). ${escapeHtml(v.nombre_completo)}</option>`
             ).join('');
-            catalogosListos = true;
         } catch (e) {
             console.error('Error al cargar catálogos:', e);
             tipoCitaSelect.innerHTML = vetSelect.innerHTML = '<option value="">No se pudo cargar. Cierra y vuelve a abrir.</option>';
@@ -1684,7 +1715,11 @@ document.addEventListener('DOMContentLoaded', () => {
             estadoSlots('vacio', 'Primero registra una mascota desde Inicio para poder agendarle una cita.');
             return;
         }
-        if (!catalogosListos) await cargarCatalogos();
+        if (clinicaSelect.options.length === 0) {
+            estadoSlots('vacio', 'Vincúlate a una clínica desde Perfil › Mis clínicas para poder agendar.');
+            return;
+        }
+        await cargarCatalogos();
         cargarHoras();
     };
 
@@ -1695,6 +1730,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === bookingModal) closeModal('portalBookingModal');
     });
 
+    // Otra clínica: otros tipos, veterinarios y días de atención.
+    clinicaSelect.addEventListener('change', async () => {
+        if (calendario) {
+            calendario.clear();
+            calendario.redraw();
+        }
+        await cargarCatalogos();
+        cargarHoras();
+    });
     mascotaSelect.addEventListener('change', actualizarResumen);
     tipoCitaSelect.addEventListener('change', cargarHoras);
     vetSelect.addEventListener('change', cargarHoras);
@@ -2093,7 +2137,7 @@ async function mostrarDetalleCita(idCita) {
         // Rellenar información general
         document.getElementById('detCitaTipo').textContent = cita.nombre_tipo.toUpperCase();
         document.getElementById('detCitaMascota').textContent = cita.nombre_mascota;
-        document.getElementById('detCitaVet').textContent = `Dr(a). ${cita.veterinario}`;
+        document.getElementById('detCitaVet').textContent = `Dr(a). ${cita.veterinario} · ${cita.clinica}`;
         document.getElementById('detCitaFechaHora').textContent = `${formatFecha(cita.fecha)} · ${cita.hora.substring(0, 5)}`;
 
         // Rellenar Badge de Estado
@@ -2172,4 +2216,86 @@ async function mostrarDetalleCita(idCita) {
     }
 }
 
+/* ── HU-5.12 y HU-5.13: mis clínicas ───────────────────────────────────── */
+async function postPortal(accion, datos) {
+    const cuerpo = new FormData();
+    Object.entries(datos).forEach(([clave, valor]) => cuerpo.append(clave, valor));
+    const res = await fetch(`index.php?action=${accion}`, {
+        method: 'POST',
+        body: cuerpo,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    return res.json();
+}
 
+function avisoPortal(icono, titulo, texto) {
+    return Swal.fire({ icon: icono, title: titulo, text: texto, confirmButtonColor: '#0052FF' });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const seccion = document.getElementById('misClinicas');
+    if (!seccion) return;
+
+    // RE-5.12.1/2: el interruptor aplica de inmediato; si el servidor rechaza, vuelve a su estado.
+    seccion.addEventListener('change', async (e) => {
+        const interruptor = e.target.closest('[data-autorizar-clinica]');
+        if (!interruptor) return;
+        interruptor.disabled = true;
+        try {
+            const res = await postPortal('portal_autorizar_historia_ajax', {
+                id_clinica: interruptor.dataset.autorizarClinica,
+                autoriza: interruptor.checked ? '1' : '0'
+            });
+            if (!res.success) {
+                interruptor.checked = !interruptor.checked;
+                avisoPortal('error', 'No se pudo cambiar', res.message || 'Intenta de nuevo.');
+                return;
+            }
+            avisoPortal('success', 'Listo', res.message);
+        } catch (err) {
+            console.error(err);
+            interruptor.checked = !interruptor.checked;
+            avisoPortal('error', 'Error de red', 'No se pudo conectar con el servidor.');
+        } finally {
+            interruptor.disabled = false;
+        }
+    });
+
+    seccion.addEventListener('click', async (e) => {
+        const vincular = e.target.closest('[data-vincular-clinica]');
+        const desvincular = e.target.closest('[data-desvincular-clinica]');
+        if (!vincular && !desvincular) return;
+
+        const boton = vincular || desvincular;
+        const nombre = boton.dataset.nombre || 'la clínica';
+        const confirmacion = await Swal.fire({
+            icon: vincular ? 'question' : 'warning',
+            title: vincular ? `¿Vincularte a ${nombre}?` : `¿Desvincularte de ${nombre}?`,
+            text: vincular
+                ? 'La clínica verá tus datos de contacto. Tus mascotas se le vinculan cuando agendes allí o te atiendan.'
+                : 'La clínica conserva lo que registró, pero deja de ver los datos nuevos de tus mascotas y la historia de otras clínicas.',
+            showCancelButton: true,
+            confirmButtonText: vincular ? 'Vincularme' : 'Desvincularme',
+            cancelButtonText: 'Volver',
+            confirmButtonColor: vincular ? '#0052FF' : '#DC2626'
+        });
+        if (!confirmacion.isConfirmed) return;
+
+        boton.disabled = true;
+        try {
+            const res = vincular
+                ? await postPortal('portal_vincular_clinica_ajax', { id_clinica: vincular.dataset.vincularClinica })
+                : await postPortal('portal_desvincular_clinica_ajax', { id_clinica: desvincular.dataset.desvincularClinica });
+            if (!res.success) {
+                avisoPortal('error', 'No se pudo completar', res.message || 'Intenta de nuevo.');
+                boton.disabled = false;
+                return;
+            }
+            avisoPortal('success', 'Listo', res.message).then(() => location.reload());
+        } catch (err) {
+            console.error(err);
+            boton.disabled = false;
+            avisoPortal('error', 'Error de red', 'No se pudo conectar con el servidor.');
+        }
+    });
+});
