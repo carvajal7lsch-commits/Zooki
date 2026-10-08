@@ -83,7 +83,6 @@
 .estado--cancelada { background: #fee2e2; color: #b91c1c; }
 .estado--no_asistio { background: #f1f5f9; color: #64748b; }
 .estado--sin_cerrar { background: #ffe4e6; color: #9f1239; }
-.estado--cerrada_sin_consulta { background: #e2e8f0; color: #334155; }
 
 /* ── Cuerpo: ficha + panel ──────────────────────────────────────── */
 .atencion__cuerpo {

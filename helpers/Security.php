@@ -307,9 +307,10 @@ class Security {
             'registrar_desparasitacion_ajax', 'registrar_nueva_vacuna_ajax',
             'registrar_nuevo_laboratorio_ajax',
             'registrar_nuevo_producto_desparasitacion_ajax',
-            // RN-407: atender una cita (iniciarla, cerrarla o marcarla como no
-            // asistida) es del veterinario asignado.
-            'iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax', 'cerrar_sin_consulta_ajax',
+            // RN-407: atender una cita (iniciarla, completarla o marcarla como
+            // no asistida) es del veterinario asignado. «Cerrar sin consulta»
+            // se retiró en C5 (RN-410 derogada, D-3).
+            'iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax',
         ] as $a) { $matriz[$a] = $soloVet; }
 
         // Consulta de informacion clinica: el administrador si la necesita

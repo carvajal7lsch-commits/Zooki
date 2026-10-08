@@ -1,433 +1,435 @@
 <?php
+require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/CatalogoClinica.php';
-class Cita {
-    private $conn;
-    private $table_name = "citas";
+require_once __DIR__ . '/../helpers/HorarioOcupado.php';
 
-    public function __construct($db) {
-        $this->conn = $db;
+/**
+ * C5: agenda v1 sobre el modelo v2. Cada cita es de la clínica activa y de un
+ * veterinario por id_usuario (RN-G13); una cita de otra clínica da 403
+ * auditado. El triage, los sobrecupos y el resto del Grafo II son del
+ * módulo 4 de la v2: aquí toda cita es verde y no es sobrecupo.
+ *
+ * Las transiciones reciben la cita ya validada (getById o paraPropietario):
+ * así ninguna cambia una cita que no pasó por la comprobación de acceso.
+ */
+class Cita extends ModeloClinica
+{
+    /** Estados desde los que se inicia, cancela, reprograma o marca "no asistió". */
+    public const ESTADOS_ABIERTOS = ['pendiente', 'confirmada'];
+
+    /** RN-409: atenciones iniciadas que se retoman hasta registrar su consulta. */
+    public const ESTADOS_EN_ATENCION = ['en_curso', 'sin_cerrar'];
+
+    /** Estados que liberan el horario (ocupa_horario NULL en la base, D-2). */
+    private const ESTADOS_LIBRES = ['cancelada', 'no_asistio'];
+
+    /** Duración que se asume si la cita no tiene tipo (como en la v1). */
+    private const DURACION_POR_DEFECTO = 30;
+
+    /** Columnas comunes de una cita con sus nombres para mostrar. */
+    private const SELECT_CITA = "SELECT c.*, m.nombre AS mascota_nombre, m.id_propietario,
+            v.nombre_completo AS veterinario_nombre, v.email AS veterinario_email,
+            p.nombre_completo AS propietario_nombre, p.email, p.telefono AS propietario_telefono,
+            tc.nombre_tipo AS tipo_cita_nombre,
+            cl.nombre AS clinica_nombre, cl.direccion AS clinica_direccion
+        FROM citas c
+        JOIN mascotas m ON m.id_mascota = c.id_mascota
+        JOIN usuarios v ON v.id_usuario = c.id_veterinario
+        JOIN clinicas cl ON cl.id_clinica = c.id_clinica
+        LEFT JOIN usuarios p ON p.id_usuario = m.id_propietario
+        LEFT JOIN tipos_cita tc ON tc.id_tipo_cita = c.id_tipo_cita";
+
+    /**
+     * HU-4.1: agenda una cita en la clínica activa. Copia la duración y el
+     * margen del tipo de cita (RE-4.13.6). Lanza HorarioOcupado si el
+     * veterinario o la mascota ya tienen algo en ese horario (RN-401).
+     */
+    public function registrar(array $datos): int
+    {
+        $clinica = $this->clinica();
+        $idMascota = (int) $datos['id_mascota'];
+        $idVeterinario = (int) $datos['id_veterinario'];
+        $fecha = $datos['fecha'];
+        $hora = self::normalizarHora($datos['hora']);
+
+        $this->exigirMascotaActiva($idMascota);
+        $this->exigirVeterinarioDeLaClinica($idVeterinario);
+        [$duracion, $margen] = $this->tiemposDelTipo($datos['id_tipo_cita'] ?? null);
+
+        $this->exigirHorarioLibre($idVeterinario, $idMascota, $fecha, $hora, $duracion, null);
+
+        $sql = "INSERT INTO citas
+            (id_clinica, id_mascota, id_veterinario, id_tipo_cita, fecha, hora, hora_fin, motivo,
+             duracion_minutos, margen_minutos, prioridad, es_sobrecupo, estado)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'verde', 0, ?)";
+        $parametros = [
+            $clinica,
+            $idMascota,
+            $idVeterinario,
+            $datos['id_tipo_cita'] ?: null,
+            $fecha,
+            $hora,
+            self::horaFin($hora, $duracion),
+            $datos['motivo'],
+            $duracion,
+            $margen,
+            $datos['estado'] ?? 'confirmada',
+        ];
+        $this->ejecutarReserva($sql, $parametros);
+        return (int) $this->conn->lastInsertId();
     }
 
-    public function insert($data) {
-        // Calcular hora_fin basado en la duración del tipo de cita
-        $hora_fin = null;
-        if (isset($data['duracion_minutos']) && $data['duracion_minutos']) {
-            $hora_fin = date('H:i:s', strtotime($data['hora'] . ' +' . $data['duracion_minutos'] . ' minutes'));
+    /**
+     * HU-4.2: cambia fecha, hora y, si se pide, el veterinario. Conserva la
+     * duración y el margen que se copiaron al reservar.
+     */
+    public function reprogramar(array $cita, int $idVeterinario, string $fecha, string $hora): void
+    {
+        $hora = self::normalizarHora($hora);
+        if ($idVeterinario !== (int) $cita['id_veterinario']) {
+            $this->exigirVeterinarioDeLaClinica($idVeterinario);
         }
-        
-        $estado = isset($data['estado']) ? $data['estado'] : 'pendiente';
+        $duracion = (int) ($cita['duracion_minutos'] ?: self::DURACION_POR_DEFECTO);
 
-        $query = "INSERT INTO " . $this->table_name . " 
-                  (id_mascota, doc_veterinario, fecha, hora, hora_fin, motivo, id_tipo_cita, duracion_minutos, estado) 
-                  VALUES (:id_mascota, :doc_veterinario, :fecha, :hora, :hora_fin, :motivo, :id_tipo_cita, :duracion_minutos, :estado)";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_mascota', $data['id_mascota']);
-        $stmt->bindParam(':doc_veterinario', $data['doc_veterinario']);
-        $stmt->bindParam(':fecha', $data['fecha']);
-        $stmt->bindParam(':hora', $data['hora']);
-        $stmt->bindParam(':hora_fin', $hora_fin);
-        $stmt->bindParam(':motivo', $data['motivo']);
-        $stmt->bindParam(':id_tipo_cita', $data['id_tipo_cita']);
-        $stmt->bindParam(':duracion_minutos', $data['duracion_minutos']);
-        $stmt->bindParam(':estado', $estado);
-        
-        if ($stmt->execute()) {
-            return $this->conn->lastInsertId();
+        $this->exigirHorarioLibre($idVeterinario, (int) $cita['id_mascota'], $fecha, $hora, $duracion, (int) $cita['id_cita']);
+
+        $marcas = $this->marcas(self::ESTADOS_ABIERTOS);
+        $sql = "UPDATE citas SET id_veterinario = ?, fecha = ?, hora = ?, hora_fin = ?
+            WHERE id_cita = ? AND id_clinica = ? AND estado IN ($marcas)";
+        $parametros = [
+            $idVeterinario,
+            $fecha,
+            $hora,
+            self::horaFin($hora, $duracion),
+            (int) $cita['id_cita'],
+            (int) $cita['id_clinica'],
+            ...self::ESTADOS_ABIERTOS,
+        ];
+        $filas = $this->ejecutarReserva($sql, $parametros);
+        if ($filas !== 1) {
+            throw new InvalidArgumentException('La cita cambió de estado mientras se reprogramaba. Recarga la agenda.');
+        }
+    }
+
+    /** Cita de la clínica activa; de otra clínica o inexistente, 403 auditado. */
+    public function getById($idCita): array
+    {
+        $consulta = $this->conn->prepare(self::SELECT_CITA . ' WHERE c.id_cita = ? AND c.id_clinica = ?');
+        $consulta->execute([(int) $idCita, $this->clinica()]);
+        $cita = $consulta->fetch(PDO::FETCH_ASSOC);
+
+        if ($cita === false) {
+            $this->denegarAcceso('citas', $idCita, 'Cita fuera de la clínica activa (RN-G13)');
+        }
+        return $cita;
+    }
+
+    /**
+     * Contexto de propietario (RN-G02): la cita es de una mascota suya y de
+     * una clínica con la que tiene un vínculo activo. Si no, 403 auditado.
+     */
+    public function paraPropietario(int $idCita, int $idPropietario): array
+    {
+        $sql = self::SELECT_CITA . "
+            JOIN propietario_clinica pc ON pc.id_propietario = m.id_propietario AND pc.id_clinica = c.id_clinica
+            WHERE c.id_cita = ? AND m.id_propietario = ? AND pc.estado = 'activo'";
+        $consulta = $this->conn->prepare($sql);
+        $consulta->execute([$idCita, $idPropietario]);
+        $cita = $consulta->fetch(PDO::FETCH_ASSOC);
+
+        if ($cita === false) {
+            $this->denegarAcceso('citas', $idCita, 'Cita de una mascota ajena o sin vínculo activo (RN-G02)');
+        }
+        return $cita;
+    }
+
+    /** RE-4.1.5: citas de la clínica activa en un rango; el veterinario ve solo las suyas. */
+    public function listarRango(string $inicio, string $fin, ?int $idVeterinario = null): array
+    {
+        $sql = self::SELECT_CITA . ' WHERE c.id_clinica = ? AND c.fecha BETWEEN ? AND ?';
+        $parametros = [$this->clinica(), $inicio, $fin];
+        if ($idVeterinario !== null) {
+            $sql .= ' AND c.id_veterinario = ?';
+            $parametros[] = $idVeterinario;
+        }
+        $consulta = $this->conn->prepare($sql . ' ORDER BY c.fecha ASC, c.hora ASC');
+        $consulta->execute($parametros);
+        return $consulta->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** Supervisión del administrador: todas las citas de la clínica activa. */
+    public function listarTodas(): array
+    {
+        $consulta = $this->conn->prepare(self::SELECT_CITA . ' WHERE c.id_clinica = ? ORDER BY c.fecha DESC, c.hora DESC');
+        $consulta->execute([$this->clinica()]);
+        return $consulta->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** Veterinarios activos de la clínica activa (usuario_clinica), para los selectores. */
+    public function veterinariosActivos(): array
+    {
+        $sql = "SELECT u.id_usuario, u.nombre_completo
+            FROM usuario_clinica uc
+            JOIN usuarios u ON u.id_usuario = uc.id_usuario
+            WHERE uc.id_clinica = ? AND uc.id_rol = 2 AND uc.estado = 'activo' AND u.estado = 1
+            ORDER BY u.nombre_completo";
+        $consulta = $this->conn->prepare($sql);
+        $consulta->execute([$this->clinica()]);
+        return $consulta->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function esVeterinarioDeLaClinica(int $idVeterinario): bool
+    {
+        $sql = "SELECT 1 FROM usuario_clinica uc
+            JOIN usuarios u ON u.id_usuario = uc.id_usuario
+            WHERE uc.id_usuario = ? AND uc.id_clinica = ? AND uc.id_rol = 2 AND uc.estado = 'activo' AND u.estado = 1";
+        $consulta = $this->conn->prepare($sql);
+        $consulta->execute([$idVeterinario, $this->clinica()]);
+        return (bool) $consulta->fetchColumn();
+    }
+
+    /** Hora de otra cita activa de la mascota ese día en la clínica activa (aviso al agendar), o null. */
+    public function horaDeOtraCitaDelDia(int $idMascota, string $fecha): ?string
+    {
+        $marcas = $this->marcas(self::ESTADOS_LIBRES);
+        $sql = "SELECT hora FROM citas
+            WHERE id_clinica = ? AND id_mascota = ? AND fecha = ? AND estado NOT IN ($marcas)
+            ORDER BY hora LIMIT 1";
+        $consulta = $this->conn->prepare($sql);
+        $consulta->execute([$this->clinica(), $idMascota, $fecha, ...self::ESTADOS_LIBRES]);
+        $hora = $consulta->fetchColumn();
+        return $hora === false ? null : (string) $hora;
+    }
+
+    public function getTiposCita(): array
+    {
+        $tipos = (new CatalogoClinica($this->conn))->tiposCita();
+        return array_map(static fn (array $tipo): array => $tipo + ['nombre' => $tipo['nombre_tipo']], $tipos);
+    }
+
+    public function getTipoCitaById($idTipoCita)
+    {
+        return (new CatalogoClinica($this->conn))->tipoCita((int) $idTipoCita) ?? false;
+    }
+
+    /**
+     * Horarios libres del veterinario ese día, de 08:00 a 18:00 como en la
+     * v1 (la pantalla los cruza con el horario de la clínica; RE-4.9.1 es del
+     * módulo 4). Cuenta sus citas en todas sus clínicas (decisión C5).
+     */
+    public function sugerencias(int $idVeterinario, string $fecha, int $duracion, ?int $excluir, DateTimeImmutable $ahora): array
+    {
+        if (!$this->esVeterinarioDeLaClinica($idVeterinario)) {
+            return [];
+        }
+        $duracion = max($duracion, 1);
+        $ocupadas = $this->intervalos($this->ocupadasDelVeterinario($idVeterinario, $fecha, $excluir));
+        $minutoActual = $fecha === $ahora->format('Y-m-d') ? self::minutos($ahora->format('H:i:s')) : null;
+
+        $sugerencias = [];
+        for ($inicio = 8 * 60; $inicio + $duracion <= 18 * 60; $inicio += $duracion) {
+            if ($minutoActual !== null && $inicio < $minutoActual) {
+                continue;
+            }
+            if (!self::seSolapa($ocupadas, $inicio, $inicio + $duracion)) {
+                $sugerencias[] = sprintf('%02d:%02d', intdiv($inicio, 60), $inicio % 60);
+            }
+        }
+        return $sugerencias;
+    }
+
+    /** RN-407: inicia la atención y sella la hora real de inicio (RE-4.5.1). */
+    public function iniciarAtencion(array $cita, string $ahora): bool
+    {
+        return $this->transicion($cita, self::ESTADOS_ABIERTOS, "estado = 'en_curso', hora_inicio_real = ?", [$ahora]);
+    }
+
+    /**
+     * RN-406: completa una cita en curso o sin cerrar. Solo lo usa la cita
+     * cuya consulta ya existe y quedó abierta; lo normal es completarla al
+     * guardar la consulta (Consulta::registrar).
+     */
+    public function completarAtencion(array $cita, string $ahora): bool
+    {
+        return $this->transicion($cita, self::ESTADOS_EN_ATENCION, "estado = 'completada', hora_fin_real = ?", [$ahora]);
+    }
+
+    /** RN-408: el paciente no llegó; la cita deja de ocupar su horario. */
+    public function marcarNoAsistio(array $cita): bool
+    {
+        return $this->transicion($cita, self::ESTADOS_ABIERTOS, "estado = 'no_asistio'", []);
+    }
+
+    /** Solo una cita pendiente se confirma: confirmar una cancelada la reactivaba. */
+    public function confirmar(array $cita): bool
+    {
+        return $this->transicion($cita, ['pendiente'], "estado = 'confirmada'", []);
+    }
+
+    /** RN-405: solo se cancela una cita pendiente o confirmada; no se borra. */
+    public function cancelar(array $cita): bool
+    {
+        return $this->transicion($cita, self::ESTADOS_ABIERTOS, "estado = 'cancelada'", []);
+    }
+
+    /**
+     * Cambia el estado solo si la cita sigue en uno de los de origen y en su
+     * clínica. false si no tocó ninguna fila (otra petición se adelantó).
+     */
+    private function transicion(array $cita, array $desde, string $cambio, array $parametros): bool
+    {
+        $marcas = $this->marcas($desde);
+        $sql = "UPDATE citas SET $cambio WHERE id_cita = ? AND id_clinica = ? AND estado IN ($marcas)";
+        $consulta = $this->conn->prepare($sql);
+        $consulta->execute([...$parametros, (int) $cita['id_cita'], (int) $cita['id_clinica'], ...$desde]);
+        return $consulta->rowCount() === 1;
+    }
+
+    /**
+     * RN-401: el veterinario no puede tener dos citas que se solapan, en
+     * ninguna de sus clínicas, y la mascota tampoco.
+     */
+    protected function exigirHorarioLibre(int $idVeterinario, int $idMascota, string $fecha, string $hora, int $duracion, ?int $excluir): void
+    {
+        $inicio = self::minutos($hora);
+        $fin = $inicio + max($duracion, 1);
+
+        $delVeterinario = $this->intervalos($this->ocupadasDelVeterinario($idVeterinario, $fecha, $excluir));
+        if (self::seSolapa($delVeterinario, $inicio, $fin)) {
+            throw new HorarioOcupado('El veterinario no está disponible en ese horario. Hay solapamiento con otra cita.');
+        }
+
+        $deLaMascota = $this->intervalos($this->ocupadasDeLaMascota($idMascota, $fecha, $excluir));
+        if (self::seSolapa($deLaMascota, $inicio, $fin)) {
+            throw new HorarioOcupado('La mascota ya tiene otra cita que se solapa con ese horario. Elige otra hora.');
+        }
+    }
+
+    /** Solo horas: de otra clínica no se lee ni se devuelve ningún otro dato. */
+    private function ocupadasDelVeterinario(int $idVeterinario, string $fecha, ?int $excluir): array
+    {
+        return $this->ocupadas('id_veterinario', $idVeterinario, $fecha, $excluir);
+    }
+
+    private function ocupadasDeLaMascota(int $idMascota, string $fecha, ?int $excluir): array
+    {
+        return $this->ocupadas('id_mascota', $idMascota, $fecha, $excluir);
+    }
+
+    private function ocupadas(string $columna, int $id, string $fecha, ?int $excluir): array
+    {
+        $marcas = $this->marcas(self::ESTADOS_LIBRES);
+        $sql = "SELECT hora, hora_fin, duracion_minutos FROM citas
+            WHERE $columna = ? AND fecha = ? AND es_sobrecupo = 0 AND estado NOT IN ($marcas)";
+        $parametros = [$id, $fecha, ...self::ESTADOS_LIBRES];
+        if ($excluir !== null) {
+            $sql .= ' AND id_cita <> ?';
+            $parametros[] = $excluir;
+        }
+        $consulta = $this->conn->prepare($sql);
+        $consulta->execute($parametros);
+        return $consulta->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** @return list<array{0: int, 1: int}> minutos de inicio y fin de cada cita */
+    private function intervalos(array $citas): array
+    {
+        $intervalos = [];
+        foreach ($citas as $cita) {
+            $inicio = self::minutos($cita['hora']);
+            $fin = !empty($cita['hora_fin'])
+                ? self::minutos($cita['hora_fin'])
+                : $inicio + ((int) $cita['duracion_minutos'] ?: self::DURACION_POR_DEFECTO);
+            $intervalos[] = [$inicio, $fin];
+        }
+        return $intervalos;
+    }
+
+    private static function seSolapa(array $intervalos, int $inicio, int $fin): bool
+    {
+        foreach ($intervalos as [$ocupadoDesde, $ocupadoHasta]) {
+            if ($inicio < $ocupadoHasta && $fin > $ocupadoDesde) {
+                return true;
+            }
         }
         return false;
     }
 
-    public function checkDisponibilidad($doc_veterinario, $fecha, $hora, $duracion_minutos = 0, $id_cita_excluir = null) {
-        // Usar timestamps numéricos para comparar horas de forma fiable
-        // (evita bugs por diferencias de formato: '08:00' vs '08:00:00')
-        $nueva_inicio = strtotime(date('Y-m-d') . ' ' . $hora);
-        $nueva_fin    = $nueva_inicio + (max((int)$duracion_minutos, 1) * 60);
-
-        $query = "SELECT hora, hora_fin, duracion_minutos FROM " . $this->table_name . "
-                  WHERE doc_veterinario = :doc_vet
-                  AND fecha = :fecha
-                  AND estado NOT IN ('cancelada', 'no_asistio', 'cerrada_sin_consulta')";
-
-        if ($id_cita_excluir) {
-            $query .= " AND id_cita != :id_cita_excluir";
-        }
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':doc_vet', $doc_veterinario);
-        $stmt->bindParam(':fecha', $fecha);
-        if ($id_cita_excluir) {
-            $stmt->bindParam(':id_cita_excluir', $id_cita_excluir);
-        }
-        $stmt->execute();
-        $citas_existentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($citas_existentes as $cita) {
-            $cita_inicio_ts = strtotime(date('Y-m-d') . ' ' . $cita['hora']);
-
-            if ($cita['hora_fin']) {
-                $cita_fin_ts = strtotime(date('Y-m-d') . ' ' . $cita['hora_fin']);
-            } else {
-                $dur = !empty($cita['duracion_minutos']) ? (int)$cita['duracion_minutos'] : 30;
-                $cita_fin_ts = $cita_inicio_ts + ($dur * 60);
-            }
-
-            // Solapamiento: nueva_inicio < cita_fin  AND  nueva_fin > cita_inicio
-            if ($nueva_inicio < $cita_fin_ts && $nueva_fin > $cita_inicio_ts) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public function checkMascotaDisponible($id_mascota, $fecha, $hora, $duracion_minutos = 0, $id_cita_excluir = null) {
-        $nueva_inicio = strtotime(date('Y-m-d') . ' ' . $hora);
-        $nueva_fin    = $nueva_inicio + (max((int)$duracion_minutos, 1) * 60);
-
-        $query = "SELECT hora, hora_fin, duracion_minutos FROM " . $this->table_name . "
-                  WHERE id_mascota = :id_mascota
-                  AND fecha = :fecha
-                  AND estado NOT IN ('cancelada', 'no_asistio', 'cerrada_sin_consulta')";
-
-        if ($id_cita_excluir) {
-            $query .= " AND id_cita != :id_cita_excluir";
-        }
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_mascota', $id_mascota);
-        $stmt->bindParam(':fecha', $fecha);
-        if ($id_cita_excluir) {
-            $stmt->bindParam(':id_cita_excluir', $id_cita_excluir);
-        }
-        $stmt->execute();
-        $citas_existentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($citas_existentes as $cita) {
-            $cita_inicio_ts = strtotime(date('Y-m-d') . ' ' . $cita['hora']);
-
-            if ($cita['hora_fin']) {
-                $cita_fin_ts = strtotime(date('Y-m-d') . ' ' . $cita['hora_fin']);
-            } else {
-                $dur = !empty($cita['duracion_minutos']) ? (int)$cita['duracion_minutos'] : 30;
-                $cita_fin_ts = $cita_inicio_ts + ($dur * 60);
-            }
-
-            // Solapamiento: nueva_inicio < cita_fin  AND  nueva_fin > cita_inicio
-            if ($nueva_inicio < $cita_fin_ts && $nueva_fin > $cita_inicio_ts) {
-                return false; // Conflicto de horario para la misma mascota
-            }
-        }
-        return true;
-    }
-    
-    public function getTiposCita() {
-        return array_map(static fn ($tipo) => $tipo + ['nombre' => $tipo['nombre_tipo']],
-            (new CatalogoClinica($this->conn))->tiposCita());
-    }
-
-    public function getTipoCitaById($id_tipo_cita) {
-        return (new CatalogoClinica($this->conn))->tipoCita((int) $id_tipo_cita) ?? false;
-    }
-
-    public function getSugerenciasHorario($doc_veterinario, $fecha, $duracion_minutos, $id_cita_excluir = null) {
-        $duracion_minutos = max((int)$duracion_minutos, 1);
-
-        $tz = new DateTimeZone('America/Bogota');
-        $now = new DateTime('now', $tz);
-        $hoy = $now->format('Y-m-d');
-        $hora_actual_ts = null;
-        if ($fecha === $hoy) {
-            $hora_actual_ts = $now->getTimestamp();
-        }
-
-        // Obtener citas existentes
-        $query = "SELECT hora, hora_fin, duracion_minutos as dur FROM " . $this->table_name . "
-                  WHERE doc_veterinario = :doc_vet
-                  AND fecha = :fecha
-                  AND estado NOT IN ('cancelada', 'no_asistio', 'cerrada_sin_consulta')";
-        if ($id_cita_excluir) {
-            $query .= " AND id_cita != :id_cita_excluir";
-        }
-        $query .= " ORDER BY hora ASC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':doc_vet', $doc_veterinario);
-        $stmt->bindParam(':fecha', $fecha);
-        if ($id_cita_excluir) {
-            $stmt->bindParam(':id_cita_excluir', $id_cita_excluir);
-        }
-        $stmt->execute();
-        $citas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Construir lista de intervalos bloqueados como timestamps
-        $bloqueados = [];
-        foreach ($citas as $c) {
-            $inicioDt = new DateTime($fecha . ' ' . $c['hora'], $tz);
-            $ini = $inicioDt->getTimestamp();
-
-            if (!empty($c['hora_fin'])) {
-                $finDt = new DateTime($fecha . ' ' . $c['hora_fin'], $tz);
-            } else {
-                $dur = !empty($c['dur']) ? (int)$c['dur'] : 30;
-                $finDt = (clone $inicioDt)->modify('+' . $dur . ' minutes');
-            }
-
-            $bloqueados[] = [$ini, $finDt->getTimestamp()];
-        }
-
-        // Recorrer el horario de atención slot por slot
-        $apertura_ts = (new DateTime($fecha . ' 08:00', $tz))->getTimestamp();
-        $cierre_ts   = (new DateTime($fecha . ' 18:00', $tz))->getTimestamp();
-        $paso        = $duracion_minutos * 60;
-
-        $sugerencias = [];
-        $slot_ts = $apertura_ts;
-
-        while ($slot_ts + $paso <= $cierre_ts) {
-            if ($hora_actual_ts !== null && $slot_ts < $hora_actual_ts) {
-                $slot_ts += $paso;
-                continue;
-            }
-
-            $slot_fin = $slot_ts + $paso;
-            $disponible = true;
-
-            foreach ($bloqueados as $blq) {
-                // Solapamiento: nueva_inicio < cita_fin  AND  nueva_fin > cita_inicio
-                if ($slot_ts < $blq[1] && $slot_fin > $blq[0]) {
-                    $disponible = false;
-                    break;
-                }
-            }
-
-            if ($disponible) {
-                $slotDate = new DateTime('@' . $slot_ts);
-                $slotDate->setTimezone($tz);
-                $sugerencias[] = $slotDate->format('H:i');
-            }
-
-            $slot_ts += $paso;
-        }
-
-        return $sugerencias;
-    }
-
-    public function getByFecha($fecha_inicio, $fecha_fin, $doc_veterinario = null) {
-        $query = "SELECT c.*, m.nombre as mascota_nombre, u.nombre_completo as veterinario_nombre, p.nombre_completo as propietario_nombre
-                  FROM " . $this->table_name . " c
-                  JOIN mascotas m ON c.id_mascota = m.id_mascota
-                  JOIN usuarios u ON c.doc_veterinario = u.documento
-                  JOIN usuarios p ON m.doc_propietario = p.documento
-                  WHERE c.fecha BETWEEN :fecha_inicio AND :fecha_fin";
-        
-        if ($doc_veterinario) {
-            $query .= " AND c.doc_veterinario = :doc_veterinario";
-        }
-        
-        $query .= " ORDER BY c.fecha ASC, c.hora ASC";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':fecha_inicio', $fecha_inicio);
-        $stmt->bindParam(':fecha_fin', $fecha_fin);
-        
-        if ($doc_veterinario) {
-            $stmt->bindParam(':doc_veterinario', $doc_veterinario);
-        }
-        
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getById($id_cita) {
-        $query = "SELECT c.*, m.nombre as mascota_nombre, u.nombre_completo as veterinario_nombre, p.nombre_completo as propietario_nombre, p.email
-                  FROM " . $this->table_name . " c
-                  JOIN mascotas m ON c.id_mascota = m.id_mascota
-                  JOIN usuarios u ON c.doc_veterinario = u.documento
-                  JOIN usuarios p ON m.doc_propietario = p.documento
-                  WHERE c.id_cita = :id_cita";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_cita', $id_cita);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    public function update($id_cita, $doc_veterinario, $fecha, $hora, $motivo, $id_tipo_cita = null, $duracion_minutos = null) {
-        // Calcular hora_fin si se proporciona duración
-        $hora_fin = null;
-        if ($duracion_minutos) {
-            $hora_fin = date('H:i:s', strtotime($hora . ' +' . $duracion_minutos . ' minutes'));
-        }
-
-        $query = "UPDATE " . $this->table_name . " 
-                  SET doc_veterinario = :doc_vet, fecha = :fecha, hora = :hora, motivo = :motivo";
-        
-        if ($id_tipo_cita) {
-            $query .= ", id_tipo_cita = :id_tipo_cita";
-        }
-        if ($duracion_minutos) {
-            $query .= ", duracion_minutos = :duracion_minutos, hora_fin = :hora_fin";
-        }
-        
-        $query .= " WHERE id_cita = :id_cita";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_cita', $id_cita);
-        $stmt->bindParam(':doc_vet', $doc_veterinario);
-        $stmt->bindParam(':fecha', $fecha);
-        $stmt->bindParam(':hora', $hora);
-        $stmt->bindParam(':motivo', $motivo);
-        if ($id_tipo_cita) {
-            $stmt->bindParam(':id_tipo_cita', $id_tipo_cita);
-        }
-        if ($duracion_minutos) {
-            $stmt->bindParam(':duracion_minutos', $duracion_minutos);
-            $stmt->bindParam(':hora_fin', $hora_fin);
-        }
-        return $stmt->execute();
-    }
-
-    public function getByMascota($id_mascota) {
-        $query = "SELECT c.*, u.nombre_completo as veterinario_nombre
-                  FROM " . $this->table_name . " c
-                  JOIN usuarios u ON c.doc_veterinario = u.documento
-                  WHERE c.id_mascota = :id_mascota
-                    AND c.estado != 'cancelada'
-                  ORDER BY c.fecha DESC, c.hora DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_mascota', $id_mascota);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getProximaByMascota($id_mascota) {
-        $query = "SELECT c.*, u.nombre_completo as veterinario_nombre
-                  FROM " . $this->table_name . " c
-                  JOIN usuarios u ON c.doc_veterinario = u.documento
-                  WHERE c.id_mascota = :id_mascota
-                    AND c.fecha >= CURDATE()
-                    AND c.estado IN ('pendiente', 'confirmada')
-                  ORDER BY c.fecha ASC, c.hora ASC
-                  LIMIT 1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_mascota', $id_mascota);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ?: null;
-    }
-
-    // Valores del ENUM de citas.estado (database/07, 09 y 12).
-    public const ESTADOS = ['pendiente', 'confirmada', 'en_curso', 'cancelada', 'completada', 'no_asistio', 'sin_cerrar', 'cerrada_sin_consulta'];
-
-    // Estados en los que la cita todavía no se ha resuelto: desde aquí se
-    // puede iniciar, cancelar, reprogramar o marcar como no asistida.
-    public const ESTADOS_ABIERTOS = ['pendiente', 'confirmada'];
-
-    // RN-409: atenciones iniciadas que todavía no se cierran. Desde aquí se
-    // retoma la atención, se registra la consulta o se cierra sin consulta.
-    public const ESTADOS_EN_ATENCION = ['en_curso', 'sin_cerrar'];
-
     /**
-     * RN-407 / HU-27 — Inicia la atención y sella la hora real de inicio.
-     * El WHERE exige que la cita siga abierta: si se canceló entre tanto, o se
-     * inicia dos veces desde dos pestañas, no se pisa el estado.
+     * Ejecuta el INSERT o el UPDATE de una reserva. Si otra reserva tomó la
+     * misma hora entre la validación y la escritura, el índice único
+     * uq_cita_veterinario_horario (D-2, sin id_clinica) la rechaza: se
+     * convierte en HorarioOcupado en vez de un 500.
      */
-    public function iniciarAtencion($id_cita, string $ahora): bool {
-        return $this->transicion($id_cita, self::ESTADOS_ABIERTOS, "estado = 'en_curso', hora_inicio_real = :ahora", [':ahora' => $ahora]);
-    }
-
-    /**
-     * RN-406 / HU-27 — Completa una cita en curso y sella la hora real de fin.
-     * RN-409: también una que quedó sin cerrar, para no perder su consulta.
-     */
-    public function completarAtencion($id_cita, string $ahora): bool {
-        return $this->transicion($id_cita, self::ESTADOS_EN_ATENCION, "estado = 'completada', hora_fin_real = :ahora", [':ahora' => $ahora]);
-    }
-
-    /** RN-408 / HU-29 — El paciente no llegó: la cita deja de ocupar la agenda. */
-    public function marcarNoAsistio($id_cita): bool {
-        return $this->transicion($id_cita, self::ESTADOS_ABIERTOS, "estado = 'no_asistio'", []);
-    }
-
-    /** RN-409 — Terminado el día, una atención que sigue en curso queda "sin cerrar". */
-    public function marcarSinCerrar($id_cita): bool {
-        return $this->transicion($id_cita, ['en_curso'], "estado = 'sin_cerrar'", []);
-    }
-
-    /**
-     * RN-410 — El veterinario cierra sin consulta una atención abierta, con su
-     * motivo. La cita no se reabre y deja libre su horario.
-     */
-    public function cerrarSinConsulta($id_cita, string $motivo, string $ahora): bool {
-        return $this->transicion(
-            $id_cita,
-            self::ESTADOS_EN_ATENCION,
-            "estado = 'cerrada_sin_consulta', motivo_cierre = :motivo, hora_fin_real = :ahora",
-            [':motivo' => $motivo, ':ahora' => $ahora]
-        );
-    }
-
-    /**
-     * RN-409 — Sella el aviso de "atención abierta". Solo escribe si el aviso
-     * no se había enviado: si la tarea programada y el calendario revisan a la
-     * vez, uno solo lo reclama y lo envía.
-     */
-    public function sellarAvisoAtencionAbierta($id_cita, string $ahora): bool {
-        $stmt = $this->conn->prepare(
-            "UPDATE " . $this->table_name . " SET aviso_atencion_abierta = :ahora
-             WHERE id_cita = :id_cita AND estado = 'en_curso' AND aviso_atencion_abierta IS NULL"
-        );
-        $stmt->execute([':ahora' => $ahora, ':id_cita' => (int) $id_cita]);
-        return $stmt->rowCount() === 1;
-    }
-
-    /** RN-409 — Atenciones en curso, con lo necesario para avisar al veterinario. */
-    public function getAtencionesEnCurso(): array {
-        $query = "SELECT c.id_cita, c.fecha, c.hora, c.hora_fin, c.duracion_minutos, c.estado,
-                         c.aviso_atencion_abierta, c.doc_veterinario, m.nombre AS mascota_nombre,
-                         v.nombre_completo AS veterinario_nombre, v.email AS veterinario_email
-                  FROM " . $this->table_name . " c
-                  LEFT JOIN mascotas m ON m.id_mascota = c.id_mascota
-                  LEFT JOIN usuarios v ON v.documento = c.doc_veterinario
-                  WHERE c.estado = 'en_curso'";
-        return $this->conn->query($query)->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Cambia el estado solo si la cita está en uno de los estados de origen.
-     * Devuelve false si no se tocó ninguna fila: la cita no existe o ya no
-     * estaba en un estado desde el que se permite ese cambio.
-     */
-    private function transicion($id_cita, array $desde, string $set, array $params): bool {
-        $marcadores = [];
-        foreach (array_values($desde) as $i => $estado) {
-            $marcadores[] = ':desde' . $i;
-            $params[':desde' . $i] = $estado;
+    private function ejecutarReserva(string $sql, array $parametros): int
+    {
+        try {
+            $consulta = $this->conn->prepare($sql);
+            $consulta->execute($parametros);
+            return $consulta->rowCount();
+        } catch (PDOException $e) {
+            if ($this->esReservaDuplicada($e)) {
+                throw new HorarioOcupado('Ese horario acaba de ocuparse. Elige otro de los horarios disponibles.');
+            }
+            throw $e;
         }
-        $params[':id_cita'] = (int) $id_cita;
-
-        $query = "UPDATE " . $this->table_name . " SET " . $set
-               . " WHERE id_cita = :id_cita AND estado IN (" . implode(', ', $marcadores) . ")";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute($params);
-        return $stmt->rowCount() === 1;
     }
 
-    /**
-     * Un estado fuera del ENUM se rechaza aquí: MySQL sin modo estricto no da
-     * error, guarda una cadena vacía, y así fue como "en_curso" dejaba citas
-     * sin estado y sin forma de completarlas.
-     */
-    public function cambiarEstado($id_cita, $estado) {
-        if (!in_array($estado, self::ESTADOS, true)) {
-            error_log('Estado de cita no válido: ' . var_export($estado, true));
-            return false;
+    private function esReservaDuplicada(PDOException $e): bool
+    {
+        $codigoMysql = (int) ($e->errorInfo[1] ?? 0);
+        if ($codigoMysql === 1062) {
+            return true;
         }
+        return str_contains($e->getMessage(), 'UNIQUE constraint failed: citas.');
+    }
 
-        $query = "UPDATE " . $this->table_name . " SET estado = :estado WHERE id_cita = :id_cita";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_cita', $id_cita);
-        $stmt->bindParam(':estado', $estado);
-        return $stmt->execute();
+    private function exigirVeterinarioDeLaClinica(int $idVeterinario): void
+    {
+        if (!$this->esVeterinarioDeLaClinica($idVeterinario)) {
+            throw new InvalidArgumentException('El veterinario seleccionado no existe o no está activo en la clínica.');
+        }
+    }
+
+    /** RE-4.13.6: duración y margen del tipo de cita de la clínica; sin tipo, 30 minutos y sin margen. */
+    private function tiemposDelTipo($idTipoCita): array
+    {
+        if (empty($idTipoCita)) {
+            return [self::DURACION_POR_DEFECTO, 0];
+        }
+        $tipo = (new CatalogoClinica($this->conn))->tipoCita((int) $idTipoCita);
+        if ($tipo === null) {
+            throw new InvalidArgumentException('Elige el tipo de cita de la lista.');
+        }
+        return [(int) $tipo['duracion_minutos'], (int) $tipo['margen_minutos']];
+    }
+
+    private function marcas(array $valores): string
+    {
+        return implode(', ', array_fill(0, count($valores), '?'));
+    }
+
+    /** "8:30" o "08:30:00" → "08:30:00"; otra cosa no es una hora válida. */
+    public static function normalizarHora(string $hora): string
+    {
+        $hora = trim($hora);
+        $formato = strlen($hora) > 5 ? 'H:i:s' : 'H:i';
+        $leida = DateTimeImmutable::createFromFormat('!' . $formato, $hora);
+        if ($leida === false || $leida->format($formato) !== $hora) {
+            throw new InvalidArgumentException('La hora de la cita no es válida.');
+        }
+        return $leida->format('H:i:s');
+    }
+
+    private static function horaFin(string $hora, int $duracion): string
+    {
+        $fin = self::minutos($hora) + $duracion;
+        return sprintf('%02d:%02d:00', intdiv($fin, 60) % 24, $fin % 60);
+    }
+
+    private static function minutos(string $hora): int
+    {
+        [$horas, $minutos] = array_map('intval', explode(':', $hora));
+        return $horas * 60 + $minutos;
     }
 }

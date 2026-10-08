@@ -18,7 +18,6 @@ const STATE_COLORS = {
   completada: "#10B981",
   no_asistio: "#94A3B8",
   sin_cerrar: "#E11D48",
-  cerrada_sin_consulta: "#64748B",
   cancelada: "#EF4444",
 };
 const STATE_LABELS = {
@@ -28,7 +27,6 @@ const STATE_LABELS = {
   completada: "Completada",
   no_asistio: "No asistió",
   sin_cerrar: "Sin cerrar",
-  cerrada_sin_consulta: "Cerrada sin consulta",
   cancelada: "Cancelada",
 };
 
@@ -310,7 +308,7 @@ function renderRanking(data) {
 function renderMisCitas(data) {
   const canvas = document.getElementById("chart-mis-citas");
   if (!canvas) return;
-  const estados = ["pendiente", "confirmada", "en_curso", "sin_cerrar", "completada", "no_asistio", "cerrada_sin_consulta", "cancelada"];
+  const estados = ["pendiente", "confirmada", "en_curso", "sin_cerrar", "completada", "no_asistio", "cancelada"];
   const counts = estados.map((st) => {
     const f = data.find((d) => d.estado === st);
     return f ? parseInt(f.total) : 0;
@@ -388,7 +386,7 @@ function renderMisEspecies(data) {
 function renderEstadoHoy(data) {
   const canvas = document.getElementById("chart-estado-hoy");
   if (!canvas) return;
-  const estados = ["pendiente", "confirmada", "en_curso", "sin_cerrar", "completada", "no_asistio", "cerrada_sin_consulta", "cancelada"];
+  const estados = ["pendiente", "confirmada", "en_curso", "sin_cerrar", "completada", "no_asistio", "cancelada"];
   const counts = estados.map((st) => {
     const f = data.find((d) => d.estado === st);
     return f ? parseInt(f.total) : 0;
@@ -477,7 +475,7 @@ function updateCountdown(citas) {
   if (!cdTime) return;
   const now = new Date();
   const proxima = citas.find((c) => {
-    if (["cancelada", "completada", "no_asistio", "cerrada_sin_consulta"].includes(c.estado)) return false;
+    if (["cancelada", "completada", "no_asistio"].includes(c.estado)) return false;
     const [h, m] = c.hora.split(":").map(Number);
     const dt = new Date();
     dt.setHours(h, m, 0, 0);
@@ -538,7 +536,6 @@ async function loadAgenda() {
       completada: { bg: "#DCFCE7", color: "#166534", dot: "#10B981" },
       no_asistio: { bg: "#F1F5F9", color: "#475569", dot: "#94A3B8" },
       sin_cerrar: { bg: "#FFE4E6", color: "#9F1239", dot: "#E11D48" },
-      cerrada_sin_consulta: { bg: "#E2E8F0", color: "#334155", dot: "#64748B" },
       cancelada:  { bg: "#FEE2E2", color: "#991B1B", dot: "#EF4444" },
     };
 

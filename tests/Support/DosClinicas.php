@@ -56,7 +56,7 @@ final class DosClinicas
         $db->exec("INSERT INTO roles (id_rol, nombre_rol) VALUES (1,'administrador'), (2,'veterinario'), (4,'propietario'), (5,'super-administrador')");
         $db->exec("CREATE TABLE clinicas (
             id_clinica INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, nit TEXT NOT NULL UNIQUE,
-            id_plan INTEGER, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
+            direccion TEXT, telefono TEXT, id_plan INTEGER, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
         $db->exec("CREATE TABLE usuarios (
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, documento TEXT UNIQUE, tipo_documento TEXT,
             nombre_completo TEXT, telefono TEXT, email TEXT UNIQUE, password TEXT, google_uid TEXT UNIQUE,
@@ -161,10 +161,19 @@ final class DosClinicas
     public static function crearHistoriaSqlite(PDO $db): void
     {
         $db->exec('PRAGMA foreign_keys = ON');
+        // C5: misma protección contra la doble reserva que 01_schema.sql (D-2):
+        // ocupa_horario es NULL si la cita está libre o es sobrecupo, y el
+        // índice único no lleva id_clinica.
         $db->exec("CREATE TABLE citas (id_cita INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER NOT NULL REFERENCES clinicas,
             id_mascota INTEGER NOT NULL REFERENCES mascotas, id_veterinario INTEGER NOT NULL REFERENCES usuarios,
-            fecha TEXT NOT NULL, hora TEXT NOT NULL, motivo TEXT NOT NULL, estado TEXT NOT NULL DEFAULT 'pendiente',
-            hora_inicio_real TEXT, hora_fin_real TEXT)");
+            id_tipo_cita INTEGER, fecha TEXT NOT NULL, hora TEXT NOT NULL, hora_fin TEXT, motivo TEXT NOT NULL,
+            duracion_minutos INTEGER, margen_minutos INTEGER NOT NULL DEFAULT 0, prioridad TEXT NOT NULL DEFAULT 'verde',
+            prioridad_calculada TEXT, motivo_ajuste_prioridad TEXT, es_sobrecupo INTEGER NOT NULL DEFAULT 0,
+            orden_sobrecupo INTEGER, sintomas_texto TEXT, inicio_sintomas TEXT, estado TEXT NOT NULL DEFAULT 'pendiente',
+            ocupa_horario INTEGER GENERATED ALWAYS AS (CASE WHEN estado IN ('cancelada', 'no_asistio') OR es_sobrecupo = 1 THEN NULL ELSE 1 END) STORED,
+            hora_llegada TEXT, hora_inicio_real TEXT, hora_fin_real TEXT, aviso_atencion_abierta TEXT, observaciones TEXT,
+            fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)");
+        $db->exec('CREATE UNIQUE INDEX uq_cita_veterinario_horario ON citas (id_veterinario, fecha, hora, ocupa_horario)');
         $db->exec('CREATE TABLE consultas (id_consulta INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER NOT NULL REFERENCES clinicas,
             id_cita INTEGER UNIQUE REFERENCES citas, id_mascota INTEGER NOT NULL REFERENCES mascotas,
             id_veterinario INTEGER NOT NULL REFERENCES usuarios, fecha_hora TEXT NOT NULL, motivo_consulta TEXT NOT NULL,
@@ -198,6 +207,26 @@ final class DosClinicas
         $db->prepare("INSERT INTO propietario_clinica (id_propietario, id_clinica, estado, autoriza_historia_compartida) VALUES (6, 2, 'activo', ?)")
             ->execute([$autoriza]);
         $db->exec("INSERT INTO mascota_clinica (id_mascota, id_clinica, estado) VALUES (1, 2, 'activo')");
+    }
+
+    /**
+     * C5: un tipo de cita por clínica (duración y margen distintos) y el
+     * horario de lunes a domingo, 08:00–12:00 y 14:00–18:00. SQL portable:
+     * también corre sobre el esquema real.
+     */
+    public static function poblarAgenda(PDO $db): void
+    {
+        $db->exec("INSERT INTO tipos_cita (id_tipo_cita, id_clinica, nombre_tipo, duracion_minutos, margen_minutos, pausable, activo) VALUES
+            (1, 1, 'Consulta Norte', 30, 10, 1, 1),
+            (2, 2, 'Control Sur', 20, 5, 1, 1)");
+        $horario = $db->prepare("INSERT INTO horarios_clinica (id_clinica, dia_semana, activo, bloque_morning_activo, bloque_afternoon_activo,
+            bloque_morning_inicio, bloque_morning_fin, bloque_afternoon_inicio, bloque_afternoon_fin)
+            VALUES (?, ?, 1, 1, 1, '08:00:00', '12:00:00', '14:00:00', '18:00:00')");
+        foreach ([self::NORTE, self::SUR] as $clinica) {
+            for ($dia = 1; $dia <= 7; $dia++) {
+                $horario->execute([$clinica, $dia]);
+            }
+        }
     }
 
     /** Datos portables (SQLite y MySQL). Los roles los trae el esquema o la semilla. */

@@ -21,7 +21,11 @@ final class RespuestaJson
         self::enviar(['success' => false, 'message' => $mensaje] + $extra);
     }
 
-    /** @param callable(): array $accion devuelve los datos de la respuesta exitosa */
+    /**
+     * @param callable(): array $accion devuelve los datos de la respuesta. Si
+     *        trae 'success' => false (un aviso que pide confirmar, no un
+     *        error), se respeta.
+     */
     public static function modificacion(callable $accion, string $origen): void
     {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
@@ -42,6 +46,6 @@ final class RespuestaJson
             return;
         }
 
-        self::enviar(['success' => true] + $respuesta);
+        self::enviar($respuesta + ['success' => true]);
     }
 }

@@ -106,6 +106,13 @@ class AutorizacionRolTest extends TestCase
         $this->assertFalse(defined('Security::ROL_RECEPCIONISTA'));
     }
 
+    /** D-3 / RN-410 derogada: «cerrar sin consulta» no queda ni en el enrutador ni en la matriz (C5). */
+    public function testYaNoExisteCerrarSinConsulta()
+    {
+        $this->assertNotContains('cerrar_sin_consulta_ajax', self::accionesDelEnrutador());
+        $this->assertArrayNotHasKey('cerrar_sin_consulta_ajax', self::matriz());
+    }
+
     public function testPropietarioNoAccedeAAdministracion()
     {
         foreach (['admin_usuarios', 'registrar_usuario_ajax', 'cambiar_estado_usuario_ajax', 'get_auditoria_ajax', 'guardar_horarios_clinica_ajax'] as $accion) {
@@ -138,7 +145,7 @@ class AutorizacionRolTest extends TestCase
     /** RN-407: atender una cita es del veterinario. */
     public function testSoloElVeterinarioAtiendeLasCitas()
     {
-        foreach (['iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax', 'cerrar_sin_consulta_ajax', 'vet_atencion'] as $accion) {
+        foreach (['iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax', 'vet_atencion'] as $accion) {
             $this->assertTrue($this->permite($accion, self::VETERINARIO), "$accion deberia permitir al veterinario");
             foreach ([self::ADMIN, self::PROPIETARIO, self::SUPER_ADMIN] as $rol) {
                 $this->assertFalse($this->permite($accion, $rol), "$accion no deberia permitir al rol $rol");

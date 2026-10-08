@@ -230,7 +230,7 @@ final class ConsultaHistorialTest extends TestCase
         DosClinicas::vincularLunaASur($this->db);
         $citaNorte = $this->crearCita(DosClinicas::NORTE, 1, self::VET_NORTE_ASIGNADO, 'en_curso');
         $citaSur = $this->crearCita(DosClinicas::SUR, 1, DosClinicas::VET_SUR, 'en_curso');
-        $citaPendiente = $this->crearCita(DosClinicas::NORTE, 1, self::VET_NORTE_ASIGNADO, 'pendiente');
+        $citaPendiente = $this->crearCita(DosClinicas::NORTE, 1, self::VET_NORTE_ASIGNADO, 'pendiente', '10:00:00');
 
         $this->comoVeterinario(DosClinicas::NORTE, self::OTRA_VET_NORTE);
         $this->assertRechazo(fn () => $this->registrar(1, ['id_cita' => $citaNorte]), 'veterinario asignado');
@@ -347,10 +347,10 @@ final class ConsultaHistorialTest extends TestCase
         $this->db->prepare("INSERT INTO mascota_clinica (id_mascota, id_clinica, estado) VALUES (?, ?, 'activo')")->execute([$id, $clinica]);
     }
 
-    private function crearCita(int $clinica, int $mascota, int $veterinario, string $estado): int
+    private function crearCita(int $clinica, int $mascota, int $veterinario, string $estado, string $hora = '09:00:00'): int
     {
         $this->db->prepare("INSERT INTO citas (id_clinica, id_mascota, id_veterinario, fecha, hora, motivo, estado)
-            VALUES (?, ?, ?, '2026-10-07', '09:00:00', 'Control', ?)")->execute([$clinica, $mascota, $veterinario, $estado]);
+            VALUES (?, ?, ?, '2026-10-07', ?, 'Control', ?)")->execute([$clinica, $mascota, $veterinario, $hora, $estado]);
         return (int) $this->db->lastInsertId();
     }
 

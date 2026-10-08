@@ -4,10 +4,15 @@
 // Los estilos se cargan en el <head> del layout (calendario.css): enlazarlos
 // aquí, en medio del body, pintaba la página sin estilos y luego con estilos.
 // FullCalendar v6 inyecta los suyos desde el JS.
+//
+// C5: el rol y la persona del contexto activo van en data-* (sin JS en
+// línea); calendario.js los lee de .agenda.
+$rolAgenda = (int) Contexto::rolActivo();
+$usuarioAgenda = (int) Contexto::idUsuario();
 ?>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
-<div class="agenda">
+<div class="agenda" data-rol="<?= $rolAgenda ?>" data-usuario="<?= $usuarioAgenda ?>">
     <div class="agenda-toolbar">
         <div class="agenda-toolbar__nav">
             <button type="button" class="cal-icon-btn" data-nav="prev" aria-label="Periodo anterior"><i class="fas fa-chevron-left"></i></button>
@@ -50,7 +55,6 @@
                 <span class="legend-estado" data-estado="cancelada">Cancelada</span>
                 <span class="legend-estado" data-estado="no_asistio">No asistió</span>
                 <span class="legend-estado" data-estado="sin_cerrar">Sin cerrar</span>
-                <span class="legend-estado" data-estado="cerrada_sin_consulta">Cerrada sin consulta</span>
             </footer>
         </section>
 
@@ -191,11 +195,7 @@
     </div>
 </div>
 
-<script>
-  const USER_ROL = <?= (int)($_SESSION['usuario_id_rol'] ?? 0) ?>;
-  const USER_DOC = <?= json_encode($_SESSION['usuario_doc'] ?? '', JSON_HEX_TAG | JSON_HEX_AMP) ?>;
-</script>
-<script src="js/calendario.js?v=7"></script>
+<script src="js/calendario.js?v=8"></script>
 
 <!-- MODAL NUEVA CONSULTA (necesario para Iniciar Atención desde el calendario) -->
 <?php include __DIR__ . "/modal_consulta.php"; ?>

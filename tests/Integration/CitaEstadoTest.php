@@ -2,183 +2,190 @@
 
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/../Support/DosClinicas.php';
 require_once __DIR__ . '/../../models/Cita.php';
+require_once __DIR__ . '/../../helpers/VigilanteAtenciones.php';
+require_once __DIR__ . '/../../controllers/CitaController.php';
 
 /**
- * Estados de una cita (RN-406, RN-407, RN-408, RN-409, RN-410).
+ * Módulo 4 — Estados de la cita en el modelo v2 (C5).
  *
- * Cada transición solo ocurre desde los estados que la permiten: iniciar
- * exige una cita abierta, completar exige una atención iniciada, "no asistió"
- * solo cierra citas que no se empezaron a atender y "cerrada sin consulta"
- * solo cierra atenciones iniciadas. Así una cita no queda en un estado del que
- * no se pueda salir, ni un cambio pisa a otro.
+ * RN-405 a RN-409 con el fixture de dos clínicas: cada transición solo
+ * parte de sus estados de origen y solo toca la cita de su clínica; la
+ * vigilancia de RN-409 avisa una sola vez, en la clínica de la cita y al
+ * veterinario por id_usuario. «Cerrar sin consulta» ya no existe (D-3,
+ * RN-410 derogada).
  */
-class CitaEstadoTest extends TestCase
+final class CitaEstadoTest extends TestCase
 {
-    private const AHORA = '2026-09-10 10:17:00';
+    private const FECHA = '2030-01-07';
 
     private PDO $db;
-    private Cita $modelo;
+    private Cita $citas;
+    private int $id;
 
     protected function setUp(): void
     {
-        $this->db = new PDO('sqlite::memory:');
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->db->exec("CREATE TABLE citas (
-            id_cita INTEGER PRIMARY KEY,
-            doc_veterinario TEXT DEFAULT 'V1',
-            fecha TEXT DEFAULT '2026-09-10',
-            hora TEXT DEFAULT '10:15:00',
-            hora_fin TEXT DEFAULT '10:45:00',
-            duracion_minutos INTEGER DEFAULT 30,
-            estado TEXT DEFAULT 'pendiente',
-            hora_inicio_real TEXT,
-            hora_fin_real TEXT,
-            aviso_atencion_abierta TEXT,
-            motivo_cierre TEXT
-        )");
-        $this->db->exec("INSERT INTO citas (id_cita) VALUES (1)");
-
-        $this->modelo = new Cita($this->db);
+        $this->db = DosClinicas::sqlite();
+        DosClinicas::crearMascotasSqlite($this->db);
+        DosClinicas::crearCatalogosSqlite($this->db);
+        DosClinicas::crearHistoriaSqlite($this->db);
+        DosClinicas::poblarAgenda($this->db);
+        $this->citas = new Cita($this->db);
+        $this->comoVeterinario(DosClinicas::NORTE, DosClinicas::VET_NORTE);
+        $this->id = $this->reservar('09:00');
     }
 
-    private function campo(string $columna): ?string
+    protected function tearDown(): void
     {
-        $valor = $this->db->query("SELECT $columna FROM citas WHERE id_cita = 1")->fetchColumn();
-        return $valor === null ? null : (string) $valor;
+        $_SESSION = [];
+    }
+
+    // ── RN-407, RE-4.3.4, RE-4.5.1 ──────────────────────────────────────
+
+    public function testIniciarGuardaEnCursoYSellaLaHoraRealUnaSolaVez(): void
+    {
+        $this->assertTrue($this->citas->iniciarAtencion($this->cita(), self::FECHA . ' 08:50:00'));
+        $this->assertFalse($this->citas->iniciarAtencion($this->cita(), self::FECHA . ' 09:10:00'), 'Iniciar dos veces no pisa el sello');
+
+        $this->assertSame('en_curso', $this->campo('estado'));
+        $this->assertSame(self::FECHA . ' 08:50:00', $this->campo('hora_inicio_real'));
+    }
+
+    public function testUnaCitaCerradaNoSeIniciaNiSeCancela(): void
+    {
+        foreach (['cancelada', 'completada', 'no_asistio', 'sin_cerrar', 'en_curso'] as $estado) {
+            $this->ponerEstado($estado);
+            $this->assertFalse($this->citas->iniciarAtencion($this->cita(), self::FECHA . ' 09:00:00'), "No debe iniciar una cita $estado");
+            $this->assertFalse($this->citas->cancelar($this->cita()), "No debe cancelar una cita $estado");
+            $this->assertSame($estado, $this->campo('estado'));
+        }
+    }
+
+    // ── RN-406, RE-4.3.1 ────────────────────────────────────────────────
+
+    public function testSoloSeCompletaUnaAtencionEnCursoOSinCerrar(): void
+    {
+        $this->assertFalse($this->citas->completarAtencion($this->cita(), self::FECHA . ' 09:30:00'));
+
+        $this->ponerEstado('sin_cerrar');
+        $this->assertTrue($this->citas->completarAtencion($this->cita(), self::FECHA . ' 09:30:00'));
+        $this->assertSame('completada', $this->campo('estado'));
+        $this->assertSame(self::FECHA . ' 09:30:00', $this->campo('hora_fin_real'));
+    }
+
+    // ── RN-408, RE-4.7.1, RE-4.7.2 ──────────────────────────────────────
+
+    public function testNoAsistioSoloDesdeUnaCitaAbiertaYLiberaElHorario(): void
+    {
+        $this->assertTrue($this->citas->marcarNoAsistio($this->cita()));
+        $this->assertFalse($this->citas->marcarNoAsistio($this->cita()));
+
+        $otra = $this->reservar('09:00');
+
+        $this->assertSame('confirmada', $this->db->query("SELECT estado FROM citas WHERE id_cita = $otra")->fetchColumn());
+    }
+
+    public function testSoloSeConfirmaUnaCitaPendiente(): void
+    {
+        $this->assertFalse($this->citas->confirmar($this->cita()), 'Ya estaba confirmada');
+
+        $this->ponerEstado('pendiente');
+        $this->assertTrue($this->citas->confirmar($this->cita()));
+        $this->assertSame('confirmada', $this->campo('estado'));
+    }
+
+    // ── RN-409, RE-4.3.6, RE-4.3.7 ──────────────────────────────────────
+
+    public function testElAvisoDeAtencionAbiertaSaleUnaSolaVezEnLaClinicaDeLaCita(): void
+    {
+        DosClinicas::vincularLunaASur($this->db);
+        $this->ponerEstado('en_curso');
+        $this->comoVeterinario(DosClinicas::SUR, DosClinicas::VET_SUR);
+        $deSur = $this->reservar('09:30', DosClinicas::VET_SUR, 2);
+        $this->db->exec("UPDATE citas SET estado = 'en_curso' WHERE id_cita = $deSur");
+
+        $correos = [];
+        $vigilante = new VigilanteAtenciones($this->db, function (array $cita) use (&$correos): void {
+            $correos[] = (int) $cita['id_cita'];
+        });
+
+        $this->assertSame(0, $vigilante->revisar($this->hora('09:39'))['avisadas'], 'Antes de los 10 minutos de gracia no se avisa');
+        // Norte termina 9:30 (aviso 9:40); Sur, 9:50 (aviso 10:00).
+        $this->assertSame(1, $vigilante->revisar($this->hora('09:41'))['avisadas']);
+        $this->assertSame(1, $vigilante->revisar($this->hora('10:01'))['avisadas']);
+        $this->assertSame(0, $vigilante->revisar($this->hora('10:30'))['avisadas'], 'El aviso sale una sola vez');
+
+        $avisos = $this->db->query("SELECT id_clinica, id_usuario, id_cita FROM notificaciones_internas WHERE tipo = 'ATENCION_ABIERTA' ORDER BY id_cita")->fetchAll(PDO::FETCH_NUM);
+        $this->assertSame([[1, 2, $this->id], [2, 4, $deSur]], array_map(fn ($fila) => array_map('intval', $fila), $avisos));
+        $this->assertSame([$this->id, $deSur], $correos);
+        $this->assertNotNull($this->campo('aviso_atencion_abierta'));
+    }
+
+    public function testAlTerminarElDiaLaAtencionQuedaSinCerrarYSeAvisa(): void
+    {
+        $this->ponerEstado('en_curso');
+        $vigilante = new VigilanteAtenciones($this->db, function (): void {
+        });
+
+        $resultado = $vigilante->revisar(new DateTimeImmutable('2030-01-08 07:00', new DateTimeZone(ReglaAtencion::ZONA)));
+
+        $this->assertSame(1, $resultado['sin_cerrar']);
+        $this->assertSame('sin_cerrar', $this->campo('estado'));
+        $mensaje = $this->db->query("SELECT mensaje FROM notificaciones_internas WHERE tipo = 'ATENCION_SIN_CERRAR'")->fetchColumn();
+        $this->assertStringContainsString('Registra su consulta', $mensaje);
+        $this->assertStringNotContainsString('sin consulta', $mensaje);
+        $this->assertTrue($this->citas->completarAtencion($this->cita(), '2030-01-08 07:30:00'), 'Una atención sin cerrar se completa con su consulta');
+    }
+
+    // ── D-3, RN-410 derogada ────────────────────────────────────────────
+
+    public function testYaNoExisteCerrarSinConsulta(): void
+    {
+        $this->assertFalse(method_exists(Cita::class, 'cerrarSinConsulta'));
+        $this->assertFalse(method_exists(CitaController::class, 'cerrarSinConsultaAjax'));
+        $this->assertNotContains('cerrada_sin_consulta', Cita::ESTADOS_ABIERTOS);
+        $this->assertNotContains('cerrada_sin_consulta', Cita::ESTADOS_EN_ATENCION);
+    }
+
+    // ── Apoyo ───────────────────────────────────────────────────────────
+
+    private function reservar(string $hora, int $veterinario = DosClinicas::VET_NORTE, ?int $tipo = 1): int
+    {
+        return $this->citas->registrar([
+            'id_mascota' => 1,
+            'id_veterinario' => $veterinario,
+            'fecha' => self::FECHA,
+            'hora' => $hora,
+            'motivo' => 'Control',
+            'id_tipo_cita' => $tipo,
+        ]);
+    }
+
+    private function comoVeterinario(int $clinica, int $idUsuario): void
+    {
+        $_SESSION = ['id_usuario' => $idUsuario];
+        Contexto::activar(Contexto::deClinica($clinica, 'Clínica', Roles::VETERINARIO), 1);
+    }
+
+    /** Hora de la clínica: ReglaAtencion compara en America/Bogota. */
+    private function hora(string $hora): DateTimeImmutable
+    {
+        return new DateTimeImmutable(self::FECHA . ' ' . $hora, new DateTimeZone(ReglaAtencion::ZONA));
+    }
+
+    private function cita(): array
+    {
+        return ['id_cita' => $this->id, 'id_clinica' => DosClinicas::NORTE];
     }
 
     private function ponerEstado(string $estado): void
     {
-        $this->db->exec("UPDATE citas SET estado = '$estado' WHERE id_cita = 1");
+        $this->db->prepare('UPDATE citas SET estado = ? WHERE id_cita = ?')->execute([$estado, $this->id]);
     }
 
-    public function testIniciarAtencionGuardaEnCursoYSellaLaHoraReal(): void
+    private function campo(string $columna)
     {
-        $this->assertTrue($this->modelo->iniciarAtencion(1, self::AHORA));
-        $this->assertSame('en_curso', $this->campo('estado'));
-        $this->assertSame(self::AHORA, $this->campo('hora_inicio_real'));
-    }
-
-    public function testUnEstadoFueraDelEnumSeRechazaSinTocarLaCita(): void
-    {
-        $this->assertFalse($this->modelo->cambiarEstado(1, 'encurso'));
-        $this->assertSame('pendiente', $this->campo('estado'));
-    }
-
-    public function testElFlujoCompletoDeAtencion(): void
-    {
-        $this->assertTrue($this->modelo->iniciarAtencion(1, self::AHORA));
-        $this->assertTrue($this->modelo->completarAtencion(1, '2026-09-10 10:52:00'));
-
-        $this->assertSame('completada', $this->campo('estado'));
-        $this->assertSame('2026-09-10 10:52:00', $this->campo('hora_fin_real'));
-    }
-
-    /** RN-406: no se completa una cita que nadie empezó a atender. */
-    public function testNoSeCompletaUnaCitaQueNoEstaEnCurso(): void
-    {
-        $this->assertFalse($this->modelo->completarAtencion(1, self::AHORA));
-        $this->assertSame('pendiente', $this->campo('estado'));
-        $this->assertNull($this->campo('hora_fin_real'));
-    }
-
-    public function testUnaCitaCerradaNoSePuedeIniciar(): void
-    {
-        foreach (['cancelada', 'completada', 'no_asistio', 'sin_cerrar', 'cerrada_sin_consulta'] as $estado) {
-            $this->ponerEstado($estado);
-            $this->assertFalse($this->modelo->iniciarAtencion(1, self::AHORA), "No debería iniciarse una cita $estado");
-            $this->assertSame($estado, $this->campo('estado'));
-        }
-    }
-
-    /** Iniciar dos veces (dos pestañas) no cambia la hora real de inicio. */
-    public function testIniciarDosVecesConservaElSelloOriginal(): void
-    {
-        $this->assertTrue($this->modelo->iniciarAtencion(1, self::AHORA));
-        $this->assertFalse($this->modelo->iniciarAtencion(1, '2026-09-10 11:40:00'));
-        $this->assertSame(self::AHORA, $this->campo('hora_inicio_real'));
-    }
-
-    /** RN-408: "no asistió" solo cierra citas que no se empezaron a atender. */
-    public function testNoAsistioSoloDesdeUnaCitaAbierta(): void
-    {
-        $this->assertTrue($this->modelo->marcarNoAsistio(1));
-        $this->assertSame('no_asistio', $this->campo('estado'));
-
-        $this->ponerEstado('en_curso');
-        $this->assertFalse($this->modelo->marcarNoAsistio(1));
-        $this->assertSame('en_curso', $this->campo('estado'));
-    }
-
-    /** RN-408 / RE-29.2: una cita no asistida deja libre su espacio. */
-    public function testUnaCitaNoAsistidaLiberaElEspacio(): void
-    {
-        $this->assertFalse($this->modelo->checkDisponibilidad('V1', '2026-09-10', '10:15', 30));
-
-        $this->modelo->marcarNoAsistio(1);
-
-        $this->assertTrue($this->modelo->checkDisponibilidad('V1', '2026-09-10', '10:15', 30));
-    }
-
-    public function testUnaCitaCanceladaTambienLiberaElEspacio(): void
-    {
-        $this->ponerEstado('cancelada');
-        $this->assertTrue($this->modelo->checkDisponibilidad('V1', '2026-09-10', '10:15', 30));
-    }
-
-    /** RN-409: solo una atención en curso pasa a "sin cerrar". */
-    public function testSoloUnaAtencionEnCursoQuedaSinCerrar(): void
-    {
-        $this->assertFalse($this->modelo->marcarSinCerrar(1));
-        $this->assertSame('pendiente', $this->campo('estado'));
-
-        $this->ponerEstado('en_curso');
-        $this->assertTrue($this->modelo->marcarSinCerrar(1));
-        $this->assertSame('sin_cerrar', $this->campo('estado'));
-    }
-
-    /** RN-406 / RN-409: una atención que quedó sin cerrar todavía se completa con su consulta. */
-    public function testUnaAtencionSinCerrarTodaviaSeCompleta(): void
-    {
-        $this->ponerEstado('sin_cerrar');
-        $this->assertTrue($this->modelo->completarAtencion(1, '2026-09-11 08:00:00'));
-        $this->assertSame('completada', $this->campo('estado'));
-    }
-
-    /** RN-410: se cierra sin consulta una atención iniciada, y queda su motivo. */
-    public function testCerrarSinConsultaGuardaElMotivo(): void
-    {
-        foreach (['en_curso', 'sin_cerrar'] as $estado) {
-            $this->ponerEstado($estado);
-            $this->assertTrue($this->modelo->cerrarSinConsulta(1, 'Se inició por error', self::AHORA), "Debería cerrarse desde $estado");
-            $this->assertSame('cerrada_sin_consulta', $this->campo('estado'));
-            $this->assertSame('Se inició por error', $this->campo('motivo_cierre'));
-        }
-    }
-
-    public function testNoSeCierraSinConsultaUnaCitaQueNoSeEmpezoAAtender(): void
-    {
-        foreach (['pendiente', 'confirmada', 'completada', 'cancelada', 'no_asistio'] as $estado) {
-            $this->ponerEstado($estado);
-            $this->assertFalse($this->modelo->cerrarSinConsulta(1, 'Motivo cualquiera', self::AHORA), "No debería cerrarse desde $estado");
-            $this->assertSame($estado, $this->campo('estado'));
-        }
-    }
-
-    /** RN-410: una atención cerrada sin consulta libera su horario. */
-    public function testUnaAtencionCerradaSinConsultaLiberaElEspacio(): void
-    {
-        $this->ponerEstado('cerrada_sin_consulta');
-        $this->assertTrue($this->modelo->checkDisponibilidad('V1', '2026-09-10', '10:15', 30));
-    }
-
-    /** RN-409: el aviso de atención abierta se sella una sola vez. */
-    public function testElAvisoDeAtencionAbiertaSeSellaUnaVez(): void
-    {
-        $this->ponerEstado('en_curso');
-        $this->assertTrue($this->modelo->sellarAvisoAtencionAbierta(1, self::AHORA));
-        $this->assertFalse($this->modelo->sellarAvisoAtencionAbierta(1, '2026-09-10 11:00:00'));
-        $this->assertSame(self::AHORA, $this->campo('aviso_atencion_abierta'));
+        return $this->db->query("SELECT $columna FROM citas WHERE id_cita = {$this->id}")->fetchColumn();
     }
 }

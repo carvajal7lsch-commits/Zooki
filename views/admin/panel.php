@@ -18,7 +18,7 @@ $variacion = $panel['variacion_consultas'];
 // Grupo de cada estado para los filtros de la lista de citas.
 $grupoEstado = [
     'pendiente' => 'por_atender', 'confirmada' => 'por_atender', 'en_curso' => 'por_atender', 'sin_cerrar' => 'por_atender',
-    'completada' => 'cerradas', 'cerrada_sin_consulta' => 'cerradas',
+    'completada' => 'cerradas',
     'cancelada' => 'no_atendidas', 'no_asistio' => 'no_atendidas',
 ];
 

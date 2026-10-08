@@ -18,39 +18,6 @@ require_once __DIR__ . '/ModeloClinica.php';
 abstract class ModeloHistoria extends ModeloClinica
 {
     /**
-     * RN-113: la mascota está vinculada a la clínica activa. Devuelve su
-     * estado y su propietario.
-     */
-    protected function exigirMascotaVinculada(int $idMascota): array
-    {
-        $sql = "SELECT m.id_mascota, m.estado, m.id_propietario
-            FROM mascotas m
-            JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota
-            WHERE m.id_mascota = ? AND mc.id_clinica = ? AND mc.estado = 'activo'";
-        $consulta = $this->conn->prepare($sql);
-        $consulta->execute([$idMascota, $this->clinica()]);
-        $mascota = $consulta->fetch(PDO::FETCH_ASSOC);
-
-        if ($mascota === false) {
-            $this->denegarAcceso('mascotas', $idMascota, 'Historia clínica de una mascota no vinculada a la clínica (RN-113)');
-        }
-        return $mascota;
-    }
-
-    /**
-     * RN-207: un acto clínico nuevo solo sobre una mascota vinculada y activa.
-     * Una mascota dada de baja conserva su historia, pero no admite registros.
-     */
-    protected function exigirMascotaActiva(int $idMascota): array
-    {
-        $mascota = $this->exigirMascotaVinculada($idMascota);
-        if ((int) $mascota['estado'] !== 1) {
-            throw new InvalidArgumentException('La mascota está inactiva: conserva su historia, pero no admite registros nuevos.');
-        }
-        return $mascota;
-    }
-
-    /**
      * RN-113: condición SQL para que la consulta con alias $alias sea visible
      * en la clínica activa. Devuelve la condición y sus parámetros.
      *

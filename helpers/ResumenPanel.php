@@ -162,7 +162,6 @@ final class ResumenPanel
         'cancelada' => 'Cancelada',
         'no_asistio' => 'No asistió',
         'sin_cerrar' => 'Sin cerrar',
-        'cerrada_sin_consulta' => 'Cerrada sin consulta',
     ];
 
     public static function etiquetaEstado(string $estado): string

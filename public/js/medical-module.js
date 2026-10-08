@@ -1628,7 +1628,7 @@ async function loadVets() {
         const select = document.getElementById('cita_veterinario');
         select.innerHTML = '<option value="">Seleccione un veterinario...</option>';
         res.forEach(v => {
-            select.innerHTML += `<option value="${v.documento}">${v.nombre_completo}</option>`;
+            select.innerHTML += `<option value="${escaparTexto(v.id_usuario)}">${escaparTexto(v.nombre_completo)}</option>`;
         });
         vetsLoaded = true;
     } catch (e) {
@@ -1644,7 +1644,7 @@ async function loadVetsForAppointment() {
     try {
         const res = await (await fetch('index.php?action=listar_veterinarios_ajax')).json();
         if (res && res.length > 0) {
-            select.innerHTML = res.map(v => `<option value="${v.documento}">${v.nombre_completo}</option>`).join('');
+            select.innerHTML = res.map(v => `<option value="${escaparTexto(v.id_usuario)}">${escaparTexto(v.nombre_completo)}</option>`).join('');
         } else {
             select.innerHTML = '<option value="">No hay veterinarios disponibles</option>';
         }

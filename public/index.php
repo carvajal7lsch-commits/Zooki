@@ -559,13 +559,6 @@ switch ($action) {
         $controller->marcarNoAsistioAjax();
         break;
 
-    // RN-410: el veterinario cierra sin consulta una atención abierta.
-    case "cerrar_sin_consulta_ajax":
-        require_once "../controllers/CitaController.php";
-        $controller = new CitaController();
-        $controller->cerrarSinConsultaAjax();
-        break;
-
     // RUTAS SPRINT 5: GESTIÓN DE USUARIOS (ADMIN)
     // HU-T.7: el controlador captura sus propios errores y responde un mensaje
     // genérico (T-04); aquí no se atrapa nada para no tragarse un 403.

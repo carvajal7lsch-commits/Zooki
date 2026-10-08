@@ -25,7 +25,7 @@ function formatFechaHora(dateStr) {
 // Para él, "sin cerrar" sigue siendo una atención en curso.
 const ESTADOS_CITA_PROPIETARIO = {
     pendiente: 'Activa', confirmada: 'Activa', en_curso: 'En atención', sin_cerrar: 'En atención',
-    completada: 'Completada', cancelada: 'Cancelada', no_asistio: 'No asistió', cerrada_sin_consulta: 'Cerrada'
+    completada: 'Completada', cancelada: 'Cancelada', no_asistio: 'No asistió'
 };
 
 function etiquetaEstadoCita(estado) {
@@ -36,7 +36,7 @@ function etiquetaEstadoCita(estado) {
 function claseEstadoCita(estado) {
     if (['pendiente', 'confirmada', 'en_curso', 'sin_cerrar'].includes(estado)) return 'status-badge--abierta';
     if (estado === 'completada') return 'status-badge--completada';
-    if (['no_asistio', 'cerrada_sin_consulta'].includes(estado)) return 'status-badge--no-asistio';
+    if (estado === 'no_asistio') return 'status-badge--no-asistio';
     return 'status-badge--cancelada';
 }
 

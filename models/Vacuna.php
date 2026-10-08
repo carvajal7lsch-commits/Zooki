@@ -81,6 +81,16 @@ class Vacuna extends ModeloHistoria
     {
         $hoy ??= new DateTimeImmutable('today', new DateTimeZone('America/Bogota'));
         $limite = $hoy->modify('+7 days');
+        return $this->pendientesEntre($hoy->format('Y-m-d'), $limite->format('Y-m-d'));
+    }
+
+    /**
+     * Próximas dosis entre dos fechas, solo de lo que aplicó la clínica
+     * activa y de mascotas activas vinculadas a ella. Las usan el panel de
+     * la semana y los eventos del calendario (C5).
+     */
+    public function pendientesEntre(string $inicio, string $fin): array
+    {
 
         $sql = "SELECT v.*, m.nombre AS nombre_mascota, e.nombre_especie, u.nombre_completo AS propietario
             FROM vacunas v
@@ -92,7 +102,7 @@ class Vacuna extends ModeloHistoria
               AND v.fecha_proxima_dosis BETWEEN ? AND ?
             ORDER BY v.fecha_proxima_dosis ASC, m.nombre ASC";
         $consulta = $this->conn->prepare($sql);
-        $consulta->execute([$this->clinica(), $hoy->format('Y-m-d'), $limite->format('Y-m-d')]);
+        $consulta->execute([$this->clinica(), $inicio, $fin]);
         return $consulta->fetchAll(PDO::FETCH_ASSOC);
     }
 

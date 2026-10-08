@@ -12,8 +12,7 @@ const ESTADOS_CITA = {
     completada: 'Completada',
     cancelada: 'Cancelada',
     no_asistio: 'No asistió',
-    sin_cerrar: 'Sin cerrar',
-    cerrada_sin_consulta: 'Cerrada sin consulta'
+    sin_cerrar: 'Sin cerrar'
 };
 
 const TIPOS_EVENTO = { cita: 'Cita', vacunacion: 'Vacunación', desparasitacion: 'Desparasitación' };
@@ -97,16 +96,22 @@ function unirLista(items) {
     return items.length > 1 ? `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}` : (items[0] || '');
 }
 
+// C5: el rol y el id_usuario del contexto activo llegan en data-* de .agenda.
+function datoAgenda(nombre) {
+    const agenda = document.querySelector('.agenda');
+    return agenda ? (agenda.dataset[nombre] || '') : '';
+}
+
 function isUsuarioVeterinario() {
-    return typeof USER_ROL !== 'undefined' && Number(USER_ROL) === 2;
+    return Number(datoAgenda('rol')) === 2;
 }
 
 function esAdmin() {
-    return typeof USER_ROL !== 'undefined' && Number(USER_ROL) === 1;
+    return Number(datoAgenda('rol')) === 1;
 }
 
-function getUsuarioDoc() {
-    return typeof USER_DOC !== 'undefined' ? USER_DOC : '';
+function getUsuarioId() {
+    return datoAgenda('usuario');
 }
 
 // ═══════════════════════════════════════
@@ -129,7 +134,7 @@ function catalogo(clave, url, transformar) {
 }
 
 const obtenerVeterinarios = () => catalogo('vets', 'index.php?action=listar_veterinarios_ajax',
-    d => (Array.isArray(d) ? d : []).map(v => ({ value: v.documento, label: v.nombre_completo })));
+    d => (Array.isArray(d) ? d : []).map(v => ({ value: String(v.id_usuario), label: v.nombre_completo })));
 
 const obtenerTipos = () => catalogo('tipos', 'index.php?action=listar_tipos_cita_ajax',
     d => (d && d.success && Array.isArray(d.tipos) ? d.tipos : []).map(t => ({
@@ -161,7 +166,7 @@ const FilterManager = {
     state: { cita: true, vacunacion: true, desparasitacion: true, veterinario: '' },
 
     init() {
-        this.state.veterinario = isUsuarioVeterinario() ? getUsuarioDoc() : '';
+        this.state.veterinario = isUsuarioVeterinario() ? getUsuarioId() : '';
     },
 
     toggle(tipo) {
@@ -169,8 +174,8 @@ const FilterManager = {
         this.aplicar();
     },
 
-    setVeterinario(doc) {
-        this.state.veterinario = doc;
+    setVeterinario(idVeterinario) {
+        this.state.veterinario = idVeterinario;
         this.aplicar();
     },
 
@@ -184,9 +189,9 @@ const FilterManager = {
 
     esVisible(ev) {
         const tipo = ev.extendedProps.tipo || 'cita';
-        const doc = ev.extendedProps.doc_veterinario || '';
+        const idVeterinario = ev.extendedProps.id_veterinario || '';
         const vet = this.state.veterinario;
-        return this.state[tipo] !== false && (!vet || !doc || doc === vet);
+        return this.state[tipo] !== false && (!vet || !idVeterinario || idVeterinario === vet);
     },
 
     /** Oculta o muestra cada evento y refresca el panel. Solo toca los que cambian. */
@@ -222,7 +227,7 @@ async function cargarEventos(info, exito, fallo) {
                     tipo,
                     estado: tipo === 'cita' ? (normalizarEstado(e.estado) || 'pendiente') : '',
                     veterinario: e.veterinario_nombre || '',
-                    doc_veterinario: e.doc_veterinario || '',
+                    id_veterinario: e.id_veterinario ? String(e.id_veterinario) : '',
                     motivo: e.motivo || '',
                     mascota_nombre: e.mascota_nombre || '',
                     propietario_nombre: e.propietario_nombre || '',
@@ -486,7 +491,7 @@ function mostrarDetalleCita(eventId) {
     // la cita; confirmar, reprogramar y cancelar también los hace el
     // administrador. Una cita en curso siempre se puede retomar, aunque sea de
     // otro día, para que una atención sin cerrar no quede "en curso" para siempre.
-    const esSuCita = esCita && isUsuarioVeterinario() && p.doc_veterinario === getUsuarioDoc();
+    const esSuCita = esCita && isUsuarioVeterinario() && p.id_veterinario === getUsuarioId();
     const gestiona = esSuCita || (esCita && esAdmin());
     const abierta = ['pendiente', 'confirmada'].includes(estado);
     const enAtencion = ['en_curso', 'sin_cerrar'].includes(estado);
@@ -495,9 +500,9 @@ function mostrarDetalleCita(eventId) {
     const enDiaDeInicio = esSuCita && abierta && esHoy(ev.start);
     const puedeIniciar = enDiaDeInicio && new Date() >= iniciaDesde;
     const esperaInicio = enDiaDeInicio && !puedeIniciar;
-    // RN-409 / RN-410: una atención abierta se documenta o se cierra sin consulta.
+    // RN-409: una atención abierta se completa registrando su consulta
+    // (RN-410, «cerrar sin consulta», se derogó en la v2).
     const puedeContinuar = esSuCita && enAtencion;
-    const puedeCerrarSinConsulta = esSuCita && enAtencion;
     const puedeNoAsistio = esSuCita && abierta && ev.start <= new Date();
     const puedeConfirmar = gestiona && estado === 'pendiente' && !pasada;
     const puedeReprogramar = gestiona && abierta && !pasada;
@@ -512,7 +517,6 @@ function mostrarDetalleCita(eventId) {
     if (puedeConfirmar && primaria[0] !== 'confirmar') secundarias.push(['confirmar', 'fa-check', 'Confirmar']);
     if (puedeReprogramar) secundarias.push(['reprogramar', 'fa-calendar-alt', 'Reprogramar']);
     if (puedeNoAsistio) secundarias.push(['no_asistio', 'fa-user-slash', 'No asistió']);
-    if (puedeCerrarSinConsulta) secundarias.push(['cerrar_sin_consulta', 'fa-folder-minus', 'Cerrar sin consulta']);
 
     const boton = ([accion, icono, texto], clase) =>
         `<button type="button" class="cal-btn ${clase}" data-accion="${accion}" data-id="${esc(ev.id)}"${accion === 'esperar' ? ' disabled' : ''}><i class="fas ${icono}"></i> ${texto}</button>`;
@@ -531,8 +535,7 @@ function mostrarDetalleCita(eventId) {
             completada: 'La cita ya fue atendida.',
             no_asistio: 'El paciente no asistió.',
             en_curso: 'La atención está en curso con el veterinario asignado.',
-            sin_cerrar: 'La atención quedó sin cerrar; la cierra el veterinario asignado.',
-            cerrada_sin_consulta: 'La atención se cerró sin consulta.'
+            sin_cerrar: 'La atención quedó sin cerrar; la completa el veterinario asignado registrando la consulta.'
         }[estado] || (pasada ? 'Esta cita ya pasó; queda solo para consulta.'
             : 'Solo el veterinario asignado o el administrador gestionan esta cita.');
         acciones = `<p class="agenda-detail__note">${nota}</p>`;
@@ -577,7 +580,6 @@ function manejarClicPanel(e) {
         case 'reprogramar': abrirModalReprogramar(id); break;
         case 'no_asistio': marcarNoAsistio(id); break;
         case 'cancelar': cancelarCita(id); break;
-        case 'cerrar_sin_consulta': cerrarSinConsulta(id); break;
     }
 }
 
@@ -680,34 +682,6 @@ async function cancelarCita(idCita) {
     } catch (e) {
         console.error(e);
         mostrarToast('Error de conexión al cancelar la cita.', 'error');
-    }
-}
-
-// RN-410: cerrar sin consulta una atención que no se va a documentar.
-async function cerrarSinConsulta(idCita) {
-    const { value: motivo } = await Swal.fire({
-        title: 'Cerrar sin consulta',
-        text: 'La cita queda cerrada sin historia clínica y no se puede reabrir. Si el paciente vuelve, agenda una cita nueva.',
-        input: 'textarea',
-        inputLabel: 'Motivo del cierre',
-        inputPlaceholder: 'Ej. se inició por error, el paciente se retiró antes de la consulta…',
-        inputAttributes: { maxlength: 255 },
-        showCancelButton: true,
-        confirmButtonColor: '#0052FF',
-        cancelButtonColor: '#64748B',
-        confirmButtonText: 'Cerrar atención',
-        cancelButtonText: 'Volver',
-        inputValidator: valor => ((valor || '').trim().length < 5 ? 'Escribe el motivo (mínimo 5 caracteres).' : undefined)
-    });
-    if (!motivo) return;
-
-    try {
-        const r = await postCita('cerrar_sin_consulta_ajax', { id_cita: idCita, motivo: motivo.trim() });
-        mostrarToast(r.message || (r.success ? 'Atención cerrada sin consulta.' : 'No se pudo cerrar la atención.'), r.success ? 'success' : 'error');
-        if (r.success) calendarInstance.refetchEvents();
-    } catch (e) {
-        console.error(e);
-        mostrarToast('Error de conexión al cerrar la atención.', 'error');
     }
 }
 
@@ -846,7 +820,7 @@ function abrirCitaModal(date) {
     limpiarMascotaSeleccionada();
     ['modal_tipo_cita', 'modal_duracion_minutos', 'modal_motivo', 'modal_hora'].forEach(id => val(id, ''));
     document.getElementById('cm_vet_field').hidden = esVet;
-    if (esVet) val('modal_veterinario_hidden', getUsuarioDoc());
+    if (esVet) val('modal_veterinario_hidden', getUsuarioId());
 
     ocultarErrorModal();
     setSlotsEstado('modal_slots_container', 'guia', textoGuiaSlots());
@@ -950,7 +924,7 @@ async function cargarSlotsModal() {
     try {
         const [horarios, sugerencias] = await Promise.all([
             fetch(`index.php?action=get_horas_disponibles_ajax&fecha=${fecha}&intervalo=${duracion}`).then(r => r.json()),
-            fetch(`index.php?action=get_sugerencias_horario_ajax&doc_veterinario=${encodeURIComponent(vet)}&fecha=${fecha}&duracion_minutos=${duracion}&modo=normal`).then(r => r.json())
+            fetch(`index.php?action=get_sugerencias_horario_ajax&id_veterinario=${encodeURIComponent(vet)}&fecha=${fecha}&duracion_minutos=${duracion}&modo=normal`).then(r => r.json())
         ]);
         if (turno !== _turnoSlotsCita) return;
 
@@ -1024,7 +998,7 @@ async function crearCitaModal(e) {
 
     const datos = {
         id_mascota: val('modal_mascota'),
-        doc_veterinario: getVetModal(),
+        id_veterinario: getVetModal(),
         fecha: val('modal_fecha'),
         hora: val('modal_hora'),
         motivo: val('modal_motivo'),
@@ -1110,7 +1084,7 @@ async function abrirModalReprogramar(idCita) {
         llenarSelect(vetSel, vets, 'Selecciona un veterinario');
         llenarSelect(tipoSel, tipos, 'Selecciona el tipo');
 
-        vetSel.value = cita.doc_veterinario || '';
+        vetSel.value = cita.id_veterinario ? String(cita.id_veterinario) : '';
         vetSel.disabled = isUsuarioVeterinario(); // el veterinario reprograma su propia agenda
         tipoSel.value = cita.id_tipo_cita || '';
         fechaIn.value = cita.fecha && cita.fecha >= fechaIn.min ? cita.fecha : fechaIn.min;
@@ -1145,7 +1119,7 @@ async function cargarSlotsReprogramar() {
     const turno = ++_turnoSlotsReprog;
     setSlotsEstado(id, 'cargando');
     try {
-        const url = `index.php?action=get_sugerencias_horario_ajax&doc_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${duracion}&id_cita_excluir=${encodeURIComponent(_reprogramarCitaId || '')}`;
+        const url = `index.php?action=get_sugerencias_horario_ajax&id_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${duracion}&id_cita_excluir=${encodeURIComponent(_reprogramarCitaId || '')}`;
         const data = await fetch(url).then(r => r.json());
         if (turno !== _turnoSlotsReprog) return;
 
@@ -1179,7 +1153,7 @@ async function confirmarReprogramacion() {
             id_cita: _reprogramarCitaId,
             fecha,
             hora,
-            doc_veterinario: val('reprogramar_veterinario')
+            id_veterinario: val('reprogramar_veterinario')
         });
         if (!r.success) {
             mostrarErrorReprog(r.message || 'No se pudo reprogramar la cita.');

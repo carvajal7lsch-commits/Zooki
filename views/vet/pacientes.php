@@ -1176,7 +1176,7 @@
                     </div>
                     <div class="input-group full">
                         <label>Veterinario Asignado *</label>
-                        <select name="doc_veterinario" id="cita_veterinario" required>
+                        <select name="id_veterinario" id="cita_veterinario" required>
                             <option value="">Cargando veterinarios...</option>
                         </select>
                     </div>

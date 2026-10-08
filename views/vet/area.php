@@ -132,7 +132,7 @@ $botonAccion = function (array $c, bool $compacto = false) use ($e, $atencionUrl
                             </li>
                         <?php endforeach; ?>
                     </ul>
-                    <p class="panel-nota">Regístrales la consulta o ciérralas sin consulta indicando el motivo.</p>
+                    <p class="panel-nota">Regístrales la consulta para completarlas.</p>
                 <?php endif; ?>
             </section>
 

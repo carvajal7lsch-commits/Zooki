@@ -87,7 +87,6 @@ $nombre = explode(" ", trim($_SESSION["usuario_nombre"]))[0];
                 <option value="completada">Completada</option>
                 <option value="no_asistio">No asistió</option>
                 <option value="sin_cerrar">Sin cerrar</option>
-                <option value="cerrada_sin_consulta">Cerrada sin consulta</option>
                 <option value="cancelada">Cancelada</option>
             </select>
         </div>
@@ -228,8 +227,8 @@ async function cargarDatosIniciales() {
         if (Array.isArray(vetsData)) {
             veterinariosArray = vetsData;
             vetsData.forEach(v => {
-                veterinariosMap[v.documento] = v.nombre_completo;
-                selectVet.innerHTML += `<option value="${v.documento}">Dr. ${v.nombre_completo.split(' ')[0]}</option>`;
+                veterinariosMap[String(v.id_usuario)] = v.nombre_completo;
+                selectVet.innerHTML += `<option value="${String(v.id_usuario)}">Dr. ${v.nombre_completo.split(' ')[0]}</option>`;
             });
         }
         
@@ -315,7 +314,7 @@ function aplicarFiltros() {
     
     if (tipoCita) citasFiltradas = citasFiltradas.filter(c => c.tipo_cita_nombre === tipoCita);
     if (estado) citasFiltradas = citasFiltradas.filter(c => c.estado === estado);
-    if (vetFiltro) citasFiltradas = citasFiltradas.filter(c => c.doc_veterinario === vetFiltro);
+    if (vetFiltro) citasFiltradas = citasFiltradas.filter(c => String(c.id_veterinario) === vetFiltro);
     if (search) {
         citasFiltradas = citasFiltradas.filter(c => 
             (c.mascota_nombre && c.mascota_nombre.toLowerCase().includes(search)) ||
@@ -364,7 +363,7 @@ function renderizarKanban(citas, vetFiltro) {
     // Filter veterinarians if one is selected in the dropdown
     let vetsToRender = veterinariosArray;
     if (vetFiltro) {
-        vetsToRender = veterinariosArray.filter(v => v.documento === vetFiltro);
+        vetsToRender = veterinariosArray.filter(v => String(v.id_usuario) === vetFiltro);
     }
     
     if (vetsToRender.length === 0) {
@@ -374,11 +373,11 @@ function renderizarKanban(citas, vetFiltro) {
     
     // Agrupar citas por veterinario
     const agrupadas = {};
-    vetsToRender.forEach(v => agrupadas[v.documento] = []);
+    vetsToRender.forEach(v => agrupadas[String(v.id_usuario)] = []);
     
     citas.forEach(c => {
-        if (agrupadas[c.doc_veterinario]) {
-            agrupadas[c.doc_veterinario].push(c);
+        if (agrupadas[String(c.id_veterinario)]) {
+            agrupadas[String(c.id_veterinario)].push(c);
         }
     });
     
@@ -389,12 +388,11 @@ function renderizarKanban(citas, vetFiltro) {
         completada: '#10B981',
         no_asistio: '#94A3B8',
         sin_cerrar: '#E11D48',
-        cerrada_sin_consulta: '#64748B',
         cancelada: '#EF4444'
     };
     
     vetsToRender.forEach(vet => {
-        const vetCitas = agrupadas[vet.documento];
+        const vetCitas = agrupadas[String(vet.id_usuario)];
         const initial = vet.nombre_completo.charAt(0);
         const firstName = vet.nombre_completo.split(' ')[0];
         const numCitas = vetCitas.length;
@@ -483,7 +481,7 @@ function verDetalle(idCita) {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                         <div style="border-left: 3px solid #0052FF; padding-left: 0.8rem; background: #f8fafc; padding: 0.8rem; border-radius: 0 8px 8px 0;">
                             <p style="margin: 0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 800;">Veterinario Asignado</p>
-                            <p style="margin: 0.2rem 0 0 0; font-size: 0.9rem; font-weight: 700; color: #1e293b;"><i class="fas fa-user-md" style="color: #94a3b8; width: 16px; margin-right: 4px;"></i> Dr. ${cita.veterinario_nombre || (veterinariosMap[cita.doc_veterinario])}</p>
+                            <p style="margin: 0.2rem 0 0 0; font-size: 0.9rem; font-weight: 700; color: #1e293b;"><i class="fas fa-user-md" style="color: #94a3b8; width: 16px; margin-right: 4px;"></i> Dr. ${cita.veterinario_nombre || (veterinariosMap[String(cita.id_veterinario)])}</p>
                         </div>
                         <div style="border-left: 3px solid #5560FF; padding-left: 0.8rem; background: #f8fafc; padding: 0.8rem; border-radius: 0 8px 8px 0;">
                             <p style="margin: 0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 800;">Tipo de Cita</p>
@@ -627,7 +625,7 @@ async function exportarCitas() {
                 c.id_cita,
                 c.mascota_nombre || '—',
                 c.propietario_nombre || '—',
-                `Dr. ${c.veterinario_nombre || veterinariosMap[c.doc_veterinario] || '—'}`,
+                `Dr. ${c.veterinario_nombre || veterinariosMap[String(c.id_veterinario)] || '—'}`,
                 c.fecha,
                 c.hora ? c.hora.substring(0, 5) : '—',
                 estadoTexto,
@@ -741,7 +739,7 @@ function exportarCitasPDF() {
             c.id_cita,
             c.mascota_nombre || '—',
             c.propietario_nombre || '—',
-            `Dr. ${c.veterinario_nombre || veterinariosMap[c.doc_veterinario] || '—'}`,
+            `Dr. ${c.veterinario_nombre || veterinariosMap[String(c.id_veterinario)] || '—'}`,
             c.fecha,
             c.hora ? c.hora.substring(0, 5) : '—',
             c.estado.toUpperCase(),

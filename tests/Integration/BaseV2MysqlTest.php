@@ -431,6 +431,74 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    /**
+     * C5 en el esquema real: duración y margen copiados, aislamiento, doble
+     * reserva entre clínicas por la aplicación y por el índice único (error
+     * 1062 convertido en mensaje) y RN-409 con NotificacionInterna v2.
+     */
+    public function testC5AgendaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../Support/CitaSinValidacionPrevia.php';
+        require_once __DIR__ . '/../../helpers/VigilanteAtenciones.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        DosClinicas::completarMascota($this->db);
+        DosClinicas::poblarAgenda($this->db);
+        DosClinicas::vincularLunaASur($this->db);
+        $this->db->exec("INSERT INTO usuario_clinica (id_usuario, id_clinica, id_rol, estado) VALUES (2, 2, 2, 'activo')");
+        $reserva = ['id_mascota' => 1, 'id_veterinario' => 2, 'fecha' => '2030-01-07', 'hora' => '09:00', 'motivo' => 'Control', 'id_tipo_cita' => 1];
+        try {
+            $_SESSION = ['id_usuario' => 2];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::VETERINARIO), 1);
+            $citas = new Cita($this->db);
+            $id = $citas->registrar($reserva);
+            $fila = $this->db->query("SELECT id_clinica, duracion_minutos, margen_minutos, hora_fin, prioridad, es_sobrecupo, ocupa_horario FROM citas WHERE id_cita = $id")->fetch(PDO::FETCH_ASSOC);
+            $this->assertSame(['1', '30', '10', '09:30:00', 'verde', '0', '1'], array_map('strval', array_values($fila)));
+
+            $_SESSION = ['id_usuario' => 3];
+            Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::ADMIN), 1);
+            try {
+                $citas->getById($id);
+                $this->fail('Debió responder 403.');
+            } catch (AccesoDenegado $e) {
+                $this->assertSame(403, $e->codigo());
+            }
+            $this->assertSame([], $citas->listarRango('2030-01-07', '2030-01-07'));
+
+            $enSur = ['id_tipo_cita' => 2] + $reserva;
+            foreach ([$citas, new CitaSinValidacionPrevia($this->db)] as $modelo) {
+                try {
+                    $modelo->registrar($enSur);
+                    $this->fail('Debió rechazar la doble reserva entre clínicas.');
+                } catch (HorarioOcupado $e) {
+                    $this->assertNotSame('', $e->getMessage());
+                }
+            }
+            $this->assertSame(1, $this->contar('citas'));
+
+            $_SESSION = ['id_usuario' => 2];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::VETERINARIO), 1);
+            $this->assertTrue($citas->cancelar($citas->getById($id)));
+            $_SESSION = ['id_usuario' => 3];
+            Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::ADMIN), 1);
+            $deSur = $citas->registrar($enSur);
+            $this->assertSame(20, (int) $this->db->query("SELECT duracion_minutos FROM citas WHERE id_cita = $deSur")->fetchColumn());
+
+            $this->db->exec("UPDATE citas SET estado = 'en_curso' WHERE id_cita = $deSur");
+            $vigilante = new VigilanteAtenciones($this->db, function (): void {
+            });
+            $zona = new DateTimeZone(ReglaAtencion::ZONA);
+            $this->assertSame(1, $vigilante->revisar(new DateTimeImmutable('2030-01-07 09:31', $zona))['avisadas']);
+            $this->assertSame(0, $vigilante->revisar(new DateTimeImmutable('2030-01-07 09:45', $zona))['avisadas']);
+            $aviso = $this->db->query("SELECT id_clinica, id_usuario FROM notificaciones_internas WHERE tipo = 'ATENCION_ABIERTA'")->fetchAll(PDO::FETCH_NUM);
+            $this->assertSame([['2', '2']], array_map(fn ($f) => array_map('strval', $f), $aviso));
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
     // -----------------------------------------------------------------------
 
     private function prepararHistoriaClinica(): void

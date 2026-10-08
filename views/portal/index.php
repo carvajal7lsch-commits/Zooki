@@ -19,7 +19,7 @@ foreach ($mascotas as $m) {
 $fotoMascota = fn (array $m): ?string => !empty($m['url_foto']) ? 'uploads/mascotas/' . htmlspecialchars($m['url_foto']) : null;
 
 // Estados vistos por el propietario: "sin cerrar" sigue siendo una atención en curso para él.
-$etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'cancelada' => 'Cancelada', 'no_asistio' => 'No asistió', 'sin_cerrar' => 'En atención', 'cerrada_sin_consulta' => 'Cerrada'];
+$etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'cancelada' => 'Cancelada', 'no_asistio' => 'No asistió', 'sin_cerrar' => 'En atención'];
 ?>
 
 <!-- ══ INICIO ═══════════════════════════════════════════════════════ -->

@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/ReglaAtencion.php';
-require_once __DIR__ . '/../models/Cita.php';
+require_once __DIR__ . '/../models/AtencionesEnCurso.php';
 require_once __DIR__ . '/../models/NotificacionInterna.php';
 
 /**
@@ -15,17 +15,24 @@ require_once __DIR__ . '/../models/NotificacionInterna.php';
  * tarea no esté programada. Cada aviso se reclama con una escritura atómica
  * (sello o cambio de estado), así que si los dos revisan a la vez solo uno lo
  * envía.
+ *
+ * Recorre todas las clínicas (AtencionesEnCurso); cada aviso queda en la
+ * clínica de su cita y va al veterinario asignado por id_usuario.
  */
 final class VigilanteAtenciones
 {
-    private Cita $citas;
+    private AtencionesEnCurso $atenciones;
     private NotificacionInterna $notificaciones;
     private $correo = null;
 
-    public function __construct(PDO $db)
+    /** @var callable(array, string, string): void|null envío del correo; las pruebas lo reemplazan */
+    private $enviarCorreo;
+
+    public function __construct(PDO $db, ?callable $enviarCorreo = null)
     {
-        $this->citas = new Cita($db);
+        $this->atenciones = new AtencionesEnCurso($db);
         $this->notificaciones = new NotificacionInterna($db);
+        $this->enviarCorreo = $enviarCorreo;
     }
 
     /** @return array{avisadas: int, sin_cerrar: int} */
@@ -33,24 +40,24 @@ final class VigilanteAtenciones
     {
         $resultado = ['avisadas' => 0, 'sin_cerrar' => 0];
 
-        foreach ($this->citas->getAtencionesEnCurso() as $cita) {
+        foreach ($this->atenciones->listar() as $cita) {
             try {
                 $mascota = $cita['mascota_nombre'] ?: 'la mascota';
 
                 if (ReglaAtencion::quedaSinCerrar($cita, $ahora)) {
-                    if ($this->citas->marcarSinCerrar($cita['id_cita'])) {
+                    if ($this->atenciones->marcarSinCerrar((int) $cita['id_cita'])) {
                         $resultado['sin_cerrar']++;
                         $this->avisar($cita, 'ATENCION_SIN_CERRAR', "Atención sin cerrar: $mascota",
                             "La atención de $mascota del " . date('d/m/Y', strtotime($cita['fecha']))
-                            . ' terminó el día sin cerrarse. Registra la consulta o ciérrala sin consulta.');
+                            . ' terminó el día sin cerrarse. Registra su consulta para completarla.');
                     }
                 } elseif (ReglaAtencion::debeAvisarAbierta($cita, $ahora)) {
-                    if ($this->citas->sellarAvisoAtencionAbierta($cita['id_cita'], $ahora->format('Y-m-d H:i:s'))) {
+                    if ($this->atenciones->sellarAviso((int) $cita['id_cita'], $ahora->format('Y-m-d H:i:s'))) {
                         $resultado['avisadas']++;
                         $fin = ReglaAtencion::fin($cita['fecha'], $cita['hora'], $cita['hora_fin'] ?? null, $cita['duracion_minutos'] ?? null);
                         $this->avisar($cita, 'ATENCION_ABIERTA', "Atención abierta: $mascota",
                             "La atención de $mascota debía terminar a las " . $fin->format('g:i A')
-                            . ' y sigue abierta. Si ya terminaste, registra la consulta; si no se atendió, ciérrala sin consulta.');
+                            . ' y sigue abierta. Registra su consulta para completarla.');
                     }
                 }
             } catch (Throwable $e) {
@@ -65,9 +72,21 @@ final class VigilanteAtenciones
     private function avisar(array $cita, string $tipo, string $titulo, string $mensaje): void
     {
         $enlace = 'index.php?action=vet_atencion&id_cita=' . (int) $cita['id_cita'];
-        $this->notificaciones->crearParaUsuario($cita['doc_veterinario'], $tipo, $titulo, $mensaje, $enlace, (int) $cita['id_cita']);
+        $this->notificaciones->crearParaUsuario(
+            (int) $cita['id_clinica'],
+            (int) $cita['id_veterinario'],
+            $tipo,
+            $titulo,
+            $mensaje,
+            $enlace,
+            (int) $cita['id_cita']
+        );
 
         if (empty($cita['veterinario_email'])) {
+            return;
+        }
+        if ($this->enviarCorreo !== null) {
+            ($this->enviarCorreo)($cita, $titulo, $mensaje);
             return;
         }
 
