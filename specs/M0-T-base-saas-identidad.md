@@ -94,6 +94,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] C4 — Historia clínica y prevención ([Anexo C4](#anexo-c4--resultado)). Implementada, verificada y revisada (C4 — Revisión).
   - [x] C5 — Agenda v1 sobre el modelo v2 y retiro de «cerrar sin consulta» ([Anexo C5](#anexo-c5--resultado)). Implementada, verificada y revisada (C5 — Revisión).
   - [x] C6 — Portal del propietario sobre el modelo v2, HU-5.12, HU-5.13 con RN-115 y arrastre en la agenda ([Anexo C6](#anexo-c6--resultado)). Implementada y verificada; Claude Code escribe y Claude revisa. Pendiente de revisión.
+  - [x] C7 — Paneles de inicio y pendientes del día por clínica activa; retiro de las estadísticas, gráficas y línea de tiempo del recepcionista ([Anexo C7](#anexo-c7--resultado)). Implementada y verificada; Claude Code escribe y Claude revisa. Pendiente de revisión.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -1011,3 +1012,79 @@ Quedan en `zooki_v2_prueba` dos citas nuevas del 9 de octubre (una confirmada en
 1. **Bug (corregido por la revisión):** al agendar, «No se pudieron cargar los horarios» siempre. En `portal.js::cargarHoras()` la desestructuración `const [clinica, agendaVet]` dentro del `try` ocultaba la constante `clinica` (el id elegido) que usan las propias URL, y lanzaba un `ReferenceError` antes de pedir nada. Se renombró a `horasClinica` / `horasDeLaClinica`; `node --check` correcto. El recorrido de C6 no lo detectó porque probó los endpoints con `curl`, no el JS: las pantallas tocadas por cada subetapa necesitan la prueba en navegador del usuario.
 2. **Molestia de uso:** el SweetAlert2 de confirmación al activar o desactivar la historia compartida en cada cambio. Se cambia por un aviso breve no bloqueante (toast de SweetAlert2) en C9. **Decisión del usuario:** SweetAlert2 no se quita del sistema; en C9 se revisan sus usos caso por caso: acciones frecuentes o reversibles pasan a toast, y las destructivas o irreversibles conservan la confirmación.
 3. **Sin indicación de que las citas se pueden arrastrar:** va en el manual de usuario (entregable pendiente) y, por decisión del usuario, una pista visible en la agenda del veterinario (C9).
+
+## Anexo C7 — Resultado
+
+Lo escribió Claude Code; la revisión corresponde a la sesión de revisión de Claude. Se releyeron `AGENTS.md`, este plan (A.5, A.6 y los anexos C4–C6 con sus revisiones) y las HU y RE del módulo 6.
+
+**Decisión del usuario (2026-10-07).** Retirar lo muerto y sumar al panel: se quitan `get_role_stats_ajax`, `get_charts_data_ajax` y `get_timeline_ajax`, sus rutas, la matriz y su JS sin pantalla. `get_pendientes_ajax` pasa a un modelo por clínica. El panel del administrador suma «Pacientes activos» y «Propietarios» de la clínica activa.
+
+**Qué se hizo.**
+
+- **`Panel` extiende `ModeloClinica`.** Toda consulta filtra por la clínica activa. El veterinario se identifica por `id_veterinario` (su `id_usuario`) y los nombres salen por `id_usuario`, no por documento. Sin clínica activa falla cerrado con 403: el super-administrador sigue sin panel clínico (etapa E).
+  - La carga por veterinario sale de `usuario_clinica` (rol veterinario, vínculo y cuenta activos), no de `usuarios.id_rol`.
+  - Los recordatorios del veterinario son vacunas y desparasitaciones registradas en la clínica activa, de mascotas activas con vínculo activo que él atendió o tiene agendadas allí.
+  - Nuevos `contarPacientesActivos()` (`mascota_clinica` activa y mascota activa; sin las desvinculadas, RN-115) y `contarPropietarios()` (`propietario_clinica` activo y cuenta activa).
+- **`PanelController`:** `datosVeterinario(int $idVeterinario)`; el administrador recibe `pacientes_activos` y `propietarios`. `vet_area` le pasa `Contexto::idUsuario()`.
+- **Vistas:** el panel del administrador muestra seis contadores (seis columnas en escritorio, tres en tablet y dos en móvil). El enlace a la ficha desde «Mi día» usa `id_propietario`, como ya esperaba `medical-module.js`.
+- **`DashboardController`:** queda solo `getPendientesAjax`, que usa el aviso del navegador de `extras.js`. Sale de `Panel`, `Vacuna::pendientesEntre` y `Desparasitacion::pendientesEntre`, con el reloj de la clínica; el veterinario recibe solo sus citas.
+- **`dashboard.js`:** pasó de 850 a 233 líneas.
+  - Se quitaron las estadísticas, las gráficas, la línea de tiempo y su cuenta regresiva, la agenda semanal y el modal de reprogramar (usaba `doc_veterinario`).
+  - También el buscador global (sin campo en ninguna vista ni ruta `buscar_global_ajax`) y el corte `ZOOKI_ROLE !== 3`.
+  - Quedan el loader global, las notificaciones internas y los valores por defecto de Chart.js, que usa la gráfica del panel.
+- Sin migración ni cambio de esquema.
+
+**RE y evidencia.**
+
+| Alcance | Prueba |
+|---|---|
+| RNF-11, RE-6.2.1, RE-6.2.3, RE-6.2.5: Norte no incluye nada de Sur, ni al revés | `PanelTest::testCadaAdministradorVeSoloSuClinica`, `testLasAtencionesAbiertasSonDeLaClinicaActiva`, `testLasConsultasSeCuentanEnUnRangoSemiabiertoDeLaClinica` |
+| RE-6.2.4: la tendencia es de la clínica | `PanelTest::testLaTendenciaEsDeLaClinicaActiva` |
+| RE-6.1.4, RN-G01: la misma persona ve números distintos según el contexto | `PanelTest::testElMismoVeterinarioVeNumerosDistintosSegunLaClinica`, `testElenaVeSuAgendaEnNorteYLaClinicaEnSur` |
+| RE-6.2.2, RE-6.2.6: la carga solo lista veterinarios activos de la clínica, también sin citas | `PanelTest::testLaCargaSoloListaLosVeterinariosActivosDeLaClinica`, `testUnVeterinarioSinCitasApareceEnCero` |
+| RE-6.4.1, RN-115: pacientes activos y propietarios, sin vínculos inactivos | `PanelTest::testPacientesYPropietariosSonDeLaClinicaYSinVinculosInactivos` |
+| RE-6.1.1: recordatorios de sus pacientes en la clínica activa | `PanelTest::testLosRecordatoriosSonDeSusPacientesEnLaClinicaActiva` |
+| RE-6.1.4: pendientes del día por clínica y veterinario | `PanelTest::testLosPendientesDelDiaSonDeLaClinicaYDelVeterinario` |
+| Super-administrador sin panel clínico | `PanelTest::testSinClinicaActivaElPanelFallaCerrado` |
+| Todo lo anterior en el esquema real | `BaseV2MysqlTest::testC7PanelesEnElEsquemaReal` |
+| Matriz y enrutador coinciden tras retirar tres acciones | `AutorizacionRolTest` (sin cambios, en verde) |
+
+`PanelTest` se reescribió con el fixture de dos clínicas (12 casos). Se comprobó que detecta una fuga: quitar el filtro de clínica de las citas, el estado del vínculo en la carga o el de `mascota_clinica` en pacientes o recordatorios hace fallar al menos una prueba.
+
+**Verificación.**
+
+| Comando | Resultado |
+|---|---|
+| `vendor/bin/phpunit` | 364 pruebas, 1657 aserciones, 18 saltadas (las de MySQL, sin variable). |
+| Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32) | 364 pruebas, 1877 aserciones, sin fallos ni saltadas. |
+| `php -l` y `node --check` de lo tocado | Sin errores. |
+
+**Recorrido HTTP** (`php -S` y `curl`; sin navegador en esta sesión).
+
+Las contraseñas guardadas ya no coincidían con `zooki_v2_prueba`, así que no se reescribieron. El recorrido corrió sobre una copia del proyecto con su propia base local temporal (esquema, semilla, `datos_prueba.php --si` y citas, consultas y vacunas en las dos clínicas); después se borraron la copia y esa base. Los intentos fallidos de login que dejó el primer intento en `zooki_v2_prueba` se borraron de `intentos_login`; nada más se tocó allí.
+
+- **Ana** (`admin_panel` de Norte) → 200: 3 citas hoy, 2 consultas del mes, 2 pacientes activos y 2 propietarios; carga de Beto y Elena. Coincide con la base.
+- **Carla** (Sur) → 200: 2 citas, 1 consulta, 1 paciente activo (la mascota desvinculada no cuenta) y 1 propietario; carga solo de Diego.
+- **Beto** (`vet_area` de Norte) → 200: sus citas de Luna y Kira, su atención sin cerrar y la vacuna próxima de Luna en Norte. Pedir `admin_panel` lo redirige.
+- **Diego** (Sur) → 200: sus dos citas de Luna y la vacuna de Sur.
+- **Elena:** como veterinaria en Norte ve solo su cita de Kira; como administradora en Sur ve lo mismo que Carla, y `vet_area` la redirige.
+- **Gina:** `admin_panel` la redirige y `get_pendientes_ajax` responde 403.
+- `get_pendientes_ajax` de cada persona coincide con su panel. Las tres acciones retiradas responden 403 (fuera de la matriz).
+- El enlace a la ficha (`vet_pacientes&propietario=6&mascota=1`) y sus dos peticiones responden 200. No hubo avisos de PHP en las páginas ni en el registro del servidor.
+
+**Pendientes.**
+
+1. **Navegador** (lección de la revisión de C6): revisar a mano `admin_panel` y `vet_area` en móvil, tablet y escritorio. En particular: los seis contadores, la gráfica de tendencia, las notificaciones y el aviso de citas del navegador después de quitar el código muerto de `dashboard.js`.
+2. **Módulo 6:** RE-6.4.4 (tasa de ausentismo por periodo y por veterinario, v2.0) no estaba en el alcance de C7. Tampoco la agrupación por especie de HU-3.5 ni las gráficas de RE-6.4.2.
+3. **C8:** recordatorios por correo por clínica. **C9:** limpieza; `views/admin/citas.php` conserva su propio `STATE_COLORS` en línea.
+4. La versión de publicación y las descargas del portal se actualizan al cerrar M0 (§7).
+
+### C7 — Revisión (2026-10-08)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el diff: `Panel` extiende `ModeloClinica` y toda cifra sale de la clínica activa; la carga por veterinario sale de `usuario_clinica`; pacientes activos excluye vínculos inactivos (RN-115); el super-administrador falla cerrado. Se valora que se comprobara que las pruebas detectan una fuga al quitar cada filtro, y que el recorrido no reescribiera las contraseñas de `zooki_v2_prueba` (usó una base temporal propia). La decisión del usuario de retirar el código muerto de `dashboard.js` y sumar dos contadores quedó bien aplicada.
+
+**Prueba manual del usuario (2026-10-08):** `admin_panel` y `vet_area` se ven bien con los dos roles.
+
+**Hallazgo (regresión de C1, se corrige en C9):** `admin_usuarios` quedó solo en vista de tabla. En v1.12.0 la vista por defecto era de tarjetas (`person-card`, `personal-grid`) con un botón para cambiar a tabla. **Decisión del usuario:** recuperar la vista de tarjetas como la de por defecto, conservando el botón para cambiar a tabla.
+
+**Fuera de M0, para el módulo 6:** RE-6.4.4 (ausentismo por periodo y veterinario), la agrupación por especie de HU-3.5 y las gráficas de RE-6.4.2.
