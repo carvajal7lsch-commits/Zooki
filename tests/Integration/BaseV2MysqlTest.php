@@ -641,6 +641,55 @@ class BaseV2MysqlTest extends TestCase
 
     // -----------------------------------------------------------------------
 
+    /**
+     * D1: registro con formulario y con Google, prueba del consentimiento
+     * (ENUM `medio` real), verificación con vínculo, re-aceptación de la
+     * política y el bloqueo de RN-109, sobre el esquema real.
+     */
+    public function testD1RegistroPoliticaYVinculoEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/RegistroPropietario.php';
+        require_once __DIR__ . '/../../models/PropietarioClinica.php';
+        require_once __DIR__ . '/../../helpers/InicioSesion.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $registro = new RegistroPropietario($this->db);
+        try {
+            $r = $registro->conFormulario([
+                'id_clinica' => '2', 'tipo_documento' => 'CC', 'documento' => '1000000099', 'nombre_completo' => 'Olga Nueva',
+                'telefono' => '+57 300 555 1234', 'email' => 'olga@zooki.test', 'password' => 'Huellita#2026',
+                'confirm_password' => 'Huellita#2026', 'acepta_datos' => '1',
+            ], '10.0.0.1');
+            $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM propietario_clinica WHERE id_propietario = {$r['id_usuario']}")->fetchColumn());
+            $this->assertSame('Clínica Sur', $registro->verificarRegistro($r['enlace']['id'], $r['enlace']['token'])['clinica']);
+
+            $google = $registro->conGoogle(['email' => 'pia@gmail.test', 'nombre_completo' => 'Pía Google', 'google_uid' => 'sub-pia'], ['id_clinica' => '1', 'acepta_datos' => '1'], '10.0.0.2');
+            $medios = $this->db->query('SELECT medio FROM consentimientos_datos ORDER BY id_consentimiento')->fetchAll(PDO::FETCH_COLUMN);
+            $this->assertSame(['formulario', 'google'], $medios);
+            $this->assertSame([PoliticaDatos::VERSION], array_values(array_unique($this->db->query('SELECT version_politica FROM consentimientos_datos')->fetchAll(PDO::FETCH_COLUMN))));
+
+            $usuario = (new Usuario($this->db))->buscarPorId($google);
+            $this->assertSame('portal_propietario', (new InicioSesion($this->db))->abrir($usuario, 'google'));
+            $this->assertSame(1, $_SESSION['perfil_incompleto']);
+            $ana = (new Usuario($this->db))->buscarPorId(1);
+            $this->assertSame('aceptar_politica', (new InicioSesion($this->db))->abrir($ana, 'password'));
+
+            $_SESSION = ['id_usuario' => 1];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+            $this->db->exec("UPDATE propietario_clinica SET estado = 'inactivo' WHERE id_propietario = 6 AND id_clinica = 1");
+            try {
+                (new PropietarioClinica($this->db))->actualizar(6, ['nombre_completo' => 'Fabio Dueño', 'telefono' => '3001234567', 'estado' => '1']);
+                $this->fail('RN-109: la clínica reactivó el vínculo sin la confirmación del titular.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame('inactivo', $this->db->query('SELECT estado FROM propietario_clinica WHERE id_propietario = 6 AND id_clinica = 1')->fetchColumn());
+            }
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
     private function prepararHistoriaClinica(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';

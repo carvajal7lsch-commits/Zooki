@@ -32,7 +32,14 @@ class Security {
      */
     private static array $accionesSinContexto = [
         'seleccionar_contexto', 'cambiar_contexto', 'logout', 'cambiar_password', 'cambiar_password_ajax',
+        'aceptar_politica',
     ];
+
+    /** RE-T.19.3: lo único que se puede hacer antes de aceptar la versión vigente de la política. */
+    private static array $accionesSinPoliticaAceptada = ['aceptar_politica', 'logout'];
+
+    /** RE-T.18.3: en el portal, con el perfil incompleto, solo se completa el perfil. */
+    private static array $accionesConPerfilIncompleto = ['completar_perfil'];
 
     /**
      * Acciones que un usuario con contrasena temporal si puede ejecutar
@@ -127,17 +134,44 @@ class Security {
             }
         }
 
+        self::validarPoliticaAceptada($action);
         self::validarPasswordTemporal($action);
 
         if (!in_array($action, self::$accionesSinContexto, true)) {
             if ($actual === null) {
                 throw new AccesoDenegado(403, 'Elige con qué perfil quieres continuar.', 'seleccionar_contexto');
             }
+            self::validarPerfilCompleto($action, $actual);
             self::validarRol($action, (int) $actual['id_rol'], $idUsuario);
             self::validarClinicaDeLaPeticion($actual);
         }
 
         self::validateCsrf($action);
+    }
+
+    /**
+     * RE-T.19.3 — Si la política cambió de versión, la persona la acepta antes
+     * de continuar. InicioSesion marca la sesión al entrar; aquí se exige en
+     * cada petición, incluidas las AJAX.
+     */
+    private static function validarPoliticaAceptada(string $action): void {
+        if (empty($_SESSION['debe_aceptar_politica'])) return;
+        if (in_array($action, self::$accionesSinPoliticaAceptada, true)) return;
+
+        throw new AccesoDenegado(403, 'Acepta la política de tratamiento de datos vigente para continuar.', 'aceptar_politica');
+    }
+
+    /**
+     * RE-T.18.3 (RN-G20) — Una cuenta de Google con el perfil incompleto no
+     * usa el portal (ni registra mascotas ni agenda) hasta registrar su
+     * documento y su teléfono.
+     */
+    private static function validarPerfilCompleto(string $action, array $contexto): void {
+        if (empty($_SESSION['perfil_incompleto'])) return;
+        if ($contexto['tipo'] !== Contexto::PROPIETARIO) return;
+        if (in_array($action, self::$accionesConPerfilIncompleto, true)) return;
+
+        throw new AccesoDenegado(403, 'Completa tu documento y tu teléfono para usar el portal.', 'completar_perfil');
     }
 
     /**
@@ -349,6 +383,8 @@ class Security {
             // C6: catálogos de la clínica elegida, HU-5.12 y HU-5.13.
             'portal_get_horas_ajax', 'portal_get_sugerencias_ajax',
             'portal_autorizar_historia_ajax', 'portal_vincular_clinica_ajax', 'portal_desvincular_clinica_ajax',
+            // D1, RE-T.18.3: documento y teléfono de una cuenta de Google.
+            'completar_perfil',
         ] as $a) { $matriz[$a] = $portal; }
 
         // Plataforma: el panel del super-administrador llega en la etapa E.

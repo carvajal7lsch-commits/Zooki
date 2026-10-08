@@ -43,8 +43,9 @@
             email.focus();
             return;
         }
-        if (nuevo.telefono && !/^[0-9+\s-]{7,20}$/.test(nuevo.telefono)) {
-            mensaje(msgContacto, 'El teléfono admite números, espacios, + y guiones (7 a 20 caracteres).', 'error');
+        // D1: la regla del teléfono viene del campo (pattern y title de ValidadorTelefono).
+        if (nuevo.telefono && !telefono.checkValidity()) {
+            mensaje(msgContacto, telefono.title, 'error');
             telefono.focus();
             return;
         }

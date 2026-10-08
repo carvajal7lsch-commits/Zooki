@@ -108,9 +108,8 @@ test('la vista del portal toma los límites del teléfono de ValidadorTelefono',
     // Hasta value=: el ?> de cada atributo PHP cortaría un [^>]*.
     const campo = vista.match(/<input type="tel" name="telefono" id="portal_contact_phone".*?value=/);
     assert.ok(campo);
-    assert.match(campo[0], /maxlength="<\?= ValidadorTelefono::MAX \?>"/);
-    assert.match(campo[0], /data-caracteres="<\?= htmlspecialchars\(ValidadorTelefono::CARACTERES\) \?>"/);
-    assert.match(campo[0], /pattern="<\?= htmlspecialchars\(ValidadorTelefono::patronHtml\(\)\) \?>"/);
+    // D1: maxlength, pattern y data-caracteres salen de un solo método.
+    assert.match(campo[0], /<\?= ValidadorTelefono::atributosHtml\(\) \?>/);
     assert.doesNotMatch(vista, /id="portalContactEditForm"[^>]*onsubmit/);
 });
 

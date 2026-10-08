@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../config/EmailService.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
@@ -109,9 +110,10 @@ class UsuarioController {
             return 'El tipo de documento no es valido.';
         }
 
-        $telefono = trim((string) ($entrada['telefono'] ?? ''));
-        if ($telefono !== '' && !preg_match('/^[0-9+\s-]{7,20}$/', $telefono)) {
-            return 'El telefono no tiene un formato valido.';
+        // D1: la misma regla de teléfono en todo el sistema (ValidadorTelefono).
+        $telefono = ValidadorTelefono::normalizar((string) ($entrada['telefono'] ?? ''));
+        if ($telefono !== '' && !ValidadorTelefono::esValido($telefono)) {
+            return ValidadorTelefono::MENSAJE;
         }
         $limpios['telefono'] = $telefono;
 

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
 require_once __DIR__ . '/../helpers/Roles.php';
@@ -103,7 +104,7 @@ class PerfilController
 
         try {
             $email    = trim((string) ($_POST['email'] ?? ''));
-            $telefono = trim((string) ($_POST['telefono'] ?? ''));
+            $telefono = ValidadorTelefono::normalizar((string) ($_POST['telefono'] ?? ''));
 
             if ($email === '') {
                 echo json_encode(['success' => false, 'message' => 'El correo electronico es obligatorio.']);
@@ -113,8 +114,9 @@ class PerfilController
                 echo json_encode(['success' => false, 'message' => 'El correo electronico no tiene un formato valido.']);
                 return;
             }
-            if ($telefono !== '' && !preg_match('/^[0-9+\s-]{7,20}$/', $telefono)) {
-                echo json_encode(['success' => false, 'message' => 'El telefono no tiene un formato valido.']);
+            // D1: la misma regla de teléfono en todo el sistema (ValidadorTelefono).
+            if ($telefono !== '' && !ValidadorTelefono::esValido($telefono)) {
+                echo json_encode(['success' => false, 'message' => ValidadorTelefono::MENSAJE]);
                 return;
             }
 

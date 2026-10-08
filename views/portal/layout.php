@@ -107,6 +107,7 @@ $iniciales = $iniciales ?: 'U';
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
 <script src="js/portal.js?v=<?= $v ?>-c91"></script>
 <script src="js/csrf.js?v=<?= $v ?>"></script>
+<script src="js/sesion.js?v=1"></script>
 <script src="js/interacciones.js?v=2"></script>
 </body>
 </html>

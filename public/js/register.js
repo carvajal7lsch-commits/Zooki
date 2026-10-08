@@ -1,14 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('registerForm');
     const documentoInput = document.getElementById('documento_reg'); // ID updated in login.php
-    const telefonoInput = document.getElementById('telefono');
     const passwordInput = document.getElementById('password_reg');
     const confirmPasswordInput = document.getElementById('confirm_password');
     const emailInput = document.getElementById('email_reg');
 
-    // Este script es de la pestana de registro de login.php. La vista suelta
-    // views/auth/register.php no tiene estos ids, y sin esta guarda el primer
-    // addEventListener sobre null tumbaba el script entero en esa pagina.
+    // Este script es de la cara de registro de login.php (D1: la única página de registro).
     if (!registerForm || !documentoInput || !passwordInput || !emailInput) return;
 
     const submitBtn = registerForm.querySelector('button[type="submit"]');
@@ -33,14 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Límites Estrictos y Validaciones en Tiempo Real ──
     
-    // Solo números en documento y teléfono
+    // Solo números en el documento. El teléfono lo filtra interacciones.js
+    // con la regla del servidor (data-caracteres, ValidadorTelefono).
     documentoInput.addEventListener('input', function() {
         this.value = this.value.replace(/[^0-9]/g, '');
     });
 
-    telefonoInput.addEventListener('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, '');
-    });
+    // HU-5.8 (RN-109): un correo que ya tiene cuenta no bloquea el registro;
+    // el servidor envía la confirmación para vincularlo a la clínica.
+    let correoExistente = false;
 
     // ── AJAX Validación de Documento ──
     const checkDocument = debounce(async (doc) => {
@@ -105,10 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await response.json();
             
-            if (data.extra && data.extra.exists) {
-                emailValidationMsg.innerHTML = '<i class="ri-close-circle-line"></i> Correo ya registrado';
-                emailValidationMsg.className = "validation-msg error";
-                isEmailValid = false;
+            correoExistente = Boolean(data.extra && data.extra.exists);
+            if (correoExistente) {
+                emailValidationMsg.innerHTML = '<i class="ri-information-line"></i> Ya tiene cuenta: te enviaremos un correo para vincularte a la clínica';
+                emailValidationMsg.className = "validation-msg";
+                isEmailValid = true;
             } else {
                 emailValidationMsg.innerHTML = '<i class="ri-checkbox-circle-line"></i> Correo disponible';
                 emailValidationMsg.className = "validation-msg success";
@@ -196,8 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ── Habilitar / Deshabilitar Botón ──
+    // Con un correo existente no se crea cuenta: su documento no importa aquí.
+    const documentoAceptable = () => isDocumentValid || correoExistente;
+
     function updateSubmitButton() {
-        if (isDocumentValid && isEmailValid && isPasswordValid) {
+        if (documentoAceptable() && isEmailValid && isPasswordValid) {
             submitBtn.disabled = false;
         } else {
             submitBtn.disabled = true;
@@ -223,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!isDocumentValid || !isEmailValid || !isPasswordValid) {
+        if (!documentoAceptable() || !isEmailValid || !isPasswordValid || !registerForm.checkValidity()) {
             event.preventDefault();
             Swal.fire({
                 icon: 'warning',
@@ -280,8 +282,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (datos.esperando_confirmacion) {
                 mostrarEspera(datos.email);
             } else {
-                // Sin verificación por correo configurada: se conserva el
-                // comportamiento anterior de volver al login con el aviso.
+                // HU-5.8: el correo ya tenía cuenta. O se le envió la
+                // confirmación del vínculo, o ya estaba vinculado y solo
+                // tiene que iniciar sesión.
+                restaurarBoton();
+                await Swal.fire({
+                    icon: datos.iniciar_sesion ? 'info' : 'success',
+                    text: datos.message,
+                    confirmButtonColor: '#0052FF'
+                });
                 window.location.href = 'index.php?action=login';
             }
         } catch (e) {

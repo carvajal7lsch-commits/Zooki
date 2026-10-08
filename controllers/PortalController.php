@@ -333,7 +333,7 @@ class PortalController
         RespuestaJson::modificacion(function (): array {
             $telefono = ValidadorTelefono::normalizar((string) ($_POST['telefono'] ?? ''));
             if (!ValidadorTelefono::esValido($telefono)) {
-                throw new InvalidArgumentException('El teléfono solo puede tener números, espacios, + y guiones (de ' . ValidadorTelefono::MIN . ' a ' . ValidadorTelefono::MAX . ' caracteres).');
+                throw new InvalidArgumentException(ValidadorTelefono::MENSAJE);
             }
 
             $usuarios = new Usuario($this->db);

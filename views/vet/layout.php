@@ -159,8 +159,9 @@
     <script src="js/avisos.js?v=3"></script>
     <script src="js/password-policy.js"></script>
     <script src="js/dashboard.js?v=7"></script>
-    <script src="js/medical-module.js?v=18"></script>
+    <script src="js/medical-module.js?v=19"></script>
     <script src="js/csrf.js"></script>
+    <script src="js/sesion.js?v=1"></script>
     <script src="js/extras.js"></script>
     <?php if (($_GET['action'] ?? '') === 'vet_consultas'): ?>
     <script src="js/consultas.js?v=1"></script>

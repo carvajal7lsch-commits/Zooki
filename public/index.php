@@ -1,20 +1,9 @@
 <?php
-// T-07: la cookie de sesion se configura ANTES de abrirla, si no los flags no
-// aplican. HttpOnly la esconde de JavaScript, SameSite=Lax corta el CSRF por
-// navegacion de terceros y Secure se activa solo bajo HTTPS para no romper el
-// desarrollo local por HTTP.
-$esHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path'     => '/',
-    'httponly' => true,
-    'secure'   => $esHttps,
-    'samesite' => 'Lax',
-]);
-
-session_start();
+// HU-T.16 y T-07: cookie segura, expiración por inactividad y regeneración
+// del identificador, en un solo lugar (helpers/Sesion.php).
+require_once "../helpers/Sesion.php";
+Sesion::iniciar();
+$esHttps = Sesion::esHttps($_SERVER);
 
 // TR-04: cabeceras de seguridad para toda respuesta. Se emiten aqui, en el
 // front controller, para que ninguna vista pueda olvidarlas.
@@ -180,6 +169,18 @@ switch ($action) {
         break;
 
     // HU-T.17: elegir o cambiar el contexto activo sin cerrar sesión.
+    // D1: la cuenta acepta la política vigente (RE-T.19.3) o completa su
+    // perfil de Google (RE-T.18.3) antes de continuar.
+    case "aceptar_politica":
+        require_once "../controllers/CuentaController.php";
+        (new CuentaController())->aceptarPolitica();
+        break;
+
+    case "completar_perfil":
+        require_once "../controllers/CuentaController.php";
+        (new CuentaController())->completarPerfil();
+        break;
+
     case "seleccionar_contexto":
         require_once "../controllers/ContextoController.php";
         (new ContextoController())->mostrar();

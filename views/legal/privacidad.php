@@ -21,8 +21,10 @@ $lp_cta_url   = $lp_logged_in ? 'index.php?action=dashboard' : 'index.php?action
 $lp_cta_text  = $lp_logged_in ? 'Ir al panel' : 'Iniciar sesión';
 $lp_version   = App::assetVersion();
 
-// Fecha de entrada en vigencia del documento (exigida por el decreto).
-$lp_vigencia  = '31 de agosto de 2026';
+// Fecha de entrada en vigencia y versión del documento (exigida por el decreto):
+// viven en PoliticaDatos, la misma versión que se guarda al aceptarla (HU-T.19).
+require_once __DIR__ . '/../../helpers/PoliticaDatos.php';
+$lp_vigencia  = PoliticaDatos::VIGENCIA;
 ?>
 <!DOCTYPE html>
 <html lang="es-CO">
@@ -63,7 +65,7 @@ $lp_vigencia  = '31 de agosto de 2026';
                 <ul class="lp-legal__meta">
                     <li><i class="ri-calendar-line" aria-hidden="true"></i> Vigente desde el <?php echo $lp_vigencia; ?></li>
                     <li><i class="ri-scales-3-line" aria-hidden="true"></i> Ley 1581 de 2012 · Decreto 1074 de 2015</li>
-                    <li><i class="ri-price-tag-3-line" aria-hidden="true"></i> Versión <?php echo $lp_version; ?></li>
+                    <li><i class="ri-price-tag-3-line" aria-hidden="true"></i> Versión <?php echo htmlspecialchars(PoliticaDatos::VERSION); ?></li>
                 </ul>
             </header>
 

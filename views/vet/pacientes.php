@@ -1,6 +1,8 @@
 <link rel="stylesheet" href="css/pacientes.css">
 <?php
 // views/mascotas/listado.php
+// D1: los teléfonos usan la regla del servidor (ValidadorTelefono).
+require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 ?>
 <!-- intl-tel-input CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
@@ -565,7 +567,7 @@
                             <div class="input-group">
                                 <label>Teléfono</label>
                                 <div class="input-wrapper no-icon">
-                                    <input type="text" name="telefono" id="new_owner_tel" required placeholder="Ej: 3001234567" maxlength="15" class="validate-tel">
+                                    <input type="tel" name="telefono" id="new_owner_tel" required placeholder="Ej: 3001234567" minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> class="validate-tel">
                                 </div>
                                 <span class="error-message display-none-error"></span>
                             </div>
@@ -963,7 +965,7 @@
                     <div class="input-group">
                         <label>Teléfono</label>
                         <div class="input-wrapper no-icon">
-                            <input type="text" name="telefono" id="edit_owner_tel" required placeholder="Ej: 3001234567" maxlength="15" class="validate-tel">
+                            <input type="tel" name="telefono" id="edit_owner_tel" required placeholder="Ej: 3001234567" minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> class="validate-tel">
                         </div>
                         <span class="error-message display-none-error"></span>
                     </div>

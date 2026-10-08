@@ -247,26 +247,48 @@
         return c && c.id_usuario ? c : null;
     }
 
+    // D1 (RN-109): la clínica desactiva el vínculo, pero no lo reactiva; para
+    // reactivarlo se envía la solicitud y el titular la confirma por correo.
+    async function solicitarVinculo(c, nombre) {
+        const ok = await zookiConfirmar(
+            'Le enviaremos a ' + nombre + ' un correo para que confirme el vínculo con esta clínica. Quedará activo cuando lo confirme.',
+            '¿Enviar la solicitud?',
+            'Enviar'
+        );
+        if (!ok) return null;
+        const datos = new FormData();
+        datos.append('identificador', c.email || '');
+        return pedir('index.php?action=solicitar_vinculo_propietario_ajax', datos);
+    }
+
     async function cambiarEstadoCliente(interruptor) {
         const nombre = interruptor.dataset.nombre;
-        if (!(await confirmarDesactivar(interruptor, '¿Desactivar el vínculo de ' + nombre + ' con esta clínica? Su cuenta y sus otras clínicas no cambian.'))) return;
         const activar = interruptor.checked;
+        // El interruptor no se enciende solo: el vínculo sigue inactivo hasta que confirme.
+        if (activar) interruptor.checked = false;
+        if (!activar && !(await confirmarDesactivar(interruptor, '¿Desactivar el vínculo de ' + nombre + ' con esta clínica? Su cuenta y sus otras clínicas no cambian.'))) return;
         interruptor.disabled = true;
         const c = await cliente(interruptor.dataset.id);
         let r = { success: false, message: 'No se pudo cargar el cliente.' };
+        if (c && activar) {
+            r = await solicitarVinculo(c, nombre);
+            interruptor.disabled = false;
+            if (r) mensaje(r.success ? 'success' : 'error', r.message || 'No se pudo enviar la solicitud.');
+            return;
+        }
         if (c) {
             const datos = new FormData();
             datos.append('id_usuario', c.id_usuario);
             datos.append('nombre_completo', c.nombre_completo || '');
             datos.append('telefono', c.telefono || '');
-            datos.append('estado', activar ? '1' : '0');
+            datos.append('estado', '0');
             r = await pedir('index.php?action=actualizar_propietario_ajax', datos);
         }
         if (r.success) {
-            zookiRecargarConAviso(activar ? 'Vínculo activado.' : 'Vínculo desactivado.');
+            zookiRecargarConAviso('Vínculo desactivado.');
             return;
         }
-        interruptor.checked = !activar;
+        interruptor.checked = true;
         interruptor.disabled = false;
         mensaje('error', r.message || 'No se pudo cambiar el vínculo.');
     }
@@ -291,6 +313,10 @@
         formCliente.elements.nombre_completo.value = c.nombre_completo || '';
         formCliente.elements.telefono.value = c.telefono || '';
         formCliente.elements.estado.value = String(c.estado);
+        // D1 (RN-109): un vínculo inactivo no se reactiva desde aquí.
+        const inactivo = String(c.estado) !== '1';
+        formCliente.elements.estado.querySelector('option[value="1"]').disabled = inactivo;
+        modalCliente.querySelector('[data-ayuda-vinculo]').hidden = !inactivo;
         modalCliente.querySelector('[data-cliente-identidad]').textContent =
             [(c.tipo_documento || '') + ' ' + (c.documento || ''), c.email || ''].map((v) => v.trim()).filter(Boolean).join(' · ');
         modalCliente.classList.add('is-open');

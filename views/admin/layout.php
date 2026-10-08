@@ -152,6 +152,7 @@
     <script src="js/password-policy.js"></script>
     <script src="js/dashboard.js?v=7"></script>
     <script src="js/csrf.js"></script>
+    <script src="js/sesion.js?v=1"></script>
     <script src="js/extras.js"></script>
     <?php if (!isset($content_view)): ?>
     <script src="js/panel-admin.js?v=1"></script>

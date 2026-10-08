@@ -301,14 +301,6 @@ async function loadOwners() {
     } catch (error) { zookiAviso('No se pudieron cargar los propietarios de esta clínica.'); }
 }
 
-async function toggleUserStatus(id, estado) {
-    const owner=await pedirJson(`index.php?action=get_propietario_ajax&id_usuario=${encodeURIComponent(id)}`);
-    const datos=new FormData();
-    Object.entries({id_usuario:id,nombre_completo:owner.nombre_completo,telefono:owner.telefono,estado}).forEach(([k,v])=>datos.set(k,v));
-    const res=await (await fetch('index.php?action=actualizar_propietario_ajax',{method:'POST',body:datos})).json();
-    if (!res.success) zookiAviso(res.message); else loadOwners();
-}
-
 function togglePetStatus(id, newStatus) {
     const actionWord = newStatus === 1 ? 'activada' : 'desactivada';
     
@@ -644,10 +636,14 @@ async function editOwner(doc) {
             const toggle = document.getElementById('toggle_edit_owner_estado');
             if (toggle) {
                 toggle.checked = (o.estado == 1);
-                // Disparar evento change manualmente para actualizar textos
+                // D1 (RN-109): la clínica desactiva el vínculo, pero no lo
+                // reactiva; se reactiva cuando el propietario lo confirma por correo.
+                toggle.disabled = o.estado != 1;
                 toggle.dispatchEvent(new Event('change'));
+                const texto = document.getElementById('text_edit_owner_estado');
+                if (texto && o.estado != 1) texto.textContent = 'Inactivo: se reactiva cuando el propietario confirma por correo';
             }
-            
+
             openModal('modalEditarPropietario');
         }
     } catch (e) { console.error(e); }
@@ -2616,10 +2612,8 @@ function validarEmail(input) {
 }
 
 function validarTelefono(input) {
-    const filteredValue = input.value.replace(/[^0-9+\s\-\(\)]/g, '');
-    if (filteredValue !== input.value) {
-        input.value = filteredValue;
-    }
+    // D1: los caracteres los filtra interacciones.js con la regla del servidor
+    // (data-caracteres de ValidadorTelefono); aquí solo se avisa el formato.
 
     const inputGroup = input.closest('.input-group');
     if (!inputGroup) return;

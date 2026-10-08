@@ -233,13 +233,17 @@ class AutorizacionRolTest extends TestCase
         }
     }
 
-    /** HU-T.17: elegir el contexto, salir y cambiar la contrasena solo exigen identidad. */
+    /**
+     * HU-T.17: elegir el contexto, salir y cambiar la contrasena solo exigen
+     * identidad. D1 (RE-T.19.3): aceptar la politica vigente tambien, porque
+     * se pide antes de entrar a cualquier contexto.
+     */
     public function testLasAccionesSinContextoSonLasMinimas()
     {
         $sinContexto = self::lista('accionesSinContexto');
         sort($sinContexto);
 
-        $this->assertSame(['cambiar_contexto', 'cambiar_password', 'cambiar_password_ajax', 'logout', 'seleccionar_contexto'], $sinContexto);
+        $this->assertSame(['aceptar_politica', 'cambiar_contexto', 'cambiar_password', 'cambiar_password_ajax', 'logout', 'seleccionar_contexto'], $sinContexto);
     }
 
     /** El login y el registro no pueden quedar detras del control de rol. */

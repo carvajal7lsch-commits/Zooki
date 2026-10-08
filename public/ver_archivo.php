@@ -20,18 +20,9 @@ require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../helpers/Security.php';
 require_once __DIR__ . '/../models/ArchivoClinico.php';
 
-// M2-07: mismos parámetros de cookie que el front controller.
-$esHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path'     => '/',
-    'httponly' => true,
-    'secure'   => $esHttps,
-    'samesite' => 'Lax',
-]);
-session_start();
+// M2-07 y HU-T.16: la misma sesión que el front controller.
+require_once __DIR__ . '/../helpers/Sesion.php';
+Sesion::iniciar();
 
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');

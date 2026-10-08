@@ -48,6 +48,12 @@ class Usuario
         return $this->uno('SELECT ' . self::COLUMNAS . ' FROM usuarios u WHERE u.email = ?', [$email]);
     }
 
+    /** RN-G21: la cuenta a la que ya está ligada una cuenta de Google. */
+    public function buscarPorGoogleUid(string $googleUid): ?array
+    {
+        return $this->uno('SELECT ' . self::COLUMNAS . ' FROM usuarios u WHERE u.google_uid = ?', [$googleUid]);
+    }
+
     /**
      * RE-T.1.1 — La persona entra con su documento o con su correo. Es la
      * única lectura que trae el hash de la contraseña (NULL en las cuentas

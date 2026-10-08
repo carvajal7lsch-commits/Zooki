@@ -465,7 +465,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
                             <div class="search-input-wrapper campo">
                                 <i class="ri-phone-line" aria-hidden="true"></i>
                                 <?php // C9.1: los mismos límites que valida el servidor (ValidadorTelefono). ?>
-                                <input type="tel" name="telefono" id="portal_contact_phone" required autocomplete="tel" inputmode="tel" placeholder="Tu número de teléfono" minlength="<?= ValidadorTelefono::MIN ?>" maxlength="<?= ValidadorTelefono::MAX ?>" pattern="<?= htmlspecialchars(ValidadorTelefono::patronHtml()) ?>" data-caracteres="<?= htmlspecialchars(ValidadorTelefono::CARACTERES) ?>" title="Solo números, espacios, + y guiones (de <?= ValidadorTelefono::MIN ?> a <?= ValidadorTelefono::MAX ?> caracteres)." value="<?= htmlspecialchars($usuarioData['telefono'] ?? '') ?>">
+                                <input type="tel" name="telefono" id="portal_contact_phone" required autocomplete="tel" placeholder="Tu número de teléfono" minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> value="<?= htmlspecialchars($usuarioData['telefono'] ?? '') ?>">
                             </div>
                         </div>
                         <button type="submit" class="btn-primary btn-primary--compacto" id="btnSubmitContactEdit">

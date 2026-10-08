@@ -22,7 +22,7 @@ $buscable = static fn (array $p): string => mb_strtolower($p['nombre_completo'] 
 $iconoRol = static fn (int $rol): string => $rol === Roles::ADMIN ? 'bi-shield-shaded' : 'bi-heart-pulse';
 $yo = Contexto::idUsuario();
 $contexto = Contexto::actual();
-$telefonoHtml = 'maxlength="' . ValidadorTelefono::MAX . '" pattern="' . $e(ValidadorTelefono::patronHtml()) . '" data-caracteres="' . $e(ValidadorTelefono::CARACTERES) . '"';
+$telefonoHtml = ValidadorTelefono::atributosHtml();
 ?>
 <div class="users-container" id="usuariosModulo" data-vista="tarjetas">
     <div class="header-container-white">
@@ -295,7 +295,7 @@ $telefonoHtml = 'maxlength="' . ValidadorTelefono::MAX . '" pattern="' . $e(Vali
                     </div>
                     <div class="input-group">
                         <label for="usuarioTelefono">Teléfono</label>
-                        <input type="tel" id="usuarioTelefono" name="telefono" inputmode="tel" <?= $telefonoHtml ?>>
+                        <input type="tel" id="usuarioTelefono" name="telefono" <?= $telefonoHtml ?>>
                     </div>
                     <div class="input-group">
                         <label for="usuarioEstado">Estado en la clínica</label>
@@ -336,7 +336,7 @@ $telefonoHtml = 'maxlength="' . ValidadorTelefono::MAX . '" pattern="' . $e(Vali
                     </div>
                     <div class="input-group">
                         <label for="clienteTelefono">Teléfono</label>
-                        <input type="tel" id="clienteTelefono" name="telefono" required inputmode="tel" minlength="<?= ValidadorTelefono::MIN ?>" <?= $telefonoHtml ?>>
+                        <input type="tel" id="clienteTelefono" name="telefono" required minlength="<?= ValidadorTelefono::MIN ?>" <?= $telefonoHtml ?>>
                     </div>
                     <div class="input-group">
                         <label for="clienteEstado">Vínculo con la clínica</label>
@@ -344,6 +344,7 @@ $telefonoHtml = 'maxlength="' . ValidadorTelefono::MAX . '" pattern="' . $e(Vali
                             <option value="1">Activo</option>
                             <option value="0">Inactivo</option>
                         </select>
+                        <small data-ayuda-vinculo hidden>Para reactivarlo usa el interruptor: el propietario lo confirma por correo.</small>
                     </div>
                 </div>
             </div>
@@ -380,4 +381,4 @@ $telefonoHtml = 'maxlength="' . ValidadorTelefono::MAX . '" pattern="' . $e(Vali
     </div>
 </div>
 
-<script src="js/usuarios.js?v=3"></script>
+<script src="js/usuarios.js?v=4"></script>

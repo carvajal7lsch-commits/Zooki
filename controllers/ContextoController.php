@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
 require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../helpers/Sesion.php';
 
 /**
  * HU-T.17 — Elegir y cambiar el contexto activo sin cerrar sesión.
@@ -73,18 +74,24 @@ class ContextoController
      */
     public function cambiar(): void
     {
+        header('Location: index.php?action=' . $this->aplicarCambio((string) ($_POST['contexto'] ?? '')));
+        exit;
+    }
+
+    /** Aplica el cambio y devuelve el destino; separado de la redirección para probarlo. */
+    public function aplicarCambio(string $clave): string
+    {
         $idUsuario = (int) Contexto::idUsuario();
         $disponibles = $this->usuario->contextosDe($idUsuario) ?? [];
-        $elegido = Contexto::buscar($disponibles, (string) ($_POST['contexto'] ?? ''));
+        $elegido = Contexto::buscar($disponibles, $clave);
 
         if ($elegido === null) {
-            Security::denegarRecursoAjeno('usuario_clinica', $_POST['contexto'] ?? null);
+            Security::denegarRecursoAjeno('usuario_clinica', $clave);
         }
 
-        // T-02: identificador de sesión nuevo al cambiar de permisos.
-        session_regenerate_id(true);
+        // T-02 y RE-T.16.3: identificador de sesión nuevo al cambiar de permisos.
+        Sesion::regenerar();
         self::entrar($elegido, $disponibles, $this->auditoria);
-        header('Location: index.php?action=' . Contexto::destino($elegido));
-        exit;
+        return Contexto::destino($elegido);
     }
 }

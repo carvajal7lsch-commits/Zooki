@@ -13,6 +13,9 @@ require_once '../helpers/PoliticaPassword.php';
 require_once '../helpers/Autenticador.php';
 require_once '../helpers/Contexto.php';
 require_once __DIR__ . '/ContextoController.php';
+require_once '../models/RegistroPropietario.php';
+require_once '../helpers/InicioSesion.php';
+require_once '../helpers/EnlaceCuenta.php';
 
 class AuthController {
     private $db;
@@ -21,6 +24,7 @@ class AuthController {
     private $verificacionEmailModel;
     private $emailService;
     private $auditoria;
+    private RegistroPropietario $registro;
 
     public function __construct() {
         $database = new Database();
@@ -30,6 +34,7 @@ class AuthController {
         $this->verificacionEmailModel = new VerificacionEmail($this->db);
         $this->emailService = new EmailService();
         $this->auditoria = new Auditoria($this->db);
+        $this->registro = new RegistroPropietario($this->db);
     }
 
     public function login() {
@@ -98,9 +103,20 @@ class AuthController {
                     $this->redirectWithError(self::MENSAJE_CREDENCIALES);
             }
         } else {
-            // Si es GET, mostramos la vista
-            require_once '../views/auth/login.php';
+            $this->mostrarAcceso(false, null);
         }
+    }
+
+    /**
+     * Inicio de sesión y registro comparten página (cara frontal y trasera).
+     * HU-5.8: el registro siempre es en una clínica; desde su enlace
+     * (index.php?action=register&clinica=ID) llega ya elegida.
+     */
+    private function mostrarAcceso(bool $abrirRegistro, $clinica): void
+    {
+        $clinicasRegistro = $this->registro->clinicasDisponibles();
+        $clinicaElegida = ctype_digit((string) $clinica) ? (int) $clinica : 0;
+        require_once '../views/auth/login.php';
     }
 
     /** RE-T.1.5: el mismo mensaje para cualquier credencial inválida. */
@@ -112,35 +128,8 @@ class AuthController {
      */
     private function iniciarSesion(array $usuario, string $metodo): string
     {
-        // T-02: identificador de sesion nuevo al elevar privilegios (session fixation).
-        session_regenerate_id(true);
-        unset($_SESSION['registro_pendiente'], $_SESSION['google_pending_register']);
-
-        $idUsuario = (int) $usuario['id_usuario'];
-        Contexto::iniciarIdentidad($idUsuario, (string) $usuario['nombre_completo'], (int) $usuario['debe_cambiar_password'] === 1, $metodo);
-
-        // El inicio de sesión es de la persona, no de una clínica.
-        $this->auditoria->log(
-            $idUsuario,
-            'LOGIN',
-            'usuarios',
-            $idUsuario,
-            null,
-            null,
-            $metodo === 'google' ? 'Inicio de sesion con Google' : 'Inicio de sesión exitoso',
-            null
-        );
-
-        $disponibles = $this->usuarioModel->contextosDe($idUsuario) ?? [];
-        if (count($disponibles) === 1) {
-            ContextoController::entrar($disponibles[0], $disponibles, $this->auditoria);
-        }
-
-        // T-05: con contraseña temporal, primero el cambio (Security lo exige igual).
-        if ((int) $usuario['debe_cambiar_password'] === 1) {
-            return 'cambiar_password';
-        }
-        return count($disponibles) === 1 ? Contexto::destino($disponibles[0]) : 'seleccionar_contexto';
+        // D1: regeneración, política vigente (RE-T.19.3) y perfil (RE-T.18.3) en un solo lugar.
+        return (new InicioSesion($this->db))->abrir($usuario, $metodo);
     }
 
     public function solicitarResetPasswordAjax() {
@@ -371,103 +360,80 @@ class AuthController {
     }
 
     public function register() {
-        require_once '../views/auth/register.php';
+        $this->mostrarAcceso(true, $_GET['clinica'] ?? null);
     }
 
+    /**
+     * HU-5.8 y HU-T.19 — Autorregistro del propietario en la clínica que
+     * eligió. RegistroPropietario decide; aquí se envían los correos.
+     */
     public function processRegister() {
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            // Validar token CSRF
-            if (!Csrf::validate('register')) {
-                $this->respuestaRegistro(false, "Token de seguridad inválido. Por favor intenta de nuevo.");
-            }
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            return;
+        }
+        if (!Csrf::validate('register')) {
+            $this->respuestaRegistro(false, "Token de seguridad inválido. Por favor intenta de nuevo.");
+        }
 
-            // Limpiar datos
-            $tipo_documento = trim($_POST['tipo_documento'] ?? '');
-            $documento = trim($_POST['documento'] ?? '');
-            $nombre_completo = trim($_POST['nombre_completo'] ?? '');
-            $telefono = trim($_POST['telefono'] ?? '');
-            $email = trim(strtolower($_POST['email'] ?? ''));
-            $password = $_POST['password'] ?? '';
-            $confirm_password = $_POST['confirm_password'] ?? '';
+        try {
+            $registro = $this->registro->conFormulario($_POST, Auditoria::ipCliente());
+        } catch (InvalidArgumentException $e) {
+            $this->respuestaRegistro(false, $e->getMessage());
+        } catch (Throwable $e) {
+            error_log('HU-5.8: registro fallido - ' . $e->getMessage());
+            $this->respuestaRegistro(false, "Ocurrió un error al procesar el registro. Intenta más tarde.");
+        }
 
-            // Validaciones básicas del servidor
-            if (empty($tipo_documento) || empty($documento) || empty($nombre_completo) || empty($telefono) || empty($email) || empty($password)) {
-                $this->respuestaRegistro(false, "Todos los campos son obligatorios.");
-            }
-
-            // La Ley 1581 de 2012 exige autorización previa, expresa e informada del
-            // titular. El atributo `required` del navegador se puede eludir, así que la
-            // ausencia de consentimiento debe bloquear el registro también aquí.
-            if (empty($_POST['acepta_datos'])) {
-                $this->respuestaRegistro(false, "Debes autorizar el tratamiento de tus datos personales para crear la cuenta.");
-            }
-
-            if ($password !== $confirm_password) {
-                $this->respuestaRegistro(false, "Las contraseñas no coinciden.");
-            }
-
-            // HU-36: el registro era el flujo mas debil (6 caracteres, sin
-            // complejidad) y por tanto el que definia la politica real.
-            $motivoPassword = PoliticaPassword::validar($password, [$documento, $nombre_completo, $email]);
-            if ($motivoPassword !== null) {
-                $this->respuestaRegistro(false, $motivoPassword);
-            }
-
-            // RN-G06: documento y correo únicos en la plataforma.
-            if ($this->usuarioModel->existeDocumento($documento)) {
-                $this->respuestaRegistro(false, "El documento ya está registrado en el sistema.");
-            }
-            if ($this->usuarioModel->existeEmail($email)) {
-                $this->respuestaRegistro(false, "El correo electrónico ya está registrado.");
-            }
-
-            // Se crea la identidad, sin rol. El vínculo con una clínica como
-            // propietario (propietario_clinica) y la prueba del consentimiento
-            // llegan con HU-5.8 y HU-T.19 (etapa D); hasta entonces la cuenta
-            // entra al selector sin contextos disponibles.
-            $idUsuario = $this->usuarioModel->crear([
-                'documento' => $documento,
-                'tipo_documento' => $tipo_documento,
-                'nombre_completo' => $nombre_completo,
-                'telefono' => $telefono,
-                'email' => $email,
-                'password' => password_hash($password, PASSWORD_DEFAULT),
-            ]);
-
-            if ($idUsuario > 0) {
-                // HU-36 (VD-SEG-08). Antes esto iniciaba sesión de una vez, así
-                // que cualquiera podía registrarse con el correo de otra persona
-                // y quedar dentro. Ahora la cuenta queda pendiente hasta que se
-                // abra el enlace que llega a ese buzón.
-                $tokenPlano = bin2hex(random_bytes(32));
-                $tokenHash = password_hash($tokenPlano, PASSWORD_DEFAULT);
-                $expira = (new DateTime('+24 hours'))->format('Y-m-d H:i:s');
-                $verificacionId = $this->verificacionEmailModel->crear($idUsuario, $email, $tokenHash, $expira);
-
+        $email = $registro['email'];
+        $clinica = $registro['clinica'];
+        switch ($registro['resultado']) {
+            case 'nueva':
+            case 'pendiente':
+                $enlace = $this->buildVerificacionLink($registro['enlace']['id'], $registro['enlace']['token']);
                 $this->emailService->limpiarDirecciones();
-                $enlace = $this->buildVerificacionLink($verificacionId, $tokenPlano);
-                $this->emailService->enviarCorreoVerificacion($email, $nombre_completo, $enlace, 24);
+                $this->emailService->enviarCorreoVerificacion($email, $registro['nombre'], $enlace, RegistroPropietario::VIGENCIA_HORAS);
 
-                $this->auditoria->log($idUsuario, 'INSERT', 'usuarios', $idUsuario, null, null, 'Auto-registro, pendiente de verificar correo', null);
-
-                // La pagina de registro se queda esperando la confirmacion en vez
-                // de recargar: aqui se guarda a quien hay que vigilar, para que
-                // el sondeo no pueda preguntar por una cuenta ajena.
+                // La página de registro espera la confirmación sin recargar:
+                // solo vigila a quien acaba de registrarse en este navegador.
                 $_SESSION['registro_pendiente'] = [
-                    'id_usuario' => $idUsuario,
+                    'id_usuario' => $registro['id_usuario'],
                     'email' => $email,
                     'desde' => time(),
                 ];
-
                 $this->respuestaRegistro(
                     true,
-                    "Cuenta creada. Te enviamos un correo a $email para confirmar tu dirección.",
+                    "Te enviamos un correo a $email para confirmar tu dirección. Al confirmarlo quedarás vinculado a $clinica.",
                     ['email' => $email, 'esperando_confirmacion' => true]
                 );
-            } else {
-                $this->respuestaRegistro(false, "Ocurrió un error al procesar el registro. Intenta más tarde.");
-            }
+
+            case 'existente':
+                // RE-5.8.2/3: no se duplica la cuenta; su dueño confirma el vínculo por correo.
+                if ($registro['enlace'] !== null) {
+                    $this->enviarConfirmacionDeVinculo($registro);
+                }
+                $this->respuestaRegistro(
+                    true,
+                    "Ese correo ya tiene cuenta en Zooki. Te enviamos un correo para confirmar que es tuyo y vincularte a $clinica.",
+                    ['email' => $email, 'esperando_confirmacion' => false]
+                );
+
+            default:
+                $this->respuestaRegistro(
+                    true,
+                    "Ya tienes cuenta y estás vinculado a $clinica. Inicia sesión.",
+                    ['email' => $email, 'iniciar_sesion' => true]
+                );
         }
+    }
+
+    private function enviarConfirmacionDeVinculo(array $registro): void
+    {
+        $enlace = EnlaceCuenta::crear('confirmar_vinculo_propietario', $registro['enlace']['id'], $registro['enlace']['token']);
+        $texto = 'Pediste vincular tu cuenta de Zooki a ' . $registro['clinica'] . ' desde su registro. Confirma solo si fuiste tú; el enlace vence en 24 horas.';
+        $html = '<p>' . htmlspecialchars($texto, ENT_QUOTES, 'UTF-8') . '</p>'
+            . '<p><a href="' . htmlspecialchars($enlace, ENT_QUOTES, 'UTF-8') . '">Confirmar el vínculo</a></p>';
+        $this->emailService->limpiarDirecciones();
+        $this->emailService->enviarCorreoPersonalizado($registro['email'], $registro['nombre'], 'Confirma tu vínculo con ' . $registro['clinica'], $html);
     }
 
     private function redirectWithError($message) {
@@ -562,54 +528,31 @@ class AuthController {
      */
     public function verificarEmail()
     {
-        $id = (int) ($_GET['id'] ?? 0);
-        $tokenPlano = $_GET['token'] ?? '';
-
-        // Mensaje unico para todos los fallos: no se distingue "no existe" de
+        // Mensaje único para todos los fallos: no se distingue "no existe" de
         // "ya usado" ni de "vencido", para no confirmar que un id es real.
-        $mensajeError = 'El enlace de confirmación no es válido o ya fue utilizado.';
-
-        if ($id <= 0 || $tokenPlano === '') {
-            $_SESSION['error_login'] = $mensajeError;
+        $verificado = $this->registro->verificarRegistro((int) ($_GET['id'] ?? 0), (string) ($_GET['token'] ?? ''));
+        if ($verificado === null) {
+            $_SESSION['error_login'] = 'El enlace de confirmación no es válido o ya fue utilizado.';
             header('Location: index.php?action=login');
             exit();
         }
 
-        $verificacion = $this->verificacionEmailModel->buscarPorId($id);
+        $usuario = $verificado['usuario'];
+        $idUsuario = (int) $usuario['id_usuario'];
+        // RE-5.8.4: recién ahora se da la bienvenida, con el enlace al portal.
+        $this->emailService->limpiarDirecciones();
+        $this->emailService->enviarCorreoBienvenida($usuario['email'], $usuario['nombre_completo']);
 
-        if (!$verificacion
-            || ($verificacion['proposito'] ?? 'registro') !== 'registro'
-            || (int) $verificacion['used'] === 1
-            || strtotime($verificacion['expires_at']) <= time()
-            || !password_verify($tokenPlano, $verificacion['token_hash'])) {
-            $_SESSION['error_login'] = $mensajeError;
-            header('Location: index.php?action=login');
-            exit();
-        }
-
-        $this->verificacionEmailModel->marcarUsada($id);
-
-        $idUsuario = (int) $verificacion['id_usuario'];
-        $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, null, null, 'Correo electronico confirmado', null);
-
-        // Recien ahora se da la bienvenida: antes no habia certeza de que el
-        // buzon fuera del titular.
-        $usuario = $this->usuarioModel->buscarPorId($idUsuario);
-        if ($usuario) {
-            $this->emailService->limpiarDirecciones();
-            $this->emailService->enviarCorreoBienvenida($verificacion['email'], $usuario['nombre_completo']);
-        }
-
-        // Si quien abre el enlace es el mismo navegador que se acaba de
-        // registrar, ya no tiene sentido mandarlo al login: el correo quedo
-        // demostrado, asi que entra directo.
+        // El mismo navegador que se registró entra directo: el correo quedó demostrado.
         $pendiente = $_SESSION['registro_pendiente'] ?? null;
-        if ($usuario && (int) $usuario['estado'] === 1 && $pendiente && (int) ($pendiente['id_usuario'] ?? 0) === $idUsuario) {
+        if ((int) $usuario['estado'] === 1 && $pendiente && (int) ($pendiente['id_usuario'] ?? 0) === $idUsuario) {
             header('Location: index.php?action=' . $this->iniciarSesion($usuario, 'password'));
             exit();
         }
 
-        $_SESSION['success_register'] = 'Tu correo quedó confirmado. Ya puedes iniciar sesión.';
+        $_SESSION['success_register'] = $verificado['clinica'] !== null
+            ? 'Tu correo quedó confirmado y quedaste vinculado a ' . $verificado['clinica'] . '. Ya puedes iniciar sesión.'
+            : 'Tu correo quedó confirmado. Ya puedes iniciar sesión.';
         header('Location: index.php?action=login');
         exit();
     }
@@ -882,136 +825,101 @@ class AuthController {
 
     public function processGoogleLoginAjax()
     {
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $accessToken = $_POST['access_token'] ?? '';
-            $credential = $_POST['credential'] ?? ''; // Para Google One Tap
-            
-            if (empty($accessToken) && empty($credential)) {
-                $this->jsonResponse(false, "No se recibió token de autenticación de Google.");
-                return;
-            }
-
-            // HU-36 (VD-SEG-10). Antes se pedía el perfil a Google y bastaba un
-            // HTTP 200. Eso confirma que el token es de Google, pero no que sea
-            // PARA Zooki: un token emitido para otra aplicación pasaba igual, y
-            // con él se entraba a la cuenta de cualquier usuario. Ahora se
-            // consulta tokeninfo (que sí devuelve `aud`) y se compara contra
-            // nuestro client_id antes de mirar el correo.
-            $esIdToken = empty($accessToken);
-            $token = $esIdToken ? $credential : $accessToken;
-
-            $payload = GoogleToken::consultar($token, $esIdToken);
-            if ($payload === null) {
-                $this->jsonResponse(false, "No se pudo validar el token con Google.");
-                return;
-            }
-
-            $motivo = GoogleToken::motivoDeRechazo($payload, GoogleToken::clientId(), $esIdToken);
-            if ($motivo !== null) {
-                // Al cliente se le responde en genérico (HU-38); el motivo real
-                // queda en el log del servidor para poder diagnosticar.
-                error_log('HU-36: token de Google rechazado - ' . $motivo);
-                $this->jsonResponse(false, "No se pudo validar el token con Google.");
-                return;
-            }
-
-            $email = trim(strtolower($payload['email']));
-            $nombre_completo = $payload['name'] ?? '';
-
-            // tokeninfo no siempre trae el nombre; para el access_token se
-            // completa con el perfil, que ya sabemos que pertenece a Zooki.
-            if ($nombre_completo === '' && !$esIdToken) {
-                $perfil = GoogleToken::perfil($accessToken);
-                $nombre_completo = $perfil['name'] ?? '';
-            }
-
-            // Se busca la cuenta por el correo que Google acaba de verificar.
-            $intento = (new Autenticador($this->usuarioModel, $this->verificacionEmailModel))->conGoogle($email);
-
-            if ($intento['resultado'] === 'inactiva') {
-                // Google ya demostró que el buzón es de quien entra: aquí sí se
-                // le puede decir por qué no pasa.
-                $this->jsonResponse(false, "Tu cuenta está inactiva. Contacta al administrador.");
-                return;
-            }
-
-            if ($intento['resultado'] === 'ok') {
-                $destino = $this->iniciarSesion($intento['usuario'], 'google');
-                $this->jsonResponse(true, "Login exitoso", ['action' => 'login', 'redirect' => 'index.php?action=' . $destino]);
-            } else {
-                // Usuario NO existe, requerimos completar su registro (Cédula y Teléfono)
-                // Usamos $_SESSION temporal para guardar su info confirmada por Google.
-                // El `sub` liga la cuenta de Google (usuarios.google_uid, MER §2).
-                $_SESSION['google_pending_register'] = [
-                    'email' => $email,
-                    'nombre_completo' => $nombre_completo,
-                    'google_uid' => isset($payload['sub']) ? (string) $payload['sub'] : null,
-                    'verified' => true
-                ];
-
-                $this->jsonResponse(true, "Completa tu registro", [
-                    'action' => 'complete_profile',
-                    'email' => $email,
-                    'name' => $nombre_completo
-                ]);
-            }
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            return;
         }
+        $accessToken = $_POST['access_token'] ?? '';
+        $credential = $_POST['credential'] ?? ''; // Para Google One Tap
+        if (empty($accessToken) && empty($credential)) {
+            $this->jsonResponse(false, "No se recibió token de autenticación de Google.");
+        }
+
+        // HU-36 (VD-SEG-10), RN-G12: el token debe ser PARA Zooki (aud), no solo de Google.
+        $esIdToken = empty($accessToken);
+        $token = $esIdToken ? $credential : $accessToken;
+        $payload = GoogleToken::consultar($token, $esIdToken);
+        $motivo = $payload === null ? 'sin respuesta' : GoogleToken::motivoDeRechazo($payload, GoogleToken::clientId(), $esIdToken);
+        if ($motivo !== null) {
+            // Al cliente se le responde en genérico (HU-38); el motivo real va al log.
+            error_log('HU-36: token de Google rechazado - ' . $motivo);
+            $this->jsonResponse(false, "No se pudo validar el token con Google.");
+        }
+
+        $email = trim(strtolower($payload['email']));
+        $nombre = $payload['name'] ?? '';
+        // tokeninfo no siempre trae el nombre; con el access_token se completa con el perfil.
+        if ($nombre === '' && !$esIdToken) {
+            $perfil = GoogleToken::perfil($accessToken);
+            $nombre = $perfil['name'] ?? '';
+        }
+        $googleUid = isset($payload['sub']) ? (string) $payload['sub'] : null;
+
+        $intento = (new Autenticador($this->usuarioModel, $this->verificacionEmailModel))->conGoogle($email);
+        if ($intento['resultado'] === 'inactiva') {
+            // Google ya demostró que el buzón es de quien entra: aquí sí se le dice por qué no pasa.
+            $this->jsonResponse(false, "Tu cuenta está inactiva. Contacta al administrador.");
+        }
+        if ($intento['resultado'] === 'ok') {
+            // RN-G21: Google se liga a la cuenta existente.
+            $usuario = $this->registro->vincularGoogle($intento['usuario'], $googleUid);
+            $destino = $this->iniciarSesion($usuario, 'google');
+            $this->jsonResponse(true, "Login exitoso", ['action' => 'login', 'redirect' => 'index.php?action=' . $destino]);
+        }
+
+        // RE-T.18.2: correo nuevo. No se guarda nada hasta que acepte la
+        // política; lo que Google confirmó vive solo en la sesión.
+        $_SESSION['google_pendiente'] = [
+            'email' => $email,
+            'nombre_completo' => $nombre,
+            'google_uid' => $googleUid,
+            'desde' => time(),
+        ];
+        $clinica = $_POST['id_clinica'] ?? '';
+        $this->jsonResponse(true, "Acepta la política para crear tu cuenta", [
+            'action' => 'aceptar_registro',
+            'email' => $email,
+            'name' => $nombre,
+            'id_clinica' => ctype_digit((string) $clinica) ? (int) $clinica : 0,
+        ]);
     }
 
+    /** Lo que Google confirmó vale 15 minutos para aceptar la política. */
+    private const GOOGLE_PENDIENTE_SEGUNDOS = 900;
+
+    /**
+     * RE-T.18.2 (RN-G19, RN-G20) — Crea la cuenta de Google solo si el
+     * titular aceptó la política; la liga a la clínica elegida y la deja con
+     * el perfil por completar (RE-T.18.3).
+     */
     public function completeGoogleRegisterAjax()
     {
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            // Verificar que venga de un proceso de Google iniciado
-            if (!isset($_SESSION['google_pending_register'])) {
-                $this->jsonResponse(false, "Sesión de Google expirada o inválida. Intenta nuevamente.");
-                return;
-            }
-
-            $pendingData = $_SESSION['google_pending_register'];
-            $documento = trim($_POST['documento'] ?? '');
-            $tipo_documento = trim($_POST['tipo_documento'] ?? 'CC');
-            $telefono = trim($_POST['telefono'] ?? '');
-            
-            if (empty($documento) || empty($telefono)) {
-                $this->jsonResponse(false, "El documento y el teléfono son obligatorios.");
-                return;
-            }
-
-            // RN-G06: el documento es único en la plataforma.
-            if ($this->usuarioModel->existeDocumento($documento)) {
-                $this->jsonResponse(false, "Este documento ya se encuentra registrado en el sistema.");
-                return;
-            }
-
-            // La cuenta nace sin contraseña (password NULL, MER §2): se entra
-            // con Google hasta que su dueño cree una desde su perfil. Antes se
-            // guardaba un hash aleatorio que en la base parecía una contraseña real.
-            $idUsuario = $this->usuarioModel->crear([
-                'documento' => $documento,
-                'tipo_documento' => $tipo_documento,
-                'nombre_completo' => $pendingData['nombre_completo'],
-                'telefono' => $telefono,
-                'email' => $pendingData['email'],
-                'password' => null,
-                'google_uid' => $pendingData['google_uid'] ?? null,
-            ]);
-
-            if ($idUsuario > 0) {
-                // Enviar correo de bienvenida
-                $this->emailService->limpiarDirecciones();
-                $this->emailService->enviarCorreoBienvenida($pendingData['email'], $pendingData['nombre_completo']);
-
-                $this->auditoria->log($idUsuario, 'INSERT', 'usuarios', $idUsuario, null, null, 'Registro con Google', null);
-
-                // Como en el autorregistro, el vínculo con una clínica llega
-                // con HU-5.8 (etapa D): por ahora entra al selector sin contextos.
-                $usuario = $this->usuarioModel->buscarPorId($idUsuario);
-                $destino = $this->iniciarSesion($usuario, 'google');
-                $this->jsonResponse(true, "Registro exitoso", ['action' => 'login', 'redirect' => 'index.php?action=' . $destino]);
-            } else {
-                $this->jsonResponse(false, "Ocurrió un error al crear la cuenta. Intenta nuevamente.");
-            }
+        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+            return;
         }
+        if (!Csrf::validate('google')) {
+            $this->jsonResponse(false, "La página venció. Recárgala e intenta de nuevo.");
+        }
+        $pendiente = $_SESSION['google_pendiente'] ?? null;
+        if (!is_array($pendiente) || time() - (int) $pendiente['desde'] > self::GOOGLE_PENDIENTE_SEGUNDOS) {
+            unset($_SESSION['google_pendiente']);
+            $this->jsonResponse(false, "La conexión con Google venció. Vuelve a continuar con Google.");
+        }
+
+        try {
+            $idUsuario = $this->registro->conGoogle($pendiente, $_POST, Auditoria::ipCliente());
+        } catch (InvalidArgumentException $e) {
+            $this->jsonResponse(false, $e->getMessage());
+        } catch (Throwable $e) {
+            error_log('HU-T.18: registro con Google fallido - ' . $e->getMessage());
+            $this->jsonResponse(false, "Ocurrió un error al crear la cuenta. Intenta nuevamente.");
+        }
+
+        unset($_SESSION['google_pendiente']);
+        $usuario = $this->usuarioModel->buscarPorId($idUsuario);
+        $this->emailService->limpiarDirecciones();
+        $this->emailService->enviarCorreoBienvenida($usuario['email'], $usuario['nombre_completo']);
+        $destino = $this->iniciarSesion($usuario, 'google');
+        $this->jsonResponse(true, "Registro exitoso", ['action' => 'login', 'redirect' => 'index.php?action=' . $destino]);
     }
 
     private function jsonResponse(bool $success, string $message, array $extra = []): void

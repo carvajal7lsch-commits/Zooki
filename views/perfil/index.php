@@ -6,6 +6,7 @@
  * $perfil (cuenta en sesión), $rolNombre, $cuentaGoogle, $pideActual y
  * $cuenta (miembro desde, acceso anterior, intentos fallidos y actividad).
  */
+require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 $e = static fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $partes = array_values(array_filter(explode(' ', trim($perfil['nombre_completo'] ?? ''))));
 $iniciales = mb_strtoupper(mb_substr($partes[0] ?? '', 0, 1) . mb_substr($partes[1] ?? '', 0, 1)) ?: 'U';
@@ -55,7 +56,8 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 </div>
                 <div class="perfil-field">
                     <label for="perfilTelefono">Teléfono</label>
-                    <input type="tel" id="perfilTelefono" class="perfil-input" value="<?= $e($perfil['telefono']) ?>" placeholder="Ej. 300 123 4567" autocomplete="tel">
+                    <?php // D1: la misma regla de teléfono que valida el servidor. ?>
+                    <input type="tel" id="perfilTelefono" class="perfil-input" value="<?= $e($perfil['telefono']) ?>" placeholder="Ej. 300 123 4567" autocomplete="tel" minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?>>
                 </div>
                 <div class="perfil-form__foot">
                     <p class="perfil-msg" id="perfilContactoMsg" role="status" aria-live="polite"></p>
@@ -154,4 +156,4 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
     </div>
 </div>
 
-<script src="js/perfil.js?v=3"></script>
+<script src="js/perfil.js?v=4"></script>

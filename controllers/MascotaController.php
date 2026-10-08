@@ -3,6 +3,7 @@ require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Mascota.php';
 require_once __DIR__ . '/../models/PropietarioClinica.php';
 require_once __DIR__ . '/../models/AvisoFichaMascota.php';
+require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../helpers/FotoMascota.php';
 
 /** C3: el controlador valida la petición; los modelos resuelven el contexto. */
@@ -119,9 +120,11 @@ class MascotaController
     {
         $this->modificar(function () {
             $nombre=trim((string)($_POST['nombre_completo'] ?? ''));
-            $telefono=trim((string)($_POST['telefono'] ?? ''));
-            if (mb_strlen($nombre)<3 || mb_strlen($nombre)>100 || !preg_match('/^[0-9+\\s-]{7,20}$/D',$telefono)
-                || !in_array((string)($_POST['estado'] ?? ''),['0','1'],true)) throw new InvalidArgumentException('Revisa nombre, teléfono y estado.');
+            // D1: la misma regla de teléfono en todo el sistema (ValidadorTelefono).
+            $telefono=ValidadorTelefono::normalizar((string)($_POST['telefono'] ?? ''));
+            if (!ValidadorTelefono::esValido($telefono)) throw new InvalidArgumentException(ValidadorTelefono::MENSAJE);
+            if (mb_strlen($nombre)<3 || mb_strlen($nombre)>100
+                || !in_array((string)($_POST['estado'] ?? ''),['0','1'],true)) throw new InvalidArgumentException('Revisa nombre y estado.');
             $this->propietarioModel->actualizar($this->id($_POST['id_usuario'] ?? ''),array_replace($_POST,['nombre_completo'=>$nombre,'telefono'=>$telefono]));
             return [];
         });

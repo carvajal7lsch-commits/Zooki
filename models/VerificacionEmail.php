@@ -44,17 +44,20 @@ class VerificacionEmail
     /**
      * True si al usuario le falta verificar su correo.
      *
-     * Una verificacion vencida NO cuenta como pendiente: si contara, el
-     * usuario quedaria encerrado para siempre sin forma de arreglarlo.
+     * D1 (RN-G11, decisión del usuario): un enlace vencido sigue contando como
+     * pendiente. Antes se ignoraba y, pasadas 24 horas, quien se registró con
+     * un correo ajeno entraba con la contraseña que él mismo puso. Para salir
+     * de aquí, registrarse otra vez con ese correo envía un enlace nuevo
+     * (RegistroPropietario) y entrar con Google verifica la cuenta (RN-G21).
      */
     public function hayPendiente(int $idUsuario): bool
     {
         $stmt = $this->conn->prepare(
             "SELECT 1 FROM {$this->table}
-             WHERE id_usuario = :id_usuario AND proposito = 'registro' AND used = 0 AND expires_at > :ahora
+             WHERE id_usuario = :id_usuario AND proposito = 'registro' AND used = 0
              LIMIT 1"
         );
-        $stmt->execute([':id_usuario' => $idUsuario, ':ahora' => date('Y-m-d H:i:s')]);
+        $stmt->execute([':id_usuario' => $idUsuario]);
 
         return (bool) $stmt->fetchColumn();
     }

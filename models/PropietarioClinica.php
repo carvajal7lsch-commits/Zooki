@@ -109,6 +109,12 @@ final class PropietarioClinica extends ModeloClinica
         foreach (['documento','tipo_documento','email'] as $campo) {
             if (isset($datos[$campo]) && $datos[$campo] !== $actual[$campo]) $this->denegar($id);
         }
+        // D1 (RN-109, revisión de C9.1): la clínica puede desactivar el vínculo,
+        // pero no reactivarlo por su cuenta. Se reactiva solo cuando el titular
+        // confirma por correo (solicitarVinculo → confirmarVinculo).
+        if ((string) $datos['estado'] === '1' && (int) $actual['estado'] !== 1) {
+            throw new InvalidArgumentException('El vínculo solo se reactiva cuando el propietario lo confirma. Envíale la solicitud por correo.');
+        }
         Transaccion::ejecutar($this->conn,function () use ($id,$datos,$actual) {
             $this->conn->prepare('UPDATE usuarios SET nombre_completo=?,telefono=? WHERE id_usuario=?')->execute([$datos['nombre_completo'],$datos['telefono'],$id]);
             $this->conn->prepare('UPDATE propietario_clinica SET estado=? WHERE id_propietario=? AND id_clinica=?')->execute([(string)$datos['estado'] === '1' ? 'activo' : 'inactivo',$id,$this->clinica()]);

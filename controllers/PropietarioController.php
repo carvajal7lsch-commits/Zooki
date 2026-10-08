@@ -1,12 +1,14 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../config/EmailService.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../models/PropietarioClinica.php';
 require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
+require_once __DIR__ . '/../helpers/PoliticaDatos.php';
 
 /**
  * Propietarios desde el personal de la clínica (HU-1.2, RN-109): alta
@@ -56,8 +58,10 @@ class PropietarioController {
         if (!filter_var($limpios['email'], FILTER_VALIDATE_EMAIL)) {
             return 'El correo electronico no tiene un formato valido.';
         }
-        if (!preg_match('/^[0-9+\s-]{7,20}$/', $limpios['telefono'])) {
-            return 'El telefono no tiene un formato valido.';
+        // D1: la misma regla de teléfono en todo el sistema (ValidadorTelefono).
+        $limpios['telefono'] = ValidadorTelefono::normalizar($limpios['telefono']);
+        if (!ValidadorTelefono::esValido($limpios['telefono'])) {
+            return ValidadorTelefono::MENSAJE;
         }
         if (mb_strlen($limpios['nombre_completo']) < 3 || mb_strlen($limpios['nombre_completo']) > 100) {
             return 'El nombre completo debe tener entre 3 y 100 caracteres.';
@@ -88,7 +92,7 @@ class PropietarioController {
             $datos['acepta_politica']=(string)($_POST['acepta_politica'] ?? '');
             $datos['titular_presente']=(string)($_POST['titular_presente'] ?? '');
             EnlaceCuenta::base(); // Validar destino antes de crear cuenta o tokens.
-            $alta=(new PropietarioClinica($this->db))->registrar($datos,self::versionPolitica(),Auditoria::ipCliente());
+            $alta=(new PropietarioClinica($this->db))->registrar($datos,PoliticaDatos::VERSION,Auditoria::ipCliente());
             $enlace=EnlaceCuenta::crear('reset_password',$alta['id_enlace'],$alta['token']);
             $enviado=$this->correo($datos['email'],$datos['nombre_completo'],'Crea tu contraseña en Zooki',
                 'Tu cuenta fue registrada con tu aceptación presencial. Crea tu contraseña desde este enlace; vence en 24 horas.',$enlace);
@@ -98,12 +102,6 @@ class PropietarioController {
         } catch (AccesoDenegado $e) { throw $e; }
         catch (InvalidArgumentException $e) { http_response_code(422); echo json_encode(['success'=>false,'message'=>$e->getMessage()]); }
         catch (Throwable $e) { error_log('Alta de propietario: ' . $e->getMessage()); http_response_code(500); echo json_encode(['success'=>false,'message'=>'No se pudo registrar al propietario.']); }
-    }
-
-    /** La versión identifica el contenido mostrado; la gestión de versiones llega en D. */
-    public static function versionPolitica(): string
-    {
-        return substr(hash_file('sha256',__DIR__ . '/../views/legal/privacidad.php'),0,20);
     }
 
     private function correo(string $email,string $nombre,string $asunto,string $mensaje,string $enlace): bool

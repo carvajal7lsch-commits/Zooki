@@ -1492,3 +1492,22 @@ body::after {
     -webkit-user-drag: none;
     pointer-events: none; /* Prevents right click, select, drag and highlight */
 }
+
+/* D1 — Acceso: estilos que antes iban en línea en views/auth/login.php. */
+.icono-google {
+    margin-right: 8px;
+}
+
+.icono-google-modal {
+    color: #4285F4;
+}
+
+.form-footer--registro {
+    margin: 1rem 0 0.5rem;
+    text-align: center;
+}
+
+.form-footer--registro p {
+    font-size: 0.85rem;
+    margin: 0;
+}
