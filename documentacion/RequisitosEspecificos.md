@@ -572,14 +572,14 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-4.3.1 | El sistema debe permitir completar solo citas en curso. | Restricción | Una cita en curso o sin cerrar se completa; una pendiente, confirmada, cancelada, no asistida o cerrada sin consulta, no. | Media |
+| RE-4.3.1 | El sistema debe permitir completar solo citas en curso. | Restricción | Una cita en curso o sin cerrar se completa; una pendiente, confirmada, cancelada o no asistida, no. | Media |
 | RE-4.3.2 | El sistema debe completar la cita al registrar su consulta, en la misma transacción. | Funcional | Guardar la consulta deja la cita completada; si algo falla no queda ninguna de las dos. | Alta |
 | RE-4.3.3 | El sistema debe excluir las completadas de la agenda futura. | Funcional | Una completada no aparece en la agenda futura. | Media |
 | RE-4.3.4 | El sistema debe permitir iniciar la atención solo al veterinario asignado, el día de la cita y desde 15 minutos antes de su hora. | Restricción | Otro rol, otro veterinario, otra fecha o una hora anterior son rechazados. | Alta |
 | RE-4.3.5 | El sistema debe permitir retomar una atención en curso. | Funcional | Una cita en curso ofrece «Continuar atención» aunque sea de otro día. | Alta |
 | RE-4.3.6 | El sistema debe avisar al veterinario cuando una atención sigue en curso 10 minutos después de su hora de fin. | Funcional | Llega un correo y una notificación interna, una sola vez por cita. | Alta |
 | RE-4.3.7 | El sistema debe pasar a "sin cerrar" las atenciones que siguen en curso al terminar el día de la cita. | Funcional | Al día siguiente la cita aparece como «Sin cerrar» y el veterinario recibe un aviso. | Alta |
-| RE-4.3.8 | El sistema debe permitir al veterinario asignado cerrar sin consulta una atención en curso o sin cerrar, con motivo obligatorio. | Funcional | La cita pasa a «Cerrada sin consulta», el motivo queda en auditoría y el horario se libera. | Media |
+| RE-4.3.8 | _(Derogado en v2.0: RN-410 se deroga.)_ En v1.11.0 el veterinario asignado podía cerrar sin consulta una atención en curso o sin cerrar, con motivo obligatorio. | Funcional | En v2.0 no existe la acción: una atención iniciada solo se completa con su consulta. | Media |
 | RE-4.3.9 | El sistema debe revisar las atenciones abiertas con una tarea programada al menos cada 5 minutos, además de al cargar el calendario. | Integración | Sin que nadie abra el calendario, el aviso llega a más tardar 15 minutos después de la hora de fin. | Alta |
 
 **Reglas de negocio:** RN-406, RN-407, RN-409, RN-410

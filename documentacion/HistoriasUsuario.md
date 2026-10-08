@@ -973,14 +973,15 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - La cita se completa al guardar su consulta, en la misma operación: no hay citas completadas sin consulta.
 - Una atención iniciada y no finalizada se retoma con «Continuar atención», aunque sea de un día anterior.
 - Si la atención sigue abierta 10 minutos después de la hora de fin, recibo un aviso por correo y en mis notificaciones.
-- Al terminar el día, una atención abierta pasa a "sin cerrar"; la cierro registrando la consulta o sin consulta, con un motivo.
+- Al terminar el día, una atención abierta pasa a "sin cerrar"; la completo registrando su consulta.
 - La revisión de atenciones abiertas corre sola cada 5 minutos, así que el aviso llega aunque nadie abra el calendario.
-- Una atención cerrada sin consulta no se reabre y libera su horario.
 - La cita completada aparece en el historial del día pero no en la agenda futura.
 
 **Reglas de negocio:** RN-406, RN-407, RN-409, RN-410 · **Dependencias:** HU-4.1, HU-2.1
 
 > _Nota: hasta v1.8.0 la cita se completaba con un botón aparte, sin consulta, y la podían iniciar recepción y administración. Como la pantalla de atención es solo del veterinario, esas citas quedaban "en curso" sin nadie que las atendiera, y una cita de un día anterior perdía todos los botones del calendario. Ver el Módulo 4 de `AuditoriaModulos.md`._
+
+> _v2.0: «cerrar sin consulta» se retira (RN-410 derogada, D-3 del plan M0): una atención iniciada solo se completa con su consulta. RE-4.3.8 queda derogado._
 
 > _Nota: desde v1.9.0 una atención ya no queda abierta indefinidamente. Si el veterinario salía sin terminar, la cita seguía "en curso" para siempre sin que nadie se enterara. Ahora se avisa a los 10 minutos de la hora de fin (`VigilanteAtenciones`, también como tarea programada en `scripts/vigilar_atenciones.php`), pasa a "sin cerrar" al terminar el día y se puede cerrar sin consulta con motivo. Además, la atención solo se inicia desde 15 minutos antes de la hora de la cita, para no abrir por error la de un paciente que aún no llega._
 

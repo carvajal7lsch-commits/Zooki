@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A y B terminadas; C3 revisada (2026-10-07); C1.7, C2 y C4 implementadas, pendientes de revisión por Claude.
+> Estado: en curso — A y B terminadas; C3 y C4 revisadas (2026-10-07); C1.7, C2 y C5 implementadas, pendientes de revisión por Claude.
 > Entrega: v2.0 · Fecha: 2026-10-06
 > Reparto vigente (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
 
@@ -91,7 +91,8 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] C1 — Identidad, contexto activo, autorización en `Security` y retiro del recepcionista ([Anexo C1](#anexo-c1--resultado)). Revisada en C1.6; corrección obligatoria aplicada en C1.7, pendiente de revisión por Claude.
   - [x] C2 — Configuración por clínica: horarios, lectura de catálogos y copia inicial D-1 ([Anexo C2](#anexo-c2--resultado)). Implementada y verificada; pendiente de revisión por Claude.
   - [x] C3 — Mascotas y propietarios del personal ([Anexo C3](#anexo-c3--resultado)). Implementada y verificada; Codex escribe y Claude revisa. El usuario aprobó adelantar de D únicamente la confirmación por correo de una vinculación de propietario existente (RN-109). La aceptación del alta nueva sigue siendo presencial, directa del titular (RE-T.19.1).
-  - [x] C4 — Historia clínica y prevención ([Anexo C4](#anexo-c4--resultado)). Implementada y verificada; Claude Code escribe y Claude revisa. Pendiente de revisión.
+  - [x] C4 — Historia clínica y prevención ([Anexo C4](#anexo-c4--resultado)). Implementada, verificada y revisada (C4 — Revisión).
+  - [x] C5 — Agenda v1 sobre el modelo v2 y retiro de «cerrar sin consulta» ([Anexo C5](#anexo-c5--resultado)). Implementada y verificada; Claude Code escribe y Claude revisa. Pendiente de revisión.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -831,3 +832,89 @@ Lo escribió Claude Code; la revisión corresponde a la sesión de revisión de 
 **Decisión del usuario sobre el pendiente 1 (RN-115):** con el vínculo `mascota_clinica` inactivo, la clínica ve **solo sus propios registros, en solo lectura**, y no puede agregar nada nuevo. Se implementa en C6 junto con la desvinculación (HU-5.13).
 
 **Base de pruebas:** `BaseV2MysqlTest` borra y recrea la base indicada en `ZOOKI_TEST_MYSQL_DB`. Desde C5 las pruebas usan su base por defecto (`zooki_test_base_v2`) y **no** `zooki_v2_prueba`, que es la base de trabajo manual del usuario.
+
+## Anexo C5 — Resultado
+
+Lo escribió Claude Code; la revisión corresponde a la sesión de revisión de Claude. Se releyeron A.2 (módulo 4), A.5, A.6, A.7 (D-2 y D-3), los anexos C1–C4 con sus revisiones, las HU y RE vigentes del módulo 4 (HU-4.1 a HU-4.10) y RN-401 a RN-410.
+
+**Decisiones del usuario (2026-10-07).**
+
+1. El propietario solo **cancela** (lo que ya existía): citas de sus mascotas en clínicas con vínculo activo. Reprogramar y confirmar siguen siendo del personal; si el portal los necesita, se especifican en C6.
+2. La validación de solapamiento y las sugerencias de horario miran las citas del veterinario y de la mascota **en todas sus clínicas** (solo horas, sin otros datos), coherente con D-2.
+3. RE-4.3.8 queda **derogado** (como RN-410), sin renumerar ni cambiar conteos; se ajustaron HU-4.3 y RE-4.3.1 (sin subir revisión).
+4. `views/admin/citas.php`: solo se adaptaron los datos; sacar su JS y su CSS en línea queda para C9.
+
+**Qué se hizo.**
+
+- `models/Cita.php` extiende `ModeloClinica`:
+  - toda lectura y transición filtra por la clínica activa; una cita de otra clínica da 403 auditado;
+  - el veterinario va por `id_usuario` y debe estar activo en la clínica (`usuario_clinica`);
+  - al reservar se copian `duracion_minutos` y `margen_minutos` del tipo de cita de la clínica (RE-4.13.6); `prioridad` queda `verde` y `es_sobrecupo` en 0;
+  - la doble reserva que rechaza el índice `uq_cita_veterinario_horario` (error 1062 o `UNIQUE` de SQLite) se convierte en `HorarioOcupado`: 422 con mensaje, no 500;
+  - las transiciones reciben la cita ya validada y repiten `id_clinica` en el `UPDATE`;
+  - `paraPropietario()` resuelve la cita del portal: mascota propia y vínculo activo, o 403 auditado.
+- `exigirMascotaVinculada()` y `exigirMascotaActiva()` subieron a `ModeloClinica`: las usan la historia (C4) y las citas.
+- `models/AtencionesEnCurso.php` (nuevo) es la excepción explícita para RN-409: la vigilancia recorre todas las clínicas sin contexto y no devuelve datos a ninguna pantalla. `VigilanteAtenciones` avisa con `NotificacionInterna` v2 (`id_clinica` de la cita e `id_veterinario`), una sola vez por el sello `aviso_atencion_abierta`; el paso a «sin cerrar» se conserva. El correo es inyectable para las pruebas.
+- `controllers/CitaController.php` reescrito sin SQL y con una sentencia por línea (`RespuestaJson`, reloj inyectable). Los eventos de vacunas y desparasitaciones salen de `Vacuna::pendientesEntre()` y `Desparasitacion::pendientesEntre()` (C4). `listarVeterinariosAjax` devuelve solo los veterinarios activos de la clínica. El calendario y el tablero reciben solo los campos que pintan (sin correos).
+- **«Cerrar sin consulta» retirado** (D-3): ruta, acción de la matriz, método del controlador y del modelo, botón y función de `calendario.js`, etiquetas y estilos (calendario, atención, tablero del administrador, panel, dashboard, portal, `ResumenPanel`) y sus pruebas. Los mensajes de RN-409 ya no lo ofrecen.
+- `atencion()`: el bug de A.6 (riesgo 10) ya lo había corregido C2; ahora la pantalla toma el nombre del tipo de la cita y los datos del propietario de la consulta de la cita, sin SQL directo.
+- Vistas y JS: `calendario.php` pasa el rol y el `id_usuario` en `data-*` (sin `<script>` en línea); `calendario.js`, `admin/citas.php`, `pacientes.php` y `medical-module.js` usan `id_veterinario` / `id_usuario` en vez del documento.
+- Agendar exige un contexto de clínica: desde el portal falla cerrado (403) hasta C6.
+
+**RE y evidencia.**
+
+| Alcance | Prueba |
+|---|---|
+| RE-4.1.1, RE-4.13.6: datos, duración y margen copiados, verde y sin sobrecupo | `CitaTest::testRegistrarGuardaClinicaVeterinarioYCopiaDuracionYMargenDelTipo`, `testSinTipoUsaTreintaMinutosYUnTipoDeOtraClinicaSeRechaza`; `BaseV2MysqlTest::testC5AgendaEnElEsquemaReal` |
+| RE-4.1.2, RE-4.2.4, RE-4.9.3, RN-401: doble reserva con mensaje, también entre clínicas y por el índice | `CitaTest::testDosReservasAlMismoVeterinarioSeRechazanConMensaje`, `testLaCarreraLaDecideElIndiceUnicoYNoEsUn500`, `testElMismoVeterinarioNoSeReservaDosVecesEntreClinicas`; `AgendaPeticionesTest::testLaSegundaReservaDelMismoHorarioRespondeConMensaje`; `BaseV2MysqlTest::testC5AgendaEnElEsquemaReal` (error 1062) |
+| RE-4.1.3, RN-402 y fechas pasadas | `AgendaPeticionesTest::testFueraDelHorarioOEnElPasadoSeRechaza`, `testOtraCitaDeLaMascotaEseDiaPideConfirmar` |
+| RE-T.15.1/2, RN-G13: una cita de A no se ve ni se modifica desde B | `CitaTest::testUnaCitaDeANoSeVeNiSeModificaDesdeB`; `AgendaPeticionesTest::testDesdeBNingunaPeticionVeNiModificaUnaCitaDeA` (siete acciones, siete 403 auditados) |
+| Veterinarios y calendario de la clínica activa (incluidas vacunas y desparasitaciones) | `CitaTest::testSoloSeAgendaConVeterinariosActivosDeLaClinica`; `AgendaPeticionesTest::testLosVeterinariosYElCalendarioSonDeLaClinicaActiva`, `testElVeterinarioAgendaParaSiMismoYNoParaOtro` |
+| RE-4.2.1–3: reprogramar, reasignar, cancelar y avisar | `CitaTest::testReprogramarRespetaElHorarioYConservaLaDuracion`, `testUnaCitaCanceladaLiberaElHorario`; `AgendaPeticionesTest::testElAdministradorReprogramaYReasignaElVeterinario` |
+| RN-G02: el propietario solo cancela lo suyo con vínculo activo | `AgendaPeticionesTest::testElPropietarioSoloCancelaCitasDeSusMascotasConVinculoActivo`, `testElPortalTodaviaNoAgenda` |
+| RE-4.3.1, RE-4.3.4, RE-4.5.1, RE-4.7.1/2, RN-405–408 | `CitaEstadoTest` (iniciar, completar, no asistió, confirmar, cancelar); `AgendaPeticionesTest::testIniciarAtencionRespetaVeterinarioDiaYHora` |
+| RE-4.3.6, RE-4.3.7, RN-409: aviso una sola vez en la clínica de la cita; «sin cerrar» | `CitaEstadoTest::testElAvisoDeAtencionAbiertaSaleUnaSolaVezEnLaClinicaDeLaCita`, `testAlTerminarElDiaLaAtencionQuedaSinCerrarYSeAvisa`; `BaseV2MysqlTest::testC5AgendaEnElEsquemaReal` |
+| D-3, RE-4.3.8 derogado | `CitaEstadoTest::testYaNoExisteCerrarSinConsulta`; `AutorizacionRolTest::testYaNoExisteCerrarSinConsulta` |
+| A.6 riesgo 10: tipos de cita de la clínica en la atención | `CitaTest::testLosTiposDeCitaSonLosDeLaClinicaActiva` |
+
+`CitaTest` y `CitaEstadoTest` se reescribieron sobre el fixture de dos clínicas (`DosClinicas::poblarAgenda()`, y la tabla `citas` del fixture ahora tiene `ocupa_horario` y el índice único de D-2); `AgendaPeticionesTest` es nueva. Una prueba de C4 creaba dos citas del mismo veterinario a la misma hora: ahora el índice lo impide y se le dio otra hora.
+
+**Verificación.**
+
+| Comando | Resultado |
+|---|---|
+| `vendor/bin/phpunit` | 334 pruebas, 1520 aserciones, 16 saltadas (las de MySQL, sin variable). |
+| Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32) | 334 pruebas, 1723 aserciones, sin fallos ni saltadas. `zooki_v2_prueba` no se usó para las pruebas. |
+| `php -l` y `node --check` de lo tocado (incluido el JS en línea de `admin/citas.php`) | Sin errores. |
+
+**Recorrido HTTP** (`php -S` y `curl` con cookie; en esta sesión no hubo navegador) sobre `zooki_v2_prueba`, el miércoles 2026-10-07 a las 15:22:
+
+- Beto (veterinario de Norte): la agenda lleva `data-rol="2" data-usuario="2"`; veterinarios de Norte: Beto y Elena; crea una cita hoy a las 15:30 (duración 15 y margen 10 copiados del tipo, verde, sin sobrecupo); otra mascota a la misma hora → 422 «no está disponible»; inicia la atención → `vet_atencion` 200; registra la consulta de la cita → la cita queda `completada` con sus horas reales. Otra cita de mañana: reprogramar a las 10:00 → 200; cancelar → 200.
+- Ana (administradora de Norte): `admin_citas` 200; agenda para Elena y reasigna a Beto al reprogramar → 200; el tablero solo trae citas de Norte.
+- Diego (veterinario de Sur): ver y cancelar la cita de Norte → 403 (dos registros en la auditoría de Sur); su calendario no trae citas de Norte; Luna en Sur a la hora que ya tiene en Norte → 422.
+- Carla (administradora de Sur): veterinarios de Sur: solo Diego; agendar con Beto → 422 «no existe o no está activo en la clínica»; reprograma y cancela la de Diego → 200.
+- Fabio (propietario): cancela la cita de Luna en Norte → 200 (avisos al veterinario y a los administradores de Norte); una cita ya atendida → 422; una inexistente → 403.
+- `cerrar_sin_consulta_ajax` → 403 (la acción ya no existe en la matriz).
+- El registro del servidor solo mostró avisos de `PropietarioController` (portal, C6).
+
+Quedaron en `zooki_v2_prueba` cuatro citas de prueba: una completada con su consulta y tres canceladas (la última, por Fabio). Las contraseñas se regeneran con `php scripts/dev/datos_prueba.php --si`.
+
+**Pendientes.**
+
+1. **Navegador.** Cambié `calendario.js`, `admin/citas.php` y la ficha de Pacientes sin poder verlos: falta revisar a mano el calendario (filtro por veterinario, detalle, reprogramar arrastrando y por el modal) y el tablero del administrador. Tampoco se probó `enviar_email_ajax`, para no enviar correos reales.
+2. **C6:** el portal sigue roto (`PropietarioController` usa SQL v1 y llama a `Cita::getByMascota` y `getProximaByMascota`, que se retiraron). `portal_agendar_cita_ajax`, `portal_get_vets_ajax` y `portal_get_tipos_cita_ajax` fallan cerrado (403) hasta que el portal elija clínica. Además, la regla de RN-115 que aprobó la revisión de C4.
+3. **Módulo 4 (v2), fuera de M0:** las sugerencias siguen con el horario fijo de 08:00 a 18:00 (RE-4.9.1); la validación del horario de la clínica mira solo la hora de inicio (RE-4.9.2); el solapamiento usa la duración sin el margen (RN-415); triage, sobrecupos, horarios por veterinario y ausencias.
+4. **C7:** panel y dashboard (solo se quitaron sus etiquetas del estado retirado). **C8:** recordatorios. **C9:** JS y CSS en línea de `admin/citas.php`, los `onclick` de `calendario.php` y `modal_consulta.php`.
+5. `completar_cita_ajax` se conserva solo para citas con consulta y sin completar (datos de antes de v1.9.0); lo normal es que `Consulta::registrar()` complete la cita (C4).
+6. La versión de publicación y las descargas del portal se actualizan al cerrar M0 (§7).
+
+### C5 — Revisión (2026-10-07)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el diff, `models/Cita.php` (toda lectura por la clínica activa, `paraPropietario()` exige mascota propia y `propietario_clinica` activo, doble reserva convertida en 422 con `HorarioOcupado`) y el ajuste de HU-4.3/RE-4.3.1/RE-4.3.8 por la derogación de RN-410, aprobado por el usuario. Se valora que el solapamiento mire las citas del veterinario y de la mascota en todas sus clínicas sin exponer más que las horas (coherente con D-2), y que la vigilancia de RN-409 sea una excepción explícita sin salida a pantallas.
+
+**Prueba manual del usuario (2026-10-07): sin fallos.** Veterinario: detalle de cita, agendar y reprogramar por el modal (fecha, hora y tipo) correctos; sin filtro por veterinario, como corresponde (solo ve sus citas). Administrador: `admin_citas` con filtros por veterinario, fecha, tipo, estado y búsqueda de paciente correctos; detalle de una cita completada correcto. Hallazgos:
+
+- **Arrastrar para reprogramar no funciona, pero no es una regresión de C5:** `calendario.js` solo habilita el arrastre para el administrador (`editable: esAdmin()`), y el administrador no tiene acceso a `vet_agenda` (RN-201). Era código muerto ya en v1.12.0. Se retira en C9; reprogramar es por el modal.
+- **Una contraseña con un espacio inicial no entra:** comportamiento correcto. La contraseña no se recorta (el espacio es un carácter válido); el documento y el correo sí se normalizan.
+
+**Alcance de C6 (propuesto por la revisión, pendiente de que el usuario lo confirme):** además de adaptar el portal, C6 cierra HU-5.12 (autorizar historia compartida) y HU-5.13 (vincularse o desvincularse de una clínica) con la regla de RN-115 de la revisión de C4, porque la desvinculación y la autorización son las que ejercitan desde la interfaz las reglas de C3 y C4.
