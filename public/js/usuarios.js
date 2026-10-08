@@ -1,5 +1,5 @@
 /**
- * HU-T.7 — Gestión del personal de la clínica activa (views/admin/usuarios.php).
+ * HU-T.7 — Personal y clientes de la clínica activa (views/admin/usuarios.php).
  *
  * Toda decisión de permisos y de clínica la toma el servidor; aquí solo se
  * arma la interfaz. Las peticiones POST llevan el token CSRF que agrega
@@ -12,6 +12,9 @@
     const modal = document.getElementById('usuarioModal');
     const form = document.getElementById('usuarioForm');
     if (!modulo || !modal || !form) return;
+    const modalCliente = document.getElementById('clienteModal');
+    const formCliente = document.getElementById('clienteForm');
+    const modalDetalle = document.getElementById('clienteDetalleModal');
 
     // C9: preferencia local; la primera visita conserva las tarjetas de v1.12.0.
     const claveVista = 'zooki.usuarios.vista';
@@ -52,41 +55,93 @@
     async function pedir(url, datos) {
         const opciones = datos ? { method: 'POST', body: datos } : {};
         opciones.headers = { 'X-Requested-With': 'XMLHttpRequest' };
-        const respuesta = await fetch(url, opciones);
-        const cuerpo = await respuesta.json().catch(() => ({ success: false, message: 'Respuesta inesperada del servidor.' }));
-        if (cuerpo.redirect && (respuesta.status === 401 || respuesta.status === 403)) {
-            window.location.href = cuerpo.redirect;
+        try {
+            const respuesta = await fetch(url, opciones);
+            const cuerpo = await respuesta.json().catch(() => ({ success: false, message: 'Respuesta inesperada del servidor.' }));
+            if (cuerpo && cuerpo.redirect && (respuesta.status === 401 || respuesta.status === 403)) {
+                window.location.href = cuerpo.redirect;
+            }
+            return cuerpo;
+        } catch (error) {
+            console.error('Usuarios:', error);
+            return { success: false, message: 'No se pudo conectar con el servidor.' };
         }
-        return cuerpo;
     }
 
     // ── Pestañas ──────────────────────────────────────────────────────────
     modulo.querySelectorAll('.tab-btn').forEach((boton) => {
         boton.addEventListener('click', () => {
+            const pestana = boton.dataset.tab;
             modulo.querySelectorAll('.tab-btn').forEach((b) => {
                 b.classList.toggle('active', b === boton);
                 b.setAttribute('aria-selected', b === boton ? 'true' : 'false');
             });
             modulo.querySelectorAll('[data-panel]').forEach((panel) => {
-                const visible = panel.dataset.panel === boton.dataset.tab;
+                const visible = panel.dataset.panel === pestana;
                 panel.hidden = !visible;
                 panel.classList.toggle('active', visible);
+            });
+            modulo.querySelectorAll('[data-filtros]').forEach((barra) => {
+                barra.classList.toggle('is-active', barra.dataset.filtros === pestana);
             });
         });
     });
 
-    // ── Búsqueda ──────────────────────────────────────────────────────────
-    const buscar = document.getElementById('usuariosBuscar');
-    if (buscar) {
-        buscar.addEventListener('input', () => {
-            const texto = buscar.value.trim().toLowerCase();
-            modulo.querySelectorAll('[data-fila]').forEach((fila) => {
-                fila.hidden = texto !== '' && !fila.dataset.buscar.includes(texto);
+    // ── Búsqueda y filtros (por pestaña; tarjetas y tabla a la vez) ────────────
+    function filtrar(pestana) {
+        const panel = modulo.querySelector('[data-panel="' + pestana + '"]');
+        const barra = modulo.querySelector('[data-filtros="' + pestana + '"]');
+        if (!panel || !barra) return;
+        const campoTexto = barra.querySelector('[data-filtro-texto]');
+        const campoRol = barra.querySelector('[data-filtro-rol]');
+        const campoEstado = barra.querySelector('[data-filtro-estado]:checked');
+        const texto = campoTexto ? campoTexto.value.trim().toLowerCase() : '';
+        const rol = campoRol ? campoRol.value : '';
+        const estado = campoEstado ? campoEstado.value : '';
+
+        panel.querySelectorAll('[data-vista-contenido]').forEach((vista) => {
+            const filas = vista.querySelectorAll('[data-fila]');
+            let visibles = 0;
+            filas.forEach((fila) => {
+                const coincide = (texto === '' || fila.dataset.buscar.includes(texto))
+                    && (rol === '' || fila.dataset.rol === rol)
+                    && (estado === '' || fila.dataset.estado === estado);
+                fila.hidden = !coincide;
+                if (coincide) visibles++;
             });
+            const sinResultados = vista.querySelector('[data-sin-resultados]');
+            if (sinResultados) sinResultados.hidden = filas.length === 0 || visibles > 0;
         });
     }
+    modulo.querySelectorAll('[data-filtros]').forEach((barra) => {
+        barra.addEventListener('input', () => filtrar(barra.dataset.filtros));
+        barra.addEventListener('change', () => filtrar(barra.dataset.filtros));
+    });
 
-    // ── Modal ─────────────────────────────────────────────────────────────
+    // ── Modales ───────────────────────────────────────────────────────────
+    const modales = [modal, modalCliente, modalDetalle].filter(Boolean);
+
+    function cerrarModal(ventana) {
+        ventana.classList.remove('is-open');
+        if (ventana === modal) {
+            form.reset();
+            form.elements.id_usuario.value = '';
+        } else if (ventana === modalCliente && formCliente) {
+            formCliente.reset();
+        }
+    }
+
+    modales.forEach((ventana) => {
+        ventana.addEventListener('click', (evento) => {
+            if (evento.target === ventana || evento.target.closest('[data-accion="cerrar"]')) cerrarModal(ventana);
+        });
+    });
+    document.addEventListener('keydown', (evento) => {
+        if (evento.key !== 'Escape') return;
+        modales.filter((ventana) => ventana.classList.contains('is-open')).forEach(cerrarModal);
+    });
+
+    // ── Personal: alta y edición ────────────────────────────────────────────
     function abrirModal(esAlta) {
         titulo.textContent = esAlta ? 'Nuevo integrante' : 'Editar integrante';
         soloAlta.hidden = !esAlta;
@@ -94,12 +149,6 @@
         if (esAlta) bloquearIdentidad(false);
         modal.classList.add('is-open');
         form.querySelector('input[name="documento"]').focus();
-    }
-
-    function cerrarModal() {
-        modal.classList.remove('is-open');
-        form.reset();
-        form.elements.id_usuario.value = '';
     }
 
     function bloquearIdentidad(bloquear) {
@@ -112,13 +161,6 @@
             aviso.hidden = false;
         }
     }
-
-    modal.addEventListener('click', (evento) => {
-        if (evento.target === modal || evento.target.closest('[data-accion="cerrar"]')) cerrarModal();
-    });
-    document.addEventListener('keydown', (evento) => {
-        if (evento.key === 'Escape' && modal.classList.contains('is-open')) cerrarModal();
-    });
 
     async function editar(id) {
         const r = await pedir('index.php?action=get_usuario_ajax&id_usuario=' + encodeURIComponent(id));
@@ -166,42 +208,185 @@
         datos.set('tipo_documento', form.elements.tipo_documento.value);
         const r = await pedir('index.php?action=' + (esAlta ? 'registrar_usuario_ajax' : 'actualizar_usuario_ajax'), datos);
         if (r.success) {
-            cerrarModal();
-            await mensaje('success', r.message);
-            window.location.reload();
+            cerrarModal(modal);
+            // C9.1: la lista se actualiza en cuanto responde el servidor.
+            zookiRecargarConAviso(r.message);
         } else {
             mensaje('error', r.message || 'No se pudo guardar.');
         }
     });
 
-    // ── Acciones de tarjetas y tabla ──────────────────────────────────────────────
+    // ── Interruptores de estado ─────────────────────────────────────────────
+    // Desactivar pide confirmación (revoca el acceso); activar no.
+    async function confirmarDesactivar(interruptor, texto) {
+        if (interruptor.checked) return true;
+        const ok = await zookiConfirmar(texto, '¿Desactivar?', 'Desactivar');
+        if (!ok) interruptor.checked = true;
+        return ok;
+    }
+
+    async function cambiarEstadoPersonal(interruptor) {
+        const nombre = interruptor.dataset.nombre;
+        if (!(await confirmarDesactivar(interruptor, '¿Desactivar a ' + nombre + ' en esta clínica? Su cuenta y sus otros roles no cambian.'))) return;
+        interruptor.disabled = true;
+        const datos = new FormData();
+        datos.append('id_usuario', interruptor.dataset.id);
+        datos.append('estado', interruptor.checked ? '1' : '0');
+        const r = await pedir('index.php?action=cambiar_estado_usuario_ajax', datos);
+        if (r.success) {
+            zookiRecargarConAviso(r.message);
+            return;
+        }
+        interruptor.checked = !interruptor.checked;
+        interruptor.disabled = false;
+        mensaje('error', r.message || 'No se pudo cambiar el estado.');
+    }
+
+    async function cliente(id) {
+        const c = await pedir('index.php?action=get_propietario_ajax&id_usuario=' + encodeURIComponent(id));
+        return c && c.id_usuario ? c : null;
+    }
+
+    async function cambiarEstadoCliente(interruptor) {
+        const nombre = interruptor.dataset.nombre;
+        if (!(await confirmarDesactivar(interruptor, '¿Desactivar el vínculo de ' + nombre + ' con esta clínica? Su cuenta y sus otras clínicas no cambian.'))) return;
+        const activar = interruptor.checked;
+        interruptor.disabled = true;
+        const c = await cliente(interruptor.dataset.id);
+        let r = { success: false, message: 'No se pudo cargar el cliente.' };
+        if (c) {
+            const datos = new FormData();
+            datos.append('id_usuario', c.id_usuario);
+            datos.append('nombre_completo', c.nombre_completo || '');
+            datos.append('telefono', c.telefono || '');
+            datos.append('estado', activar ? '1' : '0');
+            r = await pedir('index.php?action=actualizar_propietario_ajax', datos);
+        }
+        if (r.success) {
+            zookiRecargarConAviso(activar ? 'Vínculo activado.' : 'Vínculo desactivado.');
+            return;
+        }
+        interruptor.checked = !activar;
+        interruptor.disabled = false;
+        mensaje('error', r.message || 'No se pudo cambiar el vínculo.');
+    }
+
+    modulo.addEventListener('change', (evento) => {
+        const interruptor = evento.target.closest('input[data-accion]');
+        if (!interruptor) return;
+        if (interruptor.dataset.accion === 'estado') cambiarEstadoPersonal(interruptor);
+        else if (interruptor.dataset.accion === 'estado-cliente') cambiarEstadoCliente(interruptor);
+    });
+
+    // ── Clientes: edición y detalle ────────────────────────────────────────
+    async function editarCliente(id) {
+        if (!modalCliente || !formCliente) return;
+        const c = await cliente(id);
+        if (!c) {
+            mensaje('error', 'No se pudo cargar el cliente.');
+            return;
+        }
+        formCliente.reset();
+        formCliente.elements.id_usuario.value = c.id_usuario;
+        formCliente.elements.nombre_completo.value = c.nombre_completo || '';
+        formCliente.elements.telefono.value = c.telefono || '';
+        formCliente.elements.estado.value = String(c.estado);
+        modalCliente.querySelector('[data-cliente-identidad]').textContent =
+            [(c.tipo_documento || '') + ' ' + (c.documento || ''), c.email || ''].map((v) => v.trim()).filter(Boolean).join(' · ');
+        modalCliente.classList.add('is-open');
+        formCliente.elements.nombre_completo.focus();
+    }
+
+    if (formCliente) {
+        formCliente.addEventListener('submit', async (evento) => {
+            evento.preventDefault();
+            if (!formCliente.reportValidity()) return;
+            const r = await pedir('index.php?action=actualizar_propietario_ajax', new FormData(formCliente));
+            if (r.success) {
+                cerrarModal(modalCliente);
+                zookiRecargarConAviso('Cliente actualizado.');
+            } else {
+                mensaje('error', r.message || 'No se pudo guardar.');
+            }
+        });
+    }
+
+    function itemMascota(m) {
+        const item = document.createElement('div');
+        item.className = 'mascota-item';
+        const avatar = document.createElement('div');
+        avatar.className = 'mascota-avatar';
+        const inicial = document.createElement('span');
+        inicial.className = 'avatar-iniciales avatar-iniciales--tabla avatar-iniciales--mascota';
+        inicial.textContent = (m.nombre || '?').charAt(0).toUpperCase();
+        if (m.url_foto) {
+            const foto = document.createElement('img');
+            foto.src = 'uploads/mascotas/' + encodeURIComponent(m.url_foto);
+            foto.alt = '';
+            foto.addEventListener('error', () => foto.replaceWith(inicial));
+            avatar.appendChild(foto);
+        } else {
+            avatar.appendChild(inicial);
+        }
+        const info = document.createElement('div');
+        info.className = 'mascota-info';
+        const nombre = document.createElement('strong');
+        nombre.textContent = m.nombre || '';
+        const especie = document.createElement('span');
+        especie.textContent = m.especie || m.nombre_especie || 'Especie sin indicar';
+        const raza = document.createElement('span');
+        raza.textContent = m.raza || m.raza_indicada || 'Raza sin indicar';
+        info.append(nombre, especie, raza);
+        item.append(avatar, info);
+        return item;
+    }
+
+    async function verCliente(id) {
+        if (!modalDetalle) return;
+        const [c, mascotas] = await Promise.all([
+            cliente(id),
+            pedir('index.php?action=listar_mascotas_propietario_ajax&id_usuario=' + encodeURIComponent(id)),
+        ]);
+        if (!c) {
+            mensaje('error', 'No se pudo cargar el cliente.');
+            return;
+        }
+        const campo = (nombre) => modalDetalle.querySelector('[data-detalle="' + nombre + '"]');
+        const palabras = (c.nombre_completo || '').trim().split(/\s+/).slice(0, 2);
+        campo('iniciales').textContent = palabras.map((p) => p.charAt(0)).join('').toUpperCase();
+        campo('nombre').textContent = c.nombre_completo || '';
+        campo('documento').textContent = ((c.tipo_documento || '') + ' ' + (c.documento || '')).trim();
+        campo('email').textContent = c.email || 'No registrado';
+        campo('telefono').textContent = c.telefono || 'No registrado';
+
+        const lista = campo('mascotas');
+        lista.replaceChildren();
+        const filas = Array.isArray(mascotas) ? mascotas : [];
+        if (filas.length === 0) {
+            const vacio = document.createElement('div');
+            vacio.className = 'no-mascotas';
+            vacio.textContent = 'No tiene mascotas activas en esta clínica.';
+            lista.appendChild(vacio);
+        }
+        filas.forEach((m) => lista.appendChild(itemMascota(m)));
+        modalDetalle.classList.add('is-open');
+    }
+
+    // ── Botones de tarjetas y tabla ────────────────────────────────────────
     modulo.addEventListener('click', async (evento) => {
-        const boton = evento.target.closest('[data-accion]');
+        const boton = evento.target.closest('button[data-accion]');
         if (!boton) return;
         const id = boton.dataset.id;
 
         if (boton.dataset.accion === 'nuevo') {
-            cerrarModal();
+            cerrarModal(modal);
             abrirModal(true);
         } else if (boton.dataset.accion === 'editar') {
             editar(id);
-        } else if (boton.dataset.accion === 'estado') {
-            const activar = boton.dataset.estado === '1';
-            const ok = activar ? { isConfirmed: true } : await Swal.fire({
-                icon: 'question',
-                text: (activar ? '¿Activar a ' : '¿Desactivar a ') + boton.dataset.nombre + ' en esta clínica? Su cuenta y sus otros roles no cambian.',
-                showCancelButton: true,
-                confirmButtonText: activar ? 'Activar' : 'Desactivar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#0052FF',
-            });
-            if (!ok.isConfirmed) return;
-            const datos = new FormData();
-            datos.append('id_usuario', id);
-            datos.append('estado', boton.dataset.estado);
-            const r = await pedir('index.php?action=cambiar_estado_usuario_ajax', datos);
-            await mensaje(r.success ? 'success' : 'error', r.message);
-            if (r.success) window.location.reload();
+        } else if (boton.dataset.accion === 'editar-cliente') {
+            editarCliente(id);
+        } else if (boton.dataset.accion === 'ver-cliente') {
+            verCliente(id);
         } else if (boton.dataset.accion === 'restablecer') {
             const ok = await Swal.fire({
                 icon: 'warning',

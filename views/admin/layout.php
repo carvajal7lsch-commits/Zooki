@@ -19,7 +19,7 @@
     <!-- Estilos del sistema -->
     <link rel="stylesheet" href="css/styles.css?v=2">
     <link rel="stylesheet" href="css/dashboard.css?v=4">
-    <link rel="stylesheet" href="css/usuarios.css?v=2">
+    <link rel="stylesheet" href="css/usuarios.css?v=3">
     <link rel="stylesheet" href="css/pill-sidebar.css">
     <link rel="stylesheet" href="css/contexto.css?v=1">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
@@ -148,7 +148,7 @@
     </div>
 
     <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
-    <script src="js/avisos.js?v=2"></script>
+    <script src="js/avisos.js?v=3"></script>
     <script src="js/password-policy.js"></script>
     <script src="js/dashboard.js?v=7"></script>
     <script src="js/csrf.js"></script>
@@ -156,6 +156,6 @@
     <?php if (!isset($content_view)): ?>
     <script src="js/panel-admin.js?v=1"></script>
     <?php endif; ?>
-<script src="js/interacciones.js?v=1"></script>
+<script src="js/interacciones.js?v=2"></script>
 </body>
 </html>

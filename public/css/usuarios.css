@@ -1213,7 +1213,8 @@
 #usuariosModulo [hidden] {
     display: none !important;
 }
-.avatar-mini.avatar-iniciales {
+.avatar-mini.avatar-iniciales,
+.avatar-iniciales {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1222,12 +1223,92 @@
     border-radius: 50%;
     background: #0052FF;
     color: white;
-    font-weight: 700;
-    font-size: 1.1rem;
+    font-weight: 600;
+    font-size: 1.05rem;
     box-shadow: 0 4px 14px rgba(0, 82, 255, 0.25);
+    flex-shrink: 0;
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.identidad-protegida {
-    color: #64748b;
-    font-size: 0.75rem;
-    line-height: 1.4;
+
+/* C9.1: colores de la v1.12.0 (ui-avatars) por rol, sin servicio externo. */
+.avatar-iniciales--rol-2 {
+    background: #0044d6;
+}
+
+.avatar-iniciales--cliente,
+.avatar-iniciales--mascota {
+    background: #5560FF;
+    box-shadow: 0 4px 14px rgba(85, 96, 255, 0.25);
+}
+
+.avatar-iniciales--mascota {
+    background: #10B981;
+    box-shadow: none;
+}
+
+.avatar-iniciales--tabla {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    box-shadow: none;
+}
+
+.avatar-iniciales--grande {
+    width: 64px;
+    height: 64px;
+    font-size: 1.3rem;
+}
+
+.person-card:hover .avatar-iniciales,
+.client-card:hover .avatar-iniciales {
+    transform: scale(1.1) rotate(3deg);
+}
+
+.current-user-label {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.table-actions .toggle-switch {
+    margin-right: 0.25rem;
+}
+
+/* Detalle del cliente */
+.users-modal__panel--detalle {
+    max-width: 600px;
+}
+
+.cliente-detalle {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.cliente-detalle__datos h4 {
+    margin: 0 0 0.35rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.cliente-detalle__datos p {
+    margin: 0.15rem 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    overflow-wrap: anywhere;
+}
+
+.cliente-detalle__titulo {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }

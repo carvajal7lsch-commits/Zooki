@@ -1,8 +1,11 @@
 <?php
-/** C1.7/C9: tarjetas y tabla comparten las mismas restricciones de identidad. */
+/**
+ * C1.7/C9.1: tarjetas y tabla comparten las mismas restricciones de identidad.
+ * Restablecer la contraseña no se ofrece si la persona tiene otro vínculo
+ * (decisión del usuario en el recorrido de C8/C9): el servidor lo rechaza igual.
+ */
 ?>
-<button type="button" class="action-btn" data-accion="editar" data-id="<?= (int) $p['id_usuario'] ?>" title="Editar" aria-label="Editar"><i class="fas fa-pen" aria-hidden="true"></i></button>
-<?php if (!$esYo): ?>
-    <button type="button" class="action-btn" data-accion="estado" data-id="<?= (int) $p['id_usuario'] ?>" data-estado="<?= $activo ? 0 : 1 ?>" data-nombre="<?= $e($p['nombre_completo']) ?>" title="<?= $activo ? 'Desactivar en la clínica' : 'Activar en la clínica' ?>" aria-label="<?= $activo ? 'Desactivar' : 'Activar' ?>"><i class="fas <?= $activo ? 'fa-user-slash' : 'fa-user-check' ?>" aria-hidden="true"></i></button>
-    <button type="button" class="action-btn" <?php if (!$p['identidad_editable']): ?>disabled<?php endif; ?> data-accion="restablecer" data-id="<?= (int) $p['id_usuario'] ?>" data-nombre="<?= $e($p['nombre_completo']) ?>" title="<?= $p['identidad_editable'] ? 'Restablecer contraseña' : 'Cuenta con otros vínculos: solo el titular cambia la contraseña' ?>" aria-label="Restablecer contraseña"><i class="fas fa-key" aria-hidden="true"></i></button>
+<button type="button" class="<?= $claseAccion ?>" data-accion="editar" data-id="<?= (int) $p['id_usuario'] ?>" title="Editar" aria-label="Editar a <?= $e($p['nombre_completo']) ?>"><i class="bi bi-pencil-fill" aria-hidden="true"></i></button>
+<?php if (!$esYo && $p['identidad_editable']): ?>
+    <button type="button" class="<?= $claseAccion ?>" data-accion="restablecer" data-id="<?= (int) $p['id_usuario'] ?>" data-nombre="<?= $e($p['nombre_completo']) ?>" title="Restablecer contraseña" aria-label="Restablecer la contraseña de <?= $e($p['nombre_completo']) ?>"><i class="bi bi-key" aria-hidden="true"></i></button>
 <?php endif; ?>
