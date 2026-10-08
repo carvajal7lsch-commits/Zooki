@@ -98,6 +98,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] C7 — Paneles de inicio y pendientes del día por clínica activa; retiro de las estadísticas, gráficas y línea de tiempo del recepcionista ([Anexo C7](#anexo-c7--resultado)). Implementada, verificada y revisada por Claude (C7 — Revisión).
   - [x] C8 — Recordatorios por correo con clínica original, vínculos activos, ventana y reintentos ([Anexo C8](#anexo-c8--resultado)). Lo escribió Codex; implementada y verificada, pendiente de revisión por Claude.
   - [x] C9 — Limpieza de C, tarjetas por defecto con preferencia local, eventos y estilos externos, toasts por acción y auditoría en el menú ([Anexo C9](#anexo-c9--resultado)). Lo escribió Codex; pendiente de revisión por Claude y de prueba visual del usuario.
+  - [x] C9.1 — Correcciones del recorrido visual: usuarios con el diseño de v1.12.0, restablecer oculto en identidades compartidas, recarga sin esperar al aviso, teléfono del portal validado al escribir, imprimir historial en el detalle de la mascota y pruebas de JS en el CI ([Anexo C9.1](#anexo-c91--resultado)). Lo escribió Claude Code; pendiente de revisión por Claude y de prueba visual del usuario.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -1163,3 +1164,75 @@ Funcionó: Ana (usuarios en tarjetas y tabla, recarga, solo Norte, bloqueo de El
 6. Agregar `node --test tests/Frontend` al CI (observación 2 de la revisión de C8/C9).
 
 **Mejoras que no bloquean** (validar al arrastrar antes de soltar, formularios, modales, media queries, peso desconocido): anotadas en `specs/pulido-interfaz.md` para la etapa final de pulido.
+
+## Anexo C9.1 — Resultado
+
+Lo escribió Claude Code; la revisión corresponde a la sesión de revisión de Claude. Cubre los seis puntos del recorrido visual de C8/C9; no se tocó `specs/pulido-interfaz.md`.
+
+**Qué se hizo.**
+
+1. **Usuarios con el diseño de producción.** `views/admin/usuarios.php` vuelve a la estructura y las clases de v1.12.0 (cuyo CSS seguía en `usuarios.css`), con los datos v2:
+   - Pestañas Personal / Clientes, «Nuevo Usuario», buscador por pestaña, filtro de rol (Personal), Todos / Activos / Inactivos y botón tabla / cuadrícula.
+   - Tarjetas con avatar de dos iniciales (colores de v1, sin servicio externo), interruptor de estado, nombre con «(Tú)», chips de rol e «Inactivo», documento y teléfono, y botones al pie.
+   - Los filtros actúan a la vez sobre tarjetas y tabla, con aviso de «Sin resultados».
+   - Interruptor y botones en parciales compartidos por tarjetas y tabla.
+   - Personal: el interruptor usa `cambiar_estado_usuario_ajax`; desactivar pide confirmación; nadie se desactiva ni se restablece a sí mismo.
+   - Clientes: interruptor, editar (nombre, teléfono y vínculo) y ver (datos y mascotas en la clínica). Usa las acciones existentes `get_propietario_ajax`, `actualizar_propietario_ajax` y `listar_mascotas_propietario_ajax`; documento, correo y contraseña siguen fuera del alcance del administrador (C1.7).
+   - **Decisión del usuario (2026-10-08):** el interruptor del cliente es funcional, como el del veterinario en Pacientes, y se anota el hueco de RN-109 (ver pendientes).
+2. **Restablecer contraseña oculto** si la persona tiene otro vínculo (`identidad_editable` en falso), en tarjetas y tabla. El servidor sigue rechazando igual (C1.7, `UsuarioSeguridadTest`).
+3. **Recarga sin esperar al aviso.** `zookiRecargarConAviso()` en `avisos.js` (lo cargan los tres layouts) guarda el aviso en `sessionStorage`, recarga de inmediato y lo muestra al volver; sin almacenamiento, lo muestra y recarga igual.
+   - Portal: reservar, cancelar, registrar o editar mascota, vincular y desvincular.
+   - También usuarios, `medical-module.js` (mascota, consulta, vacuna, desparasitación, cita) y la contraseña creada en `perfil.js`, que esperaban o perdían el aviso.
+   - El correo de confirmación de la reserva va con `keepalive`, como en `calendario.js`, para que la recarga no lo corte.
+4. **Teléfono del perfil del propietario.** Nuevo `helpers/ValidadorTelefono.php` con la regla del servidor (7–20 caracteres: números, espacios, + y guiones). `PortalController` lo usa, y el campo toma de ahí `maxlength`, `minlength`, `pattern` y `data-caracteres`. `interacciones.js` filtra los caracteres mientras se escribe o se pega. El `onsubmit` en línea de ese formulario pasó a `portal.js`. Los formularios de personal y cliente de usuarios usan la misma regla.
+5. **Imprimir historial.** Botón «Imprimir historial» en la cabecera del detalle de la mascota, junto a editar, con el enlace de esa mascota (RE-5.11). Sigue también el de la agenda de salud.
+6. **CI.** `build-and-test` instala Node 22 y corre `node --test "tests/Frontend/**/*.test.cjs"`. `node --test tests/Frontend` literal falla desde Node 21 (el argumento es un patrón y no acepta una carpeta); el patrón corre las mismas pruebas.
+
+Sin migración ni cambio de esquema; se subieron las versiones de caché de los CSS y JS tocados.
+
+**Pruebas.**
+
+| Alcance | Prueba |
+|---|---|
+| Diseño, aislamiento, interruptores, (Tú), reset oculto en identidad compartida (también con vínculo inactivo), clientes de la clínica, teléfono, sin JS/CSS en línea y escape | `UsuariosVistaTest` (10 casos) |
+| Regla del teléfono igual en servidor y HTML | `ValidadorTelefonoTest`; `PortalPropietarioTest` sin cambios |
+| Aviso tras recargar, sin almacenamiento, ningún JS espera al aviso, filtro de caracteres, botón de imprimir, filtros de usuarios | `tests/Frontend/C91Interfaz.test.cjs` (10 casos) |
+
+Comprobación de mutación: volver a mostrar el reset en una identidad compartida hace fallar dos casos de `UsuariosVistaTest`.
+
+**Verificación.**
+
+| Comando | Resultado |
+|---|---|
+| `vendor/bin/phpunit` | 394 pruebas, 1790 aserciones, 19 saltadas (MySQL sin variable). |
+| Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32) | 394 pruebas, 2037 aserciones, sin fallos ni saltadas. |
+| `node --test "tests/Frontend/**/*.test.cjs"` | 15 pruebas en verde. |
+| `php -l` y `node --check` de lo tocado | Sin errores. |
+
+No se usó ni se modificó `zooki_v2_prueba`. No hubo navegador en esta sesión.
+
+**Para revisar en el navegador** (móvil, tablet y escritorio):
+
+- `admin_usuarios` con Ana (Norte) frente a las dos capturas de referencia: pestañas, filtros combinados, tabla / cuadrícula, interruptor de Beto (confirmar y cancelar), el de Ana deshabilitado, Elena sin la llave, editar y ver a Fabio, y desactivar y activar su vínculo.
+- Portal con Fabio: vincular y desvincular, reservar y cancelar, registrar y editar mascota (la pantalla cambia al instante y el aviso sale después); el teléfono de «Editar datos de contacto» (letras, paréntesis, más de 20 caracteres, pegar); «Imprimir historial» en el detalle de Luna.
+- Veterinario (Beto): registrar consulta, vacuna, desparasitación y cita; el aviso sale después de recargar.
+
+**Pendientes.**
+
+1. **Hueco de RN-109 (desde C3, servidor):** `actualizar_propietario_ajax` deja que la clínica reactive el vínculo de un propietario que se desvinculó desde su portal, sin su consentimiento. Afecta a Pacientes y a Usuarios. Propuesta: reactivar solo con `solicitar_vinculo_propietario_ajax` (confirmación por correo), en D1 o donde decida el usuario.
+2. La misma expresión del teléfono sigue repetida en `MascotaController`, `PerfilController`, `PropietarioController` y `UsuarioController`; pasarla a `ValidadorTelefono` y validar los demás formularios es del pulido.
+3. Queda un `onsubmit` en línea en el formulario de contraseña de `views/portal/index.php` (no estaba en el alcance).
+4. Revisión de Claude y recorrido visual del usuario. No se empezó D1.
+
+### C9.1 — Revisión (2026-10-08)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el anexo y el diff: los seis puntos están cubiertos, con pruebas de PHP y de JS (y la de JS ya corre en el CI). Se valora la solución de la demora (recargar de inmediato y mostrar el aviso al volver, guardado en `sessionStorage`) y que se aplicara también fuera del portal.
+
+**Hallazgo de seguridad heredado de C3 (pendiente 1 del anexo):** la clínica puede reactivar con `actualizar_propietario_ajax` el vínculo de un propietario que se desvinculó desde su portal, sin su consentimiento (RN-109). **Propuesta de la revisión:** toda reactivación de un vínculo de propietario por parte de la clínica pasa por la confirmación del titular por correo (`solicitar_vinculo_propietario_ajax`), sin cambio de esquema. Se corrige como primer punto de D1. **Aprobado por el usuario el 2026-10-08.**
+
+**Recorrido visual del usuario (2026-10-08): bien.** Hallazgo: el teléfono de Fabio todavía no tiene límite de caracteres ni formato en al menos un formulario, a diferencia de los de administración. Se unifica en D1: todos los campos de teléfono usan `ValidadorTelefono` y el filtro de `interacciones.js` (pendiente 2 del anexo).
+
+**Etapa D en tres partes** (reemplaza la división en dos de la revisión de C8/C9; **aprobada por el usuario el 2026-10-08**):
+- **D1 — Sesión, política de datos y registro del propietario:** el hueco de RN-109, HU-T.16 (sesión), HU-T.19 (política versionada y re-aceptación), HU-5.8 (registro del propietario como identidad global) y el consentimiento del registro con Google (RE-T.18.2–4).
+- **D2 — Cuentas del personal y del titular:** alta de personal con enlace de activación (sin contraseña por correo), cambio de correo y de documento con verificación (RE-T.5.7, RE-T.5.8) y CAPTCHA por cuenta con Cloudflare Turnstile (RE-T.13.5).
+- **D3 — Registro y activación de clínicas:** HU-0.1 (con Turnstile y NIT válido) y HU-0.2 (activación con el plan gratuito y los catálogos iniciales de D-1, RE-0.2.5).
