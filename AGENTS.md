@@ -4,9 +4,13 @@ Instrucciones para cualquier agente de IA (Claude Code, Codex, Cursor, Copilot, 
 
 Zooki es un sistema de gestión veterinaria: PHP 8.2 sin framework (MVC propio), MySQL 8, JavaScript sin bundler. Todo el código, los comentarios y la documentación van en **español**.
 
+## Empieza aquí
+
+Antes de cualquier tarea, lee **[`agentes/estado.md`](agentes/estado.md)** (dónde vamos y qué sigue) y **[`agentes/metodo.md`](agentes/metodo.md)** (roles de arquitecto, ejecutor y revisor; ciclo de cada subetapa; plantilla de prompt; cómo revisar; preferencias del dueño del producto). Así ninguna sesión necesita que el usuario repita el contexto.
+
 ## Estado del proyecto
 
-- **El código está en la v1.12.0**: una instalación para una sola clínica. Los usuarios se identifican por su documento, existe el rol recepcionista y las tablas no llevan `id_clinica`.
+- **Producción y `main` están en la v1.12.0**: una instalación para una sola clínica. La v2 se construye en ramas propias (la etapa activa está en [`agentes/estado.md`](agentes/estado.md)); el código de esas ramas ya usa el modelo v2.
 - **La especificación ya es la v2**: una plataforma SaaS multi-inquilino con dos grafos (soporte a la decisión clínica y agenda inteligente), repartida entre v2.0 y v2.1. Está en `documentacion/` y es la fuente de verdad.
 - **Se construye la v2 por módulos**, en el orden de dependencias del [plan de entregas](documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2): primero la entrega v2.0 (lo imprescindible), luego la v2.1. Cada módulo agrupa sus HU y RE; el avance y las pruebas se cierran por etapas pequeñas dentro del módulo.
 - Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/modelo/drawdb_schema_v2.sql` describen el destino para drawDB; el esquema ejecutable es `database/01_schema.sql`. Como los datos de la v1 eran solo pruebas, el salto a v2 reinicia la base con un esquema v2 consolidado y datos semilla, sin migrar datos ([plan M0](specs/M0-T-base-saas-identidad.md)). Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
@@ -108,7 +112,10 @@ Son las del manifiesto `documentacion/ZOOKI_REGLAS.md` (que no se sube al reposi
 
 - **Separación de capas y SOLID:** cada clase o función hace una sola cosa; la lógica de datos no va en las vistas ni la de presentación en los modelos.
 - **Nada de CSS ni JS en línea** en las vistas (`style=`, `onclick=`, `<script>` con código). Los datos que necesita el JS van en atributos `data-*`.
-- **Nada de `alert()`/`confirm()`/`prompt()`**: se usa SweetAlert2.
+- **Nada de `alert()`/`confirm()`/`prompt()`**: se usa SweetAlert2, caso por caso: aviso breve (toast) para acciones frecuentes o reversibles, confirmación para lo destructivo o irreversible, y nunca para errores de validación de un campo.
+- **Validación en tiempo real** en los formularios: cada campo se valida mientras se escribe, con el mensaje junto al campo y la misma regla del helper del servidor (formato, longitud, caracteres y, si aplica, unicidad por AJAX). La pantalla se actualiza en cuanto responde el servidor, sin esperar a que se cierre un aviso.
+- **Una sentencia por línea** y nombres claros.
+- Al tocar una pantalla existente se conserva su diseño (versión anterior y `specs/referencias/`); no se rediseña sin que el usuario lo pida.
 - **Validar en el servidor siempre**, aunque el formulario ya valide en el navegador. Los límites viven en un helper (ej. `ValidadorMascota::NOMBRE_MAX`) y el HTML usa los mismos.
 - Escapar toda salida con `htmlspecialchars`; consultas siempre preparadas; toda petición que modifica datos lleva token CSRF.
 - Un propietario solo ve sus propias mascotas (RN-G02): comprobarlo en el servidor en cada acción del portal.

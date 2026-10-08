@@ -27,7 +27,8 @@ composer.lock
 
 # Archivos de IDE y editores
 .vscode/
-.claude/
+.claude/*
+!.claude/skills/
 .idea/
 *.swp
 *.swo
