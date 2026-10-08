@@ -40,6 +40,16 @@ jobs:
     - name: Run PHPUnit Test Suite
       run: vendor/bin/phpunit
 
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    # C9.1: pruebas del JS del navegador con node:test, sin dependencias.
+    # Desde Node 21 el argumento es un patrón: una carpeta sola no se acepta.
+    - name: Pruebas de JS (node --test)
+      run: node --test "tests/Frontend/**/*.test.cjs"
+
   # Plan M0, etapa B: la base v2 se crea desde cero en MySQL 8 (producción)
   # y el migrador se puede correr dos veces sin cambiar nada.
   base-v2-mysql:
