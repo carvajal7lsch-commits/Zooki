@@ -147,6 +147,6 @@
     <?php endif; ?>
 
     <script src="js/imprimir-historial.js?v=1"></script>
-    <script src="js/interacciones.js?v=1"></script>
+    <script src="js/interacciones.js?v=2"></script>
 </body>
 </html>

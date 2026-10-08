@@ -10,6 +10,7 @@ require_once __DIR__ . '/../helpers/ReglaAtencion.php';
 require_once __DIR__ . '/../helpers/RespuestaJson.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/../helpers/ValidadorMascota.php';
+require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../helpers/FotoMascota.php';
 
 /**
@@ -330,9 +331,9 @@ class PortalController
     public function actualizarDatosContactoAjax(): void
     {
         RespuestaJson::modificacion(function (): array {
-            $telefono = preg_replace('/\s+/', ' ', trim((string) ($_POST['telefono'] ?? '')));
-            if (!preg_match('/^[0-9+\s-]{7,20}$/', $telefono)) {
-                throw new InvalidArgumentException('El teléfono solo puede tener números, espacios, + y guiones (de 7 a 20 caracteres).');
+            $telefono = ValidadorTelefono::normalizar((string) ($_POST['telefono'] ?? ''));
+            if (!ValidadorTelefono::esValido($telefono)) {
+                throw new InvalidArgumentException('El teléfono solo puede tener números, espacios, + y guiones (de ' . ValidadorTelefono::MIN . ' a ' . ValidadorTelefono::MAX . ' caracteres).');
             }
 
             $usuarios = new Usuario($this->db);

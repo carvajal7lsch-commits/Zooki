@@ -266,17 +266,23 @@ function toggleContactEditPortal() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('portalContactEditForm');
+    if (!form) return;
+    form.addEventListener('submit', (evento) => {
+        evento.preventDefault();
+        submitContactEditPortal();
+    });
+});
+
 /** Decisión C6: el propietario cambia su teléfono; el correo se cambia con verificación en la etapa D. */
 async function submitContactEditPortal() {
-    const phone = document.getElementById('portal_contact_phone').value.trim();
+    const campo = document.getElementById('portal_contact_phone');
+    const phone = campo.value.trim();
 
-    if (!phone) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Campos requeridos',
-            text: 'Por favor complete todos los campos.',
-            confirmButtonColor: '#5560FF'
-        });
+    // C9.1: la misma regla del servidor (ValidadorTelefono), avisada en el campo.
+    if (!campo.checkValidity()) {
+        campo.reportValidity();
         return;
     }
 
@@ -570,6 +576,8 @@ async function verDetalle(id, opciones = {}) {
     if (opciones.historial !== false) history.pushState({ zkMascota: id, zkDentro: true }, '', `#mascota-${id}`);
     showTab('historial', document.querySelector('.portal-tab[data-tab="historial"]'));
 
+    const imprimir = document.getElementById('btnImprimirFichaMascota');
+    if (imprimir) imprimir.hidden = true;
     document.getElementById('drawerPetTitle').innerHTML = 'Cargando…';
     document.getElementById('drawerPetSubtitle').textContent = '';
     document.getElementById('drawerPetSummary').innerHTML = '';
@@ -588,6 +596,11 @@ async function verDetalle(id, opciones = {}) {
 
         const m = res.mascota;
         window.activePetData = m;
+        // C9.1 (RE-5.11): el historial para imprimir de esta mascota.
+        if (imprimir) {
+            imprimir.href = `index.php?action=portal_imprimir_historial&id_mascota=${encodeURIComponent(m.id_mascota)}`;
+            imprimir.hidden = false;
+        }
         
         const avatarHtml = m.url_foto
             ? `<img src="uploads/mascotas/${escapeHtml(m.url_foto)}" alt="" class="pet-detail__avatar">`
@@ -1706,20 +1719,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const mailFd = new FormData();
                     mailFd.append('id_cita', res.id_cita);
                     mailFd.append('tipo', 'confirmacion_nueva');
+                    // keepalive: el envío termina aunque la página recargue enseguida (C9.1).
                     fetch('index.php?action=enviar_email_ajax', {
                         method: 'POST',
-                        body: mailFd
+                        body: mailFd,
+                        keepalive: true
                     }).catch(console.error);
                 }
 
-                showTikTokModal({
-                    title: '¡Cita Reservada!',
-                    message: res.message || 'Tu cita ha sido agendada y confirmada con éxito.',
-                    isConfirm: false,
-                    onConfirm: () => {
-                        location.reload();
-                    }
-                });
+                // C9.1: la agenda se actualiza ya; el aviso sale al recargar.
+                zookiRecargarConAviso(res.message || 'Tu cita ha sido agendada y confirmada con éxito.');
             } else if (res.has_warning) {
                 showTikTokModal({
                     title: 'Cita Duplicada',
@@ -1781,14 +1790,7 @@ function cancelarCitaPortal(idCita) {
                 })).json();
 
                 if (res.success) {
-                    showTikTokModal({
-                        title: 'Cita cancelada',
-                        message: res.message || 'La cita ha sido cancelada.',
-                        isConfirm: false,
-                        onConfirm: () => {
-                            location.reload();
-                        }
-                    });
+                    zookiRecargarConAviso(res.message || 'La cita ha sido cancelada.');
                 } else {
                     showTikTokModal({
                         title: 'Error',
@@ -2028,8 +2030,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (res.success) {
                     closeModal(modalId);
-                    zookiToast(exito[1] || exito[0], 'success')
-                        .then(() => location.reload());
+                    zookiRecargarConAviso(exito[1] || exito[0]);
                     return;
                 }
                 Swal.fire({ icon: 'error', title: 'Revisa los datos', text: res.message || 'No se pudo guardar.', confirmButtonColor: '#0052FF' });
@@ -2217,7 +2218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 boton.disabled = false;
                 return;
             }
-            avisoPortal('success', 'Listo', res.message).then(() => location.reload());
+            zookiRecargarConAviso(res.message || 'Listo');
         } catch (err) {
             console.error(err);
             boton.disabled = false;

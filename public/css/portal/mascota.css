@@ -56,6 +56,26 @@
 
 .pet-detail__layout { margin-top: 1rem; }
 
+/* C9.1: imprimir historial, a la vista en la cabecera de la mascota. */
+.btn-imprimir-ficha {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    padding: 0.5rem 0.85rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(85, 96, 255, 0.2);
+}
+
+.btn-imprimir-ficha i { font-size: 1rem; }
+.btn-imprimir-ficha[hidden] { display: none; }
+
 /* ── Ficha ── */
 .portal-drawer-summary {
     padding: 1rem;

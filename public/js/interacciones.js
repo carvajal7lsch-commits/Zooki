@@ -9,6 +9,23 @@ document.addEventListener('keydown', (evento) => {
     ejecutarInteraccion(evento);
 });
 
+/**
+ * C9.1: un campo con data-caracteres solo acepta esos caracteres mientras se
+ * escribe o se pega, sin pasar de su maxlength. El servidor valida lo mismo.
+ */
+document.addEventListener('input', (evento) => {
+    const campo = evento.target;
+    if (!campo || !campo.dataset || campo.dataset.caracteres === undefined) return;
+    const limpio = limpiarCaracteres(campo.value, campo.dataset.caracteres, campo.maxLength);
+    if (limpio !== campo.value) campo.value = limpio;
+});
+
+function limpiarCaracteres(valor, caracteres, maximo) {
+    const fuera = new RegExp('[^' + caracteres + ']', 'g');
+    const limpio = String(valor).replace(fuera, '');
+    return maximo > 0 ? limpio.slice(0, maximo) : limpio;
+}
+
 function ejecutarInteraccion(evento) {
     if (evento.target.closest('[data-ui-detener]')) return;
     const boton = evento.target.closest('[data-ui-accion]');

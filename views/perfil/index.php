@@ -154,4 +154,4 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
     </div>
 </div>
 
-<script src="js/perfil.js?v=2"></script>
+<script src="js/perfil.js?v=3"></script>

@@ -809,7 +809,7 @@ async function savePet(e) {
             throw new Error('La respuesta del servidor no es un JSON válido.');
         }
         if (res.success) {
-            location.reload();
+            zookiRecargarConAviso(res.message || 'Mascota registrada.');
         } else {
             zookiAviso(res.message || 'No se pudo registrar la mascota.');
         }
@@ -891,10 +891,8 @@ async function updatePet(e) {
             throw new Error('La respuesta del servidor no es un JSON válido.');
         }
         if (res.success) {
-            Swal.fire({
-                toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
-                icon: 'success', title: 'Mascota actualizada con éxito'
-            }).then(() => location.reload());
+            // C9.1: recarga ya; el aviso sale al volver.
+            zookiRecargarConAviso('Mascota actualizada con éxito');
         } else {
             Swal.fire('Error', res.message || 'Error desconocido al actualizar la mascota.', 'error');
         }
@@ -1075,9 +1073,8 @@ async function saveConsultation(e) {
         const res = await (await fetch('index.php?action=registrar_consulta_ajax', { method: 'POST', body: fd })).json();
 
         if (res.success) {
-            zookiToast(res.message);
             closeModal('modalConsulta');
-            location.reload();
+            zookiRecargarConAviso(res.message);
             return;
         }
 
@@ -1520,9 +1517,8 @@ async function saveVaccine(e) {
         // Registrar la aplicación de la vacuna
         const res = await (await fetch('index.php?action=registrar_vacuna_ajax', { method: 'POST', body: fd })).json();
         if (res.success) { 
-            zookiAviso(res.message); 
-            closeDrawer('drawerVacuna'); 
-            location.reload(); 
+            closeDrawer('drawerVacuna');
+            zookiRecargarConAviso(res.message);
         } else {
             zookiAviso(res.message);
         }
@@ -1606,9 +1602,8 @@ async function saveDeworming(e) {
         // Registrar la desparasitación
         const res = await (await fetch('index.php?action=registrar_desparasitacion_ajax', { method: 'POST', body: fd })).json();
         if (res.success) { 
-            zookiAviso(res.message); 
-            closeDrawer('drawerDesparasitacion'); 
-            location.reload(); 
+            closeDrawer('drawerDesparasitacion');
+            zookiRecargarConAviso(res.message);
         } else {
             zookiAviso(res.message);
         }
@@ -1673,9 +1668,8 @@ async function saveAppointment(e) {
     try {
         const res = await (await fetch('index.php?action=registrar_cita_ajax', { method: 'POST', body: fd })).json();
         if (res.success) { 
-            zookiAviso(res.message); 
-            closeModal('modalCita'); 
-            location.reload(); 
+            closeModal('modalCita');
+            zookiRecargarConAviso(res.message);
         } else {
             zookiAviso(res.message);
         }

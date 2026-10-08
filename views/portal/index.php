@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../helpers/ResumenPanel.php';
 require_once __DIR__ . '/../../helpers/ReglaAtencion.php';
+require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
 $total_mascotas = count($mascotas);
 $hoy = new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
@@ -453,7 +454,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
                 </button>
 
                 <div id="contactEditSection" class="password-change-collapse">
-                    <form id="portalContactEditForm" class="portal-form" onsubmit="event.preventDefault(); submitContactEditPortal();">
+                    <form id="portalContactEditForm" class="portal-form" novalidate>
                         <?php // Decisión C6: el correo es el dato de acceso; su cambio con verificación llega en la etapa D (RE-T.5.7). ?>
                         <div class="input-group">
                             <span class="portal-label">Correo electrónico</span>
@@ -463,7 +464,8 @@ foreach ((array) $todas_desparasitaciones as $d) {
                             <label class="portal-label" for="portal_contact_phone">Teléfono de contacto *</label>
                             <div class="search-input-wrapper campo">
                                 <i class="ri-phone-line" aria-hidden="true"></i>
-                                <input type="tel" name="telefono" id="portal_contact_phone" required autocomplete="tel" placeholder="Tu número de teléfono" value="<?= htmlspecialchars($usuarioData['telefono'] ?? '') ?>">
+                                <?php // C9.1: los mismos límites que valida el servidor (ValidadorTelefono). ?>
+                                <input type="tel" name="telefono" id="portal_contact_phone" required autocomplete="tel" inputmode="tel" placeholder="Tu número de teléfono" minlength="<?= ValidadorTelefono::MIN ?>" maxlength="<?= ValidadorTelefono::MAX ?>" pattern="<?= htmlspecialchars(ValidadorTelefono::patronHtml()) ?>" data-caracteres="<?= htmlspecialchars(ValidadorTelefono::CARACTERES) ?>" title="Solo números, espacios, + y guiones (de <?= ValidadorTelefono::MIN ?> a <?= ValidadorTelefono::MAX ?> caracteres)." value="<?= htmlspecialchars($usuarioData['telefono'] ?? '') ?>">
                             </div>
                         </div>
                         <button type="submit" class="btn-primary btn-primary--compacto" id="btnSubmitContactEdit">
@@ -568,6 +570,11 @@ foreach ((array) $todas_desparasitaciones as $d) {
             <h1 id="drawerPetTitle" class="pet-detail__titulo">—</h1>
             <p id="drawerPetSubtitle" class="pet-detail__subtitulo"></p>
         </div>
+        <?php // C9.1 (RE-5.11): imprimir el historial desde donde se ve la historia de la mascota; portal.js pone el enlace. ?>
+        <a href="#" id="btnImprimirFichaMascota" class="btn-imprimir-ficha" hidden>
+            <i class="ri-printer-line" aria-hidden="true"></i>
+            <span class="texto-largo">Imprimir historial</span><span class="texto-corto">Imprimir</span>
+        </a>
         <button type="button" id="btnEditPetProfile" class="btn-icono btn-icono--suave" aria-label="Editar perfil de la mascota" title="Editar perfil de la mascota">
             <i class="ri-edit-line" aria-hidden="true"></i>
         </button>

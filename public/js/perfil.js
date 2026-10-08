@@ -171,10 +171,13 @@
             formPwd.querySelectorAll('input').forEach(i => { i.type = 'password'; });
             pintarRequisitos();
             pintarCoincidencia();
-            mensaje(msgPwd, actual ? 'Contraseña actualizada.' : 'Contraseña creada.', 'ok');
             // La cuenta ya tiene contraseña: desde ahora se pide la actual (HU-39),
-            // así que se recarga para mostrar ese campo.
-            if (!actual) setTimeout(() => window.location.reload(), 1200);
+            // así que se recarga para mostrar ese campo; sin esperar (C9.1).
+            if (!actual) {
+                zookiRecargarConAviso('Contraseña creada.');
+                return;
+            }
+            mensaje(msgPwd, 'Contraseña actualizada.', 'ok');
         } catch (err) {
             console.error('Perfil:', err);
             mensaje(msgPwd, 'Error de conexión. Intenta nuevamente.', 'error');

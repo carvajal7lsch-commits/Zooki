@@ -35,6 +35,40 @@ function zookiToast(mensaje, tipo = 'success') {
     });
 }
 
+/**
+ * C9.1: recarga en cuanto responde el servidor y muestra el aviso al volver.
+ *
+ * Antes se esperaba a que el toast se cerrara (2–3 s) para recargar, y la
+ * pantalla parecía no haber hecho nada. El aviso viaja en sessionStorage; si
+ * el navegador no lo permite, se muestra igual y la recarga no espera.
+ */
+const ZOOKI_AVISO_PENDIENTE = 'zooki.avisoPendiente';
+
+function zookiRecargarConAviso(mensaje, tipo = 'success') {
+    try {
+        sessionStorage.setItem(ZOOKI_AVISO_PENDIENTE, JSON.stringify({ mensaje, tipo }));
+    } catch (error) {
+        zookiToast(mensaje, tipo);
+    }
+    window.location.reload();
+}
+
+function zookiMostrarAvisoPendiente() {
+    let aviso = null;
+    try {
+        aviso = JSON.parse(sessionStorage.getItem(ZOOKI_AVISO_PENDIENTE) || 'null');
+        sessionStorage.removeItem(ZOOKI_AVISO_PENDIENTE);
+    } catch (error) {
+        return;
+    }
+    if (aviso && typeof aviso.mensaje === 'string' && aviso.mensaje !== '') {
+        const tipos = ['success', 'error', 'warning', 'info'];
+        zookiToast(aviso.mensaje, tipos.includes(aviso.tipo) ? aviso.tipo : 'success');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', zookiMostrarAvisoPendiente);
+
 /** Aviso que exige confirmación; para errores que el usuario debe leer. */
 function zookiAviso(mensaje, tipo = 'error', titulo = null) {
     if (!window.Swal) {

@@ -156,10 +156,10 @@
     </div>
 
     <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
-    <script src="js/avisos.js?v=2"></script>
+    <script src="js/avisos.js?v=3"></script>
     <script src="js/password-policy.js"></script>
     <script src="js/dashboard.js?v=7"></script>
-    <script src="js/medical-module.js?v=17"></script>
+    <script src="js/medical-module.js?v=18"></script>
     <script src="js/csrf.js"></script>
     <script src="js/extras.js"></script>
     <?php if (($_GET['action'] ?? '') === 'vet_consultas'): ?>
@@ -171,6 +171,6 @@
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
     <script src="js/atencion.js?v=1"></script>
     <?php endif; ?>
-<script src="js/interacciones.js?v=1"></script>
+<script src="js/interacciones.js?v=2"></script>
 </body>
 </html>
