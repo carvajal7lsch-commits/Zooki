@@ -560,6 +560,53 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    /**
+     * C7 en el esquema real: el panel de cada clínica cuenta solo lo suyo,
+     * la carga sale de usuario_clinica y una mascota desvinculada no es
+     * paciente activo. Elena ve su agenda en Norte y la clínica en Sur.
+     */
+    public function testC7PanelesEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../controllers/PanelController.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        DosClinicas::poblarAgenda($this->db);
+        DosClinicas::vincularLunaASur($this->db);
+        $this->db->exec("INSERT INTO mascotas (id_mascota, id_propietario, id_clinica_registro, token_carnet, nombre, estado)
+            VALUES (2, 9, 2, '" . str_repeat('b', 43) . "', 'Toby', 1)");
+        $this->db->exec("INSERT INTO mascota_clinica (id_mascota, id_clinica, estado) VALUES (2, 2, 'inactivo')");
+        $cita = $this->db->prepare("INSERT INTO citas (id_clinica, id_mascota, id_veterinario, id_tipo_cita, fecha, hora, motivo, estado)
+            VALUES (?, 1, ?, ?, '2030-01-07', ?, 'Control', ?)");
+        $cita->execute([1, 2, 1, '09:00:00', 'completada']);
+        $cita->execute([1, 5, 1, '10:00:00', 'confirmada']);
+        $cita->execute([2, 4, 2, '09:00:00', 'pendiente']);
+        $ahora = new DateTimeImmutable('2030-01-07 08:00', new DateTimeZone(ReglaAtencion::ZONA));
+        try {
+            $_SESSION = ['id_usuario' => 5];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::VETERINARIO), 2);
+            $vet = (new PanelController($this->db))->datosVeterinario(5, $ahora);
+            $this->assertSame(['10:00:00'], array_column($vet['agenda'], 'hora'));
+
+            Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::ADMIN), 2);
+            $sur = (new PanelController($this->db))->datosAdministrador($ahora);
+            $this->assertSame([4], array_map('intval', array_column($sur['citas'], 'id_veterinario')));
+            $this->assertSame(['Diego Sur'], array_column($sur['carga'], 'veterinario'));
+            $this->assertSame(1, $sur['pacientes_activos'], 'Toby está desvinculado de Sur.');
+            $this->assertSame(2, $sur['propietarios']);
+
+            $_SESSION = ['id_usuario' => 1];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+            $norte = (new PanelController($this->db))->datosAdministrador($ahora);
+            $this->assertSame(['Beto Norte', 'Elena Doble'], array_column($norte['carga'], 'veterinario'));
+            $this->assertEquals([1, 1], array_column($norte['carga'], 'total'));
+            $this->assertSame(1, $norte['pacientes_activos']);
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
     // -----------------------------------------------------------------------
 
     private function prepararHistoriaClinica(): void

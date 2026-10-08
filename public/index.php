@@ -232,10 +232,9 @@ switch ($action) {
     // RUTAS VETERINARIO (id_rol = 2) - Área Clínica
     // ═══════════════════════════════════════════════════════════════
     case "vet_area":
-        // PanelController pasa a id_usuario e id_clinica en C7; hasta
-        // entonces recibe el id_usuario del contexto activo.
+        // C7: sus datos dentro de la clínica activa, por su id_usuario (RE-6.1.4).
         require_once "../controllers/PanelController.php";
-        $panel = (new PanelController())->datosVeterinario((string) Contexto::idUsuario());
+        $panel = (new PanelController())->datosVeterinario((int) Contexto::idUsuario());
         require_once "../views/vet/layout.php";
         break;
 
@@ -637,28 +636,10 @@ switch ($action) {
         $controller->verificarEmailAjax();
         break;
 
-    case "get_role_stats_ajax":
-        require_once "../controllers/DashboardController.php";
-        $controller = new DashboardController();
-        $controller->getStatsAjax();
-        break;
-
-    case "get_charts_data_ajax":
-        require_once "../controllers/DashboardController.php";
-        $controller = new DashboardController();
-        $controller->getChartsDataAjax();
-        break;
-
     case "get_pendientes_ajax":
         require_once "../controllers/DashboardController.php";
         $controller = new DashboardController();
         $controller->getPendientesAjax();
-        break;
-
-    case "get_timeline_ajax":
-        require_once "../controllers/DashboardController.php";
-        $controller = new DashboardController();
-        $controller->getCitasHoyTimelineAjax();
         break;
 
     case "get_horarios_clinica_ajax":

@@ -1,6 +1,6 @@
 <?php
 /**
- * Panel de inicio del administrador: la operación de la clínica hoy (HU-57).
+ * Panel de inicio del administrador: la operación de la clínica activa hoy (HU-6.2, RE-6.4.1).
  * Los datos llegan de PanelController::datosAdministrador() en $panel.
  */
 require_once __DIR__ . '/../../helpers/ResumenPanel.php';
@@ -43,7 +43,7 @@ $listaVets = fn(array $porVet) => implode(', ', array_map(
         </div>
     </header>
 
-    <div class="panel-contadores">
+    <div class="panel-contadores panel-contadores--seis">
         <div class="panel-contador">
             <span class="panel-contador__valor"><?= (int) $cont['citas'] ?></span>
             <span class="panel-contador__etiqueta">Citas hoy</span>
@@ -67,6 +67,14 @@ $listaVets = fn(array $porVet) => implode(', ', array_map(
                     <?= abs($variacion) ?> % vs. mismo periodo de <?= $e($panel['mes_anterior']) ?>
                 </span>
             <?php endif; ?>
+        </div>
+        <div class="panel-contador">
+            <span class="panel-contador__valor"><?= (int) $panel['pacientes_activos'] ?></span>
+            <span class="panel-contador__etiqueta">Pacientes activos</span>
+        </div>
+        <div class="panel-contador">
+            <span class="panel-contador__valor"><?= (int) $panel['propietarios'] ?></span>
+            <span class="panel-contador__etiqueta">Propietarios</span>
         </div>
     </div>
 

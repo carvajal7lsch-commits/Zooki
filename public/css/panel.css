@@ -163,6 +163,8 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--p-gap);
 }
+/* C7: el administrador suma pacientes activos y propietarios (RE-6.4.1). */
+.panel-contadores--seis { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .panel-contador {
     display: flex;
     flex-direction: column;
@@ -475,10 +477,12 @@ a.panel-fila__titulo:hover { color: var(--p-primary); }
     .panel--vet .panel-cuerpo,
     .panel--admin .panel-cuerpo { grid-template-columns: minmax(0, 1fr); }
     .panel-contadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .panel-contadores--seis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .panel-hero__contenido { max-width: 70%; }
 }
 @media (max-width: 640px) {
     .panel-hero { padding: 20px; }
+    .panel-contadores--seis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .panel-hero__contenido { max-width: 100%; }
     .panel-hero__imagen { display: none; }
     .panel-hero__titulo { font-size: 1.5rem; }

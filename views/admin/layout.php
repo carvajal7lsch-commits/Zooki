@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="css/horarios.css?v=1">
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
-    <link rel="stylesheet" href="css/panel.css?v=2">
+    <link rel="stylesheet" href="css/panel.css?v=3">
     <?php endif; ?>
 </head>
 <body>
@@ -153,7 +153,7 @@
     <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
     <script src="js/avisos.js"></script>
     <script src="js/password-policy.js"></script>
-    <script src="js/dashboard.js?v=5"></script>
+    <script src="js/dashboard.js?v=6"></script>
     <script src="js/csrf.js"></script>
     <script src="js/extras.js"></script>
     <?php if (!isset($content_view)): ?>

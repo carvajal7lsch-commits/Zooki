@@ -336,7 +336,6 @@ class Security {
             'registrar_cita_ajax', 'listar_citas_ajax',
             'get_cita_ajax', 'reprogramar_cita_ajax', 'confirmar_cita_ajax',
             'listar_veterinarios_ajax', 'listar_tipos_cita_ajax',
-            'get_charts_data_ajax', 'get_role_stats_ajax', 'get_timeline_ajax',
             'get_pendientes_ajax',
         ] as $a) { $matriz[$a] = $staff; }
 
