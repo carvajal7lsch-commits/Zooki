@@ -1,8 +1,9 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A y B terminadas; C3, C4 y C5 revisadas (2026-10-07); C1.7, C2 y C6 implementadas, pendientes de revisión por Claude.
+> Estado: en curso — A y B terminadas; C1–C9 implementadas y verificadas (2026-10-08). C8 y C9 pendientes de revisión por Claude; D no iniciada.
 > Entrega: v2.0 · Fecha: 2026-10-06
-> Reparto vigente (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
+> C8/C9 (2026-10-08): escribe **Codex**, revisa **Claude** (sesión de revisión).
+> Reparto del resto de M0 (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
 
 ## 1. Resultado y límites
 
@@ -20,7 +21,7 @@
 
 | HU de v2.0 | RE incluidos | RN/RNF principales | Etapa | Evidencia de aceptación |
 |---|---|---|---|---|
-| HU-T.15 | RE-T.15.1–5 | RN-G13, RN-G14, RN-001, RN-004, RNF-11 | C | Dos clínicas: petición cruzada 403, auditoría y ninguna consulta o modificación ajena. |
+| HU-T.15 | RE-T.15.1–5 | RN-G13, RN-G14, RN-001, RN-004, RNF-11 | C (cerrada) | Dos clínicas: petición cruzada 403, auditoría y ninguna consulta o modificación ajena; evidencia completa en C9. |
 | HU-T.16 | RE-T.16.1–4 | RN-G17, RN-G05, RNF-13, RNF-14 | D | Sesión vencida, AJAX 401, cookie segura y auditoría. |
 | HU-T.17 | RE-T.17.1–5 | RN-G01, RN-G06, RN-G13, RN-G18 | C | Una persona con rol de propietario y de personal en dos clínicas cambia de contexto sin mezclar permisos. |
 | HU-T.19 | RE-T.19.1–4 | RN-G19, RN-G20 | D | Ninguna cuenta se crea sin la aceptación del titular; prueba con versión, medio, fecha e IP. |
@@ -87,14 +88,16 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
 - [x] Aprobar el plan y cerrar las decisiones.
 - [x] A — Inventario de código por módulo y orden de adaptación ([Anexo A](#anexo-a--inventario-de-código-etapa-a)). Revisado y aprobado; decisiones D-1 a D-9 cerradas (A.7).
 - [x] B — ([Anexo B](#anexo-b--resultado-de-la-etapa-b); revisada, CI con MySQL 8 en verde, B.4 resuelto en B.5) Ajustes de MER/drawdb y de HU-0.2/RE-0.2.5 según A.7; `drawdb_schema_v2.sql` a `database/modelo/`; `01_schema.sql` v2, `02_semilla.sql`, retiro de 03–13, migrador sin línea base con guarda v1 y semilla en cada arranque, `crear_superadmin.php`; prueba en CI con MySQL 8 que carga el esquema desde cero y corre el migrador dos veces; instalación desde cero en MariaDB local; README y AGENTS actualizados en la sección de base de datos.
-- [ ] C — En subetapas C1–C9 (A.5), cada una con revisión y `phpunit` en verde: identidad, contexto, aislamiento, retiro del recepcionista y de «cerrar sin consulta», cierre de los puntos de fuga de A.6; pruebas de dos clínicas.
+- [x] C — C1–C9 implementadas y verificadas: identidad, contexto, aislamiento, retiro del rol eliminado y del flujo de cierre retirado, cierre de los puntos de fuga de A.6; pruebas de dos clínicas. HU-T.15 cerrada, con RE-T.15.1 en todos los módulos existentes y las excepciones explícitas del sistema y los datos globales (Anexo C9). La revisión de C8/C9 y la prueba visual del usuario quedan pendientes.
   - [x] C1 — Identidad, contexto activo, autorización en `Security` y retiro del recepcionista ([Anexo C1](#anexo-c1--resultado)). Revisada en C1.6; corrección obligatoria aplicada en C1.7, pendiente de revisión por Claude.
   - [x] C2 — Configuración por clínica: horarios, lectura de catálogos y copia inicial D-1 ([Anexo C2](#anexo-c2--resultado)). Implementada y verificada; pendiente de revisión por Claude.
   - [x] C3 — Mascotas y propietarios del personal ([Anexo C3](#anexo-c3--resultado)). Implementada y verificada; Codex escribe y Claude revisa. El usuario aprobó adelantar de D únicamente la confirmación por correo de una vinculación de propietario existente (RN-109). La aceptación del alta nueva sigue siendo presencial, directa del titular (RE-T.19.1).
   - [x] C4 — Historia clínica y prevención ([Anexo C4](#anexo-c4--resultado)). Implementada, verificada y revisada (C4 — Revisión).
   - [x] C5 — Agenda v1 sobre el modelo v2 y retiro de «cerrar sin consulta» ([Anexo C5](#anexo-c5--resultado)). Implementada, verificada y revisada (C5 — Revisión).
-  - [x] C6 — Portal del propietario sobre el modelo v2, HU-5.12, HU-5.13 con RN-115 y arrastre en la agenda ([Anexo C6](#anexo-c6--resultado)). Implementada y verificada; Claude Code escribe y Claude revisa. Pendiente de revisión.
-  - [x] C7 — Paneles de inicio y pendientes del día por clínica activa; retiro de las estadísticas, gráficas y línea de tiempo del recepcionista ([Anexo C7](#anexo-c7--resultado)). Implementada y verificada; Claude Code escribe y Claude revisa. Pendiente de revisión.
+  - [x] C6 — Portal del propietario sobre el modelo v2, HU-5.12, HU-5.13 con RN-115 y arrastre en la agenda ([Anexo C6](#anexo-c6--resultado)). Implementada, verificada y revisada por Claude (C6 — Revisión).
+  - [x] C7 — Paneles de inicio y pendientes del día por clínica activa; retiro de las estadísticas, gráficas y línea de tiempo del recepcionista ([Anexo C7](#anexo-c7--resultado)). Implementada, verificada y revisada por Claude (C7 — Revisión).
+  - [x] C8 — Recordatorios por correo con clínica original, vínculos activos, ventana y reintentos ([Anexo C8](#anexo-c8--resultado)). Lo escribió Codex; implementada y verificada, pendiente de revisión por Claude.
+  - [x] C9 — Limpieza de C, tarjetas por defecto con preferencia local, eventos y estilos externos, toasts por acción y auditoría en el menú ([Anexo C9](#anexo-c9--resultado)). Lo escribió Codex; pendiente de revisión por Claude y de prueba visual del usuario.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -1088,3 +1091,75 @@ Las contraseñas guardadas ya no coincidían con `zooki_v2_prueba`, así que no 
 **Hallazgo (regresión de C1, se corrige en C9):** `admin_usuarios` quedó solo en vista de tabla. En v1.12.0 la vista por defecto era de tarjetas (`person-card`, `personal-grid`) con un botón para cambiar a tabla. **Decisión del usuario:** recuperar la vista de tarjetas como la de por defecto, conservando el botón para cambiar a tabla.
 
 **Fuera de M0, para el módulo 6:** RE-6.4.4 (ausentismo por periodo y veterinario), la agrupación por especie de HU-3.5 y las gráficas de RE-6.4.2.
+
+## Anexo C8 — Resultado
+
+Lo escribió Codex; la revisión corresponde a la sesión de revisión de Claude.
+
+**Qué.** `Recordatorio` usa `id_usuario` y conserva la clínica que aplicó la dosis o reservó la cita. La tarea del sistema recorre todas las clínicas como excepción explícita a RNF-11, sin responder a pantallas. Solo selecciona mascota, vínculo con esa clínica y propietario activos, con correo (RN-115). `EnviadorRecordatorios` prepara el correo con el nombre de la clínica y registra el cuerpo, la persona, la clínica y el resultado. Conserva los avisos a 7 y 1 días, la recuperación por ventana y hasta tres intentos por aviso de la v1.11.0; una dosis posterior en cualquier clínica suprime la antigua.
+
+**RE y pruebas.** `RecordatorioTest` (fixture de dos clínicas, 11 casos) cubre RE-3.2.2/3/4, RE-3.6.1/2/3/4 y RE-T.15.1: origen correcto en correo y bitácora, mascota/cuenta/vínculo inactivos, sin correo, renovación entre clínicas, no duplicados, límite de reintentos, excepción SMTP y separación de intentos por clínica. `VentanaRecordatorioTest` conserva la batería de fechas de la v1.11.0. `BaseV2MysqlTest::testC8CronRealConCorreoSimuladoYDosClinicas` incluye `send_reminders.php` con conexión propia, reloj y correo simulados: 7 avisos, segunda ejecución 0; al desvincular Sur, solo 4 de Norte. Los recordatorios de citas conservan RE-4.4.1.
+
+**Verificación.** Suite SQLite: 371 pruebas, 1709 aserciones, 19 saltadas por MySQL sin variable. Suite con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1`, puerto temporal 3307 y base por defecto `zooki_test_base_v2`: 371 pruebas, 1956 aserciones, sin saltadas ni fallos. MariaDB 10.4.32 con datos temporales fuera de OneDrive (su sincronización bloqueaba el borrado del directorio de prueba). No se leyó ni modificó `zooki_v2_prueba`; ningún envío SMTP real.
+
+**Pendientes.** Revisión de Claude. El horario de las 07:00 sigue definido en `scripts/zooki.cron` y el Schedule de Dokploy; RE-3.2.5 se comprueba operativamente en F. El MER no incluye zona horaria por clínica: se conserva America/Bogota, como C4/C5 y RE-3.6.3. Configurar los días de anticipación es HU-8.4 (v2.1), no se cierra RE-3.2.1 completo aquí. `VigilanteAtenciones` y avisos internos ya se aislaron y probaron en C5. Versión y descargas de publicación al cerrar M0 (§7). No se empezó D.
+
+## Anexo C9 — Resultado
+
+Lo escribió Codex; la revisión corresponde a la sesión de revisión de Claude. Se aplicaron las decisiones de las revisiones C6 y C7; C1.7 sigue protegiendo también los otros vínculos inactivos.
+
+**Qué.** Se retiraron el espejo de rol de sesión, la compatibilidad de documento y el campo de documento sobrante de `Auditoria`, la pestaña y CSS del rol retirado y sus comentarios. La rama muerta de `nuevo_propietario` ya estaba retirada: solo se actualizó su comentario. Los eventos y estilos de las vistas pedidas pasan a archivos externos y `data-*`; los colores del tablero administrativo pasan a CSS, las gráficas breves comparten `indicadores.js`. Se escaparon nombres y motivos al trasladar sus plantillas. El menú activa auditoría, cuya pantalla se verificó. La agenda muestra la pista de arrastre. Usuarios recupera `person-card`/`personal-grid` de v1.12.0 con avatar local, tabla alternativa y preferencia en `localStorage`; ambas vistas comparten los botones y el bloqueo de C1.7.
+
+**HU-T.15 cerrada; RE-T.15.1/2/3/4/5 y evidencia de toda C.**
+
+| Alcance | Pruebas |
+|---|---|
+| Personal, contexto, rol/CSRF y super-administrador sin acceso clínico | `UsuarioSeguridadTest`, `ContextoTest`, `SeguridadClinicaTest`, `AutorizacionRolTest` |
+| Configuración y catálogos de clínica | `ConfiguracionClinicaTest` |
+| Mascotas y propietario global con vínculo y búsqueda exacta | `MascotaAccesoTest`, `PropietarioClinicaTest` |
+| Historia, adjuntos y prevención; excepciones RN-113 y RN-115 | `ConsultaHistorialTest`, `HistoriaCompartidaTest`, `PrevencionTest` |
+| Agenda y vigilancia del sistema | `CitaTest`, `AgendaPeticionesTest`, `CitaEstadoTest` |
+| Portal propio, consentimiento de historia y vínculos | `PortalPropietarioTest`, `PortalAgendaTest`, `VinculosPropietarioTest` |
+| Paneles, auditoría y avisos | `PanelTest`, `ActividadCuentaAuditoriaTest`, `NotificacionAccesoTest`, `RecordatorioTest` |
+| Esquema real y excepciones del sistema | `BaseV2MysqlTest`, incluidos C3–C8 y configuración |
+
+`UsuariosVistaTest` añade cuatro casos: tarjetas por defecto/tabla disponible, datos solo de la clínica, bloqueo compartido en ambas vistas (también vínculo inactivo), rol local y escape de texto. `ActividadCuentaAuditoriaTest` renderiza controlador y layout y comprueba que no aparece el evento de Sur. `node --test tests/Frontend/C9Interacciones.test.cjs` añade cinco casos: persistencia al recargar, navegador sin almacenamiento, clic/teclado sin duplicar, fondo/pestaña del modal y controles deshabilitados.
+
+**SweetAlert2, revisado por acción.**
+
+- **Toast:** activar/revocar historia compartida; vincular/desvincular una clínica (reversible, RE-5.13.1 con un clic; los rechazos de RN-115 siguen en el servidor); guardar teléfono y ficha/alta de mascota del portal; reservar cita y sus respuestas frecuentes; guardar personal o activar su vínculo. Los avisos de éxito y error de «Mis clínicas» no requieren aceptar. La petición bloquea únicamente su propio control mientras termina.
+- **Confirmación conservada:** cancelar una cita (libera la reserva definitivamente y avisa); marcar inasistencia (cierra la cita); reservar otra cita de la misma mascota en el día (advertencia del servidor); finalizar atención (asienta historia y completa la cita); restaurar horario (reemplaza la configuración); desactivar personal (revoca acceso); restablecer contraseña (invalida la anterior). El diálogo final de atención conserva la elección agenda/resumen. Los errores de validación, contraseña y adjuntos clínicos que necesitan lectura mantienen su aviso. SweetAlert2 sigue en el sistema; si falta, las acciones que requieren confirmar fallan cerradas, sin `window.confirm`.
+
+**Verificación.** Suite SQLite: 376 pruebas, 1726 aserciones, 19 saltadas por MySQL sin variable. Suite con `ZOOKI_TEST_MYSQL_HOST`, puerto temporal 3307 y base por defecto `zooki_test_base_v2`: 376 pruebas, 1973 aserciones, sin saltadas ni fallos. Cinco pruebas de JS en verde; sintaxis PHP/JS correcta. Búsqueda de las cinco claves v1 en `controllers`, `models`, `helpers`, `views`, `public` y `scripts`: **cero resultados**, al igual que los eventos/estilos en línea de las vistas solicitadas. El SVG del MER v1 (241 MB, ignorado por Git y sin referencias) se conservó en `scratch/MER_zooki-v1.svg`; no se tocó draw.io. PDF y Word de Historias de Usuario regenerados por el cierre de HU-T.15.
+
+**Revisión visual del usuario.** `admin_usuarios` (tarjetas/tabla, recarga, búsquedas, dos clínicas, cuenta compartida y reset bloqueado), `admin_auditoria` (menú, filtros, colores y Excel/PDF), `admin_citas` (filtros, carrusel, detalle y Excel/PDF), `vet_agenda` (pista, arrastre y ambos modales), consulta del veterinario (pestañas y tratamientos), portal (detalle de mascota/cita, «Mis clínicas», teléfono, alta/edición de mascota, reserva/cancelación e historial para imprimir), campana del administrador y del veterinario, y roles de la landing. Probar móvil/tablet/escritorio.
+
+**Pendientes.** Revisión de Claude y recorrido visual anterior; los modelos y permisos permanecen cubiertos por las pruebas. Los demás PDF/Word que ya estaban desactualizados siguen para el cierre de M0 (§7). Sin migración ni versión de publicación en C9; se actualiza al cerrar M0. No se empezó D, ni se hizo commit o push.
+
+### C8 y C9 — Revisión (2026-10-08)
+
+**Resultado: aprobadas. La etapa C queda cerrada y HU-T.15 cerrada.** Claude (sesión de revisión) revisó el diff y comprobó en el código que la búsqueda de las cinco claves v1 (`usuario_doc`, `doc_veterinario`, `doc_propietario`, `usuario_documento`, `usuario_id_rol`) da cero resultados, y que el SVG de 241 MB movido a `scratch/` está ignorado por git. C8 respeta RN-115 (una clínica desvinculada no escribe al propietario) y conserva ventana, reintentos y no duplicados. C9 recupera la vista de tarjetas de usuarios con las reglas de C1.7 y aplica el criterio aprobado de SweetAlert2.
+
+**Observaciones (no bloquean):**
+
+1. **Desvincularse con un toast, sin confirmación.** Es reversible, pero inactiva las mascotas en esa clínica hasta volver a agendar o ser atendidas. Si en la prueba manual se siente demasiado fácil de hacer por error, se le devuelve la confirmación; decide el usuario.
+2. **Pruebas de JS fuera del CI.** `tests/Frontend/C9Interacciones.test.cjs` corre con `node --test`, pero GitHub Actions no lo ejecuta. Se agrega al CI en D.
+
+**Pendiente del usuario:** el recorrido visual que lista el Anexo C9 (usuarios en tarjetas y tabla, auditoría, citas del administrador, agenda con la pista y el arrastre, consulta del veterinario, portal completo, campanas y landing), en móvil, tablet y escritorio.
+
+**Etapa D partida en dos (propuesta de la revisión):** D1 — sesión, política de datos y cuentas (HU-T.16, HU-T.19, HU-5.8, consentimiento del registro con Google, alta de personal con enlace de activación, cambio de correo y documento con verificación, CAPTCHA por cuenta con Cloudflare Turnstile); D2 — registro y activación de clínicas (HU-0.1, HU-0.2 con los catálogos iniciales de D-1 y RE-0.2.5).
+
+### C8 y C9 — Recorrido visual del usuario (2026-10-08)
+
+Funcionó: Ana (usuarios en tarjetas y tabla, recarga, solo Norte, bloqueo de Elena, auditoría, citas, campana), Beto (pista de arrastre, arrastre, rechazo al soltar en hueco inválido, consulta con tratamiento), Fabio (Mis clínicas, agendar, cancelar, editar y registrar mascota, teléfono, historial), Elena (selector, Sur solo con su personal, cambio a Norte) y landing sin el rol retirado.
+
+**Se corrige antes de D1 (subetapa C9.1):**
+
+1. **Diseño de usuarios distinto al de producción.** Las tarjetas recuperadas en C9 no se parecen a las de v1.12.0. Referencia aprobada por el usuario: `specs/referencias/usuarios-personal-v1.png` y `specs/referencias/usuarios-clientes-v1.png` (capturas de producción). Pestañas Personal / Clientes, botón «Nuevo Usuario», buscador, filtro de rol (en Personal), segmento Todos / Activos / Inactivos, botón tabla / cuadrícula; tarjetas con avatar de iniciales, interruptor de estado, nombre, chips de rol (y «Inactivo»), documento, teléfono y botones al pie (editar y restablecer contraseña en Personal; editar y ver en Clientes). Se mantiene ese diseño con los datos de la v2.
+2. **Botón de restablecer contraseña visible pero deshabilitado** en una identidad compartida (Elena): **decisión del usuario, ocultarlo** cuando no aplica. El bloqueo del servidor (C1.7) sigue igual.
+3. **Demora de 3–4 s en actualizar la pantalla** del portal después de vincular, desvincular, cancelar o registrar mascota: la recarga espera a que se cierre el toast (`avisoPortal(...).then(() => location.reload())` en `portal.js`). Actualizar en cuanto responde el servidor.
+4. **Teléfono del perfil del propietario** sin longitud máxima ni validación mientras se escribe.
+5. **Imprimir historial:** el usuario no encontró la opción. El botón existe (`btnImprimirHistorial`), pero solo aparece al elegir una mascota en el filtro, no con «Todas». Hacerlo visible y claro donde el usuario busca la historia de una mascota.
+6. Agregar `node --test tests/Frontend` al CI (observación 2 de la revisión de C8/C9).
+
+**Mejoras que no bloquean** (validar al arrastrar antes de soltar, formularios, modales, media queries, peso desconocido): anotadas en `specs/pulido-interfaz.md` para la etapa final de pulido.
