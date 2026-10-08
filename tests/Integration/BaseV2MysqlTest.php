@@ -66,6 +66,38 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    public function testC8CronRealConCorreoSimuladoYDosClinicas(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        require_once __DIR__ . '/../Support/RecordatoriosDosClinicas.php';
+        DosClinicas::poblar($this->db);
+        RecordatoriosDosClinicas::poblar($this->db);
+        $db = $this->db;
+        $emailService = new CorreoRecordatorioSimulado();
+        $ahora = new DateTimeImmutable('2026-09-23 01:00:00 UTC');
+        $appUrl = 'https://zooki.test/index.php';
+        ob_start();
+        try {
+            include __DIR__ . '/../../scripts/send_reminders.php';
+            $this->assertSame(7, $intentos);
+            include __DIR__ . '/../../scripts/send_reminders.php';
+            $this->assertSame(0, $intentos);
+            $db->exec("DELETE FROM notificaciones");
+            $db->exec("UPDATE mascota_clinica SET estado='inactivo' WHERE id_clinica=2");
+            include __DIR__ . '/../../scripts/send_reminders.php';
+            $this->assertSame(4, $intentos);
+        } finally {
+            ob_end_clean();
+        }
+        $this->assertSame([1], array_map('intval', $db->query('SELECT DISTINCT id_clinica FROM notificaciones')->fetchAll(PDO::FETCH_COLUMN)));
+        $this->assertSame([6], array_map('intval', $db->query('SELECT DISTINCT id_usuario FROM notificaciones')->fetchAll(PDO::FETCH_COLUMN)));
+        foreach ($emailService->envios as $envio) {
+            $this->assertStringContainsString('Clínica ', $envio['asunto']);
+            $this->assertStringContainsString('Luna', $envio['cuerpo']);
+        }
+    }
+
     public function testElEsquemaCreaLasCincuentaTablasEnInnoDbYUtf8mb4(): void
     {
         $this->cargar('01_schema.sql');

@@ -10,7 +10,7 @@ require_once __DIR__ . '/../helpers/RespuestaJson.php';
  * Pendientes del día para el aviso del navegador (extras.js). Todo es de la
  * clínica activa (RNF-11) y el veterinario ve solo sus citas (RE-6.1.4).
  *
- * C7: las estadísticas, gráficas y la línea de tiempo del recepcionista se
+ * C7: las estadísticas, gráficas y la línea de tiempo sin uso se
  * retiraron; los paneles salen de PanelController.
  */
 class DashboardController

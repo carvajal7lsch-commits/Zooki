@@ -365,8 +365,7 @@ switch ($action) {
         break;
 
     case "nuevo_propietario":
-        // Redirigir según el rol del contexto activo. La rama que cargaba
-        // vistas inexistentes (propietario_registro, dashboard/index) se retiró.
+        // La pantalla de alta pertenece al contexto activo (RN-G01).
         $destino = Contexto::rolActivo() === Roles::ADMIN ? "admin_usuarios" : "vet_area";
         header("Location: index.php?action=" . $destino);
         exit();

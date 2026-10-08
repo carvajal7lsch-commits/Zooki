@@ -3,7 +3,7 @@
  * veterinario): loader global, notificaciones internas y su menú.
  *
  * C7: las estadísticas, gráficas, línea de tiempo, agenda y el modal de
- * reprogramar servían al recepcionista y a pantallas que ya no existen; se
+ * reprogramar pertenecían a pantallas que ya no existen; se
  * retiraron. Los paneles llegan pintados desde el servidor (PanelController).
  */
 
@@ -60,6 +60,7 @@ window.fetch = async (...args) => {
 
 // ── Init ─────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("notifBell")?.addEventListener("click", toggleNotifications);
   loadSystemNotifications();
   initNotifClose();
   initNotifMarkAll();
@@ -115,7 +116,7 @@ async function loadSystemNotifications() {
     const countEl = document.getElementById("notifCount");
     const bell = document.getElementById("notifBell");
     
-    if (badge) badge.style.display = noLeidas > 0 ? "block" : "none";
+    if (badge) badge.hidden = noLeidas <= 0;
     if (countEl) countEl.textContent = `${noLeidas} ${noLeidas === 1 ? "nueva" : "nuevas"}`;
     if (bell) bell.classList.toggle("ringing", noLeidas > 0);
 
