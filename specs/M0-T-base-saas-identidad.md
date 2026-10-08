@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A y B terminadas; C1–C9 implementadas y verificadas (2026-10-08). C8 y C9 pendientes de revisión por Claude; D no iniciada.
+> Estado: en curso — A, B y C terminadas; D1 implementada y verificada (2026-10-08), pendiente de revisión por Claude; D2 y D3 no iniciadas.
 > Entrega: v2.0 · Fecha: 2026-10-06
 > C8/C9 (2026-10-08): escribe **Codex**, revisa **Claude** (sesión de revisión).
 > Reparto del resto de M0 (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
@@ -100,6 +100,9 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] C9 — Limpieza de C, tarjetas por defecto con preferencia local, eventos y estilos externos, toasts por acción y auditoría en el menú ([Anexo C9](#anexo-c9--resultado)). Lo escribió Codex; pendiente de revisión por Claude y de prueba visual del usuario.
   - [x] C9.1 — Correcciones del recorrido visual: usuarios con el diseño de v1.12.0, restablecer oculto en identidades compartidas, recarga sin esperar al aviso, teléfono del portal validado al escribir, imprimir historial en el detalle de la mascota y pruebas de JS en el CI ([Anexo C9.1](#anexo-c91--resultado)). Lo escribió Claude Code; pendiente de revisión por Claude y de prueba visual del usuario.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
+  - [x] D1 — Sesión (HU-T.16), política de datos versionada y re-aceptación (HU-T.19), registro del propietario como identidad global (HU-5.8), registro con Google con la política antes de la cuenta (RE-T.18.2–4), hueco de RN-109 y teléfonos unificados ([Anexo D1](#anexo-d1--resultado)). Lo escribió Claude Code; pendiente de revisión por Claude y de prueba visual del usuario.
+  - [ ] D2 — Cuentas del personal y del titular: alta con enlace de activación, cambio de correo y documento con verificación, CAPTCHA por cuenta.
+  - [ ] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2).
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
 - [ ] F — Respaldo, reinicio de la base de producción, despliegue, super-administrador y clínica demo. Incluye blindar Apache para que solo sirva `public/` y agregar `.dockerignore` (B.5).
@@ -1236,3 +1239,106 @@ No se usó ni se modificó `zooki_v2_prueba`. No hubo navegador en esta sesión.
 - **D1 — Sesión, política de datos y registro del propietario:** el hueco de RN-109, HU-T.16 (sesión), HU-T.19 (política versionada y re-aceptación), HU-5.8 (registro del propietario como identidad global) y el consentimiento del registro con Google (RE-T.18.2–4).
 - **D2 — Cuentas del personal y del titular:** alta de personal con enlace de activación (sin contraseña por correo), cambio de correo y de documento con verificación (RE-T.5.7, RE-T.5.8) y CAPTCHA por cuenta con Cloudflare Turnstile (RE-T.13.5).
 - **D3 — Registro y activación de clínicas:** HU-0.1 (con Turnstile y NIT válido) y HU-0.2 (activación con el plan gratuito y los catálogos iniciales de D-1, RE-0.2.5).
+
+## Anexo D1 — Resultado
+
+Lo escribió Claude Code; la revisión corresponde a la sesión de revisión de Claude. Se releyeron `AGENTS.md`, §2, los anexos C1 a C9.1 con sus revisiones, HU-T.16, HU-T.18, HU-T.19 y HU-5.8 con sus RE, y RN-109, RN-G05, RN-G06, RN-G11, RN-G17 y RN-G19 a RN-G22.
+
+**Decisiones del usuario (2026-10-08).**
+
+1. **RN-G11:** una cuenta sin verificar no entra aunque su enlace venza. Antes, pasadas 24 horas, entraba con la contraseña que puso quien se registró. Se sale registrándose otra vez con ese correo (enlace nuevo, sin tocar la contraseña) o entrando con Google (RN-G21).
+2. **RE-5.8.4:** el correo de bienvenida lleva el enlace del portal; el QR queda pendiente, sin dependencias nuevas.
+3. **RE-T.18.2:** la foto de Google no se guarda, porque `usuarios` no tiene columna en el MER; se decide al cerrar M0.
+
+**Qué se hizo.**
+
+- **RN-109 (revisión de C9.1):** `PropietarioClinica::actualizar` desactiva el vínculo, pero no lo reactiva. El interruptor de Clientes envía la solicitud por correo (`solicitar_vinculo_propietario_ajax`), y los modales de Usuarios y Pacientes no ofrecen «Activo» para un vínculo inactivo. Se quitó `toggleUserStatus` de `medical-module.js`, código muerto que reactivaba.
+- **HU-T.16:** `helpers/Sesion.php` es la única configuración de sesión (la usan `index.php` y `ver_archivo.php`).
+  - Cookie de sesión HttpOnly, SameSite=Lax y Secure bajo HTTPS; `gc_maxlifetime` de 30 minutos y modo estricto.
+  - A los 30 minutos sin actividad la sesión se vacía, el login muestra el motivo y queda un `LOGOUT` con usuario, clínica e IP.
+  - El identificador se regenera en `InicioSesion` y al cambiar de contexto.
+  - `public/js/sesion.js` lleva al login ante un 401 en los tres layouts.
+- **HU-T.19:** `helpers/PoliticaDatos.php` es la única fuente de la versión y la vigencia; la usan la política, el alta presencial y el registro.
+  - `ConsentimientoDatos` guarda versión, medio, fecha e IP.
+  - `InicioSesion` marca la re-aceptación y `Security` la exige antes de cualquier acción, salvo aceptar o salir (pantalla `aceptar_politica`, formulario sin JS).
+  - El super-administrador está exento. La re-aceptación se guarda con medio `formulario`, porque el ENUM del MER no tiene otro.
+- **HU-5.8:** `models/RegistroPropietario.php`. El registro siempre es en una clínica activa, elegida de la lista o por el enlace `index.php?action=register&clinica=ID`, que abre el registro con esa clínica.
+  - Cuenta nueva: la prueba del consentimiento se guarda antes de crearla; la verificación lleva la clínica, y el vínculo se crea al verificar, con auditoría en esa clínica.
+  - Correo existente: no se duplica y se envía la confirmación de vínculo de C3. Si ya estaba vinculado, se le pide que inicie sesión. Un super-administrador o una cuenta inactiva reciben la misma respuesta, sin envío.
+  - Se retiró `views/auth/register.php`, duplicada y sin uso.
+- **Google (RE-T.18.2–4):** con un correo nuevo, lo que confirmó Google vive solo en la sesión hasta aceptar la política y elegir la clínica (modal con CSRF).
+  - La cuenta nace sin contraseña ni documento, con consentimiento `google`, vínculo y perfil incompleto. Con el perfil incompleto, `Security` solo permite `completar_perfil` en el portal.
+  - Con un correo existente aplica RN-G21: una cuenta pendiente queda verificada, sin contraseña, con el perfil por confirmar y ligada a la clínica que había elegido; una cuenta verificada conserva su contraseña.
+- **Teléfonos:** `ValidadorTelefono` (`MENSAJE` y `atributosHtml()`) en los cinco puntos del servidor y en los ocho campos de las vistas.
+  - Se quitó la expresión repetida de cuatro controladores y de `perfil.js`.
+  - También el filtro propio de Pacientes, que dejaba pasar paréntesis.
+- `login.php` queda sin JS ni estilos en línea: el `client_id` viaja en `data-*`.
+
+Sin migración ni cambio de esquema.
+
+**RE y pruebas.**
+
+| Alcance | Prueba |
+|---|---|
+| RN-109: la clínica no reactiva; una petición directa tampoco | `VinculoReactivacionTest` (5) |
+| RE-T.16.1–4 | `SesionTest` (7); `D1Sesion.test.cjs` (401 → login, layouts, `login.php` sin código en línea) |
+| RE-T.19.1–3 y super-administrador exento | `PoliticaDatosTest` (5); la aceptación previa también en `RegistroPropietarioTest` y `RegistroGoogleTest` |
+| RE-5.8.1–5 y RN-G11 | `RegistroPropietarioTest` (8) |
+| RE-T.18.2–4, RN-G20–22 | `RegistroGoogleTest` (6) |
+| Teléfonos con la misma regla | `TelefonosTest` (4), `ValidadorTelefonoTest` |
+| Esquema real (ENUM `medio`, verificación con clínica, RN-109) | `BaseV2MysqlTest::testD1RegistroPoliticaYVinculoEnElEsquemaReal` |
+
+Siete mutaciones hacen fallar su prueba: quitar el bloqueo de RN-109, el del perfil incompleto, el de la política, la regla de RN-G11, la aceptación previa, la regeneración al cambiar de contexto o la validación del teléfono en Usuarios.
+
+**Verificación.**
+
+| Comando | Resultado |
+|---|---|
+| `vendor/bin/phpunit` | 430 pruebas, 2102 aserciones, 20 saltadas (MySQL sin variable). |
+| Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32) | 430 pruebas, 2357 aserciones, sin fallos ni saltadas. |
+| `node --test "tests/Frontend/**/*.test.cjs"` | 20 pruebas en verde. |
+| `php -l`, `node --check` y `git diff --check` | Sin errores. |
+
+**Recorrido HTTP** (`php -S` y `curl` sobre una copia con la base temporal `zooki_d1_recorrido`, ambas borradas al terminar; sin navegador; `zooki_v2_prueba` no se tocó):
+
+- `Set-Cookie: PHPSESSID=…; path=/; HttpOnly; SameSite=Lax` (sin Secure por ser HTTP), y el identificador cambia al iniciar sesión.
+- Política: Ana va a `aceptar_politica`; antes de aceptar, el AJAX da 403 y las páginas redirigen. Sin la casilla vuelve a la pantalla; con ella entra a `admin_panel` y queda la prueba (`2026-08-31`, `formulario`, IP). Fabio acepta y entra al portal; Gina va directo a `plataforma_inicio`.
+- Inactividad simulada en el archivo de sesión: el AJAX da 401 con `redirect` al login, la página va al login con el motivo, y queda el `LOGOUT` de Ana en Norte.
+- El enlace de Norte abre el registro con Norte elegida.
+- Registro:
+  - Sin aceptación: rechazado.
+  - Nueva cuenta: una sola, con la verificación de la clínica 1, sin vínculo, y todavía no entra.
+  - Fabio en Sur: confirmación de vínculo.
+  - Fabio en Norte: se le pide iniciar sesión.
+  - Teléfono inválido: el mensaje de la regla.
+- Perfil incompleto: el portal lleva a `completar_perfil` y agendar da 403. Con un teléfono inválido se ve el error; con uno válido, el portal responde 200.
+- No hubo avisos de PHP.
+
+**Pendientes.**
+
+1. Prueba en el navegador del usuario (lista en el resumen de entrega), incluido Google real en local con `GOOGLE_CLIENT_ID` y el origen autorizado.
+2. QR del portal (RE-5.8.4) y foto de Google (RE-T.18.2), por decidir al cerrar M0.
+3. RE-T.19.4 (revocar lleva a HU-5.14) es de v2.1; no se construyó.
+4. RE-T.19.2: falta escribir en el RE la excepción del super-administrador. El alta de personal todavía no pide aceptación (llega en D2); mientras tanto, el personal acepta la política en su primer inicio de sesión (RE-T.19.3).
+5. Heredado: un GET a `verificar_email` consume el enlace, y un filtro de correo que lo abra lo usa. La confirmación de vínculo ya no tiene este problema.
+6. El formulario de contraseña del portal conserva un `onsubmit` en línea (anotado en C9.1).
+7. Estado de HU/RE, versión y descargas: al cerrar M0 (§7). No se empezó D2.
+
+### D1 — Revisión (2026-10-08)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el anexo y el diff; en particular `helpers/Sesion.php` (una sola configuración, cookie segura también detrás del proxy por `X-Forwarded-Proto`, cierre por inactividad auditado) y se comprobó que ningún JS consulta al servidor en intervalos, así que la inactividad de 30 minutos no se renueva sola. El hueco de RN-109 quedó cerrado en el servidor y en las pantallas, y las siete mutaciones que hacen fallar sus pruebas dan confianza. Las decisiones del usuario 1 a 3 quedaron bien aplicadas.
+
+**Para D2:**
+
+1. **Enlace de verificación consumido por un GET** (pendiente 5 del anexo): los filtros de correo que abren enlaces pueden verificar una cuenta sin que el titular haga clic. La página del enlace debe mostrar un botón y verificar con POST, como ya hace la confirmación de vínculo.
+2. **Alta de personal y RE-T.19.1** (**aprobado por el usuario el 2026-10-08**): la cuenta del personal se crea **pendiente e inerte** (sin contraseña, sin poder entrar y sin consentimiento); el titular recibe un enlace que vence en 72 horas donde acepta la política y crea su contraseña; si no lo usa, la cuenta pendiente se elimina (si no tiene otros vínculos). El texto de RE-T.19.1 se ajusta para reflejarlo.
+3. Escribir en RE-T.19.2 la excepción del super-administrador (pendiente 4 del anexo).
+
+**Prueba manual del usuario (2026-10-08):** la aceptación de la política con Ana, el registro de propietario y el registro con Google en local funcionan. Hallazgos para D2:
+
+- La política de contraseña rechaza bien una clave que contiene el nombre, pero el aviso llega en un SweetAlert al enviar: debe validarse mientras se escribe.
+- «Completar perfil» (Google) no valida en tiempo real que el documento no esté registrado ni el formato del teléfono.
+- El teléfono al editar a Fabio sigue sin cambios visibles: revisar en D2 qué formulario es y aplicarle la regla.
+- El enlace del correo de verificación llevó a producción porque el `APP_URL` del `.env` local apunta allí: en local debe apuntar a la instalación local (anotado en `agentes/metodo.md`, sección 9).
+
+**Desde aquí el trabajo sigue el método de `agentes/metodo.md` y el estado en `agentes/estado.md`.**
