@@ -387,3 +387,13 @@
 
     .portal-drawer-tabs { margin-top: 0; }
 }
+
+/* C6: la clínica de cada registro de la historia (RN-114). */
+.portal-clinica {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--z-primary);
+}

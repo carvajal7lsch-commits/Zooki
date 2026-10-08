@@ -63,10 +63,14 @@ class Consulta extends ModeloHistoria
         }
     }
 
-    /** HU-2.2: consultas de la clínica activa para el listado, la más reciente primero. */
+    /**
+     * HU-2.2: consultas de la clínica activa para el listado, la más reciente
+     * primero. Incluye las de mascotas desvinculadas (RN-115: la clínica
+     * conserva lo suyo en solo lectura), marcadas con `vinculo`.
+     */
     public function listarDeLaClinica(): array
     {
-        $sql = "SELECT c.*, m.nombre AS nombre_mascota, e.nombre_especie,
+        $sql = "SELECT c.*, mc.estado AS vinculo, m.nombre AS nombre_mascota, e.nombre_especie,
                 p.nombre_completo AS nombre_propietario, u.nombre_completo AS veterinario
             FROM consultas c
             JOIN mascotas m ON m.id_mascota = c.id_mascota
@@ -74,7 +78,7 @@ class Consulta extends ModeloHistoria
             LEFT JOIN especies e ON e.id_especie = m.id_especie
             LEFT JOIN usuarios p ON p.id_usuario = m.id_propietario
             JOIN usuarios u ON u.id_usuario = c.id_veterinario
-            WHERE c.id_clinica = ? AND mc.estado = 'activo'
+            WHERE c.id_clinica = ?
             ORDER BY c.fecha_hora DESC, c.id_consulta DESC";
         $consulta = $this->conn->prepare($sql);
         $consulta->execute([$this->clinica()]);

@@ -8,10 +8,11 @@ class HorarioClinicaController
     private HorarioClinica $horario;
     private Auditoria $auditoria;
 
-    public function __construct(?PDO $db = null)
+    /** $horario: uno ya acotado, como el de la clínica que eligió el propietario en el portal (C6). */
+    public function __construct(?PDO $db = null, ?HorarioClinica $horario = null)
     {
         $db ??= (new Database())->getConnection();
-        $this->horario = new HorarioClinica($db);
+        $this->horario = $horario ?? new HorarioClinica($db);
         $this->auditoria = new Auditoria($db);
     }
 

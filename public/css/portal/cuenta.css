@@ -177,3 +177,69 @@
         gap: 2rem;
     }
 }
+
+/* C6: mis clínicas — historia compartida (HU-5.12) y vínculos (HU-5.13). */
+.mis-clinicas {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+}
+
+.mis-clinicas__titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.mis-clinicas__subtitulo {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--z-text-muted);
+}
+
+.mis-clinicas__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--z-border);
+}
+
+.mis-clinicas__datos { flex: 1 1 12rem; min-width: 0; }
+
+.mis-clinicas__datos h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.mis-clinicas__datos p {
+    font-size: 0.75rem;
+    color: var(--z-text-muted);
+}
+
+.mis-clinicas__autoriza {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 100%;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.mis-clinicas__autoriza input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--z-primary);
+}
+
+.mis-clinicas__salir { color: var(--z-danger); }

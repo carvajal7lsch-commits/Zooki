@@ -162,6 +162,29 @@ final class AgendaPeticionesTest extends TestCase
         $this->assertSame(1, (int) $this->db->query($avisoAlVeterinario)->fetchColumn());
     }
 
+    /**
+     * Arrastre del calendario (decisión de la revisión de C5): la misma
+     * petición que el modal, sin veterinario. El veterinario mueve su cita;
+     * fuera del horario se rechaza igual; otro veterinario no la mueve.
+     */
+    public function testElVeterinarioArrastraSuCitaConLasMismasValidaciones(): void
+    {
+        $this->agendar();
+        $id = (int) $this->db->query('SELECT id_cita FROM citas')->fetchColumn();
+
+        $_POST = ['id_cita' => (string) $id, 'fecha' => '2030-01-08', 'hora' => '12:30'];
+        $fueraDeHorario = $this->ejecutar(fn (CitaController $c) => $c->reprogramarCitaAjax());
+        $this->assertStringContainsString('fuera del horario', $fueraDeHorario['message']);
+
+        $_POST = ['id_cita' => (string) $id, 'fecha' => '2030-01-08', 'hora' => '10:00'];
+        $this->assertTrue($this->ejecutar(fn (CitaController $c) => $c->reprogramarCitaAjax())['success']);
+        $this->assertSame(['2030-01-08', '10:00:00'], $this->db->query("SELECT fecha, hora FROM citas WHERE id_cita = $id")->fetch(PDO::FETCH_NUM));
+
+        $this->como(DosClinicas::NORTE, DosClinicas::DOBLE, Roles::VETERINARIO);
+        $_POST = ['id_cita' => (string) $id, 'fecha' => '2030-01-08', 'hora' => '11:00'];
+        $this->assertAccesoDenegado(fn () => $this->ejecutar(fn (CitaController $c) => $c->reprogramarCitaAjax()));
+    }
+
     /** RN-407 / RE-4.3.4: la inicia el veterinario asignado, el día de la cita, desde 15 minutos antes. */
     public function testIniciarAtencionRespetaVeterinarioDiaYHora(): void
     {

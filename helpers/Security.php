@@ -347,6 +347,9 @@ class Security {
             'portal_agendar_cita_ajax', 'portal_get_vets_ajax', 'portal_get_tipos_cita_ajax',
             'portal_get_detalle_cita_clinica_ajax', 'portal_imprimir_historial',
             'ver_detalle_mascota_propietario_ajax',
+            // C6: catálogos de la clínica elegida, HU-5.12 y HU-5.13.
+            'portal_get_horas_ajax', 'portal_get_sugerencias_ajax',
+            'portal_autorizar_historia_ajax', 'portal_vincular_clinica_ajax', 'portal_desvincular_clinica_ajax',
         ] as $a) { $matriz[$a] = $portal; }
 
         // Plataforma: el panel del super-administrador llega en la etapa E.

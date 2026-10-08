@@ -29,6 +29,30 @@ class Mascota extends ModeloClinica
         if (!$filas) $this->denegar($id);
         return $filas[0];
     }
+    /**
+     * Ficha para el historial de la clínica. Con el vínculo activo, la ficha
+     * completa; con el vínculo inactivo (RN-115), solo lo que identifica a la
+     * mascota en sus propios registros, sin los datos nuevos del propietario.
+     */
+    public function getParaHistorial(int $id): array
+    {
+        $consulta = $this->conn->prepare("SELECT m.id_mascota, m.nombre, m.fecha_nacimiento, e.nombre_especie,
+                mc.numero_historia_clinica, mc.estado AS vinculo
+            FROM mascotas m
+            JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota AND mc.id_clinica = ?
+            LEFT JOIN especies e ON e.id_especie = m.id_especie
+            WHERE m.id_mascota = ?");
+        $consulta->execute([$this->clinica(), $id]);
+        $fila = $consulta->fetch(PDO::FETCH_ASSOC);
+        if ($fila === false) {
+            $this->denegar($id);
+        }
+        if ($fila['vinculo'] === 'activo') {
+            return $this->getById($id) + ['vinculo' => 'activo', 'solo_lectura' => false];
+        }
+        return $fila + ['solo_lectura' => true];
+    }
+
     public function search($term): array
     {
         $clinica = $this->clinica();

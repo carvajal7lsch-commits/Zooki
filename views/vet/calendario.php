@@ -195,7 +195,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
-<script src="js/calendario.js?v=8"></script>
+<script src="js/calendario.js?v=9"></script>
 
 <!-- MODAL NUEVA CONSULTA (necesario para Iniciar Atención desde el calendario) -->
 <?php include __DIR__ . "/modal_consulta.php"; ?>

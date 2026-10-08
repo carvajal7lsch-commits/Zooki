@@ -499,6 +499,67 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    /**
+     * C6 en el esquema real: el propietario se vincula a Sur, agenda allí
+     * (la mascota se vincula en la misma transacción), edita la ficha con
+     * auditoría sin clínica y, al desvincularse, Sur queda en solo lectura.
+     */
+    public function testC6PortalEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../controllers/CitaController.php';
+        require_once __DIR__ . '/../../models/VinculosPropietario.php';
+        require_once __DIR__ . '/../../models/MascotaPropietario.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        DosClinicas::completarMascota($this->db);
+        DosClinicas::poblarAgenda($this->db);
+        try {
+            $_SESSION = ['id_usuario' => 6];
+            Contexto::activar(Contexto::dePropietario(), 1);
+            $vinculos = new VinculosPropietario($this->db);
+            $vinculos->vincular(2);
+
+            $_POST = ['id_clinica' => '2', 'id_mascota' => '1', 'id_veterinario' => '4', 'id_tipo_cita' => '2', 'fecha' => '2030-01-07', 'hora' => '09:00', 'motivo' => 'Control'];
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $reloj = fn (): DateTimeImmutable => new DateTimeImmutable('2030-01-07 07:00', new DateTimeZone(ReglaAtencion::ZONA));
+            ob_start();
+            (new CitaController($this->db, $reloj))->agendarDesdePortalAjax();
+            $respuesta = json_decode(ob_get_clean(), true);
+            $this->assertTrue($respuesta['success'], $respuesta['message'] ?? '');
+            $this->assertSame('activo', $this->db->query('SELECT estado FROM mascota_clinica WHERE id_mascota = 1 AND id_clinica = 2')->fetchColumn());
+
+            $cambios = (new MascotaPropietario($this->db))->actualizar(1, ['sexo' => 'Macho', 'peso' => '8.50']);
+            $this->assertSame(['sexo'], $cambios);
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica IS NULL AND tabla_afectada = 'mascotas' AND accion = 'UPDATE'")->fetchColumn());
+
+            try {
+                $vinculos->desvincular(2);
+                $this->fail('Con una cita sin resolver no se desvincula.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('sin resolver', $e->getMessage());
+            }
+            $cita = (new Cita($this->db))->paraPropietario((int) $respuesta['id_cita'], 6);
+            $this->assertTrue((new Cita($this->db))->cancelar($cita));
+            $vinculos->desvincular(2);
+            $this->assertSame('inactivo', $this->db->query('SELECT estado FROM mascota_clinica WHERE id_mascota = 1 AND id_clinica = 2')->fetchColumn());
+
+            $_SESSION = ['id_usuario' => 4];
+            Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::VETERINARIO), 1);
+            try {
+                (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'X', 'fecha_aplicacion' => '2026-10-01']);
+                $this->fail('Tras desvincularse, Sur no registra nada nuevo.');
+            } catch (AccesoDenegado $e) {
+                $this->assertSame(403, $e->codigo());
+            }
+            $this->assertSame([], (new Vacuna($this->db))->findByMascota(1));
+        } finally {
+            $_SESSION = [];
+            $_POST = [];
+        }
+    }
+
     // -----------------------------------------------------------------------
 
     private function prepararHistoriaClinica(): void

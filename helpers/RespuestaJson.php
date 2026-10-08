@@ -22,6 +22,25 @@ final class RespuestaJson
     }
 
     /**
+     * Una lectura (GET): 422 con el mensaje de una validación, 500 genérico
+     * ante un error inesperado; AccesoDenegado sigue hasta el front
+     * controller. $accion escribe su propia respuesta.
+     */
+    public static function consulta(callable $accion, string $origen): void
+    {
+        try {
+            $accion();
+        } catch (AccesoDenegado $e) {
+            throw $e;
+        } catch (InvalidArgumentException $e) {
+            self::error(422, $e->getMessage());
+        } catch (Throwable $e) {
+            error_log($origen . ': ' . $e->getMessage());
+            self::error(500, 'No se pudo cargar. Intenta nuevamente.');
+        }
+    }
+
+    /**
      * @param callable(): array $accion devuelve los datos de la respuesta. Si
      *        trae 'success' => false (un aviso que pide confirmar, no un
      *        error), se respeta.

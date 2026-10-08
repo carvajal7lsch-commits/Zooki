@@ -274,66 +274,83 @@ switch ($action) {
         header("Location: index.php?action=" . Contexto::destino(Contexto::actual()));
         exit();
 
+    // ═══════════════════════════════════════════════════════════════
+    // PORTAL DEL PROPIETARIO (C6): contexto «propietario», sin clínica
+    // activa. Las acciones de una clínica la eligen entre sus vínculos.
+    // ═══════════════════════════════════════════════════════════════
     case "portal_propietario":
-        require_once "../controllers/PropietarioController.php";
-        $controller = new PropietarioController();
-        $controller->index();
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->index();
         break;
 
     case "ver_detalle_mascota_propietario_ajax":
-        require_once "../controllers/PropietarioController.php";
-        $controller = new PropietarioController();
-        $controller->verDetalleMascotaAjax();
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->verDetalleMascotaAjax();
         break;
 
     case "portal_registrar_mascota_ajax":
-        require_once "../controllers/PropietarioController.php";
-        $controller = new PropietarioController();
-        $controller->registrarMascotaAjax();
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->registrarMascotaAjax();
         break;
 
     case "portal_actualizar_mascota_ajax":
-        require_once "../controllers/PropietarioController.php";
-        $controller = new PropietarioController();
-        $controller->actualizarMascotaAjax();
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->actualizarMascotaAjax();
         break;
 
     case "portal_get_detalle_cita_clinica_ajax":
-        require_once "../controllers/PropietarioController.php";
-        $controller = new PropietarioController();
-        $controller->getDetalleCitaClinicaAjax();
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->getDetalleCitaClinicaAjax();
         break;
 
     case "portal_imprimir_historial":
-        require_once "../controllers/PropietarioController.php";
-        $controller = new PropietarioController();
-        $controller->imprimirHistorial();
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->imprimirHistorial();
         break;
 
     case "portal_actualizar_datos_contacto_ajax":
-        require_once "../controllers/PropietarioController.php";
-        $controller = new PropietarioController();
-        $controller->actualizarDatosContactoAjax();
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->actualizarDatosContactoAjax();
         break;
 
+    case "portal_autorizar_historia_ajax":
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->autorizarHistoriaAjax();
+        break;
 
+    case "portal_vincular_clinica_ajax":
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->vincularClinicaAjax();
+        break;
+
+    case "portal_desvincular_clinica_ajax":
+        require_once "../controllers/PortalController.php";
+        (new PortalController())->desvincularClinicaAjax();
+        break;
 
     case "portal_get_vets_ajax":
         require_once "../controllers/CitaController.php";
-        $controller = new CitaController();
-        $controller->listarVeterinariosAjax();
+        (new CitaController())->portalVeterinariosAjax();
         break;
 
     case "portal_get_tipos_cita_ajax":
         require_once "../controllers/CitaController.php";
-        $controller = new CitaController();
-        $controller->listarTiposCitaAjax();
+        (new CitaController())->portalTiposCitaAjax();
+        break;
+
+    case "portal_get_horas_ajax":
+        require_once "../controllers/CitaController.php";
+        (new CitaController())->portalHorasAjax();
+        break;
+
+    case "portal_get_sugerencias_ajax":
+        require_once "../controllers/CitaController.php";
+        (new CitaController())->portalSugerenciasAjax();
         break;
 
     case "portal_agendar_cita_ajax":
         require_once "../controllers/CitaController.php";
-        $controller = new CitaController();
-        $controller->registrarAjax();
+        (new CitaController())->agendarDesdePortalAjax();
         break;
 
     case "nueva_mascota":

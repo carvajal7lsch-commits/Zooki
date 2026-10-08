@@ -59,16 +59,21 @@ class Vacuna extends ModeloHistoria
     public function findByMascota($idMascota): array
     {
         $idMascota = (int) $idMascota;
-        $this->exigirMascotaVinculada($idMascota);
+        $mascota = $this->exigirMascotaVinculada($idMascota);
 
         $sql = 'SELECT v.*, cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario
             FROM vacunas v
             JOIN clinicas cl ON cl.id_clinica = v.id_clinica
             LEFT JOIN usuarios u ON u.id_usuario = v.id_veterinario
-            WHERE v.id_mascota = ?
-            ORDER BY v.fecha_aplicacion DESC, v.id_vacuna DESC';
-        $consulta = $this->conn->prepare($sql);
-        $consulta->execute([$idMascota]);
+            WHERE v.id_mascota = ?';
+        $parametros = [$idMascota];
+        // RN-115: tras desvincularse, la clínica solo lee lo que ella aplicó.
+        if ($mascota['vinculo'] !== 'activo') {
+            $sql .= ' AND v.id_clinica = ?';
+            $parametros[] = $this->clinica();
+        }
+        $consulta = $this->conn->prepare($sql . ' ORDER BY v.fecha_aplicacion DESC, v.id_vacuna DESC');
+        $consulta->execute($parametros);
         return $this->marcarOrigen($consulta->fetchAll(PDO::FETCH_ASSOC));
     }
 

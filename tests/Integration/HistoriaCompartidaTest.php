@@ -150,11 +150,10 @@ final class HistoriaCompartidaTest extends TestCase
         $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM archivos_clinicos')->fetchColumn());
     }
 
-    /** RN-113: una mascota no vinculada a la clínica activa no muestra nada (403). */
-    public function testUnaMascotaNoVinculadaNoMuestraNada(): void
+    /** RN-113: una mascota que nunca se vinculó a la clínica activa no muestra nada (403). */
+    public function testUnaMascotaNuncaVinculadaNoMuestraNada(): void
     {
-        $this->autorizarASur(1);
-        $this->db->exec("UPDATE mascota_clinica SET estado = 'inactivo' WHERE id_mascota = 1 AND id_clinica = 2");
+        $this->db->exec("DELETE FROM mascota_clinica WHERE id_mascota = 1 AND id_clinica = 2");
 
         $this->assertAccesoDenegado(fn () => (new Consulta($this->db))->historialDeMascota(self::LUNA));
         $this->assertAccesoDenegado(fn () => (new Vacuna($this->db))->findByMascota(self::LUNA));
@@ -163,6 +162,29 @@ final class HistoriaCompartidaTest extends TestCase
         $this->assertSame([], (new Tratamiento($this->db))->findByConsultas([$this->consultaDeA]));
         $this->assertAccesoDenegado(fn () => $this->historialPorControlador());
         $this->assertGreaterThanOrEqual(5, $this->auditoriasDenegadas(DosClinicas::SUR));
+    }
+
+    /**
+     * RN-115 (decisión de la revisión de C4): con el vínculo inactivo la
+     * clínica lee solo sus registros, sin los de otras clínicas aunque haya
+     * autorización, y no registra nada nuevo.
+     */
+    public function testConElVinculoInactivoLaClinicaSoloLeeLoSuyo(): void
+    {
+        $this->autorizarASur(1);
+        $vacunaDeSur = (new Vacuna($this->db))->registrar(['id_mascota' => self::LUNA, 'nombre_vacuna' => 'Moquillo', 'fecha_aplicacion' => '2026-10-02']);
+        $this->db->exec("UPDATE mascota_clinica SET estado = 'inactivo' WHERE id_mascota = 1 AND id_clinica = 2");
+
+        $this->assertSame([], (new Consulta($this->db))->historialDeMascota(self::LUNA), 'Sin las consultas de Norte');
+        $this->assertSame([$vacunaDeSur], array_map('intval', array_column((new Vacuna($this->db))->findByMascota(self::LUNA), 'id_vacuna')));
+        $this->assertSame([], (new Desparasitacion($this->db))->findByMascota(self::LUNA));
+        $this->assertAccesoDenegado(fn () => (new ArchivoClinico($this->db))->paraDescargar($this->archivoDeA));
+        $this->assertAccesoDenegado(fn () => (new Vacuna($this->db))->registrar(['id_mascota' => self::LUNA, 'nombre_vacuna' => 'Otra', 'fecha_aplicacion' => '2026-10-03']));
+
+        $respuesta = $this->historialPorControlador();
+        $this->assertTrue($respuesta['mascota']['solo_lectura']);
+        $this->assertArrayNotHasKey('peso', $respuesta['mascota'], 'Sin los datos nuevos de la ficha');
+        $this->assertSame(['Moquillo'], array_column($respuesta['vacunas'], 'nombre_vacuna'));
     }
 
     /** RE-2.3.3 en el portal: el propietario solo descarga los adjuntos de sus mascotas (RN-G02). */

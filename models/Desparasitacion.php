@@ -66,16 +66,21 @@ class Desparasitacion extends ModeloHistoria
     public function findByMascota($idMascota): array
     {
         $idMascota = (int) $idMascota;
-        $this->exigirMascotaVinculada($idMascota);
+        $mascota = $this->exigirMascotaVinculada($idMascota);
 
         $sql = 'SELECT d.*, cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario
             FROM desparasitaciones d
             JOIN clinicas cl ON cl.id_clinica = d.id_clinica
             LEFT JOIN usuarios u ON u.id_usuario = d.id_veterinario
-            WHERE d.id_mascota = ?
-            ORDER BY d.fecha_aplicacion DESC, d.id_desparasitacion DESC';
-        $consulta = $this->conn->prepare($sql);
-        $consulta->execute([$idMascota]);
+            WHERE d.id_mascota = ?';
+        $parametros = [$idMascota];
+        // RN-115: tras desvincularse, la clínica solo lee lo que ella aplicó.
+        if ($mascota['vinculo'] !== 'activo') {
+            $sql .= ' AND d.id_clinica = ?';
+            $parametros[] = $this->clinica();
+        }
+        $consulta = $this->conn->prepare($sql . ' ORDER BY d.fecha_aplicacion DESC, d.id_desparasitacion DESC');
+        $consulta->execute($parametros);
         return $this->marcarOrigen($consulta->fetchAll(PDO::FETCH_ASSOC));
     }
 

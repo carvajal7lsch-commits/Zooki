@@ -106,10 +106,6 @@ function isUsuarioVeterinario() {
     return Number(datoAgenda('rol')) === 2;
 }
 
-function esAdmin() {
-    return Number(datoAgenda('rol')) === 1;
-}
-
 function getUsuarioId() {
     return datoAgenda('usuario');
 }
@@ -221,6 +217,7 @@ async function cargarEventos(info, exito, fallo) {
                 // Vacunas y desparasitaciones vienen de otras tablas: se prefija
                 // su id para que no choque con el de una cita.
                 id: tipo === 'cita' ? String(e.id_cita) : `${tipo}-${e.id_cita}`,
+                startEditable: puedeArrastrar(tipo, e),
                 title: e.mascota_nombre || 'Paciente',
                 start: `${e.fecha}T${e.hora || '08:00'}`,
                 extendedProps: {
@@ -289,7 +286,8 @@ function iniciarCalendario() {
         scrollTime: '07:00:00',
         views: { dayGridMonth: { displayEventTime: false } },
         eventTimeFormat: { hour: 'numeric', minute: '2-digit', hour12: true },
-        editable: esAdmin(),
+        // Decisión del usuario (revisión de C5): se arrastra cita por cita; ver puedeArrastrar().
+        editable: false,
         eventDurationEditable: false,
         moreLinkText: n => `+${n} más`,
         moreLinkClick: info => {
@@ -492,7 +490,7 @@ function mostrarDetalleCita(eventId) {
     // administrador. Una cita en curso siempre se puede retomar, aunque sea de
     // otro día, para que una atención sin cerrar no quede "en curso" para siempre.
     const esSuCita = esCita && isUsuarioVeterinario() && p.id_veterinario === getUsuarioId();
-    const gestiona = esSuCita || (esCita && esAdmin());
+    const gestiona = esSuCita;
     const abierta = ['pendiente', 'confirmada'].includes(estado);
     const enAtencion = ['en_curso', 'sin_cerrar'].includes(estado);
     // RN-407: se inicia el día de la cita desde 15 minutos antes de su hora.
@@ -683,6 +681,17 @@ async function cancelarCita(idCita) {
         console.error(e);
         mostrarToast('Error de conexión al cancelar la cita.', 'error');
     }
+}
+
+/**
+ * Arrastrar para reprogramar (decisión del usuario en la revisión de C5):
+ * solo el veterinario, solo sus citas y solo pendientes o confirmadas. El
+ * servidor aplica las mismas validaciones que el modal (horario, solapamiento,
+ * doble reserva); si rechaza, la cita vuelve a su lugar.
+ */
+function puedeArrastrar(tipo, evento) {
+    const abierta = ['pendiente', 'confirmada'].includes(normalizarEstado(evento.estado));
+    return tipo === 'cita' && isUsuarioVeterinario() && abierta && String(evento.id_veterinario || '') === getUsuarioId();
 }
 
 function reprogramarPorArrastre(info) {

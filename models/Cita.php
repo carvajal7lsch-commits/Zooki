@@ -203,13 +203,13 @@ class Cita extends ModeloClinica
 
     public function getTiposCita(): array
     {
-        $tipos = (new CatalogoClinica($this->conn))->tiposCita();
+        $tipos = $this->catalogo()->tiposCita();
         return array_map(static fn (array $tipo): array => $tipo + ['nombre' => $tipo['nombre_tipo']], $tipos);
     }
 
     public function getTipoCitaById($idTipoCita)
     {
-        return (new CatalogoClinica($this->conn))->tipoCita((int) $idTipoCita) ?? false;
+        return $this->catalogo()->tipoCita((int) $idTipoCita) ?? false;
     }
 
     /**
@@ -397,11 +397,17 @@ class Cita extends ModeloClinica
         if (empty($idTipoCita)) {
             return [self::DURACION_POR_DEFECTO, 0];
         }
-        $tipo = (new CatalogoClinica($this->conn))->tipoCita((int) $idTipoCita);
+        $tipo = $this->catalogo()->tipoCita((int) $idTipoCita);
         if ($tipo === null) {
             throw new InvalidArgumentException('Elige el tipo de cita de la lista.');
         }
         return [(int) $tipo['duracion_minutos'], (int) $tipo['margen_minutos']];
+    }
+
+    /** Catálogo de la misma clínica (la activa o la que eligió el propietario en el portal). */
+    private function catalogo(): CatalogoClinica
+    {
+        return $this->conMismoAlcance(new CatalogoClinica($this->conn));
     }
 
     private function marcas(array $valores): string

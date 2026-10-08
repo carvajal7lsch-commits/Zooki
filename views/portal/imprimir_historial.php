@@ -218,7 +218,7 @@
                     <th style="width: 15%;">Fecha</th>
                     <th style="width: 25%;">Motivo</th>
                     <th style="width: 35%;">Diagnóstico y Tratamiento</th>
-                    <th style="width: 25%;">Veterinario</th>
+                    <th style="width: 25%;">Veterinario y clínica</th>
                 </tr>
             </thead>
             <tbody>
@@ -232,7 +232,7 @@
                                 <strong>Plan:</strong> <?php echo htmlspecialchars($con['plan_tratamiento']); ?>
                             </span>
                         </td>
-                        <td>Dr(a). <?php echo htmlspecialchars($con['veterinario']); ?></td>
+                        <td>Dr(a). <?php echo htmlspecialchars($con['veterinario']); ?><br><small><?php echo htmlspecialchars($con['clinica_nombre']); ?></small></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -248,7 +248,7 @@
             <thead>
                 <tr>
                     <th>Vacuna</th>
-                    <th>Laboratorio</th>
+                    <th>Laboratorio y clínica</th>
                     <th>Fecha Aplicación</th>
                     <th>Próxima Aplicación</th>
                 </tr>
@@ -257,7 +257,7 @@
                 <?php foreach ($vacunas as $v): ?>
                     <tr>
                         <td><strong><?php echo htmlspecialchars($v['nombre_vacuna']); ?></strong></td>
-                        <td><?php echo htmlspecialchars($v['laboratorio'] ?: '—'); ?></td>
+                        <td><?php echo htmlspecialchars($v['laboratorio'] ?: '—'); ?><br><small><?php echo htmlspecialchars($v['clinica_nombre']); ?></small></td>
                         <td><?php echo date('d/m/Y', strtotime($v['fecha_aplicacion'])); ?></td>
                         <td>
                             <?php echo (!empty($v['fecha_proxima_dosis']) && $v['fecha_proxima_dosis'] !== '0000-00-00') ? '<strong>' . date('d/m/Y', strtotime($v['fecha_proxima_dosis'])) . '</strong>' : '—'; ?>
@@ -277,7 +277,7 @@
             <thead>
                 <tr>
                     <th>Producto</th>
-                    <th>Tipo</th>
+                    <th>Tipo y clínica</th>
                     <th>Fecha Aplicación</th>
                     <th>Próxima Aplicación</th>
                 </tr>
@@ -286,7 +286,7 @@
                 <?php foreach ($desparasitaciones as $d): ?>
                     <tr>
                         <td><strong><?php echo htmlspecialchars($d['producto']); ?></strong></td>
-                        <td><?php echo htmlspecialchars(ucfirst((string) $d['tipo']) . ' · ' . $d['periodicidad']); ?></td>
+                        <td><?php echo htmlspecialchars(ucfirst((string) $d['tipo']) . ' · ' . $d['periodicidad']); ?><br><small><?php echo htmlspecialchars($d['clinica_nombre']); ?></small></td>
                         <td><?php echo date('d/m/Y', strtotime($d['fecha_aplicacion'])); ?></td>
                         <td>
                             <?php echo ($d['fecha_proxima'] && $d['fecha_proxima'] !== '0000-00-00') ? '<strong>' . date('d/m/Y', strtotime($d['fecha_proxima'])) . '</strong>' : '—'; ?>

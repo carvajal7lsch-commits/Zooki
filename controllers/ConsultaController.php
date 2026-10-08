@@ -108,7 +108,7 @@ class ConsultaController
         try {
             $respuesta = [
                 'success' => true,
-                'mascota' => $this->mascotaModel->getById($idMascota),
+                'mascota' => $this->mascotaModel->getParaHistorial($idMascota),
                 'consultas' => $this->consultaModel->historialDeMascota($idMascota),
                 'vacunas' => $this->vacunaModel->findByMascota($idMascota),
                 'desparasitaciones' => $this->desparasitacionModel->findByMascota($idMascota),
