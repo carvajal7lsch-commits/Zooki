@@ -92,7 +92,7 @@ class ContextoTest extends TestCase
         $this->assertSame(DosClinicas::DOBLE, Contexto::idUsuario());
         $this->assertSame(DosClinicas::SUR, Contexto::clinicaActiva());
         $this->assertSame(1, Contexto::rolActivo());
-        $this->assertSame(1, $_SESSION['usuario_id_rol'], 'El espejo para el código de C2–C9 es el rol del contexto');
+        $this->assertSame(['id_usuario', 'usuario_nombre', 'debe_cambiar_password', 'login_method', 'contexto', 'contextos_total'], array_keys($_SESSION));
         $this->assertTrue(Contexto::puedeCambiar());
         $this->assertSame('Clínica Sur · Administrador', Contexto::etiqueta($contextos[1]));
     }
@@ -111,7 +111,7 @@ class ContextoTest extends TestCase
         Contexto::iniciarIdentidad(DosClinicas::PROPIETARIO, 'Fabio', false, 'password');
 
         $this->assertNull(Contexto::actual());
-        $this->assertArrayNotHasKey('usuario_id_rol', $_SESSION);
+        $this->assertNull(Contexto::rolActivo());
     }
 
     /** El selector solo acepta claves que existen entre los contextos vigentes. */

@@ -19,9 +19,12 @@ const ZOOKI_COLOR_ERR = '#EF4444';
 
 /** Aviso breve, no bloqueante, en la esquina superior derecha. */
 function zookiToast(mensaje, tipo = 'success') {
-    if (!window.Swal) { console.log(`[${tipo}] ${mensaje}`); return; }
+    if (!window.Swal) {
+        console.log(`[${tipo}] ${mensaje}`);
+        return Promise.resolve();
+    }
 
-    Swal.fire({
+    return Swal.fire({
         toast: true,
         position: 'top-end',
         icon: tipo,
@@ -34,7 +37,10 @@ function zookiToast(mensaje, tipo = 'success') {
 
 /** Aviso que exige confirmación; para errores que el usuario debe leer. */
 function zookiAviso(mensaje, tipo = 'error', titulo = null) {
-    if (!window.Swal) { console.log(`[${tipo}] ${mensaje}`); return; }
+    if (!window.Swal) {
+        console.log(`[${tipo}] ${mensaje}`);
+        return;
+    }
 
     Swal.fire({
         icon: tipo,
@@ -46,7 +52,10 @@ function zookiAviso(mensaje, tipo = 'error', titulo = null) {
 
 /** Confirmación sí/no. Devuelve una promesa que resuelve a booleano. */
 async function zookiConfirmar(mensaje, titulo = '¿Confirmas?', textoBoton = 'Sí, continuar') {
-    if (!window.Swal) return window.confirm(mensaje);
+    if (!window.Swal) {
+        console.error('No está disponible la confirmación de la acción.');
+        return false;
+    }
 
     const r = await Swal.fire({
         icon: 'question',

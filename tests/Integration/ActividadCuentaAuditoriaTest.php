@@ -67,6 +67,26 @@ class ActividadCuentaAuditoriaTest extends TestCase
         $this->assertSame(['Personal actualizado'], array_column($this->auditoria->getLogs(DosClinicas::SUR), 'descripcion'));
     }
 
+    public function testLaPantallaDeAuditoriaFuncionaYElMenuIncluyeSuEnlace(): void
+    {
+        require_once __DIR__ . '/../../controllers/AuditoriaController.php';
+        Contexto::iniciarIdentidad(1, 'Ana Norte', false, 'password');
+        Contexto::activar(Contexto::deClinica(1, 'Clínica Norte', Roles::ADMIN), 1);
+        $_GET = ['action' => 'admin_auditoria'];
+        ob_start();
+        try {
+            (new AuditoriaController($this->db))->listar();
+            $html = ob_get_contents();
+        } finally {
+            ob_end_clean();
+            $_GET = [];
+        }
+        $this->assertStringContainsString('action=admin_auditoria', $html);
+        $this->assertStringContainsString('js/auditoria.js', $html);
+        $this->assertStringContainsString('Cambio de contraseña', $html);
+        $this->assertStringNotContainsString('Personal actualizado', $html);
+    }
+
     /** RE-T.8.3: el filtro por persona busca por nombre, documento o correo. */
     public function testElFiltroPorPersonaUsaNombreDocumentoOCorreo(): void
     {
@@ -91,11 +111,10 @@ class ActividadCuentaAuditoriaTest extends TestCase
         $this->assertNull($filas['De la plataforma']);
     }
 
-    /** El código v1 sin adaptar manda el documento: no se toma como id_usuario de otra persona. */
-    public function testUnDocumentoNoSeConfundeConUnIdUsuario(): void
+    /** C9: la auditoría recibe el identificador estable y conserva la persona. */
+    public function testElRegistroRecibeElIdUsuarioEstable(): void
     {
-        $this->auditoria->log('1', 'UPDATE', 'x', 1, null, null, 'Llamada v1', null);
-
-        $this->assertNull($this->db->query("SELECT id_usuario FROM auditoria_sistema WHERE descripcion = 'Llamada v1'")->fetchColumn() ?: null);
+        $this->auditoria->log(1, 'UPDATE', 'usuarios', 1, null, null, 'Identidad v2', null);
+        $this->assertSame(1, (int) $this->db->query("SELECT id_usuario FROM auditoria_sistema WHERE descripcion='Identidad v2'")->fetchColumn());
     }
 }

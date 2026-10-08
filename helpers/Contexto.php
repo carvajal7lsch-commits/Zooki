@@ -80,22 +80,17 @@ final class Contexto
         self::salir();
     }
 
-    /**
-     * Fija el contexto activo. usuario_id_rol se mantiene como espejo del rol
-     * del contexto para el código de C2–C9 que aún lo lee: así ese código
-     * actúa con el rol del contexto (RN-G18) y, si no lo reconoce, deniega.
-     */
+    /** Fija el contexto activo y la cantidad de opciones vigentes (RN-G18). */
     public static function activar(array $contexto, int $totalDisponibles): void
     {
         $_SESSION['contexto'] = $contexto;
         $_SESSION['contextos_total'] = $totalDisponibles;
-        $_SESSION['usuario_id_rol'] = $contexto['id_rol'];
     }
 
     /** Quita el contexto activo; la identidad sigue abierta. */
     public static function salir(): void
     {
-        unset($_SESSION['contexto'], $_SESSION['usuario_id_rol']);
+        unset($_SESSION['contexto']);
     }
 
     public static function actual(): ?array

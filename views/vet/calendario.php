@@ -41,6 +41,8 @@ $usuarioAgenda = (int) Contexto::idUsuario();
         </div>
     </div>
 
+    <p class="agenda-arrastre"><i class="fas fa-hand-pointer" aria-hidden="true"></i> Puedes arrastrar tus citas pendientes o confirmadas para reprogramarlas. En móvil también puedes usar el detalle de la cita.</p>
+
     <div class="agenda-layout">
         <section class="agenda-calendar" aria-label="Calendario">
             <div id="calendar"></div>
@@ -68,14 +70,14 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 </div>
 
 <!-- ══ MODAL — Agendar cita ══ -->
-<div id="citaModalOverlay" class="zk-overlay" onclick="if (event.target === this) closeCitaModal()">
+<div id="citaModalOverlay" class="zk-overlay" data-ui-accion="cerrar-cita" data-ui-fondo>
     <div class="zk-modal" role="dialog" aria-modal="true" aria-labelledby="citaModalTitle">
         <header class="zk-modal__head">
             <div>
                 <h3 class="zk-modal__title" id="citaModalTitle">Nueva cita</h3>
                 <p class="zk-modal__subtitle" id="citaModalFechaLabel"></p>
             </div>
-            <button type="button" class="cal-icon-btn" onclick="closeCitaModal()" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+            <button type="button" class="cal-icon-btn" data-ui-accion="cerrar-cita" aria-label="Cerrar"><i class="fas fa-times"></i></button>
         </header>
 
         <form id="formCitaModal" class="zk-modal__split" onsubmit="crearCitaModal(event)" novalidate autocomplete="off">
@@ -98,7 +100,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                     <div class="zk-selected" id="cm_mascota_chip" hidden>
                         <i class="fas fa-paw"></i>
                         <span id="cm_mascota_chip_name"></span>
-                        <button type="button" onclick="limpiarMascotaSeleccionada(true)">Cambiar</button>
+                        <button type="button" data-ui-accion="cambiar-mascota">Cambiar</button>
                     </div>
                 </div>
 
@@ -134,7 +136,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             </div>
             <p class="zk-summary" id="cm_resumen"></p>
             <div class="zk-modal__actions">
-                <button type="button" class="cal-btn cal-btn--ghost" onclick="closeCitaModal()">Cancelar</button>
+                <button type="button" class="cal-btn cal-btn--ghost" data-ui-accion="cerrar-cita">Cancelar</button>
                 <button type="submit" form="formCitaModal" class="cal-btn cal-btn--primary" id="cm_submit" disabled>Agendar cita</button>
             </div>
         </footer>
@@ -142,14 +144,14 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 </div>
 
 <!-- ══ MODAL — Reprogramar cita ══ -->
-<div id="reprogramarModalOverlay" class="zk-overlay" onclick="if (event.target === this) cerrarModalReprogramar()">
+<div id="reprogramarModalOverlay" class="zk-overlay" data-ui-accion="cerrar-reprogramacion" data-ui-fondo>
     <div class="zk-modal" role="dialog" aria-modal="true" aria-labelledby="reprogTitle">
         <header class="zk-modal__head">
             <div>
                 <h3 class="zk-modal__title" id="reprogTitle">Reprogramar cita</h3>
                 <p class="zk-modal__subtitle" id="reprogSubtitle"></p>
             </div>
-            <button type="button" class="cal-icon-btn" onclick="cerrarModalReprogramar()" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+            <button type="button" class="cal-icon-btn" data-ui-accion="cerrar-reprogramacion" aria-label="Cerrar"><i class="fas fa-times"></i></button>
         </header>
 
         <div class="zk-modal__split">
@@ -188,14 +190,14 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                 <i class="fas fa-exclamation-circle"></i><span id="reprog_error_message"></span>
             </div>
             <div class="zk-modal__actions">
-                <button type="button" class="cal-btn cal-btn--ghost" onclick="cerrarModalReprogramar()">Cancelar</button>
-                <button type="button" class="cal-btn cal-btn--primary" id="reprogramar_btn_confirmar" onclick="confirmarReprogramacion()" disabled>Confirmar reprogramación</button>
+                <button type="button" class="cal-btn cal-btn--ghost" data-ui-accion="cerrar-reprogramacion">Cancelar</button>
+                <button type="button" class="cal-btn cal-btn--primary" id="reprogramar_btn_confirmar" data-ui-accion="confirmar-reprogramacion" disabled>Confirmar reprogramación</button>
             </div>
         </footer>
     </div>
 </div>
 
-<script src="js/calendario.js?v=9"></script>
+<script src="js/calendario.js?v=10"></script>
 
 <!-- MODAL NUEVA CONSULTA (necesario para Iniciar Atención desde el calendario) -->
 <?php include __DIR__ . "/modal_consulta.php"; ?>

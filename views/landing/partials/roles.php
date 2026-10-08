@@ -28,10 +28,6 @@
                         role="tab" aria-selected="true" aria-controls="rol-vet" id="tab-vet" tabindex="0">
                     <i class="ri-stethoscope-line" aria-hidden="true"></i> Veterinario
                 </button>
-                <button type="button" class="lp-roles__tab" data-role="recepcion"
-                        role="tab" aria-selected="false" aria-controls="rol-recepcion" id="tab-recepcion" tabindex="-1">
-                    <i class="ri-customer-service-2-line" aria-hidden="true"></i> Recepción
-                </button>
                 <button type="button" class="lp-roles__tab" data-role="propietario"
                         role="tab" aria-selected="false" aria-controls="rol-propietario" id="tab-propietario" tabindex="-1">
                     <i class="ri-user-heart-line" aria-hidden="true"></i> Propietario
@@ -77,44 +73,6 @@
                             <div>
                                 <p class="lp-ui__label">Diagnóstico</p>
                                 <p class="lp-ui__v">Gastritis leve</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recepción -->
-            <div class="lp-roles__panel" id="rol-recepcion" role="tabpanel" aria-labelledby="tab-recepcion">
-                <div class="lp-roles__body">
-                    <p class="lp-roles__label"><i class="ri-customer-service-2-line" aria-hidden="true"></i> Recepcionista</p>
-                    <h3 class="lp-roles__title">Agenda con la certeza de que no habrá cruces</h3>
-                    <p class="lp-roles__text">
-                        El calendario muestra la disponibilidad real de cada veterinario. Al agendar,
-                        el sistema solo ofrece los horarios que de verdad están libres.
-                    </p>
-                    <ul class="lp-roles__list">
-                        <li><i class="ri-check-line" aria-hidden="true"></i> Registra nuevos propietarios y sus mascotas en minutos.</li>
-                        <li><i class="ri-check-line" aria-hidden="true"></i> Programa, reprograma y cancela citas con notificación automática.</li>
-                        <li><i class="ri-check-line" aria-hidden="true"></i> Ve la agenda completa de la clínica por día, semana o veterinario.</li>
-                        <li><i class="ri-check-line" aria-hidden="true"></i> Busca cualquier paciente o propietario en tiempo real.</li>
-                    </ul>
-                </div>
-                <div class="lp-roles__figure">
-                    <div class="lp-ui" aria-hidden="true">
-                        <div class="lp-ui__bar">
-                            <span class="lp-ui__dots"><span></span><span></span><span></span></span>
-                            Agenda · Martes 12
-                        </div>
-                        <div class="lp-ui__body">
-                            <div class="lp-ui__slots">
-                                <div class="lp-ui__slot"><span class="lp-ui__time">08:00</span> Nube · Vacunación</div>
-                                <div class="lp-ui__slot"><span class="lp-ui__time">09:00</span> Simba · Control</div>
-                                <div class="lp-ui__slot lp-ui__slot--free"><span class="lp-ui__time">10:00</span> Disponible</div>
-                                <div class="lp-ui__slot lp-ui__slot--blocked"><span class="lp-ui__time">11:00</span> Ocupado · se bloquea</div>
-                            </div>
-                            <div class="lp-ui__head">
-                                <span class="lp-ui__label">Dr. Ramírez</span>
-                                <span class="lp-ui__chip lp-ui__chip--accent">Sin cruces</span>
                             </div>
                         </div>
                     </div>

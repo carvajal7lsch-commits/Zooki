@@ -1208,3 +1208,26 @@
 .tab-panel[hidden] {
     display: none;
 }
+
+/* C9: misma cuadrícula y tarjetas de v1.12.0, con avatar local y vistas v2. */
+#usuariosModulo [hidden] {
+    display: none !important;
+}
+.avatar-mini.avatar-iniciales {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #0052FF;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 14px rgba(0, 82, 255, 0.25);
+}
+.identidad-protegida {
+    color: #64748b;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}

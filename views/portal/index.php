@@ -61,7 +61,7 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
                 <?php else: ?>
                     <div class="pet-carousel">
                         <?php foreach ($mascotas as $m): $foto = $fotoMascota($m); ?>
-                            <button type="button" class="pet-carousel-item" onclick="verDetalle(<?= (int) $m['id_mascota'] ?>)">
+                            <button type="button" class="pet-carousel-item" data-ui-accion="detalle-mascota" data-ui-id="<?= (int) $m['id_mascota'] ?>">
                                 <span class="pet-avatar-wrapper">
                                     <?php if ($foto): ?>
                                         <img src="<?= $foto ?>" alt="" class="pet-avatar-img" loading="lazy">
@@ -83,7 +83,7 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
                 </div>
 
                 <?php if ($earliest_cita): $foto = $fotoMascota($cita_mascota); ?>
-                    <article class="appointment-banner" role="button" tabindex="0" onclick="mostrarDetalleCita(<?= (int) $earliest_cita['id_cita'] ?>)">
+                    <article class="appointment-banner" role="button" tabindex="0" data-ui-accion="detalle-cita-portal" data-ui-id="<?= (int) $earliest_cita['id_cita'] ?>">
                         <div class="app-banner-info">
                             <?php if ($foto): ?>
                                 <img src="<?= $foto ?>" alt="" class="app-banner-avatar">
@@ -264,7 +264,7 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
             <?php else: ?>
                 <div class="agenda-list scrollable-list" id="citasListContainer">
                     <?php foreach ($todas_citas as $c): $abierta = in_array($c['estado'], ['pendiente', 'confirmada'], true); ?>
-                        <div class="agenda-list-item agenda-list-item--accion" data-pet-id="<?= (int) $c['id_mascota'] ?>" role="button" tabindex="0" onclick="if(!event.target.classList.contains('btn-cancel-agenda')) mostrarDetalleCita(<?= (int) $c['id_cita'] ?>)">
+                        <div class="agenda-list-item agenda-list-item--accion" data-pet-id="<?= (int) $c['id_mascota'] ?>" role="button" tabindex="0" data-ui-accion="detalle-cita-portal" data-ui-id="<?= (int) $c['id_cita'] ?>">
                             <div class="agenda-pet-photo">
                                 <?php if ($c['foto_mascota']): ?>
                                     <img src="<?= $c['foto_mascota'] ?>" alt="">
@@ -447,7 +447,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
 
         <div class="account-grid__acciones">
             <div class="profile-actions-list">
-                <button type="button" class="btn-profile-action" onclick="toggleContactEditPortal()" aria-controls="contactEditSection">
+                <button type="button" class="btn-profile-action" data-ui-accion="editar-contacto" aria-controls="contactEditSection">
                     <span><i class="ri-contacts-line" aria-hidden="true"></i> Editar datos de contacto</span>
                     <i class="ri-arrow-down-s-line" id="iconToggleContact" aria-hidden="true"></i>
                 </button>
@@ -512,7 +512,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
             </section>
 
             <div class="profile-actions-list">
-                <button type="button" class="btn-profile-action" onclick="togglePasswordChangePortal()" aria-controls="passwordChangeSection">
+                <button type="button" class="btn-profile-action" data-ui-accion="editar-password" aria-controls="passwordChangeSection">
                     <span><i class="ri-lock-password-line" aria-hidden="true"></i> Cambiar contraseña</span>
                     <i class="ri-arrow-down-s-line" id="iconTogglePassword" aria-hidden="true"></i>
                 </button>
@@ -561,7 +561,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
 <!-- ══ DETALLE DE MASCOTA ═══════════════════════════════════════════ -->
 <section id="screen-pet-detail" class="app-screen pet-detail" aria-labelledby="drawerPetTitle">
     <header class="pet-detail__cabecera">
-        <button type="button" class="portal-drawer-back" onclick="cerrarDrawer()" aria-label="Volver">
+        <button type="button" class="portal-drawer-back" data-ui-accion="cerrar-drawer" aria-label="Volver">
             <i class="ri-arrow-left-line" aria-hidden="true"></i>
         </button>
         <div class="portal-drawer-title-wrap">

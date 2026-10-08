@@ -499,7 +499,6 @@ function mostrarDetalleCita(eventId) {
     const puedeIniciar = enDiaDeInicio && new Date() >= iniciaDesde;
     const esperaInicio = enDiaDeInicio && !puedeIniciar;
     // RN-409: una atención abierta se completa registrando su consulta
-    // (RN-410, «cerrar sin consulta», se derogó en la v2).
     const puedeContinuar = esSuCita && enAtencion;
     const puedeNoAsistio = esSuCita && abierta && ev.start <= new Date();
     const puedeConfirmar = gestiona && estado === 'pendiente' && !pasada;

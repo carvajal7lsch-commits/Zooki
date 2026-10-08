@@ -13,11 +13,41 @@
     const form = document.getElementById('usuarioForm');
     if (!modulo || !modal || !form) return;
 
+    // C9: preferencia local; la primera visita conserva las tarjetas de v1.12.0.
+    const claveVista = 'zooki.usuarios.vista';
+    function cambiarVista(vista) {
+        const elegida = vista === 'tabla' ? 'tabla' : 'tarjetas';
+        modulo.dataset.vista = elegida;
+        modulo.querySelectorAll('[data-vista-contenido]').forEach((panel) => {
+            panel.hidden = panel.dataset.vistaContenido !== elegida;
+        });
+        modulo.querySelectorAll('[data-vista-usuarios]').forEach((boton) => {
+            const activo = boton.dataset.vistaUsuarios === elegida;
+            boton.classList.toggle('active', activo);
+            boton.setAttribute('aria-pressed', String(activo));
+        });
+        try {
+            localStorage.setItem(claveVista, elegida);
+        } catch (error) {
+            console.debug('Preferencia de vista no disponible.', error);
+        }
+    }
+    let vistaGuardada = 'tarjetas';
+    try {
+        vistaGuardada = localStorage.getItem(claveVista) || 'tarjetas';
+    } catch (error) {
+        console.debug('Preferencia de vista no disponible.', error);
+    }
+    cambiarVista(vistaGuardada);
+    modulo.querySelectorAll('[data-vista-usuarios]').forEach((boton) => {
+        boton.addEventListener('click', () => cambiarVista(boton.dataset.vistaUsuarios));
+    });
+
     const aviso = modal.querySelector('[data-aviso]');
     const titulo = modal.querySelector('[data-titulo]');
     const soloAlta = modal.querySelector('[data-solo-alta]');
 
-    const mensaje = (icono, texto) => Swal.fire({ icon: icono, text: texto, confirmButtonColor: '#0052FF' });
+    const mensaje = (icono, texto) => zookiToast(texto, icono);
 
     async function pedir(url, datos) {
         const opciones = datos ? { method: 'POST', body: datos } : {};
@@ -144,7 +174,7 @@
         }
     });
 
-    // ── Acciones de la tabla ──────────────────────────────────────────────
+    // ── Acciones de tarjetas y tabla ──────────────────────────────────────────────
     modulo.addEventListener('click', async (evento) => {
         const boton = evento.target.closest('[data-accion]');
         if (!boton) return;
@@ -157,7 +187,7 @@
             editar(id);
         } else if (boton.dataset.accion === 'estado') {
             const activar = boton.dataset.estado === '1';
-            const ok = await Swal.fire({
+            const ok = activar ? { isConfirmed: true } : await Swal.fire({
                 icon: 'question',
                 text: (activar ? '¿Activar a ' : '¿Desactivar a ') + boton.dataset.nombre + ' en esta clínica? Su cuenta y sus otros roles no cambian.',
                 showCancelButton: true,

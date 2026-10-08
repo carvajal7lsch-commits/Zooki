@@ -3,8 +3,8 @@
  * HU-T.7 — Personal de la clínica activa y propietarios vinculados a ella.
  *
  * Recibe del enrutador $personal y $propietarios (UsuarioController), ya
- * acotados a la clínica del contexto. El alta y la edición de propietarios y
- * sus mascotas llegan con el módulo 1 (C3): aquí solo se listan.
+ * acotados a la clínica del contexto. Los propietarios se listan en solo lectura;
+ * su alta y sus mascotas están en el módulo de pacientes (C3).
  * El comportamiento está en js/usuarios.js; los datos viajan en data-*.
  */
 require_once __DIR__ . '/../../helpers/Roles.php';
@@ -15,7 +15,7 @@ $e = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'
 $yo = Contexto::idUsuario();
 $contexto = Contexto::actual();
 ?>
-<div class="users-container" id="usuariosModulo">
+<div class="users-container" id="usuariosModulo" data-vista="tarjetas">
     <div class="header-container-white">
         <div class="head-title-desc">
             <h1 class="users-page-title">Gestión de usuarios</h1>
@@ -36,6 +36,12 @@ $contexto = Contexto::actual();
                 <i class="fas fa-plus" aria-hidden="true"></i><span>Nuevo integrante</span>
             </button>
         </div>
+        <div class="head-view-toggle">
+            <div class="view-toggle" role="group" aria-label="Tipo de vista">
+                <button type="button" class="view-toggle-btn active" data-vista-usuarios="tarjetas" aria-pressed="true" title="Vista de tarjetas"><i class="bi bi-grid" aria-hidden="true"></i></button>
+                <button type="button" class="view-toggle-btn" data-vista-usuarios="tabla" aria-pressed="false" title="Vista de tabla"><i class="bi bi-table" aria-hidden="true"></i></button>
+            </div>
+        </div>
         <div class="head-search">
             <div class="search-input">
                 <i class="fas fa-search" aria-hidden="true"></i>
@@ -46,7 +52,37 @@ $contexto = Contexto::actual();
 
     <!-- Personal de la clínica -->
     <section class="tab-panel active" data-panel="personal">
-        <div class="table-view">
+        <div class="personal-grid view-grid" data-vista-contenido="tarjetas">
+            <?php if (!$personal): ?>
+                <div class="empty-state"><h3>Todavía no hay personal registrado.</h3></div>
+            <?php endif; ?>
+            <?php foreach ($personal as $p): ?>
+                <?php
+                $activo = (int) $p['estado_clinica'] === 1;
+                $esYo = (int) $p['id_usuario'] === $yo;
+                $iniciales = mb_strtoupper(mb_substr($p['nombre_completo'], 0, 1));
+                ?>
+                <article class="person-card <?= $esYo ? 'current-user' : '' ?>" data-fila data-id-usuario="<?= (int) $p['id_usuario'] ?>" data-identidad-editable="<?= $p['identidad_editable'] ? '1' : '0' ?>" data-buscar="<?= $e(mb_strtolower($p['nombre_completo'] . ' ' . $p['documento'] . ' ' . $p['email'])) ?>">
+                    <div class="card-header-mini">
+                        <span class="avatar-mini avatar-iniciales" aria-hidden="true"><?= $e($iniciales) ?></span>
+                        <span class="status-badge <?= $activo ? 'status-active' : 'status-inactive' ?>"><?= $activo ? 'Activo' : 'Inactivo' ?></span>
+                    </div>
+                    <div class="card-body-mini">
+                        <h3 class="card-title-mini"><?= $e($p['nombre_completo']) ?><?php if ($esYo): ?><span class="current-user-label"> (Tú)</span><?php endif; ?></h3>
+                        <div class="card-tags-mini"><span class="tag-mini"><i class="bi <?= (int) $p['id_rol'] === Roles::ADMIN ? 'bi-shield-shaded' : 'bi-heart-pulse' ?>" aria-hidden="true"></i> <?= $e(Roles::nombre((int) $p['id_rol'])) ?></span></div>
+                        <div class="card-contact-mini">
+                            <span class="contact-text-mini"><i class="bi bi-person-badge" aria-hidden="true"></i> <?= $e(trim($p['tipo_documento'] . ' ' . $p['documento'])) ?></span>
+                            <span class="contact-text-mini"><i class="bi bi-envelope" aria-hidden="true"></i> <?= $e($p['email']) ?></span>
+                            <span class="contact-text-mini"><i class="bi bi-telephone" aria-hidden="true"></i> <?= $e($p['telefono'] ?? '') ?></span>
+                            <?php if (!$p['identidad_editable']): ?><small class="identidad-protegida"><i class="fas fa-lock" aria-hidden="true"></i> Datos de acceso protegidos por otros vínculos.</small><?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="card-footer-mini"><?php require __DIR__ . '/partials/acciones_personal.php'; ?></div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="table-view" data-vista-contenido="tabla" hidden>
             <table class="users-table">
                 <thead>
                     <tr><th>Persona</th><th>Documento</th><th>Contacto</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr>
@@ -56,7 +92,10 @@ $contexto = Contexto::actual();
                         <tr class="empty-table-row"><td colspan="6">Todavía no hay personal registrado.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($personal as $p): ?>
-                        <?php $activo = (int) $p['estado_clinica'] === 1; $esYo = (int) $p['id_usuario'] === $yo; ?>
+                        <?php
+                        $activo = (int) $p['estado_clinica'] === 1;
+                        $esYo = (int) $p['id_usuario'] === $yo;
+                        ?>
                         <tr data-fila data-buscar="<?= $e(mb_strtolower($p['nombre_completo'] . ' ' . $p['documento'] . ' ' . $p['email'])) ?>">
                             <td><strong><?= $e($p['nombre_completo']) ?></strong><?= $esYo ? ' <small>(tú)</small>' : '' ?></td>
                             <td><?= $e(trim($p['tipo_documento'] . ' ' . $p['documento'])) ?></td>
@@ -64,11 +103,7 @@ $contexto = Contexto::actual();
                             <td><span class="role-badge role-<?= (int) $p['id_rol'] ?>"><?= $e(Roles::nombre((int) $p['id_rol'])) ?></span></td>
                             <td><span class="status-badge <?= $activo ? 'status-active' : 'status-inactive' ?>"><?= $activo ? 'Activo' : 'Inactivo' ?></span></td>
                             <td class="table-actions">
-                                <button type="button" class="action-btn" data-accion="editar" data-id="<?= (int) $p['id_usuario'] ?>" title="Editar" aria-label="Editar"><i class="fas fa-pen" aria-hidden="true"></i></button>
-                                <?php if (!$esYo): ?>
-                                    <button type="button" class="action-btn" data-accion="estado" data-id="<?= (int) $p['id_usuario'] ?>" data-estado="<?= $activo ? 0 : 1 ?>" data-nombre="<?= $e($p['nombre_completo']) ?>" title="<?= $activo ? 'Desactivar en la clínica' : 'Activar en la clínica' ?>" aria-label="<?= $activo ? 'Desactivar' : 'Activar' ?>"><i class="fas <?= $activo ? 'fa-user-slash' : 'fa-user-check' ?>" aria-hidden="true"></i></button>
-                                    <button type="button" class="action-btn" <?php if (!$p['identidad_editable']): ?>disabled<?php endif; ?> data-accion="restablecer" data-id="<?= (int) $p['id_usuario'] ?>" data-nombre="<?= $e($p['nombre_completo']) ?>" title="Restablecer contraseña" aria-label="Restablecer contraseña"><i class="fas fa-key" aria-hidden="true"></i></button>
-                                <?php endif; ?>
+                                <?php require __DIR__ . '/partials/acciones_personal.php'; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -77,9 +112,30 @@ $contexto = Contexto::actual();
         </div>
     </section>
 
-    <!-- Propietarios vinculados (solo lectura en C1) -->
+    <!-- Propietarios vinculados, solo lectura -->
     <section class="tab-panel" data-panel="propietarios" hidden>
-        <div class="table-view">
+        <div class="clients-grid view-grid" data-vista-contenido="tarjetas">
+            <?php if (!$propietarios): ?>
+                <div class="empty-state"><h3>Todavía no hay propietarios vinculados.</h3></div>
+            <?php endif; ?>
+            <?php foreach ($propietarios as $p): ?>
+                <article class="client-card" data-fila data-buscar="<?= $e(mb_strtolower($p['nombre_completo'] . ' ' . ($p['documento'] ?? '') . ' ' . $p['email'])) ?>">
+                    <div class="card-header-mini"><span class="avatar-mini avatar-iniciales" aria-hidden="true"><?= $e(mb_strtoupper(mb_substr($p['nombre_completo'], 0, 1))) ?></span></div>
+                    <div class="card-body-mini">
+                        <h3 class="card-title-mini"><?= $e($p['nombre_completo']) ?></h3>
+                        <div class="card-contact-mini">
+                            <span class="contact-text-mini"><?= $e(trim(($p['tipo_documento'] ?? '') . ' ' . ($p['documento'] ?? ''))) ?></span>
+                            <span class="contact-text-mini"><?= $e($p['email']) ?></span>
+                            <span class="contact-text-mini"><?= $e($p['telefono'] ?? '') ?></span>
+                        </div>
+                        <span class="tag-mini"><?= (int) $p['num_mascotas'] ?> mascota(s) en la clínica</span>
+                        <span class="status-badge <?= (int) $p['estado_clinica'] === 1 ? 'status-active' : 'status-inactive' ?>"><?= (int) $p['estado_clinica'] === 1 ? 'Vínculo activo' : 'Vínculo inactivo' ?></span>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="table-view" data-vista-contenido="tabla" hidden>
             <table class="users-table">
                 <thead>
                     <tr><th>Propietario</th><th>Documento</th><th>Contacto</th><th>Mascotas en la clínica</th><th>Vínculo</th></tr>
@@ -168,4 +224,4 @@ $contexto = Contexto::actual();
     </div>
 </div>
 
-<script src="js/usuarios.js?v=1"></script>
+<script src="js/usuarios.js?v=2"></script>

@@ -35,7 +35,6 @@
     /* Role Colors */
     --role-admin: #0052FF;
     --role-vet: #0044d6;
-    --role-receptionist: #5560FF;
 
     /* Bento grid accent (para collage) */
     --bento-primary: #3B82F6;
@@ -1277,22 +1276,6 @@ body::after {
 /* User Profile Header */
 .header-user-wrapper {
     position: relative;
-}
-
-/* HU-42 — Avatar de recepcion. Antes llevaba los estilos en un style="..."
-   dentro del HTML y no abria ningun menu (ZOOKI_REGLAS 1). */
-.header-user__photo {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: border-color 0.15s ease;
-}
-
-.header-user__photo:hover {
-    border-color: #5560ff;
 }
 
 /* Profile Password Change Modal */

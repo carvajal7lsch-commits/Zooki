@@ -69,7 +69,7 @@ class Auditoria {
      * @param int|null|false $idClinica  false = la del contexto activo; null = acción de la plataforma
      */
     public function log(
-        $idUsuario = null,
+        ?int $idUsuario = null,
         $accion = 'OTHER',
         $tabla = null,
         $registroId = null,
@@ -78,13 +78,6 @@ class Auditoria {
         $descripcion = null,
         $idClinica = false
     ) {
-        // El código que aún no pasa a la v2 (C2–C9) manda el documento: no se
-        // convierte, porque un documento numérico se confundiría con el
-        // id_usuario de otra persona. Queda registrada la acción sin persona.
-        if ($idUsuario !== null && !is_int($idUsuario)) {
-            error_log('Auditoria: identificador de usuario no numerico (codigo v1 sin adaptar).');
-            $idUsuario = null;
-        }
         if ($idClinica === false) {
             $idClinica = Contexto::clinicaActiva();
         }
@@ -157,7 +150,7 @@ class Auditoria {
         $offset = (int) $offset;
 
         $stmt = $this->db->prepare(
-            "SELECT a.*, u.nombre_completo AS usuario_nombre, u.documento AS usuario_documento"
+            "SELECT a.*, u.nombre_completo AS usuario_nombre"
             . $desde . " ORDER BY a.fecha_hora DESC, a.id_auditoria DESC LIMIT $limit OFFSET $offset"
         );
         $stmt->execute($params);

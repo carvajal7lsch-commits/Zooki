@@ -2,7 +2,7 @@
 /**
  * Roles de la v2 tal como están en la tabla `roles` (02_semilla.sql).
  *
- * El 3 (recepcionista) ya no existe. Los roles de clínica son solo el 1 y el
+ * El identificador 3 está retirado. Los roles de clínica son solo el 1 y el
  * 2, y se asignan en usuario_clinica; el 4 lo da el vínculo en
  * propietario_clinica y el 5 la marca usuarios.es_super_admin (MER §2).
  */

@@ -32,7 +32,7 @@ $iniciales = $iniciales ?: 'U';
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <?php foreach (['base', 'navegacion', 'inicio', 'servicios', 'agenda', 'mascota', 'cuenta', 'ventanas', 'calendario', 'formularios'] as $modulo): ?>
-    <link rel="stylesheet" href="css/portal/<?= $modulo ?>.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/portal/<?= $modulo ?>.css?v=<?= $v ?>-c9">
     <?php endforeach; ?>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta name="csrf-token" content="<?= Csrf::token('default') ?>">
@@ -103,9 +103,10 @@ $iniciales = $iniciales ?: 'U';
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
-<script src="js/avisos.js?v=<?= $v ?>"></script>
+<script src="js/avisos.js?v=<?= $v ?>-c9"></script>
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
-<script src="js/portal.js?v=<?= $v ?>"></script>
+<script src="js/portal.js?v=<?= $v ?>-c9"></script>
 <script src="js/csrf.js?v=<?= $v ?>"></script>
+<script src="js/interacciones.js?v=1"></script>
 </body>
 </html>

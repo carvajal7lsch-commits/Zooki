@@ -407,7 +407,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada | 8 pts | v2 |
 
 > Como plataforma, quiero que cada sesión quede confinada a su clínica y exista un rol super-administrador por encima para que ninguna clínica vea ni altere datos de otra.
 
@@ -416,10 +416,12 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - Toda operación de negocio filtra por `id_clinica`; su omisión se considera defecto de seguridad (RNF-11).
 - Un usuario de una clínica no obtiene ni modifica datos de otra clínica: el acceso se rechaza con HTTP 403 y queda en auditoría.
 - `Security` valida en cada petición el rol permitido, el token CSRF y la clínica del recurso.
-- Excepciones al aislamiento, ambas explícitas: el **super-administrador** (rol de plataforma, RN-004/RN-G13), que no accede a datos clínicos internos salvo soporte, y la **mascota global**, cuyos datos de seguridad (alergias, alertas, vacunas y desparasitaciones) ve toda clínica vinculada y cuyas consultas de otras clínicas solo se ven con autorización del propietario (RN-113, HU-2.10).
+- Excepciones de acceso a datos globales, explícitas: el **super-administrador** (rol de plataforma, RN-004/RN-G13), que no accede a datos clínicos internos salvo soporte, y la **mascota global**, cuyos datos de seguridad (alergias, alertas, vacunas y desparasitaciones) ve toda clínica vinculada y cuyas consultas de otras clínicas solo se ven con autorización del propietario (RN-113, HU-2.10).
 - El aislamiento se centraliza (helpers de seguridad y capa de modelos) y se cubre con pruebas.
 
 **Reglas de negocio:** RN-G13, RN-G14, RN-001, RN-004 · **Requisitos:** RF-T.4, RNF-11 · **Dependencias:** HU-T.10
+
+> _Cerrada en M0, etapa C (C1–C9, 2026-10-08). RE-T.15.1 se verifica en personal, configuración, pacientes, historia y prevención, agenda, portal, paneles, auditoría y notificaciones. Los propietarios acceden únicamente a sus propios recursos (RN-G02); las tareas del sistema (`AtencionesEnCurso` y recordatorios) recorren las clínicas sin sesión y escriben cada aviso en la clínica de su registro original. Estas excepciones no permiten lecturas cruzadas desde pantallas. Evidencia: `SeguridadClinicaTest`, `ContextoTest`, `UsuarioSeguridadTest`, `NotificacionAccesoTest`, `ConfiguracionClinicaTest`, `MascotaAccesoTest`, `PropietarioClinicaTest`, `ConsultaHistorialTest`, `HistoriaCompartidaTest`, `PrevencionTest`, `AgendaPeticionesTest`, `VinculosPropietarioTest`, `PortalPropietarioTest`, `PortalAgendaTest`, `PanelTest`, `ActividadCuentaAuditoriaTest`, `RecordatorioTest` y `BaseV2MysqlTest`._
 
 ### HU-T.16 — Expiración de la sesión por inactividad
 

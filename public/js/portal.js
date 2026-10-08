@@ -301,12 +301,7 @@ async function submitContactEditPortal() {
         })).json();
 
         if (res.success) {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Éxito!',
-                text: res.message || 'Datos de contacto actualizados correctamente.',
-                confirmButtonColor: '#5560FF'
-            });
+            zookiToast(res.message || 'Datos de contacto actualizados correctamente.', 'success');
             
             const phoneSpan = document.getElementById('profilePhoneVal');
             if (phoneSpan) phoneSpan.textContent = res.telefono;
@@ -513,7 +508,7 @@ document.querySelectorAll('.portal-tab').forEach(btn => {
 // Esc cierra la ventana abierta; si no hay ninguna, sale de la ficha de la mascota.
 // Antes volvía a Inicio desde cualquier pantalla, aunque hubiera una ventana abierta.
 document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || document.getElementById('tiktok-micro-modal')) return;
+    if (e.key !== 'Escape' || (window.Swal && Swal.isVisible())) return;
     const abierta = document.querySelector('.portal-drawer-overlay.is-open');
     if (abierta) closeModal(abierta.id);
     else if (document.getElementById('screen-pet-detail')?.classList.contains('active')) cerrarDrawer();
@@ -623,7 +618,7 @@ async function verDetalle(id, opciones = {}) {
                              saltandose el control de acceso. Solo lo frenaba el .htaccess,
                              que cubre Apache con AllowOverride y nada mas. Ahora pasa por
                              ver_archivo.php, que verifica que la mascota sea del dueno. -->
-                        <a href="ver_archivo.php?id=${encodeURIComponent(file.id_archivo)}" target="_blank" rel="noopener" class="portal-file-link" onclick="event.stopPropagation()">
+                        <a href="ver_archivo.php?id=${encodeURIComponent(file.id_archivo)}" target="_blank" rel="noopener" class="portal-file-link" data-ui-detener>
                             <i class="ri-file-pdf-line" aria-hidden="true"></i> ${escapeHtml(file.nombre_original)}
                         </a>`;
                     });
@@ -633,7 +628,7 @@ async function verDetalle(id, opciones = {}) {
                 html += `
                 <div class="portal-timeline-item">
                     <div class="portal-timeline-date">${formatFechaHora(h.fecha_hora)}</div>
-                    <div class="portal-timeline-card accordion-card" role="button" tabindex="0" aria-expanded="false" onclick="toggleAccordion(this)">
+                    <div class="portal-timeline-card accordion-card" role="button" tabindex="0" aria-expanded="false" data-ui-accion="acordeon-historia">
                         <div class="accordion-header">
                             <h3>${escapeHtml(h.motivo_consulta)}</h3>
                             <i class="ri-arrow-down-s-line accordion-icon" aria-hidden="true"></i>
@@ -665,7 +660,7 @@ async function verDetalle(id, opciones = {}) {
                 // Solo se cancela en una clínica con vínculo activo (lo dice el servidor en `cancelable`).
                 let cancelBtn = '';
                 if (c.cancelable) {
-                    cancelBtn = `<button type="button" class="portal-btn-cancel" onclick="cancelarCitaPortal(${Number(c.id_cita)})"><i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita</button>`;
+                    cancelBtn = `<button type="button" class="portal-btn-cancel" data-ui-accion="cancelar-cita-portal" data-ui-id="${Number(c.id_cita)}"><i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita</button>`;
                 }
 
                 html += `
@@ -824,93 +819,33 @@ function switchAgendaTab(tabId, btn) {
     });
 }
 
-// Aviso breve del portal (confirmar, cancelar, errores). Hoja que sube desde
-// abajo en el celular y ventana centrada desde tablet; estilos en ventanas.css.
-function showTikTokModal({ title, message, isConfirm, onConfirm, onCancel }) {
-    const existing = document.getElementById('tiktok-micro-modal');
-    if (existing) existing.remove();
-    const focoAnterior = document.activeElement;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'tiktok-micro-modal';
-    overlay.className = 'zk-sheet';
-
-    const panel = document.createElement('div');
-    panel.className = 'zk-sheet__panel';
-    panel.setAttribute('role', isConfirm ? 'alertdialog' : 'dialog');
-    panel.setAttribute('aria-modal', 'true');
-
-    const asa = document.createElement('div');
-    asa.className = 'zk-sheet__asa';
-    panel.appendChild(asa);
-
-    if (title) {
-        const titleEl = document.createElement('h2');
-        titleEl.className = 'zk-sheet__titulo';
-        titleEl.id = 'zkSheetTitulo';
-        titleEl.textContent = title;
-        panel.appendChild(titleEl);
-        panel.setAttribute('aria-labelledby', titleEl.id);
-    }
-
-    if (message) {
-        const msgEl = document.createElement('p');
-        msgEl.className = 'zk-sheet__mensaje';
-        msgEl.textContent = message;
-        panel.appendChild(msgEl);
-    }
-
-    const acciones = document.createElement('div');
-    acciones.className = 'zk-sheet__acciones';
-
-    const close = () => {
-        document.removeEventListener('keydown', alTeclear);
-        overlay.classList.remove('is-open');
-        setTimeout(() => overlay.remove(), 250);
-        if (focoAnterior && document.contains(focoAnterior)) focoAnterior.focus({ preventScroll: true });
-    };
-
-    const mainBtn = document.createElement('button');
-    mainBtn.type = 'button';
-    mainBtn.className = 'zk-sheet__btn zk-sheet__btn--principal';
-    mainBtn.textContent = isConfirm ? 'Sí, continuar' : 'Entendido';
-    mainBtn.onclick = () => {
-        close();
-        if (onConfirm) onConfirm();
-    };
-    acciones.appendChild(mainBtn);
-
-    let cancelBtn = null;
+// C9: las reservas y respuestas frecuentes usan toast; cancelar o aceptar
+// una cita adicional del mismo día conserva una decisión explícita.
+async function showTikTokModal({ title, message, isConfirm, onConfirm, onCancel, icon = 'success' }) {
     if (isConfirm) {
-        cancelBtn = document.createElement('button');
-        cancelBtn.type = 'button';
-        cancelBtn.className = 'zk-sheet__btn zk-sheet__btn--secundario';
-        cancelBtn.textContent = 'No, cancelar';
-        cancelBtn.onclick = () => {
-            close();
-            if (onCancel) onCancel();
-        };
-        acciones.appendChild(cancelBtn);
-    }
-
-    // Esc equivale a «No» en una confirmación y a «Entendido» en un aviso.
-    const alTeclear = (e) => {
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            (cancelBtn || mainBtn).click();
+        const respuesta = await Swal.fire({
+            icon: 'warning',
+            title,
+            text: message,
+            showCancelButton: true,
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Volver',
+            confirmButtonColor: '#0052FF',
+        });
+        if (respuesta.isConfirmed) {
+            if (onConfirm) onConfirm();
+        } else if (onCancel) {
+            onCancel();
         }
-    };
-    document.addEventListener('keydown', alTeclear);
-
-    panel.appendChild(acciones);
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-
-    // Animar entrada
-    setTimeout(() => {
-        overlay.classList.add('is-open');
-        mainBtn.focus({ preventScroll: true });
-    }, 15);
+        return;
+    }
+    const aviso = zookiToast(message || title, icon);
+    if (icon === 'error') {
+        if (onConfirm) onConfirm();
+        return;
+    }
+    await aviso;
+    if (onConfirm) onConfirm();
 }
 
 /* Lógica de Agendamiento desde el Portal (HU-26) */
@@ -967,7 +902,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filtrados.forEach(e => {
             if (e.tipo === 'cita') {
                 htmlHistorial += `
-                <div class="agenda-list-item agenda-list-item--accion agenda-list-item--cita" role="button" tabindex="0" onclick="mostrarDetalleCita(${Number(e.id_cita)})">
+                <div class="agenda-list-item agenda-list-item--accion agenda-list-item--cita" role="button" tabindex="0" data-ui-accion="detalle-cita-portal" data-ui-id="${Number(e.id_cita)}">
                     <div class="agenda-icon-wrap"><i class="ri-calendar-event-line" aria-hidden="true"></i></div>
                     <div class="agenda-item-info">
                         <h3>${escapeHtml(e.nombre_mascota)}</h3>
@@ -1798,6 +1733,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 showTikTokModal({
                     title: 'No se pudo agendar',
+                    icon: 'error',
                     message: res.message || 'Inténtalo nuevamente.',
                     isConfirm: false,
                     onConfirm: () => {
@@ -1811,6 +1747,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error al agendar cita:', error);
             showTikTokModal({
                 title: 'Error de Red',
+                icon: 'error',
                 message: 'No pudimos conectarnos con el servidor. Inténtalo más tarde.',
                 isConfirm: false,
                 onConfirm: reactivar
@@ -1863,6 +1800,7 @@ function cancelarCitaPortal(idCita) {
                 console.error(e);
                 showTikTokModal({
                     title: 'Error de Red',
+                    icon: 'error',
                     message: 'No pudimos conectarnos con el servidor.',
                     isConfirm: false
                 });
@@ -2090,7 +2028,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (res.success) {
                     closeModal(modalId);
-                    Swal.fire({ icon: 'success', title: exito[0], text: exito[1], confirmButtonColor: '#0052FF' })
+                    zookiToast(exito[1] || exito[0], 'success')
                         .then(() => location.reload());
                     return;
                 }
@@ -2229,7 +2167,7 @@ async function postPortal(accion, datos) {
 }
 
 function avisoPortal(icono, titulo, texto) {
-    return Swal.fire({ icon: icono, title: titulo, text: texto, confirmButtonColor: '#0052FF' });
+    return zookiToast(texto || titulo, icono);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2267,19 +2205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!vincular && !desvincular) return;
 
         const boton = vincular || desvincular;
-        const nombre = boton.dataset.nombre || 'la clínica';
-        const confirmacion = await Swal.fire({
-            icon: vincular ? 'question' : 'warning',
-            title: vincular ? `¿Vincularte a ${nombre}?` : `¿Desvincularte de ${nombre}?`,
-            text: vincular
-                ? 'La clínica verá tus datos de contacto. Tus mascotas se le vinculan cuando agendes allí o te atiendan.'
-                : 'La clínica conserva lo que registró, pero deja de ver los datos nuevos de tus mascotas y la historia de otras clínicas.',
-            showCancelButton: true,
-            confirmButtonText: vincular ? 'Vincularme' : 'Desvincularme',
-            cancelButtonText: 'Volver',
-            confirmButtonColor: vincular ? '#0052FF' : '#DC2626'
-        });
-        if (!confirmacion.isConfirmed) return;
+        // RE-5.13.1: vínculo reversible con un clic; el servidor valida RN-115.
 
         boton.disabled = true;
         try {
