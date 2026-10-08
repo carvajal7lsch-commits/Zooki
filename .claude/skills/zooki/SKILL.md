@@ -12,5 +12,5 @@ description: Continuar la construcción de Zooki v2 con el método del repositor
    - **Planificar un módulo nuevo:** `metodo.md` §4 y `specs/_plantilla_modulo.md`.
    - **Ejecutar una subetapa** (si el usuario te pega un prompt): implementar solo esa subetapa siguiendo `AGENTS.md`.
 3. Clasifica los hallazgos con `metodo.md` §7 y anota todo en el plan o en `specs/pulido-interfaz.md`.
-4. Al terminar una revisión, actualiza `agentes/estado.md`.
+4. Al terminar, actualiza `agentes/estado.md`: como ejecutor, la subetapa queda «entregada, pendiente de revisión»; como revisor, «revisada», con lo que sigue y las decisiones pendientes.
 5. Habla con el usuario como indica `metodo.md` §8: español directo, una recomendación clara y comandos listos para PowerShell. Él hace los commits.

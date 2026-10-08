@@ -23,13 +23,13 @@ Un mismo agente puede ser arquitecto en una sesión y ejecutor en otra, pero nun
 1. **Planificar** (arquitecto): la subetapa sale del plan del módulo. Si es grande, se parte (C1…C9, D1…D3). Cada una cierra HU o RE concretos y se puede probar sola.
 2. **Decisiones antes del prompt:** lo que la especificación no resuelve se le pregunta al usuario con una **propuesta concreta y una recomendación**. Se anota en el plan como «Decisión del usuario (fecha)» **solo si el usuario la confirmó**; si no, como «propuesta, pendiente de confirmar».
 3. **Prompt** (arquitecto): con la plantilla de la sección 5. El usuario lo pega en el ejecutor.
-4. **Implementación** (ejecutor): sigue `AGENTS.md`, escribe pruebas, verifica y agrega al plan un «Anexo Xn — Resultado». Si algo no cuadra, pregunta al usuario antes de decidir.
+4. **Implementación** (ejecutor): sigue `AGENTS.md`, escribe pruebas, verifica, agrega al plan un «Anexo Xn — Resultado» y marca la subetapa en [`estado.md`](estado.md) como «entregada, pendiente de revisión». Si algo no cuadra, pregunta al usuario antes de decidir.
 5. **Revisión** (arquitecto): con la lista de la sección 6. Escribe «### Xn — Revisión (fecha)» en el plan.
 6. **Lista de prueba manual** (arquitecto): concreta, por usuario de prueba y con casillas ([`prueba-manual.md`](prueba-manual.md)).
 7. **Prueba del usuario** en el navegador, en escritorio y celular.
 8. **Hallazgos clasificados** (sección 7) y anotados en el plan o en `specs/pulido-interfaz.md`.
 9. **Commit** (usuario) con los comandos del ejecutor, **antes** de pegar el siguiente prompt. Si se mezclan dos subetapas en un commit, se deja así y se explica en el mensaje del siguiente; no se reescribe el historial publicado.
-10. **Actualizar [`estado.md`](estado.md)** (arquitecto).
+10. **Actualizar [`estado.md`](estado.md)** (arquitecto): la subetapa pasa a «revisada», con lo que sigue, el alcance acordado de la siguiente y las decisiones pendientes. Si una sesión termina a mitad de camino, quien la cierra deja `estado.md` al día antes de irse.
 
 ## 4. Planificar un módulo nuevo
 
@@ -55,7 +55,7 @@ Pruebas: <casos concretos, incluidos los de aislamiento entre clínicas si aplic
 
 Verificación: suite completa en verde (también con ZOOKI_TEST_MYSQL_HOST y la base por defecto), pruebas de JS en verde, y la lista de pantallas para que el usuario las pruebe en el navegador.
 
-Al terminar: marca <Xn> en el plan, agrega un "Anexo <Xn> — Resultado" corto (qué, RE con su prueba, verificación, pendientes), un resumen con lo más riesgoso primero y los comandos de commit. No hagas commit ni push tú. No empieces <siguiente>. Si algo no cuadra con el plan o los RE, pregúntame antes de decidir.
+Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendiente de revisión", agrega un "Anexo <Xn> — Resultado" corto (qué, RE con su prueba, verificación, pendientes), un resumen con lo más riesgoso primero y los comandos de commit. No hagas commit ni push tú. No empieces <siguiente>. Si algo no cuadra con el plan o los RE, pregúntame antes de decidir.
 ```
 
 ## 6. Cómo revisar una subetapa

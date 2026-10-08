@@ -8,6 +8,8 @@ Zooki es un sistema de gestión veterinaria: PHP 8.2 sin framework (MVC propio),
 
 Antes de cualquier tarea, lee **[`agentes/estado.md`](agentes/estado.md)** (dónde vamos y qué sigue) y **[`agentes/metodo.md`](agentes/metodo.md)** (roles de arquitecto, ejecutor y revisor; ciclo de cada subetapa; plantilla de prompt; cómo revisar; preferencias del dueño del producto). Así ninguna sesión necesita que el usuario repita el contexto.
 
+**Al terminar, actualiza `agentes/estado.md`**: el ejecutor anota la subetapa como «entregada, pendiente de revisión»; el revisor la pasa a «revisada» y deja escrito qué sigue y qué decisiones quedan pendientes. Toda decisión del usuario se anota en el plan del módulo.
+
 ## Estado del proyecto
 
 - **Producción y `main` están en la v1.12.0**: una instalación para una sola clínica. La v2 se construye en ramas propias (la etapa activa está en [`agentes/estado.md`](agentes/estado.md)); el código de esas ramas ya usa el modelo v2.
