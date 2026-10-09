@@ -9,8 +9,12 @@
 - **Módulo activo:** M0 — Base SaaS, identidad y aislamiento. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
-- **Entrega actual:** D2.1 revisada, aprobada y con commit (`a66830f`, `a4fdf31`). Recorrido funcional del revisor hecho el 2026-10-09 (plan, «D2.1 — Recorrido funcional del revisor»); el revisor corrigió una línea en `validacion-cuenta.js` (el primer clic no enviaba), pendiente de commit del usuario.
-- **Siguiente paso:** **D2.2** (corrección antes de D3; decisión del usuario, 2026-10-09). Alcance y decisiones en el plan, «D2.2 — Alcance». El prompt se entregó en la conversación del 2026-10-09. Después, D3 (registro de clínicas, Modelos §12.1).
+- **Entrega actual:** D2.2, implementación principal de Claude Code y cierre de Codex (MySQL, documentos y confirmación nueva de Google).
+- **Verificación de entrega:** PHP 499 en verde; con MySQL 499/2876 aserciones sin omisiones, base predeterminada `zooki_test_base_v2` en instancia temporal propia; JS 48 en verde; cuatro diagramas renderizados.
+- **D2.2:** revisada y **aprobada** (2026-10-09; «D2.2 — Revisión» en el plan). Falta el commit, la prueba del usuario (antes `php scripts/migrar.php`) y confirmar dos decisiones del ejecutor y una propuesta (ayuda al escribir sin revelar cuentas).
+- **Siguiente paso:** D3 (registro de clínicas, Modelos §12.1), con los pendientes 1 y 2 de la revisión de D2.2.
+- **Decisiones confirmadas al cerrar D2.2:** otra confirmación Google al crear la primera contraseña (RE-T.2.4) y RE-T.7.4 coherente con invitaciones; anotadas en el plan sin subir revisión.
+- **Antes:** D2.1 revisada, aprobada y con commits `a66830f`, `a4fdf31` y `d08271f`; su recorrido funcional y la corrección del primer clic están en el plan.
 - **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)

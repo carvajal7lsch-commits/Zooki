@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 revisada con corrección (2026-10-08); D2.1 entregada, pendiente de revisión (2026-10-09); D3 no iniciada.
+> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 revisada con corrección (2026-10-08); D2.1 revisada y aprobada (2026-10-09); D2.2 entregada, pendiente de revisión (2026-10-09); D3 no iniciada.
 > Entrega: v2.0 · Fecha: 2026-10-06
 > C8/C9 (2026-10-08): escribe **Codex**, revisa **Claude** (sesión de revisión).
 > Reparto del resto de M0 (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
@@ -102,7 +102,8 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
   - [x] D1 — Sesión (HU-T.16), política de datos versionada y re-aceptación (HU-T.19), registro del propietario como identidad global (HU-5.8), registro con Google con la política antes de la cuenta (RE-T.18.2–4), hueco de RN-109 y teléfonos unificados ([Anexo D1](#anexo-d1--resultado)). Lo escribió Claude Code; revisada y aprobada por Claude, con prueba manual del usuario (2026-10-08).
   - [x] D2 — Cuentas del personal y del titular: alta con enlace de activación, cambio de correo y documento con verificación, CAPTCHA por cuenta y validación reutilizable en tiempo real ([Anexo D2](#anexo-d2--resultado)). Entregada, pendiente de revisión por Claude.
-  - [x] D2.1 — Corrección de D2: IP real detrás del proxy, límites de RN-G15 (20 por IP, CAPTCHA por cuenta), comprobaciones por persona, validación en cada tecla, correos propios, modal del personal de v1.12.0, limpieza tolerante y prueba local ([Anexo D2.1](#anexo-d21--resultado)). Lo escribió Claude Code; entregada, pendiente de revisión.
+  - [x] D2.1 — Corrección de D2: IP real detrás del proxy, límites de RN-G15 (20 por IP, CAPTCHA por cuenta), comprobaciones por persona, validación en cada tecla, correos propios, modal del personal de v1.12.0, limpieza tolerante y prueba local ([Anexo D2.1](#anexo-d21--resultado)). Lo escribió Claude Code; revisada y aprobada por Claude (2026-10-09).
+  - [x] D2.2 — Invitaciones del personal con aceptación, cierre de otras sesiones y correcciones de D2.1 ([Anexo D2.2](#anexo-d22--resultado)). Escribieron Claude Code y Codex; entregada, pendiente de revisión por Claude (2026-10-09).
   - [ ] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2).
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -1610,3 +1611,90 @@ Claude hizo el recorrido en el navegador integrado del equipo del usuario (`http
 **Diagramas desactualizados.** §10 (login) todavía tiene «contraseña temporal». §13.3 y RE-T.2.5 piden cerrar las demás sesiones al crear o cambiar la contraseña, y no está construido. No hay diagrama del alta de personal (nueva o existente).
 
 **Propuesta del arquitecto, pendiente de confirmar:** guardar el rol de la invitación en `verificaciones_email.id_rol_vinculo` (nueva columna, migración 04) y cerrar las demás sesiones con `usuarios.version_sesion` (nueva columna en la misma migración).
+
+**Decisión del usuario (2026-10-09, durante la ejecución de D2.2).** El prompt pedía «la misma respuesta exista o no la cuenta», pero dejaba dos fugas: la cuenta nueva aparecía en la lista como pendiente y la existente no, y «Revisa el documento y el correo» solo salía cuando ambos existían. El usuario eligió **cerrar las dos**: (1) la invitación a una persona existente aparece en la lista como «Pendiente de activación» con lo que escribió el administrador (nombre, tipo y número de documento, correo y teléfono), solo con «Reenviar invitación» y «Cancelar invitación», igual que una cuenta nueva pendiente; (2) si el documento y el correo son de personas distintas, **manda el correo**: se invita a la dueña del correo; si el correo no tiene cuenta y el documento sí, se invita al correo registrado de la dueña del documento. La respuesta es siempre «Invitación enviada. La persona tiene 72 horas para aceptarla.». Por eso la migración 04 también guarda los datos escritos en `verificaciones_email`.
+
+**Decisiones del usuario (2026-10-09, cierre con Codex).**
+
+- Se autoriza corregir en D2.2 la creación de la primera contraseña: una sesión Google abierta no basta; se solicita y verifica un token nuevo de Google, conforme a RE-T.2.4 y Modelos §13.3.
+- Se autoriza ajustar RE-T.7.4: la unicidad se rechaza al editar una identidad; el alta invita a la cuenta existente según RE-T.7.5.
+- Ambos ajustes conservan los identificadores, conteos y revisión de los documentos.
+
+## Anexo D2.2 — Resultado
+
+**Estado:** entregada, pendiente de revisión por la sesión de Claude (arquitecto), 2026-10-09.
+**Autoría:** la implementación principal la escribió Claude Code; las pruebas de MySQL, los documentos, la confirmación nueva de Google autorizada y este cierre los escribió Codex.
+
+### Qué se entregó
+
+- **Claude Code:** invitaciones de 72 horas al personal existente, aceptación antes de asignar el rol, misma respuesta y lista con datos escritos para altas nuevas y existentes; prevalencia del correo; reenviar, cancelar, rechazar y vencer con aislamiento por clínica.
+- **Claude Code:** migración 04 repetible, MER, esquema y fixture; cierre de otras sesiones por `version_sesion`, avisos por correo y preservación de la sesión del titular; modal compartido del cliente y personal conservando v1.12.0.
+- **Claude Code:** correcciones heredadas de D2.1: URLs de correo, host efectivo para correo local, zona horaria Bogotá, páginas de enlaces con diseño de restablecimiento, estilos de Datos de acceso y mensaje de contraseña común.
+- **Codex:** tres pruebas nuevas contra el esquema real y expectativa del migrador 03 + 04; HU-T.7, RE-T.7.4/5, RE-T.19.1, RN-G06 y RN-705 coherentes, sin nuevos identificadores ni cambios en las matrices y sus conteos.
+- **Codex:** primera contraseña con otra confirmación de Google verificada por el servidor; componente externo reutilizado en Mi perfil, portal, cambio obligatorio y cambios de identidad, sin JS/CSS en línea ni tokens antiguos tras cancelar.
+
+### RE y evidencia
+
+| Requisito o regla | Prueba que lo demuestra |
+|---|---|
+| RE-T.7.5, RN-G06, RN-705 | `D22CorreccionTest`: misma respuesta, datos escritos, GET sin efectos, POST con CSRF, aceptación conservando roles, rechazo/vencimiento, aislamiento, reenviar/cancelar y auditoría equivalente; `UsuarioSeguridadTest`: prevalece el correo cuando documento y correo son de personas distintas. |
+| RE-T.7.4 | `UsuarioSeguridadTest::testEditarElCorreoRechazaElDeOtraCuentaSinModificarIdentidades` y las pruebas de alta con cuenta existente. |
+| RE-T.19.1 | `D22CorreccionTest::testElTitularDeUnaCuentaNuevaTambienPuedeRechazar`, junto con `CuentasD2Test` para activación y consentimiento. |
+| RE-T.2.4 | Tres casos nuevos en `D22CorreccionTest`: sin prueba nueva, Google inválido/ajeno y Google del titular; `GoogleTokenTest` cubre audiencia, vigencia y correo; `D22Google.test.cjs` comprueba otra solicitud, token nuevo y cancelación. |
+| RE-T.2.5 — implementado, pendiente de revisión | `D22CorreccionTest`: crear/cambiar contraseña, recuperar por enlace, restablecer por administrador y confirmar correo revocan las otras sesiones; se conserva la sesión del titular y se comprueba el aviso. |
+| Migración 04 y SQL real | `BaseV2MysqlTest::testMigracionD22ActualizaUnaBaseAnteriorDosVeces`, `testD22InvitacionesYVersionSesionEnElEsquemaReal` y `testElMigradorEstaAlDiaDosVecesSeguidas`: columnas/FK, datos conservados, repetición, UNION/orden, dos clínicas, roles y versión de sesión. |
+| Hora del sistema | `BaseV2MysqlTest::testD22ZonaHorariaAlineaNowYDate`: Bogotá, conexión -05:00 y diferencia de hasta dos segundos. |
+| Modal, invitaciones y validación | `D21Interfaz.test.cjs`, `D2ValidacionCuenta.test.cjs` y `UsuariosVistaTest`. |
+
+### Diagramas y verificación
+
+- Codex actualizó Modelos §9 (sesiones revocadas), §10 (login sin contraseña temporal), agregó §10.1 (alta de personal) y ajustó §13.3 (confirmación nueva de Google y cierre de sesiones).
+- Los cuatro diagramas renderizaron a SVG con Mermaid CLI; no se hizo recorrido de pantallas de la aplicación con el navegador.
+- `php vendor/bin/phpunit`: **499 pruebas, 2568 aserciones, verde; 24 omitidas de MySQL** al no definir su host.
+- Suite completa con `ZOOKI_TEST_MYSQL_HOST`: **499 pruebas, 2876 aserciones, verde, sin omisiones**, en MariaDB temporal propia, puerto 3307 y base predeterminada `zooki_test_base_v2`.
+- `node --test "tests/Frontend/**/*.test.cjs"`: **48 pruebas, verde**.
+- PHP lint de los archivos de la entrega, Node check de los JS de Codex y `git diff --check`: sin errores.
+- Mutación de Codex: omitir la confirmación Google hace fallar la prueba de sesión abierta sin prueba nueva; restaurada exactamente, vuelve a pasar.
+- Mutaciones reportadas por Claude Code: quitar la comparación de versión rompe cuatro pruebas; priorizar el documento sobre el correo rompe su prueba de identidad cruzada.
+
+### Pendientes para Claude y el usuario
+
+1. **Riesgo de enumeración heredado:** `validar_cuenta_ajax` aún informa si un correo/documento existe, incluso con sesión (120 consultas/15 minutos), aunque el alta del personal ya no lo consulta.
+   La decisión sobre esa ayuda pública de D2/D2.1 sigue pendiente; no se declara resuelta por D2.2.
+2. **Limpieza heredada:** al borrar una cuenta nueva vencida también se borran invitaciones de otras clínicas sin su auditoría de vencimiento; una invitación vencida permanece en la lista hasta ejecutar la limpieza.
+   Ambos puntos quedan expresamente para revisión, sin ampliar la implementación que Claude dejó.
+3. Probar Google real y el diseño en escritorio/celular; las pruebas automáticas sustituyen la respuesta de Google.
+4. Versiones, historial, revisión de documentos y PDF/Word se publican al cierre de M0, según el método acordado.
+   D3 no se inició; no se hizo commit ni push.
+
+### Pantallas para la prueba manual del usuario
+
+- **Usuarios:** alta nueva, propietario existente, correo/documento cruzados; pendientes iguales en tarjetas/tabla; reenviar/cancelar; editar cliente activo/inactivo con el modal compartido; correo duplicado al editar.
+- **Enlaces de correo:** invitación existente (aceptar/rechazar/vencido/usado), activación nueva (aceptar política o rechazar), confirmar correo nuevo y verificar registro; revisar hora y URLs de `logs/correos/`.
+- **Login y contexto:** propietario que acepta invitación conserva su portal y elige también su clínica; restablecimiento por administrador nunca envía contraseña temporal.
+- **Mi perfil, portal y cambio obligatorio:** crear primera contraseña exige otro Google del titular; cambiarla con otra sesión abierta cierra la otra y conserva la actual; errores debajo del campo.
+- **Restablecimiento y Datos de acceso:** enlace de recuperación, cambio de correo/documento y cierre de otras sesiones al confirmar correo.
+
+### D2.2 — Revisión (2026-10-09)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el anexo, el diff y los diagramas. Suite PHP en una copia: 499 pruebas, 2568 aserciones, 24 saltadas de MySQL (el ejecutor reporta la parte MySQL en verde). JS: 48 pruebas en verde.
+
+**Verificado contra el código y los diagramas.**
+
+- Modelos §10.1 (nuevo) coincide con `UsuarioController::registrarAjax` e `InvitacionPersonal`: la persona existente no queda vinculada hasta aceptar; aceptar y rechazar solo por POST con CSRF y token con hash; aceptar conserva los demás roles; la respuesta al administrador es la misma exista o no la cuenta; la lista muestra solo lo que escribió el administrador; reenviar y cancelar quedan aislados por clínica. Se retiraron `verificar_documento_ajax` y `verificar_email_ajax`.
+- RE-T.2.5 / Modelos §13.3: `usuarios.version_sesion` sube al cambiar la contraseña (perfil, portal, cambio obligatorio, recuperación, restablecimiento por el administrador y cambio de correo). `Security::autorizar` lo compara después de cargar los contextos, así que la comprobación corre en cada petición real. La sesión donde se hizo el cambio sigue abierta.
+- Migración 04 repetible; `ZonaHoraria` en el arranque y `SET time_zone` en la conexión; los siete puntos de D2.1 quedaron hechos. §9, §10 y §13.3 se actualizaron.
+
+**Decisiones del ejecutor que el usuario debe confirmar.**
+
+1. La migración 04 agrega a `verificaciones_email`, además de `id_rol_vinculo`, cinco columnas con los datos escritos por el administrador (`nombre_invitado`, `tipo_documento_invitado`, `documento_invitado`, `email_invitado`, `telefono_invitado`). Sirven para que la lista muestre igual una invitación a una cuenta nueva y a una existente. Recomendación: aceptarlo.
+2. Si el documento y el correo son de personas distintas, en vez del mensaje genérico **prevalece el correo** (se invita al titular del correo) y el administrador recibe la misma respuesta. No revela nada y está en §10.1. Recomendación: aceptarlo.
+
+**Pendientes (para D3).**
+
+| # | Tipo | Dónde | Qué pasa | Propuesta |
+|---|---|---|---|---|
+| 1 | Decisión | `IdentidadController::validar` | La ayuda al escribir todavía dice si un correo o un documento existen: sin sesión, 20 por IP; con sesión, 120 por persona. Desde D1 el registro con un correo existente ya no necesita decirlo (envía el enlace de vínculo). | Que la ayuda solo valide el formato y que el servidor responda al enviar sin revelar la cuenta. Pendiente de confirmar. |
+| 2 | Defecto menor | `CuentaTitular::limpiarUna` | Al borrar una cuenta nueva vencida borra también las invitaciones de otras clínicas a esa cuenta, sin su auditoría. | Auditar «vencida» en cada clínica antes de borrar. |
+
+**Prueba del usuario:** lista en la conversación del 2026-10-09; antes, `php scripts/migrar.php` para aplicar la 04 en la base local.

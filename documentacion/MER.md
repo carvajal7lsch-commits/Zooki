@@ -71,6 +71,7 @@ erDiagram
         tinyint perfil_completo
         tinyint es_super_admin
         tinyint estado
+        int version_sesion
     }
     consentimientos_datos {
         int id_consentimiento PK
@@ -111,8 +112,12 @@ erDiagram
         int id PK
         int id_usuario FK
         int id_clinica_vinculo FK
+        int id_rol_vinculo FK
         varchar proposito
         varchar email
+        varchar nombre_invitado
+        varchar documento_invitado
+        varchar email_invitado
         varchar token_hash
         datetime expires_at
         tinyint used
@@ -418,6 +423,7 @@ erDiagram
     usuarios  ||--o{ password_resets         : "recupera su clave"
     usuarios  ||--o{ verificaciones_email    : "verifica su correo"
     clinicas  |o--o{ verificaciones_email    : "confirma vinculo del propietario"
+    roles     |o--o{ verificaciones_email    : "rol ofrecido al invitar"
     usuarios  ||--o{ casos_soporte           : "origina"
     clinicas  ||--o{ casos_soporte           : "involucra"
     clinicas  ||--o{ mascota_clinica         : "atiende"
@@ -514,11 +520,11 @@ erDiagram
 
 ### 2. Acceso y usuarios
 *   **roles**: Perfiles del sistema: `1 Administrador`, `2 Veterinario`, `4 Propietario`, `5 Super-administrador`. **El rol 3 (Recepcionista) se elimina en v2.0.** Los roles 1 y 2 se asignan por clínica en `usuario_clinica`; el 4 lo da el vínculo en `propietario_clinica` y el 5 la marca `usuarios.es_super_admin`. El catálogo conserva el 4 y el 5 para nombrar el contexto activo de la sesión (RN-G01) y para dirigir avisos internos por rol.
-*   **usuarios**: Identidad única de cada persona. Su clave es `id_usuario`, un número que no cambia y no revela datos personales; el **documento** y el **correo** son únicos en toda la plataforma pero son datos corregibles, no la clave. Así el documento puede cambiar (de tarjeta de identidad a cédula, un error de digitación) o anonimizarse (RN-G16) sin tocar las demás tablas, que se relacionan por `id_usuario`. `documento` es NULL mientras una cuenta creada con Google no completa su perfil (`perfil_completo`); `password` es NULL hasta que esa cuenta cree una contraseña; `google_uid` vincula la cuenta de Google. Ya no lleva `id_clinica` ni `id_rol`: los roles se asignan por contexto. `es_super_admin` marca al operador de la plataforma, que no tiene roles de clínica. Al suprimir una cuenta (RN-G16) sus datos personales se reemplazan, `documento`, `email` y `google_uid` quedan en NULL y el `id_usuario` se conserva, por lo que la historia clínica y la auditoría siguen íntegras.
+*   **usuarios**: Identidad única de cada persona. Su clave es `id_usuario`, un número que no cambia y no revela datos personales; el **documento** y el **correo** son únicos en toda la plataforma pero son datos corregibles, no la clave. Así el documento puede cambiar (de tarjeta de identidad a cédula, un error de digitación) o anonimizarse (RN-G16) sin tocar las demás tablas, que se relacionan por `id_usuario`. `documento` es NULL mientras una cuenta creada con Google no completa su perfil (`perfil_completo`); `password` es NULL hasta que esa cuenta cree una contraseña; `google_uid` vincula la cuenta de Google. Ya no lleva `id_clinica` ni `id_rol`: los roles se asignan por contexto. `es_super_admin` marca al operador de la plataforma, que no tiene roles de clínica. Al suprimir una cuenta (RN-G16) sus datos personales se reemplazan, `documento`, `email` y `google_uid` quedan en NULL y el `id_usuario` se conserva, por lo que la historia clínica y la auditoría siguen íntegras. `version_sesion` sube cada vez que se crea o cambia la contraseña: cada sesión guarda la versión con la que entró y, si ya no coincide, se cierra (RE-T.2.5).
 *   **consentimientos_datos**: Prueba de la autorización de tratamiento de datos (Ley 1581 de 2012 y Decreto 1377 de 2013): quién aceptó, qué versión de la política, por qué medio, cuándo y desde qué IP (RN-G19).
 *   **usuario_clinica**: Roles de personal de una persona en cada clínica (`id_rol`: 1 administrador o 2 veterinario), con su estado. Inactivar a alguien en una clínica no afecta sus otros roles (RN-G08).
 *   **propietario_clinica**: Tabla puente que vincula un propietario (global) con una o varias clínicas. Un propietario se crea una sola vez (correo único) y se liga a cada clínica mediante este registro, previa **verificación del correo** al ligar a una clínica nueva. Esto permite las tres vías de registro (alta por el personal, enlace/QR de la clínica, autoregistro directo eligiendo clínica) sin duplicar la persona ni romper la regla de correo único. `autoriza_historia_compartida` guarda si el propietario permite que esa clínica vea las consultas registradas por otras clínicas (revocable; RN-113).
-*   **password_resets** y **verificaciones_email**: Enlaces de un solo uso, guardados como hash y con vencimiento, ligados a `id_usuario` (antes al documento). `verificaciones_email` guarda el correo que se verifica, así que sirve para el registro y para el cambio de correo: el correo nuevo solo reemplaza al anterior cuando se verifica (RN-G23). Para vincular un propietario existente, `proposito = vinculo_clinica` e `id_clinica_vinculo` identifican la solicitud: solo su confirmación crea `propietario_clinica` (RN-109); un enlace de registro no sirve para este fin.
+*   **password_resets** y **verificaciones_email**: Enlaces de un solo uso, guardados como hash y con vencimiento, ligados a `id_usuario` (antes al documento). `verificaciones_email` guarda el correo que se verifica, así que sirve para el registro y para el cambio de correo: el correo nuevo solo reemplaza al anterior cuando se verifica (RN-G23). Para vincular un propietario existente, `proposito = vinculo_clinica` e `id_clinica_vinculo` identifican la solicitud: solo su confirmación crea `propietario_clinica` (RN-109); un enlace de registro no sirve para este fin. Para invitar al personal (RE-T.7.5), `proposito = activacion_personal` es la invitación a una cuenta nueva y `proposito = invitacion_personal` la invitación a una persona que ya tiene cuenta: `id_clinica_vinculo` e `id_rol_vinculo` dicen a qué clínica y con qué rol, y solo la aceptación del titular crea `usuario_clinica`. `nombre_invitado`, `tipo_documento_invitado`, `documento_invitado`, `email_invitado` y `telefono_invitado` guardan lo que escribió el administrador: es lo único que la clínica ve mientras la invitación está pendiente, así que la lista no revela si la cuenta existe; `email` es el correo de la cuenta al que se envió.
 *   **intentos_login**: Contadores de intentos fallidos, sin clave foránea. La clave del contador (`identificador`, única) lleva prefijo: `ip:<dirección>` para el bloqueo por IP, `cuenta:<id_usuario>` para exigir el CAPTCHA por cuenta (RN-G15) y `chk:<dirección>` para limitar las verificaciones de documento y correo del formulario de registro. El contador por cuenta usa `id_usuario` y no el documento, porque la persona puede entrar con su documento, su correo o Google y los tres deben sumar al mismo contador.
 *   **casos_soporte**: Casos que pasan al super-administrador: un documento que ya pertenece a otra cuenta (RN-G24), una posible cuenta o clínica duplicada y el abuso del plan gratuito (RN-012). Guarda el tipo, la persona y la clínica involucradas, la descripción y el estado (`abierto`, `resuelto`, `descartado`).
 

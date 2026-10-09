@@ -261,7 +261,8 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Criterios de aceptación:**
 
-- _(v2.0)_ Al dar de alta personal, si la persona ya existe en la plataforma (por documento o correo), se le asigna el rol en esta clínica sin crear otra cuenta.
+- _(v2.0)_ Al dar de alta personal, una persona que ya existe recibe una invitación de la clínica que acepta o rechaza en 72 horas; el rol se asigna solo al aceptar, sin duplicar identidad y conservando sus otros roles. Prevalece la cuenta del correo; si solo existe el documento, se envía al correo registrado de su titular.
+- La respuesta del alta es la misma exista o no la cuenta. Las dos clases de invitación se listan como «Pendiente de activación» con los datos escritos por el administrador, solo con reenviar y cancelar; no se muestran los datos de una cuenta existente hasta que acepte. Los avisos previos solo usan lo que el administrador ya ve en su clínica.
 - CRUD de usuarios: nombre, correo, rol y estado (activo/inactivo).
 - Solo usuarios con rol administrador acceden a este módulo.
 - No se permite eliminar al único usuario administrador.
@@ -269,7 +270,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Reglas de negocio:** RN-G08, RN-701, RN-G06, RN-705 · **Dependencias:** HU-T.1
 
-> _Nota: al crear el usuario, la contraseña que escriba el administrador pasa por `PoliticaPassword`; si la deja vacía se genera una temporal aleatoria que también la cumple. Para un usuario ya existente, el restablecimiento lo cubre HU-T.14. Los campos del formulario se validan además en el backend (obligatoriedad, formato de correo, documento numérico y tipo de documento de una lista cerrada), no solo en el navegador._
+> _Nota: el personal nuevo queda pendiente e inerte; el titular acepta la política y crea su contraseña por enlace de 72 horas, o rechaza la invitación (HU-T.19). El administrador nunca escribe ni envía contraseñas. Para personal ya vinculado, el restablecimiento por enlace lo cubre HU-T.14. Los campos se validan en el servidor y al escribir (obligatoriedad, correo, documento y tipo de documento)._
 
 ### HU-T.8 — Logs de auditoría y seguridad
 
