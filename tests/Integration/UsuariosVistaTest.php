@@ -143,7 +143,7 @@ final class UsuariosVistaTest extends TestCase
     public function testElTelefonoDeLosFormulariosUsaLaReglaDelServidor(): void
     {
         $vista = $this->renderizar();
-        foreach (['usuarioTelefono', 'clienteTelefono'] as $id) {
+        foreach (['usuarioTelefono'] as $id) {
             $campo = $vista->query('//input[@id="' . $id . '"]')->item(0);
             $this->assertSame((string) ValidadorTelefono::MAX, $campo->getAttribute('maxlength'));
             $this->assertSame(ValidadorTelefono::patronHtml(), $campo->getAttribute('pattern'));

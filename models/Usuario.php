@@ -16,7 +16,7 @@ require_once __DIR__ . '/../helpers/Contexto.php';
 class Usuario
 {
     private const COLUMNAS = 'u.id_usuario, u.documento, u.tipo_documento, u.nombre_completo, u.telefono, u.email,
-        u.estado, u.debe_cambiar_password, u.es_super_admin, u.perfil_completo, u.fecha_registro,
+        u.estado, u.debe_cambiar_password, u.es_super_admin, u.perfil_completo, u.fecha_registro, u.version_sesion,
         CASE WHEN u.password IS NULL THEN 0 ELSE 1 END AS tiene_password,
         CASE WHEN u.google_uid IS NULL THEN 0 ELSE 1 END AS tiene_google';
 
@@ -153,6 +153,21 @@ class Usuario
         return is_string($hash) && $hash !== '' && password_verify($password, $hash);
     }
 
+    /** RE-T.2.5: invalida las sesiones abiertas con la versión anterior (CierreSesiones). */
+    public function subirVersionSesion(int $idUsuario): void
+    {
+        $this->conn->prepare('UPDATE usuarios SET version_sesion = version_sesion + 1 WHERE id_usuario = ?')->execute([$idUsuario]);
+    }
+
+    /** Versión de sesión vigente de la cuenta, o null si la cuenta no existe. */
+    public function versionSesion(int $idUsuario): ?int
+    {
+        $stmt = $this->conn->prepare('SELECT version_sesion FROM usuarios WHERE id_usuario = ?');
+        $stmt->execute([$idUsuario]);
+        $version = $stmt->fetchColumn();
+        return $version === false ? null : (int) $version;
+    }
+
     public function marcarCambioPassword(int $idUsuario, bool $debeCambiar): bool
     {
         return $this->conn->prepare('UPDATE usuarios SET debe_cambiar_password = ? WHERE id_usuario = ?')
@@ -233,7 +248,11 @@ class Usuario
         ) !== null;
     }
 
-    /** Personal de la clínica con su rol y su estado en ella. */
+    /**
+     * Personal de la clínica con su rol y su estado en ella. D2.2: sin las
+     * altas pendientes de activación, que la clínica ve como invitaciones
+     * (InvitacionPersonal::pendientesDeClinica).
+     */
     public function personalDeClinica(int $idClinica): array
     {
         $stmt = $this->conn->prepare(
@@ -243,6 +262,9 @@ class Usuario
              JOIN usuarios u ON u.id_usuario = uc.id_usuario
              JOIN roles r ON r.id_rol = uc.id_rol
              WHERE uc.id_clinica = ?
+               AND NOT (u.estado = 0 AND EXISTS (SELECT 1 FROM verificaciones_email v
+                   WHERE v.id_usuario = u.id_usuario AND v.id_clinica_vinculo = uc.id_clinica
+                     AND v.proposito = 'activacion_personal' AND v.used = 0))
              ORDER BY u.nombre_completo"
         );
         $stmt->execute([$idClinica]);

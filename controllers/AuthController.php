@@ -18,6 +18,8 @@ require_once __DIR__ . '/../helpers/InicioSesion.php';
 require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 require_once __DIR__ . '/../helpers/Turnstile.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
+require_once __DIR__ . '/../helpers/CierreSesiones.php';
+require_once __DIR__ . '/../models/CuentaTitular.php';
 
 class AuthController {
     private $db;
@@ -28,8 +30,9 @@ class AuthController {
     private $auditoria;
     private RegistroPropietario $registro;
     private Turnstile $turnstile;
+    private CuentaTitular $cuentaTitular;
 
-    public function __construct(?PDO $db = null, $emailService = null, ?Turnstile $turnstile = null) {
+    public function __construct(?PDO $db = null, $emailService = null, ?Turnstile $turnstile = null, ?callable $google = null) {
         $this->turnstile = $turnstile ?? new Turnstile();
         $this->db = $db ?? (new Database())->getConnection();
         $this->usuarioModel = new Usuario($this->db);
@@ -38,6 +41,7 @@ class AuthController {
         $this->emailService = $emailService ?? new EmailService();
         $this->auditoria = new Auditoria($this->db);
         $this->registro = new RegistroPropietario($this->db);
+        $this->cuentaTitular = new CuentaTitular($this->db, $google);
     }
 
     public function login() {
@@ -219,29 +223,38 @@ class AuthController {
             $this->jsonResponse(false, 'Recarga el formulario para continuar.');
         }
 
-        try {
-            $tokenId = isset($_POST['token_id']) ? (int)$_POST['token_id'] : 0;
-            $tokenPlano = $_POST['token'] ?? '';
-            $password = $_POST['password'] ?? '';
-            $passwordConfirm = $_POST['password_confirmation'] ?? '';
+        $resultado = $this->restablecerConEnlace($_POST);
+        $this->jsonResponse($resultado['success'], $resultado['message']);
+    }
 
-            if ($tokenId <= 0 || empty($tokenPlano)) {
-                $this->jsonResponse(false, 'El enlace para restablecer la contraseña no es válido.');
+    /**
+     * Crea la contraseña nueva con el enlace de restablecimiento. Devuelve la
+     * respuesta en vez de terminar el proceso, para poder probarla.
+     */
+    public function restablecerConEnlace(array $datos): array {
+        try {
+            $tokenId = isset($datos['token_id']) ? (int) $datos['token_id'] : 0;
+            $tokenPlano = (string) ($datos['token'] ?? '');
+            $password = (string) ($datos['password'] ?? '');
+            $passwordConfirm = (string) ($datos['password_confirmation'] ?? '');
+
+            if ($tokenId <= 0 || $tokenPlano === '') {
+                return ['success' => false, 'message' => 'El enlace para restablecer la contraseña no es válido.'];
             }
 
             if ($password !== $passwordConfirm) {
-                $this->jsonResponse(false, 'Las contraseñas no coinciden.');
+                return ['success' => false, 'message' => 'Las contraseñas no coinciden.'];
             }
 
             // Primero el token: si el enlace no vale, no hay nada que validar.
             $reset = $this->passwordResetModel->findById($tokenId);
-            if (!$reset || (int)$reset['used'] === 1 || !password_verify($tokenPlano, $reset['token_hash'])) {
-                $this->jsonResponse(false, 'El enlace para restablecer la contraseña no es válido o ya fue utilizado.');
+            if (!$reset || (int) $reset['used'] === 1 || !password_verify($tokenPlano, $reset['token_hash'])) {
+                return ['success' => false, 'message' => 'El enlace para restablecer la contraseña no es válido o ya fue utilizado.'];
             }
 
             $expira = new DateTime($reset['expires_at']);
             if ($expira < new DateTime()) {
-                $this->jsonResponse(false, 'El enlace ha expirado. Solicita uno nuevo.');
+                return ['success' => false, 'message' => 'El enlace ha expirado. Solicita uno nuevo.'];
             }
 
             // El enlace está ligado a la persona por id_usuario; si no lo
@@ -250,7 +263,7 @@ class AuthController {
                 ? $this->usuarioModel->buscarPorId((int) $reset['id_usuario'])
                 : $this->usuarioModel->buscarPorEmail((string) $reset['email']);
             if (!$user || (int) $user['estado'] !== 1 || strcasecmp((string) $user['email'], (string) $reset['email']) !== 0) {
-                $this->jsonResponse(false, 'No encontramos la cuenta asociada a este enlace.');
+                return ['success' => false, 'message' => 'No encontramos la cuenta asociada a este enlace.'];
             }
 
             // RN-G10: la misma política de todos los flujos, contrastada además
@@ -261,7 +274,7 @@ class AuthController {
                 $user['email'] ?? '',
             ]);
             if ($motivo !== null) {
-                $this->jsonResponse(false, $motivo);
+                return ['success' => false, 'message' => $motivo];
             }
 
             $idUsuario = (int) $user['id_usuario'];
@@ -272,12 +285,26 @@ class AuthController {
                 $this->usuarioModel->actualizarPassword($idUsuario, password_hash($password, PASSWORD_DEFAULT));
                 $this->usuarioModel->marcarCambioPassword($idUsuario, false);
             });
+            // RE-T.2.5: quien tenía la cuenta abierta en otro lado queda fuera.
+            CierreSesiones::cerrarOtras($this->usuarioModel, $idUsuario);
             $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, null, null, 'Cambio de contraseña por restablecimiento', null);
+            $this->avisarCambioDePassword($user);
 
-            $this->jsonResponse(true, 'Tu contraseña se actualizó correctamente. Ya puedes iniciar sesión.');
+            return ['success' => true, 'message' => 'Tu contraseña se actualizó correctamente. Ya puedes iniciar sesión.'];
         } catch (Exception $e) {
             error_log('Error procesando reset de contraseña: ' . $e->getMessage());
-            $this->jsonResponse(false, 'Ocurrió un error inesperado. Inténtalo de nuevo más tarde.');
+            return ['success' => false, 'message' => 'Ocurrió un error inesperado. Inténtalo de nuevo más tarde.'];
+        }
+    }
+
+    /** RE-T.2.5: el titular se entera del cambio aunque no lo haya hecho él. */
+    private function avisarCambioDePassword(array $usuario): void {
+        try {
+            $this->emailService->limpiarDirecciones();
+            $this->emailService->enviarAvisoCambioPassword($usuario['email'], $usuario['nombre_completo']);
+        } catch (Throwable $e) {
+            // El cambio ya se aplicó: un fallo del correo no lo deshace.
+            error_log('RE-T.2.5: no se envió el aviso de cambio de contraseña (' . $e->getMessage() . ')');
         }
     }
 
@@ -301,69 +328,78 @@ class AuthController {
     }
 
     public function cambiarPasswordAjax() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            try {
-                $nuevaPassword = $_POST['nueva_password'] ?? $_POST['password_nueva'] ?? '';
-                $idUsuario = Contexto::idUsuario();
-                $usuarioActual = $idUsuario !== null ? $this->usuarioModel->buscarPorId($idUsuario) : null;
-                if ($usuarioActual === null) {
-                    echo json_encode(['success' => false, 'message' => 'Sesion expirada. Inicia sesion nuevamente.']);
-                    exit;
-                }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return;
+        }
+        echo json_encode($this->cambiarPasswordPropia($_POST));
+    }
 
-                // HU-36: misma politica que el registro y el restablecimiento.
-                $motivo = PoliticaPassword::validar($nuevaPassword, [
-                    $usuarioActual['documento'] ?? '',
-                    $usuarioActual['nombre_completo'] ?? '',
-                    $usuarioActual['email'] ?? '',
-                ]);
-                if ($motivo !== null) {
-                    echo json_encode(['success' => false, 'message' => $motivo]);
-                    exit;
-                }
-
-                // HU-39: se pide la contraseña actual salvo si la cuenta no
-                // tiene ninguna (creada con Google: password NULL, MER §2).
-                if ((int) $usuarioActual['tiene_password'] === 1) {
-                    $passwordActual = $_POST['password_actual'] ?? '';
-                    if (empty($passwordActual)) {
-                        echo json_encode(['success' => false, 'message' => 'La contraseña actual es requerida']);
-                        exit;
-                    }
-                    if (!$this->usuarioModel->verificarPassword($idUsuario, $passwordActual)) {
-                        echo json_encode(['success' => false, 'message' => 'La contraseña actual es incorrecta']);
-                        exit;
-                    }
-                }
-
-                $passwordHash = password_hash($nuevaPassword, PASSWORD_DEFAULT);
-
-                if ($this->usuarioModel->actualizarPassword($idUsuario, $passwordHash)) {
-                    $this->usuarioModel->marcarCambioPassword($idUsuario, false);
-
-                    // T-05: hay que bajar tambien el indicador en la sesion. Si
-                    // solo se actualiza la base de datos, el bloqueo de
-                    // Security::validatePasswordTemporal() sigue activo durante
-                    // toda la sesion y el usuario queda encerrado en este
-                    // formulario despues de haber cambiado la clave.
-                    $_SESSION['debe_cambiar_password'] = 0;
-
-                    // RN-G05 / HU-42: el cambio de contraseña queda en la
-                    // actividad de la cuenta, sin guardar la contraseña.
-                    $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, null, null, 'Cambio de contraseña');
-
-                    // Si el usuario configuró una contraseña por primera vez, cambiamos a 'password'
-                    $_SESSION['login_method'] = 'password';
-
-                    echo json_encode(['success' => true, 'message' => 'Contraseña actualizada exitosamente']);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Error al actualizar la contraseña']);
-                }
-            } catch (Exception $e) {
-                // T-04: el detalle tecnico va al log, nunca al cliente.
-                error_log('Error al cambiar contrasena: ' . $e->getMessage());
-                echo json_encode(['success' => false, 'message' => 'No se pudo actualizar la contraseña. Intenta nuevamente.']);
+    /** Mi perfil, el portal y cambiar_password: el sujeto sale de la sesión, nunca del POST. */
+    private function cambiarPasswordPropia(array $datos): array {
+        try {
+            $nuevaPassword = $datos['nueva_password'] ?? $datos['password_nueva'] ?? '';
+            $idUsuario = Contexto::idUsuario();
+            $usuarioActual = $idUsuario !== null ? $this->usuarioModel->buscarPorId($idUsuario) : null;
+            if ($usuarioActual === null) {
+                return ['success' => false, 'message' => 'Sesion expirada. Inicia sesion nuevamente.'];
             }
+
+            // HU-36: misma politica que el registro y el restablecimiento.
+            $motivo = PoliticaPassword::validar($nuevaPassword, [
+                $usuarioActual['documento'] ?? '',
+                $usuarioActual['nombre_completo'] ?? '',
+                $usuarioActual['email'] ?? '',
+            ]);
+            if ($motivo !== null) {
+                return ['success' => false, 'message' => $motivo];
+            }
+
+            // HU-39: se pide la contraseña actual salvo si la cuenta no
+            // tiene ninguna (creada con Google: password NULL, MER §2).
+            if ((int) $usuarioActual['tiene_password'] === 1) {
+                $passwordActual = $datos['password_actual'] ?? '';
+                if (empty($passwordActual)) {
+                    return ['success' => false, 'message' => 'La contraseña actual es requerida'];
+                }
+                if (!$this->usuarioModel->verificarPassword($idUsuario, $passwordActual)) {
+                    return ['success' => false, 'message' => 'La contraseña actual es incorrecta'];
+                }
+            } else {
+                // RE-T.2.4 / Modelos §13.3: la sesión abierta no sustituye otra prueba de Google.
+                $this->cuentaTitular->confirmarIdentidad($idUsuario, ['access_token' => (string) ($datos['access_token'] ?? '')]);
+            }
+
+            $passwordHash = password_hash($nuevaPassword, PASSWORD_DEFAULT);
+            if (!$this->usuarioModel->actualizarPassword($idUsuario, $passwordHash)) {
+                return ['success' => false, 'message' => 'Error al actualizar la contraseña'];
+            }
+            $this->usuarioModel->marcarCambioPassword($idUsuario, false);
+
+            // T-05: hay que bajar tambien el indicador en la sesion. Si
+            // solo se actualiza la base de datos, el bloqueo de
+            // Security::validatePasswordTemporal() sigue activo durante
+            // toda la sesion y el usuario queda encerrado en este
+            // formulario despues de haber cambiado la clave.
+            $_SESSION['debe_cambiar_password'] = 0;
+
+            // RE-T.2.5: las demás sesiones se cierran; esta sigue abierta.
+            CierreSesiones::cerrarOtras($this->usuarioModel, $idUsuario);
+
+            // RN-G05 / HU-42: el cambio de contraseña queda en la
+            // actividad de la cuenta, sin guardar la contraseña.
+            $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, null, null, 'Cambio de contraseña');
+            $this->avisarCambioDePassword($usuarioActual);
+
+            // Si el usuario configuró una contraseña por primera vez, cambiamos a 'password'
+            $_SESSION['login_method'] = 'password';
+
+            return ['success' => true, 'message' => 'Contraseña actualizada exitosamente'];
+        } catch (InvalidArgumentException $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        } catch (Exception $e) {
+            // T-04: el detalle tecnico va al log, nunca al cliente.
+            error_log('Error al cambiar contrasena: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'No se pudo actualizar la contraseña. Intenta nuevamente.'];
         }
     }
 

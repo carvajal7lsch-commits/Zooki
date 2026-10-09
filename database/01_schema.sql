@@ -121,6 +121,8 @@ CREATE TABLE `usuarios` (
   `es_super_admin` TINYINT(1) NOT NULL DEFAULT 0,
   `estado` TINYINT NOT NULL DEFAULT 1,
   `debe_cambiar_password` TINYINT(1) NOT NULL DEFAULT 0,
+  -- Sube al crear o cambiar la contraseña: cierra las demás sesiones (RE-T.2.5)
+  `version_sesion` INT NOT NULL DEFAULT 0,
   `fecha_registro` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_usuario`),
   UNIQUE KEY `uq_usuarios_documento` (`documento`),
@@ -187,8 +189,17 @@ CREATE TABLE `verificaciones_email` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `id_usuario` INT NOT NULL,
   `id_clinica_vinculo` INT DEFAULT NULL,
+  -- Rol ofrecido en una invitación al personal (RE-T.7.5)
+  `id_rol_vinculo` INT DEFAULT NULL,
   `proposito` VARCHAR(30) NOT NULL DEFAULT 'registro',
   `email` VARCHAR(255) NOT NULL,
+  -- Lo que escribió el administrador al invitar; la clínica solo ve esto
+  -- hasta que el titular acepta (D2.2)
+  `nombre_invitado` VARCHAR(200) DEFAULT NULL,
+  `tipo_documento_invitado` VARCHAR(20) DEFAULT NULL,
+  `documento_invitado` VARCHAR(20) DEFAULT NULL,
+  `email_invitado` VARCHAR(255) DEFAULT NULL,
+  `telefono_invitado` VARCHAR(20) DEFAULT NULL,
   `token_hash` VARCHAR(255) NOT NULL,
   `expires_at` DATETIME NOT NULL,
   `used` TINYINT(1) NOT NULL DEFAULT 0,
@@ -196,7 +207,8 @@ CREATE TABLE `verificaciones_email` (
   PRIMARY KEY (`id`),
   KEY `idx_verif_pendiente` (`id_usuario`, `used`),
   CONSTRAINT `fk_verif_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
-  CONSTRAINT `fk_verif_clinica_vinculo` FOREIGN KEY (`id_clinica_vinculo`) REFERENCES `clinicas` (`id_clinica`)
+  CONSTRAINT `fk_verif_clinica_vinculo` FOREIGN KEY (`id_clinica_vinculo`) REFERENCES `clinicas` (`id_clinica`),
+  CONSTRAINT `fk_verif_rol_vinculo` FOREIGN KEY (`id_rol_vinculo`) REFERENCES `roles` (`id_rol`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Contadores de intentos fallidos, sin clave foránea. Claves con prefijo:

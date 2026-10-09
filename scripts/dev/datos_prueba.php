@@ -28,6 +28,9 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $raiz = dirname(__DIR__, 2);
+// Revisión de D2.1: la zona horaria del sistema (helpers/ZonaHoraria.php).
+require_once __DIR__ . '/../../helpers/ZonaHoraria.php';
+ZonaHoraria::aplicar();
 require_once $raiz . '/config/Database.php';
 require_once $raiz . '/models/Usuario.php';
 require_once $raiz . '/helpers/PoliticaPassword.php';

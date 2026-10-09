@@ -25,6 +25,7 @@
     const camposCuenta = new Set(['nombre_completo', 'documento', 'email', 'telefono', 'password', 'confirm_password']);
     // Solo el servidor sabe si existe la cuenta o si la contraseña contiene tus datos.
     const consultanServidor = new Set(['documento', 'email', 'password']);
+    const UNICOS = new Set(['documento', 'email']);
     const NOMBRES_UNICOS = { documento: 'documento', email: 'correo' };
 
     // Mismos mensajes que helpers/ValidadorCuenta.php y ValidadorTelefono.
@@ -147,10 +148,19 @@
         return true;
     }
 
+    /**
+     * D2.2 (RE-T.7.5): el alta de personal no pregunta si el documento o el
+     * correo tienen cuenta; solo valida el formato. La respuesta del servidor
+     * es la misma exista o no, así que el formulario tampoco lo revela.
+     */
+    function sinUnicidad(form, clave) {
+        return UNICOS.has(clave) && form.dataset.cuentaUnicidad === 'solo-edicion' && !form.elements.id_usuario?.value;
+    }
+
     function mensajeDeExistencia(form, clave, existe) {
         const estado = formularios.get(form);
-        const puedeVincular = !form.elements.id_usuario?.value && (form.dataset.cuentaVincular === 'true'
-            || (form.dataset.cuentaVincular === 'correo' && (clave === 'email' || estado.correoExistente)));
+        const puedeVincular = !form.elements.id_usuario?.value
+            && form.dataset.cuentaVincular === 'correo' && (clave === 'email' || estado.correoExistente);
         if (form.dataset.identidadAccion === 'cambiar_documento_ajax') {
             // RN-G24: el envío autenticado abre el caso de soporte; la ayuda no lo crea.
             return { error: null, mensaje: 'Documento registrado: al enviar se abrirá un caso para soporte.' };
@@ -169,7 +179,7 @@
         const numero = (estado.secuencias.get(campo) || 0) + 1;
         estado.secuencias.set(campo, numero);
         if (!mostrarLocal(form, campo, final)) return false;
-        if (valor === '' || clave === 'confirm_password') return true;
+        if (valor === '' || clave === 'confirm_password' || sinUnicidad(form, clave)) return true;
         const firma = JSON.stringify([valor, ...campos(form).filter(elemento => ['documento', 'email', 'nombre_completo'].includes(tipo(elemento))).map(elemento => elemento.value), form.elements.id_usuario?.value, estado.correoExistente]);
         if (estado.cache.get(campo)?.firma === firma) {
             return estado.cache.get(campo).valido;
@@ -222,7 +232,7 @@
         estado.secuencias.set(campo, (estado.secuencias.get(campo) || 0) + 1);
         if (clave === 'email') estado.correoExistente = false;
         const cumple = mostrarLocal(form, campo);
-        if (cumple && campo.value !== '' && consultanServidor.has(clave)) {
+        if (cumple && campo.value !== '' && consultanServidor.has(clave) && !sinUnicidad(form, clave)) {
             programar(form, campo);
         } else {
             clearTimeout(estado.temporizadores.get(campo));
@@ -312,22 +322,7 @@
                     boton.disabled = false;
                 }
             });
-            const googleBoton = form.querySelector('[data-confirmar-google]');
-            googleBoton?.addEventListener('click', () => {
-                const salida = form.querySelector('[data-identidad-resultado]');
-                if (!window.google?.accounts?.oauth2 || !form.dataset.googleClient) {
-                    salida.textContent = 'No se pudo cargar Google. Usa tu contraseña o vuelve a intentar.';
-                    return;
-                }
-                window.google.accounts.oauth2.initTokenClient({
-                    client_id: form.dataset.googleClient,
-                    scope: 'openid email',
-                    callback: resultado => {
-                        form.elements.access_token.value = resultado.access_token || '';
-                        salida.textContent = resultado.access_token ? 'Identidad de Google recibida. Envía el cambio para verificarla.' : 'No se pudo confirmar con Google.';
-                    }
-                }).requestAccessToken({ prompt: 'select_account' });
-            });
+
         });
     });
     window.ZookiValidacionCuenta = { vincular, comprobar, reglaLocal };

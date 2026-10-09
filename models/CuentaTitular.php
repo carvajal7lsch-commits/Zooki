@@ -5,6 +5,7 @@ require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/ConsentimientoDatos.php';
 require_once __DIR__ . '/VerificacionEmail.php';
 require_once __DIR__ . '/PasswordReset.php';
+require_once __DIR__ . '/InvitacionPersonal.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../helpers/PoliticaDatos.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
@@ -47,7 +48,10 @@ final class CuentaTitular
             $this->db->prepare('UPDATE usuarios SET estado = 0 WHERE id_usuario = ?')->execute([$id]);
             $this->usuarios->asignarRolEnClinica($id, $clinica, (int) $datos['id_rol']);
             $enlace = $this->enlace($id, $datos['email'], 'activacion_personal', self::ACTIVACION_HORAS, $clinica);
-            $this->auditoria->log(Contexto::idUsuario(), 'INSERT', 'usuarios', $id, null, ['estado' => 0], 'Personal pendiente de aceptación y activación (RE-T.19.1)', $clinica);
+            // D2.2: la cuenta nueva es un hecho de la plataforma, no de la clínica. La
+            // clínica registra solo «Invitación al personal enviada», igual que
+            // cuando la persona ya tenía cuenta (RE-T.7.5).
+            $this->auditoria->log(Contexto::idUsuario(), 'INSERT', 'usuarios', $id, null, ['estado' => 0], 'Personal pendiente de aceptación y activación (RE-T.19.1)', null);
             return ['id_usuario' => $id, 'enlace' => $enlace];
         });
     }
@@ -78,6 +82,8 @@ final class CuentaTitular
                 throw new InvalidArgumentException('La cuenta está inactiva.');
             }
             $this->db->prepare('UPDATE usuarios SET password = NULL, debe_cambiar_password = 1 WHERE id_usuario = ?')->execute([$id]);
+            // RE-T.2.5: con la clave anulada, sus sesiones abiertas también se cierran.
+            $this->usuarios->subirVersionSesion($id);
             $this->db->prepare('UPDATE password_resets SET used = 1 WHERE id_usuario = ?')->execute([$id]);
             $token = bin2hex(random_bytes(32));
             $idEnlace = (new PasswordReset($this->db))->createToken($id, $usuario['email'], password_hash($token, PASSWORD_DEFAULT), date('Y-m-d H:i:s', time() + 86400));
@@ -136,6 +142,84 @@ final class CuentaTitular
         });
     }
 
+    /**
+     * D2.2 — El titular de una cuenta nueva no acepta la invitación: la cuenta
+     * pendiente se elimina como al vencer (sin otros vínculos).
+     */
+    public function rechazarActivacion(int $id, string $token): void
+    {
+        $fila = $this->leerEnlace($id, $token, 'activacion_personal');
+        if ($fila === null) {
+            throw new InvalidArgumentException('El enlace no es válido o ya fue utilizado.');
+        }
+        Transaccion::ejecutar($this->db, function () use ($id, $fila): void {
+            $this->consumir($id);
+            $this->eliminarAltaPendiente((int) $fila['id_usuario'], (int) $fila['id_clinica_vinculo']);
+            (new InvitacionPersonal($this->db))->auditar('rechazada', $id, (int) $fila['id_clinica_vinculo'], null);
+        });
+    }
+
+    /** D2.2 — El administrador retira la invitación de una cuenta nueva. */
+    public function cancelarAlta(int $idInvitacion, int $clinica): void
+    {
+        Transaccion::ejecutar($this->db, function () use ($idInvitacion, $clinica): void {
+            $fila = (new VerificacionEmail($this->db))->buscarPorId($idInvitacion);
+            if ($fila === null || $fila['proposito'] !== 'activacion_personal' || (int) $fila['id_clinica_vinculo'] !== $clinica) {
+                throw new InvalidArgumentException('La invitación ya no está pendiente.');
+            }
+            $stmt = $this->db->prepare('UPDATE verificaciones_email SET used = 1 WHERE id = ? AND used = 0');
+            $stmt->execute([$idInvitacion]);
+            if ($stmt->rowCount() !== 1) {
+                throw new InvalidArgumentException('La invitación ya no está pendiente.');
+            }
+            $this->eliminarAltaPendiente((int) $fila['id_usuario'], $clinica);
+        });
+    }
+
+    /**
+     * Quita el alta pendiente de la clínica: la cuenta inerte se elimina si no
+     * tiene otros vínculos; si los tiene, solo se retira su rol pendiente aquí.
+     */
+    private function eliminarAltaPendiente(int $idUsuario, int $clinica): void
+    {
+        $this->bloquearUsuario($idUsuario);
+        $usuario = $this->usuarios->buscarPorId($idUsuario);
+        if ($usuario === null || (int) $usuario['estado'] !== 0 || (int) $usuario['tiene_password'] !== 0) {
+            throw new InvalidArgumentException('La invitación ya no está pendiente.');
+        }
+        $this->db->prepare("UPDATE verificaciones_email SET used = 1 WHERE id_usuario = ? AND proposito = 'activacion_personal' AND used = 0")->execute([$idUsuario]);
+        if ($this->tieneOtrosVinculos($idUsuario, $clinica)) {
+            $this->db->prepare('DELETE FROM usuario_clinica WHERE id_usuario = ? AND id_clinica = ?')->execute([$idUsuario, $clinica]);
+            return;
+        }
+        $this->borrarCuentaPendiente($idUsuario, $clinica);
+    }
+
+    private function tieneOtrosVinculos(int $idUsuario, int $clinica): bool
+    {
+        $otro = $this->db->prepare('SELECT 1 FROM usuario_clinica WHERE id_usuario = ? AND id_clinica <> ? UNION SELECT 1 FROM propietario_clinica WHERE id_propietario = ? UNION SELECT 1 FROM consentimientos_datos WHERE id_usuario = ?');
+        $otro->execute([$idUsuario, $clinica, $idUsuario, $idUsuario]);
+        return (bool) $otro->fetchColumn();
+    }
+
+    private function borrarCuentaPendiente(int $id, int $clinica): int
+    {
+        $this->db->prepare('DELETE FROM password_resets WHERE id_usuario = ?')->execute([$id]);
+        $this->db->prepare('DELETE FROM verificaciones_email WHERE id_usuario = ?')->execute([$id]);
+        $this->db->prepare('DELETE FROM usuario_clinica WHERE id_usuario = ? AND id_clinica = ?')->execute([$id, $clinica]);
+        // Se conservan los fallos de acceso; el registro_id sigue identificando el alta vencida.
+        $this->db->prepare('UPDATE auditoria_sistema SET id_usuario = NULL WHERE id_usuario = ?')->execute([$id]);
+        $stmt = $this->db->prepare('DELETE FROM usuarios WHERE id_usuario = ? AND estado = 0 AND password IS NULL');
+        $stmt->execute([$id]);
+        $total = $stmt->rowCount();
+        if ($total !== 1) {
+            throw new RuntimeException('La cuenta dejó de estar pendiente durante la limpieza.');
+        }
+        // D2.2: hecho de la plataforma (sin clínica), como su creación.
+        $this->auditoria->log(null, 'DELETE', 'usuarios', $id, ['estado' => 'pendiente'], null, 'Alta de personal sin aceptar eliminada sin otros vínculos (RE-T.19.1)', null);
+        return $total;
+    }
+
     public function confirmarIdentidad(int $id, array $datos): array
     {
         $usuario = $this->usuarios->buscarPorId($id);
@@ -188,6 +272,8 @@ final class CuentaTitular
             }
             $this->db->prepare('UPDATE usuarios SET email = ?, google_uid = NULL WHERE id_usuario = ?')
                 ->execute([$fila['email'], $fila['id_usuario']]);
+            // RE-T.2.5: el acceso cambió; quien tenía la cuenta abierta en otro lado sale.
+            $this->usuarios->subirVersionSesion((int) $fila['id_usuario']);
             $this->db->prepare('UPDATE password_resets SET used = 1 WHERE id_usuario = ?')->execute([$fila['id_usuario']]);
             $this->auditoria->log((int) $fila['id_usuario'], 'UPDATE', 'usuarios', $fila['id_usuario'], ['email' => $usuario['email']], ['email' => $fila['email']], 'Correo cambiado y Google desvinculado (RN-G23)', null);
             return ['anterior' => $usuario['email'], 'nombre' => $usuario['nombre_completo']];
@@ -235,9 +321,14 @@ final class CuentaTitular
         });
     }
 
-    /** Excepción del sistema: solo altas pendientes sin otros vínculos ni consentimiento. */
+    /**
+     * Excepción del sistema: solo altas pendientes sin otros vínculos ni
+     * consentimiento. D2.2: también vencen las invitaciones a cuentas
+     * existentes, con la misma entrada de auditoría en la clínica.
+     */
     public function limpiarPendientes(): int
     {
+        (new InvitacionPersonal($this->db))->vencerPendientes();
         $stmt = $this->db->prepare("SELECT v.* FROM verificaciones_email v JOIN usuarios u ON u.id_usuario = v.id_usuario
             WHERE v.proposito = 'activacion_personal' AND v.used = 0 AND v.expires_at <= ?
             AND u.estado = 0 AND u.password IS NULL AND u.google_uid IS NULL AND u.es_super_admin = 0");
@@ -260,10 +351,9 @@ final class CuentaTitular
     {
         return Transaccion::ejecutar($this->db, function () use ($fila): int {
             $id = (int) $fila['id_usuario'];
+            $clinica = (int) $fila['id_clinica_vinculo'];
             $this->bloquearUsuario($id);
-            $otro = $this->db->prepare('SELECT 1 FROM usuario_clinica WHERE id_usuario = ? AND id_clinica <> ? UNION SELECT 1 FROM propietario_clinica WHERE id_propietario = ? UNION SELECT 1 FROM consentimientos_datos WHERE id_usuario = ?');
-            $otro->execute([$id, $fila['id_clinica_vinculo'], $id, $id]);
-            if ($otro->fetchColumn()) {
+            if ($this->tieneOtrosVinculos($id, $clinica)) {
                 return 0;
             }
             // Una reemisión vigente impide borrar una invitación que el titular aún puede usar.
@@ -272,18 +362,8 @@ final class CuentaTitular
             if ($vigente->fetchColumn()) {
                 return 0;
             }
-            $this->db->prepare('DELETE FROM password_resets WHERE id_usuario = ?')->execute([$id]);
-            $this->db->prepare('DELETE FROM verificaciones_email WHERE id_usuario = ?')->execute([$id]);
-            $this->db->prepare('DELETE FROM usuario_clinica WHERE id_usuario = ? AND id_clinica = ?')->execute([$id, $fila['id_clinica_vinculo']]);
-            // Se conservan los fallos de acceso; el registro_id sigue identificando el alta vencida.
-            $this->db->prepare('UPDATE auditoria_sistema SET id_usuario = NULL WHERE id_usuario = ?')->execute([$id]);
-            $stmt = $this->db->prepare('DELETE FROM usuarios WHERE id_usuario = ? AND estado = 0 AND password IS NULL');
-            $stmt->execute([$id]);
-            $total = $stmt->rowCount();
-            if ($total !== 1) {
-                throw new RuntimeException('La cuenta dejó de estar pendiente durante la limpieza.');
-            }
-            $this->auditoria->log(null, 'DELETE', 'usuarios', $id, ['estado' => 'pendiente'], null, 'Alta de personal vencida eliminada sin otros vínculos (RE-T.19.1)', (int) $fila['id_clinica_vinculo']);
+            $total = $this->borrarCuentaPendiente($id, $clinica);
+            (new InvitacionPersonal($this->db))->auditar('vencida', (int) $fila['id'], $clinica, null);
             return $total;
         });
     }

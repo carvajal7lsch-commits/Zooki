@@ -79,7 +79,8 @@ class PoliticaPassword
         }
 
         if (self::esDemasiadoComun($password)) {
-            return 'Esa contraseña es demasiado conocida. Elige una que no aparezca en listas de uso común.';
+            // D2.2 (hallazgo del usuario): un mensaje que se entienda sin hablar de listas.
+            return 'Esa contraseña es muy común y fácil de adivinar. Elige otra.';
         }
 
         if (self::tienePatronTrivial($password)) {

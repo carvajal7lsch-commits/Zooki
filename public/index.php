@@ -1,6 +1,9 @@
 <?php
 // HU-T.16 y T-07: cookie segura, expiración por inactividad y regeneración
 // del identificador, en un solo lugar (helpers/Sesion.php).
+// Revisión de D2.1: la zona horaria del sistema, antes de cualquier fecha.
+require_once "../helpers/ZonaHoraria.php";
+ZonaHoraria::aplicar();
 require_once "../helpers/Sesion.php";
 Sesion::iniciar();
 $esHttps = Sesion::esHttps($_SERVER);
@@ -190,6 +193,11 @@ switch ($action) {
         (new IdentidadController())->enlace($action === 'activar_personal' ? 'activacion_personal' : 'cambio_correo');
         break;
 
+    case "invitacion_personal":
+        require_once '../controllers/IdentidadController.php';
+        (new IdentidadController())->invitacion();
+        break;
+
     case "solicitar_cambio_correo_ajax":
         require_once '../controllers/IdentidadController.php';
         (new IdentidadController())->solicitarCorreo();
@@ -233,6 +241,7 @@ switch ($action) {
         require_once "../controllers/UsuarioController.php";
         $controller = new UsuarioController();
         $personal = $controller->listar();
+        $invitaciones = $controller->listarInvitaciones();
         $propietarios = $controller->listarPropietarios();
         $content_view = "../views/admin/usuarios.php";
         require_once "../views/admin/layout.php";
@@ -648,16 +657,14 @@ switch ($action) {
         $controller->resetearPasswordAjax();
         break;
 
-    case "verificar_documento_ajax":
+    case "reenviar_invitacion_ajax":
         require_once "../controllers/UsuarioController.php";
-        $controller = new UsuarioController();
-        $controller->verificarDocumentoAjax();
+        (new UsuarioController())->reenviarInvitacionAjax();
         break;
 
-    case "verificar_email_ajax":
+    case "cancelar_invitacion_ajax":
         require_once "../controllers/UsuarioController.php";
-        $controller = new UsuarioController();
-        $controller->verificarEmailAjax();
+        (new UsuarioController())->cancelarInvitacionAjax();
         break;
 
     case "get_pendientes_ajax":

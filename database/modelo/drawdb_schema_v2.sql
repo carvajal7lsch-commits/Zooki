@@ -136,6 +136,7 @@ CREATE TABLE `usuarios` (
   `es_super_admin` tinyint(1) NOT NULL DEFAULT 0,
   `estado` tinyint(4) DEFAULT 1,
   `debe_cambiar_password` tinyint(1) DEFAULT 0,
+  `version_sesion` int(11) NOT NULL DEFAULT 0,               -- sube al crear o cambiar la contraseña: cierra las demás sesiones (RE-T.2.5)
   `fecha_registro` datetime DEFAULT current_timestamp()
 );
 
@@ -162,8 +163,14 @@ CREATE TABLE `verificaciones_email` (
   `id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_usuario` int(11) NOT NULL,
   `id_clinica_vinculo` INT DEFAULT NULL,
+  `id_rol_vinculo` INT DEFAULT NULL,                         -- rol ofrecido en una invitación al personal (RE-T.7.5)
   `proposito` VARCHAR(30) NOT NULL DEFAULT 'registro',
   `email` varchar(255) NOT NULL,                             -- correo que se verifica (registro o cambio de correo, RN-G23)
+  `nombre_invitado` varchar(200) DEFAULT NULL,               -- lo que escribió el administrador al invitar (D2.2)
+  `tipo_documento_invitado` varchar(20) DEFAULT NULL,
+  `documento_invitado` varchar(20) DEFAULT NULL,
+  `email_invitado` varchar(255) DEFAULT NULL,
+  `telefono_invitado` varchar(20) DEFAULT NULL,
   `token_hash` varchar(255) NOT NULL,
   `expires_at` datetime NOT NULL,
   `used` tinyint(1) NOT NULL DEFAULT 0,
@@ -644,7 +651,8 @@ ALTER TABLE `password_resets`
   ADD CONSTRAINT `fk_password_resets_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`);
 ALTER TABLE `verificaciones_email`
   ADD CONSTRAINT `fk_verif_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
-  ADD CONSTRAINT `fk_verif_clinica_vinculo` FOREIGN KEY (`id_clinica_vinculo`) REFERENCES `clinicas` (`id_clinica`);
+  ADD CONSTRAINT `fk_verif_clinica_vinculo` FOREIGN KEY (`id_clinica_vinculo`) REFERENCES `clinicas` (`id_clinica`),
+  ADD CONSTRAINT `fk_verif_rol_vinculo` FOREIGN KEY (`id_rol_vinculo`) REFERENCES `roles` (`id_rol`);
 ALTER TABLE `casos_soporte`
   ADD CONSTRAINT `fk_caso_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
   ADD CONSTRAINT `fk_caso_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);

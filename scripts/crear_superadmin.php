@@ -20,6 +20,9 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
+// Revisión de D2.1: la zona horaria del sistema (helpers/ZonaHoraria.php).
+require_once __DIR__ . '/../helpers/ZonaHoraria.php';
+ZonaHoraria::aplicar();
 require_once dirname(__DIR__) . '/config/Database.php';
 require_once dirname(__DIR__) . '/helpers/CreadorSuperAdmin.php';
 

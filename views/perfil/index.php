@@ -79,6 +79,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             </header>
 
             <form id="perfilPasswordForm" class="perfil-form" novalidate data-validacion-cuenta>
+                <?php if (!$pideActual) require __DIR__ . '/../partials/confirmacion_google.php'; ?>
                 <?php if ($pideActual): ?>
                     <div class="perfil-field">
                         <label for="perfilPwdActual">Contraseña actual</label>

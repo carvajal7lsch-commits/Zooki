@@ -9,6 +9,7 @@ require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
 require_once __DIR__ . '/../helpers/Security.php';
 require_once __DIR__ . '/../models/CuentaTitular.php';
+require_once __DIR__ . '/../models/InvitacionPersonal.php';
 require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 
 /**
@@ -20,6 +21,11 @@ require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
  * Security ya exige el rol administrador (RE-T.7.2).
  */
 class UsuarioController {
+    // D2.2 (RE-T.7.5): las mismas respuestas exista o no la cuenta.
+    private const INVITACION_ENVIADA = 'Invitación enviada. La persona tiene 72 horas para aceptarla.';
+    private const INVITACION_SIN_CORREO = 'La invitación quedó registrada, pero no se pudo enviar el correo. Usa «Reenviar invitación» en la lista.';
+    private const INVITACION_PENDIENTE = 'Ya hay una invitación pendiente con ese documento o correo. Reenvíala desde la lista.';
+
     private $db;
     private Usuario $usuario;
     private Auditoria $auditoria;
@@ -57,12 +63,20 @@ class UsuarioController {
         echo json_encode(['success' => $ok, 'message' => $mensaje] + $extra);
     }
 
-    /** Personal de la clínica activa, para la vista de administración. */
+    /** Personal de la clínica activa, para la vista de administración (sin las altas pendientes). */
     public function listar(): array {
         return array_map(function ($persona) {
             $persona['identidad_editable'] = $this->usuario->identidadEditableEnClinica((int) $persona['id_usuario'], $this->clinica());
             return $persona;
         }, $this->usuario->personalDeClinica($this->clinica()));
+    }
+
+    /**
+     * D2.2: invitaciones pendientes, de cuentas nuevas y existentes, con los
+     * datos que la clínica puede ver. Se identifican por el id de la invitación.
+     */
+    public function listarInvitaciones(): array {
+        return (new InvitacionPersonal($this->db))->pendientesDeClinica($this->clinica());
     }
 
     /** Propietarios vinculados a la clínica activa (solo lectura en C1). */
@@ -141,12 +155,15 @@ class UsuarioController {
     }
 
     /**
-     * Alta de personal en la clínica activa.
+     * Alta de personal en la clínica activa (RE-T.7.1, RE-T.7.5, RN-705).
      *
-     * RE-T.7.5 / RN-G06: si el documento o el correo ya pertenecen a una
-     * persona de la plataforma, se le asigna el rol en esta clínica en vez de
-     * crear otra cuenta; sus datos no se tocan. Si el documento y el correo
-     * son de personas distintas, se rechaza.
+     * D2.2 (decisión del usuario, 2026-10-09): nadie queda vinculado sin
+     * aceptar. Si el documento y el correo son nuevos, se crea la cuenta
+     * pendiente de D2; si alguno ya pertenece a una persona, esa persona
+     * recibe una invitación que acepta o rechaza en 72 horas. Manda el
+     * correo: si es de alguien, a él va la invitación; si no, al dueño del
+     * documento. El administrador recibe la misma respuesta en todos los
+     * casos y, mientras tanto, solo ve lo que él escribió.
      */
     public function registrarAjax() {
         header('Content-Type: application/json');
@@ -162,24 +179,34 @@ class UsuarioController {
         }
 
         $idClinica = $this->clinica();
+        $invitaciones = new InvitacionPersonal($this->db);
         $porDocumento = $this->usuario->buscarPorDocumento($datos['documento']);
         $porEmail = $this->usuario->buscarPorEmail($datos['email']);
 
-        try {
-            if ($porDocumento !== null || $porEmail !== null) {
-                $this->vincularExistente($porDocumento, $porEmail, $datos, $idClinica);
-                return;
-            }
+        $aviso = $this->yaEstaEnLaClinica($invitaciones, [$porEmail, $porDocumento], $datos, $idClinica);
+        if ($aviso !== null) {
+            $this->responder(false, $aviso);
+            return;
+        }
 
+        try {
             EnlaceCuenta::base();
-            $alta = (new CuentaTitular($this->db))->crearPersonal($datos, $idClinica);
-            $enlace = EnlaceCuenta::crear('activar_personal', $alta['enlace']['id'], $alta['enlace']['token']);
+            $persona = $porEmail ?? $porDocumento;
+            $rol = Roles::nombre((int) $datos['id_rol']);
             $this->correo()->limpiarDirecciones();
-            // D2.1: correo propio de invitación (la persona no se registró sola).
-            $enviado = $this->correo()->enviarInvitacionPersonal($datos['email'], $datos['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $datos['id_rol']), $enlace, CuentaTitular::ACTIVACION_HORAS);
-            $this->responder(true, $enviado
-                ? 'Invitación enviada. El titular tiene 72 horas para aceptar la política y crear su contraseña.'
-                : 'Cuenta pendiente creada, pero no se pudo enviar la invitación. El titular todavía no puede entrar.');
+            if ($persona === null) {
+                $alta = (new CuentaTitular($this->db))->crearPersonal($datos, $idClinica);
+                $idInvitacion = $alta['enlace']['id'];
+                $enlace = EnlaceCuenta::crear('activar_personal', $idInvitacion, $alta['enlace']['token']);
+                // D2.1: correo propio de invitación (la persona no se registró sola).
+                $enviado = $this->correo()->enviarInvitacionPersonal($datos['email'], $datos['nombre_completo'], $this->nombreClinica(), $rol, $enlace, CuentaTitular::ACTIVACION_HORAS);
+            } else {
+                $invitacion = $invitaciones->crear($persona, $idClinica, $datos);
+                $idInvitacion = $invitacion['id'];
+                $enviado = $this->enviarInvitacionClinica($persona, $invitacion, (int) $datos['id_rol']);
+            }
+            $invitaciones->auditar('enviada', $idInvitacion, $idClinica, Contexto::idUsuario());
+            $this->responder(true, $enviado ? self::INVITACION_ENVIADA : self::INVITACION_SIN_CORREO);
         } catch (Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
@@ -188,36 +215,111 @@ class UsuarioController {
                 throw $e;
             }
             // T-04: el detalle tecnico va al log del servidor, no al navegador.
-            error_log('Error al crear personal: ' . $e->getMessage());
-            $this->responder(false, 'No se pudo crear el usuario. Intenta nuevamente.');
+            error_log('Error al invitar personal: ' . $e->getMessage());
+            $this->responder(false, 'No se pudo enviar la invitación. Intenta nuevamente.');
         }
     }
 
-    /** RE-T.7.5: asigna el rol a la persona que ya existe en la plataforma. */
-    private function vincularExistente(?array $porDocumento, ?array $porEmail, array $datos, int $idClinica): void {
-        if ($porDocumento !== null && $porEmail !== null && (int) $porDocumento['id_usuario'] !== (int) $porEmail['id_usuario']) {
-            $this->responder(false, 'El documento y el correo pertenecen a cuentas distintas. Verifica los datos.');
+    /**
+     * Lo único que se le dice al administrador antes de invitar, y solo con
+     * datos que ya ve en su lista: la persona ya es de su personal o ya tiene
+     * una invitación pendiente con lo que escribió.
+     */
+    private function yaEstaEnLaClinica(InvitacionPersonal $invitaciones, array $personas, array $datos, int $idClinica): ?string {
+        foreach ($personas as $persona) {
+            if ($persona === null) {
+                continue;
+            }
+            $idUsuario = (int) $persona['id_usuario'];
+            if ($this->usuario->personalEnClinica($idUsuario, $idClinica) === null) {
+                continue;
+            }
+            if ($invitaciones->esAltaPendiente($idUsuario, $idClinica)) {
+                return self::INVITACION_PENDIENTE;
+            }
+            return 'Esa persona ya es parte del personal de esta clínica. Edítala desde la lista.';
+        }
+        if ($invitaciones->hayPendienteCon($idClinica, $datos['documento'], $datos['email'])) {
+            return self::INVITACION_PENDIENTE;
+        }
+        return null;
+    }
+
+    /**
+     * Correo de invitación a una cuenta existente. A una cuenta que no puede
+     * aceptar (pendiente, inactiva o super-administrador) no se le envía nada,
+     * pero la respuesta al administrador es la misma (RE-T.7.5).
+     */
+    private function enviarInvitacionClinica(array $persona, array $invitacion, int $idRol): bool {
+        if (!InvitacionPersonal::puedeAceptar($persona)) {
+            return true;
+        }
+        $enlace = EnlaceCuenta::crear('invitacion_personal', $invitacion['id'], $invitacion['token']);
+        return $this->correo()->enviarInvitacionClinica($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre($idRol), $enlace, InvitacionPersonal::HORAS);
+    }
+
+    /** D2.2: reenvía cualquier invitación pendiente de esta clínica, con un enlace nuevo de 72 horas. */
+    public function reenviarInvitacionAjax() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responder(false, 'Metodo no permitido.');
             return;
         }
-
-        $persona = $porDocumento ?? $porEmail;
-        $idUsuario = (int) $persona['id_usuario'];
-
-        if ($this->usuario->personalEnClinica($idUsuario, $idClinica) !== null) {
-            $this->responder(false, 'Esa persona ya es parte del personal de esta clínica. Edítala desde la lista.');
-            return;
-        }
-
+        $invitaciones = new InvitacionPersonal($this->db);
+        $fila = $this->invitacionDeEstaClinica($invitaciones, $_POST['id_invitacion'] ?? null);
         try {
-            $this->usuario->asignarRolEnClinica($idUsuario, $idClinica, $datos['id_rol']);
-        } catch (InvalidArgumentException $e) {
-            // RE-T.17.5: un super-administrador no recibe roles de clínica.
-            $this->responder(false, 'A esa cuenta no se le puede asignar un rol en la clínica.');
+            EnlaceCuenta::base();
+            $this->correo()->limpiarDirecciones();
+            if ($fila['proposito'] === InvitacionPersonal::ACTIVACION) {
+                $persona = $this->usuario->personalEnClinica((int) $fila['id_usuario'], $this->clinica());
+                $solicitud = (new CuentaTitular($this->db))->restablecerPersonal((int) $fila['id_usuario'], $this->clinica());
+                $idNueva = $solicitud['enlace']['id'];
+                $enlace = EnlaceCuenta::crear('activar_personal', $idNueva, $solicitud['enlace']['token']);
+                $enviado = $this->correo()->enviarInvitacionPersonal($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $persona['id_rol']), $enlace, $solicitud['horas']);
+            } else {
+                $nueva = $invitaciones->reenviar((int) $fila['id'], $this->clinica());
+                $idNueva = $nueva['id'];
+                $enviado = $this->enviarInvitacionClinica($nueva['persona'], $nueva, $nueva['id_rol']);
+            }
+            $invitaciones->auditar('reenviada', $idNueva, $this->clinica(), Contexto::idUsuario());
+            $this->responder(true, $enviado ? 'Se reenvió la invitación.' : self::INVITACION_SIN_CORREO);
+        } catch (Throwable $e) {
+            error_log('Error al reenviar la invitación: ' . $e->getMessage());
+            $this->responder(false, 'No se pudo reenviar la invitación. Intenta nuevamente.');
+        }
+    }
+
+    /** D2.2: retira una invitación pendiente; una cuenta nueva sin aceptar se elimina. */
+    public function cancelarInvitacionAjax() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responder(false, 'Metodo no permitido.');
             return;
         }
+        $invitaciones = new InvitacionPersonal($this->db);
+        $fila = $this->invitacionDeEstaClinica($invitaciones, $_POST['id_invitacion'] ?? null);
+        try {
+            if ($fila['proposito'] === InvitacionPersonal::ACTIVACION) {
+                (new CuentaTitular($this->db))->cancelarAlta((int) $fila['id'], $this->clinica());
+            } else {
+                $invitaciones->cancelar((int) $fila['id'], $this->clinica());
+            }
+            $invitaciones->auditar('cancelada', (int) $fila['id'], $this->clinica(), Contexto::idUsuario());
+            $this->responder(true, 'Invitación cancelada.');
+        } catch (Throwable $e) {
+            error_log('Error al cancelar la invitación: ' . $e->getMessage());
+            $this->responder(false, 'No se pudo cancelar la invitación. Intenta nuevamente.');
+        }
+    }
 
-        $this->auditoria->log(Contexto::idUsuario(), 'INSERT', 'usuario_clinica', $idUsuario, null, ['id_rol' => $datos['id_rol']], 'Rol asignado a una persona ya registrada');
-        $this->responder(true, 'Esa persona ya tenía cuenta en Zooki: se le asignó el rol en esta clínica. Entra con sus datos de siempre; los datos de su cuenta no se cambiaron.', ['vinculado' => true]);
+    /** La invitación pendiente de esta clínica; si no lo es, recurso ajeno (403 y auditoría). */
+    private function invitacionDeEstaClinica(InvitacionPersonal $invitaciones, $id): array {
+        $numero = ctype_digit((string) $id) ? (int) $id : 0;
+        $fila = $numero > 0 ? $invitaciones->pendienteDeClinica($numero, $this->clinica()) : null;
+        if ($fila === null) {
+            Security::denegarRecursoAjeno('verificaciones_email', $id);
+        }
+        return $fila;
     }
 
     /**
@@ -374,40 +476,17 @@ class UsuarioController {
             $enviado = $solicitud['accion'] === 'activar_personal'
                 ? $this->correo()->enviarInvitacionPersonal($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $persona['id_rol']), $enlace, $solicitud['horas'])
                 : $this->correo()->enviarRestablecimientoPorAdministrador($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), $enlace, $solicitud['horas']);
-            $this->responder(true, $enviado
-                ? 'Se envió un enlace al titular para que cree su contraseña.'
-                : 'No se pudo enviar el enlace. La contraseña anterior está invalidada; reintenta el envío.');
+            // Revisión de D2.1: con la invitación pendiente se dice lo que pasó.
+            $reenvio = $solicitud['accion'] === 'activar_personal';
+            if ($enviado) {
+                $this->responder(true, $reenvio ? 'Se reenvió la invitación.' : 'Se envió un enlace al titular para que cree su contraseña.');
+                return;
+            }
+            $this->responder(true, $reenvio ? self::INVITACION_SIN_CORREO : 'No se pudo enviar el enlace. La contraseña anterior está invalidada; reintenta el envío.');
         } catch (Throwable $e) {
             error_log('Error al restablecer contrasena: ' . $e->getMessage());
             $this->responder(false, 'No se pudo restablecer la contrasena. Intenta nuevamente.');
         }
-    }
-
-    /**
-     * Ayuda del formulario: si el documento ya existe en la plataforma y si
-     * ya es personal de esta clínica. Con RE-T.7.5 el alta de un documento
-     * existente vincula a esa persona, así que el formulario lo avisa.
-     */
-    public function verificarDocumentoAjax() {
-        header('Content-Type: application/json');
-        $persona = $this->usuario->buscarPorDocumento(trim((string) ($_GET['documento'] ?? '')));
-        echo json_encode($this->estadoDePersona($persona, $_GET['excluir'] ?? null));
-    }
-
-    public function verificarEmailAjax() {
-        header('Content-Type: application/json');
-        $persona = $this->usuario->buscarPorEmail(trim((string) ($_GET['email'] ?? '')));
-        echo json_encode($this->estadoDePersona($persona, $_GET['excluir'] ?? null));
-    }
-
-    private function estadoDePersona(?array $persona, $excluir): array {
-        if ($persona === null || (string) $persona['id_usuario'] === (string) $excluir) {
-            return ['exists' => false, 'en_clinica' => false];
-        }
-        return [
-            'exists' => true,
-            'en_clinica' => $this->usuario->personalEnClinica((int) $persona['id_usuario'], $this->clinica()) !== null,
-        ];
     }
 
     private function denegarIdentidadCompartida(int $idUsuario): never {

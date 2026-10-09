@@ -50,7 +50,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
     <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
 </head>
 <?php // D1: la configuración del JS viaja en data-*, sin JS en línea. ?>
 <body class="login-page" data-google-client-id="<?= $e($googleClientId) ?>">

@@ -12,8 +12,6 @@
     const modal = document.getElementById('usuarioModal');
     const form = document.getElementById('usuarioForm');
     if (!modulo || !modal || !form) return;
-    const modalCliente = document.getElementById('clienteModal');
-    const formCliente = document.getElementById('clienteForm');
     const modalDetalle = document.getElementById('clienteDetalleModal');
 
     // C9: preferencia local; la primera visita conserva las tarjetas de v1.12.0.
@@ -131,7 +129,7 @@
     });
 
     // ── Modales ───────────────────────────────────────────────────────────
-    const modales = [modal, modalCliente, modalDetalle].filter(Boolean);
+    const modales = [modal, modalDetalle].filter(Boolean);
 
     function cerrarModal(ventana) {
         ventana.classList.remove('is-open');
@@ -140,8 +138,6 @@
             form.elements.id_usuario.value = '';
             ponerEstado(true);
             if (telefonoPersonal) telefonoPersonal.setNumber('');
-        } else if (ventana === modalCliente && formCliente) {
-            formCliente.reset();
         }
     }
 
@@ -176,7 +172,30 @@
         }
     });
 
+    /**
+     * D2.2: como en v1.12.0, el cliente se edita en este mismo modal con el
+     * rol oculto. Se conservan las reglas de C1.7 (documento y correo solo
+     * los cambia el titular) y de RN-109 (la clínica no reactiva el vínculo).
+     */
+    function modoCliente(esCliente, vinculoActivo = true) {
+        modal.dataset.modo = esCliente ? 'cliente' : 'personal';
+        modal.querySelector('[data-grupo-rol]').hidden = esCliente;
+        form.elements.id_rol.disabled = esCliente;
+        form.elements.documento.disabled = esCliente;
+        form.elements.tipo_documento.disabled = esCliente;
+        form.elements.email.readOnly = esCliente;
+        form.elements.telefono.required = esCliente;
+        modal.querySelector('[data-etiqueta-estado]').textContent = esCliente ? 'Vínculo con la clínica' : 'Estado';
+        modal.querySelector('[data-ayuda-vinculo]').hidden = !(esCliente && !vinculoActivo);
+        if (esCliente) {
+            modal.querySelector('[data-estado-interruptor]').disabled = !vinculoActivo;
+            aviso.textContent = 'Solo el titular cambia su documento y su correo desde su cuenta.';
+            aviso.hidden = false;
+        }
+    }
+
     function abrirModal(esAlta, persona = null) {
+        modoCliente(false);
         titulo.textContent = esAlta ? 'Nuevo Usuario' : 'Editar Usuario';
         const icono = modal.querySelector('[data-icono-titulo]');
         icono.classList.toggle('fa-user-plus', esAlta);
@@ -232,27 +251,14 @@
         bloquearIdentidad(!u.identidad_editable);
     }
 
-    // RE-T.7.5: si el documento o el correo ya tienen cuenta en Zooki, el
-    // alta asigna el rol a esa persona; se avisa antes de guardar.
-    async function revisarExistente(campo) {
-        if (form.elements.id_usuario.value !== '' || campo.value.trim() === '') return;
-        const accion = campo.name === 'documento' ? 'verificar_documento_ajax&documento=' : 'verificar_email_ajax&email=';
-        const r = await pedir('index.php?action=' + accion + encodeURIComponent(campo.value.trim()));
-        if (r.en_clinica) {
-            aviso.textContent = 'Esa persona ya es parte del personal de esta clínica.';
-            aviso.hidden = false;
-        } else if (r.exists) {
-            aviso.textContent = 'Esa persona ya tiene cuenta en Zooki: al guardar se le asignará el rol en esta clínica, sin cambiar sus datos.';
-            aviso.hidden = false;
-        }
-    }
-    form.elements.documento.addEventListener('blur', () => revisarExistente(form.elements.documento));
-    form.elements.email.addEventListener('blur', () => revisarExistente(form.elements.email));
-
     form.addEventListener('submit', async (evento) => {
         evento.preventDefault();
         if (!form.reportValidity()) return;
 
+        if (modal.dataset.modo === 'cliente') {
+            await guardarCliente();
+            return;
+        }
         const esAlta = form.elements.id_usuario.value === '';
         const datos = new FormData(form);
         datos.set('tipo_documento', form.elements.tipo_documento.value);
@@ -356,39 +362,66 @@
 
     // ── Clientes: edición y detalle ────────────────────────────────────────
     async function editarCliente(id) {
-        if (!modalCliente || !formCliente) return;
         const c = await cliente(id);
         if (!c) {
             mensaje('error', 'No se pudo cargar el cliente.');
             return;
         }
-        formCliente.reset();
-        formCliente.elements.id_usuario.value = c.id_usuario;
-        formCliente.elements.nombre_completo.value = c.nombre_completo || '';
-        formCliente.elements.telefono.value = c.telefono || '';
-        formCliente.elements.estado.value = String(c.estado);
-        // D1 (RN-109): un vínculo inactivo no se reactiva desde aquí.
-        const inactivo = String(c.estado) !== '1';
-        formCliente.elements.estado.querySelector('option[value="1"]').disabled = inactivo;
-        modalCliente.querySelector('[data-ayuda-vinculo]').hidden = !inactivo;
-        modalCliente.querySelector('[data-cliente-identidad]').textContent =
-            [(c.tipo_documento || '') + ' ' + (c.documento || ''), c.email || ''].map((v) => v.trim()).filter(Boolean).join(' · ');
-        modalCliente.classList.add('is-open');
-        formCliente.elements.nombre_completo.focus();
+        form.reset();
+        form.elements.id_usuario.value = c.id_usuario;
+        form.elements.tipo_documento.value = c.tipo_documento || 'CC';
+        form.elements.documento.value = c.documento || '';
+        form.elements.nombre_completo.value = c.nombre_completo || '';
+        form.elements.email.value = c.email || '';
+        if (telefonoPersonal) {
+            telefonoPersonal.setNumber(c.telefono || '');
+        } else {
+            form.elements.telefono.value = c.telefono || '';
+        }
+        const activo = String(c.estado) === '1';
+        ponerEstado(activo);
+        abrirModal(false, c);
+        modoCliente(true, activo);
     }
 
-    if (formCliente) {
-        formCliente.addEventListener('submit', async (evento) => {
-            evento.preventDefault();
-            if (!formCliente.reportValidity()) return;
-            const r = await pedir('index.php?action=actualizar_propietario_ajax', new FormData(formCliente));
-            if (r.success) {
-                cerrarModal(modalCliente);
-                zookiRecargarConAviso('Cliente actualizado.');
-            } else {
-                mensaje('error', r.message || 'No se pudo guardar.');
-            }
-        });
+    // Solo viajan los datos que la clínica puede cambiar del cliente (C1.7).
+    async function guardarCliente() {
+        const datos = new FormData();
+        datos.set('id_usuario', form.elements.id_usuario.value);
+        datos.set('nombre_completo', form.elements.nombre_completo.value);
+        const telefono = telefonoPersonal && telefonoPersonal.isValidNumber() ? telefonoPersonal.getNumber() : form.elements.telefono.value;
+        datos.set('telefono', telefono);
+        datos.set('estado', form.elements.estado.value);
+        const r = await pedir('index.php?action=actualizar_propietario_ajax', datos);
+        if (r.success) {
+            cerrarModal(modal);
+            zookiRecargarConAviso('Cliente actualizado.');
+        } else {
+            mensaje('error', r.message || 'No se pudo guardar.');
+        }
+    }
+
+    // ── Invitaciones pendientes (D2.2, RE-T.7.5) ──────────────────────────
+    async function reenviarInvitacion(boton) {
+        boton.disabled = true;
+        const datos = new FormData();
+        datos.append('id_invitacion', boton.dataset.id);
+        const r = await pedir('index.php?action=reenviar_invitacion_ajax', datos);
+        boton.disabled = false;
+        mensaje(r.success ? 'success' : 'error', r.message || 'No se pudo reenviar la invitación.');
+    }
+
+    async function cancelarInvitacion(boton) {
+        const ok = await zookiConfirmar('La invitación de ' + boton.dataset.nombre + ' dejará de servir. Si la necesitas, invítala otra vez.', '¿Cancelar la invitación?', 'Cancelar invitación');
+        if (!ok) return;
+        const datos = new FormData();
+        datos.append('id_invitacion', boton.dataset.id);
+        const r = await pedir('index.php?action=cancelar_invitacion_ajax', datos);
+        if (r.success) {
+            zookiRecargarConAviso(r.message);
+            return;
+        }
+        mensaje('error', r.message || 'No se pudo cancelar la invitación.');
     }
 
     function itemMascota(m) {
@@ -467,10 +500,14 @@
             editarCliente(id);
         } else if (boton.dataset.accion === 'ver-cliente') {
             verCliente(id);
+        } else if (boton.dataset.accion === 'reenviar-invitacion') {
+            reenviarInvitacion(boton);
+        } else if (boton.dataset.accion === 'cancelar-invitacion') {
+            cancelarInvitacion(boton);
         } else if (boton.dataset.accion === 'restablecer') {
             const ok = await Swal.fire({
                 icon: 'warning',
-                text: 'Se invalidará la contraseña actual de ' + boton.dataset.nombre + ' y se enviará un enlace para que el titular cree otra. Si su cuenta está pendiente, se reenvía la invitación de activación.',
+                text: 'Se invalidará la contraseña actual de ' + boton.dataset.nombre + ', se cerrarán sus sesiones abiertas y se enviará un enlace para que el titular cree otra.',
                 showCancelButton: true,
                 confirmButtonText: 'Restablecer',
                 cancelButtonText: 'Cancelar',

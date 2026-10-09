@@ -19,17 +19,13 @@
     cursor: pointer;
     font-weight: 600;
 }
-.cuenta-identidad form {
+/* D2.2: los campos usan las clases de la pantalla (perfil-field o
+   input-group del portal); aquí solo se separan los dos formularios. */
+.cuenta-identidad .cuenta-identidad__form {
     margin-top: 1rem;
     text-align: left;
 }
-.cuenta-identidad label {
-    display: block;
-    margin-bottom: .75rem;
-}
-.cuenta-identidad label input,
-.cuenta-identidad label select {
-    display: block;
-    width: 100%;
-    margin-top: .25rem;
+.cuenta-identidad .cuenta-identidad__form + .cuenta-identidad__form {
+    padding-top: 1rem;
+    border-top: 1px solid #e4e7ec;
 }

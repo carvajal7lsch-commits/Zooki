@@ -62,7 +62,7 @@ final class DosClinicas
             nombre_completo TEXT, telefono TEXT, email TEXT UNIQUE, password TEXT, google_uid TEXT UNIQUE,
             perfil_completo INTEGER NOT NULL DEFAULT 1, es_super_admin INTEGER NOT NULL DEFAULT 0,
             estado INTEGER NOT NULL DEFAULT 1, debe_cambiar_password INTEGER NOT NULL DEFAULT 0,
-            fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)");
+            version_sesion INTEGER NOT NULL DEFAULT 0, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)");
         $db->exec("CREATE TABLE usuario_clinica (
             id_usuario INTEGER NOT NULL, id_clinica INTEGER NOT NULL, id_rol INTEGER NOT NULL,
             estado TEXT NOT NULL DEFAULT 'activo', fecha_vinculo TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -95,8 +95,9 @@ final class DosClinicas
             expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP)");
         $db->exec("CREATE TABLE verificaciones_email (
             id INTEGER PRIMARY KEY AUTOINCREMENT, id_usuario INTEGER NOT NULL, email TEXT NOT NULL,
-            id_clinica_vinculo INTEGER, proposito TEXT NOT NULL DEFAULT 'registro',
-            token_hash TEXT NOT NULL, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0,
+            id_clinica_vinculo INTEGER, id_rol_vinculo INTEGER, proposito TEXT NOT NULL DEFAULT 'registro',
+            nombre_invitado TEXT, tipo_documento_invitado TEXT, documento_invitado TEXT,
+            email_invitado TEXT, telefono_invitado TEXT, token_hash TEXT NOT NULL, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP)");
     }
 

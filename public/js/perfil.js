@@ -121,13 +121,14 @@
         try {
             const datos = { nueva_password: nueva.value };
             if (actual) datos.password_actual = actual.value;
+            if (formPwd.elements.access_token) datos.access_token = formPwd.elements.access_token.value;
             const r = await enviar('cambiar_password_ajax', datos);
             if (!r.success) {
                 mensaje(msgPwd, r.message || 'No se pudo actualizar la contraseña.', 'error');
                 return;
             }
             formPwd.reset();
-            formPwd.querySelectorAll('input').forEach(i => { i.type = 'password'; });
+            formPwd.querySelectorAll('input:not([type="hidden"])').forEach(i => { i.type = 'password'; });
             // La cuenta ya tiene contraseña: desde ahora se pide la actual (HU-39),
             // así que se recarga para mostrar ese campo; sin esperar (C9.1).
             if (!actual) {

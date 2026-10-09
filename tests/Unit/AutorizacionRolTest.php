@@ -158,12 +158,25 @@ class AutorizacionRolTest extends TestCase
     {
         foreach ([
             'registrar_usuario_ajax', 'actualizar_usuario_ajax', 'cambiar_estado_usuario_ajax',
-            'get_usuario_ajax', 'resetear_password_usuario_ajax', 'verificar_documento_ajax', 'verificar_email_ajax',
+            'get_usuario_ajax', 'resetear_password_usuario_ajax',
+            // D2.2: invitaciones pendientes del personal (RE-T.7.5).
+            'reenviar_invitacion_ajax', 'cancelar_invitacion_ajax',
         ] as $accion) {
             $this->assertTrue($this->permite($accion, self::ADMIN), "$accion deberia permitir al admin");
             foreach ([self::VETERINARIO, self::PROPIETARIO, self::SUPER_ADMIN] as $rol) {
                 $this->assertFalse($this->permite($accion, $rol), "$accion no deberia permitir al rol $rol");
             }
+        }
+    }
+
+    /**
+     * D2.2 (RE-T.7.5): las consultas que le decían al administrador si un
+     * documento o un correo tenían cuenta ya no existen para nadie.
+     */
+    public function testLasConsultasDeExistenciaDelAltaSeRetiraron()
+    {
+        foreach (['verificar_documento_ajax', 'verificar_email_ajax'] as $accion) {
+            $this->assertArrayNotHasKey($accion, self::matriz(), "$accion ya no deberia estar en la matriz");
         }
     }
 

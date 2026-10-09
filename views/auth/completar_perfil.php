@@ -22,7 +22,7 @@ $nombres = ['CC' => 'Cédula de ciudadanía', 'CE' => 'Cédula de extranjería',
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/contexto.css?v=<?= $e(App::assetVersion()) ?>">
     <link rel="stylesheet" href="css/cuenta-pendiente.css?v=<?= $e(App::assetVersion()) ?>">
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
 </head>
 <body class="contexto-pagina">
     <main class="contexto-tarjeta">

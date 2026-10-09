@@ -13,12 +13,13 @@ require_once __DIR__ . '/../../controllers/UsuarioController.php';
  *   VD-SEG-01  solo se asignan roles de clínica (1 y 2): ni el 3 ni el 5 (B.5, RE-T.11.2)
  *   VD-SEG-02  el último administrador activo se cuenta por clínica (RE-T.11.3, RN-G08)
  *   RE-T.17.5  un super-administrador no recibe roles de clínica
- *   RE-T.7.5   el alta de una persona que ya existe le asigna el rol, sin otra cuenta
+ *   RE-T.7.5   el alta de una persona que ya existe la invita; el rol llega solo si acepta (D2.2)
  */
 class UsuarioSeguridadTest extends TestCase
 {
     private PDO $db;
     private Usuario $usuario;
+    private object $correo;
 
     protected function setUp(): void
     {
@@ -50,7 +51,9 @@ class UsuarioSeguridadTest extends TestCase
             public function limpiarDirecciones(): void {}
             public function enviarInvitacionPersonal(...$datos) { $this->enviados[] = $datos; return true; }
             public function enviarRestablecimientoPorAdministrador(...$datos) { $this->enviados[] = $datos; return true; }
+            public function enviarInvitacionClinica(...$datos) { $this->enviados[] = $datos; return true; }
         };
+        $this->correo = $correo;
         return new UsuarioController($this->db, $correo);
     }
 
@@ -130,6 +133,21 @@ class UsuarioSeguridadTest extends TestCase
         $this->assertSame(1, (int) $this->usuario->buscarPorId(2)['debe_cambiar_password']);
     }
 
+    /** RE-T.7.4: editar una identidad mantiene la unicidad, aunque el alta permita invitar. */
+    public function testEditarElCorreoRechazaElDeOtraCuentaSinModificarIdentidades(): void
+    {
+        $controlador = $this->comoAdmin(1, 1);
+        $original = $this->usuario->buscarPorId(2);
+        $otra = $this->usuario->buscarPorId(6);
+        $_POST = $this->datosDePersonal($original);
+        $_POST['id_usuario'] = '2';
+        $_POST['email'] = $otra['email'];
+        $respuesta = $this->json(fn () => $controlador->actualizarAjax());
+        $this->assertFalse($respuesta['success']);
+        $this->assertSame($original, $this->usuario->buscarPorId(2));
+        $this->assertSame($otra, $this->usuario->buscarPorId(6));
+    }
+
     public function testPersonaCompartidaPermiteNombreTelefonoRolYEstadoLocal(): void
     {
         $controlador = $this->comoAdmin(1, 1);
@@ -205,10 +223,13 @@ class UsuarioSeguridadTest extends TestCase
             $this->assertNull($this->rolEn(DosClinicas::SUPER_ADMIN, DosClinicas::NORTE));
         }
 
+        // D2.2: la misma respuesta que con cualquier correo, pero sin correo ni rol.
         $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
         $_POST = $this->datosDePersonal(['email' => 'gina@zooki.test', 'documento' => '1000000123']);
         $r = $this->json(fn () => $controlador->registrarAjax());
-        $this->assertFalse($r['success']);
+        $this->assertTrue($r['success']);
+        $this->assertSame('Invitación enviada. La persona tiene 72 horas para aceptarla.', $r['message']);
+        $this->assertSame([], $this->correo->enviados);
         $this->assertNull($this->rolEn(DosClinicas::SUPER_ADMIN, DosClinicas::NORTE));
     }
 
@@ -229,8 +250,11 @@ class UsuarioSeguridadTest extends TestCase
         $this->assertSame(['id_rol' => 2, 'estado' => 'activo'], $this->rolEn((int) $nueva['id_usuario'], 1));
     }
 
-    /** RE-T.7.5: un propietario que pasa a ser veterinario conserva una sola cuenta con los dos roles. */
-    public function testElAltaDeUnaPersonaExistenteLeAsignaElRolSinOtraCuenta(): void
+    /**
+     * RE-T.7.5 (D2.2): un propietario que ya tiene cuenta no queda vinculado
+     * al darlo de alta: recibe la invitación y nada cambia hasta que acepta.
+     */
+    public function testElAltaDeUnaPersonaExistenteLaInvitaSinVincularNiCrearOtraCuenta(): void
     {
         $controlador = $this->comoAdmin(DosClinicas::ADMIN_SUR, DosClinicas::SUR);
         $_POST = $this->datosDePersonal(['documento' => '1000000006', 'email' => 'otro@zooki.test', 'nombre_completo' => 'Otro Nombre']);
@@ -238,19 +262,26 @@ class UsuarioSeguridadTest extends TestCase
         $r = $this->json(fn () => $controlador->registrarAjax());
 
         $this->assertTrue($r['success']);
-        $this->assertTrue($r['vinculado']);
+        $this->assertArrayNotHasKey('vinculado', $r);
         $this->assertSame(10, (int) $this->db->query('SELECT COUNT(*) FROM usuarios')->fetchColumn(), 'No se creó otra cuenta');
-        $this->assertSame('fabio@zooki.test', $this->usuario->buscarPorId(DosClinicas::PROPIETARIO)['email'], 'Sus datos no se tocan');
-        $this->assertSame(['clinica:2:2', 'propietario'], array_column($this->usuario->contextosDe(DosClinicas::PROPIETARIO), 'clave'));
+        $this->assertNull($this->rolEn(DosClinicas::PROPIETARIO, DosClinicas::SUR), 'Sin aceptar no hay rol');
+        $this->assertSame(['propietario'], array_column($this->usuario->contextosDe(DosClinicas::PROPIETARIO), 'clave'));
+        $this->assertSame('fabio@zooki.test', $this->correo->enviados[0][0], 'La invitación va al correo de la cuenta del documento');
     }
 
-    public function testDocumentoYCorreoDeCuentasDistintasSeRechazan(): void
+    /** D2.2: documento de una persona y correo de otra: manda el correo, con la misma respuesta. */
+    public function testDocumentoYCorreoDeCuentasDistintasInvitanAlDuenoDelCorreo(): void
     {
         $controlador = $this->comoAdmin(DosClinicas::ADMIN_NORTE, DosClinicas::NORTE);
         $_POST = $this->datosDePersonal(['documento' => '1000000003', 'email' => 'diego@zooki.test']);
 
-        $this->assertFalse($this->json(fn () => $controlador->registrarAjax())['success']);
+        $r = $this->json(fn () => $controlador->registrarAjax());
+
+        $this->assertTrue($r['success']);
+        $this->assertSame('Invitación enviada. La persona tiene 72 horas para aceptarla.', $r['message']);
+        $this->assertSame('diego@zooki.test', $this->correo->enviados[0][0]);
         $this->assertNull($this->rolEn(DosClinicas::ADMIN_SUR, DosClinicas::NORTE));
+        $this->assertNull($this->rolEn(DosClinicas::VET_SUR, DosClinicas::NORTE));
     }
 
     // ── VD-SEG-02: último administrador, por clínica ────────────────────

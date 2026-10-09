@@ -145,8 +145,9 @@ final class TelefonosTest extends TestCase
                 $this->assertMatchesRegularExpression('/ValidadorTelefono::atributosHtml\(\)|\$telefonoHtml/', $campo, $vista->getFilename() . ': ' . $campo);
             }
         }
-        // Registro, perfil de Google, portal, perfil del personal, Usuarios (2) y Pacientes (2).
-        $this->assertSame(8, $campos);
+        // Registro, perfil de Google, portal, perfil del personal, Usuarios y Pacientes (2).
+        // D2.2: Usuarios tiene un solo modal para personal y clientes, como v1.12.0.
+        $this->assertSame(7, $campos);
 
         $atributos = ValidadorTelefono::atributosHtml();
         $this->assertStringContainsString('maxlength="' . ValidadorTelefono::MAX . '"', $atributos);

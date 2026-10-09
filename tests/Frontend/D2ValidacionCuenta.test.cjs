@@ -125,17 +125,33 @@ test('documento duplicado impide enviar el formulario', async () => {
     assert.equal(p.campos[0].error, 'Este documento ya está registrado.');
 });
 
-test('alta de personal existente permite vincular sin prometer otra cuenta', async () => {
-    const p = pagina(['documento'], () => respuesta({ exists: true }));
-    p.form.dataset.cuentaVincular = 'true';
+test('D2.2: el alta de personal no pregunta al servidor si el documento o el correo tienen cuenta', async () => {
+    const p = pagina(['documento', 'email'], () => respuesta({ exists: true }));
+    p.form.dataset.cuentaUnicidad = 'solo-edicion';
     p.campos[0].value = '1000011111';
+    p.campos[1].value = 'fabio@zooki.test';
+    p.eventos.input({ target: p.campos[0] });
+    p.eventos.input({ target: p.campos[1] });
+    assert.equal(p.temporizadores.length, 0, 'Al escribir no se programa ninguna consulta.');
     assert.equal(await p.api.comprobar(p.form, p.campos[0]), true);
-    assert.equal(p.campos[0].salidas[0].textContent, 'Cuenta existente: se vinculará a la clínica.');
+    assert.equal(await p.api.comprobar(p.form, p.campos[1]), true);
+    assert.equal(p.llamadas.length, 0, 'Ni al comprobar ni al enviar se consulta la existencia.');
+    assert.equal(p.campos[0].error, '');
+    assert.doesNotMatch(p.campos[0].salidas[0]?.textContent || '', /vincul|registrad/);
 });
 
-test('una edición de personal no trata un documento duplicado como un alta existente', async () => {
+test('D2.2: el formato sigue validándose en el alta de personal', async () => {
+    const p = pagina(['documento'], () => respuesta());
+    p.form.dataset.cuentaUnicidad = 'solo-edicion';
+    p.campos[0].value = '12ab';
+    assert.equal(await p.api.comprobar(p.form, p.campos[0]), false);
+    assert.equal(p.campos[0].error, 'El documento debe tener entre 5 y 15 dígitos.');
+    assert.equal(p.llamadas.length, 0);
+});
+
+test('una edición de personal sí comprueba la unicidad del documento', async () => {
     const p = pagina(['documento'], () => respuesta({ exists: true }));
-    p.form.dataset.cuentaVincular = 'true';
+    p.form.dataset.cuentaUnicidad = 'solo-edicion';
     p.form.elements.id_usuario = { value: '2' };
     p.campos[0].value = '1000011111';
     assert.equal(await p.api.comprobar(p.form, p.campos[0]), false);

@@ -4,6 +4,9 @@
  * La ventana, los tres intentos y las marcas de envío conservan la v1.11.0.
  * El MER todavía no ofrece una zona configurable para cada clínica.
  */
+// Revisión de D2.1: la zona horaria del sistema (helpers/ZonaHoraria.php).
+require_once dirname(__DIR__) . '/helpers/ZonaHoraria.php';
+ZonaHoraria::aplicar();
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 require_once dirname(__DIR__) . '/config/Database.php';
 require_once dirname(__DIR__) . '/config/EmailService.php';

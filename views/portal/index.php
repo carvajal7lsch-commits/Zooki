@@ -523,6 +523,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
 
                 <div id="passwordChangeSection" class="password-change-collapse">
                     <form id="portalChangePasswordForm" data-password-accion="cambiar_password_ajax" class="portal-form"  data-validacion-cuenta>
+                        <?php if (empty($usuarioData['tiene_password'])) require __DIR__ . '/../partials/confirmacion_google.php'; ?>
                         <?php // HU-39: se pide la actual si la cuenta tiene una contraseña conocida ?>
                         <?php if ((int) ($usuarioData['tiene_password'] ?? 1) === 1): ?>
                         <div class="input-group">

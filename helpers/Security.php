@@ -23,7 +23,8 @@ class Security {
         'landing', 'privacidad', 'terminos', 'cookies', 'login', 'solicitar_reset_password_ajax', 'reset_password',
         'procesar_reset_password_ajax', 'register', 'process_register', 'verificar_email', 'estado_verificacion_ajax',
         'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax',
-        'confirmar_vinculo_propietario', 'activar_personal', 'confirmar_cambio_correo', 'validar_cuenta_ajax'
+        'confirmar_vinculo_propietario', 'activar_personal', 'confirmar_cambio_correo', 'validar_cuenta_ajax',
+        'invitacion_personal',
     ];
 
     /**
@@ -74,6 +75,9 @@ class Security {
     /** callable(int): ?array — contextos vigentes de una persona; null = cuenta inexistente o inactiva. */
     private static $fuenteContextos = null;
 
+    /** callable(int): ?int — versión de sesión de la cuenta (RE-T.2.5); null = no se comprueba. */
+    private static $fuenteVersionSesion = null;
+
     /** false = todavía no se resolvió; null = sin auditoría disponible. */
     private static $auditoria = false;
 
@@ -105,7 +109,7 @@ class Security {
     public static function autorizar(string $action): void {
         // Las acciones publicas no exigen sesion, contexto ni rol.
         if (in_array($action, self::$publicActions, true)) {
-            if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'confirmar_cambio_correo'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'confirmar_cambio_correo', 'invitacion_personal'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 require_once __DIR__ . '/Csrf.php';
                 if (!Csrf::validate()) throw new AccesoDenegado(403,'La sesión del formulario venció. Abre de nuevo el enlace.');
             }
@@ -128,6 +132,16 @@ class Security {
             throw new AccesoDenegado(401, 'Sesion expirada. Inicia sesion nuevamente.');
         }
         $_SESSION['contextos_total'] = count($disponibles);
+
+        // RE-T.2.5: si la contraseña cambió en otra sesión, esta se cierra
+        // como la de inactividad (HU-T.16): vacía y con 401.
+        if (self::$fuenteVersionSesion !== null) {
+            require_once __DIR__ . '/CierreSesiones.php';
+            if (!CierreSesiones::vigente($_SESSION, (self::$fuenteVersionSesion)($idUsuario))) {
+                $_SESSION = ['error_login' => CierreSesiones::MENSAJE];
+                throw new AccesoDenegado(401, CierreSesiones::MENSAJE);
+            }
+        }
 
         $actual = Contexto::actual();
         if ($actual !== null) {
@@ -334,7 +348,10 @@ class Security {
             'registrar_usuario_ajax', 'actualizar_usuario_ajax',
             'get_usuario_ajax', 'cambiar_estado_usuario_ajax',
             'resetear_password_usuario_ajax',
-            'verificar_documento_ajax', 'verificar_email_ajax',
+            // D2.2 (RE-T.7.5): invitaciones pendientes del personal. Las antiguas
+            // verificar_documento_ajax / verificar_email_ajax se retiraron: le
+            // decían al administrador si un documento o un correo tenían cuenta.
+            'reenviar_invitacion_ajax', 'cancelar_invitacion_ajax',
             'get_auditoria_ajax', 'listar_todas_citas_ajax',
             'get_horarios_clinica_ajax', 'guardar_horarios_clinica_ajax',
             'restaurar_horarios_defecto_ajax',
@@ -432,13 +449,24 @@ class Security {
             }
             $usuario = new Usuario($db);
             self::$fuenteContextos = static fn (int $id): ?array => $usuario->contextosDe($id);
+            self::$fuenteVersionSesion ??= static fn (int $id): ?int => $usuario->versionSesion($id);
         }
         return (self::$fuenteContextos)($idUsuario);
     }
 
-    /** Punto de inyeccion para las pruebas (null vuelve a la base real). */
+    /**
+     * Punto de inyeccion para las pruebas (null vuelve a la base real). Una
+     * prueba que inyecta los contextos no compara la versión de sesión salvo
+     * que también la inyecte (definirFuenteDeVersionSesion).
+     */
     public static function definirFuenteDeContextos(?callable $fuente): void {
         self::$fuenteContextos = $fuente;
+        self::$fuenteVersionSesion = null;
+    }
+
+    /** Punto de inyeccion para las pruebas de RE-T.2.5. */
+    public static function definirFuenteDeVersionSesion(?callable $fuente): void {
+        self::$fuenteVersionSesion = $fuente;
     }
 
     private static function auditoria() {

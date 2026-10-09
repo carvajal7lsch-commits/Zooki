@@ -8,10 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="js/password-policy.js"></script>
+    <script src="js/password-policy.js?v=d22"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <link rel="stylesheet" href="css/cambiar-password.css?v=d2">
-<link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
+<link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
 </head>
 <body>
     <div class="change-password-container">
@@ -23,6 +24,7 @@
 
         <form id="changePasswordForm" data-password-accion="cambiar_password_ajax" data-validacion-cuenta>
 <?php Csrf::field(); ?>
+            <?php if (empty($cuentaPassword['tiene_password'])) require __DIR__ . '/../partials/confirmacion_google.php'; ?>
             <?php if (!empty($cuentaPassword['tiene_password'])): ?>
                 <div class="form-group">
                     <label for="password_actual">Contraseña actual</label>

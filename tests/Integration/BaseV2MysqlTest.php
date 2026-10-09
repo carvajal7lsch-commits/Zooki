@@ -81,6 +81,105 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    /** D2.2: actualizar una base anterior conserva sus datos y se puede repetir. */
+    public function testMigracionD22ActualizaUnaBaseAnteriorDosVeces(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/VerificacionEmail.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $id = (new VerificacionEmail($this->db))->crear(6, 'fabio@zooki.test', 'hash-conservado', '2030-01-01 00:00:00');
+        $this->db->exec('ALTER TABLE verificaciones_email DROP FOREIGN KEY fk_verif_rol_vinculo');
+        $this->db->exec('ALTER TABLE verificaciones_email DROP COLUMN id_rol_vinculo, DROP COLUMN nombre_invitado, DROP COLUMN tipo_documento_invitado, DROP COLUMN documento_invitado, DROP COLUMN email_invitado, DROP COLUMN telefono_invitado');
+        $this->db->exec('ALTER TABLE usuarios DROP COLUMN version_sesion');
+        $this->cargar('04_invitacion_personal_y_sesiones.sql');
+        $this->cargar('04_invitacion_personal_y_sesiones.sql');
+        $columnas = $this->db->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'verificaciones_email'")->fetchAll(PDO::FETCH_COLUMN);
+        foreach (['id_rol_vinculo', 'nombre_invitado', 'tipo_documento_invitado', 'documento_invitado', 'email_invitado', 'telefono_invitado'] as $columna) {
+            $this->assertContains($columna, $columnas);
+        }
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'verificaciones_email' AND CONSTRAINT_NAME = 'fk_verif_rol_vinculo'")->fetchColumn());
+        $fila = (new VerificacionEmail($this->db))->buscarPorId($id);
+        $this->assertSame('hash-conservado', $fila['token_hash']);
+        $this->assertSame('fabio@zooki.test', $fila['email']);
+        $this->assertNull($fila['id_rol_vinculo']);
+        $this->assertSame(0, (int) $this->db->query('SELECT MAX(version_sesion) FROM usuarios')->fetchColumn());
+        $this->db->exec('UPDATE usuarios SET version_sesion = 3 WHERE id_usuario = 6');
+        $this->db->prepare('UPDATE verificaciones_email SET id_rol_vinculo = 2, nombre_invitado = ? WHERE id = ?')->execute(['Nombre escrito', $id]);
+        $this->cargar('04_invitacion_personal_y_sesiones.sql');
+        $this->assertSame(3, (int) $this->db->query('SELECT version_sesion FROM usuarios WHERE id_usuario = 6')->fetchColumn());
+        $this->assertSame('Nombre escrito', (new VerificacionEmail($this->db))->buscarPorId($id)['nombre_invitado']);
+    }
+
+    /** RE-T.7.5: UNION, aislamiento, datos escritos y aceptación sin duplicar identidad. */
+    public function testD22InvitacionesYVersionSesionEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/InvitacionPersonal.php';
+        require_once __DIR__ . '/../../models/CuentaTitular.php';
+        require_once __DIR__ . '/../../helpers/CierreSesiones.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $usuarios = new Usuario($this->db);
+        $invitaciones = new InvitacionPersonal($this->db);
+        $_SESSION = ['id_usuario' => 1];
+        Contexto::activar(Contexto::deClinica(1, 'Clínica Norte', Roles::ADMIN), 1);
+        try {
+            $datos = ['documento' => '1099999999', 'tipo_documento' => 'CC', 'nombre_completo' => 'Ana Invitada', 'email' => 'ana.invitada@zooki.test', 'telefono' => '3001112233', 'id_rol' => 2];
+            $nueva = (new CuentaTitular($this->db))->crearPersonal($datos, 1);
+            $escritos = ['documento' => '1088888888', 'tipo_documento' => 'CE', 'nombre_completo' => 'Zeta Escrita', 'email' => 'escrito@zooki.test', 'telefono' => '3004445566', 'id_rol' => 2];
+            $existente = $invitaciones->crear($usuarios->buscarPorId(6), 1, $escritos);
+            $sur = $invitaciones->crear($usuarios->buscarPorId(6), 2, $escritos);
+            $cuentas = $this->contar('usuarios');
+            $pendientes = $invitaciones->pendientesDeClinica(1);
+            $this->assertSame(['Ana Invitada', 'Zeta Escrita'], array_column($pendientes, 'nombre_completo'));
+            $this->assertSame([$nueva['enlace']['id'], $existente['id']], array_map('intval', array_column($pendientes, 'id_invitacion')));
+            foreach (['documento', 'tipo_documento', 'email', 'telefono'] as $campo) {
+                $this->assertSame($escritos[$campo], $pendientes[1][$campo]);
+            }
+            $this->assertCount(1, $invitaciones->pendientesDeClinica(2));
+            $this->assertNull($invitaciones->pendienteDeClinica($sur['id'], 1));
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM usuario_clinica WHERE id_usuario = 6')->fetchColumn());
+            $this->assertSame('Clínica Norte', $invitaciones->aceptar($existente['id'], $existente['token'])['clinica']);
+            $this->assertSame($cuentas, $this->contar('usuarios'));
+            $this->assertSame(2, (int) $this->db->query('SELECT id_rol FROM usuario_clinica WHERE id_usuario = 6 AND id_clinica = 1')->fetchColumn());
+            $this->assertSame('activo', $this->db->query('SELECT estado FROM propietario_clinica WHERE id_propietario = 6 AND id_clinica = 1')->fetchColumn());
+            $this->assertCount(2, $usuarios->contextosDe(6));
+            $this->assertNull($invitaciones->leer($existente['id'], $existente['token']));
+            $this->assertCount(1, $invitaciones->pendientesDeClinica(1));
+            $this->assertCount(1, $invitaciones->pendientesDeClinica(2));
+            $invitaciones->rechazar($sur['id'], $sur['token']);
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM usuario_clinica WHERE id_usuario = 6 AND id_clinica = 2')->fetchColumn());
+            $_SESSION = ['id_usuario' => 6, 'version_sesion' => 0];
+            CierreSesiones::cerrarOtras($usuarios, 6);
+            $this->assertSame(1, $usuarios->versionSesion(6));
+            $this->assertSame(1, $_SESSION['version_sesion']);
+            $this->assertSame(0, $usuarios->versionSesion(1));
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /** La misma hora para PHP y MySQL, incluso si arrancaron con zonas diferentes. */
+    public function testD22ZonaHorariaAlineaNowYDate(): void
+    {
+        require_once __DIR__ . '/../../helpers/ZonaHoraria.php';
+        $anterior = date_default_timezone_get();
+        try {
+            date_default_timezone_set('Europe/Berlin');
+            $this->db->exec("SET time_zone = '+02:00'");
+            ZonaHoraria::aplicarEnConexion($this->db);
+            $this->assertSame('America/Bogota', date_default_timezone_get());
+            $this->assertSame('-05:00', $this->db->query('SELECT @@session.time_zone')->fetchColumn());
+            $horaMysql = (string) $this->db->query('SELECT NOW()')->fetchColumn();
+            $this->assertLessThanOrEqual(2, abs(strtotime($horaMysql) - strtotime(date('Y-m-d H:i:s'))));
+        } finally {
+            date_default_timezone_set($anterior);
+        }
+    }
+
     private const DATABASE = __DIR__ . '/../../database';
 
     private PDO $db;
@@ -196,7 +295,7 @@ class BaseV2MysqlTest extends TestCase
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }

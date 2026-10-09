@@ -31,22 +31,6 @@ class EmailService {
         $this->mail->setFrom('no-reply@TU_DOMINIO', 'Zooki - Sistema Veterinario');
     }
     
-    public function enviarCredencialesUsuario($email, $nombre, $documento, $password) {
-        try {
-            $this->mail->addAddress($email, $nombre);
-            $this->mail->Subject = 'Bienvenido a Zooki - Tus credenciales de acceso';
-
-            $this->mail->Body = $this->generarPlantillaCredenciales($nombre, $documento, $password);
-            $this->mail->AltBody = "Hola $nombre,\n\nTus credenciales de acceso a Zooki son:\n\nUsuario: tu documento ($documento) o tu correo\nContraseña: $password\n\nPor seguridad, te recomendamos cambiar tu contraseña en tu primer inicio de sesión.\n\nSaludos,\nEquipo de Zooki";
-
-            $this->mail->send();
-            return true;
-        } catch (Exception $e) {
-            error_log("Error al enviar correo: " . $this->mail->ErrorInfo);
-            return false;
-        }
-    }
-
     public function enviarCorreoPersonalizado($email, $nombre, $asunto, $cuerpoHTML) {
         try {
             $this->mail->addAddress($email, $nombre);
@@ -65,26 +49,6 @@ class EmailService {
         $this->mail->clearAddresses();
     }
     
-    private function generarPlantillaCredenciales($nombre, $documento, $password) {
-        $appUrl = 'http://localhost/Zooki/public/index.php';
-
-        $contenido = '
-        <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
-          Tu cuenta ha sido creada exitosamente en el sistema veterinario Zooki. A continuación te presentamos tus credenciales de acceso:
-        </p>
-        
-        <div style="background-color:#f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
-            <p style="margin: 0 0 8px 0; font-size: 15px; color: #1d1c1d;"><strong>📋 Usuario:</strong> tu documento (' . htmlspecialchars($documento) . ') o tu correo</p>
-            <p style="margin: 0; font-size: 15px; color: #1d1c1d;"><strong>🔑 Contraseña:</strong> ' . htmlspecialchars($password) . '</p>
-        </div>
-        
-        <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
-          <strong>⚠️ Importante:</strong> Por motivos de seguridad, te sugerimos cambiar tu contraseña en tu primer inicio de sesión.
-        </p>';
-
-        return $this->obtenerPlantillaBaseHTML($nombre, 'Tus credenciales de acceso', $contenido, 'Acceder a Zooki', $appUrl);
-    }
-
     public function obtenerPlantillaBaseHTML($nombre, $titulo, $contenidoHtml, $ctaTexto = null, $ctaEnlace = null) {
         $ctaHtml = '';
         if ($ctaTexto && $ctaEnlace) {

@@ -207,11 +207,12 @@ test('Mi perfil marca la lista de requisitos de la contraseña al escribir', () 
 
 // ── usuarios.js: modal del personal con el diseño de v1.12.0 ───────────────
 
-function paginaUsuarios(usuario) {
+function paginaUsuarios(usuario, responder = () => ({ success: true, usuario })) {
     const nodos = {};
     const nodo = (nombre, extra = {}) => (nodos[nombre] = elemento({ hidden: false, disabled: false, checked: false, focus() {}, ...extra }));
     ['[data-aviso]', '[data-titulo]', '[data-subtitulo]', '[data-subtitulo-nombre]', '[data-subtitulo-documento]',
-        '[data-texto-guardar]', '[data-estado-interruptor]', '[data-estado-texto]', '[data-icono-titulo]'].forEach(selector => nodo(selector));
+        '[data-texto-guardar]', '[data-estado-interruptor]', '[data-estado-texto]', '[data-icono-titulo]',
+        '[data-grupo-rol]', '[data-etiqueta-estado]', '[data-ayuda-vinculo]'].forEach(selector => nodo(selector));
     const soloAlta = [nodo('tipo'), nodo('documento-grupo'), nodo('invitacion')];
     const eventosModal = {};
     const modal = {
@@ -226,7 +227,11 @@ function paginaUsuarios(usuario) {
         id_usuario: campoForm(), tipo_documento: campoForm(), documento: campoForm(), nombre_completo: campoForm(),
         email: campoForm(), telefono: campoForm(), id_rol: campoForm(), estado: campoForm(), password: campoForm(),
     };
-    const form = { elements: elementos, addEventListener() {}, reset() {}, querySelector: () => elementos.documento };
+    const eventosForm = {};
+    const form = { elements: elementos, addEventListener(tipo, callback) { eventosForm[tipo] = callback; }, reset() {}, reportValidity: () => true, querySelector: () => elementos.documento };
+    const peticiones = [];
+    const recargas = [];
+    const toasts = [];
     const eventosModulo = {};
     const modulo = {
         dataset: {},
@@ -246,11 +251,16 @@ function paginaUsuarios(usuario) {
             body: {},
         },
         window, localStorage: { getItem: () => null, setItem() {} }, console, FormData,
-        fetch: async () => ({ status: 200, json: async () => ({ success: true, usuario }) }),
-        zookiToast() {},
+        fetch: async (url, opciones = {}) => {
+            peticiones.push({ url, datos: opciones.body });
+            return { status: 200, json: async () => responder(url) };
+        },
+        zookiToast(texto, icono) { toasts.push({ texto, icono }); },
+        zookiConfirmar: async () => true,
+        zookiRecargarConAviso(texto) { recargas.push(texto); },
     });
-    const clic = async accion => eventosModulo.click({ target: { closest: () => ({ dataset: { accion, id: String(usuario.id_usuario) } }) } });
-    return { nodos, soloAlta, iti, clic, elementos, eventosModal };
+    const clic = async (accion, id = String(usuario.id_usuario), nombre = '') => eventosModulo.click({ target: { closest: () => ({ dataset: { accion, id, nombre }, disabled: false }) } });
+    return { nodos, soloAlta, iti, clic, elementos, eventosModal, eventosForm, peticiones, recargas, toasts };
 }
 
 test('el modal del personal se ve como en v1.12.0: título, bandera e interruptor de estado', async () => {
@@ -288,7 +298,7 @@ test('el modal del personal se ve como en v1.12.0: título, bandera e interrupto
 
 test('la vista del modal del personal no tiene código en línea y conserva el diseño de v1.12.0', () => {
     const vista = codigo('views/admin/usuarios.php');
-    const modal = vista.slice(vista.indexOf('id="usuarioModal"'), vista.indexOf('id="clienteModal"'));
+    const modal = vista.slice(vista.indexOf('id="usuarioModal"'), vista.indexOf('id="clienteDetalleModal"'));
     assert.doesNotMatch(modal, /\sstyle="|\son[a-z]+="/);
     assert.match(modal, /class="close-modal"/);
     assert.match(modal, /data-subtitulo/);
@@ -296,4 +306,78 @@ test('la vista del modal del personal no tiene código en línea y conserva el d
     assert.match(modal, /Correo electrónico/);
     assert.match(modal, /72 horas/);
     assert.match(vista, /intl-tel-input@23\.0\.10\/build\/js\/intlTelInput\.min\.js/);
+});
+
+// ── D2.2: el cliente usa el modal del personal y las invitaciones pendientes ──
+
+const fabio = { id_usuario: 6, nombre_completo: 'Fabio Dueño', documento: '1000000006', tipo_documento: 'CC', email: 'fabio@zooki.test', telefono: '+573115550000', estado: 1 };
+
+test('el cliente se edita en el mismo modal del personal con el rol oculto (v1.12.0)', async () => {
+    const p = paginaUsuarios(fabio, () => ({ ...fabio, success: true }));
+    await p.clic('editar-cliente', '6');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(p.nodos['[data-titulo]'].textContent, 'Editar Usuario');
+    assert.equal(p.nodos['[data-subtitulo-nombre]'].textContent, 'Fabio Dueño');
+    assert.equal(p.nodos['[data-subtitulo-documento]'].textContent, '1000000006');
+    assert.equal(p.nodos['[data-grupo-rol]'].hidden, true, 'Al cliente se le oculta el rol.');
+    assert.equal(p.elementos.id_rol.disabled, true);
+    assert.equal(p.elementos.email.readOnly, true, 'C1.7: el correo solo lo cambia el titular.');
+    assert.equal(p.elementos.documento.disabled, true);
+    assert.equal(p.elementos.telefono.required, true);
+    assert.equal(p.nodos['[data-etiqueta-estado]'].textContent, 'Vínculo con la clínica');
+    assert.equal(p.nodos['[data-estado-interruptor]'].disabled, false);
+    assert.equal(p.nodos['[data-ayuda-vinculo]'].hidden, true);
+    assert.equal(p.nodos['[data-aviso]'].hidden, false);
+
+    await p.eventosForm.submit({ preventDefault() {} });
+    const guardado = p.peticiones.at(-1);
+    assert.match(guardado.url, /action=actualizar_propietario_ajax/);
+    assert.deepEqual([...guardado.datos.keys()].sort(), ['estado', 'id_usuario', 'nombre_completo', 'telefono']);
+    assert.equal(guardado.datos.get('telefono'), '+573115550000');
+    assert.deepEqual(p.recargas, ['Cliente actualizado.']);
+});
+
+test('RN-109: un vínculo inactivo no se reactiva desde el modal', async () => {
+    const inactivo = { ...fabio, estado: 0 };
+    const p = paginaUsuarios(inactivo, () => ({ ...inactivo, success: true }));
+    await p.clic('editar-cliente', '6');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(p.nodos['[data-estado-interruptor]'].disabled, true);
+    assert.equal(p.nodos['[data-ayuda-vinculo]'].hidden, false);
+    assert.equal(p.elementos.estado.value, '0');
+});
+
+test('tras editar un cliente, el alta vuelve al modo de personal', async () => {
+    const p = paginaUsuarios(fabio, () => ({ ...fabio, success: true }));
+    await p.clic('editar-cliente', '6');
+    await new Promise(resolve => setImmediate(resolve));
+    await p.clic('nuevo');
+    assert.equal(p.nodos['[data-grupo-rol]'].hidden, false);
+    assert.equal(p.elementos.id_rol.disabled, false);
+    assert.equal(p.elementos.email.readOnly, false);
+    assert.equal(p.elementos.documento.disabled, false);
+    assert.equal(p.nodos['[data-etiqueta-estado]'].textContent, 'Estado');
+});
+
+test('una invitación pendiente se reenvía y se cancela por su id de invitación', async () => {
+    const p = paginaUsuarios(fabio, url => ({ success: true, message: /reenviar/.test(url) ? 'Se reenvió la invitación.' : 'Invitación cancelada.' }));
+    await p.clic('reenviar-invitacion', '41', 'Laura');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.match(p.peticiones.at(-1).url, /action=reenviar_invitacion_ajax/);
+    assert.equal(p.peticiones.at(-1).datos.get('id_invitacion'), '41');
+    assert.deepEqual(p.toasts.at(-1), { texto: 'Se reenvió la invitación.', icono: 'success' });
+    await p.clic('cancelar-invitacion', '41', 'Laura');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.match(p.peticiones.at(-1).url, /action=cancelar_invitacion_ajax/);
+    assert.equal(p.peticiones.at(-1).datos.get('id_invitacion'), '41');
+    assert.deepEqual(p.recargas, ['Invitación cancelada.']);
+});
+
+test('la vista de Usuarios ya no tiene el modal aparte del cliente ni consulta si la cuenta existe', () => {
+    const vista = codigo('views/admin/usuarios.php');
+    const js = codigo('public/js/usuarios.js');
+    assert.doesNotMatch(vista, /id="clienteModal"|id="clienteForm"/);
+    assert.match(vista, /data-cuenta-unicidad="solo-edicion"/);
+    assert.doesNotMatch(vista, /data-cuenta-vincular="true"/);
+    assert.doesNotMatch(js, /verificar_documento_ajax|verificar_email_ajax/);
 });

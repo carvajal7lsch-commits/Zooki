@@ -26,7 +26,6 @@
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
     <link rel="stylesheet" href="css/perfil.css?v=2">
     <?php endif; ?>
-    <link rel="stylesheet" href="css/dark-mode.css">
     <?php if (($_GET['action'] ?? '') === 'vet_agenda'): ?>
     <link rel="stylesheet" href="css/calendario.css?v=15">
     <?php endif; ?>
@@ -37,7 +36,7 @@
     <link rel="stylesheet" href="css/panel.css?v=3">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
 </head>
 <body>
     <div id="global-loader"><div class="spinner"></div></div>
@@ -158,7 +157,7 @@
 
     <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
     <script src="js/avisos.js?v=3"></script>
-    <script src="js/password-policy.js"></script>
+    <script src="js/password-policy.js?v=d22"></script>
     <script src="js/dashboard.js?v=7"></script>
     <script src="js/medical-module.js?v=d2"></script>
     <script src="js/csrf.js"></script>

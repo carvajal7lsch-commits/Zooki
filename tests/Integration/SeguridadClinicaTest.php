@@ -174,7 +174,7 @@ class SeguridadClinicaTest extends TestCase
     public function testElAdministradorNoVeNiModificaPersonalDeOtraClinica(): void
     {
         $this->entrarComo(DosClinicas::ADMIN_NORTE, 'clinica:1:1');
-        $controlador = new UsuarioController($this->db, new class { public function enviarCredencialesUsuario(...$a) { return true; } });
+        $controlador = new UsuarioController($this->db, new stdClass());
 
         $_GET['id_usuario'] = (string) DosClinicas::VET_SUR;
         try {

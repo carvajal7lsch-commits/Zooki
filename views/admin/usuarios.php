@@ -2,8 +2,9 @@
 /**
  * HU-T.7 — Personal de la clínica activa y propietarios vinculados a ella.
  *
- * Recibe del enrutador $personal y $propietarios (UsuarioController), ya
- * acotados a la clínica del contexto. C9.1: mismo diseño que la v1.12.0
+ * Recibe del enrutador $personal, $invitaciones y $propietarios
+ * (UsuarioController), ya acotados a la clínica del contexto. D2.2: las
+ * invitaciones pendientes muestran lo que escribió el administrador. C9.1: mismo diseño que la v1.12.0
  * (specs/referencias/usuarios-*-v1.png) con los datos y las reglas de la v2.
  * El comportamiento está en js/usuarios.js; los datos viajan en data-*.
  */
@@ -21,6 +22,7 @@ $iniciales = static function (string $nombre): string {
 $buscable = static fn (array $p): string => mb_strtolower($p['nombre_completo'] . ' ' . ($p['documento'] ?? '') . ' ' . ($p['email'] ?? ''));
 $iconoRol = static fn (int $rol): string => $rol === Roles::ADMIN ? 'bi-shield-shaded' : 'bi-heart-pulse';
 $yo = Contexto::idUsuario();
+$invitaciones = $invitaciones ?? [];
 $contexto = Contexto::actual();
 $telefonoHtml = ValidadorTelefono::atributosHtml();
 $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Identidad', 'CE' => 'Cédula de Extranjería', 'PP' => 'Pasaporte', 'NIT' => 'NIT'];
@@ -103,7 +105,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
     <!-- Personal de la clínica -->
     <section class="tab-panel active" data-panel="personal">
         <div class="personal-grid view-grid" data-vista-contenido="tarjetas">
-            <?php if (!$personal): ?>
+            <?php if (!$personal && !$invitaciones): ?>
                 <div class="empty-state"><div class="empty-icon"><i class="fas fa-users-slash" aria-hidden="true"></i></div><h3>Todavía no hay personal registrado</h3></div>
             <?php endif; ?>
             <?php foreach ($personal as $p): ?>
@@ -120,7 +122,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                     <div class="card-body-mini">
                         <h3 class="card-title-mini"><?= $e($p['nombre_completo']) ?><?php if ($esYo): ?> <span class="current-user-label">(Tú)</span><?php endif; ?></h3>
                         <div class="card-tags-mini">
-                            <?php if ((int) $p['estado'] === 0): ?><span class="tag-mini"><i class="bi bi-envelope" aria-hidden="true"></i> Pendiente de activación</span><?php endif; ?>
+                            <?php if ((int) $p['estado'] === 0): ?><span class="tag-mini"><i class="bi bi-person-lock" aria-hidden="true"></i> Cuenta inactiva</span><?php endif; ?>
                             <?php if (!$activo): ?><span class="tag-mini"><i class="bi bi-moon-stars" aria-hidden="true"></i> Inactivo</span><?php endif; ?>
                             <span class="tag-mini"><i class="bi <?= $iconoRol($rol) ?>" aria-hidden="true"></i> <?= $e(Roles::nombre($rol)) ?></span>
                         </div>
@@ -133,6 +135,30 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                     </div>
                     <div class="card-footer-mini">
                         <?php $claseAccion = 'action-btn-mini'; require __DIR__ . '/partials/acciones_personal.php'; ?>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+            <?php foreach ($invitaciones as $i): ?>
+                <?php $rol = (int) $i['id_rol']; ?>
+                <article class="person-card" data-fila data-id-invitacion="<?= (int) $i['id_invitacion'] ?>" data-rol="<?= $rol ?>" data-estado="pendiente" data-buscar="<?= $e($buscable($i)) ?>">
+                    <div class="card-header-mini">
+                        <span class="avatar-mini avatar-iniciales avatar-iniciales--rol-<?= $rol ?>" aria-hidden="true"><?= $e($iniciales($i['nombre_completo'])) ?></span>
+                    </div>
+                    <div class="card-body-mini">
+                        <h3 class="card-title-mini"><?= $e($i['nombre_completo']) ?></h3>
+                        <div class="card-tags-mini">
+                            <span class="tag-mini"><i class="bi bi-envelope" aria-hidden="true"></i> Pendiente de activación</span>
+                            <span class="tag-mini"><i class="bi <?= $iconoRol($rol) ?>" aria-hidden="true"></i> <?= $e(Roles::nombre($rol)) ?></span>
+                        </div>
+                        <div class="card-contact-mini">
+                            <span class="contact-text-mini" title="<?= $e($i['tipo_documento']) ?>"><i class="bi bi-person-badge" aria-hidden="true"></i> <?= $e($i['documento']) ?></span>
+                            <?php if (!empty($i['telefono'])): ?>
+                                <span class="contact-text-mini"><i class="bi bi-telephone" aria-hidden="true"></i> <?= $e($i['telefono']) ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="card-footer-mini">
+                        <?php $claseAccion = 'action-btn-mini'; require __DIR__ . '/partials/acciones_invitacion.php'; ?>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -149,7 +175,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                     <tr><th>Usuario</th><th>Documento</th><th>Rol</th><th>Email</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
                 </thead>
                 <tbody>
-                    <?php if (!$personal): ?>
+                    <?php if (!$personal && !$invitaciones): ?>
                         <tr class="empty-table-row"><td colspan="7">Todavía no hay personal registrado.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($personal as $p): ?>
@@ -169,11 +195,32 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                             <td><span class="tag-mini"><i class="bi <?= $iconoRol($rol) ?>" aria-hidden="true"></i> <?= $e(Roles::nombre($rol)) ?></span></td>
                             <td><?= $e($p['email']) ?></td>
                             <td><?= $e($p['telefono'] ?? '') ?></td>
-                            <td><span class="status-badge <?= $activo && (int) $p['estado'] === 1 ? 'status-active' : 'status-inactive' ?>"><?= (int) $p['estado'] === 0 ? 'Pendiente de activación' : ($activo ? 'Activo' : 'Inactivo') ?></span></td>
+                            <td><span class="status-badge <?= $activo && (int) $p['estado'] === 1 ? 'status-active' : 'status-inactive' ?>"><?= (int) $p['estado'] === 0 ? 'Cuenta inactiva' : ($activo ? 'Activo' : 'Inactivo') ?></span></td>
                             <td>
                                 <div class="table-actions">
                                     <?php require __DIR__ . '/partials/interruptor_personal.php'; ?>
                                     <?php $claseAccion = 'action-btn'; require __DIR__ . '/partials/acciones_personal.php'; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <?php foreach ($invitaciones as $i): ?>
+                        <?php $rol = (int) $i['id_rol']; ?>
+                        <tr data-fila data-rol="<?= $rol ?>" data-estado="pendiente" data-buscar="<?= $e($buscable($i)) ?>">
+                            <td>
+                                <div class="table-user">
+                                    <span class="avatar-iniciales avatar-iniciales--tabla avatar-iniciales--rol-<?= $rol ?>" aria-hidden="true"><?= $e($iniciales($i['nombre_completo'])) ?></span>
+                                    <div><strong><?= $e($i['nombre_completo']) ?></strong></div>
+                                </div>
+                            </td>
+                            <td><?= $e(trim($i['tipo_documento'] . ' ' . $i['documento'])) ?></td>
+                            <td><span class="tag-mini"><i class="bi <?= $iconoRol($rol) ?>" aria-hidden="true"></i> <?= $e(Roles::nombre($rol)) ?></span></td>
+                            <td><?= $e($i['email']) ?></td>
+                            <td><?= $e($i['telefono'] ?? '') ?></td>
+                            <td><span class="status-badge status-inactive">Pendiente de activación</span></td>
+                            <td>
+                                <div class="table-actions">
+                                    <?php $claseAccion = 'action-btn'; require __DIR__ . '/partials/acciones_invitacion.php'; ?>
                                 </div>
                             </td>
                         </tr>
@@ -257,9 +304,10 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
     </section>
 </div>
 
-<!-- Alta y edición de personal. D2.1: diseño de v1.12.0 (modalUsuarioGestion,
-     specs/referencias/usuarios-modal-editar-v1.png) con las reglas v2: alta sin
-     contraseña por invitación de 72 horas e identidad compartida de C1.7. -->
+<!-- Alta y edición de personal y edición de clientes. D2.1: diseño de v1.12.0
+     (modalUsuarioGestion, specs/referencias/usuarios-modal-editar-v1.png) con las
+     reglas v2: alta por invitación de 72 horas e identidad compartida de C1.7.
+     D2.2: como en producción, el cliente usa este mismo modal con el rol oculto. -->
 <div class="users-modal" id="usuarioModal" role="dialog" aria-modal="true" aria-labelledby="usuarioModalTitulo" data-yo="<?= (int) $yo ?>">
     <div class="modal-content users-modal__panel">
         <div class="modal-header">
@@ -276,7 +324,8 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                 <i class="fas fa-times" aria-hidden="true"></i>
             </button>
         </div>
-        <form id="usuarioForm" data-cuenta-vincular="true" novalidate data-validacion-cuenta>
+        <?php // D2.2 (RE-T.7.5): el alta no consulta si la cuenta existe; al editar sí se comprueba la unicidad. ?>
+        <form id="usuarioForm" data-cuenta-unicidad="solo-edicion" novalidate data-validacion-cuenta>
             <input type="hidden" name="id_usuario" value="">
             <div class="users-modal__body">
                 <p class="modal-aviso" data-aviso hidden></p>
@@ -293,7 +342,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                         <label for="usuarioDocumento">N° Documento</label>
                         <input type="text" id="usuarioDocumento" name="documento" required inputmode="numeric" pattern="\d{5,15}" maxlength="15" data-caracteres="0-9" placeholder="Ej: 1023456789">
                     </div>
-                    <div class="input-group">
+                    <div class="input-group" data-grupo-rol>
                         <label for="usuarioRol">Rol</label>
                         <select id="usuarioRol" name="id_rol" required>
                             <?php foreach (Roles::DE_CLINICA as $rol): ?>
@@ -311,10 +360,10 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                     </div>
                     <div class="input-group">
                         <label for="usuarioTelefono">Teléfono</label>
-                        <input type="tel" id="usuarioTelefono" name="telefono" placeholder="Ej: 3001234567" <?= $telefonoHtml ?>>
+                        <input type="tel" id="usuarioTelefono" name="telefono" placeholder="Ej: 3001234567" minlength="<?= ValidadorTelefono::MIN ?>" <?= $telefonoHtml ?>>
                     </div>
                     <div class="input-group">
-                        <label for="usuarioEstadoInterruptor">Estado</label>
+                        <label for="usuarioEstadoInterruptor" data-etiqueta-estado>Estado</label>
                         <div class="estado-usuario">
                             <label class="toggle-switch">
                                 <input type="checkbox" id="usuarioEstadoInterruptor" data-estado-interruptor checked>
@@ -323,6 +372,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                             <span class="estado-usuario__texto estado-usuario__texto--activo" data-estado-texto>Activo</span>
                         </div>
                         <input type="hidden" name="estado" value="1">
+                        <small data-ayuda-vinculo hidden>Un vínculo inactivo solo se reactiva cuando el propietario lo confirma: usa el interruptor de la lista para enviarle la solicitud.</small>
                     </div>
                     <div class="input-group full invitacion-personal" data-solo-alta>
                         <p><i class="fas fa-envelope-open-text" aria-hidden="true"></i> Activación de la cuenta</p>
@@ -334,43 +384,6 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
             <div class="users-modal__footer">
                 <button type="button" class="btn-modal-secondary" data-accion="cerrar">Cancelar</button>
                 <button type="submit" class="btn-modal-primary"><i class="fas fa-save" aria-hidden="true"></i> <span data-texto-guardar>Crear Usuario</span></button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Edición de un cliente: nombre, teléfono y vínculo con la clínica (C1.7) -->
-<div class="users-modal" id="clienteModal" role="dialog" aria-modal="true" aria-labelledby="clienteModalTitulo">
-    <div class="modal-content users-modal__panel">
-        <div class="modal-header">
-            <h3 id="clienteModalTitulo"><i class="fas fa-user-edit" aria-hidden="true"></i> Editar cliente</h3>
-        </div>
-        <form id="clienteForm" novalidate data-validacion-cuenta>
-            <input type="hidden" name="id_usuario" value="">
-            <div class="users-modal__body">
-                <p class="modal-subtitle">Documento y correo: <strong data-cliente-identidad></strong>. Solo el titular los cambia desde su cuenta.</p>
-                <div class="form-grid">
-                    <div class="input-group full">
-                        <label for="clienteNombre">Nombre completo</label>
-                        <input type="text" id="clienteNombre" name="nombre_completo" required minlength="3" maxlength="100">
-                    </div>
-                    <div class="input-group">
-                        <label for="clienteTelefono">Teléfono</label>
-                        <input type="tel" id="clienteTelefono" name="telefono" required minlength="<?= ValidadorTelefono::MIN ?>" <?= $telefonoHtml ?>>
-                    </div>
-                    <div class="input-group">
-                        <label for="clienteEstado">Vínculo con la clínica</label>
-                        <select id="clienteEstado" name="estado">
-                            <option value="1">Activo</option>
-                            <option value="0">Inactivo</option>
-                        </select>
-                        <small data-ayuda-vinculo hidden>Para reactivarlo usa el interruptor: el propietario lo confirma por correo.</small>
-                    </div>
-                </div>
-            </div>
-            <div class="users-modal__footer">
-                <button type="button" class="btn-modal-secondary" data-accion="cerrar">Cancelar</button>
-                <button type="submit" class="btn-modal-primary">Guardar</button>
             </div>
         </form>
     </div>
@@ -403,4 +416,4 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
 
 <!-- D2.1: teléfono con bandera y prefijo, el mismo intl-tel-input de Pacientes. -->
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
-<script src="js/usuarios.js?v=5-d21"></script>
+<script src="js/usuarios.js?v=6-d22"></script>

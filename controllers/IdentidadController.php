@@ -3,6 +3,8 @@ require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../config/EmailService.php';
 require_once __DIR__ . '/../models/CuentaTitular.php';
 require_once __DIR__ . '/../models/PasswordReset.php';
+require_once __DIR__ . '/../models/InvitacionPersonal.php';
+require_once __DIR__ . '/../helpers/CierreSesiones.php';
 require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/Security.php';
@@ -53,15 +55,22 @@ final class IdentidadController
         $token = (string) ($_POST['token'] ?? $_GET['token'] ?? '');
         $error = null;
         $terminado = false;
+        $rechazada = false;
         $fila = $this->cuenta->leerEnlace($id, $token, $proposito);
         $persona = $fila !== null ? (new Usuario($this->db))->buscarPorId((int) $fila['id_usuario']) : null;
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             try {
-                if ($proposito === 'activacion_personal') {
+                if ($proposito === 'activacion_personal' && ($_POST['decision'] ?? '') === 'rechazar') {
+                    // D2.2: el titular de una cuenta nueva también puede no aceptar.
+                    $this->cuenta->rechazarActivacion($id, $token);
+                    $rechazada = true;
+                } elseif ($proposito === 'activacion_personal') {
                     $this->cuenta->activar($id, $token, $_POST, Auditoria::ipCliente());
                 } else {
                     $resultado = $this->cuenta->confirmarCorreo($id, $token);
-                    $enviado = $this->enviar($resultado['anterior'], $resultado['nombre'], 'Se cambió el correo de tu cuenta', 'Se cambió el correo de tu cuenta Zooki y se retiró la vinculación anterior con Google. Si no lo solicitaste, contacta a soporte.');
+                    // RE-T.2.5: si se confirma desde una sesión de la misma cuenta, esa sigue abierta.
+                    CierreSesiones::conservarActual(new Usuario($this->db), (int) $fila['id_usuario']);
+                    $enviado = $this->enviar($resultado['anterior'], $resultado['nombre'], 'Se cambió el correo de tu cuenta', 'Se cambió el correo de tu cuenta Zooki, se retiró la vinculación anterior con Google y se cerraron las demás sesiones abiertas. Si no lo solicitaste, contacta a soporte.');
                     if (!$enviado) {
                         $error = 'El cambio se aplicó, pero no pudimos enviar el aviso al correo anterior.';
                     }
@@ -75,6 +84,38 @@ final class IdentidadController
             }
         }
         require __DIR__ . '/../views/auth/enlace_identidad.php';
+    }
+
+    /**
+     * D2.2 (RE-T.7.5) — Invitación a una persona que ya tiene cuenta. El GET
+     * solo muestra la invitación; acepta o rechaza un POST con CSRF (Security
+     * lo exige para esta acción pública), como confirmar_vinculo_propietario.
+     */
+    public function invitacion(): void
+    {
+        $id = (int) ($_POST['id'] ?? $_GET['id'] ?? 0);
+        $token = (string) ($_POST['token'] ?? $_GET['token'] ?? '');
+        $invitaciones = new InvitacionPersonal($this->db);
+        $fila = $invitaciones->leer($id, $token);
+        $resultado = null;
+        $error = null;
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            try {
+                if (($_POST['decision'] ?? '') === 'aceptar') {
+                    $resultado = ['decision' => 'aceptada'] + $invitaciones->aceptar($id, $token);
+                } else {
+                    $invitaciones->rechazar($id, $token);
+                    $resultado = ['decision' => 'rechazada'];
+                }
+            } catch (InvalidArgumentException $e) {
+                $error = $e->getMessage();
+            } catch (Throwable $e) {
+                error_log('D2.2 invitación al personal: ' . $e->getMessage());
+                $error = 'No se pudo completar la operación. Inténtalo nuevamente.';
+            }
+        }
+        $rol = $fila !== null ? Roles::nombre((int) $fila['id_rol_vinculo']) : '';
+        require __DIR__ . '/../views/auth/invitacion_personal.php';
     }
 
     public function validar(): void

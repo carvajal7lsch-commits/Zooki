@@ -21,9 +21,9 @@ $errorMessage = $errorMessage ?? '';
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="js/password-policy.js"></script>
-<link rel="stylesheet" href="css/reset-password.css?v=d2">
-<link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
+    <script src="js/password-policy.js?v=d22"></script>
+<link rel="stylesheet" href="css/reset-password.css?v=d22">
+<link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
 </head>
 <body class="login-page reset-page">
     <div class="reset-wrapper">

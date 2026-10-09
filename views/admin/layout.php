@@ -32,7 +32,7 @@
     <?php if (!isset($content_view)): ?>
     <link rel="stylesheet" href="css/panel.css?v=3">
     <?php endif; ?>
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
 </head>
 <body>
     <div id="global-loader"><div class="spinner"></div></div>
@@ -150,7 +150,7 @@
 
     <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
     <script src="js/avisos.js?v=3"></script>
-    <script src="js/password-policy.js"></script>
+    <script src="js/password-policy.js?v=d22"></script>
     <script src="js/dashboard.js?v=7"></script>
     <script src="js/csrf.js"></script>
     <script src="js/sesion.js?v=1"></script>

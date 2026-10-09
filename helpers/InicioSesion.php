@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/Sesion.php';
 require_once __DIR__ . '/Contexto.php';
+require_once __DIR__ . '/CierreSesiones.php';
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../models/ConsentimientoDatos.php';
@@ -31,6 +32,8 @@ final class InicioSesion
 
         $idUsuario = (int) $usuario['id_usuario'];
         Contexto::iniciarIdentidad($idUsuario, (string) $usuario['nombre_completo'], (int) $usuario['debe_cambiar_password'] === 1, $metodo);
+        // RE-T.2.5: la sesión recuerda con qué versión entró (CierreSesiones).
+        CierreSesiones::abrir($usuario);
 
         $auditoria = new Auditoria($this->db);
         // El inicio de sesión es de la persona, no de una clínica.

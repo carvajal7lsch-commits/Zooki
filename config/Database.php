@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../helpers/ZonaHoraria.php';
+
 class Database {
     // Parámetros de la base de datos
     private $host;
@@ -19,12 +21,23 @@ class Database {
             $this->password = $env['DB_PASS'] ?? '';
         }
         
-        // Si el host configurado es 'db' pero no se puede resolver (por ejemplo, al ejecutar localmente en Windows sin Docker)
-        if ($this->host === 'db') {
-            if (PHP_OS_FAMILY === 'Windows' || gethostbyname('db') === 'db') {
-                $this->host = '127.0.0.1';
-            }
+        $this->host = self::hostEfectivo((string) $this->host);
+    }
+
+    /**
+     * El host al que de verdad se conecta. Si el configurado es 'db' pero no
+     * se puede resolver (por ejemplo, al ejecutar localmente en Windows sin
+     * Docker), se usa 127.0.0.1. Lo usa también EmailService para decidir si
+     * es local (D2.2): con DB_HOST=db en Windows la base es local.
+     */
+    public static function hostEfectivo(string $host, string $sistema = PHP_OS_FAMILY): string {
+        if ($host !== 'db') {
+            return $host;
         }
+        if ($sistema === 'Windows' || gethostbyname('db') === 'db') {
+            return '127.0.0.1';
+        }
+        return $host;
     }
 
     // Método para obtener la conexión
@@ -39,6 +52,7 @@ class Database {
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             // Hacemos que los resultados se devuelvan como un array asociativo por defecto
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            ZonaHoraria::aplicarEnConexion($this->conn);
             
         } catch(PDOException $exception) {
             // Si falla la conexión local en XAMPP y no estamos usando 'root', intentamos con las credenciales por defecto de XAMPP (root y sin contraseña)
@@ -47,6 +61,7 @@ class Database {
                     $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4", 'root', '');
                     $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                     $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                    ZonaHoraria::aplicarEnConexion($this->conn);
                     $this->username = 'root';
                     $this->password = '';
                     return $this->conn;
