@@ -157,6 +157,9 @@ test('registro con correo existente permite solicitar su vínculo', async () => 
     p.campos[0].value = '1000011111';
     p.campos[1].value = 'fabio@zooki.test';
     await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() {} });
+    // Revisión D2.1: el reenvío va en otra tarea; dentro del submit original el navegador lo ignora.
+    assert.equal(p.form.enviado, undefined);
+    p.temporizadores.at(-1)();
     assert.equal(p.form.enviado, true);
     assert.equal(p.llamadas[0].get('campo'), 'email');
 });

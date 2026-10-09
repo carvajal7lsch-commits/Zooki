@@ -282,7 +282,9 @@
             estado.enviando = false;
             if (!resultados.every(Boolean) || !form.reportValidity()) return;
             estado.listo = true;
-            form.requestSubmit(evento.submitter || undefined);
+            // Revisión D2.1: el navegador ignora requestSubmit mientras dispara el submit
+            // original (pasaba con las comprobaciones ya en caché): se envía en otra tarea.
+            setTimeout(() => form.requestSubmit(evento.submitter || undefined), 0);
         }, true);
     }
 
