@@ -19,6 +19,12 @@
 - **Peso desconocido de la mascota:** decidir cómo registrar un peso aproximado o desconocido (pregunta del usuario, recorrido C8/C9).
 - **Modales:** mejorar su diseño en general (recorrido C8/C9).
 
+## Validación reutilizable — D2 (2026-10-08)
+
+`public/js/validacion-cuenta.js` consulta `ValidadorCuenta`, `PoliticaPassword` y la unicidad en el servidor, muestra el error junto al campo y bloquea el envío mientras valida. Aplicado a registro, completar perfil, activar personal, crear/restablecer/cambiar contraseña, correo y documento del titular, contacto del perfil, Usuarios/Clientes y alta/edición del propietario en Pacientes (incluido Fabio).
+
+Pendiente extender el patrón a los formularios del resto del sistema: mascota (registro/edición del personal y del portal), consulta (motivo, tratamiento y datos clínicos), vacunas, desparasitación, agenda (crear/reprogramar), horarios y configuración. Sus reglas siguen en sus propios helpers; no se debe usar `ValidadorCuenta` para campos clínicos. Registro de clínicas y NIT se aplican en D3. La comprobación visual en móvil y el ajuste general de media queries siguen en el pulido final.
+
 ## Adaptación a pantallas
 
 - **Media queries de todo el sistema** al final, cuando ya no entren funciones nuevas (decisión del usuario, 2026-10-08).

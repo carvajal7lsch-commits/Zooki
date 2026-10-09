@@ -486,7 +486,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Criterios de aceptación:**
 
-- Todo registro (formulario, Google o alta por el personal) exige que el titular acepte la política antes de crear la cuenta. En el alta presencial, el personal muestra la política y el titular la acepta directamente; si no está presente o no acepta, no se registra la cuenta y se le remite al autorregistro.
+- El registro con formulario o Google y el alta presencial de propietarios exige aceptación del titular antes de crear la cuenta. Excepción para personal nuevo: la cuenta se crea pendiente e inerte (sin contraseña ni consentimiento); el titular recibe un enlace que vence en 72 horas, acepta la política y crea su contraseña para activarla. Si vence sin usarse, se elimina la cuenta pendiente únicamente si no tiene otros vínculos. El personal no acepta en nombre del titular. El super-administrador está exento de aceptación y de su prueba por ser una cuenta operativa de plataforma.
 - Se guarda la prueba: quién, qué versión, por qué medio, cuándo y desde qué IP.
 - Si la política cambia, en el siguiente inicio de sesión se pide aceptar la nueva versión antes de continuar.
 - Revocar la autorización lleva a la solicitud de eliminación de la cuenta (HU-5.14).

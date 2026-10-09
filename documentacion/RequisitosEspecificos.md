@@ -288,8 +288,8 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-T.19.1 | Todo registro debe exigir la aceptación expresa del titular antes de crear la cuenta, incluida el alta por el personal. | Restricción | Un registro con Google, formulario o personal sin aceptación previa no crea `usuarios` ni el vínculo con la clínica; el personal no puede aceptar en nombre del titular. | Alta |
-| RE-T.19.2 | El sistema debe guardar la prueba de la aceptación: usuario, versión, medio, fecha e IP. | Seguridad | Cada cuenta nueva tiene su registro en `consentimientos_datos`. | Alta |
+| RE-T.19.1 | El registro por formulario, Google y el alta presencial de propietarios exige aceptación expresa antes de crear la cuenta. Excepción: el personal nuevo queda pendiente e inerte, sin contraseña ni consentimiento, y recibe un enlace de 72 horas para aceptar la política y crear su contraseña. | Restricción | Sin aceptación no se crea una cuenta de propietario. El personal no puede aceptar por el titular: la cuenta pendiente no inicia sesión y solo se activa al aceptar y crear la contraseña; si vence la invitación, se elimina únicamente si no tiene otros vínculos. | Alta |
+| RE-T.19.2 | El sistema debe guardar la prueba de la aceptación: usuario, versión, medio, fecha e IP, salvo la cuenta de super-administrador. | Seguridad | Cada cuenta nueva habilitada tiene su prueba en `consentimientos_datos`; el personal pendiente la registra al activar. El super-administrador está exento de aceptación y de esta prueba por ser una cuenta operativa de plataforma. | Alta |
 | RE-T.19.3 | Si la política cambia de versión, el sistema debe pedir aceptarla en el siguiente inicio de sesión antes de continuar. | Restricción | Tras publicar una versión nueva, el usuario no entra al panel hasta aceptarla. | Media |
 | RE-T.19.4 | Revocar la autorización debe llevar a la solicitud de eliminación de la cuenta. | Funcional | La opción de revocar abre el flujo de HU-5.14. | Media |
 

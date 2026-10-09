@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A, B y C terminadas; D1 implementada y verificada (2026-10-08), pendiente de revisión por Claude; D2 y D3 no iniciadas.
+> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 entregada, pendiente de revisión por Claude; D3 no iniciada.
 > Entrega: v2.0 · Fecha: 2026-10-06
 > C8/C9 (2026-10-08): escribe **Codex**, revisa **Claude** (sesión de revisión).
 > Reparto del resto de M0 (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
@@ -24,7 +24,7 @@
 | HU-T.15 | RE-T.15.1–5 | RN-G13, RN-G14, RN-001, RN-004, RNF-11 | C (cerrada) | Dos clínicas: petición cruzada 403, auditoría y ninguna consulta o modificación ajena; evidencia completa en C9. |
 | HU-T.16 | RE-T.16.1–4 | RN-G17, RN-G05, RNF-13, RNF-14 | D | Sesión vencida, AJAX 401, cookie segura y auditoría. |
 | HU-T.17 | RE-T.17.1–5 | RN-G01, RN-G06, RN-G13, RN-G18 | C | Una persona con rol de propietario y de personal en dos clínicas cambia de contexto sin mezclar permisos. |
-| HU-T.19 | RE-T.19.1–4 | RN-G19, RN-G20 | D | Ninguna cuenta se crea sin la aceptación del titular; prueba con versión, medio, fecha e IP. |
+| HU-T.19 | RE-T.19.1–4 | RN-G19, RN-G20 | D | Aceptación del titular antes de crear la cuenta, salvo personal pendiente e inerte por 72 horas; activación con prueba de versión, medio, fecha e IP. |
 | HU-5.8 | RE-5.8.1–5 | RN-109, RN-G06 | D | Una identidad global se vincula a las clínicas que elige, sin duplicar el correo ni exponerla a otra clínica. |
 | HU-0.1 | RE-0.1.1–10 | RN-001, RN-002, RN-010, RN-011, RN-G19, RN-G20 | D | Alta pública con NIT válido, CAPTCHA, límites, consentimiento y clínica pendiente. |
 | HU-0.2 | RE-0.2.1–5 | RN-002, RN-003, RN-005, RN-G11 | D | La verificación activa la clínica y asigna el plan gratuito; un enlace vencido no la activa. |
@@ -100,8 +100,8 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] C9 — Limpieza de C, tarjetas por defecto con preferencia local, eventos y estilos externos, toasts por acción y auditoría en el menú ([Anexo C9](#anexo-c9--resultado)). Lo escribió Codex; pendiente de revisión por Claude y de prueba visual del usuario.
   - [x] C9.1 — Correcciones del recorrido visual: usuarios con el diseño de v1.12.0, restablecer oculto en identidades compartidas, recarga sin esperar al aviso, teléfono del portal validado al escribir, imprimir historial en el detalle de la mascota y pruebas de JS en el CI ([Anexo C9.1](#anexo-c91--resultado)). Lo escribió Claude Code; pendiente de revisión por Claude y de prueba visual del usuario.
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
-  - [x] D1 — Sesión (HU-T.16), política de datos versionada y re-aceptación (HU-T.19), registro del propietario como identidad global (HU-5.8), registro con Google con la política antes de la cuenta (RE-T.18.2–4), hueco de RN-109 y teléfonos unificados ([Anexo D1](#anexo-d1--resultado)). Lo escribió Claude Code; pendiente de revisión por Claude y de prueba visual del usuario.
-  - [ ] D2 — Cuentas del personal y del titular: alta con enlace de activación, cambio de correo y documento con verificación, CAPTCHA por cuenta.
+  - [x] D1 — Sesión (HU-T.16), política de datos versionada y re-aceptación (HU-T.19), registro del propietario como identidad global (HU-5.8), registro con Google con la política antes de la cuenta (RE-T.18.2–4), hueco de RN-109 y teléfonos unificados ([Anexo D1](#anexo-d1--resultado)). Lo escribió Claude Code; revisada y aprobada por Claude, con prueba manual del usuario (2026-10-08).
+  - [x] D2 — Cuentas del personal y del titular: alta con enlace de activación, cambio de correo y documento con verificación, CAPTCHA por cuenta y validación reutilizable en tiempo real ([Anexo D2](#anexo-d2--resultado)). Entregada, pendiente de revisión por Claude.
   - [ ] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2).
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -1342,3 +1342,112 @@ Siete mutaciones hacen fallar su prueba: quitar el bloqueo de RN-109, el del per
 - El enlace del correo de verificación llevó a producción porque el `APP_URL` del `.env` local apunta allí: en local debe apuntar a la instalación local (anotado en `agentes/metodo.md`, sección 9).
 
 **Desde aquí el trabajo sigue el método de `agentes/metodo.md` y el estado en `agentes/estado.md`.**
+
+
+## Anexo D2 — Resultado
+
+Lo escribió Codex; la revisión corresponde a la sesión de revisión de Claude. **Entregada, pendiente de revisión.** Se siguieron los seis puntos acordados en `agentes/estado.md`, la revisión de D1 y la prueba manual del usuario.
+
+**Decisiones confirmadas por el usuario (2026-10-08).** Ajustar también HU-T.19, además de RE-T.19.1/2, sin subir la revisión de los documentos. El administrador restablece por enlace: invalida la contraseña actual y el titular elige otra antes de entrar; se conservan las restricciones de C1.6/C1.7. RN-G19 y la trazabilidad del plan reflejan la excepción del personal pendiente.
+
+**Qué y riesgos cubiertos.**
+
+- Alta de personal pendiente, `estado=0`, contraseña `NULL` y sin consentimiento: no entra por contraseña ni Google. Enlace secreto de 72 horas; POST con CSRF exige aceptación y contraseña válida antes de activar, con prueba `alta_personal`. El listado distingue «Pendiente de activación». Restablecer una invitación pendiente reenvía la activación. `limpiar_cuentas_pendientes.php` elimina únicamente altas vencidas sin otro vínculo (incluidos los inactivos), consentimiento ni invitación vigente; conserva la auditoría. Se agregó su tarea horaria a `scripts/zooki.cron`.
+- Correo y documento del titular desde perfil del personal y portal, con contraseña actual o token nuevo de Google verificado en servidor. El correo anterior sigue vigente hasta confirmar el nuevo por POST; se retira Google, se invalidan enlaces antiguos de recuperación y se avisa al buzón anterior. Una cuenta de Google sin contraseña debe crearla primero. Documento duplicado: sin cambio de identidad y con caso de soporte sin duplicar el caso abierto; corrección válida con valores anteriores auditados y aviso.
+- Turnstile sustituible en pruebas y reutilizable en D3. Cinco fallos en 15 minutos bloquean la IP; desde otra IP la cuenta exige CAPTCHA y sigue pudiendo entrar. Contraseña y Google aplican la regla; los mensajes no revelan la cuenta. `.env.example` contiene las claves públicas de prueba de Cloudflare, que siempre aprueban y deben sustituirse en producción.
+- Verificación de registro, activación y cambio de correo: GET presenta el botón, POST con CSRF consume una sola vez. Restablecer por enlace invalida la contraseña anterior, conserva C1.7 y consume el enlace atómicamente con la nueva contraseña. Una recuperación emitida a un correo que ya cambió no modifica la cuenta.
+- Un componente `validacion-cuenta.js` consulta los helpers del servidor, muestra avisos junto al campo, descarta respuestas antiguas y bloquea envíos pendientes o sin conexión. Aplicado a todos los formularios de cuenta acordados y al propietario de Pacientes (Fabio); reglas de formato y contraseña en servidor. Se extrajo el código en línea de las pantallas de contraseña. El resto del sistema queda inventariado en `specs/pulido-interfaz.md`.
+
+Sin migración ni cambio de esquema. Las operaciones del titular son globales y solo reciben el usuario de sesión o el enlace secreto; el administrador conserva el contexto activo y las restricciones de identidad compartida. La limpieza es una excepción explícita del sistema sobre altas inertes.
+
+**RE con evidencia.**
+
+| RE / regla | Prueba |
+|---|---|
+| RE-T.19.1, RN-G19: pendiente, aceptación, 72 horas, limpieza selectiva | `CuentasD2Test` (alta inerte, aceptación, vencimiento, otros vínculos); `UsuarioSeguridadTest`; `BaseV2MysqlTest::testD2CuentasEnElEsquemaReal` |
+| RE-T.19.2: super-administrador exento | `PoliticaDatosTest`; texto corregido junto con HU-T.19 |
+| RE-T.5.7, RN-G23: identidad, correo vigente hasta confirmar, Google retirado, unicidad al confirmar | `CuentasD2Test`; `BaseV2MysqlTest`; recorrido HTTP con correo simulado, incluido aviso al anterior |
+| RE-T.5.8, RN-G24: autenticación nueva, duplicado a soporte, valores anteriores | `CuentasD2Test`; recorrido HTTP de documento duplicado y CSRF de otra sesión |
+| RE-T.7.1–5: administración local, unicidad y vínculo existente | `UsuarioSeguridadTest`, `AutorizacionRolTest`; altas por HTTP y validación del frontend |
+| RE-T.14.2, RN-G10: restablecer por enlace, anterior revocada, regla C1.7 | `CuentasD2Test`, `UsuarioSeguridadTest`; restablecimiento completo por HTTP con correo simulado |
+| RE-T.13.5, RN-G15: cinco fallos, IP distinta y CAPTCHA sustituible | `CuentasD2Test::testCaptchaDesdeOtraIpNoBloqueaLaCuenta`, `TurnstileTest` |
+| Enlaces sin mutación por GET y consumo único; CSRF | `CuentasD2Test`, `BaseV2MysqlTest`; recorrido HTTP de activación rechazada sin CSRF y luego aceptada |
+| Formato, política al escribir, unicidad y respuestas antiguas | `D2ValidacionCuenta.test.cjs` (11), `TelefonosTest`, `ValidadorTelefonoTest`; navegador sobre copia aislada |
+
+**Verificación.**
+
+- `php vendor/bin/phpunit`: 452 pruebas, 2184 aserciones, sin fallos; 21 saltadas de MySQL sin variable.
+- Suite completa con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1`, puerto 3307, MariaDB temporal propia y base por defecto **`zooki_test_base_v2`**: 452 pruebas, 2454 aserciones, sin fallos ni saltadas. Los últimos ajustes de bloqueo del padre y contraseña nula se verificaron además con la suite y la prueba MySQL de D2.
+- `node --test "tests/Frontend/**/*.test.cjs"`: 31 pruebas en verde.
+- `php -l`, `node --check` y `git diff --check`: sin errores.
+- Navegador: registro y portal de Fabio en copia aislada; contraseña con nombre rechazada al escribir, documento ocupado avisado junto al campo, correo/documento visibles en perfil y formato del teléfono. Sin errores de JavaScript en ese recorrido. Evidencia local en `scratch/d2-validacion-portal.png`.
+- HTTP sobre copia y base temporal propia `zooki_d2_recorrido`, con correo simulado: alta inerte, activación GET/POST, rechazo sin CSRF, aceptación y acceso; cambio de correo y aviso al anterior; documento duplicado a soporte; CSRF de otra sesión rechazado; restablecimiento del administrador y creación de la contraseña por enlace. No se enviaron correos reales.
+- No se leyó ni escribió `.env`, ni se modificó `zooki_v2_prueba` ni sus contraseñas. No se hizo commit ni push ni se empezó D3.
+
+**Pendientes / pantallas para la prueba del usuario.**
+
+1. Revisión de Claude: diff, trazabilidad, seguridad y pruebas; esta entrega no se autoaprueba.
+2. Navegador en la instalación del usuario, escritorio y celular: registro, completar perfil con Google, activar personal, verificación de correo, recuperación/restablecimiento, cambio obligatorio de contraseña, Mi perfil del personal, Perfil del portal (contraseña, correo, documento y teléfono), Usuarios/Clientes y Pacientes (alta y edición de Fabio). Probar que la identidad compartida sigue sin admitir restablecimiento del administrador.
+3. Google real para confirmar cambios y Turnstile contra Cloudflare; las pruebas automáticas sustituyen ambos servicios. Configurar las nuevas variables según `.env.example` y mantener `APP_URL` local apuntando al entorno local. Las claves de prueba no protegen producción.
+4. Activar la tarea de limpieza en el despliegue F; el ejemplo cron ya la incluye. La gestión del caso de soporte queda para E; aquí se crea el caso.
+5. Versión, historial, revisión documental y PDF/Word del portal: al cerrar M0, conforme al método. Fuera de D2: D3 y E.
+
+**Ajuste del usuario a D2 (2026-10-08), lo escribió Codex.** Los errores se muestran debajo del contenedor del input; en contraseña se reutiliza la zona de ayuda/requisitos existente (por ejemplo, «Mínimo 8 caracteres»), nunca dentro de la fila del campo. Aplicado en el componente común, portal, perfil del personal, registro y pantallas de contraseña. Pruebas de JS comprueban la ubicación fuera de la envoltura y la reutilización de la ayuda: suite de frontend con 33 pruebas en verde; `node --check` y `git diff --check` sin errores. Sigue pendiente la revisión de Claude.
+
+### D2 — Revisión (2026-10-08)
+
+**Resultado: aprobada con corrección (D2.1).** Claude (sesión de revisión) revisó el anexo, el ajuste del usuario y el diff, y verificó en el código `CuentaTitular`, `IdentidadController`, `Autenticador`, `Security`, `Turnstile`, `validacion-cuenta.js` y `cuenta-password.js`. Suite PHP en una copia: 452 pruebas, 2184 aserciones, 21 saltadas de MySQL (no se corrió la parte MySQL en esta revisión). Pruebas de JS: 33 en verde.
+
+**Bien resuelto.** Los enlaces se guardan con hash, se consumen una sola vez dentro de la transacción (`UPDATE … used = 0`) y solo con POST y CSRF; abrirlos ya no cambia nada. La cuenta pendiente es inerte de verdad: sin contraseña, `estado = 0`, Google la trata como inactiva, no aparece en la agenda (`u.estado = 1`) y el cambio de estado de Usuarios solo toca el vínculo. El cambio de correo deja vigente el anterior, revalida unicidad al confirmar, retira Google, invalida las recuperaciones y avisa al buzón anterior. El documento duplicado crea un caso sin duplicarlo. El CSS sacado de las pantallas de contraseña es idéntico al que estaba en línea, así que no hay cambio de diseño. Los textos de HU-T.19, RE-T.19.1/2 y RN-G19 reflejan la decisión del usuario.
+
+**Hallazgos.**
+
+| # | Tipo | Dónde | Qué pasa | Corrección |
+|---|---|---|---|---|
+| 1 | Bloqueante (antes de F) | `helpers/Security.php` 472, 520, 537, 563; `Autenticador.php` 80 | Los límites usan `REMOTE_ADDR`. En producción todas las peticiones llegan desde Traefik con la misma IP: cinco fallos de cualquiera bloquean el login de toda la plataforma 15 minutos, y 20 comprobaciones de documento o correo de cualquiera dejan sin validación en tiempo real a todos (RN-G15, RE-T.13.4). | Una sola fuente de IP (`Auditoria::ipCliente()`) en `Security` y en Turnstile. `ipCliente` debe tomar la última IP de `X-Forwarded-For` que no sea un proxy confiable, no la primera (la primera la puede escribir el cliente). `TRUSTED_PROXIES` explicado en `.env.example` para F. Prueba con proxy confiable, no confiable y cabecera falsificada. |
+| 2 | Defecto de seguridad | `Security.php` 543 | Un acceso correcto borra el contador de la IP: quien tenga una cuenta puede alternar cuatro intentos contra otras cuentas y un acceso propio, sin bloqueo. Contradice RE-T.13.4 («el sexto intento desde la IP se rechaza»). | El acceso correcto limpia la sesión y la cuenta, no la IP. Prueba. |
+| 3 | Defecto | `IdentidadController::validar` → `checkVerificationLimit` | Cada comprobación de documento o correo al escribir gasta el límite anónimo de 20 en 15 minutos, también con sesión: un administrador que da de alta tres o cuatro personas queda en «Espera un momento». | Sin sesión, el límite por IP sigue igual; con sesión, un límite por `id_usuario` más alto (propuesta: 120 en 15 minutos). Prueba. |
+| 4 | Defecto | `UsuarioController.php` 173 y 367 | La invitación de personal y el restablecimiento usan `enviarCorreoVerificacion`: «Creaste una cuenta… si no fuiste tú quien se registró, ignora este mensaje». El personal no se registró y en el restablecimiento no se confirma un correo. | Dos plantillas en `EmailService`: invitación (clínica, rol, 72 horas, aceptar la política y crear contraseña) y restablecimiento (24 horas, la anterior ya no sirve). |
+| 5 | Regresión | `public/js/perfil.js` 84; `views/perfil/index.php` | Mi perfil conserva la lista de requisitos de la contraseña, pero ya no se marca al escribir (se quitó `pintarRequisitos`), y se perdió «Las contraseñas coinciden». | Restaurar el marcado local de la lista (solo visual) junto a la respuesta del servidor; prueba de JS. |
+| 6 | Defecto | `CuentaTitular::limpiarPendientes` 246 | Si una cuenta pendiente queda referenciada por otra tabla (perfil del veterinario, horarios, notificaciones, en módulos que vienen), el `DELETE` falla y la excepción corta todo el lote cada hora. | Error por cuenta: se registra y se sigue con la siguiente. Prueba con una FK ocupada. |
+| 7 | Decisión | RE-T.13.4, RN-G15 | Cinco fallos por IP es muy estricto para una clínica que sale a internet por una sola IP: cinco errores del personal en 15 minutos dejan a toda la clínica sin entrar. El código anterior usaba 20 a propósito. | **Decisión del usuario (2026-10-08):** 20 por IP y 5 por cuenta con CAPTCHA; se ajusta el texto de RE-T.13.4 y RN-G15 en D2.1. |
+| 8 | Pulido de interfaz | `views/auth/cambiar_password.php` 27 | «Contraseña actual» es una etiqueta sin el `form-group` ni el ojito del resto de la pantalla. | `specs/pulido-interfaz.md`, o de paso en D2.1. |
+| 9 | Anotado | `views/auth/login.php` | Turnstile se pinta en el registro con formulario, pero `process_register` no lo verifica (solo lo usa Google desde esa pestaña). | Se decide en D3 con el registro de clínicas. |
+| 10 | Cierre de M0 | `CuentaTitular::restablecerPersonal` | Restablecer o cambiar el correo no cierra las sesiones abiertas del titular. | Revisar al cerrar M0 junto con HU-T.16. |
+
+**Lo que debe probar el usuario:** la lista de prueba manual de D2 (abajo). Los hallazgos de esa prueba se suman a D2.1.
+
+#### D2 — Lista de prueba manual
+
+Antes: XAMPP encendido, `php scripts/dev/datos_prueba.php --si`, y en el `.env` local `APP_URL` local, `TURNSTILE_SITE_KEY`/`TURNSTILE_SECRET_KEY` copiadas de `.env.example` y `GOOGLE_CLIENT_ID`. Los correos `@zooki.test` no llegan: para invitaciones y cambios de correo se usa un correo real con alias (`tucorreo+vet1@gmail.com`).
+
+**Ana Norte**
+- [ ] 1. `admin_usuarios` → Nuevo integrante con un correo real con alias: no pide contraseña; documento `1000000002` o teléfono con letras avisan junto al campo mientras se escribe. Al guardar, aviso breve y la lista muestra «Pendiente de activación» sin recargar.
+- [ ] 2. El correo llega (el texto todavía dice «Creaste una cuenta»: conocido, va en D2.1). El enlace abre «Activa tu cuenta» con un botón; abrirlo no activa nada.
+- [ ] 3. En ventana privada, entrar con ese correo antes de activar: mensaje genérico, no entra.
+- [ ] 4. En la activación: una contraseña con el nombre avisa al escribir; si no coinciden, avisa; sin la casilla no envía. Bien hecho: «Tu cuenta quedó activa». Abrir otra vez el mismo enlace: «no es válido…».
+- [ ] 5. Entrar con la cuenta nueva: entra a Clínica Norte sin volver a pedir la política.
+- [ ] 6. Ana → Restablecer a esa persona: confirmación, llega un enlace; la contraseña anterior ya no sirve; con el enlace crea otra y entra.
+- [ ] 7. Ana → Elena Doble: no se puede restablecer (identidad compartida).
+- [ ] 8. Con Beto Norte, `vet_pacientes` → editar a Fabio: teléfono con letras o paréntesis avisa al escribir; documento `1000000002` avisa «ya registrado».
+- [ ] 9. Carla Sur → `admin_usuarios`: no ve a la persona nueva de Norte.
+
+**Fabio (portal)**
+- [ ] 10. Perfil → Datos de acceso → Correo nuevo (real con alias) y contraseña actual mala: «No se pudo confirmar tu identidad». Con la buena: «Revisa el correo nuevo»; sigue entrando con el correo viejo.
+- [ ] 11. Enlace del correo nuevo → botón → confirmado. Desde ahí entra con el nuevo y el viejo ya no sirve. (Al terminar, `datos_prueba.php --si` lo deja como estaba.)
+- [ ] 12. Documento `1000000001`: avisa que al enviar se abrirá un caso; al enviar, mensaje del caso y el documento no cambia. Un documento libre se actualiza en pantalla sin recargar.
+- [ ] 13. Contraseña del portal: la política avisa al escribir, sin SweetAlert. Teléfono del perfil: avisa al escribir.
+
+**Beto Norte**
+- [ ] 14. Mi perfil: el correo es de solo lectura y «Datos de acceso» funciona como en el portal. Contraseña: avisos al escribir (la lista de requisitos no se marca: conocido, va en D2.1).
+
+**Sin sesión**
+- [ ] 15. Registro de propietario con correo real: el enlace del correo abre «Confirma tu correo» con botón; solo al presionarlo queda verificada.
+- [ ] 16. Google con un correo nuevo → Completar perfil: documento ocupado y teléfono inválido avisan al escribir.
+- [ ] 17. «¿Olvidaste tu contraseña?» con Fabio: enlace, contraseña nueva, entra.
+- [ ] 18. Login: se ve el recuadro de Turnstile (con las claves de prueba dice que es de pruebas).
+- [ ] 19. **De último:** cinco contraseñas malas con Beto; el sexto intento, aun con la correcta, dice «Demasiados intentos». Bloquea tu IP local 15 minutos.
+
+**Celular** (F12 y Ctrl + Shift + M): repetir 4, 10, 12 y el login. Mirar que los avisos queden debajo del campo y no dentro de la fila.
+
+Dime solo lo que falló, con el número del paso.
