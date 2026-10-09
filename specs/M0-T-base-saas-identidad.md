@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 entregada, pendiente de revisión por Claude; D3 no iniciada.
+> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 revisada con corrección (2026-10-08); D2.1 entregada, pendiente de revisión (2026-10-09); D3 no iniciada.
 > Entrega: v2.0 · Fecha: 2026-10-06
 > C8/C9 (2026-10-08): escribe **Codex**, revisa **Claude** (sesión de revisión).
 > Reparto del resto de M0 (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
@@ -102,6 +102,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
 - [ ] D — Sesión, consentimiento, registro de propietario y de clínica, activación con copia de los catálogos iniciales (D-1, RE-0.2.5); pruebas.
   - [x] D1 — Sesión (HU-T.16), política de datos versionada y re-aceptación (HU-T.19), registro del propietario como identidad global (HU-5.8), registro con Google con la política antes de la cuenta (RE-T.18.2–4), hueco de RN-109 y teléfonos unificados ([Anexo D1](#anexo-d1--resultado)). Lo escribió Claude Code; revisada y aprobada por Claude, con prueba manual del usuario (2026-10-08).
   - [x] D2 — Cuentas del personal y del titular: alta con enlace de activación, cambio de correo y documento con verificación, CAPTCHA por cuenta y validación reutilizable en tiempo real ([Anexo D2](#anexo-d2--resultado)). Entregada, pendiente de revisión por Claude.
+  - [x] D2.1 — Corrección de D2: IP real detrás del proxy, límites de RN-G15 (20 por IP, CAPTCHA por cuenta), comprobaciones por persona, validación en cada tecla, correos propios, modal del personal de v1.12.0, limpieza tolerante y prueba local ([Anexo D2.1](#anexo-d21--resultado)). Lo escribió Claude Code; entregada, pendiente de revisión.
   - [ ] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2).
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
@@ -1464,3 +1465,97 @@ Probó hasta el paso 12; el resto quedó bloqueado por los correos y por el lím
 - **No son fallos:** el enlace iba a producción porque el `.env` local tiene `APP_URL` de producción (sin `APP_URL`, `EnlaceCuenta` usa localhost); Beto pidió la política porque era su primer acceso desde D1; la cuenta pendiente no tiene contraseña a propósito (el paso 3 estaba mal redactado).
 - **Pasaron:** alta con invitación de 72 horas; teléfono de Fabio en Pacientes; correo de solo lectura y «Datos de acceso» en Mi perfil; Carla Sur no ve el personal de Norte.
 - **Fricción de la prueba:** demasiados inicios y cierres de sesión y correos reales. D2.1 agrega correos locales a archivo, clave común opcional y política aceptada en `datos_prueba.php`, y el revisor hace el recorrido funcional en el navegador del equipo del usuario; el usuario solo revisa lo visual.
+
+## Anexo D2.1 — Resultado
+
+Lo escribió Claude Code; la revisión corresponde a la sesión de Claude (arquitecto). **Entregada, pendiente de revisión.** Cubre los hallazgos 1 a 8 de «D2 — Revisión» y los de la prueba manual del usuario; los hallazgos 9 (Turnstile en `process_register`, D3) y 10 (cerrar sesiones al restablecer, cierre de M0) quedan fuera, como pedía el alcance.
+
+**Qué se hizo.**
+
+1. **IP real (RN-G15).** `Auditoria::ipCliente()` es la única fuente de IP: auditoría, los cuatro límites de `Security` y Turnstile en `Autenticador`.
+   - Detrás de un proxy confiable recorre `X-Forwarded-For` de derecha a izquierda y toma la primera IP que no sea un proxy confiable; la de la izquierda la puede escribir el cliente.
+   - `TRUSTED_PROXIES` acepta IP exactas y rangos CIDR (IPv4 e IPv6), necesarios con Traefik porque su IP en la red Docker cambia. `.env.example` lo explica para la etapa F.
+2. **Límites (decisión del usuario, 2026-10-08).** 20 fallos en 15 minutos bloquean la IP, también en la capa de sesión. 5 fallos sobre una cuenta exigen CAPTCHA y la cuenta se registra sin castigo, así que nunca se bloquea. Se ajustaron RE-T.13.4, RN-G15, el criterio de HU-T.13 y RNF-12 del ERS (el mismo límite), sin subir revisión, y el comentario de `Security`. La matriz RN → HU → RE no cambia: son los mismos identificadores.
+3. **Acceso correcto:** limpia el contador de la sesión y el de la cuenta, no el de la IP.
+4. **`validar_cuenta_ajax`:** sin sesión, 20 comprobaciones por IP; con sesión, 120 por `id_usuario` en 15 minutos. El aviso de unicidad nombra el campo: «Este correo ya está registrado.» / «Este documento ya está registrado.»
+5. **Validación en cada tecla** (`validacion-cuenta.js`), en todos los formularios que usan el componente.
+   - Al instante: formato del documento, correo, teléfono (el `pattern` de `ValidadorTelefono`) y nombre; requisitos de la contraseña con `password-policy.js`; coincidencia de contraseñas, que ahora también dice «Las contraseñas coinciden.».
+   - Con pausa: la unicidad y la política completa del servidor, sin «Comprobando…» y sin borrar el aviso vigente mientras responde; una respuesta vieja no pisa la nueva.
+   - `enlace_identidad.php` (activación) no cargaba `password-policy.js`; ahora sí.
+6. **Mi perfil:** `perfil.js` vuelve a marcar en cada tecla la lista `perfilPwdRequisitos`; «Las contraseñas coinciden.» lo da el componente.
+7. **Correos:** `EmailService::enviarInvitacionPersonal` (clínica, rol, 72 horas, aceptar la política y crear la contraseña) y `enviarRestablecimientoPorAdministrador` (24 horas, la anterior ya no sirve). `UsuarioController` deja de usar `enviarCorreoVerificacion`. Restablecer a una persona con la invitación pendiente reenvía la invitación.
+8. **Modal del personal en Usuarios** con el diseño de v1.12.0 (`modalUsuarioGestion` y `usuarios-modal-editar-v1.png`).
+   - Encabezado: «Nuevo Usuario» / «Editar Usuario» con nombre • documento y botón ✕.
+   - Cuadrícula de tres columnas: Rol, Nombre completo, Correo electrónico, Teléfono con bandera y prefijo (intl-tel-input, la misma configuración de Pacientes) e interruptor de Estado con «Activo» / «Inactivo». Guardar dice «Crear Usuario» / «Guardar Cambios».
+   - Reglas v2 conservadas: alta sin contraseña con el aviso de la invitación de 72 horas, C1.7 (correo de solo lectura y aviso en una identidad compartida), nadie se desactiva a sí mismo y validación en tiempo real.
+   - Al editar, el tipo y el número de documento van en el subtítulo y no se editan, como en v1.12.0 y RE-T.7.1; la corrección del documento la hace el titular (RE-T.5.8).
+   - Sin JS ni CSS en línea. Los modales del propietario en Pacientes no se tocaron.
+9. **`CuentaTitular::limpiarPendientes`:** cada cuenta va en su propia transacción. Un error (por ejemplo, una FK ocupada) se registra en el log y la limpieza sigue con las demás.
+10. **`cambiar_password.php`:** «Contraseña actual» con `form-group` y ojito.
+11. **Prueba local.**
+    - `MAIL_MODO=archivo` (comentado en `.env.example`): `EmailService` no envía y guarda cada correo como `.html` en `logs/correos/`, con la fecha, el destinatario y el asunto en el nombre (ya ignorado por git). Solo se respeta en local, con `helpers/EntornoLocal.php`, que ahora también usa `datos_prueba.php`; en otro entorno se ignora y queda en el log.
+    - `datos_prueba.php --si --clave=<clave>`: misma clave para todos si cumple la política, y se niega con el motivo antes de tocar la base. Los usuarios de prueba, salvo la super-administradora, quedan con la política vigente aceptada. La lógica está en `scripts/dev/DatosPrueba.php` para probarla.
+    - `agentes/metodo.md` §9 y `agentes/prueba-manual.md`: correos en `logs/correos/`, `--clave`, `APP_URL` comentado en local y sesiones simultáneas.
+
+**De paso (anotado):** `.env.example` no se podía leer con `parse_ini_file` desde D2, por los paréntesis de dos comentarios; copiado como `.env`, ninguna variable cargaba. Se corrigió y ahora una prueba lo comprueba.
+
+**RE y pruebas.**
+
+| Alcance | Prueba |
+|---|---|
+| RN-G15: IP real; proxy no confiable, cadena real, cabecera falsificada, IPv6; Turnstile con la IP real | `D21CorreccionTest` (IP: 4 casos) |
+| RE-T.13.4: 20 fallos bloquean la IP y no antes; el acceso correcto no limpia la IP | `D21CorreccionTest`, `SecurityTest`, `CuentasD2Test::testCaptchaDesdeOtraIpNoBloqueaLaCuenta` |
+| RE-T.13.5: 5 fallos exigen CAPTCHA; 30 fallos desde otras IP no bloquean la cuenta; con CAPTCHA válido entra | `D21CorreccionTest::testCincoFallosExigenCaptchaYLaCuentaNuncaSeBloquea` |
+| Comprobaciones: 20 por IP sin sesión, 120 por persona con sesión; aviso con el nombre del campo | `D21CorreccionTest` (3 casos), `D21Interfaz.test.cjs` |
+| Validación en cada tecla, aviso vigente y respuestas tardías | `D21Interfaz.test.cjs` (4 casos), `D2ValidacionCuenta.test.cjs` |
+| Mi perfil y modal del personal (título, subtítulo, bandera, interruptor, sin código en línea) | `D21Interfaz.test.cjs` (3 casos), `UsuariosVistaTest` |
+| HU-T.14 y RE-T.19.1: asunto, enlace, clínica, rol y vigencia de las dos plantillas; el controlador las usa | `D21CorreccionTest` (3 casos) |
+| Limpieza que sigue tras una FK ocupada | `D21CorreccionTest::testLaLimpiezaSigueConLasDemasCuandoUnaCuentaFalla` |
+| `MAIL_MODO=archivo` (guarda y no envía, se ignora fuera de local); `--clave` y política aceptada; `.env.example` legible | `D21CorreccionTest` (4 casos) |
+
+Mutaciones: siete del servidor y cinco del JS hacen fallar su prueba: IP tomada por la izquierda, `REMOTE_ADDR` en los límites, el acceso correcto limpiando la IP, 5 por IP, comprobación por IP con sesión, la limpieza que se corta, `MAIL_MODO` fuera de local, borrar el aviso mientras responde el servidor, esperar al servidor para el formato, el aviso sin el nombre del campo, los requisitos sin marcar y el interruptor sin efecto.
+
+**Verificación.**
+
+| Comando | Resultado |
+|---|---|
+| `vendor/bin/phpunit` | 470 pruebas, 2421 aserciones, 21 saltadas (MySQL sin variable). |
+| Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32) | 470 pruebas, 2691 aserciones, sin fallos ni saltadas. |
+| `node --test "tests/Frontend/**/*.test.cjs"` | 40 pruebas en verde. |
+| `php -l`, `node --check` y `git diff --check` | Sin errores. |
+
+No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba` ni sus contraseñas: `datos_prueba.php` solo se corrió con una clave inválida, que se niega antes de conectarse. No hubo navegador en esta sesión.
+
+**Pendientes.**
+
+1. Revisión del arquitecto y recorrido en el navegador (la lista va en el resumen de la entrega).
+2. Etapa F: poner en `TRUSTED_PROXIES` el rango de la red de Traefik (`docker network inspect dokploy-network`). Sin eso, detrás del proxy todos comparten una IP y vuelve el bloqueo global.
+3. El modal del personal ya no edita el documento (como v1.12.0); si se quiere conservar esa capacidad del administrador para cuentas exclusivas, decidirlo en la revisión.
+4. Fuera de D2.1: Turnstile en el registro con formulario (D3), cerrar sesiones abiertas al restablecer o cambiar el correo (cierre de M0) y la validación de los formularios clínicos (pulido). No se empezó D3.
+
+### D2.1 — Revisión (2026-10-09)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el anexo y el diff. Suite PHP en una copia: 470 pruebas, 2421 aserciones, 21 saltadas de MySQL (la parte MySQL no se corrió en esta revisión; el ejecutor la reporta en verde). Pruebas de JS: 40 en verde.
+
+**Verificado en el código.**
+
+- `Auditoria::ipCliente()` es la única fuente de IP (auditoría, los cuatro límites de `Security` y Turnstile). Recorre `X-Forwarded-For` de derecha a izquierda, acepta rangos CIDR y se detiene en la primera entrada que no es IP. Sin `TRUSTED_PROXIES` vale `REMOTE_ADDR`.
+- 20 fallos por IP (también en la capa de sesión); la cuenta suma fallos con bloqueo 0, así que solo pide CAPTCHA. Un acceso correcto ya no limpia la IP.
+- Comprobaciones al escribir: `chk-usuario:<id>` con 120 en 15 minutos con sesión y `chk:<ip>` con 20 sin sesión.
+- `validacion-cuenta.js`: regla local en cada tecla, servidor con pausa de 400 ms sin «Comprobando…», respuesta vieja descartada y mensaje de unicidad con el nombre del campo.
+- Correos propios de invitación y restablecimiento; el enlace se escapa una sola vez dentro del `href`.
+- Modal del personal con la estructura de `modalUsuarioGestion` de v1.12.0, sin código en línea; los modales de Pacientes no se tocaron.
+- `MAIL_MODO=archivo` solo en local (`EntornoLocal`: Docker, `APP_ENV` y host de la base); `datos_prueba.php --clave` valida la clave antes de tocar la base y registra la política con medio `formulario`.
+
+**Aceptado.** Al editar, el administrador ya no cambia el documento: así era v1.12.0 y RE-T.7.1 solo nombra nombre, correo, rol y estado; la corrección es del titular (RE-T.5.8).
+
+**Hallazgos menores (van de paso en D3).**
+
+| # | Tipo | Dónde | Qué pasa | Corrección |
+|---|---|---|---|---|
+| 1 | Defecto | `config/EmailService.php` 94, 277, 304 | Con `APP_URL` comentado en local (lo que ahora indica `metodo.md`), el botón del correo de bienvenida y los enlaces de la plantilla base apuntan a producción. | Usar `EnlaceCuenta::base()` en lugar de la URL fija. |
+| 2 | Código muerto | `config/EmailService.php` 72 | `enviarCredencialesUsuario` (contraseña en claro por correo) ya no se llama desde D2. | Eliminarlo, también de `EmailService.example.php`. |
+
+**Pendiente para F:** poner en `TRUSTED_PROXIES` el rango de la red de Traefik; sin eso vuelve el bloqueo global.
+
+**Prueba:** recorrido funcional del revisor en el navegador integrado del equipo del usuario (con `MAIL_MODO=archivo`) y revisión visual del usuario en escritorio y celular.

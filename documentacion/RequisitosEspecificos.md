@@ -223,7 +223,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | RE-T.13.1 | El sistema debe contar los intentos del lado servidor por IP/cuenta. | Seguridad | El límite no se evade descartando la cookie. | Media |
 | RE-T.13.2 | El sistema no debe revelar la existencia de documentos/correos. | Seguridad | No se puede enumerar cuentas por estas consultas. | Media |
 | RE-T.13.3 | El sistema debe mostrar errores genéricos al cliente. | Seguridad | El cliente no recibe detalles técnicos del error. | Media |
-| RE-T.13.4 | Tras 5 intentos fallidos en 15 minutos desde una IP, el sistema debe bloquear temporalmente esa IP con un mensaje genérico. | Seguridad | El sexto intento desde la IP dentro de la ventana se rechaza aunque la contraseña sea correcta; el mensaje no revela si la cuenta existe. | Alta |
+| RE-T.13.4 | Tras 20 intentos fallidos en 15 minutos desde una IP, el sistema debe bloquear temporalmente esa IP con un mensaje genérico. La IP es la real del cliente, también detrás del proxy. | Seguridad | El intento 21 desde la IP dentro de la ventana se rechaza aunque la contraseña sea correcta; un acceso correcto no reinicia el contador de la IP; el mensaje no revela si la cuenta existe. | Alta |
 | RE-T.13.5 | _(v2.0)_ Tras 5 intentos fallidos sobre una misma cuenta, el sistema debe exigir el CAPTCHA en lugar de bloquear la cuenta. | Seguridad | Desde otra IP, el titular entra con su contraseña correcta superando el CAPTCHA; sin CAPTCHA válido el intento se rechaza. | Alta |
 
 **Reglas de negocio:** RN-G03, RN-G15

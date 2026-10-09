@@ -5,10 +5,11 @@
 ## Preparación
 
 1. XAMPP: **Apache** y **MySQL** encendidos.
-2. Desde la carpeta del proyecto: `php scripts/dev/datos_prueba.php --si` (o `C:\xampp\php\php.exe scripts/dev/datos_prueba.php --si`). Copiar las contraseñas que imprime.
+2. Desde la carpeta del proyecto: `php scripts/dev/datos_prueba.php --si --clave=<clave>` (o `C:\xampp\php\php.exe scripts/dev/datos_prueba.php --si --clave=<clave>`): todos los usuarios de prueba quedan con esa clave y con la política aceptada. Sin `--clave`, el script genera una por usuario y las imprime.
+   - En el `.env` local: `MAIL_MODO=archivo` (los correos quedan en `logs/correos/` y se abren con el navegador) y `APP_URL` comentado.
 3. URL base local: `http://localhost/Zooki/public/index.php` (una pantalla se abre con `?action=<accion>`).
 4. Tamaño celular en Chrome: **F12** y luego **Ctrl + Shift + M**. Recargar sin caché: **Ctrl + F5**.
-5. Cerrar sesión antes de cambiar de usuario.
+5. Para tener varios usuarios a la vez sin cerrar sesión: `http://localhost/...`, `http://127.0.0.1/...`, una ventana privada y otro navegador son sesiones distintas.
 
 ## Usuarios de prueba
 

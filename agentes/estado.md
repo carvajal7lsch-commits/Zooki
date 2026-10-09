@@ -2,17 +2,18 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-08
+**Actualizado:** 2026-10-09
 
 ## Ahora
 
 - **Módulo activo:** M0 — Base SaaS, identidad y aislamiento. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
-- **Entrega actual:** D2 revisada, con commit (`e503219`, `6f97d33`) y prueba manual del usuario hecha hasta el paso 12 (resultado en el plan, «D2 — Prueba manual del usuario»).
-- **Siguiente paso:** D2.1 (corrección). El prompt se entregó en la conversación del 2026-10-09; al recibirlo, el ejecutor lo implementa y lo deja «entregada, pendiente de revisión». Después, D3.
+- **Entrega actual:** D2.1 revisada y **aprobada** (2026-10-09; «D2.1 — Revisión» en el plan). Falta el commit del usuario, el recorrido funcional del revisor en el navegador integrado del equipo del usuario (con `MAIL_MODO=archivo`) y la revisión visual del usuario.
+- **Siguiente paso:** recorrido en el navegador; lo que falle va a D3 de paso o a una D2.2 si es grave. Después, prompt de D3, con los hallazgos menores 1 y 2 de la revisión de D2.1 de paso.
+- **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
 
-## D2.1 — alcance (corrección de D2)
+## D2.1 — alcance (corrección de D2; hecho y revisado)
 
 1. **Bloqueante antes de F:** límites de intentos, comprobaciones y Turnstile con la IP real (`Auditoria::ipCliente()`, primera IP no confiable desde la derecha de `X-Forwarded-For`, `TRUSTED_PROXIES` en `.env.example`).
 2. **Decisión del usuario (2026-10-08):** 20 fallos por IP bloquean la IP; 5 por cuenta exigen CAPTCHA sin bloquear la cuenta. Ajustar RE-T.13.4 y RN-G15.

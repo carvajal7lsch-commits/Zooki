@@ -102,8 +102,10 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 
 - XAMPP: encender **Apache** y **MySQL** en el panel antes de probar. «Conexión denegada» = MySQL apagado.
 - Base de trabajo manual: `zooki_v2_prueba` (la del `.env` local). Base de las pruebas automáticas: `zooki_test_base_v2`, que se borra en cada corrida. Nunca intercambiarlas.
-- `php scripts/dev/datos_prueba.php --si` crea los usuarios de prueba y **regenera sus contraseñas** cada vez (las imprime).
-- `APP_URL` del `.env` local debe apuntar a la instalación local (por ejemplo, `http://localhost/Zooki/public/`); si apunta a producción, los enlaces de los correos llevan a producción.
+- `php scripts/dev/datos_prueba.php --si` crea los usuarios de prueba y **regenera sus contraseñas** cada vez (las imprime). Con `--clave=<clave>` todos usan esa misma clave si cumple la política (si no, se niega y dice por qué). Todos, salvo la super-administradora, quedan con la política vigente aceptada, así que la prueba no empieza con la pantalla de aceptación.
+- **Correos en local:** con `MAIL_MODO=archivo` en el `.env` no se envía nada y cada correo queda como `.html` en `logs/correos/` (fecha, destinatario y asunto en el nombre; fuera de git). Se abre con el navegador y su botón lleva al enlace. Solo funciona con una base local; en otro entorno se ignora y queda en el log.
+- **`APP_URL` en local:** déjalo comentado. Sin él, los enlaces de los correos usan la instalación desde la que se abrió la página; si apunta a producción, llevan a producción.
+- **Sesiones simultáneas:** la cookie de sesión es por dominio, así que `http://localhost/...` y `http://127.0.0.1/...` son sesiones distintas. Con eso, una ventana privada y otro navegador se prueban hasta cuatro usuarios a la vez sin cerrar sesión.
 - Los agentes no leen ni escriben `.env`; las variables nuevas van a `.env.example`.
 - La carpeta del proyecto está en OneDrive: puede bloquear el borrado de archivos temporales; las bases y carpetas temporales de prueba van fuera de ella.
 

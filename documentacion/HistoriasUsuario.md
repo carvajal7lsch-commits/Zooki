@@ -375,7 +375,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 **Criterios de aceptación:**
 
 - El límite de intentos se guarda del lado servidor por IP/cuenta y no se evade sin cookie.
-- Tras 5 intentos fallidos en 15 minutos desde una misma IP, esa IP se bloquea temporalmente con un mensaje genérico.
+- Tras 20 intentos fallidos en 15 minutos desde una misma IP, esa IP se bloquea temporalmente con un mensaje genérico; un acceso correcto no reinicia ese contador.
 - _(v2.0)_ Sobre una misma cuenta, tras 5 intentos fallidos no se bloquea la cuenta: se exige superar el CAPTCHA. Así nadie puede dejar sin acceso a otro usuario fallando a propósito con su documento o correo.
 - Las verificaciones de documento/correo no revelan existencia ni permiten abuso.
 - Los mensajes de error al cliente son genéricos.
