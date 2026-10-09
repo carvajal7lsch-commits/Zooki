@@ -8,6 +8,10 @@
 .cuenta-validacion.cuenta-validacion--error {
     color: #b42318;
 }
+/* D2.1: aviso positivo, por ejemplo «Las contraseñas coinciden». */
+.cuenta-validacion.cuenta-validacion--ok {
+    color: #067647;
+}
 [data-validacion-cuenta] [aria-invalid="true"] {
     border-color: #b42318;
 }

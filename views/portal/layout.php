@@ -36,7 +36,7 @@ $iniciales = $iniciales ?: 'U';
     <?php endforeach; ?>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta name="csrf-token" content="<?= Csrf::token('default') ?>">
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
 </head>
 <body class="portal-body">
 

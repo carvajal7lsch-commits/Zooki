@@ -1312,3 +1312,66 @@
     align-items: center;
     gap: 0.4rem;
 }
+
+/* D2.1: modal del personal con el diseño de v1.12.0 (modalUsuarioGestion). */
+.users-modal__panel .form-grid .span-2 {
+    grid-column: span 2;
+}
+
+.users-modal__panel .modal-header .close-modal {
+    background: #f1f5f9;
+}
+
+.estado-usuario {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 48px;
+}
+
+.estado-usuario__texto {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.estado-usuario__texto--activo {
+    color: #10B981;
+}
+
+.estado-usuario__texto--inactivo {
+    color: #EF4444;
+}
+
+.modal-aviso {
+    margin: 0 0 1rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 0.85rem;
+}
+
+.invitacion-personal p {
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.invitacion-personal small {
+    color: var(--text-secondary);
+}
+
+.users-modal__panel .iti {
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .users-modal__panel .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .users-modal__panel .form-grid .span-2,
+    .users-modal__panel .form-grid .full {
+        grid-column: auto;
+    }
+}

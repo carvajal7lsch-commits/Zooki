@@ -125,7 +125,8 @@ final class IdentidadController
         };
         $existe = false;
         if ($error === null && in_array($campo, ['documento', 'email'], true)) {
-            if (!Security::checkVerificationLimit()) {
+            // D2.1: con sesión se cuenta por persona (120); sin sesión, por IP (20).
+            if (!Security::checkVerificationLimit(Contexto::idUsuario())) {
                 http_response_code(429);
                 echo json_encode(['success' => false, 'message' => 'Espera un momento antes de seguir comprobando.']);
                 return;

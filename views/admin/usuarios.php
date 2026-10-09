@@ -23,7 +23,9 @@ $iconoRol = static fn (int $rol): string => $rol === Roles::ADMIN ? 'bi-shield-s
 $yo = Contexto::idUsuario();
 $contexto = Contexto::actual();
 $telefonoHtml = ValidadorTelefono::atributosHtml();
+$nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Identidad', 'CE' => 'Cédula de Extranjería', 'PP' => 'Pasaporte', 'NIT' => 'NIT'];
 ?>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
 <div class="users-container" id="usuariosModulo" data-vista="tarjetas">
     <div class="header-container-white">
         <div class="head-title-desc">
@@ -255,58 +257,75 @@ $telefonoHtml = ValidadorTelefono::atributosHtml();
     </section>
 </div>
 
-<!-- Alta y edición de personal -->
-<div class="users-modal" id="usuarioModal" role="dialog" aria-modal="true" aria-labelledby="usuarioModalTitulo">
+<!-- Alta y edición de personal. D2.1: diseño de v1.12.0 (modalUsuarioGestion,
+     specs/referencias/usuarios-modal-editar-v1.png) con las reglas v2: alta sin
+     contraseña por invitación de 72 horas e identidad compartida de C1.7. -->
+<div class="users-modal" id="usuarioModal" role="dialog" aria-modal="true" aria-labelledby="usuarioModalTitulo" data-yo="<?= (int) $yo ?>">
     <div class="modal-content users-modal__panel">
         <div class="modal-header">
-            <h3 id="usuarioModalTitulo"><i class="fas fa-user-plus" aria-hidden="true"></i> <span data-titulo>Nuevo integrante</span></h3>
+            <h3 id="usuarioModalTitulo">
+                <i class="fas fa-user-plus" aria-hidden="true" data-icono-titulo></i>
+                <span data-titulo>Nuevo Usuario</span>
+                <span class="modal-subtitle" data-subtitulo hidden>
+                    <i class="bi bi-person" aria-hidden="true"></i> <span data-subtitulo-nombre></span>
+                    &nbsp;&bull;&nbsp;
+                    <i class="bi bi-card-text" aria-hidden="true"></i> <span data-subtitulo-documento></span>
+                </span>
+            </h3>
+            <button type="button" class="close-modal" data-accion="cerrar" aria-label="Cerrar">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
         </div>
         <form id="usuarioForm" data-cuenta-vincular="true" novalidate data-validacion-cuenta>
             <input type="hidden" name="id_usuario" value="">
             <div class="users-modal__body">
-                <p class="modal-subtitle" data-aviso hidden></p>
+                <p class="modal-aviso" data-aviso hidden></p>
                 <div class="form-grid">
-                    <div class="input-group">
-                        <label for="usuarioTipoDoc">Tipo doc.</label>
+                    <div class="input-group" data-solo-alta>
+                        <label for="usuarioTipoDoc">Tipo de documento</label>
                         <select id="usuarioTipoDoc" name="tipo_documento" required>
                             <?php foreach (Usuario::TIPOS_DOCUMENTO as $tipo): ?>
-                                <option value="<?= $e($tipo) ?>"><?= $e($tipo) ?></option>
+                                <option value="<?= $e($tipo) ?>"><?= $e($nombresDocumento[$tipo] ?? $tipo) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="input-group">
-                        <label for="usuarioDocumento">Documento</label>
-                        <input type="text" id="usuarioDocumento" name="documento" required inputmode="numeric" pattern="\d{5,15}" maxlength="15">
+                    <div class="input-group" data-solo-alta>
+                        <label for="usuarioDocumento">N° Documento</label>
+                        <input type="text" id="usuarioDocumento" name="documento" required inputmode="numeric" pattern="\d{5,15}" maxlength="15" data-caracteres="0-9" placeholder="Ej: 1023456789">
                     </div>
                     <div class="input-group">
-                        <label for="usuarioRol">Rol en la clínica</label>
+                        <label for="usuarioRol">Rol</label>
                         <select id="usuarioRol" name="id_rol" required>
                             <?php foreach (Roles::DE_CLINICA as $rol): ?>
                                 <option value="<?= $rol ?>"><?= $e(Roles::nombre($rol)) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="input-group full">
+                    <div class="input-group span-2">
                         <label for="usuarioNombre">Nombre completo</label>
-                        <input type="text" id="usuarioNombre" name="nombre_completo" required minlength="3" maxlength="100">
+                        <input type="text" id="usuarioNombre" name="nombre_completo" required minlength="3" maxlength="100" placeholder="Nombre y apellidos">
                     </div>
                     <div class="input-group">
-                        <label for="usuarioEmail">Correo</label>
-                        <input type="email" id="usuarioEmail" name="email" required maxlength="255">
+                        <label for="usuarioEmail">Correo electrónico</label>
+                        <input type="email" id="usuarioEmail" name="email" required maxlength="255" placeholder="correo@ejemplo.com">
                     </div>
                     <div class="input-group">
                         <label for="usuarioTelefono">Teléfono</label>
-                        <input type="tel" id="usuarioTelefono" name="telefono" <?= $telefonoHtml ?>>
+                        <input type="tel" id="usuarioTelefono" name="telefono" placeholder="Ej: 3001234567" <?= $telefonoHtml ?>>
                     </div>
                     <div class="input-group">
-                        <label for="usuarioEstado">Estado en la clínica</label>
-                        <select id="usuarioEstado" name="estado">
-                            <option value="1">Activo</option>
-                            <option value="0">Inactivo</option>
-                        </select>
+                        <label for="usuarioEstadoInterruptor">Estado</label>
+                        <div class="estado-usuario">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="usuarioEstadoInterruptor" data-estado-interruptor checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="estado-usuario__texto estado-usuario__texto--activo" data-estado-texto>Activo</span>
+                        </div>
+                        <input type="hidden" name="estado" value="1">
                     </div>
-                    <div class="input-group full" data-solo-alta>
-                        <p>Activación de la cuenta</p>
+                    <div class="input-group full invitacion-personal" data-solo-alta>
+                        <p><i class="fas fa-envelope-open-text" aria-hidden="true"></i> Activación de la cuenta</p>
                         <input type="hidden" id="usuarioPassword" name="password" value="" disabled>
                         <small>El titular recibe un enlace de 72 horas para aceptar la política y crear su contraseña. La cuenta permanece pendiente hasta entonces.</small>
                     </div>
@@ -314,7 +333,7 @@ $telefonoHtml = ValidadorTelefono::atributosHtml();
             </div>
             <div class="users-modal__footer">
                 <button type="button" class="btn-modal-secondary" data-accion="cerrar">Cancelar</button>
-                <button type="submit" class="btn-modal-primary">Guardar</button>
+                <button type="submit" class="btn-modal-primary"><i class="fas fa-save" aria-hidden="true"></i> <span data-texto-guardar>Crear Usuario</span></button>
             </div>
         </form>
     </div>
@@ -382,4 +401,6 @@ $telefonoHtml = ValidadorTelefono::atributosHtml();
     </div>
 </div>
 
-<script src="js/usuarios.js?v=4-d2"></script>
+<!-- D2.1: teléfono con bandera y prefijo, el mismo intl-tel-input de Pacientes. -->
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
+<script src="js/usuarios.js?v=5-d21"></script>

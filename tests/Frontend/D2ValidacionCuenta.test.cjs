@@ -122,7 +122,7 @@ test('documento duplicado impide enviar el formulario', async () => {
     await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() { bloqueado = true; } });
     assert.equal(bloqueado, true);
     assert.equal(p.form.enviado, undefined);
-    assert.equal(p.campos[0].error, 'Este dato ya está registrado.');
+    assert.equal(p.campos[0].error, 'Este documento ya está registrado.');
 });
 
 test('alta de personal existente permite vincular sin prometer otra cuenta', async () => {
@@ -148,7 +148,7 @@ test('registro con documento existente y correo nuevo se rechaza', async () => {
     p.campos[1].value = 'nuevo@zooki.test';
     await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() {} });
     assert.equal(p.form.enviado, undefined);
-    assert.equal(p.campos[0].error, 'Este dato ya está registrado.');
+    assert.equal(p.campos[0].error, 'Este documento ya está registrado.');
 });
 
 test('registro con correo existente permite solicitar su vínculo', async () => {

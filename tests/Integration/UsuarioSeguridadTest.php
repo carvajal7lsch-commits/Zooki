@@ -48,7 +48,8 @@ class UsuarioSeguridadTest extends TestCase
         $correo = new class {
             public array $enviados = [];
             public function limpiarDirecciones(): void {}
-            public function enviarCorreoVerificacion(...$datos) { $this->enviados[] = $datos; return true; }
+            public function enviarInvitacionPersonal(...$datos) { $this->enviados[] = $datos; return true; }
+            public function enviarRestablecimientoPorAdministrador(...$datos) { $this->enviados[] = $datos; return true; }
         };
         return new UsuarioController($this->db, $correo);
     }

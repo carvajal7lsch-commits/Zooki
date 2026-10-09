@@ -77,7 +77,8 @@ final class Autenticador
         if (!Security::checkRateLimit($cuenta)) {
             return ['resultado' => 'limite_ip', 'usuario' => null, 'id_cuenta' => $resultado['id_cuenta']];
         }
-        if (Security::exigeCaptcha($cuenta) && !$captcha->validar($token, (string) ($_SERVER['REMOTE_ADDR'] ?? ''))) {
+        // D2.1: la misma IP real que los límites (Auditoria::ipCliente), no la del proxy.
+        if (Security::exigeCaptcha($cuenta) && !$captcha->validar($token, Auditoria::ipCliente())) {
             return ['resultado' => 'fallo', 'usuario' => null, 'id_cuenta' => $resultado['id_cuenta']];
         }
         return $resultado;

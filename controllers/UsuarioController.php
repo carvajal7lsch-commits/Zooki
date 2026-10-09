@@ -44,6 +44,11 @@ class UsuarioController {
         return (int) Contexto::clinicaActiva();
     }
 
+    /** Nombre de la clínica activa, para los correos al personal. */
+    private function nombreClinica(): string {
+        return (string) (Contexto::actual()['clinica'] ?? 'tu clínica');
+    }
+
     private function correo() {
         return $this->emailService ??= new EmailService();
     }
@@ -170,7 +175,8 @@ class UsuarioController {
             $alta = (new CuentaTitular($this->db))->crearPersonal($datos, $idClinica);
             $enlace = EnlaceCuenta::crear('activar_personal', $alta['enlace']['id'], $alta['enlace']['token']);
             $this->correo()->limpiarDirecciones();
-            $enviado = $this->correo()->enviarCorreoVerificacion($datos['email'], $datos['nombre_completo'], $enlace, CuentaTitular::ACTIVACION_HORAS);
+            // D2.1: correo propio de invitación (la persona no se registró sola).
+            $enviado = $this->correo()->enviarInvitacionPersonal($datos['email'], $datos['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $datos['id_rol']), $enlace, CuentaTitular::ACTIVACION_HORAS);
             $this->responder(true, $enviado
                 ? 'Invitación enviada. El titular tiene 72 horas para aceptar la política y crear su contraseña.'
                 : 'Cuenta pendiente creada, pero no se pudo enviar la invitación. El titular todavía no puede entrar.');
@@ -364,7 +370,10 @@ class UsuarioController {
             $solicitud = (new CuentaTitular($this->db))->restablecerPersonal($idUsuario, $this->clinica());
             $enlace = EnlaceCuenta::crear($solicitud['accion'], $solicitud['enlace']['id'], $solicitud['enlace']['token']);
             $this->correo()->limpiarDirecciones();
-            $enviado = $this->correo()->enviarCorreoVerificacion($persona['email'], $persona['nombre_completo'], $enlace, $solicitud['horas']);
+            // D2.1: una invitación pendiente se reenvía como invitación; si no, aviso de restablecimiento.
+            $enviado = $solicitud['accion'] === 'activar_personal'
+                ? $this->correo()->enviarInvitacionPersonal($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $persona['id_rol']), $enlace, $solicitud['horas'])
+                : $this->correo()->enviarRestablecimientoPorAdministrador($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), $enlace, $solicitud['horas']);
             $this->responder(true, $enviado
                 ? 'Se envió un enlace al titular para que cree su contraseña.'
                 : 'No se pudo enviar el enlace. La contraseña anterior está invalidada; reintenta el envío.');

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/Roles.php';
 require_once __DIR__ . '/Contexto.php';
 require_once __DIR__ . '/AccesoDenegado.php';
+require_once __DIR__ . '/../models/Auditoria.php';
 
 /**
  * Security Middleware
@@ -50,12 +51,20 @@ class Security {
     ];
 
     /**
-     * RE-T.13.1/5: cinco fallos bloquean la IP; para la cuenta exigen CAPTCHA
-     * desde otro origen, sin permitir que un tercero bloquee al titular.
+     * RE-T.13.4/5 y RN-G15 (decisión del usuario, 2026-10-08):
+     * - 20 fallos en 15 minutos desde una IP bloquean esa IP 15 minutos. Es
+     *   holgado a propósito: una clínica sale a internet por una sola IP y
+     *   cinco errores de su personal no deben dejarla a toda sin entrar.
+     * - 5 fallos sobre una cuenta exigen el CAPTCHA y nunca bloquean la
+     *   cuenta: nadie puede dejar sin acceso a otro fallando con su correo.
+     * - Las comprobaciones al escribir (documento y correo) tienen su propio
+     *   límite: 20 por IP sin sesión y 120 por persona con sesión.
+     * La IP sale siempre de Auditoria::ipCliente() (D2.1).
      */
-    private const MAX_INTENTOS_IP     = 5;
+    private const MAX_INTENTOS_IP     = 20;
     private const MAX_INTENTOS_CUENTA = 5;
     private const MAX_VERIFICACIONES  = 20;
+    private const MAX_VERIFICACIONES_USUARIO = 120;
     private const VENTANA             = 900;  // 15 minutos
     private const BLOQUEO             = 900;  // 15 minutos
 
@@ -462,17 +471,17 @@ class Security {
     }
 
     /**
-     * Rate limiting para login: máximo 5 intentos cada 15 minutos.
+     * RE-T.13.4: 20 fallos en 15 minutos desde una IP bloquean esa IP.
      *
      * $cuenta es el id_usuario cuando el identificador escrito corresponde a
-     * una cuenta; si no, solo cuenta la IP. Quien llama responde igual en los
-     * dos casos, así que el límite no revela si la cuenta existe (RN-G15).
+     * una cuenta; la cuenta nunca se bloquea aquí (RE-T.13.5, exigeCaptcha).
+     * Quien llama responde igual exista o no la cuenta (RN-G15).
      */
     public static function checkRateLimit(?string $cuenta = null): bool {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $ip = Auditoria::ipCliente();
         $key = 'rate_limit_' . $ip;
-        $window = 900; // 15 minutos
-        $maxAttempts = 5;
+        $window = self::VENTANA;
+        $maxAttempts = self::MAX_INTENTOS_IP;
 
         $now = time();
         $attempts = $_SESSION[$key]['count'] ?? 0;
@@ -517,7 +526,7 @@ class Security {
     }
 
     public static function recordFailedLogin(?string $cuenta = null): void {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $ip = Auditoria::ipCliente();
         $key = 'rate_limit_' . $ip;
         $_SESSION[$key]['count'] = ($_SESSION[$key]['count'] ?? 0) + 1;
         $_SESSION[$key]['time'] = time();
@@ -529,18 +538,24 @@ class Security {
 
         $almacen->registrarFallo('ip:' . $ip, self::MAX_INTENTOS_IP, self::VENTANA, self::BLOQUEO);
         if ($cuenta !== null && $cuenta !== '') {
-            $almacen->registrarFallo('cuenta:' . $cuenta, self::MAX_INTENTOS_CUENTA, self::VENTANA, self::BLOQUEO);
+            // Sin castigo: la cuenta solo cuenta fallos para pedir el CAPTCHA (RE-T.13.5).
+            $almacen->registrarFallo('cuenta:' . $cuenta, self::MAX_INTENTOS_CUENTA, self::VENTANA, 0);
         }
     }
 
+    /**
+     * RE-T.13.4 (D2.1): un inicio de sesión correcto limpia el contador de la
+     * sesión y el de la cuenta, NO el de la IP. Si lo limpiara, quien tiene
+     * una cuenta podría alternar intentos contra otras con un acceso propio
+     * y nunca llegar al bloqueo.
+     */
     public static function resetRateLimit(?string $cuenta = null): void {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $ip = Auditoria::ipCliente();
         unset($_SESSION['rate_limit_' . $ip]);
 
         $almacen = self::almacenDeIntentos();
         if ($almacen === null) return;
 
-        $almacen->limpiar('ip:' . $ip);
         if ($cuenta !== null && $cuenta !== '') {
             $almacen->limpiar('cuenta:' . $cuenta);
         }
@@ -552,20 +567,24 @@ class Security {
 
     /**
      * HU-38 (VD-SEG-06) — Limite para las verificaciones de documento/correo
-     * del formulario de registro. Son publicas por necesidad (avisan si el
-     * documento ya existe), asi que lo que se corta aqui es el uso masivo:
-     * a mano no se notan, pero un script que enumere se topa con el muro.
+     * al escribir. Son publicas por necesidad (avisan si el documento ya
+     * existe), asi que lo que se corta aqui es el uso masivo: a mano no se
+     * notan, pero un script que enumere se topa con el muro.
+     *
+     * D2.1: sin sesión se cuenta por IP (20 en 15 minutos); con sesión, por
+     * persona (120 en 15 minutos). Antes una persona con sesión gastaba el
+     * límite anónimo y quedaba sin validación en tiempo real.
      */
-    public static function checkVerificationLimit(): bool {
+    public static function checkVerificationLimit(?int $idUsuario = null): bool {
         $almacen = self::almacenDeIntentos();
         if ($almacen === null) return true;
 
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        $clave = 'chk:' . $ip;
+        $clave = $idUsuario !== null ? 'chk-usuario:' . $idUsuario : 'chk:' . Auditoria::ipCliente();
+        $maximo = $idUsuario !== null ? self::MAX_VERIFICACIONES_USUARIO : self::MAX_VERIFICACIONES;
 
         if ($almacen->segundosDeBloqueo($clave) > 0) return false;
 
-        $almacen->registrarFallo($clave, self::MAX_VERIFICACIONES, self::VENTANA, self::BLOQUEO);
+        $almacen->registrarFallo($clave, $maximo, self::VENTANA, self::BLOQUEO);
 
         return true;
     }

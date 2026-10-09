@@ -75,13 +75,33 @@
     const actual = document.getElementById('perfilPwdActual');   // no existe si la cuenta no tiene contraseña
     const nueva = document.getElementById('perfilPwdNueva');
     const confirmar = document.getElementById('perfilPwdConfirmar');
-    const feedback = document.getElementById('perfilPwdFeedback');
-    const coincide = document.getElementById('perfilPwdCoincide');
     const btnPwd = document.getElementById('perfilPasswordGuardar');
     const msgPwd = document.getElementById('perfilPasswordMsg');
     const textoBoton = btnPwd.textContent;
 
-    // D2: validacion-cuenta.js consulta la política completa del servidor mientras se escribe.
+    // D2: validacion-cuenta.js escribe los avisos (política completa del
+    // servidor y «Las contraseñas coinciden»). D2.1: aquí solo se marca, en
+    // cada tecla, la lista de requisitos básicos de helpers/PoliticaPassword.php.
+    const REQUISITOS = {
+        longitud: valor => valor.length >= 8,
+        mayuscula: valor => /[A-ZÁÉÍÓÚÜÑ]/.test(valor),
+        minuscula: valor => /[a-záéíóúüñ]/.test(valor),
+        numero: valor => /\d/.test(valor),
+    };
+    const itemsRequisito = formPwd.querySelectorAll('[data-requisito]');
+
+    function pintarRequisitos() {
+        itemsRequisito.forEach(item => {
+            item.classList.toggle('is-ok', REQUISITOS[item.dataset.requisito](nueva.value));
+        });
+    }
+
+    nueva.addEventListener('input', () => {
+        pintarRequisitos();
+        mensaje(msgPwd, '');
+    });
+    confirmar.addEventListener('input', () => mensaje(msgPwd, ''));
+    formPwd.addEventListener('reset', () => setTimeout(pintarRequisitos));
 
     // Mostrar u ocultar cada contraseña.
     formPwd.querySelectorAll('[data-ver]').forEach(boton => boton.addEventListener('click', () => {

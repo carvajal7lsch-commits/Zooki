@@ -2,14 +2,17 @@
 /**
  * Datos de prueba locales para revisar a mano las subetapas de C (plan M0).
  *
- *   php scripts/dev/datos_prueba.php        muestra la base de destino y qué haría
- *   php scripts/dev/datos_prueba.php --si   los crea o los actualiza
+ *   php scripts/dev/datos_prueba.php                  muestra la base de destino y qué haría
+ *   php scripts/dev/datos_prueba.php --si             los crea o los actualiza
+ *   php scripts/dev/datos_prueba.php --si --clave=X   misma clave para todos (D2.1)
  *
  * Crea dos clínicas activas (Norte y Sur), un administrador y un veterinario
  * en cada una, una persona con rol en las dos clínicas que además es
  * propietaria, un propietario de Norte y un super-administrador. Las
  * contraseñas se generan en cada corrida y se imprimen en pantalla: nunca
- * quedan en el código.
+ * quedan en el código. Con --clave=X todos usan esa clave, si cumple la
+ * política; si no, se niega con el motivo. Todos salvo el super-administrador
+ * quedan con la política vigente aceptada (D2.1).
  *
  * Es repetible: si una cuenta ya existe (por su correo) le pone la contraseña
  * nueva y la reactiva, sin duplicar nada.
@@ -30,6 +33,8 @@ require_once $raiz . '/models/Usuario.php';
 require_once $raiz . '/helpers/PoliticaPassword.php';
 require_once $raiz . '/helpers/Roles.php';
 require_once $raiz . '/helpers/InicializadorClinica.php';
+require_once $raiz . '/helpers/EntornoLocal.php';
+require_once __DIR__ . '/DatosPrueba.php';
 
 function salir(string $mensaje, int $codigo = 1): void
 {
@@ -54,8 +59,13 @@ const PERSONAS = [
 ];
 
 // ── Guardas ───────────────────────────────────────────────────────────────
-if (file_exists('/.dockerenv') || in_array(strtolower((string) getenv('APP_ENV')), ['production', 'produccion'], true)) {
-    salir('Esto parece producción (Docker o APP_ENV=production). No se crean datos de prueba.');
+// D2.1: la clave común se revisa antes de tocar nada.
+$claveComun = DatosPrueba::claveDeArgumentos($argv ?? []);
+if ($claveComun !== null) {
+    $motivo = DatosPrueba::motivoClaveInvalida($claveComun, PERSONAS);
+    if ($motivo !== null) {
+        salir("La clave de --clave {$motivo}. Elige otra.");
+    }
 }
 
 ob_start(); // Database imprime el error de conexión; se reporta aparte.
@@ -67,8 +77,10 @@ if (!$db) {
 
 $conexion = (string) $db->getAttribute(PDO::ATTR_CONNECTION_STATUS);
 $base = (string) $db->query('SELECT DATABASE()')->fetchColumn();
-if (!preg_match('/^(localhost|127\.0\.0\.1|::1)\b/i', $conexion)) {
-    salir("La base no es local ($conexion). Este script solo escribe en una base de tu equipo.");
+// La misma comprobación que usa MAIL_MODO=archivo (helpers/EntornoLocal.php).
+$motivoNoLocal = EntornoLocal::motivoNoLocal($conexion);
+if ($motivoNoLocal !== null) {
+    salir("No se crean datos de prueba: {$motivoNoLocal}. Este script solo escribe en una base de tu equipo.");
 }
 
 $tabla = static function (string $nombre) use ($db): bool {
@@ -114,7 +126,7 @@ try {
     }
 
     foreach (PERSONAS as [$nombre, $documento, $correo, $roles, $propietarioEn, $esSuperAdmin]) {
-        $password = PoliticaPassword::generarTemporal();
+        $password = $claveComun ?? PoliticaPassword::generarTemporal();
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
         $existente = $usuario->buscarPorEmail($correo);
@@ -136,6 +148,9 @@ try {
 
         if ($esSuperAdmin) {
             $db->prepare('UPDATE usuarios SET es_super_admin = 1 WHERE id_usuario = ?')->execute([$id]);
+        } else {
+            // El super-administrador está exento (B.5); los demás no ven la pantalla de aceptación.
+            DatosPrueba::aceptarPolitica($db, $id);
         }
         foreach ($roles as $clinica => $rol) {
             $usuario->asignarRolEnClinica($id, $idClinica[$clinica], $rol);

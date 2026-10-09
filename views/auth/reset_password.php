@@ -23,7 +23,7 @@ $errorMessage = $errorMessage ?? '';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/password-policy.js"></script>
 <link rel="stylesheet" href="css/reset-password.css?v=d2">
-<link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
+<link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
 </head>
 <body class="login-page reset-page">
     <div class="reset-wrapper">

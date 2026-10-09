@@ -244,35 +244,47 @@ final class CuentaTitular
         $stmt->execute([date('Y-m-d H:i:s')]);
         $borradas = 0;
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
-            $borradas += Transaccion::ejecutar($this->db, function () use ($fila): int {
-                $id = (int) $fila['id_usuario'];
-                $this->bloquearUsuario($id);
-                $otro = $this->db->prepare('SELECT 1 FROM usuario_clinica WHERE id_usuario = ? AND id_clinica <> ? UNION SELECT 1 FROM propietario_clinica WHERE id_propietario = ? UNION SELECT 1 FROM consentimientos_datos WHERE id_usuario = ?');
-                $otro->execute([$id, $fila['id_clinica_vinculo'], $id, $id]);
-                if ($otro->fetchColumn()) {
-                    return 0;
-                }
-                // Una reemisión vigente impide borrar una invitación que el titular aún puede usar.
-                $vigente = $this->db->prepare("SELECT 1 FROM verificaciones_email WHERE id_usuario = ? AND proposito = 'activacion_personal' AND used = 0 AND expires_at > ?");
-                $vigente->execute([$id, date('Y-m-d H:i:s')]);
-                if ($vigente->fetchColumn()) {
-                    return 0;
-                }
-                $this->db->prepare('DELETE FROM password_resets WHERE id_usuario = ?')->execute([$id]);
-                $this->db->prepare('DELETE FROM verificaciones_email WHERE id_usuario = ?')->execute([$id]);
-                $this->db->prepare('DELETE FROM usuario_clinica WHERE id_usuario = ? AND id_clinica = ?')->execute([$id, $fila['id_clinica_vinculo']]);
-                // Se conservan los fallos de acceso; el registro_id sigue identificando el alta vencida.
-                $this->db->prepare('UPDATE auditoria_sistema SET id_usuario = NULL WHERE id_usuario = ?')->execute([$id]);
-                $stmt = $this->db->prepare('DELETE FROM usuarios WHERE id_usuario = ? AND estado = 0 AND password IS NULL');
-                $stmt->execute([$id]);
-                $total = $stmt->rowCount();
-                if ($total !== 1) {
-                    throw new RuntimeException('La cuenta dejó de estar pendiente durante la limpieza.');
-                }
-                $this->auditoria->log(null, 'DELETE', 'usuarios', $id, ['estado' => 'pendiente'], null, 'Alta de personal vencida eliminada sin otros vínculos (RE-T.19.1)', (int) $fila['id_clinica_vinculo']);
-                return $total;
-            });
+            try {
+                $borradas += $this->limpiarUna($fila);
+            } catch (Throwable $e) {
+                // D2.1: una cuenta que no se puede borrar (por ejemplo, una FK que
+                // la referencia) se deja anotada y la limpieza sigue con las demás.
+                error_log(sprintf('D2.1 limpieza: no se eliminó la cuenta pendiente %d (%s)', (int) $fila['id_usuario'], $e->getMessage()));
+            }
         }
         return $borradas;
+    }
+
+    /** Elimina una alta vencida dentro de su propia transacción; 0 si debe conservarse. */
+    private function limpiarUna(array $fila): int
+    {
+        return Transaccion::ejecutar($this->db, function () use ($fila): int {
+            $id = (int) $fila['id_usuario'];
+            $this->bloquearUsuario($id);
+            $otro = $this->db->prepare('SELECT 1 FROM usuario_clinica WHERE id_usuario = ? AND id_clinica <> ? UNION SELECT 1 FROM propietario_clinica WHERE id_propietario = ? UNION SELECT 1 FROM consentimientos_datos WHERE id_usuario = ?');
+            $otro->execute([$id, $fila['id_clinica_vinculo'], $id, $id]);
+            if ($otro->fetchColumn()) {
+                return 0;
+            }
+            // Una reemisión vigente impide borrar una invitación que el titular aún puede usar.
+            $vigente = $this->db->prepare("SELECT 1 FROM verificaciones_email WHERE id_usuario = ? AND proposito = 'activacion_personal' AND used = 0 AND expires_at > ?");
+            $vigente->execute([$id, date('Y-m-d H:i:s')]);
+            if ($vigente->fetchColumn()) {
+                return 0;
+            }
+            $this->db->prepare('DELETE FROM password_resets WHERE id_usuario = ?')->execute([$id]);
+            $this->db->prepare('DELETE FROM verificaciones_email WHERE id_usuario = ?')->execute([$id]);
+            $this->db->prepare('DELETE FROM usuario_clinica WHERE id_usuario = ? AND id_clinica = ?')->execute([$id, $fila['id_clinica_vinculo']]);
+            // Se conservan los fallos de acceso; el registro_id sigue identificando el alta vencida.
+            $this->db->prepare('UPDATE auditoria_sistema SET id_usuario = NULL WHERE id_usuario = ?')->execute([$id]);
+            $stmt = $this->db->prepare('DELETE FROM usuarios WHERE id_usuario = ? AND estado = 0 AND password IS NULL');
+            $stmt->execute([$id]);
+            $total = $stmt->rowCount();
+            if ($total !== 1) {
+                throw new RuntimeException('La cuenta dejó de estar pendiente durante la limpieza.');
+            }
+            $this->auditoria->log(null, 'DELETE', 'usuarios', $id, ['estado' => 'pendiente'], null, 'Alta de personal vencida eliminada sin otros vínculos (RE-T.19.1)', (int) $fila['id_clinica_vinculo']);
+            return $total;
+        });
     }
 }

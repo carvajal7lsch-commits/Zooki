@@ -36,6 +36,7 @@ final class CuentasD2Test extends TestCase
         Security::definirAlmacenDeIntentos(null);
         Security::definirAuditoria(false);
         Security::definirFuenteDeContextos(null);
+        Auditoria::definirProxiesConfiables(null);
         $_POST = [];
         $_GET = [];
         $_SESSION = [];
@@ -205,7 +206,9 @@ final class CuentasD2Test extends TestCase
 
     public function testCaptchaDesdeOtraIpNoBloqueaLaCuenta(): void
     {
-        for ($i = 0; $i < 5; $i++) {
+        // D2.1 (decisión del usuario, 2026-10-08): 20 fallos bloquean la IP; 5 exigen CAPTCHA a la cuenta.
+        Auditoria::definirProxiesConfiables([]);
+        for ($i = 0; $i < 20; $i++) {
             Security::recordFailedLogin('6');
         }
         $this->assertFalse(Security::checkRateLimit('6'), 'La IP original está bloqueada.');

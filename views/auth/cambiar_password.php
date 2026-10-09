@@ -11,7 +11,7 @@
     <script src="js/password-policy.js"></script>
 
 <link rel="stylesheet" href="css/cambiar-password.css?v=d2">
-<link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
+<link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
 </head>
 <body>
     <div class="change-password-container">
@@ -24,7 +24,15 @@
         <form id="changePasswordForm" data-password-accion="cambiar_password_ajax" data-validacion-cuenta>
 <?php Csrf::field(); ?>
             <?php if (!empty($cuentaPassword['tiene_password'])): ?>
-                <label>Contraseña actual <input type="password" name="password_actual" required autocomplete="current-password"></label>
+                <div class="form-group">
+                    <label for="password_actual">Contraseña actual</label>
+                    <div class="input-con-ojito">
+                        <input type="password" id="password_actual" name="password_actual" required autocomplete="current-password" maxlength="72" placeholder="Tu contraseña actual">
+                        <button type="button" class="ojito" data-ojito="password_actual" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
             <?php endif; ?>
             <div class="form-group">
                 <label for="nueva_password">Nueva Contraseña</label>

@@ -66,7 +66,7 @@ final class TelefonosTest extends TestCase
                     'email' => 'nueva@zooki.test', 'telefono' => $telefono, 'id_rol' => '2', 'estado' => '1', 'password' => ''];
                 $correo = new class {
                     public function limpiarDirecciones(): void {}
-                    public function enviarCorreoVerificacion(...$d) { return true; }
+                    public function enviarInvitacionPersonal(...$d) { return true; }
                 };
                 return $this->json(fn () => (new UsuarioController($this->db, $correo))->registrarAjax());
             },

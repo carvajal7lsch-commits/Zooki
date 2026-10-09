@@ -19,7 +19,7 @@
     <!-- Estilos del sistema -->
     <link rel="stylesheet" href="css/styles.css?v=2">
     <link rel="stylesheet" href="css/dashboard.css?v=4">
-    <link rel="stylesheet" href="css/usuarios.css?v=3">
+    <link rel="stylesheet" href="css/usuarios.css?v=4">
     <link rel="stylesheet" href="css/pill-sidebar.css">
     <link rel="stylesheet" href="css/contexto.css?v=1">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
@@ -32,7 +32,7 @@
     <?php if (!isset($content_view)): ?>
     <link rel="stylesheet" href="css/panel.css?v=3">
     <?php endif; ?>
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
 </head>
 <body>
     <div id="global-loader"><div class="spinner"></div></div>

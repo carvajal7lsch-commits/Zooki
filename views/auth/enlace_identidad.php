@@ -13,7 +13,8 @@ $accion = $activar ? 'activar_personal' : 'confirmar_cambio_correo';
     <title><?= $activar ? 'Activar cuenta' : 'Confirmar nuevo correo' ?> · Zooki</title>
     <link rel="stylesheet" href="css/contexto.css">
     <link rel="stylesheet" href="css/cuenta-pendiente.css">
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
+    <script src="js/password-policy.js"></script>
 </head>
 <body class="contexto-pagina">
 <main class="contexto-tarjeta">

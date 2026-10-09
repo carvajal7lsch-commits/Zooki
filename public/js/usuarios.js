@@ -48,7 +48,19 @@
 
     const aviso = modal.querySelector('[data-aviso]');
     const titulo = modal.querySelector('[data-titulo]');
-    const soloAlta = modal.querySelector('[data-solo-alta]');
+
+    // D2.1: teléfono con bandera y prefijo, como en Pacientes (intl-tel-input).
+    const telefonoPersonal = (typeof window !== 'undefined' && window.intlTelInput && form.elements.telefono)
+        ? window.intlTelInput(form.elements.telefono, {
+            initialCountry: 'co',
+            preferredCountries: ['co', 'us', 'mx', 'es'],
+            nationalMode: false,
+            autoInsertDialCode: true,
+            strictMode: true,
+            dropdownContainer: document.body,
+            utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js',
+        })
+        : null;
 
     const mensaje = (icono, texto) => zookiToast(texto, icono);
 
@@ -126,6 +138,8 @@
         if (ventana === modal) {
             form.reset();
             form.elements.id_usuario.value = '';
+            ponerEstado(true);
+            if (telefonoPersonal) telefonoPersonal.setNumber('');
         } else if (ventana === modalCliente && formCliente) {
             formCliente.reset();
         }
@@ -142,14 +156,45 @@
     });
 
     // ── Personal: alta y edición ────────────────────────────────────────────
-    function abrirModal(esAlta) {
-        titulo.textContent = esAlta ? 'Nuevo integrante' : 'Editar integrante';
-        soloAlta.hidden = !esAlta;
+    // D2.1: diseño de v1.12.0. «Nuevo Usuario» pide tipo y número de
+    // documento; «Editar Usuario» los muestra en el subtítulo (nombre •
+    // documento) y no los edita, como en producción (RE-T.7.1).
+    function ponerEstado(activo) {
+        const interruptor = modal.querySelector('[data-estado-interruptor]');
+        const texto = modal.querySelector('[data-estado-texto]');
+        if (!interruptor || !texto || !form.elements.estado) return;
+        interruptor.checked = activo;
+        form.elements.estado.value = activo ? '1' : '0';
+        texto.textContent = activo ? 'Activo' : 'Inactivo';
+        texto.classList.toggle('estado-usuario__texto--activo', activo);
+        texto.classList.toggle('estado-usuario__texto--inactivo', !activo);
+    }
+
+    modal.addEventListener('change', (evento) => {
+        if (evento.target.matches && evento.target.matches('[data-estado-interruptor]')) {
+            ponerEstado(evento.target.checked);
+        }
+    });
+
+    function abrirModal(esAlta, persona = null) {
+        titulo.textContent = esAlta ? 'Nuevo Usuario' : 'Editar Usuario';
+        const icono = modal.querySelector('[data-icono-titulo]');
+        icono.classList.toggle('fa-user-plus', esAlta);
+        icono.classList.toggle('fa-user-edit', !esAlta);
+        const subtitulo = modal.querySelector('[data-subtitulo]');
+        subtitulo.hidden = esAlta;
+        modal.querySelector('[data-subtitulo-nombre]').textContent = persona ? persona.nombre_completo || '' : '';
+        modal.querySelector('[data-subtitulo-documento]').textContent = persona ? persona.documento || '' : '';
+        modal.querySelectorAll('[data-solo-alta]').forEach((elemento) => { elemento.hidden = !esAlta; });
+        modal.querySelector('[data-texto-guardar]').textContent = esAlta ? 'Crear Usuario' : 'Guardar Cambios';
+        // Nadie se desactiva a sí mismo (C1).
+        const esYo = persona !== null && String(persona.id_usuario) === modal.dataset.yo;
+        modal.querySelector('[data-estado-interruptor]').disabled = esYo;
         aviso.hidden = true;
         if (esAlta) bloquearIdentidad(false);
         form.elements.password.disabled = esAlta;
         modal.classList.add('is-open');
-        form.querySelector('input[name="documento"]').focus();
+        (esAlta ? form.elements.documento : form.elements.nombre_completo).focus();
     }
 
     function bloquearIdentidad(bloquear) {
@@ -176,10 +221,14 @@
         form.elements.documento.value = u.documento || '';
         form.elements.nombre_completo.value = u.nombre_completo || '';
         form.elements.email.value = u.email || '';
-        form.elements.telefono.value = u.telefono || '';
+        if (telefonoPersonal) {
+            telefonoPersonal.setNumber(u.telefono || '');
+        } else {
+            form.elements.telefono.value = u.telefono || '';
+        }
         form.elements.id_rol.value = String(u.id_rol);
-        form.elements.estado.value = String(u.estado);
-        abrirModal(false);
+        ponerEstado(String(u.estado) === '1');
+        abrirModal(false, u);
         bloquearIdentidad(!u.identidad_editable);
     }
 
@@ -207,6 +256,10 @@
         const esAlta = form.elements.id_usuario.value === '';
         const datos = new FormData(form);
         datos.set('tipo_documento', form.elements.tipo_documento.value);
+        // Con bandera: se guarda el número completo con su prefijo (+57…).
+        if (telefonoPersonal && telefonoPersonal.isValidNumber()) {
+            datos.set('telefono', telefonoPersonal.getNumber());
+        }
         const r = await pedir('index.php?action=' + (esAlta ? 'registrar_usuario_ajax' : 'actualizar_usuario_ajax'), datos);
         if (r.success) {
             cerrarModal(modal);

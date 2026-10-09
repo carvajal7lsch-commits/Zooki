@@ -1,9 +1,20 @@
-/** D2: avisos junto al campo; las reglas finales se consultan al servidor. */
+/**
+ * D2 y D2.1: avisos junto al campo mientras se escribe.
+ *
+ * En cada tecla se aplican al instante las reglas que el navegador puede
+ * comprobar (formato, longitud, requisitos de la contraseña de
+ * password-policy.js y coincidencia de contraseñas). Lo que solo sabe el
+ * servidor (unicidad, política completa con los datos del titular) se
+ * consulta con una pausa corta; mientras responde no se borra el aviso
+ * vigente y una respuesta vieja nunca pisa la nueva. Al enviar se vuelve a
+ * comprobar todo con el servidor.
+ */
 (function () {
     'use strict';
     const formularios = new WeakMap();
     const fuente = document.querySelector('script[data-cuenta-csrf]');
     const csrf = fuente?.dataset.cuentaCsrf || '';
+    const PAUSA_MS = 400;
     const equivalencias = {
         nueva_password: 'password', password_nueva: 'password', new_password: 'password',
         perfilPwdNueva: 'password', portal_new_password: 'password',
@@ -12,6 +23,17 @@
         perfilPwdConfirmar: 'confirm_password', portal_confirm_password: 'confirm_password'
     };
     const camposCuenta = new Set(['nombre_completo', 'documento', 'email', 'telefono', 'password', 'confirm_password']);
+    // Solo el servidor sabe si existe la cuenta o si la contraseña contiene tus datos.
+    const consultanServidor = new Set(['documento', 'email', 'password']);
+    const NOMBRES_UNICOS = { documento: 'documento', email: 'correo' };
+
+    // Mismos mensajes que helpers/ValidadorCuenta.php y ValidadorTelefono.
+    const MENSAJES = {
+        documento: 'El documento debe tener entre 5 y 15 dígitos.',
+        email: 'Escribe un correo electrónico válido.',
+        nombre_completo: 'El nombre debe tener entre 3 y 100 caracteres.',
+        telefono: 'El teléfono solo puede tener números, espacios, + y guiones (de 7 a 20 caracteres).',
+    };
 
     function tipo(campo) {
         return campo.dataset.cuentaCampo || equivalencias[campo.name || campo.id] || campo.name;
@@ -22,10 +44,14 @@
             && !campo.disabled && !campo.readOnly && campo.type !== 'hidden');
     }
 
-    function aviso(campo, mensaje, error) {
+    function campoDe(form, clave) {
+        return campos(form).find(elemento => tipo(elemento) === clave);
+    }
+
+    function aviso(campo, mensaje, error, bien = false) {
         // El contenedor visual del input también contiene el icono o el botón del ojo.
         // La ayuda va debajo de ese contenedor, nunca dentro de su fila.
-        const envoltura = campo.closest('.input-wrapper, .search-input-wrapper, .perfil-clave, .input-con-ojito');
+        const envoltura = campo.closest('.input-wrapper, .search-input-wrapper, .perfil-clave, .input-con-ojito, .iti');
         const contenedor = envoltura ? envoltura.parentElement : campo.parentElement;
         let salida = campo.dataset.cuentaAyuda ? document.getElementById(campo.dataset.cuentaAyuda) : null;
         salida ??= contenedor.querySelector('[data-cuenta-error="' + campo.id + '"]');
@@ -42,10 +68,98 @@
             salida.dataset.cuentaTextoInicial = salida.textContent || '';
             salida.dataset.cuentaClaseInicial = salida.className || '';
         }
-        salida.className = salida.dataset.cuentaClaseInicial + ' cuenta-validacion' + (error ? ' cuenta-validacion--error' : '');
+        const estilo = error ? ' cuenta-validacion--error' : (bien ? ' cuenta-validacion--ok' : '');
+        salida.className = salida.dataset.cuentaClaseInicial + ' cuenta-validacion' + estilo;
         salida.textContent = mensaje || salida.dataset.cuentaTextoInicial;
         campo.setCustomValidity(error ? mensaje : '');
         campo.setAttribute('aria-invalid', error ? 'true' : 'false');
+    }
+
+    function cumplePatron(campo, valor) {
+        if (!campo.pattern) return true;
+        try {
+            return new RegExp('^(?:' + campo.pattern + ')$', 'v').test(valor);
+        } catch (error) {
+            return new RegExp('^(?:' + campo.pattern + ')$').test(valor);
+        }
+    }
+
+    /**
+     * Regla del navegador para el valor actual. Devuelve { error, mensaje }:
+     * error con texto si no cumple; mensaje positivo cuando aplica (las
+     * contraseñas coinciden); null si cumple y no hay nada que decir.
+     */
+    function reglaLocal(form, campo, final) {
+        const clave = tipo(campo);
+        const valor = campo.value;
+        if (valor === '') {
+            return final && campo.required ? { error: 'Este campo es obligatorio.' } : null;
+        }
+        if (clave === 'confirm_password') {
+            const password = campoDe(form, 'password');
+            const iguales = !password || valor === password.value;
+            return iguales ? { mensaje: 'Las contraseñas coinciden.' } : { error: 'Las contraseñas no coinciden.' };
+        }
+        if (clave === 'documento' && !/^\d{5,15}$/.test(valor.trim())) {
+            return { error: MENSAJES.documento };
+        }
+        if (clave === 'email' && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor.trim()) || valor.trim().length > 255)) {
+            return { error: MENSAJES.email };
+        }
+        if (clave === 'nombre_completo' && (valor.trim().length < 3 || valor.trim().length > 100)) {
+            return { error: MENSAJES.nombre_completo };
+        }
+        if (clave === 'telefono') {
+            const limpio = valor.trim().replace(/\s+/g, ' ');
+            const minimo = Number(campo.getAttribute('minlength')) || 7;
+            if (limpio.length < minimo || !cumplePatron(campo, limpio)) {
+                return { error: campo.title || MENSAJES.telefono };
+            }
+        }
+        if (clave === 'password') {
+            const motivo = typeof window.motivoPasswordInvalida === 'function'
+                ? window.motivoPasswordInvalida(valor)
+                : (valor.length < 8 ? 'Mínimo 8 caracteres' : null);
+            if (motivo) return { error: motivo };
+        }
+        return null;
+    }
+
+    /** Aplica la regla local; si cumple y ya había un aviso del servidor, lo deja hasta que responda. */
+    function mostrarLocal(form, campo, final = false) {
+        const estado = formularios.get(form);
+        const resultado = reglaLocal(form, campo, final);
+        if (resultado?.error) {
+            aviso(campo, resultado.error, true);
+            estado.origen.set(campo, 'local');
+            return false;
+        }
+        if (resultado?.mensaje) {
+            aviso(campo, resultado.mensaje, false, true);
+            estado.origen.set(campo, 'local');
+            return true;
+        }
+        // Un campo vacío vuelve a su ayuda inicial: el aviso anterior ya no le aplica.
+        if (campo.value === '' || estado.origen.get(campo) !== 'servidor') {
+            aviso(campo, '', false);
+            estado.origen.set(campo, 'local');
+        }
+        return true;
+    }
+
+    function mensajeDeExistencia(form, clave, existe) {
+        const estado = formularios.get(form);
+        const puedeVincular = !form.elements.id_usuario?.value && (form.dataset.cuentaVincular === 'true'
+            || (form.dataset.cuentaVincular === 'correo' && (clave === 'email' || estado.correoExistente)));
+        if (form.dataset.identidadAccion === 'cambiar_documento_ajax') {
+            // RN-G24: el envío autenticado abre el caso de soporte; la ayuda no lo crea.
+            return { error: null, mensaje: 'Documento registrado: al enviar se abrirá un caso para soporte.' };
+        }
+        if (puedeVincular) {
+            return { error: null, mensaje: 'Cuenta existente: se vinculará a la clínica.' };
+        }
+        const mensaje = 'Este ' + NOMBRES_UNICOS[clave] + ' ya está registrado.';
+        return { error: mensaje, mensaje };
     }
 
     async function comprobar(form, campo, final = false) {
@@ -54,16 +168,8 @@
         const valor = campo.value;
         const numero = (estado.secuencias.get(campo) || 0) + 1;
         estado.secuencias.set(campo, numero);
-        if (valor === '') {
-            aviso(campo, final && campo.required ? 'Este campo es obligatorio.' : '', final && campo.required);
-            return !campo.required;
-        }
-        if (clave === 'confirm_password') {
-            const password = campos(form).find(elemento => tipo(elemento) === 'password');
-            const error = password && valor !== password.value;
-            aviso(campo, error ? 'Las contraseñas no coinciden.' : '', Boolean(error));
-            return !error;
-        }
+        if (!mostrarLocal(form, campo, final)) return false;
+        if (valor === '' || clave === 'confirm_password') return true;
         const firma = JSON.stringify([valor, ...campos(form).filter(elemento => ['documento', 'email', 'nombre_completo'].includes(tipo(elemento))).map(elemento => elemento.value), form.elements.id_usuario?.value, estado.correoExistente]);
         if (estado.cache.get(campo)?.firma === firma) {
             return estado.cache.get(campo).valido;
@@ -76,65 +182,85 @@
         ['id_usuario', 'id_enlace', 'token_enlace', 'token_id', 'token'].forEach(nombre => {
             if (form.elements[nombre]) datos.set(nombre, form.elements[nombre].value);
         });
-        aviso(campo, 'Comprobando…', false);
         try {
             const respuesta = await fetch('index.php?action=validar_cuenta_ajax', { method: 'POST', body: datos });
             const resultado = await respuesta.json();
-            // Una respuesta antigua nunca valida el texto que el usuario ya reemplazó.
+            // Una respuesta antigua nunca valida ni pisa el texto que el usuario ya reemplazó.
             if (estado.secuencias.get(campo) !== numero || campo.value !== valor) return false;
             if (!respuesta.ok || !resultado.success) throw new Error(resultado.message || 'No se pudo comprobar el campo.');
             let error = resultado.error;
             let mensaje = error || '';
             if (clave === 'email') estado.correoExistente = Boolean(resultado.exists);
-            const puedeVincular = !form.elements.id_usuario?.value && (form.dataset.cuentaVincular === 'true'
-                || (form.dataset.cuentaVincular === 'correo' && (clave === 'email' || estado.correoExistente)));
-            if (!error && resultado.exists && ['documento', 'email'].includes(clave)) {
-                mensaje = puedeVincular ? 'Cuenta existente: se vinculará a la clínica.' : 'Este dato ya está registrado.';
-                error = puedeVincular ? null : mensaje;
-            }
-            if (form.dataset.identidadAccion === 'cambiar_documento_ajax' && resultado.exists && !resultado.error) {
-                // RN-G24: el envío autenticado abre el caso de soporte; la ayuda no lo crea.
-                error = null;
-                mensaje = 'Documento registrado: al enviar se abrirá un caso para soporte.';
+            if (!error && resultado.exists && NOMBRES_UNICOS[clave]) {
+                ({ error, mensaje } = mensajeDeExistencia(form, clave, resultado.exists));
             }
             aviso(campo, mensaje, Boolean(error));
+            estado.origen.set(campo, mensaje ? 'servidor' : 'local');
             estado.cache.set(campo, { firma, valido: !error });
             form.dispatchEvent(new CustomEvent('cuenta:validada', { detail: { campo: clave, valido: !error, existe: resultado.exists } }));
             return !error;
         } catch (error) {
             if (estado.secuencias.get(campo) !== numero) return false;
             aviso(campo, error.message || 'No se pudo comprobar el campo.', true);
+            estado.origen.set(campo, 'servidor');
             return false;
+        }
+    }
+
+    /** Consulta al servidor tras una pausa; cada campo tiene su propio temporizador. */
+    function programar(form, campo) {
+        const estado = formularios.get(form);
+        clearTimeout(estado.temporizadores.get(campo));
+        estado.temporizadores.set(campo, setTimeout(() => comprobar(form, campo), PAUSA_MS));
+    }
+
+    function alEscribir(form, campo) {
+        const estado = formularios.get(form);
+        const clave = tipo(campo);
+        estado.cache.delete(campo);
+        // Un valor nuevo invalida cualquier respuesta pendiente del anterior.
+        estado.secuencias.set(campo, (estado.secuencias.get(campo) || 0) + 1);
+        if (clave === 'email') estado.correoExistente = false;
+        const cumple = mostrarLocal(form, campo);
+        if (cumple && campo.value !== '' && consultanServidor.has(clave)) {
+            programar(form, campo);
+        } else {
+            clearTimeout(estado.temporizadores.get(campo));
+        }
+        // La confirmación depende de la contraseña: se revisa en la misma tecla.
+        if (clave === 'password') {
+            const confirmacion = campoDe(form, 'confirm_password');
+            if (confirmacion && confirmacion.value) mostrarLocal(form, confirmacion);
+        }
+        // El documento y el correo forman parte de la política completa de la contraseña.
+        if (['documento', 'email', 'nombre_completo'].includes(clave)) {
+            const password = campoDe(form, 'password');
+            if (password && password.value && reglaLocal(form, password) === null) {
+                estado.cache.delete(password);
+                programar(form, password);
+            }
         }
     }
 
     function vincular(form) {
         if (formularios.has(form)) return;
-        const estado = { cache: new WeakMap(), secuencias: new WeakMap(), temporizador: null, listo: false, enviando: false, correoExistente: false };
+        const estado = {
+            cache: new WeakMap(), secuencias: new WeakMap(), temporizadores: new Map(), origen: new WeakMap(),
+            listo: false, enviando: false, correoExistente: false,
+        };
         formularios.set(form, estado);
         campos(form).forEach((campo, indice) => {
             if (!campo.id) campo.id = 'cuenta-' + Array.from(document.forms).indexOf(form) + '-' + indice;
         });
         form.addEventListener('input', evento => {
-            if (!campos(form).includes(evento.target)) return;
-            estado.cache.delete(evento.target);
-            if (tipo(evento.target) === 'email') estado.correoExistente = false;
-            aviso(evento.target, '', false);
-            clearTimeout(estado.temporizador);
-            estado.temporizador = setTimeout(async () => {
-                await comprobar(form, evento.target);
-                if (['documento', 'email', 'nombre_completo', 'password'].includes(tipo(evento.target))) {
-                    for (const campo of campos(form).filter(elemento => ['password', 'confirm_password'].includes(tipo(elemento)) && elemento.value)) {
-                        await comprobar(form, campo);
-                    }
-                }
-            }, 400);
+            if (campos(form).includes(evento.target)) alEscribir(form, evento.target);
         });
         form.addEventListener('focusout', evento => {
             if (campos(form).includes(evento.target)) comprobar(form, evento.target);
         });
         form.addEventListener('reset', () => {
             estado.cache = new WeakMap();
+            estado.origen = new WeakMap();
             estado.correoExistente = false;
             campos(form).forEach(campo => aviso(campo, '', false));
         });
@@ -147,7 +273,7 @@
             evento.stopImmediatePropagation();
             if (estado.enviando) return;
             estado.enviando = true;
-            clearTimeout(estado.temporizador);
+            estado.temporizadores.forEach(temporizador => clearTimeout(temporizador));
             const resultados = [];
             // Secuencial: evita gastar simultáneamente el límite de comprobaciones.
             const orden = campos(form);
@@ -202,5 +328,5 @@
             });
         });
     });
-    window.ZookiValidacionCuenta = { vincular, comprobar };
+    window.ZookiValidacionCuenta = { vincular, comprobar, reglaLocal };
 }());

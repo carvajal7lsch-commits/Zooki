@@ -37,7 +37,7 @@
     <link rel="stylesheet" href="css/panel.css?v=3">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d21">
 </head>
 <body>
     <div id="global-loader"><div class="spinner"></div></div>

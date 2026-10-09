@@ -157,4 +157,4 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
     <?php require __DIR__ . "/../partials/cambios_identidad.php"; ?>
 </div>
 
-<script src="js/perfil.js?v=d2"></script>
+<script src="js/perfil.js?v=d21"></script>
