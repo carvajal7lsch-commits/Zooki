@@ -9,20 +9,22 @@
 - **Módulo activo:** M0 — Base SaaS, identidad y aislamiento. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
-- **Entrega actual:** D2 revisada; hallazgos en «D2 — Revisión» del plan. Falta el commit de D2 (usuario) y su prueba manual.
-- **Siguiente paso:** el usuario hace commit de D2, sigue la lista de prueba manual y responde con lo que falló; con eso, el arquitecto redacta el prompt de **D2.1** (corrección). D3 empieza después de D2.1.
+- **Entrega actual:** D2 revisada, con commit (`e503219`, `6f97d33`) y prueba manual del usuario hecha hasta el paso 12 (resultado en el plan, «D2 — Prueba manual del usuario»).
+- **Siguiente paso:** D2.1 (corrección). El prompt se entregó en la conversación del 2026-10-09; al recibirlo, el ejecutor lo implementa y lo deja «entregada, pendiente de revisión». Después, D3.
 
-## D2.1 — alcance propuesto (corrección de D2)
+## D2.1 — alcance (corrección de D2)
 
-1. **Bloqueante antes de F:** límites de intentos, comprobaciones y Turnstile con la IP real (`Auditoria::ipCliente()`, última IP no confiable de `X-Forwarded-For`, `TRUSTED_PROXIES` en `.env.example`).
-2. Un acceso correcto no borra el contador de la IP (RE-T.13.4).
-3. Comprobaciones al escribir: con sesión, límite por `id_usuario` (propuesta: 120 en 15 minutos); sin sesión, el de la IP.
-4. Correos propios para la invitación de personal y para el restablecimiento por el administrador.
-5. Mi perfil: la lista de requisitos de contraseña vuelve a marcarse al escribir y «Las contraseñas coinciden».
-6. La limpieza de cuentas pendientes no se detiene si una cuenta falla.
-7. Lo que falle en la prueba manual de D2.
-
-**Decisión del usuario (2026-10-08):** límite de 20 fallos por IP y 5 por cuenta con CAPTCHA (no se bloquea la cuenta); D2.1 ajusta RE-T.13.4 y RN-G15.
+1. **Bloqueante antes de F:** límites de intentos, comprobaciones y Turnstile con la IP real (`Auditoria::ipCliente()`, primera IP no confiable desde la derecha de `X-Forwarded-For`, `TRUSTED_PROXIES` en `.env.example`).
+2. **Decisión del usuario (2026-10-08):** 20 fallos por IP bloquean la IP; 5 por cuenta exigen CAPTCHA sin bloquear la cuenta. Ajustar RE-T.13.4 y RN-G15.
+3. Un acceso correcto no borra el contador de la IP.
+4. Comprobaciones al escribir: con sesión, límite por `id_usuario` (120 en 15 minutos); sin sesión, el de la IP. Mensaje de unicidad con el nombre del campo.
+5. Validación en cada tecla (reglas del navegador al instante, servidor con debounce sin borrar el aviso).
+6. Mi perfil: requisitos de contraseña marcados al escribir y «Las contraseñas coinciden».
+7. Correos propios para la invitación del personal y el restablecimiento por el administrador.
+8. Modal del personal en Usuarios con el diseño de v1.12.0 (`specs/referencias/usuarios-modal-editar-v1.png`). **Decisión del usuario (2026-10-09):** los modales del propietario en Pacientes no se tocan.
+9. La limpieza de pendientes no se detiene si una cuenta falla.
+10. «Contraseña actual» en `cambiar_password.php` con el estilo de la pantalla.
+11. Prueba local: correos a archivo (`MAIL_MODO=archivo`, solo en local), `datos_prueba.php --clave=...` y política aceptada para los usuarios de prueba; `metodo.md` §9 y `prueba-manual.md` al día.
 
 ## D2 — alcance acordado (hecho)
 

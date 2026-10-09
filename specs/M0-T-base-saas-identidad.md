@@ -1451,3 +1451,16 @@ Antes: XAMPP encendido, `php scripts/dev/datos_prueba.php --si`, y en el `.env` 
 **Celular** (F12 y Ctrl + Shift + M): repetir 4, 10, 12 y el login. Mirar que los avisos queden debajo del campo y no dentro de la fila.
 
 Dime solo lo que falló, con el número del paso.
+
+#### D2 — Prueba manual del usuario (2026-10-09)
+
+Probó hasta el paso 12; el resto quedó bloqueado por los correos y por el límite de comprobaciones.
+
+- **Regresión (desde C9.1):** el modal de alta y edición del personal en Usuarios no es el de v1.12.0. Referencia: `specs/referencias/usuarios-modal-editar-v1.png` y `modalUsuarioGestion` en `git show main:views/admin/usuarios.php` (líneas 980–1090): título «Editar Usuario» con nombre • documento, Rol, Nombre completo, Correo, Teléfono con bandera (intl-tel-input) e interruptor de Estado.
+- **Decisión del usuario (2026-10-09):** los modales del propietario en Pacientes son la referencia buena y no se cambian.
+- **Defecto:** la validación no reacciona mientras se escribe: el aviso se borra con cada tecla y solo aparece tras una pausa o al salir del campo. Debe aplicarse en cada tecla.
+- **Confirma el hallazgo 3:** en el portal, Fabio no pudo escribir un correo nuevo («Espera un momento antes de seguir comprobando»).
+- **Texto:** «Este dato ya está registrado» debe nombrar el campo (correo o documento).
+- **No son fallos:** el enlace iba a producción porque el `.env` local tiene `APP_URL` de producción (sin `APP_URL`, `EnlaceCuenta` usa localhost); Beto pidió la política porque era su primer acceso desde D1; la cuenta pendiente no tiene contraseña a propósito (el paso 3 estaba mal redactado).
+- **Pasaron:** alta con invitación de 72 horas; teléfono de Fabio en Pacientes; correo de solo lectura y «Datos de acceso» en Mi perfil; Carla Sur no ve el personal de Norte.
+- **Fricción de la prueba:** demasiados inicios y cierres de sesión y correos reales. D2.1 agrega correos locales a archivo, clave común opcional y política aceptada en `datos_prueba.php`, y el revisor hace el recorrido funcional en el navegador del equipo del usuario; el usuario solo revisa lo visual.
