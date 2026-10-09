@@ -1588,3 +1588,7 @@ Claude hizo el recorrido en el navegador integrado del equipo del usuario (`http
 7. Activación de personal, confirmación de correo y «Datos de acceso» (portal y Mi perfil) tienen campos sin el estilo del sistema: deben usar el diseño de `reset_password` y las clases de formulario del portal y de Mi perfil.
 
 **Pulido de interfaz.** Tras crear la contraseña por enlace, el login no muestra confirmación. A 611 px de ancho, el encabezado de Usuarios se monta sobre las pestañas y corta «Nuevo Usuario».
+
+**Decisión del usuario (2026-10-09), para E:** el panel del super-administrador lista las IP bloqueadas por RN-G15 y permite desbloquearlas con un clic. No se avisa por correo al administrador de la clínica en cada bloqueo; el bloqueo queda en la auditoría.
+
+**Ampliación del usuario (2026-10-09), para E:** junto a cada IP bloqueada, un botón «Enviar aviso» que el super-administrador usa a mano para escribir al administrador de la clínica (nunca automático). Como una IP no pertenece a una clínica, el panel muestra las cuentas que fallaron desde esa IP (según la auditoría de LOGIN_FAIL) y sus clínicas, y el super-administrador elige a quién avisar.

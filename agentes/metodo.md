@@ -84,6 +84,7 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 - Quiere opiniones claras con una recomendación, no análisis indecisos.
 - Explicar en palabras sencillas el porqué de un error o una decisión; dar comandos listos para PowerShell.
 - No narrar el proceso: decir qué salió, qué se encontró y qué le toca hacer.
+- **Las pruebas en el navegador las hace el usuario** (decisión del usuario, 2026-10-09): el revisor no recorre pantallas con el navegador integrado ni con Chrome, porque gasta demasiado. El revisor revisa código, corre las suites y entrega la lista de prueba manual; el usuario la sigue y responde con lo que falló.
 
 **Interfaz**
 - **Validación en tiempo real**: cada campo se valida mientras se escribe (formato, longitud, caracteres permitidos y, cuando aplica, unicidad de documento o correo por AJAX), con el mensaje junto al campo. La regla vive en un helper del servidor y el HTML y el JS usan la misma (por ejemplo, `ValidadorTelefono`). Validar solo al enviar no basta.

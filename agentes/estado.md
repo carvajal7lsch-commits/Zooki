@@ -10,7 +10,7 @@
 - **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
 - **Entrega actual:** D2.1 revisada, aprobada y con commit (`a66830f`, `a4fdf31`). Recorrido funcional del revisor hecho el 2026-10-09 (plan, «D2.1 — Recorrido funcional del revisor»); el revisor corrigió una línea en `validacion-cuenta.js` (el primer clic no enviaba), pendiente de commit del usuario.
-- **Siguiente paso:** revisión visual del usuario (lista en la conversación) y prompt de D3, con los siete puntos «De paso en D3» del recorrido.
+- **Siguiente paso:** prueba visual del usuario (desde ahora todas las pruebas en el navegador las hace él; `metodo.md` §8) y prompt de D3, con los siete puntos «De paso en D3» del recorrido.
 - **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
@@ -39,7 +39,7 @@
 ## Después
 
 - **D3:** registro de clínicas (HU-0.1, con Turnstile y NIT válido) y activación (HU-0.2, plan gratuito y catálogos iniciales, RE-0.2.5).
-- **E:** panel del super-administrador (HU-0.3 sin RE-0.3.6) y límites del plan (HU-0.4).
+- **E:** panel del super-administrador (HU-0.3 sin RE-0.3.6) y límites del plan (HU-0.4). **Decisión del usuario (2026-10-09):** el panel lista las IP bloqueadas por RN-G15 con un botón «Desbloquear» solo para el super-administrador; no se envía correo al administrador de la clínica por cada bloqueo (un bot llenaría los buzones), queda en la auditoría. **Ampliación (2026-10-09):** junto a cada IP bloqueada, un botón «Enviar aviso» que el super-administrador usa a mano para escribir al administrador de la clínica (nunca automático). Como una IP no pertenece a una clínica, el panel muestra las cuentas que fallaron desde esa IP (según la auditoría de LOGIN_FAIL) y sus clínicas, y el super-administrador elige a quién avisar.
 - **F:** respaldo, base de producción reiniciada, blindaje de Apache (`public/` y `.dockerignore`), despliegue, super-administrador y clínica demo con `zooki.vet@gmail.com`.
 - **Cierre de M0:** estados de HU/RE, una revisión nueva por documento, versión, historial y descargas del portal.
 - **Pulido de interfaz:** [`specs/pulido-interfaz.md`](../specs/pulido-interfaz.md), al final de la v2.0.
