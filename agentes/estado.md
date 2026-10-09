@@ -10,7 +10,7 @@
 - **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
 - **Entrega actual:** D2.1 revisada, aprobada y con commit (`a66830f`, `a4fdf31`). Recorrido funcional del revisor hecho el 2026-10-09 (plan, «D2.1 — Recorrido funcional del revisor»); el revisor corrigió una línea en `validacion-cuenta.js` (el primer clic no enviaba), pendiente de commit del usuario.
-- **Siguiente paso:** prueba visual del usuario (desde ahora todas las pruebas en el navegador las hace él; `metodo.md` §8) y prompt de D3, con los siete puntos «De paso en D3» del recorrido.
+- **Siguiente paso:** **D2.2** (corrección antes de D3; decisión del usuario, 2026-10-09). Alcance y decisiones en el plan, «D2.2 — Alcance». El prompt se entregó en la conversación del 2026-10-09. Después, D3 (registro de clínicas, Modelos §12.1).
 - **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)

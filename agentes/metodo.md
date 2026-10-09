@@ -35,14 +35,14 @@ Un mismo agente puede ser arquitecto en una sesión y ejecutor en otra, pero nun
 
 - El orden lo da el plan de entregas de las historias (v2.0 antes que v2.1) y las dependencias.
 - El plan es un solo `specs/M<módulo>-nombre.md` a partir de [`specs/_plantilla_modulo.md`](../specs/_plantilla_modulo.md). Etapas habituales: **A** inventario del código existente (solo lectura); **B** datos y esquema; **C…** implementación en subetapas pequeñas; corrección y pulido; **F** despliegue.
-- Antes de implementar: trazabilidad HU → RE → RN, decisiones cerradas con el usuario y riesgos con mitigación. El usuario aprueba el plan.
+- Antes de implementar: trazabilidad HU → RE → RN, **el diagrama de `Modelos.md` de cada flujo** (o la nota de que falta y se agrega), decisiones cerradas con el usuario y riesgos con mitigación. El usuario aprueba el plan.
 - Si una subetapa resulta más grande de lo previsto, se para y se replantea con el usuario.
 - La documentación (HU, RE, MER) se corrige durante el módulo **sin subir número de revisión**; la revisión nueva de cada documento se publica **una sola vez** al cerrar el módulo, con las descargas del portal regeneradas.
 
 ## 5. Plantilla del prompt para el ejecutor
 
 ```
-Seguimos con Zooki en la rama <rama>. Escribe <Claude Code | Codex>; revisa <arquitecto>. En el anexo pon quién lo escribió. Relee AGENTS.md, agentes/metodo.md y <plan del módulo> (<secciones, anexos y revisiones relevantes>). Busca en documentacion/ <HU, RE y RN>.
+Seguimos con Zooki en la rama <rama>. Escribe <Claude Code | Codex>; revisa <arquitecto>. En el anexo pon quién lo escribió. Relee AGENTS.md, agentes/metodo.md y <plan del módulo> (<secciones, anexos y revisiones relevantes>). Busca en documentacion/ <HU, RE y RN>. Sigue el diagrama de documentacion/Modelos.md <§ del flujo>: el código hace lo que dice el diagrama; si el flujo cambia, actualiza el diagrama en esta misma subetapa.
 
 Estilo: una sentencia por línea. Pruebas de MySQL con la base por defecto (zooki_test_base_v2), NUNCA zooki_v2_prueba. No reescribas contraseñas de zooki_v2_prueba. Nada de JS ni CSS en línea. Validación en tiempo real en los formularios que toques.
 
@@ -62,11 +62,12 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 
 1. Leer el anexo y `git status` / `git diff --stat` (con `GIT_OPTIONAL_LOCKS=0` si el agente trabaja sobre la carpeta sincronizada, para no dejar `.git/index.lock`).
 2. **Verificar en el código** los puntos de riesgo, no solo leer el anexo: aislamiento por `id_clinica`, permisos en la matriz de `Security`, consultas del propietario limitadas a lo suyo, migraciones repetibles, que nada lea `.env` ni toque `zooki_v2_prueba`.
-3. Buscar restos o regresiones con `grep` (claves v1, `onclick=`, `style=`, `alert(`).
-4. Comparar el diseño con la versión anterior o con `specs/referencias/` cuando la subetapa toca pantallas existentes: **no se acepta un cambio de diseño que el usuario no pidió**.
-5. Comprobar que las pruebas existen y fallarían ante el error (las «mutaciones» que reporta el ejecutor ayudan), y que hay pruebas de JS cuando cambia el JS: **un recorrido con `curl` no prueba el JavaScript**.
-6. Escribir la revisión en el plan: resultado (aprobada / con corrección), lo verificado, hallazgos con archivo y regla afectada, decisiones pendientes y lo que debe probar el usuario.
-7. Si el hallazgo es una línea evidente, el revisor puede corregirlo y anotarlo; si no, va a una subetapa de corrección.
+3. **Comparar el código con el diagrama de `Modelos.md`** de la subetapa, paso por paso (ramas de error incluidas). Una diferencia es un hallazgo: o se corrige el código, o se actualiza el diagrama con la decisión del usuario. Si el flujo no tiene diagrama, se agrega.
+4. Buscar restos o regresiones con `grep` (claves v1, `onclick=`, `style=`, `alert(`).
+5. Comparar el diseño con la versión anterior o con `specs/referencias/` cuando la subetapa toca pantallas existentes: **no se acepta un cambio de diseño que el usuario no pidió**.
+6. Comprobar que las pruebas existen y fallarían ante el error (las «mutaciones» que reporta el ejecutor ayudan), y que hay pruebas de JS cuando cambia el JS: **un recorrido con `curl` no prueba el JavaScript**.
+7. Escribir la revisión en el plan: resultado (aprobada / con corrección), lo verificado, hallazgos con archivo y regla afectada, decisiones pendientes y lo que debe probar el usuario.
+8. Si el hallazgo es una línea evidente, el revisor puede corregirlo y anotarlo; si no, va a una subetapa de corrección.
 
 ## 7. Clasificación de hallazgos
 
@@ -117,3 +118,4 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 - Una vista reconstruida perdió el diseño de producción (Usuarios): al tocar una pantalla existente se parte de su versión anterior y de las referencias.
 - Correr dos veces los comandos de commit mezcló subetapas: commit inmediatamente después de cada subetapa.
 - Un dato temporal desactivado (vínculo inactivo) también cuenta para la seguridad: las reglas de acceso consideran todos los vínculos, no solo los activos.
+- Hasta D2.1 los diagramas de `Modelos.md` no se comparaban con el código: §10 quedó con la contraseña temporal y §13.3 pedía cerrar las demás sesiones sin que se hiciera, y el alta de personal existente vinculaba sin consentimiento. Desde el 2026-10-09 cada prompt cita su diagrama y la revisión lo compara.

@@ -1592,3 +1592,21 @@ Claude hizo el recorrido en el navegador integrado del equipo del usuario (`http
 **Decisión del usuario (2026-10-09), para E:** el panel del super-administrador lista las IP bloqueadas por RN-G15 y permite desbloquearlas con un clic. No se avisa por correo al administrador de la clínica en cada bloqueo; el bloqueo queda en la auditoría.
 
 **Ampliación del usuario (2026-10-09), para E:** junto a cada IP bloqueada, un botón «Enviar aviso» que el super-administrador usa a mano para escribir al administrador de la clínica (nunca automático). Como una IP no pertenece a una clínica, el panel muestra las cuentas que fallaron desde esa IP (según la auditoría de LOGIN_FAIL) y sus clínicas, y el super-administrador elige a quién avisar.
+
+
+## D2.2 — Alcance (corrección antes de D3)
+
+**Decisiones del usuario (2026-10-09).**
+
+1. Hay **D2.2 antes de D3**.
+2. **Personal que ya existe en la plataforma:** no se vincula de una. Recibe una invitación («Clínica X te invitó como <rol>») que acepta o rechaza en 72 horas; solo al aceptar queda el rol en la clínica y el administrador ve sus datos. El administrador recibe la misma respuesta exista o no la cuenta. La persona conserva sus otros roles: un propietario que acepta queda propietario y veterinario, y elige el contexto al entrar (Modelos §9). Se ajustan RE-T.7.5, RN-705 y RN-G06.
+3. Desde ahora cada subetapa cita su diagrama de `Modelos.md` y la revisión lo compara con el código (`agentes/metodo.md` §4, §5 y §6).
+
+**Hallazgos del usuario en la prueba visual de D2.1.**
+
+- El modal «Editar cliente» sigue siendo el de C9.1: en v1.12.0 clientes y personal usaban el mismo modal (al cliente se le ocultaba el rol).
+- El mensaje de contraseña común («listas públicas…») confunde: debe decir «Esa contraseña es muy común y fácil de adivinar. Elige otra.».
+
+**Diagramas desactualizados.** §10 (login) todavía tiene «contraseña temporal». §13.3 y RE-T.2.5 piden cerrar las demás sesiones al crear o cambiar la contraseña, y no está construido. No hay diagrama del alta de personal (nueva o existente).
+
+**Propuesta del arquitecto, pendiente de confirmar:** guardar el rol de la invitación en `verificaciones_email.id_rol_vinculo` (nueva columna, migración 04) y cerrar las demás sesiones con `usuarios.version_sesion` (nueva columna en la misma migración).
