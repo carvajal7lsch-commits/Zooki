@@ -37,6 +37,7 @@
     <link rel="stylesheet" href="css/panel.css?v=3">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
 </head>
 <body>
     <div id="global-loader"><div class="spinner"></div></div>
@@ -159,7 +160,7 @@
     <script src="js/avisos.js?v=3"></script>
     <script src="js/password-policy.js"></script>
     <script src="js/dashboard.js?v=7"></script>
-    <script src="js/medical-module.js?v=19"></script>
+    <script src="js/medical-module.js?v=d2"></script>
     <script src="js/csrf.js"></script>
     <script src="js/sesion.js?v=1"></script>
     <script src="js/extras.js"></script>
@@ -173,5 +174,7 @@
     <script src="js/atencion.js?v=1"></script>
     <?php endif; ?>
 <script src="js/interacciones.js?v=2"></script>
+<?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

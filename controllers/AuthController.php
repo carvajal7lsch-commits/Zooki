@@ -1,21 +1,23 @@
 <?php
 
-require_once '../config/Database.php';
-require_once '../models/Usuario.php';
-require_once '../models/PasswordReset.php';
-require_once '../models/VerificacionEmail.php';
-require_once '../models/Auditoria.php';
-require_once '../config/EmailService.php';
-require_once '../helpers/Csrf.php';
-require_once '../helpers/Security.php';
-require_once '../helpers/GoogleToken.php';
-require_once '../helpers/PoliticaPassword.php';
-require_once '../helpers/Autenticador.php';
-require_once '../helpers/Contexto.php';
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../models/PasswordReset.php';
+require_once __DIR__ . '/../models/VerificacionEmail.php';
+require_once __DIR__ . '/../models/Auditoria.php';
+require_once __DIR__ . '/../config/EmailService.php';
+require_once __DIR__ . '/../helpers/Csrf.php';
+require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../helpers/GoogleToken.php';
+require_once __DIR__ . '/../helpers/PoliticaPassword.php';
+require_once __DIR__ . '/../helpers/Autenticador.php';
+require_once __DIR__ . '/../helpers/Contexto.php';
 require_once __DIR__ . '/ContextoController.php';
-require_once '../models/RegistroPropietario.php';
-require_once '../helpers/InicioSesion.php';
-require_once '../helpers/EnlaceCuenta.php';
+require_once __DIR__ . '/../models/RegistroPropietario.php';
+require_once __DIR__ . '/../helpers/InicioSesion.php';
+require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
+require_once __DIR__ . '/../helpers/Turnstile.php';
+require_once __DIR__ . '/../helpers/Transaccion.php';
 
 class AuthController {
     private $db;
@@ -25,14 +27,15 @@ class AuthController {
     private $emailService;
     private $auditoria;
     private RegistroPropietario $registro;
+    private Turnstile $turnstile;
 
-    public function __construct() {
-        $database = new Database();
-        $this->db = $database->getConnection();
+    public function __construct(?PDO $db = null, $emailService = null, ?Turnstile $turnstile = null) {
+        $this->turnstile = $turnstile ?? new Turnstile();
+        $this->db = $db ?? (new Database())->getConnection();
         $this->usuarioModel = new Usuario($this->db);
         $this->passwordResetModel = new PasswordReset($this->db);
         $this->verificacionEmailModel = new VerificacionEmail($this->db);
-        $this->emailService = new EmailService();
+        $this->emailService = $emailService ?? new EmailService();
         $this->auditoria = new Auditoria($this->db);
         $this->registro = new RegistroPropietario($this->db);
     }
@@ -60,10 +63,10 @@ class AuthController {
             // conocer el id_usuario y contar por cuenta. El mensaje es el
             // mismo exista o no la cuenta, así que el límite no la revela.
             $intento = (new Autenticador($this->usuarioModel, $this->verificacionEmailModel))
-                ->conPassword($identificador, $password);
+                ->conPasswordProtegido($identificador, $password, (string) ($_POST['cf-turnstile-response'] ?? ''), $this->turnstile);
             $cuenta = $intento['id_cuenta'] !== null ? (string) $intento['id_cuenta'] : null;
 
-            if (!Security::checkRateLimit($cuenta)) {
+            if ($intento['resultado'] === 'limite_ip') {
                 $this->redirectWithError("Demasiados intentos fallidos. Espera 15 minutos antes de volver a intentarlo.");
                 return;
             }
@@ -116,7 +119,7 @@ class AuthController {
     {
         $clinicasRegistro = $this->registro->clinicasDisponibles();
         $clinicaElegida = ctype_digit((string) $clinica) ? (int) $clinica : 0;
-        require_once '../views/auth/login.php';
+        require_once __DIR__ . '/../views/auth/login.php';
     }
 
     /** RE-T.1.5: el mismo mensaje para cualquier credencial inválida. */
@@ -204,12 +207,16 @@ class AuthController {
             }
         }
 
-        require_once '../views/auth/reset_password.php';
+        require_once __DIR__ . '/../views/auth/reset_password.php';
     }
 
     public function procesarResetPasswordAjax() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonResponse(false, 'Método no permitido.');
+        }
+
+        if (!Csrf::validate()) {
+            $this->jsonResponse(false, 'Recarga el formulario para continuar.');
         }
 
         try {
@@ -242,11 +249,11 @@ class AuthController {
             $user = !empty($reset['id_usuario'])
                 ? $this->usuarioModel->buscarPorId((int) $reset['id_usuario'])
                 : $this->usuarioModel->buscarPorEmail((string) $reset['email']);
-            if (!$user) {
+            if (!$user || (int) $user['estado'] !== 1 || strcasecmp((string) $user['email'], (string) $reset['email']) !== 0) {
                 $this->jsonResponse(false, 'No encontramos la cuenta asociada a este enlace.');
             }
 
-            // HU-36: la misma politica de todos los flujos, contrastada ademas
+            // RN-G10: la misma política de todos los flujos, contrastada además
             // con los datos del titular.
             $motivo = PoliticaPassword::validar($password, [
                 $user['documento'] ?? '',
@@ -258,12 +265,13 @@ class AuthController {
             }
 
             $idUsuario = (int) $user['id_usuario'];
-            if (!$this->usuarioModel->actualizarPassword($idUsuario, password_hash($password, PASSWORD_DEFAULT))) {
-                $this->jsonResponse(false, 'No fue posible actualizar la contraseña. Inténtalo nuevamente.');
-            }
-
-            $this->usuarioModel->marcarCambioPassword($idUsuario, false);
-            $this->passwordResetModel->markTokenUsed($tokenId);
+            Transaccion::ejecutar($this->db, function () use ($tokenId, $idUsuario, $password): void {
+                if (!$this->passwordResetModel->consumirToken($tokenId)) {
+                    throw new InvalidArgumentException('El enlace ya no está disponible.');
+                }
+                $this->usuarioModel->actualizarPassword($idUsuario, password_hash($password, PASSWORD_DEFAULT));
+                $this->usuarioModel->marcarCambioPassword($idUsuario, false);
+            });
             $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, null, null, 'Cambio de contraseña por restablecimiento', null);
 
             $this->jsonResponse(true, 'Tu contraseña se actualizó correctamente. Ya puedes iniciar sesión.');
@@ -528,9 +536,16 @@ class AuthController {
      */
     public function verificarEmail()
     {
+        // D2: abrir el enlace no prueba una acción del titular (filtros de correo).
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $id = (int) ($_GET['id'] ?? 0);
+            $token = (string) ($_GET['token'] ?? '');
+            require __DIR__ . '/../views/auth/verificar_email.php';
+            return;
+        }
         // Mensaje único para todos los fallos: no se distingue "no existe" de
         // "ya usado" ni de "vencido", para no confirmar que un id es real.
-        $verificado = $this->registro->verificarRegistro((int) ($_GET['id'] ?? 0), (string) ($_GET['token'] ?? ''));
+        $verificado = $this->registro->verificarRegistro((int) ($_POST['id'] ?? 0), (string) ($_POST['token'] ?? ''));
         if ($verificado === null) {
             $_SESSION['error_login'] = 'El enlace de confirmación no es válido o ya fue utilizado.';
             header('Location: index.php?action=login');
@@ -828,6 +843,9 @@ class AuthController {
         if ($_SERVER["REQUEST_METHOD"] !== "POST") {
             return;
         }
+        if (!Csrf::validate('login') || !Security::checkRateLimit()) {
+            $this->jsonResponse(false, 'No se pudo iniciar sesión. Recarga la página o inténtalo más tarde.');
+        }
         $accessToken = $_POST['access_token'] ?? '';
         $credential = $_POST['credential'] ?? ''; // Para Google One Tap
         if (empty($accessToken) && empty($credential)) {
@@ -842,6 +860,7 @@ class AuthController {
         if ($motivo !== null) {
             // Al cliente se le responde en genérico (HU-38); el motivo real va al log.
             error_log('HU-36: token de Google rechazado - ' . $motivo);
+            Security::recordFailedLogin();
             $this->jsonResponse(false, "No se pudo validar el token con Google.");
         }
 
@@ -854,12 +873,19 @@ class AuthController {
         }
         $googleUid = isset($payload['sub']) ? (string) $payload['sub'] : null;
 
-        $intento = (new Autenticador($this->usuarioModel, $this->verificacionEmailModel))->conGoogle($email);
+        $intento = (new Autenticador($this->usuarioModel, $this->verificacionEmailModel))
+            ->conGoogleProtegido($email, (string) ($_POST['cf-turnstile-response'] ?? ''), $this->turnstile);
+        $cuenta = $intento['id_cuenta'] !== null ? (string) $intento['id_cuenta'] : null;
+        if (in_array($intento['resultado'], ['fallo', 'limite_ip'], true)) {
+            Security::recordFailedLogin($cuenta);
+            $this->jsonResponse(false, self::MENSAJE_CREDENCIALES);
+        }
         if ($intento['resultado'] === 'inactiva') {
             // Google ya demostró que el buzón es de quien entra: aquí sí se le dice por qué no pasa.
             $this->jsonResponse(false, "Tu cuenta está inactiva. Contacta al administrador.");
         }
         if ($intento['resultado'] === 'ok') {
+            Security::resetRateLimit($cuenta);
             // RN-G21: Google se liga a la cuenta existente.
             $usuario = $this->registro->vincularGoogle($intento['usuario'], $googleUid);
             $destino = $this->iniciarSesion($usuario, 'google');

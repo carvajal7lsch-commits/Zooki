@@ -429,7 +429,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
             <dl class="profile-details-list">
                 <div class="profile-detail-row">
                     <dt class="profile-detail-label">Cédula</dt>
-                    <dd class="profile-detail-value"><?= htmlspecialchars($usuarioData['documento'] ?? '—') ?></dd>
+                    <dd class="profile-detail-value" data-documento-cuenta><?= htmlspecialchars($usuarioData['documento'] ?? '—') ?></dd>
                 </div>
                 <div class="profile-detail-row">
                     <dt class="profile-detail-label">Correo</dt>
@@ -454,11 +454,11 @@ foreach ((array) $todas_desparasitaciones as $d) {
                 </button>
 
                 <div id="contactEditSection" class="password-change-collapse">
-                    <form id="portalContactEditForm" class="portal-form" novalidate>
+                    <form id="portalContactEditForm" class="portal-form" novalidate data-validacion-cuenta>
                         <?php // Decisión C6: el correo es el dato de acceso; su cambio con verificación llega en la etapa D (RE-T.5.7). ?>
                         <div class="input-group">
                             <span class="portal-label">Correo electrónico</span>
-                            <p class="portal-ayuda"><?= htmlspecialchars($usuarioData['email'] ?? '') ?> · Pronto podrás cambiarlo, verificando el correo nuevo.</p>
+                            <p class="portal-ayuda"><?= htmlspecialchars($usuarioData['email'] ?? '') ?> · Puedes cambiarlo en Datos de acceso, verificando el correo nuevo.</p>
                         </div>
                         <div class="input-group">
                             <label class="portal-label" for="portal_contact_phone">Teléfono de contacto *</label>
@@ -472,7 +472,8 @@ foreach ((array) $todas_desparasitaciones as $d) {
                             <span>Guardar cambios</span>
                             <i class="ri-check-line" aria-hidden="true"></i>
                         </button>
-                    </form>
+                    <p role="status" data-password-resultado></p>
+</form>
                 </div>
             </div>
 
@@ -514,13 +515,14 @@ foreach ((array) $todas_desparasitaciones as $d) {
             </section>
 
             <div class="profile-actions-list">
+                <?php require __DIR__ . "/../partials/cambios_identidad.php"; ?>
                 <button type="button" class="btn-profile-action" data-ui-accion="editar-password" aria-controls="passwordChangeSection">
                     <span><i class="ri-lock-password-line" aria-hidden="true"></i> Cambiar contraseña</span>
                     <i class="ri-arrow-down-s-line" id="iconTogglePassword" aria-hidden="true"></i>
                 </button>
 
                 <div id="passwordChangeSection" class="password-change-collapse">
-                    <form id="portalChangePasswordForm" class="portal-form" onsubmit="event.preventDefault(); submitChangePasswordPortal();">
+                    <form id="portalChangePasswordForm" data-password-accion="cambiar_password_ajax" class="portal-form"  data-validacion-cuenta>
                         <?php // HU-39: se pide la actual si la cuenta tiene una contraseña conocida ?>
                         <?php if ((int) ($usuarioData['tiene_password'] ?? 1) === 1): ?>
                         <div class="input-group">
@@ -533,7 +535,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
                         <div class="input-group">
                             <label class="portal-label" for="portal_new_password">Nueva contraseña</label>
                             <div class="search-input-wrapper campo">
-                                <input type="password" name="new_password" id="portal_new_password" required autocomplete="new-password" placeholder="Mínimo 8 caracteres" oninput="validarFuerzaPasswordPortal()" aria-describedby="portal_pwd_strength_text">
+                                <input type="password" name="new_password" id="portal_new_password" data-cuenta-ayuda="portal_pwd_strength_text" required autocomplete="new-password" placeholder="Mínimo 8 caracteres"  aria-describedby="portal_pwd_strength_text">
                             </div>
                             <div class="password-strength-meter" aria-hidden="true">
                                 <div id="portal_pwd_strength_bar"></div>
@@ -543,11 +545,12 @@ foreach ((array) $todas_desparasitaciones as $d) {
                         <div class="input-group">
                             <label class="portal-label" for="portal_confirm_password">Confirmar nueva contraseña</label>
                             <div class="search-input-wrapper campo">
-                                <input type="password" name="confirm_password" id="portal_confirm_password" required autocomplete="new-password" placeholder="Repite la nueva contraseña" oninput="validarFuerzaPasswordPortal()">
+                                <input type="password" name="confirm_password" id="portal_confirm_password" required autocomplete="new-password" placeholder="Repite la nueva contraseña" >
                             </div>
                             <small id="portal_pwd_match_text" class="password-match-text" role="alert">Las contraseñas no coinciden.</small>
                         </div>
-                        <button type="submit" id="portal_btn_change_pwd" class="btn-primary" disabled>Actualizar contraseña</button>
+                        <button type="submit" id="portal_btn_change_pwd" class="btn-primary">Actualizar contraseña</button>
+                        <p role="status" data-password-resultado></p>
                     </form>
                 </div>
 

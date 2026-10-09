@@ -148,6 +148,9 @@ switch ($action) {
         break;
 
     case "cambiar_password":
+        require_once '../models/Usuario.php';
+        require_once '../config/Database.php';
+        $cuentaPassword = (new Usuario((new Database())->getConnection()))->buscarPorId((int) Contexto::idUsuario());
         require_once "../views/auth/cambiar_password.php";
         break;
 
@@ -179,6 +182,27 @@ switch ($action) {
     case "completar_perfil":
         require_once "../controllers/CuentaController.php";
         (new CuentaController())->completarPerfil();
+        break;
+
+    case "activar_personal":
+    case "confirmar_cambio_correo":
+        require_once '../controllers/IdentidadController.php';
+        (new IdentidadController())->enlace($action === 'activar_personal' ? 'activacion_personal' : 'cambio_correo');
+        break;
+
+    case "solicitar_cambio_correo_ajax":
+        require_once '../controllers/IdentidadController.php';
+        (new IdentidadController())->solicitarCorreo();
+        break;
+
+    case "cambiar_documento_ajax":
+        require_once '../controllers/IdentidadController.php';
+        (new IdentidadController())->cambiarDocumento();
+        break;
+
+    case "validar_cuenta_ajax":
+        require_once '../controllers/IdentidadController.php';
+        (new IdentidadController())->validar();
         break;
 
     case "seleccionar_contexto":

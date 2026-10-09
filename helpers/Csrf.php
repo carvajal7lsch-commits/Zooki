@@ -34,6 +34,12 @@ class Csrf {
         return !empty($token) && hash_equals($_SESSION[$key] ?? '', $token);
     }
 
+    /** Token de una ayuda AJAX independiente del token de guardado del formulario. */
+    public static function validarToken(string $token, string $form): bool {
+        return $token !== '' && isset($_SESSION['csrf_' . $form])
+            && hash_equals($_SESSION['csrf_' . $form], $token);
+    }
+
     /**
      * Invalida (regenera) un token, útil tras submit exitoso.
      */

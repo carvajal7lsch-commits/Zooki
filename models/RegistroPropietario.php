@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/Usuario.php';
 require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/VerificacionEmail.php';
@@ -164,7 +165,7 @@ final class RegistroPropietario
         if (!in_array($tipo, Usuario::TIPOS_DOCUMENTO, true)) {
             throw new InvalidArgumentException('Elige el tipo de documento.');
         }
-        if (!preg_match('/^\d{5,15}$/D', $documento)) {
+        if (ValidadorCuenta::documento($documento) !== null) {
             throw new InvalidArgumentException('El documento debe tener entre 5 y 15 dígitos.');
         }
         $this->exigirTelefono($telefono);
@@ -214,14 +215,14 @@ final class RegistroPropietario
         if (!in_array($datos['tipo_documento'], Usuario::TIPOS_DOCUMENTO, true)) {
             throw new InvalidArgumentException('Elige el tipo de documento.');
         }
-        if (!preg_match('/^\d{5,15}$/D', $datos['documento'])) {
+        if (ValidadorCuenta::documento($datos['documento']) !== null) {
             throw new InvalidArgumentException('El documento debe tener entre 5 y 15 dígitos.');
         }
         if (mb_strlen($datos['nombre_completo']) < 3 || mb_strlen($datos['nombre_completo']) > 100) {
             throw new InvalidArgumentException('El nombre completo debe tener entre 3 y 100 caracteres.');
         }
         $this->exigirTelefono($datos['telefono']);
-        if (!filter_var($datos['email'], FILTER_VALIDATE_EMAIL) || mb_strlen($datos['email']) > 100) {
+        if (ValidadorCuenta::correo($datos['email']) !== null || mb_strlen($datos['email']) > 100) {
             throw new InvalidArgumentException('El correo electrónico no tiene un formato válido.');
         }
         if ($datos['password'] !== (string) ($entrada['confirm_password'] ?? '')) {

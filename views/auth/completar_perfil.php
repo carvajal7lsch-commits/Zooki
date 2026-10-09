@@ -22,6 +22,7 @@ $nombres = ['CC' => 'Cédula de ciudadanía', 'CE' => 'Cédula de extranjería',
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/contexto.css?v=<?= $e(App::assetVersion()) ?>">
     <link rel="stylesheet" href="css/cuenta-pendiente.css?v=<?= $e(App::assetVersion()) ?>">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
 </head>
 <body class="contexto-pagina">
     <main class="contexto-tarjeta">
@@ -36,7 +37,7 @@ $nombres = ['CC' => 'Cédula de ciudadanía', 'CE' => 'Cédula de extranjería',
             Para registrar tus mascotas y agendar citas, la clínica necesita tu documento y un teléfono de contacto.
         </p>
 
-        <form method="POST" action="index.php?action=completar_perfil" class="cuenta-form">
+        <form method="POST" action="index.php?action=completar_perfil" class="cuenta-form" data-validacion-cuenta>
             <?php Csrf::field('default'); ?>
             <label class="cuenta-campo" for="perfilTipoDocumento">Tipo de documento</label>
             <select id="perfilTipoDocumento" name="tipo_documento" required>
@@ -57,5 +58,6 @@ $nombres = ['CC' => 'Cédula de ciudadanía', 'CE' => 'Cédula de extranjería',
         <a class="contexto-salir" href="index.php?action=logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar sesión</a>
     </main>
     <script src="js/interacciones.js?v=2"></script>
+<?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
 </body>
 </html>

@@ -43,6 +43,8 @@ window.handleGoogleCredentialResponse = async (response) => {
         const formData = new FormData();
         // Con initTokenClient recibimos access_token en lugar de credential (JWT).
         formData.append('access_token', response.access_token);
+        formData.append('csrf_token', document.querySelector('#loginForm input[name="csrf_token"]').value);
+        formData.append('cf-turnstile-response', document.querySelector((googleDesdeRegistro ? '#registerForm' : '#loginForm') + ' input[name="cf-turnstile-response"]')?.value || '');
         formData.append('id_clinica', clinicaDelRegistro());
         const res = await fetch('index.php?action=google_login_ajax', { method: 'POST', body: formData });
         responderGoogle(await res.json());
@@ -62,6 +64,8 @@ window.handleGoogleOneTapResponse = async (response) => {
         const formData = new FormData();
         // Con One Tap recibimos credential (JWT) en lugar de access_token.
         formData.append('credential', response.credential);
+        formData.append('csrf_token', document.querySelector('#loginForm input[name="csrf_token"]').value);
+        formData.append('cf-turnstile-response', document.querySelector('#loginForm input[name="cf-turnstile-response"]')?.value || '');
         const res = await fetch('index.php?action=google_login_ajax', { method: 'POST', body: formData });
         responderGoogle(await res.json());
     } catch (error) {

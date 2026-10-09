@@ -32,6 +32,7 @@
     <?php if (!isset($content_view)): ?>
     <link rel="stylesheet" href="css/panel.css?v=3">
     <?php endif; ?>
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
 </head>
 <body>
     <div id="global-loader"><div class="spinner"></div></div>
@@ -158,5 +159,7 @@
     <script src="js/panel-admin.js?v=1"></script>
     <?php endif; ?>
 <script src="js/interacciones.js?v=2"></script>
+<?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

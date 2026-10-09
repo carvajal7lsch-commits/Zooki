@@ -147,6 +147,7 @@
         soloAlta.hidden = !esAlta;
         aviso.hidden = true;
         if (esAlta) bloquearIdentidad(false);
+        form.elements.password.disabled = esAlta;
         modal.classList.add('is-open');
         form.querySelector('input[name="documento"]').focus();
     }
@@ -416,7 +417,7 @@
         } else if (boton.dataset.accion === 'restablecer') {
             const ok = await Swal.fire({
                 icon: 'warning',
-                text: 'Se generará una contraseña temporal para ' + boton.dataset.nombre + ' y se enviará a su correo. Deberá cambiarla al entrar.',
+                text: 'Se invalidará la contraseña actual de ' + boton.dataset.nombre + ' y se enviará un enlace para que el titular cree otra. Si su cuenta está pendiente, se reenvía la invitación de activación.',
                 showCancelButton: true,
                 confirmButtonText: 'Restablecer',
                 cancelButtonText: 'Cancelar',

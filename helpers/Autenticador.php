@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../models/VerificacionEmail.php';
+require_once __DIR__ . '/Security.php';
+require_once __DIR__ . '/Turnstile.php';
 
 /**
  * Decide si unas credenciales abren sesión (HU-T.1). No toca la sesión ni
@@ -55,6 +57,30 @@ final class Autenticador
         }
 
         return $this->despuesDeVerificar($usuario);
+    }
+
+    /** RE-T.13.5: IP y cuenta se tratan por separado; CAPTCHA sustituible en pruebas. */
+    public function conPasswordProtegido(string $identificador, string $password, string $token, Turnstile $captcha): array
+    {
+        $resultado = $this->conPassword($identificador, $password);
+        return $this->proteger($resultado, $token, $captcha);
+    }
+
+    public function conGoogleProtegido(string $email, string $token, Turnstile $captcha): array
+    {
+        return $this->proteger($this->conGoogle($email), $token, $captcha);
+    }
+
+    private function proteger(array $resultado, string $token, Turnstile $captcha): array
+    {
+        $cuenta = $resultado['id_cuenta'] !== null ? (string) $resultado['id_cuenta'] : null;
+        if (!Security::checkRateLimit($cuenta)) {
+            return ['resultado' => 'limite_ip', 'usuario' => null, 'id_cuenta' => $resultado['id_cuenta']];
+        }
+        if (Security::exigeCaptcha($cuenta) && !$captcha->validar($token, (string) ($_SERVER['REMOTE_ADDR'] ?? ''))) {
+            return ['resultado' => 'fallo', 'usuario' => null, 'id_cuenta' => $resultado['id_cuenta']];
+        }
+        return $resultado;
     }
 
     /**

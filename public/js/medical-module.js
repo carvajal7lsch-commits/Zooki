@@ -69,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { selector: '.validate-select', func: 'validarSelect' },
         { selector: '.validate-doc', func: 'validarDocumento', event: 'input' },
         { selector: '.validate-name', func: 'validarNombre', event: 'input' },
-        { selector: '.validate-tel', func: 'validarTelefono', event: 'input' },
         { selector: '.validate-email', func: 'validarEmail', event: 'input' }
     ];
     validations.forEach(val => {
@@ -2608,40 +2607,6 @@ function validarEmail(input) {
 
     if (emailRegex.test(value) && value.length > 0) {
         verificarEmailExiste(input);
-    }
-}
-
-function validarTelefono(input) {
-    // D1: los caracteres los filtra interacciones.js con la regla del servidor
-    // (data-caracteres de ValidadorTelefono); aquí solo se avisa el formato.
-
-    const inputGroup = input.closest('.input-group');
-    if (!inputGroup) return;
-
-    const errorSpan = inputGroup.querySelector('.error-message');
-    if (!errorSpan) return;
-
-    if (input.value.trim() === '') {
-        errorSpan.style.display = 'none';
-        input.classList.remove('error');
-        return;
-    }
-
-    const isNew = input.id === 'new_owner_tel';
-    const iti = isNew ? itiNewOwnerPhone : itiEditOwnerPhone;
-
-    if (iti) {
-        if (iti.isValidNumber()) {
-            errorSpan.style.display = 'none';
-            input.classList.remove('error');
-        } else {
-            const errorMsgMap = ["Número inválido", "Código de país inválido", "Demasiado corto", "Demasiado largo", "Número inválido"];
-            const errorCode = iti.getValidationError();
-            const msg = (errorCode >= 0 && errorCode < errorMsgMap.length) ? errorMsgMap[errorCode] : "El número no es válido para este país";
-            errorSpan.textContent = msg;
-            errorSpan.style.display = 'block';
-            input.classList.add('error');
-        }
     }
 }
 

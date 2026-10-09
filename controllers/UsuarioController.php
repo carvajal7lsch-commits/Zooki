@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
@@ -7,6 +8,8 @@ require_once __DIR__ . '/../config/EmailService.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
 require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../models/CuentaTitular.php';
+require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 
 /**
  * HU-T.7 — Personal de la clínica activa (administradores y veterinarios).
@@ -97,10 +100,10 @@ class UsuarioController {
             $limpios[$campo] = $valor;
         }
 
-        if (!preg_match('/^\d{5,15}$/', $limpios['documento'])) {
+        if (ValidadorCuenta::documento($limpios['documento']) !== null) {
             return 'El documento debe tener entre 5 y 15 digitos.';
         }
-        if (!filter_var($limpios['email'], FILTER_VALIDATE_EMAIL)) {
+        if (ValidadorCuenta::correo($limpios['email']) !== null) {
             return 'El correo electronico no tiene un formato valido.';
         }
         if (mb_strlen($limpios['nombre_completo']) < 3 || mb_strlen($limpios['nombre_completo']) > 100) {
@@ -163,39 +166,14 @@ class UsuarioController {
                 return;
             }
 
-            // HU-36 (VD-SEG-07): si el administrador escribe una contraseña
-            // debe cumplir la política; si la deja vacía se genera una
-            // temporal aleatoria. En ambos casos se pide cambiarla al entrar.
-            $password = (string) ($_POST['password'] ?? '');
-            if ($password !== '') {
-                $motivo = PoliticaPassword::validar($password, [$datos['documento'], $datos['nombre_completo'], $datos['email']]);
-                if ($motivo !== null) {
-                    $this->responder(false, $motivo);
-                    return;
-                }
-            } else {
-                $password = PoliticaPassword::generarTemporal();
-            }
-
-            $this->db->beginTransaction();
-            $idUsuario = $this->usuario->crear($datos + [
-                'password' => password_hash($password, PASSWORD_DEFAULT),
-                'debe_cambiar_password' => 1,
-            ]);
-            $this->usuario->asignarRolEnClinica($idUsuario, $idClinica, $datos['id_rol']);
-            $this->db->commit();
-
-            $this->auditoria->log(Contexto::idUsuario(), 'INSERT', 'usuario_clinica', $idUsuario, null, [
-                'nombre_completo' => $datos['nombre_completo'],
-                'email' => $datos['email'],
-                'id_rol' => $datos['id_rol'],
-            ], 'Personal creado en la clínica');
-
-            // Se envía la misma contraseña con la que se creó el hash.
-            $enviado = $this->correo()->enviarCredencialesUsuario($datos['email'], $datos['nombre_completo'], $datos['documento'], $password);
+            EnlaceCuenta::base();
+            $alta = (new CuentaTitular($this->db))->crearPersonal($datos, $idClinica);
+            $enlace = EnlaceCuenta::crear('activar_personal', $alta['enlace']['id'], $alta['enlace']['token']);
+            $this->correo()->limpiarDirecciones();
+            $enviado = $this->correo()->enviarCorreoVerificacion($datos['email'], $datos['nombre_completo'], $enlace, CuentaTitular::ACTIVACION_HORAS);
             $this->responder(true, $enviado
-                ? 'Usuario creado. Se enviaron las credenciales al correo registrado.'
-                : 'Usuario creado, pero no se pudo enviar el correo con las credenciales. Restablece la contraseña para enviarlas de nuevo.');
+                ? 'Invitación enviada. El titular tiene 72 horas para aceptar la política y crear su contraseña.'
+                : 'Cuenta pendiente creada, pero no se pudo enviar la invitación. El titular todavía no puede entrar.');
         } catch (Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
@@ -359,9 +337,7 @@ class UsuarioController {
     }
 
     /**
-     * HU-T.14 — Restablecer la contraseña de una persona del personal: clave
-     * temporal que cumple la política (RN-G10), enviada por correo, y cambio
-     * obligatorio al entrar. Solo sobre personal de esta clínica.
+     * HU-T.14 — Restablecer la contraseña de una persona del personal: enlace para elegir una nueva clave (RN-G10), con la anterior invalidada. Solo sobre personal de esta clínica.
      */
     public function resetearPasswordAjax() {
         header('Content-Type: application/json');
@@ -384,16 +360,14 @@ class UsuarioController {
         }
 
         try {
-            $temporal = PoliticaPassword::generarTemporal();
-            $this->usuario->actualizarPassword($idUsuario, password_hash($temporal, PASSWORD_DEFAULT));
-            $this->usuario->marcarCambioPassword($idUsuario, true);
-
-            $this->auditoria->log(Contexto::idUsuario(), 'UPDATE', 'usuarios', $idUsuario, null, ['debe_cambiar_password' => 1], 'Contrasena restablecida por el administrador');
-
-            $enviado = $this->correo()->enviarCredencialesUsuario($persona['email'], $persona['nombre_completo'], (string) $persona['documento'], $temporal);
+            EnlaceCuenta::base();
+            $solicitud = (new CuentaTitular($this->db))->restablecerPersonal($idUsuario, $this->clinica());
+            $enlace = EnlaceCuenta::crear($solicitud['accion'], $solicitud['enlace']['id'], $solicitud['enlace']['token']);
+            $this->correo()->limpiarDirecciones();
+            $enviado = $this->correo()->enviarCorreoVerificacion($persona['email'], $persona['nombre_completo'], $enlace, $solicitud['horas']);
             $this->responder(true, $enviado
-                ? 'Contrasena restablecida. Se envio la clave temporal al correo del usuario.'
-                : 'Contrasena restablecida, pero no se pudo enviar el correo. Comunicasela al usuario por otro medio.');
+                ? 'Se envió un enlace al titular para que cree su contraseña.'
+                : 'No se pudo enviar el enlace. La contraseña anterior está invalidada; reintenta el envío.');
         } catch (Throwable $e) {
             error_log('Error al restablecer contrasena: ' . $e->getMessage());
             $this->responder(false, 'No se pudo restablecer la contrasena. Intenta nuevamente.');

@@ -243,7 +243,7 @@ class AutorizacionRolTest extends TestCase
         $sinContexto = self::lista('accionesSinContexto');
         sort($sinContexto);
 
-        $this->assertSame(['aceptar_politica', 'cambiar_contexto', 'cambiar_password', 'cambiar_password_ajax', 'logout', 'seleccionar_contexto'], $sinContexto);
+        $this->assertSame(['aceptar_politica', 'cambiar_contexto', 'cambiar_documento_ajax', 'cambiar_password', 'cambiar_password_ajax', 'logout', 'seleccionar_contexto', 'solicitar_cambio_correo_ajax'], $sinContexto);
     }
 
     /** El login y el registro no pueden quedar detras del control de rol. */

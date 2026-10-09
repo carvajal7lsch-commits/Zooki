@@ -55,4 +55,12 @@ class PasswordReset
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
+
+    /** D2: consumo atómico en la transacción que cambia la contraseña. */
+    public function consumirToken(int $id): bool
+    {
+        $stmt = $this->conn->prepare('UPDATE password_resets SET used = 1 WHERE id = ? AND used = 0 AND expires_at > ?');
+        $stmt->execute([$id, date('Y-m-d H:i:s')]);
+        return $stmt->rowCount() === 1;
+    }
 }

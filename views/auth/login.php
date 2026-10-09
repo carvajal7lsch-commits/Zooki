@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/Turnstile.php';
 // Asegurarnos de que la sesión esté iniciada para mostrar errores
 if(session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -49,6 +50,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
     <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
 </head>
 <?php // D1: la configuración del JS viaja en data-*, sin JS en línea. ?>
 <body class="login-page" data-google-client-id="<?= $e($googleClientId) ?>">
@@ -112,6 +114,10 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     </label>
                                     <a href="#" class="forgot-password" id="forgotPasswordBtn">¿Olvidaste tu contraseña?</a>
                                 </div>
+                                <?php $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY'); ?>
+                                <?php if ($turnstileClave !== ''): ?>
+                                    <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars($turnstileClave, ENT_QUOTES, 'UTF-8') ?>"></div>
+                                <?php endif; ?>
                                 <button type="submit" class="btn-primary">
                                     <span>Entrar</span>
                                 </button>
@@ -150,7 +156,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     <span><?php echo $_SESSION['error_register']; unset($_SESSION['error_register']); ?></span>
                                 </div>
                             <?php endif; ?>
-                            <form id="registerForm" action="index.php?action=process_register" method="POST">
+                            <form id="registerForm" data-cuenta-vincular="correo" action="index.php?action=process_register" method="POST" data-validacion-cuenta>
                                 <?php require_once __DIR__ . '/../../helpers/Csrf.php'; Csrf::field('register'); ?>
                                 
                                 <div class="auth-grid">
@@ -206,7 +212,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     <div class="input-group">
                                         <label for="password_reg">Contraseña</label>
                                         <div class="input-wrapper">
-                                            <input type="password" id="password_reg" name="password" placeholder="••••••••" required minlength="8" maxlength="72" autocomplete="new-password">
+                                            <input type="password" id="password_reg" data-cuenta-ayuda="passwordValidationMsg" name="password" placeholder="••••••••" required minlength="8" maxlength="72" autocomplete="new-password">
                                             <button type="button" class="toggle-password" id="togglePasswordReg" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                                                 <i class="ri-eye-off-line"></i>
                                             </button>
@@ -233,6 +239,9 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                         <a href="index.php?action=privacidad" target="_blank" rel="noopener">Política de Tratamiento de Datos</a>.
                                     </span>
                                 </label>
+                                <?php if ($turnstileClave !== ''): ?>
+                                    <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars($turnstileClave, ENT_QUOTES, 'UTF-8') ?>"></div>
+                                <?php endif; ?>
                                 <button type="submit" class="btn-primary">
                                     <span>Registrarse</span>
                                 </button>
@@ -398,6 +407,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
         </div>
     </div>
     <!-- JS externo — ZOOKI_REGLAS: cero JS en línea -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="js/password-policy.js?v=<?php echo time(); ?>"></script>
     <script src="js/interacciones.js?v=2"></script>
     <script src="js/login.js?v=<?php echo time(); ?>"></script>
@@ -405,5 +415,6 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
     
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client?onload=initGoogleAuth" async defer></script>
+<?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
 </body>
 </html>

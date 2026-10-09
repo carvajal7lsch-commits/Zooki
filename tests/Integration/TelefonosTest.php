@@ -64,7 +64,10 @@ final class TelefonosTest extends TestCase
                 $this->comoAdminNorte();
                 $_POST = ['tipo_documento' => 'CC', 'documento' => '1000000077', 'nombre_completo' => 'Nueva Persona',
                     'email' => 'nueva@zooki.test', 'telefono' => $telefono, 'id_rol' => '2', 'estado' => '1', 'password' => ''];
-                $correo = new class { public function enviarCredencialesUsuario(...$d) { return true; } };
+                $correo = new class {
+                    public function limpiarDirecciones(): void {}
+                    public function enviarCorreoVerificacion(...$d) { return true; }
+                };
                 return $this->json(fn () => (new UsuarioController($this->db, $correo))->registrarAjax());
             },
             'perfil del personal' => function (string $telefono): array {

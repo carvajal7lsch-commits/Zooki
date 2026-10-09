@@ -1,0 +1,31 @@
+.cuenta-validacion {
+    display: block;
+    font-size: .85rem;
+    line-height: 1.4;
+    margin-top: .25rem;
+    color: #667085;
+}
+.cuenta-validacion.cuenta-validacion--error {
+    color: #b42318;
+}
+[data-validacion-cuenta] [aria-invalid="true"] {
+    border-color: #b42318;
+}
+.cuenta-identidad summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+.cuenta-identidad form {
+    margin-top: 1rem;
+    text-align: left;
+}
+.cuenta-identidad label {
+    display: block;
+    margin-bottom: .75rem;
+}
+.cuenta-identidad label input,
+.cuenta-identidad label select {
+    display: block;
+    width: 100%;
+    margin-top: .25rem;
+}

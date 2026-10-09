@@ -36,3 +36,6 @@ PATH=/usr/local/bin:/usr/bin:/bin
 # RN-410 — Avisa de las atenciones que siguen abiertas 10 minutos despues de
 # su hora de fin y pasa a "sin cerrar" las que terminaron el dia abiertas.
 */5 * * * * cd /RUTA_ZOOKI && php scripts/vigilar_atenciones.php >> logs/atenciones.log 2>&1
+
+# D2: alta de personal pendiente, vencida y sin otros vínculos.
+0 * * * * cd /RUTA_ZOOKI && php scripts/limpiar_cuentas_pendientes.php >> logs/cuentas_pendientes.log 2>&1

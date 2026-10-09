@@ -81,47 +81,7 @@
     const msgPwd = document.getElementById('perfilPasswordMsg');
     const textoBoton = btnPwd.textContent;
 
-    // password-policy.js se carga después de esta vista; se consulta al usarlo.
-    const motivoInvalida = valor => (typeof window.motivoPasswordInvalida === 'function'
-        ? window.motivoPasswordInvalida(valor) : null);
-
-    // Los mismos requisitos de helpers/PoliticaPassword.php, marcados al escribir.
-    const REQUISITOS = {
-        longitud: v => v.length >= 8,
-        mayuscula: v => /[A-ZÁÉÍÓÚÑ]/.test(v),
-        minuscula: v => /[a-záéíóúñ]/.test(v),
-        numero: v => /\d/.test(v),
-    };
-    const itemsRequisito = document.querySelectorAll('[data-requisito]');
-
-    function pintarRequisitos() {
-        const valor = nueva.value;
-        let todos = true;
-        itemsRequisito.forEach(li => {
-            const cumple = REQUISITOS[li.dataset.requisito](valor);
-            li.classList.toggle('is-ok', cumple);
-            if (!cumple) todos = false;
-        });
-        // Con los requisitos básicos cumplidos, la política aún puede rechazarla
-        // (contraseña común o con tus datos): eso se explica debajo.
-        const motivo = valor && todos ? motivoInvalida(valor) : null;
-        feedback.textContent = motivo || '';
-        feedback.className = 'perfil-field__hint' + (motivo ? ' is-error' : '');
-    }
-
-    function pintarCoincidencia() {
-        if (!confirmar.value) {
-            coincide.textContent = '';
-            coincide.className = 'perfil-field__hint';
-            return;
-        }
-        const iguales = confirmar.value === nueva.value;
-        coincide.textContent = iguales ? 'Las contraseñas coinciden.' : 'Las contraseñas no coinciden.';
-        coincide.className = 'perfil-field__hint ' + (iguales ? 'is-ok' : 'is-error');
-    }
-
-    nueva.addEventListener('input', () => { pintarRequisitos(); pintarCoincidencia(); mensaje(msgPwd, ''); });
-    confirmar.addEventListener('input', () => { pintarCoincidencia(); mensaje(msgPwd, ''); });
+    // D2: validacion-cuenta.js consulta la política completa del servidor mientras se escribe.
 
     // Mostrar u ocultar cada contraseña.
     formPwd.querySelectorAll('[data-ver]').forEach(boton => boton.addEventListener('click', () => {
@@ -136,28 +96,6 @@
 
     formPwd.addEventListener('submit', async e => {
         e.preventDefault();
-        if (actual && !actual.value) {
-            mensaje(msgPwd, 'Escribe tu contraseña actual.', 'error');
-            actual.focus();
-            return;
-        }
-        if (!nueva.value) {
-            mensaje(msgPwd, 'Escribe la nueva contraseña.', 'error');
-            nueva.focus();
-            return;
-        }
-        const motivo = motivoInvalida(nueva.value);
-        if (motivo) {
-            mensaje(msgPwd, motivo, 'error');
-            nueva.focus();
-            return;
-        }
-        if (nueva.value !== confirmar.value) {
-            mensaje(msgPwd, 'Las contraseñas no coinciden.', 'error');
-            confirmar.focus();
-            return;
-        }
-
         btnPwd.disabled = true;
         btnPwd.textContent = 'Actualizando…';
         try {
@@ -170,8 +108,6 @@
             }
             formPwd.reset();
             formPwd.querySelectorAll('input').forEach(i => { i.type = 'password'; });
-            pintarRequisitos();
-            pintarCoincidencia();
             // La cuenta ya tiene contraseña: desde ahora se pide la actual (HU-39),
             // así que se recarga para mostrar ese campo; sin esperar (C9.1).
             if (!actual) {

@@ -9,121 +9,9 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/password-policy.js"></script>
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', sans-serif;
-        }
 
-        .change-password-container {
-            background: white;
-            padding: 3rem;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 450px;
-            width: 100%;
-        }
-
-        .change-password-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .change-password-header i {
-            font-size: 4rem;
-            color: #0052FF;
-            margin-bottom: 1rem;
-        }
-
-        .change-password-header h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #111827;
-            margin: 0 0 0.5rem 0;
-        }
-
-        .change-password-header p {
-            color: #6B7280;
-            font-size: 0.95rem;
-            margin: 0;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border: 2px solid #E5E7EB;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #0052FF;
-            box-shadow: 0 0 0 4px rgba(0, 82, 255, 0.1);
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, #0052FF 0%, #003bbb 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(0, 82, 255, 0.3);
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 82, 255, 0.4);
-        }
-
-        .password-requirements {
-            background: #F3F4F6;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-        }
-
-        .password-requirements h4 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #374151;
-            margin: 0 0 0.5rem 0;
-        }
-
-        .password-requirements ul {
-            margin: 0;
-            padding-left: 1.25rem;
-            font-size: 0.8rem;
-            color: #6B7280;
-        }
-
-        .password-requirements li {
-            margin-bottom: 0.25rem;
-        }
-    </style>
+<link rel="stylesheet" href="css/cambiar-password.css?v=d2">
+<link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
 </head>
 <body>
     <div class="change-password-container">
@@ -133,11 +21,15 @@
             <p>Por seguridad, debes cambiar tu contraseña en el primer inicio de sesión.</p>
         </div>
 
-        <form id="changePasswordForm" onsubmit="cambiarPassword(event)">
+        <form id="changePasswordForm" data-password-accion="cambiar_password_ajax" data-validacion-cuenta>
+<?php Csrf::field(); ?>
+            <?php if (!empty($cuentaPassword['tiene_password'])): ?>
+                <label>Contraseña actual <input type="password" name="password_actual" required autocomplete="current-password"></label>
+            <?php endif; ?>
             <div class="form-group">
                 <label for="nueva_password">Nueva Contraseña</label>
                 <div class="input-con-ojito">
-                    <input type="password" id="nueva_password" name="nueva_password" required minlength="8" maxlength="72" placeholder="Mínimo 8 caracteres, con mayúscula, minúscula y número">
+                    <input type="password" id="nueva_password" data-cuenta-ayuda="pwdFeedback" name="nueva_password" required minlength="8" maxlength="72" placeholder="Mínimo 8 caracteres, con mayúscula, minúscula y número">
                     <button type="button" class="ojito" data-ojito="nueva_password" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                         <i class="fas fa-eye-slash"></i>
                     </button>
@@ -166,125 +58,14 @@
             <button type="submit" class="btn-submit">
                 <i class="fas fa-key"></i> Cambiar Contraseña
             </button>
-        </form>
+        <p role="status" data-password-resultado></p>
+</form>
     </div>
 
-    <style>
-        /* Aviso en vivo de la politica de contrasenas (RN-G10) */
-        .pwd-feedback { display: block; margin-top: 6px; font-size: 0.8rem; min-height: 1.1em; }
-        /* Ojito dentro del campo. Esta vista tiene su CSS propio, no usa
-           styles.css, por eso .toggle-password de alla no le sirve. */
-        .input-con-ojito { position: relative; }
-        .input-con-ojito input { padding-right: 2.75rem; }
-        .ojito {
-            position: absolute; right: 0.9rem; top: 50%; transform: translateY(-50%);
-            background: none; border: none; padding: 0; cursor: pointer;
-            color: #6B7280; font-size: 1rem; line-height: 1;
-            display: flex; align-items: center;
-        }
-        .ojito:hover { color: #0052FF; }
-        .pwd-feedback.error { color: #DC2626; }
-        .pwd-feedback.ok    { color: #047857; }
-    </style>
-    <script>
-        // Aviso mientras se escribe: antes el usuario solo se enteraba de que
-        // su contrasena no servia al pulsar el boton.
-        document.addEventListener('DOMContentLoaded', function () {
-            var campo = document.getElementById('nueva_password');
-            var aviso = document.getElementById('pwdFeedback');
-            if (!campo || !aviso) return;
 
-            document.querySelectorAll('.ojito[data-ojito]').forEach(function (boton) {
-                boton.addEventListener('click', function () {
-                    var input = document.getElementById(this.dataset.ojito);
-                    if (!input) return;
-                    var visible = input.getAttribute('type') === 'password';
-                    input.setAttribute('type', visible ? 'text' : 'password');
-                    this.setAttribute('aria-pressed', visible ? 'true' : 'false');
-                    this.innerHTML = visible
-                        ? '<i class="fas fa-eye"></i>'
-                        : '<i class="fas fa-eye-slash"></i>';
-                });
-            });
 
-            campo.addEventListener('input', function () {
-                if (this.value === '') {
-                    aviso.textContent = '';
-                    aviso.className = 'pwd-feedback';
-                    return;
-                }
-                var motivo = window.motivoPasswordInvalida(this.value);
-                aviso.textContent = motivo === null ? 'Contraseña válida' : motivo;
-                aviso.className = 'pwd-feedback ' + (motivo === null ? 'ok' : 'error');
-            });
-        });
-    </script>
-    <script>
-        async function cambiarPassword(event) {
-            event.preventDefault();
-            
-            const nuevaPassword = document.getElementById('nueva_password').value;
-            const confirmarPassword = document.getElementById('confirmar_password').value;
 
-            if (nuevaPassword !== confirmarPassword) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Las contraseñas no coinciden',
-                    confirmButtonColor: '#0052FF'
-                });
-                return;
-            }
-
-            const motivoPwd = window.motivoPasswordInvalida(nuevaPassword);
-            if (motivoPwd !== null) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: motivoPwd,
-                    confirmButtonColor: '#0052FF'
-                });
-                return;
-            }
-
-            try {
-                const res = await (await fetch('index.php?action=cambiar_password_ajax', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `nueva_password=${encodeURIComponent(nuevaPassword)}`
-                })).json();
-
-                if (res.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Contraseña cambiada!',
-                        text: 'Tu contraseña ha sido actualizada exitosamente.',
-                        confirmButtonColor: '#0052FF'
-                    }).then(() => {
-                        // HU-T.17: el inicio lo decide el contexto activo (o el
-                        // selector si todavía no hay uno), no un rol fijo.
-                        window.location.href = 'index.php?action=dashboard';
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: res.message || 'No se pudo cambiar la contraseña',
-                        confirmButtonColor: '#0052FF'
-                    });
-                }
-            } catch (e) {
-                console.error(e);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se pudo conectar con el servidor',
-                    confirmButtonColor: '#0052FF'
-                });
-            }
-        }
-    </script>
+<?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
+<script src="js/cuenta-password.js?v=d2"></script>
 </body>
 </html>

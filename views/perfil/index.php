@@ -45,14 +45,14 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             </header>
 
             <dl class="perfil-readonly">
-                <div><dt>Documento</dt><dd><?= $e(trim(($perfil['tipo_documento'] ?? '') . ' ' . $perfil['documento'])) ?></dd></div>
+                <div><dt>Documento</dt><dd data-documento-cuenta><?= $e(trim(($perfil['tipo_documento'] ?? '') . ' ' . $perfil['documento'])) ?></dd></div>
                 <div><dt>Rol</dt><dd><?= $e($rolNombre) ?></dd></div>
             </dl>
 
-            <form id="perfilContactoForm" class="perfil-form" novalidate>
+            <form id="perfilContactoForm" class="perfil-form" novalidate data-validacion-cuenta>
                 <div class="perfil-field">
                     <label for="perfilEmail">Correo electrónico</label>
-                    <input type="email" id="perfilEmail" class="perfil-input" value="<?= $e($perfil['email']) ?>" autocomplete="email" required>
+                    <input type="email" id="perfilEmail" readonly class="perfil-input" value="<?= $e($perfil['email']) ?>" autocomplete="email" required>
                 </div>
                 <div class="perfil-field">
                     <label for="perfilTelefono">Teléfono</label>
@@ -66,7 +66,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             </form>
 
             <!-- Solo lectura a propósito: el rol lo asigna el administrador (RN-701). -->
-            <p class="perfil-hint"><i class="fas fa-lock"></i> El nombre, el documento y el rol los gestiona el administrador de la clínica.</p>
+            <p class="perfil-hint"><i class="fas fa-lock"></i> El rol lo gestiona el administrador. Puedes corregir tus datos de acceso confirmando tu identidad.</p>
         </section>
 
         <!-- Contraseña -->
@@ -78,7 +78,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                     : 'Tu cuenta entra con Google. Crea una contraseña para entrar también sin Google.' ?></p>
             </header>
 
-            <form id="perfilPasswordForm" class="perfil-form" novalidate>
+            <form id="perfilPasswordForm" class="perfil-form" novalidate data-validacion-cuenta>
                 <?php if ($pideActual): ?>
                     <div class="perfil-field">
                         <label for="perfilPwdActual">Contraseña actual</label>
@@ -91,7 +91,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 <div class="perfil-field">
                     <label for="perfilPwdNueva">Nueva contraseña</label>
                     <div class="perfil-clave">
-                        <input type="password" id="perfilPwdNueva" class="perfil-input" autocomplete="new-password" aria-describedby="perfilPwdRequisitos" required>
+                        <input type="password" id="perfilPwdNueva" data-cuenta-ayuda="perfilPwdFeedback" class="perfil-input" autocomplete="new-password" aria-describedby="perfilPwdRequisitos" required>
                         <button type="button" class="perfil-clave__ver" data-ver="perfilPwdNueva" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                     </div>
                     <ul class="perfil-requisitos" id="perfilPwdRequisitos">
@@ -105,7 +105,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 <div class="perfil-field">
                     <label for="perfilPwdConfirmar">Confirmar contraseña</label>
                     <div class="perfil-clave">
-                        <input type="password" id="perfilPwdConfirmar" class="perfil-input" autocomplete="new-password" required>
+                        <input type="password" id="perfilPwdConfirmar" data-cuenta-ayuda="perfilPwdCoincide" class="perfil-input" autocomplete="new-password" required>
                         <button type="button" class="perfil-clave__ver" data-ver="perfilPwdConfirmar" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                     </div>
                     <small class="perfil-field__hint" id="perfilPwdCoincide" aria-live="polite"></small>
@@ -154,6 +154,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             </div>
         </section>
     </div>
+    <?php require __DIR__ . "/../partials/cambios_identidad.php"; ?>
 </div>
 
-<script src="js/perfil.js?v=4"></script>
+<script src="js/perfil.js?v=d2"></script>

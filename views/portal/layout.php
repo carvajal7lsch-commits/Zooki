@@ -36,6 +36,7 @@ $iniciales = $iniciales ?: 'U';
     <?php endforeach; ?>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta name="csrf-token" content="<?= Csrf::token('default') ?>">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d2">
 </head>
 <body class="portal-body">
 
@@ -105,9 +106,12 @@ $iniciales = $iniciales ?: 'U';
 <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
 <script src="js/avisos.js?v=<?= $v ?>-c91"></script>
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
-<script src="js/portal.js?v=<?= $v ?>-c91"></script>
+<script src="js/portal.js?v=<?= $v ?>-d2"></script>
 <script src="js/csrf.js?v=<?= $v ?>"></script>
 <script src="js/sesion.js?v=1"></script>
 <script src="js/interacciones.js?v=2"></script>
+<?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
+<script src="js/cuenta-password.js?v=d2"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

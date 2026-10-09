@@ -118,6 +118,7 @@ $telefonoHtml = ValidadorTelefono::atributosHtml();
                     <div class="card-body-mini">
                         <h3 class="card-title-mini"><?= $e($p['nombre_completo']) ?><?php if ($esYo): ?> <span class="current-user-label">(Tú)</span><?php endif; ?></h3>
                         <div class="card-tags-mini">
+                            <?php if ((int) $p['estado'] === 0): ?><span class="tag-mini"><i class="bi bi-envelope" aria-hidden="true"></i> Pendiente de activación</span><?php endif; ?>
                             <?php if (!$activo): ?><span class="tag-mini"><i class="bi bi-moon-stars" aria-hidden="true"></i> Inactivo</span><?php endif; ?>
                             <span class="tag-mini"><i class="bi <?= $iconoRol($rol) ?>" aria-hidden="true"></i> <?= $e(Roles::nombre($rol)) ?></span>
                         </div>
@@ -166,7 +167,7 @@ $telefonoHtml = ValidadorTelefono::atributosHtml();
                             <td><span class="tag-mini"><i class="bi <?= $iconoRol($rol) ?>" aria-hidden="true"></i> <?= $e(Roles::nombre($rol)) ?></span></td>
                             <td><?= $e($p['email']) ?></td>
                             <td><?= $e($p['telefono'] ?? '') ?></td>
-                            <td><span class="status-badge <?= $activo ? 'status-active' : 'status-inactive' ?>"><?= $activo ? 'Activo' : 'Inactivo' ?></span></td>
+                            <td><span class="status-badge <?= $activo && (int) $p['estado'] === 1 ? 'status-active' : 'status-inactive' ?>"><?= (int) $p['estado'] === 0 ? 'Pendiente de activación' : ($activo ? 'Activo' : 'Inactivo') ?></span></td>
                             <td>
                                 <div class="table-actions">
                                     <?php require __DIR__ . '/partials/interruptor_personal.php'; ?>
@@ -260,7 +261,7 @@ $telefonoHtml = ValidadorTelefono::atributosHtml();
         <div class="modal-header">
             <h3 id="usuarioModalTitulo"><i class="fas fa-user-plus" aria-hidden="true"></i> <span data-titulo>Nuevo integrante</span></h3>
         </div>
-        <form id="usuarioForm" novalidate>
+        <form id="usuarioForm" data-cuenta-vincular="true" novalidate data-validacion-cuenta>
             <input type="hidden" name="id_usuario" value="">
             <div class="users-modal__body">
                 <p class="modal-subtitle" data-aviso hidden></p>
@@ -305,9 +306,9 @@ $telefonoHtml = ValidadorTelefono::atributosHtml();
                         </select>
                     </div>
                     <div class="input-group full" data-solo-alta>
-                        <label for="usuarioPassword">Contraseña inicial (opcional)</label>
-                        <input type="password" id="usuarioPassword" name="password" minlength="8" maxlength="72" autocomplete="new-password">
-                        <small>Si la dejas vacía se genera una temporal y se envía al correo. En ambos casos se pide cambiarla al entrar.</small>
+                        <p>Activación de la cuenta</p>
+                        <input type="hidden" id="usuarioPassword" name="password" value="" disabled>
+                        <small>El titular recibe un enlace de 72 horas para aceptar la política y crear su contraseña. La cuenta permanece pendiente hasta entonces.</small>
                     </div>
                 </div>
             </div>
@@ -325,7 +326,7 @@ $telefonoHtml = ValidadorTelefono::atributosHtml();
         <div class="modal-header">
             <h3 id="clienteModalTitulo"><i class="fas fa-user-edit" aria-hidden="true"></i> Editar cliente</h3>
         </div>
-        <form id="clienteForm" novalidate>
+        <form id="clienteForm" novalidate data-validacion-cuenta>
             <input type="hidden" name="id_usuario" value="">
             <div class="users-modal__body">
                 <p class="modal-subtitle">Documento y correo: <strong data-cliente-identidad></strong>. Solo el titular los cambia desde su cuenta.</p>
@@ -381,4 +382,4 @@ $telefonoHtml = ValidadorTelefono::atributosHtml();
     </div>
 </div>
 
-<script src="js/usuarios.js?v=4"></script>
+<script src="js/usuarios.js?v=4-d2"></script>

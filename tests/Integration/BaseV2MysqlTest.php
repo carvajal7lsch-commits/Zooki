@@ -22,6 +22,65 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    /** D2 contra FK, ENUM, unicidad y enlaces reales; siempre en la base de pruebas por defecto. */
+    public function testD2CuentasEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/CuentaTitular.php';
+        require_once __DIR__ . '/../../models/IntentoLogin.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $_SESSION = ['id_usuario' => 1];
+        Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+        try {
+            $modelo = new CuentaTitular($this->db);
+            $datos = ['documento' => '1033333333', 'tipo_documento' => 'CC', 'email' => 'laura@zooki.test', 'nombre_completo' => 'Laura Nueva', 'telefono' => '3001112233', 'id_rol' => 2];
+            $alta = $modelo->crearPersonal($datos, 1);
+            $usuario = new Usuario($this->db);
+            $this->assertNull($usuario->contextosDe($alta['id_usuario']));
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM consentimientos_datos')->fetchColumn());
+            $modelo->activar($alta['enlace']['id'], $alta['enlace']['token'], ['password' => 'Bosque#Seguro2026', 'confirm_password' => 'Bosque#Seguro2026', 'acepta_datos' => '1'], '192.0.2.10');
+            $this->assertTrue($usuario->verificarPassword($alta['id_usuario'], 'Bosque#Seguro2026'));
+            $this->assertSame('alta_personal', $this->db->query('SELECT medio FROM consentimientos_datos')->fetchColumn());
+            $this->db->exec("UPDATE usuarios SET google_uid = 'google-fabio' WHERE id_usuario = 6");
+            $correo = $modelo->solicitarCorreo(6, ['email' => 'nuevo.fabio@zooki.test', 'password_actual' => DosClinicas::PASSWORD]);
+            $this->assertSame('fabio@zooki.test', $usuario->buscarPorId(6)['email']);
+            $modelo->confirmarCorreo($correo['enlace']['id'], $correo['enlace']['token']);
+            $this->assertSame('nuevo.fabio@zooki.test', $usuario->buscarPorId(6)['email']);
+            $this->assertSame(0, (int) $usuario->buscarPorId(6)['tiene_google']);
+            try {
+                $modelo->cambiarDocumento(6, ['documento' => '1000000001', 'tipo_documento' => 'CC', 'password_actual' => DosClinicas::PASSWORD]);
+                $this->fail('Debe abrir soporte sin aplicar documento duplicado.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM casos_soporte')->fetchColumn());
+            }
+            $reset = $modelo->restablecerPersonal(2, 1);
+            $this->assertSame(0, (int) $usuario->buscarPorId(2)['tiene_password']);
+            $tokens = new PasswordReset($this->db);
+            $this->assertTrue($tokens->consumirToken($reset['enlace']['id']));
+            $this->assertFalse($tokens->consumirToken($reset['enlace']['id']));
+            $datos['documento'] = '1044444444';
+            $datos['email'] = 'pendiente@zooki.test';
+            $pendiente = $modelo->crearPersonal($datos, 1);
+            (new Auditoria($this->db))->log($pendiente['id_usuario'], 'LOGIN_FAIL', 'usuarios', $pendiente['id_usuario'], null, null, 'Intento sobre alta pendiente', null);
+            $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$pendiente['enlace']['id']]);
+            $usuario->asignarRolEnClinica($pendiente['id_usuario'], 2, 2);
+            $usuario->cambiarEstadoEnClinica($pendiente['id_usuario'], 2, false);
+            $this->assertSame(0, $modelo->limpiarPendientes());
+            $this->db->prepare('DELETE FROM usuario_clinica WHERE id_usuario = ? AND id_clinica = 2')->execute([$pendiente['id_usuario']]);
+            $this->assertSame(1, $modelo->limpiarPendientes());
+            $this->assertNull($usuario->buscarPorId($pendiente['id_usuario']));
+            $intentos = new IntentoLogin($this->db);
+            for ($i = 0; $i < 5; $i++) {
+                $intentos->registrarFallo('cuenta:6', 5, 900, 900);
+            }
+            $this->assertTrue($intentos->exigeCaptcha('cuenta:6'));
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
     private const DATABASE = __DIR__ . '/../../database';
 
     private PDO $db;

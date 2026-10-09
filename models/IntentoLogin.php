@@ -106,6 +106,15 @@ class IntentoLogin
     }
 
     /** Borra el contador (se llama tras un inicio de sesion correcto). */
+    public function exigeCaptcha(string $identificador, int $maximo = 5, int $ventana = 900): bool
+    {
+        $stmt = $this->conn->prepare('SELECT intentos, primer_intento FROM intentos_login WHERE identificador = ?');
+        $stmt->execute([$identificador]);
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $fila !== false && (int) $fila['intentos'] >= $maximo
+            && strtotime($fila['primer_intento']) + $ventana > time();
+    }
+
     public function limpiar(string $identificador): void
     {
         if (!$this->tablaLista()) return;

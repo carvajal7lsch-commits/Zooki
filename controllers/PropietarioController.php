@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
@@ -52,10 +53,10 @@ class PropietarioController {
             $limpios[$campo] = $valor;
         }
 
-        if (!preg_match('/^\d{5,15}$/', $limpios['documento'])) {
+        if (ValidadorCuenta::documento($limpios['documento']) !== null) {
             return 'El documento debe tener entre 5 y 15 digitos.';
         }
-        if (!filter_var($limpios['email'], FILTER_VALIDATE_EMAIL)) {
+        if (ValidadorCuenta::correo($limpios['email']) !== null) {
             return 'El correo electronico no tiene un formato valido.';
         }
         // D1: la misma regla de teléfono en todo el sistema (ValidadorTelefono).

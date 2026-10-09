@@ -22,7 +22,7 @@ class Security {
         'landing', 'privacidad', 'terminos', 'cookies', 'login', 'solicitar_reset_password_ajax', 'reset_password',
         'procesar_reset_password_ajax', 'register', 'process_register', 'verificar_email', 'estado_verificacion_ajax',
         'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax',
-        'confirmar_vinculo_propietario'
+        'confirmar_vinculo_propietario', 'activar_personal', 'confirmar_cambio_correo', 'validar_cuenta_ajax'
     ];
 
     /**
@@ -32,7 +32,7 @@ class Security {
      */
     private static array $accionesSinContexto = [
         'seleccionar_contexto', 'cambiar_contexto', 'logout', 'cambiar_password', 'cambiar_password_ajax',
-        'aceptar_politica',
+        'aceptar_politica', 'solicitar_cambio_correo_ajax', 'cambiar_documento_ajax',
     ];
 
     /** RE-T.19.3: lo único que se puede hacer antes de aceptar la versión vigente de la política. */
@@ -50,12 +50,10 @@ class Security {
     ];
 
     /**
-     * Politica de intentos (HU-38). El limite por IP es mas holgado que el de
-     * cuenta a proposito: una clinica sale a internet por una sola IP y varias
-     * personas comparten origen, mientras que el id_usuario identifica a una
-     * cuenta concreta.
+     * RE-T.13.1/5: cinco fallos bloquean la IP; para la cuenta exigen CAPTCHA
+     * desde otro origen, sin permitir que un tercero bloquee al titular.
      */
-    private const MAX_INTENTOS_IP     = 20;
+    private const MAX_INTENTOS_IP     = 5;
     private const MAX_INTENTOS_CUENTA = 5;
     private const MAX_VERIFICACIONES  = 20;
     private const VENTANA             = 900;  // 15 minutos
@@ -98,7 +96,7 @@ class Security {
     public static function autorizar(string $action): void {
         // Las acciones publicas no exigen sesion, contexto ni rol.
         if (in_array($action, self::$publicActions, true)) {
-            if ($action === 'confirmar_vinculo_propietario' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'confirmar_cambio_correo'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 require_once __DIR__ . '/Csrf.php';
                 if (!Csrf::validate()) throw new AccesoDenegado(403,'La sesión del formulario venció. Abre de nuevo el enlace.');
             }
@@ -499,9 +497,6 @@ class Security {
         if ($almacen === null) return true;
 
         $claves = ['ip:' . $ip];
-        if ($cuenta !== null && $cuenta !== '') {
-            $claves[] = 'cuenta:' . $cuenta;
-        }
 
         foreach ($claves as $clave) {
             $restante = $almacen->segundosDeBloqueo($clave);
@@ -512,6 +507,13 @@ class Security {
         }
 
         return true;
+    }
+
+    /** RN-G15: la cuenta exige CAPTCHA, nunca se bloquea por fallos ajenos. */
+    public static function exigeCaptcha(?string $cuenta): bool {
+        $almacen = self::almacenDeIntentos();
+        return $cuenta !== null && $almacen !== null
+            && $almacen->exigeCaptcha('cuenta:' . $cuenta, self::MAX_INTENTOS_CUENTA, self::VENTANA);
     }
 
     public static function recordFailedLogin(?string $cuenta = null): void {

@@ -532,7 +532,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
         <div class="modal-body-tabs">
             <!-- TAB PROPIETARIO -->
             <div id="tabNuevoPropietario" class="modal-tab-content active">
-                <form id="formPropietario" data-c3-submit="evento41">
+                <form id="formPropietario" data-c3-submit="evento41" data-validacion-cuenta>
                     <div class="users-modal__body">
                         <div class="form-grid">
                             <div class="input-group">
@@ -929,7 +929,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="formEditPropietario">
+        <form id="formEditPropietario" data-validacion-cuenta>
             <input type="hidden" name="id_usuario" id="edit_owner_doc_orig">
             <div class="users-modal__body">
                 <div class="form-grid">

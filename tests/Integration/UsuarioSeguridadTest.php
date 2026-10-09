@@ -47,7 +47,8 @@ class UsuarioSeguridadTest extends TestCase
 
         $correo = new class {
             public array $enviados = [];
-            public function enviarCredencialesUsuario(...$datos) { $this->enviados[] = $datos; return true; }
+            public function limpiarDirecciones(): void {}
+            public function enviarCorreoVerificacion(...$datos) { $this->enviados[] = $datos; return true; }
         };
         return new UsuarioController($this->db, $correo);
     }
@@ -221,8 +222,10 @@ class UsuarioSeguridadTest extends TestCase
 
         $this->assertTrue($r['success'], $r['message'] ?? '');
         $nueva = $this->usuario->buscarPorDocumento('1000000077');
-        $this->assertSame(1, (int) $nueva['debe_cambiar_password'], 'Debe cambiar la contraseña al entrar');
-        $this->assertSame(['clinica:1:2'], array_column($this->usuario->contextosDe((int) $nueva['id_usuario']), 'clave'));
+        $this->assertSame(0, (int) $nueva['tiene_password']);
+        $this->assertSame(0, (int) $nueva['estado']);
+        $this->assertNull($this->usuario->contextosDe((int) $nueva['id_usuario']));
+        $this->assertSame(['id_rol' => 2, 'estado' => 'activo'], $this->rolEn((int) $nueva['id_usuario'], 1));
     }
 
     /** RE-T.7.5: un propietario que pasa a ser veterinario conserva una sola cuenta con los dos roles. */

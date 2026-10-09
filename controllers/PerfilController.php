@@ -132,6 +132,11 @@ class PerfilController
                 return;
             }
 
+            if ($email !== $anterior['email']) {
+                echo json_encode(['success' => false, 'message' => 'Usa Cambiar correo para verificar tu dirección nueva.']);
+                return;
+            }
+
             if (!$this->usuario->actualizarContacto($idUsuario, $email, $telefono)) {
                 echo json_encode(['success' => false, 'message' => 'No se pudieron guardar los cambios.']);
                 return;
