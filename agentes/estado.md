@@ -9,8 +9,8 @@
 - **Módulo activo:** M0 — Base SaaS, identidad y aislamiento. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
-- **Entrega actual:** D2.1 revisada y **aprobada** (2026-10-09; «D2.1 — Revisión» en el plan). Falta el commit del usuario, el recorrido funcional del revisor en el navegador integrado del equipo del usuario (con `MAIL_MODO=archivo`) y la revisión visual del usuario.
-- **Siguiente paso:** recorrido en el navegador; lo que falle va a D3 de paso o a una D2.2 si es grave. Después, prompt de D3, con los hallazgos menores 1 y 2 de la revisión de D2.1 de paso.
+- **Entrega actual:** D2.1 revisada, aprobada y con commit (`a66830f`, `a4fdf31`). Recorrido funcional del revisor hecho el 2026-10-09 (plan, «D2.1 — Recorrido funcional del revisor»); el revisor corrigió una línea en `validacion-cuenta.js` (el primer clic no enviaba), pendiente de commit del usuario.
+- **Siguiente paso:** revisión visual del usuario (lista en la conversación) y prompt de D3, con los siete puntos «De paso en D3» del recorrido.
 - **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)

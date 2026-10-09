@@ -1559,3 +1559,32 @@ No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba` ni sus contraseñ
 **Pendiente para F:** poner en `TRUSTED_PROXIES` el rango de la red de Traefik; sin eso vuelve el bloqueo global.
 
 **Prueba:** recorrido funcional del revisor en el navegador integrado del equipo del usuario (con `MAIL_MODO=archivo`) y revisión visual del usuario en escritorio y celular.
+
+#### D2.1 — Recorrido funcional del revisor (2026-10-09)
+
+Claude hizo el recorrido en el navegador integrado del equipo del usuario (`http://localhost:3000`, `php -S`, `MAIL_MODO=archivo`, `datos_prueba.php --clave`), sobre `zooki_v2_prueba`.
+
+**Pasó.**
+
+- Los usuarios de prueba entran sin pedir otra vez la política.
+- Alta de personal: validación en cada tecla (documento, correo, teléfono sin letras), invitación propia («Te invitaron a Clínica Norte…»), «Pendiente de activación» sin recargar. Modal «Editar Usuario» igual a la referencia de v1.12.0, con interruptor Activo/Inactivo.
+- Activación: la clave con el nombre se rechaza al escribir; sin la casilla no se envía; activa una sola vez; el enlace usado dice «no es válido…». Valeria entra al área clínica sin volver a pedir la política.
+- Restablecer: Elena Doble no tiene el botón; con Beto llega «Crea una nueva contraseña», la clave anterior deja de servir y con el enlace elige otra y entra.
+- Mi perfil: la lista de requisitos se marca en cada tecla, «Las contraseñas coinciden.», «Este correo ya está registrado.», y el documento duplicado abre el caso sin cambiar el documento.
+- Cambio de correo de Fabio: clave mala rechazada, enlace al correo nuevo, confirmación con botón, aviso al correo anterior y entrada con el nuevo. Se dejó con su correo original.
+- RE-T.13.5: 5 fallos sobre Beto; la clave correcta sin CAPTCHA se rechaza y con CAPTCHA entra.
+- RE-T.13.4: el intento 21 desde la IP se rechaza aunque Ana use la clave correcta; los accesos correctos intermedios no limpiaron la IP.
+
+**Corregido por el revisor (una línea, con su prueba).** `validacion-cuenta.js` llamaba a `requestSubmit` dentro del `submit` original cuando las comprobaciones ya estaban en caché; el navegador lo ignora y el primer clic no hacía nada (había que presionar dos veces). Ahora se reenvía en otra tarea (`setTimeout`). `D2ValidacionCuenta.test.cjs` comprueba que el reenvío no es inmediato. Verificado con un clic real en el portal. JS: 40 pruebas en verde.
+
+**De paso en D3.**
+
+1. `MAIL_MODO=archivo` se ignoraba con `DB_HOST=db`: `EmailService` revisa `DB_HOST` tal cual, pero `Database` lo cambia a `127.0.0.1` en Windows. Debe usar el host efectivo de la conexión.
+2. Hallazgos 1 y 2 de «D2.1 — Revisión» (URL de producción en la bienvenida y la plantilla; `enviarCredencialesUsuario` sin uso).
+3. Restablecer con la invitación pendiente: el aviso debe decir «Se reenvió la invitación.» (acordado con el usuario).
+4. «Nuevo Usuario» con el documento de alguien que ya es personal de la clínica dice «se vinculará a la clínica»: debe decir que ya es parte del personal.
+5. `views/vet/layout.php` carga `css/dark-mode.css`, que no existe (404).
+6. **Zona horaria:** el sistema no fija `date_default_timezone_set`; PHP usa la de `php.ini` (en XAMPP, Europe/Berlin: un correo de las 10:44 quedó con 17:44). Afecta «hoy», vencimientos y auditoría. Fijar `America/Bogota` en un solo lugar y la zona de la sesión de MySQL, con prueba.
+7. Activación de personal, confirmación de correo y «Datos de acceso» (portal y Mi perfil) tienen campos sin el estilo del sistema: deben usar el diseño de `reset_password` y las clases de formulario del portal y de Mi perfil.
+
+**Pulido de interfaz.** Tras crear la contraseña por enlace, el login no muestra confirmación. A 611 px de ancho, el encabezado de Usuarios se monta sobre las pestañas y corta «Nuevo Usuario».
