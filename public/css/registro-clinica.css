@@ -1,13 +1,7 @@
 /* HU-0.1: conserva los componentes de acceso; el formulario largo ocupa su propia pantalla. */
-.registro-clinica-page .login-container {
-    height: auto;
-    min-height: 100vh;
-}
-.registro-clinica-page .login-form-area {
-    overflow: visible;
-}
 .registro-clinica-page .form-wrapper {
     max-width: 600px;
+    margin: auto 0;
 }
 .registro-clinica-page .input-wrapper select {
     width: 100%;

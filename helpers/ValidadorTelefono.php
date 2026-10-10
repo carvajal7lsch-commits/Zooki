@@ -11,14 +11,14 @@ final class ValidadorTelefono
     public const MAX = 20;
 
     /** Caracteres admitidos, en el formato de una clase de expresión regular. */
-    public const CARACTERES = '0-9+\s-';
+    public const CARACTERES = '0-9+ \-';
 
     public const MENSAJE = 'El teléfono solo puede tener números, espacios, + y guiones (de ' . self::MIN . ' a ' . self::MAX . ' caracteres).';
 
     /** Espacios repetidos fuera, como se guarda. */
     public static function normalizar(string $telefono): string
     {
-        return preg_replace('/\s+/', ' ', trim($telefono));
+        return trim(preg_replace('/\s+/u', ' ', $telefono));
     }
 
     public static function esValido(string $telefono): bool
@@ -33,13 +33,13 @@ final class ValidadorTelefono
     public static function atributosHtml(): string
     {
         $e = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
-        return 'inputmode="tel" maxlength="' . self::MAX . '" pattern="' . $e(self::patronHtml()) . '"'
-            . ' data-caracteres="' . $e(self::CARACTERES) . '" title="' . $e(self::MENSAJE) . '"';
+        return 'inputmode="numeric" maxlength="' . self::MAX . '" pattern="' . $e(self::patronHtml()) . '"'
+            . ' data-caracteres="' . $e(self::CARACTERES) . '" data-espacios="normalizar" title="' . $e(self::MENSAJE) . '"';
     }
 
     /** Patrón para el atributo pattern del HTML (sin anclas: el navegador las agrega). */
     public static function patronHtml(): string
     {
-        return '[0-9+\s\-]{' . self::MIN . ',' . self::MAX . '}';
+        return '[0-9+ \\-]{' . self::MIN . ',' . self::MAX . '}';
     }
 }

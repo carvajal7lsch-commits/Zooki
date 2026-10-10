@@ -56,11 +56,16 @@ final class RegistroClinicaController
             $url = EnlaceCuenta::crear('activar_clinica', $solicitud['enlace']['id'], $solicitud['enlace']['token']);
             $asunto = 'Confirma que quieres registrar ' . $solicitud['clinica'] . ' con tu cuenta';
             $mensaje = 'Confirma solo si solicitaste registrar esta clínica. El enlace vence en 24 horas. Tu identidad, contraseña y otros roles se conservan.';
+            $recordatorio = '';
+            if (!$solicitud['nueva']) {
+                $recuperar = htmlspecialchars(EnlaceCuenta::base() . '?action=login&recuperar=1', ENT_QUOTES, 'UTF-8');
+                $recordatorio = '<p>La contraseña escrita en el formulario no se usó. Entrarás con tu contraseña de siempre y elegirás la clínica al entrar.</p><p><a href="' . $recuperar . '">¿Olvidaste tu contraseña?</a></p>';
+            }
             if ($solicitud['nueva']) {
                 $asunto = 'Activa tu clínica ' . $solicitud['clinica'];
                 $mensaje = 'Confirma tu correo y activa la clínica con el plan gratuito. El enlace vence en 24 horas.';
             }
-            $html = $this->correo->obtenerPlantillaBaseHTML($solicitud['nombre'], $asunto, '<p>' . htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8') . '</p>', 'Confirmar registro', $url);
+            $html = $this->correo->obtenerPlantillaBaseHTML($solicitud['nombre'], $asunto, '<p>' . htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8') . '</p>' . $recordatorio, 'Confirmar registro', $url);
             $this->correo->limpiarDirecciones();
             $this->correo->enviarCorreoPersonalizado($solicitud['email'], $solicitud['nombre'], $asunto, $html);
         } catch (Throwable $e) {

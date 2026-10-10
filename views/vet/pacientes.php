@@ -1,5 +1,6 @@
 <link rel="stylesheet" href="css/pacientes.css">
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 // views/mascotas/listado.php
 // D1: los teléfonos usan la regla del servidor (ValidadorTelefono).
 require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
@@ -552,7 +553,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <label>N° Documento</label>
                                 <div class="input-wrapper">
                                     <i class="fas fa-hashtag field-icon"></i>
-                                    <input type="text" name="documento" id="new_owner_doc" required placeholder="Ej: 1023456789" maxlength="20" class="validate-doc">
+                                    <input <?= ValidadorCuenta::atributosHtml('documento') ?> type="text" name="documento" id="new_owner_doc" required placeholder="Ej: 1023456789" class="validate-doc">
                                 </div>
                                 <span class="error-message display-none-error"></span>
                             </div>
@@ -560,7 +561,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <label>Nombre Completo</label>
                                 <div class="input-wrapper">
                                     <i class="far fa-user field-icon"></i>
-                                    <input type="text" name="nombre_completo" id="new_owner_nombre" required placeholder="Nombres y apellidos" maxlength="100" class="validate-name">
+                                    <input <?= ValidadorCuenta::atributosHtml('nombre_completo') ?> type="text" name="nombre_completo" id="new_owner_nombre" required placeholder="Nombres y apellidos" class="validate-name">
                                 </div>
                                 <span class="error-message display-none-error"></span>
                             </div>
@@ -575,7 +576,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <label>Email</label>
                                 <div class="input-wrapper">
                                     <i class="far fa-envelope field-icon"></i>
-                                    <input type="email" name="email" id="new_owner_email" required placeholder="correo@ejemplo.com" maxlength="100" class="validate-email">
+                                    <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" name="email" id="new_owner_email" required placeholder="correo@ejemplo.com" class="validate-email">
                                 </div>
                                 <span class="error-message display-none-error"></span>
                             </div>
@@ -950,7 +951,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                         <label>N° Documento</label>
                         <div class="input-wrapper">
                             <i class="fas fa-hashtag field-icon"></i>
-                            <input type="text" name="documento" id="edit_owner_doc" required placeholder="Ej: 1023456789" maxlength="20" class="validate-doc input-readonly-locked" readonly tabindex="-1">
+                            <input <?= ValidadorCuenta::atributosHtml('documento') ?> type="text" name="documento" id="edit_owner_doc" required placeholder="Ej: 1023456789" class="validate-doc input-readonly-locked" readonly tabindex="-1">
                         </div>
                         <span class="error-message display-none-error"></span>
                     </div>
@@ -958,7 +959,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                         <label>Nombre Completo</label>
                         <div class="input-wrapper">
                             <i class="far fa-user field-icon"></i>
-                            <input type="text" name="nombre_completo" id="edit_owner_nombre" required placeholder="Nombre y apellidos" maxlength="100" class="validate-name">
+                            <input <?= ValidadorCuenta::atributosHtml('nombre_completo') ?> type="text" name="nombre_completo" id="edit_owner_nombre" required placeholder="Nombre y apellidos" class="validate-name">
                         </div>
                         <span class="error-message display-none-error"></span>
                     </div>
@@ -973,7 +974,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                         <label>Email</label>
                         <div class="input-wrapper">
                             <i class="far fa-envelope field-icon"></i>
-                            <input type="email" name="email" id="edit_owner_email" readonly required placeholder="correo@ejemplo.com" maxlength="100" class="validate-email">
+                            <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" name="email" id="edit_owner_email" readonly required placeholder="correo@ejemplo.com" class="validate-email">
                         </div>
                         <span class="error-message display-none-error"></span>
                     </div>

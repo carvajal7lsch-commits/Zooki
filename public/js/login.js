@@ -315,6 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (forgotPasswordBtn) forgotPasswordBtn.addEventListener('click', abrirResetModal);
+    // D3.1: el correo y la confirmación enlazan al recuperador existente.
+    if (new URLSearchParams(window.location.search).get('recuperar') === '1') abrirResetModal();
     if (closeResetModalBtn) closeResetModalBtn.addEventListener('click', cerrarResetModal);
     if (resetModal) {
         resetModal.addEventListener('click', (event) => {

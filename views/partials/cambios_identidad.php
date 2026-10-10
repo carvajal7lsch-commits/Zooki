@@ -6,6 +6,7 @@
  * de la pantalla que lo incluye, sin cambiar su diseño.
  */
 require_once __DIR__ . '/../../helpers/Csrf.php';
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../../helpers/GoogleToken.php';
 $eIdentidad = static fn ($valor) => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 $cuentaIdentidad = $perfil ?? $usuarioData ?? [];
@@ -35,7 +36,7 @@ $campoIdentidad = static function (string $id, string $etiqueta, string $control
         <form class="<?= $claseFormulario ?> cuenta-identidad__form" data-validacion-cuenta data-identidad-accion="<?= $datoIdentidad === 'correo' ? 'solicitar_cambio_correo_ajax' : 'cambiar_documento_ajax' ?>" data-google-client="<?= $eIdentidad(GoogleToken::clientId()) ?>">
             <?php Csrf::field(); ?>
             <?php if ($datoIdentidad === 'correo'): ?>
-                <?php $campoIdentidad($prefijo . 'Email', 'Correo nuevo', '<input id="' . $prefijo . 'Email" class="' . $claseCampo . '" type="email" name="email" maxlength="255" autocomplete="email" required>'); ?>
+                <?php $campoIdentidad($prefijo . 'Email', 'Correo nuevo', '<input id="' . $prefijo . 'Email" class="' . $claseCampo . '" type="email" name="email" ' . ValidadorCuenta::atributosHtml('email') . ' autocomplete="email" required>'); ?>
                 <?php if (empty($cuentaIdentidad['tiene_password'])): ?>
                     <p class="<?= $claseAyuda ?>">Crea una contraseña en la sección de contraseña antes de cambiar tu correo.</p>
                 <?php endif; ?>
@@ -46,10 +47,10 @@ $campoIdentidad = static function (string $id, string $etiqueta, string $control
                     $opciones .= '<option value="' . $eIdentidad($tipoIdentidad) . '">' . $eIdentidad($tipoIdentidad) . '</option>';
                 }
                 $campoIdentidad($prefijo . 'Tipo', 'Tipo de documento', '<select id="' . $prefijo . 'Tipo" class="' . $claseCampo . '" name="tipo_documento" required>' . $opciones . '</select>');
-                $campoIdentidad($prefijo . 'Numero', 'Documento nuevo', '<input id="' . $prefijo . 'Numero" class="' . $claseCampo . '" type="text" name="documento" inputmode="numeric" pattern="\d{5,15}" maxlength="15" required>');
+                $campoIdentidad($prefijo . 'Numero', 'Documento nuevo', '<input id="' . $prefijo . 'Numero" class="' . $claseCampo . '" type="text" name="documento" ' . ValidadorCuenta::atributosHtml('documento') . ' pattern="\d{5,15}" required>');
                 ?>
             <?php endif; ?>
-            <?php $campoIdentidad($prefijo . 'Clave', 'Contraseña actual', '<input id="' . $prefijo . 'Clave" class="' . $claseCampo . '" type="password" name="password_actual" autocomplete="current-password" maxlength="72"' . (empty($cuentaIdentidad['tiene_google']) ? ' required' : '') . '>'); ?>
+            <?php $campoIdentidad($prefijo . 'Clave', 'Contraseña actual', '<input id="' . $prefijo . 'Clave" class="' . $claseCampo . '" type="password" name="password_actual" autocomplete="current-password" ' . ValidadorCuenta::atributosHtml('password') . (empty($cuentaIdentidad['tiene_google']) ? ' required' : '') . '>'); ?>
             <?php if (!empty($cuentaIdentidad['tiene_google'])): ?>
                 <button type="button" class="<?= $claseBotonGoogle ?>" data-confirmar-google>Confirmar mi identidad con Google</button>
                 <input type="hidden" name="access_token" value="">

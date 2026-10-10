@@ -48,7 +48,7 @@ class PropietarioController {
         ];
 
         foreach ($requeridos as $campo => $mensaje) {
-            $valor = trim((string) ($entrada[$campo] ?? ''));
+            $valor = ValidadorCuenta::normalizar($campo, (string) ($entrada[$campo] ?? ''));
             if ($valor === '') return $mensaje;
             $limpios[$campo] = $valor;
         }
@@ -64,8 +64,8 @@ class PropietarioController {
         if (!ValidadorTelefono::esValido($limpios['telefono'])) {
             return ValidadorTelefono::MENSAJE;
         }
-        if (mb_strlen($limpios['nombre_completo']) < 3 || mb_strlen($limpios['nombre_completo']) > 100) {
-            return 'El nombre completo debe tener entre 3 y 100 caracteres.';
+        if (ValidadorCuenta::nombre($limpios['nombre_completo']) !== null) {
+            return ValidadorCuenta::nombre($limpios['nombre_completo']);
         }
         if (!in_array($limpios['tipo_documento'], ['CC', 'CE', 'TI', 'PP', 'NIT'], true)) {
             return 'El tipo de documento no es valido.';

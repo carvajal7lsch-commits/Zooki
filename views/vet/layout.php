@@ -172,7 +172,7 @@
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
     <script src="js/atencion.js?v=1"></script>
     <?php endif; ?>
-<script src="js/interacciones.js?v=2"></script>
+<script src="js/interacciones.js?v=d31"></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>

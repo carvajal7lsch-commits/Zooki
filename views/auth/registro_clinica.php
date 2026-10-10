@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 $e = static fn ($valor) => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 $tituloPagina = 'Registra tu clínica';
@@ -6,9 +7,8 @@ $tituloPagina = 'Registra tu clínica';
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<?php require __DIR__ . '/../partials/cabecera_enlace.php'; ?>
-    <link rel="stylesheet" href="css/registro-clinica.css?v=d3">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php require __DIR__ . '/../partials/cabecera_acceso.php'; ?>
+    <link rel="stylesheet" href="css/registro-clinica.css?v=d31">
     <script src="js/turnstile-formularios.js?v=d3"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=zookiTurnstileListo" async defer></script>
 </head>
@@ -27,15 +27,15 @@ $tituloPagina = 'Registra tu clínica';
                 <fieldset class="registro-clinica-campos"><legend>Datos de la clínica</legend><div class="registro-clinica-grid">
                     <div class="input-group">
                         <label for="nombre_clinica">Nombre de la clínica</label>
-                        <div class="input-wrapper"><input id="nombre_clinica" name="nombre_clinica" type="text" minlength="<?= ValidadorClinica::NOMBRE_MIN ?>" maxlength="<?= ValidadorClinica::NOMBRE_MAX ?>" required></div>
+                        <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('nombre_clinica') ?> id="nombre_clinica" name="nombre_clinica" type="text" minlength="<?= ValidadorClinica::NOMBRE_MIN ?>" required></div>
                     </div>
                     <div class="input-group">
                         <label for="nit">NIT con dígito de verificación</label>
-                        <div class="input-wrapper"><input id="nit" name="nit" type="text" maxlength="<?= ValidadorClinica::NIT_PRESENTACION_MAX ?>" placeholder="900123456-8" required></div>
+                        <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('nit') ?> id="nit" name="nit" type="text" placeholder="900123456-8" required></div>
                     </div>
                     <div class="input-group">
                         <label for="direccion">Dirección</label>
-                        <div class="input-wrapper"><input id="direccion" name="direccion" type="text" maxlength="<?= ValidadorClinica::DIRECCION_MAX ?>" required></div>
+                        <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('direccion') ?> id="direccion" name="direccion" type="text" required></div>
                     </div>
                     <div class="input-group">
                         <label for="telefono_clinica">Teléfono</label>
@@ -43,7 +43,7 @@ $tituloPagina = 'Registra tu clínica';
                     </div>
                     <div class="input-group">
                         <label for="email_clinica">Correo de contacto</label>
-                        <div class="input-wrapper"><input id="email_clinica" name="email_clinica" type="email" maxlength="255" required data-cuenta-campo="email_clinica"></div>
+                        <div class="input-wrapper"><input <?= ValidadorCuenta::atributosHtml('email') ?> id="email_clinica" name="email_clinica" type="email" required data-cuenta-campo="email_clinica"></div>
                     </div>
                 </div></fieldset>
                 <fieldset class="registro-clinica-campos"><legend>Datos del administrador</legend><div class="registro-clinica-grid">
@@ -57,11 +57,11 @@ $tituloPagina = 'Registra tu clínica';
                     </div>
                     <div class="input-group">
                         <label for="nombre_completo">Nombre completo</label>
-                        <div class="input-wrapper"><input id="nombre_completo" name="nombre_completo" type="text" maxlength="100" required></div>
+                        <div class="input-wrapper"><input <?= ValidadorCuenta::atributosHtml('nombre_completo') ?> id="nombre_completo" name="nombre_completo" type="text" required></div>
                     </div>
                     <div class="input-group">
                         <label for="documento">Número de documento</label>
-                        <div class="input-wrapper"><input id="documento" name="documento" type="text" maxlength="15" required></div>
+                        <div class="input-wrapper"><input <?= ValidadorCuenta::atributosHtml('documento') ?> id="documento" name="documento" type="text" required></div>
                     </div>
                     <div class="input-group">
                         <label for="telefono">Teléfono</label>
@@ -69,15 +69,16 @@ $tituloPagina = 'Registra tu clínica';
                     </div>
                     <div class="input-group">
                         <label for="email">Correo</label>
-                        <div class="input-wrapper"><input id="email" name="email" type="email" maxlength="255" required data-cuenta-campo="email_administrador"></div>
+                        <div class="input-wrapper"><input <?= ValidadorCuenta::atributosHtml('email') ?> id="email" name="email" type="email" required data-cuenta-campo="email_administrador"></div>
                     </div>
                     <div class="input-group">
                         <label for="password">Contraseña</label>
-                        <div class="input-wrapper"><input id="password" name="password" type="password" maxlength="72" required autocomplete="new-password"><button type="button" class="toggle-password" tabindex="-1" aria-label="Mostrar contraseña"><i class="ri-eye-off-line" aria-hidden="true"></i></button></div>
+                        <div class="input-wrapper"><input <?= ValidadorCuenta::atributosHtml('password') ?> id="password" aria-describedby="claveCuentaAyuda" name="password" type="password" required autocomplete="new-password"><button type="button" class="toggle-password" tabindex="-1" aria-label="Mostrar contraseña"><i class="ri-eye-off-line" aria-hidden="true"></i></button></div>
+                        <small class="form-subtitle" id="claveCuentaAyuda">Si ya tienes cuenta en Zooki, entrarás con tu contraseña de siempre.</small>
                     </div>
                     <div class="input-group">
                         <label for="confirm_password">Confirma la contraseña</label>
-                        <div class="input-wrapper"><input id="confirm_password" name="confirm_password" type="password" maxlength="72" required autocomplete="new-password"><button type="button" class="toggle-password" tabindex="-1" aria-label="Mostrar contraseña"><i class="ri-eye-off-line" aria-hidden="true"></i></button></div>
+                        <div class="input-wrapper"><input <?= ValidadorCuenta::atributosHtml('password') ?> id="confirm_password" name="confirm_password" type="password" required autocomplete="new-password"><button type="button" class="toggle-password" tabindex="-1" aria-label="Mostrar contraseña"><i class="ri-eye-off-line" aria-hidden="true"></i></button></div>
                     </div>
                 </div></fieldset>
                 <label class="registro-consentimiento"><input type="checkbox" name="acepta_datos" value="1" required><span>Acepto la <a href="index.php?action=privacidad" target="_blank" rel="noopener">política de tratamiento de datos</a>.</span></label>

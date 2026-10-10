@@ -207,7 +207,7 @@ final class RegistroPropietario
         $datos = [
             'tipo_documento' => trim((string) ($entrada['tipo_documento'] ?? '')),
             'documento' => trim((string) ($entrada['documento'] ?? '')),
-            'nombre_completo' => preg_replace('/\s+/u', ' ', trim((string) ($entrada['nombre_completo'] ?? ''))),
+            'nombre_completo' => ValidadorCuenta::normalizar('nombre_completo', (string) ($entrada['nombre_completo'] ?? '')),
             'telefono' => ValidadorTelefono::normalizar((string) ($entrada['telefono'] ?? '')),
             'email' => mb_strtolower(trim((string) ($entrada['email'] ?? ''))),
             'password' => (string) ($entrada['password'] ?? ''),
@@ -218,11 +218,11 @@ final class RegistroPropietario
         if (ValidadorCuenta::documento($datos['documento']) !== null) {
             throw new InvalidArgumentException('El documento debe tener entre 5 y 15 dígitos.');
         }
-        if (mb_strlen($datos['nombre_completo']) < 3 || mb_strlen($datos['nombre_completo']) > 100) {
-            throw new InvalidArgumentException('El nombre completo debe tener entre 3 y 100 caracteres.');
+        if (ValidadorCuenta::nombre($datos['nombre_completo']) !== null) {
+            throw new InvalidArgumentException(ValidadorCuenta::nombre($datos['nombre_completo']));
         }
         $this->exigirTelefono($datos['telefono']);
-        if (ValidadorCuenta::correo($datos['email']) !== null || mb_strlen($datos['email']) > 100) {
+        if (ValidadorCuenta::correo($datos['email']) !== null) {
             throw new InvalidArgumentException('El correo electrónico no tiene un formato válido.');
         }
         if ($datos['password'] !== (string) ($entrada['confirm_password'] ?? '')) {

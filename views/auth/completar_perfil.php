@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 /**
  * RE-T.18.3 (RN-G20) — Una cuenta de Google registra su documento y su
  * teléfono antes de usar el portal. Recibe de CuentaController $error.
@@ -47,7 +48,7 @@ $nombres = ['CC' => 'Cédula de ciudadanía', 'CE' => 'Cédula de extranjería',
             </select>
 
             <label class="cuenta-campo" for="perfilDocumento">Número de documento</label>
-            <input type="text" id="perfilDocumento" name="documento" required inputmode="numeric" pattern="\d{5,15}" maxlength="15" data-caracteres="0-9" autocomplete="off">
+            <input <?= ValidadorCuenta::atributosHtml('documento') ?> type="text" id="perfilDocumento" name="documento" required pattern="\d{5,15}" autocomplete="off">
 
             <label class="cuenta-campo" for="perfilTelefono">Teléfono</label>
             <input type="tel" id="perfilTelefono" name="telefono" required minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> autocomplete="tel">
@@ -57,7 +58,7 @@ $nombres = ['CC' => 'Cédula de ciudadanía', 'CE' => 'Cédula de extranjería',
 
         <a class="contexto-salir" href="index.php?action=logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar sesión</a>
     </main>
-    <script src="js/interacciones.js?v=2"></script>
+    <script src="js/interacciones.js?v=d31"></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
 </body>
 </html>

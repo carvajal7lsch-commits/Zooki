@@ -114,7 +114,7 @@ class UsuarioController {
             'email'           => 'El correo electronico es obligatorio.',
         ];
         foreach ($requeridos as $campo => $mensaje) {
-            $valor = trim((string) ($entrada[$campo] ?? ''));
+            $valor = ValidadorCuenta::normalizar($campo, (string) ($entrada[$campo] ?? ''));
             if ($valor === '') return $mensaje;
             $limpios[$campo] = $valor;
         }
@@ -125,8 +125,8 @@ class UsuarioController {
         if (ValidadorCuenta::correo($limpios['email']) !== null) {
             return 'El correo electronico no tiene un formato valido.';
         }
-        if (mb_strlen($limpios['nombre_completo']) < 3 || mb_strlen($limpios['nombre_completo']) > 100) {
-            return 'El nombre completo debe tener entre 3 y 100 caracteres.';
+        if (ValidadorCuenta::nombre($limpios['nombre_completo']) !== null) {
+            return ValidadorCuenta::nombre($limpios['nombre_completo']);
         }
         if (!in_array($limpios['tipo_documento'], Usuario::TIPOS_DOCUMENTO, true)) {
             return 'El tipo de documento no es valido.';

@@ -109,7 +109,7 @@ $iniciales = $iniciales ?: 'U';
 <script src="js/portal.js?v=<?= $v ?>-d2"></script>
 <script src="js/csrf.js?v=<?= $v ?>"></script>
 <script src="js/sesion.js?v=1"></script>
-<script src="js/interacciones.js?v=2"></script>
+<script src="js/interacciones.js?v=d31"></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
 <script src="js/cuenta-password.js?v=d2"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>

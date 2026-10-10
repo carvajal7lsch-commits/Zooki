@@ -317,6 +317,81 @@ final class RegistroClinicaTest extends TestCase
         $this->assertSame($nueva, $existente);
         $this->assertCount(2, $correo->enviados);
         $this->assertStringContainsString('Confirma que quieres registrar', $correo->enviados[1][2]);
+        $this->assertStringContainsString('La contraseña escrita en el formulario no se usó.', $correo->enviados[1][3]);
+        $this->assertStringContainsString('Entrarás con tu contraseña de siempre', $correo->enviados[1][3]);
+        $this->assertStringContainsString('elegirás la clínica al entrar', $correo->enviados[1][3]);
+        $this->assertStringContainsString('¿Olvidaste tu contraseña?', $correo->enviados[1][3]);
+        $this->assertStringContainsString('recuperar=1', $correo->enviados[1][3]);
+    }
+
+    public function testD31VistaRegistroComparteCabeceraYEstructuraDelLogin(): void
+    {
+        ob_start();
+        (new RegistroClinicaController($this->db))->formulario();
+        $html = ob_get_clean();
+        $login = file_get_contents(__DIR__ . '/../../views/auth/login.php');
+        $this->assertStringContainsString("require __DIR__ . '/../partials/cabecera_acceso.php'", $login);
+        $this->assertStringContainsString('css/styles.css', $html);
+        $this->assertStringContainsString('animate.min.css', $html);
+        $this->assertStringContainsString('css/validacion-cuenta.css', $html);
+        $this->assertStringNotContainsString('css/reset-password.css', $html);
+        $this->assertStringContainsString('Si ya tienes cuenta en Zooki, entrarás con tu contraseña de siempre.', $html);
+        $dom = new DOMDocument();
+        $anterior = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="UTF-8">' . $html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($anterior);
+        $xpath = new DOMXPath($dom);
+        $contenedor = "//div[@class='login-container']";
+        $this->assertSame(1, $xpath->query($contenedor . "/div[contains(@class,'login-form-area')]")->length);
+        $this->assertSame(1, $xpath->query($contenedor . "/div[contains(@class,'login-hero')]")->length);
+        $this->assertSame(0, $xpath->query($contenedor . "/div[contains(@class,'login-hero')]//form")->length);
+        foreach (['documento' => '15', 'nombre_completo' => '100', 'email' => '255', 'nit' => '25'] as $campo => $maximo) {
+            $input = $xpath->query("//input[@name='$campo']")->item(0);
+            $this->assertSame($maximo, $input->getAttribute('maxlength'));
+            $this->assertTrue($input->hasAttribute('data-caracteres'));
+        }
+        $css = file_get_contents(__DIR__ . '/../../public/css/registro-clinica.css');
+        $this->assertStringNotContainsString('.login-container', $css);
+        $this->assertStringNotContainsString('.login-form-area', $css);
+        $this->assertStringContainsString('(max-width: 767px)', $css);
+    }
+
+    public function testD31SaneamientoSeGuardaYEntradaIlegalNoCreaCuenta(): void
+    {
+        $alta = $this->alta(1, ['nombre_clinica' => '  Clínica   Nueva  ', 'nombre_completo' => "  María  O'Neill-Peña  ", 'direccion' => '  Carrera  7 # 12-34  ', 'email' => ' NUEVA@ZOOKI.TEST ', 'telefono' => '  +57   3001234567  ']);
+        $fila = $this->registro->leer($alta['enlace']['id'], $alta['enlace']['token']);
+        $persona = (new Usuario($this->db))->buscarPorId((int) $fila['id_usuario']);
+        $this->assertSame("María O'Neill-Peña", $persona['nombre_completo']);
+        $this->assertSame('+57 3001234567', $persona['telefono']);
+        $this->assertSame('nueva@zooki.test', $persona['email']);
+        $this->assertSame('Clínica Nueva', $fila['clinica']);
+        $this->expectException(InvalidArgumentException::class);
+        $this->alta(2, ['nombre_completo' => 'Ana 123']);
+    }
+
+    public function testD31ConfirmacionExplicaPasswordOriginalAntesYDespuesDelPost(): void
+    {
+        $alta = $this->alta(1, ['email' => 'fabio@zooki.test']);
+        $_GET = $alta['enlace'];
+        $controlador = new RegistroClinicaController($this->db);
+        foreach (['GET', 'POST'] as $metodo) {
+            $_SERVER['REQUEST_METHOD'] = $metodo;
+            if ($metodo === 'POST') {
+                $_POST = $alta['enlace'] + ['csrf_token' => Csrf::token(), 'acepta_datos' => '1'];
+            }
+            ob_start();
+            $controlador->activar();
+            $html = ob_get_clean();
+            $this->assertStringContainsString('La contraseña escrita en el formulario no se usó.', $html);
+            $this->assertStringContainsString('Entrarás con tu contraseña de siempre.', $html);
+            $this->assertStringContainsString('Al iniciar sesión elegirás la clínica.', $html);
+            $this->assertStringContainsString('¿Olvidaste tu contraseña?', $html);
+            if ($metodo === 'POST') {
+                $this->assertStringContainsString('Tu clínica está activa', $html);
+            }
+        }
+        $this->assertTrue((new Usuario($this->db))->verificarPassword(6, DosClinicas::PASSWORD));
     }
 
     public function testD3AyudaConYSinSesionRespondeSoloFormato(): void

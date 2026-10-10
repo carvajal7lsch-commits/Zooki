@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 /**
  * D2 — Páginas de enlace de la cuenta: activar la cuenta del personal
  * (RE-T.19.1) y confirmar el correo nuevo (RE-T.5.7). D2.2: con el diseño de
@@ -55,7 +56,7 @@ $tituloPagina = $activar ? 'Activar cuenta' : 'Confirmar nuevo correo';
                         <label for="activarPassword">Nueva contraseña</label>
                         <div class="input-wrapper">
                             <i class="ri-shield-keyhole-line" aria-hidden="true"></i>
-                            <input type="password" id="activarPassword" name="password" data-cuenta-ayuda="activarPasswordAyuda" placeholder="••••••••" autocomplete="new-password" maxlength="72" required>
+                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="activarPassword" name="password" data-cuenta-ayuda="activarPasswordAyuda" placeholder="••••••••" autocomplete="new-password" required>
                             <button type="button" class="toggle-password" tabindex="-1" aria-label="Mostrar contraseña"><i class="ri-eye-off-line" aria-hidden="true"></i></button>
                         </div>
                         <span class="validation-msg" id="activarPasswordAyuda">Mínimo 8 caracteres, con mayúscula, minúscula y número</span>
@@ -64,7 +65,7 @@ $tituloPagina = $activar ? 'Activar cuenta' : 'Confirmar nuevo correo';
                         <label for="activarConfirmar">Confirmar contraseña</label>
                         <div class="input-wrapper">
                             <i class="ri-check-double-line" aria-hidden="true"></i>
-                            <input type="password" id="activarConfirmar" name="confirm_password" placeholder="Repite tu contraseña" autocomplete="new-password" maxlength="72" required>
+                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="activarConfirmar" name="confirm_password" placeholder="Repite tu contraseña" autocomplete="new-password" required>
                             <button type="button" class="toggle-password" tabindex="-1" aria-label="Mostrar contraseña"><i class="ri-eye-off-line" aria-hidden="true"></i></button>
                         </div>
                     </div>

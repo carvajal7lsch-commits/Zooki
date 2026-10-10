@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Mascota.php';
 require_once __DIR__ . '/../models/PropietarioClinica.php';
@@ -119,11 +120,11 @@ class MascotaController
     public function actualizarPropietarioAjax(): void
     {
         $this->modificar(function () {
-            $nombre=trim((string)($_POST['nombre_completo'] ?? ''));
+            $nombre = ValidadorCuenta::normalizar('nombre_completo', (string) ($_POST['nombre_completo'] ?? ''));
             // D1: la misma regla de teléfono en todo el sistema (ValidadorTelefono).
             $telefono=ValidadorTelefono::normalizar((string)($_POST['telefono'] ?? ''));
             if (!ValidadorTelefono::esValido($telefono)) throw new InvalidArgumentException(ValidadorTelefono::MENSAJE);
-            if (mb_strlen($nombre)<3 || mb_strlen($nombre)>100
+            if (ValidadorCuenta::nombre($nombre) !== null
                 || !in_array((string)($_POST['estado'] ?? ''),['0','1'],true)) throw new InvalidArgumentException('Revisa nombre y estado.');
             $this->propietarioModel->actualizar($this->id($_POST['id_usuario'] ?? ''),array_replace($_POST,['nombre_completo'=>$nombre,'telefono'=>$telefono]));
             return [];

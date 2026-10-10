@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -52,7 +53,7 @@ $errorMessage = $errorMessage ?? '';
                     <label for="newPassword">Nueva contraseña</label>
                     <div class="input-wrapper">
                         <i class="ri-shield-keyhole-line"></i>
-                        <input type="password" id="newPassword" data-cuenta-ayuda="passwordValidationMsg" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="newPassword" data-cuenta-ayuda="passwordValidationMsg" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
                         <button type="button" class="toggle-password" id="toggleNewPassword" tabindex="-1">
                             <i class="ri-eye-off-line"></i>
                         </button>
@@ -67,7 +68,7 @@ $errorMessage = $errorMessage ?? '';
                     <label for="confirmPassword">Confirmar contraseña</label>
                     <div class="input-wrapper">
                         <i class="ri-check-double-line"></i>
-                        <input type="password" id="confirmPassword" name="password_confirmation" placeholder="Repite tu contraseña" required minlength="8" autocomplete="new-password">
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="confirmPassword" name="password_confirmation" placeholder="Repite tu contraseña" required minlength="8" autocomplete="new-password">
                         <button type="button" class="toggle-password" id="toggleConfirmPassword" tabindex="-1">
                             <i class="ri-eye-off-line"></i>
                         </button>

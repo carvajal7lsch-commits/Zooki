@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 /**
  * HU-T.7 — Personal de la clínica activa y propietarios vinculados a ella.
  *
@@ -340,7 +341,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                     </div>
                     <div class="input-group" data-solo-alta>
                         <label for="usuarioDocumento">N° Documento</label>
-                        <input type="text" id="usuarioDocumento" name="documento" required inputmode="numeric" pattern="\d{5,15}" maxlength="15" data-caracteres="0-9" placeholder="Ej: 1023456789">
+                        <input <?= ValidadorCuenta::atributosHtml('documento') ?> type="text" id="usuarioDocumento" name="documento" required pattern="\d{5,15}" placeholder="Ej: 1023456789">
                     </div>
                     <div class="input-group" data-grupo-rol>
                         <label for="usuarioRol">Rol</label>
@@ -352,11 +353,11 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                     </div>
                     <div class="input-group span-2">
                         <label for="usuarioNombre">Nombre completo</label>
-                        <input type="text" id="usuarioNombre" name="nombre_completo" required minlength="3" maxlength="100" placeholder="Nombre y apellidos">
+                        <input <?= ValidadorCuenta::atributosHtml('nombre_completo') ?> type="text" id="usuarioNombre" name="nombre_completo" required minlength="3" placeholder="Nombre y apellidos">
                     </div>
                     <div class="input-group">
                         <label for="usuarioEmail">Correo electrónico</label>
-                        <input type="email" id="usuarioEmail" name="email" required maxlength="255" placeholder="correo@ejemplo.com">
+                        <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="usuarioEmail" name="email" required placeholder="correo@ejemplo.com">
                     </div>
                     <div class="input-group">
                         <label for="usuarioTelefono">Teléfono</label>

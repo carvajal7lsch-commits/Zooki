@@ -9,10 +9,11 @@
 - **Módulo activo:** M0 — Base SaaS, identidad y aislamiento. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
-- **Entrega actual:** D3, escrita por Codex: registro y activación de clínicas, CAPTCHA del propietario, pruebas aisladas de la base de trabajo y pendientes de D2.2.
+- **Entrega actual:** D3.1, escrita por Codex; **entregada, pendiente de revisión** (2026-10-10). Corrige la pantalla de registro de clínica, las restricciones de entrada de los formularios de cuenta y la explicación de la contraseña de una cuenta existente. Resultado y pantallas para el usuario en el Anexo D3.1 del plan.
 - **D2.2:** revisada, aprobada y con commit. Verificación de D3 en su anexo del plan.
-- **D3:** revisada y **aprobada** (2026-10-10; «D3 — Revisión» en el plan). Falta el commit y la prueba del usuario.
-- **Siguiente paso:** **D3.1** con Codex (pantalla de registro de clínica rota y restricción de entrada en todos los campos de cuenta; plan, «Prueba del usuario de D3»). Después, E.
+- **D3:** revisada y **aprobada** (2026-10-10; «D3 — Revisión» en el plan), con commit `fa43c3d`. La prueba del usuario motivó D3.1.
+- **Verificación D3.1:** PHP 532 en verde (también con MariaDB temporal, 3114 aserciones, ninguna omitida, base predeterminada `zooki_test_base_v2`); JS 68 en verde. Sin migración ni cambios al flujo de Modelos §12.1.
+- **Siguiente paso:** revisión de D3.1 por Claude y prueba visual del usuario en escritorio, tablet y celular; después, commit del usuario. E no se inició.
 - **Antes:** D2.1 revisada, aprobada y con commits `a66830f`, `a4fdf31` y `d08271f`; su recorrido funcional y la corrección del primer clic están en el plan.
 - **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
 

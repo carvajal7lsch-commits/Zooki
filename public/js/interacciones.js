@@ -1,27 +1,98 @@
 /** C9: acciones de las vistas en data-*, sin controladores de evento en línea. */
-document.addEventListener('click', ejecutarInteraccion);
-document.addEventListener('keydown', (evento) => {
-    if (evento.defaultPrevented) return;
-    if (!['Enter', ' '].includes(evento.key)) return;
-    const elemento = evento.target.closest('[data-ui-accion][role="button"]');
-    if (!elemento || elemento !== evento.target) return;
-    evento.preventDefault();
-    ejecutarInteraccion(evento);
-});
+if (!document.zookiInteraccionesRegistradas) {
+    document.zookiInteraccionesRegistradas = true;
+    document.addEventListener('click', ejecutarInteraccion);
+    document.addEventListener('keydown', (evento) => {
+        if (evento.defaultPrevented) return;
+        if (!['Enter', ' '].includes(evento.key)) return;
+        const elemento = evento.target.closest('[data-ui-accion][role="button"]');
+        if (!elemento || elemento !== evento.target) return;
+        evento.preventDefault();
+        ejecutarInteraccion(evento);
+    });
 
-/**
- * C9.1: un campo con data-caracteres solo acepta esos caracteres mientras se
- * escribe o se pega, sin pasar de su maxlength. El servidor valida lo mismo.
- */
-document.addEventListener('input', (evento) => {
+    /**
+     * C9.1: un campo con data-caracteres solo acepta esos caracteres mientras se
+     * escribe o se pega, sin pasar de su maxlength. El servidor valida lo mismo.
+     */
+    document.addEventListener('input', (evento) => {
+        const campo = evento.target;
+        if (!campo || !campo.dataset || campo.dataset.caracteres === undefined) return;
+        actualizarEntrada(campo, campo.value, campo.selectionStart);
+    }, true);
+
+    // D3.1: filtrar antes de la validación y antes del maxlength nativo al pegar.
+    document.addEventListener('beforeinput', (evento) => {
+        const campo = evento.target;
+        if (!campo?.dataset || campo.dataset.caracteres === undefined || evento.isComposing) return;
+        if (evento.inputType !== 'insertText' || evento.data === null || !evento.cancelable) return;
+        // type=email no expone el cursor: conservar su edición nativa y bloquear solo la tecla inválida.
+        if (typeof campo.selectionStart !== 'number') {
+            if (limpiarCaracteres(evento.data, campo.dataset.caracteres, 0) !== evento.data) evento.preventDefault();
+            return;
+        }
+        insertarEntrada(evento, evento.data);
+    }, true);
+
+    document.addEventListener('paste', (evento) => {
+        if (evento.target?.dataset?.caracteres === undefined || !evento.clipboardData) return;
+        if (typeof evento.target.selectionStart !== 'number') return;
+        insertarEntrada(evento, evento.clipboardData.getData('text'));
+    }, true);
+
+    document.addEventListener('blur', (evento) => {
+        const campo = evento.target;
+        if (campo?.dataset?.espacios !== 'normalizar') return;
+        const anterior = campo.value;
+        actualizarEntrada(campo, campo.value.trim(), campo.selectionStart);
+        if (campo.value !== anterior) campo.dispatchEvent(new Event('input', { bubbles: true }));
+    }, true);
+}
+
+function insertarEntrada(evento, texto) {
     const campo = evento.target;
-    if (!campo || !campo.dataset || campo.dataset.caracteres === undefined) return;
-    const limpio = limpiarCaracteres(campo.value, campo.dataset.caracteres, campo.maxLength);
-    if (limpio !== campo.value) campo.value = limpio;
-});
+    const inicio = campo.selectionStart ?? campo.value.length;
+    const fin = campo.selectionEnd ?? inicio;
+    const valor = campo.value.slice(0, inicio) + texto + campo.value.slice(fin);
+    // Conservar edición, cursor y deshacer nativos cuando la entrada ya cumple.
+    if (sanearEntrada(valor, campo.dataset, campo.maxLength) === valor) return;
+    evento.preventDefault();
+    actualizarEntrada(campo, valor, inicio + texto.length);
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function actualizarEntrada(campo, valor, posicion) {
+    const limpio = sanearEntrada(valor, campo.dataset, campo.maxLength);
+    const cursor = typeof posicion === 'number' ? sanearEntrada(valor.slice(0, posicion), campo.dataset, campo.maxLength).length : null;
+    if (campo.value !== limpio) campo.value = limpio;
+    if (cursor !== null && typeof campo.setSelectionRange === 'function' && ['text', 'tel', 'password', 'search'].includes(campo.type)) {
+        campo.setSelectionRange(cursor, cursor);
+    }
+}
+
+function sanearEntrada(valor, opciones, maximo) {
+    if (opciones.espacios === 'normalizar') valor = String(valor).replace(/\s+/gu, ' ');
+    let limpio = limpiarCaracteres(valor, opciones.caracteres, 0);
+    if (opciones.formato === 'nit') {
+        const partes = limpio.split('-');
+        limpio = partes[0] + (partes[0] && partes.length > 1 ? '-' + partes.slice(1).join('').slice(0, 1) : partes.slice(1).join(''));
+    }
+    if (opciones.espacios === 'normalizar') limpio = limpio.replace(/\s+/gu, ' ').trimStart();
+    if (maximo > 0) limpio = limpio.slice(0, maximo);
+    const maximoBytes = Number(opciones.maxBytes);
+    if (maximoBytes > 0) {
+        let salida = '';
+        for (const caracter of limpio) {
+            if (new TextEncoder().encode(salida + caracter).length > maximoBytes) break;
+            salida += caracter;
+        }
+        limpio = salida;
+    }
+    return limpio;
+}
 
 function limpiarCaracteres(valor, caracteres, maximo) {
-    const fuera = new RegExp('[^' + caracteres + ']', 'g');
+    const fuera = new RegExp('[^' + caracteres + ']', 'gu');
     const limpio = String(valor).replace(fuera, '');
     return maximo > 0 ? limpio.slice(0, maximo) : limpio;
 }

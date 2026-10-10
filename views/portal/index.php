@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../../helpers/ResumenPanel.php';
 require_once __DIR__ . '/../../helpers/ReglaAtencion.php';
 require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
@@ -529,14 +530,14 @@ foreach ((array) $todas_desparasitaciones as $d) {
                         <div class="input-group">
                             <label class="portal-label" for="portal_current_password">Contraseña actual</label>
                             <div class="search-input-wrapper campo">
-                                <input type="password" name="current_password" id="portal_current_password" required autocomplete="current-password" placeholder="Tu contraseña actual">
+                                <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="current_password" id="portal_current_password" required autocomplete="current-password" placeholder="Tu contraseña actual">
                             </div>
                         </div>
                         <?php endif; ?>
                         <div class="input-group">
                             <label class="portal-label" for="portal_new_password">Nueva contraseña</label>
                             <div class="search-input-wrapper campo">
-                                <input type="password" name="new_password" id="portal_new_password" data-cuenta-ayuda="portal_pwd_strength_text" required autocomplete="new-password" placeholder="Mínimo 8 caracteres"  aria-describedby="portal_pwd_strength_text">
+                                <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="new_password" id="portal_new_password" data-cuenta-ayuda="portal_pwd_strength_text" required autocomplete="new-password" placeholder="Mínimo 8 caracteres"  aria-describedby="portal_pwd_strength_text">
                             </div>
                             <div class="password-strength-meter" aria-hidden="true">
                                 <div id="portal_pwd_strength_bar"></div>
@@ -546,7 +547,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
                         <div class="input-group">
                             <label class="portal-label" for="portal_confirm_password">Confirmar nueva contraseña</label>
                             <div class="search-input-wrapper campo">
-                                <input type="password" name="confirm_password" id="portal_confirm_password" required autocomplete="new-password" placeholder="Repite la nueva contraseña" >
+                                <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="confirm_password" id="portal_confirm_password" required autocomplete="new-password" placeholder="Repite la nueva contraseña" >
                             </div>
                             <small id="portal_pwd_match_text" class="password-match-text" role="alert">Las contraseñas no coinciden.</small>
                         </div>

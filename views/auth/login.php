@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../../helpers/Turnstile.php';
 // Asegurarnos de que la sesión esté iniciada para mostrar errores
 if(session_status() === PHP_SESSION_NONE) {
@@ -36,21 +37,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle; ?></title>
-    <link rel="icon" type="image/png" href="img/icon_blue.png">
-    <!-- Fuentes y estilos -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <!-- El CSS se enlaza desde la carpeta public/css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
+<?php require __DIR__ . '/../partials/cabecera_acceso.php'; ?>
 </head>
 <?php // D1: la configuración del JS viaja en data-*, sin JS en línea. ?>
 <body class="login-page" data-google-client-id="<?= $e($googleClientId) ?>">
@@ -102,7 +89,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                 <div class="input-group">
                                     <label for="password">Contraseña</label>
                                     <div class="input-wrapper">
-                                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" maxlength="72">
+                                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
                                         <button type="button" class="toggle-password" id="togglePassword" tabindex="-1">
                                             <i class="ri-eye-off-line"></i>
                                         </button>
@@ -187,14 +174,14 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     <div class="input-group">
                                         <label for="documento_reg">Documento</label>
                                         <div class="input-wrapper">
-                                            <input type="text" id="documento_reg" name="documento" placeholder="Ej. 1075..." required maxlength="15" autocomplete="off">
+                                            <input <?= ValidadorCuenta::atributosHtml('documento') ?> type="text" id="documento_reg" name="documento" placeholder="Ej. 1075..." required autocomplete="off">
                                         </div>
                                         <span class="validation-msg" id="docValidationMsg"></span>
                                     </div>
                                     <div class="input-group full-width">
                                         <label for="nombre_completo">Nombre Completo</label>
                                         <div class="input-wrapper">
-                                            <input type="text" id="nombre_completo" name="nombre_completo" placeholder="Nombres y Apellidos completos" required maxlength="100" autocomplete="off">
+                                            <input <?= ValidadorCuenta::atributosHtml('nombre_completo') ?> type="text" id="nombre_completo" name="nombre_completo" placeholder="Nombres y Apellidos completos" required autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="input-group">
@@ -206,14 +193,14 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     <div class="input-group">
                                         <label for="email_reg">Correo</label>
                                         <div class="input-wrapper">
-                                            <input type="email" id="email_reg" name="email" placeholder="correo@ejemplo.com" required maxlength="100" autocomplete="off">
+                                            <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="email_reg" name="email" placeholder="correo@ejemplo.com" required autocomplete="off">
                                         </div>
                                         <span class="validation-msg" id="emailValidationMsg"></span>
                                     </div>
                                     <div class="input-group">
                                         <label for="password_reg">Contraseña</label>
                                         <div class="input-wrapper">
-                                            <input type="password" id="password_reg" data-cuenta-ayuda="passwordValidationMsg" name="password" placeholder="••••••••" required minlength="8" maxlength="72" autocomplete="new-password">
+                                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="password_reg" data-cuenta-ayuda="passwordValidationMsg" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
                                             <button type="button" class="toggle-password" id="togglePasswordReg" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                                                 <i class="ri-eye-off-line"></i>
                                             </button>
@@ -226,7 +213,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     <div class="input-group">
                                         <label for="confirm_password">Confirmar</label>
                                         <div class="input-wrapper">
-                                            <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required minlength="8" maxlength="72" autocomplete="new-password">
+                                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
                                             <button type="button" class="toggle-password" id="toggleConfirmPasswordReg" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                                                 <i class="ri-eye-off-line"></i>
                                             </button>
@@ -354,7 +341,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                 <label for="resetEmail">Correo electrónico</label>
                 <div class="input-wrapper">
                     <i class="ri-at-line"></i>
-                    <input type="email" id="resetEmail" name="email" placeholder="tu@correo.com" required>
+                    <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="resetEmail" name="email" placeholder="tu@correo.com" required>
                 </div>
                 <button type="submit" class="btn-primary" id="resetRequestBtn">
                     <span>Enviar enlace</span>
@@ -410,7 +397,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
     <script src="js/turnstile-formularios.js?v=d3"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=zookiTurnstileListo" async defer></script>
     <script src="js/password-policy.js?v=<?php echo time(); ?>"></script>
-    <script src="js/interacciones.js?v=2"></script>
+    <script src="js/interacciones.js?v=d31"></script>
     <script src="js/login.js?v=<?php echo time(); ?>"></script>
     <script src="js/register.js?v=<?php echo time(); ?>"></script>
     

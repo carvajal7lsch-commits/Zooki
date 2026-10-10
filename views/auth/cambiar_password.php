@@ -29,7 +29,7 @@
                 <div class="form-group">
                     <label for="password_actual">Contraseña actual</label>
                     <div class="input-con-ojito">
-                        <input type="password" id="password_actual" name="password_actual" required autocomplete="current-password" maxlength="72" placeholder="Tu contraseña actual">
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="password_actual" name="password_actual" required autocomplete="current-password" placeholder="Tu contraseña actual">
                         <button type="button" class="ojito" data-ojito="password_actual" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                             <i class="fas fa-eye-slash"></i>
                         </button>
@@ -39,7 +39,7 @@
             <div class="form-group">
                 <label for="nueva_password">Nueva Contraseña</label>
                 <div class="input-con-ojito">
-                    <input type="password" id="nueva_password" data-cuenta-ayuda="pwdFeedback" name="nueva_password" required minlength="8" maxlength="72" placeholder="Mínimo 8 caracteres, con mayúscula, minúscula y número">
+                    <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="nueva_password" data-cuenta-ayuda="pwdFeedback" name="nueva_password" required minlength="8" placeholder="Mínimo 8 caracteres, con mayúscula, minúscula y número">
                     <button type="button" class="ojito" data-ojito="nueva_password" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                         <i class="fas fa-eye-slash"></i>
                     </button>
@@ -50,7 +50,7 @@
             <div class="form-group">
                 <label for="confirmar_password">Confirmar Contraseña</label>
                 <div class="input-con-ojito">
-                    <input type="password" id="confirmar_password" name="confirmar_password" required minlength="8" maxlength="72" placeholder="Repite tu nueva contraseña">
+                    <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="confirmar_password" name="confirmar_password" required minlength="8" placeholder="Repite tu nueva contraseña">
                     <button type="button" class="ojito" data-ojito="confirmar_password" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                         <i class="fas fa-eye-slash"></i>
                     </button>

@@ -23,6 +23,13 @@ $e = static fn ($valor) => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8'
                 <p class="reset-subtitle">Confirma que quieres registrar <strong><?= $e($fila['clinica']) ?></strong> con tu cuenta y ser su administrador.</p>
             <?php endif; ?>
         </div>
+        <?php if ($fila !== null): ?>
+            <p class="reset-subtitle">Al iniciar sesión elegirás la clínica.</p>
+            <?php if ($fila['proposito'] === 'vinculo_admin_clinica'): ?>
+                <p class="reset-subtitle">La contraseña escrita en el formulario no se usó. Entrarás con tu contraseña de siempre.</p>
+                <a class="reset-back" href="index.php?action=login&amp;recuperar=1">¿Olvidaste tu contraseña?</a>
+            <?php endif; ?>
+        <?php endif; ?>
         <?php if ($error !== null): ?>
             <p class="reset-aviso" role="alert"><?= $e($error) ?></p>
         <?php endif; ?>

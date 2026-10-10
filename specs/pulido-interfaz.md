@@ -21,9 +21,15 @@
 
 ## Validación reutilizable — D2 (2026-10-08)
 
-`public/js/validacion-cuenta.js` consulta `ValidadorCuenta`, `PoliticaPassword` y la unicidad en el servidor, muestra el error junto al campo y bloquea el envío mientras valida. Aplicado a registro, completar perfil, activar personal, crear/restablecer/cambiar contraseña, correo y documento del titular, contacto del perfil, Usuarios/Clientes y alta/edición del propietario en Pacientes (incluido Fabio).
+`public/js/validacion-cuenta.js` consulta `ValidadorCuenta` y `PoliticaPassword`, muestra el error junto al campo y bloquea el envío mientras valida. Desde D3, la ayuda solo comprueba formato y política, nunca existencia de una cuenta (RE-T.13.2). Aplicado a registro, completar perfil, activar personal, crear/restablecer/cambiar contraseña, correo y documento del titular, contacto del perfil, Usuarios/Clientes y alta/edición del propietario en Pacientes (incluido Fabio).
 
 Pendiente extender el patrón a los formularios del resto del sistema: mascota (registro/edición del personal y del portal), consulta (motivo, tratamiento y datos clínicos), vacunas, desparasitación, agenda (crear/reprogramar), horarios y configuración. Sus reglas siguen en sus propios helpers; no se debe usar `ValidadorCuenta` para campos clínicos. Registro de clínicas y NIT se aplican en D3. La comprobación visual en móvil y el ajuste general de media queries siguen en el pulido final.
+
+## Restricción de entrada — D3.1 (2026-10-10)
+
+Aplicada con `data-caracteres` de `interacciones.js` y atributos de los helpers a registro de clínica, registro de propietarios (portal y personal), completar perfil, Datos de acceso, Usuarios y formularios de contraseña (Mi perfil, portal, cambio obligatorio, activación y restablecimiento). La activación de clínica solo tiene consentimiento y campos ocultos; conserva el diseño de enlaces del correo. Documento de hasta 15 dígitos; NIT solo dígitos y un guion antes del DV; nombres con letras, espacios, apóstrofo y guion; correo sin espacios y hasta 255; teléfono conforme a `ValidadorTelefono`. El servidor normaliza espacios y rechaza caracteres ilegales; las contraseñas conservan sus espacios y símbolos con límite de 72 bytes.
+
+Pendiente aplicar restricciones y máximos compartidos a mascotas (nombre, raza indicada y peso), consulta y tratamientos, vacunas, desparasitación, agenda, horarios/configuración y los formularios futuros de reputación, comunicaciones y administración de plataforma. Conservar las reglas de cada módulo y no restringir textos clínicos con la regla de nombres de persona. Se conserva el pendiente de retirar eventos en línea ajenos a los formularios de cuenta, como el filtro de servicios del portal; no se introdujeron eventos ni estilos en línea en D3.1.
 
 ## Adaptación a pantallas
 

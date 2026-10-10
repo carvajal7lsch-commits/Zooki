@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 revisada con corrección (2026-10-08); D2.1 y D2.2 revisadas y aprobadas (2026-10-09); D3 entregada, pendiente de revisión (2026-10-10).
+> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 revisada con corrección (2026-10-08); D2.1 y D2.2 revisadas y aprobadas (2026-10-09); D3 revisada y aprobada; D3.1 entregada, pendiente de revisión (2026-10-10).
 > Entrega: v2.0 · Fecha: 2026-10-06
 > C8/C9 (2026-10-08): escribe **Codex**, revisa **Claude** (sesión de revisión).
 > Reparto del resto de M0 (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
@@ -104,7 +104,8 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] D2 — Cuentas del personal y del titular: alta con enlace de activación, cambio de correo y documento con verificación, CAPTCHA por cuenta y validación reutilizable en tiempo real ([Anexo D2](#anexo-d2--resultado)). Entregada, pendiente de revisión por Claude.
   - [x] D2.1 — Corrección de D2: IP real detrás del proxy, límites de RN-G15 (20 por IP, CAPTCHA por cuenta), comprobaciones por persona, validación en cada tecla, correos propios, modal del personal de v1.12.0, limpieza tolerante y prueba local ([Anexo D2.1](#anexo-d21--resultado)). Lo escribió Claude Code; revisada y aprobada por Claude (2026-10-09).
   - [x] D2.2 — Invitaciones del personal con aceptación, cierre de otras sesiones y correcciones de D2.1 ([Anexo D2.2](#anexo-d22--resultado)). Escribieron Claude Code y Codex; entregada, pendiente de revisión por Claude (2026-10-09).
-  - [x] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2), Turnstile del propietario (RE-5.8.6) y pendientes de D2.2 ([Anexo D3](#anexo-d3--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-10). La etapa D queda implementada; su cierre espera la revisión y la prueba del usuario.
+  - [x] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2), Turnstile del propietario (RE-5.8.6) y pendientes de D2.2 ([Anexo D3](#anexo-d3--resultado)). Lo escribió Codex; revisada y aprobada por Claude, con commit `fa43c3d`. La prueba del usuario motivó D3.1; el cierre de D espera su revisión y prueba visual.
+  - [x] D3.1 — Corrección de pantalla de registro, restricciones de entrada y explicación de la contraseña de una cuenta existente ([Anexo D3.1](#anexo-d31--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-10).
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
 - [ ] F — Respaldo, reinicio de la base de producción, despliegue, super-administrador y clínica demo. Incluye blindar Apache para que solo sirva `public/` y agregar `.dockerignore` (B.5).
@@ -1784,3 +1785,34 @@ Pendientes: revisión de Claude y prueba visual del usuario. Gestión de casos, 
 
 
 **Prueba del usuario de D3 (2026-10-10).** Bloqueante: la pantalla «Registra tu clínica» se monta sobre la imagen decorativa del login y casi no se puede usar (la columna del formulario queda debajo del panel de animales); debe verse y adaptarse igual que el login. Regla nueva del usuario: los campos no solo se validan, también **restringen** lo que se escribe (`metodo.md` §8, AGENTS.md). Va en **D3.1**.
+
+**Hallazgo del usuario (2026-10-10), para D3.1:** el titular de una cuenta existente que registra una clínica escribe una contraseña en el formulario y puede creer que entrará con ella. Se aclara en tres lugares, sin revelar nada a quien no es el titular: una ayuda fija junto a la contraseña del formulario («Si ya tienes cuenta en Zooki, entrarás con tu contraseña de siempre»), el correo de confirmación de la cuenta existente («la contraseña del formulario no se usó») y la página de confirmación (enlace a «¿Olvidaste tu contraseña?»).
+
+## Anexo D3.1 — Resultado
+
+**Lo escribió Codex (2026-10-10). Entregada, pendiente de revisión.** Revisa la sesión de Claude (arquitecto); las pantallas las prueba el usuario.
+
+**Qué:** login y registro de clínica comparten `cabecera_acceso.php` y las mismas hojas (incluida `styles.css`). Registro conserva `login-container`, `login-form-area` y `login-hero` con la altura y el desplazamiento del login; su CSS solo añade el formulario y la cuadrícula, de dos columnas a una por debajo de 768 px. No se cambió el diseño del login. Activación conserva la tarjeta de las páginas de enlaces, que ya carga sus estilos y no tiene panel de imágenes.
+
+**Entrada:** atributos compartidos de `ValidadorCuenta`, `ValidadorClinica` y `ValidadorTelefono`; captura en `interacciones.js` antes de validar, también al pegar. Documento 15 dígitos, NIT solo dígitos con un guion y un DV, persona con letras/espacios/apóstrofo/guion; clínica y dirección con letras, números y signos `.,'’&()+/#:-`; correos sin espacios, máximo 255; teléfonos según su helper. Espacios repetidos y extremos normalizados; el servidor rechaza caracteres ilegales y valores demasiado largos. Contraseñas conservan sus espacios y símbolos, hasta 72 bytes, sin alterar el secreto. Se conserva cursor, selección y deshacer nativos en entradas válidas; `type=email` conserva su edición nativa. No se duplican manejadores al cargar el componente desde un layout y una pantalla.
+
+**Textos:** ayuda fija de contraseña para todos en el formulario; solo en el correo y el enlace secreto del titular de una cuenta existente se explica que la contraseña escrita no se usó. GET y POST de confirmación recuerdan la contraseña habitual y la elección de clínica. «¿Olvidaste tu contraseña?» abre el recuperador existente del login; la respuesta pública sigue idéntica entre alta nueva y existente.
+
+| RE / regla | Prueba |
+|---|---|
+| RE-0.1.1, RNF-16; pantalla reportada por el usuario | `RegistroClinicaTest::testD31VistaRegistroComparteCabeceraYEstructuraDelLogin`: render real, hojas compartidas, formulario y hero como hermanos, sin CSS que sustituya el contenedor, corte de 767 px. Diseño visual pendiente del usuario. |
+| Restricción aprobada, RE-0.1.2/3/5 y RE-T.13.2 | `D31Entrada.test.cjs`: escritura/pegado, letras rechazadas, guion único y un DV, máximos, Unicode, espacios, selección, correo sin API de cursor, contraseña en bytes y carga repetida. `D31SaneamientoTest`: reglas del servidor y atributos con los mismos máximos. |
+| Saneamiento en alta, identidad y datos de acceso | `RegistroClinicaTest::testD31SaneamientoSeGuardaYEntradaIlegalNoCreaCuenta`: datos normalizados persistidos y nombre ilegal rechazado; `D31SaneamientoTest` y suites existentes de propietarios, Usuarios, completar perfil y cambio de identidad. |
+| RE-0.1.2/7/8, RN-G06; aclaración aprobada sobre contraseña | `RegistroClinicaTest`: respuesta pública idéntica, textos del correo; `testD31ConfirmacionExplicaPasswordOriginalAntesYDespuesDelPost`: textos en GET/POST y contraseña original intacta. |
+
+**Verificación:** PHP completo **532 pruebas / 2785 aserciones**, 25 omitidas sin MySQL. Con `ZOOKI_TEST_MYSQL_HOST`, **532 / 3114**, ninguna omitida, en `zooki_test_base_v2` de MariaDB 10.4 temporal propia; MySQL 8 queda al CI. JS **68 en verde**. Sintaxis de los PHP modificados y `git diff --check` correctos. Sin migración ni JS/CSS en línea nuevos. **Modelos §12.1 no cambia:** misma selección del titular, confirmación por POST y activación atómica; solo se aclararon textos y presentación.
+
+**Pantallas para el usuario (escritorio ≥1024 px, tablet 768–1023 px y celular <768 px):**
+
+1. Login → «Registra tu clínica»: poder escribir y desplazarse sin imágenes encima; dos columnas en escritorio/tablet, una en celular. Ver la ayuda fija debajo de contraseña. Documento/NIT rechazan letras; probar pegado largo, NIT con dos guiones, nombres con ñ/tildes y espacios, correo con espacios y teléfonos.
+2. Correo de cuenta existente → confirmación → activar: aviso de contraseña habitual antes y después; recuperar contraseña con el enlace; entrar con la contraseña original y seleccionar la clínica. Cuenta nueva conserva la misma respuesta pública del formulario.
+3. Login → registro del propietario y completar perfil: mismos filtros y máximos, con avisos debajo de los campos. Pacientes → alta/edición de propietario: mismos filtros, conservando su diseño y los campos de identidad bloqueados.
+4. Usuarios → modal; Mi perfil y portal → Datos de acceso: nombres, documentos, correos y teléfonos restringidos; valores compartidos siguen en solo lectura según C1.7.
+5. Mi perfil/portal → contraseña; cambio obligatorio, activación de personal y restablecimiento: longitud restringida, requisitos al escribir y avisos debajo del campo; espacios y símbolos de la contraseña se conservan.
+
+**Pendientes:** revisión de Claude y prueba visual del usuario. Restricciones de otros módulos anotadas en `specs/pulido-interfaz.md`. E y pulido general no se iniciaron. Versión, historial, revisión documental y exportaciones siguen diferidos al cierre de M0 por el método acordado. No se leyó ni escribió `.env`, no se tocó la base de trabajo, no se hizo commit ni push.

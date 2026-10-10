@@ -109,6 +109,9 @@
         if (clave === 'nombre_completo' && (valor.trim().length < 3 || valor.trim().length > 100)) {
             return { error: MENSAJES.nombre_completo };
         }
+        if (clave === 'nombre_completo' && !/^[\p{L}\p{M} '’\-]+$/u.test(valor.trim())) {
+            return { error: 'El nombre solo admite letras, espacios, apóstrofo y guion.' };
+        }
         if (clave === 'telefono') {
             const limpio = valor.trim().replace(/\s+/g, ' ');
             const minimo = Number(campo.getAttribute('minlength')) || 7;

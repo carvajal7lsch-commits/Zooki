@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 /**
  * HU-42 / HU-39 — Panel "Mi perfil" del personal de la clínica.
  *
@@ -52,7 +53,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             <form id="perfilContactoForm" class="perfil-form" novalidate data-validacion-cuenta>
                 <div class="perfil-field">
                     <label for="perfilEmail">Correo electrónico</label>
-                    <input type="email" id="perfilEmail" readonly class="perfil-input" value="<?= $e($perfil['email']) ?>" autocomplete="email" required>
+                    <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="perfilEmail" readonly class="perfil-input" value="<?= $e($perfil['email']) ?>" autocomplete="email" required>
                 </div>
                 <div class="perfil-field">
                     <label for="perfilTelefono">Teléfono</label>
@@ -84,7 +85,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                     <div class="perfil-field">
                         <label for="perfilPwdActual">Contraseña actual</label>
                         <div class="perfil-clave">
-                            <input type="password" id="perfilPwdActual" class="perfil-input" autocomplete="current-password" required>
+                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdActual" class="perfil-input" autocomplete="current-password" required>
                             <button type="button" class="perfil-clave__ver" data-ver="perfilPwdActual" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                         </div>
                     </div>
@@ -92,7 +93,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 <div class="perfil-field">
                     <label for="perfilPwdNueva">Nueva contraseña</label>
                     <div class="perfil-clave">
-                        <input type="password" id="perfilPwdNueva" data-cuenta-ayuda="perfilPwdFeedback" class="perfil-input" autocomplete="new-password" aria-describedby="perfilPwdRequisitos" required>
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdNueva" data-cuenta-ayuda="perfilPwdFeedback" class="perfil-input" autocomplete="new-password" aria-describedby="perfilPwdRequisitos" required>
                         <button type="button" class="perfil-clave__ver" data-ver="perfilPwdNueva" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                     </div>
                     <ul class="perfil-requisitos" id="perfilPwdRequisitos">
@@ -106,7 +107,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 <div class="perfil-field">
                     <label for="perfilPwdConfirmar">Confirmar contraseña</label>
                     <div class="perfil-clave">
-                        <input type="password" id="perfilPwdConfirmar" data-cuenta-ayuda="perfilPwdCoincide" class="perfil-input" autocomplete="new-password" required>
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdConfirmar" data-cuenta-ayuda="perfilPwdCoincide" class="perfil-input" autocomplete="new-password" required>
                         <button type="button" class="perfil-clave__ver" data-ver="perfilPwdConfirmar" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                     </div>
                     <small class="perfil-field__hint" id="perfilPwdCoincide" aria-live="polite"></small>
