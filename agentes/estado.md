@@ -12,7 +12,7 @@
 - **Entrega actual:** D3, escrita por Codex: registro y activación de clínicas, CAPTCHA del propietario, pruebas aisladas de la base de trabajo y pendientes de D2.2.
 - **D2.2:** revisada, aprobada y con commit. Verificación de D3 en su anexo del plan.
 - **D3:** revisada y **aprobada** (2026-10-10; «D3 — Revisión» en el plan). Falta el commit y la prueba del usuario.
-- **Siguiente paso:** E (panel del super-administrador y límites del plan), con el desbloqueo y el aviso de IP (decisiones del 2026-10-09) y los hallazgos menores de D3.
+- **Siguiente paso:** **D3.1** con Codex (pantalla de registro de clínica rota y restricción de entrada en todos los campos de cuenta; plan, «Prueba del usuario de D3»). Después, E.
 - **Antes:** D2.1 revisada, aprobada y con commits `a66830f`, `a4fdf31` y `d08271f`; su recorrido funcional y la corrección del primer clic están en el plan.
 - **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
 

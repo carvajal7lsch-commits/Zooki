@@ -89,6 +89,7 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 
 **Interfaz**
 - **Validación en tiempo real**: cada campo se valida mientras se escribe (formato, longitud, caracteres permitidos y, cuando aplica, unicidad de documento o correo por AJAX), con el mensaje junto al campo. La regla vive en un helper del servidor y el HTML y el JS usan la misma (por ejemplo, `ValidadorTelefono`). Validar solo al enviar no basta.
+- **Restricción de entrada** (decisión del usuario, 2026-10-10): además de validar, cada campo **no deja escribir** lo que no corresponde. Números (documento, NIT, teléfono): solo los caracteres permitidos y `inputmode` numérico; nombres: letras, espacios y los signos que admita la regla; todos con `maxlength` igual al límite del servidor y sin espacios sobrantes. Se hace con `data-caracteres` (`public/js/interacciones.js`, C9.1), también al pegar. El servidor sanea y valida lo mismo.
 - **SweetAlert2 se queda**, caso por caso: avisos breves (toast) para acciones frecuentes o reversibles; confirmación para lo destructivo o irreversible. No usar SweetAlert para errores de validación de un campo.
 - La pantalla se actualiza en cuanto responde el servidor; nunca esperar a que se cierre un aviso.
 - Se conserva el diseño de producción (referencias en `specs/referencias/`); no se rediseña sin pedirlo. Prefiere vistas de tarjetas con opción de tabla.

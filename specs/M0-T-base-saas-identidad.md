@@ -1781,3 +1781,6 @@ Pendientes: revisión de Claude y prueba visual del usuario. Gestión de casos, 
 
 1. `reportar_nit` es público y solo lo frena Turnstile: sin límite por IP se pueden crear casos de soporte en cantidad. Darle un límite como el del registro al construir la gestión de casos (E).
 2. Un NIT queda reservado mientras su registro está pendiente (hasta 24 horas). Alguien podría registrar el NIT de otra clínica sin verificar; el titular lo reporta (RN-010) y la limpieza lo libera. Aceptable; anotar en E.
+
+
+**Prueba del usuario de D3 (2026-10-10).** Bloqueante: la pantalla «Registra tu clínica» se monta sobre la imagen decorativa del login y casi no se puede usar (la columna del formulario queda debajo del panel de animales); debe verse y adaptarse igual que el login. Regla nueva del usuario: los campos no solo se validan, también **restringen** lo que se escribe (`metodo.md` §8, AGENTS.md). Va en **D3.1**.
