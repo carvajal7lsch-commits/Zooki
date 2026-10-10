@@ -11,8 +11,8 @@
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
 - **Entrega actual:** D2.2, implementación principal de Claude Code y cierre de Codex (MySQL, documentos y confirmación nueva de Google).
 - **Verificación de entrega:** PHP 499 en verde; con MySQL 499/2876 aserciones sin omisiones, base predeterminada `zooki_test_base_v2` en instancia temporal propia; JS 48 en verde; cuatro diagramas renderizados.
-- **D2.2:** revisada y **aprobada** (2026-10-09; «D2.2 — Revisión» en el plan). Falta el commit, la prueba del usuario (antes `php scripts/migrar.php`) y confirmar dos decisiones del ejecutor y una propuesta (ayuda al escribir sin revelar cuentas).
-- **Siguiente paso:** D3 (registro de clínicas, Modelos §12.1), con los pendientes 1 y 2 de la revisión de D2.2.
+- **D2.2:** revisada y **aprobada** (2026-10-09; «D2.2 — Revisión» en el plan). Decisiones del ejecutor y propuesta confirmadas por el usuario (2026-10-09). Falta el commit y la prueba del usuario (antes `php scripts/migrar.php`).
+- **Siguiente paso:** D3 (registro de clínicas, Modelos §12.1). Antes, dentro de D3: **las pruebas no tocan `zooki_v2_prueba`** (hoy escriben en `intentos_login` y bloquean la IP local; ver el plan), la ayuda al escribir sin revelar cuentas (decisión del usuario, 2026-10-09) y la auditoría de invitaciones al limpiar pendientes.
 - **Decisiones confirmadas al cerrar D2.2:** otra confirmación Google al crear la primera contraseña (RE-T.2.4) y RE-T.7.4 coherente con invitaciones; anotadas en el plan sin subir revisión.
 - **Antes:** D2.1 revisada, aprobada y con commits `a66830f`, `a4fdf31` y `d08271f`; su recorrido funcional y la corrección del primer clic están en el plan.
 - **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
@@ -51,4 +51,6 @@
 ## Agentes
 
 - **Arquitecto y revisor:** sesión de Claude con acceso a la carpeta del proyecto.
-- **Ejecutores:** Claude Code (principal) y Codex (cuando Claude Code no tiene cupo). Para Codex: GPT-6.1 Sol, razonamiento medio; alto en subetapas de seguridad.
+- **Ejecutor:** **Codex** escribe el código desde el 2026-10-10 (decisión del usuario); GPT-6.1 Sol, razonamiento medio, alto en subetapas de seguridad. Claude Code queda de respaldo.
+- **Revisor:** la sesión de Claude revisa el código, corre las suites (PHP y JS) y compara con los diagramas; no escribe la subetapa.
+- **Pruebas en el navegador:** el usuario.
