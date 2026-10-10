@@ -1816,3 +1816,8 @@ Pendientes: revisión de Claude y prueba visual del usuario. Gestión de casos, 
 5. Mi perfil/portal → contraseña; cambio obligatorio, activación de personal y restablecimiento: longitud restringida, requisitos al escribir y avisos debajo del campo; espacios y símbolos de la contraseña se conservan.
 
 **Pendientes:** revisión de Claude y prueba visual del usuario. Restricciones de otros módulos anotadas en `specs/pulido-interfaz.md`. E y pulido general no se iniciaron. Versión, historial, revisión documental y exportaciones siguen diferidos al cierre de M0 por el método acordado. No se leyó ni escribió `.env`, no se tocó la base de trabajo, no se hizo commit ni push.
+
+
+### D3.1 — Revisión (2026-10-10)
+
+**Resultado: aprobada** (código; la pantalla la confirma el usuario). Claude revisó el anexo y el diff (commit `391c73d`). PHP en una copia sin `.env`: 532 pruebas, 2785 aserciones, 25 saltadas de MySQL. JS: 68 en verde. `registro_clinica.php` usa la misma cabecera (`cabecera_acceso.php`) y la estructura del login (`login-container`, `login-form-area`, `login-hero`); los atributos de restricción salen de los validadores del servidor (`ValidadorCuenta`, `ValidadorClinica`, `ValidadorTelefono`), así el HTML, el JS y el servidor usan el mismo límite. Modelos §12.1 no cambia.

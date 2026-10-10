@@ -13,8 +13,8 @@
 - **D2.2:** revisada, aprobada y con commit. Verificación de D3 en su anexo del plan.
 - **D3:** revisada y **aprobada** (2026-10-10; «D3 — Revisión» en el plan), con commit `fa43c3d`. La prueba del usuario motivó D3.1.
 - **Verificación D3.1:** PHP 532 en verde (también con MariaDB temporal, 3114 aserciones, ninguna omitida, base predeterminada `zooki_test_base_v2`); JS 68 en verde. Sin migración ni cambios al flujo de Modelos §12.1.
-- **Siguiente paso:** revisión de D3.1 por Claude y prueba visual del usuario en escritorio, tablet y celular; después, commit del usuario. E no se inició.
-- **Antes:** D2.1 revisada, aprobada y con commits `a66830f`, `a4fdf31` y `d08271f`; su recorrido funcional y la corrección del primer clic están en el plan.
+- **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
+- **Siguiente paso:** prueba del usuario de D3 y D3.1; después, E (panel del super-administrador y límites del plan) con el desbloqueo y aviso de IP y los hallazgos menores de D3.
 - **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
