@@ -1704,3 +1704,17 @@ Claude hizo el recorrido en el navegador integrado del equipo del usuario (`http
 **Hallazgo del usuario (2026-10-09), bloqueante para D3.** Correr `vendor/bin/phpunit` en su equipo le bloqueó la IP local. Causa: `phpunit.xml` no tiene bootstrap propio; varias pruebas (por ejemplo `SesionTest`, `RegistroGoogleTest`, `TelefonosTest`, `PoliticaDatosTest`) llegan a `Security::recordFailedLogin` o `checkVerificationLimit` sin inyectar el almacén de intentos, y `Security::conexion()` abre la base del `.env` (`zooki_v2_prueba`) y escribe en `intentos_login` con `REMOTE_ADDR` 127.0.0.1. Las pruebas no deben tocar nunca la base de trabajo (lección de `metodo.md` §10). Corrección: `tests/bootstrap.php` que deja el almacén en null por defecto y una guarda en `Database` que, bajo PHPUnit, se niega a conectar a otra base que no sea la de `ZOOKI_TEST_MYSQL_*`, con su prueba.
 
 **Prueba del usuario de D2.2 (2026-10-09).** Pasó: invitación a una cuenta existente con la misma respuesta y la tarjeta con lo escrito; alta nueva «Pendiente de activación»; cierre de la otra sesión al cambiar la contraseña y al restablecer; «Datos de acceso»; mensaje de contraseña común; hora de Bogotá en `logs/correos/`. Para D3 de paso: al cambiar la contraseña en Mi perfil, el portal o el cambio obligatorio, confirmar con un aviso breve (toast de SweetAlert2), como pide `metodo.md` §8; hoy solo aparece un texto pequeño bajo el botón y el usuario no lo vio. Una invitación pendiente no se edita: se cancela y se invita de nuevo (aceptado).
+
+
+## D3 — Alcance (registro y activación de clínicas)
+
+Ejecutor: Codex (decisión del usuario, 2026-10-10). Diagrama: Modelos §12.1 (y §9 para el contexto al entrar).
+
+**Decisiones del usuario (2026-10-10).**
+
+1. **Correo que ya tiene cuenta:** la respuesta del registro es la misma para todos («Revisa tu correo para activar la clínica»). Si el correo ya tiene cuenta, se le envía «Confirma que quieres registrar <Clínica> con tu cuenta»; al confirmar, la clínica se activa y esa persona queda como administradora **conservando sus otros roles** (una sola cuenta, el mismo correo y la misma contraseña; elige el contexto al entrar, §9). La contraseña escrita en el formulario se ignora. Se ajusta RE-0.1.2 («un correo ya registrado se rechaza») y HU-0.1.
+2. El formulario pide además **tipo y número de documento y teléfono** del administrador.
+3. **Correos desechables:** lista en `config/dominios_desechables.txt` (un dominio por línea), mantenida en el repositorio.
+4. **CAPTCHA en el registro de propietarios:** `process_register` verifica Turnstile en el servidor, como el registro de clínicas; se agrega un RE a HU-5.8.
+
+**Antes, en la misma subetapa (pendientes de D2.2):** las pruebas no tocan `zooki_v2_prueba`; la ayuda al escribir solo valida el formato (decisión del usuario, 2026-10-09); aviso breve (toast) al cambiar la contraseña; auditoría de invitaciones de otras clínicas al limpiar cuentas pendientes.
