@@ -39,9 +39,9 @@ final class InvitacionPersonal
      * actor es null cuando lo decide el titular antes de ser personal: su
      * nombre no se le muestra a la clínica.
      */
-    public function auditar(string $evento, int $idInvitacion, int $clinica, ?int $actor): void
+    public function auditar(string $evento, int $idInvitacion, int $clinica, ?int $actor): bool
     {
-        $this->auditoria->log($actor, 'OTHER', 'verificaciones_email', $idInvitacion, null, null, 'Invitación al personal ' . $evento . ' (RE-T.7.5)', $clinica);
+        return $this->auditoria->log($actor, 'OTHER', 'verificaciones_email', $idInvitacion, null, null, 'Invitación al personal ' . $evento . ' (RE-T.7.5)', $clinica);
     }
 
     /**

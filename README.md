@@ -103,3 +103,17 @@ El diseño arquitectónico de Zooki cubre de forma parcial los principios **SOLI
 *   **Responsabilidad Única (SRP):** Aplicado parcialmente mediante helpers de seguridad (`Csrf.php`, `Security.php`) y enrutadores dedicados que aíslan la lógica de autenticación de la presentación visual.
 *   **Abierto/Cerrado (OCP):** Modularidad en el enrutamiento centralizado que permite agregar nuevas rutas de controladores sin modificar la estructura del despachador inicial.
 *   *Nota:* Para mantener la ligereza y rapidez en las operaciones CRUD, ciertos flujos de bases de datos y controladores acoplan directamente lógica para evitar sobrecarga de abstracciones innecesarias.
+
+
+## Pruebas automáticas y registro público (D3)
+
+`tests/bootstrap.php` impide que PHPUnit abra implícitamente la base de la aplicación, antes de leer `.env`, y deja el almacén de intentos sin conexión por defecto. Las pruebas inyectan SQLite en memoria; `BaseV2MysqlTest` usa exclusivamente `zooki_test_base_v2` y borra esa base en cada prueba. No se debe apuntar a una base de trabajo. Los subprocesos PHP heredan la guarda mediante `ZOOKI_ENTORNO_PRUEBAS`.
+
+```powershell
+vendor/bin/phpunit
+node --test "tests/Frontend/**/*.test.cjs"
+```
+
+Para habilitar la suite contra una instancia de MySQL/MariaDB propia de pruebas, define `ZOOKI_TEST_MYSQL_HOST` y, si corresponde, `ZOOKI_TEST_MYSQL_PORT`, `ZOOKI_TEST_MYSQL_USER` y `ZOOKI_TEST_MYSQL_PASS`. Deja `ZOOKI_TEST_MYSQL_DB` sin definir: la base predeterminada es `zooki_test_base_v2`. La guarda rechaza otra base y `Database` solo admite la configuración de pruebas explícita; no reutiliza las credenciales de la aplicación.
+
+El registro de clínicas y el autorregistro de propietarios verifican Turnstile en el servidor. Las claves de prueba de `.env.example` siempre aprueban; se sustituyen por las de Cloudflare en producción. La lista mantenida de correos desechables está en `config/dominios_desechables.txt`, un dominio por línea. La tarea horaria existente `scripts/limpiar_cuentas_pendientes.php` limpia altas vencidas de personal y clínicas; no elimina identidades preexistentes al registrar una clínica.

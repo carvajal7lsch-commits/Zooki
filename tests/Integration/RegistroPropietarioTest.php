@@ -148,7 +148,6 @@ final class RegistroPropietarioTest extends TestCase
     public function testDatosInvalidosOClinicaNoActivaNoCreanNada(): void
     {
         $casos = [
-            'documento de otra cuenta' => ['documento' => '1000000001'],
             'teléfono con letras' => ['telefono' => '300abc4567'],
             'teléfono largo' => ['telefono' => str_repeat('3', 21)],
             'clínica suspendida' => ['id_clinica' => '3'],

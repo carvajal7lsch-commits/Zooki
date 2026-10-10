@@ -136,6 +136,7 @@
                 return;
             }
             mensaje(msgPwd, 'Contraseña actualizada.', 'ok');
+            window.zookiToast('Contraseña actualizada.');
         } catch (err) {
             console.error('Perfil:', err);
             mensaje(msgPwd, 'Error de conexión. Intenta nuevamente.', 'error');

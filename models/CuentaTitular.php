@@ -238,7 +238,7 @@ final class CuentaTitular
         throw new InvalidArgumentException('No se pudo confirmar tu identidad.');
     }
 
-    public function solicitarCorreo(int $id, array $datos): array
+    public function solicitarCorreo(int $id, array $datos): ?array
     {
         $usuario = $this->confirmarIdentidad($id, $datos);
         if ((int) $usuario['tiene_password'] !== 1) {
@@ -249,7 +249,7 @@ final class CuentaTitular
             throw new InvalidArgumentException('Escribe un correo nuevo válido.');
         }
         if ($this->usuarios->existeEmail($email, $id)) {
-            throw new InvalidArgumentException('No puedes usar ese correo.');
+            return null;
         }
         $enlace = Transaccion::ejecutar($this->db, fn () => $this->enlace($id, $email, 'cambio_correo', 24));
         return ['email' => $email, 'nombre' => $usuario['nombre_completo'], 'enlace' => $enlace];
@@ -290,7 +290,7 @@ final class CuentaTitular
         }
         if ($this->usuarios->existeDocumento($documento, $id)) {
             $this->registrarCasoDocumento($id, $documento);
-            throw new InvalidArgumentException('El documento ya está registrado. Creamos un caso para soporte.');
+            throw new InvalidArgumentException('No se pudo aplicar el cambio. Revisa los datos o contacta a soporte.');
         }
         try {
             Transaccion::ejecutar($this->db, function () use ($id, $tipo, $documento, $usuario): void {
@@ -304,7 +304,7 @@ final class CuentaTitular
             }
             // Otra solicitud pudo ocupar el documento después de comprobar su disponibilidad.
             $this->registrarCasoDocumento($id, $documento);
-            throw new InvalidArgumentException('El documento ya está registrado. Creamos un caso para soporte.');
+            throw new InvalidArgumentException('No se pudo aplicar el cambio. Revisa los datos o contacta a soporte.');
         }
         return $usuario;
     }
@@ -362,8 +362,17 @@ final class CuentaTitular
             if ($vigente->fetchColumn()) {
                 return 0;
             }
+            // D3: borrar la identidad también elimina invitaciones pendientes de otras clínicas.
+            $pendientes = $this->db->prepare("SELECT id, id_clinica_vinculo FROM verificaciones_email WHERE id_usuario = ? AND used = 0 AND proposito IN ('activacion_personal', 'invitacion_personal')");
+            $pendientes->execute([$id]);
+            foreach ($pendientes->fetchAll(PDO::FETCH_ASSOC) as $pendiente) {
+                $auditada = (new InvitacionPersonal($this->db))->auditar('vencida', (int) $pendiente['id'], (int) $pendiente['id_clinica_vinculo'], null);
+                // RE-T.7.5: conservar la cuenta si no se pudo dejar la evidencia en todas las clínicas.
+                if (!$auditada) {
+                    throw new RuntimeException('No se pudo auditar el vencimiento de la invitación.');
+                }
+            }
             $total = $this->borrarCuentaPendiente($id, $clinica);
-            (new InvitacionPersonal($this->db))->auditar('vencida', (int) $fila['id'], $clinica, null);
             return $total;
         });
     }

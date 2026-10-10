@@ -24,6 +24,7 @@
                     <a href="<?php echo $lp_cta_url; ?>" class="lp-btn lp-btn--primary">
                         <?php echo $lp_cta_text; ?> <i class="ri-arrow-right-line" aria-hidden="true"></i>
                     </a>
+                    <a href="index.php?action=registro_clinica" class="lp-btn lp-btn--ghost">Registra tu clínica</a>
                     <a href="#modulos" class="lp-btn lp-btn--ghost">
                         <i class="ri-compass-3-line" aria-hidden="true"></i> Ver qué incluye
                     </a>

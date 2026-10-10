@@ -548,7 +548,10 @@ flowchart TD
   B2 --> MED
   B3 --> MED
   MED{Formulario o Google?}
-  MED -- Formulario --> C
+  MED -- Formulario --> CAPTCHA{"Turnstile valido en servidor? (RE-5.8.6)"}
+  CAPTCHA -- No --> CAPERR[Repetir verificacion sin crear ni vincular cuentas]
+  CAPERR --> MED
+  CAPTCHA -- Si --> C
   B1 --> C
 
   C["Capturar datos y aceptacion expresa del titular antes de crear la cuenta.<br/>En alta por personal, el titular acepta presencialmente y crea la contraseña al activar;<br/>si no esta presente o no acepta, se remite al autorregistro sin crear cuenta"] --> D{"Campos validos y politica aceptada por el titular?"}
@@ -557,20 +560,23 @@ flowchart TD
   D -- Si --> E{El correo ya existe en la plataforma?}
 
   E -- No --> E2{El documento ya existe en la plataforma?}
-  E2 -- Si --> E3[/"Mensaje: ese documento ya tiene cuenta; inicia sesion o contacta soporte"/]
-  E3 --> ZF([Fin])
+  E2 -- Si --> E3["Autorregistro: enviar confirmacion al titular del documento;<br/>alta presencial: resolver con la busqueda exacta autorizada"]
+  E3 --> GENERICO["Autorregistro: misma respuesta, sin revelar existencia;<br/>Revisa tu correo para confirmar la solicitud o acceder a Zooki"]
+  GENERICO --> ZF([Fin])
   E2 -- No --> F["Crear la identidad (id_usuario) y guardar la prueba de aceptacion de la politica"]
-  F --> G["Ligar el propietario a esta clinica (propietario_clinica)"]
-  G --> H[Enviar verificacion de correo]
-  H --> I{Verifica dentro de 24 horas?}
+  F --> FP{Alta presencial por personal?}
+  FP -- Si --> G["Ligar propietario; enviar enlace para crear contraseña"]
+  G --> AUD
+  FP -- No --> H["Enviar verificacion de correo; misma respuesta publica"]
+  H --> I{"Confirma por POST con CSRF y token dentro de 24 horas?"}
   I -- No --> I1[El registro pendiente expira]
   I1 --> ZF
-  I -- Si --> J[Activar la cuenta y enviar al correo el enlace de acceso y el QR del portal]
+  I -- Si --> J["Verificar correo, ligar a clinica y ofrecer acceso al portal;<br/>QR pendiente acordado al cerrar M0"]
   J --> AUD[Registrar en auditoria]
   AUD --> ZF
 
   E -- Si --> K{Ya esta ligado a esta clinica?}
-  K -- Si --> K1[/"Mensaje: ya tienes cuenta en esta clinica, inicia sesion"/]
+  K -- Si --> K1[/"Autorregistro: misma respuesta publica sin revelar la cuenta"/]
   K1 --> ZF
   K -- No --> L["Verificar que es el dueño del correo (login o confirmacion por correo)"]
   L --> M{Verificado?}
@@ -607,37 +613,34 @@ Detalle del funcionamiento de cada proceso de módulo. Cada flujo se corresponde
 
 ```mermaid
 flowchart TD
-  A([Visitante abre el registro de clinica]) --> B["Completar datos de la clinica (nombre, NIT, direccion, telefono, correo)<br/>y del administrador inicial (nombre, correo, contraseña);<br/>aceptacion de la politica de datos y los terminos"]
-  B --> R{"Supera el limite de registros desde su IP?"}
-  R -- Si --> R1[/"Mensaje: demasiados intentos, intentalo mas tarde"/]
-  R1 --> ZF([Fin])
-  R -- No --> K{"Verificacion anti-bot (CAPTCHA) valida en el servidor?"}
-  K -- No --> K1[/"Mensaje: no pudimos verificar que no eres un robot"/]
-  K1 --> B
-  K -- Si --> C{"Campos completos y formato valido (correo, contraseña segura)?"}
-  C -- No --> C1[/"Mensaje: corrige los campos marcados"/]
-  C1 --> B
-  C -- Si --> N{"NIT valido segun el digito de verificacion de la DIAN?"}
-  N -- No --> N1[/"Mensaje: el NIT no es valido, revisa el digito de verificacion"/]
-  N1 --> B
-  N -- Si --> T{"El correo es de un dominio desechable?"}
-  T -- Si --> T1[/"Mensaje: usa un correo permanente de la clinica"/]
-  T1 --> B
-  T -- No --> D{"El correo o el NIT ya estan registrados?"}
-  D -- Si --> D1[/"Mensaje: ya existe una cuenta o clinica con esos datos"/]
-  D1 --> DR{"Es su NIT y otra clinica lo registro?"}
-  DR -- Si --> DR1["Reportarlo: se crea el caso para el super-administrador,<br/>que verifica la titularidad (RN-010)"]
-  DR1 --> ZF
-  DR -- No --> ZF
-  D -- No --> E[Crear la clinica en estado 'pendiente de verificacion']
-  E --> F[Enviar correo de verificacion con enlace temporal]
-  F --> G{Verifica el correo dentro de 24 horas?}
-  G -- No --> G1[La clinica pendiente expira y se elimina]
-  G1 --> ZF
-  G -- Si --> H[Activar la clinica, asignar el plan gratuito y crear el rol administrador]
-  H --> I[Registrar en auditoria]
-  I --> J[El administrador inicia sesion en su clinica]
-  J --> ZF
+  A([Registro publico de clinica]) --> B["Datos de clinica y administrador: nombre, tipo y documento,<br/>telefono, correo y contraseña; aceptar politica; sin Google"]
+  B --> C{"CAPTCHA valido en servidor?"}
+  C -- No --> ERR[Corregir verificacion]
+  ERR --> B
+  C -- Si --> V{"Formato, NIT DIAN y correos permanentes validos?"}
+  V -- No --> E[Corregir campos]
+  E --> B
+  V -- Si --> N{"NIT duplicado?"}
+  N -- Si --> SOP["Avisar duplicidad; ofrecer reporte a soporte<br/>POST con CSRF y CAPTCHA crea caso"]
+  N -- No --> R{"Menos de 3 altas hoy por IP real?"}
+  R -- No --> LIM[Intentalo mañana]
+  R -- Si --> T[Iniciar transaccion y reservar contador diario por IP]
+  T --> CL[Crear clinica pendiente]
+  CL --> ID{"Existe correo o, si es nuevo, documento?"}
+  ID -- No --> NUE[Crear administrador inactivo con hash y consentimiento]
+  ID -- Si --> EX["Conservar cuenta y roles; ignorar contraseña del formulario<br/>Prevalece correo; si es nuevo, titular del documento"]
+  NUE --> TK["Guardar token con hash, 24 horas; auditar; confirmar transaccion"]
+  EX --> TK
+  TK --> MAIL[Enviar enlace al titular]
+  MAIL --> MSG["Misma respuesta: Revisa tu correo para activar la clinica"]
+  MSG --> GET[GET muestra boton sin modificar datos]
+  GET --> POST{"POST con CSRF, consentimiento y token vigente no usado?"}
+  POST -- No --> INV[Enlace no disponible o corregir formulario]
+  POST -- Si --> ACT["Una transaccion: consumir token, activar clinica y cuenta nueva,<br/>plan gratuito, rol administrador, copiar catalogos y auditar"]
+  ACT --> OK{"Todo correcto?"}
+  OK -- No --> RB[Rollback completo; enlace conserva su uso]
+  OK -- Si --> LOGIN["Iniciar sesion: elegir contexto si hay varios, §9"]
+  TK -. Vence sin confirmar .-> LIMPIEZA["Limpieza del sistema: borrar clinica pendiente<br/>Cuenta nueva solo sin otros vinculos; preservar preexistente"]
 ```
 
 ### 12.2 Control de límites del plan (freemium) — Módulo 0
@@ -800,7 +803,7 @@ flowchart TD
   C -- No --> C1[/"Mensaje: corrige los campos marcados"/]
   C1 --> B
   C -- Si --> D{El documento ya pertenece a otra cuenta?}
-  D -- Si --> D1[/"Mensaje: ese documento ya tiene cuenta; inicia sesion con ella o contacta soporte"/]
+  D -- Si --> D1[/"Mensaje: no se pudo completar el perfil; revisa datos o contacta soporte"/]
   D1 --> D2[Crear el caso para el super-administrador: posible cuenta duplicada]
   D2 --> ZF([Fin: el perfil sigue incompleto])
   D -- No --> E[Guardar documento y telefono]
@@ -825,10 +828,12 @@ flowchart TD
   CP -- No --> CP1[/"Primero crea una contraseña (§13.3): al cambiar el correo se retira Google"/]
   CP1 --> ZF
   CP -- Si --> CI["Confirmar identidad (contraseña o Google)"]
-  CI --> C1{"Identidad confirmada, formato valido y no lo usa otra cuenta?"}
-  C1 -- No --> C2[/"Mensaje: ese correo no esta disponible"/]
+  CI --> C1{"Identidad confirmada y formato valido?"}
+  C1 -- No --> C2[/"Corregir formato o confirmar identidad"/]
   C2 --> A
-  C1 -- Si --> C3["Enviar verificacion al correo nuevo<br/>(el anterior sigue vigente mientras tanto)"]
+  C1 -- Si --> CU{"Correo ocupado?"}
+  CU -- Si --> CM[/"Misma respuesta: si puede completarse, recibiras un enlace"/]
+  CU -- No --> C3["Enviar verificacion al correo nuevo;<br/>misma respuesta generica y correo anterior vigente"]
   C3 --> C4{Verifica dentro del plazo?}
   C4 -- No --> C5[El cambio expira; se conserva el correo anterior]
   C5 --> ZF([Fin])
@@ -848,7 +853,8 @@ flowchart TD
   D5 --> A
   D4 -- Si --> D6{El documento ya pertenece a otra cuenta?}
   D6 -- Si --> D7["No se aplica; crear el caso para el super-administrador<br/>(posible cuenta duplicada)"]
-  D7 --> ZF
+  D7 --> DG[/"Mensaje generico: no se pudo aplicar el cambio; revisa datos o contacta soporte"/]
+  DG --> ZF
   D6 -- No --> D8[Aplicar el documento nuevo]
   D8 --> D9[Avisar por correo al titular]
   D9 --> AUD
@@ -878,7 +884,8 @@ flowchart TD
   S --> SS["Incrementar version_sesion; conservar la sesion del titular que cambia.<br/>Las demas reciben 401 en su siguiente peticion"]
   SS --> AUD[Auditar sin guardar la contraseña]
   AUD --> COR[Enviar aviso por correo]
-  COR --> F([Fin: puede entrar con contraseña y, si tenia, con Google])
+  COR --> AV[Toast breve; recarga o redireccion inmediata conserva el aviso]
+  AV --> F([Fin: puede entrar con contraseña y, si tenia, con Google])
   R([Enlace de restablecimiento]) --> RV{Token vigente, no usado, cuenta activa y correo coincide?}
   RV -- No --> G2
   RV -- Si --> RP{Contraseña y confirmacion cumplen la politica?}

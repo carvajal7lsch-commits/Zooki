@@ -100,5 +100,6 @@ $errorMessage = $errorMessage ?? '';
 
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
 <script src="js/cuenta-password.js?v=d2"></script>
+<script src="js/avisos.js?v=d3"></script>
 </body>
 </html>

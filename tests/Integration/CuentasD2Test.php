@@ -288,4 +288,67 @@ final class CuentasD2Test extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->cuentas->solicitarCorreo(6, ['email' => 'nuevo@zooki.test']);
     }
+
+    public function testD3SolicitudCorreoOcupadoRespondeIgualSinEnviarAlOtroTitular(): void
+    {
+        $correo = new class {
+            public int $enviados = 0;
+            public function limpiarDirecciones(): void {}
+            public function obtenerPlantillaBaseHTML(...$datos): string { return 'Plantilla'; }
+            public function enviarCorreoPersonalizado(...$datos): bool
+            {
+                $this->enviados++;
+                return true;
+            }
+        };
+        $_SESSION = ['id_usuario' => 6];
+        $respuestas = [];
+        foreach (['nuevo@zooki.test', 'ana@zooki.test'] as $email) {
+            $_POST = ['email' => $email, 'password_actual' => DosClinicas::PASSWORD];
+            ob_start();
+            (new IdentidadController($this->db, $correo))->solicitarCorreo();
+            $respuestas[] = json_decode(ob_get_clean(), true);
+        }
+        $this->assertSame($respuestas[0], $respuestas[1]);
+        $this->assertTrue($respuestas[0]['success']);
+        $this->assertSame(1, $correo->enviados);
+    }
+
+    public function testD3DocumentoDuplicadoAbreSoporteSinConfirmarExistencia(): void
+    {
+        try {
+            $this->cuentas->cambiarDocumento(6, ['documento' => '1000000001', 'tipo_documento' => 'CC', 'password_actual' => DosClinicas::PASSWORD]);
+            $this->fail('Se cambió un documento duplicado.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringNotContainsString('registrado', $e->getMessage());
+            $this->assertSame('No se pudo aplicar el cambio. Revisa los datos o contacta a soporte.', $e->getMessage());
+        }
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM casos_soporte')->fetchColumn());
+    }
+
+    public function testD3LimpiezaConservaCuentaSiFallaLaAuditoria(): void
+    {
+        $alta = $this->alta();
+        $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$alta['enlace']['id']]);
+        $this->db->exec("CREATE TRIGGER impedir_auditoria_vencida BEFORE INSERT ON auditoria_sistema WHEN NEW.descripcion LIKE '%vencida%' BEGIN SELECT RAISE(ABORT, 'Fallo de auditoría simulado'); END");
+        $this->assertSame(0, $this->cuentas->limpiarPendientes());
+        $this->assertNotNull((new Usuario($this->db))->buscarPorId($alta['id_usuario']));
+        $this->assertSame(0, (int) $this->db->query('SELECT used FROM verificaciones_email WHERE id = ' . (int) $alta['enlace']['id'])->fetchColumn());
+    }
+
+    public function testD3LimpiezaAuditaTodasLasInvitacionesAntesDeBorrarLaCuenta(): void
+    {
+        $alta = $this->alta();
+        $persona = (new Usuario($this->db))->buscarPorId($alta['id_usuario']);
+        $invitaciones = new InvitacionPersonal($this->db);
+        $otra = $invitaciones->crear($persona, 2, ['nombre_completo' => 'Laura Invitada', 'email' => $persona['email'], 'documento' => $persona['documento'], 'tipo_documento' => 'CC', 'telefono' => '3001112233', 'id_rol' => 2]);
+        $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$alta['enlace']['id']]);
+        $this->assertSame(1, $this->cuentas->limpiarPendientes());
+        $this->assertNull((new Usuario($this->db))->buscarPorId($alta['id_usuario']));
+        foreach ([1, 2] as $clinica) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = ? AND descripcion LIKE '%vencida%'");
+            $stmt->execute([$clinica]);
+            $this->assertSame(1, (int) $stmt->fetchColumn());
+        }
+    }
 }

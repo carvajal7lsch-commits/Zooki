@@ -52,50 +52,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!datos.success) {
                 restaurarBoton();
-                Swal.fire({
-                    icon: 'error',
-                    title: 'No pudimos crear la cuenta',
-                    text: datos.message || 'Intenta de nuevo en unos minutos.',
-                    confirmButtonColor: '#0052FF'
-                });
+                const salida = document.getElementById('registroFormResultado');
+                if (salida) salida.textContent = datos.message || 'No se pudo completar la solicitud.';
                 return;
             }
 
-            if (datos.esperando_confirmacion) {
-                mostrarEspera(datos.email);
-            } else {
-                // HU-5.8: el correo ya tenía cuenta. O se le envió la
-                // confirmación del vínculo, o ya estaba vinculado y solo
-                // tiene que iniciar sesión.
-                restaurarBoton();
-                await Swal.fire({
-                    icon: datos.iniciar_sesion ? 'info' : 'success',
-                    text: datos.message,
-                    confirmButtonColor: '#0052FF'
-                });
-                window.location.href = 'index.php?action=login';
-            }
+            restaurarBoton();
+            mostrarEspera(datos.message);
         } catch (e) {
             restaurarBoton();
-            Swal.fire({
-                icon: 'error',
-                title: 'Sin conexión',
-                text: 'No pudimos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo.',
-                confirmButtonColor: '#0052FF'
-            });
+            const salida = document.getElementById('registroFormResultado');
+            if (salida) salida.textContent = 'No pudimos comunicarnos con el servidor. Inténtalo nuevamente.';
+        } finally {
+            // RE-5.8.6: Cloudflare consume el token incluso si otro campo fue rechazado.
+            window.ZookiTurnstile?.reiniciar(registerForm);
         }
     }
 
-    // ── Pantalla de espera + sondeo de la confirmación ──
-    function mostrarEspera(email) {
+    // RE-T.13.2: todos los registros muestran la misma pantalla, sin sondeo de identidad.
+    function mostrarEspera(mensaje) {
         const espera = document.getElementById('registroEspera');
         if (!espera) {                       // vista sin la pantalla: se cae al login
             window.location.href = 'index.php?action=login';
             return;
         }
 
-        const correo = document.getElementById('registroEsperaEmail');
-        if (correo) correo.textContent = email || '';
+        const estado = document.getElementById('registroEsperaEstado');
+        if (estado) estado.textContent = mensaje;
 
         registerForm.hidden = true;
         espera.hidden = false;
@@ -107,56 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        sondearConfirmacion();
     }
 
-    function sondearConfirmacion() {
-        const estado = document.getElementById('registroEsperaEstado');
-        const INTERVALO = 4000;              // cada 4 s
-        const LIMITE = 15 * 60 * 1000;       // se rinde a los 15 min
-        const inicio = Date.now();
-
-        async function consultar() {
-            if (Date.now() - inicio > LIMITE) {
-                if (estado) {
-                    estado.textContent = 'Seguimos esperando. Abre el enlace del correo y vuelve a iniciar sesión.';
-                    estado.className = 'registro-espera-estado';
-                }
-                return;
-            }
-
-            try {
-                const r = await fetch('index.php?action=estado_verificacion_ajax', {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    cache: 'no-store'
-                });
-                const d = await r.json();
-
-                if (d.estado === 'confirmado') {
-                    if (estado) {
-                        estado.textContent = '¡Correo confirmado! Entrando a tu portal...';
-                        estado.className = 'registro-espera-estado ok';
-                    }
-                    setTimeout(function () {
-                        window.location.href = d.redirect || 'index.php?action=portal_propietario';
-                    }, 900);
-                    return;
-                }
-
-                if (d.estado === 'expirado' || d.estado === 'sin_registro') {
-                    if (estado) {
-                        estado.textContent = 'La confirmación ya no está disponible. Inicia sesión para continuar.';
-                        estado.className = 'registro-espera-estado error';
-                    }
-                    return;
-                }
-            } catch (e) {
-                // Un fallo puntual de red no debe cortar la espera.
-            }
-
-            setTimeout(consultar, INTERVALO);
-        }
-
-        setTimeout(consultar, INTERVALO);
-    }
 });

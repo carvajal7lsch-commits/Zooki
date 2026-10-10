@@ -53,6 +53,15 @@ function zookiRecargarConAviso(mensaje, tipo = 'success') {
     window.location.reload();
 }
 
+function zookiRedirigirConAviso(url, mensaje, tipo = 'success') {
+    try {
+        sessionStorage.setItem(ZOOKI_AVISO_PENDIENTE, JSON.stringify({ mensaje, tipo }));
+    } catch (error) {
+        zookiToast(mensaje, tipo);
+    }
+    window.location.href = url;
+}
+
 function zookiMostrarAvisoPendiente() {
     let aviso = null;
     try {

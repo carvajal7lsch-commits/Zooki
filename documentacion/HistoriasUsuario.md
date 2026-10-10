@@ -38,8 +38,8 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Criterios de aceptación:**
 
-- Formulario público con los datos de la clínica (nombre, NIT, dirección, teléfono, correo) y del administrador inicial (nombre, correo, contraseña segura).
-- Valida el formato de los campos y que el correo y el NIT no estén ya registrados en la plataforma; el NIT debe superar la validación del dígito de verificación de la DIAN. Si el NIT ya lo registró otra clínica, se puede reportar a soporte.
+- Formulario público con los datos de la clínica (nombre, NIT, dirección, teléfono, correo) y del administrador inicial (nombre, tipo y número de documento, teléfono, correo y contraseña segura).
+- Valida el formato y el dígito de verificación DIAN del NIT. El NIT duplicado se rechaza y puede reportarse a soporte. La respuesta pública no revela identidades: «Revisa tu correo para activar la clínica». Una cuenta existente confirma por correo sin cambiar sus datos, contraseña ni otros roles; la contraseña del formulario se ignora. Si el correo es nuevo y el documento existe, se confirma al titular del documento; si identifican personas distintas, prevalece el correo.
 - El formulario exige superar una verificación anti-bot (CAPTCHA), rechaza correos de dominios desechables y limita los registros desde una misma IP en un periodo; al superar el límite se informa que lo intente más tarde.
 - El registro de clínicas no admite Google, y exige aceptar la política de tratamiento de datos.
 - Crea la clínica en estado "pendiente de verificación" junto con su usuario administrador inicial; la clínica no opera hasta confirmar el correo.
@@ -58,10 +58,10 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Criterios de aceptación:**
 
-- El enlace de verificación vence a las 24 horas (RN-G11).
+- El enlace de verificación vence a las 24 horas (RN-G11), es de un solo uso y se confirma con botón mediante POST con CSRF; abrirlo no activa nada.
 - Al verificar dentro del plazo, la clínica pasa a estado "activa", se le asigna el **plan gratuito** y se habilita el rol administrador.
 - En la misma operación, la clínica recibe su copia de los catálogos iniciales: tipos de cita, horarios de atención, vacunas base con las especies a las que aplican, laboratorios y productos de desparasitación. Así puede agendar y registrar desde el primer día; si la activación falla, no queda ninguna copia a medias.
-- Si el plazo expira sin verificar, el registro pendiente se elimina (no deja una clínica fantasma).
+- Si el plazo expira sin verificar, se elimina la clínica pendiente y solo su administrador nuevo sin otros vínculos. Nunca se elimina una cuenta preexistente.
 - Tras activar, el administrador inicia sesión y queda acotado a su `id_clinica`.
 - La activación queda registrada en auditoría.
 
@@ -1474,6 +1474,8 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - Cuando el correo ya existe, previa **verificación de que es el dueño del correo** (login o confirmación por correo), se liga el propietario existente a la nueva clínica; si ya estaba ligado, se le indica que inicie sesión.
 - En un registro nuevo se crea la identidad global, se liga a la clínica (`propietario_clinica`) y se envía verificación de correo; al activar, se le envía su enlace de acceso y el QR de su portal.
 - Cada clínica solo ve los propietarios vinculados a ella. Todo queda en auditoría.
+
+- El autorregistro por formulario verifica Turnstile en el servidor. Las ayudas solo validan formato y la respuesta al enviar no revela si la identidad existe.
 
 **Reglas de negocio:** RN-109, RN-G06 · **Requisitos:** RF-5.3 · **Dependencias:** —
 

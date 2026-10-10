@@ -21,9 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             window.zookiRecargarConAviso('Contraseña creada.');
                         } else {
                             form.reset();
+                            window.zookiToast('Contraseña actualizada.');
                         }
                     } else {
-                        window.location.href = 'index.php?action=' + (form.dataset.passwordAccion === 'cambiar_password_ajax' ? 'dashboard' : 'login');
+                        window.zookiRedirigirConAviso('index.php?action=' + (form.dataset.passwordAccion === 'cambiar_password_ajax' ? 'dashboard' : 'login'), datos.message || 'Contraseña actualizada.');
                     }
                 }
             } catch (error) {

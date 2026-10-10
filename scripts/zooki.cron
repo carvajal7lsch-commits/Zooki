@@ -37,5 +37,5 @@ PATH=/usr/local/bin:/usr/bin:/bin
 # su hora de fin y pasa a "sin cerrar" las que terminaron el dia abiertas.
 */5 * * * * cd /RUTA_ZOOKI && php scripts/vigilar_atenciones.php >> logs/atenciones.log 2>&1
 
-# D2: alta de personal pendiente, vencida y sin otros vínculos.
+# D2/D3: altas de personal y clínicas pendientes vencidas, preservando otras cuentas.
 0 * * * * cd /RUTA_ZOOKI && php scripts/limpiar_cuentas_pendientes.php >> logs/cuentas_pendientes.log 2>&1

@@ -147,7 +147,8 @@ final class TelefonosTest extends TestCase
         }
         // Registro, perfil de Google, portal, perfil del personal, Usuarios y Pacientes (2).
         // D2.2: Usuarios tiene un solo modal para personal y clientes, como v1.12.0.
-        $this->assertSame(7, $campos);
+        // D3 agrega teléfono de clínica y administrador en el registro público.
+        $this->assertSame(9, $campos);
 
         $atributos = ValidadorTelefono::atributosHtml();
         $this->assertStringContainsString('maxlength="' . ValidadorTelefono::MAX . '"', $atributos);

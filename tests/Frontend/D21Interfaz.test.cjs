@@ -121,12 +121,12 @@ test('mientras el servidor responde no se borra el aviso vigente y el aviso nomb
 
     p.escribir(documento, '1000000001');
     const primera = p.temporizadores[0]();
-    pendientes[0](respuesta({ exists: true }));
+    pendientes[0](respuesta({ error: 'Formato rechazado por el servidor.' }));
     await primera;
-    assert.equal(documento.aviso, 'Este documento ya está registrado.');
+    assert.equal(documento.aviso, 'Formato rechazado por el servidor.');
 
     p.escribir(documento, '1000000002');
-    assert.equal(documento.aviso, 'Este documento ya está registrado.', 'No se borra ni dice «Comprobando…» mientras llega la respuesta.');
+    assert.equal(documento.aviso, 'Formato rechazado por el servidor.', 'No se borra ni dice «Comprobando…» mientras llega la respuesta.');
     const segunda = p.temporizadores[1]();
     pendientes[1](respuesta({ exists: false }));
     await segunda;
@@ -144,16 +144,16 @@ test('una respuesta vieja no pisa el aviso de la nueva', async () => {
     const nueva = p.temporizadores[1]();
     pendientes[1](respuesta({ exists: false }));
     await nueva;
-    pendientes[0](respuesta({ exists: true }));
+    pendientes[0](respuesta({ error: 'Formato rechazado por el servidor.' }));
     await vieja;
     assert.equal(correo.aviso, '', 'La respuesta tardía de «ana@» no marca como registrado el correo nuevo.');
     assert.equal(correo.error, '');
 
     p.escribir(correo, 'ana@zooki.test');
     const otra = p.temporizadores[2]();
-    pendientes[2](respuesta({ exists: true }));
+    pendientes[2](respuesta({ error: 'Formato rechazado por el servidor.' }));
     await otra;
-    assert.equal(correo.aviso, 'Este correo ya está registrado.');
+    assert.equal(correo.aviso, 'Formato rechazado por el servidor.');
 });
 
 // ── perfil.js: requisitos marcados en cada tecla ──────────────────────────

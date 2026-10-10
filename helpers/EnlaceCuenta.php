@@ -8,7 +8,7 @@ final class EnlaceCuenta
     }
     public static function base(): string
     {
-        $env = is_file(__DIR__ . '/../.env') ? parse_ini_file(__DIR__ . '/../.env') : [];
+        $env = !getenv('APP_URL') && !defined('ZOOKI_PRUEBAS') && is_file(__DIR__ . '/../.env') ? parse_ini_file(__DIR__ . '/../.env') : [];
         $base = rtrim(getenv('APP_URL') ?: ($env['APP_URL'] ?? ''), '/');
         return self::validarBase($base,(string)($_SERVER['HTTP_HOST'] ?? 'localhost'),
             (string)($_SERVER['SCRIPT_NAME'] ?? '/index.php'),!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');

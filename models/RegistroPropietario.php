@@ -61,7 +61,7 @@ final class RegistroPropietario
         $clinica = $this->clinicaElegida($entrada['id_clinica'] ?? null);
         $datos = $this->validarFormulario($entrada);
 
-        $existente = $this->usuarios->buscarPorEmail($datos['email']);
+        $existente = $this->usuarios->buscarPorEmail($datos['email']) ?? $this->usuarios->buscarPorDocumento($datos['documento']);
         if ($existente === null) {
             return $this->crearConFormulario($datos, $clinica, $ip);
         }
@@ -171,7 +171,7 @@ final class RegistroPropietario
         $this->exigirTelefono($telefono);
         $otro = $this->usuarios->buscarPorDocumento($documento);
         if ($otro !== null && (int) $otro['id_usuario'] !== $idUsuario) {
-            throw new InvalidArgumentException('Ese documento ya está registrado en otra cuenta.');
+            throw new InvalidArgumentException('No se pudo completar el perfil. Revisa los datos o contacta a soporte.');
         }
 
         Transaccion::ejecutar($this->conn, function () use ($idUsuario, $tipo, $documento, $telefono): void {

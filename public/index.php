@@ -193,6 +193,21 @@ switch ($action) {
         (new IdentidadController())->enlace($action === 'activar_personal' ? 'activacion_personal' : 'cambio_correo');
         break;
 
+    case "registro_clinica":
+    case "registrar_clinica_ajax":
+    case "activar_clinica":
+    case "reportar_nit_ajax":
+        require_once '../controllers/RegistroClinicaController.php';
+        $controller = new RegistroClinicaController();
+        $metodo = match ($action) {
+            'registro_clinica' => 'formulario',
+            'registrar_clinica_ajax' => 'procesar',
+            'activar_clinica' => 'activar',
+            'reportar_nit_ajax' => 'reportar',
+        };
+        $controller->$metodo();
+        break;
+
     case "invitacion_personal":
         require_once '../controllers/IdentidadController.php';
         (new IdentidadController())->invitacion();

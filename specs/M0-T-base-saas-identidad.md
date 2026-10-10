@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 revisada con corrección (2026-10-08); D2.1 revisada y aprobada (2026-10-09); D2.2 entregada, pendiente de revisión (2026-10-09); D3 no iniciada.
+> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 revisada con corrección (2026-10-08); D2.1 y D2.2 revisadas y aprobadas (2026-10-09); D3 entregada, pendiente de revisión (2026-10-10).
 > Entrega: v2.0 · Fecha: 2026-10-06
 > C8/C9 (2026-10-08): escribe **Codex**, revisa **Claude** (sesión de revisión).
 > Reparto del resto de M0 (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
@@ -25,7 +25,7 @@
 | HU-T.16 | RE-T.16.1–4 | RN-G17, RN-G05, RNF-13, RNF-14 | D | Sesión vencida, AJAX 401, cookie segura y auditoría. |
 | HU-T.17 | RE-T.17.1–5 | RN-G01, RN-G06, RN-G13, RN-G18 | C | Una persona con rol de propietario y de personal en dos clínicas cambia de contexto sin mezclar permisos. |
 | HU-T.19 | RE-T.19.1–4 | RN-G19, RN-G20 | D | Aceptación del titular antes de crear la cuenta, salvo personal pendiente e inerte por 72 horas; activación con prueba de versión, medio, fecha e IP. |
-| HU-5.8 | RE-5.8.1–5 | RN-109, RN-G06 | D | Una identidad global se vincula a las clínicas que elige, sin duplicar el correo ni exponerla a otra clínica. |
+| HU-5.8 | RE-5.8.1–6 | RN-109, RN-G06 | D | Una identidad global se vincula a las clínicas que elige, sin duplicar el correo ni exponerla a otra clínica. |
 | HU-0.1 | RE-0.1.1–10 | RN-001, RN-002, RN-010, RN-011, RN-G19, RN-G20 | D | Alta pública con NIT válido, CAPTCHA, límites, consentimiento y clínica pendiente. |
 | HU-0.2 | RE-0.2.1–5 | RN-002, RN-003, RN-005, RN-G11 | D | La verificación activa la clínica y asigna el plan gratuito; un enlace vencido no la activa. |
 | HU-0.3 | RE-0.3.1–5 | RN-004, RN-012, RN-G13, RN-G14 | E | El panel opera sobre clínicas sin abrir historia clínica. **RE-0.3.6 (moderar reseñas) se verifica en v2.1 junto con HU-8.1**, porque en v2.0 aún no existen reseñas. |
@@ -104,7 +104,7 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] D2 — Cuentas del personal y del titular: alta con enlace de activación, cambio de correo y documento con verificación, CAPTCHA por cuenta y validación reutilizable en tiempo real ([Anexo D2](#anexo-d2--resultado)). Entregada, pendiente de revisión por Claude.
   - [x] D2.1 — Corrección de D2: IP real detrás del proxy, límites de RN-G15 (20 por IP, CAPTCHA por cuenta), comprobaciones por persona, validación en cada tecla, correos propios, modal del personal de v1.12.0, limpieza tolerante y prueba local ([Anexo D2.1](#anexo-d21--resultado)). Lo escribió Claude Code; revisada y aprobada por Claude (2026-10-09).
   - [x] D2.2 — Invitaciones del personal con aceptación, cierre de otras sesiones y correcciones de D2.1 ([Anexo D2.2](#anexo-d22--resultado)). Escribieron Claude Code y Codex; entregada, pendiente de revisión por Claude (2026-10-09).
-  - [ ] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2).
+  - [x] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2), Turnstile del propietario (RE-5.8.6) y pendientes de D2.2 ([Anexo D3](#anexo-d3--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-10). La etapa D queda implementada; su cierre espera la revisión y la prueba del usuario.
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
 - [ ] F — Respaldo, reinicio de la base de producción, despliegue, super-administrador y clínica demo. Incluye blindar Apache para que solo sirva `public/` y agregar `.dockerignore` (B.5).
@@ -1718,3 +1718,66 @@ Ejecutor: Codex (decisión del usuario, 2026-10-10). Diagrama: Modelos §12.1 (y
 4. **CAPTCHA en el registro de propietarios:** `process_register` verifica Turnstile en el servidor, como el registro de clínicas; se agrega un RE a HU-5.8.
 
 **Antes, en la misma subetapa (pendientes de D2.2):** las pruebas no tocan `zooki_v2_prueba`; la ayuda al escribir solo valida el formato (decisión del usuario, 2026-10-09); aviso breve (toast) al cambiar la contraseña; auditoría de invitaciones de otras clínicas al limpiar cuentas pendientes.
+
+**Decisión del usuario (2026-10-10, durante D3).** Si el correo ingresado es nuevo y el documento pertenece a una cuenta, se envía la confirmación al correo registrado del titular del documento. Se conservan su identidad, contraseña y vínculos, con la misma respuesta pública. Cuando correo y documento pertenecen a cuentas distintas, prevalece el correo, como en D2.2.
+
+## Anexo D3 — Resultado
+
+**Lo escribió Codex (2026-10-10). Entregada, pendiente de revisión.** Revisa la sesión de Claude (arquitecto); las pantallas las prueba el usuario.
+
+### Qué quedó
+
+- Bootstrap y guarda de conexión: las pruebas no leen `.env` ni abren la base de trabajo. `Database` exige configuración explícita de pruebas; los subprocesos heredan la protección. Los intentos usan el almacén inyectado o la sesión.
+- Ayudas de cuenta solo de formato, con y sin sesión; respuestas iguales al registrar propietarios o solicitar cambio de correo. Documento duplicado abre soporte sin confirmar la existencia. Contraseñas con toast y actualización inmediata. Al borrar una alta de personal vencida, se audita cada invitación pendiente; si falla la auditoría, se conserva la cuenta.
+- Registro público de clínicas con el diseño del login, validadores compartidos, NIT DIAN, lista de dominios desechables, Turnstile y límite diario atómico por IP real. NIT duplicado permite reportar soporte. Enlaces desde login y página pública.
+- Identidad nueva inactiva con contraseña cifrada; identidad existente conservada y confirmación al titular, incluida la decisión sobre documento existente. Token cifrado de 24 horas y un solo uso; GET de lectura y POST con CSRF y consentimiento. Activación, plan gratuito, rol, catálogos y auditoría en una transacción.
+- Limpieza horaria de pendientes sin borrar cuentas preexistentes ni cuentas nuevas con otros vínculos. Se cubren varias solicitudes para la misma cuenta nueva y clínicas cuyo enlace desapareció por otra limpieza. Se reutilizan tablas existentes; no hay migración. El MER describe los propósitos y el contador reutilizados.
+
+### Trazabilidad y pruebas
+
+| RE / regla | Evidencia |
+|---|---|
+| RE-0.1.1, RE-0.1.10, RE-T.19.1 | `RegistroClinicaTest::testSinConsentimientoNoSeCreaNada`, `testActivacionSinConsentimientoOVencidaNoModificaDatos`; `D3Avisos.test.cjs` comprueba campos, ausencia de Google y recursos externos. |
+| RE-0.1.2, RE-0.1.7, RE-0.1.8, RN-G06 | `RegistroClinicaTest`: cuenta nueva inerte; existente conserva identidad/contraseña/roles; documento existente confirma a su titular; respuesta idéntica y correo correspondiente; NIT duplicado con soporte. |
+| RE-0.1.3, RE-0.1.5 | `ValidadorClinicaTest`: dígitos DIAN válidos/incorrectos, normalización y dominios desechables en ambos correos. Algoritmo contrastado con la Resolución DIAN 0457 de 2008. |
+| RE-0.1.4, RE-5.8.6 | `RegistroClinicaTest`: CAPTCHA ausente, inválido y válido, tanto clínica como propietario; no se crea nada si falla. `D3Avisos.test.cjs`: cada formulario restablece su propio widget sin duplicarlo. |
+| RE-0.1.6, RN-G15 | `RegistroClinicaTest::testLimiteTresPorDiaEIpNoSeEvadeConSesionNuevaNiConXForwardedFor`; también cuarto registro rechazado en `BaseV2MysqlTest`. |
+| RE-0.1.9, RE-0.2.1 a RE-0.2.5, RNF-11 | `RegistroClinicaTest`: auditoría, GET sin activar, POST sin CSRF rechazado, token alterado/vencido/usado, plan/rol/contextos, catálogos 6/7/15/11/15 y relaciones por especie; fallo intermedio revierte token, consentimiento y copias; acceso a mascota de otra clínica da 403. `BaseV2MysqlTest::testD3RegistroActivacionYRollbackEnElEsquemaReal` verifica FK, rollback y limpieza reales. |
+| RE-T.13.2, RE-5.8.2, RE-5.8.3, RN-G23, RN-G24 | `RegistroClinicaTest`: ayuda idéntica con/sin sesión y autorregistro genérico; `CuentasD2Test`: cambio de correo idéntico sin enviar al otro titular, documento duplicado genérico y caso de soporte. Pruebas JS de validación sin existencia. |
+| RE-T.7.5, preferencias de avisos | `CuentasD2Test`: vencimiento auditado en todas las clínicas antes de eliminar; fallo de auditoría conserva cuenta/enlace. `D3Avisos.test.cjs`: toasts de Mi perfil, portal y cambio obligatorio, y aviso tras redirigir. |
+| Protección de la base de trabajo | `DatabasePruebasTest`: rechaza conexión implícita y configuración de la base de trabajo; intentos del bootstrap sin conexión. `BaseV2MysqlTest` comprueba la conexión explícita a `zooki_test_base_v2`. |
+
+### Verificación y diagramas
+
+- Suite PHP sin MySQL: **526 pruebas, 2707 aserciones; 25 omitidas** por requerir MySQL.
+- Suite completa con `ZOOKI_TEST_MYSQL_HOST`: **526 pruebas, 3036 aserciones, ninguna omitida**, contra `zooki_test_base_v2` en MariaDB 10.4 de una instancia temporal propia (puerto 3308). No se usó la base de trabajo; MySQL 8 queda al CI.
+- `node --test "tests/Frontend/**/*.test.cjs"`: **57 en verde**, sin omisiones. `git diff --check` en verde; sintaxis PHP comprobada. Ninguna vista nueva contiene JS/CSS en línea.
+- Modelos **§11, §12.1, §13.2 y §13.3** actualizados y sus cuatro Mermaid renderizados; §9 se conserva, con pruebas de contextos nuevos y existentes. HU/RE/matriz y conteos actualizados: **420 RE**, nuevo RE-5.8.6; sin subir revisión.
+
+### Pantallas para el usuario y pendientes
+
+1. **Login y página pública:** abrir «Registra tu clínica»; comprobar diseño de escritorio/celular y mensajes debajo del campo mientras escribe. En registro del propietario, todos los casos aceptados muestran la misma espera de correo; después de un error se puede resolver de nuevo el CAPTCHA.
+2. **Registro de clínica:** NIT válido de ejemplo `900123456-8`, DV incorrecto y correo desechable; consentimiento y CAPTCHA obligatorios. Datos nuevos generan correo en `logs/correos/` con `MAIL_MODO=archivo`; el cuarto registro diario de la misma IP se rechaza. NIT repetido ofrece reportar soporte, sin revelar al administrador.
+3. **Activación:** abrir el correo no activa; el botón confirma. Después se entra como administrador de esa clínica y aparecen sus catálogos/horarios. Reabrir un enlace usado no activa de nuevo.
+4. **Cuenta existente:** usar su correo con otros datos/contraseña en el formulario; confirmar desde el correo del titular; entrar con la contraseña original y elegir entre sus contextos. Repetir con correo nuevo y documento existente: el correo llega al titular del documento.
+5. **Mi perfil y portal → Datos de acceso:** no revelan existencia al escribir ni al enviar; documento duplicado responde genérico y abre soporte. **Contraseña en Mi perfil, portal y cambio obligatorio:** aviso breve visible, sin retrasar la actualización o redirección.
+
+Pendientes: revisión de Claude y prueba visual del usuario. Gestión de casos, panel de IP y límites del plan pertenecen a E; no se implementaron. Versión, historial, revisión documental y PDF/Word se publican al cerrar M0, conforme a `agentes/metodo.md`. El QR del portal conserva el pendiente de D1/RE-5.8.4; esta entrega no declara cerrada toda HU-5.8. No se hizo commit ni push.
+
+
+### D3 — Revisión (2026-10-10)
+
+**Resultado: aprobada.** Claude (sesión de revisión) revisó el anexo, el diff y Modelos §12.1. Suite PHP en una copia sin `.env`: 526 pruebas, 2707 aserciones, 25 saltadas de MySQL (el ejecutor reporta la parte MySQL en verde). JS: 57 pruebas en verde.
+
+**Verificado.**
+
+- **Base de trabajo protegida:** `tests/bootstrap.php` deja el almacén de intentos en null y marca el entorno de pruebas; `Database` se niega a conectar bajo PHPUnit salvo a `zooki_test_base_v2` con `ZOOKI_TEST_MYSQL_*`. En la copia sin `.env` la suite pasó sin intentar ninguna conexión.
+- **Registro (§12.1):** NIT con el módulo 11 de la DIAN (comprobado a mano con `900123456-8`), dominios desechables, Turnstile en el servidor, límite de 3 por día e IP real con fila bloqueada, NIT duplicado con reporte a soporte, misma respuesta para correo nuevo o existente. Con cuenta existente no se toca la cuenta hasta confirmar; al confirmar, administrador con sus otros roles.
+- **Activación:** GET de solo lectura, POST con CSRF y consentimiento; en una transacción: enlace consumido, clínica activa con plan Gratuito, rol, consentimiento, catálogos con `InicializadorClinica` y auditoría.
+- **Limpieza:** nunca borra una cuenta que ya existía ni una nueva con otros vínculos.
+- **Pendientes de D2.2:** ayuda solo de formato, toasts y auditoría al limpiar quedaron hechos. RE-5.8.6 nuevo (Turnstile en el registro de propietarios).
+
+**Hallazgos menores (para E).**
+
+1. `reportar_nit` es público y solo lo frena Turnstile: sin límite por IP se pueden crear casos de soporte en cantidad. Darle un límite como el del registro al construir la gestión de casos (E).
+2. Un NIT queda reservado mientras su registro está pendiente (hasta 24 horas). Alguien podría registrar el NIT de otra clínica sin verificar; el titular lo reporta (RN-010) y la limpieza lo libera. Aceptable; anotar en E.

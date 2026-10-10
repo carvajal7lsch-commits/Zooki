@@ -180,6 +180,73 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    /** D3: FK y límites reales; el rollback incluye token, rol y todos los catálogos. */
+    public function testD3RegistroActivacionYRollbackEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/RegistroClinicaTest.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $explicita = (new Database(Database::configuracionPruebas()))->getConnection();
+        $this->assertSame('zooki_test_base_v2', $explicita->query('SELECT DATABASE()')->fetchColumn());
+        unset($explicita);
+        $_SESSION = [];
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.201';
+        $modelo = new RegistroClinica($this->db);
+        $alta = $modelo->registrar(RegistroClinicaTest::datos(), Auditoria::ipCliente());
+        $fila = $modelo->leer($alta['enlace']['id'], $alta['enlace']['token']);
+        $this->assertNull((new Usuario($this->db))->contextosDe((int) $fila['id_usuario']));
+        $this->db->exec("CREATE TRIGGER fallo_d3 BEFORE INSERT ON laboratorios_base FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo simulado'");
+        try {
+            $modelo->activar($alta['enlace']['id'], $alta['enlace']['token'], ['acepta_datos' => '1'], Auditoria::ipCliente());
+            $this->fail('Debía fallar el catálogo.');
+        } catch (PDOException $e) {
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM tipos_cita')->fetchColumn());
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM vacunas_base')->fetchColumn());
+            $this->assertNotNull($modelo->leer($alta['enlace']['id'], $alta['enlace']['token']));
+        }
+        $this->db->exec('DROP TRIGGER fallo_d3');
+        $clinica = $modelo->activar($alta['enlace']['id'], $alta['enlace']['token'], ['acepta_datos' => '1'], Auditoria::ipCliente());
+        foreach (['tipos_cita' => 6, 'horarios_clinica' => 7, 'vacunas_base' => 15, 'laboratorios_base' => 11, 'productos_desparasitacion_base' => 15] as $tabla => $esperado) {
+            $this->assertSame($esperado, (int) $this->db->query('SELECT COUNT(*) FROM ' . $tabla . ' WHERE id_clinica = ' . $clinica)->fetchColumn());
+        }
+        $persona = (new Usuario($this->db))->buscarParaLogin('fabio@zooki.test');
+        $existente = $modelo->registrar(RegistroClinicaTest::datos(2, ['email' => 'fabio@zooki.test']), Auditoria::ipCliente());
+        $modelo->activar($existente['enlace']['id'], $existente['enlace']['token'], ['acepta_datos' => '1'], Auditoria::ipCliente());
+        $this->assertSame($persona, (new Usuario($this->db))->buscarParaLogin('fabio@zooki.test'));
+        $this->assertCount(2, (new Usuario($this->db))->contextosDe(6));
+        $vence = $modelo->registrar(RegistroClinicaTest::datos(3, ['documento' => '1000000006']), Auditoria::ipCliente());
+        try {
+            $modelo->registrar(RegistroClinicaTest::datos(4), Auditoria::ipCliente());
+            $this->fail('No debe admitirse el cuarto registro.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('límite', $e->getMessage());
+        }
+        $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$vence['enlace']['id']]);
+        $modelo->reportarNit(RegistroClinicaTest::datos(3));
+        $this->assertSame(1, $modelo->limpiarPendientes());
+        $this->assertNotNull((new Usuario($this->db))->buscarPorId(6));
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.202';
+        $nueva = $modelo->registrar(RegistroClinicaTest::datos(5), Auditoria::ipCliente());
+        $idNueva = (int) $modelo->leer($nueva['enlace']['id'], $nueva['enlace']['token'])['id_usuario'];
+        $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$nueva['enlace']['id']]);
+        $this->assertSame(1, $modelo->limpiarPendientes());
+        $this->assertNull((new Usuario($this->db))->buscarPorId($idNueva));
+        $primera = $modelo->registrar(RegistroClinicaTest::datos(6), Auditoria::ipCliente());
+        $idCompartido = (int) $modelo->leer($primera['enlace']['id'], $primera['enlace']['token'])['id_usuario'];
+        $segunda = $modelo->registrar(RegistroClinicaTest::datos(7, ['email' => $primera['email']]), Auditoria::ipCliente());
+        $this->db->exec("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE used = 0");
+        $this->assertSame(2, $modelo->limpiarPendientes());
+        $this->assertNull((new Usuario($this->db))->buscarPorId($idCompartido));
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.203';
+        $sinEnlace = $modelo->registrar(RegistroClinicaTest::datos(8, ['email' => 'fabio@zooki.test']), Auditoria::ipCliente());
+        $idClinica = (int) $modelo->leer($sinEnlace['enlace']['id'], $sinEnlace['enlace']['token'])['id_clinica_vinculo'];
+        $this->db->prepare("UPDATE clinicas SET fecha_registro = '2000-01-01 00:00:00' WHERE id_clinica = ?")->execute([$idClinica]);
+        $this->db->prepare('DELETE FROM verificaciones_email WHERE id = ?')->execute([$sinEnlace['enlace']['id']]);
+        $this->assertSame(1, $modelo->limpiarPendientes());
+        $this->assertNotNull((new Usuario($this->db))->buscarPorId(6));
+    }
+
     private const DATABASE = __DIR__ . '/../../database';
 
     private PDO $db;

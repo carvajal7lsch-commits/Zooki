@@ -419,55 +419,37 @@ class AuthController {
             $this->respuestaRegistro(false, "Token de seguridad inválido. Por favor intenta de nuevo.");
         }
 
-        try {
-            $registro = $this->registro->conFormulario($_POST, Auditoria::ipCliente());
-        } catch (InvalidArgumentException $e) {
-            $this->respuestaRegistro(false, $e->getMessage());
-        } catch (Throwable $e) {
-            error_log('HU-5.8: registro fallido - ' . $e->getMessage());
-            $this->respuestaRegistro(false, "Ocurrió un error al procesar el registro. Intenta más tarde.");
-        }
+        $resultado = $this->registrarPropietario($_POST, Auditoria::ipCliente());
+        $this->respuestaRegistro($resultado['success'], $resultado['message']);
+    }
 
-        $email = $registro['email'];
-        $clinica = $registro['clinica'];
-        switch ($registro['resultado']) {
-            case 'nueva':
-            case 'pendiente':
+    /** RE-5.8.6/RE-T.13.2: mismo contrato público, correo nuevo o existente. */
+    public function registrarPropietario(array $entrada, string $ip): array
+    {
+        if (!$this->turnstile->validar((string) ($entrada['cf-turnstile-response'] ?? ''), $ip)) {
+            return ['success' => false, 'message' => 'Completa la verificación de seguridad e inténtalo de nuevo.'];
+        }
+        try {
+            $registro = $this->registro->conFormulario($entrada, $ip);
+        } catch (InvalidArgumentException $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        } catch (Throwable $e) {
+            error_log('HU-5.8: registro fallido.');
+            return ['success' => false, 'message' => 'No se pudo completar la solicitud. Intenta más tarde.'];
+        }
+        unset($_SESSION['registro_pendiente']);
+        try {
+            if (in_array($registro['resultado'], ['nueva', 'pendiente'], true)) {
                 $enlace = $this->buildVerificacionLink($registro['enlace']['id'], $registro['enlace']['token']);
                 $this->emailService->limpiarDirecciones();
-                $this->emailService->enviarCorreoVerificacion($email, $registro['nombre'], $enlace, RegistroPropietario::VIGENCIA_HORAS);
-
-                // La página de registro espera la confirmación sin recargar:
-                // solo vigila a quien acaba de registrarse en este navegador.
-                $_SESSION['registro_pendiente'] = [
-                    'id_usuario' => $registro['id_usuario'],
-                    'email' => $email,
-                    'desde' => time(),
-                ];
-                $this->respuestaRegistro(
-                    true,
-                    "Te enviamos un correo a $email para confirmar tu dirección. Al confirmarlo quedarás vinculado a $clinica.",
-                    ['email' => $email, 'esperando_confirmacion' => true]
-                );
-
-            case 'existente':
-                // RE-5.8.2/3: no se duplica la cuenta; su dueño confirma el vínculo por correo.
-                if ($registro['enlace'] !== null) {
-                    $this->enviarConfirmacionDeVinculo($registro);
-                }
-                $this->respuestaRegistro(
-                    true,
-                    "Ese correo ya tiene cuenta en Zooki. Te enviamos un correo para confirmar que es tuyo y vincularte a $clinica.",
-                    ['email' => $email, 'esperando_confirmacion' => false]
-                );
-
-            default:
-                $this->respuestaRegistro(
-                    true,
-                    "Ya tienes cuenta y estás vinculado a $clinica. Inicia sesión.",
-                    ['email' => $email, 'iniciar_sesion' => true]
-                );
+                $this->emailService->enviarCorreoVerificacion($registro['email'], $registro['nombre'], $enlace, RegistroPropietario::VIGENCIA_HORAS);
+            } elseif ($registro['enlace'] !== null) {
+                $this->enviarConfirmacionDeVinculo($registro);
+            }
+        } catch (Throwable $e) {
+            error_log('HU-5.8: no se pudo enviar el correo del registro.');
         }
+        return ['success' => true, 'message' => 'Revisa tu correo para confirmar la solicitud o acceder a Zooki.'];
     }
 
     private function enviarConfirmacionDeVinculo(array $registro): void
@@ -841,37 +823,16 @@ class AuthController {
 </html>';
     }
 
-    public function checkDocumentAjax()
-    {
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            // HU-38 (VD-SEG-06): el formulario de registro necesita avisar si
-            // el documento ya está tomado, así que el endpoint no puede dejar
-            // de responder. Lo que se corta es el uso masivo: a mano nadie
-            // llega al límite, un script que enumere sí.
-            if (!Security::checkVerificationLimit()) {
-                $this->jsonResponse(false, "Demasiadas verificaciones. Inténtalo más tarde.");
-            }
-            $documento = trim($_POST['documento'] ?? '');
-            if (empty($documento)) {
-                $this->jsonResponse(false, "Documento vacío.");
-            }
-            $this->jsonResponse(true, "Verificado", ['exists' => $this->usuarioModel->existeDocumento($documento)]);
-        }
+    public function checkDocumentAjax(): void {
+        // RE-T.13.2: las rutas heredadas tampoco permiten enumerar identidades.
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => true, 'error' => ValidadorCuenta::documento(trim((string) ($_POST['documento'] ?? '')))]);
     }
 
-    public function checkEmailAjax()
-    {
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            // Mismo límite que checkDocumentAjax (HU-38, VD-SEG-06).
-            if (!Security::checkVerificationLimit()) {
-                $this->jsonResponse(false, "Demasiadas verificaciones. Inténtalo más tarde.");
-            }
-            $email = trim(strtolower($_POST['email'] ?? ''));
-            if (empty($email)) {
-                $this->jsonResponse(false, "Email vacío.");
-            }
-            $this->jsonResponse(true, "Verificado", ['exists' => $this->usuarioModel->existeEmail($email)]);
-        }
+    public function checkEmailAjax(): void {
+        // RE-T.13.2: las rutas heredadas tampoco permiten enumerar identidades.
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => true, 'error' => ValidadorCuenta::correo(trim((string) ($_POST['email'] ?? '')))]);
     }
 
     public function processGoogleLoginAjax()

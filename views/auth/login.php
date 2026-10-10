@@ -74,6 +74,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                     <div class="front">
                         <div class="form-wrapper animate__animated animate__fadeIn">
                             <h2>Iniciar sesión</h2>
+                            <p class="form-subtitle"><a href="index.php?action=registro_clinica">Registra tu clínica</a></p>
                             <p class="form-subtitle">¡Bienvenido de vuelta! Accede a tu cuenta para continuar.</p>
                             <!-- Confirmacion de correo / registro (HU-36) -->
                             <?php if(isset($_SESSION['success_register'])): ?>
@@ -240,7 +241,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     </span>
                                 </label>
                                 <?php if ($turnstileClave !== ''): ?>
-                                    <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars($turnstileClave, ENT_QUOTES, 'UTF-8') ?>"></div>
+                                    <div data-turnstile-formulario data-sitekey="<?= htmlspecialchars($turnstileClave, ENT_QUOTES, 'UTF-8') ?>"></div>
                                 <?php endif; ?>
                                 <button type="submit" class="btn-primary">
                                     <span>Registrarse</span>
@@ -268,19 +269,18 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                  formulario sin recargar la pagina: la cuenta ya quedo
                                  creada y solo falta que el usuario abra el enlace del
                                  correo. En cuanto lo haga, el sondeo lo lleva al portal. -->
+                            <p class="cuenta-ayuda" id="registroFormResultado" role="alert" aria-live="polite"></p>
                             <div class="registro-espera" id="registroEspera" hidden>
                                 <div class="registro-espera-icono">
                                     <i class="ri-mail-send-line"></i>
-                                    <span class="registro-espera-spinner" aria-hidden="true"></span>
                                 </div>
                                 <h3>Revisa tu correo</h3>
                                 <p class="registro-espera-texto">
-                                    Enviamos un enlace de confirmación a
-                                    <strong id="registroEsperaEmail"></strong>.
-                                    Ábrelo para activar tu cuenta; esta página continúa sola.
+                                    Si la solicitud puede completarse, el titular recibirá el enlace de confirmación.
+                                    Ábrelo y después inicia sesión para continuar.
                                 </p>
                                 <p class="registro-espera-estado" id="registroEsperaEstado" role="status" aria-live="polite">
-                                    Esperando la confirmación…
+                                    Revisa tu correo para confirmar la solicitud o acceder a Zooki.
                                 </p>
                                 <p class="registro-espera-ayuda">
                                     Si no lo ves, revisa la carpeta de spam. El enlace vence en 24 horas.
@@ -407,7 +407,8 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
         </div>
     </div>
     <!-- JS externo — ZOOKI_REGLAS: cero JS en línea -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="js/turnstile-formularios.js?v=d3"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=zookiTurnstileListo" async defer></script>
     <script src="js/password-policy.js?v=<?php echo time(); ?>"></script>
     <script src="js/interacciones.js?v=2"></script>
     <script src="js/login.js?v=<?php echo time(); ?>"></script>
@@ -416,5 +417,6 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client?onload=initGoogleAuth" async defer></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
+<script src="js/avisos.js?v=d3"></script>
 </body>
 </html>

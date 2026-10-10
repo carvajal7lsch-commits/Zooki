@@ -1,0 +1,46 @@
+/* HU-0.1: conserva los componentes de acceso; el formulario largo ocupa su propia pantalla. */
+.registro-clinica-page .login-container {
+    height: auto;
+    min-height: 100vh;
+}
+.registro-clinica-page .login-form-area {
+    overflow: visible;
+}
+.registro-clinica-page .form-wrapper {
+    max-width: 600px;
+}
+.registro-clinica-page .input-wrapper select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+.registro-clinica-campos {
+    border: 0;
+    padding: 0;
+    margin: 24px 0;
+}
+.registro-clinica-campos legend {
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+.registro-clinica-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 16px;
+}
+.registro-clinica-page .registro-consentimiento {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+}
+.registro-clinica-page [hidden] {
+    display: none;
+}
+@media (max-width: 767px) {
+    .registro-clinica-grid {
+        grid-template-columns: 1fr;
+    }
+}

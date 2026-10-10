@@ -4,7 +4,7 @@
  * En cada tecla se aplican al instante las reglas que el navegador puede
  * comprobar (formato, longitud, requisitos de la contraseña de
  * password-policy.js y coincidencia de contraseñas). Lo que solo sabe el
- * servidor (unicidad, política completa con los datos del titular) se
+ * servidor (formato y política completa con los datos del titular) se
  * consulta con una pausa corta; mientras responde no se borra el aviso
  * vigente y una respuesta vieja nunca pisa la nueva. Al enviar se vuelve a
  * comprobar todo con el servidor.
@@ -22,11 +22,10 @@
         confirmar_password: 'confirm_password', password_confirmation: 'confirm_password',
         perfilPwdConfirmar: 'confirm_password', portal_confirm_password: 'confirm_password'
     };
-    const camposCuenta = new Set(['nombre_completo', 'documento', 'email', 'telefono', 'password', 'confirm_password']);
-    // Solo el servidor sabe si existe la cuenta o si la contraseña contiene tus datos.
-    const consultanServidor = new Set(['documento', 'email', 'password']);
+    const camposCuenta = new Set(['nombre_completo', 'documento', 'email', 'telefono', 'password', 'confirm_password', 'nit', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
+    // El servidor comprueba formato y política completa; nunca informa si existe la cuenta.
+    const consultanServidor = new Set(['documento', 'email', 'password', 'nit', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
     const UNICOS = new Set(['documento', 'email']);
-    const NOMBRES_UNICOS = { documento: 'documento', email: 'correo' };
 
     // Mismos mensajes que helpers/ValidadorCuenta.php y ValidadorTelefono.
     const MENSAJES = {
@@ -157,21 +156,6 @@
         return UNICOS.has(clave) && form.dataset.cuentaUnicidad === 'solo-edicion' && !form.elements.id_usuario?.value;
     }
 
-    function mensajeDeExistencia(form, clave, existe) {
-        const estado = formularios.get(form);
-        const puedeVincular = !form.elements.id_usuario?.value
-            && form.dataset.cuentaVincular === 'correo' && (clave === 'email' || estado.correoExistente);
-        if (form.dataset.identidadAccion === 'cambiar_documento_ajax') {
-            // RN-G24: el envío autenticado abre el caso de soporte; la ayuda no lo crea.
-            return { error: null, mensaje: 'Documento registrado: al enviar se abrirá un caso para soporte.' };
-        }
-        if (puedeVincular) {
-            return { error: null, mensaje: 'Cuenta existente: se vinculará a la clínica.' };
-        }
-        const mensaje = 'Este ' + NOMBRES_UNICOS[clave] + ' ya está registrado.';
-        return { error: mensaje, mensaje };
-    }
-
     async function comprobar(form, campo, final = false) {
         const estado = formularios.get(form);
         const clave = tipo(campo);
@@ -180,7 +164,7 @@
         estado.secuencias.set(campo, numero);
         if (!mostrarLocal(form, campo, final)) return false;
         if (valor === '' || clave === 'confirm_password' || sinUnicidad(form, clave)) return true;
-        const firma = JSON.stringify([valor, ...campos(form).filter(elemento => ['documento', 'email', 'nombre_completo'].includes(tipo(elemento))).map(elemento => elemento.value), form.elements.id_usuario?.value, estado.correoExistente]);
+        const firma = JSON.stringify([valor, ...campos(form).filter(elemento => ['documento', 'email', 'email_administrador', 'nombre_completo'].includes(tipo(elemento))).map(elemento => elemento.value), form.elements.id_usuario?.value]);
         if (estado.cache.get(campo)?.firma === firma) {
             return estado.cache.get(campo).valido;
         }
@@ -188,7 +172,8 @@
         datos.set('cuenta_csrf', csrf);
         datos.set('campo', clave);
         datos.set('valor', valor);
-        campos(form).filter(elemento => ['documento', 'email', 'nombre_completo'].includes(tipo(elemento))).forEach(elemento => datos.set(tipo(elemento), elemento.value));
+        if (form.dataset.cuentaDatos === 'formulario') datos.set('solo_formulario', '1');
+        campos(form).filter(elemento => ['documento', 'email', 'email_administrador', 'nombre_completo'].includes(tipo(elemento))).forEach(elemento => datos.set(tipo(elemento) === 'email_administrador' ? 'email' : tipo(elemento), elemento.value));
         ['id_usuario', 'id_enlace', 'token_enlace', 'token_id', 'token'].forEach(nombre => {
             if (form.elements[nombre]) datos.set(nombre, form.elements[nombre].value);
         });
@@ -200,14 +185,10 @@
             if (!respuesta.ok || !resultado.success) throw new Error(resultado.message || 'No se pudo comprobar el campo.');
             let error = resultado.error;
             let mensaje = error || '';
-            if (clave === 'email') estado.correoExistente = Boolean(resultado.exists);
-            if (!error && resultado.exists && NOMBRES_UNICOS[clave]) {
-                ({ error, mensaje } = mensajeDeExistencia(form, clave, resultado.exists));
-            }
             aviso(campo, mensaje, Boolean(error));
             estado.origen.set(campo, mensaje ? 'servidor' : 'local');
             estado.cache.set(campo, { firma, valido: !error });
-            form.dispatchEvent(new CustomEvent('cuenta:validada', { detail: { campo: clave, valido: !error, existe: resultado.exists } }));
+            form.dispatchEvent(new CustomEvent('cuenta:validada', { detail: { campo: clave, valido: !error } }));
             return !error;
         } catch (error) {
             if (estado.secuencias.get(campo) !== numero) return false;
@@ -230,7 +211,6 @@
         estado.cache.delete(campo);
         // Un valor nuevo invalida cualquier respuesta pendiente del anterior.
         estado.secuencias.set(campo, (estado.secuencias.get(campo) || 0) + 1);
-        if (clave === 'email') estado.correoExistente = false;
         const cumple = mostrarLocal(form, campo);
         if (cumple && campo.value !== '' && consultanServidor.has(clave) && !sinUnicidad(form, clave)) {
             programar(form, campo);
@@ -243,7 +223,7 @@
             if (confirmacion && confirmacion.value) mostrarLocal(form, confirmacion);
         }
         // El documento y el correo forman parte de la política completa de la contraseña.
-        if (['documento', 'email', 'nombre_completo'].includes(clave)) {
+        if (['documento', 'email', 'email_administrador', 'nombre_completo'].includes(clave)) {
             const password = campoDe(form, 'password');
             if (password && password.value && reglaLocal(form, password) === null) {
                 estado.cache.delete(password);
@@ -256,7 +236,7 @@
         if (formularios.has(form)) return;
         const estado = {
             cache: new WeakMap(), secuencias: new WeakMap(), temporizadores: new Map(), origen: new WeakMap(),
-            listo: false, enviando: false, correoExistente: false,
+            listo: false, enviando: false,
         };
         formularios.set(form, estado);
         campos(form).forEach((campo, indice) => {
@@ -271,7 +251,6 @@
         form.addEventListener('reset', () => {
             estado.cache = new WeakMap();
             estado.origen = new WeakMap();
-            estado.correoExistente = false;
             campos(form).forEach(campo => aviso(campo, '', false));
         });
         form.addEventListener('submit', async evento => {

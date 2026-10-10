@@ -1,0 +1,372 @@
+<?php
+use PHPUnit\Framework\TestCase;
+require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../../models/RegistroClinica.php';
+require_once __DIR__ . '/../../controllers/RegistroClinicaController.php';
+require_once __DIR__ . '/../../controllers/AuthController.php';
+require_once __DIR__ . '/../../controllers/IdentidadController.php';
+require_once __DIR__ . '/../../helpers/Autenticador.php';
+
+/** D3: los flujos públicos y sus excepciones al aislamiento se prueban sin SMTP. */
+final class RegistroClinicaTest extends TestCase
+{
+    private PDO $db;
+    private RegistroClinica $registro;
+
+    protected function setUp(): void
+    {
+        $this->db = DosClinicas::sqlite();
+        DosClinicas::crearMascotasSqlite($this->db);
+        DosClinicas::crearCatalogosSqlite($this->db);
+        $this->db->exec("CREATE TABLE planes (id_plan INTEGER PRIMARY KEY, nombre TEXT, precio_mensual INTEGER, estado INTEGER)");
+        $this->db->exec("INSERT INTO planes VALUES (1, 'Gratuito', 0, 1)");
+        $this->db->exec('CREATE TABLE intentos_login (identificador TEXT PRIMARY KEY, intentos INTEGER, primer_intento TEXT, ultimo_intento TEXT, bloqueado_hasta TEXT)');
+        $this->db->exec("CREATE TABLE casos_soporte (id_caso INTEGER PRIMARY KEY, tipo TEXT, id_usuario INTEGER, id_clinica INTEGER, descripcion TEXT, estado TEXT DEFAULT 'abierto')");
+        $this->registro = new RegistroClinica($this->db);
+        $_SESSION = [];
+        $_POST = [];
+        $_GET = [];
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.123';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        Security::definirAlmacenDeIntentos(null);
+        Auditoria::definirProxiesConfiables([]);
+        putenv('APP_URL=http://localhost/Zooki/public');
+    }
+
+    protected function tearDown(): void
+    {
+        $_SESSION = [];
+        $_POST = [];
+        $_GET = [];
+        unset($_SERVER['REQUEST_METHOD']);
+        putenv('APP_URL');
+    }
+
+    public static function datos(int $numero = 1, array $cambios = []): array
+    {
+        $numeroNit = (string) (900123450 + $numero);
+        return $cambios + [
+            'nombre_clinica' => 'Clínica Nueva ' . $numero,
+            'nit' => $numeroNit . '-' . ValidadorNit::digito($numeroNit),
+            'direccion' => 'Carrera 10 número 20-30',
+            'telefono_clinica' => '3001112233',
+            'email_clinica' => 'clinica' . $numero . '@zooki.test',
+            'nombre_completo' => 'Olga Nueva',
+            'tipo_documento' => 'CC',
+            'documento' => (string) (1030000000 + $numero),
+            'telefono' => '3001112233',
+            'email' => 'olga' . $numero . '@zooki.test',
+            'password' => 'Huellita#Segura2026',
+            'confirm_password' => 'Huellita#Segura2026',
+            'acepta_datos' => '1',
+            'cf-turnstile-response' => 'desafio',
+        ];
+    }
+
+    private function alta(int $numero = 1, array $cambios = []): array
+    {
+        return $this->registro->registrar(self::datos($numero, $cambios), Auditoria::ipCliente());
+    }
+
+    private function activar(array $alta): int
+    {
+        return $this->registro->activar($alta['enlace']['id'], $alta['enlace']['token'], ['acepta_datos' => '1'], Auditoria::ipCliente());
+    }
+
+    private function total(string $tabla): int
+    {
+        return (int) $this->db->query('SELECT COUNT(*) FROM ' . $tabla)->fetchColumn();
+    }
+
+    public function testNuevaCuentaEsInerteYActivacionCopiaTodoSinTocarOtrasClinicas(): void
+    {
+        $alta = $this->alta();
+        $fila = $this->registro->leer($alta['enlace']['id'], $alta['enlace']['token']);
+        $id = (int) $fila['id_usuario'];
+        $usuarios = new Usuario($this->db);
+        $this->assertNull($usuarios->contextosDe($id));
+        $this->assertTrue($usuarios->verificarPassword($id, self::datos()['password']));
+        $this->assertSame(0, $this->total('tipos_cita'));
+        $clinica = $this->activar($alta);
+        foreach (['tipos_cita' => 6, 'horarios_clinica' => 7, 'vacunas_base' => 15, 'laboratorios_base' => 11, 'productos_desparasitacion_base' => 15] as $tabla => $cantidad) {
+            $this->assertSame($cantidad, $this->total($tabla), $tabla);
+            $this->assertSame($cantidad, (int) $this->db->query('SELECT COUNT(*) FROM ' . $tabla . ' WHERE id_clinica = ' . $clinica)->fetchColumn());
+        }
+        $this->assertGreaterThan(0, $this->total('especie_vacunas'));
+        $this->assertSame([Contexto::deClinica($clinica, 'Clínica Nueva 1', Roles::ADMIN)], $usuarios->contextosDe($id));
+        $this->assertSame(1, (int) $this->db->query('SELECT id_plan FROM clinicas WHERE id_clinica = ' . $clinica)->fetchColumn());
+        $this->assertNull($this->registro->leer($alta['enlace']['id'], $alta['enlace']['token']));
+        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = ' . $clinica)->fetchColumn());
+        $_SESSION = ['id_usuario' => $id];
+        Contexto::activar(Contexto::deClinica($clinica, 'Clínica Nueva 1', Roles::ADMIN), $id);
+        require_once __DIR__ . '/../../models/Mascota.php';
+        Security::definirAuditoria(new Auditoria($this->db));
+        $this->assertSame([], (new Mascota($this->db))->getAll());
+        try {
+            (new Mascota($this->db))->getById(1);
+            $this->fail('El administrador nuevo accedió a una mascota de Norte.');
+        } catch (AccesoDenegado $e) {
+            $this->assertSame(403, $e->codigo());
+        }
+        Security::definirAuditoria(null);
+    }
+
+    public function testExistenteConservaIdentidadPasswordYRolesHastaYDespuesDeConfirmar(): void
+    {
+        $antes = $this->db->query('SELECT * FROM usuarios WHERE id_usuario = 5')->fetch(PDO::FETCH_ASSOC);
+        $roles = $this->db->query('SELECT * FROM usuario_clinica WHERE id_usuario = 5')->fetchAll(PDO::FETCH_ASSOC);
+        $alta = $this->alta(1, ['email' => $antes['email'], 'documento' => '1000000001']);
+        $this->assertSame($antes, $this->db->query('SELECT * FROM usuarios WHERE id_usuario = 5')->fetch(PDO::FETCH_ASSOC));
+        $this->assertSame($roles, $this->db->query('SELECT * FROM usuario_clinica WHERE id_usuario = 5')->fetchAll(PDO::FETCH_ASSOC));
+        $this->assertSame(10, $this->total('usuarios'));
+        $clinica = $this->activar($alta);
+        $this->assertSame($antes, $this->db->query('SELECT * FROM usuarios WHERE id_usuario = 5')->fetch(PDO::FETCH_ASSOC));
+        $this->assertCount(4, (new Usuario($this->db))->contextosDe(5));
+        $this->assertSame(1, (int) $this->db->query('SELECT id_rol FROM usuario_clinica WHERE id_usuario = 5 AND id_clinica = ' . $clinica)->fetchColumn());
+    }
+
+    public function testCorreoNuevoDocumentoExistenteConfirmaAlTitularSinCrearOtraCuenta(): void
+    {
+        $persona = (new Usuario($this->db))->buscarPorId(6);
+        $alta = $this->alta(1, ['documento' => $persona['documento']]);
+        $this->assertSame('fabio@zooki.test', $alta['email']);
+        $this->assertFalse($alta['nueva']);
+        $this->activar($alta);
+        $this->assertSame(10, $this->total('usuarios'));
+        $this->assertTrue((new Usuario($this->db))->verificarPassword(6, DosClinicas::PASSWORD));
+        $this->assertCount(2, (new Usuario($this->db))->contextosDe(6));
+        $this->assertSame('ok', (new Autenticador(new Usuario($this->db), new VerificacionEmail($this->db)))->conPassword('fabio@zooki.test', DosClinicas::PASSWORD)['resultado']);
+    }
+
+    public function testFallaEnCatalogosRevierteClinicaRolConsentimientoYToken(): void
+    {
+        $alta = $this->alta();
+        $antes = $this->db->query('SELECT * FROM verificaciones_email')->fetchAll(PDO::FETCH_ASSOC);
+        $this->db->exec("CREATE TRIGGER fallo_catalogo BEFORE INSERT ON laboratorios_base BEGIN SELECT RAISE(ABORT, 'Fallo simulado'); END");
+        try {
+            $this->activar($alta);
+            $this->fail('La activación debía fallar.');
+        } catch (PDOException $e) {
+            $this->assertSame(0, $this->total('tipos_cita'));
+            $this->assertSame(0, $this->total('horarios_clinica'));
+            $this->assertSame(0, $this->total('vacunas_base'));
+            $this->assertSame($antes, $this->db->query('SELECT * FROM verificaciones_email')->fetchAll(PDO::FETCH_ASSOC));
+            $this->assertSame(1, $this->total('consentimientos_datos'));
+            $this->assertNotNull($this->registro->leer($alta['enlace']['id'], $alta['enlace']['token']));
+        }
+        $this->db->exec('DROP TRIGGER fallo_catalogo');
+        $this->assertGreaterThan(3, $this->activar($alta));
+    }
+
+    public function testLimiteTresPorDiaEIpNoSeEvadeConSesionNuevaNiConXForwardedFor(): void
+    {
+        for ($i = 1; $i <= 3; $i++) {
+            $_SESSION = [];
+            $_SERVER['HTTP_X_FORWARDED_FOR'] = '192.0.2.' . $i;
+            $this->alta($i);
+        }
+        try {
+            $this->alta(4);
+            $this->fail('Se admitió el cuarto registro.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('límite', $e->getMessage());
+            $this->assertSame(6, $this->total('clinicas'));
+        }
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.124';
+        $this->alta(4);
+        $this->assertSame(7, $this->total('clinicas'));
+        unset($_SERVER['HTTP_X_FORWARDED_FOR']);
+    }
+
+    public function testNitDuplicadoPuedeReportarseSinExponerAlAdministrador(): void
+    {
+        $this->alta();
+        try {
+            $this->alta();
+            $this->fail('NIT duplicado admitido.');
+        } catch (NitDuplicado $e) {
+            $this->assertStringContainsString('soporte', $e->getMessage());
+        }
+        $this->registro->reportarNit(self::datos());
+        $this->assertSame('clinica_duplicada', $this->db->query('SELECT tipo FROM casos_soporte')->fetchColumn());
+    }
+
+    public function testLimpiezaEliminaSoloAdministradorCreadoPorEseRegistro(): void
+    {
+        $nueva = $this->alta();
+        $existente = $this->alta(2, ['email' => 'fabio@zooki.test']);
+        $this->db->exec("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00'");
+        $this->assertNull($this->registro->leer($nueva['enlace']['id'], $nueva['enlace']['token']));
+        $this->assertSame(2, $this->registro->limpiarPendientes());
+        $this->assertSame(3, $this->total('clinicas'));
+        $this->assertSame(10, $this->total('usuarios'));
+        $this->assertTrue((new Usuario($this->db))->verificarPassword(6, DosClinicas::PASSWORD));
+        $this->assertSame(0, $this->registro->limpiarPendientes());
+    }
+
+    public function testLimpiezaPreservaAdministradorNuevoQueAdquirioOtroVinculo(): void
+    {
+        $alta = $this->alta();
+        $fila = $this->registro->leer($alta['enlace']['id'], $alta['enlace']['token']);
+        (new Usuario($this->db))->asignarRolEnClinica((int) $fila['id_usuario'], 1, Roles::VETERINARIO);
+        $this->db->exec("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00'");
+        $this->assertSame(1, $this->registro->limpiarPendientes());
+        $this->assertNotNull((new Usuario($this->db))->buscarPorId((int) $fila['id_usuario']));
+    }
+
+    public function testDosAltasPendientesDeLaMismaCuentaNoDejanIdentidadInerteHuerfana(): void
+    {
+        $nueva = $this->alta();
+        $otra = $this->alta(2, ['email' => $nueva['email']]);
+        $this->db->exec("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00'");
+        $this->assertSame(2, $this->registro->limpiarPendientes());
+        $this->assertSame(10, $this->total('usuarios'));
+        $this->assertSame(3, $this->total('clinicas'));
+    }
+
+    public function testLimpiezaRetiraClinicaVencidaAunqueOtraLimpiezaBorraraElEnlace(): void
+    {
+        $alta = $this->alta(1, ['email' => 'fabio@zooki.test']);
+        $fila = $this->registro->leer($alta['enlace']['id'], $alta['enlace']['token']);
+        $this->db->prepare("UPDATE clinicas SET fecha_registro = '2000-01-01 00:00:00' WHERE id_clinica = ?")->execute([$fila['id_clinica_vinculo']]);
+        $this->db->prepare('DELETE FROM verificaciones_email WHERE id = ?')->execute([$alta['enlace']['id']]);
+        $this->assertSame(1, $this->registro->limpiarPendientes());
+        $this->assertSame(10, $this->total('usuarios'));
+        $this->assertSame(3, $this->total('clinicas'));
+    }
+
+    public function testGetNoActivaYPostSinCsrfNoActiva(): void
+    {
+        $alta = $this->alta();
+        $_GET = $alta['enlace'];
+        $_GET['token'] = $alta['enlace']['token'];
+        $controller = new RegistroClinicaController($this->db);
+        ob_start();
+        $controller->activar();
+        $html = ob_get_clean();
+        $this->assertStringContainsString('Confirmar y activar', $html);
+        $this->assertSame(0, $this->total('tipos_cita'));
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = $alta['enlace'] + ['acepta_datos' => '1'];
+        ob_start();
+        $controller->activar();
+        ob_end_clean();
+        $this->assertSame(0, $this->total('tipos_cita'));
+        $this->expectException(AccesoDenegado::class);
+        Security::autorizar('activar_clinica');
+    }
+
+    public function testTokenUsadoVencidoOTergiversadoNoActiva(): void
+    {
+        $alta = $this->alta();
+        $this->assertNull($this->registro->leer($alta['enlace']['id'], 'otro'));
+        $this->activar($alta);
+        $this->expectException(InvalidArgumentException::class);
+        $this->activar($alta);
+    }
+
+    public function testActivacionSinConsentimientoOVencidaNoModificaDatos(): void
+    {
+        $alta = $this->alta();
+        foreach ([false, true] as $vencer) {
+            if ($vencer) {
+                $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$alta['enlace']['id']]);
+            }
+            try {
+                $this->registro->activar($alta['enlace']['id'], $alta['enlace']['token'], ['acepta_datos' => $vencer ? '1' : '0'], '192.0.2.1');
+                $this->fail('Se activó sin consentimiento o con un enlace vencido.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame(0, $this->total('tipos_cita'));
+                $this->assertSame(1, $this->total('consentimientos_datos'));
+            }
+        }
+    }
+
+    public function testSinConsentimientoNoSeCreaNada(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        try {
+            $this->alta(1, ['acepta_datos' => '0']);
+        } finally {
+            $this->assertSame(3, $this->total('clinicas'));
+            $this->assertSame(10, $this->total('usuarios'));
+        }
+    }
+
+    public function testCaptchaYRespuestaPublicaIdenticaConCorreoNuevoOExistente(): void
+    {
+        $correo = new class {
+            public array $enviados = [];
+            public function limpiarDirecciones(): void {}
+            public function obtenerPlantillaBaseHTML(...$datos): string { return implode('|', $datos); }
+            public function enviarCorreoPersonalizado(...$datos): bool
+            {
+                $this->enviados[] = $datos;
+                return true;
+            }
+        };
+        $controller = new RegistroClinicaController($this->db, $correo, new Turnstile(fn ($token) => $token === 'desafio'));
+        $sin = $controller->registrar(self::datos(1, ['cf-turnstile-response' => '']), '192.0.2.1');
+        $mal = $controller->registrar(self::datos(1, ['cf-turnstile-response' => 'falso']), '192.0.2.1');
+        $this->assertSame($sin, $mal);
+        $this->assertFalse($sin['success']);
+        $this->assertSame(3, $this->total('clinicas'));
+        $nueva = $controller->registrar(self::datos(), '192.0.2.1');
+        $existente = $controller->registrar(self::datos(2, ['email' => 'fabio@zooki.test']), '192.0.2.1');
+        $this->assertSame(['success' => true, 'message' => RegistroClinica::MENSAJE], $nueva);
+        $this->assertSame($nueva, $existente);
+        $this->assertCount(2, $correo->enviados);
+        $this->assertStringContainsString('Confirma que quieres registrar', $correo->enviados[1][2]);
+    }
+
+    public function testD3AyudaConYSinSesionRespondeSoloFormato(): void
+    {
+        foreach ([[], ['id_usuario' => 6]] as $sesion) {
+            $respuestas = [];
+            foreach (['fabio@zooki.test', 'desconocido@zooki.test'] as $email) {
+                $_SESSION = $sesion + ['csrf_cuenta_validacion' => 'validacion'];
+                $_POST = ['cuenta_csrf' => 'validacion', 'campo' => 'email', 'valor' => $email];
+                $_SERVER['REQUEST_METHOD'] = 'POST';
+                ob_start();
+                (new IdentidadController($this->db))->validar();
+                $respuestas[] = json_decode(ob_get_clean(), true);
+            }
+            $this->assertSame($respuestas[0], $respuestas[1]);
+            $this->assertSame(['success' => true, 'error' => null], $respuestas[0]);
+        }
+    }
+
+    public function testD3AutorregistroPropietarioExigeCaptchaYNoRevelaExistencia(): void
+    {
+        $correo = new class {
+            public array $enviados = [];
+            public function limpiarDirecciones(): void {}
+            public function enviarCorreoVerificacion(...$datos): bool
+            {
+                $this->enviados[] = $datos;
+                return true;
+            }
+            public function enviarCorreoPersonalizado(...$datos): bool
+            {
+                $this->enviados[] = $datos;
+                return true;
+            }
+        };
+        $controller = new AuthController($this->db, $correo, new Turnstile(fn ($token) => $token === 'desafio'));
+        $datos = self::datos() + ['id_clinica' => '2'];
+        $antes = $this->total('usuarios');
+        foreach (['', 'falso'] as $token) {
+            $datos['cf-turnstile-response'] = $token;
+            $this->assertFalse($controller->registrarPropietario($datos, '192.0.2.99')['success']);
+            $this->assertSame($antes, $this->total('usuarios'));
+        }
+        $datos['cf-turnstile-response'] = 'desafio';
+        $nuevo = $controller->registrarPropietario($datos, '192.0.2.99');
+        $datos['email'] = 'fabio@zooki.test';
+        $existente = $controller->registrarPropietario($datos, '192.0.2.99');
+        $this->assertSame($nuevo, $existente);
+        $this->assertTrue($nuevo['success']);
+        $this->assertCount(2, $correo->enviados);
+        $this->assertArrayNotHasKey('registro_pendiente', $_SESSION);
+    }
+}

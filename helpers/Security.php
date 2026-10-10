@@ -24,7 +24,7 @@ class Security {
         'procesar_reset_password_ajax', 'register', 'process_register', 'verificar_email', 'estado_verificacion_ajax',
         'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax',
         'confirmar_vinculo_propietario', 'activar_personal', 'confirmar_cambio_correo', 'validar_cuenta_ajax',
-        'invitacion_personal',
+        'invitacion_personal', 'registro_clinica', 'registrar_clinica_ajax', 'activar_clinica', 'reportar_nit_ajax',
     ];
 
     /**
@@ -109,7 +109,7 @@ class Security {
     public static function autorizar(string $action): void {
         // Las acciones publicas no exigen sesion, contexto ni rol.
         if (in_array($action, self::$publicActions, true)) {
-            if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'confirmar_cambio_correo', 'invitacion_personal'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'confirmar_cambio_correo', 'invitacion_personal', 'registrar_clinica_ajax', 'activar_clinica', 'reportar_nit_ajax'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 require_once __DIR__ . '/Csrf.php';
                 if (!Csrf::validate()) throw new AccesoDenegado(403,'La sesión del formulario venció. Abre de nuevo el enlace.');
             }
@@ -642,7 +642,7 @@ class Security {
 
     /** Punto de inyeccion para las pruebas. */
     public static function definirAlmacenDeIntentos($almacen): void {
-        self::$almacenIntentos = $almacen;
+        self::$almacenIntentos = $almacen === false && defined('ZOOKI_PRUEBAS') ? null : $almacen;
     }
 
     private static function isAjax(): bool {

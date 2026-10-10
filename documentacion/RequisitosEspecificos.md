@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.1** · 419 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.1** · 420 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
@@ -15,13 +15,13 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-0.1.1 | El sistema debe ofrecer un formulario público con los datos de la clínica y del administrador inicial. | Funcional | Se capturan ambos conjuntos de datos. | Alta |
-| RE-0.1.2 | El sistema debe validar el formato y la unicidad del correo y el NIT. | Validación | Un correo o NIT ya registrado se rechaza; ante un NIT ya registrado se ofrece reportarlo, lo que crea un caso de soporte. | Alta |
+| RE-0.1.2 | El sistema debe validar el formato del correo y la unicidad del NIT, sin duplicar identidades ni revelar si una cuenta existe. | Validación | NIT duplicado se rechaza y permite reportarlo a soporte. La respuesta pública es «Revisa tu correo para activar la clínica»: correo existente confirma con su titular conservando identidad, contraseña y roles; si el correo es nuevo y el documento existe, confirma el titular del documento. Si correo y documento son de personas distintas, prevalece el correo. | Alta |
 | RE-0.1.3 | El sistema debe validar el NIT con el algoritmo del dígito de verificación de la DIAN. | Validación | Un NIT con dígito de verificación incorrecto se rechaza; uno válido se acepta. | Alta |
 | RE-0.1.4 | El formulario público debe exigir superar una verificación anti-bot (CAPTCHA) validada en el servidor. | Seguridad | Un envío sin token anti-bot válido se rechaza aunque los datos sean correctos. | Alta |
 | RE-0.1.5 | El sistema debe rechazar correos de dominios desechables según una lista mantenida. | Validación | Un correo de un dominio de la lista se rechaza con un mensaje claro. | Media |
 | RE-0.1.6 | El sistema debe admitir como máximo 3 registros de clínicas por día desde una misma IP. | Seguridad | El cuarto registro del día desde la misma IP se rechaza indicando que lo intente más tarde. | Media |
-| RE-0.1.7 | El sistema debe crear la clínica en estado «pendiente de verificación» con su usuario administrador. | Funcional | La clínica queda pendiente y no opera. | Alta |
-| RE-0.1.8 | El sistema debe enviar un correo de verificación con un enlace temporal. | Funcional | Llega el correo con el enlace. | Alta |
+| RE-0.1.7 | El sistema debe crear la clínica en estado «pendiente de verificación» con su usuario administrador. | Funcional | La clínica queda pendiente y no opera. Una identidad nueva se crea inactiva con contraseña cifrada; una preexistente se conserva y solo recibe el rol al confirmar. | Alta |
+| RE-0.1.8 | El sistema debe enviar un correo de verificación con un enlace temporal. | Funcional | El titular recibe un enlace de confirmación de 24 horas; la respuesta pública conserva el mismo texto y estructura para cuentas nuevas y preexistentes. | Alta |
 | RE-0.1.9 | El sistema debe registrar el alta en auditoría. | Seguridad | La creación queda en auditoría. | Media |
 | RE-0.1.10 | El registro de clínicas no debe ofrecer Google y debe exigir aceptar la política de tratamiento de datos. | Restricción | El formulario no muestra la opción de Google; sin aceptar la política, el registro se rechaza. | Alta |
 
@@ -33,7 +33,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 |---|---|---|---|---|
 | RE-0.2.1 | El enlace de verificación debe vencer a las 24 horas. | Seguridad | Un enlace usado después de 24 horas se rechaza. | Alta |
 | RE-0.2.2 | Al verificar, el sistema debe activar la clínica, asignar el plan gratuito y habilitar el rol administrador. | Funcional | La clínica queda activa con plan gratuito. | Alta |
-| RE-0.2.3 | Si el plazo expira, el sistema debe eliminar el registro pendiente. | Funcional | La clínica pendiente se elimina. | Media |
+| RE-0.2.3 | Si el plazo expira, el sistema debe eliminar el registro pendiente. | Funcional | La clínica pendiente se elimina; su cuenta nueva solo sin otros vínculos, nunca una preexistente. | Media |
 | RE-0.2.4 | Tras activar, el administrador debe iniciar sesión acotado a su id_clinica. | Funcional | Entra al ámbito de su clínica. | Alta |
 | RE-0.2.5 | Al activar la clínica, el sistema debe copiarle en la misma transacción los catálogos iniciales por defecto: tipos de cita, horarios de atención, vacunas base con su relación por especie, laboratorios y productos de desparasitación. | Funcional | Una clínica recién activada tiene 6 tipos de cita, 7 días de horario, 15 vacunas base con su relación por especie, 11 laboratorios y 15 productos, todos con su `id_clinica`; si la activación falla no queda ninguna copia parcial, y los catálogos de las demás clínicas no cambian. | Alta |
 
@@ -221,7 +221,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-T.13.1 | El sistema debe contar los intentos del lado servidor por IP/cuenta. | Seguridad | El límite no se evade descartando la cookie. | Media |
-| RE-T.13.2 | El sistema no debe revelar la existencia de documentos/correos. | Seguridad | No se puede enumerar cuentas por estas consultas. | Media |
+| RE-T.13.2 | El sistema no debe revelar la existencia de documentos/correos. | Seguridad | Las ayudas con o sin sesión validan solo formato y nunca devuelven existencia. El registro responde igual con correo nuevo o existente; Datos de acceso no identifica al titular de otra cuenta ni confirma su existencia. | Media |
 | RE-T.13.3 | El sistema debe mostrar errores genéricos al cliente. | Seguridad | El cliente no recibe detalles técnicos del error. | Media |
 | RE-T.13.4 | Tras 20 intentos fallidos en 15 minutos desde una IP, el sistema debe bloquear temporalmente esa IP con un mensaje genérico. La IP es la real del cliente, también detrás del proxy. | Seguridad | El intento 21 desde la IP dentro de la ventana se rechaza aunque la contraseña sea correcta; un acceso correcto no reinicia el contador de la IP; el mensaje no revela si la cuenta existe. | Alta |
 | RE-T.13.5 | _(v2.0)_ Tras 5 intentos fallidos sobre una misma cuenta, el sistema debe exigir el CAPTCHA en lugar de bloquear la cuenta. | Seguridad | Desde otra IP, el titular entra con su contraseña correcta superando el CAPTCHA; sin CAPTCHA válido el intento se rechaza. | Alta |
@@ -854,9 +854,10 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 |---|---|---|---|---|
 | RE-5.8.1 | El sistema debe permitir el registro por tres vías, siempre en el contexto de una clínica. | Funcional | Un propietario puede registrarse por cada una de las tres vías y queda vinculado a la clínica de esa vía. | Alta |
 | RE-5.8.2 | El correo debe ser único en la plataforma; si ya existe, no se duplica la identidad. | Restricción | Registrar un correo que ya existe no crea otra cuenta: tras verificar al dueño, liga la cuenta existente a la nueva clínica. | Alta |
-| RE-5.8.3 | Si el correo ya existe, el sistema debe verificar que es el dueño y ligarlo a la clínica. | Seguridad | Se liga previa verificación del dueño. | Alta |
+| RE-5.8.3 | Si el correo ya existe, el sistema debe verificar que es el dueño y ligarlo a la clínica. | Seguridad | Se liga previa verificación del dueño; el autorregistro responde igual sin revelar existencia. Si el correo es nuevo y el documento ya pertenece a una cuenta, la confirmación se dirige al correo registrado de su titular. | Alta |
 | RE-5.8.4 | En un registro nuevo, el sistema debe crear la identidad, ligarla, verificar el correo y enviar el enlace de acceso y el QR del portal. | Funcional | Se activa y recibe acceso y QR. | Alta |
 | RE-5.8.5 | Cada clínica debe ver solo sus propietarios; el alta queda en auditoría. | Seguridad | La clínica B no ve a un propietario vinculado solo a la clínica A; el alta queda en auditoría. | Alta |
+| RE-5.8.6 | El autorregistro del propietario por formulario debe verificar Turnstile en el servidor. | Seguridad | Un token ausente o inválido no crea ni vincula cuentas; un token válido permite seguir el registro y la respuesta no revela si la identidad existe. | Alta |
 
 **Reglas de negocio:** RN-109, RN-G06
 
@@ -1190,7 +1191,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | HU-5.5 | RN-206, RN-G02, RN-114 | RE-5.5.1, RE-5.5.2, RE-5.5.3 |
 | HU-5.6 | RN-405, RN-401, RN-G02 | RE-5.6.1, RE-5.6.2, RE-5.6.3, RE-5.6.4 |
 | HU-5.7 | RN-G02 | RE-5.7.1, RE-5.7.2, RE-5.7.3, RE-5.7.4 |
-| HU-5.8 | RN-109, RN-G06 | RE-5.8.1, RE-5.8.2, RE-5.8.3, RE-5.8.4, RE-5.8.5 |
+| HU-5.8 | RN-109, RN-G06 | RE-5.8.1, RE-5.8.2, RE-5.8.3, RE-5.8.4, RE-5.8.5, RE-5.8.6 |
 | HU-5.9 | RN-109, RN-114, RN-G13 | RE-5.9.1, RE-5.9.2, RE-5.9.3, RE-5.9.4 |
 | HU-5.10 | RN-110, RN-502, RN-503 | RE-5.10.1, RE-5.10.2, RE-5.10.3, RE-5.10.4, RE-5.10.5 |
 | HU-5.11 | RN-502, RN-503, RN-504, RN-505 | RE-5.11.1, RE-5.11.2, RE-5.11.3, RE-5.11.4, RE-5.11.5, RE-5.11.6 |

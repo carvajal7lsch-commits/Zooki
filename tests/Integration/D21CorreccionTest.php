@@ -202,13 +202,13 @@ final class D21CorreccionTest extends TestCase
         $this->assertSame(200, $this->comprobar('documento', '1000077777')['codigo']);
     }
 
-    public function testLaUnicidadRespondeExisteParaQueElAvisoNombreElCampo(): void
+    public function testLaAyudaNoRespondeExistenciaDeCorreoODocumento(): void
     {
         $_SESSION = ['id_usuario' => DosClinicas::PROPIETARIO];
-        $this->assertTrue($this->comprobar('email', 'ana@zooki.test')['datos']['exists']);
-        $this->assertTrue($this->comprobar('documento', '1000000001')['datos']['exists']);
+        $this->assertArrayNotHasKey('exists', $this->comprobar('email', 'ana@zooki.test')['datos']);
+        $this->assertArrayNotHasKey('exists', $this->comprobar('documento', '1000000001')['datos']);
         $js = file_get_contents(__DIR__ . '/../../public/js/validacion-cuenta.js');
-        $this->assertStringContainsString("NOMBRES_UNICOS = { documento: 'documento', email: 'correo' }", $js);
+        $this->assertStringNotContainsString('resultado.exists', $js);
         $this->assertStringNotContainsString('Este dato ya está registrado', $js);
     }
 

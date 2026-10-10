@@ -115,14 +115,13 @@ test('la contraseña reutiliza su ayuda y restaura los requisitos cuando desapar
     assert.equal(ayuda.textContent, 'Mínimo 8 caracteres.');
 });
 
-test('documento duplicado impide enviar el formulario', async () => {
+test('D3: una respuesta heredada de existencia no bloquea ni revela identidades', async () => {
     const p = pagina(['documento'], () => respuesta({ exists: true }));
     p.campos[0].value = '1000011111';
-    let bloqueado = false;
-    await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() { bloqueado = true; } });
-    assert.equal(bloqueado, true);
-    assert.equal(p.form.enviado, undefined);
-    assert.equal(p.campos[0].error, 'Este documento ya está registrado.');
+    await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() {} });
+    p.temporizadores.at(-1)();
+    assert.equal(p.form.enviado, true);
+    assert.equal(p.campos[0].error, '');
 });
 
 test('D2.2: el alta de personal no pregunta al servidor si el documento o el correo tienen cuenta', async () => {
@@ -149,22 +148,22 @@ test('D2.2: el formato sigue validándose en el alta de personal', async () => {
     assert.equal(p.llamadas.length, 0);
 });
 
-test('una edición de personal sí comprueba la unicidad del documento', async () => {
+test('una edición de personal solo comprueba el formato del documento', async () => {
     const p = pagina(['documento'], () => respuesta({ exists: true }));
     p.form.dataset.cuentaUnicidad = 'solo-edicion';
     p.form.elements.id_usuario = { value: '2' };
     p.campos[0].value = '1000011111';
-    assert.equal(await p.api.comprobar(p.form, p.campos[0]), false);
+    assert.equal(await p.api.comprobar(p.form, p.campos[0]), true);
 });
 
-test('registro con documento existente y correo nuevo se rechaza', async () => {
+test('registro no consulta existencia de documento al escribir', async () => {
     const p = pagina(['documento', 'email'], datos => respuesta({ exists: datos.get('campo') === 'documento' }));
     p.form.dataset.cuentaVincular = 'correo';
     p.campos[0].value = '1000011111';
     p.campos[1].value = 'nuevo@zooki.test';
     await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() {} });
     assert.equal(p.form.enviado, undefined);
-    assert.equal(p.campos[0].error, 'Este documento ya está registrado.');
+    assert.equal(p.campos[0].error, '');
 });
 
 test('registro con correo existente permite solicitar su vínculo', async () => {
@@ -185,7 +184,7 @@ test('el titular puede enviar documento duplicado para abrir soporte tras verifi
     p.form.dataset.identidadAccion = 'cambiar_documento_ajax';
     p.campos[0].value = '1000011111';
     assert.equal(await p.api.comprobar(p.form, p.campos[0]), true);
-    assert.match(p.campos[0].salidas[0].textContent, /soporte/);
+    assert.equal(p.campos[0].salidas[0].textContent, '');
 });
 
 test('no se envía con validación pendiente o sin conexión', async () => {

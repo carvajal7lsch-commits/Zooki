@@ -9,6 +9,7 @@ require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/Security.php';
 require_once __DIR__ . '/../helpers/ValidadorCuenta.php';
+require_once __DIR__ . '/../helpers/ValidadorClinica.php';
 
 final class IdentidadController
 {
@@ -34,9 +35,11 @@ final class IdentidadController
         $this->json(function (): array {
             EnlaceCuenta::base();
             $solicitud = $this->cuenta->solicitarCorreo((int) Contexto::idUsuario(), $_POST);
-            $url = EnlaceCuenta::crear('confirmar_cambio_correo', $solicitud['enlace']['id'], $solicitud['enlace']['token']);
-            $enviado = $this->enviar($solicitud['email'], $solicitud['nombre'], 'Confirma tu nuevo correo', 'El correo anterior sigue vigente hasta confirmar este cambio. El enlace vence en 24 horas.', $url);
-            return ['success' => $enviado, 'message' => $enviado ? 'Revisa el correo nuevo para confirmar el cambio.' : 'No se pudo enviar el correo. Tu dirección anterior sigue vigente; puedes reintentar.'];
+            if ($solicitud !== null) {
+                $url = EnlaceCuenta::crear('confirmar_cambio_correo', $solicitud['enlace']['id'], $solicitud['enlace']['token']);
+                $this->enviar($solicitud['email'], $solicitud['nombre'], 'Confirma tu nuevo correo', 'El correo anterior sigue vigente hasta confirmar este cambio. El enlace vence en 24 horas.', $url);
+            }
+            return ['success' => true, 'message' => 'Si la solicitud puede completarse, recibirás un enlace de confirmación. Tu correo actual sigue vigente.'];
         });
     }
 
@@ -154,6 +157,9 @@ final class IdentidadController
                 $persona = $usuarios->buscarPorId((int) $fila['id_usuario']);
             }
         }
+        if (($_POST['solo_formulario'] ?? '') === '1') {
+            $persona = null;
+        }
         $datosPersonales = [$persona['documento'] ?? '', $persona['nombre_completo'] ?? '', $persona['email'] ?? '',
             (string) ($_POST['documento'] ?? ''), (string) ($_POST['nombre_completo'] ?? ''), (string) ($_POST['email'] ?? '')];
         $error = match ($campo) {
@@ -162,19 +168,17 @@ final class IdentidadController
             'telefono' => ValidadorCuenta::telefono($valor),
             'nombre_completo' => ValidadorCuenta::nombre($valor),
             'password' => PoliticaPassword::validar($valor, $datosPersonales),
+            'nit', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador' => ValidadorClinica::campo($campo, $valor),
             default => 'Campo no válido.',
         };
-        $existe = false;
-        if ($error === null && in_array($campo, ['documento', 'email'], true)) {
-            // D2.1: con sesión se cuenta por persona (120); sin sesión, por IP (20).
-            if (!Security::checkVerificationLimit(Contexto::idUsuario())) {
-                http_response_code(429);
-                echo json_encode(['success' => false, 'message' => 'Espera un momento antes de seguir comprobando.']);
-                return;
-            }
-            $existe = $campo === 'email' ? $usuarios->existeEmail(trim($valor), $id) : $usuarios->existeDocumento(trim($valor), $id);
+        // RE-T.13.2: nunca se consulta la existencia de la identidad al escribir.
+        if ($error === null && in_array($campo, ['documento', 'email', 'email_administrador', 'email_clinica'], true)
+            && !Security::checkVerificationLimit(Contexto::idUsuario())) {
+            http_response_code(429);
+            echo json_encode(['success' => false, 'message' => 'Espera un momento antes de seguir comprobando.']);
+            return;
         }
-        echo json_encode(['success' => true, 'error' => $error, 'exists' => $existe]);
+        echo json_encode(['success' => true, 'error' => $error]);
     }
 
     private function json(callable $operacion): void
