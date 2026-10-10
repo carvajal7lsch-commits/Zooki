@@ -1821,3 +1821,21 @@ Pendientes: revisión de Claude y prueba visual del usuario. Gestión de casos, 
 ### D3.1 — Revisión (2026-10-10)
 
 **Resultado: aprobada** (código; la pantalla la confirma el usuario). Claude revisó el anexo y el diff (commit `391c73d`). PHP en una copia sin `.env`: 532 pruebas, 2785 aserciones, 25 saltadas de MySQL. JS: 68 en verde. `registro_clinica.php` usa la misma cabecera (`cabecera_acceso.php`) y la estructura del login (`login-container`, `login-form-area`, `login-hero`); los atributos de restricción salen de los validadores del servidor (`ValidadorCuenta`, `ValidadorClinica`, `ValidadorTelefono`), así el HTML, el JS y el servidor usan el mismo límite. Modelos §12.1 no cambia.
+
+
+## E — Alcance (propuesta, 2026-10-10)
+
+Se parte en **E1** (panel del super-administrador, HU-0.3 sin RE-0.3.6) y **E2** (límites del plan, HU-0.4).
+
+**Decisiones del usuario (2026-10-10).**
+
+1. El super-administrador **no** accede a historias, consultas ni pacientes de una clínica, ni siquiera «para soporte»: el panel solo muestra datos de la clínica, su plan y su suscripción (RE-0.3.3 se ajusta sin subir revisión).
+2. «Citas por mes» cuenta las citas con fecha en ese mes calendario, sin las canceladas. Las urgencias rojas nunca se bloquean (RN-420), pero sí cuentan.
+3. Cada subetapa deja al usuario solo 3 a 5 pruebas de navegador, las de lo nuevo y riesgoso (`metodo.md` §3).
+4. El NIT se pide en dos casillas: «NIT» (solo números) y «DV» (un dígito, «está en tu RUT después del guion»). Hoy, sin guion, el último dígito se toma como DV y una cédula puede pasar por casualidad.
+
+**Pendiente de confirmar:** los valores del plan gratuito (hoy RN-005/RE-0.4.7: 5 mascotas, 30 citas por mes y 2 cuentas de personal) y que vivan en la tabla `planes` (sin números fijos en el código) para cambiarlos sin programar.
+
+**También en E1:** casos de soporte (NIT y documento duplicados: ver y marcar resuelto), IP bloqueadas con «Desbloquear» y «Enviar aviso» (decisiones del 2026-10-09), límite por IP para `reportar_nit` y los hallazgos menores de D3.
+
+**Decisiones del usuario sobre el plan gratuito (2026-10-10).** 2 cuentas de personal y 50 mascotas vinculadas; las citas por mes suben de 30 (valor pendiente; propuesta del arquitecto: 100). Los propietarios no tienen límite. Los límites ya viven en `planes` (`limite_mascotas`, `limite_citas_mes`, `limite_personal`; NULL = sin límite): E2 los ajusta con una migración que solo cambie el plan Gratuito si conserva los valores anteriores, y actualiza RN-005 y RE-0.4.7. Los precios no se tocan por ahora.

@@ -25,7 +25,7 @@ Un mismo agente puede ser arquitecto en una sesión y ejecutor en otra, pero nun
 3. **Prompt** (arquitecto): con la plantilla de la sección 5. El usuario lo pega en el ejecutor.
 4. **Implementación** (ejecutor): sigue `AGENTS.md`, escribe pruebas, verifica, agrega al plan un «Anexo Xn — Resultado» y marca la subetapa en [`estado.md`](estado.md) como «entregada, pendiente de revisión». Si algo no cuadra, pregunta al usuario antes de decidir.
 5. **Revisión** (arquitecto): con la lista de la sección 6. Escribe «### Xn — Revisión (fecha)» en el plan.
-6. **Lista de prueba manual** (arquitecto): concreta, por usuario de prueba y con casillas ([`prueba-manual.md`](prueba-manual.md)).
+6. **Lista de prueba manual** (arquitecto): **solo 3 a 5 pruebas**, las de lo nuevo y riesgoso, sin repetir lo ya probado (decisión del usuario, 2026-10-10); concreta, por usuario de prueba y con casillas ([`prueba-manual.md`](prueba-manual.md)).
 7. **Prueba del usuario** en el navegador, en escritorio y celular.
 8. **Hallazgos clasificados** (sección 7) y anotados en el plan o en `specs/pulido-interfaz.md`.
 9. **Commit** (usuario) con los comandos del ejecutor, **antes** de pegar el siguiente prompt. Si se mezclan dos subetapas en un commit, se deja así y se explica en el mensaje del siguiente; no se reescribe el historial publicado.
