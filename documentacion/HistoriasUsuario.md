@@ -1,12 +1,14 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 3.1** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
+> **Revisión 3.2** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
 Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) → Requisito específico (RE)**. Origen: `ZOOK-xx` (backlog Jira), `Nuevo` (funcionalidad existente ya documentada), `VD-xxx` (derivada del análisis de vacíos), `Deseable` (propuesta aún no construida), `v2` (derivada de los modelos de proceso de la Fase 2).
 
-Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir, asignada a v2.0 o v2.1 según el plan de entregas. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma según el plan de entregas.
+Estado **Implementada (2.0.0-alpha.N)**: historia de la v2 terminada y probada en esa versión de la plataforma. Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir, asignada a v2.0 o v2.1 según el plan de entregas. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma según el plan de entregas.
+
+_La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1, que cierra el módulo 0 (plataforma, identidad y aislamiento): HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8, HU-0.1, HU-0.2, HU-0.3 y HU-0.4 pasan a «Implementada (2.0.0-alpha.1)»; el alta de personal invita a la persona y solo la vincula si acepta (HU-T.7); los topes del plan gratuito quedan en 2 cuentas de personal, 50 mascotas vinculadas y 100 citas al mes (HU-0.4); la moderación de reseñas de HU-0.3 y la regla de no calificarse a sí mismo de HU-T.17 se entregan en la v2.1 con HU-8.1, la revocación de HU-T.19 con HU-5.14, el QR del portal de HU-5.8 con el carnet QR del módulo 5 y la clasificación de la urgencia de HU-0.4 con el triage. Las historias de otros módulos que M0 dejó construidas en parte (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10) se cierran con su módulo._
 
 **Índice de módulos:**
 
@@ -32,7 +34,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 8 pts | v2 |
 
 > Como responsable de una clínica, quiero registrar mi clínica de forma autónoma para empezar a usar Zooki sin depender de una gestión manual.
 
@@ -52,7 +54,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 3 pts | v2 |
 
 > Como administrador inicial de una clínica recién registrada, quiero confirmar mi correo para activar la clínica y poder operar.
 
@@ -71,7 +73,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 8 pts | v2 |
 
 > Como super-administrador, quiero gestionar las clínicas, sus planes y sus suscripciones desde un panel para administrar la plataforma sin entrar en los datos clínicos de cada clínica.
 
@@ -84,7 +86,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo y confirmando la acción; puede reactivar una suspendida con motivo. El personal pierde el contexto suspendido o dado de baja en la siguiente petición.
 - Lista casos de soporte y los cierra como resueltos o descartados con nota auditada, sin enlaces a datos clínicos (RN-010).
 - Lista IP bloqueadas vigentes, su vencimiento y las cuentas que fallaron en la ventana con sus clínicas. Permite desbloquear con confirmación y auditoría. El aviso por correo solo se envía cuando el super-administrador elige al administrador de una clínica asociada, revisa o edita el texto y confirma el envío; nunca es automático (RN-G15).
-- Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo.
+- Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo. _Este criterio (RE-0.3.6) se entrega en la v2.1 junto con HU-8.1, porque en la v2.0 todavía no hay reseñas; el resto de la historia está en 2.0.0-alpha.1._
 - Toda acción queda registrada en auditoría.
 
 **Reglas de negocio:** RN-004, RN-010, RN-012, RN-804, RN-G13, RN-G14, RN-G15 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5 · **Dependencias:** —
@@ -93,7 +95,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 5 pts | v2 |
 
 > Como clínica, quiero que al crear mascotas, citas o usuarios se respete el límite de mi plan para operar dentro de lo contratado y saber cuándo conviene mejorarlo.
 
@@ -411,7 +413,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Implementada | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 8 pts | v2 |
 
 > Como plataforma, quiero que cada sesión quede confinada a su clínica y exista un rol super-administrador por encima para que ninguna clínica vea ni altere datos de otra.
 
@@ -431,7 +433,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Planificada (v2) | 3 pts | v2 |
+| Media | Implementada (2.0.0-alpha.1) | 3 pts | v2 |
 
 > Como usuario, quiero que mi sesión se cierre sola si la dejo abierta sin usar para que nadie use mi cuenta en un equipo compartido de la clínica.
 
@@ -448,7 +450,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 5 pts | v2 |
 
 > Como veterinario que también tiene mascota, o que trabaja en dos clínicas, quiero entrar con una sola cuenta y elegir en qué papel entro para no manejar varias cuentas ni mezclar permisos.
 
@@ -484,7 +486,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 3 pts | v2 |
 
 > Como titular de datos, quiero aceptar de forma expresa la política de tratamiento de datos al registrarme para saber qué se hace con mi información, como exige la Ley 1581 de 2012.
 
@@ -1465,7 +1467,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 8 pts | v2 |
 
 > Como propietario, quiero una sola cuenta en la plataforma que sirva para las clínicas donde atiendo a mis mascotas para no repetir registros ni manejar varias contraseñas.
 
@@ -1921,6 +1923,8 @@ Todo lo especificado en este documento es alcance de la v2 (salvo lo marcado com
 Dentro de cada entrega, la tabla sigue las dependencias principales: primero el aislamiento y la identidad, después las funciones que los usan. Las historias v1.x que ya funcionan se migran por completo cuando una historia v2 las toca.
 
 ### Entrega v2.0 — imprescindible para la presentación (28 historias, 159 puntos)
+
+_Avance: la versión 2.0.0-alpha.1 cierra las nueve primeras (módulo 0, 51 puntos). Cada módulo siguiente publica la alfa siguiente; la versión 2.0.0 sale cuando estén las 28._
 
 | Historia | Título | Puntos |
 |---|---|---|

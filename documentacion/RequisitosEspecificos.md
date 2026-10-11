@@ -1,12 +1,14 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.1** · 420 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.2** · 420 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
 **Tipos de requisito:** `Funcional` (lo que el sistema hace), `Validación` (datos de entrada), `Restricción` (límites y reglas que el sistema hace cumplir), `Seguridad` (autenticación, autorización, privacidad y auditoría), `Cálculo` (valores derivados), `Integración` (servicios externos), `Usabilidad`, `Rendimiento`, `Confiabilidad` (reintentos, concurrencia e integridad de datos) y `Verificación` (cómo se comprueba un conjunto de requisitos).
 
 **Criterio de aceptación:** describe una prueba concreta, con su entrada y el resultado esperado, que permite decir si el requisito se cumple.
+
+_La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1: los requisitos de las historias del módulo 0 (HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8 y HU-0.1 a HU-0.4) quedan verificados con pruebas automáticas; su evidencia está en el plan del módulo (`specs/M0-T-base-saas-identidad.md`, §2). Quedan fuera, con su nota en la fila: RE-0.3.6 y RE-T.17.4 (v2.1, con HU-8.1), RE-T.19.4 (v2.1, con HU-5.14), el QR de RE-5.8.4 (módulo 5) y la clasificación de la urgencia de RE-0.4.6 (triage, módulos 2 y 4)._
 
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0)*
 
@@ -48,7 +50,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | RE-0.3.3 | El super-administrador no debe acceder a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte. | Seguridad | El panel solo muestra metadatos de plataforma y las acciones clínicas responden 403 al contexto de plataforma. | Alta |
 | RE-0.3.4 | El super-administrador debe operar como rol de plataforma, no filtrado por una sola id_clinica. | Seguridad | Opera sobre los metadatos de todas las clínicas, los casos de soporte y las IP bloqueadas; ninguna acción del panel se permite a otro rol. | Alta |
 | RE-0.3.5 | El super-administrador debe poder suspender o dar de baja una clínica indicando el motivo y confirmar la acción; reactivar una suspendida exige motivo. | Funcional | Suspendida o dada de baja no opera ni se ofrece para registro o agenda; su personal pierde el contexto en la siguiente petición. Reactivar una suspendida devuelve el contexto disponible. Todo queda en auditoría y ningún cambio sin motivo se aplica. | Media |
-| RE-0.3.6 | El super-administrador debe poder ocultar una reseña por moderación indicando el motivo. | Funcional | La reseña oculta no se muestra ni cuenta en el promedio; el motivo queda en auditoría. | Media |
+| RE-0.3.6 | El super-administrador debe poder ocultar una reseña por moderación indicando el motivo. _Se entrega en la v2.1 con HU-8.1: en la v2.0 aún no hay reseñas._ | Funcional | La reseña oculta no se muestra ni cuenta en el promedio; el motivo queda en auditoría. | Media |
 
 **Reglas de negocio:** RN-004, RN-010, RN-012, RN-804, RN-G13, RN-G14, RN-G15
 
@@ -61,7 +63,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | RE-0.4.3 | El mensaje al propietario debe ser neutral y notificar a la clínica; al personal, indicar el límite y la mejora de plan. | Funcional | Al llegar al límite, el propietario ve «no es posible completar la acción ahora» y la clínica recibe un aviso; el personal ve el límite alcanzado y la opción de mejorar el plan. | Media |
 | RE-0.4.4 | El plan gratuito debe incluir las capacidades limitadas por volumen. | Restricción | Las capacidades funcionan dentro del límite. | Media |
 | RE-0.4.5 | El límite de mascotas debe contar las mascotas vinculadas a la clínica, incluidas las que ya existían en la plataforma. | Restricción | Vincular una mascota existente consume cupo igual que crear una nueva. | Alta |
-| RE-0.4.6 | Una urgencia 🔴 no debe bloquearse por el límite del plan ni por la mora. | Restricción | Con la clínica al límite y en mora, un caso 🔴 se registra y se atiende. | Alta |
+| RE-0.4.6 | Una urgencia 🔴 no debe bloquearse por el límite del plan ni por la mora. _En 2.0.0-alpha.1 el límite ya deja pasar una cita roja evaluada en el servidor; el triage que la clasifica llega con los módulos 2 y 4._ | Restricción | Con la clínica al límite y en mora, un caso 🔴 se registra y se atiende. | Alta |
 | RE-0.4.7 | El plan gratuito debe limitar a 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal. | Restricción | La mascota 51 creada o vinculada, la cita 101 del mes calendario (sin canceladas) y la tercera cuenta de personal activo o invitación/activación pendiente vigente se rechazan con el mensaje del límite; el administrador cuenta y los propietarios no tienen límite. | Alta |
 
 **Reglas de negocio:** RN-003, RN-005, RN-006, RN-420
@@ -268,7 +270,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | RE-T.17.1 | Una persona debe tener una sola identidad con varios roles: propietario y, por clínica, administrador o veterinario. | Funcional | Un veterinario que tiene perro usa la misma cédula y el mismo correo para ambos roles. | Alta |
 | RE-T.17.2 | Con más de un contexto, el sistema debe pedir elegir el contexto al iniciar sesión; con uno solo, entrar directo. | Funcional | Se ofrecen el portal y cada clínica con su rol. | Alta |
 | RE-T.17.3 | El cambio de contexto debe aplicar los permisos y la clínica del nuevo contexto sin volver a iniciar sesión. | Seguridad | Desde el portal de propietario no se accede a acciones de personal (403). | Alta |
-| RE-T.17.4 | Una persona no debe poder calificarse a sí misma. | Restricción | Un veterinario que atendió a su propio perro no ve la encuesta de esa cita. | Media |
+| RE-T.17.4 | Una persona no debe poder calificarse a sí misma. _Se verifica en la v2.1 con HU-8.1, cuando existan las calificaciones._ | Restricción | Un veterinario que atendió a su propio perro no ve la encuesta de esa cita. | Media |
 | RE-T.17.5 | El super-administrador no debe combinarse con roles de clínica. | Seguridad | No se puede asignar un rol de clínica a un super-administrador. | Alta |
 
 **Reglas de negocio:** RN-G01, RN-G06, RN-G13, RN-G18
@@ -291,7 +293,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | RE-T.19.1 | El registro por formulario, Google y el alta presencial de propietarios exige aceptación expresa antes de crear la cuenta. Excepción: el personal nuevo queda pendiente e inerte, sin contraseña ni consentimiento, y recibe un enlace de 72 horas para aceptar la política y crear su contraseña. | Restricción | Sin aceptación no se crea una cuenta de propietario. El personal no puede aceptar por el titular: la cuenta pendiente no inicia sesión y solo se activa al aceptar y crear la contraseña; puede rechazar la invitación sin activarse ni consentir; al rechazar o vencer se elimina únicamente si no tiene otros vínculos. | Alta |
 | RE-T.19.2 | El sistema debe guardar la prueba de la aceptación: usuario, versión, medio, fecha e IP, salvo la cuenta de super-administrador. | Seguridad | Cada cuenta nueva habilitada tiene su prueba en `consentimientos_datos`; el personal pendiente la registra al activar. El super-administrador está exento de aceptación y de esta prueba por ser una cuenta operativa de plataforma. | Alta |
 | RE-T.19.3 | Si la política cambia de versión, el sistema debe pedir aceptarla en el siguiente inicio de sesión antes de continuar. | Restricción | Tras publicar una versión nueva, el usuario no entra al panel hasta aceptarla. | Media |
-| RE-T.19.4 | Revocar la autorización debe llevar a la solicitud de eliminación de la cuenta. | Funcional | La opción de revocar abre el flujo de HU-5.14. | Media |
+| RE-T.19.4 | Revocar la autorización debe llevar a la solicitud de eliminación de la cuenta. _Se entrega en la v2.1 con HU-5.14._ | Funcional | La opción de revocar abre el flujo de HU-5.14. | Media |
 
 **Reglas de negocio:** RN-G19, RN-G07, RN-G16
 
@@ -855,7 +857,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | RE-5.8.1 | El sistema debe permitir el registro por tres vías, siempre en el contexto de una clínica. | Funcional | Un propietario puede registrarse por cada una de las tres vías y queda vinculado a la clínica de esa vía. | Alta |
 | RE-5.8.2 | El correo debe ser único en la plataforma; si ya existe, no se duplica la identidad. | Restricción | Registrar un correo que ya existe no crea otra cuenta: tras verificar al dueño, liga la cuenta existente a la nueva clínica. | Alta |
 | RE-5.8.3 | Si el correo ya existe, el sistema debe verificar que es el dueño y ligarlo a la clínica. | Seguridad | Se liga previa verificación del dueño; el autorregistro responde igual sin revelar existencia. Si el correo es nuevo y el documento ya pertenece a una cuenta, la confirmación se dirige al correo registrado de su titular. | Alta |
-| RE-5.8.4 | En un registro nuevo, el sistema debe crear la identidad, ligarla, verificar el correo y enviar el enlace de acceso y el QR del portal. | Funcional | Se activa y recibe acceso y QR. | Alta |
+| RE-5.8.4 | En un registro nuevo, el sistema debe crear la identidad, ligarla, verificar el correo y enviar el enlace de acceso y el QR del portal. _En 2.0.0-alpha.1 el correo lleva el enlace; el QR llega con el carnet QR (HU-5.10 y HU-5.11, módulo 5; decisión del usuario, 2026-10-11)._ | Funcional | Se activa y recibe acceso y QR. | Alta |
 | RE-5.8.5 | Cada clínica debe ver solo sus propietarios; el alta queda en auditoría. | Seguridad | La clínica B no ve a un propietario vinculado solo a la clínica A; el alta queda en auditoría. | Alta |
 | RE-5.8.6 | El autorregistro del propietario por formulario debe verificar Turnstile en el servidor. | Seguridad | Un token ausente o inválido no crea ni vincula cuentas; un token válido permite seguir el registro y la respuesta no revela si la identidad existe. | Alta |
 

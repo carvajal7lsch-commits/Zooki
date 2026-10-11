@@ -5,8 +5,12 @@
  * de assets estáticos para el cache-busting de CSS/JS.
  */
 class App {
-    /** Versión actual del sistema (sincronizada con el historial del README). */
-    const VERSION = '1.12.0';
+    /**
+     * Versión actual del sistema (documentacion/HistorialVersiones.md). La v2
+     * sale por módulos: 2.0.0-alpha.N sube con cada módulo y 2.0.0 llega con
+     * las 28 historias de la entrega v2.0.
+     */
+    const VERSION = '2.0.0-alpha.1';
 
     /** Nombre comercial del producto. */
     const NAME = 'Zooki';
