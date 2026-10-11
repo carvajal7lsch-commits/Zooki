@@ -4,12 +4,18 @@ Instrucciones para cualquier agente de IA (Claude Code, Codex, Cursor, Copilot, 
 
 Zooki es un sistema de gestión veterinaria: PHP 8.2 sin framework (MVC propio), MySQL 8, JavaScript sin bundler. Todo el código, los comentarios y la documentación van en **español**.
 
+## Empieza aquí
+
+Antes de cualquier tarea, lee **[`agentes/estado.md`](agentes/estado.md)** (dónde vamos y qué sigue) y **[`agentes/metodo.md`](agentes/metodo.md)** (roles de arquitecto, ejecutor y revisor; ciclo de cada subetapa; plantilla de prompt; cómo revisar; preferencias del dueño del producto). Así ninguna sesión necesita que el usuario repita el contexto.
+
+**Al terminar, actualiza `agentes/estado.md`**: el ejecutor anota la subetapa como «entregada, pendiente de revisión»; el revisor la pasa a «revisada» y deja escrito qué sigue y qué decisiones quedan pendientes. Toda decisión del usuario se anota en el plan del módulo.
+
 ## Estado del proyecto
 
-- **El código está en la v1.12.0**: una instalación para una sola clínica. Los usuarios se identifican por su documento, existe el rol recepcionista y las tablas no llevan `id_clinica`.
+- **Producción y `main` están en la v1.12.0**: una instalación para una sola clínica. La v2 se construye en ramas propias (la etapa activa está en [`agentes/estado.md`](agentes/estado.md)); el código de esas ramas ya usa el modelo v2.
 - **La especificación ya es la v2**: una plataforma SaaS multi-inquilino con dos grafos (soporte a la decisión clínica y agenda inteligente), repartida entre v2.0 y v2.1. Está en `documentacion/` y es la fuente de verdad.
 - **Se construye la v2 por módulos**, en el orden de dependencias del [plan de entregas](documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2): primero la entrega v2.0 (lo imprescindible), luego la v2.1. Cada módulo agrupa sus HU y RE; el avance y las pruebas se cierran por etapas pequeñas dentro del módulo.
-- Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/drawdb_schema_v2.sql` describen el destino, no son migraciones ejecutables. Las migraciones reales conservan los datos v1 y se aplican en orden de dependencias. Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
+- Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/modelo/drawdb_schema_v2.sql` describen el destino para drawDB; el esquema ejecutable es `database/01_schema.sql`. Como los datos de la v1 eran solo pruebas, el salto a v2 reinicia la base con un esquema v2 consolidado y datos semilla, sin migrar datos ([plan M0](specs/M0-T-base-saas-identidad.md)). Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
 
 ## Mapa de la documentación
 
@@ -17,7 +23,7 @@ Zooki es un sistema de gestión veterinaria: PHP 8.2 sin framework (MVC propio),
 |---|---|
 | Qué debe hacer una funcionalidad y cómo se acepta | [HistoriasUsuario.md](documentacion/HistoriasUsuario.md) y [RequisitosEspecificos.md](documentacion/RequisitosEspecificos.md) |
 | Qué reglas no se pueden romper | [ReglasNegocio.md](documentacion/ReglasNegocio.md) |
-| Tablas, columnas y relaciones | [MER.md](documentacion/MER.md) (esquema completo para drawDB en `database/drawdb_schema_v2.sql`, que el migrador no ejecuta) |
+| Tablas, columnas y relaciones | [MER.md](documentacion/MER.md) (esquema para drawDB en `database/modelo/drawdb_schema_v2.sql`; vive en una subcarpeta para que ni MySQL ni el migrador lo ejecuten) |
 | Cómo fluye un proceso (pasos, ramas de error) | [Modelos.md](documentacion/Modelos.md) |
 | Requisitos funcionales y no funcionales (RF, RNF), casos de uso | [ERS.md](documentacion/ERS.md) |
 | Qué nivel de triage debe dar cada caso clínico | `documentacion/CasosTriage.md` (batería de pruebas del Grafo I y de la agenda) |
@@ -74,13 +80,15 @@ composer install                                   # dependencias (PHPMailer, PH
 vendor/bin/phpunit                                 # todas las pruebas
 vendor/bin/phpunit tests/Unit/ValidadorMascotaTest.php   # una sola
 php scripts/migrar.php --revisar                   # qué migraciones faltan en la base local
-php scripts/migrar.php                             # aplicarlas
+php scripts/migrar.php                             # aplicarlas (y la semilla)
+php scripts/crear_superadmin.php                   # crear el super-administrador por consola
+php scripts/dev/datos_prueba.php --si              # datos de prueba locales: dos clínicas y una persona por contexto (se niega fuera de una base local)
 node scripts/docs/exportar.mjs --revisar           # qué PDF/Word del portal están desactualizados
 node scripts/docs/exportar.mjs                     # regenerarlos (formato de la plantilla; necesita PHP, Chrome y Pandoc, y Word para el índice)
 ```
 
 - El usuario trabaja en Windows con PowerShell 5.1: **no existe `&&`**, se encadena con `;`.
-- Las pruebas de integración usan SQLite en memoria, no necesitan la base real.
+- Las pruebas de integración usan SQLite en memoria, no necesitan la base real. La excepción es `tests/Integration/BaseV2MysqlTest.php`, que carga el esquema en MySQL o MariaDB y se salta sola si no existe la variable `ZOOKI_TEST_MYSQL_HOST` (opcionales: `_PORT`, `_USER`, `_PASS` y `_DB`; esa base se borra y se crea en cada prueba). En CI corre contra MySQL 8.
 - Local corre en XAMPP (MariaDB); producción en Docker con Dokploy (MySQL 8).
 
 ## Estructura
@@ -95,7 +103,7 @@ node scripts/docs/exportar.mjs                     # regenerarlos (formato de la
 | `views/` | Solo estructura HTML/PHP, por rol: `admin/`, `vet/`, `portal/`, `auth/`. `reception/` desaparece en la v2. |
 | `public/css/`, `public/js/` | Estilos y scripts, un archivo o módulo por pantalla. |
 | `public/docs/` | Portal de documentación (`docs.js` lista los documentos publicados). |
-| `database/` | `01_schema.sql` y migraciones `NN_nombre.sql`. |
+| `database/` | `01_schema.sql` (esquema v2), `02_semilla.sql` (datos semilla), migraciones `NN_nombre.sql` desde la 03 y `modelo/` (diagrama de drawDB, no ejecutable). |
 | `scripts/` | Tareas programadas (recordatorios, vigilante, respaldo), migrador, índice de Algolia y exportación de documentos. |
 | `tests/Unit`, `tests/Integration` | PHPUnit 10. |
 | `specs/` | Un plan por módulo a partir de `_plantilla_modulo.md`; planes `HU-...` solo para flujos excepcionales. |
@@ -106,7 +114,12 @@ Son las del manifiesto `documentacion/ZOOKI_REGLAS.md` (que no se sube al reposi
 
 - **Separación de capas y SOLID:** cada clase o función hace una sola cosa; la lógica de datos no va en las vistas ni la de presentación en los modelos.
 - **Nada de CSS ni JS en línea** en las vistas (`style=`, `onclick=`, `<script>` con código). Los datos que necesita el JS van en atributos `data-*`.
-- **Nada de `alert()`/`confirm()`/`prompt()`**: se usa SweetAlert2.
+- **Nada de `alert()`/`confirm()`/`prompt()`**: se usa SweetAlert2, caso por caso: aviso breve (toast) para acciones frecuentes o reversibles, confirmación para lo destructivo o irreversible, y nunca para errores de validación de un campo.
+- **Confirmación solo para lo grave** (decisión del usuario, 2026-10-10): SweetAlert de confirmación únicamente para lo irreversible o muy grave (dar de baja, borrar, anular). Lo reversible o lo que ya se decidió en un formulario con motivo (suspender, reactivar, cambiar plan, cerrar un caso, desbloquear, enviar un aviso ya redactado) se hace directo y se confirma con un aviso breve.
+- **Validación en tiempo real** en los formularios: cada campo se valida mientras se escribe, con el mensaje junto al campo y la misma regla del helper del servidor (formato, longitud, caracteres y, si aplica, unicidad por AJAX). La pantalla se actualiza en cuanto responde el servidor, sin esperar a que se cierre un aviso.
+- **Restricción de entrada** (decisión del usuario, 2026-10-10): además de validar, cada campo **no deja escribir** lo que no corresponde. Números (documento, NIT, teléfono): solo los caracteres permitidos y `inputmode` numérico; nombres: letras, espacios y los signos que admita la regla; todos con `maxlength` igual al límite del servidor y sin espacios sobrantes. Se hace con `data-caracteres` (`public/js/interacciones.js`, C9.1), también al pegar. El servidor sanea y valida lo mismo.
+- **Una sentencia por línea** y nombres claros.
+- Al tocar una pantalla existente se conserva su diseño (versión anterior y `specs/referencias/`); no se rediseña sin que el usuario lo pida.
 - **Validar en el servidor siempre**, aunque el formulario ya valide en el navegador. Los límites viven en un helper (ej. `ValidadorMascota::NOMBRE_MAX`) y el HTML usa los mismos.
 - Escapar toda salida con `htmlspecialchars`; consultas siempre preparadas; toda petición que modifica datos lleva token CSRF.
 - Un propietario solo ve sus propias mascotas (RN-G02): comprobarlo en el servidor en cada acción del portal.
@@ -116,12 +129,14 @@ Son las del manifiesto `documentacion/ZOOKI_REGLAS.md` (que no se sube al reposi
 
 ## Base de datos y migraciones
 
-- Una migración nueva es `database/NN_nombre.sql` con el número siguiente, y **debe poder ejecutarse dos veces sin error**. Se consulta `information_schema` antes de crear columnas o índices, y se revisa si la fila ya existe antes de insertarla. Ejemplo: [database/13_razas_portal.sql](database/13_razas_portal.sql).
-- Empieza con `SET NAMES utf8mb4;` si inserta texto con tildes.
+- La base v2 nace de `database/01_schema.sql` (las 50 tablas, sin datos) y `database/02_semilla.sql` (roles, planes y catálogos globales). La v2 **no migra datos** de la v1, que eran pruebas: las migraciones v1 (03–13) se retiraron y el migrador se niega a correr sobre una base v1. Detalle en el [plan M0](specs/M0-T-base-saas-identidad.md).
+- Una migración nueva es `database/NN_nombre.sql` con el número siguiente (la primera es la `03`), y **debe poder ejecutarse dos veces sin error**: en una instalación nueva la corre MySQL al crear el volumen y luego el migrador. Se consulta `information_schema` antes de crear columnas o índices, y se revisa si la fila ya existe antes de insertarla.
+- `02_semilla.sql` se aplica en cada arranque: **solo inserta lo que falta y nunca sobrescribe** (`INSERT IGNORE` con id explícito e índice único; nada de `ON DUPLICATE KEY UPDATE` ni `REPLACE`). Una fila nueva de un catálogo global se agrega ahí con el siguiente id libre, sin cambiar ni reutilizar los existentes.
+- Solo los `.sql` del primer nivel de `database/` se ejecutan; lo que no debe correr nunca (como el modelo de drawDB) va en una subcarpeta.
+- Empieza con `SET NAMES utf8mb4;` si inserta texto con tildes. Las tablas usan InnoDB y `utf8mb4_general_ci`, que existe en MySQL 8 y en MariaDB 10.4.
 - Al desplegar se aplican solas (`docker/iniciar.sh` → `scripts/migrar.php`). Nunca se pide al usuario que entre al servidor a correrlas.
-- **No se modifican migraciones ya publicadas**: se escribe una nueva.
-- Las tablas y columnas nuevas salen del [MER](documentacion/MER.md). Si hace falta una que no está, primero se agrega al MER y a `database/drawdb_schema_v2.sql` y se avisa al usuario.
-- Pasar de la v1 a la v2 (documento → `id_usuario`, `id_clinica` en las tablas) se hace con migraciones que conservan los datos existentes: la clínica actual pasa a ser la primera clínica de la plataforma.
+- **No se modifican migraciones ya publicadas**: se escribe una nueva. `01_schema.sql` y `02_semilla.sql` solo cambian junto con una migración que lleve el mismo cambio a las bases existentes.
+- Las tablas y columnas nuevas salen del [MER](documentacion/MER.md). Si hace falta una que no está, primero se agrega al MER y a `database/modelo/drawdb_schema_v2.sql` y se avisa al usuario.
 
 ## Mantener la documentación coherente
 

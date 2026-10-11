@@ -1,6 +1,6 @@
 <?php
 /**
- * HU-43 — Configurar los horarios de atención de la clínica.
+ * HU-7.1 — Configurar los horarios de atención de la clínica.
  *
  * Una fila por día con sus bloques de mañana y tarde. Los cambios se guardan
  * solos (public/js/horarios.js) y el resumen muestra cómo queda la semana.
@@ -152,4 +152,4 @@ $bloques = ['morning' => ['Mañana', '08:00', '12:00'], 'afternoon' => ['Tarde',
 </div>
 
 <script src="js/time-picker.js"></script>
-<script src="js/horarios.js?v=2"></script>
+<script src="js/horarios.js?v=3"></script>

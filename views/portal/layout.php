@@ -28,13 +28,15 @@ $iniciales = $iniciales ?: 'U';
     <link rel="icon" type="image/png" href="img/icon_blue.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/contexto.css?v=1">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <?php foreach (['base', 'navegacion', 'inicio', 'servicios', 'agenda', 'mascota', 'cuenta', 'ventanas', 'calendario', 'formularios'] as $modulo): ?>
-    <link rel="stylesheet" href="css/portal/<?= $modulo ?>.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/portal/<?= $modulo ?>.css?v=<?= $v ?>-c91">
     <?php endforeach; ?>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta name="csrf-token" content="<?= Csrf::token('default') ?>">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
 </head>
 <body class="portal-body">
 
@@ -63,6 +65,7 @@ $iniciales = $iniciales ?: 'U';
         <div class="portal-rail__usuario">
             <span class="portal-rail__avatar" aria-hidden="true"><?= htmlspecialchars($iniciales) ?></span>
             <span class="portal-rail__nombre"><?= htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Propietario') ?></span>
+            <?php include __DIR__ . "/../partials/contexto_actual.php"; ?>
             <a href="index.php?action=logout" class="portal-rail__salir" title="Cerrar sesión" aria-label="Cerrar sesión">
                 <i class="ri-logout-box-r-line" aria-hidden="true"></i>
             </a>
@@ -101,9 +104,14 @@ $iniciales = $iniciales ?: 'U';
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
-<script src="js/avisos.js?v=<?= $v ?>"></script>
+<script src="js/avisos.js?v=<?= $v ?>-c91"></script>
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
-<script src="js/portal.js?v=<?= $v ?>"></script>
+<script src="js/portal.js?v=<?= $v ?>-d2"></script>
 <script src="js/csrf.js?v=<?= $v ?>"></script>
+<script src="js/sesion.js?v=1"></script>
+<script src="js/interacciones.js?v=d31"></script>
+<?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
+<script src="js/cuenta-password.js?v=d2"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

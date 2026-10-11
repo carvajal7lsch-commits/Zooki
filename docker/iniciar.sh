@@ -1,7 +1,8 @@
 #!/bin/sh
 # Arranque del contenedor web (cada despliegue de Dokploy lo reconstruye).
 #
-# 1. Aplica las migraciones de database/ que falten (scripts/migrar.php).
+# 1. Aplica las migraciones de database/ que falten y la semilla
+#    (scripts/migrar.php). Se niega si la base todavía tiene el esquema v1.
 # 2. Reindexa la documentación en Algolia si los .md cambiaron
 #    (scripts/algolia_index.php --si-cambio; specs/buscador-documentacion.md, BD-1).
 # 3. Arranca Apache, igual que la imagen php:8.2-apache por defecto.

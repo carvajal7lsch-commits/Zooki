@@ -36,7 +36,7 @@ Cada etapa indica qué HU/RE cierra y qué queda pendiente. Una etapa preparator
 - **Migraciones:** `database/NN_nombre.sql` nuevas, repetibles y ordenadas; no editar las publicadas.
 - **Conservación:** cómo se hace el relleno de datos y se comprueba que no haya huérfanos ni pérdida.
 - **Compatibilidad y despliegue:** momento del cambio de código, restricciones finales y recuperación ante fallo.
-- **MER:** toda columna o relación nueva aparece también en `documentacion/MER.md` y `database/drawdb_schema_v2.sql` antes de implementarse.
+- **MER:** toda columna o relación nueva aparece también en `documentacion/MER.md` y `database/modelo/drawdb_schema_v2.sql` antes de implementarse.
 
 ## 5. Código, permisos y pantallas
 

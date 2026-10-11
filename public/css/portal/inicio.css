@@ -484,3 +484,14 @@
 @media (min-width: 1440px) {
     .home-grid { grid-template-columns: minmax(0, 1fr) 380px; }
 }
+
+/* C6: una tarjeta de horario por clínica vinculada (RE-5.1.7). */
+.horario-card + .horario-card { margin-top: 0.75rem; }
+
+.horario-card__clinica {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--z-primary);
+}

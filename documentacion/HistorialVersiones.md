@@ -1,12 +1,49 @@
 # Historial de Versiones — Proyecto Zooki
 
-> Registro de versiones (v1.0.0 → v1.12.0; la v2.0 está en desarrollo y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
+> Registro de versiones (v1.0.0 → v2.0.0-alpha.1; la v2.0 se publica por módulos y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
 
 ## Historial de Versiones
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 1.12.0 (Actual)
+### Versión 2.0.0-alpha.1 (Actual)
+Primera versión de **Zooki como plataforma**: varias clínicas usan el mismo Zooki y cada una ve solo lo suyo. Es una versión **alfa**: trae completo el primer módulo de la v2 (clínicas, planes, cuentas y seguridad) y todo lo que ya funcionaba en la 1.12.0 pasado a la nueva forma de trabajar. Las funciones nuevas de los grafos (diagnóstico, triage y agenda inteligente) y el carnet con QR llegan en las alfas siguientes.
+
+> _**Cómo se numera la v2.** Cada módulo terminado publica una alfa nueva (`alpha.1`, `alpha.2`…). La versión `2.0.0` sale cuando estén las 28 historias de la entrega v2.0 (ver el plan de entregas de las [Historias de Usuario](HistoriasUsuario.md)). Esta alfa cierra las 9 primeras._
+
+**Al actualizar**
+
+*   La base de datos se reinició con la estructura de la v2. Los datos de la 1.12.0 eran de prueba y **no se conservan**: hay que registrarse de nuevo.
+*   El rol de **recepcionista desaparece**. Una clínica trabaja con administradores y veterinarios.
+
+**Clínicas y planes**
+
+*   **Cualquier clínica se registra sola** desde la página de inicio, con su NIT y el dígito de verificación, y queda activa al confirmar el correo del administrador.
+*   **Plan Gratuito:** 2 cuentas de personal (cuentan también las invitaciones pendientes), 50 mascotas vinculadas y 100 citas al mes. El **plan Profesional** no tiene topes. Si la clínica llega a un tope, Zooki lo dice con claridad y no deja seguir con esa acción; los propietarios nunca tienen límite.
+*   **Super-administrador de la plataforma:** gestiona clínicas, planes, suscripciones, casos de soporte y direcciones IP bloqueadas. Ve solo cantidades del uso del plan, **nunca** mascotas, historias, consultas ni citas.
+
+**Una sola cuenta para cada persona**
+
+*   Cada persona tiene **una cuenta** aunque trabaje en varias clínicas o además sea propietaria. Al entrar elige con qué perfil continuar y puede cambiarlo sin salir.
+*   **Invitar al personal:** el administrador escribe los datos y Zooki envía una invitación que vence en 72 horas. Si la persona es nueva, acepta la política de datos y crea su contraseña; si ya tenía cuenta, acepta o rechaza, y la clínica no ve sus datos hasta que acepte. Ya **no se envían contraseñas por correo**.
+*   Si la invitación se envió de nuevo, el enlace del correo anterior avisa que hay uno más reciente.
+*   **Propietarios:** una sola cuenta para todas sus clínicas. Ve todas sus mascotas, se vincula o desvincula de las clínicas que quiera y decide si una clínica puede ver lo que registraron las otras. Puede registrarse con Google.
+*   El titular corrige su correo o su documento desde su perfil, confirmando su identidad; el correo nuevo vale solo cuando lo verifica.
+
+**Seguridad y datos personales**
+
+*   **Política de tratamiento de datos (Ley 1581 de 2012):** toda cuenta la acepta al crearse, y se pide de nuevo si cambia.
+*   La sesión se cierra tras **30 minutos sin actividad**. Al crear o cambiar la contraseña se **cierran las demás sesiones** abiertas de la cuenta y llega un aviso por correo.
+*   **Intentos fallidos:** 20 desde una misma conexión la bloquean 15 minutos; 5 sobre una misma cuenta piden una verificación anti-bot, sin bloquear la cuenta de nadie. Zooki usa la IP real de cada persona, también detrás del proxy.
+*   Los mensajes de acceso y de registro no revelan si una cuenta existe.
+*   Fechas y horas en la hora de Colombia en toda la aplicación y en los correos.
+
+**Instalación**
+
+*   El servidor web solo publica la carpeta `public/`; la imagen ya no incluye credenciales, pruebas ni material de trabajo.
+*   La guía del cambio a producción está en `specs/M0-F-corte-produccion.md`.
+
+### Versión 1.12.0
 Portal de documentación: un buscador que encuentra lo que está en los documentos desplegados y empieza por el documento abierto, descargas con vista previa del PDF y documentos en formato APA 7.
 
 **Buscador**
@@ -395,6 +432,7 @@ Zooki utiliza un esquema de versionamiento semántico adaptado a la distribució
 
 *   **`X` (Mayor):** Cambios de gran impacto en la lógica de negocio general, reestructuración masiva del sistema, cambios mayores de arquitectura o lanzamientos de nuevas versiones globales (Ej: de `1.0.0` a `2.0.0`).
 *   **`Y` (Backend / Backend + Frontend):** Cambios en la lógica del backend (controladores, modelos, migraciones de base de datos). Si un cambio en el backend requiere actualizar vistas u hojas de estilos (afectando también al frontend), este dígito se incrementará (Ej: de `1.0.0` a `1.1.0`).
+*   **Versiones alfa de la v2 (`2.0.0-alpha.N`):** la v2 cambia la arquitectura entera y se publica por módulos. Cada módulo terminado sube el número de la alfa (`alpha.1`, `alpha.2`…); la versión `2.0.0` se publica cuando estén las 28 historias de la entrega v2.0 (plan de entregas de las [Historias de Usuario](HistoriasUsuario.md)).
 *   **`Z` (Frontend Puro):** Cambios exclusivos del frontend (mejoras de estilo CSS, animaciones, lógica JavaScript del lado del cliente, layouts) que no afectan ni modifican controladores ni bases de datos (Ej: de `1.0.0` a `1.0.1`).
 
 ---

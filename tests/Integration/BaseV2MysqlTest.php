@@ -1,0 +1,1190 @@
+<?php
+
+use PHPUnit\Framework\TestCase;
+
+require_once __DIR__ . '/../../helpers/Migrador.php';
+require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
+
+/**
+ * Plan M0, etapa B — La base v2 limpia contra un MySQL o MariaDB real.
+ *
+ * El esquema usa columnas calculadas, JSON, information_schema y GET_LOCK, que
+ * SQLite no tiene; por eso esta prueba necesita un servidor. Se configura solo
+ * con variables de entorno (nunca con .env, para no tocar la base de la app):
+ *
+ *   ZOOKI_TEST_MYSQL_HOST  (obligatoria; sin ella la prueba se salta)
+ *   ZOOKI_TEST_MYSQL_PORT  (3306)
+ *   ZOOKI_TEST_MYSQL_USER  (root)
+ *   ZOOKI_TEST_MYSQL_PASS  ('')
+ *   ZOOKI_TEST_MYSQL_DB    (zooki_test_base_v2) — se BORRA y se crea en cada prueba
+ *
+ * En CI la provee el servicio MySQL 8 de .github/workflows/ci.yml.
+ */
+class BaseV2MysqlTest extends TestCase
+{
+    public function testE2MigracionRepetibleConservaLimitesPersonalizados(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec("UPDATE planes SET limite_mascotas = 5, limite_citas_mes = 30 WHERE nombre = 'Gratuito'");
+        $this->cargar('05_limites_plan_gratuito.sql');
+        $this->cargar('05_limites_plan_gratuito.sql');
+        $this->assertSame([50, 100, 2], array_map('intval', $this->db->query("SELECT limite_mascotas, limite_citas_mes, limite_personal FROM planes WHERE nombre = 'Gratuito'")->fetch(PDO::FETCH_NUM)));
+        $this->db->exec("UPDATE planes SET limite_mascotas = 17, limite_citas_mes = 30 WHERE nombre = 'Gratuito'");
+        $this->cargar('05_limites_plan_gratuito.sql');
+        $this->cargar('02_semilla.sql');
+        $this->assertSame([17, 30, 2], array_map('intval', $this->db->query("SELECT limite_mascotas, limite_citas_mes, limite_personal FROM planes WHERE nombre = 'Gratuito'")->fetch(PDO::FETCH_NUM)));
+        $this->assertSame(100000, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
+    }
+
+    public function testE2CuotasYBloqueoDeClinicaEnElEsquemaReal(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../helpers/LimitePlan.php';
+        require_once __DIR__ . '/../../models/Cita.php';
+        DosClinicas::poblarAgenda($this->db);
+        $this->comoVeterinario(1, 2);
+        $this->db->exec('UPDATE clinicas SET id_plan = 1 WHERE id_clinica = 1');
+        $plan = new LimitePlan($this->db, 1);
+        $this->assertSame(50, $plan->resumen()['mascotas']['limite']);
+        // La misma fila de clínica que bloquea Plataforma serializa cualquier alta del plan.
+        $otra = $this->otraConexion();
+        $otra->exec('SET SESSION innodb_lock_wait_timeout = 1');
+        $this->db->beginTransaction();
+        $this->db->query('SELECT id_clinica FROM clinicas WHERE id_clinica = 1 FOR UPDATE')->fetchColumn();
+        try {
+            (new LimitePlan($otra, 1))->consumir('mascotas', static fn () => true);
+            $this->fail('Debió esperar el bloqueo de la clínica.');
+        } catch (PDOException $error) {
+            $this->assertSame(1205, (int) $error->errorInfo[1]);
+        } finally {
+            $this->db->rollBack();
+        }
+        $this->db->exec('UPDATE planes SET limite_citas_mes = 0 WHERE id_plan = 1');
+        $datos = ['id_mascota' => 1, 'id_veterinario' => 2, 'fecha' => '2027-03-01', 'hora' => '08:00', 'motivo' => 'Urgencia', 'id_tipo_cita' => 1];
+        $citas = new Cita($this->db);
+        try {
+            $citas->registrar($datos);
+            $this->fail('Debió bloquear la cita ordinaria.');
+        } catch (LimiteAlcanzado $error) {
+            $this->assertSame(0, $error->limite);
+        }
+        $this->db->exec('UPDATE suscripciones SET al_dia = 0 WHERE id_clinica = 1');
+        $id = $citas->registrarEvaluada($datos, 'rojo');
+        $this->assertSame('rojo', $citas->getById($id)['prioridad']);
+        $this->assertSame(1, $plan->resumen('2027-03-01')['citas']['uso']);
+        $this->assertSame(0, (new LimitePlan($this->db, 2))->resumen('2027-03-01')['citas']['uso']);
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion LIKE 'Acción bloqueada%'")->fetchColumn());
+        $_SESSION = ['id_usuario' => 6];
+        Contexto::activar(Contexto::dePropietario(), 1);
+        try {
+            $citas->enClinicaDelPropietario(1)->registrar($datos);
+            $this->fail('Debió bloquear al propietario.');
+        } catch (LimiteAlcanzado $error) {
+            $this->assertSame('No es posible completar la acción ahora', $error->getMessage());
+        }
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM notificaciones_internas WHERE id_clinica = 1 AND tipo = 'LIMITE_PLAN'")->fetchColumn());
+        $_SESSION = [];
+    }
+
+    public function testE2DatosPruebaContinuaSinCambiarClinicaAjena(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec("INSERT INTO clinicas (nombre, nit, estado) VALUES ('Clínica propia del usuario', '9012345678', 'pendiente_verificacion')");
+        $antes = $this->db->query('SELECT * FROM clinicas')->fetch(PDO::FETCH_ASSOC);
+        $this->db->exec("INSERT INTO clinicas (nombre, nit, estado) VALUES ('Clínica Norte (prueba)', '900123456-8', 'activa')");
+        $db = $this->db;
+        $argv = ['datos_prueba.php', '--si'];
+        ob_start();
+        try {
+            include __DIR__ . '/../../scripts/dev/datos_prueba.php';
+            $salida = ob_get_contents();
+        } finally {
+            ob_end_clean();
+        }
+        $this->assertStringContainsString('9012345678', $salida);
+        $this->assertStringContainsString('Datos de prueba listos', $salida);
+        $this->assertSame($antes, $this->db->query('SELECT * FROM clinicas WHERE id_clinica = 1')->fetch(PDO::FETCH_ASSOC));
+        $this->assertSame(3, $this->contar('clinicas'));
+        $this->assertSame('9001234568', $this->db->query('SELECT nit FROM clinicas WHERE id_clinica = 2')->fetchColumn());
+        // F0: las clínicas de prueba quedan en Profesional con una suscripción activa; la ajena no cambia.
+        $this->assertSame([2, 2], array_map('intval', $this->db->query("SELECT id_plan FROM clinicas WHERE nit IN ('9001234568', '9006543210') ORDER BY id_clinica")->fetchAll(PDO::FETCH_COLUMN)));
+        $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM suscripciones s JOIN planes p ON p.id_plan = s.id_plan WHERE p.nombre = 'Profesional' AND s.estado = 'activa' AND s.al_dia = 1")->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM suscripciones WHERE id_clinica = 1')->fetchColumn());
+    }
+
+    /** E1 sobre el MER real: ENUM, vínculos, suscripciones, soporte, IP y auditoría. */
+    public function testE1PanelPlataformaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/PlataformaFixture.php';
+        require_once __DIR__ . '/../../models/Plataforma.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        PlataformaFixture::datos($this->db);
+        PlataformaFixture::plataforma();
+        try {
+            $modelo = new Plataforma($this->db);
+            $this->assertCount(4, $modelo->clinicas());
+            $modelo->cambiarSuscripcion(1, 2, 'activa', 'Cambio solicitado');
+            $modelo->cambiarSuscripcion(1, 2, 'cancelada', 'Cancelación solicitada');
+            $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM suscripciones')->fetchColumn());
+            $this->assertSame('cancelada', $this->db->query('SELECT estado FROM suscripciones')->fetchColumn());
+            $this->assertSame(2, (int) $this->db->query('SELECT id_plan FROM clinicas WHERE id_clinica = 1')->fetchColumn());
+            $modelo->cambiarEstado(1, 'suspendida', 'Revisar titularidad');
+            $this->assertSame([], (new Usuario($this->db))->contextosDe(2));
+            $modelo->cambiarEstado(1, 'activa', 'Titularidad válida');
+            $this->assertCount(1, (new Usuario($this->db))->contextosDe(2));
+            $modelo->cerrarCaso(1, 'resuelto', 'Titular identificado');
+            $modelo->cerrarCaso(2, 'descartado', 'Caso improcedente');
+            $this->assertCount(2, $modelo->casos());
+            $ips = $modelo->ips();
+            $this->assertCount(3, $ips[0]['cuentas']);
+            $envios = [];
+            $modelo->avisar('192.0.2.8', '2:3', 'Aviso editado', function (array $admin, string $texto) use (&$envios): bool {
+                $envios[] = [$admin['email'], $texto];
+                return true;
+            });
+            $this->assertSame([['carla@zooki.test', 'Aviso editado']], $envios);
+            $modelo->desbloquear('192.0.2.8');
+            $this->assertSame([], $modelo->ips());
+            $this->assertSame(9, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE accion = 'UPDATE'")->fetchColumn());
+            require_once __DIR__ . '/../../models/RegistroClinica.php';
+            $registro = new RegistroClinica($this->db);
+            $_SERVER['REMOTE_ADDR'] = '192.0.2.50';
+            Auditoria::definirProxiesConfiables([]);
+            $reporte = ['nit' => '900123456', 'dv' => '8', 'email' => 'titular@zooki.test'];
+            for ($i = 0; $i < 5; $i++) {
+                $registro->reportarNit($reporte);
+            }
+            try {
+                $registro->reportarNit($reporte);
+                $this->fail('El sexto reporte debe rechazarse también en MySQL.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame(7, (int) $this->db->query('SELECT COUNT(*) FROM casos_soporte')->fetchColumn());
+            }
+            $this->db->exec("CREATE TRIGGER impedir_auditoria BEFORE INSERT ON auditoria_sistema FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sin auditoria'");
+            try {
+                $modelo->cambiarEstado(1, 'baja', 'No persistir');
+                $this->fail('Debe revertir sin auditoría.');
+            } catch (RuntimeException $e) {
+                $this->assertSame('activa', $this->db->query('SELECT estado FROM clinicas WHERE id_clinica = 1')->fetchColumn());
+            }
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /** D2 contra FK, ENUM, unicidad y enlaces reales; siempre en la base de pruebas por defecto. */
+    public function testD2CuentasEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/CuentaTitular.php';
+        require_once __DIR__ . '/../../models/IntentoLogin.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $_SESSION = ['id_usuario' => 1];
+        Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+        try {
+            $modelo = new CuentaTitular($this->db);
+            $datos = ['documento' => '1033333333', 'tipo_documento' => 'CC', 'email' => 'laura@zooki.test', 'nombre_completo' => 'Laura Nueva', 'telefono' => '3001112233', 'id_rol' => 2];
+            $alta = $modelo->crearPersonal($datos, 1);
+            $usuario = new Usuario($this->db);
+            $this->assertNull($usuario->contextosDe($alta['id_usuario']));
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM consentimientos_datos')->fetchColumn());
+            $modelo->activar($alta['enlace']['id'], $alta['enlace']['token'], ['password' => 'Bosque#Seguro2026', 'confirm_password' => 'Bosque#Seguro2026', 'acepta_datos' => '1'], '192.0.2.10');
+            $this->assertTrue($usuario->verificarPassword($alta['id_usuario'], 'Bosque#Seguro2026'));
+            $this->assertSame('alta_personal', $this->db->query('SELECT medio FROM consentimientos_datos')->fetchColumn());
+            $this->db->exec("UPDATE usuarios SET google_uid = 'google-fabio' WHERE id_usuario = 6");
+            $correo = $modelo->solicitarCorreo(6, ['email' => 'nuevo.fabio@zooki.test', 'password_actual' => DosClinicas::PASSWORD]);
+            $this->assertSame('fabio@zooki.test', $usuario->buscarPorId(6)['email']);
+            $modelo->confirmarCorreo($correo['enlace']['id'], $correo['enlace']['token']);
+            $this->assertSame('nuevo.fabio@zooki.test', $usuario->buscarPorId(6)['email']);
+            $this->assertSame(0, (int) $usuario->buscarPorId(6)['tiene_google']);
+            try {
+                $modelo->cambiarDocumento(6, ['documento' => '1000000001', 'tipo_documento' => 'CC', 'password_actual' => DosClinicas::PASSWORD]);
+                $this->fail('Debe abrir soporte sin aplicar documento duplicado.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM casos_soporte')->fetchColumn());
+            }
+            $reset = $modelo->restablecerPersonal(2, 1);
+            $this->assertSame(0, (int) $usuario->buscarPorId(2)['tiene_password']);
+            $tokens = new PasswordReset($this->db);
+            $this->assertTrue($tokens->consumirToken($reset['enlace']['id']));
+            $this->assertFalse($tokens->consumirToken($reset['enlace']['id']));
+            $datos['documento'] = '1044444444';
+            $datos['email'] = 'pendiente@zooki.test';
+            $pendiente = $modelo->crearPersonal($datos, 1);
+            (new Auditoria($this->db))->log($pendiente['id_usuario'], 'LOGIN_FAIL', 'usuarios', $pendiente['id_usuario'], null, null, 'Intento sobre alta pendiente', null);
+            $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$pendiente['enlace']['id']]);
+            $usuario->asignarRolEnClinica($pendiente['id_usuario'], 2, 2);
+            $usuario->cambiarEstadoEnClinica($pendiente['id_usuario'], 2, false);
+            $this->assertSame(0, $modelo->limpiarPendientes());
+            $this->db->prepare('DELETE FROM usuario_clinica WHERE id_usuario = ? AND id_clinica = 2')->execute([$pendiente['id_usuario']]);
+            $this->assertSame(1, $modelo->limpiarPendientes());
+            $this->assertNull($usuario->buscarPorId($pendiente['id_usuario']));
+            $intentos = new IntentoLogin($this->db);
+            for ($i = 0; $i < 5; $i++) {
+                $intentos->registrarFallo('cuenta:6', 5, 900, 900);
+            }
+            $this->assertTrue($intentos->exigeCaptcha('cuenta:6'));
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /** D2.2: actualizar una base anterior conserva sus datos y se puede repetir. */
+    public function testMigracionD22ActualizaUnaBaseAnteriorDosVeces(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/VerificacionEmail.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $id = (new VerificacionEmail($this->db))->crear(6, 'fabio@zooki.test', 'hash-conservado', '2030-01-01 00:00:00');
+        $this->db->exec('ALTER TABLE verificaciones_email DROP FOREIGN KEY fk_verif_rol_vinculo');
+        $this->db->exec('ALTER TABLE verificaciones_email DROP COLUMN id_rol_vinculo, DROP COLUMN nombre_invitado, DROP COLUMN tipo_documento_invitado, DROP COLUMN documento_invitado, DROP COLUMN email_invitado, DROP COLUMN telefono_invitado');
+        $this->db->exec('ALTER TABLE usuarios DROP COLUMN version_sesion');
+        $this->cargar('04_invitacion_personal_y_sesiones.sql');
+        $this->cargar('04_invitacion_personal_y_sesiones.sql');
+        $columnas = $this->db->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'verificaciones_email'")->fetchAll(PDO::FETCH_COLUMN);
+        foreach (['id_rol_vinculo', 'nombre_invitado', 'tipo_documento_invitado', 'documento_invitado', 'email_invitado', 'telefono_invitado'] as $columna) {
+            $this->assertContains($columna, $columnas);
+        }
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'verificaciones_email' AND CONSTRAINT_NAME = 'fk_verif_rol_vinculo'")->fetchColumn());
+        $fila = (new VerificacionEmail($this->db))->buscarPorId($id);
+        $this->assertSame('hash-conservado', $fila['token_hash']);
+        $this->assertSame('fabio@zooki.test', $fila['email']);
+        $this->assertNull($fila['id_rol_vinculo']);
+        $this->assertSame(0, (int) $this->db->query('SELECT MAX(version_sesion) FROM usuarios')->fetchColumn());
+        $this->db->exec('UPDATE usuarios SET version_sesion = 3 WHERE id_usuario = 6');
+        $this->db->prepare('UPDATE verificaciones_email SET id_rol_vinculo = 2, nombre_invitado = ? WHERE id = ?')->execute(['Nombre escrito', $id]);
+        $this->cargar('04_invitacion_personal_y_sesiones.sql');
+        $this->assertSame(3, (int) $this->db->query('SELECT version_sesion FROM usuarios WHERE id_usuario = 6')->fetchColumn());
+        $this->assertSame('Nombre escrito', (new VerificacionEmail($this->db))->buscarPorId($id)['nombre_invitado']);
+    }
+
+    /** RE-T.7.5: UNION, aislamiento, datos escritos y aceptación sin duplicar identidad. */
+    public function testD22InvitacionesYVersionSesionEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/InvitacionPersonal.php';
+        require_once __DIR__ . '/../../models/CuentaTitular.php';
+        require_once __DIR__ . '/../../helpers/CierreSesiones.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $usuarios = new Usuario($this->db);
+        $invitaciones = new InvitacionPersonal($this->db);
+        $_SESSION = ['id_usuario' => 1];
+        Contexto::activar(Contexto::deClinica(1, 'Clínica Norte', Roles::ADMIN), 1);
+        try {
+            $datos = ['documento' => '1099999999', 'tipo_documento' => 'CC', 'nombre_completo' => 'Ana Invitada', 'email' => 'ana.invitada@zooki.test', 'telefono' => '3001112233', 'id_rol' => 2];
+            $nueva = (new CuentaTitular($this->db))->crearPersonal($datos, 1);
+            $escritos = ['documento' => '1088888888', 'tipo_documento' => 'CE', 'nombre_completo' => 'Zeta Escrita', 'email' => 'escrito@zooki.test', 'telefono' => '3004445566', 'id_rol' => 2];
+            $existente = $invitaciones->crear($usuarios->buscarPorId(6), 1, $escritos);
+            $sur = $invitaciones->crear($usuarios->buscarPorId(6), 2, $escritos);
+            $cuentas = $this->contar('usuarios');
+            $pendientes = $invitaciones->pendientesDeClinica(1);
+            $this->assertSame(['Ana Invitada', 'Zeta Escrita'], array_column($pendientes, 'nombre_completo'));
+            $this->assertSame([$nueva['enlace']['id'], $existente['id']], array_map('intval', array_column($pendientes, 'id_invitacion')));
+            foreach (['documento', 'tipo_documento', 'email', 'telefono'] as $campo) {
+                $this->assertSame($escritos[$campo], $pendientes[1][$campo]);
+            }
+            $this->assertCount(1, $invitaciones->pendientesDeClinica(2));
+            $this->assertNull($invitaciones->pendienteDeClinica($sur['id'], 1));
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM usuario_clinica WHERE id_usuario = 6')->fetchColumn());
+            $this->assertSame('Clínica Norte', $invitaciones->aceptar($existente['id'], $existente['token'])['clinica']);
+            $this->assertSame($cuentas, $this->contar('usuarios'));
+            $this->assertSame(2, (int) $this->db->query('SELECT id_rol FROM usuario_clinica WHERE id_usuario = 6 AND id_clinica = 1')->fetchColumn());
+            $this->assertSame('activo', $this->db->query('SELECT estado FROM propietario_clinica WHERE id_propietario = 6 AND id_clinica = 1')->fetchColumn());
+            $this->assertCount(2, $usuarios->contextosDe(6));
+            $this->assertNull($invitaciones->leer($existente['id'], $existente['token']));
+            $this->assertCount(1, $invitaciones->pendientesDeClinica(1));
+            $this->assertCount(1, $invitaciones->pendientesDeClinica(2));
+            $invitaciones->rechazar($sur['id'], $sur['token']);
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM usuario_clinica WHERE id_usuario = 6 AND id_clinica = 2')->fetchColumn());
+            $_SESSION = ['id_usuario' => 6, 'version_sesion' => 0];
+            CierreSesiones::cerrarOtras($usuarios, 6);
+            $this->assertSame(1, $usuarios->versionSesion(6));
+            $this->assertSame(1, $_SESSION['version_sesion']);
+            $this->assertSame(0, $usuarios->versionSesion(1));
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /** La misma hora para PHP y MySQL, incluso si arrancaron con zonas diferentes. */
+    public function testD22ZonaHorariaAlineaNowYDate(): void
+    {
+        require_once __DIR__ . '/../../helpers/ZonaHoraria.php';
+        $anterior = date_default_timezone_get();
+        try {
+            date_default_timezone_set('Europe/Berlin');
+            $this->db->exec("SET time_zone = '+02:00'");
+            ZonaHoraria::aplicarEnConexion($this->db);
+            $this->assertSame('America/Bogota', date_default_timezone_get());
+            $this->assertSame('-05:00', $this->db->query('SELECT @@session.time_zone')->fetchColumn());
+            $horaMysql = (string) $this->db->query('SELECT NOW()')->fetchColumn();
+            $this->assertLessThanOrEqual(2, abs(strtotime($horaMysql) - strtotime(date('Y-m-d H:i:s'))));
+        } finally {
+            date_default_timezone_set($anterior);
+        }
+    }
+
+    /** D3: FK y límites reales; el rollback incluye token, rol y todos los catálogos. */
+    public function testD3RegistroActivacionYRollbackEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/RegistroClinicaTest.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $explicita = (new Database(Database::configuracionPruebas()))->getConnection();
+        $this->assertSame('zooki_test_base_v2', $explicita->query('SELECT DATABASE()')->fetchColumn());
+        unset($explicita);
+        $_SESSION = [];
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.201';
+        $modelo = new RegistroClinica($this->db);
+        $alta = $modelo->registrar(RegistroClinicaTest::datos(), Auditoria::ipCliente());
+        $fila = $modelo->leer($alta['enlace']['id'], $alta['enlace']['token']);
+        $this->assertNull((new Usuario($this->db))->contextosDe((int) $fila['id_usuario']));
+        $this->db->exec("CREATE TRIGGER fallo_d3 BEFORE INSERT ON laboratorios_base FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo simulado'");
+        try {
+            $modelo->activar($alta['enlace']['id'], $alta['enlace']['token'], ['acepta_datos' => '1'], Auditoria::ipCliente());
+            $this->fail('Debía fallar el catálogo.');
+        } catch (PDOException $e) {
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM tipos_cita')->fetchColumn());
+            $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM vacunas_base')->fetchColumn());
+            $this->assertNotNull($modelo->leer($alta['enlace']['id'], $alta['enlace']['token']));
+        }
+        $this->db->exec('DROP TRIGGER fallo_d3');
+        $clinica = $modelo->activar($alta['enlace']['id'], $alta['enlace']['token'], ['acepta_datos' => '1'], Auditoria::ipCliente());
+        foreach (['tipos_cita' => 6, 'horarios_clinica' => 7, 'vacunas_base' => 15, 'laboratorios_base' => 11, 'productos_desparasitacion_base' => 15] as $tabla => $esperado) {
+            $this->assertSame($esperado, (int) $this->db->query('SELECT COUNT(*) FROM ' . $tabla . ' WHERE id_clinica = ' . $clinica)->fetchColumn());
+        }
+        $persona = (new Usuario($this->db))->buscarParaLogin('fabio@zooki.test');
+        $existente = $modelo->registrar(RegistroClinicaTest::datos(2, ['email' => 'fabio@zooki.test']), Auditoria::ipCliente());
+        $modelo->activar($existente['enlace']['id'], $existente['enlace']['token'], ['acepta_datos' => '1'], Auditoria::ipCliente());
+        $this->assertSame($persona, (new Usuario($this->db))->buscarParaLogin('fabio@zooki.test'));
+        $this->assertCount(2, (new Usuario($this->db))->contextosDe(6));
+        $vence = $modelo->registrar(RegistroClinicaTest::datos(3, ['documento' => '1000000006']), Auditoria::ipCliente());
+        try {
+            $modelo->registrar(RegistroClinicaTest::datos(4), Auditoria::ipCliente());
+            $this->fail('No debe admitirse el cuarto registro.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('límite', $e->getMessage());
+        }
+        $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$vence['enlace']['id']]);
+        $modelo->reportarNit(RegistroClinicaTest::datos(3));
+        $this->assertSame(1, $modelo->limpiarPendientes());
+        $this->assertNotNull((new Usuario($this->db))->buscarPorId(6));
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.202';
+        $nueva = $modelo->registrar(RegistroClinicaTest::datos(5), Auditoria::ipCliente());
+        $idNueva = (int) $modelo->leer($nueva['enlace']['id'], $nueva['enlace']['token'])['id_usuario'];
+        $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$nueva['enlace']['id']]);
+        $this->assertSame(1, $modelo->limpiarPendientes());
+        $this->assertNull((new Usuario($this->db))->buscarPorId($idNueva));
+        // E2: el NIT de datos(6) ya pertenece a Norte aunque tenga guion.
+        $primera = $modelo->registrar(RegistroClinicaTest::datos(26), Auditoria::ipCliente());
+        $idCompartido = (int) $modelo->leer($primera['enlace']['id'], $primera['enlace']['token'])['id_usuario'];
+        $segunda = $modelo->registrar(RegistroClinicaTest::datos(7, ['email' => $primera['email']]), Auditoria::ipCliente());
+        $this->db->exec("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE used = 0");
+        $this->assertSame(2, $modelo->limpiarPendientes());
+        $this->assertNull((new Usuario($this->db))->buscarPorId($idCompartido));
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.203';
+        $sinEnlace = $modelo->registrar(RegistroClinicaTest::datos(8, ['email' => 'fabio@zooki.test']), Auditoria::ipCliente());
+        $idClinica = (int) $modelo->leer($sinEnlace['enlace']['id'], $sinEnlace['enlace']['token'])['id_clinica_vinculo'];
+        $this->db->prepare("UPDATE clinicas SET fecha_registro = '2000-01-01 00:00:00' WHERE id_clinica = ?")->execute([$idClinica]);
+        $this->db->prepare('DELETE FROM verificaciones_email WHERE id = ?')->execute([$sinEnlace['enlace']['id']]);
+        $this->assertSame(1, $modelo->limpiarPendientes());
+        $this->assertNotNull((new Usuario($this->db))->buscarPorId(6));
+    }
+
+    private const DATABASE = __DIR__ . '/../../database';
+
+    private PDO $db;
+    private string $base;
+    private ?string $carpetaTemporal = null;
+
+    protected function setUp(): void
+    {
+        $host = getenv('ZOOKI_TEST_MYSQL_HOST');
+        if ($host === false || $host === '') {
+            $this->markTestSkipped('Sin ZOOKI_TEST_MYSQL_HOST: no hay MySQL de prueba.');
+        }
+        $this->base = getenv('ZOOKI_TEST_MYSQL_DB') ?: 'zooki_test_base_v2';
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $this->base)) {
+            $this->fail('ZOOKI_TEST_MYSQL_DB solo admite letras, números y guion bajo.');
+        }
+
+        try {
+            $this->db = new PDO(
+                sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, (int) (getenv('ZOOKI_TEST_MYSQL_PORT') ?: 3306)),
+                getenv('ZOOKI_TEST_MYSQL_USER') ?: 'root',
+                getenv('ZOOKI_TEST_MYSQL_PASS') ?: '',
+                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+            );
+        } catch (PDOException $e) {
+            $this->markTestSkipped('No se pudo conectar al MySQL de prueba: ' . $e->getMessage());
+        }
+
+        $this->db->exec("DROP DATABASE IF EXISTS `{$this->base}`");
+        $this->db->exec("CREATE DATABASE `{$this->base}` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci");
+        $this->db->exec("USE `{$this->base}`");
+    }
+
+    protected function tearDown(): void
+    {
+        if (isset($this->db)) {
+            $this->db->exec("DROP DATABASE IF EXISTS `{$this->base}`");
+        }
+        if ($this->carpetaTemporal !== null) {
+            array_map('unlink', glob($this->carpetaTemporal . '/*'));
+            rmdir($this->carpetaTemporal);
+        }
+    }
+
+    public function testC8CronRealConCorreoSimuladoYDosClinicas(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        require_once __DIR__ . '/../Support/RecordatoriosDosClinicas.php';
+        DosClinicas::poblar($this->db);
+        RecordatoriosDosClinicas::poblar($this->db);
+        $db = $this->db;
+        $emailService = new CorreoRecordatorioSimulado();
+        $ahora = new DateTimeImmutable('2026-09-23 01:00:00 UTC');
+        $appUrl = 'https://zooki.test/index.php';
+        ob_start();
+        try {
+            include __DIR__ . '/../../scripts/send_reminders.php';
+            $this->assertSame(7, $intentos);
+            include __DIR__ . '/../../scripts/send_reminders.php';
+            $this->assertSame(0, $intentos);
+            $db->exec("DELETE FROM notificaciones");
+            $db->exec("UPDATE mascota_clinica SET estado='inactivo' WHERE id_clinica=2");
+            include __DIR__ . '/../../scripts/send_reminders.php';
+            $this->assertSame(4, $intentos);
+        } finally {
+            ob_end_clean();
+        }
+        $this->assertSame([1], array_map('intval', $db->query('SELECT DISTINCT id_clinica FROM notificaciones')->fetchAll(PDO::FETCH_COLUMN)));
+        $this->assertSame([6], array_map('intval', $db->query('SELECT DISTINCT id_usuario FROM notificaciones')->fetchAll(PDO::FETCH_COLUMN)));
+        foreach ($emailService->envios as $envio) {
+            $this->assertStringContainsString('Clínica ', $envio['asunto']);
+            $this->assertStringContainsString('Luna', $envio['cuerpo']);
+        }
+    }
+
+    public function testElEsquemaCreaLasCincuentaTablasEnInnoDbYUtf8mb4(): void
+    {
+        $this->cargar('01_schema.sql');
+
+        $tablas = $this->db->query(
+            "SELECT ENGINE, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->assertCount(50, $tablas);
+        foreach ($tablas as $t) {
+            $this->assertSame('InnoDB', $t['ENGINE']);
+            $this->assertSame('utf8mb4_general_ci', $t['TABLE_COLLATION']);
+        }
+    }
+
+    public function testLaSemillaCargaLosCatalogosYNoDuplicaAlRepetirse(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->cargar('02_semilla.sql');
+
+        $this->assertSame(['roles' => 4, 'planes' => 2, 'especies' => 6, 'razas' => 54, 'colores_base' => 9, 'especialidades' => 0], $this->conteos());
+        $this->assertSame(
+            [1 => 'administrador', 2 => 'veterinario', 4 => 'propietario', 5 => 'super-administrador'],
+            $this->db->query('SELECT id_rol, nombre_rol FROM roles ORDER BY id_rol')->fetchAll(PDO::FETCH_KEY_PAIR)
+        );
+        $this->assertSame(0, $this->contar('usuarios'));
+        $this->assertSame(0, $this->contar('clinicas'));
+    }
+
+    public function testElMigradorEstaAlDiaDosVecesSeguidas(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $antes = $this->conteos();
+
+        $primera = $this->migrador()->migrar();
+        $segunda = $this->migrador()->migrar();
+
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
+        $this->assertSame($antes, $this->conteos());
+    }
+
+    /** C3: aislamiento, consentimiento, confirmacion y ficha global en el esquema real. */
+    public function testC3MascotasYConfirmacionEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/Mascota.php';
+        require_once __DIR__ . '/../../models/PropietarioClinica.php';
+        $this->cargar('01_schema.sql'); $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db); DosClinicas::completarMascota($this->db);
+        $_SESSION=['id_usuario'=>4]; Contexto::activar(Contexto::deClinica(2,'Clínica Sur',Roles::VETERINARIO),1);
+        try {
+            $mascotas=new Mascota($this->db); $propietarios=new PropietarioClinica($this->db);
+            $this->assertSame([],$mascotas->getAll());
+            try { $mascotas->getById(1); $this->fail('Debió rechazar'); } catch (AccesoDenegado $e) { $this->assertSame(403,$e->codigo()); }
+            $this->assertNull($propietarios->buscarExacto('fabio@'));
+            $solicitud=$propietarios->solicitarVinculo('fabio@zooki.test');
+            $this->assertFalse($mascotas->esPropietarioValido(6));
+            $this->assertTrue($propietarios->confirmarVinculo($solicitud['id_enlace'],$solicitud['token']));
+            $this->assertFalse($propietarios->confirmarVinculo($solicitud['id_enlace'],$solicitud['token']));
+            $mascotas->vincular(1,6); $mascotas->vincular(1,6);
+            $this->assertSame(1,$this->contar('mascotas')); $this->assertSame(2,$this->contar('mascota_clinica'));
+            try { $mascotas->update(['id_mascota'=>1,'id_especie'=>2]); $this->fail('Debió rechazar'); } catch (AccesoDenegado $e) { $this->assertSame(403,$e->codigo()); }
+            $mascotas->update(['id_mascota'=>1,'peso'=>'9.25']);
+            $this->assertSame('9.25',(string)$mascotas->getById(1)['peso']);
+            $this->assertSame(1,$this->contar('notificaciones'));
+            $datos=['id_propietario'=>6,'nombre'=>'Nueva ficha','id_especie'=>1,'id_raza'=>null,
+                'raza_indicada'=>'Raza por confirmar','fecha_nacimiento'=>'2022-01-01','peso'=>'3.20','sexo'=>'Macho','colores'=>[1,2]];
+            $id=$mascotas->insert($datos); $otra=$mascotas->insert($datos);
+            $this->assertSame(54,$this->contar('razas'));
+            $m=$mascotas->getById($id); $this->assertNull($m['numero_historia_clinica']);
+            $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/D',$m['token_carnet']);
+            $this->assertNotSame($m['token_carnet'],$mascotas->getById($otra)['token_carnet']);
+            $this->assertSame('1,2',$m['colores_ids']);
+            $cuentas=$this->contar('usuarios');
+            $datos=['nombre_completo'=>'Titular Nuevo','tipo_documento'=>'CC','documento'=>'1000000030','telefono'=>'3001234567',
+                'email'=>'nuevo@zooki.test','titular_presente'=>'1','acepta_politica'=>'0'];
+            try { $propietarios->registrar($datos,'politica-1','127.0.0.1'); $this->fail('Debió rechazar'); }
+            catch (InvalidArgumentException $e) { $this->assertNotEmpty($e->getMessage()); }
+            $this->assertSame($cuentas,$this->contar('usuarios'));
+            $datos['acepta_politica']='1'; $alta=$propietarios->registrar($datos,'politica-1','127.0.0.1');
+            $this->assertNull($this->db->query('SELECT password FROM usuarios WHERE id_usuario=' . $alta['id_usuario'])->fetchColumn());
+            $this->assertSame('alta_personal',$this->db->query('SELECT medio FROM consentimientos_datos')->fetchColumn());
+            $this->assertSame(1,$this->contar('password_resets'));
+        } finally { $_SESSION=[]; }
+    }
+
+    public function testMigracionC3ActualizaUnaBaseAnteriorYSePuedeRepetir(): void
+    {
+        $this->cargar('01_schema.sql'); $this->cargar('02_semilla.sql');
+        // Reproduce la forma publicada en B antes de la confirmación adelantada.
+        $this->db->exec('ALTER TABLE verificaciones_email DROP FOREIGN KEY fk_verif_clinica_vinculo');
+        $this->db->exec('ALTER TABLE verificaciones_email DROP COLUMN id_clinica_vinculo, DROP COLUMN proposito');
+        $this->cargar('03_confirmacion_vinculo_propietario.sql');
+        $this->cargar('03_confirmacion_vinculo_propietario.sql');
+        $columnas=$this->db->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='verificaciones_email'")->fetchAll(PDO::FETCH_COLUMN);
+        $this->assertContains('id_clinica_vinculo',$columnas); $this->assertContains('proposito',$columnas);
+        $this->assertSame(1,(int)$this->db->query("SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND CONSTRAINT_NAME='fk_verif_clinica_vinculo'")->fetchColumn());
+    }
+
+    /** D-5: la semilla solo inserta lo que falta y nunca sobrescribe. */
+    public function testLaSemillaNoSobrescribeNiRecreaLoQueCambioLaPlataforma(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec("UPDATE planes SET precio_mensual = 120000 WHERE id_plan = 2");
+        $this->db->exec("UPDATE colores_base SET nombre_color = 'Café oscuro' WHERE id_color = 3");
+
+        $this->migrador()->migrar();
+
+        $this->assertSame(120000, (int) $this->db->query('SELECT precio_mensual FROM planes WHERE id_plan = 2')->fetchColumn());
+        $this->assertSame('Café oscuro', $this->db->query('SELECT nombre_color FROM colores_base WHERE id_color = 3')->fetchColumn());
+        $this->assertSame(9, $this->contar('colores_base'));
+    }
+
+    public function testUnaMigracionNuevaSeAplicaUnaSolaVez(): void
+    {
+        $this->cargar('01_schema.sql');
+        $carpeta = $this->carpetaConMigracion(
+            '03_prueba_migrador.sql',
+            "CREATE TABLE IF NOT EXISTS prueba_migrador (id INT NOT NULL PRIMARY KEY) ENGINE=InnoDB;\n"
+            . "INSERT IGNORE INTO prueba_migrador (id) VALUES (1);"
+        );
+
+        $revision = (new Migrador($this->db, $carpeta))->migrar(true);
+        $primera = (new Migrador($this->db, $carpeta))->migrar();
+        $segunda = (new Migrador($this->db, $carpeta))->migrar();
+
+        $this->assertSame(['03_prueba_migrador.sql'], $revision['ejecutadas']);
+        $this->assertSame(['03_prueba_migrador.sql'], $primera['ejecutadas']);
+        $this->assertSame([], $segunda['ejecutadas']);
+        $this->assertSame(1, $this->contar('schema_migraciones'));
+        $this->assertSame(4, $this->contar('roles'), 'La semilla también se aplicó');
+    }
+
+    public function testSeNiegaSobreUnaBaseV1(): void
+    {
+        // La forma de la v1: usuarios con el documento como clave y sin clinicas.
+        $this->db->exec("CREATE TABLE usuarios (documento VARCHAR(20) NOT NULL PRIMARY KEY, id_rol INT) ENGINE=InnoDB");
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('esquema v1');
+        $this->migrador()->migrar();
+    }
+
+    public function testSeNiegaSobreUnaBaseSinEsquema(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('01_schema.sql');
+        $this->migrador()->migrar();
+    }
+
+    /** D-2 / RN-401: la base impide dos reservas del mismo veterinario a la misma hora. */
+    public function testLaDobleReservaSeRechazaSalvoSiLaCitaEstaLibreOEsSobrecupo(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        [$clinicaA, $clinicaB, $vet, $mascota] = $this->datosDeAgenda();
+
+        $primera = $this->reservar($clinicaA, $mascota, $vet, 0);
+
+        // Mismo veterinario y hora, aunque sea en otra clínica: se rechaza.
+        try {
+            $this->reservar($clinicaB, $mascota, $vet, 0);
+            $this->fail('Se aceptó una doble reserva del mismo veterinario.');
+        } catch (PDOException $e) {
+            $this->assertSame('23000', $e->getCode());
+        }
+
+        // Un sobrecupo no ocupa el horario.
+        $this->reservar($clinicaA, $mascota, $vet, 1);
+
+        // Al cancelar la primera, el horario queda libre otra vez.
+        $this->db->exec("UPDATE citas SET estado = 'cancelada' WHERE id_cita = {$primera}");
+        $this->reservar($clinicaA, $mascota, $vet, 0);
+
+        $this->assertSame(3, $this->contar('citas'));
+    }
+
+    public function testCreaElSuperAdministradorSinClinicaYNoRepiteElCorreo(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $creador = new CreadorSuperAdmin($this->db);
+
+        $id = $creador->crear('operador@zooki.test', 'Operador Zooki', 'Plataforma#Vet2026');
+
+        $fila = $this->db->query("SELECT * FROM usuarios WHERE id_usuario = {$id}")->fetch(PDO::FETCH_ASSOC);
+        $this->assertSame(1, (int) $fila['es_super_admin']);
+        $this->assertNull($fila['documento']);
+        $this->assertTrue(password_verify('Plataforma#Vet2026', $fila['password']));
+        $this->assertSame(0, $this->contar('usuario_clinica'));
+        $this->assertSame(0, $this->contar('propietario_clinica'));
+        $this->assertSame(1, (int) $this->db->query(
+            "SELECT COUNT(*) FROM auditoria_sistema WHERE id_usuario = {$id} AND id_clinica IS NULL AND accion = 'INSERT'"
+        )->fetchColumn());
+
+        try {
+            $creador->crear('OPERADOR@zooki.test', 'Otra persona', 'Plataforma#Vet2026');
+            $this->fail('Se creó una segunda cuenta con el mismo correo.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('correo', $e->getMessage());
+        }
+        $this->assertSame(1, $this->contar('usuarios'));
+    }
+
+    /**
+     * C1 — El fixture de dos clínicas que usan las pruebas en SQLite también
+     * carga en el esquema real, y los contextos salen iguales: si 01_schema.sql
+     * cambia una columna que el fixture usa, esta prueba lo detecta.
+     */
+    public function testElFixtureDeDosClinicasCargaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/Usuario.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+
+        DosClinicas::poblar($this->db);
+        $usuario = new Usuario($this->db);
+
+        $this->assertSame(['clinica:1:2', 'clinica:2:1', 'propietario'], array_column($usuario->contextosDe(DosClinicas::DOBLE), 'clave'));
+        $this->assertSame(['plataforma'], array_column($usuario->contextosDe(DosClinicas::SUPER_ADMIN), 'clave'));
+        $this->assertSame([1, 2, 5, 8], array_map('intval', array_column($usuario->personalDeClinica(DosClinicas::NORTE), 'id_usuario')));
+        $this->assertSame(1, (int) $usuario->propietariosDeClinica(DosClinicas::NORTE)[1]['num_mascotas']);
+    }
+
+    /** C2: copia repetible, relaciones reales y restauración aislada en MySQL/MariaDB. */
+    public function testConfiguracionDeDosClinicasEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../helpers/InicializadorClinica.php';
+        require_once __DIR__ . '/../../models/CatalogoClinica.php';
+        require_once __DIR__ . '/../../models/HorarioClinica.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $inicializador = new InicializadorClinica($this->db);
+        $inicializador->copiar(1);
+        $inicializador->copiar(2);
+        $inicializador->copiar(1);
+        $inicializador->copiar(2);
+        foreach (['tipos_cita'=>12,'horarios_clinica'=>14,'vacunas_base'=>30,'especie_vacunas'=>42,
+                  'laboratorios_base'=>22,'productos_desparasitacion_base'=>30] as $tabla=>$cantidad) {
+            $this->assertSame($cantidad, $this->contar($tabla));
+        }
+        $_SESSION = ['id_usuario'=>1];
+        Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+        $catalogo = new CatalogoClinica($this->db);
+        $tipos = $catalogo->tiposCita();
+        $this->assertCount(6, $tipos);
+        $this->assertCount(12, $catalogo->vacunasPorEspecie(1));
+        $horario = new HorarioClinica($this->db);
+        $horario->guardar([[1,1,1,0,'09:00:00','11:00:00',null,null]]);
+        $horario->restaurar();
+        $this->assertSame('08:00:00', $horario->dia(1)['bloque_morning_inicio']);
+        Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::ADMIN), 1);
+        $this->assertNull($catalogo->tipoCita((int) $tipos[0]['id_tipo_cita']));
+        $this->assertSame('08:00:00', $horario->dia(1)['bloque_morning_inicio']);
+        $this->db->beginTransaction();
+        $inicializador->copiar(3);
+        $this->db->rollBack();
+        $this->assertSame(30, $this->contar('vacunas_base'));
+        $_SESSION = [];
+    }
+
+    /**
+     * C4 en el esquema real: registro atómico con clínica y veterinario,
+     * número de historia por clínica, RN-113 con y sin autorización y 403
+     * al modificar lo de otra clínica.
+     */
+    public function testC4HistoriaClinicaEnElEsquemaReal(): void
+    {
+        $this->prepararHistoriaClinica();
+        try {
+            $this->comoVeterinario(1, 2);
+            $tratamiento = ['medicamento' => 'Amoxicilina', 'dosis' => '1 ml', 'via_administracion' => 'Oral', 'duracion' => '5 días', 'fecha_inicio' => '2026-10-07'];
+            $guardar = fn (int $idConsulta, array $adjunto, int $indice): array => $this->metadatosDeAdjunto();
+            $consultas = new Consulta($this->db);
+            $idConsulta = $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [$tratamiento], [['nombre' => 'rx.jpg']], $guardar);
+            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
+            $idVacuna = (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'Rabia', 'fecha_aplicacion' => '2026-10-01']);
+            $idArchivo = (int) $this->db->query('SELECT id_archivo FROM archivos_clinicos')->fetchColumn();
+
+            $fila = $this->db->query("SELECT id_clinica, id_veterinario FROM consultas WHERE id_consulta = $idConsulta")->fetch(PDO::FETCH_ASSOC);
+            $this->assertSame([1, 2], [(int) $fila['id_clinica'], (int) $fila['id_veterinario']]);
+            $this->assertSame('HC-000001', $this->numeroHistoria(1, 1));
+
+            // Sin fecha de inicio en un tratamiento no queda nada (RE-2.6.1).
+            unset($tratamiento['fecha_inicio']);
+            try {
+                $consultas->registrar(['id_mascota' => 1, 'motivo' => 'X', 'diagnostico' => 'Y'], [$tratamiento], [], $guardar);
+                $this->fail('Debió rechazar el tratamiento sin fecha de inicio.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('fecha de inicio', $e->getMessage());
+            }
+            $this->assertSame(2, $this->contar('consultas'));
+
+            $this->comoVeterinario(2, 4);
+            $this->assertSame([], $consultas->historialDeMascota(1));
+            $this->assertSame('Clínica Norte', (new Vacuna($this->db))->findByMascota(1)[0]['clinica_nombre']);
+            $this->assertDenegado(fn () => (new ArchivoClinico($this->db))->paraDescargar($idArchivo));
+
+            $this->db->exec('UPDATE propietario_clinica SET autoriza_historia_compartida = 1 WHERE id_propietario = 6 AND id_clinica = 2');
+            $historial = $consultas->historialDeMascota(1);
+            $this->assertCount(2, $historial);
+            $this->assertCount(1, array_merge(...array_column($historial, 'tratamientos')));
+            $this->assertSame('CLI_real.jpg', (new ArchivoClinico($this->db))->paraDescargar($idArchivo)['nombre_servidor']);
+            $this->assertDenegado(fn () => $consultas->paraModificar($idConsulta));
+            $this->assertDenegado(fn () => (new Vacuna($this->db))->paraModificar($idVacuna));
+
+            $this->db->exec('UPDATE propietario_clinica SET autoriza_historia_compartida = 0 WHERE id_propietario = 6 AND id_clinica = 2');
+            $this->assertSame([], $consultas->historialDeMascota(1));
+
+            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
+            $this->assertSame('HC-000001', $this->numeroHistoria(1, 2));
+            $this->assertSame('HC-000001', $this->numeroHistoria(1, 1));
+            $this->assertSame(3, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = 2 AND accion = 'OTHER'")->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /**
+     * RF-2.4: mientras otra sesión asigna un número en la misma clínica, una
+     * primera consulta espera el candado; si no lo obtiene no guarda nada, y
+     * al soltarlo toma el número siguiente sin repetir.
+     */
+    public function testC4ElNumeroDeHistoriaSeAsignaBajoCandadoSinRepetirse(): void
+    {
+        $this->prepararHistoriaClinica();
+        $this->db->exec("INSERT INTO mascotas (id_mascota, id_propietario, id_clinica_registro, token_carnet, nombre, id_especie, estado)
+            VALUES (2, 6, 1, '" . str_repeat('b', 43) . "', 'Kira', 1, 1)");
+        $this->db->exec("INSERT INTO mascota_clinica (id_mascota, id_clinica, estado) VALUES (2, 1, 'activo')");
+        $otraSesion = $this->otraConexion();
+        try {
+            $this->comoVeterinario(1, 2);
+            $sinAdjuntos = fn (): array => [];
+            $consultas = new ConsultaConEsperaCorta($this->db);
+            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+
+            $this->assertSame(1, (int) $otraSesion->query("SELECT GET_LOCK('zooki_numero_hc_1', 0)")->fetchColumn());
+            try {
+                $consultas->registrar(['id_mascota' => 2, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+                $this->fail('Debió esperar el candado de numeración.');
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('número de historia', $e->getMessage());
+            }
+            $this->assertSame(1, $this->contar('consultas'));
+            $this->assertNull($this->numeroHistoria(2, 1));
+
+            // Una consulta de una mascota que ya tiene número no necesita el candado.
+            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+
+            $otraSesion->query("SELECT RELEASE_LOCK('zooki_numero_hc_1')");
+            $consultas->registrar(['id_mascota' => 2, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+            $this->assertSame('HC-000002', $this->numeroHistoria(2, 1));
+            $this->assertSame(1, (int) $otraSesion->query("SELECT IS_FREE_LOCK('zooki_numero_hc_1')")->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /**
+     * C5 en el esquema real: duración y margen copiados, aislamiento, doble
+     * reserva entre clínicas por la aplicación y por el índice único (error
+     * 1062 convertido en mensaje) y RN-409 con NotificacionInterna v2.
+     */
+    public function testC5AgendaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../Support/CitaSinValidacionPrevia.php';
+        require_once __DIR__ . '/../../helpers/VigilanteAtenciones.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        DosClinicas::completarMascota($this->db);
+        DosClinicas::poblarAgenda($this->db);
+        DosClinicas::vincularLunaASur($this->db);
+        $this->db->exec("INSERT INTO usuario_clinica (id_usuario, id_clinica, id_rol, estado) VALUES (2, 2, 2, 'activo')");
+        $reserva = ['id_mascota' => 1, 'id_veterinario' => 2, 'fecha' => '2030-01-07', 'hora' => '09:00', 'motivo' => 'Control', 'id_tipo_cita' => 1];
+        try {
+            $_SESSION = ['id_usuario' => 2];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::VETERINARIO), 1);
+            $citas = new Cita($this->db);
+            $id = $citas->registrar($reserva);
+            $fila = $this->db->query("SELECT id_clinica, duracion_minutos, margen_minutos, hora_fin, prioridad, es_sobrecupo, ocupa_horario FROM citas WHERE id_cita = $id")->fetch(PDO::FETCH_ASSOC);
+            $this->assertSame(['1', '30', '10', '09:30:00', 'verde', '0', '1'], array_map('strval', array_values($fila)));
+
+            $_SESSION = ['id_usuario' => 3];
+            Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::ADMIN), 1);
+            try {
+                $citas->getById($id);
+                $this->fail('Debió responder 403.');
+            } catch (AccesoDenegado $e) {
+                $this->assertSame(403, $e->codigo());
+            }
+            $this->assertSame([], $citas->listarRango('2030-01-07', '2030-01-07'));
+
+            $enSur = ['id_tipo_cita' => 2] + $reserva;
+            foreach ([$citas, new CitaSinValidacionPrevia($this->db)] as $modelo) {
+                try {
+                    $modelo->registrar($enSur);
+                    $this->fail('Debió rechazar la doble reserva entre clínicas.');
+                } catch (HorarioOcupado $e) {
+                    $this->assertNotSame('', $e->getMessage());
+                }
+            }
+            $this->assertSame(1, $this->contar('citas'));
+
+            $_SESSION = ['id_usuario' => 2];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::VETERINARIO), 1);
+            $this->assertTrue($citas->cancelar($citas->getById($id)));
+            $_SESSION = ['id_usuario' => 3];
+            Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::ADMIN), 1);
+            $deSur = $citas->registrar($enSur);
+            $this->assertSame(20, (int) $this->db->query("SELECT duracion_minutos FROM citas WHERE id_cita = $deSur")->fetchColumn());
+
+            $this->db->exec("UPDATE citas SET estado = 'en_curso' WHERE id_cita = $deSur");
+            $vigilante = new VigilanteAtenciones($this->db, function (): void {
+            });
+            $zona = new DateTimeZone(ReglaAtencion::ZONA);
+            $this->assertSame(1, $vigilante->revisar(new DateTimeImmutable('2030-01-07 09:31', $zona))['avisadas']);
+            $this->assertSame(0, $vigilante->revisar(new DateTimeImmutable('2030-01-07 09:45', $zona))['avisadas']);
+            $aviso = $this->db->query("SELECT id_clinica, id_usuario FROM notificaciones_internas WHERE tipo = 'ATENCION_ABIERTA'")->fetchAll(PDO::FETCH_NUM);
+            $this->assertSame([['2', '2']], array_map(fn ($f) => array_map('strval', $f), $aviso));
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /**
+     * C6 en el esquema real: el propietario se vincula a Sur, agenda allí
+     * (la mascota se vincula en la misma transacción), edita la ficha con
+     * auditoría sin clínica y, al desvincularse, Sur queda en solo lectura.
+     */
+    public function testC6PortalEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../controllers/CitaController.php';
+        require_once __DIR__ . '/../../models/VinculosPropietario.php';
+        require_once __DIR__ . '/../../models/MascotaPropietario.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        DosClinicas::completarMascota($this->db);
+        DosClinicas::poblarAgenda($this->db);
+        try {
+            $_SESSION = ['id_usuario' => 6];
+            Contexto::activar(Contexto::dePropietario(), 1);
+            $vinculos = new VinculosPropietario($this->db);
+            $vinculos->vincular(2);
+
+            $_POST = ['id_clinica' => '2', 'id_mascota' => '1', 'id_veterinario' => '4', 'id_tipo_cita' => '2', 'fecha' => '2030-01-07', 'hora' => '09:00', 'motivo' => 'Control'];
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $reloj = fn (): DateTimeImmutable => new DateTimeImmutable('2030-01-07 07:00', new DateTimeZone(ReglaAtencion::ZONA));
+            ob_start();
+            (new CitaController($this->db, $reloj))->agendarDesdePortalAjax();
+            $respuesta = json_decode(ob_get_clean(), true);
+            $this->assertTrue($respuesta['success'], $respuesta['message'] ?? '');
+            $this->assertSame('activo', $this->db->query('SELECT estado FROM mascota_clinica WHERE id_mascota = 1 AND id_clinica = 2')->fetchColumn());
+
+            $cambios = (new MascotaPropietario($this->db))->actualizar(1, ['sexo' => 'Macho', 'peso' => '8.50']);
+            $this->assertSame(['sexo'], $cambios);
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica IS NULL AND tabla_afectada = 'mascotas' AND accion = 'UPDATE'")->fetchColumn());
+
+            try {
+                $vinculos->desvincular(2);
+                $this->fail('Con una cita sin resolver no se desvincula.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('sin resolver', $e->getMessage());
+            }
+            $cita = (new Cita($this->db))->paraPropietario((int) $respuesta['id_cita'], 6);
+            $this->assertTrue((new Cita($this->db))->cancelar($cita));
+            $vinculos->desvincular(2);
+            $this->assertSame('inactivo', $this->db->query('SELECT estado FROM mascota_clinica WHERE id_mascota = 1 AND id_clinica = 2')->fetchColumn());
+
+            $_SESSION = ['id_usuario' => 4];
+            Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::VETERINARIO), 1);
+            try {
+                (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'X', 'fecha_aplicacion' => '2026-10-01']);
+                $this->fail('Tras desvincularse, Sur no registra nada nuevo.');
+            } catch (AccesoDenegado $e) {
+                $this->assertSame(403, $e->codigo());
+            }
+            $this->assertSame([], (new Vacuna($this->db))->findByMascota(1));
+        } finally {
+            $_SESSION = [];
+            $_POST = [];
+        }
+    }
+
+    /**
+     * C7 en el esquema real: el panel de cada clínica cuenta solo lo suyo,
+     * la carga sale de usuario_clinica y una mascota desvinculada no es
+     * paciente activo. Elena ve su agenda en Norte y la clínica en Sur.
+     */
+    public function testC7PanelesEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../controllers/PanelController.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        DosClinicas::poblarAgenda($this->db);
+        DosClinicas::vincularLunaASur($this->db);
+        $this->db->exec("INSERT INTO mascotas (id_mascota, id_propietario, id_clinica_registro, token_carnet, nombre, estado)
+            VALUES (2, 9, 2, '" . str_repeat('b', 43) . "', 'Toby', 1)");
+        $this->db->exec("INSERT INTO mascota_clinica (id_mascota, id_clinica, estado) VALUES (2, 2, 'inactivo')");
+        $cita = $this->db->prepare("INSERT INTO citas (id_clinica, id_mascota, id_veterinario, id_tipo_cita, fecha, hora, motivo, estado)
+            VALUES (?, 1, ?, ?, '2030-01-07', ?, 'Control', ?)");
+        $cita->execute([1, 2, 1, '09:00:00', 'completada']);
+        $cita->execute([1, 5, 1, '10:00:00', 'confirmada']);
+        $cita->execute([2, 4, 2, '09:00:00', 'pendiente']);
+        $ahora = new DateTimeImmutable('2030-01-07 08:00', new DateTimeZone(ReglaAtencion::ZONA));
+        try {
+            $_SESSION = ['id_usuario' => 5];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::VETERINARIO), 2);
+            $vet = (new PanelController($this->db))->datosVeterinario(5, $ahora);
+            $this->assertSame(['10:00:00'], array_column($vet['agenda'], 'hora'));
+
+            Contexto::activar(Contexto::deClinica(2, 'Sur', Roles::ADMIN), 2);
+            $sur = (new PanelController($this->db))->datosAdministrador($ahora);
+            $this->assertSame([4], array_map('intval', array_column($sur['citas'], 'id_veterinario')));
+            $this->assertSame(['Diego Sur'], array_column($sur['carga'], 'veterinario'));
+            $this->assertSame(1, $sur['pacientes_activos'], 'Toby está desvinculado de Sur.');
+            $this->assertSame(2, $sur['propietarios']);
+
+            $_SESSION = ['id_usuario' => 1];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+            $norte = (new PanelController($this->db))->datosAdministrador($ahora);
+            $this->assertSame(['Beto Norte', 'Elena Doble'], array_column($norte['carga'], 'veterinario'));
+            $this->assertEquals([1, 1], array_column($norte['carga'], 'total'));
+            $this->assertSame(1, $norte['pacientes_activos']);
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    // -----------------------------------------------------------------------
+
+    /**
+     * D1: registro con formulario y con Google, prueba del consentimiento
+     * (ENUM `medio` real), verificación con vínculo, re-aceptación de la
+     * política y el bloqueo de RN-109, sobre el esquema real.
+     */
+    public function testD1RegistroPoliticaYVinculoEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/RegistroPropietario.php';
+        require_once __DIR__ . '/../../models/PropietarioClinica.php';
+        require_once __DIR__ . '/../../helpers/InicioSesion.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        $registro = new RegistroPropietario($this->db);
+        try {
+            $r = $registro->conFormulario([
+                'id_clinica' => '2', 'tipo_documento' => 'CC', 'documento' => '1000000099', 'nombre_completo' => 'Olga Nueva',
+                'telefono' => '+57 300 555 1234', 'email' => 'olga@zooki.test', 'password' => 'Huellita#2026',
+                'confirm_password' => 'Huellita#2026', 'acepta_datos' => '1',
+            ], '10.0.0.1');
+            $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM propietario_clinica WHERE id_propietario = {$r['id_usuario']}")->fetchColumn());
+            $this->assertSame('Clínica Sur', $registro->verificarRegistro($r['enlace']['id'], $r['enlace']['token'])['clinica']);
+
+            $google = $registro->conGoogle(['email' => 'pia@gmail.test', 'nombre_completo' => 'Pía Google', 'google_uid' => 'sub-pia'], ['id_clinica' => '1', 'acepta_datos' => '1'], '10.0.0.2');
+            $medios = $this->db->query('SELECT medio FROM consentimientos_datos ORDER BY id_consentimiento')->fetchAll(PDO::FETCH_COLUMN);
+            $this->assertSame(['formulario', 'google'], $medios);
+            $this->assertSame([PoliticaDatos::VERSION], array_values(array_unique($this->db->query('SELECT version_politica FROM consentimientos_datos')->fetchAll(PDO::FETCH_COLUMN))));
+
+            $usuario = (new Usuario($this->db))->buscarPorId($google);
+            $this->assertSame('portal_propietario', (new InicioSesion($this->db))->abrir($usuario, 'google'));
+            $this->assertSame(1, $_SESSION['perfil_incompleto']);
+            $ana = (new Usuario($this->db))->buscarPorId(1);
+            $this->assertSame('aceptar_politica', (new InicioSesion($this->db))->abrir($ana, 'password'));
+
+            $_SESSION = ['id_usuario' => 1];
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+            $this->db->exec("UPDATE propietario_clinica SET estado = 'inactivo' WHERE id_propietario = 6 AND id_clinica = 1");
+            try {
+                (new PropietarioClinica($this->db))->actualizar(6, ['nombre_completo' => 'Fabio Dueño', 'telefono' => '3001234567', 'estado' => '1']);
+                $this->fail('RN-109: la clínica reactivó el vínculo sin la confirmación del titular.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame('inactivo', $this->db->query('SELECT estado FROM propietario_clinica WHERE id_propietario = 6 AND id_clinica = 1')->fetchColumn());
+            }
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    private function prepararHistoriaClinica(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../Support/ConsultaConEsperaCorta.php';
+        require_once __DIR__ . '/../../models/Consulta.php';
+        require_once __DIR__ . '/../../models/Vacuna.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        DosClinicas::completarMascota($this->db);
+        DosClinicas::vincularLunaASur($this->db);
+    }
+
+    private function comoVeterinario(int $clinica, int $idUsuario): void
+    {
+        $_SESSION = ['id_usuario' => $idUsuario];
+        Contexto::activar(Contexto::deClinica($clinica, 'Clínica', Roles::VETERINARIO), 1);
+    }
+
+    private function metadatosDeAdjunto(): array
+    {
+        return [
+            'nombre_original' => 'rx.jpg',
+            'nombre_servidor' => 'CLI_real.jpg',
+            'ruta_archivo' => 'uploads/clinicos/CLI_real.jpg',
+            'tipo_archivo' => 'image/jpeg',
+            'extension' => 'jpg',
+            'tamano_bytes' => 2048,
+        ];
+    }
+
+    private function numeroHistoria(int $mascota, int $clinica): ?string
+    {
+        $numero = $this->db->query("SELECT numero_historia_clinica FROM mascota_clinica WHERE id_mascota = $mascota AND id_clinica = $clinica")->fetchColumn();
+        return $numero === false ? null : $numero;
+    }
+
+    private function assertDenegado(callable $accion): void
+    {
+        try {
+            $accion();
+            $this->fail('Debió responder 403.');
+        } catch (AccesoDenegado $e) {
+            $this->assertSame(403, $e->codigo());
+        }
+    }
+
+    /** Segunda sesión sobre la misma base, para simular otra petición en curso. */
+    private function otraConexion(): PDO
+    {
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
+            getenv('ZOOKI_TEST_MYSQL_HOST'),
+            (int) (getenv('ZOOKI_TEST_MYSQL_PORT') ?: 3306),
+            $this->base
+        );
+        $usuario = getenv('ZOOKI_TEST_MYSQL_USER') ?: 'root';
+        $clave = getenv('ZOOKI_TEST_MYSQL_PASS') ?: '';
+        return new PDO($dsn, $usuario, $clave, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    }
+
+    private function migrador(): Migrador
+    {
+        return new Migrador($this->db, self::DATABASE);
+    }
+
+    /** Ejecuta un archivo de varias sentencias, como lo hace el migrador. */
+    private function cargar(string $archivo): void
+    {
+        $st = $this->db->query(file_get_contents(self::DATABASE . '/' . $archivo));
+        while ($st->nextRowset()) {
+        }
+        $st->closeCursor();
+    }
+
+    /** Copia 02_semilla.sql y una migración de prueba a una carpeta temporal. */
+    private function carpetaConMigracion(string $nombre, string $sql): string
+    {
+        $this->carpetaTemporal = sys_get_temp_dir() . '/zooki_migrador_' . bin2hex(random_bytes(4));
+        mkdir($this->carpetaTemporal);
+        copy(self::DATABASE . '/02_semilla.sql', $this->carpetaTemporal . '/02_semilla.sql');
+        file_put_contents($this->carpetaTemporal . '/' . $nombre, $sql);
+        return $this->carpetaTemporal;
+    }
+
+    private function contar(string $tabla): int
+    {
+        return (int) $this->db->query("SELECT COUNT(*) FROM `{$tabla}`")->fetchColumn();
+    }
+
+    /** @return array<string, int> */
+    private function conteos(): array
+    {
+        $r = [];
+        foreach (['roles', 'planes', 'especies', 'razas', 'colores_base', 'especialidades'] as $t) {
+            $r[$t] = $this->contar($t);
+        }
+        return $r;
+    }
+
+    /** @return int[] [clínica A, clínica B, veterinario, mascota] */
+    private function datosDeAgenda(): array
+    {
+        $this->db->exec("INSERT INTO clinicas (nombre, nit, id_plan, estado) VALUES ('Clínica A', '900000001', 1, 'activa'), ('Clínica B', '900000002', 1, 'activa')");
+        $this->db->exec("INSERT INTO usuarios (nombre_completo, email) VALUES ('Vet', 'vet@zooki.test'), ('Dueña', 'duena@zooki.test')");
+        $this->db->exec("INSERT INTO mascotas (id_propietario, token_carnet, id_especie, id_raza, nombre) VALUES (2, '" . str_repeat('a', 43) . "', 1, 49, 'Luna')");
+        return [1, 2, 1, 1];
+    }
+
+    private function reservar(int $clinica, int $mascota, int $vet, int $sobrecupo): int
+    {
+        $this->db->prepare(
+            "INSERT INTO citas (id_clinica, id_mascota, id_veterinario, fecha, hora, motivo, es_sobrecupo)
+             VALUES (?, ?, ?, '2026-11-02', '09:00:00', 'Control', ?)"
+        )->execute([$clinica, $mascota, $vet, $sobrecupo]);
+        return (int) $this->db->lastInsertId();
+    }
+}

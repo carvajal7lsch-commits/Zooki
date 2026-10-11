@@ -381,14 +381,14 @@ flowchart TD
   B --> C{Autenticado?}
   C -- No --> C1[/"Redirigir a login (HTTP 401)"/]
   C1 --> ZF([Fin])
-  C -- Si --> SX{"Sesion vigente? (30 min sin actividad, RN-G17)"}
-  SX -- No --> SX1[/"La sesion expiro: volver a iniciar sesion"/]
+  C -- Si --> SX{"Sesion vigente y version de cuenta actual?<br/>(RN-G17, RE-T.2.5)"}
+  SX -- No --> SX1[/"Sesion vencida o revocada: volver a iniciar sesion (401)"/]
   SX1 --> ZF
   SX -- Si --> CX{"Tiene mas de un contexto?<br/>(portal de propietario y/o clinicas donde su rol esta activo)"}
   CX -- Si --> CX1[Elegir el contexto: portal de propietario o una clinica con su rol]
   CX -- No --> D
   CX1 --> D{"Es super-administrador (rol plataforma)?"}
-  D -- Si --> D1[Operar la plataforma: clinicas, planes y suscripciones]
+  D -- Si --> D1["Solo metadatos de plataforma: clinicas, planes,<br/>suscripciones, soporte e IP; flujo §12.1.1"]
   D1 --> ZF
   D -- No --> CA{"La clinica del contexto esta activa? (no suspendida ni de baja)"}
   CA -- No --> CA1[/"Mensaje: la clinica no esta disponible; contacta a la clinica"/]
@@ -414,58 +414,126 @@ El propietario entra con su documento o correo y su contraseña, o con Google. A
 
 ```mermaid
 flowchart TD
-  A([Iniciar sesion]) --> MET{Como inicia sesion?}
+  A([Iniciar sesion]) --> IP{"IP bloqueada por 20 fallos en 15 minutos?"}
+  IP -- Si --> IP1[/"Mensaje: demasiados intentos, espera 15 minutos"/]
+  IP1 --> ZF([Fin])
+  IP -- No --> MET{Como inicia sesion?}
+  MET -- Documento o correo y contraseña --> B[Ingresar credenciales]
+  B --> CAP{"Cuenta con 5 fallos: CAPTCHA aprobado?"}
+  CAP -- No --> ERR
+  CAP -- "Si o no requerido" --> C{Contraseña correcta y cuenta activa?}
+  C -- No --> ERR[Sumar fallo por IP y cuenta]
+  ERR --> MSG[/"Mensaje generico: credenciales invalidas"/]
+  MSG --> A
+  C -- Si --> V{Correo verificado?}
+  V -- No --> V1[/"Mensaje: verifica tu correo antes de entrar"/]
+  V1 --> ZF
+  V -- Si --> SES
 
-  MET -- Documento o correo y contraseña --> B[Ingresar documento o correo y contraseña]
-  B --> BL{"La IP esta bloqueada por intentos fallidos?"}
-  BL -- Si --> BL1[/"Mensaje: demasiados intentos, espera unos minutos"/]
-  BL1 --> ZF([Fin])
-  BL -- No --> CAP{"La cuenta acumula 5 fallos y no supero el CAPTCHA?"}
-  CAP -- Si --> CAP1[Pedir el CAPTCHA]
-  CAP1 --> B
-  CAP -- No --> C{Credenciales correctas?}
-  C -- No --> C1["Sumar el intento fallido (IP y cuenta)"]
-  C1 --> C2[/"Mensaje generico: credenciales invalidas"/]
-  C2 --> B
-  C -- Si --> D{La cuenta esta verificada y activa?}
-  D -- No --> D1[/"Mensaje: verifica tu correo para activar la cuenta"/]
-  D1 --> ZF
-
-  MET -- Google --> G1["Validar el token de Google (aud, iss, vigencia, correo verificado)"]
+  MET -- Google --> G1["Validar token de Google: audiencia, vigencia y correo verificado"]
   G1 --> G2{Token valido?}
-  G2 -- No --> G2a[/"Mensaje: no se pudo iniciar sesion con Google"/]
-  G2a --> ZF
-  G2 -- Si --> G3{El correo ya tiene cuenta?}
-  G3 -- No --> G3a[["Elegir la clinica de la lista y seguir el registro con Google (§11)"]]
-  G3a --> ZF
-  G3 -- Si --> G4{La cuenta ya esta vinculada a Google?}
-  G4 -- No --> G5["Vincular Google a la cuenta (RN-G21); si estaba pendiente de verificar,<br/>queda verificada, se anula su contraseña y el perfil vuelve a pedir sus datos"]
-  G5 --> PC
-  G4 -- Si --> PC
-
-  D -- Si --> TMP{"Tiene una contraseña temporal?"}
-  TMP -- Si --> TMP1[["Cambiar la contraseña antes de seguir (§13.3)"]]
-  TMP1 --> PC
-  TMP -- No --> PC{El perfil esta completo?}
-  PC -- No --> PC1[["Completar el perfil (§13.1)"]]
-  PC1 --> POL
-  PC -- Si --> POL{"Acepto la version vigente de la politica de datos?"}
-  POL -- No --> POL1["Mostrar la nueva politica y pedir aceptarla"]
+  G2 -- No --> GERR[Sumar fallo por IP]
+  GERR --> GM[/"Mensaje: no se pudo validar Google"/]
+  GM --> ZF
+  G2 -- Si --> GCAP{"Cuenta con 5 fallos: CAPTCHA aprobado?"}
+  GCAP -- No --> ERR
+  GCAP -- "Si o no requerido" --> G3{El correo tiene cuenta?}
+  G3 -- No --> REG[["Elegir clinica y aceptar la politica antes del registro Google (§11)"]]
+  REG --> ZF
+  G3 -- Si --> G4{Cuenta activa?}
+  G4 -- No --> GNO[/"Cuenta inactiva: no iniciar sesion"/]
+  GNO --> ZF
+  G4 -- Si --> G5["Vincular Google a la identidad (RN-G21); si el correo estaba pendiente,<br/>verificarlo, anular contraseña y pedir completar perfil"]
+  G5 --> SES["Abrir sesion con version actual y limpiar solo el contador de la cuenta"]
+  SES --> POL{Acepto la politica vigente?}
+  POL -- No --> POL1[Mostrar politica y pedir aceptacion]
   POL1 --> POL2{Acepta?}
-  POL2 -- No --> POL3[/"No puede continuar; puede pedir la eliminacion de su cuenta"/]
-  POL3 --> ZF
-  POL2 -- Si --> POL4[Guardar la prueba de aceptacion]
-  POL4 --> H
-  POL -- Si --> H["Mostrar su portal: todas sus mascotas y su historia,<br/>con la clinica de cada registro"]
-  H --> I{Quiere agendar, cancelar o calificar?}
+  POL2 -- No --> ZF
+  POL2 -- Si --> POL3[Guardar prueba de aceptacion]
+  POL3 --> CAM
+  POL -- Si --> CAM{"Debe crear otra contraseña tras restablecimiento del administrador?"}
+  CAM -- Si --> CAM1[["Crear contraseña (§13.3): la anterior fue anulada;<br/>solo puede llegar aqui con Google"]]
+  CAM1 --> CTX
+  CAM -- No --> CTX[["Resolver o elegir contexto: propietario y/o personal (§9)"]]
+  CTX --> PC{Perfil completo del propietario?}
+  PC -- No --> PC1[["Completar perfil (§13.1)"]]
+  PC1 --> H
+  PC -- Si --> H["Mostrar portal: todas sus mascotas e historia,<br/>con la clinica de cada registro"]
+  H --> I{Agendar, cancelar o calificar?}
   I -- No --> ZF
-  I -- Si --> E{Esta vinculado a mas de una clinica?}
-  E -- Si --> F[Elegir entre sus clinicas vinculadas]
+  I -- Si --> E{Varias clinicas vinculadas?}
+  E -- Si --> F[Elegir entre sus clinicas]
   E -- No --> G[Usar su unica clinica]
-  F --> J["Ejecutar la accion acotada a esa clinica (id_clinica)"]
+  F --> J[Ejecutar la accion acotada a la clinica elegida]
   G --> J
   J --> ZF
 ```
+
+
+### 10.1 Alta de personal: activación o invitación a una clínica
+
+HU-T.7, RE-T.7.4/5, RE-T.19.1, RN-705 y RN-G06. El administrador solo conoce los datos que escribe y los que su clínica ya puede ver. Si correo y documento identifican cuentas distintas, prevalece el correo; si solo el documento existe, se usa el correo registrado de su titular. No se muestran los datos de una cuenta existente hasta que acepte. La persona conserva los otros roles y elige contexto al entrar (§9).
+
+```mermaid
+flowchart TD
+  A([Administrador da de alta personal]) --> PER{Administrador en clinica activa y CSRF valido?}
+  PER -- No --> DEN[/"403 y auditoria"/]
+  DEN --> FIN([Fin])
+  PER -- Si --> DAT[Validar formato de los datos escritos]
+  DAT --> OK{Datos validos?}
+  OK -- No --> FMT[/"Error junto al campo"/]
+  FMT --> A
+  OK -- Si --> LOCAL{"Ya es personal o hay invitacion con estos datos en esta clinica?"}
+  LOCAL -- Si --> AVISO[/"Aviso solo sobre personal o invitaciones que la clinica ya ve"/]
+  AVISO --> FIN
+  LOCAL -- No --> COR{Correo escrito tiene cuenta?}
+  COR -- Si --> EXIST[Invitar al titular de ese correo]
+  COR -- No --> DOC{Documento escrito tiene cuenta?}
+  DOC -- Si --> EXISTD[Invitar al correo registrado del titular del documento]
+  EXISTD --> EXIST
+  DOC -- No --> NUE["Crear cuenta pendiente e inerte: sin contraseña ni consentimiento;<br/>rol de la clinica inaccesible hasta activar"]
+  NUE --> NUEI[Guardar invitacion de activacion y enviar enlace de 72 horas]
+  EXIST --> EI["Guardar invitacion de 72 horas y los datos escritos;<br/>sin asignar el rol ni modificar la cuenta"]
+  EI --> ELIG{Cuenta activa y no super-administradora?}
+  ELIG -- Si --> MAIL[Enviar invitacion de la clinica y el rol ofrecido]
+  ELIG -- No --> LIST
+  NUEI --> LIST
+  MAIL --> LIST["Lista: Pendiente de activacion, solo datos escritos;<br/>acciones Reenviar y Cancelar"]
+  LIST --> RESP[/"Misma respuesta: Invitacion enviada. La persona tiene 72 horas para aceptarla."/]
+  RESP --> ADM{Accion posterior del administrador?}
+  ADM -- Reenviar --> RE[Anular enlace anterior y emitir otro de 72 horas]
+  RE --> LIST
+  ADM -- Cancelar --> CAN[Anular invitacion; no crear rol de cuenta existente]
+  CAN --> LIM
+  ADM -- Ninguna --> GET["GET del enlace: mostrar invitacion, sin cambiar datos"]
+  GET --> EN{Enlace vigente, secreto valido y no usado?}
+  EN -- No --> REEM{"Secreto valido, pero reemplazado por otra invitacion vigente<br/>de la misma persona y clinica?"}
+  REEM -- Si --> NUEVA[/"Esta invitacion se reemplazo por una mas reciente.<br/>Usa el enlace del ultimo correo."/]
+  NUEVA --> FIN
+  REEM -- No --> INVALIDO[/"Enlace no valido, vencido o usado"/]
+  INVALIDO --> FIN
+  EN -- Si --> POST{POST con CSRF valido?}
+  POST -- No --> CSRF[/"403: formulario no valido"/]
+  CSRF --> FIN
+  POST -- Si --> DEC{Aceptar o rechazar?}
+  DEC -- Rechazar --> RECH[Consumir invitacion sin crear rol ni consentimiento]
+  RECH --> LIM
+  DEC -- Aceptar --> TIPO{Cuenta nueva?}
+  TIPO -- Si --> ACE{Acepta politica y contraseña valida?}
+  ACE -- No --> GET
+  ACE -- Si --> ACT[Activar cuenta, guardar hash y prueba de consentimiento]
+  TIPO -- No --> VALID{Cuenta activa, correo coincide y clinica activa?}
+  VALID -- No --> INVALIDO
+  VALID -- Si --> ROL[Consumir invitacion y habilitar rol en la clinica; conservar los demas]
+  ROL --> AUD[Auditar en la clinica; la identidad aceptada ya es visible]
+  ACT --> ROL
+  AUD --> CTX[["Ofrecer iniciar sesion y elegir contexto (§9)"]]
+  CTX --> FIN
+  CRON{{Cron de limpieza: invitacion vencida}} --> LIM
+  LIM["Nueva pendiente: eliminar solo sin otros vinculos;<br/>existente: conservar cuenta y roles"] --> FIN
+```
+
+Un enlace auténtico de una invitación que el administrador reenvió (la anterior quedó anulada y la nueva sigue vigente) dice que hay una más reciente; con un secreto que no coincide, vencido o ya aceptado, el mensaje es el genérico y no se revela nada (F0). Si falla el transporte de correo se informa que la invitación quedó registrada y se ofrece reenviarla, igual para ambos caminos. La auditoría de la clínica registra la invitación con el mismo texto en ambos casos; la creación o supresión de una identidad pendiente es un hecho global. Reenviar y cancelar se filtran por la clínica activa; una petición ajena da 403 y auditoría.
 
 
 ---
@@ -483,7 +551,10 @@ flowchart TD
   B2 --> MED
   B3 --> MED
   MED{Formulario o Google?}
-  MED -- Formulario --> C
+  MED -- Formulario --> CAPTCHA{"Turnstile valido en servidor? (RE-5.8.6)"}
+  CAPTCHA -- No --> CAPERR[Repetir verificacion sin crear ni vincular cuentas]
+  CAPERR --> MED
+  CAPTCHA -- Si --> C
   B1 --> C
 
   C["Capturar datos y aceptacion expresa del titular antes de crear la cuenta.<br/>En alta por personal, el titular acepta presencialmente y crea la contraseña al activar;<br/>si no esta presente o no acepta, se remite al autorregistro sin crear cuenta"] --> D{"Campos validos y politica aceptada por el titular?"}
@@ -492,20 +563,23 @@ flowchart TD
   D -- Si --> E{El correo ya existe en la plataforma?}
 
   E -- No --> E2{El documento ya existe en la plataforma?}
-  E2 -- Si --> E3[/"Mensaje: ese documento ya tiene cuenta; inicia sesion o contacta soporte"/]
-  E3 --> ZF([Fin])
+  E2 -- Si --> E3["Autorregistro: enviar confirmacion al titular del documento;<br/>alta presencial: resolver con la busqueda exacta autorizada"]
+  E3 --> GENERICO["Autorregistro: misma respuesta, sin revelar existencia;<br/>Revisa tu correo para confirmar la solicitud o acceder a Zooki"]
+  GENERICO --> ZF([Fin])
   E2 -- No --> F["Crear la identidad (id_usuario) y guardar la prueba de aceptacion de la politica"]
-  F --> G["Ligar el propietario a esta clinica (propietario_clinica)"]
-  G --> H[Enviar verificacion de correo]
-  H --> I{Verifica dentro de 24 horas?}
+  F --> FP{Alta presencial por personal?}
+  FP -- Si --> G["Ligar propietario; enviar enlace para crear contraseña"]
+  G --> AUD
+  FP -- No --> H["Enviar verificacion de correo; misma respuesta publica"]
+  H --> I{"Confirma por POST con CSRF y token dentro de 24 horas?"}
   I -- No --> I1[El registro pendiente expira]
   I1 --> ZF
-  I -- Si --> J[Activar la cuenta y enviar al correo el enlace de acceso y el QR del portal]
+  I -- Si --> J["Verificar correo, ligar a clinica y ofrecer acceso al portal;<br/>QR pendiente acordado al cerrar M0"]
   J --> AUD[Registrar en auditoria]
   AUD --> ZF
 
   E -- Si --> K{Ya esta ligado a esta clinica?}
-  K -- Si --> K1[/"Mensaje: ya tienes cuenta en esta clinica, inicia sesion"/]
+  K -- Si --> K1[/"Autorregistro: misma respuesta publica sin revelar la cuenta"/]
   K1 --> ZF
   K -- No --> L["Verificar que es el dueño del correo (login o confirmacion por correo)"]
   L --> M{Verificado?}
@@ -542,59 +616,90 @@ Detalle del funcionamiento de cada proceso de módulo. Cada flujo se corresponde
 
 ```mermaid
 flowchart TD
-  A([Visitante abre el registro de clinica]) --> B["Completar datos de la clinica (nombre, NIT, direccion, telefono, correo)<br/>y del administrador inicial (nombre, correo, contraseña);<br/>aceptacion de la politica de datos y los terminos"]
-  B --> R{"Supera el limite de registros desde su IP?"}
-  R -- Si --> R1[/"Mensaje: demasiados intentos, intentalo mas tarde"/]
-  R1 --> ZF([Fin])
-  R -- No --> K{"Verificacion anti-bot (CAPTCHA) valida en el servidor?"}
-  K -- No --> K1[/"Mensaje: no pudimos verificar que no eres un robot"/]
-  K1 --> B
-  K -- Si --> C{"Campos completos y formato valido (correo, contraseña segura)?"}
-  C -- No --> C1[/"Mensaje: corrige los campos marcados"/]
-  C1 --> B
-  C -- Si --> N{"NIT valido segun el digito de verificacion de la DIAN?"}
-  N -- No --> N1[/"Mensaje: el NIT no es valido, revisa el digito de verificacion"/]
-  N1 --> B
-  N -- Si --> T{"El correo es de un dominio desechable?"}
-  T -- Si --> T1[/"Mensaje: usa un correo permanente de la clinica"/]
-  T1 --> B
-  T -- No --> D{"El correo o el NIT ya estan registrados?"}
-  D -- Si --> D1[/"Mensaje: ya existe una cuenta o clinica con esos datos"/]
-  D1 --> DR{"Es su NIT y otra clinica lo registro?"}
-  DR -- Si --> DR1["Reportarlo: se crea el caso para el super-administrador,<br/>que verifica la titularidad (RN-010)"]
-  DR1 --> ZF
-  DR -- No --> ZF
-  D -- No --> E[Crear la clinica en estado 'pendiente de verificacion']
-  E --> F[Enviar correo de verificacion con enlace temporal]
-  F --> G{Verifica el correo dentro de 24 horas?}
-  G -- No --> G1[La clinica pendiente expira y se elimina]
-  G1 --> ZF
-  G -- Si --> H[Activar la clinica, asignar el plan gratuito y crear el rol administrador]
-  H --> I[Registrar en auditoria]
-  I --> J[El administrador inicia sesion en su clinica]
-  J --> ZF
+  A([Registro publico de clinica]) --> B["Datos de clinica: NIT numerico y DV en casillas separadas<br/>Administrador: nombre, tipo y documento, telefono,<br/>correo y contraseña; aceptar politica; sin Google"]
+  B --> C{"CAPTCHA valido en servidor?"}
+  B -. NIT y DV validos al escribir .-> UNI["Consultar unicidad por IP limitada<br/>Avisar junto al campo y habilitar Reportar a soporte<br/>Sin revelar cuentas ni contactos; repetir control al enviar"]
+  C -- No --> ERR[Corregir verificacion]
+  ERR --> B
+  C -- Si --> V{"Formato, NIT DIAN y correos permanentes validos?"}
+  V -- No --> E[Corregir campos]
+  E --> B
+  V -- Si --> N{"NIT duplicado?"}
+  N -- Si --> SOP["Avisar duplicidad; ofrecer reporte a soporte<br/>NIT numerico y DV separado; POST con CSRF y CAPTCHA<br/>maximo 5 reportes diarios por IP real; crear caso"]
+  N -- No --> R{"Menos de 3 altas hoy por IP real?"}
+  R -- No --> LIM[Intentalo mañana]
+  R -- Si --> T[Iniciar transaccion y reservar contador diario por IP]
+  T --> CL[Crear clinica pendiente]
+  CL --> ID{"Existe correo o, si es nuevo, documento?"}
+  ID -- No --> NUE[Crear administrador inactivo con hash y consentimiento]
+  ID -- Si --> EX["Conservar cuenta y roles; ignorar contraseña del formulario<br/>Prevalece correo; si es nuevo, titular del documento"]
+  NUE --> TK["Guardar token con hash, 24 horas; auditar; confirmar transaccion"]
+  EX --> TK
+  TK --> MAIL[Enviar enlace al titular]
+  MAIL --> MSG["Misma respuesta: Revisa tu correo para activar la clinica"]
+  MSG --> GET[GET muestra boton sin modificar datos]
+  GET --> POST{"POST con CSRF, consentimiento y token vigente no usado?"}
+  POST -- No --> INV[Enlace no disponible o corregir formulario]
+  POST -- Si --> ACT["Una transaccion: consumir token, activar clinica y cuenta nueva,<br/>plan gratuito, rol administrador, copiar catalogos y auditar"]
+  ACT --> OK{"Todo correcto?"}
+  OK -- No --> RB[Rollback completo; enlace conserva su uso]
+  OK -- Si --> LOGIN["Iniciar sesion: elegir contexto si hay varios, §9"]
+  TK -. Vence sin confirmar .-> LIMPIEZA["Limpieza del sistema: borrar clinica pendiente<br/>Cuenta nueva solo sin otros vinculos; preservar preexistente"]
+```
+
+### 12.1.1 Panel del super-administrador — Módulo 0
+
+```mermaid
+flowchart TD
+  A([Plataforma Zooki]) --> S{"Sesion y contexto plataforma vigentes?"}
+  S -- No --> DEN["401 o 403; ningun dato de plataforma"]
+  S -- Si --> L["Listar clinicas, planes y suscripciones; casos e IP bloqueadas<br/>Uso y limites solo como numeros: personal, mascotas, citas del mes<br/>Sin fichas, consultas, historias ni citas individuales"]
+  L --> F["Buscar y filtrar; tarjetas o tabla con componentes administrativos<br/>NIT pendiente visible; correo del administrador"]
+  F --> CONF{"Dar de baja?"}
+  CONF -- Si --> Q{"Confirma el super-administrador?"}
+  Q -- No --> L
+  Q -- Si --> M
+  CONF -- No --> M{"POST, CSRF, motivo y transicion validos?"}
+  M -- No --> ERR["Rechazar sin modificar; corregir formulario"]
+  M -- Si --> TX["Transaccion: bloquear clinica, cambiar plan/suscripcion<br/>o estado y auditar; rollback si falla auditoria"]
+  TX --> R["Actualizar panel antes del aviso breve<br/>Personal pierde contexto en siguiente peticion, segun §9<br/>Clinica inactiva no aparece para registro ni agenda"]
+  L --> CAS["Casos: resolver o descartar con nota, sin otra confirmacion<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos"]
+  L --> IP["IP: vencimiento, cuentas LOGIN_FAIL en ventana<br/>y sus clinicas; sin atribuir la IP a una sola clinica"]
+  IP --> DES["Desbloquear directo: POST y CSRF<br/>borrar solo contador de esa IP y auditar en transaccion"]
+  IP --> AV["Elegir administrador asociado, ver y editar texto<br/>Enviar solo al pulsar el boton, sin segunda confirmacion"]
+  AV --> VAL["POST, CSRF; verificar destinatario en servidor<br/>auditar solicitud, enviar solo al elegido y auditar resultado"]
+  CAS --> R
+  DES --> R
+  VAL --> R
+  R --> L
 ```
 
 ### 12.2 Control de límites del plan (freemium) — Módulo 0
 
+La mascota creada en el portal sin clínica sigue global y no consume cupo hasta vincularla. El punto de entrada de urgencia recibe una prioridad evaluada en servidor; una petición ordinaria no puede autodeclararse roja. El motor de triage pertenece a los módulos 2/4.
+
 ```mermaid
 flowchart TD
-  A([Accion que consume cupo: crear o vincular mascota, crear cita o usuario]) --> U{"Es la atencion de una urgencia roja?"}
+  A([Crear o vincular mascota, crear cita, invitar o reactivar personal]) --> T["Evaluar triage antes del plan cuando corresponda<br/>En M0: citas ordinarias verdes; entrada para prioridad ya evaluada"]
+  T --> LOCK["Transaccion: bloquear fila de la clinica<br/>Misma exclusion para comprobacion, alta y cambio de plan"]
+  LOCK --> U{"Prioridad evaluada roja?"}
   U -- Si --> E
-  U -- No --> B[Leer el plan y el estado de la suscripcion de la clinica]
-  B --> C{Suscripcion al dia?}
-  C -- No --> C1["Aplicar los limites del plan gratuito (RN-007, RN-013);<br/>los datos existentes no se ocultan ni se bloquean"]
-  C1 --> D
-  C -- Si --> D{"La accion esta dentro del limite del plan?"}
-  D -- Si --> E[Ejecutar la accion]
-  E --> E1[Registrar en auditoria]
-  E1 --> ZF([Fin])
-  D -- No --> F{Quien intenta la accion?}
-  F -- Personal --> F1[/"Mensaje: limite del plan alcanzado, mejora el plan"/]
-  F1 --> ZF
-  F -- Propietario --> F2[/"Mensaje: no es posible completar la accion ahora"/]
-  F2 --> F3[Notificar a la clinica para que lo gestione]
-  F3 --> ZF
+  U -- No --> B["Leer plan y ultima suscripcion de esa clinica"]
+  B --> C{"Suscripcion activa y al dia?"}
+  C -- No --> C1["Usar gratuito: 2 personal, 50 mascotas, 100 citas/mes<br/>Conservar datos existentes; RN-007/013"]
+  C -- Si --> P["Usar limites del plan; NULL significa sin limite"]
+  P --> D
+  C1 --> D["Contar uso por clinica: personal activo + pendientes vigentes sin duplicar<br/>Vinculos activos de mascotas; citas del mes de su fecha sin canceladas"]
+  D --> CABE{"Cabe una accion mas?"}
+  CABE -- Si --> E["Ejecutar y auditar; roja tambien suma uso"]
+  E --> OK[Commit]
+  CABE -- No --> RB["Rollback de negocio; conservar auditoria del bloqueo por clinica"]
+  RB --> F{"Quien intenta?"}
+  F -- Personal --> F1["Alcanzaste el limite de recurso de tu plan - uso/limite -<br/>Mejora tu plan para seguir"]
+  F -- Propietario --> F2["No es posible completar la accion ahora<br/>Notificacion interna solo a administradores de esa clinica"]
+  F1 --> FIN([Fin])
+  F2 --> FIN
+  OK --> FIN
 ```
 
 ### 12.3 Registro de mascota y propietario — Módulo 1
@@ -735,7 +840,7 @@ flowchart TD
   C -- No --> C1[/"Mensaje: corrige los campos marcados"/]
   C1 --> B
   C -- Si --> D{El documento ya pertenece a otra cuenta?}
-  D -- Si --> D1[/"Mensaje: ese documento ya tiene cuenta; inicia sesion con ella o contacta soporte"/]
+  D -- Si --> D1[/"Mensaje: no se pudo completar el perfil; revisa datos o contacta soporte"/]
   D1 --> D2[Crear el caso para el super-administrador: posible cuenta duplicada]
   D2 --> ZF([Fin: el perfil sigue incompleto])
   D -- No --> E[Guardar documento y telefono]
@@ -760,10 +865,12 @@ flowchart TD
   CP -- No --> CP1[/"Primero crea una contraseña (§13.3): al cambiar el correo se retira Google"/]
   CP1 --> ZF
   CP -- Si --> CI["Confirmar identidad (contraseña o Google)"]
-  CI --> C1{"Identidad confirmada, formato valido y no lo usa otra cuenta?"}
-  C1 -- No --> C2[/"Mensaje: ese correo no esta disponible"/]
+  CI --> C1{"Identidad confirmada y formato valido?"}
+  C1 -- No --> C2[/"Corregir formato o confirmar identidad"/]
   C2 --> A
-  C1 -- Si --> C3["Enviar verificacion al correo nuevo<br/>(el anterior sigue vigente mientras tanto)"]
+  C1 -- Si --> CU{"Correo ocupado?"}
+  CU -- Si --> CM[/"Misma respuesta: si puede completarse, recibiras un enlace"/]
+  CU -- No --> C3["Enviar verificacion al correo nuevo;<br/>misma respuesta generica y correo anterior vigente"]
   C3 --> C4{Verifica dentro del plazo?}
   C4 -- No --> C5[El cambio expira; se conserva el correo anterior]
   C5 --> ZF([Fin])
@@ -783,7 +890,8 @@ flowchart TD
   D5 --> A
   D4 -- Si --> D6{El documento ya pertenece a otra cuenta?}
   D6 -- Si --> D7["No se aplica; crear el caso para el super-administrador<br/>(posible cuenta duplicada)"]
-  D7 --> ZF
+  D7 --> DG[/"Mensaje generico: no se pudo aplicar el cambio; revisa datos o contacta soporte"/]
+  DG --> ZF
   D6 -- No --> D8[Aplicar el documento nuevo]
   D8 --> D9[Avisar por correo al titular]
   D9 --> AUD
@@ -795,25 +903,38 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A([Contraseña en mi perfil]) --> B{La cuenta ya tiene contraseña?}
-  B -- Si --> C[Cambiar contraseña: pedir la contraseña actual]
-  C --> C1{La contraseña actual es correcta?}
-  C1 -- No --> C2[/"Mensaje: la contraseña actual no es correcta"/]
+  A([Contraseña en mi perfil o cambio obligatorio]) --> B{La cuenta ya tiene contraseña?}
+  B -- Si --> C[Pedir la contraseña actual]
+  C --> C1{Contraseña actual correcta?}
+  C1 -- No --> C2[/"Error: contraseña actual incorrecta"/]
   C2 --> C
   C1 -- Si --> N
-  B -- "No (cuenta creada con Google)" --> G["Crear contraseña: volver a confirmar la identidad con Google"]
-  G --> G1{Confirmada?}
-  G1 -- No --> G2[/"Mensaje: no se pudo confirmar con Google"/]
+  B -- No --> G["Pedir otra confirmacion de Google: token validado en servidor,<br/>audiencia de Zooki, vigencia y correo del titular"]
+  G --> G1{Identidad confirmada y Google vinculado?}
+  G1 -- No --> G2[/"No crear contraseña; confirmar Google o usar recuperacion por enlace"/]
   G2 --> ZF([Fin])
-  G1 -- Si --> N
-  N["Ingresar la nueva contraseña<br/>(se muestran los requisitos de la politica mientras se escribe)"] --> P{Cumple la politica de contraseñas?}
-  P -- No --> P1[/"Mensaje: la contraseña no cumple los requisitos"/]
+  G1 -- Si --> N["Ingresar contraseña nueva; requisitos y errores debajo del campo mientras escribe"]
+  N --> P{Cumple la politica?}
+  P -- No --> P1[/"Error junto al campo"/]
   P1 --> N
-  P -- Si --> S[Guardar el hash de la nueva contraseña]
-  S --> SS[Cerrar las demas sesiones abiertas y avisar del cambio por correo]
-  SS --> AUD[Registrar en auditoria, sin la contraseña]
-  AUD --> F([Fin: puede entrar con contraseña y, si tenia, con Google])
+  P -- Si --> S[Guardar hash y retirar cambio obligatorio]
+  S --> SS["Incrementar version_sesion; conservar la sesion del titular que cambia.<br/>Las demas reciben 401 en su siguiente peticion"]
+  SS --> AUD[Auditar sin guardar la contraseña]
+  AUD --> COR[Enviar aviso por correo]
+  COR --> AV[Toast breve; recarga o redireccion inmediata conserva el aviso]
+  AV --> F([Fin: puede entrar con contraseña y, si tenia, con Google])
+  R([Enlace de restablecimiento]) --> RV{Token vigente, no usado, cuenta activa y correo coincide?}
+  RV -- No --> G2
+  RV -- Si --> RP{Contraseña y confirmacion cumplen la politica?}
+  RP -- No --> RERR[/"Error en el formulario de restablecimiento"/]
+  RERR --> R
+  RP -- Si --> TX["Consumir enlace y guardar hash en transaccion;<br/>despues subir version_sesion"]
+  TX --> RA[Auditar y avisar por correo; otras sesiones cerradas]
+  RA --> F
 ```
+
+RE-T.2.4/5, RN-G22 y RN-G10. La sesión abierta con Google no basta para crear la primera contraseña: se solicita otra confirmación, verificada en el servidor. El cierre de sesiones se aplica también al restablecimiento del administrador y al cambio de correo (§13.2); la sesión que realiza el cambio se conserva si pertenece al titular. Si falla el correo, el cambio ya aplicado no se revierte; queda el fallo del envío en el log.
+
 
 ### 13.4 Perfil del veterinario
 

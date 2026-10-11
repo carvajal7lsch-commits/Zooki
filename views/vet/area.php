@@ -1,18 +1,18 @@
 <?php
 /**
- * Panel de inicio del veterinario: «Mi día» (HU-18, HU-20).
+ * Panel de inicio del veterinario: «Mi día» en la clínica activa (HU-6.1).
  * Los datos llegan de PanelController::datosVeterinario() en $panel.
  */
 require_once __DIR__ . '/../../helpers/ResumenPanel.php';
 
 if (!isset($panel)) {
     require_once __DIR__ . '/../../controllers/PanelController.php';
-    $panel = (new PanelController())->datosVeterinario($_SESSION['usuario_doc']);
+    $panel = (new PanelController())->datosVeterinario((int) Contexto::idUsuario());
 }
 
 $e = fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $nombre = ResumenPanel::primerNombre($_SESSION['usuario_nombre'] ?? '');
-$fichaUrl = fn($c) => 'index.php?action=vet_pacientes&propietario=' . rawurlencode($c['doc_propietario']) . '&mascota=' . (int) $c['id_mascota'];
+$fichaUrl = fn($c) => 'index.php?action=vet_pacientes&propietario=' . (int) $c['id_propietario'] . '&mascota=' . (int) $c['id_mascota'];
 $atencionUrl = fn($c) => 'index.php?action=vet_atencion&id_cita=' . (int) $c['id_cita'];
 $cont = $panel['contadores'];
 $sig = $panel['siguiente'];
@@ -132,7 +132,7 @@ $botonAccion = function (array $c, bool $compacto = false) use ($e, $atencionUrl
                             </li>
                         <?php endforeach; ?>
                     </ul>
-                    <p class="panel-nota">Regístrales la consulta o ciérralas sin consulta indicando el motivo.</p>
+                    <p class="panel-nota">Regístrales la consulta para completarlas.</p>
                 <?php endif; ?>
             </section>
 

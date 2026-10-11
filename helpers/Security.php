@@ -1,7 +1,18 @@
 <?php
+require_once __DIR__ . '/Roles.php';
+require_once __DIR__ . '/Contexto.php';
+require_once __DIR__ . '/AccesoDenegado.php';
+require_once __DIR__ . '/../models/Auditoria.php';
+
 /**
  * Security Middleware
- * Protecciones globales: CSRF, Rate Limiting, Session Validation
+ * Protecciones globales: sesión, contexto activo, rol, clínica, CSRF y límite
+ * de intentos.
+ *
+ * Es el único lugar donde se decide si una petición pasa (HU-T.10, HU-T.15):
+ * el front controller llama a check() antes de instanciar ningún controlador,
+ * y los controladores solo piden aquí que se deniegue un recurso de otra
+ * clínica (denegarRecursoAjeno / exigirMismaClinica).
  */
 class Security {
 
@@ -11,8 +22,27 @@ class Security {
     private static array $publicActions = [
         'landing', 'privacidad', 'terminos', 'cookies', 'login', 'solicitar_reset_password_ajax', 'reset_password',
         'procesar_reset_password_ajax', 'register', 'process_register', 'verificar_email', 'estado_verificacion_ajax',
-        'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax'
+        'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax',
+        'confirmar_vinculo_propietario', 'activar_personal', 'confirmar_cambio_correo', 'validar_cuenta_ajax',
+        'invitacion_personal', 'registro_clinica', 'registrar_clinica_ajax', 'activar_clinica', 'reportar_nit_ajax',
     ];
+
+    /**
+     * HU-T.17: acciones que solo exigen identidad, porque sirven para elegir
+     * o cambiar el contexto, salir o cambiar la contraseña. Todas las demás
+     * se ejecutan con el rol del contexto activo (RN-G18).
+     */
+    private static array $accionesSinContexto = [
+        'seleccionar_contexto', 'cambiar_contexto', 'logout', 'cambiar_password', 'cambiar_password_ajax',
+        'aceptar_politica', 'solicitar_cambio_correo_ajax', 'cambiar_documento_ajax',
+    ];
+
+    /** RE-T.19.3: lo único que se puede hacer antes de aceptar la versión vigente de la política. */
+    private static array $accionesSinPoliticaAceptada = ['aceptar_politica', 'logout'];
+    public const ACCIONES_PLATAFORMA = ['plataforma_suscripcion_ajax', 'plataforma_estado_ajax', 'plataforma_caso_ajax', 'plataforma_desbloquear_ajax', 'plataforma_aviso_ajax'];
+
+    /** RE-T.18.3: en el portal, con el perfil incompleto, solo se completa el perfil. */
+    private static array $accionesConPerfilIncompleto = ['completar_perfil'];
 
     /**
      * Acciones que un usuario con contrasena temporal si puede ejecutar
@@ -23,27 +53,150 @@ class Security {
     ];
 
     /**
-     * Politica de intentos (HU-38). El limite por IP es mas holgado que el de
-     * cuenta a proposito: una clinica sale a internet por una sola IP y varias
-     * personas comparten origen, mientras que el documento identifica a una
-     * cuenta concreta.
+     * RE-T.13.4/5 y RN-G15 (decisión del usuario, 2026-10-08):
+     * - 20 fallos en 15 minutos desde una IP bloquean esa IP 15 minutos. Es
+     *   holgado a propósito: una clínica sale a internet por una sola IP y
+     *   cinco errores de su personal no deben dejarla a toda sin entrar.
+     * - 5 fallos sobre una cuenta exigen el CAPTCHA y nunca bloquean la
+     *   cuenta: nadie puede dejar sin acceso a otro fallando con su correo.
+     * - Las comprobaciones al escribir (documento y correo) tienen su propio
+     *   límite: 20 por IP sin sesión y 120 por persona con sesión.
+     * La IP sale siempre de Auditoria::ipCliente() (D2.1).
      */
     private const MAX_INTENTOS_IP     = 20;
     private const MAX_INTENTOS_CUENTA = 5;
     private const MAX_VERIFICACIONES  = 20;
+    private const MAX_VERIFICACIONES_USUARIO = 120;
     private const VENTANA             = 900;  // 15 minutos
     private const BLOQUEO             = 900;  // 15 minutos
 
     /** false = todavia no se resolvio; null = no hay almacen disponible. */
     private static $almacenIntentos = false;
 
+    /** callable(int): ?array — contextos vigentes de una persona; null = cuenta inexistente o inactiva. */
+    private static $fuenteContextos = null;
+
+    /** callable(int): ?int — versión de sesión de la cuenta (RE-T.2.5); null = no se comprueba. */
+    private static $fuenteVersionSesion = null;
+
+    /** false = todavía no se resolvió; null = sin auditoría disponible. */
+    private static $auditoria = false;
+
     /**
-     * Ejecuta todas las validaciones de seguridad según el contexto.
+     * Identificadores de rol (helpers/Roles.php). Se conservan aquí porque
+     * los usa código que todavía no se adapta (C2–C9).
+     */
+    public const ROL_ADMIN       = Roles::ADMIN;
+    public const ROL_VETERINARIO = Roles::VETERINARIO;
+    public const ROL_PROPIETARIO = Roles::PROPIETARIO;
+    public const ROL_SUPER_ADMIN = Roles::SUPER_ADMIN;
+
+    /**
+     * Ejecuta todas las validaciones de seguridad y, si alguna falla, corta la
+     * petición con la respuesta que corresponde.
      */
     public static function check(string $action): void {
-        self::validateRole($action);
-        self::validatePasswordTemporal($action);
+        try {
+            self::autorizar($action);
+        } catch (AccesoDenegado $e) {
+            self::responder($e, $action);
+        }
+    }
+
+    /**
+     * Decide si la petición pasa. Lanza AccesoDenegado si no; no escribe
+     * respuesta ni termina el proceso, para que se pueda probar.
+     */
+    public static function autorizar(string $action): void {
+        // Las acciones publicas no exigen sesion, contexto ni rol.
+        if (in_array($action, self::$publicActions, true)) {
+            if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'confirmar_cambio_correo', 'invitacion_personal', 'registrar_clinica_ajax', 'activar_clinica', 'reportar_nit_ajax'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+                require_once __DIR__ . '/Csrf.php';
+                if (!Csrf::validate()) throw new AccesoDenegado(403,'La sesión del formulario venció. Abre de nuevo el enlace.');
+            }
+            return;
+        }
+
+        $idUsuario = Contexto::idUsuario();
+        if ($idUsuario === null) {
+            throw new AccesoDenegado(401, 'Sesion expirada. Inicia sesion nuevamente.');
+        }
+
+        // Los contextos se leen de la base en cada petición: si al usuario le
+        // retiran el rol en una clínica, o la clínica deja de estar activa,
+        // pierde el acceso en la siguiente petición y no al volver a entrar
+        // (RN-G08).
+        $disponibles = self::contextosDe($idUsuario);
+        if ($disponibles === null) {
+            // La cuenta ya no existe o se inactivó con la sesión abierta.
+            $_SESSION = [];
+            throw new AccesoDenegado(401, 'Sesion expirada. Inicia sesion nuevamente.');
+        }
+        $_SESSION['contextos_total'] = count($disponibles);
+
+        // RE-T.2.5: si la contraseña cambió en otra sesión, esta se cierra
+        // como la de inactividad (HU-T.16): vacía y con 401.
+        if (self::$fuenteVersionSesion !== null) {
+            require_once __DIR__ . '/CierreSesiones.php';
+            if (!CierreSesiones::vigente($_SESSION, (self::$fuenteVersionSesion)($idUsuario))) {
+                $_SESSION = ['error_login' => CierreSesiones::MENSAJE];
+                throw new AccesoDenegado(401, CierreSesiones::MENSAJE);
+            }
+        }
+
+        $actual = Contexto::actual();
+        if ($actual !== null) {
+            $vigente = Contexto::buscar($disponibles, $actual['clave']);
+            if ($vigente === null) {
+                Contexto::salir();
+                $actual = null;
+            } else {
+                Contexto::activar($vigente, count($disponibles));
+                $actual = $vigente;
+            }
+        }
+
+        self::validarPoliticaAceptada($action);
+        self::validarPasswordTemporal($action);
+
+        if (!in_array($action, self::$accionesSinContexto, true)) {
+            if ($actual === null) {
+                throw new AccesoDenegado(403, 'Elige con qué perfil quieres continuar.', 'seleccionar_contexto');
+            }
+            self::validarPerfilCompleto($action, $actual);
+            self::validarRol($action, (int) $actual['id_rol'], $idUsuario);
+            self::validarClinicaDeLaPeticion($actual);
+        }
+
+        if (in_array($action, self::ACCIONES_PLATAFORMA, true) && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            throw new AccesoDenegado(403, 'La operación requiere POST.');
+        }
         self::validateCsrf($action);
+    }
+
+    /**
+     * RE-T.19.3 — Si la política cambió de versión, la persona la acepta antes
+     * de continuar. InicioSesion marca la sesión al entrar; aquí se exige en
+     * cada petición, incluidas las AJAX.
+     */
+    private static function validarPoliticaAceptada(string $action): void {
+        if (empty($_SESSION['debe_aceptar_politica'])) return;
+        if (in_array($action, self::$accionesSinPoliticaAceptada, true)) return;
+
+        throw new AccesoDenegado(403, 'Acepta la política de tratamiento de datos vigente para continuar.', 'aceptar_politica');
+    }
+
+    /**
+     * RE-T.18.3 (RN-G20) — Una cuenta de Google con el perfil incompleto no
+     * usa el portal (ni registra mascotas ni agenda) hasta registrar su
+     * documento y su teléfono.
+     */
+    private static function validarPerfilCompleto(string $action, array $contexto): void {
+        if (empty($_SESSION['perfil_incompleto'])) return;
+        if ($contexto['tipo'] !== Contexto::PROPIETARIO) return;
+        if (in_array($action, self::$accionesConPerfilIncompleto, true)) return;
+
+        throw new AccesoDenegado(403, 'Completa tu documento y tu teléfono para usar el portal.', 'completar_perfil');
     }
 
     /**
@@ -54,97 +207,135 @@ class Security {
      * vive aqui, en el front controller, asi que cubre tambien los endpoints
      * AJAX invocados directamente.
      */
-    private static function validatePasswordTemporal(string $action): void {
-        if (empty($_SESSION['usuario_doc'])) return;
+    private static function validarPasswordTemporal(string $action): void {
         if (empty($_SESSION['debe_cambiar_password'])) return;
         if (in_array($action, self::$accionesConPasswordTemporal, true)) return;
-        if (in_array($action, self::$publicActions, true)) return;
 
-        $mensaje = 'Debes cambiar tu contrasena temporal antes de continuar.';
+        throw new AccesoDenegado(403, 'Debes cambiar tu contrasena temporal antes de continuar.', 'cambiar_password');
+    }
 
-        // No se reutiliza denegar(): su rama 403 redirige al dashboard, que
-        // aqui tambien esta bloqueado y provocaria un bucle de redirecciones.
-        if (self::isAjax() || str_ends_with($action, '_ajax')) {
-            header('Content-Type: application/json');
-            http_response_code(403);
-            echo json_encode([
-                'success'  => false,
-                'message'  => $mensaje,
-                'redirect' => 'index.php?action=cambiar_password',
-            ]);
-            exit;
+    /**
+     * Matriz de autorizacion (HU-T.10). Se deniega por defecto (T-15): una
+     * accion sin entrada no pasa para nadie, asi que olvidar registrarla
+     * falla del lado seguro.
+     */
+    private static function validarRol(string $action, int $rol, int $idUsuario): void {
+        $permitidos = self::actionRoles()[$action] ?? null;
+
+        if ($permitidos === null) {
+            error_log(sprintf('RBAC: accion "%s" sin entrada en la matriz de autorizacion', $action));
+            throw new AccesoDenegado(403, 'No tienes permisos para realizar esta accion.');
         }
 
-        $_SESSION['error'] = $mensaje;
-        header('Location: index.php?action=cambiar_password');
-        exit;
+        if (!in_array($rol, $permitidos, true)) {
+            error_log(sprintf('RBAC: acceso denegado a "%s" para el rol %d (id_usuario %d)', $action, $rol, $idUsuario));
+            throw new AccesoDenegado(403, 'No tienes permisos para realizar esta accion.');
+        }
+    }
+
+    /**
+     * RN-G13 / RE-T.15.2 — Si la petición nombra una clínica, tiene que ser la
+     * del contexto activo. Los recursos que no traen la clínica en la
+     * petición (un usuario, una cita) los comprueba el controlador con
+     * exigirMismaClinica() o denegarRecursoAjeno().
+     */
+    private static function validarClinicaDeLaPeticion(array $contexto): void {
+        if ($contexto['tipo'] !== Contexto::CLINICA) return;
+
+        $pedida = $_POST['id_clinica'] ?? $_GET['id_clinica'] ?? null;
+        if ($pedida === null || $pedida === '') return;
+
+        if ((string) $pedida !== (string) $contexto['id_clinica']) {
+            self::denegarRecursoAjeno('clinicas', (string) $pedida);
+        }
+    }
+
+    /**
+     * RE-T.15.2 — El recurso pertenece (o podría pertenecer) a otra clínica:
+     * se registra el intento en auditoría y se responde 403. No distingue
+     * entre «no existe» y «es de otra clínica», para no confirmar ids ajenos.
+     *
+     * @throws AccesoDenegado siempre
+     */
+    public static function denegarRecursoAjeno(string $tabla, $registroId): void {
+        $clinica = Contexto::clinicaActiva();
+        $auditoria = self::auditoria();
+        if ($auditoria !== null) {
+            $auditoria->log(
+                Contexto::idUsuario(),
+                'OTHER',
+                $tabla,
+                $registroId === null ? null : (string) $registroId,
+                null,
+                ['accion' => $_GET['action'] ?? null],
+                'Acceso denegado: recurso fuera de la clínica activa',
+                $clinica
+            );
+        }
+        error_log(sprintf('RN-G13: acceso a %s %s fuera de la clinica %s', $tabla, (string) $registroId, (string) $clinica));
+
+        throw new AccesoDenegado(403, 'No tienes acceso a este recurso.');
+    }
+
+    /**
+     * Exige que el recurso sea de la clínica activa (RN-G13).
+     *
+     * @throws AccesoDenegado si es de otra clínica, no existe o no hay contexto de clínica
+     */
+    public static function exigirMismaClinica(?int $idClinicaDelRecurso, string $tabla, $registroId): void {
+        $activa = Contexto::clinicaActiva();
+        if ($activa === null || $idClinicaDelRecurso === null || $idClinicaDelRecurso !== $activa) {
+            self::denegarRecursoAjeno($tabla, $registroId);
+        }
     }
 
     /**
      * Valida token CSRF en todas las peticiones POST excepto acciones públicas.
      */
     private static function validateCsrf(string $action): void {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') return;
         if (in_array($action, self::$publicActions, true)) return;
 
         require_once __DIR__ . '/Csrf.php';
 
         // El frontend envía un token global 'default' (meta tag), no por acción
         if (!Csrf::validate('default')) {
-            // Si es AJAX, responder JSON; si es navegación normal, redirigir con error
-            if (self::isAjax()) {
-                header('Content-Type: application/json');
-                http_response_code(403);
-                echo json_encode(['success' => false, 'message' => 'Token de seguridad inválido o expirado. Recarga la página.']);
-                exit;
-            }
-            $_SESSION['error'] = 'Token de seguridad inválido. Recarga la página e intenta nuevamente.';
-            header('Location: index.php?action=' . $action);
-            exit;
+            throw new AccesoDenegado(403, 'Token de seguridad inválido o expirado. Recarga la página.', $action);
         }
     }
 
     /**
-     * Identificadores de rol tal como estan en la tabla `roles`.
-     */
-    public const ROL_ADMIN         = 1;
-    public const ROL_VETERINARIO   = 2;
-    public const ROL_RECEPCIONISTA = 3;
-    public const ROL_PROPIETARIO   = 4;
-
-    /**
-     * Matriz de autorizacion accion -> roles permitidos (HU-32 / VD-SEG-03/04).
+     * Matriz de autorizacion accion -> roles del contexto activo (HU-T.10,
+     * RN-G18). Los roles de clinica son 1 y 2; el 4 es el portal del
+     * propietario y el 5 la plataforma. El super-administrador no figura en
+     * ninguna accion clinica (RN-004, RE-T.15.4).
      *
-     * Es la fuente unica del control de acceso: se aplica en el front
-     * controller antes de instanciar ningun controlador, asi que un endpoint
-     * invocado directamente (curl, Postman, consola del navegador) queda
-     * cubierto igual que uno invocado desde la interfaz.
-     *
-     * Los conjuntos se derivaron de que vistas y que archivos JS invocan
-     * realmente cada accion, para no romper flujos que hoy funcionan.
+     * Las acciones de $accionesSinContexto no van aqui: solo exigen identidad.
      */
     private static function actionRoles(): array {
-        $admin   = [self::ROL_ADMIN];
-        $soloVet = [self::ROL_VETERINARIO];
-        $clinico = [self::ROL_ADMIN, self::ROL_VETERINARIO];
-        $staff   = [self::ROL_ADMIN, self::ROL_VETERINARIO, self::ROL_RECEPCIONISTA];
-        $portal  = [self::ROL_PROPIETARIO];
-        $todos   = [self::ROL_ADMIN, self::ROL_VETERINARIO, self::ROL_RECEPCIONISTA, self::ROL_PROPIETARIO];
+        $admin      = [Roles::ADMIN];
+        $soloVet    = [Roles::VETERINARIO];
+        $clinico    = [Roles::ADMIN, Roles::VETERINARIO];
+        $staff      = [Roles::ADMIN, Roles::VETERINARIO];
+        $portal     = [Roles::PROPIETARIO];
+        $plataforma = [Roles::SUPER_ADMIN];
+        $todos      = [Roles::ADMIN, Roles::VETERINARIO, Roles::PROPIETARIO];
 
         $matriz = [];
 
-        // Cualquier sesion valida: navegacion base, cuenta propia y avisos.
+        // Inicio: cada contexto aterriza en su panel.
+        $matriz['dashboard'] = [Roles::ADMIN, Roles::VETERINARIO, Roles::PROPIETARIO, Roles::SUPER_ADMIN];
+
+        // Cualquier contexto de clinica o de propietario: avisos y perfil propio.
         foreach ([
-            'dashboard', 'logout', 'cambiar_password', 'cambiar_password_ajax',
             'get_notificaciones_ajax', 'marcar_notificacion_leida_ajax',
             'marcar_todas_notificaciones_leidas_ajax',
-            // HU-42: el perfil propio lo consulta y edita cualquier rol; el
-            // sujeto sale de la sesion, nunca del POST.
+            // HU-T.5: el sujeto sale de la sesion, nunca del POST.
             'actualizar_mi_perfil_ajax',
         ] as $a) { $matriz[$a] = $todos; }
 
-        // HU-42: el panel "Mi perfil" es del personal; el propietario tiene el
-        // suyo en el portal.
+        // HU-T.5: el panel "Mi perfil" es del personal; el propietario tiene
+        // el suyo en el portal.
         $matriz['mi_perfil'] = $staff;
 
         // Catalogos y agenda que el portal del propietario tambien consume.
@@ -154,13 +345,17 @@ class Security {
             'cancelar_cita_ajax', 'enviar_email_ajax',
         ] as $a) { $matriz[$a] = $todos; }
 
-        // Administracion: usuarios, auditoria y configuracion.
+        // Administracion de la clinica: usuarios, auditoria y configuracion.
         foreach ([
             'admin_panel', 'admin_usuarios', 'admin_citas',
             'admin_auditoria', 'admin_configuracion',
             'registrar_usuario_ajax', 'actualizar_usuario_ajax',
             'get_usuario_ajax', 'cambiar_estado_usuario_ajax',
             'resetear_password_usuario_ajax',
+            // D2.2 (RE-T.7.5): invitaciones pendientes del personal. Las antiguas
+            // verificar_documento_ajax / verificar_email_ajax se retiraron: le
+            // decían al administrador si un documento o un correo tenían cuenta.
+            'reenviar_invitacion_ajax', 'cancelar_invitacion_ajax',
             'get_auditoria_ajax', 'listar_todas_citas_ajax',
             'get_horarios_clinica_ajax', 'guardar_horarios_clinica_ajax',
             'restaurar_horarios_defecto_ajax',
@@ -168,43 +363,42 @@ class Security {
 
         // RN-201: registrar actos clinicos y operar el area del veterinario es
         // exclusivo del rol Veterinario, ni siquiera el administrador entra.
-        // Coincide con la comprobacion en linea que el enrutador ya hacia.
         foreach ([
             'vet_area', 'vet_atencion', 'vet_consultas', 'vet_pacientes', 'vet_agenda',
             'registrar_consulta_ajax', 'registrar_vacuna_ajax',
             'registrar_desparasitacion_ajax', 'registrar_nueva_vacuna_ajax',
             'registrar_nuevo_laboratorio_ajax',
             'registrar_nuevo_producto_desparasitacion_ajax',
-            // RN-407: atender una cita (iniciarla, cerrarla o marcarla como no
-            // asistida) es del veterinario asignado. Recepción y administración
-            // podían iniciarla, pero la pantalla de atención es solo del
-            // veterinario: la cita quedaba "en curso" sin que nadie la atendiera.
-            'iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax', 'cerrar_sin_consulta_ajax',
+            // RN-407: atender una cita (iniciarla, completarla o marcarla como
+            // no asistida) es del veterinario asignado. «Cerrar sin consulta»
+            // se retiró en C5 (RN-410 derogada, D-3).
+            'iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax',
         ] as $a) { $matriz[$a] = $soloVet; }
 
         // Consulta de informacion clinica: el administrador si la necesita
-        // para auditoria, recepcion no.
+        // para auditoria.
         foreach ([
             'listar_historial_ajax',
             'get_laboratorios_ajax', 'get_productos_desparasitacion_ajax',
             'get_vacunas_por_especie_ajax',
         ] as $a) { $matriz[$a] = $clinico; }
 
-        // Personal de la clinica: recepcion, pacientes, propietarios y citas.
+        // public/ver_archivo.php: el modelo aplica RN-113 en la clinica y
+        // RN-G02 en el portal; el super-administrador no ve adjuntos (RN-004).
+        $matriz['ver_archivo'] = $todos;
+
+        // Personal de la clinica: pacientes, propietarios y citas.
         foreach ([
-            'reception_dashboard', 'reception_agenda', 'reception_nueva_cita',
-            'reception_pacientes', 'reception_nuevo_paciente',
             'nueva_mascota', 'actualizar_mascota', 'buscar_mascotas', 'guardar_mascota_ajax',
             'actualizar_mascota_ajax', 'cambiar_estado_mascota_ajax', 'get_mascota_ajax',
             'listar_mascotas_ajax', 'listar_mascotas_propietario_ajax',
             'nuevo_propietario', 'guardar_propietario_ajax',
             'listar_propietarios_ajax', 'get_propietario_ajax', 'actualizar_propietario_ajax',
+            'buscar_propietario_exacto_ajax', 'solicitar_vinculo_propietario_ajax', 'vincular_mascota_ajax',
             'registrar_cita_ajax', 'listar_citas_ajax',
             'get_cita_ajax', 'reprogramar_cita_ajax', 'confirmar_cita_ajax',
             'listar_veterinarios_ajax', 'listar_tipos_cita_ajax',
-            'get_charts_data_ajax', 'get_role_stats_ajax', 'get_timeline_ajax',
             'get_pendientes_ajax',
-            'verificar_documento_ajax', 'verificar_email_ajax',
         ] as $a) { $matriz[$a] = $staff; }
 
         // Portal del propietario: solo el dueno, sobre sus propios datos.
@@ -214,102 +408,115 @@ class Security {
             'portal_agendar_cita_ajax', 'portal_get_vets_ajax', 'portal_get_tipos_cita_ajax',
             'portal_get_detalle_cita_clinica_ajax', 'portal_imprimir_historial',
             'ver_detalle_mascota_propietario_ajax',
+            // C6: catálogos de la clínica elegida, HU-5.12 y HU-5.13.
+            'portal_get_horas_ajax', 'portal_get_sugerencias_ajax',
+            'portal_autorizar_historia_ajax', 'portal_vincular_clinica_ajax', 'portal_desvincular_clinica_ajax',
+            // D1, RE-T.18.3: documento y teléfono de una cuenta de Google.
+            'completar_perfil',
         ] as $a) { $matriz[$a] = $portal; }
+
+        // Plataforma: el panel del super-administrador llega en la etapa E.
+        $matriz['plataforma_inicio'] = $plataforma;
+        foreach (self::ACCIONES_PLATAFORMA as $accion) {
+            $matriz[$accion] = $plataforma;
+        }
 
         return $matriz;
     }
 
     /**
-     * Rol de la sesion actual. Se prefiere el id numerico; el nombre solo se
-     * usa como respaldo para sesiones abiertas antes de este despliegue, que
-     * podrian no tener `usuario_id_rol` guardado.
-     */
-    private static function rolActual(): ?int {
-        if (!empty($_SESSION['usuario_id_rol'])) {
-            return (int) $_SESSION['usuario_id_rol'];
-        }
-
-        $porNombre = [
-            'administrador' => self::ROL_ADMIN,
-            'veterinario'   => self::ROL_VETERINARIO,
-            'recepcionista' => self::ROL_RECEPCIONISTA,
-            'propietario'   => self::ROL_PROPIETARIO,
-        ];
-        $nombre = strtolower(trim($_SESSION['usuario_rol'] ?? ''));
-
-        return $porNombre[$nombre] ?? null;
-    }
-
-    /**
-     * Aplica la matriz de autorizacion. No depende de la interfaz: corre en el
-     * front controller, antes del enrutador, para toda peticion.
-     */
-    private static function validateRole(string $action): void {
-        // Las acciones publicas no exigen sesion ni rol.
-        if (in_array($action, self::$publicActions, true)) return;
-
-        $permitidos = self::actionRoles()[$action] ?? null;
-
-        // T-15 — Se deniega por defecto. Antes una accion ausente de la matriz
-        // pasaba sin control: bastaba agregar una ruta al enrutador y olvidarse
-        // de registrarla aqui para dejarla abierta a cualquier sesion, en
-        // silencio. Ahora el olvido se nota de inmediato y falla del lado
-        // seguro. Las rutas inexistentes las sigue atendiendo el `default` del
-        // enrutador, pero solo para usuarios ya autenticados.
-        if ($permitidos === null) {
-            if (self::rolActual() === null) {
-                self::denegar($action, 401, 'Sesion expirada. Inicia sesion nuevamente.');
-            }
-            error_log(sprintf('RBAC: accion "%s" sin entrada en la matriz de autorizacion', $action));
-            self::denegar($action, 403, 'No tienes permisos para realizar esta accion.');
-        }
-
-        $rol = self::rolActual();
-
-        if ($rol === null) {
-            self::denegar($action, 401, 'Sesion expirada. Inicia sesion nuevamente.');
-        }
-
-        if (!in_array($rol, $permitidos, true)) {
-            error_log(sprintf(
-                'RBAC: acceso denegado a "%s" para el rol %d (documento %s)',
-                $action,
-                $rol,
-                $_SESSION['usuario_doc'] ?? 'desconocido'
-            ));
-            self::denegar($action, 403, 'No tienes permisos para realizar esta accion.');
-        }
-    }
-
-    /**
      * Corta la peticion: JSON para AJAX, redireccion para navegacion normal.
      */
-    private static function denegar(string $action, int $codigo, string $mensaje): void {
+    public static function responder(AccesoDenegado $e, string $action): void {
         if (self::isAjax() || str_ends_with($action, '_ajax')) {
             header('Content-Type: application/json');
-            http_response_code($codigo);
-            echo json_encode(['success' => false, 'message' => $mensaje]);
+            http_response_code($e->codigo());
+            $cuerpo = ['success' => false, 'message' => $e->getMessage()];
+            if ($e->redirigir() !== 'dashboard' && $e->redirigir() !== $action) {
+                $cuerpo['redirect'] = 'index.php?action=' . $e->redirigir();
+            }
+            echo json_encode($cuerpo);
             exit;
         }
 
-        if ($codigo === 401) {
-            header('Location: index.php?action=login');
-            exit;
+        if ($e->codigo() !== 401) {
+            $_SESSION['error'] = $e->getMessage();
         }
-
-        $_SESSION['error'] = $mensaje;
-        header('Location: index.php?action=dashboard');
+        header('Location: index.php?action=' . $e->redirigir());
         exit;
     }
 
+    /** Contextos vigentes de la persona (null si la cuenta no existe o está inactiva). */
+    private static function contextosDe(int $idUsuario): ?array {
+        if (self::$fuenteContextos === null) {
+            require_once __DIR__ . '/../models/Usuario.php';
+            $db = self::conexion();
+            if ($db === null) {
+                throw new AccesoDenegado(401, 'No se pudo verificar la sesion. Intenta nuevamente.');
+            }
+            $usuario = new Usuario($db);
+            self::$fuenteContextos = static fn (int $id): ?array => $usuario->contextosDe($id);
+            self::$fuenteVersionSesion ??= static fn (int $id): ?int => $usuario->versionSesion($id);
+        }
+        return (self::$fuenteContextos)($idUsuario);
+    }
+
     /**
-     * Rate limiting para login: máximo 5 intentos cada 15 minutos.
+     * Punto de inyeccion para las pruebas (null vuelve a la base real). Una
+     * prueba que inyecta los contextos no compara la versión de sesión salvo
+     * que también la inyecte (definirFuenteDeVersionSesion).
+     */
+    public static function definirFuenteDeContextos(?callable $fuente): void {
+        self::$fuenteContextos = $fuente;
+        self::$fuenteVersionSesion = null;
+    }
+
+    /** Punto de inyeccion para las pruebas de RE-T.2.5. */
+    public static function definirFuenteDeVersionSesion(?callable $fuente): void {
+        self::$fuenteVersionSesion = $fuente;
+    }
+
+    private static function auditoria() {
+        if (self::$auditoria !== false) return self::$auditoria;
+
+        try {
+            require_once __DIR__ . '/../models/Auditoria.php';
+            $db = self::conexion();
+            self::$auditoria = $db ? new Auditoria($db) : null;
+        } catch (Throwable $e) {
+            error_log('Security: sin auditoria (' . $e->getMessage() . ')');
+            self::$auditoria = null;
+        }
+        return self::$auditoria;
+    }
+
+    /** Punto de inyeccion para las pruebas. */
+    public static function definirAuditoria($auditoria): void {
+        self::$auditoria = $auditoria;
+    }
+
+    private static ?PDO $conexion = null;
+
+    private static function conexion(): ?PDO {
+        if (self::$conexion === null) {
+            require_once __DIR__ . '/../config/Database.php';
+            self::$conexion = (new Database())->getConnection();
+        }
+        return self::$conexion;
+    }
+
+    /**
+     * RE-T.13.4: 20 fallos en 15 minutos desde una IP bloquean esa IP.
+     *
+     * $cuenta es el id_usuario cuando el identificador escrito corresponde a
+     * una cuenta; la cuenta nunca se bloquea aquí (RE-T.13.5, exigeCaptcha).
+     * Quien llama responde igual exista o no la cuenta (RN-G15).
      */
     public static function checkRateLimit(?string $cuenta = null): bool {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $ip = Auditoria::ipCliente();
         $key = 'rate_limit_' . $ip;
-        $window = 900; // 15 minutos
-        $maxAttempts = 5;
+        $window = self::VENTANA;
+        $maxAttempts = self::MAX_INTENTOS_IP;
 
         $now = time();
         $attempts = $_SESSION[$key]['count'] ?? 0;
@@ -320,7 +527,9 @@ class Security {
             $attempts = 0;
         }
 
-        if ($attempts >= $maxAttempts) {
+        $almacen = self::almacenDeIntentos();
+        // E1: el desbloqueo central también vale con la cookie anterior; la sesión solo es respaldo.
+        if ($almacen === null && $attempts >= $maxAttempts) {
             $retryAfter = $window - ($now - $lastAttempt);
             $_SESSION['error_login'] = "Demasiados intentos. Espera " . ceil($retryAfter / 60) . " minutos.";
             return false;
@@ -330,13 +539,9 @@ class Security {
         // se reinicia con solo no mandar la cookie. Este vive en la base de
         // datos y se consulta por IP y por cuenta, asi que el limite se aplica
         // aunque el cliente descarte su sesion en cada intento.
-        $almacen = self::almacenDeIntentos();
         if ($almacen === null) return true;
 
         $claves = ['ip:' . $ip];
-        if ($cuenta !== null && $cuenta !== '') {
-            $claves[] = 'cuenta:' . $cuenta;
-        }
 
         foreach ($claves as $clave) {
             $restante = $almacen->segundosDeBloqueo($clave);
@@ -349,8 +554,15 @@ class Security {
         return true;
     }
 
+    /** RN-G15: la cuenta exige CAPTCHA, nunca se bloquea por fallos ajenos. */
+    public static function exigeCaptcha(?string $cuenta): bool {
+        $almacen = self::almacenDeIntentos();
+        return $cuenta !== null && $almacen !== null
+            && $almacen->exigeCaptcha('cuenta:' . $cuenta, self::MAX_INTENTOS_CUENTA, self::VENTANA);
+    }
+
     public static function recordFailedLogin(?string $cuenta = null): void {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $ip = Auditoria::ipCliente();
         $key = 'rate_limit_' . $ip;
         $_SESSION[$key]['count'] = ($_SESSION[$key]['count'] ?? 0) + 1;
         $_SESSION[$key]['time'] = time();
@@ -362,18 +574,24 @@ class Security {
 
         $almacen->registrarFallo('ip:' . $ip, self::MAX_INTENTOS_IP, self::VENTANA, self::BLOQUEO);
         if ($cuenta !== null && $cuenta !== '') {
-            $almacen->registrarFallo('cuenta:' . $cuenta, self::MAX_INTENTOS_CUENTA, self::VENTANA, self::BLOQUEO);
+            // Sin castigo: la cuenta solo cuenta fallos para pedir el CAPTCHA (RE-T.13.5).
+            $almacen->registrarFallo('cuenta:' . $cuenta, self::MAX_INTENTOS_CUENTA, self::VENTANA, 0);
         }
     }
 
+    /**
+     * RE-T.13.4 (D2.1): un inicio de sesión correcto limpia el contador de la
+     * sesión y el de la cuenta, NO el de la IP. Si lo limpiara, quien tiene
+     * una cuenta podría alternar intentos contra otras con un acceso propio
+     * y nunca llegar al bloqueo.
+     */
     public static function resetRateLimit(?string $cuenta = null): void {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $ip = Auditoria::ipCliente();
         unset($_SESSION['rate_limit_' . $ip]);
 
         $almacen = self::almacenDeIntentos();
         if ($almacen === null) return;
 
-        $almacen->limpiar('ip:' . $ip);
         if ($cuenta !== null && $cuenta !== '') {
             $almacen->limpiar('cuenta:' . $cuenta);
         }
@@ -385,20 +603,24 @@ class Security {
 
     /**
      * HU-38 (VD-SEG-06) — Limite para las verificaciones de documento/correo
-     * del formulario de registro. Son publicas por necesidad (avisan si el
-     * documento ya existe), asi que lo que se corta aqui es el uso masivo:
-     * a mano no se notan, pero un script que enumere se topa con el muro.
+     * al escribir. Son publicas por necesidad (avisan si el documento ya
+     * existe), asi que lo que se corta aqui es el uso masivo: a mano no se
+     * notan, pero un script que enumere se topa con el muro.
+     *
+     * D2.1: sin sesión se cuenta por IP (20 en 15 minutos); con sesión, por
+     * persona (120 en 15 minutos). Antes una persona con sesión gastaba el
+     * límite anónimo y quedaba sin validación en tiempo real.
      */
-    public static function checkVerificationLimit(): bool {
+    public static function checkVerificationLimit(?int $idUsuario = null): bool {
         $almacen = self::almacenDeIntentos();
         if ($almacen === null) return true;
 
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        $clave = 'chk:' . $ip;
+        $clave = $idUsuario !== null ? 'chk-usuario:' . $idUsuario : 'chk:' . Auditoria::ipCliente();
+        $maximo = $idUsuario !== null ? self::MAX_VERIFICACIONES_USUARIO : self::MAX_VERIFICACIONES;
 
         if ($almacen->segundosDeBloqueo($clave) > 0) return false;
 
-        $almacen->registrarFallo($clave, self::MAX_VERIFICACIONES, self::VENTANA, self::BLOQUEO);
+        $almacen->registrarFallo($clave, $maximo, self::VENTANA, self::BLOQUEO);
 
         return true;
     }
@@ -416,9 +638,7 @@ class Security {
 
         try {
             require_once __DIR__ . '/../models/IntentoLogin.php';
-            require_once __DIR__ . '/../config/Database.php';
-            $database = new Database();
-            $conexion = $database->getConnection();
+            $conexion = self::conexion();
             self::$almacenIntentos = $conexion ? new IntentoLogin($conexion) : null;
         } catch (Throwable $e) {
             error_log('HU-38: sin almacen de intentos (' . $e->getMessage() . ')');
@@ -430,7 +650,7 @@ class Security {
 
     /** Punto de inyeccion para las pruebas. */
     public static function definirAlmacenDeIntentos($almacen): void {
-        self::$almacenIntentos = $almacen;
+        self::$almacenIntentos = $almacen === false && defined('ZOOKI_PRUEBAS') ? null : $almacen;
     }
 
     private static function isAjax(): bool {

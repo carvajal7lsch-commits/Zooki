@@ -1,0 +1,174 @@
+body {
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            background: #ffffff;
+            margin: 0;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-wrap h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #5560ff;
+        }
+
+        .logo-wrap p {
+            margin: 4px 0 0;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .report-meta {
+            text-align: right;
+            font-size: 0.82rem;
+            color: #64748b;
+        }
+
+        .report-meta h2 {
+            margin: 0 0 4px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .pet-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 1.25rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .pet-info-item {
+            font-size: 0.85rem;
+        }
+
+        .pet-info-item span {
+            display: block;
+            font-weight: 700;
+            font-size: 0.72rem;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .pet-info-item strong {
+            color: #0f172a;
+            font-size: 0.95rem;
+        }
+
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #0f172a;
+            border-bottom: 2px solid #5560ff;
+            padding-bottom: 6px;
+            margin: 2.5rem 0 1rem;
+            text-transform: uppercase;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.82rem;
+        }
+
+        th {
+            background: #f1f5f9;
+            color: #475569;
+            text-align: left;
+            font-weight: 700;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+        }
+
+        td {
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            vertical-align: top;
+            line-height: 1.4;
+        }
+
+        tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        .floating-actions {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 1000;
+        }
+
+        .btn {
+            background: #5560ff;
+            color: #ffffff;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(85, 96, 255, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            text-decoration: none;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+        }
+
+        /* Ocultar elementos al imprimir */
+        @media print {
+            body {
+                padding: 0;
+            }
+            .floating-actions {
+                display: none !important;
+            }
+        }
+.historial-vacio {
+    font-size:0.85rem;
+    color:#64748b;
+    font-style:italic;
+}
+
+.historial-columna-fecha {
+    width: 15%;
+}
+
+.historial-columna-motivo {
+    width: 25%;
+}
+
+.historial-columna-diagnostico {
+    width: 35%;
+}
+
+.historial-tratamiento {
+    font-size: 0.75rem;
+    color: #475569;
+    display: block;
+    margin-top: 4px;
+}

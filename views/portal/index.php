@@ -1,6 +1,8 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../../helpers/ResumenPanel.php';
 require_once __DIR__ . '/../../helpers/ReglaAtencion.php';
+require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
 $total_mascotas = count($mascotas);
 $hoy = new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
@@ -19,7 +21,7 @@ foreach ($mascotas as $m) {
 $fotoMascota = fn (array $m): ?string => !empty($m['url_foto']) ? 'uploads/mascotas/' . htmlspecialchars($m['url_foto']) : null;
 
 // Estados vistos por el propietario: "sin cerrar" sigue siendo una atención en curso para él.
-$etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'cancelada' => 'Cancelada', 'no_asistio' => 'No asistió', 'sin_cerrar' => 'En atención', 'cerrada_sin_consulta' => 'Cerrada'];
+$etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'cancelada' => 'Cancelada', 'no_asistio' => 'No asistió', 'sin_cerrar' => 'En atención'];
 ?>
 
 <!-- ══ INICIO ═══════════════════════════════════════════════════════ -->
@@ -61,7 +63,7 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
                 <?php else: ?>
                     <div class="pet-carousel">
                         <?php foreach ($mascotas as $m): $foto = $fotoMascota($m); ?>
-                            <button type="button" class="pet-carousel-item" onclick="verDetalle(<?= (int) $m['id_mascota'] ?>)">
+                            <button type="button" class="pet-carousel-item" data-ui-accion="detalle-mascota" data-ui-id="<?= (int) $m['id_mascota'] ?>">
                                 <span class="pet-avatar-wrapper">
                                     <?php if ($foto): ?>
                                         <img src="<?= $foto ?>" alt="" class="pet-avatar-img" loading="lazy">
@@ -83,7 +85,7 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
                 </div>
 
                 <?php if ($earliest_cita): $foto = $fotoMascota($cita_mascota); ?>
-                    <article class="appointment-banner" role="button" tabindex="0" onclick="mostrarDetalleCita(<?= (int) $earliest_cita['id_cita'] ?>)">
+                    <article class="appointment-banner" role="button" tabindex="0" data-ui-accion="detalle-cita-portal" data-ui-id="<?= (int) $earliest_cita['id_cita'] ?>">
                         <div class="app-banner-info">
                             <?php if ($foto): ?>
                                 <img src="<?= $foto ?>" alt="" class="app-banner-avatar">
@@ -143,27 +145,41 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
                 </div>
             </section>
 
-            <!-- HU-43: horario real de la clínica (antes, un banner de «24 horas» que no era cierto). -->
-            <section class="horario-card" aria-labelledby="tituloHorario" data-abierta="<?= $horario_ahora['abierta'] ? '1' : '0' ?>">
-                <div class="horario-card__estado">
-                    <span class="horario-card__icono" aria-hidden="true"><i class="ri-time-line"></i></span>
-                    <div>
-                        <h2 id="tituloHorario"><?= htmlspecialchars($horario_ahora['texto']) ?></h2>
-                        <p><?= htmlspecialchars($horario_ahora['detalle']) ?></p>
+            <!-- RE-5.1.7 (decisión C6): el horario real de cada clínica con vínculo activo. -->
+            <?php if (empty($clinicas_portal)): ?>
+                <section class="horario-card" aria-labelledby="tituloSinClinica">
+                    <div class="horario-card__estado">
+                        <span class="horario-card__icono" aria-hidden="true"><i class="ri-hospital-line"></i></span>
+                        <div>
+                            <h2 id="tituloSinClinica">Aún no tienes clínicas</h2>
+                            <p>Vincúlate a una desde Perfil › Mis clínicas para agendar citas.</p>
+                        </div>
                     </div>
-                </div>
-                <details class="horario-card__semana">
-                    <summary>Horario de la semana <i class="ri-arrow-down-s-line" aria-hidden="true"></i></summary>
-                    <dl>
-                        <?php foreach ($horario_semana as $n => $dia): ?>
-                            <div class="horario-card__dia<?= $n === $horario_ahora['hoy'] ? ' is-hoy' : '' ?><?= !$dia['franjas'] ? ' is-cerrado' : '' ?>">
-                                <dt><?= htmlspecialchars($dia['dia']) ?></dt>
-                                <dd><?= htmlspecialchars(HorarioAtencion::texto($dia['franjas'])) ?></dd>
-                            </div>
-                        <?php endforeach; ?>
-                    </dl>
-                </details>
-            </section>
+                </section>
+            <?php endif; ?>
+            <?php foreach ($clinicas_portal as $clinica): $idHorario = 'tituloHorario' . (int) $clinica['id_clinica']; ?>
+                <section class="horario-card" aria-labelledby="<?= $idHorario ?>" data-abierta="<?= $clinica['ahora']['abierta'] ? '1' : '0' ?>">
+                    <div class="horario-card__estado">
+                        <span class="horario-card__icono" aria-hidden="true"><i class="ri-time-line"></i></span>
+                        <div>
+                            <p class="horario-card__clinica"><?= htmlspecialchars($clinica['nombre']) ?></p>
+                            <h2 id="<?= $idHorario ?>"><?= htmlspecialchars($clinica['ahora']['texto']) ?></h2>
+                            <p><?= htmlspecialchars($clinica['ahora']['detalle']) ?></p>
+                        </div>
+                    </div>
+                    <details class="horario-card__semana">
+                        <summary>Horario de la semana <i class="ri-arrow-down-s-line" aria-hidden="true"></i></summary>
+                        <dl>
+                            <?php foreach ($clinica['semana'] as $n => $dia): ?>
+                                <div class="horario-card__dia<?= $n === $clinica['ahora']['hoy'] ? ' is-hoy' : '' ?><?= !$dia['franjas'] ? ' is-cerrado' : '' ?>">
+                                    <dt><?= htmlspecialchars($dia['dia']) ?></dt>
+                                    <dd><?= htmlspecialchars(HorarioAtencion::texto($dia['franjas'])) ?></dd>
+                                </div>
+                            <?php endforeach; ?>
+                        </dl>
+                    </details>
+                </section>
+            <?php endforeach; ?>
         </div>
     </div>
 </section>
@@ -250,7 +266,7 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
             <?php else: ?>
                 <div class="agenda-list scrollable-list" id="citasListContainer">
                     <?php foreach ($todas_citas as $c): $abierta = in_array($c['estado'], ['pendiente', 'confirmada'], true); ?>
-                        <div class="agenda-list-item agenda-list-item--accion" data-pet-id="<?= (int) $c['id_mascota'] ?>" role="button" tabindex="0" onclick="if(!event.target.classList.contains('btn-cancel-agenda')) mostrarDetalleCita(<?= (int) $c['id_cita'] ?>)">
+                        <div class="agenda-list-item agenda-list-item--accion" data-pet-id="<?= (int) $c['id_mascota'] ?>" role="button" tabindex="0" data-ui-accion="detalle-cita-portal" data-ui-id="<?= (int) $c['id_cita'] ?>">
                             <div class="agenda-pet-photo">
                                 <?php if ($c['foto_mascota']): ?>
                                     <img src="<?= $c['foto_mascota'] ?>" alt="">
@@ -261,12 +277,16 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
                             <div class="agenda-item-info">
                                 <h3><?= htmlspecialchars($c['nombre_mascota']) ?></h3>
                                 <p class="agenda-item-type"><?= htmlspecialchars($c['nombre_tipo'] ?? 'Consulta') ?> · <?= htmlspecialchars($c['nombre_completo'] ?? 'Veterinario') ?></p>
+                                <p class="agenda-item-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> <?= htmlspecialchars($c['clinica_nombre']) ?></p>
                                 <span class="agenda-item-date"><?= date('d/m/Y', strtotime($c['fecha'])) ?> · <?= htmlspecialchars(ResumenPanel::hora($c['hora'])) ?></span>
                             </div>
                             <div class="agenda-item-actions">
                                 <?php if ($abierta): ?>
                                     <span class="status-badge status-active">Activa</span>
-                                    <button type="button" class="btn-cancel-agenda" data-id="<?= (int) $c['id_cita'] ?>">Cancelar</button>
+                                    <?php // Solo se cancela en una clínica con vínculo activo (RN-G02). ?>
+                                    <?php if ($c['cancelable']): ?>
+                                        <button type="button" class="btn-cancel-agenda" data-id="<?= (int) $c['id_cita'] ?>">Cancelar</button>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span class="status-badge status-inactive<?= $c['estado'] === 'completada' ? ' status-done' : '' ?>"><?= htmlspecialchars($etiquetasCita[$c['estado']] ?? ucfirst($c['estado'])) ?></span>
                                 <?php endif; ?>
@@ -330,59 +350,58 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
     </div>
 </section>
 
-<script>
-    window.portalAgendaEventos = <?php
-        $eventos_js = [];
-        foreach ((array) $todas_citas as $c) {
-            $eventos_js[] = [
-                'tipo' => 'cita',
-                'id_cita' => $c['id_cita'],
-                'id_mascota' => $c['id_mascota'],
-                'nombre_mascota' => $c['nombre_mascota'],
-                'foto_mascota' => $c['foto_mascota'],
-                'titulo' => $c['nombre_tipo'] ?? 'Consulta',
-                'detalle' => $c['nombre_completo'] ?? 'Veterinario',
-                'fecha' => $c['fecha'],
-                'hora' => substr($c['hora'], 0, 5),
-                'estado' => $c['estado'],
-                'proxima' => null
-            ];
-        }
-        foreach ((array) $todas_vacunas as $vac) {
-            $eventos_js[] = [
-                'tipo' => 'vacuna',
-                'id_mascota' => $vac['id_mascota'],
-                'nombre_mascota' => $vac['nombre_mascota'],
-                'foto_mascota' => $vac['foto_mascota'],
-                'titulo' => $vac['nombre_vacuna'],
-                // La tabla vacunas no tiene «dosis» ni «fecha_proxima» (esas son de
-                // desparasitaciones): con esos nombres las vacunas nunca salían en
-                // «Próximas dosis» y cada carga dejaba avisos de PHP en el log.
-                'detalle' => !empty($vac['laboratorio']) ? 'Laboratorio: ' . $vac['laboratorio'] : 'Sin laboratorio registrado',
-                'fecha' => $vac['fecha_aplicacion'],
-                'hora' => null,
-                'estado' => 'aplicada',
-                'proxima' => (!empty($vac['fecha_proxima_dosis']) && $vac['fecha_proxima_dosis'] !== '0000-00-00') ? $vac['fecha_proxima_dosis'] : null
-            ];
-        }
-        foreach ((array) $todas_desparasitaciones as $d) {
-            $eventos_js[] = [
-                'tipo' => 'control',
-                'id_mascota' => $d['id_mascota'],
-                'nombre_mascota' => $d['nombre_mascota'],
-                'foto_mascota' => $d['foto_mascota'],
-                'titulo' => $d['producto'],
-                // Tampoco hay «dosis» en desparasitaciones: se muestran el tipo y la periodicidad.
-                'detalle' => ucfirst((string) ($d['tipo'] ?? '')) . ' · ' . ($d['periodicidad'] ?? ''),
-                'fecha' => $d['fecha_aplicacion'],
-                'hora' => null,
-                'estado' => 'aplicado',
-                'proxima' => ($d['fecha_proxima'] !== '0000-00-00') ? $d['fecha_proxima'] : null
-            ];
-        }
-        echo json_encode($eventos_js);
-    ?>;
-</script>
+<?php
+// Eventos de la agenda de salud para portal.js, en data-* (sin JS en línea).
+$eventos_js = [];
+foreach ((array) $todas_citas as $c) {
+    $eventos_js[] = [
+        'tipo' => 'cita',
+        'id_cita' => $c['id_cita'],
+        'id_mascota' => $c['id_mascota'],
+        'nombre_mascota' => $c['nombre_mascota'],
+        'foto_mascota' => $c['foto_mascota'],
+        'titulo' => $c['nombre_tipo'] ?? 'Consulta',
+        'detalle' => ($c['nombre_completo'] ?? 'Veterinario') . ' · ' . $c['clinica_nombre'],
+        'fecha' => $c['fecha'],
+        'hora' => substr($c['hora'], 0, 5),
+        'estado' => $c['estado'],
+        'proxima' => null
+    ];
+}
+foreach ((array) $todas_vacunas as $vac) {
+    $eventos_js[] = [
+        'tipo' => 'vacuna',
+        'id_mascota' => $vac['id_mascota'],
+        'nombre_mascota' => $vac['nombre_mascota'],
+        'foto_mascota' => $vac['foto_mascota'],
+        'titulo' => $vac['nombre_vacuna'],
+        // La tabla vacunas no tiene «dosis» ni «fecha_proxima» (esas son de
+        // desparasitaciones): con esos nombres las vacunas nunca salían en
+        // «Próximas dosis» y cada carga dejaba avisos de PHP en el log.
+        'detalle' => $vac['clinica_nombre'] . (!empty($vac['laboratorio']) ? ' · Laboratorio: ' . $vac['laboratorio'] : ''),
+        'fecha' => $vac['fecha_aplicacion'],
+        'hora' => null,
+        'estado' => 'aplicada',
+        'proxima' => (!empty($vac['fecha_proxima_dosis']) && $vac['fecha_proxima_dosis'] !== '0000-00-00') ? $vac['fecha_proxima_dosis'] : null
+    ];
+}
+foreach ((array) $todas_desparasitaciones as $d) {
+    $eventos_js[] = [
+        'tipo' => 'control',
+        'id_mascota' => $d['id_mascota'],
+        'nombre_mascota' => $d['nombre_mascota'],
+        'foto_mascota' => $d['foto_mascota'],
+        'titulo' => $d['producto'],
+        // Tampoco hay «dosis» en desparasitaciones: se muestran el tipo y la periodicidad.
+        'detalle' => ucfirst((string) ($d['tipo'] ?? '')) . ' · ' . ($d['periodicidad'] ?? '') . ' · ' . $d['clinica_nombre'],
+        'fecha' => $d['fecha_aplicacion'],
+        'hora' => null,
+        'estado' => 'aplicado',
+        'proxima' => ($d['fecha_proxima'] !== '0000-00-00') ? $d['fecha_proxima'] : null
+    ];
+}
+?>
+<div id="portalAgendaDatos" hidden data-eventos="<?= htmlspecialchars(json_encode($eventos_js, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>"></div>
 
 <!-- ══ RECORDATORIOS ════════════════════════════════════════════════ -->
 <section id="screen-notifications" class="app-screen" aria-labelledby="tituloAlertas">
@@ -411,7 +430,7 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
             <dl class="profile-details-list">
                 <div class="profile-detail-row">
                     <dt class="profile-detail-label">Cédula</dt>
-                    <dd class="profile-detail-value"><?= htmlspecialchars($_SESSION['usuario_doc'] ?? '—') ?></dd>
+                    <dd class="profile-detail-value" data-documento-cuenta><?= htmlspecialchars($usuarioData['documento'] ?? '—') ?></dd>
                 </div>
                 <div class="profile-detail-row">
                     <dt class="profile-detail-label">Correo</dt>
@@ -430,56 +449,95 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
 
         <div class="account-grid__acciones">
             <div class="profile-actions-list">
-                <button type="button" class="btn-profile-action" onclick="toggleContactEditPortal()" aria-controls="contactEditSection">
+                <button type="button" class="btn-profile-action" data-ui-accion="editar-contacto" aria-controls="contactEditSection">
                     <span><i class="ri-contacts-line" aria-hidden="true"></i> Editar datos de contacto</span>
                     <i class="ri-arrow-down-s-line" id="iconToggleContact" aria-hidden="true"></i>
                 </button>
 
                 <div id="contactEditSection" class="password-change-collapse">
-                    <form id="portalContactEditForm" class="portal-form" onsubmit="event.preventDefault(); submitContactEditPortal();">
+                    <form id="portalContactEditForm" class="portal-form" novalidate data-validacion-cuenta>
+                        <?php // Decisión C6: el correo es el dato de acceso; su cambio con verificación llega en la etapa D (RE-T.5.7). ?>
                         <div class="input-group">
-                            <label class="portal-label" for="portal_contact_email">Correo electrónico *</label>
-                            <div class="search-input-wrapper campo">
-                                <i class="ri-mail-line" aria-hidden="true"></i>
-                                <input type="email" name="email" id="portal_contact_email" required autocomplete="email" placeholder="ejemplo@correo.com" value="<?= htmlspecialchars($usuarioData['email'] ?? '') ?>">
-                            </div>
+                            <span class="portal-label">Correo electrónico</span>
+                            <p class="portal-ayuda"><?= htmlspecialchars($usuarioData['email'] ?? '') ?> · Puedes cambiarlo en Datos de acceso, verificando el correo nuevo.</p>
                         </div>
                         <div class="input-group">
                             <label class="portal-label" for="portal_contact_phone">Teléfono de contacto *</label>
                             <div class="search-input-wrapper campo">
                                 <i class="ri-phone-line" aria-hidden="true"></i>
-                                <input type="tel" name="telefono" id="portal_contact_phone" required autocomplete="tel" placeholder="Tu número de teléfono" value="<?= htmlspecialchars($usuarioData['telefono'] ?? '') ?>">
+                                <?php // C9.1: los mismos límites que valida el servidor (ValidadorTelefono). ?>
+                                <input type="tel" name="telefono" id="portal_contact_phone" required autocomplete="tel" placeholder="Tu número de teléfono" minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> value="<?= htmlspecialchars($usuarioData['telefono'] ?? '') ?>">
                             </div>
                         </div>
                         <button type="submit" class="btn-primary btn-primary--compacto" id="btnSubmitContactEdit">
                             <span>Guardar cambios</span>
                             <i class="ri-check-line" aria-hidden="true"></i>
                         </button>
-                    </form>
+                    <p role="status" data-password-resultado></p>
+</form>
                 </div>
             </div>
 
+            <!-- HU-5.12 y HU-5.13: mis clínicas, la historia compartida y los vínculos. -->
+            <section class="mis-clinicas" id="misClinicas" aria-labelledby="tituloMisClinicas">
+                <h2 id="tituloMisClinicas" class="mis-clinicas__titulo"><i class="ri-hospital-line" aria-hidden="true"></i> Mis clínicas</h2>
+                <?php if (empty($clinicas_portal)): ?>
+                    <p class="portal-ayuda">Todavía no estás vinculado a ninguna clínica.</p>
+                <?php endif; ?>
+                <?php foreach ($clinicas_portal as $clinica): $idInterruptor = 'autoriza_' . (int) $clinica['id_clinica']; ?>
+                    <article class="mis-clinicas__item">
+                        <div class="mis-clinicas__datos">
+                            <h3><?= htmlspecialchars($clinica['nombre']) ?></h3>
+                            <?php if (!empty($clinica['direccion'])): ?>
+                                <p><?= htmlspecialchars($clinica['direccion']) ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <label class="mis-clinicas__autoriza" for="<?= $idInterruptor ?>">
+                            <input type="checkbox" id="<?= $idInterruptor ?>" data-autorizar-clinica="<?= (int) $clinica['id_clinica'] ?>"<?= (int) $clinica['autoriza_historia_compartida'] === 1 ? ' checked' : '' ?>>
+                            <span>Puede ver la historia que registraron otras clínicas</span>
+                        </label>
+                        <button type="button" class="btn-enlace mis-clinicas__salir" data-desvincular-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= htmlspecialchars($clinica['nombre']) ?>">Desvincularme</button>
+                    </article>
+                <?php endforeach; ?>
+                <?php if (!empty($clinicas_disponibles)): ?>
+                    <h3 class="mis-clinicas__subtitulo">Otras clínicas en Zooki</h3>
+                    <?php foreach ($clinicas_disponibles as $clinica): ?>
+                        <article class="mis-clinicas__item mis-clinicas__item--otra">
+                            <div class="mis-clinicas__datos">
+                                <h3><?= htmlspecialchars($clinica['nombre']) ?></h3>
+                                <?php if (!empty($clinica['direccion'])): ?>
+                                    <p><?= htmlspecialchars($clinica['direccion']) ?></p>
+                                <?php endif; ?>
+                            </div>
+                            <button type="button" class="btn-primary btn-primary--compacto" data-vincular-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= htmlspecialchars($clinica['nombre']) ?>">Vincularme</button>
+                        </article>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </section>
+
             <div class="profile-actions-list">
-                <button type="button" class="btn-profile-action" onclick="togglePasswordChangePortal()" aria-controls="passwordChangeSection">
+                <?php require __DIR__ . "/../partials/cambios_identidad.php"; ?>
+                <button type="button" class="btn-profile-action" data-ui-accion="editar-password" aria-controls="passwordChangeSection">
                     <span><i class="ri-lock-password-line" aria-hidden="true"></i> Cambiar contraseña</span>
                     <i class="ri-arrow-down-s-line" id="iconTogglePassword" aria-hidden="true"></i>
                 </button>
 
                 <div id="passwordChangeSection" class="password-change-collapse">
-                    <form id="portalChangePasswordForm" class="portal-form" onsubmit="event.preventDefault(); submitChangePasswordPortal();">
+                    <form id="portalChangePasswordForm" data-password-accion="cambiar_password_ajax" class="portal-form"  data-validacion-cuenta>
+                        <?php if (empty($usuarioData['tiene_password'])) require __DIR__ . '/../partials/confirmacion_google.php'; ?>
                         <?php // HU-39: se pide la actual si la cuenta tiene una contraseña conocida ?>
-                        <?php if ((int) ($usuarioData['password_definida'] ?? 1) === 1): ?>
+                        <?php if ((int) ($usuarioData['tiene_password'] ?? 1) === 1): ?>
                         <div class="input-group">
                             <label class="portal-label" for="portal_current_password">Contraseña actual</label>
                             <div class="search-input-wrapper campo">
-                                <input type="password" name="current_password" id="portal_current_password" required autocomplete="current-password" placeholder="Tu contraseña actual">
+                                <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="current_password" id="portal_current_password" required autocomplete="current-password" placeholder="Tu contraseña actual">
                             </div>
                         </div>
                         <?php endif; ?>
                         <div class="input-group">
                             <label class="portal-label" for="portal_new_password">Nueva contraseña</label>
                             <div class="search-input-wrapper campo">
-                                <input type="password" name="new_password" id="portal_new_password" required autocomplete="new-password" placeholder="Mínimo 8 caracteres" oninput="validarFuerzaPasswordPortal()" aria-describedby="portal_pwd_strength_text">
+                                <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="new_password" id="portal_new_password" data-cuenta-ayuda="portal_pwd_strength_text" required autocomplete="new-password" placeholder="Mínimo 8 caracteres"  aria-describedby="portal_pwd_strength_text">
                             </div>
                             <div class="password-strength-meter" aria-hidden="true">
                                 <div id="portal_pwd_strength_bar"></div>
@@ -489,11 +547,12 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
                         <div class="input-group">
                             <label class="portal-label" for="portal_confirm_password">Confirmar nueva contraseña</label>
                             <div class="search-input-wrapper campo">
-                                <input type="password" name="confirm_password" id="portal_confirm_password" required autocomplete="new-password" placeholder="Repite la nueva contraseña" oninput="validarFuerzaPasswordPortal()">
+                                <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="confirm_password" id="portal_confirm_password" required autocomplete="new-password" placeholder="Repite la nueva contraseña" >
                             </div>
                             <small id="portal_pwd_match_text" class="password-match-text" role="alert">Las contraseñas no coinciden.</small>
                         </div>
-                        <button type="submit" id="portal_btn_change_pwd" class="btn-primary" disabled>Actualizar contraseña</button>
+                        <button type="submit" id="portal_btn_change_pwd" class="btn-primary">Actualizar contraseña</button>
+                        <p role="status" data-password-resultado></p>
                     </form>
                 </div>
 
@@ -509,13 +568,18 @@ $etiquetasCita = ['en_curso' => 'En atención', 'completada' => 'Completada', 'c
 <!-- ══ DETALLE DE MASCOTA ═══════════════════════════════════════════ -->
 <section id="screen-pet-detail" class="app-screen pet-detail" aria-labelledby="drawerPetTitle">
     <header class="pet-detail__cabecera">
-        <button type="button" class="portal-drawer-back" onclick="cerrarDrawer()" aria-label="Volver">
+        <button type="button" class="portal-drawer-back" data-ui-accion="cerrar-drawer" aria-label="Volver">
             <i class="ri-arrow-left-line" aria-hidden="true"></i>
         </button>
         <div class="portal-drawer-title-wrap">
             <h1 id="drawerPetTitle" class="pet-detail__titulo">—</h1>
             <p id="drawerPetSubtitle" class="pet-detail__subtitulo"></p>
         </div>
+        <?php // C9.1 (RE-5.11): imprimir el historial desde donde se ve la historia de la mascota; portal.js pone el enlace. ?>
+        <a href="#" id="btnImprimirFichaMascota" class="btn-imprimir-ficha" hidden>
+            <i class="ri-printer-line" aria-hidden="true"></i>
+            <span class="texto-largo">Imprimir historial</span><span class="texto-corto">Imprimir</span>
+        </a>
         <button type="button" id="btnEditPetProfile" class="btn-icono btn-icono--suave" aria-label="Editar perfil de la mascota" title="Editar perfil de la mascota">
             <i class="ri-edit-line" aria-hidden="true"></i>
         </button>
@@ -592,8 +656,11 @@ $campo = function (string $etiqueta, string $control, string $icono = '', string
 
 $leyenda = '<p class="portal-form__leyenda"><span class="portal-requerido" aria-hidden="true">*</span> Obligatorio. Lo demás es opcional.</p>';
 
-// Días en que la clínica no atiende en toda la jornada (1 = lunes … 7 = domingo).
-$diasCerrados = array_keys(array_filter($horario_semana, fn ($d) => !$d['franjas']));
+// Días en que cada clínica no atiende en toda la jornada (1 = lunes … 7 = domingo).
+$diasCerradosPorClinica = [];
+foreach ($clinicas_portal as $clinica) {
+    $diasCerradosPorClinica[(int) $clinica['id_clinica']] = array_values($clinica['dias_cerrados']);
+}
 ?>
 
 <!-- Ventana: agendar cita. Mismo flujo que el panel del personal:
@@ -602,18 +669,25 @@ $diasCerrados = array_keys(array_filter($horario_semana, fn ($d) => !$d['franjas
     <div class="portal-drawer portal-drawer--ancho" role="dialog" aria-modal="true" aria-labelledby="bookingTitulo">
         <?php $cabeceraVentana('btnCloseBookingModal', 'ri-calendar-event-line', 'Agendar nueva cita', 'Elige a tu compañero, el día y uno de los horarios libres.', 'bookingTitulo'); ?>
         <div class="portal-drawer-body">
-            <form id="portalBookingForm" class="portal-form booking" novalidate data-dias-cerrados="<?= htmlspecialchars(json_encode(array_values($diasCerrados))) ?>">
+            <form id="portalBookingForm" class="portal-form booking" novalidate data-dias-cerrados="<?= htmlspecialchars(json_encode($diasCerradosPorClinica)) ?>">
                 <?= $leyenda ?>
                 <div class="booking__columnas">
                     <div class="booking__datos">
                         <?php
+                        // RE-5.9.3: primero la clínica, solo entre las vinculadas; con una sola, ya elegida.
+                        $opcionesClinica = count($clinicas_portal) === 1 ? '' : '<option value="">Selecciona…</option>';
+                        foreach ($clinicas_portal as $clinica) {
+                            $opcionesClinica .= '<option value="' . (int) $clinica['id_clinica'] . '">' . htmlspecialchars($clinica['nombre']) . '</option>';
+                        }
+                        $campo('Clínica', '<select name="id_clinica" id="booking_clinica" required>' . $opcionesClinica . '</select>', 'ri-hospital-line', 'booking_clinica');
+
                         $opciones = '<option value="">Selecciona…</option>';
                         foreach ($mascotas as $m) {
                             $opciones .= '<option value="' . (int) $m['id_mascota'] . '">' . htmlspecialchars($m['nombre']) . '</option>';
                         }
                         $campo('Mascota', '<select name="id_mascota" id="booking_mascota" required>' . $opciones . '</select>', 'ri-baidu-line', 'booking_mascota');
-                        $campo('Tipo de cita', '<select name="id_tipo_cita" id="booking_tipo_cita" required><option value="">Cargando…</option></select>', 'ri-briefcase-line', 'booking_tipo_cita');
-                        $campo('Veterinario', '<select name="doc_veterinario" id="booking_veterinario" required><option value="">Cargando…</option></select>', 'ri-stethoscope-line', 'booking_veterinario');
+                        $campo('Tipo de cita', '<select name="id_tipo_cita" id="booking_tipo_cita" required><option value="">Elige primero la clínica</option></select>', 'ri-briefcase-line', 'booking_tipo_cita');
+                        $campo('Veterinario', '<select name="id_veterinario" id="booking_veterinario" required><option value="">Elige primero la clínica</option></select>', 'ri-stethoscope-line', 'booking_veterinario');
                         $campo('Motivo', '<textarea name="motivo" id="booking_motivo" maxlength="255" placeholder="Ej: control de peso, vómito desde ayer…" rows="3"></textarea>', '', 'booking_motivo', false);
                         ?>
                     </div>
@@ -622,9 +696,7 @@ $diasCerrados = array_keys(array_filter($horario_semana, fn ($d) => !$d['franjas
                         <div class="input-group">
                             <span class="portal-label" id="booking_dia_etq">Día <span class="portal-requerido" aria-hidden="true">*</span></span>
                             <input type="text" name="fecha" id="booking_fecha" class="booking__fecha" aria-labelledby="booking_dia_etq" readonly tabindex="-1">
-                            <?php if ($diasCerrados): ?>
-                                <p class="portal-ayuda">Los días en gris no se pueden elegir: ya pasaron o la clínica no atiende.</p>
-                            <?php endif; ?>
+                            <p class="portal-ayuda">Los días en gris no se pueden elegir: ya pasaron o la clínica no atiende.</p>
                         </div>
 
                         <div class="input-group">

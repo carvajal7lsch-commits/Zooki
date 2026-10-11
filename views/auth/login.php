@@ -1,10 +1,12 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
+require_once __DIR__ . '/../../helpers/Turnstile.php';
 // Asegurarnos de que la sesión esté iniciada para mostrar errores
 if(session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 // Si ya hay una sesión activa, lo mandamos al dashboard
-if(isset($_SESSION['usuario_doc'])) {
+if(isset($_SESSION['id_usuario'])) {
     header("Location: index.php?action=dashboard");
     exit();
 }
@@ -23,33 +25,22 @@ if (file_exists($envFile)) {
     $env = parse_ini_file($envFile) ?: [];
     $googleClientId = trim($env['GOOGLE_CLIENT_ID'] ?? '');
 }
+require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
+require_once __DIR__ . '/../../helpers/Csrf.php';
+// HU-5.8: AuthController::mostrarAcceso() entrega las clínicas activas y la
+// elegida por enlace; si se abre la vista sola, el registro queda sin lista.
+$clinicasRegistro = $clinicasRegistro ?? [];
+$clinicaElegida = $clinicaElegida ?? 0;
+$abrirRegistro = $abrirRegistro ?? false;
+$e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle; ?></title>
-    
-    <!-- Configuración para el JS -->
-    <script>
-        window.ZookiConfig = {
-            googleClientId: "<?php echo htmlspecialchars($googleClientId); ?>"
-        };
-    </script>
-    <link rel="icon" type="image/png" href="img/icon_blue.png">
-    <!-- Fuentes y estilos -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <!-- El CSS se enlaza desde la carpeta public/css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php require __DIR__ . '/../partials/cabecera_acceso.php'; ?>
 </head>
-<body class="login-page">
+<?php // D1: la configuración del JS viaja en data-*, sin JS en línea. ?>
+<body class="login-page" data-google-client-id="<?= $e($googleClientId) ?>">
     <div class="login-container">
         <!-- Lado del Formulario (IZQUIERDO — como en la referencia Vet da Cidade) -->
         <div class="login-form-area animate__animated animate__fadeIn">
@@ -65,11 +56,12 @@ if (file_exists($envFile)) {
                 </a>
             </div>
             <div class="flip-container">
-                <div class="flipper" id="authFlipper">
+                <div class="flipper" id="authFlipper" data-abrir-registro="<?= $abrirRegistro ? '1' : '0' ?>">
                     <!-- CARA FRONTAL: LOGIN -->
                     <div class="front">
                         <div class="form-wrapper animate__animated animate__fadeIn">
                             <h2>Iniciar sesión</h2>
+                            <p class="form-subtitle"><a href="index.php?action=registro_clinica">Registra tu clínica</a></p>
                             <p class="form-subtitle">¡Bienvenido de vuelta! Accede a tu cuenta para continuar.</p>
                             <!-- Confirmacion de correo / registro (HU-36) -->
                             <?php if(isset($_SESSION['success_register'])): ?>
@@ -89,15 +81,15 @@ if (file_exists($envFile)) {
                                 <?php require_once __DIR__ . '/../../helpers/Csrf.php'; Csrf::field('login'); ?>
                                 
                                 <div class="input-group">
-                                    <label for="documento">Documento de Identidad</label>
+                                    <label for="identificador">Documento o correo</label>
                                     <div class="input-wrapper">
-                                        <input type="text" id="documento" name="documento" placeholder="Ingrese su número de documento" required autocomplete="username" pattern="[0-9]+" maxlength="15">
+                                        <input type="text" id="identificador" name="identificador" placeholder="Tu número de documento o tu correo" required autocomplete="username" maxlength="255">
                                     </div>
                                 </div>
                                 <div class="input-group">
                                     <label for="password">Contraseña</label>
                                     <div class="input-wrapper">
-                                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" maxlength="72">
+                                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
                                         <button type="button" class="toggle-password" id="togglePassword" tabindex="-1">
                                             <i class="ri-eye-off-line"></i>
                                         </button>
@@ -110,6 +102,10 @@ if (file_exists($envFile)) {
                                     </label>
                                     <a href="#" class="forgot-password" id="forgotPasswordBtn">¿Olvidaste tu contraseña?</a>
                                 </div>
+                                <?php $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY'); ?>
+                                <?php if ($turnstileClave !== ''): ?>
+                                    <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars($turnstileClave, ENT_QUOTES, 'UTF-8') ?>"></div>
+                                <?php endif; ?>
                                 <button type="submit" class="btn-primary">
                                     <span>Entrar</span>
                                 </button>
@@ -118,7 +114,7 @@ if (file_exists($envFile)) {
                                     <span>O continua con</span>
                                 </div>
                                 <button type="button" class="btn-secondary" id="btnGoogleLogin">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+                                    <svg class="icono-google" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.16v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.16C1.43 8.55 1 10.22 1 12s.43 3.45 1.16 4.93l3.68-2.84z" fill="#FBBC05"/>
@@ -148,10 +144,22 @@ if (file_exists($envFile)) {
                                     <span><?php echo $_SESSION['error_register']; unset($_SESSION['error_register']); ?></span>
                                 </div>
                             <?php endif; ?>
-                            <form id="registerForm" action="index.php?action=process_register" method="POST">
+                            <form id="registerForm" data-cuenta-vincular="correo" action="index.php?action=process_register" method="POST" data-validacion-cuenta>
                                 <?php require_once __DIR__ . '/../../helpers/Csrf.php'; Csrf::field('register'); ?>
                                 
                                 <div class="auth-grid">
+                                    <?php // HU-5.8 (RN-109): el registro siempre es en una clínica que el propietario elige. ?>
+                                    <div class="input-group full-width">
+                                        <label for="id_clinica_reg">Clínica</label>
+                                        <div class="input-wrapper">
+                                            <select id="id_clinica_reg" name="id_clinica" required>
+                                                <option value="">Elige la clínica donde atiendes a tu mascota</option>
+                                                <?php foreach ($clinicasRegistro as $clinica): ?>
+                                                    <option value="<?= (int) $clinica['id_clinica'] ?>" <?= (int) $clinica['id_clinica'] === $clinicaElegida ? 'selected' : '' ?>><?= $e($clinica['nombre']) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
                                     <div class="input-group">
                                         <label for="tipo_documento">Tipo Doc.</label>
                                         <div class="input-wrapper">
@@ -166,33 +174,33 @@ if (file_exists($envFile)) {
                                     <div class="input-group">
                                         <label for="documento_reg">Documento</label>
                                         <div class="input-wrapper">
-                                            <input type="text" id="documento_reg" name="documento" placeholder="Ej. 1075..." required maxlength="15" autocomplete="off">
+                                            <input <?= ValidadorCuenta::atributosHtml('documento') ?> type="text" id="documento_reg" name="documento" placeholder="Ej. 1075..." required autocomplete="off">
                                         </div>
                                         <span class="validation-msg" id="docValidationMsg"></span>
                                     </div>
                                     <div class="input-group full-width">
                                         <label for="nombre_completo">Nombre Completo</label>
                                         <div class="input-wrapper">
-                                            <input type="text" id="nombre_completo" name="nombre_completo" placeholder="Nombres y Apellidos completos" required maxlength="100" autocomplete="off">
+                                            <input <?= ValidadorCuenta::atributosHtml('nombre_completo') ?> type="text" id="nombre_completo" name="nombre_completo" placeholder="Nombres y Apellidos completos" required autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="input-group">
                                         <label for="telefono">Teléfono</label>
                                         <div class="input-wrapper">
-                                            <input type="text" id="telefono" name="telefono" placeholder="Ej: 300..." required maxlength="15" autocomplete="off">
+                                            <input type="tel" id="telefono" name="telefono" placeholder="Ej: 300 123 4567" required minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> autocomplete="tel">
                                         </div>
                                     </div>
                                     <div class="input-group">
                                         <label for="email_reg">Correo</label>
                                         <div class="input-wrapper">
-                                            <input type="email" id="email_reg" name="email" placeholder="correo@ejemplo.com" required maxlength="100" autocomplete="off">
+                                            <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="email_reg" name="email" placeholder="correo@ejemplo.com" required autocomplete="off">
                                         </div>
                                         <span class="validation-msg" id="emailValidationMsg"></span>
                                     </div>
                                     <div class="input-group">
                                         <label for="password_reg">Contraseña</label>
                                         <div class="input-wrapper">
-                                            <input type="password" id="password_reg" name="password" placeholder="••••••••" required minlength="8" maxlength="72" autocomplete="new-password">
+                                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="password_reg" data-cuenta-ayuda="passwordValidationMsg" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
                                             <button type="button" class="toggle-password" id="togglePasswordReg" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                                                 <i class="ri-eye-off-line"></i>
                                             </button>
@@ -205,7 +213,7 @@ if (file_exists($envFile)) {
                                     <div class="input-group">
                                         <label for="confirm_password">Confirmar</label>
                                         <div class="input-wrapper">
-                                            <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required minlength="8" maxlength="72" autocomplete="new-password">
+                                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
                                             <button type="button" class="toggle-password" id="toggleConfirmPasswordReg" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                                                 <i class="ri-eye-off-line"></i>
                                             </button>
@@ -219,19 +227,22 @@ if (file_exists($envFile)) {
                                         <a href="index.php?action=privacidad" target="_blank" rel="noopener">Política de Tratamiento de Datos</a>.
                                     </span>
                                 </label>
+                                <?php if ($turnstileClave !== ''): ?>
+                                    <div data-turnstile-formulario data-sitekey="<?= htmlspecialchars($turnstileClave, ENT_QUOTES, 'UTF-8') ?>"></div>
+                                <?php endif; ?>
                                 <button type="submit" class="btn-primary">
                                     <span>Registrarse</span>
                                 </button>
                                 
-                                <div class="form-footer" style="margin-top: 1rem; margin-bottom: 0.5rem; text-align: center;">
-                                    <p style="font-size: 0.85rem; margin: 0;">¿Ya tienes una cuenta? <a href="#" id="showLoginBtn">Iniciar Sesión</a></p>
+                                <div class="form-footer form-footer--registro">
+                                    <p>¿Ya tienes una cuenta? <a href="#" id="showLoginBtn">Iniciar Sesión</a></p>
                                 </div>
                                 
                                 <div class="divider">
                                     <span>O regístrate con</span>
                                 </div>
                                 <button type="button" class="btn-secondary" id="btnGoogleRegister">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+                                    <svg class="icono-google" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.16v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.16C1.43 8.55 1 10.22 1 12s.43 3.45 1.16 4.93l3.68-2.84z" fill="#FBBC05"/>
@@ -245,19 +256,18 @@ if (file_exists($envFile)) {
                                  formulario sin recargar la pagina: la cuenta ya quedo
                                  creada y solo falta que el usuario abra el enlace del
                                  correo. En cuanto lo haga, el sondeo lo lleva al portal. -->
+                            <p class="cuenta-ayuda" id="registroFormResultado" role="alert" aria-live="polite"></p>
                             <div class="registro-espera" id="registroEspera" hidden>
                                 <div class="registro-espera-icono">
                                     <i class="ri-mail-send-line"></i>
-                                    <span class="registro-espera-spinner" aria-hidden="true"></span>
                                 </div>
                                 <h3>Revisa tu correo</h3>
                                 <p class="registro-espera-texto">
-                                    Enviamos un enlace de confirmación a
-                                    <strong id="registroEsperaEmail"></strong>.
-                                    Ábrelo para activar tu cuenta; esta página continúa sola.
+                                    Si la solicitud puede completarse, el titular recibirá el enlace de confirmación.
+                                    Ábrelo y después inicia sesión para continuar.
                                 </p>
                                 <p class="registro-espera-estado" id="registroEsperaEstado" role="status" aria-live="polite">
-                                    Esperando la confirmación…
+                                    Revisa tu correo para confirmar la solicitud o acceder a Zooki.
                                 </p>
                                 <p class="registro-espera-ayuda">
                                     Si no lo ves, revisa la carpeta de spam. El enlace vence en 24 horas.
@@ -331,7 +341,7 @@ if (file_exists($envFile)) {
                 <label for="resetEmail">Correo electrónico</label>
                 <div class="input-wrapper">
                     <i class="ri-at-line"></i>
-                    <input type="email" id="resetEmail" name="email" placeholder="tu@correo.com" required>
+                    <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="resetEmail" name="email" placeholder="tu@correo.com" required>
                 </div>
                 <button type="submit" class="btn-primary" id="resetRequestBtn">
                     <span>Enviar enlace</span>
@@ -344,56 +354,56 @@ if (file_exists($envFile)) {
             </div>
         </div>
     </div>
-    <!-- Modal: Completar Registro Google -->
+    <!-- RE-T.18.2: con un correo nuevo, antes de crear la cuenta se elige la
+         clínica y se acepta la política. Sin aceptación no se guarda nada. -->
     <div class="modal-backdrop" id="completeGoogleRegisterModal" hidden>
         <div class="modal-card">
             <button class="modal-close" id="closeGoogleModal" aria-label="Cerrar">
                 <i class="ri-close-line"></i>
             </button>
             <div class="modal-illustration">
-                <i class="ri-google-fill" style="color: #4285F4;"></i>
+                <i class="ri-google-fill icono-google-modal" aria-hidden="true"></i>
             </div>
-            <h3>¡Ya casi terminamos!</h3>
-            <p class="modal-subtitle">Tu correo <strong id="googleUserEmail"></strong> fue verificado. Solo necesitamos unos datos más para Zooki.</p>
+            <h3>Crea tu cuenta con Google</h3>
+            <p class="modal-subtitle">Google confirmó tu correo <strong id="googleUserEmail"></strong>. Elige tu clínica y acepta la política para crear la cuenta; después te pediremos tu documento y tu teléfono.</p>
             <form id="completeGoogleForm">
+                <?php Csrf::field('google'); ?>
                 <div class="input-group">
-                    <label for="google_tipo_documento">Tipo Doc.</label>
+                    <label for="google_id_clinica">Clínica</label>
                     <div class="input-wrapper">
-                        <select id="google_tipo_documento" name="tipo_documento" required>
-                            <option value="CC">Cédula</option>
-                            <option value="TI">T. Identidad</option>
-                            <option value="CE">C. Extranjería</option>
-                            <option value="PP">Pasaporte</option>
+                        <select id="google_id_clinica" name="id_clinica" required>
+                            <option value="">Elige la clínica</option>
+                            <?php foreach ($clinicasRegistro as $clinica): ?>
+                                <option value="<?= (int) $clinica['id_clinica'] ?>"><?= $e($clinica['nombre']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
-                <div class="input-group">
-                    <label for="google_documento">Documento</label>
-                    <div class="input-wrapper">
-                        <i class="ri-profile-line"></i>
-                        <input type="text" id="google_documento" name="documento" placeholder="Ej. 1075..." required maxlength="15">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="google_telefono">Teléfono</label>
-                    <div class="input-wrapper">
-                        <i class="ri-phone-line"></i>
-                        <input type="text" id="google_telefono" name="telefono" placeholder="Ej. 300..." required maxlength="15">
-                    </div>
-                </div>
+                <label class="consent-check">
+                    <input type="checkbox" name="acepta_datos" id="googleAceptaDatos" value="1" required>
+                    <span>
+                        Autorizo el tratamiento de mis datos personales conforme a la
+                        <a href="index.php?action=privacidad" target="_blank" rel="noopener">Política de Tratamiento de Datos</a>.
+                    </span>
+                </label>
                 <button type="submit" class="btn-primary" id="completeGoogleBtn">
-                    <span>Finalizar Registro</span>
+                    <span>Crear mi cuenta</span>
                     <i class="ri-check-line"></i>
                 </button>
             </form>
         </div>
     </div>
     <!-- JS externo — ZOOKI_REGLAS: cero JS en línea -->
+    <script src="js/turnstile-formularios.js?v=d3"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=zookiTurnstileListo" async defer></script>
     <script src="js/password-policy.js?v=<?php echo time(); ?>"></script>
+    <script src="js/interacciones.js?v=d31"></script>
     <script src="js/login.js?v=<?php echo time(); ?>"></script>
     <script src="js/register.js?v=<?php echo time(); ?>"></script>
     
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client?onload=initGoogleAuth" async defer></script>
+<?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
+<script src="js/avisos.js?v=d3"></script>
 </body>
 </html>

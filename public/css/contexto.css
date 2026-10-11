@@ -1,0 +1,173 @@
+/* HU-T.17 — Selector de contexto, indicador del contexto activo y página
+   mínima de la plataforma (C1). Cortes de RNF-16: móvil < 768 px,
+   tablet 768–1023 px, escritorio ≥ 1024 px. */
+
+:root {
+    --ctx-azul: #0052FF;
+    --ctx-azul-suave: #EEF3FF;
+    --ctx-texto: #1E293B;
+    --ctx-gris: #64748B;
+    --ctx-borde: #E2E8F0;
+    --ctx-error: #B91C1C;
+    --ctx-error-fondo: #FEF2F2;
+}
+
+/* ── Página del selector y de la plataforma ─────────────────────────────── */
+.contexto-pagina {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
+    background: linear-gradient(160deg, #F8FAFC 0%, var(--ctx-azul-suave) 100%);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ctx-texto);
+}
+
+.contexto-tarjeta {
+    width: 100%;
+    max-width: 30rem;
+    background: #FFFFFF;
+    border: 1px solid var(--ctx-borde);
+    border-radius: 1.25rem;
+    padding: 2rem 1.5rem;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    text-align: center;
+}
+
+.contexto-logo {
+    width: 3rem;
+    height: 3rem;
+}
+
+.contexto-titulo {
+    font-size: 1.5rem;
+    margin: 0.75rem 0 0.5rem;
+}
+
+.contexto-texto {
+    color: var(--ctx-gris);
+    line-height: 1.5;
+    margin: 0 0 1.5rem;
+}
+
+.contexto-aviso {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+}
+
+.contexto-aviso--error {
+    background: var(--ctx-error-fondo);
+    color: var(--ctx-error);
+}
+
+.contexto-lista {
+    list-style: none;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.contexto-lista form {
+    margin: 0;
+}
+
+.contexto-opcion {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--ctx-borde);
+    border-radius: 0.9rem;
+    background: #FFFFFF;
+    color: var(--ctx-texto);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.contexto-opcion:hover,
+.contexto-opcion:focus-visible {
+    border-color: var(--ctx-azul);
+    background: var(--ctx-azul-suave);
+    outline: none;
+}
+
+.contexto-opcion.is-actual {
+    border-color: var(--ctx-azul);
+}
+
+.contexto-opcion > .fas:first-child {
+    font-size: 1.25rem;
+    color: var(--ctx-azul);
+    width: 1.5rem;
+    text-align: center;
+}
+
+.contexto-opcion__texto {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.contexto-opcion__texto small {
+    color: var(--ctx-gris);
+}
+
+.contexto-opcion__flecha {
+    color: var(--ctx-gris);
+}
+
+.contexto-salir {
+    color: var(--ctx-gris);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.contexto-salir:hover {
+    color: var(--ctx-error);
+}
+
+/* ── Indicador del contexto activo en los layouts ───────────────────────── */
+.contexto-actual {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 100%;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: var(--ctx-azul-suave);
+    color: var(--ctx-azul);
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.contexto-actual__cambiar {
+    color: inherit;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+/* Móvil: solo el enlace para cambiar, sin el nombre largo de la clínica. */
+@media (max-width: 767px) {
+    .contexto-actual__etiqueta {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) {
+    .contexto-tarjeta {
+        padding: 2.5rem 2rem;
+    }
+}

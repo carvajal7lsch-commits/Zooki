@@ -2,6 +2,18 @@
 
 // escapeHtml() vive en avisos.js, que este layout carga antes (DRY).
 
+/** Eventos de la agenda de salud: llegan en data-eventos de #portalAgendaDatos (sin JS en línea). */
+function eventosDeLaAgenda() {
+    const datos = document.getElementById('portalAgendaDatos');
+    if (!datos) return [];
+    try {
+        return JSON.parse(datos.dataset.eventos || '[]');
+    } catch (e) {
+        console.error('Agenda: datos ilegibles', e);
+        return [];
+    }
+}
+
 function formatFecha(dateStr) {
     if (!dateStr) return '—';
     const d = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T12:00:00');
@@ -25,7 +37,7 @@ function formatFechaHora(dateStr) {
 // Para él, "sin cerrar" sigue siendo una atención en curso.
 const ESTADOS_CITA_PROPIETARIO = {
     pendiente: 'Activa', confirmada: 'Activa', en_curso: 'En atención', sin_cerrar: 'En atención',
-    completada: 'Completada', cancelada: 'Cancelada', no_asistio: 'No asistió', cerrada_sin_consulta: 'Cerrada'
+    completada: 'Completada', cancelada: 'Cancelada', no_asistio: 'No asistió'
 };
 
 function etiquetaEstadoCita(estado) {
@@ -36,7 +48,7 @@ function etiquetaEstadoCita(estado) {
 function claseEstadoCita(estado) {
     if (['pendiente', 'confirmada', 'en_curso', 'sin_cerrar'].includes(estado)) return 'status-badge--abierta';
     if (estado === 'completada') return 'status-badge--completada';
-    if (['no_asistio', 'cerrada_sin_consulta'].includes(estado)) return 'status-badge--no-asistio';
+    if (estado === 'no_asistio') return 'status-badge--no-asistio';
     return 'status-badge--cancelada';
 }
 
@@ -163,7 +175,7 @@ async function loadVetsExplore() {
             <div class="vet-card-item">
                 <div class="vet-photo-circle" aria-hidden="true">${iniciales}</div>
                 <h3>Dr(a). ${escapeHtml(v.nombre_completo.split(' ')[0])}</h3>
-                <p>Médico Veterinario</p>
+                <p>${escapeHtml(v.clinica_nombre || 'Médico Veterinario')}</p>
             </div>`;
         });
         listEl.innerHTML = html;
@@ -254,17 +266,23 @@ function toggleContactEditPortal() {
     }
 }
 
-async function submitContactEditPortal() {
-    const email = document.getElementById('portal_contact_email').value.trim();
-    const phone = document.getElementById('portal_contact_phone').value.trim();
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('portalContactEditForm');
+    if (!form) return;
+    form.addEventListener('submit', (evento) => {
+        evento.preventDefault();
+        submitContactEditPortal();
+    });
+});
 
-    if (!email || !phone) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Campos requeridos',
-            text: 'Por favor complete todos los campos.',
-            confirmButtonColor: '#5560FF'
-        });
+/** Decisión C6: el propietario cambia su teléfono; el correo se cambia con verificación en la etapa D. */
+async function submitContactEditPortal() {
+    const campo = document.getElementById('portal_contact_phone');
+    const phone = campo.value.trim();
+
+    // C9.1: la misma regla del servidor (ValidadorTelefono), avisada en el campo.
+    if (!campo.checkValidity()) {
+        campo.reportValidity();
         return;
     }
 
@@ -278,7 +296,6 @@ async function submitContactEditPortal() {
 
     try {
         const formData = new FormData();
-        formData.append('email', email);
         formData.append('telefono', phone);
 
         const res = await (await fetch('index.php?action=portal_actualizar_datos_contacto_ajax', {
@@ -290,16 +307,9 @@ async function submitContactEditPortal() {
         })).json();
 
         if (res.success) {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Éxito!',
-                text: res.message || 'Datos de contacto actualizados correctamente.',
-                confirmButtonColor: '#5560FF'
-            });
+            zookiToast(res.message || 'Datos de contacto actualizados correctamente.', 'success');
             
-            const emailSpan = document.getElementById('profileEmailVal');
             const phoneSpan = document.getElementById('profilePhoneVal');
-            if (emailSpan) emailSpan.textContent = res.email;
             if (phoneSpan) phoneSpan.textContent = res.telefono;
 
             toggleContactEditPortal();
@@ -347,128 +357,6 @@ function togglePasswordChangePortal() {
     }
 }
 
-function validarFuerzaPasswordPortal() {
-    const pwd = document.getElementById('portal_new_password').value;
-    const confirmPwd = document.getElementById('portal_confirm_password').value;
-    const bar = document.getElementById('portal_pwd_strength_bar');
-    const text = document.getElementById('portal_pwd_strength_text');
-    const matchText = document.getElementById('portal_pwd_match_text');
-    const btn = document.getElementById('portal_btn_change_pwd');
-    
-    // La politica compartida decide primero (RN-G10): no tiene sentido pintar
-    // la barra de verde si el servidor va a rechazar la contrasena.
-    const motivo = window.motivoPasswordInvalida
-        ? window.motivoPasswordInvalida(pwd)
-        : (pwd.length >= 8 ? null : 'Mínimo 8 caracteres');
-    const cumple = motivo === null;
-
-    let strength = 0;
-    if (cumple) {
-        strength = 75;
-        if (pwd.match(/[^A-Za-z0-9]/)) strength += 25;   // simbolos
-    } else if (pwd.length > 0) {
-        strength = 25;
-    }
-
-    bar.style.width = strength + '%';
-    if (!cumple) {
-        bar.style.background = 'var(--z-danger)';
-        text.textContent = pwd.length === 0
-            ? 'Mínimo 8 caracteres, con mayúscula, minúscula y número.'
-            : motivo + '.';
-        text.style.color = 'var(--z-danger)';
-    } else if (strength <= 75) {
-        bar.style.background = 'var(--z-warning)';
-        text.textContent = 'Media: Agrega símbolos para mayor seguridad.';
-        text.style.color = 'var(--z-warning)';
-    } else {
-        bar.style.background = 'var(--z-success)';
-        text.textContent = 'Fuerte: Contraseña segura.';
-        text.style.color = 'var(--z-success)';
-    }
-    
-    let match = true;
-    if (confirmPwd.length > 0) {
-        if (pwd !== confirmPwd) {
-            matchText.style.display = 'block';
-            match = false;
-        } else {
-            matchText.style.display = 'none';
-            match = true;
-        }
-    } else {
-        matchText.style.display = 'none';
-        match = false;
-    }
-    
-    btn.disabled = !(cumple && match);
-}
-
-async function submitChangePasswordPortal() {
-    const currentEl = document.getElementById('portal_current_password');
-    const current = currentEl ? currentEl.value : '';
-    const pwd = document.getElementById('portal_new_password').value;
-    const confirmPwd = document.getElementById('portal_confirm_password').value;
-
-    if (pwd !== confirmPwd) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Las contraseñas no coinciden.',
-            confirmButtonColor: '#5560FF'
-        });
-        return;
-    }
-
-    const btn = document.getElementById('portal_btn_change_pwd');
-    btn.disabled = true;
-    btn.innerHTML = 'Actualizando...';
-
-    try {
-        const formData = new FormData();
-        formData.append('password_actual', current);
-        formData.append('password_nueva', pwd);
-
-        const res = await (await fetch('index.php?action=cambiar_password_ajax', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })).json();
-
-        if (res.success) {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Éxito!',
-                text: res.message || 'Contraseña actualizada correctamente.',
-                confirmButtonColor: '#5560FF'
-            });
-            document.getElementById('portalChangePasswordForm').reset();
-            togglePasswordChangePortal();
-            validarFuerzaPasswordPortal();
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: res.message || 'No se pudo actualizar la contraseña.',
-                confirmButtonColor: '#5560FF'
-            });
-        }
-    } catch (e) {
-        console.error(e);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error de Red',
-            text: 'No pudimos conectarnos con el servidor.',
-            confirmButtonColor: '#5560FF'
-        });
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Actualizar contraseña';
-    }
-}
-
 function openDrawer() {
     mostrarPantalla('screen-pet-detail');
     // La ficha es un subnivel de Inicio.
@@ -504,7 +392,7 @@ document.querySelectorAll('.portal-tab').forEach(btn => {
 // Esc cierra la ventana abierta; si no hay ninguna, sale de la ficha de la mascota.
 // Antes volvía a Inicio desde cualquier pantalla, aunque hubiera una ventana abierta.
 document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || document.getElementById('tiktok-micro-modal')) return;
+    if (e.key !== 'Escape' || (window.Swal && Swal.isVisible())) return;
     const abierta = document.querySelector('.portal-drawer-overlay.is-open');
     if (abierta) closeModal(abierta.id);
     else if (document.getElementById('screen-pet-detail')?.classList.contains('active')) cerrarDrawer();
@@ -566,6 +454,8 @@ async function verDetalle(id, opciones = {}) {
     if (opciones.historial !== false) history.pushState({ zkMascota: id, zkDentro: true }, '', `#mascota-${id}`);
     showTab('historial', document.querySelector('.portal-tab[data-tab="historial"]'));
 
+    const imprimir = document.getElementById('btnImprimirFichaMascota');
+    if (imprimir) imprimir.hidden = true;
     document.getElementById('drawerPetTitle').innerHTML = 'Cargando…';
     document.getElementById('drawerPetSubtitle').textContent = '';
     document.getElementById('drawerPetSummary').innerHTML = '';
@@ -584,6 +474,11 @@ async function verDetalle(id, opciones = {}) {
 
         const m = res.mascota;
         window.activePetData = m;
+        // C9.1 (RE-5.11): el historial para imprimir de esta mascota.
+        if (imprimir) {
+            imprimir.href = `index.php?action=portal_imprimir_historial&id_mascota=${encodeURIComponent(m.id_mascota)}`;
+            imprimir.hidden = false;
+        }
         
         const avatarHtml = m.url_foto
             ? `<img src="uploads/mascotas/${escapeHtml(m.url_foto)}" alt="" class="pet-detail__avatar">`
@@ -614,7 +509,7 @@ async function verDetalle(id, opciones = {}) {
                              saltandose el control de acceso. Solo lo frenaba el .htaccess,
                              que cubre Apache con AllowOverride y nada mas. Ahora pasa por
                              ver_archivo.php, que verifica que la mascota sea del dueno. -->
-                        <a href="ver_archivo.php?id=${encodeURIComponent(file.id_archivo)}" target="_blank" rel="noopener" class="portal-file-link" onclick="event.stopPropagation()">
+                        <a href="ver_archivo.php?id=${encodeURIComponent(file.id_archivo)}" target="_blank" rel="noopener" class="portal-file-link" data-ui-detener>
                             <i class="ri-file-pdf-line" aria-hidden="true"></i> ${escapeHtml(file.nombre_original)}
                         </a>`;
                     });
@@ -624,12 +519,13 @@ async function verDetalle(id, opciones = {}) {
                 html += `
                 <div class="portal-timeline-item">
                     <div class="portal-timeline-date">${formatFechaHora(h.fecha_hora)}</div>
-                    <div class="portal-timeline-card accordion-card" role="button" tabindex="0" aria-expanded="false" onclick="toggleAccordion(this)">
+                    <div class="portal-timeline-card accordion-card" role="button" tabindex="0" aria-expanded="false" data-ui-accion="acordeon-historia">
                         <div class="accordion-header">
                             <h3>${escapeHtml(h.motivo_consulta)}</h3>
                             <i class="ri-arrow-down-s-line accordion-icon" aria-hidden="true"></i>
                         </div>
                         <div class="accordion-body">
+                            <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(h.clinica_nombre)}</p>
                             <p><strong>Diagnóstico:</strong> ${escapeHtml(h.diagnostico)}</p>
                             <p><strong>Tratamiento:</strong> ${escapeHtml(h.plan_tratamiento)}</p>
                             <p><strong>Veterinario:</strong> ${escapeHtml(h.veterinario)}</p>
@@ -652,9 +548,10 @@ async function verDetalle(id, opciones = {}) {
         } else {
             let html = '';
             res.citas.forEach(c => {
+                // Solo se cancela en una clínica con vínculo activo (lo dice el servidor en `cancelable`).
                 let cancelBtn = '';
-                if (c.estado === 'pendiente' || c.estado === 'confirmada' || c.estado === 'programada') {
-                    cancelBtn = `<button type="button" class="portal-btn-cancel" onclick="cancelarCitaPortal(${c.id_cita})"><i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita</button>`;
+                if (c.cancelable) {
+                    cancelBtn = `<button type="button" class="portal-btn-cancel" data-ui-accion="cancelar-cita-portal" data-ui-id="${Number(c.id_cita)}"><i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita</button>`;
                 }
 
                 html += `
@@ -664,6 +561,7 @@ async function verDetalle(id, opciones = {}) {
                         <strong>${formatFecha(c.fecha)} · ${escapeHtml((c.hora || '').substring(0, 5))}</strong>
                         <p>${escapeHtml(c.motivo)}</p>
                         ${c.veterinario_nombre ? `<p>Veterinario: ${escapeHtml(c.veterinario_nombre)}</p>` : ''}
+                        <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(c.clinica_nombre)}</p>
                         ${badgeEstado(c.estado)}
                         ${cancelBtn}
                     </div>
@@ -690,6 +588,7 @@ async function verDetalle(id, opciones = {}) {
                         <p>Aplicada: ${formatFecha(v.fecha_aplicacion)}</p>
                         ${v.fecha_proxima_dosis ? `<p class="portal-proxima">Próxima dosis: ${formatFecha(v.fecha_proxima_dosis)}</p>` : ''}
                         ${v.laboratorio ? `<p>Laboratorio: ${escapeHtml(v.laboratorio)}</p>` : ''}
+                        <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(v.clinica_nombre)}</p>
                     </div>
                 </div>`;
             });
@@ -714,6 +613,7 @@ async function verDetalle(id, opciones = {}) {
                         <p>Aplicada: ${formatFecha(d.fecha_aplicacion)}</p>
                         ${d.fecha_proxima ? `<p class="portal-proxima portal-proxima--control">Próxima dosis: ${formatFecha(d.fecha_proxima)} (${escapeHtml(d.periodicidad)})</p>` : ''}
                         ${d.observaciones ? `<p>Observaciones: ${escapeHtml(d.observaciones)}</p>` : ''}
+                        <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(d.clinica_nombre)}</p>
                     </div>
                 </div>`;
             });
@@ -810,93 +710,33 @@ function switchAgendaTab(tabId, btn) {
     });
 }
 
-// Aviso breve del portal (confirmar, cancelar, errores). Hoja que sube desde
-// abajo en el celular y ventana centrada desde tablet; estilos en ventanas.css.
-function showTikTokModal({ title, message, isConfirm, onConfirm, onCancel }) {
-    const existing = document.getElementById('tiktok-micro-modal');
-    if (existing) existing.remove();
-    const focoAnterior = document.activeElement;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'tiktok-micro-modal';
-    overlay.className = 'zk-sheet';
-
-    const panel = document.createElement('div');
-    panel.className = 'zk-sheet__panel';
-    panel.setAttribute('role', isConfirm ? 'alertdialog' : 'dialog');
-    panel.setAttribute('aria-modal', 'true');
-
-    const asa = document.createElement('div');
-    asa.className = 'zk-sheet__asa';
-    panel.appendChild(asa);
-
-    if (title) {
-        const titleEl = document.createElement('h2');
-        titleEl.className = 'zk-sheet__titulo';
-        titleEl.id = 'zkSheetTitulo';
-        titleEl.textContent = title;
-        panel.appendChild(titleEl);
-        panel.setAttribute('aria-labelledby', titleEl.id);
-    }
-
-    if (message) {
-        const msgEl = document.createElement('p');
-        msgEl.className = 'zk-sheet__mensaje';
-        msgEl.textContent = message;
-        panel.appendChild(msgEl);
-    }
-
-    const acciones = document.createElement('div');
-    acciones.className = 'zk-sheet__acciones';
-
-    const close = () => {
-        document.removeEventListener('keydown', alTeclear);
-        overlay.classList.remove('is-open');
-        setTimeout(() => overlay.remove(), 250);
-        if (focoAnterior && document.contains(focoAnterior)) focoAnterior.focus({ preventScroll: true });
-    };
-
-    const mainBtn = document.createElement('button');
-    mainBtn.type = 'button';
-    mainBtn.className = 'zk-sheet__btn zk-sheet__btn--principal';
-    mainBtn.textContent = isConfirm ? 'Sí, continuar' : 'Entendido';
-    mainBtn.onclick = () => {
-        close();
-        if (onConfirm) onConfirm();
-    };
-    acciones.appendChild(mainBtn);
-
-    let cancelBtn = null;
+// C9: las reservas y respuestas frecuentes usan toast; cancelar o aceptar
+// una cita adicional del mismo día conserva una decisión explícita.
+async function showTikTokModal({ title, message, isConfirm, onConfirm, onCancel, icon = 'success' }) {
     if (isConfirm) {
-        cancelBtn = document.createElement('button');
-        cancelBtn.type = 'button';
-        cancelBtn.className = 'zk-sheet__btn zk-sheet__btn--secundario';
-        cancelBtn.textContent = 'No, cancelar';
-        cancelBtn.onclick = () => {
-            close();
-            if (onCancel) onCancel();
-        };
-        acciones.appendChild(cancelBtn);
-    }
-
-    // Esc equivale a «No» en una confirmación y a «Entendido» en un aviso.
-    const alTeclear = (e) => {
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            (cancelBtn || mainBtn).click();
+        const respuesta = await Swal.fire({
+            icon: 'warning',
+            title,
+            text: message,
+            showCancelButton: true,
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Volver',
+            confirmButtonColor: '#0052FF',
+        });
+        if (respuesta.isConfirmed) {
+            if (onConfirm) onConfirm();
+        } else if (onCancel) {
+            onCancel();
         }
-    };
-    document.addEventListener('keydown', alTeclear);
-
-    panel.appendChild(acciones);
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-
-    // Animar entrada
-    setTimeout(() => {
-        overlay.classList.add('is-open');
-        mainBtn.focus({ preventScroll: true });
-    }, 15);
+        return;
+    }
+    const aviso = zookiToast(message || title, icon);
+    if (icon === 'error') {
+        if (onConfirm) onConfirm();
+        return;
+    }
+    await aviso;
+    if (onConfirm) onConfirm();
 }
 
 /* Lógica de Agendamiento desde el Portal (HU-26) */
@@ -935,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const proximasContainer = document.getElementById('agenda-salud-proximas');
         if (!proximasList || !historialList) return;
 
-        const eventos = window.portalAgendaEventos || [];
+        const eventos = eventosDeLaAgenda();
         
         // Filtrar por mascota y por fecha si aplica
         let filtrados = eventos.filter(e => {
@@ -953,7 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filtrados.forEach(e => {
             if (e.tipo === 'cita') {
                 htmlHistorial += `
-                <div class="agenda-list-item agenda-list-item--accion agenda-list-item--cita" role="button" tabindex="0" onclick="mostrarDetalleCita(${Number(e.id_cita)})">
+                <div class="agenda-list-item agenda-list-item--accion agenda-list-item--cita" role="button" tabindex="0" data-ui-accion="detalle-cita-portal" data-ui-id="${Number(e.id_cita)}">
                     <div class="agenda-icon-wrap"><i class="ri-calendar-event-line" aria-hidden="true"></i></div>
                     <div class="agenda-item-info">
                         <h3>${escapeHtml(e.nombre_mascota)}</h3>
@@ -1140,7 +980,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Eventos para verificar
-        const eventos = window.portalAgendaEventos || [];
+        const eventos = eventosDeLaAgenda();
 
         // Rellenar días del mes actual
         for (let day = 1; day <= totalDays; day++) {
@@ -1499,6 +1339,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!bookingModal || !form) return;
 
     const closeBtn = document.getElementById('btnCloseBookingModal');
+    // C6 / RE-5.9.3: primero la clínica, entre las vinculadas; catálogos y horarios son de esa clínica.
+    const clinicaSelect = document.getElementById('booking_clinica');
     const mascotaSelect = document.getElementById('booking_mascota');
     const tipoCitaSelect = document.getElementById('booking_tipo_cita');
     const vetSelect = document.getElementById('booking_veterinario');
@@ -1507,10 +1349,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const slots = document.getElementById('booking_slots');
     const resumen = document.getElementById('booking_resumen');
     const confirmar = document.getElementById('booking_confirmar');
-    // Días sin atención en toda la jornada (1 = lunes … 7 = domingo), desde Configuración de horarios.
-    const diasCerrados = JSON.parse(form.dataset.diasCerrados || '[]');
+    // Días sin atención en toda la jornada de cada clínica (1 = lunes … 7 = domingo).
+    const diasCerradosPorClinica = JSON.parse(form.dataset.diasCerrados || '{}');
+    const diasCerrados = () => diasCerradosPorClinica[clinicaSelect.value] || [];
     let turno = 0; // si el usuario cambia algo mientras cargan los horarios, se ignora la respuesta vieja
-    let catalogosListos = false;
+    const catalogosPorClinica = {};
 
     const minutosDe = h => { const [hh, mm] = h.split(':').map(Number); return hh * 60 + mm; };
     const hora12 = h => { const [hh, mm] = h.split(':').map(Number); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a. m.' : 'p. m.'}`; };
@@ -1525,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inline: true,
         disableMobile: true,
         monthSelectorType: 'static',
-        disable: [d => diasCerrados.includes(d.getDay() === 0 ? 7 : d.getDay())],
+        disable: [d => diasCerrados().includes(d.getDay() === 0 ? 7 : d.getDay())],
         onChange: () => cargarHoras(),
         onReady: (fechas, texto, instancia) => { if (window.zkMesesAnios) window.zkMesesAnios(instancia); }
     }) : null;
@@ -1541,6 +1384,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function textoGuia() {
         const faltan = [];
+        if (!clinicaSelect.value) faltan.push('la clínica');
         if (!tipoCitaSelect.value) faltan.push('el tipo de cita');
         if (!vetSelect.value) faltan.push('el veterinario');
         if (!dateInput.value) faltan.push('el día');
@@ -1600,29 +1444,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fecha = dateInput.value;
         const vet = vetSelect.value;
+        const clinica = clinicaSelect.value;
         const duracion = (tipoCitaSelect.selectedOptions[0] && tipoCitaSelect.selectedOptions[0].dataset.duracion) || 30;
         const miTurno = ++turno;
         estadoSlots('cargando');
 
         try {
             // Horas de la clínica ese día ∩ huecos libres del veterinario.
-            const [clinica, agendaVet] = await Promise.all([
-                fetch(`index.php?action=get_horas_disponibles_ajax&fecha=${encodeURIComponent(fecha)}&intervalo=${encodeURIComponent(duracion)}`).then(r => r.json()),
-                fetch(`index.php?action=get_sugerencias_horario_ajax&doc_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${encodeURIComponent(duracion)}`).then(r => r.json())
+            const [horasClinica, agendaVet] = await Promise.all([
+                fetch(`index.php?action=portal_get_horas_ajax&id_clinica=${encodeURIComponent(clinica)}&fecha=${encodeURIComponent(fecha)}&intervalo=${encodeURIComponent(duracion)}`).then(r => r.json()),
+                fetch(`index.php?action=portal_get_sugerencias_ajax&id_clinica=${encodeURIComponent(clinica)}&id_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${encodeURIComponent(duracion)}`).then(r => r.json())
             ]);
             if (miTurno !== turno) return;
 
-            if (!clinica.success || !agendaVet.success) {
+            if (!horasClinica.success || !agendaVet.success) {
                 estadoSlots('vacio', 'No se pudieron cargar los horarios. Intenta de nuevo.');
                 return;
             }
-            const horasClinica = clinica.horas || [];
-            if (!horasClinica.length) {
+            const horasDeLaClinica = horasClinica.horas || [];
+            if (!horasDeLaClinica.length) {
                 estadoSlots('vacio', 'La clínica no atiende ese día. Elige otro día.');
                 return;
             }
             const libresVet = agendaVet.sugerencias || [];
-            let horas = horasClinica.filter(h => libresVet.includes(h));
+            let horas = horasDeLaClinica.filter(h => libresVet.includes(h));
             // Hoy no se ofrecen horas que ya pasaron.
             if (fecha === hoyIso()) {
                 const ahora = new Date();
@@ -1641,7 +1486,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function actualizarResumen() {
-        const listo = mascotaSelect.value && tipoCitaSelect.value && vetSelect.value && dateInput.value && horaInput.value;
+        const listo = clinicaSelect.value && mascotaSelect.value && tipoCitaSelect.value && vetSelect.value && dateInput.value && horaInput.value;
         confirmar.disabled = !listo;
         if (!listo) {
             resumen.textContent = '';
@@ -1650,22 +1495,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const dia = calendario && calendario.selectedDates[0]
             ? calendario.selectedDates[0].toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
             : dateInput.value;
-        resumen.innerHTML = `<i class="ri-checkbox-circle-line" aria-hidden="true"></i>${escapeHtml(textoOpcion(mascotaSelect))} · ${escapeHtml(textoOpcion(tipoCitaSelect))} con ${escapeHtml(textoOpcion(vetSelect))} · ${escapeHtml(dia)}, ${escapeHtml(hora12(horaInput.value))}`;
+        resumen.innerHTML = `<i class="ri-checkbox-circle-line" aria-hidden="true"></i>${escapeHtml(textoOpcion(mascotaSelect))} · ${escapeHtml(textoOpcion(tipoCitaSelect))} con ${escapeHtml(textoOpcion(vetSelect))} en ${escapeHtml(textoOpcion(clinicaSelect))} · ${escapeHtml(dia)}, ${escapeHtml(hora12(horaInput.value))}`;
     }
 
+    /** Tipos de cita y veterinarios de la clínica elegida (una vez por clínica). */
     async function cargarCatalogos() {
+        const clinica = clinicaSelect.value;
+        if (!clinica) {
+            tipoCitaSelect.innerHTML = vetSelect.innerHTML = '<option value="">Elige primero la clínica</option>';
+            return;
+        }
         try {
-            const [resTipos, resVets] = await Promise.all([
-                fetch('index.php?action=portal_get_tipos_cita_ajax').then(r => r.json()),
-                fetch('index.php?action=portal_get_vets_ajax').then(r => r.json())
-            ]);
-            tipoCitaSelect.innerHTML = '<option value="">Selecciona…</option>' + (resTipos.success ? resTipos.tipos : []).map(t =>
+            if (!catalogosPorClinica[clinica]) {
+                const [resTipos, resVets] = await Promise.all([
+                    fetch(`index.php?action=portal_get_tipos_cita_ajax&id_clinica=${encodeURIComponent(clinica)}`).then(r => r.json()),
+                    fetch(`index.php?action=portal_get_vets_ajax&id_clinica=${encodeURIComponent(clinica)}`).then(r => r.json())
+                ]);
+                catalogosPorClinica[clinica] = {
+                    tipos: resTipos.success ? resTipos.tipos : [],
+                    veterinarios: Array.isArray(resVets) ? resVets : []
+                };
+            }
+            const { tipos, veterinarios } = catalogosPorClinica[clinica];
+            tipoCitaSelect.innerHTML = '<option value="">Selecciona…</option>' + tipos.map(t =>
                 `<option value="${Number(t.id_tipo_cita)}" data-duracion="${Number(t.duracion_minutos)}">${escapeHtml(t.nombre_tipo)} (${Number(t.duracion_minutos)} min)</option>`
             ).join('');
-            vetSelect.innerHTML = '<option value="">Selecciona…</option>' + (Array.isArray(resVets) ? resVets : []).map(v =>
-                `<option value="${escapeHtml(v.documento)}">Dr(a). ${escapeHtml(v.nombre_completo)}</option>`
+            vetSelect.innerHTML = '<option value="">Selecciona…</option>' + veterinarios.map(v =>
+                `<option value="${Number(v.id_usuario)}">Dr(a). ${escapeHtml(v.nombre_completo)}</option>`
             ).join('');
-            catalogosListos = true;
         } catch (e) {
             console.error('Error al cargar catálogos:', e);
             tipoCitaSelect.innerHTML = vetSelect.innerHTML = '<option value="">No se pudo cargar. Cierra y vuelve a abrir.</option>';
@@ -1684,7 +1541,11 @@ document.addEventListener('DOMContentLoaded', () => {
             estadoSlots('vacio', 'Primero registra una mascota desde Inicio para poder agendarle una cita.');
             return;
         }
-        if (!catalogosListos) await cargarCatalogos();
+        if (clinicaSelect.options.length === 0) {
+            estadoSlots('vacio', 'Vincúlate a una clínica desde Perfil › Mis clínicas para poder agendar.');
+            return;
+        }
+        await cargarCatalogos();
         cargarHoras();
     };
 
@@ -1695,6 +1556,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === bookingModal) closeModal('portalBookingModal');
     });
 
+    // Otra clínica: otros tipos, veterinarios y días de atención.
+    clinicaSelect.addEventListener('change', async () => {
+        if (calendario) {
+            calendario.clear();
+            calendario.redraw();
+        }
+        await cargarCatalogos();
+        cargarHoras();
+    });
     mascotaSelect.addEventListener('change', actualizarResumen);
     tipoCitaSelect.addEventListener('change', cargarHoras);
     vetSelect.addEventListener('change', cargarHoras);
@@ -1727,20 +1597,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const mailFd = new FormData();
                     mailFd.append('id_cita', res.id_cita);
                     mailFd.append('tipo', 'confirmacion_nueva');
+                    // keepalive: el envío termina aunque la página recargue enseguida (C9.1).
                     fetch('index.php?action=enviar_email_ajax', {
                         method: 'POST',
-                        body: mailFd
+                        body: mailFd,
+                        keepalive: true
                     }).catch(console.error);
                 }
 
-                showTikTokModal({
-                    title: '¡Cita Reservada!',
-                    message: res.message || 'Tu cita ha sido agendada y confirmada con éxito.',
-                    isConfirm: false,
-                    onConfirm: () => {
-                        location.reload();
-                    }
-                });
+                // C9.1: la agenda se actualiza ya; el aviso sale al recargar.
+                zookiRecargarConAviso(res.message || 'Tu cita ha sido agendada y confirmada con éxito.');
             } else if (res.has_warning) {
                 showTikTokModal({
                     title: 'Cita Duplicada',
@@ -1754,6 +1620,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 showTikTokModal({
                     title: 'No se pudo agendar',
+                    icon: 'error',
                     message: res.message || 'Inténtalo nuevamente.',
                     isConfirm: false,
                     onConfirm: () => {
@@ -1767,6 +1634,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error al agendar cita:', error);
             showTikTokModal({
                 title: 'Error de Red',
+                icon: 'error',
                 message: 'No pudimos conectarnos con el servidor. Inténtalo más tarde.',
                 isConfirm: false,
                 onConfirm: reactivar
@@ -1800,14 +1668,7 @@ function cancelarCitaPortal(idCita) {
                 })).json();
 
                 if (res.success) {
-                    showTikTokModal({
-                        title: 'Cita cancelada',
-                        message: res.message || 'La cita ha sido cancelada.',
-                        isConfirm: false,
-                        onConfirm: () => {
-                            location.reload();
-                        }
-                    });
+                    zookiRecargarConAviso(res.message || 'La cita ha sido cancelada.');
                 } else {
                     showTikTokModal({
                         title: 'Error',
@@ -1819,6 +1680,7 @@ function cancelarCitaPortal(idCita) {
                 console.error(e);
                 showTikTokModal({
                     title: 'Error de Red',
+                    icon: 'error',
                     message: 'No pudimos conectarnos con el servidor.',
                     isConfirm: false
                 });
@@ -2046,8 +1908,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (res.success) {
                     closeModal(modalId);
-                    Swal.fire({ icon: 'success', title: exito[0], text: exito[1], confirmButtonColor: '#0052FF' })
-                        .then(() => location.reload());
+                    zookiRecargarConAviso(exito[1] || exito[0]);
                     return;
                 }
                 Swal.fire({ icon: 'error', title: 'Revisa los datos', text: res.message || 'No se pudo guardar.', confirmButtonColor: '#0052FF' });
@@ -2093,7 +1954,7 @@ async function mostrarDetalleCita(idCita) {
         // Rellenar información general
         document.getElementById('detCitaTipo').textContent = cita.nombre_tipo.toUpperCase();
         document.getElementById('detCitaMascota').textContent = cita.nombre_mascota;
-        document.getElementById('detCitaVet').textContent = `Dr(a). ${cita.veterinario}`;
+        document.getElementById('detCitaVet').textContent = `Dr(a). ${cita.veterinario} · ${cita.clinica}`;
         document.getElementById('detCitaFechaHora').textContent = `${formatFecha(cita.fecha)} · ${cita.hora.substring(0, 5)}`;
 
         // Rellenar Badge de Estado
@@ -2172,4 +2033,74 @@ async function mostrarDetalleCita(idCita) {
     }
 }
 
+/* ── HU-5.12 y HU-5.13: mis clínicas ───────────────────────────────────── */
+async function postPortal(accion, datos) {
+    const cuerpo = new FormData();
+    Object.entries(datos).forEach(([clave, valor]) => cuerpo.append(clave, valor));
+    const res = await fetch(`index.php?action=${accion}`, {
+        method: 'POST',
+        body: cuerpo,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    return res.json();
+}
 
+function avisoPortal(icono, titulo, texto) {
+    return zookiToast(texto || titulo, icono);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const seccion = document.getElementById('misClinicas');
+    if (!seccion) return;
+
+    // RE-5.12.1/2: el interruptor aplica de inmediato; si el servidor rechaza, vuelve a su estado.
+    seccion.addEventListener('change', async (e) => {
+        const interruptor = e.target.closest('[data-autorizar-clinica]');
+        if (!interruptor) return;
+        interruptor.disabled = true;
+        try {
+            const res = await postPortal('portal_autorizar_historia_ajax', {
+                id_clinica: interruptor.dataset.autorizarClinica,
+                autoriza: interruptor.checked ? '1' : '0'
+            });
+            if (!res.success) {
+                interruptor.checked = !interruptor.checked;
+                avisoPortal('error', 'No se pudo cambiar', res.message || 'Intenta de nuevo.');
+                return;
+            }
+            avisoPortal('success', 'Listo', res.message);
+        } catch (err) {
+            console.error(err);
+            interruptor.checked = !interruptor.checked;
+            avisoPortal('error', 'Error de red', 'No se pudo conectar con el servidor.');
+        } finally {
+            interruptor.disabled = false;
+        }
+    });
+
+    seccion.addEventListener('click', async (e) => {
+        const vincular = e.target.closest('[data-vincular-clinica]');
+        const desvincular = e.target.closest('[data-desvincular-clinica]');
+        if (!vincular && !desvincular) return;
+
+        const boton = vincular || desvincular;
+        // RE-5.13.1: vínculo reversible con un clic; el servidor valida RN-115.
+
+        boton.disabled = true;
+        try {
+            const res = vincular
+                ? await postPortal('portal_vincular_clinica_ajax', { id_clinica: vincular.dataset.vincularClinica })
+                : await postPortal('portal_desvincular_clinica_ajax', { id_clinica: desvincular.dataset.desvincularClinica });
+            if (!res.success) {
+                avisoPortal('error', 'No se pudo completar', res.message || 'Intenta de nuevo.');
+                boton.disabled = false;
+                return;
+            }
+            zookiRecargarConAviso(res.message || 'Listo');
+        } catch (err) {
+            console.error(err);
+            boton.disabled = false;
+            avisoPortal('error', 'Error de red', 'No se pudo conectar con el servidor.');
+        }
+    });
+});

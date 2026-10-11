@@ -1195,3 +1195,183 @@
 .iti--container {
     z-index: 99999 !important;
 }
+/* HU-T.7 (C1): el modal se abre con una clase desde js/usuarios.js. */
+.users-modal.is-open {
+    display: flex;
+}
+
+/* C1.6: el layout del formulario no debe volver visible la clave de alta al editar. */
+.users-modal [hidden] {
+    display: none !important;
+}
+
+.tab-panel[hidden] {
+    display: none;
+}
+
+/* C9: misma cuadrícula y tarjetas de v1.12.0, con avatar local y vistas v2. */
+#usuariosModulo [hidden] {
+    display: none !important;
+}
+.avatar-mini.avatar-iniciales,
+.avatar-iniciales {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #0052FF;
+    color: white;
+    font-weight: 600;
+    font-size: 1.05rem;
+    box-shadow: 0 4px 14px rgba(0, 82, 255, 0.25);
+    flex-shrink: 0;
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* C9.1: colores de la v1.12.0 (ui-avatars) por rol, sin servicio externo. */
+.avatar-iniciales--rol-2 {
+    background: #0044d6;
+}
+
+.avatar-iniciales--cliente,
+.avatar-iniciales--mascota {
+    background: #5560FF;
+    box-shadow: 0 4px 14px rgba(85, 96, 255, 0.25);
+}
+
+.avatar-iniciales--mascota {
+    background: #10B981;
+    box-shadow: none;
+}
+
+.avatar-iniciales--tabla {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    box-shadow: none;
+}
+
+.avatar-iniciales--grande {
+    width: 64px;
+    height: 64px;
+    font-size: 1.3rem;
+}
+
+.person-card:hover .avatar-iniciales,
+.client-card:hover .avatar-iniciales {
+    transform: scale(1.1) rotate(3deg);
+}
+
+.current-user-label {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.table-actions .toggle-switch {
+    margin-right: 0.25rem;
+}
+
+/* Detalle del cliente */
+.users-modal__panel--detalle {
+    max-width: 600px;
+}
+
+.cliente-detalle {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.cliente-detalle__datos h4 {
+    margin: 0 0 0.35rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.cliente-detalle__datos p {
+    margin: 0.15rem 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    overflow-wrap: anywhere;
+}
+
+.cliente-detalle__titulo {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* D2.1: modal del personal con el diseño de v1.12.0 (modalUsuarioGestion). */
+.users-modal__panel .form-grid .span-2 {
+    grid-column: span 2;
+}
+
+.users-modal__panel .modal-header .close-modal {
+    background: #f1f5f9;
+}
+
+.estado-usuario {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 48px;
+}
+
+.estado-usuario__texto {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.estado-usuario__texto--activo {
+    color: #10B981;
+}
+
+.estado-usuario__texto--inactivo {
+    color: #EF4444;
+}
+
+.modal-aviso {
+    margin: 0 0 1rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 0.85rem;
+}
+
+.invitacion-personal p {
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.invitacion-personal small {
+    color: var(--text-secondary);
+}
+
+.users-modal__panel .iti {
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .users-modal__panel .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .users-modal__panel .form-grid .span-2,
+    .users-modal__panel .form-grid .full {
+        grid-column: auto;
+    }
+}

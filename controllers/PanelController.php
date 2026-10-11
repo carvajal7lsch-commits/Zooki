@@ -6,7 +6,8 @@ require_once __DIR__ . '/../helpers/ResumenPanel.php';
 /**
  * Datos de los paneles de inicio. Se calculan en el servidor y la vista los
  * pinta directamente: sin peticiones AJAX al cargar, sin datos de ejemplo y
- * con el "hoy" de la clínica, no el del servidor.
+ * con el "hoy" de la clínica, no el del servidor. Todo es de la clínica
+ * activa (Panel extiende ModeloClinica).
  */
 class PanelController
 {
@@ -19,26 +20,26 @@ class PanelController
         $this->panel = new Panel($this->db);
     }
 
-    /** HU-18 / HU-20: el día del veterinario. */
-    public function datosVeterinario(string $doc, ?DateTimeImmutable $ahora = null): array
+    /** HU-6.1: el día del veterinario en la clínica activa (RE-6.1.4). */
+    public function datosVeterinario(int $idVeterinario, ?DateTimeImmutable $ahora = null): array
     {
         $ahora = $ahora ?? $this->ahora();
         $this->revisarAtencionesAbiertas($ahora);
         $hoy = $ahora->format('Y-m-d');
 
-        $agenda = $this->conAccion($this->panel->citasDelDia($hoy, $doc), $ahora);
+        $agenda = $this->conAccion($this->panel->citasDelDia($hoy, $idVeterinario), $ahora);
         $siguiente = ResumenPanel::siguiente($agenda, $ahora);
 
         // Las atenciones de hoy ya se ven en la agenda con su botón; aquí solo
         // se listan las que exigen algo aparte: las abiertas de días anteriores
         // y las que quedaron sin cerrar.
         $pendientes = array_values(array_filter(
-            $this->conAccion($this->panel->atencionesAbiertas($doc), $ahora),
+            $this->conAccion($this->panel->atencionesAbiertas($idVeterinario), $ahora),
             fn($c) => $c['estado'] === 'sin_cerrar' || $c['fecha'] !== $hoy
         ));
 
         $recordatorios = $this->panel->recordatoriosDeSusPacientes(
-            $doc,
+            $idVeterinario,
             $hoy,
             $ahora->modify('+7 days')->format('Y-m-d')
         );
@@ -55,7 +56,7 @@ class PanelController
         ];
     }
 
-    /** HU-57: la operación de la clínica para el administrador. */
+    /** HU-6.2 y RE-6.4.1: la operación de la clínica activa para el administrador. */
     public function datosAdministrador(?DateTimeImmutable $ahora = null): array
     {
         $ahora = $ahora ?? $this->ahora();
@@ -84,6 +85,8 @@ class PanelController
             'fecha' => ResumenPanel::fechaLarga($ahora),
             'contadores' => ResumenPanel::contadores($citas),
             'consultas_mes' => $consultasMes,
+            'pacientes_activos' => $this->panel->contarPacientesActivos(),
+            'propietarios' => $this->panel->contarPropietarios(),
             'variacion_consultas' => ResumenPanel::variacion($consultasMes, $consultasAnterior),
             'mes_anterior' => $this->nombreMes($inicioAnterior),
             'citas' => $citas,

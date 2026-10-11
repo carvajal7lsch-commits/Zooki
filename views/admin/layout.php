@@ -17,10 +17,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Estilos del sistema -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=2">
     <link rel="stylesheet" href="css/dashboard.css?v=4">
-    <link rel="stylesheet" href="css/usuarios.css">
+    <link rel="stylesheet" href="css/usuarios.css?v=4">
     <link rel="stylesheet" href="css/pill-sidebar.css">
+    <link rel="stylesheet" href="css/contexto.css?v=1">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
     <link rel="stylesheet" href="css/perfil.css?v=2">
     <?php endif; ?>
@@ -29,8 +30,9 @@
     <link rel="stylesheet" href="css/horarios.css?v=1">
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
-    <link rel="stylesheet" href="css/panel.css?v=2">
+    <link rel="stylesheet" href="css/panel.css?v=3">
     <?php endif; ?>
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
 </head>
 <body>
     <div id="global-loader"><div class="spinner"></div></div>
@@ -47,7 +49,7 @@
                 <?php
                 $__action = $_GET["action"] ?? "admin_panel";
                 $__adminNombre = $_SESSION["usuario_nombre"] ?? "Administrador";
-                $__adminRol = $_SESSION["usuario_rol"] ?? "Admin";
+                $__adminRol = Roles::nombre((int) Contexto::rolActivo());
                 $__adminIniciales = "";
                 foreach (array_filter(explode(" ", trim($__adminNombre))) as $__i => $__parte) {
                     if ($__i > 1) {
@@ -68,7 +70,7 @@
                 <?= pillNavLink("index.php?action=admin_panel", "fa-th-large", $__action === "admin_panel") ?>
                 <?= pillNavLink("index.php?action=admin_usuarios", "fa-users", $__action === "admin_usuarios") ?>
                 <?= pillNavLink("index.php?action=admin_citas", "fa-calendar-alt", $__action === "admin_citas") ?>
-                <?php // echo pillNavLink("index.php?action=admin_auditoria", "fa-shield-alt", $__action === "admin_auditoria"); ?>
+                <?php echo pillNavLink("index.php?action=admin_auditoria", "fa-shield-alt", $__action === "admin_auditoria"); ?>
                 <?= pillNavLink("index.php?action=admin_configuracion", "fa-cog", $__action === "admin_configuracion") ?>
                 <?= pillNavLink("index.php?action=mi_perfil", "fa-user-circle", $__action === "mi_perfil") ?>
             </div>
@@ -101,10 +103,11 @@
                     <h1 class="top-header-title"><?= $tituloModulo ?></h1>
                 </div>
                 <div class="header-right">
+                    <?php include __DIR__ . "/../partials/contexto_actual.php"; ?>
                     <div class="notifications-wrapper">
-                        <button class="notif-btn" id="notifBell" onclick="toggleNotifications()">
+                        <button class="notif-btn" id="notifBell">
                             <i class="far fa-bell"></i>
-                            <span class="notif-badge" id="notifBadge" style="display:none;"></span>
+                            <span class="notif-badge" id="notifBadge" hidden></span>
                         </button>
                         <div class="notif-dropdown" id="notifDropdown">
                             <div class="notif-header">
@@ -145,17 +148,18 @@
         </main>
     </div>
 
-    <script>
-        const ZOOKI_ROLE = 1;
-    </script>
     <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
-    <script src="js/avisos.js"></script>
-    <script src="js/password-policy.js"></script>
-    <script src="js/dashboard.js?v=5"></script>
+    <script src="js/avisos.js?v=3"></script>
+    <script src="js/password-policy.js?v=d22"></script>
+    <script src="js/dashboard.js?v=7"></script>
     <script src="js/csrf.js"></script>
+    <script src="js/sesion.js?v=1"></script>
     <script src="js/extras.js"></script>
     <?php if (!isset($content_view)): ?>
     <script src="js/panel-admin.js?v=1"></script>
     <?php endif; ?>
+<script src="js/interacciones.js?v=d31"></script>
+<?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

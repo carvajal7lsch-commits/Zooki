@@ -1,12 +1,14 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 3.1** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
+> **Revisión 3.2** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
 Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) → Requisito específico (RE)**. Origen: `ZOOK-xx` (backlog Jira), `Nuevo` (funcionalidad existente ya documentada), `VD-xxx` (derivada del análisis de vacíos), `Deseable` (propuesta aún no construida), `v2` (derivada de los modelos de proceso de la Fase 2).
 
-Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir, asignada a v2.0 o v2.1 según el plan de entregas. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma según el plan de entregas.
+Estado **Implementada (2.0.0-alpha.N)**: historia de la v2 terminada y probada en esa versión de la plataforma. Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir, asignada a v2.0 o v2.1 según el plan de entregas. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma según el plan de entregas.
+
+_La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1, que cierra el módulo 0 (plataforma, identidad y aislamiento): HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8, HU-0.1, HU-0.2, HU-0.3 y HU-0.4 pasan a «Implementada (2.0.0-alpha.1)»; el alta de personal invita a la persona y solo la vincula si acepta (HU-T.7); los topes del plan gratuito quedan en 2 cuentas de personal, 50 mascotas vinculadas y 100 citas al mes (HU-0.4); la moderación de reseñas de HU-0.3 y la regla de no calificarse a sí mismo de HU-T.17 se entregan en la v2.1 con HU-8.1, la revocación de HU-T.19 con HU-5.14, el QR del portal de HU-5.8 con el carnet QR del módulo 5 y la clasificación de la urgencia de HU-0.4 con el triage. Las historias de otros módulos que M0 dejó construidas en parte (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10) se cierran con su módulo._
 
 **Índice de módulos:**
 
@@ -32,14 +34,14 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 8 pts | v2 |
 
 > Como responsable de una clínica, quiero registrar mi clínica de forma autónoma para empezar a usar Zooki sin depender de una gestión manual.
 
 **Criterios de aceptación:**
 
-- Formulario público con los datos de la clínica (nombre, NIT, dirección, teléfono, correo) y del administrador inicial (nombre, correo, contraseña segura).
-- Valida el formato de los campos y que el correo y el NIT no estén ya registrados en la plataforma; el NIT debe superar la validación del dígito de verificación de la DIAN. Si el NIT ya lo registró otra clínica, se puede reportar a soporte.
+- Formulario público con los datos de la clínica (nombre, NIT, dirección, teléfono, correo) y del administrador inicial (nombre, tipo y número de documento, teléfono, correo y contraseña segura).
+- Valida el formato y el dígito de verificación DIAN del NIT. El NIT duplicado se rechaza y puede reportarse a soporte. La respuesta pública no revela identidades: «Revisa tu correo para activar la clínica». Una cuenta existente confirma por correo sin cambiar sus datos, contraseña ni otros roles; la contraseña del formulario se ignora. Si el correo es nuevo y el documento existe, se confirma al titular del documento; si identifican personas distintas, prevalece el correo.
 - El formulario exige superar una verificación anti-bot (CAPTCHA), rechaza correos de dominios desechables y limita los registros desde una misma IP en un periodo; al superar el límite se informa que lo intente más tarde.
 - El registro de clínicas no admite Google, y exige aceptar la política de tratamiento de datos.
 - Crea la clínica en estado "pendiente de verificación" junto con su usuario administrador inicial; la clínica no opera hasta confirmar el correo.
@@ -52,15 +54,16 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 3 pts | v2 |
 
 > Como administrador inicial de una clínica recién registrada, quiero confirmar mi correo para activar la clínica y poder operar.
 
 **Criterios de aceptación:**
 
-- El enlace de verificación vence a las 24 horas (RN-G11).
+- El enlace de verificación vence a las 24 horas (RN-G11), es de un solo uso y se confirma con botón mediante POST con CSRF; abrirlo no activa nada.
 - Al verificar dentro del plazo, la clínica pasa a estado "activa", se le asigna el **plan gratuito** y se habilita el rol administrador.
-- Si el plazo expira sin verificar, el registro pendiente se elimina (no deja una clínica fantasma).
+- En la misma operación, la clínica recibe su copia de los catálogos iniciales: tipos de cita, horarios de atención, vacunas base con las especies a las que aplican, laboratorios y productos de desparasitación. Así puede agendar y registrar desde el primer día; si la activación falla, no queda ninguna copia a medias.
+- Si el plazo expira sin verificar, se elimina la clínica pendiente y solo su administrador nuevo sin otros vínculos. Nunca se elimina una cuenta preexistente.
 - Tras activar, el administrador inicia sesión y queda acotado a su `id_clinica`.
 - La activación queda registrada en auditoría.
 
@@ -70,39 +73,42 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 8 pts | v2 |
 
 > Como super-administrador, quiero gestionar las clínicas, sus planes y sus suscripciones desde un panel para administrar la plataforma sin entrar en los datos clínicos de cada clínica.
 
 **Criterios de aceptación:**
 
 - Lista de clínicas registradas con su estado, plan y estado de suscripción.
-- Puede cambiar el plan de una clínica y el estado de su suscripción.
-- **No** accede a los datos clínicos internos de una clínica (historias, consultas, pacientes); el acceso solo se justifica para soporte y queda en auditoría.
+- Puede cambiar el plan de una clínica y el estado de su suscripción, con motivo obligatorio.
+- **No** accede a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte.
 - El super-administrador es un rol de plataforma: sus acciones no se filtran por una sola `id_clinica` (única excepción al aislamiento, RN-G13).
-- Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo.
-- Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo.
+- Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo y confirmando la acción; puede reactivar una suspendida con motivo. El personal pierde el contexto suspendido o dado de baja en la siguiente petición.
+- Lista casos de soporte y los cierra como resueltos o descartados con nota auditada, sin enlaces a datos clínicos (RN-010).
+- Lista IP bloqueadas vigentes, su vencimiento y las cuentas que fallaron en la ventana con sus clínicas. Permite desbloquear con confirmación y auditoría. El aviso por correo solo se envía cuando el super-administrador elige al administrador de una clínica asociada, revisa o edita el texto y confirma el envío; nunca es automático (RN-G15).
+- Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo. _Este criterio (RE-0.3.6) se entrega en la v2.1 junto con HU-8.1, porque en la v2.0 todavía no hay reseñas; el resto de la historia está en 2.0.0-alpha.1._
 - Toda acción queda registrada en auditoría.
 
-**Reglas de negocio:** RN-004, RN-012, RN-804, RN-G13, RN-G14 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5 · **Dependencias:** —
+**Reglas de negocio:** RN-004, RN-010, RN-012, RN-804, RN-G13, RN-G14, RN-G15 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5 · **Dependencias:** —
 
 ### HU-0.4 — Control de límites del plan (freemium)
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 5 pts | v2 |
 
 > Como clínica, quiero que al crear mascotas, citas o usuarios se respete el límite de mi plan para operar dentro de lo contratado y saber cuándo conviene mejorarlo.
 
 **Criterios de aceptación:**
 
-- Antes de una acción que consume cupo (crear o vincular una mascota, crear una cita o un usuario) se lee el plan y el estado de suscripción de la clínica.
+- Antes de una acción que consume cupo (crear o vincular una mascota, crear una cita, invitar o reactivar personal) se lee el plan y el estado de suscripción de la clínica. Reactivar consume cupo si la persona no lo tenía reservado por una invitación vigente; cambiar datos de alguien ya activo no consume otro cupo.
 - Dentro del límite: la acción se ejecuta y queda en auditoría.
 - Alcanzado el límite: la acción se impide y se informa el motivo invitando a mejorar el plan.
 - **Excepción:** una urgencia 🔴 nunca se bloquea por el límite ni por la mora; se atiende y se registra (RN-420).
 - Cuando quien intenta la acción es el **propietario** (desde su portal), el mensaje es neutral ("no es posible completar la acción ahora") y se notifica a la clínica para que lo gestione; cuando es **personal**, el mensaje indica el límite alcanzado y la opción de mejorar el plan.
 - El límite de mascotas cuenta las mascotas vinculadas a la clínica, incluidas las que ya existían en la plataforma (HU-1.5).
-- Límites del plan gratuito: 5 mascotas vinculadas, 30 citas por mes y 2 cuentas de personal; el plan profesional no tiene límites de volumen.
+- Las invitaciones y activaciones pendientes vigentes cuentan junto al personal activo (incluido el administrador); los propietarios no tienen límite. Las citas cuentan por su fecha en el mes calendario, excluyendo las canceladas.
+- Límites del plan gratuito: 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal; el plan profesional no tiene límites de volumen.
 - El plan gratuito incluye las capacidades del sistema (incluidos los grafos) en funcionamiento, pero limitadas por volumen.
 
 **Reglas de negocio:** RN-003, RN-005, RN-006, RN-420 · **Requisitos:** RF-0.4 · **Dependencias:** HU-0.2
@@ -260,7 +266,8 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Criterios de aceptación:**
 
-- _(v2.0)_ Al dar de alta personal, si la persona ya existe en la plataforma (por documento o correo), se le asigna el rol en esta clínica sin crear otra cuenta.
+- _(v2.0)_ Al dar de alta personal, una persona que ya existe recibe una invitación de la clínica que acepta o rechaza en 72 horas; el rol se asigna solo al aceptar, sin duplicar identidad y conservando sus otros roles. Prevalece la cuenta del correo; si solo existe el documento, se envía al correo registrado de su titular.
+- La respuesta del alta es la misma exista o no la cuenta. Las dos clases de invitación se listan como «Pendiente de activación» con los datos escritos por el administrador, solo con reenviar y cancelar; no se muestran los datos de una cuenta existente hasta que acepte. Los avisos previos solo usan lo que el administrador ya ve en su clínica.
 - CRUD de usuarios: nombre, correo, rol y estado (activo/inactivo).
 - Solo usuarios con rol administrador acceden a este módulo.
 - No se permite eliminar al único usuario administrador.
@@ -268,7 +275,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Reglas de negocio:** RN-G08, RN-701, RN-G06, RN-705 · **Dependencias:** HU-T.1
 
-> _Nota: al crear el usuario, la contraseña que escriba el administrador pasa por `PoliticaPassword`; si la deja vacía se genera una temporal aleatoria que también la cumple. Para un usuario ya existente, el restablecimiento lo cubre HU-T.14. Los campos del formulario se validan además en el backend (obligatoriedad, formato de correo, documento numérico y tipo de documento de una lista cerrada), no solo en el navegador._
+> _Nota: el personal nuevo queda pendiente e inerte; el titular acepta la política y crea su contraseña por enlace de 72 horas, o rechaza la invitación (HU-T.19). El administrador nunca escribe ni envía contraseñas. Para personal ya vinculado, el restablecimiento por enlace lo cubre HU-T.14. Los campos se validan en el servidor y al escribir (obligatoriedad, correo, documento y tipo de documento)._
 
 ### HU-T.8 — Logs de auditoría y seguridad
 
@@ -374,7 +381,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 **Criterios de aceptación:**
 
 - El límite de intentos se guarda del lado servidor por IP/cuenta y no se evade sin cookie.
-- Tras 5 intentos fallidos en 15 minutos desde una misma IP, esa IP se bloquea temporalmente con un mensaje genérico.
+- Tras 20 intentos fallidos en 15 minutos desde una misma IP, esa IP se bloquea temporalmente con un mensaje genérico; un acceso correcto no reinicia ese contador.
 - _(v2.0)_ Sobre una misma cuenta, tras 5 intentos fallidos no se bloquea la cuenta: se exige superar el CAPTCHA. Así nadie puede dejar sin acceso a otro usuario fallando a propósito con su documento o correo.
 - Las verificaciones de documento/correo no revelan existencia ni permiten abuso.
 - Los mensajes de error al cliente son genéricos.
@@ -406,7 +413,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 8 pts | v2 |
 
 > Como plataforma, quiero que cada sesión quede confinada a su clínica y exista un rol super-administrador por encima para que ninguna clínica vea ni altere datos de otra.
 
@@ -415,16 +422,18 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - Toda operación de negocio filtra por `id_clinica`; su omisión se considera defecto de seguridad (RNF-11).
 - Un usuario de una clínica no obtiene ni modifica datos de otra clínica: el acceso se rechaza con HTTP 403 y queda en auditoría.
 - `Security` valida en cada petición el rol permitido, el token CSRF y la clínica del recurso.
-- Excepciones al aislamiento, ambas explícitas: el **super-administrador** (rol de plataforma, RN-004/RN-G13), que no accede a datos clínicos internos salvo soporte, y la **mascota global**, cuyos datos de seguridad (alergias, alertas, vacunas y desparasitaciones) ve toda clínica vinculada y cuyas consultas de otras clínicas solo se ven con autorización del propietario (RN-113, HU-2.10).
+- Excepciones de acceso a datos globales, explícitas: el **super-administrador** (rol de plataforma, RN-004/RN-G13), limitado a metadatos de plataforma sin acceso clínico tampoco para soporte, y la **mascota global**, cuyos datos de seguridad (alergias, alertas, vacunas y desparasitaciones) ve toda clínica vinculada y cuyas consultas de otras clínicas solo se ven con autorización del propietario (RN-113, HU-2.10).
 - El aislamiento se centraliza (helpers de seguridad y capa de modelos) y se cubre con pruebas.
 
 **Reglas de negocio:** RN-G13, RN-G14, RN-001, RN-004 · **Requisitos:** RF-T.4, RNF-11 · **Dependencias:** HU-T.10
+
+> _Cerrada en M0, etapa C (C1–C9, 2026-10-08). RE-T.15.1 se verifica en personal, configuración, pacientes, historia y prevención, agenda, portal, paneles, auditoría y notificaciones. Los propietarios acceden únicamente a sus propios recursos (RN-G02); las tareas del sistema (`AtencionesEnCurso` y recordatorios) recorren las clínicas sin sesión y escriben cada aviso en la clínica de su registro original. Estas excepciones no permiten lecturas cruzadas desde pantallas. Evidencia: `SeguridadClinicaTest`, `ContextoTest`, `UsuarioSeguridadTest`, `NotificacionAccesoTest`, `ConfiguracionClinicaTest`, `MascotaAccesoTest`, `PropietarioClinicaTest`, `ConsultaHistorialTest`, `HistoriaCompartidaTest`, `PrevencionTest`, `AgendaPeticionesTest`, `VinculosPropietarioTest`, `PortalPropietarioTest`, `PortalAgendaTest`, `PanelTest`, `ActividadCuentaAuditoriaTest`, `RecordatorioTest` y `BaseV2MysqlTest`._
 
 ### HU-T.16 — Expiración de la sesión por inactividad
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Planificada (v2) | 3 pts | v2 |
+| Media | Implementada (2.0.0-alpha.1) | 3 pts | v2 |
 
 > Como usuario, quiero que mi sesión se cierre sola si la dejo abierta sin usar para que nadie use mi cuenta en un equipo compartido de la clínica.
 
@@ -441,7 +450,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 5 pts | v2 |
 
 > Como veterinario que también tiene mascota, o que trabaja en dos clínicas, quiero entrar con una sola cuenta y elegir en qué papel entro para no manejar varias cuentas ni mezclar permisos.
 
@@ -477,13 +486,13 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 3 pts | v2 |
 
 > Como titular de datos, quiero aceptar de forma expresa la política de tratamiento de datos al registrarme para saber qué se hace con mi información, como exige la Ley 1581 de 2012.
 
 **Criterios de aceptación:**
 
-- Todo registro (formulario, Google o alta por el personal) exige que el titular acepte la política antes de crear la cuenta. En el alta presencial, el personal muestra la política y el titular la acepta directamente; si no está presente o no acepta, no se registra la cuenta y se le remite al autorregistro.
+- El registro con formulario o Google y el alta presencial de propietarios exige aceptación del titular antes de crear la cuenta. Excepción para personal nuevo: la cuenta se crea pendiente e inerte (sin contraseña ni consentimiento); el titular recibe un enlace que vence en 72 horas, acepta la política y crea su contraseña para activarla. Si vence sin usarse, se elimina la cuenta pendiente únicamente si no tiene otros vínculos. El personal no acepta en nombre del titular. El super-administrador está exento de aceptación y de su prueba por ser una cuenta operativa de plataforma.
 - Se guarda la prueba: quién, qué versión, por qué medio, cuándo y desde qué IP.
 - Si la política cambia, en el siguiente inicio de sesión se pide aceptar la nueva versión antes de continuar.
 - Revocar la autorización lleva a la solicitud de eliminación de la cuenta (HU-5.14).
@@ -527,9 +536,10 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 - Campos obligatorios: nombre, tipo y número de documento, teléfono y correo.
 - No se permiten documentos ni correos duplicados.
+- Si la cuenta ya existe, el personal la busca por documento o correo completo; el vínculo nuevo solo se crea al confirmar el titular desde un enlace enviado a ese correo (RN-109). La solicitud no modifica su identidad ni contraseña.
 - Desde el perfil del propietario se listan todas sus mascotas.
 
-**Reglas de negocio:** RN-101, RN-103, RN-G06 · **Dependencias:** —
+**Reglas de negocio:** RN-101, RN-103, RN-109, RN-G06 · **Dependencias:** —
 
 ### HU-1.3 — Buscar paciente
 
@@ -643,7 +653,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Reglas de negocio:** RN-204, RN-205 · **Dependencias:** HU-2.1
 
-> _Nota: la descarga pasa siempre por `public/ver_archivo.php`, que comprueba el rol y, para un propietario, que la mascota sea suya (RN-G02). El `.htaccess` de la carpeta es una segunda barrera, no la principal: solo cubre Apache con AllowOverride activo. El formato se valida por el contenido del archivo, no por la extensión del nombre que envía el cliente, y al servirlo el `Content-Type` sale de una lista cerrada._
+> _Nota: la descarga pasa siempre por `public/ver_archivo.php`, que exige sesión y contexto activo (`Security`) y aplica la misma regla que la historia: en una clínica, el adjunto de una consulta visible según RN-113; para un propietario, solo los de sus mascotas (RN-G02). Si no corresponde, responde 403 y queda en auditoría. El `.htaccess` de la carpeta es una segunda barrera, no la principal: solo cubre Apache con AllowOverride activo. El formato se valida por el contenido del archivo, no por la extensión del nombre que envía el cliente, y al servirlo el `Content-Type` sale de una lista cerrada._
 
 ### HU-2.4 — Registrar tratamiento
 
@@ -715,7 +725,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Reglas de negocio:** RN-201, RN-207, RN-208, RN-G02 · **Dependencias:** HU-2.1
 
-> _Nota: Deriva del análisis de vacíos (VD-VAC-01, VD-HC-03, VD-SEG-04). Los tres registros clínicos validan la mascota con `Mascota::getPropietarioSiActiva` y las entradas con `ValidadorClinico` antes de guardar. El permiso sobre la mascota se interpreta según RN-207 y RN-208 para el rol clínico, y según RN-G02 para el propietario en el portal._
+> _Nota: Deriva del análisis de vacíos (VD-VAC-01, VD-HC-03, VD-SEG-04). Los tres registros clínicos exigen una mascota activa y vinculada a la clínica activa (`ModeloHistoria`, v2.0) y validan las entradas con `ValidadorClinico` antes de guardar. El permiso sobre la mascota se interpreta según RN-207 y RN-208 para el rol clínico, y según RN-G02 para el propietario en el portal._
 
 ### HU-2.8 — Sugerencia de diagnósticos probables por síntomas
 
@@ -764,7 +774,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 **Criterios de aceptación:**
 
 - Siempre se muestran los datos básicos, las alergias y alertas médicas, y las vacunas y desparasitaciones de todas las clínicas, cada una con la clínica que la aplicó.
-- Las consultas, tratamientos y archivos de otra clínica solo se muestran si el propietario autorizó a esta clínica (HU-5.12); si no, se indica que hay historia en otras clínicas sin acceso, sin mostrar su contenido.
+- Las consultas, tratamientos y archivos de otra clínica solo se muestran si el propietario autorizó a esta clínica (HU-5.12); si no, no se muestran ni se indica que existan.
 - Los registros de otras clínicas son de solo lectura: solo la clínica que los creó puede modificarlos.
 - El Grafo I usa las alergias y alertas de todas las clínicas al validar una prescripción (HU-2.9).
 
@@ -971,14 +981,15 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - La cita se completa al guardar su consulta, en la misma operación: no hay citas completadas sin consulta.
 - Una atención iniciada y no finalizada se retoma con «Continuar atención», aunque sea de un día anterior.
 - Si la atención sigue abierta 10 minutos después de la hora de fin, recibo un aviso por correo y en mis notificaciones.
-- Al terminar el día, una atención abierta pasa a "sin cerrar"; la cierro registrando la consulta o sin consulta, con un motivo.
+- Al terminar el día, una atención abierta pasa a "sin cerrar"; la completo registrando su consulta.
 - La revisión de atenciones abiertas corre sola cada 5 minutos, así que el aviso llega aunque nadie abra el calendario.
-- Una atención cerrada sin consulta no se reabre y libera su horario.
 - La cita completada aparece en el historial del día pero no en la agenda futura.
 
 **Reglas de negocio:** RN-406, RN-407, RN-409, RN-410 · **Dependencias:** HU-4.1, HU-2.1
 
 > _Nota: hasta v1.8.0 la cita se completaba con un botón aparte, sin consulta, y la podían iniciar recepción y administración. Como la pantalla de atención es solo del veterinario, esas citas quedaban "en curso" sin nadie que las atendiera, y una cita de un día anterior perdía todos los botones del calendario. Ver el Módulo 4 de `AuditoriaModulos.md`._
+
+> _v2.0: «cerrar sin consulta» se retira (RN-410 derogada, D-3 del plan M0): una atención iniciada solo se completa con su consulta. RE-4.3.8 queda derogado._
 
 > _Nota: desde v1.9.0 una atención ya no queda abierta indefinidamente. Si el veterinario salía sin terminar, la cita seguía "en curso" para siempre sin que nadie se enterara. Ahora se avisa a los 10 minutos de la hora de fin (`VigilanteAtenciones`, también como tarea programada en `scripts/vigilar_atenciones.php`), pasa a "sin cerrar" al terminar el día y se puede cerrar sin consulta con motivo. Además, la atención solo se inicia desde 15 minutos antes de la hora de la cita, para no abrir por error la de un paciente que aún no llega._
 
@@ -1326,7 +1337,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - No tengo acceso a datos de otros propietarios (403).
 - Interfaz que se adapta a móvil, tablet y escritorio (RNF-16): barra inferior en móvil y tablet, menú lateral en escritorio.
 - El botón «atrás» del navegador me devuelve a la sección anterior y cierra la ventana que tenga abierta.
-- Veo si la clínica está abierta ahora y su horario de la semana.
+- Veo si la clínica está abierta ahora y su horario de la semana; _(v2.0)_ el de cada clínica a la que estoy vinculado.
 - Los formularios indican qué campos son obligatorios y cuáles opcionales.
 - Al registrar o editar una mascota elijo la raza del catálogo; si no está, indico que es mestiza, que no la sé o la escribo para que la clínica la confirme, y veo la foto antes de guardarla. El color lo registra la clínica en la consulta.
 - Al agendar no puedo elegir días en que la clínica no atiende, y los horarios libres aparecen en botones cuando ya elegí tipo, veterinario y día.
@@ -1456,7 +1467,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.1) | 8 pts | v2 |
 
 > Como propietario, quiero una sola cuenta en la plataforma que sirva para las clínicas donde atiendo a mis mascotas para no repetir registros ni manejar varias contraseñas.
 
@@ -1468,6 +1479,8 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - Cuando el correo ya existe, previa **verificación de que es el dueño del correo** (login o confirmación por correo), se liga el propietario existente a la nueva clínica; si ya estaba ligado, se le indica que inicie sesión.
 - En un registro nuevo se crea la identidad global, se liga a la clínica (`propietario_clinica`) y se envía verificación de correo; al activar, se le envía su enlace de acceso y el QR de su portal.
 - Cada clínica solo ve los propietarios vinculados a ella. Todo queda en auditoría.
+
+- El autorregistro por formulario verifica Turnstile en el servidor. Las ayudas solo validan formato y la respuesta al enviar no revela si la identidad existe.
 
 **Reglas de negocio:** RN-109, RN-G06 · **Requisitos:** RF-5.3 · **Dependencias:** —
 
@@ -1911,6 +1924,8 @@ Dentro de cada entrega, la tabla sigue las dependencias principales: primero el 
 
 ### Entrega v2.0 — imprescindible para la presentación (28 historias, 159 puntos)
 
+_Avance: la versión 2.0.0-alpha.1 cierra las nueve primeras (módulo 0, 51 puntos). Cada módulo siguiente publica la alfa siguiente; la versión 2.0.0 sale cuando estén las 28._
+
 | Historia | Título | Puntos |
 |---|---|---|
 | HU-T.15 | Aislamiento por clínica y rol super-administrador | 8 |
@@ -1999,7 +2014,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-G12 | HU-T.12, HU-T.18 |
 | RN-G13 | HU-0.3, HU-T.15, HU-T.17, HU-5.9 |
 | RN-G14 | HU-0.3, HU-T.15 |
-| RN-G15 | HU-T.13 |
+| RN-G15 | HU-0.3, HU-T.13 |
 | RN-G16 | HU-T.19, HU-5.14 |
 | RN-G17 | HU-T.16 |
 | RN-G18 | HU-T.17, HU-8.1 |
@@ -2018,7 +2033,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-007 | HU-0.5 |
 | RN-008 | HU-0.5 |
 | RN-009 | HU-7.3, HU-7.4 |
-| RN-010 | HU-0.1 |
+| RN-010 | HU-0.1, HU-0.3 |
 | RN-011 | HU-0.1 |
 | RN-012 | HU-0.3 |
 | RN-013 | HU-0.5 |
@@ -2030,7 +2045,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-106 | HU-1.1 |
 | RN-107 | HU-1.1 |
 | RN-108 | HU-1.4, HU-5.4 |
-| RN-109 | HU-T.18, HU-5.3, HU-5.8, HU-5.9, HU-5.13 |
+| RN-109 | HU-T.18, HU-1.2, HU-5.3, HU-5.8, HU-5.9, HU-5.13 |
 | RN-110 | HU-1.1, HU-1.4, HU-1.5, HU-5.3, HU-5.10, HU-5.13 |
 | RN-111 | HU-1.1, HU-1.5 |
 | RN-112 | HU-2.10 |

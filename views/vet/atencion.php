@@ -10,7 +10,7 @@ $fechaCorta = fn($fecha) => empty($fecha) ? '—' : date('d/m/Y', strtotime($fec
 $estadoLabel = [
     'pendiente' => 'Pendiente', 'confirmada' => 'Confirmada', 'en_curso' => 'En curso',
     'completada' => 'Completada', 'cancelada' => 'Cancelada', 'no_asistio' => 'No asistió',
-    'sin_cerrar' => 'Sin cerrar', 'cerrada_sin_consulta' => 'Cerrada sin consulta',
+    'sin_cerrar' => 'Sin cerrar',
 ];
 $estadoActual = strtolower($cita['estado'] ?? 'pendiente');
 $consultaRegistrada = !empty($consultaCita);

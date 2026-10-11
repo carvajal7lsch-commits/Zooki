@@ -35,7 +35,6 @@
     /* Role Colors */
     --role-admin: #0052FF;
     --role-vet: #0044d6;
-    --role-receptionist: #5560FF;
 
     /* Bento grid accent (para collage) */
     --bento-primary: #3B82F6;
@@ -1279,22 +1278,6 @@ body::after {
     position: relative;
 }
 
-/* HU-42 — Avatar de recepcion. Antes llevaba los estilos en un style="..."
-   dentro del HTML y no abria ningun menu (ZOOKI_REGLAS 1). */
-.header-user__photo {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: border-color 0.15s ease;
-}
-
-.header-user__photo:hover {
-    border-color: #5560ff;
-}
-
 /* Profile Password Change Modal */
 .pwd-modal-header {
     background: linear-gradient(135deg, #0052FF 0%, #5560FF 100%);
@@ -1508,4 +1491,23 @@ body::after {
     user-select: none;
     -webkit-user-drag: none;
     pointer-events: none; /* Prevents right click, select, drag and highlight */
+}
+
+/* D1 — Acceso: estilos que antes iban en línea en views/auth/login.php. */
+.icono-google {
+    margin-right: 8px;
+}
+
+.icono-google-modal {
+    color: #4285F4;
+}
+
+.form-footer--registro {
+    margin: 1rem 0 0.5rem;
+    text-align: center;
+}
+
+.form-footer--registro p {
+    font-size: 0.85rem;
+    margin: 0;
 }

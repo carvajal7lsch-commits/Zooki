@@ -485,3 +485,13 @@
 }
 
 .mini-calendar-nav .win11-title { font-size: 0.88rem; }
+
+/* C6: la clínica de cada cita (RN-114). */
+.agenda-item-clinica {
+    margin: 2px 0 0;
+    font-size: 0.72rem;
+    color: var(--z-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

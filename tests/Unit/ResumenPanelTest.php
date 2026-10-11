@@ -43,7 +43,7 @@ class ResumenPanelTest extends TestCase
     {
         $ahora = $this->ahora('2026-09-15 10:00');
         $this->assertNull(ResumenPanel::accion($this->cita('10:30:00', 'pendiente', '2026-09-16'), $ahora)['tipo']);
-        foreach (['completada', 'cancelada', 'no_asistio', 'cerrada_sin_consulta'] as $estado) {
+        foreach (['completada', 'cancelada', 'no_asistio'] as $estado) {
             $this->assertNull(ResumenPanel::accion($this->cita('10:30:00', $estado), $ahora)['tipo'], $estado);
         }
     }

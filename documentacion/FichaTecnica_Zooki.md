@@ -1,6 +1,6 @@
 # Ficha Técnica del Proyecto — Zooki
 
-> **Revisión 3.1** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
+> **Revisión 3.2** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
 ## Identificación del Proyecto
 
@@ -15,7 +15,7 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | v1.12.0 en producción · **v2.0 en construcción** (especificación aprobada) |
+| Estado actual | **2.0.0-alpha.1**: plataforma SaaS con el módulo 0 (clínicas, planes, identidad y aislamiento) · el resto de la v2.0 se construye por módulos (alpha.2, alpha.3…) |
 | Versión del documento | 3.1 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
@@ -45,7 +45,7 @@ La **versión 2.0** transforma Zooki en una **plataforma SaaS multi-inquilino**:
 - Construir la agenda de citas con disponibilidad real del veterinario y horarios configurables.
 - Habilitar el portal del propietario con auto-registro.
 - Ofrecer autenticación local y federada (Google) con control de acceso por roles.
-- **(v2.0)** Operar como plataforma multi-inquilino con aislamiento por `id_clinica`, registro autónomo de clínicas y suscripción por planes (freemium) administrada por un super-administrador.
+- **(v2.0)** Operar como plataforma multi-inquilino con aislamiento por `id_clinica`, registro autónomo de clínicas y suscripción por planes (freemium) administrada por un super-administrador. El gratuito admite 2 cuentas de personal (incluidas invitaciones pendientes), 50 mascotas vinculadas y 100 citas por mes calendario, sin canceladas; los propietarios no tienen límite y el profesional usa límites NULL (sin límite). Las urgencias rojas se registran incluso al límite.
 - **(v2.0)** Incorporar el **Grafo I** (soporte a la decisión clínica): sugerencia de diagnósticos por peso y alertas de toxicidad/interacción al prescribir.
 - **(v2.0)** Incorporar el **Grafo II** (agendamiento inteligente): triage de 4 niveles, reajuste de agenda en cascada, ausencias y cobertura del veterinario.
 - **(v2.0)** Habilitar el propietario como identidad global multi-clínica, el carnet digital con QR de emergencia y la reputación de veterinarios.
@@ -118,7 +118,7 @@ La línea base de la v1.x se organizó en cuatro sprints de una semana; luego el
 | v1 · Sprints 1–4 | Mascotas, historia clínica, agenda, portal y reportes | Sistema v1.x en producción |
 | v2 · Fase 1 | Visión y alcance; ERS (ISO/IEC/IEEE 29148) | Alcance de la v2.0 fijado |
 | v2 · Fase 2 | Modelos: grafos, procesos de negocio, flujos de sistema y diagrama de componentes | Documento de Modelos y maestro draw.io |
-| v2 · Fase 3 | Reglas de Negocio v2 (119 RN), Historias de Usuario v2 (95 HU) y Requisitos Específicos (418 RE) | Trazabilidad RN → HU → RE completa |
+| v2 · Fase 3 | Reglas de Negocio v2 (119 RN), Historias de Usuario v2 (95 HU) y Requisitos Específicos (420 RE) | Trazabilidad RN → HU → RE completa |
 | v2 · Construcción | Esquema multi-inquilino y módulos v2 | Plataforma SaaS v2.0 |
 
 ## 8. Análisis de Riesgos
@@ -160,16 +160,16 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 
 **v1.11.0 — en producción.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
 
-**v2.0 — en desarrollo (documentación completa).** Está terminada la especificación documentación-primero: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.1), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.0, 119 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.0, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.0, 418 RE). El siguiente paso es la construcción del software v2.0 sobre esta especificación.
+**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.3), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.2, 119 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.2, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.2, 420 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. Cada módulo siguiente publica la alfa siguiente hasta la 2.0.0.
 
 ## 12. Entregables Finales
 
 - Código fuente completo en repositorio GitHub con [README técnico](../README.md).
 - Aplicación desplegada en el servidor propio.
 - Base de datos con datos de prueba.
-- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.2).
-- Esta Ficha Técnica del Proyecto (Revisión 3.1).
-- [Reglas de Negocio](ReglasNegocio.md), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.0) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.0).
+- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.3).
+- Esta Ficha Técnica del Proyecto (Revisión 3.2).
+- [Reglas de Negocio](ReglasNegocio.md) (Rev 2.2), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.2) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.2).
 - [Modelo Entidad-Relación](MER.md) y [Modelos y diagramas](Modelos.md) (grafos, procesos, flujos de sistema y componentes) con su maestro draw.io.
 - [Historial de Versiones](HistorialVersiones.md) y documento de [Presupuesto y ROI](PresupuestoROI.md).
 - Manual de usuario. _(Pendiente)_

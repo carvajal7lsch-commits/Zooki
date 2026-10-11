@@ -14,7 +14,6 @@
     --estado-cancelada-fg: #991B1B;   --estado-cancelada-bg: #FEE2E2;   --estado-cancelada-dot: #EF4444;
     --estado-no_asistio-fg: #475569;  --estado-no_asistio-bg: #F1F5F9;  --estado-no_asistio-dot: #94A3B8;
     --estado-sin_cerrar-fg: #9F1239;  --estado-sin_cerrar-bg: #FFE4E6;  --estado-sin_cerrar-dot: #E11D48;
-    --estado-cerrada_sin_consulta-fg: #334155; --estado-cerrada_sin_consulta-bg: #E2E8F0; --estado-cerrada_sin_consulta-dot: #64748B;
     --tipo-cita-fg: #1E40AF;            --tipo-cita-bg: #DBEAFE;            --tipo-cita-dot: #0052FF;
     --tipo-vacunacion-fg: #115E59;      --tipo-vacunacion-bg: #CCFBF1;      --tipo-vacunacion-dot: #14B8A6;
     --tipo-desparasitacion-fg: #5B21B6; --tipo-desparasitacion-bg: #EDE9FE; --tipo-desparasitacion-dot: #8B5CF6;
@@ -27,7 +26,6 @@
 [data-estado="cancelada"]  { --e-fg: var(--estado-cancelada-fg);  --e-bg: var(--estado-cancelada-bg);  --e-dot: var(--estado-cancelada-dot); }
 [data-estado="no_asistio"] { --e-fg: var(--estado-no_asistio-fg); --e-bg: var(--estado-no_asistio-bg); --e-dot: var(--estado-no_asistio-dot); }
 [data-estado="sin_cerrar"] { --e-fg: var(--estado-sin_cerrar-fg); --e-bg: var(--estado-sin_cerrar-bg); --e-dot: var(--estado-sin_cerrar-dot); }
-[data-estado="cerrada_sin_consulta"] { --e-fg: var(--estado-cerrada_sin_consulta-fg); --e-bg: var(--estado-cerrada_sin_consulta-bg); --e-dot: var(--estado-cerrada_sin_consulta-dot); }
 [data-tipo="cita"]            { --e-fg: var(--tipo-cita-fg);            --e-bg: var(--tipo-cita-bg);            --e-dot: var(--tipo-cita-dot); }
 [data-tipo="vacunacion"]      { --e-fg: var(--tipo-vacunacion-fg);      --e-bg: var(--tipo-vacunacion-bg);      --e-dot: var(--tipo-vacunacion-dot); }
 [data-tipo="desparasitacion"] { --e-fg: var(--tipo-desparasitacion-fg); --e-bg: var(--tipo-desparasitacion-bg); --e-dot: var(--tipo-desparasitacion-dot); }

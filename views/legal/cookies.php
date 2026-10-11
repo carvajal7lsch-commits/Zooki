@@ -15,7 +15,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config/App.php';
 
-$lp_logged_in = isset($_SESSION['usuario_doc']);
+$lp_logged_in = isset($_SESSION['id_usuario']);
 $lp_cta_url   = $lp_logged_in ? 'index.php?action=dashboard' : 'index.php?action=login';
 $lp_cta_text  = $lp_logged_in ? 'Ir al panel' : 'Iniciar sesión';
 $lp_version   = App::assetVersion();

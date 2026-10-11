@@ -16,6 +16,12 @@ class SecurityTest extends TestCase
         // arrastren bloqueos de una corrida a la siguiente; esa capa tiene su
         // propia suite en tests/Integration/IntentoLoginTest.php.
         Security::definirAlmacenDeIntentos(null);
+        Auditoria::definirProxiesConfiables([]);
+    }
+
+    protected function tearDown(): void
+    {
+        Auditoria::definirProxiesConfiables(null);
     }
 
     public function testCheckRateLimitAllowsInitially()
@@ -25,21 +31,22 @@ class SecurityTest extends TestCase
 
     public function testCheckRateLimitBlocksAfterMaxFailedLogins()
     {
-        // Max attempts is 5
-        for ($i = 0; $i < 5; $i++) {
+        // D2.1 (RE-T.13.4): 20 fallos en 15 minutos desde una IP.
+        for ($i = 0; $i < 20; $i++) {
             $this->assertTrue(Security::checkRateLimit());
             Security::recordFailedLogin();
         }
 
-        // 6th attempt should fail
+        // El intento 21 se rechaza.
         $this->assertFalse(Security::checkRateLimit());
         $this->assertArrayHasKey('error_login', $_SESSION);
         $this->assertStringContainsString('Demasiados intentos', $_SESSION['error_login']);
     }
 
+    /** Un acceso correcto limpia el contador de la sesión (el de la IP en la base sigue: D21CorreccionTest). */
     public function testResetRateLimitClearsCounter()
     {
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 20; $i++) {
             Security::recordFailedLogin();
         }
 

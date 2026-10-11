@@ -4,29 +4,43 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../helpers/EntornoLocal.php';
+require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
+require_once __DIR__ . '/Database.php';
 
 class EmailService {
     private $mail;
 
-    public function __construct() {
+    /** D2.1: en local, MAIL_MODO=archivo guarda cada correo en logs/correos/ en vez de enviarlo. */
+    private bool $guardarEnArchivo = false;
+    private string $carpetaCorreos;
+
+    /**
+     * @param array|null $entorno variables del .env; null las lee del archivo.
+     *                            Las pruebas pasan las suyas (y CARPETA_CORREOS).
+     */
+    public function __construct(?array $entorno = null) {
         $this->mail = new PHPMailer(true);
 
         // Cargar credenciales desde .env si existe
         $envFile = __DIR__ . '/../.env';
-        if (file_exists($envFile)) {
-            $env = parse_ini_file($envFile);
-            $smtpHost = $env['SMTP_HOST'] ?? 'smtp-relay.sendinblue.com';
-            $smtpPort = $env['SMTP_PORT'] ?? 587;
-            $smtpUser = $env['SMTP_USER'] ?? 'TU_LOGIN@smtp-brevo.com';
-            $smtpPass = $env['SMTP_PASS'] ?? 'TU_CLAVE_SMTP_DE_BREVO';
-            $smtpFrom = $env['SMTP_FROM'] ?? 'no-reply@TU_DOMINIO';
-        } else {
-            // Valores por defecto (requieren configuración manual)
-            $smtpHost = 'smtp-relay.sendinblue.com';
-            $smtpPort = 587;
-            $smtpUser = 'TU_LOGIN@smtp-brevo.com'; // Login SMTP de Brevo
-            $smtpPass = 'TU_CLAVE_SMTP_DE_BREVO'; // Clave SMTP de Brevo
-            $smtpFrom = 'no-reply@TU_DOMINIO';
+        $env = $entorno ?? (file_exists($envFile) ? (parse_ini_file($envFile) ?: []) : []);
+        // Valores por defecto (requieren configuración manual)
+        $smtpHost = $env['SMTP_HOST'] ?? 'smtp-relay.sendinblue.com';
+        $smtpPort = $env['SMTP_PORT'] ?? 587;
+        $smtpUser = $env['SMTP_USER'] ?? 'TU_LOGIN@smtp-brevo.com';
+        $smtpPass = $env['SMTP_PASS'] ?? 'TU_CLAVE_SMTP_DE_BREVO';
+        $smtpFrom = $env['SMTP_FROM'] ?? 'no-reply@TU_DOMINIO';
+        $this->carpetaCorreos = (string) ($env['CARPETA_CORREOS'] ?? dirname(__DIR__) . '/logs/correos');
+        if (strtolower(trim((string) ($env['MAIL_MODO'] ?? ''))) === 'archivo') {
+            // Solo en local, con la misma comprobación que datos_prueba.php.
+            // D2.2: con el host al que de verdad se conecta Database (db → 127.0.0.1 en Windows).
+            $motivo = EntornoLocal::motivoNoLocal(Database::hostEfectivo((string) ($env['DB_HOST'] ?? '')));
+            if ($motivo === null) {
+                $this->guardarEnArchivo = true;
+            } else {
+                error_log('MAIL_MODO=archivo se ignora: ' . $motivo . '. Los correos se envían por SMTP.');
+            }
         }
 
         // Configuración del servidor SMTP
@@ -58,35 +72,12 @@ class EmailService {
         }
     }
     
-    public function enviarCredencialesUsuario($email, $nombre, $documento, $password) {
-        try {
-            $this->mail->addAddress($email, $nombre);
-            $this->mail->Subject = 'Bienvenido a Zooki - Tus credenciales de acceso';
-
-            $this->mail->Body = $this->generarPlantillaCredenciales($nombre, $documento, $password);
-            $this->mail->AltBody = "Hola $nombre,\n\nTus credenciales de acceso a Zooki son:\n\nDocumento: $documento\nContraseña: $password\n\nPor seguridad, te recomendamos cambiar tu contraseña en tu primer inicio de sesión.\n\nSaludos,\nEquipo de Zooki";
-
-            $this->mail->send();
-            return true;
-        } catch (Exception $e) {
-            error_log("Error al enviar correo: " . $this->mail->ErrorInfo);
-            return false;
-        }
-    }
-
     public function enviarCorreoBienvenida($email, $nombre) {
         try {
             $this->mail->addAddress($email, $nombre);
             $this->mail->Subject = '¡Bienvenido a Zooki!';
-            
-            $envFile = __DIR__ . '/../.env';
-            $appUrl = 'https://zooki.secarvajal.com/index.php';
-            if (file_exists($envFile)) {
-                $env = parse_ini_file($envFile);
-                if (isset($env['APP_URL'])) {
-                    $appUrl = rtrim($env['APP_URL'], '/') . '/index.php';
-                }
-            }
+            // D2.2: la instalación configurada (o la local que abrió la página), nunca producción fija.
+            $appUrl = EnlaceCuenta::base();
 
             $contenido = '
             <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
@@ -96,12 +87,12 @@ class EmailService {
               Tu compañero peludo está en las mejores manos. Si tienes alguna duda, escríbenos directamente.
             </p>';
 
-            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, '¡Te damos la bienvenida a Zooki!', $contenido, 'Ir a mi Portal', $appUrl);
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, '¡Te damos la bienvenida a Zooki!', $contenido, 'Ir a mi Portal', htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8'));
             $this->mail->isHTML(true);
-            $this->mail->send();
+            $this->entregar();
             return true;
-        } catch (Exception $e) {
-            error_log("Error al enviar correo de bienvenida: " . $this->mail->ErrorInfo);
+        } catch (Throwable $e) {
+            error_log("Error al enviar correo de bienvenida: " . $this->mail->ErrorInfo . ' ' . $e->getMessage());
             return false;
         }
     }
@@ -145,7 +136,7 @@ El enlace vence en $horasVigencia horas.
 
 Si no fuiste tú, ignora este mensaje.";
             $this->mail->isHTML(true);
-            $this->mail->send();
+            $this->entregar();
             return true;
         } catch (Exception $e) {
             error_log("Error al enviar correo de verificacion: " . $this->mail->ErrorInfo);
@@ -159,7 +150,7 @@ Si no fuiste tú, ignora este mensaje.";
             $this->mail->Subject = $asunto;
             $this->mail->Body = $cuerpoHTML;
             $this->mail->isHTML(true);
-            $this->mail->send();
+            $this->entregar();
             return true;
         } catch (Exception $e) {
             error_log("Error al enviar correo: " . $this->mail->ErrorInfo);
@@ -170,44 +161,151 @@ Si no fuiste tú, ignora este mensaje.";
     public function limpiarDirecciones() {
         $this->mail->clearAddresses();
     }
-    
-    private function generarPlantillaCredenciales($nombre, $documento, $password) {
-        $envFile = __DIR__ . '/../.env';
-        $appUrl = 'https://zooki.secarvajal.com/index.php';
-        if (file_exists($envFile)) {
-            $env = parse_ini_file($envFile);
-            if (isset($env['APP_URL'])) {
-                $appUrl = rtrim($env['APP_URL'], '/') . '/index.php';
-            }
+
+    /** True si los correos se guardan en logs/correos/ en vez de enviarse (solo en local). */
+    public function guardaEnArchivo(): bool {
+        return $this->guardarEnArchivo;
+    }
+
+    /**
+     * Único punto de salida de los correos. En MAIL_MODO=archivo guarda el
+     * HTML con la fecha, el destinatario y el asunto en el nombre, para
+     * probar en local sin buzones reales ni depender de SMTP.
+     */
+    private function entregar(): void {
+        if (!$this->guardarEnArchivo) {
+            $this->mail->send();
+            return;
         }
+        if (!is_dir($this->carpetaCorreos) && !mkdir($this->carpetaCorreos, 0775, true) && !is_dir($this->carpetaCorreos)) {
+            throw new Exception('No se pudo crear ' . $this->carpetaCorreos);
+        }
+        $destinatarios = array_map(static fn (array $direccion): string => $direccion[0], $this->mail->getToAddresses());
+        $limpio = static fn (string $texto): string => trim(preg_replace('/[^a-z0-9@._-]+/i', '-', $texto), '-');
+        $nombre = date('Ymd-His') . '-' . substr((string) hrtime(true), -6)
+            . '_' . substr($limpio(implode(',', $destinatarios)), 0, 60)
+            . '_' . substr($limpio($this->mail->Subject), 0, 60) . '.html';
+        $cabecera = '<!-- Para: ' . htmlspecialchars(implode(', ', $destinatarios), ENT_QUOTES, 'UTF-8')
+            . ' | Asunto: ' . htmlspecialchars($this->mail->Subject, ENT_QUOTES, 'UTF-8') . ' -->' . PHP_EOL;
+        if (file_put_contents($this->carpetaCorreos . '/' . $nombre, $cabecera . $this->mail->Body) === false) {
+            throw new Exception('No se pudo guardar el correo en ' . $this->carpetaCorreos);
+        }
+    }
 
-        $contenido = '
-        <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
-          Tu cuenta ha sido creada exitosamente en el sistema veterinario Zooki. A continuación te presentamos tus credenciales de acceso:
-        </p>
-        
-        <div style="background-color:#f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
-            <p style="margin: 0 0 8px 0; font-size: 15px; color: #1d1c1d;"><strong>📋 Documento:</strong> ' . htmlspecialchars($documento) . '</p>
-            <p style="margin: 0; font-size: 15px; color: #1d1c1d;"><strong>🔑 Contraseña:</strong> ' . htmlspecialchars($password) . '</p>
-        </div>
-        
-        <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
-          <strong>⚠️ Importante:</strong> Por motivos de seguridad, te sugerimos cambiar tu contraseña en tu primer inicio de sesión.
-        </p>';
+    /**
+     * D2.1 (RE-T.19.1) — Invitación del personal: la clínica lo invita con un
+     * rol; en 72 horas acepta la política y crea su contraseña.
+     */
+    public function enviarInvitacionPersonal($email, $nombre, $clinica, $rol, $enlace, $horasVigencia = 72) {
+        $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
+        try {
+            $this->mail->addAddress($email, $nombre);
+            $this->mail->Subject = 'Te invitaron a ' . $clinica . ' en Zooki';
+            $contenido = '
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              <strong>' . $e($clinica) . '</strong> te invitó a su equipo en Zooki como <strong>' . $e($rol) . '</strong>.
+            </p>
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              Para activar tu cuenta abre el enlace, acepta la política de tratamiento de datos y crea tu contraseña. El enlace vence en <strong>' . (int) $horasVigencia . ' horas</strong>.
+            </p>
+            <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
+              Si no esperabas esta invitación, ignora el mensaje: sin activarla, la cuenta no se puede usar.
+            </p>';
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($e($nombre), 'Activa tu cuenta', $contenido, 'Activar mi cuenta', $e($enlace));
+            $this->mail->AltBody = "Hola $nombre,\n\n$clinica te invitó a su equipo en Zooki como $rol.\nActiva tu cuenta, acepta la política de tratamiento de datos y crea tu contraseña:\n$enlace\n\nEl enlace vence en $horasVigencia horas.";
+            $this->mail->isHTML(true);
+            $this->entregar();
+            return true;
+        } catch (Exception $e) {
+            error_log('Error al enviar la invitación del personal: ' . $this->mail->ErrorInfo . ' ' . $e->getMessage());
+            return false;
+        }
+    }
 
-        return $this->obtenerPlantillaBaseHTML($nombre, 'Tus credenciales de acceso', $contenido, 'Acceder a Zooki', $appUrl);
+    /**
+     * D2.1 (HU-T.14) — El administrador restableció la contraseña: la
+     * anterior ya no sirve y el titular crea otra con un enlace de 24 horas.
+     */
+    public function enviarRestablecimientoPorAdministrador($email, $nombre, $clinica, $enlace, $horasVigencia = 24) {
+        $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
+        try {
+            $this->mail->addAddress($email, $nombre);
+            $this->mail->Subject = 'Crea una nueva contraseña en Zooki';
+            $contenido = '
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              El administrador de <strong>' . $e($clinica) . '</strong> restableció tu contraseña. <strong>Tu contraseña anterior ya no sirve</strong> y se cerraron las sesiones que tenías abiertas.
+            </p>
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              Crea una nueva desde el enlace. Vence en <strong>' . (int) $horasVigencia . ' horas</strong>.
+            </p>
+            <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
+              Si no lo pediste, habla con el administrador de tu clínica.
+            </p>';
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($e($nombre), 'Crea una nueva contraseña', $contenido, 'Crear mi contraseña', $e($enlace));
+            $this->mail->AltBody = "Hola $nombre,\n\nEl administrador de $clinica restableció tu contraseña; la anterior ya no sirve.\nCrea una nueva:\n$enlace\n\nEl enlace vence en $horasVigencia horas.";
+            $this->mail->isHTML(true);
+            $this->entregar();
+            return true;
+        } catch (Exception $e) {
+            error_log('Error al enviar el restablecimiento: ' . $this->mail->ErrorInfo . ' ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * D2.2 (RE-T.7.5) — Invitación a una persona que ya tiene cuenta: la
+     * clínica solo la vincula si el titular acepta en el enlace.
+     */
+    public function enviarInvitacionClinica($email, $nombre, $clinica, $rol, $enlace, $horasVigencia = 72) {
+        $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
+        try {
+            $this->mail->addAddress($email, $nombre);
+            $this->mail->Subject = $clinica . ' te invitó a su equipo en Zooki';
+            $contenido = '
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              <strong>' . $e($clinica) . '</strong> te invitó a su equipo como <strong>' . $e($rol) . '</strong>.
+            </p>
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              Ya tienes cuenta en Zooki: abre el enlace para aceptar o rechazar. Si aceptas, la clínica verá tu nombre, documento, correo y teléfono, y conservas tus otros perfiles. El enlace vence en <strong>' . (int) $horasVigencia . ' horas</strong>.
+            </p>
+            <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
+              Si no conoces a esta clínica, ignora el mensaje: sin tu aceptación no pasa nada.
+            </p>';
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($e($nombre), 'Invitación a un equipo', $contenido, 'Ver la invitación', $e($enlace));
+            $this->mail->AltBody = "Hola $nombre,\n\n$clinica te invitó a su equipo en Zooki como $rol.\nAcepta o rechaza la invitación:\n$enlace\n\nEl enlace vence en $horasVigencia horas. Si no conoces a esta clínica, ignora el mensaje.";
+            $this->mail->isHTML(true);
+            $this->entregar();
+            return true;
+        } catch (Exception $e) {
+            error_log('Error al enviar la invitación a la clínica: ' . $this->mail->ErrorInfo . ' ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /** D2.2 (RE-T.2.5) — Aviso de que la contraseña cambió y se cerraron las demás sesiones. */
+    public function enviarAvisoCambioPassword($email, $nombre) {
+        try {
+            $this->mail->addAddress($email, $nombre);
+            $this->mail->Subject = 'Se cambió la contraseña de tu cuenta Zooki';
+            $contenido = '
+            <p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">
+              La contraseña de tu cuenta cambió y se cerraron las demás sesiones que tenías abiertas.
+            </p>
+            <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
+              Si no fuiste tú, usa «¿Olvidaste tu contraseña?» en el inicio de sesión para crear otra y avisa a soporte.
+            </p>';
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML(htmlspecialchars((string) $nombre, ENT_QUOTES, 'UTF-8'), 'Tu contraseña cambió', $contenido);
+            $this->mail->AltBody = "Hola $nombre,\n\nLa contraseña de tu cuenta Zooki cambió y se cerraron las demás sesiones abiertas.\nSi no fuiste tú, usa ¿Olvidaste tu contraseña? en el inicio de sesión y avisa a soporte.";
+            $this->mail->isHTML(true);
+            $this->entregar();
+            return true;
+        } catch (Exception $e) {
+            error_log('Error al enviar el aviso de cambio de contraseña: ' . $this->mail->ErrorInfo . ' ' . $e->getMessage());
+            return false;
+        }
     }
 
     public function obtenerPlantillaBaseHTML($nombre, $titulo, $contenidoHtml, $ctaTexto = null, $ctaEnlace = null) {
-        $envFile = __DIR__ . '/../.env';
-        $appUrl = 'https://zooki.secarvajal.com/';
-        if (file_exists($envFile)) {
-            $env = parse_ini_file($envFile);
-            if (isset($env['APP_URL'])) {
-                $appUrl = rtrim($env['APP_URL'], '/');
-            }
-        }
-        
         $ctaHtml = '';
         if ($ctaTexto && $ctaEnlace) {
             $ctaHtml = '

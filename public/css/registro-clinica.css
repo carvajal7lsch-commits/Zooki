@@ -1,0 +1,57 @@
+/* HU-0.1: conserva los componentes de acceso; el formulario largo ocupa su propia pantalla. */
+.registro-clinica-page .form-wrapper {
+    max-width: 600px;
+    margin: auto 0;
+}
+.registro-clinica-page .input-wrapper select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+.registro-clinica-campos {
+    border: 0;
+    padding: 0;
+    margin: 24px 0;
+}
+.registro-clinica-campos legend {
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+.registro-clinica-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 16px;
+}
+.registro-clinica-page .registro-consentimiento {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+}
+.registro-clinica-page [hidden] {
+    display: none;
+}
+@media (max-width: 767px) {
+    .registro-clinica-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.registro-clinica-nit {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 70px;
+    gap: 0 12px;
+    min-width: 0;
+}
+.registro-clinica-nit .input-group {
+    min-width: 0;
+    margin-bottom: 0;
+}
+.registro-clinica-nit small#dvAyuda {
+    grid-column: 1 / -1;
+}
+.registro-clinica-nit #reportarNit,
+.registro-clinica-nit #nitUnicidad {
+    grid-column: 1 / -1;
+}

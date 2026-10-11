@@ -79,7 +79,8 @@ class PoliticaPassword
         }
 
         if (self::esDemasiadoComun($password)) {
-            return 'Esa contraseña es demasiado conocida. Elige una que no aparezca en listas de uso común.';
+            // D2.2 (hallazgo del usuario): un mensaje que se entienda sin hablar de listas.
+            return 'Esa contraseña es muy común y fácil de adivinar. Elige otra.';
         }
 
         if (self::tienePatronTrivial($password)) {
@@ -105,7 +106,7 @@ class PoliticaPassword
      *
      * Vive aqui y no en un controlador porque la usan dos flujos distintos:
      * el alta de un usuario por el administrador y el alta de un propietario
-     * desde recepcion. Antes solo existia en UsuarioController, y el registro
+     * desde el personal de la clinica. Antes solo existia en UsuarioController, y el registro
      * de propietarios acababa usando el numero de documento como contrasena,
      * que es justo lo que RN-G10 prohibe.
      *
@@ -280,7 +281,7 @@ class PoliticaPassword
     /**
      * Impide usar el propio documento, nombre o correo como contrasena, que
      * es lo primero que prueba quien ya tiene los datos de la persona (y en
-     * una clinica esos datos los ve todo el personal de recepcion).
+     * una clinica esos datos los ve todo el personal).
      */
     private static function usaDatosPersonales(string $password, array $datos): bool
     {

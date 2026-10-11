@@ -69,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { selector: '.validate-select', func: 'validarSelect' },
         { selector: '.validate-doc', func: 'validarDocumento', event: 'input' },
         { selector: '.validate-name', func: 'validarNombre', event: 'input' },
-        { selector: '.validate-tel', func: 'validarTelefono', event: 'input' },
         { selector: '.validate-email', func: 'validarEmail', event: 'input' }
     ];
     validations.forEach(val => {
@@ -269,129 +268,36 @@ function switchModule(module, { recargar = true } = {}) {
 
 // --- PROPIETARIOS ---
 async function loadOwners() {
+    const tbody = document.getElementById('ownersTableBody');
+    const grid = document.getElementById('ownersGrid');
+    if (!tbody && !grid) return;
     try {
-        const res = await fetch('index.php?action=listar_propietarios_ajax');
-        const owners = await res.json();
-        const tbody = document.getElementById('ownersTableBody');
-        const grid = document.getElementById('ownersGrid');
-        if (tbody) tbody.innerHTML = '';
-        if (grid) grid.innerHTML = '';
-
+        const owners = await pedirJson('index.php?action=listar_propietarios_ajax');
+        if (tbody) tbody.replaceChildren();
+        if (grid) grid.replaceChildren();
         owners.forEach(o => {
             if (tbody) {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-estado', o.estado);
-                tr.innerHTML = `
-                    <td><b>${o.documento}</b></td>
-                    <td>${o.nombre_completo}</td>
-                    <td><i class="fas fa-phone-alt"></i> ${o.telefono}</td>
-                    <td>${o.email}</td>
-                    <td><span class="hc-badge" style="background:var(--primary-soft); color:var(--primary);">${o.total_mascotas} Mascotas</span></td>
-                    <td><span class="status-badge ${o.estado == 1 ? 'active' : 'inactive'}">${o.estado == 1 ? 'Activo' : 'Inactivo'}</span></td>
-                    <td><div class="action-buttons"><button onclick="openOwnerDossier('${o.documento}')" class="btn-icon history" title="Ver Expediente"><i class="fas fa-folder-open"></i></button></div></td>
-                `;
-                tbody.appendChild(tr);
+                const tr = document.createElement('tr'); tr.dataset.estado = o.estado;
+                [o.documento,o.nombre_completo,o.telefono,o.email,o.total_mascotas,o.estado == 1 ? 'Activo' : 'Inactivo'].forEach(valor => {
+                    const td=document.createElement('td'); td.textContent=valor ?? ''; tr.append(td);
+                });
+                const td=document.createElement('td');
+                const btn=document.createElement('button'); btn.className='btn-icon history'; btn.textContent='Ver propietario';
+                btn.addEventListener('click',()=>openOwnerDossier(o.id_usuario)); td.append(btn); tr.append(td); tbody.append(tr);
             }
             if (grid) {
-                const card = document.createElement('div');
-                card.className = 'client-card person-card';
-                card.setAttribute('data-estado', o.estado);
-                card.innerHTML = `
-                    <div class="card-header-mini">
-                        <div class="avatar-mini cursor-pointer" onclick="openOwnerDossier('${o.documento}')">
-                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(o.nombre_completo)}&background=5560FF&color=fff&size=128" alt="${o.nombre_completo}">
-                        </div>
-                        <div class="status-indicator">
-                            <label class="toggle-switch" onclick="event.stopPropagation()" title="${o.estado == 1 ? 'Cliente Activo (Clic para desactivar)' : 'Cliente Inactivo (Clic para activar)'}">
-                                <input type="checkbox" ${o.estado == 1 ? 'checked' : ''} onchange="toggleUserStatus('${o.documento}', this.checked ? 1 : 0)">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="card-body-mini cursor-pointer" onclick="openOwnerDossier('${o.documento}')">
-                        <h3 class="card-title-mini">${o.nombre_completo}</h3>
-                        <div class="card-tags-mini">
-                            ${o.estado == 0 ? '<span class="tag-mini"><i class="bi bi-moon-stars"></i> Inactivo</span>' : ''}
-                            <span class="tag-mini"><i class="bi bi-phone"></i> ${o.telefono || 'N/A'}</span>
-                            <span class="tag-mini"><i class="fas fa-paw"></i> ${o.total_mascotas} Paciente(s)</span>
-                        </div>
-                        <div class="card-contact-mini">
-                            <span class="contact-text-mini"><i class="bi bi-person-badge"></i> ${o.documento}</span>
-                        </div>
-                    </div>
-                    <div class="card-footer-mini">
-                        <button class="action-btn-mini" onclick="editOwner('${o.documento}')" title="Editar">
-                            <i class="bi bi-pencil-fill"></i>
-                        </button>
-                        <button class="action-btn-mini" onclick="openOwnerDossier('${o.documento}')" title="Ver detalles de mascotas">
-                            <i class="bi bi-eye-fill"></i>
-                        </button>
-                    </div>
-                `;
-                grid.appendChild(card);
+                const card=document.createElement('div'); card.className='client-card person-card'; card.dataset.estado=o.estado;
+                card.innerHTML=`<div class="card-body-mini"><h3>${escaparTexto(o.nombre_completo)}</h3>
+                    <p>${escaparTexto(o.documento)}</p><p>${escaparTexto(o.telefono)}</p><p>${escaparTexto(o.email)}</p>
+                    <p>${Number(o.total_mascotas)} mascota(s) en esta clínica · ${o.estado == 1 ? 'Activo' : 'Inactivo'}</p></div>`;
+                const ver=document.createElement('button'); ver.className='action-btn-mini'; ver.textContent='Ver propietario';
+                ver.addEventListener('click',()=>openOwnerDossier(o.id_usuario));
+                const editar=document.createElement('button'); editar.className='action-btn-mini'; editar.textContent='Editar';
+                editar.addEventListener('click',()=>editOwner(o.id_usuario)); card.append(ver,editar); grid.append(card);
             }
         });
-    } catch (e) { console.error(e); }
-}
-
-function toggleUserStatus(doc, newStatus, isCurrentUser = false) {
-    if (isCurrentUser) {
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 2500,
-            timerProgressBar: true
-        });
-        
-        Toast.fire({
-            icon: 'warning',
-            title: 'No puedes desactivarte a ti mismo'
-        });
-        return;
-    }
-    
-    const actionWord = newStatus === 1 ? 'activado' : 'desactivado';
-    
-    fetch('index.php?action=cambiar_estado_usuario_ajax', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `documento=${encodeURIComponent(doc)}&estado=${newStatus}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true
-            });
-            
-            Toast.fire({
-                icon: 'success',
-                title: `Usuario ${actionWord}`
-            });
-            loadOwners();
-        } else {
-            const toggle = document.querySelector(`input[onchange*="${doc}"]`);
-            if (toggle) {
-                toggle.checked = !toggle.checked;
-            }
-            Swal.fire('Error', data.message || 'No se pudo actualizar el estado', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        const toggle = document.querySelector(`input[onchange*="${doc}"]`);
-        if (toggle) {
-            toggle.checked = !toggle.checked;
-        }
-        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-    });
+        filterOwners();
+    } catch (error) { zookiAviso('No se pudieron cargar los propietarios de esta clínica.'); }
 }
 
 function togglePetStatus(id, newStatus) {
@@ -425,7 +331,7 @@ function togglePetStatus(id, newStatus) {
             const tableRow = document.querySelector(`#petsTable tr[data-id="${id}"]`);
             if (tableRow) tableRow.setAttribute('data-estado', newStatus);
         } else {
-            const toggle = document.querySelector(`input[onchange*="togglePetStatus(${id}"]`);
+            const toggle = document.querySelector(`.pet-card[data-id="${id}"] input[type="checkbox"]`);
             if (toggle) {
                 toggle.checked = !toggle.checked;
             }
@@ -434,7 +340,7 @@ function togglePetStatus(id, newStatus) {
     })
     .catch(error => {
         console.error('Error:', error);
-        const toggle = document.querySelector(`input[onchange*="togglePetStatus(${id}"]`);
+        const toggle = document.querySelector(`.pet-card[data-id="${id}"] input[type="checkbox"]`);
         if (toggle) {
             toggle.checked = !toggle.checked;
         }
@@ -442,7 +348,7 @@ function togglePetStatus(id, newStatus) {
     });
 }
 
-let currentDossierDoc = '';
+let currentDossierId = '';
 // Pestaña desde la que se abrió el expediente, para volver a ella al cerrarlo.
 let dossierOrigen = 'owners';
 // Cada apertura invalida la anterior: con dos clics seguidos solo se pinta la
@@ -465,7 +371,7 @@ function usarFotoPorDefecto(img) {
 /** HU-15: la raza, más la que escribió el propietario si no estaba en la lista. */
 function razaConIndicada(nombre, indicada, porDefecto = '---') {
     const base = nombre || porDefecto;
-    return indicada ? `${base} (el propietario indicó «${indicada}»)` : base;
+    return indicada ? `${indicada} (por confirmar)` : base;
 }
 
 function escaparTexto(valor) {
@@ -510,8 +416,8 @@ async function openOwnerDossier(doc, { petId = null } = {}) {
 
     try {
         const [owner, pets, historial] = await Promise.all([
-            pedirJson(`index.php?action=get_propietario_ajax&doc=${encodeURIComponent(doc)}`),
-            pedirJson(`index.php?action=listar_mascotas_propietario_ajax&doc=${encodeURIComponent(doc)}`),
+            pedirJson(`index.php?action=get_propietario_ajax&id_usuario=${encodeURIComponent(doc)}`),
+            pedirJson(`index.php?action=listar_mascotas_propietario_ajax&id_usuario=${encodeURIComponent(doc)}`),
             petId ? pedirJson(`index.php?action=listar_historial_ajax&id_mascota=${encodeURIComponent(petId)}`) : null,
         ]);
         if (peticion !== dossierPeticion) return;
@@ -522,7 +428,7 @@ async function openOwnerDossier(doc, { petId = null } = {}) {
             return;
         }
 
-        currentDossierDoc = doc;
+        currentDossierId = doc;
         renderOwnerDossier(owner, Array.isArray(pets) ? pets : []);
         if (petId) renderPetDashboard(historial, petId);
         mostrarDossier(petId ? 'ficha' : 'listado');
@@ -687,41 +593,39 @@ function hideDossier() {
 
 function addNewPetFromDossier() {
     abrirModalRegistro('mascota');
-    const ownerInput = document.getElementById('petOwnerDoc');
-    if (ownerInput) {
-        selectOwner({ documento: currentDossierDoc, nombre_completo: document.getElementById('dossierOwnerName').innerText });
-    }
+    const documento = document.getElementById('dossierOwnerDoc').innerText;
+    document.getElementById('ownerSearchInput').value = documento;
+    searchOwnersForPet(documento).catch(() => zookiAviso('No se pudo buscar al propietario.'));
 }
 
 function editOwnerFromDossier() {
-    editOwner(currentDossierDoc);
+    editOwner(currentDossierId);
 }
 
 async function saveOwner(e) {
     e.preventDefault();
-    const fd = new FormData(e.target);
+    if (!e.target.reportValidity()) return;
+    const fd=new FormData(e.target);
+    if (itiNewOwnerPhone && itiNewOwnerPhone.isValidNumber()) fd.set('telefono',itiNewOwnerPhone.getNumber());
     try {
-        const res = await (await fetch('index.php?action=guardar_propietario_ajax', { method: 'POST', body: fd })).json();
-        if (res.success) {
-            zookiToast('Propietario guardado.');
-            const input = document.getElementById('petOwnerDoc');
-            if (input) input.value = fd.get('documento');
-            closeModal('modalPropietario');
-            e.target.reset();
-            loadOwners();
-        } else zookiAviso(res.message);
-    } catch (err) { console.error(err); }
+        const res=await (await fetch('index.php?action=guardar_propietario_ajax',{method:'POST',body:fd})).json();
+        if (!res.success) { zookiAviso(res.message); return; }
+        zookiAviso(res.message); e.target.reset();
+        await loadOwners();
+        const pestaña=document.querySelector('[data-target-tab="tabNuevaMascota"]'); if (pestaña) pestaña.click();
+        selectOwner({id_usuario:res.id_usuario,nombre_completo:fd.get('nombre_completo')});
+    } catch (error) { zookiAviso('No se pudo registrar al propietario.'); }
 }
 
 async function editOwner(doc) {
     try {
-        const o = await (await fetch(`index.php?action=get_propietario_ajax&doc=${doc}`)).json();
-        if (o) {
+        const o = await (await fetch(`index.php?action=get_propietario_ajax&id_usuario=${doc}`)).json();
+        if (o && o.id_usuario) {
             if (document.getElementById('edit_owner_tipo_doc') && o.tipo_documento) {
                 document.getElementById('edit_owner_tipo_doc').value = o.tipo_documento;
             }
             document.getElementById('edit_owner_doc').value = o.documento;
-            document.getElementById('edit_owner_doc_orig').value = o.documento;
+            document.getElementById('edit_owner_doc_orig').value = o.id_usuario;
             document.getElementById('edit_owner_nombre').value = o.nombre_completo;
             document.getElementById('edit_owner_tel').value = o.telefono;
             document.getElementById('edit_owner_email').value = o.email;
@@ -731,10 +635,14 @@ async function editOwner(doc) {
             const toggle = document.getElementById('toggle_edit_owner_estado');
             if (toggle) {
                 toggle.checked = (o.estado == 1);
-                // Disparar evento change manualmente para actualizar textos
+                // D1 (RN-109): la clínica desactiva el vínculo, pero no lo
+                // reactiva; se reactiva cuando el propietario lo confirma por correo.
+                toggle.disabled = o.estado != 1;
                 toggle.dispatchEvent(new Event('change'));
+                const texto = document.getElementById('text_edit_owner_estado');
+                if (texto && o.estado != 1) texto.textContent = 'Inactivo: se reactiva cuando el propietario confirma por correo';
             }
-            
+
             openModal('modalEditarPropietario');
         }
     } catch (e) { console.error(e); }
@@ -789,8 +697,7 @@ async function initSpecies() {
         sels.forEach(s => {
             if (!s) return;
             s.innerHTML = '<option value="">Seleccione...</option>';
-            especies.forEach(e => s.innerHTML += `<option value="${e.id_especie}">${e.nombre_especie}</option>`);
-            s.innerHTML += `<option value="Otra">Otra / No listada</option>`;
+            especies.forEach(e => s.innerHTML += `<option value="${e.id_especie}">${escaparTexto(e.nombre_especie)}</option>`);
         });
     } catch (e) { console.error(e); }
 }
@@ -814,7 +721,7 @@ async function initColores() {
             });
             
             // Inicializar Select2 en español y con placeholder
-            $(selectEl).select2({
+            if (typeof window.jQuery === 'function' && window.jQuery.fn.select2) window.jQuery(selectEl).select2({
                 placeholder: "Seleccione un color base o combinación...",
                 allowClear: true,
                 width: '100%',
@@ -838,7 +745,7 @@ async function loadBreeds(idEspecie, targetId, selectedRaza = null) {
         sel.innerHTML = '<option value="">Seleccione raza...</option>';
         razas.forEach(r => {
             const s = (selectedRaza && (selectedRaza == r.id_raza || selectedRaza == r.nombre_raza)) ? 'selected' : '';
-            sel.innerHTML += `<option value="${r.id_raza}" ${s}>${r.nombre_raza}</option>`;
+            sel.innerHTML += `<option value="${r.id_raza}" ${s}>${escaparTexto(r.nombre_raza)}</option>`;
         });
         sel.innerHTML += `<option value="Otra">Otra / No listada</option>`;
     } catch (e) { console.error(e); }
@@ -897,7 +804,7 @@ async function savePet(e) {
             throw new Error('La respuesta del servidor no es un JSON válido.');
         }
         if (res.success) {
-            location.reload();
+            zookiRecargarConAviso(res.message || 'Mascota registrada.');
         } else {
             zookiAviso(res.message || 'No se pudo registrar la mascota.');
         }
@@ -910,15 +817,31 @@ async function savePet(e) {
 async function editPet(id) {
     try {
         const m = await (await fetch(`index.php?action=get_mascota_ajax&id=${id}`)).json();
-        if (m) {
+        if (m && m.id_mascota) {
             document.getElementById('edit_id_mascota').value = m.id_mascota;
             document.getElementById('edit_nombre').value = m.nombre;
             document.getElementById('edit_especie').value = m.id_especie;
             await loadBreeds(m.id_especie, 'edit_raza', m.id_raza);
             document.getElementById('edit_peso').value = m.peso;
-            document.getElementById('edit_fecha_nac').value = m.fecha_nacimiento;
+            const nacimiento = document.getElementById('edit_fecha_nac');
+            if (nacimiento._flatpickr) nacimiento._flatpickr.setDate(m.fecha_nacimiento, false);
+            else nacimiento.value = m.fecha_nacimiento;
             document.getElementById('edit_sexo').value = m.sexo;
             document.getElementById('edit_estado').value = m.estado;
+            ['edit_especie','edit_raza','edit_sexo','edit_fecha_nac','edit_nueva_raza'].forEach(id => {
+                const campo = document.getElementById(id);
+                if (campo) {
+                    campo.disabled = !m.identidad_editable;
+                    if (campo._flatpickr?.altInput) campo._flatpickr.altInput.disabled = !m.identidad_editable;
+                }
+            });
+            const indicada = document.getElementById('edit_nueva_raza');
+            if (indicada) indicada.value = m.raza_indicada || '';
+            if (m.raza_indicada) document.getElementById('edit_raza').value = 'Otra';
+            checkOtherBreed(document.getElementById('edit_raza'),'editOtherBreedGroup');
+            const esterilizado = document.getElementById('edit_esterilizado');
+            if (esterilizado) esterilizado.value = m.esterilizado ?? '';
+
             
             // Sincronizar el toggle visual de mascota
             const toggle = document.getElementById('toggle_edit_pet_estado');
@@ -928,8 +851,10 @@ async function editPet(id) {
             }
 
             const selectedIds = m.colores_ids ? m.colores_ids.split(',') : [];
-            $('#editSelectedColoresInput').val(selectedIds).trigger('change');
-            selectEditOwner({ documento: m.doc_propietario, nombre_completo: m.propietario_nombre });
+            const colores = document.getElementById('editSelectedColoresInput');
+            Array.from(colores.options).forEach(option => option.selected = selectedIds.includes(option.value));
+            if (typeof window.jQuery === 'function') window.jQuery(colores).trigger('change');
+            selectEditOwner({ id_usuario: m.id_propietario, nombre_completo: m.propietario_nombre });
             
             const p = document.getElementById('editPreview');
             if (p) {
@@ -961,10 +886,8 @@ async function updatePet(e) {
             throw new Error('La respuesta del servidor no es un JSON válido.');
         }
         if (res.success) {
-            Swal.fire({
-                toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
-                icon: 'success', title: 'Mascota actualizada con éxito'
-            }).then(() => location.reload());
+            // C9.1: recarga ya; el aviso sale al volver.
+            zookiRecargarConAviso('Mascota actualizada con éxito');
         } else {
             Swal.fire('Error', res.message || 'Error desconocido al actualizar la mascota.', 'error');
         }
@@ -978,31 +901,48 @@ async function updatePet(e) {
 let allOwnersList = [];
 
 async function searchOwnersForPet(term) {
-    if (allOwnersList.length === 0) {
-        const res = await fetch('index.php?action=listar_propietarios_ajax');
-        allOwnersList = await res.json();
+    const panel=document.getElementById('mascotasExistentes');
+    document.getElementById('petOwnerDoc').value=''; panel.replaceChildren();
+    const res=await pedirJson(`index.php?action=buscar_propietario_exacto_ajax&identificador=${encodeURIComponent(term.trim())}`);
+    const o=res.propietario;
+    if (!o) { panel.textContent='Sin coincidencia exacta. Puedes registrar un propietario nuevo con su aceptación presencial.'; return; }
+    const nombre=document.createElement('p'); nombre.textContent=o.nombre_completo; panel.append(nombre);
+    if (!o.vinculado) {
+        const aviso=document.createElement('p'); aviso.textContent='El titular debe confirmar por correo antes de vincular o registrar mascotas aquí.'; panel.append(aviso);
+        const btn=document.createElement('button'); btn.type='button'; btn.className='btn-modal-secondary'; btn.textContent='Solicitar confirmación por correo';
+        btn.addEventListener('click',async()=>{
+            btn.disabled=true;
+            try {
+                const fd=new FormData(); fd.set('identificador',term.trim());
+                const r=await (await fetch('index.php?action=solicitar_vinculo_propietario_ajax',{method:'POST',body:fd})).json();
+                zookiAviso(r.message);
+            } finally { btn.disabled=false; }
+        }); panel.append(btn);
     }
-    const suggestions = document.getElementById('ownerSuggestions');
-    if (term.length < 2) { suggestions.style.display = 'none'; return; }
-    const matches = allOwnersList.filter(o => 
-        o.nombre_completo.toLowerCase().includes(term.toLowerCase()) || 
-        o.documento.includes(term)
-    ).slice(0, 5);
-    if (matches.length > 0) {
-        suggestions.innerHTML = '';
-        matches.forEach(m => {
-            const div = document.createElement('div');
-            div.className = 'suggestion-item';
-            div.innerHTML = `<span class="name">${m.nombre_completo}</span><br><small>${m.documento}</small>`;
-            div.onclick = () => selectOwner(m);
-            suggestions.appendChild(div);
-        });
-        suggestions.style.display = 'block';
-    } else suggestions.style.display = 'none';
+    for (const mascota of o.mascotas) {
+        const card=document.createElement('div'); card.className='mascota-existente';
+        const foto=document.createElement('img'); foto.src=fotoMascotaUrl(mascota.url_foto); foto.alt=''; foto.addEventListener('error',()=>usarFotoPorDefecto(foto));
+        const texto=document.createElement('p'); texto.textContent=[mascota.nombre,mascota.nombre_especie,razaConIndicada(mascota.nombre_raza,mascota.raza_indicada)].join(' · ');
+        card.append(foto,texto);
+        if (o.vinculado) {
+            const btn=document.createElement('button'); btn.type='button'; btn.className='btn-modal-secondary'; btn.textContent='Vincular ' + mascota.nombre;
+            btn.addEventListener('click',async()=>{
+                const fd=new FormData(); fd.set('id_propietario',o.id_usuario); fd.set('id_mascota',mascota.id_mascota);
+                const r=await (await fetch('index.php?action=vincular_mascota_ajax',{method:'POST',body:fd})).json();
+                if (r.success) location.reload(); else zookiAviso(r.message);
+            }); card.append(btn);
+        }
+        panel.append(card);
+    }
+    if (o.vinculado) {
+        const btn=document.createElement('button'); btn.type='button'; btn.className='btn-modal-secondary'; btn.textContent='Es otra mascota: registrar nueva';
+        btn.addEventListener('click',()=>selectOwner(o)); panel.append(btn);
+        if (!o.mascotas.length) selectOwner(o);
+    }
 }
 
 function selectOwner(owner) {
-    document.getElementById('petOwnerDoc').value = owner.documento;
+    document.getElementById('petOwnerDoc').value = owner.id_usuario;
     const input = document.getElementById('ownerSearchInput');
     const wrapper = input.closest('.input-wrapper');
     if (wrapper) wrapper.style.display = 'none';
@@ -1044,7 +984,7 @@ async function searchOwnersForEdit(term) {
 }
 
 function selectEditOwner(owner) {
-    document.getElementById('edit_petOwnerDoc').value = owner.documento;
+    document.getElementById('edit_petOwnerDoc').value = owner.id_usuario;
     const input = document.getElementById('editOwnerSearchInput');
     if(input) {
         input.style.display = 'none';
@@ -1128,9 +1068,8 @@ async function saveConsultation(e) {
         const res = await (await fetch('index.php?action=registrar_consulta_ajax', { method: 'POST', body: fd })).json();
 
         if (res.success) {
-            zookiToast(res.message);
             closeModal('modalConsulta');
-            location.reload();
+            zookiRecargarConAviso(res.message);
             return;
         }
 
@@ -1151,15 +1090,25 @@ async function saveConsultation(e) {
     }
 }
 
+/** Fecha de hoy en el formato de <input type="date">, en la hora local del navegador. */
+function fechaDeHoy() {
+    const hoy = new Date();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    return `${hoy.getFullYear()}-${mes}-${dia}`;
+}
+
 function addTreatmentRow() {
     const list = document.getElementById('treatmentsList');
     const row = document.createElement('div');
     row.className = 'treatment-row';
+    // RE-2.4.1: cada tratamiento lleva su fecha de inicio (obligatoria en el servidor).
     row.innerHTML = `
         <div class="input-group"><label>Medicamento</label><input type="text" name="med_nombre[]" required></div>
         <div class="input-group"><label>Dosis</label><input type="text" name="med_dosis[]" required></div>
         <div class="input-group"><label>Vía</label><select name="med_via[]"><option value="Oral">Oral</option><option value="Subcutánea">Subcutánea</option></select></div>
         <div class="input-group"><label>Duración</label><input type="text" name="med_duracion[]" required></div>
+        <div class="input-group"><label>Inicio</label><input type="date" name="med_inicio[]" value="${fechaDeHoy()}" required data-etiqueta="la fecha de inicio del tratamiento"></div>
         <button type="button" class="btn-remove-treatment" title="Quitar medicamento"><i class="fas fa-trash"></i></button>
     `;
     // Sin onclick en el HTML (ZOOKI_REGLAS §1).
@@ -1203,6 +1152,52 @@ function avisarAdjuntosRechazados(res) {
     return true;
 }
 
+/**
+ * RE-2.5.4 / RE-2.10.1: un registro de otra clínica lleva el nombre de la
+ * clínica que lo hizo. Lo propio no lleva marca.
+ */
+function etiquetaOrigen(registro) {
+    if (!registro || registro.es_propia !== false) return '';
+    return `<span class="origen-clinica" title="Registrado por otra clínica; solo lectura"><i class="fas fa-hospital"></i> ${escaparTexto(registro.clinica_nombre)}</span>`;
+}
+
+function tablaTratamientos(tratamientos) {
+    if (!Array.isArray(tratamientos) || tratamientos.length === 0) return '';
+    const filas = tratamientos.map(t => `
+        <tr>
+            <td>${escaparTexto(t.medicamento)}</td>
+            <td>${escaparTexto(t.dosis)}</td>
+            <td>${escaparTexto(t.via_administracion)}</td>
+            <td>${escaparTexto(t.duracion)}</td>
+            <td>${t.fecha_inicio ? new Date(t.fecha_inicio + 'T00:00:00').toLocaleDateString() : '---'}</td>
+        </tr>`).join('');
+    return `
+        <div class="clinical-section">
+            <label><i class="fas fa-pills"></i> Tratamiento Prescrito</label>
+            <table class="history-treatment-table">
+                <thead><tr><th>Medicamento</th><th>Dosis</th><th>Vía</th><th>Duración</th><th>Inicio</th></tr></thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>`;
+}
+
+/** La descarga siempre pasa por ver_archivo.php, que aplica la misma regla de visibilidad (RE-2.3.3). */
+function listaAdjuntos(archivos) {
+    if (!Array.isArray(archivos) || archivos.length === 0) return '';
+    const enlaces = archivos.map(archivo => {
+        const esImagen = ['jpg', 'jpeg', 'png'].includes(archivo.extension);
+        return `
+            <a href="ver_archivo.php?id=${encodeURIComponent(archivo.id_archivo)}" target="_blank" rel="noopener" class="history-file-link">
+                <i class="fas ${esImagen ? 'fa-image' : 'fa-file-pdf'}"></i> ${escaparTexto(archivo.nombre_original)}
+            </a>`;
+    }).join('');
+    return `
+        <div class="clinical-section">
+            <label><i class="fas fa-paperclip"></i> Archivos Adjuntos</label>
+            <div class="history-adjuntos">${enlaces}</div>
+        </div>`;
+}
+
 async function viewMedicalHistory(id, nombre) {
     document.getElementById('historyPetName').innerText = nombre;
     const timeline = document.getElementById('historyTimeline');
@@ -1235,7 +1230,7 @@ async function viewMedicalHistory(id, nombre) {
         petSpecie.innerText = m.nombre_especie || '---';
         petAge.innerText = m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : 'Edad desconocida';
 
-        // 2. Resumen de Vacunación
+        // 2. Resumen de Vacunación: las de todas las clínicas (RE-2.10.1)
         if (data.vacunas && data.vacunas.length > 0) {
             data.vacunas.forEach(v => {
                 const vCard = document.createElement('div');
@@ -1245,6 +1240,7 @@ async function viewMedicalHistory(id, nombre) {
                     <div class="vaccine-info">
                         <h5>${escaparTexto(v.nombre_vacuna)}</h5>
                         <span>${new Date(v.fecha_aplicacion).toLocaleDateString()}</span>
+                        ${etiquetaOrigen(v)}
                     </div>
                 `;
                 vaccineList.appendChild(vCard);
@@ -1253,47 +1249,19 @@ async function viewMedicalHistory(id, nombre) {
             vaccineList.innerHTML = '<p class="sub-text">No hay registros de vacunación.</p>';
         }
 
-        // 3. Consultas Clínicas (Línea de Tiempo)
+        // 3. Consultas Clínicas (Línea de Tiempo). Las de otra clínica solo
+        // llegan si el propietario autorizó a esta (RE-2.10.2).
         timeline.innerHTML = '';
         if (data.consultas && data.consultas.length > 0) {
             data.consultas.forEach(c => {
                 const item = document.createElement('div');
                 item.className = 'history-item';
-
-                // Construir HTML de archivos
-                let filesHtml = '';
-                if (c.archivos && c.archivos.length > 0) {
-                    filesHtml = '<div class="clinical-section"><label><i class="fas fa-paperclip"></i> Archivos Adjuntos</label><div style="display:flex; gap:0.5rem; flex-wrap:wrap;">';
-                    c.archivos.forEach(file => {
-                        const isImg = ['jpg', 'jpeg', 'png'].includes(file.extension);
-                        filesHtml += `
-                            <a href="ver_archivo.php?id=${file.id_archivo}" target="_blank" class="history-file-link">
-                                <i class="fas ${isImg ? 'fa-image' : 'fa-file-pdf'}"></i> ${file.nombre_original}
-                            </a>`;
-                    });
-                    filesHtml += '</div></div>';
-                }
-
-                // Construir HTML de tratamientos
-                let treatmentsHtml = '';
-                if (c.tratamientos && c.tratamientos.length > 0) {
-                    treatmentsHtml = `
-                        <div class="clinical-section">
-                            <label><i class="fas fa-pills"></i> Tratamiento Prescrito</label>
-                            <table class="history-treatment-table">
-                                <thead><tr><th>Medicamento</th><th>Dosis</th><th>Vía</th><th>Duración</th></tr></thead>
-                                <tbody>
-                                    ${c.tratamientos.map(t => `<tr><td>${t.medicamento}</td><td>${t.dosis}</td><td>${t.via_administracion}</td><td>${t.duracion}</td></tr>`).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-                }
-
                 item.innerHTML = `
-                    <div class="history-header" onclick="this.parentElement.classList.toggle('active')">
+                    <div class="history-header">
                         <div class="header-main">
-                            <h4>${c.motivo_consulta}</h4>
-                            <span class="vet-badge"><i class="fas fa-user-md"></i> ${c.veterinario}</span>
+                            <h4>${escaparTexto(c.motivo_consulta)}</h4>
+                            <span class="vet-badge"><i class="fas fa-user-md"></i> ${escaparTexto(c.veterinario)}</span>
+                            ${etiquetaOrigen(c)}
                         </div>
                         <div class="header-side">
                             <span class="date">${new Date(c.fecha_hora).toLocaleString()}</span>
@@ -1302,26 +1270,28 @@ async function viewMedicalHistory(id, nombre) {
                     </div>
                     <div class="history-content">
                         <div class="clinical-data-grid">
-                            <div class="clinical-field"><label>Peso</label><span>${c.peso || '--'} Kg</span></div>
-                            <div class="clinical-field"><label>Temp.</label><span>${c.temperatura || '--'} °C</span></div>
-                            <div class="clinical-field"><label>F.C.</label><span>${c.frecuencia_cardiaca || '--'} LPM</span></div>
+                            <div class="clinical-field"><label>Peso</label><span>${escaparTexto(c.peso || '--')} Kg</span></div>
+                            <div class="clinical-field"><label>Temp.</label><span>${escaparTexto(c.temperatura || '--')} °C</span></div>
+                            <div class="clinical-field"><label>F.C.</label><span>${escaparTexto(c.frecuencia_cardiaca || '--')} LPM</span></div>
                         </div>
                         <div class="clinical-section">
                             <label>Anamnesis</label>
-                            <p>${c.anamnesis || 'N/A'}</p>
+                            <p>${escaparTexto(c.anamnesis || 'N/A')}</p>
                         </div>
                         <div class="clinical-section">
                             <label>Diagnóstico Definitivo</label>
-                            <p><strong>${c.diagnostico}</strong></p>
+                            <p><strong>${escaparTexto(c.diagnostico)}</strong></p>
                         </div>
                         <div class="clinical-section">
                             <label>Plan de Manejo</label>
-                            <p>${c.plan_tratamiento || 'N/A'}</p>
+                            <p>${escaparTexto(c.plan_tratamiento || 'N/A')}</p>
                         </div>
-                        ${treatmentsHtml}
-                        ${filesHtml}
+                        ${tablaTratamientos(c.tratamientos)}
+                        ${listaAdjuntos(c.archivos)}
                     </div>
                 `;
+                // Sin onclick en el HTML (ZOOKI_REGLAS §1).
+                item.querySelector('.history-header').addEventListener('click', () => item.classList.toggle('active'));
                 timeline.appendChild(item);
             });
         } else if (m.numero_historia_clinica) {
@@ -1439,7 +1409,7 @@ async function openVaccineModal(id, nombre) {
         if (vacunaSelect && data.success) {
             vacunaSelect.innerHTML = '<option value="">Seleccione una vacuna...</option>';
             data.vacunas.forEach(v => {
-                vacunaSelect.innerHTML += `<option value="${v.nombre_vacuna}">${v.nombre_vacuna}</option>`;
+                vacunaSelect.innerHTML += `<option value="${escaparTexto(v.nombre_vacuna)}">${escaparTexto(v.nombre_vacuna)}</option>`;
             });
             // Agregar opción "Otra" al final
             vacunaSelect.innerHTML += `<option value="Otra">Otra (no está en la lista)</option>`;
@@ -1457,7 +1427,7 @@ async function openVaccineModal(id, nombre) {
         if (laboratorioSelect && data.success) {
             laboratorioSelect.innerHTML = '<option value="">Seleccione laboratorio...</option>';
             data.laboratorios.forEach(l => {
-                laboratorioSelect.innerHTML += `<option value="${l.nombre_laboratorio}">${l.nombre_laboratorio}</option>`;
+                laboratorioSelect.innerHTML += `<option value="${escaparTexto(l.nombre_laboratorio)}">${escaparTexto(l.nombre_laboratorio)}</option>`;
             });
             // Agregar opción "Otro" al final
             laboratorioSelect.innerHTML += `<option value="Otro">Otro (no está en la lista)</option>`;
@@ -1542,9 +1512,8 @@ async function saveVaccine(e) {
         // Registrar la aplicación de la vacuna
         const res = await (await fetch('index.php?action=registrar_vacuna_ajax', { method: 'POST', body: fd })).json();
         if (res.success) { 
-            zookiAviso(res.message); 
-            closeDrawer('drawerVacuna'); 
-            location.reload(); 
+            closeDrawer('drawerVacuna');
+            zookiRecargarConAviso(res.message);
         } else {
             zookiAviso(res.message);
         }
@@ -1574,7 +1543,7 @@ async function openDewormingModal(id, nombre) {
         if (productoSelect && data.success) {
             productoSelect.innerHTML = '<option value="">Seleccione producto...</option>';
             data.productos.forEach(p => {
-                productoSelect.innerHTML += `<option value="${p.nombre_producto}">${p.nombre_producto} (${p.tipo})</option>`;
+                productoSelect.innerHTML += `<option value="${escaparTexto(p.nombre_producto)}">${escaparTexto(p.nombre_producto)} (${escaparTexto(p.tipo)})</option>`;
             });
             // Agregar opción "Otro" al final
             productoSelect.innerHTML += `<option value="Otro">Otro (no está en la lista)</option>`;
@@ -1628,9 +1597,8 @@ async function saveDeworming(e) {
         // Registrar la desparasitación
         const res = await (await fetch('index.php?action=registrar_desparasitacion_ajax', { method: 'POST', body: fd })).json();
         if (res.success) { 
-            zookiAviso(res.message); 
-            closeDrawer('drawerDesparasitacion'); 
-            location.reload(); 
+            closeDrawer('drawerDesparasitacion');
+            zookiRecargarConAviso(res.message);
         } else {
             zookiAviso(res.message);
         }
@@ -1650,7 +1618,7 @@ async function loadVets() {
         const select = document.getElementById('cita_veterinario');
         select.innerHTML = '<option value="">Seleccione un veterinario...</option>';
         res.forEach(v => {
-            select.innerHTML += `<option value="${v.documento}">${v.nombre_completo}</option>`;
+            select.innerHTML += `<option value="${escaparTexto(v.id_usuario)}">${escaparTexto(v.nombre_completo)}</option>`;
         });
         vetsLoaded = true;
     } catch (e) {
@@ -1666,7 +1634,7 @@ async function loadVetsForAppointment() {
     try {
         const res = await (await fetch('index.php?action=listar_veterinarios_ajax')).json();
         if (res && res.length > 0) {
-            select.innerHTML = res.map(v => `<option value="${v.documento}">${v.nombre_completo}</option>`).join('');
+            select.innerHTML = res.map(v => `<option value="${escaparTexto(v.id_usuario)}">${escaparTexto(v.nombre_completo)}</option>`).join('');
         } else {
             select.innerHTML = '<option value="">No hay veterinarios disponibles</option>';
         }
@@ -1695,9 +1663,8 @@ async function saveAppointment(e) {
     try {
         const res = await (await fetch('index.php?action=registrar_cita_ajax', { method: 'POST', body: fd })).json();
         if (res.success) { 
-            zookiAviso(res.message); 
-            closeModal('modalCita'); 
-            location.reload(); 
+            closeModal('modalCita');
+            zookiRecargarConAviso(res.message);
         } else {
             zookiAviso(res.message);
         }
@@ -1784,27 +1751,33 @@ function renderPetDashboard(data, id) {
     if (timelineDiv) {
         const timelineEvents = [];
 
+        // Todo texto de la base se escapa: con la historia compartida
+        // (RN-113) puede venir de otra clínica.
         if (data.consultas) {
             data.consultas.forEach(c => {
+                const cantidadTratamientos = Array.isArray(c.tratamientos) ? c.tratamientos.length : 0;
                 timelineEvents.push({
                     type: 'consulta',
                     date: new Date(c.fecha_hora),
-                    title: `Consulta Clínica`,
-                    subtitle: `Dr. ${c.veterinario}`,
-                    body: `<b>Motivo:</b> ${c.motivo_consulta}<br><b>Diagnóstico:</b> ${c.diagnostico}<br><b>Peso:</b> ${c.peso || '--'} Kg • <b>F.C:</b> ${c.frecuencia_cardiaca || '--'} LPM • <b>Temp:</b> ${c.temperatura || '--'} °C`,
-                    meta: c.tratamientos && c.tratamientos.length > 0 ? `<div style="margin-top:0.4rem; font-size:0.75rem; color:var(--primary); font-weight:700;"><i class="fas fa-pills"></i> Tratamiento prescrito (${c.tratamientos.length} meds)</div>` : ''
+                    title: 'Consulta Clínica',
+                    subtitle: `Dr. ${escaparTexto(c.veterinario)}`,
+                    origen: etiquetaOrigen(c),
+                    body: `<b>Motivo:</b> ${escaparTexto(c.motivo_consulta)}<br><b>Diagnóstico:</b> ${escaparTexto(c.diagnostico)}<br><b>Peso:</b> ${escaparTexto(c.peso || '--')} Kg • <b>F.C:</b> ${escaparTexto(c.frecuencia_cardiaca || '--')} LPM • <b>Temp:</b> ${escaparTexto(c.temperatura || '--')} °C`,
+                    meta: cantidadTratamientos > 0 ? `<div class="timeline-meta-tratamiento"><i class="fas fa-pills"></i> Tratamiento prescrito (${cantidadTratamientos} meds)</div>` : ''
                 });
             });
         }
 
         if (data.vacunas) {
             data.vacunas.forEach(v => {
+                const laboratorio = v.laboratorio ? ` (${escaparTexto(v.laboratorio)})` : '';
                 timelineEvents.push({
                     type: 'vacuna',
                     date: new Date(v.fecha_aplicacion),
-                    title: `Vacuna Aplicada`,
-                    subtitle: `Vacuna: ${v.nombre_vacuna} ${v.laboratorio ? '(' + v.laboratorio + ')' : ''}`,
-                    body: `Aplicación de dosis veterinaria. Lote: ${v.lote || 'N/A'}.<br><b>Próxima dosis programada:</b> ${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : 'N/A'}`
+                    title: 'Vacuna Aplicada',
+                    subtitle: `Vacuna: ${escaparTexto(v.nombre_vacuna)}${laboratorio}`,
+                    origen: etiquetaOrigen(v),
+                    body: `Aplicación de dosis veterinaria. Lote: ${escaparTexto(v.lote || 'N/A')}.<br><b>Próxima dosis programada:</b> ${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : 'N/A'}`
                 });
             });
         }
@@ -1814,9 +1787,10 @@ function renderPetDashboard(data, id) {
                 timelineEvents.push({
                     type: 'desparasitacion',
                     date: new Date(d.fecha_aplicacion),
-                    title: `Control de Parásitos`,
-                    subtitle: `Producto: ${d.producto} (${d.tipo})`,
-                    body: `Control antiparasitario. ${d.observaciones || 'Sin observaciones.'}<br><b>Próxima dosis recomendada:</b> ${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : 'N/A'}`
+                    title: 'Control de Parásitos',
+                    subtitle: `Producto: ${escaparTexto(d.producto)} (${escaparTexto(d.tipo)})`,
+                    origen: etiquetaOrigen(d),
+                    body: `Control antiparasitario. ${escaparTexto(d.observaciones || 'Sin observaciones.')}<br><b>Próxima dosis recomendada:</b> ${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : 'N/A'}`
                 });
             });
         }
@@ -1846,7 +1820,7 @@ function renderPetDashboard(data, id) {
                             ${evt.date.toLocaleDateString()}
                         </div>
                     </div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; margin-bottom:0.3rem;">${evt.subtitle}</div>
+                    <div class="timeline-subtitulo">${evt.subtitle} ${evt.origen || ''}</div>
                     <div class="timeline-body">
                         ${evt.body}
                     </div>
@@ -1894,7 +1868,7 @@ async function printMedicalHistory(id, nombre) {
         let html = `
             <html>
             <head>
-                <title>Historia Clínica - ${nombre}</title>
+                <title>Historia Clínica - ${escaparTexto(nombre)}</title>
                 <style>
                     @page { margin: 15mm; }
                     body { font-family: 'Arial', sans-serif; padding: 0; margin: 0; color: #333; }
@@ -1913,11 +1887,11 @@ async function printMedicalHistory(id, nombre) {
                 </style>
             </head>
             <body>
-                <h1>Historia Clínica: ${nombre}</h1>
+                <h1>Historia Clínica: ${escaparTexto(nombre)}</h1>
                 <div class="meta">
-                    <strong>HC N°:</strong> ${data.mascota.numero_historia_clinica || '---'} <br>
+                    <strong>HC N°:</strong> ${escaparTexto(data.mascota.numero_historia_clinica || '---')} <br>
                     <strong>Especie/Raza:</strong> ${escaparTexto(data.mascota.nombre_especie)} - ${escaparTexto(razaConIndicada(data.mascota.nombre_raza, data.mascota.raza_indicada))} <br>
-                    <strong>Propietario:</strong> ${data.mascota.propietario_nombre}
+                    <strong>Propietario:</strong> ${escaparTexto(data.mascota.propietario_nombre)}
                 </div>
         `;
 
@@ -1925,15 +1899,16 @@ async function printMedicalHistory(id, nombre) {
             html += `<div class="section"><h2>Consultas Clínicas</h2>`;
             data.consultas.forEach(c => {
                 html += `
-                    <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${c.veterinario}</h3>
-                    <p><strong>Motivo:</strong> ${c.motivo_consulta}</p>
-                    <p><strong>Diagnóstico:</strong> ${c.diagnostico}</p>
-                    <p><strong>Peso:</strong> ${c.peso || '--'} Kg | <strong>Temp:</strong> ${c.temperatura || '--'} °C</p>
+                    <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${escaparTexto(c.veterinario)}</h3>
+                    <p><strong>Clínica:</strong> ${escaparTexto(c.clinica_nombre)}</p>
+                    <p><strong>Motivo:</strong> ${escaparTexto(c.motivo_consulta)}</p>
+                    <p><strong>Diagnóstico:</strong> ${escaparTexto(c.diagnostico)}</p>
+                    <p><strong>Peso:</strong> ${escaparTexto(c.peso || '--')} Kg | <strong>Temp:</strong> ${escaparTexto(c.temperatura || '--')} °C</p>
                 `;
                 if (c.tratamientos && c.tratamientos.length > 0) {
                     html += `<ul>`;
                     c.tratamientos.forEach(t => {
-                        html += `<li>${t.medicamento} - ${t.dosis} (${t.frecuencia} por ${t.duracion})</li>`;
+                        html += `<li>${escaparTexto(t.medicamento)} - ${escaparTexto(t.dosis)} (${escaparTexto(t.via_administracion)}, ${escaparTexto(t.duracion)}, desde ${escaparTexto(t.fecha_inicio)})</li>`;
                     });
                     html += `</ul>`;
                 }
@@ -1942,17 +1917,17 @@ async function printMedicalHistory(id, nombre) {
         }
 
         if (data.vacunas && data.vacunas.length > 0) {
-            html += `<div class="section"><h2>Vacunación</h2><table><tr><th>Fecha</th><th>Vacuna</th><th>Próxima Dosis</th></tr>`;
+            html += `<div class="section"><h2>Vacunación</h2><table><tr><th>Fecha</th><th>Vacuna</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.vacunas.forEach(v => {
-                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${v.nombre_vacuna}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${escaparTexto(v.clinica_nombre)}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }
 
         if (data.desparasitaciones && data.desparasitaciones.length > 0) {
-            html += `<div class="section"><h2>Desparasitaciones</h2><table><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Próxima Dosis</th></tr>`;
+            html += `<div class="section"><h2>Desparasitaciones</h2><table><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.desparasitaciones.forEach(d => {
-                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${d.producto}</td><td>${d.tipo}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${escaparTexto(d.clinica_nombre)}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }
@@ -2095,130 +2070,9 @@ document.addEventListener('DOMContentLoaded', () => {
         initDatePickers();
     }
 
-    // Lógica global para añadir 'Otra' Raza o Especie usando SweetAlert2
-    document.addEventListener('change', async (e) => {
-        // Manejar selección de "Otra" Raza
-        if (e.target.matches('#new_raza, #edit_raza') && e.target.value === 'Otra') {
-            const { value: nuevaRaza } = await Swal.fire({
-                title: 'Agregar nueva raza',
-                input: 'text',
-                inputLabel: 'Escribe el nombre de la nueva raza',
-                showCancelButton: true,
-                confirmButtonColor: '#0C66E4',
-                cancelButtonColor: '#ef4444',
-                confirmButtonText: 'Aceptar',
-                cancelButtonText: 'Cancelar',
-                inputValidator: (value) => {
-                    if (!value.trim()) return '¡Necesitas escribir un nombre!';
-                },
-                didOpen: () => {
-                    const input = Swal.getInput();
-                    input.addEventListener('input', () => {
-                        const val = input.value.trim().toLowerCase();
-                        const options = Array.from(e.target.options);
-                        const existe = options.some(opt => opt.text.toLowerCase() === val && opt.value !== 'Otra');
-                        
-                        if (existe) {
-                            Swal.showValidationMessage('¡Esta raza ya existe en la lista!');
-                            Swal.disableButtons();
-                        } else {
-                            Swal.resetValidationMessage();
-                            Swal.enableButtons();
-                        }
-                    });
-                }
-            });
-
-            if (nuevaRaza) {
-                let form = e.target.closest('form');
-                let hiddenInput = form.querySelector('input[name="nueva_raza"]');
-                if (!hiddenInput) {
-                    hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'nueva_raza';
-                    form.appendChild(hiddenInput);
-                }
-                hiddenInput.value = nuevaRaza.trim();
-                
-                // Actualizar visualmente la opción "Otra"
-                const optionOtra = e.target.querySelector('option[value="Otra"]');
-                if (optionOtra) optionOtra.textContent = `Otra: ${nuevaRaza.trim()}`;
-            } else {
-                // Si el usuario cancela, devolvemos el selector al estado vacío
-                e.target.value = "";
-            }
-        }
-
-        // Manejar selección de "Otra" Especie
-        if (e.target.matches('#new_especie, #edit_especie') && e.target.value === 'Otra') {
-            const { value: nuevaEspecie } = await Swal.fire({
-                title: 'Agregar nueva especie',
-                input: 'text',
-                inputLabel: 'Escribe el nombre de la nueva especie (ej: Reptil, Mini Pig)',
-                showCancelButton: true,
-                confirmButtonColor: '#0C66E4',
-                cancelButtonColor: '#ef4444',
-                confirmButtonText: 'Guardar Especie',
-                cancelButtonText: 'Cancelar',
-                inputValidator: (value) => {
-                    if (!value.trim()) return '¡Necesitas escribir un nombre!';
-                },
-                didOpen: () => {
-                    const input = Swal.getInput();
-                    input.addEventListener('input', () => {
-                        const val = input.value.trim().toLowerCase();
-                        const options = Array.from(e.target.options);
-                        const existe = options.some(opt => opt.text.toLowerCase() === val && opt.value !== 'Otra');
-                        
-                        if (existe) {
-                            Swal.showValidationMessage('¡Esta especie ya existe en la lista!');
-                            Swal.disableButtons();
-                        } else {
-                            Swal.resetValidationMessage();
-                            Swal.enableButtons();
-                        }
-                    });
-                }
-            });
-
-            if (nuevaEspecie) {
-                try {
-                    const fd = new FormData();
-                    fd.append('nombre_especie', nuevaEspecie.trim());
-                    const res = await fetch('index.php?action=registrar_especie_ajax', {
-                        method: 'POST',
-                        body: fd
-                    });
-                    const data = await res.json();
-                    
-                    if (data.success) {
-                        Swal.fire({
-                            toast: true, position: 'top-end', icon: 'success', 
-                            title: 'Especie agregada', showConfirmButton: false, timer: 2000
-                        });
-                        // Recargar las especies y seleccionar la nueva
-                        await initSpecies();
-                        e.target.value = data.id_especie;
-                        // También disparar el change para que se limpien las razas (al ser nueva especie no tendrá razas)
-                        e.target.dispatchEvent(new Event('change'));
-                    } else {
-                        Swal.fire('Error', data.message || 'Error al guardar la especie', 'error');
-                        e.target.value = "";
-                    }
-                } catch (err) {
-                    console.error(err);
-                    Swal.fire('Error', 'Error de conexión', 'error');
-                    e.target.value = "";
-                }
-            } else {
-                // Si el usuario cancela, devolvemos el selector al estado vacío
-                e.target.value = "";
-            }
-        }
-    });
+    if (document.getElementById("petsTable")) filterTable();
 });
 
-// Inicializar todos los flatpickr de la página
 function initDatePickers() {
     if (typeof flatpickr === 'undefined') return;
     try {
@@ -2444,4 +2298,333 @@ async function searchPetForConsultation(term) {
 function selectPetForConsultation(id, nombre) {
     closeModal('modalSelectPetConsulta');
     openConsultationModal(id, nombre);
+}
+
+async function verFichaBasica(id) {
+    try {
+        const mascota=await pedirJson(`index.php?action=get_mascota_ajax&id=${encodeURIComponent(id)}`);
+        if (!mascota.id_mascota) throw new Error('Ficha no disponible');
+        await Swal.fire({title:mascota.nombre,html:`<p>${escaparTexto(mascota.nombre_especie)} · ${escaparTexto(razaConIndicada(mascota.nombre_raza,mascota.raza_indicada))}</p>
+            <p>Propietario: ${escaparTexto(mascota.propietario_nombre)}</p><p>Peso: ${escaparTexto(mascota.peso)} kg · ${escaparTexto(mascota.sexo)}</p>
+            <p>Historia clínica: ${escaparTexto(mascota.numero_historia_clinica || 'Se asigna en la primera consulta')}</p>`,confirmButtonText:'Cerrar'});
+    } catch (error) { zookiAviso('No se pudo abrir la ficha de esta clínica.'); }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById('buscarPropietarioExacto')?.addEventListener('click',()=>searchOwnersForPet(document.getElementById('ownerSearchInput').value).catch(()=>zookiAviso('No se pudo buscar al propietario.')));
+});
+
+// Eventos de pacientes externos a la vista (AGENTS.md).
+const eventosPacientes = {
+    evento0: (event, element) => { switchModule('owners'); },
+    evento1: (event, element) => { switchModule('pets'); },
+    evento2: (event, element) => { abrirModalRegistro('propietario'); },
+    evento3: (event, element) => { filterOwners(); },
+    evento4: (event, element) => { filterOwners(); },
+    evento5: (event, element) => { filterOwners(); },
+    evento6: (event, element) => { filterOwners(); },
+    evento7: (event, element) => { filterTable(); },
+    evento8: (event, element) => { filterTable(); },
+    evento9: (event, element) => { filterTable(); },
+    evento10: (event, element) => { filterTable(); },
+    evento11: (event, element) => { filterTable(); },
+    evento12: (event, element) => { switchOwnerView('list'); },
+    evento13: (event, element) => { switchOwnerView('grid'); },
+    evento14: (event, element) => { switchView('list'); },
+    evento15: (event, element) => { switchView('grid'); },
+    evento16: (event, element) => { editOwnerFromDossier(); },
+    evento17: (event, element) => { hideDossier(); },
+    evento18: (event, element) => { window.location.href='tel:'+document.getElementById('dossierOwnerPhone').innerText; },
+    evento19: (event, element) => { window.location.href='mailto:'+document.getElementById('dossierOwnerEmail').innerText; },
+    evento20: (event, element) => { window.location.href='index.php?action=vet_agenda'; },
+    evento21: (event, element) => { addNewPetFromDossier(); },
+    evento22: (event, element) => { filterDossierPets(); },
+    evento23: (event, element) => { filterDossierPets(); },
+    evento24: (event, element) => { moverCarruselMascotas(-1); },
+    evento25: (event, element) => { moverCarruselMascotas(1); },
+    evento26: (event, element) => { showPetsListFromDossier(); },
+    evento27: (event, element) => { switchPetDashTab(event, 'dashGeneral'); },
+    evento28: (event, element) => { switchPetDashTab(event, 'dashHistorial'); },
+    evento29: (event, element) => { printMedicalHistory(document.getElementById('dashEditPetBtn').getAttribute('data-id'), document.getElementById('dashPetName').innerText); },
+    evento30: (event, element) => { viewImage(element.src); },
+    evento31: (event, element) => { element.onerror=null;element.src='img/default-pet.svg'; },
+    evento32: (event, element) => { viewMedicalHistory(JSON.parse(element.dataset.c3Arg0), JSON.parse(element.dataset.c3Arg1)); },
+    evento33: (event, element) => { editPet(JSON.parse(element.dataset.c3Arg0)); },
+    evento34: (event, element) => { verFichaBasica(JSON.parse(element.dataset.c3Arg0)); },
+    evento35: (event, element) => { element.onerror=null;element.src='img/default-pet.svg'; },
+    evento36: (event, element) => { togglePetStatus(JSON.parse(element.dataset.c3Arg0), element.checked ? 1 : 0); },
+    evento37: (event, element) => { verFichaBasica(JSON.parse(element.dataset.c3Arg0)); },
+    evento38: (event, element) => { editPet(JSON.parse(element.dataset.c3Arg0)); },
+    evento39: (event, element) => { viewMedicalHistory(JSON.parse(element.dataset.c3Arg0), JSON.parse(element.dataset.c3Arg1)); },
+    evento40: (event, element) => { verFichaBasica(JSON.parse(element.dataset.c3Arg0)); },
+    evento41: (event, element) => { saveOwner(event); },
+    evento42: (event, element) => { savePet(event); },
+    evento43: (event, element) => { loadBreeds(element.value, 'new_raza'); },
+    evento44: (event, element) => { checkOtherBreed(element, 'newOtherBreedGroup'); },
+    evento45: (event, element) => { clearOwnerSelection(); },
+    evento46: (event, element) => { closeDrawer('drawerHistorial'); },
+    evento47: (event, element) => { closeDrawer('drawerHistorial'); },
+    evento48: (event, element) => { closeDrawer('drawerVacuna'); },
+    evento49: (event, element) => { closeDrawer('drawerVacuna'); },
+    evento50: (event, element) => { saveVaccine(event); },
+    evento51: (event, element) => { toggleNuevaVacuna(element); },
+    evento52: (event, element) => { toggleNuevoLaboratorio(element); },
+    evento53: (event, element) => { closeDrawer('drawerDesparasitacion'); },
+    evento54: (event, element) => { closeDrawer('drawerDesparasitacion'); },
+    evento55: (event, element) => { saveDeworming(event); },
+    evento56: (event, element) => { toggleNuevoProducto(element); },
+    evento57: (event, element) => { closeModal('modalCita'); },
+    evento58: (event, element) => { saveAppointment(event); },
+    evento59: (event, element) => { closeLightbox(); },
+};
+document.addEventListener('DOMContentLoaded',()=>{
+    document.querySelectorAll('[data-c3-change]').forEach(element => element.addEventListener('change', event => eventosPacientes[element.dataset.c3Change](event, element)));
+    document.querySelectorAll('[data-c3-click]').forEach(element => element.addEventListener('click', event => eventosPacientes[element.dataset.c3Click](event, element)));
+    document.querySelectorAll('[data-c3-error]').forEach(element => element.addEventListener('error', event => eventosPacientes[element.dataset.c3Error](event, element)));
+    document.querySelectorAll('[data-c3-keyup]').forEach(element => element.addEventListener('keyup', event => eventosPacientes[element.dataset.c3Keyup](event, element)));
+    document.querySelectorAll('[data-c3-submit]').forEach(element => element.addEventListener('submit', event => eventosPacientes[element.dataset.c3Submit](event, element)));
+});
+
+let itiNewOwnerPhone;
+let itiEditOwnerPhone;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const newTelInput = document.querySelector("#new_owner_tel");
+    if (newTelInput) {
+        itiNewOwnerPhone = window.intlTelInput(newTelInput, {
+            initialCountry: "co",
+            preferredCountries: ["co", "us", "mx", "es"],
+            nationalMode: false,
+            autoInsertDialCode: true,
+            strictMode: true,
+            dropdownContainer: document.body,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js"
+        });
+    }
+
+    const editTelInput = document.querySelector("#edit_owner_tel");
+    if (editTelInput) {
+        itiEditOwnerPhone = window.intlTelInput(editTelInput, {
+            initialCountry: "co",
+            preferredCountries: ["co", "us", "mx", "es"],
+            nationalMode: false,
+            autoInsertDialCode: true,
+            strictMode: true,
+            dropdownContainer: document.body,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js"
+        });
+    }
+});
+
+function checkOtherBreed(select, targetGroupId) {
+    const group = document.getElementById(targetGroupId);
+    if (!group) return;
+    const input = group.querySelector('input');
+    if (select.value === 'Otra' || select.value === 'other') {
+        group.classList.remove('d-none');
+        group.style.display = 'block';
+        if (input) input.required = true;
+    } else {
+        group.classList.add('d-none');
+        group.style.display = 'none';
+        if (input) {
+            input.required = false;
+            input.value = '';
+        }
+    }
+}
+
+function validarSelect(select) {
+    const errorSpan = select.closest('.input-group') ? select.closest('.input-group').querySelector('.error-message') : null;
+    if (!errorSpan) return;
+
+    if (select.value === '') {
+        errorSpan.textContent = 'Debe seleccionar una opción';
+        errorSpan.style.display = 'block';
+        select.classList.add('error');
+    } else {
+        errorSpan.style.display = 'none';
+        select.classList.remove('error');
+    }
+
+    if (select.name === 'tipo_documento') {
+        const docInput = select.closest('form') ? select.closest('form').querySelector('input[name="documento"]') : null;
+        if (docInput && docInput.value.length > 0) {
+            validarDocumento(docInput);
+        }
+    }
+}
+
+async function verificarDocumentoExiste(input) {
+    const value = input.value.replace(/[^0-9]/g, '');
+    input.value = value;
+
+    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
+    if (!errorSpan) return;
+
+    if (value.length < 5) return;
+
+    const originalDoc = document.getElementById('edit_owner_doc_orig') ? document.getElementById('edit_owner_doc_orig').value : '';
+    const url = `index.php?action=verificar_documento_ajax&documento=${value}&exclude_doc=${originalDoc}`;
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.exists) {
+            errorSpan.textContent = 'El documento ya está registrado en el sistema';
+            errorSpan.style.display = 'block';
+            input.classList.add('error');
+        } else {
+            errorSpan.style.display = 'none';
+            input.classList.remove('error');
+        }
+    } catch (e) {
+        console.error('Error al verificar documento:', e);
+    }
+}
+
+async function verificarEmailExiste(input) {
+    const value = input.value;
+
+    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
+    if (!errorSpan) return;
+
+    if (!value || !value.includes('@')) return;
+
+    const originalDoc = document.getElementById('edit_owner_doc_orig') ? document.getElementById('edit_owner_doc_orig').value : '';
+    const url = `index.php?action=verificar_email_ajax&email=${encodeURIComponent(value)}&exclude_doc=${originalDoc}`;
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.exists) {
+            errorSpan.textContent = 'El correo electrónico ya está registrado en el sistema';
+            errorSpan.style.display = 'block';
+            input.classList.add('error');
+        } else {
+            errorSpan.style.display = 'none';
+            input.classList.remove('error');
+        }
+    } catch (e) {
+        console.error('Error al verificar email:', e);
+    }
+}
+
+function validarDocumento(input) {
+    const form = input.closest('form');
+    let tipoDoc = '';
+    if (form) {
+        const select = form.querySelector('select[name="tipo_documento"]');
+        if (select) tipoDoc = select.value;
+    }
+
+    let value = input.value;
+    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
+    let errorMessage = '';
+
+    if (tipoDoc === 'PP') {
+        value = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        value = value.substring(0, 15);
+        if (value.length > 0 && value.length < 6) errorMessage = 'El pasaporte debe tener al menos 6 caracteres';
+    } else {
+        value = value.replace(/[^0-9]/g, '');
+        if (tipoDoc === 'CC') {
+            value = value.substring(0, 10);
+            if (value.length > 0 && value.length < 5) errorMessage = 'Cédula inválida (muy corta)';
+            else if (value.length === 9) errorMessage = 'Las cédulas en Colombia no tienen 9 dígitos';
+        } else if (tipoDoc === 'TI') {
+            value = value.substring(0, 11);
+            if (value.length > 0 && value.length < 10) errorMessage = 'La TI debe tener 10 u 11 dígitos';
+        } else if (tipoDoc === 'CE') {
+            value = value.substring(0, 7);
+            if (value.length > 0 && value.length < 6) errorMessage = 'La CE debe tener al menos 6 dígitos';
+        } else {
+            value = value.substring(0, 20);
+            if (value.length > 0 && value.length < 5) errorMessage = 'El documento debe tener al menos 5 dígitos';
+        }
+    }
+
+    input.value = value;
+
+    if (!errorSpan) return;
+
+    if (errorMessage) {
+        errorSpan.textContent = errorMessage;
+        errorSpan.style.display = 'block';
+        input.classList.add('error');
+    } else {
+        errorSpan.style.display = 'none';
+        input.classList.remove('error');
+    }
+
+    if (value.length >= 5) {
+        verificarDocumentoExiste(input);
+    }
+}
+
+function validarNombre(input) {
+    const value = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    input.value = value;
+
+    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
+    if (!errorSpan) return;
+
+    if (value.length > 0 && value.length < 3) {
+        errorSpan.textContent = 'El nombre debe tener al menos 3 caracteres';
+        errorSpan.style.display = 'block';
+        input.classList.add('error');
+    } else if (value.length > 100) {
+        errorSpan.textContent = 'El nombre no puede tener más de 100 caracteres';
+        errorSpan.style.display = 'block';
+        input.classList.add('error');
+    } else {
+        errorSpan.style.display = 'none';
+        input.classList.remove('error');
+    }
+}
+
+function validarEmail(input) {
+    const value = input.value;
+
+    const errorSpan = input.closest('.input-group') ? input.closest('.input-group').querySelector('.error-message') : null;
+    if (!errorSpan) return;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,4}$/;
+
+    if (value.length > 0 && !emailRegex.test(value)) {
+        errorSpan.textContent = 'Ingrese un correo electrónico válido (ej. usuario@dominio.com)';
+        errorSpan.style.display = 'block';
+        input.classList.add('error');
+    } else if (value.length > 100) {
+        errorSpan.textContent = 'El correo no puede tener más de 100 caracteres';
+        errorSpan.style.display = 'block';
+        input.classList.add('error');
+    } else {
+        errorSpan.style.display = 'none';
+        input.classList.remove('error');
+    }
+
+    if (emailRegex.test(value) && value.length > 0) {
+        verificarEmailExiste(input);
+    }
+}
+
+// Search owners directory locally using real-time search
+function filterOwners() {
+    const term = document.getElementById('ownerSearch').value.toLowerCase();
+
+    // Filter grid cards
+    const cards = document.querySelectorAll('#ownerGridView .client-card');
+    cards.forEach(card => {
+        const txt = card.innerText.toLowerCase();
+        card.style.display = txt.includes(term) ? '' : 'none';
+    });
+
+    // Filter table rows
+    const rows = document.querySelectorAll('#ownersTable tbody tr');
+    rows.forEach(row => {
+        const txt = row.innerText.toLowerCase();
+        row.style.display = txt.includes(term) ? '' : 'none';
+    });
 }

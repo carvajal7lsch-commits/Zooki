@@ -43,8 +43,9 @@
             email.focus();
             return;
         }
-        if (nuevo.telefono && !/^[0-9+\s-]{7,20}$/.test(nuevo.telefono)) {
-            mensaje(msgContacto, 'El teléfono admite números, espacios, + y guiones (7 a 20 caracteres).', 'error');
+        // D1: la regla del teléfono viene del campo (pattern y title de ValidadorTelefono).
+        if (nuevo.telefono && !telefono.checkValidity()) {
+            mensaje(msgContacto, telefono.title, 'error');
             telefono.focus();
             return;
         }
@@ -74,53 +75,33 @@
     const actual = document.getElementById('perfilPwdActual');   // no existe si la cuenta no tiene contraseña
     const nueva = document.getElementById('perfilPwdNueva');
     const confirmar = document.getElementById('perfilPwdConfirmar');
-    const feedback = document.getElementById('perfilPwdFeedback');
-    const coincide = document.getElementById('perfilPwdCoincide');
     const btnPwd = document.getElementById('perfilPasswordGuardar');
     const msgPwd = document.getElementById('perfilPasswordMsg');
     const textoBoton = btnPwd.textContent;
 
-    // password-policy.js se carga después de esta vista; se consulta al usarlo.
-    const motivoInvalida = valor => (typeof window.motivoPasswordInvalida === 'function'
-        ? window.motivoPasswordInvalida(valor) : null);
-
-    // Los mismos requisitos de helpers/PoliticaPassword.php, marcados al escribir.
+    // D2: validacion-cuenta.js escribe los avisos (política completa del
+    // servidor y «Las contraseñas coinciden»). D2.1: aquí solo se marca, en
+    // cada tecla, la lista de requisitos básicos de helpers/PoliticaPassword.php.
     const REQUISITOS = {
-        longitud: v => v.length >= 8,
-        mayuscula: v => /[A-ZÁÉÍÓÚÑ]/.test(v),
-        minuscula: v => /[a-záéíóúñ]/.test(v),
-        numero: v => /\d/.test(v),
+        longitud: valor => valor.length >= 8,
+        mayuscula: valor => /[A-ZÁÉÍÓÚÜÑ]/.test(valor),
+        minuscula: valor => /[a-záéíóúüñ]/.test(valor),
+        numero: valor => /\d/.test(valor),
     };
-    const itemsRequisito = document.querySelectorAll('[data-requisito]');
+    const itemsRequisito = formPwd.querySelectorAll('[data-requisito]');
 
     function pintarRequisitos() {
-        const valor = nueva.value;
-        let todos = true;
-        itemsRequisito.forEach(li => {
-            const cumple = REQUISITOS[li.dataset.requisito](valor);
-            li.classList.toggle('is-ok', cumple);
-            if (!cumple) todos = false;
+        itemsRequisito.forEach(item => {
+            item.classList.toggle('is-ok', REQUISITOS[item.dataset.requisito](nueva.value));
         });
-        // Con los requisitos básicos cumplidos, la política aún puede rechazarla
-        // (contraseña común o con tus datos): eso se explica debajo.
-        const motivo = valor && todos ? motivoInvalida(valor) : null;
-        feedback.textContent = motivo || '';
-        feedback.className = 'perfil-field__hint' + (motivo ? ' is-error' : '');
     }
 
-    function pintarCoincidencia() {
-        if (!confirmar.value) {
-            coincide.textContent = '';
-            coincide.className = 'perfil-field__hint';
-            return;
-        }
-        const iguales = confirmar.value === nueva.value;
-        coincide.textContent = iguales ? 'Las contraseñas coinciden.' : 'Las contraseñas no coinciden.';
-        coincide.className = 'perfil-field__hint ' + (iguales ? 'is-ok' : 'is-error');
-    }
-
-    nueva.addEventListener('input', () => { pintarRequisitos(); pintarCoincidencia(); mensaje(msgPwd, ''); });
-    confirmar.addEventListener('input', () => { pintarCoincidencia(); mensaje(msgPwd, ''); });
+    nueva.addEventListener('input', () => {
+        pintarRequisitos();
+        mensaje(msgPwd, '');
+    });
+    confirmar.addEventListener('input', () => mensaje(msgPwd, ''));
+    formPwd.addEventListener('reset', () => setTimeout(pintarRequisitos));
 
     // Mostrar u ocultar cada contraseña.
     formPwd.querySelectorAll('[data-ver]').forEach(boton => boton.addEventListener('click', () => {
@@ -135,46 +116,27 @@
 
     formPwd.addEventListener('submit', async e => {
         e.preventDefault();
-        if (actual && !actual.value) {
-            mensaje(msgPwd, 'Escribe tu contraseña actual.', 'error');
-            actual.focus();
-            return;
-        }
-        if (!nueva.value) {
-            mensaje(msgPwd, 'Escribe la nueva contraseña.', 'error');
-            nueva.focus();
-            return;
-        }
-        const motivo = motivoInvalida(nueva.value);
-        if (motivo) {
-            mensaje(msgPwd, motivo, 'error');
-            nueva.focus();
-            return;
-        }
-        if (nueva.value !== confirmar.value) {
-            mensaje(msgPwd, 'Las contraseñas no coinciden.', 'error');
-            confirmar.focus();
-            return;
-        }
-
         btnPwd.disabled = true;
         btnPwd.textContent = 'Actualizando…';
         try {
             const datos = { nueva_password: nueva.value };
             if (actual) datos.password_actual = actual.value;
+            if (formPwd.elements.access_token) datos.access_token = formPwd.elements.access_token.value;
             const r = await enviar('cambiar_password_ajax', datos);
             if (!r.success) {
                 mensaje(msgPwd, r.message || 'No se pudo actualizar la contraseña.', 'error');
                 return;
             }
             formPwd.reset();
-            formPwd.querySelectorAll('input').forEach(i => { i.type = 'password'; });
-            pintarRequisitos();
-            pintarCoincidencia();
-            mensaje(msgPwd, actual ? 'Contraseña actualizada.' : 'Contraseña creada.', 'ok');
+            formPwd.querySelectorAll('input:not([type="hidden"])').forEach(i => { i.type = 'password'; });
             // La cuenta ya tiene contraseña: desde ahora se pide la actual (HU-39),
-            // así que se recarga para mostrar ese campo.
-            if (!actual) setTimeout(() => window.location.reload(), 1200);
+            // así que se recarga para mostrar ese campo; sin esperar (C9.1).
+            if (!actual) {
+                zookiRecargarConAviso('Contraseña creada.');
+                return;
+            }
+            mensaje(msgPwd, 'Contraseña actualizada.', 'ok');
+            window.zookiToast('Contraseña actualizada.');
         } catch (err) {
             console.error('Perfil:', err);
             mensaje(msgPwd, 'Error de conexión. Intenta nuevamente.', 'error');

@@ -1,0 +1,31 @@
+.cuenta-validacion {
+    display: block;
+    font-size: .85rem;
+    line-height: 1.4;
+    margin-top: .25rem;
+    color: #667085;
+}
+.cuenta-validacion.cuenta-validacion--error {
+    color: #b42318;
+}
+/* D2.1: aviso positivo, por ejemplo «Las contraseñas coinciden». */
+.cuenta-validacion.cuenta-validacion--ok {
+    color: #067647;
+}
+[data-validacion-cuenta] [aria-invalid="true"] {
+    border-color: #b42318;
+}
+.cuenta-identidad summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+/* D2.2: los campos usan las clases de la pantalla (perfil-field o
+   input-group del portal); aquí solo se separan los dos formularios. */
+.cuenta-identidad .cuenta-identidad__form {
+    margin-top: 1rem;
+    text-align: left;
+}
+.cuenta-identidad .cuenta-identidad__form + .cuenta-identidad__form {
+    padding-top: 1rem;
+    border-top: 1px solid #e4e7ec;
+}

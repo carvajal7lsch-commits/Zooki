@@ -69,7 +69,7 @@ class ReglaAtencionTest extends TestCase
 
     public function testSoloSeAvisaDeAtencionesEnCurso(): void
     {
-        foreach (['confirmada', 'completada', 'sin_cerrar', 'cerrada_sin_consulta'] as $estado) {
+        foreach (['confirmada', 'completada', 'sin_cerrar', 'cancelada'] as $estado) {
             $this->assertFalse(
                 ReglaAtencion::debeAvisarAbierta(self::cita(['estado' => $estado]), self::en('2026-09-10 12:00:00')),
                 "No debería avisarse de una cita $estado"

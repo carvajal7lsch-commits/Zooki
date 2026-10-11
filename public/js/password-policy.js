@@ -126,7 +126,8 @@ window.motivoPasswordInvalida = function (password) {
     if (!/[a-záéíóúüñ]/.test(password)) return 'Falta una letra minúscula';
     if (!/[A-ZÁÉÍÓÚÜÑ]/.test(password)) return 'Falta una letra mayúscula';
     if (!/[0-9]/.test(password)) return 'Falta un número';
-    if (window.esPasswordComun(password)) return 'Es una contraseña demasiado conocida';
+    // D2.2: el mismo texto que PoliticaPassword::validar.
+    if (window.esPasswordComun(password)) return 'Esa contraseña es muy común y fácil de adivinar. Elige otra.';
     if (window.tienePatronTrivial(password)) return 'Evita secuencias como "12345" o "abcde"';
 
     return null;

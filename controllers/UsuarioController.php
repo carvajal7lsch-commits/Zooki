@@ -1,22 +1,41 @@
 <?php
+require_once __DIR__ . '/../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../config/EmailService.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
+require_once __DIR__ . '/../helpers/Contexto.php';
+require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../models/CuentaTitular.php';
+require_once __DIR__ . '/../models/InvitacionPersonal.php';
+require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 
+/**
+ * HU-T.7 — Personal de la clínica activa (administradores y veterinarios).
+ *
+ * Todo ocurre dentro de la clínica del contexto: la persona se identifica por
+ * id_usuario y su rol vive en usuario_clinica. Una persona que no es personal
+ * de esta clínica es un recurso ajeno: 403 y auditoría (RN-G13). La matriz de
+ * Security ya exige el rol administrador (RE-T.7.2).
+ */
 class UsuarioController {
+    // D2.2 (RE-T.7.5): las mismas respuestas exista o no la cuenta.
+    private const INVITACION_ENVIADA = 'Invitación enviada. La persona tiene 72 horas para aceptarla.';
+    private const INVITACION_SIN_CORREO = 'La invitación quedó registrada, pero no se pudo enviar el correo. Usa «Reenviar invitación» en la lista.';
+    private const INVITACION_PENDIENTE = 'Ya hay una invitación pendiente con ese documento o correo. Reenvíala desde la lista.';
+
     private $db;
-    private $usuario;
-    private $auditoria;
+    private Usuario $usuario;
+    private Auditoria $auditoria;
+    private $emailService;
 
     /**
-     * La conexion es opcional: el router lo instancia sin argumentos y se
-     * crea la conexion real de siempre. En pruebas se puede inyectar un PDO
-     * propio (SQLite en memoria) para ejercitar los endpoints sin tocar la
-     * base de datos real.
+     * La conexion y el servicio de correo son inyectables: el router los crea
+     * de verdad y las pruebas pasan un PDO en memoria y un correo falso.
      */
-    public function __construct($db = null) {
+    public function __construct($db = null, $emailService = null) {
         if ($db === null) {
             $database = new Database();
             $db = $database->getConnection();
@@ -24,30 +43,68 @@ class UsuarioController {
         $this->db = $db;
         $this->usuario = new Usuario($this->db);
         $this->auditoria = new Auditoria($this->db);
+        $this->emailService = $emailService;
+    }
+
+    private function clinica(): int {
+        return (int) Contexto::clinicaActiva();
+    }
+
+    /** Nombre de la clínica activa, para los correos al personal. */
+    private function nombreClinica(): string {
+        return (string) (Contexto::actual()['clinica'] ?? 'tu clínica');
+    }
+
+    private function correo() {
+        return $this->emailService ??= new EmailService();
+    }
+
+    private function responder(bool $ok, string $mensaje, array $extra = []): void {
+        echo json_encode(['success' => $ok, 'message' => $mensaje] + $extra);
+    }
+
+    /** Personal de la clínica activa, para la vista de administración (sin las altas pendientes). */
+    public function listar(): array {
+        return array_map(function ($persona) {
+            $persona['identidad_editable'] = $this->usuario->identidadEditableEnClinica((int) $persona['id_usuario'], $this->clinica());
+            return $persona;
+        }, $this->usuario->personalDeClinica($this->clinica()));
     }
 
     /**
-     * Listar todos los usuarios para la vista de admin.
-     *
-     * T-17: el control de rol ya lo aplico Security::validateRole() sobre la
-     * matriz de autorizacion, con el id numerico. La comprobacion que habia
-     * aqui lo repetia comparando la cadena 'administrador', que ademas fallaba
-     * en las sesiones de Google donde ese campo no siempre se guardaba.
+     * D2.2: invitaciones pendientes, de cuentas nuevas y existentes, con los
+     * datos que la clínica puede ver. Se identifican por el id de la invitación.
      */
-    public function listar() {
-        return $this->usuario->getAll();
+    public function listarInvitaciones(): array {
+        return (new InvitacionPersonal($this->db))->pendientesDeClinica($this->clinica());
+    }
+
+    /** Propietarios vinculados a la clínica activa (solo lectura en C1). */
+    public function listarPropietarios(): array {
+        return $this->usuario->propietariosDeClinica($this->clinica());
     }
 
     /**
-     * Valida y normaliza los datos de un usuario que llegan por POST.
-     *
-     * T-14 — Antes los campos se leian directo de $_POST sin comprobar que
-     * existieran ni que tuvieran forma valida: solo validaba el formulario, es
-     * decir la unica capa que un atacante no ejecuta. Devuelve el mensaje de
-     * error, o null si todo esta correcto, y deja los valores ya limpios en
-     * $limpios.
+     * La persona como personal de la clínica activa; si no lo es, es un
+     * recurso ajeno y Security corta con 403 y auditoría.
      */
-    private function validarDatosUsuario(array $entrada, ?array &$limpios): ?string {
+    private function personalDeEstaClinica($idUsuario): array {
+        $id = ctype_digit((string) $idUsuario) ? (int) $idUsuario : 0;
+        $fila = $id > 0 ? $this->usuario->personalEnClinica($id, $this->clinica()) : null;
+        if ($fila === null) {
+            Security::denegarRecursoAjeno('usuarios', $idUsuario);
+        }
+        return $fila;
+    }
+
+    /**
+     * Valida y normaliza los datos de identidad y el rol que llegan por POST.
+     *
+     * T-14: se valida en el servidor aunque el formulario ya valide. RE-T.11.2
+     * y B.5: el rol solo puede ser uno de clínica (1 o 2); el 3 ya no existe
+     * y el 5 se marca con es_super_admin, nunca en usuario_clinica.
+     */
+    private function validarDatos(array $entrada, ?array &$limpios): ?string {
         $limpios = [];
 
         $requeridos = [
@@ -56,39 +113,40 @@ class UsuarioController {
             'nombre_completo' => 'El nombre completo es obligatorio.',
             'email'           => 'El correo electronico es obligatorio.',
         ];
-
         foreach ($requeridos as $campo => $mensaje) {
-            $valor = trim((string) ($entrada[$campo] ?? ''));
+            $valor = ValidadorCuenta::normalizar($campo, (string) ($entrada[$campo] ?? ''));
             if ($valor === '') return $mensaje;
             $limpios[$campo] = $valor;
         }
 
-        if (!preg_match('/^\d{5,15}$/', $limpios['documento'])) {
+        if (ValidadorCuenta::documento($limpios['documento']) !== null) {
             return 'El documento debe tener entre 5 y 15 digitos.';
         }
-        if (!filter_var($limpios['email'], FILTER_VALIDATE_EMAIL)) {
+        if (ValidadorCuenta::correo($limpios['email']) !== null) {
             return 'El correo electronico no tiene un formato valido.';
         }
-        if (mb_strlen($limpios['nombre_completo']) < 3 || mb_strlen($limpios['nombre_completo']) > 100) {
-            return 'El nombre completo debe tener entre 3 y 100 caracteres.';
+        if (ValidadorCuenta::nombre($limpios['nombre_completo']) !== null) {
+            return ValidadorCuenta::nombre($limpios['nombre_completo']);
         }
-        if (!in_array($limpios['tipo_documento'], ['CC', 'CE', 'TI', 'PP', 'NIT'], true)) {
+        if (!in_array($limpios['tipo_documento'], Usuario::TIPOS_DOCUMENTO, true)) {
             return 'El tipo de documento no es valido.';
         }
 
-        $telefono = trim((string) ($entrada['telefono'] ?? ''));
-        if ($telefono !== '' && !preg_match('/^[0-9+\s-]{7,20}$/', $telefono)) {
-            return 'El telefono no tiene un formato valido.';
+        // D1: la misma regla de teléfono en todo el sistema (ValidadorTelefono).
+        $telefono = ValidadorTelefono::normalizar((string) ($entrada['telefono'] ?? ''));
+        if ($telefono !== '' && !ValidadorTelefono::esValido($telefono)) {
+            return ValidadorTelefono::MENSAJE;
         }
         $limpios['telefono'] = $telefono;
 
-        if (!$this->usuario->esRolValido($entrada['id_rol'] ?? null)) {
+        $rol = $entrada['id_rol'] ?? null;
+        if (!ctype_digit((string) $rol) || !Roles::esDeClinica((int) $rol)) {
             return 'El rol indicado no es valido.';
         }
-        $limpios['id_rol'] = (int) $entrada['id_rol'];
+        $limpios['id_rol'] = (int) $rol;
 
-        $estado = $entrada['estado'] ?? 1;
-        if (!in_array((int) $estado, [0, 1], true)) {
+        $estado = (string) ($entrada['estado'] ?? '1');
+        if (!in_array($estado, ['0', '1'], true)) {
             return 'El estado indicado no es valido.';
         }
         $limpios['estado'] = (int) $estado;
@@ -96,364 +154,346 @@ class UsuarioController {
         return null;
     }
 
-    // Obtener roles para el formulario
-    public function getRoles() {
-        return $this->usuario->getRoles();
-    }
-
-    // Registrar un nuevo usuario (AJAX)
-    public function registrarAjax() {
-        try {
-            if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                // T-14 / VD-SEG-01: obligatoriedad, formato y rol validos antes
-                // de tocar la base de datos.
-                $error = $this->validarDatosUsuario($_POST, $datos);
-                if ($error !== null) {
-                    echo json_encode(['success' => false, 'message' => $error]);
-                    exit;
-                }
-
-                $documento = $datos['documento'];
-                $email = $datos['email'];
-
-                // Verificar si el documento ya existe
-                $existingDoc = $this->usuario->getById($documento);
-                if ($existingDoc) {
-                    echo json_encode(['success' => false, 'message' => 'El documento ya está registrado en el sistema.']);
-                    exit;
-                }
-
-                // Verificar si el email ya existe
-                $existingEmail = $this->usuario->getUserByEmail($email);
-                if ($existingEmail) {
-                    echo json_encode(['success' => false, 'message' => 'El correo electrónico ya está registrado en el sistema.']);
-                    exit;
-                }
-
-                // HU-36 (VD-SEG-07). Si el administrador escribe una contraseña
-                // debe cumplir la política; si la deja vacía se genera una
-                // temporal aleatoria. Antes el valor por defecto era '12345'
-                // fijo: cualquiera que conociera el patrón podía entrar como el
-                // usuario recién creado antes de que este iniciara sesión.
-                if (isset($_POST['password']) && $_POST['password'] !== '') {
-                    $motivo = PoliticaPassword::validar($_POST['password'], [
-                        $documento,
-                        $datos['nombre_completo'],
-                        $email,
-                    ]);
-                    if ($motivo !== null) {
-                        echo json_encode(['success' => false, 'message' => $motivo]);
-                        exit;
-                    }
-                    $password = $_POST['password'];
-                } else {
-                    $password = self::generarPasswordTemporal();
-                }
-
-                $data = $datos + [
-                    'password' => password_hash($password, PASSWORD_DEFAULT),
-                    'debe_cambiar_password' => 1
-                ];
-
-                if ($this->usuario->create($data)) {
-                    // Auditoría: usuario creado
-                    $adminDoc = $_SESSION['usuario_doc'] ?? 'sistema';
-                    $this->auditoria->log($adminDoc, 'INSERT', 'usuarios', $documento, null, [
-                        'nombre_completo' => $datos['nombre_completo'],
-                        'email' => $email,
-                        'id_rol' => $datos['id_rol']
-                    ], 'Usuario creado');
-
-                    // Enviar correo con credenciales. Se reutiliza la misma
-                    // variable con la que se creó el hash, para que nunca se
-                    // envíe una contraseña distinta de la que quedó guardada.
-                    $emailService = new EmailService();
-                    $enviado = $emailService->enviarCredencialesUsuario($email, $datos['nombre_completo'], $documento, $password);
-                    
-                    if ($enviado) {
-                        echo json_encode(['success' => true, 'message' => 'Usuario creado exitosamente. Se han enviado las credenciales al correo registrado.']);
-                    } else {
-                        echo json_encode(['success' => true, 'message' => 'Usuario creado exitosamente. No se pudo enviar el correo con las credenciales, pero el usuario fue creado correctamente.']);
-                    }
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Error al crear el usuario.']);
-                }
-            }
-        } catch (Exception $e) {
-            // T-04: el detalle tecnico va al log del servidor, no al navegador.
-            error_log('Error al crear usuario: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'No se pudo crear el usuario. Intenta nuevamente.']);
-        }
-    }
-
-    // Actualizar usuario (AJAX)
-    public function actualizarAjax() {
-        try {
-            if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                $original_doc = trim((string) ($_POST['original_doc'] ?? ''));
-                if ($original_doc === '') {
-                    echo json_encode(['success' => false, 'message' => 'Falta el usuario a modificar.']);
-                    exit;
-                }
-
-                // Si el documento está vacío (porque el input está deshabilitado), usar el original
-                $entrada = $_POST;
-                if (trim((string) ($entrada['documento'] ?? '')) === '') {
-                    $entrada['documento'] = $original_doc;
-                }
-
-                // T-14 / VD-SEG-01: obligatoriedad, formato y rol validos.
-                $error = $this->validarDatosUsuario($entrada, $datos);
-                if ($error !== null) {
-                    echo json_encode(['success' => false, 'message' => $error]);
-                    exit;
-                }
-
-                $documento = $datos['documento'];
-                $email = $datos['email'];
-
-                // VD-SEG-02: no permitir que el ultimo admin activo pierda el
-                // rol o quede inactivo; dejaria el sistema sin administracion.
-                $quitaAdmin = $datos['id_rol'] !== 1;
-                $desactiva  = $datos['estado'] !== 1;
-                if (($quitaAdmin || $desactiva) && $this->usuario->esUltimoAdminActivo($original_doc)) {
-                    echo json_encode(['success' => false, 'message' => 'No se puede quitar el rol ni desactivar al unico administrador activo. Asigna primero otro administrador.']);
-                    exit;
-                }
-
-                // Verificar si el email ya existe (excluyendo el usuario actual)
-                $existingEmail = $this->usuario->getUserByEmailExcluding($email, $original_doc);
-                if ($existingEmail) {
-                    echo json_encode(['success' => false, 'message' => 'El correo electrónico ya está registrado en el sistema.']);
-                    exit;
-                }
-
-                // T-11: se lee el estado previo para que la auditoria registre
-                // datos anteriores reales y el cambio sea reconstruible.
-                $anterior = $this->usuario->getById($original_doc);
-
-                $data = $datos + ['original_doc' => $original_doc];
-
-                if ($this->usuario->update($data)) {
-                    // Auditoría: usuario actualizado
-                    $adminDoc = $_SESSION['usuario_doc'] ?? 'sistema';
-                    $this->auditoria->log($adminDoc, 'UPDATE', 'usuarios', $documento, $anterior ?: ['original_doc' => $original_doc], [
-                        'documento' => $documento,
-                        'nombre_completo' => $datos['nombre_completo'],
-                        'email' => $email,
-                        'id_rol' => $datos['id_rol'],
-                        'estado' => $datos['estado']
-                    ], 'Usuario actualizado');
-                    echo json_encode(['success' => true, 'message' => 'Usuario actualizado.']);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Error al actualizar.']);
-                }
-            }
-        } catch (PDOException $e) {
-            // T-04: antes esta rama devolvia al navegador el mensaje SQL crudo
-            // y una cadena "Debug:" con los documentos implicados.
-            error_log('Error al actualizar usuario: ' . $e->getMessage());
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
-                echo json_encode(['success' => false, 'message' => 'No se puede cambiar el documento: el usuario ya tiene registros asociados en el sistema.']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'No se pudo actualizar el usuario. Intenta nuevamente.']);
-            }
-        } catch (Exception $e) {
-            error_log('Error al actualizar usuario: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'No se pudo actualizar el usuario. Intenta nuevamente.']);
-        }
-    }
-
     /**
-     * Obtener un usuario por documento (AJAX).
+     * Alta de personal en la clínica activa (RE-T.7.1, RE-T.7.5, RN-705).
      *
-     * T-03/T-19: getById() ya no arrastra la columna `password`, y se quitaron
-     * los error_log de depuracion que volcaban el registro completo del usuario
-     * (hash incluido) al log del servidor.
+     * D2.2 (decisión del usuario, 2026-10-09): nadie queda vinculado sin
+     * aceptar. Si el documento y el correo son nuevos, se crea la cuenta
+     * pendiente de D2; si alguno ya pertenece a una persona, esa persona
+     * recibe una invitación que acepta o rechaza en 72 horas. Manda el
+     * correo: si es de alguien, a él va la invitación; si no, al dueño del
+     * documento. El administrador recibe la misma respuesta en todos los
+     * casos y, mientras tanto, solo ve lo que él escribió.
      */
-    public function getUsuarioAjax() {
-        try {
-            $documento = trim((string) ($_GET['documento'] ?? ''));
-            if ($documento === '') {
-                echo json_encode(['success' => false, 'message' => 'Documento no indicado.']);
-                return;
-            }
-
-            $u = $this->usuario->getById($documento);
-            if (!$u) {
-                echo json_encode(['success' => false, 'message' => 'Usuario no encontrado.']);
-                return;
-            }
-
-            echo json_encode($u);
-        } catch (Exception $e) {
-            // T-04: mensaje generico al cliente, detalle al log.
-            error_log('Error al consultar usuario: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'No se pudo consultar el usuario.']);
+    public function registrarAjax() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responder(false, 'Metodo no permitido.');
+            return;
         }
-    }
 
-    // Cambiar estado del usuario (AJAX)
-    public function cambiarEstadoAjax() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            if (isset($_POST['documento']) && isset($_POST['estado'])) {
-                $doc = $_POST['documento'];
-                $est = $_POST['estado'];
+        $error = $this->validarDatos($_POST, $datos);
+        if ($error !== null) {
+            $this->responder(false, $error);
+            return;
+        }
 
-                // VD-SEG-02: desactivar al unico administrador activo dejaria
-                // el sistema sin ningun acceso administrativo.
-                if ((int) $est !== 1 && $this->usuario->esUltimoAdminActivo($doc)) {
-                    echo json_encode(['success' => false, 'message' => 'No se puede desactivar al unico administrador activo. Asigna primero otro administrador.']);
-                    exit;
-                }
+        $idClinica = $this->clinica();
+        $invitaciones = new InvitacionPersonal($this->db);
+        $porDocumento = $this->usuario->buscarPorDocumento($datos['documento']);
+        $porEmail = $this->usuario->buscarPorEmail($datos['email']);
 
-                // T-11: el estado previo se consulta antes de escribir, en vez
-                // de registrar la cadena 'desconocido' que dejaba el log de
-                // auditoria inservible para reconstruir el cambio (HU-24).
-                $anterior = $this->usuario->getById($doc);
-                if (!$anterior) {
-                    echo json_encode(['success' => false, 'message' => 'Usuario no encontrado.']);
-                    exit;
-                }
+        $aviso = $this->yaEstaEnLaClinica($invitaciones, [$porEmail, $porDocumento], $datos, $idClinica);
+        if ($aviso !== null) {
+            $this->responder(false, $aviso);
+            return;
+        }
 
-                if ($this->usuario->updateStatus($doc, $est)) {
-                    // Auditoría: cambio de estado
-                    $adminDoc = $_SESSION['usuario_doc'] ?? 'sistema';
-                    $this->auditoria->log(
-                        $adminDoc,
-                        'UPDATE',
-                        'usuarios',
-                        $doc,
-                        ['estado' => (int) $anterior['estado']],
-                        ['estado' => (int) $est],
-                        'Estado de usuario cambiado a ' . ((int) $est === 1 ? 'activo' : 'inactivo')
-                    );
-                    echo json_encode(['success' => true, 'message' => 'Estado actualizado exitosamente.']);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Error al cambiar el estado.']);
-                }
+        try {
+            EnlaceCuenta::base();
+            $persona = $porEmail ?? $porDocumento;
+            $rol = Roles::nombre((int) $datos['id_rol']);
+            $this->correo()->limpiarDirecciones();
+            if ($persona === null) {
+                $alta = (new CuentaTitular($this->db))->crearPersonal($datos, $idClinica);
+                $idInvitacion = $alta['enlace']['id'];
+                $enlace = EnlaceCuenta::crear('activar_personal', $idInvitacion, $alta['enlace']['token']);
+                // D2.1: correo propio de invitación (la persona no se registró sola).
+                $enviado = $this->correo()->enviarInvitacionPersonal($datos['email'], $datos['nombre_completo'], $this->nombreClinica(), $rol, $enlace, CuentaTitular::ACTIVACION_HORAS);
+            } else {
+                $invitacion = $invitaciones->crear($persona, $idClinica, $datos);
+                $idInvitacion = $invitacion['id'];
+                $enviado = $this->enviarInvitacionClinica($persona, $invitacion, (int) $datos['id_rol']);
             }
+            $invitaciones->auditar('enviada', $idInvitacion, $idClinica, Contexto::idUsuario());
+            $this->responder(true, $enviado ? self::INVITACION_ENVIADA : self::INVITACION_SIN_CORREO);
+        } catch (Throwable $e) {
+            if ($e instanceof LimiteAlcanzado) {
+                $this->responder(false, $e->getMessage());
+                return;
+            }
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            if ($e instanceof AccesoDenegado) {
+                throw $e;
+            }
+            // T-04: el detalle tecnico va al log del servidor, no al navegador.
+            error_log('Error al invitar personal: ' . $e->getMessage());
+            $this->responder(false, 'No se pudo enviar la invitación. Intenta nuevamente.');
         }
     }
 
     /**
-     * HU-54 — Restablecer la contrasena de un usuario desde el panel.
-     *
-     * Genera una contrasena temporal que cumple la politica (RN-G10), la envia
-     * al correo del usuario y marca `debe_cambiar_password`, de modo que
-     * Security::validatePasswordTemporal() lo obliga a cambiarla en su
-     * siguiente ingreso antes de poder usar el sistema (criterio "El usuario
-     * debe cambiarla en su proximo ingreso").
-     *
-     * El acceso queda restringido al administrador por la matriz de
-     * autorizacion, y la accion se registra en auditoria (RN-G05).
+     * Lo único que se le dice al administrador antes de invitar, y solo con
+     * datos que ya ve en su lista: la persona ya es de su personal o ya tiene
+     * una invitación pendiente con lo que escribió.
+     */
+    private function yaEstaEnLaClinica(InvitacionPersonal $invitaciones, array $personas, array $datos, int $idClinica): ?string {
+        foreach ($personas as $persona) {
+            if ($persona === null) {
+                continue;
+            }
+            $idUsuario = (int) $persona['id_usuario'];
+            if ($this->usuario->personalEnClinica($idUsuario, $idClinica) === null) {
+                continue;
+            }
+            if ($invitaciones->esAltaPendiente($idUsuario, $idClinica)) {
+                return self::INVITACION_PENDIENTE;
+            }
+            return 'Esa persona ya es parte del personal de esta clínica. Edítala desde la lista.';
+        }
+        if ($invitaciones->hayPendienteCon($idClinica, $datos['documento'], $datos['email'])) {
+            return self::INVITACION_PENDIENTE;
+        }
+        return null;
+    }
+
+    /**
+     * Correo de invitación a una cuenta existente. A una cuenta que no puede
+     * aceptar (pendiente, inactiva o super-administrador) no se le envía nada,
+     * pero la respuesta al administrador es la misma (RE-T.7.5).
+     */
+    private function enviarInvitacionClinica(array $persona, array $invitacion, int $idRol): bool {
+        if (!InvitacionPersonal::puedeAceptar($persona)) {
+            return true;
+        }
+        $enlace = EnlaceCuenta::crear('invitacion_personal', $invitacion['id'], $invitacion['token']);
+        return $this->correo()->enviarInvitacionClinica($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre($idRol), $enlace, InvitacionPersonal::HORAS);
+    }
+
+    /** D2.2: reenvía cualquier invitación pendiente de esta clínica, con un enlace nuevo de 72 horas. */
+    public function reenviarInvitacionAjax() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responder(false, 'Metodo no permitido.');
+            return;
+        }
+        $invitaciones = new InvitacionPersonal($this->db);
+        $fila = $this->invitacionDeEstaClinica($invitaciones, $_POST['id_invitacion'] ?? null);
+        try {
+            EnlaceCuenta::base();
+            $this->correo()->limpiarDirecciones();
+            if ($fila['proposito'] === InvitacionPersonal::ACTIVACION) {
+                $persona = $this->usuario->personalEnClinica((int) $fila['id_usuario'], $this->clinica());
+                $solicitud = (new CuentaTitular($this->db))->restablecerPersonal((int) $fila['id_usuario'], $this->clinica());
+                $idNueva = $solicitud['enlace']['id'];
+                $enlace = EnlaceCuenta::crear('activar_personal', $idNueva, $solicitud['enlace']['token']);
+                $enviado = $this->correo()->enviarInvitacionPersonal($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $persona['id_rol']), $enlace, $solicitud['horas']);
+            } else {
+                $nueva = $invitaciones->reenviar((int) $fila['id'], $this->clinica());
+                $idNueva = $nueva['id'];
+                $enviado = $this->enviarInvitacionClinica($nueva['persona'], $nueva, $nueva['id_rol']);
+            }
+            $invitaciones->auditar('reenviada', $idNueva, $this->clinica(), Contexto::idUsuario());
+            $this->responder(true, $enviado ? 'Se reenvió la invitación.' : self::INVITACION_SIN_CORREO);
+        } catch (Throwable $e) {
+            error_log('Error al reenviar la invitación: ' . $e->getMessage());
+            $this->responder(false, $e instanceof LimiteAlcanzado ? $e->getMessage() : 'No se pudo reenviar la invitación. Intenta nuevamente.');
+        }
+    }
+
+    /** D2.2: retira una invitación pendiente; una cuenta nueva sin aceptar se elimina. */
+    public function cancelarInvitacionAjax() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responder(false, 'Metodo no permitido.');
+            return;
+        }
+        $invitaciones = new InvitacionPersonal($this->db);
+        $fila = $this->invitacionDeEstaClinica($invitaciones, $_POST['id_invitacion'] ?? null);
+        try {
+            if ($fila['proposito'] === InvitacionPersonal::ACTIVACION) {
+                (new CuentaTitular($this->db))->cancelarAlta((int) $fila['id'], $this->clinica());
+            } else {
+                $invitaciones->cancelar((int) $fila['id'], $this->clinica());
+            }
+            $invitaciones->auditar('cancelada', (int) $fila['id'], $this->clinica(), Contexto::idUsuario());
+            $this->responder(true, 'Invitación cancelada.');
+        } catch (Throwable $e) {
+            error_log('Error al cancelar la invitación: ' . $e->getMessage());
+            $this->responder(false, 'No se pudo cancelar la invitación. Intenta nuevamente.');
+        }
+    }
+
+    /** La invitación pendiente de esta clínica; si no lo es, recurso ajeno (403 y auditoría). */
+    private function invitacionDeEstaClinica(InvitacionPersonal $invitaciones, $id): array {
+        $numero = ctype_digit((string) $id) ? (int) $id : 0;
+        $fila = $numero > 0 ? $invitaciones->pendienteDeClinica($numero, $this->clinica()) : null;
+        if ($fila === null) {
+            Security::denegarRecursoAjeno('verificaciones_email', $id);
+        }
+        return $fila;
+    }
+
+    /**
+     * Edición de una persona del personal: identidad, rol y estado en esta
+     * clínica. El documento es un dato editable con unicidad (RN-G06), no la
+     * clave: la persona sigue siendo el mismo id_usuario.
+     */
+    public function actualizarAjax() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responder(false, 'Metodo no permitido.');
+            return;
+        }
+
+        $actual = $this->personalDeEstaClinica($_POST['id_usuario'] ?? null);
+        $idUsuario = (int) $actual['id_usuario'];
+        $idClinica = $this->clinica();
+
+        // C1.6: rechazar incluso peticiones directas antes de validar o escribir.
+        if (!$this->usuario->identidadEditableEnClinica($idUsuario, $idClinica)) {
+            foreach (['documento', 'tipo_documento', 'email'] as $campo) {
+                if (isset($_POST[$campo]) && trim((string) $_POST[$campo]) !== (string) $actual[$campo]) {
+                    $this->denegarIdentidadCompartida($idUsuario);
+                }
+            }
+            if (trim((string) ($_POST['password'] ?? '')) !== '') {
+                $this->denegarIdentidadCompartida($idUsuario);
+            }
+        }
+
+        $error = $this->validarDatos($_POST, $datos);
+        if ($error !== null) {
+            $this->responder(false, $error);
+            return;
+        }
+
+        // RE-T.11.3 / RN-G08: el único administrador activo de la clínica no
+        // pierde el rol ni queda inactivo en ella.
+        $quitaAdmin = $datos['id_rol'] !== Roles::ADMIN;
+        $desactiva = $datos['estado'] !== 1;
+        if (($quitaAdmin || $desactiva) && $this->usuario->esUltimoAdminActivo($idUsuario, $idClinica)) {
+            $this->responder(false, 'No se puede quitar el rol ni desactivar al unico administrador activo de la clinica. Asigna primero otro administrador.');
+            return;
+        }
+
+        if ($this->usuario->existeDocumento($datos['documento'], $idUsuario)) {
+            $this->responder(false, 'El documento ya está registrado por otra persona.');
+            return;
+        }
+        if ($this->usuario->existeEmail($datos['email'], $idUsuario)) {
+            $this->responder(false, 'El correo electrónico ya está registrado por otra persona.');
+            return;
+        }
+
+        try {
+            $this->usuario->editarPersonalEnClinica($idUsuario, $idClinica, $datos);
+        } catch (LimiteAlcanzado $e) {
+            $this->responder(false, $e->getMessage());
+            return;
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('Error al actualizar personal: ' . $e->getMessage());
+            $this->responder(false, 'No se pudo actualizar el usuario. Intenta nuevamente.');
+            return;
+        }
+
+        // T-11: datos anteriores y nuevos reales, para reconstruir el cambio.
+        $campos = ['documento', 'tipo_documento', 'nombre_completo', 'email', 'telefono', 'id_rol'];
+        $antes = array_intersect_key($actual, array_flip($campos)) + ['estado' => (int) $actual['estado_clinica']];
+        $this->auditoria->log(Contexto::idUsuario(), 'UPDATE', 'usuarios', $idUsuario, $antes, $datos, 'Personal actualizado');
+        $this->responder(true, 'Usuario actualizado.');
+    }
+
+    /** Datos de una persona del personal (sin contraseña, T-03). */
+    public function getUsuarioAjax() {
+        header('Content-Type: application/json');
+        $fila = $this->personalDeEstaClinica($_GET['id_usuario'] ?? null);
+        $fila['estado'] = (int) $fila['estado_clinica'];
+        $fila['identidad_editable'] = $this->usuario->identidadEditableEnClinica((int) $fila['id_usuario'], $this->clinica());
+        echo json_encode(['success' => true, 'usuario' => $fila]);
+    }
+
+    /**
+     * Activa o inactiva a la persona en esta clínica (RN-G08): su cuenta y
+     * sus roles en otras clínicas no cambian.
+     */
+    public function cambiarEstadoAjax() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->responder(false, 'Metodo no permitido.');
+            return;
+        }
+
+        $actual = $this->personalDeEstaClinica($_POST['id_usuario'] ?? null);
+        $idUsuario = (int) $actual['id_usuario'];
+        $activo = (string) ($_POST['estado'] ?? '') === '1';
+
+        if (!$activo && $this->usuario->esUltimoAdminActivo($idUsuario, $this->clinica())) {
+            $this->responder(false, 'No se puede desactivar al unico administrador activo de la clinica. Asigna primero otro administrador.');
+            return;
+        }
+
+        try {
+            $this->usuario->cambiarEstadoEnClinica($idUsuario, $this->clinica(), $activo);
+        } catch (LimiteAlcanzado $e) {
+            $this->responder(false, $e->getMessage());
+            return;
+        }
+        $this->auditoria->log(
+            Contexto::idUsuario(),
+            'UPDATE',
+            'usuario_clinica',
+            $idUsuario,
+            ['estado' => (int) $actual['estado_clinica']],
+            ['estado' => $activo ? 1 : 0],
+            'Estado en la clínica cambiado a ' . ($activo ? 'activo' : 'inactivo')
+        );
+        $this->responder(true, 'Estado actualizado.');
+    }
+
+    /**
+     * HU-T.14 — Restablecer la contraseña de una persona del personal: enlace para elegir una nueva clave (RN-G10), con la anterior invalidada. Solo sobre personal de esta clínica.
      */
     public function resetearPasswordAjax() {
         header('Content-Type: application/json');
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Metodo no permitido.']);
+            $this->responder(false, 'Metodo no permitido.');
+            return;
+        }
+
+        $persona = $this->personalDeEstaClinica($_POST['id_usuario'] ?? null);
+        $idUsuario = (int) $persona['id_usuario'];
+
+        if (!$this->usuario->identidadEditableEnClinica($idUsuario, $this->clinica())) {
+            $this->denegarIdentidadCompartida($idUsuario);
+        }
+
+        // Para la contraseña propia está el perfil, que sí pide la actual.
+        if ($idUsuario === Contexto::idUsuario()) {
+            $this->responder(false, 'Para cambiar tu propia contrasena usa la opcion de tu perfil.');
             return;
         }
 
         try {
-            $documento = trim((string) ($_POST['documento'] ?? ''));
-            if ($documento === '') {
-                echo json_encode(['success' => false, 'message' => 'Documento no indicado.']);
+            EnlaceCuenta::base();
+            $solicitud = (new CuentaTitular($this->db))->restablecerPersonal($idUsuario, $this->clinica());
+            $enlace = EnlaceCuenta::crear($solicitud['accion'], $solicitud['enlace']['id'], $solicitud['enlace']['token']);
+            $this->correo()->limpiarDirecciones();
+            // D2.1: una invitación pendiente se reenvía como invitación; si no, aviso de restablecimiento.
+            $enviado = $solicitud['accion'] === 'activar_personal'
+                ? $this->correo()->enviarInvitacionPersonal($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $persona['id_rol']), $enlace, $solicitud['horas'])
+                : $this->correo()->enviarRestablecimientoPorAdministrador($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), $enlace, $solicitud['horas']);
+            // Revisión de D2.1: con la invitación pendiente se dice lo que pasó.
+            $reenvio = $solicitud['accion'] === 'activar_personal';
+            if ($enviado) {
+                $this->responder(true, $reenvio ? 'Se reenvió la invitación.' : 'Se envió un enlace al titular para que cree su contraseña.');
                 return;
             }
-
-            $usuario = $this->usuario->getById($documento);
-            if (!$usuario) {
-                echo json_encode(['success' => false, 'message' => 'Usuario no encontrado.']);
-                return;
-            }
-
-            // Un administrador no se restablece a si mismo por esta via: para
-            // eso esta el cambio de contrasena de su propio perfil, que si pide
-            // la contrasena actual.
-            if ($documento === ($_SESSION['usuario_doc'] ?? '')) {
-                echo json_encode(['success' => false, 'message' => 'Para cambiar tu propia contrasena usa la opcion de tu perfil.']);
-                return;
-            }
-
-            $temporal = self::generarPasswordTemporal();
-
-            if (!$this->usuario->updatePassword($documento, password_hash($temporal, PASSWORD_DEFAULT))) {
-                echo json_encode(['success' => false, 'message' => 'No se pudo restablecer la contrasena.']);
-                return;
-            }
-
-            $this->usuario->updateDebeCambiarPassword($documento, 1);
-
-            $this->auditoria->log(
-                $_SESSION['usuario_doc'] ?? 'sistema',
-                'UPDATE',
-                'usuarios',
-                $documento,
-                null,
-                ['debe_cambiar_password' => 1],
-                'Contrasena restablecida por el administrador'
-            );
-
-            $emailService = new EmailService();
-            $enviado = $emailService->enviarCredencialesUsuario(
-                $usuario['email'],
-                $usuario['nombre_completo'],
-                $documento,
-                $temporal
-            );
-
-            echo json_encode([
-                'success' => true,
-                'message' => $enviado
-                    ? 'Contrasena restablecida. Se envio la clave temporal al correo del usuario.'
-                    : 'Contrasena restablecida, pero no se pudo enviar el correo. Comunicasela al usuario por otro medio.',
-            ]);
-        } catch (Exception $e) {
-            // T-04: detalle al log, mensaje generico al cliente.
+            $this->responder(true, $reenvio ? self::INVITACION_SIN_CORREO : 'No se pudo enviar el enlace. La contraseña anterior está invalidada; reintenta el envío.');
+        } catch (Throwable $e) {
             error_log('Error al restablecer contrasena: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'No se pudo restablecer la contrasena. Intenta nuevamente.']);
+            $this->responder(false, $e instanceof LimiteAlcanzado ? $e->getMessage() : 'No se pudo restablecer la contrasena. Intenta nuevamente.');
         }
     }
 
-    // Verificar si documento ya existe (AJAX)
-    public function verificarDocumentoAjax() {
-        $documento = $_GET['documento'] ?? '';
-        $exclude_doc = $_GET['exclude_doc'] ?? '';
-        
-        if ($exclude_doc && $documento == $exclude_doc) {
-            // Es el mismo documento, no está duplicado
-            echo json_encode(['exists' => false]);
-            return;
-        }
-        
-        $existing = $this->usuario->getById($documento);
-        echo json_encode(['exists' => $existing !== false]);
+    private function denegarIdentidadCompartida(int $idUsuario): never {
+        $this->auditoria->log(Contexto::idUsuario(), 'OTHER', 'usuarios', $idUsuario,
+            null, null, 'Acceso denegado: modificación de identidad compartida', $this->clinica());
+        throw new AccesoDenegado(403, 'La cuenta tiene otros vínculos. El titular debe corregir sus datos desde su perfil.');
     }
-
-    // Verificar si email ya existe (AJAX)
-    public function verificarEmailAjax() {
-        $email = $_GET['email'] ?? '';
-        $exclude_doc = $_GET['exclude_doc'] ?? '';
-        
-        if ($exclude_doc) {
-            $existing = $this->usuario->getUserByEmailExcluding($email, $exclude_doc);
-        } else {
-            $existing = $this->usuario->getUserByEmail($email);
-        }
-        
-        echo json_encode(['exists' => $existing !== false]);
-    }
-
-    /**
-     * Contrasena temporal aleatoria. Delega en PoliticaPassword, que es donde
-     * vive ahora (la necesitan tambien el alta de propietarios). Se conserva
-     * el nombre para no tocar los llamadores.
-     */
-    private static function generarPasswordTemporal(): string
-    {
-        return PoliticaPassword::generarTemporal();
-    }
-
 }

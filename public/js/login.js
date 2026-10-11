@@ -4,47 +4,52 @@
  */
 
 // ── Lógica de Google Sign-In & One Tap ──
-const GOOGLE_CLIENT_ID = (window.ZookiConfig && window.ZookiConfig.googleClientId) ? window.ZookiConfig.googleClientId : ""; 
+// D1: el client_id llega en data-google-client-id del <body> (sin JS en línea).
+const GOOGLE_CLIENT_ID = (document.body && document.body.dataset.googleClientId) || '';
+
+// HU-5.8: si Google se inicia desde el registro, viaja la clínica elegida.
+let googleDesdeRegistro = false;
+
+function clinicaDelRegistro() {
+    const select = document.getElementById('id_clinica_reg');
+    return googleDesdeRegistro && select ? select.value : '';
+}
+
+/**
+ * Respuesta de google_login_ajax. Con una cuenta existente entra; con un
+ * correo nuevo pide clínica y aceptación de la política antes de crear la
+ * cuenta (RE-T.18.2).
+ */
+function responderGoogle(data) {
+    if (!data.success) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de autenticación',
+            text: data.message || 'No se pudo iniciar sesión con Google.',
+            confirmButtonColor: '#0052FF'
+        });
+        return;
+    }
+    const extra = data.extra || {};
+    if (extra.action === 'login') {
+        window.location.href = extra.redirect;
+    } else if (extra.action === 'aceptar_registro' && typeof window.abrirGoogleModal === 'function') {
+        window.abrirGoogleModal(extra.email, extra.id_clinica);
+    }
+}
 
 window.handleGoogleCredentialResponse = async (response) => {
     try {
         const formData = new FormData();
-        // Con initTokenClient recibimos access_token en lugar de credential(JWT)
+        // Con initTokenClient recibimos access_token en lugar de credential (JWT).
         formData.append('access_token', response.access_token);
-
-        const res = await fetch('index.php?action=google_login_ajax', {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await res.json();
-        console.log("Respuesta de Google Login AJAX:", data);
-
-        if (data.success) {
-            if (data.extra && data.extra.action === 'login') {
-                console.log("Login exitoso, redirigiendo a", data.extra.redirect);
-                window.location.href = data.extra.redirect;
-            } else if (data.extra && data.extra.action === 'complete_profile') {
-                console.log("Perfil nuevo detectado. Intentando abrir modal con email:", data.extra.email);
-                console.log("typeof window.abrirGoogleModal =", typeof window.abrirGoogleModal);
-                
-                if (typeof window.abrirGoogleModal === 'function') {
-                    window.abrirGoogleModal(data.extra.email);
-                    console.log("window.abrirGoogleModal ejecutada.");
-                } else {
-                    console.error("No se encontró la función abrirGoogleModal!");
-                }
-            }
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error de autenticación',
-                text: data.message || 'No se pudo iniciar sesión con Google.',
-                confirmButtonColor: '#0052FF'
-            });
-        }
+        formData.append('csrf_token', document.querySelector('#loginForm input[name="csrf_token"]').value);
+        formData.append('cf-turnstile-response', document.querySelector((googleDesdeRegistro ? '#registerForm' : '#loginForm') + ' input[name="cf-turnstile-response"]')?.value || '');
+        formData.append('id_clinica', clinicaDelRegistro());
+        const res = await fetch('index.php?action=google_login_ajax', { method: 'POST', body: formData });
+        responderGoogle(await res.json());
     } catch (error) {
-        console.error("Error validando Google Token:", error);
+        console.error('Error validando Google Token:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error de red',
@@ -57,35 +62,14 @@ window.handleGoogleCredentialResponse = async (response) => {
 window.handleGoogleOneTapResponse = async (response) => {
     try {
         const formData = new FormData();
-        // Con One Tap recibimos credential (JWT) en lugar de access_token
+        // Con One Tap recibimos credential (JWT) en lugar de access_token.
         formData.append('credential', response.credential);
-
-        const res = await fetch('index.php?action=google_login_ajax', {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await res.json();
-        console.log("Respuesta de One Tap AJAX:", data);
-
-        if (data.success) {
-            if (data.extra && data.extra.action === 'login') {
-                window.location.href = data.extra.redirect;
-            } else if (data.extra && data.extra.action === 'complete_profile') {
-                if (typeof window.abrirGoogleModal === 'function') {
-                    window.abrirGoogleModal(data.extra.email);
-                }
-            }
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error de autenticación',
-                text: data.message || 'No se pudo iniciar sesión con Google One Tap.',
-                confirmButtonColor: '#0052FF'
-            });
-        }
+        formData.append('csrf_token', document.querySelector('#loginForm input[name="csrf_token"]').value);
+        formData.append('cf-turnstile-response', document.querySelector('#loginForm input[name="cf-turnstile-response"]')?.value || '');
+        const res = await fetch('index.php?action=google_login_ajax', { method: 'POST', body: formData });
+        responderGoogle(await res.json());
     } catch (error) {
-        console.error("Error validando Google One Tap Token:", error);
+        console.error('Error validando Google One Tap Token:', error);
     }
 };
 
@@ -95,7 +79,7 @@ let googleTokenClient = null;
 window.initGoogleAuth = function() {
     console.log("initGoogleAuth convocado por Google Identity Services.");
     if (!GOOGLE_CLIENT_ID) {
-        console.error("No se encontró el Client ID de Google en ZookiConfig.");
+        console.error("No se encontró el Client ID de Google en data-google-client-id.");
         return;
     }
 
@@ -107,7 +91,7 @@ window.initGoogleAuth = function() {
             callback: window.handleGoogleCredentialResponse
         });
         console.log("googleTokenClient inicializado correctamente.");
-        
+
         // Inicializar cliente de Identity (para Google One Tap)
         google.accounts.id.initialize({
             client_id: GOOGLE_CLIENT_ID,
@@ -115,7 +99,7 @@ window.initGoogleAuth = function() {
             auto_select: false,
             cancel_on_tap_outside: false
         });
-        
+
         // Mostrar el popup de One Tap
         google.accounts.id.prompt((notification) => {
             if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
@@ -125,7 +109,7 @@ window.initGoogleAuth = function() {
             }
         });
         console.log("Google One Tap invocado.");
-        
+
     } catch (e) {
         console.error("Error inicializando Google Auth:", e);
     }
@@ -137,7 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.querySelector('#password');
     const loginForm = document.querySelector('#loginForm');
     const loginBtn = loginForm ? loginForm.querySelector('button[type="submit"]') : null;
-    const documentoInput = document.querySelector('#documento');
+    // RE-T.1.1: se entra con el documento o con el correo.
+    const documentoInput = document.querySelector('#identificador');
     const rememberMeCheckbox = document.querySelector('#rememberMe');
     const forgotPasswordBtn = document.querySelector('#forgotPasswordBtn');
     const resetModal = document.querySelector('#resetPasswordModal');
@@ -146,14 +131,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetRequestBtn = document.querySelector('#resetRequestBtn');
     const resetEmailInput = document.querySelector('#resetEmail');
     const btnGoogleInfo = document.querySelector('#btnGoogleInfo');
-    
+
     // ── Lógica de Botones Personalizados de Google ──
     const btnGoogleLogin = document.querySelector('#btnGoogleLogin');
     const btnGoogleRegister = document.querySelector('#btnGoogleRegister');
 
     const handleGoogleClick = (e) => {
         e.preventDefault();
-        
+        googleDesdeRegistro = e.currentTarget === btnGoogleRegister;
+
         // Efecto visual de carga en el botón
         const btn = e.currentTarget;
         const originalHtml = btn.innerHTML;
@@ -194,10 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             btn.innerHTML = originalHtml;
             btn.style.pointerEvents = 'auto';
-            
+
             let diag = "googleTokenClient is null.";
             if (!GOOGLE_CLIENT_ID) diag = "GOOGLE_CLIENT_ID is empty.";
-            
+
             Swal.fire({
                 icon: 'error',
                 title: 'No conectado',
@@ -237,9 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Si hay un error de registro, voltear automáticamente la tarjeta
+    // Si hay un error de registro, o se llegó por el enlace de una clínica
+    // (action=register&clinica=ID, HU-5.8), se abre directo el registro.
     const registerError = document.querySelector('.back .alert-error');
-    if (registerError && authFlipper) {
+    if (authFlipper && (registerError || authFlipper.dataset.abrirRegistro === '1')) {
         authFlipper.classList.add('flipped');
     }
 
@@ -328,6 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (forgotPasswordBtn) forgotPasswordBtn.addEventListener('click', abrirResetModal);
+    // D3.1: el correo y la confirmación enlazan al recuperador existente.
+    if (new URLSearchParams(window.location.search).get('recuperar') === '1') abrirResetModal();
     if (closeResetModalBtn) closeResetModalBtn.addEventListener('click', cerrarResetModal);
     if (resetModal) {
         resetModal.addEventListener('click', (event) => {
@@ -383,38 +372,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ── Filtrar solo números en campo documento ──
-    if (documentoInput) {
-        documentoInput.addEventListener('input', function () {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-    }
+    // El campo de acceso ya no filtra a solo números: también admite el correo.
 
 
 
-    // ── Modal Completar Registro Google ──
+    // ── RE-T.18.2: clínica y aceptación antes de crear la cuenta de Google ──
     const completeGoogleModal = document.getElementById('completeGoogleRegisterModal');
     const closeGoogleModalBtn = document.getElementById('closeGoogleModal');
     const completeGoogleForm = document.getElementById('completeGoogleForm');
     const completeGoogleBtn = document.getElementById('completeGoogleBtn');
     const googleUserEmailSpan = document.getElementById('googleUserEmail');
-    const googleDocumentoInput = document.getElementById('google_documento');
-    const googleTelefonoInput = document.getElementById('google_telefono');
+    const googleClinica = document.getElementById('google_id_clinica');
+    const textoBotonGoogle = '<span>Crear mi cuenta</span> <i class="ri-check-line"></i>';
 
-    // Exponer globalmente para que handleGoogleCredentialResponse lo pueda llamar
-    window.abrirGoogleModal = (email) => {
-        console.log("abrirGoogleModal ejecutándose para:", email);
-        if (!completeGoogleModal) {
-            console.error("No se encontró el elemento completeGoogleRegisterModal en el HTML.");
-            return;
-        }
+    window.abrirGoogleModal = (email, idClinica) => {
+        if (!completeGoogleModal) return;
         if (googleUserEmailSpan) googleUserEmailSpan.textContent = email;
+        if (googleClinica && idClinica) googleClinica.value = String(idClinica);
         completeGoogleModal.removeAttribute('hidden');
         document.body.classList.add('modal-open');
-        setTimeout(() => {
-            completeGoogleModal.classList.add('active');
-            console.log("Clase active añadida al modal.");
-        }, 10);
+        setTimeout(() => completeGoogleModal.classList.add('active'), 10);
     };
 
     const cerrarGoogleModal = () => {
@@ -425,55 +402,30 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (closeGoogleModalBtn) closeGoogleModalBtn.addEventListener('click', cerrarGoogleModal);
-    
-    // Validar inputs
-    if (googleDocumentoInput) {
-        googleDocumentoInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-    }
-    if (googleTelefonoInput) {
-        googleTelefonoInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-    }
 
     if (completeGoogleForm) {
         completeGoogleForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!completeGoogleForm.reportValidity()) return;
             completeGoogleBtn.disabled = true;
-            completeGoogleBtn.innerHTML = '<span>Guardando...</span> <i class="ri-loader-4-line animate-spin"></i>';
+            completeGoogleBtn.innerHTML = '<span>Creando cuenta...</span> <i class="ri-loader-4-line animate-spin"></i>';
 
             try {
-                const formData = new FormData(completeGoogleForm);
                 const res = await fetch('index.php?action=complete_google_register_ajax', {
                     method: 'POST',
-                    body: formData
+                    body: new FormData(completeGoogleForm)
                 });
                 const data = await res.json();
-
                 if (data.success) {
                     window.location.href = data.extra.redirect;
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: data.message,
-                        confirmButtonColor: '#0052FF'
-                    });
-                    completeGoogleBtn.disabled = false;
-                    completeGoogleBtn.innerHTML = '<span>Finalizar Registro</span> <i class="ri-check-line"></i>';
+                    return;
                 }
+                Swal.fire({ icon: 'error', title: 'No pudimos crear la cuenta', text: data.message, confirmButtonColor: '#0052FF' });
             } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Error de conexión',
-                    confirmButtonColor: '#0052FF'
-                });
-                completeGoogleBtn.disabled = false;
-                completeGoogleBtn.innerHTML = '<span>Finalizar Registro</span> <i class="ri-check-line"></i>';
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexión', confirmButtonColor: '#0052FF' });
             }
+            completeGoogleBtn.disabled = false;
+            completeGoogleBtn.innerHTML = textoBotonGoogle;
         });
     }
 });

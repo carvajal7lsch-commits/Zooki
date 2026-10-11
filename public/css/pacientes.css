@@ -1,0 +1,34 @@
+/* Presentación de pacientes extraída de la vista. */
+.pacientes-estilo-0 { display: none; }
+.pacientes-estilo-1 { display: none; }
+.pacientes-estilo-2 { display:block; color:#666; }
+.pacientes-estilo-3 { font-size: 0.9rem; font-weight: 500; }
+.pacientes-estilo-4 { width: 100%; margin-top: 5px; }
+.pacientes-estilo-5 { font-size: 0.9rem; font-weight: 500; }
+.pacientes-estilo-6 { font-size: 0.9rem; font-weight: 500; }
+.pacientes-estilo-7 { color:#ef4444 }
+.pacientes-estilo-8 { font-size: 0.9rem; font-weight: 500; }
+.pacientes-estilo-9 { margin-bottom: 1.5rem; }
+.pacientes-estilo-10 { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+.pacientes-estilo-11 { display: none; }
+.pacientes-estilo-12 { color: var(--text-muted); font-size: 0.75rem; }
+.pacientes-estilo-13 { display: none; }
+.pacientes-estilo-14 { color: var(--text-muted); font-size: 0.75rem; }
+.pacientes-estilo-15 { margin-bottom: 1.5rem; }
+.pacientes-estilo-16 { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+.pacientes-estilo-17 { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+.pacientes-estilo-18 { margin-top: 1.5rem; }
+.pacientes-estilo-19 { margin-bottom: 1.5rem; }
+.pacientes-estilo-20 { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+.pacientes-estilo-21 { display: none; }
+.pacientes-estilo-22 { color: var(--text-muted); font-size: 0.75rem; }
+.pacientes-estilo-23 { margin-bottom: 1.5rem; }
+.pacientes-estilo-24 { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+.pacientes-estilo-25 { background: #f0fdf4; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; color: #166534; border: 1px solid #bbf7d0; }
+.pacientes-estilo-26 { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+.pacientes-estilo-27 { margin-top: 1.5rem; }
+.pacientes-estilo-28 { background: #f0fdf4; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.85rem; color: #16a34a; }
+.pacientes-estilo-29 { margin-top: 1.5rem; }
+.consentimiento-presencial { display:grid; gap:.5rem; max-width:32rem; }
+.mascota-existente { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin:.75rem 0; }
+.mascota-existente img { width:48px; height:48px; border-radius:8px; object-fit:cover; }

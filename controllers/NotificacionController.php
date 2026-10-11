@@ -1,91 +1,78 @@
 <?php
 require_once __DIR__ . '/../models/NotificacionInterna.php';
+require_once __DIR__ . '/../helpers/Contexto.php';
+require_once __DIR__ . '/../helpers/Security.php';
 
+/**
+ * HU-T.6 — Notificaciones internas del contexto activo. La persona, la
+ * clínica y el rol salen de la sesión, nunca de la petición. En el portal
+ * del propietario todavía no hay avisos internos (HU-5.7, v2.1): la lista va
+ * vacía.
+ */
 class NotificacionController {
-    
+
     private $notificacionModel;
 
     // T-18: la sesion ya la abre el front controller (public/index.php).
-    public function __construct() {
-        $this->notificacionModel = new NotificacionInterna();
+    public function __construct($db = null) {
+        $this->notificacionModel = new NotificacionInterna($db);
+    }
+
+    /** [id_clinica, id_usuario, id_rol] del contexto, o null si no es de clínica. */
+    private function destinatario(): ?array {
+        $clinica = Contexto::clinicaActiva();
+        $usuario = Contexto::idUsuario();
+        $rol = Contexto::rolActivo();
+        return ($clinica === null || $usuario === null || $rol === null) ? null : [$clinica, $usuario, $rol];
     }
 
     // Retorna JSON con las notificaciones no leídas y las últimas 10
     public function obtenerNotificaciones() {
         header('Content-Type: application/json');
 
-        if (!isset($_SESSION['usuario_doc']) || !isset($_SESSION['usuario_id_rol'])) {
-            echo json_encode(['success' => false, 'message' => 'No autorizado']);
-            exit;
+        $d = $this->destinatario();
+        if ($d === null) {
+            echo json_encode(['success' => true, 'no_leidas' => 0, 'notificaciones' => []]);
+            return;
         }
-
-        $doc_usuario = $_SESSION['usuario_doc'];
-        $id_rol = $_SESSION['usuario_id_rol'];
 
         try {
-            $no_leidas = $this->notificacionModel->contarNoLeidas($doc_usuario, $id_rol);
-            $notificaciones = $this->notificacionModel->obtenerParaUsuario($doc_usuario, $id_rol, 10);
-
             echo json_encode([
                 'success' => true,
-                'no_leidas' => $no_leidas,
-                'notificaciones' => $notificaciones
+                'no_leidas' => $this->notificacionModel->contarNoLeidas(...$d),
+                'notificaciones' => $this->notificacionModel->obtenerParaUsuario(...$d)
             ]);
         } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            error_log('Notificaciones: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'No se pudieron cargar las notificaciones.']);
         }
-        exit;
     }
 
     // Marca una notificación específica como leída
     public function marcarLeida() {
         header('Content-Type: application/json');
 
-        if (!isset($_SESSION['usuario_doc']) || !isset($_SESSION['usuario_id_rol'])) {
-            http_response_code(401);
-            echo json_encode(['success' => false, 'message' => 'No autorizado']);
-            exit;
-        }
-
-        $id_notificacion = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-
+        $id_notificacion = isset($_POST['id']) ? (int) $_POST['id'] : 0;
         if ($id_notificacion <= 0) {
             echo json_encode(['success' => false, 'message' => 'ID inválido']);
-            exit;
+            return;
         }
 
-        $doc_usuario = $_SESSION['usuario_doc'];
-        $id_rol = $_SESSION['usuario_id_rol'];
-
-        // T-01 (RN-G02): la notificación tiene que ir dirigida a este usuario
-        // o a su rol. Sin esta comprobación bastaba enviar cualquier id para
-        // marcar como leída la notificación de otra persona.
-        if (!$this->notificacionModel->perteneceA($id_notificacion, $doc_usuario, $id_rol)) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'No tienes acceso a esta notificación.']);
-            exit;
+        // T-01 (RN-G02, RN-G13): la notificación tiene que ser de esta clínica
+        // y dirigida a esta persona o a su rol; si no, 403 y auditoría.
+        $d = $this->destinatario();
+        if ($d === null || !$this->notificacionModel->perteneceA($id_notificacion, ...$d)) {
+            Security::denegarRecursoAjeno('notificaciones_internas', $id_notificacion);
         }
 
-        $success = $this->notificacionModel->marcarLeida($id_notificacion, $doc_usuario, $id_rol);
-        echo json_encode(['success' => $success]);
-        exit;
+        echo json_encode(['success' => $this->notificacionModel->marcarLeida($id_notificacion, ...$d)]);
     }
 
     // Marca todas como leídas
     public function marcarTodasLeidas() {
         header('Content-Type: application/json');
 
-        if (!isset($_SESSION['usuario_doc']) || !isset($_SESSION['usuario_id_rol'])) {
-            echo json_encode(['success' => false, 'message' => 'No autorizado']);
-            exit;
-        }
-
-        $doc_usuario = $_SESSION['usuario_doc'];
-        $id_rol = $_SESSION['usuario_id_rol'];
-
-        $success = $this->notificacionModel->marcarTodasLeidas($doc_usuario, $id_rol);
-        echo json_encode(['success' => $success]);
-        exit;
+        $d = $this->destinatario();
+        echo json_encode(['success' => $d === null ? true : $this->notificacionModel->marcarTodasLeidas(...$d)]);
     }
 }
-?>

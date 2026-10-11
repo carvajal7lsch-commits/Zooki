@@ -2,11 +2,11 @@
 require_once __DIR__ . '/ReglaAtencion.php';
 
 /**
- * Qué recordatorio le toca a una dosis según los días que faltan (RN-303, HU-37).
+ * Qué recordatorio le toca a una dosis según los días que faltan (RN-303, HU-3.6).
  *
  * Antes el envío buscaba fechas exactas (hoy + 7 y hoy + 1): si la tarea no
  * corría ese día, el aviso se perdía para siempre. Ahora cada aviso tiene una
- * ventana y se envía el primer día que la tarea corra dentro de ella (RE-37.1).
+ * ventana y se envía el primer día que la tarea corra dentro de ella (RE-3.6.1).
  * Funciones puras para probarlas sin base de datos ni reloj.
  */
 final class VentanaRecordatorio
@@ -20,11 +20,11 @@ final class VentanaRecordatorio
     /** RN-303: el último aviso, 1 día antes. */
     public const DIAS_ULTIMO_AVISO = 1;
 
-    /** RE-37.2: tras estos envíos fallidos se deja de reintentar el mismo aviso. */
+    /** RE-3.6.2: tras estos envíos fallidos se deja de reintentar el mismo aviso. */
     public const MAX_INTENTOS = 3;
 
     /**
-     * RE-37.3: el día de hoy en la zona de la clínica. CURDATE() de MySQL
+     * RE-3.6.3: el día de hoy en la zona de la clínica. CURDATE() de MySQL
      * depende de la zona del servidor de base de datos, que en Docker es UTC.
      */
     public static function hoy(DateTimeImmutable $ahora): string

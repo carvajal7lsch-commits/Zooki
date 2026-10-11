@@ -526,3 +526,11 @@
     .agenda-panel { max-height: 520px; }
     .agenda-toolbar__filters { margin-left: 0; }
 }
+
+/* C9: pista de arrastre aprobada en la revisión de C6. */
+.agenda-arrastre {
+    color: #64748b;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin: 0 0 0.8rem;
+}

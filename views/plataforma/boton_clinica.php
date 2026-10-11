@@ -1,0 +1,1 @@
+<button type="button" class="action-btn-mini" data-gestionar-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>" data-estado="<?= $e($clinica['estado']) ?>" data-plan="<?= $e($clinica['id_plan']) ?>" data-suscripcion="<?= $e($clinica['suscripcion']) ?>">Gestionar</button>

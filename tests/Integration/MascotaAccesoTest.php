@@ -1,104 +1,156 @@
 <?php
-
 use PHPUnit\Framework\TestCase;
-
+require_once __DIR__ . '/../Support/DosClinicas.php';
 require_once __DIR__ . '/../../models/Mascota.php';
+require_once __DIR__ . '/../../models/PropietarioClinica.php';
+require_once __DIR__ . '/../../models/AvisoFichaMascota.php';
+require_once __DIR__ . '/../../controllers/MascotaController.php';
 
-/**
- * HU-35 — "Se valida que la mascota exista" y "se verifica que el actor tenga
- * permiso sobre esa mascota" (VD-VAC-01, VD-HC-03).
- *
- * getPropietarioSiActiva() es la comprobacion que usan los tres registros
- * clinicos antes de insertar: responde en una sola consulta si la mascota
- * existe, si sigue activa y de quien es (lo que necesita RN-G02 en el portal).
- */
-class MascotaAccesoTest extends TestCase
+final class MascotaAccesoTest extends TestCase
 {
-    private $db;
-    private $mascota;
-
+    private PDO $db;
+    private Mascota $modelo;
     protected function setUp(): void
     {
-        $this->db = new PDO('sqlite::memory:');
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        $this->db->exec("
-            CREATE TABLE mascotas (
-                id_mascota INTEGER PRIMARY KEY,
-                numero_historia_clinica TEXT,
-                doc_propietario TEXT,
-                id_especie INTEGER,
-                id_raza INTEGER,
-                nombre TEXT,
-                fecha_nacimiento TEXT,
-                peso REAL,
-                sexo TEXT,
-                color TEXT,
-                estado INTEGER DEFAULT 1,
-                url_foto TEXT,
-                patron TEXT
-            )
-        ");
-
-        $this->crearMascota(1, '1080361993', 1);  // activa
-        $this->crearMascota(2, '12345678', 1);    // activa, de otro dueno
-        $this->crearMascota(3, '1080361993', 0);  // inactiva (baja logica)
-
-        $this->mascota = new Mascota($this->db);
+        $this->db=DosClinicas::sqlite(); DosClinicas::crearMascotasSqlite($this->db);
+        $this->modelo=new Mascota($this->db); $this->comoVet(1);
+        $_POST=[]; $_GET=[]; $_FILES=[]; $_SERVER['REQUEST_METHOD']='POST';
     }
-
-    private function crearMascota(int $id, string $doc, int $estado): void
+    protected function tearDown(): void { $_SESSION=[]; $_POST=[]; $_GET=[]; $_FILES=[]; }
+    private function comoVet(int $clinica): void
     {
-        $stmt = $this->db->prepare(
-            "INSERT INTO mascotas (id_mascota, doc_propietario, nombre, peso, estado)
-             VALUES (:id, :doc, 'Firulais', 5.0, :estado)"
-        );
-        $stmt->execute([':id' => $id, ':doc' => $doc, ':estado' => $estado]);
+        $_SESSION=['id_usuario'=>$clinica === 1 ? 2 : 4];
+        Contexto::activar(Contexto::deClinica($clinica,'Clínica',Roles::VETERINARIO),1);
     }
-
-    public function testDevuelveElPropietarioDeUnaMascotaActiva()
+    private function rechazo(callable $accion): void
     {
-        $this->assertSame('1080361993', $this->mascota->getPropietarioSiActiva(1));
-        $this->assertSame('12345678', $this->mascota->getPropietarioSiActiva(2));
+        try { $accion(); $this->fail('Debió rechazar el acceso.'); }
+        catch (AccesoDenegado $e) { $this->assertSame(403,$e->codigo()); }
     }
-
-    /** El caso que abria el hueco: un id_mascota que no existe. */
-    public function testDevuelveNullSiLaMascotaNoExiste()
+    public function testLaMascotaDeANoSeVeNiSeEditaDesdeB(): void
     {
-        $this->assertNull($this->mascota->getPropietarioSiActiva(999));
-        $this->assertNull($this->mascota->getPropietarioSiActiva(0));
-        $this->assertNull($this->mascota->getPropietarioSiActiva(-1));
+        $this->assertCount(1,$this->modelo->getAll()); $this->comoVet(2);
+        $this->assertSame([],$this->modelo->getAll()); $this->assertSame([],$this->modelo->search('Luna'));
+        $this->assertSame([],$this->modelo->getByPropietario(6));
+        foreach ([fn()=>$this->modelo->getById(1),fn()=>$this->modelo->update(['id_mascota'=>1,'peso'=>10]),
+            fn()=>$this->modelo->updateStatus(1,0),fn()=>$this->modelo->getPropietarioSiActiva(1)] as $accion) $this->rechazo($accion);
+        $this->assertSame(4,(int)$this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica=2 AND id_usuario=4 AND accion='OTHER'")->fetchColumn());
+        $this->assertSame('8.5',(string)$this->db->query('SELECT peso FROM mascotas WHERE id_mascota=1')->fetchColumn());
     }
-
-    /**
-     * RN-206 deja la historia clinica intacta, pero una mascota dada de baja
-     * no debe seguir recibiendo registros nuevos.
-     */
-    public function testDevuelveNullSiLaMascotaEstaInactiva()
+    public function testConfirmarPropietarioYVincularMascotaNoDuplicaNiAsignaHC(): void
     {
-        $this->assertNull($this->mascota->getPropietarioSiActiva(3));
+        $this->comoVet(2); $propietario=new PropietarioClinica($this->db);
+        $this->rechazo(fn()=>$this->modelo->vincular(1,6));
+        $solicitud=$propietario->solicitarVinculo('fabio@zooki.test');
+        $this->assertFalse($this->modelo->esPropietarioValido(6));
+        $this->assertTrue($propietario->confirmarVinculo($solicitud['id_enlace'],$solicitud['token']));
+        $this->modelo->vincular(1,6); $this->modelo->vincular(1,6);
+        $m=$this->modelo->getById(1);
+        $this->assertSame(str_repeat('a',43),$m['token_carnet']); $this->assertNull($m['numero_historia_clinica']);
+        $this->assertSame(1,(int)$this->db->query('SELECT COUNT(*) FROM mascotas')->fetchColumn());
+        $this->assertSame(2,(int)$this->db->query('SELECT COUNT(*) FROM mascota_clinica')->fetchColumn());
+        $this->assertSame(1,(int)$this->db->query("SELECT COUNT(*) FROM auditoria_mascotas WHERE campo_modificado='vinculo_clinica' AND id_clinica=2 AND id_usuario=4")->fetchColumn());
     }
-
-    /** El parametro va tipado a entero, asi que no hay via de inyeccion. */
-    public function testNoSeDejaInyectarPorElIdentificador()
+    public function testBSoloEditaDatosNoProtegidosYSeAuditaYNotifica(): void
     {
-        $this->assertNull($this->mascota->getPropietarioSiActiva("1 OR 1=1"));
-        $this->assertNull($this->mascota->getPropietarioSiActiva("999 UNION SELECT doc_propietario FROM mascotas"));
-
-        // La tabla sigue intacta despues de los intentos.
-        $this->assertSame(3, (int) $this->db->query("SELECT COUNT(*) FROM mascotas")->fetchColumn());
+        $this->db->exec("INSERT INTO propietario_clinica (id_propietario,id_clinica) VALUES (6,2)");
+        $this->comoVet(2); $this->modelo->vincular(1,6);
+        foreach (['id_especie'=>2,'id_raza'=>50,'raza_indicada'=>'Nueva raza','sexo'=>'Macho','fecha_nacimiento'=>'2023-01-01'] as $campo=>$valor) {
+            $this->rechazo(fn()=>$this->modelo->update(['id_mascota'=>1,$campo=>$valor]));
+        }
+        $this->assertTrue($this->modelo->update(['id_mascota'=>1,'peso'=>'10.25','nombre'=>'Luna Sur','colores'=>[1,2]]));
+        $this->assertSame(1,(int)$this->modelo->getById(1)['id_especie']);
+        $this->assertFalse($this->modelo->getById(1)['identidad_editable']);
+        $auditoria=$this->db->query("SELECT campo_modificado FROM auditoria_mascotas WHERE campo_modificado <> 'vinculo_clinica'")->fetchAll(PDO::FETCH_COLUMN);
+        sort($auditoria); $this->assertSame(['colores','nombre','peso'],$auditoria);
+        $avisos=[]; (new AvisoFichaMascota($this->db))->enviarPendientes(1,function ($aviso) use (&$avisos) { $avisos[]=$aviso; return true; });
+        $this->assertCount(1,$avisos); $this->assertStringContainsString('Clínica Sur',$avisos[0]['mensaje']);
+        $this->assertStringContainsString('peso',$avisos[0]['mensaje']); $this->assertSame('fabio@zooki.test',$avisos[0]['destinatario_email']);
+        $this->assertSame('enviado',$this->db->query('SELECT estado FROM notificaciones')->fetchColumn());
     }
-
-    /**
-     * RN-G02: el dueno de una mascota no es el de otra. La comprobacion de
-     * propiedad del portal se apoya en comparar este documento con el de la
-     * sesion, asi que tienen que ser distinguibles.
-     */
-    public function testDistingueAlPropietarioDeCadaMascota()
+    public function testEdicionDePesoNoEscribeIdentidadNiColores(): void
     {
-        $duenoUno = $this->mascota->getPropietarioSiActiva(1);
-        $duenoDos = $this->mascota->getPropietarioSiActiva(2);
-
-        $this->assertNotSame($duenoUno, $duenoDos);
+        $this->db->exec("INSERT INTO propietario_clinica (id_propietario,id_clinica) VALUES (6,2)");
+        $this->comoVet(2); $this->modelo->vincular(1,6);
+        $this->db->exec("CREATE TRIGGER proteger_identidad BEFORE UPDATE OF id_especie,id_raza,raza_indicada,sexo,fecha_nacimiento ON mascotas BEGIN SELECT RAISE(ABORT,'identidad sobrescrita'); END");
+        $this->db->exec("CREATE TRIGGER proteger_colores BEFORE DELETE ON mascota_colores BEGIN SELECT RAISE(ABORT,'colores sobrescritos'); END");
+        $this->assertTrue($this->modelo->update(['id_mascota'=>1,'peso'=>'11']));
+        $this->assertSame('11',(string)$this->modelo->getById(1)['peso']);
+    }
+    public function testVinculoConPropietarioAjenoDejaAuditoriaTrasRollback(): void
+    {
+        $this->rechazo(fn()=>$this->modelo->vincular(1,5));
+        $this->assertSame(1,(int)$this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE accion='OTHER'")->fetchColumn());
+        $this->assertSame(1,(int)$this->db->query('SELECT COUNT(*) FROM mascota_clinica')->fetchColumn());
+    }
+    public function testRegistrarTokenAleatorioUnicoYColoresSinColumnasV1(): void
+    {
+        $tokens=[];
+        for ($i=0;$i<12;$i++) {
+            $id=$this->modelo->insert(['id_propietario'=>6,'nombre'=>'Nueva ' . $i,'id_especie'=>1,'id_raza'=>49,
+                'fecha_nacimiento'=>'2023-01-01','peso'=>'3.50','sexo'=>'Macho','colores'=>[1]]);
+            $m=$this->modelo->getById($id); $tokens[]=$m['token_carnet'];
+            $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/D',$m['token_carnet']);
+            $this->assertNull($m['numero_historia_clinica']); $this->assertSame(1,(int)$m['id_clinica_registro']);
+            $this->assertSame('1',$m['colores_ids']);
+        }
+        $this->assertCount(12,array_unique($tokens));
+        $columnas=array_column($this->db->query('PRAGMA table_info(mascotas)')->fetchAll(PDO::FETCH_ASSOC),'name');
+        $this->assertNotContains('color',$columnas); $this->assertNotContains('numero_historia_clinica',$columnas);
+    }
+    public function testBusquedaPorMascotaPropietarioYDocumentoYMinimoTresCaracteres(): void
+    {
+        $inicio=microtime(true);
+        foreach (['Luna','Fabio','1000000006'] as $termino) {
+            $resultado=$this->modelo->search($termino);
+            $this->assertSame([1],array_map('intval',array_column($resultado,'id_mascota')));
+            foreach (['nombre','nombre_especie','propietario_nombre','url_foto'] as $campo) $this->assertArrayHasKey($campo,$resultado[0]);
+        }
+        $this->assertLessThan(2,microtime(true)-$inicio);
+        $this->assertSame([],$this->modelo->search('Lu'));
+        $this->assertCount(1,$this->modelo->getByPropietario(6));
+        $this->assertFalse(method_exists($this->modelo,'delete'));
+    }
+    public function testAltaSinPropietarioYFotoInvalidaNoGuardaMascota(): void
+    {
+        $this->rechazo(fn()=>$this->modelo->insert(['nombre'=>'Toby']));
+        $temporal=tempnam(sys_get_temp_dir(),'foto_c3_');
+        try {
+            file_put_contents($temporal,base64_decode('R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='));
+            foreach ([42,FotoMascota::MAX_BYTES+1] as $tamano) {
+                $_FILES=['foto'=>['error'=>UPLOAD_ERR_OK,'size'=>$tamano,'tmp_name'=>$temporal,'name'=>'foto.jpg']];
+                $_POST=['nombre'=>'Toby'];
+                ob_start();
+                try { (new MascotaController($this->db))->registrarAjax(); $respuesta=json_decode(ob_get_contents(),true); }
+                finally { ob_end_clean(); }
+                $this->assertFalse($respuesta['success']); $this->assertSame(422,http_response_code());
+            }
+        } finally { unlink($temporal); http_response_code(200); }
+        $this->assertSame(1,(int)$this->db->query('SELECT COUNT(*) FROM mascotas')->fetchColumn());
+    }
+    public function testInactivarConservaFichaYNoSaleEnBusquedaActiva(): void
+    {
+        $this->modelo->updateStatus(1,0);
+        $this->assertSame([],$this->modelo->search('Luna')); $this->assertSame([],$this->modelo->getAll());
+        $this->assertSame(0,$this->modelo->getEstado(1)); $this->assertCount(1,$this->modelo->getAll(true));
+        $this->assertNull($this->modelo->getPropietarioSiActiva(1));
+    }
+    public function testSinContextoFallaCerrado(): void
+    {
+        Contexto::salir(); $this->rechazo(fn()=>$this->modelo->getAll()); $this->rechazo(fn()=>$this->modelo->search('Luna'));
+    }
+    public function testPeticionDirectaDelControladorNoOcultaUn403(): void
+    {
+        $this->comoVet(2); $_POST=['id_mascota'=>'1','peso'=>'10'];
+        ob_start(); try { $this->rechazo(fn()=>(new MascotaController($this->db))->actualizarAjax()); } finally { ob_end_clean(); }
+        $this->assertSame('8.5',(string)$this->db->query('SELECT peso FROM mascotas WHERE id_mascota=1')->fetchColumn());
+    }
+    public function testUnaAuditoriaFallidaDeshaceFichaColoresYNotificacion(): void
+    {
+        $this->db->exec("CREATE TRIGGER fallo_auditoria BEFORE INSERT ON auditoria_mascotas BEGIN SELECT RAISE(ABORT,'fallo'); END");
+        try { $this->modelo->update(['id_mascota'=>1,'peso'=>'9','colores'=>[2]]); $this->fail('Debió fallar'); }
+        catch (PDOException $e) { $this->assertStringContainsString('fallo',$e->getMessage()); }
+        $m=$this->modelo->getById(1); $this->assertSame('8.5',(string)$m['peso']); $this->assertSame('1',$m['colores_ids']);
+        $this->assertSame(0,(int)$this->db->query('SELECT COUNT(*) FROM notificaciones')->fetchColumn());
     }
 }

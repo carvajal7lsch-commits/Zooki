@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 /**
  * HU-42 / HU-39 — Panel "Mi perfil" del personal de la clínica.
  *
@@ -6,6 +7,7 @@
  * $perfil (cuenta en sesión), $rolNombre, $cuentaGoogle, $pideActual y
  * $cuenta (miembro desde, acceso anterior, intentos fallidos y actividad).
  */
+require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 $e = static fn($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $partes = array_values(array_filter(explode(' ', trim($perfil['nombre_completo'] ?? ''))));
 $iniciales = mb_strtoupper(mb_substr($partes[0] ?? '', 0, 1) . mb_substr($partes[1] ?? '', 0, 1)) ?: 'U';
@@ -44,18 +46,19 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             </header>
 
             <dl class="perfil-readonly">
-                <div><dt>Documento</dt><dd><?= $e(trim(($perfil['tipo_documento'] ?? '') . ' ' . $perfil['documento'])) ?></dd></div>
+                <div><dt>Documento</dt><dd data-documento-cuenta><?= $e(trim(($perfil['tipo_documento'] ?? '') . ' ' . $perfil['documento'])) ?></dd></div>
                 <div><dt>Rol</dt><dd><?= $e($rolNombre) ?></dd></div>
             </dl>
 
-            <form id="perfilContactoForm" class="perfil-form" novalidate>
+            <form id="perfilContactoForm" class="perfil-form" novalidate data-validacion-cuenta>
                 <div class="perfil-field">
                     <label for="perfilEmail">Correo electrónico</label>
-                    <input type="email" id="perfilEmail" class="perfil-input" value="<?= $e($perfil['email']) ?>" autocomplete="email" required>
+                    <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="perfilEmail" readonly class="perfil-input" value="<?= $e($perfil['email']) ?>" autocomplete="email" required>
                 </div>
                 <div class="perfil-field">
                     <label for="perfilTelefono">Teléfono</label>
-                    <input type="tel" id="perfilTelefono" class="perfil-input" value="<?= $e($perfil['telefono']) ?>" placeholder="Ej. 300 123 4567" autocomplete="tel">
+                    <?php // D1: la misma regla de teléfono que valida el servidor. ?>
+                    <input type="tel" id="perfilTelefono" class="perfil-input" value="<?= $e($perfil['telefono']) ?>" placeholder="Ej. 300 123 4567" autocomplete="tel" minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?>>
                 </div>
                 <div class="perfil-form__foot">
                     <p class="perfil-msg" id="perfilContactoMsg" role="status" aria-live="polite"></p>
@@ -64,7 +67,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             </form>
 
             <!-- Solo lectura a propósito: el rol lo asigna el administrador (RN-701). -->
-            <p class="perfil-hint"><i class="fas fa-lock"></i> El nombre, el documento y el rol los gestiona el administrador de la clínica.</p>
+            <p class="perfil-hint"><i class="fas fa-lock"></i> El rol lo gestiona el administrador. Puedes corregir tus datos de acceso confirmando tu identidad.</p>
         </section>
 
         <!-- Contraseña -->
@@ -76,12 +79,13 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                     : 'Tu cuenta entra con Google. Crea una contraseña para entrar también sin Google.' ?></p>
             </header>
 
-            <form id="perfilPasswordForm" class="perfil-form" novalidate>
+            <form id="perfilPasswordForm" class="perfil-form" novalidate data-validacion-cuenta>
+                <?php if (!$pideActual) require __DIR__ . '/../partials/confirmacion_google.php'; ?>
                 <?php if ($pideActual): ?>
                     <div class="perfil-field">
                         <label for="perfilPwdActual">Contraseña actual</label>
                         <div class="perfil-clave">
-                            <input type="password" id="perfilPwdActual" class="perfil-input" autocomplete="current-password" required>
+                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdActual" class="perfil-input" autocomplete="current-password" required>
                             <button type="button" class="perfil-clave__ver" data-ver="perfilPwdActual" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                         </div>
                     </div>
@@ -89,7 +93,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 <div class="perfil-field">
                     <label for="perfilPwdNueva">Nueva contraseña</label>
                     <div class="perfil-clave">
-                        <input type="password" id="perfilPwdNueva" class="perfil-input" autocomplete="new-password" aria-describedby="perfilPwdRequisitos" required>
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdNueva" data-cuenta-ayuda="perfilPwdFeedback" class="perfil-input" autocomplete="new-password" aria-describedby="perfilPwdRequisitos" required>
                         <button type="button" class="perfil-clave__ver" data-ver="perfilPwdNueva" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                     </div>
                     <ul class="perfil-requisitos" id="perfilPwdRequisitos">
@@ -103,7 +107,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 <div class="perfil-field">
                     <label for="perfilPwdConfirmar">Confirmar contraseña</label>
                     <div class="perfil-clave">
-                        <input type="password" id="perfilPwdConfirmar" class="perfil-input" autocomplete="new-password" required>
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdConfirmar" data-cuenta-ayuda="perfilPwdCoincide" class="perfil-input" autocomplete="new-password" required>
                         <button type="button" class="perfil-clave__ver" data-ver="perfilPwdConfirmar" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                     </div>
                     <small class="perfil-field__hint" id="perfilPwdCoincide" aria-live="polite"></small>
@@ -152,6 +156,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             </div>
         </section>
     </div>
+    <?php require __DIR__ . "/../partials/cambios_identidad.php"; ?>
 </div>
 
-<script src="js/perfil.js?v=2"></script>
+<script src="js/perfil.js?v=d21"></script>

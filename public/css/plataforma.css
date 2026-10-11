@@ -1,0 +1,58 @@
+/* E2: los componentes son de styles/dashboard/usuarios; aquí solo la composición del panel. */
+.plataforma-contenido [hidden] {
+    display: none !important;
+}
+.plataforma-contenido section {
+    margin-bottom: 2rem;
+}
+.plataforma-filtros {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: end;
+    margin-bottom: 1.5rem;
+}
+.plataforma-ficha {
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+.plataforma-ficha dl {
+    margin: 1rem 0;
+}
+.plataforma-ficha dd {
+    margin-left: 0;
+    overflow-wrap: anywhere;
+}
+.plataforma-uso {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    font-size: .85rem;
+}
+.plataforma-contenido textarea {
+    width: 100%;
+    min-height: 5rem;
+    padding: .75rem;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    font: inherit;
+}
+.plataforma-contenido [data-error-campo] {
+    color: #b42318;
+}
+.plataforma-contenido .users-modal__body {
+    overflow-y: auto;
+}
+.plataforma-contenido .users-modal__body form + form {
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+}
+.plataforma-ayuda {
+    color: var(--text-secondary, #64748b);
+}
+@media (max-width: 767px) {
+    .plataforma-filtros > * {
+        width: 100%;
+    }
+}

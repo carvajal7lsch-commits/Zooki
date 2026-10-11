@@ -113,7 +113,7 @@ class PoliticaPasswordTest extends TestCase
 
     /**
      * En una clinica el documento y el nombre los ve todo el personal de
-     * recepcion: son lo primero que probaria alguien de adentro.
+     * el personal: son lo primero que probaria alguien de adentro.
      */
     public function testRechazaLosDatosDelPropioUsuario()
     {

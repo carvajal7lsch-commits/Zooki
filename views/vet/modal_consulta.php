@@ -1,27 +1,27 @@
 <!-- MODAL NUEVA CONSULTA -->
-<div id="modalConsulta" class="users-modal" onclick="if(event.target===this) closeModal('modalConsulta')">
+<div id="modalConsulta" class="users-modal" data-ui-accion="cerrar-consulta" data-ui-fondo>
     <div class="modal-content users-modal__panel modal-lg">
         <div class="modal-header">
             <h3 class="modal-header-title">
                 <i class="fas fa-stethoscope icon-primary"></i>
                 Atención Médica: <span id="consultationPetName"></span>
             </h3>
-            <button type="button" class="close-modal" onclick="closeModal('modalConsulta')" aria-label="Cerrar">
+            <button type="button" class="close-modal" data-ui-accion="cerrar-consulta" aria-label="Cerrar">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         
         <div class="modal-tabs">
-            <button class="modal-tab-btn active" onclick="switchModalTab(event, 'tabMotivo')">
+            <button class="modal-tab-btn active" data-ui-accion="pestana-consulta" data-tab="tabMotivo">
                 <i class="fas fa-comment-medical"></i> Motivo
             </button>
-            <button class="modal-tab-btn" onclick="switchModalTab(event, 'tabSignos')">
+            <button class="modal-tab-btn" data-ui-accion="pestana-consulta" data-tab="tabSignos">
                 <i class="fas fa-heartbeat"></i> Signos
             </button>
-            <button class="modal-tab-btn" onclick="switchModalTab(event, 'tabResolucion')">
+            <button class="modal-tab-btn" data-ui-accion="pestana-consulta" data-tab="tabResolucion">
                 <i class="fas fa-clipboard-check"></i> Plan
             </button>
-            <button class="modal-tab-btn" onclick="switchModalTab(event, 'tabArchivos')">
+            <button class="modal-tab-btn" data-ui-accion="pestana-consulta" data-tab="tabArchivos">
                 <i class="fas fa-paperclip"></i> Archivos
             </button>
         </div>
@@ -85,7 +85,7 @@
                     <div class="treatments-section">
                         <div class="section-title-action">
                             <label>Tratamientos</label>
-                            <button type="button" class="btn-add-treatment" onclick="addTreatmentRow()"><i class="fas fa-plus"></i> Agregar</button>
+                            <button type="button" class="btn-add-treatment" data-ui-accion="agregar-tratamiento"><i class="fas fa-plus"></i> Agregar</button>
                         </div>
                         <div id="treatmentsList"></div>
                     </div>
@@ -102,7 +102,7 @@
             </div>
             
             <div class="users-modal__footer">
-                <button type="button" class="btn-modal-secondary" onclick="closeModal('modalConsulta')">Cancelar</button>
+                <button type="button" class="btn-modal-secondary" data-ui-accion="cerrar-consulta">Cancelar</button>
                 <button type="submit" class="btn-modal-primary">Guardar Consulta</button>
             </div>
         </form>
