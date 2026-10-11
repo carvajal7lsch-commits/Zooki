@@ -381,6 +381,7 @@ El respaldo v1 **no carga** en el esquema v2: para volver se usa la imagen v1.12
    DROP DATABASE <DB_NAME>;
    CREATE DATABASE <DB_NAME> CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
    USE <DB_NAME>;
+   SET SESSION sql_mode = '';
    SOURCE /tmp/respaldo-v1.sql;
    EXIT;
    ```
