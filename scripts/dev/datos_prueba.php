@@ -6,7 +6,7 @@
  *   php scripts/dev/datos_prueba.php --si             los crea o los actualiza
  *   php scripts/dev/datos_prueba.php --si --clave=X   misma clave para todos (D2.1)
  *
- * Crea dos clínicas activas (Norte y Sur), un administrador y un veterinario
+ * Crea dos clínicas activas (Norte y Sur) en plan Profesional (F0), un administrador y un veterinario
  * en cada una, una persona con rol en las dos clínicas que además es
  * propietaria, un propietario de Norte y un super-administrador. Las
  * contraseñas se generan en cada corrida y se imprimen en pantalla: nunca
@@ -108,7 +108,7 @@ if ($ajenas) {
 
 echo "Base de destino: {$base} ({$conexion})" . PHP_EOL;
 if (!in_array('--si', $argv ?? [], true)) {
-    salir('Se crearían 2 clínicas y ' . count(PERSONAS) . ' personas de prueba. Vuelve a correrlo con --si para hacerlo.', 0);
+    salir('Se crearían 2 clínicas en plan Profesional y ' . count(PERSONAS) . ' personas de prueba. Vuelve a correrlo con --si para hacerlo.', 0);
 }
 
 // ── Datos ─────────────────────────────────────────────────────────────────
@@ -131,6 +131,7 @@ try {
         }
         $idClinica[$clave] = (int) $id;
         (new InicializadorClinica($db))->copiar((int) $id);
+        DatosPrueba::planProfesional($db, (int) $id);
     }
 
     foreach (PERSONAS as [$nombre, $documento, $correo, $roles, $propietarioEn, $esSuperAdmin]) {

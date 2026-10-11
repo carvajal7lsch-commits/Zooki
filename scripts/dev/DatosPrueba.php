@@ -38,6 +38,34 @@ final class DatosPrueba
         return ['propias' => $propias, 'ajenas' => $ajenas];
     }
 
+    /**
+     * F0 (decisión del usuario, 2026-10-11): las clínicas de prueba quedan en
+     * el plan Profesional con una suscripción activa y al día, para que sus
+     * tres personas no choquen con el tope del gratuito (HU-0.4). Solo para
+     * estas clínicas de scripts/dev; nunca para la base de producción.
+     * Repetible: devuelve true si creó la suscripción ahora.
+     */
+    public static function planProfesional(PDO $db, int $idClinica): bool
+    {
+        $plan = (int) $db->query("SELECT id_plan FROM planes WHERE nombre = 'Profesional'")->fetchColumn();
+        if ($plan === 0) {
+            throw new RuntimeException('Falta el plan Profesional en la semilla.');
+        }
+        $db->prepare('UPDATE clinicas SET id_plan = ? WHERE id_clinica = ?')->execute([$plan, $idClinica]);
+        $ultima = $db->prepare('SELECT id_plan, estado, al_dia FROM suscripciones WHERE id_clinica = ? ORDER BY id_suscripcion DESC LIMIT 1');
+        $ultima->execute([$idClinica]);
+        $fila = $ultima->fetch(PDO::FETCH_ASSOC);
+        if ($fila && (int) $fila['id_plan'] === $plan && $fila['estado'] === 'activa' && (int) $fila['al_dia'] === 1) {
+            return false;
+        }
+        // La que estaba activa (la del gratuito) se cierra: queda una sola vigente.
+        $db->prepare("UPDATE suscripciones SET estado = 'cancelada', fecha_fin = ? WHERE id_clinica = ? AND estado = 'activa'")
+            ->execute([date('Y-m-d'), $idClinica]);
+        $db->prepare("INSERT INTO suscripciones (id_clinica, id_plan, estado, ciclo, al_dia, fecha_inicio) VALUES (?, ?, 'activa', 'mensual', 1, ?)")
+            ->execute([$idClinica, $plan, date('Y-m-d')]);
+        return true;
+    }
+
     /** Valor de --clave=<clave>, o null si no se pasó. */
     public static function claveDeArgumentos(array $argumentos): ?string
     {
