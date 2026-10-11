@@ -1,6 +1,6 @@
 # M0-T — Base SaaS, identidad y aislamiento
 
-> Estado: en curso — A, B y C terminadas; D1 revisada y aprobada (2026-10-08); D2 revisada con corrección (2026-10-08); D2.1 y D2.2 revisadas y aprobadas (2026-10-09); D3 revisada y aprobada; D3.1 entregada, pendiente de revisión (2026-10-10).
+> Estado: en curso — A a E cerradas; F0 (preparación del corte, versión 2.0.0-alpha.1) entregada, pendiente de revisión (2026-10-11); falta F1 (el corte en producción, con la guía `specs/M0-F-corte-produccion.md`).
 > Entrega: v2.0 · Fecha: 2026-10-06
 > C8/C9 (2026-10-08): escribe **Codex**, revisa **Claude** (sesión de revisión).
 > Reparto del resto de M0 (2026-10-06): **Claude Code** en el equipo del usuario escribe cada etapa; **Claude** (sesión de revisión, sin editar los mismos archivos) revisa el diff, las pruebas y la trazabilidad. Codex queda disponible como revisor alterno. El usuario puede cambiarlo antes de cada etapa.
@@ -19,17 +19,17 @@
 
 ## 2. Trazabilidad
 
-| HU de v2.0 | RE incluidos | RN/RNF principales | Etapa | Evidencia de aceptación |
+| HU de v2.0 | RE incluidos | RN/RNF principales | Etapa | Evidencia de aceptación (pruebas automáticas; suite completa en verde en F0) |
 |---|---|---|---|---|
-| HU-T.15 | RE-T.15.1–5 | RN-G13, RN-G14, RN-001, RN-004, RNF-11 | C (cerrada) | Dos clínicas: petición cruzada 403, auditoría y ninguna consulta o modificación ajena; evidencia completa en C9. |
-| HU-T.16 | RE-T.16.1–4 | RN-G17, RN-G05, RNF-13, RNF-14 | D | Sesión vencida, AJAX 401, cookie segura y auditoría. |
-| HU-T.17 | RE-T.17.1–5 | RN-G01, RN-G06, RN-G13, RN-G18 | C | Una persona con rol de propietario y de personal en dos clínicas cambia de contexto sin mezclar permisos. |
-| HU-T.19 | RE-T.19.1–4 | RN-G19, RN-G20 | D | Aceptación del titular antes de crear la cuenta, salvo personal pendiente e inerte por 72 horas; activación con prueba de versión, medio, fecha e IP. |
-| HU-5.8 | RE-5.8.1–6 | RN-109, RN-G06 | D | Una identidad global se vincula a las clínicas que elige, sin duplicar el correo ni exponerla a otra clínica. |
-| HU-0.1 | RE-0.1.1–10 | RN-001, RN-002, RN-010, RN-011, RN-G19, RN-G20 | D | Alta pública con NIT válido, CAPTCHA, límites, consentimiento y clínica pendiente. |
-| HU-0.2 | RE-0.2.1–5 | RN-002, RN-003, RN-005, RN-G11 | D | La verificación activa la clínica y asigna el plan gratuito; un enlace vencido no la activa. |
-| HU-0.3 | RE-0.3.1–5 | RN-004, RN-012, RN-G13, RN-G14 | E | El panel opera sobre clínicas sin abrir historia clínica. **RE-0.3.6 (moderar reseñas) se verifica en v2.1 junto con HU-8.1**, porque en v2.0 aún no existen reseñas. |
-| HU-0.4 | RE-0.4.1–7 | RN-003, RN-005, RN-006, RN-420 | E | Topes gratuitos por clínica; una mascota vinculada cuenta; una urgencia roja nunca se bloquea. |
+| HU-T.15 | RE-T.15.1–5 | RN-G13, RN-G14, RN-001, RN-004, RNF-11 | C | **.1** cada módulo filtra por la clínica activa: `SeguridadClinicaTest`, `MascotaAccesoTest`, `CitaTest::testUnaCitaDeANoSeVeNiSeModificaDesdeB`, `AgendaPeticionesTest`, `ConfiguracionClinicaTest`, `RecordatorioTest`, `NotificacionAccesoTest` (anexos C1–C9). **.2** 403 y auditoría: `SeguridadClinicaTest::testUnaPeticionAOtraClinicaDa403YQuedaEnAuditoria`. **.3** rol, CSRF y clínica en cada petición: `SeguridadClinicaTest`, `AutorizacionRolTest`. **.4** super-administrador sin datos clínicos: `SeguridadClinicaTest::testElSuperAdministradorNoEntraADatosClinicos`, `PlataformaTest`. **.5** dos clínicas en SQLite y en MySQL: `DosClinicas`, `BaseV2MysqlTest::testElFixtureDeDosClinicasCargaEnElEsquemaReal`. |
+| HU-T.16 | RE-T.16.1–4 | RN-G17, RN-G05, RNF-13, RNF-14 | D1 | **.1–.4** `SesionTest` (30 minutos, 401 en AJAX, cookie HttpOnly/SameSite/Secure, cierre auditado) y `D1Sesion.test.cjs` (el 401 lleva al login). Cierre de las demás sesiones al cambiar la contraseña (RE-T.2.5): `D22CorreccionTest`. |
+| HU-T.17 | RE-T.17.1–3 y 17.5 | RN-G01, RN-G06, RN-G13, RN-G18 | C | **.1** `ContextoTest::testUnaPersonaTieneSusRolesComoContextosSeparados`, `D22CorreccionTest::testAceptarCreaElRolYConservaLosDemas`. **.2** `ContextoTest`, `SeguridadClinicaTest::testSinContextoSeLlevaAlSelector`. **.3** `SeguridadClinicaTest::testDosContextosNoMezclanPermisos`, `testUnContextoRetiradoSeQuitaDeLaSesion`. **.5** `ContextoTest::testElSuperAdministradorSoloTieneLaPlataforma`, `UsuarioSeguridadTest::testUnSuperAdministradorNoRecibeRolesDeClinica`. **RE-T.17.4** (no calificarse a sí mismo) se verifica en v2.1 con HU-8.1. |
+| HU-T.19 | RE-T.19.1–3 | RN-G19, RN-G20 | D1–D2.2 | **.1** `PropietarioClinicaTest::testAltaSinAceptacionOPresenciaNoCreaCuentaNiVinculoNiToken`, `CuentasD2Test` (personal pendiente e inerte 72 horas), `RegistroClinicaTest::testSinConsentimientoNoSeCreaNada`, `D22CorreccionTest::testElTitularDeUnaCuentaNuevaTambienPuedeRechazar`. **.2** prueba de versión, medio, fecha e IP, y super-administrador exento: `PoliticaDatosTest`, `PropietarioClinicaTest::testAltaConsentidaGuardaPruebaYPasswordResetSinContrasena`. **.3** nueva versión antes de seguir: `PoliticaDatosTest`, `AutorizacionRolTest`. **RE-T.19.4** (revocar) va con HU-5.14 en v2.1. |
+| HU-5.8 | RE-5.8.1–6 | RN-109, RN-G06, RN-G11 | D1, D3 | **.1–.5** `RegistroPropietarioTest` (8 casos: identidad global, vínculo confirmado por correo, sin duplicar ni exponer la cuenta), `RegistroGoogleTest`, `RegistroClinicaTest` (respuesta idéntica). **.6** CAPTCHA del propietario: `RegistroClinicaTest`, `D3Avisos.test.cjs`. **RE-5.8.4**: el correo lleva el enlace del portal; el QR llega con el carnet QR del módulo 5 (decisión del usuario, 2026-10-11). |
+| HU-0.1 | RE-0.1.1–10 | RN-001, RN-002, RN-010, RN-011, RN-G19, RN-G20 | D3, D3.1, E1 | **.1, .10** `RegistroClinicaTest::testSinConsentimientoNoSeCreaNada`, `testD31VistaRegistroComparteCabeceraYEstructuraDelLogin`, `D3Avisos.test.cjs`. **.2, .7, .8** `RegistroClinicaTest` (cuenta nueva inerte, existente sin cambios, respuesta idéntica, NIT duplicado con soporte). **.3, .5** `ValidadorClinicaTest`, `PlataformaValidacionTest::testNitYDvSeValidanSeparadosSinAdivinarUltimoDigito`, `D31Entrada.test.cjs`. **.4** `RegistroClinicaTest` (CAPTCHA ausente, inválido y válido). **.6** `RegistroClinicaTest::testLimiteTresPorDiaEIpNoSeEvadeConSesionNuevaNiConXForwardedFor`, `BaseV2MysqlTest`. **.9** auditoría en `RegistroClinicaTest`. |
+| HU-0.2 | RE-0.2.1–5 | RN-002, RN-003, RN-005, RN-G11 | D3 | **.1–.4** `RegistroClinicaTest` (GET sin activar, POST sin CSRF rechazado, token alterado, vencido o usado, plan Gratuito, rol y contextos). **.5** copia inicial de catálogos sin duplicar y con rollback: `ConfiguracionClinicaTest::testInicializadorNoDuplicaNiSobrescribeCatalogosPropios`, `testCopiaInicialFallaSinDejarDatosParcialesYRespetaTransaccionExterior`, `BaseV2MysqlTest::testConfiguracionDeDosClinicasEnElEsquemaReal`. |
+| HU-0.3 | RE-0.3.1–5 | RN-004, RN-012, RN-G13, RN-G14 | E1, E2 | **.1, .4** `PlataformaTest::testListaClinicasActivaPendienteSuspendidaYFiltrosSinDatosClinicos`, `testRolesYPostCsrfEnTodasLasAccionesDelPanel`, `E1Plataforma.test.cjs`. **.2** `PlataformaTest::testPlanSuscripcionMotivoYAuditoriaAtomica`. **.3** `AutorizacionRolTest::testElSuperAdministradorSoloTieneLaPlataforma`, `PlataformaTest::testVistaEscapaDatosYNoOfreceEnlacesClinicos`. **.5** `PlataformaTest::testSuspenderRetiraContextoYReactivarPermiteElegirloSinBorrarDatos`. **RE-0.3.6 (moderar reseñas) se verifica en v2.1 junto con HU-8.1**, porque en v2.0 aún no existen reseñas. |
+| HU-0.4 | RE-0.4.1–7 | RN-003, RN-005, RN-006, RN-420 | E2 | **.1, .2, .4, .7** `LimitePlanTest` (bordes 2/50/100, pendientes sin duplicar, reactivación con cupo, cambio de mes, Profesional sin límite), `BaseV2MysqlTest::testE2CuotasYBloqueoDeClinicaEnElEsquemaReal`. **.3, .5** `LimitePlanTest`, `PortalAgendaTest` (mensaje neutral y aviso a la clínica). **.6** `LimitePlanTest::testProfesionalSinLimiteMoraYUrgenciaRojaConservanElUso`: una cita roja evaluada pasa el límite; la clasificación por triage llega con los módulos 2 y 4. |
 
 Los RE completos y sus criterios están en `documentacion/RequisitosEspecificos.md`; esta tabla solo organiza la entrega. Una HU no se marca como terminada por tener sus tablas: necesita el flujo y las pruebas que le corresponden.
 
@@ -106,12 +106,13 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] D2.2 — Invitaciones del personal con aceptación, cierre de otras sesiones y correcciones de D2.1 ([Anexo D2.2](#anexo-d22--resultado)). Escribieron Claude Code y Codex; entregada, pendiente de revisión por Claude (2026-10-09).
   - [x] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2), Turnstile del propietario (RE-5.8.6) y pendientes de D2.2 ([Anexo D3](#anexo-d3--resultado)). Lo escribió Codex; revisada y aprobada por Claude, con commit `fa43c3d`. La prueba del usuario motivó D3.1; el cierre de D espera su revisión y prueba visual.
   - [x] D3.1 — Corrección de pantalla de registro, restricciones de entrada y explicación de la contraseña de una cuenta existente ([Anexo D3.1](#anexo-d31--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-10).
-- [x] E — Panel del super-administrador y límites del plan; implementación entregada, pendiente de revisión de E2. La clasificación clínica de triage se integra en los módulos 2/4.
+- [x] E — Panel del super-administrador y límites del plan; cerrada con E2 (2026-10-11). La clasificación clínica de triage se integra en los módulos 2/4.
   - [x] E1 — Panel de plataforma (HU-0.3 sin RE-0.3.6), soporte, IP bloqueadas y NIT/DV separados ([Anexo E1](#anexo-e1--resultado)). Lo escribió Codex; revisada y aprobada por Claude (2026-10-10); hallazgos del usuario corregidos en E2.
-  - [x] E2 — Límites del plan (HU-0.4) y correcciones de E1 ([Anexo E2](#anexo-e2--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-11).
-- [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
+  - [x] E2 — Límites del plan (HU-0.4) y correcciones de E1 ([Anexo E2](#anexo-e2--resultado)). Lo escribió Codex; revisada y aprobada por Claude, y probada por el usuario (2026-10-11).
+- [x] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia (F0: §2 con la evidencia por RE; suite completa en verde, también con MySQL).
+- [x] F0 — Escrita por Claude Code; revisada y aprobada por Claude, 2026-10-11 ([Anexo F0](#anexo-f0--resultado)). Preparación del corte: blindaje de Apache, `.dockerignore`, IP real, invitación reemplazada, clínicas de prueba en Profesional, cierre documental en `2.0.0-alpha.1` y guía del corte ([F0 — Alcance](#f0--alcance-preparación-del-corte-2026-10-11)).
 - [ ] F — Respaldo, reinicio de la base de producción, despliegue, super-administrador y clínica demo. Incluye blindar Apache para que solo sirva `public/` y agregar `.dockerignore` (B.5).
-- [ ] Actualizar HU/RE (estado y nota de RE-0.3.6), `config/App.php` e `HistorialVersiones.md` al cerrar; regenerar descargas si cambian documentos publicados.
+- [x] Actualizar HU/RE (estado y nota de RE-0.3.6), `config/App.php` e `HistorialVersiones.md` al cerrar; regenerar descargas si cambian documentos publicados (F0, versión `2.0.0-alpha.1`).
 - [ ] Entregar al usuario los comandos de commit por etapa para PowerShell; el usuario crea ramas, commits, push y tags.
 
 **Resultado de pruebas:** pendiente hasta la implementación.
@@ -1945,3 +1946,97 @@ Casos de soporte con resolución o descarte y nota auditada. IP bloqueadas vigen
 1. El motor de triage no existe todavía: la integración real de urgencias queda para el módulo de agenda (2/4). Ya está anotado como pendiente.
 2. Las clínicas de prueba del script conservan tres personas, por encima del gratuito (2). Para probar no estorba: la prueba 3 ya lo contempla desactivando a Beto. Al cierre de M0 conviene que el script deje las clínicas de prueba en Profesional o con dos personas.
 3. Deuda técnica conocida: `AuthController` ronda las 900 líneas; partirlo cuando se toque de nuevo, no en M0.
+
+### E2 — Prueba del usuario (2026-10-11)
+
+Las cuatro pruebas de `prueba-manual.md` pasaron (escritorio y celular). **E2 cerrada**, y con ella la etapa E.
+
+**Enlace de Fabio «no disponible» (pendiente desde D2.2), diagnosticado.** No es un fallo. Ana envió la invitación dos veces con 9 segundos de diferencia (id 10 a las 15:45:14 e id 11 a las 15:45:23 del 2026-10-09). La segunda reemplazó a la primera y la marcó usada, como debe ser; Fabio abrió el enlace del primer correo (`id=10`). El del segundo (`id=11`) sigue vigente hasta el 2026-10-12 15:45. Lo que sí falta es decirlo: «no disponible» no le dice a la persona que hay un correo más reciente. Se corrige en F0.
+
+**Decisiones del usuario (2026-10-11).**
+
+- M0 sale a producción como **`2.0.0-alpha.1`**. Cada módulo siguiente sube `alpha.N`; `2.0.0` queda para cuando estén las 28 historias de la entrega v2.0 (plan de entregas de HistoriasUsuario).
+- Entran en F0: mensaje propio para una invitación reemplazada por otra más reciente, y las clínicas de prueba de `datos_prueba.php` en plan Profesional (sus tres personas ya no chocan con el gratuito).
+
+## F0 — Alcance (preparación del corte, 2026-10-11)
+
+**Escribe:** Claude Code (decisión del usuario, 2026-10-11; Codex retoma después). **Revisa:** Claude (arquitecto). F se parte en dos: **F0** deja el repositorio listo para producción y escribe la guía exacta del corte; **F1** es el corte mismo, que ejecuta el usuario con esa guía (la tabla de etapas ya lo asigna así). F0 no toca producción.
+
+1. **Blindaje de Apache (B.5).** Solo `public/` se sirve. Las URL públicas actuales no cambian (`/`, `?action=`, el portal de documentación y los archivos por `ver_archivo.php`). Verificar con una imagen local si hay Docker; si no, dejar la comprobación en la guía.
+2. **`.dockerignore`.** Fuera de la imagen: `.env`, `.git`, `tests`, `scratch`, `logs`, `Claude outputs`, `node_modules` y lo que no use la aplicación en ejecución. Se conserva lo que necesitan el portal de documentación y el indexado de Algolia.
+3. **IP real detrás de nginx → Traefik → Apache (RN-G15).** `.env.example` y la guía explican `TRUSTED_PROXIES` con el rango de `dokploy-network` y qué cabecera debe pasar nginx (`X-Forwarded-For`). Prueba con la cadena de dos saltos.
+4. **Invitación reemplazada.** Un enlace válido (token correcto) de una invitación que fue reemplazada por otra vigente para la misma persona y clínica muestra «Esta invitación se reemplazó por una más reciente. Usa el enlace del último correo». Sin token correcto, el mensaje genérico de siempre (no se revela nada).
+5. **Clínicas de prueba en Profesional** con suscripción activa, solo en `scripts/dev/`.
+6. **Cierre documental de M0.** Versión `2.0.0-alpha.1` en `config/App.php` y donde se muestre; entrada en `HistorialVersiones.md` escrita para quien usa el sistema; estado de las HU y RE cerrados en M0 y nota de RE-0.3.6; la revisión nueva de cada documento tocado, una sola vez (`metodo.md` §4); descargas del portal regeneradas.
+7. **Tabla de trazabilidad (§2)** con la evidencia de cada RE y la suite completa en verde, para marcar la casilla pendiente de §7.
+8. **Guía del corte (`specs/M0-F-corte-produccion.md`).** Comandos exactos, en orden, separando los de PowerShell y los del VPS: respaldo de la base y de `uploads` y comprobación de que se pueden leer; integración `v2/m0` → `main` y tag (los hace el usuario); variables de Dokploy por nombre, nunca valores (`APP_URL`, correo, Turnstile real, Google, `TRUSTED_PROXIES`, `DB_*`); reinicio de la base y limpieza de `uploads` de prueba; despliegue y lectura del registro del migrador; `crear_superadmin.php`; registro de la clínica demo «Zooki» con `zooki.vet@gmail.com` por HU-0.1; tareas programadas (`scripts/zooki.cron`); 3–5 comprobaciones finales; y vuelta atrás (imagen v1.12.0 + respaldo en una base vacía, porque el respaldo v1 no carga en el esquema v2).
+
+**Fuera de F0:** ejecutar nada en producción, merge, tags, commits, `.env`; HU-0.5, triage y los demás módulos.
+
+## Anexo F0 — Resultado
+
+**Escribió:** Claude Code (2026-10-11). **Estado:** entregada, pendiente de revisión. No se ejecutó nada en producción.
+
+**Decisiones del usuario durante F0 (2026-10-11).**
+
+1. La base de producción vive en el **MySQL central del VPS**, no en el contenedor `db` del compose: la guía reinicia esa base a mano.
+2. **`.env` montado al arrancar.** La aplicación lee el `.env` como archivo (`parse_ini_file`); hasta hoy funcionaba porque Dokploy lo escribía junto al compose y `COPY . .` lo metía en la imagen. Sacarlo con `.dockerignore` habría dejado a producción sin credenciales. Queda fuera de la imagen y `docker-compose.yml` lo monta de solo lectura en `/var/www/html/Zooki/.env`.
+3. **QR de RE-5.8.4** al módulo 5 (con HU-5.10 y HU-5.11); HU-5.8 se cierra con esa nota, como RE-0.3.6.
+4. **HU construidas en parte fuera de §2** (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10) siguen «Planificada (v2)» y se cierran con su módulo.
+
+### Qué se hizo
+
+1. **Blindaje de Apache (B.5).** `docker/apache-zooki.conf` reemplaza el sitio por defecto: `DocumentRoot` en `public/`, `Alias /Zooki/public` al mismo lugar (un proxy que todavía apunte ahí sigue funcionando, así que el corte no exige tocar el `proxy_pass`), `/var/www/html` denegado, sin listados y sin archivos ocultos. Antes la raíz de Apache era `/var/www/html` y desde la red interna se podía pedir `/Zooki/.env`. Sin Docker en el equipo: la comprobación con imagen local (opcional) y sobre producción está en la guía, pasos 0.2 y 6.2.
+2. **`.dockerignore`.** Fuera: `.env`, `.git`, `tests`, `scratch`, `logs`, `Claude outputs`, `node_modules`, `vendor` (la imagen corre su propio `composer install --no-dev`), `specs`, `agentes`, `scripts/dev`, `scripts/docs`, respaldos, `*.bak*`, archivos de `public/uploads` y los documentos no publicados. Dentro: el código, `public/`, `database/`, `scripts/` de las tareas, `docker/`, `README.md` y `documentacion/` (portal y Algolia).
+3. **IP real (RN-G15).** `.env.example` explica la cadena nginx → Traefik (9080, `dokploy-network`) → Apache, los dos saltos de confianza y que Traefik debe confiar en nginx (`forwardedHeaders.trustedIPs`); el archivo sigue cargando como `.env` (había que evitar paréntesis y llaves en los comentarios, que `parse_ini_file` rechaza). La guía, paso 0.3, da las órdenes y una comprobación con un intento real (paso 10.4).
+4. **Invitación reemplazada** (Modelos §10.1 actualizado). `InvitacionPersonal::reemplazada()` solo responde sí cuando el secreto del enlace coincide, la invitación está usada y existe otra vigente posterior para la misma persona y clínica. Las dos páginas (invitación a cuenta existente y activación de cuenta nueva) muestran «Esta invitación se reemplazó por una más reciente. Usa el enlace del último correo.»; un POST sobre ese enlace no decide nada; con secreto incorrecto, vencida o aceptada, el mensaje genérico de siempre. Solo lee: el GET no cambia nada.
+5. **Clínicas de prueba en Profesional.** `DatosPrueba::planProfesional()` (solo `scripts/dev/`): plan Profesional, cierra la suscripción activa anterior y crea una activa y al día; repetible y sin tocar clínicas ajenas.
+6. **Cierre documental en 2.0.0-alpha.1.** `config/App.php` (`VERSION`; la muestran el portal de documentación y el cache-busting). `HistorialVersiones.md`: entrada para quien usa el sistema y regla de `alpha.N`. Revisiones nuevas, una por documento tocado en M0: ERS 3.3, Ficha Técnica 3.2, Historias 3.2, Requisitos 3.2 y Reglas 2.2 (MER y Modelos no llevan número de revisión). Las nueve HU de §2 pasan a «Implementada (2.0.0-alpha.1)» y 22 reglas a «Aplicada (2.0.0-alpha.1)» (RN-006 con la nota del triage, RN-420 «Parcial»). Notas en sus filas: RE-0.3.6 y RE-T.17.4 (v2.1, HU-8.1), RE-T.19.4 (v2.1, HU-5.14), QR de RE-5.8.4 (módulo 5) y RE-0.4.6 (triage). RE-T.19.2 ya aclaraba la exención del super-administrador. README y Ficha apuntan a la versión nueva. Descargas del portal regeneradas.
+7. **Tabla §2** con la evidencia de cada RE (pruebas existentes, verificadas por nombre).
+8. **Guía del corte:** [`specs/M0-F-corte-produccion.md`](M0-F-corte-produccion.md), con los pasos a–j del alcance y los comandos separados entre PowerShell y VPS.
+
+### RE y pruebas
+
+| Punto | Prueba |
+|---|---|
+| RN-G15, RE-T.13.4: dos saltos | `F0CorteTest::testLaIpRealAtraviesaLosDosSaltosDeProduccion` (rango correcto, solo Traefik, sin proxies y nginx fuera del rango) |
+| B.5: Apache e imagen | `F0CorteTest::testApacheSirveSoloPublicSinCambiarLasUrl`, `testLaImagenNoLlevaCredencialesNiPruebasYConservaElPortal` (también el montaje del `.env`) |
+| Invitación reemplazada | `F0CorteTest`: reemplazada sin cambiar nada, POST que no decide, token incorrecto, vencida, aceptada, activación de cuenta nueva y otra persona que no cuenta |
+| Clínicas de prueba | `DatosPruebaClinicasTest` (2 casos nuevos) y `BaseV2MysqlTest::testE2DatosPruebaContinuaSinCambiarClinicaAjena` (Profesional y suscripción activa en MySQL) |
+| `.env.example` sigue cargando | `D21CorreccionTest::testEnvExampleSeLeeYExplicaLosProxiesYLosCorreos` |
+
+### Verificación
+
+- `vendor/bin/phpunit` con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` (MariaDB de XAMPP) y la base por defecto `zooki_test_base_v2`: **578 pruebas, 3446 aserciones, ninguna omitida**, en verde (incluye las 10 de `F0CorteTest`).
+- Descargas del portal regeneradas y «al día» (`exportar.mjs --revisar`). El retoque final de Word no terminó (Word automatizado dejó un archivo bloqueado); el script lo prevé: el índice de esos `.docx` se llena al abrirlos.
+- `node --test "tests/Frontend/**/*.test.cjs"`: **78 en verde** (F0 no cambió JS).
+- No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+
+### Pendientes y riesgos
+
+- **Lo más riesgoso del corte es el `.env` montado:** si en Dokploy el `.env` no queda junto al compose, el contenedor arranca sin credenciales. La guía lo comprueba en 6.3 antes de seguir.
+- La IP con que nginx llega a Traefik depende de la red del VPS: la guía la confirma con un intento real (10.4).
+- El enlace «Volver a Zooki» del portal de documentación usa `../../`; en producción lleva a `/`, en XAMPP a `/Zooki/`. No se tocó.
+- `AGENTS.md` dice que producción está en v1.12.0: se actualiza en F1, cuando el corte se haga.
+
+### Pantallas para el usuario (local)
+
+1. Con `datos_prueba.php --si`: invita a Fabio desde Norte, pulsa «Reenviar invitación» y abre en `logs/correos/` el **primer** correo: debe decir que hay una invitación más reciente; el segundo abre la invitación normal.
+2. Panel del super-administrador: Norte y Sur (prueba) en plan **Profesional**; en Usuarios de Norte se puede invitar a una cuarta persona sin el aviso del tope.
+3. Portal de documentación: dice **Zooki v2.0.0-alpha.1** y el historial empieza por esa versión.
+
+### F0 — Revisión (2026-10-11)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, con una corrección aplicada en la revisión.
+
+**Verificado.**
+
+- Suites: PHP 578 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas; la única falla fue por no copiar `public/docs/` a esa copia, y `F0CorteTest` pasó completo, 10 pruebas, al reponerlo); JS 78/78 en el equipo del usuario.
+- Apache: `DocumentRoot` en `public/`, `Alias /Zooki/public` para no tocar el `proxy_pass`, `/var/www/html` denegado y archivos ocultos bloqueados. `.dockerignore` deja fuera credenciales, pruebas y material de trabajo, y conserva `documentacion/` para el portal.
+- `.env` montado de solo lectura (decisión del usuario): la guía comprueba en 6.3 que se lee antes de seguir.
+- Invitación reemplazada: solo con el secreto correcto, invitación usada y otra vigente posterior de la misma persona y clínica; el POST no decide nada y el GET no cambia nada. Coincide con Modelos §10.1.
+- Guía del corte: respaldo comprobado restaurándolo en una base aparte antes de borrar nada; el esquema v2 da 50 tablas (igual que `BaseV2MysqlTest`); el tag `v1.12.0` existe para la vuelta atrás; las columnas de la consulta de IP (10.4) existen en `auditoria_sistema`; el NIT demo 901234567-7 cumple el módulo 11.
+
+**Corrección aplicada en la revisión.** `public/uploads/clinicos/.htaccess` no está en git (`.gitignore` ignora `public/uploads/*`) ni entra en la imagen, así que el bloqueo de los adjuntos clínicos dependía de que el volumen lo tuviera, y el paso 5.2 de la guía esperaba verlo. Ahora `docker/apache-zooki.conf` deniega `public/uploads/clinicos` (los adjuntos siguen saliendo solo por `ver_archivo.php`), `F0CorteTest` lo comprueba y la guía revisa `/uploads/clinicos/` en 6.2.
+
+**Para F1.** El paso 0.3.3 cambia el `traefik.yml` que comparten todos los proyectos del VPS; `trustedIPs` con solo el gateway no afecta a los demás, pero conviene hacerlo en un momento tranquilo y abrir otro proyecto después. El NIT demo puede coincidir con el de una empresa real; si un día molesta, se cambia por otro con DV válido.
