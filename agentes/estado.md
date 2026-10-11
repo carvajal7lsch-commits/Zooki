@@ -16,7 +16,7 @@
 - **Verificación D3.1:** PHP 532 en verde (también con MariaDB temporal, 3114 aserciones, ninguna omitida, base predeterminada `zooki_test_base_v2`); JS 68 en verde. Sin migración ni cambios al flujo de Modelos §12.1.
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada y **aprobada** (2026-10-10; «E1 — Revisión»). Falta el commit y las 5 pruebas del usuario (`agentes/prueba-manual.md`).
-- **Siguiente paso:** **E2** (límites del plan, HU-0.4): 2 cuentas de personal, 50 mascotas y citas por mes por confirmar (propuesta 100).
+- **Siguiente paso:** **E2** (límites del plan: 2 personal, 50 mascotas, 100 citas por mes; decisión del usuario 2026-10-10) con, primero, el fallo al suspender una clínica, el panel con los estilos administrativos y `datos_prueba.php` con clínicas locales.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 
