@@ -38,3 +38,16 @@
         grid-template-columns: 1fr;
     }
 }
+.registro-clinica-nit {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 70px;
+    gap: 0 12px;
+    min-width: 0;
+}
+.registro-clinica-nit .input-group {
+    min-width: 0;
+    margin-bottom: 0;
+}
+.registro-clinica-nit small#dvAyuda {
+    grid-column: 1 / -1;
+}

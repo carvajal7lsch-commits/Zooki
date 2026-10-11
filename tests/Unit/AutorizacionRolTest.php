@@ -197,7 +197,7 @@ class AutorizacionRolTest extends TestCase
         $permitidas = array_keys(array_filter(self::matriz(), fn ($roles) => in_array(self::SUPER_ADMIN, $roles, true)));
         sort($permitidas);
 
-        $this->assertSame(['dashboard', 'plataforma_inicio'], $permitidas);
+        $this->assertSame(['dashboard', 'plataforma_aviso_ajax', 'plataforma_caso_ajax', 'plataforma_desbloquear_ajax', 'plataforma_estado_ajax', 'plataforma_inicio', 'plataforma_suscripcion_ajax'], $permitidas);
     }
 
     /** RE-2.3.3 / RN-004: los adjuntos los piden la clínica y el portal; nunca la plataforma. */

@@ -169,6 +169,7 @@ final class IdentidadController
             'nombre_completo' => ValidadorCuenta::nombre($valor),
             'password' => PoliticaPassword::validar($valor, $datosPersonales),
             'nit', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador' => ValidadorClinica::campo($campo, $valor),
+            'dv' => ValidadorNit::validarSeparado((string) ($_POST['nit'] ?? ''), $valor),
             default => 'Campo no válido.',
         };
         // RE-T.13.2: nunca se consulta la existencia de la identidad al escribir.

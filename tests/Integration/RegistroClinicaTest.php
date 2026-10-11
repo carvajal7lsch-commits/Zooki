@@ -47,7 +47,8 @@ final class RegistroClinicaTest extends TestCase
         $numeroNit = (string) (900123450 + $numero);
         return $cambios + [
             'nombre_clinica' => 'Clínica Nueva ' . $numero,
-            'nit' => $numeroNit . '-' . ValidadorNit::digito($numeroNit),
+            'nit' => $numeroNit,
+            'dv' => (string) ValidadorNit::digito($numeroNit),
             'direccion' => 'Carrera 10 número 20-30',
             'telefono_clinica' => '3001112233',
             'email_clinica' => 'clinica' . $numero . '@zooki.test',
@@ -214,6 +215,45 @@ final class RegistroClinicaTest extends TestCase
         $this->assertNotNull((new Usuario($this->db))->buscarPorId((int) $fila['id_usuario']));
     }
 
+    public function testReportarNitPermiteCincoPorDiaEIpSinEvadirConOtraSesion(): void
+    {
+        $this->alta();
+        for ($i = 0; $i < RegistroClinica::REPORTES_DIARIOS; $i++) {
+            $_SESSION = [];
+            $_SERVER['HTTP_X_FORWARDED_FOR'] = '192.0.2.' . $i;
+            $this->registro->reportarNit(self::datos());
+        }
+        try {
+            $this->registro->reportarNit(self::datos());
+            $this->fail('El sexto reporte debe rechazarse.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertSame(5, $this->total('casos_soporte'));
+        }
+        $_SERVER['REMOTE_ADDR'] = '192.0.2.125';
+        $this->registro->reportarNit(self::datos());
+        $this->assertSame(6, $this->total('casos_soporte'));
+        unset($_SERVER['HTTP_X_FORWARDED_FOR']);
+    }
+
+    public function testRegistroYReporteRechazanDvIncorrectoYNoExtraenDelNit(): void
+    {
+        foreach ([['nit' => '9001234568', 'dv' => ''], ['nit' => '900123456', 'dv' => '2'], ['nit' => '900123456-8', 'dv' => '8']] as $cambio) {
+            foreach (['registrar', 'reportarNit'] as $metodo) {
+                try {
+                    if ($metodo === 'registrar') {
+                        $this->registro->registrar(self::datos(1, $cambio), Auditoria::ipCliente());
+                    } else {
+                        $this->registro->reportarNit(self::datos(1, $cambio));
+                    }
+                    $this->fail('El formato o DV incorrecto no debe crear registros.');
+                } catch (InvalidArgumentException $e) {
+                    $this->assertSame(3, $this->total('clinicas'));
+                    $this->assertSame(0, $this->total('casos_soporte'));
+                }
+            }
+        }
+    }
+
     public function testDosAltasPendientesDeLaMismaCuentaNoDejanIdentidadInerteHuerfana(): void
     {
         $nueva = $this->alta();
@@ -346,7 +386,7 @@ final class RegistroClinicaTest extends TestCase
         $this->assertSame(1, $xpath->query($contenedor . "/div[contains(@class,'login-form-area')]")->length);
         $this->assertSame(1, $xpath->query($contenedor . "/div[contains(@class,'login-hero')]")->length);
         $this->assertSame(0, $xpath->query($contenedor . "/div[contains(@class,'login-hero')]//form")->length);
-        foreach (['documento' => '15', 'nombre_completo' => '100', 'email' => '255', 'nit' => '25'] as $campo => $maximo) {
+        foreach (['documento' => '15', 'nombre_completo' => '100', 'email' => '255', 'nit' => '14', 'dv' => '1'] as $campo => $maximo) {
             $input = $xpath->query("//input[@name='$campo']")->item(0);
             $this->assertSame($maximo, $input->getAttribute('maxlength'));
             $this->assertTrue($input->hasAttribute('data-caracteres'));

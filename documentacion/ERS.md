@@ -152,7 +152,7 @@ Agrupadas por módulo (los módulos marcados con ★ son nuevos o rehechos en v2
 
 | Rol | Ámbito | Descripción y nivel de acceso |
 |---|---|---|
-| Super-administrador | Toda la plataforma | Administra las clínicas registradas, sus planes y suscripciones. No accede a los datos clínicos internos de una clínica salvo para soporte. |
+| Super-administrador | Toda la plataforma | Administra las clínicas registradas, sus planes y suscripciones. No accede a mascotas, historias, consultas ni citas, tampoco para soporte. |
 | Administrador de clínica | Su clínica | Gestiona usuarios, configuración, catálogos y datos de su clínica. Nivel técnico medio-bajo; interfaz intuitiva. |
 | Veterinario | Su clínica | Usuario clínico principal: pacientes, historia clínica, vacunación y agenda. Cuenta con **perfil público calificable**. |
 | Propietario | Sus mascotas, en las clínicas que él elige | Accede al portal con credenciales propias o con Google. Se registra en una clínica y puede vincularse a otras cuando quiera; consulta sus mascotas, agenda, califica y puede pedir la eliminación de su cuenta. |

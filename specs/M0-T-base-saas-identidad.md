@@ -107,6 +107,8 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2), Turnstile del propietario (RE-5.8.6) y pendientes de D2.2 ([Anexo D3](#anexo-d3--resultado)). Lo escribió Codex; revisada y aprobada por Claude, con commit `fa43c3d`. La prueba del usuario motivó D3.1; el cierre de D espera su revisión y prueba visual.
   - [x] D3.1 — Corrección de pantalla de registro, restricciones de entrada y explicación de la contraseña de una cuenta existente ([Anexo D3.1](#anexo-d31--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-10).
 - [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
+  - [x] E1 — Panel de plataforma (HU-0.3 sin RE-0.3.6), soporte, IP bloqueadas y NIT/DV separados ([Anexo E1](#anexo-e1--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-10).
+  - [ ] E2 — Límites del plan (HU-0.4); fuera de E1.
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
 - [ ] F — Respaldo, reinicio de la base de producción, despliegue, super-administrador y clínica demo. Incluye blindar Apache para que solo sirva `public/` y agregar `.dockerignore` (B.5).
 - [ ] Actualizar HU/RE (estado y nota de RE-0.3.6), `config/App.php` e `HistorialVersiones.md` al cerrar; regenerar descargas si cambian documentos publicados.
@@ -1823,7 +1825,7 @@ Pendientes: revisión de Claude y prueba visual del usuario. Gestión de casos, 
 **Resultado: aprobada** (código; la pantalla la confirma el usuario). Claude revisó el anexo y el diff (commit `391c73d`). PHP en una copia sin `.env`: 532 pruebas, 2785 aserciones, 25 saltadas de MySQL. JS: 68 en verde. `registro_clinica.php` usa la misma cabecera (`cabecera_acceso.php`) y la estructura del login (`login-container`, `login-form-area`, `login-hero`); los atributos de restricción salen de los validadores del servidor (`ValidadorCuenta`, `ValidadorClinica`, `ValidadorTelefono`), así el HTML, el JS y el servidor usan el mismo límite. Modelos §12.1 no cambia.
 
 
-## E — Alcance (propuesta, 2026-10-10)
+## E — Alcance (aprobado para E1, 2026-10-10)
 
 Se parte en **E1** (panel del super-administrador, HU-0.3 sin RE-0.3.6) y **E2** (límites del plan, HU-0.4).
 
@@ -1839,3 +1841,42 @@ Se parte en **E1** (panel del super-administrador, HU-0.3 sin RE-0.3.6) y **E2**
 **También en E1:** casos de soporte (NIT y documento duplicados: ver y marcar resuelto), IP bloqueadas con «Desbloquear» y «Enviar aviso» (decisiones del 2026-10-09), límite por IP para `reportar_nit` y los hallazgos menores de D3.
 
 **Decisiones del usuario sobre el plan gratuito (2026-10-10).** 2 cuentas de personal y 50 mascotas vinculadas; las citas por mes suben de 30 (valor pendiente; propuesta del arquitecto: 100). Los propietarios no tienen límite. Los límites ya viven en `planes` (`limite_mascotas`, `limite_citas_mes`, `limite_personal`; NULL = sin límite): E2 los ajusta con una migración que solo cambie el plan Gratuito si conserva los valores anteriores, y actualiza RN-005 y RE-0.4.7. Los precios no se tocan por ahora.
+
+## Anexo E1 — Resultado
+
+**Lo escribió Codex.** Revisa la sesión de Claude (arquitecto).
+**Estado:** entregada, pendiente de revisión, 2026-10-10.
+
+**Qué.** Panel `plataforma_inicio` con tarjetas por defecto, tabla recordada en el navegador, búsqueda y estado; datos de clínica, plan, suscripción, fecha y administrador, incluyendo los NIT pendientes de verificación. Los modelos de plataforma solo consultan metadatos y exigen una cuenta super-administradora activa con el contexto de plataforma. Cambios con motivo y auditoría en transacción; rollback si no se puede auditar. Suspendida o dada de baja pierde el contexto en la siguiente petición; reactivar devuelve la opción en el selector. Nunca se borran los registros de una clínica dada de baja.
+
+Casos de soporte con resolución o descarte y nota auditada. IP bloqueadas vigentes con cuentas de `LOGIN_FAIL` dentro de la ventana y sus clínicas; cuenta no reconocida se muestra como tal. Desbloqueo central válido también con la cookie anterior; conserva el CAPTCHA por cuenta. Aviso únicamente al administrador elegido y comprobado en servidor, con texto editable, auditoría previa y resultado del envío. Sin envío automático. Registro y reporte usan NIT/DV separados; reporte limitado a cinco por día e IP real, con el mismo contador transaccional del registro.
+
+**RE y pruebas.**
+
+| RE/RN | Evidencia |
+|---|---|
+| RE-0.3.1/4, RN-G13/G14 | `PlataformaTest::testListaClinicasActivaPendienteSuspendidaYFiltrosSinDatosClinicos`, `testRolesYPostCsrfEnTodasLasAccionesDelPanel`, `testElModeloRechazaContextoClinicoAunqueSeLlameDirecto`; tarjetas y preferencia en `E1Plataforma.test.cjs`. |
+| RE-0.3.2 | `PlataformaTest::testPlanSuscripcionMotivoYAuditoriaAtomica`; inserta o actualiza la suscripción y el plan juntos sin duplicar ni tocar otra clínica. Aplicación de límites: HU-0.4, E2. |
+| RE-0.3.3, RN-004 | `AutorizacionRolTest::testElSuperAdministradorSoloTieneLaPlataforma`, denegación de acciones clínicas en `PlataformaTest`, `testVistaEscapaDatosYNoOfreceEnlacesClinicos`. RE, HU, RN y ERS coherentes sin excepción de soporte ni cambio de revisión. |
+| RE-0.3.5, RN-012/G08 | `PlataformaTest::testSuspenderRetiraContextoYReactivarPermiteElegirloSinBorrarDatos`, `testSinMotivoNiNotaNoCambiaEstadoOCasoYFalloDeAuditoriaNoDesbloquea`; no se activa un registro pendiente sin verificación. |
+| RN-010, soporte | `PlataformaTest::testCasosSeResuelvenODescartanConNotaAuditada`; sin nota no cambia y el fallo de auditoría revierte. |
+| RN-G15, IP y avisos | `PlataformaTest::testIpMuestraCuentasClinicasYSoloEnviaAlAdministradorElegido`, `testDesbloquearValeConLaMismaCookieYConservaContadorDeCuenta`, `testAvisoFallidoSeAuditaYNuncaSeEnviaSinAuditoria`; JS comprueba cancelación, envío explícito y doble clic. |
+| RE-0.1.3 y hallazgo D3 | `PlataformaValidacionTest::testNitYDvSeValidanSeparadosSinAdivinarUltimoDigito`, `RegistroClinicaTest::testRegistroYReporteRechazanDvIncorrectoYNoExtraenDelNit`, `testReportarNitPermiteCincoPorDiaEIpSinEvadirConOtraSesion`; restricción al escribir/pegar en `D31Entrada.test.cjs`. |
+| MySQL real | `BaseV2MysqlTest::testE1PanelPlataformaEnElEsquemaReal`: estados ENUM, actualización de suscripción, contexto suspendido, cierre de casos, destinatario, desbloqueo, cinco reportes y rollback sin auditoría. |
+
+**Diagrama.** Nuevo Modelos §12.1.1; §9 enlaza al panel y §12.1 refleja NIT/DV y el límite de reportes. Mermaid renderizado con CLI en `scratch/e1-diagrama-1.svg` (material de verificación, fuera de git).
+
+**Verificación.** PHP completo: 548 pruebas, 2925 aserciones, 26 omitidas de MySQL. Con `ZOOKI_TEST_MYSQL_HOST` en MariaDB temporal propio, puerto 3308 y base predeterminada `zooki_test_base_v2`: 548 pruebas, 3267 aserciones, ninguna omitida. JS completo: 75 en verde. Ninguna prueba accedió a la base de trabajo. Sin migración, cambios de precios ni nuevos valores del plan; versión y exportaciones se cierran con M0 según `metodo.md` §4.
+
+**Confirmaciones.** Suspender, dar de baja, cancelar suscripción, cerrar caso, desbloquear IP y enviar aviso conservan confirmación. Reactivar o guardar un plan/suscripción reversible usa aviso breve; el panel se actualiza antes de mostrarlo. Validación junto al campo, restricción de entrada y máximos compartidos con el servidor; sin JS/CSS en línea.
+
+**Pendientes.** Revisión de Claude y las cinco pruebas de navegador de `agentes/prueba-manual.md`, escritorio y celular. Un correo y la base no forman una transacción única: queda auditada la solicitud antes de enviar y su resultado; las pruebas usan correo simulado. HU-0.4/E2, mora, precios y RE-0.3.6 quedan fuera. No se empezó E2.
+
+
+### E1 — Revisión (2026-10-10)
+
+**Resultado: aprobada.** Claude revisó el anexo y el diff. PHP en una copia: 548 pruebas, 2925 aserciones, 26 saltadas de MySQL. JS: 75 en verde. Sin JS ni CSS en línea en las vistas nuevas.
+
+**Verificado.** `Plataforma` exige en cada método el contexto de plataforma, el rol de super-administrador y la cuenta activa con `es_super_admin = 1`, y solo consulta metadatos (sin mascotas, historias ni citas). Las acciones del panel están en la matriz solo para la plataforma y exigen POST con CSRF. Los cambios de plan, suscripción, estado y casos piden motivo o nota y se auditan en la misma transacción. Desbloquear borra solo `ip:<ip>` de `intentos_login` (el contador por cuenta se conserva). El aviso solo va a un administrador que el servidor saca de las cuentas que fallaron desde esa IP (nunca un correo del navegador) y queda auditado antes y después del envío. NIT y DV en casillas separadas; `reportar_nit` con 5 por día e IP. Diagrama nuevo §12.1.1.
+
+**Anotado.** `Security::checkRateLimit` ya no usa el contador de la sesión cuando hay almacén en la base (para que el desbloqueo central valga con la cookie anterior); la sesión queda solo de respaldo sin base. Es coherente con RE-T.13.1 (el límite se cuenta del lado del servidor).

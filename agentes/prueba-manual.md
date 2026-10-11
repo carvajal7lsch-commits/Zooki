@@ -29,3 +29,18 @@
 - Cada paso con su casilla, la pantalla (`?action=...`) y **qué debe pasar**.
 - Siempre incluye: una comprobación de que una clínica no ve lo de la otra, las pantallas tocadas en celular y lo que cambió en el JavaScript.
 - Al final: «dime solo lo que falló, con el número del paso».
+
+## E1 — Cinco pruebas del usuario (2026-10-10)
+
+Usa las cuentas de prueba que ya tienes; no hace falta regenerar sus contraseñas.
+Abre primero Gina en un navegador y usa otra sesión para el personal.
+Los correos se revisan en `logs/correos/` si tienes `MAIL_MODO=archivo` configurado en local.
+Haz las comprobaciones de pantalla también en celular.
+
+- [ ] **1. Gina — Clínicas y permisos.** En `?action=plataforma_inicio`, comprueba tarjetas, cambio a tabla y que al recargar conserve la vista; busca por nombre/NIT y filtra estado. Un registro sin confirmar debe verse como «Pendiente de verificación». Gina recibe 403 al abrir `?action=vet_pacientes`; Ana/Beto reciben 403 al abrir el panel de plataforma.
+- [ ] **2. Gina y Beto — Plan y suspensión.** En Gestionar, cambia plan/suscripción con motivo y comprueba el resultado inmediato; sin motivo no guarda. Suspende Norte con confirmación y motivo. La siguiente petición de Beto pierde ese contexto, y Norte no se ofrece en el registro ni para agendar desde el portal. Reactiva con motivo: Beto vuelve a elegir Norte en el selector. Para «Dar de baja», comprueba el texto de confirmación y pulsa Cancelar; no des de baja una clínica que quieras seguir usando en las pruebas.
+- [ ] **3. Gina — Soporte.** Con dos casos de prueba (se pueden generar reportando un NIT duplicado), resuelve uno y descarta el otro con nota; confirma y comprueba que el estado cambia sin recargar a mano. La pantalla no contiene enlaces a mascotas, consultas ni citas.
+- [ ] **4. Gina — IP y aviso manual.** Mantén abierta la sesión de Gina; desde otra sesión genera 20 accesos fallidos con cuentas conocidas de Norte/Sur. El panel debe mostrar la IP, vencimiento, esas cuentas y clínicas. Abrir «Enviar aviso» no crea un correo: elige administrador, edita texto y confirma Enviar; solo ese destinatario recibe el aviso. Desbloquea con confirmación y vuelve a intentar entrar desde la misma sesión bloqueada; el CAPTCHA por cuenta se conserva cuando corresponde.
+- [ ] **5. Registro de clínica — NIT/DV.** En `?action=registro_clinica`, NIT y DV están juntos y separados: NIT `900123456`, DV `8` válido; DV `2` muestra error bajo el campo. Letras/guion no entran, DV solo deja un dígito y pegar un NIT largo respeta el máximo. Con un NIT de una clínica ya registrada, el reporte usa ambas casillas y el sexto envío de ese día/IP se rechaza sin crear otro caso.
+
+Dime solo lo que falló, con el número del paso.

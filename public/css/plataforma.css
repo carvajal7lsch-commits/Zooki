@@ -1,0 +1,181 @@
+:root {
+    font-family: Inter, sans-serif;
+    color: #16324f;
+    background: #f4f7fb;
+}
+* {
+    box-sizing: border-box;
+}
+[hidden] {
+    display: none !important;
+}
+body {
+    margin: 0;
+}
+a {
+    color: #245da6;
+}
+button, input, select, textarea {
+    font: inherit;
+}
+button, summary {
+    cursor: pointer;
+}
+button {
+    padding: .65rem .9rem;
+    border: 1px solid #bdd0e7;
+    border-radius: 8px;
+    color: #16324f;
+    background: #fff;
+}
+button:disabled {
+    opacity: .5;
+    cursor: default;
+}
+button[aria-pressed="true"] {
+    background: #16324f;
+    color: #fff;
+}
+.plataforma-cabecera {
+    padding: 1.3rem 3%;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.plataforma-cabecera a {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    text-decoration: none;
+}
+.plataforma-cabecera img {
+    width: 32px;
+}
+.plataforma-cabecera nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+main {
+    max-width: 1400px;
+    margin: auto;
+    padding: 2rem 3%;
+}
+section {
+    margin-bottom: 2.5rem;
+}
+.plataforma-titulo, .plataforma-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .8rem;
+    margin-bottom: 1rem;
+}
+.plataforma-titulo h2 {
+    margin-right: auto;
+}
+.plataforma-tarjetas {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+.plataforma-tarjeta {
+    padding: 1.25rem;
+    background: #fff;
+    border: 1px solid #dbe5ef;
+    border-radius: 14px;
+    margin-bottom: 1rem;
+    overflow-wrap: anywhere;
+}
+.plataforma-tarjeta h3 {
+    margin-top: 0;
+}
+.plataforma-tarjeta dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .6rem;
+    font-size: .9rem;
+}
+dd {
+    margin: 0;
+}
+dt {
+    color: #536b84;
+}
+.plataforma-ayuda {
+    color: #536b84;
+    font-size: .9rem;
+}
+.plataforma-estado {
+    display: inline-block;
+    padding: .3rem .6rem;
+    border-radius: 6px;
+    background: #eaf1fb;
+}
+form label {
+    display: block;
+    margin-bottom: .7rem;
+}
+form input:not([type="hidden"]), form select, form textarea {
+    display: block;
+    padding: .7rem;
+    border: 1px solid #aebfd3;
+    border-radius: 8px;
+    max-width: 100%;
+}
+form textarea {
+    width: 100%;
+    min-height: 85px;
+}
+[data-error-campo] {
+    display: block;
+    color: #b42318;
+    margin-top: .35rem;
+}
+.plataforma-tabla {
+    overflow: auto;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+th, td {
+    padding: .8rem;
+    text-align: left;
+    border-bottom: 1px solid #dbe5ef;
+}
+dialog {
+    border: 1px solid #bdd0e7;
+    border-radius: 14px;
+    width: min(600px, 94vw);
+    max-height: 90vh;
+    overflow: auto;
+}
+dialog::backdrop {
+    background: #12233d80;
+}
+dialog form {
+    border-top: 1px solid #dbe5ef;
+    padding-top: .8rem;
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+    .plataforma-tarjetas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+}
+@media (max-width: 767px) {
+    .plataforma-tarjetas {
+    grid-template-columns: 1fr;
+}
+    .plataforma-filtros {
+    align-items: stretch;
+    flex-direction: column;
+}
+    .plataforma-filtros input, .plataforma-filtros select {
+    width: 100%;
+}
+}

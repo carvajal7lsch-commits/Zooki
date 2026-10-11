@@ -15,6 +15,7 @@ final class RegistroClinica
 {
     public const VIGENCIA_HORAS = 24;
     public const MAXIMO_DIARIO = 3;
+    public const REPORTES_DIARIOS = 5;
     public const MENSAJE = 'Revisa tu correo para activar la clínica';
     private const NUEVA = 'registro_clinica';
     private const EXISTENTE = 'vinculo_admin_clinica';
@@ -24,17 +25,17 @@ final class RegistroClinica
     }
 
     /** RE-0.1.6: contador diario con fila única bloqueada; también serializa envíos concurrentes. */
-    private function contarRegistro(string $ip): void
+    private function contarRegistro(string $ip, string $prefijo = 'alta-clinica', int $maximo = self::MAXIMO_DIARIO): void
     {
-        $clave = 'alta-clinica:' . date('Y-m-d') . ':' . $ip;
+        $clave = $prefijo . ':' . date('Y-m-d') . ':' . $ip;
         $ahora = date('Y-m-d H:i:s');
         $insertar = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? 'INSERT IGNORE' : 'INSERT OR IGNORE';
         $this->db->prepare("$insertar INTO intentos_login (identificador, intentos, primer_intento, ultimo_intento) VALUES (?, 0, ?, ?)")
             ->execute([$clave, $ahora, $ahora]);
         $stmt = $this->db->prepare('SELECT intentos FROM intentos_login WHERE identificador = ?' . $this->bloqueo());
         $stmt->execute([$clave]);
-        if ((int) $stmt->fetchColumn() >= self::MAXIMO_DIARIO) {
-            throw new InvalidArgumentException('Alcanzaste el límite de registros de hoy. Inténtalo mañana.');
+        if ((int) $stmt->fetchColumn() >= $maximo) {
+            throw new InvalidArgumentException('Alcanzaste el límite de solicitudes de hoy. Inténtalo mañana.');
         }
         $this->db->prepare('UPDATE intentos_login SET intentos = intentos + 1, ultimo_intento = ? WHERE identificador = ?')
             ->execute([$ahora, $clave]);
@@ -164,9 +165,11 @@ final class RegistroClinica
 
     public function reportarNit(array $entrada): void
     {
-        $nit = (string) ($entrada['nit'] ?? '');
-        $email = trim((string) ($entrada['email'] ?? ''));
-        if (ValidadorNit::validar($nit) !== null || ValidadorCuenta::correo($email) !== null) {
+        $numero = trim((string) ($entrada['nit'] ?? ''));
+        $dv = trim((string) ($entrada['dv'] ?? ''));
+        $nit = ValidadorNit::normalizar($numero . '-' . $dv);
+        $email = ValidadorCuenta::normalizar('email', (string) ($entrada['email'] ?? ''));
+        if (ValidadorNit::validarSeparado($numero, $dv) !== null || ValidadorCuenta::correo($email) !== null) {
             throw new InvalidArgumentException('Revisa el NIT y el correo de contacto.');
         }
         $clinica = $this->porNit(ValidadorNit::normalizar($nit));
@@ -174,8 +177,11 @@ final class RegistroClinica
             throw new InvalidArgumentException('No se pudo registrar el reporte. Revisa el NIT.');
         }
         // RN-010: solo se abre el caso; la resolución pertenece al panel de la etapa E.
-        $this->db->prepare("INSERT INTO casos_soporte (tipo, id_clinica, descripcion) VALUES ('clinica_duplicada', ?, ?)")
-            ->execute([$clinica['id_clinica'], 'Reporte público de NIT ' . ValidadorNit::normalizar($nit) . '. Contacto: ' . $email . '. IP: ' . Auditoria::ipCliente()]);
+        Transaccion::ejecutar($this->db, function () use ($clinica, $nit, $email): void {
+            $this->contarRegistro(Auditoria::ipCliente(), 'reporte-nit', self::REPORTES_DIARIOS);
+            $this->db->prepare("INSERT INTO casos_soporte (tipo, id_clinica, descripcion) VALUES ('clinica_duplicada', ?, ?)")
+                ->execute([$clinica['id_clinica'], 'Reporte público de NIT ' . $nit . '. Contacto: ' . $email . '. IP: ' . Auditoria::ipCliente()]);
+        });
     }
 
     /** RE-0.2.3: proceso del sistema; nunca elimina identidades preexistentes. */

@@ -73,6 +73,20 @@ test('documento: las letras no entran al escribir ni al pegar y el máximo es 15
     assert.equal(p.eventos.input[0].captura, true);
 });
 
+test('E1: NIT y DV separados solo aceptan números y su propio máximo', () => {
+    const p = pagina();
+    const nit = p.campo({ caracteres: '0-9' }, 14);
+    const dv = p.campo({ caracteres: '0-9' }, 1);
+    p.escribir(nit, 'a-');
+    assert.equal(nit.value, '');
+    p.escribir(nit, 'abc90012345678901234567890', true);
+    assert.equal(nit.value, '90012345678901');
+    p.escribir(dv, 'a-');
+    assert.equal(dv.value, '');
+    p.escribir(dv, '8a9', true);
+    assert.equal(dv.value, '8');
+});
+
 test('NIT: sin letras, solo un guion después del número y un dígito después', () => {
     const p = pagina();
     const campo = p.campo({ caracteres: '0-9\\-', formato: 'nit' }, 25);

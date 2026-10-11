@@ -16,7 +16,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 |---|---|---|---|---|
 | RE-0.1.1 | El sistema debe ofrecer un formulario público con los datos de la clínica y del administrador inicial. | Funcional | Se capturan ambos conjuntos de datos. | Alta |
 | RE-0.1.2 | El sistema debe validar el formato del correo y la unicidad del NIT, sin duplicar identidades ni revelar si una cuenta existe. | Validación | NIT duplicado se rechaza y permite reportarlo a soporte. La respuesta pública es «Revisa tu correo para activar la clínica»: correo existente confirma con su titular conservando identidad, contraseña y roles; si el correo es nuevo y el documento existe, confirma el titular del documento. Si correo y documento son de personas distintas, prevalece el correo. | Alta |
-| RE-0.1.3 | El sistema debe validar el NIT con el algoritmo del dígito de verificación de la DIAN. | Validación | Un NIT con dígito de verificación incorrecto se rechaza; uno válido se acepta. | Alta |
+| RE-0.1.3 | El sistema debe pedir NIT numérico y DV de un dígito en casillas separadas y validar ambos con el algoritmo de la DIAN. | Validación | Un DV incorrecto se rechaza; uno válido se acepta. El servidor no interpreta el último dígito del NIT escrito como DV. La misma regla se aplica al reporte de NIT duplicado. | Alta |
 | RE-0.1.4 | El formulario público debe exigir superar una verificación anti-bot (CAPTCHA) validada en el servidor. | Seguridad | Un envío sin token anti-bot válido se rechaza aunque los datos sean correctos. | Alta |
 | RE-0.1.5 | El sistema debe rechazar correos de dominios desechables según una lista mantenida. | Validación | Un correo de un dominio de la lista se rechaza con un mensaje claro. | Media |
 | RE-0.1.6 | El sistema debe admitir como máximo 3 registros de clínicas por día desde una misma IP. | Seguridad | El cuarto registro del día desde la misma IP se rechaza indicando que lo intente más tarde. | Media |
@@ -44,13 +44,13 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-0.3.1 | El sistema debe listar las clínicas con su estado, plan y estado de suscripción. | Funcional | Con tres clínicas registradas (activa, pendiente y suspendida), el listado muestra las tres con su plan y el estado de su suscripción. | Alta |
-| RE-0.3.2 | El sistema debe permitir cambiar el plan y el estado de la suscripción de una clínica. | Funcional | Al cambiar una clínica del plan gratuito al profesional, sus límites dejan de aplicarse en la siguiente acción y el cambio queda en auditoría. | Alta |
-| RE-0.3.3 | El super-administrador no debe acceder a los datos clínicos internos salvo soporte, que queda auditado. | Seguridad | No ve datos clínicos; el acceso de soporte queda en auditoría. | Alta |
-| RE-0.3.4 | El super-administrador debe operar como rol de plataforma, no filtrado por una sola id_clinica. | Seguridad | Opera sobre todas las clínicas. | Alta |
-| RE-0.3.5 | El super-administrador debe poder suspender o dar de baja una clínica indicando el motivo. | Funcional | La clínica suspendida no opera y el motivo queda en auditoría. | Media |
+| RE-0.3.2 | El sistema debe permitir cambiar el plan y el estado de la suscripción de una clínica con motivo obligatorio. | Funcional | Sin motivo se rechaza; el plan y la suscripción se actualizan juntos y quedan en auditoría. Los límites del nuevo plan se aplican en la siguiente acción (HU-0.4). | Alta |
+| RE-0.3.3 | El super-administrador no debe acceder a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte. | Seguridad | El panel solo muestra metadatos de plataforma y las acciones clínicas responden 403 al contexto de plataforma. | Alta |
+| RE-0.3.4 | El super-administrador debe operar como rol de plataforma, no filtrado por una sola id_clinica. | Seguridad | Opera sobre los metadatos de todas las clínicas, los casos de soporte y las IP bloqueadas; ninguna acción del panel se permite a otro rol. | Alta |
+| RE-0.3.5 | El super-administrador debe poder suspender o dar de baja una clínica indicando el motivo y confirmar la acción; reactivar una suspendida exige motivo. | Funcional | Suspendida o dada de baja no opera ni se ofrece para registro o agenda; su personal pierde el contexto en la siguiente petición. Reactivar una suspendida devuelve el contexto disponible. Todo queda en auditoría y ningún cambio sin motivo se aplica. | Media |
 | RE-0.3.6 | El super-administrador debe poder ocultar una reseña por moderación indicando el motivo. | Funcional | La reseña oculta no se muestra ni cuenta en el promedio; el motivo queda en auditoría. | Media |
 
-**Reglas de negocio:** RN-004, RN-012, RN-804, RN-G13, RN-G14
+**Reglas de negocio:** RN-004, RN-010, RN-012, RN-804, RN-G13, RN-G14, RN-G15
 
 ### HU-0.4 — Control de límites del plan (freemium)
 
@@ -1121,7 +1121,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 |---|---|---|
 | HU-0.1 | RN-001, RN-002, RN-010, RN-011, RN-G06, RN-G19, RN-G20 | RE-0.1.1, RE-0.1.2, RE-0.1.3, RE-0.1.4, RE-0.1.5, RE-0.1.6, RE-0.1.7, RE-0.1.8, RE-0.1.9, RE-0.1.10 |
 | HU-0.2 | RN-002, RN-003, RN-005, RN-G11 | RE-0.2.1, RE-0.2.2, RE-0.2.3, RE-0.2.4, RE-0.2.5 |
-| HU-0.3 | RN-004, RN-012, RN-804, RN-G13, RN-G14 | RE-0.3.1, RE-0.3.2, RE-0.3.3, RE-0.3.4, RE-0.3.5, RE-0.3.6 |
+| HU-0.3 | RN-004, RN-010, RN-012, RN-804, RN-G13, RN-G14, RN-G15 | RE-0.3.1, RE-0.3.2, RE-0.3.3, RE-0.3.4, RE-0.3.5, RE-0.3.6 |
 | HU-0.4 | RN-003, RN-005, RN-006, RN-420 | RE-0.4.1, RE-0.4.2, RE-0.4.3, RE-0.4.4, RE-0.4.5, RE-0.4.6, RE-0.4.7 |
 | HU-0.5 | RN-007, RN-008, RN-013 | RE-0.5.1, RE-0.5.2, RE-0.5.3, RE-0.5.4, RE-0.5.5 |
 | HU-T.1 | RN-G01, RN-G03, RN-G09 | RE-T.1.1, RE-T.1.2, RE-T.1.3, RE-T.1.4, RE-T.1.5 |

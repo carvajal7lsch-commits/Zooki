@@ -388,7 +388,7 @@ flowchart TD
   CX -- Si --> CX1[Elegir el contexto: portal de propietario o una clinica con su rol]
   CX -- No --> D
   CX1 --> D{"Es super-administrador (rol plataforma)?"}
-  D -- Si --> D1[Operar la plataforma: clinicas, planes y suscripciones]
+  D -- Si --> D1["Solo metadatos de plataforma: clinicas, planes,<br/>suscripciones, soporte e IP; flujo §12.1.1"]
   D1 --> ZF
   D -- No --> CA{"La clinica del contexto esta activa? (no suspendida ni de baja)"}
   CA -- No --> CA1[/"Mensaje: la clinica no esta disponible; contacta a la clinica"/]
@@ -613,7 +613,7 @@ Detalle del funcionamiento de cada proceso de módulo. Cada flujo se corresponde
 
 ```mermaid
 flowchart TD
-  A([Registro publico de clinica]) --> B["Datos de clinica y administrador: nombre, tipo y documento,<br/>telefono, correo y contraseña; aceptar politica; sin Google"]
+  A([Registro publico de clinica]) --> B["Datos de clinica: NIT numerico y DV en casillas separadas<br/>Administrador: nombre, tipo y documento, telefono,<br/>correo y contraseña; aceptar politica; sin Google"]
   B --> C{"CAPTCHA valido en servidor?"}
   C -- No --> ERR[Corregir verificacion]
   ERR --> B
@@ -621,7 +621,7 @@ flowchart TD
   V -- No --> E[Corregir campos]
   E --> B
   V -- Si --> N{"NIT duplicado?"}
-  N -- Si --> SOP["Avisar duplicidad; ofrecer reporte a soporte<br/>POST con CSRF y CAPTCHA crea caso"]
+  N -- Si --> SOP["Avisar duplicidad; ofrecer reporte a soporte<br/>NIT numerico y DV separado; POST con CSRF y CAPTCHA<br/>maximo 5 reportes diarios por IP real; crear caso"]
   N -- No --> R{"Menos de 3 altas hoy por IP real?"}
   R -- No --> LIM[Intentalo mañana]
   R -- Si --> T[Iniciar transaccion y reservar contador diario por IP]
@@ -641,6 +641,36 @@ flowchart TD
   OK -- No --> RB[Rollback completo; enlace conserva su uso]
   OK -- Si --> LOGIN["Iniciar sesion: elegir contexto si hay varios, §9"]
   TK -. Vence sin confirmar .-> LIMPIEZA["Limpieza del sistema: borrar clinica pendiente<br/>Cuenta nueva solo sin otros vinculos; preservar preexistente"]
+```
+
+### 12.1.1 Panel del super-administrador — Módulo 0
+
+```mermaid
+flowchart TD
+  A([Plataforma Zooki]) --> S{"Sesion y contexto plataforma vigentes?"}
+  S -- No --> DEN["401 o 403; ningun dato de plataforma"]
+  S -- Si --> L["Listar clinicas, planes y suscripciones;<br/>casos de soporte e IP bloqueadas vigentes<br/>Sin mascotas, consultas, historias ni citas"]
+  L --> C{"Gestionar clinica?"}
+  C -- Si --> F["Buscar y filtrar; tarjetas o tabla<br/>NIT pendiente visible; correo del administrador"]
+  F --> M{"POST, CSRF, motivo y transicion validos?"}
+  M -- No --> ERR["Rechazar sin modificar; corregir formulario"]
+  M -- Si --> CONF{"Suspender, dar de baja o cancelar suscripcion?"}
+  CONF -- Si --> Q{"Confirma el super-administrador?"}
+  CONF -- No --> TX
+  Q -- No --> L
+  Q -- Si --> TX["Transaccion: bloquear clinica, cambiar plan/suscripcion<br/>o estado y auditar; rollback si falla auditoria"]
+  TX --> R["Actualizar panel; aviso breve<br/>Personal pierde contexto en siguiente peticion, segun §9<br/>Clinica inactiva no aparece para registro ni agenda"]
+  L --> CAS["Casos: confirmar cierre como resuelto o descartado con nota<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos"]
+  L --> IP["IP: vencimiento, cuentas LOGIN_FAIL en ventana<br/>y sus clinicas; sin atribuir la IP a una sola clinica"]
+  IP --> DES["Desbloquear: confirmar; POST y CSRF<br/>borrar solo contador de esa IP y auditar en transaccion"]
+  IP --> AV["Elegir administrador de una clinica asociada<br/>ver y editar el texto; ningun envio automatico"]
+  AV --> ENV{"Super-administrador confirma el envio?"}
+  ENV -- No --> L
+  ENV -- Si --> VAL["POST, CSRF; verificar destinatario en servidor<br/>auditar solicitud, enviar solo al elegido y auditar resultado"]
+  CAS --> L
+  DES --> L
+  VAL --> L
+  R --> L
 ```
 
 ### 12.2 Control de límites del plan (freemium) — Módulo 0

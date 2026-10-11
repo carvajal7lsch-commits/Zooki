@@ -9,13 +9,14 @@
 - **Módulo activo:** M0 — Base SaaS, identidad y aislamiento. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
-- **Entrega actual:** D3.1, escrita por Codex; **entregada, pendiente de revisión** (2026-10-10). Corrige la pantalla de registro de clínica, las restricciones de entrada de los formularios de cuenta y la explicación de la contraseña de una cuenta existente. Resultado y pantallas para el usuario en el Anexo D3.1 del plan.
+- **Entrega actual:** E1, escrita por Codex; **entregada, pendiente de revisión** (2026-10-10). Panel del super-administrador sin acceso clínico, gestión de clínicas y soporte, desbloqueo y avisos manuales de IP, NIT y DV separados, máximo de cinco reportes de NIT diarios por IP. Resultado en el Anexo E1 del plan; cinco pruebas de navegador en `prueba-manual.md`.
+- **Verificación E1:** PHP 548 en verde (también con MariaDB temporal, 3267 aserciones, ninguna omitida, base predeterminada `zooki_test_base_v2`); JS 75 en verde. Diagrama nuevo Modelos §12.1.1 renderizado. Sin migración; no se empezó E2.
 - **D2.2:** revisada, aprobada y con commit. Verificación de D3 en su anexo del plan.
 - **D3:** revisada y **aprobada** (2026-10-10; «D3 — Revisión» en el plan), con commit `fa43c3d`. La prueba del usuario motivó D3.1.
 - **Verificación D3.1:** PHP 532 en verde (también con MariaDB temporal, 3114 aserciones, ninguna omitida, base predeterminada `zooki_test_base_v2`); JS 68 en verde. Sin migración ni cambios al flujo de Modelos §12.1.
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
-- **Siguiente paso:** **E1** con Codex (panel del super-administrador; plan, «E — Alcance»). Después **E2** (límites del plan; falta confirmar las citas por mes, propuesta 100).
-- **Para F:** `TRUSTED_PROXIES` con el rango de la red de Traefik; sin eso vuelve el bloqueo global por IP.
+- **E1:** revisada y **aprobada** (2026-10-10; «E1 — Revisión»). Falta el commit y las 5 pruebas del usuario (`agentes/prueba-manual.md`).
+- **Siguiente paso:** **E2** (límites del plan, HU-0.4): 2 cuentas de personal, 50 mascotas y citas por mes por confirmar (propuesta 100).
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 

@@ -78,14 +78,16 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 **Criterios de aceptación:**
 
 - Lista de clínicas registradas con su estado, plan y estado de suscripción.
-- Puede cambiar el plan de una clínica y el estado de su suscripción.
-- **No** accede a los datos clínicos internos de una clínica (historias, consultas, pacientes); el acceso solo se justifica para soporte y queda en auditoría.
+- Puede cambiar el plan de una clínica y el estado de su suscripción, con motivo obligatorio.
+- **No** accede a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte.
 - El super-administrador es un rol de plataforma: sus acciones no se filtran por una sola `id_clinica` (única excepción al aislamiento, RN-G13).
-- Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo.
+- Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo y confirmando la acción; puede reactivar una suspendida con motivo. El personal pierde el contexto suspendido o dado de baja en la siguiente petición.
+- Lista casos de soporte y los cierra como resueltos o descartados con nota auditada, sin enlaces a datos clínicos (RN-010).
+- Lista IP bloqueadas vigentes, su vencimiento y las cuentas que fallaron en la ventana con sus clínicas. Permite desbloquear con confirmación y auditoría. El aviso por correo solo se envía cuando el super-administrador elige al administrador de una clínica asociada, revisa o edita el texto y confirma el envío; nunca es automático (RN-G15).
 - Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo.
 - Toda acción queda registrada en auditoría.
 
-**Reglas de negocio:** RN-004, RN-012, RN-804, RN-G13, RN-G14 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5 · **Dependencias:** —
+**Reglas de negocio:** RN-004, RN-010, RN-012, RN-804, RN-G13, RN-G14, RN-G15 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5 · **Dependencias:** —
 
 ### HU-0.4 — Control de límites del plan (freemium)
 
@@ -417,7 +419,7 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 - Toda operación de negocio filtra por `id_clinica`; su omisión se considera defecto de seguridad (RNF-11).
 - Un usuario de una clínica no obtiene ni modifica datos de otra clínica: el acceso se rechaza con HTTP 403 y queda en auditoría.
 - `Security` valida en cada petición el rol permitido, el token CSRF y la clínica del recurso.
-- Excepciones de acceso a datos globales, explícitas: el **super-administrador** (rol de plataforma, RN-004/RN-G13), que no accede a datos clínicos internos salvo soporte, y la **mascota global**, cuyos datos de seguridad (alergias, alertas, vacunas y desparasitaciones) ve toda clínica vinculada y cuyas consultas de otras clínicas solo se ven con autorización del propietario (RN-113, HU-2.10).
+- Excepciones de acceso a datos globales, explícitas: el **super-administrador** (rol de plataforma, RN-004/RN-G13), limitado a metadatos de plataforma sin acceso clínico tampoco para soporte, y la **mascota global**, cuyos datos de seguridad (alergias, alertas, vacunas y desparasitaciones) ve toda clínica vinculada y cuyas consultas de otras clínicas solo se ven con autorización del propietario (RN-113, HU-2.10).
 - El aislamiento se centraliza (helpers de seguridad y capa de modelos) y se cubre con pruebas.
 
 **Reglas de negocio:** RN-G13, RN-G14, RN-001, RN-004 · **Requisitos:** RF-T.4, RNF-11 · **Dependencias:** HU-T.10
@@ -2007,7 +2009,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-G12 | HU-T.12, HU-T.18 |
 | RN-G13 | HU-0.3, HU-T.15, HU-T.17, HU-5.9 |
 | RN-G14 | HU-0.3, HU-T.15 |
-| RN-G15 | HU-T.13 |
+| RN-G15 | HU-0.3, HU-T.13 |
 | RN-G16 | HU-T.19, HU-5.14 |
 | RN-G17 | HU-T.16 |
 | RN-G18 | HU-T.17, HU-8.1 |
@@ -2026,7 +2028,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-007 | HU-0.5 |
 | RN-008 | HU-0.5 |
 | RN-009 | HU-7.3, HU-7.4 |
-| RN-010 | HU-0.1 |
+| RN-010 | HU-0.1, HU-0.3 |
 | RN-011 | HU-0.1 |
 | RN-012 | HU-0.3 |
 | RN-013 | HU-0.5 |

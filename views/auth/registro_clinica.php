@@ -29,9 +29,16 @@ $tituloPagina = 'Registra tu clínica';
                         <label for="nombre_clinica">Nombre de la clínica</label>
                         <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('nombre_clinica') ?> id="nombre_clinica" name="nombre_clinica" type="text" minlength="<?= ValidadorClinica::NOMBRE_MIN ?>" required></div>
                     </div>
+                    <div class="registro-clinica-nit">
                     <div class="input-group">
-                        <label for="nit">NIT con dígito de verificación</label>
-                        <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('nit') ?> id="nit" name="nit" type="text" placeholder="900123456-8" required></div>
+                        <label for="nit">NIT</label>
+                        <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('nit') ?> id="nit" name="nit" type="text" placeholder="900123456" required></div>
+                    </div>
+                    <div class="input-group">
+                        <label for="dv">DV</label>
+                        <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('dv') ?> id="dv" name="dv" type="text" required aria-describedby="dvAyuda"></div>
+                    </div>
+                    <small id="dvAyuda">Está en tu RUT, después del guion</small>
                     </div>
                     <div class="input-group">
                         <label for="direccion">Dirección</label>

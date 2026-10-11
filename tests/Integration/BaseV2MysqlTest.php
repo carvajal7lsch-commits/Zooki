@@ -22,6 +22,68 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    /** E1 sobre el MER real: ENUM, vínculos, suscripciones, soporte, IP y auditoría. */
+    public function testE1PanelPlataformaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/PlataformaFixture.php';
+        require_once __DIR__ . '/../../models/Plataforma.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        PlataformaFixture::datos($this->db);
+        PlataformaFixture::plataforma();
+        try {
+            $modelo = new Plataforma($this->db);
+            $this->assertCount(4, $modelo->clinicas());
+            $modelo->cambiarSuscripcion(1, 2, 'activa', 'Cambio solicitado');
+            $modelo->cambiarSuscripcion(1, 2, 'cancelada', 'Cancelación solicitada');
+            $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM suscripciones')->fetchColumn());
+            $this->assertSame('cancelada', $this->db->query('SELECT estado FROM suscripciones')->fetchColumn());
+            $this->assertSame(2, (int) $this->db->query('SELECT id_plan FROM clinicas WHERE id_clinica = 1')->fetchColumn());
+            $modelo->cambiarEstado(1, 'suspendida', 'Revisar titularidad');
+            $this->assertSame([], (new Usuario($this->db))->contextosDe(2));
+            $modelo->cambiarEstado(1, 'activa', 'Titularidad válida');
+            $this->assertCount(1, (new Usuario($this->db))->contextosDe(2));
+            $modelo->cerrarCaso(1, 'resuelto', 'Titular identificado');
+            $modelo->cerrarCaso(2, 'descartado', 'Caso improcedente');
+            $this->assertCount(2, $modelo->casos());
+            $ips = $modelo->ips();
+            $this->assertCount(3, $ips[0]['cuentas']);
+            $envios = [];
+            $modelo->avisar('192.0.2.8', '2:3', 'Aviso editado', function (array $admin, string $texto) use (&$envios): bool {
+                $envios[] = [$admin['email'], $texto];
+                return true;
+            });
+            $this->assertSame([['carla@zooki.test', 'Aviso editado']], $envios);
+            $modelo->desbloquear('192.0.2.8');
+            $this->assertSame([], $modelo->ips());
+            $this->assertSame(9, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE accion = 'UPDATE'")->fetchColumn());
+            require_once __DIR__ . '/../../models/RegistroClinica.php';
+            $registro = new RegistroClinica($this->db);
+            $_SERVER['REMOTE_ADDR'] = '192.0.2.50';
+            Auditoria::definirProxiesConfiables([]);
+            $reporte = ['nit' => '900123456', 'dv' => '8', 'email' => 'titular@zooki.test'];
+            for ($i = 0; $i < 5; $i++) {
+                $registro->reportarNit($reporte);
+            }
+            try {
+                $registro->reportarNit($reporte);
+                $this->fail('El sexto reporte debe rechazarse también en MySQL.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame(7, (int) $this->db->query('SELECT COUNT(*) FROM casos_soporte')->fetchColumn());
+            }
+            $this->db->exec("CREATE TRIGGER impedir_auditoria BEFORE INSERT ON auditoria_sistema FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'sin auditoria'");
+            try {
+                $modelo->cambiarEstado(1, 'baja', 'No persistir');
+                $this->fail('Debe revertir sin auditoría.');
+            } catch (RuntimeException $e) {
+                $this->assertSame('activa', $this->db->query('SELECT estado FROM clinicas WHERE id_clinica = 1')->fetchColumn());
+            }
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
     /** D2 contra FK, ENUM, unicidad y enlaces reales; siempre en la base de pruebas por defecto. */
     public function testD2CuentasEnElEsquemaReal(): void
     {

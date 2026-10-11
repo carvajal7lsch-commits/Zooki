@@ -1,0 +1,109 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const codigo = fs.readFileSync(path.join(__dirname, '../../public/js/plataforma.js'), 'utf8');
+
+function pagina() {
+    const eventos = {};
+    const solicitudes = [];
+    const confirmaciones = [];
+    const memoria = new Map();
+    const tarjetas = { dataset: { listaVista: 'tarjetas' }, hidden: false };
+    const tabla = { dataset: { listaVista: 'tabla' }, hidden: true };
+    let actualizado = false;
+    const contexto = {
+        TextEncoder,
+        window: { location: { href: 'index.php?action=plataforma_inicio' }, zookiToast: () => {} },
+        localStorage: { getItem: clave => memoria.get(clave), setItem: (clave, valor) => memoria.set(clave, valor) },
+        document: {
+            addEventListener: (tipo, callback) => { eventos[tipo] = callback; },
+            querySelectorAll: selector => selector === '[data-lista-vista]' ? [tarjetas, tabla] : [],
+            getElementById: () => ({ replaceWith: () => { actualizado = true; } }),
+        },
+        DOMParser: class {
+            parseFromString() { return { getElementById: () => ({}) }; }
+        },
+        FormData: class { constructor(form) { this.form = form; } },
+        Swal: { fire: async opciones => { confirmaciones.push(opciones); return { isConfirmed: true }; } },
+        fetch: async (url, opciones) => {
+            solicitudes.push([url, opciones]);
+            return { ok: true, json: async () => ({ success: true, message: 'Guardado' }), text: async () => '' };
+        },
+    };
+    vm.runInNewContext(codigo, contexto);
+    function form(accion, estado = 'activa') {
+        const salida = { textContent: '' };
+        return {
+            dataset: { plataformaAccion: accion }, elements: { estado: { value: estado } },
+            querySelectorAll: () => [], querySelector: () => salida, reportValidity: () => true,
+        };
+    }
+    return { contexto, eventos, solicitudes, confirmaciones, memoria, tarjetas, tabla, form, api: contexto.window.ZookiPlataforma, actualizado: () => actualizado };
+}
+
+test('E1: cargar y elegir vista no envía correo ni hace peticiones', () => {
+    const p = pagina();
+    p.eventos.DOMContentLoaded();
+    assert.equal(p.tarjetas.hidden, false);
+    assert.equal(p.tabla.hidden, true);
+    assert.equal(p.solicitudes.length, 0);
+    p.api.vista('tabla');
+    assert.equal(p.tabla.hidden, false);
+    p.eventos.DOMContentLoaded();
+    assert.equal(p.tarjetas.hidden, true);
+    assert.equal(p.tabla.hidden, false);
+});
+
+test('E1: motivo valida mientras se escribe y el máximo también cuenta bytes', () => {
+    const p = pagina();
+    const ayuda = {};
+    const campo = { value: ' ', dataset: { maxBytes: '65535' }, parentElement: { querySelector: () => ayuda }, setAttribute: () => {}, setCustomValidity: valor => { campo.error = valor; } };
+    assert.equal(p.api.validar(campo), false);
+    assert.match(ayuda.textContent, /motivo/);
+    campo.value = 'Revisión válida';
+    assert.equal(p.api.validar(campo), true);
+    assert.equal(campo.error, '');
+    campo.value = 'ñ'.repeat(32768);
+    assert.equal(p.api.validar(campo), false);
+});
+
+test('E1: destructivas confirman y reactivar usa aviso breve', () => {
+    const p = pagina();
+    for (const [accion, estado] of [['plataforma_estado_ajax', 'baja'], ['plataforma_estado_ajax', 'suspendida'], ['plataforma_suscripcion_ajax', 'cancelada'], ['plataforma_caso_ajax', 'resuelto'], ['plataforma_aviso_ajax', 'activa']]) {
+        assert.ok(p.api.confirmacion(p.form(accion, estado)));
+    }
+    assert.equal(p.api.confirmacion(p.form('plataforma_estado_ajax', 'activa')), null);
+    assert.equal(p.api.confirmacion(p.form('plataforma_suscripcion_ajax', 'activa')), null);
+});
+
+test('E1: cancelar confirmación no modifica ni envía avisos', async () => {
+    const p = pagina();
+    p.contexto.Swal.fire = async () => ({ isConfirmed: false });
+    await p.api.enviar(p.form('plataforma_aviso_ajax'), { disabled: false });
+    assert.equal(p.solicitudes.length, 0);
+});
+
+test('E1: envío explícito actualiza el panel antes del toast y usa POST', async () => {
+    const p = pagina();
+    let actualizadoAlAvisar = false;
+    p.contexto.window.zookiToast = () => { actualizadoAlAvisar = p.actualizado(); };
+    await p.api.enviar(p.form('plataforma_aviso_ajax'), { disabled: false });
+    assert.equal(p.confirmaciones.length, 1);
+    assert.equal(p.solicitudes[0][0], 'index.php?action=plataforma_aviso_ajax');
+    assert.equal(p.solicitudes[0][1].method, 'POST');
+    assert.equal(actualizadoAlAvisar, true);
+});
+
+test('E1: doble envío no repite la petición mientras espera confirmación', async () => {
+    const p = pagina();
+    let resolver;
+    p.contexto.Swal.fire = () => new Promise(resolve => { resolver = resolve; });
+    const form = p.form('plataforma_aviso_ajax');
+    const primero = p.api.enviar(form, { disabled: false });
+    await p.api.enviar(form, { disabled: false });
+    resolver({ isConfirmed: true });
+    await primero;
+    assert.equal(p.solicitudes.filter(([, opciones]) => opciones.method === 'POST').length, 1);
+});

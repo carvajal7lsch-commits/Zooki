@@ -4,6 +4,18 @@
 final class ValidadorNit
 {
     public const MENSAJE = 'Escribe un NIT válido, incluido su dígito de verificación.';
+    public const NUMERO_MAX = 14;
+
+    /** Decisión 2026-10-10: el usuario indica el DV; nunca se extrae del número. */
+    public static function validarSeparado(string $numero, string $dv): ?string
+    {
+        $numero = trim($numero);
+        $dv = trim($dv);
+        if (!preg_match('/^[0-9]{1,14}$/D', $numero) || !preg_match('/^[0-9]$/D', $dv) || (int) $numero === 0) {
+            return self::MENSAJE;
+        }
+        return self::digito($numero) === (int) $dv ? null : self::MENSAJE;
+    }
 
     public static function normalizar(string $valor): string
     {

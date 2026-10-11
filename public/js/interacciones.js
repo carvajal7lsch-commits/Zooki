@@ -82,9 +82,13 @@ function sanearEntrada(valor, opciones, maximo) {
     const maximoBytes = Number(opciones.maxBytes);
     if (maximoBytes > 0) {
         let salida = '';
+        let bytes = 0;
+        const codificador = new TextEncoder();
         for (const caracter of limpio) {
-            if (new TextEncoder().encode(salida + caracter).length > maximoBytes) break;
+            const longitud = codificador.encode(caracter).length;
+            if (bytes + longitud > maximoBytes) break;
             salida += caracter;
+            bytes += longitud;
         }
         limpio = salida;
     }

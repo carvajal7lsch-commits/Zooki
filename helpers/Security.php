@@ -39,6 +39,7 @@ class Security {
 
     /** RE-T.19.3: lo único que se puede hacer antes de aceptar la versión vigente de la política. */
     private static array $accionesSinPoliticaAceptada = ['aceptar_politica', 'logout'];
+    public const ACCIONES_PLATAFORMA = ['plataforma_suscripcion_ajax', 'plataforma_estado_ajax', 'plataforma_caso_ajax', 'plataforma_desbloquear_ajax', 'plataforma_aviso_ajax'];
 
     /** RE-T.18.3: en el portal, con el perfil incompleto, solo se completa el perfil. */
     private static array $accionesConPerfilIncompleto = ['completar_perfil'];
@@ -167,6 +168,9 @@ class Security {
             self::validarClinicaDeLaPeticion($actual);
         }
 
+        if (in_array($action, self::ACCIONES_PLATAFORMA, true) && ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            throw new AccesoDenegado(403, 'La operación requiere POST.');
+        }
         self::validateCsrf($action);
     }
 
@@ -413,6 +417,9 @@ class Security {
 
         // Plataforma: el panel del super-administrador llega en la etapa E.
         $matriz['plataforma_inicio'] = $plataforma;
+        foreach (self::ACCIONES_PLATAFORMA as $accion) {
+            $matriz[$accion] = $plataforma;
+        }
 
         return $matriz;
     }
@@ -520,7 +527,9 @@ class Security {
             $attempts = 0;
         }
 
-        if ($attempts >= $maxAttempts) {
+        $almacen = self::almacenDeIntentos();
+        // E1: el desbloqueo central también vale con la cookie anterior; la sesión solo es respaldo.
+        if ($almacen === null && $attempts >= $maxAttempts) {
             $retryAfter = $window - ($now - $lastAttempt);
             $_SESSION['error_login'] = "Demasiados intentos. Espera " . ceil($retryAfter / 60) . " minutos.";
             return false;
@@ -530,7 +539,6 @@ class Security {
         // se reinicia con solo no mandar la cookie. Este vive en la base de
         // datos y se consulta por IP y por cuenta, asi que el limite se aplica
         // aunque el cliente descarte su sesion en cada intento.
-        $almacen = self::almacenDeIntentos();
         if ($almacen === null) return true;
 
         $claves = ['ip:' . $ip];

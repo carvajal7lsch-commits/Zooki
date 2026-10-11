@@ -238,9 +238,19 @@ switch ($action) {
         (new ContextoController())->cambiar();
         break;
 
-    // Página mínima de la plataforma; el panel del super-administrador es de la etapa E.
+    // HU-0.3: solo metadatos de plataforma, sin acceso clínico.
     case "plataforma_inicio":
-        require_once "../views/plataforma/inicio.php";
+        require_once "../controllers/PlataformaController.php";
+        (new PlataformaController())->inicio();
+        break;
+
+    case "plataforma_suscripcion_ajax":
+    case "plataforma_estado_ajax":
+    case "plataforma_caso_ajax":
+    case "plataforma_desbloquear_ajax":
+    case "plataforma_aviso_ajax":
+        require_once '../controllers/PlataformaController.php';
+        (new PlataformaController())->modificar($action);
         break;
 
     // ═══════════════════════════════════════════════════════════════

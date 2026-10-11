@@ -10,13 +10,16 @@ final class ValidadorClinica
     public const NOMBRE_MIN = 3;
     public const NOMBRE_MAX = 150;
     public const DIRECCION_MAX = 255;
-    public const NIT_PRESENTACION_MAX = 25;
+    public const NIT_PRESENTACION_MAX = ValidadorNit::NUMERO_MAX;
     public const TEXTO_CARACTERES = "\\p{L}\\p{M}\\p{N} .,'’&()+/#:\\-";
 
     public static function atributosHtml(string $campo): string
     {
         if ($campo === 'nit') {
-            return 'inputmode="numeric" maxlength="' . self::NIT_PRESENTACION_MAX . '" data-caracteres="0-9\\-" data-formato="nit"';
+            return 'inputmode="numeric" maxlength="' . self::NIT_PRESENTACION_MAX . '" data-caracteres="0-9"';
+        }
+        if ($campo === 'dv') {
+            return 'inputmode="numeric" maxlength="1" data-caracteres="0-9"';
         }
         $maximo = $campo === 'nombre_clinica' ? self::NOMBRE_MAX : self::DIRECCION_MAX;
         $caracteres = htmlspecialchars(self::TEXTO_CARACTERES, ENT_QUOTES, 'UTF-8');
@@ -27,7 +30,8 @@ final class ValidadorClinica
     {
         $valor = ValidadorCuenta::normalizar($campo, $valor);
         return match ($campo) {
-            'nit' => strlen($valor) <= self::NIT_PRESENTACION_MAX && preg_match('/^[0-9]+(?:-[0-9])?$/D', $valor) ? ValidadorNit::validar($valor) : ValidadorNit::MENSAJE,
+            'nit' => preg_match('/^[0-9]{1,14}$/D', $valor) && (int) $valor > 0 ? null : 'El NIT solo admite de 1 a 14 dígitos; escribe el DV en su casilla.',
+            'dv' => preg_match('/^[0-9]$/D', $valor) ? null : 'El DV debe ser un solo dígito.',
             'nombre_clinica' => self::textoValido($valor, self::NOMBRE_MIN, self::NOMBRE_MAX) ? null : 'El nombre de la clínica debe tener entre 3 y 150 caracteres y usar letras, números o signos de nombre.',
             'direccion' => self::textoValido($valor, 1, self::DIRECCION_MAX) ? null : 'Escribe una dirección de hasta 255 caracteres con letras, números y signos de dirección.',
             'email_clinica', 'email_administrador' => ValidadorCuenta::correo($valor) ?? DominiosDesechables::validar($valor),
@@ -38,12 +42,13 @@ final class ValidadorClinica
     public static function formulario(array $entrada): array
     {
         $datos = [];
-        foreach (['nombre_clinica', 'nit', 'direccion', 'telefono_clinica', 'email_clinica', 'nombre_completo', 'tipo_documento', 'documento', 'telefono', 'email'] as $campo) {
+        foreach (['nombre_clinica', 'nit', 'dv', 'direccion', 'telefono_clinica', 'email_clinica', 'nombre_completo', 'tipo_documento', 'documento', 'telefono', 'email'] as $campo) {
             $datos[$campo] = ValidadorCuenta::normalizar($campo, (string) ($entrada[$campo] ?? ''));
         }
         foreach (['nombre_clinica', 'nit', 'direccion', 'email_clinica'] as $campo) {
             self::exigir(self::campo($campo, $datos[$campo]));
         }
+        self::exigir(ValidadorNit::validarSeparado($datos['nit'], $datos['dv']));
         self::exigir(self::campo('email_administrador', $datos['email']));
         self::exigir(ValidadorCuenta::nombre($datos['nombre_completo']));
         self::exigir(ValidadorCuenta::documento($datos['documento']));
@@ -62,7 +67,7 @@ final class ValidadorClinica
         if ($datos['password'] !== (string) ($entrada['confirm_password'] ?? '')) {
             throw new InvalidArgumentException('Las contraseñas no coinciden.');
         }
-        $datos['nit'] = ValidadorNit::normalizar($datos['nit']);
+        $datos['nit'] = ValidadorNit::normalizar($datos['nit'] . '-' . $datos['dv']);
         $datos['email'] = mb_strtolower($datos['email']);
         $datos['email_clinica'] = mb_strtolower($datos['email_clinica']);
         return $datos;
