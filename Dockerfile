@@ -3,6 +3,10 @@ FROM php:8.2-apache
 # Habilitar mod_rewrite de Apache
 RUN a2enmod rewrite
 
+# F0 (B.5): Apache sirve solo public/ (docker/apache-zooki.conf). La raíz del
+# contenedor deja de exponer .env, composer.json, database/ o tests/.
+COPY docker/apache-zooki.conf /etc/apache2/sites-available/000-default.conf
+
 # Instalar dependencias del sistema y extensiones de PHP necesarias
 RUN apt-get update && apt-get install -y \
     git \
@@ -16,7 +20,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Configurar el directorio de trabajo
 WORKDIR /var/www/html/Zooki
 
-# Copiar los archivos de la aplicación
+# Copiar los archivos de la aplicación (lo que no se copia está en .dockerignore)
 COPY . .
 
 # Instalar dependencias de PHP (si existe el archivo composer.json)

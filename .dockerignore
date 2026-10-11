@@ -1,0 +1,58 @@
+# F0 (B.5) — Lo que no entra en la imagen web.
+#
+# La imagen lleva solo lo que usa la aplicación en ejecución: el código PHP,
+# public/, database/ (migrador y semilla), scripts/ de tareas programadas,
+# docker/ (arranque y Apache), y README.md y documentacion/ para el portal de
+# documentación y el índice de Algolia (scripts/algolia_index.php).
+
+# Credenciales: las variables las pone Dokploy, nunca un archivo en la imagen.
+.env
+.env.*
+*.env
+
+# Repositorio, editores y agentes
+.git
+.gitattributes
+.gitignore
+.github
+.claude
+.vscode
+.idea
+agentes
+specs
+AGENTS.md
+CLAUDE.md
+Claude outputs
+
+# Pruebas y herramientas de desarrollo
+tests
+phpunit.xml
+.phpunit.cache
+node_modules
+scripts/dev
+scripts/docs
+
+# Dependencias: la imagen corre su propio composer install --no-dev
+vendor
+
+# Material de trabajo, registros y respaldos
+scratch
+logs
+backups
+*.log
+*.bak
+*.bak_*
+*.bak2_*
+*.bak_dl
+*.sql.gz
+
+# Archivos de los usuarios: en producción viven en el volumen «uploads»
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Documentos que no se publican
+documentacion/AnalisisVaciosDiseno.md
+documentacion/ZOOKI_REGLAS.md
+
+# No hacen falta dentro del contenedor
+docker-compose.yml
