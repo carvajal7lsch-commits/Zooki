@@ -45,7 +45,7 @@ La **versión 2.0** transforma Zooki en una **plataforma SaaS multi-inquilino**:
 - Construir la agenda de citas con disponibilidad real del veterinario y horarios configurables.
 - Habilitar el portal del propietario con auto-registro.
 - Ofrecer autenticación local y federada (Google) con control de acceso por roles.
-- **(v2.0)** Operar como plataforma multi-inquilino con aislamiento por `id_clinica`, registro autónomo de clínicas y suscripción por planes (freemium) administrada por un super-administrador.
+- **(v2.0)** Operar como plataforma multi-inquilino con aislamiento por `id_clinica`, registro autónomo de clínicas y suscripción por planes (freemium) administrada por un super-administrador. El gratuito admite 2 cuentas de personal (incluidas invitaciones pendientes), 50 mascotas vinculadas y 100 citas por mes calendario, sin canceladas; los propietarios no tienen límite y el profesional usa límites NULL (sin límite). Las urgencias rojas se registran incluso al límite.
 - **(v2.0)** Incorporar el **Grafo I** (soporte a la decisión clínica): sugerencia de diagnósticos por peso y alertas de toxicidad/interacción al prescribir.
 - **(v2.0)** Incorporar el **Grafo II** (agendamiento inteligente): triage de 4 niveles, reajuste de agenda en cascada, ausencias y cobertura del veterinario.
 - **(v2.0)** Habilitar el propietario como identidad global multi-clínica, el carnet digital con QR de emergencia y la reputación de veterinarios.

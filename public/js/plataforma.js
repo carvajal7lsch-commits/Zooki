@@ -9,6 +9,7 @@
         });
         document.querySelectorAll('[data-vista]').forEach(boton => {
             boton.setAttribute('aria-pressed', String(boton.dataset.vista === tipo));
+            boton.classList?.toggle('active', boton.dataset.vista === tipo);
         });
         try {
             localStorage.setItem(CLAVE_VISTA, tipo);
@@ -40,15 +41,9 @@
     }
 
     function confirmacion(form) {
-        if (form.dataset.confirmacion) return form.dataset.confirmacion;
         if (form.dataset.plataformaAccion === 'plataforma_estado_ajax') {
             if (form.elements.estado.value === 'baja') return 'Dar de baja impide operar a esta clínica y no permite reactivarla desde el panel. Sus registros se conservan.';
-            if (form.elements.estado.value === 'suspendida') return 'Suspender impide operar a esta clínica y retira el contexto de su personal en la siguiente petición.';
         }
-        if (form.dataset.plataformaAccion === 'plataforma_suscripcion_ajax' && form.elements.estado.value === 'cancelada') return '¿Cancelar la suscripción de esta clínica?';
-        // Cerrar casos no tiene reapertura en E1; el correo enviado tampoco se puede retirar.
-        if (form.dataset.plataformaAccion === 'plataforma_caso_ajax') return '¿Cerrar este caso con la nota indicada?';
-        if (form.dataset.plataformaAccion === 'plataforma_aviso_ajax') return '¿Enviar este texto al administrador elegido?';
         return null;
     }
 
@@ -70,7 +65,7 @@
         try {
             const texto = confirmacion(form);
             if (texto) {
-                const respuesta = await Swal.fire({ title: 'Confirmar acción', text: texto, icon: 'warning', showCancelButton: true, confirmButtonText: 'Confirmar', cancelButtonText: 'Cancelar' });
+                const respuesta = await Swal.fire({ target: form.closest('.users-modal') || document.body, title: 'Confirmar acción', text: texto, icon: 'warning', showCancelButton: true, confirmButtonText: 'Confirmar', cancelButtonText: 'Cancelar' });
                 if (!respuesta.isConfirmed) return;
             }
             boton.disabled = true;
@@ -98,7 +93,11 @@
         const boton = evento.target.closest('button');
         if (!boton) return;
         if (boton.dataset.vista) vista(boton.dataset.vista);
-        if (boton.hasAttribute('data-cerrar-dialogo')) boton.closest('dialog').close();
+        if (boton.hasAttribute('data-cerrar-dialogo')) {
+            const modal = boton.closest('.users-modal');
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
         if (boton.dataset.gestionarClinica) {
             const dialogo = document.getElementById('gestionarClinica');
             dialogo.querySelector('[data-clinica-titulo]').textContent = boton.dataset.nombre;
@@ -119,7 +118,9 @@
             });
             estados.elements.estado.value = Array.from(estados.elements.estado.options).find(opcion => !opcion.disabled)?.value || '';
             estados.querySelector('button').disabled = boton.dataset.estado === 'baja';
-            dialogo.showModal();
+            dialogo.classList.add('is-open');
+            dialogo.setAttribute('aria-hidden', 'false');
+            dialogo.querySelector('select').focus();
         }
     });
     document.addEventListener('submit', evento => {

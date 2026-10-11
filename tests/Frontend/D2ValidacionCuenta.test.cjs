@@ -76,6 +76,33 @@ test('el rechazo de la política del servidor aparece junto al campo mientras se
     assert.equal(p.llamadas[0].has('csrf_token'), false, 'el interceptor global no reemplaza el token de esta ayuda');
 });
 
+test('E2: completar NIT y DV muestra duplicado junto al campo y habilita Reportar a soporte', async () => {
+    const p = pagina(['nit', 'dv'], () => respuesta({ error: 'Este NIT ya está registrado en Zooki. Puedes reportarlo a soporte.', nit_duplicado: true }));
+    const reporte = { hidden: true, addEventListener() {} };
+    const salida = {};
+    const registros = {};
+    p.form.addEventListener = (tipo, callback) => { registros[tipo] = callback; };
+    p.form.dispatchEvent = evento => registros[evento.tipo]?.(evento);
+    vm.runInNewContext(fs.readFileSync(path.join(raiz, 'public/js/registro-clinica.js'), 'utf8'), {
+        document: { addEventListener(tipo, callback) { callback(); }, getElementById: id => id === 'registroClinicaForm' ? p.form : (id === 'reportarNit' ? reporte : salida) },
+        window: {},
+    });
+    p.campos[0].value = '900123456';
+    p.campos[1].value = '8';
+    p.eventos.input({ target: p.campos[1] });
+    await p.temporizadores.at(-1)();
+    assert.equal(p.llamadas[0].get('nit'), '900123456');
+    assert.equal(p.llamadas[0].get('campo'), 'dv');
+    assert.match(p.campos[1].salidas[0].textContent, /ya está registrado/);
+    assert.equal(reporte.hidden, false);
+    p.campos[0].value = '900123457';
+    registros.input({ target: p.campos[0] });
+    assert.equal(reporte.hidden, true);
+    const vista = fs.readFileSync(path.join(raiz, 'views/auth/registro_clinica.php'), 'utf8');
+    assert.ok(vista.indexOf('id="reportarNit"') < vista.indexOf('id="direccion"'));
+    assert.match(vista, />Reportar a soporte</);
+});
+
 test('una respuesta antigua no valida el documento que fue reemplazado', async () => {
     let resolver;
     const p = pagina(['documento'], () => new Promise(resolve => { resolver = resolve; }));

@@ -374,7 +374,7 @@ class CitaController
 
         $idPropietario = (int) Contexto::idUsuario();
         $mascotas = (new Mascota($this->db))->enClinicaDelPropietario($idClinica);
-        $idCita = Transaccion::ejecutar($this->db, function () use ($mascotas, $citas, $idMascota, $idPropietario, $idVeterinario, $fecha, $hora, $motivo, $idTipo): int {
+        $idCita = (new LimitePlan($this->db, $idClinica))->transaccion(function () use ($mascotas, $citas, $idMascota, $idPropietario, $idVeterinario, $fecha, $hora, $motivo, $idTipo): int {
             // RN-110: la mascota se vincula a la clínica al agendar allí (si ya lo estaba, no cambia nada).
             $mascotas->vincular($idMascota, $idPropietario);
             return $citas->registrar([
@@ -389,7 +389,6 @@ class CitaController
         });
 
         $cita = $citas->getById($idCita);
-        (new Auditoria($this->db))->log($idPropietario, 'INSERT', 'citas', $idCita, null, ['fecha' => $fecha, 'hora' => $hora], 'Cita agendada desde el portal (RE-5.3.4)', $idClinica);
         $this->avisarCita('NUEVA_CITA', 'Nueva cita desde el portal', $cita, false);
 
         return ['message' => 'Tu cita quedó agendada. Te enviaremos la confirmación por correo.', 'id_cita' => $idCita];

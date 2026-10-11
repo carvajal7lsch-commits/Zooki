@@ -13,13 +13,58 @@ final class RegistroClinicaTest extends TestCase
     private PDO $db;
     private RegistroClinica $registro;
 
+    public function testE2NitAntiguoConGuionTambienImpideDuplicarLaClinica(): void
+    {
+        $this->db->exec("UPDATE clinicas SET nit = '900123456-8' WHERE id_clinica = 1");
+        $this->assertTrue($this->registro->nitExiste('900123456', '8'));
+        try {
+            $this->registro->registrar(self::datos(1, ['nit' => '900123456', 'dv' => '8']), '192.0.2.123');
+            $this->fail('El guion antiguo no debe permitir una segunda clínica con el mismo NIT.');
+        } catch (NitDuplicado $error) {
+            $this->assertSame(3, $this->total('clinicas'));
+            $this->assertSame('900123456-8', $this->db->query('SELECT nit FROM clinicas WHERE id_clinica = 1')->fetchColumn());
+        }
+    }
+
+    public function testE2NitDuplicadoSeAvisaAlEscribirSinRevelarIdentidadesYConLimiteIp(): void
+    {
+        $this->registro->registrar(self::datos(), '192.0.2.123');
+        $_SESSION = ['csrf_cuenta_validacion' => 'validacion'];
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $entrada = self::datos();
+        $_POST = ['cuenta_csrf' => 'validacion', 'campo' => 'dv', 'valor' => $entrada['dv'], 'nit' => $entrada['nit']];
+        $controller = new IdentidadController($this->db);
+        require_once __DIR__ . '/../../models/IntentoLogin.php';
+        Security::definirAlmacenDeIntentos(new IntentoLogin($this->db));
+        ob_start();
+        $controller->validar();
+        $respuesta = json_decode(ob_get_clean(), true);
+        $this->assertTrue($respuesta['nit_duplicado']);
+        $this->assertStringContainsString('reportarlo a soporte', $respuesta['error']);
+        $this->assertArrayNotHasKey('email', $respuesta);
+        $this->assertArrayNotHasKey('id_clinica', $respuesta);
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM clinicas WHERE nit = '" . ValidadorNit::normalizar($entrada['nit'] . '-' . $entrada['dv']) . "'")->fetchColumn());
+        for ($numero = 1; $numero < 20; $numero++) {
+            $_SESSION = ['id_usuario' => 1, 'csrf_cuenta_validacion' => 'validacion'];
+            ob_start();
+            $controller->validar();
+            ob_end_clean();
+        }
+        ob_start();
+        $controller->validar();
+        $respuesta = json_decode(ob_get_clean(), true);
+        $this->assertSame(429, http_response_code());
+        $this->assertFalse($respuesta['success']);
+        $this->assertArrayNotHasKey('nit_duplicado', $respuesta);
+        Security::definirAlmacenDeIntentos(null);
+        http_response_code(200);
+    }
+
     protected function setUp(): void
     {
         $this->db = DosClinicas::sqlite();
         DosClinicas::crearMascotasSqlite($this->db);
         DosClinicas::crearCatalogosSqlite($this->db);
-        $this->db->exec("CREATE TABLE planes (id_plan INTEGER PRIMARY KEY, nombre TEXT, precio_mensual INTEGER, estado INTEGER)");
-        $this->db->exec("INSERT INTO planes VALUES (1, 'Gratuito', 0, 1)");
         $this->db->exec('CREATE TABLE intentos_login (identificador TEXT PRIMARY KEY, intentos INTEGER, primer_intento TEXT, ultimo_intento TEXT, bloqueado_hasta TEXT)');
         $this->db->exec("CREATE TABLE casos_soporte (id_caso INTEGER PRIMARY KEY, tipo TEXT, id_usuario INTEGER, id_clinica INTEGER, descripcion TEXT, estado TEXT DEFAULT 'abierto')");
         $this->registro = new RegistroClinica($this->db);

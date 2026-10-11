@@ -10,6 +10,7 @@ require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/Security.php';
 require_once __DIR__ . '/../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../helpers/ValidadorClinica.php';
+require_once __DIR__ . '/../models/RegistroClinica.php';
 
 final class IdentidadController
 {
@@ -173,13 +174,21 @@ final class IdentidadController
             default => 'Campo no válido.',
         };
         // RE-T.13.2: nunca se consulta la existencia de la identidad al escribir.
-        if ($error === null && in_array($campo, ['documento', 'email', 'email_administrador', 'email_clinica'], true)
-            && !Security::checkVerificationLimit(Contexto::idUsuario())) {
+        if ($error === null && in_array($campo, ['documento', 'email', 'email_administrador', 'email_clinica', 'dv'], true)
+            && !Security::checkVerificationLimit($campo === 'dv' ? null : Contexto::idUsuario())) {
             http_response_code(429);
             echo json_encode(['success' => false, 'message' => 'Espera un momento antes de seguir comprobando.']);
             return;
         }
-        echo json_encode(['success' => true, 'error' => $error]);
+        $duplicado = $campo === 'dv' && $error === null && (new RegistroClinica($this->db))->nitExiste((string) $_POST['nit'], $valor);
+        if ($duplicado) {
+            $error = 'Este NIT ya está registrado en Zooki. Puedes reportarlo a soporte.';
+        }
+        $respuesta = ['success' => true, 'error' => $error];
+        if ($campo === 'dv') {
+            $respuesta['nit_duplicado'] = $duplicado;
+        }
+        echo json_encode($respuesta);
     }
 
     private function json(callable $operacion): void

@@ -15,7 +15,7 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-0.1.1 | El sistema debe ofrecer un formulario público con los datos de la clínica y del administrador inicial. | Funcional | Se capturan ambos conjuntos de datos. | Alta |
-| RE-0.1.2 | El sistema debe validar el formato del correo y la unicidad del NIT, sin duplicar identidades ni revelar si una cuenta existe. | Validación | NIT duplicado se rechaza y permite reportarlo a soporte. La respuesta pública es «Revisa tu correo para activar la clínica»: correo existente confirma con su titular conservando identidad, contraseña y roles; si el correo es nuevo y el documento existe, confirma el titular del documento. Si correo y documento son de personas distintas, prevalece el correo. | Alta |
+| RE-0.1.2 | El sistema debe validar el formato del correo y la unicidad del NIT, sin duplicar identidades ni revelar si una cuenta existe. | Validación | Con NIT y DV válidos, la comprobación al escribir avisa el duplicado junto al campo y permite reportarlo a soporte; está limitada por IP. Al enviar también se rechaza el duplicado. La respuesta pública es «Revisa tu correo para activar la clínica»: correo existente confirma con su titular conservando identidad, contraseña y roles; si el correo es nuevo y el documento existe, confirma el titular del documento. Si correo y documento son de personas distintas, prevalece el correo. | Alta |
 | RE-0.1.3 | El sistema debe pedir NIT numérico y DV de un dígito en casillas separadas y validar ambos con el algoritmo de la DIAN. | Validación | Un DV incorrecto se rechaza; uno válido se acepta. El servidor no interpreta el último dígito del NIT escrito como DV. La misma regla se aplica al reporte de NIT duplicado. | Alta |
 | RE-0.1.4 | El formulario público debe exigir superar una verificación anti-bot (CAPTCHA) validada en el servidor. | Seguridad | Un envío sin token anti-bot válido se rechaza aunque los datos sean correctos. | Alta |
 | RE-0.1.5 | El sistema debe rechazar correos de dominios desechables según una lista mantenida. | Validación | Un correo de un dominio de la lista se rechaza con un mensaje claro. | Media |
@@ -56,13 +56,13 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-0.4.1 | El sistema debe leer el plan y la suscripción antes de una acción que consume cupo. | Funcional | Se evalúa antes de crear o vincular una mascota y de crear una cita o un usuario. | Alta |
+| RE-0.4.1 | El sistema debe leer el plan y la suscripción antes de una acción que consume cupo. | Funcional | Se evalúa por clínica antes de crear o vincular una mascota, crear una cita, invitar o reactivar personal; suscripción no al día aplica el gratuito. Comprobación y alta se serializan por clínica; una invitación vigente ya reserva el cupo de su titular. | Alta |
 | RE-0.4.2 | Dentro del límite, la acción debe ejecutarse; alcanzado el límite, el sistema debe impedirla e informar el motivo. | Restricción | Al límite, la acción se bloquea con un mensaje. | Alta |
 | RE-0.4.3 | El mensaje al propietario debe ser neutral y notificar a la clínica; al personal, indicar el límite y la mejora de plan. | Funcional | Al llegar al límite, el propietario ve «no es posible completar la acción ahora» y la clínica recibe un aviso; el personal ve el límite alcanzado y la opción de mejorar el plan. | Media |
 | RE-0.4.4 | El plan gratuito debe incluir las capacidades limitadas por volumen. | Restricción | Las capacidades funcionan dentro del límite. | Media |
 | RE-0.4.5 | El límite de mascotas debe contar las mascotas vinculadas a la clínica, incluidas las que ya existían en la plataforma. | Restricción | Vincular una mascota existente consume cupo igual que crear una nueva. | Alta |
 | RE-0.4.6 | Una urgencia 🔴 no debe bloquearse por el límite del plan ni por la mora. | Restricción | Con la clínica al límite y en mora, un caso 🔴 se registra y se atiende. | Alta |
-| RE-0.4.7 | El plan gratuito debe limitar a 5 mascotas vinculadas, 30 citas por mes y 2 cuentas de personal. | Restricción | La sexta mascota, la cita 31 del mes y la tercera cuenta de personal se rechazan con el mensaje del límite. | Alta |
+| RE-0.4.7 | El plan gratuito debe limitar a 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal. | Restricción | La mascota 51 creada o vinculada, la cita 101 del mes calendario (sin canceladas) y la tercera cuenta de personal activo o invitación/activación pendiente vigente se rechazan con el mensaje del límite; el administrador cuenta y los propietarios no tienen límite. | Alta |
 
 **Reglas de negocio:** RN-003, RN-005, RN-006, RN-420
 

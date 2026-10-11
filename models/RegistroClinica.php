@@ -48,9 +48,20 @@ final class RegistroClinica
 
     private function porNit(string $nit): ?array
     {
-        $stmt = $this->db->prepare('SELECT id_clinica FROM clinicas WHERE nit = ?');
+        // E2: el mismo NIT antiguo con guion también reserva el número (RE-0.1.2).
+        $stmt = $this->db->prepare("SELECT id_clinica FROM clinicas WHERE REPLACE(nit, '-', '') = ?");
         $stmt->execute([$nit]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /** RE-0.1.2: el NIT es público; no devuelve identidad ni contacto. */
+    public function nitExiste(string $numero, string $dv): bool
+    {
+        $error = ValidadorNit::validarSeparado($numero, $dv);
+        if ($error !== null) {
+            throw new InvalidArgumentException($error);
+        }
+        return $this->porNit(ValidadorNit::normalizar($numero . '-' . $dv)) !== null;
     }
 
     public function registrar(array $entrada, string $ip): array

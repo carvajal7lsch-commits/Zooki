@@ -4,6 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!form) return;
     const salida = document.getElementById('registroClinicaResultado');
     const reporte = document.getElementById('reportarNit');
+    form.addEventListener('cuenta:validada', evento => {
+        if (evento.detail.campo === 'dv') reporte.hidden = !evento.detail.nitDuplicado;
+    });
+    form.addEventListener('input', evento => {
+        if (['nit', 'dv'].includes(evento.target.name)) reporte.hidden = true;
+    });
+    form.addEventListener('reset', () => { reporte.hidden = true; });
     const enviar = async (accion, boton) => {
         boton.disabled = true;
         try {

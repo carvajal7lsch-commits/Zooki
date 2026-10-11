@@ -36,9 +36,11 @@ $tituloPagina = 'Registra tu clínica';
                     </div>
                     <div class="input-group">
                         <label for="dv">DV</label>
-                        <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('dv') ?> id="dv" name="dv" type="text" required aria-describedby="dvAyuda"></div>
+                        <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('dv') ?> id="dv" name="dv" type="text" required aria-describedby="dvAyuda" data-cuenta-ayuda="nitUnicidad"></div>
                     </div>
                     <small id="dvAyuda">Está en tu RUT, después del guion</small>
+                    <small id="nitUnicidad" role="status"></small>
+                    <button id="reportarNit" type="button" class="btn-secondary" hidden>Reportar a soporte</button>
                     </div>
                     <div class="input-group">
                         <label for="direccion">Dirección</label>
@@ -92,7 +94,6 @@ $tituloPagina = 'Registra tu clínica';
                 <div data-turnstile-formulario data-sitekey="<?= $e(Turnstile::configuracion('TURNSTILE_SITE_KEY')) ?>"></div>
                 <button type="submit" class="btn-primary">Registrar clínica</button>
                 <p id="registroClinicaResultado" role="status" aria-live="polite"></p>
-                <button id="reportarNit" type="button" class="btn-secondary" hidden>Reportar NIT a soporte</button>
             </form>
         </main>
     </div>

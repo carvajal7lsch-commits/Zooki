@@ -30,17 +30,19 @@
 - Siempre incluye: una comprobación de que una clínica no ve lo de la otra, las pantallas tocadas en celular y lo que cambió en el JavaScript.
 - Al final: «dime solo lo que falló, con el número del paso».
 
-## E1 — Cinco pruebas del usuario (2026-10-10)
+## E2 — Cuatro pruebas del usuario (2026-10-11)
 
-Usa las cuentas de prueba que ya tienes; no hace falta regenerar sus contraseñas.
-Abre primero Gina en un navegador y usa otra sesión para el personal.
-Los correos se revisan en `logs/correos/` si tienes `MAIL_MODO=archivo` configurado en local.
-Haz las comprobaciones de pantalla también en celular.
+Usa las cuentas que ya tienes; no hace falta regenerar sus contraseñas.
+Aplica primero `php scripts/migrar.php` en tu entorno local para cargar la migración 05.
+Abre Gina en un navegador y otra sesión para el personal.
+Los correos se revisan en `logs/correos/` si tienes `MAIL_MODO=archivo` configurado.
+Haz las comprobaciones de pantalla también en celular; no repitas las IP y avisos que ya probaste en E1.
 
-- [ ] **1. Gina — Clínicas y permisos.** En `?action=plataforma_inicio`, comprueba tarjetas, cambio a tabla y que al recargar conserve la vista; busca por nombre/NIT y filtra estado. Un registro sin confirmar debe verse como «Pendiente de verificación». Gina recibe 403 al abrir `?action=vet_pacientes`; Ana/Beto reciben 403 al abrir el panel de plataforma.
-- [ ] **2. Gina y Beto — Plan y suspensión.** En Gestionar, cambia plan/suscripción con motivo y comprueba el resultado inmediato; sin motivo no guarda. Suspende Norte con confirmación y motivo. La siguiente petición de Beto pierde ese contexto, y Norte no se ofrece en el registro ni para agendar desde el portal. Reactiva con motivo: Beto vuelve a elegir Norte en el selector. Para «Dar de baja», comprueba el texto de confirmación y pulsa Cancelar; no des de baja una clínica que quieras seguir usando en las pruebas.
-- [ ] **3. Gina — Soporte.** Con dos casos de prueba (se pueden generar reportando un NIT duplicado), resuelve uno y descarta el otro con nota; confirma y comprueba que el estado cambia sin recargar a mano. La pantalla no contiene enlaces a mascotas, consultas ni citas.
-- [ ] **4. Gina — IP y aviso manual.** Mantén abierta la sesión de Gina; desde otra sesión genera 20 accesos fallidos con cuentas conocidas de Norte/Sur. El panel debe mostrar la IP, vencimiento, esas cuentas y clínicas. Abrir «Enviar aviso» no crea un correo: elige administrador, edita texto y confirma Enviar; solo ese destinatario recibe el aviso. Desbloquea con confirmación y vuelve a intentar entrar desde la misma sesión bloqueada; el CAPTCHA por cuenta se conserva cuando corresponde.
-- [ ] **5. Registro de clínica — NIT/DV.** En `?action=registro_clinica`, NIT y DV están juntos y separados: NIT `900123456`, DV `8` válido; DV `2` muestra error bajo el campo. Letras/guion no entran, DV solo deja un dígito y pegar un NIT largo respeta el máximo. Con un NIT de una clínica ya registrada, el reporte usa ambas casillas y el sexto envío de ese día/IP se rechaza sin crear otro caso.
+- [ ] **1. Gina y Beto — Modal y suspensión.** En `?action=plataforma_inicio`, Gestionar Norte → Suspender con motivo: debe enviar y actualizar la tarjeta sin otra confirmación; Beto pierde ese contexto en su siguiente petición. Reactiva con motivo: Beto vuelve a elegir Norte. «Dar de baja» sí pide confirmación; pulsa Cancelar. Comprueba que el modal conserva los componentes administrativos y se puede usar en celular.
+- [ ] **2. Registro de clínica — NIT duplicado al escribir.** En `?action=registro_clinica`, escribe NIT `900123456` y DV `8` (o el NIT/DV de una clínica existente): sin enviar debe aparecer el aviso junto al campo y «Reportar a soporte», sin identificar al administrador. Cambia el DV a `2`: se muestra el error de DV y desaparece el reporte. Vuelve a `8`: reaparece el duplicado y permite reportarlo. Verifica letras/pegado y el diseño en celular.
+- [ ] **3. Gina y Ana — Cupo y reactivación de personal.** Gina asigna a Norte el plan Gratuito con motivo. Si están los tres usuarios originales, Ana desactiva a Beto en `?action=admin_usuarios`: quedan Ana y Elena (2/2). Invitar otra persona y reactivar Beto, tanto por el botón de estado como por el modal, deben mostrar el límite sin cambiar sus datos. Desactiva a Elena solo en Norte (queda 1/2), reactiva Beto y comprueba que permite hacerlo (2/2). Carla verifica que el vínculo de Elena en Sur sigue activo.
+- [ ] **4. Gina — Uso agregado y cambio de plan.** En el panel, Norte muestra uso contra límites 2/50/100; cambia entre tarjetas y tabla y recarga: conserva la vista. Cambia Norte a Profesional con suscripción activa y motivo: actualiza inmediatamente y muestra «Sin límite» para los recursos. Sur conserva su propio plan y uso. El panel muestra únicamente los números, sin enlaces a mascotas ni citas individuales. Devuelve Norte al plan elegido para tus pruebas.
+
+Los bordes de 50 mascotas/100 citas, las invitaciones pendientes, el aviso neutral del portal y la entrada roja ya tienen pruebas automáticas; no hace falta crear cientos de registros a mano. Estas pruebas pueden dejar a Elena inactiva solo en Norte; el vínculo se conserva.
 
 Dime solo lo que falló, con el número del paso.

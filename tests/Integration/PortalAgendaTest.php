@@ -127,6 +127,32 @@ final class PortalAgendaTest extends TestCase
 
     // ── Apoyo ───────────────────────────────────────────────────────────
 
+    public function testE2PortalBloqueadoDaMensajeNeutralAuditaYAvisaSinVincular(): void
+    {
+        $this->db->exec("INSERT INTO propietario_clinica (id_propietario, id_clinica) VALUES (6, 2)");
+        $this->db->exec('UPDATE clinicas SET id_plan = 1 WHERE id_clinica = 2');
+        $this->db->exec('UPDATE planes SET limite_citas_mes = 0 WHERE id_plan = 1');
+        $respuesta = $this->agendar(2, 4, 2);
+        $this->assertFalse($respuesta['success']);
+        $this->assertSame('No es posible completar la acción ahora', $respuesta['message']);
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM mascota_clinica WHERE id_clinica = 2')->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM citas')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = 2 AND descripcion LIKE 'Acción bloqueada%'")->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM notificaciones_internas WHERE id_clinica = 2 AND tipo = 'LIMITE_PLAN'")->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM notificaciones_internas WHERE id_clinica = 1 AND tipo = 'LIMITE_PLAN'")->fetchColumn());
+    }
+
+    public function testE2PortalCuentaVincularMascotaExistenteComoCupo(): void
+    {
+        $this->db->exec("INSERT INTO propietario_clinica (id_propietario, id_clinica) VALUES (6, 2)");
+        $this->db->exec('UPDATE clinicas SET id_plan = 1 WHERE id_clinica = 2');
+        $this->db->exec('UPDATE planes SET limite_mascotas = 0 WHERE id_plan = 1');
+        $respuesta = $this->agendar(2, 4, 2);
+        $this->assertSame('No es posible completar la acción ahora', $respuesta['message']);
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM mascotas')->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM mascota_clinica WHERE id_clinica = 2')->fetchColumn());
+    }
+
     private function agendar(int $clinica, int $veterinario, int $tipo, int $mascota = 1, string $hora = '09:00'): array
     {
         $_POST = [

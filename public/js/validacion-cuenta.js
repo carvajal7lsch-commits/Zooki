@@ -194,7 +194,7 @@
             aviso(campo, mensaje, Boolean(error));
             estado.origen.set(campo, mensaje ? 'servidor' : 'local');
             estado.cache.set(campo, { firma, valido: !error });
-            form.dispatchEvent(new CustomEvent('cuenta:validada', { detail: { campo: clave, valido: !error } }));
+            form.dispatchEvent(new CustomEvent('cuenta:validada', { detail: { campo: clave, valido: !error, nitDuplicado: Boolean(resultado.nit_duplicado) } }));
             return !error;
         } catch (error) {
             if (estado.secuencias.get(campo) !== numero) return false;

@@ -8,9 +8,7 @@ final class PlataformaFixture
     {
         $db = DosClinicas::sqlite();
         DosClinicas::crearMascotasSqlite($db);
-        $db->exec("CREATE TABLE planes (id_plan INTEGER PRIMARY KEY, nombre TEXT, estado INTEGER)");
-        $db->exec("INSERT INTO planes VALUES (1, 'Gratuito', 1), (2, 'Profesional', 1)");
-        $db->exec("CREATE TABLE suscripciones (id_suscripcion INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER, id_plan INTEGER, estado TEXT DEFAULT 'activa', ciclo TEXT DEFAULT 'mensual', al_dia INTEGER DEFAULT 1, fecha_inicio TEXT, fecha_fin TEXT)");
+        DosClinicas::crearHistoriaSqlite($db);
         $db->exec("CREATE TABLE casos_soporte (id_caso INTEGER PRIMARY KEY AUTOINCREMENT, tipo TEXT, id_usuario INTEGER, id_clinica INTEGER, descripcion TEXT, estado TEXT DEFAULT 'abierto', fecha TEXT DEFAULT CURRENT_TIMESTAMP, fecha_cierre TEXT)");
         $db->exec('CREATE TABLE intentos_login (identificador TEXT PRIMARY KEY, intentos INTEGER DEFAULT 0, primer_intento TEXT, ultimo_intento TEXT, bloqueado_hasta TEXT)');
         return $db;
@@ -18,6 +16,7 @@ final class PlataformaFixture
 
     public static function datos(PDO $db): void
     {
+        $db->exec('DELETE FROM suscripciones');
         $db->exec("UPDATE clinicas SET id_plan = 1 WHERE id_clinica IN (1,2,3)");
         $db->exec("INSERT INTO clinicas (id_clinica, nombre, nit, estado) VALUES (4, 'Pendiente', '9001234568', 'pendiente_verificacion')");
         $db->exec("INSERT INTO casos_soporte (tipo, id_clinica, descripcion) VALUES ('clinica_duplicada', 1, 'Reporte de NIT'), ('documento_duplicado', 2, 'Reporte de documento')");

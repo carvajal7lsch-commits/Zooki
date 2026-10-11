@@ -2,6 +2,7 @@
 require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/CatalogoClinica.php';
 require_once __DIR__ . '/../helpers/HorarioOcupado.php';
+require_once __DIR__ . '/../helpers/LimitePlan.php';
 
 /**
  * C5: agenda v1 sobre el modelo v2. Cada cita es de la clínica activa y de un
@@ -46,37 +47,57 @@ class Cita extends ModeloClinica
      */
     public function registrar(array $datos): int
     {
+        // Las peticiones ordinarias no pueden autodeclararse rojas para eludir el plan.
+        return $this->registrarEvaluada($datos, 'verde');
+    }
+
+    /** RN-420: punto de entrada del futuro triage, con prioridad ya evaluada en servidor. */
+    public function registrarEvaluada(array $datos, string $prioridad): int
+    {
+        if (!in_array($prioridad, ['verde', 'amarillo', 'naranja', 'rojo'], true)) {
+            throw new InvalidArgumentException('Prioridad clínica no válida.');
+        }
         $clinica = $this->clinica();
-        $idMascota = (int) $datos['id_mascota'];
-        $idVeterinario = (int) $datos['id_veterinario'];
-        $fecha = $datos['fecha'];
-        $hora = self::normalizarHora($datos['hora']);
+        // RN-G13: un id ajeno sigue dando 403, incluso si la clínica ya agotó su plan.
+        $this->exigirMascotaActiva((int) $datos['id_mascota']);
+        $this->exigirVeterinarioDeLaClinica((int) $datos['id_veterinario']);
+        return (new LimitePlan($this->conn, $clinica))->consumir('citas', function () use ($datos, $prioridad, $clinica): int {
+            $idMascota = (int) $datos['id_mascota'];
+            $idVeterinario = (int) $datos['id_veterinario'];
+            $fecha = $datos['fecha'];
+            $hora = self::normalizarHora($datos['hora']);
 
-        $this->exigirMascotaActiva($idMascota);
-        $this->exigirVeterinarioDeLaClinica($idVeterinario);
-        [$duracion, $margen] = $this->tiemposDelTipo($datos['id_tipo_cita'] ?? null);
+            $this->exigirMascotaActiva($idMascota);
+            $this->exigirVeterinarioDeLaClinica($idVeterinario);
+            [$duracion, $margen] = $this->tiemposDelTipo($datos['id_tipo_cita'] ?? null);
 
-        $this->exigirHorarioLibre($idVeterinario, $idMascota, $fecha, $hora, $duracion, null);
+            $this->exigirHorarioLibre($idVeterinario, $idMascota, $fecha, $hora, $duracion, null);
 
-        $sql = "INSERT INTO citas
-            (id_clinica, id_mascota, id_veterinario, id_tipo_cita, fecha, hora, hora_fin, motivo,
-             duracion_minutos, margen_minutos, prioridad, es_sobrecupo, estado)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'verde', 0, ?)";
-        $parametros = [
-            $clinica,
-            $idMascota,
-            $idVeterinario,
-            $datos['id_tipo_cita'] ?: null,
-            $fecha,
-            $hora,
-            self::horaFin($hora, $duracion),
-            $datos['motivo'],
-            $duracion,
-            $margen,
-            $datos['estado'] ?? 'confirmada',
-        ];
-        $this->ejecutarReserva($sql, $parametros);
-        return (int) $this->conn->lastInsertId();
+            $sql = "INSERT INTO citas
+                (id_clinica, id_mascota, id_veterinario, id_tipo_cita, fecha, hora, hora_fin, motivo,
+                 duracion_minutos, margen_minutos, prioridad, es_sobrecupo, estado)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)";
+            $parametros = [
+                $clinica,
+                $idMascota,
+                $idVeterinario,
+                $datos['id_tipo_cita'] ?: null,
+                $fecha,
+                $hora,
+                self::horaFin($hora, $duracion),
+                $datos['motivo'],
+                $duracion,
+                $margen,
+                $prioridad,
+                $datos['estado'] ?? 'confirmada',
+            ];
+            $this->ejecutarReserva($sql, $parametros);
+            $id = (int) $this->conn->lastInsertId();
+            if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'INSERT', 'citas', $id, null, ['fecha' => $fecha, 'prioridad' => $prioridad], 'Cita registrada con verificación del plan (RE-0.4.1, RN-420)', $clinica)) {
+                throw new RuntimeException('No se pudo auditar la cita.');
+            }
+            return $id;
+        }, $datos['fecha'], $prioridad);
     }
 
     /**

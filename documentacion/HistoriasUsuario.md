@@ -99,13 +99,14 @@ Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir
 
 **Criterios de aceptación:**
 
-- Antes de una acción que consume cupo (crear o vincular una mascota, crear una cita o un usuario) se lee el plan y el estado de suscripción de la clínica.
+- Antes de una acción que consume cupo (crear o vincular una mascota, crear una cita, invitar o reactivar personal) se lee el plan y el estado de suscripción de la clínica. Reactivar consume cupo si la persona no lo tenía reservado por una invitación vigente; cambiar datos de alguien ya activo no consume otro cupo.
 - Dentro del límite: la acción se ejecuta y queda en auditoría.
 - Alcanzado el límite: la acción se impide y se informa el motivo invitando a mejorar el plan.
 - **Excepción:** una urgencia 🔴 nunca se bloquea por el límite ni por la mora; se atiende y se registra (RN-420).
 - Cuando quien intenta la acción es el **propietario** (desde su portal), el mensaje es neutral ("no es posible completar la acción ahora") y se notifica a la clínica para que lo gestione; cuando es **personal**, el mensaje indica el límite alcanzado y la opción de mejorar el plan.
 - El límite de mascotas cuenta las mascotas vinculadas a la clínica, incluidas las que ya existían en la plataforma (HU-1.5).
-- Límites del plan gratuito: 5 mascotas vinculadas, 30 citas por mes y 2 cuentas de personal; el plan profesional no tiene límites de volumen.
+- Las invitaciones y activaciones pendientes vigentes cuentan junto al personal activo (incluido el administrador); los propietarios no tienen límite. Las citas cuentan por su fecha en el mes calendario, excluyendo las canceladas.
+- Límites del plan gratuito: 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal; el plan profesional no tiene límites de volumen.
 - El plan gratuito incluye las capacidades del sistema (incluidos los grafos) en funcionamiento, pero limitadas por volumen.
 
 **Reglas de negocio:** RN-003, RN-005, RN-006, RN-420 · **Requisitos:** RF-0.4 · **Dependencias:** HU-0.2

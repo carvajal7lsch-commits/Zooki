@@ -4,6 +4,7 @@ require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/Roles.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
+require_once __DIR__ . '/../helpers/LimitePlan.php';
 
 /**
  * D2.2 (RE-T.7.5, RN-705, RN-G06) — Invitaciones al personal de una clínica.
@@ -52,25 +53,27 @@ final class InvitacionPersonal
      */
     public function crear(array $persona, int $clinica, array $escritos): array
     {
-        $token = bin2hex(random_bytes(32));
-        $stmt = $this->db->prepare('INSERT INTO verificaciones_email (id_usuario, email, proposito, id_clinica_vinculo, id_rol_vinculo,
-                nombre_invitado, tipo_documento_invitado, documento_invitado, email_invitado, telefono_invitado, token_hash, expires_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-        $stmt->execute([
-            (int) $persona['id_usuario'],
-            (string) $persona['email'],
-            self::PROPOSITO,
-            $clinica,
-            (int) $escritos['id_rol'],
-            $escritos['nombre_completo'],
-            $escritos['tipo_documento'],
-            $escritos['documento'],
-            $escritos['email'],
-            ($escritos['telefono'] ?? '') !== '' ? $escritos['telefono'] : null,
-            password_hash($token, PASSWORD_DEFAULT),
-            date('Y-m-d H:i:s', time() + self::HORAS * 3600),
-        ]);
-        return ['id' => (int) $this->db->lastInsertId(), 'token' => $token];
+        return (new LimitePlan($this->db, $clinica))->consumir('personal', function () use ($persona, $clinica, $escritos): array {
+            $token = bin2hex(random_bytes(32));
+            $stmt = $this->db->prepare('INSERT INTO verificaciones_email (id_usuario, email, proposito, id_clinica_vinculo, id_rol_vinculo,
+                    nombre_invitado, tipo_documento_invitado, documento_invitado, email_invitado, telefono_invitado, token_hash, expires_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            $stmt->execute([
+                (int) $persona['id_usuario'],
+                (string) $persona['email'],
+                self::PROPOSITO,
+                $clinica,
+                (int) $escritos['id_rol'],
+                $escritos['nombre_completo'],
+                $escritos['tipo_documento'],
+                $escritos['documento'],
+                $escritos['email'],
+                ($escritos['telefono'] ?? '') !== '' ? $escritos['telefono'] : null,
+                password_hash($token, PASSWORD_DEFAULT),
+                date('Y-m-d H:i:s', time() + self::HORAS * 3600),
+            ]);
+            return ['id' => (int) $this->db->lastInsertId(), 'token' => $token];
+        });
     }
 
     /**
@@ -222,7 +225,7 @@ final class InvitacionPersonal
      */
     public function reenviar(int $id, int $clinica): array
     {
-        return Transaccion::ejecutar($this->db, function () use ($id, $clinica): array {
+        return (new LimitePlan($this->db, $clinica))->transaccion(function () use ($id, $clinica): array {
             $fila = $this->pendienteDeClinica($id, $clinica);
             if ($fila === null || $fila['proposito'] !== self::PROPOSITO) {
                 throw new InvalidArgumentException('La invitación ya no está pendiente.');

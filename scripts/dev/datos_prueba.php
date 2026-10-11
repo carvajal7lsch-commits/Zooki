@@ -18,8 +18,8 @@
  * nueva y la reactiva, sin duplicar nada.
  *
  * Se niega a correr fuera de la consola, dentro de Docker, contra una base
- * que no sea local, sobre una base v1 o si la base tiene clínicas que no son
- * las de prueba.
+ * que no sea local o sobre una base v1. Conserva las clínicas ajenas a las
+ * de prueba y avisa cuáles encontró.
  */
 
 if (PHP_SAPI !== 'cli') {
@@ -46,8 +46,8 @@ function salir(string $mensaje, int $codigo = 1): void
 }
 
 const CLINICAS = [
-    'norte' => ['nombre' => 'Clínica Norte (prueba)', 'nit' => '900123456-8'],
-    'sur'   => ['nombre' => 'Clínica Sur (prueba)', 'nit' => '900654321-0'],
+    'norte' => ['nombre' => 'Clínica Norte (prueba)', 'nit' => '9001234568'],
+    'sur'   => ['nombre' => 'Clínica Sur (prueba)', 'nit' => '9006543210'],
 ];
 
 // [nombre, documento, correo, roles de clínica [clínica => rol], propietario en [clínicas], super-administrador]
@@ -72,7 +72,8 @@ if ($claveComun !== null) {
 }
 
 ob_start(); // Database imprime el error de conexión; se reporta aparte.
-$db = (new Database())->getConnection();
+// E2: permite inyectar una base temporal en pruebas; la guarda local sigue siendo obligatoria.
+$db = $db ?? (new Database())->getConnection();
 $error = trim((string) ob_get_clean());
 if (!$db) {
     salir('No se pudo conectar a la base de datos: ' . $error);
@@ -95,11 +96,14 @@ if (!$tabla('clinicas') || !$tabla('usuario_clinica')) {
     salir("La base «{$base}» no tiene el esquema v2. Carga database/01_schema.sql y database/02_semilla.sql.");
 }
 
-$nits = array_column(CLINICAS, 'nit');
-$ajenas = $db->query('SELECT nit FROM clinicas')->fetchAll(PDO::FETCH_COLUMN);
-$ajenas = array_diff($ajenas, $nits);
+try {
+    $revision = DatosPrueba::revisarClinicas($db, CLINICAS);
+} catch (InvalidArgumentException $e) {
+    salir($e->getMessage());
+}
+$ajenas = $revision['ajenas'];
 if ($ajenas) {
-    salir("La base «{$base}» ya tiene clínicas que no son de prueba (" . implode(', ', $ajenas) . '). No se mezclan datos.');
+    echo 'Clínicas locales ajenas a los datos de prueba (se conservan sin cambios): ' . implode(', ', $ajenas) . PHP_EOL;
 }
 
 echo "Base de destino: {$base} ({$conexion})" . PHP_EOL;
@@ -113,16 +117,17 @@ $credenciales = [];
 
 $db->beginTransaction();
 try {
+    // Decisión del usuario 2026-10-11: volver a comprobar bajo bloqueo antes de escribir.
+    $revision = DatosPrueba::revisarClinicas($db, CLINICAS, true);
     $idClinica = [];
     foreach (CLINICAS as $clave => $c) {
-        $st = $db->prepare('SELECT id_clinica FROM clinicas WHERE nit = ?');
-        $st->execute([$c['nit']]);
-        $id = $st->fetchColumn();
-        if ($id === false) {
+        $id = $revision['propias'][$clave] ?? null;
+        if ($id === null) {
             $db->prepare("INSERT INTO clinicas (nombre, nit, id_plan, estado) VALUES (?, ?, 1, 'activa')")->execute([$c['nombre'], $c['nit']]);
             $id = $db->lastInsertId();
         } else {
-            $db->prepare("UPDATE clinicas SET estado = 'activa' WHERE id_clinica = ?")->execute([$id]);
+            // Solo las clínicas reconocidas por nombre y NIT se normalizan; conserva sus ids.
+            $db->prepare("UPDATE clinicas SET estado = 'activa', nit = ? WHERE id_clinica = ?")->execute([$c['nit'], $id]);
         }
         $idClinica[$clave] = (int) $id;
         (new InicializadorClinica($db))->copiar((int) $id);

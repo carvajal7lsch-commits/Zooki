@@ -51,3 +51,7 @@
 .registro-clinica-nit small#dvAyuda {
     grid-column: 1 / -1;
 }
+.registro-clinica-nit #reportarNit,
+.registro-clinica-nit #nitUnicidad {
+    grid-column: 1 / -1;
+}

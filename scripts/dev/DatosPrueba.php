@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../../helpers/PoliticaDatos.php';
 require_once __DIR__ . '/../../models/ConsentimientoDatos.php';
+require_once __DIR__ . '/../../helpers/ValidadorNit.php';
 
 /**
  * D2.1 — Apoyo de scripts/dev/datos_prueba.php, separado para probarlo sin la
@@ -10,6 +11,33 @@ require_once __DIR__ . '/../../models/ConsentimientoDatos.php';
  */
 final class DatosPrueba
 {
+    /** E2: comprobar todos los conflictos antes de regenerar claves o modificar clínicas. */
+    public static function revisarClinicas(PDO $db, array $esperadas, bool $bloquear = false): array
+    {
+        $bloqueo = $bloquear && $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+        $filas = $db->query('SELECT id_clinica, nombre, nit FROM clinicas' . $bloqueo)->fetchAll(PDO::FETCH_ASSOC);
+        $propias = [];
+        $ajenas = [];
+        foreach ($filas as $fila) {
+            $clavePropia = null;
+            foreach ($esperadas as $clave => $esperada) {
+                if (ValidadorNit::normalizar($fila['nit']) !== ValidadorNit::normalizar($esperada['nit'])) {
+                    continue;
+                }
+                if ($fila['nombre'] !== $esperada['nombre'] || isset($propias[$clave])) {
+                    throw new InvalidArgumentException('El NIT de prueba ' . $esperada['nit'] . ' ya pertenece a otra clínica local. No se cambió ningún dato.');
+                }
+                $clavePropia = $clave;
+                $propias[$clave] = (int) $fila['id_clinica'];
+                break;
+            }
+            if ($clavePropia === null) {
+                $ajenas[] = $fila['nit'];
+            }
+        }
+        return ['propias' => $propias, 'ajenas' => $ajenas];
+    }
+
     /** Valor de --clave=<clave>, o null si no se pasó. */
     public static function claveDeArgumentos(array $argumentos): ?string
     {

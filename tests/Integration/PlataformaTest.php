@@ -52,6 +52,10 @@ final class PlataformaTest extends TestCase
         $this->assertCount(1, $norte);
         $this->assertSame('Gratuito', $norte[0]['plan']);
         $this->assertSame('ana@zooki.test', $norte[0]['administrador']);
+        $this->assertSame(['uso' => 1, 'limite' => 50], $norte[0]['uso_plan']['mascotas']);
+        $this->assertSame(['uso' => 0, 'limite' => 100], $norte[0]['uso_plan']['citas']);
+        $sur = $this->panel->clinicas('Sur', 'activa');
+        $this->assertSame(0, $sur[0]['uso_plan']['mascotas']['uso']);
         $this->assertCount(0, $this->panel->clinicas('%'));
         foreach ($filas as $fila) {
             $this->assertArrayNotHasKey('mascotas', $fila);

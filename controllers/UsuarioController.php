@@ -208,6 +208,10 @@ class UsuarioController {
             $invitaciones->auditar('enviada', $idInvitacion, $idClinica, Contexto::idUsuario());
             $this->responder(true, $enviado ? self::INVITACION_ENVIADA : self::INVITACION_SIN_CORREO);
         } catch (Throwable $e) {
+            if ($e instanceof LimiteAlcanzado) {
+                $this->responder(false, $e->getMessage());
+                return;
+            }
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
@@ -285,7 +289,7 @@ class UsuarioController {
             $this->responder(true, $enviado ? 'Se reenvió la invitación.' : self::INVITACION_SIN_CORREO);
         } catch (Throwable $e) {
             error_log('Error al reenviar la invitación: ' . $e->getMessage());
-            $this->responder(false, 'No se pudo reenviar la invitación. Intenta nuevamente.');
+            $this->responder(false, $e instanceof LimiteAlcanzado ? $e->getMessage() : 'No se pudo reenviar la invitación. Intenta nuevamente.');
         }
     }
 
@@ -375,17 +379,10 @@ class UsuarioController {
         }
 
         try {
-            $this->db->beginTransaction();
-            if ($this->usuario->identidadEditableEnClinica($idUsuario, $idClinica)) {
-                $this->usuario->actualizarIdentidad($idUsuario, $datos);
-            } else {
-                $this->usuario->actualizarDatosPersonal($idUsuario, $datos);
-            }
-            $this->usuario->asignarRolEnClinica($idUsuario, $idClinica, $datos['id_rol']);
-            if ($datos['estado'] !== 1) {
-                $this->usuario->cambiarEstadoEnClinica($idUsuario, $idClinica, false);
-            }
-            $this->db->commit();
+            $this->usuario->editarPersonalEnClinica($idUsuario, $idClinica, $datos);
+        } catch (LimiteAlcanzado $e) {
+            $this->responder(false, $e->getMessage());
+            return;
         } catch (Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
@@ -431,7 +428,12 @@ class UsuarioController {
             return;
         }
 
-        $this->usuario->cambiarEstadoEnClinica($idUsuario, $this->clinica(), $activo);
+        try {
+            $this->usuario->cambiarEstadoEnClinica($idUsuario, $this->clinica(), $activo);
+        } catch (LimiteAlcanzado $e) {
+            $this->responder(false, $e->getMessage());
+            return;
+        }
         $this->auditoria->log(
             Contexto::idUsuario(),
             'UPDATE',
@@ -485,7 +487,7 @@ class UsuarioController {
             $this->responder(true, $reenvio ? self::INVITACION_SIN_CORREO : 'No se pudo enviar el enlace. La contraseña anterior está invalidada; reintenta el envío.');
         } catch (Throwable $e) {
             error_log('Error al restablecer contrasena: ' . $e->getMessage());
-            $this->responder(false, 'No se pudo restablecer la contrasena. Intenta nuevamente.');
+            $this->responder(false, $e instanceof LimiteAlcanzado ? $e->getMessage() : 'No se pudo restablecer la contrasena. Intenta nuevamente.');
         }
     }
 

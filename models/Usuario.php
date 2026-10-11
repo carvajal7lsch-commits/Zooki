@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../helpers/Roles.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
+require_once __DIR__ . '/../helpers/LimitePlan.php';
 
 /**
  * Identidad de las personas (MER §2) y sus roles por clínica.
@@ -344,9 +345,46 @@ class Usuario
      */
     public function cambiarEstadoEnClinica(int $idUsuario, int $idClinica, bool $activo): bool
     {
-        $stmt = $this->conn->prepare('UPDATE usuario_clinica SET estado = ? WHERE id_usuario = ? AND id_clinica = ?');
-        $stmt->execute([$activo ? 'activo' : 'inactivo', $idUsuario, $idClinica]);
-        return $stmt->rowCount() > 0;
+        return $this->conCupoParaReactivar($idUsuario, $idClinica, $activo, function () use ($idUsuario, $idClinica, $activo): bool {
+            $stmt = $this->conn->prepare('UPDATE usuario_clinica SET estado = ? WHERE id_usuario = ? AND id_clinica = ?');
+            $stmt->execute([$activo ? 'activo' : 'inactivo', $idUsuario, $idClinica]);
+            return $stmt->rowCount() > 0;
+        });
+    }
+
+    /** Decisión 2026-10-11: el modal también respeta el cupo al reactivar (RE-0.4.7). */
+    public function editarPersonalEnClinica(int $idUsuario, int $idClinica, array $datos): void
+    {
+        $this->conCupoParaReactivar($idUsuario, $idClinica, $datos['estado'] === 1, function () use ($idUsuario, $idClinica, $datos): void {
+            if ($this->identidadEditableEnClinica($idUsuario, $idClinica)) {
+                $this->actualizarIdentidad($idUsuario, $datos);
+            } else {
+                $this->actualizarDatosPersonal($idUsuario, $datos);
+            }
+            $this->asignarRolEnClinica($idUsuario, $idClinica, $datos['id_rol']);
+            if ($datos['estado'] !== 1) {
+                $this->cambiarEstadoEnClinica($idUsuario, $idClinica, false);
+            }
+        });
+    }
+
+    private function conCupoParaReactivar(int $idUsuario, int $idClinica, bool $activo, callable $operacion): mixed
+    {
+        $limites = new LimitePlan($this->conn, $idClinica);
+        return $limites->transaccion(function () use ($idUsuario, $idClinica, $activo, $operacion, $limites): mixed {
+            $vinculo = $this->uno('SELECT uc.estado AS estado_clinica, u.estado FROM usuario_clinica uc JOIN usuarios u ON u.id_usuario = uc.id_usuario WHERE uc.id_usuario = ? AND uc.id_clinica = ?', [$idUsuario, $idClinica]);
+            if ($vinculo === null) {
+                throw new InvalidArgumentException('La persona no está vinculada a esta clínica.');
+            }
+            if ($activo && $vinculo['estado_clinica'] !== 'activo' && (int) $vinculo['estado'] === 1) {
+                $pendiente = $this->uno("SELECT id FROM verificaciones_email WHERE id_usuario = ? AND id_clinica_vinculo = ? AND proposito IN ('activacion_personal', 'invitacion_personal') AND used = 0 AND expires_at > ?", [$idUsuario, $idClinica, date('Y-m-d H:i:s')]);
+                // Una invitación vigente ya reservó este cupo; no se vuelve a consumir.
+                if ($pendiente === null) {
+                    return $limites->consumir('personal', $operacion);
+                }
+            }
+            return $operacion();
+        });
     }
 
     /** Administradores activos de la clínica, con la cuenta también activa. */

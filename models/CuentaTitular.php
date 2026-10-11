@@ -9,6 +9,7 @@ require_once __DIR__ . '/InvitacionPersonal.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../helpers/PoliticaDatos.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
+require_once __DIR__ . '/../helpers/LimitePlan.php';
 require_once __DIR__ . '/../helpers/GoogleToken.php';
 
 /** D2: operaciones globales de la cuenta; el sujeto viene de sesión o de un enlace secreto. */
@@ -42,7 +43,7 @@ final class CuentaTitular
     /** RE-T.19.1: excepción aprobada para personal, sin contraseña ni consentimiento aún. */
     public function crearPersonal(array $datos, int $clinica): array
     {
-        return Transaccion::ejecutar($this->db, function () use ($datos, $clinica): array {
+        return (new LimitePlan($this->db, $clinica))->consumir('personal', function () use ($datos, $clinica): array {
             $datos['password'] = null;
             $id = $this->usuarios->crear($datos);
             $this->db->prepare('UPDATE usuarios SET estado = 0 WHERE id_usuario = ?')->execute([$id]);
@@ -66,7 +67,8 @@ final class CuentaTitular
     /** RE-T.14.2: revoca la clave anterior; solo el titular conoce la nueva. */
     public function restablecerPersonal(int $id, int $clinica): array
     {
-        return Transaccion::ejecutar($this->db, function () use ($id, $clinica): array {
+        $limites = new LimitePlan($this->db, $clinica);
+        return $limites->transaccion(function () use ($id, $clinica, $limites): array {
             $this->bloquearUsuario($id);
             $usuario = $this->usuarios->buscarPorId($id);
             if ($usuario === null || !$this->usuarios->identidadEditableEnClinica($id, $clinica)) {
@@ -75,8 +77,12 @@ final class CuentaTitular
             $pendiente = $this->db->prepare("SELECT 1 FROM verificaciones_email WHERE id_usuario = ? AND proposito = 'activacion_personal' AND used = 0");
             $pendiente->execute([$id]);
             if ((int) $usuario['estado'] === 0 && $pendiente->fetchColumn()) {
-                return ['accion' => 'activar_personal', 'horas' => self::ACTIVACION_HORAS,
+                $vigente = $this->db->prepare("SELECT 1 FROM verificaciones_email WHERE id_usuario = ? AND id_clinica_vinculo = ? AND proposito = 'activacion_personal' AND used = 0 AND expires_at > ?");
+                $vigente->execute([$id, $clinica, date('Y-m-d H:i:s')]);
+                $crear = fn () => ['accion' => 'activar_personal', 'horas' => self::ACTIVACION_HORAS,
                     'enlace' => $this->enlace($id, $usuario['email'], 'activacion_personal', self::ACTIVACION_HORAS, $clinica)];
+                // Reenviar una activación vigente conserva su cupo; una vencida debe reservarlo otra vez.
+                return $vigente->fetchColumn() ? $crear() : $limites->consumir('personal', $crear);
             }
             if ((int) $usuario['estado'] !== 1) {
                 throw new InvalidArgumentException('La cuenta está inactiva.');

@@ -615,6 +615,7 @@ Detalle del funcionamiento de cada proceso de módulo. Cada flujo se corresponde
 flowchart TD
   A([Registro publico de clinica]) --> B["Datos de clinica: NIT numerico y DV en casillas separadas<br/>Administrador: nombre, tipo y documento, telefono,<br/>correo y contraseña; aceptar politica; sin Google"]
   B --> C{"CAPTCHA valido en servidor?"}
+  B -. NIT y DV validos al escribir .-> UNI["Consultar unicidad por IP limitada<br/>Avisar junto al campo y habilitar Reportar a soporte<br/>Sin revelar cuentas ni contactos; repetir control al enviar"]
   C -- No --> ERR[Corregir verificacion]
   ERR --> B
   C -- Si --> V{"Formato, NIT DIAN y correos permanentes validos?"}
@@ -649,50 +650,53 @@ flowchart TD
 flowchart TD
   A([Plataforma Zooki]) --> S{"Sesion y contexto plataforma vigentes?"}
   S -- No --> DEN["401 o 403; ningun dato de plataforma"]
-  S -- Si --> L["Listar clinicas, planes y suscripciones;<br/>casos de soporte e IP bloqueadas vigentes<br/>Sin mascotas, consultas, historias ni citas"]
-  L --> C{"Gestionar clinica?"}
-  C -- Si --> F["Buscar y filtrar; tarjetas o tabla<br/>NIT pendiente visible; correo del administrador"]
-  F --> M{"POST, CSRF, motivo y transicion validos?"}
-  M -- No --> ERR["Rechazar sin modificar; corregir formulario"]
-  M -- Si --> CONF{"Suspender, dar de baja o cancelar suscripcion?"}
+  S -- Si --> L["Listar clinicas, planes y suscripciones; casos e IP bloqueadas<br/>Uso y limites solo como numeros: personal, mascotas, citas del mes<br/>Sin fichas, consultas, historias ni citas individuales"]
+  L --> F["Buscar y filtrar; tarjetas o tabla con componentes administrativos<br/>NIT pendiente visible; correo del administrador"]
+  F --> CONF{"Dar de baja?"}
   CONF -- Si --> Q{"Confirma el super-administrador?"}
-  CONF -- No --> TX
   Q -- No --> L
-  Q -- Si --> TX["Transaccion: bloquear clinica, cambiar plan/suscripcion<br/>o estado y auditar; rollback si falla auditoria"]
-  TX --> R["Actualizar panel; aviso breve<br/>Personal pierde contexto en siguiente peticion, segun §9<br/>Clinica inactiva no aparece para registro ni agenda"]
-  L --> CAS["Casos: confirmar cierre como resuelto o descartado con nota<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos"]
+  Q -- Si --> M
+  CONF -- No --> M{"POST, CSRF, motivo y transicion validos?"}
+  M -- No --> ERR["Rechazar sin modificar; corregir formulario"]
+  M -- Si --> TX["Transaccion: bloquear clinica, cambiar plan/suscripcion<br/>o estado y auditar; rollback si falla auditoria"]
+  TX --> R["Actualizar panel antes del aviso breve<br/>Personal pierde contexto en siguiente peticion, segun §9<br/>Clinica inactiva no aparece para registro ni agenda"]
+  L --> CAS["Casos: resolver o descartar con nota, sin otra confirmacion<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos"]
   L --> IP["IP: vencimiento, cuentas LOGIN_FAIL en ventana<br/>y sus clinicas; sin atribuir la IP a una sola clinica"]
-  IP --> DES["Desbloquear: confirmar; POST y CSRF<br/>borrar solo contador de esa IP y auditar en transaccion"]
-  IP --> AV["Elegir administrador de una clinica asociada<br/>ver y editar el texto; ningun envio automatico"]
-  AV --> ENV{"Super-administrador confirma el envio?"}
-  ENV -- No --> L
-  ENV -- Si --> VAL["POST, CSRF; verificar destinatario en servidor<br/>auditar solicitud, enviar solo al elegido y auditar resultado"]
-  CAS --> L
-  DES --> L
-  VAL --> L
+  IP --> DES["Desbloquear directo: POST y CSRF<br/>borrar solo contador de esa IP y auditar en transaccion"]
+  IP --> AV["Elegir administrador asociado, ver y editar texto<br/>Enviar solo al pulsar el boton, sin segunda confirmacion"]
+  AV --> VAL["POST, CSRF; verificar destinatario en servidor<br/>auditar solicitud, enviar solo al elegido y auditar resultado"]
+  CAS --> R
+  DES --> R
+  VAL --> R
   R --> L
 ```
 
 ### 12.2 Control de límites del plan (freemium) — Módulo 0
 
+La mascota creada en el portal sin clínica sigue global y no consume cupo hasta vincularla. El punto de entrada de urgencia recibe una prioridad evaluada en servidor; una petición ordinaria no puede autodeclararse roja. El motor de triage pertenece a los módulos 2/4.
+
 ```mermaid
 flowchart TD
-  A([Accion que consume cupo: crear o vincular mascota, crear cita o usuario]) --> U{"Es la atencion de una urgencia roja?"}
+  A([Crear o vincular mascota, crear cita, invitar o reactivar personal]) --> T["Evaluar triage antes del plan cuando corresponda<br/>En M0: citas ordinarias verdes; entrada para prioridad ya evaluada"]
+  T --> LOCK["Transaccion: bloquear fila de la clinica<br/>Misma exclusion para comprobacion, alta y cambio de plan"]
+  LOCK --> U{"Prioridad evaluada roja?"}
   U -- Si --> E
-  U -- No --> B[Leer el plan y el estado de la suscripcion de la clinica]
-  B --> C{Suscripcion al dia?}
-  C -- No --> C1["Aplicar los limites del plan gratuito (RN-007, RN-013);<br/>los datos existentes no se ocultan ni se bloquean"]
-  C1 --> D
-  C -- Si --> D{"La accion esta dentro del limite del plan?"}
-  D -- Si --> E[Ejecutar la accion]
-  E --> E1[Registrar en auditoria]
-  E1 --> ZF([Fin])
-  D -- No --> F{Quien intenta la accion?}
-  F -- Personal --> F1[/"Mensaje: limite del plan alcanzado, mejora el plan"/]
-  F1 --> ZF
-  F -- Propietario --> F2[/"Mensaje: no es posible completar la accion ahora"/]
-  F2 --> F3[Notificar a la clinica para que lo gestione]
-  F3 --> ZF
+  U -- No --> B["Leer plan y ultima suscripcion de esa clinica"]
+  B --> C{"Suscripcion activa y al dia?"}
+  C -- No --> C1["Usar gratuito: 2 personal, 50 mascotas, 100 citas/mes<br/>Conservar datos existentes; RN-007/013"]
+  C -- Si --> P["Usar limites del plan; NULL significa sin limite"]
+  P --> D
+  C1 --> D["Contar uso por clinica: personal activo + pendientes vigentes sin duplicar<br/>Vinculos activos de mascotas; citas del mes de su fecha sin canceladas"]
+  D --> CABE{"Cabe una accion mas?"}
+  CABE -- Si --> E["Ejecutar y auditar; roja tambien suma uso"]
+  E --> OK[Commit]
+  CABE -- No --> RB["Rollback de negocio; conservar auditoria del bloqueo por clinica"]
+  RB --> F{"Quien intenta?"}
+  F -- Personal --> F1["Alcanzaste el limite de recurso de tu plan - uso/limite -<br/>Mejora tu plan para seguir"]
+  F -- Propietario --> F2["No es posible completar la accion ahora<br/>Notificacion interna solo a administradores de esa clinica"]
+  F1 --> FIN([Fin])
+  F2 --> FIN
+  OK --> FIN
 ```
 
 ### 12.3 Registro de mascota y propietario — Módulo 1

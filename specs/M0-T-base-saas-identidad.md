@@ -106,9 +106,9 @@ Ramas: el trabajo de M0 vive en una rama propia (p. ej. `v2/m0`) y se integra a 
   - [x] D2.2 — Invitaciones del personal con aceptación, cierre de otras sesiones y correcciones de D2.1 ([Anexo D2.2](#anexo-d22--resultado)). Escribieron Claude Code y Codex; entregada, pendiente de revisión por Claude (2026-10-09).
   - [x] D3 — Registro y activación de clínicas (HU-0.1, HU-0.2), Turnstile del propietario (RE-5.8.6) y pendientes de D2.2 ([Anexo D3](#anexo-d3--resultado)). Lo escribió Codex; revisada y aprobada por Claude, con commit `fa43c3d`. La prueba del usuario motivó D3.1; el cierre de D espera su revisión y prueba visual.
   - [x] D3.1 — Corrección de pantalla de registro, restricciones de entrada y explicación de la contraseña de una cuenta existente ([Anexo D3.1](#anexo-d31--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-10).
-- [ ] E — Panel del super-administrador y límites del plan; pruebas (incluida la excepción de urgencia roja).
-  - [x] E1 — Panel de plataforma (HU-0.3 sin RE-0.3.6), soporte, IP bloqueadas y NIT/DV separados ([Anexo E1](#anexo-e1--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-10).
-  - [ ] E2 — Límites del plan (HU-0.4); fuera de E1.
+- [x] E — Panel del super-administrador y límites del plan; implementación entregada, pendiente de revisión de E2. La clasificación clínica de triage se integra en los módulos 2/4.
+  - [x] E1 — Panel de plataforma (HU-0.3 sin RE-0.3.6), soporte, IP bloqueadas y NIT/DV separados ([Anexo E1](#anexo-e1--resultado)). Lo escribió Codex; revisada y aprobada por Claude (2026-10-10); hallazgos del usuario corregidos en E2.
+  - [x] E2 — Límites del plan (HU-0.4) y correcciones de E1 ([Anexo E2](#anexo-e2--resultado)). Lo escribió Codex; entregada, pendiente de revisión (2026-10-11).
 - [ ] `vendor/bin/phpunit` completo y cada RE de la tabla con evidencia.
 - [ ] F — Respaldo, reinicio de la base de producción, despliegue, super-administrador y clínica demo. Incluye blindar Apache para que solo sirva `public/` y agregar `.dockerignore` (B.5).
 - [ ] Actualizar HU/RE (estado y nota de RE-0.3.6), `config/App.php` e `HistorialVersiones.md` al cerrar; regenerar descargas si cambian documentos publicados.
@@ -1836,11 +1836,11 @@ Se parte en **E1** (panel del super-administrador, HU-0.3 sin RE-0.3.6) y **E2**
 3. Cada subetapa deja al usuario solo 3 a 5 pruebas de navegador, las de lo nuevo y riesgoso (`metodo.md` §3).
 4. El NIT se pide en dos casillas: «NIT» (solo números) y «DV» (un dígito, «está en tu RUT después del guion»). Hoy, sin guion, el último dígito se toma como DV y una cédula puede pasar por casualidad.
 
-**Pendiente de confirmar:** los valores del plan gratuito (hoy RN-005/RE-0.4.7: 5 mascotas, 30 citas por mes y 2 cuentas de personal) y que vivan en la tabla `planes` (sin números fijos en el código) para cambiarlos sin programar.
+**Pendiente al preparar E1, ya resuelto:** los valores originales eran 5 mascotas, 30 citas por mes y 2 cuentas de personal. La decisión posterior del 2026-10-10 fija 50/100/2; viven en `planes`, sin topes fijos en el código.
 
 **También en E1:** casos de soporte (NIT y documento duplicados: ver y marcar resuelto), IP bloqueadas con «Desbloquear» y «Enviar aviso» (decisiones del 2026-10-09), límite por IP para `reportar_nit` y los hallazgos menores de D3.
 
-**Decisiones del usuario sobre el plan gratuito (2026-10-10).** 2 cuentas de personal y 50 mascotas vinculadas; las citas por mes suben de 30 (valor pendiente; propuesta del arquitecto: 100). Los propietarios no tienen límite. Los límites ya viven en `planes` (`limite_mascotas`, `limite_citas_mes`, `limite_personal`; NULL = sin límite): E2 los ajusta con una migración que solo cambie el plan Gratuito si conserva los valores anteriores, y actualiza RN-005 y RE-0.4.7. Los precios no se tocan por ahora.
+**Decisiones del usuario sobre el plan gratuito (2026-10-10).** 2 cuentas de personal, 50 mascotas vinculadas y 100 citas por mes (confirmadas tras la prueba de E1). Los propietarios no tienen límite. Los límites ya viven en `planes` (`limite_mascotas`, `limite_citas_mes`, `limite_personal`; NULL = sin límite): E2 los ajusta con una migración que solo cambie el plan Gratuito si conserva los valores anteriores, y actualiza RN-005 y RE-0.4.7. Los precios no se tocan por ahora.
 
 ## Anexo E1 — Resultado
 
@@ -1888,3 +1888,60 @@ Casos de soporte con resolución o descarte y nota auditada. IP bloqueadas vigen
 **Decisión del usuario (2026-10-10):** el plan gratuito queda en **100 citas por mes**, 50 mascotas vinculadas y 2 cuentas de personal (va en E2).
 
 **Prueba del usuario de E1, detalle (2026-10-10).** Suspender: al pulsar el botón del modal (con motivo) no pasa nada, ni mensaje ni envío. Las confirmaciones de SweetAlert en acciones sencillas cansan: solo para lo grave (regla nueva en `metodo.md` §8 y AGENTS.md). El NIT duplicado solo se avisa al enviar: debe avisarse en el campo mientras se escribe, con el reporte a soporte ahí (el NIT no es un dato privado; RE-0.1.2 ya permite decirlo). El NIT en dos casillas se mantiene.
+
+## E2 — Alcance acordado
+
+1. Corregir las cinco observaciones de E1: suspensión desde el modal, confirmación solo al dar de baja, componentes administrativos compartidos, NIT duplicado avisado junto al campo y datos de prueba que conservan clínicas ajenas locales.
+2. Gratuito 2/50/100, migración 05 repetible y sin sobrescribir límites personalizados; profesional NULL. Un helper calcula el uso y serializa comprobación y alta por clínica; sin suscripción activa y al día se aplica el gratuito.
+3. Crear o vincular mascotas (personal/portal), crear citas del mes de su fecha sin canceladas e invitar personal. Personal activo y pendientes vigentes cuentan por persona, incluido el administrador; el propietario global sin clínica no consume cupo.
+4. Excepción roja en el punto de entrada del servidor, antes del control del plan; la clasificación completa de triage se integra en los módulos 2/4. Bloqueos auditados; mensaje del límite al personal y neutral al propietario, con aviso interno a su clínica.
+5. Plataforma muestra únicamente números de uso/límite. Actualizar HU, RE, RN, Ficha Técnica y Modelos sin subir revisión; verificación PHP, MariaDB temporal y JS; cuatro pruebas de navegador para el usuario.
+6. Fuera: HU-0.5 (mora/congelación), precios, RE-0.3.6, pulido general y F.
+
+**Decisiones del usuario durante E2 (2026-10-11).**
+
+- El mismo NIT se reconoce con o sin guion. El script normaliza únicamente las clínicas de prueba antiguas reconocidas por nombre y NIT, conserva sus identificadores y se detiene antes de modificar datos si el NIT pertenece a otra clínica local. Las demás clínicas ajenas se avisan y conservan.
+- Reactivar personal también requiere cupo, tanto por el botón de estado como por el modal. Una invitación vigente conserva su reserva; una vencida necesita cupo al reenviarse. Los vínculos y datos existentes se conservan.
+
+## Anexo E2 — Resultado
+
+**Lo escribió Codex.** Revisa la sesión de Claude (arquitecto).
+**Estado:** entregada, pendiente de revisión, 2026-10-11.
+
+**Qué.** `LimitePlan` lee los límites desde `planes`, la última suscripción y el uso de cada clínica; bloquea su fila durante comprobación y alta. Aplica los límites en mascotas, citas e invitaciones, y la reactivación aprobada por el usuario. El rollback conserva la auditoría del intento y el aviso interno al administrador cuando procede del portal. Los pendientes vigentes reservan cupo una sola vez; reenviar uno vencido requiere una reserva nueva. La migración 05 cambia solo el gratuito que conserve 2/5/30; la semilla nueva usa 2/50/100 y no sobrescribe configuraciones. No cambió el MER ni los precios.
+
+**Correcciones de E1.** El modal nativo ocultaba la confirmación de SweetAlert2 detrás de su capa superior, dejando el envío esperando. Ahora usa `users-modal` y las hojas/componentes administrativos, con prueba de clic → motivo → submit → POST. `validacion-cuenta.js` no intercepta estos formularios. Solo **dar de baja** confirma; suspensión, reactivación, plan/suscripción, cierre de caso, desbloqueo y aviso redactado se ejecutan directamente y actualizan antes del toast, por ser reversibles o decisiones ya expresadas en el formulario. El NIT válido se comprueba mientras se escribe con límite por IP, aviso junto al campo y reporte a soporte. El servidor mantiene la comprobación final, también para NIT antiguos con guion. El script conserva clínicas ajenas y protege conflictos antes de regenerar claves.
+
+| RE / regla | Evidencia |
+|---|---|
+| RE-0.4.1/2/4/7 | `LimitePlanTest`: borde 2/50/100, activos y pendientes sin duplicación, reenvío, reactivación por ambos endpoints, edición al límite, cancelación y cambio de mes; profesional NULL y suscripción no al día. `BaseV2MysqlTest::testE2CuotasYBloqueoDeClinicaEnElEsquemaReal`: exclusión entre conexiones. |
+| RE-0.4.3/5, RE-5.3.5 | `LimitePlanTest` y los dos casos E2 de `PortalAgendaTest`: mensaje neutral, aviso solo a la clínica correspondiente, bloqueo al vincular una existente y rollback completo sin dejar el vínculo. |
+| RE-0.4.6, RN-420 | `LimitePlanTest::testProfesionalSinLimiteMoraYUrgenciaRojaConservanElUso` y prueba MySQL: cita roja evaluada en servidor se registra y cuenta al límite/con mora; enviar `prioridad=rojo` por la entrada ordinaria no evita el límite. Integración con triage: pendiente del módulo de agenda. |
+| RE-0.3.1/3, RN-004/G13 | `PlataformaTest`: números de uso/límite por clínica sin datos clínicos individuales; permisos clínicos siguen denegados al super-administrador. |
+| RE-0.1.2 | `RegistroClinicaTest`: consulta pública sin identidad, límite por IP aun con sesión y rechazo de NIT antiguo duplicado. `D2ValidacionCuenta.test.cjs`: debounce, aviso y reporte junto al campo; se ocultan al editar. |
+| Migración y script | `BaseV2MysqlTest`: migración dos veces, límites personalizados conservados y ejecución real del script con clínica ajena intacta y Norte antigua normalizada sin duplicación. `DatosPruebaClinicasTest`: conflictos con/sin guion y dos filas equivalentes se rechazan sin modificar datos. |
+
+**Diagramas.** Modelos §12.1 (NIT en tiempo real), §12.1.1 (componentes, agregados y solo baja confirmada), §12.2 (transacción, límites, reactivación y excepción roja). Los tres renderizados con Mermaid CLI; SVG de verificación en `scratch/e2-diagrama-1.svg` a `-3.svg`, fuera de git.
+
+**Verificación.** `vendor/bin/phpunit`: 566 pruebas, 3004 aserciones, 29 MySQL omitidas sin variable; con `ZOOKI_TEST_MYSQL_HOST`: 566 pruebas, 3363 aserciones, ninguna omitida. `node --test "tests/Frontend/**/*.test.cjs"`: 78/78. MariaDB únicamente con la base predeterminada `zooki_test_base_v2` en una instancia temporal propia; no se accedió a la base de trabajo ni a sus contraseñas. `git diff --check` y vistas tocadas sin JS/CSS en línea. Pruebas manuales: cuatro en `agentes/prueba-manual.md`.
+
+**Pendientes.** Revisión de Claude y prueba del usuario en escritorio/celular. Todavía no existe el motor de triage: `Cita::registrarEvaluada` recibe la clasificación futura del servidor; las rutas actuales registran citas ordinarias verdes. No se afirma haber integrado la urgencia presencial completa. El script de desarrollo puede conservar tres personas por clínica, por encima del nuevo gratuito; son datos de prueba existentes, no se eliminan. Versión, historial y descargas se publican al cierre de M0 (`metodo.md` §4). No se empezó F.
+
+### E2 — Revisión (2026-10-11)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de las cuatro pruebas del usuario.
+
+**Verificado.**
+
+- Suites: PHP 566 pruebas, 3004 aserciones, 29 MySQL omitidas (copia limpia del repositorio, sin `.env`); JS 78/78 en el equipo del usuario.
+- Migración 05: `UPDATE` condicionado a 2/5/30, repetible y sin pisar límites personalizados. La semilla nueva trae 2/50/100.
+- `helpers/LimitePlan.php`: lee los límites de `planes` y de la última suscripción (si no está activa/al día, cae al Gratuito), bloquea la fila de la clínica con `FOR UPDATE` durante comprobación y alta, y audita el intento bloqueado en una transacción aparte para que el rollback de negocio no lo borre. Los pendientes de personal (activación/invitación vigentes) cuentan una sola vez.
+- RN-420: la excepción roja solo entra por `Cita::registrarEvaluada`; enviar `prioridad=rojo` por la entrada ordinaria no salta el límite (cubierto por prueba).
+- Diagramas: Modelos §12.1, §12.1.1 y §12.2 coinciden con el código (NIT en tiempo real, solo «dar de baja» confirma, transacción con bloqueo y excepción roja).
+- Vistas de plataforma sin JS/CSS en línea; el modal usa `users-modal` y los componentes administrativos, como pidió el usuario.
+
+**Observaciones (no bloquean).**
+
+1. El motor de triage no existe todavía: la integración real de urgencias queda para el módulo de agenda (2/4). Ya está anotado como pendiente.
+2. Las clínicas de prueba del script conservan tres personas, por encima del gratuito (2). Para probar no estorba: la prueba 3 ya lo contempla desactivando a Beto. Al cierre de M0 conviene que el script deje las clínicas de prueba en Profesional o con dos personas.
+3. Deuda técnica conocida: `AuthController` ronda las 900 líneas; partirlo cuando se toque de nuevo, no en M0.

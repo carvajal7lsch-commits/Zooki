@@ -3,6 +3,7 @@ require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/../helpers/ValidadorMascota.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
+require_once __DIR__ . '/../helpers/LimitePlan.php';
 
 /** RN-110 / RNF-11: ficha global, acceso del personal por mascota_clinica. */
 class Mascota extends ModeloClinica
@@ -90,39 +91,62 @@ class Mascota extends ModeloClinica
     }
     public function insert(array $datos): int
     {
-        $clinica=$this->clinica();
-        if (!$this->esPropietarioValido($datos['id_propietario'] ?? 0)) $this->denegar(null);
-        $datos=$this->validar($datos);
-        return Transaccion::ejecutar($this->conn,function () use ($datos,$clinica) {
+        $clinica = $this->clinica();
+        if (!$this->esPropietarioValido($datos['id_propietario'] ?? 0)) {
+            $this->denegar(null);
+        }
+        $datos = $this->validar($datos);
+        return (new LimitePlan($this->conn, $clinica))->consumir('mascotas', function () use ($datos, $clinica): int {
             // RN-502: 256 bits independientes del id; base64url de 43 caracteres.
-            $token=rtrim(strtr(base64_encode(random_bytes(32)),'+/','-_'),'=');
-            $campos=array_intersect_key($datos,array_flip(self::EDITABLES));
-            $campos+=['id_propietario'=>$datos['id_propietario'],'id_clinica_registro'=>$clinica,'token_carnet'=>$token];
-            $sql='INSERT INTO mascotas (' . implode(',',array_keys($campos)) . ') VALUES (' . implode(',',array_fill(0,count($campos),'?')) . ')';
-            $this->conn->prepare($sql)->execute(array_values($campos)); $id=(int)$this->conn->lastInsertId();
+            $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+            $campos = array_intersect_key($datos, array_flip(self::EDITABLES));
+            $campos += ['id_propietario' => $datos['id_propietario'], 'id_clinica_registro' => $clinica, 'token_carnet' => $token];
+            $sql = 'INSERT INTO mascotas (' . implode(',', array_keys($campos)) . ') VALUES (' . implode(',', array_fill(0, count($campos), '?')) . ')';
+            $this->conn->prepare($sql)->execute(array_values($campos));
+            $id = (int) $this->conn->lastInsertId();
             // RN-102: HC NULL hasta la primera consulta (C4).
-            $this->conn->prepare('INSERT INTO mascota_clinica (id_mascota,id_clinica) VALUES (?,?)')->execute([$id,$clinica]);
-            $this->escribirColores($id,$datos['colores']);
-            $this->registrarAuditoria($id,'registro',null,'Ficha y vínculo creados');
+            $this->conn->prepare('INSERT INTO mascota_clinica (id_mascota,id_clinica) VALUES (?,?)')->execute([$id, $clinica]);
+            $this->escribirColores($id, $datos['colores']);
+            $this->registrarAuditoria($id, 'registro', null, 'Ficha y vínculo creados');
             return $id;
         });
     }
-    /** RE-1.5.2: propietario confirmado, mascota existente y sin duplicación. */
-    public function vincular(int $id,int $idPropietario): void
+
+    /** RE-1.5.2/3: propietario confirmado, mascota existente y cupo sin duplicación. */
+    public function vincular(int $id, int $idPropietario): void
     {
-        if (!$this->esPropietarioValido($idPropietario)) $this->denegar($id);
-        try { Transaccion::ejecutar($this->conn,function () use ($id,$idPropietario) {
-            $bloqueo=$this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
-            $stmt=$this->conn->prepare('SELECT id_mascota FROM mascotas WHERE id_mascota = ? AND id_propietario = ? AND estado = 1' . $bloqueo);
-            $stmt->execute([$id,$idPropietario]); if (!$stmt->fetchColumn()) $this->denegar($id);
-            $stmt=$this->conn->prepare('SELECT estado FROM mascota_clinica WHERE id_mascota = ? AND id_clinica = ?');
-            $stmt->execute([$id,$this->clinica()]); $estado=$stmt->fetchColumn();
-            if ($estado === 'activo') return;
-            if ($estado === false) $this->conn->prepare('INSERT INTO mascota_clinica (id_mascota,id_clinica) VALUES (?,?)')->execute([$id,$this->clinica()]);
-            else $this->conn->prepare("UPDATE mascota_clinica SET estado = 'activo' WHERE id_mascota = ? AND id_clinica = ?")->execute([$id,$this->clinica()]);
-            $this->registrarAuditoria($id,'vinculo_clinica',$estado === false ? null : $estado,'activo');
-        }); } catch (AccesoDenegado $e) { $this->denegar($id); }
+        if (!$this->esPropietarioValido($idPropietario)) {
+            $this->denegar($id);
+        }
+        $limites = new LimitePlan($this->conn, $this->clinica());
+        try {
+            $limites->transaccion(function () use ($id, $idPropietario, $limites): void {
+                $bloqueo = $this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+                $stmt = $this->conn->prepare('SELECT id_mascota FROM mascotas WHERE id_mascota = ? AND id_propietario = ? AND estado = 1' . $bloqueo);
+                $stmt->execute([$id, $idPropietario]);
+                if (!$stmt->fetchColumn()) {
+                    $this->denegar($id);
+                }
+                $stmt = $this->conn->prepare('SELECT estado FROM mascota_clinica WHERE id_mascota = ? AND id_clinica = ?');
+                $stmt->execute([$id, $this->clinica()]);
+                $estado = $stmt->fetchColumn();
+                if ($estado === 'activo') {
+                    return;
+                }
+                $limites->consumir('mascotas', function () use ($id, $estado): void {
+                    if ($estado === false) {
+                        $this->conn->prepare('INSERT INTO mascota_clinica (id_mascota,id_clinica) VALUES (?,?)')->execute([$id, $this->clinica()]);
+                    } else {
+                        $this->conn->prepare("UPDATE mascota_clinica SET estado = 'activo' WHERE id_mascota = ? AND id_clinica = ?")->execute([$id, $this->clinica()]);
+                    }
+                    $this->registrarAuditoria($id, 'vinculo_clinica', $estado === false ? null : $estado, 'activo');
+                });
+            });
+        } catch (AccesoDenegado $error) {
+            $this->denegar($id);
+        }
     }
+
     public function comprobarEdicion(array $actual,array $datos): void
     {
         if (isset($datos['id_propietario']) && (int)$datos['id_propietario'] !== (int)$actual['id_propietario']) $this->denegar($actual['id_mascota']);

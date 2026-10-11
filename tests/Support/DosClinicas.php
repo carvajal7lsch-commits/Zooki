@@ -52,11 +52,15 @@ final class DosClinicas
 
     public static function crearEsquemaSqlite(PDO $db): void
     {
+        $db->exec("CREATE TABLE planes (id_plan INTEGER PRIMARY KEY, nombre TEXT, precio_mensual INTEGER, estado INTEGER,
+            limite_personal INTEGER, limite_mascotas INTEGER, limite_citas_mes INTEGER)");
+        $db->exec("INSERT INTO planes VALUES (1, 'Gratuito', 0, 1, 2, 50, 100), (2, 'Profesional', 100000, 1, NULL, NULL, NULL)");
+        $db->exec("CREATE TABLE suscripciones (id_suscripcion INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER, id_plan INTEGER, estado TEXT DEFAULT 'activa', ciclo TEXT DEFAULT 'mensual', al_dia INTEGER DEFAULT 1, fecha_inicio TEXT, fecha_fin TEXT)");
         $db->exec("CREATE TABLE roles (id_rol INTEGER PRIMARY KEY, nombre_rol TEXT NOT NULL UNIQUE)");
         $db->exec("INSERT INTO roles (id_rol, nombre_rol) VALUES (1,'administrador'), (2,'veterinario'), (4,'propietario'), (5,'super-administrador')");
         $db->exec("CREATE TABLE clinicas (
             id_clinica INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, nit TEXT NOT NULL UNIQUE,
-            direccion TEXT, telefono TEXT, email_contacto TEXT, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP, id_plan INTEGER, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
+            direccion TEXT, telefono TEXT, email_contacto TEXT, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP, id_plan INTEGER DEFAULT 2, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
         $db->exec("CREATE TABLE usuarios (
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, documento TEXT UNIQUE, tipo_documento TEXT,
             nombre_completo TEXT, telefono TEXT, email TEXT UNIQUE, password TEXT, google_uid TEXT UNIQUE,
@@ -237,6 +241,9 @@ final class DosClinicas
             (1, 'Clínica Norte', '900123456-8', 'activa'),
             (2, 'Clínica Sur', '900654321-0', 'activa'),
             (3, 'Clínica Pausada', '900111222-1', 'suspendida')");
+        // El fixture general no prueba cuotas; E2 selecciona el gratuito explícitamente.
+        $db->exec('UPDATE clinicas SET id_plan = 2');
+        $db->exec("INSERT INTO suscripciones (id_clinica, id_plan, fecha_inicio) VALUES (1, 2, '2026-01-01'), (2, 2, '2026-01-01'), (3, 2, '2026-01-01')");
 
         // Costo bajo a propósito: las pruebas crean este fixture muchas veces.
         $hash = password_hash(self::PASSWORD, PASSWORD_BCRYPT, ['cost' => 4]);

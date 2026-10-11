@@ -22,6 +22,94 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testE2MigracionRepetibleConservaLimitesPersonalizados(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec("UPDATE planes SET limite_mascotas = 5, limite_citas_mes = 30 WHERE nombre = 'Gratuito'");
+        $this->cargar('05_limites_plan_gratuito.sql');
+        $this->cargar('05_limites_plan_gratuito.sql');
+        $this->assertSame([50, 100, 2], array_map('intval', $this->db->query("SELECT limite_mascotas, limite_citas_mes, limite_personal FROM planes WHERE nombre = 'Gratuito'")->fetch(PDO::FETCH_NUM)));
+        $this->db->exec("UPDATE planes SET limite_mascotas = 17, limite_citas_mes = 30 WHERE nombre = 'Gratuito'");
+        $this->cargar('05_limites_plan_gratuito.sql');
+        $this->cargar('02_semilla.sql');
+        $this->assertSame([17, 30, 2], array_map('intval', $this->db->query("SELECT limite_mascotas, limite_citas_mes, limite_personal FROM planes WHERE nombre = 'Gratuito'")->fetch(PDO::FETCH_NUM)));
+        $this->assertSame(100000, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
+    }
+
+    public function testE2CuotasYBloqueoDeClinicaEnElEsquemaReal(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../helpers/LimitePlan.php';
+        require_once __DIR__ . '/../../models/Cita.php';
+        DosClinicas::poblarAgenda($this->db);
+        $this->comoVeterinario(1, 2);
+        $this->db->exec('UPDATE clinicas SET id_plan = 1 WHERE id_clinica = 1');
+        $plan = new LimitePlan($this->db, 1);
+        $this->assertSame(50, $plan->resumen()['mascotas']['limite']);
+        // La misma fila de clínica que bloquea Plataforma serializa cualquier alta del plan.
+        $otra = $this->otraConexion();
+        $otra->exec('SET SESSION innodb_lock_wait_timeout = 1');
+        $this->db->beginTransaction();
+        $this->db->query('SELECT id_clinica FROM clinicas WHERE id_clinica = 1 FOR UPDATE')->fetchColumn();
+        try {
+            (new LimitePlan($otra, 1))->consumir('mascotas', static fn () => true);
+            $this->fail('Debió esperar el bloqueo de la clínica.');
+        } catch (PDOException $error) {
+            $this->assertSame(1205, (int) $error->errorInfo[1]);
+        } finally {
+            $this->db->rollBack();
+        }
+        $this->db->exec('UPDATE planes SET limite_citas_mes = 0 WHERE id_plan = 1');
+        $datos = ['id_mascota' => 1, 'id_veterinario' => 2, 'fecha' => '2027-03-01', 'hora' => '08:00', 'motivo' => 'Urgencia', 'id_tipo_cita' => 1];
+        $citas = new Cita($this->db);
+        try {
+            $citas->registrar($datos);
+            $this->fail('Debió bloquear la cita ordinaria.');
+        } catch (LimiteAlcanzado $error) {
+            $this->assertSame(0, $error->limite);
+        }
+        $this->db->exec('UPDATE suscripciones SET al_dia = 0 WHERE id_clinica = 1');
+        $id = $citas->registrarEvaluada($datos, 'rojo');
+        $this->assertSame('rojo', $citas->getById($id)['prioridad']);
+        $this->assertSame(1, $plan->resumen('2027-03-01')['citas']['uso']);
+        $this->assertSame(0, (new LimitePlan($this->db, 2))->resumen('2027-03-01')['citas']['uso']);
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion LIKE 'Acción bloqueada%'")->fetchColumn());
+        $_SESSION = ['id_usuario' => 6];
+        Contexto::activar(Contexto::dePropietario(), 1);
+        try {
+            $citas->enClinicaDelPropietario(1)->registrar($datos);
+            $this->fail('Debió bloquear al propietario.');
+        } catch (LimiteAlcanzado $error) {
+            $this->assertSame('No es posible completar la acción ahora', $error->getMessage());
+        }
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM notificaciones_internas WHERE id_clinica = 1 AND tipo = 'LIMITE_PLAN'")->fetchColumn());
+        $_SESSION = [];
+    }
+
+    public function testE2DatosPruebaContinuaSinCambiarClinicaAjena(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->db->exec("INSERT INTO clinicas (nombre, nit, estado) VALUES ('Clínica propia del usuario', '9012345678', 'pendiente_verificacion')");
+        $antes = $this->db->query('SELECT * FROM clinicas')->fetch(PDO::FETCH_ASSOC);
+        $this->db->exec("INSERT INTO clinicas (nombre, nit, estado) VALUES ('Clínica Norte (prueba)', '900123456-8', 'activa')");
+        $db = $this->db;
+        $argv = ['datos_prueba.php', '--si'];
+        ob_start();
+        try {
+            include __DIR__ . '/../../scripts/dev/datos_prueba.php';
+            $salida = ob_get_contents();
+        } finally {
+            ob_end_clean();
+        }
+        $this->assertStringContainsString('9012345678', $salida);
+        $this->assertStringContainsString('Datos de prueba listos', $salida);
+        $this->assertSame($antes, $this->db->query('SELECT * FROM clinicas WHERE id_clinica = 1')->fetch(PDO::FETCH_ASSOC));
+        $this->assertSame(3, $this->contar('clinicas'));
+        $this->assertSame('9001234568', $this->db->query('SELECT nit FROM clinicas WHERE id_clinica = 2')->fetchColumn());
+    }
+
     /** E1 sobre el MER real: ENUM, vínculos, suscripciones, soporte, IP y auditoría. */
     public function testE1PanelPlataformaEnElEsquemaReal(): void
     {
@@ -294,7 +382,8 @@ class BaseV2MysqlTest extends TestCase
         $this->db->prepare("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE id = ?")->execute([$nueva['enlace']['id']]);
         $this->assertSame(1, $modelo->limpiarPendientes());
         $this->assertNull((new Usuario($this->db))->buscarPorId($idNueva));
-        $primera = $modelo->registrar(RegistroClinicaTest::datos(6), Auditoria::ipCliente());
+        // E2: el NIT de datos(6) ya pertenece a Norte aunque tenga guion.
+        $primera = $modelo->registrar(RegistroClinicaTest::datos(26), Auditoria::ipCliente());
         $idCompartido = (int) $modelo->leer($primera['enlace']['id'], $primera['enlace']['token'])['id_usuario'];
         $segunda = $modelo->registrar(RegistroClinicaTest::datos(7, ['email' => $primera['email']]), Auditoria::ipCliente());
         $this->db->exec("UPDATE verificaciones_email SET expires_at = '2000-01-01 00:00:00' WHERE used = 0");
@@ -424,7 +513,7 @@ class BaseV2MysqlTest extends TestCase
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }

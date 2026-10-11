@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../helpers/Security.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/ValidadorPlataforma.php';
+require_once __DIR__ . '/../helpers/LimitePlan.php';
 
 /** RN-004/G13/G14: excepción de plataforma, limitada a metadatos; nunca datos clínicos. */
 final class Plataforma
@@ -45,7 +46,12 @@ final class Plataforma
         $patron = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $buscar) . '%';
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$estado, $estado, $buscar, $patron, $patron]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $clinicas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($clinicas as &$clinica) {
+            // E2: excepción explícita de plataforma para números, sin fichas ni citas.
+            $clinica['uso_plan'] = (new LimitePlan($this->db, (int) $clinica['id_clinica']))->resumen();
+        }
+        return $clinicas;
     }
 
     public function planes(): array
