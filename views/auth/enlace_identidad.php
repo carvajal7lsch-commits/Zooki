@@ -28,6 +28,9 @@ $tituloPagina = $activar ? 'Activar cuenta' : 'Confirmar nuevo correo';
             <?php elseif ($terminado): ?>
                 <h1><?= $activar ? 'Tu cuenta está activa' : 'Correo actualizado' ?></h1>
                 <p class="reset-subtitle"><?= $activar ? 'Ya puedes iniciar sesión con tu documento o tu correo y la contraseña que elegiste.' : 'Ya puedes entrar con el correo nuevo. Las demás sesiones abiertas se cerraron.' ?></p>
+            <?php elseif ($reemplazada ?? false): ?>
+                <h1>Hay una invitación más reciente</h1>
+                <p class="reset-subtitle">Esta invitación se reemplazó por una más reciente. Usa el enlace del último correo.</p>
             <?php elseif ($fila === null): ?>
                 <h1>Enlace no disponible</h1>
                 <p class="reset-subtitle">El enlace no es válido, venció o ya fue utilizado.</p>

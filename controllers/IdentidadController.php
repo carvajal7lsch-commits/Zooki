@@ -62,7 +62,9 @@ final class IdentidadController
         $rechazada = false;
         $fila = $this->cuenta->leerEnlace($id, $token, $proposito);
         $persona = $fila !== null ? (new Usuario($this->db))->buscarPorId((int) $fila['id_usuario']) : null;
-        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        // F0: un enlace de activación auténtico pero reemplazado por otro vigente lo dice.
+        $reemplazada = $fila === null && (new InvitacionPersonal($this->db))->reemplazada($id, $token, $proposito);
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !$reemplazada) {
             try {
                 if ($proposito === 'activacion_personal' && ($_POST['decision'] ?? '') === 'rechazar') {
                     // D2.2: el titular de una cuenta nueva también puede no aceptar.
@@ -101,9 +103,11 @@ final class IdentidadController
         $token = (string) ($_POST['token'] ?? $_GET['token'] ?? '');
         $invitaciones = new InvitacionPersonal($this->db);
         $fila = $invitaciones->leer($id, $token);
+        // F0: un enlace auténtico pero reemplazado por otro vigente lo dice; el GET no cambia nada.
+        $reemplazada = $fila === null && $invitaciones->reemplazada($id, $token, InvitacionPersonal::PROPOSITO);
         $resultado = null;
         $error = null;
-        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !$reemplazada) {
             try {
                 if (($_POST['decision'] ?? '') === 'aceptar') {
                     $resultado = ['decision' => 'aceptada'] + $invitaciones->aceptar($id, $token);

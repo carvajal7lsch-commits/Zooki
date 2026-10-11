@@ -171,6 +171,35 @@ final class InvitacionPersonal
     }
 
     /**
+     * F0 (decisión del usuario, 2026-10-11): el enlace es auténtico (su
+     * secreto coincide), pero el administrador ya envió otro más reciente a
+     * la misma persona para la misma clínica y ese sigue vigente. Solo
+     * entonces se dice que hay un correo más nuevo: con un secreto que no
+     * coincide la respuesta es la genérica y no se revela nada. Sirve para
+     * las dos clases de invitación (activación de una cuenta nueva e
+     * invitación a una cuenta existente). Solo lee: el GET no cambia nada.
+     */
+    public function reemplazada(int $id, string $token, string $proposito): bool
+    {
+        if (!in_array($proposito, [self::PROPOSITO, self::ACTIVACION], true) || $id <= 0 || $token === '') {
+            return false;
+        }
+        $stmt = $this->db->prepare('SELECT * FROM verificaciones_email WHERE id = ? AND proposito = ?');
+        $stmt->execute([$id, $proposito]);
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$fila || (int) $fila['used'] !== 1 || !password_verify($token, $fila['token_hash'])) {
+            return false;
+        }
+        $vigente = $this->db->prepare(
+            'SELECT 1 FROM verificaciones_email
+             WHERE proposito = ? AND id_usuario = ? AND id_clinica_vinculo = ? AND id > ? AND used = 0 AND expires_at > ?
+             LIMIT 1'
+        );
+        $vigente->execute([$proposito, (int) $fila['id_usuario'], (int) $fila['id_clinica_vinculo'], $id, date('Y-m-d H:i:s')]);
+        return (bool) $vigente->fetchColumn();
+    }
+
+    /**
      * El titular acepta: se crea su rol en la clínica y conserva los demás
      * (un propietario queda propietario y veterinario, Modelos §9).
      *

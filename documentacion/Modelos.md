@@ -507,7 +507,10 @@ flowchart TD
   CAN --> LIM
   ADM -- Ninguna --> GET["GET del enlace: mostrar invitacion, sin cambiar datos"]
   GET --> EN{Enlace vigente, secreto valido y no usado?}
-  EN -- No --> INVALIDO[/"Enlace no valido, vencido o usado"/]
+  EN -- No --> REEM{"Secreto valido, pero reemplazado por otra invitacion vigente<br/>de la misma persona y clinica?"}
+  REEM -- Si --> NUEVA[/"Esta invitacion se reemplazo por una mas reciente.<br/>Usa el enlace del ultimo correo."/]
+  NUEVA --> FIN
+  REEM -- No --> INVALIDO[/"Enlace no valido, vencido o usado"/]
   INVALIDO --> FIN
   EN -- Si --> POST{POST con CSRF valido?}
   POST -- No --> CSRF[/"403: formulario no valido"/]
@@ -530,7 +533,7 @@ flowchart TD
   LIM["Nueva pendiente: eliminar solo sin otros vinculos;<br/>existente: conservar cuenta y roles"] --> FIN
 ```
 
-Si falla el transporte de correo se informa que la invitación quedó registrada y se ofrece reenviarla, igual para ambos caminos. La auditoría de la clínica registra la invitación con el mismo texto en ambos casos; la creación o supresión de una identidad pendiente es un hecho global. Reenviar y cancelar se filtran por la clínica activa; una petición ajena da 403 y auditoría.
+Un enlace auténtico de una invitación que el administrador reenvió (la anterior quedó anulada y la nueva sigue vigente) dice que hay una más reciente; con un secreto que no coincide, vencido o ya aceptado, el mensaje es el genérico y no se revela nada (F0). Si falla el transporte de correo se informa que la invitación quedó registrada y se ofrece reenviarla, igual para ambos caminos. La auditoría de la clínica registra la invitación con el mismo texto en ambos casos; la creación o supresión de una identidad pendiente es un hecho global. Reenviar y cancelar se filtran por la clínica activa; una petición ajena da 403 y auditoría.
 
 
 ---

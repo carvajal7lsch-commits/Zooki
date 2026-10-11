@@ -26,6 +26,9 @@ $rechazada = ($resultado['decision'] ?? '') === 'rechazada';
             <?php elseif ($rechazada): ?>
                 <h1>Invitación rechazada</h1>
                 <p class="reset-subtitle">No se hizo ningún cambio en tu cuenta y la clínica no verá tus datos.</p>
+            <?php elseif ($reemplazada ?? false): ?>
+                <h1>Hay una invitación más reciente</h1>
+                <p class="reset-subtitle">Esta invitación se reemplazó por una más reciente. Usa el enlace del último correo.</p>
             <?php elseif ($fila === null): ?>
                 <h1>Enlace no disponible</h1>
                 <p class="reset-subtitle">La invitación no es válida, venció o ya fue utilizada.</p>
