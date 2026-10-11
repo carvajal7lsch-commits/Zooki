@@ -108,6 +108,10 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame($antes, $this->db->query('SELECT * FROM clinicas WHERE id_clinica = 1')->fetch(PDO::FETCH_ASSOC));
         $this->assertSame(3, $this->contar('clinicas'));
         $this->assertSame('9001234568', $this->db->query('SELECT nit FROM clinicas WHERE id_clinica = 2')->fetchColumn());
+        // F0: las clínicas de prueba quedan en Profesional con una suscripción activa; la ajena no cambia.
+        $this->assertSame([2, 2], array_map('intval', $this->db->query("SELECT id_plan FROM clinicas WHERE nit IN ('9001234568', '9006543210') ORDER BY id_clinica")->fetchAll(PDO::FETCH_COLUMN)));
+        $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM suscripciones s JOIN planes p ON p.id_plan = s.id_plan WHERE p.nombre = 'Profesional' AND s.estado = 'activa' AND s.al_dia = 1")->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM suscripciones WHERE id_clinica = 1')->fetchColumn());
     }
 
     /** E1 sobre el MER real: ENUM, vínculos, suscripciones, soporte, IP y auditoría. */
