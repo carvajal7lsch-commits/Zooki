@@ -81,8 +81,8 @@ Si A demuestra que C1 queda vacío o muy pequeño, C1 se une a C2.
 
 ## 7. Tareas y verificación
 
-- [ ] Aprobar este plan (usuario). §6.1 decidida: la foto de Google no se guarda.
-- [ ] A — Inventario y verificación (Claude Code; revisa Claude).
+- [x] Aprobar este plan (usuario). §6.1 decidida: la foto de Google no se guarda.
+- [x] A — Inventario y verificación (Claude Code; revisada y aprobada por Claude, 2026-10-12; decisiones del usuario en «A — Revisión»). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo A — Resultado».
 - [ ] C1 — Huecos funcionales.
 - [ ] C2 — Portal del propietario pulido.
 - [ ] C3 — Lado del personal (HU-1.5, HU-2.10).
@@ -91,3 +91,169 @@ Si A demuestra que C1 queda vacío o muy pequeño, C1 se une a C2.
 - [ ] Comandos de commit por etapa para PowerShell (el usuario hace ramas, commits, push y tags).
 
 **Resultado de pruebas:** pendiente.
+
+## Anexo A — Resultado
+
+**Escribió:** Claude Code (2026-10-12). **Estado:** entregada, pendiente de revisión. Solo lectura del código: no se cambió código ni pruebas. Se escribió este anexo y el borrador del diagrama Modelos §11.1.
+
+Se releyeron `AGENTS.md`, `agentes/metodo.md`, este plan, los Anexos C3, C4, C6 y D1 de M0 con sus revisiones, los Anexos M0.1, M0.2 y M0.2.1, HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 con sus RE, RN-109 a RN-115, RN-G12, RN-G13 y RN-G19 a RN-G21, y Modelos §9, §10, §11, §12.3 y §13.1.
+
+### 1. Lo más riesgoso primero (huecos)
+
+| # | Hueco | RE / RN | Dónde | Propuesta |
+|---|---|---|---|---|
+| 1 | **La clínica sigue viendo los datos nuevos del propietario después de que se desvincula.** Clientes lista también los vínculos inactivos y lee correo, teléfono y documento en vivo de `usuarios`: si el propietario cambia su teléfono después de irse, la clínica lo ve. | RE-5.12.3, RN-115 | `models/PropietarioClinica.php:11` (`BASICOS`) y `:14-21` (`listar()` sin filtro de `pc.estado`); `obtener()` `:23-27` usa la misma lista | Con el vínculo inactivo, la clínica ve solo el nombre y la marca «Desvinculado», sin correo, teléfono ni documento. Prueba: desvincular, cambiar el teléfono y comprobar que la clínica no lo recibe. **Decisión 1.** |
+| 2 | **La búsqueda exacta muestra nombre y mascotas de una persona que no está vinculada a la clínica.** Basta con escribir su documento o correo completo. §12.3 muestra las mascotas solo **después** de ligar al propietario, y RN-109 dice que cada clínica solo ve a sus propietarios vinculados. C3 aprobó «mascotas básicas», pero no dijo si antes o después del vínculo. | RE-1.5.1, RN-109, RN-111 | `models/PropietarioClinica.php:36-44`; `public/js/medical-module.js:907-938`; la prueba lo fija en `PropietarioClinicaTest::testBusquedaGlobalSoloExactaConMascotasBasicas` | Sin vínculo: «Hay una cuenta con ese dato. Pide la confirmación por correo», sin nombre ni mascotas. Con el vínculo confirmado, sus mascotas (HU-1.5). Hay que ajustar la prueba. **Decisión 2.** |
+| 3 | **Alergias y alertas: la tabla `alertas_medicas` existe, pero ningún código la lee ni la escribe.** Ni la historia del veterinario ni el portal las muestran. Registrarlas es RE-2.1.5, que pertenece al módulo 2. | RE-2.10.1, RN-113, RN-114 | `database/01_schema.sql:421-436`; ningún archivo de `models/`, `controllers/`, `views/` ni `public/js/` la nombra | En M5 se construye **la lectura**: alertas activas de todas las clínicas, con su clínica, en la historia del veterinario y en el portal, probadas con filas del fixture. El registro llega con RE-2.1.5 en el módulo 2. Alternativa: cerrar RE-2.10.1 con nota, como RE-0.3.6. **Decisión 3.** |
+| 4 | **«Registrarse con Google» desde la clínica X, con una cuenta ya verificada:** entra al portal, pero no queda ligada a X. Solo se ligan las cuentas pendientes, y además a la clínica de su registro pendiente, no a X. §11 (nodo GG4) dice «ligarla a esta clínica si no lo estaba». | RN-109, RE-T.18.4, Modelos §11 | `controllers/AuthController.php:928-934`; `models/RegistroPropietario.php:139-157` | Ligarla a X con auditoría cuando llega desde el registro con la clínica elegida, porque Google ya probó el correo. El botón «Entrar con Google» no manda clínica y sigue igual. Alternativa: corregir el diagrama, porque se vincula con un clic desde «Mis clínicas». **Decisión 4.** |
+| 5 | **Completar perfil con un documento que ya usa otra cuenta** no crea el caso de soporte que pide §13.1 (nodo D2). El cambio de documento (RN-G24) sí lo crea. | RE-T.18.3, Modelos §13.1 | `models/RegistroPropietario.php:172-175`; el patrón está en `models/CuentaTitular.php:318-327` (`registrarCasoDocumento`) | Reutilizar ese registro de caso (llevarlo a un solo lugar) y probarlo. C1. |
+| 6 | **La historia del veterinario no avisa que la mascota está desvinculada.** El servidor manda `solo_lectura` y `vinculo` (`Mascota::getParaHistorial`), pero ningún JS los usa: la pantalla ofrece registrar consulta o vacuna y el servidor responde 403. | RN-115, RE-2.10.4 | `models/Mascota.php:38-53`; `public/js/medical-module.js` (ningún uso de `solo_lectura`) | Aviso «El propietario se desvinculó: solo lectura» y sin botones de registro. C3. |
+| 7 | **RE-T.18.1 cumple, pero sin prueba.** `registro_clinica.php` no ofrece Google; nada lo comprueba. | RE-T.18.1 | `views/auth/registro_clinica.php`; Google solo en `views/auth/login.php:122` y `:233` | Prueba de la vista y del controlador del registro de clínica. C1. |
+| 8 | **Con una sola clínica, el `select` de clínica sigue a la vista** (con una opción ya elegida). RE-5.9.3 pide ofrecer la selección solo si hay varias. No hay prueba de la vista. | RE-5.9.3 | `views/portal/index.php:677-682` | Con una clínica, su nombre como texto fijo y el id en un campo oculto; prueba de JS. C2. |
+
+**Menores (van en la etapa que toca la pantalla):**
+- `oninput` en línea en el buscador de servicios: `views/portal/index.php:195` (C2).
+- Los formularios de mascota del portal muestran los errores de validación en un SweetAlert y no validan mientras se escribe: `public/js/portal.js:1914` (C2).
+- El portal recarga la página entera al vincular, desvincular, cancelar o registrar una mascota (`zookiRecargarConAviso`). Además, `PortalController::index()` vuelve a consultar las clínicas una vez por cada mascota (`PortalController.php:61` → `:101`) (C2).
+- En el lado del personal, vincular una mascota recarga sin aviso, y el JS cambia `style.display` y encadena varias sentencias por línea: `public/js/medical-module.js:931-932` y `:946-949` (C3).
+- `layout.php` agrega sufijos escritos a mano (`-c91`, `-d2`) a `App::assetVersion()`, en `:35`, `:107` y `:109`. No hacen daño, pero sobran (C2).
+
+### 2. RE → prueba → estado
+
+Las suites pasan hoy: PHP 608 sin MySQL y 608 con MySQL, JS 108 (ver Verificación). Por eso «pasa» vale para todas las pruebas citadas.
+
+| RE | Prueba (archivo::método) | Estado | Código |
+|---|---|---|---|
+| RE-T.18.1 | — | **Cumple sin prueba suficiente** (hueco 7) | `views/auth/registro_clinica.php`; preselección de la clínica del enlace en `public/js/login.js:389-392` |
+| RE-T.18.2 | `RegistroGoogleTest::testSinAceptarLaPoliticaNoSeGuardaNiLaIdentidadNiElVinculo`, `::testConAceptacionQuedaEnLaClinicaConPruebaYPerfilIncompleto` | Cumple. La foto no se guarda (decisión 2026-10-12) | `controllers/AuthController.php:936-951` (solo correo, nombre y uid en la sesión) |
+| RE-T.18.3 | `RegistroGoogleTest::testConElPerfilIncompletoNoAgendaNiRegistraMascotasHastaCompletarlo` | Cumple. Falta el caso de soporte de §13.1 (hueco 5) | `models/RegistroPropietario.php:160-180`; `controllers/CuentaController.php:56-76` |
+| RE-T.18.4 | `RegistroGoogleTest::testUnaCuentaVerificadaConservaSuContrasenaAlEntrarConGoogle`, `::testUnaCuentaPendienteQuedaVerificadaSinContrasenaYConPerfilPorConfirmar`, `::testUnaCuentaDeGoogleYaLigadaNoSeReasigna` | Cumple. La parte de ligar a la clínica es el hueco 4 | `models/RegistroPropietario.php:139-157` |
+| RE-5.9.1 | `AuthTest::testUnaCredencialInvalidaNoDistingueSiLaCuentaExiste`, `::testUnaCuentaInactivaNoEntra`, `::testUnCorreoSinVerificarNoEntra`; `GoogleTokenTest` (12) | Cumple | `controllers/AuthController.php:877-934` |
+| RE-5.9.2 | `PortalPropietarioTest::testVeLaHistoriaDeSuMascotaEnTodasLasClinicasConSuClinica`, `::testDesvinculadoDeUnaClinicaSigueViendoSuHistoria` | Cumple. Sin alergias ni alertas (hueco 3) | `controllers/PortalController.php:129-151`; `HistoriaPropietario` |
+| RE-5.9.3 | `PortalAgendaTest::testAgendarEnUnaClinicaNoVinculadaSeRechazaAunqueMandeElId` (servidor) | **Cumple sin prueba suficiente** (hueco 8) | `views/portal/index.php:677-682`; `public/js/portal.js:1544` |
+| RE-5.9.4 | `PortalAgendaTest` (8), `CitaTest::testUnaCitaDeANoSeVeNiSeModificaDesdeB`, `BaseV2MysqlTest::testC6PortalEnElEsquemaReal` | Cumple | `models/ModeloClinica.php:35-55` (`enClinicaDelPropietario`) |
+| RE-1.5.1 | `PropietarioClinicaTest::testBusquedaGlobalSoloExactaConMascotasBasicas` | Cumple lo que dice el RE (sin datos clínicos). Antes del vínculo muestra de más (hueco 2) | `models/PropietarioClinica.php:29-47` |
+| RE-1.5.2 | `MascotaAccesoTest::testConfirmarPropietarioYVincularMascotaNoDuplicaNiAsignaHC`; `ConsultaHistorialTest::testElNumeroDeHistoriaSeAsignaUnaVezYNoSeRepiteDentroDeLaClinica` (Luna vinculada a Sur recibe `HC-000001` en su primera consulta allí) | Cumple | `models/Mascota.php:116-148`; `models/Consulta.php:313-353` |
+| RE-1.5.3 | `LimitePlanTest::testMascota51CreadaYVinculadaRechazadasSinDuplicacion`, `PortalAgendaTest::testE2PortalCuentaVincularMascotaExistenteComoCupo`; auditoría `vinculo_clinica` en `MascotaAccesoTest::testConfirmarPropietarioYVincularMascotaNoDuplicaNiAsignaHC` | Cumple | `models/Mascota.php:121-143` (`LimitePlan::consumir('mascotas')`) |
+| RE-5.12.1 | `VinculosPropietarioTest::testAutorizarYRevocarCambianLoQueVeLaOtraClinicaAlInstante`, `::testSoloAutorizaClinicasConVinculoActivo` | Cumple | `models/VinculosPropietario.php:120-133`; `views/portal/index.php:494-497` |
+| RE-5.12.2 | El mismo `testAutorizarYRevocar…`; `HistoriaCompartidaTest::testConAutorizacionBLasVeMarcadasYAlRevocarDejaDeVerlas` | Cumple. La autorización se lee de la base en cada petición | `models/ModeloHistoria.php:29-55` |
+| RE-5.12.3 | `VinculosPropietarioTest::testTrasDesvincularseLaClinicaLeeSusRegistrosYNoRegistraNadaNuevo`; `HistoriaCompartidaTest::testConElVinculoInactivoLaClinicaSoloLeeLoSuyo`, `::testUnaAutorizacionDeUnVinculoInactivoNoCuenta` | **No cumple del todo**: la autorización y los registros sí; los datos nuevos del propietario siguen visibles (hueco 1) | `models/VinculosPropietario.php:89-117`; `models/PropietarioClinica.php:14-21` |
+| RE-5.12.4 | `VinculosPropietarioTest::testAutorizarYRevocar…` (líneas 65-66) | Cumple | `models/VinculosPropietario.php:131-132` |
+| RE-5.13.1 | `VinculosPropietarioTest::testVincularseAUnaClinicaActivaNoLeExponeSusMascotas` | Cumple | `models/VinculosPropietario.php:60-81` |
+| RE-5.13.2 | El mismo; `PortalAgendaTest::testAgendarConLaMascotaSinVincularLaVincula` | Cumple | `models/VinculosPropietario.php:55-59` |
+| RE-5.13.3 | `VinculosPropietarioTest::testConCitasSinResolverNoSeDesvincula` | Cumple (pendiente, confirmada, en curso y sin cerrar; decisión 4 de C6) | `models/VinculosPropietario.php:14`, `:96-103` |
+| RE-5.13.4 | `VinculosPropietarioTest` (líneas 94 y 134) | Cumple | `models/VinculosPropietario.php:80`, `:115` |
+| RE-2.10.1 | `HistoriaCompartidaTest::testBVeLasVacunasYDesparasitacionesDeAConLaClinicaQueLasAplico` | **No cumple del todo**: vacunas y desparasitaciones sí; alergias y alertas no existen en el código (hueco 3) | `models/Vacuna.php:59-83`; `models/Desparasitacion.php:66-86` |
+| RE-2.10.2 | `HistoriaCompartidaTest::testSinAutorizacionBNoVeNiSabeDeLasConsultasDeA`, `::testElHistorialPorPeticionDirectaNoRevelaLasConsultasDeA`, `::testConAutorizacion…`; `AutorizacionRolTest::testVerArchivoEsDeLaClinicaYDelPortalNoDeLaPlataforma` | Cumple | `models/ModeloHistoria.php:29-55`; `models/ArchivoClinico.php:61-110` |
+| RE-2.10.3 | `HistoriaCompartidaTest::testSinAutorizacionBNoVeNiSabeDeLasConsultasDeA`, `::testElHistorialPorPeticionDirectaNoRevelaLasConsultasDeA` | Cumple | El mismo |
+| RE-2.10.4 | `HistoriaCompartidaTest::testBNoModificaNingunRegistroDeAYQuedaEnAuditoria`, `::testBNoAgregaTratamientosNiAdjuntosAUnaConsultaDeA` | Cumple en el servidor. La pantalla no avisa del solo lectura de una mascota desvinculada (hueco 6) | `paraModificar()` de cada modelo de historia |
+
+### 3. Inventario de pantallas
+
+| Pantalla | Qué hace | JS y CSS | En línea | Pendientes que le tocan |
+|---|---|---|---|---|
+| `views/portal/layout.php` (117 l.) | Marco: menú lateral en escritorio (≥ 1024 px) y barra inferior con botón central «Agendar» en celular y tableta; contexto actual y salir. | CSS: `contexto.css`, `portal/{base,navegacion,inicio,servicios,agenda,mascota,cuenta,ventanas,calendario,formularios}.css` (3570 l.), `validacion-cuenta.css`, flatpickr. Iconos: Font Awesome **y** Remix. JS: `avisos.js`, `password-policy.js`, `portal.js`, `csrf.js`, `sesion.js`, `interacciones.js`, `cuenta-password.js`, Google GSI, SweetAlert2. | Nada | Sufijos de versión escritos a mano; dos bibliotecas de iconos. |
+| `views/portal/index.php` (861 l.), Inicio | Saludo, «Mis compañeros», próxima cita, accesos rápidos y el horario de cada clínica vinculada (o «Aún no tienes clínicas»). | `portal/inicio.css`, `portal.js` | Nada | — |
+| Servicios | Lista fija de tres servicios (filtro al escribir) y veterinarios de sus clínicas. | `portal/servicios.css`; `portal.js:147` y `:160` | `oninput="filtrarServicios(this.value)"` (l. 195) | Restricción de entrada D3.1 («eventos en línea ajenos… filtro de servicios»). |
+| Agenda | «Mis citas» (cancelar solo en clínicas con vínculo activo) y calendario de salud (próximas dosis e historial). | `portal/agenda.css`, `calendario.css` | Nada | Recarga entera al cancelar. |
+| Alertas | Pantalla casi vacía («No tienes alertas…»); se llena con recordatorios de vacunas. | `portal.js` | Nada | Las alertas médicas no existen (hueco 3); el centro de notificaciones es HU-5.7 (v2.1). |
+| Perfil | Datos, contacto (teléfono con la regla común), «Mis clínicas» (interruptor de historia compartida, desvincularme y vincularme), datos de acceso, contraseña y salir. | `portal/cuenta.css`; `portal.js:2052-2106`; `validacion-cuenta.js` | Nada | «Pantalla 3–4 s tarde»: C9.1 ya no espera al aviso (recarga y lo muestra después), pero recarga todo. Vincular y desvincular deberían actualizar la tarjeta en su sitio. |
+| Detalle de mascota | Pestañas Historial · Citas · Vacunas · Desparasitaciones, con la clínica de cada registro; editar e imprimir. | `portal/mascota.css`, `portal.js` | Nada | Sin alertas (hueco 3). |
+| Ventanas (agendar, mascota nueva o editada, detalle de cita) | Agendar empieza por la clínica; mascota con especie y raza; detalle con resultado clínico y receta. | `portal/ventanas.css`, `formularios.css`, `portal.js:1343-1650`, `:1880-1935` | Nada | Errores en SweetAlert (`:1914`); sin validación en tiempo real ni restricción de entrada en mascota; el `select` de clínica con una sola (hueco 8); «Modales: mejorar su diseño». |
+| `views/portal/imprimir_historial.php` (153 l.) | Versión imprimible con la clínica de cada registro (RE-5.5). | `imprimir-historial.css`, `imprimir-historial.js`, `interacciones.js` | Nada | Sin alertas (hueco 3). |
+| `views/auth/completar_perfil.php` (50 l.) | Documento y teléfono obligatorios de una cuenta de Google. Ya tiene el marco del acceso de M0.2. | `registro-cuenta.css`, `validacion-cuenta.js`, `interacciones.js` | Nada | Caso de soporte por documento duplicado (hueco 5). |
+| Personal: «Nueva mascota» → buscar propietario (`views/vet/pacientes.php:709-722`) | Búsqueda exacta por documento o correo; mascotas del propietario con «Vincular X» o «Es otra mascota: registrar nueva»; sin vínculo, «Solicitar confirmación por correo». | `pacientes.css`; `medical-module.js:903-950` | Nada en la vista; el JS cambia `style.display` | Hueco 2; recarga sin aviso; código de C3 con varias sentencias por línea; usar las tarjetas mini de Usuarios. |
+| Personal: historia de la mascota | Línea de tiempo de consultas, vacunas y desparasitaciones; lo de otra clínica lleva su nombre e icono, con «solo lectura» en el `title`. | `medical-module.js:1156-1162` (`etiquetaOrigen`), `:1252-1300`, `:1903-1930` | Nada | Hueco 6 (solo lectura); hueco 3 (alertas); la marca de solo lectura solo se ve al pasar el ratón. |
+
+### 4. Propuesta de estructura visual del portal (C2, para aprobar)
+
+Se reutilizan las piezas de M0.1, M0.2 y M0.2.1, solo en azul y grises:
+- cabecera blanca (`header-container-white`);
+- pestañas (`tabs-wrapper`);
+- tarjetas de Usuarios (`person-card`, `card-*-mini`, `tag-mini`, `action-btn-mini`);
+- interruptor (`toggle-switch`) y tarjetas de elección de «Gestionar»;
+- modal con pie a la derecha (`users-modal__footer`);
+- avisos de una línea bajo el campo y estados vacíos compactos.
+
+El marco actual (menú lateral y barra inferior) se conserva.
+
+**Secciones**:
+
+1. **Inicio:** saludo, la próxima cita en una tarjeta y las mascotas en tarjetas. Cada tarjeta lleva foto o iniciales, nombre, especie y raza, las clínicas donde se atiende como etiquetas y su próxima dosis. Debajo, el horario de hoy de cada clínica, compacto («Abierta hasta las 6:00 p. m.»).
+2. **Mascota** (al tocar una tarjeta):
+   - Cabecera con foto, nombre y etiquetas.
+   - Pestañas Historia · Vacunas · Desparasitaciones · Citas, y Alertas si se aprueba la decisión 3.
+   - Cada registro lleva la etiqueta de su clínica (RN-114).
+   - Filtro por clínica si tiene varias; «Editar» e «Imprimir» como botones de icono.
+3. **Citas:** pestañas Próximas, Pasadas y Calendario de salud. Tarjetas con mascota, clínica, veterinario y estado. «Cancelar» confirma, porque es lo único irreversible.
+4. **Agendar** (modal):
+   - Paso a paso: clínica, mascota, tipo, veterinario, día y hora, y resumen.
+   - Clínica y mascota como tarjetas de elección; con una sola clínica, solo su nombre (hueco 8). Tipo y veterinario siguen como selector.
+   - Pie con «Agendar».
+5. **Clínicas** (sección propia, hoy enterrada en Perfil):
+   - Una tarjeta por clínica vinculada: nombre, dirección, abierta o cerrada hoy, el interruptor «Puede ver la historia que registraron otras clínicas» con su ayuda, y el botón de icono «Desvincularme».
+   - Desvincularse es directo con aviso breve. El rechazo por citas sin resolver aparece en la tarjeta, en una línea.
+   - Abajo, «Otras clínicas en Zooki»: buscador corto y tarjetas con «Vincularme».
+   - Todo se actualiza en su sitio con la respuesta del servidor, sin recargar la página.
+6. **Perfil:** datos, contacto, datos de acceso, contraseña y salir, en tarjetas plegables como hoy.
+
+**Servicios** se retira como sección: es una lista fija y «Agendar» ya hace ese papel. **Alertas** pasa a un punto en el menú hasta HU-5.7.
+
+```
+Escritorio (≥ 1024 px)                         Celular (< 768 px)
+┌───────────┬─────────────────────────────┐    ┌───────────────────────┐
+│ Zooki     │ Hola, Fabio                 │    │ Hola, Fabio      (FA) │
+│[+ Agendar]│ ┌─Próxima cita───────────┐  │    │ ┌Próxima cita───────┐ │
+│ Inicio    │ └────────────────────────┘  │    │ └───────────────────┘ │
+│ Citas     │ ┌Luna──┐ ┌Kira──┐ ┌Milo─┐  │    │ ┌Luna───────────────┐ │
+│ Clínicas  │ │Norte │ │Sur   │ │Norte│  │    │ │Norte · Sur        │ │
+│ Perfil    │ └──────┘ └──────┘ └─────┘  │    │ └───────────────────┘ │
+│           │ Horario de hoy: Norte · Sur │    │ ┌Kira───────────────┐ │
+│ (FA) Fabio│                             │    ├───────────────────────┤
+└───────────┴─────────────────────────────┘    │Inicio Citas (+) Clín. Perfil│
+                                               └───────────────────────┘
+```
+
+En celular: una columna; las tarjetas ocupan todo el ancho; los modales se abren como hoja a pantalla completa con el pie fijo; tablet (768–1023 px) usa dos columnas de tarjetas con la barra inferior.
+
+### 5. Diagramas
+
+| Diagrama | ¿Coincide con el código? |
+|---|---|
+| §9 Acceso y aislamiento | Sí. El portal no tiene clínica activa: cada acción en una clínica pasa por `enClinicaDelPropietario()`, que es la rama «el recurso es de su clínica». |
+| §10 Login del propietario | Sí, con el matiz del hueco 8: con una clínica el `select` sigue a la vista, aunque ya elegida. Cancelar no pide clínica, porque la cita ya tiene la suya. |
+| §11 Registro del propietario | **No del todo**: el nodo GG4 liga a la clínica una cuenta existente que entra con Google, y el código solo liga las pendientes (hueco 4). |
+| §12.3 Registro de mascota | **No del todo**: el diagrama muestra las mascotas después de ligar al propietario, y el código las muestra antes (hueco 2). El resto coincide: el límite se comprueba al guardar o al vincular, no se duplica, se conservan el carnet y el token, y queda auditoría. |
+| §13.1 Completar el perfil | **No del todo**: falta el caso de soporte por documento duplicado (hueco 5). |
+| **§11.1 Vínculos del propietario (nuevo, borrador)** | Se agregó a `Modelos.md`: vincularse, desvincularse con la regla de citas sin resolver y RN-115, y autorizar o revocar la historia compartida. Sigue al código de `VinculosPropietario`. Para la parte de RN-115 que dice «ni los datos nuevos», el código no cumple (hueco 1). Renderiza con Mermaid CLI. |
+
+### 6. Decisiones pendientes del usuario (antes de C1)
+
+1. **Hueco 1:** con el vínculo inactivo, ¿la clínica ve solo el nombre y la marca «Desvinculado»? Recomendado: sí. ¿Vale también cuando es la clínica la que desactivó el vínculo (D1)?
+2. **Hueco 2:** ¿las mascotas del propietario se muestran solo cuando ya está vinculado a la clínica, como dice §12.3? Recomendado: sí, sin nombre ni mascotas antes de la confirmación.
+3. **Hueco 3:** ¿M5 construye la lectura de alergias y alertas y deja el registro para el módulo 2? Recomendado: sí.
+4. **Hueco 4:** ¿«Registrarse con Google» desde una clínica liga a esa clínica una cuenta ya verificada? Recomendado: sí, con auditoría.
+5. **Propuesta visual (§4):** ¿«Clínicas» pasa a sección propia y se retira «Servicios»?
+
+**Alcance propuesto para C1** (huecos funcionales): los huecos 1 a 5 y 7, según lo que se decida. C2 lleva el hueco 8 y la propuesta visual; C3, el hueco 6 y el modal de vincular mascota.
+
+### 7. Verificación
+
+- `vendor/bin/phpunit` sin MySQL: **608 en verde**, 3487 aserciones, 29 omitidas (las de MySQL).
+- Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: **608 en verde**, 3849 aserciones, ninguna omitida.
+- `node --test "tests/Frontend/**/*.test.cjs"`: **108 en verde**.
+- El diagrama §11.1 se renderizó con Mermaid CLI (`@mermaid-js/mermaid-cli` con el Chrome del equipo): 47 nodos, sin error de sintaxis.
+- No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`. No se cambió código ni pruebas.
+
+### A — Revisión (2026-10-12)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada.** Inventario completo y preciso: se comprobaron en el código los huecos 1 (`PropietarioClinica::listar()` sin filtro de `pc.estado` y con correo, teléfono y documento en vivo), 2 (`buscarExacto()` devuelve nombre, contacto y mascotas sin mirar el vínculo) y 3 (`alertas_medicas` no aparece en ningún modelo, controlador, vista ni JS). El diagrama §11.1 queda como base de C1.
+
+**Decisiones del usuario (2026-10-12).**
+
+1. **Huecos 1 y 2 — solo con vínculo activo.** Con el vínculo inactivo (lo haya desactivado el propietario o la clínica), la clínica ve solo el nombre y la marca «Desvinculado», sin correo, teléfono ni documento. La búsqueda exacta de una persona no vinculada responde «Hay una cuenta con ese dato. Pide la confirmación por correo», sin nombre, contacto ni mascotas; las mascotas (HU-1.5) aparecen cuando el vínculo ya está confirmado, como en §12.3.
+2. **Hueco 3 — alergias y alertas, todo en el módulo 2.** Registrar y mostrar van juntas con el Grafo I. RE-2.10.1 se cierra en M5 para datos básicos, vacunas y desparasitaciones, con nota de que alergias y alertas llegan con el módulo 2 (como RE-0.3.6).
+3. **Hueco 4 — Google desde una clínica.** «Registrarme con Google» desde la clínica X liga a X una cuenta ya verificada, con auditoría (como dice §11). «Entrar con Google» sin clínica no cambia.
+4. **Portal (propuesta visual §4 del Anexo A) aprobada:** menú Inicio · Citas · Clínicas · Perfil con «Agendar» al centro; «Clínicas» es sección propia; se retira «Servicios»; «Alertas» sale del menú hasta HU-5.7; todo se actualiza en su sitio sin recargar.
+
+**Alcance de C1:** huecos 1, 2, 4, 5 y 7, la nota de RE-2.10.1 y los diagramas §11, §12.3 y §13.1 alineados. C2: hueco 8, menores del portal y la propuesta visual. C3: hueco 6 y el modal de vincular mascota.

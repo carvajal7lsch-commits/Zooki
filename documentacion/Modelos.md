@@ -611,6 +611,48 @@ flowchart TD
   GG7 --> AUD
 ```
 
+### 11.1 Vínculos del propietario: vincularse, desvincularse y autorizar la historia
+
+_Borrador de la etapa A de M5 (2026-10-12), pendiente de revisión._ Desde «Mis clínicas» del portal, el propietario decide a qué clínicas está vinculado y cuáles ven la historia que registraron las demás ([HU-5.13](HistoriasUsuario.md#hu-513--vincularme-o-desvincularme-de-una-clínica), [HU-5.12](HistoriasUsuario.md#hu-512--autorizar-a-una-clínica-a-ver-la-historia-de-otras-clínicas)). Las tres acciones son reversibles, así que se aplican sin confirmación y con un aviso breve. La autorización se lee de la base en cada petición de la clínica, nunca de su sesión: por eso revocar aplica de inmediato ([RN-113](ReglasNegocio.md#módulo-1--mascotas-y-propietarios), [RN-115](ReglasNegocio.md#módulo-1--mascotas-y-propietarios)).
+
+```mermaid
+flowchart TD
+  A(["Mis clinicas, en el portal del propietario"]) --> S{"Contexto propietario, rol permitido y CSRF validos?"}
+  S -- No --> S1[/"HTTP 403 o 401: no se cambia nada"/]
+  S1 --> ZF([Fin])
+  S -- Si --> Q{Que hace?}
+
+  Q -- Vincularme --> V1{"La clinica existe y esta activa?"}
+  V1 -- No --> V1N[/"Mensaje: esa clinica no esta disponible"/]
+  V1N --> ZF
+  V1 -- Si --> V2{"Ya tiene un vinculo activo con ella?"}
+  V2 -- Si --> V2N[/"Mensaje: ya estas vinculado"/]
+  V2N --> ZF
+  V2 -- No --> V3["Crear el vinculo o reactivar el inactivo, sin autorizacion de historia;<br/>no se pide verificar otra vez el correo (ya inicio sesion)"]
+  V3 --> V4["La clinica ve solo sus datos de propietario; sus mascotas se le vinculan<br/>al agendar alli o al atenderlas alli (RN-110, cuentan para el plan)"]
+  V4 --> AUD["Registrar en auditoria con la clinica afectada"]
+
+  Q -- Desvincularme --> D1{"Tiene un vinculo activo con ella?"}
+  D1 -- No --> D1N[/"Mensaje: no estas vinculado a esa clinica"/]
+  D1N --> ZF
+  D1 -- Si --> D2{"Tiene citas sin resolver alli?<br/>(pendiente, confirmada, en curso o sin cerrar)"}
+  D2 -- Si --> D2N[/"Mensaje: tienes N citas sin resolver; cancela las pendientes o confirmadas,<br/>las que estan en atencion las cierra la clinica"/]
+  D2N --> ZF
+  D2 -- No --> D3["En una transaccion: vinculo inactivo, autorizacion de historia en 0<br/>y las mascotas del propietario desvinculadas de esa clinica"]
+  D3 --> D4["RN-115: la clinica conserva sus propios registros en solo lectura;<br/>no ve lo de otras clinicas ni los datos nuevos, y no registra nada nuevo"]
+  D4 --> AUD
+
+  Q -- "Activar o revocar la historia compartida" --> H1{"Tiene un vinculo activo con ella?"}
+  H1 -- No --> H1N[/"Mensaje: solo puedes autorizar a una clinica a la que estas vinculado;<br/>el interruptor vuelve a su estado"/]
+  H1N --> ZF
+  H1 -- Si --> H2["Guardar la autorizacion con su fecha, o quitarla"]
+  H2 --> H3["Desde la siguiente peticion de la clinica: con autorizacion ve consultas,<br/>tratamientos y archivos de otras clinicas; sin ella, ni sabe que existen (RN-113)"]
+  H3 --> AUD
+
+  AUD --> UI[/"Actualizar la pantalla con la respuesta del servidor y mostrar un aviso breve"/]
+  UI --> ZF
+```
+
 
 ---
 
