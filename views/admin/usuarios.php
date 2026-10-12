@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../config/App.php';
 require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 /**
  * HU-T.7 — Personal de la clínica activa y propietarios vinculados a ella.
@@ -417,4 +418,4 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
 
 <!-- D2.1: teléfono con bandera y prefijo, el mismo intl-tel-input de Pacientes. -->
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
-<script src="js/usuarios.js?v=6-d22"></script>
+<script src="js/usuarios.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

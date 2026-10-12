@@ -28,7 +28,7 @@ $iniciales = $iniciales ?: 'U';
     <link rel="icon" type="image/png" href="img/icon_blue.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/contexto.css?v=1">
+    <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <?php foreach (['base', 'navegacion', 'inicio', 'servicios', 'agenda', 'mascota', 'cuenta', 'ventanas', 'calendario', 'formularios'] as $modulo): ?>
@@ -36,7 +36,7 @@ $iniciales = $iniciales ?: 'U';
     <?php endforeach; ?>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta name="csrf-token" content="<?= Csrf::token('default') ?>">
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body class="portal-body">
 
@@ -108,10 +108,10 @@ $iniciales = $iniciales ?: 'U';
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
 <script src="js/portal.js?v=<?= $v ?>-d2"></script>
 <script src="js/csrf.js?v=<?= $v ?>"></script>
-<script src="js/sesion.js?v=1"></script>
-<script src="js/interacciones.js?v=d31"></script>
+<script src="js/sesion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/interacciones.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
-<script src="js/cuenta-password.js?v=d2"></script>
+<script src="js/cuenta-password.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

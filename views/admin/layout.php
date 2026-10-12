@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../../config/App.php'; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,22 +18,22 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Estilos del sistema -->
-    <link rel="stylesheet" href="css/styles.css?v=2">
-    <link rel="stylesheet" href="css/dashboard.css?v=4">
-    <link rel="stylesheet" href="css/usuarios.css?v=4">
-    <link rel="stylesheet" href="css/pill-sidebar.css">
-    <link rel="stylesheet" href="css/contexto.css?v=1">
+    <link rel="stylesheet" href="css/styles.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/dashboard.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/usuarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/pill-sidebar.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
-    <link rel="stylesheet" href="css/perfil.css?v=2">
+    <link rel="stylesheet" href="css/perfil.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
     <?php if (($_GET['action'] ?? '') === 'admin_configuracion'): ?>
-    <link rel="stylesheet" href="css/horarios.css?v=1">
+    <link rel="stylesheet" href="css/horarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
-    <link rel="stylesheet" href="css/panel.css?v=3">
+    <link rel="stylesheet" href="css/panel.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
     <div id="global-loader"><div class="spinner"></div></div>
@@ -149,16 +150,16 @@
     </div>
 
     <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
-    <script src="js/avisos.js?v=3"></script>
-    <script src="js/password-policy.js?v=d22"></script>
-    <script src="js/dashboard.js?v=7"></script>
-    <script src="js/csrf.js"></script>
-    <script src="js/sesion.js?v=1"></script>
-    <script src="js/extras.js"></script>
+    <script src="js/avisos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/password-policy.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/dashboard.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/csrf.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/sesion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/extras.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php if (!isset($content_view)): ?>
-    <script src="js/panel-admin.js?v=1"></script>
+    <script src="js/panel-admin.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php endif; ?>
-<script src="js/interacciones.js?v=d31"></script>
+<script src="js/interacciones.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
