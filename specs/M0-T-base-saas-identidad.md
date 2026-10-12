@@ -2294,3 +2294,13 @@ Mutaciones comprobadas:
    - Abre un enlace ya usado: «Enlace no disponible» con el mismo diseño.
    - Revisa también «Elige cómo entrar» y «Completa tu perfil».
 5. **Un correo real en Gmail** (producción o tu cuenta con Brevo), en tema claro y oscuro: logotipo visible, botón azul y enlace debajo.
+
+### M0.2 — Revisión (2026-10-12)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, con un arreglo de commit y pendiente de la prueba del usuario.
+
+**Verificado.** PHP 605 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 101/101 en el equipo del usuario; `views/auth`, `views/plataforma` y `views/partials` sin `style=`, `on…=` ni `<script>` con código; ninguna vista referencia los CSS y el parcial retirados. El panel sigue la decisión del usuario durante M0.2 (reutilizar tal cual los componentes de Usuarios, sin franja de indicadores, solo azul y grises), que reemplaza la franja propuesta en el alcance. El escape de la plantilla de correo cierra un hallazgo real: el título del correo de registro llevaba el nombre de clínica escrito por el público sin escapar.
+
+**Arreglo de commit.** Los commits de M0.2 quedaron sin `views/plataforma/estado_clinica.php` (preparado pero sin commit), y `inicio.php` ya lo incluye en dos sitios: desplegado así, el panel fallaría. Va en un commit aparte antes del push.
+
+**Observaciones (no bloquean).** El `@import ...?v=4` de `dashboard.css` no se renueva con la alfa (queda para el módulo de la clínica). Falta ver un correo real en Gmail claro y oscuro: se mira tras el despliegue.

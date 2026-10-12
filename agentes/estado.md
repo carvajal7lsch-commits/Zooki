@@ -18,7 +18,7 @@
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
-- **Siguiente paso:** revisar M0.2 (Claude, arquitecto) y la prueba del usuario de M0.1 y M0.2 en el navegador (escritorio y celular, y un correo en Gmail); commit y despliegue de la 2.0.0-alpha.2 (rama `release/v2.0.0-alpha.2`, PR, tag), y al desplegar actualizar `AGENTS.md` (producción en alpha.2). Después, el plan del módulo siguiente con Codex.
+- **Siguiente paso:** M0.1 y M0.2 revisadas y aprobadas (2026-10-12). Commit del archivo que faltó (`views/plataforma/estado_clinica.php`), prueba local del usuario y despliegue de 2.0.0-alpha.2 (merge `v2/m0` → `main`, tag, y prueba del Turnstile real y de un correo en Gmail). Después, el plan del módulo siguiente con Codex.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 
