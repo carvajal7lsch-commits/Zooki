@@ -87,7 +87,7 @@ class EmailService {
               Tu compañero peludo está en las mejores manos. Si tienes alguna duda, escríbenos directamente.
             </p>';
 
-            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, '¡Te damos la bienvenida a Zooki!', $contenido, 'Ir a mi Portal', htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8'));
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, '¡Te damos la bienvenida a Zooki!', $contenido, 'Ir a mi Portal', $appUrl);
             $this->mail->isHTML(true);
             $this->entregar();
             return true;
@@ -211,7 +211,7 @@ Si no fuiste tú, ignora este mensaje.";
             <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
               Si no esperabas esta invitación, ignora el mensaje: sin activarla, la cuenta no se puede usar.
             </p>';
-            $this->mail->Body = $this->obtenerPlantillaBaseHTML($e($nombre), 'Activa tu cuenta', $contenido, 'Activar mi cuenta', $e($enlace));
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Activa tu cuenta', $contenido, 'Activar mi cuenta', $enlace);
             $this->mail->AltBody = "Hola $nombre,\n\n$clinica te invitó a su equipo en Zooki como $rol.\nActiva tu cuenta, acepta la política de tratamiento de datos y crea tu contraseña:\n$enlace\n\nEl enlace vence en $horasVigencia horas.";
             $this->mail->isHTML(true);
             $this->entregar();
@@ -241,7 +241,7 @@ Si no fuiste tú, ignora este mensaje.";
             <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
               Si no lo pediste, habla con el administrador de tu clínica.
             </p>';
-            $this->mail->Body = $this->obtenerPlantillaBaseHTML($e($nombre), 'Crea una nueva contraseña', $contenido, 'Crear mi contraseña', $e($enlace));
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Crea una nueva contraseña', $contenido, 'Crear mi contraseña', $enlace);
             $this->mail->AltBody = "Hola $nombre,\n\nEl administrador de $clinica restableció tu contraseña; la anterior ya no sirve.\nCrea una nueva:\n$enlace\n\nEl enlace vence en $horasVigencia horas.";
             $this->mail->isHTML(true);
             $this->entregar();
@@ -271,7 +271,7 @@ Si no fuiste tú, ignora este mensaje.";
             <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
               Si no conoces a esta clínica, ignora el mensaje: sin tu aceptación no pasa nada.
             </p>';
-            $this->mail->Body = $this->obtenerPlantillaBaseHTML($e($nombre), 'Invitación a un equipo', $contenido, 'Ver la invitación', $e($enlace));
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Invitación a un equipo', $contenido, 'Ver la invitación', $enlace);
             $this->mail->AltBody = "Hola $nombre,\n\n$clinica te invitó a su equipo en Zooki como $rol.\nAcepta o rechaza la invitación:\n$enlace\n\nEl enlace vence en $horasVigencia horas. Si no conoces a esta clínica, ignora el mensaje.";
             $this->mail->isHTML(true);
             $this->entregar();
@@ -294,7 +294,7 @@ Si no fuiste tú, ignora este mensaje.";
             <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
               Si no fuiste tú, usa «¿Olvidaste tu contraseña?» en el inicio de sesión para crear otra y avisa a soporte.
             </p>';
-            $this->mail->Body = $this->obtenerPlantillaBaseHTML(htmlspecialchars((string) $nombre, ENT_QUOTES, 'UTF-8'), 'Tu contraseña cambió', $contenido);
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Tu contraseña cambió', $contenido);
             $this->mail->AltBody = "Hola $nombre,\n\nLa contraseña de tu cuenta Zooki cambió y se cerraron las demás sesiones abiertas.\nSi no fuiste tú, usa ¿Olvidaste tu contraseña? en el inicio de sesión y avisa a soporte.";
             $this->mail->isHTML(true);
             $this->entregar();
@@ -305,100 +305,74 @@ Si no fuiste tú, ignora este mensaje.";
         }
     }
 
+    /**
+     * Plantilla común de los correos.
+     *
+     * M0.2: $nombre, $titulo, $ctaTexto y $ctaEnlace son texto plano y se
+     * escapan aquí (el título lleva a veces el nombre de una clínica escrito
+     * por el público); $contenidoHtml ya viene armado y escapado por quien
+     * llama. Para Gmail claro y oscuro: colores de fondo en cada celda, botón
+     * como celda con su color, el logotipo sobre una placa blanca para que no
+     * desaparezca cuando Gmail oscurece el fondo, y ancho fluido en el celular.
+     */
     public function obtenerPlantillaBaseHTML($nombre, $titulo, $contenidoHtml, $ctaTexto = null, $ctaEnlace = null) {
+        $h = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
         $ctaHtml = '';
         if ($ctaTexto && $ctaEnlace) {
             $ctaHtml = '
-            <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:28px 0">
-              <tbody>
-                <tr>
-                  <td>
-                    <a href="' . $ctaEnlace . '" style="line-height:22px;text-decoration:none;display:inline-block;max-width:100%;mso-padding-alt:0px;background-color:#0052ff;border-radius:4px;color:#ffffff;font-size:15px;font-weight:700;text-align:center;padding:12px 24px;" target="_blank">
-                      <span style="max-width:100%;display:inline-block;line-height:120%;">
-                        ' . $ctaTexto . '
-                      </span>
-                    </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>';
+            <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:28px 0">
+              <tr>
+                <td align="center" bgcolor="#0052ff" style="background-color:#0052ff;border-radius:10px;mso-padding-alt:12px 24px;">
+                  <a href="' . $h($ctaEnlace) . '" target="_blank" style="display:inline-block;padding:13px 26px;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;line-height:20px;color:#ffffff;text-decoration:none;border-radius:10px;">' . $h($ctaTexto) . '</a>
+                </td>
+              </tr>
+            </table>
+            <p style="font-size:12px;line-height:18px;color:#6b7280;margin:0 0 8px 0;">Si el botón no funciona, copia este enlace en tu navegador:<br /><a href="' . $h($ctaEnlace) . '" style="color:#0052ff;word-break:break-all;">' . $h($ctaEnlace) . '</a></p>';
         }
 
         return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" lang="es">
   <head>
     <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="x-apple-disable-message-reformatting" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>' . $h($titulo) . '</title>
   </head>
-  <body style="background-color:#ffffff">
-    <table border="0" width="100%" cellpadding="0" cellspacing="0" role="presentation" align="center">
-      <tbody>
-        <tr>
-          <td style=\'background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif\'>
-            <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width:37.5em;margin:0 auto;padding:40px 20px 64px 20px;width:600px">
-              <tbody>
-                <tr style="width:100%">
-                  <td>
-                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:32px;text-align:left">
-                      <tbody>
+  <body style="margin:0;padding:0;background-color:#f4f6fb;">
+    <table border="0" width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="#f4f6fb" style="background-color:#f4f6fb;">
+      <tr>
+        <td align="center" style="padding:32px 12px;">
+          <table border="0" width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="#ffffff" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:16px;">
+            <tr>
+              <td style="padding:32px 28px 28px 28px;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1d1c1d;">
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:28px;">
+                  <tr>
+                    <td bgcolor="#ffffff" style="background-color:#ffffff;border-radius:10px;padding:6px 10px 6px 6px;">
+                      <table border="0" cellpadding="0" cellspacing="0" role="presentation">
                         <tr>
-                          <td>
-                            <table border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
-                              <tr>
-                                <td style="vertical-align:middle;padding-right:0px">
-                                  <img alt="Zooki Icon" height="36" src="cid:zooki_icon_blue" style="display:block;outline:none;border:none;text-decoration:none;height:auto" width="36" />
-                                </td>
-                                <td style="vertical-align:middle">
-                                  <img alt="Zooki logotipo" src="cid:zooki_logotipo" style="display:block;outline:none;border:none;text-decoration:none;margin:-15px 0 -15px -10px;height:auto" width="110" />
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
+                          <td style="vertical-align:middle;padding-right:6px;"><img alt="" height="36" width="36" src="cid:zooki_icon_blue" style="display:block;border:0;outline:none;text-decoration:none;" /></td>
+                          <td style="vertical-align:middle;"><img alt="Zooki" width="96" src="cid:zooki_logotipo" style="display:block;border:0;outline:none;text-decoration:none;height:auto;" /></td>
                         </tr>
-                      </tbody>
-                    </table>
-                    
-                    <h1 style="color:#1d1c1d;font-size:36px;font-weight:800;letter-spacing:-1.2px;line-height:42px;margin:0 0 20px 0">
-                      ' . $titulo . '
-                    </h1>
-                    
-                    <p style="font-size:20px;line-height:28px;color:#1d1c1d;margin:0 0 24px 0;">
-                      Hola, ' . htmlspecialchars($nombre) . '.
-                    </p>
-                    
-                    ' . $contenidoHtml . '
-                    
-                    ' . $ctaHtml . '
-                    
-                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-top:1px solid #dddddd;margin:32px 0 24px 0">
-                      <tbody>
-                        <tr>
-                          <td></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    
-                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="text-align:left">
-                      <tbody>
-                        <tr>
-                          <td>
-                            <p style="font-size:13px;line-height:18px;color:#868686;margin:0 0 8px 0;">
-                              Enviado con 💙 por el equipo de Zooki<br />Zooki Inc. · Gestión y Cuidado Veterinario
-                            </p>
-                            <p style="font-size:11px;line-height:16px;color:#b0b0b0;margin:0;">
-                              Si tienes alguna duda o consideras que esto es un error de seguridad, por favor comunícate con nuestro soporte administrativo.
-                            </p>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-      </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                <h1 style="color:#1d1c1d;font-size:26px;font-weight:800;letter-spacing:-0.5px;line-height:32px;margin:0 0 16px 0;">' . $h($titulo) . '</h1>
+                <p style="font-size:17px;line-height:26px;color:#1d1c1d;margin:0 0 20px 0;">Hola, ' . $h($nombre) . '.</p>
+                ' . $contenidoHtml . '
+                ' . $ctaHtml . '
+                <table border="0" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:28px 0 20px 0;">
+                  <tr><td style="border-top:1px solid #e5e7eb;font-size:0;line-height:0;">&nbsp;</td></tr>
+                </table>
+                <p style="font-size:13px;line-height:18px;color:#6b7280;margin:0 0 8px 0;">Enviado con 💙 por el equipo de Zooki<br />Zooki · Gestión y cuidado veterinario</p>
+                <p style="font-size:12px;line-height:17px;color:#6b7280;margin:0;">Si tienes alguna duda o crees que este correo es un error de seguridad, comunícate con soporte de Zooki.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
   </body>
 </html>';
