@@ -674,7 +674,8 @@ flowchart TD
   PES -- Clinicas --> F["Buscar por nombre o NIT y filtrar por estado y plan al escribir<br/>Tarjetas o tabla de Usuarios: estado, NIT con DV, plan y suscripcion,<br/>barras de uso; correo del administrador; Gestionar por pestañas"]
   PES -- Soporte --> CAS
   PES -- Seguridad --> IP
-  F --> CONF{"Dar de baja?"}
+  F --> GES["Gestionar: tarjeta del plan actual marcada e interruptor de suscripcion;<br/>deshabilitado con nota si esta pendiente o de baja<br/>Estado: tarjetas solo con las acciones del estado actual (activa o pendiente: suspender;<br/>suspendida verificada: reactivar; de baja: ninguna) y Dar de baja en rojo"]
+  GES --> CONF{"Dar de baja?"}
   CONF -- Si --> Q{"Confirma el super-administrador?"}
   Q -- No --> L
   Q -- Si --> M

@@ -2304,3 +2304,77 @@ Mutaciones comprobadas:
 **Arreglo de commit.** Los commits de M0.2 quedaron sin `views/plataforma/estado_clinica.php` (preparado pero sin commit), y `inicio.php` ya lo incluye en dos sitios: desplegado así, el panel fallaría. Va en un commit aparte antes del push.
 
 **Observaciones (no bloquean).** El `@import ...?v=4` de `dashboard.css` no se renueva con la alfa (queda para el módulo de la clínica). Falta ver un correo real en Gmail claro y oscuro: se mira tras el despliegue.
+
+## M0.2.1 — Alcance: modal «Gestionar» de la clínica (2026-10-12)
+
+**Escribe:** Claude Code. **Revisa:** Claude (arquitecto). Entra en `2.0.0-alpha.2` (todavía sin desplegar). **Estado:** entregada, pendiente de revisión (2026-10-12; ver «Anexo M0.2.1 — Resultado»).
+
+**Hallazgos del usuario (captura del modal de una clínica pendiente).** La cabecera tiene la insignia, el NIT y el correo con sangrías distintas y mucho espacio vacío; en «Plan y suscripción» de una clínica pendiente el `select` de plan sale vacío y el formulario se ve activo aunque abajo dice que no se puede cambiar; «Motivo» ocupa demasiado. La pestaña «Estado» es un `select` con «Suspender», «Dar de baja» y «Reactivar» siempre, sea cual sea el estado actual.
+
+**Propuesta de la revisión (el usuario la aprueba al pegar el prompt).**
+
+1. **Cabecera compacta y alineada** con el título: línea 1, nombre e insignia de estado; línea 2, NIT con DV · correo del administrador («por confirmar» si aplica). Sin huecos.
+2. **Plan y suscripción:** el plan actual seleccionado (nunca vacío); si la clínica no puede cambiar de plan (pendiente o de baja), el aviso va **arriba** como nota informativa y los campos y el botón quedan deshabilitados, o la pestaña no se ofrece. Motivo de 2–3 líneas.
+3. **Estado como acciones según el estado actual**, no un `select` con todo: activa → «Suspender»; suspendida → «Reactivar»; pendiente → solo lo que hoy permite el servidor. Se elige la acción con un control segmentado (o botones), aparece el motivo y se aplica directo con aviso breve (decisión del 2026-10-10). **«Dar de baja» aparte**, al final, como zona de riesgo en rojo, con su confirmación (lo único que confirma). El servidor no cambia sus reglas: solo cambia cómo se ofrecen.
+4. **Pie del modal** con los botones alineados a la derecha y el mismo espaciado del modal de Usuarios; en celular, campos en una columna.
+
+## Anexo M0.2.1 — Resultado
+
+**Escribió:** Claude Code (2026-10-12). **Estado:** entregada, pendiente de revisión. Entra en `2.0.0-alpha.2`.
+
+**Revisiones del usuario durante M0.2.1 (2026-10-12).**
+
+1. La primera versión dejaba el control segmentado «Suspender» como única opción y parecía un botón que no hacía nada.
+2. El `select` de suscripción abría la lista nativa con un recuadro blanco de más, y no se entendía qué era la suscripción.
+3. «Dar de baja» parecía un aviso de error, no una acción.
+4. El usuario pidió algo más interactivo para el plan, la suscripción, el motivo y el estado.
+5. En Soporte y Seguridad, el estado vacío tenía letra más grande que el resto, el mensaje no era claro y el icono estaba mal ubicado. Un caso ocupaba casi todo el ancho: había que repartir mejor el espacio.
+
+### Qué se hizo
+
+1. **Cabecera compacta.** Línea 1: nombre y etiqueta de estado. Línea 2: NIT con DV · administrador. Las dos tienen la misma sangría.
+2. **Plan y suscripción** (sin listas nativas):
+   - **Plan:** una tarjeta por plan con sus topes («2 personal · 50 mascotas · 100 citas al mes» o «Sin límites…», de `planes`; `Plataforma::planes()` ahora trae los topes, que son metadatos). Un clic elige y una marca azul indica la elegida; el plan actual llega marcado.
+   - **Suscripción:** el interruptor (`toggle-switch`) de Usuarios. Apagado, aparece «Suspendida / Cancelada»; con el Gratuito se oculta («no tiene pago») y se envía «activa». Una ayuda explica que sin suscripción activa se usan los límites del Gratuito.
+   - **Pendiente o de baja:** la nota va arriba y todo queda deshabilitado; abre en Estado.
+3. **Estado:**
+   - Las acciones son tarjetas. Solo se ven las que el estado admite: activa o pendiente, «Suspender»; suspendida verificada, «Reactivar»; «Dar de baja» en rojo, salvo si ya está de baja. Lo decide `accionesEstado`, reflejo de `Plataforma::cambiarEstado`.
+   - Al abrir no hay nada elegido. Al elegir aparecen el motivo y el botón con el nombre de la acción; el de «Dar de baja» va en rojo.
+   - Solo «Dar de baja» confirma. El servidor no cambió sus reglas.
+4. **Motivo:** dos líneas, con sugerencias de un clic («Pago recibido», «Falta de pago»…) que llenan el campo y se pueden editar.
+5. **Pie:** el `users-modal__footer` de Usuarios en cada pestaña, con los botones a la derecha unidos a su formulario con `form`. En celular, una columna.
+6. **Soporte y Seguridad:**
+   - Las mismas tarjetas de Usuarios, en cuadrícula. El caso muestra tipo, clínica (el modelo ahora trae su nombre), fecha y descripción en tres líneas; la IP muestra la hora del bloqueo y las cuentas con sus clínicas.
+   - «Cerrar caso» y «Enviar aviso» abren un modal pequeño con tarjetas (Resuelto/Descartado; el administrador destinatario), nota con sugerencias y pie. «Desbloquear» es directo.
+   - Los modales quedan fuera de las tarjetas: la animación de la tarjeta (`transform`) encerraría el fondo fijo.
+   - Los estados vacíos son compactos: icono a la izquierda, título de 0,95 rem y un mensaje que dice qué aparecerá ahí.
+7. Modelos §12.1.1 tiene el nodo «Gestionar» actualizado (se dibuja con Mermaid CLI); el historial de la 2.0.0-alpha.2 lo describe; descarga regenerada.
+
+### RE y pruebas
+
+| Punto | Prueba |
+|---|---|
+| RE-0.3.5: acciones por estado (activa, suspendida con y sin registro verificado, pendiente, de baja) | `M021Gestionar.test.cjs`; la mutación que ofrece «Reactivar» a una activa la hace fallar |
+| RE-0.3.2: plan marcado, interruptor, Gratuito sin pago, campos deshabilitados | `M021Gestionar.test.cjs` |
+| Solo «Dar de baja» confirma | `M021Gestionar.test.cjs`, `E1Plataforma.test.cjs` |
+| Sugerencias de motivo, Soporte y Seguridad en tarjetas con modales fuera de ellas, vacíos compactos | `M021Gestionar.test.cjs` |
+| El servidor rechaza por POST una transición no permitida | `M021GestionarTest` (activa → activa, pendiente → activa, suspendida → suspendida, estado inventado, pendiente suspendida → activa, de baja → cualquiera; sin cambios ni auditoría) y el marcado del modal |
+
+### Verificación
+
+- `vendor/bin/phpunit`: **608 en verde**. Sin MySQL: 3487 aserciones y 29 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 3849 aserciones y ninguna omitida.
+- JS: **108 en verde**.
+- `views/plataforma` sin `style=`, `on…=` ni `<script>` con código.
+- No se leyó ni escribió `.env`.
+
+### Pantallas para el usuario
+
+1. **«Gestionar» (escritorio):**
+   - En una activa, la tarjeta del plan marcada y el interruptor de suscripción. Apágalo para ver «Suspendida / Cancelada»; elige el Gratuito para ver que se oculta.
+   - En Estado: elige «Suspender», usa una sugerencia de motivo y aplícalo (aviso breve, sin confirmación). Vuelve a abrirla: ofrece «Reactivar».
+   - «Dar de baja» en rojo pide confirmación.
+   - En una pendiente, el plan deshabilitado con la nota arriba.
+2. **Soporte y Seguridad (escritorio y celular):**
+   - Tarjetas en cuadrícula; «Cerrar caso» y «Enviar aviso» abren su ventana pequeña.
+   - Sin casos o sin IP bloqueadas, un aviso corto.
+   - El modal «Gestionar» en el celular, en una columna.

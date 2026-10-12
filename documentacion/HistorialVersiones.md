@@ -25,7 +25,8 @@ Pulido del módulo 0: el inicio de sesión y los registros se ven y se comportan
 *   **Pestañas** Clínicas, Soporte y Seguridad, con contadores; el panel recuerda la última pestaña y la vista de tarjetas o tabla.
 *   Buscador corto por nombre o NIT y filtros de estado y plan en una sola línea, que actúan mientras escribes.
 *   Cada clínica muestra su **estado como etiqueta**, el NIT con su dígito de verificación (`901234567-7`), el plan, la suscripción en palabras («Sin pago» en el gratuito), la fecha de registro legible y el **uso del plan con barras** («sin límite» en Profesional).
-*   «Gestionar» abre una ventana con dos pestañas, «Plan y suscripción» y «Estado», con el estado, el NIT y el administrador arriba.
+*   «Gestionar» abre una ventana con dos pestañas, «Plan y suscripción» y «Estado», con el nombre, el estado, el NIT y el administrador arriba. El plan se elige con dos tarjetas que muestran sus límites, y la suscripción con un interruptor; si la clínica aún no puede cambiar de plan, lo dice arriba y no deja editarlo. En «Estado» solo aparecen como tarjetas las acciones posibles (suspender una activa, reactivar una suspendida) y «Dar de baja», en rojo, que es lo único que pide confirmación. El motivo trae sugerencias de un clic.
+*   **Soporte y Seguridad** usan las mismas tarjetas, en cuadrícula, y cerrar un caso o avisar a una clínica se hace en una ventana pequeña. Cuando no hay nada, un aviso corto dice qué aparecerá ahí.
 *   Si una cuenta de la plataforma intenta administrar una clínica, la página de activación lo explica: «Esta cuenta administra la plataforma y no puede administrar una clínica. Regístrala con otro correo».
 
 **Páginas que se abren desde un correo**
