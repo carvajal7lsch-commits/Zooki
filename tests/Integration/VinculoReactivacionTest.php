@@ -20,6 +20,8 @@ final class VinculoReactivacionTest extends TestCase
         $this->db = DosClinicas::sqlite();
         // La solicitud muestra las mascotas básicas: necesita la taxonomía de C3.
         DosClinicas::crearMascotasSqlite($this->db);
+        // C1.1: desactivar el vínculo revisa las citas sin resolver de la clínica.
+        DosClinicas::crearHistoriaSqlite($this->db);
         Security::definirAuditoria(new Auditoria($this->db));
         $_SESSION = ['id_usuario' => DosClinicas::ADMIN_NORTE];
         Contexto::activar(Contexto::deClinica(DosClinicas::NORTE, 'Clínica Norte', Roles::ADMIN), 1);

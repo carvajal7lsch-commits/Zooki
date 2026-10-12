@@ -133,7 +133,7 @@ final class M5C1HuecosTest extends TestCase
 
     public function testSiLaClinicaDesactivaElVinculoTampocoVeElContactoNiEnLaFichaNiEnLasCitas(): void
     {
-        $this->db->exec("INSERT INTO citas (id_clinica, id_mascota, id_veterinario, fecha, hora, motivo, estado) VALUES (1, 1, 2, '2026-10-20', '09:00:00', 'Control', 'pendiente')");
+        $this->db->exec("INSERT INTO citas (id_clinica, id_mascota, id_veterinario, fecha, hora, motivo, estado) VALUES (1, 1, 2, '2026-10-01', '09:00:00', 'Control', 'completada')");
         $idCita = (int) $this->db->lastInsertId();
         $this->comoAdministrador(DosClinicas::NORTE, DosClinicas::ADMIN_NORTE);
         $this->assertSame('3001234567', (new Cita($this->db))->getById($idCita)['propietario_telefono'], 'Con el vínculo activo sí lo ve.');
@@ -142,16 +142,32 @@ final class M5C1HuecosTest extends TestCase
         $this->cambiaSuContacto();
 
         $this->assertSoloNombreYMarca($this->filaDeFabio((new PropietarioClinica($this->db))->listar()));
+        // C1.1: sus mascotas quedan inactivas en Norte; la ficha de solo lectura no trae al propietario.
         $mascotas = new Mascota($this->db);
-        $luna = $mascotas->getById(1);
-        $this->assertSame('Fabio Dueño', $luna['propietario_nombre']);
-        $this->assertNull($luna['propietario_documento']);
-        $this->assertSame([], $mascotas->search('1000000006'), 'No se busca por el documento de un cliente desvinculado.');
-        $this->assertCount(1, $mascotas->search('Luna'));
+        $this->assertSame([], $mascotas->search('Luna'));
+        $this->assertSame([], $mascotas->search('1000000006'));
+        $historial = $mascotas->getParaHistorial(1);
+        $this->assertTrue($historial['solo_lectura']);
+        $this->assertArrayNotHasKey('propietario_documento', $historial);
         $cita = (new Cita($this->db))->getById($idCita);
         $this->assertSame('Fabio Dueño', $cita['propietario_nombre']);
         $this->assertNull($cita['email']);
         $this->assertNull($cita['propietario_telefono']);
+    }
+
+    /** Datos anteriores a C1.1 (vínculo inactivo con la mascota aún activa): la ficha tampoco muestra el documento. */
+    public function testLaFichaNoMuestraElDocumentoSiSoloElVinculoDelPropietarioEstaInactivo(): void
+    {
+        $this->db->exec("UPDATE propietario_clinica SET estado = 'inactivo' WHERE id_propietario = 6 AND id_clinica = 1");
+        $this->comoAdministrador(DosClinicas::NORTE, DosClinicas::ADMIN_NORTE);
+        $mascotas = new Mascota($this->db);
+
+        $luna = $mascotas->getById(1);
+
+        $this->assertSame('Fabio Dueño', $luna['propietario_nombre']);
+        $this->assertNull($luna['propietario_documento']);
+        $this->assertSame([], $mascotas->search('1000000006'), 'No se busca por el documento de un cliente desvinculado.');
+        $this->assertCount(1, $mascotas->search('Luna'));
     }
 
     public function testUnClienteDesvinculadoNoSeEditaYSeReactivaPidiendoLaConfirmacionPorSuId(): void
