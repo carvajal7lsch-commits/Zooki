@@ -105,10 +105,9 @@ $nombreUsuario = (string) ($_SESSION['usuario_nombre'] ?? '');
 
     <section class="plataforma-panel" id="panelClinicas" role="tabpanel" aria-labelledby="pestanaClinicas" data-panel="clinicas">
         <?php if ($error !== null): ?><p class="plataforma-alerta" role="alert"><?= $e($error) ?></p><?php endif; ?>
-        <div class="empty-state plataforma-vacio" data-sin-resultados <?= $clinicas ? 'hidden' : '' ?>>
-            <div class="empty-icon"><i class="fas fa-search" aria-hidden="true"></i></div>
-            <h3>Sin resultados</h3>
-            <p>No hay clínicas que coincidan con la búsqueda o los filtros.</p>
+        <div class="plataforma-vacio" data-sin-resultados <?= $clinicas ? 'hidden' : '' ?>>
+            <span class="plataforma-vacio__icono" aria-hidden="true"><i class="bi bi-search"></i></span>
+            <div><h3>Sin resultados</h3><p>No hay clínicas que coincidan con la búsqueda o los filtros.</p></div>
         </div>
         <div class="personal-grid view-grid plataforma-tarjetas" data-lista-vista="tarjetas">
             <?php foreach ($clinicas as $clinica): ?>
@@ -154,92 +153,168 @@ $nombreUsuario = (string) ($_SESSION['usuario_nombre'] ?? '');
         </div>
     </section>
 
+    <?php
+    // Revisión del usuario (2026-10-12): Soporte y Seguridad en tarjetas de Usuarios, en cuadrícula
+    // (no filas a todo el ancho), estados vacíos compactos y las acciones en modales pequeños.
+    $motivosCaso = ['Se corrigió el dato duplicado', 'Reporte duplicado', 'Sin información suficiente', 'Se contactó a la clínica'];
+    ?>
     <section class="plataforma-panel" id="panelSoporte" role="tabpanel" aria-labelledby="pestanaSoporte" data-panel="soporte" hidden>
         <?php if (!$casos): ?>
-        <div class="empty-state plataforma-vacio">
-            <div class="empty-icon"><i class="bi bi-life-preserver" aria-hidden="true"></i></div>
-            <h3>No hay casos de soporte</h3>
-            <p>Los reportes de NIT duplicado aparecerán aquí.</p>
+        <div class="plataforma-vacio">
+            <span class="plataforma-vacio__icono" aria-hidden="true"><i class="bi bi-life-preserver"></i></span>
+            <div><h3>No hay casos de soporte</h3><p>Cuando alguien reporte un NIT o un documento duplicado, el caso aparecerá aquí para revisarlo.</p></div>
         </div>
         <?php endif; ?>
-        <div class="plataforma-lista">
+        <div class="personal-grid view-grid plataforma-tarjetas">
             <?php foreach ($casos as $caso): ?>
-            <article class="plataforma-item">
-                <div class="plataforma-item__cabeza">
-                    <span class="plataforma-item__icono" aria-hidden="true"><i class="bi bi-life-preserver"></i></span>
-                    <div class="plataforma-item__titulo">
-                        <h3>Caso <?= (int) $caso['id_caso'] ?> · <?= $e(ucfirst(str_replace('_', ' ', $caso['tipo']))) ?></h3>
-                        <span class="plataforma-item__meta"><?= $e($p::fecha($caso['fecha'])) ?></span>
-                    </div>
-                    <span class="tag-mini plataforma-estado <?= $caso['estado'] === 'abierto' ? 'plataforma-estado--activa' : '' ?>"><i class="bi <?= $caso['estado'] === 'abierto' ? 'bi-envelope-open' : 'bi-check2-circle' ?>" aria-hidden="true"></i> <?= $e(ucfirst($caso['estado'])) ?></span>
+            <?php $abierto = $caso['estado'] === 'abierto'; ?>
+            <article class="person-card plataforma-tarjeta">
+                <div class="card-header-mini">
+                    <span class="avatar-mini avatar-iniciales plataforma-icono-tarjeta" aria-hidden="true"><i class="bi bi-life-preserver"></i></span>
+                    <span class="tag-mini plataforma-estado <?= $abierto ? 'plataforma-estado--activa' : '' ?>"><i class="bi <?= $abierto ? 'bi-envelope-open' : 'bi-check2-circle' ?>" aria-hidden="true"></i> <?= $e(ucfirst($caso['estado'])) ?></span>
                 </div>
-                <p class="plataforma-item__texto"><?= $e($caso['descripcion']) ?></p>
-                <?php if ($caso['estado'] === 'abierto'): ?>
-                <details class="plataforma-item__accion">
-                    <summary class="btn-modal-secondary">Cerrar caso</summary>
-                    <form class="plataforma-form" data-plataforma-accion="plataforma_caso_ajax">
-                        <?php Csrf::field(); ?>
-                        <input type="hidden" name="id_caso" value="<?= (int) $caso['id_caso'] ?>">
-                        <label class="input-group">Resultado <select name="estado" required><option value="resuelto">Resuelto</option><option value="descartado">Descartado</option></select></label>
-                        <label class="input-group">Nota <textarea name="motivo" <?= ValidadorPlataforma::atributos() ?>></textarea><small data-error-campo role="status"></small></label>
-                        <div class="plataforma-form__pie"><p data-resultado role="status"></p><button type="submit" class="btn-modal-primary">Cerrar caso</button></div>
-                    </form>
-                </details>
+                <div class="card-body-mini">
+                    <h3 class="card-title-mini" title="Caso <?= (int) $caso['id_caso'] ?>">Caso <?= (int) $caso['id_caso'] ?> · <?= $e(ucfirst(str_replace('_', ' ', $caso['tipo']))) ?></h3>
+                    <div class="card-contact-mini">
+                        <span class="contact-text-mini"><i class="bi bi-buildings" aria-hidden="true"></i> <span class="plataforma-recorte"><?= $e($caso['clinica'] ?? 'Sin clínica') ?></span></span>
+                        <span class="contact-text-mini"><i class="bi bi-calendar3" aria-hidden="true"></i> <?= $e($p::fecha($caso['fecha'])) ?></span>
+                    </div>
+                    <p class="plataforma-tarjeta__texto"><?= $e($caso['descripcion']) ?></p>
+                </div>
+                <?php if ($abierto): ?>
+                <div class="card-footer-mini">
+                    <button type="button" class="plataforma-boton-mini" data-abrir-dialogo="casoModal<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Cerrar caso</button>
+                </div>
                 <?php endif; ?>
             </article>
             <?php endforeach; ?>
         </div>
+        <?php // Fuera de las tarjetas: su animación (transform) encerraría el fondo fijo del modal. ?>
+        <?php foreach ($casos as $caso): ?>
+            <?php if ($caso['estado'] !== 'abierto') continue; ?>
+            <div class="users-modal plataforma-dialogo" id="casoModal<?= (int) $caso['id_caso'] ?>" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="casoTitulo<?= (int) $caso['id_caso'] ?>">
+                <div class="modal-content users-modal__panel plataforma-modal plataforma-modal--angosto">
+                    <div class="modal-header">
+                        <div class="plataforma-modal__cabeza">
+                            <h3 id="casoTitulo<?= (int) $caso['id_caso'] ?>">Cerrar el caso <?= (int) $caso['id_caso'] ?></h3>
+                            <p class="plataforma-modal__datos"><?= $e(ucfirst(str_replace('_', ' ', $caso['tipo']))) ?><span class="plataforma-modal__separador" aria-hidden="true">·</span><?= $e($caso['clinica'] ?? 'Sin clínica') ?></p>
+                        </div>
+                        <button type="button" data-cerrar-dialogo class="close-modal" aria-label="Cerrar">×</button>
+                    </div>
+                    <div class="users-modal__body">
+                        <form class="plataforma-form" id="casoForm<?= (int) $caso['id_caso'] ?>" data-plataforma-accion="plataforma_caso_ajax">
+                            <?php Csrf::field(); ?><input type="hidden" name="id_caso" value="<?= (int) $caso['id_caso'] ?>">
+                            <fieldset class="plataforma-grupo">
+                                <legend>Resultado</legend>
+                                <div class="plataforma-opciones">
+                                    <label class="plataforma-opcion"><input type="radio" name="estado" value="resuelto" required checked><span class="plataforma-opcion__icono" aria-hidden="true"><i class="bi bi-check2-circle"></i></span><span class="plataforma-opcion__texto"><strong>Resuelto</strong><span>Se atendió el reporte.</span></span><span class="plataforma-opcion__marca" aria-hidden="true"><i class="bi bi-check-lg"></i></span></label>
+                                    <label class="plataforma-opcion"><input type="radio" name="estado" value="descartado"><span class="plataforma-opcion__icono" aria-hidden="true"><i class="bi bi-slash-circle"></i></span><span class="plataforma-opcion__texto"><strong>Descartado</strong><span>No hacía falta actuar.</span></span><span class="plataforma-opcion__marca" aria-hidden="true"><i class="bi bi-check-lg"></i></span></label>
+                                </div>
+                            </fieldset>
+                            <label class="input-group">Nota <textarea name="motivo" rows="2" placeholder="Escribe la nota o elige una abajo" <?= ValidadorPlataforma::atributos() ?>></textarea><small data-error-campo role="status"></small></label>
+                            <div class="plataforma-sugerencias" role="group" aria-label="Notas frecuentes">
+                                <?php foreach ($motivosCaso as $motivo): ?><button type="button" class="plataforma-sugerencia" data-motivo-sugerido="<?= $e($motivo) ?>"><?= $e($motivo) ?></button><?php endforeach; ?>
+                            </div>
+                            <p class="plataforma-form__resultado" data-resultado role="status"></p>
+                        </form>
+                    </div>
+                    <div class="users-modal__footer">
+                        <button type="button" class="btn-modal-secondary" data-cerrar-dialogo>Cancelar</button>
+                        <button type="submit" class="btn-modal-primary" form="casoForm<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Cerrar caso</button>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </section>
 
     <section class="plataforma-panel" id="panelSeguridad" role="tabpanel" aria-labelledby="pestanaSeguridad" data-panel="seguridad" hidden>
         <?php if (!$ips): ?>
-        <div class="empty-state plataforma-vacio">
-            <div class="empty-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></div>
-            <h3>No hay IP bloqueadas</h3>
-            <p>Una IP se bloquea 15 minutos tras 20 intentos fallidos de inicio de sesión.</p>
+        <div class="plataforma-vacio">
+            <span class="plataforma-vacio__icono" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+            <div><h3>No hay direcciones IP bloqueadas</h3><p>Una IP se bloquea 15 minutos después de 20 intentos fallidos de inicio de sesión. Si pasa, aquí podrás desbloquearla o avisar a la clínica.</p></div>
         </div>
         <?php endif; ?>
-        <div class="plataforma-lista">
-            <?php foreach ($ips as $ip): ?>
-            <article class="plataforma-item">
-                <div class="plataforma-item__cabeza">
-                    <span class="plataforma-item__icono" aria-hidden="true"><i class="bi bi-shield-lock"></i></span>
-                    <div class="plataforma-item__titulo">
-                        <h3><?= $e($ip['ip']) ?></h3>
-                        <span class="plataforma-item__meta">Bloqueada hasta <?= $e(date('H:i', strtotime((string) $ip['bloqueado_hasta']) ?: time())) ?> · fallos desde <?= $e(date('H:i', strtotime((string) $ip['primer_intento']) ?: time())) ?></span>
-                    </div>
-                    <form class="plataforma-item__directa" data-plataforma-accion="plataforma_desbloquear_ajax">
-                        <?php Csrf::field(); ?><input type="hidden" name="ip" value="<?= $e($ip['ip']) ?>"><button type="submit" class="btn-modal-primary">Desbloquear</button><p data-resultado role="status"></p>
-                    </form>
+        <div class="personal-grid view-grid plataforma-tarjetas">
+            <?php foreach ($ips as $indice => $ip): ?>
+            <article class="person-card plataforma-tarjeta">
+                <div class="card-header-mini">
+                    <span class="avatar-mini avatar-iniciales plataforma-icono-tarjeta" aria-hidden="true"><i class="bi bi-shield-lock"></i></span>
+                    <span class="tag-mini plataforma-estado plataforma-estado--activa"><i class="bi bi-clock" aria-hidden="true"></i> Hasta las <?= $e(date('H:i', strtotime((string) $ip['bloqueado_hasta']) ?: time())) ?></span>
                 </div>
-                <ul class="plataforma-item__cuentas">
-                    <?php foreach ($ip['cuentas'] as $cuenta): ?>
-                    <li><strong><?= $e($cuenta['email'] ?? 'Cuenta no identificada') ?></strong> · <?= $e(implode(', ', array_column($cuenta['clinicas'], 'nombre')) ?: 'Sin clínica vinculada') ?></li>
-                    <?php endforeach; ?>
-                </ul>
-                <p class="plataforma-item__nota">Las clínicas salen de los vínculos de las cuentas; una IP puede ser compartida.</p>
-                <?php if ($ip['administradores']): ?>
-                <details class="plataforma-item__accion">
-                    <summary class="btn-modal-secondary">Enviar aviso</summary>
-                    <form class="plataforma-form" data-plataforma-accion="plataforma_aviso_ajax">
+                <div class="card-body-mini">
+                    <h3 class="card-title-mini"><?= $e($ip['ip']) ?></h3>
+                    <div class="card-contact-mini">
+                        <span class="contact-text-mini"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Fallos desde las <?= $e(date('H:i', strtotime((string) $ip['primer_intento']) ?: time())) ?></span>
+                        <?php foreach ($ip['cuentas'] as $cuenta): ?>
+                            <span class="contact-text-mini" title="<?= $e(implode(', ', array_column($cuenta['clinicas'], 'nombre'))) ?>"><i class="bi bi-person" aria-hidden="true"></i> <span class="plataforma-recorte"><?= $e($cuenta['email'] ?? 'Cuenta no identificada') ?> · <?= $e(implode(', ', array_column($cuenta['clinicas'], 'nombre')) ?: 'sin clínica') ?></span></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <p class="plataforma-tarjeta__nota">Las clínicas salen de las cuentas que fallaron; una IP puede ser compartida.</p>
+                </div>
+                <div class="card-footer-mini">
+                    <form class="plataforma-pie-accion" data-plataforma-accion="plataforma_desbloquear_ajax">
                         <?php Csrf::field(); ?><input type="hidden" name="ip" value="<?= $e($ip['ip']) ?>">
-                        <label class="input-group">Administrador destinatario <select name="destinatario" required><option value="">Elige a quién avisar</option><?php foreach ($ip['administradores'] as $clave => $admin): ?><option value="<?= $e($clave) ?>"><?= $e($admin['clinica'] . ' · ' . $admin['email']) ?></option><?php endforeach; ?></select></label>
-                        <label class="input-group">Texto propuesto <textarea name="texto" <?= ValidadorPlataforma::atributos() ?>>Se detectaron intentos fallidos de acceso desde la IP <?= $e($ip['ip']) ?>, bloqueada temporalmente hasta <?= $e($ip['bloqueado_hasta']) ?>. Revisa con tu equipo si fueron errores al entrar. Si no reconoces estos intentos, contacta a soporte de Zooki.</textarea><small data-error-campo role="status"></small></label>
-                        <div class="plataforma-form__pie"><p data-resultado role="status">El aviso se envía solo al pulsar Enviar y al administrador elegido.</p><button type="submit" class="btn-modal-primary">Enviar aviso</button></div>
+                        <button type="submit" class="plataforma-boton-mini plataforma-boton-mini--principal"><i class="bi bi-unlock" aria-hidden="true"></i> Desbloquear</button>
+                        <p class="plataforma-form__resultado" data-resultado role="status"></p>
                     </form>
-                </details>
-                <?php endif; ?>
+                    <?php if ($ip['administradores']): ?>
+                        <button type="button" class="plataforma-boton-mini" data-abrir-dialogo="avisoModal<?= (int) $indice ?>"><i class="bi bi-envelope" aria-hidden="true"></i> Enviar aviso</button>
+                    <?php endif; ?>
+                </div>
             </article>
             <?php endforeach; ?>
         </div>
+        <?php foreach ($ips as $indice => $ip): ?>
+            <?php if ($ip['administradores']): ?>
+            <div class="users-modal plataforma-dialogo" id="avisoModal<?= (int) $indice ?>" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="avisoTitulo<?= (int) $indice ?>">
+                <div class="modal-content users-modal__panel plataforma-modal plataforma-modal--angosto">
+                    <div class="modal-header">
+                        <div class="plataforma-modal__cabeza">
+                            <h3 id="avisoTitulo<?= (int) $indice ?>">Avisar a una clínica</h3>
+                            <p class="plataforma-modal__datos">IP <?= $e($ip['ip']) ?><span class="plataforma-modal__separador" aria-hidden="true">·</span>se envía solo al pulsar «Enviar aviso»</p>
+                        </div>
+                        <button type="button" data-cerrar-dialogo class="close-modal" aria-label="Cerrar">×</button>
+                    </div>
+                    <div class="users-modal__body">
+                        <form class="plataforma-form" id="avisoForm<?= (int) $indice ?>" data-plataforma-accion="plataforma_aviso_ajax">
+                            <?php Csrf::field(); ?><input type="hidden" name="ip" value="<?= $e($ip['ip']) ?>">
+                            <fieldset class="plataforma-grupo">
+                                <legend>Destinatario</legend>
+                                <div class="plataforma-opciones">
+                                    <?php foreach ($ip['administradores'] as $clave => $admin): ?>
+                                        <label class="plataforma-opcion"><input type="radio" name="destinatario" value="<?= $e($clave) ?>" required><span class="plataforma-opcion__icono" aria-hidden="true"><i class="bi bi-person-badge"></i></span><span class="plataforma-opcion__texto"><strong><?= $e($admin['clinica']) ?></strong><span class="plataforma-recorte"><?= $e($admin['email']) ?></span></span><span class="plataforma-opcion__marca" aria-hidden="true"><i class="bi bi-check-lg"></i></span></label>
+                                    <?php endforeach; ?>
+                                </div>
+                            </fieldset>
+                            <label class="input-group">Texto <textarea name="texto" rows="4" <?= ValidadorPlataforma::atributos() ?>>Se detectaron intentos fallidos de acceso desde la IP <?= $e($ip['ip']) ?>, bloqueada temporalmente hasta <?= $e($ip['bloqueado_hasta']) ?>. Revisa con tu equipo si fueron errores al entrar. Si no reconoces estos intentos, contacta a soporte de Zooki.</textarea><small data-error-campo role="status"></small></label>
+                            <p class="plataforma-form__resultado" data-resultado role="status"></p>
+                        </form>
+                    </div>
+                    <div class="users-modal__footer">
+                        <button type="button" class="btn-modal-secondary" data-cerrar-dialogo>Cancelar</button>
+                        <button type="submit" class="btn-modal-primary" form="avisoForm<?= (int) $indice ?>"><i class="bi bi-send" aria-hidden="true"></i> Enviar aviso</button>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+        <?php endforeach; ?>
     </section>
 
+    <?php
+    // M0.2.1: cabecera compacta; cada pestaña con su cuerpo y su pie (el del modal de Usuarios).
+    // Los botones del pie se asocian a su formulario con el atributo form.
+    // Las acciones de estado se ofrecen según el estado actual (plataforma.js), como tarjetas;
+    // el servidor sigue validando cada transición (Plataforma::cambiarEstado).
+    ?>
     <div class="users-modal" id="gestionarClinica" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="clinicaModalTitulo">
         <div class="modal-content users-modal__panel plataforma-modal">
             <div class="modal-header">
                 <div class="plataforma-modal__cabeza">
-                    <h3 id="clinicaModalTitulo"><i class="bi bi-sliders" aria-hidden="true"></i><span data-clinica-titulo></span></h3>
-                    <p class="modal-subtitle"><span class="tag-mini plataforma-estado" data-clinica-estado></span><span data-clinica-nit></span><span data-clinica-admin></span></p>
+                    <div class="plataforma-modal__titulo">
+                        <h3 id="clinicaModalTitulo" data-clinica-titulo></h3>
+                        <span class="tag-mini plataforma-estado" data-clinica-estado></span>
+                    </div>
+                    <p class="plataforma-modal__datos"><span data-clinica-nit></span><span class="plataforma-modal__separador" aria-hidden="true">·</span><span data-clinica-admin></span></p>
                 </div>
                 <button type="button" data-cerrar-dialogo class="close-modal" aria-label="Cerrar">×</button>
             </div>
@@ -247,24 +322,99 @@ $nombreUsuario = (string) ($_SESSION['usuario_nombre'] ?? '');
                 <button type="button" role="tab" class="plataforma-modal__pestana active" aria-selected="true" data-modal-pestana="plan">Plan y suscripción</button>
                 <button type="button" role="tab" class="plataforma-modal__pestana" aria-selected="false" data-modal-pestana="estado">Estado</button>
             </div>
-            <div class="users-modal__body">
-                <form class="plataforma-form" data-plataforma-accion="plataforma_suscripcion_ajax" data-modal-panel="plan">
-                    <?php Csrf::field(); ?><input type="hidden" name="id_clinica">
-                    <div class="plataforma-form__fila">
-                        <label class="input-group">Plan <select name="id_plan" required><?php foreach ($planes as $opcion): ?><option value="<?= (int) $opcion['id_plan'] ?>"><?= $e($opcion['nombre']) ?></option><?php endforeach; ?></select></label>
-                        <label class="input-group">Suscripción <select name="estado" required><option value="activa">Activa</option><option value="suspendida">Suspendida</option><option value="cancelada">Cancelada</option></select></label>
-                    </div>
-                    <label class="input-group">Motivo <textarea name="motivo" <?= ValidadorPlataforma::atributos() ?>></textarea><small data-error-campo role="status"></small></label>
-                    <p class="plataforma-ayuda" data-aviso-plan hidden>La clínica debe estar verificada y no dada de baja para cambiar su plan.</p>
-                    <div class="plataforma-form__pie"><p data-resultado role="status"></p><button type="submit" class="btn-modal-primary">Guardar plan</button></div>
-                </form>
-                <form class="plataforma-form" data-plataforma-accion="plataforma_estado_ajax" data-modal-panel="estado" hidden>
-                    <?php Csrf::field(); ?><input type="hidden" name="id_clinica">
-                    <label class="input-group">Nuevo estado <select name="estado" required><option value="suspendida">Suspender</option><option value="baja">Dar de baja</option><option value="activa">Reactivar</option></select></label>
-                    <label class="input-group">Motivo <textarea name="motivo" <?= ValidadorPlataforma::atributos() ?>></textarea><small data-error-campo role="status"></small></label>
-                    <p class="plataforma-ayuda">Una clínica pendiente completa su verificación por correo. Dar de baja conserva sus registros y no permite reactivarla desde este panel.</p>
-                    <div class="plataforma-form__pie"><p data-resultado role="status"></p><button type="submit" class="btn-modal-primary">Cambiar estado</button></div>
-                </form>
+
+            <?php
+            // Revisión del usuario (2026-10-12): elecciones con tarjetas, interruptor y sugerencias,
+            // nada de listas nativas; «Dar de baja» es una tarjeta de acción, no un aviso.
+            $motivosPlan = ['Pago recibido', 'Cambio pedido por la clínica', 'Fin del periodo de prueba', 'Falta de pago'];
+            $motivosEstado = ['Falta de pago', 'Uso indebido del plan gratuito', 'Solicitud de la clínica', 'Pago al día'];
+            ?>
+            <div class="plataforma-modal__panel" data-modal-panel="plan">
+                <div class="users-modal__body">
+                    <p class="plataforma-nota" data-aviso-plan hidden><i class="bi bi-info-circle" aria-hidden="true"></i><span>La clínica debe estar verificada y no dada de baja para cambiar su plan.</span></p>
+                    <form class="plataforma-form" id="plataformaPlanForm" data-plataforma-accion="plataforma_suscripcion_ajax">
+                        <?php Csrf::field(); ?><input type="hidden" name="id_clinica"><input type="hidden" name="estado" value="activa" data-suscripcion-valor>
+                        <fieldset class="plataforma-grupo">
+                            <legend>Plan</legend>
+                            <div class="plataforma-opciones">
+                                <?php foreach ($planes as $opcion): ?>
+                                    <?php $gratuito = (float) ($opcion['precio_mensual'] ?? 0) <= 0; ?>
+                                    <label class="plataforma-opcion">
+                                        <input type="radio" name="id_plan" value="<?= (int) $opcion['id_plan'] ?>" required data-plan-gratuito="<?= $gratuito ? '1' : '0' ?>">
+                                        <span class="plataforma-opcion__icono" aria-hidden="true"><i class="bi <?= $gratuito ? 'bi-gift' : 'bi-gem' ?>"></i></span>
+                                        <span class="plataforma-opcion__texto"><strong><?= $e($opcion['nombre']) ?></strong><span><?= $e(PresentacionPlataforma::topesPlan($opcion)) ?></span></span>
+                                        <span class="plataforma-opcion__marca" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </fieldset>
+                        <div class="plataforma-suscripcion" data-suscripcion>
+                            <div class="plataforma-suscripcion__fila">
+                                <span class="plataforma-suscripcion__texto"><strong>Suscripción activa</strong><span>El pago del plan está al día.</span></span>
+                                <label class="toggle-switch"><input type="checkbox" data-suscripcion-activa checked aria-label="Suscripción activa"><span class="toggle-slider"></span></label>
+                            </div>
+                            <div class="segmented-control plataforma-segmentado" role="radiogroup" aria-label="Suscripción inactiva" data-suscripcion-inactiva hidden>
+                                <input type="radio" name="suscripcion_inactiva" id="suscripcionSuspendida" value="suspendida" checked><label for="suscripcionSuspendida"><i class="bi bi-pause-circle" aria-hidden="true"></i> Suspendida</label>
+                                <input type="radio" name="suscripcion_inactiva" id="suscripcionCancelada" value="cancelada"><label for="suscripcionCancelada"><i class="bi bi-x-circle" aria-hidden="true"></i> Cancelada</label>
+                            </div>
+                            <p class="plataforma-ayuda">Sin suscripción activa, la clínica usa los límites del plan Gratuito.</p>
+                        </div>
+                        <p class="plataforma-ayuda" data-suscripcion-gratuito hidden>El plan Gratuito no tiene pago: no hay suscripción que cambiar.</p>
+                        <label class="input-group">Motivo <textarea name="motivo" rows="2" placeholder="Escribe el motivo o elige uno abajo" <?= ValidadorPlataforma::atributos() ?>></textarea><small data-error-campo role="status"></small></label>
+                        <div class="plataforma-sugerencias" role="group" aria-label="Motivos frecuentes">
+                            <?php foreach ($motivosPlan as $motivo): ?><button type="button" class="plataforma-sugerencia" data-motivo-sugerido="<?= $e($motivo) ?>"><?= $e($motivo) ?></button><?php endforeach; ?>
+                        </div>
+                        <p class="plataforma-form__resultado" data-resultado role="status"></p>
+                    </form>
+                </div>
+                <div class="users-modal__footer">
+                    <button type="button" class="btn-modal-secondary" data-cerrar-dialogo>Cancelar</button>
+                    <button type="submit" class="btn-modal-primary" form="plataformaPlanForm" data-guardar-plan><i class="bi bi-floppy" aria-hidden="true"></i> Guardar plan</button>
+                </div>
+            </div>
+
+            <div class="plataforma-modal__panel" data-modal-panel="estado" hidden>
+                <div class="users-modal__body">
+                    <p class="plataforma-nota" data-estado-nota hidden><i class="bi bi-info-circle" aria-hidden="true"></i><span data-estado-nota-texto></span></p>
+                    <form class="plataforma-form" id="plataformaEstadoForm" data-plataforma-accion="plataforma_estado_ajax" data-estado-acciones>
+                        <?php Csrf::field(); ?><input type="hidden" name="id_clinica">
+                        <fieldset class="plataforma-grupo">
+                            <legend>¿Qué quieres hacer?</legend>
+                            <div class="plataforma-opciones plataforma-opciones--acciones">
+                                <label class="plataforma-opcion" data-opcion-estado="suspendida">
+                                    <input type="radio" name="estado" value="suspendida" required>
+                                    <span class="plataforma-opcion__icono" aria-hidden="true"><i class="bi bi-pause-circle"></i></span>
+                                    <span class="plataforma-opcion__texto"><strong>Suspender</strong><span>Deja de operar y su personal pierde el acceso hasta reactivarla. Sus datos se conservan.</span></span>
+                                    <span class="plataforma-opcion__marca" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                                </label>
+                                <label class="plataforma-opcion" data-opcion-estado="activa">
+                                    <input type="radio" name="estado" value="activa">
+                                    <span class="plataforma-opcion__icono" aria-hidden="true"><i class="bi bi-play-circle"></i></span>
+                                    <span class="plataforma-opcion__texto"><strong>Reactivar</strong><span>Vuelve a operar y su personal puede elegirla otra vez al entrar.</span></span>
+                                    <span class="plataforma-opcion__marca" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                                </label>
+                                <?php // Lo único irreversible desde el panel: en rojo y con confirmación (decisión del 2026-10-10). ?>
+                                <label class="plataforma-opcion plataforma-opcion--riesgo" data-opcion-estado="baja">
+                                    <input type="radio" name="estado" value="baja">
+                                    <span class="plataforma-opcion__icono" aria-hidden="true"><i class="bi bi-trash3"></i></span>
+                                    <span class="plataforma-opcion__texto"><strong>Dar de baja</strong><span>Definitivo: no se puede reactivar desde este panel. Sus registros se conservan.</span></span>
+                                    <span class="plataforma-opcion__marca" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                                </label>
+                            </div>
+                        </fieldset>
+                        <div class="plataforma-detalle" data-estado-detalle hidden>
+                            <label class="input-group">Motivo <textarea name="motivo" rows="2" placeholder="Escribe el motivo o elige uno abajo" <?= ValidadorPlataforma::atributos() ?>></textarea><small data-error-campo role="status"></small></label>
+                            <div class="plataforma-sugerencias" role="group" aria-label="Motivos frecuentes">
+                                <?php foreach ($motivosEstado as $motivo): ?><button type="button" class="plataforma-sugerencia" data-motivo-sugerido="<?= $e($motivo) ?>"><?= $e($motivo) ?></button><?php endforeach; ?>
+                            </div>
+                        </div>
+                        <p class="plataforma-form__resultado" data-resultado role="status"></p>
+                    </form>
+                </div>
+                <div class="users-modal__footer" data-pie-estado>
+                    <button type="button" class="btn-modal-secondary" data-cerrar-dialogo>Cancelar</button>
+                    <button type="submit" class="btn-modal-primary" form="plataformaEstadoForm" data-aplicar-estado disabled>Elige una acción</button>
+                </div>
             </div>
         </div>
     </div>

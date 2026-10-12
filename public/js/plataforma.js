@@ -174,8 +174,28 @@
         });
     }
 
-    function abrirGestion(boton) {
-        const dialogo = document.getElementById('gestionarClinica');
+    /**
+     * M0.2.1: qué se ofrece en la pestaña Estado según el estado actual. Es
+     * el reflejo de Plataforma::cambiarEstado, que sigue siendo quien decide:
+     * activa o pendiente → suspender; suspendida → reactivar si el registro
+     * se verificó (tiene plan); dar de baja aparte, salvo si ya está de baja.
+     */
+    function accionesEstado(estado, tienePlan) {
+        if (estado === 'baja') {
+            return { acciones: [], baja: false, nota: 'La clínica está dada de baja: no se puede reactivar desde este panel.' };
+        }
+        if (estado === 'suspendida') {
+            return tienePlan
+                ? { acciones: ['activa'], baja: true, nota: null }
+                : { acciones: [], baja: true, nota: 'No se puede reactivar: la clínica no verificó su registro.' };
+        }
+        const nota = estado === 'pendiente_verificacion' ? 'La clínica está pendiente: se activa cuando su administrador confirma el correo.' : null;
+        return { acciones: ['suspendida'], baja: true, nota };
+    }
+
+    const TEXTO_ACCION = { suspendida: 'Suspender clínica', activa: 'Reactivar clínica', baja: 'Dar de baja' };
+
+    function cabecera(dialogo, boton) {
         dialogo.querySelector('[data-clinica-titulo]').textContent = boton.dataset.nombre;
         // La misma etiqueta de estado de la tarjeta (tag-mini con su icono).
         const insignia = dialogo.querySelector('[data-clinica-estado]');
@@ -191,6 +211,115 @@
         if (nit) nit.textContent = boton.dataset.nit ? 'NIT ' + boton.dataset.nit : '';
         const administrador = dialogo.querySelector('[data-clinica-admin]');
         if (administrador) administrador.textContent = boton.dataset.administrador || '';
+    }
+
+    /**
+     * Suscripción según el plan y el interruptor: el Gratuito no tiene pago
+     * (se envía «activa»); en un plan de pago, apagada pide «Suspendida» o
+     * «Cancelada». El valor que llega al servidor va en el campo oculto.
+     */
+    function actualizarSuscripcion(form) {
+        const plan = form.querySelector('input[name="id_plan"]:checked');
+        const gratuito = !plan || plan.dataset.planGratuito === '1';
+        const bloque = form.querySelector('[data-suscripcion]');
+        if (bloque) bloque.hidden = gratuito;
+        const avisoGratuito = form.querySelector('[data-suscripcion-gratuito]');
+        if (avisoGratuito) avisoGratuito.hidden = !plan || !gratuito;
+        const interruptor = form.querySelector('[data-suscripcion-activa]');
+        const activa = !interruptor || interruptor.checked;
+        const inactivas = form.querySelector('[data-suscripcion-inactiva]');
+        if (inactivas) inactivas.hidden = activa;
+        const inactiva = form.querySelector('input[name="suscripcion_inactiva"]:checked');
+        const valor = form.querySelector('[data-suscripcion-valor]');
+        if (valor) valor.value = gratuito || activa ? 'activa' : (inactiva ? inactiva.value : 'suspendida');
+        return valor ? valor.value : 'activa';
+    }
+
+    /** Plan actual siempre marcado; si no se puede cambiar, nota arriba y todo deshabilitado. */
+    function prepararPlan(dialogo, boton) {
+        const plan = dialogo.querySelector('[data-plataforma-accion="plataforma_suscripcion_ajax"]');
+        const sinPlan = ['baja', 'pendiente_verificacion'].includes(boton.dataset.estado);
+        const suscripcion = boton.dataset.suscripcion || 'activa';
+        plan.querySelectorAll('input[name="id_plan"]').forEach(opcion => {
+            opcion.checked = opcion.value === (boton.dataset.plan || '');
+        });
+        const interruptor = plan.querySelector('[data-suscripcion-activa]');
+        if (interruptor) interruptor.checked = suscripcion === 'activa';
+        plan.querySelectorAll('input[name="suscripcion_inactiva"]').forEach(opcion => {
+            opcion.checked = opcion.value === (suscripcion === 'cancelada' ? 'cancelada' : 'suspendida');
+        });
+        plan.querySelectorAll('input, textarea, button').forEach(campo => {
+            if (campo.type !== 'hidden') campo.disabled = sinPlan;
+        });
+        const guardar = dialogo.querySelector('[data-guardar-plan]');
+        if (guardar) guardar.disabled = sinPlan;
+        const aviso = dialogo.querySelector('[data-aviso-plan]');
+        if (aviso) aviso.hidden = !sinPlan;
+        actualizarSuscripcion(plan);
+        return sinPlan;
+    }
+
+    /** Tarjetas de acción: solo las que el estado actual admite, ninguna elegida al abrir. */
+    function prepararEstado(dialogo, boton) {
+        const ofrecido = accionesEstado(boton.dataset.estado, Boolean(boton.dataset.plan));
+        let disponibles = 0;
+        dialogo.querySelectorAll('[data-opcion-estado]').forEach(tarjeta => {
+            const valor = tarjeta.dataset.opcionEstado;
+            const disponible = valor === 'baja' ? ofrecido.baja : ofrecido.acciones.includes(valor);
+            tarjeta.hidden = !disponible;
+            const opcion = tarjeta.querySelector('input');
+            if (opcion) {
+                opcion.disabled = !disponible;
+                opcion.checked = false;
+            }
+            if (disponible) disponibles += 1;
+        });
+        const formulario = dialogo.querySelector('[data-estado-acciones]');
+        if (formulario) formulario.hidden = disponibles === 0;
+        const pie = dialogo.querySelector('[data-pie-estado]');
+        if (pie) pie.hidden = disponibles === 0;
+        const detalle = dialogo.querySelector('[data-estado-detalle]');
+        if (detalle) detalle.hidden = true;
+        const aplicar = dialogo.querySelector('[data-aplicar-estado]');
+        if (aplicar) {
+            aplicar.disabled = true;
+            aplicar.textContent = 'Elige una acción';
+            aplicar.className = 'btn-modal-primary';
+        }
+        const nota = dialogo.querySelector('[data-estado-nota]');
+        if (nota) {
+            nota.hidden = ofrecido.nota === null;
+            const texto = nota.querySelector('[data-estado-nota-texto]');
+            if (texto) texto.textContent = ofrecido.nota || '';
+        }
+        return ofrecido;
+    }
+
+    /** Al elegir una tarjeta aparecen el motivo y el botón con su nombre; dar de baja, en rojo. */
+    function elegirAccion(dialogo, valor) {
+        const detalle = dialogo.querySelector('[data-estado-detalle]');
+        if (detalle) detalle.hidden = false;
+        const aplicar = dialogo.querySelector('[data-aplicar-estado]');
+        if (aplicar) {
+            aplicar.disabled = false;
+            aplicar.textContent = TEXTO_ACCION[valor] || 'Aplicar';
+            aplicar.className = valor === 'baja' ? 'btn-modal-peligro' : 'btn-modal-primary';
+        }
+    }
+
+    /** Un motivo frecuente llena el campo; se puede editar después. */
+    function sugerirMotivo(boton) {
+        const form = boton.closest('form');
+        const campo = form ? form.querySelector('textarea[name="motivo"]') : null;
+        if (!campo || campo.disabled) return;
+        campo.value = boton.dataset.motivoSugerido;
+        validar(campo);
+        campo.focus();
+    }
+
+    function abrirGestion(boton) {
+        const dialogo = document.getElementById('gestionarClinica');
+        cabecera(dialogo, boton);
         dialogo.querySelectorAll('form').forEach(form => {
             form.reset();
             form.elements.id_clinica.value = boton.dataset.gestionarClinica;
@@ -198,24 +327,26 @@
             form.querySelector('[data-error-campo]').textContent = '';
             form.elements.motivo.setCustomValidity('');
         });
-        const plan = dialogo.querySelector('[data-plataforma-accion="plataforma_suscripcion_ajax"]');
-        plan.elements.id_plan.value = boton.dataset.plan;
-        plan.elements.estado.value = boton.dataset.suscripcion || 'activa';
-        const sinPlan = ['baja', 'pendiente_verificacion'].includes(boton.dataset.estado);
-        plan.querySelector('button').disabled = sinPlan;
-        const avisoPlan = plan.querySelector('[data-aviso-plan]');
-        if (avisoPlan) avisoPlan.hidden = !sinPlan;
-        const estados = dialogo.querySelector('[data-plataforma-accion="plataforma_estado_ajax"]');
-        Array.from(estados.elements.estado.options).forEach(opcion => {
-            opcion.disabled = opcion.value === boton.dataset.estado || (opcion.value === 'activa' && (boton.dataset.estado !== 'suspendida' || !boton.dataset.plan));
-        });
-        estados.elements.estado.value = Array.from(estados.elements.estado.options).find(opcion => !opcion.disabled)?.value || '';
-        estados.querySelector('button').disabled = boton.dataset.estado === 'baja';
+        const sinPlan = prepararPlan(dialogo, boton);
+        prepararEstado(dialogo, boton);
         // Una clínica sin plan (pendiente o dada de baja) abre en Estado, lo único que se puede cambiar.
         pestanaModal(dialogo, sinPlan ? 'estado' : 'plan');
         dialogo.classList.add('is-open');
         dialogo.setAttribute('aria-hidden', 'false');
-        dialogo.querySelector('select').focus();
+        dialogo.querySelector('.close-modal')?.focus();
+    }
+
+    /** Modales de Soporte y Seguridad (cerrar un caso, avisar a una clínica): se abren limpios. */
+    function abrirDialogo(id) {
+        const dialogo = document.getElementById(id);
+        if (!dialogo) return;
+        dialogo.querySelectorAll('form').forEach(form => {
+            form.reset();
+            form.querySelectorAll('[data-resultado], [data-error-campo]').forEach(salida => { salida.textContent = ''; });
+        });
+        dialogo.classList.add('is-open');
+        dialogo.setAttribute('aria-hidden', 'false');
+        dialogo.querySelector('.close-modal')?.focus();
     }
 
     function cerrarDialogo(modal) {
@@ -230,6 +361,9 @@
     });
     document.addEventListener('change', evento => {
         if (evento.target.matches('[data-filtro-estado], [data-filtro-plan]')) filtrar();
+        const form = evento.target.closest?.('form');
+        if (form && evento.target.matches('input[name="id_plan"], [data-suscripcion-activa], input[name="suscripcion_inactiva"]')) actualizarSuscripcion(form);
+        if (form && form.matches('[data-estado-acciones]') && evento.target.name === 'estado') elegirAccion(document.getElementById('gestionarClinica'), evento.target.value);
     });
     document.addEventListener('keydown', evento => {
         if (evento.key !== 'Escape') return;
@@ -239,6 +373,8 @@
     document.addEventListener('click', evento => {
         const boton = evento.target.closest('button');
         if (!boton) return;
+        if (boton.dataset.motivoSugerido) sugerirMotivo(boton);
+        if (boton.dataset.abrirDialogo) abrirDialogo(boton.dataset.abrirDialogo);
         if (boton.dataset.vista) vista(boton.dataset.vista);
         if (boton.dataset.pestana) pestana(boton.dataset.pestana);
         if (boton.dataset.modalPestana) pestanaModal(boton.closest('.users-modal'), boton.dataset.modalPestana);
@@ -257,5 +393,5 @@
         evento.preventDefault();
         enviar(form, evento.submitter || form.querySelector('button[type="submit"]'));
     });
-    window.ZookiPlataforma = { validar, confirmacion, vista, pestana, filtrar, pestanaModal, enviar };
+    window.ZookiPlataforma = { validar, confirmacion, vista, pestana, filtrar, pestanaModal, accionesEstado, actualizarSuscripcion, enviar };
 }());

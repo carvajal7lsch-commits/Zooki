@@ -127,6 +127,24 @@ final class PresentacionPlataforma
         return $filas;
     }
 
+    /** M0.2.1: los topes de un plan en una línea, para su tarjeta en el modal. */
+    public static function topesPlan(array $plan): string
+    {
+        $topes = [
+            'personal' => $plan['limite_personal'] ?? null,
+            'mascotas' => $plan['limite_mascotas'] ?? null,
+            'citas al mes' => $plan['limite_citas_mes'] ?? null,
+        ];
+        if (count(array_filter($topes, static fn ($tope): bool => $tope !== null)) === 0) {
+            return 'Sin límites de personal, mascotas ni citas';
+        }
+        $partes = [];
+        foreach ($topes as $nombre => $tope) {
+            $partes[] = ($tope === null ? 'sin límite de' : (int) $tope) . ' ' . $nombre;
+        }
+        return ucfirst(implode(' · ', $partes));
+    }
+
     /** Dos letras para el distintivo de la tarjeta. */
     public static function iniciales(string $nombre): string
     {

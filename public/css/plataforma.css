@@ -216,112 +216,114 @@
     white-space: nowrap;
 }
 
-/* ── Soporte y Seguridad: filas con el mismo componente ── */
-.plataforma-lista {
-    display: grid;
-    gap: 0.75rem;
+/* ── Soporte y Seguridad: las mismas tarjetas de Usuarios, en cuadrícula ── */
+.plataforma-icono-tarjeta {
+    font-size: 1.15rem;
 }
 
-.plataforma-vacio {
-    padding: 2.5rem 1rem;
-    border-radius: 16px;
+.plataforma-tarjeta__texto {
+    display: -webkit-box;
+    margin: 0.15rem 0 0;
+    overflow: hidden;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #475569;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+}
+
+.plataforma-tarjeta__nota {
+    margin: 0.15rem 0 0;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: #94a3b8;
+}
+
+/* Botón pequeño con texto: el action-btn-mini de Usuarios, a lo ancho de su texto. */
+.plataforma-boton-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    height: 32px;
+    padding: 0 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
     background: #ffffff;
+    color: #475569;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.plataforma-item {
-    display: grid;
-    gap: 0.6rem;
+.plataforma-boton-mini:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: #f5f8ff;
+}
+
+.plataforma-boton-mini--principal {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #ffffff;
+}
+
+.plataforma-boton-mini--principal:hover {
+    background: var(--primary-hover);
+    color: #ffffff;
+}
+
+.plataforma-pie-accion {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+/* Estado vacío compacto: icono a la izquierda y dos líneas, del tamaño del resto del panel. */
+.plataforma-vacio {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    max-width: 560px;
     padding: 1rem 1.15rem;
     border-radius: 16px;
     background: #ffffff;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-.plataforma-item__cabeza {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 0;
-}
-
-.plataforma-item__icono {
+.plataforma-vacio__icono {
     flex-shrink: 0;
     display: grid;
     place-items: center;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--primary);
-    color: #ffffff;
+    background: #eff4ff;
+    color: var(--primary);
+    font-size: 1.1rem;
 }
 
-.plataforma-item__titulo {
-    flex: 1;
-    min-width: 0;
-}
-
-.plataforma-item__titulo h3 {
+.plataforma-vacio h3 {
     margin: 0;
     font-size: 0.95rem;
     font-weight: 700;
     color: #0f172a;
-    overflow-wrap: anywhere;
 }
 
-.plataforma-item__meta {
-    display: block;
-    margin-top: 0.1rem;
-    font-size: 0.78rem;
+.plataforma-vacio p {
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
     color: #64748b;
 }
 
-.plataforma-item__texto,
-.plataforma-item__nota,
-.plataforma-item__cuentas {
-    margin: 0;
-    font-size: 0.85rem;
-    line-height: 1.5;
-    color: #475569;
-    overflow-wrap: anywhere;
-}
-
-.plataforma-item__nota {
-    font-size: 0.78rem;
-    color: #64748b;
-}
-
-.plataforma-item__cuentas {
-    padding-left: 1.1rem;
-}
-
-.plataforma-item__directa {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-}
-
-.plataforma-item__directa [data-resultado] {
-    margin: 0;
-    font-size: 0.78rem;
-    color: #64748b;
-}
-
-.plataforma-item__directa [data-resultado]:empty {
-    display: none;
-}
-
-.plataforma-item__accion > summary {
-    display: inline-flex;
-    list-style: none;
-}
-
-.plataforma-item__accion > summary::-webkit-details-marker {
-    display: none;
-}
-
-.plataforma-item__accion[open] > summary {
-    margin-bottom: 0.75rem;
+/* Modales pequeños (cerrar un caso, avisar a una clínica). */
+.plataforma-modal--angosto {
+    max-width: 520px;
 }
 
 /* ── Formularios del panel (casos, avisos y modal) con los campos del modal de Usuarios ── */
@@ -403,7 +405,7 @@
     color: #64748b;
 }
 
-/* ── Modal «Gestionar» con pestañas internas ── */
+/* ── Modal «Gestionar» (M0.2.1): cabecera compacta, pestañas y un pie por pestaña ── */
 .plataforma-modal .modal-header {
     display: flex;
     align-items: flex-start;
@@ -412,23 +414,38 @@
 }
 
 .plataforma-modal__cabeza {
+    display: grid;
+    gap: 0.3rem;
     min-width: 0;
 }
 
-.plataforma-modal__cabeza h3 {
-    display: flex;
-    align-items: center;
-    margin: 0;
-}
-
-.plataforma-modal .modal-subtitle {
+/* Línea 1: nombre e insignia; línea 2: NIT · administrador, con la misma sangría. */
+.plataforma-modal__titulo {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.35rem 0.75rem;
-    margin-top: 0.4rem;
-    cursor: default;
+    gap: 0.35rem 0.6rem;
+    min-width: 0;
+}
+
+.plataforma-modal__titulo h3 {
+    margin: 0;
     overflow-wrap: anywhere;
+}
+
+.plataforma-modal__datos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 0.4rem;
+    margin: 0;
+    font-size: 0.82rem;
+    color: #64748b;
+    overflow-wrap: anywhere;
+}
+
+.plataforma-modal__separador {
+    color: #cbd5e1;
 }
 
 .plataforma-modal__pestanas {
@@ -457,9 +474,304 @@
     color: var(--primary);
 }
 
+/* Cada pestaña: cuerpo con desplazamiento y su pie fijo abajo, como el modal de Usuarios. */
+.plataforma-modal__panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
 .plataforma-modal .users-modal__body {
-    padding: 1.25rem 1.5rem 1.5rem;
+    display: grid;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
     overflow-y: auto;
+}
+
+.plataforma-modal textarea {
+    min-height: 0;
+}
+
+.plataforma-form__resultado {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.plataforma-form__resultado:empty {
+    display: none;
+}
+
+.plataforma-form select:disabled,
+.plataforma-form textarea:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Nota informativa arriba (plan no modificable, estado sin acciones). */
+.plataforma-nota {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    background: #eff4ff;
+    color: #1e3a8a;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.plataforma-nota i {
+    margin-top: 0.1rem;
+    color: var(--primary);
+}
+
+/* Plan y suscripción: el control segmentado de Usuarios (sin listas nativas). */
+.plataforma-segmentado {
+    justify-self: start;
+    flex-wrap: wrap;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.plataforma-segmentado input:disabled + label {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/* La acción de estado en palabras: qué pasa al pulsar el botón del pie. */
+.plataforma-accion {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #334155;
+}
+
+.plataforma-accion:empty {
+    display: none;
+}
+
+/* Tarjetas de elección (plan y acciones de estado): un clic elige; la marca azul dice cuál. */
+.plataforma-grupo {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.plataforma-grupo legend {
+    margin-bottom: 0.5rem;
+    padding: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.plataforma-opciones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.6rem;
+}
+
+.plataforma-opcion {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.8rem 0.9rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 14px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.plataforma-opcion:hover {
+    border-color: #93b4ff;
+}
+
+/* El radio queda accesible con teclado, pero la tarjeta entera es el control. */
+.plataforma-opcion input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.plataforma-opcion:has(input:focus-visible) {
+    box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+.plataforma-opcion:has(input:checked) {
+    border-color: var(--primary);
+    background: #f5f8ff;
+}
+
+.plataforma-opcion:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.plataforma-opcion__icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #eff4ff;
+    color: var(--primary);
+    font-size: 1.05rem;
+}
+
+.plataforma-opcion__texto {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: #64748b;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.plataforma-opcion__texto strong {
+    font-size: 0.9rem;
+    color: #0f172a;
+}
+
+.plataforma-opcion__marca {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.75rem;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.plataforma-opcion:has(input:checked) .plataforma-opcion__marca {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* «Dar de baja»: una tarjeta de acción en rojo, no un aviso. */
+.plataforma-opcion--riesgo .plataforma-opcion__icono {
+    background: #fef3f2;
+    color: #d92d20;
+}
+
+.plataforma-opcion--riesgo:hover {
+    border-color: #fda29b;
+}
+
+.plataforma-opcion--riesgo:has(input:checked) {
+    border-color: #d92d20;
+    background: #fff5f5;
+}
+
+.plataforma-opcion--riesgo .plataforma-opcion__marca {
+    background: #d92d20;
+}
+
+/* Suscripción: el interruptor de Usuarios y, si se apaga, por qué. */
+.plataforma-suscripcion {
+    display: grid;
+    gap: 0.6rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    background: #f8fafc;
+}
+
+.plataforma-suscripcion__fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.plataforma-suscripcion__texto {
+    display: grid;
+    gap: 0.1rem;
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.plataforma-suscripcion__texto strong {
+    font-size: 0.875rem;
+    color: #0f172a;
+}
+
+.plataforma-detalle {
+    display: grid;
+    gap: 0.6rem;
+}
+
+/* Motivos frecuentes: un clic llena el campo. */
+.plataforma-sugerencias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: -0.35rem;
+}
+
+.plataforma-sugerencia {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: #ffffff;
+    color: #475569;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.plataforma-sugerencia:hover,
+.plataforma-sugerencia:focus-visible {
+    border-color: var(--primary);
+    background: #f5f8ff;
+    color: var(--primary);
+    outline: none;
+}
+
+.plataforma-sugerencia:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.btn-modal-peligro {
+    padding: 0.65rem 1.1rem;
+    border: none;
+    border-radius: 10px;
+    background: #d92d20;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-modal-peligro:hover {
+    background: #b42318;
+}
+
+.plataforma-modal .btn-modal-primary:disabled {
+    background: #cbd5e1;
+    box-shadow: none;
+    cursor: not-allowed;
 }
 
 /* ── Celular (RNF-16): una columna, nada encimado ── */
@@ -478,17 +790,8 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .plataforma-item__cabeza {
-        flex-wrap: wrap;
-    }
-
-    .plataforma-item__directa {
-        width: 100%;
-    }
-
-    .plataforma-item__directa .btn-modal-primary {
-        width: 100%;
-        justify-content: center;
+    .plataforma-vacio {
+        align-items: flex-start;
     }
 
     .plataforma-form__fila {
@@ -511,4 +814,15 @@
     .plataforma-modal .users-modal__body {
         padding: 1rem;
     }
+
+    .plataforma-modal .users-modal__footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .plataforma-modal .users-modal__footer button {
+        width: 100%;
+        justify-content: center;
+    }
+
 }

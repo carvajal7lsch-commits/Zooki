@@ -60,7 +60,8 @@ final class Plataforma
     public function planes(): array
     {
         $this->exigirPlataforma();
-        return $this->db->query('SELECT id_plan, nombre FROM planes WHERE estado = 1 ORDER BY id_plan')->fetchAll(PDO::FETCH_ASSOC);
+        // M0.2.1: los topes se muestran en las tarjetas de plan del modal (metadatos, RN-004).
+        return $this->db->query('SELECT id_plan, nombre, precio_mensual, limite_personal, limite_mascotas, limite_citas_mes FROM planes WHERE estado = 1 ORDER BY id_plan')->fetchAll(PDO::FETCH_ASSOC);
     }
 
     private function clinica(int $id): array
@@ -129,7 +130,8 @@ final class Plataforma
     public function casos(): array
     {
         $this->exigirPlataforma();
-        return $this->db->query('SELECT id_caso, tipo, id_clinica, descripcion, estado, fecha, fecha_cierre FROM casos_soporte ORDER BY fecha DESC, id_caso DESC')->fetchAll(PDO::FETCH_ASSOC);
+        // M0.2.1: el nombre de la clínica del caso, para su tarjeta (metadato de plataforma).
+        return $this->db->query('SELECT cs.id_caso, cs.tipo, cs.id_clinica, c.nombre AS clinica, cs.descripcion, cs.estado, cs.fecha, cs.fecha_cierre FROM casos_soporte cs LEFT JOIN clinicas c ON c.id_clinica = cs.id_clinica ORDER BY cs.fecha DESC, cs.id_caso DESC')->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function cerrarCaso(int $id, string $estado, string $nota): void
