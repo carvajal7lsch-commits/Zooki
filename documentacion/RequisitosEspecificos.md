@@ -459,7 +459,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-2.10.1 | El sistema debe mostrar siempre los datos básicos, las alergias y alertas, y las vacunas y desparasitaciones de todas las clínicas, indicando la clínica de cada registro. | Funcional | Una vacuna aplicada en otra clínica aparece con el nombre de esa clínica. | Alta |
+| RE-2.10.1 | El sistema debe mostrar siempre los datos básicos, las alergias y alertas, y las vacunas y desparasitaciones de todas las clínicas, indicando la clínica de cada registro. _Las alergias y alertas se entregan con el módulo 2, junto a su registro (RE-2.1.5); el módulo 5 cierra los datos básicos, las vacunas y las desparasitaciones._ | Funcional | Una vacuna aplicada en otra clínica aparece con el nombre de esa clínica. | Alta |
 | RE-2.10.2 | Las consultas, tratamientos y archivos de otra clínica solo deben mostrarse si el propietario autorizó a la clínica que consulta. | Seguridad | Sin autorización no se ve su contenido, ni por la interfaz ni pidiéndolo directamente al servidor (403). | Alta |
 | RE-2.10.3 | Sin autorización, el sistema no debe revelar que existe historia en otras clínicas. | Seguridad | Ni la interfaz ni la respuesta del servidor incluyen ni mencionan consultas, tratamientos o archivos de otras clínicas; la autorización la da el propietario desde su portal (HU-5.12). | Media |
 | RE-2.10.4 | Los registros de otras clínicas deben ser de solo lectura. | Restricción | Intentar modificar un registro de otra clínica se rechaza (403). | Alta |

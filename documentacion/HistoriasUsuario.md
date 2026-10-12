@@ -773,7 +773,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- Siempre se muestran los datos básicos, las alergias y alertas médicas, y las vacunas y desparasitaciones de todas las clínicas, cada una con la clínica que la aplicó.
+- Siempre se muestran los datos básicos, las alergias y alertas médicas, y las vacunas y desparasitaciones de todas las clínicas, cada una con la clínica que la aplicó. _Las alergias y alertas se entregan con el módulo 2, junto a su registro (RE-2.1.5); el resto de este criterio se cierra con el módulo 5._
 - Las consultas, tratamientos y archivos de otra clínica solo se muestran si el propietario autorizó a esta clínica (HU-5.12); si no, no se muestran ni se indica que existan.
 - Los registros de otras clínicas son de solo lectura: solo la clínica que los creó puede modificarlos.
 - El Grafo I usa las alergias y alertas de todas las clínicas al validar una prescripción (HU-2.9).

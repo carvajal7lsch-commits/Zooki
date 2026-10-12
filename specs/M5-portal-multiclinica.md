@@ -83,7 +83,7 @@ Si A demuestra que C1 queda vacío o muy pequeño, C1 se une a C2.
 
 - [x] Aprobar este plan (usuario). §6.1 decidida: la foto de Google no se guarda.
 - [x] A — Inventario y verificación (Claude Code; revisada y aprobada por Claude, 2026-10-12; decisiones del usuario en «A — Revisión»). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo A — Resultado».
-- [ ] C1 — Huecos funcionales.
+- [ ] C1 — Huecos funcionales (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1 — Resultado».
 - [ ] C2 — Portal del propietario pulido.
 - [ ] C3 — Lado del personal (HU-1.5, HU-2.10).
 - [ ] `vendor/bin/phpunit` completo, JS y cada RE de §2 con evidencia.
@@ -257,3 +257,77 @@ En celular: una columna; las tarjetas ocupan todo el ancho; los modales se abren
 4. **Portal (propuesta visual §4 del Anexo A) aprobada:** menú Inicio · Citas · Clínicas · Perfil con «Agendar» al centro; «Clínicas» es sección propia; se retira «Servicios»; «Alertas» sale del menú hasta HU-5.7; todo se actualiza en su sitio sin recargar.
 
 **Alcance de C1:** huecos 1, 2, 4, 5 y 7, la nota de RE-2.10.1 y los diagramas §11, §12.3 y §13.1 alineados. C2: hueco 8, menores del portal y la propuesta visual. C3: hueco 6 y el modal de vincular mascota.
+
+## Anexo C1 — Resultado
+
+**Escribió:** Claude Code (2026-10-12). **Estado:** entregada, pendiente de revisión. Sin migración ni cambio de esquema.
+
+**Decisión del usuario durante C1 (2026-10-12).** Con el vínculo inactivo, la clínica **no edita** los datos del cliente: «Editar» no se ofrece y el servidor lo rechaza («El cliente está desvinculado: sus datos solo los cambia él»). Hasta ahora D1 permitía cambiar nombre y teléfono, y eso escribía a ciegas en la cuenta global. Se ajustó la prueba de D1.
+
+### Qué se hizo (lo más riesgoso primero)
+
+1. **Hueco 1 — RN-115 en todas las lecturas del personal.**
+   - `helpers/ContactoPropietario.php` es el único lugar de la regla: tipo y número de documento, correo y teléfono salen solo con el vínculo `propietario_clinica` activo en esa clínica (`NULL` si no), más la marca `desvinculado`.
+   - La usan las dos listas de clientes (`PropietarioClinica::listar()`/`obtener()`, y por tanto `get_propietario_ajax`, y `Usuario::propietariosDeClinica()` de Usuarios), la ficha y la búsqueda de mascotas (`Mascota::ficha()`: el documento del propietario y la búsqueda por documento) y las citas (`Cita::selectCita()`: correo y teléfono).
+   - Vale igual si el vínculo lo desactivó el propietario o la clínica.
+   - Pantallas: la tarjeta y la tabla de Clientes dicen «Desvinculado», sin documento ni «Editar»; el detalle muestra «Desvinculado» en los datos de contacto; la lista de Pacientes, igual.
+   - Para reactivarlo, la clínica pide la confirmación **por el id** (`PropietarioClinica::solicitarVinculoDe`, solo con quien tuvo vínculo con ella; si no, 403): ya no necesita ver el correo.
+2. **Hueco 2 — búsqueda exacta (RE-1.5.1, RN-109).** Sin vínculo activo (nunca vinculado o desvinculado, propietario o personal), la respuesta es siempre la misma: `{vinculado: false, mensaje: "Hay una cuenta con ese dato. Pide la confirmación por correo."}`, sin id, nombre, contacto ni mascotas. Con el vínculo activo, sus datos y sus mascotas básicas. La solicitud por correo funciona como antes. En `medical-module.js` solo cambió lo necesario: el aviso del servidor y el botón; el nombre y las mascotas, solo con vínculo.
+3. **Hueco 4 — Google desde una clínica (RN-G21, §11 GG4).** `RegistroPropietario::vincularGoogle()` recibe la clínica de «Registrarme con Google» (`AuthController::clinicaDelRegistroGoogle()`). Si la cuenta verificada no estaba ligada a esa clínica, la liga con auditoría en la clínica. Un vínculo inactivo se reactiva como desde el portal. «Entrar con Google» no manda clínica y no cambia nada. Nunca liga a un super-administrador (RN-G13) ni a una clínica que no esté activa.
+4. **Hueco 5 — caso de soporte al completar el perfil (§13.1 D2).** `models/CasoSoporte.php::documentoDuplicado()` es el único registro del caso: lo usan el cambio de documento (`CuentaTitular`, RN-G24, igual que antes) y «Completar perfil». El caso es uno abierto por titular y documento; al titular se le responde siempre «No se pudo completar el perfil. Revisa los datos o contacta a soporte», sin decir de quién es. También cubre la carrera en la que otra cuenta ocupa el documento entre la comprobación y el guardado.
+5. **Hueco 7 — RE-T.18.1** con prueba de la pantalla y del controlador.
+6. **RE-2.10.1 y HU-2.10:** nota de que las alergias y alertas llegan con el módulo 2 junto a su registro (RE-2.1.5). Sin subir revisión.
+7. **Diagramas:**
+   - §11 GG4: reactivación como desde el portal y nunca al super-administrador.
+   - §11.1: ya no es borrador. El nodo de RN-115 dice que la clínica ve solo el nombre y la marca, y una nota explica la misma regla cuando desactiva la clínica.
+   - §12.3: sin vínculo, solo el aviso; se pide la confirmación y se espera.
+   - §13.1: un solo caso abierto.
+   - Los cuatro renderizan con Mermaid CLI.
+
+### RE y pruebas
+
+| Punto | Prueba |
+|---|---|
+| RE-5.12.3, RN-115: el propietario se desvincula y cambia su contacto; la clínica no lo recibe (listas, ficha, `get_propietario_ajax`) | `M5C1HuecosTest::testSiElPropietarioSeDesvinculaLaClinicaNoRecibeSuTelefonoNuevo`; control con vínculo activo en `testConElVinculoActivoLaClinicaVeElContacto` |
+| Lo mismo cuando desactiva la clínica, también en la ficha, la búsqueda por documento y las citas | `M5C1HuecosTest::testSiLaClinicaDesactivaElVinculoTampocoVeElContactoNiEnLaFichaNiEnLasCitas`; `UsuariosVistaTest::testClientesDeLaClinicaConInterruptorEditarYVer` (marca, sin documento ni «Editar») |
+| Decisión: no se edita; se reactiva por el id | `VinculoReactivacionTest::testUnVinculoInactivoNoSeEditaDesdeLaClinica`; `M5C1HuecosTest::testUnClienteDesvinculadoNoSeEditaYSeReactivaPidiendoLaConfirmacionPorSuId`, `testNoSePideConfirmacionPorIdAQuienNuncaFueClienteDeLaClinica` |
+| RE-1.5.1, RN-109: búsqueda exacta y aislamiento entre clínicas | `PropietarioClinicaTest::testBusquedaExactaSinVinculoSoloDiceQueHayUnaCuenta`, `testBusquedaExactaConVinculoActivoMuestraSusMascotasBasicas`; `M5C1HuecosTest::testSurNoVeAlPropietarioDeNorteNiPorListaNiPorBusqueda`, `testLaBusquedaNoDistingueNuncaVinculadoDeDesvinculado`; JS: `M5C1Busqueda.test.cjs` (2) |
+| RN-G21, §11 GG4 | `M5C1HuecosTest::testRegistrarmeConGoogleDesdeSurLigaLaCuentaVerificadaConAuditoria`, `testUnVinculoInactivoSeReactivaComoDesdeElPortal`, `testEntrarConGoogleSinClinicaYUnVinculoYaActivoNoCambianNada`, `testNoLigaAlSuperAdministradorNiAUnaClinicaSuspendida`, `testElControladorSoloTomaLaClinicaDelRegistro` |
+| RE-T.18.3, §13.1 D2 | `M5C1HuecosTest::testDocumentoDeOtraCuentaAbreUnSoloCasoSinDecirDeQuienEs`; `RegistroGoogleTest::testConElPerfilIncompletoNoAgendaNiRegistraMascotasHastaCompletarlo` (ahora también comprueba el caso); `CuentasD2Test` sigue igual (RN-G24) |
+| RE-T.18.1 | `M5C1RegistroClinicaSinGoogleTest::testLaPantallaDelRegistroDeClinicaNoOfreceGoogle`, `testElControladorNoAceptaUnaIdentidadDeGoogle` |
+
+Mutaciones comprobadas: entregar el contacto sin mirar el vínculo, quitar la liga de Google y no abrir el caso de soporte hacen fallar sus pruebas.
+
+### Verificación
+
+- `vendor/bin/phpunit`: **624 en verde** (16 nuevas). Sin MySQL: 3579 aserciones y 29 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 3941 aserciones y ninguna omitida.
+- `node --test "tests/Frontend/**/*.test.cjs"`: **110 en verde** (2 nuevas).
+- `php -l` y `node --check` de lo tocado; vistas tocadas sin `style=`, `on…=` ni `<script>` con código.
+- No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+
+### Pendientes y riesgos
+
+- **Hueco de seguridad que encontré (anterior a C1, no lo toqué):** la clínica puede pedir el vínculo de una cuenta de **super-administrador** (`solicitarVinculo` no la excluye) y, si esa persona confirma el correo, quedaría como propietaria de la clínica, en contra de RN-G13. Propuesta: misma respuesta, sin crear la solicitud ni enviar el correo, como ya hace el registro del propietario.
+- Cuando la **clínica** desactiva el vínculo, las mascotas siguen vinculadas (`mascota_clinica` activo): la clínica sigue registrando consultas y enviando recordatorios automáticos al correo del propietario. Cuando es el propietario quien se desvincula, las mascotas sí quedan inactivas. Hay que decidir si la desactivación por la clínica debe hacer lo mismo.
+- Con el vínculo inactivo, los correos de cita que envía la clínica (confirmar o cancelar) ya no salen, porque el correo llega vacío. Es coherente con RN-115.
+- El flujo completo de Google (con token real) no se recorrió. Se probaron el modelo y la toma de la clínica en el controlador.
+- C2: portal. C3: modal de vincular mascota y aviso de solo lectura (en Clientes, pedir la confirmación todavía abre una confirmación que no es grave).
+
+### Pantallas para el usuario
+
+1. **Ana (Norte) → Usuarios › Clientes:** desactiva el vínculo de un cliente. La tarjeta debe quedar con su nombre y «Desvinculado», sin documento, teléfono ni «Editar»; «Ver» dice «Desvinculado» en los datos. Vuelve a activar el interruptor: se envía la solicitud (correo en `logs/correos/`); al confirmarla, los datos reaparecen.
+2. **Diego (Sur) → Pacientes › Nueva mascota:** busca el documento de Fabio (solo es cliente de Norte). Debe salir solo «Hay una cuenta con ese dato. Pide la confirmación por correo» y el botón, sin nombre ni mascotas. Con un cliente vinculado a Sur, su nombre y sus mascotas.
+3. **Registro con Google** (si tienes Google configurado en local): desde el registro, eligiendo Sur y con una cuenta que ya existe, entra y Sur aparece en «Mis clínicas». Sin Google: en «Completar perfil», un documento que ya existe da el mensaje genérico y el caso aparece en la pestaña Soporte del super-administrador.
+
+### C1 — Revisión (2026-10-12)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada.** PHP 624 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 110/110 en el equipo del usuario. La regla de RN-115 vive en un solo lugar (`helpers/ContactoPropietario`: documento, correo y teléfono solo con el vínculo activo) y la usan las listas de clientes, la ficha, la búsqueda por documento y las citas. La búsqueda exacta sin vínculo responde igual para «nunca vinculado» y «desvinculado». Google desde una clínica liga la cuenta verificada con auditoría y nunca a un super-administrador ni a una clínica que no esté activa. La decisión del usuario durante C1 (con el vínculo inactivo la clínica no edita los datos del cliente) queda en el Anexo.
+
+**Decisiones del usuario sobre los pendientes de C1 (2026-10-12).**
+
+1. **Super-administrador como cliente (hueco de seguridad anterior a C1, RN-G13):** se corrige ya, en C1.1. La clínica recibe la misma respuesta de siempre, pero no se crea la solicitud ni se envía el correo, como en el registro del propietario. Vale también para la búsqueda exacta y la solicitud por id.
+2. **La clínica desactiva el vínculo de un cliente:** sus mascotas quedan inactivas en esa clínica, igual que cuando se desvincula el propietario (solo lectura de lo suyo, sin registros nuevos ni recordatorios). Se reactivan cuando el vínculo se confirma de nuevo y la mascota se agenda o se atiende allí (RN-110).
+
+## C1.1 — Alcance (2026-10-12)
+
+Las dos decisiones anteriores, con sus pruebas, y §11.1 alineado. Escribe Claude Code; revisa Claude.

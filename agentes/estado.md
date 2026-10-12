@@ -7,7 +7,8 @@
 ## Ahora
 
 - **Módulo activo:** M5 — Portal multi-clínica y vínculos (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13, HU-2.10; sale como `2.0.0-alpha.3`). Plan: [`specs/M5-portal-multiclinica.md`](../specs/M5-portal-multiclinica.md). Rama: `v2/m5-portal`.
-- **Entrega actual de M5:** **A — inventario y verificación: entregada, pendiente de revisión (2026-10-12, Claude Code).** De 23 RE: 19 cumplen (RE-1.5.1 muestra de más antes del vínculo, hueco 2), 2 cumplen sin prueba suficiente (RE-T.18.1 y RE-5.9.3) y 2 no cumplen del todo (RE-5.12.3: la clínica sigue viendo los datos nuevos del propietario desvinculado; RE-2.10.1: alergias y alertas sin código). Diferencias con §11, §12.3 y §13.1; borrador del diagrama nuevo §11.1 (vínculos del propietario). PHP 608 en verde (también con MySQL, ninguna omitida); JS 108. Detalle y **cinco decisiones pendientes** en «Anexo A — Resultado».
+- **Entrega actual de M5:** **C1 — huecos funcionales: entregada, pendiente de revisión (2026-10-12, Claude Code).** RN-115 en todas las lecturas del personal (`helpers/ContactoPropietario.php`: con el vínculo inactivo, solo nombre y «Desvinculado»; no se edita, decisión del usuario durante C1; se reactiva pidiendo la confirmación por id); búsqueda exacta sin datos ni mascotas antes del vínculo; «Registrarme con Google» liga a la clínica elegida; caso de soporte al completar el perfil (`models/CasoSoporte.php`); prueba de RE-T.18.1; nota de RE-2.10.1; diagramas §11, §11.1, §12.3 y §13.1. PHP 624 en verde (también con MySQL, ninguna omitida); JS 110. **Hueco de seguridad reportado:** la clínica puede pedir el vínculo de un super-administrador. Detalle en «Anexo C1 — Resultado».
+- **A:** revisada y aprobada (2026-10-12), con las decisiones del usuario en «A — Revisión» del plan M5.
 - **Módulo anterior:** M0 — Base SaaS, identidad y aislamiento, cerrado. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
 - **Entrega actual:** **M0 cerrado y pulido (2026-10-12).** Producción en 2.0.0-alpha.2 (`main` `875d035`, tag `v2.0.0-alpha.2`): acceso y registros pulidos, panel de plataforma y páginas de los correos con el marco del acceso.
@@ -19,7 +20,7 @@
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
-- **Siguiente paso:** M5, etapa A revisada y aprobada (2026-10-12) con cuatro decisiones del usuario («A — Revisión» del plan M5). Sigue C1 — huecos funcionales (Claude Code, rama `v2/m5-portal`). Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
+- **Siguiente paso:** M5, C1 revisada y aprobada (2026-10-12). Sigue C1.1 (super-administrador nunca como cliente; la clínica que desactiva el vínculo deja las mascotas inactivas), Claude Code. Después C2 (portal). Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 

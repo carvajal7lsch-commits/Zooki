@@ -599,7 +599,7 @@ flowchart TD
   GG2 -- No --> GG2a[/"Mensaje: no se pudo continuar con Google"/]
   GG2a --> ZF
   GG2 -- Si --> GG3{El correo ya tiene cuenta?}
-  GG3 -- Si --> GG4["Vincular Google a esa cuenta (si estaba pendiente, queda verificada<br/>y se anula su contraseña, RN-G21) y ligarla a esta clinica si no lo estaba"]
+  GG3 -- Si --> GG4["Vincular Google a esa cuenta (si estaba pendiente, queda verificada<br/>y se anula su contraseña, RN-G21) y ligarla a esta clinica si no lo estaba:<br/>un vinculo inactivo se reactiva como desde el portal (§11.1); nunca al super-administrador"]
   GG4 --> AUD
   GG3 -- No --> GGP[Mostrar la politica de datos vigente]
   GGP --> GGA{Acepta expresamente?}
@@ -613,7 +613,7 @@ flowchart TD
 
 ### 11.1 Vínculos del propietario: vincularse, desvincularse y autorizar la historia
 
-_Borrador de la etapa A de M5 (2026-10-12), pendiente de revisión._ Desde «Mis clínicas» del portal, el propietario decide a qué clínicas está vinculado y cuáles ven la historia que registraron las demás ([HU-5.13](HistoriasUsuario.md#hu-513--vincularme-o-desvincularme-de-una-clínica), [HU-5.12](HistoriasUsuario.md#hu-512--autorizar-a-una-clínica-a-ver-la-historia-de-otras-clínicas)). Las tres acciones son reversibles, así que se aplican sin confirmación y con un aviso breve. La autorización se lee de la base en cada petición de la clínica, nunca de su sesión: por eso revocar aplica de inmediato ([RN-113](ReglasNegocio.md#módulo-1--mascotas-y-propietarios), [RN-115](ReglasNegocio.md#módulo-1--mascotas-y-propietarios)).
+Desde «Mis clínicas» del portal, el propietario decide a qué clínicas está vinculado y cuáles ven la historia que registraron las demás ([HU-5.13](HistoriasUsuario.md#hu-513--vincularme-o-desvincularme-de-una-clínica), [HU-5.12](HistoriasUsuario.md#hu-512--autorizar-a-una-clínica-a-ver-la-historia-de-otras-clínicas)). Las tres acciones son reversibles, así que se aplican sin confirmación y con un aviso breve. La autorización se lee de la base en cada petición de la clínica, nunca de su sesión: por eso revocar aplica de inmediato ([RN-113](ReglasNegocio.md#módulo-1--mascotas-y-propietarios), [RN-115](ReglasNegocio.md#módulo-1--mascotas-y-propietarios)).
 
 ```mermaid
 flowchart TD
@@ -639,7 +639,7 @@ flowchart TD
   D2 -- Si --> D2N[/"Mensaje: tienes N citas sin resolver; cancela las pendientes o confirmadas,<br/>las que estan en atencion las cierra la clinica"/]
   D2N --> ZF
   D2 -- No --> D3["En una transaccion: vinculo inactivo, autorizacion de historia en 0<br/>y las mascotas del propietario desvinculadas de esa clinica"]
-  D3 --> D4["RN-115: la clinica conserva sus propios registros en solo lectura;<br/>no ve lo de otras clinicas ni los datos nuevos, y no registra nada nuevo"]
+  D3 --> D4["RN-115: la clinica conserva sus propios registros en solo lectura; no ve lo de otras clinicas<br/>ni registra nada nuevo, y del propietario solo ve el nombre y la marca Desvinculado"]
   D4 --> AUD
 
   Q -- "Activar o revocar la historia compartida" --> H1{"Tiene un vinculo activo con ella?"}
@@ -652,6 +652,8 @@ flowchart TD
   AUD --> UI[/"Actualizar la pantalla con la respuesta del servidor y mostrar un aviso breve"/]
   UI --> ZF
 ```
+
+La misma regla de RN-115 vale cuando es la clínica la que desactiva el vínculo desde Clientes: deja de ver el documento, el correo y el teléfono del propietario (en su lista, en la ficha de la mascota y en las citas) y ya no edita sus datos. Para reactivarlo, le pide la confirmación por correo y el propietario la acepta (§12.3).
 
 
 ---
@@ -774,11 +776,13 @@ flowchart TD
   B --> C{Permitido por el plan?}
   C -- No --> C1[/"Mensaje: limite alcanzado, mejora el plan"/]
   C1 --> ZF([Fin])
-  C -- Si --> D{"El propietario ya existe? (buscar por documento)"}
+  C -- Si --> D{"El propietario ya existe? (busqueda exacta por documento o correo)"}
   D -- No --> E[["Alta del propietario por el personal (§11)"]]
-  D -- Si --> FL{"Ya esta ligado a esta clinica?"}
-  FL -- No --> FL1[["Ligarlo a esta clinica con su confirmacion por correo (§11)"]]
-  FL1 --> F
+  D -- Si --> FL{"Tiene vinculo activo con esta clinica?"}
+  FL -- No --> FL0[/"Mensaje: hay una cuenta con ese dato, pide la confirmacion por correo;<br/>sin nombre, contacto ni mascotas (RN-109)"/]
+  FL0 --> FL1[["Enviar al titular la confirmacion del vinculo por correo (§11)"]]
+  FL1 --> FL2[/"Vuelve a buscarlo cuando confirme"/]
+  FL2 --> ZF
   FL -- Si --> F[Seleccionar al propietario]
   F --> P{"El propietario ya tiene mascotas en la plataforma?"}
   P -- Si --> Q["Mostrar sus mascotas (nombre, especie, raza, foto; sin datos clinicos)"]
@@ -903,7 +907,7 @@ flowchart TD
   C1 --> B
   C -- Si --> D{El documento ya pertenece a otra cuenta?}
   D -- Si --> D1[/"Mensaje: no se pudo completar el perfil; revisa datos o contacta soporte"/]
-  D1 --> D2[Crear el caso para el super-administrador: posible cuenta duplicada]
+  D1 --> D2["Crear el caso para el super-administrador: posible cuenta duplicada<br/>(uno abierto por titular y documento; no se repite)"]
   D2 --> ZF([Fin: el perfil sigue incompleto])
   D -- No --> E[Guardar documento y telefono]
   E --> F[Marcar el perfil como completo]
