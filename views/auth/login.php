@@ -62,7 +62,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                     <span>Volver al inicio</span>
                 </a>
             </div>
-            <div class="flip-container">
+            <div class="flip-container" data-acceso-giro-tarjeta>
                 <div class="flipper" id="authFlipper" data-abrir-registro="<?= $abrirRegistro ? '1' : '0' ?>">
                     <!-- CARA FRONTAL: LOGIN -->
                     <div class="front">
@@ -253,47 +253,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                 <p>© Zooki App, 2026</p>
             </div>
         </div>
-        <!-- Lado de la Imagen / Bento Grid (DERECHO - con formas originales) -->
-        <div class="login-hero animate__animated animate__fadeIn">
-            <div class="hero-grid-collage">
-                <!-- Fila 1 -->
-                <div class="collage-item bg-primary-dark br-tr collage-puppy-wrapper">
-                    <img src="img/cachorro-negro.png" alt="Cachorro Negro" class="collage-puppy-img" draggable="false">
-                </div>
-                <div class="collage-item bg-primary-light br-bl"></div>
-                <div class="collage-item bg-medium-blue br-tl collage-cat-wrapper">
-                    <img src="img/gato-blanco.png" alt="Gato Blanco" class="collage-cat-img" draggable="false">
-                </div>
-                <!-- Fila 2 -->
-                <div class="collage-item bg-white br-circle">
-                    <svg class="cross-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="35" y="10" width="30" height="80" rx="15" fill="#93C5FD"/>
-                        <rect x="10" y="35" width="80" height="30" rx="15" fill="#93C5FD"/>
-                        <line x1="15" y1="15" x2="85" y2="85" stroke="white" stroke-width="8" />
-                    </svg>
-                </div>
-                <div class="collage-item bg-primary-dark br-pill-left"></div>
-                <div class="collage-item bg-white"></div>
-                <!-- Fila 3 -->
-                <div class="collage-item bg-primary-dark br-pill-bottom"></div>
-                <div class="collage-item bg-primary-light br-bl"></div>
-                <div class="collage-item bg-primary-light br-tr collage-golden-wrapper">
-                    <img src="img/golden-retriever.png" alt="Golden Retriever" class="collage-golden-img" draggable="false">
-                </div>
-                <!-- Fila 4 -->
-                <div class="collage-item bg-medium-blue br-tr collage-gray-cat-wrapper">
-                    <img src="img/gato-gris.png" alt="Gato Gris" class="collage-gray-cat-img" draggable="false">
-                </div>
-                <div class="collage-item bg-white br-circle">
-                    <svg class="cross-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="35" y="10" width="30" height="80" rx="15" fill="#93C5FD"/>
-                        <rect x="10" y="35" width="80" height="30" rx="15" fill="#93C5FD"/>
-                        <line x1="15" y1="15" x2="85" y2="85" stroke="white" stroke-width="8" />
-                    </svg>
-                </div>
-                <div class="collage-item bg-medium-blue br-leaf"></div>
-            </div>
-        </div>
+        <?php require __DIR__ . '/../partials/acceso_hero.php'; ?>
     </div>
     <!-- M0.1: un solo «Crear cuenta» con dos opciones -->
     <div class="modal-backdrop" id="crearCuentaModal" hidden>
@@ -312,7 +272,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                     </span>
                     <i class="ri-arrow-right-s-line crear-cuenta-flecha" aria-hidden="true"></i>
                 </button>
-                <a class="crear-cuenta-opcion" href="index.php?action=registro_clinica">
+                <a class="crear-cuenta-opcion" href="index.php?action=registro_clinica" data-acceso-giro-ir>
                     <span class="crear-cuenta-icono"><i class="ri-hospital-line" aria-hidden="true"></i></span>
                     <span class="crear-cuenta-texto">
                         <strong>Registrar mi clínica</strong>
@@ -390,6 +350,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
     <script src="js/password-policy.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/login.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/crear-cuenta.js?v=<?= $versionAcceso ?>"></script>
+    <script src="js/acceso-giro.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/registro-cuenta.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/register.js?v=<?= $versionAcceso ?>"></script>
 

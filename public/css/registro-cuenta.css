@@ -7,8 +7,14 @@
 
 /* ── Ancho: el login, el registro del propietario y el de clínica ── */
 .flip-container,
-.registro-clinica-page .registro-marco {
+.registro-clinica-page .registro-marco,
+.acceso-pagina {
     max-width: 460px;
+}
+
+/* Centrada en el alto disponible, como la tarjeta del login. */
+.acceso-pagina {
+    margin: auto 0;
 }
 
 .registro-marco [hidden],
@@ -26,7 +32,21 @@
 
 .registro-grid .input-group {
     min-width: 0;
-    margin-bottom: 0.75rem;
+}
+
+/* M0.2: cada campo reserva una línea fija para su aviso. Aparecer, cambiar o
+   vaciarse no mueve nada de lo que está debajo (sin saltos al validar). */
+.registro-marco .input-group {
+    position: relative;
+    margin-bottom: 0.2rem;
+    padding-bottom: 1.15rem;
+}
+
+.registro-marco .input-group > .cuenta-validacion {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .registro-ancho {
@@ -54,12 +74,12 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     font-size: 0.75rem;
-    line-height: 1.35;
-    margin-top: 0.25rem;
+    line-height: 1.15rem;
+    margin: 0;
 }
 
 .registro-nota {
-    margin: -0.25rem 0 0.75rem;
+    margin: 0 0 0.75rem;
     font-size: 0.75rem;
     line-height: 1.45;
     color: var(--text-secondary);
@@ -195,6 +215,32 @@ form:not(.registro-por-pasos) [data-paso-ir] {
     max-width: 100%;
 }
 
+/* ── Giro de la tarjeta entre el login y el registro de clínica (acceso-giro.js) ── */
+.acceso-giro-salida {
+    animation: acceso-giro-salida 0.38s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.acceso-giro-entrada {
+    animation: acceso-giro-entrada 0.38s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes acceso-giro-salida {
+    from { transform: perspective(1500px) rotateY(0deg); }
+    to { transform: perspective(1500px) rotateY(90deg); }
+}
+
+@keyframes acceso-giro-entrada {
+    from { transform: perspective(1500px) rotateY(-90deg); }
+    to { transform: perspective(1500px) rotateY(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .acceso-giro-salida,
+    .acceso-giro-entrada {
+        animation: none;
+    }
+}
+
 /* ── Ventana de espera (views/partials/registro_espera.php) ── */
 .registro-espera a.btn-secondary {
     text-decoration: none;
@@ -271,4 +317,119 @@ form:not(.registro-por-pasos) [data-paso-ir] {
     margin-left: auto;
     font-size: 1.3rem;
     color: var(--text-muted);
+}
+
+/* ── Páginas de los correos y las que siguen al login (M0.2) ──
+   El mismo marco del acceso; el encabezado de estado es un solo componente
+   para el formulario, el éxito, el error y el enlace no disponible. */
+.acceso-estado {
+    margin-bottom: 1.25rem;
+}
+
+.acceso-estado__icono {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 0.9rem;
+    border-radius: 16px;
+    font-size: 1.5rem;
+}
+
+.acceso-estado h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.acceso-estado__texto {
+    margin: 0.5rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.acceso-estado__texto strong {
+    color: var(--text-primary);
+}
+
+.acceso-estado--info .acceso-estado__icono { background: #EFF4FF; color: var(--primary); }
+.acceso-estado--exito .acceso-estado__icono { background: #ECFDF3; color: #067647; }
+.acceso-estado--error .acceso-estado__icono { background: #FEF3F2; color: #B42318; }
+.acceso-estado--aviso .acceso-estado__icono { background: #FFFAEB; color: #B54708; }
+
+.acceso-form {
+    margin: 0;
+}
+
+.acceso-form .btn-primary,
+.acceso-form .btn-secondary {
+    margin-top: 0.25rem;
+}
+
+.acceso-form--decision {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.acceso-form--secundario {
+    margin-top: 0.75rem;
+}
+
+.acceso-form .consent-check {
+    margin-top: 0.25rem;
+}
+
+/* Párrafos sueltos de las piezas comunes (p. ej. la confirmación con Google). */
+.acceso-nota,
+.acceso-pagina form > p:not([class]) {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.acceso-resultado,
+.acceso-pagina [data-google-resultado] {
+    margin: 0.75rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.acceso-resultado:empty,
+.acceso-pagina [data-google-resultado]:empty {
+    display: none;
+}
+
+.acceso-enlaces {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.25rem;
+    margin: 1.5rem 0 0;
+}
+
+.acceso-enlace {
+    color: var(--primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.acceso-enlace:hover,
+.acceso-enlace:focus-visible {
+    text-decoration: underline;
+}
+
+.acceso-contextos {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.crear-cuenta-opcion.is-actual {
+    border-color: var(--primary);
+    background-color: #F5F8FF;
 }

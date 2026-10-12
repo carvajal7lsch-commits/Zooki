@@ -20,8 +20,7 @@
 }
 
 .registro-clinica-nit #dvAyuda,
-.registro-clinica-nit #nitUnicidad,
-.registro-clinica-nit #reportarNit {
+.registro-clinica-nit .registro-nit-aviso {
     grid-column: 1 / -1;
 }
 
@@ -29,10 +28,35 @@
     margin: 0.3rem 0 0;
 }
 
-.registro-clinica-nit .registro-reportar {
-    margin-top: 0.5rem;
-    padding: 0.6rem;
-    font-size: 0.9rem;
+/* M0.2: el duplicado y «Reportar a soporte» comparten una línea reservada; aparecer no mueve el formulario. */
+.registro-nit-aviso {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    height: 1.4rem;
+}
+
+.registro-nit-aviso #nitUnicidad {
+    flex: 1;
+    min-width: 0;
+}
+
+.registro-reportar {
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--primary);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.registro-reportar:hover,
+.registro-reportar:focus-visible {
+    text-decoration: underline;
 }
 
 @media (max-width: 767px) {

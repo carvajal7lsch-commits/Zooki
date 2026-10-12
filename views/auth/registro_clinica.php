@@ -23,11 +23,12 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
     <div class="login-form-area">
         <div class="login-topbar">
             <a href="index.php" class="login-brand" aria-label="Zooki, ir al inicio"><img src="img/icon_blue.png" alt="" class="brand-logo" draggable="false"><span class="brand-text">Zooki</span></a>
-            <a href="index.php?action=login" class="login-back"><i class="ri-login-box-line" aria-hidden="true"></i><span>Iniciar sesión</span></a>
+            <a href="index.php" class="login-back"><i class="ri-arrow-left-line" aria-hidden="true"></i><span>Volver al inicio</span></a>
         </div>
-        <main class="form-wrapper registro-marco">
+        <main class="form-wrapper registro-marco" data-acceso-giro-tarjeta>
             <div class="form-header">
-                <a class="btn-back-top" href="index.php?action=login" title="Volver al inicio de sesión" aria-label="Volver al inicio de sesión"><i class="ri-arrow-left-line" aria-hidden="true"></i></a>
+                <?php // M0.2: la misma flecha del registro del propietario; en los pasos 2 y 3 vuelve al anterior (registro-pasos.js). ?>
+                <a class="btn-back-top" id="registroAtras" href="index.php?action=login" data-acceso-giro-ir title="Volver al inicio de sesión" aria-label="Volver al inicio de sesión"><i class="ri-arrow-left-line" aria-hidden="true"></i></a>
                 <h2>Registra tu clínica</h2>
             </div>
             <p class="form-subtitle">Empieza con el plan gratuito. Confirma el registro desde tu correo para activar la clínica.</p>
@@ -37,7 +38,7 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
                 <li data-paso-indicador="2"><span class="registro-pasos-numero">2</span><span class="registro-pasos-nombre">Administrador</span></li>
                 <li data-paso-indicador="3"><span class="registro-pasos-numero">3</span><span class="registro-pasos-nombre">Confirmar</span></li>
             </ol>
-            <form id="registroClinicaForm" method="POST" action="index.php?action=registrar_clinica_ajax" data-validacion-cuenta data-cuenta-datos="formulario" data-registro data-registro-espera="registroClinicaEspera" data-registro-pasos="registroPasos" <?= $registroAceptado ? 'hidden' : '' ?>>
+            <form id="registroClinicaForm" method="POST" action="index.php?action=registrar_clinica_ajax" data-validacion-cuenta data-cuenta-datos="formulario" data-registro data-registro-espera="registroClinicaEspera" data-registro-pasos="registroPasos" data-registro-atras="registroAtras" <?= $registroAceptado ? 'hidden' : '' ?>>
                 <?php Csrf::field(); ?>
                 <div class="registro-resumen" data-registro-resumen role="alert" <?= $errorRegistro === null ? 'hidden' : '' ?>>
                     <?php if ($errorRegistro !== null): ?><p><?= $e($errorRegistro) ?></p><?php endif; ?>
@@ -59,8 +60,10 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
                                 <div class="input-wrapper"><input <?= ValidadorClinica::atributosHtml('dv') ?> id="dv" name="dv" type="text" required aria-describedby="dvAyuda" data-cuenta-ayuda="nitUnicidad"></div>
                             </div>
                             <small id="dvAyuda" class="registro-nota">El DV está en tu RUT, después del guion.</small>
-                            <small id="nitUnicidad" role="status"></small>
-                            <button id="reportarNit" type="button" class="btn-secondary registro-reportar" hidden>Reportar a soporte</button>
+                            <div class="registro-nit-aviso">
+                                <small id="nitUnicidad" role="status"></small>
+                                <button id="reportarNit" type="button" class="registro-reportar" hidden>Reportar a soporte</button>
+                            </div>
                         </div>
                         <div class="input-group registro-ancho">
                             <label for="direccion">Dirección</label>
@@ -117,7 +120,6 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
                         <p class="registro-nota registro-ancho" id="claveCuentaAyuda">Mínimo 8 caracteres, con mayúscula, minúscula y número. Si ya tienes cuenta en Zooki, entrarás con tu contraseña de siempre.</p>
                     </div>
                     <div class="registro-acciones">
-                        <button type="button" class="btn-secondary" data-paso-ir="anterior"><i class="ri-arrow-left-line" aria-hidden="true"></i> Atrás</button>
                         <button type="button" class="btn-primary" data-paso-ir="siguiente">Siguiente <i class="ri-arrow-right-line" aria-hidden="true"></i></button>
                     </div>
                 </fieldset>
@@ -126,7 +128,6 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
                     <p class="registro-nota">Enviaremos el enlace de activación al correo del administrador. La clínica empieza con el plan gratuito.</p>
                     <?php $consentimientoId = 'aceptaDatosClinica'; require __DIR__ . '/../partials/consentimiento_datos.php'; ?>
                     <div class="registro-acciones">
-                        <button type="button" class="btn-secondary" data-paso-ir="anterior"><i class="ri-arrow-left-line" aria-hidden="true"></i> Atrás</button>
                         <button type="submit" class="btn-primary">Registrar clínica</button>
                     </div>
                 </fieldset>
@@ -144,46 +145,7 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
             ?>
         </main>
     </div>
-        <div class="login-hero animate__animated animate__fadeIn">
-            <div class="hero-grid-collage">
-                <!-- Fila 1 -->
-                <div class="collage-item bg-primary-dark br-tr collage-puppy-wrapper">
-                    <img src="img/cachorro-negro.png" alt="Cachorro Negro" class="collage-puppy-img" draggable="false">
-                </div>
-                <div class="collage-item bg-primary-light br-bl"></div>
-                <div class="collage-item bg-medium-blue br-tl collage-cat-wrapper">
-                    <img src="img/gato-blanco.png" alt="Gato Blanco" class="collage-cat-img" draggable="false">
-                </div>
-                <!-- Fila 2 -->
-                <div class="collage-item bg-white br-circle">
-                    <svg class="cross-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="35" y="10" width="30" height="80" rx="15" fill="#93C5FD"/>
-                        <rect x="10" y="35" width="80" height="30" rx="15" fill="#93C5FD"/>
-                        <line x1="15" y1="15" x2="85" y2="85" stroke="white" stroke-width="8" />
-                    </svg>
-                </div>
-                <div class="collage-item bg-primary-dark br-pill-left"></div>
-                <div class="collage-item bg-white"></div>
-                <!-- Fila 3 -->
-                <div class="collage-item bg-primary-dark br-pill-bottom"></div>
-                <div class="collage-item bg-primary-light br-bl"></div>
-                <div class="collage-item bg-primary-light br-tr collage-golden-wrapper">
-                    <img src="img/golden-retriever.png" alt="Golden Retriever" class="collage-golden-img" draggable="false">
-                </div>
-                <!-- Fila 4 -->
-                <div class="collage-item bg-medium-blue br-tr collage-gray-cat-wrapper">
-                    <img src="img/gato-gris.png" alt="Gato Gris" class="collage-gray-cat-img" draggable="false">
-                </div>
-                <div class="collage-item bg-white br-circle">
-                    <svg class="cross-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="35" y="10" width="30" height="80" rx="15" fill="#93C5FD"/>
-                        <rect x="10" y="35" width="80" height="30" rx="15" fill="#93C5FD"/>
-                        <line x1="15" y1="15" x2="85" y2="85" stroke="white" stroke-width="8" />
-                    </svg>
-                </div>
-                <div class="collage-item bg-medium-blue br-leaf"></div>
-            </div>
-        </div>
+        <?php require __DIR__ . '/../partials/acceso_hero.php'; ?>
 
 </div>
 <script src="js/password-policy.js?v=<?= $versionAcceso ?>"></script>
@@ -192,6 +154,7 @@ $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
 <script src="js/cuenta-password.js?v=<?= $versionAcceso ?>"></script>
 <script src="js/registro-cuenta.js?v=<?= $versionAcceso ?>"></script>
 <script src="js/registro-pasos.js?v=<?= $versionAcceso ?>"></script>
+<script src="js/acceso-giro.js?v=<?= $versionAcceso ?>"></script>
 <script src="js/registro-clinica.js?v=<?= $versionAcceso ?>"></script>
 </body>
 </html>

@@ -22,6 +22,19 @@
         return document.getElementById(form.dataset.registroPasos);
     }
 
+    /** M0.2: la flecha junto al título es el único «Atrás», como en el registro del propietario. */
+    function atras(form) {
+        return document.getElementById(form.dataset.registroAtras);
+    }
+
+    function rotularAtras(form, numero) {
+        const flecha = atras(form);
+        if (!flecha) return;
+        const texto = numero > 1 ? 'Volver al paso anterior' : 'Volver al inicio de sesión';
+        flecha.setAttribute('title', texto);
+        flecha.setAttribute('aria-label', texto);
+    }
+
     function camposDe(paso) {
         return Array.from(paso.querySelectorAll('input, select, textarea'))
             .filter(campo => campo.type !== 'hidden' && !campo.disabled);
@@ -45,6 +58,7 @@
             }
         });
         form.dataset.pasoActual = String(numero);
+        rotularAtras(form, numero);
         const visible = pasos(form).find(paso => Number(paso.dataset.paso) === numero);
         const primero = visible ? camposDe(visible)[0] : null;
         if (enfocar && primero) primero.focus({ preventScroll: true });
@@ -92,6 +106,15 @@
             }
             ir(form, destino);
         });
+        // En el paso 1 la flecha sigue su enlace al login (con el giro de acceso-giro.js).
+        const flecha = atras(form);
+        if (flecha) {
+            flecha.addEventListener('click', evento => {
+                if (actual(form) <= 1) return;
+                evento.preventDefault();
+                ir(form, actual(form) - 1);
+            });
+        }
         // Un campo inválido al enviar (por ejemplo, el NIT que el servidor rechazó) vuelve a su paso.
         form.addEventListener('cuenta:invalida', evento => {
             const campo = evento.detail.campos[0];
