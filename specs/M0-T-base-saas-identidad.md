@@ -2378,3 +2378,9 @@ Mutaciones comprobadas:
    - Tarjetas en cuadrícula; «Cerrar caso» y «Enviar aviso» abren su ventana pequeña.
    - Sin casos o sin IP bloqueadas, un aviso corto.
    - El modal «Gestionar» en el celular, en una columna.
+
+### M0.2.1 — Revisión (2026-10-12)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de la prueba del usuario y del despliegue de `2.0.0-alpha.2`.
+
+**Verificado.** PHP 608 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 108/108 en el equipo del usuario; `views/plataforma` sin `style=`, `on…=` ni `<script>` con código. Las acciones que ofrece el modal coinciden con las transiciones que acepta `Plataforma::cambiarEstado` (activa y pendiente → suspendida o baja; suspendida → activa, solo si el registro se verificó, o baja; baja → nada), y el servidor rechaza por POST las demás sin cambiar ni auditar. Las revisiones del usuario durante la subetapa (tarjetas de plan, interruptor de suscripción, «Dar de baja» como acción, sugerencias de motivo, Soporte y Seguridad en tarjetas) quedan anotadas en el Anexo.
