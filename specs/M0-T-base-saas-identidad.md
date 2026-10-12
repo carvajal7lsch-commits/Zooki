@@ -2067,7 +2067,7 @@ Las cuatro pruebas de `prueba-manual.md` pasaron (escritorio y celular). **E2 ce
 
 ## M0.1 — Alcance: pulido del acceso y los registros (2026-10-11)
 
-**Escribe:** Claude Code (decisión del usuario: mejor en interfaz y experiencia). **Revisa:** Claude (arquitecto). **Sale como `2.0.0-alpha.2`.**
+**Escribe:** Claude Code (decisión del usuario: mejor en interfaz y experiencia). **Revisa:** Claude (arquitecto). **Sale como `2.0.0-alpha.2`.** **Estado:** entregada, pendiente de revisión (2026-10-11; ver «Anexo M0.1 — Resultado»).
 
 **Decisiones del usuario (2026-10-11).**
 
@@ -2085,3 +2085,120 @@ Las cuatro pruebas de `prueba-manual.md` pasaron (escritorio y celular). **E2 ce
 6. **Casilla de la política de datos** del registro de clínica con el mismo componente del registro del propietario.
 
 **Fuera de M0.1:** panel del super-administrador (M0.2), mensaje del super-administrador que intenta administrar una clínica (anotado en la bitácora de F1; entra en M0.2 si cabe), y los pendientes de `pulido-interfaz.md` de otros módulos.
+
+**Decisión del usuario durante M0.1 (2026-10-11).** Los 5 fallos que piden el CAPTCHA se cuentan **solo por el documento o correo escrito** (normalizado, sin mayúsculas ni espacios sobrantes), exista o no la cuenta, y ya no por `id_usuario`. Contar por cuenta habría delatado las cuentas reales en cuanto el widget dejó de salir siempre. Matiz aceptado: alternando documento y correo de una misma cuenta se llega a 10 fallos antes del CAPTCHA; el tope de 20 por IP sigue igual. RN-G15, RE-T.13.5, HU-T.13 y RNF-12 quedaron redactados así.
+
+## Anexo M0.1 — Resultado
+
+**Escribió:** Claude Code (2026-10-11). **Estado:** entregada, pendiente de revisión.
+
+### Qué se hizo
+
+1. **Turnstile.** `turnstile-formularios.js` pinta cada widget en tema claro, en español y del ancho del formulario: tamaño `flexible`, o `compact` si el contenedor mide menos de 300 px. No pinta un contenedor oculto hasta que se muestra con `mostrar()`. Se carga con `render=explicit` y desapareció el `.cf-turnstile` de pintado automático.
+   - **Login.** El widget, con `appearance: always`, solo se ve cuando el servidor lo pidió en los últimos 15 minutos (`$_SESSION['login_captcha']`). Lo pide en dos casos: tras el quinto fallo, para el intento siguiente, y cuando un intento llega sin token válido. En ese segundo caso responde «Por seguridad, completa la verificación y vuelve a escribir tu contraseña.», con la contraseña correcta o incorrecta y exista o no la cuenta (`Autenticador` devuelve `captcha`).
+   - **Google.** Si el servidor exige el CAPTCHA, muestra el widget del login y pide volver a continuar con Google.
+   - **Registros.** Usan `interaction-only`. En el de clínica el widget va fuera de los pasos, porque «Reportar a soporte» del paso 1 también lo exige.
+   - **Validación del servidor:** no cambió.
+2. **Un solo «Crear cuenta».** Bajo el login hay un enlace que abre un selector (`crear-cuenta.js`) con dos opciones:
+   - «Soy propietario» gira la tarjeta al registro del propietario.
+   - «Registrar mi clínica» lleva a `registro_clinica`.
+
+   Se retiró «Registra tu clínica». Sin JavaScript, el enlace abre `action=register`. Las rutas `register`, `process_register`, `registro_clinica` y `registrar_clinica_ajax` siguen igual.
+3. **Marco común** (`registro-cuenta.css`):
+   - Ancho de 460 px, campos de 42 px y rejilla de dos columnas: una por debajo de 768 px.
+   - Los mismos botones, la misma casilla de la política (`partials/consentimiento_datos.php`, también en el modal de Google) y la misma ventana de espera (`partials/registro_espera.php` y `registro-cuenta.js`).
+   - El botón del propietario dice «Crear mi cuenta». Se retiró el medidor de contraseña, que ningún script movía.
+4. **Avisos de una línea.** Bajo el campo, el aviso ocupa una sola línea con puntos suspensivos y lleva el texto completo en `title`. Los textos son de 35 caracteres o menos, en `ValidadorCuenta`, `ValidadorClinica`, `ValidadorTelefono`, `ValidadorNit`, `DominiosDesechables`, tres mensajes de `PoliticaPassword` y sus espejos en JS.
+   - `RegistroPropietario` usa los mismos textos.
+   - Al enviar con errores, `validacion-cuenta.js` emite `cuenta:invalida` y el resumen del formulario lista «Campo: detalle». Allí también aparece el rechazo del servidor.
+5. **Registro de clínica en tres pasos** (`registro-pasos.js`):
+   - Los pasos son clínica (con NIT y DV en vivo), administrador y política con «Registrar clínica».
+   - El indicador de progreso solo aparece con JavaScript.
+   - Cada paso valida sus campos con las reglas de `validacion-cuenta.js` y las del navegador antes de avanzar. Atrás conserva lo escrito.
+   - Un error al enviar lleva al paso del campo. El NIT duplicado que rechaza el servidor vuelve al paso 1 con «Reportar a soporte».
+   - Sin JavaScript se ven los tres pasos y el formulario se envía completo. `RegistroClinicaController` ya no devuelve JSON crudo a un envío normal: vuelve a la página con el error en el resumen, o con «Revisa tu correo».
+6. **Ventana de carga** al enviar los dos registros: primero «Enviando tu registro…» y después «Revisa tu correo», con el mismo texto exista o no la cuenta (RE-T.13.2).
+7. **Versión 2.0.0-alpha.2.** Cambian:
+   - `config/App.php`.
+   - La entrada de `HistorialVersiones.md` y la regla de numeración, en la nota de la v2 y en el esquema: cada entrega a producción sube la alfa.
+   - README y Ficha.
+   - Las páginas de acceso piden sus CSS y JS con `?v=<versión>`.
+8. **Diagramas.** Modelos §10 (CAPTCHA por identificador, widget y mensaje), §11 (selector «Crear cuenta» y ventana de carga) y §12.1 (tres pasos, Atrás y ventana de carga). Los tres renderizan con Mermaid CLI.
+
+### RE y pruebas
+
+| Punto | Prueba |
+|---|---|
+| RE-T.13.5 / RN-G15: sin fallos no hay widget; tras 5 fallos, misma respuesta con o sin cuenta | `M01AccesoTest::testSinFallosElLoginNoMuestraElWidget`, `testCincoFallosDanLaMismaRespuestaConYSinCuenta`, `testCuatroFallosNoLoPidenYMayusculasOEspaciosNoCuentanAparte` |
+| RE-T.13.5: el servidor rechaza sin token, también con la contraseña correcta, y el titular entra con un CAPTCHA válido desde otra IP | `M01AccesoTest::testElServidorRechazaSinTokenYAdmiteElTitularConCaptchaValido`, `CuentasD2Test::testCaptchaDesdeOtraIpNoBloqueaLaCuenta`, `D21CorreccionTest` (actualizadas al identificador) |
+| RE-0.1.1: tres pasos, sin JS se envía completo | `M01AccesoTest::testRegistroDeClinicaSinJavascriptMuestraElErrorOLaEspera`, `testLosDosRegistrosCompartenMarcoCasillaYVentanaDeEspera`; JS: `M01Acceso.test.cjs` (no avanza con errores, avanza y vuelve sin perder datos, error al paso de su campo) |
+| RE-0.1.4 / RE-5.8.6: CAPTCHA en los registros | `M01AccesoTest::testRegistroDeClinicaPorAjaxSigueRespondiendoJson`, `RegistroClinicaTest` y `D3Avisos.test.cjs` (Turnstile: tema claro, `interaction-only`, `compact` en pantallas angostas, sin duplicar) |
+| Selector «Crear cuenta» | `M01Acceso.test.cjs` (abre, «Soy propietario» gira, se cierra con X, fondo y Escape; vista sin «Registra tu clínica») |
+| Avisos de una línea | `M01AccesoTest::testLosAvisosDelServidorBajoElCampoSonCortos`; JS: CSS de una línea, `title` y textos ≤ 35, resumen con etiqueta |
+| Ventana de carga | `M01Acceso.test.cjs` (carga → «Revisa tu correo», rechazo vuelve al formulario sin borrar), `D3Avisos.test.cjs` (registro del propietario) |
+
+Mutaciones comprobadas:
+- Pedir el CAPTCHA solo a cuentas existentes hace fallar `testCincoFallosDanLaMismaRespuestaConYSinCuenta`.
+- Mostrar el widget siempre hace fallar dos pruebas.
+
+### Verificación
+
+- `vendor/bin/phpunit`: **587 pruebas en verde**. Sin MySQL: 3201 aserciones y 29 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 3563 aserciones y ninguna omitida.
+- `node --test "tests/Frontend/**/*.test.cjs"`: **92 en verde** (14 nuevas).
+- Sin `style=`, `on…=` ni `<script>` con código en las vistas tocadas.
+- Descargas del portal regeneradas.
+- No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+
+### Pendientes y riesgos
+
+- **El Turnstile real solo se ve en el navegador:** tema, ancho y `interaction-only`. Para probar el widget del login en local, el `.env` debe tener claves de Turnstile, por ejemplo las de prueba de Cloudflare.
+- Si Cloudflare pide interactuar en el registro de clínica, el widget aparece debajo de los botones del paso. Es poco frecuente con `interaction-only`.
+- Los contadores `cuenta:<id>` que hoy existan en producción quedan sin uso y la limpieza los borra en 24 horas. No hace falta migración.
+- RN-G15, RE-T.13.5, HU-T.13, RNF-12, HU-0.1 y RE-0.1.1 se corrigieron sin subir revisión. La revisión nueva sale al cerrar el próximo módulo.
+- `AGENTS.md` dice que producción está en alpha.1; se actualiza cuando el usuario despliegue la alpha.2.
+- `activar_clinica.php` conserva su casilla propia. No es uno de los dos registros y quedó fuera.
+
+### M0.1 — Revisión (2026-10-11)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de la prueba del usuario.
+
+**Verificado.** PHP 587 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 92/92 en el equipo del usuario; vistas tocadas sin `style=`, `on…=` ni `<script>` con código. El CAPTCHA del login cuenta por la huella SHA-256 del identificador normalizado (no guarda el documento ni el correo), responde `captcha` igual exista o no la cuenta y con la contraseña correcta o no, y el servidor sigue exigiéndolo aunque la página no muestre el widget. El widget solo se pinta cuando la sesión trae la marca del servidor de los últimos 15 minutos. Turnstile: tema claro, español, `flexible`/`compact` según el ancho y `interaction-only` en los registros.
+
+**Observaciones (no bloquean).**
+
+1. Al contar por identificador, una misma cuenta admite 5 fallos por su documento y otros 5 por su correo antes de pedir el CAPTCHA. Es el precio de no revelar qué cuentas existen y sigue acotado por las 20 de la IP. Aceptable.
+2. El Anexo no trae la lista de pantallas para el usuario; la da la revisión (abajo).
+3. Los contadores `cuenta:<id>` de producción quedan sin uso y se limpian solos.
+
+**Prueba del usuario (local y, después del despliegue, en producción).**
+
+1. Login sin el cuadro de Cloudflare; 5 fallos con un mismo correo (exista o no) muestran el cuadro claro en el sexto intento; con él se entra.
+2. «Crear cuenta» abre el selector; «Soy propietario» gira la tarjeta y «Registrar mi clínica» abre su página; los dos con el mismo aspecto.
+3. Registro de clínica: no avanza con errores (avisos de una línea), «Atrás» conserva lo escrito, el NIT duplicado avisa en el paso 1 y el envío muestra la ventana de carga y «Revisa tu correo».
+4. Las dos pantallas en el celular: una columna, nada se sale.
+
+## M0.2 — Alcance propuesto: últimas correcciones del acceso, panel del super-administrador y páginas de los enlaces de correo (2026-10-11)
+
+**Escribe:** Claude Code. **Revisa:** Claude (arquitecto). M0.1 y M0.2 salen juntas en **`2.0.0-alpha.2`** (un solo despliegue). La estructura del panel es una propuesta de la revisión que el usuario aprueba antes de pegar el prompt.
+
+**A. Correcciones del acceso (hallazgos del usuario sobre M0.1).**
+
+1. Al entrar y salir de un campo sin escribir, el contenido de debajo baja: el aviso vacío no debe ocupar ni cambiar el alto (espacio reservado fijo o aviso superpuesto); ningún salto de diseño al validar.
+2. El botón «Atrás» del registro de clínica es el mismo del registro del propietario (componente, icono y posición).
+3. La animación de voltear la tarjeta del registro del propietario también al entrar al registro de clínica desde «Crear cuenta» y al volver de él al inicio de sesión.
+
+**B. Panel del super-administrador** (`views/plataforma/`, `public/css/plataforma.css`, `public/js/plataforma.js`). Hoy: tres secciones apiladas (clínicas, casos de soporte, IP bloqueadas), mucho desplazamiento, tarjetas sin estilo y elementos encimados. La barra lateral se conserva. Propuesta:
+
+- **Franja de indicadores** arriba: clínicas activas, pendientes, suspendidas, casos abiertos e IP bloqueadas; cada uno filtra o abre su pestaña.
+- **Pestañas** «Clínicas», «Soporte» (con contador) y «Seguridad» (IP bloqueadas): una sola sección a la vista; la pestaña se recuerda como la vista de tarjetas/tabla.
+- **Clínicas:** buscador por nombre o NIT y filtros de estado y plan en una línea; tarjetas con nombre, insignia de estado, NIT con DV, plan y suscripción, y el uso con barras (personal x/2, mascotas x/50, citas x/100, «Sin límite» en Profesional), y «Gestionar». La tabla conserva las mismas columnas con el mismo estilo de Usuarios.
+- **Modal «Gestionar»** por pestañas internas (Plan y suscripción · Estado · Aviso al administrador) con el estado y el administrador en la cabecera; solo «Dar de baja» confirma (decisión del 2026-10-10).
+- **Soporte y Seguridad** en tarjetas o filas con el mismo componente, acciones alineadas y estados vacíos con mensaje.
+- Objetivo: la primera vista sin desplazamiento en escritorio (≥ 1024 px); en celular, una columna sin nada encimado ni desbordado.
+- Mensaje claro cuando un super-administrador intenta administrar una clínica (bitácora de F1): en `activar_clinica`, donde el titular ya probó su correo, «Esta cuenta administra la plataforma y no puede administrar una clínica. Regístrala con otro correo».
+
+**C. Páginas a las que se llega desde un correo.** Mismo marco visual que el acceso: tarjeta, tipografía, botones, avisos y la casilla de la política de `partials/consentimiento_datos.php`; ningún párrafo, enlace ni casilla sin estilo; estados de éxito, error y enlace no disponible con el mismo componente. Vistas: `activar_clinica`, `aceptar_politica`, `confirmar_vinculo`, `enlace_identidad` (activación del personal y cambio de correo), `invitacion_personal`, `verificar_email`, `reset_password`, `cambiar_password`, `completar_perfil` y `seleccionar_contexto`. También se revisa que el HTML de los correos se vea bien en Gmail (claro y oscuro).
+
+**Fuera de M0.2:** paneles de la clínica, del veterinario y del portal (se rehacen en sus módulos) y los pendientes de `pulido-interfaz.md` de otros módulos.
+
+**Captura del usuario del panel en producción (2026-10-11), defectos concretos para B:** cabecera con «Cambiar contexto» y «Cerrar sesión» como enlaces sin estilo (morados de visitado), título «Clínicas» pegado al subtítulo, el selector tarjetas/tabla solo en una franja blanca de lado a lado, buscador y «Estado» desalineados y con el `select` nativo; en la tarjeta: NIT sin guion del DV (`9012345677` → `901234567-7`), estado como texto suelto (no insignia), etiquetas y valores apilados sin jerarquía, fecha de registro en crudo (`2026-10-11 18:35:45`), «Sin suscripción» en una clínica Gratuito (debe decir algo comprensible, p. ej. «Gratuito · sin pago»), cuadrícula de uso desordenada y botón «Gestionar» más angosto que su texto. **Además:** las vistas piden CSS y JS con versiones escritas a mano (`?v=e2`, `?v=d3`); todas deben usar `App::assetVersion()` para que cada alfa renueve la caché del navegador.

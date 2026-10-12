@@ -418,11 +418,13 @@ flowchart TD
   IP -- Si --> IP1[/"Mensaje: demasiados intentos, espera 15 minutos"/]
   IP1 --> ZF([Fin])
   IP -- No --> MET{Como inicia sesion?}
-  MET -- Documento o correo y contraseña --> B[Ingresar credenciales]
-  B --> CAP{"Cuenta con 5 fallos: CAPTCHA aprobado?"}
-  CAP -- No --> ERR
+  MET -- Documento o correo y contraseña --> B["Ingresar credenciales<br/>(el CAPTCHA solo se ve si el servidor ya lo pidio)"]
+  B --> CAP{"Ese documento o correo suma 5 fallos en 15 minutos,<br/>exista o no la cuenta: CAPTCHA aprobado?"}
+  CAP -- No --> CAPN["Sumar fallo por IP e identificador"]
+  CAPN --> CAPM[/"Mismo mensaje para todos: completa la verificacion;<br/>la pagina vuelve con el CAPTCHA visible"/]
+  CAPM --> A
   CAP -- "Si o no requerido" --> C{Contraseña correcta y cuenta activa?}
-  C -- No --> ERR[Sumar fallo por IP y cuenta]
+  C -- No --> ERR["Sumar fallo por IP e identificador;<br/>al quinto, el siguiente intento muestra el CAPTCHA"]
   ERR --> MSG[/"Mensaje generico: credenciales invalidas"/]
   MSG --> A
   C -- Si --> V{Correo verificado?}
@@ -435,8 +437,9 @@ flowchart TD
   G2 -- No --> GERR[Sumar fallo por IP]
   GERR --> GM[/"Mensaje: no se pudo validar Google"/]
   GM --> ZF
-  G2 -- Si --> GCAP{"Cuenta con 5 fallos: CAPTCHA aprobado?"}
-  GCAP -- No --> ERR
+  G2 -- Si --> GCAP{"Ese correo suma 5 fallos: CAPTCHA aprobado?"}
+  GCAP -- No --> GCAPM[/"Mostrar el CAPTCHA del login y volver a continuar con Google"/]
+  GCAPM --> A
   GCAP -- "Si o no requerido" --> G3{El correo tiene cuenta?}
   G3 -- No --> REG[["Elegir clinica y aceptar la politica antes del registro Google (§11)"]]
   REG --> ZF
@@ -444,7 +447,7 @@ flowchart TD
   G4 -- No --> GNO[/"Cuenta inactiva: no iniciar sesion"/]
   GNO --> ZF
   G4 -- Si --> G5["Vincular Google a la identidad (RN-G21); si el correo estaba pendiente,<br/>verificarlo, anular contraseña y pedir completar perfil"]
-  G5 --> SES["Abrir sesion con version actual y limpiar solo el contador de la cuenta"]
+  G5 --> SES["Abrir sesion con version actual y limpiar solo el contador del identificador usado"]
   SES --> POL{Acepto la politica vigente?}
   POL -- No --> POL1[Mostrar politica y pedir aceptacion]
   POL1 --> POL2{Acepta?}
@@ -544,6 +547,9 @@ Tres caminos de registro, siempre en el contexto de una clínica: **alta por el 
 
 ```mermaid
 flowchart TD
+  A0(["Crear cuenta, bajo el inicio de sesion"]) --> SEL{"Soy propietario o Registrar mi clinica?"}
+  SEL -- Registrar mi clinica --> SELC[["Registro de clinica (§12.1)"]]
+  SEL -- Soy propietario --> B3
   A([Registro de propietario]) --> B{Como se registra?}
   B -- Alta por el personal --> B1[Tomar el id_clinica del personal que lo registra]
   B -- Enlace o QR de la clinica --> B2[Tomar el id_clinica del enlace o QR]
@@ -564,7 +570,7 @@ flowchart TD
 
   E -- No --> E2{El documento ya existe en la plataforma?}
   E2 -- Si --> E3["Autorregistro: enviar confirmacion al titular del documento;<br/>alta presencial: resolver con la busqueda exacta autorizada"]
-  E3 --> GENERICO["Autorregistro: misma respuesta, sin revelar existencia;<br/>Revisa tu correo para confirmar la solicitud o acceder a Zooki"]
+  E3 --> GENERICO["Autorregistro: ventana de carga y luego la misma respuesta, sin revelar existencia;<br/>Revisa tu correo para confirmar la solicitud o acceder a Zooki"]
   GENERICO --> ZF([Fin])
   E2 -- No --> F["Crear la identidad (id_usuario) y guardar la prueba de aceptacion de la politica"]
   F --> FP{Alta presencial por personal?}
@@ -616,9 +622,17 @@ Detalle del funcionamiento de cada proceso de módulo. Cada flujo se corresponde
 
 ```mermaid
 flowchart TD
-  A([Registro publico de clinica]) --> B["Datos de clinica: NIT numerico y DV en casillas separadas<br/>Administrador: nombre, tipo y documento, telefono,<br/>correo y contraseña; aceptar politica; sin Google"]
+  A([Registro publico de clinica]) --> P1["Paso 1, datos de la clinica:<br/>NIT numerico y DV en casillas separadas"]
+  P1 --> P1V{"Campos del paso validos?"}
+  P1V -- No --> P1
+  P1V -- Si --> P2["Paso 2, administrador: nombre, tipo y documento,<br/>telefono, correo y contraseña"]
+  P2 -. Atras sin perder lo escrito .-> P1
+  P2 --> P2V{"Campos del paso validos?"}
+  P2V -- No --> P2
+  P2V -- Si --> B["Paso 3: aceptar politica y Registrar clinica; sin Google<br/>(sin JavaScript se ven los tres pasos y se envia todo junto)"]
+  B -. Atras sin perder lo escrito .-> P2
   B --> C{"CAPTCHA valido en servidor?"}
-  B -. NIT y DV validos al escribir .-> UNI["Consultar unicidad por IP limitada<br/>Avisar junto al campo y habilitar Reportar a soporte<br/>Sin revelar cuentas ni contactos; repetir control al enviar"]
+  P1 -. NIT y DV validos al escribir .-> UNI["Consultar unicidad por IP limitada<br/>Avisar junto al campo y habilitar Reportar a soporte<br/>Sin revelar cuentas ni contactos; repetir control al enviar"]
   C -- No --> ERR[Corregir verificacion]
   ERR --> B
   C -- Si --> V{"Formato, NIT DIAN y correos permanentes validos?"}
@@ -636,7 +650,7 @@ flowchart TD
   NUE --> TK["Guardar token con hash, 24 horas; auditar; confirmar transaccion"]
   EX --> TK
   TK --> MAIL[Enviar enlace al titular]
-  MAIL --> MSG["Misma respuesta: Revisa tu correo para activar la clinica"]
+  MAIL --> MSG["Ventana de carga y luego la misma respuesta:<br/>Revisa tu correo para activar la clinica"]
   MSG --> GET[GET muestra boton sin modificar datos]
   GET --> POST{"POST con CSRF, consentimiento y token vigente no usado?"}
   POST -- No --> INV[Enlace no disponible o corregir formulario]
