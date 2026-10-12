@@ -79,7 +79,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- Lista de clínicas registradas con su estado, plan y estado de suscripción.
+- Lista de clínicas registradas con su estado, plan y estado de suscripción; se busca por nombre o NIT y se filtra por estado y plan.
 - Puede cambiar el plan de una clínica y el estado de su suscripción, con motivo obligatorio.
 - **No** accede a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte.
 - El super-administrador es un rol de plataforma: sus acciones no se filtran por una sola `id_clinica` (única excepción al aislamiento, RN-G13).

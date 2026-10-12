@@ -652,7 +652,9 @@ flowchart TD
   TK --> MAIL[Enviar enlace al titular]
   MAIL --> MSG["Ventana de carga y luego la misma respuesta:<br/>Revisa tu correo para activar la clinica"]
   MSG --> GET[GET muestra boton sin modificar datos]
-  GET --> POST{"POST con CSRF, consentimiento y token vigente no usado?"}
+  GET --> SA{"La cuenta del enlace es de super-administrador?"}
+  SA -- Si --> SAM[/"Mensaje claro sin boton: administra la plataforma y no puede<br/>administrar una clinica; registrala con otro correo (RN-G13)"/]
+  SA -- No --> POST{"POST con CSRF, consentimiento y token vigente no usado?"}
   POST -- No --> INV[Enlace no disponible o corregir formulario]
   POST -- Si --> ACT["Una transaccion: consumir token, activar clinica y cuenta nueva,<br/>plan gratuito, rol administrador, copiar catalogos y auditar"]
   ACT --> OK{"Todo correcto?"}
@@ -668,7 +670,10 @@ flowchart TD
   A([Plataforma Zooki]) --> S{"Sesion y contexto plataforma vigentes?"}
   S -- No --> DEN["401 o 403; ningun dato de plataforma"]
   S -- Si --> L["Listar clinicas, planes y suscripciones; casos e IP bloqueadas<br/>Uso y limites solo como numeros: personal, mascotas, citas del mes<br/>Sin fichas, consultas, historias ni citas individuales"]
-  L --> F["Buscar y filtrar; tarjetas o tabla con componentes administrativos<br/>NIT pendiente visible; correo del administrador"]
+  L --> PES{"Pestaña recordada: Clinicas, Soporte o Seguridad<br/>(contadores de casos abiertos e IP bloqueadas)"}
+  PES -- Clinicas --> F["Buscar por nombre o NIT y filtrar por estado y plan al escribir<br/>Tarjetas o tabla de Usuarios: estado, NIT con DV, plan y suscripcion,<br/>barras de uso; correo del administrador; Gestionar por pestañas"]
+  PES -- Soporte --> CAS
+  PES -- Seguridad --> IP
   F --> CONF{"Dar de baja?"}
   CONF -- Si --> Q{"Confirma el super-administrador?"}
   Q -- No --> L
@@ -677,15 +682,15 @@ flowchart TD
   M -- No --> ERR["Rechazar sin modificar; corregir formulario"]
   M -- Si --> TX["Transaccion: bloquear clinica, cambiar plan/suscripcion<br/>o estado y auditar; rollback si falla auditoria"]
   TX --> R["Actualizar panel antes del aviso breve<br/>Personal pierde contexto en siguiente peticion, segun §9<br/>Clinica inactiva no aparece para registro ni agenda"]
-  L --> CAS["Casos: resolver o descartar con nota, sin otra confirmacion<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos"]
-  L --> IP["IP: vencimiento, cuentas LOGIN_FAIL en ventana<br/>y sus clinicas; sin atribuir la IP a una sola clinica"]
+  CAS["Casos: resolver o descartar con nota, sin otra confirmacion<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos"]
+  IP["IP: vencimiento, cuentas LOGIN_FAIL en ventana<br/>y sus clinicas; sin atribuir la IP a una sola clinica"]
   IP --> DES["Desbloquear directo: POST y CSRF<br/>borrar solo contador de esa IP y auditar en transaccion"]
   IP --> AV["Elegir administrador asociado, ver y editar texto<br/>Enviar solo al pulsar el boton, sin segunda confirmacion"]
   AV --> VAL["POST, CSRF; verificar destinatario en servidor<br/>auditar solicitud, enviar solo al elegido y auditar resultado"]
   CAS --> R
   DES --> R
   VAL --> R
-  R --> L
+  R --> PES
 ```
 
 ### 12.2 Control de límites del plan (freemium) — Módulo 0

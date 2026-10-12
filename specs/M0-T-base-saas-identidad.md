@@ -2179,7 +2179,7 @@ Mutaciones comprobadas:
 
 ## M0.2 — Alcance propuesto: últimas correcciones del acceso, panel del super-administrador y páginas de los enlaces de correo (2026-10-11)
 
-**Escribe:** Claude Code. **Revisa:** Claude (arquitecto). M0.1 y M0.2 salen juntas en **`2.0.0-alpha.2`** (un solo despliegue). La estructura del panel es una propuesta de la revisión que el usuario aprueba antes de pegar el prompt.
+**Escribe:** Claude Code. **Revisa:** Claude (arquitecto). M0.1 y M0.2 salen juntas en **`2.0.0-alpha.2`** (un solo despliegue). **Estado:** entregada, pendiente de revisión (2026-10-11; ver «Anexo M0.2 — Resultado»). La estructura del panel es una propuesta de la revisión que el usuario aprueba antes de pegar el prompt.
 
 **A. Correcciones del acceso (hallazgos del usuario sobre M0.1).**
 
@@ -2202,3 +2202,95 @@ Mutaciones comprobadas:
 **Fuera de M0.2:** paneles de la clínica, del veterinario y del portal (se rehacen en sus módulos) y los pendientes de `pulido-interfaz.md` de otros módulos.
 
 **Captura del usuario del panel en producción (2026-10-11), defectos concretos para B:** cabecera con «Cambiar contexto» y «Cerrar sesión» como enlaces sin estilo (morados de visitado), título «Clínicas» pegado al subtítulo, el selector tarjetas/tabla solo en una franja blanca de lado a lado, buscador y «Estado» desalineados y con el `select` nativo; en la tarjeta: NIT sin guion del DV (`9012345677` → `901234567-7`), estado como texto suelto (no insignia), etiquetas y valores apilados sin jerarquía, fecha de registro en crudo (`2026-10-11 18:35:45`), «Sin suscripción» en una clínica Gratuito (debe decir algo comprensible, p. ej. «Gratuito · sin pago»), cuadrícula de uso desordenada y botón «Gestionar» más angosto que su texto. **Además:** las vistas piden CSS y JS con versiones escritas a mano (`?v=e2`, `?v=d3`); todas deben usar `App::assetVersion()` para que cada alfa renueve la caché del navegador.
+
+**Decisiones del usuario durante M0.2 (2026-10-11).**
+
+1. El modal «Gestionar» tiene **dos pestañas**, «Plan y suscripción» y «Estado». No se agrega un aviso libre al administrador de una clínica, porque sería una acción nueva. El aviso sigue en cada IP de la pestaña Seguridad.
+2. En el registro de clínica, **la flecha junto al título es el único «Atrás»**, el mismo componente del registro del propietario. En el paso 1 vuelve al login con el giro; en los pasos 2 y 3, al paso anterior. Abajo solo queda «Siguiente» o «Registrar clínica».
+3. **Revisión del usuario sobre la primera versión del panel (2026-10-12).**
+   - Fuera la franja de indicadores: ocupaba casi un quinto de la pantalla cada uno y no aportaba.
+   - La identidad de Zooki es el azul: nada de verdes, ámbar, rojos ni violetas de adorno.
+   - Las tarjetas deben medir lo mismo y copiar el diseño de Usuarios del administrador de la clínica, reutilizando lo hecho.
+   - El buscador ocupaba media pantalla: debe ser corto.
+
+## Anexo M0.2 — Resultado
+
+**Escribió:** Claude Code (2026-10-11). **Estado:** entregada, pendiente de revisión. Sale con M0.1 en `2.0.0-alpha.2`.
+
+### Qué se hizo
+
+1. **Acceso (A).**
+   - **Aviso sin salto.** Cada campo de los formularios de acceso reserva una línea fija para su aviso: `.registro-marco .input-group` con `padding-bottom` y el aviso en posición absoluta. Aparecer, cambiar o vaciarse no mueve nada. El NIT duplicado y «Reportar a soporte» comparten una línea reservada; el botón se volvió un enlace de texto.
+   - **Un solo «Atrás».** Ver la decisión 2; lo maneja `registro-pasos.js`.
+   - **Giro de tarjeta.** El nuevo `acceso-giro.js` gira la tarjeta hasta dejarla de canto, navega, y la página nueva la termina de girar. Funciona entre «Crear cuenta → Registrar mi clínica» y la flecha que vuelve al login. Sin JavaScript los enlaces navegan normal; quien prefiere menos movimiento no ve el giro.
+   - La barra superior del registro de clínica dice «Volver al inicio», como el login.
+   - El collage del acceso ahora es un parcial (`partials/acceso_hero.php`).
+2. **Panel del super-administrador (B).** Está en `views/plataforma/`, `plataforma.css` y `plataforma.js`, con el nuevo `helpers/PresentacionPlataforma.php`.
+   - **Cabecera:** el indicador de contexto y la ficha de usuario del sistema, en lugar de enlaces sueltos.
+   - **Después de la revisión del usuario (decisión 3):** la página reutiliza tal cual la cabecera, los filtros, la tarjeta y la tabla de Usuarios (`header-container-white`, `tabs-wrapper`, `search-input`, `filter-select`, `person-card` con `card-*-mini`, `tag-mini`, `action-btn-mini`, `users-table`). No hay franja de indicadores y solo se usan azul y grises.
+   - **Pestañas** Clínicas, Soporte (con contador de casos abiertos) y Seguridad (con contador de IP bloqueadas): se recuerdan, igual que la vista de tarjetas o tabla.
+   - **Buscador y filtros:** buscador corto (280 px), estado y plan en la misma línea, que actúan al escribir y solo se ven en Clínicas. Sin JavaScript filtran en el servidor; el modelo ahora acepta `plan` y busca el NIT con o sin guion.
+   - **Tarjeta de Usuarios, todas del mismo alto:** iniciales, nombre en una línea, etiquetas de estado (la activa en azul, las demás en gris con su icono) y de plan, y líneas con NIT con DV, administrador («por confirmar» si está pendiente), suscripción («Sin pago» en el gratuito) y fecha legible («11 oct 2026»). Debajo, barras de uso finas en azul con `<progress>`; en Profesional, «sin límite» con una línea punteada. «Gestionar» es el botón de icono del pie, como «Editar» en Usuarios.
+   - **Tabla** con el estilo de Usuarios.
+   - **Soporte y Seguridad** con el mismo componente de fila, acciones alineadas y estados vacíos.
+   - **Modal por pestañas,** con el estado, el NIT y el administrador en la cabecera. Una clínica pendiente o dada de baja abre en Estado y dice por qué no se cambia el plan. Solo «Dar de baja» confirma.
+   - **Acciones y permisos:** no cambian.
+   - **`activar_clinica`:** si la cuenta del enlace es de super-administrador, el GET y el POST muestran «Esta cuenta administra la plataforma y no puede administrar una clínica. Regístrala con otro correo.», sin botón y sin cambiar nada (`RegistroClinica::MENSAJE_SUPER_ADMIN`). Modelos §12.1 tiene la rama nueva y §12.1.1 la franja y las pestañas; los dos renderizan con Mermaid CLI.
+3. **Versiones (B2).** Todas las vistas, incluidos `admin`, `vet`, `portal`, los parciales y el portal de documentación, piden sus CSS y JS con `App::assetVersion()`. Ya no quedan `?v=e2`, `?v=d3`, `?v=12` ni `time()`.
+4. **Páginas de los correos (C).**
+   - **Piezas comunes:** `partials/acceso_marco_inicio.php` y `acceso_marco_fin.php` (el mismo marco del login, con `referrer` desactivado porque la URL lleva el token) y `partials/acceso_estado.php` (un solo encabezado de estado para formulario, éxito, error y enlace no disponible).
+   - **Las diez vistas** del alcance se reescribieron sobre esas piezas, con la casilla común de la política. La casilla admite la versión: la activación del personal y «aceptar política» la muestran.
+   - **Retirados:** `cabecera_enlace.php`, `reset-password.css`, `cuenta-pendiente.css` y `cambiar-password.css`. A `contexto.css` solo le queda el indicador del contexto activo.
+5. **Correos.** La plantilla ahora escapa el nombre, el título, el texto del botón y el enlace. **Hallazgo de seguridad:** el título no se escapaba, y en el registro de clínica lleva el nombre escrito por el público. Además había doble escape en los correos del personal; los llamadores pasan ahora texto plano.
+   - **Para Gmail claro y oscuro:** `color-scheme: light`, colores de fondo en cada celda, botón como celda con su color, logotipo sobre una placa blanca y sin márgenes negativos, ancho fluido de hasta 600 px y el enlace en texto debajo del botón. `EmailService.example.php` va igual.
+6. **Versión:** sigue en 2.0.0-alpha.2. La entrada de `HistorialVersiones.md` ahora incluye el acceso, el panel y las páginas de los correos. HU-0.3 menciona los filtros y la franja.
+
+### RE y pruebas
+
+| Punto | Prueba |
+|---|---|
+| RE-0.3.1–0.3.4 (lista, plan y suscripción, sin datos clínicos, rol de plataforma) | `M02PanelEnlacesTest::testElPanelOrdenaClinicasSoporteYSeguridadSinDatosClinicos`, `testSinJavascriptFiltraPorEstadoPlanYNitConGuion`, `testPresentacionDelPanel`, y `PlataformaTest` completo |
+| Pestañas, filtros por pestaña, contador, modal por pestañas, sin colores ajenos al azul | `M02Panel.test.cjs` (5 casos), `E1Plataforma.test.cjs` |
+| RN-G13 en `activar_clinica` (super-administrador) | `M02PanelEnlacesTest::testActivarClinicaExplicaQueLaCuentaEsDeSuperAdministrador` (GET, POST y modelo directo, sin activar ni dar rol) |
+| Páginas de enlace con el marco común | `M02PanelEnlacesTest::testLasPaginasDeLosCorreosUsanElMarcoDelAcceso` (11 casos: marco, estado, versión, `no-referrer`, sin diseño viejo, sin enlaces ni párrafos sin clase), `testLasCasillasDeLaPoliticaSonLaComun`, `testExitoErrorYEnlaceNoDisponibleConElMismoComponente` |
+| Aviso sin cambio de alto, giro y «Atrás» | `M02Panel.test.cjs` (CSS reservado, giro de salida y de entrada, sin movimiento, flecha por paso) |
+| Correos | `M02PanelEnlacesTest::testLaPlantillaDeCorreoEscapaYSeLeeEnGmail` |
+| Versión de los recursos | `D1Sesion.test.cjs` (layouts con `App::assetVersion()`), `M02Panel.test.cjs` |
+
+Mutaciones comprobadas:
+- No guardar la pestaña hace fallar la prueba de la pestaña recordada.
+- Quitar el espacio reservado del aviso hace fallar la prueba del aviso sin salto.
+
+### Verificación
+
+- `vendor/bin/phpunit`: **605 pruebas en verde**. Sin MySQL: 3450 aserciones y 29 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 3812 aserciones y ninguna omitida.
+- `node --test "tests/Frontend/**/*.test.cjs"`: **101 en verde** (9 nuevas).
+- Sin `style=`, `on…=` ni `<script>` con código en las vistas tocadas. `views/vet/calendario.php` ya tenía `on…=` antes de M0.2; solo se le cambió la versión del script y su limpieza queda para el módulo 4.
+- Descargas del portal regeneradas (HU e historial).
+- No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+
+### Pendientes y riesgos
+
+- **No pude ver Gmail.** La plantilla se probó por su estructura; falta mirar un correo real en Gmail claro y oscuro (pantalla 5).
+- **Las diez páginas de enlace cambiaron por completo.** Sus flujos (POST, tokens, CSRF) siguen igual y las suites pasan, pero conviene recorrerlas.
+- `dashboard.css` importa sus módulos con `@import ...?v=4`. Un CSS no puede leer `App::assetVersion()`, así que esos módulos no se renuevan con la alfa. Se resuelve cuando el módulo de la clínica rehaga sus estilos.
+- Sin la franja, en escritorio la primera fila de tarjetas queda a la vista con la cabecera y los filtros.
+
+### Pantallas para el usuario
+
+1. **Registro (escritorio y celular).**
+   - Entra y sal de los campos sin escribir: nada debe moverse.
+   - «Crear cuenta → Registrar mi clínica» gira la tarjeta; la flecha del paso 1 vuelve al login con el giro.
+   - En los pasos 2 y 3 la flecha vuelve al paso anterior sin perder lo escrito.
+2. **Panel del super-administrador (escritorio y celular).**
+   - Debe verse como Usuarios: tarjetas del mismo alto, en azul y gris, y buscador corto.
+   - La pestaña se recuerda al recargar, y el buscador encuentra «901234567-7».
+   - Revisa la tabla y el botón de icono «Gestionar» con sus dos pestañas.
+   - En el celular, una columna y nada encimado.
+3. **Registrar una clínica con el correo de tu super-administrador** y abrir el enlace: debe salir «Esta cuenta administra la plataforma… Regístrala con otro correo», sin botón.
+4. **Páginas de los correos (local, `logs/correos/`).**
+   - Invita a una persona nueva y abre «Activar cuenta».
+   - Pide «¿Olvidaste tu contraseña?» y abre el enlace.
+   - Abre un enlace ya usado: «Enlace no disponible» con el mismo diseño.
+   - Revisa también «Elige cómo entrar» y «Completa tu perfil».
+5. **Un correo real en Gmail** (producción o tu cuenta con Brevo), en tema claro y oscuro: logotipo visible, botón azul y enlace debajo.

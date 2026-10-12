@@ -7,13 +7,31 @@
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
 ### Versión 2.0.0-alpha.2 (Actual)
-Pulido del inicio de sesión y de los registros: los dos registros se ven y se comportan igual, y la verificación anti-bot ya no aparece cuando no hace falta.
+Pulido del módulo 0: el inicio de sesión y los registros se ven y se comportan igual, la verificación anti-bot ya no aparece cuando no hace falta, el panel de la plataforma es más ordenado y las páginas que se abren desde un correo tienen el mismo diseño del acceso.
+
+**Acceso y registros**
 
 *   **Un solo «Crear cuenta»** bajo el inicio de sesión: eliges «Soy propietario» o «Registrar mi clínica».
 *   **Registro de clínica en tres pasos** (clínica, administrador y confirmación), con su indicador de progreso. Cada paso revisa sus datos antes de seguir y al volver atrás no se pierde lo escrito. En el computador los campos van en dos columnas; en el celular, en una.
 *   Los dos registros comparten diseño: el mismo ancho y los mismos campos, la misma casilla de la política de datos y la misma ventana de «Enviando tu registro…» y «Revisa tu correo».
 *   **Avisos más cortos** bajo cada campo, en una sola línea. Al enviar, el resumen del formulario dice qué falta en cada campo.
 *   **Verificación anti-bot en tema claro** y del ancho del formulario. En el inicio de sesión solo aparece después de 5 intentos fallidos con el mismo documento o correo, y se cuenta igual exista o no la cuenta para no revelar cuáles existen. En los registros solo se muestra si Cloudflare necesita que confirmes que eres una persona.
+*   Los avisos bajo los campos ya no mueven el formulario al aparecer o al salir de un campo.
+*   El registro de clínica entra y sale con el mismo giro de tarjeta del registro del propietario, y su flecha de «Atrás» es la misma: en los pasos 2 y 3 vuelve al paso anterior.
+
+**Panel de la plataforma (super-administrador)**
+
+*   El panel usa **el mismo diseño de la pantalla de Usuarios**: tarjetas iguales en tamaño, tabla, buscador y filtros, en el azul de Zooki.
+*   **Pestañas** Clínicas, Soporte y Seguridad, con contadores; el panel recuerda la última pestaña y la vista de tarjetas o tabla.
+*   Buscador corto por nombre o NIT y filtros de estado y plan en una sola línea, que actúan mientras escribes.
+*   Cada clínica muestra su **estado como etiqueta**, el NIT con su dígito de verificación (`901234567-7`), el plan, la suscripción en palabras («Sin pago» en el gratuito), la fecha de registro legible y el **uso del plan con barras** («sin límite» en Profesional).
+*   «Gestionar» abre una ventana con dos pestañas, «Plan y suscripción» y «Estado», con el estado, el NIT y el administrador arriba.
+*   Si una cuenta de la plataforma intenta administrar una clínica, la página de activación lo explica: «Esta cuenta administra la plataforma y no puede administrar una clínica. Regístrala con otro correo».
+
+**Páginas que se abren desde un correo**
+
+*   Activar la clínica o la cuenta del personal, aceptar una invitación, confirmar el correo o un vínculo, crear una contraseña nueva, aceptar la política, completar el perfil y elegir el perfil de entrada usan el **mismo diseño del inicio de sesión**, con un mismo aviso para el éxito, el error y el enlace vencido.
+*   Los correos se ven bien en Gmail, claro y oscuro, y en el celular; si el botón no funciona, traen el enlace para copiarlo.
 
 > _Desde esta versión **cada entrega a producción sube la alfa**, sea un módulo nuevo o un pulido: así el navegador descarga los estilos y scripts nuevos en vez de usar los que tenía guardados._
 
