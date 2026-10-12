@@ -51,66 +51,97 @@ class AuthController {
                 $this->redirectWithError("Token de seguridad inválido. Recarga la página e intenta nuevamente.");
                 return;
             }
+            header('Location: ' . $this->intentarLogin($_POST));
+            exit();
+        }
+        $this->mostrarAcceso(false, null);
+    }
 
-            // RE-T.1.1: se entra con el documento o con el correo. T-21: al
-            // identificador se le recorta el espacio sobrante, pero a la
-            // contrasena no: recortarla altera en silencio lo que se escribio.
-            $identificador = trim((string) ($_POST['identificador'] ?? ''));
-            $password = (string) ($_POST['password'] ?? '');
+    /**
+     * Decide un inicio de sesión con contraseña sin responder: devuelve a
+     * dónde ir y deja el mensaje en la sesión. M0.1: separado de login()
+     * para probar el CAPTCHA sin servidor web.
+     */
+    public function intentarLogin(array $entrada): string
+    {
+        // RE-T.1.1: se entra con el documento o con el correo. T-21: al
+        // identificador se le recorta el espacio sobrante, pero a la
+        // contrasena no: recortarla altera en silencio lo que se escribio.
+        $identificador = trim((string) ($entrada['identificador'] ?? ''));
+        $password = (string) ($entrada['password'] ?? '');
 
-            if ($identificador === '' || $password === '') {
-                $this->redirectWithError("Escribe tu documento o correo y tu contraseña.");
-                return;
-            }
+        if ($identificador === '' || $password === '') {
+            return $this->volverConError("Escribe tu documento o correo y tu contraseña.");
+        }
 
-            // RN-G15: el resultado se calcula antes de mirar el límite para
-            // conocer el id_usuario y contar por cuenta. El mensaje es el
-            // mismo exista o no la cuenta, así que el límite no la revela.
-            $intento = (new Autenticador($this->usuarioModel, $this->verificacionEmailModel))
-                ->conPasswordProtegido($identificador, $password, (string) ($_POST['cf-turnstile-response'] ?? ''), $this->turnstile);
-            $cuenta = $intento['id_cuenta'] !== null ? (string) $intento['id_cuenta'] : null;
+        // RN-G15: el CAPTCHA y el límite dependen del identificador escrito
+        // y de la IP, nunca de que la cuenta exista, así que ni el mensaje
+        // ni el widget la revelan.
+        $intento = (new Autenticador($this->usuarioModel, $this->verificacionEmailModel))
+            ->conPasswordProtegido($identificador, $password, (string) ($entrada['cf-turnstile-response'] ?? ''), $this->turnstile);
 
-            if ($intento['resultado'] === 'limite_ip') {
-                $this->redirectWithError("Demasiados intentos fallidos. Espera 15 minutos antes de volver a intentarlo.");
-                return;
-            }
+        switch ($intento['resultado']) {
+            case 'limite_ip':
+                return $this->volverConError("Demasiados intentos fallidos. Espera 15 minutos antes de volver a intentarlo.");
 
-            switch ($intento['resultado']) {
-                case 'ok':
-                    // T-22: el contador se limpia antes de cualquier redirección.
-                    Security::resetRateLimit($cuenta);
-                    header('Location: index.php?action=' . $this->iniciarSesion($intento['usuario'], 'password'));
-                    exit();
+            case 'ok':
+                // T-22: el contador se limpia antes de cualquier redirección.
+                Security::resetRateLimit($identificador);
+                unset($_SESSION['login_captcha']);
+                return 'index.php?action=' . $this->iniciarSesion($intento['usuario'], 'password');
 
-                case 'pendiente':
-                    // HU-36 (VD-SEG-08): este mensaje SI es especifico: solo se
-                    // llega aqui despues de acertar la contrasena, asi que no le
-                    // sirve a quien enumera cuentas.
-                    Security::recordFailedLogin($cuenta);
-                    $this->redirectWithError("Debes verificar tu correo antes de iniciar sesion. Revisa el enlace que te enviamos.");
-                    return;
+            case 'captcha':
+                // RE-T.13.5: sin verificación válida no se decide nada sobre la contraseña.
+                $this->registrarFalloDeLogin($identificador, $intento['id_cuenta'], 'Intento de login fallido: falta la verificación anti-bot');
+                return $this->volverConError(self::MENSAJE_CAPTCHA);
 
-                default:
-                    // HU-38 (VD-SEG-06): «cuenta inactiva» usa el mismo mensaje
-                    // que las credenciales incorrectas; el motivo real queda en
-                    // auditoría, sin clínica porque aún no hay contexto.
-                    Security::recordFailedLogin($cuenta);
-                    $this->auditoria->log(
-                        $intento['id_cuenta'],
-                        'LOGIN_FAIL',
-                        'usuarios',
-                        $intento['id_cuenta'],
-                        null,
-                        null,
-                        $intento['resultado'] === 'inactiva'
-                            ? 'Intento de login fallido: cuenta inactiva'
-                            : 'Intento de login fallido: credenciales incorrectas',
-                        null
-                    );
-                    $this->redirectWithError(self::MENSAJE_CREDENCIALES);
-            }
-        } else {
-            $this->mostrarAcceso(false, null);
+            case 'pendiente':
+                // HU-36 (VD-SEG-08): este mensaje SI es especifico: solo se
+                // llega aqui despues de acertar la contrasena, asi que no le
+                // sirve a quien enumera cuentas.
+                Security::recordFailedLogin($identificador);
+                $this->recordarIdentificador($identificador);
+                return $this->volverConError("Debes verificar tu correo antes de iniciar sesion. Revisa el enlace que te enviamos.");
+
+            default:
+                // HU-38 (VD-SEG-06): «cuenta inactiva» usa el mismo mensaje
+                // que las credenciales incorrectas; el motivo real queda en
+                // auditoría, sin clínica porque aún no hay contexto.
+                $this->registrarFalloDeLogin(
+                    $identificador,
+                    $intento['id_cuenta'],
+                    $intento['resultado'] === 'inactiva'
+                        ? 'Intento de login fallido: cuenta inactiva'
+                        : 'Intento de login fallido: credenciales incorrectas'
+                );
+                return $this->volverConError(self::MENSAJE_CREDENCIALES);
+        }
+    }
+
+    private function volverConError(string $mensaje): string
+    {
+        $_SESSION['error_login'] = $mensaje;
+        return 'index.php?action=login';
+    }
+
+    /** Suma el fallo por IP e identificador y lo deja en auditoría (E1 lo lista por IP). */
+    private function registrarFalloDeLogin(string $identificador, ?int $idCuenta, string $detalle): void
+    {
+        Security::recordFailedLogin($identificador);
+        $this->auditoria->log($idCuenta, 'LOGIN_FAIL', 'usuarios', $idCuenta, null, null, $detalle, null);
+        $this->recordarIdentificador($identificador);
+    }
+
+    /**
+     * M0.1: tras un fallo, la página vuelve con el identificador escrito y,
+     * si ese identificador ya exige CAPTCHA, con el widget visible para el
+     * siguiente intento. Depende solo de lo escrito (RN-G15).
+     */
+    private function recordarIdentificador(string $identificador): void
+    {
+        $_SESSION['login_identificador'] = $identificador;
+        if (Security::exigeCaptcha($identificador)) {
+            $_SESSION['login_captcha'] = time();
         }
     }
 
@@ -123,11 +154,19 @@ class AuthController {
     {
         $clinicasRegistro = $this->registro->clinicasDisponibles();
         $clinicaElegida = ctype_digit((string) $clinica) ? (int) $clinica : 0;
-        require_once __DIR__ . '/../views/auth/login.php';
+        // RE-T.13.5: el widget del login solo aparece cuando el servidor lo pidió en los últimos 15 minutos.
+        $captchaLogin = time() - (int) ($_SESSION['login_captcha'] ?? 0) < Security::VENTANA;
+        $identificadorPrevio = (string) ($_SESSION['login_identificador'] ?? '');
+        unset($_SESSION['login_identificador']);
+        // require y no require_once: la misma petición de prueba puede pintarla dos veces.
+        require __DIR__ . '/../views/auth/login.php';
     }
 
     /** RE-T.1.5: el mismo mensaje para cualquier credencial inválida. */
     private const MENSAJE_CREDENCIALES = 'Documento, correo o contraseña incorrectos.';
+
+    /** RE-T.13.5: el mismo para cualquier identificador con 5 fallos, exista o no. */
+    private const MENSAJE_CAPTCHA = 'Por seguridad, completa la verificación y vuelve a escribir tu contraseña.';
 
     /**
      * Abre la sesión de una identidad ya autenticada y devuelve a dónde ir
@@ -872,9 +911,14 @@ class AuthController {
 
         $intento = (new Autenticador($this->usuarioModel, $this->verificacionEmailModel))
             ->conGoogleProtegido($email, (string) ($_POST['cf-turnstile-response'] ?? ''), $this->turnstile);
-        $cuenta = $intento['id_cuenta'] !== null ? (string) $intento['id_cuenta'] : null;
+        if ($intento['resultado'] === 'captcha') {
+            // M0.1: el login muestra el widget y la persona vuelve a continuar con Google.
+            Security::recordFailedLogin($email);
+            $_SESSION['login_captcha'] = time();
+            $this->jsonResponse(false, 'Por seguridad, completa la verificación y vuelve a continuar con Google.', ['captcha' => true]);
+        }
         if (in_array($intento['resultado'], ['fallo', 'limite_ip'], true)) {
-            Security::recordFailedLogin($cuenta);
+            Security::recordFailedLogin($email);
             $this->jsonResponse(false, self::MENSAJE_CREDENCIALES);
         }
         if ($intento['resultado'] === 'inactiva') {
@@ -882,7 +926,8 @@ class AuthController {
             $this->jsonResponse(false, "Tu cuenta está inactiva. Contacta al administrador.");
         }
         if ($intento['resultado'] === 'ok') {
-            Security::resetRateLimit($cuenta);
+            Security::resetRateLimit($email);
+            unset($_SESSION['login_captcha']);
             // RN-G21: Google se liga a la cuenta existente.
             $usuario = $this->registro->vincularGoogle($intento['usuario'], $googleUid);
             $destino = $this->iniciarSesion($usuario, 'google');
