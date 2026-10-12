@@ -84,6 +84,7 @@ Si A demuestra que C1 queda vacío o muy pequeño, C1 se une a C2.
 - [x] Aprobar este plan (usuario). §6.1 decidida: la foto de Google no se guarda.
 - [x] A — Inventario y verificación (Claude Code; revisada y aprobada por Claude, 2026-10-12; decisiones del usuario en «A — Revisión»). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo A — Resultado».
 - [ ] C1 — Huecos funcionales (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1 — Resultado».
+- [ ] C1.1 — Super-administrador nunca como cliente y desactivación por la clínica (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1.1 — Resultado».
 - [ ] C2 — Portal del propietario pulido.
 - [ ] C3 — Lado del personal (HU-1.5, HU-2.10).
 - [ ] `vendor/bin/phpunit` completo, JS y cada RE de §2 con evidencia.
@@ -331,3 +332,74 @@ Mutaciones comprobadas: entregar el contacto sin mirar el vínculo, quitar la li
 ## C1.1 — Alcance (2026-10-12)
 
 Las dos decisiones anteriores, con sus pruebas, y §11.1 alineado. Escribe Claude Code; revisa Claude.
+
+## Anexo C1.1 — Resultado
+
+**Escribió:** Claude Code (2026-10-12). **Estado:** entregada, pendiente de revisión. Sin migración ni cambio de esquema.
+
+**Decisión del usuario durante C1.1 (2026-10-12).** La clínica **no puede desactivar** el vínculo de un cliente con citas sin resolver en ella (pendiente, confirmada, en curso o sin cerrar). Es la misma regla que se aplica al propietario (RE-5.13.3). Antes, desactivar habría dejado esas citas sin poder atenderse.
+
+### Qué se hizo
+
+1. **RN-G13: el super-administrador nunca es cliente.**
+   - **Búsqueda exacta:** responde «Hay una cuenta con ese dato…», como con cualquier cuenta sin vínculo, aunque exista un vínculo anterior.
+   - **Solicitud por documento o correo y solicitud por id:** dan la misma respuesta de siempre («Se envió la solicitud…»), pero sin crear la solicitud ni enviar el correo. Queda una auditoría `OTHER` con RN-G13.
+   - **Enlace viejo:** `confirmarVinculo` lo rechaza como enlace no disponible y no liga a la cuenta.
+   - **Registro del propietario:** ya se comportaba así; se agregó su prueba.
+2. **La clínica desactiva el vínculo (RN-115).**
+   - `models/VinculoClinica.php` reúne en un solo lugar la regla de citas sin resolver y la desactivación: vínculo inactivo, autorización de historia en 0 y mascotas del propietario inactivas en esa clínica.
+   - Lo usan el portal (`VinculosPropietario::desvincular`) y Clientes (`PropietarioClinica::actualizar`), cada uno dentro de su transacción y con auditoría. La de Clientes incluye `mascotas_desvinculadas`.
+   - Efecto: la clínica solo lee lo suyo, no registra nada nuevo (403) y no salen sus recordatorios, porque `Recordatorio` ya filtraba por `mascota_clinica` activo.
+   - Al confirmar otra vez el vínculo, la mascota vuelve cuando se agenda o se atiende allí (RN-110, `Mascota::vincular`, que cuenta para el plan).
+3. **Modelos:**
+   - §11.1 tiene una segunda entrada, «Clientes, en la clínica», con el rechazo por citas, y su nota explica las mascotas, la reactivación y RN-G13.
+   - §12.3 indica que a un super-administrador no se le envía nada.
+   - Los dos renderizan con Mermaid CLI.
+
+### RE y pruebas
+
+| Punto | Prueba |
+|---|---|
+| RN-G13: la solicitud por correo da la misma respuesta, sin solicitud ni correo | `M5C11VinculosTest::testLaSolicitudPorCorreoAUnSuperAdministradorRespondeIgualSinCrearNiEnviar` (controlador; compara con la respuesta para una cuenta cualquiera) |
+| RN-G13: búsqueda exacta y solicitud por id (modelo y controlador) | `testLaBusquedaYLaSolicitudPorIdTampocoDistinguenNiLigan` |
+| RN-G13: enlace viejo y registro del propietario | `testUnEnlaceViejoNoLigaAlSuperAdministrador`, `testElRegistroDelPropietarioTampocoLeEnviaUnVinculo` |
+| RN-115: mascotas inactivas, autorización en 0, auditoría; Sur no cambia | `testDesactivarDesdeLaClinicaDejaLasMascotasInactivasSoloEnEsaClinica` |
+| Decisión: con citas sin resolver no se desactiva | `testConCitasSinResolverLaClinicaNoDesactivaNiTocaNada` |
+| Sin consulta ni vacuna (403); recordatorios solo de Sur | `testLaClinicaNoRegistraConsultaNiVacunaYNoSalenSusRecordatorios` |
+| RN-110: reconfirmar no reactiva sola a la mascota; agendar sí | `testAlReconfirmarYAgendarLaMascotaSeReactiva` |
+| La ficha no muestra el documento con datos anteriores a C1.1 | `M5C1HuecosTest::testLaFichaNoMuestraElDocumentoSiSoloElVinculoDelPropietarioEstaInactivo` (separada de la de C1, porque ahora Luna queda inactiva) |
+
+Mutaciones comprobadas: no excluir al super-administrador al pedir el vínculo, no excluirlo al confirmar y desactivar sin las mascotas hacen fallar sus pruebas.
+
+### Verificación
+
+- `vendor/bin/phpunit`: **633 en verde** (9 nuevas). Sin MySQL: 3618 aserciones y 29 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 3980 aserciones y ninguna omitida.
+- JS: **110 en verde** (C1.1 no cambió JS).
+- No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+
+### Pendientes
+
+- El estado de cita `pausada` (en el esquema, para HU-4.14) no está entre las «citas sin resolver». Hoy ningún código lo usa. Hay que sumarlo cuando llegue el módulo 4.
+- C2: portal. C3: modal de vincular mascota y aviso de solo lectura en la historia del veterinario.
+
+### Pantallas para el usuario (C1 y C1.1)
+
+1. **Ana (Norte) → Usuarios › Clientes → desactivar a Fabio.**
+   - Primero, con una cita pendiente de Luna en Norte, debe salir «Tiene 1 cita sin resolver…» y nada cambia.
+   - Cancela la cita y desactívalo: su tarjeta queda con el nombre y «Desvinculado», sin documento, teléfono ni «Editar».
+   - En Pacientes, Luna ya no aparece en Norte; en Sur sigue igual.
+2. **Reactivar a Fabio:** vuelve a activar el interruptor. La solicitud llega a `logs/correos/`; confírmala. Sus datos reaparecen, pero Luna sigue fuera de Norte. Con Fabio, agenda a Luna en Norte desde el portal: Luna vuelve a Pacientes de Norte.
+3. **Diego (Sur) → Pacientes › Nueva mascota:**
+   - Busca el documento de un propietario que no es de Sur. Debe salir solo «Hay una cuenta con ese dato. Pide la confirmación por correo», sin nombre ni mascotas.
+   - Busca el correo del super-administrador y pulsa «Solicitar confirmación»: dice «Se envió la solicitud…», pero en `logs/correos/` no aparece ningún correo nuevo.
+4. **Completar perfil** con un documento que ya existe: mensaje genérico, y el caso aparece en la pestaña Soporte del super-administrador. Si tienes Google en local: «Registrarme con Google» desde Sur con una cuenta existente deja a Sur en «Mis clínicas».
+
+### C1.1 — Revisión (2026-10-12)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de la prueba del usuario (las cuatro pantallas del Anexo C1.1 juntan C1 y C1.1). PHP 633 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 110/110. `models/VinculoClinica` deja en un solo lugar la regla de citas sin resolver y la desactivación (vínculo, autorización y mascotas), y la usan el portal y Clientes dentro de su transacción. El super-administrador recibe la misma respuesta por las tres vías sin solicitud ni correo, y un enlace viejo no lo liga. La decisión del usuario durante C1.1 (la clínica tampoco desactiva con citas sin resolver) queda en el Anexo.
+
+**Para el módulo 4:** cuando se use el estado de cita `pausada` (HU-4.14), sumarlo a `VinculoClinica::CITAS_SIN_RESOLVER`.
+
+## C2 — Alcance (2026-10-12)
+
+El portal del propietario con la estructura aprobada (Anexo A §4 y decisión 4 de «A — Revisión»), el hueco 8 y los menores del portal del Anexo A. Escribe Claude Code; revisa Claude.

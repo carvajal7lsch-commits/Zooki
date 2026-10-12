@@ -639,6 +639,10 @@ flowchart TD
   D2 -- Si --> D2N[/"Mensaje: tienes N citas sin resolver; cancela las pendientes o confirmadas,<br/>las que estan en atencion las cierra la clinica"/]
   D2N --> ZF
   D2 -- No --> D3["En una transaccion: vinculo inactivo, autorizacion de historia en 0<br/>y las mascotas del propietario desvinculadas de esa clinica"]
+
+  C0(["Clientes, en la clinica: desactivar el vinculo de un cliente"]) --> CC{"Tiene citas sin resolver en esta clinica?"}
+  CC -- Si --> CCN[/"Mensaje: tiene N citas sin resolver; cancelalas o cierralas antes de desactivar el vinculo"/]
+  CC -- No --> D3
   D3 --> D4["RN-115: la clinica conserva sus propios registros en solo lectura; no ve lo de otras clinicas<br/>ni registra nada nuevo, y del propietario solo ve el nombre y la marca Desvinculado"]
   D4 --> AUD
 
@@ -651,9 +655,10 @@ flowchart TD
 
   AUD --> UI[/"Actualizar la pantalla con la respuesta del servidor y mostrar un aviso breve"/]
   UI --> ZF
+  CCN --> ZF
 ```
 
-La misma regla de RN-115 vale cuando es la clínica la que desactiva el vínculo desde Clientes: deja de ver el documento, el correo y el teléfono del propietario (en su lista, en la ficha de la mascota y en las citas) y ya no edita sus datos. Para reactivarlo, le pide la confirmación por correo y el propietario la acepta (§12.3).
+La clínica también puede desactivar el vínculo desde Clientes (entrada «Clientes» del diagrama): se rechaza con citas sin resolver en ella y, si procede, se aplica lo mismo que cuando se desvincula el propietario (decisiones del usuario en M5, C1.1). Sus mascotas quedan inactivas allí: la clínica solo lee lo suyo, no registra nada nuevo y no salen sus recordatorios. Deja de ver el documento, el correo y el teléfono del propietario (en su lista, en la ficha de la mascota y en las citas) y ya no edita sus datos. Para reactivarlo, le pide la confirmación por correo y el propietario la acepta (§12.3); sus mascotas vuelven a esa clínica cuando se agendan o se atienden allí (RN-110). Nunca se pide el vínculo de una cuenta de super-administrador (RN-G13): la clínica recibe la respuesta de siempre, pero no se crea la solicitud ni se envía el correo, y un enlace anterior tampoco la liga.
 
 
 ---
@@ -780,7 +785,7 @@ flowchart TD
   D -- No --> E[["Alta del propietario por el personal (§11)"]]
   D -- Si --> FL{"Tiene vinculo activo con esta clinica?"}
   FL -- No --> FL0[/"Mensaje: hay una cuenta con ese dato, pide la confirmacion por correo;<br/>sin nombre, contacto ni mascotas (RN-109)"/]
-  FL0 --> FL1[["Enviar al titular la confirmacion del vinculo por correo (§11)"]]
+  FL0 --> FL1[["Enviar al titular la confirmacion del vinculo por correo (§11);<br/>a una cuenta de super-administrador no se envia nada, con la misma respuesta (RN-G13)"]]
   FL1 --> FL2[/"Vuelve a buscarlo cuando confirme"/]
   FL2 --> ZF
   FL -- Si --> F[Seleccionar al propietario]
