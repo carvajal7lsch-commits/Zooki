@@ -19,7 +19,7 @@
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
-- **Siguiente paso:** el usuario aprueba el plan M5 y sus decisiones; luego Codex hace la etapa A (inventario, solo lectura) y el arquitecto dibuja los diagramas que faltan (etapa B). Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
+- **Siguiente paso:** módulo 5 — Portal multi-clínica y vínculos (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13, HU-2.10). Plan en `specs/M5-portal-multiclinica.md`, pendiente de aprobación del usuario y de la decisión de la foto de Google. Primera etapa: A (inventario y verificación), la escribe Claude Code en la rama `v2/m5-portal`. Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 

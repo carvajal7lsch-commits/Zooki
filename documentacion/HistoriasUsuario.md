@@ -475,7 +475,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 **Criterios de aceptación:**
 
 - Desde el enlace o QR de una clínica, o eligiéndola de la lista, puedo continuar con Google; el registro de clínicas y el alta de personal no ofrecen esta opción.
-- Si mi correo es nuevo, antes de crear la cuenta acepto la política de tratamiento de datos; si no acepto, no se guarda la identidad ni el vínculo con la clínica. Al aceptar, se crea la cuenta con el nombre, el correo y la foto de Google, sin verificar de nuevo el correo, y quedo vinculado a esa clínica.
+- Si mi correo es nuevo, antes de crear la cuenta acepto la política de tratamiento de datos; si no acepto, no se guarda la identidad ni el vínculo con la clínica. Al aceptar, se crea la cuenta con el nombre y el correo de Google (la foto no se guarda), sin verificar de nuevo el correo, y quedo vinculado a esa clínica.
 - Antes de usar el portal completo, una pantalla obligatoria me pide el tipo y número de documento y el teléfono; mientras no la complete, no puedo registrar mascotas ni agendar.
 - Si mi correo ya tiene cuenta, Google se vincula a ella; si estaba pendiente de verificar, queda verificada, se anula la contraseña que tenía y me pide confirmar mis datos.
 - El token de Google se valida contra el client_id de Zooki (RN-G12).

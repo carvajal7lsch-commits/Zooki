@@ -605,7 +605,7 @@ flowchart TD
   GGP --> GGA{Acepta expresamente?}
   GGA -- No --> GGNA[/"No se crea cuenta ni vinculo"/]
   GGNA --> ZF
-  GGA -- Si --> GG5["Crear la identidad con nombre, correo y foto de Google<br/>y guardar la prueba de aceptacion; perfil incompleto"]
+  GGA -- Si --> GG5["Crear la identidad con nombre y correo de Google<br/>y guardar la prueba de aceptacion; perfil incompleto"]
   GG5 --> GG6["Ligar a esta clinica (propietario_clinica)"]
   GG6 --> GG7[["Completar el perfil (§13.1)"]]
   GG7 --> AUD
