@@ -166,7 +166,7 @@ final class RegistroPropietario
             throw new InvalidArgumentException('Elige el tipo de documento.');
         }
         if (ValidadorCuenta::documento($documento) !== null) {
-            throw new InvalidArgumentException('El documento debe tener entre 5 y 15 dígitos.');
+            throw new InvalidArgumentException(ValidadorCuenta::documento($documento));
         }
         $this->exigirTelefono($telefono);
         $otro = $this->usuarios->buscarPorDocumento($documento);
@@ -216,14 +216,14 @@ final class RegistroPropietario
             throw new InvalidArgumentException('Elige el tipo de documento.');
         }
         if (ValidadorCuenta::documento($datos['documento']) !== null) {
-            throw new InvalidArgumentException('El documento debe tener entre 5 y 15 dígitos.');
+            throw new InvalidArgumentException(ValidadorCuenta::documento($datos['documento']));
         }
         if (ValidadorCuenta::nombre($datos['nombre_completo']) !== null) {
             throw new InvalidArgumentException(ValidadorCuenta::nombre($datos['nombre_completo']));
         }
         $this->exigirTelefono($datos['telefono']);
         if (ValidadorCuenta::correo($datos['email']) !== null) {
-            throw new InvalidArgumentException('El correo electrónico no tiene un formato válido.');
+            throw new InvalidArgumentException(ValidadorCuenta::correo($datos['email']));
         }
         if ($datos['password'] !== (string) ($entrada['confirm_password'] ?? '')) {
             throw new InvalidArgumentException('Las contraseñas no coinciden.');

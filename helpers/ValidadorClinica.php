@@ -30,10 +30,10 @@ final class ValidadorClinica
     {
         $valor = ValidadorCuenta::normalizar($campo, $valor);
         return match ($campo) {
-            'nit' => preg_match('/^[0-9]{1,14}$/D', $valor) && (int) $valor > 0 ? null : 'El NIT solo admite de 1 a 14 dígitos; escribe el DV en su casilla.',
-            'dv' => preg_match('/^[0-9]$/D', $valor) ? null : 'El DV debe ser un solo dígito.',
-            'nombre_clinica' => self::textoValido($valor, self::NOMBRE_MIN, self::NOMBRE_MAX) ? null : 'El nombre de la clínica debe tener entre 3 y 150 caracteres y usar letras, números o signos de nombre.',
-            'direccion' => self::textoValido($valor, 1, self::DIRECCION_MAX) ? null : 'Escribe una dirección de hasta 255 caracteres con letras, números y signos de dirección.',
+            'nit' => preg_match('/^[0-9]{1,14}$/D', $valor) && (int) $valor > 0 ? null : 'NIT de 1 a 14 dígitos, sin el DV.',
+            'dv' => preg_match('/^[0-9]$/D', $valor) ? null : 'El DV es un solo dígito.',
+            'nombre_clinica' => self::textoValido($valor, self::NOMBRE_MIN, self::NOMBRE_MAX) ? null : 'Nombre de 3 a 150 caracteres.',
+            'direccion' => self::textoValido($valor, 1, self::DIRECCION_MAX) ? null : 'Dirección de hasta 255 caracteres.',
             'email_clinica', 'email_administrador' => ValidadorCuenta::correo($valor) ?? DominiosDesechables::validar($valor),
             default => 'Campo no válido.',
         };

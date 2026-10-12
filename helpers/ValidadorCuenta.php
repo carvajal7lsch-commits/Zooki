@@ -38,13 +38,13 @@ final class ValidadorCuenta
     public static function documento(string $valor): ?string
     {
         $valor = self::normalizar('documento', $valor);
-        return preg_match('/^\d{5,15}$/D', $valor) ? null : 'El documento debe tener entre 5 y 15 dígitos.';
+        return preg_match('/^\d{5,15}$/D', $valor) ? null : 'Documento de 5 a 15 dígitos.';
     }
 
     public static function correo(string $valor): ?string
     {
         $valor = self::normalizar('email', $valor);
-        return filter_var($valor, FILTER_VALIDATE_EMAIL) && strlen($valor) <= self::CORREO_MAX ? null : 'Escribe un correo electrónico válido.';
+        return filter_var($valor, FILTER_VALIDATE_EMAIL) && strlen($valor) <= self::CORREO_MAX ? null : 'Escribe un correo válido.';
     }
 
     public static function telefono(string $valor): ?string
@@ -56,8 +56,8 @@ final class ValidadorCuenta
     {
         $valor = self::normalizar('nombre_completo', $valor);
         if (mb_strlen($valor) < 3 || mb_strlen($valor) > self::NOMBRE_MAX) {
-            return 'El nombre debe tener entre 3 y 100 caracteres.';
+            return 'Nombre de 3 a 100 caracteres.';
         }
-        return preg_match('/^[' . self::NOMBRE_CARACTERES . ']+$/uD', $valor) ? null : 'El nombre solo admite letras, espacios, apóstrofo y guion.';
+        return preg_match('/^[' . self::NOMBRE_CARACTERES . ']+$/uD', $valor) ? null : "Nombre: letras, espacios, ' y -.";
     }
 }
