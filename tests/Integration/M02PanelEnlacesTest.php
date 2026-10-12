@@ -85,7 +85,7 @@ final class M02PanelEnlacesTest extends TestCase
         $this->assertStringContainsString('Gratuito · sin pago', $html, 'En la tabla.');
         $this->assertStringContainsString('11 oct 2026', $html);
         $this->assertStringNotContainsString('2026-10-11 18:35:45', $html);
-        $this->assertStringNotContainsString('Sin suscripción', $html);
+        $this->assertStringNotContainsString('<i class="bi bi-credit-card" aria-hidden="true"></i> Sin suscripción', $html, 'La tarjeta no dice «Sin suscripción» de un gratuito.');
         $this->assertMatchesRegularExpression('/<progress class="plataforma-uso__barra" max="2" value="\d">/', $html);
         // El modal tiene dos pestañas: el aviso sigue en Seguridad (decisión del usuario, 2026-10-11).
         $this->assertSame(2, substr_count($html, 'data-modal-pestana='));
@@ -108,10 +108,10 @@ final class M02PanelEnlacesTest extends TestCase
         // Una clínica pendiente aún no tiene plan (se asigna al verificar, HU-0.2).
         $this->db->exec('UPDATE clinicas SET id_plan = NULL WHERE id_clinica = 4');
         $porNit = $this->panel(['buscar' => '901234567-7']);
-        $this->assertSame(1, substr_count($porNit, '<article class="person-card plataforma-tarjeta"'));
+        $this->assertSame(1, substr_count($porNit, '<article class="person-card plataforma-tarjeta" data-clinica-fila'));
         $this->assertStringContainsString('Clínica Norte', $porNit);
         $porPlan = $this->panel(['plan' => '2']);
-        $this->assertSame(1, substr_count($porPlan, '<article class="person-card plataforma-tarjeta"'));
+        $this->assertSame(1, substr_count($porPlan, '<article class="person-card plataforma-tarjeta" data-clinica-fila'));
         $this->assertStringContainsString('Clínica Sur', $porPlan);
         $vacio = $this->panel(['estado' => 'baja']);
         $this->assertMatchesRegularExpression('/data-sin-resultados >/', $vacio, 'El estado vacío se ve.');

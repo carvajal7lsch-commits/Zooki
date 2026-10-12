@@ -134,68 +134,7 @@ test('M0.2: el buscador encuentra por nombre o NIT con guion, combina estado y p
     assert.equal(p.vacio.hidden, false, 'Sin coincidencias se ve el estado vacío.');
 });
 
-test('M0.2: el modal «Gestionar» abre por pestañas con estado, NIT y administrador en la cabecera', () => {
-    const pestanasModal = ['plan', 'estado'].map(nombre => elemento({ dataset: { modalPestana: nombre } }));
-    const panelesModal = ['plan', 'estado'].map(nombre => elemento({ dataset: { modalPanel: nombre } }));
-    const cabecera = { titulo: elemento(), estado: elemento({ prepend(hijo) { this.icono = hijo; } }), nit: elemento(), admin: elemento() };
-    const formulario = accion => {
-        const salida = elemento();
-        const boton = elemento({ disabled: false });
-        const aviso = elemento({ hidden: true });
-        const opciones = [{ value: 'suspendida' }, { value: 'baja' }, { value: 'activa' }];
-        return elemento({
-            dataset: { plataformaAccion: accion },
-            elements: { id_clinica: { value: '' }, id_plan: { value: '' }, estado: { value: '', options: opciones }, motivo: { setCustomValidity() {} } },
-            reset() {},
-            querySelector: selector => ({ '[data-resultado]': salida, '[data-error-campo]': elemento(), button: boton, '[data-aviso-plan]': aviso })[selector] || null,
-            boton, aviso,
-        });
-    };
-    const plan = formulario('plataforma_suscripcion_ajax');
-    const estados = formulario('plataforma_estado_ajax');
-    const dialogo = elemento({
-        querySelector: selector => ({
-            '[data-clinica-titulo]': cabecera.titulo, '[data-clinica-estado]': cabecera.estado, '[data-clinica-nit]': cabecera.nit,
-            '[data-clinica-admin]': cabecera.admin, '[data-plataforma-accion="plataforma_suscripcion_ajax"]': plan,
-            '[data-plataforma-accion="plataforma_estado_ajax"]': estados, select: elemento(),
-        })[selector] || null,
-        querySelectorAll: selector => ({ form: [plan, estados], '[data-modal-pestana]': pestanasModal, '[data-modal-panel]': panelesModal })[selector] || [],
-    });
-    const gestionar = elemento({ dataset: { gestionarClinica: '4', nombre: 'Pendiente', estado: 'pendiente_verificacion', estadoTexto: 'Pendiente de verificación', estadoClase: 'plataforma-estado--pendiente', estadoIcono: 'bi-hourglass-split', nit: '900123456-8', administrador: 'olga@zooki.test (por confirmar)', plan: '' } });
-    gestionar.hasAttribute = () => false;
-    const eventos = {};
-    const contexto = {
-        TextEncoder,
-        localStorage: { getItem: () => null, setItem() {} },
-        document: {
-            addEventListener: (tipo, callback) => { eventos[tipo] = callback; },
-            querySelectorAll: () => [],
-            querySelector: () => null,
-            createElement: () => elemento(),
-            getElementById: id => (id === 'gestionarClinica' ? dialogo : null),
-        },
-    };
-    contexto.window = contexto;
-    vm.runInNewContext(codigo('public/js/plataforma.js'), contexto);
-    contexto.ZookiPlataforma.pestanaModal(dialogo, 'estado');
-    assert.deepEqual(panelesModal.map(panelX => panelX.hidden), [true, false]);
-    assert.equal(pestanasModal[1].getAttribute('aria-selected'), 'true');
-    contexto.ZookiPlataforma.pestanaModal(dialogo, 'plan');
-    assert.deepEqual(panelesModal.map(panelX => panelX.hidden), [false, true]);
-    // Una clínica pendiente abre en Estado, con su cabecera.
-    eventos.click({ target: { closest: () => gestionar } });
-    assert.equal(cabecera.titulo.textContent, 'Pendiente');
-    assert.equal(cabecera.estado.textContent, ' Pendiente de verificación');
-    assert.equal(cabecera.estado.className, 'tag-mini plataforma-estado plataforma-estado--pendiente');
-    assert.equal(cabecera.estado.icono.className, 'bi bi-hourglass-split', 'La misma etiqueta con icono de la tarjeta.');
-    assert.equal(cabecera.nit.textContent, 'NIT 900123456-8');
-    assert.equal(cabecera.admin.textContent, 'olga@zooki.test (por confirmar)');
-    assert.equal(plan.boton.disabled, true, 'Sin plan hasta verificar.');
-    assert.equal(plan.aviso.hidden, false, 'Y se dice por qué.');
-    assert.deepEqual(panelesModal.map(panelX => panelX.hidden), [true, false], 'Abre en Estado.');
-    assert.equal(dialogo.classList.contains('is-open'), true);
-});
-
+// M0.2.1: el modal «Gestionar» se prueba en M021Gestionar.test.cjs.
 test('M0.2: la vista del panel sin JS ni CSS en línea y con un contador por pestaña', () => {
     const vista = codigo('views/plataforma/inicio.php');
     assert.doesNotMatch(vista, /\sstyle=|\son[a-z]+=|<script>\s*\S/);
@@ -203,7 +142,9 @@ test('M0.2: la vista del panel sin JS ni CSS en línea y con un contador por pes
     assert.match(vista, /data-contador-seguridad/);
     assert.doesNotMatch(vista, /data-indicador|plataforma-indicador/);
     assert.match(vista, /class="header-container-white/);
-    assert.doesNotMatch(codigo('public/css/plataforma.css'), /#(?:067647|ECFDF3|B54708|FFFAEB|B42318|FEF3F2|5925DC|F4F3FF)/i, 'Sin verdes, ámbar, rojos ni violetas: identidad azul.');
+    // M0.2.1: el rojo solo en la zona de riesgo de «Dar de baja» (alcance aprobado por el usuario).
+    const css = codigo('public/css/plataforma.css').replace(/\.(?:plataforma-riesgo|plataforma-opcion--riesgo|btn-modal-peligro)[^{]*\{[^}]*\}/g, '');
+    assert.doesNotMatch(css, /#(?:067647|ECFDF3|B54708|FFFAEB|B42318|FEF3F2|5925DC|F4F3FF|d92d20|fecaca|fff5f5)/i, 'Sin verdes, ámbar, rojos ni violetas fuera de la zona de riesgo.');
     assert.equal((vista.match(/data-modal-pestana=/g) || []).length, 2);
     assert.doesNotMatch(vista, /\?v=e2|\?v=d\d/);
 });
