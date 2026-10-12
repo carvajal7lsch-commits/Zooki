@@ -29,12 +29,13 @@ final class Plataforma
         return $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
     }
 
-    public function clinicas(string $buscar = '', string $estado = ''): array
+    public function clinicas(string $buscar = '', string $estado = '', string $plan = ''): array
     {
         $this->exigirPlataforma();
         $buscar = ValidadorPlataforma::busqueda($buscar);
-        if (mb_strlen($buscar) > ValidadorPlataforma::BUSQUEDA_MAX || !in_array($estado, ['', 'activa', 'pendiente_verificacion', 'suspendida', 'baja'], true)) {
-            throw new InvalidArgumentException('Revisa la búsqueda y el estado.');
+        if (mb_strlen($buscar) > ValidadorPlataforma::BUSQUEDA_MAX || !in_array($estado, ['', 'activa', 'pendiente_verificacion', 'suspendida', 'baja'], true)
+            || ($plan !== '' && !ctype_digit($plan))) {
+            throw new InvalidArgumentException('Revisa la búsqueda, el estado y el plan.');
         }
         $sql = "SELECT c.id_clinica, c.nombre, c.nit, c.estado, c.fecha_registro, c.id_plan, p.nombre AS plan,
             s.estado AS suscripcion,
@@ -42,10 +43,12 @@ final class Plataforma
             (SELECT v.email FROM verificaciones_email v WHERE v.id_clinica_vinculo = c.id_clinica AND v.proposito IN ('registro_clinica','vinculo_admin_clinica') AND v.used = 0 ORDER BY v.id DESC LIMIT 1) AS administrador_pendiente
             FROM clinicas c LEFT JOIN planes p ON p.id_plan = c.id_plan
             LEFT JOIN suscripciones s ON s.id_suscripcion = (SELECT MAX(ss.id_suscripcion) FROM suscripciones ss WHERE ss.id_clinica = c.id_clinica)
-            WHERE (? = '' OR c.estado = ?) AND (? = '' OR c.nombre LIKE ? ESCAPE '!' OR c.nit LIKE ? ESCAPE '!') ORDER BY c.fecha_registro DESC, c.id_clinica DESC";
+            WHERE (? = '' OR c.estado = ?) AND (? = '' OR c.id_plan = ?) AND (? = '' OR c.nombre LIKE ? ESCAPE '!' OR c.nit LIKE ? ESCAPE '!') ORDER BY c.fecha_registro DESC, c.id_clinica DESC";
         $patron = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $buscar) . '%';
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$estado, $estado, $buscar, $patron, $patron]);
+        // M0.2: el NIT se guarda sin guion; buscar «901234567-7» también lo encuentra.
+        $patronNit = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], str_replace('-', '', $buscar)) . '%';
+        $stmt->execute([$estado, $estado, $plan, $plan === '' ? 0 : (int) $plan, $buscar, $patron, $patronNit]);
         $clinicas = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($clinicas as &$clinica) {
             // E2: excepción explícita de plataforma para números, sin fichas ni citas.
@@ -57,7 +60,8 @@ final class Plataforma
     public function planes(): array
     {
         $this->exigirPlataforma();
-        return $this->db->query('SELECT id_plan, nombre FROM planes WHERE estado = 1 ORDER BY id_plan')->fetchAll(PDO::FETCH_ASSOC);
+        // M0.2.1: los topes se muestran en las tarjetas de plan del modal (metadatos, RN-004).
+        return $this->db->query('SELECT id_plan, nombre, precio_mensual, limite_personal, limite_mascotas, limite_citas_mes FROM planes WHERE estado = 1 ORDER BY id_plan')->fetchAll(PDO::FETCH_ASSOC);
     }
 
     private function clinica(int $id): array
@@ -126,7 +130,8 @@ final class Plataforma
     public function casos(): array
     {
         $this->exigirPlataforma();
-        return $this->db->query('SELECT id_caso, tipo, id_clinica, descripcion, estado, fecha, fecha_cierre FROM casos_soporte ORDER BY fecha DESC, id_caso DESC')->fetchAll(PDO::FETCH_ASSOC);
+        // M0.2.1: el nombre de la clínica del caso, para su tarjeta (metadato de plataforma).
+        return $this->db->query('SELECT cs.id_caso, cs.tipo, cs.id_clinica, c.nombre AS clinica, cs.descripcion, cs.estado, cs.fecha, cs.fecha_cierre FROM casos_soporte cs LEFT JOIN clinicas c ON c.id_clinica = cs.id_clinica ORDER BY cs.fecha DESC, cs.id_caso DESC')->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function cerrarCaso(int $id, string $estado, string $nota): void

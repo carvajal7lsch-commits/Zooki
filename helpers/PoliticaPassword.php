@@ -80,15 +80,15 @@ class PoliticaPassword
 
         if (self::esDemasiadoComun($password)) {
             // D2.2 (hallazgo del usuario): un mensaje que se entienda sin hablar de listas.
-            return 'Esa contraseña es muy común y fácil de adivinar. Elige otra.';
+            return 'Contraseña muy común; elige otra.';
         }
 
         if (self::tienePatronTrivial($password)) {
-            return 'Evita secuencias o caracteres repetidos (como "12345", "abcde" o "aaaa").';
+            return 'Evita secuencias como 12345 o aaaa.';
         }
 
         if (self::usaDatosPersonales($password, $datosPersonales)) {
-            return 'La contraseña no puede contener tu documento, tu nombre ni tu correo.';
+            return 'No uses tus datos en la contraseña.';
         }
 
         return null;

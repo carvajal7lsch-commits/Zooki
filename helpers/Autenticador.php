@@ -16,11 +16,12 @@ require_once __DIR__ . '/Turnstile.php';
  *  · inactiva    contraseña correcta, cuenta inactiva
  *  · pendiente   contraseña correcta, falta verificar el correo (HU-36)
  *  · nueva       (solo Google) no hay cuenta con ese correo
+ *  · captcha     el identificador acumula 5 fallos y no llegó un CAPTCHA válido
  *
  * `id_cuenta` es el id_usuario cuando el identificador corresponde a una
- * cuenta, aunque el intento falle: con él se cuenta el límite por cuenta
- * (RN-G15). El mensaje al cliente es el mismo en «fallo» y en «inactiva», así
- * que no revela si la cuenta existe.
+ * cuenta, aunque el intento falle: con él se audita el fallo. El mensaje al
+ * cliente es el mismo en «fallo» y en «inactiva», así que no revela si la
+ * cuenta existe.
  */
 final class Autenticador
 {
@@ -59,27 +60,32 @@ final class Autenticador
         return $this->despuesDeVerificar($usuario);
     }
 
-    /** RE-T.13.5: IP y cuenta se tratan por separado; CAPTCHA sustituible en pruebas. */
+    /** RE-T.13.5: IP e identificador se tratan por separado; CAPTCHA sustituible en pruebas. */
     public function conPasswordProtegido(string $identificador, string $password, string $token, Turnstile $captcha): array
     {
         $resultado = $this->conPassword($identificador, $password);
-        return $this->proteger($resultado, $token, $captcha);
+        return $this->proteger($resultado, $identificador, $token, $captcha);
     }
 
     public function conGoogleProtegido(string $email, string $token, Turnstile $captcha): array
     {
-        return $this->proteger($this->conGoogle($email), $token, $captcha);
+        return $this->proteger($this->conGoogle($email), $email, $token, $captcha);
     }
 
-    private function proteger(array $resultado, string $token, Turnstile $captcha): array
+    /**
+     * M0.1: «captcha» sale igual con la contraseña correcta o incorrecta y
+     * exista o no la cuenta, porque depende solo del identificador escrito
+     * (Security::exigeCaptcha). Así el login puede mostrar el widget solo
+     * cuando hace falta sin revelar nada (RN-G15).
+     */
+    private function proteger(array $resultado, string $identificador, string $token, Turnstile $captcha): array
     {
-        $cuenta = $resultado['id_cuenta'] !== null ? (string) $resultado['id_cuenta'] : null;
-        if (!Security::checkRateLimit($cuenta)) {
+        if (!Security::checkRateLimit($identificador)) {
             return ['resultado' => 'limite_ip', 'usuario' => null, 'id_cuenta' => $resultado['id_cuenta']];
         }
         // D2.1: la misma IP real que los límites (Auditoria::ipCliente), no la del proxy.
-        if (Security::exigeCaptcha($cuenta) && !$captcha->validar($token, Auditoria::ipCliente())) {
-            return ['resultado' => 'fallo', 'usuario' => null, 'id_cuenta' => $resultado['id_cuenta']];
+        if (Security::exigeCaptcha($identificador) && !$captcha->validar($token, Auditoria::ipCliente())) {
+            return ['resultado' => 'captcha', 'usuario' => null, 'id_cuenta' => $resultado['id_cuenta']];
         }
         return $resultado;
     }

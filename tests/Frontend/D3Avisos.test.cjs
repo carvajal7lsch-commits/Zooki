@@ -85,15 +85,15 @@ test('el toast de redirección se recupera una sola vez y conserva SweetAlert2 n
 
 test('registro de clínicas conserva los componentes de acceso y no incluye Google ni código en línea', () => {
     const vista = codigo('views/auth/registro_clinica.php');
-    assert.match(vista, /login-hero/);
+    assert.match(vista, /partials\/acceso_hero\.php/);
     assert.match(vista, /data-validacion-cuenta/);
     assert.match(vista, /data-turnstile-formulario/);
     assert.doesNotMatch(vista, /gsi\/client|btnGoogle|\sstyle=|\son[a-z]+=|<script>\s*\S/);
 });
 
 test('cada formulario renueva únicamente su widget de Turnstile y no crea duplicados', () => {
-    const propietario = { dataset: { sitekey: 'prueba' } };
-    const clinica = { dataset: { sitekey: 'prueba' } };
+    const propietario = { dataset: { sitekey: 'prueba' }, closest: () => null };
+    const clinica = { dataset: { sitekey: 'prueba' }, closest: () => null };
     const renderizados = [];
     const renovados = [];
     let iniciar;
@@ -150,30 +150,41 @@ for (const crear of [false, true]) {
 }
 
 test('autorregistro: éxito genérico conserva la pantalla común y siempre renueva el CAPTCHA', async () => {
-    const boton = {};
+    // M0.1: register.js envía con la ventana común de registro-cuenta.js.
     const eventos = {};
-    const formulario = { hidden: false, querySelector: () => boton, addEventListener(tipo, callback) { eventos[tipo] = callback; } };
-    const nodos = {
-        registerForm: formulario, documento_reg: {}, password_reg: {}, confirm_password: {}, email_reg: {},
-        registroEspera: { hidden: true }, registroEsperaEstado: {}, registroEsperaVolver: { addEventListener() {} },
+    const estados = [{ dataset: { esperaEstado: 'cargando' }, hidden: false }, { dataset: { esperaEstado: 'listo' }, hidden: true }];
+    const mensaje = { textContent: '' };
+    const ventana = { hidden: true, querySelectorAll: () => estados, querySelector: () => mensaje };
+    const resumen = { hidden: true, textContent: '' };
+    const formulario = {
+        hidden: false,
+        dataset: { registroEspera: 'registroEspera' },
+        querySelector: () => resumen,
+        addEventListener(tipo, callback) { eventos[tipo] = callback; },
     };
+    const nodos = { registerForm: formulario, registroEspera: ventana };
     let completar;
     const renovados = [];
     const contexto = {
-        document: { addEventListener(tipo, callback) { callback(); }, getElementById: id => nodos[id] || null },
-        window: { ZookiTurnstile: { reiniciar: form => renovados.push(form) } },
+        document: { addEventListener(tipo, callback) { callback(); }, getElementById: id => nodos[id] || null, querySelectorAll: () => [] },
         FormData: class {},
         fetch: async () => {
             await new Promise(resolve => { completar = resolve; });
             return { headers: { get: () => 'application/json' }, json: async () => ({ success: true, message: 'Revisa tu correo.' }) };
         },
     };
+    contexto.window = contexto;
+    contexto.ZookiTurnstile = { reiniciar: form => renovados.push(form) };
+    vm.runInNewContext(codigo('public/js/registro-cuenta.js'), contexto);
     vm.runInNewContext(codigo('public/js/register.js'), contexto);
     eventos.submit({ preventDefault() {} });
+    assert.equal(ventana.hidden, false, 'La ventana de carga aparece al enviar.');
+    assert.equal(estados[0].hidden, false);
     completar();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(nodos.registroEsperaEstado.textContent, 'Revisa tu correo.');
-    assert.equal(nodos.registroEspera.hidden, false);
+    assert.equal(mensaje.textContent, 'Revisa tu correo.');
+    assert.equal(estados[0].hidden, true);
+    assert.equal(estados[1].hidden, false);
     assert.equal(formulario.hidden, true);
     assert.deepEqual(renovados, [formulario]);
     assert.doesNotMatch(codigo('public/js/register.js'), /estado_verificacion_ajax|datos\.iniciar_sesion|datos\.esperando_confirmacion/);

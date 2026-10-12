@@ -20,6 +20,8 @@ function pagina() {
         document: {
             addEventListener: (tipo, callback) => { eventos[tipo] = callback; },
             querySelectorAll: selector => selector === '[data-lista-vista]' ? [tarjetas, tabla] : [],
+            querySelector: () => null,
+            createElement: () => ({ setAttribute() {} }),
             getElementById: () => ({ replaceWith: () => { actualizado = true; } }),
         },
         DOMParser: class {
@@ -114,58 +116,10 @@ test('E1: doble envío no repite la petición mientras espera confirmación', as
     assert.equal(p.solicitudes.filter(([, opciones]) => opciones.method === 'POST').length, 1);
 });
 
-test('E2: abrir modal, escribir motivo y pulsar Suspender llega al POST sin SweetAlert bloqueante', async () => {
-    const p = pagina();
-    const clase = new Set();
-    const atributo = {};
-    const errorCampo = { textContent: '' };
-    const motivo = {
-        value: '', dataset: { maxBytes: '65535' }, matches: () => true,
-        parentElement: { querySelector: () => errorCampo },
-        setAttribute() {}, setCustomValidity(valor) { this.error = valor; },
-    };
-    const botonGuardar = { disabled: false, dataset: {}, hasAttribute: () => false };
-    botonGuardar.closest = () => botonGuardar;
-    const estados = p.form('plataforma_estado_ajax', 'suspendida');
-    estados.elements = { estado: { value: '', options: [{ value: 'suspendida' }, { value: 'baja' }, { value: 'activa' }] }, motivo, id_clinica: { value: '' } };
-    estados.reset = () => { motivo.value = ''; };
-    estados.querySelectorAll = () => [motivo];
-    const salida = { textContent: '' };
-    estados.querySelector = selector => selector === 'button' ? botonGuardar : (selector === '[data-error-campo]' ? errorCampo : salida);
-    estados.reportValidity = () => motivo.value !== '' && !motivo.error;
-    const plan = p.form('plataforma_suscripcion_ajax');
-    plan.elements.id_plan = { value: '' };
-    plan.querySelector = () => ({ disabled: false });
-    const modal = {
-        classList: { add: valor => clase.add(valor) }, setAttribute: (clave, valor) => { atributo[clave] = valor; },
-        querySelectorAll: () => [estados],
-        querySelector: selector => selector.includes('suscripcion') ? plan : (selector.includes('estado_ajax') ? estados : (selector === 'select' ? { focus() {} } : {})),
-        showModal() { clase.add('dialog-nativo'); },
-    };
-    const obtenerOriginal = p.contexto.document.getElementById;
-    p.contexto.document.getElementById = id => id === 'gestionarClinica' ? modal : obtenerOriginal(id);
-    const gestionar = { dataset: { gestionarClinica: '1', nombre: 'Norte', estado: 'activa', plan: '1' }, hasAttribute: () => false };
-    p.eventos.click({ target: { closest: () => gestionar } });
-    motivo.value = 'Verificar el titular';
-    p.eventos.input({ target: motivo });
-    p.contexto.Swal.fire = () => { throw new Error('La suspensión no debe esperar otra confirmación'); };
-    // El clic activa la validación nativa y luego el submit que delega la pantalla.
-    p.eventos.click({ target: botonGuardar });
-    let cancelado = false;
-    if (estados.reportValidity()) p.eventos.submit({ target: estados, submitter: botonGuardar, preventDefault() { cancelado = true; } });
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(cancelado, true);
-    assert.equal(atributo['aria-hidden'], 'false');
-    assert.equal(p.solicitudes[0][0], 'index.php?action=plataforma_estado_ajax');
-    assert.equal(p.solicitudes[0][1].method, 'POST');
-    assert.equal(p.solicitudes[0][1].body.form.elements.estado.value, 'suspendida');
-    assert.equal(p.solicitudes[0][1].body.form.elements.id_clinica.value, '1');
-    assert.equal(p.actualizado(), true);
-});
-
+// M0.2.1: el modal «Gestionar» se prueba en M021Gestionar.test.cjs.
 test('E2: la plataforma usa componentes administrativos y su modal no entra en la capa superior nativa', () => {
     const vista = fs.readFileSync(path.join(__dirname, '../../views/plataforma/inicio.php'), 'utf8');
-    for (const elemento of ['css/styles.css', 'css/dashboard.css', 'css/usuarios.css', 'person-card', 'personal-grid', 'users-modal', 'users-table', 'view-toggle']) assert.ok(vista.includes(elemento));
+    for (const elemento of ['css/styles.css', 'css/dashboard.css', 'css/usuarios.css', 'person-card', 'personal-grid', 'users-modal', 'users-table', 'view-toggle', 'tabs-wrapper', 'search-input', 'filter-select']) assert.ok(vista.includes(elemento));
     assert.doesNotMatch(vista, /<dialog|data-validacion-cuenta|\sstyle=|\sonclick=/);
     const css = fs.readFileSync(path.join(__dirname, '../../public/css/plataforma.css'), 'utf8');
     assert.doesNotMatch(css, /(?:^|\n)(?:body|button|input|:root|\.person-card|\.users-modal)\s*\{/);

@@ -21,6 +21,18 @@ function clinicaDelRegistro() {
  * cuenta (RE-T.18.2).
  */
 function responderGoogle(data) {
+    // M0.1 (RE-T.13.5): el servidor pide el CAPTCHA; se muestra en el login y se vuelve a continuar con Google.
+    if (!data.success && data.extra && data.extra.captcha) {
+        const formulario = document.getElementById('loginForm');
+        if (formulario && window.ZookiTurnstile) window.ZookiTurnstile.mostrar(formulario);
+        Swal.fire({
+            icon: 'info',
+            title: 'Verificación de seguridad',
+            text: data.message,
+            confirmButtonColor: '#0052FF'
+        });
+        return;
+    }
     if (!data.success) {
         Swal.fire({
             icon: 'error',
@@ -197,17 +209,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnGoogleRegister) btnGoogleRegister.addEventListener('click', handleGoogleClick);
 
     // ── Lógica de Animación Flip (Login/Registro) ──
+    // M0.1: la cara del registro se abre desde el selector «Crear cuenta» (crear-cuenta.js).
     const authFlipper = document.querySelector('#authFlipper');
-    const showRegisterBtn = document.querySelector('#showRegisterBtn');
     const showLoginBtn = document.querySelector('#showLoginBtn');
     const btnBackToLoginTop = document.querySelector('#btnBackToLoginTop');
-
-    if (showRegisterBtn && authFlipper) {
-        showRegisterBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            authFlipper.classList.add('flipped');
-        });
-    }
 
     if (showLoginBtn && authFlipper) {
         showLoginBtn.addEventListener('click', (e) => {
@@ -224,9 +229,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Si hay un error de registro, o se llegó por el enlace de una clínica
-    // (action=register&clinica=ID, HU-5.8), se abre directo el registro.
-    const registerError = document.querySelector('.back .alert-error');
-    if (authFlipper && (registerError || authFlipper.dataset.abrirRegistro === '1')) {
+    // (action=register&clinica=ID, HU-5.8), la vista pide abrir el registro.
+    if (authFlipper && authFlipper.dataset.abrirRegistro === '1') {
         authFlipper.classList.add('flipped');
     }
 

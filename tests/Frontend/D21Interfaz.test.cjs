@@ -76,16 +76,16 @@ const respuesta = (datos = {}) => ({ ok: true, json: async () => ({ success: tru
 
 test('el formato se avisa en la misma tecla, sin esperar al servidor', () => {
     const documento = campo('documento');
-    const telefono = campo('telefono', { pattern: '[0-9+\\s\\-]{7,20}', title: 'El teléfono solo puede tener números, espacios, + y guiones (de 7 a 20 caracteres).' });
+    const telefono = campo('telefono', { pattern: '[0-9+\\s\\-]{7,20}', title: 'Teléfono de 7 a 20 caracteres.' });
     const correo = campo('email');
     const p = formulario([documento, telefono, correo], () => respuesta());
 
     p.escribir(documento, '12');
-    assert.equal(documento.aviso, 'El documento debe tener entre 5 y 15 dígitos.');
+    assert.equal(documento.aviso, 'Documento de 5 a 15 dígitos.');
     p.escribir(telefono, '300 abc');
     assert.equal(telefono.aviso, telefono.title);
     p.escribir(correo, 'fabio@');
-    assert.equal(correo.aviso, 'Escribe un correo electrónico válido.');
+    assert.equal(correo.aviso, 'Escribe un correo válido.');
     assert.equal(p.llamadas.length, 0, 'Nada de esto consulta al servidor.');
     assert.equal(p.temporizadores.length, 0, 'Ni programa una consulta.');
 

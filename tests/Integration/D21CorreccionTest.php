@@ -120,16 +120,17 @@ final class D21CorreccionTest extends TestCase
     public function testCincoFallosExigenCaptchaYLaCuentaNuncaSeBloquea(): void
     {
         // 30 fallos sobre Fabio desde 6 IP distintas, ninguna llega al límite de IP.
+        // M0.1: se cuentan por el identificador escrito (mayúsculas y espacios no cuentan aparte).
         for ($i = 0; $i < 30; $i++) {
             $_SERVER['REMOTE_ADDR'] = '192.0.2.' . (100 + intdiv($i, 5));
-            Security::recordFailedLogin('6');
+            Security::recordFailedLogin($i % 2 === 0 ? 'fabio@zooki.test' : ' Fabio@Zooki.TEST ');
         }
-        $this->assertTrue(Security::exigeCaptcha('6'));
+        $this->assertTrue(Security::exigeCaptcha('fabio@zooki.test'));
         $_SERVER['REMOTE_ADDR'] = '192.0.2.200';
         $_SESSION = [];
-        $this->assertTrue(Security::checkRateLimit('6'), 'La cuenta no se bloquea.');
+        $this->assertTrue(Security::checkRateLimit('fabio@zooki.test'), 'La cuenta no se bloquea.');
         $auth = new Autenticador(new Usuario($this->db), new VerificacionEmail($this->db));
-        $this->assertSame('fallo', $auth->conPasswordProtegido('fabio@zooki.test', DosClinicas::PASSWORD, '', new Turnstile(static fn () => true))['resultado'], 'Sin CAPTCHA no entra.');
+        $this->assertSame('captcha', $auth->conPasswordProtegido('fabio@zooki.test', DosClinicas::PASSWORD, '', new Turnstile(static fn () => true))['resultado'], 'Sin CAPTCHA no entra.');
         $this->assertSame('ok', $auth->conPasswordProtegido('fabio@zooki.test', DosClinicas::PASSWORD, 'token', new Turnstile(static fn () => true))['resultado'], 'Con CAPTCHA válido entra.');
     }
 
@@ -139,7 +140,7 @@ final class D21CorreccionTest extends TestCase
         $_SERVER['REMOTE_ADDR'] = '10.0.0.2';
         $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.50';
         for ($i = 0; $i < 5; $i++) {
-            Security::recordFailedLogin('6');
+            Security::recordFailedLogin('fabio@zooki.test');
         }
         $ipVista = null;
         $captcha = new Turnstile(function (string $token, string $ip) use (&$ipVista): bool {
@@ -155,9 +156,9 @@ final class D21CorreccionTest extends TestCase
         for ($i = 0; $i < 10; $i++) {
             Security::recordFailedLogin('2');
         }
-        Security::recordFailedLogin('6');
-        Security::resetRateLimit('6');
-        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM intentos_login WHERE identificador = 'cuenta:6'")->fetchColumn(), 'Limpia la cuenta.');
+        Security::recordFailedLogin('fabio@zooki.test');
+        Security::resetRateLimit('fabio@zooki.test');
+        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM intentos_login WHERE identificador = 'identificador:" . hash('sha256', 'fabio@zooki.test') . "'")->fetchColumn(), 'Limpia el identificador.');
         $this->assertArrayNotHasKey('rate_limit_192.0.2.10', $_SESSION, 'Limpia la sesión.');
         for ($i = 0; $i < 9; $i++) {
             Security::recordFailedLogin('2');

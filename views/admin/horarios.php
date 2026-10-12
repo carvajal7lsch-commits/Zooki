@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../config/App.php';
 /**
  * HU-7.1 — Configurar los horarios de atención de la clínica.
  *
@@ -151,5 +152,5 @@ $bloques = ['morning' => ['Mañana', '08:00', '12:00'], 'afternoon' => ['Tarde',
     </div>
 </div>
 
-<script src="js/time-picker.js"></script>
-<script src="js/horarios.js?v=3"></script>
+<script src="js/time-picker.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/horarios.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

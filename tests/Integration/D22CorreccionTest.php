@@ -538,7 +538,7 @@ final class D22CorreccionTest extends TestCase
 
     public function testElMensajeDeContrasenaComunSeEntiende(): void
     {
-        $mensaje = 'Esa contraseña es muy común y fácil de adivinar. Elige otra.';
+        $mensaje = 'Contraseña muy común; elige otra.';
         $this->assertSame($mensaje, PoliticaPassword::validar('Password123'));
         $this->assertStringContainsString("'" . $mensaje . "'", (string) file_get_contents(__DIR__ . '/../../public/js/password-policy.js'));
     }

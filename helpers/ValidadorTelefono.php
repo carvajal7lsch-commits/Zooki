@@ -13,7 +13,8 @@ final class ValidadorTelefono
     /** Caracteres admitidos, en el formato de una clase de expresión regular. */
     public const CARACTERES = '0-9+ \-';
 
-    public const MENSAJE = 'El teléfono solo puede tener números, espacios, + y guiones (de ' . self::MIN . ' a ' . self::MAX . ' caracteres).';
+    /** M0.1: aviso de una línea; los caracteres ilegales ya no se dejan escribir (data-caracteres). */
+    public const MENSAJE = 'Teléfono de ' . self::MIN . ' a ' . self::MAX . ' caracteres.';
 
     /** Espacios repetidos fuera, como se guarda. */
     public static function normalizar(string $telefono): string

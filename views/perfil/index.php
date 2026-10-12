@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../config/App.php';
 require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 /**
  * HU-42 / HU-39 — Panel "Mi perfil" del personal de la clínica.
@@ -159,4 +160,4 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
     <?php require __DIR__ . "/../partials/cambios_identidad.php"; ?>
 </div>
 
-<script src="js/perfil.js?v=d21"></script>
+<script src="js/perfil.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

@@ -119,6 +119,20 @@ final class RegistroClinica
         return $nombre !== false ? $fila + ['clinica' => $nombre] : null;
     }
 
+    /**
+     * M0.2 (bitácora de F1): quien abre el enlace ya probó que el correo es
+     * suyo, así que se le puede decir por qué no sigue: un super-administrador
+     * no tiene roles de clínica (RN-G13).
+     */
+    public const MENSAJE_SUPER_ADMIN = 'Esta cuenta administra la plataforma y no puede administrar una clínica. Regístrala con otro correo.';
+
+    public function esDeSuperAdministrador(array $fila): bool
+    {
+        $stmt = $this->db->prepare('SELECT es_super_admin FROM usuarios WHERE id_usuario = ?');
+        $stmt->execute([(int) $fila['id_usuario']]);
+        return (int) $stmt->fetchColumn() === 1;
+    }
+
     public function activar(int $id, string $token, array $entrada, string $ip): int
     {
         return Transaccion::ejecutar($this->db, function () use ($id, $token, $entrada, $ip): int {
@@ -141,7 +155,10 @@ final class RegistroClinica
             $stmt->execute([$usuario]);
             $persona = $stmt->fetch(PDO::FETCH_ASSOC);
             $nueva = $fila['proposito'] === self::NUEVA;
-            if (!$persona || $persona['email'] !== $fila['email'] || (int) $persona['es_super_admin'] === 1
+            if ($persona && (int) $persona['es_super_admin'] === 1) {
+                throw new InvalidArgumentException(self::MENSAJE_SUPER_ADMIN);
+            }
+            if (!$persona || $persona['email'] !== $fila['email']
                 || (int) $persona['estado'] !== ($nueva ? 0 : 1)
                 || (!$nueva && (new VerificacionEmail($this->db))->hayPendiente($usuario))) {
                 throw new InvalidArgumentException('No se pudo confirmar esta solicitud. Contacta a soporte.');

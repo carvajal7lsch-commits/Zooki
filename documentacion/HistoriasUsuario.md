@@ -40,7 +40,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- Formulario público con los datos de la clínica (nombre, NIT, dirección, teléfono, correo) y del administrador inicial (nombre, tipo y número de documento, teléfono, correo y contraseña segura).
+- Formulario público con los datos de la clínica (nombre, NIT, dirección, teléfono, correo) y del administrador inicial (nombre, tipo y número de documento, teléfono, correo y contraseña segura), en tres pasos: clínica, administrador y confirmación. Cada paso valida lo suyo antes de avanzar y volver atrás conserva lo escrito. Se llega desde «Crear cuenta», bajo el inicio de sesión.
 - Valida el formato y el dígito de verificación DIAN del NIT. El NIT duplicado se rechaza y puede reportarse a soporte. La respuesta pública no revela identidades: «Revisa tu correo para activar la clínica». Una cuenta existente confirma por correo sin cambiar sus datos, contraseña ni otros roles; la contraseña del formulario se ignora. Si el correo es nuevo y el documento existe, se confirma al titular del documento; si identifican personas distintas, prevalece el correo.
 - El formulario exige superar una verificación anti-bot (CAPTCHA), rechaza correos de dominios desechables y limita los registros desde una misma IP en un periodo; al superar el límite se informa que lo intente más tarde.
 - El registro de clínicas no admite Google, y exige aceptar la política de tratamiento de datos.
@@ -79,7 +79,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- Lista de clínicas registradas con su estado, plan y estado de suscripción.
+- Lista de clínicas registradas con su estado, plan y estado de suscripción; se busca por nombre o NIT y se filtra por estado y plan.
 - Puede cambiar el plan de una clínica y el estado de su suscripción, con motivo obligatorio.
 - **No** accede a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte.
 - El super-administrador es un rol de plataforma: sus acciones no se filtran por una sola `id_clinica` (única excepción al aislamiento, RN-G13).
@@ -380,9 +380,9 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- El límite de intentos se guarda del lado servidor por IP/cuenta y no se evade sin cookie.
+- El límite de intentos se guarda del lado servidor por IP y por documento o correo, y no se evade sin cookie.
 - Tras 20 intentos fallidos en 15 minutos desde una misma IP, esa IP se bloquea temporalmente con un mensaje genérico; un acceso correcto no reinicia ese contador.
-- _(v2.0)_ Sobre una misma cuenta, tras 5 intentos fallidos no se bloquea la cuenta: se exige superar el CAPTCHA. Así nadie puede dejar sin acceso a otro usuario fallando a propósito con su documento o correo.
+- _(v2.0)_ Sobre un mismo documento o correo, tras 5 intentos fallidos no se bloquea la cuenta: se exige superar el CAPTCHA, que el inicio de sesión solo muestra desde ese momento. Así nadie puede dejar sin acceso a otro usuario fallando a propósito con su documento o correo, y como se cuenta por lo escrito, exista o no la cuenta, pedirlo no la revela.
 - Las verificaciones de documento/correo no revelan existencia ni permiten abuso.
 - Los mensajes de error al cliente son genéricos.
 

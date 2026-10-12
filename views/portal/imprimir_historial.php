@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../../config/App.php'; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,7 +7,7 @@
     <title>Historial Clínico - <?php echo htmlspecialchars($mascota['nombre']); ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/imprimir-historial.css?v=1">
+    <link rel="stylesheet" href="css/imprimir-historial.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
 
@@ -146,7 +147,7 @@
         </table>
     <?php endif; ?>
 
-    <script src="js/imprimir-historial.js?v=1"></script>
-    <script src="js/interacciones.js?v=d31"></script>
+    <script src="js/imprimir-historial.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/interacciones.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>

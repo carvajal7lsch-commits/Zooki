@@ -86,7 +86,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_index') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Estilos Oficiales del Portal -->
-    <link rel="stylesheet" href="docs.css?v=20261005c">
+    <link rel="stylesheet" href="docs.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 
     <!-- Aplicar el tema guardado antes del primer pintado, para evitar parpadeo -->
     <script>
@@ -349,6 +349,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_index') {
     </script>
 
     <!-- Script de control principal -->
-    <script src="docs.js?v=20261005c"></script>
+    <script src="docs.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>

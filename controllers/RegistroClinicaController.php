@@ -20,18 +20,37 @@ final class RegistroClinicaController
 
     public function formulario(): void
     {
+        // M0.1: resultado de un envío sin JavaScript (ver procesar()).
+        $resultadoRegistro = $_SESSION['registro_clinica_resultado'] ?? null;
+        unset($_SESSION['registro_clinica_resultado']);
         require __DIR__ . '/../views/auth/registro_clinica.php';
     }
 
     public function procesar(): void
     {
-        header('Content-Type: application/json; charset=utf-8');
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !Csrf::validate()) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Recarga el formulario e inténtalo de nuevo.']);
+            $this->responder(['success' => false, 'message' => 'Recarga el formulario e inténtalo de nuevo.'], 403);
             return;
         }
-        echo json_encode($this->registrar($_POST, Auditoria::ipCliente()));
+        $this->responder($this->registrar($_POST, Auditoria::ipCliente()));
+    }
+
+    /**
+     * El formulario envía por AJAX y recibe JSON. Sin JavaScript (M0.1) el
+     * mismo POST vuelve a la página con el resultado, como el registro del
+     * propietario; el servidor valida lo mismo en los dos casos.
+     */
+    private function responder(array $resultado, int $codigo = 200): void
+    {
+        $ajax = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+        if (!$ajax) {
+            $_SESSION['registro_clinica_resultado'] = $resultado;
+            header('Location: index.php?action=registro_clinica');
+            return;
+        }
+        http_response_code($codigo);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($resultado);
     }
 
     /** RE-0.1.4/8: verifica antes de escribir; transporte sustituible en pruebas. */
@@ -82,7 +101,12 @@ final class RegistroClinicaController
         $fila = $this->registro->leer($id, $token);
         $error = null;
         $terminado = false;
-        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        // M0.2: el GET ya dice por qué no sigue; ni se ofrece el botón ni el POST cambia nada.
+        $superAdministrador = $fila !== null && $this->registro->esDeSuperAdministrador($fila);
+        if ($superAdministrador) {
+            $error = RegistroClinica::MENSAJE_SUPER_ADMIN;
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && !$superAdministrador) {
             try {
                 if (!Csrf::validate()) {
                     throw new InvalidArgumentException('Recarga el enlace e inténtalo de nuevo.');

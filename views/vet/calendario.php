@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../config/App.php';
 // views/vet/calendario.php — Agenda del veterinario.
 //
 // Los estilos se cargan en el <head> del layout (calendario.css): enlazarlos
@@ -197,7 +198,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
-<script src="js/calendario.js?v=10"></script>
+<script src="js/calendario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 
 <!-- MODAL NUEVA CONSULTA (necesario para Iniciar Atención desde el calendario) -->
 <?php include __DIR__ . "/modal_consulta.php"; ?>

@@ -27,12 +27,15 @@
     const consultanServidor = new Set(['documento', 'email', 'password', 'nit', 'dv', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
     const UNICOS = new Set(['documento', 'email']);
 
-    // Mismos mensajes que helpers/ValidadorCuenta.php y ValidadorTelefono.
+    // Mismos mensajes que helpers/ValidadorCuenta.php, ValidadorClinica y ValidadorTelefono (M0.1: una línea).
     const MENSAJES = {
-        documento: 'El documento debe tener entre 5 y 15 dígitos.',
-        email: 'Escribe un correo electrónico válido.',
-        nombre_completo: 'El nombre debe tener entre 3 y 100 caracteres.',
-        telefono: 'El teléfono solo puede tener números, espacios, + y guiones (de 7 a 20 caracteres).',
+        documento: 'Documento de 5 a 15 dígitos.',
+        email: 'Escribe un correo válido.',
+        nombre_completo: 'Nombre de 3 a 100 caracteres.',
+        nombre_caracteres: "Nombre: letras, espacios, ' y -.",
+        telefono: 'Teléfono de 7 a 20 caracteres.',
+        nit: 'NIT de 1 a 14 dígitos, sin el DV.',
+        dv: 'El DV es un solo dígito.',
     };
 
     function tipo(campo) {
@@ -71,6 +74,8 @@
         const estilo = error ? ' cuenta-validacion--error' : (bien ? ' cuenta-validacion--ok' : '');
         salida.className = salida.dataset.cuentaClaseInicial + ' cuenta-validacion' + estilo;
         salida.textContent = mensaje || salida.dataset.cuentaTextoInicial;
+        // M0.1: el aviso ocupa una línea del ancho del campo; si no cabe, el texto completo queda al pasar el cursor.
+        salida.title = salida.textContent;
         campo.setCustomValidity(error ? mensaje : '');
         campo.setAttribute('aria-invalid', error ? 'true' : 'false');
     }
@@ -109,10 +114,10 @@
         if (clave === 'nombre_completo' && (valor.trim().length < 3 || valor.trim().length > 100)) {
             return { error: MENSAJES.nombre_completo };
         }
-        if (clave === 'nit' && !/^[0-9]{1,14}$/.test(valor.trim())) return { error: 'El NIT solo admite de 1 a 14 dígitos; escribe el DV en su casilla.' };
-        if (clave === 'dv' && !/^[0-9]$/.test(valor.trim())) return { error: 'El DV debe ser un solo dígito.' };
+        if (clave === 'nit' && !/^[0-9]{1,14}$/.test(valor.trim())) return { error: MENSAJES.nit };
+        if (clave === 'dv' && !/^[0-9]$/.test(valor.trim())) return { error: MENSAJES.dv };
         if (clave === 'nombre_completo' && !/^[\p{L}\p{M} '’\-]+$/u.test(valor.trim())) {
-            return { error: 'El nombre solo admite letras, espacios, apóstrofo y guion.' };
+            return { error: MENSAJES.nombre_caracteres };
         }
         if (clave === 'telefono') {
             const limpio = valor.trim().replace(/\s+/g, ' ');
@@ -246,6 +251,20 @@
         }
     }
 
+    /**
+     * M0.1: el resumen del formulario (registros) recibe los campos que no
+     * pasaron, también los que solo valida el navegador (select, casilla), y
+     * un formulario por pasos vuelve al paso del primero.
+     */
+    function avisarInvalidos(form, invalidos) {
+        const nativos = Array.from(form.elements || []).filter(campo => campo.willValidate
+            && typeof campo.checkValidity === 'function' && !campo.checkValidity() && !invalidos.includes(campo));
+        const todos = invalidos.concat(nativos);
+        if (todos.length === 0) return true;
+        form.dispatchEvent(new CustomEvent('cuenta:invalida', { detail: { campos: todos } }));
+        return false;
+    }
+
     function vincular(form) {
         if (formularios.has(form)) return;
         const estado = {
@@ -283,7 +302,11 @@
             if (form.dataset.cuentaVincular === 'correo') orden.sort((a, b) => Number(tipo(b) === 'email') - Number(tipo(a) === 'email'));
             for (const campo of orden) resultados.push(await comprobar(form, campo, true));
             estado.enviando = false;
-            if (!resultados.every(Boolean) || !form.reportValidity()) return;
+            if (!avisarInvalidos(form, orden.filter((campo, indice) => !resultados[indice]))) {
+                // Después del evento: un formulario por pasos ya mostró el paso del campo.
+                form.reportValidity();
+                return;
+            }
             estado.listo = true;
             // Revisión D2.1: el navegador ignora requestSubmit mientras dispara el submit
             // original (pasaba con las comprobaciones ya en caché): se envía en otra tarea.

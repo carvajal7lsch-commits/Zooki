@@ -15,7 +15,7 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.0.0-alpha.1**: plataforma SaaS con el módulo 0 (clínicas, planes, identidad y aislamiento) · el resto de la v2.0 se construye por módulos (alpha.2, alpha.3…) |
+| Estado actual | **2.0.0-alpha.2**: plataforma SaaS con el módulo 0 (clínicas, planes, identidad y aislamiento) y el pulido del acceso y los registros · el resto de la v2.0 se construye por módulos; cada entrega a producción sube la alfa |
 | Versión del documento | 3.1 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
@@ -160,7 +160,7 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 
 **v1.11.0 — en producción.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
 
-**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.3), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.2, 119 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.2, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.2, 420 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. Cada módulo siguiente publica la alfa siguiente hasta la 2.0.0.
+**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.3), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.2, 119 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.2, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.2, 420 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
 
 ## 12. Entregables Finales
 

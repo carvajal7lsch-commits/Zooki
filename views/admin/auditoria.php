@@ -1,5 +1,6 @@
-<link rel="stylesheet" href="css/gestion.css?v=1">
-<link rel="stylesheet" href="css/auditoria.css?v=1">
+<?php require_once __DIR__ . '/../../config/App.php'; ?>
+<link rel="stylesheet" href="css/gestion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+<link rel="stylesheet" href="css/auditoria.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <?php
 /**
  * HU-T.8 — Auditoría de la clínica activa. AuditoriaController entrega $logs,
@@ -192,5 +193,5 @@ if (!isset($logs) || !is_array($logs)) $logs = [];
     </p>
 </div>
 
-<script src="js/indicadores.js?v=1"></script>
-<script src="js/auditoria.js?v=1"></script>
+<script src="js/indicadores.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/auditoria.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

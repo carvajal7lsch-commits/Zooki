@@ -25,6 +25,9 @@ class Usuario
     public const DOCUMENTO_MAX = 20;
     public const TIPOS_DOCUMENTO = ['CC', 'CE', 'TI', 'PP', 'NIT'];
 
+    /** M0.1: el nombre que ven los formularios de registro para cada tipo. */
+    public const NOMBRES_TIPO_DOCUMENTO = ['CC' => 'Cédula', 'TI' => 'T. Identidad', 'CE' => 'C. Extranjería', 'PP' => 'Pasaporte', 'NIT' => 'NIT'];
+
     private PDO $conn;
 
     public function __construct($db)

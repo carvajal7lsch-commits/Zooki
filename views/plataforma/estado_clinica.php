@@ -1,0 +1,2 @@
+<?php // Revisión del usuario (2026-10-12): el estado es una etiqueta de Usuarios (tag-mini); la activa en azul, las demás en gris con su icono. ?>
+<span class="tag-mini plataforma-estado <?= $e(PresentacionPlataforma::claseEstado($clinica['estado'])) ?>"><i class="bi <?= $e(PresentacionPlataforma::iconoEstado($clinica['estado'])) ?>" aria-hidden="true"></i> <?= $e(PresentacionPlataforma::estado($clinica['estado'])) ?></span>

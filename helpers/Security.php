@@ -64,10 +64,10 @@ class Security {
      * La IP sale siempre de Auditoria::ipCliente() (D2.1).
      */
     private const MAX_INTENTOS_IP     = 20;
-    private const MAX_INTENTOS_CUENTA = 5;
+    private const MAX_INTENTOS_IDENTIFICADOR = 5;
     private const MAX_VERIFICACIONES  = 20;
     private const MAX_VERIFICACIONES_USUARIO = 120;
-    private const VENTANA             = 900;  // 15 minutos
+    public const VENTANA              = 900;  // 15 minutos
     private const BLOQUEO             = 900;  // 15 minutos
 
     /** false = todavia no se resolvio; null = no hay almacen disponible. */
@@ -508,11 +508,11 @@ class Security {
     /**
      * RE-T.13.4: 20 fallos en 15 minutos desde una IP bloquean esa IP.
      *
-     * $cuenta es el id_usuario cuando el identificador escrito corresponde a
-     * una cuenta; la cuenta nunca se bloquea aquí (RE-T.13.5, exigeCaptcha).
-     * Quien llama responde igual exista o no la cuenta (RN-G15).
+     * $identificador es el documento o correo escrito; nunca se bloquea aquí
+     * (RE-T.13.5, exigeCaptcha). Quien llama responde igual exista o no la
+     * cuenta (RN-G15).
      */
-    public static function checkRateLimit(?string $cuenta = null): bool {
+    public static function checkRateLimit(?string $identificador = null): bool {
         $ip = Auditoria::ipCliente();
         $key = 'rate_limit_' . $ip;
         $window = self::VENTANA;
@@ -554,14 +554,31 @@ class Security {
         return true;
     }
 
-    /** RN-G15: la cuenta exige CAPTCHA, nunca se bloquea por fallos ajenos. */
-    public static function exigeCaptcha(?string $cuenta): bool {
+    /**
+     * RN-G15 (M0.1, decisión del usuario 2026-10-11): 5 fallos sobre un mismo
+     * documento o correo exigen CAPTCHA, exista o no la cuenta. Como el login
+     * solo muestra el widget cuando el servidor lo exige, contar por cuenta
+     * delataría las cuentas reales: un identificador inexistente nunca lo
+     * pediría. Nunca se bloquea por fallos ajenos.
+     */
+    public static function exigeCaptcha(?string $identificador): bool {
         $almacen = self::almacenDeIntentos();
-        return $cuenta !== null && $almacen !== null
-            && $almacen->exigeCaptcha('cuenta:' . $cuenta, self::MAX_INTENTOS_CUENTA, self::VENTANA);
+        $clave = self::claveIdentificador($identificador);
+        return $clave !== null && $almacen !== null
+            && $almacen->exigeCaptcha($clave, self::MAX_INTENTOS_IDENTIFICADOR, self::VENTANA);
     }
 
-    public static function recordFailedLogin(?string $cuenta = null): void {
+    /**
+     * Clave del contador de un identificador. Se normaliza como lo busca el
+     * login (sin espacios sobrantes, correo sin mayúsculas) y se guarda su
+     * huella, no el documento ni el correo.
+     */
+    private static function claveIdentificador(?string $identificador): ?string {
+        $normalizado = mb_strtolower(trim((string) $identificador));
+        return $normalizado === '' ? null : 'identificador:' . hash('sha256', $normalizado);
+    }
+
+    public static function recordFailedLogin(?string $identificador = null): void {
         $ip = Auditoria::ipCliente();
         $key = 'rate_limit_' . $ip;
         $_SESSION[$key]['count'] = ($_SESSION[$key]['count'] ?? 0) + 1;
@@ -573,27 +590,29 @@ class Security {
         if ($almacen === null) return;
 
         $almacen->registrarFallo('ip:' . $ip, self::MAX_INTENTOS_IP, self::VENTANA, self::BLOQUEO);
-        if ($cuenta !== null && $cuenta !== '') {
-            // Sin castigo: la cuenta solo cuenta fallos para pedir el CAPTCHA (RE-T.13.5).
-            $almacen->registrarFallo('cuenta:' . $cuenta, self::MAX_INTENTOS_CUENTA, self::VENTANA, 0);
+        $clave = self::claveIdentificador($identificador);
+        if ($clave !== null) {
+            // Sin castigo: el identificador solo cuenta fallos para pedir el CAPTCHA (RE-T.13.5).
+            $almacen->registrarFallo($clave, self::MAX_INTENTOS_IDENTIFICADOR, self::VENTANA, 0);
         }
     }
 
     /**
      * RE-T.13.4 (D2.1): un inicio de sesión correcto limpia el contador de la
-     * sesión y el de la cuenta, NO el de la IP. Si lo limpiara, quien tiene
-     * una cuenta podría alternar intentos contra otras con un acceso propio
-     * y nunca llegar al bloqueo.
+     * sesión y el del identificador usado, NO el de la IP. Si lo limpiara,
+     * quien tiene una cuenta podría alternar intentos contra otras con un
+     * acceso propio y nunca llegar al bloqueo.
      */
-    public static function resetRateLimit(?string $cuenta = null): void {
+    public static function resetRateLimit(?string $identificador = null): void {
         $ip = Auditoria::ipCliente();
         unset($_SESSION['rate_limit_' . $ip]);
 
         $almacen = self::almacenDeIntentos();
         if ($almacen === null) return;
 
-        if ($cuenta !== null && $cuenta !== '') {
-            $almacen->limpiar('cuenta:' . $cuenta);
+        $clave = self::claveIdentificador($identificador);
+        if ($clave !== null) {
+            $almacen->limpiar($clave);
         }
 
         // Momento barato para el mantenimiento: ocurre una vez por inicio de

@@ -13,7 +13,7 @@ final class DominiosDesechables
         foreach ($lineas as $linea) {
             $rechazado = mb_strtolower(trim($linea));
             if ($rechazado !== '' && ($dominio === $rechazado || str_ends_with($dominio, '.' . $rechazado))) {
-                return 'Usa un correo permanente; no se admiten dominios desechables.';
+                return 'No se admiten correos temporales.';
             }
         }
         return null;

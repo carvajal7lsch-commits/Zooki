@@ -7,10 +7,12 @@
 class App {
     /**
      * Versión actual del sistema (documentacion/HistorialVersiones.md). La v2
-     * sale por módulos: 2.0.0-alpha.N sube con cada módulo y 2.0.0 llega con
-     * las 28 historias de la entrega v2.0.
+     * sale por partes: 2.0.0-alpha.N sube con cada entrega a producción (un
+     * módulo o un pulido; decisión del usuario, 2026-10-11), porque los CSS y
+     * JS se piden con ?v=<versión> y sin cambiarla el navegador sigue con los
+     * archivos viejos. 2.0.0 llega con las 28 historias de la entrega v2.0.
      */
-    const VERSION = '2.0.0-alpha.1';
+    const VERSION = '2.0.0-alpha.2';
 
     /** Nombre comercial del producto. */
     const NAME = 'Zooki';

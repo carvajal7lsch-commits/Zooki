@@ -9,7 +9,8 @@
 - **Módulo activo:** M0 — Base SaaS, identidad y aislamiento. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
-- **Entrega actual:** **M0 cerrado (2026-10-11).** F1 ejecutada por el usuario: producción en 2.0.0-alpha.1, base v2 limpia, super-administrador y clínica demo «Zooki» activos, IP real comprobada (`TRUSTED_PROXIES=10.0.1.0/24,172.16.0.1,172.16.11.1`). Bitácora al final del plan M0.
+- **Entrega actual:** **M0.2.1 — modal «Gestionar», Soporte y Seguridad: entregada, pendiente de revisión (2026-10-12, Claude Code).** Tras dos revisiones del usuario en la misma sesión: plan con tarjetas de elección (con sus topes) e interruptor de suscripción, sin listas nativas; estado como tarjetas de acción según el estado actual con «Dar de baja» en rojo (lo único que confirma); sugerencias de motivo; pie del modal de Usuarios; Soporte y Seguridad en tarjetas en cuadrícula con modales pequeños y estados vacíos compactos. El servidor no cambió sus reglas. PHP 608 en verde (también con MySQL en `zooki_test_base_v2`, ninguna omitida); JS 108. Detalle en «Anexo M0.2.1 — Resultado» del plan M0. M0.1 y M0.2 revisadas; las tres salen juntas en 2.0.0-alpha.2.
+- **M0 cerrado (2026-10-11).** F1 ejecutada por el usuario: producción en 2.0.0-alpha.1, base v2 limpia, super-administrador y clínica demo «Zooki» activos, IP real comprobada (`TRUSTED_PROXIES=10.0.1.0/24,172.16.0.1,172.16.11.1`). Bitácora al final del plan M0.
 - **Verificación E2:** PHP 566 en verde (SQLite: 3004 aserciones, 29 pruebas MySQL omitidas; con MariaDB temporal: 3363 aserciones, ninguna omitida, base predeterminada `zooki_test_base_v2`); JS 78 en verde. Modelos §12.1, §12.1.1 y §12.2 renderizados. Migración 05 repetible y límites personalizados conservados. No se accedió a la base de trabajo ni a sus contraseñas.
 - **D2.2:** revisada, aprobada y con commit. Verificación de D3 en su anexo del plan.
 - **D3:** revisada y **aprobada** (2026-10-10; «D3 — Revisión» en el plan), con commit `fa43c3d`. La prueba del usuario motivó D3.1.
@@ -17,7 +18,7 @@
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
-- **Siguiente paso:** planear el módulo siguiente de la entrega v2.0 (plan de entregas de HistoriasUsuario.md) con el usuario; Codex retoma como ejecutor. Limpiar los respaldos temporales del VPS tras una o dos semanas sin problemas.
+- **Siguiente paso:** M0.1, M0.2 y M0.2.1 revisadas y aprobadas (2026-10-12). Commit de M0.2.1, prueba local del usuario y despliegue de 2.0.0-alpha.2 (merge `v2/m0` → `main`, tag, Turnstile real y un correo en Gmail). Después, el plan del módulo siguiente con Codex.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 

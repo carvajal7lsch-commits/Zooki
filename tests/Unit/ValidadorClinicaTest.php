@@ -21,7 +21,7 @@ final class ValidadorClinicaTest extends TestCase
     {
         foreach (['email_clinica', 'email_administrador'] as $campo) {
             foreach (['persona@YOPMAIL.COM', 'persona@sub.mailinator.com'] as $email) {
-                $this->assertStringContainsString('permanente', ValidadorClinica::campo($campo, $email));
+                $this->assertSame('No se admiten correos temporales.', ValidadorClinica::campo($campo, $email));
             }
             $this->assertNull(ValidadorClinica::campo($campo, 'permanente@zooki.test'));
             $this->assertNotNull(ValidadorClinica::campo($campo, 'sin-arroba'));

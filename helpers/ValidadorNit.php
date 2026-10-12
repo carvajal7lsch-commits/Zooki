@@ -3,7 +3,7 @@
 /** RE-0.1.3: módulo 11 de la DIAN, con pesos alineados a la derecha. */
 final class ValidadorNit
 {
-    public const MENSAJE = 'Escribe un NIT válido, incluido su dígito de verificación.';
+    public const MENSAJE = 'El DV no corresponde al NIT.';
     public const NUMERO_MAX = 14;
 
     /** Decisión 2026-10-10: el usuario indica el DV; nunca se extrae del número. */

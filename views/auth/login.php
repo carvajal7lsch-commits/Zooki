@@ -31,7 +31,14 @@ require_once __DIR__ . '/../../helpers/Csrf.php';
 // elegida por enlace; si se abre la vista sola, el registro queda sin lista.
 $clinicasRegistro = $clinicasRegistro ?? [];
 $clinicaElegida = $clinicaElegida ?? 0;
-$abrirRegistro = $abrirRegistro ?? false;
+// Un error del registro sin JavaScript vuelve con la cara del registro abierta.
+$errorRegistro = $_SESSION['error_register'] ?? null;
+unset($_SESSION['error_register']);
+$abrirRegistro = ($abrirRegistro ?? false) || $errorRegistro !== null;
+// M0.1 (RE-T.13.5): el widget del login solo sale cuando el servidor lo exigió.
+$captchaLogin = $captchaLogin ?? false;
+$identificadorPrevio = $identificadorPrevio ?? '';
+$turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY');
 $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
@@ -55,13 +62,12 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                     <span>Volver al inicio</span>
                 </a>
             </div>
-            <div class="flip-container">
+            <div class="flip-container" data-acceso-giro-tarjeta>
                 <div class="flipper" id="authFlipper" data-abrir-registro="<?= $abrirRegistro ? '1' : '0' ?>">
                     <!-- CARA FRONTAL: LOGIN -->
                     <div class="front">
                         <div class="form-wrapper animate__animated animate__fadeIn">
                             <h2>Iniciar sesión</h2>
-                            <p class="form-subtitle"><a href="index.php?action=registro_clinica">Registra tu clínica</a></p>
                             <p class="form-subtitle">¡Bienvenido de vuelta! Accede a tu cuenta para continuar.</p>
                             <!-- Confirmacion de correo / registro (HU-36) -->
                             <?php if(isset($_SESSION['success_register'])): ?>
@@ -83,7 +89,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                 <div class="input-group">
                                     <label for="identificador">Documento o correo</label>
                                     <div class="input-wrapper">
-                                        <input type="text" id="identificador" name="identificador" placeholder="Tu número de documento o tu correo" required autocomplete="username" maxlength="255">
+                                        <input type="text" id="identificador" name="identificador" value="<?= $e($identificadorPrevio) ?>" placeholder="Tu número de documento o tu correo" required autocomplete="username" maxlength="255">
                                     </div>
                                 </div>
                                 <div class="input-group">
@@ -102,9 +108,9 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     </label>
                                     <a href="#" class="forgot-password" id="forgotPasswordBtn">¿Olvidaste tu contraseña?</a>
                                 </div>
-                                <?php $turnstileClave = Turnstile::configuracion('TURNSTILE_SITE_KEY'); ?>
                                 <?php if ($turnstileClave !== ''): ?>
-                                    <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars($turnstileClave, ENT_QUOTES, 'UTF-8') ?>"></div>
+                                    <?php // RN-G15: sale tras 5 fallos sobre el mismo documento o correo, exista o no la cuenta. ?>
+                                    <div class="acceso-turnstile" data-turnstile-formulario data-turnstile-apariencia="always" data-sitekey="<?= $e($turnstileClave) ?>" <?= $captchaLogin ? '' : 'hidden' ?>></div>
                                 <?php endif; ?>
                                 <button type="submit" class="btn-primary">
                                     <span>Entrar</span>
@@ -124,32 +130,28 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                 </button>
                             </form>
                             <div class="form-footer">
-                                <p>¿No tienes una cuenta? <a href="#" id="showRegisterBtn">Regístrate</a></p>
+                                <p>¿No tienes una cuenta? <a href="index.php?action=register" data-crear-cuenta-abrir>Crear cuenta</a></p>
                             </div>
                         </div>
                     </div>
-                    <!-- CARA TRASERA: REGISTRO -->
+                    <!-- CARA TRASERA: REGISTRO DEL PROPIETARIO (M0.1: mismo marco que el registro de clínica) -->
                     <div class="back">
-                        <div class="form-wrapper">
+                        <div class="form-wrapper registro-marco">
                             <div class="form-header">
-                                <button type="button" class="btn-back-top" id="btnBackToLoginTop" title="Volver al inicio">
-                                    <i class="ri-arrow-left-line"></i>
+                                <button type="button" class="btn-back-top" id="btnBackToLoginTop" title="Volver al inicio de sesión" aria-label="Volver al inicio de sesión">
+                                    <i class="ri-arrow-left-line" aria-hidden="true"></i>
                                 </button>
                                 <h2>Crea tu cuenta</h2>
                             </div>
                             <p class="form-subtitle">Regístrate para agendar citas y revisar el historial de tus mascotas.</p>
-                            <?php if(isset($_SESSION['error_register'])): ?>
-                                <div class="alert-error animate__animated animate__shakeX">
-                                    <i class="ri-error-warning-line"></i>
-                                    <span><?php echo $_SESSION['error_register']; unset($_SESSION['error_register']); ?></span>
+                            <form id="registerForm" data-cuenta-vincular="correo" action="index.php?action=process_register" method="POST" data-validacion-cuenta data-registro data-registro-espera="registroEspera">
+                                <?php Csrf::field('register'); ?>
+                                <div class="registro-resumen" data-registro-resumen role="alert" <?= $errorRegistro === null ? 'hidden' : '' ?>>
+                                    <?php if ($errorRegistro !== null): ?><p><?= $e($errorRegistro) ?></p><?php endif; ?>
                                 </div>
-                            <?php endif; ?>
-                            <form id="registerForm" data-cuenta-vincular="correo" action="index.php?action=process_register" method="POST" data-validacion-cuenta>
-                                <?php require_once __DIR__ . '/../../helpers/Csrf.php'; Csrf::field('register'); ?>
-                                
-                                <div class="auth-grid">
+                                <div class="registro-grid">
                                     <?php // HU-5.8 (RN-109): el registro siempre es en una clínica que el propietario elige. ?>
-                                    <div class="input-group full-width">
+                                    <div class="input-group registro-ancho">
                                         <label for="id_clinica_reg">Clínica</label>
                                         <div class="input-wrapper">
                                             <select id="id_clinica_reg" name="id_clinica" required>
@@ -161,7 +163,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                         </div>
                                     </div>
                                     <div class="input-group">
-                                        <label for="tipo_documento">Tipo Doc.</label>
+                                        <label for="tipo_documento">Tipo de documento</label>
                                         <div class="input-wrapper">
                                             <select id="tipo_documento" name="tipo_documento" required autocomplete="off">
                                                 <option value="CC">Cédula</option>
@@ -172,16 +174,15 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                         </div>
                                     </div>
                                     <div class="input-group">
-                                        <label for="documento_reg">Documento</label>
+                                        <label for="documento_reg">Número de documento</label>
                                         <div class="input-wrapper">
                                             <input <?= ValidadorCuenta::atributosHtml('documento') ?> type="text" id="documento_reg" name="documento" placeholder="Ej. 1075..." required autocomplete="off">
                                         </div>
-                                        <span class="validation-msg" id="docValidationMsg"></span>
                                     </div>
-                                    <div class="input-group full-width">
-                                        <label for="nombre_completo">Nombre Completo</label>
+                                    <div class="input-group registro-ancho">
+                                        <label for="nombre_completo">Nombre completo</label>
                                         <div class="input-wrapper">
-                                            <input <?= ValidadorCuenta::atributosHtml('nombre_completo') ?> type="text" id="nombre_completo" name="nombre_completo" placeholder="Nombres y Apellidos completos" required autocomplete="off">
+                                            <input <?= ValidadorCuenta::atributosHtml('nombre_completo') ?> type="text" id="nombre_completo" name="nombre_completo" placeholder="Nombres y apellidos" required autocomplete="name">
                                         </div>
                                     </div>
                                     <div class="input-group">
@@ -193,25 +194,20 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     <div class="input-group">
                                         <label for="email_reg">Correo</label>
                                         <div class="input-wrapper">
-                                            <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="email_reg" name="email" placeholder="correo@ejemplo.com" required autocomplete="off">
+                                            <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="email_reg" name="email" placeholder="correo@ejemplo.com" required autocomplete="email">
                                         </div>
-                                        <span class="validation-msg" id="emailValidationMsg"></span>
                                     </div>
                                     <div class="input-group">
                                         <label for="password_reg">Contraseña</label>
                                         <div class="input-wrapper">
-                                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="password_reg" data-cuenta-ayuda="passwordValidationMsg" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
+                                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="password_reg" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password" aria-describedby="registroClaveAyuda">
                                             <button type="button" class="toggle-password" id="togglePasswordReg" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
                                                 <i class="ri-eye-off-line"></i>
                                             </button>
                                         </div>
-                                        <div class="password-meter-container">
-                                            <div class="password-meter" id="passwordMeter"></div>
-                                        </div>
-                                        <span class="validation-msg" id="passwordValidationMsg">Mínimo 8 caracteres, con mayúscula, minúscula y número</span>
                                     </div>
                                     <div class="input-group">
-                                        <label for="confirm_password">Confirmar</label>
+                                        <label for="confirm_password">Confirma la contraseña</label>
                                         <div class="input-wrapper">
                                             <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
                                             <button type="button" class="toggle-password" id="toggleConfirmPasswordReg" tabindex="-1" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false">
@@ -219,25 +215,18 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                             </button>
                                         </div>
                                     </div>
+                                    <p class="registro-nota registro-ancho" id="registroClaveAyuda">Mínimo 8 caracteres, con mayúscula, minúscula y número.</p>
                                 </div>
-                                <label class="consent-check">
-                                    <input type="checkbox" name="acepta_datos" id="aceptaDatos" value="1" required>
-                                    <span>
-                                        Autorizo el tratamiento de mis datos personales conforme a la
-                                        <a href="index.php?action=privacidad" target="_blank" rel="noopener">Política de Tratamiento de Datos</a>.
-                                    </span>
-                                </label>
+                                <?php $consentimientoId = 'aceptaDatos'; require __DIR__ . '/../partials/consentimiento_datos.php'; ?>
                                 <?php if ($turnstileClave !== ''): ?>
-                                    <div data-turnstile-formulario data-sitekey="<?= htmlspecialchars($turnstileClave, ENT_QUOTES, 'UTF-8') ?>"></div>
+                                    <div class="acceso-turnstile" data-turnstile-formulario data-sitekey="<?= $e($turnstileClave) ?>"></div>
                                 <?php endif; ?>
                                 <button type="submit" class="btn-primary">
-                                    <span>Registrarse</span>
+                                    <span>Crear mi cuenta</span>
                                 </button>
-                                
                                 <div class="form-footer form-footer--registro">
-                                    <p>¿Ya tienes una cuenta? <a href="#" id="showLoginBtn">Iniciar Sesión</a></p>
+                                    <p>¿Ya tienes una cuenta? <a href="#" id="showLoginBtn">Iniciar sesión</a></p>
                                 </div>
-                                
                                 <div class="divider">
                                     <span>O regístrate con</span>
                                 </div>
@@ -251,31 +240,11 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     Registrarse con Google
                                 </button>
                             </form>
-
-                            <!-- Pantalla de espera del registro (HU-36). Reemplaza al
-                                 formulario sin recargar la pagina: la cuenta ya quedo
-                                 creada y solo falta que el usuario abra el enlace del
-                                 correo. En cuanto lo haga, el sondeo lo lleva al portal. -->
-                            <p class="cuenta-ayuda" id="registroFormResultado" role="alert" aria-live="polite"></p>
-                            <div class="registro-espera" id="registroEspera" hidden>
-                                <div class="registro-espera-icono">
-                                    <i class="ri-mail-send-line"></i>
-                                </div>
-                                <h3>Revisa tu correo</h3>
-                                <p class="registro-espera-texto">
-                                    Si la solicitud puede completarse, el titular recibirá el enlace de confirmación.
-                                    Ábrelo y después inicia sesión para continuar.
-                                </p>
-                                <p class="registro-espera-estado" id="registroEsperaEstado" role="status" aria-live="polite">
-                                    Revisa tu correo para confirmar la solicitud o acceder a Zooki.
-                                </p>
-                                <p class="registro-espera-ayuda">
-                                    Si no lo ves, revisa la carpeta de spam. El enlace vence en 24 horas.
-                                </p>
-                                <button type="button" class="btn-secondary" id="registroEsperaVolver">
-                                    Volver al inicio de sesión
-                                </button>
-                            </div>
+                            <?php
+                            $esperaId = 'registroEspera';
+                            $esperaTexto = 'Si la solicitud puede completarse, el titular recibirá el enlace de confirmación. Ábrelo y después inicia sesión para continuar.';
+                            require __DIR__ . '/../partials/registro_espera.php';
+                            ?>
                         </div>
                     </div>
                 </div>
@@ -284,45 +253,33 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                 <p>© Zooki App, 2026</p>
             </div>
         </div>
-        <!-- Lado de la Imagen / Bento Grid (DERECHO - con formas originales) -->
-        <div class="login-hero animate__animated animate__fadeIn">
-            <div class="hero-grid-collage">
-                <!-- Fila 1 -->
-                <div class="collage-item bg-primary-dark br-tr collage-puppy-wrapper">
-                    <img src="img/cachorro-negro.png" alt="Cachorro Negro" class="collage-puppy-img" draggable="false">
-                </div>
-                <div class="collage-item bg-primary-light br-bl"></div>
-                <div class="collage-item bg-medium-blue br-tl collage-cat-wrapper">
-                    <img src="img/gato-blanco.png" alt="Gato Blanco" class="collage-cat-img" draggable="false">
-                </div>
-                <!-- Fila 2 -->
-                <div class="collage-item bg-white br-circle">
-                    <svg class="cross-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="35" y="10" width="30" height="80" rx="15" fill="#93C5FD"/>
-                        <rect x="10" y="35" width="80" height="30" rx="15" fill="#93C5FD"/>
-                        <line x1="15" y1="15" x2="85" y2="85" stroke="white" stroke-width="8" />
-                    </svg>
-                </div>
-                <div class="collage-item bg-primary-dark br-pill-left"></div>
-                <div class="collage-item bg-white"></div>
-                <!-- Fila 3 -->
-                <div class="collage-item bg-primary-dark br-pill-bottom"></div>
-                <div class="collage-item bg-primary-light br-bl"></div>
-                <div class="collage-item bg-primary-light br-tr collage-golden-wrapper">
-                    <img src="img/golden-retriever.png" alt="Golden Retriever" class="collage-golden-img" draggable="false">
-                </div>
-                <!-- Fila 4 -->
-                <div class="collage-item bg-medium-blue br-tr collage-gray-cat-wrapper">
-                    <img src="img/gato-gris.png" alt="Gato Gris" class="collage-gray-cat-img" draggable="false">
-                </div>
-                <div class="collage-item bg-white br-circle">
-                    <svg class="cross-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="35" y="10" width="30" height="80" rx="15" fill="#93C5FD"/>
-                        <rect x="10" y="35" width="80" height="30" rx="15" fill="#93C5FD"/>
-                        <line x1="15" y1="15" x2="85" y2="85" stroke="white" stroke-width="8" />
-                    </svg>
-                </div>
-                <div class="collage-item bg-medium-blue br-leaf"></div>
+        <?php require __DIR__ . '/../partials/acceso_hero.php'; ?>
+    </div>
+    <!-- M0.1: un solo «Crear cuenta» con dos opciones -->
+    <div class="modal-backdrop" id="crearCuentaModal" hidden>
+        <div class="modal-card crear-cuenta-card" role="dialog" aria-modal="true" aria-labelledby="crearCuentaTitulo">
+            <button type="button" class="modal-close" data-crear-cuenta-cerrar aria-label="Cerrar">
+                <i class="ri-close-line" aria-hidden="true"></i>
+            </button>
+            <h3 id="crearCuentaTitulo">Crear cuenta</h3>
+            <p class="modal-subtitle">¿Cómo vas a usar Zooki?</p>
+            <div class="crear-cuenta-opciones">
+                <button type="button" class="crear-cuenta-opcion" data-crear-cuenta="propietario">
+                    <span class="crear-cuenta-icono"><i class="ri-heart-3-line" aria-hidden="true"></i></span>
+                    <span class="crear-cuenta-texto">
+                        <strong>Soy propietario</strong>
+                        <span>Agenda citas y consulta la historia de tus mascotas.</span>
+                    </span>
+                    <i class="ri-arrow-right-s-line crear-cuenta-flecha" aria-hidden="true"></i>
+                </button>
+                <a class="crear-cuenta-opcion" href="index.php?action=registro_clinica" data-acceso-giro-ir>
+                    <span class="crear-cuenta-icono"><i class="ri-hospital-line" aria-hidden="true"></i></span>
+                    <span class="crear-cuenta-texto">
+                        <strong>Registrar mi clínica</strong>
+                        <span>Administra tu veterinaria en Zooki con el plan gratuito.</span>
+                    </span>
+                    <i class="ri-arrow-right-s-line crear-cuenta-flecha" aria-hidden="true"></i>
+                </a>
             </div>
         </div>
     </div>
@@ -379,13 +336,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                         </select>
                     </div>
                 </div>
-                <label class="consent-check">
-                    <input type="checkbox" name="acepta_datos" id="googleAceptaDatos" value="1" required>
-                    <span>
-                        Autorizo el tratamiento de mis datos personales conforme a la
-                        <a href="index.php?action=privacidad" target="_blank" rel="noopener">Política de Tratamiento de Datos</a>.
-                    </span>
-                </label>
+                <?php $consentimientoId = 'googleAceptaDatos'; require __DIR__ . '/../partials/consentimiento_datos.php'; ?>
                 <button type="submit" class="btn-primary" id="completeGoogleBtn">
                     <span>Crear mi cuenta</span>
                     <i class="ri-check-line"></i>
@@ -394,16 +345,18 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
         </div>
     </div>
     <!-- JS externo — ZOOKI_REGLAS: cero JS en línea -->
-    <script src="js/turnstile-formularios.js?v=d3"></script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=zookiTurnstileListo" async defer></script>
-    <script src="js/password-policy.js?v=<?php echo time(); ?>"></script>
-    <script src="js/interacciones.js?v=d31"></script>
-    <script src="js/login.js?v=<?php echo time(); ?>"></script>
-    <script src="js/register.js?v=<?php echo time(); ?>"></script>
-    
+    <script src="js/turnstile-formularios.js?v=<?= $versionAcceso ?>"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=zookiTurnstileListo&render=explicit" async defer></script>
+    <script src="js/password-policy.js?v=<?= $versionAcceso ?>"></script>
+    <script src="js/login.js?v=<?= $versionAcceso ?>"></script>
+    <script src="js/crear-cuenta.js?v=<?= $versionAcceso ?>"></script>
+    <script src="js/acceso-giro.js?v=<?= $versionAcceso ?>"></script>
+    <script src="js/registro-cuenta.js?v=<?= $versionAcceso ?>"></script>
+    <script src="js/register.js?v=<?= $versionAcceso ?>"></script>
+
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client?onload=initGoogleAuth" async defer></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>
-<script src="js/avisos.js?v=d3"></script>
+<script src="js/avisos.js?v=<?= $versionAcceso ?>"></script>
 </body>
 </html>

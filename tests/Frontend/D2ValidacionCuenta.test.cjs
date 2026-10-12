@@ -171,7 +171,7 @@ test('D2.2: el formato sigue validándose en el alta de personal', async () => {
     p.form.dataset.cuentaUnicidad = 'solo-edicion';
     p.campos[0].value = '12ab';
     assert.equal(await p.api.comprobar(p.form, p.campos[0]), false);
-    assert.equal(p.campos[0].error, 'El documento debe tener entre 5 y 15 dígitos.');
+    assert.equal(p.campos[0].error, 'Documento de 5 a 15 dígitos.');
     assert.equal(p.llamadas.length, 0);
 });
 

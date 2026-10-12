@@ -49,7 +49,8 @@ test('cargar el script dos veces no envuelve fetch dos veces', async () => {
 
 test('los tres layouts cargan sesion.js', () => {
     for (const layout of ['views/admin/layout.php', 'views/vet/layout.php', 'views/portal/layout.php']) {
-        assert.match(codigo(layout), /<script src="js\/sesion\.js\?v=\d+"><\/script>/, layout);
+        // M0.2: con la versión del producto, para que cada alfa renueve la caché.
+        assert.match(codigo(layout), /<script src="js\/sesion\.js\?v=<\?= htmlspecialchars\(App::assetVersion\(\), ENT_QUOTES, 'UTF-8'\) \?>"><\/script>/, layout);
     }
 });
 

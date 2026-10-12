@@ -186,7 +186,7 @@ final class IdentidadController
         }
         $duplicado = $campo === 'dv' && $error === null && (new RegistroClinica($this->db))->nitExiste((string) $_POST['nit'], $valor);
         if ($duplicado) {
-            $error = 'Este NIT ya está registrado en Zooki. Puedes reportarlo a soporte.';
+            $error = 'Este NIT ya está registrado en Zooki.';
         }
         $respuesta = ['success' => true, 'error' => $error];
         if ($campo === 'dv') {
