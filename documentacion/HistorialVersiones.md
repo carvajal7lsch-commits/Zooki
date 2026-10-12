@@ -1,15 +1,26 @@
 # Historial de Versiones — Proyecto Zooki
 
-> Registro de versiones (v1.0.0 → v2.0.0-alpha.1; la v2.0 se publica por módulos y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
+> Registro de versiones (v1.0.0 → v2.0.0-alpha.2; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
 
 ## Historial de Versiones
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 2.0.0-alpha.1 (Actual)
+### Versión 2.0.0-alpha.2 (Actual)
+Pulido del inicio de sesión y de los registros: los dos registros se ven y se comportan igual, y la verificación anti-bot ya no aparece cuando no hace falta.
+
+*   **Un solo «Crear cuenta»** bajo el inicio de sesión: eliges «Soy propietario» o «Registrar mi clínica».
+*   **Registro de clínica en tres pasos** (clínica, administrador y confirmación), con su indicador de progreso. Cada paso revisa sus datos antes de seguir y al volver atrás no se pierde lo escrito. En el computador los campos van en dos columnas; en el celular, en una.
+*   Los dos registros comparten diseño: el mismo ancho y los mismos campos, la misma casilla de la política de datos y la misma ventana de «Enviando tu registro…» y «Revisa tu correo».
+*   **Avisos más cortos** bajo cada campo, en una sola línea. Al enviar, el resumen del formulario dice qué falta en cada campo.
+*   **Verificación anti-bot en tema claro** y del ancho del formulario. En el inicio de sesión solo aparece después de 5 intentos fallidos con el mismo documento o correo, y se cuenta igual exista o no la cuenta para no revelar cuáles existen. En los registros solo se muestra si Cloudflare necesita que confirmes que eres una persona.
+
+> _Desde esta versión **cada entrega a producción sube la alfa**, sea un módulo nuevo o un pulido: así el navegador descarga los estilos y scripts nuevos en vez de usar los que tenía guardados._
+
+### Versión 2.0.0-alpha.1
 Primera versión de **Zooki como plataforma**: varias clínicas usan el mismo Zooki y cada una ve solo lo suyo. Es una versión **alfa**: trae completo el primer módulo de la v2 (clínicas, planes, cuentas y seguridad) y todo lo que ya funcionaba en la 1.12.0 pasado a la nueva forma de trabajar. Las funciones nuevas de los grafos (diagnóstico, triage y agenda inteligente) y el carnet con QR llegan en las alfas siguientes.
 
-> _**Cómo se numera la v2.** Cada módulo terminado publica una alfa nueva (`alpha.1`, `alpha.2`…). La versión `2.0.0` sale cuando estén las 28 historias de la entrega v2.0 (ver el plan de entregas de las [Historias de Usuario](HistoriasUsuario.md)). Esta alfa cierra las 9 primeras._
+> _**Cómo se numera la v2.** Cada entrega a producción publica una alfa nueva (`alpha.1`, `alpha.2`…), sea un módulo terminado o un pulido. La versión `2.0.0` sale cuando estén las 28 historias de la entrega v2.0 (ver el plan de entregas de las [Historias de Usuario](HistoriasUsuario.md)). Esta alfa cierra las 9 primeras._
 
 **Al actualizar**
 
@@ -432,7 +443,7 @@ Zooki utiliza un esquema de versionamiento semántico adaptado a la distribució
 
 *   **`X` (Mayor):** Cambios de gran impacto en la lógica de negocio general, reestructuración masiva del sistema, cambios mayores de arquitectura o lanzamientos de nuevas versiones globales (Ej: de `1.0.0` a `2.0.0`).
 *   **`Y` (Backend / Backend + Frontend):** Cambios en la lógica del backend (controladores, modelos, migraciones de base de datos). Si un cambio en el backend requiere actualizar vistas u hojas de estilos (afectando también al frontend), este dígito se incrementará (Ej: de `1.0.0` a `1.1.0`).
-*   **Versiones alfa de la v2 (`2.0.0-alpha.N`):** la v2 cambia la arquitectura entera y se publica por módulos. Cada módulo terminado sube el número de la alfa (`alpha.1`, `alpha.2`…); la versión `2.0.0` se publica cuando estén las 28 historias de la entrega v2.0 (plan de entregas de las [Historias de Usuario](HistoriasUsuario.md)).
+*   **Versiones alfa de la v2 (`2.0.0-alpha.N`):** la v2 cambia la arquitectura entera y se publica por módulos. **Cada entrega a producción** sube el número de la alfa (`alpha.1`, `alpha.2`…), sea un módulo terminado o un pulido (decisión del usuario, 2026-10-11): los estilos y scripts se piden con `?v=<versión>` y, si no cambia, el navegador sigue usando los archivos viejos; la versión `2.0.0` se publica cuando estén las 28 historias de la entrega v2.0 (plan de entregas de las [Historias de Usuario](HistoriasUsuario.md)).
 *   **`Z` (Frontend Puro):** Cambios exclusivos del frontend (mejoras de estilo CSS, animaciones, lógica JavaScript del lado del cliente, layouts) que no afectan ni modifican controladores ni bases de datos (Ej: de `1.0.0` a `1.0.1`).
 
 ---
