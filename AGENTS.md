@@ -12,7 +12,7 @@ Antes de cualquier tarea, lee **[`agentes/estado.md`](agentes/estado.md)** (dón
 
 ## Estado del proyecto
 
-- **Producción y `main` están en la v2.0.0-alpha.1** (módulo 0 de la v2: varias clínicas, identidad única y aislamiento; corte del 2026-10-11). Cada módulo siguiente se construye en su propia rama y publica una alfa nueva (la etapa activa está en [`agentes/estado.md`](agentes/estado.md)).
+- **Producción y `main` están en la v2.0.0-alpha.2** (módulo 0 de la v2: varias clínicas, identidad única y aislamiento; corte del 2026-10-11 y pulido del acceso y del panel de plataforma el 2026-10-12). Cada módulo siguiente se construye en su propia rama y publica una alfa nueva (la etapa activa está en [`agentes/estado.md`](agentes/estado.md)).
 - **La especificación ya es la v2**: una plataforma SaaS multi-inquilino con dos grafos (soporte a la decisión clínica y agenda inteligente), repartida entre v2.0 y v2.1. Está en `documentacion/` y es la fuente de verdad.
 - **Se construye la v2 por módulos**, en el orden de dependencias del [plan de entregas](documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2): primero la entrega v2.0 (lo imprescindible), luego la v2.1. Cada módulo agrupa sus HU y RE; el avance y las pruebas se cierran por etapas pequeñas dentro del módulo.
 - Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/modelo/drawdb_schema_v2.sql` describen el destino para drawDB; el esquema ejecutable es `database/01_schema.sql`. Como los datos de la v1 eran solo pruebas, el salto a v2 reinicia la base con un esquema v2 consolidado y datos semilla, sin migrar datos ([plan M0](specs/M0-T-base-saas-identidad.md)). Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
