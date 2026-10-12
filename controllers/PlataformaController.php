@@ -3,6 +3,7 @@ require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../config/EmailService.php';
 require_once __DIR__ . '/../models/Plataforma.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
+require_once __DIR__ . '/../helpers/PresentacionPlataforma.php';
 
 final class PlataformaController
 {
@@ -17,17 +18,23 @@ final class PlataformaController
     {
         $buscar = (string) ($_GET['buscar'] ?? '');
         $estado = (string) ($_GET['estado'] ?? '');
+        $plan = (string) ($_GET['plan'] ?? '');
         $error = null;
-        try {
-            $clinicas = $this->modelo->clinicas($buscar, $estado);
-        } catch (InvalidArgumentException $e) {
-            http_response_code(422);
-            $error = $e->getMessage();
-            $clinicas = [];
+        // M0.2: la lista llega filtrada solo sin JavaScript (con él, plataforma.js filtra al escribir).
+        $clinicas = $this->modelo->clinicas();
+        if ($buscar !== '' || $estado !== '' || $plan !== '') {
+            try {
+                $clinicas = $this->modelo->clinicas($buscar, $estado, $plan);
+            } catch (InvalidArgumentException $e) {
+                http_response_code(422);
+                $error = $e->getMessage();
+                $clinicas = [];
+            }
         }
         $planes = $this->modelo->planes();
         $casos = $this->modelo->casos();
         $ips = $this->modelo->ips();
+        $contadores = PresentacionPlataforma::contadores($casos, $ips);
         require __DIR__ . '/../views/plataforma/inicio.php';
     }
 

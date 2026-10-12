@@ -1,58 +1,514 @@
-/* E2: los componentes son de styles/dashboard/usuarios; aquí solo la composición del panel. */
+/*
+ * HU-0.3 — Panel del super-administrador. Revisión del usuario (2026-10-12):
+ * la cabecera, los filtros, la tarjeta (person-card), la tabla y el modal son
+ * los de Usuarios (usuarios.css); aquí solo los ajustes del panel. Identidad
+ * de Zooki: azul y grises, sin verdes ni rojos de adorno.
+ */
 .plataforma-contenido [hidden] {
     display: none !important;
 }
-.plataforma-contenido section {
-    margin-bottom: 2rem;
-}
-.plataforma-filtros {
-    display: flex;
+
+/* ── Cabecera de la página ── */
+.plataforma-cabecera {
     gap: 1rem;
     flex-wrap: wrap;
-    align-items: end;
-    margin-bottom: 1.5rem;
 }
-.plataforma-ficha {
-    padding: 1.25rem;
-    margin-bottom: 1rem;
+
+.plataforma-cabecera__cuenta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+    min-width: 0;
 }
-.plataforma-ficha dl {
-    margin: 1rem 0;
+
+.plataforma-cabecera .header-user {
+    cursor: default;
 }
-.plataforma-ficha dd {
-    margin-left: 0;
+
+.plataforma-cabecera .header-user__role {
+    text-transform: none;
+}
+
+/* ── Buscador corto: un nombre o un NIT caben en poco ancho ── */
+.plataforma .head-search .search-input {
+    max-width: 280px;
+}
+
+.plataforma .filter-select {
+    min-height: 36px;
+}
+
+/* Con JavaScript filtra al escribir: el botón solo sirve sin él. */
+.plataforma-filtros--vivo .plataforma-filtros__enviar {
+    display: none;
+}
+
+.plataforma-filtros__enviar {
+    padding: 0.45rem 0.9rem;
+}
+
+/* Contador de las pestañas Soporte y Seguridad. */
+.plataforma-contador {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.tab-btn.active .plataforma-contador {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+.plataforma-alerta {
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius-md);
+    background: #eff4ff;
+    color: #1e3a8a;
+    font-size: 0.85rem;
+}
+
+/* ── Tarjetas: la rejilla de Usuarios, todas del mismo alto ── */
+.plataforma .plataforma-tarjetas {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    align-items: stretch;
+}
+
+.plataforma .plataforma-tarjeta {
+    min-width: 0;
+}
+
+/* El pie queda abajo aunque una tarjeta tenga menos texto. */
+.plataforma .plataforma-tarjeta .card-body-mini {
+    flex: 1;
+    min-width: 0;
+}
+
+.plataforma .plataforma-tarjeta .contact-text-mini {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.plataforma-recorte {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Estado: la etiqueta de Usuarios; la activa en el azul de Zooki. */
+.plataforma-estado--activa {
+    background: #eff4ff;
+    color: var(--primary);
+}
+
+.plataforma-estado--activa i {
+    color: var(--primary);
+}
+
+/* ── Uso del plan: cifras y una barra fina azul ── */
+.plataforma-uso {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0.35rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.plataforma-uso__fila {
+    display: grid;
+    grid-template-columns: 5.6rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.plataforma-uso__valor {
+    grid-column: 3;
+    grid-row: 1;
+    font-weight: 600;
+    color: #334155;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.plataforma-uso__barra {
+    grid-column: 2;
+    grid-row: 1;
+    display: block;
+    width: 100%;
+    height: 4px;
+    border: 0;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.plataforma-uso__barra::-webkit-progress-bar {
+    background: #e2e8f0;
+    border-radius: 999px;
+}
+
+.plataforma-uso__barra::-webkit-progress-value {
+    background: var(--primary);
+    border-radius: 999px;
+}
+
+.plataforma-uso__barra::-moz-progress-bar {
+    background: var(--primary);
+    border-radius: 999px;
+}
+
+/* Cupo lleno: la cifra se marca, sin cambiar de color de marca. */
+.plataforma-uso__fila--lleno .plataforma-uso__valor {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* Sin límite: línea punteada en lugar de una barra que no se llena. */
+.plataforma-uso__barra--libre {
+    height: 0;
+    border-top: 2px dotted #cbd5e1;
+    border-radius: 0;
+    background: none;
+}
+
+/* ── Tabla de Usuarios ── */
+.plataforma-tabla .table-user {
+    align-items: center;
+}
+
+.plataforma-tabla .table-user div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.plataforma-nit {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+}
+
+.plataforma-tabla .plataforma-uso {
+    min-width: 12rem;
+    margin: 0;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+/* ── Soporte y Seguridad: filas con el mismo componente ── */
+.plataforma-lista {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.plataforma-vacio {
+    padding: 2.5rem 1rem;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.plataforma-item {
+    display: grid;
+    gap: 0.6rem;
+    padding: 1rem 1.15rem;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.plataforma-item__cabeza {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.plataforma-item__icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #ffffff;
+}
+
+.plataforma-item__titulo {
+    flex: 1;
+    min-width: 0;
+}
+
+.plataforma-item__titulo h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
     overflow-wrap: anywhere;
 }
-.plataforma-uso {
+
+.plataforma-item__meta {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.plataforma-item__texto,
+.plataforma-item__nota,
+.plataforma-item__cuentas {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #475569;
+    overflow-wrap: anywhere;
+}
+
+.plataforma-item__nota {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.plataforma-item__cuentas {
+    padding-left: 1.1rem;
+}
+
+.plataforma-item__directa {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.plataforma-item__directa [data-resultado] {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.plataforma-item__directa [data-resultado]:empty {
+    display: none;
+}
+
+.plataforma-item__accion > summary {
+    display: inline-flex;
+    list-style: none;
+}
+
+.plataforma-item__accion > summary::-webkit-details-marker {
+    display: none;
+}
+
+.plataforma-item__accion[open] > summary {
+    margin-bottom: 0.75rem;
+}
+
+/* ── Formularios del panel (casos, avisos y modal) con los campos del modal de Usuarios ── */
+.plataforma-form {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.plataforma-form .input-group {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.plataforma-form select,
+.plataforma-form textarea {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.plataforma-form textarea {
+    min-height: 4.5rem;
+    resize: vertical;
+}
+
+.plataforma-form select:focus,
+.plataforma-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+.plataforma-form [data-error-campo] {
+    min-height: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    color: #1e3a8a;
+}
+
+.plataforma-form__fila {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.plataforma-form__pie {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.plataforma-form__pie [data-resultado] {
+    flex: 1;
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.plataforma-ayuda {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+/* ── Modal «Gestionar» con pestañas internas ── */
+.plataforma-modal .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.plataforma-modal__cabeza {
+    min-width: 0;
+}
+
+.plataforma-modal__cabeza h3 {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.plataforma-modal .modal-subtitle {
     display: flex;
     flex-wrap: wrap;
-    gap: .75rem;
-    font-size: .85rem;
+    align-items: center;
+    gap: 0.35rem 0.75rem;
+    margin-top: 0.4rem;
+    cursor: default;
+    overflow-wrap: anywhere;
 }
-.plataforma-contenido textarea {
-    width: 100%;
-    min-height: 5rem;
-    padding: .75rem;
-    border: 1px solid var(--border-color, #e2e8f0);
-    border-radius: 8px;
+
+.plataforma-modal__pestanas {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.plataforma-modal__pestana {
+    padding: 0.8rem 0.9rem;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: #64748b;
     font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
 }
-.plataforma-contenido [data-error-campo] {
-    color: #b42318;
+
+.plataforma-modal__pestana.active {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
 }
-.plataforma-contenido .users-modal__body {
+
+.plataforma-modal .users-modal__body {
+    padding: 1.25rem 1.5rem 1.5rem;
     overflow-y: auto;
 }
-.plataforma-contenido .users-modal__body form + form {
-    border-top: 1px solid var(--border-color, #e2e8f0);
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-}
-.plataforma-ayuda {
-    color: var(--text-secondary, #64748b);
-}
+
+/* ── Celular (RNF-16): una columna, nada encimado ── */
 @media (max-width: 767px) {
-    .plataforma-filtros > * {
+    .plataforma-cabecera__cuenta {
+        margin-left: 0;
         width: 100%;
+        justify-content: space-between;
+    }
+
+    .plataforma .head-search .search-input {
+        max-width: none;
+    }
+
+    .plataforma .plataforma-tarjetas {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .plataforma-item__cabeza {
+        flex-wrap: wrap;
+    }
+
+    .plataforma-item__directa {
+        width: 100%;
+    }
+
+    .plataforma-item__directa .btn-modal-primary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .plataforma-form__fila {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .plataforma-form__pie {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .plataforma-form__pie .btn-modal-primary {
+        justify-content: center;
+    }
+
+    .plataforma-modal__pestanas {
+        padding: 0 1rem;
+    }
+
+    .plataforma-modal .users-modal__body {
+        padding: 1rem;
     }
 }
