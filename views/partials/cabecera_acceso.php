@@ -1,4 +1,9 @@
-<?php /** D3.1: mismos estilos del login y del registro público de clínica. */ ?>
+<?php
+/** D3.1: mismos estilos del login y del registro público de clínica. */
+require_once __DIR__ . '/../../config/App.php';
+// M0.1: los archivos propios se piden con la versión; cada entrega a producción sube la alfa.
+$versionAcceso = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
+?>
 <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($tituloPagina ?? $pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
@@ -10,7 +15,8 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <!-- El CSS se enlaza desde la carpeta public/css -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <link rel="stylesheet" href="css/styles.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/styles.css?v=<?= $versionAcceso ?>">
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="css/validacion-cuenta.css?v=d22">
+    <link rel="stylesheet" href="css/validacion-cuenta.css?v=<?= $versionAcceso ?>">
+    <link rel="stylesheet" href="css/registro-cuenta.css?v=<?= $versionAcceso ?>">

@@ -1,8 +1,12 @@
-/** HU-0.1: envío con CAPTCHA de un solo uso; no informa qué cuenta recibió el enlace. */
+/**
+ * HU-0.1: envío con CAPTCHA de un solo uso; no informa qué cuenta recibió el
+ * enlace. M0.1: la misma ventana de carga y de «Revisa tu correo» del
+ * registro del propietario (registro-cuenta.js); si el servidor rechaza el
+ * NIT por duplicado, vuelve al paso 1 con «Reportar a soporte».
+ */
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('registroClinicaForm');
     if (!form) return;
-    const salida = document.getElementById('registroClinicaResultado');
     const reporte = document.getElementById('reportarNit');
     form.addEventListener('cuenta:validada', evento => {
         if (evento.detail.campo === 'dv') reporte.hidden = !evento.detail.nitDuplicado;
@@ -10,28 +14,35 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('input', evento => {
         if (['nit', 'dv'].includes(evento.target.name)) reporte.hidden = true;
     });
-    form.addEventListener('reset', () => { reporte.hidden = true; });
-    const enviar = async (accion, boton) => {
-        boton.disabled = true;
+    form.addEventListener('submit', async evento => {
+        evento.preventDefault();
+        const datos = await window.ZookiRegistro.enviar(form, 'registrar_clinica_ajax');
+        if (datos.success) {
+            form.reset();
+            return;
+        }
+        if (datos.reportar_nit) {
+            reporte.hidden = false;
+            window.ZookiPasos?.ir(form, 1);
+        }
+    });
+    // El reporte no cambia de pantalla: responde en el resumen del formulario.
+    reporte.addEventListener('click', async () => {
+        reporte.disabled = true;
         try {
-            const respuesta = await fetch('index.php?action=' + accion, { method: 'POST', body: new FormData(form) });
+            const respuesta = await fetch('index.php?action=reportar_nit_ajax', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form),
+            });
             const datos = await respuesta.json();
-            salida.textContent = datos.message;
-            reporte.hidden = !datos.reportar_nit;
-            if (datos.success) {
-                window.zookiToast(datos.message);
-                if (accion === 'registrar_clinica_ajax') form.reset();
-            }
+            window.ZookiRegistro.mostrarResumen(form, datos.message);
+            if (datos.success) window.zookiToast(datos.message);
         } catch (error) {
-            salida.textContent = 'No se pudo completar la solicitud. Inténtalo nuevamente.';
+            window.ZookiRegistro.mostrarResumen(form, 'No se pudo enviar el reporte. Inténtalo nuevamente.');
         } finally {
-            boton.disabled = false;
+            reporte.disabled = false;
             window.ZookiTurnstile?.reiniciar(form);
         }
-    };
-    form.addEventListener('submit', evento => {
-        evento.preventDefault();
-        enviar('registrar_clinica_ajax', evento.submitter || form.querySelector('button[type="submit"]'));
     });
-    reporte.addEventListener('click', () => enviar('reportar_nit_ajax', reporte));
 });

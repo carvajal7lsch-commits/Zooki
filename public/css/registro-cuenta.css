@@ -1,0 +1,274 @@
+/*
+ * M0.1 — Marco común del acceso y de los dos registros (propietario y
+ * clínica): mismo ancho, alto de campos, espaciado, avisos de una línea,
+ * resumen del formulario, pasos, selector «Crear cuenta» y Turnstile.
+ * Se carga después de styles.css (views/partials/cabecera_acceso.php).
+ */
+
+/* ── Ancho: el login, el registro del propietario y el de clínica ── */
+.flip-container,
+.registro-clinica-page .registro-marco {
+    max-width: 460px;
+}
+
+.registro-marco [hidden],
+.acceso-turnstile[hidden],
+.registro-pasos[hidden] {
+    display: none !important;
+}
+
+/* ── Rejilla: dos columnas en escritorio y tableta, una en celular (RNF-16) ── */
+.registro-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.75rem;
+}
+
+.registro-grid .input-group {
+    min-width: 0;
+    margin-bottom: 0.75rem;
+}
+
+.registro-ancho {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 767px) {
+    .registro-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* ── Campos del mismo alto, con o sin lista desplegable ── */
+.registro-marco .input-wrapper input,
+.registro-marco .input-wrapper select {
+    min-height: 42px;
+}
+
+/* ── Avisos bajo el campo: una línea del ancho del campo; el texto completo
+      queda en el title y en el resumen del formulario ── */
+.registro-marco .cuenta-validacion {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    margin-top: 0.25rem;
+}
+
+.registro-nota {
+    margin: -0.25rem 0 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+/* ── Resumen del formulario ── */
+.registro-resumen {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid #DC2626;
+    border-radius: var(--radius-md);
+    background-color: #FEF2F2;
+    color: #B42318;
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+.registro-resumen p {
+    margin: 0;
+    font-weight: 600;
+}
+
+.registro-resumen ul {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+}
+
+/* ── Pasos del registro de clínica ── */
+.registro-pasos {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    list-style: none;
+}
+
+.registro-pasos li {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 3px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.registro-pasos-numero {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    font-size: 0.75rem;
+}
+
+.registro-pasos li.activo {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.registro-pasos li.activo .registro-pasos-numero {
+    border-color: var(--primary);
+    background-color: var(--primary);
+    color: #FFFFFF;
+}
+
+.registro-pasos li.hecho {
+    color: var(--text-secondary);
+    border-bottom-color: var(--primary-soft);
+}
+
+.registro-pasos li.hecho .registro-pasos-numero {
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: var(--primary-soft);
+}
+
+/* En el celular el número va sobre el nombre: «Administrador» no cabe al lado. */
+@media (max-width: 767px) {
+    .registro-pasos li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+        font-size: 0.75rem;
+    }
+}
+
+.registro-paso {
+    min-width: 0;
+    margin: 0 0 1rem;
+    padding: 0;
+    border: 0;
+}
+
+.registro-paso legend {
+    margin-bottom: 0.75rem;
+    padding: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.registro-acciones {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.registro-acciones .btn-primary,
+.registro-acciones .btn-secondary {
+    flex: 1;
+    margin-top: 0;
+}
+
+/* Sin JavaScript los tres pasos se ven a la vez y solo queda el botón de envío. */
+form:not(.registro-por-pasos) [data-paso-ir] {
+    display: none;
+}
+
+/* ── Turnstile: tema claro y ancho del formulario como máximo ── */
+.acceso-turnstile {
+    max-width: 100%;
+    margin: 0.25rem 0 1rem;
+}
+
+.acceso-turnstile iframe {
+    max-width: 100%;
+}
+
+/* ── Ventana de espera (views/partials/registro_espera.php) ── */
+.registro-espera a.btn-secondary {
+    text-decoration: none;
+}
+
+/* ── Selector «Crear cuenta» ── */
+.crear-cuenta-card h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #0f172a;
+}
+
+.crear-cuenta-opciones {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.crear-cuenta-opcion {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    width: 100%;
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background-color: #FFFFFF;
+    color: var(--text-primary);
+    font-family: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.crear-cuenta-opcion:hover,
+.crear-cuenta-opcion:focus-visible {
+    border-color: var(--primary);
+    background-color: #F5F8FF;
+    box-shadow: 0 0 0 4px var(--primary-soft);
+    outline: none;
+}
+
+.crear-cuenta-icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background-color: #EFF4FF;
+    color: var(--primary);
+    font-size: 1.35rem;
+}
+
+.crear-cuenta-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.crear-cuenta-texto strong {
+    font-size: 0.95rem;
+}
+
+.crear-cuenta-texto span {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+}
+
+.crear-cuenta-flecha {
+    margin-left: auto;
+    font-size: 1.3rem;
+    color: var(--text-muted);
+}

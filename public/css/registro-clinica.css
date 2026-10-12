@@ -1,57 +1,42 @@
-/* HU-0.1: conserva los componentes de acceso; el formulario largo ocupa su propia pantalla. */
+/* HU-0.1: lo propio del registro de clínica. El marco que comparte con el
+   registro del propietario (ancho, campos, avisos, pasos) está en
+   registro-cuenta.css (M0.1). */
 .registro-clinica-page .form-wrapper {
-    max-width: 600px;
     margin: auto 0;
 }
-.registro-clinica-page .input-wrapper select {
-    width: 100%;
-    padding: 14px 16px;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-}
-.registro-clinica-campos {
-    border: 0;
-    padding: 0;
-    margin: 24px 0;
-}
-.registro-clinica-campos legend {
-    font-weight: 700;
-    margin-bottom: 16px;
-}
-.registro-clinica-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 16px;
-}
-.registro-clinica-page .registro-consentimiento {
-    display: flex;
-    gap: 8px;
-    margin: 16px 0;
-}
-.registro-clinica-page [hidden] {
-    display: none;
-}
-@media (max-width: 767px) {
-    .registro-clinica-grid {
-        grid-template-columns: 1fr;
-    }
-}
+
+/* NIT y DV en casillas separadas (RE-0.1.3), con su ayuda y el duplicado debajo. */
 .registro-clinica-nit {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 70px;
-    gap: 0 12px;
+    grid-template-columns: minmax(0, 1fr) 88px;
+    gap: 0 0.75rem;
     min-width: 0;
+    margin-bottom: 0.75rem;
 }
+
 .registro-clinica-nit .input-group {
     min-width: 0;
     margin-bottom: 0;
 }
-.registro-clinica-nit small#dvAyuda {
+
+.registro-clinica-nit #dvAyuda,
+.registro-clinica-nit #nitUnicidad,
+.registro-clinica-nit #reportarNit {
     grid-column: 1 / -1;
 }
-.registro-clinica-nit #reportarNit,
-.registro-clinica-nit #nitUnicidad {
-    grid-column: 1 / -1;
+
+.registro-clinica-nit #dvAyuda {
+    margin: 0.3rem 0 0;
+}
+
+.registro-clinica-nit .registro-reportar {
+    margin-top: 0.5rem;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 767px) {
+    .registro-clinica-nit {
+        grid-template-columns: minmax(0, 1fr) 72px;
+    }
 }
