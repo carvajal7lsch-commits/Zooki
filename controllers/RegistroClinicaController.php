@@ -101,7 +101,12 @@ final class RegistroClinicaController
         $fila = $this->registro->leer($id, $token);
         $error = null;
         $terminado = false;
-        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        // M0.2: el GET ya dice por qué no sigue; ni se ofrece el botón ni el POST cambia nada.
+        $superAdministrador = $fila !== null && $this->registro->esDeSuperAdministrador($fila);
+        if ($superAdministrador) {
+            $error = RegistroClinica::MENSAJE_SUPER_ADMIN;
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && !$superAdministrador) {
             try {
                 if (!Csrf::validate()) {
                     throw new InvalidArgumentException('Recarga el enlace e inténtalo de nuevo.');
