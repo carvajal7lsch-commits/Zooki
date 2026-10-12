@@ -23,6 +23,7 @@ final class RegistroGoogleTest extends TestCase
     {
         $this->db = DosClinicas::sqlite();
         DosClinicas::crearMascotasSqlite($this->db);
+        $this->db->exec("CREATE TABLE casos_soporte (id_caso INTEGER PRIMARY KEY AUTOINCREMENT, tipo TEXT, id_usuario INTEGER, id_clinica INTEGER, descripcion TEXT, estado TEXT DEFAULT 'abierto')");
         $this->registro = new RegistroPropietario($this->db);
         $usuarios = new Usuario($this->db);
         Security::definirFuenteDeContextos(static fn (int $id): ?array => $usuarios->contextosDe($id));
@@ -104,6 +105,8 @@ final class RegistroGoogleTest extends TestCase
             $this->fail('Aceptó el documento de otra cuenta.');
         } catch (InvalidArgumentException $e) {
             $this->assertSame(1, (int) $_SESSION['perfil_incompleto']);
+            // Modelos §13.1 (M5 C1): el documento ocupado abre el caso de soporte.
+            $this->assertSame(1, $this->contar("SELECT COUNT(*) FROM casos_soporte WHERE tipo = 'documento_duplicado' AND id_usuario = $id"));
         }
         try {
             $controlador->guardarPerfil($id, ['tipo_documento' => 'CC', 'documento' => '1000000088', 'telefono' => '(300) 123']);

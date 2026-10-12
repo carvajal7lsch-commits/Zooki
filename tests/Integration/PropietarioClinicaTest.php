@@ -23,16 +23,41 @@ final class PropietarioClinicaTest extends TestCase
         return array_replace(['nombre_completo'=>'Nuevo Titular','tipo_documento'=>'CC','documento'=>'1000000030',
             'email'=>'nuevo@zooki.test','telefono'=>'3001234567','titular_presente'=>'1','acepta_politica'=>'1'],$cambios);
     }
-    public function testBusquedaGlobalSoloExactaConMascotasBasicas(): void
+    /**
+     * RE-1.5.1, RN-109 y RN-111 (decisión del usuario, M5): sin vínculo activo
+     * la búsqueda exacta solo dice que la cuenta existe, igual por documento o
+     * correo; con el vínculo activo, sus datos y sus mascotas básicas.
+     */
+    public function testBusquedaExactaSinVinculoSoloDiceQueHayUnaCuenta(): void
     {
-        foreach (['Fabio','10000','fabio@','%','100000000','fabio@zooki.tes'] as $termino) $this->assertNull($this->modelo->buscarExacto($termino));
-        $porDocumento=$this->modelo->buscarExacto('1000000006');
-        $porCorreo=$this->modelo->buscarExacto('fabio@zooki.test');
-        $this->assertSame($porDocumento,$porCorreo); $this->assertFalse($porCorreo['vinculado']);
-        $this->assertSame(['id_mascota','nombre','nombre_especie','nombre_raza','raza_indicada','url_foto'],array_keys($porCorreo['mascotas'][0]));
-        foreach (['password','google_uid','peso','token_carnet'] as $campo) $this->assertArrayNotHasKey($campo,$porCorreo);
-        $this->assertSame([9],array_map('intval',array_column($this->modelo->listar(),'id_usuario')));
-        try { $this->modelo->obtener(6); $this->fail('Debió rechazar'); } catch (AccesoDenegado $e) { $this->assertSame(403,$e->codigo()); }
+        foreach (['Fabio', '10000', 'fabio@', '%', '100000000', 'fabio@zooki.tes'] as $termino) {
+            $this->assertNull($this->modelo->buscarExacto($termino));
+        }
+        $esperado = ['vinculado' => false, 'mensaje' => PropietarioClinica::MENSAJE_SIN_VINCULO];
+        $this->assertSame($esperado, $this->modelo->buscarExacto('1000000006'));
+        $this->assertSame($esperado, $this->modelo->buscarExacto('fabio@zooki.test'));
+        $this->assertSame([9], array_map('intval', array_column($this->modelo->listar(), 'id_usuario')));
+        try {
+            $this->modelo->obtener(6);
+            $this->fail('Debió rechazar');
+        } catch (AccesoDenegado $e) {
+            $this->assertSame(403, $e->codigo());
+        }
+    }
+
+    public function testBusquedaExactaConVinculoActivoMuestraSusMascotasBasicas(): void
+    {
+        $this->db->exec("INSERT INTO propietario_clinica (id_propietario, id_clinica, estado) VALUES (6, 2, 'activo')");
+
+        $porDocumento = $this->modelo->buscarExacto('1000000006');
+
+        $this->assertSame($porDocumento, $this->modelo->buscarExacto('fabio@zooki.test'));
+        $this->assertTrue($porDocumento['vinculado']);
+        $this->assertSame('Fabio Dueño', $porDocumento['nombre_completo']);
+        $this->assertSame(['id_mascota', 'nombre', 'nombre_especie', 'nombre_raza', 'raza_indicada', 'url_foto'], array_keys($porDocumento['mascotas'][0]));
+        foreach (['password', 'google_uid', 'peso', 'token_carnet', 'es_super_admin'] as $campo) {
+            $this->assertArrayNotHasKey($campo, $porDocumento);
+        }
     }
     public function testAltaSinAceptacionOPresenciaNoCreaCuentaNiVinculoNiToken(): void
     {

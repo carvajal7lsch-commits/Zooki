@@ -83,13 +83,20 @@ final class VinculoReactivacionTest extends TestCase
         $this->assertSame('inactivo', $this->vinculo(DosClinicas::PROPIETARIO, DosClinicas::NORTE));
     }
 
-    public function testEditarNombreDeUnVinculoInactivoSinReactivarloSiSePuede(): void
+    /** RN-115 (decisión del usuario, M5 C1): la clínica no sobrescribe los datos de un cliente desvinculado. */
+    public function testUnVinculoInactivoNoSeEditaDesdeLaClinica(): void
     {
         $this->db->exec("UPDATE propietario_clinica SET estado='inactivo' WHERE id_propietario=6 AND id_clinica=1");
 
-        (new PropietarioClinica($this->db))->actualizar(DosClinicas::PROPIETARIO, ['nombre_completo' => 'Fabio Corregido', 'telefono' => '3001234567', 'estado' => '0']);
+        try {
+            (new PropietarioClinica($this->db))->actualizar(DosClinicas::PROPIETARIO, ['nombre_completo' => 'Fabio Corregido', 'telefono' => '3009999999', 'estado' => '0']);
+            $this->fail('La clínica editó a un cliente desvinculado.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertSame(PropietarioClinica::MENSAJE_DESVINCULADO, $e->getMessage());
+        }
 
-        $this->assertSame('Fabio Corregido', $this->db->query('SELECT nombre_completo FROM usuarios WHERE id_usuario = 6')->fetchColumn());
+        $this->assertSame('Fabio Dueño', $this->db->query('SELECT nombre_completo FROM usuarios WHERE id_usuario = 6')->fetchColumn());
+        $this->assertNull($this->db->query('SELECT telefono FROM usuarios WHERE id_usuario = 6')->fetchColumn());
         $this->assertSame('inactivo', $this->vinculo(DosClinicas::PROPIETARIO, DosClinicas::NORTE));
     }
 
