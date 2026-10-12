@@ -126,9 +126,8 @@ class PropietarioController {
             $solicitud = $idPersona !== null
                 ? $modelo->solicitarVinculoDe($idPersona)
                 : $modelo->solicitarVinculo((string) ($_POST['identificador'] ?? ''));
-            $enlace=EnlaceCuenta::crear('confirmar_vinculo_propietario',$solicitud['id_enlace'],$solicitud['token']);
-            $enviado=$this->correo($solicitud['email'],$solicitud['nombre'],'Confirma tu vínculo con ' . $solicitud['clinica'],
-                'El personal de ' . $solicitud['clinica'] . ' solicita vincular tu cuenta. Confirma solo si elegiste atenderte allí. El enlace vence en 24 horas.',$enlace);
+            // RN-G13: sin solicitud (cuenta de plataforma) se responde igual, sin enviar nada.
+            $enviado = $solicitud === null || $this->enviarSolicitud($solicitud);
             // Nunca devolver el token ni el enlace al personal que hizo la solicitud.
             echo json_encode(['success'=>$enviado,'message'=>$enviado
                 ? 'Se envió la solicitud al propietario. Vuelve a buscarlo cuando confirme.'
@@ -136,6 +135,14 @@ class PropietarioController {
         } catch (AccesoDenegado $e) { throw $e; }
         catch (InvalidArgumentException $e) { http_response_code(422); echo json_encode(['success'=>false,'message'=>$e->getMessage()]); }
         catch (Throwable $e) { error_log('Solicitud de vínculo: ' . $e->getMessage()); http_response_code(500); echo json_encode(['success'=>false,'message'=>'No se pudo solicitar la vinculación.']); }
+    }
+
+    private function enviarSolicitud(array $solicitud): bool
+    {
+        $enlace = EnlaceCuenta::crear('confirmar_vinculo_propietario', $solicitud['id_enlace'], $solicitud['token']);
+        $asunto = 'Confirma tu vínculo con ' . $solicitud['clinica'];
+        $texto = 'El personal de ' . $solicitud['clinica'] . ' solicita vincular tu cuenta. Confirma solo si elegiste atenderte allí. El enlace vence en 24 horas.';
+        return $this->correo($solicitud['email'], $solicitud['nombre'], $asunto, $texto, $enlace);
     }
 
     public function confirmarVinculo(): void

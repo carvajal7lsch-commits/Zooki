@@ -5,6 +5,7 @@ require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/PasswordReset.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/ContactoPropietario.php';
+require_once __DIR__ . '/VinculoClinica.php';
 
 /** RN-109: datos de propietario del personal y confirmación de vínculo. */
 final class PropietarioClinica extends ModeloClinica
@@ -61,7 +62,8 @@ final class PropietarioClinica extends ModeloClinica
         if ($persona === null) {
             return null;
         }
-        $vinculado = $this->estadoVinculo((int) $persona['id_usuario']) === 'activo';
+        // RN-G13: el super-administrador nunca es cliente; se responde como a cualquier cuenta sin vínculo.
+        $vinculado = !$this->esPlataforma($persona) && $this->estadoVinculo((int) $persona['id_usuario']) === 'activo';
         $auditoria = new Auditoria($this->conn);
         if (!$vinculado) {
             $auditoria->log(Contexto::idUsuario(), 'VIEW', 'usuarios', (int) $persona['id_usuario'], null, null, 'Búsqueda exacta de una cuenta sin vínculo con la clínica (RN-109)');
@@ -77,6 +79,7 @@ final class PropietarioClinica extends ModeloClinica
         $stmt->execute([$persona['id_usuario']]);
         $mascotas = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $auditoria->log(Contexto::idUsuario(), 'VIEW', 'usuarios', (int) $persona['id_usuario'], null, null, 'Búsqueda exacta de propietario (RN-111)');
+        unset($persona['es_super_admin']);
         return $persona + ['vinculado' => true, 'mascotas' => $mascotas];
     }
 
@@ -90,12 +93,17 @@ final class PropietarioClinica extends ModeloClinica
             return null;
         }
         $campo = $esCorreo ? 'email' : 'documento';
-        $stmt = $this->conn->prepare("SELECT u.id_usuario, u.nombre_completo, u.tipo_documento, u.documento, u.email, u.telefono
+        $stmt = $this->conn->prepare("SELECT u.id_usuario, u.nombre_completo, u.tipo_documento, u.documento, u.email, u.telefono, u.es_super_admin
             FROM usuarios u
             WHERE u.$campo = ? AND u.estado = 1");
         $stmt->execute([$identificador]);
         $persona = $stmt->fetch(PDO::FETCH_ASSOC);
         return $persona === false ? null : $persona;
+    }
+
+    private function esPlataforma(array $persona): bool
+    {
+        return (int) ($persona['es_super_admin'] ?? 0) === 1;
     }
 
     /** Estado del vínculo de la persona con la clínica activa ('activo', 'inactivo') o null. */
@@ -127,8 +135,12 @@ final class PropietarioClinica extends ModeloClinica
             return ['id_usuario'=>$id,'id_enlace'=>$reset,'token'=>$token];
         });
     }
-    /** RN-109: la clínica pide al titular, por correo, confirmar el vínculo. */
-    public function solicitarVinculo(string $identificador): array
+    /**
+     * RN-109: la clínica pide al titular, por correo, confirmar el vínculo.
+     * Devuelve null cuando no se envía nada (cuenta de plataforma, RN-G13):
+     * quien llama responde lo mismo que si se hubiera enviado.
+     */
+    public function solicitarVinculo(string $identificador): ?array
     {
         $persona = $this->personaExacta($identificador);
         if ($persona === null) {
@@ -142,12 +154,12 @@ final class PropietarioClinica extends ModeloClinica
      * la confirmación por el id de la persona, porque ya no ve su correo. Solo
      * sirve con quien tuvo vínculo con esta clínica.
      */
-    public function solicitarVinculoDe(int $idPersona): array
+    public function solicitarVinculoDe(int $idPersona): ?array
     {
         if ($this->estadoVinculo($idPersona) === null) {
             $this->denegar($idPersona);
         }
-        $stmt = $this->conn->prepare('SELECT u.id_usuario, u.nombre_completo, u.email FROM usuarios u WHERE u.id_usuario = ? AND u.estado = 1');
+        $stmt = $this->conn->prepare('SELECT u.id_usuario, u.nombre_completo, u.email, u.es_super_admin FROM usuarios u WHERE u.id_usuario = ? AND u.estado = 1');
         $stmt->execute([$idPersona]);
         $persona = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($persona === false) {
@@ -156,8 +168,15 @@ final class PropietarioClinica extends ModeloClinica
         return $this->crearSolicitud($persona);
     }
 
-    private function crearSolicitud(array $persona): array
+    private function crearSolicitud(array $persona): ?array
     {
+        // RN-G13 (decisión del usuario, M5 «C1 — Revisión»): el super-administrador
+        // no tiene roles de clínica. La clínica recibe la respuesta de siempre,
+        // pero no se crea la solicitud ni se envía el correo.
+        if ($this->esPlataforma($persona)) {
+            (new Auditoria($this->conn))->log(Contexto::idUsuario(), 'OTHER', 'usuarios', (int) $persona['id_usuario'], null, null, 'Solicitud de vínculo a una cuenta de plataforma: no se envió (RN-G13)');
+            return null;
+        }
         if ($this->estadoVinculo((int) $persona['id_usuario']) === 'activo') {
             throw new InvalidArgumentException('El propietario ya está vinculado a esta clínica.');
         }
@@ -183,7 +202,7 @@ final class PropietarioClinica extends ModeloClinica
     {
         return Transaccion::ejecutar($this->conn,function () use ($id,$token) {
             $bloqueo=$this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
-            $stmt=$this->conn->prepare("SELECT v.*,u.email AS email_actual,u.estado AS usuario_activo,c.estado AS clinica_estado
+            $stmt=$this->conn->prepare("SELECT v.*,u.email AS email_actual,u.estado AS usuario_activo,u.es_super_admin,c.estado AS clinica_estado
                 FROM verificaciones_email v JOIN usuarios u ON u.id_usuario=v.id_usuario
                 JOIN clinicas c ON c.id_clinica=v.id_clinica_vinculo
                 WHERE v.id=? AND v.proposito='vinculo_clinica'" . $bloqueo);
@@ -191,6 +210,10 @@ final class PropietarioClinica extends ModeloClinica
             if (!$fila || (int)$fila['used'] !== 0 || strtotime($fila['expires_at'])<=time()
                 || (int)$fila['usuario_activo'] !== 1 || $fila['clinica_estado'] !== 'activa'
                 || $fila['email'] !== $fila['email_actual'] || !password_verify($token,$fila['token_hash'])) return false;
+            // RN-G13: un enlace anterior a la regla tampoco liga a un super-administrador.
+            if ((int) $fila['es_super_admin'] === 1) {
+                return false;
+            }
             $stmt=$this->conn->prepare('UPDATE verificaciones_email SET used=1 WHERE id=? AND used=0');
             $stmt->execute([$id]); if ($stmt->rowCount() !== 1) return false;
             $stmt=$this->conn->prepare('SELECT estado FROM propietario_clinica WHERE id_propietario=? AND id_clinica=?');
@@ -219,11 +242,38 @@ final class PropietarioClinica extends ModeloClinica
         foreach (['documento','tipo_documento','email'] as $campo) {
             if (isset($datos[$campo]) && $datos[$campo] !== $actual[$campo]) $this->denegar($id);
         }
-        Transaccion::ejecutar($this->conn,function () use ($id,$datos,$actual) {
-            $this->conn->prepare('UPDATE usuarios SET nombre_completo=?,telefono=? WHERE id_usuario=?')->execute([$datos['nombre_completo'],$datos['telefono'],$id]);
-            $this->conn->prepare('UPDATE propietario_clinica SET estado=? WHERE id_propietario=? AND id_clinica=?')->execute([(string)$datos['estado'] === '1' ? 'activo' : 'inactivo',$id,$this->clinica()]);
-            (new Auditoria($this->conn))->log(Contexto::idUsuario(),'UPDATE','propietario_clinica',$id,['nombre_completo'=>$actual['nombre_completo'],'telefono'=>$actual['telefono'],'estado'=>$actual['estado']],array_intersect_key($datos,array_flip(['nombre_completo','telefono','estado'])),'Datos de contacto y vínculo del propietario actualizados');
+        $desactiva = (string) $datos['estado'] !== '1';
+        $vinculos = new VinculoClinica($this->conn);
+        if ($desactiva) {
+            $this->exigirSinCitasSinResolver($vinculos, $id);
+        }
+        Transaccion::ejecutar($this->conn, function () use ($id, $datos, $actual, $desactiva, $vinculos): void {
+            $this->conn->prepare('UPDATE usuarios SET nombre_completo = ?, telefono = ? WHERE id_usuario = ?')->execute([$datos['nombre_completo'], $datos['telefono'], $id]);
+            $nuevos = array_intersect_key($datos, array_flip(['nombre_completo', 'telefono', 'estado']));
+            $descripcion = 'Datos de contacto del propietario actualizados';
+            if ($desactiva) {
+                // RN-115 (decisión del usuario, M5 «C1 — Revisión»): igual que cuando se desvincula el propietario.
+                $nuevos['mascotas_desvinculadas'] = $vinculos->desactivar($id, $this->clinica());
+                $descripcion = 'La clínica desactivó el vínculo del propietario y sus mascotas (RN-115)';
+            }
+            (new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'propietario_clinica', $id, ['nombre_completo' => $actual['nombre_completo'], 'telefono' => $actual['telefono'], 'estado' => $actual['estado']], $nuevos, $descripcion);
         });
+    }
+
+    /** RE-5.13.3 (decisión del usuario, C1.1): la clínica tampoco desactiva con citas sin resolver allí. */
+    private function exigirSinCitasSinResolver(VinculoClinica $vinculos, int $id): void
+    {
+        $pendientes = $vinculos->citasSinResolver($id, $this->clinica());
+        if ($pendientes === 0) {
+            return;
+        }
+        throw new InvalidArgumentException(sprintf(
+            'Tiene %d cita%s sin resolver en esta clínica. Cancélala%s o ciérrala%s antes de desactivar el vínculo.',
+            $pendientes,
+            $pendientes === 1 ? '' : 's',
+            $pendientes === 1 ? '' : 's',
+            $pendientes === 1 ? '' : 's'
+        ));
     }
     private function denegar(int $id): never
     {
