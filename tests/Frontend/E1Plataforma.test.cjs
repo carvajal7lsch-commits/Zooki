@@ -20,6 +20,8 @@ function pagina() {
         document: {
             addEventListener: (tipo, callback) => { eventos[tipo] = callback; },
             querySelectorAll: selector => selector === '[data-lista-vista]' ? [tarjetas, tabla] : [],
+            querySelector: () => null,
+            createElement: () => ({ setAttribute() {} }),
             getElementById: () => ({ replaceWith: () => { actualizado = true; } }),
         },
         DOMParser: class {
@@ -138,8 +140,8 @@ test('E2: abrir modal, escribir motivo y pulsar Suspender llega al POST sin Swee
     plan.querySelector = () => ({ disabled: false });
     const modal = {
         classList: { add: valor => clase.add(valor) }, setAttribute: (clave, valor) => { atributo[clave] = valor; },
-        querySelectorAll: () => [estados],
-        querySelector: selector => selector.includes('suscripcion') ? plan : (selector.includes('estado_ajax') ? estados : (selector === 'select' ? { focus() {} } : {})),
+        querySelectorAll: selector => selector === 'form' ? [estados] : [],
+        querySelector: selector => selector.includes('suscripcion') ? plan : (selector.includes('estado_ajax') ? estados : (selector === 'select' ? { focus() {} } : { prepend() {} })),
         showModal() { clase.add('dialog-nativo'); },
     };
     const obtenerOriginal = p.contexto.document.getElementById;
@@ -165,7 +167,7 @@ test('E2: abrir modal, escribir motivo y pulsar Suspender llega al POST sin Swee
 
 test('E2: la plataforma usa componentes administrativos y su modal no entra en la capa superior nativa', () => {
     const vista = fs.readFileSync(path.join(__dirname, '../../views/plataforma/inicio.php'), 'utf8');
-    for (const elemento of ['css/styles.css', 'css/dashboard.css', 'css/usuarios.css', 'person-card', 'personal-grid', 'users-modal', 'users-table', 'view-toggle']) assert.ok(vista.includes(elemento));
+    for (const elemento of ['css/styles.css', 'css/dashboard.css', 'css/usuarios.css', 'person-card', 'personal-grid', 'users-modal', 'users-table', 'view-toggle', 'tabs-wrapper', 'search-input', 'filter-select']) assert.ok(vista.includes(elemento));
     assert.doesNotMatch(vista, /<dialog|data-validacion-cuenta|\sstyle=|\sonclick=/);
     const css = fs.readFileSync(path.join(__dirname, '../../public/css/plataforma.css'), 'utf8');
     assert.doesNotMatch(css, /(?:^|\n)(?:body|button|input|:root|\.person-card|\.users-modal)\s*\{/);

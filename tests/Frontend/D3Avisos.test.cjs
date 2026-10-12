@@ -85,7 +85,7 @@ test('el toast de redirección se recupera una sola vez y conserva SweetAlert2 n
 
 test('registro de clínicas conserva los componentes de acceso y no incluye Google ni código en línea', () => {
     const vista = codigo('views/auth/registro_clinica.php');
-    assert.match(vista, /login-hero/);
+    assert.match(vista, /partials\/acceso_hero\.php/);
     assert.match(vista, /data-validacion-cuenta/);
     assert.match(vista, /data-turnstile-formulario/);
     assert.doesNotMatch(vista, /gsi\/client|btnGoogle|\sstyle=|\son[a-z]+=|<script>\s*\S/);

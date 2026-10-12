@@ -109,7 +109,7 @@ test('M0.1: el login tiene un solo «Crear cuenta» con las dos opciones y sin J
     assert.equal((vista.match(/data-crear-cuenta-abrir/g) || []).length, 1);
     assert.match(vista, /href="index\.php\?action=register" data-crear-cuenta-abrir>Crear cuenta</, 'Sin JavaScript abre el registro del propietario.');
     assert.match(vista, /<strong>Soy propietario<\/strong>/);
-    assert.match(vista, /<a class="crear-cuenta-opcion" href="index\.php\?action=registro_clinica">/);
+    assert.match(vista, /<a class="crear-cuenta-opcion" href="index\.php\?action=registro_clinica" data-acceso-giro-ir>/);
     assert.match(vista, /<strong>Registrar mi clínica<\/strong>/);
     assert.doesNotMatch(vista, /\sstyle="|\son[a-z]+="|<script>\s*\S/);
     assert.doesNotMatch(codigo('views/auth/registro_clinica.php'), /\sstyle="|\son[a-z]+="|<script>\s*\S/);
