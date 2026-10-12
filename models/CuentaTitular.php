@@ -9,6 +9,7 @@ require_once __DIR__ . '/InvitacionPersonal.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../helpers/PoliticaDatos.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
+require_once __DIR__ . '/CasoSoporte.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
 require_once __DIR__ . '/../helpers/GoogleToken.php';
 
@@ -295,7 +296,7 @@ final class CuentaTitular
             throw new InvalidArgumentException('Elige un tipo válido y un documento de 5 a 15 dígitos.');
         }
         if ($this->usuarios->existeDocumento($documento, $id)) {
-            $this->registrarCasoDocumento($id, $documento);
+            (new CasoSoporte($this->db))->documentoDuplicado($id, $documento, 'RN-G24');
             throw new InvalidArgumentException('No se pudo aplicar el cambio. Revisa los datos o contacta a soporte.');
         }
         try {
@@ -309,22 +310,10 @@ final class CuentaTitular
                 throw $e;
             }
             // Otra solicitud pudo ocupar el documento después de comprobar su disponibilidad.
-            $this->registrarCasoDocumento($id, $documento);
+            (new CasoSoporte($this->db))->documentoDuplicado($id, $documento, 'RN-G24');
             throw new InvalidArgumentException('No se pudo aplicar el cambio. Revisa los datos o contacta a soporte.');
         }
         return $usuario;
-    }
-
-    private function registrarCasoDocumento(int $id, string $documento): void
-    {
-        $descripcion = 'El titular solicitó el documento ' . $documento . ' ya asociado a otra cuenta (RN-G24).';
-        Transaccion::ejecutar($this->db, function () use ($id, $descripcion): void {
-            $this->bloquearUsuario($id);
-            $this->db->prepare("INSERT INTO casos_soporte (tipo, id_usuario, descripcion)
-                SELECT 'documento_duplicado', ?, ? WHERE NOT EXISTS
-                (SELECT 1 FROM casos_soporte WHERE tipo = 'documento_duplicado' AND id_usuario = ? AND descripcion = ? AND estado = 'abierto')")
-                ->execute([$id, $descripcion, $id, $descripcion]);
-        });
     }
 
     /**

@@ -929,7 +929,8 @@ class AuthController {
             Security::resetRateLimit($email);
             unset($_SESSION['login_captcha']);
             // RN-G21: Google se liga a la cuenta existente.
-            $usuario = $this->registro->vincularGoogle($intento['usuario'], $googleUid);
+            // RN-109 (Modelos §11, GG4): desde «Registrarme con Google» llega la clínica elegida.
+            $usuario = $this->registro->vincularGoogle($intento['usuario'], $googleUid, $this->clinicaDelRegistroGoogle());
             $destino = $this->iniciarSesion($usuario, 'google');
             $this->jsonResponse(true, "Login exitoso", ['action' => 'login', 'redirect' => 'index.php?action=' . $destino]);
         }
@@ -942,13 +943,22 @@ class AuthController {
             'google_uid' => $googleUid,
             'desde' => time(),
         ];
-        $clinica = $_POST['id_clinica'] ?? '';
         $this->jsonResponse(true, "Acepta la política para crear tu cuenta", [
             'action' => 'aceptar_registro',
             'email' => $email,
             'name' => $nombre,
-            'id_clinica' => ctype_digit((string) $clinica) ? (int) $clinica : 0,
+            'id_clinica' => $this->clinicaDelRegistroGoogle() ?? 0,
         ]);
+    }
+
+    /** La clínica elegida en «Registrarme con Google»; «Entrar con Google» la manda vacía. */
+    private function clinicaDelRegistroGoogle(): ?int
+    {
+        $clinica = (string) ($_POST['id_clinica'] ?? '');
+        if (!ctype_digit($clinica) || (int) $clinica < 1) {
+            return null;
+        }
+        return (int) $clinica;
     }
 
     /** Lo que Google confirmó vale 15 minutos para aceptar la política. */

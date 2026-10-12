@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../helpers/Roles.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
+require_once __DIR__ . '/../helpers/ContactoPropietario.php';
 
 /**
  * Identidad de las personas (MER §2) y sus roles por clínica.
@@ -295,8 +296,9 @@ class Usuario
      */
     public function propietariosDeClinica(int $idClinica): array
     {
+        // RN-115: con el vínculo inactivo, solo el nombre y la marca «Desvinculado».
         $stmt = $this->conn->prepare(
-            "SELECT u.id_usuario, u.documento, u.tipo_documento, u.nombre_completo, u.telefono, u.email,
+            'SELECT u.id_usuario, u.nombre_completo, ' . ContactoPropietario::columnas('u', 'pc') . ', ' . ContactoPropietario::marca('pc') . ",
                     CASE WHEN pc.estado = 'activo' THEN 1 ELSE 0 END AS estado_clinica,
                     (SELECT COUNT(*) FROM mascotas m
                        JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota AND mc.id_clinica = pc.id_clinica

@@ -10,6 +10,7 @@ require_once __DIR__ . '/../models/PropietarioClinica.php';
 require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/PoliticaDatos.php';
+require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 
 /**
  * Propietarios desde el personal de la clínica (HU-1.2, RN-109): alta
@@ -119,7 +120,12 @@ class PropietarioController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); return; }
         try {
             EnlaceCuenta::base();
-            $solicitud=(new PropietarioClinica($this->db))->solicitarVinculo((string)($_POST['identificador'] ?? ''));
+            $modelo = new PropietarioClinica($this->db);
+            // RN-115: desde Clientes se reactiva por el id, porque la clínica ya no ve el correo.
+            $idPersona = ValidadorClinico::id($_POST['id_usuario'] ?? null);
+            $solicitud = $idPersona !== null
+                ? $modelo->solicitarVinculoDe($idPersona)
+                : $modelo->solicitarVinculo((string) ($_POST['identificador'] ?? ''));
             $enlace=EnlaceCuenta::crear('confirmar_vinculo_propietario',$solicitud['id_enlace'],$solicitud['token']);
             $enviado=$this->correo($solicitud['email'],$solicitud['nombre'],'Confirma tu vínculo con ' . $solicitud['clinica'],
                 'El personal de ' . $solicitud['clinica'] . ' solicita vincular tu cuenta. Confirma solo si elegiste atenderte allí. El enlace vence en 24 horas.',$enlace);

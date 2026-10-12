@@ -8,6 +8,7 @@ require_once __DIR__ . '/../helpers/PoliticaDatos.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
+require_once __DIR__ . '/CasoSoporte.php';
 
 /**
  * HU-5.8, HU-T.18 y HU-T.19 — El propietario se registra como identidad
@@ -26,6 +27,9 @@ require_once __DIR__ . '/../helpers/Transaccion.php';
 final class RegistroPropietario
 {
     public const VIGENCIA_HORAS = 24;
+
+    /** RE-T.18.3: no dice si el documento existe ni de quién es (Modelos §13.1). */
+    public const MENSAJE_PERFIL_NO_COMPLETADO = 'No se pudo completar el perfil. Revisa los datos o contacta a soporte.';
 
     private Usuario $usuarios;
     private VerificacionEmail $verificaciones;
@@ -135,25 +139,52 @@ final class RegistroPropietario
      * se liga a la clínica que había elegido, pierde la contraseña (pudo
      * crearla otra persona con ese correo) y vuelve a pedir documento y
      * teléfono. Una cuenta verificada conserva su contraseña.
+     *
+     * $idClinicaRegistro llega solo desde «Registrarme con Google» con una
+     * clínica elegida (Modelos §11, nodo GG4); «Entrar con Google» no la manda.
      */
-    public function vincularGoogle(array $usuario, ?string $googleUid): array
+    public function vincularGoogle(array $usuario, ?string $googleUid, ?int $idClinicaRegistro = null): array
     {
         $idUsuario = (int) $usuario['id_usuario'];
-        Transaccion::ejecutar($this->conn, function () use ($idUsuario, $googleUid): void {
+        Transaccion::ejecutar($this->conn, function () use ($usuario, $idUsuario, $googleUid, $idClinicaRegistro): void {
             if ($googleUid !== null && $googleUid !== '' && $this->usuarios->buscarPorGoogleUid($googleUid) === null) {
                 $this->conn->prepare('UPDATE usuarios SET google_uid = ? WHERE id_usuario = ? AND google_uid IS NULL')
                     ->execute([$googleUid, $idUsuario]);
             }
-            if (!$this->verificaciones->hayPendiente($idUsuario)) {
-                return;
+            if ($this->verificaciones->hayPendiente($idUsuario)) {
+                $idClinica = $this->clinicaDelRegistroPendiente($idUsuario);
+                $this->verificaciones->invalidarDe($idUsuario);
+                $this->conn->prepare('UPDATE usuarios SET password = NULL, perfil_completo = 0 WHERE id_usuario = ?')->execute([$idUsuario]);
+                $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, null, ['perfil_completo' => 0], 'Correo verificado con Google (RN-G21): contraseña anulada y perfil por confirmar', null);
+                $this->ligarAClinica($idUsuario, $idClinica, 'Propietario vinculado al verificar su correo con Google (RN-G21)');
             }
-            $idClinica = $this->clinicaDelRegistroPendiente($idUsuario);
-            $this->verificaciones->invalidarDe($idUsuario);
-            $this->conn->prepare('UPDATE usuarios SET password = NULL, perfil_completo = 0 WHERE id_usuario = ?')->execute([$idUsuario]);
-            $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, null, ['perfil_completo' => 0], 'Correo verificado con Google (RN-G21): contraseña anulada y perfil por confirmar', null);
-            $this->ligarAClinica($idUsuario, $idClinica, 'Propietario vinculado al verificar su correo con Google (RN-G21)');
+            $this->ligarDesdeRegistroGoogle($usuario, $idClinicaRegistro);
         });
         return $this->usuarios->buscarPorId($idUsuario) ?? $usuario;
+    }
+
+    /**
+     * RN-109 y RN-G21 (decisión del usuario, M5): Google ya probó que el
+     * correo es de quien entra, así que «Registrarme con Google» desde la
+     * clínica X liga a X la cuenta existente si no lo estaba. Un vínculo
+     * inactivo se reactiva como al vincularse desde el portal (HU-5.13). El
+     * super-administrador no tiene roles de clínica (RN-G13).
+     */
+    private function ligarDesdeRegistroGoogle(array $usuario, ?int $idClinica): void
+    {
+        if ($idClinica === null) {
+            return;
+        }
+        if ((int) ($usuario['es_super_admin'] ?? 0) === 1) {
+            return;
+        }
+        $idUsuario = (int) $usuario['id_usuario'];
+        $stmt = $this->conn->prepare('SELECT estado FROM propietario_clinica WHERE id_propietario = ? AND id_clinica = ?');
+        $stmt->execute([$idUsuario, $idClinica]);
+        if ($stmt->fetchColumn() === 'activo') {
+            return;
+        }
+        $this->ligarAClinica($idUsuario, $idClinica, 'Propietario vinculado al registrarse con Google desde la clínica (RN-109, RN-G21)');
     }
 
     /** RE-T.18.3 — Documento y teléfono de un perfil incompleto. */
@@ -171,14 +202,32 @@ final class RegistroPropietario
         $this->exigirTelefono($telefono);
         $otro = $this->usuarios->buscarPorDocumento($documento);
         if ($otro !== null && (int) $otro['id_usuario'] !== $idUsuario) {
-            throw new InvalidArgumentException('No se pudo completar el perfil. Revisa los datos o contacta a soporte.');
+            $this->documentoOcupado($idUsuario, $documento);
         }
 
-        Transaccion::ejecutar($this->conn, function () use ($idUsuario, $tipo, $documento, $telefono): void {
-            $this->conn->prepare('UPDATE usuarios SET tipo_documento = ?, documento = ?, telefono = ?, perfil_completo = 1 WHERE id_usuario = ?')
-                ->execute([$tipo, $documento, $telefono, $idUsuario]);
-            $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, null, ['perfil_completo' => 1], 'Perfil completado: documento y teléfono (RE-T.18.3)', null);
-        });
+        try {
+            Transaccion::ejecutar($this->conn, function () use ($idUsuario, $tipo, $documento, $telefono): void {
+                $this->conn->prepare('UPDATE usuarios SET tipo_documento = ?, documento = ?, telefono = ?, perfil_completo = 1 WHERE id_usuario = ?')
+                    ->execute([$tipo, $documento, $telefono, $idUsuario]);
+                $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, null, ['perfil_completo' => 1], 'Perfil completado: documento y teléfono (RE-T.18.3)', null);
+            });
+        } catch (PDOException $e) {
+            if ($e->getCode() !== '23000') {
+                throw $e;
+            }
+            // Otra cuenta pudo ocupar el documento después de comprobarlo.
+            $this->documentoOcupado($idUsuario, $documento);
+        }
+    }
+
+    /**
+     * Modelos §13.1 (nodo D2): el documento ya es de otra cuenta. Se abre el
+     * caso para el super-administrador y al titular no se le dice de quién es.
+     */
+    private function documentoOcupado(int $idUsuario, string $documento): never
+    {
+        (new CasoSoporte($this->conn))->documentoDuplicado($idUsuario, $documento, 'al completar el perfil, RE-T.18.3');
+        throw new InvalidArgumentException(self::MENSAJE_PERFIL_NO_COMPLETADO);
     }
 
     // ── Apoyo ───────────────────────────────────────────────────────────

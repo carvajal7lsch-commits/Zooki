@@ -249,12 +249,15 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                     <div class="card-body-mini">
                         <h3 class="card-title-mini"><?= $e($p['nombre_completo']) ?></h3>
                         <div class="card-tags-mini">
-                            <?php if (!$activo): ?><span class="tag-mini"><i class="bi bi-moon-stars" aria-hidden="true"></i> Inactivo</span><?php endif; ?>
+                            <?php // RN-115: desvinculado, solo el nombre y la marca. ?>
+                            <?php if (!$activo): ?><span class="tag-mini"><i class="bi bi-link-45deg" aria-hidden="true"></i> <?= $e(ContactoPropietario::MARCA_DESVINCULADO) ?></span><?php endif; ?>
                             <?php if (!empty($p['telefono'])): ?><span class="tag-mini"><i class="bi bi-phone" aria-hidden="true"></i> <?= $e($p['telefono']) ?></span><?php endif; ?>
                         </div>
+                        <?php if (!empty($p['documento'])): ?>
                         <div class="card-contact-mini">
-                            <span class="contact-text-mini" title="<?= $e($p['tipo_documento'] ?? '') ?>"><i class="bi bi-person-badge" aria-hidden="true"></i> <?= $e($p['documento'] ?? '') ?></span>
+                            <span class="contact-text-mini" title="<?= $e($p['tipo_documento'] ?? '') ?>"><i class="bi bi-person-badge" aria-hidden="true"></i> <?= $e($p['documento']) ?></span>
                         </div>
+                        <?php endif; ?>
                     </div>
                     <div class="card-footer-mini">
                         <?php $claseAccion = 'action-btn-mini'; require __DIR__ . '/partials/acciones_cliente.php'; ?>
@@ -287,10 +290,10 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                                 </div>
                             </td>
                             <td><?= $e(trim(($p['tipo_documento'] ?? '') . ' ' . ($p['documento'] ?? ''))) ?></td>
-                            <td><?= $e($p['email']) ?></td>
+                            <td><?= $e($p['email'] ?? '') ?></td>
                             <td><?= $e($p['telefono'] ?? '') ?></td>
                             <td><?= (int) $p['num_mascotas'] ?> mascota(s)</td>
-                            <td><span class="status-badge <?= $activo ? 'status-active' : 'status-inactive' ?>"><?= $activo ? 'Activo' : 'Inactivo' ?></span></td>
+                            <td><span class="status-badge <?= $activo ? 'status-active' : 'status-inactive' ?>"><?= $e($activo ? 'Activo' : ContactoPropietario::MARCA_DESVINCULADO) ?></span></td>
                             <td>
                                 <div class="table-actions">
                                     <?php require __DIR__ . '/partials/interruptor_cliente.php'; ?>

@@ -278,7 +278,8 @@ async function loadOwners() {
         owners.forEach(o => {
             if (tbody) {
                 const tr = document.createElement('tr'); tr.dataset.estado = o.estado;
-                [o.documento,o.nombre_completo,o.telefono,o.email,o.total_mascotas,o.estado == 1 ? 'Activo' : 'Inactivo'].forEach(valor => {
+                // RN-115: desvinculado, solo el nombre y la marca (el servidor no manda el contacto).
+                [o.documento,o.nombre_completo,o.telefono,o.email,o.total_mascotas,o.estado == 1 ? 'Activo' : 'Desvinculado'].forEach(valor => {
                     const td=document.createElement('td'); td.textContent=valor ?? ''; tr.append(td);
                 });
                 const td=document.createElement('td');
@@ -289,11 +290,15 @@ async function loadOwners() {
                 const card=document.createElement('div'); card.className='client-card person-card'; card.dataset.estado=o.estado;
                 card.innerHTML=`<div class="card-body-mini"><h3>${escaparTexto(o.nombre_completo)}</h3>
                     <p>${escaparTexto(o.documento)}</p><p>${escaparTexto(o.telefono)}</p><p>${escaparTexto(o.email)}</p>
-                    <p>${Number(o.total_mascotas)} mascota(s) en esta clínica · ${o.estado == 1 ? 'Activo' : 'Inactivo'}</p></div>`;
+                    <p>${Number(o.total_mascotas)} mascota(s) en esta clínica · ${o.estado == 1 ? 'Activo' : 'Desvinculado'}</p></div>`;
                 const ver=document.createElement('button'); ver.className='action-btn-mini'; ver.textContent='Ver propietario';
                 ver.addEventListener('click',()=>openOwnerDossier(o.id_usuario));
                 const editar=document.createElement('button'); editar.className='action-btn-mini'; editar.textContent='Editar';
-                editar.addEventListener('click',()=>editOwner(o.id_usuario)); card.append(ver,editar); grid.append(card);
+                editar.addEventListener('click',()=>editOwner(o.id_usuario));
+                card.append(ver);
+                // RN-115: a un cliente desvinculado la clínica ya no lo edita.
+                if (o.estado == 1) card.append(editar);
+                grid.append(card);
             }
         });
         filterOwners();
@@ -906,9 +911,11 @@ async function searchOwnersForPet(term) {
     const res=await pedirJson(`index.php?action=buscar_propietario_exacto_ajax&identificador=${encodeURIComponent(term.trim())}`);
     const o=res.propietario;
     if (!o) { panel.textContent='Sin coincidencia exacta. Puedes registrar un propietario nuevo con su aceptación presencial.'; return; }
-    const nombre=document.createElement('p'); nombre.textContent=o.nombre_completo; panel.append(nombre);
+    // RE-1.5.1 y RN-109: sin vínculo activo el servidor no manda nombre, contacto ni mascotas.
     if (!o.vinculado) {
-        const aviso=document.createElement('p'); aviso.textContent='El titular debe confirmar por correo antes de vincular o registrar mascotas aquí.'; panel.append(aviso);
+        const aviso=document.createElement('p');
+        aviso.textContent=o.mensaje;
+        panel.append(aviso);
         const btn=document.createElement('button'); btn.type='button'; btn.className='btn-modal-secondary'; btn.textContent='Solicitar confirmación por correo';
         btn.addEventListener('click',async()=>{
             btn.disabled=true;
@@ -918,7 +925,11 @@ async function searchOwnersForPet(term) {
                 zookiAviso(r.message);
             } finally { btn.disabled=false; }
         }); panel.append(btn);
+        return;
     }
+    const nombre=document.createElement('p');
+    nombre.textContent=o.nombre_completo;
+    panel.append(nombre);
     for (const mascota of o.mascotas) {
         const card=document.createElement('div'); card.className='mascota-existente';
         const foto=document.createElement('img'); foto.src=fotoMascotaUrl(mascota.url_foto); foto.alt=''; foto.addEventListener('error',()=>usarFotoPorDefecto(foto));

@@ -317,7 +317,8 @@
         );
         if (!ok) return null;
         const datos = new FormData();
-        datos.append('identificador', c.email || '');
+        // RN-115: con el vínculo inactivo la clínica ya no ve el correo; el servidor lo busca por el id.
+        datos.append('id_usuario', c.id_usuario);
         return pedir('index.php?action=solicitar_vinculo_propietario_ajax', datos);
     }
 
@@ -468,9 +469,11 @@
         const palabras = (c.nombre_completo || '').trim().split(/\s+/).slice(0, 2);
         campo('iniciales').textContent = palabras.map((p) => p.charAt(0)).join('').toUpperCase();
         campo('nombre').textContent = c.nombre_completo || '';
-        campo('documento').textContent = ((c.tipo_documento || '') + ' ' + (c.documento || '')).trim();
-        campo('email').textContent = c.email || 'No registrado';
-        campo('telefono').textContent = c.telefono || 'No registrado';
+        // RN-115: un cliente desvinculado solo muestra su nombre y la marca.
+        const desvinculado = Number(c.desvinculado) === 1;
+        campo('documento').textContent = desvinculado ? 'Desvinculado' : ((c.tipo_documento || '') + ' ' + (c.documento || '')).trim();
+        campo('email').textContent = desvinculado ? 'Desvinculado' : (c.email || 'No registrado');
+        campo('telefono').textContent = desvinculado ? 'Desvinculado' : (c.telefono || 'No registrado');
 
         const lista = campo('mascotas');
         lista.replaceChildren();

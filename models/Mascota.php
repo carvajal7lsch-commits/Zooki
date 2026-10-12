@@ -4,29 +4,38 @@ require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/../helpers/ValidadorMascota.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
+require_once __DIR__ . '/../helpers/ContactoPropietario.php';
 
 /** RN-110 / RNF-11: ficha global, acceso del personal por mascota_clinica. */
 class Mascota extends ModeloClinica
 {
-    private const FICHA = "SELECT m.*, mc.numero_historia_clinica,
-        u.nombre_completo AS propietario_nombre, u.documento AS propietario_documento,
-        e.nombre_especie, r.nombre_raza
-        FROM mascotas m JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota
-        LEFT JOIN usuarios u ON u.id_usuario = m.id_propietario
-        LEFT JOIN especies e ON e.id_especie = m.id_especie
-        LEFT JOIN razas r ON r.id_raza = m.id_raza
-        WHERE mc.id_clinica = ? AND mc.estado = 'activo'";
+    /**
+     * Ficha con el propietario. RN-115: su documento solo con el vínculo del
+     * propietario activo en esta clínica (ContactoPropietario).
+     */
+    private static function ficha(): string
+    {
+        return 'SELECT m.*, mc.numero_historia_clinica,
+            u.nombre_completo AS propietario_nombre, ' . ContactoPropietario::columna('u.documento', 'pv', 'propietario_documento') . ",
+            e.nombre_especie, r.nombre_raza
+            FROM mascotas m JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota
+            LEFT JOIN usuarios u ON u.id_usuario = m.id_propietario
+            LEFT JOIN propietario_clinica pv ON pv.id_propietario = m.id_propietario AND pv.id_clinica = mc.id_clinica
+            LEFT JOIN especies e ON e.id_especie = m.id_especie
+            LEFT JOIN razas r ON r.id_raza = m.id_raza
+            WHERE mc.id_clinica = ? AND mc.estado = 'activo'";
+    }
     private const EDITABLES = ['nombre','id_especie','id_raza','raza_indicada','sexo',
         'fecha_nacimiento','peso','url_foto','esterilizado','estado'];
     private const PROTEGIDOS = ['id_especie','id_raza','raza_indicada','sexo','fecha_nacimiento'];
 
     public function getAll(bool $incluirInactivas = false): array
     {
-        return $this->leer(self::FICHA . ($incluirInactivas ? '' : ' AND m.estado = 1') . ' ORDER BY m.nombre', [$this->clinica()]);
+        return $this->leer(self::ficha() . ($incluirInactivas ? '' : ' AND m.estado = 1') . ' ORDER BY m.nombre', [$this->clinica()]);
     }
     public function getById($id): array
     {
-        $filas = $this->leer(self::FICHA . ' AND m.id_mascota = ?', [$this->clinica(),$id]);
+        $filas = $this->leer(self::ficha() . ' AND m.id_mascota = ?', [$this->clinica(),$id]);
         if (!$filas) $this->denegar($id);
         return $filas[0];
     }
@@ -59,13 +68,13 @@ class Mascota extends ModeloClinica
         $clinica = $this->clinica();
         if (mb_strlen(trim($term)) < 3) return [];
         $como = '%' . str_replace(['!','%','_'],['!!','!%','!_'],trim($term)) . '%';
-        return $this->leer(self::FICHA . " AND m.estado = 1 AND
-            (m.nombre LIKE ? ESCAPE '!' OR u.nombre_completo LIKE ? ESCAPE '!' OR u.documento LIKE ? ESCAPE '!')
+        return $this->leer(self::ficha() . " AND m.estado = 1 AND
+            (m.nombre LIKE ? ESCAPE '!' OR u.nombre_completo LIKE ? ESCAPE '!' OR (" . ContactoPropietario::vinculoActivo('pv') . " AND u.documento LIKE ? ESCAPE '!'))
             ORDER BY m.nombre LIMIT 10",[$clinica,$como,$como,$como]);
     }
     public function getByPropietario($idPropietario): array
     {
-        return $this->leer(self::FICHA . ' AND m.id_propietario = ? AND m.estado = 1 ORDER BY m.nombre',[$this->clinica(),$idPropietario]);
+        return $this->leer(self::ficha() . ' AND m.id_propietario = ? AND m.estado = 1 ORDER BY m.nombre',[$this->clinica(),$idPropietario]);
     }
     private function leer(string $sql,array $parametros): array
     {

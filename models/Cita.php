@@ -3,6 +3,7 @@ require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/CatalogoClinica.php';
 require_once __DIR__ . '/../helpers/HorarioOcupado.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
+require_once __DIR__ . '/../helpers/ContactoPropietario.php';
 
 /**
  * C5: agenda v1 sobre el modelo v2. Cada cita es de la clínica activa y de un
@@ -27,18 +28,28 @@ class Cita extends ModeloClinica
     /** Duración que se asume si la cita no tiene tipo (como en la v1). */
     private const DURACION_POR_DEFECTO = 30;
 
-    /** Columnas comunes de una cita con sus nombres para mostrar. */
-    private const SELECT_CITA = "SELECT c.*, m.nombre AS mascota_nombre, m.id_propietario,
-            v.nombre_completo AS veterinario_nombre, v.email AS veterinario_email,
-            p.nombre_completo AS propietario_nombre, p.email, p.telefono AS propietario_telefono,
-            tc.nombre_tipo AS tipo_cita_nombre,
-            cl.nombre AS clinica_nombre, cl.direccion AS clinica_direccion
-        FROM citas c
-        JOIN mascotas m ON m.id_mascota = c.id_mascota
-        JOIN usuarios v ON v.id_usuario = c.id_veterinario
-        JOIN clinicas cl ON cl.id_clinica = c.id_clinica
-        LEFT JOIN usuarios p ON p.id_usuario = m.id_propietario
-        LEFT JOIN tipos_cita tc ON tc.id_tipo_cita = c.id_tipo_cita";
+    /**
+     * Columnas comunes de una cita con sus nombres para mostrar. RN-115: el
+     * correo y el teléfono del propietario solo con su vínculo activo en la
+     * clínica de la cita (ContactoPropietario).
+     */
+    private static function selectCita(): string
+    {
+        return 'SELECT c.*, m.nombre AS mascota_nombre, m.id_propietario,
+                v.nombre_completo AS veterinario_nombre, v.email AS veterinario_email,
+                p.nombre_completo AS propietario_nombre,
+                ' . ContactoPropietario::columna('p.email', 'pcv', 'email') . ',
+                ' . ContactoPropietario::columna('p.telefono', 'pcv', 'propietario_telefono') . ',
+                tc.nombre_tipo AS tipo_cita_nombre,
+                cl.nombre AS clinica_nombre, cl.direccion AS clinica_direccion
+            FROM citas c
+            JOIN mascotas m ON m.id_mascota = c.id_mascota
+            JOIN usuarios v ON v.id_usuario = c.id_veterinario
+            JOIN clinicas cl ON cl.id_clinica = c.id_clinica
+            LEFT JOIN usuarios p ON p.id_usuario = m.id_propietario
+            LEFT JOIN propietario_clinica pcv ON pcv.id_propietario = m.id_propietario AND pcv.id_clinica = c.id_clinica
+            LEFT JOIN tipos_cita tc ON tc.id_tipo_cita = c.id_tipo_cita';
+    }
 
     /**
      * HU-4.1: agenda una cita en la clínica activa. Copia la duración y el
@@ -135,7 +146,7 @@ class Cita extends ModeloClinica
     /** Cita de la clínica activa; de otra clínica o inexistente, 403 auditado. */
     public function getById($idCita): array
     {
-        $consulta = $this->conn->prepare(self::SELECT_CITA . ' WHERE c.id_cita = ? AND c.id_clinica = ?');
+        $consulta = $this->conn->prepare(self::selectCita() . ' WHERE c.id_cita = ? AND c.id_clinica = ?');
         $consulta->execute([(int) $idCita, $this->clinica()]);
         $cita = $consulta->fetch(PDO::FETCH_ASSOC);
 
@@ -151,7 +162,7 @@ class Cita extends ModeloClinica
      */
     public function paraPropietario(int $idCita, int $idPropietario): array
     {
-        $sql = self::SELECT_CITA . "
+        $sql = self::selectCita() . "
             JOIN propietario_clinica pc ON pc.id_propietario = m.id_propietario AND pc.id_clinica = c.id_clinica
             WHERE c.id_cita = ? AND m.id_propietario = ? AND pc.estado = 'activo'";
         $consulta = $this->conn->prepare($sql);
@@ -167,7 +178,7 @@ class Cita extends ModeloClinica
     /** RE-4.1.5: citas de la clínica activa en un rango; el veterinario ve solo las suyas. */
     public function listarRango(string $inicio, string $fin, ?int $idVeterinario = null): array
     {
-        $sql = self::SELECT_CITA . ' WHERE c.id_clinica = ? AND c.fecha BETWEEN ? AND ?';
+        $sql = self::selectCita() . ' WHERE c.id_clinica = ? AND c.fecha BETWEEN ? AND ?';
         $parametros = [$this->clinica(), $inicio, $fin];
         if ($idVeterinario !== null) {
             $sql .= ' AND c.id_veterinario = ?';
@@ -181,7 +192,7 @@ class Cita extends ModeloClinica
     /** Supervisión del administrador: todas las citas de la clínica activa. */
     public function listarTodas(): array
     {
-        $consulta = $this->conn->prepare(self::SELECT_CITA . ' WHERE c.id_clinica = ? ORDER BY c.fecha DESC, c.hora DESC');
+        $consulta = $this->conn->prepare(self::selectCita() . ' WHERE c.id_clinica = ? ORDER BY c.fecha DESC, c.hora DESC');
         $consulta->execute([$this->clinica()]);
         return $consulta->fetchAll(PDO::FETCH_ASSOC);
     }
