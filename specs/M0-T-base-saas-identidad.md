@@ -2064,3 +2064,24 @@ Las cuatro pruebas de `prueba-manual.md` pasaron (escritorio y celular). **E2 ce
 **10.4 IP real, segundo intento (2026-10-11).** Con la lista nueva, la auditoría guardó `191.156.231.158`, la IP pública del celular con datos móviles: RN-G15 funciona detrás de nginx → Traefik → Apache.
 
 **F1 cerrada; M0 cerrado (2026-10-11).** Producción en **2.0.0-alpha.1** (`main` `c3b7fb6`, tag `v2.0.0-alpha.1`), base v2 limpia, super-administrador del usuario y clínica demo «Zooki» activa con `zooki.vet@gmail.com`. Respaldo v1 en `~/respaldo-zooki-f1` del VPS y en `C:\Users\Usuario\respaldo-zooki-f1`. Limpieza pendiente cuando el usuario quiera (una o dos semanas sin problemas): `/tmp/respaldo-v1.sql` dentro de `zooki_db`, `/tmp/zooki-f1` y `/tmp/respaldo-v1.sql` del VPS. Pulido anotado: mensaje claro cuando un super-administrador intenta administrar una clínica.
+
+## M0.1 — Alcance: pulido del acceso y los registros (2026-10-11)
+
+**Escribe:** Claude Code (decisión del usuario: mejor en interfaz y experiencia). **Revisa:** Claude (arquitecto). **Sale como `2.0.0-alpha.2`.**
+
+**Decisiones del usuario (2026-10-11).**
+
+- La interfaz se pule **por módulo, al cerrarlo y antes del siguiente**, solo en las pantallas de ese módulo y en los patrones compartidos (formularios, modales, validación, avisos). Lo de `specs/pulido-interfaz.md` que pertenece a pantallas que un módulo próximo va a rehacer (agenda con triage, consulta con HU-2.8/2.9, portal) se atiende dentro de ese módulo.
+- **Cada entrega a producción sube la alfa** (`alpha.N`), no solo cada módulo: los CSS y JS se piden con `?v=<versión>` y, sin cambiarla, el navegador sigue con los archivos viejos.
+- Orden del pulido de M0: primero acceso y registros (M0.1); después el panel del super-administrador (M0.2).
+
+**Hallazgos del usuario en producción y qué se pide.**
+
+1. **Turnstile en el inicio de sesión.** Hoy el widget sale siempre (en tema oscuro, grande) aunque el servidor solo lo exige tras 5 fallos sobre una cuenta (RN-G15, RE-T.13.5). Se pide: tema claro, tamaño que no estorbe (ancho del formulario como máximo) y que **solo aparezca cuando haga falta**: en el login, cuando el servidor lo pide; en los registros (propietario y clínica), con `appearance: interaction-only` para que Cloudflare solo lo muestre si necesita que la persona interactúe. El servidor sigue validando igual. Cuidado: pedirlo solo a una cuenta existente revelaría que existe (RN-G15/RE-T.13.x); la condición debe dar la misma respuesta para un identificador inexistente.
+2. **Un solo «Crear cuenta».** Debajo del inicio de sesión, un único enlace lleva a crear cuenta, con un selector de dos opciones («Soy propietario» / «Registrar mi clínica»). Se retira el enlace suelto de «Registra tu clínica». Los dos formularios se ven igual: mismo ancho, alto de campos, espaciado, tipografía y botones.
+3. **Avisos bajo los campos en una línea**, del ancho del campo: textos cortos; el detalle, si hace falta, en el resumen del formulario.
+4. **Registro de clínica por pasos:** 1) datos de la clínica, 2) datos del administrador, 3) política de datos y «Registrar clínica». Cada paso valida lo suyo antes de seguir y se puede volver atrás sin perder lo escrito; campos más compactos y mejor repartidos (dos columnas en escritorio, una en celular).
+5. **Al enviar el registro de clínica**, la misma ventanita de carga y de «confirma tu correo» que ya tiene el registro del propietario.
+6. **Casilla de la política de datos** del registro de clínica con el mismo componente del registro del propietario.
+
+**Fuera de M0.1:** panel del super-administrador (M0.2), mensaje del super-administrador que intenta administrar una clínica (anotado en la bitácora de F1; entra en M0.2 si cabe), y los pendientes de `pulido-interfaz.md` de otros módulos.

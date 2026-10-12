@@ -17,7 +17,7 @@
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
-- **Siguiente paso:** planear el módulo siguiente de la entrega v2.0 (plan de entregas de HistoriasUsuario.md) con el usuario; Codex retoma como ejecutor. Limpiar los respaldos temporales del VPS tras una o dos semanas sin problemas.
+- **Siguiente paso:** M0.1 — pulido del acceso y los registros (escribe Claude Code, revisa Claude; sale como 2.0.0-alpha.2). Alcance y decisiones en «M0.1 — Alcance» del plan M0. Después M0.2 (panel del super-administrador) y el plan del módulo siguiente con Codex.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 
