@@ -192,11 +192,14 @@ final class PlataformaTest extends TestCase
     public function testDesbloquearValeConLaMismaCookieYConservaContadorDeCuenta(): void
     {
         $_SESSION['rate_limit_192.0.2.8'] = ['count' => 20, 'time' => time()];
-        $this->db->prepare('INSERT INTO intentos_login (identificador, intentos, primer_intento, ultimo_intento) VALUES (?, 5, ?, ?)')->execute(['cuenta:2', date('Y-m-d H:i:s'), date('Y-m-d H:i:s')]);
-        $this->assertFalse(Security::checkRateLimit('2'));
+        // M0.1: el contador del CAPTCHA es por identificador escrito (RN-G15).
+        for ($i = 0; $i < 5; $i++) {
+            Security::recordFailedLogin('admin.norte@zooki.test');
+        }
+        $this->assertFalse(Security::checkRateLimit('admin.norte@zooki.test'));
         $this->panel->desbloquear('192.0.2.8');
-        $this->assertTrue(Security::checkRateLimit('2'));
-        $this->assertTrue(Security::exigeCaptcha('2'));
+        $this->assertTrue(Security::checkRateLimit('admin.norte@zooki.test'));
+        $this->assertTrue(Security::exigeCaptcha('admin.norte@zooki.test'));
         $this->assertSame([], $this->panel->ips());
         $this->assertSame('192.0.2.8', $this->db->query("SELECT registro_id FROM auditoria_sistema WHERE tabla_afectada = 'intentos_login'")->fetchColumn());
     }

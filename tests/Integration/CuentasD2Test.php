@@ -206,24 +206,25 @@ final class CuentasD2Test extends TestCase
 
     public function testCaptchaDesdeOtraIpNoBloqueaLaCuenta(): void
     {
-        // D2.1 (decisión del usuario, 2026-10-08): 20 fallos bloquean la IP; 5 exigen CAPTCHA a la cuenta.
+        // D2.1 (decisión del usuario, 2026-10-08): 20 fallos bloquean la IP; 5 exigen CAPTCHA.
+        // M0.1 (decisión del usuario, 2026-10-11): los 5 se cuentan por el documento o correo escrito.
         Auditoria::definirProxiesConfiables([]);
         for ($i = 0; $i < 20; $i++) {
-            Security::recordFailedLogin('6');
+            Security::recordFailedLogin('fabio@zooki.test');
         }
-        $this->assertFalse(Security::checkRateLimit('6'), 'La IP original está bloqueada.');
+        $this->assertFalse(Security::checkRateLimit('fabio@zooki.test'), 'La IP original está bloqueada.');
         $_SESSION = [];
         $_SERVER['REMOTE_ADDR'] = '192.0.2.20';
-        $this->assertTrue(Security::checkRateLimit('6'), 'La cuenta no bloquea la IP nueva.');
+        $this->assertTrue(Security::checkRateLimit('fabio@zooki.test'), 'La cuenta no bloquea la IP nueva.');
         $auth = new Autenticador(new Usuario($this->db), new VerificacionEmail($this->db));
-        $this->assertSame('fallo', $auth->conPasswordProtegido('fabio@zooki.test', DosClinicas::PASSWORD, '', new Turnstile(static fn () => true))['resultado']);
-        $this->assertSame('fallo', $auth->conPasswordProtegido('fabio@zooki.test', DosClinicas::PASSWORD, 'token', new Turnstile(static fn () => false))['resultado']);
+        $this->assertSame('captcha', $auth->conPasswordProtegido('fabio@zooki.test', DosClinicas::PASSWORD, '', new Turnstile(static fn () => true))['resultado']);
+        $this->assertSame('captcha', $auth->conPasswordProtegido('fabio@zooki.test', DosClinicas::PASSWORD, 'token', new Turnstile(static fn () => false))['resultado']);
         $this->assertSame('ok', $auth->conPasswordProtegido('fabio@zooki.test', DosClinicas::PASSWORD, 'token', new Turnstile(static fn () => true))['resultado']);
-        $this->assertSame('fallo', $auth->conGoogleProtegido('fabio@zooki.test', '', new Turnstile(static fn () => true))['resultado']);
+        $this->assertSame('captcha', $auth->conGoogleProtegido('fabio@zooki.test', '', new Turnstile(static fn () => true))['resultado']);
         $this->assertSame('ok', $auth->conGoogleProtegido('fabio@zooki.test', 'token', new Turnstile(static fn () => true))['resultado']);
         $this->assertSame('fallo', $auth->conPasswordProtegido('fabio@zooki.test', 'incorrecta', 'token', new Turnstile(static fn () => true))['resultado']);
         $this->db->exec("UPDATE intentos_login SET primer_intento = '2000-01-01 00:00:00'");
-        $this->assertFalse(Security::exigeCaptcha('6'));
+        $this->assertFalse(Security::exigeCaptcha('fabio@zooki.test'));
     }
 
     public function testValidacionUsaDatosDelTitularYCsrfIndependiente(): void

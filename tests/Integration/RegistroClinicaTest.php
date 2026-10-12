@@ -40,7 +40,8 @@ final class RegistroClinicaTest extends TestCase
         $controller->validar();
         $respuesta = json_decode(ob_get_clean(), true);
         $this->assertTrue($respuesta['nit_duplicado']);
-        $this->assertStringContainsString('reportarlo a soporte', $respuesta['error']);
+        // M0.1: aviso de una línea; «Reportar a soporte» es el botón que aparece debajo.
+        $this->assertSame('Este NIT ya está registrado en Zooki.', $respuesta['error']);
         $this->assertArrayNotHasKey('email', $respuesta);
         $this->assertArrayNotHasKey('id_clinica', $respuesta);
         $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM clinicas WHERE nit = '" . ValidadorNit::normalizar($entrada['nit'] . '-' . $entrada['dv']) . "'")->fetchColumn());
