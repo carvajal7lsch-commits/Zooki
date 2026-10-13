@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════
-   Portal · Agenda de salud
-   Móvil y tablet: pestañas «Mis citas» / «Calendario de salud».
-   Escritorio: las dos columnas a la vez, sin pestañas.
+   Portal · Citas y calendario de salud (M5 C2)
+   Las pestañas Próximas · Pasadas · Calendario son las de Usuarios
+   (tabs-wrapper). Aquí: filtro por mascota, el calendario y sus listas;
+   en escritorio, el calendario y las listas lado a lado.
    ═══════════════════════════════════════════════════════════ */
 
 /* ── Filtro por mascota ── */
@@ -35,30 +36,11 @@
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.pet-chip--foto { padding: 0.35rem 1rem 0.35rem 0.4rem; }
-
-.pet-chip-photo {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: #CBD5E1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.pet-chip-photo img { width: 100%; height: 100%; object-fit: cover; }
-.pet-chip-photo i { font-size: 0.75rem; color: #ffffff; }
-
 .pet-chip.active {
     background: var(--z-primary);
     color: #ffffff;
     box-shadow: 0 4px 15px rgba(0, 82, 255, 0.25);
 }
-
-.pet-chip.active .pet-chip-photo { border: 1.5px solid #ffffff; }
 
 /* ── Tarjeta y pestañas ── */
 .agenda-card {
@@ -69,43 +51,6 @@
     border: 1px solid var(--z-border);
     margin-bottom: 1.5rem;
 }
-
-.agenda-tabs {
-    display: flex;
-    gap: 0.5rem;
-    background: var(--z-bg-light);
-    padding: 4px;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-}
-
-.agenda-tab-btn {
-    flex: 1;
-    border: none;
-    padding: 0.65rem 0.5rem;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    transition: all 0.2s;
-    background: transparent;
-    color: var(--z-text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
-}
-
-.agenda-tab-btn.active {
-    background: #ffffff;
-    color: var(--z-primary);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-.agenda-tab-content { display: none; }
-.agenda-tab-content.active { display: block; }
-
-/* Solo en escritorio, donde no hay pestañas. */
-.agenda-col-title { display: none; }
 
 .agenda-empty-state {
     text-align: center;
@@ -129,12 +74,6 @@
     gap: 0.75rem;
 }
 
-.scrollable-list {
-    max-height: 480px;
-    overflow-y: auto;
-    padding-right: 2px;
-}
-
 .agenda-list-item {
     display: flex;
     align-items: center;
@@ -151,21 +90,6 @@
 }
 
 .agenda-list-item--cita { border-left: 3px solid var(--z-primary); }
-
-.agenda-pet-photo {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: var(--z-primary-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.agenda-pet-photo img { width: 100%; height: 100%; object-fit: cover; }
-.agenda-pet-photo i { color: var(--z-primary); }
 
 .agenda-item-info {
     flex: 1;
@@ -448,8 +372,7 @@
     .pet-filter-chips-wrapper { flex-wrap: wrap; overflow: visible; white-space: normal; }
     .cal-day-cell { height: 44px; font-size: 0.82rem; }
     .mini-calendar-days { font-size: 0.72rem; }
-    .agenda-tab-btn { font-size: 0.85rem; }
-}
+}
 
 /* ── Escritorio: las dos columnas a la vez ── */
 @media (min-width: 1024px) {
@@ -460,38 +383,11 @@
         padding: 1.75rem;
     }
 
-    .agenda-tabs { display: none; }
-
-    .agenda-tab-content,
-    .agenda-tab-content.active { display: block; }
-
     .agenda-salud-listas {
         border-left: 1px solid var(--z-border);
         padding-left: 2rem;
     }
-
-    .agenda-col-title {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.95rem;
-        font-weight: 800;
-        margin-bottom: 1rem;
-    }
-
-    .agenda-col-title i { color: var(--z-primary); }
-
-    .scrollable-list { max-height: max(420px, calc(100dvh - 300px)); }
-}
+}
 
 .mini-calendar-nav .win11-title { font-size: 0.88rem; }
 
-/* C6: la clínica de cada cita (RN-114). */
-.agenda-item-clinica {
-    margin: 2px 0 0;
-    font-size: 0.72rem;
-    color: var(--z-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}

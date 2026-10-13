@@ -12,6 +12,7 @@ require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/../helpers/ValidadorMascota.php';
 require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../helpers/FotoMascota.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
 require_once __DIR__ . '/../helpers/ProximaDosis.php';
 require_once __DIR__ . '/../helpers/PresentacionPortal.php';
 require_once __DIR__ . '/../helpers/PresentacionPlataforma.php';
@@ -209,7 +210,7 @@ class PortalController
             $datos = $this->datosDeMascota();
             $foto = FotoMascota::guardar($_FILES['foto'] ?? null, $datos['nombre'], $errorFoto);
             if ($foto === false) {
-                throw new InvalidArgumentException($errorFoto);
+                throw new CampoInvalido('foto', ValidadorMascota::aviso('foto'), $errorFoto);
             }
             $datos['url_foto'] = $foto;
 
@@ -238,7 +239,7 @@ class PortalController
 
             $foto = FotoMascota::guardar($_FILES['foto'] ?? null, $datos['nombre'], $errorFoto);
             if ($foto === false) {
-                throw new InvalidArgumentException($errorFoto);
+                throw new CampoInvalido('foto', ValidadorMascota::aviso('foto'), $errorFoto);
             }
             if ($foto) {
                 $datos['url_foto'] = $foto;
@@ -270,21 +271,21 @@ class PortalController
         $hoy = new DateTimeImmutable('today', new DateTimeZone(ReglaAtencion::ZONA));
         $resultado = ValidadorMascota::validar($_POST, $hoy);
         if ($resultado['error']) {
-            throw new InvalidArgumentException($resultado['error']);
+            throw new CampoInvalido($resultado['campo'], ValidadorMascota::aviso($resultado['campo']), $resultado['error']);
         }
         $datos = $resultado['datos'];
 
         $taxonomia = new Mascota($this->db);
         if (!$taxonomia->especieExiste((int) $datos['especie'])) {
-            throw new InvalidArgumentException('Elige la especie de la lista.');
+            throw new CampoInvalido('especie', ValidadorMascota::aviso('especie'), 'Elige la especie de la lista.');
         }
         if ($datos['raza'] === null) {
             $datos['raza'] = $taxonomia->idSinRazaDefinida((int) $datos['especie']);
             if ($datos['raza'] === null) {
-                throw new InvalidArgumentException('Esta especie todavía no permite indicar otra raza. Elige la más parecida y avísale a la clínica en la consulta.');
+                throw new CampoInvalido('raza', ValidadorMascota::aviso('raza'), 'Esta especie todavía no permite indicar otra raza. Elige la más parecida y avísale a la clínica en la consulta.');
             }
         } elseif (!$taxonomia->razaEsDeEspecie((int) $datos['raza'], (int) $datos['especie'])) {
-            throw new InvalidArgumentException('Elige una raza de la lista para esa especie.');
+            throw new CampoInvalido('raza', ValidadorMascota::aviso('raza'), 'Elige una raza de la lista para esa especie.');
         }
 
         return [

@@ -85,7 +85,7 @@ Si A demuestra que C1 queda vacío o muy pequeño, C1 se une a C2.
 - [x] A — Inventario y verificación (Claude Code; revisada y aprobada por Claude, 2026-10-12; decisiones del usuario en «A — Revisión»). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo A — Resultado».
 - [ ] C1 — Huecos funcionales (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1 — Resultado».
 - [ ] C1.1 — Super-administrador nunca como cliente y desactivación por la clínica (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1.1 — Resultado».
-- [ ] C2 — Portal del propietario pulido (Claude Code), en dos partes. **C2a (estructura, navegación, Inicio, Mascota y Citas): entregada, pendiente de revisión (2026-10-12)**, ver «Anexo C2a — Resultado». **C2b (Agendar, Clínicas, Perfil y actualización en su sitio): pendiente de confirmar.**
+- [ ] C2 — Portal del propietario pulido (Claude Code), en dos partes. **C2a (estructura, navegación, Inicio, Mascota y Citas): entregada, pendiente de revisión (2026-10-12)**, ver «Anexo C2a — Resultado». **C2b (Agendar, Clínicas, Perfil y actualización en su sitio): entregada, pendiente de revisión (2026-10-12)**, ver «Anexo C2b — Resultado».
 - [ ] C3 — Lado del personal (HU-1.5, HU-2.10).
 - [ ] `vendor/bin/phpunit` completo, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.3`: HU a «Implementada», revisiones de documentos, historial, descargas, merge y tag.
@@ -506,3 +506,100 @@ Se actualizó la prueba de C9.1 del botón «Imprimir», que ahora es un botón 
 **Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de la prueba visual del usuario. PHP 643 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 117/117; `views/portal` sin `style=`, `on…=` ni `<script>` con código. `index()` pasa a un número fijo de consultas (13 con una o seis mascotas). La división de C2 en C2a y C2b la prevé el prompt y se acepta. Lo más importante que solo se ve en el navegador: el portal ahora carga `usuarios.css` del panel; el usuario revisa que nada choque en celular, tableta y escritorio.
 
 **C2b** (Agendar por pasos con la clínica única, Clínicas con tarjetas, Perfil plegable, actualización en su sitio sin recargar, validación en tiempo real y restricción de entrada en los formularios de mascota, y la limpieza de reglas CSS sin uso) sigue con el mismo alcance de «C2 — Alcance», después de la prueba de C2a.
+
+## Anexo C2b — Resultado
+
+**Escribió:** Claude Code (2026-10-12). **Estado:** entregada, pendiente de revisión. Sin migración. No había hallazgos de la prueba de C2a en el plan.
+
+### Qué se hizo (lo más riesgoso primero)
+
+1. **Actualización en su sitio, sin recargar** (cierra el pendiente «pantalla 3–4 s tarde» de `pulido-interfaz.md`).
+   - Acciones cubiertas: agendar, cancelar, vincularse, desvincularse, y registrar o editar una mascota. Autorizar ya aplicaba en su sitio.
+   - El aviso breve sale en cuanto responde el servidor. Después, `refrescarPortal()` pide de nuevo el portal y `aplicarPartes()` cambia solo lo que depende de los datos: Inicio, filtro de mascotas, Próximas y Pasadas con su contador, Clínicas, las elecciones de Agendar, y los datos del calendario y de los días cerrados.
+   - La sección, la pestaña de Citas y las ventanas se conservan, porque sus elementos no se reemplazan. La ficha abierta se pone al día en su misma pestaña.
+   - Si la respuesta no trae el portal (por ejemplo, venció la sesión), recarga entera.
+   - Los botones que se repintan (Agendar, registrar mascota, chips de mascota) pasaron a eventos delegados.
+   - Ya no queda ningún `zookiRecargarConAviso`.
+2. **Agendar por pasos:** 1) clínica y mascota, 2) tipo y veterinario, 3) día y hora, 4) confirmar.
+   - Hay indicador de pasos, «Atrás» y «Siguiente», que solo se habilita con el paso completo. Una línea dice qué falta.
+   - El último paso muestra un resumen; el pie es el de Usuarios.
+   - Clínica y mascota son tarjetas de elección. **Con una sola clínica, solo su nombre y el id oculto (hueco 8, RE-5.9.3)**; nunca se ofrecen las demás clínicas de la plataforma.
+   - La lógica de horarios, catálogos y reserva no cambió. `eleccion()` da a las tarjetas la misma interfaz que tenía el `select`.
+   - Si el servidor rechaza la reserva, se vuelve al paso de día y hora con un aviso breve.
+3. **Formularios de mascota: validación en tiempo real y restricción de entrada.**
+   - `ValidadorMascota` ahora dice el campo de cada error, trae avisos de una línea (35 caracteres o menos) y genera los atributos de cada campo (`atributosHtml`: `maxlength`, `pattern`, `data-caracteres`, `data-maximo`, `data-aviso-formato`).
+   - `public/js/validacion-mascota.js` valida mientras se escribe, con las mismas reglas del servidor. El aviso va en una línea reservada bajo el campo; no usa las reglas de cuenta.
+   - El servidor rechaza con `CampoInvalido`: un 422 con `campo` y `aviso`. El aviso va bajo su campo y el detalle al resumen del formulario.
+   - Sin SweetAlert para errores de validación.
+4. **Clínicas en tarjetas** (Modelos §11.1, sin cambios):
+   - Cada tarjeta de clínica vinculada trae iniciales, «Abierta ahora» o «Cerrada ahora», dirección y horario de hoy, el interruptor de Usuarios con su ayuda y «Desvincularme», directo y con aviso breve.
+   - El rechazo por citas sin resolver sale en la misma tarjeta, en una línea (RE-5.13.3).
+   - Debajo, «Otras clínicas en Zooki» con un buscador corto que filtra mientras se escribe (sin tildes ni mayúsculas) y «Vincularme».
+5. **Perfil en tarjetas plegables** (`<details>`): Mis datos (abierta), Datos de contacto, Datos de acceso (el parcial común, con la misma clase), Contraseña y Cerrar sesión.
+   - Ya no hay funciones para abrir y cerrar.
+   - El error del teléfono va junto al campo, no en una ventana.
+6. **Limpieza de CSS:**
+   - Se quitaron las reglas sin uso de `inicio.css` (de 497 a 32 líneas, reescrito), `agenda.css` (de 497 a 393) y `cuenta.css` (de 245 a 106: el perfil viejo y las clínicas viejas).
+   - `formularios.css` cambia la distribución vieja de Agendar por la de pasos.
+   - Los dos errores de carga del detalle de cita ahora son avisos breves.
+
+### RE y pruebas
+
+| Punto | Prueba |
+|---|---|
+| Actualización en su sitio, sin recargar | JS: `aplicarPartes` (partes, atributos y aviso), `refrescarPortal` (sin recarga; recarga solo si no llega el portal), ninguna acción con `zookiRecargarConAviso` (`M5C2bPortal.test.cjs`) |
+| RE-5.9.3 (hueco 8): clínica única | `M5C2bPortalTest::testConUnaSolaClinicaAgendarMuestraSuNombreYElIdOculto`, `testConVariasClinicasSonTarjetasDeEleccionSoloDeLasVinculadas`; JS: `eleccion` (oculta, radios, mascota única) |
+| Agendar por pasos | `M5C2bPortalTest::testAgendarTieneCuatroPasosConElPieDelModal` |
+| Validación en tiempo real y restricción de entrada | `M5C2bPortalTest::testLosCamposDeMascotaLlevanLasReglasYElAvisoDelServidor`; `ValidadorMascotaTest::testCadaErrorDiceSuCampo`, `testLosAvisosCabenEnUnaLineaYLosAtributosUsanLosLimites`; JS: nombre, peso, envío (foco y grupo de radios), rechazo del servidor, `limpiarCaracteres` con los caracteres de `ValidadorMascota` |
+| El servidor dice el campo | `M5C2bPortalTest::testElServidorDiceElCampoYSuAvisoCortoAlRechazarUnaMascota` (422, `campo`, `aviso` y detalle; no guarda) |
+| Clínicas (RE-5.12.1, RE-5.13.1/3) | `M5C2bPortalTest::testClinicasEnTarjetasConInterruptorAvisoYBuscador`; JS: `avisoEnTarjeta`, `filtrarClinicas` |
+| Perfil plegable | `M5C2bPortalTest::testPerfilEnTarjetasPlegables` |
+| Sin SweetAlert para validación ni código en línea | JS: solo queda la confirmación de cancelar o de la cita duplicada; vistas sin `style=`, `on…=` ni `<script>` con código |
+
+### Verificación
+
+- `vendor/bin/phpunit`: **652 en verde** (9 nuevas). Sin MySQL: 3742 aserciones y 29 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 4104 aserciones y ninguna omitida.
+- JS: **129 en verde** (12 nuevas).
+- No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+
+### Pendientes y riesgos
+
+- **Lo visual solo se ve en el navegador:** los pasos de Agendar, las tarjetas de elección, el pie fijo de los modales en celular y las tarjetas plegables. La especificidad con `cuenta.css` se resolvió con dos clases (`.profile-card.portal-plegable`).
+- Actualizar en su sitio pide el portal entero otra vez: es una segunda petición después de la acción. Es correcto (los datos salen del servidor), pero conviene medirlo en producción.
+- `ValidadorMascota` también lo usa el personal; el campo nuevo en sus errores no cambia su comportamiento. El formulario de mascota del personal sigue para C3 o el pulido.
+- `portal-vacio` sigue copiando a `plataforma-vacio` (anotado en C2a).
+
+### Pantallas para el usuario (Fabio, escritorio y celular)
+
+1. **Agendar.** Con Fabio vinculado solo a Norte, «Agendar» muestra «Clínica Norte» como texto, sin elegir. Vincúlalo también a Sur y vuelve a abrirlo: ahora salen las dos como tarjetas. Avanza por los cuatro pasos («Siguiente» solo se habilita con el paso completo) y confirma. La cita aparece en Inicio y en Citas sin recargar la página.
+2. **Cancelar.** En Citas › Próximas, «Cancelar cita» pide confirmación. Al aceptar, la tarjeta sale de Próximas y la pantalla no se recarga.
+3. **Clínicas.**
+   - Activa y desactiva el interruptor de historia compartida: debe salir un aviso breve.
+   - «Desvincularme» con una cita pendiente en esa clínica: el motivo aparece en una línea dentro de la tarjeta.
+   - Sin citas pendientes, la clínica pasa a «Otras clínicas» sin recargar.
+   - El buscador filtra mientras escribes («clinica» encuentra «Clínica»).
+4. **Mascota.**
+   - Registra una con «<» en el nombre: ese carácter no se deja escribir.
+   - Un peso de 200 muestra el aviso de una línea bajo el campo. Sin especie, «Elige la especie.».
+   - Ninguno de esos errores abre una ventana.
+   - Al guardar, la mascota aparece en Inicio sin recargar. Edita la mascota desde su ficha: la ficha se pone al día en la misma pestaña.
+5. **Perfil y celular.**
+   - Las tarjetas plegables (Mis datos abierta; contacto, datos de acceso y contraseña cerradas) se abren y cierran solas, y guardar el teléfono cierra su tarjeta.
+   - En celular, los modales son hojas a pantalla completa con el pie fijo abajo.
+
+### C2b — Revisión (2026-10-12)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de la prueba visual del usuario. PHP 652 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 129/129; `views/portal` sin código en línea. Ya no queda ninguna recarga entera tras una acción del portal; con una sola clínica Agendar muestra solo su nombre (hueco 8); el servidor responde 422 con el campo y su aviso corto (`CampoInvalido`), y el formulario de mascota valida mientras se escribe con las reglas de `ValidadorMascota`. **Observación:** actualizar en su sitio pide el portal entero otra vez tras cada acción; es correcto, y si en producción se nota lento se acota a las partes que cambian.
+
+## C3 — Alcance: lado del personal (2026-10-12)
+
+**Escribe:** Claude Code. **Revisa:** Claude. Junta lo que ya estaba previsto para C3 (hueco 6 y el modal de vincular mascota) con los hallazgos de la prueba de C1/C1.1 y los ajustes del usuario.
+
+1. **Alta del propietario por el personal sin aceptación presencial** (decisión del usuario, 2026-10-12). Se quitan «Soy el titular y estoy presente» y «Acepto la política». El personal registra al propietario con el correo obligatorio; la cuenta queda pendiente, sin contraseña ni portal; el propietario recibe un enlace de 72 horas donde él mismo acepta la política (con su prueba en `consentimientos_datos`) y crea su contraseña, como la activación del personal. Mientras no active: la clínica registra y atiende a la mascota; no salen correos automáticos a esa dirección salvo el de activación; la clínica puede reenviar el enlace; la limpieza de pendientes no borra una cuenta que ya tenga mascotas o registros clínicos. Si el documento o el correo ya tienen cuenta, sigue la confirmación del vínculo por correo (RN-109). `verificaciones_email.proposito` es VARCHAR: no hace falta migración. Se corrigen RE-T.19.1, HU-T.19, RN-109 y Modelos §11 y §12.3, y cualquier otro documento que describa la aceptación presencial (sin subir revisión).
+2. **Confirmación al desactivar un cliente:** corta, solo «¿Desactivar a <nombre> como cliente?» y los botones, con el estilo de Zooki; sin mencionar otras clínicas.
+3. **Búsqueda del propietario en tiempo real** en «Nueva mascota»: al completar un documento o correo válido, con espera corta y límite por IP (como el NIT), sale el aviso «Hay una cuenta con ese dato…» con «Pedir confirmación», o los datos y mascotas del cliente vinculado; sin enviar el formulario.
+4. **Modal de vincular mascota existente** (HU-1.5) con las tarjetas mini de Usuarios, sin `style.display` desde el JS, una sentencia por línea y actualización en su sitio con aviso breve.
+5. **Hueco 6:** en la historia del veterinario, una mascota desvinculada muestra «El propietario se desvinculó: solo lectura» y no ofrece registrar consulta, vacuna ni desparasitación; los registros de otra clínica llevan su clínica visible (no solo en `title`).
+6. **Formulario de mascota del personal** con la validación en tiempo real y la restricción de entrada de `validacion-mascota.js` (las mismas reglas de C2b).
+
+**Fuera de C3:** el resto del panel del veterinario y de la clínica (módulos 2 y 4), alergias y alertas (módulo 2).

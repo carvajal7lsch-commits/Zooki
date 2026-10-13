@@ -28,8 +28,8 @@ $campoIdentidad = static function (string $id, string $etiqueta, string $control
     echo '</div>';
 };
 ?>
-<details class="cuenta-identidad <?= $enPortal ? 'profile-card' : 'perfil-card' ?>">
-    <summary>Datos de acceso</summary>
+<details class="cuenta-identidad <?= $enPortal ? 'profile-card portal-plegable' : 'perfil-card' ?>">
+    <summary><?php if ($enPortal): ?><i class="ri-shield-user-line" aria-hidden="true"></i> <?php endif; ?>Datos de acceso</summary>
     <p class="<?= $claseAyuda ?>">Para corregirlos, confirma tu identidad. El correo anterior seguirá vigente hasta verificar el nuevo.</p>
     <?php foreach (['correo', 'documento'] as $datoIdentidad): ?>
         <?php $prefijo = 'identidad' . ucfirst($datoIdentidad); ?>

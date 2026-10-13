@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/CampoInvalido.php';
 require_once __DIR__ . '/AccesoDenegado.php';
 
 /**
@@ -56,6 +57,10 @@ final class RespuestaJson
             $respuesta = $accion();
         } catch (AccesoDenegado $e) {
             throw $e;
+        } catch (CampoInvalido $e) {
+            // M5 C2b: el formulario pone el aviso bajo el campo y el mensaje en su resumen.
+            self::error(422, $e->getMessage(), ['campo' => $e->campo, 'aviso' => $e->aviso]);
+            return;
         } catch (InvalidArgumentException $e) {
             self::error(422, $e->getMessage());
             return;

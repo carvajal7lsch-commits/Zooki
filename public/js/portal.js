@@ -117,6 +117,53 @@ document.addEventListener('click', (e) => {
     if (chip) filtrarFichaPorClinica(chip.dataset.filtroClinica);
 });
 
+/* ── Actualización en su sitio (M5 C2b, pendiente «pantalla 3–4 s tarde») ──
+   Tras una acción, la pantalla se actualiza con lo que dice el servidor sin
+   recargar la página: se pide de nuevo el portal y se cambian solo las partes
+   que dependen de los datos. La sección, la pestaña de Citas y las ventanas
+   abiertas se conservan, porque sus elementos no se reemplazan. */
+const PARTES_DEL_PORTAL = [
+    'screen-home', 'filtroMascotasCitas', 'contadorProximas', 'citas-proximas', 'citas-pasadas',
+    'misClinicas', 'bookingEleccionClinica', 'bookingEleccionMascota'
+];
+const ATRIBUTOS_DEL_PORTAL = [['portalAgendaDatos', 'data-eventos'], ['portalBookingForm', 'data-dias-cerrados']];
+
+/** Copia del portal nuevo las partes y los atributos que cambian, y avisa a quien los pinta. */
+function aplicarPartes(nuevo) {
+    PARTES_DEL_PORTAL.forEach(id => {
+        const actual = document.getElementById(id);
+        const reciente = nuevo.getElementById(id);
+        if (actual && reciente) actual.innerHTML = reciente.innerHTML;
+    });
+    ATRIBUTOS_DEL_PORTAL.forEach(([id, atributo]) => {
+        const actual = document.getElementById(id);
+        const reciente = nuevo.getElementById(id);
+        if (actual && reciente) actual.setAttribute(atributo, reciente.getAttribute(atributo) || '');
+    });
+    document.dispatchEvent(new CustomEvent('portal:actualizado'));
+}
+
+async function refrescarPortal() {
+    try {
+        const respuesta = await fetch('index.php?action=portal_propietario', { credentials: 'same-origin' });
+        const nuevo = new DOMParser().parseFromString(await respuesta.text(), 'text/html');
+        // Sin el portal en la respuesta (por ejemplo, venció la sesión y llegó el login), se recarga entera.
+        if (!respuesta.ok || !nuevo.getElementById('screen-home')) {
+            window.location.reload();
+            return;
+        }
+        aplicarPartes(nuevo);
+        // La ficha abierta también se pone al día, en la misma pestaña.
+        const ficha = document.getElementById('screen-pet-detail');
+        if (ficha && ficha.classList.contains('active') && window.activePetData) {
+            verDetalle(window.activePetData.id_mascota, { historial: false, conservarPestana: true });
+        }
+    } catch (error) {
+        console.error('Portal: no se pudo actualizar', error);
+        window.location.reload();
+    }
+}
+
 /* ── Navegación entre secciones (M5 C2: Inicio · Citas · Clínicas · Perfil) ──
    Cada sección tiene su dirección (#citas, #perfil…) para que el botón
    «atrás» del navegador y la recarga de la página respeten dónde estaba
@@ -201,27 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
     history.replaceState(destino.mascota ? { zkMascota: destino.mascota } : { zkTab: destino.tab }, '', direccion);
 });
 
-/* Editar Datos de Contacto Inline */
-function toggleContactEditPortal() {
-    const section = document.getElementById('contactEditSection');
-    const icon = document.getElementById('iconToggleContact');
-    if (section) {
-        if (section.style.display === 'none' || section.style.display === '') {
-            section.style.display = 'block';
-            if (icon) icon.className = 'ri-arrow-up-s-line';
-            if (typeof section.animate === 'function') {
-                section.animate([
-                    { opacity: 0, transform: 'translateY(-10px)' },
-                    { opacity: 1, transform: 'translateY(0)' }
-                ], { duration: 300, easing: 'ease-out' });
-            }
-        } else {
-            section.style.display = 'none';
-            if (icon) icon.className = 'ri-arrow-down-s-line';
-        }
-    }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('portalContactEditForm');
     if (!form) return;
@@ -262,54 +288,27 @@ async function submitContactEditPortal() {
             }
         })).json();
 
+        const resultado = document.querySelector('#portalContactEditForm [data-password-resultado]');
         if (res.success) {
-            zookiToast(res.message || 'Datos de contacto actualizados correctamente.', 'success');
-            
+            zookiToast(res.message || 'Datos de contacto actualizados.', 'success');
             const phoneSpan = document.getElementById('profilePhoneVal');
             if (phoneSpan) phoneSpan.textContent = res.telefono;
-
-            toggleContactEditPortal();
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: res.message || 'No se pudieron actualizar los datos.',
-                confirmButtonColor: '#5560FF'
-            });
+            if (resultado) resultado.textContent = '';
+            // La tarjeta se cierra: el teléfono nuevo ya se ve en «Mis datos».
+            document.getElementById('contactEditSection').open = false;
+        } else if (resultado) {
+            // Un error del campo va junto a él, no en una ventana (M0.1).
+            resultado.textContent = res.message || 'No se pudo actualizar el teléfono.';
+            resultado.className = 'cuenta-validacion cuenta-validacion--error';
         }
     } catch (e) {
         console.error(e);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error de Red',
-            text: 'No se pudo conectar con el servidor.',
-            confirmButtonColor: '#5560FF'
-        });
+        zookiToast('No se pudo conectar con el servidor.', 'error');
     } finally {
         if (btn && btnText) {
             btn.disabled = false;
-            btnText.textContent = 'Guardar Cambios';
+            btnText.textContent = 'Guardar cambios';
         }
-    }
-}
-
-/* Cambiar Contraseña del Propietario mediante Swal */
-/* Cambio de Contraseña Inline */
-function togglePasswordChangePortal() {
-    const section = document.getElementById('passwordChangeSection');
-    const icon = document.getElementById('iconTogglePassword');
-    if (section.style.display === 'none' || section.style.display === '') {
-        section.style.display = 'block';
-        icon.className = 'ri-arrow-up-s-line';
-        if (typeof section.animate === 'function') {
-            section.animate([
-                { opacity: 0, transform: 'translateY(-10px)' },
-                { opacity: 1, transform: 'translateY(0)' }
-            ], { duration: 300, easing: 'ease-out' });
-        }
-    } else {
-        section.style.display = 'none';
-        icon.className = 'ri-arrow-down-s-line';
     }
 }
 
@@ -409,13 +408,15 @@ function toggleAccordion(card) {
 async function verDetalle(id, opciones = {}) {
     openDrawer();
     if (opciones.historial !== false) history.pushState({ zkMascota: id, zkDentro: true }, '', `#mascota-${id}`);
-    activarPestana(document.querySelector('[data-pestanas="mascota"]'), 'tab-historial');
+    if (!opciones.conservarPestana) activarPestana(document.querySelector('[data-pestanas="mascota"]'), 'tab-historial');
 
     const imprimir = document.getElementById('btnImprimirFichaMascota');
     if (imprimir) imprimir.hidden = true;
-    document.getElementById('drawerPetTitle').innerHTML = 'Cargando…';
-    document.getElementById('drawerPetTags').replaceChildren();
-    document.getElementById('filtroClinicaMascota').hidden = true;
+    if (!opciones.conservarPestana) {
+        document.getElementById('drawerPetTitle').innerHTML = 'Cargando…';
+        document.getElementById('drawerPetTags').replaceChildren();
+        document.getElementById('filtroClinicaMascota').hidden = true;
+    }
     document.getElementById('drawerPetSummary').innerHTML = '';
     document.getElementById('historialContent').innerHTML = '<div class="portal-loading">Cargando historial…</div>';
     document.getElementById('citasContent').innerHTML = '';
@@ -693,7 +694,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCalMonth = today.getMonth(); // 0-11
     let currentCalYear = today.getFullYear();
 
-    const chips = document.querySelectorAll('.pet-chip[data-pet-id]');
     const printBtn = document.getElementById('btnImprimirHistorial');
 
     // Nombres de meses en español
@@ -1028,26 +1028,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Registrar Clics en Chips de Mascota
-    chips.forEach(chip => {
-        chip.addEventListener('click', () => {
-            chips.forEach(c => {
-                c.classList.toggle('active', c === chip);
-                c.setAttribute('aria-pressed', c === chip ? 'true' : 'false');
-            });
-
-            selectedPetId = chip.dataset.petId;
-
-            // Imprimir la ficha de salud solo con una mascota elegida.
-            if (printBtn) {
-                printBtn.hidden = selectedPetId === 'all';
-                printBtn.href = `index.php?action=portal_imprimir_historial&id_mascota=${encodeURIComponent(selectedPetId)}`;
-            }
-
-            // Filtrar ambos módulos
-            filterCitas();
-            resetCalendarDateFilter();
+    // Chips de mascota: delegados, porque se repintan al actualizar el portal.
+    const elegirMascota = (chip) => {
+        document.querySelectorAll('.pet-chip[data-pet-id]').forEach(c => {
+            c.classList.toggle('active', c === chip);
+            c.setAttribute('aria-pressed', c === chip ? 'true' : 'false');
         });
+        selectedPetId = chip.dataset.petId;
+
+        // Imprimir la ficha de salud solo con una mascota elegida.
+        if (printBtn) {
+            printBtn.hidden = selectedPetId === 'all';
+            printBtn.href = `index.php?action=portal_imprimir_historial&id_mascota=${encodeURIComponent(selectedPetId)}`;
+        }
+
+        // Filtrar ambos módulos
+        filterCitas();
+        resetCalendarDateFilter();
+    };
+
+    document.addEventListener('click', (e) => {
+        const chip = e.target.closest('.pet-chip[data-pet-id]');
+        if (chip) elegirMascota(chip);
+    });
+
+    // Tras una acción: el calendario y las listas con los datos nuevos, con el mismo filtro.
+    document.addEventListener('portal:actualizado', () => {
+        const chip = document.querySelector(`.pet-chip[data-pet-id="${selectedPetId}"]`);
+        if (chip) elegirMascota(chip);
+        else selectedPetId = 'all';
+        filterCitas();
+        if (document.getElementById('agenda-salud')) {
+            renderMiniCalendar();
+            renderSaludLists();
+        }
     });
 
     // Cargar datos por primera vez al abrir
@@ -1239,29 +1253,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ── Agendar cita (HU-26): el mismo flujo del panel del personal ──
-    // Datos a la izquierda; día y horarios libres a la derecha. Los horarios
-    // aparecen cuando ya hay tipo, veterinario y día, y mientras tanto el
-    // panel dice qué falta (antes quedaba «Elige fecha…» sin explicar nada).
+    // ── Agendar cita por pasos (M5 C2b): clínica y mascota, tipo y veterinario,
+    // día y hora, y confirmar. Los horarios salen cuando hay tipo, veterinario
+    // y día; mientras tanto, cada paso dice qué falta.
     const bookingModal = document.getElementById('portalBookingModal');
     const form = document.getElementById('portalBookingForm');
     if (!bookingModal || !form) return;
 
     const closeBtn = document.getElementById('btnCloseBookingModal');
     // C6 / RE-5.9.3: primero la clínica, entre las vinculadas; catálogos y horarios son de esa clínica.
-    const clinicaSelect = document.getElementById('booking_clinica');
-    const mascotaSelect = document.getElementById('booking_mascota');
+    const clinicaSelect = eleccion(form, 'id_clinica');
+    const mascotaSelect = eleccion(form, 'id_mascota');
     const tipoCitaSelect = document.getElementById('booking_tipo_cita');
     const vetSelect = document.getElementById('booking_veterinario');
     const dateInput = document.getElementById('booking_fecha');
     const horaInput = document.getElementById('booking_hora');
     const slots = document.getElementById('booking_slots');
     const resumen = document.getElementById('booking_resumen');
+    const guia = document.getElementById('booking_guia');
     const confirmar = document.getElementById('booking_confirmar');
-    // Días sin atención en toda la jornada de cada clínica (1 = lunes … 7 = domingo).
-    const diasCerradosPorClinica = JSON.parse(form.dataset.diasCerrados || '{}');
-    const diasCerrados = () => diasCerradosPorClinica[clinicaSelect.value] || [];
+    const siguiente = form.querySelector('[data-paso-siguiente]');
+    const atras = form.querySelector('[data-paso-atras]');
+    // Días sin atención en toda la jornada de cada clínica (1 = lunes … 7 = domingo); se relee tras actualizar.
+    const diasCerrados = () => (JSON.parse(form.dataset.diasCerrados || '{}')[clinicaSelect.value]) || [];
     let turno = 0; // si el usuario cambia algo mientras cargan los horarios, se ignora la respuesta vieja
+    let paso = 1;
     const catalogosPorClinica = {};
 
     const minutosDe = h => { const [hh, mm] = h.split(':').map(Number); return hh * 60 + mm; };
@@ -1291,13 +1307,50 @@ document.addEventListener('DOMContentLoaded', () => {
         slots.innerHTML = `<div class="slot-state"><i class="${icono}" aria-hidden="true"></i><p>${escapeHtml(texto)}</p></div>`;
     }
 
-    function textoGuia() {
+    /** Qué falta en cada paso; vacío si el paso está completo. */
+    function faltanDelPaso(n) {
         const faltan = [];
-        if (!clinicaSelect.value) faltan.push('la clínica');
-        if (!tipoCitaSelect.value) faltan.push('el tipo de cita');
-        if (!vetSelect.value) faltan.push('el veterinario');
-        if (!dateInput.value) faltan.push('el día');
-        return faltan.length ? `Elige ${enLista(faltan)} para ver los horarios libres.` : '';
+        if (n === 1) {
+            if (!clinicaSelect.value) faltan.push('la clínica');
+            if (!mascotaSelect.value) faltan.push('la mascota');
+        }
+        if (n === 2) {
+            if (!tipoCitaSelect.value) faltan.push('el tipo de cita');
+            if (!vetSelect.value) faltan.push('el veterinario');
+        }
+        if (n === 3) {
+            if (!dateInput.value) faltan.push('el día');
+            if (!horaInput.value) faltan.push('la hora');
+        }
+        return faltan;
+    }
+
+    function actualizarPaso() {
+        const faltan = faltanDelPaso(paso);
+        guia.textContent = faltan.length ? `Elige ${enLista(faltan)}.` : '';
+        siguiente.disabled = faltan.length > 0;
+        confirmar.disabled = paso !== 4;
+    }
+
+    function irAPaso(n) {
+        paso = n;
+        form.querySelectorAll('[data-paso]').forEach(f => { f.hidden = Number(f.dataset.paso) !== n; });
+        form.querySelectorAll('[data-paso-indicador]').forEach(li => {
+            const numero = Number(li.dataset.pasoIndicador);
+            li.classList.toggle('is-activo', numero === n);
+            li.classList.toggle('is-hecho', numero < n);
+            if (numero === n) li.setAttribute('aria-current', 'step');
+            else li.removeAttribute('aria-current');
+        });
+        atras.hidden = n === 1;
+        siguiente.hidden = n === 4;
+        confirmar.hidden = n !== 4;
+        if (n === 3) {
+            if (calendario) calendario.redraw();
+            if (!horaInput.value) cargarHoras();
+        }
+        if (n === 4) pintarResumen();
+        actualizarPaso();
     }
 
     /** Horarios repartidos en Mañana y Tarde, como en el panel del personal. */
@@ -1337,17 +1390,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 c.setAttribute('aria-pressed', String(c === chip));
             });
             horaInput.value = chip.dataset.hora;
-            actualizarResumen();
+            actualizarPaso();
         }
     });
 
     async function cargarHoras() {
         horaInput.value = '';
-        actualizarResumen();
+        actualizarPaso();
 
-        const guia = textoGuia();
-        if (guia) {
-            estadoSlots('guia', guia);
+        if (!clinicaSelect.value || !tipoCitaSelect.value || !vetSelect.value) {
+            estadoSlots('guia', 'Elige primero el tipo de cita y el veterinario.');
+            return;
+        }
+        if (!dateInput.value) {
+            estadoSlots('guia', 'Elige el día para ver los horarios libres.');
             return;
         }
 
@@ -1394,17 +1450,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function actualizarResumen() {
-        const listo = clinicaSelect.value && mascotaSelect.value && tipoCitaSelect.value && vetSelect.value && dateInput.value && horaInput.value;
-        confirmar.disabled = !listo;
-        if (!listo) {
-            resumen.textContent = '';
-            return;
-        }
+    /** El último paso: lo que se va a agendar, para confirmarlo de un vistazo. */
+    function pintarResumen() {
         const dia = calendario && calendario.selectedDates[0]
             ? calendario.selectedDates[0].toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
             : dateInput.value;
-        resumen.innerHTML = `<i class="ri-checkbox-circle-line" aria-hidden="true"></i>${escapeHtml(textoOpcion(mascotaSelect))} · ${escapeHtml(textoOpcion(tipoCitaSelect))} con ${escapeHtml(textoOpcion(vetSelect))} en ${escapeHtml(textoOpcion(clinicaSelect))} · ${escapeHtml(dia)}, ${escapeHtml(hora12(horaInput.value))}`;
+        const motivo = document.getElementById('booking_motivo').value.trim();
+        const filas = [
+            ['Clínica', clinicaSelect.texto()],
+            ['Mascota', mascotaSelect.texto()],
+            ['Tipo de cita', textoOpcion(tipoCitaSelect)],
+            ['Veterinario', textoOpcion(vetSelect)],
+            ['Día y hora', `${dia}, ${horaInput.value ? hora12(horaInput.value) : ''}`],
+        ];
+        if (motivo) filas.push(['Motivo', motivo]);
+        resumen.innerHTML = filas.map(([etiqueta, valor]) => `<div><dt>${escapeHtml(etiqueta)}</dt><dd>${escapeHtml(valor)}</dd></div>`).join('');
     }
 
     /** Tipos de cita y veterinarios de la clínica elegida (una vez por clínica). */
@@ -1436,6 +1496,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error al cargar catálogos:', e);
             tipoCitaSelect.innerHTML = vetSelect.innerHTML = '<option value="">No se pudo cargar. Cierra y vuelve a abrir.</option>';
         }
+        actualizarPaso();
     }
 
     const abrirBooking = async () => {
@@ -1443,30 +1504,29 @@ document.addEventListener('DOMContentLoaded', () => {
         horaInput.value = '';
         if (calendario) calendario.clear();
         // Con una sola mascota no hay nada que elegir.
-        if (mascotaSelect.options.length === 2) mascotaSelect.selectedIndex = 1;
+        mascotaSelect.elegirUnica();
+        irAPaso(1);
         openModal('portalBookingModal');
-
-        if (mascotaSelect.options.length === 1) {
-            estadoSlots('vacio', 'Primero registra una mascota desde Inicio para poder agendarle una cita.');
-            return;
-        }
-        if (clinicaSelect.options.length === 0) {
-            estadoSlots('vacio', 'Vincúlate a una clínica desde Perfil › Mis clínicas para poder agendar.');
-            return;
-        }
         await cargarCatalogos();
-        cargarHoras();
     };
 
-    // Todos los botones de agendar: menú lateral, barra inferior, accesos y servicios.
-    document.querySelectorAll('[data-agendar]').forEach(btn => btn.addEventListener('click', abrirBooking));
+    // Todos los botones de agendar (menú lateral, barra inferior y avisos), delegados: se repintan.
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('[data-agendar]')) abrirBooking();
+        if (e.target.closest('[data-cerrar-agendar]')) closeModal('portalBookingModal');
+    });
     if (closeBtn) closeBtn.addEventListener('click', () => closeModal('portalBookingModal'));
     bookingModal.addEventListener('click', (e) => {
         if (e.target === bookingModal) closeModal('portalBookingModal');
     });
 
+    siguiente.addEventListener('click', () => {
+        if (faltanDelPaso(paso).length === 0) irAPaso(paso + 1);
+    });
+    atras.addEventListener('click', () => irAPaso(paso - 1));
+
     // Otra clínica: otros tipos, veterinarios y días de atención.
-    clinicaSelect.addEventListener('change', async () => {
+    clinicaSelect.alCambiar(async () => {
         if (calendario) {
             calendario.clear();
             calendario.redraw();
@@ -1474,7 +1534,7 @@ document.addEventListener('DOMContentLoaded', () => {
         await cargarCatalogos();
         cargarHoras();
     });
-    mascotaSelect.addEventListener('change', actualizarResumen);
+    mascotaSelect.alCambiar(actualizarPaso);
     tipoCitaSelect.addEventListener('change', cargarHoras);
     vetSelect.addEventListener('change', cargarHoras);
 
@@ -1482,7 +1542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn = confirmar;
         const reactivar = () => {
             submitBtn.querySelector('span').textContent = 'Confirmar cita';
-            actualizarResumen();
+            actualizarPaso();
         };
         submitBtn.disabled = true;
         submitBtn.querySelector('span').textContent = 'Agendando...';
@@ -1502,20 +1562,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (res.success) {
                 closeModal('portalBookingModal');
+                reactivar();
                 if (res.id_cita) {
                     const mailFd = new FormData();
                     mailFd.append('id_cita', res.id_cita);
                     mailFd.append('tipo', 'confirmacion_nueva');
-                    // keepalive: el envío termina aunque la página recargue enseguida (C9.1).
                     fetch('index.php?action=enviar_email_ajax', {
                         method: 'POST',
                         body: mailFd,
                         keepalive: true
                     }).catch(console.error);
                 }
-
-                // C9.1: la agenda se actualiza ya; el aviso sale al recargar.
-                zookiRecargarConAviso(res.message || 'Tu cita ha sido agendada y confirmada con éxito.');
+                // M5 C2b: el aviso sale ya y la pantalla se pone al día sin recargar.
+                zookiToast(res.message || 'Tu cita quedó agendada.', 'success');
+                refrescarPortal();
             } else if (res.has_warning) {
                 showTikTokModal({
                     title: 'Cita Duplicada',
@@ -1527,36 +1587,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     onCancel: reactivar
                 });
             } else {
-                showTikTokModal({
-                    title: 'No se pudo agendar',
-                    icon: 'error',
-                    message: res.message || 'Inténtalo nuevamente.',
-                    isConfirm: false,
-                    onConfirm: () => {
-                        reactivar();
-                        // El horario pudo ocuparse mientras tanto: se vuelven a pedir.
-                        cargarHoras();
-                    }
-                });
+                // El horario pudo ocuparse mientras tanto: se vuelve al paso de día y hora.
+                zookiToast(res.message || 'No se pudo agendar. Inténtalo nuevamente.', 'error');
+                reactivar();
+                irAPaso(3);
+                cargarHoras();
             }
         } catch (error) {
             console.error('Error al agendar cita:', error);
-            showTikTokModal({
-                title: 'Error de Red',
-                icon: 'error',
-                message: 'No pudimos conectarnos con el servidor. Inténtalo más tarde.',
-                isConfirm: false,
-                onConfirm: reactivar
-            });
+            zookiToast('No pudimos conectarnos con el servidor. Inténtalo más tarde.', 'error');
+            reactivar();
         }
     };
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-        if (confirmar.disabled) return;
+        if (paso !== 4 || confirmar.disabled) return;
         enviarFormulario(false);
     });
 });
+
+/**
+ * Tarjetas de elección (radios) como un campo: valor, texto, cambio y la
+ * opción única. Con una sola clínica el valor llega en un campo oculto
+ * (RE-5.9.3, hueco 8). Se leen los campos cada vez: se repintan al actualizar.
+ */
+function eleccion(form, nombre) {
+    const campos = () => [...form.querySelectorAll(`[name="${nombre}"]`)];
+    const elegido = () => campos().find(c => c.type === 'hidden' || c.checked) || null;
+    return {
+        get value() { return elegido() ? elegido().value : ''; },
+        texto() { return elegido() ? (elegido().dataset.nombre || '') : ''; },
+        elegirUnica() {
+            const opciones = campos();
+            if (opciones.length === 1 && opciones[0].type === 'radio') opciones[0].checked = true;
+        },
+        alCambiar(accion) {
+            form.addEventListener('change', (e) => { if (e.target.name === nombre) accion(); });
+        },
+    };
+}
 
 /* Función para cancelar cita desde el portal (Propietario) */
 function cancelarCitaPortal(idCita) {
@@ -1577,22 +1647,14 @@ function cancelarCitaPortal(idCita) {
                 })).json();
 
                 if (res.success) {
-                    zookiRecargarConAviso(res.message || 'La cita ha sido cancelada.');
+                    zookiToast(res.message || 'La cita quedó cancelada.', 'success');
+                    refrescarPortal();
                 } else {
-                    showTikTokModal({
-                        title: 'Error',
-                        message: res.message || 'No se pudo cancelar la cita.',
-                        isConfirm: false
-                    });
+                    zookiToast(res.message || 'No se pudo cancelar la cita.', 'error');
                 }
             } catch (e) {
                 console.error(e);
-                showTikTokModal({
-                    title: 'Error de Red',
-                    icon: 'error',
-                    message: 'No pudimos conectarnos con el servidor.',
-                    isConfirm: false
-                });
+                zookiToast('No pudimos conectarnos con el servidor.', 'error');
             }
         }
     });
@@ -1722,6 +1784,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ayuda.classList.add('is-error');
                     return;
                 }
+                if (window.ZookiValidacionMascota) window.ZookiValidacionMascota.marcar(input, '');
                 if (form._urlVista) URL.revokeObjectURL(form._urlVista);
                 form._urlVista = URL.createObjectURL(archivo);
                 pintarFoto(form, form._urlVista);
@@ -1737,21 +1800,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const limpiarFormulario = (form) => {
         form.reset();
         form.classList.remove('intentado');
+        if (window.ZookiValidacionMascota) window.ZookiValidacionMascota.limpiar(form);
         const nacimiento = campo(form, 'fecha_nacimiento');
         if (nacimiento && nacimiento._flatpickr) nacimiento._flatpickr.clear();
     };
 
-    // ── Abrir: registrar ──
-    const openAddBtn = document.getElementById('btnOpenAddPetModal');
-    if (openAddBtn) {
-        openAddBtn.addEventListener('click', () => {
-            limpiarFormulario(addForm);
-            cargarRazas('', campo(addForm, 'raza'));
-            mostrarRazaOtra(addForm, false);
-            prepararFoto(addForm, null);
-            openModal('portalAddPetModal');
-        });
-    }
+    // ── Abrir: registrar (delegado: el botón está en Inicio, que se repinta) ──
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#btnOpenAddPetModal')) return;
+        limpiarFormulario(addForm);
+        cargarRazas('', campo(addForm, 'raza'));
+        mostrarRazaOtra(addForm, false);
+        prepararFoto(addForm, null);
+        openModal('portalAddPetModal');
+    });
 
     // ── Abrir: editar, con los datos actuales ──
     const editProfileBtn = document.getElementById('btnEditPetProfile');
@@ -1794,15 +1856,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ── Enviar: primero la validación del navegador, luego el servidor ──
+    // ── Enviar: primero la validación en el navegador (avisos de una línea), luego el servidor ──
     const enviarMascota = (form, { accion, modalId, textoBoton, textoEnviando, exito }) => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             form.classList.add('intentado');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
+            if (!window.ZookiValidacionMascota.validar(form)) return;
 
             const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
@@ -1817,13 +1876,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (res.success) {
                     closeModal(modalId);
-                    zookiRecargarConAviso(exito[1] || exito[0]);
-                    return;
+                    // M5 C2b: el aviso sale ya y la pantalla (y la ficha abierta) se ponen al día sin recargar.
+                    zookiToast(exito[1] || exito[0], 'success');
+                    refrescarPortal();
+                } else {
+                    // El error del servidor va bajo su campo y en el resumen, no en una ventana (M0.1).
+                    window.ZookiValidacionMascota.mostrarServidor(form, res);
                 }
-                Swal.fire({ icon: 'error', title: 'Revisa los datos', text: res.message || 'No se pudo guardar.', confirmButtonColor: '#0052FF' });
             } catch (err) {
                 console.error(err);
-                Swal.fire({ icon: 'error', title: 'Error de red', text: 'No se pudo conectar con el servidor.', confirmButtonColor: '#0052FF' });
+                zookiToast('No se pudo conectar con el servidor.', 'error');
             }
             submitBtn.disabled = false;
             submitBtn.querySelector('span').textContent = textoBoton;
@@ -1847,12 +1909,7 @@ async function mostrarDetalleCita(idCita) {
     try {
         const res = await (await fetch(`index.php?action=portal_get_detalle_cita_clinica_ajax&id_cita=${idCita}`)).json();
         if (!res.success) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: res.message || 'No se pudo cargar la información de la cita.',
-                confirmButtonColor: '#5560FF'
-            });
+            zookiToast(res.message || 'No se pudo cargar la información de la cita.', 'error');
             return;
         }
 
@@ -1933,12 +1990,7 @@ async function mostrarDetalleCita(idCita) {
         openModal('portalCitaDetalleModal');
     } catch (e) {
         console.error(e);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error de Red',
-            text: 'No se pudo conectar con el servidor para traer los detalles.',
-            confirmButtonColor: '#5560FF'
-        });
+        zookiToast('No se pudo conectar con el servidor para traer los detalles.', 'error');
     }
 }
 
@@ -1994,6 +2046,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const boton = vincular || desvincular;
         // RE-5.13.1: vínculo reversible con un clic; el servidor valida RN-115.
+        const aviso = boton.closest('.portal-clinica')?.querySelector('[data-aviso-clinica]');
+        if (aviso) aviso.textContent = '';
 
         boton.disabled = true;
         try {
@@ -2001,15 +2055,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? await postPortal('portal_vincular_clinica_ajax', { id_clinica: vincular.dataset.vincularClinica })
                 : await postPortal('portal_desvincular_clinica_ajax', { id_clinica: desvincular.dataset.desvincularClinica });
             if (!res.success) {
-                avisoPortal('error', 'No se pudo completar', res.message || 'Intenta de nuevo.');
+                // RE-5.13.3: el rechazo (citas sin resolver) queda en la misma tarjeta, en una línea.
+                avisoEnTarjeta(boton, res.message || 'No se pudo completar. Intenta de nuevo.');
                 boton.disabled = false;
                 return;
             }
-            zookiRecargarConAviso(res.message || 'Listo');
+            avisoPortal('success', 'Listo', res.message || 'Listo');
+            refrescarPortal();
         } catch (err) {
             console.error(err);
             boton.disabled = false;
-            avisoPortal('error', 'Error de red', 'No se pudo conectar con el servidor.');
+            avisoEnTarjeta(boton, 'No se pudo conectar con el servidor.');
         }
     });
+
+    // «Otras clínicas en Zooki»: el buscador filtra mientras se escribe.
+    seccion.addEventListener('input', (e) => {
+        if (!e.target.matches('[data-buscar-clinica]')) return;
+        filtrarClinicas(seccion, e.target.value);
+    });
 });
+
+/** Un aviso de una línea en la tarjeta de la clínica; el texto completo, al pasar el cursor. */
+function avisoEnTarjeta(boton, mensaje) {
+    const aviso = boton.closest('.portal-clinica')?.querySelector('[data-aviso-clinica]');
+    if (!aviso) {
+        avisoPortal('error', 'No se pudo completar', mensaje);
+        return;
+    }
+    aviso.textContent = mensaje;
+    aviso.title = mensaje;
+    aviso.classList.add('cuenta-validacion--error');
+}
+
+/** Sin tildes ni mayúsculas, para buscar «clinica» y encontrar «Clínica». */
+function sinTildes(texto) {
+    return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function filtrarClinicas(seccion, consulta) {
+    const buscado = sinTildes(consulta);
+    let visibles = 0;
+    seccion.querySelectorAll('[data-otras-clinicas] [data-buscar]').forEach(tarjeta => {
+        const coincide = buscado === '' || sinTildes(tarjeta.dataset.buscar).includes(buscado);
+        tarjeta.hidden = !coincide;
+        if (coincide) visibles++;
+    });
+    const vacio = seccion.querySelector('[data-sin-clinicas]');
+    if (vacio) vacio.hidden = visibles > 0;
+}

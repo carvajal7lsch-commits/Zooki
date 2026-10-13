@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../helpers/ReglaAtencion.php';
 require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../../helpers/PresentacionPortal.php';
 require_once __DIR__ . '/../../helpers/PresentacionPlataforma.php';
+require_once __DIR__ . '/../../helpers/ValidadorMascota.php';
 
 /**
  * M5 C2 — Portal del propietario: Inicio · Citas · Clínicas · Perfil (Anexo A
@@ -45,7 +46,7 @@ $tarjetaCita = static function (array $cita) use ($e, $hoy, $avatarMascota): voi
         <?php // RN-405: solo se cancela en una clínica con vínculo activo; es lo único que confirma. ?>
         <?php if (!empty($cita['cancelable'])): ?>
             <div class="card-footer-mini">
-                <button type="button" class="portal-cita__cancelar" data-ui-accion="cancelar-cita-portal" data-ui-id="<?= (int) $cita['id_cita'] ?>">
+                <button type="button" class="portal-boton-secundario" data-ui-accion="cancelar-cita-portal" data-ui-id="<?= (int) $cita['id_cita'] ?>">
                     <i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita
                 </button>
             </div>
@@ -179,18 +180,21 @@ $vacio = static function (string $icono, string $titulo, string $texto, string $
         </div>
     </header>
 
-    <?php if (count($mascotas) > 1): ?>
-        <div class="pet-filter-chips-wrapper" role="group" aria-label="Filtrar por mascota">
-            <button type="button" class="pet-chip active" data-pet-id="all" aria-pressed="true"><span>Todas</span></button>
-            <?php foreach ($mascotas as $m): ?>
-                <button type="button" class="pet-chip" data-pet-id="<?= (int) $m['id_mascota'] ?>" aria-pressed="false"><span><?= $e($m['nombre']) ?></span></button>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
+    <?php // M5 C2b: contenedor estable; portal.js lo repinta tras una acción. ?>
+    <div id="filtroMascotasCitas">
+        <?php if (count($mascotas) > 1): ?>
+            <div class="pet-filter-chips-wrapper" role="group" aria-label="Filtrar por mascota">
+                <button type="button" class="pet-chip active" data-pet-id="all" aria-pressed="true"><span>Todas</span></button>
+                <?php foreach ($mascotas as $m): ?>
+                    <button type="button" class="pet-chip" data-pet-id="<?= (int) $m['id_mascota'] ?>" aria-pressed="false"><span><?= $e($m['nombre']) ?></span></button>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
 
     <div class="tabs-wrapper portal-pestanas" role="tablist" aria-label="Citas" data-pestanas="citas">
         <button type="button" class="tab-btn active" role="tab" aria-selected="true" aria-controls="citas-proximas" data-pestana="citas-proximas">
-            <i class="ri-calendar-event-line" aria-hidden="true"></i> Próximas <span class="tag-mini"><?= count($agenda['proximas']) ?></span>
+            <i class="ri-calendar-event-line" aria-hidden="true"></i> Próximas <span class="tag-mini" id="contadorProximas"><?= count($agenda['proximas']) ?></span>
         </button>
         <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="citas-pasadas" data-pestana="citas-pasadas">
             <i class="ri-history-line" aria-hidden="true"></i> Pasadas
@@ -329,7 +333,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
 <div id="portalAgendaDatos" hidden data-eventos="<?= htmlspecialchars(json_encode($eventos_js, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>"></div>
 
 <!-- ══ CLÍNICAS ═════════════════════════════════════════════════════ -->
-<!-- HU-5.12 y HU-5.13: sección propia (decisión 4 de «A — Revisión»). El rediseño de las tarjetas es de C2b. -->
+<!-- HU-5.12 y HU-5.13: sección propia (decisión 4 de «A — Revisión»), Modelos §11.1. -->
 <section id="screen-clinicas" class="app-screen" aria-labelledby="tituloMisClinicas">
     <header class="portal-cabecera">
         <div>
@@ -337,151 +341,188 @@ foreach ((array) $todas_desparasitaciones as $d) {
             <p class="portal-cabecera__ayuda">Dónde se atienden tus mascotas y quién ve su historia.</p>
         </div>
     </header>
-    <section class="mis-clinicas" id="misClinicas" aria-label="Mis clínicas">
+
+    <div class="mis-clinicas" id="misClinicas">
+        <h2 class="portal-subtitulo">Mis clínicas</h2>
         <?php if (empty($clinicas_portal)): ?>
-            <p class="portal-ayuda">Todavía no estás vinculado a ninguna clínica.</p>
+            <?php $vacio('ri-hospital-line', 'Aún no tienes clínicas', 'Vincúlate a una de la lista de abajo para agendar citas.'); ?>
+        <?php else: ?>
+            <div class="portal-tarjetas">
+                <?php foreach ($clinicas_portal as $clinica): $idInterruptor = 'autoriza_' . (int) $clinica['id_clinica']; $abierta = (bool) $clinica['ahora']['abierta']; ?>
+                    <article class="person-card portal-clinica" data-id-clinica="<?= (int) $clinica['id_clinica'] ?>">
+                        <div class="card-header-mini">
+                            <span class="avatar-mini avatar-iniciales" aria-hidden="true"><?= $e(PresentacionPlataforma::iniciales($clinica['nombre'])) ?></span>
+                            <span class="tag-mini<?= $abierta ? ' tag-mini--azul' : '' ?>"><?= $abierta ? 'Abierta ahora' : 'Cerrada ahora' ?></span>
+                        </div>
+                        <div class="card-body-mini">
+                            <h3 class="card-title-mini"><?= $e($clinica['nombre']) ?></h3>
+                            <?php if (!empty($clinica['direccion'])): ?>
+                                <span class="contact-text-mini"><i class="ri-map-pin-line" aria-hidden="true"></i> <?= $e($clinica['direccion']) ?></span>
+                            <?php endif; ?>
+                            <span class="contact-text-mini"><i class="ri-time-line" aria-hidden="true"></i> <?= $e($clinica['ahora']['texto']) ?></span>
+                        </div>
+                        <?php // RE-5.12.1/2: aplica de inmediato, sin confirmación (se revoca igual de fácil). ?>
+                        <label class="portal-interruptor" for="<?= $idInterruptor ?>">
+                            <span class="toggle-switch">
+                                <input type="checkbox" id="<?= $idInterruptor ?>" data-autorizar-clinica="<?= (int) $clinica['id_clinica'] ?>" aria-describedby="<?= $idInterruptor ?>_ayuda"<?= (int) $clinica['autoriza_historia_compartida'] === 1 ? ' checked' : '' ?>>
+                                <span class="toggle-slider"></span>
+                            </span>
+                            <span class="portal-interruptor__texto">Puede ver la historia de otras clínicas</span>
+                        </label>
+                        <p class="portal-ayuda" id="<?= $idInterruptor ?>_ayuda">Las consultas, tratamientos y archivos que registraron otras. Las vacunas, desparasitaciones y datos básicos los ve siempre.</p>
+                        <div class="card-footer-mini">
+                            <button type="button" class="portal-boton-secundario" data-desvincular-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>">
+                                <i class="ri-link-unlink" aria-hidden="true"></i> Desvincularme
+                            </button>
+                        </div>
+                        <?php // RE-5.13.3: el rechazo por citas sin resolver sale aquí, en una línea. ?>
+                        <p class="cuenta-validacion portal-aviso" role="status" data-aviso-clinica></p>
+                    </article>
+                <?php endforeach; ?>
+            </div>
         <?php endif; ?>
-        <?php foreach ($clinicas_portal as $clinica): $idInterruptor = 'autoriza_' . (int) $clinica['id_clinica']; ?>
-            <article class="mis-clinicas__item">
-                <div class="mis-clinicas__datos">
-                    <h3><?= $e($clinica['nombre']) ?></h3>
-                    <?php if (!empty($clinica['direccion'])): ?>
-                        <p><?= $e($clinica['direccion']) ?></p>
-                    <?php endif; ?>
-                </div>
-                <label class="mis-clinicas__autoriza" for="<?= $idInterruptor ?>">
-                    <input type="checkbox" id="<?= $idInterruptor ?>" data-autorizar-clinica="<?= (int) $clinica['id_clinica'] ?>"<?= (int) $clinica['autoriza_historia_compartida'] === 1 ? ' checked' : '' ?>>
-                    <span>Puede ver la historia que registraron otras clínicas</span>
-                </label>
-                <button type="button" class="btn-enlace mis-clinicas__salir" data-desvincular-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>">Desvincularme</button>
-            </article>
-        <?php endforeach; ?>
+
         <?php if (!empty($clinicas_disponibles)): ?>
-            <h2 class="mis-clinicas__subtitulo">Otras clínicas en Zooki</h2>
-            <?php foreach ($clinicas_disponibles as $clinica): ?>
-                <article class="mis-clinicas__item mis-clinicas__item--otra">
-                    <div class="mis-clinicas__datos">
-                        <h3><?= $e($clinica['nombre']) ?></h3>
-                        <?php if (!empty($clinica['direccion'])): ?>
-                            <p><?= $e($clinica['direccion']) ?></p>
-                        <?php endif; ?>
-                    </div>
-                    <button type="button" class="btn-primary btn-primary--compacto" data-vincular-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>">Vincularme</button>
-                </article>
-            <?php endforeach; ?>
+            <div class="portal-subtitulo-fila">
+                <h2 class="portal-subtitulo">Otras clínicas en Zooki</h2>
+                <div class="search-input portal-buscador">
+                    <i class="ri-search-line" aria-hidden="true"></i>
+                    <input type="search" data-buscar-clinica maxlength="100" placeholder="Buscar clínica" aria-label="Buscar una clínica por su nombre o dirección">
+                </div>
+            </div>
+            <div class="portal-tarjetas" data-otras-clinicas>
+                <?php foreach ($clinicas_disponibles as $clinica): ?>
+                    <article class="person-card portal-clinica" data-buscar="<?= $e(mb_strtolower($clinica['nombre'] . ' ' . ($clinica['direccion'] ?? ''))) ?>">
+                        <div class="card-header-mini">
+                            <span class="avatar-mini avatar-iniciales" aria-hidden="true"><?= $e(PresentacionPlataforma::iniciales($clinica['nombre'])) ?></span>
+                        </div>
+                        <div class="card-body-mini">
+                            <h3 class="card-title-mini"><?= $e($clinica['nombre']) ?></h3>
+                            <?php if (!empty($clinica['direccion'])): ?>
+                                <span class="contact-text-mini"><i class="ri-map-pin-line" aria-hidden="true"></i> <?= $e($clinica['direccion']) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="card-footer-mini">
+                            <button type="button" class="btn-primary btn-primary--compacto" data-vincular-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>">
+                                <i class="ri-link" aria-hidden="true"></i> Vincularme
+                            </button>
+                        </div>
+                        <p class="cuenta-validacion portal-aviso" role="status" data-aviso-clinica></p>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+            <p class="portal-filtro-vacio" data-sin-clinicas hidden>No hay clínicas con ese nombre.</p>
         <?php endif; ?>
-    </section>
+    </div>
 </section>
 
 <!-- ══ PERFIL ═══════════════════════════════════════════════════════ -->
+<!-- M5 C2b: datos, contacto, datos de acceso, contraseña y salir, en tarjetas plegables. -->
 <section id="screen-account" class="app-screen" aria-labelledby="tituloCuenta">
-    <h1 class="sr-only" id="tituloCuenta">Mi perfil</h1>
-    <div class="account-grid">
-        <div class="account-grid__datos">
-            <div class="profile-card">
-                <div class="profile-avatar-large" aria-hidden="true"><?= $e($iniciales) ?></div>
-                <h2><?= $e($_SESSION['usuario_nombre'] ?? 'Propietario') ?></h2>
-                <p>Propietario Zooki</p>
-            </div>
-
-            <dl class="profile-details-list">
-                <div class="profile-detail-row">
-                    <dt class="profile-detail-label">Cédula</dt>
-                    <dd class="profile-detail-value" data-documento-cuenta><?= $e($usuarioData['documento'] ?? '—') ?></dd>
-                </div>
-                <div class="profile-detail-row">
-                    <dt class="profile-detail-label">Correo</dt>
-                    <dd class="profile-detail-value" id="profileEmailVal"><?= $e($usuarioData['email'] ?? 'No registrado') ?></dd>
-                </div>
-                <div class="profile-detail-row">
-                    <dt class="profile-detail-label">Teléfono</dt>
-                    <dd class="profile-detail-value" id="profilePhoneVal"><?= $e($usuarioData['telefono'] ?? 'No registrado') ?></dd>
-                </div>
-                <div class="profile-detail-row">
-                    <dt class="profile-detail-label">Rol</dt>
-                    <dd class="profile-detail-value">Cliente</dd>
-                </div>
-            </dl>
+    <header class="portal-cabecera">
+        <div>
+            <h1 id="tituloCuenta" class="portal-cabecera__titulo">Perfil</h1>
+            <p class="portal-cabecera__ayuda">Tus datos y el acceso a tu cuenta.</p>
         </div>
+    </header>
 
-        <div class="account-grid__acciones">
-            <div class="profile-actions-list">
-                <button type="button" class="btn-profile-action" data-ui-accion="editar-contacto" aria-controls="contactEditSection">
-                    <span><i class="ri-contacts-line" aria-hidden="true"></i> Editar datos de contacto</span>
-                    <i class="ri-arrow-down-s-line" id="iconToggleContact" aria-hidden="true"></i>
-                </button>
-
-                <div id="contactEditSection" class="password-change-collapse">
-                    <form id="portalContactEditForm" class="portal-form" novalidate data-validacion-cuenta>
-                        <?php // Decisión C6: el correo es el dato de acceso; su cambio con verificación llega en la etapa D (RE-T.5.7). ?>
-                        <div class="input-group">
-                            <span class="portal-label">Correo electrónico</span>
-                            <p class="portal-ayuda"><?= $e($usuarioData['email'] ?? '') ?> · Puedes cambiarlo en Datos de acceso, verificando el correo nuevo.</p>
-                        </div>
-                        <div class="input-group">
-                            <label class="portal-label" for="portal_contact_phone">Teléfono de contacto *</label>
-                            <div class="search-input-wrapper campo">
-                                <i class="ri-phone-line" aria-hidden="true"></i>
-                                <?php // C9.1: los mismos límites que valida el servidor (ValidadorTelefono). ?>
-                                <input type="tel" name="telefono" id="portal_contact_phone" required autocomplete="tel" placeholder="Tu número de teléfono" minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> value="<?= htmlspecialchars($usuarioData['telefono'] ?? '') ?>">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn-primary btn-primary--compacto" id="btnSubmitContactEdit">
-                            <span>Guardar cambios</span>
-                            <i class="ri-check-line" aria-hidden="true"></i>
-                        </button>
-                        <p role="status" data-password-resultado></p>
-                    </form>
+    <div class="portal-plegables">
+        <details class="profile-card portal-plegable" open>
+            <summary><i class="ri-user-3-line" aria-hidden="true"></i> Mis datos</summary>
+            <div class="portal-plegable__cuerpo">
+                <div class="portal-perfil">
+                    <span class="avatar-mini avatar-iniciales avatar-iniciales--grande" aria-hidden="true"><?= $e($iniciales) ?></span>
+                    <div>
+                        <h2 class="card-title-mini"><?= $e($_SESSION['usuario_nombre'] ?? 'Propietario') ?></h2>
+                        <span class="tag-mini">Propietario</span>
+                    </div>
                 </div>
+                <dl class="profile-details-list">
+                    <div class="profile-detail-row">
+                        <dt class="profile-detail-label">Cédula</dt>
+                        <dd class="profile-detail-value" data-documento-cuenta><?= $e($usuarioData['documento'] ?? '—') ?></dd>
+                    </div>
+                    <div class="profile-detail-row">
+                        <dt class="profile-detail-label">Correo</dt>
+                        <dd class="profile-detail-value" id="profileEmailVal"><?= $e($usuarioData['email'] ?? 'No registrado') ?></dd>
+                    </div>
+                    <div class="profile-detail-row">
+                        <dt class="profile-detail-label">Teléfono</dt>
+                        <dd class="profile-detail-value" id="profilePhoneVal"><?= $e($usuarioData['telefono'] ?? 'No registrado') ?></dd>
+                    </div>
+                </dl>
             </div>
+        </details>
 
-            <div class="profile-actions-list">
-                <?php require __DIR__ . "/../partials/cambios_identidad.php"; ?>
-                <button type="button" class="btn-profile-action" data-ui-accion="editar-password" aria-controls="passwordChangeSection">
-                    <span><i class="ri-lock-password-line" aria-hidden="true"></i> Cambiar contraseña</span>
-                    <i class="ri-arrow-down-s-line" id="iconTogglePassword" aria-hidden="true"></i>
-                </button>
-
-                <div id="passwordChangeSection" class="password-change-collapse">
-                    <form id="portalChangePasswordForm" data-password-accion="cambiar_password_ajax" class="portal-form"  data-validacion-cuenta>
-                        <?php if (empty($usuarioData['tiene_password'])) require __DIR__ . '/../partials/confirmacion_google.php'; ?>
-                        <?php // HU-39: se pide la actual si la cuenta tiene una contraseña conocida ?>
-                        <?php if ((int) ($usuarioData['tiene_password'] ?? 1) === 1): ?>
-                        <div class="input-group">
-                            <label class="portal-label" for="portal_current_password">Contraseña actual</label>
-                            <div class="search-input-wrapper campo">
-                                <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="current_password" id="portal_current_password" required autocomplete="current-password" placeholder="Tu contraseña actual">
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                        <div class="input-group">
-                            <label class="portal-label" for="portal_new_password">Nueva contraseña</label>
-                            <div class="search-input-wrapper campo">
-                                <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="new_password" id="portal_new_password" data-cuenta-ayuda="portal_pwd_strength_text" required autocomplete="new-password" placeholder="Mínimo 8 caracteres"  aria-describedby="portal_pwd_strength_text">
-                            </div>
-                            <div class="password-strength-meter" aria-hidden="true">
-                                <div id="portal_pwd_strength_bar"></div>
-                            </div>
-                            <small id="portal_pwd_strength_text" class="password-strength-text">Mínimo 8 caracteres, una mayúscula y un número.</small>
-                        </div>
-                        <div class="input-group">
-                            <label class="portal-label" for="portal_confirm_password">Confirmar nueva contraseña</label>
-                            <div class="search-input-wrapper campo">
-                                <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="confirm_password" id="portal_confirm_password" required autocomplete="new-password" placeholder="Repite la nueva contraseña" >
-                            </div>
-                            <small id="portal_pwd_match_text" class="password-match-text" role="alert">Las contraseñas no coinciden.</small>
-                        </div>
-                        <button type="submit" id="portal_btn_change_pwd" class="btn-primary">Actualizar contraseña</button>
-                        <p role="status" data-password-resultado></p>
-                    </form>
+        <details class="profile-card portal-plegable" id="contactEditSection">
+            <summary><i class="ri-contacts-line" aria-hidden="true"></i> Datos de contacto</summary>
+            <form id="portalContactEditForm" class="portal-form portal-plegable__cuerpo" novalidate data-validacion-cuenta>
+                <?php // Decisión C6: el correo es el dato de acceso; su cambio con verificación llega en la etapa D (RE-T.5.7). ?>
+                <div class="input-group">
+                    <span class="portal-label">Correo electrónico</span>
+                    <p class="portal-ayuda"><?= $e($usuarioData['email'] ?? '') ?> · Puedes cambiarlo en Datos de acceso, verificando el correo nuevo.</p>
                 </div>
+                <div class="input-group">
+                    <label class="portal-label" for="portal_contact_phone">Teléfono de contacto *</label>
+                    <div class="search-input-wrapper campo">
+                        <i class="ri-phone-line" aria-hidden="true"></i>
+                        <?php // C9.1: los mismos límites que valida el servidor (ValidadorTelefono). ?>
+                        <input type="tel" name="telefono" id="portal_contact_phone" required autocomplete="tel" placeholder="Tu número de teléfono" minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> value="<?= htmlspecialchars($usuarioData['telefono'] ?? '') ?>">
+                    </div>
+                </div>
+                <p role="status" data-password-resultado></p>
+                <div class="portal-plegable__pie">
+                    <button type="submit" class="btn-primary btn-primary--compacto" id="btnSubmitContactEdit">
+                        <span>Guardar cambios</span>
+                        <i class="ri-check-line" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </form>
+        </details>
 
-                <a href="index.php?action=logout" class="btn-profile-action logout-btn">
-                    <span><i class="ri-logout-box-r-line" aria-hidden="true"></i> Cerrar sesión</span>
-                    <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
-                </a>
-            </div>
-        </div>
+        <?php require __DIR__ . "/../partials/cambios_identidad.php"; ?>
+
+        <details class="profile-card portal-plegable" id="passwordChangeSection">
+            <summary><i class="ri-lock-password-line" aria-hidden="true"></i> Contraseña</summary>
+            <form id="portalChangePasswordForm" data-password-accion="cambiar_password_ajax" class="portal-form portal-plegable__cuerpo" data-validacion-cuenta>
+                <?php if (empty($usuarioData['tiene_password'])) require __DIR__ . '/../partials/confirmacion_google.php'; ?>
+                <?php // HU-39: se pide la actual si la cuenta tiene una contraseña conocida ?>
+                <?php if ((int) ($usuarioData['tiene_password'] ?? 1) === 1): ?>
+                <div class="input-group">
+                    <label class="portal-label" for="portal_current_password">Contraseña actual</label>
+                    <div class="search-input-wrapper campo">
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="current_password" id="portal_current_password" required autocomplete="current-password" placeholder="Tu contraseña actual">
+                    </div>
+                </div>
+                <?php endif; ?>
+                <div class="input-group">
+                    <label class="portal-label" for="portal_new_password">Nueva contraseña</label>
+                    <div class="search-input-wrapper campo">
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="new_password" id="portal_new_password" data-cuenta-ayuda="portal_pwd_strength_text" required autocomplete="new-password" placeholder="Mínimo 8 caracteres"  aria-describedby="portal_pwd_strength_text">
+                    </div>
+                    <div class="password-strength-meter" aria-hidden="true">
+                        <div id="portal_pwd_strength_bar"></div>
+                    </div>
+                    <small id="portal_pwd_strength_text" class="password-strength-text">Mínimo 8 caracteres, una mayúscula y un número.</small>
+                </div>
+                <div class="input-group">
+                    <label class="portal-label" for="portal_confirm_password">Confirmar nueva contraseña</label>
+                    <div class="search-input-wrapper campo">
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" name="confirm_password" id="portal_confirm_password" required autocomplete="new-password" placeholder="Repite la nueva contraseña" >
+                    </div>
+                    <small id="portal_pwd_match_text" class="password-match-text" role="alert">Las contraseñas no coinciden.</small>
+                </div>
+                <p role="status" data-password-resultado></p>
+                <div class="portal-plegable__pie">
+                    <button type="submit" id="portal_btn_change_pwd" class="btn-primary btn-primary--compacto">Actualizar contraseña</button>
+                </div>
+            </form>
+        </details>
+
+        <a href="index.php?action=logout" class="profile-card portal-plegable portal-plegable--enlace">
+            <span><i class="ri-logout-box-r-line" aria-hidden="true"></i> Cerrar sesión</span>
+            <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+        </a>
     </div>
 </section>
 
@@ -566,8 +607,10 @@ $cabeceraVentana = function (string $idCerrar, string $icono, string $titulo, st
 /**
  * Campo con el borde y el ícono de los formularios del portal.
  * Los obligatorios llevan * y los demás «(opcional)», como en el panel del personal.
+ * M5 C2b: con $aviso, una línea reservada debajo para el aviso del campo (M0.1/M0.2:
+ * aparecer o vaciarse no mueve nada).
  */
-$campo = function (string $etiqueta, string $control, string $icono = '', string $for = '', bool $obligatorio = true, string $ayuda = ''): void { ?>
+$campo = function (string $etiqueta, string $control, string $icono = '', string $for = '', bool $obligatorio = true, string $ayuda = '', bool $aviso = false): void { ?>
                 <div class="input-group">
                     <label class="portal-label"<?= $for ? " for=\"$for\"" : '' ?>><?= $etiqueta ?><?= $obligatorio ? ' <span class="portal-requerido" aria-hidden="true">*</span>' : ' <span class="portal-opcional">(opcional)</span>' ?></label>
                     <div class="search-input-wrapper campo">
@@ -575,6 +618,7 @@ $campo = function (string $etiqueta, string $control, string $icono = '', string
                         <?= $control ?>
                     </div>
                     <?php if ($ayuda): ?><p class="portal-ayuda"<?= $for ? " id=\"{$for}_ayuda\"" : '' ?>><?= $ayuda ?></p><?php endif; ?>
+                    <?php if ($aviso): ?><small class="cuenta-validacion portal-aviso" id="<?= $for ?>_aviso" aria-live="polite"></small><?php endif; ?>
                 </div>
 <?php };
 
@@ -587,53 +631,106 @@ foreach ($clinicas_portal as $clinica) {
 }
 ?>
 
-<!-- Ventana: agendar cita. Mismo flujo que el panel del personal:
-     datos a la izquierda; día y horarios libres a la derecha. -->
+<!-- Ventana: agendar cita, por pasos (M5 C2b): clínica y mascota, tipo y
+     veterinario, día y hora, y confirmar. -->
 <div id="portalBookingModal" class="portal-drawer-overlay">
     <div class="portal-drawer portal-drawer--ancho" role="dialog" aria-modal="true" aria-labelledby="bookingTitulo">
-        <?php $cabeceraVentana('btnCloseBookingModal', 'ri-calendar-event-line', 'Agendar nueva cita', 'Elige a tu compañero, el día y uno de los horarios libres.', 'bookingTitulo'); ?>
+        <?php $cabeceraVentana('btnCloseBookingModal', 'ri-calendar-event-line', 'Agendar una cita', 'En cuatro pasos: clínica y mascota, tipo y veterinario, día y hora, y confirmar.', 'bookingTitulo'); ?>
         <div class="portal-drawer-body">
-            <form id="portalBookingForm" class="portal-form booking" novalidate data-dias-cerrados="<?= htmlspecialchars(json_encode($diasCerradosPorClinica)) ?>">
-                <?= $leyenda ?>
-                <div class="booking__columnas">
-                    <div class="booking__datos">
-                        <?php
-                        // RE-5.9.3: primero la clínica, solo entre las vinculadas; con una sola, ya elegida.
-                        $opcionesClinica = count($clinicas_portal) === 1 ? '' : '<option value="">Selecciona…</option>';
-                        foreach ($clinicas_portal as $clinica) {
-                            $opcionesClinica .= '<option value="' . (int) $clinica['id_clinica'] . '">' . htmlspecialchars($clinica['nombre']) . '</option>';
-                        }
-                        $campo('Clínica', '<select name="id_clinica" id="booking_clinica" required>' . $opcionesClinica . '</select>', 'ri-hospital-line', 'booking_clinica');
+            <form id="portalBookingForm" class="portal-form booking" novalidate data-dias-cerrados="<?= $e(json_encode($diasCerradosPorClinica)) ?>">
+                <ol class="booking__progreso" aria-label="Pasos para agendar">
+                    <?php foreach (['Clínica y mascota', 'Tipo y veterinario', 'Día y hora', 'Confirmar'] as $n => $nombrePaso): ?>
+                        <li class="booking__progreso-paso<?= $n === 0 ? ' is-activo' : '' ?>" data-paso-indicador="<?= $n + 1 ?>"><span aria-hidden="true"><?= $n + 1 ?></span> <?= $e($nombrePaso) ?></li>
+                    <?php endforeach; ?>
+                </ol>
 
-                        $opciones = '<option value="">Selecciona…</option>';
-                        foreach ($mascotas as $m) {
-                            $opciones .= '<option value="' . (int) $m['id_mascota'] . '">' . htmlspecialchars($m['nombre']) . '</option>';
-                        }
-                        $campo('Mascota', '<select name="id_mascota" id="booking_mascota" required>' . $opciones . '</select>', 'ri-baidu-line', 'booking_mascota');
-                        $campo('Tipo de cita', '<select name="id_tipo_cita" id="booking_tipo_cita" required><option value="">Elige primero la clínica</option></select>', 'ri-briefcase-line', 'booking_tipo_cita');
-                        $campo('Veterinario', '<select name="id_veterinario" id="booking_veterinario" required><option value="">Elige primero la clínica</option></select>', 'ri-stethoscope-line', 'booking_veterinario');
-                        $campo('Motivo', '<textarea name="motivo" id="booking_motivo" maxlength="255" placeholder="Ej: control de peso, vómito desde ayer…" rows="3"></textarea>', '', 'booking_motivo', false);
-                        ?>
+                <fieldset class="booking__paso" data-paso="1">
+                    <legend class="sr-only">Clínica y mascota</legend>
+                    <?php // RE-5.9.3 (hueco 8): solo sus clínicas; con una sola, su nombre y el id oculto. ?>
+                    <div class="input-group" id="bookingEleccionClinica">
+                        <?php if (empty($clinicas_portal)): ?>
+                            <?php $vacio('ri-hospital-line', 'Aún no tienes clínicas', 'Vincúlate a una en Clínicas para poder agendar.', '<button type="button" class="btn-enlace" data-nav="clinicas" data-cerrar-agendar>Ver clínicas</button>'); ?>
+                        <?php elseif (count($clinicas_portal) === 1): $unica = $clinicas_portal[0]; ?>
+                            <span class="portal-label">Clínica</span>
+                            <p class="booking__unica"><i class="ri-hospital-line" aria-hidden="true"></i> <?= $e($unica['nombre']) ?></p>
+                            <input type="hidden" name="id_clinica" value="<?= (int) $unica['id_clinica'] ?>" data-nombre="<?= $e($unica['nombre']) ?>">
+                        <?php else: ?>
+                            <span class="portal-label" id="booking_clinica_etq">Clínica <span class="portal-requerido" aria-hidden="true">*</span></span>
+                            <div class="portal-opciones" role="radiogroup" aria-labelledby="booking_clinica_etq">
+                                <?php foreach ($clinicas_portal as $clinica): ?>
+                                    <label class="portal-opcion">
+                                        <input type="radio" name="id_clinica" value="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>" required>
+                                        <span class="portal-opcion__icono" aria-hidden="true"><i class="ri-hospital-line"></i></span>
+                                        <span class="portal-opcion__texto">
+                                            <strong><?= $e($clinica['nombre']) ?></strong>
+                                            <span><?= $e($clinica['ahora']['texto']) ?></span>
+                                        </span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="booking__agenda">
-                        <div class="input-group">
-                            <span class="portal-label" id="booking_dia_etq">Día <span class="portal-requerido" aria-hidden="true">*</span></span>
-                            <input type="text" name="fecha" id="booking_fecha" class="booking__fecha" aria-labelledby="booking_dia_etq" readonly tabindex="-1">
-                            <p class="portal-ayuda">Los días en gris no se pueden elegir: ya pasaron o la clínica no atiende.</p>
-                        </div>
-
-                        <div class="input-group">
-                            <span class="portal-label" id="booking_hora_etq">Horario disponible <span class="portal-requerido" aria-hidden="true">*</span></span>
-                            <input type="hidden" name="hora" id="booking_hora">
-                            <div class="slot-panel" id="booking_slots" role="group" aria-labelledby="booking_hora_etq" aria-live="polite"></div>
-                        </div>
+                    <div class="input-group" id="bookingEleccionMascota">
+                        <?php if (empty($mascotas)): ?>
+                            <?php $vacio('ri-heart-3-line', 'Todavía no tienes mascotas', 'Regístrala desde Inicio para poder agendarle una cita.'); ?>
+                        <?php else: ?>
+                            <span class="portal-label" id="booking_mascota_etq">Mascota <span class="portal-requerido" aria-hidden="true">*</span></span>
+                            <div class="portal-opciones" role="radiogroup" aria-labelledby="booking_mascota_etq">
+                                <?php foreach ($mascotas as $m): ?>
+                                    <label class="portal-opcion">
+                                        <input type="radio" name="id_mascota" value="<?= (int) $m['id_mascota'] ?>" data-nombre="<?= $e($m['nombre']) ?>" required>
+                                        <?php $avatarMascota($m['foto'], (string) $m['nombre'], 'portal-opcion__avatar'); ?>
+                                        <span class="portal-opcion__texto">
+                                            <strong><?= $e($m['nombre']) ?></strong>
+                                            <span><?= $e(PresentacionPortal::especieYRaza($m)) ?></span>
+                                        </span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
-                </div>
+                </fieldset>
 
-                <div class="booking__pie">
-                    <p class="booking__resumen" id="booking_resumen" aria-live="polite"></p>
-                    <button type="submit" class="btn-primary" id="booking_confirmar" disabled>
+                <fieldset class="booking__paso" data-paso="2" hidden>
+                    <legend class="sr-only">Tipo y veterinario</legend>
+                    <?php
+                    $campo('Tipo de cita', '<select name="id_tipo_cita" id="booking_tipo_cita" required><option value="">Elige primero la clínica</option></select>', 'ri-briefcase-line', 'booking_tipo_cita');
+                    $campo('Veterinario', '<select name="id_veterinario" id="booking_veterinario" required><option value="">Elige primero la clínica</option></select>', 'ri-stethoscope-line', 'booking_veterinario');
+                    $campo('Motivo', '<textarea name="motivo" id="booking_motivo" maxlength="255" placeholder="Ej: control de peso, vómito desde ayer…" rows="2"></textarea>', '', 'booking_motivo', false);
+                    ?>
+                </fieldset>
+
+                <fieldset class="booking__paso booking__agenda" data-paso="3" hidden>
+                    <legend class="sr-only">Día y hora</legend>
+                    <div class="input-group">
+                        <span class="portal-label" id="booking_dia_etq">Día <span class="portal-requerido" aria-hidden="true">*</span></span>
+                        <input type="text" name="fecha" id="booking_fecha" class="booking__fecha" aria-labelledby="booking_dia_etq" readonly tabindex="-1">
+                        <p class="portal-ayuda">Los días en gris no se pueden elegir: ya pasaron o la clínica no atiende.</p>
+                    </div>
+                    <div class="input-group">
+                        <span class="portal-label" id="booking_hora_etq">Horario disponible <span class="portal-requerido" aria-hidden="true">*</span></span>
+                        <input type="hidden" name="hora" id="booking_hora">
+                        <div class="slot-panel" id="booking_slots" role="group" aria-labelledby="booking_hora_etq" aria-live="polite"></div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="booking__paso" data-paso="4" hidden>
+                    <legend class="sr-only">Confirmar</legend>
+                    <dl class="booking__resumen" id="booking_resumen"></dl>
+                </fieldset>
+
+                <p class="booking__guia" id="booking_guia" aria-live="polite"></p>
+
+                <div class="users-modal__footer portal-modal__pie">
+                    <button type="button" class="portal-boton-secundario" data-paso-atras hidden>
+                        <i class="ri-arrow-left-line" aria-hidden="true"></i> Atrás
+                    </button>
+                    <button type="button" class="btn-primary" data-paso-siguiente disabled>
+                        <span>Siguiente</span>
+                        <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                    </button>
+                    <button type="submit" class="btn-primary" id="booking_confirmar" hidden disabled>
                         <span>Confirmar cita</span>
                         <i class="ri-calendar-check-line" aria-hidden="true"></i>
                     </button>
@@ -656,14 +753,14 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
     ?>
                 <div class="portal-form__fila">
                     <?php
-                    $campo('Nombre', "<input type=\"text\" name=\"nombre\" id=\"{$p}_pet_nombre\" required maxlength=\"50\" pattern=\"[\\p{L}\\p{N}][\\p{L}\\p{N} .'\\-]*\" title=\"Letras, números, espacios, puntos, guiones y apóstrofos.\" placeholder=\"Ej: Toby\" autocomplete=\"off\">", '', "{$p}_pet_nombre");
-                    $campo('Fecha de nacimiento', "<input type=\"text\" class=\"flatpickr-date\" name=\"fecha_nacimiento\" id=\"{$p}_pet_nacimiento\" placeholder=\"Selecciona la fecha\">", 'ri-calendar-line', "{$p}_pet_nacimiento", false);
+                    $campo('Nombre', "<input type=\"text\" name=\"nombre\" id=\"{$p}_pet_nombre\" required " . ValidadorMascota::atributosHtml('nombre') . " placeholder=\"Ej: Toby\" autocomplete=\"off\">", '', "{$p}_pet_nombre", true, '', true);
+                    $campo('Fecha de nacimiento', "<input type=\"text\" class=\"flatpickr-date\" name=\"fecha_nacimiento\" id=\"{$p}_pet_nacimiento\" placeholder=\"Selecciona la fecha\" " . ValidadorMascota::atributosHtml('fecha_nacimiento') . ">", 'ri-calendar-line', "{$p}_pet_nacimiento", false, '', true);
                     ?>
                 </div>
                 <div class="portal-form__fila">
                     <?php
-                    $campo('Especie', "<select name=\"especie\" id=\"{$p}_pet_especie\" required>$especies</select>", '', "{$p}_pet_especie");
-                    $campo('Raza', "<select name=\"raza\" id=\"{$p}_pet_raza\" required aria-describedby=\"{$p}_pet_raza_ayuda\" disabled><option value=\"\">Primero elige la especie</option></select>", '', "{$p}_pet_raza");
+                    $campo('Especie', "<select name=\"especie\" id=\"{$p}_pet_especie\" required " . ValidadorMascota::atributosHtml('especie') . ">$especies</select>", '', "{$p}_pet_especie", true, '', true);
+                    $campo('Raza', "<select name=\"raza\" id=\"{$p}_pet_raza\" required aria-describedby=\"{$p}_pet_raza_ayuda\" disabled " . ValidadorMascota::atributosHtml('raza') . "><option value=\"\">Primero elige la especie</option></select>", '', "{$p}_pet_raza", true, '', true);
                     ?>
                 </div>
                 <?php // portal.js la muestra cuando carga las razas de la especie. ?>
@@ -672,8 +769,9 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
                 <div class="input-group raza-otra" id="<?= $p ?>_raza_otra" hidden>
                     <label class="portal-label" for="<?= $p ?>_pet_raza_indicada">¿Cuál es la raza? <span class="portal-requerido" aria-hidden="true">*</span></label>
                     <div class="search-input-wrapper campo">
-                        <input type="text" name="raza_indicada" id="<?= $p ?>_pet_raza_indicada" maxlength="50" pattern="[\p{L}][\p{L}\p{N} .'\(\)\-]*" title="Letras, números, espacios, puntos, guiones, apóstrofos y paréntesis." placeholder="Ej: Pomerania" autocomplete="off" disabled>
+                        <input type="text" name="raza_indicada" id="<?= $p ?>_pet_raza_indicada" <?= ValidadorMascota::atributosHtml('raza_indicada') ?> placeholder="Ej: Pomerania" autocomplete="off" disabled>
                     </div>
+                    <small class="cuenta-validacion portal-aviso" id="<?= $p ?>_pet_raza_indicada_aviso" aria-live="polite"></small>
                     <p class="portal-ayuda">La clínica la revisa y la agrega a la lista. Mientras tanto se ve como «por confirmar».</p>
                 </div>
                 <div class="portal-form__fila">
@@ -681,16 +779,17 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
                         <legend class="portal-label">Sexo <span class="portal-requerido" aria-hidden="true">*</span></legend>
                         <div class="segmento">
                             <label class="segmento__opcion">
-                                <input type="radio" name="sexo" value="Macho" id="<?= $p ?>_pet_sexo" required>
+                                <input type="radio" name="sexo" value="Macho" id="<?= $p ?>_pet_sexo" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
                                 <span><i class="ri-men-line" aria-hidden="true"></i> Macho</span>
                             </label>
                             <label class="segmento__opcion">
-                                <input type="radio" name="sexo" value="Hembra" required>
+                                <input type="radio" name="sexo" value="Hembra" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
                                 <span><i class="ri-women-line" aria-hidden="true"></i> Hembra</span>
                             </label>
                         </div>
+                        <small class="cuenta-validacion portal-aviso" id="<?= $p ?>_pet_sexo_aviso" aria-live="polite"></small>
                     </fieldset>
-                    <?php $campo('Peso (kg)', "<input type=\"text\" inputmode=\"decimal\" name=\"peso\" id=\"{$p}_pet_peso\" required maxlength=\"6\" pattern=\"\\d{1,3}([.,]\\d{1,2})?\" title=\"Un número mayor que 0, por ejemplo 8,5.\" placeholder=\"Ej: 8,5\">", '', "{$p}_pet_peso"); ?>
+                    <?php $campo('Peso (kg)', "<input type=\"text\" name=\"peso\" id=\"{$p}_pet_peso\" required " . ValidadorMascota::atributosHtml('peso') . " placeholder=\"Ej: 8,5\">", '', "{$p}_pet_peso", true, '', true); ?>
                 </div>
 
                 <div class="input-group">
@@ -698,7 +797,7 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
                     <div class="foto-campo" data-foto="<?= $p ?>">
                         <div class="foto-campo__vista" aria-hidden="true"><i class="ri-image-line"></i></div>
                         <div class="foto-campo__acciones">
-                            <input type="file" name="foto" id="<?= $p ?>_pet_foto" accept="image/jpeg,image/png" class="foto-campo__input" aria-labelledby="<?= $p ?>_foto_etq" aria-describedby="<?= $p ?>_foto_ayuda">
+                            <input type="file" name="foto" id="<?= $p ?>_pet_foto" accept="image/jpeg,image/png" class="foto-campo__input" aria-labelledby="<?= $p ?>_foto_etq" aria-describedby="<?= $p ?>_foto_ayuda" <?= ValidadorMascota::atributosHtml('foto') ?>>
                             <label class="foto-campo__boton" for="<?= $p ?>_pet_foto"><i class="ri-upload-2-line" aria-hidden="true"></i> <span><?= $editar ? 'Cambiar foto' : 'Elegir foto' ?></span></label>
                             <button type="button" class="btn-enlace foto-campo__quitar" hidden>Quitar la foto elegida</button>
                             <p class="portal-ayuda foto-campo__ayuda" id="<?= $p ?>_foto_ayuda">JPG o PNG, hasta 5 MB.</p>
@@ -712,12 +811,15 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
     <div class="portal-drawer" role="dialog" aria-modal="true" aria-labelledby="addPetTitulo">
         <?php $cabeceraVentana('btnCloseAddPetModal', 'ri-baidu-line', 'Registrar mascota', 'Agrega un nuevo compañero a tu cuenta.', 'addPetTitulo'); ?>
         <div class="portal-drawer-body">
-            <form id="portalAddPetForm" class="portal-form" enctype="multipart/form-data">
+            <form id="portalAddPetForm" class="portal-form portal-form--mascota" enctype="multipart/form-data" novalidate data-validacion-mascota data-aviso-obligatorio="<?= $e(ValidadorMascota::AVISO_OBLIGATORIO) ?>">
                 <?php $formularioMascota('add', false); ?>
-                <button type="submit" class="btn-primary">
-                    <span>Registrar mascota</span>
-                    <i class="ri-check-line" aria-hidden="true"></i>
-                </button>
+                <p class="portal-form__resumen" role="alert" data-resumen-mascota hidden></p>
+                <div class="users-modal__footer portal-modal__pie">
+                    <button type="submit" class="btn-primary">
+                        <span>Registrar mascota</span>
+                        <i class="ri-check-line" aria-hidden="true"></i>
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -728,13 +830,16 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
     <div class="portal-drawer" role="dialog" aria-modal="true" aria-labelledby="editPetTitulo">
         <?php $cabeceraVentana('btnCloseEditPetModal', 'ri-edit-line', 'Editar mascota', 'Personaliza y actualiza la información de tu mascota.', 'editPetTitulo'); ?>
         <div class="portal-drawer-body">
-            <form id="portalEditPetForm" class="portal-form" enctype="multipart/form-data">
+            <form id="portalEditPetForm" class="portal-form portal-form--mascota" enctype="multipart/form-data" novalidate data-validacion-mascota data-aviso-obligatorio="<?= $e(ValidadorMascota::AVISO_OBLIGATORIO) ?>">
                 <input type="hidden" name="id_mascota" id="edit_pet_id">
                 <?php $formularioMascota('edit', true); ?>
-                <button type="submit" class="btn-primary">
-                    <span>Guardar cambios</span>
-                    <i class="ri-check-line" aria-hidden="true"></i>
-                </button>
+                <p class="portal-form__resumen" role="alert" data-resumen-mascota hidden></p>
+                <div class="users-modal__footer portal-modal__pie">
+                    <button type="submit" class="btn-primary">
+                        <span>Guardar cambios</span>
+                        <i class="ri-check-line" aria-hidden="true"></i>
+                    </button>
+                </div>
             </form>
         </div>
     </div>

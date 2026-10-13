@@ -105,4 +105,34 @@ class ValidadorMascotaTest extends TestCase
         $this->assertSame('Don_Toby', FotoMascota::etiqueta('Don Toby'));
         $this->assertSame('mascota', FotoMascota::etiqueta('ñ/\\.'));
     }
+
+    /** M5 C2b: cada rechazo dice su campo, para poner el aviso bajo él. */
+    public function testCadaErrorDiceSuCampo(): void
+    {
+        $casos = [
+            'nombre' => ['nombre' => '<b>'],
+            'especie' => ['especie' => ''],
+            'raza' => ['raza' => 'cualquiera'],
+            'raza_indicada' => ['raza' => 'otra', 'raza_indicada' => 'x'],
+            'sexo' => ['sexo' => 'Otro'],
+            'peso' => ['peso' => '0'],
+            'fecha_nacimiento' => ['fecha_nacimiento' => '2999-01-01'],
+        ];
+        foreach ($casos as $campo => $cambios) {
+            $this->assertSame($campo, ValidadorMascota::validar($this->entrada($cambios), $this->hoy)['campo'], $campo);
+        }
+        $this->assertNull(ValidadorMascota::validar($this->entrada(), $this->hoy)['campo']);
+    }
+
+    /** M0.1: los avisos bajo el campo ocupan una línea, 35 caracteres o menos. */
+    public function testLosAvisosCabenEnUnaLineaYLosAtributosUsanLosLimites(): void
+    {
+        foreach (ValidadorMascota::AVISOS + ['obligatorio' => ValidadorMascota::AVISO_OBLIGATORIO] as $campo => $aviso) {
+            $this->assertLessThanOrEqual(35, mb_strlen($aviso), $campo);
+        }
+        $this->assertStringContainsString('maxlength="' . ValidadorMascota::NOMBRE_MAX . '"', ValidadorMascota::atributosHtml('nombre'));
+        $this->assertStringContainsString('maxlength="' . ValidadorMascota::RAZA_MAX . '"', ValidadorMascota::atributosHtml('raza_indicada'));
+        $this->assertStringContainsString('data-maximo="' . ValidadorMascota::PESO_MAX_KG . '"', ValidadorMascota::atributosHtml('peso'));
+        $this->assertStringContainsString('data-aviso-formato="Elige la especie."', ValidadorMascota::atributosHtml('especie'));
+    }
 }

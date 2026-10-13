@@ -136,12 +136,6 @@ function ejecutarInteraccion(evento) {
         case 'detalle-cita-portal':
             mostrarDetalleCita(id);
             break;
-        case 'editar-contacto':
-            toggleContactEditPortal();
-            break;
-        case 'editar-password':
-            togglePasswordChangePortal();
-            break;
         case 'cerrar-drawer':
             cerrarDrawer();
             break;
