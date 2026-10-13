@@ -7,7 +7,8 @@
 ## Ahora
 
 - **Módulo activo:** M5 — Portal multi-clínica y vínculos (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13, HU-2.10; sale como `2.0.0-alpha.3`). Plan: [`specs/M5-portal-multiclinica.md`](../specs/M5-portal-multiclinica.md). Rama: `v2/m5-portal`.
-- **Entrega actual de M5:** **C1.1 — super-administrador nunca como cliente y desactivación por la clínica: entregada, pendiente de revisión (2026-10-12, Claude Code).** La clínica recibe la respuesta de siempre pero no se pide el vínculo de un super-administrador, ni por búsqueda, documento, correo o id, y un enlace viejo no lo liga (RN-G13). Desactivar desde Clientes deja las mascotas inactivas allí, sin registros nuevos ni recordatorios, con la regla compartida en `models/VinculoClinica.php`; **decisión del usuario durante C1.1:** con citas sin resolver no se desactiva. §11.1 y §12.3 alineados. PHP 633 en verde (también con MySQL, ninguna omitida); JS 110. Detalle y 4 pantallas para probar (C1 y C1.1) en «Anexo C1.1 — Resultado».
+- **Entrega actual de M5:** **C2a — portal: estructura, navegación, Inicio, Mascota y Citas: entregada, pendiente de revisión (2026-10-12, Claude Code).** Menú Inicio · Citas · Clínicas · Perfil (sin Servicios ni Alertas; las direcciones viejas redirigen); componentes de Usuarios en el portal; Inicio con la próxima cita, las mascotas en tarjetas (clínicas y próxima dosis) y el horario de hoy compacto; ficha con etiquetas, botones de icono, pestañas y filtro por clínica; Citas con Próximas, Pasadas y Calendario; `index()` con un número fijo de consultas; sin `oninput`, sin sufijos de versión y con una sola biblioteca de iconos. PHP 643 en verde (también con MySQL, ninguna omitida); JS 117. **C2 se partió en C2a y C2b; C2b (Agendar, Clínicas, Perfil y actualización en su sitio) espera la confirmación del usuario.** Detalle en «Anexo C2a — Resultado».
+- **C1.1:** revisada y aprobada (2026-10-12), con commit.
 - **C1:** revisada y aprobada (2026-10-12), con commit.
 - **A:** revisada y aprobada (2026-10-12), con las decisiones del usuario en «A — Revisión» del plan M5.
 - **Módulo anterior:** M0 — Base SaaS, identidad y aislamiento, cerrado. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
@@ -21,7 +22,7 @@
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
-- **Siguiente paso:** M5, C1 y C1.1 aprobadas y probadas por el usuario en lo esencial (2026-10-12). Sus hallazgos del lado del personal (confirmación al desactivar, búsqueda en tiempo real, alta del propietario sin aceptación presencial) van en C3. Sigue C2 — portal del propietario (Claude Code). Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
+- **Siguiente paso:** M5, C2a (estructura, navegación, Inicio, Mascota y Citas del portal) revisada y aprobada (2026-10-12); falta la prueba visual del usuario y su commit. Sigue C2b (Agendar, Clínicas, Perfil, actualización en su sitio y formularios de mascota) y después C3 (lado del personal con los hallazgos de C1/C1.1). Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 

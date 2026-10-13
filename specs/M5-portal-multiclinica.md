@@ -85,7 +85,7 @@ Si A demuestra que C1 queda vacío o muy pequeño, C1 se une a C2.
 - [x] A — Inventario y verificación (Claude Code; revisada y aprobada por Claude, 2026-10-12; decisiones del usuario en «A — Revisión»). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo A — Resultado».
 - [ ] C1 — Huecos funcionales (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1 — Resultado».
 - [ ] C1.1 — Super-administrador nunca como cliente y desactivación por la clínica (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1.1 — Resultado».
-- [ ] C2 — Portal del propietario pulido.
+- [ ] C2 — Portal del propietario pulido (Claude Code), en dos partes. **C2a (estructura, navegación, Inicio, Mascota y Citas): entregada, pendiente de revisión (2026-10-12)**, ver «Anexo C2a — Resultado». **C2b (Agendar, Clínicas, Perfil y actualización en su sitio): pendiente de confirmar.**
 - [ ] C3 — Lado del personal (HU-1.5, HU-2.10).
 - [ ] `vendor/bin/phpunit` completo, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.3`: HU a «Implementada», revisiones de documentos, historial, descargas, merge y tag.
@@ -412,3 +412,97 @@ El usuario probó la desactivación de un cliente y la búsqueda del veterinario
 2. **Búsqueda del propietario en «Nueva mascota» no es en tiempo real:** el aviso «Hay una cuenta con ese dato…» o los datos del cliente deben salir mientras se escribe el documento o el correo completo (con espera corta y límite por IP, como la comprobación del NIT), no al enviar.
 3. **Alta del propietario por el personal sin aceptación presencial (decisión del usuario, 2026-10-12).** El modal «Nuevo registro → Propietario» pide «Soy el titular y estoy presente» y «Acepto la política»: más trabajo para la clínica y poco lógico. El personal registra al propietario normalmente (con correo obligatorio); el propietario recibe un correo con un enlace donde **él mismo** acepta la política y crea su contraseña para activar su portal, como la activación del personal. Cambia RE-T.19.1, HU-T.19, RN-109 y Modelos §11 y §12.3 (sin subir revisión).
    - **Propuesta de la revisión para los detalles** (el usuario puede ajustarla al pegar el prompt): mientras el propietario no active, la cuenta queda pendiente, sin portal ni contraseña; la clínica sí registra a la mascota y la atiende, porque son registros de la clínica; no salen correos automáticos (recordatorios) a esa dirección hasta que acepte, salvo el de activación; el enlace vence en 72 horas y la clínica puede reenviarlo; una cuenta pendiente **no se borra** si ya tiene mascotas o registros clínicos.
+
+**Ajustes del usuario a esos hallazgos (2026-10-12).** Punto 1: el mensaje propuesto es demasiado largo y explícito; la confirmación debe ser corta, solo la pregunta («¿Desactivar a Fabio Propietario como cliente?») y los botones, con el estilo de Zooki. Punto 3: confirmado, se quita la aceptación presencial y se corrige todo diagrama o documento que la describa (Modelos §11 y §12.3, HU-T.19, RE-T.19.1, RN-109 y los que aparezcan); los detalles propuestos por la revisión quedan como base de C3 (el usuario no los objetó).
+
+## Anexo C2a — Resultado
+
+**Escribió:** Claude Code (2026-10-12). **Estado:** entregada, pendiente de revisión. Sin migración.
+
+**División de C2, como prevé el prompt.** El portal tiene una vista de 861 líneas, un JS de 2106 y diez hojas de estilo. C2 se partió en dos:
+
+- **C2a, esta entrega:** estructura, navegación, Inicio, Mascota y Citas, más los menores que les tocan.
+- **C2b, pendiente de que el usuario la confirme:** Agendar por pasos (con la clínica única, hueco 8), Clínicas con tarjetas, Perfil en tarjetas plegables, actualización en su sitio sin recargar, y validación en tiempo real con restricción de entrada en los formularios de mascota.
+
+En C2a, «Clínicas» ya es una sección propia, pero conserva su contenido y su comportamiento de antes.
+
+### Qué se hizo
+
+1. **Menú: Inicio · Citas · Clínicas · Perfil.**
+   - El marco se conserva: menú lateral con «Agendar» en escritorio y barra inferior con «Agendar» al centro en celular y tableta.
+   - Salen «Servicios» (pantalla, buscador con `oninput`, `filtrarServicios`, `loadVetsExplore` y `portal/servicios.css`) y «Alertas» (pantalla, campana, punto del menú y `loadPortalAlerts`) hasta HU-5.7.
+   - Cada sección tiene su dirección (RE-5.1.6). Las anteriores redirigen: `#agenda` va a Citas; `#servicios` y `#recordatorios`, a Inicio.
+2. **Componentes de M0.1, M0.2 y M0.2.1.**
+   - El portal carga `css/usuarios.css` (tarjeta, etiquetas, avatar de iniciales, botones de icono, pestañas) y `portal/base.css` le da sus 10 tokens.
+   - `portal/componentes.css` trae lo propio del portal: cabecera, cuadrícula de una, dos o más columnas, `tag-mini--azul`, estado vacío compacto y horario de hoy.
+   - Solo azul y grises.
+3. **Inicio:**
+   - La próxima cita, en tarjeta.
+   - Las mascotas en tarjetas: foto o iniciales, especie y raza, clínicas como etiquetas (o «Sin clínica todavía») y la próxima dosis. Una dosis renovada ya no cuenta (`helpers/ProximaDosis.php`, la regla de `Recordatorio`).
+   - El horario de hoy de cada clínica, en compacto: abierta o cerrada, detalle y la semana desplegable (RE-5.1.7).
+   - Se retiran «Accesos rápidos» y el saludo con la campana.
+4. **Mascota:**
+   - Cabecera con avatar, nombre, etiquetas de especie y raza, y las clínicas donde se atiende (la ficha ahora trae `clinicas`).
+   - «Editar» e «Imprimir» son botones de icono.
+   - Pestañas: Historia · Vacunas · Desparasitaciones · Citas.
+   - La clínica de cada registro aparece como etiqueta (RN-114).
+   - Con registros de dos o más clínicas, unos chips filtran por clínica.
+5. **Citas:**
+   - Pestañas Próximas (con contador), Pasadas y Calendario de salud. Próximas son las abiertas de hoy en adelante, la más cercana primero (`helpers/PresentacionPortal.php`).
+   - Tarjetas con mascota, día y hora, clínica, tipo, veterinario y estado.
+   - «Cancelar cita» solo aparece en una clínica con vínculo activo, y es lo único que confirma.
+   - El filtro por mascota actúa en las dos listas.
+   - El calendario y sus listas no cambian de lógica.
+6. **`PortalController::index()` con un número fijo de consultas:** citas, vacunas, desparasitaciones y clínicas de todas las mascotas llegan en una consulta cada una (`HistoriaPropietario::…DeSusMascotas`, `MascotaPropietario::clinicasDeSusMascotas`). Antes eran tres o cuatro consultas por mascota, más las clínicas otra vez por cada una. Ahora son 13 consultas con 1 mascota y 13 con 6.
+7. **Menores del Anexo A:**
+   - Sin `oninput`.
+   - Sin sufijos de versión escritos a mano.
+   - Una sola biblioteca de iconos (Remix): fuera Font Awesome del layout y de la página imprimible.
+   - El controlador usa `require` del layout, en lugar de `require_once`, para poder pintarlo dos veces en una prueba.
+
+### RE y pruebas
+
+| Punto | Prueba |
+|---|---|
+| RN-G02, RE-5.1.2: solo lo del propietario | `M5C2PortalTest::testElPortalSoloMuestraLoDelPropietario` (la mascota y la cita de otro propietario no aparecen) |
+| `index()` con consultas fijas | `M5C2PortalTest::testIndexHaceElMismoNumeroDeConsultasConUnaOConSeisMascotas`. La mutación que consulta por mascota la hace fallar (23 frente a 13) |
+| RN-114: clínicas de la mascota y de cada registro | `M5C2PortalTest::testInicioMuestraLasClinicasDeLaMascotaYSuProximaDosis`, `testLaFichaTraeLasClinicasDeLaMascotaYLaDeCadaRegistro`; JS: `clinicasDeLosRegistros`, filtro por clínica (`M5C2Portal.test.cjs`) |
+| Menú de cuatro secciones, sin Servicios, Alertas ni Font Awesome | `M5C2PortalTest::testLaNavegacionTieneInicioCitasClinicasYPerfilSinServiciosNiAlertas`; JS: estructura y sin código en línea |
+| RE-5.1.6: dirección por sección y direcciones anteriores | JS: `seccionDesdeHash`, `switchTab` (pantalla, menú y `#citas`) |
+| Próximas y Pasadas; «Cancelar» solo con vínculo activo | `M5C2PortalTest::testCitasSeparaProximasDePasadasYCancelaSoloEnClinicaVinculada`; `PresentacionPortalTest` (separación, estados, especie y raza) |
+| Próxima dosis, sin contar las renovadas | `PresentacionPortalTest::testLaProximaDosisEsLaMasCercanaYUnaRenovadaYaNoCuenta` |
+| Pestañas comunes | JS: `activarPestana` |
+
+Se actualizó la prueba de C9.1 del botón «Imprimir», que ahora es un botón de icono con «Imprimir historial» en su `aria-label`.
+
+### Verificación
+
+- `vendor/bin/phpunit`: **643 en verde** (10 nuevas). Sin MySQL: 3657 aserciones y 29 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 4019 aserciones y ninguna omitida.
+- JS: **117 en verde** (7 nuevas).
+- `views/portal` sin `style=`, `on…=` ni `<script>` con código.
+- No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+- Modelos §10 y §11.1 no cambian: los flujos son los mismos.
+
+### Pendientes y riesgos
+
+- **Lo visual solo se ve en el navegador:** el portal ahora carga `usuarios.css`, que es del panel. Hay que revisar en celular, tableta y escritorio que nada choque. La única clase que coincidía, `status-badge`, ya no se usa en lo nuevo.
+- `portal-vacio` copia el estado vacío compacto de `plataforma-vacio` (M0.2.1). Conviene unificarlos en el pulido final.
+- Quedan reglas sin uso en `inicio.css` y `agenda.css`, de las piezas retiradas («Accesos rápidos», pestañas viejas de la agenda). Se limpian con C2b o en el pulido.
+- **C2b** queda pendiente de la confirmación del usuario.
+
+### Pantallas para el usuario (Fabio, escritorio y celular)
+
+1. **Menú.** Inicio · Citas · Clínicas · Perfil, con «Agendar» en el menú lateral (escritorio) y al centro de la barra (celular). Recarga en Citas y debe quedarse en Citas. Abre `…#agenda`: debe llevar a Citas.
+2. **Inicio.** La próxima cita en tarjeta. Las mascotas en tarjetas con sus clínicas como etiquetas y la próxima dosis. A la derecha (abajo en celular), el horario de hoy de cada clínica, con «Horario de la semana» desplegable.
+3. **Mascota** (toca a Luna).
+   - Cabecera con etiquetas y los botones de icono Editar e Imprimir.
+   - Pestañas Historia · Vacunas · Desparasitaciones · Citas, cada registro con su clínica.
+   - Si Luna tiene registros de Norte y de Sur, los chips filtran por clínica.
+4. **Citas.** Próximas, Pasadas y Calendario de salud. El filtro por mascota (con más de una) actúa en las dos listas. «Cancelar cita» pide confirmación. Por ahora la página se recarga; la actualización en su sitio es de C2b.
+5. **Tamaños.** Una columna de tarjetas en celular, dos en tableta y varias en escritorio, sin nada encimado ni desbordado.
+
+### C2a — Revisión (2026-10-12)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de la prueba visual del usuario. PHP 643 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 117/117; `views/portal` sin `style=`, `on…=` ni `<script>` con código. `index()` pasa a un número fijo de consultas (13 con una o seis mascotas). La división de C2 en C2a y C2b la prevé el prompt y se acepta. Lo más importante que solo se ve en el navegador: el portal ahora carga `usuarios.css` del panel; el usuario revisa que nada choque en celular, tableta y escritorio.
+
+**C2b** (Agendar por pasos con la clínica única, Clínicas con tarjetas, Perfil plegable, actualización en su sitio sin recargar, validación en tiempo real y restricción de entrada en los formularios de mascota, y la limpieza de reglas CSS sin uso) sigue con el mismo alcance de «C2 — Alcance», después de la prueba de C2a.
