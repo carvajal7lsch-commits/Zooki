@@ -729,3 +729,37 @@ Mutaciones comprobadas: sin el tope, sin el filtro del aviso de ficha o del corr
 1. **Límite de la búsqueda del personal:** `MascotaController` llama a `Security::checkVerificationLimit(null)`, el contador por IP de 20 en 15 minutos que comparte la comprobación pública del NIT. El personal está autenticado: debe usar el contador por usuario (`checkVerificationLimit(Contexto::idUsuario())`, 120 en 15 minutos, como ya hace `IdentidadController`), para que una recepción con mucho movimiento detrás de una sola IP no se bloquee. Ajustar su prueba.
 2. **Medio del consentimiento:** la activación del propietario guarda el medio `alta_personal`, que describe el alta del personal. Revisar si conviene un medio propio (p. ej. `alta_clinica`) para que la prueba diga cómo aceptó; si requiere cambiar un ENUM, va con migración.
 3. Siguen recargando la página registrar o editar una mascota del personal y desactivar un cliente.
+
+### Prueba del usuario de C3 (2026-10-13)
+
+Las cinco pantallas pasaron. **Pregunta del usuario:** si pasan las 72 horas, el propietario no activó y ya tiene una consulta, ¿qué pasa y cómo recupera el acceso? Hoy (Anexo C3): la cuenta **no se borra** (tiene mascota) y queda pendiente; el enlace vence; la única vía es que la clínica le reenvíe el enlace. «¿Olvidaste tu contraseña?», el autorregistro con su correo y Google no le sirven. **Propuesta de la revisión para el pulido:** que el propietario pueda pedirlo él mismo, sin depender de la clínica: «¿Olvidaste tu contraseña?» y el autorregistro con el correo de una cuenta pendiente le envían un enlace de activación nuevo (en pantalla, la misma respuesta genérica de siempre, sin revelar nada); y entrar con Google con una cuenta pendiente lleva a aceptar la política y la activa sin contraseña (Google ya probó el correo, RN-G21).
+
+## C4 — Alcance: pulido de M5 (2026-10-13)
+
+**Escribe:** Claude Code. **Revisa:** Claude. Capturas del usuario en `specs/referencias/m5-pulido/` (01 a 07). Se parte en **C4a (portal del propietario)** y **C4b (lado de la clínica y pendientes técnicos)**; C4b se encarga después de la prueba de C4a. Agendar del portal no se toca (cambia con el triage del módulo 4), salvo errores.
+
+**Criterio general del usuario:** aprovechar el espacio de la pantalla al máximo y pensar siempre en celular y tableta; diseño minimalista; nada de enlaces sueltos sin estilo ni mal ubicados.
+
+### C4a — Portal del propietario (hallazgos del usuario, 2026-10-13)
+
+1. **Pie del menú lateral:** «Mi portal de propietario» se corta (captura 01). Nombre y contexto completos o un texto que quepa.
+2. **Próxima cita:** la tarjeta es demasiado grande para lo que dice; compacta, de una o dos líneas (mascota, día y hora, clínica, veterinario, cancelar), que también funcione en celular.
+3. **Tarjetas de mascota del Inicio:** las de C2a copian las del panel y no encajan en el portal. Volver al diseño anterior del portal (más pequeño y mejor para el usuario; está en git antes del commit `d8a62f8`) y potenciarlo donde se pueda, conservando lo que aporta (clínicas como etiquetas, próxima dosis).
+4. **Columna derecha del Inicio:** además del horario de hoy, un vistazo del calendario de salud de las mascotas (próximas dosis y citas), solo en escritorio y tableta; en celular no se muestra.
+5. **Enlaces sin estilo o mal ubicados** («Ver todas», «Horario de la semana» y similares): con estilo de botón o enlace del sistema y en un lugar pensado.
+6. **Horario de la semana:** desordenado y alto (captura 02). Ordenarlo como tabla alineada y acortarlo, por ejemplo agrupando los días con el mismo horario («Lun–Vie 8:00–12:00 · 14:00–18:00», «Sáb–Dom Cerrado»).
+7. **Citas:** la sección se ve vacía y con módulos sueltos (captura 03). Integrar Próximas, Pasadas y el calendario de salud en una sola vista que aproveche el espacio (por ejemplo, lista a la izquierda y calendario a la derecha en escritorio; en celular, una columna).
+8. **Clínicas:** mala distribución del espacio y tarjetas sobredimensionadas, con la misma ayuda larga repetida en cada una (captura 04). Rediseño minimalista y compacto: una fila o tarjeta corta por clínica, la explicación del interruptor una sola vez (o en un icono de ayuda), «Otras clínicas» igual de compacta.
+9. **Perfil:** mal uso del espacio en computador. Unir en un solo apartado los datos de contacto y el correo («Contacto»); lo que necesite confirmación (correo, documento, contraseña) se hace en los **modales de Zooki** adaptados a celular (hoja a pantalla completa), no con SweetAlert. Inputs más compactos: hoy ocupan espacio de más y muestran una caja dentro de otra (captura 05). Dos columnas en escritorio.
+10. **Modales en celular:** en el portal no se usa SweetAlert para confirmaciones ni formularios en celular; se usan los modales del sistema (como `users-modal` / hoja de celular). En computador, los mismos, por coherencia. Los avisos breves (toast) se mantienen.
+11. **Teléfono con banderita y sus validaciones** (el input que ya usan Usuarios y Pacientes): también en el registro del propietario (login), en «Completar perfil» (cuenta de Google) y en el contacto del Perfil del portal.
+12. **«Agregar mascota» visible:** hoy es un «+» pequeño; un botón claro en Inicio (y en el estado vacío).
+
+### C4b — Lado de la clínica y pendientes técnicos
+
+1. **Pacientes › Propietarios:** las tarjetas no usan el estilo de tarjeta del sistema (captura 06: botones «Ver propietario» y «Editar» rotos). Usar las tarjetas mini de Usuarios (`person-card`, `card-*-mini`, `tag-mini`, `action-btn-mini`), con «Aún no activa su cuenta» como etiqueta y «Reenviar enlace» como botón de icono.
+2. **Registro de mascota › Propietario:** sale una tarjeta y además un recuadro verde con el mismo propietario (captura 07). Debe ser **un solo bloque** que sirva para buscar y para mostrar al elegido; «Aún no activa su cuenta» mejor presentado.
+3. **Buscar propietario también por nombre o correo:** por nombre, entre los clientes de esta clínica (coincidencia parcial); por documento o correo completos, la búsqueda global exacta de C1/C3 (sin revelar nada).
+4. **Colores de la mascota:** hoy no se pueden registrar. **Recomendación de la revisión, pendiente de confirmar por el usuario:** quitar el campo de los formularios (no influye en lo clínico y la foto identifica a la mascota); la columna se queda en la base sin uso, sin migración, con nota en el MER.
+5. **Recuperar la activación sin depender de la clínica** (propuesta de «Prueba del usuario de C3», pendiente de confirmar): «¿Olvidaste tu contraseña?» y el autorregistro con el correo de una cuenta pendiente envían un enlace de activación nuevo (respuesta genérica en pantalla); Google con una cuenta pendiente lleva a aceptar la política y la activa.
+6. Las tres notas de «C3 — Revisión»: límite de la búsqueda del personal por usuario; medio propio del consentimiento de la activación del propietario; registrar o editar mascota del personal y desactivar un cliente sin recargar.

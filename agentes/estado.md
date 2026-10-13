@@ -23,7 +23,7 @@
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
-- **Siguiente paso:** M5, C3 revisada y aprobada (2026-10-13); faltan la prueba del usuario y su commit. Después, la lista de inconformidades del usuario y la subetapa de pulido de M5 (con las tres notas de «C3 — Revisión»), y F (2.0.0-alpha.3). Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
+- **Siguiente paso:** M5, C3 probada por el usuario (2026-10-13). Sigue C4 — pulido de M5 («C4 — Alcance» del plan M5, capturas en `specs/referencias/m5-pulido/`): primero C4a (portal), luego C4b (lado de la clínica y pendientes técnicos). Después F (2.0.0-alpha.3). Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 
