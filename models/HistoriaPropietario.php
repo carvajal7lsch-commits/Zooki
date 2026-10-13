@@ -73,6 +73,49 @@ final class HistoriaPropietario extends ModeloPropietario
         return $consulta->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // ── Inicio y Citas del portal (M5 C2): todas sus mascotas activas a la vez ──
+    // Una consulta por tabla, sin importar cuántas mascotas tenga.
+
+    /** Citas de todas sus mascotas activas, menos las canceladas. */
+    public function citasDeSusMascotas(): array
+    {
+        $consulta = $this->conn->prepare("SELECT c.id_cita, c.id_clinica, c.id_mascota, c.fecha, c.hora, c.motivo, c.estado,
+                cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario_nombre, tc.nombre_tipo
+            FROM citas c
+            JOIN mascotas m ON m.id_mascota = c.id_mascota
+            JOIN clinicas cl ON cl.id_clinica = c.id_clinica
+            JOIN usuarios u ON u.id_usuario = c.id_veterinario
+            LEFT JOIN tipos_cita tc ON tc.id_tipo_cita = c.id_tipo_cita
+            WHERE m.id_propietario = ? AND m.estado = 1 AND c.estado <> 'cancelada'
+            ORDER BY c.fecha DESC, c.hora DESC");
+        $consulta->execute([$this->propietario()]);
+        return $consulta->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** Vacunas de todas sus mascotas activas, con la clínica que las aplicó (RN-114). */
+    public function vacunasDeSusMascotas(): array
+    {
+        $consulta = $this->conn->prepare('SELECT v.*, cl.nombre AS clinica_nombre FROM vacunas v
+            JOIN mascotas m ON m.id_mascota = v.id_mascota
+            JOIN clinicas cl ON cl.id_clinica = v.id_clinica
+            WHERE m.id_propietario = ? AND m.estado = 1
+            ORDER BY v.fecha_aplicacion DESC, v.id_vacuna DESC');
+        $consulta->execute([$this->propietario()]);
+        return $consulta->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** Desparasitaciones de todas sus mascotas activas, con la clínica que las aplicó (RN-114). */
+    public function desparasitacionesDeSusMascotas(): array
+    {
+        $consulta = $this->conn->prepare('SELECT d.*, cl.nombre AS clinica_nombre FROM desparasitaciones d
+            JOIN mascotas m ON m.id_mascota = d.id_mascota
+            JOIN clinicas cl ON cl.id_clinica = d.id_clinica
+            WHERE m.id_propietario = ? AND m.estado = 1
+            ORDER BY d.fecha_aplicacion DESC, d.id_desparasitacion DESC');
+        $consulta->execute([$this->propietario()]);
+        return $consulta->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     /**
      * Detalle de una cita de una mascota propia, con su consulta y receta si
      * ya se atendió. Cita ajena o inexistente: 403 auditado.
