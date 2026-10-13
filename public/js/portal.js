@@ -53,21 +53,85 @@ function claseEstadoCita(estado) {
 }
 
 function badgeEstado(estado) {
-    const e = (estado || 'pendiente').toLowerCase();
-    return `<span class="portal-badge portal-badge--${escapeHtml(e)}">${escapeHtml(estado || 'pendiente')}</span>`;
+    const abierta = ['pendiente', 'confirmada', 'en_curso', 'sin_cerrar'].includes(estado);
+    return `<span class="tag-mini${abierta ? ' tag-mini--azul' : ''}">${escapeHtml(etiquetaEstadoCita(estado))}</span>`;
 }
 
-/* ── Navegación entre secciones ──
-   Cada sección tiene su dirección (#agenda, #perfil…) para que el botón
-   «atrás» del navegador y la recarga de la página respeten dónde estaba. */
-const SECCIONES_URL = { home: 'inicio', explore: 'servicios', agenda: 'agenda', notifications: 'recordatorios', account: 'perfil' };
+/** Dos letras para el avatar, como las tarjetas de Usuarios (PresentacionPlataforma::iniciales). */
+function inicialesDe(nombre) {
+    const palabras = String(nombre || '?').trim().split(/\s+/).slice(0, 2);
+    return palabras.map(p => p.charAt(0)).join('').toUpperCase();
+}
+
+/** RN-114: la clínica de cada registro, como etiqueta. */
+function etiquetaClinica(nombre) {
+    return `<span class="tag-mini"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(nombre)}</span>`;
+}
+
+/** Cabecera de la ficha: especie y raza, y las clínicas donde se atiende. */
+function etiquetasDeLaMascota(m, clinicas) {
+    let html = `<span class="tag-mini">${escapeHtml([m.especie, m.raza].filter(Boolean).join(' · '))}</span>`;
+    clinicas.forEach(c => {
+        html += `<span class="tag-mini tag-mini--azul"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(c.nombre)}</span>`;
+    });
+    return html;
+}
+
+/** Clínicas distintas entre todos los registros de la ficha, en orden de aparición. */
+function clinicasDeLosRegistros(res) {
+    const vistas = new Map();
+    [res.historial, res.vacunas, res.desparasitaciones, res.citas].forEach(lista => {
+        (lista || []).forEach(r => {
+            if (!vistas.has(Number(r.id_clinica))) vistas.set(Number(r.id_clinica), r.clinica_nombre);
+        });
+    });
+    return [...vistas].map(([id, nombre]) => ({ id, nombre }));
+}
+
+/** Con registros de varias clínicas, chips para ver solo los de una (RN-114). */
+function prepararFiltroClinica(clinicas) {
+    const filtro = document.getElementById('filtroClinicaMascota');
+    if (!filtro) return;
+    filtro.hidden = clinicas.length < 2;
+    if (filtro.hidden) return;
+    let html = '<button type="button" class="pet-chip active" data-filtro-clinica="all" aria-pressed="true"><span>Todas</span></button>';
+    clinicas.forEach(c => {
+        html += `<button type="button" class="pet-chip" data-filtro-clinica="${c.id}" aria-pressed="false"><span>${escapeHtml(c.nombre)}</span></button>`;
+    });
+    filtro.innerHTML = html;
+}
+
+function filtrarFichaPorClinica(idClinica) {
+    document.querySelectorAll('#screen-pet-detail [data-filtro-clinica]').forEach(chip => {
+        const activo = chip.dataset.filtroClinica === idClinica;
+        chip.classList.toggle('active', activo);
+        chip.setAttribute('aria-pressed', activo ? 'true' : 'false');
+    });
+    document.querySelectorAll('#screen-pet-detail [data-id-clinica]').forEach(registro => {
+        registro.hidden = idClinica !== 'all' && registro.dataset.idClinica !== idClinica;
+    });
+}
+
+document.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-filtro-clinica]');
+    if (chip) filtrarFichaPorClinica(chip.dataset.filtroClinica);
+});
+
+/* ── Navegación entre secciones (M5 C2: Inicio · Citas · Clínicas · Perfil) ──
+   Cada sección tiene su dirección (#citas, #perfil…) para que el botón
+   «atrás» del navegador y la recarga de la página respeten dónde estaba
+   (RE-5.1.6). */
+const SECCIONES_URL = { home: 'inicio', citas: 'citas', clinicas: 'clinicas', account: 'perfil' };
+
+/** Direcciones anteriores a C2: un enlace guardado sigue llevando a algún lado. */
+const SECCIONES_ANTERIORES = { agenda: 'citas', servicios: 'home', recordatorios: 'home' };
 
 function seccionDesdeHash(hash) {
     const limpio = (hash || '').replace(/^#/, '');
     const mascota = limpio.match(/^mascota-(\d+)$/);
     if (mascota) return { mascota: Number(mascota[1]) };
     const tab = Object.keys(SECCIONES_URL).find(k => SECCIONES_URL[k] === limpio);
-    return { tab: tab || 'home' };
+    return { tab: tab || SECCIONES_ANTERIORES[limpio] || 'home' };
 }
 
 function marcarNavegacion(tabId) {
@@ -97,16 +161,9 @@ function switchTab(tabId, opciones = {}) {
         if (opciones.reemplazar) history.replaceState({ zkTab: tabId }, '', url);
         else if (location.hash !== url) history.pushState({ zkTab: tabId }, '', url);
     }
-
-    // Si entramos a Notificaciones/Alertas o Explorar, refrescar datos dinámicamente
-    if (tabId === 'notifications') {
-        loadPortalAlerts();
-    } else if (tabId === 'explore') {
-        loadVetsExplore();
-    }
 }
 
-// Botones de navegación (menú lateral, barra inferior, campana, accesos rápidos).
+// Botones de navegación (menú lateral, barra inferior y enlaces «Ver todas»).
 document.addEventListener('click', (e) => {
     const destino = e.target.closest('[data-nav]');
     if (destino) {
@@ -140,110 +197,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const destino = seccionDesdeHash(location.hash);
     if (destino.mascota) verDetalle(destino.mascota, { historial: false });
     else if (destino.tab !== 'home') switchTab(destino.tab, { historial: false });
-    history.replaceState(destino.mascota ? { zkMascota: destino.mascota } : { zkTab: destino.tab }, '', location.hash || '#inicio');
+    const direccion = destino.mascota ? location.hash : '#' + SECCIONES_URL[destino.tab];
+    history.replaceState(destino.mascota ? { zkMascota: destino.mascota } : { zkTab: destino.tab }, '', direccion);
 });
-
-/* Buscar/Filtrar Servicios en la pestaña Explorar */
-function filtrarServicios(query) {
-    const cleanQuery = query.toLowerCase().trim();
-    document.querySelectorAll('.service-row-item').forEach(item => {
-        const name = item.dataset.name || '';
-        if (name.includes(cleanQuery)) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-}
-
-/* Cargar Veterinarios Activos en pestaña Explorar */
-async function loadVetsExplore() {
-    const listEl = document.getElementById('exploreVetsList');
-    if (!listEl) return;
-
-    try {
-        const res = await (await fetch('index.php?action=portal_get_vets_ajax')).json();
-        if (!res || res.length === 0) {
-            listEl.innerHTML = '<div class="notification-card-empty"><p>No hay veterinarios activos hoy.</p></div>';
-            return;
-        }
-
-        let html = '';
-        res.forEach(v => {
-            const iniciales = escapeHtml(v.nombre_completo.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase());
-            html += `
-            <div class="vet-card-item">
-                <div class="vet-photo-circle" aria-hidden="true">${iniciales}</div>
-                <h3>Dr(a). ${escapeHtml(v.nombre_completo.split(' ')[0])}</h3>
-                <p>${escapeHtml(v.clinica_nombre || 'Médico Veterinario')}</p>
-            </div>`;
-        });
-        listEl.innerHTML = html;
-    } catch (e) {
-        console.error(e);
-        listEl.innerHTML = '<div class="notification-card-empty"><p>Error al cargar veterinarios.</p></div>';
-    }
-}
-
-/** La campana (móvil y tablet) y el punto del menú lateral (escritorio) se encienden juntos. */
-function mostrarAvisoAlertas(hayNuevas) {
-    const campana = document.getElementById('bellBadgeAlert');
-    const puntoMenu = document.querySelector('[data-badge-alertas]');
-    if (campana) campana.style.display = hayNuevas ? 'block' : 'none';
-    if (puntoMenu) puntoMenu.hidden = !hayNuevas;
-}
-
-/* Cargar Alertas y Notificaciones */
-async function loadPortalAlerts() {
-    const listEl = document.getElementById('portalAlertsList');
-    if (!listEl) return;
-
-    try {
-        const res = await (await fetch('index.php?action=get_notificaciones_ajax')).json();
-        if (!res.success || !res.notificaciones || res.notificaciones.length === 0) {
-            listEl.innerHTML = `
-                <div class="notification-card-empty">
-                    <i class="ri-notification-off-line"></i>
-                    <p>No tienes alertas médicas o recordatorios programados en este momento.</p>
-                </div>`;
-            mostrarAvisoAlertas(false);
-            return;
-        }
-
-        mostrarAvisoAlertas(res.no_leidas > 0);
-
-        let html = '';
-        res.notificaciones.forEach(n => {
-            let typeClass = 'cita';
-            let iconClass = 'ri-calendar-todo-line';
-            if (n.tipo === 'NUEVA_VACUNA' || n.tipo === 'VACUNA_PENDIENTE') {
-                typeClass = 'vacuna';
-                iconClass = 'ri-syringe-line';
-            } else if (n.tipo === 'DESPARASITACION') {
-                typeClass = 'desparasitacion';
-                iconClass = 'ri-capsule-line';
-            }
-
-            html += `
-            <div class="notification-card">
-                <div class="notification-icon ${typeClass}"><i class="${iconClass}"></i></div>
-                <div class="notification-content">
-                    <h3>${escapeHtml(n.titulo)}</h3>
-                    <p>${escapeHtml(n.mensaje)}</p>
-                    <span class="notification-date">${escapeHtml(n.fecha_creacion)}</span>
-                </div>
-            </div>`;
-        });
-        listEl.innerHTML = html;
-    } catch (e) {
-        console.error(e);
-        listEl.innerHTML = `
-            <div class="notification-card-empty">
-                <i class="ri-error-warning-line"></i>
-                <p>Error al conectar con el servidor.</p>
-            </div>`;
-    }
-}
 
 /* Editar Datos de Contacto Inline */
 function toggleContactEditPortal() {
@@ -369,24 +325,25 @@ function cerrarDrawer() {
     else switchTab('home', { reemplazar: true });
 }
 
-function showTab(tabId, btn) {
-    document.querySelectorAll('.portal-tab').forEach(t => {
-        t.classList.remove('active');
-        t.setAttribute('aria-selected', 'false');
+/**
+ * Pestañas del portal (Citas y Mascota), con los componentes de Usuarios
+ * (tabs-wrapper y tab-btn). Cada botón nombra su panel en data-pestana.
+ */
+function activarPestana(grupo, idPanel) {
+    if (!grupo) return;
+    grupo.querySelectorAll('[data-pestana]').forEach(boton => {
+        const activa = boton.dataset.pestana === idPanel;
+        boton.classList.toggle('active', activa);
+        boton.setAttribute('aria-selected', activa ? 'true' : 'false');
+        const panel = document.getElementById(boton.dataset.pestana);
+        if (panel) panel.hidden = !activa;
     });
-    document.querySelectorAll('.portal-tab-panel').forEach(p => p.classList.remove('active'));
-
-    const tab = btn || document.querySelector(`.portal-tab[data-tab="${tabId}"]`);
-    if (tab) {
-        tab.classList.add('active');
-        tab.setAttribute('aria-selected', 'true');
-    }
-    const panel = document.getElementById(`tab-${tabId}`);
-    if (panel) panel.classList.add('active');
 }
 
-document.querySelectorAll('.portal-tab').forEach(btn => {
-    btn.addEventListener('click', () => showTab(btn.dataset.tab, btn));
+document.addEventListener('click', (e) => {
+    const boton = e.target.closest('[data-pestana]');
+    if (!boton) return;
+    activarPestana(boton.closest('[data-pestanas]'), boton.dataset.pestana);
 });
 
 // Esc cierra la ventana abierta; si no hay ninguna, sale de la ficha de la mascota.
@@ -452,12 +409,13 @@ function toggleAccordion(card) {
 async function verDetalle(id, opciones = {}) {
     openDrawer();
     if (opciones.historial !== false) history.pushState({ zkMascota: id, zkDentro: true }, '', `#mascota-${id}`);
-    showTab('historial', document.querySelector('.portal-tab[data-tab="historial"]'));
+    activarPestana(document.querySelector('[data-pestanas="mascota"]'), 'tab-historial');
 
     const imprimir = document.getElementById('btnImprimirFichaMascota');
     if (imprimir) imprimir.hidden = true;
     document.getElementById('drawerPetTitle').innerHTML = 'Cargando…';
-    document.getElementById('drawerPetSubtitle').textContent = '';
+    document.getElementById('drawerPetTags').replaceChildren();
+    document.getElementById('filtroClinicaMascota').hidden = true;
     document.getElementById('drawerPetSummary').innerHTML = '';
     document.getElementById('historialContent').innerHTML = '<div class="portal-loading">Cargando historial…</div>';
     document.getElementById('citasContent').innerHTML = '';
@@ -481,12 +439,11 @@ async function verDetalle(id, opciones = {}) {
         }
         
         const avatarHtml = m.url_foto
-            ? `<img src="uploads/mascotas/${escapeHtml(m.url_foto)}" alt="" class="pet-detail__avatar">`
-            : `<span class="pet-detail__avatar pet-detail__avatar--vacio" aria-hidden="true"><i class="ri-baidu-line"></i></span>`;
+            ? `<span class="avatar-mini"><img src="uploads/mascotas/${escapeHtml(m.url_foto)}" alt=""></span>`
+            : `<span class="avatar-mini avatar-iniciales" aria-hidden="true">${escapeHtml(inicialesDe(m.nombre))}</span>`;
 
         document.getElementById('drawerPetTitle').innerHTML = `${avatarHtml}<span>${escapeHtml(m.nombre)}</span>`;
-        // textContent ya escapa: con escapeHtml encima, «&» salía como «&amp;».
-        document.getElementById('drawerPetSubtitle').textContent = `${m.especie} · ${m.raza}`;
+        document.getElementById('drawerPetTags').innerHTML = etiquetasDeLaMascota(m, res.clinicas || []);
 
         renderSummary(m);
 
@@ -517,7 +474,7 @@ async function verDetalle(id, opciones = {}) {
                 }
 
                 html += `
-                <div class="portal-timeline-item">
+                <div class="portal-timeline-item" data-id-clinica="${Number(h.id_clinica)}">
                     <div class="portal-timeline-date">${formatFechaHora(h.fecha_hora)}</div>
                     <div class="portal-timeline-card accordion-card" role="button" tabindex="0" aria-expanded="false" data-ui-accion="acordeon-historia">
                         <div class="accordion-header">
@@ -525,7 +482,7 @@ async function verDetalle(id, opciones = {}) {
                             <i class="ri-arrow-down-s-line accordion-icon" aria-hidden="true"></i>
                         </div>
                         <div class="accordion-body">
-                            <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(h.clinica_nombre)}</p>
+                            ${etiquetaClinica(h.clinica_nombre)}
                             <p><strong>Diagnóstico:</strong> ${escapeHtml(h.diagnostico)}</p>
                             <p><strong>Tratamiento:</strong> ${escapeHtml(h.plan_tratamiento)}</p>
                             <p><strong>Veterinario:</strong> ${escapeHtml(h.veterinario)}</p>
@@ -555,14 +512,13 @@ async function verDetalle(id, opciones = {}) {
                 }
 
                 html += `
-                <div class="portal-list-item">
+                <div class="portal-list-item" data-id-clinica="${Number(c.id_clinica)}">
                     <div class="portal-list-icon portal-list-icon--cita"><i class="ri-calendar-check-line"></i></div>
                     <div class="portal-list-body">
                         <strong>${formatFecha(c.fecha)} · ${escapeHtml((c.hora || '').substring(0, 5))}</strong>
                         <p>${escapeHtml(c.motivo)}</p>
                         ${c.veterinario_nombre ? `<p>Veterinario: ${escapeHtml(c.veterinario_nombre)}</p>` : ''}
-                        <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(c.clinica_nombre)}</p>
-                        ${badgeEstado(c.estado)}
+                        <div class="card-tags-mini">${etiquetaClinica(c.clinica_nombre)}${badgeEstado(c.estado)}</div>
                         ${cancelBtn}
                     </div>
                 </div>`;
@@ -581,14 +537,14 @@ async function verDetalle(id, opciones = {}) {
             let html = '';
             res.vacunas.forEach(v => {
                 html += `
-                <div class="portal-list-item">
+                <div class="portal-list-item" data-id-clinica="${Number(v.id_clinica)}">
                     <div class="portal-list-icon portal-list-icon--vacuna"><i class="ri-syringe-line"></i></div>
                     <div class="portal-list-body">
                         <strong>${escapeHtml(v.nombre_vacuna)}</strong>
                         <p>Aplicada: ${formatFecha(v.fecha_aplicacion)}</p>
                         ${v.fecha_proxima_dosis ? `<p class="portal-proxima">Próxima dosis: ${formatFecha(v.fecha_proxima_dosis)}</p>` : ''}
                         ${v.laboratorio ? `<p>Laboratorio: ${escapeHtml(v.laboratorio)}</p>` : ''}
-                        <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(v.clinica_nombre)}</p>
+                        <div class="card-tags-mini">${etiquetaClinica(v.clinica_nombre)}</div>
                     </div>
                 </div>`;
             });
@@ -606,20 +562,21 @@ async function verDetalle(id, opciones = {}) {
             let html = '';
             res.desparasitaciones.forEach(d => {
                 html += `
-                <div class="portal-list-item">
+                <div class="portal-list-item" data-id-clinica="${Number(d.id_clinica)}">
                     <div class="portal-list-icon portal-list-icon--desparasitacion"><i class="ri-capsule-line"></i></div>
                     <div class="portal-list-body">
                         <strong>${escapeHtml(d.producto)} (${escapeHtml(d.tipo)})</strong>
                         <p>Aplicada: ${formatFecha(d.fecha_aplicacion)}</p>
                         ${d.fecha_proxima ? `<p class="portal-proxima portal-proxima--control">Próxima dosis: ${formatFecha(d.fecha_proxima)} (${escapeHtml(d.periodicidad)})</p>` : ''}
                         ${d.observaciones ? `<p>Observaciones: ${escapeHtml(d.observaciones)}</p>` : ''}
-                        <p class="portal-clinica"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(d.clinica_nombre)}</p>
+                        <div class="card-tags-mini">${etiquetaClinica(d.clinica_nombre)}</div>
                     </div>
                 </div>`;
             });
             document.getElementById('desparasitacionesContent').innerHTML = html;
         }
 
+        prepararFiltroClinica(clinicasDeLosRegistros(res));
     } catch (e) {
         console.error(e);
         zookiAviso('No se pudieron cargar los datos de la mascota.');
@@ -698,18 +655,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Pestañas de «Mi agenda de salud». En escritorio las dos columnas se ven a la vez (agenda.css).
-function switchAgendaTab(tabId, btn) {
-    document.querySelectorAll('.agenda-tab-content').forEach(el => {
-        el.classList.toggle('active', el.id === tabId);
-    });
-    document.querySelectorAll('.agenda-tab-btn').forEach(b => {
-        const activo = b === btn;
-        b.classList.toggle('active', activo);
-        b.setAttribute('aria-selected', activo ? 'true' : 'false');
-    });
-}
-
 // C9: las reservas y respuestas frecuentes usan toast; cancelar o aceptar
 // una cita adicional del mismo día conserva una decisión explícita.
 async function showTikTokModal({ title, message, isConfirm, onConfirm, onCancel, icon = 'success' }) {
@@ -741,17 +686,6 @@ async function showTikTokModal({ title, message, isConfirm, onConfirm, onCancel,
 
 /* Lógica de Agendamiento desde el Portal (HU-26) */
 document.addEventListener('DOMContentLoaded', () => {
-    const btnAgendaCitas = document.getElementById('btn-agenda-citas');
-    const btnAgendaSalud = document.getElementById('btn-agenda-salud');
-    if (btnAgendaCitas && btnAgendaSalud) {
-        btnAgendaCitas.addEventListener('click', () => {
-            switchAgendaTab('agenda-citas', btnAgendaCitas);
-        });
-        btnAgendaSalud.addEventListener('click', () => {
-            switchAgendaTab('agenda-salud', btnAgendaSalud);
-        });
-    }
-
     // --- LÓGICA COMPLETA DE CALENDARIO, FILTROS Y TIMELINE (V1.6.0) ---
     let selectedPetId = 'all';
     let selectedCalendarDate = null; // Formato YYYY-MM-DD
@@ -759,7 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCalMonth = today.getMonth(); // 0-11
     let currentCalYear = today.getFullYear();
 
-    const chips = document.querySelectorAll('.pet-chip');
+    const chips = document.querySelectorAll('.pet-chip[data-pet-id]');
     const printBtn = document.getElementById('btnImprimirHistorial');
 
     // Nombres de meses en español
@@ -1073,36 +1007,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Filtrar Citas por Mascota
+    // Filtrar Próximas y Pasadas por mascota; cada panel dice si quedó vacío.
     const filterCitas = () => {
-        const citasContainer = document.getElementById('citasListContainer');
-        if (!citasContainer) return;
-
-        let visibleCount = 0;
-        citasContainer.querySelectorAll('.agenda-list-item').forEach(item => {
-            if (selectedPetId === 'all' || item.dataset.petId == selectedPetId) {
-                item.style.display = 'flex';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
+        document.querySelectorAll('[data-panel-citas]').forEach(panel => {
+            let visibles = 0;
+            panel.querySelectorAll('.portal-cita[data-pet-id]').forEach(tarjeta => {
+                const mostrar = selectedPetId === 'all' || tarjeta.dataset.petId === selectedPetId;
+                tarjeta.hidden = !mostrar;
+                if (mostrar) visibles++;
+            });
+            const aviso = panel.querySelector('.portal-filtro-vacio');
+            const hayTarjetas = panel.querySelector('.portal-cita') !== null;
+            if (hayTarjetas && visibles === 0 && !aviso) {
+                const p = document.createElement('p');
+                p.className = 'portal-filtro-vacio';
+                p.textContent = 'No hay citas de esta mascota aquí.';
+                panel.append(p);
             }
+            if (visibles > 0 && aviso) aviso.remove();
         });
-
-        // Mostrar estado vacío si no hay citas de esta mascota
-        const emptyState = citasContainer.parentElement.querySelector('.agenda-empty-state');
-        if (visibleCount === 0) {
-            if (!emptyState) {
-                const div = document.createElement('div');
-                div.className = 'agenda-empty-state temp-empty';
-                div.innerHTML = `<i class="ri-calendar-line"></i><p>No hay citas de esta mascota.</p>`;
-                citasContainer.style.display = 'none';
-                citasContainer.parentElement.appendChild(div);
-            }
-        } else {
-            citasContainer.style.display = 'flex';
-            const temp = citasContainer.parentElement.querySelector('.temp-empty');
-            if (temp) temp.remove();
-        }
     };
 
     // Registrar Clics en Chips de Mascota
@@ -1115,14 +1038,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             selectedPetId = chip.dataset.petId;
 
-            // Mostrar/Ocultar botón de Imprimir Historial
+            // Imprimir la ficha de salud solo con una mascota elegida.
             if (printBtn) {
-                if (selectedPetId === 'all') {
-                    printBtn.style.display = 'none';
-                } else {
-                    printBtn.style.display = 'flex';
-                    printBtn.href = `index.php?action=portal_imprimir_historial&id_mascota=${selectedPetId}`;
-                }
+                printBtn.hidden = selectedPetId === 'all';
+                printBtn.href = `index.php?action=portal_imprimir_historial&id_mascota=${encodeURIComponent(selectedPetId)}`;
             }
 
             // Filtrar ambos módulos
@@ -1136,16 +1055,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderMiniCalendar();
         renderSaludLists();
     }
-
-    // Attach cancellation event listeners to all cancel buttons in the Agenda
-    document.querySelectorAll('.btn-cancel-agenda').forEach(btn => {
-        btn.addEventListener('click', () => {
-            cancelarCitaPortal(btn.dataset.id);
-        });
-    });
-
-    // Al iniciar, cargar el contador de notificaciones de la campana
-    loadPortalAlerts();
 
     // Inicializar Flatpickr personalizado (estilo Win11) para fecha de nacimiento de mascotas y agendamiento
     if (typeof flatpickr !== 'undefined') {

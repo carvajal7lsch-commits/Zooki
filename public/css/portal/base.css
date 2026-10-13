@@ -39,6 +39,18 @@
     --rail-w: 248px;
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --gutter: 1.25rem;
+
+    /* M5 C2: los tokens que usan los componentes de Usuarios (css/usuarios.css). */
+    --primary: var(--z-primary);
+    --primary-hover: var(--z-primary-dark);
+    --primary-soft: var(--z-primary-soft);
+    --text-primary: var(--z-text);
+    --text-secondary: #475569;
+    --text-muted: var(--z-text-muted);
+    --border-color: var(--z-border);
+    --bg-surface: var(--z-surface);
+    --bg-main: var(--z-bg-light);
+    --radius-md: var(--z-radius-sm);
 }
 
 *,

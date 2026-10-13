@@ -1,0 +1,252 @@
+/* ═══════════════════════════════════════════════════════════
+   Portal · Componentes (M5 C2)
+   El portal usa los componentes de Usuarios (css/usuarios.css):
+   person-card, card-*-mini, tag-mini, action-btn-mini, avatar-iniciales,
+   tabs-wrapper y tab-btn. Aquí van solo sus ajustes para el portal y las
+   piezas propias: cabecera, cuadrícula de tarjetas, estado vacío compacto
+   y horario de hoy. Solo azul y grises (decisión del usuario en M0.2).
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Cabecera de cada sección ── */
+.portal-cabecera {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.portal-cabecera__titulo {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--z-text);
+    letter-spacing: -0.01em;
+}
+
+.portal-cabecera__ayuda {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--z-text-muted);
+}
+
+/* ── Tarjetas: una columna en celular, dos en tableta, más en escritorio ── */
+.portal-tarjetas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.portal-tarjetas > [hidden] { display: none; }
+
+.person-card[role="button"] { cursor: pointer; }
+
+.person-card[role="button"]:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.card-header-mini .avatar-mini img { display: block; }
+
+.tag-mini--azul {
+    color: var(--z-primary);
+    background: var(--z-primary-soft);
+}
+
+.tag-mini--azul i { color: var(--z-primary); }
+
+/* ── Cita en tarjeta ── */
+.portal-cita__cuando {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--z-text);
+}
+
+.portal-cita__cancelar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 32px;
+    padding: 0 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.portal-cita__cancelar:hover { border-color: #94a3b8; color: var(--z-text); }
+
+/* ── Estado vacío compacto: icono a la izquierda y dos líneas (como el panel de plataforma) ── */
+.portal-vacio {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1rem 1.15rem;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.portal-vacio__icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #eff4ff;
+    color: var(--z-primary);
+    font-size: 1.1rem;
+}
+
+.portal-vacio h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--z-text);
+}
+
+.portal-vacio p {
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--z-text-muted);
+}
+
+.portal-filtro-vacio {
+    margin: 0.5rem 0 0;
+    font-size: 0.85rem;
+    color: var(--z-text-muted);
+}
+
+/* ── Pestañas (tabs-wrapper de Usuarios) ── */
+.portal-pestanas {
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.portal-pestanas::-webkit-scrollbar { display: none; }
+
+.portal-pestanas .tab-btn {
+    flex-shrink: 0;
+    min-height: 44px;
+}
+
+.portal-pestanas .tab-btn .tag-mini { font-size: 0.68rem; }
+
+.portal-panel[hidden] { display: none; }
+
+/* ── Horario de hoy, compacto ── */
+.portal-horario {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.portal-horario__clinica {
+    padding: 0.9rem 1rem;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.portal-horario__fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.portal-horario__fila h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--z-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.portal-horario__detalle {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    color: var(--z-text-muted);
+}
+
+.portal-horario__semana { margin-top: 0.5rem; }
+
+.portal-horario__semana summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--z-primary);
+    cursor: pointer;
+    list-style: none;
+}
+
+.portal-horario__semana summary::-webkit-details-marker { display: none; }
+
+.portal-horario__semana[open] summary i { transform: rotate(180deg); }
+
+.portal-horario__semana dl {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0.5rem 0 0;
+}
+
+.portal-horario__dia {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: #475569;
+}
+
+.portal-horario__dia dd { margin: 0; text-align: right; }
+
+.portal-horario__dia.is-hoy { font-weight: 700; color: var(--z-text); }
+
+.portal-horario__dia.is-cerrado dd { color: #94a3b8; }
+
+/* ── Cabecera de la ficha de la mascota ── */
+.pet-detail__identidad {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.pet-detail__titulo .avatar-mini img,
+.pet-detail__titulo .avatar-iniciales {
+    width: 44px;
+    height: 44px;
+}
+
+.pet-detail__acciones {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.pet-detail__acciones [hidden] { display: none; }
+
+#filtroClinicaMascota { margin-bottom: 0.75rem; }
+
+/* ── Tableta: dos columnas de tarjetas ── */
+@media (min-width: 768px) {
+    .portal-tarjetas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── Escritorio ── */
+@media (min-width: 1024px) {
+    .portal-tarjetas { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    .portal-cabecera__titulo { font-size: 1.6rem; }
+}

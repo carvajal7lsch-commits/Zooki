@@ -465,7 +465,7 @@
     .agenda-tab-content,
     .agenda-tab-content.active { display: block; }
 
-    #agenda-salud {
+    .agenda-salud-listas {
         border-left: 1px solid var(--z-border);
         padding-left: 2rem;
     }
