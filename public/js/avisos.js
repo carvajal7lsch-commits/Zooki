@@ -115,6 +115,37 @@ async function zookiConfirmar(mensaje, titulo = '¿Confirmas?', textoBoton = 'S�
 }
 
 /**
+ * M5 C3 (decisión del usuario): confirmación corta con el estilo de Zooki.
+ * Solo la pregunta, unas filas opcionales [etiqueta, valor] y los botones,
+ * sin icono ni explicación. Resuelve a booleano.
+ */
+async function zookiConfirmarCorto(pregunta, textoBoton, filas = []) {
+    if (!window.Swal) {
+        console.error('No está disponible la confirmación de la acción.');
+        return false;
+    }
+    const lista = filas.map(([etiqueta, valor]) => `<div><dt>${escapeHtml(etiqueta)}</dt><dd>${escapeHtml(valor)}</dd></div>`).join('');
+    const r = await Swal.fire({
+        title: pregunta,
+        html: lista ? `<dl class="zooki-confirmacion__filas">${lista}</dl>` : undefined,
+        showCancelButton: true,
+        confirmButtonText: textoBoton,
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        buttonsStyling: false,
+        customClass: {
+            popup: 'zooki-confirmacion',
+            title: 'zooki-confirmacion__titulo',
+            htmlContainer: 'zooki-confirmacion__cuerpo',
+            actions: 'zooki-confirmacion__botones',
+            confirmButton: 'btn-modal-primary',
+            cancelButton: 'btn-modal-secondary',
+        },
+    });
+    return r.isConfirmed;
+}
+
+/**
  * Escapa texto para insertarlo en HTML sin abrir un XSS.
  *
  * Vive aquí porque lo necesitan tanto el portal como el módulo clínico, y

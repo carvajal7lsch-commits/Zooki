@@ -2,10 +2,10 @@
 require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/Usuario.php';
 require_once __DIR__ . '/Auditoria.php';
-require_once __DIR__ . '/PasswordReset.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/ContactoPropietario.php';
 require_once __DIR__ . '/VinculoClinica.php';
+require_once __DIR__ . '/ActivacionPropietario.php';
 
 /** RN-109: datos de propietario del personal y confirmación de vínculo. */
 final class PropietarioClinica extends ModeloClinica
@@ -18,6 +18,9 @@ final class PropietarioClinica extends ModeloClinica
     /** RE-1.5.1 y RN-109 (decisión del usuario, M5): lo único que se dice de una cuenta sin vínculo activo. */
     public const MENSAJE_SIN_VINCULO = 'Hay una cuenta con ese dato. Pide la confirmación por correo.';
 
+    /** M5 C3: al registrar a quien ya es cliente de esta clínica. */
+    public const MENSAJE_YA_CLIENTE = 'Ya es cliente de esta clínica. Búscalo en «Nueva mascota».';
+
     /**
      * Propietarios de la clínica activa. RN-115: con el vínculo inactivo
      * solo el nombre y la marca «Desvinculado» (ContactoPropietario).
@@ -28,6 +31,7 @@ final class PropietarioClinica extends ModeloClinica
                 pc.estado AS estado_vinculo,
                 CASE WHEN pc.estado = 'activo' THEN 1 ELSE 0 END AS estado,
                 " . ContactoPropietario::marca('pc') . ",
+                CASE WHEN " . ActivacionPropietario::pendiente('u') . " THEN 1 ELSE 0 END AS pendiente_activacion,
                 (SELECT COUNT(*) FROM mascotas m JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota
                     WHERE m.id_propietario = u.id_usuario AND mc.id_clinica = pc.id_clinica AND mc.estado = 'activo' AND m.estado = 1) AS total_mascotas
             FROM usuarios u
@@ -79,11 +83,45 @@ final class PropietarioClinica extends ModeloClinica
         $stmt->execute([$persona['id_usuario']]);
         $mascotas = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $auditoria->log(Contexto::idUsuario(), 'VIEW', 'usuarios', (int) $persona['id_usuario'], null, null, 'Búsqueda exacta de propietario (RN-111)');
-        unset($persona['es_super_admin']);
-        return $persona + ['vinculado' => true, 'mascotas' => $mascotas];
+        $pendiente = (int) $persona['pendiente'] === 1;
+        unset($persona['es_super_admin'], $persona['pendiente']);
+        // M5 C3: la clínica sabe que su cliente aún no activa su cuenta, para reenviarle el enlace.
+        return $persona + ['vinculado' => true, 'pendiente' => $pendiente, 'mascotas' => $mascotas];
     }
 
-    /** Cuenta activa con ese documento o correo exacto; solo para uso interno. */
+    /**
+     * M5 C3 (RN-109): al registrar un propietario cuyo documento o correo ya
+     * tiene cuenta. Prevalece el correo (como RN-G06). Devuelve lo que la
+     * clínica puede saber: si ya es su cliente y con qué dato pedir la
+     * confirmación; nunca de quién es la cuenta.
+     *
+     * @return array{vinculado: bool, identificador: string}|null
+     */
+    public function existente(string $documento, string $email): ?array
+    {
+        foreach ([$email, $documento] as $identificador) {
+            $persona = $this->personaExacta($identificador);
+            if ($persona === null) {
+                continue;
+            }
+            $vinculado = !$this->esPlataforma($persona) && $this->estadoVinculo((int) $persona['id_usuario']) === 'activo';
+            return ['vinculado' => $vinculado, 'identificador' => $identificador];
+        }
+        $usuarios = new Usuario($this->conn);
+        // Una cuenta inactiva (no pendiente) tampoco se duplica; se responde como sin vínculo.
+        if ($usuarios->existeEmail($email)) {
+            return ['vinculado' => false, 'identificador' => $email];
+        }
+        if ($usuarios->existeDocumento($documento)) {
+            return ['vinculado' => false, 'identificador' => $documento];
+        }
+        return null;
+    }
+
+    /**
+     * Cuenta con ese documento o correo exacto, activa o de un propietario
+     * que la clínica registró y aún no activa (M5 C3); solo para uso interno.
+     */
     private function personaExacta(string $identificador): ?array
     {
         $this->clinica();
@@ -93,9 +131,10 @@ final class PropietarioClinica extends ModeloClinica
             return null;
         }
         $campo = $esCorreo ? 'email' : 'documento';
-        $stmt = $this->conn->prepare("SELECT u.id_usuario, u.nombre_completo, u.tipo_documento, u.documento, u.email, u.telefono, u.es_super_admin
+        $stmt = $this->conn->prepare("SELECT u.id_usuario, u.nombre_completo, u.tipo_documento, u.documento, u.email, u.telefono, u.es_super_admin,
+                CASE WHEN " . ActivacionPropietario::pendiente('u') . " THEN 1 ELSE 0 END AS pendiente
             FROM usuarios u
-            WHERE u.$campo = ? AND u.estado = 1");
+            WHERE u.$campo = ? AND " . ActivacionPropietario::usable('u'));
         $stmt->execute([$identificador]);
         $persona = $stmt->fetch(PDO::FETCH_ASSOC);
         return $persona === false ? null : $persona;
@@ -115,25 +154,29 @@ final class PropietarioClinica extends ModeloClinica
         return $estado === false ? null : (string) $estado;
     }
 
-    /** RE-T.19.1/2: la aceptación presencial se valida antes de cualquier INSERT. */
-    public function registrar(array $datos,string $version,string $ip): array
+    /**
+     * RE-T.19.1 (decisión del usuario, M5 C3): la clínica registra al
+     * propietario sin aceptación presencial. La cuenta queda pendiente, sin
+     * contraseña, consentimiento ni portal, hasta que el titular acepte la
+     * política y cree su contraseña desde el enlace (ActivacionPropietario).
+     * Un documento o correo con cuenta no se duplica: va por la confirmación
+     * del vínculo (RN-109).
+     *
+     * @return array{id_usuario: int, id: int, token: string}
+     */
+    public function registrar(array $datos): array
     {
-        $clinica=$this->clinica();
-        if (($datos['titular_presente'] ?? '') !== '1' || ($datos['acepta_politica'] ?? '') !== '1') {
-            throw new InvalidArgumentException('El titular debe estar presente y aceptar directamente la política antes de crear su cuenta.');
+        $clinica = $this->clinica();
+        if ($this->existente((string) $datos['documento'], (string) $datos['email']) !== null) {
+            throw new InvalidArgumentException(self::MENSAJE_SIN_VINCULO);
         }
-        if ($version === '' || strlen($version)>20) throw new InvalidArgumentException('Política no disponible.');
-        $usuario=new Usuario($this->conn);
-        if ($usuario->existeDocumento($datos['documento']) || $usuario->existeEmail($datos['email'])) throw new InvalidArgumentException('La cuenta ya existe. Búscala por documento o correo completo y solicita su vinculación.');
-        return Transaccion::ejecutar($this->conn,function () use ($datos,$version,$ip,$clinica,$usuario) {
-            $id=$usuario->crear(array_replace($datos,['password'=>null,'debe_cambiar_password'=>0]));
-            $this->conn->prepare('INSERT INTO consentimientos_datos (id_usuario,version_politica,medio,ip_address) VALUES (?,?,\'alta_personal\',?)')->execute([$id,$version,$ip]);
-            $this->conn->prepare('INSERT INTO propietario_clinica (id_propietario,id_clinica) VALUES (?,?)')->execute([$id,$clinica]);
-            $token=bin2hex(random_bytes(32));
-            $reset=(new PasswordReset($this->conn))->createToken($id,$datos['email'],password_hash($token,PASSWORD_DEFAULT),date('Y-m-d H:i:s',time()+self::VIGENCIA_HORAS*3600));
-            (new Auditoria($this->conn))->log(Contexto::idUsuario(),'INSERT','usuarios',$id,null,null,'Alta presencial de propietario con consentimiento y sin contraseña');
-            return ['id_usuario'=>$id,'id_enlace'=>$reset,'token'=>$token];
-        });
+        return Transaccion::ejecutar($this->conn, fn (): array => (new ActivacionPropietario($this->conn))->crear($datos, $clinica));
+    }
+
+    /** M5 C3: la clínica reenvía el enlace de activación a su cliente pendiente. */
+    public function reenviarActivacion(int $idPersona): array
+    {
+        return (new ActivacionPropietario($this->conn))->reenviar($idPersona, $this->clinica()) + ['clinica' => Contexto::actual()['clinica']];
     }
     /**
      * RN-109: la clínica pide al titular, por correo, confirmar el vínculo.
@@ -159,7 +202,7 @@ final class PropietarioClinica extends ModeloClinica
         if ($this->estadoVinculo($idPersona) === null) {
             $this->denegar($idPersona);
         }
-        $stmt = $this->conn->prepare('SELECT u.id_usuario, u.nombre_completo, u.email, u.es_super_admin FROM usuarios u WHERE u.id_usuario = ? AND u.estado = 1');
+        $stmt = $this->conn->prepare('SELECT u.id_usuario, u.nombre_completo, u.email, u.es_super_admin FROM usuarios u WHERE u.id_usuario = ? AND ' . ActivacionPropietario::usable('u'));
         $stmt->execute([$idPersona]);
         $persona = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($persona === false) {
@@ -202,7 +245,8 @@ final class PropietarioClinica extends ModeloClinica
     {
         return Transaccion::ejecutar($this->conn,function () use ($id,$token) {
             $bloqueo=$this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
-            $stmt=$this->conn->prepare("SELECT v.*,u.email AS email_actual,u.estado AS usuario_activo,u.es_super_admin,c.estado AS clinica_estado
+            // M5 C3 (decisión del usuario): una cuenta que otra clínica registró y aún no se activa también confirma.
+            $stmt=$this->conn->prepare("SELECT v.*,u.email AS email_actual,CASE WHEN " . ActivacionPropietario::usable('u') . " THEN 1 ELSE 0 END AS usuario_activo,u.es_super_admin,c.estado AS clinica_estado
                 FROM verificaciones_email v JOIN usuarios u ON u.id_usuario=v.id_usuario
                 JOIN clinicas c ON c.id_clinica=v.id_clinica_vinculo
                 WHERE v.id=? AND v.proposito='vinculo_clinica'" . $bloqueo);

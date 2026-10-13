@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.2** · 420 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.2** · 421 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
@@ -290,8 +290,8 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-T.19.1 | El registro por formulario, Google y el alta presencial de propietarios exige aceptación expresa antes de crear la cuenta. Excepción: el personal nuevo queda pendiente e inerte, sin contraseña ni consentimiento, y recibe un enlace de 72 horas para aceptar la política y crear su contraseña. | Restricción | Sin aceptación no se crea una cuenta de propietario. El personal no puede aceptar por el titular: la cuenta pendiente no inicia sesión y solo se activa al aceptar y crear la contraseña; puede rechazar la invitación sin activarse ni consentir; al rechazar o vencer se elimina únicamente si no tiene otros vínculos. | Alta |
-| RE-T.19.2 | El sistema debe guardar la prueba de la aceptación: usuario, versión, medio, fecha e IP, salvo la cuenta de super-administrador. | Seguridad | Cada cuenta nueva habilitada tiene su prueba en `consentimientos_datos`; el personal pendiente la registra al activar. El super-administrador está exento de aceptación y de esta prueba por ser una cuenta operativa de plataforma. | Alta |
+| RE-T.19.1 | El registro por formulario o Google exige aceptación expresa antes de crear la cuenta. Excepción: las cuentas que crea una clínica (personal nuevo y propietario dado de alta por el personal) quedan pendientes e inertes, sin contraseña ni consentimiento, y el titular recibe un enlace de 72 horas para aceptar la política y crear su contraseña. _(M5, decisión del usuario 2026-10-12: el propietario ya no acepta de forma presencial.)_ | Restricción | El personal no puede aceptar por el titular: la cuenta pendiente no inicia sesión ni tiene portal y solo se activa al aceptar y crear la contraseña. El personal puede rechazar la invitación sin activarse ni consentir; el propietario no tiene «No acepto»: deja vencer el enlace. La clínica puede reenviar el enlace y el anterior deja de servir. Mientras no active, la clínica registra y atiende a sus mascotas y no le salen correos automáticos salvo el de activación. Al vencer, la cuenta se elimina únicamente si no tiene otros vínculos ni, si es de un propietario, mascotas. | Alta |
+| RE-T.19.2 | El sistema debe guardar la prueba de la aceptación: usuario, versión, medio, fecha e IP, salvo la cuenta de super-administrador. | Seguridad | Cada cuenta nueva habilitada tiene su prueba en `consentimientos_datos`; el personal y el propietario pendientes la registran al activar. El super-administrador está exento de aceptación y de esta prueba por ser una cuenta operativa de plataforma. | Alta |
 | RE-T.19.3 | Si la política cambia de versión, el sistema debe pedir aceptarla en el siguiente inicio de sesión antes de continuar. | Restricción | Tras publicar una versión nueva, el usuario no entra al panel hasta aceptarla. | Media |
 | RE-T.19.4 | Revocar la autorización debe llevar a la solicitud de eliminación de la cuenta. _Se entrega en la v2.1 con HU-5.14._ | Funcional | La opción de revocar abre el flujo de HU-5.14. | Media |
 
@@ -918,6 +918,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | RE-5.13.2 | Al vincularse, la clínica nueva solo debe ver los datos del propietario; las mascotas se le vinculan al agendar o al ser atendidas allí. | Seguridad | Recién vinculada, la clínica no ve mascotas del propietario hasta que se cumpla una de las dos condiciones. | Alta |
 | RE-5.13.3 | El propietario debe poder desvincularse; se rechaza si tiene citas pendientes en esa clínica. | Restricción | Con citas pendientes se informa que debe cancelarlas primero; sin ellas, el vínculo pasa a inactivo. | Media |
 | RE-5.13.4 | Cada vinculación y desvinculación debe registrarse en auditoría. | Seguridad | Ambas operaciones generan entrada de auditoría. | Media |
+| RE-5.13.5 | Desde el portal, el propietario debe poder tener como máximo 3 clínicas con vínculo activo (RN-116); el tope no aplica cuando una clínica lo registra o confirma su vínculo. | Restricción | Con 3 clínicas activas, «Vincularme» se muestra deshabilitado con una línea que lo explica y el servidor rechaza una cuarta vinculación desde el portal; una clínica sí liga a un propietario que ya tiene 3; al desvincularse de una, puede vincularse a otra. El registro desde el enlace o QR de una clínica no cuenta como vinculación desde el portal (decisión del usuario, M5 C3). | Media |
 
 **Reglas de negocio:** RN-109, RN-110, RN-115
 
@@ -1146,7 +1147,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | HU-T.18 | RN-G20, RN-G21, RN-G19, RN-G12, RN-109 | RE-T.18.1, RE-T.18.2, RE-T.18.3, RE-T.18.4 |
 | HU-T.19 | RN-G19, RN-G07, RN-G16 | RE-T.19.1, RE-T.19.2, RE-T.19.3, RE-T.19.4 |
 | HU-1.1 | RN-101, RN-102, RN-106, RN-107, RN-110, RN-111 | RE-1.1.1, RE-1.1.2, RE-1.1.3, RE-1.1.4, RE-1.1.5, RE-1.1.6 |
-| HU-1.2 | RN-101, RN-103, RN-109, RN-G06 | RE-1.2.1, RE-1.2.2, RE-1.2.3 |
+| HU-1.2 | RN-101, RN-103, RN-109, RN-G06, RN-G19 | RE-1.2.1, RE-1.2.2, RE-1.2.3 |
 | HU-1.3 | RN-105 | RE-1.3.1, RE-1.3.2, RE-1.3.3, RE-1.3.4 |
 | HU-1.4 | RN-104, RN-105, RN-108, RN-110 | RE-1.4.1, RE-1.4.2, RE-1.4.3, RE-1.4.4, RE-1.4.5 |
 | HU-1.5 | RN-003, RN-102, RN-110, RN-111 | RE-1.5.1, RE-1.5.2, RE-1.5.3 |
@@ -1198,7 +1199,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | HU-5.10 | RN-110, RN-502, RN-503 | RE-5.10.1, RE-5.10.2, RE-5.10.3, RE-5.10.4, RE-5.10.5 |
 | HU-5.11 | RN-502, RN-503, RN-504, RN-505 | RE-5.11.1, RE-5.11.2, RE-5.11.3, RE-5.11.4, RE-5.11.5, RE-5.11.6 |
 | HU-5.12 | RN-113, RN-115, RN-G07 | RE-5.12.1, RE-5.12.2, RE-5.12.3, RE-5.12.4 |
-| HU-5.13 | RN-109, RN-110, RN-115 | RE-5.13.1, RE-5.13.2, RE-5.13.3, RE-5.13.4 |
+| HU-5.13 | RN-109, RN-110, RN-115, RN-116 | RE-5.13.1, RE-5.13.2, RE-5.13.3, RE-5.13.4, RE-5.13.5 |
 | HU-5.14 | RN-G16, RN-G07 | RE-5.14.1, RE-5.14.2, RE-5.14.3, RE-5.14.4, RE-5.14.5 |
 | HU-6.1 | RN-G01, RN-407, RN-409 | RE-6.1.1, RE-6.1.2, RE-6.1.3, RE-6.1.4, RE-6.1.5, RE-6.1.6, RE-6.1.7 |
 | HU-6.2 | RN-G01, RN-408, RN-409 | RE-6.2.1, RE-6.2.2, RE-6.2.3, RE-6.2.4, RE-6.2.5, RE-6.2.6 |

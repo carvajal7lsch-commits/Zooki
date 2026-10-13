@@ -40,7 +40,7 @@ Lo que falta es, sobre todo: verificar cada RE contra el código actual (M0 camb
 | HU-5.9 | RE-5.9.1–4 | RN-109, RN-114, RN-G13 | A, C2 | `PortalPropietarioTest`, `PortalAgendaTest`; recorrido del usuario con dos clínicas |
 | HU-1.5 | RE-1.5.1–3 | RN-003, RN-102, RN-110, RN-111 | A, C1, C3 | `PropietarioClinicaTest`, `MascotaAccesoTest`, `LimitePlanTest` (vincular al límite) |
 | HU-5.12 | RE-5.12.1–4 | RN-113, RN-115, RN-G07 | A, C2 | `VinculosPropietarioTest` |
-| HU-5.13 | RE-5.13.1–4 | RN-109, RN-110, RN-115 | A, C2 | `VinculosPropietarioTest`, `HistoriaCompartidaTest` |
+| HU-5.13 | RE-5.13.1–5 | RN-109, RN-110, RN-115, RN-116 | A, C2, C3 | `VinculosPropietarioTest`, `HistoriaCompartidaTest`, `M5C3TopeClinicasTest` (RE-5.13.5) |
 | HU-2.10 | RE-2.10.1–4 | RN-112, RN-113 | A, C3 | `HistoriaCompartidaTest`, `ConsultaHistorialTest`; la clínica de cada registro visible en la historia del veterinario |
 
 Los criterios normativos permanecen en `documentacion/`; este plan los enlaza y organiza.
@@ -86,7 +86,7 @@ Si A demuestra que C1 queda vacío o muy pequeño, C1 se une a C2.
 - [ ] C1 — Huecos funcionales (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1 — Resultado».
 - [ ] C1.1 — Super-administrador nunca como cliente y desactivación por la clínica (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1.1 — Resultado».
 - [ ] C2 — Portal del propietario pulido (Claude Code), en dos partes. **C2a (estructura, navegación, Inicio, Mascota y Citas): entregada, pendiente de revisión (2026-10-12)**, ver «Anexo C2a — Resultado». **C2b (Agendar, Clínicas, Perfil y actualización en su sitio): entregada, pendiente de revisión (2026-10-12)**, ver «Anexo C2b — Resultado».
-- [ ] C3 — Lado del personal (HU-1.5, HU-2.10).
+- [ ] C3 — Lado del personal (HU-1.5, HU-2.10), con el alta sin aceptación presencial, el tope de clínicas (RN-116) y Agendar en un solo formulario (Claude Code). **Entregada, pendiente de revisión (2026-10-13)**: ver «Anexo C3 — Resultado».
 - [ ] `vendor/bin/phpunit` completo, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.3`: HU a «Implementada», revisiones de documentos, historial, descargas, merge y tag.
 - [ ] Comandos de commit por etapa para PowerShell (el usuario hace ramas, commits, push y tags).
@@ -603,3 +603,129 @@ Se actualizó la prueba de C9.1 del botón «Imprimir», que ahora es un botón 
 6. **Formulario de mascota del personal** con la validación en tiempo real y la restricción de entrada de `validacion-mascota.js` (las mismas reglas de C2b).
 
 **Fuera de C3:** el resto del panel del veterinario y de la clínica (módulos 2 y 4), alergias y alertas (módulo 2).
+
+**Decisiones del usuario sobre el portal de C2b (2026-10-12), entran en C3 como punto 7.**
+
+- **Tope de clínicas:** un propietario puede tener como máximo **3 clínicas con vínculo activo** cuando se vincula él mismo desde el portal. El tope no aplica cuando una clínica lo registra o confirma su vínculo (una atención nunca se bloquea); desvincularse libera el cupo. Al llegar al tope, «Vincularme» se deshabilita con una línea que lo explica. Regla y criterio nuevos: RN nueva en el módulo 1 (siguiente número libre), criterio en HU-5.13 y RE-5.13.5 (sin subir revisión).
+- **Agendar vuelve a un solo formulario:** los cuatro pasos cansan. Clínica (texto fijo con una sola; tarjetas con varias), mascota, tipo, veterinario, calendario con día y hora, todo a la vista como antes, y al pulsar «Agendar» una ventanita corta de confirmación con clínica, mascota, día y hora. Se conservan la clínica única (hueco 8), la validación y la actualización en su sitio.
+- **Carga del servidor al actualizar en su sitio:** se explicó al usuario que no satura (son ~13 consultas solo cuando el propietario hace una acción, no un sondeo continuo). Se mantiene; si en producción se nota, la respuesta de la acción devolverá las partes actualizadas en una sola petición.
+- **Pulido final de M5:** antes de F el usuario dará su lista de inconformidades de interfaz y se hará una subetapa de pulido antes de pasar a los grafos.
+
+## Anexo C3 — Resultado
+
+**Escribió:** Claude Code (2026-10-13). **Estado:** entregada, pendiente de revisión. Sin migración: `verificaciones_email.proposito` es VARCHAR y el medio del consentimiento sigue siendo `alta_personal`.
+
+**Decisiones del usuario durante C3 (2026-10-13).**
+
+1. La regla del tope es **RN-116**, el siguiente número libre del módulo 1. En la tabla de equivalencias se anota que no es el RN-116 anterior, que ahora es RN-502.
+2. El tope aplica **solo cuando el propietario se vincula desde el portal**. Si se registra desde el enlace o QR de una clínica con una cuenta que ya existe, no se bloquea: es un canal de esa clínica, como el alta por el personal.
+3. Una cuenta pendiente que registró otra clínica **sí confirma el vínculo**. La otra clínica ve lo de siempre («Hay una cuenta con ese dato»). Si el titular confirma, queda ligado y su cuenta sigue pendiente hasta que active; esa clínica también le puede reenviar el enlace.
+4. En la activación, **el propietario no tiene «No acepto»**. Si no quiere el portal, deja vencer el enlace, y la limpieza borra la cuenta solo si no tiene mascotas.
+
+### Qué se hizo (lo más riesgoso primero)
+
+1. **Alta del propietario sin aceptación presencial** (RE-T.19.1, RN-G19, RN-109; Modelos §11).
+   - Ya no están «Soy el titular y estoy presente» ni «Acepto la política».
+   - `models/ActivacionPropietario.php` es el único lugar de la regla. Crea la cuenta pendiente (estado 0, sin contraseña ni consentimiento), la liga a la clínica y emite el enlace de 72 horas (`activacion_propietario`). Reenviar anula el enlace anterior.
+   - La limpieza forma parte de `CuentaTitular::limpiarPendientes()`. Borra la cuenta solo si no tiene mascotas (y con ellas sus registros clínicos) ni otros vínculos.
+   - La activación reutiliza `CuentaTitular::activar()`, igual que la del personal (§10.1): acepta la política, crea la contraseña y guarda la prueba en `consentimientos_datos`. La página es `activar_propietario` y dice qué clínica lo registró.
+   - Mientras no active:
+     - No entra por contraseña ni por Google, porque la cuenta está inactiva.
+     - La clínica sí lo encuentra, registra y atiende a sus mascotas (`Mascota::esPropietarioValido` acepta la cuenta pendiente).
+     - No le salen correos automáticos: ni recordatorios (ya filtraban `u.estado = 1`), ni correos de citas (`CitaController::enviarCorreoCita`), ni avisos de cambio de ficha (`Mascota::avisarPropietario`). Solo le llega el de activación.
+   - Si el documento o el correo ya tienen cuenta, la respuesta es un 409 con `existe`: el aviso de la búsqueda exacta y «Pedir confirmación» en el mismo formulario (RN-109). Nunca dice de quién es la cuenta.
+   - Clientes (Ana) y Pacientes (Beto) marcan «Aún no activa su cuenta» y ofrecen «Reenviar enlace» (`reenviar_activacion_propietario_ajax`, en la matriz como acción del personal).
+2. **Tope de clínicas** (RN-116, RE-5.13.5; Modelos §11.1).
+   - `VinculosPropietario::vincular()` cuenta las clínicas activas con vínculo activo, las mismas que muestra «Clínicas», bajo el bloqueo de la fila del propietario, y rechaza la cuarta.
+   - El portal deshabilita «Vincularme» y explica por qué en una línea. Lo calcula con las clínicas que ya leyó, así que el portal sigue en 13 consultas.
+   - La clínica sí liga a quien ya tiene 3. Desvincularse libera el cupo.
+3. **Búsqueda del propietario en tiempo real** (RE-1.5.1).
+   - `public/js/propietario-mascota.js` (nuevo) busca solo cuando hay un documento de 5 a 15 dígitos o un correo completo, tras 450 ms y una sola vez por valor.
+   - El servidor aplica el mismo límite por IP que la comprobación del NIT (`Security::checkVerificationLimit`, 20 en 15 minutos) y responde 429 con el aviso en la línea de ayuda.
+   - La respuesta es la misma para una cuenta nunca vinculada, desvinculada, de super-administrador o pendiente de otra clínica.
+4. **Vincular la mascota existente** (HU-1.5).
+   - El cliente y sus mascotas salen en las tarjetas mini de Usuarios.
+   - «Vincular a la clínica» cambia por la marca «Vinculada a la clínica», con un aviso breve, y la lista de pacientes se pone al día sin recargar (`refrescarPacientes`, con `enlazarEventosPacientes` para los eventos de lo que se repinta).
+   - No se usa `style.display` y hay una sentencia por línea. El buscador viejo de `medical-module.js` se quitó.
+5. **Hueco 6** (RN-115, RE-2.10.4).
+   - En el historial (cajón y ficha), una mascota desvinculada muestra «El propietario se desvinculó: solo lectura», sin «Registrar primera consulta» ni «Editar».
+   - Lo de otra clínica dice «Clínica X · solo lectura» a la vista, ya no en un `title`.
+6. **Formulario de mascota del personal** (registrar y editar) con `validacion-mascota.js` y las reglas de `ValidadorMascota::atributosHtml`, como en C2b.
+   - El servidor rechaza con `CampoInvalido` (campo y aviso corto), también para especie, raza, fecha y colores.
+   - El peso es texto con coma decimal. Sale «Desconocido» del sexo, que el servidor ya rechazaba.
+7. **Confirmación al desactivar un cliente:** solo «¿Desactivar a <nombre> como cliente?» y los botones de los modales de Zooki (`zookiConfirmarCorto` en `avisos.js`, con el estilo en `usuarios.css`).
+8. **Agendar del portal en un solo formulario.**
+   - Clínica (texto fijo si es una sola, tarjetas si son varias), mascota, tipo, veterinario, día y hora, todo a la vista y en dos columnas desde tableta.
+   - Una línea dice qué falta y «Agendar» se habilita al estar todo.
+   - Al pulsarlo, una confirmación corta con clínica, mascota, día y hora.
+   - Se conservan la clínica única, los horarios y la actualización en su sitio.
+9. **Documentos** (sin subir revisión):
+   - Reglas e historias: RE-T.19.1 y RE-T.19.2, HU-T.19, HU-1.2, RN-G19, RN-109, RN-116 (nueva), HU-5.13 y RE-5.13.5 (nuevo).
+   - ERS: RF-T.7 y RF-5.4.
+   - Matrices y conteos: 120 RN y 421 RE, en las historias, los requisitos, la Ficha Técnica y la Visión.
+   - Modelos §11, §11.1 y §12.3. Los cuatro diagramas (§10.1, §11, §11.1 y §12.3) renderizan con Mermaid CLI.
+
+### RE y pruebas
+
+| Punto | Prueba |
+|---|---|
+| Alta sin aceptación: pendiente, con enlace y sin consentimiento | `PropietarioClinicaTest::testAltaSinAceptacionCreaCuentaPendienteConEnlaceYSinConsentimiento`; `BaseV2MysqlTest::testC3MascotasYConfirmacionEnElEsquemaReal` (esquema real, también el duplicado) |
+| Al activar quedan la prueba y la contraseña; GET sin cambios y sin «No acepto» | `M5C3PersonalTest::testElAltaDejaLaCuentaPendienteYAlActivarQuedanLaPruebaYLaContrasena`, `testSinAceptarLaPoliticaNoSeActiva` |
+| Antes de activar: sin portal ni correos; la clínica registra y atiende | `M5C3PersonalTest::testAntesDeActivarNoEntraNiRecibeCorreosYLaClinicaRegistraYAtiendeSuMascota` |
+| Reenviar invalida el anterior; Sur no reenvía a un cliente de Norte | `M5C3PersonalTest::testReenviarInvalidaElEnlaceAnteriorYSoloLoHaceSuClinica` |
+| La limpieza no borra una pendiente con mascotas | `M5C3PersonalTest::testLaLimpiezaNoBorraUnaCuentaPendienteConMascotas` |
+| Documento o correo existentes van por la confirmación del vínculo; aislamiento Norte/Sur | `PropietarioClinicaTest::testControladorExigeDatosObligatoriosYRechazaDuplicados` (409); `M5C3PersonalTest::testUnaCuentaPendienteDeNorteVaPorLaConfirmacionDelVinculoDesdeSur` |
+| Límite por IP de la búsqueda | `M5C3PersonalTest::testLaBusquedaDelPropietarioTieneLimitePorIp` |
+| Mascota del personal: campo y aviso | `M5C3PersonalTest::testElServidorDiceElCampoYSuAvisoAlRechazarUnaMascotaDelPersonal`, `testLasVistasDelPersonalYaNoPidenLaAceptacionPresencial` |
+| RN-116 / RE-5.13.5 | `M5C3TopeClinicasTest` (5): la cuarta desde el portal se rechaza (modelo y controlador), la clínica sí liga con 3, desvincular libera, una suspendida no ocupa cupo, «Vincularme» deshabilitado con su línea |
+| Agendar en un solo formulario | `M5C2bPortalTest::testAgendarEsUnSoloFormularioConElPieDelModal` |
+| JS | `M5C3Personal.test.cjs` (13): búsqueda con espera y aviso, límite, sin vínculo, tarjetas mini, vincular sin recarga, `hidden` en vez de `style.display`, aviso de existente, confirmación corta (Clientes y Agendar), lo que falta para agendar, solo lectura sin botones y «solo lectura» visible. `M5C1Busqueda.test.cjs` sigue con la regla de C1 en el módulo nuevo. |
+
+Mutaciones comprobadas: sin el tope, sin el filtro del aviso de ficha o del correo de cita, con la limpieza ignorando las mascotas, sin el límite por IP, con la cuenta creada activa o con la confirmación del vínculo que exige `estado = 1`, sus pruebas fallan.
+
+### Verificación
+
+- `vendor/bin/phpunit`: **665 en verde** (13 nuevas). Sin MySQL: 3902 aserciones y 29 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 4265 aserciones y ninguna omitida.
+- JS: **142 en verde** (13 nuevas).
+- Mermaid CLI: §10.1, §11, §11.1 y §12.3 renderizan.
+- Vistas tocadas sin `style=`, `on…=` ni `<script>` con código. No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+
+### Pendientes y riesgos
+
+- **El límite por IP es compartido:** 20 búsquedas en 15 minutos por IP, el mismo contador de la comprobación del NIT. Una recepción con mucho movimiento detrás de una sola IP podría llegar a él. Se avisa en la línea de ayuda y hay que medirlo en producción.
+- **Una cuenta pendiente no tiene otras vías.** Con Google sale «inactiva», «Recuperar contraseña» no le sirve y el autorregistro con su correo da la respuesta genérica sin enviar nada. La única vía es su enlace, y la clínica se lo reenvía.
+- **«Pendiente» se reconoce por estado 0, sin contraseña, con un enlace de activación y sin consentimiento.** Cuando llegue la supresión de cuentas (HU-5.14, v2.1), revisar que una cuenta anonimizada no se confunda con una pendiente.
+- **Siguen recargando la página**, fuera del alcance de C3: registrar o editar una mascota del personal y desactivar un cliente.
+- Lo visual solo se ve en el navegador: tarjetas de «Nueva mascota», confirmación corta, Agendar en dos columnas y celular.
+
+### Pantallas para el usuario
+
+1. **Beto (Norte) → Pacientes › Nuevo registro › Propietario.**
+   - Registra a alguien nuevo con un correo de prueba. Ya no aparecen las casillas de aceptación.
+   - Sale el aviso «Le enviamos el enlace…» y pasa a la pestaña Mascota con el propietario ya elegido.
+   - Registra su mascota: «<» no se deja escribir en el nombre, un peso de 200 muestra el aviso bajo el campo y no se abre ninguna ventana.
+   - En `logs/correos/` está «Activa tu cuenta en Zooki». Ábrelo en una ventana privada: dice «Clínica Norte te registró», no tiene «No acepto»; acepta, crea la contraseña y entra a su portal.
+2. **Ana (Norte) → Usuarios › Clientes**, antes de activar al cliente de la pantalla 1:
+   - Su tarjeta dice «Aún no activa su cuenta» y tiene el sobre «Reenviar enlace». El aviso es breve y el enlace del correo anterior dice «Hay un enlace más reciente».
+   - Desactiva a otro cliente sin citas pendientes: la confirmación solo pregunta «¿Desactivar a … como cliente?», con los botones de Zooki.
+3. **Diego (Sur) → Pacientes › Nuevo registro › Mascota.**
+   - Escribe el documento de Fabio (1000000006) sin pulsar nada: tras una pausa corta sale «Hay una cuenta con ese dato…» con «Pedir confirmación por correo». Con el correo de Gina sale lo mismo.
+   - Después vincula a Fabio con Sur, desde el portal de Fabio o confirmando el correo, y vuelve a buscarlo: salen Fabio y sus mascotas en tarjetas.
+   - «Vincular a la clínica» cambia por «Vinculada a la clínica» y la mascota aparece en la lista sin recargar.
+4. **Fabio → portal.**
+   - En Agendar está todo a la vista; una línea dice qué falta y «Agendar» abre una confirmación corta con clínica, mascota, día y hora.
+   - En Clínicas, si tu base local tiene al menos 4 clínicas activas: con 3 vinculadas, «Vincularme» queda deshabilitado con la línea «Ya tienes 3 clínicas…»; desvincúlate de una y vuelve a habilitarse.
+5. **Beto (Norte) → historia de una mascota desvinculada.**
+   - Ana desactiva a Fabio en Norte (sin citas pendientes).
+   - En Consultas, abre el historial de una consulta anterior de su mascota: arriba dice «El propietario se desvinculó: solo lectura» y no ofrece registrar nada.
+   - Si la mascota tiene vacunas de Sur, dicen «Clínica Sur · solo lectura».
+
+### C3 — Revisión (2026-10-13)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de la prueba del usuario. PHP 665 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 142/142. El alta sin aceptación presencial vive en `ActivacionPropietario` y reutiliza la activación del personal; la cuenta pendiente no entra, no recibe correos automáticos y no se borra si tiene mascotas; el tope de 3 (RN-116) se comprueba con la fila del propietario bloqueada; la búsqueda en tiempo real no distingue cuentas. Las cuatro decisiones del usuario durante C3 quedan en el Anexo.
+
+**Para el pulido de M5 (no bloquea):**
+
+1. **Límite de la búsqueda del personal:** `MascotaController` llama a `Security::checkVerificationLimit(null)`, el contador por IP de 20 en 15 minutos que comparte la comprobación pública del NIT. El personal está autenticado: debe usar el contador por usuario (`checkVerificationLimit(Contexto::idUsuario())`, 120 en 15 minutos, como ya hace `IdentidadController`), para que una recepción con mucho movimiento detrás de una sola IP no se bloquee. Ajustar su prueba.
+2. **Medio del consentimiento:** la activación del propietario guarda el medio `alta_personal`, que describe el alta del personal. Revisar si conviene un medio propio (p. ej. `alta_clinica`) para que la prueba diga cómo aceptó; si requiere cambiar un ENUM, va con migración.
+3. Siguen recargando la página registrar o editar una mascota del personal y desactivar un cliente.

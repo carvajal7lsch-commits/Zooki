@@ -492,7 +492,8 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- El registro con formulario o Google y el alta presencial de propietarios exige aceptación del titular antes de crear la cuenta. Excepción para personal nuevo: la cuenta se crea pendiente e inerte (sin contraseña ni consentimiento); el titular recibe un enlace que vence en 72 horas, acepta la política y crea su contraseña para activarla. Si vence sin usarse, se elimina la cuenta pendiente únicamente si no tiene otros vínculos. El personal no acepta en nombre del titular. El super-administrador está exento de aceptación y de su prueba por ser una cuenta operativa de plataforma.
+- El registro con formulario o Google exige aceptación del titular antes de crear la cuenta. Excepción para las cuentas que crea una clínica (personal nuevo y propietario dado de alta por el personal): la cuenta se crea pendiente e inerte (sin contraseña, sin consentimiento y, para el propietario, sin portal); el titular recibe un enlace que vence en 72 horas, acepta la política y crea su contraseña para activarla. La clínica puede reenviar el enlace; el anterior deja de servir. Si vence sin usarse, la cuenta pendiente se elimina únicamente si no tiene otros vínculos y, si es de un propietario, tampoco mascotas (sus registros son de la clínica). El personal no acepta en nombre del titular. El super-administrador está exento de aceptación y de su prueba por ser una cuenta operativa de plataforma.
+- _(M5)_ Mientras el propietario no active su cuenta, la clínica registra y atiende a sus mascotas, pero no le salen correos automáticos (recordatorios, citas, cambios de ficha) salvo el de activación.
 - Se guarda la prueba: quién, qué versión, por qué medio, cuándo y desde qué IP.
 - Si la política cambia, en el siguiente inicio de sesión se pide aceptar la nueva versión antes de continuar.
 - Revocar la autorización lleva a la solicitud de eliminación de la cuenta (HU-5.14).
@@ -537,9 +538,10 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - Campos obligatorios: nombre, tipo y número de documento, teléfono y correo.
 - No se permiten documentos ni correos duplicados.
 - Si la cuenta ya existe, el personal la busca por documento o correo completo; el vínculo nuevo solo se crea al confirmar el titular desde un enlace enviado a ese correo (RN-109). La solicitud no modifica su identidad ni contraseña.
+- _(M5)_ Un propietario nuevo queda pendiente hasta que él mismo acepte la política y cree su contraseña desde el enlace de activación (HU-T.19); el personal no acepta por él.
 - Desde el perfil del propietario se listan todas sus mascotas.
 
-**Reglas de negocio:** RN-101, RN-103, RN-109, RN-G06 · **Dependencias:** —
+**Reglas de negocio:** RN-101, RN-103, RN-109, RN-G06, RN-G19 · **Dependencias:** —
 
 ### HU-1.3 — Buscar paciente
 
@@ -1571,10 +1573,11 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 - Desde el portal veo la lista de clínicas activas de la plataforma y puedo vincularme a una con un clic; como ya inicié sesión, no se me pide verificar de nuevo el correo.
 - La clínica nueva solo ve mis datos de propietario; mis mascotas se le vinculan cuando agendo con ellas allí o cuando la clínica las atiende (RN-110).
+- Desde el portal llego como máximo a 3 clínicas con vínculo activo (RN-116). Con 3, «Vincularme» se deshabilita con una línea que lo explica; desvincularme de una libera el cupo. El tope no aplica cuando una clínica me registra o confirmo su solicitud de vínculo: una atención nunca se bloquea por esto.
 - Puedo desvincularme de una clínica; la clínica conserva lo que registró, deja de ver mis datos nuevos y pierde la autorización a la historia de otras clínicas (RN-115). No puedo desvincularme mientras tenga citas pendientes en ella: primero debo cancelarlas.
 - Cada vinculación y desvinculación queda en auditoría.
 
-**Reglas de negocio:** RN-109, RN-110, RN-115 · **Requisitos:** RF-5.4 · **Dependencias:** HU-5.8, HU-5.9
+**Reglas de negocio:** RN-109, RN-110, RN-115, RN-116 · **Requisitos:** RF-5.4 · **Dependencias:** HU-5.8, HU-5.9
 
 ### HU-5.14 — Eliminar mi cuenta (derecho de supresión)
 
@@ -1992,7 +1995,7 @@ Mientras llega la v2.1, la solicitud de eliminación de cuenta (HU-5.14) se atie
 
 ## Apéndice — Cobertura y trazabilidad (RN → HU)
 
-Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** están cubiertas por al menos una historia de usuario.
+Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** están cubiertas por al menos una historia de usuario.
 
 **Reglas sin historia asociada:** — ninguna: cobertura total —
 
@@ -2018,7 +2021,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-G16 | HU-T.19, HU-5.14 |
 | RN-G17 | HU-T.16 |
 | RN-G18 | HU-T.17, HU-8.1 |
-| RN-G19 | HU-0.1, HU-T.18, HU-T.19 |
+| RN-G19 | HU-0.1, HU-T.18, HU-T.19, HU-1.2 |
 | RN-G20 | HU-0.1, HU-T.18 |
 | RN-G21 | HU-T.18 |
 | RN-G22 | HU-T.2 |
@@ -2052,6 +2055,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-113 | HU-2.1, HU-2.5, HU-2.9, HU-2.10, HU-5.12 |
 | RN-114 | HU-5.5, HU-5.9 |
 | RN-115 | HU-5.12, HU-5.13 |
+| RN-116 | HU-5.13 |
 | RN-201 | HU-2.1, HU-2.7 |
 | RN-202 | HU-2.1, HU-2.8 |
 | RN-203 | HU-2.1, HU-2.2 |

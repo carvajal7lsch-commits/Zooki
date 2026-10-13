@@ -298,6 +298,18 @@ async function loadOwners() {
                 card.append(ver);
                 // RN-115: a un cliente desvinculado la clínica ya no lo edita.
                 if (o.estado == 1) card.append(editar);
+                // M5 C3: aún no activa su cuenta; la clínica le reenvía el enlace (propietario-mascota.js).
+                if (o.pendiente_activacion == 1) {
+                    const pendiente = document.createElement('span');
+                    pendiente.className = 'tag-mini tag-mini--aviso';
+                    pendiente.textContent = 'Aún no activa su cuenta';
+                    const reenviar = document.createElement('button');
+                    reenviar.type = 'button';
+                    reenviar.className = 'action-btn-mini';
+                    reenviar.textContent = 'Reenviar enlace';
+                    reenviar.dataset.reenviarActivacion = o.id_usuario;
+                    card.append(pendiente, reenviar);
+                }
                 grid.append(card);
             }
         });
@@ -599,27 +611,46 @@ function hideDossier() {
 function addNewPetFromDossier() {
     abrirModalRegistro('mascota');
     const documento = document.getElementById('dossierOwnerDoc').innerText;
-    document.getElementById('ownerSearchInput').value = documento;
-    searchOwnersForPet(documento).catch(() => zookiAviso('No se pudo buscar al propietario.'));
+    // M5 C3: la búsqueda del propietario vive en propietario-mascota.js.
+    ZookiPropietarioMascota.buscarAhora(documento);
 }
 
 function editOwnerFromDossier() {
     editOwner(currentDossierId);
 }
 
+/**
+ * HU-1.2 y RE-T.19.1 (M5 C3): la clínica registra al propietario y él activa
+ * su cuenta desde el correo. Si el documento o el correo ya tienen cuenta, el
+ * aviso y «Pedir confirmación» salen en el formulario (RN-109), sin ventana.
+ */
 async function saveOwner(e) {
     e.preventDefault();
     if (!e.target.reportValidity()) return;
-    const fd=new FormData(e.target);
-    if (itiNewOwnerPhone && itiNewOwnerPhone.isValidNumber()) fd.set('telefono',itiNewOwnerPhone.getNumber());
+    const fd = new FormData(e.target);
+    if (itiNewOwnerPhone && itiNewOwnerPhone.isValidNumber()) fd.set('telefono', itiNewOwnerPhone.getNumber());
+    const existente = document.getElementById('propietarioExistente');
+    ZookiPropietarioMascota.limpiarExistente(existente);
     try {
-        const res=await (await fetch('index.php?action=guardar_propietario_ajax',{method:'POST',body:fd})).json();
-        if (!res.success) { zookiAviso(res.message); return; }
-        zookiAviso(res.message); e.target.reset();
+        const res = await (await fetch('index.php?action=guardar_propietario_ajax', { method: 'POST', body: fd })).json();
+        if (res.existe) {
+            ZookiPropietarioMascota.mostrarExistente(existente, res);
+            return;
+        }
+        if (!res.success) {
+            ZookiPropietarioMascota.mostrarError(existente, res.message || 'No se pudo registrar al propietario.');
+            return;
+        }
+        zookiToast(res.message);
+        e.target.reset();
         await loadOwners();
-        const pestaña=document.querySelector('[data-target-tab="tabNuevaMascota"]'); if (pestaña) pestaña.click();
-        selectOwner({id_usuario:res.id_usuario,nombre_completo:fd.get('nombre_completo')});
-    } catch (error) { zookiAviso('No se pudo registrar al propietario.'); }
+        const pestana = document.querySelector('[data-target-tab="tabNuevaMascota"]');
+        if (pestana) pestana.click();
+        // Queda elegido para su primera mascota: es cliente de esta clínica y no tiene mascotas.
+        ZookiPropietarioMascota.buscarAhora(fd.get('email'));
+    } catch (error) {
+        ZookiPropietarioMascota.mostrarError(existente, 'No se pudo registrar al propietario. Revisa la conexión.');
+    }
 }
 
 async function editOwner(doc) {
@@ -756,66 +787,49 @@ async function loadBreeds(idEspecie, targetId, selectedRaza = null) {
     } catch (e) { console.error(e); }
 }
 
-function validatePetForm(form) {
-    let valid = true;
-    const inputs = form.querySelectorAll('input, select, textarea');
-    form.querySelectorAll('.error-msg').forEach(m => m.remove());
-    form.querySelectorAll('.input-group').forEach(g => g.classList.remove('error'));
-    
-    inputs.forEach(f => {
-        // Ignorar campos ocultos o no requeridos que esten vacios y sean válidos
-        if (!f.willValidate) return;
-
-        if (!f.checkValidity()) {
-            valid = false;
-            const group = f.closest('.input-group') || f.parentElement;
-            if (group && !group.querySelector('.error-msg')) {
-                group.classList.add('error');
-                const msg = document.createElement('span');
-                msg.className = 'error-msg';
-                // Mensajes personalizados
-                if (f.validity.valueMissing) {
-                    msg.innerText = 'Requerido';
-                } else if (f.validity.rangeOverflow) {
-                    msg.innerText = 'Máximo permitido: ' + f.max;
-                } else if (f.validity.rangeUnderflow) {
-                    msg.innerText = 'Mínimo permitido: ' + f.min;
-                } else if (f.validity.tooLong) {
-                    msg.innerText = 'Demasiado largo';
-                } else {
-                    msg.innerText = 'Valor inválido';
-                }
-                group.appendChild(msg);
-            }
+/**
+ * M5 C3: los formularios de mascota del personal validan mientras se escribe
+ * con las reglas de ValidadorMascota (validacion-mascota.js, como en C2b) y
+ * el rechazo del servidor va bajo su campo, nunca en una ventana.
+ */
+function mascotaValida(form) {
+    if (!window.ZookiValidacionMascota.validar(form)) return false;
+    const propietario = form.querySelector('[name="id_propietario"]');
+    if (propietario && propietario.required && !propietario.value) {
+        const ayuda = document.getElementById('ownerSearchAyuda');
+        if (ayuda) {
+            ayuda.textContent = 'Busca y elige al propietario.';
+            ayuda.classList.add('cuenta-validacion--error');
         }
-    });
-    return valid;
+        document.getElementById('ownerSearchInput')?.focus();
+        return false;
+    }
+    return true;
+}
+
+async function enviarMascota(form, accion) {
+    const respuesta = await fetch(`index.php?action=${accion}`, { method: 'POST', body: new FormData(form) });
+    try {
+        return await respuesta.json();
+    } catch (error) {
+        return { success: false, message: 'No se pudo guardar. Intenta nuevamente.' };
+    }
 }
 
 async function savePet(e) {
     e.preventDefault();
-    if (typeof validatePetForm === 'function' && !validatePetForm(e.target)) return;
+    const form = e.target;
+    if (!mascotaValida(form)) return;
     try {
-        const response = await fetch('index.php?action=guardar_mascota_ajax', { method: 'POST', body: new FormData(e.target) });
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        const text = await response.text();
-        let res;
-        try {
-            res = JSON.parse(text);
-        } catch (jsonErr) {
-            console.error('Failed to parse JSON. Raw response:', text);
-            throw new Error('La respuesta del servidor no es un JSON válido.');
-        }
+        const res = await enviarMascota(form, 'guardar_mascota_ajax');
         if (res.success) {
             zookiRecargarConAviso(res.message || 'Mascota registrada.');
-        } else {
-            zookiAviso(res.message || 'No se pudo registrar la mascota.');
+            return;
         }
+        window.ZookiValidacionMascota.mostrarServidor(form, res);
     } catch (err) {
         console.error(err);
-        zookiAviso('No se pudo procesar el registro. Intenta nuevamente.');
+        window.ZookiValidacionMascota.mostrarServidor(form, { message: 'No se pudo procesar el registro. Revisa la conexión.' });
     }
 }
 
@@ -876,102 +890,24 @@ async function editPet(id) {
 
 async function updatePet(e) {
     e.preventDefault();
-    if (typeof validatePetForm === 'function' && !validatePetForm(e.target)) return;
+    const form = e.target;
+    if (!mascotaValida(form)) return;
     try {
-        const response = await fetch('index.php?action=actualizar_mascota_ajax', { method: 'POST', body: new FormData(e.target) });
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        const text = await response.text();
-        let res;
-        try {
-            res = JSON.parse(text);
-        } catch (jsonErr) {
-            console.error('Failed to parse JSON. Raw response:', text);
-            throw new Error('La respuesta del servidor no es un JSON válido.');
-        }
+        const res = await enviarMascota(form, 'actualizar_mascota_ajax');
         if (res.success) {
             // C9.1: recarga ya; el aviso sale al volver.
             zookiRecargarConAviso('Mascota actualizada con éxito');
-        } else {
-            Swal.fire('Error', res.message || 'Error desconocido al actualizar la mascota.', 'error');
+            return;
         }
+        window.ZookiValidacionMascota.mostrarServidor(form, res);
     } catch (err) {
         console.error(err);
-        Swal.fire('Error', 'Ocurrió un error al actualizar los datos: ' + err.message, 'error');
+        window.ZookiValidacionMascota.mostrarServidor(form, { message: 'No se pudo guardar. Revisa la conexión.' });
     }
 }
 
 // --- BUSCADOR DE PROPIETARIOS ---
 let allOwnersList = [];
-
-async function searchOwnersForPet(term) {
-    const panel=document.getElementById('mascotasExistentes');
-    document.getElementById('petOwnerDoc').value=''; panel.replaceChildren();
-    const res=await pedirJson(`index.php?action=buscar_propietario_exacto_ajax&identificador=${encodeURIComponent(term.trim())}`);
-    const o=res.propietario;
-    if (!o) { panel.textContent='Sin coincidencia exacta. Puedes registrar un propietario nuevo con su aceptación presencial.'; return; }
-    // RE-1.5.1 y RN-109: sin vínculo activo el servidor no manda nombre, contacto ni mascotas.
-    if (!o.vinculado) {
-        const aviso=document.createElement('p');
-        aviso.textContent=o.mensaje;
-        panel.append(aviso);
-        const btn=document.createElement('button'); btn.type='button'; btn.className='btn-modal-secondary'; btn.textContent='Solicitar confirmación por correo';
-        btn.addEventListener('click',async()=>{
-            btn.disabled=true;
-            try {
-                const fd=new FormData(); fd.set('identificador',term.trim());
-                const r=await (await fetch('index.php?action=solicitar_vinculo_propietario_ajax',{method:'POST',body:fd})).json();
-                zookiAviso(r.message);
-            } finally { btn.disabled=false; }
-        }); panel.append(btn);
-        return;
-    }
-    const nombre=document.createElement('p');
-    nombre.textContent=o.nombre_completo;
-    panel.append(nombre);
-    for (const mascota of o.mascotas) {
-        const card=document.createElement('div'); card.className='mascota-existente';
-        const foto=document.createElement('img'); foto.src=fotoMascotaUrl(mascota.url_foto); foto.alt=''; foto.addEventListener('error',()=>usarFotoPorDefecto(foto));
-        const texto=document.createElement('p'); texto.textContent=[mascota.nombre,mascota.nombre_especie,razaConIndicada(mascota.nombre_raza,mascota.raza_indicada)].join(' · ');
-        card.append(foto,texto);
-        if (o.vinculado) {
-            const btn=document.createElement('button'); btn.type='button'; btn.className='btn-modal-secondary'; btn.textContent='Vincular ' + mascota.nombre;
-            btn.addEventListener('click',async()=>{
-                const fd=new FormData(); fd.set('id_propietario',o.id_usuario); fd.set('id_mascota',mascota.id_mascota);
-                const r=await (await fetch('index.php?action=vincular_mascota_ajax',{method:'POST',body:fd})).json();
-                if (r.success) location.reload(); else zookiAviso(r.message);
-            }); card.append(btn);
-        }
-        panel.append(card);
-    }
-    if (o.vinculado) {
-        const btn=document.createElement('button'); btn.type='button'; btn.className='btn-modal-secondary'; btn.textContent='Es otra mascota: registrar nueva';
-        btn.addEventListener('click',()=>selectOwner(o)); panel.append(btn);
-        if (!o.mascotas.length) selectOwner(o);
-    }
-}
-
-function selectOwner(owner) {
-    document.getElementById('petOwnerDoc').value = owner.id_usuario;
-    const input = document.getElementById('ownerSearchInput');
-    const wrapper = input.closest('.input-wrapper');
-    if (wrapper) wrapper.style.display = 'none';
-    else input.style.display = 'none';
-    document.getElementById('ownerSuggestions').style.display = 'none';
-    document.getElementById('selectedOwnerName').innerText = owner.nombre_completo;
-    document.getElementById('selectedOwnerInfo').classList.remove('d-none');
-}
-
-function clearOwnerSelection() {
-    document.getElementById('petOwnerDoc').value = '';
-    const input = document.getElementById('ownerSearchInput');
-    input.value = ''; 
-    const wrapper = input.closest('.input-wrapper');
-    if (wrapper) wrapper.style.display = '';
-    else input.style.display = 'block';
-    document.getElementById('selectedOwnerInfo').classList.add('d-none');
-}
 
 async function searchOwnersForEdit(term) {
     if (allOwnersList.length === 0) {
@@ -1164,12 +1100,32 @@ function avisarAdjuntosRechazados(res) {
 }
 
 /**
- * RE-2.5.4 / RE-2.10.1: un registro de otra clínica lleva el nombre de la
- * clínica que lo hizo. Lo propio no lleva marca.
+ * RE-2.5.4 / RE-2.10.1 y RE-2.10.4: un registro de otra clínica lleva a la
+ * vista el nombre de la clínica que lo hizo y que es de solo lectura (antes
+ * «solo lectura» solo salía al pasar el ratón). Lo propio no lleva marca.
  */
 function etiquetaOrigen(registro) {
     if (!registro || registro.es_propia !== false) return '';
-    return `<span class="origen-clinica" title="Registrado por otra clínica; solo lectura"><i class="fas fa-hospital"></i> ${escaparTexto(registro.clinica_nombre)}</span>`;
+    return `<span class="origen-clinica"><i class="fas fa-hospital" aria-hidden="true"></i> ${escaparTexto(registro.clinica_nombre)} · solo lectura</span>`;
+}
+
+/** Hueco 6 (M5 C3; RN-115): la mascota se desvinculó de esta clínica. */
+const AVISO_SOLO_LECTURA = 'El propietario se desvinculó: solo lectura';
+
+/**
+ * Pone o quita, al principio de `contenedor`, el aviso de solo lectura.
+ * Devuelve true si la mascota es de solo lectura.
+ */
+function avisoSoloLectura(contenedor, mascota) {
+    const previo = contenedor.querySelector(':scope > .aviso-solo-lectura');
+    if (previo) previo.remove();
+    if (!mascota || !mascota.solo_lectura) return false;
+    const aviso = document.createElement('p');
+    aviso.className = 'aviso-solo-lectura';
+    aviso.setAttribute('role', 'status');
+    aviso.textContent = AVISO_SOLO_LECTURA;
+    contenedor.prepend(aviso);
+    return true;
 }
 
 function tablaTratamientos(tratamientos) {
@@ -1237,6 +1193,8 @@ async function viewMedicalHistory(id, nombre) {
 
         // 1. Datos de Mascota
         const m = data.mascota;
+        // Hueco 6: desvinculada, la clínica solo lee lo suyo y no se ofrece registrar nada.
+        const soloLectura = avisoSoloLectura(document.querySelector('#drawerHistorial .drawer-body'), m);
         hcNumber.innerText = m.numero_historia_clinica || 'Sin asignar';
         petSpecie.innerText = m.nombre_especie || '---';
         petAge.innerText = m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : 'Edad desconocida';
@@ -1308,7 +1266,7 @@ async function viewMedicalHistory(id, nombre) {
         } else if (m.numero_historia_clinica) {
             timeline.innerHTML = '<div class="empty-table"><i class="fas fa-folder-open"></i><p>No hay consultas registradas para esta mascota.</p></div>';
         } else {
-            mostrarSinHistoria(timeline, id, m.nombre, closeHistorialDrawer);
+            mostrarSinHistoria(timeline, id, m.nombre, closeHistorialDrawer, soloLectura);
         }
     } catch (e) {
         console.error(e);
@@ -1322,8 +1280,8 @@ async function viewMedicalHistory(id, nombre) {
  * en lugar de dejarlo vacío y, si la vista tiene el formulario de consulta,
  * se ofrece abrirlo desde ahí.
  */
-function mostrarSinHistoria(contenedor, idMascota, nombre, alAbrirConsulta = null) {
-    const puedeConsultar = Boolean(document.getElementById('modalConsulta'));
+function mostrarSinHistoria(contenedor, idMascota, nombre, alAbrirConsulta = null, soloLectura = false) {
+    const puedeConsultar = !soloLectura && Boolean(document.getElementById('modalConsulta'));
     contenedor.innerHTML = `
         <div class="empty-table">
             <i class="fas fa-folder-plus"></i>
@@ -1721,7 +1679,10 @@ function renderPetDashboard(data, id) {
     if (editBtn) {
         editBtn.setAttribute('data-id', id);
         editBtn.onclick = () => editPet(id);
+        // Hueco 6: con la mascota desvinculada no se edita ni se registra nada.
+        editBtn.hidden = Boolean(m.solo_lectura);
     }
+    const soloLectura = avisoSoloLectura(document.getElementById('dossierPetDashboardSection'), m);
 
     // 2. Pet Info Card
     const photo = document.getElementById('dashPetPhoto');
@@ -1843,7 +1804,7 @@ function renderPetDashboard(data, id) {
         } else if (m.numero_historia_clinica) {
             timelineDiv.innerHTML = '<div class="empty-table"><i class="fas fa-history"></i><p>No hay eventos registrados en el expediente clínico.</p></div>';
         } else {
-            mostrarSinHistoria(timelineDiv, id, m.nombre);
+            mostrarSinHistoria(timelineDiv, id, m.nombre, null, soloLectura);
         }
     }
 
@@ -2320,10 +2281,6 @@ async function verFichaBasica(id) {
             <p>Historia clínica: ${escaparTexto(mascota.numero_historia_clinica || 'Se asigna en la primera consulta')}</p>`,confirmButtonText:'Cerrar'});
     } catch (error) { zookiAviso('No se pudo abrir la ficha de esta clínica.'); }
 }
-document.addEventListener('DOMContentLoaded',()=>{
-    document.getElementById('buscarPropietarioExacto')?.addEventListener('click',()=>searchOwnersForPet(document.getElementById('ownerSearchInput').value).catch(()=>zookiAviso('No se pudo buscar al propietario.')));
-});
-
 // Eventos de pacientes externos a la vista (AGENTS.md).
 const eventosPacientes = {
     evento0: (event, element) => { switchModule('owners'); },
@@ -2371,7 +2328,6 @@ const eventosPacientes = {
     evento42: (event, element) => { savePet(event); },
     evento43: (event, element) => { loadBreeds(element.value, 'new_raza'); },
     evento44: (event, element) => { checkOtherBreed(element, 'newOtherBreedGroup'); },
-    evento45: (event, element) => { clearOwnerSelection(); },
     evento46: (event, element) => { closeDrawer('drawerHistorial'); },
     evento47: (event, element) => { closeDrawer('drawerHistorial'); },
     evento48: (event, element) => { closeDrawer('drawerVacuna'); },
@@ -2387,13 +2343,18 @@ const eventosPacientes = {
     evento58: (event, element) => { saveAppointment(event); },
     evento59: (event, element) => { closeLightbox(); },
 };
-document.addEventListener('DOMContentLoaded',()=>{
-    document.querySelectorAll('[data-c3-change]').forEach(element => element.addEventListener('change', event => eventosPacientes[element.dataset.c3Change](event, element)));
-    document.querySelectorAll('[data-c3-click]').forEach(element => element.addEventListener('click', event => eventosPacientes[element.dataset.c3Click](event, element)));
-    document.querySelectorAll('[data-c3-error]').forEach(element => element.addEventListener('error', event => eventosPacientes[element.dataset.c3Error](event, element)));
-    document.querySelectorAll('[data-c3-keyup]').forEach(element => element.addEventListener('keyup', event => eventosPacientes[element.dataset.c3Keyup](event, element)));
-    document.querySelectorAll('[data-c3-submit]').forEach(element => element.addEventListener('submit', event => eventosPacientes[element.dataset.c3Submit](event, element)));
-});
+/**
+ * Enlaza los eventos data-c3-* dentro de `raiz`. M5 C3: se vuelve a llamar
+ * con la parte que se repinta en su sitio (propietario-mascota.js).
+ */
+function enlazarEventosPacientes(raiz) {
+    raiz.querySelectorAll('[data-c3-change]').forEach(element => element.addEventListener('change', event => eventosPacientes[element.dataset.c3Change](event, element)));
+    raiz.querySelectorAll('[data-c3-click]').forEach(element => element.addEventListener('click', event => eventosPacientes[element.dataset.c3Click](event, element)));
+    raiz.querySelectorAll('[data-c3-error]').forEach(element => element.addEventListener('error', event => eventosPacientes[element.dataset.c3Error](event, element)));
+    raiz.querySelectorAll('[data-c3-keyup]').forEach(element => element.addEventListener('keyup', event => eventosPacientes[element.dataset.c3Keyup](event, element)));
+    raiz.querySelectorAll('[data-c3-submit]').forEach(element => element.addEventListener('submit', event => eventosPacientes[element.dataset.c3Submit](event, element)));
+}
+document.addEventListener('DOMContentLoaded', () => enlazarEventosPacientes(document));
 
 let itiNewOwnerPhone;
 let itiEditOwnerPhone;

@@ -23,7 +23,7 @@ class Security {
         'landing', 'privacidad', 'terminos', 'cookies', 'login', 'solicitar_reset_password_ajax', 'reset_password',
         'procesar_reset_password_ajax', 'register', 'process_register', 'verificar_email', 'estado_verificacion_ajax',
         'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax',
-        'confirmar_vinculo_propietario', 'activar_personal', 'confirmar_cambio_correo', 'validar_cuenta_ajax',
+        'confirmar_vinculo_propietario', 'activar_personal', 'activar_propietario', 'confirmar_cambio_correo', 'validar_cuenta_ajax',
         'invitacion_personal', 'registro_clinica', 'registrar_clinica_ajax', 'activar_clinica', 'reportar_nit_ajax',
     ];
 
@@ -110,7 +110,7 @@ class Security {
     public static function autorizar(string $action): void {
         // Las acciones publicas no exigen sesion, contexto ni rol.
         if (in_array($action, self::$publicActions, true)) {
-            if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'confirmar_cambio_correo', 'invitacion_personal', 'registrar_clinica_ajax', 'activar_clinica', 'reportar_nit_ajax'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            if (in_array($action, ['confirmar_vinculo_propietario', 'verificar_email', 'activar_personal', 'activar_propietario', 'confirmar_cambio_correo', 'invitacion_personal', 'registrar_clinica_ajax', 'activar_clinica', 'reportar_nit_ajax'], true) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 require_once __DIR__ . '/Csrf.php';
                 if (!Csrf::validate()) throw new AccesoDenegado(403,'La sesión del formulario venció. Abre de nuevo el enlace.');
             }
@@ -395,6 +395,7 @@ class Security {
             'nuevo_propietario', 'guardar_propietario_ajax',
             'listar_propietarios_ajax', 'get_propietario_ajax', 'actualizar_propietario_ajax',
             'buscar_propietario_exacto_ajax', 'solicitar_vinculo_propietario_ajax', 'vincular_mascota_ajax',
+            'reenviar_activacion_propietario_ajax',
             'registrar_cita_ajax', 'listar_citas_ajax',
             'get_cita_ajax', 'reprogramar_cita_ajax', 'confirmar_cita_ajax',
             'listar_veterinarios_ajax', 'listar_tipos_cita_ajax',

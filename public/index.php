@@ -44,6 +44,11 @@ switch ($action) {
         (new PropietarioController())->solicitarVinculoAjax();
         break;
 
+    case "reenviar_activacion_propietario_ajax":
+        require_once '../controllers/PropietarioController.php';
+        (new PropietarioController())->reenviarActivacionAjax();
+        break;
+
     case "buscar_propietario_exacto_ajax":
         require_once '../controllers/MascotaController.php';
         (new MascotaController())->buscarPropietarioExactoAjax();
@@ -188,9 +193,11 @@ switch ($action) {
         break;
 
     case "activar_personal":
+    case "activar_propietario":
     case "confirmar_cambio_correo":
         require_once '../controllers/IdentidadController.php';
-        (new IdentidadController())->enlace($action === 'activar_personal' ? 'activacion_personal' : 'cambio_correo');
+        $propositos = ['activar_personal' => 'activacion_personal', 'activar_propietario' => 'activacion_propietario', 'confirmar_cambio_correo' => 'cambio_correo'];
+        (new IdentidadController())->enlace($propositos[$action]);
         break;
 
     case "registro_clinica":

@@ -1253,9 +1253,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ── Agendar cita por pasos (M5 C2b): clínica y mascota, tipo y veterinario,
-    // día y hora, y confirmar. Los horarios salen cuando hay tipo, veterinario
-    // y día; mientras tanto, cada paso dice qué falta.
+    // ── Agendar cita (M5 C3, decisión del usuario): un solo formulario con la
+    // clínica, la mascota, el tipo, el veterinario, el día y la hora a la
+    // vista. Los horarios salen cuando hay tipo, veterinario y día; una línea
+    // dice qué falta y «Agendar» abre una confirmación corta.
     const bookingModal = document.getElementById('portalBookingModal');
     const form = document.getElementById('portalBookingForm');
     if (!bookingModal || !form) return;
@@ -1269,22 +1270,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById('booking_fecha');
     const horaInput = document.getElementById('booking_hora');
     const slots = document.getElementById('booking_slots');
-    const resumen = document.getElementById('booking_resumen');
     const guia = document.getElementById('booking_guia');
     const confirmar = document.getElementById('booking_confirmar');
-    const siguiente = form.querySelector('[data-paso-siguiente]');
-    const atras = form.querySelector('[data-paso-atras]');
     // Días sin atención en toda la jornada de cada clínica (1 = lunes … 7 = domingo); se relee tras actualizar.
     const diasCerrados = () => (JSON.parse(form.dataset.diasCerrados || '{}')[clinicaSelect.value]) || [];
     let turno = 0; // si el usuario cambia algo mientras cargan los horarios, se ignora la respuesta vieja
-    let paso = 1;
     const catalogosPorClinica = {};
 
     const minutosDe = h => { const [hh, mm] = h.split(':').map(Number); return hh * 60 + mm; };
     const hora12 = h => { const [hh, mm] = h.split(':').map(Number); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a. m.' : 'p. m.'}`; };
     const hoyIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-    const enLista = partes => partes.length > 1 ? `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}` : partes[0];
-    const textoOpcion = sel => (sel.selectedOptions[0] ? sel.selectedOptions[0].textContent.trim() : '');
 
     const calendario = typeof flatpickr !== 'undefined' ? flatpickr(dateInput, {
         locale: window.zkLocale || 'es',
@@ -1307,50 +1302,20 @@ document.addEventListener('DOMContentLoaded', () => {
         slots.innerHTML = `<div class="slot-state"><i class="${icono}" aria-hidden="true"></i><p>${escapeHtml(texto)}</p></div>`;
     }
 
-    /** Qué falta en cada paso; vacío si el paso está completo. */
-    function faltanDelPaso(n) {
-        const faltan = [];
-        if (n === 1) {
-            if (!clinicaSelect.value) faltan.push('la clínica');
-            if (!mascotaSelect.value) faltan.push('la mascota');
-        }
-        if (n === 2) {
-            if (!tipoCitaSelect.value) faltan.push('el tipo de cita');
-            if (!vetSelect.value) faltan.push('el veterinario');
-        }
-        if (n === 3) {
-            if (!dateInput.value) faltan.push('el día');
-            if (!horaInput.value) faltan.push('la hora');
-        }
-        return faltan;
-    }
+    /** Lo que falta para agendar, en el orden del formulario (faltanParaAgendar, más abajo). */
+    const faltan = () => faltanParaAgendar({
+        clinica: clinicaSelect.value,
+        mascota: mascotaSelect.value,
+        tipo: tipoCitaSelect.value,
+        veterinario: vetSelect.value,
+        dia: dateInput.value,
+        hora: horaInput.value,
+    });
 
-    function actualizarPaso() {
-        const faltan = faltanDelPaso(paso);
-        guia.textContent = faltan.length ? `Elige ${enLista(faltan)}.` : '';
-        siguiente.disabled = faltan.length > 0;
-        confirmar.disabled = paso !== 4;
-    }
-
-    function irAPaso(n) {
-        paso = n;
-        form.querySelectorAll('[data-paso]').forEach(f => { f.hidden = Number(f.dataset.paso) !== n; });
-        form.querySelectorAll('[data-paso-indicador]').forEach(li => {
-            const numero = Number(li.dataset.pasoIndicador);
-            li.classList.toggle('is-activo', numero === n);
-            li.classList.toggle('is-hecho', numero < n);
-            if (numero === n) li.setAttribute('aria-current', 'step');
-            else li.removeAttribute('aria-current');
-        });
-        atras.hidden = n === 1;
-        siguiente.hidden = n === 4;
-        confirmar.hidden = n !== 4;
-        if (n === 3) {
-            if (calendario) calendario.redraw();
-            if (!horaInput.value) cargarHoras();
-        }
-        if (n === 4) pintarResumen();
-        actualizarPaso();
+    function actualizarGuia() {
+        const pendientes = faltan();
+        guia.textContent = guiaParaAgendar(pendientes);
+        confirmar.disabled = pendientes.length > 0;
     }
 
     /** Horarios repartidos en Mañana y Tarde, como en el panel del personal. */
@@ -1390,13 +1355,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 c.setAttribute('aria-pressed', String(c === chip));
             });
             horaInput.value = chip.dataset.hora;
-            actualizarPaso();
+            actualizarGuia();
         }
     });
 
     async function cargarHoras() {
         horaInput.value = '';
-        actualizarPaso();
+        actualizarGuia();
 
         if (!clinicaSelect.value || !tipoCitaSelect.value || !vetSelect.value) {
             estadoSlots('guia', 'Elige primero el tipo de cita y el veterinario.');
@@ -1450,21 +1415,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /** El último paso: lo que se va a agendar, para confirmarlo de un vistazo. */
-    function pintarResumen() {
+    /** Clínica, mascota, día y hora: lo que dice la confirmación corta. */
+    function filasDeLaCita() {
         const dia = calendario && calendario.selectedDates[0]
             ? calendario.selectedDates[0].toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
             : dateInput.value;
-        const motivo = document.getElementById('booking_motivo').value.trim();
-        const filas = [
+        return [
             ['Clínica', clinicaSelect.texto()],
             ['Mascota', mascotaSelect.texto()],
-            ['Tipo de cita', textoOpcion(tipoCitaSelect)],
-            ['Veterinario', textoOpcion(vetSelect)],
-            ['Día y hora', `${dia}, ${horaInput.value ? hora12(horaInput.value) : ''}`],
+            ['Día', dia],
+            ['Hora', horaInput.value ? hora12(horaInput.value) : ''],
         ];
-        if (motivo) filas.push(['Motivo', motivo]);
-        resumen.innerHTML = filas.map(([etiqueta, valor]) => `<div><dt>${escapeHtml(etiqueta)}</dt><dd>${escapeHtml(valor)}</dd></div>`).join('');
     }
 
     /** Tipos de cita y veterinarios de la clínica elegida (una vez por clínica). */
@@ -1496,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error al cargar catálogos:', e);
             tipoCitaSelect.innerHTML = vetSelect.innerHTML = '<option value="">No se pudo cargar. Cierra y vuelve a abrir.</option>';
         }
-        actualizarPaso();
+        actualizarGuia();
     }
 
     const abrirBooking = async () => {
@@ -1505,9 +1466,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (calendario) calendario.clear();
         // Con una sola mascota no hay nada que elegir.
         mascotaSelect.elegirUnica();
-        irAPaso(1);
         openModal('portalBookingModal');
+        if (calendario) calendario.redraw();
         await cargarCatalogos();
+        cargarHoras();
     };
 
     // Todos los botones de agendar (menú lateral, barra inferior y avisos), delegados: se repintan.
@@ -1520,11 +1482,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === bookingModal) closeModal('portalBookingModal');
     });
 
-    siguiente.addEventListener('click', () => {
-        if (faltanDelPaso(paso).length === 0) irAPaso(paso + 1);
-    });
-    atras.addEventListener('click', () => irAPaso(paso - 1));
-
     // Otra clínica: otros tipos, veterinarios y días de atención.
     clinicaSelect.alCambiar(async () => {
         if (calendario) {
@@ -1534,15 +1491,15 @@ document.addEventListener('DOMContentLoaded', () => {
         await cargarCatalogos();
         cargarHoras();
     });
-    mascotaSelect.alCambiar(actualizarPaso);
+    mascotaSelect.alCambiar(actualizarGuia);
     tipoCitaSelect.addEventListener('change', cargarHoras);
     vetSelect.addEventListener('change', cargarHoras);
 
     const enviarFormulario = async (ignoreWarning = false) => {
         const submitBtn = confirmar;
         const reactivar = () => {
-            submitBtn.querySelector('span').textContent = 'Confirmar cita';
-            actualizarPaso();
+            submitBtn.querySelector('span').textContent = 'Agendar';
+            actualizarGuia();
         };
         submitBtn.disabled = true;
         submitBtn.querySelector('span').textContent = 'Agendando...';
@@ -1587,10 +1544,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     onCancel: reactivar
                 });
             } else {
-                // El horario pudo ocuparse mientras tanto: se vuelve al paso de día y hora.
+                // El horario pudo ocuparse mientras tanto: se vuelven a pedir los horarios libres.
                 zookiToast(res.message || 'No se pudo agendar. Inténtalo nuevamente.', 'error');
                 reactivar();
-                irAPaso(3);
                 cargarHoras();
             }
         } catch (error) {
@@ -1600,12 +1556,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (paso !== 4 || confirmar.disabled) return;
-        enviarFormulario(false);
+        if (faltan().length > 0) {
+            actualizarGuia();
+            return;
+        }
+        const confirmada = await zookiConfirmarCorto('¿Agendar esta cita?', 'Agendar', filasDeLaCita());
+        if (confirmada) enviarFormulario(false);
     });
 });
+
+/**
+ * M5 C3: lo que falta para agendar, en el orden del formulario. Recibe los
+ * valores elegidos y devuelve sus nombres; vacío si se puede agendar.
+ */
+function faltanParaAgendar(valores) {
+    const nombres = [
+        ['clinica', 'la clínica'],
+        ['mascota', 'la mascota'],
+        ['tipo', 'el tipo de cita'],
+        ['veterinario', 'el veterinario'],
+        ['dia', 'el día'],
+        ['hora', 'la hora'],
+    ];
+    return nombres.filter(([clave]) => !valores[clave]).map(([, nombre]) => nombre);
+}
+
+/** La línea bajo el formulario: «Elige la mascota y la hora.», o nada si está completo. */
+function guiaParaAgendar(faltan) {
+    if (!faltan.length) return '';
+    const lista = faltan.length > 1 ? `${faltan.slice(0, -1).join(', ')} y ${faltan[faltan.length - 1]}` : faltan[0];
+    return `Elige ${lista}.`;
+}
 
 /**
  * Tarjetas de elección (radios) como un campo: valor, texto, cambio y la

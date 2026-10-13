@@ -285,6 +285,17 @@
         return ok;
     }
 
+    /**
+     * M5 C3 (decisión del usuario): solo la pregunta y los botones, con el
+     * estilo de Zooki; nada sobre otras clínicas. Deshacerlo depende del
+     * propietario, por eso se confirma.
+     */
+    async function confirmarDesactivarCliente(interruptor, nombre) {
+        const ok = await zookiConfirmarCorto('¿Desactivar a ' + nombre + ' como cliente?', 'Desactivar');
+        if (!ok) interruptor.checked = true;
+        return ok;
+    }
+
     async function cambiarEstadoPersonal(interruptor) {
         const nombre = interruptor.dataset.nombre;
         if (!(await confirmarDesactivar(interruptor, '¿Desactivar a ' + nombre + ' en esta clínica? Su cuenta y sus otros roles no cambian.'))) return;
@@ -327,7 +338,7 @@
         const activar = interruptor.checked;
         // El interruptor no se enciende solo: el vínculo sigue inactivo hasta que confirme.
         if (activar) interruptor.checked = false;
-        if (!activar && !(await confirmarDesactivar(interruptor, '¿Desactivar el vínculo de ' + nombre + ' con esta clínica? Su cuenta y sus otras clínicas no cambian.'))) return;
+        if (!activar && !(await confirmarDesactivarCliente(interruptor, nombre))) return;
         interruptor.disabled = true;
         const c = await cliente(interruptor.dataset.id);
         let r = { success: false, message: 'No se pudo cargar el cliente.' };
@@ -410,6 +421,16 @@
         const r = await pedir('index.php?action=reenviar_invitacion_ajax', datos);
         boton.disabled = false;
         mensaje(r.success ? 'success' : 'error', r.message || 'No se pudo reenviar la invitación.');
+    }
+
+    // M5 C3 (RE-T.19.1): el cliente que aún no activa su cuenta recibe un enlace nuevo de 72 horas.
+    async function reenviarActivacion(boton) {
+        boton.disabled = true;
+        const datos = new FormData();
+        datos.append('id_usuario', boton.dataset.id);
+        const r = await pedir('index.php?action=reenviar_activacion_propietario_ajax', datos);
+        boton.disabled = false;
+        mensaje(r.success ? 'success' : 'error', r.message || 'No se pudo reenviar el enlace.');
     }
 
     async function cancelarInvitacion(boton) {
@@ -505,6 +526,8 @@
             verCliente(id);
         } else if (boton.dataset.accion === 'reenviar-invitacion') {
             reenviarInvitacion(boton);
+        } else if (boton.dataset.accion === 'reenviar-activacion') {
+            reenviarActivacion(boton);
         } else if (boton.dataset.accion === 'cancelar-invitacion') {
             cancelarInvitacion(boton);
         } else if (boton.dataset.accion === 'restablecer') {

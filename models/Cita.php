@@ -37,7 +37,7 @@ class Cita extends ModeloClinica
     {
         return 'SELECT c.*, m.nombre AS mascota_nombre, m.id_propietario,
                 v.nombre_completo AS veterinario_nombre, v.email AS veterinario_email,
-                p.nombre_completo AS propietario_nombre,
+                p.nombre_completo AS propietario_nombre, p.estado AS propietario_estado,
                 ' . ContactoPropietario::columna('p.email', 'pcv', 'email') . ',
                 ' . ContactoPropietario::columna('p.telefono', 'pcv', 'propietario_telefono') . ',
                 tc.nombre_tipo AS tipo_cita_nombre,

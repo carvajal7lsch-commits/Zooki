@@ -11,6 +11,16 @@ require_once __DIR__ . '/VinculoClinica.php';
  */
 final class VinculosPropietario extends ModeloPropietario
 {
+    /**
+     * RN-116 (decisión del usuario, M5 C3): clínicas con vínculo activo a las
+     * que el propietario puede llegar vinculándose él mismo desde el portal.
+     * No cuenta para el alta por una clínica ni para la confirmación de su
+     * vínculo: una atención nunca se bloquea por esto.
+     */
+    public const TOPE_CLINICAS = 3;
+
+    public const MENSAJE_TOPE = 'Ya tienes 3 clínicas. Desvincúlate de una para sumar otra.';
+
     /** Clínicas activas con vínculo activo del propietario, con su autorización de historia. */
     public function clinicas(): array
     {
@@ -38,6 +48,25 @@ final class VinculosPropietario extends ModeloPropietario
         return $consulta->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /** RN-116: ¿ya llegó al tope de clínicas con vínculo activo? */
+    public function alTope(): bool
+    {
+        return $this->vinculosActivos() >= self::TOPE_CLINICAS;
+    }
+
+    /**
+     * Las mismas que muestra «Clínicas» (clinicas()): una clínica suspendida
+     * no ocupa cupo, porque desde el portal no podría desvincularse de ella.
+     */
+    private function vinculosActivos(): int
+    {
+        $consulta = $this->conn->prepare("SELECT COUNT(*) FROM propietario_clinica pc
+            JOIN clinicas c ON c.id_clinica = pc.id_clinica
+            WHERE pc.id_propietario = ? AND pc.estado = 'activo' AND c.estado = 'activa'");
+        $consulta->execute([$this->propietario()]);
+        return (int) $consulta->fetchColumn();
+    }
+
     /** Horario de cada clínica vinculada (HU-5.1, RE-5.1.7), indexado por id_clinica. */
     public function horarios(): array
     {
@@ -53,7 +82,8 @@ final class VinculosPropietario extends ModeloPropietario
     /**
      * RE-5.13.1/2: se vincula con un clic, sin repetir la verificación del
      * correo (ya inició sesión). La clínica solo ve sus datos de propietario:
-     * las mascotas se le vinculan al agendar o al atenderlas allí.
+     * las mascotas se le vinculan al agendar o al atenderlas allí. RE-5.13.5:
+     * con 3 clínicas activas se rechaza; desvincularse libera el cupo.
      */
     public function vincular(int $idClinica): void
     {
@@ -68,14 +98,22 @@ final class VinculosPropietario extends ModeloPropietario
             throw new InvalidArgumentException('Ya estás vinculado a esa clínica.');
         }
 
-        if ($vinculo === null) {
-            $this->conn->prepare("INSERT INTO propietario_clinica (id_propietario, id_clinica, estado) VALUES (?, ?, 'activo')")
-                ->execute([$idPropietario, $idClinica]);
-        } else {
-            $this->conn->prepare("UPDATE propietario_clinica SET estado = 'activo' WHERE id_propietario = ? AND id_clinica = ?")
-                ->execute([$idPropietario, $idClinica]);
-        }
-        $this->auditar('INSERT', 'propietario_clinica', $idPropietario, ['estado' => $vinculo], ['estado' => 'activo'], 'El propietario se vinculó desde el portal (HU-5.13)', $idClinica);
+        Transaccion::ejecutar($this->conn, function () use ($idPropietario, $idClinica, $vinculo): void {
+            // RN-116: se cuenta bajo el bloqueo de su fila, para que dos clics a la vez no pasen el tope.
+            $bloqueo = $this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+            $this->conn->prepare('SELECT id_usuario FROM usuarios WHERE id_usuario = ?' . $bloqueo)->execute([$idPropietario]);
+            if ($this->alTope()) {
+                throw new InvalidArgumentException(self::MENSAJE_TOPE);
+            }
+            if ($vinculo === null) {
+                $this->conn->prepare("INSERT INTO propietario_clinica (id_propietario, id_clinica, estado) VALUES (?, ?, 'activo')")
+                    ->execute([$idPropietario, $idClinica]);
+            } else {
+                $this->conn->prepare("UPDATE propietario_clinica SET estado = 'activo' WHERE id_propietario = ? AND id_clinica = ?")
+                    ->execute([$idPropietario, $idClinica]);
+            }
+            $this->auditar('INSERT', 'propietario_clinica', $idPropietario, ['estado' => $vinculo], ['estado' => 'activo'], 'El propietario se vinculó desde el portal (HU-5.13)', $idClinica);
+        });
     }
 
     /**

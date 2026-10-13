@@ -956,6 +956,70 @@
     }
 }
 
+/* M5 C3 (decisión del usuario): confirmación corta con el estilo de Zooki
+   (zookiConfirmarCorto, avisos.js): la pregunta, unas filas y los botones de
+   los modales de Usuarios. La usan Clientes y Agendar del portal. */
+.swal2-popup.zooki-confirmacion {
+    width: min(26rem, calc(100vw - 2rem));
+    padding: 1.5rem 1.5rem 1.25rem;
+    border-radius: 18px;
+    font-family: inherit;
+}
+
+.zooki-confirmacion__titulo {
+    margin: 0;
+    padding: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.35;
+    color: var(--text-primary, #0f172a);
+    text-align: left;
+}
+
+.swal2-html-container.zooki-confirmacion__cuerpo {
+    margin: 0.9rem 0 0;
+    padding: 0;
+    text-align: left;
+}
+
+.zooki-confirmacion__filas {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0;
+}
+
+.zooki-confirmacion__filas div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.875rem;
+}
+
+.zooki-confirmacion__filas dt { color: var(--text-secondary, #64748b); }
+
+.zooki-confirmacion__filas dd {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+    text-align: right;
+}
+
+.swal2-actions.zooki-confirmacion__botones {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin: 1.25rem 0 0;
+}
+
+@media (max-width: 767px) {
+    .swal2-actions.zooki-confirmacion__botones { flex-direction: column-reverse; }
+
+    .swal2-actions.zooki-confirmacion__botones button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* Aumentar z-index de SweetAlert2 para que aparezca por encima del modal de usuarios */
 .swal2-container {
     z-index: 30000 !important;
@@ -1119,6 +1183,14 @@
     color: #64748b;
     font-size: 0.75rem;
 }
+
+/* M5 C3: cliente que aún no activa su cuenta. */
+.tag-mini--aviso {
+    color: #9a3412;
+    background: #fff7ed;
+}
+
+.tag-mini--aviso i { color: #9a3412; }
 
 .card-contact-mini {
     display: flex;

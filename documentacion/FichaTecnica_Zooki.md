@@ -118,7 +118,7 @@ La línea base de la v1.x se organizó en cuatro sprints de una semana; luego el
 | v1 · Sprints 1–4 | Mascotas, historia clínica, agenda, portal y reportes | Sistema v1.x en producción |
 | v2 · Fase 1 | Visión y alcance; ERS (ISO/IEC/IEEE 29148) | Alcance de la v2.0 fijado |
 | v2 · Fase 2 | Modelos: grafos, procesos de negocio, flujos de sistema y diagrama de componentes | Documento de Modelos y maestro draw.io |
-| v2 · Fase 3 | Reglas de Negocio v2 (119 RN), Historias de Usuario v2 (95 HU) y Requisitos Específicos (420 RE) | Trazabilidad RN → HU → RE completa |
+| v2 · Fase 3 | Reglas de Negocio v2 (120 RN), Historias de Usuario v2 (95 HU) y Requisitos Específicos (421 RE) | Trazabilidad RN → HU → RE completa |
 | v2 · Construcción | Esquema multi-inquilino y módulos v2 | Plataforma SaaS v2.0 |
 
 ## 8. Análisis de Riesgos
@@ -160,7 +160,7 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 
 **v1.11.0 — en producción.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
 
-**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.3), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.2, 119 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.2, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.2, 420 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
+**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.3), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.2, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.2, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.2, 421 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
 
 ## 12. Entregables Finales
 

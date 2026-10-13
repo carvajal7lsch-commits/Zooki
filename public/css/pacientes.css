@@ -29,6 +29,73 @@
 .pacientes-estilo-27 { margin-top: 1.5rem; }
 .pacientes-estilo-28 { background: #f0fdf4; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.85rem; color: #16a34a; }
 .pacientes-estilo-29 { margin-top: 1.5rem; }
-.consentimiento-presencial { display:grid; gap:.5rem; max-width:32rem; }
-.mascota-existente { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin:.75rem 0; }
-.mascota-existente img { width:48px; height:48px; border-radius:8px; object-fit:cover; }
+/* ── M5 C3: alta del propietario y búsqueda en «Nueva mascota» ── */
+.propietario-nota {
+    margin: 1rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.propietario-existente {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+}
+
+.propietario-existente[hidden] { display: none; }
+
+.propietario-existente__aviso {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.propietario-existente__aviso--error { color: var(--danger, #dc2626); }
+
+.busqueda-propietario__ayuda { display: block; }
+
+.mascotas-existentes {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.mascotas-existentes:empty { display: none; }
+
+.mascotas-existentes__lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.mascota-existente .avatar-mini {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.selected-badge[hidden],
+.input-wrapper[hidden] { display: none; }
+
+.close-selected-owner {
+    border: 0;
+    background: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+}
+
+/* Resumen del rechazo del servidor en los formularios de mascota (validacion-mascota.js). */
+.mascota-form__resumen {
+    margin: 0.75rem 1.5rem 0;
+    font-size: 0.85rem;
+    color: var(--danger, #dc2626);
+}
+
+.mascota-form__resumen[hidden] { display: none; }
+
+.mascota-aviso { display: block; }

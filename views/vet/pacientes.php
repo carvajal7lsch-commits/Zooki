@@ -371,7 +371,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                             <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="petsTableBody">
                         <?php if (count($mascotas) > 0): ?>
                             <?php foreach ($mascotas as $m): ?>
                                 <tr data-id="<?php echo htmlspecialchars((string)($m["id_mascota"]), ENT_QUOTES, 'UTF-8'); ?>" data-estado="<?php echo htmlspecialchars((string)($m["estado"]), ENT_QUOTES, 'UTF-8'); ?>">
@@ -582,15 +582,13 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <span class="error-message display-none-error"></span>
                             </div>
                         </div>
+                        <?php // RE-T.19.1 (decisión del usuario, M5 C3): el titular acepta la política él mismo, desde el enlace. ?>
+                        <p class="propietario-nota">Le enviaremos un correo para que active su cuenta: él acepta la política de datos y crea su contraseña. Mientras tanto puedes registrar y atender a sus mascotas.</p>
+                        <?php // RN-109: si el documento o el correo ya tienen cuenta, aquí sale el aviso y «Pedir confirmación». ?>
+                        <div class="propietario-existente" id="propietarioExistente" aria-live="polite" hidden></div>
                     </div>
                     <div class="users-modal__footer">
                         <button type="button" class="btn-modal-secondary close-modal-btn" data-modal="modalNuevoRegistro">Cancelar</button>
-                        <div class="consentimiento-presencial">
-                            <p>Entrega este formulario al titular para que lea la política y acepte directamente.</p>
-                            <a href="index.php?action=privacidad" target="_blank" rel="noopener">Leer política de tratamiento de datos</a>
-                            <label><input type="checkbox" name="titular_presente" value="1" required> Soy el titular y estoy presente.</label>
-                            <label><input type="checkbox" name="acepta_politica" value="1" required> Acepto la política de tratamiento de datos.</label>
-                        </div>
                         <button type="submit" class="btn-modal-primary">
                             <i class="fas fa-check-circle"></i> Registrar Propietario
                         </button>
@@ -600,7 +598,8 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
             <!-- TAB MASCOTA -->
             <div id="tabNuevaMascota" class="modal-tab-content">
-                <form id="formMascota" data-c3-submit="evento42" enctype="multipart/form-data">
+                <?php // M5 C3: validación en tiempo real y restricción de entrada con las reglas de ValidadorMascota (validacion-mascota.js). ?>
+                <form id="formMascota" data-c3-submit="evento42" enctype="multipart/form-data" novalidate data-validacion-mascota data-aviso-obligatorio="<?= htmlspecialchars(ValidadorMascota::AVISO_OBLIGATORIO, ENT_QUOTES, 'UTF-8') ?>">
                     <div class="users-modal__body">
                         <div class="form-grid-split">
                             <div class="photo-side">
@@ -615,9 +614,10 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <div class="pet-extra-panel mt-1rem">
                                     <div class="input-group">
                                         <label class="m-0"><i class="fas fa-palette"></i> Colores Base</label>
-                                        <select id="newSelectedColoresInput" name="colores[]" multiple required class="pacientes-estilo-4">
+                                        <select id="newSelectedColoresInput" name="colores[]" multiple required class="pacientes-estilo-4" data-aviso-formato="<?= htmlspecialchars(ValidadorMascota::AVISO_COLORES, ENT_QUOTES, 'UTF-8') ?>">
                                             <!-- Cargado vía JS -->
                                         </select>
+                                        <small class="cuenta-validacion mascota-aviso" id="newSelectedColoresInput_aviso" aria-live="polite"></small>
                                     </div>
                                     <div class="input-group mt-1rem">
                                         <label><i class="fas fa-toggle-on"></i> Estado de la Mascota</label>
@@ -640,19 +640,21 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                             <label>Nombre de la Mascota</label>
                                             <div class="input-wrapper">
                                                 <i class="fas fa-paw field-icon"></i>
-                                                <input type="text" name="nombre" id="new_nombre" required placeholder="Ej: Firulais" maxlength="<?= ValidadorMascota::NOMBRE_MAX ?>">
+                                                <input type="text" name="nombre" id="new_nombre" required placeholder="Ej: Firulais" autocomplete="off" <?= ValidadorMascota::atributosHtml('nombre') ?>>
                                             </div>
+                                            <small class="cuenta-validacion mascota-aviso" id="new_nombre_aviso" aria-live="polite"></small>
                                         </div>
 
                                         <div class="input-group">
                                             <label>Sexo</label>
                                             <div class="input-wrapper">
                                                 <i class="fas fa-venus-mars field-icon"></i>
-                                                <select name="sexo" id="new_sexo" required>
+                                                <select name="sexo" id="new_sexo" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
                                                     <option value="Macho">Macho</option>
                                                     <option value="Hembra">Hembra</option>
                                                 </select>
                                             </div>
+                                            <small class="cuenta-validacion mascota-aviso" id="new_sexo_aviso" aria-live="polite"></small>
                                         </div>
                                     </div>
 
@@ -661,20 +663,22 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                             <label>Especie</label>
                                             <div class="input-wrapper">
                                                 <i class="fas fa-cat field-icon"></i>
-                                                <select name="especie" id="new_especie" required data-c3-change="evento43">
+                                                <select name="especie" id="new_especie" required data-c3-change="evento43" <?= ValidadorMascota::atributosHtml('especie') ?>>
                                                     <option value="">Seleccione...</option>
                                                 </select>
                                             </div>
+                                            <small class="cuenta-validacion mascota-aviso" id="new_especie_aviso" aria-live="polite"></small>
                                         </div>
 
                                         <div class="input-group">
                                             <label>Raza</label>
                                             <div class="input-wrapper">
                                                 <i class="fas fa-dna field-icon"></i>
-                                                <select name="raza" id="new_raza" required data-c3-change="evento44">
+                                                <select name="raza" id="new_raza" required data-c3-change="evento44" <?= ValidadorMascota::atributosHtml('raza') ?>>
                                                     <option value="">Especie primero</option>
                                                 </select>
                                             </div>
+                                            <small class="cuenta-validacion mascota-aviso" id="new_raza_aviso" aria-live="polite"></small>
                                         </div>
                                     </div>
 
@@ -683,16 +687,18 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                             <label>Fecha Nacimiento</label>
                                             <div class="input-wrapper">
                                                 <i class="far fa-calendar-alt field-icon"></i>
-                                                <input type="text" class="flatpickr-date" name="fecha_nacimiento" id="new_fecha_nacimiento" required placeholder="Seleccione fecha...">
+                                                <input type="text" class="flatpickr-date" name="fecha_nacimiento" id="new_fecha_nacimiento" required placeholder="Seleccione fecha..." <?= ValidadorMascota::atributosHtml('fecha_nacimiento') ?>>
                                             </div>
+                                            <small class="cuenta-validacion mascota-aviso" id="new_fecha_nacimiento_aviso" aria-live="polite"></small>
                                         </div>
 
                                         <div class="input-group">
                                             <label>Peso (Kg)</label>
                                             <div class="input-wrapper">
                                                 <i class="fas fa-weight field-icon"></i>
-                                                <input type="number" step="0.01" name="peso" id="new_peso" required placeholder="Ej: 4.5" min="0.1" max="<?= ValidadorMascota::PESO_MAX_KG ?>">
+                                                <input type="text" name="peso" id="new_peso" required placeholder="Ej: 4,5" <?= ValidadorMascota::atributosHtml('peso') ?>>
                                             </div>
+                                            <small class="cuenta-validacion mascota-aviso" id="new_peso_aviso" aria-live="polite"></small>
                                         </div>
                                     </div>
 
@@ -700,31 +706,33 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                         <label>Raza por confirmar</label>
                                         <div class="input-wrapper">
                                             <i class="fas fa-tag field-icon"></i>
-                                            <input type="text" name="raza_indicada" maxlength="<?= ValidadorMascota::RAZA_MAX ?>" id="new_nueva_raza" placeholder="¿Qué raza es?">
+                                            <input type="text" name="raza_indicada" id="new_nueva_raza" placeholder="¿Qué raza es?" autocomplete="off" <?= ValidadorMascota::atributosHtml('raza_indicada') ?>>
                                         </div>
+                                        <small class="cuenta-validacion mascota-aviso" id="new_nueva_raza_aviso" aria-live="polite"></small>
                                     </div>
 
 
 
-                                    <div class="input-group rel-pos">
-                                        <label>Vincular Propietario *</label>
-                                        <div class="input-wrapper">
+                                    <?php // RE-1.5.1 (M5 C3): al completar un documento o un correo, se busca solo, con espera corta y límite por IP. ?>
+                                    <div class="input-group rel-pos busqueda-propietario">
+                                        <label for="ownerSearchInput">Propietario *</label>
+                                        <div class="input-wrapper" id="ownerSearchWrapper">
                                             <i class="fas fa-search field-icon"></i>
-                                            <input type="text" id="ownerSearchInput" placeholder="Documento o correo completo..."  autocomplete="off">
-                                            <button type="button" id="buscarPropietarioExacto" class="btn-modal-secondary">Buscar coincidencia exacta</button>
+                                            <input type="text" id="ownerSearchInput" placeholder="Documento o correo completo..." autocomplete="off" aria-describedby="ownerSearchAyuda" data-buscar-propietario <?= ValidadorCuenta::atributosHtml('email') ?>>
                                         </div>
+                                        <small class="cuenta-validacion busqueda-propietario__ayuda" id="ownerSearchAyuda" aria-live="polite">Escribe el documento o el correo completo: lo buscamos solo.</small>
                                         <input type="hidden" name="id_propietario" id="petOwnerDoc" required>
-                                        <div id="ownerSuggestions" class="suggestions-list"></div>
                                         <div id="mascotasExistentes" class="mascotas-existentes" aria-live="polite"></div>
-                                        <div id="selectedOwnerInfo" class="selected-badge d-none">
-                                            <i class="fas fa-user-check"></i> <span id="selectedOwnerName"></span>
-                                            <i class="fas fa-times-circle close-selected-owner" data-c3-click="evento45"></i>
+                                        <div id="selectedOwnerInfo" class="selected-badge" hidden>
+                                            <i class="fas fa-user-check" aria-hidden="true"></i> <span id="selectedOwnerName"></span>
+                                            <button type="button" class="close-selected-owner" data-quitar-propietario aria-label="Cambiar de propietario"><i class="fas fa-times-circle" aria-hidden="true"></i></button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <p class="mascota-form__resumen" data-resumen-mascota hidden></p>
                     <div class="users-modal__footer">
                         <button type="button" class="btn-modal-secondary close-modal-btn" data-modal="modalNuevoRegistro">Cancelar</button>
                         <button type="submit" class="btn-modal-primary">
@@ -745,7 +753,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="formEditMascota">
+        <form id="formEditMascota" novalidate data-validacion-mascota data-aviso-obligatorio="<?= htmlspecialchars(ValidadorMascota::AVISO_OBLIGATORIO, ENT_QUOTES, 'UTF-8') ?>">
             <input type="hidden" name="id_mascota" id="edit_id_mascota">
             <div class="users-modal__body">
                 <div class="form-grid-split">
@@ -761,7 +769,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                         <div class="pet-extra-panel mt-1rem">
                             <div class="input-group">
                                 <label class="m-0"><i class="fas fa-palette"></i> Colores Base</label>
-                                <select id="editSelectedColoresInput" name="colores[]" multiple required class="w-100 mt-2">
+                                <select id="editSelectedColoresInput" name="colores[]" multiple required class="w-100 mt-2" data-aviso-formato="<?= htmlspecialchars(ValidadorMascota::AVISO_COLORES, ENT_QUOTES, 'UTF-8') ?>">
                                     <!-- Cargado vía JS -->
                                 </select>
                             </div>
@@ -786,21 +794,21 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                     <label>Nombre de la Mascota</label>
                                     <div class="input-wrapper">
                                         <i class="fas fa-paw field-icon"></i>
-                                        <input type="text" name="nombre" id="edit_nombre" required maxlength="<?= ValidadorMascota::NOMBRE_MAX ?>" class="validate-name">
+                                        <input type="text" name="nombre" id="edit_nombre" required autocomplete="off" <?= ValidadorMascota::atributosHtml('nombre') ?>>
                                     </div>
-                                    <span class="error-message display-none-error"></span>
+                                    <small class="cuenta-validacion mascota-aviso" id="edit_nombre_aviso" aria-live="polite"></small>
                                 </div>
 
                                 <div class="input-group">
                                     <label>Sexo</label>
                                     <div class="input-wrapper">
                                         <i class="fas fa-venus-mars field-icon"></i>
-                                        <select name="sexo" id="edit_sexo" required>
+                                        <select name="sexo" id="edit_sexo" required <?= ValidadorMascota::atributosHtml('sexo') ?>>
                                             <option value="Macho">Macho</option>
                                             <option value="Hembra">Hembra</option>
-                                            <option value="Desconocido">Desconocido</option>
                                         </select>
                                     </div>
+                                    <small class="cuenta-validacion mascota-aviso" id="edit_sexo_aviso" aria-live="polite"></small>
                                 </div>
                             </div>
 
@@ -809,20 +817,22 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                     <label>Especie</label>
                                     <div class="input-wrapper">
                                         <i class="fas fa-cat field-icon"></i>
-                                        <select name="especie" id="edit_especie" required class="load-breeds-select" data-target="edit_raza">
+                                        <select name="especie" id="edit_especie" required class="load-breeds-select" data-target="edit_raza" <?= ValidadorMascota::atributosHtml('especie') ?>>
                                             <option value="">Seleccione...</option>
                                         </select>
                                     </div>
+                                    <small class="cuenta-validacion mascota-aviso" id="edit_especie_aviso" aria-live="polite"></small>
                                 </div>
 
                                 <div class="input-group">
                                     <label>Raza</label>
                                     <div class="input-wrapper">
                                         <i class="fas fa-dna field-icon"></i>
-                                        <select name="raza" id="edit_raza" required class="check-other-breed" data-target="editOtherBreedGroup">
+                                        <select name="raza" id="edit_raza" required class="check-other-breed" data-target="editOtherBreedGroup" <?= ValidadorMascota::atributosHtml('raza') ?>>
                                             <option value="">Seleccione especie...</option>
                                         </select>
                                     </div>
+                                    <small class="cuenta-validacion mascota-aviso" id="edit_raza_aviso" aria-live="polite"></small>
                                 </div>
                             </div>
 
@@ -831,16 +841,18 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                     <label>Fecha Nacimiento</label>
                                     <div class="input-wrapper">
                                         <i class="far fa-calendar-alt field-icon"></i>
-                                        <input type="text" class="flatpickr-date" name="fecha_nacimiento" id="edit_fecha_nac" required placeholder="Seleccione fecha...">
+                                        <input type="text" class="flatpickr-date" name="fecha_nacimiento" id="edit_fecha_nac" required placeholder="Seleccione fecha..." <?= ValidadorMascota::atributosHtml('fecha_nacimiento') ?>>
                                     </div>
+                                    <small class="cuenta-validacion mascota-aviso" id="edit_fecha_nac_aviso" aria-live="polite"></small>
                                 </div>
 
                                 <div class="input-group">
                                     <label>Peso (Kg)</label>
                                     <div class="input-wrapper">
                                         <i class="fas fa-weight field-icon"></i>
-                                        <input type="number" step="0.01" name="peso" id="edit_peso" required placeholder="0.00" min="0.01" max="<?= ValidadorMascota::PESO_MAX_KG ?>">
+                                        <input type="text" name="peso" id="edit_peso" required placeholder="Ej: 4,5" <?= ValidadorMascota::atributosHtml('peso') ?>>
                                     </div>
+                                    <small class="cuenta-validacion mascota-aviso" id="edit_peso_aviso" aria-live="polite"></small>
                                 </div>
                             </div>
 
@@ -849,8 +861,9 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <div class="input-group">
                                     <label>Raza por confirmar <span class="pacientes-estilo-7">*</span></label>
                                     <div class="input-wrapper no-icon">
-                                        <input type="text" name="raza_indicada" maxlength="<?= ValidadorMascota::RAZA_MAX ?>" id="edit_nueva_raza" placeholder="¿Qué raza es?">
+                                        <input type="text" name="raza_indicada" id="edit_nueva_raza" placeholder="¿Qué raza es?" autocomplete="off" <?= ValidadorMascota::atributosHtml('raza_indicada') ?>>
                                     </div>
+                                    <small class="cuenta-validacion mascota-aviso" id="edit_nueva_raza_aviso" aria-live="polite"></small>
                                 </div>
                             </div>
 
@@ -874,6 +887,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                     </div>
                 </div>
             </div>
+            <p class="mascota-form__resumen" data-resumen-mascota hidden></p>
             <div class="users-modal__footer">
                 <button type="button" class="btn-modal-secondary close-modal-btn" data-modal="modalEditarMascota">Cancelar</button>
                 <button type="submit" class="btn-modal-primary">Actualizar Cambios</button>

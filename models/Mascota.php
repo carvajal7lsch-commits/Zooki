@@ -2,6 +2,8 @@
 require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/../helpers/ValidadorMascota.php';
+require_once __DIR__ . '/ActivacionPropietario.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
 require_once __DIR__ . '/../helpers/ContactoPropietario.php';
@@ -94,8 +96,9 @@ class Mascota extends ModeloClinica
     }
     public function esPropietarioValido($id): bool
     {
+        // M5 C3: la clínica también registra y atiende las mascotas de un cliente que aún no activa su cuenta.
         $stmt=$this->conn->prepare("SELECT 1 FROM propietario_clinica pc JOIN usuarios u ON u.id_usuario = pc.id_propietario
-            WHERE pc.id_propietario = ? AND pc.id_clinica = ? AND pc.estado = 'activo' AND u.estado = 1");
+            WHERE pc.id_propietario = ? AND pc.id_clinica = ? AND pc.estado = 'activo' AND " . ActivacionPropietario::usable('u'));
         $stmt->execute([$id,$this->clinica()]); return (bool)$stmt->fetchColumn();
     }
     public function insert(array $datos): int
@@ -229,11 +232,20 @@ class Mascota extends ModeloClinica
             'raza_indicada'=>$datos['raza_indicada'] ?? '', 'sexo'=>$datos['sexo'] ?? '',
             'fecha_nacimiento'=>$datos['fecha_nacimiento'] ?? '', 'peso'=>$datos['peso'] ?? '',
         ],new DateTimeImmutable('today',new DateTimeZone('America/Bogota')));
-        if ($resultado['error']) throw new InvalidArgumentException($resultado['error']);
+        // M5 C3: cada rechazo dice su campo y su aviso corto, como en el portal (C2b).
+        if ($resultado['error']) {
+            throw new CampoInvalido($resultado['campo'], ValidadorMascota::aviso($resultado['campo']), $resultado['error']);
+        }
         $limpios=$resultado['datos'];
-        if (!$limpios['fecha_nacimiento']) throw new InvalidArgumentException('La fecha de nacimiento es obligatoria.');
-        if (!$this->especieExiste((int)$limpios['especie'])) throw new InvalidArgumentException('Especie no válida.');
-        if ($limpios['raza'] !== null && !$this->razaPerteneceAEspecie($limpios['raza'],$limpios['especie'])) throw new InvalidArgumentException('La raza no corresponde a la especie.');
+        if (!$limpios['fecha_nacimiento']) {
+            throw new CampoInvalido('fecha_nacimiento', ValidadorMascota::AVISO_OBLIGATORIO, 'La fecha de nacimiento es obligatoria.');
+        }
+        if (!$this->especieExiste((int)$limpios['especie'])) {
+            throw new CampoInvalido('especie', ValidadorMascota::aviso('especie'), 'Especie no válida.');
+        }
+        if ($limpios['raza'] !== null && !$this->razaPerteneceAEspecie($limpios['raza'],$limpios['especie'])) {
+            throw new CampoInvalido('raza', ValidadorMascota::aviso('raza'), 'La raza no corresponde a la especie.');
+        }
         $datos=array_replace($datos,['nombre'=>$limpios['nombre'],'id_especie'=>(int)$limpios['especie'],
             'id_raza'=>$limpios['raza'],'raza_indicada'=>$limpios['raza_indicada'],
             'sexo'=>$limpios['sexo'],'peso'=>$limpios['peso'],'fecha_nacimiento'=>$limpios['fecha_nacimiento']]);
@@ -244,7 +256,9 @@ class Mascota extends ModeloClinica
         if ($esterilizado !== null && !in_array((string)$esterilizado,['0','1'],true)) throw new InvalidArgumentException('Esterilización no válida.');
         $datos['esterilizado']=$esterilizado === null ? null : (int)$esterilizado;
         $colores=$datos['colores'] ?? [];
-        if (!is_array($colores) || !$colores) throw new InvalidArgumentException('Selecciona al menos un color.');
+        if (!is_array($colores) || !$colores) {
+            throw new CampoInvalido('colores[]', ValidadorMascota::AVISO_COLORES, 'Selecciona al menos un color.');
+        }
         $permitidos=array_map('intval',array_column($this->getColoresBase(),'id_color'));
         foreach ($colores as $color) {
             if (!ctype_digit((string)$color) || !in_array((int)$color,$permitidos,true)) throw new InvalidArgumentException('Color no válido.');
@@ -267,8 +281,13 @@ class Mascota extends ModeloClinica
     private function avisarPropietario(array $mascota,array $campos): void
     {
         // RE-1.4.5: aviso durable en la misma transacción; el envío puede reintentarse.
-        $stmt=$this->conn->prepare('SELECT u.email,c.nombre FROM usuarios u JOIN clinicas c ON c.id_clinica = ? WHERE u.id_usuario = ?');
-        $stmt->execute([$this->clinica(),$mascota['id_propietario']]); $destino=$stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt=$this->conn->prepare('SELECT u.email,u.estado,c.nombre FROM usuarios u JOIN clinicas c ON c.id_clinica = ? WHERE u.id_usuario = ?');
+        $stmt->execute([$this->clinica(),$mascota['id_propietario']]);
+        $destino=$stmt->fetch(PDO::FETCH_ASSOC);
+        // M5 C3 (RE-T.19.1): a quien aún no activa su cuenta solo le llega el correo de activación.
+        if ((int) $destino['estado'] !== 1) {
+            return;
+        }
         $mensaje='La clínica ' . $destino['nombre'] . ' actualizó la ficha de ' . $mascota['nombre'] . '. Campos: ' . implode(', ',$campos) . '.';
         $this->conn->prepare("INSERT INTO notificaciones (id_clinica,id_usuario,tipo_entidad,id_entidad,destinatario_email,tipo_notificacion,asunto,mensaje) VALUES (?,?,'mascota',?,?,'cambio_ficha',?,?)")
             ->execute([$this->clinica(),$mascota['id_propietario'],$mascota['id_mascota'],$destino['email'],'Ficha de mascota actualizada',$mensaje]);

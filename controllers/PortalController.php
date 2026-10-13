@@ -90,6 +90,8 @@ class PortalController
             $clinicas_portal[] = $clinica;
         }
         $clinicas_disponibles = $this->vinculos->disponibles();
+        // RN-116: se cuenta con las mismas clínicas que ya se leyeron, sin otra consulta.
+        $al_tope_clinicas = count($clinicas_portal) >= VinculosPropietario::TOPE_CLINICAS;
 
         $usuarioData = (new Usuario($this->db))->buscarPorId((int) Contexto::idUsuario()) ?? [];
         $primer_nombre = explode(' ', trim($_SESSION['usuario_nombre'] ?? 'Propietario'))[0];

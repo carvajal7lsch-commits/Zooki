@@ -365,47 +365,7 @@
     text-overflow: ellipsis;
 }
 
-/* ── Agendar: pasos, clínica única, guía y resumen ── */
-.booking__progreso {
-    display: flex;
-    gap: 0.4rem;
-    margin: 0 0 1rem;
-    padding: 0;
-    list-style: none;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.booking__progreso::-webkit-scrollbar { display: none; }
-
-.booking__progreso-paso {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.3rem 0.7rem 0.3rem 0.35rem;
-    border-radius: 50px;
-    background: #f1f5f9;
-    color: #64748b;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.booking__progreso-paso span {
-    display: grid;
-    place-items: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #ffffff;
-    font-size: 0.7rem;
-}
-
-.booking__progreso-paso.is-activo { background: var(--z-primary-soft); color: var(--z-primary); }
-
-.booking__progreso-paso.is-activo span,
-.booking__progreso-paso.is-hecho span { background: var(--z-primary); color: #ffffff; }
-
+/* ── Agendar: clínica única y guía de lo que falta ── */
 .booking__unica {
     display: inline-flex;
     align-items: center;
@@ -417,37 +377,25 @@
 
 .booking__unica i { color: var(--z-primary); }
 
+/* La guía va en el pie, junto a «Agendar». */
+.booking__pie {
+    align-items: center;
+}
+
 .booking__guia {
+    flex: 1;
     min-height: 1.3em;
-    margin: 0.5rem 0 0;
+    margin: 0;
     font-size: 0.8rem;
     color: var(--z-text-muted);
 }
 
-.booking__resumen {
-    display: grid;
-    gap: 0.5rem;
-    margin: 0;
-    padding: 1rem;
-    border-radius: 14px;
-    background: #ffffff;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-}
-
-.booking__resumen div {
+/* RN-116: la línea que explica por qué «Vincularme» está deshabilitado. */
+.portal-tope {
     display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    font-size: 0.85rem;
-}
-
-.booking__resumen dt { color: var(--z-text-muted); }
-
-.booking__resumen dd {
-    margin: 0;
-    font-weight: 600;
-    color: var(--z-text);
-    text-align: right;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.75rem;
 }
 
 /* ── Clínicas ── */

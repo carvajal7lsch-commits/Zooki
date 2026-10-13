@@ -2,12 +2,13 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-12
+**Actualizado:** 2026-10-13
 
 ## Ahora
 
 - **Módulo activo:** M5 — Portal multi-clínica y vínculos (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13, HU-2.10; sale como `2.0.0-alpha.3`). Plan: [`specs/M5-portal-multiclinica.md`](../specs/M5-portal-multiclinica.md). Rama: `v2/m5-portal`.
-- **Entrega actual de M5:** **C2b — portal: Agendar por pasos, Clínicas, Perfil y actualización en su sitio: entregada, pendiente de revisión (2026-10-12, Claude Code).** Agendar en cuatro pasos con tarjetas de elección; con una sola clínica, su nombre y el id oculto (hueco 8, RE-5.9.3). Todas las acciones se ponen al día sin recargar (`refrescarPortal`/`aplicarPartes`). Clínicas en tarjetas con interruptor, rechazo en la tarjeta y buscador. Perfil en tarjetas plegables. Formularios de mascota con validación en tiempo real, avisos de una línea y restricción de entrada (`ValidadorMascota::atributosHtml`, `validacion-mascota.js`, `CampoInvalido`). Se quitaron las reglas CSS sin uso de `inicio.css`, `agenda.css` y `cuenta.css`. PHP 652 en verde (también con MySQL, ninguna omitida); JS 129. Detalle y 5 pantallas en «Anexo C2b — Resultado».
+- **Entrega actual de M5:** **C3 — lado del personal: entregada, pendiente de revisión (2026-10-13, Claude Code).** El propietario dado de alta por el personal queda pendiente, sin aceptación presencial; activa su cuenta desde un enlace de 72 horas donde acepta la política y crea su contraseña. Mientras tanto la clínica lo atiende sin enviarle correos automáticos; puede reenviarle el enlace, y la limpieza no borra una cuenta con mascotas. Además: búsqueda del propietario en tiempo real con límite por IP, vincular la mascota en tarjetas sin recargar, solo lectura en la historia (hueco 6), formulario de mascota del personal con la validación de C2b, confirmación corta al desactivar un cliente, tope de 3 clínicas desde el portal (RN-116 y RE-5.13.5, nuevos) y Agendar de nuevo en un solo formulario. PHP 665 en verde (también con MySQL, ninguna omitida); JS 142. Decisiones del usuario durante C3 y 5 pantallas en «Anexo C3 — Resultado».
+- **C2b:** revisada y aprobada (2026-10-12), con commit `da1aadb`.
 - **C1.1:** revisada y aprobada (2026-10-12), con commit.
 - **C1:** revisada y aprobada (2026-10-12), con commit.
 - **A:** revisada y aprobada (2026-10-12), con las decisiones del usuario en «A — Revisión» del plan M5.
@@ -22,7 +23,7 @@
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
-- **Siguiente paso:** M5, C2b revisada y aprobada (2026-10-12); faltan la prueba visual del usuario y su commit. Sigue C3 — lado del personal («C3 — Alcance» del plan M5: alta del propietario sin aceptación presencial, confirmación corta, búsqueda en tiempo real, modal de vincular mascota, solo lectura y formulario de mascota). Después F (2.0.0-alpha.3). Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
+- **Siguiente paso:** M5, C3 revisada y aprobada (2026-10-13); faltan la prueba del usuario y su commit. Después, la lista de inconformidades del usuario y la subetapa de pulido de M5 (con las tres notas de «C3 — Revisión»), y F (2.0.0-alpha.3). Pendiente aparte: borrar los respaldos temporales del VPS tras una o dos semanas sin problemas.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 

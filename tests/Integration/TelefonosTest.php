@@ -83,7 +83,7 @@ final class TelefonosTest extends TestCase
             'alta presencial de propietario (Pacientes)' => function (string $telefono): array {
                 $this->comoAdminNorte();
                 $_POST = ['tipo_documento' => 'CC', 'documento' => '1000000066', 'nombre_completo' => 'Rosa Nueva',
-                    'email' => 'rosa@zooki.test', 'telefono' => $telefono, 'titular_presente' => '1', 'acepta_politica' => '1'];
+                    'email' => 'rosa@zooki.test', 'telefono' => $telefono];
                 return $this->json(fn () => (new PropietarioController($this->db, static fn () => true))->registrarAjax());
             },
             'perfil del propietario (portal)' => function (string $telefono): array {

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../helpers/Roles.php';
+require_once __DIR__ . '/ActivacionPropietario.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
 require_once __DIR__ . '/../helpers/ContactoPropietario.php';
@@ -300,6 +301,7 @@ class Usuario
         $stmt = $this->conn->prepare(
             'SELECT u.id_usuario, u.nombre_completo, ' . ContactoPropietario::columnas('u', 'pc') . ', ' . ContactoPropietario::marca('pc') . ",
                     CASE WHEN pc.estado = 'activo' THEN 1 ELSE 0 END AS estado_clinica,
+                    CASE WHEN " . ActivacionPropietario::pendiente('u') . " THEN 1 ELSE 0 END AS pendiente_activacion,
                     (SELECT COUNT(*) FROM mascotas m
                        JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota AND mc.id_clinica = pc.id_clinica
                       WHERE m.id_propietario = u.id_usuario AND m.estado = 1) AS num_mascotas

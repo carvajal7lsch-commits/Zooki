@@ -555,15 +555,17 @@ class BaseV2MysqlTest extends TestCase
             $this->assertNotSame($m['token_carnet'],$mascotas->getById($otra)['token_carnet']);
             $this->assertSame('1,2',$m['colores_ids']);
             $cuentas=$this->contar('usuarios');
+            // M5 C3 (RE-T.19.1): el alta del personal deja la cuenta pendiente, sin consentimiento, con el enlace de activación.
             $datos=['nombre_completo'=>'Titular Nuevo','tipo_documento'=>'CC','documento'=>'1000000030','telefono'=>'3001234567',
-                'email'=>'nuevo@zooki.test','titular_presente'=>'1','acepta_politica'=>'0'];
-            try { $propietarios->registrar($datos,'politica-1','127.0.0.1'); $this->fail('Debió rechazar'); }
-            catch (InvalidArgumentException $e) { $this->assertNotEmpty($e->getMessage()); }
-            $this->assertSame($cuentas,$this->contar('usuarios'));
-            $datos['acepta_politica']='1'; $alta=$propietarios->registrar($datos,'politica-1','127.0.0.1');
+                'email'=>'nuevo@zooki.test'];
+            $alta=$propietarios->registrar($datos);
+            $this->assertSame($cuentas+1,$this->contar('usuarios'));
             $this->assertNull($this->db->query('SELECT password FROM usuarios WHERE id_usuario=' . $alta['id_usuario'])->fetchColumn());
-            $this->assertSame('alta_personal',$this->db->query('SELECT medio FROM consentimientos_datos')->fetchColumn());
-            $this->assertSame(1,$this->contar('password_resets'));
+            $this->assertSame(0,(int)$this->db->query('SELECT estado FROM usuarios WHERE id_usuario=' . $alta['id_usuario'])->fetchColumn());
+            $this->assertSame(0,$this->contar('consentimientos_datos'));
+            $this->assertSame('activacion_propietario',$this->db->query('SELECT proposito FROM verificaciones_email WHERE id=' . $alta['id'])->fetchColumn());
+            try { $propietarios->registrar($datos); $this->fail('Debió rechazar el duplicado'); }
+            catch (InvalidArgumentException $e) { $this->assertSame(PropietarioClinica::MENSAJE_SIN_VINCULO,$e->getMessage()); }
         } finally { $_SESSION=[]; }
     }
 

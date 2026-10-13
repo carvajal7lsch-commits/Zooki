@@ -5,7 +5,7 @@ require_once __DIR__ . '/../Support/DosClinicas.php';
 require_once __DIR__ . '/../../controllers/PortalController.php';
 
 /**
- * M5 C2b — Agendar por pasos con la clínica única (RE-5.9.3, hueco 8),
+ * M5 C2b — Agendar con la clínica única (RE-5.9.3, hueco 8; un solo formulario desde C3),
  * Clínicas en tarjetas, Perfil plegable y los formularios de mascota con las
  * reglas y los avisos de ValidadorMascota (validación en tiempo real y
  * restricción de entrada; el servidor dice el campo que rechaza).
@@ -80,15 +80,17 @@ final class M5C2bPortalTest extends TestCase
         $this->assertStringNotContainsString('Clínica Pausada', $paso, 'Nunca las demás clínicas de la plataforma.');
     }
 
-    public function testAgendarTieneCuatroPasosConElPieDelModal(): void
+    /** M5 C3 (decisión del usuario): Agendar vuelve a un solo formulario, todo a la vista, con el pie del modal. */
+    public function testAgendarEsUnSoloFormularioConElPieDelModal(): void
     {
         $modal = $this->trozo($this->portal(), 'id="portalBookingModal"', '<!-- Ventana: registrar mascota');
 
-        preg_match_all('/data-paso="(\d)"/', $modal, $pasos);
-        $this->assertSame(['1', '2', '3', '4'], $pasos[1]);
+        $this->assertStringNotContainsString('data-paso', $modal, 'Sin pasos.');
+        foreach (['bookingEleccionClinica', 'bookingEleccionMascota', 'booking_tipo_cita', 'booking_veterinario', 'booking_fecha', 'booking_slots'] as $id) {
+            $this->assertStringContainsString('id="' . $id . '"', $modal, "{$id} a la vista.");
+        }
         $this->assertStringContainsString('users-modal__footer portal-modal__pie', $modal);
-        $this->assertStringContainsString('data-paso-siguiente', $modal);
-        $this->assertMatchesRegularExpression('/<button type="submit" class="btn-primary" id="booking_confirmar" hidden disabled>/', $modal);
+        $this->assertMatchesRegularExpression('/<button type="submit" class="btn-primary" id="booking_confirmar" disabled>\s*<span>Agendar<\/span>/', $modal);
     }
 
     public function testLosCamposDeMascotaLlevanLasReglasYElAvisoDelServidor(): void

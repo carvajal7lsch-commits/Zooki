@@ -7,14 +7,14 @@ require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../config/EmailService.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../models/PropietarioClinica.php';
+require_once __DIR__ . '/../models/VerificacionEmail.php';
 require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
-require_once __DIR__ . '/../helpers/PoliticaDatos.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 
 /**
- * Propietarios desde el personal de la clínica (HU-1.2, RN-109): alta
- * presencial, solicitud y confirmación del vínculo. El portal del
+ * Propietarios desde el personal de la clínica (HU-1.2, RN-109): alta con
+ * activación por enlace (M5 C3), solicitud y confirmación del vínculo. El portal del
  * propietario está en PortalController (C6).
  */
 class PropietarioController {
@@ -72,38 +72,72 @@ class PropietarioController {
             return 'El tipo de documento no es valido.';
         }
 
-        // RE-1.2.2 / RN-G06: ni documento ni correo duplicados.
-        if ($this->usuarioModel->buscarPorDocumento($limpios['documento'])) {
-            return 'Ese documento ya esta registrado en el sistema.';
-        }
-        if ($this->usuarioModel->buscarPorEmail($limpios['email'])) {
-            return 'Ese correo electronico ya esta registrado en el sistema.';
-        }
-
         return null;
     }
 
+    /**
+     * HU-1.2 y RE-T.19.1 (decisión del usuario, M5 C3): la clínica registra al
+     * propietario sin aceptación presencial; el titular recibe el enlace de
+     * 72 horas para aceptar la política y crear su contraseña. Si el documento
+     * o el correo ya tienen cuenta, no se duplica: la respuesta es la de la
+     * búsqueda exacta y la clínica pide la confirmación del vínculo (RN-109).
+     */
     public function registrarAjax(): void
     {
         header('Content-Type: application/json; charset=utf-8');
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); return; }
         try {
-            $error=$this->validarDatosPropietario($_POST,$datos);
-            if ($error !== null) throw new InvalidArgumentException($error);
-            // RE-T.19.1: el titular acepta en esta pantalla presencial; no el empleado.
-            $datos['acepta_politica']=(string)($_POST['acepta_politica'] ?? '');
-            $datos['titular_presente']=(string)($_POST['titular_presente'] ?? '');
+            $error = $this->validarDatosPropietario($_POST, $datos);
+            if ($error !== null) {
+                throw new InvalidArgumentException($error);
+            }
             EnlaceCuenta::base(); // Validar destino antes de crear cuenta o tokens.
-            $alta=(new PropietarioClinica($this->db))->registrar($datos,PoliticaDatos::VERSION,Auditoria::ipCliente());
-            $enlace=EnlaceCuenta::crear('reset_password',$alta['id_enlace'],$alta['token']);
-            $enviado=$this->correo($datos['email'],$datos['nombre_completo'],'Crea tu contraseña en Zooki',
-                'Tu cuenta fue registrada con tu aceptación presencial. Crea tu contraseña desde este enlace; vence en 24 horas.',$enlace);
-            echo json_encode(['success'=>true,'id_usuario'=>$alta['id_usuario'],'message'=>$enviado
-                ? 'Propietario registrado. Se envió el enlace para crear su contraseña.'
-                : 'Propietario registrado. No se pudo enviar el enlace; el titular puede solicitarlo desde Recuperar contraseña.']);
+            $modelo = new PropietarioClinica($this->db);
+            $existente = $modelo->existente($datos['documento'], $datos['email']);
+            if ($existente !== null) {
+                http_response_code(409);
+                echo json_encode(['success' => false, 'existe' => true] + $existente + ['message' => $existente['vinculado']
+                    ? PropietarioClinica::MENSAJE_YA_CLIENTE
+                    : PropietarioClinica::MENSAJE_SIN_VINCULO]);
+                return;
+            }
+            $alta = $modelo->registrar($datos);
+            $enviado = $this->enviarActivacion($datos['email'], $datos['nombre_completo'], (string) Contexto::actual()['clinica'], $alta);
+            echo json_encode(['success' => true, 'id_usuario' => $alta['id_usuario'], 'message' => $enviado
+                ? 'Propietario registrado. Le enviamos el enlace para activar su cuenta (72 horas).'
+                : 'Propietario registrado. No se pudo enviar el enlace; reenvíalo desde su ficha.']);
         } catch (AccesoDenegado $e) { throw $e; }
-        catch (InvalidArgumentException $e) { http_response_code(422); echo json_encode(['success'=>false,'message'=>$e->getMessage()]); }
-        catch (Throwable $e) { error_log('Alta de propietario: ' . $e->getMessage()); http_response_code(500); echo json_encode(['success'=>false,'message'=>'No se pudo registrar al propietario.']); }
+        catch (InvalidArgumentException $e) { http_response_code(422); echo json_encode(['success' => false, 'message' => $e->getMessage()]); }
+        catch (Throwable $e) { error_log('Alta de propietario: ' . $e->getMessage()); http_response_code(500); echo json_encode(['success' => false, 'message' => 'No se pudo registrar al propietario.']); }
+    }
+
+    /** M5 C3: reenviar el enlace de activación; el anterior deja de servir. */
+    public function reenviarActivacionAjax(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); return; }
+        try {
+            EnlaceCuenta::base();
+            $idPersona = ValidadorClinico::id($_POST['id_usuario'] ?? null);
+            if ($idPersona === null) {
+                throw new InvalidArgumentException('Cliente no válido.');
+            }
+            $enlace = (new PropietarioClinica($this->db))->reenviarActivacion($idPersona);
+            $enviado = $this->enviarActivacion($enlace['email'], $enlace['nombre'], (string) $enlace['clinica'], $enlace);
+            echo json_encode(['success' => $enviado, 'message' => $enviado
+                ? 'Le enviamos un enlace nuevo; vence en 72 horas.'
+                : 'No se pudo enviar el correo. Inténtalo de nuevo.']);
+        } catch (AccesoDenegado $e) { throw $e; }
+        catch (InvalidArgumentException $e) { http_response_code(422); echo json_encode(['success' => false, 'message' => $e->getMessage()]); }
+        catch (Throwable $e) { error_log('Reenvío de activación: ' . $e->getMessage()); http_response_code(500); echo json_encode(['success' => false, 'message' => 'No se pudo reenviar el enlace.']); }
+    }
+
+    /** El único correo que recibe un propietario mientras no active su cuenta. */
+    private function enviarActivacion(string $email, string $nombre, string $clinica, array $enlace): bool
+    {
+        $url = EnlaceCuenta::crear('activar_propietario', (int) $enlace['id'], (string) $enlace['token']);
+        $texto = $clinica . ' te registró como cliente en Zooki. Para entrar a tu portal, acepta la política de tratamiento de datos y crea tu contraseña. El enlace vence en 72 horas.';
+        return $this->correo($email, $nombre, 'Activa tu cuenta en Zooki', $texto, $url);
     }
 
     private function correo(string $email,string $nombre,string $asunto,string $mensaje,string $enlace): bool
@@ -151,8 +185,12 @@ class PropietarioController {
         $token=(string)($_POST['token'] ?? $_GET['token'] ?? '');
         $resultado=null;
         // GET no consume el enlace: los filtros de correo suelen abrirlo automáticamente.
+        $pendiente=false;
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $resultado=(new PropietarioClinica($this->db))->confirmarVinculo($id,$token);
+            // M5 C3: si su cuenta aún no se activa, la página se lo recuerda.
+            $fila=$resultado ? (new VerificacionEmail($this->db))->buscarPorId($id) : null;
+            $pendiente=$fila !== null && (new ActivacionPropietario($this->db))->esPendiente((int) $fila['id_usuario']);
         }
         require __DIR__ . '/../views/auth/confirmar_vinculo.php';
     }

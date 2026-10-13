@@ -9,52 +9,51 @@ const codigo = (archivo) => fs.readFileSync(path.join(raiz, archivo), 'utf8');
 
 // M5 C1, hueco 2 (RE-1.5.1, RN-109): sin vínculo activo el panel de la
 // búsqueda exacta solo muestra el aviso del servidor y la solicitud por correo.
+// Desde C3 la búsqueda vive en propietario-mascota.js.
 
 function elemento(tag) {
-    return {
-        tag,
+    const n = {
+        tagName: String(tag).toUpperCase(),
         hijos: [],
         textContent: '',
         value: '',
+        hidden: false,
         dataset: {},
+        classList: { toggle() {}, add() {}, contains: () => false },
         append(...nodos) { this.hijos.push(...nodos); },
-        replaceChildren() { this.hijos = []; this.textContent = ''; },
+        replaceChildren(...nodos) { this.hijos = [...nodos]; this.textContent = ''; },
         addEventListener() {},
         get texto() { return [this.textContent, ...this.hijos.map(h => h.texto)].join(' '); },
     };
+    return n;
 }
 
-async function buscar(propietario) {
+function pintar(propietario) {
     const panel = elemento('div');
-    const ids = { mascotasExistentes: panel, petOwnerDoc: elemento('input') };
-    const document = {
-        addEventListener() {},
-        getElementById: (id) => ids[id] || elemento('div'),
-        createElement: elemento,
-    };
+    const ayuda = elemento('small');
+    const ids = { mascotasExistentes: panel, ownerSearchAyuda: ayuda, petOwnerDoc: elemento('input'), ownerSearchWrapper: elemento('div'), selectedOwnerName: elemento('span'), selectedOwnerInfo: elemento('div') };
     const contexto = {
-        document,
-        window: {},
         console,
-        fetch: async () => ({ json: async () => ({ success: true, propietario }) }),
+        window: {},
+        document: { addEventListener() {}, getElementById: (id) => ids[id] || null, createElement: elemento },
     };
     vm.createContext(contexto);
-    vm.runInContext(codigo('public/js/medical-module.js'), contexto);
-    await contexto.searchOwnersForPet('1000000006');
-    return panel;
+    vm.runInContext(codigo('public/js/propietario-mascota.js'), contexto);
+    contexto.window.ZookiPropietarioMascota.pintar(panel, propietario, '1000000006');
+    return { panel, ayuda };
 }
 
-test('sin vínculo: solo el aviso y la solicitud, sin nombre ni mascotas', async () => {
-    const panel = await buscar({ vinculado: false, mensaje: 'Hay una cuenta con ese dato. Pide la confirmación por correo.' });
+test('sin vínculo: solo el aviso y la solicitud, sin nombre ni mascotas', () => {
+    const { panel, ayuda } = pintar({ vinculado: false, mensaje: 'Hay una cuenta con ese dato. Pide la confirmación por correo.' });
 
-    assert.match(panel.texto, /Hay una cuenta con ese dato\. Pide la confirmación por correo\./);
-    assert.match(panel.texto, /Solicitar confirmación por correo/);
+    assert.match(ayuda.textContent, /Hay una cuenta con ese dato\. Pide la confirmación por correo\./);
+    assert.match(panel.texto, /Pedir confirmación por correo/);
     assert.doesNotMatch(panel.texto, /undefined|Vincular|registrar nueva/);
-    assert.equal(panel.hijos.length, 2);
+    assert.equal(panel.hijos.length, 1);
 });
 
-test('con vínculo: el nombre y sus mascotas para vincular', async () => {
-    const panel = await buscar({
+test('con vínculo: el nombre y sus mascotas para vincular', () => {
+    const { panel } = pintar({
         vinculado: true,
         id_usuario: 6,
         nombre_completo: 'Fabio Dueño',
@@ -62,6 +61,6 @@ test('con vínculo: el nombre y sus mascotas para vincular', async () => {
     });
 
     assert.match(panel.texto, /Fabio Dueño/);
-    assert.match(panel.texto, /Vincular Luna/);
+    assert.match(panel.texto, /Vincular a la clínica/);
     assert.match(panel.texto, /Es otra mascota: registrar nueva/);
 });

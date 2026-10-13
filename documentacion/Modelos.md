@@ -543,7 +543,7 @@ Un enlace auténtico de una invitación que el administrador reenvió (la anteri
 
 ## 11. Flujo del sistema — Registro del propietario (multi-clínica)
 
-Tres caminos de registro, siempre en el contexto de una clínica: **alta por el personal**, **enlace o QR de la clínica** y **autoregistro directo** eligiendo la clínica de la lista. En los dos últimos el propietario puede usar el formulario o **Google**; el alta por el personal no usa Google. Todo registro exige aceptar la política de tratamiento de datos ([RN-G19](ReglasNegocio.md#módulo-t--acceso-seguridad-y-administración-reglas-transversales)). Si el correo ya existe, no se duplica la identidad: se **liga** la cuenta existente a la nueva clínica, previa verificación de que es el dueño del correo ([RN-109](ReglasNegocio.md#módulo-1--mascotas-y-propietarios), [RN-G20](ReglasNegocio.md#módulo-t--acceso-seguridad-y-administración-reglas-transversales)).
+Tres caminos de registro, siempre en el contexto de una clínica: **alta por el personal**, **enlace o QR de la clínica** y **autoregistro directo** eligiendo la clínica de la lista. En los dos últimos el propietario puede usar el formulario o **Google**; el alta por el personal no usa Google. Todo registro exige aceptar la política de tratamiento de datos ([RN-G19](ReglasNegocio.md#módulo-t--acceso-seguridad-y-administración-reglas-transversales)). En el alta por el personal no hay aceptación presencial (decisión del usuario, M5 C3): la cuenta queda pendiente y el titular acepta la política y crea su contraseña desde un enlace de 72 horas, como la activación del personal (§10.1). Si el correo ya existe, no se duplica la identidad: se **liga** la cuenta existente a la nueva clínica, previa verificación de que es el dueño del correo ([RN-109](ReglasNegocio.md#módulo-1--mascotas-y-propietarios), [RN-G20](ReglasNegocio.md#módulo-t--acceso-seguridad-y-administración-reglas-transversales)).
 
 ```mermaid
 flowchart TD
@@ -563,20 +563,25 @@ flowchart TD
   CAPTCHA -- Si --> C
   B1 --> C
 
-  C["Capturar datos y aceptacion expresa del titular antes de crear la cuenta.<br/>En alta por personal, el titular acepta presencialmente y crea la contraseña al activar;<br/>si no esta presente o no acepta, se remite al autorregistro sin crear cuenta"] --> D{"Campos validos y politica aceptada por el titular?"}
+  C["Capturar los datos. Formulario y Google: aceptacion expresa del titular antes de crear la cuenta.<br/>Alta por el personal: correo obligatorio y sin aceptacion presencial;<br/>el titular acepta la politica al activar su cuenta"] --> D{"Campos validos y, salvo en el alta por el personal, politica aceptada?"}
   D -- No --> D1[/"Mensaje: corrige los campos marcados"/]
   D1 --> C
   D -- Si --> E{El correo ya existe en la plataforma?}
 
   E -- No --> E2{El documento ya existe en la plataforma?}
-  E2 -- Si --> E3["Autorregistro: enviar confirmacion al titular del documento;<br/>alta presencial: resolver con la busqueda exacta autorizada"]
+  E2 -- Si --> E3["Autorregistro: enviar confirmacion al titular del documento;<br/>alta por el personal: la respuesta de la busqueda exacta y Pedir confirmacion (§12.3)"]
   E3 --> GENERICO["Autorregistro: ventana de carga y luego la misma respuesta, sin revelar existencia;<br/>Revisa tu correo para confirmar la solicitud o acceder a Zooki"]
   GENERICO --> ZF([Fin])
-  E2 -- No --> F["Crear la identidad (id_usuario) y guardar la prueba de aceptacion de la politica"]
-  F --> FP{Alta presencial por personal?}
-  FP -- Si --> G["Ligar propietario; enviar enlace para crear contraseña"]
-  G --> AUD
-  FP -- No --> H["Enviar verificacion de correo; misma respuesta publica"]
+  E2 -- No --> FP{Alta por el personal?}
+  FP -- Si --> PEN["Crear la cuenta pendiente e inerte: sin contraseña, consentimiento ni portal;<br/>ligarla a la clinica y enviar el enlace de activacion de 72 horas"]
+  PEN --> PENM["Mientras no active: la clinica registra y atiende a sus mascotas;<br/>no salen correos automaticos salvo el de activacion; Reenviar anula el enlace anterior"]
+  PENM --> ACTP{"Desde el enlace vigente, acepta la politica y crea una contraseña valida?"}
+  ACTP -- Si --> ACTV["Activar la cuenta y guardar la prueba de aceptacion (como §10.1)"]
+  ACTV --> AUD
+  ACTP -- "No, el enlace vence" --> LIMP{{"Limpieza: borrar la cuenta solo sin mascotas ni otros vinculos;<br/>con mascotas se conserva y la clinica reenvia el enlace"}}
+  LIMP --> ZF
+  FP -- No --> F["Crear la identidad (id_usuario) y guardar la prueba de aceptacion de la politica"]
+  F --> H["Enviar verificacion de correo; misma respuesta publica"]
   H --> I{"Confirma por POST con CSRF y token dentro de 24 horas?"}
   I -- No --> I1[El registro pendiente expira]
   I1 --> ZF
@@ -585,9 +590,9 @@ flowchart TD
   AUD --> ZF
 
   E -- Si --> K{Ya esta ligado a esta clinica?}
-  K -- Si --> K1[/"Autorregistro: misma respuesta publica sin revelar la cuenta"/]
+  K -- Si --> K1[/"Autorregistro: misma respuesta publica sin revelar la cuenta;<br/>alta por el personal: ya es cliente de esta clinica"/]
   K1 --> ZF
-  K -- No --> L["Verificar que es el dueño del correo (login o confirmacion por correo)"]
+  K -- No --> L["Verificar que es el dueño del correo (login o confirmacion por correo);<br/>alta por el personal: Pedir confirmacion, tambien a una cuenta que otra clinica registro y aun no se activa"]
   L --> M{Verificado?}
   M -- No --> M1[/"Mensaje: no se pudo verificar; no se liga"/]
   M1 --> ZF
@@ -628,7 +633,10 @@ flowchart TD
   V1 -- Si --> V2{"Ya tiene un vinculo activo con ella?"}
   V2 -- Si --> V2N[/"Mensaje: ya estas vinculado"/]
   V2N --> ZF
-  V2 -- No --> V3["Crear el vinculo o reactivar el inactivo, sin autorizacion de historia;<br/>no se pide verificar otra vez el correo (ya inicio sesion)"]
+  V2 -- No --> TP{"Ya tiene 3 clinicas activas con vinculo activo? (RN-116)"}
+  TP -- Si --> TPN[/"Vincularme deshabilitado con una linea que lo explica;<br/>el servidor lo rechaza: desvinculate de una para sumar otra"/]
+  TPN --> ZF
+  TP -- No --> V3["Crear el vinculo o reactivar el inactivo, sin autorizacion de historia;<br/>no se pide verificar otra vez el correo (ya inicio sesion)"]
   V3 --> V4["La clinica ve solo sus datos de propietario; sus mascotas se le vinculan<br/>al agendar alli o al atenderlas alli (RN-110, cuentan para el plan)"]
   V4 --> AUD["Registrar en auditoria con la clinica afectada"]
 
@@ -659,6 +667,8 @@ flowchart TD
 ```
 
 La clínica también puede desactivar el vínculo desde Clientes (entrada «Clientes» del diagrama): se rechaza con citas sin resolver en ella y, si procede, se aplica lo mismo que cuando se desvincula el propietario (decisiones del usuario en M5, C1.1). Sus mascotas quedan inactivas allí: la clínica solo lee lo suyo, no registra nada nuevo y no salen sus recordatorios. Deja de ver el documento, el correo y el teléfono del propietario (en su lista, en la ficha de la mascota y en las citas) y ya no edita sus datos. Para reactivarlo, le pide la confirmación por correo y el propietario la acepta (§12.3); sus mascotas vuelven a esa clínica cuando se agendan o se atienden allí (RN-110). Nunca se pide el vínculo de una cuenta de super-administrador (RN-G13): la clínica recibe la respuesta de siempre, pero no se crea la solicitud ni se envía el correo, y un enlace anterior tampoco la liga.
+
+El tope de 3 clínicas ([RN-116](ReglasNegocio.md#módulo-1--mascotas-y-propietarios), decisión del usuario en M5 C3) cuenta las clínicas activas con vínculo activo, las mismas que muestra «Clínicas»; se cuenta bajo el bloqueo de la fila del propietario, para que dos clics a la vez no lo pasen. Solo aplica cuando el propietario se vincula él mismo desde el portal: el alta por una clínica, la confirmación de su solicitud de vínculo y el registro desde el enlace o QR de una clínica no se bloquean. Desvincularse libera el cupo.
 
 
 ---
@@ -781,18 +791,18 @@ flowchart TD
   B --> C{Permitido por el plan?}
   C -- No --> C1[/"Mensaje: limite alcanzado, mejora el plan"/]
   C1 --> ZF([Fin])
-  C -- Si --> D{"El propietario ya existe? (busqueda exacta por documento o correo)"}
-  D -- No --> E[["Alta del propietario por el personal (§11)"]]
+  C -- Si --> D{"El propietario ya existe? (busqueda exacta mientras se escribe un documento<br/>o correo completo, con espera corta y limite por IP)"}
+  D -- No --> E[["Alta del propietario por el personal (§11): cuenta pendiente<br/>hasta que active su enlace; la clinica ya registra a su mascota"]]
   D -- Si --> FL{"Tiene vinculo activo con esta clinica?"}
   FL -- No --> FL0[/"Mensaje: hay una cuenta con ese dato, pide la confirmacion por correo;<br/>sin nombre, contacto ni mascotas (RN-109)"/]
   FL0 --> FL1[["Enviar al titular la confirmacion del vinculo por correo (§11);<br/>a una cuenta de super-administrador no se envia nada, con la misma respuesta (RN-G13)"]]
   FL1 --> FL2[/"Vuelve a buscarlo cuando confirme"/]
   FL2 --> ZF
-  FL -- Si --> F[Seleccionar al propietario]
+  FL -- Si --> F["Seleccionar al propietario; si aun no activa su cuenta, se marca y se ofrece Reenviar enlace"]
   F --> P{"El propietario ya tiene mascotas en la plataforma?"}
-  P -- Si --> Q["Mostrar sus mascotas (nombre, especie, raza, foto; sin datos clinicos)"]
+  P -- Si --> Q["Mostrar sus mascotas en tarjetas (nombre, especie, raza, foto; sin datos clinicos)"]
   Q --> V{Es una de ellas?}
-  V -- Si --> W["Vincular la mascota existente a esta clinica (mascota_clinica);<br/>conserva su ficha, carnet y QR"]
+  V -- Si --> W["Vincular la mascota existente a esta clinica (mascota_clinica);<br/>conserva su ficha, carnet y QR; la lista se pone al dia sin recargar"]
   W --> K
   V -- No --> G
   P -- No --> G

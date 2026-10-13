@@ -390,6 +390,10 @@ foreach ((array) $todas_desparasitaciones as $d) {
                     <input type="search" data-buscar-clinica maxlength="100" placeholder="Buscar clínica" aria-label="Buscar una clínica por su nombre o dirección">
                 </div>
             </div>
+            <?php // RN-116 y RE-5.13.5: al tope, «Vincularme» no se ofrece y una línea dice por qué. ?>
+            <?php if ($al_tope_clinicas): ?>
+                <p class="portal-ayuda portal-tope" data-tope-clinicas><i class="ri-information-line" aria-hidden="true"></i> <?= $e(VinculosPropietario::MENSAJE_TOPE) ?></p>
+            <?php endif; ?>
             <div class="portal-tarjetas" data-otras-clinicas>
                 <?php foreach ($clinicas_disponibles as $clinica): ?>
                     <article class="person-card portal-clinica" data-buscar="<?= $e(mb_strtolower($clinica['nombre'] . ' ' . ($clinica['direccion'] ?? ''))) ?>">
@@ -403,7 +407,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
                             <?php endif; ?>
                         </div>
                         <div class="card-footer-mini">
-                            <button type="button" class="btn-primary btn-primary--compacto" data-vincular-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>">
+                            <button type="button" class="btn-primary btn-primary--compacto" data-vincular-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>"<?= $al_tope_clinicas ? ' disabled' : '' ?>>
                                 <i class="ri-link" aria-hidden="true"></i> Vincularme
                             </button>
                         </div>
@@ -635,103 +639,81 @@ foreach ($clinicas_portal as $clinica) {
      veterinario, día y hora, y confirmar. -->
 <div id="portalBookingModal" class="portal-drawer-overlay">
     <div class="portal-drawer portal-drawer--ancho" role="dialog" aria-modal="true" aria-labelledby="bookingTitulo">
-        <?php $cabeceraVentana('btnCloseBookingModal', 'ri-calendar-event-line', 'Agendar una cita', 'En cuatro pasos: clínica y mascota, tipo y veterinario, día y hora, y confirmar.', 'bookingTitulo'); ?>
+        <?php $cabeceraVentana('btnCloseBookingModal', 'ri-calendar-event-line', 'Agendar una cita', 'Elige la clínica, tu compañero, el día y uno de los horarios libres.', 'bookingTitulo'); ?>
         <div class="portal-drawer-body">
+            <?php // M5 C3 (decisión del usuario): un solo formulario, todo a la vista; «Agendar» abre una confirmación corta. ?>
             <form id="portalBookingForm" class="portal-form booking" novalidate data-dias-cerrados="<?= $e(json_encode($diasCerradosPorClinica)) ?>">
-                <ol class="booking__progreso" aria-label="Pasos para agendar">
-                    <?php foreach (['Clínica y mascota', 'Tipo y veterinario', 'Día y hora', 'Confirmar'] as $n => $nombrePaso): ?>
-                        <li class="booking__progreso-paso<?= $n === 0 ? ' is-activo' : '' ?>" data-paso-indicador="<?= $n + 1 ?>"><span aria-hidden="true"><?= $n + 1 ?></span> <?= $e($nombrePaso) ?></li>
-                    <?php endforeach; ?>
-                </ol>
+                <div class="booking__columnas">
+                    <div class="booking__datos">
+                        <?php // RE-5.9.3 (hueco 8): solo sus clínicas; con una sola, su nombre y el id oculto. ?>
+                        <div class="input-group" id="bookingEleccionClinica">
+                            <?php if (empty($clinicas_portal)): ?>
+                                <?php $vacio('ri-hospital-line', 'Aún no tienes clínicas', 'Vincúlate a una en Clínicas para poder agendar.', '<button type="button" class="btn-enlace" data-nav="clinicas" data-cerrar-agendar>Ver clínicas</button>'); ?>
+                            <?php elseif (count($clinicas_portal) === 1): $unica = $clinicas_portal[0]; ?>
+                                <span class="portal-label">Clínica</span>
+                                <p class="booking__unica"><i class="ri-hospital-line" aria-hidden="true"></i> <?= $e($unica['nombre']) ?></p>
+                                <input type="hidden" name="id_clinica" value="<?= (int) $unica['id_clinica'] ?>" data-nombre="<?= $e($unica['nombre']) ?>">
+                            <?php else: ?>
+                                <span class="portal-label" id="booking_clinica_etq">Clínica <span class="portal-requerido" aria-hidden="true">*</span></span>
+                                <div class="portal-opciones" role="radiogroup" aria-labelledby="booking_clinica_etq">
+                                    <?php foreach ($clinicas_portal as $clinica): ?>
+                                        <label class="portal-opcion">
+                                            <input type="radio" name="id_clinica" value="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>" required>
+                                            <span class="portal-opcion__icono" aria-hidden="true"><i class="ri-hospital-line"></i></span>
+                                            <span class="portal-opcion__texto">
+                                                <strong><?= $e($clinica['nombre']) ?></strong>
+                                                <span><?= $e($clinica['ahora']['texto']) ?></span>
+                                            </span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
-                <fieldset class="booking__paso" data-paso="1">
-                    <legend class="sr-only">Clínica y mascota</legend>
-                    <?php // RE-5.9.3 (hueco 8): solo sus clínicas; con una sola, su nombre y el id oculto. ?>
-                    <div class="input-group" id="bookingEleccionClinica">
-                        <?php if (empty($clinicas_portal)): ?>
-                            <?php $vacio('ri-hospital-line', 'Aún no tienes clínicas', 'Vincúlate a una en Clínicas para poder agendar.', '<button type="button" class="btn-enlace" data-nav="clinicas" data-cerrar-agendar>Ver clínicas</button>'); ?>
-                        <?php elseif (count($clinicas_portal) === 1): $unica = $clinicas_portal[0]; ?>
-                            <span class="portal-label">Clínica</span>
-                            <p class="booking__unica"><i class="ri-hospital-line" aria-hidden="true"></i> <?= $e($unica['nombre']) ?></p>
-                            <input type="hidden" name="id_clinica" value="<?= (int) $unica['id_clinica'] ?>" data-nombre="<?= $e($unica['nombre']) ?>">
-                        <?php else: ?>
-                            <span class="portal-label" id="booking_clinica_etq">Clínica <span class="portal-requerido" aria-hidden="true">*</span></span>
-                            <div class="portal-opciones" role="radiogroup" aria-labelledby="booking_clinica_etq">
-                                <?php foreach ($clinicas_portal as $clinica): ?>
-                                    <label class="portal-opcion">
-                                        <input type="radio" name="id_clinica" value="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>" required>
-                                        <span class="portal-opcion__icono" aria-hidden="true"><i class="ri-hospital-line"></i></span>
-                                        <span class="portal-opcion__texto">
-                                            <strong><?= $e($clinica['nombre']) ?></strong>
-                                            <span><?= $e($clinica['ahora']['texto']) ?></span>
-                                        </span>
-                                    </label>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
+                        <div class="input-group" id="bookingEleccionMascota">
+                            <?php if (empty($mascotas)): ?>
+                                <?php $vacio('ri-heart-3-line', 'Todavía no tienes mascotas', 'Regístrala desde Inicio para poder agendarle una cita.'); ?>
+                            <?php else: ?>
+                                <span class="portal-label" id="booking_mascota_etq">Mascota <span class="portal-requerido" aria-hidden="true">*</span></span>
+                                <div class="portal-opciones" role="radiogroup" aria-labelledby="booking_mascota_etq">
+                                    <?php foreach ($mascotas as $m): ?>
+                                        <label class="portal-opcion">
+                                            <input type="radio" name="id_mascota" value="<?= (int) $m['id_mascota'] ?>" data-nombre="<?= $e($m['nombre']) ?>" required>
+                                            <?php $avatarMascota($m['foto'], (string) $m['nombre'], 'portal-opcion__avatar'); ?>
+                                            <span class="portal-opcion__texto">
+                                                <strong><?= $e($m['nombre']) ?></strong>
+                                                <span><?= $e(PresentacionPortal::especieYRaza($m)) ?></span>
+                                            </span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php
+                        $campo('Tipo de cita', '<select name="id_tipo_cita" id="booking_tipo_cita" required><option value="">Elige primero la clínica</option></select>', 'ri-briefcase-line', 'booking_tipo_cita');
+                        $campo('Veterinario', '<select name="id_veterinario" id="booking_veterinario" required><option value="">Elige primero la clínica</option></select>', 'ri-stethoscope-line', 'booking_veterinario');
+                        $campo('Motivo', '<textarea name="motivo" id="booking_motivo" maxlength="255" placeholder="Ej: control de peso, vómito desde ayer…" rows="2"></textarea>', '', 'booking_motivo', false);
+                        ?>
                     </div>
 
-                    <div class="input-group" id="bookingEleccionMascota">
-                        <?php if (empty($mascotas)): ?>
-                            <?php $vacio('ri-heart-3-line', 'Todavía no tienes mascotas', 'Regístrala desde Inicio para poder agendarle una cita.'); ?>
-                        <?php else: ?>
-                            <span class="portal-label" id="booking_mascota_etq">Mascota <span class="portal-requerido" aria-hidden="true">*</span></span>
-                            <div class="portal-opciones" role="radiogroup" aria-labelledby="booking_mascota_etq">
-                                <?php foreach ($mascotas as $m): ?>
-                                    <label class="portal-opcion">
-                                        <input type="radio" name="id_mascota" value="<?= (int) $m['id_mascota'] ?>" data-nombre="<?= $e($m['nombre']) ?>" required>
-                                        <?php $avatarMascota($m['foto'], (string) $m['nombre'], 'portal-opcion__avatar'); ?>
-                                        <span class="portal-opcion__texto">
-                                            <strong><?= $e($m['nombre']) ?></strong>
-                                            <span><?= $e(PresentacionPortal::especieYRaza($m)) ?></span>
-                                        </span>
-                                    </label>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
+                    <div class="booking__agenda">
+                        <div class="input-group">
+                            <span class="portal-label" id="booking_dia_etq">Día <span class="portal-requerido" aria-hidden="true">*</span></span>
+                            <input type="text" name="fecha" id="booking_fecha" class="booking__fecha" aria-labelledby="booking_dia_etq" readonly tabindex="-1">
+                            <p class="portal-ayuda">Los días en gris no se pueden elegir: ya pasaron o la clínica no atiende.</p>
+                        </div>
+                        <div class="input-group">
+                            <span class="portal-label" id="booking_hora_etq">Horario disponible <span class="portal-requerido" aria-hidden="true">*</span></span>
+                            <input type="hidden" name="hora" id="booking_hora">
+                            <div class="slot-panel" id="booking_slots" role="group" aria-labelledby="booking_hora_etq" aria-live="polite"></div>
+                        </div>
                     </div>
-                </fieldset>
+                </div>
 
-                <fieldset class="booking__paso" data-paso="2" hidden>
-                    <legend class="sr-only">Tipo y veterinario</legend>
-                    <?php
-                    $campo('Tipo de cita', '<select name="id_tipo_cita" id="booking_tipo_cita" required><option value="">Elige primero la clínica</option></select>', 'ri-briefcase-line', 'booking_tipo_cita');
-                    $campo('Veterinario', '<select name="id_veterinario" id="booking_veterinario" required><option value="">Elige primero la clínica</option></select>', 'ri-stethoscope-line', 'booking_veterinario');
-                    $campo('Motivo', '<textarea name="motivo" id="booking_motivo" maxlength="255" placeholder="Ej: control de peso, vómito desde ayer…" rows="2"></textarea>', '', 'booking_motivo', false);
-                    ?>
-                </fieldset>
-
-                <fieldset class="booking__paso booking__agenda" data-paso="3" hidden>
-                    <legend class="sr-only">Día y hora</legend>
-                    <div class="input-group">
-                        <span class="portal-label" id="booking_dia_etq">Día <span class="portal-requerido" aria-hidden="true">*</span></span>
-                        <input type="text" name="fecha" id="booking_fecha" class="booking__fecha" aria-labelledby="booking_dia_etq" readonly tabindex="-1">
-                        <p class="portal-ayuda">Los días en gris no se pueden elegir: ya pasaron o la clínica no atiende.</p>
-                    </div>
-                    <div class="input-group">
-                        <span class="portal-label" id="booking_hora_etq">Horario disponible <span class="portal-requerido" aria-hidden="true">*</span></span>
-                        <input type="hidden" name="hora" id="booking_hora">
-                        <div class="slot-panel" id="booking_slots" role="group" aria-labelledby="booking_hora_etq" aria-live="polite"></div>
-                    </div>
-                </fieldset>
-
-                <fieldset class="booking__paso" data-paso="4" hidden>
-                    <legend class="sr-only">Confirmar</legend>
-                    <dl class="booking__resumen" id="booking_resumen"></dl>
-                </fieldset>
-
-                <p class="booking__guia" id="booking_guia" aria-live="polite"></p>
-
-                <div class="users-modal__footer portal-modal__pie">
-                    <button type="button" class="portal-boton-secundario" data-paso-atras hidden>
-                        <i class="ri-arrow-left-line" aria-hidden="true"></i> Atrás
-                    </button>
-                    <button type="button" class="btn-primary" data-paso-siguiente disabled>
-                        <span>Siguiente</span>
-                        <i class="ri-arrow-right-line" aria-hidden="true"></i>
-                    </button>
-                    <button type="submit" class="btn-primary" id="booking_confirmar" hidden disabled>
-                        <span>Confirmar cita</span>
+                <div class="users-modal__footer portal-modal__pie booking__pie">
+                    <p class="booking__guia" id="booking_guia" aria-live="polite"></p>
+                    <button type="submit" class="btn-primary" id="booking_confirmar" disabled>
+                        <span>Agendar</span>
                         <i class="ri-calendar-check-line" aria-hidden="true"></i>
                     </button>
                 </div>

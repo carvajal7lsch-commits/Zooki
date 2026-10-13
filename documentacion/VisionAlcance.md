@@ -46,7 +46,7 @@ Su propósito es servir como documento maestro de la Fase 0 del proceso de re-do
 
 ## 2. Contexto y motivación del cambio
 
-Zooki nació como una aplicación web para digitalizar la gestión clínica de veterinarias pequeñas en Neiva (Huila). La versión **v1.12.0** es un sistema estable de una sola clínica, con autenticación por sesiones y Google OAuth, historia clínica, agenda de citas, calendario de vacunación, portal del propietario y notificaciones por correo. La especificación actual de la v2 reúne 95 historias de usuario, 418 requisitos específicos y 119 reglas de negocio.
+Zooki nació como una aplicación web para digitalizar la gestión clínica de veterinarias pequeñas en Neiva (Huila). La versión **v1.12.0** es un sistema estable de una sola clínica, con autenticación por sesiones y Google OAuth, historia clínica, agenda de citas, calendario de vacunación, portal del propietario y notificaciones por correo. La especificación actual de la v2 reúne 95 historias de usuario, 418 requisitos específicos y 120 reglas de negocio.
 
 El cambio propuesto responde a dos necesidades:
 
