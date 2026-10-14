@@ -27,7 +27,7 @@
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
-- **Siguiente paso:** plan del módulo 2 (Grafo I: HU-2.8 diagnósticos sugeridos, HU-2.9 alertas de toxicidad e interacción, HU-2.11 triage, y alergias y alertas médicas con RE-2.10.1 y RE-2.1.5). Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Siguiente paso:** módulo 2 — Grafo I. Plan en `specs/M2-grafo-clinico.md`, aprobado con las decisiones de §6 (2026-10-14): sin veterinario, conocimiento desde fuentes públicas con su fuente y marca de pendiente; conocimiento en archivos más un mapa del grafo (C6); el nivel de triage no sale del texto libre; Codex escribe A, B y C2–C4, Claude Code C1, C5 y C6. Etapa en curso: A (inventario y diseño, Codex), en la rama `v2/m2-grafo`. Pendiente aparte: borrar los respaldos temporales del VPS.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 
