@@ -1,8 +1,8 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: aprobado con las decisiones de §6 (2026-10-14); el mecanismo de la decisión 3 se confirma en la revisión de A
+> Estado: A revisada y aprobada con ajustes (2026-10-14); en curso B1
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
-> Responsable de escritura: Codex (A, B, C2, C3, C4) y Claude Code (C1, C5, C6) · Revisión independiente: Claude (arquitecto)
+> Responsable de escritura: Codex (A, B1, B2, C2, C3, C4) y Claude Code (C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
 
 ## 1. Resultado y límites
@@ -31,20 +31,21 @@
 | HU-2.8 | RE-2.8.1–5 | RN-209, RN-210, RN-212, RN-202 | C2, C5 | Diagnósticos ordenados por peso con casos de prueba; aceptar o escribir el propio |
 | HU-2.9 | RE-2.9.1–4 | RN-209, RN-211, RN-212, RN-113 | C3, C5 | Bloqueo por toxicidad y alergia; advertencia de interacción con auditoría; aviso genérico sin revelar lo de otra clínica |
 | HU-2.11 | RE-2.11.1–7 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | C4 | La batería de 26 casos como prueba automatizada (RE-2.11.7), con síntomas marcados (decisión 3) |
-| Nueva: mapa del grafo (A propone HU, RE y número) | por definir | RN-212 | C6 | El superadministrador explora nodos y aristas con su peso, signo y fuente; solo lectura |
+| Propuesta de A: HU-2.12, mapa del grafo (pendiente de aprobación) | RE-2.12.1–6 propuestos | RN-212, RN-209, RN-004/RN-G13 | C6 | El superadministrador explora conocimiento global con peso, signo y fuente; solo lectura y sin pacientes |
 
 ## 3. Etapas y dependencias
 
 | Etapa | Entregable comprobable | Depende de | Escribe | Revisa |
 |---|---|---|---|---|
 | **A. Inventario y diseño** (solo lectura del código) | La consulta actual (código, vistas, JS, pruebas) y qué se conserva; el esquema del grafo frente a lo que piden los RE y la batería (por ejemplo: nivel de triage por síntoma, alarmas universales, sinónimos para el buscador de síntomas, fuente de cada nodo y arista, cobertura por especie, contagio, ventanas de tiempo, interacciones fármaco–fármaco, modificadores de raza, edad y estado); cada caso T-01 a T-26 traducido a lo que el propietario marcaría (síntomas del catálogo, tiempo y paciente) y el conocimiento que exige; propuesta del modelo de datos (para B), del formato de la base de conocimiento y de los tres algoritmos (ranking, prescripción, triage); diagramas §1 y §3 frente a la propuesta. | M5 | Codex | Claude |
-| **B. Esquema y conocimiento base** | Migración `07` repetible con lo que falte, MER y drawDB al día; la base de conocimiento versionada en el repositorio con su cargador idempotente; conocimiento inicial que cubre la batería y lo común en perros y gatos, marcado «pendiente de validación veterinaria» y con su fuente pública. | A | Codex | Claude |
-| **C1. Alergias y alertas médicas** | Registrar y desactivar (RE-2.1.5); visibles en la ficha de toda clínica vinculada (RN-113) y en el portal (pestaña de la mascota). | B | Claude Code | Claude |
-| **C2. Motor de diagnósticos** (HU-2.8) | Helper sin base de datos que ordena diagnósticos por peso según síntomas y contexto; API para la consulta; pruebas con casos. | B | Codex | Claude |
-| **C3. Alertas de prescripción** (HU-2.9) | Bloqueo por toxicidad de especie o raza y por alergia; advertencia de interacción con la medicación vigente, confirmación con auditoría; aviso genérico cuando el tratamiento es de otra clínica sin autorización. | B, C1 | Codex | Claude |
-| **C4. Motor de triage** (HU-2.11) | Helper con las reglas P1–P8 (RN-416 a RN-418, RN-425) que calcula el nivel **solo con síntomas marcados**, tiempo y paciente; la opción «Otro / no sé» da 🟡 con revisión del personal (P6); el texto libre se guarda para el personal y no cambia el nivel; buscador del catálogo tolerante a errores (sugiere, el usuario confirma); la batería completa como prueba automatizada. | B | Codex | Claude |
+| **B1. Esquema y cargador** | Migración `07` repetible (A.2 con los ajustes de la revisión de A), `01_schema.sql`, MER y drawDB; Gran danés en la semilla; validador y cargador idempotente con `--revisar`; arranque que solo carga si la migración salió bien; documentos de A.7; un conjunto de conocimiento mínimo de prueba. | A | Codex | Claude |
+| **B2. Conocimiento inicial** | Los archivos de `database/conocimiento/` con lo que exige la batería (A.3), los casos P1 adicionales y un núcleo común de perros y gatos; cada elemento con su fuente específica y la marca «pendiente de validación veterinaria»; carga repetida sin cambios. | B1 | Codex | Claude |
+| **C1. Alergias y alertas médicas** | Registrar y desactivar (RE-2.1.5); visibles en la ficha de toda clínica vinculada (RN-113) y en el portal (pestaña de la mascota). | B1 | Claude Code | Claude |
+| **C2. Motor de diagnósticos** (HU-2.8) | Helper sin base de datos que ordena diagnósticos por peso según síntomas y contexto; API para la consulta; pruebas con casos. | B2 | Codex | Claude |
+| **C3. Alertas de prescripción** (HU-2.9) | Bloqueo por toxicidad de especie o raza y por alergia; advertencia de interacción con la medicación vigente, confirmación con auditoría; aviso genérico cuando el tratamiento es de otra clínica sin autorización. | B2, C1 | Codex | Claude |
+| **C4. Motor de triage** (HU-2.11) | Helper con las reglas P1–P8 (RN-416 a RN-418, RN-425) que calcula el nivel **solo con síntomas marcados**, tiempo y paciente; la opción «Otro / no sé» da 🟡 con revisión del personal (P6); el texto libre se guarda para el personal y no cambia el nivel; buscador del catálogo tolerante a errores (sugiere, el usuario confirma); la batería completa como prueba automatizada. | B2 | Codex | Claude |
 | **C5. Consulta del veterinario** | La consulta con síntomas marcados, diagnósticos sugeridos, tratamiento con sus alertas y la sección de alergias y alertas; pendientes de `pulido-interfaz.md` de la consulta. | C1–C3 | Claude Code | Claude |
-| **C6. Mapa del grafo** («cerebro de nodos») | Vista de solo lectura en el panel del superadministrador: grafo interactivo con color por tipo de nodo, aristas por signo y grosor por peso, buscador, filtro por tipo y especie, y al tocar un nodo sus relaciones con peso, signo, fuente y la marca «pendiente de validación». Conviene hacerla justo después de B: es la forma de revisar el conocimiento a ojo. | B | Claude Code | Claude |
+| **C6. Mapa del grafo** («cerebro de nodos») | Vista de solo lectura en el panel del superadministrador: grafo interactivo con color por tipo de nodo, aristas por signo y grosor por peso, buscador, filtro por tipo y especie, y al tocar un nodo sus relaciones con peso, signo, fuente y la marca «pendiente de validación». Conviene hacerla justo después de B2: es la forma de revisar el conocimiento a ojo. | B2 | Claude Code | Claude |
 | **F. Cierre** | `2.0.0-alpha.4`, HU implementadas, revisiones de documentos, descargas, despliegue con la migración 07 y la carga del conocimiento. | todo | | Claude |
 
 ## 4. Datos y migraciones
@@ -67,23 +68,474 @@
 |---|---|
 | 1. **Validez clínica del conocimiento** | **Decisión del usuario (2026-10-14):** no hay un veterinario disponible para revisarlo. Por eso: el conocimiento se arma solo desde fuentes públicas reconocidas (por ejemplo, la lista de tóxicos de la ASPCA y manuales veterinarios de referencia) y **cada nodo y arista guarda su fuente**; todo queda marcado «pendiente de validación veterinaria»; la interfaz dice «Sugerencia de apoyo» (RN-209); ante la duda, el triage sube de nivel y no baja (P2, P6); un bloqueo de prescripción solo se carga con fuente explícita de toxicidad, lo demás queda como advertencia. La falta de validación clínica se declara como limitación en la documentación. |
 | 2. **Dónde vive el conocimiento** | **Decisión del usuario (2026-10-14):** archivos versionados en `database/conocimiento/` con un cargador idempotente que corre al desplegar; sin pantalla de edición en la v2.0. **Además pide verlo como un mapa de nodos («cerebro de nodos»):** etapa C6, de solo lectura, en el panel del superadministrador (el conocimiento es global, RN-212). A propone su HU y RE para los documentos. |
-| 3. **Texto libre del triage** | **Decisión del usuario (2026-10-14):** no confiar el nivel al texto libre; interpretar lo que el propietario escribe es arriesgado para el triage y muy difícil de probar. **Mecanismo recomendado (se confirma en la revisión de A):** el nivel se calcula solo con lo marcado del catálogo, el tiempo y el paciente; el catálogo trae «Otro / no sé», que da 🟡 con revisión del personal (P6); el texto libre queda opcional, como nota para el personal, y no cambia el nivel; un buscador del catálogo tolerante a errores ayuda a encontrar el síntoma («bomita» sugiere «Vómito con sangre») pero el usuario lo marca. Ajustes en los documentos (B): RE-2.11.1 («al menos un síntoma marcado o “Otro / no sé”», ya no «o el texto»), RN-424 (el texto no interviene en el cálculo), CasosTriage: cada caso se expresa como síntomas marcados; T-22 pasa a «Otro / no sé» → 🟡 con revisión; T-23 pasa a prueba del buscador más el caso marcado → 🟠. |
+| 3. **Texto libre del triage** | **Decisión del usuario (2026-10-14):** no confiar el nivel al texto libre; interpretar lo que el propietario escribe es arriesgado para el triage y muy difícil de probar. **Mecanismo (confirmado en la revisión de A):** el nivel se calcula solo con lo marcado del catálogo, el tiempo y el paciente; el catálogo trae «Otro / no sé», que da 🟡 con revisión del personal (P6); el texto libre queda opcional, como nota para el personal, y no cambia el nivel; un buscador del catálogo tolerante a errores ayuda a encontrar el síntoma («bomita» sugiere «Vómito con sangre») pero el usuario lo marca. Ajustes en los documentos (B): RE-2.11.1 («al menos un síntoma marcado o “Otro / no sé”», ya no «o el texto»), RN-424 (el texto no interviene en el cálculo), CasosTriage: cada caso se expresa como síntomas marcados; T-22 pasa a «Otro / no sé» → 🟡 con revisión; T-23 pasa a prueba del buscador más el caso marcado → 🟠. |
 | 4. **Alcance del triage en M2** | M2 entrega el motor, su API y la batería en verde; la captura en Agendar, urgencias y el ajuste del veterinario van en M4. |
 | 5. **Quién escribe** | **Decisión del usuario (2026-10-14):** Codex para A, B y los motores (C2–C4); Claude Code para las pantallas (C1, C5 y C6). |
 | 6. **Medicación vigente** | Se toma de los tratamientos activos (por duración) y de las alertas de tipo «medicación continua»; A confirma si el esquema alcanza. |
 
+**Decisiones del usuario durante A (2026-10-14):**
+
+- No inventar edades ni horas que falten en la batería.
+  Los umbrales geriátricos serán por especie/raza y tendrán fuente; no se deducen de «10 años» para cualquier perro.
+  Se permite «No sé» como respuesta temporal, con revisión del personal cuando ese dato sea necesario para calcular.
+  B reflejará esta excepción en RE-2.11.1 y RN-424.
+- T-16 conserva 🟡 como esperado provisional, con revisión por cantidad y tipo de chocolate desconocidos.
+  Las 48 horas no son una regla general para bajar el nivel ni para descartar toxicidad.
+  B anotará la limitación en la batería; no se declara validación veterinaria.
+- Agregar solo Gran danés al catálogo global en B, con un ID nuevo y sin cambiar los existentes.
+  Las categorías taxonómicas amplias o dudosas siguen sin cobertura específica y con revisión; no se inventa su especie clínica.
+
 ## 7. Tareas y verificación
 
 - [x] Aprobar este plan y decidir §6 (2026-10-14).
-- [ ] A — Inventario y diseño.
-- [ ] B — Esquema y conocimiento base.
+- [x] A — Inventario y diseño: revisada y aprobada con ajustes (Codex, 2026-10-14).
+- [ ] B1 — Esquema, cargador y documentos.
+- [ ] B2 — Conocimiento inicial con fuentes.
 - [ ] C1 — Alergias y alertas médicas.
 - [ ] C2 — Motor de diagnósticos.
 - [ ] C3 — Alertas de prescripción.
 - [ ] C4 — Motor de triage con la batería.
 - [ ] C5 — Consulta del veterinario.
-- [ ] C6 — Mapa del grafo (recomendado justo después de B).
+- [ ] C6 — Mapa del grafo (recomendado justo después de B2).
 - [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.4`.
 
-**Resultado de pruebas:** pendiente.
+**Resultado de pruebas:** línea base de A en verde (691 PHP sin/con MariaDB temporal y 167 JS; detalle al final del Anexo A); las pruebas de implementación de B en adelante siguen pendientes.
+
+## Anexo A — Inventario y diseño
+
+**Lo escribió Codex (2026-10-14); revisión independiente: Claude (arquitecto).**
+Lectura sobre `v2/m2-grafo`, commit de partida `9276d37`.
+El código y las pruebas existentes coinciden con `main`; la diferencia previa de la rama era el plan y el estado del trabajo.
+Este anexo propone el contrato de B y C1–C6; no crea tablas, conocimiento, rutas, pantallas ni pruebas.
+Las propuestas técnicas y los números nuevos de C6 requieren la revisión de A antes de implementar B.
+
+### A.1. Consulta actual e inserciones para C5
+
+| Pieza existente | Qué hace y se conserva | Separación o ampliación propuesta |
+|---|---|---|
+| `controllers/ConsultaController.php::registrarAjax` | Rechaza método distinto de POST; revisa todos los adjuntos antes de escribir; recoge tratamientos; responde JSON; elimina del disco lo movido si falla la transacción. | Incorporar síntomas y selección explícita de fármaco; recoger conciliación/confirmación; delegar validación clínica al servicio común de C3, también al guardar, sin confiar en una validación AJAX previa. |
+| `ConsultaController::listarHistorialAjax` | Devuelve mascota, consultas visibles, vacunas y desparasitaciones; una mascota no vinculada da 403 auditado. | C1 añade alertas con su clínica de origen; C5 añade síntomas de consultas visibles, sin abrir consultas ajenas ni usar el historial como acceso interno a medicación protegida. |
+| `models/Consulta.php::registrar`, `escribir`, `validar` | Exige mascota activa/vinculada, motivo y diagnóstico; valida signos opcionales; consulta, tratamientos y adjuntos se guardan juntos; completa la cita; asigna HC una sola vez por clínica con candado MySQL. | Conservar esa transacción y sus candados; insertar `consulta_sintomas` dentro de ella; repetir prescripción contra datos vigentes antes de confirmar el registro; persistir la decisión del veterinario y la versión del conocimiento usada en auditoría. |
+| `models/ModeloHistoria.php` | Centraliza RN-112/RN-113/RN-115; historia propia, ajena autorizada y modo de solo lectura tras desvincularse. | Conservar; C3 tendrá una lectura interna separada y mínima para RN-211, sin ampliar `consultaVisible` ni `findByConsultas`. |
+| `models/Tratamiento.php` | Valida medicamento, dosis, vía, duración y fecha inicial; escribe en consulta propia; lectura agrupada de tratamientos visibles. | Hoy no escribe `id_nodo_farmaco` ni `fecha_fin`, aunque las columnas existen; separar validación de datos y evaluación de seguridad; no deducir un principio activo del nombre comercial por coincidencia aproximada. |
+| `views/vet/modal_consulta.php` | Modal compartido por Pacientes y Calendario: motivo, signos, diagnóstico/plan, tratamientos y adjuntos. | Conservar diseño; síntomas junto a anamnesis, sugerencias junto a diagnóstico y alertas junto a cada tratamiento; quitar `onsubmit` y `onchange` heredados al tocarlo; máximos, restricciones y mensajes junto al campo con helpers comunes. |
+| `views/vet/atencion.php`, `public/js/atencion.js`, `CitaController::atencion` | Segunda entrada real: consulta de una cita, pasos, signos completos, borrador, registro y cierre; usa el mismo endpoint y `addTreatmentRow`. | Incluirla en C5, no solo el modal; reutilizar componentes de síntomas/prescripción y ampliar el borrador solo para datos editables, nunca para una autorización de prescripción reutilizable. |
+| `public/js/medical-module.js` (2657 líneas) | Mezcla mascotas, propietarios, consultas, tratamientos, historial, vacunas, desparasitación y agenda. | Extraer solo consulta, selector de síntomas y filas de tratamiento a archivos propios reutilizados por ambas entradas; mantener adaptadores de las llamadas actuales, sin reescribir mascotas/agenda. |
+| `ResumenClinico` y vistas de historial | Resumen de último peso/consulta y próximas dosis; varias presentaciones del mismo historial, incluida impresión. | Sus «alertas» actuales son avisos de dosis, no `alertas_medicas`; añadir una sección distinta de seguridad clínica, manteniendo la privacidad de las consultas y el peso desconocido como NULL, nunca 0. |
+
+**Enganches concretos:**
+
+- Síntomas: `tabMotivo` del modal y primer paso de `formConsultaAtencion`; IDs explícitos hacia `consulta_sintomas`, nunca extracción de la anamnesis.
+- Diagnósticos: antes del textarea obligatorio de diagnóstico; el buscador o ranking no lo rellena ni lo acepta por sí solo.
+- Prescripción: `addTreatmentRow` y `tratamientosDelFormulario`; cada fila tendrá nodo opcional confirmado, fecha de fin y resultado de evaluación.
+- Alergias: C1 aporta el componente compartido y las lecturas para clínica y portal; C5 lo presenta antes de prescribir.
+- Guardado: `Consulta::escribir` conserva la unidad atómica; si cambia una alergia, medicación o versión de conocimiento desde la vista previa, el servidor vuelve a evaluar y exige una nueva decisión cuando corresponda.
+- La comprobación previa de permisos y la auditoría de rechazo se conservan fuera del rollback que borraría su evidencia.
+
+**Hallazgos concretos para C5, sin corregir en A:**
+
+- `saveConsultation` todavía usa un aviso global para motivo/diagnóstico y recarga al guardar; los errores de campo deben verse junto al campo y el estado actualizarse con la respuesta.
+- `addTreatmentRow` solo presenta nombre libre, dosis, vía, duración e inicio; no muestra observaciones ni fin, aunque el controlador admite observaciones.
+- El modal no presenta frecuencia respiratoria ni observaciones de consulta, que sí admite el modelo y sí tiene Atención.
+- La duración libre no demuestra vigencia y un peso aislado no demuestra obesidad.
+  No usar ninguno como dato estructurado inferido.
+- Persisten eventos en línea del modal y un `style=` en el error de historial de `medical-module.js:1361`; retirarlos en la extracción de C5, conservando el diseño.
+
+**Pruebas que se conservan y se ampliarán en su etapa:**
+
+| Prueba existente | Evidencia actual | Ampliación futura |
+|---|---|---|
+| `ConsultaHistorialTest` | Campos, motivo/diagnóstico, fecha inicial del tratamiento, rollback de consulta/archivos/tratamientos, mascota activa, HC por clínica, veterinario asignado y listado aislado. | Síntomas en la misma transacción y rechazo servidor de prescripción bloqueada, incluso por petición directa. |
+| `HistoriaCompartidaTest` | Sin autorización no se muestra ni se menciona historia ajena; con autorización llega de solo lectura; desvinculación conserva solo lo propio. | Alertas globales con origen y avisos de interacción protegida sin filtración en ninguna clave JSON. |
+| `BaseV2MysqlTest::testC4HistoriaClinicaEnElEsquemaReal`, `testC4ElNumeroDeHistoriaSeAsignaBajoCandadoSinRepetirse` | FK, atomicidad y concurrencia de numeración en el esquema real. | Migración 07 repetida, carga repetida y guardado seguro en B/C3/C5. |
+| `ValidadorClinicoTest`, `ResumenClinicoTest`, pruebas JS de M5 C3/C4b | Validación clínica, resumen, historial y solo lectura de Pacientes. | Pruebas de componentes de ambas entradas de consulta; hoy no prueban motores inexistentes. |
+
+### A.2. Esquema frente al conocimiento requerido
+
+**Inventario confirmado:** `01_schema.sql`, MER y drawDB coinciden en las dos tablas del grafo y sus enlaces clínicos.
+`grafo_nodos` solo tiene ID, tipo y etiqueta; `grafo_aristas`, extremos, relación, signo y peso.
+No hay conocimiento en `02_semilla.sql`, ni código de negocio que use nodos, aristas, síntomas estructurados o alertas médicas.
+`consulta_sintomas` y `cita_sintomas` alcanzan para marcar nodos sin duplicados, pero no guardan atributos temporales por síntoma.
+
+**Taxonomía real de la semilla:** Canino, Felino, Roedor, Ave, Reptil y Exótico.
+Labrador Retriever y Bulldog Francés sí existen; Gran danés no existe.
+`Conejo Enano` aparece bajo `Roedor`, y `Loro Amazónico` bajo `Ave`: son categorías heredadas, no cobertura clínica validada.
+No deducir «conejo» de cualquier Roedor ni «loro» de cualquier Ave, ni tomar `raza_indicada` como raza verificada.
+El usuario aprobó el 2026-10-14 incluir solo Gran danés en B con un ID nuevo y conservar los IDs existentes.
+Las categorías amplias o dudosas siguen sin cobertura específica y con revisión; no se reclasifica taxonomía ni se inventa una especie clínica.
+
+La migración 07 propuesta amplía el esquema y, a la vez, B actualiza MER, drawDB y `01_schema.sql`.
+Todos los nombres y largos siguientes son propuesta de diseño, no columnas ya aprobadas o existentes.
+
+| Necesidad | Qué alcanza hoy | Propuesta para B / migración 07 |
+|---|---|---|
+| Identidad estable y retiro lógico | IDs numéricos referenciados por FK; etiquetas no son únicas. | En nodos y aristas: `codigo VARCHAR(100) UNIQUE`, `activo`, `version_conocimiento VARCHAR(50)`; el código externo es inmutable y no se recicla; el ID numérico local no se cambia. |
+| Fuente y validación por nodo/arista, decisión 1 | Ninguna columna. | En ambos: `fuentes JSON NOT NULL`, `estado_validacion` (`pendiente`, `validado`, `rechazado`), `validado_por` y `fecha_validacion` opcionales; todos los elementos iniciales quedan pendientes; toda corrección de contenido clínico invalida una validación anterior. |
+| Triage básico y alarmas P1 | No existe nivel por síntoma. | Nodos síntoma: `nivel_triage` nullable, `alarma_universal`, `moderado`, `metadatos JSON`; las alarmas universales producen rojo sin depender de cobertura, raza o texto. |
+| Sinónimos y búsqueda | Solo etiqueta. | `grafo_sinonimos`: `codigo`, `id_nodo`, `texto`, `normalizado`, `fuentes`, `estado_validacion`, `activo`, `version_conocimiento`; una misma forma puede sugerir más de un nodo; no obliga a una interpretación única. |
+| Especie y raza del paciente frente a nodos | No hay enlace entre nodo especie/raza y catálogos taxonómicos. | `grafo_nodos.id_especie` / `id_raza` opcionales con FK e índices; unicidad de cada enlace según tipo; validar coherencia raza–especie; nunca enlazar por IDs supuestos ni por el texto libre `raza_indicada`. |
+| Cobertura explícita | Que exista un nodo especie no demuestra cobertura clínica. | Nodo especie con `metadatos.cobertura` por motor (`diagnosticos`, `triage`, `prescripcion`) y alcance de reglas; perro/gato con cobertura parcial declarada; conejo/loro sin cobertura específica de triage; P1 global disponible. |
+| Combinaciones, ventanas P5 y modificadores P4 | Una arista binaria no representa por sí sola «A Y B Y paciente», ventanas ni datos desconocidos. | `grafo_reglas`: `id_regla`, `codigo UNIQUE`, `motor`, `condiciones JSON`, `resultado JSON`, `fuentes`, `estado_validacion`, `activo`, `version_conocimiento`, validación/autor opcionales; lenguaje declarativo cerrado, sin PHP/SQL/JavaScript ejecutable. |
+| Interacción y toxicidad | Aristas entre fármacos y desde especie/raza alcanzan para relaciones simples. | Aristas con `condiciones JSON` y `efecto` explícito (`evidencia`, `bloqueo`, `advertencia`); `interactua_con` se evalúa en ambos sentidos sin duplicar pares; toxicidad documentada no se decide por un peso ni por cualquier signo negativo. |
+| Lirios, chocolate y xilitol | No son fármacos; el enum actual no representa sustancias tóxicas como tales. | Proponer el tipo de nodo `sustancia`, conservando los seis tipos existentes; síntomas de exposición lo enlazan a especie/toxicidad; no registrar una planta como medicamento prescrito. |
+| «Otro / no sé» | Puede existir como nodo síntoma, sin significado clínico. | Código estable `sintoma.otro_no_se`, nivel de reserva amarillo y revisión; su fuente es la política RN-418, no una enfermedad; combinarlo con P1 nunca baja un rojo. |
+| Contexto temporal y del episodio | `citas.inicio_sintomas` es único y nullable. | `detalles JSON` opcional en `cita_sintomas` y `consulta_sintomas` para inicio conocido/desconocido, episodio en curso/resuelto, número de episodios y otros atributos declarados; `citas.contexto_triage JSON` para datos declarados del paciente y versión/reglas de cálculo; no guardar allí tratamientos protegidos. |
+| Paciente P4 | Ficha: especie, raza, nacimiento, sexo y esterilización nullable; vacunas y alertas están disponibles. | Obtener edad a la fecha de evaluación; vacunación incompleta/desconocida y condición corporal no se infieren del silencio ni del peso; preguntas cerradas o alertas de condición crónica; tiempo del celo separado del inicio del flujo, en contexto estructurado del episodio. |
+| Medicación vigente | Ya existen `fecha_inicio`, `fecha_fin` e `id_nodo_farmaco`; `alertas_medicas` admite medicación continua con nodo. | No falta una segunda tabla de tratamientos; falta usar esas columnas, pedir fin explícito para tratamiento acotado y leer activas las alertas continuas; NULL de fin en datos heredados significa vigencia desconocida/potencial, no tratamiento terminado. |
+| Auditoría de decisiones | `auditoria_sistema` ya guarda clínica, actor, tabla, ID, acción, descripción y datos anteriores/nuevos. | Reutilizarla para regla/versión, rechazo, conciliación y decisión; el servidor conserva trazabilidad interna y la respuesta genérica no incluye IDs ni metadatos del tratamiento protegido. |
+
+**Contrato del lenguaje de reglas:** condiciones `todos`, `alguno` y predicados tipados sobre un conjunto cerrado de datos.
+Ejemplos de predicados: síntoma marcado, especie/raza, edad en meses, sexo, esterilización, alerta activa enlazada, inicio de episodio y minutos desde exposición.
+Cada tiempo identifica el evento al que pertenece y usa intervalos explícitos con límites inclusivos/exclusivos.
+Un dato ausente es `desconocido`, no `false`, cero ni «sin riesgo».
+El cargador rechaza campos desconocidos, ciclos de referencias de reglas, unidades incompatibles y un resultado de bloqueo sin fundamento permitido.
+Las reglas se evalúan independientemente; no leen el nivel que produjo la regla anterior.
+
+**Medicación vigente y privacidad, decisión 6:**
+
+- Tratamiento acotado: `fecha_inicio <= hoy <= fecha_fin`, con fin inclusivo al tener granularidad DATE; un tratamiento futuro no es vigente.
+- C5 pide fecha final o una duración estructurada que permita calcularla inequívocamente; se conserva `duracion` como texto descriptivo.
+  No analizar «hasta mejorar», «7 días?» o un nombre comercial para inventar fechas o principios activos.
+- Medicación continua: alerta activa de tipo `medicacion_continua`, enlazada a un nodo fármaco cuando esté identificado.
+- Fin o fármaco desconocido: marcar evaluación incompleta y solicitar conciliación; no afirmar «sin interacciones».
+  No inferir identidad de un fármaco desde una descripción de alerta no enlazada.
+- El modelo interno de C3 lee los nodos necesarios de tratamientos de todas las clínicas para esa mascota, tras comprobar vínculo activo de la clínica solicitante.
+  No devuelve ese conjunto al controlador de historial ni al navegador.
+- Una alerta global de `condicion_cronica` «epilepsia» permite T-19 sin abrir una consulta protegida.
+  La ausencia de esa alerta no autoriza leer diagnósticos ajenos ni a afirmar que es una crisis habitual.
+- Evaluar también interacciones entre las filas nuevas de la misma consulta.
+  La confirmación del veterinario no puede saltarse toxicidad o alergia; solo resuelve advertencias permitidas por RN-211.
+- La regla de §6 sobre fuente pública se refiere al conocimiento de toxicidad.
+  Una alergia individual registrada y enlazada al fármaco bloquea por RE-2.9.2 aunque no sea una relación bibliográfica.
+
+### A.3. Traducción de T-01 a T-26
+
+Los colores son los esperados provisionales de la batería, no diagnósticos ni una validación veterinaria.
+Los nombres siguientes proponen entradas del catálogo; B les asignará códigos estables y fuentes.
+«Sin dato» mantiene el atributo desconocido; no se añade una raza, vacunación, estado ni una hora que el caso no declara.
+Para casos sin tiempo, se propone la respuesta explícita «No sé» aprobada durante A; una alarma suficiente no espera ese dato y una regla que lo necesita pide revisión.
+Una opción tranquilizadora puede precisar qué episodio se describe, pero nunca resta puntos a una alarma.
+
+| Caso | Marcas del catálogo y atributos cerrados del episodio | Tiempo declarado | Paciente y estado aportados | Esperado | Conocimiento mínimo |
+|---|---|---|---|---|---|
+| T-01 | Dificultad para respirar; encías azuladas/moradas. | En curso; inicio sin dato. | Perro mestizo, 6 años; resto sin dato. | 🔴 | P1 universal; dos alarmas no se promedian. |
+| T-02 | Convulsión en curso. | Ahora, duración 6 minutos. | Gata, 3 años; resto sin dato. | 🔴 | P1: basta que siga en curso; no exigir superar 5 minutos para activar la alarma. |
+| T-03 | Atropello/traumatismo; hemorragia que no se detiene. | Sangrado actual; hora del atropello sin dato. | Perro, 4 años. | 🔴 | P1 prevalece sobre regla de trauma. |
+| T-04 | Intentos repetidos de orinar con salida mínima; dolor/maullido al intentarlo. | Inicio sin dato. | Gato macho castrado, 5 años; se declara «por lo demás bien». | 🔴 | Combinación de signos urinarios de alarma, no exigir que el propietario diagnostique obstrucción ni confundirlo con simple frecuencia urinaria. |
+| T-05 | Arcadas sin producir vómito; abdomen distendido; inquietud. | Inicio sin dato. | Perro gran danés, 7 años; raza gigante. | 🔴 | Regla explícita combinación + raza gigante; no confundir arcadas con vómito aislado. |
+| T-06 | Mucha sed; decaimiento; secreción genital. | Celo hace 5 semanas; inicio de otros signos sin dato. | Perra, 8 años, no esterilizada. | 🟠 | Sexo/estado reproductivo y evento «último celo»; sospecha de piometra como apoyo, no diagnóstico automático. |
+| T-07 | Atropello/traumatismo, aunque camina. | Sin dato. | Perro, 5 años; camina normalmente. | 🟠 | Regla de trauma; caminar no anula el riesgo. |
+| T-08 | Mordió/ingirió lirios identificados. | Sin dato. | Gato, 2 años, sin signos visibles. | 🔴 | Sustancia + toxicidad por especie; no exige un síntoma posterior. |
+| T-09 | Respiración ruidosa después de ejercicio; cansancio tras ejercicio; exposición a calor. | Después de caminar; intervalo exacto sin dato. | Perro bulldog francés, 3 años. | 🟠 | Modificador braquicéfalo; cansancio no equivale por sí solo a colapso ni respiración ruidosa a dificultad respiratoria P1; añadir cualquiera de esas alarmas da rojo. |
+| T-10 | Las mismas marcas de T-09. | Igual que T-09. | Perro labrador, 3 años. | 🟡 | Control sin modificador braquicéfalo; no clasificar «cansancio tras ejercicio» como decaimiento sistémico de P3. |
+| T-11 | Vómito; diarrea con sangre; falta de apetito. | Sin dato. | Perro, 3 meses, vacunas incompletas. | 🟠 + aislamiento | P3 y contexto cachorro/vacunación; regla de posible contagio separada del color. |
+| T-12 | Vómito, un episodio; diarrea sin sangre declarada. | Inicio sin dato; un vómito. | Perro, 6 años, vacunado, activo. | 🟡 | Episodio aislado y ausencia de marcas de alarma; no inventar vacunas específicas desde una edad. |
+| T-13 | No come; se esconde. | Sin comer 3 días. | Gato, 9 años, obesidad declarada. | 🟠 | Anorexia sostenida + especie/condición corporal; peso solo no prueba obesidad; fuente para la ventana usada. |
+| T-14 | Ingesta de chicle sin azúcar; posible exposición a xilitol. | 20 minutos. | Perro, 15 kg; edad/raza sin dato. | 🟠 | Sospecha de sustancia y tiempo; no afirmar ingrediente, dosis ni seguridad cuando se desconocen. |
+| T-15 | Administración/ingesta de acetaminofén (sinónimo de paracetamol). | Sin dato. | Gato; fiebre referida. | 🔴 | Mismo nodo fármaco y misma relación de toxicidad que prescripción; no inventar dosis. |
+| T-16 | Ingesta de chocolate; sin signos declarados. | 48 horas. | Perro; peso, tipo y cantidad de chocolate sin dato. | 🟡 provisional + revisión | P5 contextual, no descuento general por tiempo; faltan cantidad/tipo; decisión del usuario durante A y validación clínica pendiente. |
+| T-17 | Vómito repetido; no bebe; decaimiento marcado; encías secas/deshidratación. | 4 vómitos hoy. | Perro, 10 años; raza/tamaño sin dato. | 🟠 | P3 sube una vez la evidencia moderada; no sumar sucesivamente deshidratación, número de síntomas y una geriatría inventada hasta rojo. |
+| T-18 | Episodio convulsivo ya finalizado; primera crisis. | Ayer; recuperado ahora. | Perro, 4 años, activo y come. | 🟠 | Primera crisis resuelta es distinta de convulsión en curso; recuperación no borra esa regla. |
+| T-19 | Episodio convulsivo finalizado, único, corto y habitual; recuperado. | Pasado, duración exacta sin dato. | Perro con epilepsia conocida y tratamiento; edad/raza sin dato. | 🟡 | Alerta global de epilepsia + medicación conocida, o historia autorizada; no interpretar una consulta protegida; sin evidencia de patrón habitual, revisión. |
+| T-20 | No come; no defeca. | Desde ayer. | Conejo, 2 años. | 🟡 + revisión inmediata antes de agendar | P6: conejo sin cobertura específica; no cargar naranja como regla aprobada; ninguna respuesta tranquilizadora elimina la revisión. |
+| T-21 | Dificultad para respirar, con ayuda visible «mueve mucho la cola al respirar»; plumaje erizado. | Sin dato. | Loro; edad/raza sin dato. | 🔴 | P1 universal; la marca explícita sustituye la interpretación automática del relato, aunque aves no tengan cobertura específica. |
+| T-22 | «Otro / no sé»; nota opcional «está raro». | «No sé». | Perro; resto sin dato. | 🟡 + revisión | P6; una nota sola no satisface la captura ni calcula un nivel. |
+| T-23 | Buscar «bomita sangre» y «desaido»; confirmar Vómito con sangre y Decaimiento. | «No sé» si no se conoce. | Gato; resto sin dato. | 🟠 | Búsqueda tolerante + selección explícita; sangre en vómito no equivale por sí sola a hemorragia incontrolable P1; P3/combinación. |
+| T-24 | Control preventivo / vacunación, sin síntomas de alarma marcados. | No aplica, motivo preventivo explícito. | Perro, 3 años. | 🟢 | Entrada reconocida del catálogo para atención preventiva; añadir P1 sigue dando rojo. |
+| T-25 | Picor de oídos leve; sin otras alarmas marcadas. | Una semana. | Gato, 4 años, come y juega. | 🟢 | Regla de molestia leve estable; no tratar la ausencia de marcas como síntoma desconocido si la entrada sí está cubierta. |
+| T-26 | Cojera leve estable; mantiene actividad habitual. | Un mes. | Perro, 6 años. | 🟢 | Intensidad/estabilidad explícitas y cronicidad; no aplicar esa regla a cojera aguda, incapacidad de apoyar ni trauma. |
+
+**Pérdidas de significado y límites de la batería:**
+
+- T-22 deja de probar comprensión de «está raro»; prueba captura de «Otro / no sé» y revisión.
+- T-23 pasa a dos comprobaciones: el buscador ofrece opciones y el motor calcula después de confirmarlas.
+  «bomita» por sí solo puede sugerir Vómito y Vómito con sangre, pero nunca añade sangre ni selecciona una opción automáticamente.
+- T-04, T-06, T-09, T-13, T-18, T-19 y T-21 necesitan etiquetas y preguntas comprensibles para conservar el significado que antes estaba escondido en el texto.
+  Una lista de «vómito, diarrea, dolor» sin esos matices no cubre la batería.
+- T-24 requiere «No aplica» para tiempo de atención preventiva; no inventar un inicio de síntomas inexistentes.
+  B documentará esta precisión junto a «No sé» en RE-2.11.1.
+- T-14/T-16 cambian sustancia además de tiempo: no aíslan P5.
+  C4 debe añadir pruebas del mismo tóxico con ventanas distintas y P1 agregado, sin cambiar en A los 26 esperados ni inventar una ventana clínica sin fuente.
+- P1 también exige casos adicionales de encías pálidas, colapso/inconsciencia, imposibilidad de orinar, golpe de calor y parto con esfuerzo sin cría >30 minutos; la batería no cubre cada alarma aisladamente.
+- El esperado 🟡 de T-20 y la ausencia de revisión veterinaria siguen siendo limitaciones abiertas; pasar las pruebas no significa que la batería clínica quede validada.
+
+### A.4. Base versionada y cargador idempotente
+
+**Propuesta: JSON UTF-8**, por su representación directa de condiciones, fuentes y listas; CSV obligaría a ocultar esos datos en celdas o multiplicar joins entre archivos.
+El JSON es declarativo y se valida antes de tocar datos.
+
+| Archivo propuesto bajo `database/conocimiento/` | Contenido y campos mínimos |
+|---|---|
+| `manifiesto.json` | `formato`, `version`, archivos esperados y sus hashes, fecha, limitación de validación, compatibilidad del motor y política de cobertura. |
+| `fuentes.json` | Código de fuente, entidad/autores, título, URL exacta, fecha/edición cuando esté publicada, fecha de consulta y sección que respalda el dato; no copiar capítulos completos. |
+| `nodos.json` | Código estable, tipo, etiqueta, fuentes con localizador, validación, nivel/moderación/alarma cuando apliquen, referencia taxonómica y metadatos declarados. |
+| `aristas.json` | Código estable, códigos de origen/destino, relación, signo, peso, efecto, condiciones, fuentes y validación. |
+| `sinonimos.json` | Código estable, código de nodo destino, texto, fuentes y validación; el normalizado se calcula con el mismo normalizador de búsqueda. |
+| `reglas.json` | Código estable, motor, condiciones cerradas, resultado tipado, fuentes y validación; referencias a nodos/aristas por código, no por ID local. |
+
+Ejemplos de identidad externa: `sintoma.convulsion_en_curso`, `farmaco.paracetamol`, `sustancia.lirio_lilium`, `regla.triage.alarma_respiratoria`.
+No usar posiciones del array ni `MAX(id)+1` como identidad del archivo.
+Las referencias a taxonomía se resuelven contra catálogos existentes y se comprueba su especie; si no hay equivalencia inequívoca, la carga falla y B registra la falta, sin crear razas a escondidas.
+La ampliación aprobada de Gran danés para T-05 va por `02_semilla.sql` con ID nuevo e inserción que no sobrescribe, junto con su inclusión repetible en 07 cuando corresponda.
+El cargador del conocimiento no crea especies o razas.
+
+**Fuentes y límites para B:**
+
+- Cada nodo, arista, sinónimo y regla registra su evidencia específica; el enlace a la portada de un manual no basta.
+  Una referencia a RN-417 justifica una política de triage, pero no reemplaza una fuente veterinaria que sostenga la toxicidad.
+- Separar fundamento bibliográfico de decisiones del producto y de pesos heurísticos pendientes de validación.
+  Una fuente que describe una enfermedad no valida por sí sola el peso 0.8 ni un color de triage.
+- [ASPCA: Lilium y gatos](https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/lily) es una fuente candidata concreta para la relación de T-08; no extenderla a cualquier flor llamada «lirio».
+- [MSD Veterinary Manual: chocolate](https://www.msdvetmanual.com/toxicology/food-hazards/chocolate-toxicosis-in-animals) considera tipo/cantidad y signos, además del tiempo; no respalda una regla general «48 horas = sin peligro».
+  Esta revisión motivó la decisión del usuario sobre T-16.
+- B verificará fuentes específicas del resto de los elementos antes de cargarlos; A no da por verificada toda la base futura.
+  Si una regla necesaria no tiene sustento suficiente, se informa antes de inventarla o declarar cobertura.
+
+**Cargador propuesto (`scripts/cargar_conocimiento.php`, modelo de escritura y validador separados):**
+
+1. Lee todos los archivos y verifica manifiesto/hashes, unicidad de códigos, tipos, referencias, fuentes, pesos finitos y coherencia de relaciones.
+2. Comprueba que migración 07 esté aplicada; prepara en memoria un conjunto completo y toma un bloqueo para evitar dos cargas simultáneas.
+3. En una transacción, inserta los códigos nuevos y actualiza solo conocimiento gestionado por esos archivos.
+   Conserva IDs numéricos y todas sus referencias clínicas; resuelve extremos por código.
+4. Un código que desaparece del manifiesto completo se desactiva, nunca se borra.
+   El historial conserva el nodo/etiqueta y el motor deja de usar su conocimiento retirado; el retiro de una regla crítica requiere revisión del diff.
+   Un archivo faltante, inválido o un hash incorrecto causa error, nunca un retiro masivo.
+5. Un elemento reintroducido recupera su mismo ID; cambiar de concepto exige un código nuevo, no reciclar uno anterior.
+6. Un cambio de etiqueta puramente ortográfico conserva identidad; un cambio clínico reinicia validación a pendiente y cambia la versión.
+   Se conserva versión/reglas utilizadas en la auditoría de cada decisión para poder reconstruirla desde el repositorio.
+7. Solo confirma si todo es válido; ante error conserva íntegro el conocimiento anterior y devuelve código de salida distinto de cero.
+8. Correr dos veces el mismo conjunto no crea filas ni altera IDs/validación; registra conteos de altas, cambios y retiros.
+   Un modo `--revisar` muestra ese diff sin escribir.
+
+**Despliegue:** B engancha la carga después de `scripts/migrar.php` y antes de iniciar Apache, sin modificar `02_semilla.sql` para meter el grafo.
+Hoy `docker/iniciar.sh` arranca Apache incluso si falla la migración: no encadenar una carga sobre un esquema incompleto.
+Si falla migración/carga, se conserva el servicio con conocimiento previo compatible; si no hay conjunto compatible, el motor devuelve indisponibilidad/revisión y nunca una prescripción «segura» o triage verde por base vacía.
+F verificará en logs migración y versión cargada; A no ejecuta esos scripts sobre la base de trabajo.
+
+### A.5. Helpers puros y contratos
+
+Los helpers reciben arrays normalizados, un conjunto de conocimiento inmutable y la fecha de evaluación explícita.
+No consultan PDO, sesión, reloj global ni archivos; modelos/controladores preparan sus entradas y aplican permisos.
+Las respuestas incluyen versión, reglas y limitaciones; los serializers para el navegador filtran lo protegido.
+El servidor valida IDs y tipos de nodo; seleccionar un ID desconocido o retirado no crea síntomas nuevos.
+
+#### A.5.1. Ranking de diagnósticos — HU-2.8
+
+**Entrada:** síntomas únicos confirmados, atributos de episodio, especie/raza/edad/estado, alertas globales y antecedentes autorizados, grafo activo.
+**Salida:** diagnósticos con puntuación de afinidad, evidencia coincidente, fuente y validación; o lista vacía y obligación de diagnóstico libre.
+
+```text
+S = conjunto de síntomas explícitamente marcados
+para cada diagnóstico D relacionado con algún síntoma de S
+    evidencias = aristas aplicables de S hacia D
+    si no hay evidencia positiva de síntomas: omitir D
+    contexto = modificadores de D cuyos predicados están acreditados
+    puntuación[D] = suma(signo(e) * peso(e), e en evidencias y contexto)
+    si hay exclusión explícita aplicable: omitir D
+ordenar por puntuación descendente y código estable para desempatar
+devolver candidatos con evidencia y limitaciones, sin elegir uno
+```
+
+No recorrer indefinidamente ciclos, ni acumular sinónimos del mismo síntoma como evidencia independiente.
+El peso no es una probabilidad clínica; no mostrar «80 % de certeza» por una suma 0.8.
+Ausencia de una marca no equivale a un hallazgo negativo; solo se resta evidencia explícita aplicable.
+Los modificadores no leen diagnósticos protegidos y el contexto por sí solo no inventa un síntoma.
+El diagnóstico final sigue siendo texto decidido por el veterinario, sugerido o propio, obligatorio por RN-202.
+
+#### A.5.2. Prescripción — HU-2.9
+
+**Entrada:** fármaco confirmado o desconocido, paciente, alergias activas globales, medicamentos vigentes/potenciales internos y filas nuevas, grafo y contexto de evaluación.
+**Salida interna:** `bloqueada`, motivos, advertencias, evaluación incompleta, conciliación requerida y reglas/versión.
+**Salida pública:** solo motivos visibles; interacción protegida con mensaje genérico sin fármaco ajeno, dosis, ID, clínica, fuente o arista que permita reconstruirlo.
+
+```text
+si hay alergia activa enlazada al fármaco: bloquear
+si hay toxicidad de especie/raza con fuente explícita aplicable: bloquear
+por cada medicamento vigente y cada fila nueva distinta
+    buscar interacción en ambos sentidos y comprobar condiciones
+    añadir advertencia; marcar protegida si no tiene permiso de lectura
+si falta identidad o vigencia necesaria: marcar evaluación incompleta
+si hay advertencias: exigir decisión explícita del veterinario
+si alguna es protegida: exigir conciliación documentada o autorización verificada
+al guardar: releer, recalcular y auditar decisión con usuario y clínica
+si sigue bloqueada o falta decisión exigida: no escribir la consulta
+```
+
+Un efecto «negativo» no es automáticamente bloqueo: interacción y toxicidad tienen semántica distinta.
+Una duda bibliográfica produce advertencia, no una contraindicación inventada; tampoco una declaración de seguridad.
+No permitir que un booleano del cliente «ya confirmado» sustituya la comprobación de motivos y conciliación en el servidor.
+La autorización para ver historia se relee; su revocación entre vista previa y guardado vuelve genérica la alerta.
+El conocimiento global expuesto por C6 no incluye cuáles de sus fármacos toma un paciente.
+
+#### A.5.3. Triage — HU-2.11, P1 a P8
+
+**Entrada:** marcas del catálogo y atributos cerrados, tiempos por evento conocidos/«No sé»/«No aplica», paciente y alertas permitidas, reglas y cobertura, fecha de evaluación.
+**Salida:** nivel calculado, revisión requerida e inmediata cuando proceda, posible contagio, reglas/versión y datos necesarios desconocidos.
+La nota libre no es una entrada del helper y nunca se interpreta.
+El orden de severidad es rojo > naranja > amarillo > verde; no depende del orden alfabético ni del ordinal del ENUM de MySQL.
+
+```text
+validar captura y eliminar marcas duplicadas
+si no hay marca reconocida: reserva amarilla y revisión P6
+evaluar todas las alarmas universales P1 aun sin cobertura
+si falta cobertura específica: añadir reserva amarilla y revisión P6
+si existe cobertura: reunir niveles básicos aplicables a este episodio
+si no hay regla o nivel aplicable a las marcas: añadir reserva amarilla y revisión
+aplicar P3 una vez sobre síntomas moderados distintos, no sobre resultados escalados
+evaluar reglas de combinación, paciente y tiempo P4/P5 independientemente
+si falta un dato que decide una regla: marcar revisión, sin inventar su valor
+nivel = máximo de niveles disparados, sin restar por datos tranquilizadores P2
+evaluar bandera de contagio RN-425 independientemente del nivel
+devolver cálculo y trazabilidad, sin reservar ni ajustar una cita
+```
+
+- P1 es universal y no depende de que un manual específico de conejos o aves esté cargado.
+- P3 cuenta síntomas clínicos distintos, no la misma marca repetida ni sinónimos, y no se aplica en cascada junto con modificadores de edad hasta generar un rojo sin regla.
+- P4/P5 producen candidatos condicionados al episodio, no descuentos sobre una alarma ya disparada.
+  Convulsión actual, primera crisis resuelta y crisis habitual resuelta son entradas distintas; la regla temporal de chocolate no borra una alarma universal.
+- P6 mantiene T-20 amarillo con revisión inmediata y T-22 amarillo con revisión; ante cualquier P1 ambos pasan a rojo.
+- P7: el motor conserva su cálculo; M4 implementa ajuste veterinario, motivo obligatorio, auditoría e historial, usando las columnas ya existentes de citas.
+- P8: el motor no recibe cuotas ni mora; devuelve rojo aunque el plan no tenga cupo.
+  M4 ejecuta la derivación de urgencia antes de consultar límites y prueba O-01 a O-10.
+- M2 prueba el indicador de posible contagio y lo expone a M4; la entrega operativa del aviso asociado al agendamiento pertenece a M4.
+
+#### A.5.4. Buscador de síntomas — solo sugerencias
+
+**Entrada:** consulta de búsqueda, etiquetas y sinónimos activos, filtro de especie con alarmas universales siempre disponibles.
+**Salida:** opciones con ID/código/etiqueta, tipo de coincidencia y puntuación de similitud; nunca un nivel ni una marca seleccionada.
+
+```text
+normalizar Unicode, mayúsculas, tildes y espacios para comparar
+buscar etiqueta/sinónimo exacto, luego prefijo y tokens coincidentes
+si hace falta, ordenar candidatos por distancia Damerau-Levenshtein normalizada
+resolver empates por coincidencia exacta, distancia y código estable
+ofrecer opciones y conservar «Otro / no sé»
+solo al confirmar una opción enviar su ID al motor
+```
+
+La distancia se calcula sobre Unicode normalizado, no bytes de tildes.
+El umbral técnico y número de resultados serán constantes compartidas y verificadas con el corpus en C4, no una puntuación clínica.
+Buscar «bomita» no convierte la nota ni la consulta en «vómito con sangre».
+No usar LLM, corrección silenciosa de la historia ni extracción de fármacos de una nota.
+
+### A.6. Mapa del grafo C6 y propuesta de HU/RE
+
+**Se confirma Cytoscape.js 3.34.3**, versión disponible verificada en [cdnjs](https://cdnjs.com/libraries/cytoscape), fijada en `https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.34.3/cytoscape.min.js`.
+Su [documentación oficial](https://js.cytoscape.org/) admite datos JSON, estilos separados y layouts incluidos; encaja con JavaScript sin bundler y no requiere otra librería de grafos.
+Usar layout `cose` incluido, estilos en `public/js/grafo-conocimiento.js`/CSS externo y hash SRI de ese archivo comprobado al implementar C6, sin URL `latest`.
+Si falla el CDN, mostrar indisponibilidad y conservar una lista legible de los datos cargados; no una pantalla vacía.
+No se implementa ni descarga la librería en A.
+
+**Rutas propuestas:** `plataforma_grafo` y GET `obtener_grafo_conocimiento_ajax`, exclusivas del contexto de superadministrador en `Security`.
+El endpoint consulta únicamente conocimiento global activo, sus fuentes, reglas y cobertura; no acepta `id_mascota`, `id_consulta` ni `id_clinica` para ampliar la respuesta.
+La vista clínica no usa este endpoint de plataforma: los motores tienen su lectura de conocimiento y sus permisos de paciente por separado.
+
+**Respuesta propuesta:** `version`, `limitaciones`, `cobertura`, `nodes`, `edges`, `reglas`.
+Los nodos llevan ID/código, tipo, etiqueta, fuentes y validación; las aristas, extremos, relación, signo, peso, efecto, condiciones, fuentes y validación.
+Las reglas con más de dos condiciones se muestran en el detalle relacionado, indicando que no equivalen a una sola arista.
+Los filtros de especie conservan relaciones universales; el detalle distingue taxonomía existente de cobertura clínica.
+La selección de tipo/especie y el buscador no escriben en base de datos ni cambian el conocimiento.
+
+**Propuesta de historia libre en la numeración actual: HU-2.12 — Explorar el mapa del conocimiento clínico.**
+Como superadministrador, quiero recorrer el conocimiento global con sus relaciones y fuentes para revisar su cobertura y estado de validación, sin acceder a datos de pacientes ni editarlo.
+
+| RE propuesto | Criterio de aceptación y prueba futura C6 |
+|---|---|
+| RE-2.12.1 | Solo el superadministrador en contexto de plataforma abre vista y endpoint; 403 para otros contextos, incluso una persona superadministradora actuando en clínica. |
+| RE-2.12.2 | Nodos distinguibles por tipo y aristas dirigidas por signo/grosor de peso, con leyenda; prueba JS de mapeo y revisión visual. |
+| RE-2.12.3 | Buscar y filtrar por tipo/especie permite recorrer conexiones, conservando las universales; prueba JS y conjunto conocido. |
+| RE-2.12.4 | El detalle de nodo/arista/regla muestra relación, peso cuando aplique, signo, efecto, condiciones, fuente y estado de validación; comprobación de respuesta y detalle. |
+| RE-2.12.5 | Solo lectura y solo conocimiento global; ninguna consulta o respuesta incluye datos de mascotas, consultas, tratamientos o citas, ni permite escribir conocimiento. |
+| RE-2.12.6 | Muestra versión, cobertura y aviso de validación pendiente; conocimiento vacío o fallo de CDN produce un estado explícito y legible, no cobertura falsa. |
+
+Trazabilidad propuesta: RN-212, RN-209, RN-004/RN-G13 y RNF-16; depende de B y se entrega en C6.
+La excepción global del conocimiento no concede soporte clínico al superadministrador.
+B incorpora esta propuesta a HU/RE y matrices solo tras aprobación de la revisión de A.
+
+### A.7. Documentos que cambiará B
+
+| Documento | Cambio previsto, sin subir revisión durante B |
+|---|---|
+| `RequisitosEspecificos.md` | RE-2.11.1: exigir marca del catálogo o «Otro / no sé»; el texto nunca sustituye una marca; tiempo conocido o «No sé», y «No aplica» para preventivo; revisión si falta un dato decisivo; introducir RE-2.12.1–6 si A se aprueba. |
+| `ReglasNegocio.md` | RN-424: solo marcas/contexto/tiempos calculan, nota opcional sin efecto; desconocido/no aplica explícitos; mantener RN-416 a RN-419 y RN-425; precisar RN-418 sin reconocimiento de texto libre automático. |
+| `HistoriasUsuario.md` | Criterios HU-2.11 coherentes con captura y buscador; propuesta HU-2.12; revisar referencias RN y dependencias; no marcar implementados motores todavía. |
+| `CasosTriage.md` | Sustituir «lo que escribe» como entrada del motor por marcas y datos de A.3; conservar relatos como explicación; T-22 «Otro / no sé»; T-23 búsqueda + confirmación; T-16 provisional con revisión y límite de la regla temporal; P6 sin inferencia desde nota. |
+| `CasosTriage.md`, advertencia inicial | Reflejar la decisión 1 que permite construir/cargar conocimiento pendiente con fuentes, sin afirmar aprobación clínica; conservar la limitación especial T-20 y la validación veterinaria pendiente del conjunto. |
+| `MER.md` y `database/modelo/drawdb_schema_v2.sql` | Entidades/columnas propuestas de A.2, retiro lógico, proveniencia, cobertura, reglas y captura temporal; coincidir con migración 07 y esquema consolidado. |
+| `Modelos.md` | Actualizar §1 y §3 según A.8; agregar flujo de exploración C6; alinear §4 en lo relativo a entrada estructurada, sin implementar agenda de M4. |
+| `ERS.md` y `FichaTecnica_Zooki.md` | Referencias/alcance del mapa y limitación clínica; conteos solo donde cambien por la HU/los RE nuevos; RF nuevo solo si el documento lo requiere, con número libre y aprobación. |
+| Matrices y encabezados de HU/RE | Incorporar HU-2.12/RE-2.12.x, referencias RN, totales y Ficha Técnica coherentes; no renumerar ni quitar requisitos existentes. |
+
+Las revisiones nuevas y regeneración de descargas se hacen una vez en F, como indica `agentes/metodo.md` §4.
+No se modifica ninguno de esos documentos en A.
+La parte del carnet de RE-2.1.5/RE-2.10.1 sigue siendo dependencia expresamente diferida del plan, no una aceptación que C1 pueda declarar completa en QR.
+
+### A.8. Diferencias con diagramas y cierre de A
+
+| Diagrama | Diferencia y ajuste previsto |
+|---|---|
+| `Modelos.md` §1, grafo con signo | El ejemplo binario no representa AND, tiempos, cobertura ni procedencia; añadir fuente/validación y reglas contextuales; mostrar una interacción fármaco–fármaco como advertencia, distinta de veto por toxicidad; no tratar todo signo negativo como bloqueo. |
+| §1, ejemplo de fármacos | Las aristas ilustrativas y sus pesos no son semilla clínica aprobada; B debe respaldar lo que cargue o conservarlo solo como ejemplo explícito; ranking no implica recomendación automática de dosis o tratamiento. |
+| `Modelos.md` §3, captura y diagnóstico | Marcas explícitas antes del ranking, sin impedir sugerencias hasta que ya exista diagnóstico; mantener diagnóstico final obligatorio y alternativa libre, validación junto al campo y ambas entradas de consulta. |
+| §3, prescripción | Añadir rama de tratamiento protegido: evaluación interna, aviso genérico, conciliación documentada o autorización verificada, decisión auditada; distinguir bloqueo no confirmable de advertencia confirmable. |
+| §3, guardado | Revalidar prescripción/alertas/versión antes del guardado atómico e incluir `consulta_sintomas`; error o advertencia no resuelta conserva formulario y no crea registros parciales; el disco mantiene su limpieza compensatoria. |
+| §3, alertas y emergencia | Conservar alertas globales y contexto desconocido sin inventar datos; no ejecutar ahora la ficha provisional ni la derivación de agenda de M4; carnet sigue fuera de M2. |
+| Nuevo flujo C6 | Contexto plataforma → permiso → cargar solo conocimiento global → vacío/error o mapa → buscar/filtrar → detalle con fuentes/validación; sin rama de edición ni acceso a pacientes. |
+| §4, integración futura M4 | Entrada de catálogo/tiempos/contexto → motor → revisión/contagio/rojo antes de cuotas; nota libre fuera del cálculo; P7 y agenda siguen en M4. |
+
+**Riesgos por orden de impacto:**
+
+1. No hay validación veterinaria; la base no puede presentarse como clínicamente aprobada por pasar 26 pruebas.
+   T-16 y T-20 requieren las limitaciones descritas; cantidades/tiempos/estados desconocidos no se inventan.
+2. Leer toda la historia para obtener medicación filtraría datos ajenos; solo C3 tiene la excepción interna y la salida se filtra antes de responder.
+3. Los enlaces existentes no bastan sin fechas finales, fármaco confirmado, reglas temporales y cobertura explícita; una etiqueta libre o una base vacía nunca equivale a seguridad.
+4. P3 y P4 aplicados como sumas sucesivas sobre el resultado previo sobreclasificarían; el máximo se toma entre candidatos independientes y las alarmas no se rebajan.
+5. Implementar solo el modal dejaría Atención fuera; C5 comparte los componentes y conserva atomicidad, HC y permisos.
+
+**Verificación de A, sin cambiar pruebas:**
+
+| Ejecución | Resultado |
+|---|---|
+| `php vendor/bin/phpunit` | Verde: 691 pruebas, 4231 aserciones; 31 pruebas MySQL omitidas por no definir el host, como en `main`. |
+| Suite completa con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1`, puerto temporal 3309 y base predeterminada `zooki_test_base_v2` | Verde: 691 pruebas, 4603 aserciones, ninguna omitida; MariaDB 10.4.32 temporal propia, no la instancia/base de trabajo. |
+| `node --test "tests/Frontend/**/*.test.cjs"` | Verde: 167 pruebas, ninguna fallida ni omitida. |
+| Comparación con `main` y `git diff --check` | Sin diferencias de código/esquema/pruebas respecto de `main`; sin errores de espacios; solo plan M2 y `agentes/estado.md` modificados en el checkout. |
+
+MySQL 8 se verifica en CI; la corrida local real fue con MariaDB, sin atribuirle un resultado de otro motor.
+No se leyó ni escribió `.env`, ni se accedió a `zooki_v2_prueba` o sus contraseñas.
+No hay pruebas nuevas ni cambios de código, esquema, versiones o descargas en esta etapa.
+El usuario aprobó durante A las tres precisiones de §6; quedan para Claude la revisión del mecanismo de decisión 3, el diseño de migración/cargador/algoritmos y HU-2.12 antes de B.
+La decisión de Gran danés y la reserva segura de categorías amplias quedó confirmada; su implementación corresponde a B.
+No se empezó B.
+
+**Comandos de commit para el usuario (PowerShell 5.1):**
+
+```powershell
+git add -- specs/M2-grafo-clinico.md agentes/estado.md
+git diff --cached --stat
+git commit -m "docs(grafo): inventario y diseno de M2 etapa A (HU-2.8, HU-2.9, HU-2.11)"
+```
+
+### A — Revisión (2026-10-14)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada con ajustes.** El código, el esquema y las pruebas no cambian respecto de `main` (solo el plan y el estado); la línea base de Codex (691 PHP, 167 JS) no requiere repetirse para una etapa de solo lectura.
+
+**Lo que se aprueba tal cual:** inventario de la consulta con sus dos entradas (modal y Atención) y la unidad atómica de `Consulta::escribir`; la traducción de T-01 a T-26 (A.3); el contrato de los cuatro helpers puros (A.5) y la regla de tomar el máximo entre candidatos independientes; la lectura interna mínima de C3 para RN-211/RE-2.9.3; el tipo de nodo `sustancia`; el retiro lógico por código estable; Cytoscape.js con versión fija y SRI; HU-2.12 con RE-2.12.1–6; la lista de documentos de A.7 y los cambios de diagramas de A.8.
+
+**Decisión 3 confirmada:** el mecanismo de §6 queda adoptado tal como lo concretan A.3, A.5.3 y A.5.4: el nivel sale solo de marcas, tiempos y paciente; «Otro / no sé», «No sé» y «No aplica» son respuestas explícitas; la nota no entra al helper.
+
+**Ajustes obligatorios para B:**
+
+1. **B se parte en B1 y B2.** B1: migración 07, esquema consolidado, MER, drawDB, Gran danés, validador, cargador, arranque y documentos de A.7, con un conjunto mínimo de prueba en `tests/`. B2: el conocimiento real con sus fuentes. Investigar y citar fuentes es otro trabajo que el esquema, y así cada revisión es manejable.
+2. **Sin hashes por archivo en el manifiesto.** Git ya protege la integridad y editar un JSON obligaría a recalcular hashes a mano. El manifiesto lista los archivos esperados (un faltante sigue siendo error, nunca retiro masivo) y el cargador calcula un hash del conjunto completo que se usa como versión cargada y queda en auditoría.
+3. **Validación sin columnas de persona:** `estado_validacion` sí; quién y cuándo validó viven en el archivo (no hay usuario del sistema que lo haga en la v2.0). Sin FK `validado_por`.
+4. **Lenguaje de reglas acotado:** B1 enumera la lista cerrada de predicados de A.2 (ni uno más sin revisión), anidamiento máximo de dos niveles (`todos`/`alguno` dentro de `todos`/`alguno`) y el validador rechaza lo demás. El evaluador de condiciones es un único helper compartido; se escribe en C2 (primer motor que lo usa) y lo reutilizan C3 y C4.
+5. **Reglas generales, no por caso:** ninguna regla puede nombrar un caso ni una raza solo para aprobar la batería; se expresan por atributo con fuente (por ejemplo, «raza gigante» en los metadatos de la raza, no «Gran danés»). La revisión de B2 y C4 rechaza reglas hechas a la medida de un caso.
+6. **Ranking (C2):** además de la suma, cada candidato informa la cobertura («coincide X de Y síntomas característicos»), que sirve de segundo criterio de orden; se muestran como máximo 5 candidatos con puntuación positiva.
+7. **Arranque:** `docker/iniciar.sh` ejecuta el cargador solo si `migrar.php` terminó bien; Apache arranca igual en ambos casos y el error queda en el log con el prefijo `[conocimiento]`.
+8. **Alcance de B2:** lo que exige la batería (A.3) y los casos P1 adicionales, más un núcleo común de perros y gatos (del orden de 15 diagnósticos frecuentes y 15 fármacos o sustancias con toxicidad documentada). Cada elemento con fuente específica y URL verificada; si un dato no tiene fuente suficiente, se informa y no se carga.
+
+**Verificación de esta revisión:** `git diff main` sin cambios fuera de `specs/` y `agentes/`; numeración HU-2.12 y RE-2.12.x libre; RE-2.9.3 y RN-211 ya exigen la conciliación que propone A.5.2; `tratamientos.fecha_fin` e `id_nodo_farmaco` existen en el esquema; `docker/iniciar.sh` hoy arranca Apache aunque falle la migración, como señala A.4.
+
+**Siguiente:** B1 (Codex).
