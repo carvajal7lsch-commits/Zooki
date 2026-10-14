@@ -599,7 +599,7 @@ flowchart TD
   AUD --> ZF
 
   E -- Si --> KP{"Autorregistro con el correo de una cuenta que una clinica registro y aun no se activa? (M5 C4b)"}
-  KP -- Si --> KPA["Enviar un enlace de activacion nuevo al correo de la cuenta (el anterior deja de servir);<br/>misma respuesta publica, sin ligarla a otra clinica"]
+  KP -- Si --> KPA["Bloquear la cuenta y comprobar el tope: uno cada 5 minutos y 3 por hora;<br/>si cabe, renovar el enlace; si no, conservarlo sin enviar;<br/>misma respuesta publica, sin ligarla a otra clinica"]
   KPA --> ZF
   KP -- No --> K{Ya esta ligado a esta clinica?}
   K -- Si --> K1[/"Autorregistro: misma respuesta publica sin revelar la cuenta;<br/>alta por el personal: ya es cliente de esta clinica"/]

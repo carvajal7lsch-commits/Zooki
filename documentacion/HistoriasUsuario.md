@@ -1,6 +1,6 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 3.2** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
+> **Revisión 3.3** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
@@ -9,6 +9,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 Estado **Implementada (2.0.0-alpha.N)**: historia de la v2 terminada y probada en esa versión de la plataforma. Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir, asignada a v2.0 o v2.1 según el plan de entregas. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma según el plan de entregas.
 
 _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1, que cierra el módulo 0 (plataforma, identidad y aislamiento): HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8, HU-0.1, HU-0.2, HU-0.3 y HU-0.4 pasan a «Implementada (2.0.0-alpha.1)»; el alta de personal invita a la persona y solo la vincula si acepta (HU-T.7); los topes del plan gratuito quedan en 2 cuentas de personal, 50 mascotas vinculadas y 100 citas al mes (HU-0.4); la moderación de reseñas de HU-0.3 y la regla de no calificarse a sí mismo de HU-T.17 se entregan en la v2.1 con HU-8.1, la revocación de HU-T.19 con HU-5.14, el QR del portal de HU-5.8 con el carnet QR del módulo 5 y la clasificación de la urgencia de HU-0.4 con el triage. Las historias de otros módulos que M0 dejó construidas en parte (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10) se cierran con su módulo._
+
+_La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.3, que cierra el módulo 5 (portal multi-clínica y vínculos): HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 pasan a «Implementada (2.0.0-alpha.3)», con las alergias y alertas de HU-2.10 en el módulo 2. La clínica registra al propietario sin aceptación presencial: el titular activa su cuenta desde un enlace de 72 horas y, si vence, lo pide él mismo o activa con Google (HU-T.19, HU-1.2, HU-T.18, HU-5.8). El propietario puede tener hasta 3 clínicas cuando se vincula él (HU-5.13); el personal lo busca también por nombre entre sus clientes (HU-1.5); el color de la mascota ya no se pide (HU-1.1); y los correos temporales se rechazan en los registros y al cambiar el correo (HU-T.5, HU-T.18, HU-5.8)._
 
 **Índice de módulos:**
 
@@ -469,7 +471,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 5 pts | v2 |
 
 > Como propietario, quiero registrarme con mi cuenta de Google para no llenar un formulario largo ni recordar otra contraseña.
 
@@ -585,7 +587,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 3 pts | v2 |
 
 > Como veterinario, quiero ver las mascotas que un propietario ya tiene en la plataforma y vincular la que corresponde para no crear una ficha duplicada.
 
@@ -774,7 +776,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 5 pts | v2 |
 
 > Como veterinario, quiero ver lo que otras clínicas registraron de la mascota, según lo que el propietario autorizó, para no repetir vacunas ni pasar por alto una alergia.
 
@@ -1497,7 +1499,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 5 pts | v2 |
 
 > Como propietario vinculado a varias clínicas, quiero entrar una sola vez y ver todas mis mascotas y su historia, eligiendo la clínica solo cuando hago algo en ella, para no tener que cambiar de clínica para ver a mi mascota.
 
@@ -1554,7 +1556,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 3 pts | v2 |
 
 > Como propietario, quiero decidir qué clínicas pueden ver las consultas que otras clínicas le hicieron a mi mascota para que esa información viaje solo con mi permiso.
 
@@ -1572,7 +1574,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 3 pts | v2 |
 
 > Como propietario, quiero vincularme a otra clínica cuando yo lo decida, con un clic desde mi portal, para atender a mis mascotas allí sin crear otra cuenta.
 

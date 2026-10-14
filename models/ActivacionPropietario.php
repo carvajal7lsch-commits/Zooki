@@ -24,6 +24,14 @@ final class ActivacionPropietario
     public const ASUNTO = 'Activa tu cuenta en Zooki';
 
     /**
+     * M5 F (observación 2 de «C4b — Revisión»): cuando el titular pide el
+     * enlace él mismo, como mucho uno cada 5 minutos y 3 por hora. Cuentan
+     * todos sus enlaces de activación, también los que envió la clínica.
+     */
+    public const TOPE_ESPERA_SEGUNDOS = 300;
+    public const TOPE_POR_HORA = 3;
+
+    /**
      * El único correo que recibe mientras no active su cuenta: lo envían la
      * clínica (al registrarlo o reenviarlo) y, desde C4b, el propio titular al
      * pedirlo con «¿Olvidaste tu contraseña?» o con el autorregistro.
@@ -122,6 +130,14 @@ final class ActivacionPropietario
             return null;
         }
         return Transaccion::ejecutar($this->db, function () use ($idUsuario): ?array {
+            // RE-T.19.1: dos solicitudes simultáneas no pueden reservar dos envíos.
+            $bloqueo = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+            $stmt = $this->db->prepare('SELECT u.id_usuario FROM usuarios u WHERE u.id_usuario = ? AND ' . self::pendiente('u') . $bloqueo);
+            $stmt->execute([$idUsuario]);
+            // Volver a comprobar tras esperar el bloqueo: la cuenta pudo activarse.
+            if (!$stmt->fetchColumn() || $this->topeAlcanzado($idUsuario)) {
+                return null;
+            }
             $origen = $this->origen($idUsuario);
             if ($origen === null) {
                 return null;
@@ -169,6 +185,23 @@ final class ActivacionPropietario
             (new ConsentimientoDatos($this->db))->registrar($idUsuario, PoliticaDatos::MEDIO_GOOGLE, $ip);
             $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, ['estado' => 0], ['estado' => 1], 'Propietario activado con Google: aceptó la política (RE-T.19.1, RN-G21)', $origen['id_clinica'] ?? null);
         });
+    }
+
+    /** Un enlace en los últimos 5 minutos, o 3 en la última hora. */
+    private function topeAlcanzado(int $idUsuario): bool
+    {
+        // El autorregistro ya puede tener una lectura anterior en su transacción.
+        // FOR UPDATE lee el contador actual, no la instantánea anterior de MySQL.
+        $bloqueo = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+        $stmt = $this->db->prepare('SELECT created_at FROM verificaciones_email
+            WHERE id_usuario = ? AND proposito = ? AND created_at >= ?
+            ORDER BY created_at DESC' . $bloqueo);
+        $stmt->execute([$idUsuario, self::PROPOSITO, date('Y-m-d H:i:s', time() - 3600)]);
+        $fechas = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        if (count($fechas) >= self::TOPE_POR_HORA) {
+            return true;
+        }
+        return $fechas !== [] && strtotime((string) $fechas[0]) > time() - self::TOPE_ESPERA_SEGUNDOS;
     }
 
     /** Correo, nombre y clínica del último enlace de activación de la persona. */
@@ -257,8 +290,9 @@ final class ActivacionPropietario
         $this->db->prepare('UPDATE verificaciones_email SET used = 1 WHERE id_usuario = ? AND proposito = ? AND used = 0')
             ->execute([$id, self::PROPOSITO]);
         $token = bin2hex(random_bytes(32));
-        $this->db->prepare('INSERT INTO verificaciones_email (id_usuario, email, proposito, id_clinica_vinculo, token_hash, expires_at) VALUES (?, ?, ?, ?, ?, ?)')
-            ->execute([$id, $email, self::PROPOSITO, $clinica, password_hash($token, PASSWORD_DEFAULT), date('Y-m-d H:i:s', time() + self::HORAS * 3600)]);
+        // created_at lo pone PHP, con la misma hora con que se mide el tope (no la de la base).
+        $this->db->prepare('INSERT INTO verificaciones_email (id_usuario, email, proposito, id_clinica_vinculo, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+            ->execute([$id, $email, self::PROPOSITO, $clinica, password_hash($token, PASSWORD_DEFAULT), date('Y-m-d H:i:s', time() + self::HORAS * 3600), date('Y-m-d H:i:s')]);
         return ['id' => (int) $this->db->lastInsertId(), 'token' => $token];
     }
 }

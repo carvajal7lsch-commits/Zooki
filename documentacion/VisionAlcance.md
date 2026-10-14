@@ -6,7 +6,7 @@
 **Programa:** Tecnología en Análisis y Desarrollo de Software (ADSO) — SENA, Florencia (Caquetá)
 **Mercado objetivo:** Clínicas veterinarias pequeñas en Colombia
 **Estándar de referencia:** ISO/IEC/IEEE 29148:2018
-**Código:** ZOOKI-VIS-ALCANCE · v1.3
+**Código:** ZOOKI-VIS-ALCANCE · v1.4
 
 ---
 
@@ -18,6 +18,7 @@
 | 1.1 | 2026-09-23 | Ajustes tras revisión: los grafos se incluyen en el plan gratuito (con límites de volumen); encuesta de calificación simplificada; descuento por pago anual; incorporación del Estudio de Factibilidad Económica a la hoja de ruta; nota sobre la decisión del stack y sobre el rol recepcionista. | J. S. Carvajal H. |
 | 1.2 | 2026-09-23 | Se confirma la eliminación del rol recepcionista en v2.0 y el mantenimiento del stack actual (PHP 8.2 / MySQL 8). | J. S. Carvajal H. |
 | 1.3 | 2026-10-06 | Línea base v1.12.0; el copiloto clínico y la agenda inteligente se incluyen en el plan gratuito con límites de volumen; `usuarios` y `mascotas` son globales; reparto de la construcción en v2.0 y v2.1; especificación aprobada. | J. S. Carvajal H. |
+| 1.4 | 2026-10-14 | Conteos de la especificación al día (120 reglas y 421 requisitos) con la versión 2.0.0-alpha.3, que cierra el módulo 5 (portal multi-clínica). | J. S. Carvajal H. |
 
 ---
 

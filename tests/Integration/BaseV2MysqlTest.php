@@ -22,6 +22,44 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testM5FTopeDeActivacionSerializaLaCuentaYSeComparteEntreConexiones(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/ActivacionPropietario.php';
+        $this->comoVeterinario(1, 2);
+        $modelo = new ActivacionPropietario($this->db);
+        $alta = Transaccion::ejecutar($this->db, fn () => $modelo->crear(['tipo_documento' => 'CC', 'documento' => '1000000040', 'nombre_completo' => 'Rosa Nueva', 'telefono' => '3001234567', 'email' => 'rosa@zooki.test'], 1));
+        $id = $alta['id_usuario'];
+        $this->db->prepare('UPDATE verificaciones_email SET created_at = ? WHERE id_usuario = ?')->execute([date('Y-m-d H:i:s', time() - 7200), $id]);
+        $otra = $this->otraConexion();
+        $otra->exec('SET SESSION innodb_lock_wait_timeout = 1');
+        $this->db->beginTransaction();
+        $this->db->prepare('SELECT id_usuario FROM usuarios WHERE id_usuario = ? FOR UPDATE')->execute([$id]);
+        try {
+            (new ActivacionPropietario($otra))->renovarPorTitular($id);
+            $this->fail('Debe esperar el bloqueo de la cuenta antes de renovar.');
+        } catch (PDOException $error) {
+            $this->assertSame(1205, (int) $error->errorInfo[1]);
+            $this->assertFalse($otra->inTransaction(), 'La solicitud que no pudo renovar revierte su transacción.');
+        } finally {
+            $this->db->rollBack();
+        }
+        // El autorregistro ya leyó la cuenta antes de esperar: conservar esa instantánea
+        // no puede ocultarle el envío que acaba de confirmar la otra conexión.
+        $otra->beginTransaction();
+        try {
+            $this->assertTrue((new ActivacionPropietario($otra))->esPendiente($id));
+            $nuevo = $modelo->renovarPorTitular($id);
+            $this->assertNotNull($nuevo);
+            $this->assertNull((new ActivacionPropietario($otra))->renovarPorTitular($id));
+        } finally {
+            $otra->rollBack();
+        }
+        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM verificaciones_email WHERE id_usuario = ' . $id)->fetchColumn());
+        $this->assertSame((int) $nuevo['id'], (int) $this->db->query('SELECT id FROM verificaciones_email WHERE id_usuario = ' . $id . ' AND used = 0')->fetchColumn());
+        $_SESSION = [];
+    }
+
     public function testE2MigracionRepetibleConservaLimitesPersonalizados(): void
     {
         $this->cargar('01_schema.sql');

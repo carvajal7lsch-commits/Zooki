@@ -1,12 +1,52 @@
 # Historial de Versiones — Proyecto Zooki
 
-> Registro de versiones (v1.0.0 → v2.0.0-alpha.2; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
+> Registro de versiones (v1.0.0 → v2.0.0-alpha.3; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
 
 ## Historial de Versiones
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 2.0.0-alpha.2 (Actual)
+### Versión 2.0.0-alpha.3 (Actual)
+Segundo módulo de la v2: el **portal del propietario multi-clínica**. Con una sola cuenta el propietario ve todas sus mascotas y la historia de todas las clínicas donde se atienden, elige la clínica solo cuando agenda o cancela, se vincula o se desvincula de clínicas y decide qué clínica ve la historia de las otras. La clínica, a su vez, vincula una mascota que ya existe en Zooki en lugar de duplicarla. Esta alfa cierra 6 historias más de la entrega v2.0 (15 de 28).
+
+**Portal del propietario**
+
+*   **Menú de cuatro secciones:** Inicio, Citas, Clínicas y Perfil, con «Agendar» siempre a mano. En el celular, barra inferior; en el computador, menú lateral.
+*   **Inicio:** la próxima cita en una línea, tus mascotas en tarjetas pequeñas con sus clínicas y su próxima dosis, el horario de hoy de cada clínica (con el de la semana en una tabla corta) y «Próximo en salud» con las próximas citas y dosis.
+*   **Citas:** próximas y pasadas, con las vacunas y los controles, y un calendario del mes. Al tocar un día ves lo de ese día.
+*   **La historia de cada mascota en todas sus clínicas**, con la clínica de cada registro y un filtro por clínica.
+*   **Agendar en un solo formulario:** con una sola clínica ya viene elegida; con varias, eliges entre las tuyas. Antes de agendar, una confirmación corta con la clínica, la mascota, el día y la hora.
+*   **Perfil** en tres partes (mis datos, contacto y seguridad). El correo, el documento y la contraseña se cambian en ventanas propias, que en el celular ocupan la pantalla. El teléfono lleva bandera y prefijo del país.
+*   La pantalla se pone al día en cuanto respondes, sin recargar la página. Los formularios avisan mientras escribes y no dejan escribir lo que no corresponde.
+
+**Clínicas y vínculos**
+
+*   **Vincularte o desvincularte** de una clínica desde «Clínicas». Puedes tener hasta **3 clínicas** vinculadas cuando te vinculas tú; si una clínica te registra o confirma tu vínculo, no hay tope. Desvincularte libera el cupo.
+*   No te puedes desvincular de una clínica con citas sin resolver; el aviso sale en su fila.
+*   **Decides qué clínica ve la historia de las otras** con un interruptor por clínica. Las vacunas, desparasitaciones y datos básicos las ve siempre.
+*   **Privacidad:** si te desvinculas, la clínica conserva lo que ya registró, pero no ve tus datos nuevos (correo, teléfono, documento) ni puede registrar nada más. Una clínica nunca sabe si tienes cuenta en otra: buscarte sin vínculo solo dice «Hay una cuenta con ese dato».
+
+**Registro y activación**
+
+*   **La clínica ya no pide aceptar la política en el mostrador.** Te registra con tu correo y te llega un enlace de 72 horas para aceptar la política y crear tu contraseña. Mientras tanto la clínica atiende a tus mascotas, pero no te envía correos automáticos.
+*   **Si el enlace venció, lo pides tú:** con «¿Olvidaste tu contraseña?», registrándote con tu correo o entrando con Google, que activa tu cuenta sin contraseña. Para evitar abusos, el enlace se envía como mucho una vez cada 5 minutos y 3 veces por hora.
+*   «Registrarme con Google» desde una clínica te liga a esa clínica.
+*   **No se admiten correos temporales** (del tipo que se borra solo) en el registro, en el alta por la clínica ni al cambiar el correo. El aviso dice qué le falta al correo mal escrito.
+
+**Para la clínica**
+
+*   **Vincular la mascota que ya existe:** al buscar al propietario (por nombre entre tus clientes, o por documento o correo completos) ves sus mascotas en Zooki y vinculas la que es, sin crear otra ficha.
+*   **Pacientes › Propietarios** con las mismas tarjetas de Usuarios; «Aún no activa su cuenta» se ve en la tarjeta, con el botón para reenviar el enlace, y tocar la tarjeta abre el detalle.
+*   **La historia dice de qué clínica es cada registro.** Lo de otra clínica, y todo lo de una mascota cuyo propietario se desvinculó, se ve en **solo lectura**.
+*   Registrar o editar una mascota y desactivar un cliente ya no recargan la página. El formulario de la mascota no pide el color; el estado y la esterilización van juntos en una línea.
+*   Las confirmaciones importantes (cancelar una cita, desactivar un cliente) usan la ventana de Zooki.
+
+**Al actualizar**
+
+*   La base recibe un cambio pequeño y automático (migración 06): la prueba de aceptación de la política distingue al propietario que activó su cuenta desde el enlace. No hay que hacer nada a mano.
+*   Las alergias y las alertas médicas, que también se comparten entre clínicas, llegan con el módulo 2, junto con su registro.
+
+### Versión 2.0.0-alpha.2
 Pulido del módulo 0: el inicio de sesión y los registros se ven y se comportan igual, la verificación anti-bot ya no aparece cuando no hace falta, el panel de la plataforma es más ordenado y las páginas que se abren desde un correo tienen el mismo diseño del acceso.
 
 **Acceso y registros**

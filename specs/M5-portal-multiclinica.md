@@ -1,8 +1,8 @@
 # M5 — Portal multi-clínica y vínculos
 
-> Estado: borrador (pendiente de aprobación del usuario)
+> Estado: F entregada, pendiente de revisión (2026-10-14); despliegue pendiente del usuario
 > Entrega: v2.0 · Fecha: 2026-10-12 · Sale como `2.0.0-alpha.3`
-> Responsable de escritura: Claude Code (decisión del usuario, 2026-10-12) · Revisión independiente: Claude (arquitecto)
+> Responsable de escritura: Claude Code (implementación y avance de F); Codex (retoma y completa F, 2026-10-14) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m5-portal`, creada desde `v2/m0` (que ya contiene todo M0 y su pulido).
 
 ## 1. Resultado y límites
@@ -34,14 +34,34 @@ Lo que falta es, sobre todo: verificar cada RE contra el código actual (M0 camb
 
 ## 2. Trazabilidad
 
-| HU | RE incluidos | RN/RNF | Etapa | Evidencia de aceptación |
+| HU | RE incluido | RN/RNF | Etapa | Evidencia final de aceptación |
 |---|---|---|---|---|
-| HU-T.18 | RE-T.18.1–4 | RN-G20, RN-G21, RN-G19, RN-G12, RN-109 | A, C1, C2 | `RegistroGoogleTest` revisada en A; RE-T.18.1 (sin Google en el registro de clínica) con prueba; pantalla de completar perfil con el marco común |
-| HU-5.9 | RE-5.9.1–4 | RN-109, RN-114, RN-G13 | A, C2 | `PortalPropietarioTest`, `PortalAgendaTest`; recorrido del usuario con dos clínicas |
-| HU-1.5 | RE-1.5.1–3 | RN-003, RN-102, RN-110, RN-111 | A, C1, C3 | `PropietarioClinicaTest`, `MascotaAccesoTest`, `LimitePlanTest` (vincular al límite) |
-| HU-5.12 | RE-5.12.1–4 | RN-113, RN-115, RN-G07 | A, C2 | `VinculosPropietarioTest` |
-| HU-5.13 | RE-5.13.1–5 | RN-109, RN-110, RN-115, RN-116 | A, C2, C3 | `VinculosPropietarioTest`, `HistoriaCompartidaTest`, `M5C3TopeClinicasTest` (RE-5.13.5) |
-| HU-2.10 | RE-2.10.1–4 | RN-112, RN-113 | A, C3 | `HistoriaCompartidaTest`, `ConsultaHistorialTest`; la clínica de cada registro visible en la historia del veterinario |
+| HU-T.18 | RE-T.18.1 | RN-G20 | C1 | M5C1RegistroClinicaSinGoogleTest::testLaPantallaDelRegistroDeClinicaNoOfreceGoogle; M5C1RegistroClinicaSinGoogleTest::testElControladorNoAceptaUnaIdentidadDeGoogle |
+| HU-T.18 | RE-T.18.2 | RN-G19/G20 | C1 | RegistroGoogleTest::testSinAceptarLaPoliticaNoSeGuardaNiLaIdentidadNiElVinculo; RegistroGoogleTest::testConAceptacionQuedaEnLaClinicaConPruebaYPerfilIncompleto |
+| HU-T.18 | RE-T.18.3 | RN-G20 | C1 | RegistroGoogleTest::testConElPerfilIncompletoNoAgendaNiRegistraMascotasHastaCompletarlo; M5C1HuecosTest::testDocumentoDeOtraCuentaAbreUnSoloCasoSinDecirDeQuienEs |
+| HU-T.18 | RE-T.18.4 | RN-G21, RN-109 | C1, C4b | RegistroGoogleTest::testUnaCuentaVerificadaConservaSuContrasenaAlEntrarConGoogle; M5C1HuecosTest::testRegistrarmeConGoogleDesdeSurLigaLaCuentaVerificadaConAuditoria; M5C4bPersonalTest::testGoogleConUnaCuentaPendientePideAceptarLaPoliticaYLaActivaSinContrasena |
+| HU-5.9 | RE-5.9.1 | RN-G15 | A, C1 | AuthTest::testUnaCredencialInvalidaNoDistingueSiLaCuentaExiste; AuthTest::testUnCorreoSinVerificarNoEntra; GoogleTokenTest |
+| HU-5.9 | RE-5.9.2 | RN-114, RN-G02 | C2 | PortalPropietarioTest::testVeLaHistoriaDeSuMascotaEnTodasLasClinicasConSuClinica; PortalPropietarioTest::testDesvinculadoDeUnaClinicaSigueViendoSuHistoria; M5C2PortalTest::testLaFichaTraeLasClinicasDeLaMascotaYLaDeCadaRegistro. Alergias/alertas: módulo 2. |
+| HU-5.9 | RE-5.9.3 | RN-109 | C2b, C3 | M5C2bPortalTest::testConUnaSolaClinicaAgendarMuestraSuNombreYElIdOculto; M5C2bPortalTest::testConVariasClinicasSonTarjetasDeEleccionSoloDeLasVinculadas; M5C2bPortal.test.cjs y M5C3Personal.test.cjs |
+| HU-5.9 | RE-5.9.4 | RN-G13 | C2, C3 | PortalAgendaTest::testAgendarEnUnaClinicaNoVinculadaSeRechazaAunqueMandeElId; CitaTest::testUnaCitaDeANoSeVeNiSeModificaDesdeB; BaseV2MysqlTest::testC6PortalEnElEsquemaReal |
+| HU-1.5 | RE-1.5.1 | RN-109/111 | C1, C3, C4b | PropietarioClinicaTest::testBusquedaExactaSinVinculoSoloDiceQueHayUnaCuenta; PropietarioClinicaTest::testBusquedaExactaConVinculoActivoMuestraSusMascotasBasicas; M5C4bPersonalTest::testPorNombreSoloSalenLosClientesActivosDeLaClinica |
+| HU-1.5 | RE-1.5.2 | RN-102/110 | C3 | MascotaAccesoTest::testConfirmarPropietarioYVincularMascotaNoDuplicaNiAsignaHC; ConsultaHistorialTest::testElNumeroDeHistoriaSeAsignaUnaVezYNoSeRepiteDentroDeLaClinica |
+| HU-1.5 | RE-1.5.3 | RN-003/110 | C3 | LimitePlanTest::testMascota51CreadaYVinculadaRechazadasSinDuplicacion; MascotaAccesoTest::testConfirmarPropietarioYVincularMascotaNoDuplicaNiAsignaHC (auditoría); M5C3Personal.test.cjs (vincular sin recarga) |
+| HU-5.12 | RE-5.12.1 | RN-113 | C2b | VinculosPropietarioTest::testSoloAutorizaClinicasConVinculoActivo; M5C2bPortalTest::testClinicasEnFilasConInterruptorAvisoYBuscador |
+| HU-5.12 | RE-5.12.2 | RN-113 | C1, C2 | VinculosPropietarioTest::testAutorizarYRevocarCambianLoQueVeLaOtraClinicaAlInstante; HistoriaCompartidaTest::testConAutorizacionBLasVeMarcadasYAlRevocarDejaDeVerlas |
+| HU-5.12 | RE-5.12.3 | RN-115 | C1, C1.1, C3 | M5C1HuecosTest::testSiElPropietarioSeDesvinculaLaClinicaNoRecibeSuTelefonoNuevo; M5C1HuecosTest::testSiLaClinicaDesactivaElVinculoTampocoVeElContactoNiEnLaFichaNiEnLasCitas; HistoriaCompartidaTest::testConElVinculoInactivoLaClinicaSoloLeeLoSuyo |
+| HU-5.12 | RE-5.12.4 | RN-G07 | C2 | VinculosPropietarioTest::testAutorizarYRevocarCambianLoQueVeLaOtraClinicaAlInstante (usuario, clínica y autorización en auditoría) |
+| HU-5.13 | RE-5.13.1 | RN-109/110 | C2b | VinculosPropietarioTest::testVincularseAUnaClinicaActivaNoLeExponeSusMascotas |
+| HU-5.13 | RE-5.13.2 | RN-109 | C2b | M5C2bPortalTest::testConVariasClinicasSonTarjetasDeEleccionSoloDeLasVinculadas; PortalAgendaTest::testAgendarConLaMascotaSinVincularLaVincula |
+| HU-5.13 | RE-5.13.3 | RN-115 | C1.1, C2b | VinculosPropietarioTest::testConCitasSinResolverNoSeDesvincula; M5C11VinculosTest::testConCitasSinResolverLaClinicaNoDesactivaNiTocaNada |
+| HU-5.13 | RE-5.13.4 | RN-G07 | C2 | VinculosPropietarioTest::testVincularseAUnaClinicaActivaNoLeExponeSusMascotas; VinculosPropietarioTest::testTrasDesvincularseLaClinicaLeeSusRegistrosYNoRegistraNadaNuevo (auditoría) |
+| HU-5.13 | RE-5.13.5 | RN-116 | C3 | M5C3TopeClinicasTest: cuarta rechazada, desvincular libera, suspendida no cuenta, la clínica puede ligar con tres y aviso del portal |
+| HU-2.10 | RE-2.10.1 | RN-113 | C1, C3 | HistoriaCompartidaTest::testBVeLasVacunasYDesparasitacionesDeAConLaClinicaQueLasAplico. Cerrado para datos básicos, vacunas y desparasitaciones; alergias y alertas llegan con el módulo 2 (RE-2.1.5). |
+| HU-2.10 | RE-2.10.2 | RN-112/113 | C1, C3 | HistoriaCompartidaTest::testSinAutorizacionBNoVeNiSabeDeLasConsultasDeA; HistoriaCompartidaTest::testConAutorizacionBLasVeMarcadasYAlRevocarDejaDeVerlas; AutorizacionRolTest::testVerArchivoEsDeLaClinicaYDelPortalNoDeLaPlataforma |
+| HU-2.10 | RE-2.10.3 | RN-113 | C1 | HistoriaCompartidaTest::testSinAutorizacionBNoVeNiSabeDeLasConsultasDeA; HistoriaCompartidaTest::testElHistorialPorPeticionDirectaNoRevelaLasConsultasDeA |
+| HU-2.10 | RE-2.10.4 | RN-112/115 | C3 | HistoriaCompartidaTest::testBNoModificaNingunRegistroDeAYQuedaEnAuditoria; HistoriaCompartidaTest::testBNoAgregaTratamientosNiAdjuntosAUnaConsultaDeA; M5C3Personal.test.cjs (solo lectura visible sin botones) |
+
+Las pruebas citadas pasan en la verificación final de F. La excepción de RE-2.10.1 permanece explícita; no se declara implementado el módulo 2.
 
 Los criterios normativos permanecen en `documentacion/`; este plan los enlaza y organiza.
 
@@ -53,14 +73,15 @@ Los criterios normativos permanecen en `documentacion/`; este plan los enlaza y 
 | **C1. Huecos funcionales** | Lo que A encuentre que no cumple un RE, con su prueba. | A y decisiones de §6 | Claude Code | Claude |
 | **C2. Portal del propietario pulido** | Inicio con las mascotas de todas las clínicas, historia con la clínica de cada registro, agendar eligiendo clínica, «Mis clínicas» (vincular, desvincular, autorizar con aviso breve), perfil y completar perfil, con el marco y los componentes de M0.1/M0.2; respuesta inmediata en pantalla; restricción de entrada; celular. | C1 | Claude Code | Claude |
 | **C3. Lado del personal** | Vincular la mascota existente (HU-1.5) y la historia compartida (HU-2.10) claras en la vista del veterinario: la clínica de cada registro y lo ajeno en solo lectura, sin rediseñar el resto del panel. | C1 | Claude Code | Claude |
-| **F. Despliegue** | `2.0.0-alpha.3`: HU a «Implementada», revisiones de documentos, descargas, merge a `main` y tag. | C2, C3 | Usuario, con comandos del agente | Claude |
+| **C4. Pulido** | Portal y lado de la clínica, según las decisiones y capturas del usuario; C4a y C4b. | C2, C3 | Claude Code | Claude |
+| **F. Cierre** | `2.0.0-alpha.3`: tope de activación, HU y reglas con estado, revisiones documentales, descargas y evidencia final. Merge y tag pendientes del usuario. | C4a, C4b | Claude Code (avance); Codex (cierre); despliega el usuario | Claude |
 
 Si A demuestra que C1 queda vacío o muy pequeño, C1 se une a C2.
 
 ## 4. Datos y migraciones
 
-- **No se espera cambio de esquema.** Las tablas existen desde M0.
-- La foto de Google no se guarda (decisión 1 de §6), así que M5 no tiene migraciones.
+- Las tablas existen desde M0; no se guarda la foto de Google.
+- **Migración 06**, aprobada durante C4b: agrega `activacion_propietario` al ENUM del medio en `consentimientos_datos`. Es repetible, conserva los valores anteriores y las filas; se aplica automáticamente al arrancar. F no agrega ni modifica migraciones.
 
 ## 5. Código, permisos y pantallas
 
@@ -81,17 +102,20 @@ Si A demuestra que C1 queda vacío o muy pequeño, C1 se une a C2.
 
 ## 7. Tareas y verificación
 
-- [x] Aprobar este plan (usuario). §6.1 decidida: la foto de Google no se guarda.
-- [x] A — Inventario y verificación (Claude Code; revisada y aprobada por Claude, 2026-10-12; decisiones del usuario en «A — Revisión»). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo A — Resultado».
-- [ ] C1 — Huecos funcionales (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1 — Resultado».
-- [ ] C1.1 — Super-administrador nunca como cliente y desactivación por la clínica (Claude Code). **Entregada, pendiente de revisión (2026-10-12)**: ver «Anexo C1.1 — Resultado».
-- [ ] C2 — Portal del propietario pulido (Claude Code), en dos partes. **C2a (estructura, navegación, Inicio, Mascota y Citas): entregada, pendiente de revisión (2026-10-12)**, ver «Anexo C2a — Resultado». **C2b (Agendar, Clínicas, Perfil y actualización en su sitio): entregada, pendiente de revisión (2026-10-12)**, ver «Anexo C2b — Resultado».
-- [ ] C3 — Lado del personal (HU-1.5, HU-2.10), con el alta sin aceptación presencial, el tope de clínicas (RN-116) y Agendar en un solo formulario (Claude Code). **Entregada, pendiente de revisión (2026-10-13)**: ver «Anexo C3 — Resultado».
-- [ ] `vendor/bin/phpunit` completo, JS y cada RE de §2 con evidencia.
-- [ ] F — `2.0.0-alpha.3`: HU a «Implementada», revisiones de documentos, historial, descargas, merge y tag.
-- [ ] Comandos de commit por etapa para PowerShell (el usuario hace ramas, commits, push y tags).
+- [x] Aprobar este plan (usuario).
+- [x] A — Inventario y verificación; revisada y aprobada (2026-10-12).
+- [x] C1 y C1.1 — Huecos y vínculos; revisadas y aprobadas (2026-10-12).
+- [x] C2a y C2b — Portal; revisadas y aprobadas (2026-10-12).
+- [x] C3 — Lado del personal, alta pendiente, tope de clínicas y Agendar; revisada, aprobada y probada por el usuario (2026-10-13).
+- [x] C4a y C4b — Pulido; revisadas y aprobadas por Claude (2026-10-13), con los ajustes del usuario de C4b (2026-10-14).
+- [x] F — Cierre de M5 y `2.0.0-alpha.3`: **entregada, pendiente de revisión (2026-10-14)**. Ver «Anexo F — Resultado»; todavía no desplegada.
+- [x] Suites PHP y JS completas y evidencia final por RE en §2; resultados en el Anexo F.
+- [x] Revisiones documentales publicadas una vez; PDF/Word regenerados y comprobación `--revisar` en el Anexo F.
+- [x] Comandos de commit y despliegue entregados; los ejecuta el usuario.
+- [ ] Merge a `main`, tag y despliegue de `2.0.0-alpha.3` (usuario, después de revisión).
+- [ ] Tres comprobaciones de producción del Anexo F (usuario).
 
-**Resultado de pruebas:** pendiente.
+**Resultado de pruebas:** verificación final en el Anexo F.
 
 ## Anexo A — Resultado
 
@@ -1002,7 +1026,7 @@ Pruebas: `M5C4bPersonal.test.cjs` comprueba la tarjeta que abre el detalle, la m
 
 ## F — Alcance: cierre de M5 y 2.0.0-alpha.3 (2026-10-13)
 
-**Escribe:** Claude Code. **Revisa:** Claude. **Despliega:** el usuario.
+**Escribe:** Claude Code dejó un avance sin commit; Codex lo retoma y completa por petición del usuario (2026-10-14). **Revisa:** Claude. **Despliega:** el usuario.
 
 1. Tope de reenvíos del enlace de activación por cuenta (observación 2 de «C4b — Revisión»), con prueba.
 2. Versión `2.0.0-alpha.3` en `config/App.php` y entrada en `HistorialVersiones.md` escrita para quien usa el sistema.
@@ -1010,3 +1034,63 @@ Pruebas: `M5C4bPersonal.test.cjs` comprueba la tarjeta que abre el detalle, la m
 4. Revisión nueva de cada documento tocado en M5, una sola vez (metodo §4), y descargas del portal regeneradas.
 5. Tabla §2 del plan con la evidencia final de cada RE y §7 marcado.
 6. Comandos del despliegue para el usuario: merge `v2/m5-portal` → `main`, tag `v2.0.0-alpha.3`; la migración 06 se aplica sola al arrancar; comprobación del registro del migrador.
+
+## Anexo F — Resultado
+
+**Estado:** entregada, pendiente de revisión (2026-10-14). **Revisa:** Claude (arquitecto).
+**Autoría:** Claude Code escribió el tope inicial, su prueba, la versión, el historial y el avance de las revisiones documentales; quedó sin commit. Codex retomó ese avance por petición del usuario: corrigió la concurrencia, agregó las pruebas de borde y de MySQL, completó §2/§7, las descargas, el estado y esta entrega. No rehízo C4 ni cambió la interfaz.
+
+**Qué.** El titular puede recibir un enlace de activación como máximo cada cinco minutos y tres en una hora por cuenta. Al bloquearlo no se reemplaza el enlace vigente ni sale correo, y se conserva la respuesta pública. El reenvío desde la clínica sigue sin ese tope. Google prueba la identidad y activa con aceptación, sin reenviar un enlace. La fila de la cuenta se bloquea antes de comprobar y reservar; el contador se lee actualizado incluso cuando el autorregistro ya tenía una lectura anterior en su transacción.
+
+**RE y pruebas.** RE-T.19.1/RN-G15: `M5C4bPersonalTest::testElTitularPideElEnlaceConTopeYLaClinicaReenviaSinEl`, `testElTopeEsPorCuentaYNoInvalidaElEnlaceCuandoBloquea` y `testGoogleConUnaCuentaPendientePideAceptarLaPoliticaYLaActivaSinContrasena`. La respuesta del autorregistro es idéntica y los bloqueos no envían. `BaseV2MysqlTest::testM5FTopeDeActivacionSerializaLaCuentaYSeComparteEntreConexiones` verifica bloqueo, rollback y una transacción con instantánea anterior. Los **24 RE** de las seis HU tienen evidencia final por requisito en §2. RE-2.10.1/RN-113 siguen con su excepción explícita: alergias y alertas llegan con M2.
+
+**Cierre documental.** `2.0.0-alpha.3`; seis HU implementadas y estados de RN-109–116/RN-G20–21. Una revisión por documento: ERS 3.4, Ficha 3.3, HU 3.3, RE 3.3, Reglas 2.3 y Visión 1.4; se conservó el avance de Claude sin subirlas otra vez. MER y Modelos no tienen revisión numérica, igual que en F0. README e historial actualizados. Modelos §11 refleja el tope y renderiza; el resto del flujo no cambia. PDF/Word de los ocho documentos publicados modificados regenerados; Modelos no tiene descarga según la configuración del exportador.
+
+**Verificación.** PHP: **691 pruebas**, 4231 aserciones y 31 MySQL omitidas sin variable; con MariaDB temporal propia y exclusivamente `zooki_test_base_v2`: **691 pruebas, 4603 aserciones, ninguna omitida**. JS: **167/167**. `exportar.mjs --revisar`: «Las descargas están al día». Los ocho PDF y los ocho paquetes Word se comprobaron íntegros, con sus revisiones correctas. Los bloqueos de OneDrive se resolvieron con un reintento del exportador y el retoque final de Requisitos sobre una copia temporal propia fuera de OneDrive; todos los índices/tablas se completaron. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
+
+**Pendientes.** Revisión de Claude, commit, merge/tag/despliegue y las tres comprobaciones siguientes: los hace el usuario. Producción sigue en alpha.2 hasta desplegar. No se empezó M2.
+
+### Commit del cierre — PowerShell 5.1
+
+Desde la carpeta del proyecto, después de la revisión:
+
+```powershell
+git add -- (Get-Content -LiteralPath .\scratch\archivos-M5-F.txt)
+git diff --cached --stat
+git commit -m "feat(portal): cerrar M5 y publicar alpha.3 (RE-T.19.1, HU-5.9)"
+```
+
+### Despliegue — lo ejecuta el usuario
+
+PowerShell 5.1, después del commit, con el árbol limpio y en `v2/m5-portal`. El push a `main` inicia el despliegue de Dokploy.
+
+```powershell
+git push origin v2/m5-portal
+git checkout main
+git pull --ff-only origin main
+git merge --no-ff v2/m5-portal -m "merge: publicar portal multiclinica (v2.0.0-alpha.3)"
+$commitAlfa3 = git rev-parse HEAD
+git push origin main
+git tag -a v2.0.0-alpha.3 $commitAlfa3 -m "Zooki v2.0.0-alpha.3 - portal multiclinica"
+git push origin v2.0.0-alpha.3
+git checkout v2/m5-portal
+```
+
+En la terminal del VPS, después de arrancar la imagen nueva:
+
+```sh
+docker logs zooki_web
+docker exec zooki_web php /var/www/html/Zooki/scripts/migrar.php --revisar
+```
+
+El arranque ejecuta `scripts/migrar.php` automáticamente. Los logs deben incluir `Aplicadas: 06_medio_activacion_propietario.sql` (puede venir junto a otros archivos); después, `--revisar` debe decir «La base está al día». La 06 conserva las filas y los medios anteriores; no se borra ni reinicia la base. Si aparece «No se aplicaron todas las migraciones», revisar ese error antes de comprobar la activación; no se considera aplicado por haber arrancado Apache.
+
+### Tres comprobaciones en producción
+
+- [ ] **1. Versión y portal.** El portal de documentación y su historial muestran `2.0.0-alpha.3`, y las descargas nuevas abren. Con un propietario, comprobar Inicio · Citas · Clínicas · Perfil y Agendar, en computador y celular; cambios de mascotas y citas se reflejan sin recargar toda la pantalla.
+- [ ] **2. Privacidad y vínculos.** Con una mascota atendida en dos clínicas, cada registro muestra su clínica. Revocar la autorización deja de mostrar las consultas ajenas a la otra clínica inmediatamente. Desvincularse sin citas pendientes conserva la historia del propietario y deja a esa clínica sin datos de contacto nuevos ni registros nuevos. «Mis clínicas» muestra el tope de tres del portal.
+- [ ] **3. Activación.** La clínica registra un propietario sin aceptación presencial: puede atenderlo y le llega el enlace. Pedirlo inmediatamente por «¿Olvidaste tu contraseña?» o autorregistro mantiene el mensaje genérico y no envía otro; pasado el intervalo permite renovarlo. La clínica sí puede reenviarlo. El enlace permite aceptar y crear contraseña; con Google exige aceptación y activa sin contraseña.
+
+### F — Revisión (2026-10-14)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada.** PHP 691 pruebas en verde en una copia limpia sin `.env` (31 MySQL omitidas); JS 167/167. El tope de activación bloquea la fila de la cuenta y lee el contador con `FOR UPDATE` (también dentro de la transacción del autorregistro), no reemplaza el enlace vigente al bloquear y no limita el reenvío de la clínica; `created_at` lo pone PHP para medir con la misma hora. Versión `2.0.0-alpha.3`, seis HU implementadas y una revisión por documento, como en el cierre de M0. Escribieron Claude Code y Codex (anotado en el Anexo). Sigue el despliegue por el usuario.

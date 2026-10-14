@@ -112,6 +112,15 @@ final class M5C4bPersonalTest extends TestCase
         return new AuthController($this->db, $this->correo(), new Turnstile(static fn (string $token): bool => $token === 'valido'));
     }
 
+    /** M5 F: corre hacia atrás la fecha de los enlaces de activación, como si hubiera pasado el tiempo. */
+    private function envejecerEnlaces(int $id, int $segundos): void
+    {
+        foreach ($this->db->query("SELECT id, created_at FROM verificaciones_email WHERE id_usuario = $id AND proposito = 'activacion_propietario'")->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            $this->db->prepare('UPDATE verificaciones_email SET created_at = ? WHERE id = ?')
+                ->execute([date('Y-m-d H:i:s', strtotime((string) $fila['created_at']) - $segundos), $fila['id']]);
+        }
+    }
+
     /** Enlaces de activación vigentes de una persona. */
     private function enlacesVigentes(int $id): int
     {
@@ -160,6 +169,7 @@ final class M5C4bPersonalTest extends TestCase
     public function testOlvideMiContrasenaConUnaCuentaPendienteEnviaUnEnlaceDeActivacionNuevo(): void
     {
         $idRosa = $this->registrarRosa();
+        $this->envejecerEnlaces($idRosa, 7200);
         $anterior = (int) $this->db->query("SELECT id FROM verificaciones_email WHERE id_usuario = $idRosa AND proposito = 'activacion_propietario'")->fetchColumn();
         $_SESSION = [];
 
@@ -181,9 +191,73 @@ final class M5C4bPersonalTest extends TestCase
         $this->assertMatchesRegularExpression('/renovarActivacionPendiente\(\(int\) \$user\[.id_usuario.\]\);\s*\}\s*if \(!\$user \|\| \(int\)\(\$user\[.estado.\] \?\? 0\) !== 1\) \{\s*\$this->jsonResponse\(true, \$mensajeGenerico\);/', $ruta);
     }
 
+    /**
+     * M5 F (observación 2 de «C4b — Revisión»): el titular pide el enlace a
+     * lo sumo una vez cada 5 minutos y 3 veces por hora; al pasarlo no sale
+     * nada y la pantalla responde igual. La clínica reenvía sin ese tope.
+     */
+    public function testElTitularPideElEnlaceConTopeYLaClinicaReenviaSinEl(): void
+    {
+        $idRosa = $this->registrarRosa();
+        $_SESSION = [];
+        $auth = $this->auth();
+
+        $auth->renovarActivacionPendiente($idRosa);
+        $this->assertCount(0, $this->correos, 'Recién registrado por la clínica: hace menos de 5 minutos que salió su enlace.');
+
+        $this->envejecerEnlaces($idRosa, 7200);
+        $auth->renovarActivacionPendiente($idRosa);
+        $auth->renovarActivacionPendiente($idRosa);
+        $this->assertCount(1, $this->correos, 'Uno cada 5 minutos.');
+
+        $this->envejecerEnlaces($idRosa, 360);
+        $auth->renovarActivacionPendiente($idRosa);
+        $this->envejecerEnlaces($idRosa, 360);
+        $auth->renovarActivacionPendiente($idRosa);
+        $this->assertCount(3, $this->correos, 'Tres en la hora.');
+        $this->envejecerEnlaces($idRosa, 360);
+        $auth->renovarActivacionPendiente($idRosa);
+        $this->assertCount(3, $this->correos, 'El cuarto de la hora no sale.');
+
+        // El autorregistro responde lo mismo de siempre aunque no envíe nada.
+        $formulario = ['tipo_documento' => 'CC', 'documento' => '1000000040', 'nombre_completo' => 'Rosa Nueva', 'telefono' => '3001234567',
+            'email' => 'rosa@zooki.test', 'password' => self::CLAVE, 'confirm_password' => self::CLAVE, 'acepta_datos' => '1', 'id_clinica' => '2', 'cf-turnstile-response' => 'valido'];
+        $nueva = $auth->registrarPropietario(['email' => 'nadie2@zooki.test', 'documento' => '1000000098'] + $formulario, '192.0.2.40');
+        $antes = count($this->correos);
+        $this->assertSame($nueva, $auth->registrarPropietario($formulario, '192.0.2.40'));
+        $this->assertCount($antes, $this->correos, 'Al tope, el autorregistro tampoco envía.');
+
+        // La clínica sí reenvía.
+        $this->comoVeterinario(DosClinicas::NORTE, DosClinicas::VET_NORTE, 'Clínica Norte');
+        $enlace = (new PropietarioClinica($this->db))->reenviarActivacion($idRosa);
+        $this->assertGreaterThan(0, $enlace['id']);
+    }
+
+    public function testElTopeEsPorCuentaYNoInvalidaElEnlaceCuandoBloquea(): void
+    {
+        $idRosa = $this->registrarRosa();
+        $modelo = new ActivacionPropietario($this->db);
+        $antes = $this->db->query("SELECT * FROM verificaciones_email WHERE id_usuario = $idRosa")->fetchAll(PDO::FETCH_ASSOC);
+        $this->assertNull($modelo->renovarPorTitular($idRosa));
+        $this->assertSame($antes, $this->db->query("SELECT * FROM verificaciones_email WHERE id_usuario = $idRosa")->fetchAll(PDO::FETCH_ASSOC));
+
+        $this->envejecerEnlaces($idRosa, 7200);
+        $this->auth()->renovarActivacionPendiente($idRosa);
+        $otra = Transaccion::ejecutar($this->db, fn () => $modelo->crear(['tipo_documento' => 'CC', 'documento' => '1000000041', 'nombre_completo' => 'Otra Persona', 'telefono' => '3001234567', 'email' => 'otra@zooki.test'], DosClinicas::NORTE));
+        $this->envejecerEnlaces($otra['id_usuario'], 7200);
+        $this->auth()->renovarActivacionPendiente($otra['id_usuario']);
+        $this->assertCount(2, $this->correos, 'Una cuenta no consume el tope de otra.');
+
+        $this->db->prepare('UPDATE verificaciones_email SET created_at = ? WHERE id_usuario = ? AND used = 0')->execute([date('Y-m-d H:i:s', time() - 299), $idRosa]);
+        $this->assertNull($modelo->renovarPorTitular($idRosa), 'Antes de cinco minutos no se renueva.');
+        $this->db->prepare('UPDATE verificaciones_email SET created_at = ? WHERE id_usuario = ? AND used = 0')->execute([date('Y-m-d H:i:s', time() - 301), $idRosa]);
+        $this->assertNotNull($modelo->renovarPorTitular($idRosa), 'Pasados cinco minutos vuelve a permitirlo.');
+    }
+
     public function testElAutorregistroConElCorreoDeUnaCuentaPendienteResponseIgualYEnviaLaActivacion(): void
     {
         $idRosa = $this->registrarRosa();
+        $this->envejecerEnlaces($idRosa, 7200);
         $_SESSION = [];
         $formulario = ['tipo_documento' => 'CC', 'documento' => '1000000040', 'nombre_completo' => 'Rosa Nueva', 'telefono' => '3001234567',
             'email' => 'rosa@zooki.test', 'password' => self::CLAVE, 'confirm_password' => self::CLAVE, 'acepta_datos' => '1', 'id_clinica' => '2', 'cf-turnstile-response' => 'valido'];
@@ -205,6 +279,7 @@ final class M5C4bPersonalTest extends TestCase
         $_SESSION = [];
         $auth = $this->auth();
         $usuario = (new Usuario($this->db))->buscarPorId($idRosa);
+        $this->assertNull((new ActivacionPropietario($this->db))->renovarPorTitular($idRosa), 'El tope del correo no impide activar con Google.');
 
         $respuesta = $auth->activacionPendienteConGoogle($usuario, 'rosa@zooki.test', 'Rosa Nueva', 'google-rosa');
         $this->assertSame(['action' => 'activar_cuenta', 'email' => 'rosa@zooki.test', 'clinica' => 'Clínica Norte'], $respuesta);
@@ -233,6 +308,7 @@ final class M5C4bPersonalTest extends TestCase
     public function testLaActivacionPorEnlaceGuardaSuPropioMedioDeConsentimiento(): void
     {
         $idRosa = $this->registrarRosa();
+        $this->envejecerEnlaces($idRosa, 7200);
         $_SESSION = [];
         $enlace = (new ActivacionPropietario($this->db))->renovarPorTitular($idRosa);
 

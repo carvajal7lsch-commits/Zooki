@@ -1,6 +1,6 @@
 # Ficha Técnica del Proyecto — Zooki
 
-> **Revisión 3.2** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
+> **Revisión 3.3** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
 ## Identificación del Proyecto
 
@@ -15,7 +15,7 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.0.0-alpha.2**: plataforma SaaS con el módulo 0 (clínicas, planes, identidad y aislamiento) y el pulido del acceso y los registros · el resto de la v2.0 se construye por módulos; cada entrega a producción sube la alfa |
+| Estado actual | **2.0.0-alpha.3**: plataforma SaaS con el módulo 0 (clínicas, planes, identidad y aislamiento), el pulido del acceso y el portal del propietario multi-clínica (módulo 5) · el resto de la v2.0 se construye por módulos; cada entrega a producción sube la alfa |
 | Versión del documento | 3.1 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
@@ -160,15 +160,15 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 
 **v1.11.0 — en producción.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
 
-**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.3), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.2, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.2, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.2, 421 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
+**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.4), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.3, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.3, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.3, 421 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros, y la 2.0.0-alpha.3 trae el portal del propietario multi-clínica: todas sus mascotas e historia en todas sus clínicas, vínculos con tope de 3 clínicas y la historia compartida bajo su autorización. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
 
 ## 12. Entregables Finales
 
 - Código fuente completo en repositorio GitHub con [README técnico](../README.md).
 - Aplicación desplegada en el servidor propio.
 - Base de datos con datos de prueba.
-- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.3).
-- Esta Ficha Técnica del Proyecto (Revisión 3.2).
+- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.4).
+- Esta Ficha Técnica del Proyecto (Revisión 3.3).
 - [Reglas de Negocio](ReglasNegocio.md) (Rev 2.2), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.2) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.2).
 - [Modelo Entidad-Relación](MER.md) y [Modelos y diagramas](Modelos.md) (grafos, procesos, flujos de sistema y componentes) con su maestro draw.io.
 - [Historial de Versiones](HistorialVersiones.md) y documento de [Presupuesto y ROI](PresupuestoROI.md).
