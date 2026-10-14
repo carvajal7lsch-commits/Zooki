@@ -25,6 +25,28 @@ final class MascotaPropietario extends ModeloPropietario
         return $consulta->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * M5 C2: las clínicas donde se atiende cada mascota (vínculo activo), para
+     * mostrarlas como etiquetas. Una sola consulta; por id_mascota.
+     *
+     * @return array<int, list<array{id_clinica: int, nombre: string}>>
+     */
+    public function clinicasDeSusMascotas(): array
+    {
+        $consulta = $this->conn->prepare("SELECT mc.id_mascota, c.id_clinica, c.nombre
+            FROM mascota_clinica mc
+            JOIN mascotas m ON m.id_mascota = mc.id_mascota
+            JOIN clinicas c ON c.id_clinica = mc.id_clinica
+            WHERE m.id_propietario = ? AND m.estado = 1 AND mc.estado = 'activo'
+            ORDER BY c.nombre");
+        $consulta->execute([$this->propietario()]);
+        $porMascota = [];
+        foreach ($consulta->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            $porMascota[(int) $fila['id_mascota']][] = ['id_clinica' => (int) $fila['id_clinica'], 'nombre' => (string) $fila['nombre']];
+        }
+        return $porMascota;
+    }
+
     /** RE-5.1.4: la ficha de una mascota propia; ajena, 403 auditado. */
     public function ficha(int $idMascota): array
     {

@@ -1,6 +1,6 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 3.2** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
+> **Revisión 3.3** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
@@ -9,6 +9,8 @@ Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) →
 Estado **Implementada (2.0.0-alpha.N)**: historia de la v2 terminada y probada en esa versión de la plataforma. Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir, asignada a v2.0 o v2.1 según el plan de entregas. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma según el plan de entregas.
 
 _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1, que cierra el módulo 0 (plataforma, identidad y aislamiento): HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8, HU-0.1, HU-0.2, HU-0.3 y HU-0.4 pasan a «Implementada (2.0.0-alpha.1)»; el alta de personal invita a la persona y solo la vincula si acepta (HU-T.7); los topes del plan gratuito quedan en 2 cuentas de personal, 50 mascotas vinculadas y 100 citas al mes (HU-0.4); la moderación de reseñas de HU-0.3 y la regla de no calificarse a sí mismo de HU-T.17 se entregan en la v2.1 con HU-8.1, la revocación de HU-T.19 con HU-5.14, el QR del portal de HU-5.8 con el carnet QR del módulo 5 y la clasificación de la urgencia de HU-0.4 con el triage. Las historias de otros módulos que M0 dejó construidas en parte (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10) se cierran con su módulo._
+
+_La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.3, que cierra el módulo 5 (portal multi-clínica y vínculos): HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 pasan a «Implementada (2.0.0-alpha.3)», con las alergias y alertas de HU-2.10 en el módulo 2. La clínica registra al propietario sin aceptación presencial: el titular activa su cuenta desde un enlace de 72 horas y, si vence, lo pide él mismo o activa con Google (HU-T.19, HU-1.2, HU-T.18, HU-5.8). El propietario puede tener hasta 3 clínicas cuando se vincula él (HU-5.13); el personal lo busca también por nombre entre sus clientes (HU-1.5); el color de la mascota ya no se pide (HU-1.1); y los correos temporales se rechazan en los registros y al cambiar el correo (HU-T.5, HU-T.18, HU-5.8)._
 
 **Índice de módulos:**
 
@@ -224,6 +226,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - Puedo actualizar teléfono y correo.
 - El correo nuevo se valida como único.
 - _(v2.0)_ Cambiar el correo pide confirmar la identidad, y una cuenta sin contraseña debe crearla antes. El correo nuevo solo se aplica después de verificarlo; el correo anterior recibe un aviso del cambio y, si la cuenta estaba vinculada a Google con él, esa vinculación se retira.
+- _(M5)_ El correo nuevo no puede ser de un servicio de correo temporal (la lista de RE-0.1.5) ni el mismo que ya tengo; el aviso sale junto al campo mientras escribo y el servidor lo rechaza igual.
 - _(v2.0)_ Puedo corregir mi tipo y número de documento confirmando mi identidad (contraseña o Google); si el documento ya pertenece a otra cuenta, el cambio pasa a soporte.
 - _(v2.0)_ Si soy veterinario, edito mi bio y mi foto públicas; mis especialidades las asigna el administrador.
 - El cambio persiste y se refleja de inmediato.
@@ -468,16 +471,18 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 5 pts | v2 |
 
 > Como propietario, quiero registrarme con mi cuenta de Google para no llenar un formulario largo ni recordar otra contraseña.
 
 **Criterios de aceptación:**
 
 - Desde el enlace o QR de una clínica, o eligiéndola de la lista, puedo continuar con Google; el registro de clínicas y el alta de personal no ofrecen esta opción.
-- Si mi correo es nuevo, antes de crear la cuenta acepto la política de tratamiento de datos; si no acepto, no se guarda la identidad ni el vínculo con la clínica. Al aceptar, se crea la cuenta con el nombre, el correo y la foto de Google, sin verificar de nuevo el correo, y quedo vinculado a esa clínica.
+- Si mi correo es nuevo, antes de crear la cuenta acepto la política de tratamiento de datos; si no acepto, no se guarda la identidad ni el vínculo con la clínica. Al aceptar, se crea la cuenta con el nombre y el correo de Google (la foto no se guarda), sin verificar de nuevo el correo, y quedo vinculado a esa clínica.
 - Antes de usar el portal completo, una pantalla obligatoria me pide el tipo y número de documento y el teléfono; mientras no la complete, no puedo registrar mascotas ni agendar.
 - Si mi correo ya tiene cuenta, Google se vincula a ella; si estaba pendiente de verificar, queda verificada, se anula la contraseña que tenía y me pide confirmar mis datos.
+- _(M5)_ Si una clínica me registró y aún no activé mi cuenta, continuar con Google me pide aceptar la política, sin elegir clínica, y la activa sin contraseña (RN-G21).
+- _(M5)_ En el registro por formulario, el correo no puede ser de un servicio de correo temporal (RE-0.1.5); el aviso sale junto al campo.
 - El token de Google se valida contra el client_id de Zooki (RN-G12).
 
 **Reglas de negocio:** RN-G20, RN-G21, RN-G19, RN-G12, RN-109 · **Requisitos:** RF-T.6 · **Dependencias:** HU-T.1, HU-5.8
@@ -492,7 +497,9 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- El registro con formulario o Google y el alta presencial de propietarios exige aceptación del titular antes de crear la cuenta. Excepción para personal nuevo: la cuenta se crea pendiente e inerte (sin contraseña ni consentimiento); el titular recibe un enlace que vence en 72 horas, acepta la política y crea su contraseña para activarla. Si vence sin usarse, se elimina la cuenta pendiente únicamente si no tiene otros vínculos. El personal no acepta en nombre del titular. El super-administrador está exento de aceptación y de su prueba por ser una cuenta operativa de plataforma.
+- El registro con formulario o Google exige aceptación del titular antes de crear la cuenta. Excepción para las cuentas que crea una clínica (personal nuevo y propietario dado de alta por el personal): la cuenta se crea pendiente e inerte (sin contraseña, sin consentimiento y, para el propietario, sin portal); el titular recibe un enlace que vence en 72 horas, acepta la política y crea su contraseña para activarla. La clínica puede reenviar el enlace; el anterior deja de servir. Si vence sin usarse, la cuenta pendiente se elimina únicamente si no tiene otros vínculos y, si es de un propietario, tampoco mascotas (sus registros son de la clínica). El personal no acepta en nombre del titular. El super-administrador está exento de aceptación y de su prueba por ser una cuenta operativa de plataforma.
+- _(M5)_ Mientras el propietario no active su cuenta, la clínica registra y atiende a sus mascotas, pero no le salen correos automáticos (recordatorios, citas, cambios de ficha) salvo el de activación.
+- _(M5, decisión del usuario 2026-10-13)_ Si el enlace venció, el propietario pide uno nuevo sin depender de la clínica: «¿Olvidaste tu contraseña?» o el autorregistro con su correo le envían un enlace de activación nuevo, con la misma respuesta en pantalla de siempre (RN-G15), y entrar con Google le pide aceptar la política y activa la cuenta sin contraseña (RN-G21). La prueba guarda su propio medio: activación del propietario por enlace o Google.
 - Se guarda la prueba: quién, qué versión, por qué medio, cuándo y desde qué IP.
 - Si la política cambia, en el siguiente inicio de sesión se pide aceptar la nueva versión antes de continuar.
 - Revocar la autorización lleva a la solicitud de eliminación de la cuenta (HU-5.14).
@@ -516,7 +523,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- El formulario exige nombre, especie, raza, fecha de nacimiento, peso, sexo y color.
+- El formulario exige nombre, especie, raza, fecha de nacimiento, peso y sexo. _(M5, decisión del usuario 2026-10-13: el color ya no se pide; la foto identifica a la mascota.)_
 - Se puede subir una fotografía (JPG/PNG).
 - Al guardar, la mascota aparece en el listado y en la búsqueda.
 - No se puede guardar sin propietario asignado.
@@ -537,9 +544,10 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - Campos obligatorios: nombre, tipo y número de documento, teléfono y correo.
 - No se permiten documentos ni correos duplicados.
 - Si la cuenta ya existe, el personal la busca por documento o correo completo; el vínculo nuevo solo se crea al confirmar el titular desde un enlace enviado a ese correo (RN-109). La solicitud no modifica su identidad ni contraseña.
+- _(M5)_ Un propietario nuevo queda pendiente hasta que él mismo acepte la política y cree su contraseña desde el enlace de activación (HU-T.19); el personal no acepta por él.
 - Desde el perfil del propietario se listan todas sus mascotas.
 
-**Reglas de negocio:** RN-101, RN-103, RN-109, RN-G06 · **Dependencias:** —
+**Reglas de negocio:** RN-101, RN-103, RN-109, RN-G06, RN-G19 · **Dependencias:** —
 
 ### HU-1.3 — Buscar paciente
 
@@ -579,13 +587,14 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 3 pts | v2 |
 
 > Como veterinario, quiero ver las mascotas que un propietario ya tiene en la plataforma y vincular la que corresponde para no crear una ficha duplicada.
 
 **Criterios de aceptación:**
 
 - Al registrar una mascota a un propietario ya vinculado a la clínica, se muestran primero las mascotas que él tiene en la plataforma (nombre, especie, raza y foto), sin datos clínicos.
+- _(M5)_ Al propietario lo busco por documento o correo completos (búsqueda exacta en toda la plataforma, RN-111) o por nombre, con coincidencia parcial solo entre los clientes con vínculo activo de esta clínica. Ya elegido, se ve en un solo bloque, su tarjeta.
 - Si la mascota ya existe, se vincula a la clínica: conserva su ficha, su carnet y su QR; el número de historia clínica de esta clínica se genera en su primera consulta aquí (RN-102).
 - Si no existe, se registra como nueva (HU-1.1).
 - La vinculación cuenta para el límite de mascotas del plan (HU-0.4) y queda en auditoría.
@@ -767,13 +776,13 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 5 pts | v2 |
 
 > Como veterinario, quiero ver lo que otras clínicas registraron de la mascota, según lo que el propietario autorizó, para no repetir vacunas ni pasar por alto una alergia.
 
 **Criterios de aceptación:**
 
-- Siempre se muestran los datos básicos, las alergias y alertas médicas, y las vacunas y desparasitaciones de todas las clínicas, cada una con la clínica que la aplicó.
+- Siempre se muestran los datos básicos, las alergias y alertas médicas, y las vacunas y desparasitaciones de todas las clínicas, cada una con la clínica que la aplicó. _Las alergias y alertas se entregan con el módulo 2, junto a su registro (RE-2.1.5); el resto de este criterio se cierra con el módulo 5._
 - Las consultas, tratamientos y archivos de otra clínica solo se muestran si el propietario autorizó a esta clínica (HU-5.12); si no, no se muestran ni se indica que existan.
 - Los registros de otras clínicas son de solo lectura: solo la clínica que los creó puede modificarlos.
 - El Grafo I usa las alergias y alertas de todas las clínicas al validar una prescripción (HU-2.9).
@@ -1339,7 +1348,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - El botón «atrás» del navegador me devuelve a la sección anterior y cierra la ventana que tenga abierta.
 - Veo si la clínica está abierta ahora y su horario de la semana; _(v2.0)_ el de cada clínica a la que estoy vinculado.
 - Los formularios indican qué campos son obligatorios y cuáles opcionales.
-- Al registrar o editar una mascota elijo la raza del catálogo; si no está, indico que es mestiza, que no la sé o la escribo para que la clínica la confirme, y veo la foto antes de guardarla. El color lo registra la clínica en la consulta.
+- Al registrar o editar una mascota elijo la raza del catálogo; si no está, indico que es mestiza, que no la sé o la escribo para que la clínica la confirme, y veo la foto antes de guardarla. El color no se registra (M5).
 - Al agendar no puedo elegir días en que la clínica no atiende, y los horarios libres aparecen en botones cuando ya elegí tipo, veterinario y día.
 
 > **Nota:** el portal mostraba un banner fijo de «Médicos calificados las 24 horas del día», que no correspondía al horario configurado en HU-7.1. Se reemplazó por el horario real.
@@ -1481,6 +1490,8 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - Cada clínica solo ve los propietarios vinculados a ella. Todo queda en auditoría.
 
 - El autorregistro por formulario verifica Turnstile en el servidor. Las ayudas solo validan formato y la respuesta al enviar no revela si la identidad existe.
+- _(M5)_ En las tres vías, el correo del propietario no puede ser de un servicio de correo temporal (RE-0.1.5): el aviso sale junto al campo y el servidor lo rechaza.
+- _(M5)_ Si el correo o el documento del autorregistro son de una cuenta que una clínica registró y aún no se activa, se le envía un enlace de activación nuevo al correo de esa cuenta, con la misma respuesta en pantalla.
 
 **Reglas de negocio:** RN-109, RN-G06 · **Requisitos:** RF-5.3 · **Dependencias:** —
 
@@ -1488,7 +1499,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 5 pts | v2 |
 
 > Como propietario vinculado a varias clínicas, quiero entrar una sola vez y ver todas mis mascotas y su historia, eligiendo la clínica solo cuando hago algo en ella, para no tener que cambiar de clínica para ver a mi mascota.
 
@@ -1545,7 +1556,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 3 pts | v2 |
 
 > Como propietario, quiero decidir qué clínicas pueden ver las consultas que otras clínicas le hicieron a mi mascota para que esa información viaje solo con mi permiso.
 
@@ -1563,7 +1574,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.3) | 3 pts | v2 |
 
 > Como propietario, quiero vincularme a otra clínica cuando yo lo decida, con un clic desde mi portal, para atender a mis mascotas allí sin crear otra cuenta.
 
@@ -1571,10 +1582,11 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 - Desde el portal veo la lista de clínicas activas de la plataforma y puedo vincularme a una con un clic; como ya inicié sesión, no se me pide verificar de nuevo el correo.
 - La clínica nueva solo ve mis datos de propietario; mis mascotas se le vinculan cuando agendo con ellas allí o cuando la clínica las atiende (RN-110).
+- Desde el portal llego como máximo a 3 clínicas con vínculo activo (RN-116). Con 3, «Vincularme» se deshabilita con una línea que lo explica; desvincularme de una libera el cupo. El tope no aplica cuando una clínica me registra o confirmo su solicitud de vínculo: una atención nunca se bloquea por esto.
 - Puedo desvincularme de una clínica; la clínica conserva lo que registró, deja de ver mis datos nuevos y pierde la autorización a la historia de otras clínicas (RN-115). No puedo desvincularme mientras tenga citas pendientes en ella: primero debo cancelarlas.
 - Cada vinculación y desvinculación queda en auditoría.
 
-**Reglas de negocio:** RN-109, RN-110, RN-115 · **Requisitos:** RF-5.4 · **Dependencias:** HU-5.8, HU-5.9
+**Reglas de negocio:** RN-109, RN-110, RN-115, RN-116 · **Requisitos:** RF-5.4 · **Dependencias:** HU-5.8, HU-5.9
 
 ### HU-5.14 — Eliminar mi cuenta (derecho de supresión)
 
@@ -1992,7 +2004,7 @@ Mientras llega la v2.1, la solicitud de eliminación de cuenta (HU-5.14) se atie
 
 ## Apéndice — Cobertura y trazabilidad (RN → HU)
 
-Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** están cubiertas por al menos una historia de usuario.
+Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** están cubiertas por al menos una historia de usuario.
 
 **Reglas sin historia asociada:** — ninguna: cobertura total —
 
@@ -2018,7 +2030,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-G16 | HU-T.19, HU-5.14 |
 | RN-G17 | HU-T.16 |
 | RN-G18 | HU-T.17, HU-8.1 |
-| RN-G19 | HU-0.1, HU-T.18, HU-T.19 |
+| RN-G19 | HU-0.1, HU-T.18, HU-T.19, HU-1.2 |
 | RN-G20 | HU-0.1, HU-T.18 |
 | RN-G21 | HU-T.18 |
 | RN-G22 | HU-T.2 |
@@ -2052,6 +2064,7 @@ Auditoría automática de la Fase 3: de **119 reglas de negocio**, **119** está
 | RN-113 | HU-2.1, HU-2.5, HU-2.9, HU-2.10, HU-5.12 |
 | RN-114 | HU-5.5, HU-5.9 |
 | RN-115 | HU-5.12, HU-5.13 |
+| RN-116 | HU-5.13 |
 | RN-201 | HU-2.1, HU-2.7 |
 | RN-202 | HU-2.1, HU-2.8 |
 | RN-203 | HU-2.1, HU-2.2 |

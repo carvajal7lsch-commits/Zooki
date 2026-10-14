@@ -659,6 +659,10 @@ class CitaController
         if (empty($cita['email'])) {
             return false;
         }
+        // M5 C3 (RE-T.19.1): un cliente que aún no activa su cuenta solo recibe el correo de activación.
+        if ((int) ($cita['propietario_estado'] ?? 1) !== 1) {
+            return false;
+        }
 
         $textos = [
             'confirmacion_nueva' => ['¡Cita Confirmada!', 'Confirmación de Cita Veterinaria - Zooki', 'Queremos confirmarte que la cita para tu mascota ha sido programada con éxito.'],

@@ -122,8 +122,10 @@ class UsuarioController {
         if (ValidadorCuenta::documento($limpios['documento']) !== null) {
             return 'El documento debe tener entre 5 y 15 digitos.';
         }
-        if (ValidadorCuenta::correo($limpios['email']) !== null) {
-            return 'El correo electronico no tiene un formato valido.';
+        // M5 C4b: el aviso dice qué le falta o que es un correo temporal (RE-0.1.5).
+        $motivoCorreo = ValidadorCuenta::correoDeCuenta($limpios['email']);
+        if ($motivoCorreo !== null) {
+            return $motivoCorreo;
         }
         if (ValidadorCuenta::nombre($limpios['nombre_completo']) !== null) {
             return ValidadorCuenta::nombre($limpios['nombre_completo']);

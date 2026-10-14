@@ -103,6 +103,9 @@ final class DosClinicas
             nombre_invitado TEXT, tipo_documento_invitado TEXT, documento_invitado TEXT,
             email_invitado TEXT, telefono_invitado TEXT, token_hash TEXT NOT NULL, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP)");
+        // M5 C3: la cuenta pendiente de un propietario se reconoce sin consentimiento (ActivacionPropietario).
+        $db->exec('CREATE TABLE consentimientos_datos (id_consentimiento INTEGER PRIMARY KEY AUTOINCREMENT, id_usuario INTEGER REFERENCES usuarios,
+            version_politica TEXT NOT NULL,medio TEXT NOT NULL,ip_address TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP)');
     }
 
     /** C2: mismas columnas de los catálogos reales, con FK para probar rollback. */
@@ -148,8 +151,6 @@ final class DosClinicas
         $db->exec("CREATE TABLE notificaciones (id_notificacion INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER REFERENCES clinicas,
             id_usuario INTEGER REFERENCES usuarios,tipo_entidad TEXT,id_entidad INTEGER,destinatario_email TEXT,
             tipo_notificacion TEXT,asunto TEXT,mensaje TEXT,fecha_envio TEXT DEFAULT CURRENT_TIMESTAMP,estado TEXT DEFAULT 'pendiente')");
-        $db->exec('CREATE TABLE consentimientos_datos (id_consentimiento INTEGER PRIMARY KEY AUTOINCREMENT, id_usuario INTEGER REFERENCES usuarios,
-            version_politica TEXT NOT NULL,medio TEXT NOT NULL,ip_address TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP)');
         self::completarMascota($db);
     }
 

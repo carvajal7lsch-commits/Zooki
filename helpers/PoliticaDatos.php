@@ -20,4 +20,6 @@ final class PoliticaDatos
     public const MEDIO_FORMULARIO = 'formulario';
     public const MEDIO_GOOGLE = 'google';
     public const MEDIO_ALTA_PERSONAL = 'alta_personal';
+    /** M5 C4b (migración 06): el propietario activó la cuenta que le creó la clínica, con su enlace. */
+    public const MEDIO_ACTIVACION_PROPIETARIO = 'activacion_propietario';
 }

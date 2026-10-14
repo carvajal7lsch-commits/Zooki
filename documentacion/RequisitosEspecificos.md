@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.2** · 420 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.3** · 421 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
@@ -9,6 +9,8 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 **Criterio de aceptación:** describe una prueba concreta, con su entrada y el resultado esperado, que permite decir si el requisito se cumple.
 
 _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1: los requisitos de las historias del módulo 0 (HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8 y HU-0.1 a HU-0.4) quedan verificados con pruebas automáticas; su evidencia está en el plan del módulo (`specs/M0-T-base-saas-identidad.md`, §2). Quedan fuera, con su nota en la fila: RE-0.3.6 y RE-T.17.4 (v2.1, con HU-8.1), RE-T.19.4 (v2.1, con HU-5.14), el QR de RE-5.8.4 (módulo 5) y la clasificación de la urgencia de RE-0.4.6 (triage, módulos 2 y 4)._
+
+_La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.3: los requisitos de HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 quedan verificados con pruebas automáticas, con su evidencia en el plan del módulo (`specs/M5-portal-multiclinica.md`, §2). Se agrega RE-5.13.5 (tope de 3 clínicas, RN-116); RE-T.19.1 deja el alta del propietario por la clínica sin aceptación presencial y con la activación recuperable por el titular; RE-1.1.1 ya no exige el color; RE-T.5.7 rechaza correos temporales. Queda fuera, con su nota: las alergias y alertas de RE-2.10.1 (módulo 2, con RE-2.1.5)._
 
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0)*
 
@@ -137,7 +139,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | RE-T.5.4 | El sistema debe mostrar la actividad reciente de la cuenta: accesos, intentos fallidos y cambios, con fecha en hora de la clínica e IP. | Seguridad | Solo aparecen eventos de la propia cuenta y los intentos fallidos se destacan. | Media |
 | RE-T.5.5 | El sistema debe registrar en auditoría el cambio de contraseña, sin guardar la contraseña. | Seguridad | Tras cambiarla, el evento aparece en la actividad. | Alta |
 | RE-T.5.6 | El formulario de contraseña debe mostrar los requisitos de la política mientras se escribe y permitir ver lo escrito. | Usabilidad | Cada requisito se marca al cumplirse y la confirmación avisa si no coincide. | Baja |
-| RE-T.5.7 | _(v2.0)_ Cambiar el correo debe exigir confirmar la identidad, y una cuenta sin contraseña debe crearla antes. El correo nuevo debe aplicarse solo tras verificarlo; el anterior debe recibir un aviso y la vinculación con Google del correo anterior debe retirarse. | Seguridad | Hasta verificar, se sigue entrando con el correo anterior; tras verificar, el correo anterior recibe el aviso. | Alta |
+| RE-T.5.7 | _(v2.0)_ Cambiar el correo debe exigir confirmar la identidad, y una cuenta sin contraseña debe crearla antes. El correo nuevo debe aplicarse solo tras verificarlo; el anterior debe recibir un aviso y la vinculación con Google del correo anterior debe retirarse. _(M5)_ El correo nuevo no puede ser temporal (RE-0.1.5) ni el actual. | Seguridad | Hasta verificar, se sigue entrando con el correo anterior; tras verificar, el correo anterior recibe el aviso. | Alta |
 | RE-T.5.8 | _(v2.0)_ El titular debe poder corregir su documento confirmando su identidad; el sistema debe validar formato y unicidad, auditar el valor anterior y avisar por correo. | Seguridad | Un documento que ya usa otra cuenta no se aplica y se crea el caso para soporte; uno válido se aplica y queda en auditoría. | Alta |
 | RE-T.5.9 | _(v2.0)_ El veterinario debe poder editar su bio y su foto públicas, pero no sus especialidades. | Seguridad | El perfil público muestra la bio nueva; intentar cambiar las especialidades devuelve 403. | Media |
 
@@ -280,7 +282,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-T.18.1 | El registro con Google debe ofrecerse solo a propietarios, desde el enlace o QR de una clínica o eligiéndola de la lista. | Restricción | El formulario de registro de clínica no muestra la opción de Google. | Alta |
-| RE-T.18.2 | Con un correo nuevo, el sistema debe exigir aceptar la política antes de crear la cuenta y vincularla a la clínica elegida; luego guarda el nombre, correo y foto de Google sin pedir nueva verificación del correo. | Funcional | Sin aceptación no existen cuenta ni vínculo; tras aceptarla, la cuenta existe en la clínica elegida y tiene una prueba en `consentimientos_datos`. | Alta |
+| RE-T.18.2 | Con un correo nuevo, el sistema debe exigir aceptar la política antes de crear la cuenta y vincularla a la clínica elegida; luego guarda el nombre y el correo de Google, sin la foto y sin pedir nueva verificación del correo. | Funcional | Sin aceptación no existen cuenta ni vínculo; tras aceptarla, la cuenta existe en la clínica elegida y tiene una prueba en `consentimientos_datos`. | Alta |
 | RE-T.18.3 | Mientras el perfil esté incompleto, el sistema debe exigir documento y teléfono e impedir registrar mascotas o agendar. | Restricción | Con el perfil incompleto, intentar agendar lleva a la pantalla de completar perfil. | Alta |
 | RE-T.18.4 | Si el correo ya tiene cuenta, el sistema debe vincular Google a esa cuenta y verificarla si estaba pendiente; al verificar una cuenta pendiente debe anular su contraseña y volver a pedir sus datos. | Seguridad | No se crea una segunda cuenta; una cuenta pendiente queda verificada, la contraseña con la que se creó ya no sirve y el perfil queda por completar. | Alta |
 
@@ -290,8 +292,8 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-T.19.1 | El registro por formulario, Google y el alta presencial de propietarios exige aceptación expresa antes de crear la cuenta. Excepción: el personal nuevo queda pendiente e inerte, sin contraseña ni consentimiento, y recibe un enlace de 72 horas para aceptar la política y crear su contraseña. | Restricción | Sin aceptación no se crea una cuenta de propietario. El personal no puede aceptar por el titular: la cuenta pendiente no inicia sesión y solo se activa al aceptar y crear la contraseña; puede rechazar la invitación sin activarse ni consentir; al rechazar o vencer se elimina únicamente si no tiene otros vínculos. | Alta |
-| RE-T.19.2 | El sistema debe guardar la prueba de la aceptación: usuario, versión, medio, fecha e IP, salvo la cuenta de super-administrador. | Seguridad | Cada cuenta nueva habilitada tiene su prueba en `consentimientos_datos`; el personal pendiente la registra al activar. El super-administrador está exento de aceptación y de esta prueba por ser una cuenta operativa de plataforma. | Alta |
+| RE-T.19.1 | El registro por formulario o Google exige aceptación expresa antes de crear la cuenta. Excepción: las cuentas que crea una clínica (personal nuevo y propietario dado de alta por el personal) quedan pendientes e inertes, sin contraseña ni consentimiento, y el titular recibe un enlace de 72 horas para aceptar la política y crear su contraseña. _(M5, decisión del usuario 2026-10-12: el propietario ya no acepta de forma presencial.)_ | Restricción | El personal no puede aceptar por el titular: la cuenta pendiente no inicia sesión ni tiene portal y solo se activa al aceptar y crear la contraseña. El personal puede rechazar la invitación sin activarse ni consentir; el propietario no tiene «No acepto»: deja vencer el enlace. La clínica puede reenviar el enlace y el anterior deja de servir. Mientras no active, la clínica registra y atiende a sus mascotas y no le salen correos automáticos salvo el de activación. Al vencer, la cuenta se elimina únicamente si no tiene otros vínculos ni, si es de un propietario, mascotas. _(M5)_ El propietario también pide un enlace nuevo con «¿Olvidaste tu contraseña?» o el autorregistro con su correo (misma respuesta en pantalla) o activa con Google aceptando la política, sin contraseña. Cuando lo pide el titular, se permite como máximo un envío cada 5 minutos y 3 en una hora por cuenta, contando sus enlaces de activación: al superar el tope no se renueva ni envía y la respuesta es idéntica. La comprobación y reserva se serializan por cuenta; el reenvío de la clínica no tiene este tope. Google activa con aceptación, sin enviar un enlace. | Alta |
+| RE-T.19.2 | El sistema debe guardar la prueba de la aceptación: usuario, versión, medio, fecha e IP, salvo la cuenta de super-administrador. | Seguridad | Cada cuenta nueva habilitada tiene su prueba en `consentimientos_datos`; el personal y el propietario pendientes la registran al activar. El super-administrador está exento de aceptación y de esta prueba por ser una cuenta operativa de plataforma. | Alta |
 | RE-T.19.3 | Si la política cambia de versión, el sistema debe pedir aceptarla en el siguiente inicio de sesión antes de continuar. | Restricción | Tras publicar una versión nueva, el usuario no entra al panel hasta aceptarla. | Media |
 | RE-T.19.4 | Revocar la autorización debe llevar a la solicitud de eliminación de la cuenta. _Se entrega en la v2.1 con HU-5.14._ | Funcional | La opción de revocar abre el flujo de HU-5.14. | Media |
 
@@ -303,7 +305,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-1.1.1 | El sistema debe exigir nombre, especie, raza, fecha de nacimiento, peso, sexo y color; si se conoce, registra si está esterilizada, porque el triage lo usa. | Funcional | Guardar sin un campo obligatorio muestra error. | Alta |
+| RE-1.1.1 | El sistema debe exigir nombre, especie, raza, fecha de nacimiento, peso y sexo; si se conoce, registra si está esterilizada, porque el triage lo usa. _(M5, decisión del usuario 2026-10-13: el color ya no se pide.)_ | Funcional | Guardar sin un campo obligatorio muestra error. | Alta |
 | RE-1.1.2 | El sistema debe permitir subir una fotografía JPG/PNG validando tipo y tamaño. | Validación | Un archivo no permitido o excedido es rechazado. | Media |
 | RE-1.1.3 | El sistema debe impedir guardar una mascota sin propietario. | Restricción | Guardar sin propietario es rechazado. | Alta |
 | RE-1.1.4 | El sistema debe validar los campos en cliente y servidor. | Validación | La validación falla en cliente y en servidor. | Alta |
@@ -459,7 +461,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-2.10.1 | El sistema debe mostrar siempre los datos básicos, las alergias y alertas, y las vacunas y desparasitaciones de todas las clínicas, indicando la clínica de cada registro. | Funcional | Una vacuna aplicada en otra clínica aparece con el nombre de esa clínica. | Alta |
+| RE-2.10.1 | El sistema debe mostrar siempre los datos básicos, las alergias y alertas, y las vacunas y desparasitaciones de todas las clínicas, indicando la clínica de cada registro. _Las alergias y alertas se entregan con el módulo 2, junto a su registro (RE-2.1.5); el módulo 5 cierra los datos básicos, las vacunas y las desparasitaciones._ | Funcional | Una vacuna aplicada en otra clínica aparece con el nombre de esa clínica. | Alta |
 | RE-2.10.2 | Las consultas, tratamientos y archivos de otra clínica solo deben mostrarse si el propietario autorizó a la clínica que consulta. | Seguridad | Sin autorización no se ve su contenido, ni por la interfaz ni pidiéndolo directamente al servidor (403). | Alta |
 | RE-2.10.3 | Sin autorización, el sistema no debe revelar que existe historia en otras clínicas. | Seguridad | Ni la interfaz ni la respuesta del servidor incluyen ni mencionan consultas, tratamientos o archivos de otras clínicas; la autorización la da el propietario desde su portal (HU-5.12). | Media |
 | RE-2.10.4 | Los registros de otras clínicas deben ser de solo lectura. | Restricción | Intentar modificar un registro de otra clínica se rechaza (403). | Alta |
@@ -779,7 +781,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | RE-5.1.6 | Cada sección del portal debe tener su propia dirección. | Usabilidad | El botón «atrás» del navegador vuelve a la sección anterior, cierra la ventana abierta y la recarga conserva la sección. | Media |
 | RE-5.1.7 | El portal debe mostrar el horario real de atención de la clínica (HU-43); _(v2.0)_ el de cada clínica con vínculo activo. | Funcional | Indica si la clínica está abierta en este momento, cuándo cierra o cuándo vuelve a abrir, y el horario de la semana. | Media |
 | RE-5.1.8 | El portal debe poder usarse con teclado y permitir ampliar la pantalla. | Usabilidad | El zoom no está bloqueado; las ventanas se cierran con Esc y el foco no sale de ellas mientras están abiertas. | Media |
-| RE-5.1.9 | El servidor debe validar los datos de mascota que registra o edita el propietario. | Seguridad | Nombre de 1 a 50 caracteres (letras, números, espacio, punto, guion, apóstrofo); especie y raza del catálogo y la raza de esa especie; sexo Macho o Hembra; peso mayor que 0 y hasta 150 kg; nacimiento no futuro ni de más de 40 años; foto JPG o PNG real de hasta 5 MB con nombre generado por el servidor. El propietario no crea razas: si la suya no está, la elige como mestiza («Criollo»), «No sé la raza» o «Mi raza no está en la lista» y la escribe; queda como «Sin raza definida» con la raza indicada, que el personal ve en la ficha, la atención y la lista de pacientes y se borra cuando el personal asigna una raza. Tampoco registra el color: el color lo anota la clínica en la consulta y el portal no lo modifica. | Alta |
+| RE-5.1.9 | El servidor debe validar los datos de mascota que registra o edita el propietario. | Seguridad | Nombre de 1 a 50 caracteres (letras, números, espacio, punto, guion, apóstrofo); especie y raza del catálogo y la raza de esa especie; sexo Macho o Hembra; peso mayor que 0 y hasta 150 kg; nacimiento no futuro ni de más de 40 años; foto JPG o PNG real de hasta 5 MB con nombre generado por el servidor. El propietario no crea razas: si la suya no está, la elige como mestiza («Criollo»), «No sé la raza» o «Mi raza no está en la lista» y la escribe; queda como «Sin raza definida» con la raza indicada, que el personal ve en la ficha, la atención y la lista de pacientes y se borra cuando el personal asigna una raza. Tampoco registra el color: desde M5 ningún formulario lo pide. | Alta |
 | RE-5.1.10 | Al agendar, el portal solo debe ofrecer días y horas en que se puede atender. | Usabilidad | Los días sin atención en toda la jornada y los pasados no se pueden elegir; los horarios salen en botones de mañana y tarde cuando ya hay tipo, veterinario y día, y el botón de confirmar se habilita al completar todo. | Media |
 
 **Reglas de negocio:** RN-G02
@@ -918,6 +920,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | RE-5.13.2 | Al vincularse, la clínica nueva solo debe ver los datos del propietario; las mascotas se le vinculan al agendar o al ser atendidas allí. | Seguridad | Recién vinculada, la clínica no ve mascotas del propietario hasta que se cumpla una de las dos condiciones. | Alta |
 | RE-5.13.3 | El propietario debe poder desvincularse; se rechaza si tiene citas pendientes en esa clínica. | Restricción | Con citas pendientes se informa que debe cancelarlas primero; sin ellas, el vínculo pasa a inactivo. | Media |
 | RE-5.13.4 | Cada vinculación y desvinculación debe registrarse en auditoría. | Seguridad | Ambas operaciones generan entrada de auditoría. | Media |
+| RE-5.13.5 | Desde el portal, el propietario debe poder tener como máximo 3 clínicas con vínculo activo (RN-116); el tope no aplica cuando una clínica lo registra o confirma su vínculo. | Restricción | Con 3 clínicas activas, «Vincularme» se muestra deshabilitado con una línea que lo explica y el servidor rechaza una cuarta vinculación desde el portal; una clínica sí liga a un propietario que ya tiene 3; al desvincularse de una, puede vincularse a otra. El registro desde el enlace o QR de una clínica no cuenta como vinculación desde el portal (decisión del usuario, M5 C3). | Media |
 
 **Reglas de negocio:** RN-109, RN-110, RN-115
 
@@ -1146,7 +1149,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | HU-T.18 | RN-G20, RN-G21, RN-G19, RN-G12, RN-109 | RE-T.18.1, RE-T.18.2, RE-T.18.3, RE-T.18.4 |
 | HU-T.19 | RN-G19, RN-G07, RN-G16 | RE-T.19.1, RE-T.19.2, RE-T.19.3, RE-T.19.4 |
 | HU-1.1 | RN-101, RN-102, RN-106, RN-107, RN-110, RN-111 | RE-1.1.1, RE-1.1.2, RE-1.1.3, RE-1.1.4, RE-1.1.5, RE-1.1.6 |
-| HU-1.2 | RN-101, RN-103, RN-109, RN-G06 | RE-1.2.1, RE-1.2.2, RE-1.2.3 |
+| HU-1.2 | RN-101, RN-103, RN-109, RN-G06, RN-G19 | RE-1.2.1, RE-1.2.2, RE-1.2.3 |
 | HU-1.3 | RN-105 | RE-1.3.1, RE-1.3.2, RE-1.3.3, RE-1.3.4 |
 | HU-1.4 | RN-104, RN-105, RN-108, RN-110 | RE-1.4.1, RE-1.4.2, RE-1.4.3, RE-1.4.4, RE-1.4.5 |
 | HU-1.5 | RN-003, RN-102, RN-110, RN-111 | RE-1.5.1, RE-1.5.2, RE-1.5.3 |
@@ -1198,7 +1201,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | HU-5.10 | RN-110, RN-502, RN-503 | RE-5.10.1, RE-5.10.2, RE-5.10.3, RE-5.10.4, RE-5.10.5 |
 | HU-5.11 | RN-502, RN-503, RN-504, RN-505 | RE-5.11.1, RE-5.11.2, RE-5.11.3, RE-5.11.4, RE-5.11.5, RE-5.11.6 |
 | HU-5.12 | RN-113, RN-115, RN-G07 | RE-5.12.1, RE-5.12.2, RE-5.12.3, RE-5.12.4 |
-| HU-5.13 | RN-109, RN-110, RN-115 | RE-5.13.1, RE-5.13.2, RE-5.13.3, RE-5.13.4 |
+| HU-5.13 | RN-109, RN-110, RN-115, RN-116 | RE-5.13.1, RE-5.13.2, RE-5.13.3, RE-5.13.4, RE-5.13.5 |
 | HU-5.14 | RN-G16, RN-G07 | RE-5.14.1, RE-5.14.2, RE-5.14.3, RE-5.14.4, RE-5.14.5 |
 | HU-6.1 | RN-G01, RN-407, RN-409 | RE-6.1.1, RE-6.1.2, RE-6.1.3, RE-6.1.4, RE-6.1.5, RE-6.1.6, RE-6.1.7 |
 | HU-6.2 | RN-G01, RN-408, RN-409 | RE-6.2.1, RE-6.2.2, RE-6.2.3, RE-6.2.4, RE-6.2.5, RE-6.2.6 |

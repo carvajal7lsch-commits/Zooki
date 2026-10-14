@@ -164,7 +164,7 @@ CREATE TABLE `consentimientos_datos` (
   `id_consentimiento` INT NOT NULL AUTO_INCREMENT,
   `id_usuario` INT NOT NULL,
   `version_politica` VARCHAR(20) NOT NULL,
-  `medio` ENUM('formulario','google','alta_personal') NOT NULL,
+  `medio` ENUM('formulario','google','alta_personal','activacion_propietario') NOT NULL,
   `ip_address` VARCHAR(45) DEFAULT NULL,
   `fecha` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_consentimiento`),

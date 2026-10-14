@@ -47,6 +47,9 @@ function responderGoogle(data) {
         window.location.href = extra.redirect;
     } else if (extra.action === 'aceptar_registro' && typeof window.abrirGoogleModal === 'function') {
         window.abrirGoogleModal(extra.email, extra.id_clinica);
+    } else if (extra.action === 'activar_cuenta' && typeof window.abrirGoogleModal === 'function') {
+        // M5 C4b (RN-G21): la cuenta la registró una clínica; solo falta aceptar la política.
+        window.abrirGoogleModal(extra.email, null, extra.clinica);
     }
 }
 
@@ -387,10 +390,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const completeGoogleBtn = document.getElementById('completeGoogleBtn');
     const googleUserEmailSpan = document.getElementById('googleUserEmail');
     const googleClinica = document.getElementById('google_id_clinica');
-    const textoBotonGoogle = '<span>Crear mi cuenta</span> <i class="ri-check-line"></i>';
+    const BOTON_GOOGLE = {
+        registro: '<span>Crear mi cuenta</span> <i class="ri-check-line"></i>',
+        activar: '<span>Activar mi cuenta</span> <i class="ri-check-line"></i>',
+    };
+    let textoBotonGoogle = BOTON_GOOGLE.registro;
 
-    window.abrirGoogleModal = (email, idClinica) => {
+    /**
+     * M5 C4b: con la clínica de origen, el modal activa la cuenta pendiente:
+     * sin elegir clínica (el campo se deshabilita y no se envía).
+     */
+    window.abrirGoogleModal = (email, idClinica, clinicaOrigen = null) => {
         if (!completeGoogleModal) return;
+        const modo = clinicaOrigen ? 'activar' : 'registro';
+        completeGoogleModal.querySelectorAll('[data-google-modo]').forEach(parte => {
+            parte.hidden = parte.dataset.googleModo !== modo;
+        });
+        if (googleClinica) googleClinica.disabled = modo === 'activar';
+        completeGoogleModal.querySelectorAll('[data-google-clinica]').forEach(parte => { parte.textContent = clinicaOrigen || ''; });
+        completeGoogleModal.querySelectorAll('[data-google-correo]').forEach(parte => { parte.textContent = email; });
+        textoBotonGoogle = BOTON_GOOGLE[modo];
+        if (completeGoogleBtn) completeGoogleBtn.innerHTML = textoBotonGoogle;
         if (googleUserEmailSpan) googleUserEmailSpan.textContent = email;
         if (googleClinica && idClinica) googleClinica.value = String(idClinica);
         completeGoogleModal.removeAttribute('hidden');
@@ -412,7 +432,9 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             if (!completeGoogleForm.reportValidity()) return;
             completeGoogleBtn.disabled = true;
-            completeGoogleBtn.innerHTML = '<span>Creando cuenta...</span> <i class="ri-loader-4-line animate-spin"></i>';
+            completeGoogleBtn.innerHTML = textoBotonGoogle === BOTON_GOOGLE.activar
+                ? '<span>Activando…</span> <i class="ri-loader-4-line animate-spin"></i>'
+                : '<span>Creando cuenta...</span> <i class="ri-loader-4-line animate-spin"></i>';
 
             try {
                 const res = await fetch('index.php?action=complete_google_register_ajax', {

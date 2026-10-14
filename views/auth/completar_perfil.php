@@ -13,6 +13,8 @@ require_once __DIR__ . '/../../config/App.php';
 $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 $tituloPagina = 'Completa tu perfil · Zooki';
 $accesoSalida = 'sesion';
+// M5 C4a (punto 11): teléfono con bandera, como en el registro.
+$accesoTelefono = true;
 require __DIR__ . '/../partials/acceso_marco_inicio.php';
 $estado = ['tipo' => 'info', 'icono' => 'ri-user-settings-line', 'titulo' => 'Completa tu perfil', 'texto' => 'Para registrar tus mascotas y agendar citas, la clínica necesita tu documento y un teléfono de contacto.'];
 require __DIR__ . '/../partials/acceso_estado.php';
@@ -39,12 +41,14 @@ require __DIR__ . '/../partials/acceso_estado.php';
                     </div>
                     <div class="input-group registro-ancho">
                         <label for="perfilTelefono">Teléfono</label>
-                        <div class="input-wrapper"><input type="tel" id="perfilTelefono" name="telefono" placeholder="Ej: 300 123 4567" required minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> autocomplete="tel"></div>
+                        <div class="input-wrapper"><input type="tel" id="perfilTelefono" name="telefono" placeholder="Ej: 300 123 4567" required minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> data-telefono-internacional autocomplete="tel"></div>
                     </div>
                 </div>
                 <button type="submit" class="btn-primary"><span>Guardar y continuar</span><i class="ri-arrow-right-line" aria-hidden="true"></i></button>
             </form>
 <?php require __DIR__ . '/../partials/acceso_marco_fin.php'; ?>
 <?php require __DIR__ . '/../partials/validacion_cuenta.php'; ?>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
+<script src="js/telefono-internacional.js?v=<?= $e(App::assetVersion()) ?>"></script>
 </body>
 </html>

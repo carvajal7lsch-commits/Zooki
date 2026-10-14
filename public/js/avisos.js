@@ -115,6 +115,87 @@ async function zookiConfirmar(mensaje, titulo = '¿Confirmas?', textoBoton = 'S�
 }
 
 /**
+ * M5 C3 (decisión del usuario): confirmación corta con el estilo de Zooki.
+ * Solo la pregunta, unas filas opcionales [etiqueta, valor] y los botones,
+ * sin icono ni explicación. Resuelve a booleano. textoVolver nombra el botón
+ * que no hace nada («Volver» cuando la acción misma es «Cancelar cita»).
+ *
+ * M5 C4a (decisión del usuario, 2026-10-13): es el modal de Zooki en todo el
+ * sistema, ya no SweetAlert: hoja desde abajo en el celular y ventana
+ * centrada desde tableta (usuarios.css). Escape o tocar el fondo cancelan,
+ * el foco no sale de la ventana y vuelve a quien la abrió. Los textos van con
+ * textContent, sin armar HTML.
+ */
+function zookiConfirmarCorto(pregunta, textoBoton, filas = [], textoVolver = 'Cancelar') {
+    const previo = document.activeElement;
+    const crear = (etiqueta, clase, texto) => {
+        const nodo = document.createElement(etiqueta);
+        if (clase) nodo.className = clase;
+        if (texto !== undefined) nodo.textContent = texto;
+        return nodo;
+    };
+
+    const fondo = crear('div', 'zooki-confirmacion');
+    const panel = crear('div', 'zooki-confirmacion__panel');
+    panel.setAttribute('role', 'alertdialog');
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-labelledby', 'zookiConfirmacionTitulo');
+    const titulo = crear('h2', 'zooki-confirmacion__titulo', pregunta);
+    titulo.id = 'zookiConfirmacionTitulo';
+    panel.appendChild(titulo);
+    if (filas.length) {
+        const lista = crear('dl', 'zooki-confirmacion__filas');
+        filas.forEach(([etiqueta, valor]) => {
+            const fila = crear('div');
+            fila.appendChild(crear('dt', '', etiqueta));
+            fila.appendChild(crear('dd', '', valor));
+            lista.appendChild(fila);
+        });
+        panel.appendChild(lista);
+    }
+    const botones = crear('div', 'zooki-confirmacion__botones');
+    const cancelar = crear('button', 'btn-modal-secondary', textoVolver);
+    cancelar.type = 'button';
+    const aceptar = crear('button', 'btn-modal-primary', textoBoton);
+    aceptar.type = 'button';
+    botones.appendChild(cancelar);
+    botones.appendChild(aceptar);
+    panel.appendChild(botones);
+    fondo.appendChild(panel);
+
+    return new Promise((resolver) => {
+        function cerrar(respuesta) {
+            document.removeEventListener('keydown', teclado, true);
+            fondo.remove();
+            if (previo && typeof previo.focus === 'function') previo.focus();
+            resolver(respuesta);
+        }
+        function teclado(evento) {
+            if (evento.key === 'Escape') {
+                // Solo cierra la confirmación, no la ventana que haya debajo.
+                evento.preventDefault();
+                evento.stopPropagation();
+                cerrar(false);
+                return;
+            }
+            if (evento.key === 'Tab') {
+                evento.preventDefault();
+                const siguiente = document.activeElement === aceptar ? cancelar : aceptar;
+                siguiente.focus();
+            }
+        }
+        cancelar.addEventListener('click', () => cerrar(false));
+        aceptar.addEventListener('click', () => cerrar(true));
+        fondo.addEventListener('click', (evento) => {
+            if (evento.target === fondo) cerrar(false);
+        });
+        document.addEventListener('keydown', teclado, true);
+        document.body.appendChild(fondo);
+        aceptar.focus();
+    });
+}
+
+/**
  * Escapa texto para insertarlo en HTML sin abrir un XSS.
  *
  * Vive aquí porque lo necesitan tanto el portal como el módulo clínico, y

@@ -177,7 +177,7 @@
     .foto-campo__boton:hover { background: var(--z-primary); color: #ffffff; }
 }
 
-/* ── Agendar cita ── */
+/* ── Agendar cita (M5 C3): un solo formulario, todo a la vista ── */
 .booking__columnas {
     display: flex;
     flex-direction: column;
@@ -328,23 +328,7 @@
     .slot-chip:hover:not(.is-selected) { border-color: var(--z-primary); color: var(--z-primary); }
 }
 
-.booking__pie {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding-top: 0.25rem;
-}
-
-.booking__resumen {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--z-text);
-}
-
-.booking__resumen:empty { display: none; }
-.booking__resumen i { color: var(--z-primary); margin-right: 0.25rem; }
-
-/* ── Tablet y escritorio: dos columnas como en el panel del personal ── */
+/* ── Tablet y escritorio: dos columnas, como en el panel del personal ── */
 @media (min-width: 768px) {
     .portal-drawer.portal-drawer--ancho { width: min(900px, 100%); }
 
@@ -359,23 +343,7 @@
         border-left: 1px solid var(--z-border);
     }
 
-    .slot-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-
-    .booking__pie {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--z-border);
-    }
-
-    .booking__pie .btn-primary {
-        width: auto;
-        min-width: 220px;
-        margin-top: 0;
-        padding-inline: 1.5rem;
-    }
+    .slot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* El atributo hidden (pestaña Mañana/Tarde) debe ganarle al display: grid. */

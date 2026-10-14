@@ -143,6 +143,19 @@ final class CuentasD2Test extends TestCase
         $this->assertSame(0, $this->cuentas->limpiarPendientes());
     }
 
+    /** M5 C4a: pedir el mismo correo dice «Ese ya es tu correo»; un correo mal escrito, qué le falta. */
+    public function testCorreoIgualAlActualOMalEscritoDiceElMotivo(): void
+    {
+        try {
+            $this->cuentas->solicitarCorreo(6, ['email' => 'FABIO@zooki.test', 'password_actual' => DosClinicas::PASSWORD]);
+            $this->fail('El mismo correo no se solicita.');
+        } catch (InvalidArgumentException $error) {
+            $this->assertSame('Ese ya es tu correo.', $error->getMessage());
+        }
+        $this->expectExceptionMessage('Al correo le falta la @.');
+        $this->cuentas->solicitarCorreo(6, ['email' => 'fabio.zooki.test', 'password_actual' => DosClinicas::PASSWORD]);
+    }
+
     public function testCorreoConservaAnteriorHastaConfirmarYRetiraGoogle(): void
     {
         $this->db->exec("UPDATE usuarios SET google_uid = 'google-fabio' WHERE id_usuario = 6");

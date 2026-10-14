@@ -93,6 +93,7 @@ body.login-page {
     justify-content: space-between;
     gap: 1rem;
     z-index: 10;
+    min-height: 44px;
     margin-bottom: 2.5rem;
 }
 
@@ -241,12 +242,21 @@ body.login-page {
 }
 
 /* ── Copyright inferior izquierdo ── */
+/* M5 C4a: el pie ocupa lo mismo que la barra de arriba (alto y margen). El
+   contenido se centra entre los dos con margin: auto; si la barra es más alta,
+   la tarjeta queda más abajo de la mitad (login, perfiles, registro). */
 .login-copyright {
-    margin-top: 1rem;
+    margin-top: 2.5rem;
+    min-height: 44px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
     align-self: center;
     font-size: 0.85rem;
     color: var(--text-muted);
 }
+
+.login-copyright p { margin: 0; }
 
 /* ── Form wrapper ── */
 .flip-container {
@@ -877,14 +887,14 @@ body::after {
         padding: 2rem 1.5rem;
     }
 
+    /* M5 C4a: la marca vive en la barra de arriba; su margen sobrante bajaba la tarjeta. */
     .login-brand {
         position: static;
-        margin-bottom: 2rem;
     }
 
     .login-copyright {
         position: static;
-        margin-top: 2rem;
+        margin-top: 2.5rem;
         text-align: center;
     }
 }
@@ -996,6 +1006,11 @@ body::after {
 
 .modal-backdrop[hidden] {
     display: none;
+}
+
+/* M5 C4b: el modal de Google muestra solo las partes de su modo (crear o activar). */
+.modal-card [hidden] {
+    display: none !important;
 }
 
 .modal-backdrop:not(.active) {

@@ -2,31 +2,42 @@
 require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/../helpers/ValidadorMascota.php';
+require_once __DIR__ . '/ActivacionPropietario.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
+require_once __DIR__ . '/../helpers/ContactoPropietario.php';
 
 /** RN-110 / RNF-11: ficha global, acceso del personal por mascota_clinica. */
 class Mascota extends ModeloClinica
 {
-    private const FICHA = "SELECT m.*, mc.numero_historia_clinica,
-        u.nombre_completo AS propietario_nombre, u.documento AS propietario_documento,
-        e.nombre_especie, r.nombre_raza
-        FROM mascotas m JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota
-        LEFT JOIN usuarios u ON u.id_usuario = m.id_propietario
-        LEFT JOIN especies e ON e.id_especie = m.id_especie
-        LEFT JOIN razas r ON r.id_raza = m.id_raza
-        WHERE mc.id_clinica = ? AND mc.estado = 'activo'";
+    /**
+     * Ficha con el propietario. RN-115: su documento solo con el vínculo del
+     * propietario activo en esta clínica (ContactoPropietario).
+     */
+    private static function ficha(): string
+    {
+        return 'SELECT m.*, mc.numero_historia_clinica,
+            u.nombre_completo AS propietario_nombre, ' . ContactoPropietario::columna('u.documento', 'pv', 'propietario_documento') . ",
+            e.nombre_especie, r.nombre_raza
+            FROM mascotas m JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota
+            LEFT JOIN usuarios u ON u.id_usuario = m.id_propietario
+            LEFT JOIN propietario_clinica pv ON pv.id_propietario = m.id_propietario AND pv.id_clinica = mc.id_clinica
+            LEFT JOIN especies e ON e.id_especie = m.id_especie
+            LEFT JOIN razas r ON r.id_raza = m.id_raza
+            WHERE mc.id_clinica = ? AND mc.estado = 'activo'";
+    }
     private const EDITABLES = ['nombre','id_especie','id_raza','raza_indicada','sexo',
         'fecha_nacimiento','peso','url_foto','esterilizado','estado'];
     private const PROTEGIDOS = ['id_especie','id_raza','raza_indicada','sexo','fecha_nacimiento'];
 
     public function getAll(bool $incluirInactivas = false): array
     {
-        return $this->leer(self::FICHA . ($incluirInactivas ? '' : ' AND m.estado = 1') . ' ORDER BY m.nombre', [$this->clinica()]);
+        return $this->leer(self::ficha() . ($incluirInactivas ? '' : ' AND m.estado = 1') . ' ORDER BY m.nombre', [$this->clinica()]);
     }
     public function getById($id): array
     {
-        $filas = $this->leer(self::FICHA . ' AND m.id_mascota = ?', [$this->clinica(),$id]);
+        $filas = $this->leer(self::ficha() . ' AND m.id_mascota = ?', [$this->clinica(),$id]);
         if (!$filas) $this->denegar($id);
         return $filas[0];
     }
@@ -59,13 +70,13 @@ class Mascota extends ModeloClinica
         $clinica = $this->clinica();
         if (mb_strlen(trim($term)) < 3) return [];
         $como = '%' . str_replace(['!','%','_'],['!!','!%','!_'],trim($term)) . '%';
-        return $this->leer(self::FICHA . " AND m.estado = 1 AND
-            (m.nombre LIKE ? ESCAPE '!' OR u.nombre_completo LIKE ? ESCAPE '!' OR u.documento LIKE ? ESCAPE '!')
+        return $this->leer(self::ficha() . " AND m.estado = 1 AND
+            (m.nombre LIKE ? ESCAPE '!' OR u.nombre_completo LIKE ? ESCAPE '!' OR (" . ContactoPropietario::vinculoActivo('pv') . " AND u.documento LIKE ? ESCAPE '!'))
             ORDER BY m.nombre LIMIT 10",[$clinica,$como,$como,$como]);
     }
     public function getByPropietario($idPropietario): array
     {
-        return $this->leer(self::FICHA . ' AND m.id_propietario = ? AND m.estado = 1 ORDER BY m.nombre',[$this->clinica(),$idPropietario]);
+        return $this->leer(self::ficha() . ' AND m.id_propietario = ? AND m.estado = 1 ORDER BY m.nombre',[$this->clinica(),$idPropietario]);
     }
     private function leer(string $sql,array $parametros): array
     {
@@ -85,8 +96,9 @@ class Mascota extends ModeloClinica
     }
     public function esPropietarioValido($id): bool
     {
+        // M5 C3: la clínica también registra y atiende las mascotas de un cliente que aún no activa su cuenta.
         $stmt=$this->conn->prepare("SELECT 1 FROM propietario_clinica pc JOIN usuarios u ON u.id_usuario = pc.id_propietario
-            WHERE pc.id_propietario = ? AND pc.id_clinica = ? AND pc.estado = 'activo' AND u.estado = 1");
+            WHERE pc.id_propietario = ? AND pc.id_clinica = ? AND pc.estado = 'activo' AND " . ActivacionPropietario::usable('u'));
         $stmt->execute([$id,$this->clinica()]); return (bool)$stmt->fetchColumn();
     }
     public function insert(array $datos): int
@@ -220,11 +232,20 @@ class Mascota extends ModeloClinica
             'raza_indicada'=>$datos['raza_indicada'] ?? '', 'sexo'=>$datos['sexo'] ?? '',
             'fecha_nacimiento'=>$datos['fecha_nacimiento'] ?? '', 'peso'=>$datos['peso'] ?? '',
         ],new DateTimeImmutable('today',new DateTimeZone('America/Bogota')));
-        if ($resultado['error']) throw new InvalidArgumentException($resultado['error']);
+        // M5 C3: cada rechazo dice su campo y su aviso corto, como en el portal (C2b).
+        if ($resultado['error']) {
+            throw new CampoInvalido($resultado['campo'], ValidadorMascota::aviso($resultado['campo']), $resultado['error']);
+        }
         $limpios=$resultado['datos'];
-        if (!$limpios['fecha_nacimiento']) throw new InvalidArgumentException('La fecha de nacimiento es obligatoria.');
-        if (!$this->especieExiste((int)$limpios['especie'])) throw new InvalidArgumentException('Especie no válida.');
-        if ($limpios['raza'] !== null && !$this->razaPerteneceAEspecie($limpios['raza'],$limpios['especie'])) throw new InvalidArgumentException('La raza no corresponde a la especie.');
+        if (!$limpios['fecha_nacimiento']) {
+            throw new CampoInvalido('fecha_nacimiento', ValidadorMascota::AVISO_OBLIGATORIO, 'La fecha de nacimiento es obligatoria.');
+        }
+        if (!$this->especieExiste((int)$limpios['especie'])) {
+            throw new CampoInvalido('especie', ValidadorMascota::aviso('especie'), 'Especie no válida.');
+        }
+        if ($limpios['raza'] !== null && !$this->razaPerteneceAEspecie($limpios['raza'],$limpios['especie'])) {
+            throw new CampoInvalido('raza', ValidadorMascota::aviso('raza'), 'La raza no corresponde a la especie.');
+        }
         $datos=array_replace($datos,['nombre'=>$limpios['nombre'],'id_especie'=>(int)$limpios['especie'],
             'id_raza'=>$limpios['raza'],'raza_indicada'=>$limpios['raza_indicada'],
             'sexo'=>$limpios['sexo'],'peso'=>$limpios['peso'],'fecha_nacimiento'=>$limpios['fecha_nacimiento']]);
@@ -234,8 +255,9 @@ class Mascota extends ModeloClinica
         if ($esterilizado === '') $esterilizado=null;
         if ($esterilizado !== null && !in_array((string)$esterilizado,['0','1'],true)) throw new InvalidArgumentException('Esterilización no válida.');
         $datos['esterilizado']=$esterilizado === null ? null : (int)$esterilizado;
+        // M5 C4b (decisión 1 del usuario): el color ya no se pide; si llega, debe ser del catálogo (RN-107).
         $colores=$datos['colores'] ?? [];
-        if (!is_array($colores) || !$colores) throw new InvalidArgumentException('Selecciona al menos un color.');
+        if (!is_array($colores)) throw new InvalidArgumentException('Color no válido.');
         $permitidos=array_map('intval',array_column($this->getColoresBase(),'id_color'));
         foreach ($colores as $color) {
             if (!ctype_digit((string)$color) || !in_array((int)$color,$permitidos,true)) throw new InvalidArgumentException('Color no válido.');
@@ -258,8 +280,13 @@ class Mascota extends ModeloClinica
     private function avisarPropietario(array $mascota,array $campos): void
     {
         // RE-1.4.5: aviso durable en la misma transacción; el envío puede reintentarse.
-        $stmt=$this->conn->prepare('SELECT u.email,c.nombre FROM usuarios u JOIN clinicas c ON c.id_clinica = ? WHERE u.id_usuario = ?');
-        $stmt->execute([$this->clinica(),$mascota['id_propietario']]); $destino=$stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt=$this->conn->prepare('SELECT u.email,u.estado,c.nombre FROM usuarios u JOIN clinicas c ON c.id_clinica = ? WHERE u.id_usuario = ?');
+        $stmt->execute([$this->clinica(),$mascota['id_propietario']]);
+        $destino=$stmt->fetch(PDO::FETCH_ASSOC);
+        // M5 C3 (RE-T.19.1): a quien aún no activa su cuenta solo le llega el correo de activación.
+        if ((int) $destino['estado'] !== 1) {
+            return;
+        }
         $mensaje='La clínica ' . $destino['nombre'] . ' actualizó la ficha de ' . $mascota['nombre'] . '. Campos: ' . implode(', ',$campos) . '.';
         $this->conn->prepare("INSERT INTO notificaciones (id_clinica,id_usuario,tipo_entidad,id_entidad,destinatario_email,tipo_notificacion,asunto,mensaje) VALUES (?,?,'mascota',?,?,'cambio_ficha',?,?)")
             ->execute([$this->clinica(),$mascota['id_propietario'],$mascota['id_mascota'],$destino['email'],'Ficha de mascota actualizada',$mensaje]);

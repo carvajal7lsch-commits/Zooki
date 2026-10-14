@@ -1138,6 +1138,20 @@
     white-space: nowrap;
 }
 
+/* Hueco 6 (M5 C3, RN-115): la mascota se desvinculó; la clínica solo lee lo suyo. */
+.aviso-solo-lectura {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 12px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
 .history-adjuntos {
     display: flex;
     flex-wrap: wrap;

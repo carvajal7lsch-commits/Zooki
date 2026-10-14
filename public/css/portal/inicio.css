@@ -1,467 +1,261 @@
 /* ═══════════════════════════════════════════════════════════
-   Portal · Inicio
-   Móvil: una columna con carrusel de mascotas.
-   Tablet: mascotas en cuadrícula y accesos en 4 columnas.
-   Escritorio: columna principal + columna lateral.
+   Portal · Inicio (M5 C2, pulido en C4a)
+   Móvil: una columna (próxima cita, mascotas en carrusel y horario).
+   Tableta: las mascotas en cuadrícula; horario y «Próximo en salud»
+   lado a lado. Escritorio: columna principal y columna lateral.
+   Las filas de cita y el horario compacto están en componentes.css.
    ═══════════════════════════════════════════════════════════ */
 
-.home-header {
+.home-grid,
+.home-grid__principal,
+.home-grid__lateral {
+    display: grid;
+    gap: 1.75rem;
+    align-content: start;
+}
+
+.section-title-row h2 .tag-mini {
+    margin-left: 0.25rem;
+    font-size: 0.7rem;
+    vertical-align: middle;
+}
+
+/* El saludo vive en la columna principal (la lateral sube hasta arriba). */
+.home-cabecera { margin-bottom: 0; }
+
+/* ── Mis mascotas: el diseño anterior del portal (antes de d8a62f8), potenciado ──
+   Celular: carrusel que se desliza de lado, como las historias; desde tableta, cuadrícula. */
+.mascotas-carrusel {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.75rem;
-}
-
-.user-profile-summary {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-}
-
-.user-avatar {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-dark) 100%);
-    color: #ffffff;
-    font-size: 1.15rem;
-    font-weight: 700;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 3px solid #ffffff;
-    box-shadow: var(--z-shadow);
-    flex-shrink: 0;
-}
-
-.user-info-text span {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--z-text-muted);
-}
-
-.user-info-text h1 {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--z-text);
-}
-
-.header-actions { position: relative; }
-
-.bell-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--z-surface);
-    border: 1px solid var(--z-border);
-    color: var(--z-text);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
-    position: relative;
-    transition: background 0.2s;
-}
-
-.bell-badge {
-    display: none;
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 8px;
-    height: 8px;
-    background-color: var(--z-danger);
-    border-radius: 50%;
-    border: 1px solid #ffffff;
-}
-
-/* ── Mascotas ── */
-.pet-carousel {
-    display: flex;
-    gap: 1.1rem;
+    gap: 0.75rem;
+    margin: 0 calc(var(--gutter) * -1);
+    padding: 0.25rem var(--gutter) 0.5rem;
     overflow-x: auto;
-    scroll-behavior: smooth;
     scroll-snap-type: x proximity;
-    padding: 0.25rem 0.25rem 1rem;
-    margin-bottom: 1.5rem;
+    scroll-padding-inline: var(--gutter);
     scrollbar-width: none;
 }
 
-.pet-carousel::-webkit-scrollbar { display: none; }
+.mascotas-carrusel::-webkit-scrollbar { display: none; }
 
-.pet-carousel-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
+.mascota-mini {
+    flex: 0 0 150px;
     scroll-snap-align: start;
-    border: none;
-    background: transparent;
-    padding: 0;
-    color: inherit;
-}
-
-.pet-avatar-wrapper {
-    display: block;
-    width: 68px;
-    height: 68px;
-    border-radius: 50%;
-    padding: 3px;
-    background: #ffffff;
-    border: 2px solid var(--z-border);
-    transition: border-color 0.2s, transform 0.2s;
-}
-
-.pet-avatar-img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-    background: #F1F5F9;
-}
-
-.pet-avatar-placeholder {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: var(--z-primary-soft);
-    color: var(--z-primary);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-}
-
-.pet-carousel-name {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--z-text);
-    max-width: 72px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.pet-carousel-raza { display: none; }
-
-/* ── Próxima cita ── */
-.appointment-banner {
-    background: var(--z-surface);
-    border: 1px solid var(--z-border);
-    border-radius: var(--z-radius-lg);
-    padding: 1.25rem 1.25rem 1.25rem 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: var(--z-shadow);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.2s;
-}
-
-.appointment-banner::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 5px;
-    background: var(--z-primary);
-}
-
-.app-banner-info {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
+    gap: 0.2rem;
     min-width: 0;
-}
-
-.app-banner-avatar {
-    width: 54px;
-    height: 54px;
-    border-radius: var(--z-radius);
-    object-fit: cover;
+    padding: 0.9rem 0.7rem 0.8rem;
     border: 1px solid var(--z-border);
-    flex-shrink: 0;
+    border-radius: var(--z-radius);
+    background: var(--z-surface);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
-.app-banner-avatar--vacio {
+.mascota-mini:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.mascota-mini__avatar {
+    display: block;
+    margin-bottom: 0.25rem;
+    padding: 3px;
+    border: 2px solid var(--z-border);
+    border-radius: 50%;
+    transition: border-color 0.2s ease;
+}
+
+.mascota-mini__avatar .avatar-mini img,
+.mascota-mini__avatar .avatar-iniciales {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+.mascota-mini__avatar .avatar-mini img {
+    display: block;
+    object-fit: cover;
+}
+
+/* La inicial va centrada en el círculo (con display: block se subía arriba). */
+.mascota-mini__avatar .avatar-iniciales {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--z-primary-soft);
-    color: var(--z-primary);
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+    line-height: 1;
 }
 
-.app-banner-details { min-width: 0; }
-
-.app-banner-details h3 {
-    font-size: 0.95rem;
+.mascota-mini__nombre {
+    max-width: 100%;
+    margin: 0;
+    font-size: 0.92rem;
     font-weight: 800;
     color: var(--z-text);
-}
-
-.app-banner-details p {
-    font-size: 0.78rem;
-    color: var(--z-text-muted);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.mascota-mini__raza {
+    max-width: 100%;
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--z-text-muted);
     white-space: nowrap;
-}
-
-.app-banner-vet {
-    display: none;
-}
-
-.app-banner-schedule {
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.15rem;
-    flex-shrink: 0;
-}
-
-.schedule-badge {
-    background: var(--z-primary-soft);
-    color: var(--z-primary);
-    padding: 0.25rem 0.5rem;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 700;
-}
-
-.schedule-badge--pendiente { background: var(--z-warning-soft); color: #B45309; }
-.schedule-badge--confirmada { background: var(--z-success-soft); color: #047857; }
-
-.schedule-day {
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: var(--z-text);
-}
-
-.schedule-time {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--z-text-muted);
-}
-
-.appointment-banner-empty {
-    margin: 0 0 1.5rem;
-    padding: 1.75rem;
-}
-
-.appointment-banner-empty i {
-    font-size: 1.75rem;
-    color: var(--z-primary);
-    opacity: 0.6;
-}
-
-.appointment-banner-empty p { font-size: 0.85rem; }
-
-/* ── Accesos rápidos ── */
-.home-services-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.home-service-card {
-    background: var(--z-surface);
-    border: 1px solid var(--z-border);
-    border-radius: var(--z-radius);
-    padding: 1.15rem;
-    text-align: left;
-    box-shadow: var(--z-shadow);
-    color: inherit;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    transition: transform 0.2s, border-color 0.2s;
-}
-
-.service-card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-}
-
-.service-card-icon.consultation { background-color: var(--z-primary-soft); color: var(--z-primary); }
-.service-card-icon.vaccines { background-color: var(--z-success-soft); color: var(--z-success); }
-.service-card-icon.deworming { background-color: var(--z-warning-soft); color: var(--z-warning); }
-.service-card-icon.history { background-color: var(--z-purple-light); color: var(--z-purple); }
-
-.home-service-card h3 {
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: var(--z-text);
-}
-
-.home-service-card p {
-    font-size: 0.72rem;
-    color: var(--z-text-muted);
-}
-
-/* ── Horario de atención (HU-43) ── */
-.horario-card {
-    background: var(--z-surface);
-    border: 1px solid var(--z-border);
-    border-radius: var(--z-radius-lg);
-    box-shadow: var(--z-shadow);
     overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.horario-card__estado {
+.mascota-mini__clinicas {
     display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    padding: 1.15rem 1.25rem;
-}
-
-.horario-card__icono {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     justify-content: center;
-    font-size: 1.3rem;
-    flex-shrink: 0;
-    background: #F1F5F9;
-    color: var(--z-text-muted);
+    gap: 0.25rem;
+    max-width: 100%;
+    margin-top: 0.2rem;
 }
 
-.horario-card[data-abierta="1"] .horario-card__icono {
-    background: var(--z-success-soft);
-    color: var(--z-success);
+.mascota-mini__clinicas .tag-mini {
+    max-width: 100%;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.66rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.horario-card__estado h2 {
-    font-size: 0.95rem;
-    font-weight: 800;
-}
-
-.horario-card[data-abierta="1"] .horario-card__estado h2 { color: #047857; }
-
-.horario-card__estado p {
-    font-size: 0.78rem;
-    color: var(--z-text-muted);
-}
-
-.horario-card__semana { border-top: 1px solid var(--z-border); }
-
-.horario-card__semana summary {
+.mascota-mini__dosis {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.8rem 1.25rem;
-    font-size: 0.8rem;
-    font-weight: 700;
+    align-items: flex-start;
+    gap: 0.25rem;
+    max-width: 100%;
+    margin: 0.3rem 0 0;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    color: var(--z-text-muted);
+    text-align: left;
+}
+
+.mascota-mini__dosis.is-pendiente {
+    font-weight: 600;
     color: var(--z-primary);
-    cursor: pointer;
-    list-style: none;
 }
-
-.horario-card__semana summary::-webkit-details-marker { display: none; }
-.horario-card__semana summary i { font-size: 1.1rem; transition: transform 0.2s; }
-.horario-card__semana[open] summary i { transform: rotate(180deg); }
-
-.horario-card__semana dl { padding: 0 1.25rem 1rem; }
-
-.horario-card__dia {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.4rem 0;
-    font-size: 0.78rem;
-    border-bottom: 1px dashed var(--z-border);
-}
-
-.horario-card__dia:last-child { border-bottom: none; }
-.horario-card__dia dt { font-weight: 700; color: var(--z-text); }
-.horario-card__dia dd { color: var(--z-text-muted); text-align: right; }
-.horario-card__dia.is-cerrado dd { color: #94A3B8; }
-.horario-card__dia.is-hoy dt,
-.horario-card__dia.is-hoy dd { color: var(--z-primary); font-weight: 800; }
 
 @media (hover: hover) {
-    .bell-btn:hover { background: var(--z-primary-soft); }
-    .pet-carousel-item:hover .pet-avatar-wrapper { border-color: var(--z-primary); transform: scale(1.05); }
-    .appointment-banner:hover { border-color: #C5CAFF; }
-    .home-service-card:hover { transform: translateY(-2px); border-color: var(--z-primary); }
+    .mascota-mini:hover {
+        border-color: var(--z-primary);
+        transform: translateY(-2px);
+    }
+
+    .mascota-mini:hover .mascota-mini__avatar { border-color: var(--z-primary); }
 }
 
-/* ── Tablet ── */
+/* ── Próximo en salud: solo en tableta y escritorio (decisión 1 del usuario) ── */
+.portal-salud { display: none; }
+
+.portal-salud__lista {
+    display: grid;
+    margin: 0;
+    padding: 0.35rem;
+    list-style: none;
+    border-radius: var(--z-radius);
+    background: var(--z-surface);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.portal-salud__item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.6rem;
+    border-radius: 12px;
+}
+
+.portal-salud__item[role="button"] { cursor: pointer; }
+
+.portal-salud__icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: #eff4ff;
+    color: var(--z-primary);
+}
+
+.portal-salud__item--dosis .portal-salud__icono {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.portal-salud__texto {
+    display: grid;
+    min-width: 0;
+    font-size: 0.75rem;
+    color: var(--z-text-muted);
+}
+
+.portal-salud__texto strong {
+    font-size: 0.84rem;
+    color: var(--z-text);
+}
+
+.portal-salud__texto strong,
+.portal-salud__texto span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.portal-salud__vacio {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border-radius: var(--z-radius);
+    background: var(--z-surface);
+    font-size: 0.8rem;
+    color: var(--z-text-muted);
+}
+
+@media (hover: hover) {
+    .portal-salud__item[role="button"]:hover { background: #f5f8ff; }
+}
+
+/* ── Tableta ── */
 @media (min-width: 768px) {
-    .pet-carousel {
+    .mascotas-carrusel {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 1rem;
-        overflow: visible;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        margin: 0;
         padding: 0;
+        overflow: visible;
     }
 
-    .pet-carousel-item {
-        background: var(--z-surface);
-        border: 1px solid var(--z-border);
-        border-radius: var(--z-radius);
-        box-shadow: var(--z-shadow);
-        padding: 1.15rem 0.75rem 1rem;
-        gap: 0.35rem;
-        transition: border-color 0.2s, transform 0.2s;
-    }
+    .mascota-mini { flex-basis: auto; }
 
-    .pet-avatar-wrapper { width: 76px; height: 76px; margin-bottom: 0.25rem; }
-    .pet-carousel-name { max-width: 100%; font-size: 0.88rem; font-weight: 800; }
-
-    .pet-carousel-raza {
-        display: block;
-        max-width: 100%;
-        font-size: 0.72rem;
-        color: var(--z-text-muted);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .app-banner-vet {
+    .portal-salud {
         display: flex;
-        align-items: center;
-        gap: 0.3rem;
-        margin-top: 0.15rem;
+        flex-direction: column;
     }
 
-    .home-services-grid { grid-template-columns: repeat(4, 1fr); }
+    .portal-salud .section-title-row { margin-bottom: 0.75rem; }
+}
 
-    @media (hover: hover) {
-        .pet-carousel-item:hover { border-color: var(--z-primary); transform: translateY(-2px); }
-        .pet-carousel-item:hover .pet-avatar-wrapper { transform: none; }
-    }
+/* Tableta: el horario y «Próximo en salud» lado a lado, sin dejar la mitad vacía. */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .home-grid__lateral { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ── Escritorio ── */
 @media (min-width: 1024px) {
-    /* El menú lateral ya lleva a Recordatorios y marca las alertas. */
-    .header-actions { display: none; }
-
-    .home-header { margin-bottom: 2rem; }
-    .user-avatar { width: 56px; height: 56px; font-size: 1.3rem; }
-    .user-info-text h1 { font-size: 1.5rem; }
-
     .home-grid {
-        display: grid;
         grid-template-columns: minmax(0, 1fr) 340px;
         gap: 2rem;
         align-items: start;
@@ -471,27 +265,8 @@
         position: sticky;
         top: 2.25rem;
     }
-
-    .home-services-grid { grid-template-columns: repeat(2, 1fr); }
-
-    .appointment-banner { padding: 1.5rem 1.5rem 1.5rem 1.75rem; }
-    .app-banner-avatar { width: 64px; height: 64px; }
-    .app-banner-details h3 { font-size: 1.05rem; }
-    .app-banner-details p { font-size: 0.85rem; }
-    .schedule-day { font-size: 0.95rem; }
 }
 
 @media (min-width: 1440px) {
     .home-grid { grid-template-columns: minmax(0, 1fr) 380px; }
-}
-
-/* C6: una tarjeta de horario por clínica vinculada (RE-5.1.7). */
-.horario-card + .horario-card { margin-top: 0.75rem; }
-
-.horario-card__clinica {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--z-primary);
 }

@@ -102,6 +102,67 @@ final class HorarioAtencion
         ));
     }
 
+    /** M5 C4a: nombres cortos para la tabla agrupada de la semana. */
+    public const DIAS_CORTOS = [1 => 'Lun', 2 => 'Mar', 3 => 'Mié', 4 => 'Jue', 5 => 'Vie', 6 => 'Sáb', 7 => 'Dom'];
+
+    /**
+     * M5 C4a (captura 02 del usuario): la semana en pocas filas, juntando los
+     * días seguidos con el mismo horario: «Lun–Vie 8:00–12:00 · 14:00–18:00»,
+     * «Sáb–Dom Cerrado». La fila que contiene a hoy va marcada.
+     *
+     * @return list<array{dias: string, texto: string, cerrado: bool, hoy: bool}>
+     */
+    public static function agrupar(array $semana, int $hoy): array
+    {
+        $grupos = [];
+        foreach (array_keys(self::DIAS) as $n) {
+            $franjas = $semana[$n]['franjas'] ?? [];
+            $ultimo = array_key_last($grupos);
+            if ($ultimo !== null && $grupos[$ultimo]['franjas'] === $franjas) {
+                $grupos[$ultimo]['hasta'] = $n;
+                continue;
+            }
+            $grupos[] = ['desde' => $n, 'hasta' => $n, 'franjas' => $franjas];
+        }
+
+        $filas = [];
+        foreach ($grupos as $grupo) {
+            $filas[] = [
+                'dias' => self::rango($grupo['desde'], $grupo['hasta']),
+                'texto' => self::textoCorto($grupo['franjas']),
+                'cerrado' => !$grupo['franjas'],
+                'hoy' => $hoy >= $grupo['desde'] && $hoy <= $grupo['hasta'],
+            ];
+        }
+        return $filas;
+    }
+
+    /** «8:00–12:00 · 14:00–18:00» o «Cerrado»: cabe en una línea de la columna lateral. */
+    public static function textoCorto(array $franjas): string
+    {
+        if (!$franjas) {
+            return 'Cerrado';
+        }
+        return implode(' · ', array_map(
+            fn ($f) => self::horaCorta($f['inicio']) . '–' . self::horaCorta($f['fin']),
+            $franjas
+        ));
+    }
+
+    private static function rango(int $desde, int $hasta): string
+    {
+        if ($desde === $hasta) {
+            return self::DIAS_CORTOS[$desde];
+        }
+        return self::DIAS_CORTOS[$desde] . '–' . self::DIAS_CORTOS[$hasta];
+    }
+
+    /** «08:00» → «8:00». */
+    private static function horaCorta(string $hhmm): string
+    {
+        return (int) substr($hhmm, 0, 2) . substr($hhmm, 2, 3);
+    }
+
     private static function hhmm($valor): ?string
     {
         return is_string($valor) && preg_match('/^(\d{2}:\d{2})/', $valor, $m) ? $m[1] : null;

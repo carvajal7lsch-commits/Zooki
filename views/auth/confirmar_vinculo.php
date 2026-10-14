@@ -10,6 +10,9 @@ $tituloPagina = 'Confirmar vínculo · Zooki';
 require __DIR__ . '/../partials/acceso_marco_inicio.php';
 if ($resultado === null) {
     $estado = ['tipo' => 'info', 'icono' => 'ri-links-line', 'titulo' => 'Vínculo con una clínica', 'texto' => 'Confirma solo si elegiste vincular tu cuenta a la clínica indicada en el correo.'];
+} elseif ($resultado && ($pendiente ?? false)) {
+    // M5 C3: la cuenta la registró otra clínica y aún no se activa.
+    $estado = ['tipo' => 'exito', 'titulo' => 'Vínculo confirmado', 'texto' => 'Tu cuenta quedó vinculada a la clínica. Para entrar, actívala con el enlace de activación que te enviamos.'];
 } elseif ($resultado) {
     $estado = ['tipo' => 'exito', 'titulo' => 'Vínculo confirmado', 'texto' => 'Tu cuenta quedó vinculada a la clínica. Ya puedes iniciar sesión.'];
 } else {

@@ -181,7 +181,8 @@ final class InvitacionPersonal
      */
     public function reemplazada(int $id, string $token, string $proposito): bool
     {
-        if (!in_array($proposito, [self::PROPOSITO, self::ACTIVACION], true) || $id <= 0 || $token === '') {
+        // M5 C3: también la activación del propietario que registró la clínica.
+        if (!in_array($proposito, [self::PROPOSITO, self::ACTIVACION, 'activacion_propietario'], true) || $id <= 0 || $token === '') {
             return false;
         }
         $stmt = $this->db->prepare('SELECT * FROM verificaciones_email WHERE id = ? AND proposito = ?');

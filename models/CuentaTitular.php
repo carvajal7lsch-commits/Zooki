@@ -6,9 +6,11 @@ require_once __DIR__ . '/ConsentimientoDatos.php';
 require_once __DIR__ . '/VerificacionEmail.php';
 require_once __DIR__ . '/PasswordReset.php';
 require_once __DIR__ . '/InvitacionPersonal.php';
+require_once __DIR__ . '/ActivacionPropietario.php';
 require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../helpers/PoliticaDatos.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
+require_once __DIR__ . '/CasoSoporte.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
 require_once __DIR__ . '/../helpers/GoogleToken.php';
 
@@ -116,9 +118,17 @@ final class CuentaTitular
         $stmt->fetchColumn();
     }
 
-    public function activar(int $id, string $token, array $datos, string $ip): void
+    /**
+     * El titular activa su cuenta pendiente: acepta la política y crea su
+     * contraseña. Sirve para el personal nuevo (D2) y para el propietario que
+     * registró la clínica (M5 C3, RE-T.19.1), cada uno con su enlace.
+     */
+    public function activar(int $id, string $token, array $datos, string $ip, string $proposito = 'activacion_personal'): void
     {
-        $fila = $this->leerEnlace($id, $token, 'activacion_personal');
+        if (!in_array($proposito, ['activacion_personal', ActivacionPropietario::PROPOSITO], true)) {
+            throw new InvalidArgumentException('El enlace no es válido o ya fue utilizado.');
+        }
+        $fila = $this->leerEnlace($id, $token, $proposito);
         if ($fila === null) {
             throw new InvalidArgumentException('El enlace no es válido o ya fue utilizado.');
         }
@@ -135,7 +145,10 @@ final class CuentaTitular
         if ($error !== null || $password !== ($datos['confirm_password'] ?? '')) {
             throw new InvalidArgumentException($error ?? 'Las contraseñas no coinciden.');
         }
-        Transaccion::ejecutar($this->db, function () use ($id, $usuario, $password, $ip, $fila): void {
+        $descripcion = $proposito === 'activacion_personal' ? 'Personal activado por el titular (RE-T.19.1)' : 'Propietario activado por el titular: aceptó la política y creó su contraseña (RE-T.19.1)';
+        // M5 C4b: la prueba del consentimiento dice cómo aceptó cada uno.
+        $medio = $proposito === 'activacion_personal' ? PoliticaDatos::MEDIO_ALTA_PERSONAL : PoliticaDatos::MEDIO_ACTIVACION_PROPIETARIO;
+        Transaccion::ejecutar($this->db, function () use ($id, $usuario, $password, $ip, $fila, $descripcion, $medio): void {
             $this->consumir($id);
             $this->bloquearUsuario((int) $usuario['id_usuario']);
             $stmt = $this->db->prepare('UPDATE usuarios SET password = ?, estado = 1, debe_cambiar_password = 0 WHERE id_usuario = ? AND estado = 0 AND password IS NULL');
@@ -143,8 +156,8 @@ final class CuentaTitular
             if ($stmt->rowCount() !== 1) {
                 throw new InvalidArgumentException('La cuenta ya no está pendiente.');
             }
-            (new ConsentimientoDatos($this->db))->registrar((int) $usuario['id_usuario'], PoliticaDatos::MEDIO_ALTA_PERSONAL, $ip);
-            $this->auditoria->log((int) $usuario['id_usuario'], 'UPDATE', 'usuarios', $usuario['id_usuario'], ['estado' => 0], ['estado' => 1], 'Personal activado por el titular (RE-T.19.1)', (int) $fila['id_clinica_vinculo']);
+            (new ConsentimientoDatos($this->db))->registrar((int) $usuario['id_usuario'], $medio, $ip);
+            $this->auditoria->log((int) $usuario['id_usuario'], 'UPDATE', 'usuarios', $usuario['id_usuario'], ['estado' => 0], ['estado' => 1], $descripcion, (int) $fila['id_clinica_vinculo']);
         });
     }
 
@@ -251,8 +264,14 @@ final class CuentaTitular
             throw new InvalidArgumentException('Crea una contraseña antes de cambiar el correo.');
         }
         $email = mb_strtolower(trim((string) ($datos['email'] ?? '')));
-        if (ValidadorCuenta::correo($email) !== null || strlen($email) > 255 || $email === $usuario['email']) {
-            throw new InvalidArgumentException('Escribe un correo nuevo válido.');
+        // M5 C4b (RE-0.1.5): tampoco un correo temporal.
+        $motivo = ValidadorCuenta::correoDeCuenta($email);
+        if ($motivo !== null) {
+            throw new InvalidArgumentException($motivo);
+        }
+        // Decirle al titular que ya es su correo no revela nada de otra cuenta.
+        if ($email === mb_strtolower((string) $usuario['email'])) {
+            throw new InvalidArgumentException('Ese ya es tu correo.');
         }
         if ($this->usuarios->existeEmail($email, $id)) {
             return null;
@@ -295,7 +314,7 @@ final class CuentaTitular
             throw new InvalidArgumentException('Elige un tipo válido y un documento de 5 a 15 dígitos.');
         }
         if ($this->usuarios->existeDocumento($documento, $id)) {
-            $this->registrarCasoDocumento($id, $documento);
+            (new CasoSoporte($this->db))->documentoDuplicado($id, $documento, 'RN-G24');
             throw new InvalidArgumentException('No se pudo aplicar el cambio. Revisa los datos o contacta a soporte.');
         }
         try {
@@ -309,22 +328,10 @@ final class CuentaTitular
                 throw $e;
             }
             // Otra solicitud pudo ocupar el documento después de comprobar su disponibilidad.
-            $this->registrarCasoDocumento($id, $documento);
+            (new CasoSoporte($this->db))->documentoDuplicado($id, $documento, 'RN-G24');
             throw new InvalidArgumentException('No se pudo aplicar el cambio. Revisa los datos o contacta a soporte.');
         }
         return $usuario;
-    }
-
-    private function registrarCasoDocumento(int $id, string $documento): void
-    {
-        $descripcion = 'El titular solicitó el documento ' . $documento . ' ya asociado a otra cuenta (RN-G24).';
-        Transaccion::ejecutar($this->db, function () use ($id, $descripcion): void {
-            $this->bloquearUsuario($id);
-            $this->db->prepare("INSERT INTO casos_soporte (tipo, id_usuario, descripcion)
-                SELECT 'documento_duplicado', ?, ? WHERE NOT EXISTS
-                (SELECT 1 FROM casos_soporte WHERE tipo = 'documento_duplicado' AND id_usuario = ? AND descripcion = ? AND estado = 'abierto')")
-                ->execute([$id, $descripcion, $id, $descripcion]);
-        });
     }
 
     /**
@@ -335,6 +342,8 @@ final class CuentaTitular
     public function limpiarPendientes(): int
     {
         (new InvitacionPersonal($this->db))->vencerPendientes();
+        // M5 C3: los propietarios sin activar, solo sin mascotas ni otros vínculos.
+        $propietarios = (new ActivacionPropietario($this->db))->limpiar();
         $stmt = $this->db->prepare("SELECT v.* FROM verificaciones_email v JOIN usuarios u ON u.id_usuario = v.id_usuario
             WHERE v.proposito = 'activacion_personal' AND v.used = 0 AND v.expires_at <= ?
             AND u.estado = 0 AND u.password IS NULL AND u.google_uid IS NULL AND u.es_super_admin = 0");
@@ -349,7 +358,7 @@ final class CuentaTitular
                 error_log(sprintf('D2.1 limpieza: no se eliminó la cuenta pendiente %d (%s)', (int) $fila['id_usuario'], $e->getMessage()));
             }
         }
-        return $borradas;
+        return $borradas + $propietarios;
     }
 
     /** Elimina una alta vencida dentro de su propia transacción; 0 si debe conservarse. */

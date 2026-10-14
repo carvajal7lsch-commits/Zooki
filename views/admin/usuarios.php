@@ -249,12 +249,17 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                     <div class="card-body-mini">
                         <h3 class="card-title-mini"><?= $e($p['nombre_completo']) ?></h3>
                         <div class="card-tags-mini">
-                            <?php if (!$activo): ?><span class="tag-mini"><i class="bi bi-moon-stars" aria-hidden="true"></i> Inactivo</span><?php endif; ?>
+                            <?php // RN-115: desvinculado, solo el nombre y la marca. ?>
+                            <?php if (!$activo): ?><span class="tag-mini"><i class="bi bi-link-45deg" aria-hidden="true"></i> <?= $e(ContactoPropietario::MARCA_DESVINCULADO) ?></span><?php endif; ?>
+                            <?php // M5 C3: la clínica lo registró y aún no activa su cuenta. ?>
+                            <?php if ($activo && (int) $p['pendiente_activacion'] === 1): ?><span class="tag-mini tag-mini--aviso"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Aún no activa su cuenta</span><?php endif; ?>
                             <?php if (!empty($p['telefono'])): ?><span class="tag-mini"><i class="bi bi-phone" aria-hidden="true"></i> <?= $e($p['telefono']) ?></span><?php endif; ?>
                         </div>
+                        <?php if (!empty($p['documento'])): ?>
                         <div class="card-contact-mini">
-                            <span class="contact-text-mini" title="<?= $e($p['tipo_documento'] ?? '') ?>"><i class="bi bi-person-badge" aria-hidden="true"></i> <?= $e($p['documento'] ?? '') ?></span>
+                            <span class="contact-text-mini" title="<?= $e($p['tipo_documento'] ?? '') ?>"><i class="bi bi-person-badge" aria-hidden="true"></i> <?= $e($p['documento']) ?></span>
                         </div>
+                        <?php endif; ?>
                     </div>
                     <div class="card-footer-mini">
                         <?php $claseAccion = 'action-btn-mini'; require __DIR__ . '/partials/acciones_cliente.php'; ?>
@@ -287,10 +292,11 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                                 </div>
                             </td>
                             <td><?= $e(trim(($p['tipo_documento'] ?? '') . ' ' . ($p['documento'] ?? ''))) ?></td>
-                            <td><?= $e($p['email']) ?></td>
+                            <td><?= $e($p['email'] ?? '') ?></td>
                             <td><?= $e($p['telefono'] ?? '') ?></td>
                             <td><?= (int) $p['num_mascotas'] ?> mascota(s)</td>
-                            <td><span class="status-badge <?= $activo ? 'status-active' : 'status-inactive' ?>"><?= $activo ? 'Activo' : 'Inactivo' ?></span></td>
+                            <?php $estadoCliente = !$activo ? ContactoPropietario::MARCA_DESVINCULADO : ((int) $p['pendiente_activacion'] === 1 ? 'Aún no activa su cuenta' : 'Activo'); ?>
+                            <td><span class="status-badge <?= $activo ? 'status-active' : 'status-inactive' ?>"><?= $e($estadoCliente) ?></span></td>
                             <td>
                                 <div class="table-actions">
                                     <?php require __DIR__ . '/partials/interruptor_cliente.php'; ?>
@@ -418,4 +424,5 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
 
 <!-- D2.1: teléfono con bandera y prefijo, el mismo intl-tel-input de Pacientes. -->
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
+<script src="js/telefono-internacional.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/usuarios.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

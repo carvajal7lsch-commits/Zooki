@@ -20,6 +20,7 @@ require_once __DIR__ . '/../helpers/Turnstile.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/CierreSesiones.php';
 require_once __DIR__ . '/../models/CuentaTitular.php';
+require_once __DIR__ . '/../models/ActivacionPropietario.php';
 
 class AuthController {
     private $db;
@@ -192,6 +193,11 @@ class AuthController {
             $mensajeGenerico = 'Si el correo está registrado, recibirás un mensaje con instrucciones para restablecer tu contraseña.';
             $user = $this->usuarioModel->buscarPorEmail($email);
 
+            // M5 C4b (decisión 2): la cuenta que registró una clínica y aún no se
+            // activa recibe un enlace de activación nuevo; la respuesta es la misma.
+            if ($user && (int) ($user['estado'] ?? 0) !== 1) {
+                $this->renovarActivacionPendiente((int) $user['id_usuario']);
+            }
             if (!$user || (int)($user['estado'] ?? 0) !== 1) {
                 $this->jsonResponse(true, $mensajeGenerico);
             }
@@ -478,7 +484,9 @@ class AuthController {
         }
         unset($_SESSION['registro_pendiente']);
         try {
-            if (in_array($registro['resultado'], ['nueva', 'pendiente'], true)) {
+            if ($registro['resultado'] === 'activacion') {
+                $this->enviarActivacionRenovada($registro['activacion']);
+            } elseif (in_array($registro['resultado'], ['nueva', 'pendiente'], true)) {
                 $enlace = $this->buildVerificacionLink($registro['enlace']['id'], $registro['enlace']['token']);
                 $this->emailService->limpiarDirecciones();
                 $this->emailService->enviarCorreoVerificacion($registro['email'], $registro['nombre'], $enlace, RegistroPropietario::VIGENCIA_HORAS);
@@ -489,6 +497,34 @@ class AuthController {
             error_log('HU-5.8: no se pudo enviar el correo del registro.');
         }
         return ['success' => true, 'message' => 'Revisa tu correo para confirmar la solicitud o acceder a Zooki.'];
+    }
+
+    /**
+     * M5 C4b (decisión 2): «¿Olvidaste tu contraseña?» con el correo de una
+     * cuenta que registró una clínica y aún no se activa: enlace de activación
+     * nuevo. Si la cuenta no está pendiente, no se hace nada.
+     */
+    public function renovarActivacionPendiente(int $idUsuario): void
+    {
+        $this->enviarActivacionRenovada((new ActivacionPropietario($this->db))->renovarPorTitular($idUsuario));
+    }
+
+    /**
+     * M5 C4b: el enlace de activación que pidió el propio titular. Un fallo al
+     * enviar solo queda en el log: la respuesta en pantalla no cambia (RN-G15).
+     */
+    private function enviarActivacionRenovada(?array $activacion): void
+    {
+        if ($activacion === null) {
+            return;
+        }
+        try {
+            $url = EnlaceCuenta::crear('activar_propietario', (int) $activacion['id'], (string) $activacion['token']);
+            $this->emailService->limpiarDirecciones();
+            $this->emailService->enviarCorreoPersonalizado($activacion['email'], $activacion['nombre'], ActivacionPropietario::ASUNTO, ActivacionPropietario::correoHtml($activacion['clinica'], $url));
+        } catch (Throwable $e) {
+            error_log('M5 C4b: no se pudo enviar el enlace de activación pedido por el titular.');
+        }
     }
 
     private function enviarConfirmacionDeVinculo(array $registro): void
@@ -871,7 +907,7 @@ class AuthController {
     public function checkEmailAjax(): void {
         // RE-T.13.2: las rutas heredadas tampoco permiten enumerar identidades.
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['success' => true, 'error' => ValidadorCuenta::correo(trim((string) ($_POST['email'] ?? '')))]);
+        echo json_encode(['success' => true, 'error' => ValidadorCuenta::correoDeCuenta(trim((string) ($_POST['email'] ?? '')))]);
     }
 
     public function processGoogleLoginAjax()
@@ -922,6 +958,12 @@ class AuthController {
             $this->jsonResponse(false, self::MENSAJE_CREDENCIALES);
         }
         if ($intento['resultado'] === 'inactiva') {
+            // M5 C4b (decisión 2; RN-G21): una cuenta que registró una clínica y aún
+            // no se activa se activa aquí, después de aceptar la política.
+            $activar = $this->activacionPendienteConGoogle($intento['usuario'], $email, $nombre, $googleUid);
+            if ($activar !== null) {
+                $this->jsonResponse(true, 'Acepta la política para activar tu cuenta', $activar);
+            }
             // Google ya demostró que el buzón es de quien entra: aquí sí se le dice por qué no pasa.
             $this->jsonResponse(false, "Tu cuenta está inactiva. Contacta al administrador.");
         }
@@ -929,7 +971,8 @@ class AuthController {
             Security::resetRateLimit($email);
             unset($_SESSION['login_captcha']);
             // RN-G21: Google se liga a la cuenta existente.
-            $usuario = $this->registro->vincularGoogle($intento['usuario'], $googleUid);
+            // RN-109 (Modelos §11, GG4): desde «Registrarme con Google» llega la clínica elegida.
+            $usuario = $this->registro->vincularGoogle($intento['usuario'], $googleUid, $this->clinicaDelRegistroGoogle());
             $destino = $this->iniciarSesion($usuario, 'google');
             $this->jsonResponse(true, "Login exitoso", ['action' => 'login', 'redirect' => 'index.php?action=' . $destino]);
         }
@@ -942,13 +985,60 @@ class AuthController {
             'google_uid' => $googleUid,
             'desde' => time(),
         ];
-        $clinica = $_POST['id_clinica'] ?? '';
         $this->jsonResponse(true, "Acepta la política para crear tu cuenta", [
             'action' => 'aceptar_registro',
             'email' => $email,
             'name' => $nombre,
-            'id_clinica' => ctype_digit((string) $clinica) ? (int) $clinica : 0,
+            'id_clinica' => $this->clinicaDelRegistroGoogle() ?? 0,
         ]);
+    }
+
+    /**
+     * M5 C4b (decisión 2; RN-G21): Google con una cuenta que registró una
+     * clínica y aún no se activa. Lo que Google confirmó queda en la sesión
+     * (como el registro con Google) y el navegador pide aceptar la política.
+     * Null si la cuenta no está pendiente: entonces sigue siendo «inactiva».
+     */
+    public function activacionPendienteConGoogle(array $usuario, string $email, string $nombre, ?string $googleUid): ?array
+    {
+        $idPendiente = (int) $usuario['id_usuario'];
+        $clinicaOrigen = (new ActivacionPropietario($this->db))->clinicaDeOrigen($idPendiente);
+        if ($clinicaOrigen === null) {
+            return null;
+        }
+        $_SESSION['google_pendiente'] = [
+            'email' => $email,
+            'nombre_completo' => $nombre,
+            'google_uid' => $googleUid,
+            'desde' => time(),
+            'id_activacion' => $idPendiente,
+        ];
+        return ['action' => 'activar_cuenta', 'email' => $email, 'clinica' => $clinicaOrigen];
+    }
+
+    /**
+     * Lo que sigue a aceptar la política con Google: activar la cuenta
+     * pendiente (M5 C4b) o crear la cuenta nueva (RE-T.18.2). Devuelve el id.
+     */
+    public function completarConGoogle(array $pendiente, array $entrada, string $ip): int
+    {
+        $activacion = (int) ($pendiente['id_activacion'] ?? 0);
+        if ($activacion === 0) {
+            return $this->registro->conGoogle($pendiente, $entrada, $ip);
+        }
+        // La cuenta ya existe (la registró una clínica); solo se activa.
+        (new ActivacionPropietario($this->db))->activarConGoogle($activacion, (string) $pendiente['email'], $pendiente['google_uid'] ?? null, ($entrada['acepta_datos'] ?? '') === '1', $ip);
+        return $activacion;
+    }
+
+    /** La clínica elegida en «Registrarme con Google»; «Entrar con Google» la manda vacía. */
+    private function clinicaDelRegistroGoogle(): ?int
+    {
+        $clinica = (string) ($_POST['id_clinica'] ?? '');
+        if (!ctype_digit($clinica) || (int) $clinica < 1) {
+            return null;
+        }
+        return (int) $clinica;
     }
 
     /** Lo que Google confirmó vale 15 minutos para aceptar la política. */
@@ -974,7 +1064,7 @@ class AuthController {
         }
 
         try {
-            $idUsuario = $this->registro->conGoogle($pendiente, $_POST, Auditoria::ipCliente());
+            $idUsuario = $this->completarConGoogle($pendiente, $_POST, Auditoria::ipCliente());
         } catch (InvalidArgumentException $e) {
             $this->jsonResponse(false, $e->getMessage());
         } catch (Throwable $e) {

@@ -1,0 +1,582 @@
+/* ═══════════════════════════════════════════════════════════
+   Portal · Componentes (M5 C2)
+   El portal usa los componentes de Usuarios (css/usuarios.css):
+   person-card, card-*-mini, tag-mini, action-btn-mini, avatar-iniciales,
+   tabs-wrapper y tab-btn. Aquí van solo sus ajustes para el portal y las
+   piezas propias: cabecera, cuadrícula de tarjetas, estado vacío compacto
+   y horario de hoy. Solo azul y grises (decisión del usuario en M0.2).
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Cabecera de cada sección ── */
+.portal-cabecera {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.portal-cabecera__titulo {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--z-text);
+    letter-spacing: -0.01em;
+}
+
+.portal-cabecera__ayuda {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--z-text-muted);
+}
+
+/* ── Tarjetas: una columna en celular, dos en tableta, más en escritorio ── */
+.portal-tarjetas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.portal-tarjetas > [hidden] { display: none; }
+
+.person-card[role="button"] { cursor: pointer; }
+
+.person-card[role="button"]:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.card-header-mini .avatar-mini img { display: block; }
+
+.tag-mini--azul {
+    color: var(--z-primary);
+    background: var(--z-primary-soft);
+}
+
+.tag-mini--azul i { color: var(--z-primary); }
+
+/* ── Cita en una fila compacta de dos líneas (M5 C4a, punto 2) ── */
+.portal-citas {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.portal-cita {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--z-border);
+    border-radius: 14px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.portal-cita[hidden] { display: none; }
+
+.portal-cita:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.portal-cita__avatar img,
+.portal-cita .avatar-iniciales {
+    width: 40px;
+    height: 40px;
+    font-size: 0.85rem;
+    box-shadow: none;
+}
+
+.portal-cita__texto {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 0.1rem;
+}
+
+.portal-cita__cuando {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.45rem;
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--z-text);
+}
+
+.portal-cita__cuando strong { font-weight: 800; }
+
+.portal-cita__cuando span {
+    font-weight: 600;
+    color: var(--z-primary);
+}
+
+.portal-cita__donde {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--z-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.portal-cita__donde span + span::before {
+    content: '·';
+    margin: 0 0.35rem;
+}
+
+.portal-cita__estado { flex-shrink: 0; }
+
+.portal-cita__cancelar {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 34px;
+    padding: 0 0.65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* En el celular, «Cancelar» es solo el icono (su nombre está en aria-label). */
+@media (max-width: 767px) {
+    .portal-cita__cancelar {
+        width: 34px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .portal-cita__cancelar span { display: none; }
+}
+
+@media (hover: hover) {
+    .portal-cita:hover { border-color: #c5d3ff; }
+    .portal-cita__cancelar:hover { border-color: #94a3b8; color: var(--z-text); }
+}
+
+/* ── Botón de texto: «Ver todas», «Horario de la semana», «Cambiar»… (M5 C4a, punto 5) ── */
+.portal-boton-texto {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+    min-height: 32px;
+    padding: 0.25rem 0.6rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--z-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.portal-boton-texto i { font-size: 1rem; }
+
+/* Pegado al borde derecho de su fila, alineado con las tarjetas de abajo. */
+.section-title-row .portal-boton-texto { margin-right: -0.6rem; }
+
+@media (hover: hover) {
+    .portal-boton-texto:hover { background: var(--z-primary-soft); }
+}
+
+.portal-vacio__accion {
+    width: auto;
+    margin-top: 0.6rem;
+    padding: 0.55rem 0.9rem;
+}
+
+/* Botón secundario de las tarjetas: Cancelar cita, Desvincularme, Atrás. */
+.portal-boton-secundario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 36px;
+    padding: 0 0.85rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.portal-boton-secundario:hover { border-color: #94a3b8; color: var(--z-text); }
+
+.portal-boton-secundario[hidden] { display: none; }
+
+/* ── Estado vacío compacto: icono a la izquierda y dos líneas (como el panel de plataforma) ── */
+.portal-vacio {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1rem 1.15rem;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.portal-vacio__icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #eff4ff;
+    color: var(--z-primary);
+    font-size: 1.1rem;
+}
+
+.portal-vacio h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--z-text);
+}
+
+.portal-vacio p {
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--z-text-muted);
+}
+
+.portal-filtro-vacio {
+    margin: 0.5rem 0 0;
+    font-size: 0.85rem;
+    color: var(--z-text-muted);
+}
+
+/* ── Pestañas (tabs-wrapper de Usuarios) ── */
+.portal-pestanas {
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.portal-pestanas::-webkit-scrollbar { display: none; }
+
+.portal-pestanas .tab-btn {
+    flex-shrink: 0;
+    min-height: 44px;
+}
+
+.portal-pestanas .tab-btn .tag-mini { font-size: 0.68rem; }
+
+.portal-panel[hidden] { display: none; }
+
+/* ── Horario de hoy, compacto ── */
+.portal-horario {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.portal-horario__clinica {
+    padding: 0.9rem 1rem;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.portal-horario__fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.portal-horario__fila h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--z-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.portal-horario__detalle {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    color: var(--z-text-muted);
+}
+
+.portal-horario__semana { margin-top: 0.35rem; }
+
+.portal-horario__semana summary {
+    margin-left: -0.6rem;
+    list-style: none;
+}
+
+.portal-horario__semana summary::-webkit-details-marker { display: none; }
+
+.portal-horario__semana summary i { transition: transform 0.2s ease; }
+
+.portal-horario__semana[open] summary i { transform: rotate(180deg); }
+
+/* M5 C4a (punto 6): una tabla corta y alineada, con los días del mismo horario juntos. */
+.horario-semana {
+    width: 100%;
+    margin-top: 0.25rem;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    color: #475569;
+}
+
+.horario-semana th {
+    width: 1%;
+    padding: 0.2rem 0.85rem 0.2rem 0;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.horario-semana td {
+    padding: 0.2rem 0;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+}
+
+.horario-semana tr.is-hoy th,
+.horario-semana tr.is-hoy td {
+    font-weight: 800;
+    color: var(--z-text);
+}
+
+.horario-semana tr.is-cerrado td { color: #94a3b8; }
+
+/* ── Cabecera de la ficha de la mascota ── */
+.pet-detail__identidad {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.pet-detail__titulo .avatar-mini img,
+.pet-detail__titulo .avatar-iniciales {
+    width: 44px;
+    height: 44px;
+}
+
+.pet-detail__acciones {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.pet-detail__acciones [hidden] { display: none; }
+
+#filtroClinicaMascota { margin-bottom: 0.75rem; }
+
+/* ── Tableta: dos columnas de tarjetas ── */
+@media (min-width: 768px) {
+    .portal-tarjetas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── Escritorio ── */
+@media (min-width: 1024px) {
+    .portal-tarjetas { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    .portal-cabecera__titulo { font-size: 1.6rem; }
+}
+
+/* ═══ M5 C2b ═══════════════════════════════════════════════ */
+
+/* ── Aviso de una línea bajo el campo, con su espacio reservado (M0.1/M0.2) ── */
+.portal-aviso {
+    display: block;
+    min-height: 1.3em;
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.portal-form__resumen {
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #b42318;
+    font-size: 0.82rem;
+}
+
+.portal-form__resumen[hidden] { display: none; }
+
+/* ── Pie del modal: el de Usuarios, fijo abajo en la hoja del celular ── */
+.portal-modal__pie {
+    position: sticky;
+    bottom: calc(-1.25rem - var(--safe-bottom));
+    margin: 0.5rem -1.25rem calc(-1.25rem - var(--safe-bottom));
+    padding: 0.85rem 1.25rem calc(0.85rem + var(--safe-bottom));
+    z-index: 2;
+}
+
+.portal-modal__pie .btn-primary { width: auto; margin-top: 0; }
+
+.portal-modal__pie [hidden] { display: none; }
+
+/* ── Tarjetas de elección (como las del plan en «Gestionar», M0.2.1) ── */
+.portal-opciones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.6rem;
+}
+
+.portal-opcion {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.75rem 0.85rem;
+    border: 1.5px solid var(--z-border);
+    border-radius: 14px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.portal-opcion:hover { border-color: #93b4ff; }
+
+/* El radio queda accesible con teclado; la tarjeta entera es el control. */
+.portal-opcion input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.portal-opcion:has(input:focus-visible) { box-shadow: 0 0 0 4px var(--z-primary-soft); }
+
+.portal-opcion:has(input:checked) {
+    border-color: var(--z-primary);
+    background: #f5f8ff;
+}
+
+.portal-opcion__icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #eff4ff;
+    color: var(--z-primary);
+    font-size: 1.05rem;
+}
+
+.portal-opcion .avatar-mini img,
+.portal-opcion .avatar-iniciales {
+    width: 36px;
+    height: 36px;
+    font-size: 0.85rem;
+    box-shadow: none;
+}
+
+.portal-opcion__texto {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+    font-size: 0.78rem;
+    color: var(--z-text-muted);
+}
+
+.portal-opcion__texto strong {
+    font-size: 0.9rem;
+    color: var(--z-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Agendar: clínica única y guía de lo que falta ── */
+.booking__unica {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-weight: 700;
+    color: var(--z-text);
+}
+
+.booking__unica i { color: var(--z-primary); }
+
+/* La guía va en el pie, junto a «Agendar». */
+.booking__pie {
+    align-items: center;
+}
+
+.booking__guia {
+    flex: 1;
+    min-height: 1.3em;
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--z-text-muted);
+}
+
+/* RN-116: la línea que explica por qué «Vincularme» está deshabilitado. */
+.portal-tope {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.75rem;
+}
+
+/* ── Clínicas ── */
+.portal-subtitulo {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--z-text);
+}
+
+.portal-subtitulo-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 1.75rem 0 0.75rem;
+}
+
+.portal-subtitulo-fila .portal-subtitulo { margin: 0; }
+
+.portal-buscador {
+    flex: 0 1 260px;
+    min-width: 0;
+}
+
+.portal-interruptor {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.35rem;
+    cursor: pointer;
+}
+
+.portal-interruptor__texto {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--z-text);
+}
+
+/* Desde tableta los modales son ventanas centradas: el pie va al final, sin pegarse. */
+@media (min-width: 768px) {
+    .portal-modal__pie {
+        bottom: -1.5rem;
+        margin: 0.75rem -1.5rem -1.5rem;
+        padding: 1rem 1.5rem 1.25rem;
+    }
+}

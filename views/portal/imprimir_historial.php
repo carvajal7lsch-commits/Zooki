@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial Clínico - <?php echo htmlspecialchars($mascota['nombre']); ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="css/imprimir-historial.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
 
     <!-- Botones flotantes -->
     <div class="floating-actions">
-        <a href="index.php?action=portal_propietario" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Volver</a>
-        <button class="btn" data-ui-accion="imprimir"><i class="fa fa-print"></i> Imprimir / PDF</button>
+        <a href="index.php?action=portal_propietario" class="btn btn-secondary"><i class="ri-arrow-left-line" aria-hidden="true"></i> Volver</a>
+        <button class="btn" data-ui-accion="imprimir"><i class="ri-printer-line" aria-hidden="true"></i> Imprimir / PDF</button>
     </div>
 
     <!-- Encabezado -->

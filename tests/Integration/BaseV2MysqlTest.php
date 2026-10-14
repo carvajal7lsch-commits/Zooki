@@ -22,6 +22,44 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testM5FTopeDeActivacionSerializaLaCuentaYSeComparteEntreConexiones(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/ActivacionPropietario.php';
+        $this->comoVeterinario(1, 2);
+        $modelo = new ActivacionPropietario($this->db);
+        $alta = Transaccion::ejecutar($this->db, fn () => $modelo->crear(['tipo_documento' => 'CC', 'documento' => '1000000040', 'nombre_completo' => 'Rosa Nueva', 'telefono' => '3001234567', 'email' => 'rosa@zooki.test'], 1));
+        $id = $alta['id_usuario'];
+        $this->db->prepare('UPDATE verificaciones_email SET created_at = ? WHERE id_usuario = ?')->execute([date('Y-m-d H:i:s', time() - 7200), $id]);
+        $otra = $this->otraConexion();
+        $otra->exec('SET SESSION innodb_lock_wait_timeout = 1');
+        $this->db->beginTransaction();
+        $this->db->prepare('SELECT id_usuario FROM usuarios WHERE id_usuario = ? FOR UPDATE')->execute([$id]);
+        try {
+            (new ActivacionPropietario($otra))->renovarPorTitular($id);
+            $this->fail('Debe esperar el bloqueo de la cuenta antes de renovar.');
+        } catch (PDOException $error) {
+            $this->assertSame(1205, (int) $error->errorInfo[1]);
+            $this->assertFalse($otra->inTransaction(), 'La solicitud que no pudo renovar revierte su transacción.');
+        } finally {
+            $this->db->rollBack();
+        }
+        // El autorregistro ya leyó la cuenta antes de esperar: conservar esa instantánea
+        // no puede ocultarle el envío que acaba de confirmar la otra conexión.
+        $otra->beginTransaction();
+        try {
+            $this->assertTrue((new ActivacionPropietario($otra))->esPendiente($id));
+            $nuevo = $modelo->renovarPorTitular($id);
+            $this->assertNotNull($nuevo);
+            $this->assertNull((new ActivacionPropietario($otra))->renovarPorTitular($id));
+        } finally {
+            $otra->rollBack();
+        }
+        $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM verificaciones_email WHERE id_usuario = ' . $id)->fetchColumn());
+        $this->assertSame((int) $nuevo['id'], (int) $this->db->query('SELECT id FROM verificaciones_email WHERE id_usuario = ' . $id . ' AND used = 0')->fetchColumn());
+        $_SESSION = [];
+    }
+
     public function testE2MigracionRepetibleConservaLimitesPersonalizados(): void
     {
         $this->cargar('01_schema.sql');
@@ -517,7 +555,7 @@ class BaseV2MysqlTest extends TestCase
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }
@@ -555,15 +593,17 @@ class BaseV2MysqlTest extends TestCase
             $this->assertNotSame($m['token_carnet'],$mascotas->getById($otra)['token_carnet']);
             $this->assertSame('1,2',$m['colores_ids']);
             $cuentas=$this->contar('usuarios');
+            // M5 C3 (RE-T.19.1): el alta del personal deja la cuenta pendiente, sin consentimiento, con el enlace de activación.
             $datos=['nombre_completo'=>'Titular Nuevo','tipo_documento'=>'CC','documento'=>'1000000030','telefono'=>'3001234567',
-                'email'=>'nuevo@zooki.test','titular_presente'=>'1','acepta_politica'=>'0'];
-            try { $propietarios->registrar($datos,'politica-1','127.0.0.1'); $this->fail('Debió rechazar'); }
-            catch (InvalidArgumentException $e) { $this->assertNotEmpty($e->getMessage()); }
-            $this->assertSame($cuentas,$this->contar('usuarios'));
-            $datos['acepta_politica']='1'; $alta=$propietarios->registrar($datos,'politica-1','127.0.0.1');
+                'email'=>'nuevo@zooki.test'];
+            $alta=$propietarios->registrar($datos);
+            $this->assertSame($cuentas+1,$this->contar('usuarios'));
             $this->assertNull($this->db->query('SELECT password FROM usuarios WHERE id_usuario=' . $alta['id_usuario'])->fetchColumn());
-            $this->assertSame('alta_personal',$this->db->query('SELECT medio FROM consentimientos_datos')->fetchColumn());
-            $this->assertSame(1,$this->contar('password_resets'));
+            $this->assertSame(0,(int)$this->db->query('SELECT estado FROM usuarios WHERE id_usuario=' . $alta['id_usuario'])->fetchColumn());
+            $this->assertSame(0,$this->contar('consentimientos_datos'));
+            $this->assertSame('activacion_propietario',$this->db->query('SELECT proposito FROM verificaciones_email WHERE id=' . $alta['id'])->fetchColumn());
+            try { $propietarios->registrar($datos); $this->fail('Debió rechazar el duplicado'); }
+            catch (InvalidArgumentException $e) { $this->assertSame(PropietarioClinica::MENSAJE_SIN_VINCULO,$e->getMessage()); }
         } finally { $_SESSION=[]; }
     }
 
@@ -578,6 +618,19 @@ class BaseV2MysqlTest extends TestCase
         $columnas=$this->db->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='verificaciones_email'")->fetchAll(PDO::FETCH_COLUMN);
         $this->assertContains('id_clinica_vinculo',$columnas); $this->assertContains('proposito',$columnas);
         $this->assertSame(1,(int)$this->db->query("SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND CONSTRAINT_NAME='fk_verif_clinica_vinculo'")->fetchColumn());
+    }
+
+    /** M5 C4b: la migración 06 agrega el medio del propietario a una base anterior y se puede repetir. */
+    public function testMigracionC4bAgregaElMedioDelPropietarioYSePuedeRepetir(): void
+    {
+        $this->cargar('01_schema.sql'); $this->cargar('02_semilla.sql');
+        // La forma publicada antes de C4b.
+        $this->db->exec("ALTER TABLE consentimientos_datos MODIFY medio ENUM('formulario','google','alta_personal') NOT NULL");
+        $this->cargar('06_medio_activacion_propietario.sql');
+        $this->cargar('06_medio_activacion_propietario.sql');
+        $tipo=$this->db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='consentimientos_datos' AND COLUMN_NAME='medio'")->fetchColumn();
+        $this->assertSame("enum('formulario','google','alta_personal','activacion_propietario')",$tipo);
+        $this->assertSame('NO',$this->db->query("SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='consentimientos_datos' AND COLUMN_NAME='medio'")->fetchColumn());
     }
 
     /** D-5: la semilla solo inserta lo que falta y nunca sobrescribe. */

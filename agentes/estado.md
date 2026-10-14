@@ -2,14 +2,22 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-11
+**Actualizado:** 2026-10-14
 
 ## Ahora
 
-- **Módulo activo:** M0 — Base SaaS, identidad y aislamiento. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
-- **Rama:** `v2/m0`. Producción sigue en v1.12.0 (`main`) hasta la etapa F.
+- **Módulo activo:** M5 — Portal multi-clínica y vínculos (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13, HU-2.10; sale como `2.0.0-alpha.3`). Plan: [`specs/M5-portal-multiclinica.md`](../specs/M5-portal-multiclinica.md). Rama: `v2/m5-portal`.
+- **Entrega actual de M5:** **F — cierre: entregada, pendiente de revisión (2026-10-14).** Claude Code dejó sin commit el tope, su prueba, la versión y el avance documental; Codex los retomó, corrigió la concurrencia del tope y completó la trazabilidad de 24 RE, revisiones, descargas, anexo y comandos. Versión preparada: **2.0.0-alpha.3**; no está desplegada. Ver «Anexo F — Resultado» del plan M5.
+- **C4b:** revisada y aprobada por Claude (2026-10-13), con los ajustes visuales pedidos por el usuario el 2026-10-14 y commits `8224d98`, `7cdcf65`, `37f4836` y `f03d0b4`. Migración 06: medio `activacion_propietario` del consentimiento; se aplica automáticamente al desplegar.
+- **C4a:** revisada y aprobada (2026-10-13), con commit `19728e6`.
+- **C3:** revisada, aprobada y probada por el usuario (2026-10-13), con commit `2e251c4`. El propietario dado de alta por el personal queda pendiente, sin aceptación presencial; activa su cuenta desde un enlace de 72 horas donde acepta la política y crea su contraseña. Mientras tanto la clínica lo atiende sin enviarle correos automáticos; puede reenviarle el enlace, y la limpieza no borra una cuenta con mascotas. Además: búsqueda del propietario en tiempo real con límite por IP, vincular la mascota en tarjetas sin recargar, solo lectura en la historia (hueco 6), formulario de mascota del personal con la validación de C2b, confirmación corta al desactivar un cliente, tope de 3 clínicas desde el portal (RN-116 y RE-5.13.5, nuevos) y Agendar de nuevo en un solo formulario. PHP 665 en verde (también con MySQL, ninguna omitida); JS 142. Decisiones del usuario durante C3 y 5 pantallas en «Anexo C3 — Resultado».
+- **C2b:** revisada y aprobada (2026-10-12), con commit `da1aadb`.
+- **C1.1:** revisada y aprobada (2026-10-12), con commit.
+- **C1:** revisada y aprobada (2026-10-12), con commit.
+- **A:** revisada y aprobada (2026-10-12), con las decisiones del usuario en «A — Revisión» del plan M5.
+- **Módulo anterior:** M0 — Base SaaS, identidad y aislamiento, cerrado. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
-- **Entrega actual:** **M0.2.1 — modal «Gestionar», Soporte y Seguridad: entregada, pendiente de revisión (2026-10-12, Claude Code).** Tras dos revisiones del usuario en la misma sesión: plan con tarjetas de elección (con sus topes) e interruptor de suscripción, sin listas nativas; estado como tarjetas de acción según el estado actual con «Dar de baja» en rojo (lo único que confirma); sugerencias de motivo; pie del modal de Usuarios; Soporte y Seguridad en tarjetas en cuadrícula con modales pequeños y estados vacíos compactos. El servidor no cambió sus reglas. PHP 608 en verde (también con MySQL en `zooki_test_base_v2`, ninguna omitida); JS 108. Detalle en «Anexo M0.2.1 — Resultado» del plan M0. M0.1 y M0.2 revisadas; las tres salen juntas en 2.0.0-alpha.2.
+- **Entrega actual:** **M0 cerrado y pulido (2026-10-12).** Producción en 2.0.0-alpha.2 (`main` `875d035`, tag `v2.0.0-alpha.2`): acceso y registros pulidos, panel de plataforma y páginas de los correos con el marco del acceso.
 - **M0 cerrado (2026-10-11).** F1 ejecutada por el usuario: producción en 2.0.0-alpha.1, base v2 limpia, super-administrador y clínica demo «Zooki» activos, IP real comprobada (`TRUSTED_PROXIES=10.0.1.0/24,172.16.0.1,172.16.11.1`). Bitácora al final del plan M0.
 - **Verificación E2:** PHP 566 en verde (SQLite: 3004 aserciones, 29 pruebas MySQL omitidas; con MariaDB temporal: 3363 aserciones, ninguna omitida, base predeterminada `zooki_test_base_v2`); JS 78 en verde. Modelos §12.1, §12.1.1 y §12.2 renderizados. Migración 05 repetible y límites personalizados conservados. No se accedió a la base de trabajo ni a sus contraseñas.
 - **D2.2:** revisada, aprobada y con commit. Verificación de D3 en su anexo del plan.
@@ -18,7 +26,8 @@
 - **D3.1:** revisada y aprobada en código (2026-10-10, commit `391c73d`); falta la prueba del usuario (pantalla de registro y restricción de entrada).
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
-- **Siguiente paso:** M0.1, M0.2 y M0.2.1 revisadas y aprobadas (2026-10-12). Commit de M0.2.1, prueba local del usuario y despliegue de 2.0.0-alpha.2 (merge `v2/m0` → `main`, tag, Turnstile real y un correo en Gmail). Después, el plan del módulo siguiente con Codex.
+- **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
+- **Siguiente paso:** M5 cerrado en código y revisado (2026-10-14). El usuario hace el commit, despliega 2.0.0-alpha.3 (merge `v2/m5-portal` → `main`, tag) y las tres comprobaciones del Anexo F. Después, el plan del módulo 2 (Grafo I: HU-2.8, HU-2.9, HU-2.11 y alergias/alertas). Pendiente aparte: borrar los respaldos temporales del VPS (ya pasaron días sin problemas).
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 

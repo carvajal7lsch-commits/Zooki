@@ -20,3 +20,6 @@ $versionAcceso = htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8');
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="css/validacion-cuenta.css?v=<?= $versionAcceso ?>">
     <link rel="stylesheet" href="css/registro-cuenta.css?v=<?= $versionAcceso ?>">
+    <?php if (!empty($accesoTelefono)): // M5 C4a: solo las páginas con teléfono cargan la bandera. ?>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
+    <?php endif; ?>

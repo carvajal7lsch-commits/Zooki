@@ -136,7 +136,11 @@ final class UsuariosVistaTest extends TestCase
 
         $elena = $vista->query(self::CLIENTES . '//article[@data-id-usuario="5"]')->item(0);
         $this->assertSame('0', $elena->getAttribute('data-estado'));
-        $this->assertStringContainsString('Inactivo', $elena->textContent);
+        // RN-115 (M5 C1): desvinculada, solo el nombre y la marca; ya no se edita.
+        $this->assertStringContainsString('Desvinculado', $elena->textContent);
+        $this->assertStringNotContainsString('1000000005', $elena->textContent);
+        $this->assertSame(0, $vista->query('.//button[@data-accion="editar-cliente"]', $elena)->length);
+        $this->assertSame(1, $vista->query('.//button[@data-accion="ver-cliente"]', $elena)->length);
         $this->assertSame(0, $vista->query('.//input[@data-accion="estado-cliente"][@checked]', $elena)->length);
     }
 

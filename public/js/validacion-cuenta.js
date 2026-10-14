@@ -54,7 +54,8 @@
     function aviso(campo, mensaje, error, bien = false) {
         // El contenedor visual del input también contiene el icono o el botón del ojo.
         // La ayuda va debajo de ese contenedor, nunca dentro de su fila.
-        const envoltura = campo.closest('.input-wrapper, .search-input-wrapper, .perfil-clave, .input-con-ojito, .iti');
+        // M5 C4a: el teléfono con bandera queda dentro de .iti; el aviso va bajo el contenedor de afuera.
+        const envoltura = campo.closest('.input-wrapper, .search-input-wrapper, .perfil-clave, .input-con-ojito') || campo.closest('.iti');
         const contenedor = envoltura ? envoltura.parentElement : campo.parentElement;
         let salida = campo.dataset.cuentaAyuda ? document.getElementById(campo.dataset.cuentaAyuda) : null;
         salida ??= contenedor.querySelector('[data-cuenta-error="' + campo.id + '"]');
@@ -94,6 +95,21 @@
      * error con texto si no cumple; mensaje positivo cuando aplica (las
      * contraseñas coinciden); null si cumple y no hay nada que decir.
      */
+    /**
+     * M5 C4a: qué le falta al correo, con los mismos mensajes y el mismo orden
+     * que ValidadorCuenta::correo() del servidor. null si el formato sirve.
+     */
+    function motivoCorreo(valor) {
+        if (valor.length > 255) return 'El correo admite hasta 255 caracteres.';
+        const arrobas = (valor.match(/@/g) || []).length;
+        if (arrobas === 0) return 'Al correo le falta la @.';
+        if (arrobas > 1) return 'El correo lleva una sola @.';
+        const [usuario, dominio] = valor.split('@');
+        if (usuario === '') return 'Escribe lo que va antes de la @.';
+        if (!/^[^.\s]+(\.[^.\s]+)+$/.test(dominio)) return 'Escribe el dominio completo, por ejemplo gmail.com.';
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor) ? null : MENSAJES.email;
+    }
+
     function reglaLocal(form, campo, final) {
         const clave = tipo(campo);
         const valor = campo.value;
@@ -108,8 +124,11 @@
         if (clave === 'documento' && !/^\d{5,15}$/.test(valor.trim())) {
             return { error: MENSAJES.documento };
         }
-        if (clave === 'email' && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor.trim()) || valor.trim().length > 255)) {
-            return { error: MENSAJES.email };
+        if (clave === 'email') {
+            const motivo = motivoCorreo(valor.trim().toLowerCase());
+            if (motivo) return { error: motivo };
+            const actual = (campo.dataset.correoActual || '').toLowerCase();
+            if (actual && valor.trim().toLowerCase() === actual) return { error: 'Ese ya es tu correo.' };
         }
         if (clave === 'nombre_completo' && (valor.trim().length < 3 || valor.trim().length > 100)) {
             return { error: MENSAJES.nombre_completo };
@@ -331,6 +350,8 @@
                             document.querySelectorAll('[data-documento-cuenta]').forEach(elemento => { elemento.textContent = datos.documento; });
                         }
                         form.reset();
+                        // M5 C4a: quien muestra el formulario en un modal lo cierra (portal.js).
+                        form.dispatchEvent(new CustomEvent('cuenta:guardada', { bubbles: true, detail: datos }));
                     }
                 } catch (error) {
                     salida.textContent = 'No se pudo completar la operación. Inténtalo nuevamente.';
@@ -341,5 +362,5 @@
 
         });
     });
-    window.ZookiValidacionCuenta = { vincular, comprobar, reglaLocal };
+    window.ZookiValidacionCuenta = { vincular, comprobar, reglaLocal, motivoCorreo };
 }());

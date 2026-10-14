@@ -94,16 +94,24 @@
         background: var(--z-danger);
     }
 
+    /* M5 C4a (punto 1): avatar, nombre y contexto, y salir centrado con el avatar;
+       «Cambiar de perfil» al final, alineado con el nombre. */
     .portal-rail__usuario {
         margin-top: auto;
-        display: flex;
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr) 34px;
+        grid-template-areas:
+            "avatar nombre salir"
+            "avatar contexto salir"
+            "cambiar cambiar cambiar";
         align-items: center;
-        gap: 0.65rem;
+        column-gap: 0.65rem;
         padding: 0.85rem 0.5rem 0;
         border-top: 1px solid var(--z-border);
     }
 
     .portal-rail__avatar {
+        grid-area: avatar;
         width: 36px;
         height: 36px;
         border-radius: 50%;
@@ -114,20 +122,41 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
     }
 
-    .portal-rail__nombre {
-        flex: 1;
+    .portal-rail__nombre,
+    .portal-rail__contexto {
         min-width: 0;
-        font-size: 0.82rem;
-        font-weight: 700;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
+    .portal-rail__nombre {
+        grid-area: nombre;
+        align-self: end;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .portal-rail__contexto {
+        grid-area: contexto;
+        align-self: start;
+        font-size: 0.72rem;
+        color: var(--z-text-muted);
+    }
+
+    .portal-rail__cambiar {
+        grid-area: cambiar;
+        justify-self: start;
+        margin: 0.4rem 0 0 calc(36px + 0.65rem - 0.6rem);
+        font-size: 0.75rem;
+    }
+
     .portal-rail__salir {
+        grid-area: salir;
+        /* Centrado con el avatar, no pegado a la fila del nombre. */
+        align-self: center;
         width: 34px;
         height: 34px;
         border-radius: 50%;

@@ -48,16 +48,9 @@
     const titulo = modal.querySelector('[data-titulo]');
 
     // D2.1: teléfono con bandera y prefijo, como en Pacientes (intl-tel-input).
-    const telefonoPersonal = (typeof window !== 'undefined' && window.intlTelInput && form.elements.telefono)
-        ? window.intlTelInput(form.elements.telefono, {
-            initialCountry: 'co',
-            preferredCountries: ['co', 'us', 'mx', 'es'],
-            nationalMode: false,
-            autoInsertDialCode: true,
-            strictMode: true,
-            dropdownContainer: document.body,
-            utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js',
-        })
+    // M5 C4a: la configuración es la de js/telefono-internacional.js, una sola para todo el sistema.
+    const telefonoPersonal = (typeof window !== 'undefined' && window.zookiTelefono)
+        ? window.zookiTelefono(form.elements.telefono)
         : null;
 
     const mensaje = (icono, texto) => zookiToast(texto, icono);
@@ -285,6 +278,17 @@
         return ok;
     }
 
+    /**
+     * M5 C3 (decisión del usuario): solo la pregunta y los botones, con el
+     * estilo de Zooki; nada sobre otras clínicas. Deshacerlo depende del
+     * propietario, por eso se confirma.
+     */
+    async function confirmarDesactivarCliente(interruptor, nombre) {
+        const ok = await zookiConfirmarCorto('¿Desactivar a ' + nombre + ' como cliente?', 'Desactivar');
+        if (!ok) interruptor.checked = true;
+        return ok;
+    }
+
     async function cambiarEstadoPersonal(interruptor) {
         const nombre = interruptor.dataset.nombre;
         if (!(await confirmarDesactivar(interruptor, '¿Desactivar a ' + nombre + ' en esta clínica? Su cuenta y sus otros roles no cambian.'))) return;
@@ -317,8 +321,32 @@
         );
         if (!ok) return null;
         const datos = new FormData();
-        datos.append('identificador', c.email || '');
+        // RN-115: con el vínculo inactivo la clínica ya no ve el correo; el servidor lo busca por el id.
+        datos.append('id_usuario', c.id_usuario);
         return pedir('index.php?action=solicitar_vinculo_propietario_ajax', datos);
+    }
+
+    /**
+     * M5 C4b: el panel de Clientes sale del servidor; se pide la página otra
+     * vez y se cambia solo ese panel, con la vista y los filtros elegidos.
+     * Si la respuesta no trae el panel (venció la sesión), se recarga entera.
+     */
+    async function refrescarClientes() {
+        const actual = modulo.querySelector('[data-panel="clientes"]');
+        try {
+            const html = await (await fetch(window.location.href, { credentials: 'same-origin' })).text();
+            const nuevo = new DOMParser().parseFromString(html, 'text/html').querySelector('[data-panel="clientes"]');
+            if (!actual || !nuevo) {
+                window.location.reload();
+                return;
+            }
+            actual.innerHTML = nuevo.innerHTML;
+            cambiarVista(modulo.dataset.vista);
+            filtrar('clientes');
+        } catch (error) {
+            console.error('Usuarios:', error);
+            window.location.reload();
+        }
     }
 
     async function cambiarEstadoCliente(interruptor) {
@@ -326,7 +354,7 @@
         const activar = interruptor.checked;
         // El interruptor no se enciende solo: el vínculo sigue inactivo hasta que confirme.
         if (activar) interruptor.checked = false;
-        if (!activar && !(await confirmarDesactivar(interruptor, '¿Desactivar el vínculo de ' + nombre + ' con esta clínica? Su cuenta y sus otras clínicas no cambian.'))) return;
+        if (!activar && !(await confirmarDesactivarCliente(interruptor, nombre))) return;
         interruptor.disabled = true;
         const c = await cliente(interruptor.dataset.id);
         let r = { success: false, message: 'No se pudo cargar el cliente.' };
@@ -345,7 +373,9 @@
             r = await pedir('index.php?action=actualizar_propietario_ajax', datos);
         }
         if (r.success) {
-            zookiRecargarConAviso('Vínculo desactivado.');
+            // M5 C4b (revisión de C3): sin recargar; solo el panel de Clientes se pone al día.
+            mensaje('success', 'Vínculo desactivado.');
+            refrescarClientes();
             return;
         }
         interruptor.checked = true;
@@ -411,6 +441,16 @@
         mensaje(r.success ? 'success' : 'error', r.message || 'No se pudo reenviar la invitación.');
     }
 
+    // M5 C3 (RE-T.19.1): el cliente que aún no activa su cuenta recibe un enlace nuevo de 72 horas.
+    async function reenviarActivacion(boton) {
+        boton.disabled = true;
+        const datos = new FormData();
+        datos.append('id_usuario', boton.dataset.id);
+        const r = await pedir('index.php?action=reenviar_activacion_propietario_ajax', datos);
+        boton.disabled = false;
+        mensaje(r.success ? 'success' : 'error', r.message || 'No se pudo reenviar el enlace.');
+    }
+
     async function cancelarInvitacion(boton) {
         const ok = await zookiConfirmar('La invitación de ' + boton.dataset.nombre + ' dejará de servir. Si la necesitas, invítala otra vez.', '¿Cancelar la invitación?', 'Cancelar invitación');
         if (!ok) return;
@@ -468,9 +508,11 @@
         const palabras = (c.nombre_completo || '').trim().split(/\s+/).slice(0, 2);
         campo('iniciales').textContent = palabras.map((p) => p.charAt(0)).join('').toUpperCase();
         campo('nombre').textContent = c.nombre_completo || '';
-        campo('documento').textContent = ((c.tipo_documento || '') + ' ' + (c.documento || '')).trim();
-        campo('email').textContent = c.email || 'No registrado';
-        campo('telefono').textContent = c.telefono || 'No registrado';
+        // RN-115: un cliente desvinculado solo muestra su nombre y la marca.
+        const desvinculado = Number(c.desvinculado) === 1;
+        campo('documento').textContent = desvinculado ? 'Desvinculado' : ((c.tipo_documento || '') + ' ' + (c.documento || '')).trim();
+        campo('email').textContent = desvinculado ? 'Desvinculado' : (c.email || 'No registrado');
+        campo('telefono').textContent = desvinculado ? 'Desvinculado' : (c.telefono || 'No registrado');
 
         const lista = campo('mascotas');
         lista.replaceChildren();
@@ -502,6 +544,8 @@
             verCliente(id);
         } else if (boton.dataset.accion === 'reenviar-invitacion') {
             reenviarInvitacion(boton);
+        } else if (boton.dataset.accion === 'reenviar-activacion') {
+            reenviarActivacion(boton);
         } else if (boton.dataset.accion === 'cancelar-invitacion') {
             cancelarInvitacion(boton);
         } else if (boton.dataset.accion === 'restablecer') {

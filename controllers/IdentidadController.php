@@ -62,6 +62,8 @@ final class IdentidadController
         $rechazada = false;
         $fila = $this->cuenta->leerEnlace($id, $token, $proposito);
         $persona = $fila !== null ? (new Usuario($this->db))->buscarPorId((int) $fila['id_usuario']) : null;
+        // M5 C3: el propietario ve qué clínica lo registró.
+        $clinicaDelEnlace = $fila !== null && $fila['id_clinica_vinculo'] !== null ? $this->nombreClinica((int) $fila['id_clinica_vinculo']) : '';
         // F0: un enlace de activación auténtico pero reemplazado por otro vigente lo dice.
         $reemplazada = $fila === null && (new InvitacionPersonal($this->db))->reemplazada($id, $token, $proposito);
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !$reemplazada) {
@@ -70,8 +72,8 @@ final class IdentidadController
                     // D2.2: el titular de una cuenta nueva también puede no aceptar.
                     $this->cuenta->rechazarActivacion($id, $token);
                     $rechazada = true;
-                } elseif ($proposito === 'activacion_personal') {
-                    $this->cuenta->activar($id, $token, $_POST, Auditoria::ipCliente());
+                } elseif (in_array($proposito, ['activacion_personal', ActivacionPropietario::PROPOSITO], true)) {
+                    $this->cuenta->activar($id, $token, $_POST, Auditoria::ipCliente(), $proposito);
                 } else {
                     $resultado = $this->cuenta->confirmarCorreo($id, $token);
                     // RE-T.2.5: si se confirma desde una sesión de la misma cuenta, esa sigue abierta.
@@ -90,6 +92,13 @@ final class IdentidadController
             }
         }
         require __DIR__ . '/../views/auth/enlace_identidad.php';
+    }
+
+    private function nombreClinica(int $idClinica): string
+    {
+        $stmt = $this->db->prepare('SELECT nombre FROM clinicas WHERE id_clinica = ?');
+        $stmt->execute([$idClinica]);
+        return (string) $stmt->fetchColumn();
     }
 
     /**
@@ -169,7 +178,7 @@ final class IdentidadController
             (string) ($_POST['documento'] ?? ''), (string) ($_POST['nombre_completo'] ?? ''), (string) ($_POST['email'] ?? '')];
         $error = match ($campo) {
             'documento' => ValidadorCuenta::documento($valor),
-            'email' => ValidadorCuenta::correo($valor),
+            'email' => ValidadorCuenta::correoDeCuenta($valor),
             'telefono' => ValidadorCuenta::telefono($valor),
             'nombre_completo' => ValidadorCuenta::nombre($valor),
             'password' => PoliticaPassword::validar($valor, $datosPersonales),

@@ -12,6 +12,11 @@ require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/../helpers/ValidadorMascota.php';
 require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../helpers/FotoMascota.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
+require_once __DIR__ . '/../helpers/ProximaDosis.php';
+require_once __DIR__ . '/../helpers/PresentacionPortal.php';
+require_once __DIR__ . '/../helpers/PresentacionPlataforma.php';
+require_once __DIR__ . '/../helpers/ResumenPanel.php';
 
 /**
  * C6: portal del propietario en el contexto «propietario» (RN-G01), sin
@@ -39,41 +44,42 @@ class PortalController
 
     // ── Pantalla del portal ─────────────────────────────────────────────
 
+    /**
+     * Inicio, Citas, Clínicas y Perfil (M5 C2). Hace un número fijo de
+     * consultas sin importar cuántas mascotas tenga: las citas, vacunas,
+     * desparasitaciones y clínicas de todas sus mascotas llegan de una vez.
+     */
     public function index(): void
     {
         $ahora = new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
+        $hoy = $ahora->format('Y-m-d');
         $clinicas = $this->vinculos->clinicas();
+        $vinculadas = array_map('intval', array_column($clinicas, 'id_clinica'));
+
+        $clinicasPorMascota = $this->mascotas->clinicasDeSusMascotas();
+        $citas = $this->conCancelacion($this->historia->citasDeSusMascotas(), $vinculadas);
+        $vacunas = $this->historia->vacunasDeSusMascotas();
+        $desparasitaciones = $this->historia->desparasitacionesDeSusMascotas();
+        $dosis = ProximaDosis::porMascota($vacunas, $desparasitaciones, $hoy);
 
         $mascotas = [];
-        $todas_citas = [];
-        $todas_vacunas = [];
-        $todas_desparasitaciones = [];
+        $porId = [];
         foreach ($this->mascotas->listar() as $mascota) {
             $id = (int) $mascota['id_mascota'];
-            $foto = $mascota['url_foto'] ? 'uploads/mascotas/' . htmlspecialchars($mascota['url_foto']) : null;
-            $citas = $this->historia->citas($id);
-            $mascota['especie'] = $mascota['nombre_especie'];
-            $mascota['raza'] = $mascota['nombre_raza'];
-            $mascota['proxima_cita'] = $this->proximaCita($citas, $ahora);
+            $mascota['foto'] = $mascota['url_foto'] ? 'uploads/mascotas/' . $mascota['url_foto'] : null;
+            $mascota['clinicas'] = $clinicasPorMascota[$id] ?? [];
+            $mascota['proxima_dosis'] = $dosis[$id] ?? null;
             $mascotas[] = $mascota;
-
-            // Solo se cancela en una clínica con vínculo activo (Cita::paraPropietario).
-            foreach ($this->conCancelacion($citas) as $cita) {
-                $cita['nombre_mascota'] = $mascota['nombre'];
-                $cita['foto_mascota'] = $foto;
-                $cita['nombre_completo'] = $cita['veterinario_nombre'];
-                $todas_citas[] = $cita;
-            }
-            foreach ($this->historia->vacunas($id) as $vacuna) {
-                $todas_vacunas[] = $vacuna + ['nombre_mascota' => $mascota['nombre'], 'foto_mascota' => $foto];
-            }
-            foreach ($this->historia->desparasitaciones($id) as $desparasitacion) {
-                $todas_desparasitaciones[] = $desparasitacion + ['nombre_mascota' => $mascota['nombre'], 'foto_mascota' => $foto];
-            }
+            $porId[$id] = $mascota;
         }
-        usort($todas_citas, fn (array $a, array $b): int => strcmp($b['fecha'] . $b['hora'], $a['fecha'] . $a['hora']));
-        usort($todas_vacunas, fn (array $a, array $b): int => strcmp($b['fecha_aplicacion'], $a['fecha_aplicacion']));
-        usort($todas_desparasitaciones, fn (array $a, array $b): int => strcmp($b['fecha_aplicacion'], $a['fecha_aplicacion']));
+
+        $todas_citas = $this->conMascota($citas, $porId);
+        $todas_vacunas = $this->conMascota($vacunas, $porId);
+        $todas_desparasitaciones = $this->conMascota($desparasitaciones, $porId);
+        $agenda = PresentacionPortal::separarCitas($todas_citas, $hoy);
+        $proxima_cita = $agenda['proximas'][0] ?? null;
+        // M5 C4a: «Próximo en salud» del Inicio, con lo que ya se leyó (sin otra consulta).
+        $proximo_salud = PresentacionPortal::proximoEnSalud($agenda['proximas'], ProximaDosis::pendientes($vacunas, $desparasitaciones, $hoy), $porId);
 
         // RE-5.1.7 (decisión C6): el horario de cada clínica vinculada.
         $horarios = $this->vinculos->horarios();
@@ -82,23 +88,26 @@ class PortalController
             $semana = HorarioAtencion::semana($horarios[(int) $clinica['id_clinica']] ?? []);
             $clinica['semana'] = $semana;
             $clinica['ahora'] = HorarioAtencion::ahora($semana, $ahora);
+            // M5 C4a: la semana en pocas filas, juntando los días con el mismo horario.
+            $clinica['semana_agrupada'] = HorarioAtencion::agrupar($semana, $clinica['ahora']['hoy']);
             $clinica['dias_cerrados'] = array_keys(array_filter($semana, fn (array $dia): bool => !$dia['franjas']));
             $clinicas_portal[] = $clinica;
         }
         $clinicas_disponibles = $this->vinculos->disponibles();
+        // RN-116: se cuenta con las mismas clínicas que ya se leyeron, sin otra consulta.
+        $al_tope_clinicas = count($clinicas_portal) >= VinculosPropietario::TOPE_CLINICAS;
 
         $usuarioData = (new Usuario($this->db))->buscarPorId((int) Contexto::idUsuario()) ?? [];
         $primer_nombre = explode(' ', trim($_SESSION['usuario_nombre'] ?? 'Propietario'))[0];
         $catalogo_especies = (new Mascota($this->db))->getEspecies();
 
         $view = __DIR__ . '/../views/portal/index.php';
-        require_once __DIR__ . '/../views/portal/layout.php';
+        require __DIR__ . '/../views/portal/layout.php';
     }
 
     /** Marca las citas que el propietario puede cancelar: abiertas y en una clínica con vínculo activo. */
-    private function conCancelacion(array $citas): array
+    private function conCancelacion(array $citas, array $vinculadas): array
     {
-        $vinculadas = array_map('intval', array_column($this->vinculos->clinicas(), 'id_clinica'));
         foreach ($citas as &$cita) {
             $abierta = in_array($cita['estado'], self::CITAS_ABIERTAS, true);
             $cita['cancelable'] = $abierta && in_array((int) $cita['id_clinica'], $vinculadas, true);
@@ -107,20 +116,16 @@ class PortalController
         return $citas;
     }
 
-    /** La primera cita abierta desde hoy, de cualquier clínica. */
-    private function proximaCita(array $citas, DateTimeImmutable $ahora): ?array
+    /** Nombre y foto de la mascota en cada registro, para las listas y el calendario de salud. */
+    private function conMascota(array $filas, array $mascotasPorId): array
     {
-        $proxima = null;
-        $hoy = $ahora->format('Y-m-d');
-        foreach ($citas as $cita) {
-            if (!in_array($cita['estado'], self::CITAS_ABIERTAS, true) || $cita['fecha'] < $hoy) {
-                continue;
-            }
-            if ($proxima === null || $cita['fecha'] . $cita['hora'] < $proxima['fecha'] . $proxima['hora']) {
-                $proxima = $cita;
-            }
+        foreach ($filas as &$fila) {
+            $mascota = $mascotasPorId[(int) $fila['id_mascota']] ?? null;
+            $fila['nombre_mascota'] = $mascota['nombre'] ?? '';
+            $fila['foto_mascota'] = $mascota['foto'] ?? null;
         }
-        return $proxima;
+        unset($fila);
+        return $filas;
     }
 
     // ── Mascotas e historia ─────────────────────────────────────────────
@@ -143,11 +148,19 @@ class PortalController
                 'success' => true,
                 'mascota' => $mascota,
                 'historial' => $this->historia->consultas($idMascota),
-                'citas' => $this->conCancelacion($this->historia->citas($idMascota)),
+                'citas' => $this->conCancelacion($this->historia->citas($idMascota), $this->clinicasVinculadas()),
                 'vacunas' => $this->historia->vacunas($idMascota),
                 'desparasitaciones' => $this->historia->desparasitaciones($idMascota),
+                // M5 C2: las clínicas donde se atiende, para las etiquetas de la cabecera.
+                'clinicas' => $this->mascotas->clinicasDeSusMascotas()[$idMascota] ?? [],
             ]);
         }, 'C6 portal detalle');
+    }
+
+    /** Ids de las clínicas con vínculo activo del propietario. */
+    private function clinicasVinculadas(): array
+    {
+        return array_map('intval', array_column($this->vinculos->clinicas(), 'id_clinica'));
     }
 
     /** RE-5.5.1–3: versión imprimible con la clínica de cada registro (RN-114). */
@@ -203,7 +216,7 @@ class PortalController
             $datos = $this->datosDeMascota();
             $foto = FotoMascota::guardar($_FILES['foto'] ?? null, $datos['nombre'], $errorFoto);
             if ($foto === false) {
-                throw new InvalidArgumentException($errorFoto);
+                throw new CampoInvalido('foto', ValidadorMascota::aviso('foto'), $errorFoto);
             }
             $datos['url_foto'] = $foto;
 
@@ -232,7 +245,7 @@ class PortalController
 
             $foto = FotoMascota::guardar($_FILES['foto'] ?? null, $datos['nombre'], $errorFoto);
             if ($foto === false) {
-                throw new InvalidArgumentException($errorFoto);
+                throw new CampoInvalido('foto', ValidadorMascota::aviso('foto'), $errorFoto);
             }
             if ($foto) {
                 $datos['url_foto'] = $foto;
@@ -264,21 +277,21 @@ class PortalController
         $hoy = new DateTimeImmutable('today', new DateTimeZone(ReglaAtencion::ZONA));
         $resultado = ValidadorMascota::validar($_POST, $hoy);
         if ($resultado['error']) {
-            throw new InvalidArgumentException($resultado['error']);
+            throw new CampoInvalido($resultado['campo'], ValidadorMascota::aviso($resultado['campo']), $resultado['error']);
         }
         $datos = $resultado['datos'];
 
         $taxonomia = new Mascota($this->db);
         if (!$taxonomia->especieExiste((int) $datos['especie'])) {
-            throw new InvalidArgumentException('Elige la especie de la lista.');
+            throw new CampoInvalido('especie', ValidadorMascota::aviso('especie'), 'Elige la especie de la lista.');
         }
         if ($datos['raza'] === null) {
             $datos['raza'] = $taxonomia->idSinRazaDefinida((int) $datos['especie']);
             if ($datos['raza'] === null) {
-                throw new InvalidArgumentException('Esta especie todavía no permite indicar otra raza. Elige la más parecida y avísale a la clínica en la consulta.');
+                throw new CampoInvalido('raza', ValidadorMascota::aviso('raza'), 'Esta especie todavía no permite indicar otra raza. Elige la más parecida y avísale a la clínica en la consulta.');
             }
         } elseif (!$taxonomia->razaEsDeEspecie((int) $datos['raza'], (int) $datos['especie'])) {
-            throw new InvalidArgumentException('Elige una raza de la lista para esa especie.');
+            throw new CampoInvalido('raza', ValidadorMascota::aviso('raza'), 'Elige una raza de la lista para esa especie.');
         }
 
         return [

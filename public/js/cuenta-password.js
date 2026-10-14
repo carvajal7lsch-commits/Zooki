@@ -21,7 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             window.zookiRecargarConAviso('Contraseña creada.');
                         } else {
                             form.reset();
-                            window.zookiToast('Contraseña actualizada.');
+                            // M5 C4a: el portal cierra el modal y da el aviso breve.
+                            form.dispatchEvent(new CustomEvent('cuenta:guardada', { bubbles: true, detail: { message: 'Contraseña actualizada.' } }));
                         }
                     } else {
                         window.zookiRedirigirConAviso('index.php?action=' + (form.dataset.passwordAccion === 'cambiar_password_ajax' ? 'dashboard' : 'login'), datos.message || 'Contraseña actualizada.');

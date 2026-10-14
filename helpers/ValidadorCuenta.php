@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/ValidadorTelefono.php';
 require_once __DIR__ . '/PoliticaPassword.php';
+require_once __DIR__ . '/DominiosDesechables.php';
 
 /** Reglas del servidor compartidas por las ayudas al escribir y por el guardado. */
 final class ValidadorCuenta
@@ -41,10 +42,42 @@ final class ValidadorCuenta
         return preg_match('/^\d{5,15}$/D', $valor) ? null : 'Documento de 5 a 15 dígitos.';
     }
 
+    /**
+     * M5 C4a: el aviso dice qué le falta al correo, no solo que no sirve. Los
+     * mismos mensajes y el mismo orden que motivoCorreo() de validacion-cuenta.js.
+     */
     public static function correo(string $valor): ?string
     {
         $valor = self::normalizar('email', $valor);
-        return filter_var($valor, FILTER_VALIDATE_EMAIL) && strlen($valor) <= self::CORREO_MAX ? null : 'Escribe un correo válido.';
+        if (strlen($valor) > self::CORREO_MAX) {
+            return 'El correo admite hasta ' . self::CORREO_MAX . ' caracteres.';
+        }
+        $arrobas = substr_count($valor, '@');
+        if ($arrobas === 0) {
+            return 'Al correo le falta la @.';
+        }
+        if ($arrobas > 1) {
+            return 'El correo lleva una sola @.';
+        }
+        [$usuario, $dominio] = explode('@', $valor);
+        if ($usuario === '') {
+            return 'Escribe lo que va antes de la @.';
+        }
+        if (!preg_match('/^[^.\s]+(\.[^.\s]+)+$/D', $dominio)) {
+            return 'Escribe el dominio completo, por ejemplo gmail.com.';
+        }
+        return filter_var($valor, FILTER_VALIDATE_EMAIL) ? null : 'Escribe un correo válido.';
+    }
+
+    /**
+     * M5 C4b (decisión 3 del usuario, 2026-10-13; RE-0.1.5): el correo de una
+     * cuenta tampoco puede ser temporal, como el de la clínica. Lo usan el
+     * registro del propietario, su alta por la clínica, el cambio de correo y
+     * la ayuda al escribir, para que el navegador y el servidor digan lo mismo.
+     */
+    public static function correoDeCuenta(string $valor): ?string
+    {
+        return self::correo($valor) ?? DominiosDesechables::validar(self::normalizar('email', $valor));
     }
 
     public static function telefono(string $valor): ?string

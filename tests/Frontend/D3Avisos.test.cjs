@@ -19,8 +19,10 @@ async function cambiar(id, accion, actual) {
         addEventListener(tipo, callback) { enviar = callback; },
         querySelector: () => salida,
         reset() { this.restablecido = true; },
+        dispatchEvent(evento) { avisos.push(evento.detail.message); this.evento = evento.type; },
     };
     const contexto = {
+        CustomEvent: class { constructor(tipo, opciones) { this.type = tipo; this.detail = opciones.detail; } },
         document: {
             addEventListener(tipo, callback) { callback(); },
             querySelectorAll: selector => selector === '[data-password-accion]' ? [form] : [],
@@ -41,8 +43,10 @@ async function cambiar(id, accion, actual) {
     return { form, avisos, destinos, recargas, boton };
 }
 
-test('portal: cambiar contraseña muestra toast sin bloquear la pantalla', async () => {
+test('portal: cambiar contraseña avisa al portal, que cierra el modal y da el aviso breve', async () => {
     const pagina = await cambiar('portalChangePasswordForm', 'portal_cambiar_password_ajax', true);
+    // M5 C4a: el formulario vive en un modal; portal.js escucha «cuenta:guardada» y muestra el toast.
+    assert.equal(pagina.form.evento, 'cuenta:guardada');
     assert.deepEqual(pagina.avisos, ['Contraseña actualizada.']);
     assert.equal(pagina.form.restablecido, true);
     assert.equal(pagina.boton.disabled, false);

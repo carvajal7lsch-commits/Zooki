@@ -956,6 +956,116 @@
     }
 }
 
+/* M5 C3 (decisión del usuario): confirmación corta con el estilo de Zooki
+   (zookiConfirmarCorto, avisos.js): la pregunta, unas filas y los botones de
+   los modales de Usuarios. M5 C4a (decisión del usuario, 2026-10-13): es el
+   modal de Zooki en todo el sistema, sin SweetAlert; en el celular, hoja que
+   sube desde abajo. */
+.zooki-confirmacion {
+    position: fixed;
+    inset: 0;
+    z-index: 30000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: zookiConfirmacionFondo 0.2s ease;
+}
+
+.zooki-confirmacion__panel {
+    width: 100%;
+    padding: 1.4rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    border-radius: 20px 20px 0 0;
+    background: #ffffff;
+    box-shadow: 0 -15px 40px rgba(15, 23, 42, 0.15);
+    font-family: inherit;
+    animation: zookiConfirmacionHoja 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zooki-confirmacion__titulo {
+    margin: 0;
+    padding: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.35;
+    color: var(--text-primary, #0f172a);
+    text-align: left;
+}
+
+.zooki-confirmacion__filas {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0.9rem 0 0;
+}
+
+.zooki-confirmacion__filas div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.875rem;
+}
+
+.zooki-confirmacion__filas dt { color: var(--text-secondary, #64748b); }
+
+.zooki-confirmacion__filas dd {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+    text-align: right;
+}
+
+.zooki-confirmacion__botones {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.6rem;
+    margin: 1.25rem 0 0;
+}
+
+.zooki-confirmacion__botones button {
+    width: 100%;
+    justify-content: center;
+}
+
+@keyframes zookiConfirmacionFondo {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes zookiConfirmacionHoja {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+/* Desde tableta, ventana centrada con los botones a la derecha. */
+@media (min-width: 768px) {
+    .zooki-confirmacion {
+        align-items: center;
+        padding: 1.5rem;
+    }
+
+    .zooki-confirmacion__panel {
+        width: min(26rem, 100%);
+        padding: 1.5rem 1.5rem 1.25rem;
+        border-radius: 18px;
+        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
+        animation-name: zookiConfirmacionFondo;
+    }
+
+    .zooki-confirmacion__botones {
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+
+    .zooki-confirmacion__botones button { width: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zooki-confirmacion,
+    .zooki-confirmacion__panel { animation: none; }
+}
+
 /* Aumentar z-index de SweetAlert2 para que aparezca por encima del modal de usuarios */
 .swal2-container {
     z-index: 30000 !important;
@@ -1119,6 +1229,14 @@
     color: #64748b;
     font-size: 0.75rem;
 }
+
+/* M5 C3: cliente que aún no activa su cuenta. */
+.tag-mini--aviso {
+    color: #9a3412;
+    background: #fff7ed;
+}
+
+.tag-mini--aviso i { color: #9a3412; }
 
 .card-contact-mini {
     display: flex;

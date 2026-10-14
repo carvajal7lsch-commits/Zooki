@@ -44,6 +44,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<?php $accesoTelefono = true; ?>
 <?php require __DIR__ . '/../partials/cabecera_acceso.php'; ?>
 </head>
 <?php // D1: la configuración del JS viaja en data-*, sin JS en línea. ?>
@@ -188,7 +189,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     <div class="input-group">
                                         <label for="telefono">Teléfono</label>
                                         <div class="input-wrapper">
-                                            <input type="tel" id="telefono" name="telefono" placeholder="Ej: 300 123 4567" required minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> autocomplete="tel">
+                                            <input type="tel" id="telefono" name="telefono" placeholder="Ej: 300 123 4567" required minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> data-telefono-internacional autocomplete="tel">
                                         </div>
                                     </div>
                                     <div class="input-group">
@@ -321,11 +322,14 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
             <div class="modal-illustration">
                 <i class="ri-google-fill icono-google-modal" aria-hidden="true"></i>
             </div>
-            <h3>Crea tu cuenta con Google</h3>
-            <p class="modal-subtitle">Google confirmó tu correo <strong id="googleUserEmail"></strong>. Elige tu clínica y acepta la política para crear la cuenta; después te pediremos tu documento y tu teléfono.</p>
+            <?php // M5 C4b (RN-G21): el mismo modal activa la cuenta que registró una clínica, sin elegir clínica. ?>
+            <h3 data-google-modo="registro">Crea tu cuenta con Google</h3>
+            <h3 data-google-modo="activar" hidden>Activa tu cuenta con Google</h3>
+            <p class="modal-subtitle" data-google-modo="registro">Google confirmó tu correo <strong id="googleUserEmail"></strong>. Elige tu clínica y acepta la política para crear la cuenta; después te pediremos tu documento y tu teléfono.</p>
+            <p class="modal-subtitle" data-google-modo="activar" hidden><strong data-google-clinica></strong> te registró como cliente con <strong data-google-correo></strong>. Acepta la política para activar tu cuenta y entrar a tu portal.</p>
             <form id="completeGoogleForm">
                 <?php Csrf::field('google'); ?>
-                <div class="input-group">
+                <div class="input-group" data-google-modo="registro">
                     <label for="google_id_clinica">Clínica</label>
                     <div class="input-wrapper">
                         <select id="google_id_clinica" name="id_clinica" required>
@@ -348,6 +352,9 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
     <script src="js/turnstile-formularios.js?v=<?= $versionAcceso ?>"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=zookiTurnstileListo&render=explicit" async defer></script>
     <script src="js/password-policy.js?v=<?= $versionAcceso ?>"></script>
+    <?php // M5 C4a (punto 11): teléfono con bandera en el registro del propietario. ?>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
+    <script src="js/telefono-internacional.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/login.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/crear-cuenta.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/acceso-giro.js?v=<?= $versionAcceso ?>"></script>

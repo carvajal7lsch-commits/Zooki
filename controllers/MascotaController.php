@@ -6,10 +6,14 @@ require_once __DIR__ . '/../models/PropietarioClinica.php';
 require_once __DIR__ . '/../models/AvisoFichaMascota.php';
 require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../helpers/FotoMascota.php';
+require_once __DIR__ . '/../helpers/Security.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
 
 /** C3: el controlador valida la petición; los modelos resuelven el contexto. */
 class MascotaController
 {
+    public const MENSAJE_ESPERA = 'Espera un momento antes de seguir buscando.';
+
     private PDO $db;
     private Mascota $mascotaModel;
     private PropietarioClinica $propietarioModel;
@@ -29,12 +33,22 @@ class MascotaController
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); $this->json(['success'=>false,'message'=>'Método no permitido.']); return; }
         try { $this->json(['success'=>true]+($accion() ?? [])); }
         catch (AccesoDenegado $e) { throw $e; }
+        // M5 C3: el campo y su aviso corto, como en el portal (C2b).
+        catch (CampoInvalido $e) { http_response_code(422); $this->json(['success'=>false,'message'=>$e->getMessage(),'campo'=>$e->campo,'aviso'=>$e->aviso]); }
         catch (InvalidArgumentException $e) { http_response_code(422); $this->json(['success'=>false,'message'=>$e->getMessage()]); }
         catch (Throwable $e) { error_log('C3: ' . $e->getMessage()); http_response_code(500); $this->json(['success'=>false,'message'=>'No se pudo guardar. Intenta nuevamente.']); }
     }
     private function id($valor): int
     {
         if (!ctype_digit((string)$valor) || (int)$valor<1) throw new InvalidArgumentException('Identificador no válido.');
+        return (int)$valor;
+    }
+    /** M5 C3: especie o raza sin elegir dicen su campo, para el aviso bajo él. */
+    private function idDeCampo($valor, string $campo): int
+    {
+        if (!ctype_digit((string)$valor) || (int)$valor<1) {
+            throw new CampoInvalido($campo, ValidadorMascota::aviso($campo), $campo === 'especie' ? 'Elige la especie de la lista.' : 'Elige la raza de la lista.');
+        }
         return (int)$valor;
     }
     public function listar(): array { return $this->mascotaModel->getAll(true); }
@@ -48,14 +62,16 @@ class MascotaController
     {
         $datos=array_intersect_key($entrada,array_flip(['nombre','fecha_nacimiento','peso','sexo','estado','esterilizado']));
         if (isset($entrada['id_propietario'])) $datos['id_propietario']=$this->id($entrada['id_propietario']);
-        if (array_key_exists('especie',$entrada)) $datos['id_especie']=$this->id($entrada['especie']);
+        if (array_key_exists('especie',$entrada)) $datos['id_especie']=$this->idDeCampo($entrada['especie'],'especie');
         if (array_key_exists('raza',$entrada)) {
             $otra=in_array($entrada['raza'],['Otra','otra'],true);
-            $datos['id_raza']=$otra ? null : $this->id($entrada['raza']);
+            $datos['id_raza']=$otra ? null : $this->idDeCampo($entrada['raza'],'raza');
             $datos['raza_indicada']=$otra ? trim((string)($entrada['raza_indicada'] ?? $entrada['nueva_raza'] ?? '')) : null;
-            if ($otra && $datos['raza_indicada'] === '') throw new InvalidArgumentException('Indica la raza por confirmar.');
+            if ($otra && $datos['raza_indicada'] === '') {
+                throw new CampoInvalido('raza_indicada', ValidadorMascota::AVISO_OBLIGATORIO, 'Indica la raza por confirmar.');
+            }
         }
-        if (array_key_exists('colores',$entrada)) $datos['colores']=$entrada['colores'];
+        // M5 C4b (decisión 1 del usuario): los formularios ya no piden colores.
         return $datos;
     }
     public function registrarAjax(): void
@@ -106,9 +122,44 @@ class MascotaController
         });
     }
     public function listarPropietariosAjax(): void { $this->json($this->propietarioModel->listar()); }
+    /**
+     * RE-1.5.1 (M5 C3): la búsqueda corre mientras se escribe, así que lleva
+     * el mismo límite por IP que la comprobación del NIT (RE-T.13.2): a mano
+     * no se nota y un script que enumere documentos se topa con el muro.
+     */
     public function buscarPropietarioExactoAjax(): void
     {
+        if (!$this->dentroDelLimite()) {
+            return;
+        }
         $this->json(['success'=>true,'propietario'=>$this->propietarioModel->buscarExacto((string)($_GET['identificador'] ?? ''))]);
+    }
+
+    /**
+     * M5 C4b: por nombre, coincidencia parcial solo entre los clientes con
+     * vínculo activo de esta clínica (nunca la búsqueda global, RN-111).
+     */
+    public function buscarPropietarioNombreAjax(): void
+    {
+        if (!$this->dentroDelLimite()) {
+            return;
+        }
+        $this->json(['success'=>true,'clientes'=>$this->propietarioModel->buscarPorNombre((string)($_GET['nombre'] ?? ''))]);
+    }
+
+    /**
+     * Revisión de C3: el personal está autenticado, así que cuenta por usuario
+     * (120 en 15 minutos), no por IP: una recepción detrás de una sola IP no se
+     * bloquea por el contador de la comprobación pública del NIT.
+     */
+    private function dentroDelLimite(): bool
+    {
+        if (Security::checkVerificationLimit(Contexto::idUsuario())) {
+            return true;
+        }
+        http_response_code(429);
+        $this->json(['success'=>false,'message'=>self::MENSAJE_ESPERA]);
+        return false;
     }
     public function listarMascotasPorPropietarioAjax(): void
     {
@@ -132,5 +183,4 @@ class MascotaController
     }
     public function listarEspeciesAjax(): void { $this->json($this->mascotaModel->getEspecies()); }
     public function listarRazasAjax(): void { $this->json($this->mascotaModel->getRazasByEspecie($_GET['id_especie'] ?? 0)); }
-    public function listarColoresAjax(): void { $this->json($this->mascotaModel->getColoresBase()); }
 }

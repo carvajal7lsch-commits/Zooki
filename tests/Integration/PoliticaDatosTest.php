@@ -117,7 +117,9 @@ final class PoliticaDatosTest extends TestCase
         $this->assertLessThanOrEqual(20, strlen(PoliticaDatos::VERSION), 'Cabe en version_politica.');
         $raiz = __DIR__ . '/../..';
         $this->assertStringContainsString('PoliticaDatos::VERSION', file_get_contents($raiz . '/views/legal/privacidad.php'));
-        $this->assertStringContainsString('PoliticaDatos::VERSION', file_get_contents($raiz . '/controllers/PropietarioController.php'));
+        // M5 C3: el propietario que registra la clínica acepta la vigente al activar su cuenta (RE-T.19.1).
+        $this->assertStringContainsString('PoliticaDatos::VERSION', file_get_contents($raiz . '/views/auth/enlace_identidad.php'));
+        $this->assertStringContainsString('PoliticaDatos::VERSION', file_get_contents($raiz . '/models/ConsentimientoDatos.php'));
         $this->assertStringNotContainsString('versionPolitica', file_get_contents($raiz . '/controllers/PropietarioController.php'));
     }
 }
