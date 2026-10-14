@@ -224,6 +224,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - Puedo actualizar teléfono y correo.
 - El correo nuevo se valida como único.
 - _(v2.0)_ Cambiar el correo pide confirmar la identidad, y una cuenta sin contraseña debe crearla antes. El correo nuevo solo se aplica después de verificarlo; el correo anterior recibe un aviso del cambio y, si la cuenta estaba vinculada a Google con él, esa vinculación se retira.
+- _(M5)_ El correo nuevo no puede ser de un servicio de correo temporal (la lista de RE-0.1.5) ni el mismo que ya tengo; el aviso sale junto al campo mientras escribo y el servidor lo rechaza igual.
 - _(v2.0)_ Puedo corregir mi tipo y número de documento confirmando mi identidad (contraseña o Google); si el documento ya pertenece a otra cuenta, el cambio pasa a soporte.
 - _(v2.0)_ Si soy veterinario, edito mi bio y mi foto públicas; mis especialidades las asigna el administrador.
 - El cambio persiste y se refleja de inmediato.
@@ -478,6 +479,8 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - Si mi correo es nuevo, antes de crear la cuenta acepto la política de tratamiento de datos; si no acepto, no se guarda la identidad ni el vínculo con la clínica. Al aceptar, se crea la cuenta con el nombre y el correo de Google (la foto no se guarda), sin verificar de nuevo el correo, y quedo vinculado a esa clínica.
 - Antes de usar el portal completo, una pantalla obligatoria me pide el tipo y número de documento y el teléfono; mientras no la complete, no puedo registrar mascotas ni agendar.
 - Si mi correo ya tiene cuenta, Google se vincula a ella; si estaba pendiente de verificar, queda verificada, se anula la contraseña que tenía y me pide confirmar mis datos.
+- _(M5)_ Si una clínica me registró y aún no activé mi cuenta, continuar con Google me pide aceptar la política, sin elegir clínica, y la activa sin contraseña (RN-G21).
+- _(M5)_ En el registro por formulario, el correo no puede ser de un servicio de correo temporal (RE-0.1.5); el aviso sale junto al campo.
 - El token de Google se valida contra el client_id de Zooki (RN-G12).
 
 **Reglas de negocio:** RN-G20, RN-G21, RN-G19, RN-G12, RN-109 · **Requisitos:** RF-T.6 · **Dependencias:** HU-T.1, HU-5.8
@@ -494,6 +497,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 - El registro con formulario o Google exige aceptación del titular antes de crear la cuenta. Excepción para las cuentas que crea una clínica (personal nuevo y propietario dado de alta por el personal): la cuenta se crea pendiente e inerte (sin contraseña, sin consentimiento y, para el propietario, sin portal); el titular recibe un enlace que vence en 72 horas, acepta la política y crea su contraseña para activarla. La clínica puede reenviar el enlace; el anterior deja de servir. Si vence sin usarse, la cuenta pendiente se elimina únicamente si no tiene otros vínculos y, si es de un propietario, tampoco mascotas (sus registros son de la clínica). El personal no acepta en nombre del titular. El super-administrador está exento de aceptación y de su prueba por ser una cuenta operativa de plataforma.
 - _(M5)_ Mientras el propietario no active su cuenta, la clínica registra y atiende a sus mascotas, pero no le salen correos automáticos (recordatorios, citas, cambios de ficha) salvo el de activación.
+- _(M5, decisión del usuario 2026-10-13)_ Si el enlace venció, el propietario pide uno nuevo sin depender de la clínica: «¿Olvidaste tu contraseña?» o el autorregistro con su correo le envían un enlace de activación nuevo, con la misma respuesta en pantalla de siempre (RN-G15), y entrar con Google le pide aceptar la política y activa la cuenta sin contraseña (RN-G21). La prueba guarda su propio medio: activación del propietario por enlace o Google.
 - Se guarda la prueba: quién, qué versión, por qué medio, cuándo y desde qué IP.
 - Si la política cambia, en el siguiente inicio de sesión se pide aceptar la nueva versión antes de continuar.
 - Revocar la autorización lleva a la solicitud de eliminación de la cuenta (HU-5.14).
@@ -517,7 +521,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- El formulario exige nombre, especie, raza, fecha de nacimiento, peso, sexo y color.
+- El formulario exige nombre, especie, raza, fecha de nacimiento, peso y sexo. _(M5, decisión del usuario 2026-10-13: el color ya no se pide; la foto identifica a la mascota.)_
 - Se puede subir una fotografía (JPG/PNG).
 - Al guardar, la mascota aparece en el listado y en la búsqueda.
 - No se puede guardar sin propietario asignado.
@@ -588,6 +592,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 **Criterios de aceptación:**
 
 - Al registrar una mascota a un propietario ya vinculado a la clínica, se muestran primero las mascotas que él tiene en la plataforma (nombre, especie, raza y foto), sin datos clínicos.
+- _(M5)_ Al propietario lo busco por documento o correo completos (búsqueda exacta en toda la plataforma, RN-111) o por nombre, con coincidencia parcial solo entre los clientes con vínculo activo de esta clínica. Ya elegido, se ve en un solo bloque, su tarjeta.
 - Si la mascota ya existe, se vincula a la clínica: conserva su ficha, su carnet y su QR; el número de historia clínica de esta clínica se genera en su primera consulta aquí (RN-102).
 - Si no existe, se registra como nueva (HU-1.1).
 - La vinculación cuenta para el límite de mascotas del plan (HU-0.4) y queda en auditoría.
@@ -1341,7 +1346,7 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - El botón «atrás» del navegador me devuelve a la sección anterior y cierra la ventana que tenga abierta.
 - Veo si la clínica está abierta ahora y su horario de la semana; _(v2.0)_ el de cada clínica a la que estoy vinculado.
 - Los formularios indican qué campos son obligatorios y cuáles opcionales.
-- Al registrar o editar una mascota elijo la raza del catálogo; si no está, indico que es mestiza, que no la sé o la escribo para que la clínica la confirme, y veo la foto antes de guardarla. El color lo registra la clínica en la consulta.
+- Al registrar o editar una mascota elijo la raza del catálogo; si no está, indico que es mestiza, que no la sé o la escribo para que la clínica la confirme, y veo la foto antes de guardarla. El color no se registra (M5).
 - Al agendar no puedo elegir días en que la clínica no atiende, y los horarios libres aparecen en botones cuando ya elegí tipo, veterinario y día.
 
 > **Nota:** el portal mostraba un banner fijo de «Médicos calificados las 24 horas del día», que no correspondía al horario configurado en HU-7.1. Se reemplazó por el horario real.
@@ -1483,6 +1488,8 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - Cada clínica solo ve los propietarios vinculados a ella. Todo queda en auditoría.
 
 - El autorregistro por formulario verifica Turnstile en el servidor. Las ayudas solo validan formato y la respuesta al enviar no revela si la identidad existe.
+- _(M5)_ En las tres vías, el correo del propietario no puede ser de un servicio de correo temporal (RE-0.1.5): el aviso sale junto al campo y el servidor lo rechaza.
+- _(M5)_ Si el correo o el documento del autorregistro son de una cuenta que una clínica registró y aún no se activa, se le envía un enlace de activación nuevo al correo de esa cuenta, con la misma respuesta en pantalla.
 
 **Reglas de negocio:** RN-109, RN-G06 · **Requisitos:** RF-5.3 · **Dependencias:** —
 

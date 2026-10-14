@@ -273,13 +273,13 @@ Los módulos siguen la **misma numeración en todos los documentos** ([Historias
 
 | ID | Descripción del requisito | Prioridad | Criterio de verificación |
 |---|---|---|---|
-| RF-1.1 | Registrar una mascota con nombre, especie, raza, fecha de nacimiento, peso, sexo, color(es) y fotografía. | Alta | El registro aparece en la búsqueda de su clínica con todos los campos. |
+| RF-1.1 | Registrar una mascota con nombre, especie, raza, fecha de nacimiento, peso, sexo y fotografía (el color ya no se pide desde M5). | Alta | El registro aparece en la búsqueda de su clínica con todos los campos. |
 | RF-1.2 | Vincular cada mascota a un propietario con nombre, documento, dirección, teléfono y correo. | Alta | No es posible guardar una mascota sin propietario asignado. |
 | RF-1.3 | Actualizar la ficha registrando automáticamente fecha y usuario del cambio. La especie, la raza, el sexo y la fecha de nacimiento solo los cambian el propietario o la clínica que registró la mascota, y todo cambio se notifica al propietario. | Alta | La auditoría refleja campo, valor anterior y nuevo; una clínica que no registró la mascota no puede cambiar su especie. |
 | RF-1.4 | Buscar mascotas por nombre, propietario, documento o historia clínica, en tiempo real y **dentro de la clínica**. | Alta | Resultados en < 2 s; no aparecen mascotas que no estén vinculadas a la clínica. |
 | RF-1.5 | Registrar múltiples mascotas por propietario, agrupadas en su perfil. | Media | Desde el perfil se listan todas sus mascotas. |
 | RF-1.6 | Marcar una mascota como inactiva sin eliminar su historial. | Media | La inactiva no aparece en búsquedas activas; su historial permanece. |
-| RF-1.7 | Registrar varios colores por mascota (relación N:M). | Baja | Una mascota puede almacenar y mostrar más de un color. |
+| RF-1.7 | Registrar varios colores por mascota (relación N:M). _Sin uso desde M5: los formularios no piden el color._ | Baja | Una mascota puede almacenar y mostrar más de un color. |
 | RF-1.8 | Manejar la mascota como **identidad global** del propietario, vinculable a varias clínicas: una sola ficha, un solo carnet y un solo QR; antes de registrar, ofrecer vincular una mascota existente del propietario; cada clínica asigna su propio número de historia clínica. | Alta | Una mascota atendida en dos clínicas existe una sola vez y aparece en ambas con su número de HC; vincularla consume cupo del plan. |
 
 #### 3.2.4 Módulo 2 — Historia clínica y soporte a la decisión clínica (Grafo I) ★

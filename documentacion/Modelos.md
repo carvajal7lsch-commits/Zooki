@@ -444,8 +444,15 @@ flowchart TD
   G3 -- No --> REG[["Elegir clinica y aceptar la politica antes del registro Google (§11)"]]
   REG --> ZF
   G3 -- Si --> G4{Cuenta activa?}
-  G4 -- No --> GNO[/"Cuenta inactiva: no iniciar sesion"/]
+  G4 -- No --> GPEN{"La registro una clinica y aun no la activa? (M5 C4b)"}
+  GPEN -- No --> GNO[/"Cuenta inactiva: no iniciar sesion"/]
   GNO --> ZF
+  GPEN -- Si --> GPA["Pedir aceptar la politica vigente, sin elegir clinica"]
+  GPA --> GPB{Acepta expresamente?}
+  GPB -- No --> GPNA[/"La cuenta sigue pendiente; no se activa"/]
+  GPNA --> ZF
+  GPB -- Si --> GPC["Activar sin contraseña (RN-G21): ligar Google, guardar la prueba<br/>(medio google) y anular los enlaces de activacion"]
+  GPC --> SES
   G4 -- Si --> G5["Vincular Google a la identidad (RN-G21); si el correo estaba pendiente,<br/>verificarlo, anular contraseña y pedir completar perfil"]
   G5 --> SES["Abrir sesion con version actual y limpiar solo el contador del identificador usado"]
   SES --> POL{Acepto la politica vigente?}
@@ -564,12 +571,12 @@ flowchart TD
   B1 --> C
 
   C["Capturar los datos. Formulario y Google: aceptacion expresa del titular antes de crear la cuenta.<br/>Alta por el personal: correo obligatorio y sin aceptacion presencial;<br/>el titular acepta la politica al activar su cuenta"] --> D{"Campos validos y, salvo en el alta por el personal, politica aceptada?"}
-  D -- No --> D1[/"Mensaje: corrige los campos marcados"/]
+  D -- No --> D1[/"Mensaje: corrige los campos marcados<br/>(tambien un correo temporal, RE-0.1.5)"/]
   D1 --> C
   D -- Si --> E{El correo ya existe en la plataforma?}
 
   E -- No --> E2{El documento ya existe en la plataforma?}
-  E2 -- Si --> E3["Autorregistro: enviar confirmacion al titular del documento;<br/>alta por el personal: la respuesta de la busqueda exacta y Pedir confirmacion (§12.3)"]
+  E2 -- Si --> E3["Autorregistro: enviar confirmacion al titular del documento, o el enlace de activacion<br/>si una clinica lo registro y aun no activa (M5 C4b);<br/>alta por el personal: la respuesta de la busqueda exacta y Pedir confirmacion (§12.3)"]
   E3 --> GENERICO["Autorregistro: ventana de carga y luego la misma respuesta, sin revelar existencia;<br/>Revisa tu correo para confirmar la solicitud o acceder a Zooki"]
   GENERICO --> ZF([Fin])
   E2 -- No --> FP{Alta por el personal?}
@@ -578,7 +585,9 @@ flowchart TD
   PENM --> ACTP{"Desde el enlace vigente, acepta la politica y crea una contraseña valida?"}
   ACTP -- Si --> ACTV["Activar la cuenta y guardar la prueba de aceptacion (como §10.1)"]
   ACTV --> AUD
-  ACTP -- "No, el enlace vence" --> LIMP{{"Limpieza: borrar la cuenta solo sin mascotas ni otros vinculos;<br/>con mascotas se conserva y la clinica reenvia el enlace"}}
+  ACTP -- "No, el enlace vence" --> REN{"Pide un enlace nuevo? (M5 C4b): la clinica lo reenvia, o el titular<br/>con Olvidaste tu contraseña o el autorregistro con su correo (misma respuesta publica);<br/>con Google acepta la politica y activa sin contraseña (§10)"}
+  REN -- Si --> ACTP
+  REN -- No --> LIMP{{"Limpieza: borrar la cuenta solo sin mascotas ni otros vinculos;<br/>con mascotas se conserva y la clinica reenvia el enlace"}}
   LIMP --> ZF
   FP -- No --> F["Crear la identidad (id_usuario) y guardar la prueba de aceptacion de la politica"]
   F --> H["Enviar verificacion de correo; misma respuesta publica"]
@@ -589,7 +598,10 @@ flowchart TD
   J --> AUD[Registrar en auditoria]
   AUD --> ZF
 
-  E -- Si --> K{Ya esta ligado a esta clinica?}
+  E -- Si --> KP{"Autorregistro con el correo de una cuenta que una clinica registro y aun no se activa? (M5 C4b)"}
+  KP -- Si --> KPA["Enviar un enlace de activacion nuevo al correo de la cuenta (el anterior deja de servir);<br/>misma respuesta publica, sin ligarla a otra clinica"]
+  KPA --> ZF
+  KP -- No --> K{Ya esta ligado a esta clinica?}
   K -- Si --> K1[/"Autorregistro: misma respuesta publica sin revelar la cuenta;<br/>alta por el personal: ya es cliente de esta clinica"/]
   K1 --> ZF
   K -- No --> L["Verificar que es el dueño del correo (login o confirmacion por correo);<br/>alta por el personal: Pedir confirmacion, tambien a una cuenta que otra clinica registro y aun no se activa"]
@@ -791,14 +803,19 @@ flowchart TD
   B --> C{Permitido por el plan?}
   C -- No --> C1[/"Mensaje: limite alcanzado, mejora el plan"/]
   C1 --> ZF([Fin])
-  C -- Si --> D{"El propietario ya existe? (busqueda exacta mientras se escribe un documento<br/>o correo completo, con espera corta y limite por IP)"}
+  C -- Si --> BUS{"Busca por nombre o por documento o correo completos? (M5 C4b)"}
+  BUS -- "Nombre, 3 letras o mas" --> BN["Coincidencia parcial solo entre los clientes con vinculo activo de esta clinica;<br/>espera corta y limite por usuario"]
+  BN --> BN1{Elige a uno de la lista?}
+  BN1 -- No --> BUS
+  BN1 -- Si --> F
+  BUS -- "Documento o correo completos" --> D{"El propietario ya existe? (busqueda exacta global mientras se escribe,<br/>con espera corta y limite por usuario)"}
   D -- No --> E[["Alta del propietario por el personal (§11): cuenta pendiente<br/>hasta que active su enlace; la clinica ya registra a su mascota"]]
   D -- Si --> FL{"Tiene vinculo activo con esta clinica?"}
   FL -- No --> FL0[/"Mensaje: hay una cuenta con ese dato, pide la confirmacion por correo;<br/>sin nombre, contacto ni mascotas (RN-109)"/]
   FL0 --> FL1[["Enviar al titular la confirmacion del vinculo por correo (§11);<br/>a una cuenta de super-administrador no se envia nada, con la misma respuesta (RN-G13)"]]
   FL1 --> FL2[/"Vuelve a buscarlo cuando confirme"/]
   FL2 --> ZF
-  FL -- Si --> F["Seleccionar al propietario; si aun no activa su cuenta, se marca y se ofrece Reenviar enlace"]
+  FL -- Si --> F["Seleccionar al propietario: queda en un solo bloque, su tarjeta mini;<br/>si aun no activa su cuenta, se marca y se ofrece Reenviar enlace"]
   F --> P{"El propietario ya tiene mascotas en la plataforma?"}
   P -- Si --> Q["Mostrar sus mascotas en tarjetas (nombre, especie, raza, foto; sin datos clinicos)"]
   Q --> V{Es una de ellas?}
@@ -807,11 +824,11 @@ flowchart TD
   V -- No --> G
   P -- No --> G
   E --> G
-  G["Capturar datos de la mascota: nombre, especie, raza, sexo, nacimiento/edad, peso y color;<br/>esterilizado (si se sabe) y foto (opcionales)"] --> H{"Campos obligatorios y formato validos (servidor)?"}
+  G["Capturar datos de la mascota: nombre, especie, raza, sexo, nacimiento/edad y peso;<br/>esterilizado (si se sabe) y foto (opcionales). M5 C4b: el color ya no se pide"] --> H{"Campos obligatorios y formato validos (servidor)?"}
   H -- No --> H1[/"Mensaje: corrige los campos marcados"/]
   H1 --> G
   H -- Si --> J["Guardar la mascota (global, del propietario), vincularla a esta clinica<br/>y generar el carnet con un token aleatorio para el QR"]
-  J --> K[Registrar en auditoria]
+  J --> K["Registrar en auditoria; las listas y el expediente abierto se ponen al dia sin recargar"]
   K --> ZF
 ```
 
@@ -946,8 +963,8 @@ flowchart TD
   CP -- No --> CP1[/"Primero crea una contraseña (§13.3): al cambiar el correo se retira Google"/]
   CP1 --> ZF
   CP -- Si --> CI["Confirmar identidad (contraseña o Google)"]
-  CI --> C1{"Identidad confirmada y formato valido?"}
-  C1 -- No --> C2[/"Corregir formato o confirmar identidad"/]
+  CI --> C1{"Identidad confirmada, formato valido, correo no temporal (RE-0.1.5)<br/>y distinto del actual? (M5 C4b)"}
+  C1 -- No --> C2[/"El aviso dice que falta, que es temporal, que ya es su correo<br/>o que confirme la identidad"/]
   C2 --> A
   C1 -- Si --> CU{"Correo ocupado?"}
   CU -- Si --> CM[/"Misma respuesta: si puede completarse, recibiras un enlace"/]

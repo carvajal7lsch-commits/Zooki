@@ -889,3 +889,97 @@ Con sus capturas, antes del commit:
 1. **Colores de la mascota:** se quitan de los formularios (portal y personal); la columna queda en la base sin uso, sin migración, con nota en el MER y en la HU de registro de mascota.
 2. **Recuperar la activación sin la clínica:** sí. «¿Olvidaste tu contraseña?» y el autorregistro con el correo de una cuenta pendiente envían un enlace de activación nuevo, con la misma respuesta genérica en pantalla; entrar con Google con una cuenta pendiente lleva a aceptar la política y la activa sin contraseña (RN-G21).
 3. **Correos temporales:** también se rechazan en el registro del propietario (formulario y alta por la clínica) y al cambiar el correo, con la lista de `DominiosDesechables` y aviso junto al campo; criterio en HU-T.5, HU-T.18 y HU-5.8 (sin subir revisión).
+
+## Anexo C4b — Resultado
+
+**Escribió:** Claude Code (2026-10-13). **Estado:** entregada, pendiente de revisión.
+
+**Decisión del usuario durante C4b (2026-10-13):** el medio propio del consentimiento exigía migración (`consentimientos_datos.medio` es un ENUM). Se eligió la **migración pequeña**: `06_medio_activacion_propietario.sql` agrega `activacion_propietario`. Se puede correr dos veces y se aplica sola al desplegar. `01_schema.sql`, el modelo de drawDB y el MER llevan el mismo cambio.
+
+### Qué se hizo (lo más riesgoso primero)
+
+1. **Recuperar la activación sin la clínica** (decisión 2; RE-T.19.1, RN-G15, RN-G21; Modelos §10 y §11).
+   - `ActivacionPropietario::renovarPorTitular` da un enlace nuevo solo si la cuenta sigue pendiente. El enlace lleva la clínica que la registró y el anterior deja de servir.
+   - Las tres vías:
+     - **«¿Olvidaste tu contraseña?»:** con el correo de una cuenta pendiente envía el enlace de activación. La respuesta en pantalla no cambia.
+     - **Autorregistro:** con el correo o el documento de una cuenta pendiente envía el enlace de activación al correo de esa cuenta. La respuesta es la misma que la de un registro nuevo, y la cuenta no se liga a otra clínica sin activarse.
+     - **Google:** con una cuenta pendiente abre el mismo modal del registro con Google en modo «Activa tu cuenta», sin elegir clínica. `activarConGoogle` exige aceptar la política, liga Google, activa sin contraseña, anula los enlaces y guarda la prueba con el medio `google`.
+   - El correo de activación sale de un solo lugar (`ActivacionPropietario::correoHtml`), que usan la clínica y el titular.
+   - Para probarlas sin el `exit` de `jsonResponse`, `AuthController` expone `renovarActivacionPendiente`, `activacionPendienteConGoogle` y `completarConGoogle`.
+2. **Correos temporales** (decisión 3; RE-0.1.5).
+   - `ValidadorCuenta::correoDeCuenta` (formato + `DominiosDesechables`) es la regla única. La usan el autorregistro, el alta por la clínica, el cambio de correo, la ayuda al escribir (`IdentidadController::validar` y `check_email_ajax`) y el registro de clínicas.
+   - **Alcance:** la ayuda al escribir del campo `email` es una sola para todo el sistema. Para que el navegador y el servidor digan lo mismo, la invitación de personal (`UsuarioController`) también rechaza correos temporales.
+   - El cambio de correo dice además «Ese ya es tu correo».
+3. **Medio del consentimiento:** la activación por enlace del propietario guarda `activacion_propietario` (migración 06); la del personal sigue con `alta_personal`.
+4. **Búsqueda por nombre** (RE-1.5.1, RN-111; Modelos §12.3).
+   - `PropietarioClinica::buscarPorNombre` hace una coincidencia parcial (desde 3 letras, letras y espacios) solo entre los clientes con vínculo activo de la clínica, con hasta 8 resultados.
+   - Ruta nueva `buscar_propietario_nombre_ajax`, en la matriz solo para el personal.
+   - Al elegir un resultado se trae la ficha con la búsqueda exacta de siempre.
+   - El comodín del LIKE se escapa con `!`, que funciona igual en MySQL y SQLite.
+5. **Límite por usuario** (revisión de C3): las dos búsquedas cuentan con `checkVerificationLimit(Contexto::idUsuario())` (120 en 15 minutos). El compañero de la misma recepción no queda bloqueado.
+6. **Un solo bloque del propietario** (captura 07):
+   - Sin mascotas que vincular, se elige directo.
+   - El elegido queda en su tarjeta mini, con «Aún no activa su cuenta» y los botones de icono «Reenviar enlace» y «Cambiar». Se quitaron el recuadro verde y la tarjeta repetida.
+   - El campo de búsqueda admite nombres: letras, dígitos, espacio y `@._+'’-`, hasta 255.
+7. **Pacientes › Propietarios** (captura 06): tarjetas y filas con las tarjetas mini de Usuarios (`person-card`, `card-*-mini`, `tag-mini`, `action-btn-mini`). Las acciones son botones de icono: editar, reenviar el enlace y ver.
+8. **Sin recargas** (revisión de C3):
+   - Registrar o editar una mascota del personal cierra el modal y pone al día, en su sitio, los pacientes, los propietarios y el expediente abierto (`ponerAlDiaPacientes`).
+   - Desactivar un cliente repinta solo el panel de Clientes, con la vista y el filtro elegidos (`refrescarClientes`).
+9. **Sin colores** (decisión 1):
+   - Fuera de los formularios de registro y edición, de la ficha y de la tabla de mascotas, del JS (`initColores`) y de la ruta `listar_colores_ajax`.
+   - El servidor ya no toma colores del formulario. Si llegan por otra vía, el modelo los acepta solo del catálogo.
+   - Se anotó en RN-107, HU-1.1, RE-1.1.1, RE-5.1.9, RF-1.1, RF-1.7 y el MER, sin migración.
+10. **Documentos:**
+    - Criterios en HU-T.5, HU-T.18, HU-T.19, HU-5.8, HU-1.1 y HU-1.5; RE-T.5.7, RE-T.19.1, RE-1.1.1 y RE-5.1.9; RN-107; ERS; MER.
+    - Diagramas de Modelos §10, §11, §12.3 y §13.2.
+    - Sin RE ni RN nuevos: los conteos no cambian.
+
+### Puntos y pruebas
+
+| Punto | Prueba |
+|---|---|
+| Tarjetas y filas de Propietarios | `M5C4bPersonal.test.cjs`: tarjeta mini, «Aún no activa» como etiqueta, botones de icono, desvinculado sin editar, fila de la tabla |
+| Bloque único | `M5C3Personal.test.cjs` (reescrita para C4b) y `M5C4bPersonal.test.cjs`: elegido por nombre, una sola tarjeta, panel vacío |
+| Búsqueda por nombre y aislamiento | `M5C4bPersonalTest`: solo clientes activos, desvinculado fuera, Sur no ve a los de Norte, tres letras y sin comodines; controlador; JS: tipo de búsqueda, resultados y sin coincidencias; `AutorizacionRolTest`: solo el personal |
+| Límite por usuario | `M5C3PersonalTest::testLaBusquedaDelPropietarioTieneLimitePorUsuario` (120, compartido por las dos búsquedas; otro usuario sigue) |
+| Activación por las tres vías | `M5C4bPersonalTest`: olvidé mi contraseña (enlace nuevo, el anterior anulado, cuenta activa sin nada), autorregistro (misma respuesta, sin ligar), Google (sin aceptar no activa; activa sin contraseña, medio `google`, enlaces anulados) |
+| Medio propio | `M5C4bPersonalTest::testLaActivacionPorEnlaceGuardaSuPropioMedioDeConsentimiento`, `M5C3PersonalTest`; `BaseV2MysqlTest::testMigracionC4bAgregaElMedioDelPropietarioYSePuedeRepetir` y el migrador al día |
+| Correos temporales | `M5C4bPersonalTest::testUnCorreoTemporalSeRechazaEnLosTresFormulariosYAlEscribir` (alta por la clínica, autorregistro, cambio de correo y ayuda al escribir) |
+| Sin recargas | `M5C4bPersonal.test.cjs`: guardar y editar mascota sin recarga; panel de Clientes repintado en su sitio |
+| Sin colores | `M5C4bPersonalTest::testLaMascotaDelPersonalSeRegistraSinColores`; JS: vista y módulo sin colores; `MascotaCatalogoTest` ajustada |
+| Modal de Google | `M5C4bPersonal.test.cjs`: modo «Activa tu cuenta», sin clínica |
+
+Mutaciones comprobadas: sin el filtro de vínculo activo o de clínica en la búsqueda por nombre, sin la lista de dominios temporales, sin la renovación en el autorregistro, sin exigir la aceptación con Google, con el controlador tomando otra vez los colores y con la búsqueda por nombre desde 2 caracteres, sus pruebas fallan. Hay una mutación equivalente, sin defecto: agregar la tarjeta al panel antes de elegir no cambia nada, porque elegir vacía el panel.
+
+### Verificación
+
+- `vendor/bin/phpunit`: **688 en verde** (11 nuevas). Sin MySQL: 4216 aserciones y 30 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 4581 aserciones y ninguna omitida.
+- JS: **166 en verde** (9 nuevas). El DOM falso de propietario-mascota pasó a `tests/Frontend/apoyo/propietario-mascota.cjs`.
+- Mermaid CLI: §10, §11, §12.3 y §13.2 renderizan.
+- Vistas tocadas sin `style=`, `on…=` ni `<script>` con código. No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+
+### Pendientes y riesgos
+
+- **Migración 06 en producción:** cambia un ENUM de `consentimientos_datos`; el migrador la aplica al desplegar (F). Es repetible y no toca filas.
+- **La invitación de personal también rechaza correos temporales** (por la ayuda única al escribir). Si el usuario no lo quiere, se separa el tipo de campo.
+- **«¿Olvidaste tu contraseña?» no tiene límite propio:** cualquiera que sepa el correo de una cuenta pendiente puede hacer que le llegue otro enlace de activación, igual que hoy con el restablecimiento. No revela nada, pero puede repetir correos.
+- **El autorregistro de una cuenta pendiente no la liga a la clínica elegida:** el enlace va a la clínica que la registró. Después de activar, se vincula a otra desde su portal (HU-5.13).
+- El selector de propietario del formulario de **editar** mascota sigue con su diseño (fuera de C4b).
+
+### Pantallas para el usuario (computador y celular)
+
+1. **Beto (Norte) → Pacientes › Propietarios.**
+   - Las tarjetas se ven como las de Usuarios › Clientes: avatar, etiquetas y tres botones de icono. Ya no hay «Ver propietario» partido.
+   - Un cliente sin activar lleva la etiqueta «Aún no activa su cuenta» y el sobre de reenviar.
+2. **Beto → Nuevo registro › Mascota.**
+   - Escribe «fab»: sale Fabio como resultado y lo eliges. Queda **un solo bloque**, su tarjeta con «Cambiar».
+   - Escribe el nombre de un cliente de Sur: no sale.
+   - Ya no aparece «Colores Base».
+   - Registra la mascota: el modal se cierra, sale el aviso breve y la lista se actualiza sin recargar. Edita otra mascota: igual.
+3. **Ana (Norte) → Usuarios › Clientes:** desactiva un cliente. La lista se pone al día sin recargar y conserva la vista (tarjetas o tabla).
+4. **Un propietario que registró Norte y no ha activado** (créalo desde Pacientes con un correo de prueba), en una ventana privada:
+   - En el login, «¿Olvidaste tu contraseña?» con su correo: en `logs/correos/` llega «Activa tu cuenta en Zooki» y el enlace anterior ya no sirve.
+   - Con Google, si su correo es de Google: «Activa tu cuenta con Google», sin elegir clínica. Al aceptar, entra al portal.
+5. **Correos temporales:**
+   - En el registro del propietario, en el alta desde Pacientes y en Perfil › Cambiar correo, escribe `alguien@mailinator.com`: junto al campo sale «No se admiten correos temporales».
+   - En Cambiar correo, el correo actual dice «Ese ya es tu correo».
