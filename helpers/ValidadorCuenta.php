@@ -41,10 +41,31 @@ final class ValidadorCuenta
         return preg_match('/^\d{5,15}$/D', $valor) ? null : 'Documento de 5 a 15 dígitos.';
     }
 
+    /**
+     * M5 C4a: el aviso dice qué le falta al correo, no solo que no sirve. Los
+     * mismos mensajes y el mismo orden que motivoCorreo() de validacion-cuenta.js.
+     */
     public static function correo(string $valor): ?string
     {
         $valor = self::normalizar('email', $valor);
-        return filter_var($valor, FILTER_VALIDATE_EMAIL) && strlen($valor) <= self::CORREO_MAX ? null : 'Escribe un correo válido.';
+        if (strlen($valor) > self::CORREO_MAX) {
+            return 'El correo admite hasta ' . self::CORREO_MAX . ' caracteres.';
+        }
+        $arrobas = substr_count($valor, '@');
+        if ($arrobas === 0) {
+            return 'Al correo le falta la @.';
+        }
+        if ($arrobas > 1) {
+            return 'El correo lleva una sola @.';
+        }
+        [$usuario, $dominio] = explode('@', $valor);
+        if ($usuario === '') {
+            return 'Escribe lo que va antes de la @.';
+        }
+        if (!preg_match('/^[^.\s]+(\.[^.\s]+)+$/D', $dominio)) {
+            return 'Escribe el dominio completo, por ejemplo gmail.com.';
+        }
+        return filter_var($valor, FILTER_VALIDATE_EMAIL) ? null : 'Escribe un correo válido.';
     }
 
     public static function telefono(string $valor): ?string

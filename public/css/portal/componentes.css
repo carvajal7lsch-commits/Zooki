@@ -56,12 +56,141 @@
 
 .tag-mini--azul i { color: var(--z-primary); }
 
-/* ── Cita en tarjeta ── */
-.portal-cita__cuando {
-    margin: 0;
+/* ── Cita en una fila compacta de dos líneas (M5 C4a, punto 2) ── */
+.portal-citas {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.portal-cita {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--z-border);
+    border-radius: 14px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.portal-cita[hidden] { display: none; }
+
+.portal-cita:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.portal-cita__avatar img,
+.portal-cita .avatar-iniciales {
+    width: 40px;
+    height: 40px;
     font-size: 0.85rem;
-    font-weight: 600;
+    box-shadow: none;
+}
+
+.portal-cita__texto {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 0.1rem;
+}
+
+.portal-cita__cuando {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.45rem;
+    margin: 0;
+    font-size: 0.88rem;
     color: var(--z-text);
+}
+
+.portal-cita__cuando strong { font-weight: 800; }
+
+.portal-cita__cuando span {
+    font-weight: 600;
+    color: var(--z-primary);
+}
+
+.portal-cita__donde {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--z-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.portal-cita__donde span + span::before {
+    content: '·';
+    margin: 0 0.35rem;
+}
+
+.portal-cita__estado { flex-shrink: 0; }
+
+.portal-cita__cancelar {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 34px;
+    padding: 0 0.65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* En el celular, «Cancelar» es solo el icono (su nombre está en aria-label). */
+@media (max-width: 767px) {
+    .portal-cita__cancelar {
+        width: 34px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .portal-cita__cancelar span { display: none; }
+}
+
+@media (hover: hover) {
+    .portal-cita:hover { border-color: #c5d3ff; }
+    .portal-cita__cancelar:hover { border-color: #94a3b8; color: var(--z-text); }
+}
+
+/* ── Botón de texto: «Ver todas», «Horario de la semana», «Cambiar»… (M5 C4a, punto 5) ── */
+.portal-boton-texto {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+    min-height: 32px;
+    padding: 0.25rem 0.6rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--z-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.portal-boton-texto i { font-size: 1rem; }
+
+/* Pegado al borde derecho de su fila, alineado con las tarjetas de abajo. */
+.section-title-row .portal-boton-texto { margin-right: -0.6rem; }
+
+@media (hover: hover) {
+    .portal-boton-texto:hover { background: var(--z-primary-soft); }
+}
+
+.portal-vacio__accion {
+    width: auto;
+    margin-top: 0.6rem;
+    padding: 0.55rem 0.9rem;
 }
 
 /* Botón secundario de las tarjetas: Cancelar cita, Desvincularme, Atrás. */
@@ -182,42 +311,49 @@
     color: var(--z-text-muted);
 }
 
-.portal-horario__semana { margin-top: 0.5rem; }
+.portal-horario__semana { margin-top: 0.35rem; }
 
 .portal-horario__semana summary {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--z-primary);
-    cursor: pointer;
+    margin-left: -0.6rem;
     list-style: none;
 }
 
 .portal-horario__semana summary::-webkit-details-marker { display: none; }
 
+.portal-horario__semana summary i { transition: transform 0.2s ease; }
+
 .portal-horario__semana[open] summary i { transform: rotate(180deg); }
 
-.portal-horario__semana dl {
-    display: grid;
-    gap: 0.2rem;
-    margin: 0.5rem 0 0;
-}
-
-.portal-horario__dia {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.75rem;
+/* M5 C4a (punto 6): una tabla corta y alineada, con los días del mismo horario juntos. */
+.horario-semana {
+    width: 100%;
+    margin-top: 0.25rem;
+    border-collapse: collapse;
     font-size: 0.78rem;
     color: #475569;
 }
 
-.portal-horario__dia dd { margin: 0; text-align: right; }
+.horario-semana th {
+    width: 1%;
+    padding: 0.2rem 0.85rem 0.2rem 0;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
 
-.portal-horario__dia.is-hoy { font-weight: 700; color: var(--z-text); }
+.horario-semana td {
+    padding: 0.2rem 0;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+}
 
-.portal-horario__dia.is-cerrado dd { color: #94a3b8; }
+.horario-semana tr.is-hoy th,
+.horario-semana tr.is-hoy td {
+    font-weight: 800;
+    color: var(--z-text);
+}
+
+.horario-semana tr.is-cerrado td { color: #94a3b8; }
 
 /* ── Cabecera de la ficha de la mascota ── */
 .pet-detail__identidad {
@@ -435,86 +571,6 @@
     font-weight: 600;
     color: var(--z-text);
 }
-
-.portal-clinica .portal-ayuda {
-    margin: 0;
-    font-size: 0.75rem;
-}
-
-.portal-clinica .card-footer-mini { justify-content: flex-end; }
-
-/* ── Perfil: tarjetas plegables ── */
-.portal-plegables {
-    display: grid;
-    gap: 0.85rem;
-    max-width: 720px;
-}
-
-/* .profile-card (cuenta.css) se carga después: la tarjeta plegable le gana con las dos clases. */
-.profile-card.portal-plegable {
-    margin: 0;
-    padding: 0;
-    text-align: left;
-}
-
-.portal-plegable > summary {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1rem 1.15rem;
-    font-weight: 700;
-    color: var(--z-text);
-    cursor: pointer;
-    list-style: none;
-}
-
-.portal-plegable > summary::-webkit-details-marker { display: none; }
-
-.portal-plegable > summary i { color: var(--z-primary); }
-
-.portal-plegable > summary::after {
-    content: '';
-    margin-left: auto;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-right: 2px solid #94a3b8;
-    border-bottom: 2px solid #94a3b8;
-    transform: rotate(45deg);
-    transition: transform 0.2s ease;
-}
-
-.portal-plegable[open] > summary::after { transform: rotate(-135deg); }
-
-.portal-plegable__cuerpo,
-.portal-plegable.cuenta-identidad > :not(summary) {
-    padding: 0 1.15rem 1.15rem;
-}
-
-.portal-plegable__pie {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.profile-card.portal-plegable--enlace {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1.15rem;
-    font-weight: 700;
-    color: var(--z-text);
-    text-decoration: none;
-}
-
-.portal-plegable--enlace i:first-child { color: var(--z-primary); margin-right: 0.5rem; }
-
-.portal-perfil {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    margin-bottom: 0.75rem;
-}
-
-.portal-perfil .card-title-mini { margin-bottom: 0.25rem; }
 
 /* Desde tableta los modales son ventanas centradas: el pie va al final, sin pegarse. */
 @media (min-width: 768px) {

@@ -291,6 +291,16 @@
     .portal-drawer-close:hover { background: var(--z-bg-light); color: var(--z-text); }
 }
 
+/* M5 C4a (punto 9): los formularios del Perfil, a pantalla completa en el celular
+   (el teclado no tapa el campo). Desde tableta, ventana centrada como las demás. */
+@media (max-width: 767px) {
+    .portal-drawer--completa {
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+}
+
 /* ── Tablet y escritorio: ventana centrada ── */
 @media (min-width: 768px) {
     .portal-drawer-overlay {

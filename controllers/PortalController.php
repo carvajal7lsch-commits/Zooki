@@ -78,6 +78,8 @@ class PortalController
         $todas_desparasitaciones = $this->conMascota($desparasitaciones, $porId);
         $agenda = PresentacionPortal::separarCitas($todas_citas, $hoy);
         $proxima_cita = $agenda['proximas'][0] ?? null;
+        // M5 C4a: «Próximo en salud» del Inicio, con lo que ya se leyó (sin otra consulta).
+        $proximo_salud = PresentacionPortal::proximoEnSalud($agenda['proximas'], ProximaDosis::pendientes($vacunas, $desparasitaciones, $hoy), $porId);
 
         // RE-5.1.7 (decisión C6): el horario de cada clínica vinculada.
         $horarios = $this->vinculos->horarios();
@@ -86,6 +88,8 @@ class PortalController
             $semana = HorarioAtencion::semana($horarios[(int) $clinica['id_clinica']] ?? []);
             $clinica['semana'] = $semana;
             $clinica['ahora'] = HorarioAtencion::ahora($semana, $ahora);
+            // M5 C4a: la semana en pocas filas, juntando los días con el mismo horario.
+            $clinica['semana_agrupada'] = HorarioAtencion::agrupar($semana, $clinica['ahora']['hoy']);
             $clinica['dias_cerrados'] = array_keys(array_filter($semana, fn (array $dia): bool => !$dia['franjas']));
             $clinicas_portal[] = $clinica;
         }

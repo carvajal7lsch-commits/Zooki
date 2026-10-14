@@ -114,7 +114,8 @@ final class M5C2PortalTest extends TestCase
     public function testInicioMuestraLasClinicasDeLaMascotaYSuProximaDosis(): void
     {
         $html = $this->portal();
-        $tarjeta = substr($html, strpos($html, 'class="person-card portal-mascota"'));
+        // M5 C4a: la tarjeta pequeña del portal anterior, con las clínicas y la próxima dosis.
+        $tarjeta = substr($html, strpos($html, 'class="mascota-mini portal-mascota"'));
         $tarjeta = substr($tarjeta, 0, strpos($tarjeta, '</article>'));
 
         $this->assertStringContainsString('Clínica Norte', $tarjeta);
@@ -149,6 +150,33 @@ final class M5C2PortalTest extends TestCase
         $this->assertStringContainsString('Clínica Norte', $proximas);
         $this->assertStringContainsString('Completada', $pasadas);
         $this->assertStringNotContainsString('cancelar-cita-portal', $pasadas);
+    }
+
+    /** M5 C4a (punto 4): «Próximo en salud» trae citas y dosis de sus mascotas, por fecha, nunca las de otro propietario. */
+    public function testProximoEnSaludSoloTraeLoDelPropietarioYPorFecha(): void
+    {
+        $html = $this->portal();
+        $salud = substr($html, strpos($html, 'data-proximo-salud'));
+        $salud = substr($salud, 0, strpos($salud, '</section>'));
+
+        $this->assertStringContainsString('Rabia · Luna', $salud, 'La dosis de su mascota en otra clínica (RN-114).');
+        $this->assertStringContainsString('Consulta Norte · Luna', $salud, 'Su cita próxima.');
+        $this->assertLessThan(strpos($salud, 'Consulta Norte · Luna'), strpos($salud, 'Rabia · Luna'), 'Por fecha: la dosis de enero va antes que la cita de marzo.');
+        $this->assertStringNotContainsString('Milo', $salud, 'RN-G02: lo de otro propietario no se cuela.');
+        $this->assertStringNotContainsString('data-ui-id="50"', $salud);
+    }
+
+    /** M5 C4a (punto 6): el horario de la semana en una tabla corta, con los días iguales juntos. */
+    public function testElHorarioDeLaSemanaAgrupaLosDiasIguales(): void
+    {
+        $html = $this->portal();
+        $semana = substr($html, strpos($html, 'class="horario-semana"'));
+        $semana = substr($semana, 0, strpos($semana, '</table>'));
+
+        $this->assertSame(1, substr_count($semana, '<tr'), 'Los siete días tienen el mismo horario: una sola fila.');
+        $this->assertStringContainsString('<th scope="row">Lun–Dom</th>', $semana);
+        $this->assertStringContainsString('<td>8:00–12:00 · 14:00–18:00</td>', $semana);
+        $this->assertStringContainsString('is-hoy', $semana);
     }
 
     public function testLaFichaTraeLasClinicasDeLaMascotaYLaDeCadaRegistro(): void

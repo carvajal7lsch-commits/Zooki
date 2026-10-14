@@ -85,7 +85,8 @@ test('el formato se avisa en la misma tecla, sin esperar al servidor', () => {
     p.escribir(telefono, '300 abc');
     assert.equal(telefono.aviso, telefono.title);
     p.escribir(correo, 'fabio@');
-    assert.equal(correo.aviso, 'Escribe un correo válido.');
+    // M5 C4a: el aviso dice qué falta (el mismo de ValidadorCuenta::correo).
+    assert.equal(correo.aviso, 'Escribe el dominio completo, por ejemplo gmail.com.');
     assert.equal(p.llamadas.length, 0, 'Nada de esto consulta al servidor.');
     assert.equal(p.temporizadores.length, 0, 'Ni programa una consulta.');
 
@@ -244,7 +245,8 @@ function paginaUsuarios(usuario, responder = () => ({ success: true, usuario }))
         intlTelInput(campo, opciones) { iti.campo = campo; iti.opciones = opciones; return iti; },
         location: { href: '' },
     };
-    vm.runInNewContext(codigo('public/js/usuarios.js'), {
+    // M5 C4a: la configuración del teléfono vive en telefono-internacional.js, que la página carga antes.
+    const contexto = {
         document: {
             getElementById: id => ({ usuariosModulo: modulo, usuarioModal: modal, usuarioForm: form })[id],
             addEventListener() {},
@@ -258,7 +260,10 @@ function paginaUsuarios(usuario, responder = () => ({ success: true, usuario }))
         zookiToast(texto, icono) { toasts.push({ texto, icono }); },
         zookiConfirmar: async () => true,
         zookiRecargarConAviso(texto) { recargas.push(texto); },
-    });
+    };
+    vm.createContext(contexto);
+    vm.runInContext(codigo('public/js/telefono-internacional.js'), contexto);
+    vm.runInContext(codigo('public/js/usuarios.js'), contexto);
     const clic = async (accion, id = String(usuario.id_usuario), nombre = '') => eventosModulo.click({ target: { closest: () => ({ dataset: { accion, id, nombre }, disabled: false }) } });
     return { nodos, soloAlta, iti, clic, elementos, eventosModal, eventosForm, peticiones, recargas, toasts };
 }

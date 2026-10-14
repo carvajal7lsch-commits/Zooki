@@ -4,6 +4,9 @@
  * su documento confirmando su identidad. Se incluye en Mi perfil y en el
  * portal; D2.2 (revisión de D2.1): cada campo usa las clases de formulario
  * de la pantalla que lo incluye, sin cambiar su diseño.
+ *
+ * M5 C4a: con $identidadDato ('correo' o 'documento') se pinta solo ese
+ * formulario, sin la tarjeta plegable: el portal lo pone en su modal.
  */
 require_once __DIR__ . '/../../helpers/Csrf.php';
 require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
@@ -28,17 +31,21 @@ $campoIdentidad = static function (string $id, string $etiqueta, string $control
     echo '</div>';
 };
 ?>
+<?php $datosIdentidad = isset($identidadDato) ? [$identidadDato] : ['correo', 'documento']; ?>
+<?php if (!isset($identidadDato)): ?>
 <details class="cuenta-identidad <?= $enPortal ? 'profile-card portal-plegable' : 'perfil-card' ?>">
     <summary><?php if ($enPortal): ?><i class="ri-shield-user-line" aria-hidden="true"></i> <?php endif; ?>Datos de acceso</summary>
     <p class="<?= $claseAyuda ?>">Para corregirlos, confirma tu identidad. El correo anterior seguirá vigente hasta verificar el nuevo.</p>
-    <?php foreach (['correo', 'documento'] as $datoIdentidad): ?>
+<?php endif; ?>
+    <?php foreach ($datosIdentidad as $datoIdentidad): ?>
         <?php $prefijo = 'identidad' . ucfirst($datoIdentidad); ?>
         <form class="<?= $claseFormulario ?> cuenta-identidad__form" data-validacion-cuenta data-identidad-accion="<?= $datoIdentidad === 'correo' ? 'solicitar_cambio_correo_ajax' : 'cambiar_documento_ajax' ?>" data-google-client="<?= $eIdentidad(GoogleToken::clientId()) ?>">
             <?php Csrf::field(); ?>
             <?php if ($datoIdentidad === 'correo'): ?>
-                <?php $campoIdentidad($prefijo . 'Email', 'Correo nuevo', '<input id="' . $prefijo . 'Email" class="' . $claseCampo . '" type="email" name="email" ' . ValidadorCuenta::atributosHtml('email') . ' autocomplete="email" required>'); ?>
+                <?php // M5 C4a: con el correo actual, el aviso dice «Ese ya es tu correo» sin ir al servidor. ?>
+                <?php $campoIdentidad($prefijo . 'Email', 'Correo nuevo', '<input id="' . $prefijo . 'Email" class="' . $claseCampo . '" type="email" name="email" ' . ValidadorCuenta::atributosHtml('email') . ' data-correo-actual="' . $eIdentidad($cuentaIdentidad['email'] ?? '') . '" autocomplete="email" required>'); ?>
                 <?php if (empty($cuentaIdentidad['tiene_password'])): ?>
-                    <p class="<?= $claseAyuda ?>">Crea una contraseña en la sección de contraseña antes de cambiar tu correo.</p>
+                    <p class="<?= $claseAyuda ?>"><?= $enPortal ? 'Primero crea una contraseña en Seguridad.' : 'Crea una contraseña en la sección de contraseña antes de cambiar tu correo.' ?></p>
                 <?php endif; ?>
             <?php else: ?>
                 <?php
@@ -50,13 +57,25 @@ $campoIdentidad = static function (string $id, string $etiqueta, string $control
                 $campoIdentidad($prefijo . 'Numero', 'Documento nuevo', '<input id="' . $prefijo . 'Numero" class="' . $claseCampo . '" type="text" name="documento" ' . ValidadorCuenta::atributosHtml('documento') . ' pattern="\d{5,15}" required>');
                 ?>
             <?php endif; ?>
-            <?php $campoIdentidad($prefijo . 'Clave', 'Contraseña actual', '<input id="' . $prefijo . 'Clave" class="' . $claseCampo . '" type="password" name="password_actual" autocomplete="current-password" ' . ValidadorCuenta::atributosHtml('password') . (empty($cuentaIdentidad['tiene_google']) ? ' required' : '') . '>'); ?>
+            <?php
+            // M5 C4a: en el portal, el ojito para ver la contraseña que se escribe (como en el login).
+            $ojitoIdentidad = $enPortal ? '<button type="button" class="portal-ojito" data-ojito="' . $prefijo . 'Clave" aria-label="Mostrar u ocultar la contraseña" aria-pressed="false"><i class="ri-eye-line portal-ojito__ver" aria-hidden="true"></i><i class="ri-eye-off-line portal-ojito__ocultar" aria-hidden="true"></i></button>' : '';
+            $campoIdentidad($prefijo . 'Clave', 'Contraseña actual', '<input id="' . $prefijo . 'Clave" class="' . $claseCampo . '" type="password" name="password_actual" autocomplete="current-password" ' . ValidadorCuenta::atributosHtml('password') . (empty($cuentaIdentidad['tiene_google']) ? ' required' : '') . '>' . $ojitoIdentidad);
+            ?>
             <?php if (!empty($cuentaIdentidad['tiene_google'])): ?>
                 <button type="button" class="<?= $claseBotonGoogle ?>" data-confirmar-google>Confirmar mi identidad con Google</button>
                 <input type="hidden" name="access_token" value="">
             <?php endif; ?>
             <p class="<?= $claseResultado ?>" role="status" data-identidad-resultado></p>
-            <button type="submit" class="<?= $claseBoton ?>">Solicitar cambio de <?= $datoIdentidad ?></button>
+            <?php if (isset($identidadDato)): ?>
+                <div class="users-modal__footer portal-modal__pie">
+                    <button type="submit" class="btn-primary">Solicitar cambio de <?= $datoIdentidad ?></button>
+                </div>
+            <?php else: ?>
+                <button type="submit" class="<?= $claseBoton ?>">Solicitar cambio de <?= $datoIdentidad ?></button>
+            <?php endif; ?>
         </form>
     <?php endforeach; ?>
+<?php if (!isset($identidadDato)): ?>
 </details>
+<?php endif; ?>

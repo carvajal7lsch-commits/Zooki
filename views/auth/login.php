@@ -44,6 +44,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<?php $accesoTelefono = true; ?>
 <?php require __DIR__ . '/../partials/cabecera_acceso.php'; ?>
 </head>
 <?php // D1: la configuración del JS viaja en data-*, sin JS en línea. ?>
@@ -188,7 +189,7 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
                                     <div class="input-group">
                                         <label for="telefono">Teléfono</label>
                                         <div class="input-wrapper">
-                                            <input type="tel" id="telefono" name="telefono" placeholder="Ej: 300 123 4567" required minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> autocomplete="tel">
+                                            <input type="tel" id="telefono" name="telefono" placeholder="Ej: 300 123 4567" required minlength="<?= ValidadorTelefono::MIN ?>" <?= ValidadorTelefono::atributosHtml() ?> data-telefono-internacional autocomplete="tel">
                                         </div>
                                     </div>
                                     <div class="input-group">
@@ -348,6 +349,9 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
     <script src="js/turnstile-formularios.js?v=<?= $versionAcceso ?>"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=zookiTurnstileListo&render=explicit" async defer></script>
     <script src="js/password-policy.js?v=<?= $versionAcceso ?>"></script>
+    <?php // M5 C4a (punto 11): teléfono con bandera en el registro del propietario. ?>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
+    <script src="js/telefono-internacional.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/login.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/crear-cuenta.js?v=<?= $versionAcceso ?>"></script>
     <script src="js/acceso-giro.js?v=<?= $versionAcceso ?>"></script>

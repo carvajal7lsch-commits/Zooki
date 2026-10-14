@@ -268,6 +268,46 @@ button { cursor: pointer; }
 
 .search-input-wrapper textarea { resize: none; }
 
+/* M5 C4a (captura 05): el autocompletado del navegador pintaba un recuadro
+   azul dentro del campo (una caja dentro de otra). */
+.search-input-wrapper input:-webkit-autofill,
+.search-input-wrapper input:-webkit-autofill:hover,
+.search-input-wrapper input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--z-text);
+    -webkit-box-shadow: 0 0 0 1000px var(--z-surface) inset;
+    box-shadow: 0 0 0 1000px var(--z-surface) inset;
+    transition: background-color 9999s ease-out 0s;
+}
+
+/* El teléfono con bandera ocupa el campo entero, sin su propio borde. */
+.search-input-wrapper .iti { flex: 1; min-width: 0; }
+
+/* M5 C4a: ver u ocultar la contraseña (cuenta-password.js cambia aria-pressed). */
+.portal-ojito {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin: -0.35rem -0.4rem -0.35rem 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--z-text-muted);
+    font-size: 1.1rem;
+}
+
+.portal-ojito__ocultar,
+.portal-ojito[aria-pressed="true"] .portal-ojito__ver { display: none; }
+
+.portal-ojito[aria-pressed="true"] .portal-ojito__ocultar { display: inline; }
+
+@media (hover: hover) {
+    .portal-ojito:hover { color: var(--z-primary); background: var(--z-primary-soft); }
+}
+
+.search-input-wrapper .iti input { padding-top: 0.35rem; padding-bottom: 0.35rem; }
+
 /* Campo de formulario: el mismo contenedor, más compacto. */
 .search-input-wrapper.campo {
     padding: 0.65rem 0.85rem;

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/App.php';
 require_once __DIR__ . '/../../helpers/Csrf.php';
+require_once __DIR__ . '/../../helpers/Contexto.php';
 $v = App::assetVersion();
 
 // Secciones del portal: una sola lista para el menú lateral y la barra inferior.
@@ -30,6 +31,8 @@ $iniciales = $iniciales ?: 'U';
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <?php // M5 C4a (punto 11): teléfono con bandera, el mismo de Usuarios y Pacientes. ?>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
     <?php // M5 C2: los componentes de Usuarios (tarjetas mini, etiquetas, pestañas), con los tokens del portal. ?>
     <link rel="stylesheet" href="css/usuarios.css?v=<?= $v ?>">
     <?php foreach (['base', 'navegacion', 'componentes', 'inicio', 'agenda', 'mascota', 'cuenta', 'ventanas', 'calendario', 'formularios'] as $modulo): ?>
@@ -62,13 +65,27 @@ $iniciales = $iniciales ?: 'U';
             <?php endforeach; ?>
         </nav>
 
+        <?php
+        // M5 C4a (punto 1): nombre, contexto (HU-T.17) y salir en una cuadrícula; el contexto en una
+        // línea y «Cambiar de perfil» como botón del sistema, no un enlace suelto subrayado.
+        $contextoRail = Contexto::actual();
+        $nombreRail = htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Propietario');
+        ?>
         <div class="portal-rail__usuario">
             <span class="portal-rail__avatar" aria-hidden="true"><?= htmlspecialchars($iniciales) ?></span>
-            <span class="portal-rail__nombre"><?= htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Propietario') ?></span>
-            <?php include __DIR__ . "/../partials/contexto_actual.php"; ?>
+            <span class="portal-rail__nombre" title="<?= $nombreRail ?>"><?= $nombreRail ?></span>
+            <?php if ($contextoRail !== null): ?>
+                <?php // El portal es siempre el contexto de propietario: «Propietario» cabe junto a salir; el nombre completo, en el title. ?>
+                <span class="portal-rail__contexto" title="<?= htmlspecialchars(Contexto::etiqueta($contextoRail)) ?>">Propietario</span>
+            <?php endif; ?>
             <a href="index.php?action=logout" class="portal-rail__salir" title="Cerrar sesión" aria-label="Cerrar sesión">
                 <i class="ri-logout-box-r-line" aria-hidden="true"></i>
             </a>
+            <?php if (Contexto::puedeCambiar()): ?>
+                <a href="index.php?action=seleccionar_contexto" class="portal-boton-texto portal-rail__cambiar">
+                    <i class="ri-arrow-left-right-line" aria-hidden="true"></i> Cambiar de perfil
+                </a>
+            <?php endif; ?>
         </div>
     </aside>
 
@@ -105,6 +122,8 @@ $iniciales = $iniciales ?: 'U';
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <!-- TR-02: helpers de aviso; debe ir antes de quien los usa -->
 <script src="js/avisos.js?v=<?= $v ?>"></script>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
+<script src="js/telefono-internacional.js?v=<?= $v ?>"></script>
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
 <script src="js/validacion-mascota.js?v=<?= $v ?>"></script>
 <script src="js/portal.js?v=<?= $v ?>"></script>

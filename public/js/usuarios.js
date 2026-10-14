@@ -48,16 +48,9 @@
     const titulo = modal.querySelector('[data-titulo]');
 
     // D2.1: teléfono con bandera y prefijo, como en Pacientes (intl-tel-input).
-    const telefonoPersonal = (typeof window !== 'undefined' && window.intlTelInput && form.elements.telefono)
-        ? window.intlTelInput(form.elements.telefono, {
-            initialCountry: 'co',
-            preferredCountries: ['co', 'us', 'mx', 'es'],
-            nationalMode: false,
-            autoInsertDialCode: true,
-            strictMode: true,
-            dropdownContainer: document.body,
-            utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js',
-        })
+    // M5 C4a: la configuración es la de js/telefono-internacional.js, una sola para todo el sistema.
+    const telefonoPersonal = (typeof window !== 'undefined' && window.zookiTelefono)
+        ? window.zookiTelefono(form.elements.telefono)
         : null;
 
     const mensaje = (icono, texto) => zookiToast(texto, icono);

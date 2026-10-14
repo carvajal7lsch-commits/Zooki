@@ -740,6 +740,13 @@ Las cinco pantallas pasaron. **Pregunta del usuario:** si pasan las 72 horas, el
 
 **Criterio general del usuario:** aprovechar el espacio de la pantalla al máximo y pensar siempre en celular y tableta; diseño minimalista; nada de enlaces sueltos sin estilo ni mal ubicados.
 
+**Decisiones del usuario (2026-10-13), antes del prompt de C4a:**
+
+1. **Calendario de salud:** en Inicio, una lista corta «Próximo en salud» (4 o 5 eventos: dosis y citas) bajo el horario de hoy, solo en escritorio y tableta. En Citas, lista a la izquierda y calendario del mes a la derecha, con puntos en los días que tienen algo; en celular, una sola columna sin el mes.
+2. **Confirmaciones en todo el sistema con el modal de Zooki:** se cambia `zookiConfirmarCorto` (`avisos.js`) para que use el modal del sistema (hoja a pantalla completa en celular) en vez de SweetAlert; así cambian a la vez el portal y Clientes del personal. Los avisos breves (toast) siguen con SweetAlert.
+3. **Colores de la mascota (C4b, punto 4):** se quita el campo de los formularios del personal y del portal; la columna se queda en la base sin uso, sin migración, con nota en el MER.
+4. **Recuperar la activación (C4b, punto 5):** por las tres vías. «¿Olvidaste tu contraseña?» y el autorregistro con el correo de una cuenta pendiente envían un enlace de activación nuevo (respuesta genérica en pantalla); entrar con Google con una cuenta pendiente lleva a aceptar la política y la activa sin contraseña (RN-G21).
+
 ### C4a — Portal del propietario (hallazgos del usuario, 2026-10-13)
 
 1. **Pie del menú lateral:** «Mi portal de propietario» se corta (captura 01). Nombre y contexto completos o un texto que quepa.
@@ -760,6 +767,125 @@ Las cinco pantallas pasaron. **Pregunta del usuario:** si pasan las 72 horas, el
 1. **Pacientes › Propietarios:** las tarjetas no usan el estilo de tarjeta del sistema (captura 06: botones «Ver propietario» y «Editar» rotos). Usar las tarjetas mini de Usuarios (`person-card`, `card-*-mini`, `tag-mini`, `action-btn-mini`), con «Aún no activa su cuenta» como etiqueta y «Reenviar enlace» como botón de icono.
 2. **Registro de mascota › Propietario:** sale una tarjeta y además un recuadro verde con el mismo propietario (captura 07). Debe ser **un solo bloque** que sirva para buscar y para mostrar al elegido; «Aún no activa su cuenta» mejor presentado.
 3. **Buscar propietario también por nombre o correo:** por nombre, entre los clientes de esta clínica (coincidencia parcial); por documento o correo completos, la búsqueda global exacta de C1/C3 (sin revelar nada).
-4. **Colores de la mascota:** hoy no se pueden registrar. **Recomendación de la revisión, pendiente de confirmar por el usuario:** quitar el campo de los formularios (no influye en lo clínico y la foto identifica a la mascota); la columna se queda en la base sin uso, sin migración, con nota en el MER.
-5. **Recuperar la activación sin depender de la clínica** (propuesta de «Prueba del usuario de C3», pendiente de confirmar): «¿Olvidaste tu contraseña?» y el autorregistro con el correo de una cuenta pendiente envían un enlace de activación nuevo (respuesta genérica en pantalla); Google con una cuenta pendiente lleva a aceptar la política y la activa.
+4. **Colores de la mascota:** hoy no se pueden registrar. **Confirmado por el usuario (decisión 3, 2026-10-13):** quitar el campo de los formularios (no influye en lo clínico y la foto identifica a la mascota); la columna se queda en la base sin uso, sin migración, con nota en el MER.
+5. **Recuperar la activación sin depender de la clínica** (confirmado por el usuario, decisión 4, 2026-10-13): «¿Olvidaste tu contraseña?» y el autorregistro con el correo de una cuenta pendiente envían un enlace de activación nuevo (respuesta genérica en pantalla); Google con una cuenta pendiente lleva a aceptar la política y la activa.
 6. Las tres notas de «C3 — Revisión»: límite de la búsqueda del personal por usuario; medio propio del consentimiento de la activación del propietario; registrar o editar mascota del personal y desactivar un cliente sin recargar.
+
+## Anexo C4a — Resultado
+
+**Escribió:** Claude Code (2026-10-13). **Estado:** entregada, pendiente de revisión. Sin migración ni cambios en el servidor más allá de la presentación: los datos nuevos del Inicio salen de lo que el portal ya leía (siguen las mismas consultas). La misma sesión redactó el prompt, así que la revisión la hace otra sesión.
+
+### Qué se hizo (lo más riesgoso primero)
+
+1. **Confirmaciones con el modal de Zooki en todo el sistema** (decisión 2; puntos 9 y 10).
+   - `zookiConfirmarCorto` (`avisos.js`) ya no usa SweetAlert. Arma su ventana con `textContent` (sin HTML), con `role="alertdialog"` y `aria-modal`.
+   - En el celular es una hoja desde abajo; desde tableta, una ventana centrada (`usuarios.css`, que cargan los cuatro layouts con sesión).
+   - Escape y tocar el fondo cancelan. Escape no cierra la ventana de abajo. El foco no sale y vuelve a quien la abrió. Tiene un cuarto parámetro para el botón que no hace nada («Volver» cuando la acción es «Cancelar cita»).
+   - En el portal ya no hay `Swal.` (se quitó `showTikTokModal`): cancelar una cita, la cita adicional del mismo día y Agendar usan ese modal. Clientes del personal cambia a la vez.
+   - Las demás confirmaciones del personal que siguen con SweetAlert quedan en `specs/pulido-interfaz.md`. Se ajustaron `AGENTS.md` y `metodo.md` §8 a la decisión.
+2. **Perfil** (punto 9): tres tarjetas (Mis datos, Contacto, Seguridad), dos columnas en escritorio.
+   - El teléfono se edita en Contacto, con bandera.
+   - Correo, documento y contraseña se cambian en modales del portal (`portal-drawer`, a pantalla completa en el celular). Sus formularios son los mismos de siempre: `cambios_identidad.php` pinta uno solo con `$identidadDato`, y Mi perfil del personal no cambia.
+   - Al guardar, `validacion-cuenta.js` y `cuenta-password.js` avisan con `cuenta:guardada` y el portal cierra el modal con un aviso breve. Modelos §13.2 y §13.3 no cambian: el flujo es el mismo.
+   - Se quitó el recuadro azul del autocompletado (la caja dentro de otra caja).
+3. **Teléfono con bandera** (punto 11): `public/js/telefono-internacional.js` reúne la configuración que repetían Usuarios y Pacientes. Ahora está también en el registro del propietario, en «Completar perfil» y en el Perfil del portal.
+   - Al enviar, el número sale con su prefijo; si la bandera no lo reconoce, se envía lo escrito. `ValidadorTelefono` no cambia.
+   - El aviso de validación del campo con bandera va debajo del contenedor (`validacion-cuenta.js`).
+4. **Citas en una sola vista** (punto 7, decisión 1).
+   - Las pestañas Próximas, Pasadas y «Vacunas y controles» van a la izquierda; el calendario del mes, a la derecha desde tableta, y en el celular no se muestra.
+   - Un día marcado muestra lo de ese día (citas, aplicaciones y dosis que tocan) en lugar de las pestañas, con «Ver todo» para volver.
+   - El calendario llega hasta dos años adelante, porque las dosis próximas caen ahí.
+   - Las funciones del día son puras y se prueban sin DOM: `eventosDelDia`, `filaEventoDeSalud` y `etiquetaDelDia`.
+5. **Inicio**:
+   - Próxima cita en una fila de dos líneas (la misma fila en Citas), con «Cancelar» como icono en el celular (punto 2).
+   - Mascotas con el diseño anterior del portal (avatar redondo, nombre y raza), más las clínicas como etiquetas y la próxima dosis. En el celular son un carrusel; desde tableta, una cuadrícula (punto 3).
+   - «Agregar mascota» es un botón claro, también en el estado vacío (punto 12).
+   - «Próximo en salud»: 5 citas y dosis por fecha (`PresentacionPortal::proximoEnSalud` y `ProximaDosis::pendientes`), solo desde tableta. En tableta va al lado del horario (punto 4).
+6. **Horario de la semana** (punto 6): `HorarioAtencion::agrupar` arma una tabla corta que junta los días seguidos con el mismo horario («Lun–Vie 8:00–12:00 · 14:00–18:00») y marca hoy.
+7. **Clínicas** (punto 8):
+   - Una fila por clínica y la explicación del interruptor una sola vez (cada interruptor la nombra con `aria-describedby`).
+   - «Mis clínicas» dice «2 de 3». «Otras clínicas» va al lado en escritorio.
+   - Se conservan el tope (RN-116) y el aviso en la fila (RE-5.13.3).
+8. **Enlaces** (punto 5): «Ver todas», «Horario de la semana», «Calendario», «Ver clínicas» y «Cambiar» usan `portal-boton-texto`. **Pie del menú** (punto 1): el nombre y el contexto van en dos líneas, sin la píldora que se cortaba.
+
+### Puntos y pruebas
+
+| Punto | Prueba |
+|---|---|
+| 1, 5 | Revisión visual (lista de pantallas); `M5C4aPortal`: sin código en línea |
+| 2, 7 | `M5C2PortalTest::testCitasSeparaProximasDePasadasYCancelaSoloEnClinicaVinculada`; `M5C4aPortal.test.cjs`: el día elegido, las filas, la vista con el calendario oculto en el celular y cancelar con «Volver» |
+| 3 | `M5C2PortalTest::testInicioMuestraLasClinicasDeLaMascotaYSuProximaDosis` (tarjeta nueva), `testIndexHaceElMismoNumeroDeConsultasConUnaOConSeisMascotas` |
+| 4 | `M5C2PortalTest::testProximoEnSaludSoloTraeLoDelPropietarioYPorFecha` (RN-G02, RN-114); `PresentacionPortalTest` (2 nuevas); JS: oculto en el celular |
+| 6 | `HorarioAtencionTest` (4 nuevas); `M5C2PortalTest::testElHorarioDeLaSemanaAgrupaLosDiasIguales` |
+| 8 | `M5C2bPortalTest::testClinicasEnFilasConInterruptorAvisoYBuscador` y `testOtrasClinicasOfreceVincularmeEnSuFila`; `M5C3TopeClinicasTest` sigue en verde |
+| 9, 10 | `M5C2bPortalTest::testPerfilConContactoYLosCambiosEnModales`; JS: modales del Perfil, confirmación (Escape, fondo, Tab y foco), sin `Swal.` en el portal; `M5C3Personal` y `D3Avisos` ajustadas al modal |
+| 11 | `M5C4aPortal.test.cjs` (3): se prepara una vez, envía con prefijo y está en los cinco formularios; `D21Interfaz` carga el módulo común |
+| 12 | Vista: `data-agregar-mascota` en Inicio y en el estado vacío (revisión visual) |
+
+Mutaciones comprobadas: sin el filtro de mascotas ajenas en «Próximo en salud», sin agrupar los días, sin descartar las dosis vencidas, con Escape que deja pasar el evento, con el número del teléfono puesto después de la validación y sin el filtro de mascota del día elegido, sus pruebas fallan.
+
+### Verificación
+
+- `vendor/bin/phpunit`: **677 en verde** (12 nuevas, con los ajustes de abajo). Sin MySQL: 3955 aserciones y 29 omitidas. Con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2`: 4318 aserciones y ninguna omitida.
+- JS: **157 en verde** (15 nuevas, más un DOM mínimo en `tests/Frontend/apoyo/`).
+- Vistas tocadas sin `style=`, `on…=` ni `<script>` con código. No se leyó ni escribió `.env`, ni se tocó `zooki_v2_prueba`.
+- Sin cambio de versión: sube en F, como en las subetapas anteriores.
+
+### Pendientes y riesgos
+
+- **Lo visual solo se ve en el navegador**: carrusel en el celular, Citas en tableta (lista y calendario de 290 px), filas de Clínicas en el celular y la hoja de confirmación. Hay que recargar con Ctrl+F5: la versión de los archivos no cambió.
+- **Teléfonos guardados sin prefijo** («3001234567»): la bandera los toma como de Colombia y al guardar salen como «+573001234567». Es el mismo comportamiento de Usuarios y Pacientes.
+- El resto de confirmaciones con SweetAlert del personal quedan para el pulido final (`specs/pulido-interfaz.md`).
+- Agendar no se tocó, salvo que su confirmación de cita adicional del mismo día usa ahora el modal de Zooki.
+
+### Ajustes tras la primera mirada del usuario (2026-10-13)
+
+Con sus capturas, antes del commit:
+
+1. **Inicio:** el saludo pasó a la columna principal, así la lateral («Horario de hoy») sube hasta arriba y no deja un hueco a su lado.
+2. **Inicial de la mascota** centrada en el círculo (el `display: block` la subía).
+3. **Pie del menú:** cuadrícula con avatar, nombre y salir en una fila; «Mi portal de propietario» en una sola línea debajo; «Cambiar de perfil» como botón del sistema, ya no un enlace subrayado suelto. Se arma en el layout con `Contexto` (HU-T.17), sin el parcial de la píldora.
+4. **Perfil:** Mis datos y Seguridad se apilan a la izquierda y Contacto va a la derecha, sin el hueco que dejaba Contacto por ser más alta.
+5. **Ojito** para ver la contraseña en los cinco campos de contraseña del portal (contraseña actual, nueva y confirmación; contraseña actual de correo y documento). Lo atiende `cuenta-password.js`, como en el login.
+6. **El correo dice qué le falta** («Al correo le falta la @», «Escribe lo que va antes de la @», «El correo lleva una sola @», «Escribe el dominio completo, por ejemplo gmail.com»), con los mismos mensajes en `ValidadorCuenta::correo` y en `validacion-cuenta.js`, para todo el sistema. En «Cambiar correo», escribir el correo actual avisa «Ese ya es tu correo» (también el servidor); no revela nada de otra cuenta. Pruebas: `ValidadorCorreoTest` (2), `CuentasD2Test::testCorreoIgualAlActualOMalEscritoDiceElMotivo`, y en JS los mismos casos, el correo actual y el ojito (3).
+
+7. **Pie del menú:** salir queda centrado con el avatar; bajo el nombre dice «Propietario» (cabe al lado de salir) y el contexto completo va en el title.
+8. **Páginas de acceso** (login, elegir perfil, registros, activaciones): la tarjeta queda en la mitad de la pantalla. El pie ocupa lo mismo que la barra de arriba (`styles.css`), y se quitó el margen sobrante del logo en celular y tableta, que la bajaba.
+
+**Propuesta para decidir (no hecha):** rechazar también los correos temporales (`DominiosDesechables`, que ya usa el registro de clínicas, RE-0.1.5) al cambiar el correo y en el registro del propietario. Es una regla nueva: necesita su criterio en HU-T.5 y HU-T.18.
+
+### Pantallas para el usuario (Fabio, salvo que se diga otro; computador y celular)
+
+1. **Inicio.**
+   - El pie del menú muestra tu nombre y «Mi portal de propietario» completos.
+   - La próxima cita ocupa una o dos líneas.
+   - Las mascotas son tarjetas pequeñas con foto redonda, clínicas y próxima dosis; en el celular se deslizan de lado. «Agregar mascota» abre el registro.
+   - En el computador, a la derecha, «Próximo en salud»; en el celular no sale.
+   - «Horario de la semana» es una tabla corta («Lun–Dom …» o «Lun–Vie …»).
+2. **Citas.**
+   - En el computador, la lista a la izquierda y el calendario del mes a la derecha. Toca un día con puntos: la lista muestra solo ese día; «Ver todo» vuelve.
+   - En el celular, sin el mes, con la pestaña «Vacunas y controles».
+   - Cancela una cita: sale la confirmación de Zooki («Volver» / «Cancelar cita»), como hoja en el celular; Escape o tocar fuera no cancela nada.
+3. **Clínicas.**
+   - Una fila por clínica con su interruptor, la explicación una sola vez arriba y «2 de 3».
+   - Desvincúlate de una con citas pendientes: el aviso sale en su fila.
+4. **Perfil.**
+   - Tres tarjetas, en dos columnas en el computador.
+   - Cambia el teléfono con la bandera.
+   - «Cambiar» del correo, del documento y de la contraseña abre su modal (pantalla completa en el celular). Al guardar se cierra con un aviso breve.
+   - El autocompletado del navegador ya no pinta una caja azul dentro del campo.
+5. **Registro y «Completar perfil»** (sin sesión), y **Ana → Usuarios › Clientes.**
+   - En el registro del propietario y en «Completar perfil» (entra con una cuenta de Google nueva), el teléfono tiene bandera y la cuenta queda con el prefijo.
+   - Ana desactiva un cliente: la misma confirmación de Zooki, sin SweetAlert.
+
+### C4a — Revisión (2026-10-13)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de la prueba del usuario (ya hubo una primera mirada con ajustes, anotados en el Anexo). PHP 677 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 157/157; el portal ya no usa `Swal.`. La regla nueva de AGENTS.md y metodo.md §8 (SweetAlert2 solo para avisos breves; confirmaciones y formularios en los modales de Zooki) sigue la decisión del usuario sobre los modales (C4 — Alcance, punto 10). «Próximo en salud» sale de lo que el portal ya leía (sin consultas nuevas) y filtra por propietario.
+
+**Pendiente de decisión del usuario para C4b:** rechazar también los correos temporales (`DominiosDesechables`, RE-0.1.5) en el registro del propietario y al cambiar el correo. Recomendación de la revisión: sí, por coherencia con el registro de clínicas; requiere su criterio en HU-T.5 y HU-T.18. Siguen pendientes las dos confirmaciones de C4b (quitar colores de la mascota y recuperar la activación sin la clínica).
+
+**Decisiones del usuario para C4b (2026-10-13).**
+
+1. **Colores de la mascota:** se quitan de los formularios (portal y personal); la columna queda en la base sin uso, sin migración, con nota en el MER y en la HU de registro de mascota.
+2. **Recuperar la activación sin la clínica:** sí. «¿Olvidaste tu contraseña?» y el autorregistro con el correo de una cuenta pendiente envían un enlace de activación nuevo, con la misma respuesta genérica en pantalla; entrar con Google con una cuenta pendiente lleva a aceptar la política y la activa sin contraseña (RN-G21).
+3. **Correos temporales:** también se rechazan en el registro del propietario (formulario y alta por la clínica) y al cambiar el correo, con la lista de `DominiosDesechables` y aviso junto al campo; criterio en HU-T.5, HU-T.18 y HU-5.8 (sin subir revisión).

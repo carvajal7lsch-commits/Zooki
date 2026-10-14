@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
+const { crearDocumento } = require('./apoyo/dom-minimo.cjs');
 
 const raiz = path.join(__dirname, '../..');
 const codigo = (archivo) => fs.readFileSync(path.join(raiz, archivo), 'utf8');
@@ -257,60 +258,52 @@ test('un documento o correo con cuenta, al registrar, muestra el aviso y «Pedir
     assert.doesNotMatch(codigo('views/vet/pacientes.php'), /titular_presente|acepta_politica/);
 });
 
-/** avisos.js con un Swal falso que guarda lo que se le pide. */
-function avisos(confirma = true) {
+/**
+ * avisos.js con un DOM mínimo. M5 C4a (decisión del usuario, 2026-10-13): la
+ * confirmación corta es el modal de Zooki, sin SweetAlert; si se llamara a
+ * Swal.fire, la prueba lo vería en «llamadas».
+ */
+function avisos() {
     const llamadas = [];
-    const contexto = {
-        console,
-        window: {},
-        document: {
-            addEventListener() {},
-            createElement: () => {
-                let texto = '';
-                return {
-                    set textContent(valor) { texto = valor; },
-                    get innerHTML() { return texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); },
-                };
-            },
-        },
-    };
-    contexto.Swal = { fire: async (opciones) => { llamadas.push(opciones); return { isConfirmed: confirma }; } };
+    const document = crearDocumento();
+    const contexto = { console, window: {}, document };
+    contexto.Swal = { fire: async (opciones) => { llamadas.push(opciones); return { isConfirmed: true }; } };
     contexto.window.Swal = contexto.Swal;
     vm.createContext(contexto);
     vm.runInContext(codigo('public/js/avisos.js'), contexto);
-    return { contexto, llamadas };
+    return { contexto, llamadas, document };
 }
 
 test('desactivar un cliente pide solo «¿Desactivar a <nombre> como cliente?» con el estilo de Zooki', async () => {
-    const { contexto, llamadas } = avisos();
+    const { contexto, llamadas, document } = avisos();
 
-    const ok = await contexto.zookiConfirmarCorto('¿Desactivar a Fabio Dueño como cliente?', 'Desactivar');
+    const promesa = contexto.zookiConfirmarCorto('¿Desactivar a Fabio Dueño como cliente?', 'Desactivar');
+    const fondo = document.body.hijos[0];
+    assert.equal(fondo.className, 'zooki-confirmacion');
+    assert.equal(fondo.buscar('zooki-confirmacion__titulo').textContent, '¿Desactivar a Fabio Dueño como cliente?');
+    assert.equal(fondo.buscar('zooki-confirmacion__filas'), null, 'Sin filas ni explicación.');
+    assert.equal(fondo.buscar('btn-modal-secondary').textContent, 'Cancelar');
+    fondo.buscar('btn-modal-primary').click();
 
-    assert.equal(ok, true);
-    const [opciones] = llamadas;
-    assert.equal(opciones.title, '¿Desactivar a Fabio Dueño como cliente?');
-    assert.equal(opciones.text, undefined, 'Sin explicación.');
-    assert.equal(opciones.icon, undefined, 'Sin icono.');
-    assert.equal(opciones.html, undefined);
-    assert.equal(opciones.buttonsStyling, false);
-    assert.equal(opciones.customClass.popup, 'zooki-confirmacion');
-    assert.equal(opciones.customClass.confirmButton, 'btn-modal-primary');
-    assert.equal(opciones.customClass.cancelButton, 'btn-modal-secondary');
+    assert.equal(await promesa, true);
+    assert.equal(llamadas.length, 0, 'Sin SweetAlert.');
     const usuarios = codigo('public/js/usuarios.js');
     assert.match(usuarios, /zookiConfirmarCorto\('¿Desactivar a ' \+ nombre \+ ' como cliente\?', 'Desactivar'\)/);
     assert.doesNotMatch(usuarios, /sus otras clínicas no cambian/, 'Ya no insinúa que tiene otras clínicas.');
 });
 
-test('la confirmación corta de Agendar lleva clínica, mascota, día y hora, escapados', async () => {
-    const { contexto, llamadas } = avisos(false);
+test('la confirmación corta de Agendar lleva clínica, mascota, día y hora, como texto', async () => {
+    const { contexto, document } = avisos();
 
-    const ok = await contexto.zookiConfirmarCorto('¿Agendar esta cita?', 'Agendar', [['Clínica', 'Norte <b>'], ['Mascota', 'Luna'], ['Día', 'lunes 7 de enero'], ['Hora', '9:00 a. m.']]);
+    const promesa = contexto.zookiConfirmarCorto('¿Agendar esta cita?', 'Agendar', [['Clínica', 'Norte <b>'], ['Mascota', 'Luna'], ['Día', 'lunes 7 de enero'], ['Hora', '9:00 a. m.']]);
+    const fondo = document.body.hijos[0];
+    const etiquetas = fondo.porEtiqueta('dt').map(n => n.textContent);
+    const valores = fondo.porEtiqueta('dd').map(n => n.textContent);
+    fondo.buscar('btn-modal-secondary').click();
 
-    assert.equal(ok, false);
-    const html = llamadas[0].html;
-    assert.match(html, /<dl class="zooki-confirmacion__filas">/);
-    assert.match(html, /<dt>Clínica<\/dt><dd>Norte &lt;b&gt;<\/dd>/);
-    for (const etiqueta of ['Mascota', 'Día', 'Hora']) assert.match(html, new RegExp(`<dt>${etiqueta}</dt>`));
+    assert.equal(await promesa, false);
+    assert.deepEqual(etiquetas, ['Clínica', 'Mascota', 'Día', 'Hora']);
+    assert.equal(valores[0], 'Norte <b>', 'Va con textContent: no se interpreta como HTML.');
 });
 
 test('Agendar es un solo formulario: una línea dice qué falta y «Agendar» abre la confirmación corta', () => {

@@ -1,68 +1,124 @@
 /* ═══════════════════════════════════════════════════════════
-   Portal · Perfil (M5 C2b)
-   Tarjetas plegables en una columna (componentes.css): mis datos,
-   contacto, datos de acceso, contraseña y salir. Aquí, la tarjeta
-   base y la lista de datos.
+   Portal · Perfil y Clínicas (M5 C4a)
+   Perfil: tres tarjetas (Mis datos, Contacto, Seguridad), en dos
+   columnas desde escritorio; lo que pide confirmar la identidad abre
+   un modal (ventanas.css). Clínicas: una fila corta por clínica, la
+   explicación del interruptor una sola vez, y las dos listas lado a
+   lado desde escritorio. Solo azul y grises (M0.2).
    ═══════════════════════════════════════════════════════════ */
+
+/* ── Perfil ── */
+.perfil-grid {
+    display: grid;
+    gap: 1rem;
+    align-items: start;
+}
 
 .profile-card {
     background: var(--z-surface);
     border: 1px solid var(--z-border);
-    border-radius: var(--z-radius-lg);
-    padding: 1.5rem;
-    text-align: center;
-    box-shadow: var(--z-shadow);
-    margin-bottom: 1.5rem;
+    border-radius: var(--z-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-.profile-card h2 {
-    font-size: 1.25rem;
+.perfil-tarjeta {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1.1rem 1.2rem;
+}
+
+.perfil-tarjeta__titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: 0.95rem;
     font-weight: 800;
     color: var(--z-text);
+}
+
+.perfil-tarjeta__titulo i { color: var(--z-primary); }
+
+.portal-perfil {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.portal-perfil .card-title-mini {
+    margin: 0 0 0.2rem;
+    font-size: 1rem;
     overflow-wrap: anywhere;
 }
 
-.profile-card p {
-    font-size: 0.85rem;
-    color: var(--z-text-muted);
+.portal-perfil .avatar-iniciales {
+    width: 48px;
+    height: 48px;
+    box-shadow: none;
 }
 
-.profile-details-list {
-    background: var(--z-surface);
-    border: 1px solid var(--z-border);
-    border-radius: var(--z-radius);
-    overflow: hidden;
-    box-shadow: var(--z-shadow);
-    margin-bottom: 1.5rem;
+/* Dato, valor y su «Cambiar» en una fila. */
+.perfil-datos {
+    display: grid;
+    margin: 0;
 }
 
-.profile-detail-row {
-    display: flex;
+.perfil-dato {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "etiqueta accion"
+        "valor accion";
     align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--z-border);
-    gap: 1rem;
+    column-gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-top: 1px solid var(--z-border);
 }
 
-.profile-detail-row:last-child { border-bottom: none; }
-
-.profile-detail-label {
-    font-size: 0.78rem;
+.perfil-dato dt {
+    grid-area: etiqueta;
+    font-size: 0.72rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
     color: var(--z-text-muted);
-    flex-shrink: 0;
 }
 
-.profile-detail-value {
+.perfil-dato dd {
+    grid-area: valor;
+    margin: 0;
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--z-text);
     overflow-wrap: anywhere;
-    text-align: right;
+}
+
+.perfil-dato .portal-boton-texto { grid-area: accion; }
+
+/* Teléfono: el campo y «Guardar» en la misma fila. */
+.perfil-telefono { gap: 0.25rem; }
+
+.perfil-telefono__fila {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.perfil-telefono__fila .search-input-wrapper {
+    flex: 1;
     min-width: 0;
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+}
+
+.perfil-telefono__fila .btn-primary {
+    width: auto;
+    padding: 0 1.1rem;
+}
+
+.perfil-telefono .portal-ayuda:empty { display: none; }
+
+.perfil-salir {
+    justify-self: start;
+    text-decoration: none;
 }
 
 .password-strength-meter {
@@ -93,15 +149,158 @@
     color: var(--z-danger);
 }
 
-/* C6: mis clínicas — historia compartida (HU-5.12) y vínculos (HU-5.13). */
+/* ── Clínicas (HU-5.12 y HU-5.13) ── */
 .mis-clinicas {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    padding: 1rem 1.25rem;
-    background: var(--z-surface);
-    border: 1px solid var(--z-border);
-    border-radius: var(--z-radius);
+    display: grid;
+    gap: 1.5rem;
+    align-items: start;
 }
 
+.clinicas-bloque .portal-subtitulo-fila { margin: 0 0 0.65rem; }
+
+.clinicas-ayuda {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin: 0 0 0.65rem;
+    font-size: 0.76rem;
+    line-height: 1.45;
+}
+
+.clinicas-ayuda i {
+    margin-top: 0.1rem;
+    color: var(--z-primary);
+}
+
+.clinicas-ayuda strong { color: var(--z-text); }
+
+.clinicas-lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-radius: var(--z-radius);
+    background: var(--z-surface);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.clinica-fila {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    grid-template-areas:
+        "avatar datos accion"
+        ". interruptor interruptor"
+        ". aviso aviso";
+    align-items: center;
+    column-gap: 0.75rem;
+    row-gap: 0.35rem;
+    padding: 0.8rem 1rem;
+}
+
+.clinica-fila + .clinica-fila { border-top: 1px solid var(--z-border); }
+
+.clinica-fila[hidden] { display: none; }
+
+.clinica-fila__avatar.avatar-iniciales {
+    grid-area: avatar;
+    width: 40px;
+    height: 40px;
+    font-size: 0.8rem;
+    box-shadow: none;
+}
+
+.clinica-fila__datos {
+    grid-area: datos;
+    min-width: 0;
+}
+
+.clinica-fila__datos h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--z-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.clinica-fila__datos p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--z-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.clinica-fila__datos p span + span::before {
+    content: '·';
+    margin: 0 0.35rem;
+}
+
+.clinica-fila__estado.is-abierta {
+    font-weight: 600;
+    color: var(--z-primary);
+}
+
+.clinica-fila__interruptor {
+    grid-area: interruptor;
+    margin: 0;
+}
+
+.clinica-fila__accion { grid-area: accion; }
+
+.clinica-fila .btn-primary.clinica-fila__accion {
+    width: auto;
+    padding: 0.5rem 0.85rem;
+}
+
+/* El aviso de RE-5.13.3 ocupa su línea solo cuando hay algo que decir. */
+.clinica-fila__aviso {
+    grid-area: aviso;
+    min-height: 0;
+    margin: 0;
+}
+
+.clinica-fila__aviso:empty { display: none; }
+
+/* El interruptor y el botón de la fila no tienen que verse sueltos en el celular. */
+@media (max-width: 767px) {
+    .clinica-fila {
+        grid-template-areas:
+            "avatar datos datos"
+            ". interruptor interruptor"
+            ". accion accion"
+            ". aviso aviso";
+    }
+
+    .clinica-fila__accion { justify-self: start; }
+
+    .clinica-fila--otra {
+        grid-template-areas:
+            "avatar datos accion"
+            ". aviso aviso";
+    }
+
+    .clinica-fila--otra .clinica-fila__accion { justify-self: end; }
+}
+
+/* ── Escritorio: Perfil y Clínicas en dos columnas ── */
+@media (min-width: 1024px) {
+    /* Mis datos y Seguridad apiladas a la izquierda; Contacto a la derecha, sin
+       dejar un hueco bajo Mis datos cuando Contacto es más alta. */
+    .perfil-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "datos contacto"
+            "seguridad contacto";
+    }
+
+    .perfil-tarjeta--datos { grid-area: datos; }
+    .perfil-tarjeta--contacto { grid-area: contacto; }
+    .perfil-tarjeta--seguridad { grid-area: seguridad; }
+
+    .mis-clinicas {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 2rem;
+    }
+}

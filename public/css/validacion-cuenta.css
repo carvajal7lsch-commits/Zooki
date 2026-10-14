@@ -29,3 +29,15 @@
     padding-top: 1rem;
     border-top: 1px solid #e4e7ec;
 }
+
+/* M5 C4a (punto 11): teléfono con bandera (js/telefono-internacional.js) en el
+   registro, «Completar perfil» y el Perfil del portal; ocupa todo su campo y
+   su lista de países queda por encima de los modales. */
+.iti {
+    display: block;
+    width: 100%;
+}
+
+.iti--container {
+    z-index: 99999 !important;
+}

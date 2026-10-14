@@ -113,4 +113,55 @@ class HorarioAtencionTest extends TestCase
             HorarioAtencion::texto([['inicio' => '08:00', 'fin' => '12:00'], ['inicio' => '14:00', 'fin' => '18:00']])
         );
     }
+    // ── M5 C4a (punto 6): la semana agrupada ──
+
+    /** Semana con las franjas dadas por día (1 = lunes); los demás días, cerrados. */
+    private function semanaCon(array $porDia): array
+    {
+        $semana = [];
+        foreach (HorarioAtencion::DIAS as $n => $nombre) {
+            $semana[$n] = ['dia' => $nombre, 'franjas' => $porDia[$n] ?? []];
+        }
+        return $semana;
+    }
+
+    private const PARTIDO = [['inicio' => '08:00', 'fin' => '12:00'], ['inicio' => '14:00', 'fin' => '18:00']];
+    private const MANANA = [['inicio' => '08:00', 'fin' => '12:00']];
+
+    public function testLosDiasSeguidosConElMismoHorarioVanEnUnaFila(): void
+    {
+        $semana = $this->semanaCon([1 => self::PARTIDO, 2 => self::PARTIDO, 3 => self::PARTIDO, 4 => self::PARTIDO, 5 => self::PARTIDO, 6 => self::MANANA]);
+
+        $filas = HorarioAtencion::agrupar($semana, 2);
+
+        $this->assertSame(['Lun–Vie', 'Sáb', 'Dom'], array_column($filas, 'dias'));
+        $this->assertSame(['8:00–12:00 · 14:00–18:00', '8:00–12:00', 'Cerrado'], array_column($filas, 'texto'));
+        $this->assertSame([true, false, false], array_column($filas, 'hoy'), 'El martes cae en Lun–Vie.');
+        $this->assertSame([false, false, true], array_column($filas, 'cerrado'));
+    }
+
+    public function testUnDiaDistintoEnMedioPartLaSemana(): void
+    {
+        $semana = $this->semanaCon([1 => self::PARTIDO, 2 => self::PARTIDO, 3 => self::MANANA, 4 => self::PARTIDO, 5 => self::PARTIDO]);
+
+        $filas = HorarioAtencion::agrupar($semana, 7);
+
+        $this->assertSame(['Lun–Mar', 'Mié', 'Jue–Vie', 'Sáb–Dom'], array_column($filas, 'dias'), 'Solo se juntan días seguidos.');
+        $this->assertSame('Cerrado', $filas[3]['texto']);
+        $this->assertTrue($filas[3]['hoy']);
+    }
+
+    public function testTodaLaSemanaIgualOTodaCerradaEsUnaSolaFila(): void
+    {
+        $igual = array_fill_keys(range(1, 7), self::PARTIDO);
+        $this->assertSame([['dias' => 'Lun–Dom', 'texto' => '8:00–12:00 · 14:00–18:00', 'cerrado' => false, 'hoy' => true]], HorarioAtencion::agrupar($this->semanaCon($igual), 4));
+
+        $cerrada = HorarioAtencion::agrupar($this->semanaCon([]), 1);
+        $this->assertSame([['dias' => 'Lun–Dom', 'texto' => 'Cerrado', 'cerrado' => true, 'hoy' => true]], $cerrada);
+    }
+
+    public function testLaHoraCortaNoPierdeLaMedianoche(): void
+    {
+        $this->assertSame('0:30–9:05', HorarioAtencion::textoCorto([['inicio' => '00:30', 'fin' => '09:05']]));
+    }
 }

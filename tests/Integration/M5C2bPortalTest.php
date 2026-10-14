@@ -129,29 +129,55 @@ final class M5C2bPortalTest extends TestCase
         $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM mascotas')->fetchColumn());
     }
 
-    public function testClinicasEnTarjetasConInterruptorAvisoYBuscador(): void
+    /** M5 C4a (punto 8): una fila corta por clínica y la explicación del interruptor una sola vez. */
+    public function testClinicasEnFilasConInterruptorAvisoYBuscador(): void
     {
+        $this->db->exec("INSERT INTO propietario_clinica (id_propietario, id_clinica, estado) VALUES (6, 2, 'activo')");
+
         $clinicas = $this->trozo($this->portal(), 'id="screen-clinicas"', '<!-- ══ PERFIL');
 
-        $tarjeta = $this->trozo($clinicas, 'class="person-card portal-clinica" data-id-clinica="1"', '</article>');
-        $this->assertStringContainsString('class="toggle-switch"', $tarjeta);
-        $this->assertStringContainsString('data-autorizar-clinica="1"', $tarjeta);
-        $this->assertStringContainsString('data-desvincular-clinica="1"', $tarjeta);
-        $this->assertStringContainsString('data-aviso-clinica', $tarjeta, 'RE-5.13.3: el rechazo sale en la tarjeta.');
-        $this->assertStringContainsString('data-buscar-clinica', $clinicas);
-        $this->assertStringContainsString('data-vincular-clinica="2"', $clinicas, 'Sur aparece en «Otras clínicas».');
+        $fila = $this->trozo($clinicas, 'class="portal-clinica clinica-fila" data-id-clinica="1"', '</li>');
+        $this->assertStringContainsString('class="toggle-switch"', $fila);
+        $this->assertStringContainsString('data-autorizar-clinica="1"', $fila);
+        $this->assertStringContainsString('aria-describedby="ayudaHistoriaCompartida"', $fila, 'El interruptor nombra la explicación común.');
+        $this->assertStringContainsString('data-desvincular-clinica="1"', $fila);
+        $this->assertStringContainsString('data-aviso-clinica', $fila, 'RE-5.13.3: el rechazo sale en la fila.');
+        $this->assertSame(1, substr_count($clinicas, 'tratamientos y archivos'), 'La explicación sale una vez, no en cada clínica.');
+        $this->assertSame(2, substr_count($clinicas, 'data-autorizar-clinica='));
         $this->assertStringNotContainsString('data-vincular-clinica="3"', $clinicas, 'Una clínica suspendida no se ofrece.');
     }
 
-    public function testPerfilEnTarjetasPlegables(): void
+    public function testOtrasClinicasOfreceVincularmeEnSuFila(): void
     {
-        $perfil = $this->trozo($this->portal(), 'id="screen-account"', '<!-- ══ MASCOTA');
+        $clinicas = $this->trozo($this->portal(), 'id="screen-clinicas"', '<!-- ══ PERFIL');
 
-        $this->assertSame(4, substr_count($perfil, '<details class="'), 'Mis datos, contacto, datos de acceso y contraseña.');
-        $this->assertStringContainsString('<details class="profile-card portal-plegable" id="contactEditSection">', $perfil);
-        $this->assertStringContainsString('<details class="profile-card portal-plegable" id="passwordChangeSection">', $perfil);
-        $this->assertStringContainsString('cuenta-identidad profile-card portal-plegable', $perfil);
-        $this->assertStringContainsString('portal-plegable--enlace', $perfil, 'Salir.');
-        $this->assertStringNotContainsString('data-ui-accion="editar-contacto"', $perfil);
+        $this->assertStringContainsString('data-buscar-clinica', $clinicas);
+        $this->assertStringContainsString('data-vincular-clinica="2"', $clinicas, 'Sur aparece en «Otras clínicas».');
+        $this->assertStringContainsString('class="portal-clinica clinica-fila clinica-fila--otra"', $clinicas);
+    }
+
+    /** M5 C4a (puntos 9 y 10): Mis datos, Contacto y Seguridad; correo, documento y contraseña en modales de Zooki. */
+    public function testPerfilConContactoYLosCambiosEnModales(): void
+    {
+        $html = $this->portal();
+        $perfil = $this->trozo($html, 'id="screen-account"', '<!-- ══ MASCOTA');
+
+        $this->assertStringNotContainsString('<details', $perfil, 'Sin tarjetas plegables.');
+        $this->assertSame(3, substr_count($perfil, 'class="profile-card perfil-tarjeta perfil-tarjeta--'));
+        $this->assertStringContainsString('data-abrir-modal="portalCorreoModal"', $perfil);
+        $this->assertStringContainsString('data-abrir-modal="portalDocumentoModal"', $perfil);
+        $this->assertStringContainsString('data-abrir-modal="portalPasswordModal"', $perfil);
+        $this->assertStringNotContainsString('data-identidad-accion', $perfil, 'Los formularios con confirmación van en los modales.');
+        $this->assertStringContainsString('data-telefono-internacional', $perfil, 'Punto 11: teléfono con bandera.');
+
+        $correo = $this->trozo($html, 'id="portalCorreoModal"', 'id="portalDocumentoModal"');
+        $this->assertStringContainsString('portal-drawer portal-drawer--completa', $correo, 'Hoja a pantalla completa en el celular.');
+        $this->assertStringContainsString('data-identidad-accion="solicitar_cambio_correo_ajax"', $correo);
+        $this->assertStringNotContainsString('cambiar_documento_ajax', $correo);
+        $documento = $this->trozo($html, 'id="portalDocumentoModal"', 'id="portalPasswordModal"');
+        $this->assertStringContainsString('data-identidad-accion="cambiar_documento_ajax"', $documento);
+        $clave = $this->trozo($html, 'id="portalPasswordModal"', '<!-- Ventana: detalle de la cita');
+        $this->assertStringContainsString('id="portalChangePasswordForm"', $clave);
+        $this->assertStringContainsString('users-modal__footer portal-modal__pie', $clave);
     }
 }

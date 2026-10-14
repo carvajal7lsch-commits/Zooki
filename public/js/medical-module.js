@@ -2359,32 +2359,11 @@ document.addEventListener('DOMContentLoaded', () => enlazarEventosPacientes(docu
 let itiNewOwnerPhone;
 let itiEditOwnerPhone;
 
+// M5 C4a: la configuración es la de js/telefono-internacional.js, una sola para todo el sistema.
 document.addEventListener('DOMContentLoaded', function() {
-    const newTelInput = document.querySelector("#new_owner_tel");
-    if (newTelInput) {
-        itiNewOwnerPhone = window.intlTelInput(newTelInput, {
-            initialCountry: "co",
-            preferredCountries: ["co", "us", "mx", "es"],
-            nationalMode: false,
-            autoInsertDialCode: true,
-            strictMode: true,
-            dropdownContainer: document.body,
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js"
-        });
-    }
-
-    const editTelInput = document.querySelector("#edit_owner_tel");
-    if (editTelInput) {
-        itiEditOwnerPhone = window.intlTelInput(editTelInput, {
-            initialCountry: "co",
-            preferredCountries: ["co", "us", "mx", "es"],
-            nationalMode: false,
-            autoInsertDialCode: true,
-            strictMode: true,
-            dropdownContainer: document.body,
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js"
-        });
-    }
+    if (!window.zookiTelefono) return;
+    itiNewOwnerPhone = window.zookiTelefono(document.querySelector("#new_owner_tel"));
+    itiEditOwnerPhone = window.zookiTelefono(document.querySelector("#edit_owner_tel"));
 });
 
 function checkOtherBreed(select, targetGroupId) {

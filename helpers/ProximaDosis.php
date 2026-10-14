@@ -16,6 +16,40 @@ final class ProximaDosis
      */
     public static function porMascota(array $vacunas, array $desparasitaciones, string $hoy): array
     {
+        $proximas = [];
+        foreach (self::pendientes($vacunas, $desparasitaciones, $hoy) as $dosis) {
+            $actual = $proximas[$dosis['id_mascota']] ?? null;
+            if ($actual === null || $dosis['fecha'] < $actual['fecha']) {
+                $proximas[$dosis['id_mascota']] = ['nombre' => $dosis['nombre'], 'fecha' => $dosis['fecha'], 'clinica' => $dosis['clinica']];
+            }
+        }
+        return $proximas;
+    }
+
+    /**
+     * M5 C4a («Próximo en salud» del Inicio): todas las dosis por aplicar de
+     * hoy en adelante, de todas las mascotas, la más cercana primero. Con la
+     * misma regla de la dosis renovada que porMascota().
+     *
+     * @return list<array{id_mascota: int, nombre: string, fecha: string, clinica: string}>
+     */
+    public static function pendientes(array $vacunas, array $desparasitaciones, string $hoy): array
+    {
+        $pendientes = [];
+        foreach (self::vigentes($vacunas, $desparasitaciones) as $dosis) {
+            if (!self::esFechaValida($dosis['fecha']) || $dosis['fecha'] < $hoy) {
+                continue;
+            }
+            unset($dosis['aplicacion']);
+            $pendientes[] = $dosis;
+        }
+        usort($pendientes, static fn (array $a, array $b): int => strcmp($a['fecha'], $b['fecha']));
+        return $pendientes;
+    }
+
+    /** La última aplicación de cada vacuna o tipo de desparasitación, por mascota. */
+    private static function vigentes(array $vacunas, array $desparasitaciones): array
+    {
         $vigentes = [];
         foreach ($vacunas as $vacuna) {
             $clave = $vacuna['id_mascota'] . '|vacuna|' . $vacuna['nombre_vacuna'];
@@ -35,18 +69,7 @@ final class ProximaDosis
                 'clinica' => (string) ($desparasitacion['clinica_nombre'] ?? ''),
             ]);
         }
-
-        $proximas = [];
-        foreach ($vigentes as $dosis) {
-            if (!self::esFechaValida($dosis['fecha']) || $dosis['fecha'] < $hoy) {
-                continue;
-            }
-            $actual = $proximas[$dosis['id_mascota']] ?? null;
-            if ($actual === null || $dosis['fecha'] < $actual['fecha']) {
-                $proximas[$dosis['id_mascota']] = ['nombre' => $dosis['nombre'], 'fecha' => $dosis['fecha'], 'clinica' => $dosis['clinica']];
-            }
-        }
-        return $proximas;
+        return $vigentes;
     }
 
     private static function conservarUltima(array $vigentes, string $clave, string $aplicacion, array $dosis): array

@@ -53,6 +53,57 @@ final class PresentacionPortal
         return ['proximas' => $proximas, 'pasadas' => $pasadas];
     }
 
+    /** M5 C4a (decisión 1 del usuario): cuántos eventos lleva «Próximo en salud» del Inicio. */
+    public const PROXIMO_EN_SALUD = 5;
+
+    /**
+     * «Próximo en salud»: las próximas citas y dosis de todas las mascotas,
+     * por fecha, hasta el tope. Sale de lo que el portal ya leyó, sin otra
+     * consulta. Solo entra lo de las mascotas del propietario ($mascotas, por
+     * id): un registro ajeno no se cuela aunque llegue en la lista (RN-G02).
+     *
+     * @param list<array> $proximasCitas  «Próximas» de separarCitas()
+     * @param list<array> $dosis          ProximaDosis::pendientes()
+     * @param array<int, array> $mascotas las del propietario, por id_mascota
+     * @return list<array{tipo: string, fecha: string, hora: string, mascota: string, titulo: string, clinica: string, id_cita: int}>
+     */
+    public static function proximoEnSalud(array $proximasCitas, array $dosis, array $mascotas, int $tope = self::PROXIMO_EN_SALUD): array
+    {
+        $eventos = [];
+        foreach ($proximasCitas as $cita) {
+            $mascota = $mascotas[(int) $cita['id_mascota']] ?? null;
+            if ($mascota === null) {
+                continue;
+            }
+            $eventos[] = [
+                'tipo' => 'cita',
+                'fecha' => (string) $cita['fecha'],
+                'hora' => substr((string) $cita['hora'], 0, 5),
+                'mascota' => (string) $mascota['nombre'],
+                'titulo' => (string) ($cita['nombre_tipo'] ?? '') ?: 'Cita',
+                'clinica' => (string) ($cita['clinica_nombre'] ?? ''),
+                'id_cita' => (int) $cita['id_cita'],
+            ];
+        }
+        foreach ($dosis as $una) {
+            $mascota = $mascotas[(int) $una['id_mascota']] ?? null;
+            if ($mascota === null) {
+                continue;
+            }
+            $eventos[] = [
+                'tipo' => 'dosis',
+                'fecha' => (string) $una['fecha'],
+                'hora' => '',
+                'mascota' => (string) $mascota['nombre'],
+                'titulo' => (string) $una['nombre'],
+                'clinica' => (string) $una['clinica'],
+                'id_cita' => 0,
+            ];
+        }
+        usort($eventos, static fn (array $a, array $b): int => strcmp($a['fecha'] . $a['hora'], $b['fecha'] . $b['hora']));
+        return array_slice($eventos, 0, $tope);
+    }
+
     /** «Canino · Criollo», con la raza que escribió el propietario mientras la clínica no la confirma. */
     public static function especieYRaza(array $mascota): string
     {

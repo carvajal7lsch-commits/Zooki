@@ -283,7 +283,8 @@ test('la restricción de entrada del nombre no deja escribir lo que no correspon
 test('el portal no usa SweetAlert para errores de validación ni código en línea', () => {
     const js = codigo('public/js/portal.js');
     assert.doesNotMatch(js, /title: 'Revisa los datos'/);
-    assert.equal((js.match(/Swal\.fire\(/g) || []).length, 1, 'Solo la confirmación de cancelar o de la cita duplicada.');
+    // M5 C4a: tampoco para confirmar; cancelar y la cita duplicada usan el modal de Zooki.
+    assert.equal((js.match(/Swal\./g) || []).length, 0, 'Sin SweetAlert en el portal (los toasts van por zookiToast).');
     assert.match(codigo('views/portal/layout.php'), /js\/validacion-mascota\.js\?v=<\?= \$v \?>"><\/script>\s*<script src="js\/portal\.js/);
     for (const archivo of ['views/portal/index.php', 'views/portal/layout.php']) {
         assert.doesNotMatch(codigo(archivo), /\sstyle="|\son[a-z]+="|<script>\s*\S/, archivo);

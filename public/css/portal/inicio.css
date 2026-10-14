@@ -1,8 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   Portal · Inicio (M5 C2)
-   Móvil y tablet: una columna (próxima cita, mascotas y horario).
-   Escritorio: columna principal y columna lateral con el horario.
-   Las tarjetas y el horario compacto están en componentes.css.
+   Portal · Inicio (M5 C2, pulido en C4a)
+   Móvil: una columna (próxima cita, mascotas en carrusel y horario).
+   Tableta: las mascotas en cuadrícula; horario y «Próximo en salud»
+   lado a lado. Escritorio: columna principal y columna lateral.
+   Las filas de cita y el horario compacto están en componentes.css.
    ═══════════════════════════════════════════════════════════ */
 
 .home-grid,
@@ -11,6 +12,245 @@
     display: grid;
     gap: 1.75rem;
     align-content: start;
+}
+
+.section-title-row h2 .tag-mini {
+    margin-left: 0.25rem;
+    font-size: 0.7rem;
+    vertical-align: middle;
+}
+
+/* El saludo vive en la columna principal (la lateral sube hasta arriba). */
+.home-cabecera { margin-bottom: 0; }
+
+/* ── Mis mascotas: el diseño anterior del portal (antes de d8a62f8), potenciado ──
+   Celular: carrusel que se desliza de lado, como las historias; desde tableta, cuadrícula. */
+.mascotas-carrusel {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0 calc(var(--gutter) * -1);
+    padding: 0.25rem var(--gutter) 0.5rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: var(--gutter);
+    scrollbar-width: none;
+}
+
+.mascotas-carrusel::-webkit-scrollbar { display: none; }
+
+.mascota-mini {
+    flex: 0 0 150px;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    min-width: 0;
+    padding: 0.9rem 0.7rem 0.8rem;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    background: var(--z-surface);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.mascota-mini:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.mascota-mini__avatar {
+    display: block;
+    margin-bottom: 0.25rem;
+    padding: 3px;
+    border: 2px solid var(--z-border);
+    border-radius: 50%;
+    transition: border-color 0.2s ease;
+}
+
+.mascota-mini__avatar .avatar-mini img,
+.mascota-mini__avatar .avatar-iniciales {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+.mascota-mini__avatar .avatar-mini img {
+    display: block;
+    object-fit: cover;
+}
+
+/* La inicial va centrada en el círculo (con display: block se subía arriba). */
+.mascota-mini__avatar .avatar-iniciales {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.mascota-mini__nombre {
+    max-width: 100%;
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--z-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mascota-mini__raza {
+    max-width: 100%;
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--z-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mascota-mini__clinicas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+    max-width: 100%;
+    margin-top: 0.2rem;
+}
+
+.mascota-mini__clinicas .tag-mini {
+    max-width: 100%;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.66rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mascota-mini__dosis {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
+    max-width: 100%;
+    margin: 0.3rem 0 0;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    color: var(--z-text-muted);
+    text-align: left;
+}
+
+.mascota-mini__dosis.is-pendiente {
+    font-weight: 600;
+    color: var(--z-primary);
+}
+
+@media (hover: hover) {
+    .mascota-mini:hover {
+        border-color: var(--z-primary);
+        transform: translateY(-2px);
+    }
+
+    .mascota-mini:hover .mascota-mini__avatar { border-color: var(--z-primary); }
+}
+
+/* ── Próximo en salud: solo en tableta y escritorio (decisión 1 del usuario) ── */
+.portal-salud { display: none; }
+
+.portal-salud__lista {
+    display: grid;
+    margin: 0;
+    padding: 0.35rem;
+    list-style: none;
+    border-radius: var(--z-radius);
+    background: var(--z-surface);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.portal-salud__item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.6rem;
+    border-radius: 12px;
+}
+
+.portal-salud__item[role="button"] { cursor: pointer; }
+
+.portal-salud__icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: #eff4ff;
+    color: var(--z-primary);
+}
+
+.portal-salud__item--dosis .portal-salud__icono {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.portal-salud__texto {
+    display: grid;
+    min-width: 0;
+    font-size: 0.75rem;
+    color: var(--z-text-muted);
+}
+
+.portal-salud__texto strong {
+    font-size: 0.84rem;
+    color: var(--z-text);
+}
+
+.portal-salud__texto strong,
+.portal-salud__texto span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.portal-salud__vacio {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border-radius: var(--z-radius);
+    background: var(--z-surface);
+    font-size: 0.8rem;
+    color: var(--z-text-muted);
+}
+
+@media (hover: hover) {
+    .portal-salud__item[role="button"]:hover { background: #f5f8ff; }
+}
+
+/* ── Tableta ── */
+@media (min-width: 768px) {
+    .mascotas-carrusel {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        margin: 0;
+        padding: 0;
+        overflow: visible;
+    }
+
+    .mascota-mini { flex-basis: auto; }
+
+    .portal-salud {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .portal-salud .section-title-row { margin-bottom: 0.75rem; }
+}
+
+/* Tableta: el horario y «Próximo en salud» lado a lado, sin dejar la mitad vacía. */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .home-grid__lateral { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ── Escritorio ── */

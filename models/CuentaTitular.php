@@ -262,8 +262,13 @@ final class CuentaTitular
             throw new InvalidArgumentException('Crea una contraseña antes de cambiar el correo.');
         }
         $email = mb_strtolower(trim((string) ($datos['email'] ?? '')));
-        if (ValidadorCuenta::correo($email) !== null || strlen($email) > 255 || $email === $usuario['email']) {
-            throw new InvalidArgumentException('Escribe un correo nuevo válido.');
+        $motivo = ValidadorCuenta::correo($email);
+        if ($motivo !== null) {
+            throw new InvalidArgumentException($motivo);
+        }
+        // Decirle al titular que ya es su correo no revela nada de otra cuenta.
+        if ($email === mb_strtolower((string) $usuario['email'])) {
+            throw new InvalidArgumentException('Ese ya es tu correo.');
         }
         if ($this->usuarios->existeEmail($email, $id)) {
             return null;
