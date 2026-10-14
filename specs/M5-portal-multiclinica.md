@@ -1094,3 +1094,5 @@ El arranque ejecuta `scripts/migrar.php` automáticamente. Los logs deben inclui
 ### F — Revisión (2026-10-14)
 
 **Revisó:** Claude (arquitecto). **Resultado: aprobada.** PHP 691 pruebas en verde en una copia limpia sin `.env` (31 MySQL omitidas); JS 167/167. El tope de activación bloquea la fila de la cuenta y lee el contador con `FOR UPDATE` (también dentro de la transacción del autorregistro), no reemplaza el enlace vigente al bloquear y no limita el reenvío de la clínica; `created_at` lo pone PHP para medir con la misma hora. Versión `2.0.0-alpha.3`, seis HU implementadas y una revisión por documento, como en el cierre de M0. Escribieron Claude Code y Codex (anotado en el Anexo). Sigue el despliegue por el usuario.
+
+**Despliegue de 2.0.0-alpha.3 (2026-10-14).** El usuario hizo el merge `v2/m5-portal` → `main` y el tag `v2.0.0-alpha.3`. En producción: migración 06 aplicada (`[migraciones] Aplicadas: 06_medio_activacion_propietario.sql`), `--revisar` dice que la base está al día (la semilla se revisa en cada arranque, por diseño) y la aplicación responde `2.0.0-alpha.3`. **M5 cerrado.**

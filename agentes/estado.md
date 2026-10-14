@@ -17,7 +17,7 @@
 - **A:** revisada y aprobada (2026-10-12), con las decisiones del usuario en «A — Revisión» del plan M5.
 - **Módulo anterior:** M0 — Base SaaS, identidad y aislamiento, cerrado. Plan: [`specs/M0-T-base-saas-identidad.md`](../specs/M0-T-base-saas-identidad.md).
 - **Hecho y revisado:** A (inventario), B (base v2 limpia), C1–C9 y C9.1 (código pasado al modelo v2, etapa C cerrada, HU-T.15 cerrada), D1 (sesión, política de datos, registro del propietario y Google), D2 (cuentas del personal y del titular; revisada el 2026-10-08, **aprobada con corrección**).
-- **Entrega actual:** **M0 cerrado y pulido (2026-10-12).** Producción en 2.0.0-alpha.2 (`main` `875d035`, tag `v2.0.0-alpha.2`): acceso y registros pulidos, panel de plataforma y páginas de los correos con el marco del acceso.
+- **Entrega actual:** **M5 cerrado y desplegado (2026-10-14).** Producción en 2.0.0-alpha.3: portal multi-clínica, vínculos y privacidad del propietario, alta sin aceptación presencial, tope de 3 clínicas y pulido del portal y del lado de la clínica. Migración 06 aplicada.
 - **M0 cerrado (2026-10-11).** F1 ejecutada por el usuario: producción en 2.0.0-alpha.1, base v2 limpia, super-administrador y clínica demo «Zooki» activos, IP real comprobada (`TRUSTED_PROXIES=10.0.1.0/24,172.16.0.1,172.16.11.1`). Bitácora al final del plan M0.
 - **Verificación E2:** PHP 566 en verde (SQLite: 3004 aserciones, 29 pruebas MySQL omitidas; con MariaDB temporal: 3363 aserciones, ninguna omitida, base predeterminada `zooki_test_base_v2`); JS 78 en verde. Modelos §12.1, §12.1.1 y §12.2 renderizados. Migración 05 repetible y límites personalizados conservados. No se accedió a la base de trabajo ni a sus contraseñas.
 - **D2.2:** revisada, aprobada y con commit. Verificación de D3 en su anexo del plan.
@@ -27,7 +27,7 @@
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
-- **Siguiente paso:** M5 cerrado en código y revisado (2026-10-14). El usuario hace el commit, despliega 2.0.0-alpha.3 (merge `v2/m5-portal` → `main`, tag) y las tres comprobaciones del Anexo F. Después, el plan del módulo 2 (Grafo I: HU-2.8, HU-2.9, HU-2.11 y alergias/alertas). Pendiente aparte: borrar los respaldos temporales del VPS (ya pasaron días sin problemas).
+- **Siguiente paso:** plan del módulo 2 (Grafo I: HU-2.8 diagnósticos sugeridos, HU-2.9 alertas de toxicidad e interacción, HU-2.11 triage, y alergias y alertas médicas con RE-2.10.1 y RE-2.1.5). Pendiente aparte: borrar los respaldos temporales del VPS.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)
 
