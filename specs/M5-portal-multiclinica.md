@@ -966,6 +966,16 @@ Mutaciones comprobadas: sin el filtro de vínculo activo o de clínica en la bú
 - **El autorregistro de una cuenta pendiente no la liga a la clínica elegida:** el enlace va a la clínica que la registró. Después de activar, se vincula a otra desde su portal (HU-5.13).
 - El selector de propietario del formulario de **editar** mascota sigue con su diseño (fuera de C4b).
 
+### Ajustes tras la primera mirada del usuario (2026-10-14)
+
+1. **Propietarios:** «Aún no activa su cuenta» (y «Desvinculado») pasa a la cabecera, junto al avatar, y los botones quedan abajo en todas las tarjetas de la fila. Así el contenido empieza a la misma altura.
+2. **Modal de mascota:** estado y esterilización en una sola línea, como dos cajas gemelas (misma altura, borde y radio, cada una con su etiqueta pequeña arriba): el interruptor con «Activo» y el select de esterilización. Se quitó la caja gris (`pet-extra-panel`) y la foto queda en 4:3, en registrar y en editar.
+3. **Propietario elegido:** una fila compacta (avatar de 36 px, nombre con sus etiquetas e iconos a la derecha) en lugar de la columna centrada de las tarjetas de Usuarios, para que el modal no haga scroll. Lo mismo para la tarjeta del cliente sobre sus mascotas.
+
+4. **Toda la tarjeta de Propietarios abre el detalle** con sus mascotas, como el ojito; sus botones (editar, reenviar) siguen haciendo lo suyo y con el teclado se abre con Enter o Espacio.
+
+Pruebas: `M5C4bPersonal.test.cjs` comprueba la tarjeta que abre el detalle, la marca en la cabecera, el pie abajo, el bloque compacto en los dos formularios y la fila del propietario elegido.
+
 ### Pantallas para el usuario (computador y celular)
 
 1. **Beto (Norte) → Pacientes › Propietarios.**
@@ -983,3 +993,20 @@ Mutaciones comprobadas: sin el filtro de vínculo activo o de clínica en la bú
 5. **Correos temporales:**
    - En el registro del propietario, en el alta desde Pacientes y en Perfil › Cambiar correo, escribe `alguien@mailinator.com`: junto al campo sale «No se admiten correos temporales».
    - En Cambiar correo, el correo actual dice «Ese ya es tu correo».
+
+### C4b — Revisión (2026-10-13)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, pendiente de la prueba del usuario. PHP 688 pruebas en verde en una copia limpia sin `.env` (30 MySQL omitidas); JS 166/166. La migración 06 conserva los tres valores anteriores del ENUM (`formulario`, `google`, `alta_personal`, comprobado contra el esquema anterior) y agrega `activacion_propietario`; es repetible. La búsqueda por nombre solo ve clientes con vínculo activo de la clínica y escapa el comodín del LIKE. Las tres vías de recuperar la activación responden igual que antes en pantalla.
+
+**Observaciones.** (1) La invitación de personal también rechaza correos temporales por compartir la ayuda al escribir: se acepta, el personal tampoco debe usar correos temporales. (2) **«¿Olvidaste tu contraseña?» y el autorregistro pueden reenviar el enlace de activación sin límite propio:** se corrige en el cierre, con un tope por cuenta (por ejemplo, un envío cada 5 minutos y 3 por hora, en silencio: la pantalla responde igual).
+
+## F — Alcance: cierre de M5 y 2.0.0-alpha.3 (2026-10-13)
+
+**Escribe:** Claude Code. **Revisa:** Claude. **Despliega:** el usuario.
+
+1. Tope de reenvíos del enlace de activación por cuenta (observación 2 de «C4b — Revisión»), con prueba.
+2. Versión `2.0.0-alpha.3` en `config/App.php` y entrada en `HistorialVersiones.md` escrita para quien usa el sistema.
+3. Las seis HU de M5 (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13, HU-2.10) a «Implementada (2.0.0-alpha.3)», con la nota de RE-2.10.1 (alergias y alertas en el módulo 2); reglas aplicadas (RN-109 a RN-116, RN-G20, RN-G21) con su estado.
+4. Revisión nueva de cada documento tocado en M5, una sola vez (metodo §4), y descargas del portal regeneradas.
+5. Tabla §2 del plan con la evidencia final de cada RE y §7 marcado.
+6. Comandos del despliegue para el usuario: merge `v2/m5-portal` → `main`, tag `v2.0.0-alpha.3`; la migración 06 se aplica sola al arrancar; comprobación del registro del migrador.
