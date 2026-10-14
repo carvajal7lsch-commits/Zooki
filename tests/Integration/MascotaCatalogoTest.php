@@ -47,7 +47,8 @@ final class MascotaCatalogoTest extends TestCase
     }
     public function testCamposObligatoriosYLargoSeValidanEnServidor(): void
     {
-        foreach (['nombre'=>'','fecha_nacimiento'=>'','peso'=>'-1','sexo'=>'X','colores'=>[],'nombre_largo'=>str_repeat('A',51)] as $campo=>$valor) {
+        // M5 C4b (decisión 1 del usuario): el color ya no es obligatorio; si llega, sigue siendo del catálogo.
+        foreach (['nombre'=>'','fecha_nacimiento'=>'','peso'=>'-1','sexo'=>'X','colores'=>'rojo','nombre_largo'=>str_repeat('A',51)] as $campo=>$valor) {
             try { $this->modelo->insert($this->datos([$campo === 'nombre_largo' ? 'nombre' : $campo=>$valor])); $this->fail('Debió rechazar'); }
             catch (InvalidArgumentException $e) { $this->assertNotEmpty($e->getMessage()); }
         }

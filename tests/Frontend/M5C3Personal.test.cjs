@@ -12,121 +12,7 @@ const codigo = (archivo) => fs.readFileSync(path.join(raiz, archivo), 'utf8');
 // tiempo real, tarjetas de vincular sin recargar, solo lectura en la historia
 // y Agendar del portal en un solo formulario con su confirmación corta.
 
-/** Un nodo con lo que usan propietario-mascota.js y medical-module.js. */
-function nodo(etiqueta = 'div') {
-    const atributos = {};
-    const clases = new Set();
-    const n = {
-        tagName: etiqueta.toUpperCase(),
-        hijos: [],
-        padre: null,
-        textContent: '',
-        hidden: false,
-        disabled: false,
-        dataset: {},
-        type: '',
-        src: '',
-        alt: '',
-        value: '',
-        escuchas: {},
-        get className() { return [...clases].join(' '); },
-        set className(valor) { clases.clear(); String(valor).split(/\s+/).filter(Boolean).forEach(c => clases.add(c)); },
-        classList: {
-            add: (c) => clases.add(c),
-            remove: (c) => clases.delete(c),
-            toggle: (c, si) => (si ? clases.add(c) : clases.delete(c)),
-            contains: (c) => clases.has(c),
-        },
-        setAttribute: (a, v) => { atributos[a] = String(v); },
-        getAttribute: (a) => (a in atributos ? atributos[a] : null),
-        addEventListener(tipo, fn) { (n.escuchas[tipo] = n.escuchas[tipo] || []).push(fn); },
-        append(...hijos) { hijos.forEach(h => { h.padre = n; n.hijos.push(h); }); },
-        prepend(h) { h.padre = n; n.hijos.unshift(h); },
-        replaceChildren(...hijos) { n.hijos = []; n.append(...hijos); },
-        remove() { if (n.padre) n.padre.hijos = n.padre.hijos.filter(h => h !== n); },
-        replaceWith(otro) {
-            const lista = n.padre.hijos;
-            otro.padre = n.padre;
-            lista[lista.indexOf(n)] = otro;
-        },
-        focus() { n.enfocado = true; },
-        closest(selector) {
-            let actual = n;
-            while (actual) {
-                if (selector === 'button' && actual.tagName === 'BUTTON') return actual;
-                actual = actual.padre;
-            }
-            return null;
-        },
-        matches: () => false,
-        querySelector(selector) {
-            return todos(n).find(h => selector.includes('aviso-solo-lectura') && h.classList.contains('aviso-solo-lectura')) || null;
-        },
-        get texto() { return [n.textContent, ...n.hijos.map(h => h.texto)].join(' ').trim(); },
-    };
-    return n;
-}
-
-function todos(raiz) {
-    return raiz.hijos.flatMap(h => [h, ...todos(h)]);
-}
-
-function botones(raiz) {
-    return todos(raiz).filter(h => h.tagName === 'BUTTON');
-}
-
-/** propietario-mascota.js con un DOM, fetch y temporizadores que controla cada prueba. */
-function modulo({ respuestas = [] } = {}) {
-    const ids = {};
-    ['mascotasExistentes', 'petOwnerDoc', 'ownerSearchWrapper', 'selectedOwnerName', 'selectedOwnerInfo', 'ownerSearchAyuda', 'ownerSearchInput'].forEach(id => {
-        ids[id] = nodo(id === 'ownerSearchInput' || id === 'petOwnerDoc' ? 'input' : 'div');
-    });
-    ids.selectedOwnerInfo.hidden = true;
-    const escuchas = {};
-    const pedidos = [];
-    const avisos = [];
-    const temporizadores = [];
-    let recargas = 0;
-    const contexto = {
-        console,
-        FormData: class { constructor() { this.datos = {}; } set(k, v) { this.datos[k] = v; } append(k, v) { this.datos[k] = v; } },
-        document: {
-            getElementById: (id) => ids[id] || null,
-            createElement: (etiqueta) => nodo(etiqueta),
-            addEventListener: (tipo, fn) => { (escuchas[tipo] = escuchas[tipo] || []).push(fn); },
-        },
-        window: { location: { href: 'index.php?action=vet_pacientes', reload: () => { recargas++; } } },
-        setTimeout: (fn, ms) => { temporizadores.push({ fn, ms }); return temporizadores.length; },
-        clearTimeout: (id) => { if (temporizadores[id - 1]) temporizadores[id - 1].fn = null; },
-        zookiToast: (mensaje, tipo = 'success') => avisos.push([mensaje, tipo]),
-        fetch: async (url, opciones = {}) => {
-            pedidos.push({ url, opciones });
-            const respuesta = respuestas.shift() || { success: true };
-            return { json: async () => respuesta, text: async () => '<html></html>' };
-        },
-        DOMParser: class { parseFromString() { return { getElementById: () => null }; } },
-    };
-    contexto.window.document = contexto.document;
-    vm.createContext(contexto);
-    vm.runInContext(codigo('public/js/propietario-mascota.js'), contexto);
-    const correr = async () => {
-        const pendientes = temporizadores.splice(0).filter(t => t.fn);
-        pendientes.forEach(t => t.fn());
-        await new Promise(r => setImmediate(r));
-        await new Promise(r => setImmediate(r));
-    };
-    const escribir = (valor) => {
-        ids.ownerSearchInput.value = valor;
-        ids.ownerSearchInput.matches = (selector) => selector === '[data-buscar-propietario]';
-        escuchas.input.forEach(fn => fn({ target: ids.ownerSearchInput }));
-    };
-    const clic = async (boton) => {
-        escuchas.click.forEach(fn => fn({ target: boton }));
-        await new Promise(r => setImmediate(r));
-        await new Promise(r => setImmediate(r));
-    };
-    return { api: contexto.window.ZookiPropietarioMascota, ids, pedidos, avisos, temporizadores, correr, escribir, clic, recargas: () => recargas };
-}
+const { nodo, todos, botones, modulo } = require('./apoyo/propietario-mascota.cjs');
 
 const FABIO = {
     vinculado: true,
@@ -220,7 +106,7 @@ test('vincular se pone al día en su sitio con un aviso breve, sin recargar', as
     assert.ok(m.pedidos.some(p => p.url === 'index.php?action=vet_pacientes'), 'Pide otra vez la lista de pacientes para ponerla al día.');
 });
 
-test('elegir al propietario y quitarlo usan hidden, nunca style.display', async () => {
+test('elegir al propietario y quitarlo usan hidden, nunca style.display; ya elegido, un solo bloque (M5 C4b)', async () => {
     const m = modulo({ respuestas: [{ success: true, propietario: { ...FABIO, mascotas: [], pendiente: true } }] });
     m.escribir('fabio@zooki.test');
     await m.correr();
@@ -228,19 +114,27 @@ test('elegir al propietario y quitarlo usan hidden, nunca style.display', async 
     assert.equal(m.ids.petOwnerDoc.value, 6, 'Sin mascotas queda elegido para registrar la primera.');
     assert.equal(m.ids.ownerSearchWrapper.hidden, true);
     assert.equal(m.ids.selectedOwnerInfo.hidden, false);
-    assert.equal(m.ids.selectedOwnerName.textContent, 'Fabio Dueño');
-    assert.match(m.ids.mascotasExistentes.texto, /Aún no activa su cuenta/);
-    assert.deepEqual(botones(m.ids.mascotasExistentes).map(b => b.textContent), ['Reenviar enlace']);
+    // M5 C4b (captura 07): la tarjeta del elegido es lo único; no queda otra en el panel de la búsqueda.
+    assert.equal(m.ids.mascotasExistentes.hijos.length, 0);
+    assert.match(m.ids.selectedOwnerInfo.texto, /Fabio Dueño/);
+    assert.match(m.ids.selectedOwnerInfo.texto, /Aún no activa su cuenta/);
+    const acciones = botones(m.ids.selectedOwnerInfo);
+    assert.deepEqual(acciones.map(b => b.getAttribute('aria-label')), ['Reenviar el enlace de activación', 'Cambiar de propietario']);
+    assert.equal(acciones[0].dataset.reenviarActivacion, '6');
+    assert.equal(acciones[1].dataset.quitarPropietario, '');
 
-    m.api.quitarPropietario(true);
+    await m.clic(acciones[1]);
     assert.equal(m.ids.petOwnerDoc.value, '');
     assert.equal(m.ids.ownerSearchWrapper.hidden, false);
     assert.equal(m.ids.selectedOwnerInfo.hidden, true);
+    assert.equal(m.ids.selectedOwnerInfo.hijos.length, 0);
 
     const js = codigo('public/js/propietario-mascota.js');
     assert.doesNotMatch(js, /\.style\./);
     assert.doesNotMatch(js, /location\.reload|zookiRecargarConAviso/);
     assert.doesNotMatch(codigo('public/js/medical-module.js'), /searchOwnersForPet|function selectOwner|clearOwnerSelection/);
+    assert.match(codigo('views/vet/pacientes.php'), /<div id="selectedOwnerInfo" class="propietario-elegido" aria-live="polite" hidden><\/div>/);
+    assert.doesNotMatch(codigo('views/vet/pacientes.php'), /selectedOwnerName/);
 });
 
 test('un documento o correo con cuenta, al registrar, muestra el aviso y «Pedir confirmación» en el formulario', () => {

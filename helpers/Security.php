@@ -340,7 +340,7 @@ class Security {
 
         // Catalogos y agenda que el portal del propietario tambien consume.
         foreach ([
-            'listar_especies_ajax', 'listar_razas_ajax', 'listar_colores_ajax',
+            'listar_especies_ajax', 'listar_razas_ajax',
             'get_horas_disponibles_ajax', 'get_sugerencias_horario_ajax',
             'cancelar_cita_ajax', 'enviar_email_ajax',
         ] as $a) { $matriz[$a] = $todos; }
@@ -394,7 +394,7 @@ class Security {
             'listar_mascotas_ajax', 'listar_mascotas_propietario_ajax',
             'nuevo_propietario', 'guardar_propietario_ajax',
             'listar_propietarios_ajax', 'get_propietario_ajax', 'actualizar_propietario_ajax',
-            'buscar_propietario_exacto_ajax', 'solicitar_vinculo_propietario_ajax', 'vincular_mascota_ajax',
+            'buscar_propietario_exacto_ajax', 'buscar_propietario_nombre_ajax', 'solicitar_vinculo_propietario_ajax', 'vincular_mascota_ajax',
             'reenviar_activacion_propietario_ajax',
             'registrar_cita_ajax', 'listar_citas_ajax',
             'get_cita_ajax', 'reprogramar_cita_ajax', 'confirmar_cita_ajax',

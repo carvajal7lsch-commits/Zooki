@@ -1008,6 +1008,11 @@ body::after {
     display: none;
 }
 
+/* M5 C4b: el modal de Google muestra solo las partes de su modo (crear o activar). */
+.modal-card [hidden] {
+    display: none !important;
+}
+
 .modal-backdrop:not(.active) {
     pointer-events: none;
 }

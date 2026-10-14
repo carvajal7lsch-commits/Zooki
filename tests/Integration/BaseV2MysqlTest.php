@@ -517,7 +517,7 @@ class BaseV2MysqlTest extends TestCase
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }
@@ -580,6 +580,19 @@ class BaseV2MysqlTest extends TestCase
         $columnas=$this->db->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='verificaciones_email'")->fetchAll(PDO::FETCH_COLUMN);
         $this->assertContains('id_clinica_vinculo',$columnas); $this->assertContains('proposito',$columnas);
         $this->assertSame(1,(int)$this->db->query("SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND CONSTRAINT_NAME='fk_verif_clinica_vinculo'")->fetchColumn());
+    }
+
+    /** M5 C4b: la migración 06 agrega el medio del propietario a una base anterior y se puede repetir. */
+    public function testMigracionC4bAgregaElMedioDelPropietarioYSePuedeRepetir(): void
+    {
+        $this->cargar('01_schema.sql'); $this->cargar('02_semilla.sql');
+        // La forma publicada antes de C4b.
+        $this->db->exec("ALTER TABLE consentimientos_datos MODIFY medio ENUM('formulario','google','alta_personal') NOT NULL");
+        $this->cargar('06_medio_activacion_propietario.sql');
+        $this->cargar('06_medio_activacion_propietario.sql');
+        $tipo=$this->db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='consentimientos_datos' AND COLUMN_NAME='medio'")->fetchColumn();
+        $this->assertSame("enum('formulario','google','alta_personal','activacion_propietario')",$tipo);
+        $this->assertSame('NO',$this->db->query("SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='consentimientos_datos' AND COLUMN_NAME='medio'")->fetchColumn());
     }
 
     /** D-5: la semilla solo inserta lo que falta y nunca sobrescribe. */

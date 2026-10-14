@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/ValidadorTelefono.php';
 require_once __DIR__ . '/PoliticaPassword.php';
+require_once __DIR__ . '/DominiosDesechables.php';
 
 /** Reglas del servidor compartidas por las ayudas al escribir y por el guardado. */
 final class ValidadorCuenta
@@ -66,6 +67,17 @@ final class ValidadorCuenta
             return 'Escribe el dominio completo, por ejemplo gmail.com.';
         }
         return filter_var($valor, FILTER_VALIDATE_EMAIL) ? null : 'Escribe un correo válido.';
+    }
+
+    /**
+     * M5 C4b (decisión 3 del usuario, 2026-10-13; RE-0.1.5): el correo de una
+     * cuenta tampoco puede ser temporal, como el de la clínica. Lo usan el
+     * registro del propietario, su alta por la clínica, el cambio de correo y
+     * la ayuda al escribir, para que el navegador y el servidor digan lo mismo.
+     */
+    public static function correoDeCuenta(string $valor): ?string
+    {
+        return self::correo($valor) ?? DominiosDesechables::validar(self::normalizar('email', $valor));
     }
 
     public static function telefono(string $valor): ?string

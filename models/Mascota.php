@@ -255,10 +255,9 @@ class Mascota extends ModeloClinica
         if ($esterilizado === '') $esterilizado=null;
         if ($esterilizado !== null && !in_array((string)$esterilizado,['0','1'],true)) throw new InvalidArgumentException('Esterilización no válida.');
         $datos['esterilizado']=$esterilizado === null ? null : (int)$esterilizado;
+        // M5 C4b (decisión 1 del usuario): el color ya no se pide; si llega, debe ser del catálogo (RN-107).
         $colores=$datos['colores'] ?? [];
-        if (!is_array($colores) || !$colores) {
-            throw new CampoInvalido('colores[]', ValidadorMascota::AVISO_COLORES, 'Selecciona al menos un color.');
-        }
+        if (!is_array($colores)) throw new InvalidArgumentException('Color no válido.');
         $permitidos=array_map('intval',array_column($this->getColoresBase(),'id_color'));
         foreach ($colores as $color) {
             if (!ctype_digit((string)$color) || !in_array((int)$color,$permitidos,true)) throw new InvalidArgumentException('Color no válido.');

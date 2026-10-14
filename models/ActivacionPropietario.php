@@ -3,6 +3,8 @@ require_once __DIR__ . '/Usuario.php';
 require_once __DIR__ . '/Auditoria.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/Contexto.php';
+require_once __DIR__ . '/../helpers/PoliticaDatos.php';
+require_once __DIR__ . '/ConsentimientoDatos.php';
 
 /**
  * M5 C3 (decisión del usuario, 2026-10-12; RE-T.19.1, RN-G19, RN-109) —
@@ -19,6 +21,18 @@ final class ActivacionPropietario
 {
     public const PROPOSITO = 'activacion_propietario';
     public const HORAS = 72;
+    public const ASUNTO = 'Activa tu cuenta en Zooki';
+
+    /**
+     * El único correo que recibe mientras no active su cuenta: lo envían la
+     * clínica (al registrarlo o reenviarlo) y, desde C4b, el propio titular al
+     * pedirlo con «¿Olvidaste tu contraseña?» o con el autorregistro.
+     */
+    public static function correoHtml(string $clinica, string $url): string
+    {
+        $texto = $clinica . ' te registró como cliente en Zooki. Para entrar a tu portal, acepta la política de tratamiento de datos y crea tu contraseña. El enlace vence en ' . self::HORAS . ' horas.';
+        return '<p>' . htmlspecialchars($texto, ENT_QUOTES, 'UTF-8') . '</p><p><a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">Continuar</a></p>';
+    }
 
     private Auditoria $auditoria;
 
@@ -91,6 +105,92 @@ final class ActivacionPropietario
             $this->auditoria->log(Contexto::idUsuario(), 'OTHER', 'verificaciones_email', $enlace['id'], null, null, 'Enlace de activación del propietario reenviado (RE-T.19.1)', $clinica);
             return $enlace + ['email' => (string) $persona['email'], 'nombre' => (string) $persona['nombre_completo']];
         });
+    }
+
+    /**
+     * M5 C4b (decisión 2 del usuario, 2026-10-13): el titular pide un enlace
+     * nuevo sin depender de la clínica («¿Olvidaste tu contraseña?» o el
+     * autorregistro con su correo). Solo si la cuenta sigue pendiente; si no,
+     * null, y quien llama responde lo mismo que siempre (RN-G15). El enlace
+     * lleva la clínica que lo registró, la de su último enlace.
+     *
+     * @return array{id: int, token: string, email: string, nombre: string, clinica: string}|null
+     */
+    public function renovarPorTitular(int $idUsuario): ?array
+    {
+        if (!$this->esPendiente($idUsuario)) {
+            return null;
+        }
+        return Transaccion::ejecutar($this->db, function () use ($idUsuario): ?array {
+            $origen = $this->origen($idUsuario);
+            if ($origen === null) {
+                return null;
+            }
+            $enlace = $this->enlace($idUsuario, $origen['email'], $origen['id_clinica']);
+            $this->auditoria->log(null, 'OTHER', 'verificaciones_email', $enlace['id'], null, null, 'Enlace de activación pedido por el titular (RE-T.19.1)', $origen['id_clinica']);
+            return $enlace + ['email' => $origen['email'], 'nombre' => $origen['nombre'], 'clinica' => $origen['clinica']];
+        });
+    }
+
+    /** Nombre de la clínica que lo registró, para el modal de Google. Null si no está pendiente. */
+    public function clinicaDeOrigen(int $idUsuario): ?string
+    {
+        if (!$this->esPendiente($idUsuario)) {
+            return null;
+        }
+        $origen = $this->origen($idUsuario);
+        return $origen === null ? null : $origen['clinica'];
+    }
+
+    /**
+     * M5 C4b (decisión 2; RN-G21): entrar con Google con una cuenta pendiente
+     * la activa sin contraseña, porque Google ya demostró que el correo es
+     * suyo. Exige aceptar la política (RN-G19), liga Google y anula los
+     * enlaces de activación que queden.
+     */
+    public function activarConGoogle(int $idUsuario, string $email, ?string $googleUid, bool $acepta, string $ip): void
+    {
+        if (!$acepta) {
+            throw new InvalidArgumentException('Debes aceptar la política de tratamiento de datos.');
+        }
+        Transaccion::ejecutar($this->db, function () use ($idUsuario, $email, $googleUid, $ip): void {
+            $bloqueo = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : '';
+            $stmt = $this->db->prepare('SELECT u.email FROM usuarios u WHERE u.id_usuario = ? AND ' . self::pendiente('u') . $bloqueo);
+            $stmt->execute([$idUsuario]);
+            $actual = $stmt->fetchColumn();
+            if ($actual === false || mb_strtolower((string) $actual) !== mb_strtolower($email)) {
+                throw new InvalidArgumentException('Tu cuenta ya no está pendiente. Vuelve a continuar con Google.');
+            }
+            $origen = $this->origen($idUsuario);
+            $this->db->prepare('UPDATE usuarios SET estado = 1, google_uid = COALESCE(google_uid, ?) WHERE id_usuario = ? AND estado = 0 AND password IS NULL')
+                ->execute([$googleUid, $idUsuario]);
+            $this->db->prepare('UPDATE verificaciones_email SET used = 1 WHERE id_usuario = ? AND proposito = ? AND used = 0')
+                ->execute([$idUsuario, self::PROPOSITO]);
+            (new ConsentimientoDatos($this->db))->registrar($idUsuario, PoliticaDatos::MEDIO_GOOGLE, $ip);
+            $this->auditoria->log($idUsuario, 'UPDATE', 'usuarios', $idUsuario, ['estado' => 0], ['estado' => 1], 'Propietario activado con Google: aceptó la política (RE-T.19.1, RN-G21)', $origen['id_clinica'] ?? null);
+        });
+    }
+
+    /** Correo, nombre y clínica del último enlace de activación de la persona. */
+    private function origen(int $idUsuario): ?array
+    {
+        $stmt = $this->db->prepare('SELECT u.email, u.nombre_completo, v.id_clinica_vinculo, c.nombre AS clinica
+            FROM usuarios u
+            JOIN verificaciones_email v ON v.id_usuario = u.id_usuario AND v.proposito = ?
+            LEFT JOIN clinicas c ON c.id_clinica = v.id_clinica_vinculo
+            WHERE u.id_usuario = ?
+            ORDER BY v.id DESC LIMIT 1');
+        $stmt->execute([self::PROPOSITO, $idUsuario]);
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($fila === false) {
+            return null;
+        }
+        return [
+            'email' => (string) $fila['email'],
+            'nombre' => (string) $fila['nombre_completo'],
+            'id_clinica' => (int) $fila['id_clinica_vinculo'],
+            'clinica' => (string) ($fila['clinica'] ?? 'Tu clínica'),
+        ];
     }
 
     /**

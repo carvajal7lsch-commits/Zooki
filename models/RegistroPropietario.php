@@ -9,6 +9,7 @@ require_once __DIR__ . '/../helpers/PoliticaPassword.php';
 require_once __DIR__ . '/../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/CasoSoporte.php';
+require_once __DIR__ . '/ActivacionPropietario.php';
 
 /**
  * HU-5.8, HU-T.18 y HU-T.19 — El propietario se registra como identidad
@@ -271,8 +272,10 @@ final class RegistroPropietario
             throw new InvalidArgumentException(ValidadorCuenta::nombre($datos['nombre_completo']));
         }
         $this->exigirTelefono($datos['telefono']);
-        if (ValidadorCuenta::correo($datos['email']) !== null) {
-            throw new InvalidArgumentException(ValidadorCuenta::correo($datos['email']));
+        // M5 C4b (RE-0.1.5): ni mal escrito ni temporal.
+        $motivoCorreo = ValidadorCuenta::correoDeCuenta($datos['email']);
+        if ($motivoCorreo !== null) {
+            throw new InvalidArgumentException($motivoCorreo);
         }
         if ($datos['password'] !== (string) ($entrada['confirm_password'] ?? '')) {
             throw new InvalidArgumentException('Las contraseñas no coinciden.');
@@ -321,6 +324,15 @@ final class RegistroPropietario
         $email = (string) $persona['email'];
         $nombre = (string) $persona['nombre_completo'];
 
+        // M5 C4b (decisión 2): una cuenta que registró una clínica y aún no se
+        // activa recibe un enlace de activación nuevo, sin depender de la
+        // clínica. En pantalla se responde lo mismo que a cualquiera (RN-G15).
+        if ((int) $persona['es_super_admin'] !== 1 && (int) $persona['estado'] !== 1) {
+            $activacion = (new ActivacionPropietario($this->conn))->renovarPorTitular($idUsuario);
+            if ($activacion !== null) {
+                return $this->resultado('activacion', $idUsuario, (string) $activacion['email'], $nombre, $clinica, null) + ['activacion' => $activacion];
+            }
+        }
         // El super-administrador no se combina con otros roles (RE-T.17.5) y
         // una cuenta inactiva no se vincula. Se responde igual, sin enviar nada.
         if ((int) $persona['es_super_admin'] === 1 || (int) $persona['estado'] !== 1) {

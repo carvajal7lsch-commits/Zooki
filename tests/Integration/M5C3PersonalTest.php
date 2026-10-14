@@ -142,7 +142,7 @@ final class M5C3PersonalTest extends TestCase
         $prueba = $this->db->query('SELECT * FROM consentimientos_datos')->fetch(PDO::FETCH_ASSOC);
         $this->assertSame((int) $alta['id_usuario'], (int) $prueba['id_usuario']);
         $this->assertSame(PoliticaDatos::VERSION, $prueba['version_politica']);
-        $this->assertSame('alta_personal', $prueba['medio']);
+        $this->assertSame('activacion_propietario', $prueba['medio'], 'M5 C4b: su propio medio (migración 06).');
         $this->assertSame('192.0.2.30', $prueba['ip_address']);
         $this->assertSame('ok', (new Autenticador($usuarios, new VerificacionEmail($this->db)))->conPassword('rosa@zooki.test', self::CLAVE)['resultado']);
         $this->assertFalse((new ActivacionPropietario($this->db))->esPendiente((int) $alta['id_usuario']));
@@ -269,42 +269,47 @@ final class M5C3PersonalTest extends TestCase
         $this->assertSame(DosClinicas::SUR, (int) $this->db->query("SELECT id_clinica_vinculo FROM verificaciones_email WHERE id = " . $sur->reenviarActivacion($idRosa)['id'])->fetchColumn());
     }
 
-    /** RE-1.5.1 (M5 C3): la búsqueda corre al escribir; el mismo límite por IP que el NIT. */
-    public function testLaBusquedaDelPropietarioTieneLimitePorIp(): void
+    /**
+     * RE-1.5.1 (M5 C3) y revisión de C3 (M5 C4b): la búsqueda del personal
+     * cuenta por usuario (120 en 15 minutos), no por IP: el compañero que busca
+     * desde la misma recepción no queda bloqueado.
+     */
+    public function testLaBusquedaDelPropietarioTieneLimitePorUsuario(): void
     {
         Security::definirAlmacenDeIntentos(new IntentoLogin($this->db));
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET = ['identificador' => '1000000006'];
+        $_GET = ['identificador' => '1000000006', 'nombre' => 'Fabio'];
         $controlador = new MascotaController($this->db);
 
-        for ($i = 0; $i < 20; $i++) {
-            [$respuesta, $codigo] = $this->llamar(fn () => $controlador->buscarPropietarioExactoAjax());
+        for ($i = 0; $i < 120; $i++) {
+            $metodo = $i % 2 === 0 ? 'buscarPropietarioExactoAjax' : 'buscarPropietarioNombreAjax';
+            [$respuesta, $codigo] = $this->llamar(fn () => $controlador->$metodo());
             $this->assertSame(200, $codigo, "búsqueda $i");
             $this->assertTrue($respuesta['success']);
         }
-        [$respuesta, $codigo] = $this->llamar(fn () => $controlador->buscarPropietarioExactoAjax());
-
-        $this->assertSame(429, $codigo);
+        [$respuesta, $codigo] = $this->llamar(fn () => $controlador->buscarPropietarioNombreAjax());
+        $this->assertSame(429, $codigo, 'Las dos búsquedas comparten el contador del usuario.');
         $this->assertSame(MascotaController::MENSAJE_ESPERA, $respuesta['message']);
-        $this->assertArrayNotHasKey('propietario', $respuesta);
+        $this->assertArrayNotHasKey('clientes', $respuesta);
+
+        // Otro usuario de la misma clínica, desde la misma IP, sigue buscando.
+        $_SESSION['id_usuario'] = DosClinicas::ADMIN_NORTE;
+        [$respuesta, $codigo] = $this->llamar(fn () => $controlador->buscarPropietarioExactoAjax());
+        $this->assertSame(200, $codigo);
+        $this->assertTrue($respuesta['success']);
     }
 
     /** M5 C3: el formulario de mascota del personal usa las reglas y avisos de C2b. */
     public function testElServidorDiceElCampoYSuAvisoAlRechazarUnaMascotaDelPersonal(): void
     {
-        $_POST = ['id_propietario' => '6', 'nombre' => 'Toby', 'especie' => '1', 'raza' => '49', 'sexo' => 'Macho', 'peso' => '999', 'fecha_nacimiento' => '2023-01-01', 'colores' => ['1']];
+        // M5 C4b (decisión 1 del usuario): el formulario ya no manda colores.
+        $_POST = ['id_propietario' => '6', 'nombre' => 'Toby', 'especie' => '1', 'raza' => '49', 'sexo' => 'Macho', 'peso' => '999', 'fecha_nacimiento' => '2023-01-01'];
         [$respuesta, $codigo] = $this->llamar(fn () => (new MascotaController($this->db))->registrarAjax());
         $this->assertSame(422, $codigo);
         $this->assertSame('peso', $respuesta['campo']);
         $this->assertSame(ValidadorMascota::AVISOS['peso'], $respuesta['aviso']);
 
         $_POST['peso'] = '4.5';
-        $_POST['colores'] = [];
-        [$respuesta] = $this->llamar(fn () => (new MascotaController($this->db))->registrarAjax());
-        $this->assertSame('colores[]', $respuesta['campo']);
-        $this->assertSame(ValidadorMascota::AVISO_COLORES, $respuesta['aviso']);
-
-        $_POST['colores'] = ['1'];
         $_POST['especie'] = '';
         [$respuesta] = $this->llamar(fn () => (new MascotaController($this->db))->registrarAjax());
         $this->assertSame('especie', $respuesta['campo']);

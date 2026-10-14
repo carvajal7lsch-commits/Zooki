@@ -146,7 +146,9 @@ final class CuentaTitular
             throw new InvalidArgumentException($error ?? 'Las contraseñas no coinciden.');
         }
         $descripcion = $proposito === 'activacion_personal' ? 'Personal activado por el titular (RE-T.19.1)' : 'Propietario activado por el titular: aceptó la política y creó su contraseña (RE-T.19.1)';
-        Transaccion::ejecutar($this->db, function () use ($id, $usuario, $password, $ip, $fila, $descripcion): void {
+        // M5 C4b: la prueba del consentimiento dice cómo aceptó cada uno.
+        $medio = $proposito === 'activacion_personal' ? PoliticaDatos::MEDIO_ALTA_PERSONAL : PoliticaDatos::MEDIO_ACTIVACION_PROPIETARIO;
+        Transaccion::ejecutar($this->db, function () use ($id, $usuario, $password, $ip, $fila, $descripcion, $medio): void {
             $this->consumir($id);
             $this->bloquearUsuario((int) $usuario['id_usuario']);
             $stmt = $this->db->prepare('UPDATE usuarios SET password = ?, estado = 1, debe_cambiar_password = 0 WHERE id_usuario = ? AND estado = 0 AND password IS NULL');
@@ -154,7 +156,7 @@ final class CuentaTitular
             if ($stmt->rowCount() !== 1) {
                 throw new InvalidArgumentException('La cuenta ya no está pendiente.');
             }
-            (new ConsentimientoDatos($this->db))->registrar((int) $usuario['id_usuario'], PoliticaDatos::MEDIO_ALTA_PERSONAL, $ip);
+            (new ConsentimientoDatos($this->db))->registrar((int) $usuario['id_usuario'], $medio, $ip);
             $this->auditoria->log((int) $usuario['id_usuario'], 'UPDATE', 'usuarios', $usuario['id_usuario'], ['estado' => 0], ['estado' => 1], $descripcion, (int) $fila['id_clinica_vinculo']);
         });
     }
@@ -262,7 +264,8 @@ final class CuentaTitular
             throw new InvalidArgumentException('Crea una contraseña antes de cambiar el correo.');
         }
         $email = mb_strtolower(trim((string) ($datos['email'] ?? '')));
-        $motivo = ValidadorCuenta::correo($email);
+        // M5 C4b (RE-0.1.5): tampoco un correo temporal.
+        $motivo = ValidadorCuenta::correoDeCuenta($email);
         if ($motivo !== null) {
             throw new InvalidArgumentException($motivo);
         }

@@ -144,7 +144,7 @@ CREATE TABLE `consentimientos_datos` (
   `id_consentimiento` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_usuario` int(11) NOT NULL,
   `version_politica` varchar(20) NOT NULL,
-  `medio` enum('formulario','google','alta_personal') NOT NULL,
+  `medio` enum('formulario','google','alta_personal','activacion_propietario') NOT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
   `fecha` datetime DEFAULT current_timestamp()
 );

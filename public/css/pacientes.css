@@ -78,15 +78,96 @@
     object-fit: cover;
 }
 
-.selected-badge[hidden],
 .input-wrapper[hidden] { display: none; }
 
-.close-selected-owner {
-    border: 0;
-    background: none;
+/* ── M5 C4b (captura 07): un solo bloque para el propietario elegido ── */
+.propietario-elegido[hidden] { display: none; }
+
+.propietario-elegido .person-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9rem;
+}
+
+.propietario-elegido .card-header-mini,
+.propietario-elegido .card-footer-mini {
+    margin: 0;
     padding: 0;
-    color: inherit;
+    border: 0;
+}
+
+.propietario-elegido .card-body-mini {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+}
+
+.propietario-elegido .card-title-mini {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+}
+
+.propietario-elegido .card-footer-mini {
+    display: flex;
+    gap: 0.35rem;
+}
+
+/* Resultados por nombre: filas cortas que se eligen con un clic. */
+.propietario-resultados {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.propietario-resultado {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    background: #ffffff;
+    color: var(--text-primary, #0f172a);
+    text-align: left;
     cursor: pointer;
+}
+
+.propietario-resultado:hover,
+.propietario-resultado:focus-visible { border-color: var(--primary, #0052ff); }
+
+.propietario-resultado .avatar-iniciales {
+    width: 34px;
+    height: 34px;
+    font-size: 0.78rem;
+    box-shadow: none;
+}
+
+.propietario-resultado__texto {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+}
+
+.propietario-resultado__texto strong,
+.propietario-resultado__texto span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.propietario-resultado__texto span {
+    font-size: 0.78rem;
+    color: var(--text-secondary, #64748b);
+}
+
+/* Acciones de la tabla de propietarios: los mismos botones de icono que las tarjetas. */
+.acciones-mini {
+    display: flex;
+    gap: 0.35rem;
 }
 
 /* Resumen del rechazo del servidor en los formularios de mascota (validacion-mascota.js). */

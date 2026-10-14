@@ -57,8 +57,10 @@ class PropietarioController {
         if (ValidadorCuenta::documento($limpios['documento']) !== null) {
             return 'El documento debe tener entre 5 y 15 digitos.';
         }
-        if (ValidadorCuenta::correo($limpios['email']) !== null) {
-            return 'El correo electronico no tiene un formato valido.';
+        // M5 C4b: el aviso dice qué le falta o que es un correo temporal (RE-0.1.5).
+        $motivoCorreo = ValidadorCuenta::correoDeCuenta($limpios['email']);
+        if ($motivoCorreo !== null) {
+            return $motivoCorreo;
         }
         // D1: la misma regla de teléfono en todo el sistema (ValidadorTelefono).
         $limpios['telefono'] = ValidadorTelefono::normalizar($limpios['telefono']);
@@ -132,12 +134,13 @@ class PropietarioController {
         catch (Throwable $e) { error_log('Reenvío de activación: ' . $e->getMessage()); http_response_code(500); echo json_encode(['success' => false, 'message' => 'No se pudo reenviar el enlace.']); }
     }
 
-    /** El único correo que recibe un propietario mientras no active su cuenta. */
+    /** El único correo que recibe un propietario mientras no active su cuenta (el mismo texto en ActivacionPropietario). */
     private function enviarActivacion(string $email, string $nombre, string $clinica, array $enlace): bool
     {
         $url = EnlaceCuenta::crear('activar_propietario', (int) $enlace['id'], (string) $enlace['token']);
-        $texto = $clinica . ' te registró como cliente en Zooki. Para entrar a tu portal, acepta la política de tratamiento de datos y crea tu contraseña. El enlace vence en 72 horas.';
-        return $this->correo($email, $nombre, 'Activa tu cuenta en Zooki', $texto, $url);
+        $html = ActivacionPropietario::correoHtml($clinica, $url);
+        if ($this->enviarCorreo !== null) return (bool) ($this->enviarCorreo)($email, $nombre, ActivacionPropietario::ASUNTO, $html);
+        return (new EmailService())->enviarCorreoPersonalizado($email, $nombre, ActivacionPropietario::ASUNTO, $html);
     }
 
     private function correo(string $email,string $nombre,string $asunto,string $mensaje,string $enlace): bool

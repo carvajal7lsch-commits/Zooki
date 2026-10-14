@@ -34,7 +34,7 @@ final class ValidadorClinica
             'dv' => preg_match('/^[0-9]$/D', $valor) ? null : 'El DV es un solo dígito.',
             'nombre_clinica' => self::textoValido($valor, self::NOMBRE_MIN, self::NOMBRE_MAX) ? null : 'Nombre de 3 a 150 caracteres.',
             'direccion' => self::textoValido($valor, 1, self::DIRECCION_MAX) ? null : 'Dirección de hasta 255 caracteres.',
-            'email_clinica', 'email_administrador' => ValidadorCuenta::correo($valor) ?? DominiosDesechables::validar($valor),
+            'email_clinica', 'email_administrador' => ValidadorCuenta::correoDeCuenta($valor),
             default => 'Campo no válido.',
         };
     }

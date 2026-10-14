@@ -326,6 +326,29 @@
         return pedir('index.php?action=solicitar_vinculo_propietario_ajax', datos);
     }
 
+    /**
+     * M5 C4b: el panel de Clientes sale del servidor; se pide la página otra
+     * vez y se cambia solo ese panel, con la vista y los filtros elegidos.
+     * Si la respuesta no trae el panel (venció la sesión), se recarga entera.
+     */
+    async function refrescarClientes() {
+        const actual = modulo.querySelector('[data-panel="clientes"]');
+        try {
+            const html = await (await fetch(window.location.href, { credentials: 'same-origin' })).text();
+            const nuevo = new DOMParser().parseFromString(html, 'text/html').querySelector('[data-panel="clientes"]');
+            if (!actual || !nuevo) {
+                window.location.reload();
+                return;
+            }
+            actual.innerHTML = nuevo.innerHTML;
+            cambiarVista(modulo.dataset.vista);
+            filtrar('clientes');
+        } catch (error) {
+            console.error('Usuarios:', error);
+            window.location.reload();
+        }
+    }
+
     async function cambiarEstadoCliente(interruptor) {
         const nombre = interruptor.dataset.nombre;
         const activar = interruptor.checked;
@@ -350,7 +373,9 @@
             r = await pedir('index.php?action=actualizar_propietario_ajax', datos);
         }
         if (r.success) {
-            zookiRecargarConAviso('Vínculo desactivado.');
+            // M5 C4b (revisión de C3): sin recargar; solo el panel de Clientes se pone al día.
+            mensaje('success', 'Vínculo desactivado.');
+            refrescarClientes();
             return;
         }
         interruptor.checked = true;

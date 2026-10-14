@@ -322,11 +322,14 @@ $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES,
             <div class="modal-illustration">
                 <i class="ri-google-fill icono-google-modal" aria-hidden="true"></i>
             </div>
-            <h3>Crea tu cuenta con Google</h3>
-            <p class="modal-subtitle">Google confirmó tu correo <strong id="googleUserEmail"></strong>. Elige tu clínica y acepta la política para crear la cuenta; después te pediremos tu documento y tu teléfono.</p>
+            <?php // M5 C4b (RN-G21): el mismo modal activa la cuenta que registró una clínica, sin elegir clínica. ?>
+            <h3 data-google-modo="registro">Crea tu cuenta con Google</h3>
+            <h3 data-google-modo="activar" hidden>Activa tu cuenta con Google</h3>
+            <p class="modal-subtitle" data-google-modo="registro">Google confirmó tu correo <strong id="googleUserEmail"></strong>. Elige tu clínica y acepta la política para crear la cuenta; después te pediremos tu documento y tu teléfono.</p>
+            <p class="modal-subtitle" data-google-modo="activar" hidden><strong data-google-clinica></strong> te registró como cliente con <strong data-google-correo></strong>. Acepta la política para activar tu cuenta y entrar a tu portal.</p>
             <form id="completeGoogleForm">
                 <?php Csrf::field('google'); ?>
-                <div class="input-group">
+                <div class="input-group" data-google-modo="registro">
                     <label for="google_id_clinica">Clínica</label>
                     <div class="input-wrapper">
                         <select id="google_id_clinica" name="id_clinica" required>

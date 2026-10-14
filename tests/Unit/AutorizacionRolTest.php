@@ -232,11 +232,20 @@ class AutorizacionRolTest extends TestCase
         $this->assertFalse($this->permite('mi_perfil', self::PROPIETARIO));
     }
 
+    /** M5 C4b: buscar al propietario por nombre es del personal de la clínica, nunca del portal. */
+    public function testBuscarPropietarioPorNombreEsDelPersonal()
+    {
+        $this->assertTrue($this->permite('buscar_propietario_nombre_ajax', self::ADMIN));
+        $this->assertTrue($this->permite('buscar_propietario_nombre_ajax', self::VETERINARIO));
+        $this->assertFalse($this->permite('buscar_propietario_nombre_ajax', self::PROPIETARIO));
+        $this->assertArrayNotHasKey('listar_colores_ajax', self::matriz(), 'Sin colores, la ruta ya no existe.');
+    }
+
     /** Endpoints que el portal comparte con el personal (catalogos, agenda, avisos). */
     public function testLosEndpointsCompartidosSiguenAbiertosAlPersonalYAlPortal()
     {
         foreach ([
-            'listar_especies_ajax', 'listar_razas_ajax', 'listar_colores_ajax',
+            'listar_especies_ajax', 'listar_razas_ajax',
             'get_horas_disponibles_ajax', 'get_sugerencias_horario_ajax',
             'cancelar_cita_ajax', 'enviar_email_ajax', 'get_notificaciones_ajax', 'dashboard',
         ] as $accion) {

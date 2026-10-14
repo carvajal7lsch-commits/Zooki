@@ -6,6 +6,7 @@ require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/ContactoPropietario.php';
 require_once __DIR__ . '/VinculoClinica.php';
 require_once __DIR__ . '/ActivacionPropietario.php';
+require_once __DIR__ . '/../helpers/ValidadorCuenta.php';
 
 /** RN-109: datos de propietario del personal y confirmación de vínculo. */
 final class PropietarioClinica extends ModeloClinica
@@ -87,6 +88,48 @@ final class PropietarioClinica extends ModeloClinica
         unset($persona['es_super_admin'], $persona['pendiente']);
         // M5 C3: la clínica sabe que su cliente aún no activa su cuenta, para reenviarle el enlace.
         return $persona + ['vinculado' => true, 'pendiente' => $pendiente, 'mascotas' => $mascotas];
+    }
+
+    /** M5 C4b: mínimo de letras para buscar por nombre y cuántos clientes se muestran. */
+    public const NOMBRE_MIN = 3;
+    public const NOMBRE_RESULTADOS = 8;
+
+    /**
+     * M5 C4b: coincidencia parcial por nombre, solo entre los clientes con
+     * vínculo activo de la clínica activa. Lo que la clínica ya ve en su lista
+     * de clientes, nada de otras clínicas ni de cuentas sin vínculo (RN-111).
+     *
+     * @return list<array{id_usuario: int, nombre_completo: string, documento: ?string, identificador: string, pendiente: bool}>
+     */
+    public function buscarPorNombre(string $texto): array
+    {
+        $texto = ValidadorCuenta::normalizar('nombre_completo', $texto);
+        if (mb_strlen($texto) < self::NOMBRE_MIN || mb_strlen($texto) > ValidadorCuenta::NOMBRE_MAX
+            || !preg_match('/^[' . ValidadorCuenta::NOMBRE_CARACTERES . ']+$/u', $texto)) {
+            return [];
+        }
+        // «!» escapa los comodines igual en MySQL y en SQLite (la barra invertida no).
+        $patron = '%' . strtr($texto, ['!' => '!!', '%' => '!%', '_' => '!_']) . '%';
+        $stmt = $this->conn->prepare("SELECT u.id_usuario, u.nombre_completo, u.documento, u.email,
+                CASE WHEN " . ActivacionPropietario::pendiente('u') . " THEN 1 ELSE 0 END AS pendiente
+            FROM usuarios u
+            JOIN propietario_clinica pc ON pc.id_propietario = u.id_usuario AND pc.id_clinica = ? AND pc.estado = 'activo'
+            WHERE u.es_super_admin = 0 AND LOWER(u.nombre_completo) LIKE LOWER(?) ESCAPE '!'
+            ORDER BY u.nombre_completo
+            LIMIT " . self::NOMBRE_RESULTADOS);
+        $stmt->execute([$this->clinica(), $patron]);
+        $clientes = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            $clientes[] = [
+                'id_usuario' => (int) $fila['id_usuario'],
+                'nombre_completo' => (string) $fila['nombre_completo'],
+                'documento' => $fila['documento'],
+                // Con este dato se trae la ficha con la búsqueda exacta (sus mascotas).
+                'identificador' => (string) ($fila['documento'] ?: $fila['email']),
+                'pendiente' => (int) $fila['pendiente'] === 1,
+            ];
+        }
+        return $clientes;
     }
 
     /**

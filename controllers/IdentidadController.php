@@ -178,7 +178,7 @@ final class IdentidadController
             (string) ($_POST['documento'] ?? ''), (string) ($_POST['nombre_completo'] ?? ''), (string) ($_POST['email'] ?? '')];
         $error = match ($campo) {
             'documento' => ValidadorCuenta::documento($valor),
-            'email' => ValidadorCuenta::correo($valor),
+            'email' => ValidadorCuenta::correoDeCuenta($valor),
             'telefono' => ValidadorCuenta::telefono($valor),
             'nombre_completo' => ValidadorCuenta::nombre($valor),
             'password' => PoliticaPassword::validar($valor, $datosPersonales),

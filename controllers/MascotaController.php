@@ -71,7 +71,7 @@ class MascotaController
                 throw new CampoInvalido('raza_indicada', ValidadorMascota::AVISO_OBLIGATORIO, 'Indica la raza por confirmar.');
             }
         }
-        if (array_key_exists('colores',$entrada)) $datos['colores']=$entrada['colores'];
+        // M5 C4b (decisión 1 del usuario): los formularios ya no piden colores.
         return $datos;
     }
     public function registrarAjax(): void
@@ -129,12 +129,37 @@ class MascotaController
      */
     public function buscarPropietarioExactoAjax(): void
     {
-        if (!Security::checkVerificationLimit(null)) {
-            http_response_code(429);
-            $this->json(['success'=>false,'message'=>self::MENSAJE_ESPERA]);
+        if (!$this->dentroDelLimite()) {
             return;
         }
         $this->json(['success'=>true,'propietario'=>$this->propietarioModel->buscarExacto((string)($_GET['identificador'] ?? ''))]);
+    }
+
+    /**
+     * M5 C4b: por nombre, coincidencia parcial solo entre los clientes con
+     * vínculo activo de esta clínica (nunca la búsqueda global, RN-111).
+     */
+    public function buscarPropietarioNombreAjax(): void
+    {
+        if (!$this->dentroDelLimite()) {
+            return;
+        }
+        $this->json(['success'=>true,'clientes'=>$this->propietarioModel->buscarPorNombre((string)($_GET['nombre'] ?? ''))]);
+    }
+
+    /**
+     * Revisión de C3: el personal está autenticado, así que cuenta por usuario
+     * (120 en 15 minutos), no por IP: una recepción detrás de una sola IP no se
+     * bloquea por el contador de la comprobación pública del NIT.
+     */
+    private function dentroDelLimite(): bool
+    {
+        if (Security::checkVerificationLimit(Contexto::idUsuario())) {
+            return true;
+        }
+        http_response_code(429);
+        $this->json(['success'=>false,'message'=>self::MENSAJE_ESPERA]);
+        return false;
     }
     public function listarMascotasPorPropietarioAjax(): void
     {
@@ -158,5 +183,4 @@ class MascotaController
     }
     public function listarEspeciesAjax(): void { $this->json($this->mascotaModel->getEspecies()); }
     public function listarRazasAjax(): void { $this->json($this->mascotaModel->getRazasByEspecie($_GET['id_especie'] ?? 0)); }
-    public function listarColoresAjax(): void { $this->json($this->mascotaModel->getColoresBase()); }
 }

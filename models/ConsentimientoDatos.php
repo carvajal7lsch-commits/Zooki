@@ -13,7 +13,7 @@ final class ConsentimientoDatos
 
     public function registrar(int $idUsuario, string $medio, string $ip, string $version = PoliticaDatos::VERSION): void
     {
-        $medios = [PoliticaDatos::MEDIO_FORMULARIO, PoliticaDatos::MEDIO_GOOGLE, PoliticaDatos::MEDIO_ALTA_PERSONAL];
+        $medios = [PoliticaDatos::MEDIO_FORMULARIO, PoliticaDatos::MEDIO_GOOGLE, PoliticaDatos::MEDIO_ALTA_PERSONAL, PoliticaDatos::MEDIO_ACTIVACION_PROPIETARIO];
         if (!in_array($medio, $medios, true)) {
             throw new InvalidArgumentException('Medio de aceptación no válido.');
         }

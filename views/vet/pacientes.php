@@ -324,10 +324,6 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                             <label>Fecha de Nacimiento</label>
                                             <span id="dashPetFechaNac">---</span>
                                         </div>
-                                        <div class="dossier-pet-field pet-colores-wrapper">
-                                            <label>Colores Base</label>
-                                            <div id="dashPetColores" class="dash-pet-colores"></div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -364,7 +360,6 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                             <th>Foto</th>
                             <th>Paciente</th>
                             <th>Especie / Raza</th>
-                            <th>Colores</th>
                             <th>Propietario</th>
                             <th>HC</th>
                             <th>Estado</th>
@@ -398,13 +393,6 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                             <span class="sub-text"><?php echo htmlspecialchars((string)($m[
                                                 "sexo"
                                             ]), ENT_QUOTES, 'UTF-8'); ?></span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="cell-info">
-                                            <span class="main-text"><?php echo htmlspecialchars((string)($m[
-                                                "colores_nombres"
-                                            ] ?? "N/A"), ENT_QUOTES, 'UTF-8'); ?></span>
                                         </div>
                                     </td>
                                     <td class="owner-name-cell">
@@ -612,13 +600,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <input type="file" name="foto" id="newFoto" accept="image/jpeg,image/png" class="d-none image-upload-input" data-preview="newPreview" data-clear-btn="btnClearNewImg">
 
                                 <div class="pet-extra-panel mt-1rem">
-                                    <div class="input-group">
-                                        <label class="m-0"><i class="fas fa-palette"></i> Colores Base</label>
-                                        <select id="newSelectedColoresInput" name="colores[]" multiple required class="pacientes-estilo-4" data-aviso-formato="<?= htmlspecialchars(ValidadorMascota::AVISO_COLORES, ENT_QUOTES, 'UTF-8') ?>">
-                                            <!-- Cargado vía JS -->
-                                        </select>
-                                        <small class="cuenta-validacion mascota-aviso" id="newSelectedColoresInput_aviso" aria-live="polite"></small>
-                                    </div>
+                                    <?php // M5 C4b (decisión 1 del usuario): sin colores; la foto identifica a la mascota. ?>
                                     <div class="input-group mt-1rem">
                                         <label><i class="fas fa-toggle-on"></i> Estado de la Mascota</label>
                                         <div class="flex-center-gap mt-2">
@@ -713,20 +695,18 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
 
 
-                                    <?php // RE-1.5.1 (M5 C3): al completar un documento o un correo, se busca solo, con espera corta y límite por IP. ?>
+                                    <?php // RE-1.5.1 (M5 C3): se busca solo, con espera corta. M5 C4b: también por nombre, entre los clientes activos de esta clínica; límite por usuario. ?>
+                                    <?php // M5 C4b (captura 07): un solo bloque; buscar y, ya elegido, el propietario en su tarjeta. ?>
                                     <div class="input-group rel-pos busqueda-propietario">
                                         <label for="ownerSearchInput">Propietario *</label>
                                         <div class="input-wrapper" id="ownerSearchWrapper">
                                             <i class="fas fa-search field-icon"></i>
-                                            <input type="text" id="ownerSearchInput" placeholder="Documento o correo completo..." autocomplete="off" aria-describedby="ownerSearchAyuda" data-buscar-propietario <?= ValidadorCuenta::atributosHtml('email') ?>>
+                                            <input type="text" id="ownerSearchInput" placeholder="Nombre, documento o correo..." autocomplete="off" aria-describedby="ownerSearchAyuda" data-buscar-propietario maxlength="<?= ValidadorCuenta::CORREO_MAX ?>" data-caracteres="\p{L}\p{M}\p{N} @._+'’\-">
                                         </div>
-                                        <small class="cuenta-validacion busqueda-propietario__ayuda" id="ownerSearchAyuda" aria-live="polite">Escribe el documento o el correo completo: lo buscamos solo.</small>
+                                        <small class="cuenta-validacion busqueda-propietario__ayuda" id="ownerSearchAyuda" aria-live="polite">Escribe el nombre, el documento o el correo completo: lo buscamos solo.</small>
                                         <input type="hidden" name="id_propietario" id="petOwnerDoc" required>
                                         <div id="mascotasExistentes" class="mascotas-existentes" aria-live="polite"></div>
-                                        <div id="selectedOwnerInfo" class="selected-badge" hidden>
-                                            <i class="fas fa-user-check" aria-hidden="true"></i> <span id="selectedOwnerName"></span>
-                                            <button type="button" class="close-selected-owner" data-quitar-propietario aria-label="Cambiar de propietario"><i class="fas fa-times-circle" aria-hidden="true"></i></button>
-                                        </div>
+                                        <div id="selectedOwnerInfo" class="propietario-elegido" aria-live="polite" hidden></div>
                                     </div>
                                 </div>
                             </div>
@@ -767,12 +747,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                         <input type="file" name="foto" id="editFoto" accept="image/jpeg,image/png" class="d-none image-upload-input" data-preview="editPreview" data-clear-btn="btnClearEditImg">
 
                         <div class="pet-extra-panel mt-1rem">
-                            <div class="input-group">
-                                <label class="m-0"><i class="fas fa-palette"></i> Colores Base</label>
-                                <select id="editSelectedColoresInput" name="colores[]" multiple required class="w-100 mt-2" data-aviso-formato="<?= htmlspecialchars(ValidadorMascota::AVISO_COLORES, ENT_QUOTES, 'UTF-8') ?>">
-                                    <!-- Cargado vía JS -->
-                                </select>
-                            </div>
+                            <?php // M5 C4b (decisión 1 del usuario): sin colores. ?>
                             <div class="input-group mt-1rem">
                                 <label><i class="fas fa-toggle-on"></i> Estado de la Mascota</label>
                                 <div class="flex-center-gap mt-2">

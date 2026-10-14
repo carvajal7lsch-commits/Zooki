@@ -38,7 +38,6 @@ final class ValidadorMascota
     public const AVISO_OBLIGATORIO = 'Este campo es obligatorio.';
 
     /** M5 C3: el formulario del personal también pide los colores (RE-1.1.1). */
-    public const AVISO_COLORES = 'Elige al menos un color.';
 
     /**
      * @return array{datos: array<string, mixed>, error: ?string}

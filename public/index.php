@@ -54,6 +54,11 @@ switch ($action) {
         (new MascotaController())->buscarPropietarioExactoAjax();
         break;
 
+    case "buscar_propietario_nombre_ajax":
+        require_once '../controllers/MascotaController.php';
+        (new MascotaController())->buscarPropietarioNombreAjax();
+        break;
+
     case "vincular_mascota_ajax":
         require_once '../controllers/MascotaController.php';
         (new MascotaController())->vincularMascotaAjax();
@@ -505,11 +510,6 @@ switch ($action) {
         require_once "../controllers/MascotaController.php";
         $controller = new MascotaController();
         $controller->listarRazasAjax();
-        break;
-    case "listar_colores_ajax":
-        require_once "../controllers/MascotaController.php";
-        $controller = new MascotaController();
-        $controller->listarColoresAjax();
         break;
     // RUTAS SPRINT 2: CONSULTAS MÉDICAS
     case "registrar_consulta_ajax":

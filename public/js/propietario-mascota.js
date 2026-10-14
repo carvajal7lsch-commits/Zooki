@@ -3,8 +3,11 @@
  * (HU-1.5, RE-1.5.1, RN-109, RN-111; Modelos §12.3).
  *
  * - Búsqueda en tiempo real: al completar un documento (5 a 15 dígitos) o un
- *   correo válido, se busca solo, tras una espera corta. El servidor limita
- *   las búsquedas por IP, como la comprobación del NIT.
+ *   correo válido, se busca solo, tras una espera corta. M5 C4b: también por
+ *   nombre (3 letras o más), pero solo entre los clientes activos de esta
+ *   clínica; el servidor limita las búsquedas por usuario (120 en 15 minutos).
+ * - M5 C4b (captura 07): un solo bloque. Ya elegido, el propietario se ve en
+ *   su tarjeta mini, con «Reenviar enlace» y «Cambiar» como botones de icono.
  * - Sin vínculo activo el servidor manda solo el aviso; la respuesta es la
  *   misma para una cuenta nunca vinculada, desvinculada o de plataforma
  *   (C1, C1.1). Con el vínculo, el cliente y sus mascotas en las tarjetas
@@ -16,7 +19,10 @@
  */
 (function () {
     const ESPERA_MS = 450;
-    const AYUDA = 'Escribe el documento o el correo completo: lo buscamos solo.';
+    const AYUDA = 'Escribe el nombre, el documento o el correo completo: lo buscamos solo.';
+    const SIN_NOMBRE = 'Ningún cliente de esta clínica con ese nombre. Búscalo por documento o correo, o regístralo.';
+    /** El mismo mínimo de PropietarioClinica::NOMBRE_MIN. */
+    const NOMBRE_MIN = 3;
     const BUSCANDO = 'Buscando…';
     const SIN_COINCIDENCIA = 'No hay una cuenta con ese dato. Regístralo en la pestaña Propietario.';
     const PENDIENTE = 'Aún no activa su cuenta';
@@ -31,6 +37,19 @@
         return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(limpio);
     }
 
+    /** Un nombre para buscar entre los clientes: letras y espacios, sin dígitos ni @ (ValidadorCuenta::NOMBRE_CARACTERES). */
+    function esNombre(valor) {
+        const limpio = String(valor || '').trim();
+        return limpio.length >= NOMBRE_MIN && /^[\p{L}\p{M} '’\-]+$/u.test(limpio);
+    }
+
+    /** 'exacta' (documento o correo completos), 'nombre' o null si todavía no alcanza. */
+    function tipoDeBusqueda(valor) {
+        if (identificadorCompleto(valor)) return 'exacta';
+        if (esNombre(valor)) return 'nombre';
+        return null;
+    }
+
     function nodo(etiqueta, clase, texto) {
         const elemento = document.createElement(etiqueta);
         if (clase) elemento.className = clase;
@@ -41,6 +60,17 @@
     function boton(clase, texto) {
         const elemento = nodo('button', clase, texto);
         elemento.type = 'button';
+        return elemento;
+    }
+
+    /** Botón de icono de las tarjetas mini (Bootstrap Icons), con su nombre accesible. */
+    function botonIcono(icono, etiqueta) {
+        const elemento = boton('action-btn-mini');
+        elemento.title = etiqueta;
+        elemento.setAttribute('aria-label', etiqueta);
+        const i = nodo('i', 'bi ' + icono);
+        i.setAttribute('aria-hidden', 'true');
+        elemento.append(i);
         return elemento;
     }
 
@@ -62,7 +92,7 @@
     }
 
     /** La tarjeta mini del cliente, como en Usuarios › Clientes. */
-    function tarjetaPropietario(propietario) {
+    function tarjetaPropietario(propietario, elegido = false) {
         const tarjeta = nodo('article', 'client-card person-card busqueda-propietario__cliente');
         const cabecera = nodo('div', 'card-header-mini');
         cabecera.append(nodo('span', 'avatar-mini avatar-iniciales avatar-iniciales--cliente', iniciales(propietario.nombre_completo)));
@@ -71,16 +101,56 @@
         const etiquetas = nodo('div', 'card-tags-mini');
         etiquetas.append(nodo('span', 'tag-mini', `${propietario.mascotas.length} mascota(s) en Zooki`));
         if (propietario.pendiente) etiquetas.append(nodo('span', 'tag-mini tag-mini--aviso', PENDIENTE));
+        if (propietario.documento) etiquetas.append(nodo('span', 'tag-mini', propietario.documento));
         cuerpo.append(etiquetas);
         tarjeta.append(cabecera, cuerpo);
+        const acciones = [];
         if (propietario.pendiente) {
-            const pie = nodo('div', 'card-footer-mini');
-            const reenviar = boton('action-btn-mini', 'Reenviar enlace');
+            const reenviar = botonIcono('bi-envelope-arrow-up-fill', 'Reenviar el enlace de activación');
             reenviar.dataset.reenviarActivacion = String(propietario.id_usuario);
-            pie.append(reenviar);
+            acciones.push(reenviar);
+        }
+        if (elegido) {
+            const cambiar = botonIcono('bi-x-lg', 'Cambiar de propietario');
+            cambiar.dataset.quitarPropietario = '';
+            acciones.push(cambiar);
+        }
+        if (acciones.length) {
+            const pie = nodo('div', 'card-footer-mini');
+            pie.append(...acciones);
             tarjeta.append(pie);
         }
         return tarjeta;
+    }
+
+    /** M5 C4b: un cliente encontrado por nombre; al elegirlo se trae su ficha con la búsqueda exacta. */
+    function filaResultado(cliente) {
+        const fila = boton('propietario-resultado');
+        fila.dataset.identificadorCliente = cliente.identificador;
+        const avatar = nodo('span', 'avatar-mini avatar-iniciales avatar-iniciales--cliente', iniciales(cliente.nombre_completo));
+        avatar.setAttribute('aria-hidden', 'true');
+        const texto = nodo('span', 'propietario-resultado__texto');
+        texto.append(nodo('strong', '', cliente.nombre_completo));
+        texto.append(nodo('span', '', cliente.documento || ''));
+        fila.append(avatar, texto);
+        if (cliente.pendiente) fila.append(nodo('span', 'tag-mini tag-mini--aviso', PENDIENTE));
+        return fila;
+    }
+
+    function pintarResultados(panel, clientes) {
+        panel.replaceChildren();
+        if (!clientes.length) {
+            ayuda(SIN_NOMBRE);
+            return;
+        }
+        ayuda(clientes.length === 1 ? 'Elige al cliente.' : `Elige al cliente (${clientes.length}).`);
+        const lista = nodo('ul', 'propietario-resultados');
+        clientes.forEach(cliente => {
+            const item = nodo('li');
+            item.append(filaResultado(cliente));
+            lista.append(item);
+        });
+        panel.append(lista);
     }
 
     /** RE-1.5.1: nombre, especie, raza y foto; sin datos clínicos. */
@@ -122,19 +192,20 @@
             panel.append(pedir);
             return;
         }
-        ayuda(propietario.mascotas.length ? 'Si la mascota ya está en Zooki, vincúlala en lugar de registrarla otra vez.' : '');
-        panel.append(tarjetaPropietario(propietario));
-        if (propietario.mascotas.length) {
-            const lista = nodo('div', 'mascotas-existentes__lista');
-            propietario.mascotas.forEach(mascota => lista.append(tarjetaMascota(mascota)));
-            panel.append(lista);
-            const nueva = boton('btn-modal-secondary', 'Es otra mascota: registrar nueva');
-            nueva.dataset.elegirPropietario = String(propietario.id_usuario);
-            panel.append(nueva);
-        } else {
-            elegirPropietario(propietario);
-        }
         panel.propietario = propietario;
+        if (!propietario.mascotas.length) {
+            // M5 C4b (captura 07): sin mascotas que vincular, se elige directo, en un solo bloque.
+            elegirPropietario(propietario);
+            return;
+        }
+        ayuda('Si la mascota ya está en Zooki, vincúlala en lugar de registrarla otra vez.');
+        panel.append(tarjetaPropietario(propietario));
+        const lista = nodo('div', 'mascotas-existentes__lista');
+        propietario.mascotas.forEach(mascota => lista.append(tarjetaMascota(mascota)));
+        panel.append(lista);
+        const nueva = boton('btn-modal-secondary', 'Es otra mascota: registrar nueva');
+        nueva.dataset.elegirPropietario = String(propietario.id_usuario);
+        panel.append(nueva);
     }
 
     async function buscar(valor) {
@@ -157,18 +228,40 @@
         }
     }
 
-    /** Al escribir: espera corta y busca solo con un dato completo. */
+    /** M5 C4b: por nombre, solo entre los clientes activos de esta clínica. */
+    async function buscarNombre(valor) {
+        const panel = document.getElementById('mascotasExistentes');
+        if (!panel) return;
+        const miTurno = ++turno;
+        ayuda(BUSCANDO);
+        try {
+            const respuesta = await fetch(`index.php?action=buscar_propietario_nombre_ajax&nombre=${encodeURIComponent(valor.trim())}`);
+            const datos = await respuesta.json();
+            if (miTurno !== turno) return;
+            if (!datos.success) {
+                panel.replaceChildren();
+                ayuda(datos.message || 'No se pudo buscar. Intenta de nuevo.', true);
+                return;
+            }
+            pintarResultados(panel, datos.clientes || []);
+        } catch (error) {
+            if (miTurno === turno) ayuda('No se pudo buscar. Revisa la conexión.', true);
+        }
+    }
+
+    /** Al escribir: espera corta y busca solo con un dato completo o un nombre. */
     function alEscribir(campo) {
         clearTimeout(espera);
         quitarPropietario(false);
         const panel = document.getElementById('mascotasExistentes');
         if (panel) panel.replaceChildren();
         turno++;
-        if (!identificadorCompleto(campo.value)) {
+        const tipo = tipoDeBusqueda(campo.value);
+        if (tipo === null) {
             ayuda(AYUDA);
             return;
         }
-        espera = setTimeout(() => buscar(campo.value), ESPERA_MS);
+        espera = setTimeout(() => (tipo === 'exacta' ? buscar(campo.value) : buscarNombre(campo.value)), ESPERA_MS);
     }
 
     /** Buscar ya (desde la ficha del cliente o tras registrarlo). */
@@ -180,11 +273,15 @@
         if (identificadorCompleto(campo.value)) buscar(campo.value);
     }
 
+    /** M5 C4b (captura 07): el elegido queda en su tarjeta mini; la búsqueda y sus resultados se ocultan. */
     function elegirPropietario(propietario) {
         document.getElementById('petOwnerDoc').value = propietario.id_usuario;
         document.getElementById('ownerSearchWrapper').hidden = true;
-        document.getElementById('selectedOwnerName').textContent = propietario.nombre_completo;
-        document.getElementById('selectedOwnerInfo').hidden = false;
+        const panel = document.getElementById('mascotasExistentes');
+        if (panel) panel.replaceChildren();
+        const elegido = document.getElementById('selectedOwnerInfo');
+        elegido.replaceChildren(tarjetaPropietario(propietario, true));
+        elegido.hidden = false;
         ayuda('');
     }
 
@@ -194,7 +291,10 @@
         const envoltura = document.getElementById('ownerSearchWrapper');
         if (envoltura) envoltura.hidden = false;
         const elegido = document.getElementById('selectedOwnerInfo');
-        if (elegido) elegido.hidden = true;
+        if (elegido) {
+            elegido.hidden = true;
+            elegido.replaceChildren();
+        }
         if (!limpiarCampo) return;
         const campo = document.getElementById('ownerSearchInput');
         if (campo) {
@@ -316,10 +416,14 @@
         else if (control.dataset.reenviarActivacion !== undefined) reenviarActivacion(control);
         else if (control.dataset.elegirPropietario !== undefined) elegirPropietario(document.getElementById('mascotasExistentes').propietario);
         else if (control.dataset.quitarPropietario !== undefined) quitarPropietario(true);
+        else if (control.dataset.identificadorCliente !== undefined) buscar(control.dataset.identificadorCliente);
     });
 
     window.ZookiPropietarioMascota = {
         identificadorCompleto,
+        tipoDeBusqueda,
+        buscarNombre,
+        pintarResultados,
         pintar,
         buscar,
         buscarAhora,
