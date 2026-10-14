@@ -36,6 +36,12 @@ test('Propietarios usa la tarjeta mini de Usuarios, con «Aún no activa su cuen
     }
     const etiquetas = todos(tarjeta).filter(h => h.classList.contains('tag-mini'));
     assert.ok(etiquetas.some(e => e.classList.contains('tag-mini--aviso') && /Aún no activa su cuenta/.test(e.texto)));
+    // M5 C4b (usuario): la marca va en la cabecera, para que el contenido de todas las tarjetas empiece a la misma altura.
+    const cabecera = todos(tarjeta).find(h => h.classList.contains('card-header-mini'));
+    assert.ok(todos(cabecera).some(h => h.classList.contains('tag-mini--aviso')));
+    const cuerpo = todos(tarjeta).find(h => h.classList.contains('card-body-mini'));
+    assert.ok(!todos(cuerpo).some(h => h.classList.contains('tag-mini--aviso')));
+    assert.match(codigo('public/css/pacientes.css'), /#ownersGrid \.card-footer-mini \{ margin-top: auto; \}/, 'Los botones, abajo en todas.');
     const acciones = botones(tarjeta);
     assert.ok(acciones.every(b => b.classList.contains('action-btn-mini')));
     assert.deepEqual(acciones.map(b => b.title), ['Editar', 'Reenviar enlace de activación', 'Ver detalle y mascotas']);
@@ -50,6 +56,26 @@ test('Propietarios usa la tarjeta mini de Usuarios, con «Aún no activa su cuen
     const fila = p.filaDueno(ROSA);
     assert.equal(fila.tagName, 'TR');
     assert.deepEqual(botones(fila).map(b => b.title), ['Editar', 'Reenviar enlace de activación', 'Ver detalle y mascotas']);
+});
+
+test('tocar la tarjeta del propietario abre su detalle con las mascotas, como el ojito; sus botones no', () => {
+    const p = pacientes();
+    const abiertos = [];
+    p.openOwnerDossier = (id) => abiertos.push(id);
+    const tarjeta = p.tarjetaDueno(ROSA);
+
+    assert.equal(tarjeta.getAttribute('role'), 'button');
+    assert.equal(tarjeta.getAttribute('tabindex'), '0');
+    tarjeta.escuchas.click.forEach(fn => fn({ target: todos(tarjeta).find(h => h.classList.contains('card-title-mini')) }));
+    assert.deepEqual(abiertos, [9], 'Clic en el nombre (o cualquier parte de la tarjeta).');
+
+    const reenviar = botones(tarjeta)[1];
+    tarjeta.escuchas.click.forEach(fn => fn({ target: reenviar }));
+    assert.deepEqual(abiertos, [9], 'Reenviar el enlace no abre el detalle.');
+
+    const evento = { target: tarjeta, key: 'Enter', preventDefault() {} };
+    tarjeta.escuchas.keydown.forEach(fn => fn(evento));
+    assert.deepEqual(abiertos, [9, 9], 'Con el teclado, Enter.');
 });
 
 test('el propietario se busca también por nombre, solo con tres letras o más', async () => {
@@ -170,8 +196,17 @@ test('el modal de Google activa la cuenta pendiente sin pedir clínica (RN-G21)'
     assert.match(codigo('public/css/styles.css'), /\.modal-card \[hidden\] \{\s*display: none !important;/);
 });
 
-test('el registro de mascota del personal ya no pide colores', () => {
+test('el registro de mascota del personal ya no pide colores y su panel es compacto', () => {
     const vista = codigo('views/vet/pacientes.php');
+    assert.doesNotMatch(vista, /pet-extra-panel/, 'Sin la caja gris de estado y esterilización.');
+    assert.equal((vista.match(/<div class="mascota-extra">/g) || []).length, 2, 'Registrar y editar.');
+    // En una línea: dos cajas gemelas con su etiqueta arriba (estado y esterilización).
+    assert.equal((vista.match(/<div class="mascota-extra__campo">/g) || []).length, 4);
+    assert.match(vista, /<select class="mascota-extra__control" name="esterilizado" id="new_esterilizado">/);
+    assert.match(vista, /<div class="mascota-extra__control">\s*<label class="toggle-switch" for="toggle_pet_estado">/);
+    assert.match(codigo('public/css/pacientes.css'), /\.mascota-extra \{\s*display: grid;\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+    const css = codigo('public/css/pacientes.css');
+    assert.match(css, /\.propietario-elegido \.person-card,[\s\S]*?flex-direction: row;/, 'El propietario elegido va en una fila compacta.');
     assert.doesNotMatch(vista, /SelectedColoresInput|colores\[\]|dashPetColores/);
     const medical = codigo('public/js/medical-module.js');
     assert.doesNotMatch(medical, /initColores|listar_colores_ajax|colores_nombres|SelectedColoresInput/);

@@ -80,37 +80,140 @@
 
 .input-wrapper[hidden] { display: none; }
 
-/* ── M5 C4b (captura 07): un solo bloque para el propietario elegido ── */
+/* ── M5 C4b (captura 07): un solo bloque para el propietario, en una fila compacta ──
+   La tarjeta mini de Usuarios es una columna centrada; aquí va en fila para que el
+   modal no haga scroll: avatar pequeño, nombre con sus etiquetas e iconos a la derecha. */
 .propietario-elegido[hidden] { display: none; }
 
-.propietario-elegido .person-card {
-    display: flex;
+.propietario-elegido .person-card,
+.mascotas-existentes .busqueda-propietario__cliente {
+    flex-direction: row;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 0.9rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    box-shadow: none;
+    text-align: left;
+    animation: none;
 }
 
 .propietario-elegido .card-header-mini,
-.propietario-elegido .card-footer-mini {
+.propietario-elegido .card-footer-mini,
+.mascotas-existentes .busqueda-propietario__cliente .card-header-mini,
+.mascotas-existentes .busqueda-propietario__cliente .card-footer-mini {
+    flex-shrink: 0;
     margin: 0;
     padding: 0;
     border: 0;
 }
 
-.propietario-elegido .card-body-mini {
+.propietario-elegido .avatar-iniciales,
+.mascotas-existentes .busqueda-propietario__cliente .avatar-iniciales {
+    width: 36px;
+    height: 36px;
+    font-size: 0.78rem;
+    box-shadow: none;
+}
+
+.propietario-elegido .card-body-mini,
+.mascotas-existentes .busqueda-propietario__cliente .card-body-mini {
     flex: 1;
     min-width: 0;
     padding: 0;
+    gap: 0.2rem;
 }
 
-.propietario-elegido .card-title-mini {
-    margin: 0 0 0.25rem;
-    font-size: 0.95rem;
+.propietario-elegido .card-title-mini,
+.mascotas-existentes .busqueda-propietario__cliente .card-title-mini {
+    margin: 0;
+    font-size: 0.92rem;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.propietario-elegido .card-tags-mini,
+.mascotas-existentes .busqueda-propietario__cliente .card-tags-mini {
+    justify-content: flex-start;
+    gap: 0.3rem;
 }
 
 .propietario-elegido .card-footer-mini {
     display: flex;
     gap: 0.35rem;
+}
+
+/* ── M5 C4b (usuario): estado y esterilización en una línea ──
+   Dos cajas gemelas (misma altura, borde y radio que los campos del modal),
+   cada una con su etiqueta pequeña arriba: el interruptor y el select ya no
+   se ven como piezas de estilos distintos. */
+.mascota-extra {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+}
+
+.mascota-extra__campo {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.mascota-extra__etiqueta {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-secondary, #64748b);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mascota-extra__control {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    height: 42px;
+    padding: 0 0.6rem;
+    border: 1.5px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    background: #f8fafc;
+    font-size: 0.85rem;
+    color: var(--text-primary, #0f172a);
+}
+
+select.mascota-extra__control { cursor: pointer; }
+
+select.mascota-extra__control:focus,
+.mascota-extra__control:focus-within {
+    outline: none;
+    border-color: var(--primary, #0052ff);
+    background: #ffffff;
+}
+
+/* El interruptor, a la escala de la caja. */
+.mascota-extra__control .toggle-switch {
+    flex-shrink: 0;
+    transform: scale(0.8);
+    transform-origin: left center;
+    margin-right: -0.4rem;
+}
+
+.mascota-extra__valor {
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* La foto, un poco más baja: con el propietario en fila el modal cabe sin scroll. */
+#formMascota .preview-box,
+#formEditMascota .preview-box {
+    aspect-ratio: 4 / 3;
 }
 
 /* Resultados por nombre: filas cortas que se eligen con un clic. */
@@ -163,6 +266,19 @@
     font-size: 0.78rem;
     color: var(--text-secondary, #64748b);
 }
+
+/* M5 C4b (usuario): en Propietarios los botones quedan abajo en todas las tarjetas de la fila. */
+#ownersGrid .card-footer-mini { margin-top: auto; }
+
+/* Toda la tarjeta abre el detalle del propietario (como el ojito). */
+.client-card--abre { cursor: pointer; }
+
+.client-card--abre:focus-visible {
+    outline: 2px solid var(--primary, #0052ff);
+    outline-offset: 2px;
+}
+
+#ownersGrid .card-header-mini { align-items: center; gap: 0.5rem; }
 
 /* Acciones de la tabla de propietarios: los mismos botones de icono que las tarjetas. */
 .acciones-mini {

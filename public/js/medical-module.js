@@ -343,12 +343,13 @@ function tarjetaDueno(o) {
     const avatar = nodoDueno('span', 'avatar-mini avatar-iniciales avatar-iniciales--cliente', inicialesDueno(o.nombre_completo));
     avatar.setAttribute('aria-hidden', 'true');
     cabecera.append(avatar);
+    // La marca va en la cabecera, junto al avatar: así el contenido de todas las tarjetas queda a la misma altura.
+    if (activo && Number(o.pendiente_activacion) === 1) cabecera.append(etiquetaDueno('Aún no activa su cuenta', 'bi-hourglass-split', 'tag-mini tag-mini--aviso'));
+    // RN-115: desvinculado, solo el nombre y la marca (el servidor no manda el contacto).
+    if (!activo) cabecera.append(etiquetaDueno('Desvinculado', 'bi-link-45deg'));
     const cuerpo = nodoDueno('div', 'card-body-mini');
     cuerpo.append(nodoDueno('h3', 'card-title-mini', o.nombre_completo));
     const etiquetas = nodoDueno('div', 'card-tags-mini');
-    // RN-115: desvinculado, solo el nombre y la marca (el servidor no manda el contacto).
-    if (!activo) etiquetas.append(etiquetaDueno('Desvinculado', 'bi-link-45deg'));
-    if (activo && Number(o.pendiente_activacion) === 1) etiquetas.append(etiquetaDueno('Aún no activa su cuenta', 'bi-hourglass-split', 'tag-mini tag-mini--aviso'));
     etiquetas.append(etiquetaDueno(`${Number(o.total_mascotas)} mascota(s)`, 'bi-heart'));
     if (o.telefono) etiquetas.append(etiquetaDueno(o.telefono, 'bi-phone'));
     cuerpo.append(etiquetas);
@@ -363,7 +364,29 @@ function tarjetaDueno(o) {
     const pie = nodoDueno('div', 'card-footer-mini');
     pie.append(...accionesDueno(o));
     tarjeta.append(cabecera, cuerpo, pie);
+    abrirDetalleConLaTarjeta(tarjeta, o);
     return tarjeta;
+}
+
+/**
+ * M5 C4b (usuario): tocar la tarjeta abre el detalle del propietario con sus
+ * mascotas, como el ojito. Sus botones (editar, reenviar) siguen haciendo lo
+ * suyo, y con el teclado se abre con Enter o Espacio.
+ */
+function abrirDetalleConLaTarjeta(tarjeta, o) {
+    tarjeta.setAttribute('role', 'button');
+    tarjeta.setAttribute('tabindex', '0');
+    tarjeta.setAttribute('aria-label', 'Ver a ' + o.nombre_completo + ' y sus mascotas');
+    tarjeta.classList.add('client-card--abre');
+    tarjeta.addEventListener('click', (evento) => {
+        if (evento.target.closest && evento.target.closest('button')) return;
+        openOwnerDossier(o.id_usuario);
+    });
+    tarjeta.addEventListener('keydown', (evento) => {
+        if (evento.target !== tarjeta || (evento.key !== 'Enter' && evento.key !== ' ')) return;
+        evento.preventDefault();
+        openOwnerDossier(o.id_usuario);
+    });
 }
 
 /** La misma información en una fila de la tabla. */

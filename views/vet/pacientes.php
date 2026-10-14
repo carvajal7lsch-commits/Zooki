@@ -599,19 +599,22 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 </div>
                                 <input type="file" name="foto" id="newFoto" accept="image/jpeg,image/png" class="d-none image-upload-input" data-preview="newPreview" data-clear-btn="btnClearNewImg">
 
-                                <div class="pet-extra-panel mt-1rem">
-                                    <?php // M5 C4b (decisión 1 del usuario): sin colores; la foto identifica a la mascota. ?>
-                                    <div class="input-group mt-1rem">
-                                        <label><i class="fas fa-toggle-on"></i> Estado de la Mascota</label>
-                                        <div class="flex-center-gap mt-2">
-                                            <label class="toggle-switch">
-                                                <input type="checkbox" id="toggle_pet_estado" checked class="status-toggle-input" data-target="new_estado" data-text-target="text_pet_estado" data-text-active="Activo" data-text-inactive="Inactivo">
+                                <div class="mascota-extra">
+                                    <?php // M5 C4b (usuario): estado y esterilización en una línea, dos cajas gemelas con su etiqueta arriba; sin colores. ?>
+                                    <div class="mascota-extra__campo">
+                                        <span class="mascota-extra__etiqueta" id="toggle_pet_estado_etq">Estado</span>
+                                        <div class="mascota-extra__control">
+                                            <label class="toggle-switch" for="toggle_pet_estado">
+                                                <input type="checkbox" id="toggle_pet_estado" checked class="status-toggle-input" data-target="new_estado" data-text-target="text_pet_estado" data-text-active="Activo" data-text-inactive="Inactivo" aria-labelledby="toggle_pet_estado_etq">
                                                 <span class="toggle-slider"></span>
                                             </label>
-                                            <span id="text_pet_estado" class="pacientes-estilo-5 text-success">Activo</span>
+                                            <span id="text_pet_estado" class="pacientes-estilo-5 mascota-extra__valor text-success">Activo</span>
                                         </div>
-                                        <input type="hidden" name="estado" id="new_estado" value="1"><label for="new_esterilizado">Esterilización</label>
-        <select name="esterilizado" id="new_esterilizado"><option value="">No se sabe</option><option value="1">Sí</option><option value="0">No</option></select>
+                                        <input type="hidden" name="estado" id="new_estado" value="1">
+                                    </div>
+                                    <div class="mascota-extra__campo">
+                                        <label class="mascota-extra__etiqueta" for="new_esterilizado">Esterilización</label>
+                                        <select class="mascota-extra__control" name="esterilizado" id="new_esterilizado"><option value="">No se sabe</option><option value="1">Sí</option><option value="0">No</option></select>
                                     </div>
                                 </div>
                             </div>
@@ -746,19 +749,22 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                         </div>
                         <input type="file" name="foto" id="editFoto" accept="image/jpeg,image/png" class="d-none image-upload-input" data-preview="editPreview" data-clear-btn="btnClearEditImg">
 
-                        <div class="pet-extra-panel mt-1rem">
-                            <?php // M5 C4b (decisión 1 del usuario): sin colores. ?>
-                            <div class="input-group mt-1rem">
-                                <label><i class="fas fa-toggle-on"></i> Estado de la Mascota</label>
-                                <div class="flex-center-gap mt-2">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggle_edit_pet_estado" class="status-toggle-input" data-target="edit_estado" data-text-target="text_edit_pet_estado" data-text-active="Activo" data-text-inactive="Inactivo">
+                        <div class="mascota-extra">
+                            <?php // M5 C4b (usuario): estado y esterilización en una línea, dos cajas gemelas con su etiqueta arriba; sin colores. ?>
+                            <div class="mascota-extra__campo">
+                                <span class="mascota-extra__etiqueta" id="toggle_edit_pet_estado_etq">Estado</span>
+                                <div class="mascota-extra__control">
+                                    <label class="toggle-switch" for="toggle_edit_pet_estado">
+                                        <input type="checkbox" id="toggle_edit_pet_estado" class="status-toggle-input" data-target="edit_estado" data-text-target="text_edit_pet_estado" data-text-active="Activo" data-text-inactive="Inactivo" aria-labelledby="toggle_edit_pet_estado_etq">
                                         <span class="toggle-slider"></span>
                                     </label>
-                                    <span id="text_edit_pet_estado" class="pacientes-estilo-6 text-success">Activo</span>
+                                    <span id="text_edit_pet_estado" class="pacientes-estilo-6 mascota-extra__valor text-success">Activo</span>
                                 </div>
-                                <input type="hidden" name="estado" id="edit_estado" value="1"><label for="edit_esterilizado">Esterilización</label>
-        <select name="esterilizado" id="edit_esterilizado"><option value="">No se sabe</option><option value="1">Sí</option><option value="0">No</option></select>
+                                <input type="hidden" name="estado" id="edit_estado" value="1">
+                            </div>
+                            <div class="mascota-extra__campo">
+                                <label class="mascota-extra__etiqueta" for="edit_esterilizado">Esterilización</label>
+                                <select class="mascota-extra__control" name="esterilizado" id="edit_esterilizado"><option value="">No se sabe</option><option value="1">Sí</option><option value="0">No</option></select>
                             </div>
                         </div>
                     </div>
