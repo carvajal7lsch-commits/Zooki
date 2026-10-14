@@ -7,9 +7,10 @@
 ## Ahora
 
 - **Módulo activo:** M2 — Historia clínica y soporte a la decisión (Grafo I), previsto como `2.0.0-alpha.4`. Plan: [`specs/M2-grafo-clinico.md`](../specs/M2-grafo-clinico.md). Rama: `v2/m2-grafo`.
-- **Entrega actual de M2:** **A — inventario y diseño: revisada y aprobada con ajustes (2026-10-14).** Lo escribió Codex. Ver «Anexo A» y «A — Revisión» del plan: B se parte en B1 (esquema, cargador, documentos) y B2 (conocimiento con fuentes); sin hashes por archivo; validación sin columnas de persona; lenguaje de reglas acotado; reglas generales, no por caso; ranking con cobertura; cargador solo si la migración salió bien.
+- **Entrega actual de M2:** **B1 — esquema, cargador y documentos: revisada y aprobada (2026-10-14).** Lo escribió Codex. Ver «Anexo B1» y «B1 — Revisión»: dos correcciones al inicio de B2 (faltan los predicados `exposicion`, `vacunacion` y `dias_desde_celo` para expresar T-06, T-08, T-11 y T-14 a T-16; los errores del validador deben decir archivo y código).
+- **A de M2:** revisada y aprobada con ocho ajustes (2026-10-14), aplicados a B1 y conservados como contrato de B2/C2–C4 en el plan.
+- **Verificación de B1:** Codex: PHP 703 con MariaDB 10.4.32 (4692 aserciones, ninguna omitida); revisión de Claude: lo mismo con MariaDB 10.11 y sin MySQL (4284 aserciones, 34 omitidas); JS 167/167.
 - **Decisiones del usuario durante A (2026-10-14):** no inventar edades ni tiempos; umbrales geriátricos por especie/raza con fuente y «No sé» temporal con revisión si hace falta para calcular. T-16 conserva amarillo provisional con revisión por tipo/cantidad de chocolate desconocidos; 48 horas no es una regla general para rebajar el nivel. Anotadas en §6 del plan M2.
-- **Verificación de A:** PHP 691 en verde sin MySQL (4231 aserciones, 31 omitidas) y con MariaDB temporal propia (4603 aserciones, ninguna omitida, base predeterminada `zooki_test_base_v2`); JS 167/167. Código, esquema y pruebas sin diferencias respecto de `main`; no se accedió a `.env` ni a la base de trabajo.
 - **M5:** cerrado y desplegado como `2.0.0-alpha.3` (2026-10-14); ver «Anexo F — Resultado» y bitácora de despliegue en [`specs/M5-portal-multiclinica.md`](../specs/M5-portal-multiclinica.md).
 - **C4b:** revisada y aprobada por Claude (2026-10-13), con los ajustes visuales pedidos por el usuario el 2026-10-14 y commits `8224d98`, `7cdcf65`, `37f4836` y `f03d0b4`. Migración 06: medio `activacion_propietario` del consentimiento; se aplica automáticamente al desplegar.
 - **C4a:** revisada y aprobada (2026-10-13), con commit `19728e6`.
@@ -30,7 +31,7 @@
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
-- **Siguiente paso:** B1 — esquema, cargador y documentos (Codex), en `v2/m2-grafo`. Reparto de M2: Codex A, B1, B2 y C2–C4; Claude Code C1, C5 y C6. Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Siguiente paso:** B2 — conocimiento inicial con fuentes (Codex), empezando por las dos correcciones de B1. Reparto de M2: Codex A, B1, B2 y C2–C4; Claude Code C1, C5 y C6. Pendiente aparte: borrar los respaldos temporales del VPS.
 - **Decisiones confirmadas durante A (2026-10-14):** Gran danés se agrega en B1 con ID nuevo; las categorías taxonómicas amplias siguen sin cobertura específica y con revisión; el mecanismo de la decisión 3 queda adoptado.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)

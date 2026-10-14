@@ -96,7 +96,8 @@ INSERT IGNORE INTO `razas` (`id_raza`, `id_especie`, `nombre_raza`) VALUES
 (51, 3, 'Sin raza definida'),
 (52, 4, 'Sin raza definida'),
 (53, 5, 'Sin raza definida'),
-(54, 6, 'Sin raza definida');
+(54, 6, 'Sin raza definida'),
+(55, 1, 'Gran danés');
 
 -- Colores (sin «blancoo»; «Verde» con mayúscula, D-4).
 INSERT IGNORE INTO `colores_base` (`id_color`, `nombre_color`) VALUES

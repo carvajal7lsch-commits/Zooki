@@ -1,6 +1,6 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: A revisada y aprobada con ajustes (2026-10-14); en curso B1
+> Estado: B1 entregada, pendiente de revisión de Claude (2026-10-14); B2 no iniciada
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, B2, C2, C3, C4) y Claude Code (C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
@@ -31,7 +31,7 @@
 | HU-2.8 | RE-2.8.1–5 | RN-209, RN-210, RN-212, RN-202 | C2, C5 | Diagnósticos ordenados por peso con casos de prueba; aceptar o escribir el propio |
 | HU-2.9 | RE-2.9.1–4 | RN-209, RN-211, RN-212, RN-113 | C3, C5 | Bloqueo por toxicidad y alergia; advertencia de interacción con auditoría; aviso genérico sin revelar lo de otra clínica |
 | HU-2.11 | RE-2.11.1–7 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | C4 | La batería de 26 casos como prueba automatizada (RE-2.11.7), con síntomas marcados (decisión 3) |
-| Propuesta de A: HU-2.12, mapa del grafo (pendiente de aprobación) | RE-2.12.1–6 propuestos | RN-212, RN-209, RN-004/RN-G13 | C6 | El superadministrador explora conocimiento global con peso, signo y fuente; solo lectura y sin pacientes |
+| HU-2.12, mapa del grafo (aprobada en revisión de A) | RE-2.12.1–6 | RN-212, RN-209, RN-004/RN-G13 | C6 | El superadministrador explora conocimiento global con peso, signo y fuente; solo lectura y sin pacientes |
 
 ## 3. Etapas y dependencias
 
@@ -41,7 +41,7 @@
 | **B1. Esquema y cargador** | Migración `07` repetible (A.2 con los ajustes de la revisión de A), `01_schema.sql`, MER y drawDB; Gran danés en la semilla; validador y cargador idempotente con `--revisar`; arranque que solo carga si la migración salió bien; documentos de A.7; un conjunto de conocimiento mínimo de prueba. | A | Codex | Claude |
 | **B2. Conocimiento inicial** | Los archivos de `database/conocimiento/` con lo que exige la batería (A.3), los casos P1 adicionales y un núcleo común de perros y gatos; cada elemento con su fuente específica y la marca «pendiente de validación veterinaria»; carga repetida sin cambios. | B1 | Codex | Claude |
 | **C1. Alergias y alertas médicas** | Registrar y desactivar (RE-2.1.5); visibles en la ficha de toda clínica vinculada (RN-113) y en el portal (pestaña de la mascota). | B1 | Claude Code | Claude |
-| **C2. Motor de diagnósticos** (HU-2.8) | Helper sin base de datos que ordena diagnósticos por peso según síntomas y contexto; API para la consulta; pruebas con casos. | B2 | Codex | Claude |
+| **C2. Motor de diagnósticos** (HU-2.8) | Helper sin base de datos que ordena por peso y después cobertura de síntomas; informa coincidencias X de Y y presenta máximo 5 candidatos positivos; evaluador de condiciones único compartido por C3/C4; API y pruebas con casos. | B2 | Codex | Claude |
 | **C3. Alertas de prescripción** (HU-2.9) | Bloqueo por toxicidad de especie o raza y por alergia; advertencia de interacción con la medicación vigente, confirmación con auditoría; aviso genérico cuando el tratamiento es de otra clínica sin autorización. | B2, C1 | Codex | Claude |
 | **C4. Motor de triage** (HU-2.11) | Helper con las reglas P1–P8 (RN-416 a RN-418, RN-425) que calcula el nivel **solo con síntomas marcados**, tiempo y paciente; la opción «Otro / no sé» da 🟡 con revisión del personal (P6); el texto libre se guarda para el personal y no cambia el nivel; buscador del catálogo tolerante a errores (sugiere, el usuario confirma); la batería completa como prueba automatizada. | B2 | Codex | Claude |
 | **C5. Consulta del veterinario** | La consulta con síntomas marcados, diagnósticos sugeridos, tratamiento con sus alertas y la sección de alergias y alertas; pendientes de `pulido-interfaz.md` de la consulta. | C1–C3 | Claude Code | Claude |
@@ -89,7 +89,7 @@
 
 - [x] Aprobar este plan y decidir §6 (2026-10-14).
 - [x] A — Inventario y diseño: revisada y aprobada con ajustes (Codex, 2026-10-14).
-- [ ] B1 — Esquema, cargador y documentos.
+- [x] B1 — Esquema, cargador y documentos: entregada, pendiente de revisión (Codex, 2026-10-14).
 - [ ] B2 — Conocimiento inicial con fuentes.
 - [ ] C1 — Alergias y alertas médicas.
 - [ ] C2 — Motor de diagnósticos.
@@ -100,7 +100,7 @@
 - [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.4`.
 
-**Resultado de pruebas:** línea base de A en verde (691 PHP sin/con MariaDB temporal y 167 JS; detalle al final del Anexo A); las pruebas de implementación de B en adelante siguen pendientes.
+**Resultado de pruebas:** B1 en verde: 703 PHP (4284 aserciones y 34 omitidas sin host; 4692 aserciones y ninguna omitida con MariaDB temporal propia y `zooki_test_base_v2`), 167 JS y 27 diagramas renderizados; detalle en Anexo B1. B2 y los motores siguen pendientes.
 
 ## Anexo A — Inventario y diseño
 
@@ -539,3 +539,106 @@ git commit -m "docs(grafo): inventario y diseno de M2 etapa A (HU-2.8, HU-2.9, H
 **Verificación de esta revisión:** `git diff main` sin cambios fuera de `specs/` y `agentes/`; numeración HU-2.12 y RE-2.12.x libre; RE-2.9.3 y RN-211 ya exigen la conciliación que propone A.5.2; `tratamientos.fecha_fin` e `id_nodo_farmaco` existen en el esquema; `docker/iniciar.sh` hoy arranca Apache aunque falle la migración, como señala A.4.
 
 **Siguiente:** B1 (Codex).
+
+## Anexo B1 — Resultado
+
+**Lo escribió Codex (2026-10-14); revisión independiente: Claude (arquitecto).**
+**Estado: entregada, pendiente de revisión.**
+
+### Qué se entregó
+
+- Migración `07_grafo_conocimiento.sql` y esquema consolidado coherentes con MER y drawDB: códigos estables, activo, SHA-256 de 64 caracteres, fuentes, validación, sustancia, sinónimos, reglas y contexto JSON de citas/síntomas.
+  No se agregaron columnas `validado_por` ni `fecha_validacion`; esas evidencias permanecen en el archivo.
+- Gran danés con ID 55 en semilla y migración, sin sobrescribir filas existentes; el tamaño de raza se carga en B2 como conocimiento con fuente.
+  Los conceptos anteriores a 07 conservan su tipo, ID y referencias; quedan inactivos con prefijo reservado `legado.` si no tenían procedencia/código.
+- `ValidadorConocimiento`, puro, con los nueve predicados enumerados en el README, máximo dos niveles de grupos, referencias existentes, fuentes obligatorias y bloqueo solo por toxicidad/alergia con fundamento clínico explícito.
+  No hay evaluador de condiciones ni motores en B1.
+- `ArchivosConocimiento` valida una instantánea completa y calcula su hash; `CargadorConocimiento` escribe solo tablas globales con candado/transacción, conserva IDs, retira lógicamente, recupera IDs al reintroducir y ofrece `--revisar` sin escritura.
+  La auditoría conserva el hash completo; no se reutiliza un código para otro tipo o taxón.
+- Arranque: carga únicamente si `migrar.php` terminó bien; mensajes `[conocimiento]`, conservación transaccional del conjunto previo ante error y arranque de Apache en ambas ramas.
+- `database/conocimiento/` contiene manifiesto sin hashes manuales, cinco listas vacías válidas y README del contrato.
+  El conjunto sintético está solo en `tests/Fixtures/conocimiento/`; el contenido clínico es B2.
+- Captura, limitaciones de los 26 casos, HU-2.12/RE-2.12.1–6, matrices y conteos documentados: 96 HU, 427 RE, 52 entidades.
+  Modelos §1/§3/§4 y nuevo §14 coherentes con el diseño; 27 diagramas de MER/Modelos renderizados con Mermaid 11.4.1.
+  Se conservaron las revisiones actuales y no se regeneraron descargas.
+
+### Trazabilidad y pruebas
+
+| RE/RN o decisión | Evidencia B1 | Lo que sigue pendiente |
+|---|---|---|
+| RN-212; ajustes 1–4 de A | `ValidadorConocimientoTest`: conjunto válido/vacío, nueve predicados, campos/predicados desconocidos, tercer nivel, referencias, fuentes y bloqueos inválidos. | Contenido verificable de B2 y evaluador único de C2. |
+| RN-212; identidad y retiro lógico A.4 | `CargadorConocimientoTest`: segunda carga sin escrituras/auditoría, etiqueta con mismo ID, retiro/reintroducción, simulación sin escritura, faltante/JSON/referencia/taxonomía inválidos sin cambios, rollback por fallo de escritura e identidad taxonómica estable. | Fuentes clínicas y revisión del conjunto real en B2. |
+| Migración 07, FK, Gran danés | `BaseV2MysqlTest::testB1Migracion07ActualizaElEsquemaAnteriorDosVecesSinCambiarIds`, `testB1CargadorRealIdempotenteConCandadoYRevisarSinEscritura`, `testB1TaxonomiaConFKYTiposCoherentes`: actualización real y DDL estable, instalación consolidada más 07 dos veces, integridad y CLI con éxito/error. | MySQL 8 en CI; la verificación local real fue MariaDB 10.4.32. |
+| RE-2.11.1, RN-424/RN-418; decisión 3 | HU, RE, RN, CasosTriage y Modelos expresan marcas confirmadas y tiempos explícitos, sin cálculo por nota; T-16/T-20/T-22/T-23 conservan sus limitaciones. | C4 prueba el cálculo y M4 implementa captura/agenda; B1 no declara aprobado clínicamente el triage. |
+| RE-2.12.1–6 | Numeración y matrices incorporadas; RF-2.7 ampliado sin inventar un RF adicional; flujo §14 renderizado. | Pantalla, endpoint, permisos y pruebas de C6; la HU sigue planificada. |
+| Ajustes 5, 6 y 8 de A | Contrato sin reglas por caso ni predicado de raza individual; C2 mantiene ranking por peso/cobertura con máximo 5 positivos; B2 mantiene la batería/P1 y núcleo aproximado de 15 diagnósticos y 15 fármacos/sustancias con fuentes. | Su implementación corresponde a B2/C2–C4, no se adelantó. |
+| Ajuste 7 de A | Condicional explícito en `docker/iniciar.sh`; CLI probado con `--revisar` y salida no cero ante error. | Comprobación del arranque del contenedor por el usuario; no se levantó Docker durante B1. |
+
+### Verificación
+
+- Suite completa sin host MySQL: **703 pruebas, 4284 aserciones, 34 omitidas** por no habilitar ese motor.
+- Suite completa con `ZOOKI_TEST_MYSQL_HOST`: **703 pruebas, 4692 aserciones, ninguna omitida**, sobre MariaDB 10.4.32 temporal propia y la base predeterminada `zooki_test_base_v2`.
+- JavaScript: **167/167** en verde, sin código JS modificado.
+- `git diff --check` sin errores; conteos documentales comprobados y 27 diagramas renderizados.
+- No se leyó ni escribió `.env`; no se accedió a `zooki_v2_prueba` ni se regeneraron contraseñas.
+  No se hizo commit, push ni se empezó B2.
+
+### Cómo comprobarlo en local
+
+**Docker local:** después de reconstruir/iniciar el servicio, comprobar en los logs que 07 se aplica antes de `[conocimiento] Carga terminada` y que Apache arranca.
+Un reinicio debe mostrar migraciones al día y una carga con cero altas/cambios/retiros para los mismos archivos.
+El hash cargado aparece en la línea del cargador y en `auditoria_sistema.datos_nuevos.version`.
+
+```powershell
+docker compose up -d --build web
+docker compose logs --tail=150 web
+docker compose restart web
+docker compose logs --tail=150 web
+```
+
+**XAMPP:** encender Apache no ejecuta `docker/iniciar.sh`.
+Para reproducir por consola el mismo orden sobre la base local del usuario:
+
+```powershell
+php scripts/migrar.php
+if ($LASTEXITCODE -eq 0) {
+    php scripts/cargar_conocimiento.php
+}
+php scripts/cargar_conocimiento.php --revisar
+```
+
+La carga de B1 es vacía deliberadamente: cero nodos no demuestra cobertura ni éxito de un motor clínico.
+F comprobará de nuevo el arranque y las descargas al publicar el módulo.
+
+### Commit para el usuario — PowerShell 5.1
+
+```powershell
+git add -- database/01_schema.sql database/02_semilla.sql database/07_grafo_conocimiento.sql database/modelo/drawdb_schema_v2.sql database/conocimiento
+git add -- helpers/ArchivosConocimiento.php helpers/ValidadorConocimiento.php models/CargadorConocimiento.php scripts/cargar_conocimiento.php docker/iniciar.sh
+git add -- tests/Fixtures tests/Unit/ValidadorConocimientoTest.php tests/Integration/CargadorConocimientoTest.php tests/Integration/BaseV2MysqlTest.php tests/Support/ConocimientoPrueba.php
+git add -- documentacion/MER.md documentacion/Modelos.md documentacion/HistoriasUsuario.md documentacion/RequisitosEspecificos.md documentacion/ReglasNegocio.md documentacion/CasosTriage.md documentacion/ERS.md documentacion/FichaTecnica_Zooki.md specs/M2-grafo-clinico.md agentes/estado.md
+git diff --cached --stat
+git commit -m "feat(grafo): esquema y cargador de conocimiento B1 (RN-212, RN-424, HU-2.12)"
+```
+
+### B1 — Revisión (2026-10-14)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada; dos correcciones pasan al inicio de B2** (las escribe Codex, que también escribe B2, sobre el validador de B1).
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 703 pruebas y 4284 aserciones (34 omitidas); con MariaDB 10.11 propia y la base por defecto, 703 pruebas y 4692 aserciones, ninguna omitida; JS 167/167. La prueba real corre la migración 07 dos veces sobre el esquema anterior.
+
+**Lo que está bien:** 07 repetible y con FK y CHECK de taxonomía; los nodos anteriores quedan como `legado.` inactivos sin perder referencias; Gran danés con ID 55 sin sobrescribir; cargador con candado, transacción, retiro lógico, recuperación de ID, `--revisar` y versión por hash del conjunto (ajuste 2); validador puro con lista cerrada y dos niveles (ajuste 4); reglas que nombran un caso T-nn se rechazan (ajuste 5); `docker/iniciar.sh` solo carga si la migración salió bien (ajuste 7); conocimiento vacío en `database/` y conjunto sintético en `tests/`. Documentos (RE-2.11.1, RN-418, RN-424, HU-2.12, RE-2.12.1–6, CasosTriage) coherentes con la decisión 3.
+
+**Hallazgos (corregir al inicio de B2):**
+
+1. **Faltan predicados para expresar la batería** (`helpers/ValidadorConocimiento.php`, `PREDICADOS`; el hueco viene de la lista de A.2 y no lo vio la revisión de A). Con los nueve actuales no se pueden escribir:
+   - T-08, T-14, T-15 y T-16: la exposición a una sustancia o fármaco **sin tiempo conocido**. `minutos_desde_exposicion` exige un intervalo, y con tiempo desconocido daría revisión en vez de 🔴 en T-08 y T-15. Falta `exposicion` (`codigo` de sustancia o fármaco).
+   - T-11: la vacunación incompleta (P4). Falta `vacunacion` con valor `completa`, `incompleta` o `desconocida`.
+   - T-06: el tiempo desde el último celo (P4). Falta `dias_desde_celo` (intervalo en días).
+
+   Se agregan esos tres al validador, al README y a sus pruebas; con eso la lista cerrada queda en doce. Antes de cargar, B2 comprueba que cada caso de A.3 se puede expresar con ellos y lo deja en una tabla.
+2. **Mensajes de error sin ubicación:** «Campo desconocido.» o «Referencia a código inexistente.» no dicen en qué archivo ni en qué elemento. Con cientos de elementos, B2 y cualquier corrección futura a mano serían a ciegas. Cada error del validador nombra el archivo y el código del elemento (y el campo cuando aplica).
+
+**Pendientes anotados para F:** AGENTS.md todavía dice alpha.2 y «50 tablas» (ahora 52); en XAMPP la carga no corre sola: después de `php scripts/migrar.php` hay que ejecutar `php scripts/cargar_conocimiento.php`.
+
+**Siguiente:** B2 (Codex), empezando por las dos correcciones.

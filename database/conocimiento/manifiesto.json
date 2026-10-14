@@ -1,0 +1,12 @@
+{
+  "formato": 1,
+  "version": "b1-vacio",
+  "archivos": [
+    "fuentes.json",
+    "nodos.json",
+    "aristas.json",
+    "sinonimos.json",
+    "reglas.json"
+  ],
+  "limitaciones": "Sin conocimiento clínico cargado. Pendiente de validación veterinaria y de B2."
+}

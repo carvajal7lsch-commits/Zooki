@@ -22,6 +22,98 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testB1Migracion07ActualizaElEsquemaAnteriorDosVecesSinCambiarIds(): void
+    {
+        $sql = $this->db->query(file_get_contents(__DIR__ . '/../Fixtures/grafo_pre07.sql'));
+        while ($sql->nextRowset()) {
+        }
+        $sql->closeCursor();
+        $this->cargar('07_grafo_conocimiento.sql');
+        $antes = $this->db->query('SELECT * FROM grafo_nodos ORDER BY id_nodo')->fetchAll(PDO::FETCH_ASSOC);
+        $tablas = [];
+        foreach (['grafo_nodos', 'grafo_aristas', 'grafo_sinonimos', 'grafo_reglas', 'citas', 'cita_sintomas', 'consulta_sintomas'] as $tabla) {
+            $tablas[$tabla] = $this->db->query('SHOW CREATE TABLE ' . $tabla)->fetch(PDO::FETCH_NUM)[1];
+        }
+        $this->cargar('07_grafo_conocimiento.sql');
+        $this->assertSame($antes, $this->db->query('SELECT * FROM grafo_nodos ORDER BY id_nodo')->fetchAll(PDO::FETCH_ASSOC));
+        foreach ($tablas as $tabla => $ddl) {
+            $this->assertSame($ddl, $this->db->query('SHOW CREATE TABLE ' . $tabla)->fetch(PDO::FETCH_NUM)[1]);
+        }
+        $this->assertSame('especie', $antes[0]['tipo']);
+        $this->assertSame(0, (int) $antes[0]['activo']);
+        $this->assertSame(2, (int) $this->db->query('SELECT id_nodo FROM consulta_sintomas')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM razas WHERE nombre_raza = 'Gran danés'")->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE 'grafo_%' AND COLUMN_NAME IN ('validado_por','fecha_validacion')")->fetchColumn());
+    }
+
+    public function testB1CargadorRealIdempotenteConCandadoYRevisarSinEscritura(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->cargar('07_grafo_conocimiento.sql');
+        $this->cargar('07_grafo_conocimiento.sql');
+        $carpeta = ConocimientoPrueba::copiar();
+        try {
+            $cargador = new CargadorConocimiento($this->db);
+            $this->assertSame(9, $cargador->cargar($carpeta, true)['altas']);
+            $this->assertSame(0, $this->contar('auditoria_sistema'));
+            $resultado = $cargador->cargar($carpeta);
+            $antes = ConocimientoPrueba::instantanea($this->db);
+            $this->assertSame(64, strlen($resultado['version']));
+            $this->assertSame(0, $cargador->cargar($carpeta)['cambios']);
+            $this->assertSame($antes, ConocimientoPrueba::instantanea($this->db));
+            $otra = $this->otraConexion();
+            $otra->query("SELECT GET_LOCK('zooki_conocimiento', 0)");
+            $bloqueada = $this->db->query("SELECT IS_USED_LOCK('zooki_conocimiento')")->fetchColumn();
+            $this->assertNotFalse($bloqueada);
+            $otra->query("SELECT RELEASE_LOCK('zooki_conocimiento')");
+            $id = $this->db->query("SELECT id_nodo FROM grafo_nodos WHERE codigo = 'sustancia.prueba'")->fetchColumn();
+            ConocimientoPrueba::cambiar($carpeta, 'nodos', static function (array &$nodos): void {
+                $nodos[5]['etiqueta'] = 'Nueva etiqueta';
+            });
+            $antesRevision = ConocimientoPrueba::instantanea($this->db);
+            $this->assertGreaterThan(0, $cargador->cargar($carpeta, true)['cambios']);
+            $this->assertSame($antesRevision, ConocimientoPrueba::instantanea($this->db));
+            $cargador->cargar($carpeta);
+            $this->assertSame($id, $this->db->query("SELECT id_nodo FROM grafo_nodos WHERE codigo = 'sustancia.prueba'")->fetchColumn());
+            ConocimientoPrueba::cambiar($carpeta, 'nodos', static function (array &$nodos): void {
+                array_pop($nodos);
+            });
+            $this->assertSame(1, $cargador->cargar($carpeta)['retiros']);
+            copy(__DIR__ . '/../Fixtures/conocimiento/nodos.json', $carpeta . '/nodos.json');
+            $cargador->cargar($carpeta);
+            $this->assertSame(1, (int) $this->db->query('SELECT activo FROM grafo_nodos WHERE id_nodo = ' . $id)->fetchColumn());
+            $this->assertSame(55, $this->contar('razas'));
+            foreach ([[$carpeta, 0], [$carpeta . '/ausente', 1]] as [$directorio, $esperado]) {
+                $proceso = proc_open([PHP_BINARY, __DIR__ . '/../../scripts/cargar_conocimiento.php', '--revisar', '--carpeta=' . $directorio], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+                $salida = stream_get_contents($pipes[1]);
+                $error = stream_get_contents($pipes[2]);
+                fclose($pipes[1]);
+                fclose($pipes[2]);
+                $this->assertSame($esperado, proc_close($proceso), $salida . $error);
+                $this->assertStringContainsString('[conocimiento]', $salida . $error);
+            }
+        } finally {
+            ConocimientoPrueba::borrar($carpeta);
+        }
+    }
+
+    public function testB1TaxonomiaConFKYTiposCoherentes(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        (new CargadorConocimiento($this->db))->cargar(__DIR__ . '/../Fixtures/conocimiento');
+        foreach (["id_especie = 999999", "id_raza = 55", "id_especie = NULL"] as $cambio) {
+            try {
+                $this->db->exec("UPDATE grafo_nodos SET $cambio WHERE codigo = 'especie.prueba'");
+                $this->fail('La FK o el CHECK debió rechazar el enlace.');
+            } catch (PDOException $error) {
+                $this->assertNotSame('', $error->getMessage());
+            }
+        }
+    }
     public function testM5FTopeDeActivacionSerializaLaCuentaYSeComparteEntreConexiones(): void
     {
         $this->prepararHistoriaClinica();
@@ -516,7 +608,7 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
-    public function testElEsquemaCreaLasCincuentaTablasEnInnoDbYUtf8mb4(): void
+    public function testElEsquemaCreaLasCincuentaYDosTablasEnInnoDbYUtf8mb4(): void
     {
         $this->cargar('01_schema.sql');
 
@@ -524,7 +616,7 @@ class BaseV2MysqlTest extends TestCase
             "SELECT ENGINE, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
         )->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->assertCount(50, $tablas);
+        $this->assertCount(52, $tablas);
         foreach ($tablas as $t) {
             $this->assertSame('InnoDB', $t['ENGINE']);
             $this->assertSame('utf8mb4_general_ci', $t['TABLE_COLLATION']);
@@ -537,7 +629,7 @@ class BaseV2MysqlTest extends TestCase
         $this->cargar('02_semilla.sql');
         $this->cargar('02_semilla.sql');
 
-        $this->assertSame(['roles' => 4, 'planes' => 2, 'especies' => 6, 'razas' => 54, 'colores_base' => 9, 'especialidades' => 0], $this->conteos());
+        $this->assertSame(['roles' => 4, 'planes' => 2, 'especies' => 6, 'razas' => 55, 'colores_base' => 9, 'especialidades' => 0], $this->conteos());
         $this->assertSame(
             [1 => 'administrador', 2 => 'veterinario', 4 => 'propietario', 5 => 'super-administrador'],
             $this->db->query('SELECT id_rol, nombre_rol FROM roles ORDER BY id_rol')->fetchAll(PDO::FETCH_KEY_PAIR)
@@ -555,7 +647,7 @@ class BaseV2MysqlTest extends TestCase
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }
@@ -587,7 +679,7 @@ class BaseV2MysqlTest extends TestCase
             $datos=['id_propietario'=>6,'nombre'=>'Nueva ficha','id_especie'=>1,'id_raza'=>null,
                 'raza_indicada'=>'Raza por confirmar','fecha_nacimiento'=>'2022-01-01','peso'=>'3.20','sexo'=>'Macho','colores'=>[1,2]];
             $id=$mascotas->insert($datos); $otra=$mascotas->insert($datos);
-            $this->assertSame(54,$this->contar('razas'));
+            $this->assertSame(55, $this->contar('razas'));
             $m=$mascotas->getById($id); $this->assertNull($m['numero_historia_clinica']);
             $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/D',$m['token_carnet']);
             $this->assertNotSame($m['token_carnet'],$mascotas->getById($otra)['token_carnet']);

@@ -1,6 +1,6 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 3.3** · 95 historias de usuario organizadas por módulos (54 de la v1.x + 41 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
+> **Revisión 3.3** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
@@ -799,17 +799,40 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Criterios de aceptación:**
 
-- Los síntomas se capturan con una lista para marcar (del catálogo del grafo), un texto libre opcional y la pregunta de cuándo empezaron o cuándo ocurrió la ingesta de un tóxico.
+- Los síntomas se confirman desde el catálogo o con «Otro / no sé»; la nota libre es opcional y nunca interviene en el cálculo.
+- El buscador tolera errores y solo sugiere opciones; el usuario las confirma, sin selección automática.
+- El tiempo se declara por evento: conocido, «No sé» con revisión si es decisivo, o «No aplica» para atención preventiva; no se inventan edades ni horas.
 - El nivel final es el más alto que dispare cualquier síntoma o combinación; los datos tranquilizadores no bajan una alarma.
 - Las combinaciones escalan, y la raza, la edad, el estado, el historial (incluidas alergias de otras clínicas) y el tiempo modifican el nivel.
 - Las señales de alarma universales dan 🔴 en cualquier especie.
-- Sin cobertura de la especie o sin síntomas reconocidos, el caso queda en 🟡 con la marca «revisión del personal»; nunca en 🟢.
+- Sin cobertura específica, con «Otro / no sé» o sin regla aplicable a las marcas, el caso queda en 🟡 con revisión del personal; las alarmas universales siguen dando 🔴.
 - Si el caso indica una posible enfermedad contagiosa, se avisa a la clínica para preparar el aislamiento.
 - Los casos de la batería de triage (`documentacion/CasosTriage.md`) se usan como pruebas de aceptación.
 
 **Reglas de negocio:** RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 · **Requisitos:** RF-2.12 · **Dependencias:** HU-2.8, HU-2.10
 
 ---
+---
+
+### HU-2.12 — Explorar el mapa del conocimiento clínico
+
+| Prioridad | Estado | Estimación | Origen |
+|---|---|---|---|
+| Media | Planificada (v2.0, M2 C6) | Por estimar | Decisión del usuario, M2 |
+
+> Como superadministrador, quiero recorrer el conocimiento global con sus relaciones y fuentes para revisar su cobertura y validación, sin acceder a pacientes ni editarlo.
+
+**Criterios de aceptación:**
+
+- Acceso exclusivo al contexto de superadministrador de plataforma.
+- Representar nodos por tipo y aristas dirigidas por signo y grosor de peso, con leyenda.
+- Buscar y filtrar por tipo y especie conservando relaciones universales.
+- Mostrar detalle de nodo, arista y regla con relación, peso cuando aplique, signo, efecto, condiciones, fuente y validación.
+- Ofrecer solo lectura del conocimiento global sin datos individuales de pacientes ni escritura del conocimiento.
+- Mostrar versión, cobertura y validación pendiente, con estados legibles ante conjunto vacío o fallo del CDN.
+
+**Reglas de negocio:** RN-212, RN-209, RN-004, RN-G13 · **Requisitos:** RF-2.7, RNF-16 · **Dependencias:** conocimiento cargado de M2 B2
+
 ---
 
 ## Módulo 3 — Vacunación, desparasitación y recordatorios
@@ -1958,6 +1981,7 @@ _Avance: la versión 2.0.0-alpha.1 cierra las nueve primeras (módulo 0, 51 punt
 | HU-2.8 | Sugerencia de diagnósticos probables por síntomas | 8 |
 | HU-2.9 | Alertas de toxicidad e interacción al prescribir | 8 |
 | HU-2.11 | Calcular el nivel de triage a partir de los síntomas | 8 |
+| HU-2.12 | Explorar el mapa del conocimiento clínico | Por estimar |
 | HU-7.4 | Personalizar la clínica: marca y tipos de cita | 5 |
 | HU-4.11 | Configurar el horario recurrente del veterinario | 5 |
 | HU-4.12 | Registrar ausencia del veterinario y gestionar cobertura | 8 |
@@ -2024,7 +2048,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-G10 | HU-T.12 |
 | RN-G11 | HU-0.2, HU-T.12 |
 | RN-G12 | HU-T.12, HU-T.18 |
-| RN-G13 | HU-0.3, HU-T.15, HU-T.17, HU-5.9 |
+| RN-G13 | HU-0.3, HU-T.15, HU-T.17, HU-5.9, HU-2.12 |
 | RN-G14 | HU-0.3, HU-T.15 |
 | RN-G15 | HU-0.3, HU-T.13 |
 | RN-G16 | HU-T.19, HU-5.14 |
@@ -2039,7 +2063,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-001 | HU-0.1, HU-T.15 |
 | RN-002 | HU-0.1, HU-0.2 |
 | RN-003 | HU-0.2, HU-0.4, HU-1.5 |
-| RN-004 | HU-0.3, HU-T.15 |
+| RN-004 | HU-0.3, HU-T.15, HU-2.12 |
 | RN-005 | HU-0.2, HU-0.4 |
 | RN-006 | HU-0.4 |
 | RN-007 | HU-0.5 |
@@ -2073,10 +2097,10 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-206 | HU-2.5, HU-2.6, HU-5.5 |
 | RN-207 | HU-2.7 |
 | RN-208 | HU-2.2, HU-2.7 |
-| RN-209 | HU-2.8, HU-2.9, HU-2.11, HU-4.18 |
+| RN-209 | HU-2.8, HU-2.9, HU-2.11, HU-4.18, HU-2.12 |
 | RN-210 | HU-2.8 |
 | RN-211 | HU-2.9 |
-| RN-212 | HU-2.8, HU-2.9 |
+| RN-212 | HU-2.8, HU-2.9, HU-2.12 |
 | RN-301 | HU-3.1, HU-3.5 |
 | RN-302 | HU-3.4 |
 | RN-303 | HU-3.2, HU-3.6, HU-7.5, HU-8.4 |

@@ -1,0 +1,19 @@
+[
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "arista.prueba",
+    "origen": "sintoma.prueba",
+    "destino": "diagnostico.prueba",
+    "tipo_relacion": "sugiere",
+    "signo": "positivo",
+    "peso": 0.8,
+    "efecto": "evidencia"
+  }
+]

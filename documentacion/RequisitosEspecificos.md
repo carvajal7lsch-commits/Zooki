@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.3** · 421 requisitos específicos para 95 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.3** · 427 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
@@ -472,7 +472,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-2.11.1 | El formulario debe capturar los síntomas con una lista para marcar, un texto libre opcional y el tiempo desde el inicio o desde la ingesta. | Funcional | No se puede calcular el nivel sin indicar al menos un síntoma o el texto, y el tiempo. | Alta |
+| RE-2.11.1 | El formulario captura al menos un síntoma confirmado del catálogo o «Otro / no sé», nota libre opcional y tiempo por evento. El buscador solo sugiere y la nota no calcula el nivel. | Funcional | Solo texto no permite calcular. Se acepta tiempo conocido, «No sé» con revisión cuando sea decisivo o «No aplica» para preventivo; no se inventan datos ausentes. | Alta |
 | RE-2.11.2 | El nivel final debe ser el máximo de los síntomas y combinaciones; los datos tranquilizadores no deben bajarlo. | Cálculo | T-04 y T-18 de la batería dan el nivel esperado. | Alta |
 | RE-2.11.3 | Las combinaciones y los modificadores de raza, edad, estado, historial y tiempo deben cambiar el nivel. | Cálculo | Los pares T-09/T-10, T-11/T-12 y T-14/T-16 dan niveles distintos. | Alta |
 | RE-2.11.4 | Las señales de alarma universales deben dar 🔴 en cualquier especie. | Restricción | T-21 (loro con dificultad respiratoria) da 🔴. | Alta |
@@ -481,6 +481,19 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | RE-2.11.7 | La batería de casos de triage debe ejecutarse como prueba automatizada del cálculo. | Verificación | Los 26 casos clínicos coinciden con su nivel esperado o la diferencia queda justificada. | Alta |
 
 **Reglas de negocio:** RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209
+
+### HU-2.12 — Explorar el mapa del conocimiento clínico
+
+| ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
+|---|---|---|---|---|
+| RE-2.12.1 | Acceso exclusivo al contexto de superadministrador de plataforma. | Seguridad | Vista y endpoint rechazan con 403 cualquier otro contexto, incluso el clínico de una persona superadministradora. | Media |
+| RE-2.12.2 | Representar nodos por tipo y aristas dirigidas por signo y grosor de peso, con leyenda. | Usabilidad | El mapa y su leyenda distinguen tipos, dirección, signo y peso. | Media |
+| RE-2.12.3 | Buscar y filtrar por tipo y especie conservando relaciones universales. | Funcional | Buscar un nodo y filtrar conserva sus conexiones universales. | Media |
+| RE-2.12.4 | Mostrar detalle de nodo, arista y regla con relación, peso cuando aplique, signo, efecto, condiciones, fuente y validación. | Funcional | El detalle coincide con el conocimiento cargado y distingue reglas de varias condiciones de una arista simple. | Media |
+| RE-2.12.5 | Ofrecer solo lectura del conocimiento global sin datos individuales de pacientes ni escritura del conocimiento. | Seguridad | No consulta ni responde mascotas, consultas, tratamientos o citas; no hay acción de edición. | Media |
+| RE-2.12.6 | Mostrar versión, cobertura y validación pendiente, con estados legibles ante conjunto vacío o fallo del CDN. | Usabilidad | Se informa la limitación; un fallo o conjunto vacío no se presenta como cobertura clínica. | Media |
+
+**Reglas de negocio:** RN-212, RN-209, RN-004, RN-G13
 
 ## Módulo 3 — Vacunación, desparasitación y recordatorios
 
@@ -1164,6 +1177,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | HU-2.9 | RN-209, RN-211, RN-212, RN-113 | RE-2.9.1, RE-2.9.2, RE-2.9.3, RE-2.9.4 |
 | HU-2.10 | RN-112, RN-113 | RE-2.10.1, RE-2.10.2, RE-2.10.3, RE-2.10.4 |
 | HU-2.11 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | RE-2.11.1, RE-2.11.2, RE-2.11.3, RE-2.11.4, RE-2.11.5, RE-2.11.6, RE-2.11.7 |
+| HU-2.12 | RN-212, RN-209, RN-004, RN-G13 | RE-2.12.1, RE-2.12.2, RE-2.12.3, RE-2.12.4, RE-2.12.5, RE-2.12.6 |
 | HU-3.1 | RN-301, RN-306 | RE-3.1.1, RE-3.1.2, RE-3.1.3 |
 | HU-3.2 | RN-303, RN-304, RN-305 | RE-3.2.1, RE-3.2.2, RE-3.2.3, RE-3.2.4, RE-3.2.5 |
 | HU-3.3 | RN-307 | RE-3.3.1, RE-3.3.2, RE-3.3.3 |

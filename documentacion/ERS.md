@@ -292,14 +292,16 @@ Los módulos siguen la **misma numeración en todos los documentos** ([Historias
 | RF-2.4 | Generar un número de historia clínica único por mascota en su primera consulta en cada clínica. | Media | El número no se repite dentro de la clínica. |
 | RF-2.5 | Visualizar el resumen cronológico de todas las consultas con acordeón. | Media | La vista carga en < 3 s para historiales de hasta 100 consultas. |
 | RF-2.6 | Historia clínica compartida entre clínicas: cada registro conserva la clínica y el veterinario que lo hizo y solo esa clínica lo modifica; toda clínica vinculada ve alergias, alertas, vacunas y desparasitaciones de todas las clínicas; las consultas, tratamientos y archivos de otra clínica solo con autorización del propietario, revocable. | Alta | Sin autorización, una clínica no obtiene las consultas de otra ni por la interfaz ni por petición directa (403); con autorización, las ve marcadas con su clínica de origen. |
-| RF-2.7 | Mantener el grafo de conocimiento clínico: nodos (síntomas, diagnósticos, fármacos, especies, razas, condiciones) y aristas con tipo y signo (positivo/negativo). | Alta | Es posible crear y consultar nodos y aristas con su tipo y signo. |
+| RF-2.7 | Mantener conocimiento global versionado: nodos (incluidas sustancias), aristas con signo/peso/efecto, fuentes, validación, sinónimos y reglas contextuales. El superadministrador lo explora en un mapa de solo lectura sin pacientes (HU-2.12). | Alta | La carga conserva IDs y retira lógicamente; el mapa muestra fuentes/cobertura/versión y rechaza acceso desde contextos clínicos. |
 | RF-2.8 | Al registrar los síntomas de una consulta, sugerir diagnósticos probables ordenados por peso. | Alta | La lista sugerida corresponde a las aristas síntoma→diagnóstico y su orden por peso. |
 | RF-2.9 | Al prescribir, detectar toxicidad por especie/raza y bloquear o advertir mediante aristas negativas (p. ej. paracetamol en felinos). | Alta | Prescribir un fármaco con arista negativa para la especie del paciente dispara la alerta/bloqueo. |
 | RF-2.10 | Detectar interacciones con la medicación vigente del paciente usando su historia como subgrafo. | Alta | Al prescribir un fármaco que interactúa con otro activo del paciente, se advierte. |
 | RF-2.11 | Mostrar las predisposiciones asociadas a la raza al abrir la cita. | Media | Al abrir la cita de una raza con predisposiciones cargadas, estas se muestran. |
-| RF-2.12 | Calcular el nivel de triage con reglas explícitas: captura estructurada de síntomas y tiempo, nivel máximo sin promediar, escalamiento por combinación, modificadores del paciente, alarmas universales para cualquier especie, «revisión del personal» cuando no hay cobertura y aviso de posible contagio. | Alta | Los 26 casos clínicos de la batería de triage dan su nivel esperado. |
+| RF-2.12 | Calcular el triage solo con marcas confirmadas, tiempo por evento y paciente; nota libre excluida, máximo sin promediar, combinaciones, modificadores, P1 universal, revisión sin cobertura y aviso de posible contagio. | Alta | Los 26 casos estructurados cumplen sus esperados provisionales y limitaciones; «No sé» requiere revisión si es decisivo y «No aplica» se usa solo para preventivo. |
 
 > El Grafo I es **apoyo**, no diagnóstico automático: la decisión final es del veterinario. Su cobertura depende del conocimiento cargado (acotado inicialmente a perros y gatos).
+Cada elemento tiene fuente y validación pendiente; las pruebas de software no certifican validez clínica.
+El formato y la carga son de B1; el contenido real se entrega en B2 y los motores en C2–C4.
 
 #### 3.2.5 Módulo 3 — Vacunación, desparasitación y recordatorios *(v1.x)*
 

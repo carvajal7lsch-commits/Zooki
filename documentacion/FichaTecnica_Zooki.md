@@ -73,6 +73,10 @@ Se decidió **mantener el stack nativo** de la v1.x por ser suficiente a la esca
 | DevOps | Git + GitHub + Docker + Dokploy | — | Control de versiones, contenedores y despliegue. |
 | Pruebas | PHPUnit | 10.x | Pruebas unitarias y de integración. |
 
+El diseño de M2 contempla conocimiento global versionado con fuentes y validación veterinaria pendiente.
+HU-2.12 permite al superadministrador explorar ese conocimiento sin editarlo ni acceder a pacientes; su pantalla se entrega en C6.
+B1 prepara 52 tablas y el cargador; los archivos de conocimiento permanecen vacíos hasta B2.
+
 ## 4. Arquitectura del Sistema
 
 Zooki v2.0 es una aplicación web de **tres capas (3-Tier)**, autónoma y con tecnologías nativas, que opera como **plataforma multi-inquilino**: una única instancia atiende a muchas clínicas con sus datos aislados mediante `id_clinica`, y un **super-administrador** administra la plataforma por encima de las clínicas. El detalle visual está en el [diagrama de componentes](Modelos.md#arquitectura--diagrama-de-componentes) del documento de Modelos.
@@ -118,7 +122,7 @@ La línea base de la v1.x se organizó en cuatro sprints de una semana; luego el
 | v1 · Sprints 1–4 | Mascotas, historia clínica, agenda, portal y reportes | Sistema v1.x en producción |
 | v2 · Fase 1 | Visión y alcance; ERS (ISO/IEC/IEEE 29148) | Alcance de la v2.0 fijado |
 | v2 · Fase 2 | Modelos: grafos, procesos de negocio, flujos de sistema y diagrama de componentes | Documento de Modelos y maestro draw.io |
-| v2 · Fase 3 | Reglas de Negocio v2 (120 RN), Historias de Usuario v2 (95 HU) y Requisitos Específicos (421 RE) | Trazabilidad RN → HU → RE completa |
+| v2 · Fase 3 | Reglas de Negocio v2 (120 RN), Historias de Usuario v2 (96 HU) y Requisitos Específicos (427 RE) | Trazabilidad RN → HU → RE completa |
 | v2 · Construcción | Esquema multi-inquilino y módulos v2 | Plataforma SaaS v2.0 |
 
 ## 8. Análisis de Riesgos
@@ -160,7 +164,7 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 
 **v1.11.0 — en producción.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
 
-**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.4), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.3, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.3, 95 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.3, 421 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros, y la 2.0.0-alpha.3 trae el portal del propietario multi-clínica: todas sus mascotas e historia en todas sus clínicas, vínculos con tope de 3 clínicas y la historia compartida bajo su autorización. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
+**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.4), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.3, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.3, 96 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.3, 427 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros, y la 2.0.0-alpha.3 trae el portal del propietario multi-clínica: todas sus mascotas e historia en todas sus clínicas, vínculos con tope de 3 clínicas y la historia compartida bajo su autorización. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
 
 ## 12. Entregables Finales
 

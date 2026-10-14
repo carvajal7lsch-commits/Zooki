@@ -1,0 +1,94 @@
+[
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "especie.prueba",
+    "tipo": "especie",
+    "etiqueta": "Canino de prueba",
+    "taxonomia": {
+      "especie": "Canino"
+    },
+    "metadatos": {
+      "cobertura": {
+        "triage": "parcial"
+      }
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "raza.prueba",
+    "tipo": "raza",
+    "etiqueta": "Raza de prueba",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Gran danés"
+    }
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "sintoma.prueba",
+    "tipo": "sintoma",
+    "etiqueta": "Signo sintético",
+    "nivel_triage": "amarillo",
+    "moderado": true
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "diagnostico.prueba",
+    "tipo": "diagnostico",
+    "etiqueta": "Diagnóstico sintético"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "farmaco.prueba",
+    "tipo": "farmaco",
+    "etiqueta": "Fármaco sintético"
+  },
+  {
+    "estado_validacion": "pendiente",
+    "fuentes": [
+      {
+        "codigo": "fuente.prueba",
+        "localizador": "Dato sintético",
+        "fundamento": "clinico"
+      }
+    ],
+    "codigo": "sustancia.prueba",
+    "tipo": "sustancia",
+    "etiqueta": "Sustancia sintética"
+  }
+]
