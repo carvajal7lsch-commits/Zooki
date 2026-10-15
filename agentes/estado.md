@@ -2,12 +2,13 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-14
+**Actualizado:** 2026-10-15
 
 ## Ahora
 
 - **Módulo activo:** M2 — Historia clínica y soporte a la decisión (Grafo I), previsto como `2.0.0-alpha.4`. Plan: [`specs/M2-grafo-clinico.md`](../specs/M2-grafo-clinico.md). Rama: `v2/m2-grafo`.
-- **Entrega actual de M2:** **C1 — alergias y alertas médicas: revisada y aprobada en código (2026-10-15), pendiente de las pruebas del usuario.** Lo escribió Claude Code. Ver «Anexo C1» y «C1 — Revisión». C6 cerrada (`1053ee7`); B cerrada.
+- **Entrega actual de M2:** **C2 — motor de diagnósticos: revisada y aprobada (2026-10-15).** Lo escribió Codex. Ver «Anexo C2» y «C2 — Revisión» (verificada también en MySQL 8.0; se corrigieron los conteos del CI, que fallaba desde B1). C1, C6 y B cerradas.
+- **C1 cerrada** el 2026-10-15: el usuario pasó las cinco pruebas; commit `d8f8519`.
 - **C6:** cerrada el 2026-10-15 (el usuario pasó las cinco pruebas del navegador; commit `1053ee7`). B (B1, B2, B2.1) cerrada y con commit.
 - **B de M2 cerrada:** B1, B2 y B2.1 revisadas y aprobadas (2026-10-14). Conjunto: 47 fuentes, 105 nodos, 105 aristas, 201 sinónimos, 29 reglas, todo pendiente de validación veterinaria. Notas para C4 en «B2.1 — Revisión».
 - **B2 de M2:** revisada y aprobada (2026-10-14), con sus correcciones aplicadas en B2.1.
@@ -38,7 +39,9 @@
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
-- **Siguiente paso:** el usuario prueba C1; luego C2 — motor de diagnósticos (Codex). Reparto de M2: Codex C2–C4; Claude Code C5. Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal. Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Siguiente paso:** C3 — alertas de prescripción (Codex). Reparto de M2: Codex C3–C4; Claude Code C5. Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal. Pendiente aparte: borrar los respaldos temporales del VPS.
+  Reparto de M2: Codex C2–C4; Claude Code C5.
+  Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal.
   En XAMPP, antes de probar: `php scripts/migrar.php` y luego `php scripts/cargar_conocimiento.php`. Pendiente aparte: borrar los respaldos temporales del VPS.
 - **Decisión del usuario durante B2 (2026-10-14):** mantener los doce predicados; obesidad de T-13 y tratamiento sin fármaco conocido de T-19 quedan como contexto.
   Usar anorexia sostenida en gatos y crisis breve habitual finalizada con epilepsia documentada, sin inferir medicamentos ni datos ausentes.

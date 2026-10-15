@@ -1,6 +1,6 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B y C6 cerradas; C1 entregada, pendiente de revisión (Claude Code, 2026-10-15)
+> Estado: B, C1 y C6 cerradas; C2 entregada, pendiente de revisión (Codex, 2026-10-15)
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
@@ -28,7 +28,7 @@
 |---|---|---|---|---|
 | HU-2.1 (alergias y alertas) | RE-2.1.5 | RN-113 | C1 | Registrar y desactivar; visible en toda clínica vinculada y en el portal |
 | HU-2.10 (cierre) | RE-2.10.1 (alergias y alertas) | RN-113 | C1 | La parte que quedó pendiente en M5 |
-| HU-2.8 | RE-2.8.1–5 | RN-209, RN-210, RN-212, RN-202 | C2, C5 | Diagnósticos ordenados por peso con casos de prueba; aceptar o escribir el propio |
+| HU-2.8 | RE-2.8.1–5 | RN-209, RN-210, RN-212, RN-202 | C2, C5 | C2: `MotorDiagnosticosTest`, `EvaluadorCondicionesTest`, `DiagnosticoTest` y `BaseV2MysqlTest::testC2RankingConFichaYConocimientoActivosSinGuardar`; pantalla, aceptación y guardado final en C5 |
 | HU-2.9 | RE-2.9.1–4 | RN-209, RN-211, RN-212, RN-113 | C3, C5 | Bloqueo por toxicidad y alergia; advertencia de interacción con auditoría; aviso genérico sin revelar lo de otra clínica |
 | HU-2.11 | RE-2.11.1–7 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | C4 | La batería de 26 casos como prueba automatizada (RE-2.11.7), con síntomas marcados (decisión 3) |
 | HU-2.12, mapa del grafo (aprobada en revisión de A) | RE-2.12.1–6 | RN-212, RN-209, RN-004/RN-G13 | C6 | El superadministrador explora conocimiento global con peso, signo y fuente; solo lectura y sin pacientes |
@@ -97,12 +97,12 @@ T-13 se expresa mediante anorexia sostenida en gatos; T-19 mediante crisis breve
 - [x] B1 — Esquema, cargador y documentos: revisada y aprobada (Codex, 2026-10-14).
 - [x] B2 — Conocimiento inicial con fuentes: revisada y aprobada con correcciones en B2.1 (Codex inició, Claude Code terminó; 2026-10-14).
 - [x] B2.1 — Correcciones del conocimiento: revisada y aprobada (Codex, 2026-10-14).
-- [x] C1 — Alergias y alertas médicas: entregada, pendiente de revisión (Claude Code, 2026-10-15).
-- [ ] C2 — Motor de diagnósticos.
+- [x] C1 — Alergias y alertas médicas: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
+- [x] C2 — Motor de diagnósticos: entregada, pendiente de revisión (Codex, 2026-10-15).
 - [ ] C3 — Alertas de prescripción.
 - [ ] C4 — Motor de triage con la batería.
 - [ ] C5 — Consulta del veterinario.
-- [x] C6 — Mapa del grafo: entregada, pendiente de revisión (Claude Code, 2026-10-14).
+- [x] C6 — Mapa del grafo: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
 - [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.4`.
 
@@ -1040,3 +1040,107 @@ En XAMPP, antes: `php scripts/migrar.php` y `php scripts/cargar_conocimiento.php
 **Para F:** agregar «alerta médica» a la lista de RN-112; incluir las alertas activas en `imprimir_historial.php` del portal.
 
 **Siguiente:** pruebas del usuario (lista del Anexo C1) y C2 — motor de diagnósticos (Codex).
+
+**Pruebas del usuario (2026-10-15):** las cinco pruebas del Anexo C1 pasaron. **C1 cerrada**, con commit `d8f8519`.
+
+## Anexo C2 — Resultado
+
+**Lo escribió Codex (2026-10-15); entregada, pendiente de revisión; revisión independiente: Claude (arquitecto).**
+
+### Qué y alcance
+
+- `EvaluadorCondiciones`: doce predicados, lógica ternaria, intervalos inclusivos/exclusivos y fecha inyectada.
+  Contexto, mapas de eventos y datos desconocidos documentados en el README del conocimiento.
+- `GrafoConocimiento::instantanea()` reutiliza C6, conserva el contrato de `mapa()` y entrega `ConocimientoClinico` inmutable y cacheado por petición.
+  Lee en una transacción coherente con la lectura repetible de InnoDB; no escribe conocimiento ni pacientes.
+- `MotorDiagnosticos`: suma de evidencias con signo y modificadores verdaderos, evidencia positiva obligatoria, orden por puntuación/cobertura/código, máximo cinco candidatos.
+  Informa datos faltantes sin aplicar sus condiciones, fuentes, evidencia y estado pendiente; no muestra probabilidades ni porcentajes.
+  La cobertura usa síntomas positivos únicos característicos aplicables al contexto; el README detalla su denominador.
+- `sugerir_diagnosticos_ajax`: POST con CSRF, solo veterinario; vínculo activo exigido por `PacienteDiagnostico`, 403 auditado si falta o está inactivo.
+  La ficha y los nodos enlazados determinan especie/raza, edad en meses cumplidos, sexo y esterilización; las alertas activas son globales, sin leer consultas o tratamientos protegidos.
+  Solo vacunación y días desde celo se aceptan como datos adicionales; vacunación omitida queda desconocida, sin inferirla de los registros.
+  Códigos inexistentes, retirados o de otro tipo y entradas inválidas dan 422; sin coincidencias se indica escribir el diagnóstico obligatorio.
+
+### RE y pruebas
+
+| RE / regla | Evidencia |
+|---|---|
+| RE-2.8.1, RN-210 | `MotorDiagnosticosTest`: los cuatro pacientes del encargo con conocimiento real; signos, cobertura, desempate, determinismo y máximo cinco. |
+| RE-2.8.3, RN-202 | Sin evidencia, lista vacía aunque existan modificadores; API indica diagnóstico libre obligatorio. El guardado final sigue en C5. |
+| RE-2.8.4, RN-209 | Solo candidatos con evidencia positiva y puntuación positiva; fuentes y marca pendiente, sin probabilidades ni elección automática. |
+| RE-2.8.5, RN-212 | Instantánea del conocimiento global, activa, inmutable y reutilizada; C6 conserva sus pruebas y contrato. |
+| RN-113 / RN-G13 | `DiagnosticoTest`: dos clínicas, vínculo ausente/inactivo con 403 auditado, alertas activas de otra clínica sin leer sus consultas; roles no permitidos, CSRF, 422 y método 405. |
+| Contrato A.2 y ajustes 4/6 de A | `EvaluadorCondicionesTest`: tablas ternarias completas, doce predicados presentes/ausentes, cero conocido, límites temporales y fecha explícita. |
+| Esquema real y sin guardado | `BaseV2MysqlTest::testC2RankingConFichaYConocimientoActivosSinGuardar`: edad desde nacimiento, esterilización falsa conservada y ranking; ninguna consulta, marca de síntomas ni auditoría de escritura creada. |
+
+El diagrama de Modelos §3 se conserva: la rama de ranking ya exige peso, cobertura y máximo cinco, seguida de decisión y diagnóstico obligatorio del veterinario.
+No cambió el flujo ni se implementaron las pantallas de C5.
+
+### Ejemplo de petición y respuesta real
+
+Ejecutado con Security y el controlador reales sobre el fixture SQLite de dos clínicas, fecha inyectada `2026-10-15T12:00:00-05:00`, veterinario de Norte y mascota 1 con nacimiento `2026-07-15`.
+No es una prueba de navegador ni una petición a la base de trabajo.
+
+```http
+POST /index.php?action=sugerir_diagnosticos_ajax
+Content-Type: application/x-www-form-urlencoded
+
+csrf_token=<token_de_la_sesion>&id_mascota=1&sintomas[]=sintoma.vomito&sintomas[]=sintoma.diarrea_sangre&sintomas[]=sintoma.no_come&vacunacion=incompleta
+```
+
+Extracto de la respuesta obtenida (se muestran el primer candidato y los metadatos; la respuesta completa también trae fuentes, las demás evidencias y cuatro candidatos adicionales):
+
+```json
+{
+  "success": true,
+  "candidatos": [{
+    "codigo": "diagnostico.parvovirosis_canina",
+    "etiqueta": "Parvovirosis canina",
+    "puntuacion": 2.2,
+    "cobertura": {"coinciden": 3, "caracteristicos": 6, "texto": "Coincide 3 de 6 síntomas característicos"},
+    "sintomas_coincidentes": ["sintoma.diarrea_sangre", "sintoma.no_come", "sintoma.vomito"],
+    "reglas_aplicadas": ["ranking.parvovirosis_contexto"],
+    "estado_validacion": "pendiente"
+  }],
+  "datos_faltantes": [],
+  "diagnostico_libre": true,
+  "version": "980faceaaff142fa4c77eac28ba36aa57f2b53710f1174aaefa26cdb8edfebc9"
+}
+```
+
+### Verificación y pendientes
+
+- PHP completo sin host: **767 pruebas, 6628 aserciones, 39 omitidas** (MySQL).
+- PHP completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1`, puerto 3309 y la base predeterminada `zooki_test_base_v2`, en instancia temporal propia MariaDB 10.4.32: **767 pruebas, 7199 aserciones, ninguna omitida**.
+  No se ejecutó MySQL 8 en este equipo.
+- JS: **183/183**; no hay cambios de JS ni pantalla nueva, por lo que no se requieren pruebas de navegador en C2.
+- `git diff --check` sin errores de espacios; sin lectura/escritura de `.env`, sin tocar la base de trabajo ni contraseñas, sin commit ni push y sin empezar C3.
+
+RE-2.8.2 y la interacción/guardado de RE-2.8.3 se completan en C5; no se declara toda HU-2.8 implementada por esta API.
+El conocimiento sigue pendiente de validación veterinaria; C3 y C4 reutilizarán el evaluador.
+No se cambió el esquema ni el contenido clínico de los JSON.
+Versiones, revisiones documentales y descargas se cierran en F.
+
+### Commit — PowerShell 5.1
+
+```powershell
+git add -- controllers/DiagnosticoController.php helpers/ConocimientoClinico.php helpers/EvaluadorCondiciones.php helpers/MotorDiagnosticos.php helpers/Security.php models/GrafoConocimiento.php models/PacienteDiagnostico.php public/index.php
+git add -- tests/Unit/EvaluadorCondicionesTest.php tests/Unit/MotorDiagnosticosTest.php tests/Integration/DiagnosticoTest.php tests/Integration/BaseV2MysqlTest.php tests/Support/ConocimientoPrueba.php tests/Support/ConocimientoRealPrueba.php
+git add -- database/conocimiento/README.md specs/M2-grafo-clinico.md agentes/estado.md
+git diff --cached --stat
+git commit -m "feat(grafo): ranking de diagnosticos y evaluador ternario (HU-2.8, RE-2.8.1)"
+```
+
+### C2 — Revisión (2026-10-15)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 767 pruebas y 6628 aserciones (39 omitidas); **con MySQL 8.0.46** (el motor de producción y del CI) y la base por defecto, 767 pruebas y 7199 aserciones, ninguna omitida; JS 183/183.
+
+**Lo que está bien:** evaluador ternario puro con la fecha inyectada; instantánea del conocimiento inmutable y una vez por petición, sin cambiar el contrato de C6; ranking con evidencia positiva obligatoria, cobertura «coincide X de Y» calculada sobre los síntomas característicos aplicables a la especie, orden por puntuación, cobertura y código, máximo cinco y sin porcentajes; la vacunación no se infiere de los registros; acceso igual que la historia (403 auditado sin vínculo); no guarda nada.
+
+**Observación menor (para C5):** `datos_faltantes` puede nombrar aristas o reglas de candidatos que no quedan entre los cinco; la pantalla debe mostrar como «datos que ayudarían» solo los campos (vacunación, días desde el celo…), sin listar códigos.
+
+**Corrección del CI hecha en esta revisión:** `.github/workflows/ci.yml` esperaba 50 tablas y 54 razas; desde B1 son 52 y 55 (`grafo_sinonimos`, `grafo_reglas` y Gran danés). Por eso el CI fallaba desde el push de B1. Se comprobó en MySQL 8.0 el mismo recorrido del CI: esquema y semilla (52 tablas, 55 razas), migrador dos veces («La base está al día») y pruebas de base real en verde.
+
+**Siguiente:** C3 — alertas de prescripción (Codex).

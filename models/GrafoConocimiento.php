@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../helpers/MapaConocimiento.php';
+require_once __DIR__ . '/../helpers/ConocimientoClinico.php';
 
 /**
  * HU-2.12 — Lectura del conocimiento global para el mapa de la plataforma.
@@ -13,6 +14,7 @@ final class GrafoConocimiento
     public const LIMITACION_RESERVA = 'Conocimiento pendiente de validación veterinaria. Es apoyo a la decisión (RN-209): decide el veterinario.';
 
     private string $manifiesto;
+    private ?ConocimientoClinico $instantanea = null;
 
     public function __construct(private PDO $db, ?string $manifiesto = null)
     {
@@ -51,6 +53,32 @@ final class GrafoConocimiento
              ORDER BY motor, codigo'
         )->fetchAll(PDO::FETCH_ASSOC);
         return MapaConocimiento::construir($nodos, $aristas, $sinonimos, $reglas, $this->versionCargada(), $this->limitaciones());
+    }
+
+    /** C2: reutiliza la lectura activa de C6 sin cambiar la respuesta del mapa. */
+    public function instantanea(): ConocimientoClinico
+    {
+        if ($this->instantanea === null) {
+            // En InnoDB la lectura repetible evita mezclar versiones si se carga otro conjunto.
+            $propia = !$this->db->inTransaction();
+            if ($propia) {
+                $this->db->beginTransaction();
+            }
+            try {
+                $mapa = $this->mapa();
+                $instantanea = new ConocimientoClinico($mapa['nodes'], $mapa['edges'], $mapa['reglas'], $mapa['version']['hash'] ?? null, $mapa['limitaciones']);
+                if ($propia) {
+                    $this->db->commit();
+                }
+                $this->instantanea = $instantanea;
+            } catch (Throwable $error) {
+                if ($propia && $this->db->inTransaction()) {
+                    $this->db->rollBack();
+                }
+                throw $error;
+            }
+        }
+        return $this->instantanea;
     }
 
     /** La versión de la última carga auditada por el cargador (RN-212). */

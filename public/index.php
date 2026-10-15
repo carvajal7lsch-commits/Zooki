@@ -534,6 +534,11 @@ switch ($action) {
         $controller->listarHistorialAjax();
         break;
 
+    case "sugerir_diagnosticos_ajax":
+        require_once "../controllers/DiagnosticoController.php";
+        (new DiagnosticoController())->sugerirAjax();
+        break;
+
     // HU-2.1, RE-2.1.5: alergias y alertas médicas de la mascota.
     case "listar_alertas_medicas_ajax":
         require_once "../controllers/AlertaMedicaController.php";

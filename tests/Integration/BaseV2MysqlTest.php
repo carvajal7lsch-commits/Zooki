@@ -22,6 +22,32 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testC2RankingConFichaYConocimientoActivosSinGuardar(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/GrafoConocimiento.php';
+        require_once __DIR__ . '/../../models/PacienteDiagnostico.php';
+        require_once __DIR__ . '/../../helpers/MotorDiagnosticos.php';
+        require_once __DIR__ . '/../../models/CargadorConocimiento.php';
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $this->comoVeterinario(1, 2);
+        $this->db->exec("UPDATE mascotas SET fecha_nacimiento = '2026-07-15', sexo = 'Macho', esterilizado = 0 WHERE id_mascota = 1");
+        $lector = new GrafoConocimiento($this->db);
+        $grafo = $lector->instantanea();
+        $this->assertSame($grafo, $lector->instantanea());
+        $fecha = new DateTimeImmutable('2026-10-15T12:00:00-05:00');
+        $contexto = (new PacienteDiagnostico($this->db))->contexto(1, $grafo, $fecha, ['vacunacion' => 'incompleta']);
+        $this->assertSame(3, $contexto['edad_meses']);
+        $this->assertFalse($contexto['esterilizado']);
+        $contexto['sintomas'] = array_fill_keys(['sintoma.vomito', 'sintoma.diarrea_sangre', 'sintoma.no_come'], ['minutos' => null]);
+        $antes = $this->contar('auditoria_sistema');
+        $resultado = MotorDiagnosticos::sugerir($grafo, $contexto, $fecha);
+        $this->assertSame('diagnostico.parvovirosis_canina', $resultado['candidatos'][0]['codigo']);
+        $this->assertSame($antes, $this->contar('auditoria_sistema'));
+        $this->assertSame(0, $this->contar('consultas'));
+        $this->assertSame(0, $this->contar('consulta_sintomas'));
+    }
+
     public function testB1Migracion07ActualizaElEsquemaAnteriorDosVecesSinCambiarIds(): void
     {
         $sql = $this->db->query(file_get_contents(__DIR__ . '/../Fixtures/grafo_pre07.sql'));

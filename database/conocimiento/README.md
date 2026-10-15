@@ -45,7 +45,7 @@ En base, el nodo especie enlaza `id_especie`; el nodo raza enlaza `id_raza` y ob
 Los metadatos admiten solo `cobertura` por motor (`sin_cobertura`, `parcial`, `completa`), `tamanio` (`pequeno`, `mediano`, `grande`, `gigante`) y `braquicefalo` booleano.
 Gran danés se incorpora al catálogo en B1; su atributo gigante con fuente se carga en el nodo en B2.
 
-## Condiciones: lista cerrada, todavía sin evaluador
+## Condiciones: lista cerrada y evaluador de C2
 
 Los grupos son `{"todos": [...]}` o `{"alguno": [...]}`; como máximo dos niveles de grupos anidados.
 Las hojas tienen `predicado` y exclusivamente estos campos:
@@ -70,7 +70,61 @@ No se permiten unidades alternativas, campos desconocidos, referencias inexisten
 Los atributos adicionales de episodios o nuevos predicados requerirán revisión antes de ampliar esta lista en una etapa posterior.
 La lista cerrada contiene exactamente doce predicados.
 Los errores indican archivo y código del elemento; si todavía no existe un código válido, indican su posición o el conjunto, además del campo afectado cuando aplica.
-El evaluador único de estas condiciones pertenece a C2 y será compartido por C3/C4.
+`EvaluadorCondiciones` es el evaluador único de C2, reutilizable por C3/C4.
+
+### Contexto de evaluación
+
+`evaluar(condicion, contexto, fecha)` recibe una condición validada por el cargador, un array normalizado y una `DateTimeImmutable` explícita.
+Devuelve `valor` (`true`, `false` o `null` = desconocido) y `faltantes` (rutas de los datos necesarios).
+No consulta el reloj, la sesión, archivos ni la base.
+`todos` da falso ante cualquier falso y `alguno` verdadero ante cualquier verdadero; solo si nada decide, un desconocido deja el grupo desconocido.
+Los datos faltantes de una rama que ya no puede cambiar el resultado no se solicitan.
+
+```php
+$contexto = [
+    'especie' => 'especie.canino',
+    'raza' => ['codigo' => 'raza.gran_danes', 'atributos' => ['tamanio' => 'gigante']],
+    'edad_meses' => 84,
+    'sexo' => 'Macho',
+    'esterilizado' => false,
+    'vacunacion' => null,
+    'dias_desde_celo' => null,
+    'alertas_activas' => ['condicion.epilepsia'],
+    'sintomas' => ['sintoma.arcadas_improductivas' => ['minutos' => null]],
+    'exposiciones' => ['sustancia.chocolate' => ['minutos' => 20]],
+];
+```
+
+Cada campo puede faltar o ser `null`: es desconocido, nunca cero ni falso.
+Una edad cero es un recién nacido conocido y `esterilizado: false` es un estado conocido.
+`sexo` admite Macho/Hembra; la ficha «Desconocido» se normaliza a `null`.
+`vacunacion` admite completa/incompleta/desconocida si se declara: `desconocida` es una respuesta explícita del catálogo; omitirla produce `null`, y el motor no la deduce de vacunas registradas.
+`raza.atributos` solo lleva los atributos acreditados del nodo enlazado; un atributo ausente no equivale a falso ni se inventa desde `raza_indicada`.
+`alertas_activas` es la lista de códigos enlazados a alertas activas conocidas; vacía significa que no hay esos registros, no que el paciente carezca de alergias o enfermedades.
+
+`sintomas` y `exposiciones` son mapas por código, sin duplicados.
+Un mapa vacío es una selección conocida vacía; que un código no esté significa «no marcado», no un hallazgo clínico negativo.
+Si el mapa completo es `null`, la selección es desconocida.
+La marca con `minutos: null` acredita el evento pero desconoce el tiempo; las exposiciones sin hora pueden activar reglas sin intervalo.
+Para un evento no marcado, su condición temporal no aplica (falso); para uno marcado sin hora es desconocida.
+Los minutos son números no negativos referidos a la fecha de evaluación.
+Alternativamente, un episodio interno puede traer `desde: DateTimeImmutable`; el evaluador obtiene los minutos respecto a la fecha inyectada, y un inicio futuro queda desconocido.
+Ese objeto no es un dato aceptado directamente desde HTTP.
+La edad de la ficha se expresa en meses calendario cumplidos a la fecha de evaluación; nacimiento ausente, inválido o futuro queda desconocido.
+
+### Lectura y ranking
+
+`GrafoConocimiento::instantanea()` reutiliza la lectura activa del mapa de C6 y conserva una `ConocimientoClinico` inmutable durante la petición.
+No cambia el contrato de `mapa()` ni lee registros de pacientes.
+El modelo `PacienteDiagnostico` verifica el vínculo activo y arma por separado especie/raza enlazadas, edad, sexo, esterilización y alertas activas globales (RN-113); no lee consultas ni tratamientos protegidos.
+
+`MotorDiagnosticos` suma signo por peso de las aristas `sugiere` aplicables desde las marcas, más los modificadores verdaderos del motor `diagnosticos`.
+Las condiciones desconocidas no aportan peso y se devuelven como `datos_faltantes` con el código de arista o regla.
+El contexto por sí solo no crea candidatos: se exige al menos una coincidencia positiva de síntomas y puntuación positiva.
+La cobertura cuenta síntomas únicos positivos coincidentes sobre los síntomas positivos característicos cuyas condiciones son verdaderas para ese contexto.
+No cuenta dos veces una marca o sus sinónimos ni usa aristas negativas en el denominador.
+Ordena por puntuación descendente, fracción de cobertura descendente y código estable ascendente; devuelve como máximo cinco candidatos, sin probabilidades ni porcentajes.
+La respuesta conserva fuentes, versión, evidencia y la marca pendiente de validación; nunca guarda ni elige el diagnóstico final (C5, RN-202).
 
 El resultado admite `nivel`, `revision`, `revision_inmediata`, `contagio` para triage; `diagnostico` y `peso` para ranking; y `efecto`/`motivo` para la semántica de apoyo/prescripción.
 Un efecto de bloqueo solo es válido por toxicidad o alergia, en prescripción, con fuente clínica explícita; las interacciones advierten.
