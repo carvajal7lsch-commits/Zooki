@@ -22,7 +22,7 @@ Aprobadas el 05/10/2026 e incorporadas a las [Reglas de Negocio](ReglasNegocio.m
 
 | ID | Regla | Por qué hace falta | Regla de negocio |
 |---|---|---|---|
-| P1 | **Señales de alarma universales → 🔴 en cualquier especie:** dificultad respiratoria, encías pálidas o azuladas, convulsión en curso, colapso o inconsciencia, hemorragia que no se detiene, no poder orinar, golpe de calor y parto con esfuerzo sin cría por más de 30 minutos. | Garantiza un piso de seguridad aunque la especie no tenga cobertura en el grafo. | RN-417 |
+| P1 | **Señales de alarma universales → 🔴 en cualquier especie:** dificultad respiratoria, encías pálidas o azuladas, convulsión en curso, colapso o inconsciencia, hemorragia que no se detiene, no poder orinar, golpe de calor y parto con esfuerzo sin cría por más de 30 minutos o tiempo desconocido. | Garantiza un piso de seguridad aunque la especie no tenga cobertura en el grafo; decisión del usuario durante B2.1 para el tiempo desconocido del parto. | RN-417 |
 | P2 | **El nivel final es el más alto** que dispare cualquier síntoma o combinación. Nunca se promedia, y los datos tranquilizadores («come bien», «está activo») no bajan una alarma. | Evita que el propietario «diluya» una señal grave con buenas noticias. | RN-416 |
 | P3 | **Las combinaciones escalan:** tres o más síntomas moderados, o uno moderado con signos de deshidratación o decaimiento, suben un nivel. | Ningún síntoma solo parece grave, pero juntos sí. | RN-416 |
 | P4 | **Modificadores del paciente:** la raza (braquicéfalos con síntomas respiratorios; razas grandes o gigantes con abdomen distendido), la edad (menor de 6 meses, geriátrico), el estado (sin vacunas, hembra entera, gato macho) y el historial (epilepsia conocida, alergias registradas en cualquier clínica) cambian el nivel. | El mismo texto no significa lo mismo en un bulldog que en un labrador. | RN-416 |
@@ -32,6 +32,11 @@ Aprobadas el 05/10/2026 e incorporadas a las [Reglas de Negocio](ReglasNegocio.m
 | P8 | **Una urgencia 🔴 nunca se bloquea** por el límite del plan ni por una suscripción en mora. | El modelo de negocio no puede impedir atender una emergencia. | RN-420 |
 
 ---
+
+**Parto (decisión del usuario, 2026-10-14):** la captura distingue «Parto con esfuerzo sin cría: más de 30 minutos o no sé» (alarma universal 🔴) de «Parto con esfuerzo sin cría: menos de 30 minutos» (🟠 con revisión del personal).
+El buscador solo sugiere ambas marcas; la persona confirma cuál corresponde.
+El tiempo desconocido no puede dejar este parto en la reserva amarilla.
+Los colores son política del producto y siguen pendientes de validación veterinaria.
 
 ## 2. Casos clínicos
 

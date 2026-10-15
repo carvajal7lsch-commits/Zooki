@@ -1,1 +1,3605 @@
-[]
+[
+  {
+    "codigo": "sinonimo.dificultad_respiratoria.le_falta_el_aire",
+    "nodo": "sintoma.dificultad_respiratoria",
+    "texto": "le falta el aire",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dificultad_respiratoria.se_ahoga",
+    "nodo": "sintoma.dificultad_respiratoria",
+    "texto": "se ahoga",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dificultad_respiratoria.respira_con_dificultad",
+    "nodo": "sintoma.dificultad_respiratoria",
+    "texto": "respira con dificultad",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dificultad_respiratoria.respira_con_la_boca_abierta",
+    "nodo": "sintoma.dificultad_respiratoria",
+    "texto": "respira con la boca abierta",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dificultad_respiratoria.respira_agitado",
+    "nodo": "sintoma.dificultad_respiratoria",
+    "texto": "respira agitado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dificultad_respiratoria.ahogado",
+    "nodo": "sintoma.dificultad_respiratoria",
+    "texto": "ahogado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dificultad_respiratoria.mueve_mucho_la_cola_al_respirar",
+    "nodo": "sintoma.dificultad_respiratoria",
+    "texto": "mueve mucho la cola al respirar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.aves_enfermedad",
+        "localizador": "How Can I Tell If My Pet Bird Is Sick?: «tail bobbing while breathing»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dificultad_respiratoria.mueve_la_cola_al_respirar",
+    "nodo": "sintoma.dificultad_respiratoria",
+    "texto": "mueve la cola al respirar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.aves_enfermedad",
+        "localizador": "How Can I Tell If My Pet Bird Is Sick?: «tail bobbing while breathing»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_azuladas.encias_moradas",
+    "nodo": "sintoma.encias_azuladas",
+    "texto": "encías moradas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_azuladas.lengua_morada",
+    "nodo": "sintoma.encias_azuladas",
+    "texto": "lengua morada",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_azuladas.encias_azules",
+    "nodo": "sintoma.encias_azuladas",
+    "texto": "encías azules",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_azuladas.boca_morada",
+    "nodo": "sintoma.encias_azuladas",
+    "texto": "boca morada",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_azuladas.se_puso_morado",
+    "nodo": "sintoma.encias_azuladas",
+    "texto": "se puso morado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_palidas.encias_blancas",
+    "nodo": "sintoma.encias_palidas",
+    "texto": "encías blancas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_palidas.boca_palida",
+    "nodo": "sintoma.encias_palidas",
+    "texto": "boca pálida",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_palidas.encias_descoloridas",
+    "nodo": "sintoma.encias_palidas",
+    "texto": "encías descoloridas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.convulsion_en_curso.esta_convulsionando",
+    "nodo": "sintoma.convulsion_en_curso",
+    "texto": "está convulsionando",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.convulsion_en_curso.convulsion",
+    "nodo": "sintoma.convulsion_en_curso",
+    "texto": "convulsión",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.convulsion_en_curso.convulsiona",
+    "nodo": "sintoma.convulsion_en_curso",
+    "texto": "convulsiona",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.convulsion_en_curso.convulcion",
+    "nodo": "sintoma.convulsion_en_curso",
+    "texto": "convulcion",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.convulsion_en_curso.le_esta_dando_un_ataque",
+    "nodo": "sintoma.convulsion_en_curso",
+    "texto": "le está dando un ataque",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.convulsion_en_curso.ataque_epileptico",
+    "nodo": "sintoma.convulsion_en_curso",
+    "texto": "ataque epiléptico",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.colapso.se_desmayo",
+    "nodo": "sintoma.colapso",
+    "texto": "se desmayó",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.colapso.se_desplomo",
+    "nodo": "sintoma.colapso",
+    "texto": "se desplomó",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.colapso.no_reacciona",
+    "nodo": "sintoma.colapso",
+    "texto": "no reacciona",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.colapso.desmayo",
+    "nodo": "sintoma.colapso",
+    "texto": "desmayo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.colapso.inconsciente",
+    "nodo": "sintoma.colapso",
+    "texto": "inconsciente",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.colapso.se_cayo_y_no_se_levanta",
+    "nodo": "sintoma.colapso",
+    "texto": "se cayó y no se levanta",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.hemorragia_incontrolable.sangra_mucho",
+    "nodo": "sintoma.hemorragia_incontrolable",
+    "texto": "sangra mucho",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.hemorragia_incontrolable.no_para_de_sangrar",
+    "nodo": "sintoma.hemorragia_incontrolable",
+    "texto": "no para de sangrar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.hemorragia_incontrolable.hemorragia",
+    "nodo": "sintoma.hemorragia_incontrolable",
+    "texto": "hemorragia",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.hemorragia_incontrolable.le_sale_mucha_sangre",
+    "nodo": "sintoma.hemorragia_incontrolable",
+    "texto": "le sale mucha sangre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.imposibilidad_orinar.no_puede_orinar",
+    "nodo": "sintoma.imposibilidad_orinar",
+    "texto": "no puede orinar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.imposibilidad_orinar.no_orina",
+    "nodo": "sintoma.imposibilidad_orinar",
+    "texto": "no orina",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.imposibilidad_orinar.no_puede_hacer_pipi",
+    "nodo": "sintoma.imposibilidad_orinar",
+    "texto": "no puede hacer pipí",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.imposibilidad_orinar.no_hace_pipi",
+    "nodo": "sintoma.imposibilidad_orinar",
+    "texto": "no hace pipí",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.golpe_calor.insolacion",
+    "nodo": "sintoma.golpe_calor",
+    "texto": "insolación",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.golpe_calor.se_insolo",
+    "nodo": "sintoma.golpe_calor",
+    "texto": "se insoló",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.golpe_calor.se_acaloro_mucho",
+    "nodo": "sintoma.golpe_calor",
+    "texto": "se acaloró mucho",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.parto_esfuerzo_sin_cria.parto_dificil",
+    "nodo": "sintoma.parto_esfuerzo_sin_cria",
+    "texto": "parto difícil",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.parto_esfuerzo_sin_cria.puja_y_no_sale_el_perrito",
+    "nodo": "sintoma.parto_esfuerzo_sin_cria",
+    "texto": "puja y no sale el perrito",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.parto_esfuerzo_sin_cria.puja_y_no_sale_el_gatito",
+    "nodo": "sintoma.parto_esfuerzo_sin_cria",
+    "texto": "puja y no sale el gatito",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.parto_esfuerzo_sin_cria.no_puede_parir",
+    "nodo": "sintoma.parto_esfuerzo_sin_cria",
+    "texto": "no puede parir",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.traumatismo.lo_atropello_un_carro",
+    "nodo": "sintoma.traumatismo",
+    "texto": "lo atropelló un carro",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.traumatismo.lo_atropello_una_moto",
+    "nodo": "sintoma.traumatismo",
+    "texto": "lo atropelló una moto",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.traumatismo.lo_cogio_un_carro",
+    "nodo": "sintoma.traumatismo",
+    "texto": "lo cogió un carro",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.traumatismo.atropellado",
+    "nodo": "sintoma.traumatismo",
+    "texto": "atropellado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.traumatismo.atropello",
+    "nodo": "sintoma.traumatismo",
+    "texto": "atropello",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.traumatismo.accidente",
+    "nodo": "sintoma.traumatismo",
+    "texto": "accidente",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.traumatismo.golpe",
+    "nodo": "sintoma.traumatismo",
+    "texto": "golpe",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.traumatismo.se_cayo",
+    "nodo": "sintoma.traumatismo",
+    "texto": "se cayó",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.intentos_orinar_minimo.va_mucho_a_la_arena_y_no_hace",
+    "nodo": "sintoma.intentos_orinar_minimo",
+    "texto": "va mucho a la arena y no hace",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.intentos_orinar_minimo.va_mucho_a_la_arena",
+    "nodo": "sintoma.intentos_orinar_minimo",
+    "texto": "va mucho a la arena",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.intentos_orinar_minimo.puja_para_orinar",
+    "nodo": "sintoma.intentos_orinar_minimo",
+    "texto": "puja para orinar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.intentos_orinar_minimo.orina_gotitas",
+    "nodo": "sintoma.intentos_orinar_minimo",
+    "texto": "orina gotitas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.intentos_orinar_minimo.orina_poquito",
+    "nodo": "sintoma.intentos_orinar_minimo",
+    "texto": "orina poquito",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dolor_orinar.le_duele_al_orinar",
+    "nodo": "sintoma.dolor_orinar",
+    "texto": "le duele al orinar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dolor_orinar.llora_al_orinar",
+    "nodo": "sintoma.dolor_orinar",
+    "texto": "llora al orinar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dolor_orinar.maulla_al_orinar",
+    "nodo": "sintoma.dolor_orinar",
+    "texto": "maúlla al orinar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.dolor_orinar.se_queja_al_orinar",
+    "nodo": "sintoma.dolor_orinar",
+    "texto": "se queja al orinar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.arcadas_improductivas.arcadas",
+    "nodo": "sintoma.arcadas_improductivas",
+    "texto": "arcadas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.arcadas_improductivas.quiere_vomitar_y_no_puede",
+    "nodo": "sintoma.arcadas_improductivas",
+    "texto": "quiere vomitar y no puede",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.arcadas_improductivas.intenta_vomitar_y_no_le_sale_nada",
+    "nodo": "sintoma.arcadas_improductivas",
+    "texto": "intenta vomitar y no le sale nada",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.arcadas_improductivas.trata_de_vomitar",
+    "nodo": "sintoma.arcadas_improductivas",
+    "texto": "trata de vomitar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.abdomen_distendido.barriga_hinchada",
+    "nodo": "sintoma.abdomen_distendido",
+    "texto": "barriga hinchada",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.abdomen_distendido.panza_hinchada",
+    "nodo": "sintoma.abdomen_distendido",
+    "texto": "panza hinchada",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.abdomen_distendido.barriga_inflada",
+    "nodo": "sintoma.abdomen_distendido",
+    "texto": "barriga inflada",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.abdomen_distendido.barriga_dura",
+    "nodo": "sintoma.abdomen_distendido",
+    "texto": "barriga dura",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.abdomen_distendido.estomago_hinchado",
+    "nodo": "sintoma.abdomen_distendido",
+    "texto": "estómago hinchado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.inquietud.inquieto",
+    "nodo": "sintoma.inquietud",
+    "texto": "inquieto",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.inquietud.inquieta",
+    "nodo": "sintoma.inquietud",
+    "texto": "inquieta",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.inquietud.no_se_queda_quieto",
+    "nodo": "sintoma.inquietud",
+    "texto": "no se queda quieto",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.inquietud.intranquilo",
+    "nodo": "sintoma.inquietud",
+    "texto": "intranquilo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.sed_aumentada.toma_mucha_agua",
+    "nodo": "sintoma.sed_aumentada",
+    "texto": "toma mucha agua",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.sed_aumentada.mucha_sed",
+    "nodo": "sintoma.sed_aumentada",
+    "texto": "mucha sed",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.sed_aumentada.bebe_mucha_agua",
+    "nodo": "sintoma.sed_aumentada",
+    "texto": "bebe mucha agua",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.decaido",
+    "nodo": "sintoma.decaimiento",
+    "texto": "decaído",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.decaida",
+    "nodo": "sintoma.decaimiento",
+    "texto": "decaída",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.desaido",
+    "nodo": "sintoma.decaimiento",
+    "texto": "desaido",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.esta_desaido",
+    "nodo": "sintoma.decaimiento",
+    "texto": "esta desaido",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.desanimado",
+    "nodo": "sintoma.decaimiento",
+    "texto": "desanimado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.aguado",
+    "nodo": "sintoma.decaimiento",
+    "texto": "aguado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.aguadito",
+    "nodo": "sintoma.decaimiento",
+    "texto": "aguadito",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.sin_animo",
+    "nodo": "sintoma.decaimiento",
+    "texto": "sin ánimo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.debil",
+    "nodo": "sintoma.decaimiento",
+    "texto": "débil",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.decaimiento.flojo",
+    "nodo": "sintoma.decaimiento",
+    "texto": "flojo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_genital.flujo",
+    "nodo": "sintoma.secrecion_genital",
+    "texto": "flujo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_genital.le_sale_flujo",
+    "nodo": "sintoma.secrecion_genital",
+    "texto": "le sale flujo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_genital.le_sale_pus_por_la_vulva",
+    "nodo": "sintoma.secrecion_genital",
+    "texto": "le sale pus por la vulva",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.secrecion_genital.secrecion_vaginal",
+    "nodo": "sintoma.secrecion_genital",
+    "texto": "secreción vaginal",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.respiracion_ruidosa_ejercicio.respira_ruidoso",
+    "nodo": "sintoma.respiracion_ruidosa_ejercicio",
+    "texto": "respira ruidoso",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.respiracion_ruidosa_ejercicio.respira_muy_ruidoso",
+    "nodo": "sintoma.respiracion_ruidosa_ejercicio",
+    "texto": "respira muy ruidoso",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.respiracion_ruidosa_ejercicio.ronca_al_respirar",
+    "nodo": "sintoma.respiracion_ruidosa_ejercicio",
+    "texto": "ronca al respirar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.respiracion_ruidosa_ejercicio.respira_muy_fuerte_despues_de_caminar",
+    "nodo": "sintoma.respiracion_ruidosa_ejercicio",
+    "texto": "respira muy fuerte después de caminar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cansancio_ejercicio.muy_cansado",
+    "nodo": "sintoma.cansancio_ejercicio",
+    "texto": "muy cansado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cansancio_ejercicio.cansado",
+    "nodo": "sintoma.cansancio_ejercicio",
+    "texto": "cansado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cansancio_ejercicio.se_cansa_rapido",
+    "nodo": "sintoma.cansancio_ejercicio",
+    "texto": "se cansa rápido",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cansancio_ejercicio.muy_cansado_despues_de_caminar",
+    "nodo": "sintoma.cansancio_ejercicio",
+    "texto": "muy cansado después de caminar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.exposicion_calor.dia_caluroso",
+    "nodo": "sintoma.exposicion_calor",
+    "texto": "día caluroso",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.exposicion_calor.estuvo_al_sol",
+    "nodo": "sintoma.exposicion_calor",
+    "texto": "estuvo al sol",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.exposicion_calor.lo_dejaron_en_el_carro",
+    "nodo": "sintoma.exposicion_calor",
+    "texto": "lo dejaron en el carro",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.exposicion_calor.mucho_calor",
+    "nodo": "sintoma.exposicion_calor",
+    "texto": "mucho calor",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito.vomita",
+    "nodo": "sintoma.vomito",
+    "texto": "vomita",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito.vomito",
+    "nodo": "sintoma.vomito",
+    "texto": "vomitó",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito.bomita",
+    "nodo": "sintoma.vomito",
+    "texto": "bomita",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito.bomito",
+    "nodo": "sintoma.vomito",
+    "texto": "bómito",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito.trasboca",
+    "nodo": "sintoma.vomito",
+    "texto": "trasboca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito.trasboco",
+    "nodo": "sintoma.vomito",
+    "texto": "trasbocó",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito_repetido.vomita_mucho",
+    "nodo": "sintoma.vomito_repetido",
+    "texto": "vomita mucho",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito_repetido.vomito_varias_veces",
+    "nodo": "sintoma.vomito_repetido",
+    "texto": "vomitó varias veces",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito_repetido.no_para_de_vomitar",
+    "nodo": "sintoma.vomito_repetido",
+    "texto": "no para de vomitar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito_sangre.bomita_sangre",
+    "nodo": "sintoma.vomito_sangre",
+    "texto": "bomita sangre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito_sangre.bomita_con_sangre",
+    "nodo": "sintoma.vomito_sangre",
+    "texto": "bomita con sangre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito_sangre.vomita_sangre",
+    "nodo": "sintoma.vomito_sangre",
+    "texto": "vomita sangre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.vomito_sangre.trasboca_sangre",
+    "nodo": "sintoma.vomito_sangre",
+    "texto": "trasboca sangre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.diarrea.popo_aguado",
+    "nodo": "sintoma.diarrea",
+    "texto": "popó aguado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.diarrea.popo_liquido",
+    "nodo": "sintoma.diarrea",
+    "texto": "popó líquido",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.diarrea.soltura",
+    "nodo": "sintoma.diarrea",
+    "texto": "soltura",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.diarrea.diarrea_liquida",
+    "nodo": "sintoma.diarrea",
+    "texto": "diarrea líquida",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.diarrea_sangre.popo_con_sangre",
+    "nodo": "sintoma.diarrea_sangre",
+    "texto": "popó con sangre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.diarrea_sangre.caca_con_sangre",
+    "nodo": "sintoma.diarrea_sangre",
+    "texto": "caca con sangre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.diarrea_sangre.diarrea_sanguinolenta",
+    "nodo": "sintoma.diarrea_sangre",
+    "texto": "diarrea sanguinolenta",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_come.no_quiere_comer",
+    "nodo": "sintoma.no_come",
+    "texto": "no quiere comer",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_come.inapetente",
+    "nodo": "sintoma.no_come",
+    "texto": "inapetente",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_come.sin_apetito",
+    "nodo": "sintoma.no_come",
+    "texto": "sin apetito",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_come.no_ha_comido",
+    "nodo": "sintoma.no_come",
+    "texto": "no ha comido",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_come.dejo_de_comer",
+    "nodo": "sintoma.no_come",
+    "texto": "dejó de comer",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_bebe.no_bebe",
+    "nodo": "sintoma.no_bebe",
+    "texto": "no bebe",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_bebe.no_quiere_tomar_agua",
+    "nodo": "sintoma.no_bebe",
+    "texto": "no quiere tomar agua",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_secas.encias_secas",
+    "nodo": "sintoma.encias_secas",
+    "texto": "encías secas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_secas.deshidratado",
+    "nodo": "sintoma.encias_secas",
+    "texto": "deshidratado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_secas.boca_seca",
+    "nodo": "sintoma.encias_secas",
+    "texto": "boca seca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.encias_secas.encias_pegajosas",
+    "nodo": "sintoma.encias_secas",
+    "texto": "encías pegajosas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.se_esconde.se_aisla",
+    "nodo": "sintoma.se_esconde",
+    "texto": "se aísla",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.se_esconde.escondido",
+    "nodo": "sintoma.se_esconde",
+    "texto": "escondido",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.se_esconde.se_mete_debajo_de_la_cama",
+    "nodo": "sintoma.se_esconde",
+    "texto": "se mete debajo de la cama",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.fiebre.fiebre",
+    "nodo": "sintoma.fiebre",
+    "texto": "fiebre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.fiebre.calentura",
+    "nodo": "sintoma.fiebre",
+    "texto": "calentura",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.fiebre.esta_caliente",
+    "nodo": "sintoma.fiebre",
+    "texto": "está caliente",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.primera_convulsion_resuelta.convulsiono_por_primera_vez",
+    "nodo": "sintoma.primera_convulsion_resuelta",
+    "texto": "convulsionó por primera vez",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.primera_convulsion_resuelta.primera_convulsion",
+    "nodo": "sintoma.primera_convulsion_resuelta",
+    "texto": "primera convulsión",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.primera_convulsion_resuelta.le_dio_un_ataque_ayer",
+    "nodo": "sintoma.primera_convulsion_resuelta",
+    "texto": "le dio un ataque ayer",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.convulsion_habitual_resuelta.convulsion_como_las_de_siempre",
+    "nodo": "sintoma.convulsion_habitual_resuelta",
+    "texto": "convulsión como las de siempre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.convulsion_habitual_resuelta.crisis_de_las_de_siempre",
+    "nodo": "sintoma.convulsion_habitual_resuelta",
+    "texto": "crisis de las de siempre",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_defeca.no_hace_popo",
+    "nodo": "sintoma.no_defeca",
+    "texto": "no hace popó",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_defeca.no_defeca",
+    "nodo": "sintoma.no_defeca",
+    "texto": "no defeca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_defeca.no_ha_hecho_popo",
+    "nodo": "sintoma.no_defeca",
+    "texto": "no ha hecho popó",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_defeca.estrenido",
+    "nodo": "sintoma.no_defeca",
+    "texto": "estreñido",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.no_defeca.no_hace_caca",
+    "nodo": "sintoma.no_defeca",
+    "texto": "no hace caca",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.plumaje_erizado.esponjado",
+    "nodo": "sintoma.plumaje_erizado",
+    "texto": "esponjado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.plumaje_erizado.esta_esponjado",
+    "nodo": "sintoma.plumaje_erizado",
+    "texto": "está esponjado",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.plumaje_erizado.plumas_erizadas",
+    "nodo": "sintoma.plumaje_erizado",
+    "texto": "plumas erizadas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.plumaje_erizado.plumas_esponjadas",
+    "nodo": "sintoma.plumaje_erizado",
+    "texto": "plumas esponjadas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.otro_no_se.otro",
+    "nodo": "sintoma.otro_no_se",
+    "texto": "otro",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.otro_no_se.no_se",
+    "nodo": "sintoma.otro_no_se",
+    "texto": "no sé",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.otro_no_se.esta_raro",
+    "nodo": "sintoma.otro_no_se",
+    "texto": "está raro",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.otro_no_se.no_se_que_tiene",
+    "nodo": "sintoma.otro_no_se",
+    "texto": "no sé qué tiene",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.control_preventivo.control",
+    "nodo": "sintoma.control_preventivo",
+    "texto": "control",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.control_preventivo.vacuna",
+    "nodo": "sintoma.control_preventivo",
+    "texto": "vacuna",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.control_preventivo.vacunacion",
+    "nodo": "sintoma.control_preventivo",
+    "texto": "vacunación",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.control_preventivo.chequeo",
+    "nodo": "sintoma.control_preventivo",
+    "texto": "chequeo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.control_preventivo.control_anual",
+    "nodo": "sintoma.control_preventivo",
+    "texto": "control anual",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.control_preventivo.desparasitar",
+    "nodo": "sintoma.control_preventivo",
+    "texto": "desparasitar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picor_oidos_leve_estable.se_rasca_las_orejas",
+    "nodo": "sintoma.picor_oidos_leve_estable",
+    "texto": "se rasca las orejas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picor_oidos_leve_estable.rasquina_en_los_oidos",
+    "nodo": "sintoma.picor_oidos_leve_estable",
+    "texto": "rasquiña en los oídos",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picor_oidos_leve_estable.picazon_en_las_orejas",
+    "nodo": "sintoma.picor_oidos_leve_estable",
+    "texto": "picazón en las orejas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.picor_oidos_leve_estable.comezon_en_los_oidos",
+    "nodo": "sintoma.picor_oidos_leve_estable",
+    "texto": "comezón en los oídos",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cojera_leve_estable.cojea_un_poco",
+    "nodo": "sintoma.cojera_leve_estable",
+    "texto": "cojea un poco",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cojera_leve_estable.cojea",
+    "nodo": "sintoma.cojera_leve_estable",
+    "texto": "cojea",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cojera_leve_estable.renquea",
+    "nodo": "sintoma.cojera_leve_estable",
+    "texto": "renquea",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cojera_leve_estable.cojito",
+    "nodo": "sintoma.cojera_leve_estable",
+    "texto": "cojito",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.lilium.lirio",
+    "nodo": "sustancia.lilium",
+    "texto": "lirio",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.lilium.lirios",
+    "nodo": "sustancia.lilium",
+    "texto": "lirios",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.lilium.comio_lirios",
+    "nodo": "sustancia.lilium",
+    "texto": "comió lirios",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.lilium.mordio_lirios",
+    "nodo": "sustancia.lilium",
+    "texto": "mordió lirios",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.chocolate.chocolatina",
+    "nodo": "sustancia.chocolate",
+    "texto": "chocolatina",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.chocolate.cacao",
+    "nodo": "sustancia.chocolate",
+    "texto": "cacao",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.xilitol.xilitol",
+    "nodo": "sustancia.xilitol",
+    "texto": "xilitol",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.xilitol.xylitol",
+    "nodo": "sustancia.xilitol",
+    "texto": "xylitol",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.posible_xilitol.chicle",
+    "nodo": "sustancia.posible_xilitol",
+    "texto": "chicle",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.posible_xilitol.chicle_sin_azucar",
+    "nodo": "sustancia.posible_xilitol",
+    "texto": "chicle sin azúcar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.posible_xilitol.goma_de_mascar",
+    "nodo": "sustancia.posible_xilitol",
+    "texto": "goma de mascar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.posible_xilitol.dulce_sin_azucar",
+    "nodo": "sustancia.posible_xilitol",
+    "texto": "dulce sin azúcar",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.uvas_pasas.uvas",
+    "nodo": "sustancia.uvas_pasas",
+    "texto": "uvas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.uvas_pasas.uvas_pasas",
+    "nodo": "sustancia.uvas_pasas",
+    "texto": "uvas pasas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.uvas_pasas.pasas",
+    "nodo": "sustancia.uvas_pasas",
+    "texto": "pasas",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cebolla_ajo.cebolla",
+    "nodo": "sustancia.cebolla_ajo",
+    "texto": "cebolla",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cebolla_ajo.ajo",
+    "nodo": "sustancia.cebolla_ajo",
+    "texto": "ajo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.cebolla_ajo.cebollin",
+    "nodo": "sustancia.cebolla_ajo",
+    "texto": "cebollín",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.etilenglicol.anticongelante",
+    "nodo": "sustancia.etilenglicol",
+    "texto": "anticongelante",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.etilenglicol.refrigerante_del_carro",
+    "nodo": "sustancia.etilenglicol",
+    "texto": "refrigerante del carro",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.paracetamol.acetaminofen",
+    "nodo": "farmaco.paracetamol",
+    "texto": "acetaminofén",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.paracetamol.paracetamol",
+    "nodo": "farmaco.paracetamol",
+    "texto": "paracetamol",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.ibuprofeno.ibuprofen",
+    "nodo": "farmaco.ibuprofeno",
+    "texto": "ibuprofén",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.aspirina.aspirina",
+    "nodo": "farmaco.aspirina",
+    "texto": "aspirina",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.aspirina.acido_acetilsalicilico",
+    "nodo": "farmaco.aspirina",
+    "texto": "ácido acetilsalicílico",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-424: captura estructurada con lista de síntomas del catálogo; el buscador solo sugiere",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: buscador tolerante a errores de escritura y dictado",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.parto_esfuerzo_sin_cria.mas_30",
+    "nodo": "sintoma.parto_esfuerzo_sin_cria",
+    "texto": "puja hace más de media hora y no nace la cría",
+    "fuentes": [
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): buscador sugiere ambas marcas y la persona confirma el tiempo, sin selección automática",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.parto_esfuerzo_sin_cria.tiempo_desconocido",
+    "nodo": "sintoma.parto_esfuerzo_sin_cria",
+    "texto": "está pujando y no sé desde cuándo",
+    "fuentes": [
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): buscador sugiere ambas marcas y la persona confirma el tiempo, sin selección automática",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.parto_esfuerzo_menos_30.menos_30",
+    "nodo": "sintoma.parto_esfuerzo_menos_30",
+    "texto": "puja hace menos de media hora sin cría",
+    "fuentes": [
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): buscador sugiere ambas marcas y la persona confirma el tiempo, sin selección automática",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.parto_esfuerzo_menos_30.perrito",
+    "nodo": "sintoma.parto_esfuerzo_menos_30",
+    "texto": "puja y no sale el perrito",
+    "fuentes": [
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): buscador sugiere ambas marcas y la persona confirma el tiempo, sin selección automática",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sinonimo.parto_esfuerzo_menos_30.gatito",
+    "nodo": "sintoma.parto_esfuerzo_menos_30",
+    "texto": "puja y no sale el gatito",
+    "fuentes": [
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): buscador sugiere ambas marcas y la persona confirma el tiempo, sin selección automática",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  }
+]

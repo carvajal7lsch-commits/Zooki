@@ -99,6 +99,62 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    public function testB2ConocimientoRealSeCargaDosVecesSinCambios(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->cargar('07_grafo_conocimiento.sql');
+        $carpeta = self::DATABASE . '/conocimiento';
+        $cargador = new CargadorConocimiento($this->db);
+        $primera = $cargador->cargar($carpeta);
+        $this->assertGreaterThan(0, $primera['altas']);
+        $antes = ConocimientoPrueba::instantanea($this->db);
+        $segunda = $cargador->cargar($carpeta);
+        $this->assertSame([0, 0, 0], [$segunda['altas'], $segunda['cambios'], $segunda['retiros']]);
+        $this->assertSame($antes, ConocimientoPrueba::instantanea($this->db));
+        // Las razas y especies del conjunto se enlazan al catálogo real, sin crear taxonomía.
+        $this->assertSame(55, $this->contar('razas'));
+        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM grafo_nodos WHERE tipo IN ('especie', 'raza') AND id_especie IS NULL AND id_raza IS NULL")->fetchColumn());
+        $this->assertSame(55, (int) $this->db->query("SELECT id_raza FROM grafo_nodos WHERE codigo = 'raza.gran_danes'")->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM grafo_nodos WHERE codigo NOT LIKE 'legado.%' AND estado_validacion <> 'pendiente'")->fetchColumn());
+    }
+
+    public function testB21RetiraPartoProlongadoSinBorrarloNiCambiarSuId(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $carpeta = ConocimientoPrueba::copiar(self::DATABASE . '/conocimiento');
+        try {
+            // Conserva la declaración anterior para demostrar el retiro sobre una carga existente.
+            $anterior = json_decode(file_get_contents(__DIR__ . '/../Fixtures/parto_regla_b2.json'), true, 64, JSON_THROW_ON_ERROR);
+            ConocimientoPrueba::cambiar($carpeta, 'reglas', static function (array &$reglas) use ($anterior): void {
+                $reglas[] = $anterior;
+            });
+            $cargador = new CargadorConocimiento($this->db);
+            $cargador->cargar($carpeta);
+            $partoAntes = $this->db->query("SELECT * FROM grafo_reglas WHERE codigo = 'triage.parto_prolongado'")->fetch(PDO::FETCH_ASSOC);
+            $antes = ConocimientoPrueba::instantanea($this->db);
+            $simulacion = $cargador->cargar(self::DATABASE . '/conocimiento', true);
+            $this->assertSame(1, $simulacion['retiros']);
+            $this->assertSame($antes, ConocimientoPrueba::instantanea($this->db));
+            $resultado = $cargador->cargar(self::DATABASE . '/conocimiento');
+            $this->assertSame(1, $resultado['retiros']);
+            $partoDespues = $this->db->query("SELECT * FROM grafo_reglas WHERE codigo = 'triage.parto_prolongado'")->fetch(PDO::FETCH_ASSOC);
+            $this->assertSame($partoAntes['id_regla'], $partoDespues['id_regla']);
+            $this->assertSame(0, (int) $partoDespues['activo']);
+            $this->assertSame($partoAntes['condiciones'], $partoDespues['condiciones']);
+            $this->assertSame(1, (int) $this->db->query("SELECT alarma_universal FROM grafo_nodos WHERE codigo = 'sintoma.parto_esfuerzo_sin_cria'")->fetchColumn());
+            $despues = ConocimientoPrueba::instantanea($this->db);
+            $repetida = $cargador->cargar(self::DATABASE . '/conocimiento');
+            $this->assertSame([0, 0, 0], [$repetida['altas'], $repetida['cambios'], $repetida['retiros']]);
+            $this->assertSame($despues, ConocimientoPrueba::instantanea($this->db));
+        } finally {
+            ConocimientoPrueba::borrar($carpeta);
+        }
+    }
+
     public function testB1TaxonomiaConFKYTiposCoherentes(): void
     {
         require_once __DIR__ . '/../Support/ConocimientoPrueba.php';

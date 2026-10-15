@@ -4,11 +4,12 @@ require_once __DIR__ . '/../../models/CargadorConocimiento.php';
 /** Cambios de un conjunto sintético aislado; nunca modifica los archivos de producción. */
 final class ConocimientoPrueba
 {
-    public static function copiar(): string
+    public static function copiar(?string $origen = null): string
     {
         $carpeta = sys_get_temp_dir() . '/zooki_conocimiento_' . bin2hex(random_bytes(6));
         mkdir($carpeta);
-        foreach (glob(__DIR__ . '/../Fixtures/conocimiento/*.json') as $archivo) {
+        $origen ??= __DIR__ . '/../Fixtures/conocimiento';
+        foreach (glob($origen . '/*.json') as $archivo) {
             copy($archivo, $carpeta . '/' . basename($archivo));
         }
         return $carpeta;

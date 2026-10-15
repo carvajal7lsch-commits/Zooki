@@ -1,1 +1,1337 @@
-[]
+[
+  {
+    "codigo": "triage.urinario_macho",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        },
+        {
+          "predicado": "sexo",
+          "valor": "Macho"
+        },
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.intentos_orinar_minimo"
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "rojo"
+    },
+    "fuentes": [
+      {
+        "codigo": "cornell.flutd",
+        "localizador": "Urethral obstruction: «a true medical emergency»; machos con uretra más larga y estrecha",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «difficulty urinating or inability to urinate in male cats»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: modificador «gato macho»",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.abdomen_gigante",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.arcadas_improductivas"
+        },
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.abdomen_distendido"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "raza",
+              "atributo": "tamanio",
+              "valor": "gigante"
+            },
+            {
+              "predicado": "raza",
+              "atributo": "tamanio",
+              "valor": "grande"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "rojo"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dtg",
+        "localizador": "«acute, life-threatening condition that primarily affects large- and giant-breed dogs»; arcadas improductivas y distensión",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «swollen or painful abdomen or nonproductive retching»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: razas grandes o gigantes con abdomen distendido",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.reproductivo_poscelo",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "sexo",
+          "valor": "Hembra"
+        },
+        {
+          "predicado": "esterilizado",
+          "valor": false
+        },
+        {
+          "predicado": "dias_desde_celo",
+          "minimo": 28,
+          "incluye_minimo": true,
+          "maximo": 42,
+          "incluye_maximo": true
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.secrecion_genital"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.sed_aumentada"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.decaimiento"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.vomito"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.no_come"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "naranja"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.piometra_propietarios",
+        "localizador": "Pyometra: «tends to occur 4 to 6 weeks after estrus»; signos y progresión rápida",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.piometra",
+        "localizador": "Hembras enteras; signos clínicos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: modificador «hembra entera» y tiempo",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.B: hembra entera con signos tras el celo, naranja",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.lilium_felino",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        },
+        {
+          "predicado": "exposicion",
+          "codigo": "sustancia.lilium"
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "rojo"
+    },
+    "fuentes": [
+      {
+        "codigo": "aspca.lirio",
+        "localizador": "Ficha Lily: «Toxic to Cats»; falla renal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.B: toxicidad por especie sin síntomas visibles, rojo",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.ejercicio_braquicefalo",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "raza",
+          "atributo": "braquicefalo",
+          "valor": true
+        },
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.respiracion_ruidosa_ejercicio"
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "naranja"
+    },
+    "fuentes": [
+      {
+        "codigo": "cornell.boas",
+        "localizador": "Symptoms: respiración ruidosa, intolerancia al ejercicio, encías azuladas, colapso",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: braquicéfalos con síntomas respiratorios",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.C: la raza braquicéfala sube el nivel, naranja",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.digestivo_cachorro",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "edad_meses",
+          "maximo": 6,
+          "incluye_maximo": false
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "vacunacion",
+              "valor": "incompleta"
+            },
+            {
+              "predicado": "vacunacion",
+              "valor": "desconocida"
+            }
+          ]
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.vomito"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.vomito_repetido"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.diarrea"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.diarrea_sangre"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "naranja"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.parvovirus",
+        "localizador": "«Young (6 weeks–6 months old), unvaccinated, or incompletely vaccinated dogs are most susceptible»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: modificadores «menor de 6 meses» y «sin vacunas»",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.contagio_digestivo",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "vacunacion",
+              "valor": "incompleta"
+            },
+            {
+              "predicado": "vacunacion",
+              "valor": "desconocida"
+            }
+          ]
+        },
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.diarrea_sangre"
+        }
+      ]
+    },
+    "resultado": {
+      "contagio": true
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.parvovirus",
+        "localizador": "Transmisión fecal-oral y aislamiento estricto",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-425: aviso de posible enfermedad contagiosa",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.contagio_digestivo_felino",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "vacunacion",
+              "valor": "incompleta"
+            },
+            {
+              "predicado": "vacunacion",
+              "valor": "desconocida"
+            }
+          ]
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.vomito"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.vomito_repetido"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.diarrea"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.diarrea_sangre"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "contagio": true
+    },
+    "fuentes": [
+      {
+        "codigo": "cornell.panleucopenia",
+        "localizador": "Gatos no vacunados susceptibles; virus muy contagioso; tratamiento en aislamiento",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-425: aviso de posible enfermedad contagiosa",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.anorexia_felina_sostenida",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        },
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.no_come"
+        },
+        {
+          "predicado": "inicio_episodio",
+          "codigo": "sintoma.no_come",
+          "minimo": 1440,
+          "incluye_minimo": true
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "naranja"
+    },
+    "fuentes": [
+      {
+        "codigo": "cornell.anorexia",
+        "localizador": "«can have a severe impact on a mature cat’s health if it persists for as little as 24 hours»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "cornell.lipidosis",
+        "localizador": "Anorexia como desencadenante; obesidad como factor de riesgo",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.C: varios días sin comer en un gato, naranja",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.posible_xilitol",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.posible_xilitol"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.xilitol"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "naranja",
+      "revision": true
+    },
+    "fuentes": [
+      {
+        "codigo": "fda.xilitol",
+        "localizador": "Hipoglucemia que puede ocurrir entre 10 y 60 minutos tras la ingesta",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.xilitol",
+        "localizador": "Hipoglucemia desde 30 minutos o retardada hasta 12–18 horas con chicles",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.D «Tóxicos y tiempo»: asintomático con reloj, naranja",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.paracetamol_felino",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        },
+        {
+          "predicado": "exposicion",
+          "codigo": "farmaco.paracetamol"
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "rojo"
+    },
+    "fuentes": [
+      {
+        "codigo": "fda.analgesicos",
+        "localizador": "«Acetaminophen is fatal to cats»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_humanos",
+        "localizador": "Acetaminophen Toxicosis: gatos especialmente susceptibles",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.D: triage y alerta de toxicidad coinciden, rojo",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.chocolate_tardio",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "exposicion",
+          "codigo": "sustancia.chocolate"
+        },
+        {
+          "predicado": "minutos_desde_exposicion",
+          "codigo": "sustancia.chocolate",
+          "minimo": 720,
+          "incluye_minimo": true
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "amarillo",
+      "revision": true
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.chocolate",
+        "localizador": "Clinical Findings: signos habituales entre 6 y 12 horas, pueden durar hasta 72 horas; cantidad de metilxantinas variable",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: sin cobertura o sin síntoma reconocido, amarillo con revisión del personal",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.D: tipo y cantidad desconocidos piden revisión; el tiempo no descarta toxicidad",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.digestivo_compromiso",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "alguno": [
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.vomito"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.vomito_repetido"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.vomito_sangre"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.diarrea"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.diarrea_sangre"
+            }
+          ]
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.decaimiento"
+            },
+            {
+              "predicado": "sintoma_marcado",
+              "codigo": "sintoma.encias_secas"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "naranja"
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: uno moderado con deshidratación o decaimiento sube un nivel",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.E: juntos indican deshidratación, naranja",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.crisis_habitual_documentada",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.convulsion_habitual_resuelta"
+        },
+        {
+          "predicado": "alerta_activa",
+          "codigo": "condicion.epilepsia"
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "amarillo"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.epilepsia",
+        "localizador": "Epilepsia idiopática: crisis recurrentes",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: historial de epilepsia conocida",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.E: paciente conocido, episodio único y recuperado, amarillo",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.apetito_sin_heces",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.no_come"
+        },
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.no_defeca"
+        }
+      ]
+    },
+    "resultado": {
+      "revision": true,
+      "revision_inmediata": true
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: sin cobertura o sin síntoma reconocido, amarillo con revisión del personal",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F: sin apetito ni heces, revisión inmediata del personal antes de agendar",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.conejos_no_infecciosas",
+        "localizador": "Gastric Stasis: conejos presentados con estasis avanzada, deshidratación y lipidosis hepática",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.reserva_otro",
+    "motor": "triage",
+    "condiciones": {
+      "predicado": "sintoma_marcado",
+      "codigo": "sintoma.otro_no_se"
+    },
+    "resultado": {
+      "nivel": "amarillo",
+      "revision": true
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: sin cobertura o sin síntoma reconocido, amarillo con revisión del personal",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.preventivo",
+    "motor": "triage",
+    "condiciones": {
+      "predicado": "sintoma_marcado",
+      "codigo": "sintoma.control_preventivo"
+    },
+    "resultado": {
+      "nivel": "verde"
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.G: consulta preventiva, verde; una alarma de RN-417 sigue dando rojo",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.oidos_estable",
+    "motor": "triage",
+    "condiciones": {
+      "predicado": "sintoma_marcado",
+      "codigo": "sintoma.picor_oidos_leve_estable"
+    },
+    "resultado": {
+      "nivel": "verde"
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.G: molestia leve con paciente estable, verde",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.otitis_externa",
+        "localizador": "Clinical Findings: prurito ótico",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.cojera_estable",
+    "motor": "triage",
+    "condiciones": {
+      "predicado": "sintoma_marcado",
+      "codigo": "sintoma.cojera_leve_estable"
+    },
+    "resultado": {
+      "nivel": "verde"
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.G: lo crónico y estable no se trata como agudo, verde",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.osteoartritis",
+        "localizador": "Signos clínicos: cojera",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "ranking.parvovirosis_contexto",
+    "motor": "diagnosticos",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "edad_meses",
+              "maximo": 6,
+              "incluye_maximo": false
+            },
+            {
+              "predicado": "vacunacion",
+              "valor": "incompleta"
+            },
+            {
+              "predicado": "vacunacion",
+              "valor": "desconocida"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "diagnostico": "diagnostico.parvovirosis_canina",
+      "peso": 0.3
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.parvovirus",
+        "localizador": "Perros jóvenes, no vacunados o con vacunación incompleta, los más susceptibles",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "ranking.panleucopenia_contexto",
+    "motor": "diagnosticos",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "vacunacion",
+              "valor": "incompleta"
+            },
+            {
+              "predicado": "vacunacion",
+              "valor": "desconocida"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "diagnostico": "diagnostico.panleucopenia_felina",
+      "peso": 0.3
+    },
+    "fuentes": [
+      {
+        "codigo": "cornell.panleucopenia",
+        "localizador": "Gatos no vacunados y gatitos, los más susceptibles",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "ranking.dtg_tamanio",
+    "motor": "diagnosticos",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "raza",
+              "atributo": "tamanio",
+              "valor": "gigante"
+            },
+            {
+              "predicado": "raza",
+              "atributo": "tamanio",
+              "valor": "grande"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "diagnostico": "diagnostico.dilatacion_torsion_gastrica",
+      "peso": 0.3
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dtg",
+        "localizador": "Afecta sobre todo a perros de razas grandes y gigantes",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "ranking.piometra_poscelo",
+    "motor": "diagnosticos",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "dias_desde_celo",
+          "minimo": 28,
+          "incluye_minimo": true,
+          "maximo": 42,
+          "incluye_maximo": true
+        }
+      ]
+    },
+    "resultado": {
+      "diagnostico": "diagnostico.piometra",
+      "peso": 0.3
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.piometra_propietarios",
+        "localizador": "Pyometra: 4 a 6 semanas después del celo",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "ranking.obstruccion_macho",
+    "motor": "diagnosticos",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        },
+        {
+          "predicado": "sexo",
+          "valor": "Macho"
+        }
+      ]
+    },
+    "resultado": {
+      "diagnostico": "diagnostico.obstruccion_uretral_felina",
+      "peso": 0.3
+    },
+    "fuentes": [
+      {
+        "codigo": "cornell.flutd",
+        "localizador": "Machos con mayor riesgo por uretra más larga y estrecha",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-210: orden por peso; el valor numérico es heurístico de Zooki, sin validación veterinaria",
+        "fundamento": "heuristico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.toxicos_canino",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "minutos_desde_exposicion",
+              "codigo": "sustancia.chocolate",
+              "maximo": 720,
+              "incluye_maximo": false
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.xilitol"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.uvas_pasas"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.cebolla_ajo"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.macadamia"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.etilenglicol"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.paracetamol"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.ibuprofeno"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "naranja",
+      "revision": true
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.chocolate",
+        "localizador": "Etiology: «Chocolate poisoning occurs most commonly in dogs»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "fda.xilitol",
+        "localizador": "Hipoglucemia rápida y profunda en perros",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.xilitol",
+        "localizador": "Hipoglucemia e insuficiencia hepática en perros",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.uvas",
+        "localizador": "Clinical Findings: falla renal oligúrica o anúrica en perros",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.allium",
+        "localizador": "«Cats are the most susceptible species, followed by dogs»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "aspca.alimentos",
+        "localizador": "Macadamia Nuts: debilidad, vómito, temblores e hipertermia en perros",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.etilenglicol",
+        "localizador": "«Dogs and cats are most commonly affected»; a menudo fatal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_humanos",
+        "localizador": "Acetaminophen Toxicosis: perros afectados a exposiciones mayores que los gatos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_humanos",
+        "localizador": "Ibuprofen: «no longer recommended in dogs», úlceras y perforaciones",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 1 del usuario (2026-10-14): toxicidad documentada para la especie implica mínimo naranja; chocolate solo con menos de 720 minutos",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.toxicos_felino",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.felino"
+        },
+        {
+          "alguno": [
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.lilium"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.cebolla_ajo"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "sustancia.etilenglicol"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.paracetamol"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.permetrina"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.amitraz"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.ibuprofeno"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.aspirina"
+            },
+            {
+              "predicado": "exposicion",
+              "codigo": "farmaco.meloxicam"
+            }
+          ]
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "naranja",
+      "revision": true
+    },
+    "fuentes": [
+      {
+        "codigo": "aspca.lirio",
+        "localizador": "Ficha Lily: «Toxic to Cats»; «Cats: kidney failure»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.allium",
+        "localizador": "«Cats are the most susceptible species, followed by dogs»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.etilenglicol",
+        "localizador": "«Dogs and cats are most commonly affected»; a menudo fatal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.aine",
+        "localizador": "Acetaminofén: «Use in cats is contraindicated»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "fda.analgesicos",
+        "localizador": "«Acetaminophen is fatal to cats»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_humanos",
+        "localizador": "Acetaminophen Toxicosis: «Cats are especially susceptible»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.ectoparasiticidas",
+        "localizador": "Pyrethrins and Pyrethroids: «permethrin, can be highly toxic to cats»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.ectoparasiticidas",
+        "localizador": "Formamidines: «Amitraz should not be applied to cats in any formulation»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_humanos",
+        "localizador": "Ibuprofen: gatos más sensibles que los perros",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.analgesicos_humanos",
+        "localizador": "Aspirin: «Cats are very susceptible to aspirin»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.aine",
+        "localizador": "Meloxicam en gatos: aprobación limitada y advertencia de recuadro negro en EE. UU.",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 1 del usuario (2026-10-14): toxicidad documentada para la especie implica mínimo naranja; chocolate solo con menos de 720 minutos",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.etilenglicol",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "alguno": [
+            {
+              "predicado": "especie",
+              "codigo": "especie.canino"
+            },
+            {
+              "predicado": "especie",
+              "codigo": "especie.felino"
+            }
+          ]
+        },
+        {
+          "predicado": "exposicion",
+          "codigo": "sustancia.etilenglicol"
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "rojo"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.etilenglicol",
+        "localizador": "«Dogs and cats are most commonly affected»; a menudo fatal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 1 del usuario (2026-10-14): exposición a etilenglicol en perro o gato implica rojo, sin exigir tiempo conocido",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.abdomen_canino",
+    "motor": "triage",
+    "condiciones": {
+      "todos": [
+        {
+          "predicado": "especie",
+          "codigo": "especie.canino"
+        },
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.arcadas_improductivas"
+        },
+        {
+          "predicado": "sintoma_marcado",
+          "codigo": "sintoma.abdomen_distendido"
+        }
+      ]
+    },
+    "resultado": {
+      "nivel": "naranja"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.dtg",
+        "localizador": "«acute, life-threatening condition that primarily affects large- and giant-breed dogs»; arcadas improductivas y distensión",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «swollen or painful abdomen or nonproductive retching»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 2 del usuario (2026-10-14): arcadas improductivas y abdomen distendido en perro implican naranja sin exigir tamaño; grande o gigante conserva rojo",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "triage.parto_menos_30",
+    "motor": "triage",
+    "condiciones": {
+      "predicado": "sintoma_marcado",
+      "codigo": "sintoma.parto_esfuerzo_menos_30"
+    },
+    "resultado": {
+      "nivel": "naranja",
+      "revision": true
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.distocia",
+        "localizador": "Treatment of Dystocia: contracciones intensas por más de 30 minutos sin expulsar cría",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): menos de 30 minutos implica naranja con revisión; no declara un parto seguro",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  }
+]

@@ -4,3 +4,6 @@
 
 # Los scripts de shell se ejecutan en Linux (Docker): siempre con LF.
 *.sh text eol=lf
+
+# El conocimiento comparte hash entre Windows y Linux.
+database/conocimiento/*.json text eol=lf

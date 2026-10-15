@@ -7,7 +7,12 @@
 ## Ahora
 
 - **Módulo activo:** M2 — Historia clínica y soporte a la decisión (Grafo I), previsto como `2.0.0-alpha.4`. Plan: [`specs/M2-grafo-clinico.md`](../specs/M2-grafo-clinico.md). Rama: `v2/m2-grafo`.
-- **Entrega actual de M2:** **B1 — esquema, cargador y documentos: revisada y aprobada (2026-10-14).** Lo escribió Codex. Ver «Anexo B1» y «B1 — Revisión»: dos correcciones al inicio de B2 (faltan los predicados `exposicion`, `vacunacion` y `dias_desde_celo` para expresar T-06, T-08, T-11 y T-14 a T-16; los errores del validador deben decir archivo y código).
+- **Entrega actual de M2:** **B2 y B2.1 — conocimiento inicial: revisadas y aprobadas (2026-10-14). B cerrada.** B2 la empezó Codex y la terminó Claude Code; B2.1 la escribió Codex con las tres decisiones del usuario. Conjunto: 47 fuentes, 105 nodos, 105 aristas, 201 sinónimos, 29 reglas, todo pendiente de validación veterinaria. Notas para C4 en «B2.1 — Revisión».
+- **B2 de M2:** revisada y aprobada (2026-10-14), con sus correcciones aplicadas en B2.1.
+  Conjunto actual: 105 nodos, 105 aristas, 201 sinónimos, 29 reglas y 47 fuentes; todo pendiente de validación veterinaria.
+- **Verificación de B2.1:** PHP 724 (6200 aserciones y 36 omitidas sin host; 6624 aserciones y ninguna omitida con MariaDB 10.4.32 temporal propia y `zooki_test_base_v2`); JS 167/167.
+  CLI `--revisar` sobre B2 cargado: 11 altas, 429 cambios por versión/contenido y 1 retiro; instantánea sin escrituras comprobada.
+- **B1 de M2:** revisada y aprobada (2026-10-14); las dos correcciones de su revisión las hizo Codex al inicio de B2 y se revisan con B2.
 - **A de M2:** revisada y aprobada con ocho ajustes (2026-10-14), aplicados a B1 y conservados como contrato de B2/C2–C4 en el plan.
 - **Verificación de B1:** Codex: PHP 703 con MariaDB 10.4.32 (4692 aserciones, ninguna omitida); revisión de Claude: lo mismo con MariaDB 10.11 y sin MySQL (4284 aserciones, 34 omitidas); JS 167/167.
 - **Decisiones del usuario durante A (2026-10-14):** no inventar edades ni tiempos; umbrales geriátricos por especie/raza con fuente y «No sé» temporal con revisión si hace falta para calcular. T-16 conserva amarillo provisional con revisión por tipo/cantidad de chocolate desconocidos; 48 horas no es una regla general para rebajar el nivel. Anotadas en §6 del plan M2.
@@ -31,7 +36,12 @@
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
-- **Siguiente paso:** B2 — conocimiento inicial con fuentes (Codex), empezando por las dos correcciones de B1. Reparto de M2: Codex A, B1, B2 y C2–C4; Claude Code C1, C5 y C6. Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Siguiente paso:** C6 — mapa del grafo (Claude Code). En XAMPP, antes de probar: `php scripts/migrar.php` y luego `php scripts/cargar_conocimiento.php`. Reparto de M2: Codex C2–C4; Claude Code C1, C5 y C6. Pendiente aparte: borrar los respaldos temporales del VPS.
+  Después, según el plan, C6 (Claude Code); no se inició C1 ni C6.
+  Reparto de M2: Codex A, B1, B2.1 y C2–C4; Claude Code B2 (terminó), C1, C5 y C6.
+  Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Decisión del usuario durante B2 (2026-10-14):** mantener los doce predicados; obesidad de T-13 y tratamiento sin fármaco conocido de T-19 quedan como contexto.
+  Usar anorexia sostenida en gatos y crisis breve habitual finalizada con epilepsia documentada, sin inferir medicamentos ni datos ausentes.
 - **Decisiones confirmadas durante A (2026-10-14):** Gran danés se agrega en B1 con ID nuevo; las categorías taxonómicas amplias siguen sin cobertura específica y con revisión; el mecanismo de la decisión 3 queda adoptado.
 
 ## D2.1 — alcance (corrección de D2; hecho y revisado)

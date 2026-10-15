@@ -25,12 +25,13 @@ final class ArchivosConocimiento
             if (!is_array($datos)) {
                 throw new InvalidArgumentException('Estructura no válida en ' . $archivo);
             }
-            $contenido[$archivo] = $texto;
+            // B2.1: el mismo conjunto debe conservar su versión entre Windows y Linux.
+            $contenido[$archivo] = str_replace("\r\n", "\n", $texto);
             $conjunto[pathinfo($archivo, PATHINFO_FILENAME)] = $datos;
         }
         ValidadorConocimiento::validar($conjunto);
         ksort($contenido);
-        // La versión identifica todos los bytes leídos, incluido el manifiesto, sin hashes manuales.
+        // Incluye el manifiesto y todos los contenidos con finales LF, sin hashes manuales.
         $version = hash('sha256', json_encode($contenido, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         return ['datos' => $conjunto, 'version' => $version];
     }

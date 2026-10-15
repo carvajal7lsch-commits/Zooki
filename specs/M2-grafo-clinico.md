@@ -1,8 +1,8 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B1 entregada, pendiente de revisión de Claude (2026-10-14); B2 no iniciada
+> Estado: B1 y B2 revisadas y aprobadas; B2.1 entregada, pendiente de revisión (Codex, 2026-10-14)
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
-> Responsable de escritura: Codex (A, B1, B2, C2, C3, C4) y Claude Code (C1, C5, C6) · Revisión independiente: Claude (arquitecto)
+> Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
 
 ## 1. Resultado y límites
@@ -40,6 +40,7 @@
 | **A. Inventario y diseño** (solo lectura del código) | La consulta actual (código, vistas, JS, pruebas) y qué se conserva; el esquema del grafo frente a lo que piden los RE y la batería (por ejemplo: nivel de triage por síntoma, alarmas universales, sinónimos para el buscador de síntomas, fuente de cada nodo y arista, cobertura por especie, contagio, ventanas de tiempo, interacciones fármaco–fármaco, modificadores de raza, edad y estado); cada caso T-01 a T-26 traducido a lo que el propietario marcaría (síntomas del catálogo, tiempo y paciente) y el conocimiento que exige; propuesta del modelo de datos (para B), del formato de la base de conocimiento y de los tres algoritmos (ranking, prescripción, triage); diagramas §1 y §3 frente a la propuesta. | M5 | Codex | Claude |
 | **B1. Esquema y cargador** | Migración `07` repetible (A.2 con los ajustes de la revisión de A), `01_schema.sql`, MER y drawDB; Gran danés en la semilla; validador y cargador idempotente con `--revisar`; arranque que solo carga si la migración salió bien; documentos de A.7; un conjunto de conocimiento mínimo de prueba. | A | Codex | Claude |
 | **B2. Conocimiento inicial** | Los archivos de `database/conocimiento/` con lo que exige la batería (A.3), los casos P1 adicionales y un núcleo común de perros y gatos; cada elemento con su fuente específica y la marca «pendiente de validación veterinaria»; carga repetida sin cambios. | B1 | Codex | Claude |
+| **B2.1. Correcciones del conocimiento** | Decisiones aprobadas en la revisión de B2: tóxicos por especie con mínimo naranja y etilenglicol rojo, abdomen canino sin tamaño naranja, dos marcas de parto y retiro lógico de la regla anterior; versión idéntica entre CRLF y LF. | B2 | Codex | Claude |
 | **C1. Alergias y alertas médicas** | Registrar y desactivar (RE-2.1.5); visibles en la ficha de toda clínica vinculada (RN-113) y en el portal (pestaña de la mascota). | B1 | Claude Code | Claude |
 | **C2. Motor de diagnósticos** (HU-2.8) | Helper sin base de datos que ordena por peso y después cobertura de síntomas; informa coincidencias X de Y y presenta máximo 5 candidatos positivos; evaluador de condiciones único compartido por C3/C4; API y pruebas con casos. | B2 | Codex | Claude |
 | **C3. Alertas de prescripción** (HU-2.9) | Bloqueo por toxicidad de especie o raza y por alergia; advertencia de interacción con la medicación vigente, confirmación con auditoría; aviso genérico cuando el tratamiento es de otra clínica sin autorización. | B2, C1 | Codex | Claude |
@@ -85,12 +86,17 @@
 - Agregar solo Gran danés al catálogo global en B, con un ID nuevo y sin cambiar los existentes.
   Las categorías taxonómicas amplias o dudosas siguen sin cobertura específica y con revisión; no se inventa su especie clínica.
 
+**Decisión del usuario durante B2 (2026-10-14):** se mantienen exactamente doce predicados.
+La obesidad declarada de T-13 y «está en tratamiento» de T-19 se conservan como contexto, sin inferir peso, medicamento ni pauta.
+T-13 se expresa mediante anorexia sostenida en gatos; T-19 mediante crisis breve habitual ya finalizada más epilepsia documentada.
+
 ## 7. Tareas y verificación
 
 - [x] Aprobar este plan y decidir §6 (2026-10-14).
 - [x] A — Inventario y diseño: revisada y aprobada con ajustes (Codex, 2026-10-14).
-- [x] B1 — Esquema, cargador y documentos: entregada, pendiente de revisión (Codex, 2026-10-14).
-- [ ] B2 — Conocimiento inicial con fuentes.
+- [x] B1 — Esquema, cargador y documentos: revisada y aprobada (Codex, 2026-10-14).
+- [x] B2 — Conocimiento inicial con fuentes: revisada y aprobada con correcciones en B2.1 (Codex inició, Claude Code terminó; 2026-10-14).
+- [x] B2.1 — Correcciones del conocimiento: entregada, pendiente de revisión (Codex, 2026-10-14).
 - [ ] C1 — Alergias y alertas médicas.
 - [ ] C2 — Motor de diagnósticos.
 - [ ] C3 — Alertas de prescripción.
@@ -100,7 +106,8 @@
 - [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.4`.
 
-**Resultado de pruebas:** B1 en verde: 703 PHP (4284 aserciones y 34 omitidas sin host; 4692 aserciones y ninguna omitida con MariaDB temporal propia y `zooki_test_base_v2`), 167 JS y 27 diagramas renderizados; detalle en Anexo B1. B2 y los motores siguen pendientes.
+**Resultado de pruebas:** B1 en verde: 703 PHP (4284 aserciones y 34 omitidas sin host; 4692 aserciones y ninguna omitida con MariaDB temporal propia y `zooki_test_base_v2`), 167 JS y 27 diagramas renderizados; detalle en Anexo B1. B2 en verde: 717 PHP (6060 aserciones y 35 omitidas sin host; 6475 aserciones y ninguna omitida con `zooki_test_base_v2`), 167 JS y carga real repetida sin cambios; detalle en Anexo B2. Los motores siguen pendientes.
+B2.1 en verde: 724 PHP (6200 aserciones y 36 omitidas sin host; 6624 aserciones y ninguna omitida con MariaDB temporal propia y la base por defecto), 167 JS; simulación real del salto desde B2 sin escrituras, detallada en su anexo.
 
 ## Anexo A — Inventario y diseño
 
@@ -642,3 +649,239 @@ git commit -m "feat(grafo): esquema y cargador de conocimiento B1 (RN-212, RN-42
 **Pendientes anotados para F:** AGENTS.md todavía dice alpha.2 y «50 tablas» (ahora 52); en XAMPP la carga no corre sola: después de `php scripts/migrar.php` hay que ejecutar `php scripts/cargar_conocimiento.php`.
 
 **Siguiente:** B2 (Codex), empezando por las dos correcciones.
+
+## Anexo B2 — Resultado
+
+**Estado: entregada, pendiente de revisión (2026-10-14).** Revisión independiente: Claude (arquitecto).
+
+**Quién escribió cada parte:**
+
+| Parte | Autor |
+|---|---|
+| Correcciones de la revisión de B1: predicados `exposicion`, `vacunacion` y `dias_desde_celo` (doce en total); errores del validador con archivo, código y campo; README de los predicados; sus pruebas en `ValidadorConocimientoTest`; tabla de cobertura B2.1 | Codex |
+| Investigación y verificación de fuentes; los seis JSON de `database/conocimiento/`; `ConocimientoRealTest`; prueba MySQL `testB2ConocimientoRealSeCargaDosVecesSinCambios`; ajuste de una prueba de Codex y del README (abajo); verificación y este anexo | Claude Code |
+
+### B2.1 — Tabla de cobertura (escrita por Codex)
+
+Tabla redactada antes de escribir el conjunto real.
+La tabla expresa datos y candidatos independientes; comprobar sus códigos no sustituye ejecutar la batería en C4 ni validarla clínicamente.
+En esta tabla se omite el prefijo `sintoma.` en los síntomas y `triage.` en las reglas.
+
+| Caso | Nodos necesarios | Regla o atributo que lo expresa; esperado provisional |
+|---|---|---|
+| T-01 | `dificultad_respiratoria`, `encias_azuladas` | Ambas alarmas universales rojas; máximo P1. |
+| T-02 | `convulsion_en_curso` | Alarma universal roja, sin exigir un tiempo mínimo. |
+| T-03 | `traumatismo`, `hemorragia_incontrolable` | Alarma universal roja prevalece sobre trauma naranja. |
+| T-04 | `intentos_orinar_minimo`, `dolor_orinar`, `especie.felino` | `urinario_macho`: combinación + macho → rojo. |
+| T-05 | `arcadas_improductivas`, `abdomen_distendido`, `inquietud`, `raza.gran_danes` | `abdomen_gigante`: atributo gigante, no raza individual → rojo. |
+| T-06 | `sed_aumentada`, `decaimiento`, `secrecion_genital`, `especie.canino` | `reproductivo_poscelo`: hembra entera + intervalo desde celo → naranja; la ventana exige fuente clínica. |
+| T-07 | `traumatismo` | Nivel naranja del síntoma; caminar no lo cancela. |
+| T-08 | `sustancia.lilium`, `especie.felino` | `lilium_felino`: exposición sin exigir hora → rojo; misma arista de toxicidad que prescripción. |
+| T-09 | `respiracion_ruidosa_ejercicio`, `cansancio_ejercicio`, `exposicion_calor`, `raza.bulldog_frances` | `ejercicio_braquicefalo`: atributo braquicéfalo → naranja. |
+| T-10 | Los tres síntomas anteriores, `raza.labrador` | Candidatos amarillos, sin atributo braquicéfalo verdadero; cansancio de ejercicio no es decaimiento sistémico. |
+| T-11 | `vomito`, `diarrea_sangre`, `no_come`, `especie.canino` | `digestivo_cachorro`: menor de 6 meses + vacunación incompleta → naranja; `contagio_digestivo` separado. |
+| T-12 | `vomito`, `diarrea`, `especie.canino` | Candidatos amarillos; número de episodios, actividad y vacunas conservados sin inventar alarmas. |
+| T-13 | `no_come`, `se_esconde`, `especie.felino` | `anorexia_felina_sostenida`: tiempo de anorexia → naranja; obesidad queda como contexto aprobado, sin predicado nuevo. |
+| T-14 | `sustancia.posible_xilitol`, `especie.canino` | `posible_xilitol`: posible exposición → naranja con revisión; el tiempo conocido se conserva, sin afirmar ingrediente. |
+| T-15 | `farmaco.paracetamol`, `especie.felino`, `fiebre` | `paracetamol_felino`: exposición → rojo aunque no haya hora; toxicidad explícita. |
+| T-16 | `sustancia.chocolate`, `especie.canino` | `chocolate_tardio`: intervalo temporal → amarillo provisional con revisión; no regla general de seguridad ni descuento de otras alarmas. |
+| T-17 | `vomito_repetido`, `no_bebe`, `decaimiento`, `encias_secas` | `digestivo_compromiso`: combinación moderada con compromiso → naranja; P3 solo escala una vez en C4. |
+| T-18 | `primera_convulsion_resuelta` | Nivel naranja; distinta de la convulsión activa roja. |
+| T-19 | `convulsion_habitual_resuelta`, `condicion.epilepsia` | `crisis_habitual_documentada`: alerta global de epilepsia → amarillo; no se infiere el fármaco. |
+| T-20 | `no_come`, `no_defeca`, `especie.roedor` | `apetito_sin_heces`: revisión inmediata; P6 mantiene amarillo sin cobertura específica, sin inferir especie clínica. |
+| T-21 | `dificultad_respiratoria`, `plumaje_erizado`, `especie.ave` | P1 rojo aun sin cobertura específica; búsqueda ayuda, no interpreta ni marca sola. |
+| T-22 | `otro_no_se` | `reserva_otro`: amarillo con revisión; nota no calcula. |
+| T-23 | `vomito_sangre`, `decaimiento` | `digestivo_compromiso`: naranja; sinónimos «bomita sangre» y «desaido», confirmados por la persona. |
+| T-24 | `control_preventivo` | `preventivo`: verde, tiempo no aplica; P1 siempre prevalece. |
+| T-25 | `picor_oidos_leve_estable` | `oidos_estable`: ventana de estabilidad → verde; no aplica a cualquier dolor ótico. |
+| T-26 | `cojera_leve_estable` | `cojera_estable`: ventana crónica estable → verde; no aplica a trauma ni falta de apoyo. |
+| P1 adicional | `encias_palidas` | Alarma universal roja. |
+| P1 adicional | `colapso` | Alarma universal roja. |
+| P1 adicional | `imposibilidad_orinar` | Alarma universal roja, distinta de frecuencia urinaria aislada. |
+| P1 adicional | `golpe_calor` | Alarma universal roja, distinta de mera exposición a calor. |
+| P1 adicional | `parto_esfuerzo_sin_cria` | B2.1: «más de 30 minutos o no sé» es alarma universal roja sin exigir tiempo adicional; `parto_prolongado` se retira lógicamente. |
+| Parto breve | `parto_esfuerzo_menos_30` | B2.1: «menos de 30 minutos» es naranja con revisión mediante `parto_menos_30`; el buscador sugiere ambas marcas y la persona confirma. |
+
+No se necesitan predicados adicionales para esta representación con la decisión del usuario sobre T-13/T-19.
+Los tiempos ausentes siguen ausentes; su evaluación incompleta corresponde a C2–C4.
+
+### B2.2 — Conocimiento cargado (Claude Code)
+
+Todo el conjunto está `pendiente`; cada elemento cita su fuente con localizador (sección, apartado o frase) y fundamento.
+Claude Code declaró abiertas y verificadas las 46 URL clínicas y de política de B2 el 2026-10-14; ninguna es una portada.
+La fuente adicional de B2.1 es la decisión del usuario conservada en este plan, consultado localmente por Codex; su URL identifica el archivo que se publicará con el commit.
+Fuentes clínicas: MSD Veterinary Manual (profesional y para propietarios), Cornell Feline Health Center y Riney Canine Health Center, ASPCA Animal Poison Control, FDA (consumidor y CVM), WSU (MDR1), University of Cambridge (BOAS) y un estudio del RVC en PubMed Central.
+Fuentes de política: `ReglasNegocio.md` y `CasosTriage.md` del repositorio público en `main` (los colores de triage); los pesos del ranking citan RN-210 como `heuristico`.
+
+| Tipo | B2 aprobada | Conjunto actualizado por Codex en B2.1 |
+|---|---|---|
+| Fuentes | 46 | 47 (se agrega la política aprobada por el usuario) |
+| Nodos | 104: 50 síntomas, 17 diagnósticos, 12 fármacos, 8 sustancias, 10 razas, 6 especies, 1 condición | 105: 51 síntomas; los demás tipos conservan su cantidad |
+| Aristas | 105: 75 síntoma→diagnóstico, 12 toxicidades con bloqueo, 6 toxicidades con advertencia, 12 interacciones | 105, sin cambios |
+| Sinónimos | 196 | 201 |
+| Reglas | 25: 20 de triage, 5 modificadores del ranking | 29: 24 de triage y 5 de ranking (5 altas y 1 retiro) |
+
+- **P1 en B2:** ocho señales eran síntomas con `alarma_universal` y nivel rojo (política), cada una con la fuente clínica que la marca como urgencia (MSD, triage inicial).
+  B2.1 agrega el parto de más de 30 minutos o tiempo desconocido como novena marca universal roja y retira `triage.parto_prolongado`.
+- **Bloqueos (12), todos `toxico_para` con fundamento clínico explícito:** lirio→gato; chocolate, xilitol, uvas/pasas, macadamia→perro; cebolla/ajo y etilenglicol→perro y gato; paracetamol, permetrina y amitraz→gato.
+  Lo que la fuente presenta como dependiente de la exposición o como «no recomendado» queda en advertencia: paracetamol en perro, ibuprofeno en perro y gato, aspirina y meloxicam en gato, y loperamida en Pastor Alemán (MDR1 en ~10 %; solo la prueba individual lo confirma).
+- **Interacciones (12, advertencia):** AINE con prednisona (meloxicam, carprofeno, aspirina, ibuprofeno), AINE con AINE (seis pares) y tramadol con selegilina o fluoxetina.
+- **Núcleo común:** 17 diagnósticos de perros y gatos (gastritis aguda, gastroenteritis hemorrágica, parvovirosis, panleucopenia, dilatación-torsión gástrica, obstrucción uretral felina, cistitis idiopática felina, piometra, lipidosis hepática felina, epilepsia idiopática, síndrome braquicefálico, golpe de calor, otitis externa, osteoartritis, enfermedad renal crónica, diabetes mellitus y tos de las perreras), con condiciones de especie, sexo o raza en la arista cuando la fuente las limita.
+- **Razas, por atributo:** Gran danés gigante; Labrador, Golden y Pastor Alemán grandes (MSD: «retrievers and shepherds»); Bulldog Francés, Bulldog Inglés, Pug, Shih Tzu, Boxer y Persa braquicéfalos; Labrador `braquicefalo: false` (mesocéfalo en el estudio del RVC).
+- **Cobertura:** Canino y Felino parcial en los tres motores; Roedor, Ave, Reptil y Exótico sin cobertura.
+- **Buscador:** 196 sinónimos con formas habladas en Colombia y errores de dictado («bomita», «desaido», «trasboca», «aguado», «renquea», «rasquiña», «lo cogió un carro», «chocolatina»…); cada marca de A.3 se encuentra por etiqueta o sinónimo normalizado.
+  Su fundamento es política (RN-424 y la batería): solo sugieren y la persona confirma.
+
+**Ventanas temporales, todas con fuente:** anorexia felina ≥ 24 horas (Cornell, gato adulto); 28–42 días desde el celo (MSD: piometra «4 to 6 weeks after estrus»); chocolate ≥ 12 horas → amarillo con revisión (MSD: signos habituales entre 6 y 12 horas, hasta 72; no declara seguridad); parto > 30 minutos (MSD distocia).
+
+**Dónde la implementación precisa la tabla B2.1 (sin renombrar códigos):**
+
+1. `triage.abdomen_gigante` acepta tamaño grande **o** gigante, como dice RN-416/P4 («razas grandes o gigantes con abdomen distendido») y MSD (DTG en razas grandes y gigantes); B2.1 decía solo gigante.
+2. `triage.oidos_estable` y `triage.cojera_estable` no usan una ventana de tiempo: ninguna fuente fija cuántos días hacen «estable».
+   La estabilidad y la leveza están en la marca que la persona confirma; la regla da verde solo con esa marca y nunca se aplica a trauma o cojera aguda, que son otras marcas.
+3. `triage.digestivo_cachorro` y los dos avisos de contagio aceptan vacunación `incompleta` o `desconocida`: ante la duda sube (P6), sin inventar el dato.
+4. `triage.urinario_macho` exige gato macho con intentos de orinar con salida mínima; el dolor no es requisito (la fuente marca la obstrucción como emergencia aunque no haya quejido).
+5. `triage.digestivo_compromiso` exige un síntoma digestivo moderado con decaimiento o encías secas (P3); «no bebe» no cuenta como deshidratación.
+6. Se agregó `triage.contagio_digestivo_felino` (panleucopenia, Cornell), análogo felino del aviso de contagio de RN-425.
+
+### B2.3 — Lo que no se cargó por falta de fuente
+
+| Elemento | Qué faltó |
+|---|---|
+| Nivel de triage para la exposición a otros tóxicos y chocolate reciente (< 12 h) | B2 lo dejó fuera por falta de política de color; decisión 1 aprobada en la revisión y aplicada en B2.1: mínimo naranja por especie y etilenglicol rojo. |
+| Dilatación-torsión gástrica en perro de tamaño medio o desconocido | B2 lo dejó fuera por falta de política; decisión 2 aplicada en B2.1: arcadas improductivas y abdomen distendido implican naranja sin exigir tamaño. |
+| Umbrales geriátricos por especie o raza (P4) | No se buscó ni encontró una fuente que fije la edad por raza; sin regla geriátrica (decisión de A: no inventar). |
+| Anorexia de gatitos (Cornell: 12 horas antes de 6 semanas) | `edad_meses` no expresa 6 semanas sin redondear; no se cargó. |
+| Tamaño o braquicefalia de Rottweiler, Dóberman, Chihuahua y el resto de la semilla | Ninguna regla los necesita o la fuente no los nombra; quedan sin atributo. |
+| Ivermectina en razas MDR1 | WSU la da como segura a dosis de etiqueta en un producto; depende de la dosis, no se cargó como toxicidad. |
+| Selegilina con amitraz | La página de MSD consultada no lo afirma. |
+| Verificación de los regionalismos en el DLE | `dle.rae.es` respondió 403; los sinónimos quedan con fundamento de política, no de diccionario. |
+
+Ningún caso de la tabla B2.1 quedó sin expresar.
+
+### B2.4 — Cambios sobre lo que dejó Codex
+
+- `ValidadorConocimientoTest::testConjuntoSinteticoYVacioSonValidos` pasa a `testConjuntoSinteticoYRealSonValidos`: exigía que `database/conocimiento` siguiera vacío (estado de B1), lo que B2 cambia por diseño; conserva la validación de ambos conjuntos.
+- `database/conocimiento/README.md`: el párrafo inicial decía que los archivos estaban vacíos; ahora describe el conjunto de B2, sus fundamentos y cómo corregirlo.
+- `helpers/ValidadorConocimiento.php` no se cambió: se revisó el diff de Codex (doce predicados, ubicación de errores) y no se encontró error.
+
+### B2.5 — Pruebas y verificación
+
+| Exigencia del prompt | Prueba |
+|---|---|
+| El conjunto real pasa el validador | `ConocimientoRealTest::testElConjuntoRealPasaElValidadorYNoEstaVacio` y `ValidadorConocimientoTest::testConjuntoSinteticoYRealSonValidos` |
+| Cada fila de B2.1 tiene sus códigos | `testCadaFilaDeLaTablaB2TieneTodosSusCodigos` (lee los archivos, sin motor) |
+| Núcleo de ~15 diagnósticos y ~15 fármacos o sustancias, interacciones con fuente | `testNucleoComunDePerrosYGatos` |
+| Ningún bloqueo sin fuente clínica | `testNingunBloqueoSinFuenteClinicaDeToxicidad` |
+| Ninguna regla nombra un caso; reglas por atributo | `testNingunElementoNombraUnCasoYLasReglasUsanAtributosDeRaza`, `testNingunaReglaRebajaNiDejaVerdeUnaAlarma` |
+| Fuentes con URL https específica y fecha; todo pendiente | `testFuentesConUrlHttpsEspecificaYFechaDeConsulta` |
+| Sin dosis ni pautas | `testSinDosisNiPautasDeTratamiento` |
+| Cobertura por especie y taxonomía de la semilla | `testCoberturaPorEspecie`, `testRazasYEspeciesExistenEnLaSemilla` |
+| Cada síntoma de A.3 se encuentra | `testCadaSintomaDeA3SeEncuentraPorEtiquetaOSinonimo` (con `ArchivosConocimiento::normalizarTexto`) |
+| Carga dos veces con cero cambios (MySQL) | `BaseV2MysqlTest::testB2ConocimientoRealSeCargaDosVecesSinCambios` |
+
+**Verificación (Claude Code, 2026-10-14):**
+
+- Suite completa sin host MySQL: **717 pruebas, 6060 aserciones, 35 omitidas** (las de MySQL).
+- Suite completa con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32 de XAMPP): **717 pruebas, 6475 aserciones, ninguna omitida**.
+- JavaScript: **167/167** en verde, sin JS modificado.
+- `php scripts/cargar_conocimiento.php` sobre `zooki_test_base_v2` recién creada con 01, 02 y 07: `--revisar` → 430 altas, 0 cambios, 0 retiros, sin escribir; carga → 430 altas; segundo `--revisar` → 0 altas, 0 cambios, 0 retiros.
+  Altas por tipo en la base: nodos 50 síntomas, 17 diagnósticos, 12 fármacos, 8 sustancias, 10 razas, 6 especies, 1 condición; aristas 75 `sugiere`, 12 `toxico_para`/bloqueo, 6 `toxico_para`/advertencia, 12 `interactua_con`; 196 sinónimos; reglas 20 de triage y 5 de ranking.
+- `git diff --check` sin errores. No se leyó ni escribió `.env`, no se tocó `zooki_v2_prueba` ni sus contraseñas, no se hizo commit ni se empezó C1 ni C2.
+- Hallazgo de B2 corregido en B2.1: el hash de bytes sin normalizar variaba entre Windows y Linux; ahora CRLF y LF producen la misma versión.
+
+### B2.6 — Pendientes
+
+1. Colores de tóxicos y DTG sin tamaño: decisión aprobada en la revisión de B2 y aplicada en B2.1.
+2. Parto con tiempo «No sé»: decisión aprobada en la revisión de B2 y aplicada en B2.1 con dos marcas; la desconocida es roja universal.
+3. C4 decide cómo trata una raza sin el atributo que pide una regla (desconocido → revisión, según A.2); el Labrador ya declara `braquicefalo: false`.
+4. Validación veterinaria del conjunto completo (decisión 1): sigue pendiente.
+
+### B2 — Revisión (2026-10-14)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada; correcciones en B2.1.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 717 pruebas y 6060 aserciones (35 omitidas); con MariaDB 10.11 propia y la base por defecto, 717 pruebas y 6475 aserciones, ninguna omitida; JS 167/167.
+
+**Lo que está bien:** las correcciones de B1 hechas por Codex (doce predicados y errores con ubicación) y la tabla B2.1; 12 bloqueos, todos `toxico_para` con fundamento clínico; lo dudoso queda en advertencia (ibuprofeno, loperamida en Pastor Alemán); reglas por atributo, ninguna baja un nivel; 196 sinónimos coloquiales que cubren A.3; lo que no tuvo fuente quedó fuera y anotado en B2.3. No se pudieron abrir URL de muestra desde la revisión; queda la comprobación declarada por Claude Code.
+
+**Decisiones del usuario (2026-10-14), sobre los pendientes de B2.6:**
+
+1. Exposición a una sustancia o fármaco con toxicidad documentada (arista `toxico_para`) para la especie del paciente: nivel mínimo 🟠; el etilenglicol da 🔴. El chocolate entra en ese mínimo solo con exposición de menos de 12 horas; con 12 horas o más, o tiempo desconocido, sigue `triage.chocolate_tardio` (🟡 con revisión).
+2. Arcadas improductivas con abdomen distendido en un perro sin tamaño grande o gigante conocido: 🟠; con tamaño grande o gigante sigue 🔴.
+3. Parto con esfuerzo sin cría y tiempo «No sé»: 🔴. Se expresa con dos marcas: «más de 30 minutos o no sé» (alarma universal roja) y «menos de 30 minutos» (🟠 con revisión, recomendación del revisor).
+
+**Hallazgo técnico:** la versión es el SHA-256 de los bytes; con `autocrlf` en Windows da otra versión que en Linux. Se normalizan los finales de línea antes del hash.
+
+**Siguiente:** B2.1 (Codex, por decisión del usuario sobre el uso disponible).
+
+## Anexo B2.1 — Resultado
+
+**Lo escribió Codex (2026-10-14); entregada, pendiente de revisión de Claude (arquitecto).**
+Se construyó sobre el trabajo de B2 sin commit: Codex inició el validador y la tabla; Claude Code terminó el conocimiento, sus pruebas y su anexo.
+
+### Qué y trazabilidad
+
+| Cambio aprobado | Evidencia |
+|---|---|
+| Decisión 1; RN-416/RN-418, preparación de RE-2.11.2–5 | `ConocimientoRealTest::testCadaToxicoDeEspecieTieneMinimoNaranjaConSuFuente`: cada `toxico_para` con origen especie está en su grupo naranja y conserva sus fuentes clínicas; chocolate solo con tiempo `< 720`. |
+| Etilenglicol rojo; conservar los rojos existentes y el amarillo provisional | `testEtilenglicolRojoEnAmbasEspeciesYLiriosYParacetamolConservanRojo` y `testChocolateNoTieneCandidatoSuperiorAAmarilloCon720MinutosOMas`; no se cambió `triage.chocolate_tardio`. |
+| Decisión 2; abdomen canino sin tamaño | `testAbdomenCaninoNaranjaNoExigeTamanioYGiganteConservaRojo`: nueva regla naranja sin atributo; regla roja de tamaño grande/gigante conservada. |
+| Decisión 3; RN-417/P1 | `testPartoTieneDosMarcasYTiempoDesconocidoEsAlarmaUniversal`: marca existente roja universal, nueva marca menor de 30 minutos naranja con revisión; cinco sinónimos añadidos, sin selección automática. |
+| Retiro lógico, RN-212 | `BaseV2MysqlTest::testB21RetiraPartoProlongadoSinBorrarloNiCambiarSuId`: simular no escribe; recargar desactiva la regla antigua sin borrar ni cambiar su ID; repetir da cero cambios. |
+| Hash entre Windows y Linux, RN-212 | `ValidadorConocimientoTest::testVersionIdenticaConFinalesCrLfYLf`: todos los JSON con CRLF/LF producen la misma versión; un cambio de etiqueta sí cambia el hash. |
+
+Se actualizaron el README, la tabla y los conteos del Anexo B2, P1 y la nota de parto de `CasosTriage.md` y el texto de RN-417 para reflejar la decisión ya aprobada, sin cambiar número ni conteos de reglas documentales.
+`.gitattributes` conserva sus reglas anteriores y agrega finales LF a los JSON del conocimiento.
+Los diagramas no cambian: no hay esquema, motor, ruta ni pantalla nuevos.
+
+**Conjunto actual:** 47 fuentes; 105 nodos (51 síntomas, 17 diagnósticos, 12 fármacos, 8 sustancias, 10 razas, 6 especies y 1 condición); 105 aristas; 201 sinónimos; 29 reglas (24 de triage y 5 de ranking).
+B2.1 agrega 1 nodo, 5 sinónimos y 5 reglas; retira 1 regla.
+El código estable de la marca roja de parto se conserva.
+
+### Verificación
+
+- PHP completo sin host: **724 pruebas, 6200 aserciones, 36 omitidas** (MySQL).
+- PHP completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1`, puerto 3309 e instancia temporal propia MariaDB 10.4.32: **724 pruebas, 6624 aserciones, ninguna omitida**; base por defecto `zooki_test_base_v2`.
+  No se ejecutó contra MySQL 8 en este equipo.
+- JS: **167/167**, sin cambios de JS.
+- Carga repetida del conjunto real en MySQL/MariaDB: cero altas, cambios y retiros en la segunda ejecución (`testB2ConocimientoRealSeCargaDosVecesSinCambios`).
+- CLI real sobre una base temporal con B2 cargado: se reconstruyó la instantánea de B2 revirtiendo únicamente el delta de B2.1 en una copia de prueba, con 430 elementos activos y la regla antigua de parto.
+  `php scripts/cargar_conocimiento.php --revisar` informó **11 altas, 429 cambios, 1 retiro**; `solo_revisar: true`.
+  Se comparó la instantánea de las cuatro tablas del grafo y su auditoría antes/después: idéntica.
+  Los 429 cambios incluyen la actualización de `version_conocimiento` de todas las filas existentes: no representan 429 cambios clínicos.
+- `git diff --check` sin errores de espacios; sin acceso a `.env` ni a la base de trabajo, sin modificar contraseñas.
+  Sin commit, push ni inicio de C1/C6.
+
+### Pendientes
+
+Todos los elementos continúan `pendiente` de validación veterinaria.
+Los colores añadidos son política del usuario con fundamento separado de la toxicidad clínica.
+T-16 sigue amarillo provisional con revisión; el tiempo no demuestra seguridad ni rebaja otras alarmas.
+El cálculo efectivo de la batería y la combinación por máximo se verifican en C4; estas pruebas comprueban declaraciones y carga, sin adelantar el evaluador.
+Revisiones documentales, descargas y versión de la aplicación se cierran en F.
+
+### Commit de TODO B2 y B2.1 — PowerShell 5.1
+
+```powershell
+git add -- .gitattributes agentes/estado.md database/conocimiento/README.md database/conocimiento/manifiesto.json database/conocimiento/fuentes.json database/conocimiento/nodos.json database/conocimiento/aristas.json database/conocimiento/sinonimos.json database/conocimiento/reglas.json
+git add -- helpers/ArchivosConocimiento.php helpers/ValidadorConocimiento.php tests/Support/ConocimientoPrueba.php tests/Fixtures/parto_regla_b2.json tests/Unit/ValidadorConocimientoTest.php tests/Unit/ConocimientoRealTest.php tests/Integration/BaseV2MysqlTest.php
+git add -- documentacion/CasosTriage.md documentacion/ReglasNegocio.md specs/M2-grafo-clinico.md
+git diff --cached --stat
+git commit -m "feat(grafo): conocimiento inicial y ajustes de triage (HU-2.11, RN-417, RN-212)"
+```
+
+### B2.1 — Revisión (2026-10-14)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada. B2 queda cerrada.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 724 pruebas y 6200 aserciones (36 omitidas); con MariaDB 10.11 propia y la base por defecto, 724 pruebas y 6624 aserciones, ninguna omitida; JS 167/167.
+
+**Lo que está bien:** las tres decisiones del usuario quedaron como reglas generales (`triage.toxicos_canino`, `triage.toxicos_felino`, `triage.etilenglicol`, `triage.abdomen_canino`, las dos marcas de parto y `triage.parto_menos_30`); el chocolate solo entra en el mínimo naranja con menos de 720 minutos y `chocolate_tardio` no cambió; `parto_prolongado` se retira sin borrarse ni cambiar su ID; la versión es igual con CRLF y LF, y `.gitattributes` fija LF en los JSON.
+
+**Notas para C4 (no bloquean):**
+
+1. Las reglas de tóxicos marcan `revision: true`. En T-08 y T-15 el resultado final es 🔴 y la batería no espera revisión: C4 no informa «revisión del personal» cuando el nivel final es 🔴 (la urgencia ya exige atención inmediata), y la batería compara la revisión solo donde CasosTriage la pide.
+2. Cada cambio del conocimiento reescribe `version_conocimiento` en todas las filas (429 «cambios» en `--revisar`). Es esperado; el resumen de C6 y el log deben distinguir cambios de contenido de la actualización de versión si se muestran.
+
+**Siguiente:** C6 — mapa del grafo (Claude Code).

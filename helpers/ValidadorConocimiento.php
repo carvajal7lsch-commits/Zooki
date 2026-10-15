@@ -4,13 +4,20 @@
 final class ValidadorConocimiento
 {
     public const ARCHIVOS = ['fuentes.json', 'nodos.json', 'aristas.json', 'sinonimos.json', 'reglas.json'];
-    public const PREDICADOS = ['sintoma_marcado', 'especie', 'raza', 'edad_meses', 'sexo', 'esterilizado', 'alerta_activa', 'inicio_episodio', 'minutos_desde_exposicion'];
+    public const PREDICADOS = ['sintoma_marcado', 'especie', 'raza', 'edad_meses', 'sexo', 'esterilizado', 'alerta_activa', 'inicio_episodio', 'minutos_desde_exposicion', 'exposicion', 'vacunacion', 'dias_desde_celo'];
     public const MOTORES = ['diagnosticos', 'prescripcion', 'triage'];
     public const NIVELES = ['rojo', 'naranja', 'amarillo', 'verde'];
     private const TIPOS = ['sintoma', 'diagnostico', 'farmaco', 'especie', 'raza', 'condicion', 'sustancia'];
     private const COMUNES = ['codigo', 'fuentes', 'estado_validacion', 'validacion'];
 
     public static function validar(array $conjunto): void
+    {
+        self::ubicado('manifiesto.json', '[conjunto]', static function () use ($conjunto): void {
+            self::validarConjunto($conjunto);
+        });
+    }
+
+    private static function validarConjunto(array $conjunto): void
     {
         self::campos($conjunto, ['manifiesto', 'fuentes', 'nodos', 'aristas', 'sinonimos', 'reglas'], ['manifiesto', 'fuentes', 'nodos', 'aristas', 'sinonimos', 'reglas']);
         $manifiesto = $conjunto['manifiesto'];
@@ -24,85 +31,95 @@ final class ValidadorConocimiento
         $esperados = self::ARCHIVOS;
         sort($esperados);
         self::exigir($archivos === $esperados, 'El manifiesto debe listar todos los archivos esperados, sin extras ni hashes.');
-        $fuentes = self::indexar($conjunto['fuentes']);
+        $fuentes = self::indexar($conjunto['fuentes'], 'fuentes.json');
         foreach ($fuentes as $fuente) {
-            self::campos($fuente, ['codigo', 'entidad', 'titulo', 'url', 'fecha_consulta', 'seccion', 'fecha_publicacion'], ['codigo', 'entidad', 'titulo', 'url', 'fecha_consulta', 'seccion']);
-            foreach (['entidad', 'titulo', 'url', 'seccion'] as $campo) {
-                self::texto($fuente[$campo], 2000);
-            }
-            self::exigir(filter_var($fuente['url'], FILTER_VALIDATE_URL) !== false && parse_url($fuente['url'], PHP_URL_SCHEME) === 'https', 'La fuente necesita una URL HTTPS específica.');
-            self::fecha($fuente['fecha_consulta']);
-            if (isset($fuente['fecha_publicacion'])) {
-                self::fecha($fuente['fecha_publicacion']);
-            }
+            self::ubicado('fuentes.json', $fuente['codigo'], static function () use ($fuente): void {
+                self::campos($fuente, ['codigo', 'entidad', 'titulo', 'url', 'fecha_consulta', 'seccion', 'fecha_publicacion'], ['codigo', 'entidad', 'titulo', 'url', 'fecha_consulta', 'seccion']);
+                foreach (['entidad', 'titulo', 'url', 'seccion'] as $campo) {
+                    self::texto($fuente[$campo], 2000, $campo);
+                }
+                self::exigir(filter_var($fuente['url'], FILTER_VALIDATE_URL) !== false && parse_url($fuente['url'], PHP_URL_SCHEME) === 'https', 'La fuente necesita una URL HTTPS específica.');
+                self::fecha($fuente['fecha_consulta'], 'fecha_consulta');
+                if (isset($fuente['fecha_publicacion'])) {
+                    self::fecha($fuente['fecha_publicacion'], 'fecha_publicacion');
+                }
+            });
         }
-        $nodos = self::indexar($conjunto['nodos']);
+        $nodos = self::indexar($conjunto['nodos'], 'nodos.json');
         foreach ($nodos as $nodo) {
-            self::elemento($nodo, ['tipo', 'etiqueta', 'nivel_triage', 'alarma_universal', 'moderado', 'metadatos', 'taxonomia'], ['tipo', 'etiqueta'], $fuentes);
-            self::opcion($nodo['tipo'], self::TIPOS);
-            self::texto($nodo['etiqueta'], 150);
-            $esSintoma = $nodo['tipo'] === 'sintoma';
-            if (isset($nodo['nivel_triage'])) {
-                self::exigir($esSintoma, 'Solo un síntoma tiene nivel de triage.');
-                self::opcion($nodo['nivel_triage'], self::NIVELES);
-            }
-            foreach (['alarma_universal', 'moderado'] as $campo) {
-                if (isset($nodo[$campo])) {
-                    self::exigir(is_bool($nodo[$campo]) && ($esSintoma || !$nodo[$campo]), 'Indicador clínico inválido.');
+            self::ubicado('nodos.json', $nodo['codigo'], static function () use ($nodo, $fuentes): void {
+                self::elemento($nodo, ['tipo', 'etiqueta', 'nivel_triage', 'alarma_universal', 'moderado', 'metadatos', 'taxonomia'], ['tipo', 'etiqueta'], $fuentes);
+                self::opcion($nodo['tipo'], self::TIPOS);
+                self::texto($nodo['etiqueta'], 150, 'etiqueta');
+                $esSintoma = $nodo['tipo'] === 'sintoma';
+                if (isset($nodo['nivel_triage'])) {
+                    self::exigir($esSintoma, 'Solo un síntoma tiene nivel de triage.');
+                    self::opcion($nodo['nivel_triage'], self::NIVELES);
                 }
-            }
-            if ($nodo['alarma_universal'] ?? false) {
-                self::exigir(($nodo['nivel_triage'] ?? null) === 'rojo', 'Una alarma universal siempre es roja.');
-            }
-            self::metadatos($nodo['metadatos'] ?? []);
-            if (in_array($nodo['tipo'], ['especie', 'raza'], true)) {
-                $taxonomia = $nodo['taxonomia'] ?? null;
-                $campos = $nodo['tipo'] === 'raza' ? ['especie', 'raza'] : ['especie'];
-                self::campos($taxonomia, $campos, $campos);
-                foreach ($taxonomia as $nombre) {
-                    self::texto($nombre, 50);
+                foreach (['alarma_universal', 'moderado'] as $campo) {
+                    if (isset($nodo[$campo])) {
+                        self::exigir(is_bool($nodo[$campo]) && ($esSintoma || !$nodo[$campo]), 'Indicador clínico inválido.');
+                    }
                 }
-            } else {
-                self::exigir(!isset($nodo['taxonomia']), 'Solo especie y raza enlazan taxonomía.');
-            }
+                if ($nodo['alarma_universal'] ?? false) {
+                    self::exigir(($nodo['nivel_triage'] ?? null) === 'rojo', 'Una alarma universal siempre es roja.');
+                }
+                self::metadatos($nodo['metadatos'] ?? []);
+                if (in_array($nodo['tipo'], ['especie', 'raza'], true)) {
+                    $taxonomia = $nodo['taxonomia'] ?? null;
+                    $campos = $nodo['tipo'] === 'raza' ? ['especie', 'raza'] : ['especie'];
+                    self::campos($taxonomia, $campos, $campos);
+                    foreach ($taxonomia as $nombre) {
+                        self::texto($nombre, 50);
+                    }
+                } else {
+                    self::exigir(!isset($nodo['taxonomia']), 'Solo especie y raza enlazan taxonomía.');
+                }
+            });
         }
-        $aristas = self::indexar($conjunto['aristas']);
+        $aristas = self::indexar($conjunto['aristas'], 'aristas.json');
         foreach ($aristas as $arista) {
-            self::elemento($arista, ['origen', 'destino', 'tipo_relacion', 'signo', 'peso', 'efecto', 'condiciones'], ['origen', 'destino', 'tipo_relacion', 'signo', 'peso', 'efecto'], $fuentes);
-            self::referencia($arista['origen'], $nodos);
-            self::referencia($arista['destino'], $nodos);
-            self::opcion($arista['tipo_relacion'], ['sugiere', 'trata', 'toxico_para', 'alergia', 'interactua_con', 'contraindica', 'asociado']);
-            self::opcion($arista['signo'], ['positivo', 'negativo']);
-            self::peso($arista['peso'], 0, 1);
-            self::opcion($arista['efecto'], ['evidencia', 'bloqueo', 'advertencia']);
-            if ($arista['efecto'] === 'bloqueo') {
-                self::exigir(in_array($arista['tipo_relacion'], ['toxico_para', 'alergia'], true) && $arista['signo'] === 'negativo', 'Bloqueo solo por toxicidad o alergia explícita.');
-                self::fundamentoClinico($arista);
-                $tiposOrigen = $arista['tipo_relacion'] === 'toxico_para' ? ['especie', 'raza'] : ['condicion'];
-                self::exigir(in_array($nodos[$arista['origen']]['tipo'], $tiposOrigen, true) && in_array($nodos[$arista['destino']]['tipo'], ['farmaco', 'sustancia'], true), 'Los extremos del bloqueo no expresan toxicidad o alergia.');
-            }
-            if ($arista['tipo_relacion'] === 'interactua_con') {
-                self::exigir($arista['efecto'] === 'advertencia', 'Una interacción advierte, no bloquea.');
-                self::exigir($nodos[$arista['origen']]['tipo'] === 'farmaco' && $nodos[$arista['destino']]['tipo'] === 'farmaco', 'La interacción relaciona fármacos.');
-            }
-            if (isset($arista['condiciones'])) {
-                self::condiciones($arista['condiciones'], $nodos);
-            }
+            self::ubicado('aristas.json', $arista['codigo'], static function () use ($arista, $fuentes, $nodos): void {
+                self::elemento($arista, ['origen', 'destino', 'tipo_relacion', 'signo', 'peso', 'efecto', 'condiciones'], ['origen', 'destino', 'tipo_relacion', 'signo', 'peso', 'efecto'], $fuentes);
+                self::referencia($arista['origen'], $nodos, 'origen');
+                self::referencia($arista['destino'], $nodos, 'destino');
+                self::opcion($arista['tipo_relacion'], ['sugiere', 'trata', 'toxico_para', 'alergia', 'interactua_con', 'contraindica', 'asociado']);
+                self::opcion($arista['signo'], ['positivo', 'negativo']);
+                self::peso($arista['peso'], 0, 1);
+                self::opcion($arista['efecto'], ['evidencia', 'bloqueo', 'advertencia']);
+                if ($arista['efecto'] === 'bloqueo') {
+                    self::exigir(in_array($arista['tipo_relacion'], ['toxico_para', 'alergia'], true) && $arista['signo'] === 'negativo', 'Bloqueo solo por toxicidad o alergia explícita.');
+                    self::fundamentoClinico($arista);
+                    $tiposOrigen = $arista['tipo_relacion'] === 'toxico_para' ? ['especie', 'raza'] : ['condicion'];
+                    self::exigir(in_array($nodos[$arista['origen']]['tipo'], $tiposOrigen, true) && in_array($nodos[$arista['destino']]['tipo'], ['farmaco', 'sustancia'], true), 'Los extremos del bloqueo no expresan toxicidad o alergia.');
+                }
+                if ($arista['tipo_relacion'] === 'interactua_con') {
+                    self::exigir($arista['efecto'] === 'advertencia', 'Una interacción advierte, no bloquea.');
+                    self::exigir($nodos[$arista['origen']]['tipo'] === 'farmaco' && $nodos[$arista['destino']]['tipo'] === 'farmaco', 'La interacción relaciona fármacos.');
+                }
+                if (isset($arista['condiciones'])) {
+                    self::condiciones($arista['condiciones'], $nodos);
+                }
+            });
         }
-        foreach (self::indexar($conjunto['sinonimos']) as $sinonimo) {
-            self::elemento($sinonimo, ['nodo', 'texto'], ['nodo', 'texto'], $fuentes);
-            self::referencia($sinonimo['nodo'], $nodos);
-            self::texto($sinonimo['texto'], 150);
+        foreach (self::indexar($conjunto['sinonimos'], 'sinonimos.json') as $sinonimo) {
+            self::ubicado('sinonimos.json', $sinonimo['codigo'], static function () use ($sinonimo, $fuentes, $nodos): void {
+                self::elemento($sinonimo, ['nodo', 'texto'], ['nodo', 'texto'], $fuentes);
+                self::referencia($sinonimo['nodo'], $nodos, 'nodo');
+                self::texto($sinonimo['texto'], 150, 'texto');
+            });
         }
-        foreach (self::indexar($conjunto['reglas']) as $regla) {
-            self::elemento($regla, ['motor', 'condiciones', 'resultado'], ['motor', 'condiciones', 'resultado'], $fuentes);
-            self::exigir(!preg_match('/\bT-\d{2}\b/i', json_encode($regla)), 'Las reglas no nombran casos de la batería.');
-            self::opcion($regla['motor'], self::MOTORES);
-            self::condiciones($regla['condiciones'], $nodos);
-            self::resultado($regla['resultado'], $regla['motor'], $nodos);
-            if (($regla['resultado']['efecto'] ?? null) === 'bloqueo') {
-                self::fundamentoClinico($regla);
-            }
+        foreach (self::indexar($conjunto['reglas'], 'reglas.json') as $regla) {
+            self::ubicado('reglas.json', $regla['codigo'], static function () use ($regla, $fuentes, $nodos): void {
+                self::elemento($regla, ['motor', 'condiciones', 'resultado'], ['motor', 'condiciones', 'resultado'], $fuentes);
+                self::exigir(!preg_match('/\bT-\d{2}\b/i', json_encode($regla)), 'Las reglas no nombran casos de la batería.');
+                self::opcion($regla['motor'], self::MOTORES);
+                self::condiciones($regla['condiciones'], $nodos);
+                self::resultado($regla['resultado'], $regla['motor'], $nodos);
+                if (($regla['resultado']['efecto'] ?? null) === 'bloqueo') {
+                    self::fundamentoClinico($regla);
+                }
+            });
         }
     }
 
@@ -111,7 +128,7 @@ final class ValidadorConocimiento
         self::campos($elemento, [...self::COMUNES, ...$extras], ['codigo', 'fuentes', 'estado_validacion', ...$requeridos]);
         self::opcion($elemento['estado_validacion'], ['pendiente', 'validado', 'rechazado']);
         self::lista($elemento['fuentes']);
-        self::exigir($elemento['fuentes'] !== [], 'Todo elemento necesita fuente.');
+        self::exigir($elemento['fuentes'] !== [], 'Campo fuentes: todo elemento necesita al menos una fuente.');
         foreach ($elemento['fuentes'] as $referencia) {
             self::campos($referencia, ['codigo', 'localizador', 'fundamento'], ['codigo', 'localizador', 'fundamento']);
             self::referencia($referencia['codigo'], $fuentes);
@@ -142,21 +159,21 @@ final class ValidadorConocimiento
         }
         $predicado = $condicion['predicado'] ?? null;
         self::opcion($predicado, self::PREDICADOS);
-        if (in_array($predicado, ['sintoma_marcado', 'especie', 'alerta_activa'], true)) {
+        if (in_array($predicado, ['sintoma_marcado', 'especie', 'alerta_activa', 'exposicion'], true)) {
             self::campos($condicion, ['predicado', 'codigo'], ['predicado', 'codigo']);
             self::referencia($condicion['codigo'], $nodos);
-            $tipos = ['sintoma_marcado' => ['sintoma'], 'especie' => ['especie'], 'alerta_activa' => ['farmaco', 'condicion']];
+            $tipos = ['sintoma_marcado' => ['sintoma'], 'especie' => ['especie'], 'alerta_activa' => ['farmaco', 'condicion'], 'exposicion' => ['sustancia', 'farmaco']];
             self::exigir(in_array($nodos[$condicion['codigo']]['tipo'], $tipos[$predicado], true), 'Tipo de referencia no válido para el predicado.');
         } elseif ($predicado === 'raza') {
             self::campos($condicion, ['predicado', 'atributo', 'valor'], ['predicado', 'atributo', 'valor']);
             self::opcion($condicion['atributo'], ['tamanio', 'braquicefalo']);
             self::metadatos([$condicion['atributo'] => $condicion['valor']]);
-        } elseif (in_array($predicado, ['edad_meses', 'inicio_episodio', 'minutos_desde_exposicion'], true)) {
+        } elseif (in_array($predicado, ['edad_meses', 'inicio_episodio', 'minutos_desde_exposicion', 'dias_desde_celo'], true)) {
             $campos = ['predicado', 'minimo', 'maximo', 'incluye_minimo', 'incluye_maximo'];
-            if ($predicado !== 'edad_meses') {
+            if (!in_array($predicado, ['edad_meses', 'dias_desde_celo'], true)) {
                 $campos[] = 'codigo';
             }
-            self::campos($condicion, $campos, $predicado === 'edad_meses' ? ['predicado'] : ['predicado', 'codigo']);
+            self::campos($condicion, $campos, in_array($predicado, ['edad_meses', 'dias_desde_celo'], true) ? ['predicado'] : ['predicado', 'codigo']);
             if (isset($condicion['codigo'])) {
                 self::referencia($condicion['codigo'], $nodos);
                 $tipo = $predicado === 'inicio_episodio' ? ['sintoma'] : ['sustancia', 'farmaco'];
@@ -174,7 +191,9 @@ final class ValidadorConocimiento
             self::exigir(!isset($condicion['minimo'], $condicion['maximo']) || $condicion['minimo'] <= $condicion['maximo'], 'Intervalo invertido.');
         } else {
             self::campos($condicion, ['predicado', 'valor'], ['predicado', 'valor']);
-            if ($predicado === 'sexo') {
+            if ($predicado === 'vacunacion') {
+                self::opcion($condicion['valor'], ['completa', 'incompleta', 'desconocida']);
+            } elseif ($predicado === 'sexo') {
                 self::opcion($condicion['valor'], ['Macho', 'Hembra', 'Desconocido']);
             } else {
                 self::exigir(is_bool($condicion['valor']), 'Esterilización debe ser booleana.');
@@ -244,16 +263,21 @@ final class ValidadorConocimiento
         self::exigir(in_array('clinico', array_column($elemento['fuentes'], 'fundamento'), true), 'Un bloqueo necesita fuente clínica explícita.');
     }
 
-    private static function indexar(mixed $elementos): array
+    private static function indexar(mixed $elementos, string $archivo): array
     {
-        self::lista($elementos);
+        self::ubicado($archivo, '[lista]', static function () use ($elementos): void {
+            self::lista($elementos);
+        });
         $indice = [];
-        foreach ($elementos as $elemento) {
-            self::exigir(is_array($elemento), 'Elemento no válido.');
-            $codigo = $elemento['codigo'] ?? null;
-            self::exigir(is_string($codigo) && strlen($codigo) <= 100 && preg_match('/^[a-z][a-z0-9_.-]*$/D', $codigo), 'Código estable no válido.');
-            self::exigir(!str_starts_with($codigo, 'legado.'), 'El prefijo legado está reservado para conservar referencias antiguas.');
-            self::exigir(!isset($indice[$codigo]), 'Código repetido: ' . $codigo);
+        foreach ($elementos as $posicion => $elemento) {
+            $codigo = is_array($elemento) && is_string($elemento['codigo'] ?? null) ? $elemento['codigo'] : '[sin codigo #' . $posicion . ']';
+            self::ubicado($archivo, $codigo, static function () use ($elemento, $indice): void {
+                self::exigir(is_array($elemento), 'Elemento no válido.');
+                $codigo = $elemento['codigo'] ?? null;
+                self::exigir(is_string($codigo) && strlen($codigo) <= 100 && preg_match('/^[a-z][a-z0-9_.-]*$/D', $codigo), 'Campo codigo: código estable no válido.');
+                self::exigir(!str_starts_with($codigo, 'legado.'), 'Campo codigo: prefijo legado reservado.');
+                self::exigir(!isset($indice[$codigo]), 'Campo codigo: código repetido.');
+            });
             $indice[$codigo] = $elemento;
         }
         return $indice;
@@ -262,13 +286,13 @@ final class ValidadorConocimiento
     private static function campos(mixed $objeto, array $permitidos, array $requeridos): void
     {
         self::exigir(is_array($objeto), 'Se esperaba un objeto.');
-        self::exigir(array_diff(array_keys($objeto), $permitidos) === [], 'Campo desconocido.');
-        self::exigir(array_diff($requeridos, array_keys($objeto)) === [], 'Falta un campo obligatorio.');
+        self::exigir(array_diff(array_keys($objeto), $permitidos) === [], 'Campo desconocido: ' . implode(', ', array_diff(array_keys($objeto), $permitidos)));
+        self::exigir(array_diff($requeridos, array_keys($objeto)) === [], 'Falta campo obligatorio: ' . implode(', ', array_diff($requeridos, array_keys($objeto))));
     }
 
-    private static function referencia(mixed $codigo, array $indice): void
+    private static function referencia(mixed $codigo, array $indice, string $campo = 'codigo'): void
     {
-        self::exigir(is_string($codigo) && isset($indice[$codigo]), 'Referencia a código inexistente.');
+        self::exigir(is_string($codigo) && isset($indice[$codigo]), 'Campo ' . $campo . ': referencia a código inexistente (' . (is_scalar($codigo) ? (string) $codigo : 'tipo inválido') . ').');
     }
 
     private static function lista(mixed $valor): void
@@ -276,9 +300,9 @@ final class ValidadorConocimiento
         self::exigir(is_array($valor) && array_is_list($valor), 'Se esperaba una lista.');
     }
 
-    private static function texto(mixed $valor, int $maximo): void
+    private static function texto(mixed $valor, int $maximo, string $campo = 'texto'): void
     {
-        self::exigir(is_string($valor) && trim($valor) === $valor && $valor !== '' && mb_strlen($valor) <= $maximo, 'Texto vacío, con espacios sobrantes o demasiado largo.');
+        self::exigir(is_string($valor) && trim($valor) === $valor && $valor !== '' && mb_strlen($valor) <= $maximo, 'Campo ' . $campo . ': texto vacío, con espacios sobrantes o demasiado largo.');
     }
 
     private static function opcion(mixed $valor, array $opciones): void
@@ -286,16 +310,29 @@ final class ValidadorConocimiento
         self::exigir(in_array($valor, $opciones, true), 'Valor o predicado desconocido.');
     }
 
-    private static function fecha(mixed $valor): void
+    private static function fecha(mixed $valor, string $campo = 'fecha'): void
     {
-        self::exigir(is_string($valor), 'Fecha no válida.');
+        self::exigir(is_string($valor), 'Campo ' . $campo . ': fecha no válida.');
         $fecha = DateTimeImmutable::createFromFormat('!Y-m-d', $valor);
-        self::exigir($fecha !== false && $fecha->format('Y-m-d') === $valor, 'Fecha no válida.');
+        self::exigir($fecha !== false && $fecha->format('Y-m-d') === $valor, 'Campo ' . $campo . ': fecha no válida.');
     }
 
     private static function peso(mixed $valor, float $minimo, float $maximo): void
     {
         self::exigir((is_int($valor) || is_float($valor)) && is_finite((float) $valor) && $valor >= $minimo && $valor <= $maximo, 'Número fuera de rango.');
+    }
+
+    private static function ubicado(string $archivo, string $codigo, callable $validar): void
+    {
+        try {
+            $validar();
+        } catch (InvalidArgumentException | TypeError | ValueError $error) {
+            // La ubicación más específica se conserva al salir del conjunto completo.
+            if (preg_match('/^[a-z]+\.json \[/', $error->getMessage())) {
+                throw $error;
+            }
+            throw new InvalidArgumentException($archivo . ' [' . $codigo . ']: ' . $error->getMessage(), 0, $error);
+        }
     }
 
     private static function exigir(bool $condicion, string $mensaje): void
