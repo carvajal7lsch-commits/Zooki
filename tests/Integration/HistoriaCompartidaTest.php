@@ -83,7 +83,7 @@ final class HistoriaCompartidaTest extends TestCase
 
         $this->assertTrue($respuesta['success']);
         $this->assertSame([], $respuesta['consultas']);
-        $this->assertSame(['success', 'mascota', 'consultas', 'vacunas', 'desparasitaciones'], array_keys($respuesta));
+        $this->assertSame(['success', 'mascota', 'consultas', 'vacunas', 'desparasitaciones', 'alertas'], array_keys($respuesta));
         $this->assertStringNotContainsString('Otitis', json_encode($respuesta, JSON_UNESCAPED_UNICODE));
     }
 

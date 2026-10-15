@@ -200,6 +200,21 @@ class AutorizacionRolTest extends TestCase
         $this->assertSame(['dashboard', 'obtener_grafo_conocimiento_ajax', 'plataforma_aviso_ajax', 'plataforma_caso_ajax', 'plataforma_desbloquear_ajax', 'plataforma_estado_ajax', 'plataforma_grafo', 'plataforma_inicio', 'plataforma_suscripcion_ajax'], $permitidas);
     }
 
+    /** RE-2.1.5 y RN-113: el veterinario registra y desactiva; el personal clínico lee; ni la plataforma ni el portal. */
+    public function testAlertasMedicasSoloElVeterinarioEscribeYElPersonalLee()
+    {
+        foreach (['registrar_alerta_medica_ajax', 'desactivar_alerta_medica_ajax', 'buscar_nodo_alerta_ajax'] as $accion) {
+            $this->assertTrue($this->permite($accion, self::VETERINARIO), $accion);
+            foreach ([self::ADMIN, self::PROPIETARIO, self::SUPER_ADMIN] as $rol) {
+                $this->assertFalse($this->permite($accion, $rol), "$accion no deberia permitir al rol $rol");
+            }
+        }
+        $this->assertTrue($this->permite('listar_alertas_medicas_ajax', self::VETERINARIO));
+        $this->assertTrue($this->permite('listar_alertas_medicas_ajax', self::ADMIN));
+        $this->assertFalse($this->permite('listar_alertas_medicas_ajax', self::PROPIETARIO));
+        $this->assertFalse($this->permite('listar_alertas_medicas_ajax', self::SUPER_ADMIN));
+    }
+
     /** RE-2.12.1: el mapa del conocimiento es solo del contexto de plataforma, nunca de un rol de clínica ni del portal. */
     public function testElMapaDelConocimientoEsSoloDeLaPlataforma()
     {

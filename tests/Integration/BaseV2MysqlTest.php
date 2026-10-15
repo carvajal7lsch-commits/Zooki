@@ -155,6 +155,36 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    public function testC1AlertasMedicasEnElEsquemaRealConNodoYAuditoria(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        require_once __DIR__ . '/../../models/AlertaMedica.php';
+        $this->prepararHistoriaClinica();
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        try {
+            $this->comoVeterinario(1, 2);
+            $modelo = new AlertaMedica($this->db);
+            $id = $modelo->registrar(['id_mascota' => 1, 'tipo' => 'alergia', 'descripcion' => 'Alergia al paracetamol', 'nodo' => 'farmaco.paracetamol']);
+            $sinNodo = $modelo->registrar(['id_mascota' => 1, 'tipo' => 'otra', 'descripcion' => 'Muerde al examinarlo']);
+            $nodo = (int) $this->db->query("SELECT id_nodo FROM grafo_nodos WHERE codigo = 'farmaco.paracetamol'")->fetchColumn();
+            $this->assertSame($nodo, (int) $this->db->query('SELECT id_nodo FROM alertas_medicas WHERE id_alerta = ' . $id)->fetchColumn());
+            $this->assertNull($this->db->query('SELECT id_nodo FROM alertas_medicas WHERE id_alerta = ' . $sinNodo)->fetchColumn());
+            $this->comoVeterinario(2, 4);
+            $sur = new AlertaMedica($this->db);
+            $this->assertSame('Clínica Norte', $sur->deMascota(1)['activas'][1]['clinica_nombre']);
+            $this->assertDenegado(fn () => $sur->desactivar($id));
+            $this->comoVeterinario(1, 2);
+            $modelo->desactivar($id);
+            $historial = $modelo->deMascota(1)['historial'];
+            $this->assertSame([$id], array_map('intval', array_column($historial, 'id_alerta')));
+            $this->assertNotNull($historial[0]['desactivada_en']);
+            $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM alertas_medicas")->fetchColumn(), 'Nunca se borra');
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada = 'alertas_medicas' AND accion = 'UPDATE' AND registro_id = '$id'")->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
     public function testC6MapaDelConocimientoRealSoloActivoYConReglasEnSusNodos(): void
     {
         require_once __DIR__ . '/../Support/ConocimientoPrueba.php';

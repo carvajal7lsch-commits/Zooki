@@ -277,6 +277,9 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                             </div>
                         </div>
 
+                        <?php // M2 C1 (RE-2.1.5, RE-2.10.1): arriba de la ficha, antes de las pestañas; la pinta alertas-medicas.js. ?>
+                        <section class="alertas-medicas" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-ficha hidden></section>
+
                         <!-- Tabs del Dashboard -->
                         <div class="dossier-dashboard-tabs">
                             <button class="dossier-dashboard-tab active" data-c3-click="evento27">
@@ -880,6 +883,8 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 <!-- MODAL NUEVA CONSULTA -->
 <?php include __DIR__ . "/modal_consulta.php"; ?>
 
+<?php include __DIR__ . '/../partials/modal_alerta_medica.php'; ?>
+
 <!-- DRAWER HISTORIAL MÉDICO -->
 <div id="drawerHistorialOverlay" class="drawer-overlay" data-c3-click="evento46"></div>
 <aside id="drawerHistorial" class="drawer">
@@ -893,6 +898,9 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
         </div>
     </div>
     <div class="drawer-body">
+        <?php // M2 C1: alergias y alertas, lo primero de la historia. ?>
+        <section class="alertas-medicas" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-historial hidden></section>
+
         <!-- Encabezado de Historia Clínica -->
         <div class="history-pet-header">
             <div class="hc-number-badge">

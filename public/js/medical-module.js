@@ -1263,6 +1263,9 @@ async function viewMedicalHistory(id, nombre) {
 
     timeline.innerHTML = '<div class="empty-table"><i class="fas fa-spinner fa-spin"></i><p>Cargando historial...</p></div>';
     vaccineList.innerHTML = '';
+    // M2 C1: no se muestran las alertas de la mascota anterior mientras carga la nueva.
+    const alertasHistorial = document.querySelector('[data-alertas-historial]');
+    if (alertasHistorial) alertasHistorial.hidden = true;
     hcNumber.innerText = '---';
     petSpecie.innerText = '---';
     petAge.innerText = '---';
@@ -1283,6 +1286,8 @@ async function viewMedicalHistory(id, nombre) {
         const m = data.mascota;
         // Hueco 6: desvinculada, la clínica solo lee lo suyo y no se ofrece registrar nada.
         const soloLectura = avisoSoloLectura(document.querySelector('#drawerHistorial .drawer-body'), m);
+        // M2 C1 (RE-2.10.1): alergias y alertas de todas las clínicas, arriba de la historia.
+        if (window.ZookiAlertas) window.ZookiAlertas.pintar(alertasHistorial, data.alertas, { idMascota: id, nombreMascota: m.nombre });
         hcNumber.innerText = m.numero_historia_clinica || 'Sin asignar';
         petSpecie.innerText = m.nombre_especie || '---';
         petAge.innerText = m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : 'Edad desconocida';
@@ -1771,6 +1776,8 @@ function renderPetDashboard(data, id) {
         editBtn.hidden = Boolean(m.solo_lectura);
     }
     const soloLectura = avisoSoloLectura(document.getElementById('dossierPetDashboardSection'), m);
+    // M2 C1 (RE-2.10.1): alergias y alertas de todas las clínicas, arriba de la ficha.
+    if (window.ZookiAlertas) window.ZookiAlertas.pintar(document.querySelector('[data-alertas-ficha]'), data.alertas, { idMascota: id, nombreMascota: m.nombre });
 
     // 2. Pet Info Card
     const photo = document.getElementById('dashPetPhoto');

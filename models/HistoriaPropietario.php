@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/ModeloPropietario.php';
+require_once __DIR__ . '/../helpers/ValidadorAlertaMedica.php';
 
 /**
  * RN-114 / RE-5.9.2: el propietario ve la historia completa de sus mascotas
@@ -55,6 +56,27 @@ final class HistoriaPropietario extends ModeloPropietario
             WHERE d.id_mascota = ? ORDER BY d.fecha_aplicacion DESC, d.id_desparasitacion DESC');
         $consulta->execute([$idMascota]);
         return $consulta->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * RE-2.10.1 y RN-114: alergias y alertas activas de su mascota en todas las
+     * clínicas, con la clínica que las registró. De solo lectura (RN-G02).
+     */
+    public function alertas(int $idMascota): array
+    {
+        $this->exigirMascotaPropia($idMascota);
+        $consulta = $this->conn->prepare('SELECT a.id_alerta, a.id_clinica, a.tipo, a.descripcion, a.fecha, cl.nombre AS clinica_nombre
+            FROM alertas_medicas a
+            JOIN clinicas cl ON cl.id_clinica = a.id_clinica
+            WHERE a.id_mascota = ? AND a.activa = 1
+            ORDER BY a.fecha DESC, a.id_alerta DESC');
+        $consulta->execute([$idMascota]);
+        $alertas = $consulta->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($alertas as &$alerta) {
+            $alerta['tipo_nombre'] = ValidadorAlertaMedica::TIPOS[$alerta['tipo']] ?? $alerta['tipo'];
+        }
+        unset($alerta);
+        return $alertas;
     }
 
     /** Citas de la mascota en todas sus clínicas, menos las canceladas. */

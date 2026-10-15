@@ -185,7 +185,7 @@ flowchart TD
   RD -- Confirmar con requisitos cumplidos --> U
   U -- Si --> P
   U -- No --> AL{"Detecto una alergia o alerta nueva?"}
-  AL -- Si --> AL1["Registrarla en las alertas de la mascota<br/>(visible para toda clinica vinculada y en el carnet)"]
+  AL -- Si --> AL1["Registrarla en las alertas de la mascota, con nodo del Grafo I si existe<br/>(visible para toda clinica vinculada y en el carnet;<br/>solo la clinica que la registro la desactiva y queda en el historial)"]
   AL1 --> V
   AL -- No --> V{Adjuntar archivos?}
   V -- Si --> W{"Tipo y tamaño validos? (JPG/PNG/PDF, max 10MB, RN-204)"}

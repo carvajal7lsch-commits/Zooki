@@ -35,6 +35,7 @@ $iniciales = $iniciales ?: 'U';
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
     <?php // M5 C2: los componentes de Usuarios (tarjetas mini, etiquetas, pestañas), con los tokens del portal. ?>
     <link rel="stylesheet" href="css/usuarios.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/alertas-medicas.css?v=<?= $v ?>">
     <?php foreach (['base', 'navegacion', 'componentes', 'inicio', 'agenda', 'mascota', 'cuenta', 'ventanas', 'calendario', 'formularios'] as $modulo): ?>
     <link rel="stylesheet" href="css/portal/<?= $modulo ?>.css?v=<?= $v ?>">
     <?php endforeach; ?>
@@ -127,6 +128,8 @@ $iniciales = $iniciales ?: 'U';
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
 <script src="js/validacion-mascota.js?v=<?= $v ?>"></script>
 <script src="js/portal.js?v=<?= $v ?>"></script>
+<?php // M2 C1: alergias y alertas de la mascota, de solo lectura; portal.js la usa al abrir la ficha. ?>
+<script src="js/alertas-medicas.js?v=<?= $v ?>"></script>
 <script src="js/csrf.js?v=<?= $v ?>"></script>
 <script src="js/sesion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/interacciones.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

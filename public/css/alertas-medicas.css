@@ -1,0 +1,369 @@
+/*
+ * HU-2.1, RE-2.1.5 y RE-2.10.1 — Sección «Alergias y alertas» de la mascota y su modal.
+ * Se usa en la historia del veterinario (Pacientes, Consultas, Atención) y en el portal.
+ * El rojo es semántico (alergia: riesgo de prescripción), no de adorno.
+ * RNF-16: móvil < 768, tablet 768–1023, escritorio ≥ 1024.
+ */
+.alertas-medicas {
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.alertas-medicas[hidden] {
+    display: none;
+}
+
+.alertas-medicas--con-alertas {
+    border-left: 4px solid #dc2626;
+    background: #fffafa;
+}
+
+.alertas-medicas__barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.alertas-medicas__titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.alertas-medicas--con-alertas .alertas-medicas__titulo > i {
+    color: #dc2626;
+}
+
+.alertas-medicas__contador {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.3rem;
+    height: 1.3rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.alertas-medicas--con-alertas .alertas-medicas__contador {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.alertas-medicas__registrar,
+.alertas-medicas__desactivar {
+    flex-shrink: 0;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 8px;
+    background: #ffffff;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--primary, #0052ff);
+    cursor: pointer;
+}
+
+.alertas-medicas__registrar:hover,
+.alertas-medicas__desactivar:hover {
+    background: #eff4ff;
+}
+
+.alertas-medicas__desactivar {
+    align-self: center;
+    color: #475569;
+}
+
+.alertas-medicas__vacio {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.alertas-medicas__vacio--error {
+    color: #b91c1c;
+}
+
+.alertas-medicas__lista,
+.alertas-medicas__pasadas {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.alertas-medicas__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.alertas-medicas__icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.alertas-medicas__item--alergia .alertas-medicas__icono {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.alertas-medicas__item--medicacion_continua .alertas-medicas__icono {
+    background: #eff4ff;
+    color: #1d4ed8;
+}
+
+.alertas-medicas__item--condicion_cronica .alertas-medicas__icono {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.alertas-medicas__cuerpo {
+    flex: 1;
+    min-width: 0;
+}
+
+.alertas-medicas__cabeza {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+}
+
+.alertas-medicas__tipo {
+    margin-right: 0.35rem;
+}
+
+.alertas-medicas__item--alergia .alertas-medicas__tipo {
+    color: #b91c1c;
+}
+
+.alertas-medicas__origen,
+.alertas-medicas__enlace {
+    margin: 0.15rem 0 0;
+    font-size: 0.74rem;
+    color: #64748b;
+}
+
+.alertas-medicas__enlace--sin {
+    color: #92400e;
+}
+
+.alertas-medicas__propia {
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: #eff4ff;
+    color: #1e3a8a;
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.alertas-medicas__historial {
+    margin-top: 0.6rem;
+    font-size: 0.78rem;
+}
+
+.alertas-medicas__historial summary {
+    color: var(--primary, #0052ff);
+    cursor: pointer;
+}
+
+.alertas-medicas__pasadas {
+    margin-top: 0.5rem;
+}
+
+.alertas-medicas__pasada {
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.alertas-medicas__pasada-detalle {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+/* Atención: la columna del paciente es angosta. */
+.alertas-medicas--compacta {
+    padding: 0.7rem 0.75rem;
+}
+
+.alertas-medicas--compacta .alertas-medicas__item {
+    flex-wrap: wrap;
+}
+
+/* ── Modal de registro (users-modal) ── */
+.alertas-medicas__panel {
+    max-width: 560px;
+}
+
+.alertas-medicas__subtitulo {
+    margin: 0.2rem 0 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.alertas-medicas__tipos {
+    margin: 0 0 1rem;
+    padding: 0;
+    border: none;
+}
+
+.alertas-medicas__tipos legend {
+    margin-bottom: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.alertas-medicas__opciones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.alertas-medicas__opcion {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.alertas-medicas__opcion:has(input:checked) {
+    border-color: var(--primary, #0052ff);
+    background: #eff4ff;
+}
+
+.alertas-medicas__opcion input {
+    accent-color: var(--primary, #0052ff);
+    margin: 0;
+}
+
+.alertas-medicas__pie-campo {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.alertas-medicas__contador-texto,
+.alertas-medicas__opcional,
+.alertas-medicas__nota {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.alertas-medicas__nota {
+    display: block;
+    margin-top: 0.35rem;
+}
+
+.alertas-medicas__nodo-elegido {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    background: #eff4ff;
+    color: #1e3a8a;
+    font-size: 0.8rem;
+}
+
+.alertas-medicas__quitar-nodo {
+    border: none;
+    background: none;
+    color: #1e3a8a;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.alertas-medicas__sugerencias {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.35rem;
+    padding: 0.3rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 10px;
+}
+
+.alertas-medicas__sugerencia {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.45rem 0.55rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.82rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.alertas-medicas__sugerencia:hover,
+.alertas-medicas__sugerencia:focus-visible {
+    background: #eff4ff;
+    outline: none;
+}
+
+.alertas-medicas__sugerencia span,
+.alertas-medicas__sin-resultados {
+    margin: 0;
+    font-size: 0.74rem;
+    color: #64748b;
+}
+
+.alertas-medicas__resultado {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    color: #b91c1c;
+}
+
+.alertas-medicas__resultado:empty {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .alertas-medicas__opciones {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .alertas-medicas__item {
+        flex-wrap: wrap;
+    }
+
+    .alertas-medicas__desactivar {
+        margin-left: auto;
+    }
+}

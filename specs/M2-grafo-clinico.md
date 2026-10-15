@@ -1,6 +1,6 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B cerrada (B1, B2 y B2.1 revisadas y aprobadas); C6 entregada, pendiente de revisión (Claude Code, 2026-10-14)
+> Estado: B y C6 cerradas; C1 entregada, pendiente de revisión (Claude Code, 2026-10-15)
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
@@ -97,7 +97,7 @@ T-13 se expresa mediante anorexia sostenida en gatos; T-19 mediante crisis breve
 - [x] B1 — Esquema, cargador y documentos: revisada y aprobada (Codex, 2026-10-14).
 - [x] B2 — Conocimiento inicial con fuentes: revisada y aprobada con correcciones en B2.1 (Codex inició, Claude Code terminó; 2026-10-14).
 - [x] B2.1 — Correcciones del conocimiento: revisada y aprobada (Codex, 2026-10-14).
-- [ ] C1 — Alergias y alertas médicas.
+- [x] C1 — Alergias y alertas médicas: entregada, pendiente de revisión (Claude Code, 2026-10-15).
 - [ ] C2 — Motor de diagnósticos.
 - [ ] C3 — Alertas de prescripción.
 - [ ] C4 — Motor de triage con la batería.
@@ -960,3 +960,83 @@ En XAMPP, antes: `php scripts/migrar.php`, luego `php scripts/cargar_conocimient
 **Decisión abierta para el usuario después de probar:** el layout `cose` acomoda el mapa distinto en cada carga. Si incomoda, se fija (posiciones estables) en el pulido; no bloquea C6.
 
 **Siguiente:** pruebas del usuario (lista del Anexo C6) y C1 — alergias y alertas médicas (Claude Code).
+
+**Pruebas del usuario (2026-10-15):** las cinco pruebas del Anexo C6 pasaron. No pidió fijar el layout del mapa. **C6 cerrada**, con commit `1053ee7`.
+
+## Anexo C1 — Resultado
+
+**Lo escribió Claude Code (2026-10-15); entregada, pendiente de revisión de Claude (arquitecto).**
+
+### Qué se entregó
+
+- **Modelo `AlertaMedica`** (sobre la tabla existente, sin migración) con la misma regla de acceso que las vacunas (`ModeloHistoria`):
+  - **Registrar:** solo con vínculo activo y mascota activa. Valida tipo y descripción con `ValidadorAlertaMedica` (máximo 255, el tamaño de la columna). El nodo es opcional, viaja por su **código estable** (nunca un id) y debe estar activo y ser del tipo permitido: alergia → fármaco o sustancia; medicación continua → fármaco; condición crónica → condición; «otra» → ninguno.
+  - **Desactivar:** solo la clínica que la registró (RN-112) y con el vínculo activo (RN-115); si no, 403 auditado. Nunca se borra.
+  - **Leer:** toda clínica con vínculo activo ve las de todas, con clínica y veterinario; con el vínculo inactivo, solo las propias; sin vínculo, 403 auditado.
+  - **Auditoría:** registrar y desactivar quedan en `auditoria_sistema` en la misma transacción; si no se puede auditar, no se guarda.
+- **Quién y cuándo desactivó, sin migración:** la tabla no tiene esas columnas. El historial las lee de la fila de auditoría de la desactivación (usuario y `fecha_hora`), escrita en la misma transacción. Si se prefieren columnas propias, hace falta una migración (decisión pendiente).
+- **Buscador `NodosEnlazables`:** nodos activos por etiqueta y sinónimo activo, normalizados con `ArchivosConocimiento::normalizarTexto` y filtrados por los tipos que admite la alerta; máximo 8 resultados. Si el nodo no está, se guarda solo la descripción, y la tarjeta y el formulario dicen que el motor de prescripción no podrá cruzarla (A.2).
+- **Rutas:** `registrar_alerta_medica_ajax`, `desactivar_alerta_medica_ajax` y `buscar_nodo_alerta_ajax` son solo del veterinario. `listar_alertas_medicas_ajax` es del personal clínico, igual que `listar_historial_ajax`. Lo que escribe exige POST y CSRF. La plataforma no tiene acceso. `listar_historial_ajax` ahora trae `alertas` y el detalle de la mascota del portal también (de solo lectura, RN-G02).
+- **Veterinario:** sección «Alergias y alertas» arriba de la ficha de la mascota en Pacientes, en el cajón de historial (Pacientes y Consultas) y en la columna del paciente de Atención (se carga sola). Muestra la clínica, el veterinario y la fecha de cada alerta, y la marca «Tu clínica».
+  - **Registrar:** botón con un modal propio (`views/partials/modal_alerta_medica.php`) con validación en tiempo real, contador, restricción de entrada y el buscador de nodos. Se confirma con un aviso breve.
+  - **Desactivar:** solo en las propias, con `zookiConfirmarCorto` («deja de mostrarse y de alertar; queda en el historial»).
+  - **Lista e historial:** se actualizan con la respuesta, sin recargar, en todas las secciones de la misma mascota. Las desactivadas se ven en el desplegable «Historial», con quién y cuándo.
+  - **Sin alertas:** dice «Que no haya registro no significa que no tenga».
+- **Portal:** sección de solo lectura arriba del detalle de la mascota, fuera de las pestañas y del filtro por clínica (es información de seguridad), con la clínica de cada alerta activa.
+- **Código:** JS en `public/js/alertas-medicas.js` (funciones puras en `window.ZookiAlertas`), CSS en `public/css/alertas-medicas.css`; sin JS ni CSS en línea y textos de la base con `textContent`. El DOM mínimo de las pruebas pasó a `tests/Frontend/apoyo/dom-datos.cjs` y lo usan C1 y C6.
+- **Documentos:** Modelos §3, nodo AL1: se registra con el nodo si existe; solo la clínica que la registró la desactiva y queda en el historial. RE-2.1.5, RE-2.10.1 y RN-113 no cambian de texto (su estado se cierra en F).
+
+### RE con su prueba
+
+| RE / regla | Prueba |
+|---|---|
+| RE-2.1.5: registrar y desactivar en la propia clínica, sin borrar y con auditoría | `AlertaMedicaTest::testRegistrarYDesactivarEnLaPropiaClinicaSinBorrarYConAuditoria`; `BaseV2MysqlTest::testC1AlertasMedicasEnElEsquemaRealConNodoYAuditoria` (FK al nodo real, ENUM y auditoría en MariaDB) |
+| RE-2.10.1 y RN-113: otra clínica vinculada las ve con la clínica de origen y no las desactiva (403) | `testOtraClinicaVinculadaLaVeConLaClinicaDeOrigenYNoLaDesactiva`; `HistoriaCompartidaTest` (la historia trae `alertas`) |
+| RN-G13: clínica sin vínculo, 403 auditado | `testClinicaSinVinculoNoLaVeNiRegistraY403Auditado` |
+| RN-115: vínculo inactivo, solo lo propio y sin escribir | `testConElVinculoInactivoSoloLeeLoPropioYNadaSeEscribe` |
+| Tipo y nodo incompatibles, nodo inactivo o inexistente, descripción vacía, larga o con caracteres de control | `testTipoYNodoIncompatiblesNodoInactivoYDescripcionInvalidaSeRechazan` |
+| Buscador por etiqueta y sinónimo, por tipo y solo lo activo | `testBuscadorDeNodosPorEtiquetaYSinonimoFiltradoPorTipo` |
+| RN-G02: el propietario ve las activas solo de sus mascotas | `testElPropietarioVeLasActivasDeSusMascotasConSuClinicaYNoLasDeOtro` |
+| Matriz, CSRF y superadministrador sin acceso | `testEscribirExigeCsrfYLaPlataformaNoEntra`; `AutorizacionRolTest::testAlertasMedicasSoloElVeterinarioEscribeYElPersonalLee` |
+| Controlador: lista actualizada, 422 junto al campo, 405 sin POST | `testControladorDevuelveLaListaActualizadaYRechazaSinPost` |
+| Modal con los límites del servidor y sin código en línea | `testElModalUsaLosLimitesYTiposDelServidorSinCodigoEnLinea` |
+| JS de la sección | `M2C1Alertas.test.cjs`: pintado (clínica, «Tu clínica», desactivar solo en las propias, historial), solo lectura y portal, validación en tiempo real y contador, buscador de nodos, registro y desactivación que actualizan sin recargar, error del servidor junto al campo y carga automática en Atención |
+
+### Verificación
+
+- PHP completo sin host MySQL: **750 pruebas, 6440 aserciones, 38 omitidas** (las de MySQL).
+- PHP completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32 de XAMPP): **750 pruebas, 7004 aserciones, ninguna omitida**.
+- JavaScript: **183/183** (176 anteriores + 7 de `M2C1Alertas.test.cjs`).
+- Pruebas existentes que cambiaron por diseño: `HistoriaCompartidaTest` espera la clave `alertas` en la historia, y `M2C6Grafo.test.cjs` usa el DOM compartido. En el portal, `alertas-medicas.js` se carga después de `portal.js`, porque `M5C2bPortal` exige que `validacion-mascota.js` vaya justo antes.
+- `git diff --check` sin errores. No se leyó ni escribió `.env`, no se tocó `zooki_v2_prueba` ni sus contraseñas; sin commit ni push, y no se empezó C2.
+
+### Prueba en el navegador (usuario)
+
+En XAMPP, antes: `php scripts/migrar.php` y `php scripts/cargar_conocimiento.php` (los nodos para enlazar). Hace falta una mascota de Fabio vinculada a Norte y a Sur, como en las pruebas de M5.
+
+1. [ ] **Beto Norte** (veterinario de Norte), escritorio: en Pacientes, abre la ficha de la mascota. Registra una alergia; escribe «acetaminofen» en «Enlazar al conocimiento» y elige «Paracetamol». Debe aparecer arriba sin recargar, con «Clínica Norte» y «Tu clínica». Prueba también una descripción vacía y otra de más de 255 caracteres: el aviso sale junto al campo mientras escribes.
+2. [ ] **Diego Sur** (veterinario de Sur): la misma mascota muestra la alergia con «Clínica Norte» y **sin** botón «Desactivar». Registra una condición crónica propia «Epilepsia» (sin enlace o con «Epilepsia diagnosticada»); sí tiene «Desactivar».
+3. [ ] **Beto Norte**: desactiva su alergia; confirma en el modal. Desaparece de las activas y queda en «Historial» con quién y cuándo. Abre una cita de esa mascota en Atención: la columna del paciente muestra la condición de Sur.
+4. [ ] **Ana Norte** (administradora): no tiene la pantalla de Pacientes. En `index.php?action=listar_alertas_medicas_ajax&id_mascota=<id>` lee las alertas, y no puede registrar (403 si intenta la ruta de registro).
+5. [ ] **Fabio Propietario**, en el celular: en el detalle de la mascota, «Alergias y alertas» arriba, de solo lectura, con la clínica de cada una y sin las desactivadas.
+
+### Pendientes
+
+- **Decisión:** quién y cuándo desactivó vive en la auditoría. Si se quieren columnas en `alertas_medicas` (`desactivada_por`, `fecha_desactivacion`), es una migración nueva.
+- **Sugerencia documental para F:** RN-112 enumera consulta, vacuna, desparasitación, tratamiento y archivo; convendría agregar «alerta médica», que ya se comporta así. No se cambió por estar fuera de lo autorizado.
+- El historial imprimible del portal (`imprimir_historial.php`) aún no muestra las alertas; el carnet sigue fuera (final de la v2.0).
+- El cruce de la alergia con la prescripción (bloqueo) es C3; C1 solo guarda el enlace al nodo.
+
+### C1 — Revisión (2026-10-15)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada en código; pendiente de las pruebas del usuario en el navegador.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 750 pruebas y 6440 aserciones (38 omitidas); con MariaDB 10.11 propia y la base por defecto, 750 pruebas y 7004 aserciones, ninguna omitida; JS 183/183.
+
+**Lo que está bien:** `AlertaMedica` reutiliza la regla de acceso de `ModeloHistoria` (vínculo activo, RN-115 de solo lectura, 403 auditado sin distinguir «no existe» de «es de otra clínica»); el nodo viaja por código estable y se valida activo y del tipo permitido; registrar y desactivar se auditan en la misma transacción y sin auditoría no se guarda; nunca se borra; el portal muestra las activas fuera del filtro por clínica (información de seguridad); el mensaje «Que no haya registro no significa que no tenga» evita la falsa seguridad.
+
+**Decisión del revisor sobre el pendiente de C1:** quién y cuándo desactivó se queda en la auditoría, sin migración. Se escribe en la misma transacción que el cambio, así que no puede faltar, y una columna repetiría el dato. Si más adelante se necesita filtrar por fecha de desactivación, se agrega entonces.
+
+**Para F:** agregar «alerta médica» a la lista de RN-112; incluir las alertas activas en `imprimir_historial.php` del portal.
+
+**Siguiente:** pruebas del usuario (lista del Anexo C1) y C2 — motor de diagnósticos (Codex).

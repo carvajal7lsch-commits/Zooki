@@ -373,12 +373,16 @@ class Security {
             // no asistida) es del veterinario asignado. «Cerrar sin consulta»
             // se retiró en C5 (RN-410 derogada, D-3).
             'iniciar_cita_ajax', 'completar_cita_ajax', 'marcar_no_asistio_ajax',
+            // HU-2.1, RE-2.1.5: registrar y desactivar alergias y alertas es un acto clínico.
+            'registrar_alerta_medica_ajax', 'desactivar_alerta_medica_ajax', 'buscar_nodo_alerta_ajax',
         ] as $a) { $matriz[$a] = $soloVet; }
 
         // Consulta de informacion clinica: el administrador si la necesita
         // para auditoria.
         foreach ([
             'listar_historial_ajax',
+            // RN-113: toda clínica vinculada lee las alertas de todas las clínicas.
+            'listar_alertas_medicas_ajax',
             'get_laboratorios_ajax', 'get_productos_desparasitacion_ajax',
             'get_vacunas_por_especie_ajax',
         ] as $a) { $matriz[$a] = $clinico; }

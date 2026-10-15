@@ -139,6 +139,8 @@ $consultasJson = json_encode($consultas, JSON_UNESCAPED_UNICODE);
     </div>
 
     <div class="drawer-body">
+        <?php // M2 C1: alergias y alertas, lo primero de la historia. ?>
+        <section class="alertas-medicas" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-historial hidden></section>
         <div>
             <h4 class="section-label"><i class="fas fa-syringe text-success"></i>Resumen de Vacunación</h4>
             <div id="vaccineList" class="vaccine-grid"></div>
@@ -149,6 +151,8 @@ $consultasJson = json_encode($consultas, JSON_UNESCAPED_UNICODE);
         </div>
     </div>
 </div>
+
+<?php include __DIR__ . '/../partials/modal_alerta_medica.php'; ?>
 
 <!-- Atención sin cita: elegir la mascota -->
 <div id="modalSelectPetConsulta" class="modal">

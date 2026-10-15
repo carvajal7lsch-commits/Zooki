@@ -151,6 +151,8 @@ class PortalController
                 'citas' => $this->conCancelacion($this->historia->citas($idMascota), $this->clinicasVinculadas()),
                 'vacunas' => $this->historia->vacunas($idMascota),
                 'desparasitaciones' => $this->historia->desparasitaciones($idMascota),
+                // C1 (RE-2.10.1): alergias y alertas activas de todas las clínicas, solo lectura.
+                'alertas' => $this->historia->alertas($idMascota),
                 // M5 C2: las clínicas donde se atiende, para las etiquetas de la cabecera.
                 'clinicas' => $this->mascotas->clinicasDeSusMascotas()[$idMascota] ?? [],
             ]);

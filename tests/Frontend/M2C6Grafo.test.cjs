@@ -7,6 +7,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
+const { crearNodo, textoNodo } = require('./apoyo/dom-datos.cjs');
 
 const codigo = fs.readFileSync(path.join(__dirname, '../../public/js/grafo-conocimiento.js'), 'utf8');
 
@@ -158,60 +159,6 @@ test('C6: condiciones y resultados legibles, sin JSON (RE-2.12.4)', () => {
 });
 
 // ── Pantalla con un DOM mínimo ────────────────────────────────────────────
-
-function kebab(texto) {
-    return texto.replace(/[A-Z]/g, letra => '-' + letra.toLowerCase());
-}
-
-function crearNodo(etiqueta, documento) {
-    const clases = new Set();
-    const atributos = {};
-    const n = {
-        tagName: etiqueta.toUpperCase(), hijos: [], padre: null, hidden: false, disabled: false, checked: false,
-        value: '', type: '', href: '', target: '', rel: '', title: '', dataset: {}, escuchas: {}, propiedades: {},
-        _texto: '',
-        get textContent() { return n._texto + n.hijos.map(h => h.textContent).join(''); },
-        set textContent(valor) { n._texto = String(valor); n.hijos = []; },
-        get className() { return [...clases].join(' '); },
-        set className(valor) { clases.clear(); String(valor).split(/\s+/).filter(Boolean).forEach(c => clases.add(c)); },
-        classList: { add: c => clases.add(c), remove: c => clases.delete(c), toggle: (c, si) => (si === undefined ? (clases.has(c) ? clases.delete(c) : clases.add(c)) : (si ? clases.add(c) : clases.delete(c))), contains: c => clases.has(c) },
-        style: { setProperty: (nombre, valor) => { n.propiedades[nombre] = valor; } },
-        get firstChild() { return n.hijos[0] || null; },
-        setAttribute: (a, v) => { atributos[a] = String(v); },
-        getAttribute: a => (a in atributos ? atributos[a] : null),
-        addEventListener(tipo, fn) { (n.escuchas[tipo] = n.escuchas[tipo] || []).push(fn); },
-        disparar(tipo, evento = {}) { (n.escuchas[tipo] || []).forEach(fn => fn({ target: n, preventDefault() {}, ...evento })); },
-        click() { n.disparar('click'); },
-        appendChild(h) { h.padre = n; n.hijos.push(h); return h; },
-        append(...hs) { hs.forEach(h => n.appendChild(h)); },
-        replaceChildren(...hs) { n.hijos = []; n._texto = ''; n.append(...hs); },
-        todos() { return n.hijos.flatMap(h => [h, ...h.todos()]); },
-        querySelectorAll(selector) { return n.todos().filter(h => coincide(h, selector)); },
-        querySelector(selector) { return n.querySelectorAll(selector)[0] || null; },
-        atributos, clases,
-    };
-    return n;
-}
-
-function textoNodo(texto) {
-    return { tagName: '#text', hijos: [], textContent: texto, todos: () => [], dataset: {}, atributos: {}, clases: new Set() };
-}
-
-/** Selectores que usa grafo-conocimiento.js: [data-x], [data-x="v"] y opcionalmente .clase. */
-function coincide(n, selector) {
-    const partes = selector.match(/^\[([a-z-]+)(?:="([^"]*)")?\](?:\.([a-z-]+))?$/);
-    if (!partes || n.tagName === '#text') return false;
-    const [, atributo, valor, clase] = partes;
-    const nombre = atributo.replace(/^data-/, '');
-    let actual = null;
-    for (const [clave, dato] of Object.entries(n.dataset)) {
-        if (kebab(clave) === nombre) actual = String(dato);
-    }
-    if (actual === null && atributo in n.atributos) actual = n.atributos[atributo];
-    if (actual === null) return false;
-    if (valor !== undefined && actual !== valor) return false;
-    return clase === undefined || n.clases.has(clase);
-}
 
 function pagina({ respuesta, cytoscape }) {
     const documento = { escuchas: {} };

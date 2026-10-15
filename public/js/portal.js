@@ -525,6 +525,9 @@ async function verDetalle(id, opciones = {}) {
     document.getElementById('citasContent').innerHTML = '';
     document.getElementById('vacunasContent').innerHTML = '';
     document.getElementById('desparasitacionesContent').innerHTML = '';
+    // M2 C1: no se muestran las alertas de otra mascota mientras carga esta.
+    const alertasMascota = document.getElementById('alertasMascota');
+    if (alertasMascota) alertasMascota.hidden = true;
 
     try {
         const res = await (await fetch(`index.php?action=ver_detalle_mascota_propietario_ajax&id_mascota=${id}`)).json();
@@ -550,6 +553,10 @@ async function verDetalle(id, opciones = {}) {
         document.getElementById('drawerPetTags').innerHTML = etiquetasDeLaMascota(m, res.clinicas || []);
 
         renderSummary(m);
+        // M2 C1 (RE-2.10.1, RN-114): de solo lectura, con la clínica que registró cada una.
+        if (alertasMascota && window.ZookiAlertas) {
+            window.ZookiAlertas.pintar(alertasMascota, { activas: res.alertas || [], historial: [] }, { idMascota: m.id_mascota, lectura: true, iconos: 'ri' });
+        }
 
         // Historial
         if (!res.historial.length) {

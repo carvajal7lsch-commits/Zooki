@@ -534,6 +534,24 @@ switch ($action) {
         $controller->listarHistorialAjax();
         break;
 
+    // HU-2.1, RE-2.1.5: alergias y alertas médicas de la mascota.
+    case "listar_alertas_medicas_ajax":
+        require_once "../controllers/AlertaMedicaController.php";
+        (new AlertaMedicaController())->listarAjax();
+        break;
+    case "registrar_alerta_medica_ajax":
+        require_once "../controllers/AlertaMedicaController.php";
+        (new AlertaMedicaController())->registrarAjax();
+        break;
+    case "desactivar_alerta_medica_ajax":
+        require_once "../controllers/AlertaMedicaController.php";
+        (new AlertaMedicaController())->desactivarAjax();
+        break;
+    case "buscar_nodo_alerta_ajax":
+        require_once "../controllers/AlertaMedicaController.php";
+        (new AlertaMedicaController())->buscarNodosAjax();
+        break;
+
     // RUTAS SPRINT 3: VACUNACIÓN Y CALENDARIO
     case "registrar_vacuna_ajax":
         require_once "../controllers/VacunaController.php";

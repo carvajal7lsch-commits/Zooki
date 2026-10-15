@@ -63,6 +63,9 @@ $hoyIso = date('Y-m-d');
                 <div><dt>Historia</dt><dd><?= $e($mascota['numero_historia_clinica'] ?: 'Nueva') ?></dd></div>
             </dl>
 
+            <?php // M2 C1 (RE-2.1.5): alergias y alertas de todas las clínicas, a la vista durante la atención. ?>
+            <section class="alertas-medicas alertas-medicas--compacta" aria-label="Alergias y alertas" data-alertas-medicas data-cargar data-id-mascota="<?= (int) $mascota['id_mascota'] ?>" data-nombre-mascota="<?= $e($mascota['nombre'] ?? '') ?>"></section>
+
             <div class="paciente__bloque">
                 <span class="paciente__etiqueta">Propietario</span>
                 <p class="paciente__texto"><?= $e($propietario['nombre_completo'] ?? '—') ?></p>
@@ -450,3 +453,4 @@ $hoyIso = date('Y-m-d');
     <datalist id="listaLaboratorios"></datalist>
     <datalist id="listaProductos"></datalist>
 </section>
+<?php include __DIR__ . '/../partials/modal_alerta_medica.php'; ?>
