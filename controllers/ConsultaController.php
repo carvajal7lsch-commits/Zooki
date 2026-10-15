@@ -64,14 +64,23 @@ class ConsultaController
             return;
         }
 
-        $tratamientos = $this->tratamientosDelFormulario();
+        $tratamientos = [];
         $movidos = [];
         $guardarAdjunto = function (int $idConsulta, array $adjunto, int $indice) use (&$movidos): array {
             return $this->guardarAdjunto($idConsulta, $adjunto, $indice, $movidos);
         };
 
         try {
+            $tratamientos = $this->tratamientosDelFormulario();
             $idConsulta = $this->consultaModel->registrar($_POST, $tratamientos, $adjuntos, $guardarAdjunto);
+        } catch (PrescripcionRechazada $e) {
+            $this->borrarArchivos($movidos);
+            RespuestaJson::error(422, $e->getMessage(), ['campo' => 'tratamientos.' . $e->fila, 'fila' => $e->fila, 'aviso' => $e->getMessage(), 'prescripcion' => $e->publica]);
+            return;
+        } catch (CampoInvalido $e) {
+            $this->borrarArchivos($movidos);
+            RespuestaJson::error(422, $e->getMessage(), ['campo' => $e->campo, 'aviso' => $e->aviso]);
+            return;
         } catch (AccesoDenegado $e) {
             $this->borrarArchivos($movidos);
             throw $e;
@@ -271,6 +280,11 @@ class ConsultaController
                 'duracion' => $_POST['med_duracion'][$i] ?? null,
                 'fecha_inicio' => $_POST['med_inicio'][$i] ?? null,
                 'observaciones' => $_POST['med_obs'][$i] ?? null,
+                'farmaco' => $_POST['med_farmaco'][$i] ?? null,
+                'fecha_fin' => $_POST['med_fin'][$i] ?? null,
+                'decision' => $_POST['med_decision'][$i] ?? null,
+                'conciliacion' => $_POST['med_conciliacion'][$i] ?? null,
+                'huella' => $_POST['med_huella'][$i] ?? null,
             ];
         }
         return $tratamientos;

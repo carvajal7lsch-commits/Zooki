@@ -7,7 +7,10 @@
 ## Ahora
 
 - **Módulo activo:** M2 — Historia clínica y soporte a la decisión (Grafo I), previsto como `2.0.0-alpha.4`. Plan: [`specs/M2-grafo-clinico.md`](../specs/M2-grafo-clinico.md). Rama: `v2/m2-grafo`.
-- **Entrega actual de M2:** **C2 — motor de diagnósticos: revisada y aprobada (2026-10-15).** Lo escribió Codex. Ver «Anexo C2» y «C2 — Revisión» (verificada también en MySQL 8.0; se corrigieron los conteos del CI, que fallaba desde B1). C1, C6 y B cerradas.
+- **Entrega actual de M2:** **C3 — alertas de prescripción: revisada y aprobada (2026-10-15).** Lo escribió Codex. Ver «Anexo C3» y «C3 — Revisión». C2 con commit `172a707`; CI corregido en `668cd0a`. C1, C6 y B cerradas.
+- **C2:** revisada y aprobada (2026-10-15), escrita por Codex. Ver «C2 — Revisión» (verificada también en MySQL 8.0; corregidos los conteos del CI). C1, C6 y B cerradas.
+- **Decisiones del usuario durante C3 (2026-10-15):** conciliación de máximo 500 caracteres, rechazando el exceso sin recortar; confirmar exige una huella opaca vigente por fila, invalidada por cambios de cruces, permisos o versión. Anotadas en §7 del plan M2.
+- **Verificación C3:** PHP 783 (6758 aserciones y 40 omitidas sin host; 7337 aserciones y ninguna omitida con MariaDB 10.4.32 temporal propia y `zooki_test_base_v2`); JS 183/183; diagrama §3 renderizado y respuestas reales de aviso protegido y bloqueo en el anexo. Pantallas e integración del formulario pendientes de C5.
 - **C1 cerrada** el 2026-10-15: el usuario pasó las cinco pruebas; commit `d8f8519`.
 - **C6:** cerrada el 2026-10-15 (el usuario pasó las cinco pruebas del navegador; commit `1053ee7`). B (B1, B2, B2.1) cerrada y con commit.
 - **B de M2 cerrada:** B1, B2 y B2.1 revisadas y aprobadas (2026-10-14). Conjunto: 47 fuentes, 105 nodos, 105 aristas, 201 sinónimos, 29 reglas, todo pendiente de validación veterinaria. Notas para C4 en «B2.1 — Revisión».
@@ -39,7 +42,7 @@
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
-- **Siguiente paso:** C3 — alertas de prescripción (Codex). Reparto de M2: Codex C3–C4; Claude Code C5. Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal. Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Siguiente paso:** C4 — motor de triage con la batería (Codex); después C5 — consulta del veterinario (Claude Code) y F. Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal. Pendiente aparte: borrar los respaldos temporales del VPS.
   Reparto de M2: Codex C2–C4; Claude Code C5.
   Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal.
   En XAMPP, antes de probar: `php scripts/migrar.php` y luego `php scripts/cargar_conocimiento.php`. Pendiente aparte: borrar los respaldos temporales del VPS.

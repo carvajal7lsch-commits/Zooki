@@ -131,6 +131,28 @@ Un efecto de bloqueo solo es válido por toxicidad o alergia, en prescripción, 
 Las relaciones permitidas son `sugiere`, `trata`, `toxico_para`, `alergia`, `interactua_con`, `contraindica` y `asociado`.
 El signo y peso no convierten por sí solos una relación en bloqueo.
 
+### Prescripción y medicación vigente (C3)
+
+`MotorPrescripcion` es puro y comparte `EvaluadorCondiciones` con el ranking.
+Una alergia individual activa enlazada bloquea aunque no tenga fuente bibliográfica; `toxico_para` respeta su efecto de bloqueo o advertencia y las interacciones se cruzan en ambos sentidos, incluidas las otras filas nuevas.
+No interpreta nombres escritos a mano ni deduce nodos; un fármaco sin código o una medicación sin enlace deja la evaluación incompleta, nunca «sin interacciones».
+
+`MedicacionVigente` es una lectura interna separada del historial, tras comprobar el vínculo activo del paciente.
+Incluye tratamientos de todas las clínicas con inicio no futuro y fin desde hoy inclusive, y alertas activas de medicación continua.
+Un fin nulo conserva vigencia desconocida y solo genera advertencia si existe un cruce; el texto pide conciliar.
+Los tratamientos ajenos requieren autorización para nombrarse; las alertas médicas siguen siendo globales por RN-113.
+
+`POST ?action=validar_prescripcion_ajax`, con CSRF y contexto veterinario, recibe `id_mascota` y una lista `tratamientos` con `farmaco` opcional.
+Devuelve por fila `bloqueada`, `motivos`, `advertencias`, `evaluacion_incompleta`, `requiere_decision`, `requiere_conciliacion` y `huella`.
+`PrescripcionPublica` usa una lista cerrada de campos y agrupa todas las interacciones protegidas en un solo aviso genérico, sin evidencia que permita reconstruir la medicación.
+La huella HMAC usa una clave secreta de sesión y vincula paciente, contexto, filas, fecha, cruces, visibilidad y versión.
+
+El guardado acepta `med_farmaco`, `med_fin`, `med_decision`, `med_conciliacion` y `med_huella`, paralelos a los campos heredados del tratamiento.
+Dentro de la transacción se relee y evalúa antes de insertar la consulta o mover adjuntos.
+Un bloqueo no se confirma; una advertencia exige `confirmar` y huella vigente; si es protegida exige además conciliación de máximo `ValidadorPrescripcion::CONCILIACION_MAX` (500), rechazando el exceso sin recortarlo.
+Cada decisión se audita con la versión y la evidencia interna dentro de la transacción; el rechazo se audita después del rollback.
+Las filas heredadas sin código siguen guardándose como evaluación incompleta; el buscador y la presentación de las alertas se integran en C5.
+
 ## Política de B2.1
 
 El conjunto contiene 105 nodos (51 síntomas), 105 aristas, 201 sinónimos, 29 reglas (24 de triage y 5 de ranking) y 47 fuentes.

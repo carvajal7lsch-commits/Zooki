@@ -1,6 +1,6 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B, C1 y C6 cerradas; C2 entregada, pendiente de revisión (Codex, 2026-10-15)
+> Estado: B, C1 y C6 cerradas; C2 revisada y aprobada; C3 entregada, pendiente de revisión (Codex, 2026-10-15)
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
@@ -29,7 +29,7 @@
 | HU-2.1 (alergias y alertas) | RE-2.1.5 | RN-113 | C1 | Registrar y desactivar; visible en toda clínica vinculada y en el portal |
 | HU-2.10 (cierre) | RE-2.10.1 (alergias y alertas) | RN-113 | C1 | La parte que quedó pendiente en M5 |
 | HU-2.8 | RE-2.8.1–5 | RN-209, RN-210, RN-212, RN-202 | C2, C5 | C2: `MotorDiagnosticosTest`, `EvaluadorCondicionesTest`, `DiagnosticoTest` y `BaseV2MysqlTest::testC2RankingConFichaYConocimientoActivosSinGuardar`; pantalla, aceptación y guardado final en C5 |
-| HU-2.9 | RE-2.9.1–4 | RN-209, RN-211, RN-212, RN-113 | C3, C5 | Bloqueo por toxicidad y alergia; advertencia de interacción con auditoría; aviso genérico sin revelar lo de otra clínica |
+| HU-2.9 | RE-2.9.1–4 | RN-209, RN-211, RN-212, RN-113 | C3, C5 | C3: `MotorPrescripcionTest`, `PrescripcionTest` y `BaseV2MysqlTest::testC3PrescripcionSeRevalidaAlGuardarConAuditoriaYRollback`; toxicidad/alergia, interacción, privacidad, decisión vigente y auditoría atómica; presentación y selección del fármaco en C5 |
 | HU-2.11 | RE-2.11.1–7 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | C4 | La batería de 26 casos como prueba automatizada (RE-2.11.7), con síntomas marcados (decisión 3) |
 | HU-2.12, mapa del grafo (aprobada en revisión de A) | RE-2.12.1–6 | RN-212, RN-209, RN-004/RN-G13 | C6 | El superadministrador explora conocimiento global con peso, signo y fuente; solo lectura y sin pacientes |
 
@@ -92,14 +92,17 @@ T-13 se expresa mediante anorexia sostenida en gatos; T-19 mediante crisis breve
 
 ## 7. Tareas y verificación
 
+**Decisiones del usuario durante C3 (2026-10-15):** conciliación de máximo 500 caracteres, con rechazo si excede el límite, sin recortar.
+La decisión «confirmar» requiere una huella opaca vigente por fila: si cambian los cruces, los permisos o la versión del conocimiento, se vuelve a pedir confirmación sin revelar medicación protegida.
+
 - [x] Aprobar este plan y decidir §6 (2026-10-14).
 - [x] A — Inventario y diseño: revisada y aprobada con ajustes (Codex, 2026-10-14).
 - [x] B1 — Esquema, cargador y documentos: revisada y aprobada (Codex, 2026-10-14).
 - [x] B2 — Conocimiento inicial con fuentes: revisada y aprobada con correcciones en B2.1 (Codex inició, Claude Code terminó; 2026-10-14).
 - [x] B2.1 — Correcciones del conocimiento: revisada y aprobada (Codex, 2026-10-14).
 - [x] C1 — Alergias y alertas médicas: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
-- [x] C2 — Motor de diagnósticos: entregada, pendiente de revisión (Codex, 2026-10-15).
-- [ ] C3 — Alertas de prescripción.
+- [x] C2 — Motor de diagnósticos: revisada y aprobada (Codex, 2026-10-15).
+- [x] C3 — Alertas de prescripción: entregada, pendiente de revisión (Codex, 2026-10-15).
 - [ ] C4 — Motor de triage con la batería.
 - [ ] C5 — Consulta del veterinario.
 - [x] C6 — Mapa del grafo: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
@@ -1144,3 +1147,95 @@ git commit -m "feat(grafo): ranking de diagnosticos y evaluador ternario (HU-2.8
 **Corrección del CI hecha en esta revisión:** `.github/workflows/ci.yml` esperaba 50 tablas y 54 razas; desde B1 son 52 y 55 (`grafo_sinonimos`, `grafo_reglas` y Gran danés). Por eso el CI fallaba desde el push de B1. Se comprobó en MySQL 8.0 el mismo recorrido del CI: esquema y semilla (52 tablas, 55 razas), migrador dos veces («La base está al día») y pruebas de base real en verde.
 
 **Siguiente:** C3 — alertas de prescripción (Codex).
+
+## Anexo C3 — Resultado
+
+**Entrega:** 2026-10-15; entregada, pendiente de revisión.
+**Autor:** lo escribió Codex; revisión independiente de Claude (arquitecto).
+
+### Qué se hizo y evidencia
+
+- Motor puro `MotorPrescripcion`, compartiendo el evaluador y la instantánea de C2: toxicidad según efecto, alergia individual sin exigir bibliografía, interacciones en ambos sentidos y entre filas, reglas de prescripción y evaluación incompleta sin inferir fármacos.
+- Lectura mínima `MedicacionVigente`, separada de `ModeloHistoria`: exige vínculo activo, incluye el último día, excluye tratamientos futuros o terminados y conserva fin desconocido; suma alertas activas de medicación continua, globales por RN-113.
+- `PrescripcionPublica` limita los campos y agrupa las advertencias protegidas; ni el historial ni `Tratamiento::findByConsultas` amplían permisos.
+- API veterinaria POST/CSRF `validar_prescripcion_ajax`, sin guardar; contrato de integración en `database/conocimiento/README.md`.
+- Guardado con revalidación dentro de la transacción antes de insertar o mover archivos; bloqueo/advertencia sin resolver dan 422 por fila, con rollback completo y rechazo auditado fuera del rollback.
+  Las decisiones y conciliaciones se auditan dentro de la transacción con versión y evidencia interna; si falla esa auditoría no se guarda.
+  Código activo y fecha final se persisten; las filas heredadas sin código conservan su guardado como evaluación incompleta hasta C5.
+- Decisiones aprobadas: conciliación de máximo 500 caracteres sin recortar; confirmación con huella HMAC secreta por sesión y vigente por fila.
+  Cambiar cruces, visibilidad o versión invalida la confirmación anterior; se vuelve a evaluar sin revelar medicación protegida.
+
+| RE / regla | Evidencia automatizada |
+|---|---|
+| RE-2.9.1, RN-211 | `MotorPrescripcionTest`: paracetamol gato/perro, permetrina gato, loperamida Pastor Alemán, interacción meloxicam/prednisona en ambos sentidos y entre filas; `PrescripcionTest::testVigenciaIncluyeFinExcluyeTerminadosYFuturosYConservaDesconocida` |
+| RE-2.9.2 | Alergia individual sin arista bibliográfica; `testBloqueoDirectoNoGuardaNiMueveAdjuntosYDejaAuditoriaDeRechazo`; petición directa 422 con fila; esquema real con `BaseV2MysqlTest::testC3PrescripcionSeRevalidaAlGuardarConAuditoriaYRollback` |
+| RE-2.9.3, RN-G13, RN-113 | Recorrido recursivo de claves y búsqueda de secretos en JSON; agrupación de múltiples protegidas; autorización/revocación; nueva interacción y versión invalidan huella; conciliación obligatoria, máximo y fallo de auditoría revierten el guardado |
+| RE-2.9.4, RN-209, RN-212 | El motor no prescribe ni genera dosis o pautas; solo bloquea/advierte y exige decisión explícita; código desconocido conserva evaluación incompleta; instantánea y versión auditada |
+| Seguridad de la API | Veterinario autorizado; 403 a administrador, propietario y plataforma; CSRF y vínculo obligatorio con rechazo auditado; `PrescripcionTest::testApiNuncaExponeClavesProtegidasY403SinVinculoYConOtrosRolesOCsrf` |
+
+### Respuestas reales de la API
+
+Capturadas llamando al controlador y a Security con el fixture de dos clínicas y el conocimiento real, sobre SQLite en memoria, sin navegador.
+Vista previa con interacción protegida; HTTP 200 significa que se evaluó la petición, no que esté autorizado guardar:
+
+```json
+{
+  "success": true,
+  "filas": [{
+    "bloqueada": false,
+    "motivos": [],
+    "advertencias": [{
+      "tipo": "interaccion_protegida",
+      "mensaje": "Posible interacción con medicación registrada por otra clínica; concilie con el propietario antes de confirmar."
+    }],
+    "evaluacion_incompleta": false,
+    "requiere_decision": true,
+    "requiere_conciliacion": true,
+    "huella": "ca3e39d451cd9d2c06929470f09851d71c16f2bb6de103590ace36f9d2274046"
+  }]
+}
+```
+
+Vista previa con bloqueo por toxicidad; intentar guardarla responde 422 sin crear registros clínicos:
+
+```json
+{
+  "success": true,
+  "filas": [{
+    "bloqueada": true,
+    "motivos": [{
+      "tipo": "toxicidad",
+      "mensaje": "Toxicidad documentada para la especie o raza del paciente."
+    }],
+    "advertencias": [],
+    "evaluacion_incompleta": false,
+    "requiere_decision": false,
+    "requiere_conciliacion": false,
+    "huella": "39ae7d29cbc6537c592178e1fcbc8a8a97eeeb2748bffa00dabfc936068578b3"
+  }]
+}
+```
+
+Las huellas capturadas son opacas, pertenecen a aquella sesión y no sirven como confirmaciones de otra sesión.
+
+### Verificación y pendientes
+
+- Suite PHP completa sin host: 783 pruebas, 6758 aserciones y 40 omitidas de MySQL.
+- Suite PHP completa con MariaDB 10.4.32 temporal propia y base predeterminada `zooki_test_base_v2`: 783 pruebas, 7337 aserciones, ninguna omitida.
+- JS: 183/183; sin cambios de JS ni pantallas nuevas.
+- Modelos §3 distingue toxicidad con bloqueo de advertencia, incluye interacciones entre filas, huella vigente y auditoría de decisiones en el guardado atómico; su diagrama se renderizó con Mermaid 11.4.1.
+- Sin migración, cambios al conjunto clínico, lecturas de `.env`, acceso a la base de trabajo, commit ni push.
+- Pendiente: revisión de Claude; presentación, buscador y campos de confirmación en ambas entradas de consulta en C5; conocimiento pendiente de validación veterinaria.
+  C4 no se empezó; versión, revisiones y descargas se publican en F.
+
+### C3 — Revisión (2026-10-15)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 783 pruebas y 6758 aserciones (40 omitidas); con MySQL 8.0.46 y la base por defecto, 783 pruebas y 7337 aserciones, ninguna omitida; JS 183/183.
+
+**Lo que está bien:** el motor reutiliza el evaluador y la instantánea de C2; la alergia individual bloquea sin bibliografía; un bloqueo no se confirma, solo las advertencias; `PrescripcionPublica` es una lista cerrada de campos y agrupa las protegidas en un aviso genérico; `MedicacionVigente` es una lectura aparte que no amplía la historia; el servidor vuelve a evaluar dentro de la transacción al guardar, y las decisiones y conciliaciones se auditan con la versión del conocimiento; la huella HMAC por sesión obliga a confirmar de nuevo si cambian los cruces, la visibilidad o la versión; las filas sin código siguen guardándose hasta C5.
+
+**Para C5:** el motivo de bloqueo por toxicidad es genérico («para la especie o raza del paciente»); en pantalla conviene nombrar la especie o la raza y enlazar la fuente, que son conocimiento global y no datos protegidos.
+
+**Siguiente:** C4 — motor de triage con la batería (Codex).

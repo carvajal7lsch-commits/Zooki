@@ -22,6 +22,37 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testC3PrescripcionSeRevalidaAlGuardarConAuditoriaYRollback(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/ValidacionPrescripcion.php';
+        require_once __DIR__ . '/../../models/CargadorConocimiento.php';
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $this->comoVeterinario(1, 2);
+        $fecha = new DateTimeImmutable('now', new DateTimeZone('America/Bogota'));
+        $fila = ['farmaco' => 'farmaco.paracetamol', 'medicamento' => 'Nombre indicado', 'dosis' => 'Indicada', 'via_administracion' => 'Oral', 'duracion' => 'Según valoración', 'fecha_inicio' => $fecha->format('Y-m-d'), 'fecha_fin' => $fecha->modify('+1 day')->format('Y-m-d')];
+        $entrada = ['id_mascota' => 1, 'motivo' => 'Prueba', 'diagnostico' => 'Decisión del veterinario'];
+        $this->db->exec('UPDATE mascotas SET id_especie = 2, id_raza = 50 WHERE id_mascota = 1');
+        try {
+            (new Consulta($this->db))->registrar($entrada, [$fila], [], static fn (): array => []);
+            $this->fail('Se guardó un fármaco bloqueado.');
+        } catch (PrescripcionRechazada $error) {
+            $this->assertTrue($error->publica['bloqueada']);
+        }
+        $this->assertSame(0, $this->contar('consultas'));
+        $this->assertSame(0, $this->contar('tratamientos'));
+        $this->assertSame(0, $this->contar('archivos_clinicos'));
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion = 'Prescripción rechazada (RE-2.9.2, RE-2.9.3)'")->fetchColumn());
+        $this->db->exec('UPDATE mascotas SET id_especie = 1, id_raza = 49 WHERE id_mascota = 1');
+        $evaluacion = (new ValidacionPrescripcion($this->db))->evaluar(1, [$fila], $fecha)[0];
+        $fila += ['decision' => 'confirmar', 'huella' => $evaluacion['publica']['huella']];
+        $id = (new Consulta($this->db))->registrar($entrada, [$fila], [], static fn (): array => []);
+        $guardado = $this->db->query('SELECT t.fecha_fin, n.codigo FROM tratamientos t JOIN grafo_nodos n ON n.id_nodo = t.id_nodo_farmaco WHERE t.id_consulta = ' . $id)->fetch(PDO::FETCH_ASSOC);
+        $this->assertSame($fila['fecha_fin'], $guardado['fecha_fin']);
+        $this->assertSame($fila['farmaco'], $guardado['codigo']);
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion = 'Decisión de prescripción (RE-2.9.3)'")->fetchColumn());
+    }
+
     public function testC2RankingConFichaYConocimientoActivosSinGuardar(): void
     {
         $this->prepararHistoriaClinica();

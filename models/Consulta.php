@@ -2,6 +2,7 @@
 require_once __DIR__ . '/ModeloHistoria.php';
 require_once __DIR__ . '/ArchivoClinico.php';
 require_once __DIR__ . '/Tratamiento.php';
+require_once __DIR__ . '/ValidacionPrescripcion.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 
@@ -53,6 +54,12 @@ class Consulta extends ModeloHistoria
             return Transaccion::ejecutar($this->conn, function () use ($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica) {
                 return $this->escribir($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica);
             });
+        } catch (PrescripcionRechazada $e) {
+            // RN-211: el rechazo se audita después del rollback, sin perder su evidencia.
+            if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'OTHER', 'mascotas', $idMascota, null, $e->paraAuditoria(), 'Prescripción rechazada (RE-2.9.2, RE-2.9.3)')) {
+                throw new RuntimeException('No se pudo auditar el rechazo de prescripción.');
+            }
+            throw $e;
         } catch (AccesoDenegado $e) {
             // La auditoría escrita dentro de la transacción se deshizo con ella.
             $this->denegarAcceso('mascotas', $idMascota, 'Registro de consulta denegado; no se guardó nada (RN-112, RN-207)');
@@ -149,6 +156,9 @@ class Consulta extends ModeloHistoria
         // RN-207: se relee dentro de la transacción, por si la mascota se dio
         // de baja o se desvinculó mientras se revisaban los adjuntos.
         $this->exigirMascotaActiva($datos['id_mascota']);
+        $seguridad = new ValidacionPrescripcion($this->conn);
+        $evaluaciones = $tratamientos === [] ? [] : $seguridad->evaluar($datos['id_mascota'], $tratamientos, new DateTimeImmutable($this->ahora(), new DateTimeZone('America/Bogota')));
+        ValidacionPrescripcion::exigirDecisiones($evaluaciones);
         $idConsulta = $this->insertar($datos, $clinica);
 
         $modeloArchivo = new ArchivoClinico($this->conn);
@@ -158,8 +168,9 @@ class Consulta extends ModeloHistoria
         }
 
         $modeloTratamiento = new Tratamiento($this->conn);
-        foreach ($tratamientos as $tratamiento) {
+        foreach ($tratamientos as $indice => $tratamiento) {
             $modeloTratamiento->insertarEnConsulta($idConsulta, $tratamiento);
+            $seguridad->auditarDecision($idConsulta, $indice, $evaluaciones[$indice]);
         }
 
         if ($datos['id_cita'] !== null) {

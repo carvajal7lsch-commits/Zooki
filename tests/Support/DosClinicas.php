@@ -202,10 +202,8 @@ final class DosClinicas
             observaciones TEXT, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)');
         $db->exec('CREATE UNIQUE INDEX uq_mascota_clinica_numero_hc ON mascota_clinica (id_clinica, numero_historia_clinica)');
         // M2 C1: alergias y alertas (RE-2.1.5) y el conocimiento mínimo al que se enlazan.
-        $db->exec('CREATE TABLE grafo_nodos (id_nodo INTEGER PRIMARY KEY AUTOINCREMENT, codigo TEXT NOT NULL UNIQUE, activo INTEGER NOT NULL DEFAULT 1,
-            tipo TEXT NOT NULL, etiqueta TEXT NOT NULL)');
-        $db->exec('CREATE TABLE grafo_sinonimos (id_sinonimo INTEGER PRIMARY KEY AUTOINCREMENT, id_nodo INTEGER NOT NULL REFERENCES grafo_nodos,
-            texto TEXT NOT NULL, activo INTEGER NOT NULL DEFAULT 1)');
+        require_once __DIR__ . '/ConocimientoPrueba.php';
+        ConocimientoPrueba::crearGrafo($db);
         $db->exec("CREATE TABLE alertas_medicas (id_alerta INTEGER PRIMARY KEY AUTOINCREMENT, id_mascota INTEGER NOT NULL REFERENCES mascotas,
             id_clinica INTEGER NOT NULL REFERENCES clinicas, id_veterinario INTEGER REFERENCES usuarios,
             tipo TEXT NOT NULL CHECK (tipo IN ('alergia', 'condicion_cronica', 'medicacion_continua', 'otra')),
@@ -215,7 +213,7 @@ final class DosClinicas
             (1, 'farmaco.paracetamol', 1, 'farmaco', 'Paracetamol (acetaminofén)'), (2, 'sustancia.lilium', 1, 'sustancia', 'Lirio verdadero (Lilium)'),
             (3, 'condicion.epilepsia', 1, 'condicion', 'Epilepsia diagnosticada'), (4, 'farmaco.retirado', 0, 'farmaco', 'Fármaco retirado'),
             (5, 'sintoma.vomito', 1, 'sintoma', 'Vómito'), (6, 'farmaco.meloxicam', 1, 'farmaco', 'Meloxicam')");
-        $db->exec("INSERT INTO grafo_sinonimos (id_nodo, texto, activo) VALUES (1, 'acetaminofén', 1), (1, 'dolex viejo', 0), (2, 'lirios', 1)");
+        $db->exec("INSERT INTO grafo_sinonimos (codigo, id_nodo, texto, activo) VALUES ('sinonimo.acetaminofen', 1, 'acetaminofén', 1), ('sinonimo.dolex', 1, 'dolex viejo', 0), ('sinonimo.lirios', 2, 'lirios', 1)");
     }
 
     /**

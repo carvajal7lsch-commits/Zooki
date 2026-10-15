@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/ModeloHistoria.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../helpers/ValidadorPrescripcion.php';
 
 /** HU-2.4: tratamientos; heredan la clínica de su consulta (RN-112). */
 class Tratamiento extends ModeloHistoria
@@ -28,6 +29,16 @@ class Tratamiento extends ModeloHistoria
         if ($fechaInicio === null) {
             throw new InvalidArgumentException(sprintf('El tratamiento "%s" necesita una fecha de inicio válida.', $medicamento));
         }
+        $fechaFin = $datos['fecha_fin'] ?? null;
+        if ($fechaFin === '') {
+            $fechaFin = null;
+        }
+        if ($fechaFin !== null) {
+            $fechaFin = ValidadorClinico::fecha($fechaFin);
+            if ($fechaFin === null || $fechaFin < $fechaInicio) {
+                throw new InvalidArgumentException('La fecha de fin del tratamiento debe ser válida y no anterior al inicio.');
+            }
+        }
 
         return [
             'medicamento' => $medicamento,
@@ -35,8 +46,9 @@ class Tratamiento extends ModeloHistoria
             'via_administracion' => $via,
             'duracion' => $duracion,
             'fecha_inicio' => $fechaInicio,
+            'fecha_fin' => $fechaFin,
             'observaciones' => ValidadorClinico::textoOpcional($datos['observaciones'] ?? null, 500),
-        ];
+        ] + ValidadorPrescripcion::fila($datos);
     }
 
     /**
@@ -47,10 +59,19 @@ class Tratamiento extends ModeloHistoria
     {
         $this->exigirConsultaPropia($idConsulta);
         $limpio = self::validar($datos);
+        $idNodo = null;
+        if ($limpio['farmaco'] !== null) {
+            $nodo = $this->conn->prepare("SELECT id_nodo FROM grafo_nodos WHERE codigo = ? AND tipo = 'farmaco' AND activo = 1");
+            $nodo->execute([$limpio['farmaco']]);
+            $idNodo = $nodo->fetchColumn();
+            if ($idNodo === false) {
+                throw new InvalidArgumentException('El fármaco debe ser un nodo activo del catálogo.');
+            }
+        }
 
         $sql = 'INSERT INTO tratamientos
-            (id_consulta, medicamento, dosis, via_administracion, duracion, fecha_inicio, observaciones)
-            VALUES (?, ?, ?, ?, ?, ?, ?)';
+            (id_consulta, medicamento, dosis, via_administracion, duracion, fecha_inicio, observaciones, id_nodo_farmaco, fecha_fin)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
         $this->conn->prepare($sql)->execute([
             $idConsulta,
             $limpio['medicamento'],
@@ -59,6 +80,8 @@ class Tratamiento extends ModeloHistoria
             $limpio['duracion'],
             $limpio['fecha_inicio'],
             $limpio['observaciones'],
+            $idNodo,
+            $limpio['fecha_fin'],
         ]);
         return (int) $this->conn->lastInsertId();
     }

@@ -538,6 +538,10 @@ switch ($action) {
         require_once "../controllers/DiagnosticoController.php";
         (new DiagnosticoController())->sugerirAjax();
         break;
+    case "validar_prescripcion_ajax":
+        require_once "../controllers/PrescripcionController.php";
+        (new PrescripcionController())->validarAjax();
+        break;
 
     // HU-2.1, RE-2.1.5: alergias y alertas médicas de la mascota.
     case "listar_alertas_medicas_ajax":

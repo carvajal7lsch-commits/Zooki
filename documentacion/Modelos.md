@@ -170,19 +170,19 @@ flowchart TD
   N -- No --> N1[/"Mensaje: el diagnostico es obligatorio"/]
   N1 --> L
   N -- Si --> P["El veterinario define el tratamiento:<br/>medicamento, dosis, via, duracion, observaciones"]
-  P --> Q{"Alergia registrada del paciente, toxico para la especie<br/>o contraindicado por raza? (RN-211)"}
+  P --> Q{"Alergia registrada del paciente o toxicidad de especie/raza<br/>con efecto bloqueo? (RN-211)"}
   Q -- Si --> Q1[/"Mensaje de bloqueo: elige otro farmaco"/]
   Q1 --> P
-  Q -- No --> R{Interaccion con la medicacion vigente?}
-  R -- Si --> RP{Tratamiento visible segun RN-113?}
-  RP -- Si --> R1[Advertencia visible y decision auditada]
-  RP -- No --> RG["Aviso generico sin farmaco, dosis ni contenido protegido"]
+  Q -- No --> R{"Advertencia por toxicidad, regla o interaccion<br/>con medicacion vigente u otra fila nueva?"}
+  R -- Si --> RP{Aviso de medicacion protegida segun RN-113?}
+  RP -- No --> R1[Advertencia visible y decision auditada]
+  RP -- Si --> RG["Aviso generico sin farmaco, dosis ni contenido protegido"]
   RG --> RC["Conciliar con el propietario o verificar autorizacion antes de confirmar"]
   RC --> R1
   R -- No --> U{Agregar otro tratamiento?}
   R1 --> RD{Confirmar o cambiar?}
   RD -- Cambiar --> P
-  RD -- Confirmar con requisitos cumplidos --> U
+  RD -- Confirmar con huella vigente y requisitos cumplidos --> U
   U -- Si --> P
   U -- No --> AL{"Detecto una alergia o alerta nueva?"}
   AL -- Si --> AL1["Registrarla en las alertas de la mascota, con nodo del Grafo I si existe<br/>(visible para toda clinica vinculada y en el carnet;<br/>solo la clinica que la registro la desactiva y queda en el historial)"]
@@ -193,10 +193,10 @@ flowchart TD
   W1 --> V
   W -- Si --> X[Confirmar y guardar]
   V -- No --> X
-  X --> RV["Releer permisos, alergias, medicacion y version;<br/>revalidar prescripcion en servidor"]
+  X --> RV["Releer permisos, alergias, medicacion y version;<br/>revalidar prescripcion en servidor y huella por fila"]
   RV --> RB{Bloqueo o advertencia no resuelta?}
   RB -- Si --> P
-  RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos;<br/>N de historia si es la 1a (RN-102);<br/>completar la cita si venia de una (RN-406)"]]
+  RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos<br/>y decisiones de prescripcion auditadas;<br/>N de historia si es la 1a (RN-102);<br/>completar la cita si venia de una (RN-406)"]]
   Y --> Y1{Guardado correcto?}
   Y1 -- No --> Y2[/"Mensaje: error al guardar, reintentar"/]
   Y2 --> X
