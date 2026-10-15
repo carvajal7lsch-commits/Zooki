@@ -153,6 +153,34 @@ Un bloqueo no se confirma; una advertencia exige `confirmar` y huella vigente; s
 Cada decisión se audita con la versión y la evidencia interna dentro de la transacción; el rechazo se audita después del rollback.
 Las filas heredadas sin código siguen guardándose como evaluación incompleta; el buscador y la presentación de las alertas se integran en C5.
 
+### Triage y buscador (C4)
+
+`MotorTriage::calcular(sintomas, exposiciones, paciente, grafo, fecha)` recibe mapas por código y una fecha explícita; no recibe la nota libre ni cuotas o mora.
+Cada episodio conserva `tiempo` (`conocido`, `no_se`, `no_aplica`) y `minutos` numéricos o `null`; «No aplica» solo corresponde a `sintoma.control_preventivo`.
+Los síntomas se cuentan una sola vez por código; la API rechaza repetir una marca con tiempos distintos.
+P1 es universal; el nivel base exige cobertura; P3 escala una sola vez los síntomas moderados distintos, sin leer resultados anteriores.
+Cada regla verdadera aporta un candidato independiente y el resultado toma el máximo explícito rojo/naranja/amarillo/verde.
+Sin cobertura, con «Otro / no sé» o sin candidato hay reserva amarilla con revisión; un dato desconocido decisivo también pide revisión.
+Rojo no informa revisión del personal, y `revision_inmediata` y `contagio` se conservan como banderas independientes.
+La respuesta incluye `reglas_aplicadas`, `datos_faltantes`, `version` y `aviso` de apoyo pendiente de validación veterinaria.
+
+`GET ?action=buscar_sintomas_ajax&q=bomita&especie=especie.canino` entrega sugerencias de código/etiqueta, coincidencia y similitud, sin seleccionar ni calcular.
+`BuscadorSintomas` normaliza con `ArchivosConocimiento`, ordena exacto/prefijo/palabras y finalmente Damerau-Levenshtein sobre Unicode.
+El umbral técnico es 0.65 y el máximo ocho opciones, reservando una para «Otro / no sé»; la búsqueda admite hasta 100 caracteres para acotar su costo.
+El filtro conserva alarmas universales y conceptos sin restricción de especie; el catálogo actual declara sus síntomas globales, sin inventar exclusividades a partir de su nombre.
+La lectura de C6 aporta únicamente nodos y sinónimos activos.
+
+`POST ?action=calcular_triage_ajax`, con CSRF, recibe `id_mascota`, `sintomas` y `exposiciones` como listas de objetos `codigo`, `tiempo`, `minutos`.
+Se requiere al menos una marca de síntoma o exposición; una nota sola no calcula.
+Una exposición es una marca del catálogo de tipo sustancia/fármaco, necesaria para los casos sin síntomas como T-08 y T-14.
+Puede incluir `vacunacion` y `dias_desde_celo` declarados; especie, raza, edad, sexo, esterilización y alertas salen del contexto común de la ficha, no de campos enviados por el cliente.
+Ambas APIs son para veterinario y propietario según Modelos §4; el cálculo exige vínculo activo en clínica o mascota propia en el portal, con 403 auditado.
+No guardan citas, síntomas ni decisiones; M4 integra captura, revisión previa a asignar horario, derivación, aislamiento y ajuste veterinario auditado.
+
+La batería versionada está en `tests/Fixtures/triage.php` y corre con `MotorTriageTest` sobre el conocimiento real.
+El esperado de revisión solo se compara donde la batería lo define (nota de B2.1 — Revisión); `null` significa no especificado, nunca revisión negativa inferida.
+T-16 y T-20 mantienen sus limitaciones clínicas; pasar las pruebas verifica el software y no valida el conocimiento.
+
 ## Política de B2.1
 
 El conjunto contiene 105 nodos (51 síntomas), 105 aristas, 201 sinónimos, 29 reglas (24 de triage y 5 de ranking) y 47 fuentes.

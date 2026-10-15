@@ -392,6 +392,9 @@ class Security {
         // public/ver_archivo.php: el modelo aplica RN-113 en la clinica y
         // RN-G02 en el portal; el super-administrador no ve adjuntos (RN-004).
         $matriz['ver_archivo'] = $todos;
+        // HU-2.11: conocimiento global y cálculo propio; el modelo verifica RN-G02/RN-113.
+        $matriz['buscar_sintomas_ajax'] = [Roles::VETERINARIO, Roles::PROPIETARIO];
+        $matriz['calcular_triage_ajax'] = [Roles::VETERINARIO, Roles::PROPIETARIO];
 
         // Personal de la clinica: pacientes, propietarios y citas.
         foreach ([

@@ -7,6 +7,10 @@ El texto libre no interviene en el cálculo; el buscador solo sugiere y el propi
 
 **Trazabilidad:** RN-411 y RN-416 a RN-425 (triage y agenda), RN-209 (el soporte es apoyo, no diagnóstico), RN-113 (historia compartida), HU-2.11, HU-4.13, HU-4.15, HU-4.17, HU-4.18, RF-2.12, RF-4.7, RF-4.10 a RF-4.13. La HU-2.11 usa esta batería como prueba de aceptación (RE-2.11.7).
 
+**Automatizada el 2026-10-15 (M2 C4, Codex):** los 26 casos estructurados viven en `tests/Fixtures/triage.php` y se ejecutan mediante el proveedor de datos de `tests/Unit/MotorTriageTest.php`, con el conocimiento real de `database/conocimiento/`.
+La prueba conserva los niveles esperados de esta batería; compara la revisión donde está expresamente exigida, y también revisión inmediata y contagio.
+Incluye pruebas adicionales de P1–P6, tóxicos, ventanas temporales y decisiones aprobadas, sin convertir los colores pendientes en validación veterinaria.
+
 > ⚠️ **Validación clínica pendiente.** Los niveles esperados son orientativos para probar el software. Por decisión del usuario (2026-10-14), se permite construir y cargar conocimiento pendiente desde fuentes reconocidas, identificadas por elemento.
 Eso no constituye aprobación clínica: la validación veterinaria del conjunto sigue pendiente. El sistema apoya la decisión; no la reemplaza (RN-209).
 

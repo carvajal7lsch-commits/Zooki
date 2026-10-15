@@ -1,6 +1,6 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B, C1 y C6 cerradas; C2 revisada y aprobada; C3 entregada, pendiente de revisión (Codex, 2026-10-15)
+> Estado: B, C1 y C6 cerradas; C2 y C3 revisadas y aprobadas; C4 entregada, pendiente de revisión (Codex, 2026-10-15)
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
@@ -30,7 +30,7 @@
 | HU-2.10 (cierre) | RE-2.10.1 (alergias y alertas) | RN-113 | C1 | La parte que quedó pendiente en M5 |
 | HU-2.8 | RE-2.8.1–5 | RN-209, RN-210, RN-212, RN-202 | C2, C5 | C2: `MotorDiagnosticosTest`, `EvaluadorCondicionesTest`, `DiagnosticoTest` y `BaseV2MysqlTest::testC2RankingConFichaYConocimientoActivosSinGuardar`; pantalla, aceptación y guardado final en C5 |
 | HU-2.9 | RE-2.9.1–4 | RN-209, RN-211, RN-212, RN-113 | C3, C5 | C3: `MotorPrescripcionTest`, `PrescripcionTest` y `BaseV2MysqlTest::testC3PrescripcionSeRevalidaAlGuardarConAuditoriaYRollback`; toxicidad/alergia, interacción, privacidad, decisión vigente y auditoría atómica; presentación y selección del fármaco en C5 |
-| HU-2.11 | RE-2.11.1–7 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | C4 | La batería de 26 casos como prueba automatizada (RE-2.11.7), con síntomas marcados (decisión 3) |
+| HU-2.11 | RE-2.11.1–7 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | C4 | `MotorTriageTest` y fixture de 26 casos; P1–P6, tiempo y contexto sin nota; `BuscadorSintomasTest`, `TriageTest` y `BaseV2MysqlTest::testM2C4TriageConFichaPropiaYBusquedaSinEscrituras`; captura, avisos y ajuste operativo en M4 |
 | HU-2.12, mapa del grafo (aprobada en revisión de A) | RE-2.12.1–6 | RN-212, RN-209, RN-004/RN-G13 | C6 | El superadministrador explora conocimiento global con peso, signo y fuente; solo lectura y sin pacientes |
 
 ## 3. Etapas y dependencias
@@ -102,9 +102,10 @@ La decisión «confirmar» requiere una huella opaca vigente por fila: si cambia
 - [x] B2.1 — Correcciones del conocimiento: revisada y aprobada (Codex, 2026-10-14).
 - [x] C1 — Alergias y alertas médicas: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
 - [x] C2 — Motor de diagnósticos: revisada y aprobada (Codex, 2026-10-15).
-- [x] C3 — Alertas de prescripción: entregada, pendiente de revisión (Codex, 2026-10-15).
-- [ ] C4 — Motor de triage con la batería.
-- [ ] C5 — Consulta del veterinario.
+- [x] C3 — Alertas de prescripción: revisada y aprobada (Codex, 2026-10-15).
+- [x] C4 — Motor de triage con la batería: entregada, pendiente de revisión (Codex, 2026-10-15).
+- [ ] C5a — Consulta: síntomas, diagnósticos sugeridos y obligatorios.
+- [ ] C5b — Consulta: prescripción con alertas, tratamiento y peso desconocido.
 - [x] C6 — Mapa del grafo: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
 - [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.4`.
@@ -1239,3 +1240,127 @@ Las huellas capturadas son opacas, pertenecen a aquella sesión y no sirven como
 **Para C5:** el motivo de bloqueo por toxicidad es genérico («para la especie o raza del paciente»); en pantalla conviene nombrar la especie o la raza y enlazar la fuente, que son conocimiento global y no datos protegidos.
 
 **Siguiente:** C4 — motor de triage con la batería (Codex).
+
+## Anexo C4 — Resultado
+
+**Entrega:** 2026-10-15; entregada, pendiente de revisión.
+**Autor:** lo escribió Codex; revisión independiente de Claude (arquitecto).
+
+### Qué y trazabilidad
+
+- `MotorTriage` puro reutiliza `EvaluadorCondiciones` y `ConocimientoClinico`: máximo explícito, P1 universal, P3 una sola vez sobre moderados distintos, reglas independientes y reserva P6.
+  Los datos desconocidos decisivos piden revisión; rojo no informa revisión del personal y las banderas de revisión inmediata y contagio se conservan por separado.
+- `BuscadorSintomas` puro: normalización compartida, etiquetas/sinónimos activos, exacto/prefijo/palabras y Damerau-Levenshtein completo sobre puntos Unicode; umbral 0.65 y ocho opciones como máximo, incluida «Otro / no sé».
+  Conserva alarmas y síntomas globales al filtrar; no inventa exclusividades de especie ausentes del catálogo, no selecciona y no calcula.
+- APIs sin guardado `buscar_sintomas_ajax` (GET) y `calcular_triage_ajax` (POST/CSRF), para veterinario y propietario conforme a los actores de Modelos §4; plataforma y administrador no entran.
+  El contexto común exige vínculo activo de la clínica o mascota propia del titular, con 403 auditado; las declaraciones de vacunación/celo se validan en un helper compartido con C2.
+  No se ampliaron permisos de historia ni se leyeron tratamientos protegidos.
+- Fixture versionado de los 26 casos, sin inventar edades, horas ni fármacos; batería automatizada y fechada en `CasosTriage.md`, sin cambiar esperados ni JSON clínicos.
+  La revisión esperada solo se compara donde la batería la exige (`null` significa no especificada, según B2.1 — Revisión); la tabla muestra además toda revisión obtenida.
+
+| RE / regla | Prueba |
+|---|---|
+| RE-2.11.1, RN-424 | `TriageTest`: nota sola rechazada, nota no cambia cálculo, tiempos conocidos/no sé/no aplica, códigos inválidos/retirados/tipo incorrecto y duplicados; `BuscadorSintomasTest`: «bomita», «desaido», tildes, palabras y transposición sin selección |
+| RE-2.11.2, RN-416 | `MotorTriageTest`: P2 máximo; P3 distintos y una sola vez; T-04/T-17/T-18; P1 prevalece ante verde y amarillo |
+| RE-2.11.3 | Batería T-09/T-10, T-11/T-12, T-14/T-16; ventanas chocolate 0/719/720/2880 y tiempo desconocido; tamaño desconocido/grande, tóxico naranja, etilenglicol rojo y parto breve naranja con revisión |
+| RE-2.11.4, RN-417 | Las nueve alarmas universales en perro, ave y roedor, incluidas las cinco P1 sin caso propio; T-21 |
+| RE-2.11.5, RN-418 | P6 aislada: sin cobertura, vacío, «Otro / no sé» y marca sin nivel/regla; T-20 conserva revisión inmediata; dato decisivo desconocido explícito |
+| RE-2.11.6, RN-425 | T-11 devuelve contagio; prueba adicional conserva la bandera incluso con nivel rojo; notificación operativa pertenece a M4 |
+| RE-2.11.7 | `MotorTriageTest::testBateriaConConocimientoReal` con proveedor y `tests/Fixtures/triage.php`: 26/26 niveles y banderas exigidas coinciden |
+| RN-G02 / RN-G13; sin escrituras | `TriageTest`: propiedad, vínculo activo, CSRF, roles, contexto desde ficha; `BaseV2MysqlTest::testM2C4TriageConFichaPropiaYBusquedaSinEscrituras`: esquema real, propietario/vet y cero citas, consultas, marcas o auditorías de escritura |
+| RN-209, P8 | Aviso de apoyo y versión; determinismo con fecha fija; nota, cuota y mora no modifican el cálculo; rojo se conserva sin cupo |
+
+### Batería real
+
+Conocimiento `980faceaaff142fa4c77eac28ba36aa57f2b53710f1174aaefa26cdb8edfebc9`, fecha de evaluación `2026-10-15T12:00:00-05:00`.
+R = revisión del personal; I = revisión inmediata; C = contagio.
+Las revisiones adicionales de T-11, T-12 y T-17 indican datos decisivos desconocidos, no cambios del color esperado.
+
+| Caso | Esperado | Obtenido | R | I | C |
+|---|---|---|---|---|---|
+| T-01 | Rojo | Rojo | No | No | No |
+| T-02 | Rojo | Rojo | No | No | No |
+| T-03 | Rojo | Rojo | No | No | No |
+| T-04 | Rojo | Rojo | No | No | No |
+| T-05 | Rojo | Rojo | No | No | No |
+| T-06 | Naranja | Naranja | No | No | No |
+| T-07 | Naranja | Naranja | No | No | No |
+| T-08 | Rojo | Rojo | No | No | No |
+| T-09 | Naranja | Naranja | No | No | No |
+| T-10 | Amarillo | Amarillo | No | No | No |
+| T-11 | Naranja + contagio | Naranja + contagio | Sí | No | Sí |
+| T-12 | Amarillo | Amarillo | Sí | No | No |
+| T-13 | Naranja | Naranja | No | No | No |
+| T-14 | Naranja + revisión | Naranja + revisión | Sí | No | No |
+| T-15 | Rojo | Rojo | No | No | No |
+| T-16 | Amarillo provisional + revisión | Amarillo + revisión | Sí | No | No |
+| T-17 | Naranja | Naranja | Sí | No | No |
+| T-18 | Naranja | Naranja | No | No | No |
+| T-19 | Amarillo | Amarillo | No | No | No |
+| T-20 | Amarillo + revisión inmediata | Amarillo + revisión inmediata | Sí | Sí | No |
+| T-21 | Rojo | Rojo | No | No | No |
+| T-22 | Amarillo + revisión | Amarillo + revisión | Sí | No | No |
+| T-23 | Naranja | Naranja | No | No | No |
+| T-24 | Verde | Verde | No | No | No |
+| T-25 | Verde | Verde | No | No | No |
+| T-26 | Verde | Verde | No | No | No |
+
+### Ejemplos reales de las APIs
+
+Ejecutados con controlador, Security y conocimiento reales sobre SQLite en memoria, fixture de dos clínicas y propietario 6; no es prueba de navegador ni de la base de trabajo.
+
+`GET ?action=buscar_sintomas_ajax&q=bomita` devuelve HTTP 200:
+
+```json
+{
+  "success": true,
+  "sugerencias": [
+    {"codigo":"sintoma.vomito","etiqueta":"Vómito","similitud":1,"coincidencia":"exacta"},
+    {"codigo":"sintoma.vomito_sangre","etiqueta":"Vómito con sangre","similitud":1,"coincidencia":"prefijo"},
+    {"codigo":"sintoma.vomito_repetido","etiqueta":"Vómito repetido (varias veces el mismo día)","similitud":0.8333333333333334,"coincidencia":"aproximada"},
+    {"codigo":"sintoma.arcadas_improductivas","etiqueta":"Arcadas: intenta vomitar y no sale nada","similitud":0.7142857142857143,"coincidencia":"aproximada"},
+    {"codigo":"sintoma.otro_no_se","etiqueta":"Otro / no sé","coincidencia":"reserva","similitud":0}
+  ],
+  "version":"980faceaaff142fa4c77eac28ba36aa57f2b53710f1174aaefa26cdb8edfebc9"
+}
+```
+
+`POST ?action=calcular_triage_ajax`, formulario `csrf_token=<token>&id_mascota=1&sintomas[0][codigo]=sintoma.dificultad_respiratoria&sintomas[0][tiempo]=no_se`, devuelve HTTP 200:
+
+```json
+{
+  "success": true,
+  "nivel": "rojo",
+  "revision": false,
+  "revision_inmediata": false,
+  "contagio": false,
+  "reglas_aplicadas": ["P1:sintoma.dificultad_respiratoria"],
+  "datos_faltantes": [],
+  "version": "980faceaaff142fa4c77eac28ba36aa57f2b53710f1174aaefa26cdb8edfebc9",
+  "aviso": "Conocimiento inicial armado solo desde fuentes públicas reconocidas, con la fuente de cada elemento. Todo está pendiente de validación veterinaria: no hay un veterinario que lo haya revisado. Los colores de triage son políticas del producto (RN-416 a RN-418) y los pesos del ranking son heurísticos. Cobertura parcial en perros y gatos; las demás especies no tienen cobertura específica. Sin dosis ni pautas de tratamiento. Es apoyo a la decisión (RN-209): decide el veterinario."
+}
+```
+
+### Verificación y pendientes
+
+- PHP completo sin host: 828 pruebas, 7025 aserciones, 41 omitidas de MySQL.
+- PHP completo con MariaDB 10.4.32 temporal propia y `zooki_test_base_v2`: 828 pruebas, 7614 aserciones, ninguna omitida.
+- JS: 183/183; sin pantallas, CSS o JS nuevos.
+- Modelos §4 conserva el flujo: C4 entrega el cálculo de G1; la captura, la derivación, revisión antes de asignar horario, los límites, aislamiento y ajuste auditado son de M4.
+- Conocimiento y casos T-16/T-20 pendientes de validación veterinaria; no hubo ajustes de esperados ni reglas hechas para un caso.
+- Pendiente de revisión de Claude; C5 no se empezó.
+  Sin migración, lectura/escritura de `.env`, acceso a la base de trabajo, commit ni push; versiones, revisiones y descargas se cierran en F.
+
+### C4 — Revisión (2026-10-15)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada. RE-2.11.7 se cumple: 26 de 26.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 828 pruebas y 7025 aserciones (41 omitidas); con MySQL 8.0.46 y la base por defecto, 828 pruebas y 7614 aserciones, ninguna omitida; JS 183/183. Se revisó que `MotorTriage` no nombra casos, razas ni sustancias (todo sale del conocimiento) y que el fixture de la batería no inventa edades, horas ni fármacos.
+
+**Lo que está bien:** máximo explícito sin promedios; P1 universal aun sin cobertura; P3 una sola vez (T-17 queda 🟠); P6 sin 🟢 por defecto; revisión omitida cuando el final es 🔴 y revisión inmediata y contagio conservados aparte (notas de B2.1); las decisiones del usuario sobre tóxicos, torsión y parto probadas con sus límites (0, 719, 720 y 2880 minutos de chocolate); el buscador sugiere sin marcar y siempre ofrece «Otro / no sé»; las APIs no guardan nada y respetan vínculo y propiedad.
+
+**Nota para M4:** `calcular_triage_ajax` admite veterinario y propietario, según los actores de Modelos §4; si en la agenda otro rol del personal agenda con triage, se amplía la matriz allí.
+
+**Decisión del revisor:** C5 se parte en dos para que cada revisión y cada prueba en el navegador sean manejables: **C5a** (síntomas guardados, diagnósticos sugeridos y obligatorios avisados desde el inicio, en ambas entradas de consulta) y **C5b** (prescripción con buscador de fármacos, alertas, decisiones y conciliación; formulario de tratamiento y peso desconocido).
+
+**Siguiente:** C5a (Claude Code).

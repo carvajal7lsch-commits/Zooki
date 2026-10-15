@@ -5,6 +5,7 @@ require_once __DIR__ . '/../models/PacienteDiagnostico.php';
 require_once __DIR__ . '/../helpers/MotorDiagnosticos.php';
 require_once __DIR__ . '/../helpers/RespuestaJson.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../helpers/ValidadorContextoClinico.php';
 
 /** C2: consulta POST protegida por Security, sin guardar diagnóstico ni síntomas (RN-202). */
 final class DiagnosticoController
@@ -55,14 +56,6 @@ final class DiagnosticoController
 
     private function declarados(): array
     {
-        $vacunacion = $_POST['vacunacion'] ?? null;
-        if ($vacunacion !== null && !in_array($vacunacion, ['completa', 'incompleta', 'desconocida'], true)) {
-            throw new InvalidArgumentException('Vacunación no válida.');
-        }
-        $dias = $_POST['dias_desde_celo'] ?? null;
-        if ($dias !== null && ((!is_string($dias) && !is_int($dias) && !is_float($dias)) || !is_numeric($dias) || !is_finite((float) $dias) || (float) $dias < 0)) {
-            throw new InvalidArgumentException('Días desde el celo no válidos.');
-        }
-        return ['vacunacion' => $vacunacion, 'dias_desde_celo' => $dias === null ? null : (float) $dias];
+        return ValidadorContextoClinico::validar($_POST);
     }
 }

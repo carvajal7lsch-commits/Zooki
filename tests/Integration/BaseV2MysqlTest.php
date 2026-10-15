@@ -22,6 +22,44 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testM2C4TriageConFichaPropiaYBusquedaSinEscrituras(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../controllers/TriageController.php';
+        require_once __DIR__ . '/../../models/CargadorConocimiento.php';
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $this->db->exec('UPDATE mascotas SET id_especie = 2, id_raza = 50 WHERE id_mascota = 1');
+        $antes = $this->contar('auditoria_sistema');
+        $this->comoVeterinario(1, 2);
+        $fecha = new DateTimeImmutable('2026-10-15T12:00:00-05:00');
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = ['id_mascota' => 1, 'sintomas' => [], 'exposiciones' => [['codigo' => 'farmaco.paracetamol', 'tiempo' => 'no_se']]];
+        foreach ([false, true] as $propietario) {
+            if ($propietario) {
+                $_SESSION = ['id_usuario' => 6];
+                Contexto::activar(Contexto::dePropietario(), 1);
+            }
+            ob_start();
+            (new TriageController($this->db, $fecha))->calcularAjax();
+            $resultado = json_decode(ob_get_clean(), true, 64, JSON_THROW_ON_ERROR);
+            $this->assertSame('rojo', $resultado['nivel']);
+            $this->assertFalse($resultado['revision']);
+        }
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = ['q' => 'bomita'];
+        ob_start();
+        (new TriageController($this->db, $fecha))->buscarAjax();
+        $respuesta = json_decode(ob_get_clean(), true, 64, JSON_THROW_ON_ERROR);
+        $this->assertContains('sintoma.vomito_sangre', array_column($respuesta['sugerencias'], 'codigo'));
+        $this->assertSame($antes, $this->contar('auditoria_sistema'));
+        foreach (['citas', 'consultas', 'cita_sintomas', 'consulta_sintomas'] as $tabla) {
+            $this->assertSame(0, $this->contar($tabla));
+        }
+        $_GET = [];
+        $_POST = [];
+        http_response_code(200);
+    }
+
     public function testC3PrescripcionSeRevalidaAlGuardarConAuditoriaYRollback(): void
     {
         $this->prepararHistoriaClinica();

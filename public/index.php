@@ -538,6 +538,14 @@ switch ($action) {
         require_once "../controllers/DiagnosticoController.php";
         (new DiagnosticoController())->sugerirAjax();
         break;
+    case "buscar_sintomas_ajax":
+        require_once '../controllers/TriageController.php';
+        (new TriageController())->buscarAjax();
+        break;
+    case "calcular_triage_ajax":
+        require_once '../controllers/TriageController.php';
+        (new TriageController())->calcularAjax();
+        break;
     case "validar_prescripcion_ajax":
         require_once "../controllers/PrescripcionController.php";
         (new PrescripcionController())->validarAjax();
