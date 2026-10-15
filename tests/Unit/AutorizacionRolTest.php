@@ -197,7 +197,18 @@ class AutorizacionRolTest extends TestCase
         $permitidas = array_keys(array_filter(self::matriz(), fn ($roles) => in_array(self::SUPER_ADMIN, $roles, true)));
         sort($permitidas);
 
-        $this->assertSame(['dashboard', 'plataforma_aviso_ajax', 'plataforma_caso_ajax', 'plataforma_desbloquear_ajax', 'plataforma_estado_ajax', 'plataforma_inicio', 'plataforma_suscripcion_ajax'], $permitidas);
+        $this->assertSame(['dashboard', 'obtener_grafo_conocimiento_ajax', 'plataforma_aviso_ajax', 'plataforma_caso_ajax', 'plataforma_desbloquear_ajax', 'plataforma_estado_ajax', 'plataforma_grafo', 'plataforma_inicio', 'plataforma_suscripcion_ajax'], $permitidas);
+    }
+
+    /** RE-2.12.1: el mapa del conocimiento es solo del contexto de plataforma, nunca de un rol de clínica ni del portal. */
+    public function testElMapaDelConocimientoEsSoloDeLaPlataforma()
+    {
+        foreach (['plataforma_grafo', 'obtener_grafo_conocimiento_ajax'] as $accion) {
+            $this->assertTrue($this->permite($accion, self::SUPER_ADMIN));
+            foreach ([self::ADMIN, self::VETERINARIO, self::PROPIETARIO] as $rol) {
+                $this->assertFalse($this->permite($accion, $rol), "$accion no deberia permitir al rol $rol");
+            }
+        }
     }
 
     /** RE-2.3.3 / RN-004: los adjuntos los piden la clínica y el portal; nunca la plataforma. */

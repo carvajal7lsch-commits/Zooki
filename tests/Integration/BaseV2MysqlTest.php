@@ -155,6 +155,38 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    public function testC6MapaDelConocimientoRealSoloActivoYConReglasEnSusNodos(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        require_once __DIR__ . '/../../models/GrafoConocimiento.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->cargar('07_grafo_conocimiento.sql');
+        $carga = (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $mapa = (new GrafoConocimiento($this->db))->mapa();
+        $this->assertSame($carga['version'], $mapa['version']['hash']);
+        $this->assertSame((int) $this->db->query('SELECT COUNT(*) FROM grafo_nodos WHERE activo = 1')->fetchColumn(), $mapa['conteos']['nodos']);
+        $this->assertSame((int) $this->db->query('SELECT COUNT(*) FROM grafo_aristas WHERE activo = 1')->fetchColumn(), $mapa['conteos']['aristas']);
+        $this->assertSame((int) $this->db->query('SELECT COUNT(*) FROM grafo_reglas WHERE activo = 1')->fetchColumn(), $mapa['conteos']['reglas']);
+        // La regla retirada en B2.1 no forma parte del conjunto vigente; el retiro de filas se prueba en GrafoConocimientoTest.
+        $this->assertNotContains('triage.parto_prolongado', array_column($mapa['reglas'], 'codigo'));
+        $nodos = array_column($mapa['nodes'], null, 'codigo');
+        foreach ($mapa['reglas'] as $regla) {
+            $this->assertNotEmpty($regla['nodos'], $regla['codigo']);
+            foreach ($regla['nodos'] as $codigo) {
+                $this->assertContains($regla['codigo'], $nodos[$codigo]['reglas'], $codigo);
+            }
+        }
+        $this->assertSame(['especie.canino'], $nodos['raza.gran_danes']['especies']);
+        $this->assertSame(['especie.felino'], $nodos['raza.persa']['especies']);
+        $this->assertSame('parcial', array_column($mapa['cobertura'], null, 'codigo')['especie.canino']['triage']);
+        $this->assertSame('sin_cobertura', array_column($mapa['cobertura'], null, 'codigo')['especie.ave']['triage']);
+        $json = json_encode($mapa);
+        foreach (['id_mascota', 'id_consulta', 'id_cita', 'id_clinica', 'id_tratamiento', 'id_propietario', 'id_usuario', 'id_nodo'] as $clave) {
+            $this->assertStringNotContainsString('"' . $clave . '"', $json);
+        }
+    }
+
     public function testB1TaxonomiaConFKYTiposCoherentes(): void
     {
         require_once __DIR__ . '/../Support/ConocimientoPrueba.php';

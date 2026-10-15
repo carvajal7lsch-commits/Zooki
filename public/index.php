@@ -256,6 +256,17 @@ switch ($action) {
         (new PlataformaController())->inicio();
         break;
 
+    // HU-2.12: mapa de solo lectura del conocimiento global (RN-212).
+    case "plataforma_grafo":
+        require_once "../controllers/GrafoConocimientoController.php";
+        (new GrafoConocimientoController())->vista();
+        break;
+
+    case "obtener_grafo_conocimiento_ajax":
+        require_once "../controllers/GrafoConocimientoController.php";
+        (new GrafoConocimientoController())->datosAjax();
+        break;
+
     case "plataforma_suscripcion_ajax":
     case "plataforma_estado_ajax":
     case "plataforma_caso_ajax":

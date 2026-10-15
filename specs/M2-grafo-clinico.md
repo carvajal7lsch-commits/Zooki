@@ -1,6 +1,6 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B1 y B2 revisadas y aprobadas; B2.1 entregada, pendiente de revisión (Codex, 2026-10-14)
+> Estado: B cerrada (B1, B2 y B2.1 revisadas y aprobadas); C6 entregada, pendiente de revisión (Claude Code, 2026-10-14)
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
@@ -96,18 +96,19 @@ T-13 se expresa mediante anorexia sostenida en gatos; T-19 mediante crisis breve
 - [x] A — Inventario y diseño: revisada y aprobada con ajustes (Codex, 2026-10-14).
 - [x] B1 — Esquema, cargador y documentos: revisada y aprobada (Codex, 2026-10-14).
 - [x] B2 — Conocimiento inicial con fuentes: revisada y aprobada con correcciones en B2.1 (Codex inició, Claude Code terminó; 2026-10-14).
-- [x] B2.1 — Correcciones del conocimiento: entregada, pendiente de revisión (Codex, 2026-10-14).
+- [x] B2.1 — Correcciones del conocimiento: revisada y aprobada (Codex, 2026-10-14).
 - [ ] C1 — Alergias y alertas médicas.
 - [ ] C2 — Motor de diagnósticos.
 - [ ] C3 — Alertas de prescripción.
 - [ ] C4 — Motor de triage con la batería.
 - [ ] C5 — Consulta del veterinario.
-- [ ] C6 — Mapa del grafo (recomendado justo después de B2).
+- [x] C6 — Mapa del grafo: entregada, pendiente de revisión (Claude Code, 2026-10-14).
 - [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.4`.
 
 **Resultado de pruebas:** B1 en verde: 703 PHP (4284 aserciones y 34 omitidas sin host; 4692 aserciones y ninguna omitida con MariaDB temporal propia y `zooki_test_base_v2`), 167 JS y 27 diagramas renderizados; detalle en Anexo B1. B2 en verde: 717 PHP (6060 aserciones y 35 omitidas sin host; 6475 aserciones y ninguna omitida con `zooki_test_base_v2`), 167 JS y carga real repetida sin cambios; detalle en Anexo B2. Los motores siguen pendientes.
 B2.1 en verde: 724 PHP (6200 aserciones y 36 omitidas sin host; 6624 aserciones y ninguna omitida con MariaDB temporal propia y la base por defecto), 167 JS; simulación real del salto desde B2 sin escrituras, detallada en su anexo.
+C6 en verde: 738 PHP (6316 aserciones y 37 omitidas sin host; 6872 aserciones y ninguna omitida con `zooki_test_base_v2`), 176 JS; detalle en Anexo C6.
 
 ## Anexo A — Inventario y diseño
 
@@ -885,3 +886,77 @@ git commit -m "feat(grafo): conocimiento inicial y ajustes de triage (HU-2.11, R
 2. Cada cambio del conocimiento reescribe `version_conocimiento` en todas las filas (429 «cambios» en `--revisar`). Es esperado; el resumen de C6 y el log deben distinguir cambios de contenido de la actualización de versión si se muestran.
 
 **Siguiente:** C6 — mapa del grafo (Claude Code).
+
+## Anexo C6 — Resultado
+
+**Lo escribió Claude Code (2026-10-14); entregada, pendiente de revisión de Claude (arquitecto).**
+
+### Qué se entregó
+
+- **Lectura (RE-2.12.5):** `models/GrafoConocimiento.php` lee solo `grafo_nodos`, `grafo_aristas`, `grafo_sinonimos` y `grafo_reglas` activos, la última carga auditada de `auditoria_sistema` y el catálogo global `razas` (solo `id_especie`, para ubicar cada raza en su especie al filtrar). No escribe.
+  Una arista hacia un nodo inactivo tampoco se devuelve.
+  Las limitaciones salen de `database/conocimiento/manifiesto.json` porque el cargador no las guarda en la base; si falta el archivo, hay un texto de reserva que dice «pendiente de validación veterinaria».
+- **Respuesta (A.6):** `helpers/MapaConocimiento.php`, puro: `version` (hash y abreviada), `limitaciones`, `conteos`, `pendientes`, `cobertura` por especie (sin declaración = sin cobertura), `nodes`, `edges` y `reglas`.
+  Cada elemento lleva sus fuentes (entidad, título, URL solo si es https, localizador, fundamento y fecha de consulta) y su estado de validación.
+  Las reglas no son aristas: cada regla lista los nodos que nombra y cada nodo, las reglas que lo usan. Sin IDs internos ni claves de pacientes.
+- **Rutas y permisos (RE-2.12.1):** `plataforma_grafo` y `obtener_grafo_conocimiento_ajax` (solo GET; otro método da 405), en la matriz de `Security.php` solo para el rol de plataforma.
+  Una superadministradora nunca recibe un contexto de clínica (`Usuario::contextosDe`); si una sesión trae uno, se descarta y la acción da 403. Además, la matriz no admite ningún rol de clínica ni el portal.
+- **Pantalla:** «Conocimiento clínico» en la barra del panel. La barra y la cabecera pasaron a parciales (`barra_lateral.php`, `cabecera.php`) que también usa `inicio.php`, con el mismo HTML de antes más el ítem nuevo.
+  Cytoscape.js 3.34.3 se carga desde cdnjs con SRI `sha512-SQeb…` comprobado dos veces el 2026-10-14 (descarga propia y API de cdnjs), con layout `cose`. La pantalla incluye:
+  - **Franja:** versión abreviada (completa al pasar el ratón), conteos, cobertura por especie y la limitación del manifiesto con el número de elementos pendientes.
+  - **Mapa:** color y forma por tipo, alarmas P1 con borde rojo; aristas dirigidas, color y trazo por signo, grosor por peso, bloqueo con flecha `┤` roja y advertencia discontinua ámbar; leyenda pintada con las mismas constantes.
+  - **Buscador y filtros:** búsqueda por etiqueta y sinónimo, que normaliza igual que `ArchivosConocimiento::normalizarTexto`; filtro por especie (conserva lo universal y las alarmas P1) y por tipo; los vecinos del nodo elegido se resaltan.
+  - **Detalle:** de nodo y de arista, con condiciones y resultados en frases, reglas que lo usan, fuentes que abren en otra pestaña y la marca «Pendiente de validación veterinaria».
+  - **Estados:** vacío (con los comandos de XAMPP), error con reintento, y fallo del CDN con aviso y la lista de los mismos datos. La lista también es una vista alternativa.
+  - **Responsive (RNF-16):** en el celular el detalle es una hoja inferior y el mapa ocupa el ancho; desde 768 px, panel lateral (300 px en tablet, 380 px en escritorio).
+- **Código:** JS en `public/js/grafo-conocimiento.js` (funciones puras en `window.ZookiGrafo`) y CSS en `public/css/grafo-conocimiento.css`; sin JS ni CSS en línea en las vistas. El texto de los datos se pinta con `textContent`, nunca con `innerHTML`.
+- **Modelos §14:** se agregó la rama «¿cargó la librería del CDN? No → aviso y lista con los mismos datos».
+  La nota 2 de «B2.1 — Revisión» no aplica: el mapa muestra la versión cargada, no el resumen de cambios del cargador.
+
+### RE con su prueba
+
+| RE | Prueba |
+|---|---|
+| RE-2.12.1 | `GrafoConocimientoTest::testVistaYEndpointRechazanCualquierContextoQueNoSeaPlataforma` (403 para administrador, veterinario, propietario y superadministradora con contexto de clínica en la sesión; pasa en plataforma); `AutorizacionRolTest::testElMapaDelConocimientoEsSoloDeLaPlataforma` y lista actualizada de `testElSuperAdministradorSoloTieneLaPlataforma`. |
+| RE-2.12.2 | JS: tipos con color y forma distintos, alarma distinguida, grosor por peso, bloqueo y advertencia diferenciados; mapa con Cytoscape falso (estilos de cada elemento). Comprobación adicional con Cytoscape 3.34.3 real sobre los 105 nodos y 105 aristas: cero avisos de estilo y valores aplicados (borde rojo, `tee`, discontinua). |
+| RE-2.12.3 | JS: búsqueda con tildes, mayúsculas y sinónimos («bomita» → vómito, primero el exacto); filtro por especie que conserva alarmas universales y lo universal y oculta lo de otra especie; filtro por tipo; vecinos; búsqueda que selecciona y atenúa lo demás. |
+| RE-2.12.4 | `MapaConocimientoTest::testReglasSeAsocianALosNodosQueNombranYNoSonAristas`, `GrafoConocimientoTest::testRespuestaConVersionLimitacionesCoberturaYReglasEnSusNodos`, `BaseV2MysqlTest::testC6MapaDelConocimientoRealSoloActivoYConReglasEnSusNodos` (todas las reglas reales enlazadas a sus nodos); JS: condiciones y resultados legibles y detalle con regla, sinónimos y enlace `_blank` con `noopener`. |
+| RE-2.12.5 | `GrafoConocimientoTest::testSoloElementosActivosYSinClavesDePacientes`, `testElModeloNoConsultaTablasDePacientesNiEscribe` (las tablas de las consultas del modelo, sin INSERT/UPDATE/DELETE), `testElEndpointSoloConsulta` (405), `testLaVistaUsaElPanelYCytoscapeConVersionFijaYSri` (sin formularios que escriban); `MapaConocimientoTest::testRespuestaSinClavesDePacientesNiIdsInternos`. |
+| RE-2.12.6 | `testConocimientoVacioDaEstadoExplicitoYManifiestoAusenteUnaReserva`, `MapaConocimientoTest::testConjuntoVacioSinCoberturaFalsa`; JS: estado vacío sin franja, fallo del CDN con lista y franja, error con reintento. |
+
+### Verificación
+
+- PHP completo sin host MySQL: **738 pruebas, 6316 aserciones, 37 omitidas** (las de MySQL).
+- PHP completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32 de XAMPP): **738 pruebas, 6872 aserciones, ninguna omitida**.
+- JavaScript: **176/176** (167 anteriores + 9 de `M2C6Grafo.test.cjs`).
+- Cytoscape.js 3.34.3 real, sin navegador, con el conocimiento real cargado en `zooki_test_base_v2`: 105 nodos y 105 aristas, cero avisos de la hoja de estilos y estilos aplicados como se esperaba; el layout `cose` dio 105 posiciones distintas y el filtro «Gato» deja 78 nodos y 80 aristas con las 9 alarmas universales.
+- SRI del CDN: el `sha512` calculado sobre la descarga coincide con el que publica la API de cdnjs para `cytoscape.min.js` 3.34.3.
+- `git diff --check` sin errores. No se leyó ni escribió `.env`, no se tocó `zooki_v2_prueba` ni sus contraseñas; sin commit ni push, y no se empezó C1.
+
+### Prueba en el navegador (usuario)
+
+En XAMPP, antes: `php scripts/migrar.php`, luego `php scripts/cargar_conocimiento.php`, y `php scripts/dev/datos_prueba.php --si` si hacen falta los usuarios.
+
+1. [ ] **Gina Plataforma** (escritorio): en la barra, «Conocimiento clínico». Debe abrir el mapa con la franja (versión, conteos, cobertura Perro/Gato parcial y las demás sin cobertura, aviso de validación) y la leyenda. Busca «bomita», elige «Vómito» y revisa que se resalten sus vecinos y que el detalle muestre sinónimos, relaciones, reglas en frases y fuentes que abren en otra pestaña.
+2. [ ] **Gina Plataforma**: filtra «Gato»; las alarmas (encías azuladas, colapso…) siguen y desaparecen Gran danés y los diagnósticos solo caninos. Toca una arista roja de lirio y otra discontinua de interacción para ver su detalle. Cambia a la vista de lista y vuelve al mapa.
+3. [ ] **Gina Plataforma en el celular** (o DevTools a 375 px): el mapa ocupa el ancho y el detalle sale como hoja inferior que se cierra con ×.
+4. [ ] **Beto Norte** (veterinario) y **Ana Norte** (administradora): abrir `index.php?action=plataforma_grafo` debe negar el acceso; `index.php?action=obtener_grafo_conocimiento_ajax` responde 403 en JSON.
+5. [ ] **Sin conexión al CDN** (DevTools → Network → bloquear `cdnjs.cloudflare.com` y recargar): aviso y lista con los mismos datos, no una pantalla en blanco.
+
+### Pendientes
+
+- HU-2.12 y RE-2.12.1–6 siguen «Planificada» en los documentos; su estado se cierra en F con las revisiones y descargas del módulo.
+- Con unos 105 nodos, el layout `cose` sale distinto en cada carga. Si incomoda, se puede fijar la semilla o guardar posiciones (decisión para la revisión).
+- Todo el conocimiento sigue pendiente de validación veterinaria (decisión 1).
+
+### C6 — Revisión (2026-10-14)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada en código; pendiente de las pruebas del usuario en el navegador.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 738 pruebas y 6316 aserciones (37 omitidas); con MariaDB 10.11 propia y la base por defecto, 738 pruebas y 6872 aserciones, ninguna omitida; JS 176/176.
+
+**Lo que está bien:** las dos rutas solo en la matriz del contexto de plataforma; el endpoint es GET (405 si no), sin IDs internos ni claves de pacientes, y el modelo solo lee las tablas del grafo, `razas` y la última carga auditada; Cytoscape 3.34.3 con SRI; vistas sin JS ni CSS en línea y datos pintados con `textContent`; barra y cabecera del panel extraídas a parciales sin cambiar su HTML; estados de vacío, error y fallo del CDN; Modelos §14 al día.
+
+**Decisión abierta para el usuario después de probar:** el layout `cose` acomoda el mapa distinto en cada carga. Si incomoda, se fija (posiciones estables) en el pulido; no bloquea C6.
+
+**Siguiente:** pruebas del usuario (lista del Anexo C6) y C1 — alergias y alertas médicas (Claude Code).

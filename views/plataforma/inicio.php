@@ -14,7 +14,6 @@ $v = $e(App::assetVersion());
 $p = PresentacionPlataforma::class;
 $contadores = $contadores ?? PresentacionPlataforma::contadores($casos, $ips);
 $plan = $plan ?? '';
-$nombreUsuario = (string) ($_SESSION['usuario_nombre'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -39,23 +38,9 @@ $nombreUsuario = (string) ($_SESSION['usuario_nombre'] ?? '');
 </head>
 <body>
 <div class="dashboard-layout">
-<nav class="pill-sidebar" aria-label="Plataforma"><a class="pill-logo" href="index.php?action=plataforma_inicio"><img class="pill-logo-img" src="img/icon_blue.png" alt="Zooki"></a><div class="pill-nav"><a class="pill-nav-item active" href="index.php?action=plataforma_inicio" title="Plataforma"><i class="fas fa-building" aria-hidden="true"></i></a></div><a class="pill-logout" href="index.php?action=logout" title="Cerrar sesión"><i class="fas fa-sign-out-alt" aria-hidden="true"></i></a></nav>
+<?php $seccionPlataforma = 'clinicas'; require __DIR__ . '/barra_lateral.php'; ?>
 <div class="main-content plataforma-contenido">
-<header class="top-header plataforma-cabecera">
-    <div class="plataforma-cabecera__titulo">
-        <h1 class="top-header-title">Plataforma</h1>
-    </div>
-    <div class="plataforma-cabecera__cuenta">
-        <?php include __DIR__ . '/../partials/contexto_actual.php'; ?>
-        <div class="header-user" title="<?= $e($nombreUsuario) ?>">
-            <div class="header-user__avatar" aria-hidden="true"><?= $e(PresentacionPlataforma::iniciales($nombreUsuario !== '' ? $nombreUsuario : 'Zooki')) ?></div>
-            <div class="header-user__info">
-                <span class="header-user__name"><?= $e(explode(' ', trim($nombreUsuario))[0] ?? '') ?></span>
-                <span class="header-user__role">Super-administrador</span>
-            </div>
-        </div>
-    </div>
-</header>
+<?php require __DIR__ . '/cabecera.php'; ?>
 <main id="plataformaContenido" class="content-body plataforma">
     <?php // Revisión del usuario (2026-10-12): la misma cabecera, filtros y tarjeta de Usuarios; sin franja de cifras. ?>
     <div class="header-container-white plataforma-encabezado">

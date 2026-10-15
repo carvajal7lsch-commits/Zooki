@@ -1093,11 +1093,15 @@ flowchart TD
   B -- Si --> C["Leer solo conocimiento global, fuentes, cobertura y version"]
   C --> D{Conjunto disponible?}
   D -- No --> E["Estado vacio o error legible; sin cobertura falsa"]
-  D -- Si --> F["Mapa dirigido con tipo, signo y peso; validacion pendiente visible"]
+  D -- Si --> L{Cargo la libreria del mapa desde el CDN?}
+  L -- No --> M["Aviso y lista con los mismos datos, filtros y detalle"]
+  L -- Si --> F["Mapa dirigido con tipo, signo y peso; validacion pendiente visible"]
   F --> G["Buscar y filtrar conservando relaciones universales"]
+  M --> G
   G --> H["Detalle de nodo, arista o regla; fuentes y condiciones"]
   H --> G
 ```
 
 No hay rama de edición ni lecturas de mascotas, historia, tratamientos o citas.
+La pantalla también ofrece la lista como vista alternativa al mapa; una regla aparece en el detalle de los nodos que nombra, no como arista (C6).
 La escritura del conocimiento ocurre solo desde el cargador por consola, después de una migración exitosa; la pantalla y su endpoint se implementan en C6.

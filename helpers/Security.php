@@ -418,6 +418,9 @@ class Security {
 
         // Plataforma: el panel del super-administrador llega en la etapa E.
         $matriz['plataforma_inicio'] = $plataforma;
+        // HU-2.12, RE-2.12.1: solo el contexto de plataforma; una superadministradora en una clínica tiene el rol de esa clínica.
+        $matriz['plataforma_grafo'] = $plataforma;
+        $matriz['obtener_grafo_conocimiento_ajax'] = $plataforma;
         foreach (self::ACCIONES_PLATAFORMA as $accion) {
             $matriz[$accion] = $plataforma;
         }
