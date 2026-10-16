@@ -2,9 +2,10 @@
  * M2 C5a — formulario de consulta compartido por sus dos entradas (A.1): el
  * modal (Pacientes, Consultas y Calendario) y Atención.
  *
- * - Motivo y diagnóstico se ven obligatorios desde que se abre la consulta y
- *   el aviso va junto al campo mientras se escribe, con la regla del servidor
- *   (ValidadorClinico::AVISOS_CONSULTA, en data-aviso-*).
+ * - Motivo y diagnóstico se ven obligatorios desde que se abre la consulta (su
+ *   asterisco) y el aviso va junto al campo mientras se escribe, con la regla del
+ *   servidor (ValidadorClinico::AVISOS_CONSULTA, en data-aviso-*). C8 (H5): el
+ *   aviso rojo sale solo cuando hay un error; «Obligatorio.» ya no queda suelto.
  * - Un 422 del servidor con `campo` se muestra junto a ese campo.
  * - Une los síntomas (consulta-sintomas.js) con los diagnósticos sugeridos
  *   (consulta-diagnosticos.js) y las filas de tratamiento con sus alertas de
@@ -20,11 +21,16 @@
 (function () {
     'use strict';
 
-    const OBLIGATORIO = 'Obligatorio.';
     const EVENTO_REGISTRADA = 'zooki:consulta-registrada';
 
     function avisoDe(form, nombre) {
         return form.querySelector(`[data-campo-aviso="${nombre}"]`);
+    }
+
+    /** Un límite del signo: data-minimo/data-maximo (C8, campo de texto) o min/max de un campo numérico. */
+    function limiteDe(campo, dato, atributo) {
+        const valor = campo.dataset[dato];
+        return valor === undefined ? campo.getAttribute(atributo) : valor;
     }
 
     /** La misma regla del servidor: obligatorio, longitud máxima y rango de los signos. */
@@ -35,14 +41,16 @@
         if (campo.required && texto === '') return campo.dataset.avisoRequerido || 'Este campo es obligatorio.';
         const maximo = Number(campo.getAttribute('maxlength'));
         if (maximo > 0 && valor.length > maximo) return `Admite hasta ${maximo} caracteres.`;
-        if (texto !== '' && campo.type === 'number') {
+        const esNumero = campo.type === 'number' || campo.dataset.formato === 'decimal';
+        if (texto !== '' && esNumero) {
             const numero = Number(texto);
-            const minimo = campo.getAttribute('min');
-            const tope = campo.getAttribute('max');
+            const minimo = limiteDe(campo, 'minimo', 'min');
+            const tope = limiteDe(campo, 'maximo', 'max');
+            const entero = campo.dataset.decimales === '0' || campo.getAttribute('step') === '1';
             const fuera = !Number.isFinite(numero)
                 || (minimo !== null && numero < Number(minimo))
                 || (tope !== null && numero > Number(tope))
-                || (campo.getAttribute('step') === '1' && !Number.isInteger(numero));
+                || (entero && !Number.isInteger(numero));
             if (fuera) return campo.dataset.avisoRango || 'Revisa este valor.';
         }
         return '';
@@ -59,7 +67,7 @@
             aviso.dataset.campoAviso = nombre;
             campo.insertAdjacentElement('afterend', aviso);
         }
-        aviso.textContent = mensaje || (campo.required ? OBLIGATORIO : '');
+        aviso.textContent = mensaje || '';
         aviso.classList.toggle('cuenta-validacion--error', Boolean(mensaje));
         campo.setAttribute('aria-invalid', mensaje ? 'true' : 'false');
     }
@@ -203,6 +211,9 @@
         form.reset();
         document.getElementById('consultation_id_mascota').value = id;
         document.getElementById('consultationPetName').textContent = nombre;
+        // C8 (H5): el avatar azul con la inicial, como en el portal (inicialesDueno es de medical-module.js).
+        const inicial = document.getElementById('consultationPetInicial');
+        if (inicial) inicial.textContent = typeof inicialesDueno === 'function' ? inicialesDueno(nombre) : String(nombre || '?').charAt(0).toUpperCase();
         const archivos = document.getElementById('fileList');
         if (archivos) archivos.replaceChildren();
         controladorModal().limpiar();
@@ -306,7 +317,7 @@
         if (archivos) archivos.addEventListener('change', () => updateFileList(archivos));
     }
 
-    window.ZookiConsultaForm = { OBLIGATORIO, EVENTO_REGISTRADA, errorDe, validarTodo, mostrarErrorServidor, iniciar };
+    window.ZookiConsultaForm = { EVENTO_REGISTRADA, errorDe, validarTodo, mostrarErrorServidor, iniciar };
     window.openConsultationModal = openConsultationModal;
     window.saveConsultation = saveConsultation;
     window.addTreatmentRow = addTreatmentRow;

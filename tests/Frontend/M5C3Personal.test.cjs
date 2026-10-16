@@ -79,14 +79,19 @@ test('con vínculo: el cliente y sus mascotas en las tarjetas mini de Usuarios',
 
     const tarjetas = todos(m.ids.mascotasExistentes).filter(h => h.tagName === 'ARTICLE');
     assert.equal(tarjetas.length, 2, 'El cliente y Luna.');
-    for (const tarjeta of tarjetas) {
-        assert.ok(tarjeta.classList.contains('person-card'));
-        assert.ok(todos(tarjeta).some(h => h.classList.contains('card-body-mini')));
-    }
+    const [cliente, luna] = tarjetas;
+    assert.ok(cliente.classList.contains('person-card'));
+    assert.ok(todos(cliente).some(h => h.classList.contains('card-body-mini')));
+    // M2 C8 (H2): cada mascota en su mini-tarjeta horizontal, con el avatar azul y la inicial si no hay foto.
+    assert.ok(luna.classList.contains('mascota-mini'));
+    assert.ok(todos(luna).some(h => h.classList.contains('avatar-iniciales') && h.textContent === 'L'));
     assert.match(m.ids.mascotasExistentes.texto, /Fabio Dueño/);
     assert.match(m.ids.mascotasExistentes.texto, /Luna/);
     assert.match(m.ids.mascotasExistentes.texto, /Canino · Criollo/);
-    assert.deepEqual(botones(m.ids.mascotasExistentes).map(b => b.textContent), ['Vincular a la clínica', 'Es otra mascota: registrar nueva']);
+    // M2 C8 (H2): «Vincular» en la tarjeta, y las flechas del carrusel (ocultas si todo cabe).
+    const nombres = botones(m.ids.mascotasExistentes).map(b => b.textContent || b.getAttribute('aria-label'));
+    assert.deepEqual(nombres, ['Vincular', 'Mascotas anteriores', 'Más mascotas', 'Es otra mascota: registrar nueva']);
+    assert.equal(botones(m.ids.mascotasExistentes)[0].getAttribute('aria-label'), 'Vincular a Luna a la clínica');
 });
 
 test('vincular se pone al día en su sitio con un aviso breve, sin recargar', async () => {
@@ -100,8 +105,9 @@ test('vincular se pone al día en su sitio con un aviso breve, sin recargar', as
     assert.match(m.pedidos[1].url, /vincular_mascota_ajax/);
     assert.deepEqual(m.pedidos[1].opciones.body.datos, { id_propietario: 6, id_mascota: '1' });
     assert.deepEqual(m.avisos, [['Luna quedó vinculada a la clínica.', 'success']]);
-    assert.match(m.ids.mascotasExistentes.texto, /Vinculada a la clínica/);
-    assert.equal(botones(m.ids.mascotasExistentes).length, 1, 'El botón de Luna cambió por la marca.');
+    assert.match(m.ids.mascotasExistentes.texto, /Luna Canino · Criollo Vinculada/);
+    // M2 C8 (H2): quedan las flechas del carrusel y «Es otra mascota»; el «Vincular» de Luna cambió por la marca.
+    assert.equal(botones(m.ids.mascotasExistentes).filter(b => b.dataset.vincularMascota !== undefined).length, 0, 'El botón de Luna cambió por la marca.');
     assert.equal(m.recargas(), 0);
     assert.ok(m.pedidos.some(p => p.url === 'index.php?action=vet_pacientes'), 'Pide otra vez la lista de pacientes para ponerla al día.');
 });

@@ -13,7 +13,8 @@ const { crearDocumento, colgar } = require('./apoyo/dom-datos.cjs');
 
 const RAIZ = path.join(__dirname, '../..');
 const leer = archivo => fs.readFileSync(path.join(RAIZ, archivo), 'utf8');
-const ARCHIVOS = ['public/js/consulta-sintomas.js', 'public/js/consulta-diagnosticos.js', 'public/js/consulta-formulario.js'];
+// M2 C8: los buscadores usan combobox.js (flechas, Enter y Esc), que el layout carga antes.
+const ARCHIVOS = ['public/js/combobox.js', 'public/js/consulta-sintomas.js', 'public/js/consulta-diagnosticos.js', 'public/js/consulta-formulario.js'];
 const AVISO_MOTIVO = 'Escribe el motivo de la consulta.';
 const AVISO_DIAGNOSTICO = 'Escribe el diagnóstico: es obligatorio para guardar.';
 
@@ -60,7 +61,7 @@ function armarConsulta(form) {
     const pestanaMotivo = colgar(form, 'div', {}, { id: 'tabMotivo', className: 'modal-tab-content' });
     const motivo = colgar(pestanaMotivo, 'input', { consultaCampo: 'motivo', avisoRequerido: AVISO_MOTIVO }, { name: 'motivo', type: 'text', required: true });
     motivo.setAttribute('maxlength', '5000');
-    colgar(pestanaMotivo, 'small', { campoAviso: 'motivo' }, { className: 'cuenta-validacion', textContent: 'Obligatorio.' });
+    colgar(pestanaMotivo, 'small', { campoAviso: 'motivo' }, { className: 'cuenta-validacion' });
     const sintomas = colgar(pestanaMotivo, 'div', { sintomas: '', max: '30' });
     colgar(sintomas, 'div', { sintomasChips: '' }, { hidden: true });
     const buscador = colgar(sintomas, 'input', { sintomasBuscar: '' }, { type: 'text' });
@@ -85,7 +86,7 @@ function armarConsulta(form) {
     colgar(envolturaCelo, 'input', { datoCampo: 'dias_desde_celo' }, { type: 'text' });
     const diagnostico = colgar(pestanaPlan, 'textarea', { consultaCampo: 'diagnostico', avisoRequerido: AVISO_DIAGNOSTICO }, { name: 'diagnostico', required: true });
     diagnostico.setAttribute('maxlength', '5000');
-    colgar(pestanaPlan, 'small', { campoAviso: 'diagnostico' }, { className: 'cuenta-validacion', textContent: 'Obligatorio.' });
+    colgar(pestanaPlan, 'small', { campoAviso: 'diagnostico' }, { className: 'cuenta-validacion' });
     return { motivo, buscador, sintomas, temperatura, panel, datos, envolturaVacunacion, envolturaCelo, vacunacion, diagnostico };
 }
 
@@ -246,7 +247,8 @@ test('«Usar este diagnóstico» copia el texto al campo y deja editarlo, sin du
     p.campos.panel.querySelector('[data-usar-diagnostico="diagnostico.gastritis"]').click();
     assert.equal(p.campos.diagnostico.value, 'Gastritis');
     assert.ok(p.campos.diagnostico.enfocado);
-    assert.equal(aviso.textContent, 'Obligatorio.');
+    // M2 C8 (H5): «Obligatorio.» ya no queda suelto; el aviso sale solo con un error (el asterisco marca el obligatorio).
+    assert.equal(aviso.textContent, '');
     assert.equal(aviso.classList.contains('cuenta-validacion--error'), false);
 
     p.campos.diagnostico.value = 'Gastritis aguda por dieta';
@@ -304,7 +306,9 @@ test('motivo y diagnóstico se ven obligatorios desde que se abre y el aviso va 
     const p = pagina();
     p.ventana.openConsultationModal(1, 'Luna');
     const avisoMotivo = p.form.querySelector('[data-campo-aviso="motivo"]');
-    assert.equal(avisoMotivo.textContent, 'Obligatorio.');
+    // M2 C8 (H5): «Obligatorio.» ya no queda suelto; el aviso sale solo con un error (el asterisco marca el obligatorio).
+    assert.equal(avisoMotivo.textContent, '');
+    assert.equal(p.campos.motivo.required, true, 'Sigue siendo obligatorio');
     assert.equal(avisoMotivo.classList.contains('cuenta-validacion--error'), false);
 
     await escribir(p.campos.motivo, '   ');
@@ -313,7 +317,7 @@ test('motivo y diagnóstico se ven obligatorios desde que se abre y el aviso va 
     assert.equal(p.campos.motivo.getAttribute('aria-invalid'), 'true');
 
     await escribir(p.campos.motivo, 'Vomita desde ayer');
-    assert.equal(avisoMotivo.textContent, 'Obligatorio.');
+    assert.equal(avisoMotivo.textContent, '');
     assert.equal(avisoMotivo.classList.contains('cuenta-validacion--error'), false);
 
     // Un signo fuera de rango crea su aviso junto al campo.
@@ -373,7 +377,7 @@ test('los errores del servidor salen junto a su campo y, al guardar, la pantalla
     // Al abrir otra consulta no quedan síntomas, sugerencias ni avisos de la anterior.
     p.ventana.openConsultationModal(2, 'Kira');
     assert.deepEqual(ocultos(p), []);
-    assert.equal(p.form.querySelector('[data-campo-aviso="diagnostico"]').textContent, 'Obligatorio.');
+    assert.equal(p.form.querySelector('[data-campo-aviso="diagnostico"]').textContent, '', 'Sin avisos de la anterior (C8: ni «Obligatorio.» suelto)');
     assert.equal(p.documento.getElementById('consultation_id_mascota').value, 2);
 });
 
@@ -422,8 +426,10 @@ test('las dos entradas de consulta usan los mismos componentes, sin eventos ni e
         assert.match(vista, /partials\/consulta_diagnosticos\.php/);
         assert.match(vista, /data-consulta-campo="motivo"[^>]*data-aviso-requerido/);
         assert.match(vista, /data-consulta-campo="diagnostico"[^>]*data-aviso-requerido/);
-        assert.match(vista, /data-campo-aviso="motivo">Obligatorio\./);
-        assert.match(vista, /data-campo-aviso="diagnostico">Obligatorio\./);
+        // M2 C8 (H5): el obligatorio lo marca el asterisco; el aviso empieza vacío.
+        assert.match(vista, /data-campo-aviso="motivo"><\/small>/);
+        assert.match(vista, /data-campo-aviso="diagnostico"><\/small>/);
+        assert.match(vista, /consulta-obligatorio/);
     }
     assert.doesNotMatch(modal, /\son[a-z]+=|style=/, 'El modal sin onsubmit/onchange ni style=');
     assert.match(modal, /<form id="formConsulta"[^>]*novalidate/);

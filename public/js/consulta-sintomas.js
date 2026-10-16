@@ -63,6 +63,7 @@
             lista.replaceChildren();
             lista.hidden = true;
             buscador.setAttribute('aria-expanded', 'false');
+            window.ZookiCombobox.reiniciar(buscador);
         }
 
         function pintarChips() {
@@ -113,8 +114,10 @@
             } else {
                 lista.replaceChildren(...sugerencias.map(sintoma => {
                     const item = elemento('li');
+                    item.setAttribute('role', 'presentation');
                     const boton = elemento('button', 'consulta-sintomas__opcion', sintoma.etiqueta);
                     boton.type = 'button';
+                    boton.tabIndex = -1;
                     boton.dataset.codigo = sintoma.codigo;
                     boton.setAttribute('role', 'option');
                     boton.addEventListener('click', () => marcarSintoma(sintoma));
@@ -124,6 +127,7 @@
             }
             lista.hidden = false;
             buscador.setAttribute('aria-expanded', 'true');
+            window.ZookiCombobox.reiniciar(buscador);
         }
 
         async function buscar(texto) {
@@ -155,11 +159,9 @@
             }
             temporizador = setTimeout(() => buscar(texto), ESPERA_MS);
         });
-        // Enter no envía la consulta ni marca nada: el síntoma se elige de la lista.
-        buscador.addEventListener('keydown', evento => {
-            if (evento.key === 'Enter') evento.preventDefault();
-            if (evento.key === 'Escape') cerrarSugerencias();
-        });
+        // C8 (H6): flechas, Enter y Esc. Enter no envía la consulta ni marca nada
+        // por sí solo: marca la opción activa de la lista, igual que el clic.
+        window.ZookiCombobox.enlazar(buscador, lista, { cerrar: cerrarSugerencias });
 
         return {
             marcados: () => marcados.slice(),

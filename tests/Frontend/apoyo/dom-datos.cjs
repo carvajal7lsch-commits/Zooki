@@ -2,7 +2,7 @@
  * M2 — Un DOM mínimo para pantallas que se enganchan por atributos data-*
  * (grafo-conocimiento.js, alertas-medicas.js, consulta-*.js): nodos con hijos,
  * dataset, clases, atributos, eventos y selectores [data-x], [data-x="v"],
- * .clase y :checked; closest, remove e insertAdjacentElement('afterend').
+ * .clase y :checked; closest, remove, replaceWith e insertAdjacentElement('afterend').
  * No es un DOM completo; solo lo que usan esos archivos.
  */
 function kebab(texto) {
@@ -53,6 +53,14 @@ function crearNodo(etiqueta) {
         },
         remove() {
             if (n.padre) n.padre.hijos = n.padre.hijos.filter(h => h !== n);
+            n.padre = null;
+        },
+        // M2 C8: vincular cambia el botón por la marca «Vinculada».
+        replaceWith(otro) {
+            if (!n.padre) return;
+            const hermanos = n.padre.hijos;
+            otro.padre = n.padre;
+            hermanos[hermanos.indexOf(n)] = otro;
             n.padre = null;
         },
         /** Copia propiedades, dataset, atributos, clases y, si es profundo, los hijos; no los escuchas. */

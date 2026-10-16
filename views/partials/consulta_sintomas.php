@@ -13,10 +13,10 @@ $idSugerenciasSintoma = htmlspecialchars(($prefijoConsulta ?? 'consulta') . 'Sug
     <div class="consulta-sintomas__buscador">
         <input type="text" id="<?= $idBuscarSintoma ?>" data-sintomas-buscar
                maxlength="<?= BuscadorSintomas::CONSULTA_MAX ?>" data-caracteres="\p{L}\p{M}\p{N} ,.()/-" data-espacios="normalizar"
-               autocomplete="off" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="<?= $idSugerenciasSintoma ?>"
+               autocomplete="off" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="<?= $idSugerenciasSintoma ?>"
                placeholder="Busca y marca: vómito, tos, no come…">
         <ul class="consulta-sintomas__sugerencias" id="<?= $idSugerenciasSintoma ?>" data-sintomas-sugerencias role="listbox" hidden></ul>
     </div>
     <small class="cuenta-validacion" data-campo-aviso="sintomas"></small>
-    <small class="consulta-sintomas__ayuda">Opcional. Lo que no esté en el catálogo, escríbelo en la anamnesis.</small>
+    <small class="consulta-ayuda consulta-sintomas__ayuda">Opcional. Lo que no esté en el catálogo, escríbelo en la anamnesis.</small>
 </div>

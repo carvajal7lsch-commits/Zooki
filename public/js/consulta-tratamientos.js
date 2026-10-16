@@ -286,6 +286,7 @@
             sugerencias.replaceChildren();
             sugerencias.hidden = true;
             campoDe(fila, 'medicamento').setAttribute('aria-expanded', 'false');
+            window.ZookiCombobox.reiniciar(campoDe(fila, 'medicamento'));
         }
 
         async function buscar(fila, texto) {
@@ -300,8 +301,10 @@
                 } else {
                     sugerencias.replaceChildren(...farmacos.map(farmaco => {
                         const item = elemento('li');
+                        item.setAttribute('role', 'presentation');
                         const boton = elemento('button', 'consulta-sintomas__opcion', farmaco.etiqueta);
                         boton.type = 'button';
+                        boton.tabIndex = -1;
                         boton.dataset.farmaco = farmaco.codigo;
                         boton.setAttribute('role', 'option');
                         boton.addEventListener('click', () => elegirFarmaco(fila, farmaco));
@@ -311,6 +314,7 @@
                 }
                 sugerencias.hidden = false;
                 campoDe(fila, 'medicamento').setAttribute('aria-expanded', 'true');
+                window.ZookiCombobox.reiniciar(campoDe(fila, 'medicamento'));
             } catch (error) {
                 if (numero === fila._busqueda) cerrarSugerencias(fila);
             }
@@ -349,11 +353,8 @@
                 }
                 temporizadorBusqueda = setTimeout(() => buscar(fila, texto), ESPERA_BUSQUEDA_MS);
             });
-            // Enter no envía la consulta: el fármaco se elige de la lista.
-            medicamento.addEventListener('keydown', evento => {
-                if (evento.key === 'Enter') evento.preventDefault();
-                if (evento.key === 'Escape') cerrarSugerencias(fila);
-            });
+            // C8 (H6): flechas, Enter y Esc. Enter no envía la consulta: elige el fármaco activo de la lista.
+            window.ZookiCombobox.enlazar(medicamento, fila.querySelector('[data-farmaco-sugerencias]'), { cerrar: () => cerrarSugerencias(fila) });
             for (const nombre of ['dosis', 'via_administracion']) {
                 const campo = campoDe(fila, nombre);
                 campo.addEventListener('input', () => pintarAviso(fila, nombre, errorDe(fila, nombre)));

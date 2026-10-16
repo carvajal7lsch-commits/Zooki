@@ -33,6 +33,8 @@ $iniciales = $iniciales ?: 'U';
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <?php // M5 C4a (punto 11): teléfono con bandera, el mismo de Usuarios y Pacientes. ?>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
+    <?php // M2 C8: alertas-medicas.css usa las variables compartidas de identidad (las mismas --z-* de portal/base.css). ?>
+    <link rel="stylesheet" href="css/identidad.css?v=<?= $v ?>">
     <?php // M5 C2: los componentes de Usuarios (tarjetas mini, etiquetas, pestañas), con los tokens del portal. ?>
     <link rel="stylesheet" href="css/usuarios.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/alertas-medicas.css?v=<?= $v ?>">

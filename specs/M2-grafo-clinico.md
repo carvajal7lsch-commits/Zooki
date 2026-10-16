@@ -1826,3 +1826,79 @@ Tres comprobaciones finales en producción, con datos de prueba autorizados y si
 **Verificación propia:** el único cambio de PHP es `App::VERSION` (`git diff` sobre `*.php`), así que la suite de C7 revisada en MySQL 8.0.46 (852 pruebas, 7783 aserciones) sigue valiendo; la entrada 2.0.0-alpha.4 del historial está escrita para quien usa el sistema y declara la validación veterinaria pendiente; HU-2.11 queda parcial y RN-419/420/425 con su estado real, sin inflar; la lista de pruebas junta C5a, C5b y C7 en cinco pasos con su usuario, su preparación y sin `datos_prueba.php --si`; el respaldo usa el mismo procedimiento del corte de M0 (`scripts/backup.php`, `/var/backups/zooki`); las comprobaciones leen el log completo, no `--tail`.
 
 **Nota:** el push a `main` dispara el despliegue en Dokploy; el respaldo se toma antes de ese push.
+
+## Hallazgos del usuario en las pruebas antes del despliegue (2026-10-16)
+
+Capturas en `specs/referencias/m2-pulido/` (01 a 06). Las pruebas funcionales pasan (bloqueo por paracetamol, sugerencias, peso obligatorio, vínculo); los hallazgos son de interfaz y uno de actualización:
+
+| # | Pantalla | Hallazgo | Captura |
+|---|---|---|---|
+| H1 | Pacientes → vincular | La búsqueda del propietario solo encuentra por documento exacto: **se acepta como está** (RN-109 y RE-1.5.1: no hay búsqueda global de clientes ajenos). | 01 |
+| H2 | Vincular mascotas | Las tarjetas de las mascotas del propietario ocupan un espacio desproporcionado y el botón «Vincular a la clínica» está sin estilo (texto partido en tres líneas). | 02 |
+| H3 | Pacientes | Después de vincular, la mascota nueva no aparece hasta recargar la página. **Error**, no solo diseño. | 01 |
+| H4 | Atención, columna izquierda | «Alergias y alertas» se parte en tres líneas y crecerá sin control cuando haya alertas; la columna desperdicia espacio. | 03 |
+| H5 | Todo el módulo de consulta | Colores fuera de la identidad (verdes y otros tonos en botones y partes), icono de pata antiguo en lugar del avatar azul con inicial del portal, textos e inputs sin estilo, «Obligatorio.» debajo del motivo parece una etiqueta. | 03, 04, 05, 06 |
+| H6 | Buscador de síntomas | Sin navegación por teclado: debe moverse con flechas, elegir con Enter y cerrar con Esc, además del clic. | — |
+| H7 | Diagnóstico y plan | El scroll se bloquea dentro del paso; las tarjetas de diagnósticos sugeridos son demasiado grandes; las etiquetas «Diagnóstico» y «Plan / recomendaciones» se montan entre sí. | 04 |
+| H8 | Peso | Deja escribir 20000 aunque el máximo es 200: falta la restricción de entrada (regla de AGENTS). | 05 |
+| H9 | Modal de consulta | Mucho scroll, elementos sin estilo («+ Agregar» con el botón del navegador, fechas y lista de vía recortadas), inputs desalineados. | 06 |
+
+**Decisión del revisor:** antes de desplegar va **C8 — rediseño visual de la consulta y del vínculo** (Claude Code), con los hallazgos H2 a H9. La versión sigue siendo 2.0.0-alpha.4; F se completa con una línea en el historial y el anexo de C8.
+
+## Anexo C8 — Resultado
+
+**Lo escribió Claude Code (2026-10-16); entregada, pendiente de revisión de Claude (arquitecto).** Sin cambios de reglas, rutas, permisos ni respuestas del servidor; versión 2.0.0-alpha.4 sin cambiar.
+
+### Qué resuelve cada cambio
+
+| Hallazgo | Cambio | Prueba |
+|---|---|---|
+| H5 identidad | `public/css/identidad.css`: variables `--z-*` con los nombres y valores del portal; las cargan el layout clínico (antes de `styles.css`) y el del portal (antes de `alertas-medicas.css`). `atencion.css`, `consulta-clinica.css`, `alertas-medicas.css` y `pacientes.css` sin colores sueltos; rojo y ámbar solo para bloqueo/error y advertencia. «Finalizar atención» y «Guardar consulta» en azul de marca. Avatar azul con la inicial (`PresentacionPlataforma::iniciales`) o la foto en Atención, en el modal y en el vínculo. | JS `M2C8Rediseno` «H5: las hojas tocadas…» (sin hex, `rgb()` ni nombres; toda `var(--z-*)` definida) y «H5: el botón principal…» |
+| H4 columna de Atención | Datos en cuadrícula densa de 2×2; «Alergias y alertas» en una línea con su contador, «Registrar» como icono con nombre accesible, dos alertas visibles y «Ver todas (N)»; propietario, motivo, pendientes y última consulta en filas cortas (`dl`). | «H4: la lista compacta…» |
+| H5, H9 campos | Un solo componente `consulta-campo` en el modal y en Atención; obligatorios con asterisco (`consulta-obligatorio`), aviso rojo solo con error, ayuda `consulta-ayuda`; «Agregar medicamento» con `consulta-boton`. «Obligatorio.» ya no se escribe en el aviso. | «H5, H9: campos con el estilo…» |
+| H8 peso y signos | `ValidadorClinico::SIGNOS`, `atributosSigno()` y `ayudaSigno()`; los signos pasan a `type="text"` con `inputmode` y `data-formato="decimal"`, que `interacciones.js` restringe (cifras de la columna, máximo, coma → punto), también al pegar. El aviso de rango lee `data-minimo`/`data-maximo`. | `ValidadorClinicoTest` (2 nuevas); JS «H8» (3): 20000 → 200, 250 → 25, pegar, temperatura y frecuencias, aviso de rango |
+| H7 diagnóstico y plan | Cada paso de Atención es el único que desplaza; sin `max-height` ni scroll en la lista de sugerencias ni en la de tratamientos. Sugerencias en filas compactas (nombre, «Coincide X de Y», «Usar») que se expanden con los síntomas, la fuente y el aviso de apoyo; «Ayudaría saber» en una línea; diagnóstico arriba y plan/observaciones en dos columnas. | «H7: los diagnósticos sugeridos…» (expande y «Usar» copia) y «H7: en Atención cada paso…» |
+| H6 teclado | `public/js/combobox.js`: flechas (con vuelta), Enter elige la activa con su mismo clic y nunca envía, Esc cierra la lista sin cerrar la ventana; `role`, `aria-controls`, `aria-activedescendant`, `aria-selected`. En síntomas, fármacos y nodos de alergias. | «H6» (3): síntomas, fármacos y nodos (Esc no cierra el formulario) |
+| H9 modal | Cabecera con avatar, pestañas, cuerpo con scroll y pie fijo; secciones «Diagnóstico» y «Tratamientos»; fila de tratamiento en cuadrícula con áreas fijas (4 columnas, 2 en tableta, 1 en celular con fechas en filas propias); hoja completa en el celular. | «H9: el modal tiene el pie…» |
+| H2 vincular | Mini-tarjetas horizontales (foto o avatar con inicial, nombre, especie · raza, «Vincular» con nombre accesible) en un carrusel sin barra, con flechas que aparecen solo si hay más y arrastre con el ratón; `contain: inline-size` evita que ensanche el modal. | «H2: las mascotas del propietario…» |
+| H3 error | Al vincular, `propietario-mascota.js` llama `ponerAlDiaPacientes` (`medical-module.js`): lista de mascotas, tarjetas y tabla de propietarios (contador) y expediente abierto, sin recargar. Antes solo se repintaba la lista de mascotas. | «H3: vincular pone al día Pacientes…» (con `medical-module.js` y `propietario-mascota.js` juntos) |
+
+Mutaciones comprobadas (cada una hace fallar su prueba y se restauró): sin `ponerAlDiaPacientes`, sin `sanearDecimal`, sin el combobox de síntomas, sin expandir la fila y sin «Ver todas».
+
+### Pruebas existentes que cambiaron por diseño
+
+- C5a y C5b cargan `combobox.js` (dependencia nueva de los buscadores) y esperan el aviso vacío en lugar de «Obligatorio.» (H5); la fila de tratamiento de C5b pasó a `tests/Frontend/apoyo/consulta-fila.cjs` para compartirla.
+- C7: el modal toma los límites de F.R. de `atributosSigno` (H8) y el buscador de «Atención sin cita» usa las variables con los mismos valores (H5).
+- M5C1Busqueda y M5C3Personal: mini-tarjetas, «Vincular» con su nombre accesible, flechas del carrusel y la marca «Vinculada» (H2). `dom-datos.cjs` suma `replaceWith`.
+
+### Verificación
+
+- PHP sin host MySQL: **854 pruebas, 7211 aserciones, 44 omitidas** (las de MySQL).
+- PHP con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32 de XAMPP): **854 pruebas, 7812 aserciones, ninguna omitida**.
+- JavaScript: **227/227** (211 anteriores + 16 de `M2C8Rediseno.test.cjs`).
+- Capturas antes y después de cada pantalla, en escritorio (1440×900) y celular (390×844): `specs/referencias/m2-pulido/c8-antes/` y `c8-despues/` (12 escenas cada una). Se generaron con Chrome sin interfaz sobre las vistas, hojas y scripts reales del repositorio y respuestas simuladas del servidor (sin base de datos ni sesión); el aviso «Recuperamos el borrador» de algunas es del arnés.
+- Historial: línea nueva en 2.0.0-alpha.4; PDF y Word regenerados, `exportar.mjs --revisar`: «Las descargas están al día».
+- No se leyó ni escribió `.env`, no se tocó `zooki_v2_prueba` ni sus contraseñas; sin commit ni push.
+
+### Prueba en el navegador (usuario)
+
+1. [ ] **Beto Norte**, Atención de una cita, escritorio y celular: avatar con la inicial, columna izquierda sin scroll, «Ver todas» con más de dos alertas; en «Signos» escribir y pegar 20000 en el peso deja 200; en «Diagnóstico y plan» la rueda y el dedo desplazan todo el paso y las sugerencias se expanden; «Finalizar atención» en azul.
+2. [ ] **Beto Norte**, modal de consulta desde Pacientes: en «Síntomas» y en el medicamento, flechas, Enter y Esc (Esc no cierra el modal); fila de tratamiento sin recortes; el pie con «Guardar consulta» siempre visible; en el celular ocupa la pantalla.
+3. [ ] **Beto Norte**, «Registrar alergia» con el buscador de nodos: flechas, Enter enlaza y Esc cierra solo la lista.
+4. [ ] **Beto Norte**, Pacientes → «Vincular mascota de un cliente» con Fabio: tarjetas pequeñas que se deslizan; al vincular, sin recargar, la tarjeta de Fabio suma la mascota, su expediente la muestra y aparece en la lista.
+
+### Pendientes y para la revisión
+
+- **Cambios visibles fuera de la consulta:** `alertas-medicas.css` también la usa el portal (lectura): con la identidad, el icono de condición crónica pasa de naranja a azul y el fondo de la sección con alertas deja de ser rosado; el rojo queda para la alergia. En Pacientes, dos notas informativas verdes (la próxima dosis de la desparasitación y el correo al agendar; `pacientes-estilo-25` y `-28`) pasan al azul de marca. Los estados de la cita en Atención (confirmada, completada) pasan de verde a azul.
+- Los signos son ahora campos de texto con restricción: el servidor no cambia y sigue validando el rango.
+- Fuera de C8, en `specs/pulido-interfaz.md`: unificar los `--z-*` de `portal/base.css` con `identidad.css`, el color de SweetAlert (`ZOOKI_COLOR_OK`), y el diseño de «Es otra mascota» y del formulario de alertas.
+
+### C8 — Revisión (2026-10-16)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada en código; pendiente de que el usuario repita las pruebas antes del despliegue.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 854 pruebas y 7211 aserciones (44 omitidas); con MySQL 8.0.46 y la base por defecto, 854 pruebas y 7812 aserciones, ninguna omitida; JS 227/227; vistas de la consulta sin `style=`. Se miraron las capturas de `c8-despues/` (Atención en diagnóstico, modal con fila bloqueada, vínculo con mini-tarjetas): identidad en azul de marca, avatar con inicial, sugerencias en filas compactas, fila de tratamiento en cuadrícula sin recortes y pie fijo.
+
+**Aceptado:** los cambios visibles fuera de la consulta que anota el anexo (portal: icono de condición crónica en azul y rojo solo para alergias; notas verdes de Pacientes y estados de cita en azul) son coherentes con la identidad. Lo que queda para el pulido general (unificar `--z-*` del portal con `identidad.css`, color de SweetAlert, «Es otra mascota», interruptor verde «Activo» del registro de mascota) se anotó en `pulido-interfaz.md`.
+
+**Siguiente:** el usuario repite las pruebas (las cinco de «Pruebas del usuario antes del despliegue» y las cuatro del Anexo C8), y después respaldo, integración, tag y comprobación del VPS.

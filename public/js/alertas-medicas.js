@@ -19,6 +19,8 @@
     };
     const BUSQUEDA_MIN = 2;
     const ESPERA_BUSQUEDA = 250;
+    // M2 C8 (H4): la sección compacta muestra las primeras y «Ver todas» despliega el resto.
+    const VISIBLES_COMPACTA = 2;
     const CARACTERES = /^[\p{L}\p{M}\p{N}\p{P}\p{S} ]+$/u;
 
     /** Mismo criterio que ArchivosConocimiento::normalizarTexto. */
@@ -175,6 +177,9 @@
             const registrar = el('button', 'alertas-medicas__registrar', 'Registrar');
             registrar.type = 'button';
             registrar.dataset.registrarAlerta = '';
+            // M2 C8 (H4): en la columna angosta de Atención el botón se ve solo como icono.
+            registrar.title = 'Registrar alergia o alerta';
+            registrar.setAttribute('aria-label', 'Registrar alergia o alerta');
             registrar.prepend(icono('fas fa-plus'), doc.createTextNode(' '));
             registrar.addEventListener('click', () => abrirFormulario(contenedor.dataset.idMascota, ajustes.nombreMascota));
             cabeza.appendChild(registrar);
@@ -189,6 +194,9 @@
                 lista.appendChild(tarjeta(alerta, ajustes));
             }
             contenedor.appendChild(lista);
+            if (contenedor.classList.contains('alertas-medicas--compacta') && activas.length > VISIBLES_COMPACTA) {
+                contenedor.appendChild(botonVerTodas(lista, activas.length));
+            }
         }
         if (historial.length > 0 && !ajustes.lectura) {
             const detalles = el('details', 'alertas-medicas__historial');
@@ -202,6 +210,22 @@
             detalles.appendChild(lista);
             contenedor.appendChild(detalles);
         }
+    }
+
+    /** M2 C8 (H4): limita la lista compacta y alterna entre ver todas y ver menos. */
+    function botonVerTodas(lista, total) {
+        lista.classList.add('alertas-medicas__lista--limitada');
+        const boton = el('button', 'alertas-medicas__ver-todas', 'Ver todas (' + total + ')');
+        boton.type = 'button';
+        boton.dataset.verTodasAlertas = '';
+        boton.setAttribute('aria-expanded', 'false');
+        boton.addEventListener('click', () => {
+            const expandida = !lista.classList.contains('is-expandida');
+            lista.classList.toggle('is-expandida', expandida);
+            boton.setAttribute('aria-expanded', String(expandida));
+            boton.textContent = expandida ? 'Ver menos' : 'Ver todas (' + total + ')';
+        });
+        return boton;
     }
 
     /** Toda sección de la página que muestre la misma mascota se actualiza con la respuesta. */
@@ -314,7 +338,19 @@
         elegido.replaceChildren(el('span', null, 'Enlazada a «' + nodo.etiqueta + '»'), quitar);
         elegido.hidden = false;
         formulario.form.querySelector('[data-alerta-buscar]').hidden = true;
-        formulario.form.querySelector('[data-alerta-sugerencias]').hidden = true;
+        cerrarSugerencias();
+    }
+
+    /** Cierra la lista de nodos sugeridos (también con Esc, M2 C8). */
+    function cerrarSugerencias() {
+        const caja = formulario.form.querySelector('[data-alerta-sugerencias]');
+        caja.replaceChildren();
+        caja.hidden = true;
+        const buscador = campo('busqueda');
+        buscador.setAttribute('aria-expanded', 'false');
+        if (global.ZookiCombobox) {
+            global.ZookiCombobox.reiniciar(buscador);
+        }
     }
 
     function actualizarTipo() {
@@ -326,7 +362,7 @@
         quitarNodo();
         const buscador = campo('busqueda');
         buscador.value = '';
-        formulario.form.querySelector('[data-alerta-sugerencias]').hidden = true;
+        cerrarSugerencias();
         mostrarAviso('tipo', '');
     }
 
@@ -334,8 +370,7 @@
         const texto = campo('busqueda').value;
         const caja = formulario.form.querySelector('[data-alerta-sugerencias]');
         if (normalizar(texto).length < BUSQUEDA_MIN) {
-            caja.replaceChildren();
-            caja.hidden = true;
+            cerrarSugerencias();
             return;
         }
         const { ok, cuerpo } = await pedir(RUTAS.buscar + '&tipo=' + encodeURIComponent(tipoElegido()) + '&q=' + encodeURIComponent(texto));
@@ -347,6 +382,8 @@
         for (const nodo of nodos) {
             const opcion = el('button', 'alertas-medicas__sugerencia');
             opcion.type = 'button';
+            opcion.tabIndex = -1;
+            opcion.setAttribute('role', 'option');
             opcion.dataset.nodoSugerido = nodo.codigo;
             opcion.appendChild(el('strong', null, nodo.etiqueta));
             if (normalizar(nodo.coincidencia) !== normalizar(nodo.etiqueta)) {
@@ -356,6 +393,10 @@
             caja.appendChild(opcion);
         }
         caja.hidden = false;
+        campo('busqueda').setAttribute('aria-expanded', 'true');
+        if (global.ZookiCombobox) {
+            global.ZookiCombobox.reiniciar(campo('busqueda'));
+        }
     }
 
     function abrirFormulario(idMascota, nombreMascota) {
@@ -443,6 +484,10 @@
             global.clearTimeout(formulario.temporizador);
             formulario.temporizador = global.setTimeout(buscarNodos, ESPERA_BUSQUEDA);
         });
+        // M2 C8 (H6): flechas, Enter y Esc; Esc cierra la lista sin cerrar el formulario.
+        if (global.ZookiCombobox) {
+            global.ZookiCombobox.enlazar(buscador, formulario.form.querySelector('[data-alerta-sugerencias]'), { cerrar: cerrarSugerencias });
+        }
         for (const cerrar of formulario.modal.querySelectorAll('[data-alerta-cerrar]')) {
             cerrar.addEventListener('click', cerrarFormulario);
         }
@@ -452,6 +497,9 @@
             }
         });
         doc.addEventListener('keydown', evento => {
+            if (evento.defaultPrevented) {
+                return;
+            }
             if (evento.key === 'Escape' && formulario.modal.classList.contains('is-open')) {
                 cerrarFormulario();
             }

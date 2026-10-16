@@ -9,11 +9,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const { crearDocumento, crearNodo, colgar } = require('./apoyo/dom-datos.cjs');
+const { crearDocumento, colgar } = require('./apoyo/dom-datos.cjs');
 
 const RAIZ = path.join(__dirname, '../..');
 const leer = archivo => fs.readFileSync(path.join(RAIZ, archivo), 'utf8');
-const ARCHIVOS = ['public/js/consulta-sintomas.js', 'public/js/consulta-diagnosticos.js', 'public/js/consulta-tratamientos.js', 'public/js/consulta-formulario.js'];
+// M2 C8: los buscadores usan combobox.js (flechas, Enter y Esc), que el layout carga antes.
+const ARCHIVOS = ['public/js/combobox.js', 'public/js/consulta-sintomas.js', 'public/js/consulta-diagnosticos.js', 'public/js/consulta-tratamientos.js', 'public/js/consulta-formulario.js'];
 const AVISOS = {
     medicamento: 'Escribe el medicamento o elígelo del catálogo.', dosis: 'Indica la dosis.', via_administracion: 'Elige la vía de administración.',
     duracion: 'Indica la duración.', fecha_inicio: 'Indica una fecha de inicio válida.', fecha_fin: 'El fin no puede ser anterior al inicio.',
@@ -46,42 +47,8 @@ class FormDataFalso {
     get(clave) { return this.getAll(clave)[0]; }
 }
 
-/** La misma fila que views/partials/consulta_tratamiento_fila.php, con sus data-*. */
-function plantillaFila() {
-    const fila = crearNodo('div');
-    fila.dataset.tratamiento = '';
-    const campo = (nombre, etiqueta, extra = {}) => {
-        const nodo = colgar(fila, etiqueta, { tratamientoCampo: nombre }, extra);
-        colgar(fila, 'small', { tratamientoAviso: nombre });
-        return nodo;
-    };
-    campo('medicamento', 'input', { name: 'med_nombre[]', type: 'text' });
-    colgar(fila, 'ul', { farmacoSugerencias: '' }, { hidden: true });
-    colgar(fila, 'input', { tratamientoCampo: 'farmaco' }, { name: 'med_farmaco[]', type: 'hidden' });
-    colgar(fila, 'small', { farmacoEstado: '' });
-    campo('dosis', 'input', { name: 'med_dosis[]', type: 'text' });
-    campo('via_administracion', 'select', { name: 'med_via[]' });
-    campo('duracion', 'input', { name: 'med_duracion[]', type: 'text' });
-    campo('fecha_inicio', 'input', { name: 'med_inicio[]', type: 'date' });
-    campo('fecha_fin', 'input', { name: 'med_fin[]', type: 'date' });
-    colgar(fila, 'small', { finAyuda: '' });
-    colgar(fila, 'input', { tratamientoCampo: 'observaciones' }, { name: 'med_obs[]', type: 'text' });
-    colgar(fila, 'button', { quitarTratamiento: '' }, { type: 'button' });
-    colgar(fila, 'p', { prescripcionEstado: '' });
-    colgar(fila, 'ul', { prescripcionLista: '' }, { hidden: true });
-    const confirmar = colgar(fila, 'label', { prescripcionConfirmar: '' }, { hidden: true });
-    colgar(confirmar, 'input', { prescripcionCasilla: '' }, { type: 'checkbox' });
-    colgar(fila, 'small', { tratamientoAviso: 'decision' });
-    const conciliacion = colgar(fila, 'div', { prescripcionConciliacion: '' }, { hidden: true });
-    const texto = colgar(conciliacion, 'textarea', { tratamientoCampo: 'conciliacion' }, { name: 'med_conciliacion[]' });
-    texto.setAttribute('maxlength', '500');
-    colgar(conciliacion, 'small', { conciliacionContador: '' });
-    colgar(conciliacion, 'small', { tratamientoAviso: 'conciliacion' });
-    colgar(fila, 'input', { tratamientoCampo: 'decision' }, { name: 'med_decision[]', type: 'hidden' });
-    colgar(fila, 'input', { tratamientoCampo: 'huella' }, { name: 'med_huella[]', type: 'hidden' });
-    colgar(fila, 'small', { tratamientoAviso: 'fila' });
-    return fila;
-}
+// La misma fila que views/partials/consulta_tratamiento_fila.php (M2 C8: en apoyo/, la comparte M2C8Rediseno).
+const { plantillaFila } = require('./apoyo/consulta-fila.cjs');
 
 /** El modal de consulta con peso, alergias, diagnóstico y tratamientos, y los cuatro archivos cargados. */
 function pagina({ validar = () => ({ success: true, filas: [] }), registrar = [], farmacos = [] } = {}) {
@@ -98,17 +65,17 @@ function pagina({ validar = () => ({ success: true, filas: [] }), registrar = []
     colgar(form, 'input', {}, { id: 'consultation_id_mascota', name: 'id_mascota', type: 'hidden' });
     const motivoTab = colgar(form, 'div', {}, { id: 'tabMotivo', className: 'modal-tab-content' });
     const motivo = colgar(motivoTab, 'input', { consultaCampo: 'motivo', avisoRequerido: 'Escribe el motivo de la consulta.' }, { name: 'motivo', type: 'text', required: true });
-    colgar(motivoTab, 'small', { campoAviso: 'motivo' }, { textContent: 'Obligatorio.' });
+    colgar(motivoTab, 'small', { campoAviso: 'motivo' });
     const signos = colgar(form, 'div', {}, { id: 'tabSignos', className: 'modal-tab-content' });
     const peso = colgar(signos, 'input', { consultaCampo: 'peso', avisoRequerido: AVISO_PESO, avisoRango: 'El peso debe estar entre 0.01 y 200 kg.' }, { name: 'peso', type: 'number', required: true });
     peso.setAttribute('min', '0.01');
     peso.setAttribute('max', '200');
     const sinPeso = colgar(signos, 'input', { sinPeso: 'peso' }, { name: 'peso_desconocido', type: 'checkbox', value: '1' });
-    colgar(signos, 'small', { campoAviso: 'peso' }, { textContent: 'Obligatorio.' });
+    colgar(signos, 'small', { campoAviso: 'peso' });
     const plan = colgar(form, 'div', {}, { id: 'tabResolucion', className: 'modal-tab-content' });
     const alertas = colgar(plan, 'section', { alertasMedicas: '', alertasConsulta: '' }, { hidden: true });
     const diagnostico = colgar(plan, 'textarea', { consultaCampo: 'diagnostico', avisoRequerido: 'Escribe el diagnóstico.' }, { name: 'diagnostico', required: true });
-    colgar(plan, 'small', { campoAviso: 'diagnostico' }, { textContent: 'Obligatorio.' });
+    colgar(plan, 'small', { campoAviso: 'diagnostico' });
     const raiz = colgar(plan, 'div', { tratamientos: '', avisos: JSON.stringify(AVISOS) });
     const agregar = colgar(raiz, 'button', { agregarTratamiento: '' }, { type: 'button' });
     const lista = colgar(raiz, 'div', { tratamientosLista: '' }, { id: 'treatmentsList' });
@@ -413,7 +380,9 @@ test('«No se pudo pesar» vacía y deshabilita el peso; sin marcarla el peso se
     p.sinPeso.checked = false;
     p.sinPeso.disparar('change');
     assert.equal(p.peso.disabled, false);
-    assert.equal(avisoPeso.textContent, 'Obligatorio.');
+    // M2 C8 (H5): «Obligatorio.» ya no queda suelto; el aviso sale solo con un error (el asterisco marca el obligatorio).
+    assert.equal(avisoPeso.textContent, '');
+    assert.equal(p.peso.required, true);
 
     // Al abrir otra consulta la casilla vuelve a su estado y el peso se habilita.
     p.sinPeso.checked = true;

@@ -1,15 +1,16 @@
 /*
  * HU-2.1, RE-2.1.5 y RE-2.10.1 — Sección «Alergias y alertas» de la mascota y su modal.
  * Se usa en la historia del veterinario (Pacientes, Consultas, Atención) y en el portal.
- * El rojo es semántico (alergia: riesgo de prescripción), no de adorno.
+ * El rojo es semántico (alergia: riesgo de prescripción) y el ámbar avisa lo que el
+ * motor no podrá cruzar; lo demás va con la identidad de Zooki (css/identidad.css, M2 C8).
  * RNF-16: móvil < 768, tablet 768–1023, escritorio ≥ 1024.
  */
 .alertas-medicas {
     margin: 0 0 1rem;
     padding: 0.85rem 1rem;
-    border: 1px solid var(--border-color, #e5e7eb);
+    border: 1px solid var(--z-border);
     border-radius: 14px;
-    background: #ffffff;
+    background: var(--z-surface);
 }
 
 .alertas-medicas[hidden] {
@@ -17,8 +18,8 @@
 }
 
 .alertas-medicas--con-alertas {
-    border-left: 4px solid #dc2626;
-    background: #fffafa;
+    border-left: 4px solid var(--z-danger);
+    background: var(--z-surface);
 }
 
 .alertas-medicas__barra {
@@ -29,18 +30,22 @@
     margin-bottom: 0.5rem;
 }
 
+/* M2 C8 (H4): el título va en una línea con su contador, aunque la columna sea angosta. */
 .alertas-medicas__titulo {
     display: flex;
+    flex: 1;
     align-items: center;
     gap: 0.4rem;
+    min-width: 0;
     margin: 0;
     font-size: 0.9rem;
     font-weight: 700;
-    color: #0f172a;
+    white-space: nowrap;
+    color: var(--z-text);
 }
 
 .alertas-medicas--con-alertas .alertas-medicas__titulo > i {
-    color: #dc2626;
+    color: var(--z-danger);
 }
 
 .alertas-medicas__contador {
@@ -50,49 +55,50 @@
     height: 1.3rem;
     padding: 0 0.35rem;
     border-radius: 999px;
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--z-bg-light);
+    color: var(--z-text-secondary);
     font-size: 0.72rem;
     font-weight: 700;
 }
 
 .alertas-medicas--con-alertas .alertas-medicas__contador {
-    background: #dc2626;
-    color: #ffffff;
+    background: var(--z-danger);
+    color: var(--z-surface);
 }
 
 .alertas-medicas__registrar,
 .alertas-medicas__desactivar {
     flex-shrink: 0;
     padding: 0.35rem 0.75rem;
-    border: 1px solid var(--border-color, #e5e7eb);
+    border: 1px solid var(--z-border);
     border-radius: 8px;
-    background: #ffffff;
+    background: var(--z-surface);
     font: inherit;
     font-size: 0.78rem;
     font-weight: 600;
-    color: var(--primary, #0052ff);
+    white-space: nowrap;
+    color: var(--z-primary);
     cursor: pointer;
 }
 
 .alertas-medicas__registrar:hover,
 .alertas-medicas__desactivar:hover {
-    background: #eff4ff;
+    background: var(--z-primary-soft);
 }
 
 .alertas-medicas__desactivar {
     align-self: center;
-    color: #475569;
+    color: var(--z-text-secondary);
 }
 
 .alertas-medicas__vacio {
     margin: 0;
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .alertas-medicas__vacio--error {
-    color: #b91c1c;
+    color: var(--z-danger-dark);
 }
 
 .alertas-medicas__lista,
@@ -111,8 +117,8 @@
     gap: 0.65rem;
     padding: 0.6rem 0.7rem;
     border-radius: 10px;
-    background: #ffffff;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-sm);
 }
 
 .alertas-medicas__icono {
@@ -122,23 +128,13 @@
     width: 2rem;
     height: 2rem;
     border-radius: 50%;
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
 }
 
 .alertas-medicas__item--alergia .alertas-medicas__icono {
-    background: #fef2f2;
-    color: #dc2626;
-}
-
-.alertas-medicas__item--medicacion_continua .alertas-medicas__icono {
-    background: #eff4ff;
-    color: #1d4ed8;
-}
-
-.alertas-medicas__item--condicion_cronica .alertas-medicas__icono {
-    background: #fff7ed;
-    color: #c2410c;
+    background: var(--z-danger-soft);
+    color: var(--z-danger);
 }
 
 .alertas-medicas__cuerpo {
@@ -149,8 +145,8 @@
 .alertas-medicas__cabeza {
     margin: 0;
     font-size: 0.84rem;
-    color: #0f172a;
-    overflow-wrap: anywhere;
+    color: var(--z-text);
+    overflow-wrap: break-word;
 }
 
 .alertas-medicas__tipo {
@@ -158,26 +154,28 @@
 }
 
 .alertas-medicas__item--alergia .alertas-medicas__tipo {
-    color: #b91c1c;
+    color: var(--z-danger-dark);
 }
 
 .alertas-medicas__origen,
 .alertas-medicas__enlace {
     margin: 0.15rem 0 0;
     font-size: 0.74rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .alertas-medicas__enlace--sin {
-    color: #92400e;
+    color: var(--z-warning-dark);
 }
 
 .alertas-medicas__propia {
+    display: inline-block;
     margin-left: 0.4rem;
+    white-space: nowrap;
     padding: 0.05rem 0.4rem;
     border-radius: 999px;
-    background: #eff4ff;
-    color: #1e3a8a;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
     font-size: 0.68rem;
     font-weight: 600;
 }
@@ -188,7 +186,7 @@
 }
 
 .alertas-medicas__historial summary {
-    color: var(--primary, #0052ff);
+    color: var(--z-primary);
     cursor: pointer;
 }
 
@@ -199,24 +197,80 @@
 .alertas-medicas__pasada {
     padding: 0.45rem 0.6rem;
     border-radius: 8px;
-    background: #f8fafc;
-    color: #475569;
+    background: var(--z-bg-suave);
+    color: var(--z-text-secondary);
 }
 
 .alertas-medicas__pasada-detalle {
     display: block;
     margin-top: 0.15rem;
     font-size: 0.72rem;
-    color: #94a3b8;
+    color: var(--z-text-tenue);
 }
 
-/* Atención: la columna del paciente es angosta. */
+/* ── Compacta: columna de Atención y antes de prescribir ──
+   M2 C8 (H4): el texto ocupa todo el ancho (sin partirse letra a letra) y
+   «Desactivar» queda debajo, como enlace; con muchas alertas se ven las
+   primeras y «Ver todas» despliega el resto. */
 .alertas-medicas--compacta {
-    padding: 0.7rem 0.75rem;
+    padding: 0.65rem 0.75rem;
+}
+
+.alertas-medicas--compacta .alertas-medicas__barra {
+    gap: 0.5rem;
+}
+
+.alertas-medicas--compacta .alertas-medicas__titulo {
+    font-size: 0.84rem;
+}
+
+.alertas-medicas--compacta .alertas-medicas__registrar {
+    padding: 0.3rem 0.6rem;
 }
 
 .alertas-medicas--compacta .alertas-medicas__item {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.55rem;
+    row-gap: 0.15rem;
+    padding: 0.5rem 0.6rem;
+}
+
+.alertas-medicas--compacta .alertas-medicas__icono {
+    width: 1.7rem;
+    height: 1.7rem;
+    font-size: 0.8rem;
+}
+
+.alertas-medicas--compacta .alertas-medicas__desactivar {
+    grid-column: 2;
+    justify-self: start;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 0.74rem;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.alertas-medicas__lista--limitada:not(.is-expandida) > .alertas-medicas__item:nth-child(n + 3) {
+    display: none;
+}
+
+.alertas-medicas__ver-todas {
+    margin-top: 0.4rem;
+    padding: 0.2rem 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--z-primary);
+    cursor: pointer;
+}
+
+.alertas-medicas__ver-todas:hover {
+    text-decoration: underline;
 }
 
 /* ── Modal de registro (users-modal) ── */
@@ -227,7 +281,7 @@
 .alertas-medicas__subtitulo {
     margin: 0.2rem 0 0;
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .alertas-medicas__tipos {
@@ -240,7 +294,7 @@
     margin-bottom: 0.4rem;
     font-size: 0.82rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--z-text-secondary);
 }
 
 .alertas-medicas__opciones {
@@ -254,19 +308,19 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.55rem 0.7rem;
-    border: 1px solid var(--border-color, #e5e7eb);
+    border: 1px solid var(--z-border);
     border-radius: 10px;
     font-size: 0.82rem;
     cursor: pointer;
 }
 
 .alertas-medicas__opcion:has(input:checked) {
-    border-color: var(--primary, #0052ff);
-    background: #eff4ff;
+    border-color: var(--z-primary);
+    background: var(--z-primary-soft);
 }
 
 .alertas-medicas__opcion input {
-    accent-color: var(--primary, #0052ff);
+    accent-color: var(--z-primary);
     margin: 0;
 }
 
@@ -280,7 +334,7 @@
 .alertas-medicas__opcional,
 .alertas-medicas__nota {
     font-size: 0.72rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .alertas-medicas__nota {
@@ -294,15 +348,15 @@
     gap: 0.5rem;
     padding: 0.35rem 0.6rem;
     border-radius: 999px;
-    background: #eff4ff;
-    color: #1e3a8a;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
     font-size: 0.8rem;
 }
 
 .alertas-medicas__quitar-nodo {
     border: none;
     background: none;
-    color: #1e3a8a;
+    color: var(--z-primary-dark);
     font-size: 1rem;
     line-height: 1;
     cursor: pointer;
@@ -313,8 +367,13 @@
     flex-direction: column;
     margin-top: 0.35rem;
     padding: 0.3rem;
-    border: 1px solid var(--border-color, #e5e7eb);
+    border: 1px solid var(--z-border);
     border-radius: 10px;
+    background: var(--z-surface);
+}
+
+.alertas-medicas__sugerencias[hidden] {
+    display: none;
 }
 
 .alertas-medicas__sugerencia {
@@ -328,26 +387,33 @@
     font: inherit;
     font-size: 0.82rem;
     text-align: left;
+    color: var(--z-text);
     cursor: pointer;
 }
 
+/* M2 C8 (H6): la opción activa con las flechas se ve igual que al pasar el ratón. */
 .alertas-medicas__sugerencia:hover,
-.alertas-medicas__sugerencia:focus-visible {
-    background: #eff4ff;
+.alertas-medicas__sugerencia:focus-visible,
+.alertas-medicas__sugerencia.is-activa {
+    background: var(--z-primary-soft);
     outline: none;
+}
+
+.alertas-medicas__sugerencia.is-activa {
+    box-shadow: inset 3px 0 0 var(--z-primary);
 }
 
 .alertas-medicas__sugerencia span,
 .alertas-medicas__sin-resultados {
     margin: 0;
     font-size: 0.74rem;
-    color: #64748b;
+    color: var(--z-text-muted);
 }
 
 .alertas-medicas__resultado {
     margin: 0.5rem 0 0;
     font-size: 0.8rem;
-    color: #b91c1c;
+    color: var(--z-danger-dark);
 }
 
 .alertas-medicas__resultado:empty {
@@ -365,5 +431,9 @@
 
     .alertas-medicas__desactivar {
         margin-left: auto;
+    }
+
+    .alertas-medicas--compacta .alertas-medicas__desactivar {
+        margin-left: 0;
     }
 }

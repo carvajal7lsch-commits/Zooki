@@ -24,6 +24,18 @@ class ValidadorClinico
     public const FR_MIN   = 5;
     public const FR_MAX   = 150;
 
+    /**
+     * M2 C8 (H8): forma de cada signo para la restricción de entrada del navegador
+     * (cifras enteras y decimales de su columna, y su rango). El servidor sigue
+     * validando con decimal() y entero(); esto solo impide escribir lo que no cabe.
+     */
+    public const SIGNOS = [
+        'peso' => ['enteros' => 3, 'decimales' => 2, 'min' => self::PESO_MIN, 'max' => self::PESO_MAX, 'unidad' => 'kg'],
+        'temperatura' => ['enteros' => 2, 'decimales' => 1, 'min' => self::TEMP_MIN, 'max' => self::TEMP_MAX, 'unidad' => '°C'],
+        'frecuencia_cardiaca' => ['enteros' => 3, 'decimales' => 0, 'min' => self::FC_MIN, 'max' => self::FC_MAX, 'unidad' => 'lpm'],
+        'frecuencia_respiratoria' => ['enteros' => 3, 'decimales' => 0, 'min' => self::FR_MIN, 'max' => self::FR_MAX, 'unidad' => 'rpm'],
+    ];
+
     /** M2 C5b (decisión del usuario, 2026-10-15): sin peso solo con la casilla «No se pudo pesar». */
     public const AVISO_PESO_REQUERIDO = 'Indica el peso o marca «No se pudo pesar».';
 
@@ -138,6 +150,36 @@ class ValidadorClinico
         $entero = (int) $num;
 
         return ($entero >= $min && $entero <= $max) ? $entero : null;
+    }
+
+    /**
+     * M2 C8 (H8): atributos HTML de un signo para que el campo no deje escribir
+     * más cifras ni un valor mayor que el máximo, también al pegar
+     * (data-formato="decimal" en js/interacciones.js). La coma se toma como punto.
+     */
+    public static function atributosSigno(string $campo): string
+    {
+        $signo = self::SIGNOS[$campo];
+        $largo = $signo['enteros'] + ($signo['decimales'] > 0 ? 1 + $signo['decimales'] : 0);
+        $modo = $signo['decimales'] > 0 ? 'decimal' : 'numeric';
+        $caracteres = $signo['decimales'] > 0 ? '0-9.,' : '0-9';
+        return 'type="text" inputmode="' . $modo . '" autocomplete="off" maxlength="' . $largo . '"'
+            . ' data-caracteres="' . $caracteres . '" data-formato="decimal"'
+            . ' data-enteros="' . $signo['enteros'] . '" data-decimales="' . $signo['decimales'] . '"'
+            . ' data-minimo="' . self::numero($signo['min']) . '" data-maximo="' . self::numero($signo['max']) . '"';
+    }
+
+    /** M2 C8: la ayuda discreta de cada signo, con el rango del servidor («Entre 25 y 45 °C»). */
+    public static function ayudaSigno(string $campo): string
+    {
+        $signo = self::SIGNOS[$campo];
+        return 'Entre ' . self::numero($signo['min']) . ' y ' . self::numero($signo['max']) . ' ' . $signo['unidad'];
+    }
+
+    /** 200.0 → «200», 0.01 → «0.01»: sin ceros sobrantes ni separador de miles. */
+    private static function numero(float|int $valor): string
+    {
+        return rtrim(rtrim(number_format((float) $valor, 2, '.', ''), '0'), '.');
     }
 
     /** Valor que debe pertenecer a un ENUM de la base de datos. */

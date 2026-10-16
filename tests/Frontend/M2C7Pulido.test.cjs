@@ -87,7 +87,8 @@ test('3. el imprimible del portal tiene las alergias y alertas activas con su cl
 test('4. el modal tiene frecuencia respiratoria y observaciones con los límites y avisos del servidor', () => {
     const modal = leer('views/vet/modal_consulta.php');
     assert.match(modal, /name="frecuencia_respiratoria" data-consulta-campo="frecuencia_respiratoria" data-aviso-rango="<\?= \$avisoConsulta\('frecuencia_respiratoria'\) \?>"/);
-    assert.match(modal, /min="<\?= ValidadorClinico::FR_MIN \?>" max="<\?= ValidadorClinico::FR_MAX \?>"/);
+    // M2 C8 (H8): los límites y la restricción de entrada salen de ValidadorClinico::atributosSigno (FR_MIN y FR_MAX).
+    assert.match(modal, /<\?= ValidadorClinico::atributosSigno\('frecuencia_respiratoria'\) \?> name="frecuencia_respiratoria"/);
     assert.match(modal, /name="observaciones" rows="2" maxlength="<\?= ValidadorClinico::TEXTO_MAX \?>"/);
     assert.doesNotMatch(modal, /\son[a-z]+=|style=/);
 });
@@ -106,8 +107,13 @@ test('5. medical-module.js ya no tiene style= ni eventos en línea en su HTML', 
     assert.match(pacientes, /\.dossier-sin-mascotas \{\s+text-align: center;\s+padding: 3rem;\s+color: var\(--text-muted\);\s+width: 100%;/);
     assert.match(pacientes, /\.pet-dossier-card-hc\.pet-dossier-card-hc--numero \{\s+color: var\(--primary\);/);
     const consulta = leer('public/css/consulta-clinica.css');
-    assert.match(consulta, /\.suggestion-item\.paciente-resultado \{\s+display: flex;\s+align-items: center;\s+gap: 1rem;\s+padding: 0\.75rem;\s+border: 1px solid #e2e8f0;\s+border-radius: 12px;/);
-    assert.match(consulta, /\.suggestion-item\.paciente-resultado:hover \{\s+background: #f8fafc;\s+border-color: #cbd5e1;/);
+    // M2 C8 (H5): los mismos valores, ahora con las variables de identidad (#e2e8f0, #f8fafc y #cbd5e1 en css/identidad.css).
+    assert.match(consulta, /\.suggestion-item\.paciente-resultado \{\s+display: flex;\s+align-items: center;\s+gap: 1rem;\s+padding: 0\.75rem;\s+border: 1px solid var\(--z-border\);\s+border-radius: 12px;/);
+    assert.match(consulta, /\.suggestion-item\.paciente-resultado:hover \{\s+background: var\(--z-bg-suave\);\s+border-color: var\(--z-border-fuerte\);/);
+    const identidad = leer('public/css/identidad.css');
+    assert.match(identidad, /--z-border: #E2E8F0;/);
+    assert.match(identidad, /--z-bg-suave: #F8FAFC;/);
+    assert.match(identidad, /--z-border-fuerte: #CBD5E1;/);
 
     // El buscador de «Atención sin cita» pinta sus avisos con las clases de la vista.
     let respuesta = [];

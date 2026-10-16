@@ -9,6 +9,9 @@
  * siendo obligatorio. Los datos que ayudarían (revisión de C2) salen con
  * nombre legible; vacunación y días desde el celo tienen un campo opcional que
  * vuelve a calcular y no se guarda en la consulta.
+ *
+ * M2 C8 (H7): cada candidato es una fila compacta con su nombre, la cobertura y
+ * «Usar»; la fila se expande para ver los síntomas que coinciden y la fuente.
  */
 (function () {
     'use strict';
@@ -99,6 +102,16 @@
         return nodo;
     }
 
+    let detalles = 0;
+
+    /** Abre o cierra el detalle de una fila (síntomas que coinciden y fuente). */
+    function alternarDetalle(item, boton, detalle) {
+        const abierto = boton.getAttribute('aria-expanded') === 'true';
+        boton.setAttribute('aria-expanded', String(!abierto));
+        detalle.hidden = abierto;
+        item.classList.toggle('is-abierta', !abierto);
+    }
+
     /**
      * Prepara un bloque [data-diagnosticos]. opciones.idMascota() da la
      * mascota; opciones.campoDiagnostico es el textarea obligatorio.
@@ -142,12 +155,32 @@
         function tarjeta(candidato, etiquetas) {
             const item = elemento('li', 'consulta-sugerencia');
             item.dataset.diagnostico = candidato.codigo;
-            const cabecera = elemento('div', 'consulta-sugerencia__cabecera');
-            cabecera.append(elemento('strong', 'consulta-sugerencia__nombre', candidato.etiqueta));
-            cabecera.append(elemento('span', 'consulta-sugerencia__cobertura', candidato.cobertura && candidato.cobertura.texto ? candidato.cobertura.texto : ''));
-            item.append(cabecera);
+            detalles += 1;
+            const detalle = elemento('div', 'consulta-sugerencia__detalle');
+            detalle.id = `consulta-sugerencia-${detalles}`;
+            detalle.hidden = true;
+
+            const fila = elemento('div', 'consulta-sugerencia__fila');
+            const abrir = elemento('button', 'consulta-sugerencia__abrir');
+            abrir.type = 'button';
+            abrir.setAttribute('aria-expanded', 'false');
+            abrir.setAttribute('aria-controls', detalle.id);
+            const flecha = elemento('i', 'fas fa-chevron-right consulta-sugerencia__flecha');
+            flecha.setAttribute('aria-hidden', 'true');
+            const cobertura = candidato.cobertura && candidato.cobertura.texto ? candidato.cobertura.texto : '';
+            abrir.append(flecha, elemento('strong', 'consulta-sugerencia__nombre', candidato.etiqueta), elemento('span', 'consulta-sugerencia__cobertura', cobertura));
+            abrir.addEventListener('click', () => alternarDetalle(item, abrir, detalle));
+            const usar = elemento('button', 'consulta-sugerencia__usar', 'Usar');
+            usar.type = 'button';
+            usar.dataset.usarDiagnostico = candidato.codigo;
+            usar.setAttribute('aria-label', `Usar este diagnóstico: ${candidato.etiqueta}`);
+            usar.addEventListener('click', () => {
+                if (opciones.campoDiagnostico) usarDiagnostico(opciones.campoDiagnostico, candidato.etiqueta);
+            });
+            fila.append(abrir, usar);
+
             const coinciden = (candidato.sintomas_coincidentes || []).map(codigo => etiquetas[codigo]).filter(Boolean);
-            if (coinciden.length) item.append(elemento('p', 'consulta-sugerencia__sintomas', `Coinciden: ${coinciden.join(', ')}`));
+            if (coinciden.length) detalle.append(elemento('p', 'consulta-sugerencia__sintomas', `Coinciden: ${coinciden.join(', ')}`));
             const fuente = fuentePrincipal(candidato.fuentes);
             if (fuente) {
                 const parrafo = elemento('p', 'consulta-sugerencia__fuente', 'Fuente: ');
@@ -161,16 +194,10 @@
                     parrafo.append(fuente.texto);
                 }
                 if (fuente.otras > 0) parrafo.append(` (+${fuente.otras})`);
-                item.append(parrafo);
+                detalle.append(parrafo);
             }
-            item.append(elemento('p', 'consulta-sugerencia__apoyo', APOYO));
-            const usar = elemento('button', 'consulta-sugerencia__usar', 'Usar este diagnóstico');
-            usar.type = 'button';
-            usar.dataset.usarDiagnostico = candidato.codigo;
-            usar.addEventListener('click', () => {
-                if (opciones.campoDiagnostico) usarDiagnostico(opciones.campoDiagnostico, candidato.etiqueta);
-            });
-            item.append(usar);
+            detalle.append(elemento('p', 'consulta-sugerencia__apoyo', APOYO));
+            item.append(fila, detalle);
             return item;
         }
 

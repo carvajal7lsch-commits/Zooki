@@ -49,10 +49,10 @@ $nodosPorTipo = htmlspecialchars(json_encode(ValidadorAlertaMedica::NODOS_POR_TI
                     <label for="alertaBuscarNodo">Enlazar al conocimiento <span class="alertas-medicas__opcional">(opcional)</span></label>
                     <div class="input-wrapper" data-alerta-buscar>
                         <i class="fas fa-search field-icon" aria-hidden="true"></i>
-                        <input type="search" id="alertaBuscarNodo" autocomplete="off" placeholder="Busca el fármaco, la sustancia o la condición" maxlength="<?= ValidadorAlertaMedica::BUSQUEDA_MAX ?>" data-caracteres="<?= ValidadorAlertaMedica::CARACTERES ?>" data-espacios="normalizar" data-alerta-campo="busqueda">
+                        <input type="search" id="alertaBuscarNodo" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="alertaSugerenciasNodo" placeholder="Busca el fármaco, la sustancia o la condición" maxlength="<?= ValidadorAlertaMedica::BUSQUEDA_MAX ?>" data-caracteres="<?= ValidadorAlertaMedica::CARACTERES ?>" data-espacios="normalizar" data-alerta-campo="busqueda">
                     </div>
                     <div class="alertas-medicas__nodo-elegido" hidden data-alerta-nodo-elegido></div>
-                    <div class="alertas-medicas__sugerencias" role="listbox" aria-label="Elementos del conocimiento" hidden data-alerta-sugerencias></div>
+                    <div class="alertas-medicas__sugerencias" id="alertaSugerenciasNodo" role="listbox" aria-label="Elementos del conocimiento" hidden data-alerta-sugerencias></div>
                     <small class="alertas-medicas__nota">Con el enlace, el motor de prescripción podrá cruzar la alerta con el fármaco. Sin él se guarda solo la descripción y el motor no podrá cruzarla.</small>
                 </div>
 

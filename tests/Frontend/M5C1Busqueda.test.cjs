@@ -23,6 +23,8 @@ function elemento(tag) {
         append(...nodos) { this.hijos.push(...nodos); },
         replaceChildren(...nodos) { this.hijos = [...nodos]; this.textContent = ''; },
         addEventListener() {},
+        // M2 C8: las mini-tarjetas y el carrusel ponen atributos de accesibilidad.
+        setAttribute() {},
         get texto() { return [this.textContent, ...this.hijos.map(h => h.texto)].join(' '); },
     };
     return n;
@@ -61,6 +63,7 @@ test('con vínculo: el nombre y sus mascotas para vincular', () => {
     });
 
     assert.match(panel.texto, /Fabio Dueño/);
-    assert.match(panel.texto, /Vincular a la clínica/);
+    // M2 C8 (H2): el botón de la mini-tarjeta dice «Vincular» (su nombre accesible, «Vincular a Luna a la clínica»).
+    assert.match(panel.texto, /Luna Canino · Sin raza definida Vincular/);
     assert.match(panel.texto, /Es otra mascota: registrar nueva/);
 });

@@ -18,6 +18,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Estilos del sistema -->
+    <?php // M2 C8 (H5): variables de identidad (azul de marca y neutros del portal) para la consulta y el vínculo. ?>
+    <link rel="stylesheet" href="css/identidad.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/styles.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/dashboard.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/usuarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
@@ -164,6 +166,8 @@
     <script src="js/password-policy.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/dashboard.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/medical-module.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <?php // M2 C8 (H6): flechas, Enter y Esc en los buscadores con lista (síntomas, fármacos y nodos de alergias). ?>
+    <script src="js/combobox.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M2 C5a: la consulta que comparten el modal y Atención: síntomas, diagnósticos sugeridos y avisos junto al campo. ?>
     <script src="js/consulta-sintomas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/consulta-diagnosticos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
