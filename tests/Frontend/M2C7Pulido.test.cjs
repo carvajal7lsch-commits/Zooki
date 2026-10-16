@@ -181,8 +181,8 @@ test('7. la línea de tiempo vacía dice «Registrar consulta» y la consulta si
     const { contexto } = medical();
     assert.match(contexto.etiquetaSinCita({ id_cita: null }), /consultation-sin-cita-badge.*Sin cita/);
     assert.equal(contexto.etiquetaSinCita({ id_cita: 12 }), '');
-    assert.match(codigo, /\$\{etiquetaSinCita\(c\)\}/, 'Cajón del historial');
-    assert.match(codigo, /subtitle: `Dr\. \$\{escaparTexto\(c\.veterinario\)\} \$\{etiquetaSinCita\(c\)\}`/, 'Ficha');
+    assert.match(contexto.filaHistorialCompacto({ id_cita: null }, 'consulta'), /Sin cita/);
+    assert.doesNotMatch(contexto.filaHistorialCompacto({ id_cita: 12 }, 'consulta'), /Sin cita/);
     assert.match(leer('public/js/consultas.js'), /c\.id_cita \? '' : '<span class="consultation-sin-cita-badge"/, 'Detalle de la lista');
     assert.match(leer('views/vet/atencion.php'), /empty\(\$con\['id_cita'\]\).*Sin cita/, 'Historial de Atención');
 });

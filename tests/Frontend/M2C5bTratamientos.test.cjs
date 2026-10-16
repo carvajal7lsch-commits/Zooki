@@ -401,7 +401,9 @@ test('el historial dice «Sin peso registrado» (C7) y nunca muestra el peso NUL
     assert.equal(contexto.textoPeso('8.50'), '8.50 Kg');
     const medical = leer('public/js/medical-module.js');
     assert.doesNotMatch(medical, /c\.peso \|\| '--'/);
-    assert.equal((medical.match(/textoPeso\(c\.peso\)/g) || []).length, 3, 'Cajón, ficha e impresión del veterinario');
+    assert.match(contexto.filaHistorialCompacto({ peso: null }, 'consulta'), /Sin peso registrado/);
+    assert.match(contexto.filaHistorialCompacto({ peso: '8.50' }, 'consulta'), /8.50 Kg/);
+    assert.match(medical, /textoPeso\(c.peso\)/, 'La impresión conserva el peso legible');
     const atencion = leer('views/vet/atencion.php');
     assert.match(atencion, /\$textoPeso = fn\(\$peso\): string => \$peso === null \|\| \$peso === '' \? 'Sin peso registrado'/);
     assert.match(atencion, /\$textoPeso\(\$con\['peso'\] \?\? null\)/);

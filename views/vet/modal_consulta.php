@@ -12,7 +12,7 @@ $claseCampo = 'consulta-campo';
 $claseEtiqueta = 'consulta-campo__etiqueta';
 $prefijoConsulta = 'modalConsulta';
 ?>
-<div id="modalConsulta" class="users-modal consulta-modal" data-ui-accion="cerrar-consulta" data-ui-fondo>
+<div id="modalConsulta" class="users-modal consulta-modal" data-paciente-compacto data-ui-accion="cerrar-consulta" data-ui-fondo>
     <div class="modal-content users-modal__panel modal-lg consulta-modal__panel" role="dialog" aria-modal="true" aria-labelledby="consultaModalTitulo">
         <div class="modal-header consulta-modal__cabecera">
             <div class="consulta-modal__paciente">
@@ -20,6 +20,7 @@ $prefijoConsulta = 'modalConsulta';
                 <div>
                     <p class="consulta-modal__sobretitulo">Nueva consulta</p>
                     <h3 class="consulta-modal__titulo" id="consultaModalTitulo"><span id="consultationPetName"></span></h3>
+                    <p class="paciente-compacto__especie" id="consultaPacienteEspecie"></p>
                 </div>
             </div>
             <button type="button" class="close-modal" data-ui-accion="cerrar-consulta" aria-label="Cerrar">
@@ -27,6 +28,17 @@ $prefijoConsulta = 'modalConsulta';
             </button>
         </div>
 
+        <div class="consulta-modal__ficha">
+            <p class="paciente-compacto__datos" id="consultaPacienteDatos"></p>
+            <div class="paciente-compacto__controles">
+                <button type="button" class="paciente-compacto__alertas" data-paciente-alertas aria-expanded="false" aria-controls="consultaAlertas">Cargando alertas</button>
+                <button type="button" class="paciente-compacto__ficha" data-paciente-ficha aria-expanded="false" aria-controls="consultaFicha">Ver ficha <i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+            </div>
+            <p class="paciente-compacto__ficha-contenido" id="consultaFicha"></p>
+            <div class="paciente-compacto__lista" id="consultaAlertas">
+
+            </div>
+        </div>
         <div class="modal-tabs consulta-modal__pestanas">
             <button type="button" class="modal-tab-btn active" data-ui-accion="pestana-consulta" data-tab="tabMotivo">
                 <i class="fas fa-comment-medical" aria-hidden="true"></i> Motivo
@@ -118,8 +130,8 @@ $prefijoConsulta = 'modalConsulta';
                 </div>
 
                 <div id="tabResolucion" class="modal-tab-content">
+                    <div id="consultaAlertasEscritorio"><section class="alertas-medicas alertas-medicas--compacta" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-consulta hidden></section></div>
                     <?php // M2 C5b: alergias y alertas de la mascota a la vista antes de prescribir (C1). ?>
-                    <section class="alertas-medicas alertas-medicas--compacta" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-consulta hidden></section>
                     <section class="consulta-seccion" aria-labelledby="consultaSeccionDiagnostico">
                         <h4 class="consulta-seccion__titulo" id="consultaSeccionDiagnostico">Diagnóstico</h4>
                         <?php include __DIR__ . '/../partials/consulta_diagnosticos.php'; ?>

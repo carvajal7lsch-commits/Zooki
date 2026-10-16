@@ -85,8 +85,25 @@
         });
         if (navPasos) navPasos.hidden = nombre !== 'consulta';
 
+        if (nombre === 'historial') cargarHistorialCompacto();
         if (nombre === 'vacuna') cargarCatalogosVacuna();
         if (nombre === 'desparasitacion') cargarCatalogoProductos();
+    }
+
+    let historialCargado = false;
+    async function cargarHistorialCompacto() {
+        const lista = document.getElementById('atencionHistorial');
+        if (!lista || historialCargado || typeof filaHistorialCompacto !== 'function') return;
+        try {
+            const respuesta = await fetch('index.php?action=listar_historial_ajax&id_mascota=' + encodeURIComponent(idMascota));
+            const datos = await respuesta.json();
+            if (datos.success === false) throw new Error(datos.message || 'No se pudo cargar el detalle del historial.');
+            const filas = eventosHistorialCompacto(datos);
+            if (filas.length) lista.innerHTML = filas.map(fila => '<li>' + filaHistorialCompacto(fila.registro, fila.tipo) + '</li>').join('');
+            historialCargado = true;
+        } catch (error) {
+            zookiToast('No se pudo cargar el detalle del historial. Vuelve a abrir la pestaña para reintentar.', 'error');
+        }
     }
 
     // ── Pasos de la consulta ────────────────────────────────────────────
@@ -104,6 +121,7 @@
             boton.classList.toggle('is-active', i === pasoActual);
             boton.classList.toggle('is-hecho', i < pasoActual);
         });
+        if (window.matchMedia && window.matchMedia('(max-width: 767px)').matches && botonesPaso[pasoActual]) botonesPaso[pasoActual].scrollIntoView({ block: 'nearest', inline: 'nearest' });
         if (btnAnterior) btnAnterior.disabled = pasoActual === 0;
         if (btnSiguiente) btnSiguiente.hidden = pasoActual === pasos.length - 1;
     }
@@ -317,17 +335,8 @@
     }
 
     // ── Vacuna y desparasitación (sin recargar) ─────────────────────────
-    const plantillaVacuna = (d) => `
-        <li class="registro registro--nuevo">
-            <div><strong>${escapeHtml(d.nombre_vacuna)}</strong><span>${escapeHtml(d.laboratorio || 'Sin laboratorio')}</span></div>
-            <div class="registro__fechas"><span>Aplicada ${fechaCorta(d.fecha_aplicacion)}</span>${d.fecha_proxima ? `<span>Próxima ${fechaCorta(d.fecha_proxima)}</span>` : ''}</div>
-        </li>`;
-
-    const plantillaDesparasitacion = (d) => `
-        <li class="registro registro--nuevo">
-            <div><strong>${escapeHtml(d.producto)}</strong><span>${escapeHtml(d.tipo.charAt(0).toUpperCase() + d.tipo.slice(1))} · ${escapeHtml(d.periodicidad)}</span></div>
-            <div class="registro__fechas"><span>Aplicada ${fechaCorta(d.fecha_aplicacion)}</span></div>
-        </li>`;
+    const plantillaVacuna = (d) => '<li>' + filaHistorialCompacto(d, 'vacuna') + '</li>';
+    const plantillaDesparasitacion = (d) => '<li>' + filaHistorialCompacto(d, 'desparasitacion') + '</li>';
 
     function sumarAlContador(nombre) {
         const contador = app.querySelector(`[data-contador="${nombre}"]`);
@@ -361,6 +370,7 @@
             if (vacio) vacio.remove();
             lista.insertAdjacentHTML('afterbegin', config.plantilla(Object.fromEntries(datos)));
             sumarAlContador(config.contador);
+            historialCargado = false;
 
             const fecha = form.elements.fecha_aplicacion.value;
             form.reset();

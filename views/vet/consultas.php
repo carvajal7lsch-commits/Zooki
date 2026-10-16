@@ -105,7 +105,7 @@ $consultasJson = json_encode($consultas, JSON_UNESCAPED_UNICODE);
 <!-- Historial clínico (drawer); lo llena viewMedicalHistory() de medical-module.js -->
 <div id="historialDrawerOverlay" class="drawer-overlay" hidden></div>
 
-<div id="historialDrawer" class="drawer-panel drawer-lg closed">
+<div id="historialDrawer" data-paciente-compacto class="drawer-panel drawer-lg closed">
     <div class="drawer-header">
         <div class="drawer-title-group">
             <div class="drawer-icon-box drawer-icon-historial">
@@ -140,9 +140,14 @@ $consultasJson = json_encode($consultas, JSON_UNESCAPED_UNICODE);
 
     <div class="drawer-body">
         <?php // M2 C1: alergias y alertas, lo primero de la historia. ?>
+        <div class="paciente-compacto__controles">
+            <button type="button" class="paciente-compacto__alertas" data-paciente-alertas aria-expanded="false" aria-controls="consultasHistorialAlertas">Cargando alertas</button>
+        </div>
+        <div class="paciente-compacto__lista" id="consultasHistorialAlertas">
         <section class="alertas-medicas" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-historial hidden></section>
+        </div>
         <div>
-            <h4 class="section-label"><i class="fas fa-syringe text-success"></i>Resumen de Vacunación</h4>
+            <h4 class="section-label"><i class="fas fa-syringe text-success"></i>Vacunas y desparasitaciones</h4>
             <div id="vaccineList" class="vaccine-grid"></div>
         </div>
         <div>

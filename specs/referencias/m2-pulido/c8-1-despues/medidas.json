@@ -1,0 +1,107 @@
+{
+  "medidas": [
+    {
+      "ancho": 360,
+      "documento": 360,
+      "menu": {
+        "x": 8,
+        "y": 770,
+        "width": 344,
+        "height": 64,
+        "top": 770,
+        "right": 352,
+        "bottom": 834,
+        "left": 8
+      },
+      "pie": {
+        "x": 0,
+        "y": 707.8125,
+        "width": 360,
+        "height": 52.1875,
+        "top": 707.8125,
+        "right": 360,
+        "bottom": 760,
+        "left": 0
+      },
+      "salir": {
+        "x": 306,
+        "y": 780,
+        "width": 40,
+        "height": 44,
+        "top": 780,
+        "right": 346,
+        "bottom": 824,
+        "left": 306
+      }
+    },
+    {
+      "ancho": 390,
+      "documento": 390,
+      "menu": {
+        "x": 8,
+        "y": 770,
+        "width": 374,
+        "height": 64,
+        "top": 770,
+        "right": 382,
+        "bottom": 834,
+        "left": 8
+      },
+      "pie": {
+        "x": 0,
+        "y": 707.8125,
+        "width": 390,
+        "height": 52.1875,
+        "top": 707.8125,
+        "right": 390,
+        "bottom": 760,
+        "left": 0
+      },
+      "salir": {
+        "x": 336,
+        "y": 780,
+        "width": 40,
+        "height": 44,
+        "top": 780,
+        "right": 376,
+        "bottom": 824,
+        "left": 336
+      }
+    },
+    {
+      "ancho": 414,
+      "documento": 414,
+      "menu": {
+        "x": 8,
+        "y": 770,
+        "width": 398,
+        "height": 64,
+        "top": 770,
+        "right": 406,
+        "bottom": 834,
+        "left": 8
+      },
+      "pie": {
+        "x": 0,
+        "y": 707.8125,
+        "width": 414,
+        "height": 52.1875,
+        "top": 707.8125,
+        "right": 414,
+        "bottom": 760,
+        "left": 0
+      },
+      "salir": {
+        "x": 360,
+        "y": 780,
+        "width": 40,
+        "height": 44,
+        "top": 780,
+        "right": 400,
+        "bottom": 824,
+        "left": 360
+      }
+    }
+  ],
+  "errores": []
+}

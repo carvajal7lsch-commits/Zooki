@@ -1018,3 +1018,254 @@ small.cuenta-validacion[data-tratamiento-aviso]:empty {
         font-size: 16px;
     }
 }
+
+/* M2 C8.1 (H10/H11): cabecera móvil y registros plegables sin cambiar los datos. */
+.paciente-compacto__controles,
+.atencion__paciente > .paciente-compacto__datos,
+.consulta-modal__ficha > :is(.paciente-compacto__datos, .paciente-compacto__ficha-contenido),
+.paciente-compacto__especie {
+    display: none;
+}
+
+.historia-fila {
+    min-width: 0;
+    margin-bottom: 0.4rem;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-xs);
+    background: var(--z-surface);
+    color: var(--z-text);
+}
+
+.historia-fila__resumen {
+    display: grid;
+    grid-template-columns: auto minmax(0, 0.7fr) minmax(0, 1fr) minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.3rem 0.65rem;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.historia-fila__resumen::-webkit-details-marker {
+    display: none;
+}
+
+.historia-fila__resumen:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+    border-radius: var(--z-radius-xs);
+}
+
+.historia-fila__resumen > :is(span, strong) {
+    min-width: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.historia-fila__fecha,
+.historia-fila__clinica {
+    color: var(--z-text-muted);
+}
+
+.historia-fila__resumen .historia-fila__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    overflow: visible;
+    white-space: normal;
+}
+
+.historia-fila__chip,
+.historia-fila__chips .consultation-sin-cita-badge {
+    margin: 0;
+    padding: 0.1rem 0.35rem;
+    border-radius: 999px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
+    font-size: 0.65rem;
+    line-height: 1.4;
+}
+
+.historia-fila__flecha {
+    color: var(--z-primary);
+    transition: transform 0.15s ease;
+}
+
+.historia-fila[open] > summary .historia-fila__flecha {
+    transform: rotate(180deg);
+}
+
+.historia-fila__detalle {
+    padding: 0.65rem 0.8rem;
+    border-top: 1px solid var(--z-border);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+}
+
+.historia-fila__detalle p {
+    margin: 0.25rem 0;
+}
+
+.historia-fila__detalle .clinical-data-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 0.5rem;
+}
+
+.historia-fila__detalle .history-treatment-table {
+    width: 100%;
+    table-layout: fixed;
+    font-size: 0.75rem;
+}
+
+.historia-fila__detalle .history-treatment-table :is(td, th) {
+    padding: 0.4rem;
+    overflow-wrap: anywhere;
+}
+
+.historia-fila__detalle .history-adjuntos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+#vaccineList.vaccine-grid {
+    display: block;
+}
+
+@media (max-width: 767px) {
+    .paciente-compacto__controles {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .paciente-compacto__controles button {
+        min-height: 32px;
+        padding: 0.25rem 0.6rem;
+        border: 1px solid var(--z-primary-borde);
+        border-radius: 999px;
+        background: var(--z-primary-soft);
+        color: var(--z-primary);
+        font: inherit;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .paciente-compacto__controles .paciente-compacto__alertas--alergia {
+        border-color: var(--z-danger-borde);
+        background: var(--z-danger-soft);
+        color: var(--z-danger-dark);
+    }
+
+    [data-paciente-compacto] .paciente-compacto__lista,
+    [data-paciente-compacto] .paciente-compacto__ficha-contenido {
+        display: none;
+    }
+
+    [data-paciente-compacto].is-alertas-abierta .paciente-compacto__lista,
+    [data-paciente-compacto].is-ficha-abierta .paciente-compacto__ficha-contenido {
+        display: block;
+        max-height: 32dvh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .paciente-compacto__lista .alertas-medicas {
+        margin: 0.35rem 0 0;
+    }
+
+    .paciente-compacto__ficha-contenido {
+        font-size: 0.8rem;
+        overflow-wrap: anywhere;
+    }
+
+    .paciente-compacto__datos,
+    .atencion__paciente > .paciente-compacto__datos,
+    .paciente-compacto__especie {
+        display: block;
+        margin: 0;
+        font-size: 0.73rem;
+        color: var(--z-text-muted);
+        overflow-wrap: anywhere;
+    }
+
+    .consulta-modal__ficha {
+        flex-shrink: 0;
+        padding: 0 0.85rem 0.5rem;
+    }
+
+    .consulta-modal__ficha > .paciente-compacto__datos {
+        display: block;
+        margin-bottom: 0.4rem;
+    }
+
+    .consulta-modal .consulta-modal__cabecera {
+        flex-shrink: 0;
+        gap: 0.5rem;
+        padding: 0.6rem 0.85rem 0.35rem;
+    }
+
+    .consulta-modal .consulta-modal__panel {
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .consulta-modal .consulta-modal__pestanas {
+        display: flex;
+        flex-wrap: nowrap;
+        min-height: 44px;
+        padding: 0 0.5rem;
+    }
+
+    .consulta-modal .consulta-modal__pie {
+        padding-bottom: max(0.7rem, env(safe-area-inset-bottom));
+    }
+
+    .consulta-modal .consulta-modal__cuerpo {
+        padding: 0.85rem;
+    }
+
+    .historia-fila__resumen {
+        grid-template-columns: auto minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+        gap: 0.25rem 0.4rem;
+        padding: 0.5rem 0.6rem;
+    }
+
+    .historia-fila__fecha { grid-column: 1; }
+    .historia-fila__clinica { grid-column: 2; }
+    .historia-fila__flecha { grid-column: 5; grid-row: 1; }
+    .historia-fila__motivo { grid-column: 3; }
+    .historia-fila__diagnostico { grid-column: 4; }
+    .historia-fila__resumen .historia-fila__chips { grid-column: 1 / -1; }
+
+    .historia-fila__detalle .history-treatment-table :is(thead) {
+        display: none;
+    }
+
+    .historia-fila__detalle .history-treatment-table :is(tbody, tr, td) {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .historia-fila__detalle .history-treatment-table tr + tr {
+        margin-top: 0.5rem;
+        border-top: 1px solid var(--z-border);
+    }
+
+    .historia-fila__detalle .history-treatment-table td {
+        padding: 0.2rem 0;
+    }
+
+    .historia-fila__detalle .history-treatment-table td::before {
+        content: attr(data-etiqueta) ': ';
+        font-weight: 600;
+        color: var(--z-text-muted);
+    }
+}
+
+.historia-fila__chips:empty { display: none; }

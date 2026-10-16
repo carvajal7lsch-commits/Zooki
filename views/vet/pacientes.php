@@ -892,7 +892,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
 <!-- DRAWER HISTORIAL MÉDICO -->
 <div id="drawerHistorialOverlay" class="drawer-overlay" data-c3-click="evento46"></div>
-<aside id="drawerHistorial" class="drawer">
+<aside id="drawerHistorial" data-paciente-compacto class="drawer">
     <div class="drawer-header">
         <button type="button" class="drawer-close" data-c3-click="evento47" aria-label="Cerrar">
             <i class="fas fa-times"></i>
@@ -904,7 +904,12 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
     </div>
     <div class="drawer-body">
         <?php // M2 C1: alergias y alertas, lo primero de la historia. ?>
+        <div class="paciente-compacto__controles">
+            <button type="button" class="paciente-compacto__alertas" data-paciente-alertas aria-expanded="false" aria-controls="pacientesHistorialAlertas">Cargando alertas</button>
+        </div>
+        <div class="paciente-compacto__lista" id="pacientesHistorialAlertas">
         <section class="alertas-medicas" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-historial hidden></section>
+        </div>
 
         <!-- Encabezado de Historia Clínica -->
         <div class="history-pet-header">
@@ -917,9 +922,9 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
             </div>
         </div>
 
-        <!-- Resumen de Vacunación -->
+        <!-- Vacunas y desparasitaciones -->
         <div class="vaccine-summary-section">
-            <h4 class="section-title"><i class="fas fa-syringe"></i> Resumen de Vacunación</h4>
+            <h4 class="section-title"><i class="fas fa-syringe"></i> Vacunas y desparasitaciones</h4>
             <div id="vaccineList" class="vaccine-grid">
                 <!-- Dinámico -->
             </div>

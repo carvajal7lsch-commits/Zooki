@@ -174,6 +174,7 @@
     <script src="js/consulta-tratamientos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/consulta-formulario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M2 C1: sección «Alergias y alertas» de la historia y su formulario. ?>
+    <script src="js/paciente-compacto.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/alertas-medicas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M5 C3: formularios de mascota con las reglas de ValidadorMascota y el propietario buscado en tiempo real. ?>
     <script src="js/validacion-mascota.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

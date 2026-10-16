@@ -218,14 +218,45 @@
         if (archivos) archivos.replaceChildren();
         controladorModal().limpiar();
         // C5b: las alergias y alertas de esta mascota, a la vista antes de prescribir.
-        const alertas = form.querySelector('[data-alertas-consulta]');
+        const modal = document.getElementById('modalConsulta');
+        const alertas = modal.querySelector('[data-alertas-consulta]') || form.querySelector('[data-alertas-consulta]');
         if (alertas && window.ZookiAlertas) {
             alertas.dataset.idMascota = String(id);
             alertas.dataset.nombreMascota = nombre;
             window.ZookiAlertas.cargar(alertas);
         }
+        if (window.ZookiPacienteCompacto) {
+            window.ZookiPacienteCompacto.preparar(modal);
+            cargarFichaCompacta(modal, id);
+        }
         mostrarPestana('tabMotivo');
         openModal('modalConsulta');
+    }
+
+    // El endpoint existente aplica los permisos de la ficha; no se agregan datos al servidor.
+    async function cargarFichaCompacta(modal, id) {
+        const especie = document.getElementById('consultaPacienteEspecie');
+        const datos = document.getElementById('consultaPacienteDatos');
+        const ficha = document.getElementById('consultaFicha');
+        if (!especie || !datos || !ficha) return;
+        especie.textContent = '';
+        datos.textContent = 'Cargando ficha…';
+        ficha.textContent = '';
+        try {
+            const respuesta = await fetch('index.php?action=get_mascota_ajax&id=' + encodeURIComponent(id));
+            const contenido = await respuesta.json();
+            // Una respuesta tardía no puede pintar la mascota anterior en el modal nuevo.
+            if (String(document.getElementById('consultation_id_mascota').value) !== String(id)) return;
+            if (contenido.success === false || !contenido.id_mascota) throw new Error('Ficha no disponible');
+            const mascota = contenido;
+            especie.textContent = [mascota.nombre_especie, mascota.nombre_raza || mascota.raza_indicada].filter(Boolean).join(' · ');
+            const edad = mascota.fecha_nacimiento && typeof calculateAge === 'function' ? calculateAge(mascota.fecha_nacimiento) : 'Edad sin registrar';
+            const peso = mascota.peso === null || mascota.peso === undefined || mascota.peso === '' ? 'Sin peso registrado' : mascota.peso + ' kg';
+            datos.textContent = [edad, peso, mascota.numero_historia_clinica || 'Historia nueva'].join(' · ');
+            ficha.textContent = 'Propietario: ' + (mascota.propietario_nombre || 'Sin dato disponible') + ' · Consulta sin cita';
+        } catch (error) {
+            if (String(document.getElementById('consultation_id_mascota').value) === String(id)) datos.textContent = 'No se pudo cargar la ficha.';
+        }
     }
 
     async function saveConsultation(evento) {

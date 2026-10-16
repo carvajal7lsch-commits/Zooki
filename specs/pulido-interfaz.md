@@ -69,3 +69,8 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 - **Motivo de la cita obligatorio** cuando exista el Grafo I: el triage necesita síntomas (módulo 4, HU-4.13 y HU-2.11).
 - **Manual de usuario:** incluir que las citas se pueden arrastrar (entregable pendiente).
 - **Interruptor «Activo» del registro de mascota en verde** (revisión de M2 C8, 2026-10-16): pasar a la identidad (azul de marca) junto con el resto del pulido general.
+
+## Observaciones fuera de M2 C8.1 (2026-10-16)
+
+- El icono verde de la cabecera del cajón «Historial clínico» y otros acentos de `medical/consultas.css` conservan el diseño heredado; unificarlos en el pulido general. C8.1 solo cambia las filas del historial y el indicador móvil de alertas.
+- En tableta (820 px), Atención conserva la ficha completa encima del formulario conforme al diseño existente; el alcance aprobado compacta la cabecera por debajo de 768 px. Revisar la distribución de tableta en el pulido general si el usuario lo pide.

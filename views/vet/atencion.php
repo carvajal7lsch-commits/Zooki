@@ -62,7 +62,7 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
 
         <!-- ── Ficha del paciente (fija) ──────────────────────────── -->
         <?php // M2 C8 (H4): más compacta; los datos en una cuadrícula densa y el resto en filas cortas. ?>
-        <aside class="atencion__paciente">
+        <aside class="atencion__paciente" data-paciente-compacto>
             <div class="paciente__cabecera">
                 <?php if ($tieneFoto): ?>
                     <img src="<?= $e($fotoMascota) ?>" alt="" class="paciente__foto" id="atencionFoto">
@@ -75,6 +75,7 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                 </div>
             </div>
 
+            <p class="paciente-compacto__datos"><?= $e($edadMascota) ?> · <?= $textoPeso($pesoReferencia) ?> · <?= $e($mascota['numero_historia_clinica'] ?: 'Historia nueva') ?></p>
             <dl class="paciente__datos">
                 <div><dt>Edad</dt><dd><?= $e($edadMascota) ?></dd></div>
                 <div><dt>Sexo</dt><dd><?= $e($mascota['sexo'] ?? '—') ?></dd></div>
@@ -82,10 +83,16 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                 <div><dt>Historia</dt><dd><?= $e($mascota['numero_historia_clinica'] ?: 'Nueva') ?></dd></div>
             </dl>
 
+            <div class="paciente-compacto__controles">
+                <button type="button" class="paciente-compacto__alertas" data-paciente-alertas aria-expanded="false" aria-controls="atencionAlertas">Cargando alertas</button>
+                <button type="button" class="paciente-compacto__ficha" data-paciente-ficha aria-expanded="false" aria-controls="atencionFicha">Ver ficha <i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+            </div>
+            <div class="paciente-compacto__lista" id="atencionAlertas">
             <?php // M2 C1 (RE-2.1.5): alergias y alertas de todas las clínicas, a la vista durante la atención. ?>
             <section class="alertas-medicas alertas-medicas--compacta" aria-label="Alergias y alertas" data-alertas-medicas data-cargar data-id-mascota="<?= (int) $mascota['id_mascota'] ?>" data-nombre-mascota="<?= $e($mascota['nombre'] ?? '') ?>"></section>
 
-            <dl class="paciente__resumen">
+            </div>
+            <dl class="paciente__resumen paciente-compacto__ficha-contenido" id="atencionFicha">
                 <div class="paciente__bloque">
                     <dt class="paciente__etiqueta">Propietario</dt>
                     <dd class="paciente__texto">
@@ -394,9 +401,9 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                                     <li class="atencion__vacio">Aún no tiene vacunas registradas.</li>
                                 <?php endif; ?>
                                 <?php foreach ($vacunas as $v): ?>
-                                    <li class="registro">
-                                        <div><strong><?= $e($v['nombre_vacuna']) ?></strong><span><?= $e($v['laboratorio'] ?: 'Sin laboratorio') ?></span></div>
-                                        <div class="registro__fechas"><span>Aplicada <?= $fechaCorta($v['fecha_aplicacion']) ?></span><?php if (!empty($v['fecha_proxima_dosis'])): ?><span>Próxima <?= $fechaCorta($v['fecha_proxima_dosis']) ?></span><?php endif; ?></div>
+                                    <li>
+                                        <?php $registroHistoria = $v; ?>
+                                        <?php include __DIR__ . '/../partials/historial_procedimiento.php'; ?>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
@@ -453,9 +460,9 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                                     <li class="atencion__vacio">Aún no tiene desparasitaciones registradas.</li>
                                 <?php endif; ?>
                                 <?php foreach ($desparasitaciones as $d): ?>
-                                    <li class="registro">
-                                        <div><strong><?= $e($d['producto']) ?></strong><span><?= $e(ucfirst($d['tipo'])) ?> · <?= $e($d['periodicidad'] ?? '') ?></span></div>
-                                        <div class="registro__fechas"><span>Aplicada <?= $fechaCorta($d['fecha_aplicacion']) ?></span><?php if (!empty($d['fecha_proxima'])): ?><span>Próxima <?= $fechaCorta($d['fecha_proxima']) ?></span><?php endif; ?></div>
+                                    <li>
+                                        <?php $registroHistoria = $d; ?>
+                                        <?php include __DIR__ . '/../partials/historial_procedimiento.php'; ?>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
@@ -465,27 +472,33 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
 
                 <!-- HISTORIAL -->
                 <section class="atencion__vista" data-vista="historial">
-                    <ul class="historial">
+                    <ul class="historial" id="atencionHistorial">
                         <?php if (empty($consultas)): ?>
                             <li class="atencion__vacio">Es su primera consulta: todavía no hay historial.</li>
                         <?php endif; ?>
                         <?php foreach ($consultas as $con): ?>
-                            <li class="historial__item">
-                                <div class="historial__cabecera">
-                                    <span class="historial__fecha"><?= $fechaCorta($con['fecha_hora']) ?></span>
-                                    <strong><?= $e($con['motivo_consulta']) ?></strong>
-                                    <span class="historial__vet"><i class="fas fa-user-md"></i> <?= $e($con['veterinario'] ?? '') ?></span>
-                                    <?php // M2 C7 (HU-2.2): la consulta registrada sin cita se distingue. ?>
-                                    <?php if (empty($con['id_cita'])): ?><span class="consultation-sin-cita-badge" title="Registrada sin cita (urgencia o imprevisto)"><i class="fas fa-ambulance"></i> Sin cita</span><?php endif; ?>
-                                </div>
-                                <?php if (!empty($con['sintomas'])): ?><p><span>Síntomas:</span> <?= $e(implode(', ', array_column($con['sintomas'], 'etiqueta'))) ?></p><?php endif; ?>
-                                <p><span>Diagnóstico:</span> <?= $e($con['diagnostico']) ?></p>
-                                <?php if (!empty($con['plan_tratamiento'])): ?><p><span>Plan:</span> <?= $e($con['plan_tratamiento']) ?></p><?php endif; ?>
-                                <div class="historial__signos">
-                                    <span><i class="fas fa-weight"></i> <?= $textoPeso($con['peso'] ?? null) ?></span>
-                                    <?php if (!empty($con['temperatura'])): ?><span><i class="fas fa-thermometer-half"></i> <?= $e($con['temperatura']) ?> °C</span><?php endif; ?>
-                                    <?php if (!empty($con['frecuencia_cardiaca'])): ?><span><i class="fas fa-heartbeat"></i> <?= $e($con['frecuencia_cardiaca']) ?> lpm</span><?php endif; ?>
-                                </div>
+                            <li>
+                                <details class="historia-fila">
+                                    <summary class="historia-fila__resumen">
+                                        <time class="historia-fila__fecha"><?= $fechaCorta($con['fecha_hora']) ?></time>
+                                        <span class="historia-fila__clinica"><?= $e($con['clinica_nombre'] ?? 'Clínica actual') ?></span>
+                                        <strong class="historia-fila__motivo"><?= $e($con['motivo_consulta']) ?></strong>
+                                        <span class="historia-fila__diagnostico"><?= $e($con['diagnostico']) ?></span>
+                                        <span class="historia-fila__chips">
+                                            <?php if (empty($con['id_cita'])): ?><span class="consultation-sin-cita-badge">Sin cita</span><?php endif; ?>
+                                            <span class="historia-fila__chip"><?= $textoPeso($con['peso'] ?? null) ?></span>
+                                        </span>
+                                        <i class="fas fa-chevron-down historia-fila__flecha" aria-hidden="true"></i>
+                                    </summary>
+                                    <div class="historia-fila__detalle">
+                                        <p><strong>Motivo:</strong> <?= $e($con['motivo_consulta']) ?></p>
+                                        <p><strong>Diagnóstico:</strong> <?= $e($con['diagnostico']) ?></p>
+                                        <p><strong>Veterinario:</strong> <?= $e($con['veterinario'] ?? '') ?></p>
+                                        <?php if (!empty($con['sintomas'])): ?><p><strong>Síntomas:</strong> <?= $e(implode(', ', array_column($con['sintomas'], 'etiqueta'))) ?></p><?php endif; ?>
+                                        <p><strong>Plan:</strong> <?= $e($con['plan_tratamiento'] ?? '') ?></p>
+                                        <p>Temperatura <?= $e($con['temperatura'] ?? '—') ?> °C · F.C. <?= $e($con['frecuencia_cardiaca'] ?? '—') ?> lpm</p>
+                                    </div>
+                                </details>
                             </li>
                         <?php endforeach; ?>
                     </ul>

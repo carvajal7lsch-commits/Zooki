@@ -237,6 +237,9 @@ function switchModalTab(event, tabId) {
     modal.querySelectorAll('.modal-tab-content').forEach(c => c.classList.remove('active'));
     event.currentTarget.classList.add('active');
     document.getElementById(tabId).classList.add('active');
+    if (modal.classList.contains('consulta-modal') && window.matchMedia && window.matchMedia('(max-width: 767px)').matches) {
+        event.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
 }
 
 // recargar: false al volver a una pestaña que ya está cargada (al cerrar el
@@ -1168,11 +1171,11 @@ function tablaTratamientos(tratamientos) {
     if (!Array.isArray(tratamientos) || tratamientos.length === 0) return '';
     const filas = tratamientos.map(t => `
         <tr>
-            <td>${escaparTexto(t.medicamento)}</td>
-            <td>${escaparTexto(t.dosis)}</td>
-            <td>${escaparTexto(t.via_administracion)}</td>
-            <td>${escaparTexto(t.duracion)}</td>
-            <td>${t.fecha_inicio ? new Date(t.fecha_inicio + 'T00:00:00').toLocaleDateString() : '---'}</td>
+            <td data-etiqueta="Medicamento">${escaparTexto(t.medicamento)}</td>
+            <td data-etiqueta="Dosis">${escaparTexto(t.dosis)}</td>
+            <td data-etiqueta="Vía">${escaparTexto(t.via_administracion)}</td>
+            <td data-etiqueta="Duración">${escaparTexto(t.duracion)}</td>
+            <td data-etiqueta="Inicio">${t.fecha_inicio ? new Date(t.fecha_inicio + 'T00:00:00').toLocaleDateString() : '---'}</td>
         </tr>`).join('');
     return `
         <div class="clinical-section">
@@ -1201,6 +1204,61 @@ function listaAdjuntos(archivos) {
         </div>`;
 }
 
+/** Orden común de consultas, vacunas y desparasitaciones (RE-2.5.1). */
+function eventosHistorialCompacto(datos) {
+    const eventos = [
+        ...(datos.consultas || []).map(registro => ({ registro, tipo: 'consulta', fecha: registro.fecha_hora })),
+        ...(datos.vacunas || []).map(registro => ({ registro, tipo: 'vacuna', fecha: registro.fecha_aplicacion })),
+        ...(datos.desparasitaciones || []).map(registro => ({ registro, tipo: 'desparasitacion', fecha: registro.fecha_aplicacion })),
+    ];
+    const fechaLocal = fecha => new Date(fecha && fecha.length === 10 ? fecha + 'T00:00:00' : String(fecha || '').replace(' ', 'T'));
+    return eventos.sort((a, b) => fechaLocal(b.fecha) - fechaLocal(a.fecha));
+}
+
+/** M2 C8.1 (H11): mismo resumen en Atención y en los dos cajones de historial. */
+function filaHistorialCompacto(registro, tipo) {
+    const consulta = tipo === 'consulta';
+    const fecha = registro.fecha_hora || registro.fecha_aplicacion;
+    const fechaLocal = fecha && fecha.length === 10 ? fecha + 'T00:00:00' : String(fecha || '').replace(' ', 'T');
+    const fechaTexto = fecha ? new Date(fechaLocal).toLocaleDateString('es-CO') : 'Sin fecha';
+    const titulo = consulta ? registro.motivo_consulta : (registro.nombre_vacuna || registro.producto);
+    const diagnostico = consulta ? registro.diagnostico : (registro.laboratorio || registro.tipo || '');
+    const tratamientos = Array.isArray(registro.tratamientos) ? registro.tratamientos : [];
+    const chips = consulta ? `${etiquetaSinCita(registro)}<span class="historia-fila__chip">${textoPeso(registro.peso)}</span><span class="historia-fila__chip">${tratamientos.length} tratamientos</span>` : '';
+    const detalle = consulta ? `
+        <p><strong>Veterinario:</strong> ${escaparTexto(registro.veterinario || 'Sin dato')}</p>
+        ${etiquetaOrigen(registro)}
+        <div class="clinical-data-grid">
+            <div class="clinical-field"><label>Peso</label><span>${textoPeso(registro.peso)}</span></div>
+            <div class="clinical-field"><label>Temp.</label><span>${escaparTexto(registro.temperatura || '—')} °C</span></div>
+            <div class="clinical-field"><label>F.C.</label><span>${escaparTexto(registro.frecuencia_cardiaca || '—')} lpm</span></div>
+            <div class="clinical-field"><label>F.R.</label><span>${escaparTexto(registro.frecuencia_respiratoria || '—')} rpm</span></div>
+        </div>
+        ${seccionSintomas(registro)}
+        <p><strong>Motivo:</strong> ${escaparTexto(titulo)}</p>
+        <p><strong>Anamnesis:</strong> ${escaparTexto(registro.anamnesis || 'Sin registro')}</p>
+        <p><strong>Diagnóstico:</strong> ${escaparTexto(diagnostico)}</p>
+        <p><strong>Plan:</strong> ${escaparTexto(registro.plan_tratamiento || 'Sin registro')}</p>
+        ${tablaTratamientos(tratamientos)}${listaAdjuntos(registro.archivos)}` : `
+        ${etiquetaOrigen(registro)}
+        <p><strong>${tipo === 'vacuna' ? 'Vacuna' : 'Producto'}:</strong> ${escaparTexto(titulo)}</p>
+        <p><strong>Detalle:</strong> ${escaparTexto(diagnostico)}</p>
+        <p><strong>Lote:</strong> ${escaparTexto(registro.lote || 'Sin registro')}</p>
+        <p><strong>Próxima aplicación:</strong> ${escaparTexto(registro.fecha_proxima_dosis || registro.fecha_proxima || 'Sin programar')}</p>
+        <p>${escaparTexto(registro.observaciones || '')}</p>`;
+    return `<details class="historia-fila">
+        <summary class="historia-fila__resumen">
+            <time class="historia-fila__fecha">${escaparTexto(fechaTexto)}</time>
+            <span class="historia-fila__clinica">${escaparTexto(registro.clinica_nombre || 'Clínica actual')}</span>
+            <strong class="historia-fila__motivo">${escaparTexto(titulo)}</strong>
+            <span class="historia-fila__diagnostico">${escaparTexto(diagnostico)}</span>
+            <span class="historia-fila__chips">${chips}</span>
+            <i class="fas fa-chevron-down historia-fila__flecha" aria-hidden="true"></i>
+        </summary>
+        <div class="historia-fila__detalle"><p><strong>Clínica:</strong> ${escaparTexto(registro.clinica_nombre || 'Clínica actual')}</p>${detalle}</div>
+    </details>`;
+}
+
 // M2 C5a: el historial abierto se pone al día cuando se guarda una consulta de esa mascota.
 let historialAbierto = null;
 
@@ -1218,6 +1276,7 @@ async function viewMedicalHistory(id, nombre) {
     // M2 C1: no se muestran las alertas de la mascota anterior mientras carga la nueva.
     const alertasHistorial = document.querySelector('[data-alertas-historial]');
     if (alertasHistorial) alertasHistorial.hidden = true;
+    if (alertasHistorial && window.ZookiPacienteCompacto) window.ZookiPacienteCompacto.preparar(alertasHistorial.closest('[data-paciente-compacto]'));
     hcNumber.innerText = '---';
     petSpecie.innerText = '---';
     petAge.innerText = '---';
@@ -1237,79 +1296,20 @@ async function viewMedicalHistory(id, nombre) {
         // 1. Datos de Mascota
         const m = data.mascota;
         // Hueco 6: desvinculada, la clínica solo lee lo suyo y no se ofrece registrar nada.
-        const soloLectura = avisoSoloLectura(document.querySelector('#drawerHistorial .drawer-body'), m);
+        const soloLectura = avisoSoloLectura(document.querySelector('#drawerHistorial .drawer-body') || document.querySelector('#historialDrawer .drawer-body'), m);
         // M2 C1 (RE-2.10.1): alergias y alertas de todas las clínicas, arriba de la historia.
         if (window.ZookiAlertas) window.ZookiAlertas.pintar(alertasHistorial, data.alertas, { idMascota: id, nombreMascota: m.nombre });
         hcNumber.innerText = m.numero_historia_clinica || 'Sin asignar';
         petSpecie.innerText = m.nombre_especie || '---';
         petAge.innerText = m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : 'Edad desconocida';
 
-        // 2. Resumen de Vacunación: las de todas las clínicas (RE-2.10.1)
-        if (data.vacunas && data.vacunas.length > 0) {
-            data.vacunas.forEach(v => {
-                const vCard = document.createElement('div');
-                vCard.className = 'vaccine-card';
-                vCard.innerHTML = `
-                    <div class="vaccine-icon"><i class="fas fa-syringe"></i></div>
-                    <div class="vaccine-info">
-                        <h5>${escaparTexto(v.nombre_vacuna)}</h5>
-                        <span>${new Date(v.fecha_aplicacion).toLocaleDateString()}</span>
-                        ${etiquetaOrigen(v)}
-                    </div>
-                `;
-                vaccineList.appendChild(vCard);
-            });
-        } else {
-            vaccineList.innerHTML = '<p class="sub-text">No hay registros de vacunación.</p>';
-        }
-
-        // 3. Consultas Clínicas (Línea de Tiempo). Las de otra clínica solo
-        // llegan si el propietario autorizó a esta (RE-2.10.2).
+        // M2 C8.1 (H11): las tres clases de registro comparten filas plegables.
+        vaccineList.innerHTML = eventosHistorialCompacto(data)
+            .filter(evento => evento.tipo !== 'consulta')
+            .map(evento => filaHistorialCompacto(evento.registro, evento.tipo)).join('') || '<p class="sub-text">No hay vacunas ni desparasitaciones registradas.</p>';
         timeline.innerHTML = '';
         if (data.consultas && data.consultas.length > 0) {
-            data.consultas.forEach(c => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
-                item.innerHTML = `
-                    <div class="history-header">
-                        <div class="header-main">
-                            <h4>${escaparTexto(c.motivo_consulta)}</h4>
-                            <span class="vet-badge"><i class="fas fa-user-md"></i> ${escaparTexto(c.veterinario)}</span>
-                            ${etiquetaSinCita(c)}
-                            ${etiquetaOrigen(c)}
-                        </div>
-                        <div class="header-side">
-                            <span class="date">${new Date(c.fecha_hora).toLocaleString()}</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                    </div>
-                    <div class="history-content">
-                        <div class="clinical-data-grid">
-                            <div class="clinical-field"><label>Peso</label><span>${textoPeso(c.peso)}</span></div>
-                            <div class="clinical-field"><label>Temp.</label><span>${escaparTexto(c.temperatura || '--')} °C</span></div>
-                            <div class="clinical-field"><label>F.C.</label><span>${escaparTexto(c.frecuencia_cardiaca || '--')} LPM</span></div>
-                        </div>
-                        ${seccionSintomas(c)}
-                        <div class="clinical-section">
-                            <label>Anamnesis</label>
-                            <p>${escaparTexto(c.anamnesis || 'N/A')}</p>
-                        </div>
-                        <div class="clinical-section">
-                            <label>Diagnóstico Definitivo</label>
-                            <p><strong>${escaparTexto(c.diagnostico)}</strong></p>
-                        </div>
-                        <div class="clinical-section">
-                            <label>Plan de Manejo</label>
-                            <p>${escaparTexto(c.plan_tratamiento || 'N/A')}</p>
-                        </div>
-                        ${tablaTratamientos(c.tratamientos)}
-                        ${listaAdjuntos(c.archivos)}
-                    </div>
-                `;
-                // Sin onclick en el HTML (ZOOKI_REGLAS §1).
-                item.querySelector('.history-header').addEventListener('click', () => item.classList.toggle('active'));
-                timeline.appendChild(item);
-            });
+            timeline.innerHTML = data.consultas.map(c => filaHistorialCompacto(c, 'consulta')).join('');
         } else if (m.numero_historia_clinica) {
             timeline.innerHTML = '<div class="empty-table"><i class="fas fa-folder-open"></i><p>No hay consultas registradas para esta mascota.</p></div>';
         } else {
@@ -1759,86 +1759,9 @@ function renderPetDashboard(data, id) {
     // 3. Render Unified Chronological Timeline
     const timelineDiv = document.getElementById('dashHistorialTimeline');
     if (timelineDiv) {
-        const timelineEvents = [];
-
-        // Todo texto de la base se escapa: con la historia compartida
-        // (RN-113) puede venir de otra clínica.
-        if (data.consultas) {
-            data.consultas.forEach(c => {
-                const cantidadTratamientos = Array.isArray(c.tratamientos) ? c.tratamientos.length : 0;
-                timelineEvents.push({
-                    type: 'consulta',
-                    date: new Date(c.fecha_hora),
-                    title: 'Consulta Clínica',
-                    subtitle: `Dr. ${escaparTexto(c.veterinario)} ${etiquetaSinCita(c)}`,
-                    origen: etiquetaOrigen(c),
-                    body: `<b>Motivo:</b> ${escaparTexto(c.motivo_consulta)}${textoSintomas(c) ? `<br><b>Síntomas:</b> ${textoSintomas(c)}` : ''}<br><b>Diagnóstico:</b> ${escaparTexto(c.diagnostico)}<br><b>Peso:</b> ${textoPeso(c.peso)} • <b>F.C:</b> ${escaparTexto(c.frecuencia_cardiaca || '--')} LPM • <b>Temp:</b> ${escaparTexto(c.temperatura || '--')} °C`,
-                    meta: cantidadTratamientos > 0 ? `<div class="timeline-meta-tratamiento"><i class="fas fa-pills"></i> Tratamiento prescrito (${cantidadTratamientos} meds)</div>` : ''
-                });
-            });
-        }
-
-        if (data.vacunas) {
-            data.vacunas.forEach(v => {
-                const laboratorio = v.laboratorio ? ` (${escaparTexto(v.laboratorio)})` : '';
-                timelineEvents.push({
-                    type: 'vacuna',
-                    date: new Date(v.fecha_aplicacion),
-                    title: 'Vacuna Aplicada',
-                    subtitle: `Vacuna: ${escaparTexto(v.nombre_vacuna)}${laboratorio}`,
-                    origen: etiquetaOrigen(v),
-                    body: `Aplicación de dosis veterinaria. Lote: ${escaparTexto(v.lote || 'N/A')}.<br><b>Próxima dosis programada:</b> ${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : 'N/A'}`
-                });
-            });
-        }
-
-        if (data.desparasitaciones) {
-            data.desparasitaciones.forEach(d => {
-                timelineEvents.push({
-                    type: 'desparasitacion',
-                    date: new Date(d.fecha_aplicacion),
-                    title: 'Control de Parásitos',
-                    subtitle: `Producto: ${escaparTexto(d.producto)} (${escaparTexto(d.tipo)})`,
-                    origen: etiquetaOrigen(d),
-                    body: `Control antiparasitario. ${escaparTexto(d.observaciones || 'Sin observaciones.')}<br><b>Próxima dosis recomendada:</b> ${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : 'N/A'}`
-                });
-            });
-        }
-
-        // Chronological Sorting Descending
-        timelineEvents.sort((a, b) => b.date - a.date);
-
-        timelineDiv.innerHTML = '';
-        if (timelineEvents.length > 0) {
-            const container = document.createElement('div');
-            container.className = 'clinical-timeline';
-            timelineEvents.forEach(evt => {
-                const eventDiv = document.createElement('div');
-                eventDiv.className = `timeline-event event-${evt.type}`;
-
-                let iconClass = 'fa-notes-medical';
-                if (evt.type === 'consulta') iconClass = 'fa-stethoscope';
-                else if (evt.type === 'vacuna') iconClass = 'fa-syringe';
-                else if (evt.type === 'desparasitacion') iconClass = 'fa-bug';
-
-                eventDiv.innerHTML = `
-                    <div class="timeline-header">
-                        <div class="timeline-title">
-                            <i class="fas ${iconClass}"></i> ${evt.title}
-                        </div>
-                        <div class="timeline-date">
-                            ${evt.date.toLocaleDateString()}
-                        </div>
-                    </div>
-                    <div class="timeline-subtitulo">${evt.subtitle} ${evt.origen || ''}</div>
-                    <div class="timeline-body">
-                        ${evt.body}
-                    </div>
-                    ${evt.meta || ''}
-                `;
-                container.appendChild(eventDiv);
-            });
-            timelineDiv.appendChild(container);
+        const eventos = eventosHistorialCompacto(data);
+        if (eventos.length > 0) {
+            timelineDiv.innerHTML = eventos.map(evento => filaHistorialCompacto(evento.registro, evento.tipo)).join('');
         } else if (m.numero_historia_clinica) {
             timelineDiv.innerHTML = '<div class="empty-table"><i class="fas fa-history"></i><p>No hay eventos registrados en el expediente clínico.</p></div>';
         } else {

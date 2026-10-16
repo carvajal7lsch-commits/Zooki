@@ -400,8 +400,9 @@ test('el historial muestra los síntomas marcados de cada consulta, escapados, y
     assert.match(html, /Síntomas marcados/);
     assert.match(html, /Vómito, &lt;b&gt;Tos&lt;\/b&gt;/, 'Pueden venir de otra clínica autorizada: se escapan');
     const medical = leer('public/js/medical-module.js');
-    assert.match(medical, /\$\{seccionSintomas\(c\)\}/, 'Cajón del historial');
-    assert.match(medical, /<b>Síntomas:<\/b> \$\{textoSintomas\(c\)\}/, 'Línea de tiempo de la ficha');
+    assert.match(contexto.filaHistorialCompacto({ motivo_consulta: 'Control', sintomas: [{ etiqueta: '<b>Tos</b>' }] }, 'consulta'), /Síntomas marcados[\s\S]*&lt;b&gt;Tos&lt;\/b&gt;/);
+    assert.equal((medical.match(/filaHistorialCompacto\(c, 'consulta'\)/g) || []).length, 1, 'El cajón usa el renderer común');
+    assert.match(medical, /filaHistorialCompacto\(evento.registro, evento.tipo\)/, 'La ficha usa el mismo renderer');
     assert.match(leer('views/vet/atencion.php'), /\$con\['sintomas'\]/, 'Historial de Atención');
 
     // Tras guardar solo se repinta el historial si su cajón está a la vista (Pacientes también lo cierra con closeDrawer).

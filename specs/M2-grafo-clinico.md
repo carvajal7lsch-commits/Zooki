@@ -146,6 +146,8 @@ La decisión «confirmar» requiere una huella opaca vigente por fila: si cambia
 - [x] C7 — Pulido de M2 (pendientes de C1, C5a y C5b y hallazgos del usuario): revisada y aprobada en código (Claude Code, 2026-10-16).
 - [x] C6 — Mapa del grafo: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
 - [x] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia; verificación final de F.
+- [x] C8 — Rediseño visual de consulta y vínculo: revisada y aprobada en código (Claude Code; commit `7367317`).
+- [x] C8.1 — Celular y ficha/historial compactos: entregada, pendiente de revisión (Codex, 2026-10-16).
 - [x] F — `2.0.0-alpha.4`: entregada, pendiente de revisión (Codex, 2026-10-16).
 - [x] Revisiones documentales una vez por módulo y descargas regeneradas; ver Anexo F.
 - [ ] Pruebas del usuario de C5a/C5b/C7 antes del despliegue (lista consolidada abajo).
@@ -1902,3 +1904,67 @@ Mutaciones comprobadas (cada una hace fallar su prueba y se restauró): sin `pon
 **Aceptado:** los cambios visibles fuera de la consulta que anota el anexo (portal: icono de condición crónica en azul y rojo solo para alergias; notas verdes de Pacientes y estados de cita en azul) son coherentes con la identidad. Lo que queda para el pulido general (unificar `--z-*` del portal con `identidad.css`, color de SweetAlert, «Es otra mascota», interruptor verde «Activo» del registro de mascota) se anotó en `pulido-interfaz.md`.
 
 **Siguiente:** el usuario repite las pruebas (las cinco de «Pruebas del usuario antes del despliegue» y las cuatro del Anexo C8), y después respaldo, integración, tag y comprobación del VPS.
+
+**Hallazgos del usuario sobre C8 (2026-10-16):**
+
+| # | Hallazgo | Corrección (C8.1) |
+|---|---|---|
+| H10 | En el celular la consulta no queda bien: en Atención la columna del paciente ocupa toda la primera pantalla y el formulario queda muy abajo; el botón de salir se sale de la barra inferior (captura `c8-despues/03-atencion-diagnostico-celular.png`). | En el celular, el paciente pasa a una cabecera compacta y plegable (avatar, nombre, edad, peso y un indicador «N alertas» que abre la lista); el formulario y los pasos quedan arriba; barra inferior sin desbordes. |
+| H11 | El **historial** ocupa demasiado espacio innecesario (aclaración del usuario: «control» era el historial). | Historial compacto: pestaña «Historial» de Atención y cajón de historial de Pacientes/Consultas, cada consulta como fila corta que se expande. |
+
+## Anexo C8.1 — Resultado
+
+**Lo escribió Codex (2026-10-16); entregada, pendiente de revisión de Claude (arquitecto).**
+Se conserva C8, que al iniciar ya estaba en el commit `7367317`; no se reescribe ese commit.
+No cambian reglas, rutas, permisos, respuestas del servidor ni la versión preparada `2.0.0-alpha.4`.
+
+### Qué y evidencia
+
+| Hallazgo / requisito | Cambio | Prueba |
+|---|---|---|
+| H10, RNF-16, presentación de RE-2.1.5 | Por debajo de 768 px, Atención muestra avatar pequeño, identidad y edad/peso/historia en una línea; el indicador cuenta las alertas y es rojo solo si hay alergia; alertas y «Ver ficha» se abren por separado. La columna de escritorio conserva su presentación. | `M2C81Celular.test.cjs`: conteo/color semántico, abrir/cerrar, actualización con el renderer real y limpieza al cambiar de paciente; capturas 360/390 y comparación a 1440. |
+| H10, RNF-16 | Pasos y pestañas con desplazamiento horizontal; el activo se lleva a la vista. Pie de Atención fijo por encima del menú, con espacio para el área segura. Modal de pantalla completa, ficha compacta, campos de todo el ancho y cuerpo que desplaza sin mover el pie. | `c81-navegador.mjs`: geometría y acceso real a «Finalizar» después de desplazar; pie del modal dentro del viewport; capturas de todos los pasos y pestañas. |
+| H10, RNF-16 | Los siete accesos inferiores, incluido Salir, caben en 360/390/414 px. Se limita el adorno heredado del cuerpo en el área con barra clínica: medía 350 px más el margen del 5% y ensanchaba la página a 368 px. | Chrome: ancho del documento igual al solicitado, Salir contenido en la barra y pie de Atención por encima de esta; `medidas.json`. |
+| H11, RE-2.5.1, RE-2.5.2, RE-2.5.4 y presentación de RE-2.10.1 | Filas nativas `details/summary` en Atención, cajones de Pacientes/Consultas y expediente: fecha, clínica, motivo y diagnóstico en una línea; chips de Sin cita, peso y tratamientos. Al expandir conserva signos, síntomas, tratamientos, archivos y origen de otra clínica. Vacunas/desparasitaciones usan el mismo patrón y orden descendente. | `M2C81Celular`: renderer común, escape de datos, adjuntos, peso NULL, fechas locales y orden mixto; navegador sobre ambos cajones y Atención. C5a/C5b/C7 adaptan sus comprobaciones al renderer compartido y siguen verdes. |
+
+La cabecera del modal obtiene sus datos del endpoint existente de ficha básica `get_mascota_ajax`; no pide historia clínica para mostrar edad, especie, raza, peso y propietario.
+Atención obtiene tratamientos y adjuntos del endpoint existente `listar_historial_ajax` al abrir Historial, con sus mismos permisos y respuesta; si falla, conserva las filas iniciales y permite reintentar.
+Se corrigió el selector del cuerpo del cajón de Consultas: buscaba solo `drawerHistorial`, que existe en Pacientes; ahora admite también `historialDrawer`.
+Las alertas del cajón se pliegan en el celular con el mismo indicador para dejar las filas a la vista; en escritorio conservan su presentación.
+Un fallo HTTP de la carga de alertas no se presenta como cero alertas; la carga de alertas y de ficha básica del modal descarta respuestas de una mascota anterior.
+Las reglas nuevas de color solo usan variables `--z-*` existentes en `identidad.css`; sin JS ni CSS en línea en las vistas.
+
+### Verificación
+
+- PHP completo sin host MySQL: **854 pruebas, 7212 aserciones y 44 omitidas** (MySQL).
+- PHP completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1`, instancia temporal propia MariaDB 10.4.32 y base por defecto **`zooki_test_base_v2`**: **854 pruebas, 7813 aserciones, ninguna omitida**.
+- JavaScript completo: **232/232**, incluidas C5a, C5b, C7, C8 y las cinco pruebas de C8.1.
+- Chrome sin interfaz: **360, 390, 414, 820 y 1440 px**; **72 capturas** a 360/390/820/1440 en `specs/referencias/m2-pulido/c8-1-despues/`, con índice y medidas. A 414 px se comprueban dimensiones y navegación, sin duplicar capturas.
+- Las capturas usan las vistas PHP, hojas y scripts reales y respuestas HTTP simuladas; el arnés está en `tests/Frontend/apoyo/c81-vistas.php` y `c81-navegador.mjs`. No equivalen a una sesión autenticada contra la base del usuario.
+- No se leyó ni escribió `.env`; no se usó `zooki_v2_prueba` ni se cambiaron contraseñas. No se hicieron commits ni push.
+
+### Pendientes
+
+Revisión de Claude (arquitecto) y comprobación del usuario con **Beto Norte**, sobre datos de prueba existentes:
+
+1. [ ] **Atención, celular 360/390 px:** al entrar se ven los pasos; desplegar y cerrar alertas y «Ver ficha»; pasar por los cinco pasos y desplazar hasta abajo: Anterior/Siguiente/Finalizar y Salir siguen accesibles.
+2. [ ] **Modal desde Pacientes, celular y escritorio:** ficha correcta, contador rojo ante alergia, pestañas desplazables, campos completos y Guardar/Cancelar siempre visibles; la columna de Atención en escritorio conserva el diseño.
+3. [ ] **Historial de Atención y los cajones de Pacientes/Consultas:** filas cortas de consultas, vacunas y desparasitaciones; expandir una consulta con síntomas, tratamiento y archivo y comprobar que todo el contenido sigue disponible, sin scroll horizontal.
+
+Lo ajeno a esta corrección (acentos heredados del cajón y distribución de tableta) se anotó en `specs/pulido-interfaz.md`.
+Se mantienen las pruebas anteriores al despliegue de F y C8 que aún no haya aprobado el usuario.
+
+### Comandos de commit (PowerShell 5.1)
+
+C8 ya está en `7367317`; estos comandos agregan C8.1 encima, sin rehacer el historial de C8.
+La entrega completa queda en ambos commits consecutivos.
+
+```powershell
+git add -- agentes/estado.md specs/M2-grafo-clinico.md specs/pulido-interfaz.md specs/referencias/m2-pulido/c8-1-despues/
+git add -- public/css/atencion.css public/css/consulta-clinica.css public/css/pill-sidebar.css
+git add -- public/js/paciente-compacto.js public/js/alertas-medicas.js public/js/atencion.js public/js/consulta-formulario.js public/js/medical-module.js
+git add -- views/vet/atencion.php views/vet/modal_consulta.php views/vet/pacientes.php views/vet/consultas.php views/vet/layout.php views/partials/historial_procedimiento.php
+git add -- tests/Frontend/M2C81Celular.test.cjs tests/Frontend/M2C5aConsulta.test.cjs tests/Frontend/M2C5bTratamientos.test.cjs tests/Frontend/M2C7Pulido.test.cjs tests/Frontend/apoyo/c81-vistas.php tests/Frontend/apoyo/c81-navegador.mjs
+git diff --cached --stat
+git commit -m "fix(consulta): compactar ficha e historial en celular (M2 C8.1, RE-2.5.1)"
+```

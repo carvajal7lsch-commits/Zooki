@@ -166,6 +166,7 @@
         const iconos = ICONOS[ajustes.iconos] || ICONOS.fa;
         contenedor.dataset.idMascota = String(ajustes.idMascota ?? contenedor.dataset.idMascota ?? '');
         contenedor._alertas = { opciones: ajustes };
+        if (global.ZookiPacienteCompacto) global.ZookiPacienteCompacto.actualizarAlertas(contenedor, activas);
         contenedor.replaceChildren();
         contenedor.hidden = false;
         contenedor.classList.toggle('alertas-medicas--con-alertas', activas.length > 0);
@@ -256,8 +257,11 @@
         const idMascota = contenedor.dataset.idMascota;
         contenedor.replaceChildren(el('p', 'alertas-medicas__vacio', 'Cargando alergias y alertas…'));
         const { ok, cuerpo } = await pedir(RUTAS.listar + '&id_mascota=' + encodeURIComponent(idMascota));
+        // C8.1: al cambiar de paciente, una respuesta anterior no pinta su cabecera ni su lista.
+        if (String(contenedor.dataset.idMascota) !== String(idMascota)) return;
         if (!ok) {
             contenedor.replaceChildren(el('p', 'alertas-medicas__vacio alertas-medicas__vacio--error', cuerpo.message || 'No se pudieron cargar las alergias y alertas.'));
+            if (global.ZookiPacienteCompacto) global.ZookiPacienteCompacto.actualizarAlertas(contenedor, null);
             return;
         }
         pintar(contenedor, cuerpo.alertas, { idMascota, nombreMascota: contenedor.dataset.nombreMascota, lectura: contenedor.dataset.lectura === '1' });
