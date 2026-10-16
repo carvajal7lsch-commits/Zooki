@@ -363,7 +363,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-2.1.1 | El sistema debe registrar fecha/hora, motivo, anamnesis, examen físico, diagnóstico y plan. | Funcional | La consulta conserva todos los campos. | Alta |
+| RE-2.1.1 | El sistema debe registrar fecha/hora, motivo, anamnesis, examen físico, diagnóstico y plan. El peso del examen físico es obligatorio, salvo que el veterinario marque «No se pudo pesar». | Funcional | La consulta conserva todos los campos; sin peso solo se guarda con «No se pudo pesar», el peso queda vacío (nunca 0 ni aproximado) y el historial lo dice. | Alta |
 | RE-2.1.2 | El sistema debe generar un número de HC único en la primera consulta. | Funcional | La primera consulta genera un N.° de HC único. | Alta |
 | RE-2.1.3 | El sistema debe impedir guardar una consulta sin diagnóstico. | Restricción | Guardar sin diagnóstico es rechazado. | Alta |
 | RE-2.1.4 | El sistema debe vincular la consulta a la mascota y mostrarla en su historial. | Funcional | La consulta aparece en el historial cronológico. | Alta |

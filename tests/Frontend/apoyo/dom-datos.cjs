@@ -25,8 +25,8 @@ function crearNodo(etiqueta) {
         get className() { return [...clases].join(' '); },
         set className(valor) { clases.clear(); String(valor).split(/\s+/).filter(Boolean).forEach(c => clases.add(c)); },
         classList: {
-            add: c => clases.add(c),
-            remove: c => clases.delete(c),
+            add: (...cs) => cs.forEach(c => clases.add(c)),
+            remove: (...cs) => cs.forEach(c => clases.delete(c)),
             toggle: (c, si) => (si === undefined ? (clases.has(c) ? clases.delete(c) : clases.add(c)) : (si ? clases.add(c) : clases.delete(c))),
             contains: c => clases.has(c),
         },
@@ -54,6 +54,19 @@ function crearNodo(etiqueta) {
         remove() {
             if (n.padre) n.padre.hijos = n.padre.hijos.filter(h => h !== n);
             n.padre = null;
+        },
+        /** Copia propiedades, dataset, atributos, clases y, si es profundo, los hijos; no los escuchas. */
+        cloneNode(profundo) {
+            const copia = crearNodo(n.tagName.toLowerCase());
+            for (const clave of ['hidden', 'disabled', 'checked', 'value', 'type', 'href', 'title', 'name', 'id', 'required', 'placeholder']) {
+                if (Object.prototype.hasOwnProperty.call(n, clave)) copia[clave] = n[clave];
+            }
+            Object.assign(copia.dataset, n.dataset);
+            Object.assign(copia.atributos, n.atributos);
+            n.clases.forEach(c => copia.clases.add(c));
+            copia._texto = n._texto;
+            if (profundo) n.hijos.forEach(h => copia.appendChild(h.tagName === '#text' ? textoNodo(h.textContent) : h.cloneNode(true)));
+            return copia;
         },
         insertAdjacentElement(posicion, nuevo) {
             if (posicion !== 'afterend' || !n.padre) throw new Error('Solo afterend con padre');

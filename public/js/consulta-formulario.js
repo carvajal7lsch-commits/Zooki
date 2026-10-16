@@ -7,10 +7,13 @@
  *   (ValidadorClinico::AVISOS_CONSULTA, en data-aviso-*).
  * - Un 422 del servidor con `campo` se muestra junto a ese campo.
  * - Une los síntomas (consulta-sintomas.js) con los diagnósticos sugeridos
- *   (consulta-diagnosticos.js).
+ *   (consulta-diagnosticos.js) y las filas de tratamiento con sus alertas de
+ *   prescripción (consulta-tratamientos.js, C5b).
+ * - Peso (decisión del usuario, 2026-10-15): se pide, salvo que se marque
+ *   «No se pudo pesar»; entonces el campo queda vacío y deshabilitado.
  *
  * Al final, el adaptador del modal conserva las llamadas de siempre
- * (openConsultationModal, saveConsultation, updateFileList y
+ * (openConsultationModal, saveConsultation, addTreatmentRow, updateFileList y
  * avisarAdjuntosRechazados), que antes vivían en medical-module.js, y pone
  * la pantalla al día con la respuesta, sin recargar.
  */
@@ -26,6 +29,7 @@
 
     /** La misma regla del servidor: obligatorio, longitud máxima y rango de los signos. */
     function errorDe(campo) {
+        if (campo.disabled) return '';
         const valor = String(campo.value === undefined || campo.value === null ? '' : campo.value);
         const texto = valor.trim();
         if (campo.required && texto === '') return campo.dataset.avisoRequerido || 'Este campo es obligatorio.';
@@ -64,9 +68,22 @@
         return [...form.querySelectorAll('[data-consulta-campo]')];
     }
 
+    /** «No se pudo pesar»: el peso queda vacío, deshabilitado y deja de ser obligatorio. */
+    function aplicarSinPeso(form, casilla) {
+        const peso = form.querySelector(`[data-consulta-campo="${casilla.dataset.sinPeso}"]`);
+        if (!peso) return;
+        if (casilla.checked) peso.value = '';
+        peso.disabled = casilla.checked;
+        peso.required = !casilla.checked;
+        pintarAviso(form, peso, '');
+    }
+
     function preparar(form) {
         camposDe(form).forEach(campo => {
             campo.addEventListener('input', () => pintarAviso(form, campo, errorDe(campo)));
+        });
+        form.querySelectorAll('[data-sin-peso]').forEach(casilla => {
+            casilla.addEventListener('change', () => aplicarSinPeso(form, casilla));
         });
     }
 
@@ -82,6 +99,8 @@
     }
 
     function reiniciar(form) {
+        // form.reset() desmarca la casilla pero no vuelve a habilitar el peso.
+        form.querySelectorAll('[data-sin-peso]').forEach(casilla => aplicarSinPeso(form, casilla));
         camposDe(form).forEach(campo => pintarAviso(form, campo, ''));
     }
 
@@ -105,6 +124,10 @@
         const diagnosticos = raizDiagnosticos && window.ZookiDiagnosticos
             ? window.ZookiDiagnosticos.crear(raizDiagnosticos, { idMascota, campoDiagnostico })
             : null;
+        const raizTratamientos = form.querySelector('[data-tratamientos]');
+        const tratamientos = raizTratamientos && window.ZookiTratamientos
+            ? window.ZookiTratamientos.crear(raizTratamientos, { idMascota })
+            : null;
         const raizSintomas = form.querySelector('[data-sintomas]');
         const sintomas = raizSintomas && window.ZookiSintomas
             ? window.ZookiSintomas.crear(raizSintomas, {
@@ -120,16 +143,28 @@
         return {
             sintomas,
             diagnosticos,
-            validar: () => validarTodo(form),
+            tratamientos,
+            /** Primero los campos de la consulta; después las filas de tratamiento. */
+            validar() {
+                const campo = validarTodo(form);
+                const fila = tratamientos ? tratamientos.validar() : null;
+                return campo || fila;
+            },
+            /** Antes de validar al guardar: que las alertas de prescripción estén al día. */
+            listo: () => (tratamientos ? tratamientos.listo() : Promise.resolve()),
             limpiar() {
                 reiniciar(form);
                 if (sintomas) sintomas.limpiar();
                 if (diagnosticos) diagnosticos.limpiar();
+                if (tratamientos) tratamientos.limpiar();
             },
             mostrarErrorServidor(respuesta) {
                 if (respuesta && respuesta.campo === 'sintomas' && sintomas) {
                     sintomas.mostrarError(respuesta.aviso || respuesta.message);
                     return sintomas.campo;
+                }
+                if (respuesta && String(respuesta.campo || '').startsWith('tratamientos.') && tratamientos) {
+                    return tratamientos.mostrarErrorServidor(respuesta);
                 }
                 return mostrarErrorServidor(form, respuesta);
             },
@@ -168,10 +203,16 @@
         form.reset();
         document.getElementById('consultation_id_mascota').value = id;
         document.getElementById('consultationPetName').textContent = nombre;
-        document.getElementById('treatmentsList').replaceChildren();
         const archivos = document.getElementById('fileList');
         if (archivos) archivos.replaceChildren();
         controladorModal().limpiar();
+        // C5b: las alergias y alertas de esta mascota, a la vista antes de prescribir.
+        const alertas = form.querySelector('[data-alertas-consulta]');
+        if (alertas && window.ZookiAlertas) {
+            alertas.dataset.idMascota = String(id);
+            alertas.dataset.nombreMascota = nombre;
+            window.ZookiAlertas.cargar(alertas);
+        }
         mostrarPestana('tabMotivo');
         openModal('modalConsulta');
     }
@@ -180,6 +221,7 @@
         evento.preventDefault();
         const form = evento.currentTarget || evento.target;
         const consulta = controladorModal();
+        await consulta.listo();
         const invalido = consulta.validar();
         if (invalido) {
             irAlCampoDelModal(invalido);
@@ -211,6 +253,12 @@
         } finally {
             if (boton) boton.disabled = false;
         }
+    }
+
+    /** Adaptador de la llamada de siempre: una fila nueva en el modal. */
+    function addTreatmentRow() {
+        const consulta = controladorModal();
+        if (consulta && consulta.tratamientos) consulta.tratamientos.agregar();
     }
 
     /** Muestra los nombres de los archivos elegidos en un input de adjuntos. */
@@ -261,6 +309,7 @@
     window.ZookiConsultaForm = { OBLIGATORIO, EVENTO_REGISTRADA, errorDe, validarTodo, mostrarErrorServidor, iniciar };
     window.openConsultationModal = openConsultationModal;
     window.saveConsultation = saveConsultation;
+    window.addTreatmentRow = addTreatmentRow;
     window.updateFileList = updateFileList;
     window.avisarAdjuntosRechazados = avisarAdjuntosRechazados;
 

@@ -55,7 +55,7 @@ final class PrescripcionTest extends TestCase
 
     private function guardar(array $filas, ?callable $adjunto = null): int
     {
-        return (new Consulta($this->db))->registrar(['id_mascota' => 1, 'motivo' => 'Prueba', 'diagnostico' => 'Decisión veterinaria'], $filas, $adjunto === null ? [] : [[]], $adjunto ?? static fn (): array => []);
+        return (new Consulta($this->db))->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Prueba', 'diagnostico' => 'Decisión veterinaria'], $filas, $adjunto === null ? [] : [[]], $adjunto ?? static fn (): array => []);
     }
 
     private function sembrarMedicacion(?string $farmaco, int $clinica = 2, ?string $inicio = null, ?string $fin = null): int
@@ -279,7 +279,7 @@ final class PrescripcionTest extends TestCase
     public function testControladorGuardarDirectoResponde422JuntoALaFila(): void
     {
         $this->db->exec('UPDATE mascotas SET id_especie = 2, id_raza = 50 WHERE id_mascota = 1');
-        $_POST += ['motivo' => 'Control', 'diagnostico' => 'Veterinario', 'med_nombre' => ['Texto manual'], 'med_dosis' => ['Indicada'], 'med_via' => ['Oral'], 'med_duracion' => ['Indicada'], 'med_inicio' => [$this->fecha->format('Y-m-d')], 'med_farmaco' => ['farmaco.paracetamol']];
+        $_POST += ['peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Veterinario', 'med_nombre' => ['Texto manual'], 'med_dosis' => ['Indicada'], 'med_via' => ['Oral'], 'med_duracion' => ['Indicada'], 'med_inicio' => [$this->fecha->format('Y-m-d')], 'med_farmaco' => ['farmaco.paracetamol']];
         ob_start();
         (new ConsultaController($this->db))->registrarAjax();
         $respuesta = json_decode(ob_get_clean(), true);
@@ -309,5 +309,114 @@ final class PrescripcionTest extends TestCase
         }
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM consultas')->fetchColumn());
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM tratamientos')->fetchColumn());
+    }
+
+    // ── M2 C5b: presentación en la consulta ─────────────────────────────
+
+    /** Nota de C3: la toxicidad nombra la especie del paciente y su fuente (conocimiento global). */
+    public function testToxicidadNombraLaEspecieYSuFuenteYLaInteraccionVisibleSuFarmaco(): void
+    {
+        $this->db->exec('UPDATE mascotas SET id_especie = 2, id_raza = 50 WHERE id_mascota = 1');
+        $_POST['tratamientos'] = [['farmaco' => 'farmaco.paracetamol']];
+        $fila = $this->api()['filas'][0];
+        $this->assertTrue($fila['bloqueada']);
+        $motivo = $fila['motivos'][0];
+        $this->assertSame('toxicidad', $motivo['tipo']);
+        $this->assertSame($this->db->query("SELECT etiqueta FROM grafo_nodos WHERE codigo = 'especie.felino'")->fetchColumn(), $motivo['paciente']);
+        $this->assertNotEmpty($motivo['fuentes']);
+        foreach ($motivo['fuentes'] as $fuente) {
+            $this->assertSame(['entidad', 'titulo', 'url', 'fundamento'], array_keys($fuente));
+            $this->assertTrue($fuente['url'] === null || str_starts_with($fuente['url'], 'https://'));
+        }
+
+        // Visible (misma clínica): dice con qué fármaco interactúa y su fuente.
+        $this->db->exec('UPDATE mascotas SET id_especie = 1, id_raza = NULL WHERE id_mascota = 1');
+        $this->sembrarMedicacion('farmaco.prednisona', 1, null, $this->fecha->modify('+3 days')->format('Y-m-d'));
+        $_POST['tratamientos'] = [['farmaco' => 'farmaco.meloxicam']];
+        $advertencia = $this->api()['filas'][0]['advertencias'][0];
+        $this->assertSame('interaccion', $advertencia['tipo']);
+        $this->assertSame($this->db->query("SELECT etiqueta FROM grafo_nodos WHERE codigo = 'farmaco.prednisona'")->fetchColumn(), $advertencia['farmaco']);
+        $this->assertNotEmpty($advertencia['fuentes']);
+    }
+
+    /** RE-2.9.3 por el formulario: la huella, la decisión y la conciliación de cada fila llegan y se auditan. */
+    public function testDecisionYConciliacionDeCadaFilaLleganPorElFormularioYSeAuditan(): void
+    {
+        $this->sembrarMedicacion('farmaco.prednisona');
+        $hoy = $this->fecha->format('Y-m-d');
+        $base = $_POST + ['motivo' => 'Dolor', 'peso' => '8.5', 'diagnostico' => 'Artrosis', 'med_nombre' => ['Meloxicam', 'Suero oral'],
+            'med_dosis' => ['Según peso', '50 ml'], 'med_via' => ['Oral', 'Oral'], 'med_duracion' => ['5 días', '1 día'],
+            'med_inicio' => [$hoy, $hoy], 'med_fin' => [$this->fecha->modify('+4 days')->format('Y-m-d'), $hoy], 'med_farmaco' => ['farmaco.meloxicam', '']];
+        $_POST = $base;
+        $primera = $this->registrarPorFormulario();
+        $this->assertSame('tratamientos.0', $primera['campo']);
+        $this->assertTrue($primera['prescripcion']['requiere_conciliacion']);
+        $this->assertStringNotContainsString('prednisona', strtolower(json_encode($primera)));
+
+        $_POST = $base + ['med_decision' => ['confirmar', ''], 'med_huella' => [$primera['prescripcion']['huella'], ''], 'med_conciliacion' => ['', '']];
+        $sinConciliar = $this->registrarPorFormulario();
+        $this->assertSame('tratamientos.0', $sinConciliar['campo']);
+        $this->assertStringContainsString('conciliación', $sinConciliar['message']);
+
+        $_POST['med_conciliacion'] = ['El propietario confirma un antiinflamatorio de otra clínica; se ajusta el plan.', ''];
+        $guardada = $this->registrarPorFormulario();
+        $this->assertTrue($guardada['success'], $guardada['message'] ?? '');
+        $auditoria = $this->db->query("SELECT datos_nuevos FROM auditoria_sistema WHERE descripcion = 'Decisión de prescripción (RE-2.9.3)'")->fetchAll(PDO::FETCH_COLUMN);
+        $this->assertCount(1, $auditoria, 'Solo la fila con decisión se audita');
+        $datos = json_decode($auditoria[0], true);
+        $this->assertSame('confirmar', $datos['decision']);
+        $this->assertStringContainsString('El propietario confirma', $datos['conciliacion']);
+    }
+
+    public function testBuscadorDeFarmacosSoloOfreceFarmacosActivosPorEtiquetaYSinonimoYSoloAlVeterinario(): void
+    {
+        $sinonimo = $this->db->query("SELECT s.texto, n.codigo FROM grafo_sinonimos s JOIN grafo_nodos n ON n.id_nodo = s.id_nodo
+            WHERE n.tipo = 'farmaco' AND n.activo = 1 AND s.activo = 1 ORDER BY s.id_sinonimo LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+        $sustancia = $this->db->query("SELECT etiqueta FROM grafo_nodos WHERE tipo = 'sustancia' AND activo = 1 ORDER BY id_nodo LIMIT 1")->fetchColumn();
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        try {
+            $_GET = ['q' => 'paracet'];
+            $this->assertContains('farmaco.paracetamol', array_column($this->buscarFarmacos()['farmacos'], 'codigo'));
+            $_GET = ['q' => $sinonimo['texto']];
+            $this->assertContains($sinonimo['codigo'], array_column($this->buscarFarmacos()['farmacos'], 'codigo'));
+            $_GET = ['q' => mb_substr($sustancia, 0, 6)];
+            $this->assertSame([], array_values(array_diff(array_column($this->buscarFarmacos()['farmacos'], 'tipo'), ['farmaco'])), 'Ni sustancias ni otros tipos');
+            $_GET = ['q' => 'retirado'];
+            $this->assertNotContains('farmaco.retirado', array_column($this->buscarFarmacos()['farmacos'], 'codigo'));
+
+            $_SESSION['id_usuario'] = 1;
+            Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+            try {
+                $this->buscarFarmacos();
+                $this->fail('El administrador no prescribe.');
+            } catch (AccesoDenegado $error) {
+                $this->assertSame(403, $error->codigo());
+            }
+        } finally {
+            $_GET = [];
+        }
+    }
+
+    private function registrarPorFormulario(): array
+    {
+        ob_start();
+        try {
+            (new ConsultaController($this->db))->registrarAjax();
+        } finally {
+            $salida = ob_get_clean();
+        }
+        return json_decode($salida, true);
+    }
+
+    private function buscarFarmacos(): array
+    {
+        Security::autorizar('buscar_farmaco_ajax');
+        ob_start();
+        try {
+            (new PrescripcionController($this->db))->buscarFarmacosAjax();
+        } finally {
+            $salida = ob_get_clean();
+        }
+        return json_decode($salida, true, 64, JSON_THROW_ON_ERROR);
     }
 }

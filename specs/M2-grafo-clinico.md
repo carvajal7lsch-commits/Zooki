@@ -1,6 +1,6 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B, C1 y C6 cerradas; C2, C3 y C4 revisadas y aprobadas; C5a entregada, pendiente de revisión (Claude Code, 2026-10-15)
+> Estado: B, C1 y C6 cerradas; C2, C3, C4 y C5a revisadas y aprobadas; C5b entregada, pendiente de revisión (Claude Code, 2026-10-15)
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
@@ -90,6 +90,8 @@
 La obesidad declarada de T-13 y «está en tratamiento» de T-19 se conservan como contexto, sin inferir peso, medicamento ni pauta.
 T-13 se expresa mediante anorexia sostenida en gatos; T-19 mediante crisis breve habitual ya finalizada más epilepsia documentada.
 
+**Decisión del usuario (2026-10-15):** peso desconocido con una casilla "No se pudo pesar"; el peso queda NULL, nunca 0, y no hay peso aproximado.
+
 ## 7. Tareas y verificación
 
 **Decisiones del usuario durante C3 (2026-10-15):** conciliación de máximo 500 caracteres, con rechazo si excede el límite, sin recortar.
@@ -104,8 +106,8 @@ La decisión «confirmar» requiere una huella opaca vigente por fila: si cambia
 - [x] C2 — Motor de diagnósticos: revisada y aprobada (Codex, 2026-10-15).
 - [x] C3 — Alertas de prescripción: revisada y aprobada (Codex, 2026-10-15).
 - [x] C4 — Motor de triage con la batería: revisada y aprobada (Codex, 2026-10-15).
-- [x] C5a — Consulta: síntomas, diagnósticos sugeridos y obligatorios: entregada, pendiente de revisión (Claude Code, 2026-10-15).
-- [ ] C5b — Consulta: prescripción con alertas, tratamiento y peso desconocido.
+- [x] C5a — Consulta: síntomas, diagnósticos sugeridos y obligatorios: revisada y aprobada en código (Claude Code, 2026-10-15).
+- [x] C5b — Consulta: prescripción con alertas, tratamiento y peso desconocido: entregada, pendiente de revisión (Claude Code, 2026-10-15).
 - [x] C6 — Mapa del grafo: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
 - [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.4`.
@@ -1469,3 +1471,109 @@ En XAMPP, antes: `php scripts/migrar.php` y `php scripts/cargar_conocimiento.php
 **Aceptado de los pendientes:** `buscar_sintomas_ajax` con `id_mascota` es un cambio aditivo con la misma regla de acceso; «Otro / no sé» no se ofrece en la consulta (es la reserva del triage del propietario). Los síntomas en la lista de Consultas, el portal y el imprimible, la frecuencia respiratoria y las observaciones del modal y los `style=` restantes de `medical-module.js` pasan al pulido (F).
 
 **Siguiente:** pruebas del usuario (lista del Anexo C5a) y C5b (Claude Code).
+
+## Anexo C5b — Resultado
+
+**Lo escribió Claude Code (2026-10-15); entregada, pendiente de revisión de Claude (arquitecto).**
+
+### Qué se entregó
+
+- **Filas de tratamiento compartidas por el modal y Atención** (`views/partials/consulta_tratamiento_fila.php` y `public/js/consulta-tratamientos.js`):
+  - **Campos:** medicamento, dosis, vía (lista de `ValidadorTratamiento::VIAS`), duración, inicio, fin y observaciones.
+  - **Límites y avisos:** los máximos y los avisos son los de `ValidadorTratamiento`, con validación en tiempo real y restricción de entrada.
+  - **Fecha de fin:** se calcula solo desde una duración inequívoca («7 días» cuenta el día de inicio, «2 semanas», «dosis única»). El veterinario la ve y la corrige; si la cambia a mano, ya no se recalcula. El fin no puede ser anterior al inicio, en el navegador y en el servidor. Lo demás («hasta mejorar», meses) no se adivina (A.2).
+- **Buscador de fármacos:**
+  - `buscar_farmaco_ajax` (GET, solo veterinario) reutiliza `NodosEnlazables` filtrado al tipo «fármaco»: busca nodos activos por etiqueta y sinónimo.
+  - Elegir uno pone su código en la fila.
+  - Si se escribe un nombre libre, o se cambia el texto después de elegir, el código se quita y la fila dice «No se pudo cruzar con el conocimiento: evaluación incompleta» (nunca «sin interacciones»).
+- **Alertas por fila (RE-2.9.1 a RE-2.9.4):** al cambiar el fármaco, las fechas, al agregar o quitar filas o al registrar una alergia, `validar_prescripcion_ajax` evalúa todas las filas juntas, con 400 ms de espera.
+  - **Bloqueo:** en rojo, con el motivo; si es por toxicidad, «Paciente: Gato» y la fuente con enlace. La fila no se confirma ni deja guardar: hay que cambiar el fármaco o quitarla.
+  - **Advertencia visible:** en ámbar, con «Interactúa con: Prednisona», la fuente y la casilla «Confirmo la prescripción».
+  - **Advertencia protegida:** el mensaje genérico tal cual, sin fármaco, paciente ni fuente; pide la casilla y una conciliación obligatoria (máximo 500, con contador y aviso junto al campo).
+  - **Huella vigente:** viaja con cada fila (`med_huella[]`, `med_decision[]`, `med_conciliacion[]`). Si cambia, la fila se desmarca, vuelve a pedir confirmación y avisa con un aviso breve.
+- **Antes de guardar:** el modal y Atención esperan la evaluación pendiente (`listo()`).
+- **Errores del servidor junto a la fila:**
+  - `Tratamiento::validar` y `ValidadorPrescripcion` responden `tratamientos.N.campo` (por ejemplo `tratamientos.1.fecha_fin`), y el rechazo de prescripción responde `tratamientos.N` con su evaluación nueva, que repinta la fila.
+  - La N cuenta solo las filas con medicamento, igual que el servidor. Ya no hay aviso global para estos errores.
+- **Toxicidad con especie y fuente** (nota de la revisión de C3): `PrescripcionPublica` agrega `paciente` (la especie o la raza) y las `fuentes` (entidad, título, URL https y fundamento) a la toxicidad, y las fuentes a la interacción visible. Es conocimiento global; lo protegido no cambia: sigue siendo un único aviso genérico. Para eso, `MotorPrescripcion` guarda internamente el origen de la toxicidad.
+- **Alergias y alertas antes de prescribir (C1):** el modal las carga arriba de la pestaña «Plan» al abrirse, y Atención las muestra arriba del paso de tratamientos.
+  - Calendario incluye ahora el formulario de alertas, para registrar una alergia desde el modal.
+  - Registrar o desactivar una alerta emite `zooki:alertas-medicas` y la prescripción en curso se vuelve a evaluar.
+- **Peso (decisión del usuario, 2026-10-15):**
+  - El peso es obligatorio, salvo que se marque «No se pudo pesar». Con la casilla, el campo se vacía y se deshabilita y el servidor guarda NULL, aunque llegue un valor. Sin la casilla y sin peso, responde 422 junto al campo.
+  - El historial (cajón, ficha, impresión del veterinario y Atención) dice «No se pudo pesar», y `ResumenClinico` usa el último peso conocido.
+  - El borrador de Atención recuerda la casilla.
+- **Documentos:** anoté la decisión en §6. El criterio del peso quedó en RE-2.1.1 (no hay un RE propio de signos) y en HU-2.1. En Modelos §3 actualicé los nodos de contexto, formulario y tratamiento (fármaco o nombre libre, fin calculado, peso NULL); el diagrama renderiza con Mermaid 11.4.1. También actualicé `pulido-interfaz.md`.
+- **Código retirado:** `addTreatmentRow` y `fechaDeHoy` salen de `medical-module.js`; `addTreatmentRow` queda como adaptador en `consulta-formulario.js`. Interacciones ya no tiene la acción «agregar-tratamiento», porque el botón lo atiende el componente. Atención ya no usa `MutationObserver`.
+
+### RE con su prueba
+
+| RE / regla | Prueba |
+|---|---|
+| Decisión del peso (RE-2.1.1, HU-2.1) | `ConsultaTratamientoTest::testLaCasillaGuardaElPesoNullYSinCasillaElPesoSePide`, `testElResumenUsaElUltimoPesoConocidoYNoUnNull`; `BaseV2MysqlTest::testC5bPesoDesconocidoYFinDeLaFilaEnElEsquemaReal`; JS «No se pudo pesar…» y «el historial dice No se pudo pesar…» |
+| RE-2.4.1: campos de la fila y fin no anterior al inicio, junto a la fila | `testElFinAnteriorAlInicioYLosCamposFaltantesDicenSuFilaYCampo`, `testLasFilasSinMedicamentoNoCuentanEnLaNumeracion`, `testFinYObservacionesSeGuardanConLaFila`; JS «los errores tratamientos.N.campo…» y «el fin se calcula solo desde una duración inequívoca» |
+| RE-2.9.1: cruce con el fármaco elegido; nombre libre, evaluación incompleta | `PrescripcionTest::testBuscadorDeFarmacosSoloOfreceFarmacosActivosPorEtiquetaYSinonimoYSoloAlVeterinario`; JS «el buscador de fármacos pone el código…» |
+| RE-2.9.2: bloqueo con especie y fuente, que no se confirma | `testToxicidadNombraLaEspecieYSuFuenteYLaInteraccionVisibleSuFarmaco`; JS «un bloqueo muestra la especie…» |
+| RE-2.9.3: advertencia visible y protegida, decisión y conciliación auditadas | `testDecisionYConciliacionDeCadaFilaLleganPorElFormularioYSeAuditan` (por el formulario: 422 con huella, conciliación obligatoria, auditoría solo de la fila decidida, sin «prednisona» en la respuesta); C3 sigue en verde; JS «advertencia visible…», «advertencia protegida…» y «si la huella cambia…» |
+| RE-2.9.4: apoyo, decide el veterinario | Ninguna fila se confirma sola; la casilla y la conciliación las marca el veterinario (pruebas de JS anteriores) |
+| RE-2.1.5 / RN-113: alergias a la vista antes de prescribir | JS «las alergias y alertas de la mascota se cargan en el modal…» (y Atención en la vista) |
+| Las dos entradas con los mismos componentes y sin código en línea | JS «las dos entradas usan la misma fila…» |
+
+### Verificación
+
+- PHP completo sin host MySQL: **846 pruebas, 7161 aserciones, 43 omitidas (las de MySQL)**.
+- PHP completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32 de XAMPP): **846 pruebas, 7759 aserciones, ninguna omitida**.
+- JavaScript: **204/204** (193 anteriores + 11 de `M2C5bTratamientos.test.cjs`).
+- Diagrama §3 renderizado; `git diff --check` sin errores.
+- Pruebas que cambiaron por la decisión del peso: los registros de consulta de las pruebas existentes ahora mandan `peso` (27 llamadas en 8 archivos).
+- No se leyó ni escribió `.env`, no se tocó `zooki_v2_prueba` ni sus contraseñas; sin commit ni push, y no se empezó F.
+
+### Prueba en el navegador (usuario)
+
+**Preparar en XAMPP:** `php scripts/migrar.php` y `php scripts/cargar_conocimiento.php`. Con Fabio Propietario hacen falta:
+
+- un **gato** vinculado a Norte;
+- un **perro A** vinculado solo a Norte;
+- un **perro B** vinculado a Norte y a Sur. En el portal, Fabio **no** autoriza a Norte a ver la historia de Sur.
+
+1. [ ] **Beto Norte**, escritorio, Pacientes → gato → nueva consulta:
+   - En «Signos», marca «No se pudo pesar»: el peso se vacía y se deshabilita. Desmárcala y guarda sin peso: el aviso sale junto al campo.
+   - En «Plan», las alergias y alertas del gato aparecen arriba.
+   - Agrega un tratamiento, busca «paracet» y elige «Paracetamol (acetaminofén)»: la fila se pone roja, con «Paciente: Gato» y la fuente con enlace, y sin casilla para confirmar. No deja guardar hasta cambiar el fármaco o quitar la fila.
+   - Guarda con «No se pudo pesar» marcada: el historial dice «No se pudo pesar».
+2. [ ] **Beto Norte**, perro A:
+   - Registra una consulta con «Prednisona» del catálogo, duración «7 días» (el fin se calcula solo).
+   - Abre otra consulta y receta «Meloxicam»: la fila se pone ámbar, con «Interactúa con: Prednisona» y la casilla «Confirmo la prescripción». Sin marcarla no guarda; marcada, guarda.
+   - Escribe un medicamento que no esté en el catálogo: dice «No se pudo cruzar con el conocimiento: evaluación incompleta».
+3. [ ] **Diego Sur** (veterinario de Sur): registra en Sur una consulta del perro B con «Prednisona» del catálogo, inicio hoy y 7 días.
+4. [ ] **Beto Norte**, perro B:
+   - Receta «Meloxicam»: sale solo el aviso genérico de medicación de otra clínica, sin el nombre del fármaco ni la clínica. Pide la casilla y la conciliación (contador hasta 500).
+   - Sin conciliación no guarda; con ella, guarda.
+   - Después de confirmar, agrega otra fila con otro medicamento: cambian los cruces, la casilla se desmarca y sale el aviso «Cambió algo en la prescripción».
+5. [ ] **Beto Norte**, Atención de una cita en curso del perro A, en el celular:
+   - Los mismos campos y alertas en el paso «Tratamientos», con las alergias arriba.
+   - La fila con un fin anterior al inicio muestra el aviso junto al campo.
+   - El peso y «No se pudo pesar» funcionan igual que en el modal.
+
+### Pendientes
+
+- **Para confirmar:** no hay un RE propio de signos de la consulta; el criterio del peso quedó en RE-2.1.1 (examen físico) y en HU-2.1.
+- **Consultas anteriores sin peso:** las de antes de C5b que se guardaron sin peso también dicen «No se pudo pesar»; no se distingue «no se registró».
+- **La vía ahora es una lista:** el servidor la valida contra esa lista en las consultas nuevas; los tratamientos ya guardados no cambian.
+- **Pulido y F:** el resto que se dejó para el pulido sigue fuera: lista de Consultas, portal, imprimible del portal, frecuencia respiratoria y observaciones del modal, y los `style=` restantes.
+
+### C5b — Revisión (2026-10-16)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada en código; pendiente de las pruebas del usuario en el navegador.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 846 pruebas y 7161 aserciones (43 omitidas); con MySQL 8.0.46 y la base por defecto, 846 pruebas y 7759 aserciones, ninguna omitida; JS 204/204. El modal, Atención y los parciales siguen sin `style=` ni eventos en línea.
+
+**Lo que está bien:** una sola fila de tratamiento para las dos entradas; el fin solo se calcula desde una duración inequívoca y no se adivina lo demás; nombre libre = evaluación incompleta, nunca «sin interacciones»; bloqueo sin casilla, advertencia visible con su fármaco y fuente, protegida con el aviso genérico y conciliación obligatoria; huella que desmarca y avisa si cambian los cruces; errores `tratamientos.N.campo` junto a su fila; la toxicidad ahora nombra la especie y la fuente (nota de C3) sin tocar lo protegido; alergias arriba antes de prescribir y reevaluación al registrar una; peso obligatorio salvo «No se pudo pesar», guardado como NULL.
+
+**Ajuste para C7 (pulido):** las consultas de antes de C5b sin peso dicen «No se pudo pesar», lo que afirma algo que no se sabe. El historial debe decir «Sin peso registrado» para cualquier peso NULL (es cierto en los dos casos); la casilla sigue igual.
+
+**Decisión del revisor:** antes de F va una subetapa **C7 — pulido de M2** (Claude Code) con lo que quedó pendiente de C1, C5a y C5b y los dos hallazgos del usuario en las pruebas de C5a (vincular una mascota existente está escondido; «Primera consulta» se lee como si faltara una cita). F queda para versión, documentos, descargas y despliegue.
+
+**Siguiente:** pruebas del usuario (lista del Anexo C5b), luego C7 (Claude Code) y F.
+
+**Decisión del usuario (2026-10-16):** las pruebas del navegador de C5a, C5b y C7 se hacen juntas al final, antes del despliegue de F. Cada etapa se hace commit con la revisión de código y la suite en verde; si una prueba falla, se corrige antes de desplegar.

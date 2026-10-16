@@ -550,6 +550,11 @@ switch ($action) {
         require_once "../controllers/PrescripcionController.php";
         (new PrescripcionController())->validarAjax();
         break;
+    // M2 C5b: el medicamento de una fila se cruza con un fármaco del conocimiento.
+    case "buscar_farmaco_ajax":
+        require_once "../controllers/PrescripcionController.php";
+        (new PrescripcionController())->buscarFarmacosAjax();
+        break;
 
     // HU-2.1, RE-2.1.5: alergias y alertas médicas de la mascota.
     case "listar_alertas_medicas_ajax":

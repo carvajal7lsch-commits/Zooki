@@ -18,7 +18,18 @@ final class NodosEnlazables
     /** @return list<array{codigo: string, etiqueta: string, tipo: string, coincidencia: string}> */
     public function buscar(string $tipoAlerta, string $texto): array
     {
-        $tipos = ValidadorAlertaMedica::tiposDeNodo($tipoAlerta);
+        return $this->buscarEnTipos(ValidadorAlertaMedica::tiposDeNodo($tipoAlerta), $texto);
+    }
+
+    /** M2 C5b (A.1): el medicamento de una fila de tratamiento se cruza con un nodo «fármaco» activo. */
+    public function farmacos(string $texto): array
+    {
+        return $this->buscarEnTipos(['farmaco'], $texto);
+    }
+
+    /** @param list<string> $tipos */
+    private function buscarEnTipos(array $tipos, string $texto): array
+    {
         $buscado = ArchivosConocimiento::normalizarTexto(ValidadorAlertaMedica::busqueda($texto));
         if ($tipos === [] || mb_strlen($buscado) < ValidadorAlertaMedica::BUSQUEDA_MIN) {
             return [];

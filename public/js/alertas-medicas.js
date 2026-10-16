@@ -211,6 +211,10 @@
                 pintar(contenedor, alertas, contenedor._alertas.opciones);
             }
         }
+        // M2 C5b: una alergia o medicación continua nueva cambia los cruces de la prescripción en curso.
+        if (typeof global.CustomEvent === 'function' && typeof doc.dispatchEvent === 'function') {
+            doc.dispatchEvent(new global.CustomEvent('zooki:alertas-medicas', { detail: { idMascota: String(idMascota) } }));
+        }
     }
 
     async function pedir(url, opciones) {

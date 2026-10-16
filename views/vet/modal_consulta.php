@@ -3,6 +3,7 @@
 // M2 C5a: los límites y avisos son los de ValidadorClinico; el comportamiento
 // está en js/consulta-formulario.js (sin eventos en línea).
 require_once __DIR__ . '/../../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../../helpers/ValidadorTratamiento.php';
 $avisoConsulta = fn(string $campo): string => htmlspecialchars(ValidadorClinico::AVISOS_CONSULTA[$campo], ENT_QUOTES, 'UTF-8');
 $claseCampo = 'input-group full';
 $claseEtiqueta = '';
@@ -60,8 +61,12 @@ $prefijoConsulta = 'modalConsulta';
                                 <i class="fas fa-weight"></i>
                             </div>
                             <div class="vital-input-col">
-                                <label>Peso (Kg)</label>
-                                <input type="number" step="0.01" min="<?= ValidadorClinico::PESO_MIN ?>" max="<?= ValidadorClinico::PESO_MAX ?>" name="peso" data-consulta-campo="peso" data-aviso-rango="<?= $avisoConsulta('peso') ?>">
+                                <label for="consultaPeso">Peso (Kg) *</label>
+                                <input type="number" id="consultaPeso" step="0.01" min="<?= ValidadorClinico::PESO_MIN ?>" max="<?= ValidadorClinico::PESO_MAX ?>" name="peso" required aria-required="true"
+                                       data-consulta-campo="peso" data-aviso-rango="<?= $avisoConsulta('peso') ?>" data-aviso-requerido="<?= htmlspecialchars(ValidadorClinico::AVISO_PESO_REQUERIDO, ENT_QUOTES, 'UTF-8') ?>">
+                                <?php // Decisión del usuario (2026-10-15): sin peso aproximado; la casilla deja el peso en NULL. ?>
+                                <label class="consulta-sin-peso"><input type="checkbox" name="peso_desconocido" value="1" data-sin-peso="peso"> No se pudo pesar</label>
+                                <small class="cuenta-validacion" data-campo-aviso="peso">Obligatorio.</small>
                             </div>
                         </div>
                         <div class="vital-card">
@@ -86,6 +91,8 @@ $prefijoConsulta = 'modalConsulta';
                 </div>
 
                 <div id="tabResolucion" class="modal-tab-content">
+                    <?php // M2 C5b: alergias y alertas de la mascota a la vista antes de prescribir (C1). ?>
+                    <section class="alertas-medicas alertas-medicas--compacta" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-consulta hidden></section>
                     <?php include __DIR__ . '/../partials/consulta_diagnosticos.php'; ?>
                     <div class="input-group full">
                         <label for="consultaDiagnostico">Diagnóstico *</label>
@@ -97,12 +104,13 @@ $prefijoConsulta = 'modalConsulta';
                         <label>Plan / Recomendaciones</label>
                         <textarea name="plan_tratamiento" rows="2" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
                     </div>
-                    <div class="treatments-section">
+                    <div class="treatments-section" data-tratamientos data-avisos="<?= htmlspecialchars(json_encode(ValidadorTratamiento::AVISOS, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>">
                         <div class="section-title-action">
                             <label>Tratamientos</label>
-                            <button type="button" class="btn-add-treatment" data-ui-accion="agregar-tratamiento"><i class="fas fa-plus"></i> Agregar</button>
+                            <button type="button" class="btn-add-treatment" data-agregar-tratamiento><i class="fas fa-plus"></i> Agregar</button>
                         </div>
-                        <div id="treatmentsList"></div>
+                        <div id="treatmentsList" data-tratamientos-lista></div>
+                        <?php include __DIR__ . '/../partials/consulta_tratamiento_fila.php'; ?>
                     </div>
                 </div>
                 

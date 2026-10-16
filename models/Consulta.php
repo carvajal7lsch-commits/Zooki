@@ -55,7 +55,9 @@ class Consulta extends ModeloHistoria
         if ($datos['id_cita'] !== null) {
             $this->exigirCitaParaConsulta($datos['id_cita'], $idMascota);
         }
-        $tratamientosValidos = array_map([Tratamiento::class, 'validar'], $tratamientos);
+        // C5b: cada fila se valida con su número para mostrar el error junto a ella.
+        $tratamientos = array_values($tratamientos);
+        $tratamientosValidos = array_map([Tratamiento::class, 'validar'], $tratamientos, array_keys($tratamientos));
 
         $clinica = $this->clinica();
         $esPrimeraConsulta = $this->numeroHistoria($idMascota, $clinica) === null;
@@ -201,7 +203,7 @@ class Consulta extends ModeloHistoria
 
         $modeloTratamiento = new Tratamiento($this->conn);
         foreach ($tratamientos as $indice => $tratamiento) {
-            $modeloTratamiento->insertarEnConsulta($idConsulta, $tratamiento);
+            $modeloTratamiento->insertarEnConsulta($idConsulta, $tratamiento, $indice);
             $seguridad->auditarDecision($idConsulta, $indice, $evaluaciones[$indice]);
         }
 
@@ -257,7 +259,7 @@ class Consulta extends ModeloHistoria
 
         // Un signo vital fuera de rango es un error de digitación, y
         // guardarlo ensucia la historia de forma permanente (RN-206).
-        $peso = $this->signoDecimal($entrada['peso'] ?? null, ValidadorClinico::PESO_MIN, ValidadorClinico::PESO_MAX, 'peso');
+        $peso = $this->peso($entrada);
         $temperatura = $this->signoDecimal($entrada['temperatura'] ?? null, ValidadorClinico::TEMP_MIN, ValidadorClinico::TEMP_MAX, 'temperatura');
         $cardiaca = $this->signoEntero($entrada['frecuencia_cardiaca'] ?? null, ValidadorClinico::FC_MIN, ValidadorClinico::FC_MAX, 'frecuencia_cardiaca');
         $respiratoria = $this->signoEntero($entrada['frecuencia_respiratoria'] ?? null, ValidadorClinico::FR_MIN, ValidadorClinico::FR_MAX, 'frecuencia_respiratoria');
@@ -290,6 +292,22 @@ class Consulta extends ModeloHistoria
             throw new CampoInvalido($campo, $limite, $limite);
         }
         return $texto;
+    }
+
+    /**
+     * Decisión del usuario (2026-10-15, M2 C5b): el peso se pide; si no se pudo
+     * pesar, la casilla lo deja en NULL, nunca 0 ni un peso aproximado.
+     */
+    private function peso(array $entrada): ?float
+    {
+        if (($entrada['peso_desconocido'] ?? null) === '1') {
+            return null;
+        }
+        $crudo = $entrada['peso'] ?? null;
+        if ($crudo === null || $crudo === '') {
+            throw new CampoInvalido('peso', ValidadorClinico::AVISO_PESO_REQUERIDO, ValidadorClinico::AVISO_PESO_REQUERIDO);
+        }
+        return $this->signoDecimal($crudo, ValidadorClinico::PESO_MIN, ValidadorClinico::PESO_MAX, 'peso');
     }
 
     private function signoDecimal($crudo, float $minimo, float $maximo, string $campo): ?float

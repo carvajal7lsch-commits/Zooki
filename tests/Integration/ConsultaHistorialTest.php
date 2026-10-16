@@ -312,7 +312,7 @@ final class ConsultaHistorialTest extends TestCase
 
     private function registrar(int $idMascota, array $extra = [], array $tratamientos = [], array $adjuntos = [], ?callable $guardar = null): int
     {
-        $entrada = array_replace(['id_mascota' => $idMascota, 'motivo' => 'Control', 'diagnostico' => 'Sano'], $extra);
+        $entrada = array_replace(['id_mascota' => $idMascota, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], $extra);
         $guardar ??= fn (int $idConsulta, array $adjunto, int $indice): array => $this->metadatos($idConsulta, $indice);
         return $this->consultas->registrar($entrada, $tratamientos, $adjuntos, $guardar);
     }
@@ -375,6 +375,7 @@ final class ConsultaHistorialTest extends TestCase
         return [
             'id_mascota' => '1',
             'motivo' => 'Control',
+            'peso' => '8.5',
             'diagnostico' => 'Sano',
             'med_nombre' => ['Amoxicilina'],
             'med_dosis' => ['1 ml'],

@@ -157,7 +157,7 @@ flowchart TD
   G --> G1["Guardar ficha provisional e ingreso con datos disponibles del acompañante;<br/>sin atribuir propiedad ni crear cuenta antes del consentimiento (HU-4.15)"]
   G1 --> CTX
 
-  CTX["Contexto disponible del paciente: especie, raza, edad, alergias y alertas, historia<br/>(consultas de otras clinicas solo si el propietario lo autorizo, RN-113);<br/>los datos desconocidos de una ficha provisional no se inventan"] --> H["Form Consulta: motivo, anamnesis,<br/>examen fisico y sintomas confirmados del catalogo;<br/>nota libre fuera del calculo"]
+  CTX["Contexto disponible del paciente: especie, raza, edad, alergias y alertas a la vista, historia<br/>(consultas de otras clinicas solo si el propietario lo autorizo, RN-113);<br/>los datos desconocidos de una ficha provisional no se inventan"] --> H["Form Consulta: motivo, anamnesis,<br/>examen fisico (peso o No se pudo pesar: NULL, nunca 0)<br/>y sintomas confirmados del catalogo; nota libre fuera del calculo"]
   H --> I{Captura inicial y rangos validos?}
   I -- No --> I1[/"Mensaje: corrige los campos marcados"/]
   I1 --> H
@@ -171,7 +171,7 @@ flowchart TD
   L --> N{"Diagnostico registrado? (RN-202)"}
   N -- No --> N1[/"Mensaje: el diagnostico es obligatorio"/]
   N1 --> L
-  N -- Si --> P["El veterinario define el tratamiento:<br/>medicamento, dosis, via, duracion, observaciones"]
+  N -- Si --> P["El veterinario define el tratamiento: farmaco del catalogo<br/>o nombre libre (evaluacion incompleta, nunca sin interacciones);<br/>dosis, via, duracion, inicio, fin (calculado si es inequivoco) y observaciones"]
   P --> Q{"Alergia registrada del paciente o toxicidad de especie/raza<br/>con efecto bloqueo? (RN-211)"}
   Q -- Si --> Q1[/"Mensaje de bloqueo: elige otro farmaco"/]
   Q1 --> P

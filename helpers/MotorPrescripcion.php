@@ -33,7 +33,7 @@ final class MotorPrescripcion
             if ($dato !== $arista['origen'] || !self::aplica($arista['condiciones'] ?? null, $contexto, $fecha, $resultado)) {
                 continue;
             }
-            $evidencia = ['tipo' => 'toxicidad', 'mensaje' => 'Toxicidad documentada para la especie o raza del paciente.', 'arista' => $arista['codigo'], 'fuentes' => $arista['fuentes'], 'protegida' => false];
+            $evidencia = ['tipo' => 'toxicidad', 'mensaje' => 'Toxicidad documentada para la especie o raza del paciente.', 'arista' => $arista['codigo'], 'origen' => $arista['origen'], 'fuentes' => $arista['fuentes'], 'protegida' => false];
             if ($arista['efecto'] === 'bloqueo') {
                 $resultado['motivos'][] = $evidencia;
             } elseif ($arista['efecto'] === 'advertencia') {

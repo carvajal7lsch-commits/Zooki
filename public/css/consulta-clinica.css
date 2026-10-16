@@ -289,6 +289,173 @@ small.cuenta-validacion[data-campo-aviso]:empty {
     text-align: left;
 }
 
+/* ── Peso: «No se pudo pesar» (C5b, decisión del usuario 2026-10-15) ── */
+.consulta-sin-peso {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary, #6b7280);
+    cursor: pointer;
+}
+
+.vital-input-col .consulta-sin-peso input[type="checkbox"],
+.consulta-sin-peso input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    border: 1px solid var(--border-color, #e5e7eb);
+    accent-color: var(--primary, #0052ff);
+}
+
+/* ── Filas de tratamiento (C5b) ────────────────────────────── */
+.consulta-tratamiento {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-left: 4px solid var(--border-color, #e5e7eb);
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.consulta-tratamiento__campos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    gap: 0.5rem 0.75rem;
+    align-items: start;
+}
+
+.consulta-tratamiento__campos .input-group {
+    margin: 0;
+    min-width: 0;
+}
+
+.consulta-tratamiento__medicamento {
+    grid-column: span 2;
+}
+
+.consulta-tratamiento__observaciones {
+    grid-column: span 4;
+}
+
+.consulta-tratamiento__etiqueta {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #6b7280);
+}
+
+.consulta-tratamiento__buscador {
+    position: relative;
+}
+
+.consulta-tratamiento__cruce,
+.consulta-tratamiento__ayuda,
+.consulta-tratamiento__contador {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary, #6b7280);
+}
+
+.consulta-tratamiento__quitar {
+    align-self: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--danger, #ef4444);
+    cursor: pointer;
+}
+
+.consulta-tratamiento__prescripcion {
+    margin-top: 0.6rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border-color, #e5e7eb);
+    font-size: 0.82rem;
+}
+
+.consulta-tratamiento__estado {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-secondary, #6b7280);
+}
+
+.consulta-tratamiento__alertas {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+}
+
+.consulta-tratamiento__alertas[hidden],
+.consulta-tratamiento__confirmar[hidden],
+.consulta-tratamiento__conciliacion[hidden] {
+    display: none;
+}
+
+.consulta-tratamiento__fuente a {
+    color: var(--primary, #0052ff);
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+}
+
+.consulta-tratamiento__confirmar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.45rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.consulta-tratamiento__confirmar input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    accent-color: #b45309;
+}
+
+.consulta-tratamiento__conciliacion {
+    margin-top: 0.5rem;
+}
+
+.consulta-tratamiento__conciliacion textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem 0.65rem;
+    border: 1.5px solid var(--border-color, #e5e7eb);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
+/* El rojo y el ámbar son semánticos: bloqueo y advertencia (RN-211). */
+.consulta-tratamiento--bloqueo {
+    border-left-color: #dc2626;
+    background: #fef2f2;
+}
+
+.consulta-tratamiento--bloqueo .consulta-tratamiento__estado {
+    color: #b91c1c;
+}
+
+.consulta-tratamiento--advertencia {
+    border-left-color: #d97706;
+    background: #fffbeb;
+}
+
+.consulta-tratamiento--advertencia .consulta-tratamiento__estado {
+    color: #b45309;
+}
+
+.consulta-tratamiento--incompleta {
+    border-left-color: #94a3b8;
+}
+
 /* Atención no hace scroll de página: el panel no le quita el alto al diagnóstico. */
 .atencion .consulta-sugerencias {
     flex-shrink: 0;
@@ -303,7 +470,30 @@ small.cuenta-validacion[data-campo-aviso]:empty {
     max-height: 12rem;
 }
 
+@media (max-width: 1023px) {
+    .consulta-tratamiento__campos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .consulta-tratamiento__observaciones {
+        grid-column: span 2;
+    }
+
+    .consulta-tratamiento__quitar {
+        justify-self: end;
+    }
+}
+
 @media (max-width: 767px) {
+    .consulta-tratamiento__campos {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .consulta-tratamiento__medicamento,
+    .consulta-tratamiento__observaciones {
+        grid-column: auto;
+    }
+
     .consulta-sugerencias {
         padding: 0.65rem 0.7rem;
     }

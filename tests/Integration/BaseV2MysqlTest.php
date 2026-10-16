@@ -69,7 +69,7 @@ class BaseV2MysqlTest extends TestCase
         $this->comoVeterinario(1, 2);
         $fecha = new DateTimeImmutable('now', new DateTimeZone('America/Bogota'));
         $fila = ['farmaco' => 'farmaco.paracetamol', 'medicamento' => 'Nombre indicado', 'dosis' => 'Indicada', 'via_administracion' => 'Oral', 'duracion' => 'Según valoración', 'fecha_inicio' => $fecha->format('Y-m-d'), 'fecha_fin' => $fecha->modify('+1 day')->format('Y-m-d')];
-        $entrada = ['id_mascota' => 1, 'motivo' => 'Prueba', 'diagnostico' => 'Decisión del veterinario'];
+        $entrada = ['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Prueba', 'diagnostico' => 'Decisión del veterinario'];
         $this->db->exec('UPDATE mascotas SET id_especie = 2, id_raza = 50 WHERE id_mascota = 1');
         try {
             (new Consulta($this->db))->registrar($entrada, [$fila], [], static fn (): array => []);
@@ -291,20 +291,45 @@ class BaseV2MysqlTest extends TestCase
             $this->comoVeterinario(1, 2);
             $consultas = new Consulta($this->db);
             $sinAdjuntos = fn (int $idConsulta, array $adjunto, int $indice): array => [];
-            $id = $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Vomita', 'diagnostico' => 'Gastritis', 'sintomas' => ['sintoma.vomito', 'sintoma.diarrea']], [], [], $sinAdjuntos);
+            $id = $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Vomita', 'diagnostico' => 'Gastritis', 'sintomas' => ['sintoma.vomito', 'sintoma.diarrea']], [], [], $sinAdjuntos);
             $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM consulta_sintomas WHERE id_consulta = $id")->fetchColumn());
             $this->assertSame(['Diarrea', 'Vómito'], array_column($consultas->historialDeMascota(1)[0]['sintomas'], 'etiqueta'));
 
             // Retirado entre la búsqueda y el guardado: 422 en el campo y nada escrito.
             $this->db->exec("UPDATE grafo_nodos SET activo = 0 WHERE codigo = 'sintoma.diarrea'");
             try {
-                $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano', 'sintomas' => ['sintoma.vomito', 'sintoma.diarrea']], [], [], $sinAdjuntos);
+                $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano', 'sintomas' => ['sintoma.vomito', 'sintoma.diarrea']], [], [], $sinAdjuntos);
                 $this->fail('Un síntoma retirado no se guarda.');
             } catch (CampoInvalido $e) {
                 $this->assertSame('sintomas', $e->campo);
             }
             $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM consultas')->fetchColumn());
             $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM consulta_sintomas')->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /** M2 C5b: «No se pudo pesar» guarda NULL (nunca 0) y una fila con fin anterior al inicio no deja nada. */
+    public function testC5bPesoDesconocidoYFinDeLaFilaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../../models/Consulta.php';
+        $this->prepararHistoriaClinica();
+        try {
+            $this->comoVeterinario(1, 2);
+            $consultas = new Consulta($this->db);
+            $sinAdjuntos = fn (int $idConsulta, array $adjunto, int $indice): array => [];
+            $fila = ['medicamento' => 'Amoxicilina', 'dosis' => '1 tableta', 'via_administracion' => 'Oral', 'duracion' => '7 días', 'fecha_inicio' => '2026-10-15', 'fecha_fin' => '2026-10-21', 'observaciones' => 'Con comida'];
+            $id = $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano', 'peso' => '', 'peso_desconocido' => '1'], [$fila], [], $sinAdjuntos);
+            $this->assertNull($this->db->query("SELECT peso FROM consultas WHERE id_consulta = $id")->fetchColumn());
+            $this->assertSame('2026-10-21', $this->db->query("SELECT fecha_fin FROM tratamientos WHERE id_consulta = $id")->fetchColumn());
+            try {
+                $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano', 'peso' => '8.5'], [$fila, array_replace($fila, ['fecha_fin' => '2026-10-01'])], [], $sinAdjuntos);
+                $this->fail('Un fin anterior al inicio no se guarda.');
+            } catch (CampoInvalido $e) {
+                $this->assertSame('tratamientos.1.fecha_fin', $e->campo);
+            }
+            $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM consultas')->fetchColumn());
         } finally {
             $_SESSION = [];
         }
@@ -1147,8 +1172,8 @@ class BaseV2MysqlTest extends TestCase
             $tratamiento = ['medicamento' => 'Amoxicilina', 'dosis' => '1 ml', 'via_administracion' => 'Oral', 'duracion' => '5 días', 'fecha_inicio' => '2026-10-07'];
             $guardar = fn (int $idConsulta, array $adjunto, int $indice): array => $this->metadatosDeAdjunto();
             $consultas = new Consulta($this->db);
-            $idConsulta = $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [$tratamiento], [['nombre' => 'rx.jpg']], $guardar);
-            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
+            $idConsulta = $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [$tratamiento], [['nombre' => 'rx.jpg']], $guardar);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
             $idVacuna = (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'Rabia', 'fecha_aplicacion' => '2026-10-01']);
             $idArchivo = (int) $this->db->query('SELECT id_archivo FROM archivos_clinicos')->fetchColumn();
 
@@ -1159,7 +1184,7 @@ class BaseV2MysqlTest extends TestCase
             // Sin fecha de inicio en un tratamiento no queda nada (RE-2.6.1).
             unset($tratamiento['fecha_inicio']);
             try {
-                $consultas->registrar(['id_mascota' => 1, 'motivo' => 'X', 'diagnostico' => 'Y'], [$tratamiento], [], $guardar);
+                $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'X', 'diagnostico' => 'Y'], [$tratamiento], [], $guardar);
                 $this->fail('Debió rechazar el tratamiento sin fecha de inicio.');
             } catch (InvalidArgumentException $e) {
                 $this->assertStringContainsString('fecha de inicio', $e->getMessage());
@@ -1182,7 +1207,7 @@ class BaseV2MysqlTest extends TestCase
             $this->db->exec('UPDATE propietario_clinica SET autoriza_historia_compartida = 0 WHERE id_propietario = 6 AND id_clinica = 2');
             $this->assertSame([], $consultas->historialDeMascota(1));
 
-            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
             $this->assertSame('HC-000001', $this->numeroHistoria(1, 2));
             $this->assertSame('HC-000001', $this->numeroHistoria(1, 1));
             $this->assertSame(3, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = 2 AND accion = 'OTHER'")->fetchColumn());
@@ -1207,11 +1232,11 @@ class BaseV2MysqlTest extends TestCase
             $this->comoVeterinario(1, 2);
             $sinAdjuntos = fn (): array => [];
             $consultas = new ConsultaConEsperaCorta($this->db);
-            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
 
             $this->assertSame(1, (int) $otraSesion->query("SELECT GET_LOCK('zooki_numero_hc_1', 0)")->fetchColumn());
             try {
-                $consultas->registrar(['id_mascota' => 2, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+                $consultas->registrar(['id_mascota' => 2, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
                 $this->fail('Debió esperar el candado de numeración.');
             } catch (RuntimeException $e) {
                 $this->assertStringContainsString('número de historia', $e->getMessage());
@@ -1220,10 +1245,10 @@ class BaseV2MysqlTest extends TestCase
             $this->assertNull($this->numeroHistoria(2, 1));
 
             // Una consulta de una mascota que ya tiene número no necesita el candado.
-            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
 
             $otraSesion->query("SELECT RELEASE_LOCK('zooki_numero_hc_1')");
-            $consultas->registrar(['id_mascota' => 2, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+            $consultas->registrar(['id_mascota' => 2, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
             $this->assertSame('HC-000002', $this->numeroHistoria(2, 1));
             $this->assertSame(1, (int) $otraSesion->query("SELECT IS_FREE_LOCK('zooki_numero_hc_1')")->fetchColumn());
         } finally {

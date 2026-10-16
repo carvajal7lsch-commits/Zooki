@@ -24,7 +24,10 @@ $pesoReferencia = $resumenClinico['ultimo_peso'] ?? ($mascota['peso'] ?? null);
 $hoyIso = date('Y-m-d');
 // M2 C5a: límites y avisos de ValidadorClinico, los mismos del servidor (js/consulta-formulario.js).
 require_once __DIR__ . '/../../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/../../helpers/ValidadorTratamiento.php';
 $avisoConsulta = fn(string $campo): string => $e(ValidadorClinico::AVISOS_CONSULTA[$campo]);
+// M2 C5b (decisión del usuario, 2026-10-15): sin peso dice «No se pudo pesar», nunca 0.
+$textoPeso = fn($peso): string => $peso === null || $peso === '' ? 'No se pudo pesar' : $e($peso) . ' kg';
 $claseCampo = 'campo';
 $claseEtiqueta = 'campo__etiqueta';
 $prefijoConsulta = 'atencion';
@@ -170,7 +173,7 @@ $prefijoConsulta = 'atencion';
                     <?php if ($consultaRegistrada): ?>
                         <div class="consulta-resumen">
                             <div class="consulta-resumen__signos">
-                                <div><span>Peso</span><strong><?= $e($consultaCita['peso'] ?? '—') ?> kg</strong></div>
+                                <div><span>Peso</span><strong><?= $textoPeso($consultaCita['peso'] ?? null) ?></strong></div>
                                 <div><span>Temperatura</span><strong><?= $e($consultaCita['temperatura'] ?? '—') ?> °C</strong></div>
                                 <div><span>F. cardíaca</span><strong><?= $e($consultaCita['frecuencia_cardiaca'] ?? '—') ?> lpm</strong></div>
                                 <div><span>F. respiratoria</span><strong><?= $e($consultaCita['frecuencia_respiratoria'] ?? '—') ?> rpm</strong></div>
@@ -229,10 +232,12 @@ $prefijoConsulta = 'atencion';
                                     <div class="signos">
                                         <label class="signo">
                                             <i class="fas fa-weight signo__icono signo__icono--peso"></i>
-                                            <span class="campo__etiqueta">Peso</span>
-                                            <span class="signo__entrada"><input type="number" name="peso" data-consulta-campo="peso" data-aviso-rango="<?= $avisoConsulta('peso') ?>" step="0.01" min="0.01" max="200" data-etiqueta="el peso" placeholder="<?= $pesoReferencia !== null ? $e($pesoReferencia) : '0.00' ?>"><em>kg</em></span>
+                                            <span class="campo__etiqueta">Peso *</span>
+                                            <span class="signo__entrada"><input type="number" name="peso" required aria-required="true" data-consulta-campo="peso" data-aviso-rango="<?= $avisoConsulta('peso') ?>" data-aviso-requerido="<?= $e(ValidadorClinico::AVISO_PESO_REQUERIDO) ?>" step="0.01" min="0.01" max="200" data-etiqueta="el peso" placeholder="<?= $pesoReferencia !== null ? $e($pesoReferencia) : '0.00' ?>"><em>kg</em></span>
                                             <small>Entre 0.01 y 200 kg<?= $pesoReferencia !== null ? ' · último: ' . $e($pesoReferencia) . ' kg' : '' ?></small>
-                                            <small class="cuenta-validacion" data-campo-aviso="peso"></small>
+                                            <?php // Decisión del usuario (2026-10-15): sin peso aproximado; la casilla deja el peso en NULL. ?>
+                                            <span class="consulta-sin-peso"><input type="checkbox" name="peso_desconocido" value="1" data-sin-peso="peso" id="atencionSinPeso"> <span>No se pudo pesar</span></span>
+                                            <small class="cuenta-validacion" data-campo-aviso="peso">Obligatorio.</small>
                                         </label>
                                         <label class="signo">
                                             <i class="fas fa-thermometer-half signo__icono signo__icono--temp"></i>
@@ -278,17 +283,20 @@ $prefijoConsulta = 'atencion';
                                     </div>
                                 </div>
 
-                                <div class="atencion__paso">
+                                <div class="atencion__paso" data-tratamientos data-avisos="<?= $e(json_encode(ValidadorTratamiento::AVISOS, JSON_UNESCAPED_UNICODE)) ?>">
+                                    <?php // M2 C5b: alergias y alertas de la mascota a la vista antes de prescribir (C1). ?>
+                                    <section class="alertas-medicas alertas-medicas--compacta" aria-label="Alergias y alertas" data-alertas-medicas data-cargar data-id-mascota="<?= (int) $mascota['id_mascota'] ?>" data-nombre-mascota="<?= $e($mascota['nombre'] ?? '') ?>"></section>
                                     <div class="tratamientos__cabecera">
                                         <p>Medicamentos prescritos en esta consulta.</p>
-                                        <button type="button" class="atencion__btn atencion__btn--suave" id="btnAgregarTratamiento">
+                                        <button type="button" class="atencion__btn atencion__btn--suave" id="btnAgregarTratamiento" data-agregar-tratamiento>
                                             <i class="fas fa-plus"></i> Agregar medicamento
                                         </button>
                                     </div>
                                     <div class="tratamientos__lista">
-                                        <p class="atencion__vacio" id="tratamientosVacio">Sin medicamentos. Agrega uno si hace falta.</p>
-                                        <div id="treatmentsList"></div>
+                                        <p class="atencion__vacio" id="tratamientosVacio" data-tratamientos-vacio>Sin medicamentos. Agrega uno si hace falta.</p>
+                                        <div id="treatmentsList" data-tratamientos-lista></div>
                                     </div>
+                                    <?php include __DIR__ . '/../partials/consulta_tratamiento_fila.php'; ?>
                                 </div>
 
                                 <div class="atencion__paso">
@@ -435,13 +443,11 @@ $prefijoConsulta = 'atencion';
                                 <?php if (!empty($con['sintomas'])): ?><p><span>Síntomas:</span> <?= $e(implode(', ', array_column($con['sintomas'], 'etiqueta'))) ?></p><?php endif; ?>
                                 <p><span>Diagnóstico:</span> <?= $e($con['diagnostico']) ?></p>
                                 <?php if (!empty($con['plan_tratamiento'])): ?><p><span>Plan:</span> <?= $e($con['plan_tratamiento']) ?></p><?php endif; ?>
-                                <?php if (!empty($con['peso']) || !empty($con['temperatura'])): ?>
-                                    <div class="historial__signos">
-                                        <?php if (!empty($con['peso'])): ?><span><i class="fas fa-weight"></i> <?= $e($con['peso']) ?> kg</span><?php endif; ?>
-                                        <?php if (!empty($con['temperatura'])): ?><span><i class="fas fa-thermometer-half"></i> <?= $e($con['temperatura']) ?> °C</span><?php endif; ?>
-                                        <?php if (!empty($con['frecuencia_cardiaca'])): ?><span><i class="fas fa-heartbeat"></i> <?= $e($con['frecuencia_cardiaca']) ?> lpm</span><?php endif; ?>
-                                    </div>
-                                <?php endif; ?>
+                                <div class="historial__signos">
+                                    <span><i class="fas fa-weight"></i> <?= $textoPeso($con['peso'] ?? null) ?></span>
+                                    <?php if (!empty($con['temperatura'])): ?><span><i class="fas fa-thermometer-half"></i> <?= $e($con['temperatura']) ?> °C</span><?php endif; ?>
+                                    <?php if (!empty($con['frecuencia_cardiaca'])): ?><span><i class="fas fa-heartbeat"></i> <?= $e($con['frecuencia_cardiaca']) ?> lpm</span><?php endif; ?>
+                                </div>
                             </li>
                         <?php endforeach; ?>
                     </ul>

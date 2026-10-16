@@ -115,9 +115,6 @@ function ejecutarInteraccion(evento) {
         case 'pestana-consulta':
             switchModalTab({ target: evento.target, currentTarget: boton }, boton.dataset.tab);
             break;
-        case 'agregar-tratamiento':
-            addTreatmentRow();
-            break;
         case 'cerrar-cita':
             closeCitaModal();
             break;

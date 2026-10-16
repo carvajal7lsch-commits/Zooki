@@ -2,6 +2,7 @@
 require_once __DIR__ . '/ModeloHistoria.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/../helpers/ValidadorPrescripcion.php';
+require_once __DIR__ . '/../helpers/ValidadorTratamiento.php';
 
 /** HU-2.4: tratamientos; heredan la clínica de su consulta (RN-112). */
 class Tratamiento extends ModeloHistoria
@@ -9,25 +10,31 @@ class Tratamiento extends ModeloHistoria
     /**
      * RE-2.4.1: valida un tratamiento antes de guardarlo. fecha_inicio es
      * obligatoria (NOT NULL en v2): el Grafo I la usará para saber si la
-     * medicación sigue vigente (RN-211).
+     * medicación sigue vigente (RN-211). Cada error dice su fila y su campo
+     * (tratamientos.N.campo) para mostrarlo junto a él (M2 C5b).
      */
-    public static function validar(array $datos): array
+    public static function validar(array $datos, int $indice = 0): array
     {
-        $medicamento = ValidadorClinico::textoRequerido($datos['medicamento'] ?? null, 150);
-        $dosis = ValidadorClinico::textoRequerido($datos['dosis'] ?? null, 100);
-        $via = ValidadorClinico::textoRequerido($datos['via_administracion'] ?? null, 50);
-        $duracion = ValidadorClinico::textoRequerido($datos['duracion'] ?? null, 100);
-
+        $medicamento = ValidadorClinico::textoRequerido($datos['medicamento'] ?? null, ValidadorTratamiento::MEDICAMENTO_MAX);
         if ($medicamento === null) {
-            throw new InvalidArgumentException('Cada tratamiento necesita el medicamento.');
+            ValidadorTratamiento::error($indice, 'medicamento', 'Cada tratamiento necesita el medicamento.');
         }
-        if ($dosis === null || $via === null || $duracion === null) {
-            throw new InvalidArgumentException(sprintf('El tratamiento "%s" necesita dosis, vía de administración y duración.', $medicamento));
+        $dosis = ValidadorClinico::textoRequerido($datos['dosis'] ?? null, ValidadorTratamiento::DOSIS_MAX);
+        if ($dosis === null) {
+            ValidadorTratamiento::error($indice, 'dosis', sprintf('El tratamiento "%s" necesita la dosis.', $medicamento));
+        }
+        $via = $datos['via_administracion'] ?? null;
+        if (!in_array($via, ValidadorTratamiento::VIAS, true)) {
+            ValidadorTratamiento::error($indice, 'via_administracion', sprintf('El tratamiento "%s" necesita una vía de administración de la lista.', $medicamento));
+        }
+        $duracion = ValidadorClinico::textoRequerido($datos['duracion'] ?? null, ValidadorTratamiento::DURACION_MAX);
+        if ($duracion === null) {
+            ValidadorTratamiento::error($indice, 'duracion', sprintf('El tratamiento "%s" necesita la duración.', $medicamento));
         }
 
         $fechaInicio = ValidadorClinico::fecha($datos['fecha_inicio'] ?? null);
         if ($fechaInicio === null) {
-            throw new InvalidArgumentException(sprintf('El tratamiento "%s" necesita una fecha de inicio válida.', $medicamento));
+            ValidadorTratamiento::error($indice, 'fecha_inicio', sprintf('El tratamiento "%s" necesita una fecha de inicio válida.', $medicamento));
         }
         $fechaFin = $datos['fecha_fin'] ?? null;
         if ($fechaFin === '') {
@@ -36,7 +43,7 @@ class Tratamiento extends ModeloHistoria
         if ($fechaFin !== null) {
             $fechaFin = ValidadorClinico::fecha($fechaFin);
             if ($fechaFin === null || $fechaFin < $fechaInicio) {
-                throw new InvalidArgumentException('La fecha de fin del tratamiento debe ser válida y no anterior al inicio.');
+                ValidadorTratamiento::error($indice, 'fecha_fin', 'La fecha de fin del tratamiento debe ser válida y no anterior al inicio.');
             }
         }
 
@@ -47,25 +54,25 @@ class Tratamiento extends ModeloHistoria
             'duracion' => $duracion,
             'fecha_inicio' => $fechaInicio,
             'fecha_fin' => $fechaFin,
-            'observaciones' => ValidadorClinico::textoOpcional($datos['observaciones'] ?? null, 500),
-        ] + ValidadorPrescripcion::fila($datos);
+            'observaciones' => ValidadorClinico::textoOpcional($datos['observaciones'] ?? null, ValidadorTratamiento::OBSERVACIONES_MAX),
+        ] + ValidadorPrescripcion::fila($datos, $indice);
     }
 
     /**
      * Agrega un tratamiento a una consulta de la clínica activa. Lo llama
      * Consulta::registrar dentro de su transacción.
      */
-    public function insertarEnConsulta(int $idConsulta, array $datos): int
+    public function insertarEnConsulta(int $idConsulta, array $datos, int $indice = 0): int
     {
         $this->exigirConsultaPropia($idConsulta, 'Tratamiento sobre una consulta de otra clínica (RN-112)');
-        $limpio = self::validar($datos);
+        $limpio = self::validar($datos, $indice);
         $idNodo = null;
         if ($limpio['farmaco'] !== null) {
             $nodo = $this->conn->prepare("SELECT id_nodo FROM grafo_nodos WHERE codigo = ? AND tipo = 'farmaco' AND activo = 1");
             $nodo->execute([$limpio['farmaco']]);
             $idNodo = $nodo->fetchColumn();
             if ($idNodo === false) {
-                throw new InvalidArgumentException('El fármaco debe ser un nodo activo del catálogo.');
+                ValidadorPrescripcion::error($indice, 'farmaco', 'El fármaco debe ser un nodo activo del catálogo.');
             }
         }
 

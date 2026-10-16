@@ -619,6 +619,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 **Criterios de aceptación:**
 
 - Campos: fecha/hora, motivo, anamnesis, examen físico, diagnóstico y plan de tratamiento.
+- El peso se pide en cada consulta; si no se pudo pesar, el veterinario marca «No se pudo pesar» y el peso queda sin valor (nunca 0 ni un peso aproximado). El historial lo muestra así y ningún cálculo lo toma como 0.
 - Se genera un número de historia clínica único en la primera consulta.
 - La consulta queda vinculada a la mascota y visible en su historial.
 - No se puede registrar una consulta sin diagnóstico.

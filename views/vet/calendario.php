@@ -202,3 +202,5 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 
 <!-- MODAL NUEVA CONSULTA (necesario para Iniciar Atención desde el calendario) -->
 <?php include __DIR__ . "/modal_consulta.php"; ?>
+<?php // M2 C5b: el modal de consulta muestra y registra alergias antes de prescribir (C1). ?>
+<?php include __DIR__ . '/../partials/modal_alerta_medica.php'; ?>

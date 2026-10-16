@@ -7,10 +7,10 @@
  * la cita en un solo paso. Nada recarga la página salvo al terminar.
  *
  * Usa de otros archivos: zookiToast/zookiAviso/zookiConfirmar y escapeHtml
- * (avisos.js), addTreatmentRow (medical-module.js) y, de la consulta
- * compartida con el modal (M2 C5a), ZookiConsultaForm, updateFileList y
- * avisarAdjuntosRechazados (consulta-formulario.js), con los síntomas y los
- * diagnósticos sugeridos.
+ * (avisos.js) y, de la consulta compartida con el modal (M2 C5a y C5b),
+ * ZookiConsultaForm, updateFileList y avisarAdjuntosRechazados
+ * (consulta-formulario.js), con los síntomas, los diagnósticos sugeridos y
+ * las filas de tratamiento con sus alertas de prescripción.
  */
 (function () {
     'use strict';
@@ -161,6 +161,9 @@
             });
             // C5a: los síntomas marcados también son datos editables del borrador.
             if (consulta && consulta.sintomas) datos.sintomas = consulta.sintomas.marcados();
+            // C5b: «No se pudo pesar» se recuerda como lo que es, no como un peso.
+            const sinPeso = formConsulta.querySelector('[data-sin-peso]');
+            if (sinPeso) datos.sin_peso = sinPeso.checked;
             const ahora = Date.now();
             localStorage.setItem(CLAVE_BORRADOR, JSON.stringify({ datos, guardado: ahora }));
             mostrarEstadoBorrador(ahora);
@@ -182,6 +185,12 @@
                     restaurado = true;
                 }
             });
+            const sinPeso = formConsulta.querySelector('[data-sin-peso]');
+            if (sinPeso && datos.sin_peso === true && !sinPeso.checked) {
+                sinPeso.checked = true;
+                sinPeso.dispatchEvent(new Event('change'));
+                restaurado = true;
+            }
             if (consulta && consulta.sintomas && Array.isArray(datos.sintomas) && datos.sintomas.length) {
                 consulta.sintomas.poner(datos.sintomas);
                 restaurado = true;
@@ -240,6 +249,8 @@
 
     async function finalizarAtencion() {
         const consultaRegistrada = app.dataset.consultaRegistrada === '1';
+        // C5b: las alertas de prescripción deben estar al día antes de validar.
+        if (!consultaRegistrada && consulta) await consulta.listo();
         if (!consultaRegistrada && formConsulta && !validarConsulta()) return;
 
         const mensaje = consultaRegistrada
@@ -394,21 +405,12 @@
             (d) => (d.productos || []).map((p) => p.nombre_producto));
     }
 
-    // ── Medicamentos y adjuntos ─────────────────────────────────────────
+    // ── Medicamentos ────────────────────────────────────────────────────
+    // C5b: las filas, el fármaco, las alertas y la lista vacía los maneja
+    // consulta-tratamientos.js; aquí solo se marca que hay cambios.
     function iniciarTratamientos() {
-        const lista = document.getElementById('treatmentsList');
-        const vacio = document.getElementById('tratamientosVacio');
         const boton = document.getElementById('btnAgregarTratamiento');
-        if (!lista || !boton) return;
-
-        const actualizarVacio = () => { vacio.hidden = lista.children.length > 0; };
-        new MutationObserver(actualizarVacio).observe(lista, { childList: true });
-        boton.addEventListener('click', () => {
-            addTreatmentRow();
-            hayCambiosSinGuardar = true;
-            const filas = lista.querySelectorAll('.treatment-row input');
-            if (filas.length) filas[filas.length - 4]?.focus();
-        });
+        if (boton) boton.addEventListener('click', () => { hayCambiosSinGuardar = true; });
     }
 
     // ── Arranque ────────────────────────────────────────────────────────

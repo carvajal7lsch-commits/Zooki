@@ -24,6 +24,9 @@ class ValidadorClinico
     public const FR_MIN   = 5;
     public const FR_MAX   = 150;
 
+    /** M2 C5b (decisión del usuario, 2026-10-15): sin peso solo con la casilla «No se pudo pesar». */
+    public const AVISO_PESO_REQUERIDO = 'Indica el peso o marca «No se pudo pesar».';
+
     /** Textos de la consulta (columnas TEXT); el HTML usa el mismo maxlength. */
     public const TEXTO_MAX = 5000;
 

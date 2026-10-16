@@ -1099,34 +1099,17 @@ function filterTable() {
 }
 
 // --- CONSULTAS ---
-// M2 C5a: openConsultationModal, saveConsultation, updateFileList y
-// avisarAdjuntosRechazados viven en consulta-formulario.js, compartido con
-// Atención; aquí quedan las filas de tratamiento (C5b) y el historial.
+// M2 C5a y C5b: el formulario de consulta (openConsultationModal,
+// saveConsultation, addTreatmentRow, updateFileList y avisarAdjuntosRechazados)
+// vive en consulta-formulario.js y consulta-tratamientos.js, compartidos con
+// Atención; aquí queda el historial.
 
-/** Fecha de hoy en el formato de <input type="date">, en la hora local del navegador. */
-function fechaDeHoy() {
-    const hoy = new Date();
-    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-    const dia = String(hoy.getDate()).padStart(2, '0');
-    return `${hoy.getFullYear()}-${mes}-${dia}`;
-}
-
-function addTreatmentRow() {
-    const list = document.getElementById('treatmentsList');
-    const row = document.createElement('div');
-    row.className = 'treatment-row';
-    // RE-2.4.1: cada tratamiento lleva su fecha de inicio (obligatoria en el servidor).
-    row.innerHTML = `
-        <div class="input-group"><label>Medicamento</label><input type="text" name="med_nombre[]" required></div>
-        <div class="input-group"><label>Dosis</label><input type="text" name="med_dosis[]" required></div>
-        <div class="input-group"><label>Vía</label><select name="med_via[]"><option value="Oral">Oral</option><option value="Subcutánea">Subcutánea</option></select></div>
-        <div class="input-group"><label>Duración</label><input type="text" name="med_duracion[]" required></div>
-        <div class="input-group"><label>Inicio</label><input type="date" name="med_inicio[]" value="${fechaDeHoy()}" required data-etiqueta="la fecha de inicio del tratamiento"></div>
-        <button type="button" class="btn-remove-treatment" title="Quitar medicamento"><i class="fas fa-trash"></i></button>
-    `;
-    // Sin onclick en el HTML (ZOOKI_REGLAS §1).
-    row.querySelector('.btn-remove-treatment').addEventListener('click', () => row.remove());
-    list.appendChild(row);
+/**
+ * M2 C5b (decisión del usuario, 2026-10-15): una consulta sin peso dice que no
+ * se pudo pesar; el peso NULL nunca se muestra ni se cuenta como 0.
+ */
+function textoPeso(peso) {
+    return peso === null || peso === undefined || peso === '' ? 'No se pudo pesar' : `${escaparTexto(peso)} Kg`;
 }
 
 /**
@@ -1294,7 +1277,7 @@ async function viewMedicalHistory(id, nombre) {
                     </div>
                     <div class="history-content">
                         <div class="clinical-data-grid">
-                            <div class="clinical-field"><label>Peso</label><span>${escaparTexto(c.peso || '--')} Kg</span></div>
+                            <div class="clinical-field"><label>Peso</label><span>${textoPeso(c.peso)}</span></div>
                             <div class="clinical-field"><label>Temp.</label><span>${escaparTexto(c.temperatura || '--')} °C</span></div>
                             <div class="clinical-field"><label>F.C.</label><span>${escaparTexto(c.frecuencia_cardiaca || '--')} LPM</span></div>
                         </div>
@@ -1781,7 +1764,7 @@ function renderPetDashboard(data, id) {
                     title: 'Consulta Clínica',
                     subtitle: `Dr. ${escaparTexto(c.veterinario)}`,
                     origen: etiquetaOrigen(c),
-                    body: `<b>Motivo:</b> ${escaparTexto(c.motivo_consulta)}${textoSintomas(c) ? `<br><b>Síntomas:</b> ${textoSintomas(c)}` : ''}<br><b>Diagnóstico:</b> ${escaparTexto(c.diagnostico)}<br><b>Peso:</b> ${escaparTexto(c.peso || '--')} Kg • <b>F.C:</b> ${escaparTexto(c.frecuencia_cardiaca || '--')} LPM • <b>Temp:</b> ${escaparTexto(c.temperatura || '--')} °C`,
+                    body: `<b>Motivo:</b> ${escaparTexto(c.motivo_consulta)}${textoSintomas(c) ? `<br><b>Síntomas:</b> ${textoSintomas(c)}` : ''}<br><b>Diagnóstico:</b> ${escaparTexto(c.diagnostico)}<br><b>Peso:</b> ${textoPeso(c.peso)} • <b>F.C:</b> ${escaparTexto(c.frecuencia_cardiaca || '--')} LPM • <b>Temp:</b> ${escaparTexto(c.temperatura || '--')} °C`,
                     meta: cantidadTratamientos > 0 ? `<div class="timeline-meta-tratamiento"><i class="fas fa-pills"></i> Tratamiento prescrito (${cantidadTratamientos} meds)</div>` : ''
                 });
             });
@@ -1922,7 +1905,7 @@ async function printMedicalHistory(id, nombre) {
                     <p><strong>Clínica:</strong> ${escaparTexto(c.clinica_nombre)}</p>
                     <p><strong>Motivo:</strong> ${escaparTexto(c.motivo_consulta)}</p>
                     <p><strong>Diagnóstico:</strong> ${escaparTexto(c.diagnostico)}</p>
-                    <p><strong>Peso:</strong> ${escaparTexto(c.peso || '--')} Kg | <strong>Temp:</strong> ${escaparTexto(c.temperatura || '--')} °C</p>
+                    <p><strong>Peso:</strong> ${textoPeso(c.peso)} | <strong>Temp:</strong> ${escaparTexto(c.temperatura || '--')} °C</p>
                 `;
                 if (c.tratamientos && c.tratamientos.length > 0) {
                     html += `<ul>`;

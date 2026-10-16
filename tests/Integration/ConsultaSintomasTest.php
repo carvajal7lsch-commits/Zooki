@@ -84,7 +84,7 @@ final class ConsultaSintomasTest extends TestCase
         }
 
         // Por el controlador: 422 con el campo y el aviso corto, sin datos parciales.
-        $_POST = ['id_mascota' => '1', 'motivo' => 'Control', 'diagnostico' => 'Sano', 'sintomas' => ['sintoma.vomito', 'sintoma.tos_retirada']];
+        $_POST = ['id_mascota' => '1', 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano', 'sintomas' => ['sintoma.vomito', 'sintoma.tos_retirada']];
         $respuesta = $this->ejecutarControlador();
         $this->assertFalse($respuesta['success']);
         $this->assertSame(422, http_response_code());
@@ -160,7 +160,7 @@ final class ConsultaSintomasTest extends TestCase
             'frecuencia_respiratoria' => ['frecuencia_respiratoria' => '1.5'],
         ];
         foreach ($casos as $campo => $cambio) {
-            $_POST = array_replace(['id_mascota' => '1', 'motivo' => 'Control', 'diagnostico' => 'Sano'], $cambio);
+            $_POST = array_replace(['id_mascota' => '1', 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], $cambio);
             $respuesta = $this->ejecutarControlador();
             $this->assertSame(422, http_response_code(), $campo);
             $this->assertSame($campo, $respuesta['campo']);
@@ -168,7 +168,7 @@ final class ConsultaSintomasTest extends TestCase
         }
 
         // Más largo que la columna: se rechaza sin recortar lo que escribió el veterinario.
-        $_POST = ['id_mascota' => '1', 'motivo' => 'Control', 'diagnostico' => str_repeat('d', ValidadorClinico::TEXTO_MAX + 1)];
+        $_POST = ['id_mascota' => '1', 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => str_repeat('d', ValidadorClinico::TEXTO_MAX + 1)];
         $respuesta = $this->ejecutarControlador();
         $this->assertSame('diagnostico', $respuesta['campo']);
         $this->assertStringContainsString((string) ValidadorClinico::TEXTO_MAX, $respuesta['aviso']);
@@ -178,7 +178,7 @@ final class ConsultaSintomasTest extends TestCase
 
     public function testElRegistroDevuelveLaFilaDelListadoParaPonerLaPantallaAlDia(): void
     {
-        $_POST = ['id_mascota' => '1', 'motivo' => 'Vomita', 'diagnostico' => 'Gastritis', 'sintomas' => ['sintoma.vomito']];
+        $_POST = ['id_mascota' => '1', 'peso' => '8.5', 'motivo' => 'Vomita', 'diagnostico' => 'Gastritis', 'sintomas' => ['sintoma.vomito']];
 
         $respuesta = $this->ejecutarControlador();
 
@@ -200,7 +200,7 @@ final class ConsultaSintomasTest extends TestCase
 
     private function registrar(array $extra = [], array $tratamientos = []): int
     {
-        $entrada = array_replace(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], $extra);
+        $entrada = array_replace(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], $extra);
         $sinAdjuntos = fn (int $idConsulta, array $adjunto, int $indice): array => [];
         return $this->consultas->registrar($entrada, $tratamientos, [], $sinAdjuntos);
     }
