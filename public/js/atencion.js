@@ -7,8 +7,10 @@
  * la cita en un solo paso. Nada recarga la página salvo al terminar.
  *
  * Usa de otros archivos: zookiToast/zookiAviso/zookiConfirmar y escapeHtml
- * (avisos.js), addTreatmentRow/updateFileList/avisarAdjuntosRechazados
- * (medical-module.js).
+ * (avisos.js), addTreatmentRow (medical-module.js) y, de la consulta
+ * compartida con el modal (M2 C5a), ZookiConsultaForm, updateFileList y
+ * avisarAdjuntosRechazados (consulta-formulario.js), con los síntomas y los
+ * diagnósticos sugeridos.
  */
 (function () {
     'use strict';
@@ -23,6 +25,8 @@
 
     let hayCambiosSinGuardar = false;
     let finalizando = false;
+    // M2 C5a: síntomas, diagnósticos sugeridos y avisos junto al campo, los mismos del modal.
+    let consulta = null;
 
     // ── Alto disponible (sin scroll de página) ──────────────────────────
     function ajustarAlto() {
@@ -104,18 +108,29 @@
         if (btnSiguiente) btnSiguiente.hidden = pasoActual === pasos.length - 1;
     }
 
-    // Lleva al primer error de la consulta (pestaña y paso) y dice qué falta.
-    function validarConsulta() {
-        botonesPaso.forEach((b) => b.classList.remove('tiene-error'));
-        const error = primerCampoInvalido(formConsulta);
-        if (!error) return true;
-
-        const indice = pasos.indexOf(error.campo.closest('.atencion__paso'));
+    // Lleva al paso del campo, lo marca y lo enfoca.
+    function irAlCampo(campo) {
+        const indice = pasos.indexOf(campo.closest('.atencion__paso'));
         activarPestana('consulta');
         mostrarPaso(indice);
         if (botonesPaso[indice]) botonesPaso[indice].classList.add('tiene-error');
-        marcarInvalido(error.campo);
-        error.campo.focus();
+        marcarInvalido(campo);
+        campo.focus();
+    }
+
+    // Lleva al primer error de la consulta (pestaña y paso). Motivo, diagnóstico
+    // y signos dicen su aviso junto al campo (C5a); los demás campos, en un aviso breve.
+    function validarConsulta() {
+        botonesPaso.forEach((b) => b.classList.remove('tiene-error'));
+        const conAviso = consulta ? consulta.validar() : null;
+        if (conAviso) {
+            irAlCampo(conAviso);
+            return false;
+        }
+        const error = primerCampoInvalido(formConsulta);
+        if (!error) return true;
+
+        irAlCampo(error.campo);
         zookiToast(error.mensaje, 'error');
         return false;
     }
@@ -144,6 +159,8 @@
                 const campo = formConsulta.elements[nombre];
                 if (campo) datos[nombre] = campo.value;
             });
+            // C5a: los síntomas marcados también son datos editables del borrador.
+            if (consulta && consulta.sintomas) datos.sintomas = consulta.sintomas.marcados();
             const ahora = Date.now();
             localStorage.setItem(CLAVE_BORRADOR, JSON.stringify({ datos, guardado: ahora }));
             mostrarEstadoBorrador(ahora);
@@ -165,6 +182,10 @@
                     restaurado = true;
                 }
             });
+            if (consulta && consulta.sintomas && Array.isArray(datos.sintomas) && datos.sintomas.length) {
+                consulta.sintomas.poner(datos.sintomas);
+                restaurado = true;
+            }
             if (restaurado) {
                 hayCambiosSinGuardar = true;
                 zookiToast('Recuperamos el borrador que no alcanzaste a guardar.', 'info');
@@ -235,8 +256,15 @@
                 // (RN-406): o quedan las dos cosas, o ninguna.
                 const res = await postJson('index.php?action=registrar_consulta_ajax', new FormData(formConsulta));
                 if (!res.success) {
-                    if (!avisarAdjuntosRechazados(res)) zookiAviso(res.message || 'No se pudo guardar la consulta.');
                     finalizando = false;
+                    if (avisarAdjuntosRechazados(res)) return;
+                    // C5a: el error de un campo va junto a ese campo, en su paso.
+                    const campo = consulta ? consulta.mostrarErrorServidor(res) : null;
+                    if (campo) {
+                        irAlCampo(campo);
+                        return;
+                    }
+                    zookiAviso(res.message || 'No se pudo guardar la consulta.');
                     return;
                 }
                 app.dataset.consultaRegistrada = '1';
@@ -410,6 +438,16 @@
         if (btnFinalizar) btnFinalizar.addEventListener('click', finalizarAtencion);
 
         if (formConsulta) {
+            if (window.ZookiConsultaForm) {
+                consulta = window.ZookiConsultaForm.iniciar(formConsulta, {
+                    idMascota: () => idMascota,
+                    alCambiarSintomas: () => {
+                        hayCambiosSinGuardar = true;
+                        clearTimeout(temporizadorBorrador);
+                        temporizadorBorrador = setTimeout(guardarBorrador, 600);
+                    },
+                });
+            }
             restaurarBorrador();
             formConsulta.addEventListener('input', (e) => {
                 if (e.target.type === 'file') return;

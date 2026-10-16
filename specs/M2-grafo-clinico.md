@@ -1,6 +1,6 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B, C1 y C6 cerradas; C2 y C3 revisadas y aprobadas; C4 entregada, pendiente de revisión (Codex, 2026-10-15)
+> Estado: B, C1 y C6 cerradas; C2, C3 y C4 revisadas y aprobadas; C5a entregada, pendiente de revisión (Claude Code, 2026-10-15)
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
@@ -103,8 +103,8 @@ La decisión «confirmar» requiere una huella opaca vigente por fila: si cambia
 - [x] C1 — Alergias y alertas médicas: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
 - [x] C2 — Motor de diagnósticos: revisada y aprobada (Codex, 2026-10-15).
 - [x] C3 — Alertas de prescripción: revisada y aprobada (Codex, 2026-10-15).
-- [x] C4 — Motor de triage con la batería: entregada, pendiente de revisión (Codex, 2026-10-15).
-- [ ] C5a — Consulta: síntomas, diagnósticos sugeridos y obligatorios.
+- [x] C4 — Motor de triage con la batería: revisada y aprobada (Codex, 2026-10-15).
+- [x] C5a — Consulta: síntomas, diagnósticos sugeridos y obligatorios: entregada, pendiente de revisión (Claude Code, 2026-10-15).
 - [ ] C5b — Consulta: prescripción con alertas, tratamiento y peso desconocido.
 - [x] C6 — Mapa del grafo: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
 - [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
@@ -1364,3 +1364,108 @@ Ejecutados con controlador, Security y conocimiento reales sobre SQLite en memor
 **Decisión del revisor:** C5 se parte en dos para que cada revisión y cada prueba en el navegador sean manejables: **C5a** (síntomas guardados, diagnósticos sugeridos y obligatorios avisados desde el inicio, en ambas entradas de consulta) y **C5b** (prescripción con buscador de fármacos, alertas, decisiones y conciliación; formulario de tratamiento y peso desconocido).
 
 **Siguiente:** C5a (Claude Code).
+
+## Anexo C5a — Resultado
+
+**Lo escribió Claude Code (2026-10-15); entregada, pendiente de revisión de Claude (arquitecto).**
+
+### Qué se entregó
+
+- **Síntomas guardados (RN-210, A.1):** la consulta recibe `sintomas[]` (códigos del catálogo) y `Consulta::escribir` los guarda en `consulta_sintomas` dentro de su misma transacción, después de leerlos ahí mismo como síntomas activos (`ConsultaSintoma`).
+  - Un código inexistente, retirado, de otro tipo, repetido como lista anidada o por encima del tope (30, `ValidadorClinico::SINTOMAS_MAX`) da 422 con `campo: sintomas` y no se escribe nada. Los repetidos se guardan una vez.
+  - Un fallo posterior (tratamiento, adjunto, cita) deshace también los síntomas.
+- **Historial con síntomas (RN-113):** `historialDeMascota` y el historial de Atención agregan los síntomas de cada consulta con `Consulta::conSintomas`. `ConsultaSintoma::deConsultas` repite la regla de visibilidad, así que pedir los de una consulta ajena sin autorización devuelve nada. Un síntoma retirado después sigue saliendo con su etiqueta: es lo que se registró.
+- **Componentes compartidos por el modal (Pacientes, Consultas, Calendario) y Atención:**
+  - `public/js/consulta-sintomas.js`: buscador con `buscar_sintomas_ajax` que solo sugiere; el síntoma se marca al elegirlo y queda como chip con su × y su campo oculto. Enter no envía ni marca. «Otro / no sé» no se ofrece en la consulta (es la reserva del triage del propietario); lo que no esté se escribe en la anamnesis.
+  - `public/js/consulta-diagnosticos.js`: al cambiar los síntomas, con 400 ms de espera, pide `sugerir_diagnosticos_ajax` y muestra hasta 5 candidatos con la etiqueta, «Coincide X de Y síntomas característicos», los síntomas que coinciden, la fuente (la clínica primero, con enlace) y «Sugerencia de apoyo · pendiente de validación veterinaria»; sin porcentajes ni puntuación. «Usar este diagnóstico» copia el texto al campo, sin borrar lo escrito ni repetirlo, y deja editarlo; nunca se rellena solo. Sin candidatos: «Sin coincidencias en el conocimiento: escribe el diagnóstico».
+  - **Datos que faltan (revisión de C2):** se muestran con nombre legible, nunca códigos. Vacunación y días desde el celo tienen un campo opcional que vuelve a calcular y no se guarda en la consulta (sin `name`). Los de la ficha (edad, raza, sexo, esterilización) y «desde cuándo empezaron los síntomas» solo se nombran.
+  - `public/js/consulta-formulario.js`: motivo y diagnóstico salen «Obligatorio.» desde que se abre; el aviso va junto al campo mientras se escribe, con la regla del servidor (`ValidadorClinico::AVISOS_CONSULTA` en `data-aviso-*`). Los signos fuera de rango también. Al guardar, el 422 del servidor sale junto a su campo y se abre su pestaña o paso; ya no hay aviso global.
+  - **Adaptadores:** `openConsultationModal`, `saveConsultation`, `updateFileList` y `avisarAdjuntosRechazados` salen de `medical-module.js` hacia `consulta-formulario.js`, con los mismos nombres. Atención usa `ZookiConsultaForm.iniciar`, y su borrador también guarda los síntomas marcados.
+- **Sin recargar (hallazgo de A.1):**
+  - Al guardar desde el modal se emite `zooki:consulta-registrada` con la fila del listado que ahora devuelve `registrar_consulta_ajax` (`consulta`).
+  - Pacientes pone al día la lista, el expediente y la ficha (número de historia); el historial abierto se repinta, y solo si su cajón está a la vista.
+  - La lista de Consultas suma la tarjeta nueva. Atención sigue terminando como antes (volver a la agenda o ver el resumen).
+- **Errores por campo en el servidor:** `Consulta::validar` lanza `CampoInvalido` con `motivo`, `diagnostico`, `peso`, `temperatura`, `frecuencia_cardiaca` o `frecuencia_respiratoria` y su aviso corto. Motivo y diagnóstico de más de 5000 caracteres se rechazan sin recortar. Los mensajes existentes se conservan.
+- **Sin código en línea:** el modal ya no tiene `onsubmit` ni `onchange` (y lleva `novalidate`, porque valida Zooki). El `style=` del error del historial pasó a la clase `empty-table--error`, y el del aviso de adjuntos rechazados, a clases. El diseño del modal y de Atención se conserva: los parciales usan la clase de campo de cada pantalla y solo se agrega `public/css/consulta-clinica.css`.
+- **Buscador por especie:** `buscar_sintomas_ajax` acepta `id_mascota` y toma la especie de la ficha con la misma regla de acceso que las sugerencias: vínculo activo o mascota propia, y 403 auditado si no. Con `id_mascota`, el parámetro `especie` no cuenta.
+- **Orden interno:** `exigirConsultaPropia` estaba copiado en `ArchivoClinico` y `Tratamiento`; ahora vive una vez en `ModeloHistoria` y lo usan los tres. El SQL del listado de consultas se comparte con la fila que devuelve el registro.
+- **Modelos §3:** el ranking se recalcula al cambiar los síntomas, sin porcentajes y con los datos que ayudarían; hay una rama «Usar este diagnóstico» que copia y deja editar; al guardar se releen los síntomas activos, y uno retirado vuelve a «corrige los campos marcados» (422, nada escrito). Renderizado con Mermaid 11.4.1 en Chrome sin interfaz.
+
+### RE con su prueba
+
+| RE / regla | Prueba |
+|---|---|
+| RN-210: síntomas en la transacción, sin repetir; opcionales | `ConsultaSintomasTest::testLosSintomasSeGuardanConLaConsultaSinRepetirYSalenEnElHistorial`; `BaseV2MysqlTest::testC5aSintomasDeLaConsultaEnElEsquemaRealConRollback` (FK reales en MariaDB) |
+| Código inválido, retirado, de otro tipo o con otra forma: 422 junto al campo y nada escrito | `testCodigoInvalidoRetiradoODeOtroTipoSeRechazaJuntoAlCampoSinEscribir` (modelo y controlador); en MariaDB, retirado entre la búsqueda y el guardado |
+| RE-2.6.1: el rollback también deshace los síntomas | `testUnFalloPosteriorDeshaceTambienLosSintomas` |
+| RN-113: síntomas solo de consultas visibles | `testElHistorialMuestraSintomasSoloDeConsultasQueLaClinicaPuedeVer` (sin vínculo 403; vinculada sin autorización nada, ni pidiendo el id; autorizada de solo lectura); `testElHistorialConservaLaEtiquetaDeUnSintomaRetiradoDespues` |
+| RE-2.1.3, RN-202 y signos: errores del servidor con su campo | `testLosErroresDelServidorDicenSuCampoYSuAvisoCorto`; `ConsultaHistorialTest` sigue en verde |
+| Registro que pone la pantalla al día sin recargar | `testElRegistroDevuelveLaFilaDelListadoParaPonerLaPantallaAlDia` |
+| Buscador con la especie de la ficha y acceso | `TriageTest::testBuscadorConLaMascotaUsaLaEspecieDeSuFichaYExigeVinculo` |
+| RE-2.8.1, RE-2.8.4: ranking que se recalcula, máximo 5, cobertura, coincidencias, fuente, apoyo y sin porcentajes | `M2C5aConsulta.test.cjs`: «el ranking se recalcula…» |
+| RE-2.8.2: «Usar este diagnóstico» copia y deja editar; nunca se rellena solo | «Usar este diagnóstico copia el texto…» y la comprobación de campo vacío del ranking |
+| RE-2.8.3, RN-202: sin candidatos, mensaje y diagnóstico obligatorio | «sin candidatos dice que se escriba el diagnóstico…» |
+| Revisión de C2: datos que faltan legibles y campos que recalculan | «los datos que faltan salen con nombres legibles…» |
+| Buscador que solo sugiere, chips y quitar | «el buscador sugiere sin marcar nada solo…» |
+| Obligatorios desde el inicio y aviso junto al campo; errores del servidor junto al campo; sin recargar | «motivo y diagnóstico se ven obligatorios…» y «los errores del servidor salen junto a su campo…» |
+| Historial con síntomas escapados, y repintado solo con el cajón a la vista | «el historial muestra los síntomas marcados…» |
+| Las dos entradas con los mismos componentes, sin código en línea | «las dos entradas de consulta usan los mismos componentes…» |
+
+### Verificación
+
+- PHP completo sin host MySQL: **837 pruebas, 7095 aserciones, 42 omitidas (las de MySQL)**.
+- PHP completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32 de XAMPP): **837 pruebas, 7689 aserciones, ninguna omitida**.
+- JavaScript: **193/193** (183 anteriores + 10 de `M2C5aConsulta.test.cjs`).
+- Diagrama §3 renderizado con Mermaid 11.4.1; `git diff --check` sin errores.
+- No se leyó ni escribió `.env`, no se tocó `zooki_v2_prueba` ni sus contraseñas; sin commit ni push, y no se empezó C5b.
+
+### Prueba en el navegador (usuario)
+
+En XAMPP, antes: `php scripts/migrar.php` y `php scripts/cargar_conocimiento.php`. Hace falta un perro adulto de Fabio (con fecha de nacimiento de hace más de un año) vinculado a Norte y a Sur.
+
+1. [ ] **Beto Norte** (veterinario de Norte), escritorio, Pacientes → ficha del perro → nueva consulta:
+   - Motivo y diagnóstico dicen «Obligatorio.» desde que se abre; si escribes y borras el motivo, el aviso rojo sale junto al campo.
+   - En «Síntomas observados» escribe «vomito»: sugiere sin marcar nada. Marca «Vómito», «Diarrea con sangre» y «No come»: salen como chips con ×.
+   - En «Plan» aparecen hasta 5 diagnósticos, con «Coincide X de Y», los síntomas que coinciden, la fuente con enlace y «Sugerencia de apoyo · pendiente de validación veterinaria», sin porcentajes.
+   - Sale «Estado de vacunación»: elige «Incompleta» y la lista se recalcula.
+   - «Usar este diagnóstico» copia el texto y lo puedes editar.
+   - Al guardar, el modal se cierra sin recargar, la ficha muestra el número de historia y el historial muestra «Síntomas marcados».
+2. [ ] **Beto Norte:**
+   - Abre otra consulta y guarda con el diagnóstico vacío: se abre «Plan» con el aviso junto al campo, sin ventana.
+   - Marca solo un síntoma sin relación en el conocimiento (por ejemplo «No toma agua»): dice «Sin coincidencias en el conocimiento: escribe el diagnóstico» y el diagnóstico sigue obligatorio.
+   - Pon temperatura 80 en «Signos»: el aviso sale junto al campo.
+3. [ ] **Beto Norte**, Atención de una cita en curso del perro:
+   - Síntomas en el paso 1 y sugerencias en el paso 3, iguales al modal.
+   - Recarga la página a mitad: el borrador recupera los chips.
+   - «Finalizar atención» sin diagnóstico lleva al paso 3 con el aviso junto al campo.
+   - Al finalizar, el historial de Atención muestra «Síntomas:».
+4. [ ] **Diego Sur** (veterinario de Sur):
+   - Sin la autorización de Fabio, el historial del perro no muestra la consulta de Norte ni sus síntomas.
+   - Con la autorización (Fabio en el portal), la ve de solo lectura con «Síntomas marcados».
+5. [ ] **Beto Norte**, en el celular, Consultas → «Atención sin cita»:
+   - Elige el perro, registra la consulta y la tarjeta nueva aparece en la lista sin recargar.
+   - Los chips, las sugerencias y el panel de diagnósticos caben en el ancho del celular.
+
+### Pendientes
+
+- **Para la revisión:**
+  - `buscar_sintomas_ajax` admite ahora `id_mascota` (cambio aditivo a la API de C4).
+  - Hoy todos los síntomas del conocimiento son universales (`MapaConocimiento` no les asigna especie), así que el filtro por especie todavía no cambia resultados; queda listo para cuando el conocimiento los distinga.
+- El motivo de más de 5000 caracteres ahora se rechaza en vez de recortarse, igual que el diagnóstico.
+- **Fuera de C5a:**
+  - Los síntomas no se ven en el detalle de la lista de Consultas (su fila no los trae), en el portal ni en el historial imprimible.
+  - El modal sigue sin frecuencia respiratoria ni observaciones (hallazgo de A.1).
+  - Quedan `style=` en otras partes de `medical-module.js` (expediente, buscador de pacientes, impresión): van al pulido.
+- **C5b:** prescripción con buscador de fármacos, alertas y conciliación en las filas de tratamiento, formulario de tratamiento y peso desconocido. Los errores `tratamientos.N` del servidor siguen saliendo en un aviso hasta entonces.
+
+### C5a — Revisión (2026-10-15)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada en código; pendiente de las pruebas del usuario en el navegador.**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 837 pruebas y 7095 aserciones (42 omitidas); con MySQL 8.0.46 y la base por defecto, 837 pruebas y 7689 aserciones, ninguna omitida; JS 193/193. Las vistas del modal, Atención y los parciales nuevos no tienen `style=` ni eventos en línea.
+
+**Lo que está bien:** síntomas releídos como activos dentro de la transacción y deshechos con el resto si algo falla; el historial repite la regla de visibilidad para los síntomas (una consulta ajena sin autorización no devuelve nada); los componentes se comparten entre el modal y Atención con adaptadores de los mismos nombres; «Usar este diagnóstico» copia sin rellenar solo; los datos que faltan salen con nombre legible; errores del servidor junto a su campo y pantalla al día sin recargar; `exigirConsultaPropia` quedó en un solo lugar.
+
+**Aceptado de los pendientes:** `buscar_sintomas_ajax` con `id_mascota` es un cambio aditivo con la misma regla de acceso; «Otro / no sé» no se ofrece en la consulta (es la reserva del triage del propietario). Los síntomas en la lista de Consultas, el portal y el imprimible, la frecuencia respiratoria y las observaciones del modal y los `style=` restantes de `medical-module.js` pasan al pulido (F).
+
+**Siguiente:** pruebas del usuario (lista del Anexo C5a) y C5b (Claude Code).

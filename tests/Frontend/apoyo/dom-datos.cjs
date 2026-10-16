@@ -1,7 +1,8 @@
 /**
  * M2 — Un DOM mínimo para pantallas que se enganchan por atributos data-*
- * (grafo-conocimiento.js, alertas-medicas.js): nodos con hijos, dataset,
- * clases, atributos, eventos y selectores [data-x], [data-x="v"], .clase y :checked.
+ * (grafo-conocimiento.js, alertas-medicas.js, consulta-*.js): nodos con hijos,
+ * dataset, clases, atributos, eventos y selectores [data-x], [data-x="v"],
+ * .clase y :checked; closest, remove e insertAdjacentElement('afterend').
  * No es un DOM completo; solo lo que usan esos archivos.
  */
 function kebab(texto) {
@@ -39,6 +40,28 @@ function crearNodo(etiqueta) {
             (n.escuchas[tipo] || []).forEach(fn => fn(objeto));
             return objeto;
         },
+        dispatchEvent(evento) {
+            if (!evento.target) evento.target = n;
+            (n.escuchas[evento.type] || []).forEach(fn => fn(evento));
+            return true;
+        },
+        closest(selector) {
+            for (let actual = n; actual; actual = actual.padre) {
+                if (coincide(actual, selector)) return actual;
+            }
+            return null;
+        },
+        remove() {
+            if (n.padre) n.padre.hijos = n.padre.hijos.filter(h => h !== n);
+            n.padre = null;
+        },
+        insertAdjacentElement(posicion, nuevo) {
+            if (posicion !== 'afterend' || !n.padre) throw new Error('Solo afterend con padre');
+            const hermanos = n.padre.hijos;
+            nuevo.padre = n.padre;
+            hermanos.splice(hermanos.indexOf(n) + 1, 0, nuevo);
+            return nuevo;
+        },
         click() { n.disparar('click'); },
         focus() { n.enfocado = true; },
         appendChild(h) { h.padre = n; n.hijos.push(h); return h; },
@@ -60,10 +83,10 @@ function valorDato(n, nombre) {
     return null;
 }
 
-/** [data-x], [data-x="v"], varios seguidos, más .clase o :checked al final. */
+/** [data-x], [data-x="v"], varios seguidos, más .clase o :checked al final; o solo .clase. */
 function coincide(n, selector) {
-    if (n.tagName === '#text') return false;
-    const partes = selector.match(/^((?:\[[a-z-]+(?:="[^"]*")?\])+)(?:\.([a-z-]+)|(:checked))?$/);
+    if (n.tagName === '#text' || selector === '') return false;
+    const partes = selector.match(/^((?:\[[a-z-]+(?:="[^"]*")?\])*)(?:\.([a-z_-]+)|(:checked))?$/);
     if (!partes) return false;
     const [, atributos, clase, marcado] = partes;
     for (const [, atributo, valor] of atributos.matchAll(/\[([a-z-]+)(?:="([^"]*)")?\]/g)) {
@@ -86,6 +109,8 @@ function crearDocumento() {
     documento.querySelector = selector => documento.raiz.querySelector(selector);
     documento.querySelectorAll = selector => documento.raiz.querySelectorAll(selector);
     documento.disparar = (tipo, evento = {}) => (documento.escuchas[tipo] || []).forEach(fn => fn(evento));
+    documento.dispatchEvent = evento => { documento.disparar(evento.type, evento); return true; };
+    documento.getElementById = id => documento.raiz.todos().find(h => h.id === id) || null;
     return documento;
 }
 

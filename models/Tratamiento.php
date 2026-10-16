@@ -57,7 +57,7 @@ class Tratamiento extends ModeloHistoria
      */
     public function insertarEnConsulta(int $idConsulta, array $datos): int
     {
-        $this->exigirConsultaPropia($idConsulta);
+        $this->exigirConsultaPropia($idConsulta, 'Tratamiento sobre una consulta de otra clínica (RN-112)');
         $limpio = self::validar($datos);
         $idNodo = null;
         if ($limpio['farmaco'] !== null) {
@@ -127,14 +127,5 @@ class Tratamiento extends ModeloHistoria
             $this->denegarAcceso('tratamientos', $idTratamiento, 'Modificación de un tratamiento de otra clínica (RN-112)');
         }
         return $tratamiento;
-    }
-
-    private function exigirConsultaPropia(int $idConsulta): void
-    {
-        $consulta = $this->conn->prepare('SELECT 1 FROM consultas WHERE id_consulta = ? AND id_clinica = ?');
-        $consulta->execute([$idConsulta, $this->clinica()]);
-        if (!$consulta->fetchColumn()) {
-            $this->denegarAcceso('consultas', $idConsulta, 'Tratamiento sobre una consulta de otra clínica (RN-112)');
-        }
     }
 }

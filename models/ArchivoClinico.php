@@ -10,7 +10,7 @@ class ArchivoClinico extends ModeloHistoria
     /** Lo llama Consulta::registrar dentro de su transacción. */
     public function insertarEnConsulta(int $idConsulta, array $datos): int
     {
-        $this->exigirConsultaPropia($idConsulta);
+        $this->exigirConsultaPropia($idConsulta, 'Adjunto sobre una consulta de otra clínica (RN-112)');
 
         $sql = 'INSERT INTO archivos_clinicos
             (id_consulta, nombre_original, nombre_servidor, ruta_archivo, tipo_archivo, extension, tamano_bytes, descripcion)
@@ -125,14 +125,5 @@ class ArchivoClinico extends ModeloHistoria
             throw new AccesoDenegado(403, 'No tienes acceso a este registro clínico.');
         }
         return $archivo;
-    }
-
-    private function exigirConsultaPropia(int $idConsulta): void
-    {
-        $consulta = $this->conn->prepare('SELECT 1 FROM consultas WHERE id_consulta = ? AND id_clinica = ?');
-        $consulta->execute([$idConsulta, $this->clinica()]);
-        if (!$consulta->fetchColumn()) {
-            $this->denegarAcceso('consultas', $idConsulta, 'Adjunto sobre una consulta de otra clínica (RN-112)');
-        }
     }
 }

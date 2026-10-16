@@ -22,6 +22,12 @@ $abierta = in_array($estadoActual, ['pendiente', 'confirmada'], true);
 $porIniciar = $abierta && $esDiaDeLaCita;
 $pesoReferencia = $resumenClinico['ultimo_peso'] ?? ($mascota['peso'] ?? null);
 $hoyIso = date('Y-m-d');
+// M2 C5a: límites y avisos de ValidadorClinico, los mismos del servidor (js/consulta-formulario.js).
+require_once __DIR__ . '/../../helpers/ValidadorClinico.php';
+$avisoConsulta = fn(string $campo): string => $e(ValidadorClinico::AVISOS_CONSULTA[$campo]);
+$claseCampo = 'campo';
+$claseEtiqueta = 'campo__etiqueta';
+$prefijoConsulta = 'atencion';
 ?>
 <section class="atencion" id="atencionApp"
          data-id-cita="<?= (int) $cita['id_cita'] ?>"
@@ -208,11 +214,14 @@ $hoyIso = date('Y-m-d');
                                 <div class="atencion__paso is-active">
                                     <label class="campo">
                                         <span class="campo__etiqueta">Motivo de la consulta *</span>
-                                        <input type="text" name="motivo" required maxlength="5000" data-etiqueta="el motivo" value="<?= $e($cita['motivo'] ?? '') ?>">
+                                        <input type="text" name="motivo" required aria-required="true" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>" data-etiqueta="el motivo" value="<?= $e($cita['motivo'] ?? '') ?>"
+                                               data-consulta-campo="motivo" data-aviso-requerido="<?= $avisoConsulta('motivo') ?>">
+                                        <small class="cuenta-validacion" data-campo-aviso="motivo">Obligatorio.</small>
                                     </label>
+                                    <?php include __DIR__ . '/../partials/consulta_sintomas.php'; ?>
                                     <label class="campo campo--crece">
                                         <span class="campo__etiqueta">Anamnesis</span>
-                                        <textarea name="anamnesis" maxlength="5000" placeholder="Historia relatada por el propietario, síntomas, desde cuándo…"></textarea>
+                                        <textarea name="anamnesis" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>" placeholder="Historia relatada por el propietario, síntomas, desde cuándo…"></textarea>
                                     </label>
                                 </div>
 
@@ -221,43 +230,50 @@ $hoyIso = date('Y-m-d');
                                         <label class="signo">
                                             <i class="fas fa-weight signo__icono signo__icono--peso"></i>
                                             <span class="campo__etiqueta">Peso</span>
-                                            <span class="signo__entrada"><input type="number" name="peso" step="0.01" min="0.01" max="200" data-etiqueta="el peso" placeholder="<?= $pesoReferencia !== null ? $e($pesoReferencia) : '0.00' ?>"><em>kg</em></span>
+                                            <span class="signo__entrada"><input type="number" name="peso" data-consulta-campo="peso" data-aviso-rango="<?= $avisoConsulta('peso') ?>" step="0.01" min="0.01" max="200" data-etiqueta="el peso" placeholder="<?= $pesoReferencia !== null ? $e($pesoReferencia) : '0.00' ?>"><em>kg</em></span>
                                             <small>Entre 0.01 y 200 kg<?= $pesoReferencia !== null ? ' · último: ' . $e($pesoReferencia) . ' kg' : '' ?></small>
+                                            <small class="cuenta-validacion" data-campo-aviso="peso"></small>
                                         </label>
                                         <label class="signo">
                                             <i class="fas fa-thermometer-half signo__icono signo__icono--temp"></i>
                                             <span class="campo__etiqueta">Temperatura</span>
-                                            <span class="signo__entrada"><input type="number" name="temperatura" step="0.1" min="25" max="45" data-etiqueta="la temperatura" placeholder="38.5"><em>°C</em></span>
+                                            <span class="signo__entrada"><input type="number" name="temperatura" data-consulta-campo="temperatura" data-aviso-rango="<?= $avisoConsulta('temperatura') ?>" step="0.1" min="25" max="45" data-etiqueta="la temperatura" placeholder="38.5"><em>°C</em></span>
                                             <small>Entre 25 y 45 °C</small>
+                                            <small class="cuenta-validacion" data-campo-aviso="temperatura"></small>
                                         </label>
                                         <label class="signo">
                                             <i class="fas fa-heartbeat signo__icono signo__icono--fc"></i>
                                             <span class="campo__etiqueta">Frecuencia cardíaca</span>
-                                            <span class="signo__entrada"><input type="number" name="frecuencia_cardiaca" step="1" min="10" max="400" data-etiqueta="la frecuencia cardíaca" placeholder="100"><em>lpm</em></span>
+                                            <span class="signo__entrada"><input type="number" name="frecuencia_cardiaca" data-consulta-campo="frecuencia_cardiaca" data-aviso-rango="<?= $avisoConsulta('frecuencia_cardiaca') ?>" step="1" min="10" max="400" data-etiqueta="la frecuencia cardíaca" placeholder="100"><em>lpm</em></span>
                                             <small>Entre 10 y 400 lpm</small>
+                                            <small class="cuenta-validacion" data-campo-aviso="frecuencia_cardiaca"></small>
                                         </label>
                                         <label class="signo">
                                             <i class="fas fa-lungs signo__icono signo__icono--fr"></i>
                                             <span class="campo__etiqueta">Frecuencia respiratoria</span>
-                                            <span class="signo__entrada"><input type="number" name="frecuencia_respiratoria" step="1" min="5" max="150" data-etiqueta="la frecuencia respiratoria" placeholder="24"><em>rpm</em></span>
+                                            <span class="signo__entrada"><input type="number" name="frecuencia_respiratoria" data-consulta-campo="frecuencia_respiratoria" data-aviso-rango="<?= $avisoConsulta('frecuencia_respiratoria') ?>" step="1" min="5" max="150" data-etiqueta="la frecuencia respiratoria" placeholder="24"><em>rpm</em></span>
                                             <small>Entre 5 y 150 rpm</small>
+                                            <small class="cuenta-validacion" data-campo-aviso="frecuencia_respiratoria"></small>
                                         </label>
                                     </div>
                                 </div>
 
                                 <div class="atencion__paso">
+                                    <?php include __DIR__ . '/../partials/consulta_diagnosticos.php'; ?>
                                     <label class="campo campo--crece">
                                         <span class="campo__etiqueta">Diagnóstico *</span>
-                                        <textarea name="diagnostico" required maxlength="5000" data-etiqueta="el diagnóstico"></textarea>
+                                        <textarea name="diagnostico" required aria-required="true" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>" data-etiqueta="el diagnóstico"
+                                                  data-consulta-campo="diagnostico" data-aviso-requerido="<?= $avisoConsulta('diagnostico') ?>"></textarea>
+                                        <small class="cuenta-validacion" data-campo-aviso="diagnostico">Obligatorio.</small>
                                     </label>
                                     <div class="campo-fila">
                                         <label class="campo campo--crece">
                                             <span class="campo__etiqueta">Plan / recomendaciones</span>
-                                            <textarea name="plan_tratamiento" maxlength="5000"></textarea>
+                                            <textarea name="plan_tratamiento" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
                                         </label>
                                         <label class="campo campo--crece">
                                             <span class="campo__etiqueta">Observaciones</span>
-                                            <textarea name="observaciones" maxlength="5000"></textarea>
+                                            <textarea name="observaciones" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
                                         </label>
                                     </div>
                                 </div>
@@ -416,6 +432,7 @@ $hoyIso = date('Y-m-d');
                                     <strong><?= $e($con['motivo_consulta']) ?></strong>
                                     <span class="historial__vet"><i class="fas fa-user-md"></i> <?= $e($con['veterinario'] ?? '') ?></span>
                                 </div>
+                                <?php if (!empty($con['sintomas'])): ?><p><span>Síntomas:</span> <?= $e(implode(', ', array_column($con['sintomas'], 'etiqueta'))) ?></p><?php endif; ?>
                                 <p><span>Diagnóstico:</span> <?= $e($con['diagnostico']) ?></p>
                                 <?php if (!empty($con['plan_tratamiento'])): ?><p><span>Plan:</span> <?= $e($con['plan_tratamiento']) ?></p><?php endif; ?>
                                 <?php if (!empty($con['peso']) || !empty($con['temperatura'])): ?>

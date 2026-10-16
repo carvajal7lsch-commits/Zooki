@@ -320,5 +320,13 @@
         boton.addEventListener('click', () => closeModal(boton.dataset.cerrarModal));
     });
 
+    // M2 C5a (hallazgo de A.1): la consulta recién guardada entra a la lista sin recargar la página.
+    document.addEventListener('zooki:consulta-registrada', (evento) => {
+        const nueva = evento.detail && evento.detail.consulta;
+        if (!nueva) return;
+        todasLasConsultas = [nueva, ...todasLasConsultas.filter((c) => String(c.id_consulta) !== String(nueva.id_consulta))];
+        filtrarConsultas();
+    });
+
     filtrarConsultas();
 })();

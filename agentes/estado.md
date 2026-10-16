@@ -7,7 +7,8 @@
 ## Ahora
 
 - **Módulo activo:** M2 — Historia clínica y soporte a la decisión (Grafo I), previsto como `2.0.0-alpha.4`. Plan: [`specs/M2-grafo-clinico.md`](../specs/M2-grafo-clinico.md). Rama: `v2/m2-grafo`.
-- **Entrega actual de M2:** **C4 — motor de triage: revisada y aprobada (2026-10-15); la batería da 26/26 (RE-2.11.7).** Lo escribió Codex. Ver «Anexo C4» y «C4 — Revisión». C3 con commit `bf87ce3`. C1, C2, C6 y B cerradas. C5 se parte en C5a y C5b.
+- **Entrega actual de M2:** **C5a — consulta: síntomas, diagnósticos sugeridos y obligatorios: revisada y aprobada en código (2026-10-15), pendiente de las pruebas del usuario.** Lo escribió Claude Code. Ver «Anexo C5a» y «C5a — Revisión». C4 con commit `697cac7` (26/26). C1, C2, C3, C6 y B cerradas.
+- **C4:** revisada y aprobada (2026-10-15); la batería da 26/26 (RE-2.11.7). Lo escribió Codex. Ver «Anexo C4» y «C4 — Revisión». C3 con commit `bf87ce3`. C1, C2, C6 y B cerradas. C5 se parte en C5a y C5b.
 - **C3:** revisada y aprobada (2026-10-15), escrita por Codex; ver «C3 — Revisión». C2 con commit `172a707`; CI corregido en `668cd0a`. C1, C6 y B cerradas.
 - **Verificación C4:** PHP 828 (7025 aserciones y 41 omitidas sin host; 7614 aserciones y ninguna omitida con MariaDB 10.4.32 temporal propia y `zooki_test_base_v2`); JS 183/183; 26/26 casos con conocimiento real, sin cambiar esperados ni reglas. C5 no se empezó.
 - **C2:** revisada y aprobada (2026-10-15), escrita por Codex. Ver «C2 — Revisión» (verificada también en MySQL 8.0; corregidos los conteos del CI). C1, C6 y B cerradas.
@@ -44,7 +45,8 @@
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
-- **Siguiente paso:** C5a — consulta: síntomas, diagnósticos sugeridos y obligatorios (Claude Code); luego C5b y F. Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal; AGENTS.md (alpha y 52 tablas). Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Siguiente paso:** el usuario prueba C5a; luego C5b — prescripción con alertas, tratamiento y peso desconocido (Claude Code), y F. Para F: RN-112 con «alerta médica»; alertas y síntomas en el historial imprimible del portal; síntomas en la lista de Consultas y en el portal; frecuencia respiratoria y observaciones del modal; `style=` restantes de medical-module.js; AGENTS.md (alpha y 52 tablas). Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Para el plan de M4 (idea del usuario, 2026-10-15, por decidir allí):** el paciente que llega sin cita y no es urgencia debería pasar por la agenda. Recomendación del revisor: «Atención sin cita» (HU-2.2) crea por detrás una cita de llegada en curso, como sobrecupo si no hay hueco (RN-422), para que la agenda del veterinario refleje la realidad; las urgencias siguen HU-4.15. Hoy (M2) la consulta sin cita no crea cita.
   Reparto de M2: Codex C2–C4; Claude Code C5.
   Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal.
   En XAMPP, antes de probar: `php scripts/migrar.php` y luego `php scripts/cargar_conocimiento.php`. Pendiente aparte: borrar los respaldos temporales del VPS.

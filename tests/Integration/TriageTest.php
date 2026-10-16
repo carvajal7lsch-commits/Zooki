@@ -189,4 +189,31 @@ final class TriageTest extends TestCase
         $_GET = ['especie' => 'inventada'];
         $this->assertFalse($this->llamar('buscar_sintomas_ajax')['success']);
     }
+
+    /** M2 C5a: la consulta busca con la especie de la ficha, con la misma regla de acceso que las sugerencias. */
+    public function testBuscadorConLaMascotaUsaLaEspecieDeSuFichaYExigeVinculo(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = ['q' => 'vomi', 'especie' => 'especie.canino'];
+        $conEspecie = $this->llamar('buscar_sintomas_ajax');
+        // Con la mascota, el parámetro de especie no cuenta: ni uno inventado da error.
+        $_GET = ['q' => 'vomi', 'id_mascota' => '1', 'especie' => 'inventada'];
+        $conMascota = $this->llamar('buscar_sintomas_ajax');
+        $this->assertTrue($conMascota['success']);
+        $this->assertSame($conEspecie['sugerencias'], $conMascota['sugerencias']);
+
+        $_GET = ['q' => 'vomi', 'id_mascota' => 'x'];
+        $this->assertFalse($this->llamar('buscar_sintomas_ajax')['success']);
+        $this->assertSame(422, http_response_code());
+
+        $this->como(4, Contexto::deClinica(2, 'Sur', Roles::VETERINARIO));
+        $_GET = ['q' => 'vomi', 'id_mascota' => '1'];
+        try {
+            $this->llamar('buscar_sintomas_ajax');
+            $this->fail('Sin vínculo no se busca con la ficha.');
+        } catch (AccesoDenegado $error) {
+            $this->assertSame(403, $error->codigo());
+        }
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE accion = 'OTHER' AND tabla_afectada = 'mascotas' AND id_clinica = 2")->fetchColumn());
+    }
 }

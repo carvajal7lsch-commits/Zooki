@@ -24,6 +24,26 @@ class ValidadorClinico
     public const FR_MIN   = 5;
     public const FR_MAX   = 150;
 
+    /** Textos de la consulta (columnas TEXT); el HTML usa el mismo maxlength. */
+    public const TEXTO_MAX = 5000;
+
+    /** M2 C5a: síntomas marcados en una consulta (RN-210); el buscador ofrece de a 8. */
+    public const SINTOMAS_MAX = 30;
+
+    /**
+     * M2 C5a: aviso corto de cada campo de la consulta, el mismo junto al campo
+     * en el navegador y en la respuesta 422 del servidor.
+     */
+    public const AVISOS_CONSULTA = [
+        'motivo' => 'Escribe el motivo de la consulta.',
+        'diagnostico' => 'Escribe el diagnóstico: es obligatorio para guardar.',
+        'peso' => 'El peso debe estar entre 0.01 y 200 kg.',
+        'temperatura' => 'La temperatura debe estar entre 25 y 45 °C.',
+        'frecuencia_cardiaca' => 'La frecuencia cardíaca debe estar entre 10 y 400 lpm.',
+        'frecuencia_respiratoria' => 'La frecuencia respiratoria debe estar entre 5 y 150 rpm.',
+        'sintomas' => 'Hay un síntoma que ya no está en el catálogo. Quítalo y búscalo de nuevo.',
+    ];
+
     /**
      * Identificador de fila: entero estrictamente positivo.
      * Rechaza "3abc", "0", "-1", arreglos y cadenas vacias.

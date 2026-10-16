@@ -1,4 +1,13 @@
 <!-- MODAL NUEVA CONSULTA -->
+<?php
+// M2 C5a: los límites y avisos son los de ValidadorClinico; el comportamiento
+// está en js/consulta-formulario.js (sin eventos en línea).
+require_once __DIR__ . '/../../helpers/ValidadorClinico.php';
+$avisoConsulta = fn(string $campo): string => htmlspecialchars(ValidadorClinico::AVISOS_CONSULTA[$campo], ENT_QUOTES, 'UTF-8');
+$claseCampo = 'input-group full';
+$claseEtiqueta = '';
+$prefijoConsulta = 'modalConsulta';
+?>
 <div id="modalConsulta" class="users-modal" data-ui-accion="cerrar-consulta" data-ui-fondo>
     <div class="modal-content users-modal__panel modal-lg">
         <div class="modal-header">
@@ -26,18 +35,21 @@
             </button>
         </div>
 
-        <form id="formConsulta" onsubmit="saveConsultation(event)" enctype="multipart/form-data">
+        <form id="formConsulta" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="id_mascota" id="consultation_id_mascota">
             
             <div class="users-modal__body">
                 <div id="tabMotivo" class="modal-tab-content active">
                     <div class="input-group full">
-                        <label>Motivo de Consulta *</label>
-                        <input type="text" name="motivo" required>
+                        <label for="consultaMotivo">Motivo de Consulta *</label>
+                        <input type="text" id="consultaMotivo" name="motivo" required aria-required="true" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"
+                               data-consulta-campo="motivo" data-aviso-requerido="<?= $avisoConsulta('motivo') ?>">
+                        <small class="cuenta-validacion" data-campo-aviso="motivo">Obligatorio.</small>
                     </div>
+                    <?php include __DIR__ . '/../partials/consulta_sintomas.php'; ?>
                     <div class="input-group full">
                         <label>Anamnesis</label>
-                        <textarea name="anamnesis" rows="4"></textarea>
+                        <textarea name="anamnesis" rows="4" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
                     </div>
                 </div>
 
@@ -49,7 +61,7 @@
                             </div>
                             <div class="vital-input-col">
                                 <label>Peso (Kg)</label>
-                                <input type="number" step="0.01" name="peso">
+                                <input type="number" step="0.01" min="<?= ValidadorClinico::PESO_MIN ?>" max="<?= ValidadorClinico::PESO_MAX ?>" name="peso" data-consulta-campo="peso" data-aviso-rango="<?= $avisoConsulta('peso') ?>">
                             </div>
                         </div>
                         <div class="vital-card">
@@ -58,7 +70,7 @@
                             </div>
                             <div class="vital-input-col">
                                 <label>Temp (°C)</label>
-                                <input type="number" step="0.1" name="temperatura">
+                                <input type="number" step="0.1" min="<?= ValidadorClinico::TEMP_MIN ?>" max="<?= ValidadorClinico::TEMP_MAX ?>" name="temperatura" data-consulta-campo="temperatura" data-aviso-rango="<?= $avisoConsulta('temperatura') ?>">
                             </div>
                         </div>
                         <div class="vital-card">
@@ -67,20 +79,23 @@
                             </div>
                             <div class="vital-input-col">
                                 <label>F.C. (LPM)</label>
-                                <input type="number" name="frecuencia_cardiaca">
+                                <input type="number" step="1" min="<?= ValidadorClinico::FC_MIN ?>" max="<?= ValidadorClinico::FC_MAX ?>" name="frecuencia_cardiaca" data-consulta-campo="frecuencia_cardiaca" data-aviso-rango="<?= $avisoConsulta('frecuencia_cardiaca') ?>">
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div id="tabResolucion" class="modal-tab-content">
+                    <?php include __DIR__ . '/../partials/consulta_diagnosticos.php'; ?>
                     <div class="input-group full">
-                        <label>Diagnóstico *</label>
-                        <textarea name="diagnostico" rows="3" required></textarea>
+                        <label for="consultaDiagnostico">Diagnóstico *</label>
+                        <textarea id="consultaDiagnostico" name="diagnostico" rows="3" required aria-required="true" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"
+                                  data-consulta-campo="diagnostico" data-aviso-requerido="<?= $avisoConsulta('diagnostico') ?>"></textarea>
+                        <small class="cuenta-validacion" data-campo-aviso="diagnostico">Obligatorio.</small>
                     </div>
                     <div class="input-group full">
                         <label>Plan / Recomendaciones</label>
-                        <textarea name="plan_tratamiento" rows="2"></textarea>
+                        <textarea name="plan_tratamiento" rows="2" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
                     </div>
                     <div class="treatments-section">
                         <div class="section-title-action">
@@ -93,7 +108,7 @@
                 
                 <div id="tabArchivos" class="modal-tab-content">
                     <div class="file-upload-zone">
-                        <input type="file" name="archivos[]" multiple accept=".jpg,.jpeg,.png,.pdf" onchange="updateFileList(this)">
+                        <input type="file" name="archivos[]" multiple accept=".jpg,.jpeg,.png,.pdf" data-consulta-archivos>
                         <i class="fas fa-cloud-upload-alt fa-2x"></i>
                         <p>Adjuntar archivos (JPG, PNG, PDF)</p>
                         <div id="fileList"></div>

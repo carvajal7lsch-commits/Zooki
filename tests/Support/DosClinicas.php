@@ -214,6 +214,9 @@ final class DosClinicas
             (3, 'condicion.epilepsia', 1, 'condicion', 'Epilepsia diagnosticada'), (4, 'farmaco.retirado', 0, 'farmaco', 'Fármaco retirado'),
             (5, 'sintoma.vomito', 1, 'sintoma', 'Vómito'), (6, 'farmaco.meloxicam', 1, 'farmaco', 'Meloxicam')");
         $db->exec("INSERT INTO grafo_sinonimos (codigo, id_nodo, texto, activo) VALUES ('sinonimo.acetaminofen', 1, 'acetaminofén', 1), ('sinonimo.dolex', 1, 'dolex viejo', 0), ('sinonimo.lirios', 2, 'lirios', 1)");
+        // M2 C5a: síntomas marcados de la consulta (RN-210), con la clave de 01_schema.sql.
+        $db->exec('CREATE TABLE consulta_sintomas (detalles TEXT, id_consulta INTEGER NOT NULL REFERENCES consultas,
+            id_nodo INTEGER NOT NULL REFERENCES grafo_nodos, PRIMARY KEY (id_consulta, id_nodo))');
     }
 
     /**

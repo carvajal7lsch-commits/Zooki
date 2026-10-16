@@ -161,11 +161,13 @@ flowchart TD
   H --> I{Captura inicial y rangos validos?}
   I -- No --> I1[/"Mensaje: corrige los campos marcados"/]
   I1 --> H
-  I -- Si --> J["Grafo I: ranking por peso y cobertura;<br/>maximo 5 candidatos positivos; sin elegir por el vet"]
+  I -- Si --> J["Grafo I: ranking por peso y cobertura al cambiar los sintomas;<br/>maximo 5 candidatos positivos, sin porcentajes ni elegir por el vet;<br/>datos que ayudarian con nombre legible y campos opcionales"]
   J --> K{El grafo encontro coincidencias?}
   K -- No --> L[El veterinario escribe el diagnostico]
   K -- Si --> M[Mostrar diagnosticos probables rankeados]
-  M --> L
+  M -- Escribe el suyo --> L
+  M -- Usar este diagnostico --> MU["Copiar el texto al campo para que el vet lo edite;<br/>nunca se rellena solo"]
+  MU --> L
   L --> N{"Diagnostico registrado? (RN-202)"}
   N -- No --> N1[/"Mensaje: el diagnostico es obligatorio"/]
   N1 --> L
@@ -193,8 +195,10 @@ flowchart TD
   W1 --> V
   W -- Si --> X[Confirmar y guardar]
   V -- No --> X
-  X --> RV["Releer permisos, alergias, medicacion y version;<br/>revalidar prescripcion en servidor y huella por fila"]
-  RV --> RB{Bloqueo o advertencia no resuelta?}
+  X --> RV["Releer permisos, alergias, medicacion, version y sintomas activos;<br/>revalidar prescripcion en servidor y huella por fila"]
+  RV --> RS{"Sintoma retirado o invalido? (RN-210)"}
+  RS -- "Si: 422 junto al campo, nada escrito" --> I1
+  RS -- No --> RB{Bloqueo o advertencia no resuelta?}
   RB -- Si --> P
   RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos<br/>y decisiones de prescripcion auditadas;<br/>N de historia si es la 1a (RN-102);<br/>completar la cita si venia de una (RN-406)"]]
   Y --> Y1{Guardado correcto?}

@@ -99,6 +99,8 @@ class ConsultaController
         RespuestaJson::enviar([
             'success' => true,
             'id_consulta' => $idConsulta,
+            // C5a (hallazgo de A.1): la pantalla se pone al día con esto, sin recargar.
+            'consulta' => $this->consultaModel->filaDelListado($idConsulta),
             'adjuntos_guardados' => count($adjuntos),
             'tratamientos_guardados' => count($tratamientos),
             'message' => $this->resumenDelRegistro(count($adjuntos), count($tratamientos)),

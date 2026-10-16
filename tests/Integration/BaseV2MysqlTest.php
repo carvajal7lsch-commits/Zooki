@@ -280,6 +280,36 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    /** M2 C5a (RN-210): síntomas con FK real a consultas y grafo_nodos, en la transacción de la consulta. */
+    public function testC5aSintomasDeLaConsultaEnElEsquemaRealConRollback(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        require_once __DIR__ . '/../../models/Consulta.php';
+        $this->prepararHistoriaClinica();
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        try {
+            $this->comoVeterinario(1, 2);
+            $consultas = new Consulta($this->db);
+            $sinAdjuntos = fn (int $idConsulta, array $adjunto, int $indice): array => [];
+            $id = $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Vomita', 'diagnostico' => 'Gastritis', 'sintomas' => ['sintoma.vomito', 'sintoma.diarrea']], [], [], $sinAdjuntos);
+            $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM consulta_sintomas WHERE id_consulta = $id")->fetchColumn());
+            $this->assertSame(['Diarrea', 'Vómito'], array_column($consultas->historialDeMascota(1)[0]['sintomas'], 'etiqueta'));
+
+            // Retirado entre la búsqueda y el guardado: 422 en el campo y nada escrito.
+            $this->db->exec("UPDATE grafo_nodos SET activo = 0 WHERE codigo = 'sintoma.diarrea'");
+            try {
+                $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano', 'sintomas' => ['sintoma.vomito', 'sintoma.diarrea']], [], [], $sinAdjuntos);
+                $this->fail('Un síntoma retirado no se guarda.');
+            } catch (CampoInvalido $e) {
+                $this->assertSame('sintomas', $e->campo);
+            }
+            $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM consultas')->fetchColumn());
+            $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM consulta_sintomas')->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
     public function testC6MapaDelConocimientoRealSoloActivoYConReglasEnSusNodos(): void
     {
         require_once __DIR__ . '/../Support/ConocimientoPrueba.php';

@@ -23,6 +23,8 @@
     <link rel="stylesheet" href="css/usuarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/medical-module.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/alertas-medicas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <?php // M2 C5a: síntomas y diagnósticos sugeridos de la consulta (modal y Atención). ?>
+    <link rel="stylesheet" href="css/consulta-clinica.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/pill-sidebar.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
@@ -162,6 +164,10 @@
     <script src="js/password-policy.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/dashboard.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/medical-module.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <?php // M2 C5a: la consulta que comparten el modal y Atención: síntomas, diagnósticos sugeridos y avisos junto al campo. ?>
+    <script src="js/consulta-sintomas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/consulta-diagnosticos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/consulta-formulario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M2 C1: sección «Alergias y alertas» de la historia y su formulario. ?>
     <script src="js/alertas-medicas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php // M5 C3: formularios de mascota con las reglas de ValidadorMascota y el propietario buscado en tiempo real. ?>

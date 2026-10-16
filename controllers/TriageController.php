@@ -38,11 +38,25 @@ final class TriageController
             $especie = $_GET['especie'] ?? null;
             $mapa = $this->grafo->mapa();
             $nodos = array_column($mapa['nodes'], null, 'codigo');
-            if ($especie !== null && (!is_string($especie) || ($nodos[$especie]['tipo'] ?? null) !== 'especie')) {
+            if (isset($_GET['id_mascota'])) {
+                // C5a: la consulta filtra por la especie de la ficha, con la misma
+                // regla de acceso que las sugerencias (vínculo activo o mascota propia).
+                $especie = $this->especieDelPaciente($_GET['id_mascota']);
+            } elseif ($especie !== null && (!is_string($especie) || ($nodos[$especie]['tipo'] ?? null) !== 'especie')) {
                 throw new InvalidArgumentException('Especie no válida.');
             }
             RespuestaJson::enviar(['success' => true, 'sugerencias' => BuscadorSintomas::buscar($texto, $mapa['nodes'], $especie), 'version' => $mapa['version']['hash'] ?? null]);
         }, 'C4 buscar síntomas');
+    }
+
+    /** Sin nodo de especie en el conocimiento, null: se ofrecen todos los síntomas. */
+    private function especieDelPaciente($crudo): ?string
+    {
+        $id = ValidadorClinico::id($crudo);
+        if ($id === null) {
+            throw new InvalidArgumentException('Mascota no válida.');
+        }
+        return $this->paciente->contexto($id, $this->grafo->instantanea(), $this->fecha, [])['especie'];
     }
 
     public function calcularAjax(): void

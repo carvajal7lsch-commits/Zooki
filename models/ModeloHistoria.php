@@ -65,6 +65,16 @@ abstract class ModeloHistoria extends ModeloClinica
         return $filas;
     }
 
+    /** RN-112: lo que cuelga de una consulta solo se escribe en una consulta de la clínica activa. */
+    protected function exigirConsultaPropia(int $idConsulta, string $motivo): void
+    {
+        $consulta = $this->conn->prepare('SELECT 1 FROM consultas WHERE id_consulta = ? AND id_clinica = ?');
+        $consulta->execute([$idConsulta, $this->clinica()]);
+        if (!$consulta->fetchColumn()) {
+            $this->denegarAcceso('consultas', $idConsulta, $motivo);
+        }
+    }
+
     /** RN-112: el veterinario que registra es la persona del contexto activo. */
     protected function veterinarioActual(): int
     {

@@ -140,6 +140,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// M2 C5a (hallazgo de A.1): una consulta guardada pone al día, sin recargar,
+// los pacientes y el expediente (número de historia, ficha) y el historial abierto.
+document.addEventListener('zooki:consulta-registrada', (evento) => {
+    const idMascota = String(evento.detail.idMascota);
+    if (document.getElementById('dossierView')) ponerAlDiaPacientes(idMascota);
+    if (historialAbierto && String(historialAbierto.id) === idMascota && historialEstaAbierto()) viewMedicalHistory(historialAbierto.id, historialAbierto.nombre);
+});
+
+/** Pacientes cierra su cajón también con closeDrawer: se mira el cajón, no solo la variable. */
+function historialEstaAbierto() {
+    const enPacientes = document.getElementById('drawerHistorial');
+    if (enPacientes) return enPacientes.classList.contains('is-open');
+    const enConsultas = document.getElementById('historialDrawer');
+    return Boolean(enConsultas) && enConsultas.style.transform === 'translateX(0)';
+}
+
 // --- UTILITIES ---
 function openModal(id) {
     const m = document.getElementById(id);
@@ -1083,47 +1099,9 @@ function filterTable() {
 }
 
 // --- CONSULTAS ---
-function openConsultationModal(id, nombre) {
-    document.getElementById('consultation_id_mascota').value = id;
-    document.getElementById('consultationPetName').innerText = nombre;
-    document.getElementById('formConsulta').reset();
-    document.getElementById('treatmentsList').innerHTML = '';
-    openModal('modalConsulta');
-}
-
-async function saveConsultation(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    if (!fd.get('motivo') || !fd.get('diagnostico')) { zookiAviso('Motivo y Diagnóstico son obligatorios.', 'warning', 'Faltan datos'); return; }
-
-    const boton = e.target.querySelector('[type="submit"]');
-    if (boton) boton.disabled = true;
-
-    try {
-        const res = await (await fetch('index.php?action=registrar_consulta_ajax', { method: 'POST', body: fd })).json();
-
-        if (res.success) {
-            closeModal('modalConsulta');
-            zookiRecargarConAviso(res.message);
-            return;
-        }
-
-        // HU-34 — Si algún adjunto fue rechazado se dice cuál y por qué, uno
-        // por uno. Antes se descartaban en silencio dentro del bucle del
-        // servidor y la consulta se guardaba igual diciendo que los adjuntos
-        // habían entrado: se perdía evidencia clínica sin que nadie se
-        // enterara. Ahora no se guarda nada y el formulario sigue abierto con
-        // los datos escritos, para corregir y reenviar.
-        if (avisarAdjuntosRechazados(res)) return;
-
-        zookiAviso(res.message);
-    } catch (err) {
-        console.error('saveConsultation', err);
-        zookiAviso('No se pudo guardar la consulta. Intenta nuevamente.');
-    } finally {
-        if (boton) boton.disabled = false;
-    }
-}
+// M2 C5a: openConsultationModal, saveConsultation, updateFileList y
+// avisarAdjuntosRechazados viven en consulta-formulario.js, compartido con
+// Atención; aquí quedan las filas de tratamiento (C5b) y el historial.
 
 /** Fecha de hoy en el formato de <input type="date">, en la hora local del navegador. */
 function fechaDeHoy() {
@@ -1149,42 +1127,6 @@ function addTreatmentRow() {
     // Sin onclick en el HTML (ZOOKI_REGLAS §1).
     row.querySelector('.btn-remove-treatment').addEventListener('click', () => row.remove());
     list.appendChild(row);
-}
-
-/**
- * Muestra los nombres de los archivos elegidos en un input de adjuntos.
- * El modal de consulta la llamaba desde su input y nunca existió: elegir un
- * archivo lanzaba un error y no se veía qué se había adjuntado.
- */
-function updateFileList(input) {
-    const zona = input.closest('.file-upload-zone');
-    const lista = zona ? zona.querySelector('.file-list, #fileList') : null;
-    if (!lista) return;
-    lista.innerHTML = [...input.files]
-        .map(f => `<span class="file-chip"><i class="fas ${/\.pdf$/i.test(f.name) ? 'fa-file-pdf' : 'fa-image'}"></i> ${escaparTexto(f.name)}</span>`)
-        .join('');
-}
-
-/**
- * HU-34 — Si el servidor rechazó adjuntos, dice cuáles y por qué, uno por
- * uno. Devuelve true si mostró el aviso. Compartida por el modal de consulta
- * y la pantalla de atención.
- */
-function avisarAdjuntosRechazados(res) {
-    if (!Array.isArray(res.adjuntos_rechazados) || !res.adjuntos_rechazados.length) return false;
-
-    const lista = res.adjuntos_rechazados
-        .map(a => `<li><strong>${escapeHtml(a.archivo)}</strong>: ${escapeHtml(a.motivo)}</li>`)
-        .join('');
-
-    Swal.fire({
-        icon: 'warning',
-        title: 'La consulta no se guardó',
-        html: `<p style="margin-bottom:.75rem;">${escapeHtml(res.message)}</p>
-               <ul style="text-align:left; margin:0 auto; max-width:32rem; font-size:.9rem;">${lista}</ul>`,
-        confirmButtonColor: '#5560FF',
-    });
-    return true;
 }
 
 /**
@@ -1214,6 +1156,22 @@ function avisoSoloLectura(contenedor, mascota) {
     aviso.textContent = AVISO_SOLO_LECTURA;
     contenedor.prepend(aviso);
     return true;
+}
+
+/** M2 C5a (RN-210): síntomas marcados de una consulta visible, ya escapados. */
+function textoSintomas(consulta) {
+    const sintomas = Array.isArray(consulta.sintomas) ? consulta.sintomas : [];
+    return sintomas.map(s => escaparTexto(s.etiqueta)).join(', ');
+}
+
+function seccionSintomas(consulta) {
+    const texto = textoSintomas(consulta);
+    if (texto === '') return '';
+    return `
+        <div class="clinical-section">
+            <label>Síntomas marcados</label>
+            <p>${texto}</p>
+        </div>`;
 }
 
 function tablaTratamientos(tratamientos) {
@@ -1253,7 +1211,11 @@ function listaAdjuntos(archivos) {
         </div>`;
 }
 
+// M2 C5a: el historial abierto se pone al día cuando se guarda una consulta de esa mascota.
+let historialAbierto = null;
+
 async function viewMedicalHistory(id, nombre) {
+    historialAbierto = { id, nombre };
     document.getElementById('historyPetName').innerText = nombre;
     const timeline = document.getElementById('historyTimeline');
     const vaccineList = document.getElementById('vaccineList');
@@ -1336,6 +1298,7 @@ async function viewMedicalHistory(id, nombre) {
                             <div class="clinical-field"><label>Temp.</label><span>${escaparTexto(c.temperatura || '--')} °C</span></div>
                             <div class="clinical-field"><label>F.C.</label><span>${escaparTexto(c.frecuencia_cardiaca || '--')} LPM</span></div>
                         </div>
+                        ${seccionSintomas(c)}
                         <div class="clinical-section">
                             <label>Anamnesis</label>
                             <p>${escaparTexto(c.anamnesis || 'N/A')}</p>
@@ -1363,7 +1326,7 @@ async function viewMedicalHistory(id, nombre) {
         }
     } catch (e) {
         console.error(e);
-        timeline.innerHTML = '<div class="empty-table" style="color:red;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar el historial clínico.</p></div>';
+        timeline.innerHTML = '<div class="empty-table empty-table--error"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar el historial clínico.</p></div>';
     }
 }
 
@@ -1407,6 +1370,7 @@ function openHistorialDrawer() {
 }
 
 function closeHistorialDrawer() {
+    historialAbierto = null;
     if (document.getElementById('drawerHistorial')) {
         closeDrawer('drawerHistorial');
         return;
@@ -1817,7 +1781,7 @@ function renderPetDashboard(data, id) {
                     title: 'Consulta Clínica',
                     subtitle: `Dr. ${escaparTexto(c.veterinario)}`,
                     origen: etiquetaOrigen(c),
-                    body: `<b>Motivo:</b> ${escaparTexto(c.motivo_consulta)}<br><b>Diagnóstico:</b> ${escaparTexto(c.diagnostico)}<br><b>Peso:</b> ${escaparTexto(c.peso || '--')} Kg • <b>F.C:</b> ${escaparTexto(c.frecuencia_cardiaca || '--')} LPM • <b>Temp:</b> ${escaparTexto(c.temperatura || '--')} °C`,
+                    body: `<b>Motivo:</b> ${escaparTexto(c.motivo_consulta)}${textoSintomas(c) ? `<br><b>Síntomas:</b> ${textoSintomas(c)}` : ''}<br><b>Diagnóstico:</b> ${escaparTexto(c.diagnostico)}<br><b>Peso:</b> ${escaparTexto(c.peso || '--')} Kg • <b>F.C:</b> ${escaparTexto(c.frecuencia_cardiaca || '--')} LPM • <b>Temp:</b> ${escaparTexto(c.temperatura || '--')} °C`,
                     meta: cantidadTratamientos > 0 ? `<div class="timeline-meta-tratamiento"><i class="fas fa-pills"></i> Tratamiento prescrito (${cantidadTratamientos} meds)</div>` : ''
                 });
             });
