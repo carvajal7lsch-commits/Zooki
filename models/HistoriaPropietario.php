@@ -28,11 +28,14 @@ final class HistoriaPropietario extends ModeloPropietario
         $ids = array_map('intval', array_column($consultas, 'id_consulta'));
         $archivos = $this->agrupar('SELECT id_archivo, id_consulta, nombre_original, extension FROM archivos_clinicos WHERE id_consulta IN (%s) ORDER BY id_archivo', $ids);
         $tratamientos = $this->agrupar('SELECT id_tratamiento, id_consulta, medicamento, dosis, via_administracion, duracion, fecha_inicio FROM tratamientos WHERE id_consulta IN (%s) ORDER BY id_tratamiento', $ids);
+        // M2 C7 (RN-G02): los síntomas marcados de las consultas de su mascota; la etiqueta aunque el nodo se haya retirado.
+        $sintomas = $this->agrupar('SELECT cs.id_consulta, n.codigo, n.etiqueta FROM consulta_sintomas cs JOIN grafo_nodos n ON n.id_nodo = cs.id_nodo WHERE cs.id_consulta IN (%s) ORDER BY cs.id_consulta, n.etiqueta, n.codigo', $ids);
 
         foreach ($consultas as &$fila) {
             $id = (int) $fila['id_consulta'];
             $fila['archivos'] = $archivos[$id] ?? [];
             $fila['tratamientos'] = $tratamientos[$id] ?? [];
+            $fila['sintomas'] = array_map(static fn (array $sintoma): array => ['codigo' => $sintoma['codigo'], 'etiqueta' => $sintoma['etiqueta']], $sintomas[$id] ?? []);
         }
         unset($fila);
         return $consultas;

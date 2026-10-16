@@ -423,18 +423,18 @@ test('«No se pudo pesar» vacía y deshabilita el peso; sin marcarla el peso se
     assert.equal(p.peso.disabled, false);
 });
 
-test('el historial dice «No se pudo pesar» y nunca muestra el peso NULL como 0', () => {
+test('el historial dice «Sin peso registrado» (C7) y nunca muestra el peso NULL como 0', () => {
     const contexto = { console, window: {}, document: { addEventListener() {}, getElementById: () => null } };
     vm.createContext(contexto);
     vm.runInContext(leer('public/js/medical-module.js'), contexto);
-    assert.equal(contexto.textoPeso(null), 'No se pudo pesar');
-    assert.equal(contexto.textoPeso(''), 'No se pudo pesar');
+    assert.equal(contexto.textoPeso(null), 'Sin peso registrado');
+    assert.equal(contexto.textoPeso(''), 'Sin peso registrado');
     assert.equal(contexto.textoPeso('8.50'), '8.50 Kg');
     const medical = leer('public/js/medical-module.js');
     assert.doesNotMatch(medical, /c\.peso \|\| '--'/);
     assert.equal((medical.match(/textoPeso\(c\.peso\)/g) || []).length, 3, 'Cajón, ficha e impresión del veterinario');
     const atencion = leer('views/vet/atencion.php');
-    assert.match(atencion, /\$textoPeso = fn\(\$peso\): string => \$peso === null \|\| \$peso === '' \? 'No se pudo pesar'/);
+    assert.match(atencion, /\$textoPeso = fn\(\$peso\): string => \$peso === null \|\| \$peso === '' \? 'Sin peso registrado'/);
     assert.match(atencion, /\$textoPeso\(\$con\['peso'\] \?\? null\)/);
 });
 

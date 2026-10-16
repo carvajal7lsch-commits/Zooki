@@ -17,7 +17,8 @@ final class PropietarioClinica extends ModeloClinica
     public const MENSAJE_DESVINCULADO = 'El cliente está desvinculado: sus datos solo los cambia él.';
 
     /** RE-1.5.1 y RN-109 (decisión del usuario, M5): lo único que se dice de una cuenta sin vínculo activo. */
-    public const MENSAJE_SIN_VINCULO = 'Hay una cuenta con ese dato. Pide la confirmación por correo.';
+    /** M2 C7: dice en una línea qué hacer si aún no es cliente de esta clínica (RN-109). */
+    public const MENSAJE_SIN_VINCULO = 'Hay una cuenta con ese dato, pero aún no es cliente de esta clínica: pide la confirmación por correo o que se vincule desde su portal.';
 
     /** M5 C3: al registrar a quien ya es cliente de esta clínica. */
     public const MENSAJE_YA_CLIENTE = 'Ya es cliente de esta clínica. Búscalo en «Nueva mascota».';

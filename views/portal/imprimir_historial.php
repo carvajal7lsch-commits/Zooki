@@ -49,13 +49,39 @@
         </div>
         <div class="pet-info-item">
             <span>Peso Promedio</span>
-            <strong><?php echo htmlspecialchars($mascota['peso']); ?> kg</strong>
+            <?php // M2 C7: un peso NULL no se imprime como « kg» ni como 0. ?>
+            <strong><?php echo ($mascota['peso'] ?? null) === null || $mascota['peso'] === '' ? 'Sin peso registrado' : htmlspecialchars($mascota['peso']) . ' kg'; ?></strong>
         </div>
         <div class="pet-info-item">
             <span>Propietario</span>
             <strong><?php echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Cliente'); ?></strong>
         </div>
     </div>
+
+    <!-- Alergias y alertas activas (M2 C7, RE-2.10.1): de todas las clínicas, con la que las registró -->
+    <h3 class="section-title">Alergias y alertas activas</h3>
+    <?php if (empty($alertas)): ?>
+        <p class="historial-vacio">No hay alergias ni alertas registradas. Que no haya registro no significa que no tenga.</p>
+    <?php else: ?>
+        <table>
+            <thead>
+                <tr>
+                    <th class="historial-columna-fecha">Tipo</th>
+                    <th class="historial-columna-diagnostico">Descripción</th>
+                    <th class="historial-columna-motivo">Clínica</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($alertas as $alerta): ?>
+                    <tr>
+                        <td><strong><?php echo htmlspecialchars($alerta['tipo_nombre']); ?></strong></td>
+                        <td><?php echo htmlspecialchars($alerta['descripcion']); ?></td>
+                        <td><?php echo htmlspecialchars($alerta['clinica_nombre']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
 
     <!-- Historial de Consultas -->
     <h3 class="section-title">Historial de Consultas y Diagnósticos</h3>
@@ -77,6 +103,9 @@
                         <td><strong><?php echo date('d/m/Y', strtotime($con['fecha_hora'])); ?></strong></td>
                         <td><?php echo htmlspecialchars($con['motivo_consulta']); ?></td>
                         <td>
+                            <?php if (!empty($con['sintomas'])): ?>
+                                <strong>Síntomas:</strong> <?php echo htmlspecialchars(implode(', ', array_column($con['sintomas'], 'etiqueta'))); ?><br>
+                            <?php endif; ?>
                             <strong>Diagnóstico:</strong> <?php echo htmlspecialchars($con['diagnostico']); ?><br>
                             <span class="historial-tratamiento">
                                 <strong>Plan:</strong> <?php echo htmlspecialchars($con['plan_tratamiento']); ?>

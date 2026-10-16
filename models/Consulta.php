@@ -95,7 +95,8 @@ class Consulta extends ModeloHistoria
         $sql = self::SQL_LISTADO . ' ORDER BY c.fecha_hora DESC, c.id_consulta DESC';
         $consulta = $this->conn->prepare($sql);
         $consulta->execute([$this->clinica()]);
-        return $consulta->fetchAll(PDO::FETCH_ASSOC);
+        // M2 C7: el detalle de la lista muestra los síntomas marcados (RN-113 en ConsultaSintoma).
+        return $this->conSintomas($consulta->fetchAll(PDO::FETCH_ASSOC));
     }
 
     /**
@@ -156,7 +157,7 @@ class Consulta extends ModeloHistoria
         $consulta = $this->conn->prepare(self::SQL_LISTADO . ' AND c.id_consulta = ?');
         $consulta->execute([$this->clinica(), $idConsulta]);
         $fila = $consulta->fetch(PDO::FETCH_ASSOC);
-        return $fila === false ? null : $fila;
+        return $fila === false ? null : $this->conSintomas([$fila])[0];
     }
 
     /** Consulta de una cita de la clínica activa (una cita genera una sola consulta). */

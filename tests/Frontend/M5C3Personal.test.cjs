@@ -249,9 +249,9 @@ test('hueco 6: una mascota desvinculada dice «solo lectura» y no ofrece regist
     const sinHistoria = { innerHTML: '', querySelector: () => null };
     contexto.document.getElementById = (id) => (id === 'modalConsulta' ? {} : null);
     contexto.mostrarSinHistoria(sinHistoria, 1, 'Luna', null, true);
-    assert.doesNotMatch(sinHistoria.innerHTML, /Registrar primera consulta/);
+    assert.doesNotMatch(sinHistoria.innerHTML, /Registrar consulta/);
     contexto.mostrarSinHistoria(sinHistoria, 1, 'Luna', null, false);
-    assert.match(sinHistoria.innerHTML, /Registrar primera consulta/, 'Con el vínculo activo sí se ofrece.');
+    assert.match(sinHistoria.innerHTML, /Registrar consulta/, 'Con el vínculo activo sí se ofrece.');
 });
 
 test('lo registrado por otra clínica lleva su clínica y «solo lectura» a la vista, no solo en el title', () => {

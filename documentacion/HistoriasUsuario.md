@@ -619,7 +619,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 **Criterios de aceptación:**
 
 - Campos: fecha/hora, motivo, anamnesis, examen físico, diagnóstico y plan de tratamiento.
-- El peso se pide en cada consulta; si no se pudo pesar, el veterinario marca «No se pudo pesar» y el peso queda sin valor (nunca 0 ni un peso aproximado). El historial lo muestra así y ningún cálculo lo toma como 0.
+- El peso se pide en cada consulta; si no se pudo pesar, el veterinario marca «No se pudo pesar» y el peso queda sin valor (nunca 0 ni un peso aproximado). El historial dice «Sin peso registrado» y ningún cálculo lo toma como 0.
 - Se genera un número de historia clínica único en la primera consulta.
 - La consulta queda vinculada a la mascota y visible en su historial.
 - No se puede registrar una consulta sin diagnóstico.
@@ -641,7 +641,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - En Consultas Médicas, el botón «Atención sin cita» permite buscar al paciente (HU-1.3) y registrar la consulta sin cita asociada.
 - La pantalla explica cuándo usarlo y remite al calendario si el paciente tiene cita.
 - Se exigen los mismos datos que en HU-2.1 (motivo y diagnóstico) y, si es su primera consulta, se asigna el número de historia clínica (RN-102).
-- En el listado de consultas, las registradas sin cita se distinguen con la etiqueta «Sin cita».
+- En el listado de consultas, las registradas sin cita se distinguen con la etiqueta «Sin cita»; también en su detalle y en el historial de la mascota (cajón, ficha y Atención).
 
 **Reglas de negocio:** RN-102, RN-203, RN-208 · **Dependencias:** HU-1.3, HU-2.1
 

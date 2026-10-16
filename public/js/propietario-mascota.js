@@ -26,6 +26,7 @@
     const BUSCANDO = 'Buscando…';
     const SIN_COINCIDENCIA = 'No hay una cuenta con ese dato. Regístralo en la pestaña Propietario.';
     const PENDIENTE = 'Aún no activa su cuenta';
+    const AYUDA_VINCULAR = 'Busca al propietario por nombre, documento o correo: verás sus mascotas en Zooki para vincular la que corresponde.';
 
     let espera = null;
     let turno = 0;
@@ -306,6 +307,19 @@
         ayuda(AYUDA);
     }
 
+    /**
+     * M2 C7 (hallazgo del usuario, 2026-10-15): el acceso visible «Vincular
+     * mascota de un cliente» abre el mismo registro de mascota, ya en la
+     * búsqueda del propietario, con el mismo flujo (RE-1.5.1 a RE-1.5.3).
+     */
+    function abrirVincular() {
+        if (typeof abrirModalRegistro === 'function') abrirModalRegistro('mascota');
+        quitarPropietario(true);
+        ayuda(AYUDA_VINCULAR);
+        const campo = document.getElementById('ownerSearchInput');
+        if (campo && typeof campo.scrollIntoView === 'function') campo.scrollIntoView({ block: 'center' });
+    }
+
     async function pedirConfirmacion(control) {
         control.disabled = true;
         const datos = new FormData();
@@ -417,9 +431,12 @@
         else if (control.dataset.elegirPropietario !== undefined) elegirPropietario(document.getElementById('mascotasExistentes').propietario);
         else if (control.dataset.quitarPropietario !== undefined) quitarPropietario(true);
         else if (control.dataset.identificadorCliente !== undefined) buscar(control.dataset.identificadorCliente);
+        else if (control.dataset.vincularMascotaCliente !== undefined) abrirVincular();
     });
 
     window.ZookiPropietarioMascota = {
+        AYUDA_VINCULAR,
+        abrirVincular,
         identificadorCompleto,
         tipoDeBusqueda,
         buscarNombre,

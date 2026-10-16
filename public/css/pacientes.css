@@ -296,3 +296,28 @@ select.mascota-extra__control:focus,
 .mascota-form__resumen[hidden] { display: none; }
 
 .mascota-aviso { display: block; }
+
+/* M2 C7: antes en style= de medical-module.js; los mismos valores. */
+.dossier-sin-mascotas {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    width: 100%;
+}
+
+.dossier-sin-mascotas i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+    display: block;
+}
+
+.pet-dossier-card-hc.pet-dossier-card-hc--numero {
+    color: var(--primary);
+}
+
+/* M2 C7: «Vincular mascota de un cliente», junto a «Nuevo Registro», como acción secundaria. */
+.btn-create.btn-create-outline:hover {
+    background: var(--bg-main);
+    color: var(--text-primary);
+}

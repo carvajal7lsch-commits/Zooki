@@ -632,7 +632,7 @@ function renderOwnerDossier(owner, pets) {
     petsScroll.innerHTML = '';
 
     if (pets.length === 0) {
-        petsScroll.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-muted); width:100%;"><i class="fas fa-paw" style="font-size:3rem; margin-bottom:1rem; opacity:0.3; display:block;"></i>Este cliente aún no tiene mascotas registradas.</div>';
+        petsScroll.innerHTML = '<div class="dossier-sin-mascotas"><i class="fas fa-paw"></i>Este cliente aún no tiene mascotas registradas.</div>';
         return;
     }
 
@@ -663,7 +663,7 @@ function renderOwnerDossier(owner, pets) {
                 </div>
                 <div class="data-group right-align">
                     <label>HISTORIA</label>
-                    <span class="pet-dossier-card-hc" style="color:var(--primary);">${escaparTexto(m.numero_historia_clinica || 'SIN REGISTRO')}</span>
+                    <span class="pet-dossier-card-hc pet-dossier-card-hc--numero">${escaparTexto(m.numero_historia_clinica || 'SIN REGISTRO')}</span>
                 </div>
             </div>
             <div class="pet-dossier-status">
@@ -1105,11 +1105,18 @@ function filterTable() {
 // Atención; aquí queda el historial.
 
 /**
- * M2 C5b (decisión del usuario, 2026-10-15): una consulta sin peso dice que no
- * se pudo pesar; el peso NULL nunca se muestra ni se cuenta como 0.
+ * M2 C5b y C7 (revisión de C5b): una consulta sin peso dice «Sin peso
+ * registrado», que es cierto tanto si no se pudo pesar como en las consultas
+ * anteriores; el peso NULL nunca se muestra ni se cuenta como 0.
  */
 function textoPeso(peso) {
-    return peso === null || peso === undefined || peso === '' ? 'No se pudo pesar' : `${escaparTexto(peso)} Kg`;
+    return peso === null || peso === undefined || peso === '' ? 'Sin peso registrado' : `${escaparTexto(peso)} Kg`;
+}
+
+/** M2 C7 (HU-2.2): una consulta sin cita (urgencia o imprevisto) se distingue con «Sin cita». */
+function etiquetaSinCita(consulta) {
+    if (!consulta || consulta.id_cita) return '';
+    return '<span class="consultation-sin-cita-badge" title="Registrada sin cita (urgencia o imprevisto)"><i class="fas fa-ambulance"></i> Sin cita</span>';
 }
 
 /**
@@ -1268,6 +1275,7 @@ async function viewMedicalHistory(id, nombre) {
                         <div class="header-main">
                             <h4>${escaparTexto(c.motivo_consulta)}</h4>
                             <span class="vet-badge"><i class="fas fa-user-md"></i> ${escaparTexto(c.veterinario)}</span>
+                            ${etiquetaSinCita(c)}
                             ${etiquetaOrigen(c)}
                         </div>
                         <div class="header-side">
@@ -1324,8 +1332,8 @@ function mostrarSinHistoria(contenedor, idMascota, nombre, alAbrirConsulta = nul
     contenedor.innerHTML = `
         <div class="empty-table">
             <i class="fas fa-folder-plus"></i>
-            <p><strong>${escaparTexto(nombre)}</strong> aún no tiene historia clínica. El número se asigna al registrar su primera consulta.</p>
-            ${puedeConsultar ? '<button type="button" class="btn-modal-primary btn-primera-consulta"><i class="fas fa-stethoscope"></i> Registrar primera consulta</button>' : ''}
+            <p><strong>${escaparTexto(nombre)}</strong> aún no tiene historia clínica. El número se asigna con su primera consulta; no hace falta una cita (HU-2.2).</p>
+            ${puedeConsultar ? '<button type="button" class="btn-modal-primary btn-primera-consulta"><i class="fas fa-stethoscope"></i> Registrar consulta</button>' : ''}
         </div>`;
 
     const boton = contenedor.querySelector('.btn-primera-consulta');
@@ -1762,7 +1770,7 @@ function renderPetDashboard(data, id) {
                     type: 'consulta',
                     date: new Date(c.fecha_hora),
                     title: 'Consulta Clínica',
-                    subtitle: `Dr. ${escaparTexto(c.veterinario)}`,
+                    subtitle: `Dr. ${escaparTexto(c.veterinario)} ${etiquetaSinCita(c)}`,
                     origen: etiquetaOrigen(c),
                     body: `<b>Motivo:</b> ${escaparTexto(c.motivo_consulta)}${textoSintomas(c) ? `<br><b>Síntomas:</b> ${textoSintomas(c)}` : ''}<br><b>Diagnóstico:</b> ${escaparTexto(c.diagnostico)}<br><b>Peso:</b> ${textoPeso(c.peso)} • <b>F.C:</b> ${escaparTexto(c.frecuencia_cardiaca || '--')} LPM • <b>Temp:</b> ${escaparTexto(c.temperatura || '--')} °C`,
                     meta: cantidadTratamientos > 0 ? `<div class="timeline-meta-tratamiento"><i class="fas fa-pills"></i> Tratamiento prescrito (${cantidadTratamientos} meds)</div>` : ''
@@ -1880,6 +1888,7 @@ async function printMedicalHistory(id, nombre) {
                     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
                     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.9em; }
                     th { background-color: #f8fafc; }
+                    .pie { margin-top: 30px; font-size: 0.8em; text-align: center; color: #999; }
                     
                     /* Ocultar encabezados y pies de página por defecto del navegador al imprimir */
                     @media print {
@@ -1904,6 +1913,7 @@ async function printMedicalHistory(id, nombre) {
                     <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${escaparTexto(c.veterinario)}</h3>
                     <p><strong>Clínica:</strong> ${escaparTexto(c.clinica_nombre)}</p>
                     <p><strong>Motivo:</strong> ${escaparTexto(c.motivo_consulta)}</p>
+                    ${textoSintomas(c) ? `<p><strong>Síntomas:</strong> ${textoSintomas(c)}</p>` : ''}
                     <p><strong>Diagnóstico:</strong> ${escaparTexto(c.diagnostico)}</p>
                     <p><strong>Peso:</strong> ${textoPeso(c.peso)} | <strong>Temp:</strong> ${escaparTexto(c.temperatura || '--')} °C</p>
                 `;
@@ -1935,7 +1945,7 @@ async function printMedicalHistory(id, nombre) {
         }
 
         html += `
-                <div style="margin-top: 30px; font-size: 0.8em; text-align: center; color: #999;">
+                <div class="pie">
                     Documento generado el ${new Date().toLocaleString()} por Zooki.
                 </div>
             </body>
@@ -2257,12 +2267,43 @@ function filterDossierPets() {
 
 window.filterDossierPets = filterDossierPets;
 
+/** Un aviso del buscador de «Atención sin cita», con las clases de la vista, sin estilos en línea. */
+function avisoBusquedaPaciente(texto, clase = '', icono = false) {
+    const aviso = document.createElement('div');
+    aviso.className = `empty-state-text ${clase}`.trim();
+    if (icono) {
+        const i = document.createElement('i');
+        i.className = 'fas fa-search icon-large';
+        aviso.append(i);
+    }
+    aviso.append(texto);
+    return aviso;
+}
+
 function openNewConsultationFlow() {
     openModal('modalSelectPetConsulta');
     const searchInput = document.getElementById('consultaPetSearch');
     if (searchInput) searchInput.value = '';
     const suggestions = document.getElementById('consultaPetSuggestions');
-    if (suggestions) suggestions.innerHTML = '<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.9rem;"><i class="fas fa-search" style="display:block; font-size:1.5rem; margin-bottom:0.5rem; opacity:0.3;"></i>Escribe para buscar un paciente...</div>';
+    if (suggestions) suggestions.replaceChildren(avisoBusquedaPaciente('Escribe para buscar un paciente...', '', true));
+}
+
+/** Un paciente encontrado: al elegirlo se abre su consulta (sin onclick ni onerror en línea). */
+function resultadoPaciente(item) {
+    const fila = document.createElement('div');
+    fila.className = 'suggestion-item paciente-resultado';
+    fila.innerHTML = `
+        <img src="${escaparTexto(fotoMascotaUrl(item.url_foto))}" class="paciente-resultado__foto" alt="">
+        <div>
+            <div class="paciente-resultado__nombre">${escaparTexto(item.nombre)}</div>
+            <!-- M1-21: HU-03 pide mostrar la especie y no aparecia. -->
+            <div class="paciente-resultado__dato">${escaparTexto(item.nombre_especie || 'Sin especie')}${item.nombre_raza ? ' · ' + escaparTexto(item.nombre_raza) : ''}</div>
+            <div class="paciente-resultado__dato">Propietario: ${escaparTexto(item.propietario_nombre || 'Sin asignar')}</div>
+        </div>`;
+    const foto = fila.querySelector('img');
+    foto.addEventListener('error', () => usarFotoPorDefecto(foto), { once: true });
+    fila.addEventListener('click', () => selectPetForConsultation(item.id_mascota, item.nombre));
+    return fila;
 }
 
 async function searchPetForConsultation(term) {
@@ -2270,30 +2311,20 @@ async function searchPetForConsultation(term) {
     // M1-15: HU-03 pide un minimo de 3 caracteres; el front pedia 2 y el
     // backend tambien, asi que la busqueda salia con menos de lo acordado.
     if (term.length < 3) {
-        suggestions.innerHTML = '<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.9rem;"><i class="fas fa-search" style="display:block; font-size:1.5rem; margin-bottom:0.5rem; opacity:0.3;"></i>Escribe al menos 3 caracteres para buscar un paciente...</div>';
+        suggestions.replaceChildren(avisoBusquedaPaciente('Escribe al menos 3 caracteres para buscar un paciente...', '', true));
         return;
     }
-    
+
     try {
         const res = await (await fetch(`index.php?action=buscar_mascotas&query=${encodeURIComponent(term)}`)).json();
-        if(res.length) {
-            suggestions.innerHTML = res.map(item => `
-                <div class="suggestion-item" style="display:flex; align-items:center; gap:1rem; padding:0.75rem; border:1px solid #e2e8f0; border-radius:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='transparent'; this.style.borderColor='#e2e8f0';" onclick="selectPetForConsultation(${item.id_mascota}, '${item.nombre.replace(/'/g, "\\'")}')">
-                    <img src="${escaparTexto(fotoMascotaUrl(item.url_foto))}" onerror="this.onerror=null;this.src='${FOTO_MASCOTA_DEFECTO}'" style="width:40px; height:40px; border-radius:10px; object-fit:cover;" alt="">
-                    <div>
-                        <div style="font-weight:700; color:var(--text-main); font-size:0.95rem;">${escaparTexto(item.nombre)}</div>
-                        <!-- M1-21: HU-03 pide mostrar la especie y no aparecia. -->
-                        <div style="font-size:0.75rem; color:var(--text-muted);">${item.nombre_especie || 'Sin especie'}${item.nombre_raza ? ' · ' + item.nombre_raza : ''}</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Propietario: ${item.propietario_nombre || 'Sin asignar'}</div>
-                    </div>
-                </div>
-            `).join('');
+        if (res.length) {
+            suggestions.replaceChildren(...res.map(resultadoPaciente));
         } else {
-            suggestions.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">No se encontraron pacientes.</div>';
+            suggestions.replaceChildren(avisoBusquedaPaciente('No se encontraron pacientes.', 'empty-state-text--compacto'));
         }
-    } catch(e) { 
-        console.error('Search error', e); 
-        suggestions.innerHTML = '<div style="padding:1rem; text-align:center; color:red;">Error en la búsqueda.</div>';
+    } catch (e) {
+        console.error('Search error', e);
+        suggestions.replaceChildren(avisoBusquedaPaciente('Error en la búsqueda.', 'empty-state-text--compacto empty-state-text--error'));
     }
 }
 

@@ -508,3 +508,59 @@ small.cuenta-validacion[data-campo-aviso]:empty {
         width: 100%;
     }
 }
+
+/* ── «Atención sin cita»: buscador de pacientes (M2 C7) ───────
+   Antes en style= y onmouseover de medical-module.js; los mismos valores. */
+#consultaPetSuggestions .suggestion-item.paciente-resultado {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#consultaPetSuggestions .suggestion-item.paciente-resultado:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.paciente-resultado__foto {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.paciente-resultado__nombre {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.paciente-resultado__dato {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.empty-state-text.empty-state-text--compacto {
+    padding: 1rem;
+    font-size: inherit;
+}
+
+.empty-state-text.empty-state-text--error {
+    color: red;
+}
+
+/* ── Signos del modal de consulta (M2 C7): cuatro, como en Atención ── */
+.vitals-dashboard-grid.vitals-dashboard-grid--cuatro {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vital-sign-icon.resp {
+    background: #eff6ff;
+    color: #3b82f6;
+}

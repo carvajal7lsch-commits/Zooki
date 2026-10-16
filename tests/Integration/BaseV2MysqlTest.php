@@ -335,6 +335,29 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
+    /** M2 C7: los síntomas en la lista de la clínica y en la historia del portal, con el esquema real. */
+    public function testC7SintomasEnLaListaYEnElPortalEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        require_once __DIR__ . '/../../models/Consulta.php';
+        require_once __DIR__ . '/../../models/HistoriaPropietario.php';
+        $this->prepararHistoriaClinica();
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        try {
+            $this->comoVeterinario(1, 2);
+            $consultas = new Consulta($this->db);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '', 'peso_desconocido' => '1', 'motivo' => 'Vomita', 'diagnostico' => 'Gastritis', 'sintomas' => ['sintoma.vomito']], [], [], fn (): array => []);
+            $this->assertSame(['Vómito'], array_column($consultas->listarDeLaClinica()[0]['sintomas'], 'etiqueta'));
+            $_SESSION = ['id_usuario' => 6];
+            Contexto::activar(Contexto::dePropietario(), 1);
+            $historia = (new HistoriaPropietario($this->db))->consultas(1);
+            $this->assertSame(['Vómito'], array_column($historia[0]['sintomas'], 'etiqueta'));
+            $this->assertNull($historia[0]['peso']);
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
     public function testC6MapaDelConocimientoRealSoloActivoYConReglasEnSusNodos(): void
     {
         require_once __DIR__ . '/../Support/ConocimientoPrueba.php';

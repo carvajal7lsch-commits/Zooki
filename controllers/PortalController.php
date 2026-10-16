@@ -178,6 +178,8 @@ class PortalController
         $consultas = $this->historia->consultas($idMascota);
         $vacunas = $this->historia->vacunas($idMascota);
         $desparasitaciones = $this->historia->desparasitaciones($idMascota);
+        // M2 C7 (pendiente de C1): alergias y alertas activas, con la clínica de cada una.
+        $alertas = $this->historia->alertas($idMascota);
 
         require_once __DIR__ . '/../views/portal/imprimir_historial.php';
     }

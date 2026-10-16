@@ -55,7 +55,8 @@ $prefijoConsulta = 'modalConsulta';
                 </div>
 
                 <div id="tabSignos" class="modal-tab-content">
-                    <div class="vitals-dashboard-grid">
+                    <?php // M2 C7 (hallazgo de A.1): frecuencia respiratoria, como en Atención; cuatro signos en dos filas. ?>
+                    <div class="vitals-dashboard-grid vitals-dashboard-grid--cuatro">
                         <div class="vital-card">
                             <div class="vital-sign-icon weight">
                                 <i class="fas fa-weight"></i>
@@ -87,6 +88,15 @@ $prefijoConsulta = 'modalConsulta';
                                 <input type="number" step="1" min="<?= ValidadorClinico::FC_MIN ?>" max="<?= ValidadorClinico::FC_MAX ?>" name="frecuencia_cardiaca" data-consulta-campo="frecuencia_cardiaca" data-aviso-rango="<?= $avisoConsulta('frecuencia_cardiaca') ?>">
                             </div>
                         </div>
+                        <div class="vital-card">
+                            <div class="vital-sign-icon resp">
+                                <i class="fas fa-lungs"></i>
+                            </div>
+                            <div class="vital-input-col">
+                                <label for="consultaFrecuenciaRespiratoria">F.R. (RPM)</label>
+                                <input type="number" id="consultaFrecuenciaRespiratoria" step="1" min="<?= ValidadorClinico::FR_MIN ?>" max="<?= ValidadorClinico::FR_MAX ?>" name="frecuencia_respiratoria" data-consulta-campo="frecuencia_respiratoria" data-aviso-rango="<?= $avisoConsulta('frecuencia_respiratoria') ?>">
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -103,6 +113,11 @@ $prefijoConsulta = 'modalConsulta';
                     <div class="input-group full">
                         <label>Plan / Recomendaciones</label>
                         <textarea name="plan_tratamiento" rows="2" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
+                    </div>
+                    <?php // M2 C7 (hallazgo de A.1): observaciones, como en Atención; el servidor ya las admite. ?>
+                    <div class="input-group full">
+                        <label for="consultaObservaciones">Observaciones</label>
+                        <textarea id="consultaObservaciones" name="observaciones" rows="2" maxlength="<?= ValidadorClinico::TEXTO_MAX ?>"></textarea>
                     </div>
                     <div class="treatments-section" data-tratamientos data-avisos="<?= htmlspecialchars(json_encode(ValidadorTratamiento::AVISOS, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>">
                         <div class="section-title-action">

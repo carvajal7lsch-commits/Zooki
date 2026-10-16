@@ -7,7 +7,8 @@
 ## Ahora
 
 - **Módulo activo:** M2 — Historia clínica y soporte a la decisión (Grafo I), previsto como `2.0.0-alpha.4`. Plan: [`specs/M2-grafo-clinico.md`](../specs/M2-grafo-clinico.md). Rama: `v2/m2-grafo`.
-- **Entrega actual de M2:** **C5b — prescripción con alertas, tratamiento y peso desconocido: revisada y aprobada en código (2026-10-16), pendiente de las pruebas del usuario.** Lo escribió Claude Code. Ver «Anexo C5b» y «C5b — Revisión». C5a con commit `f2adbcb`. C1–C4, C6 y B cerradas.
+- **Entrega actual de M2:** **C7 — pulido de M2: revisada y aprobada en código (2026-10-16).** Lo escribió Claude Code. Ver «Anexo C7» y «C7 — Revisión». C5b con commit `83ef9af`. Todas las etapas de construcción (B, C1–C7) revisadas; pruebas del navegador de C5a, C5b y C7 pendientes antes del despliegue.
+- **C5b — prescripción con alertas, tratamiento y peso desconocido:** revisada y aprobada en código (2026-10-16), pendiente de las pruebas del usuario. Lo escribió Claude Code. Ver «Anexo C5b» y «C5b — Revisión». C5a con commit `f2adbcb`. C1–C4, C6 y B cerradas.
 - **C5a:** revisada y aprobada en código (2026-10-15), pendiente de las pruebas del usuario; commit `f2adbcb`. Lo escribió Claude Code. Ver «Anexo C5a» y «C5a — Revisión». C4 con commit `697cac7` (26/26). C1, C2, C3, C6 y B cerradas.
 - **C4:** revisada y aprobada (2026-10-15); la batería da 26/26 (RE-2.11.7). Lo escribió Codex. Ver «Anexo C4» y «C4 — Revisión». C3 con commit `bf87ce3`. C1, C2, C6 y B cerradas. C5 se parte en C5a y C5b.
 - **C3:** revisada y aprobada (2026-10-15), escrita por Codex; ver «C3 — Revisión». C2 con commit `172a707`; CI corregido en `668cd0a`. C1, C6 y B cerradas.
@@ -46,7 +47,7 @@
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
-- **Siguiente paso:** C7 — pulido de M2 (Claude Code), luego F. **Decisión del usuario (2026-10-16):** las pruebas del navegador de C5a, C5b y C7 se hacen juntas antes del despliegue de F (listas en los anexos C5a, C5b y C7). Para F: RN-112 con «alerta médica»; AGENTS.md (alpha y 52 tablas); HU-2.1, 2.8, 2.9, 2.10, 2.11 y 2.12 con su estado. Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Siguiente paso:** F — 2.0.0-alpha.4 (Codex): versión, estados de HU/RE/RN, RN-112 con «alerta médica», AGENTS.md (alpha, 52 tablas y la carga del conocimiento), revisiones y descargas. Después, el usuario prueba C5a, C5b y C7 en el navegador y se despliega. Pendiente aparte: borrar los respaldos temporales del VPS.
 - **Para el plan de M4 (idea del usuario, 2026-10-15, por decidir allí):** el paciente que llega sin cita y no es urgencia debería pasar por la agenda. Recomendación del revisor: «Atención sin cita» (HU-2.2) crea por detrás una cita de llegada en curso, como sobrecupo si no hay hueco (RN-422), para que la agenda del veterinario refleje la realidad; las urgencias siguen HU-4.15. Hoy (M2) la consulta sin cita no crea cita.
   Reparto de M2: Codex C2–C4; Claude Code C5.
   Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal.

@@ -1,6 +1,6 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B, C1 y C6 cerradas; C2, C3, C4 y C5a revisadas y aprobadas; C5b entregada, pendiente de revisión (Claude Code, 2026-10-15)
+> Estado: B, C1 y C6 cerradas; C2, C3, C4, C5a y C5b revisadas y aprobadas en código; C7 entregada, pendiente de revisión (Claude Code, 2026-10-16)
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
 > Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
@@ -107,7 +107,8 @@ La decisión «confirmar» requiere una huella opaca vigente por fila: si cambia
 - [x] C3 — Alertas de prescripción: revisada y aprobada (Codex, 2026-10-15).
 - [x] C4 — Motor de triage con la batería: revisada y aprobada (Codex, 2026-10-15).
 - [x] C5a — Consulta: síntomas, diagnósticos sugeridos y obligatorios: revisada y aprobada en código (Claude Code, 2026-10-15).
-- [x] C5b — Consulta: prescripción con alertas, tratamiento y peso desconocido: entregada, pendiente de revisión (Claude Code, 2026-10-15).
+- [x] C5b — Consulta: prescripción con alertas, tratamiento y peso desconocido: revisada y aprobada en código (Claude Code, 2026-10-16).
+- [x] C7 — Pulido de M2 (pendientes de C1, C5a y C5b y hallazgos del usuario): entregada, pendiente de revisión (Claude Code, 2026-10-16).
 - [x] C6 — Mapa del grafo: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
 - [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
 - [ ] F — `2.0.0-alpha.4`.
@@ -1577,3 +1578,68 @@ En XAMPP, antes: `php scripts/migrar.php` y `php scripts/cargar_conocimiento.php
 **Siguiente:** pruebas del usuario (lista del Anexo C5b), luego C7 (Claude Code) y F.
 
 **Decisión del usuario (2026-10-16):** las pruebas del navegador de C5a, C5b y C7 se hacen juntas al final, antes del despliegue de F. Cada etapa se hace commit con la revisión de código y la suite en verde; si una prueba falla, se corrige antes de desplegar.
+
+**Decisión del usuario (2026-10-16):** C7 lo escribe Claude Code (ya lanzado); F lo escribe Codex.
+
+## Anexo C7 — Resultado
+
+**Lo escribió Claude Code (2026-10-16); entregada, pendiente de revisión de Claude (arquitecto).**
+
+### Qué se entregó y su prueba
+
+| Punto | Qué | Prueba |
+|---|---|---|
+| 1. Peso | Todo peso NULL dice «Sin peso registrado» (revisión de C5b), donde aparece: cajón, ficha e impresión del veterinario, Atención (historial y resumen), detalle de la lista de Consultas, detalle de la visita en el portal y su imprimible (peso de la ficha). La casilla «No se pudo pesar» no cambia. | JS `M2C7Pulido` 1; `M2C7PulidoTest::testElImprimibleTraeAlergiasActivasConSuClinicaSintomasYPesoSinRegistrar`; `BaseV2MysqlTest::testC7SintomasEnLaListaYEnElPortalEnElEsquemaReal` (NULL real) |
+| 2. Síntomas | **Clínica:** `Consulta::listarDeLaClinica` y `filaDelListado` usan `conSintomas` (regla de RN-113 en `ConsultaSintoma`); el detalle de la lista de Consultas muestra «Síntomas marcados». **Portal:** `HistoriaPropietario::consultas` los agrega solo tras `exigirMascotaPropia` (RN-G02); salen en el historial del portal y en su imprimible. | `testLaListaDeConsultasTraeLosSintomasSoloDeSuClinica` (Sur, aun autorizada, no los lista), `testElPortalMuestraLosSintomasDeSuMascotaYNoLosDeOtroPropietario` (403 al otro), imprimible; JS 2 (escapados); MySQL C7 |
+| 3. Alertas en el imprimible | `imprimirHistorial` pasa las alertas activas (`HistoriaPropietario::alertas`), y el imprimible las muestra arriba con su tipo, descripción y clínica; sin alertas dice «Que no haya registro no significa que no tenga». Las desactivadas no salen. | `testElImprimibleTraeAlergiasActivas…` (con 403 para otro propietario); JS 3 |
+| 4. Modal | Frecuencia respiratoria (cuarta tarjeta; los cuatro signos en dos columnas) y observaciones, con los límites y avisos de `ValidadorClinico`. | `testElModalGuardaFrecuenciaRespiratoriaYObservacionesValidadasEnElServidor` (guardado y 422 junto al campo); JS 4 |
+| 5. `style=` | Los de `medical-module.js` pasaron a clases con los mismos valores: expediente sin mascotas y número de historia (`pacientes.css`), pie de la impresión (en la hoja de la propia impresión), buscador de «Atención sin cita» (`consulta-clinica.css`). El buscador también dejó `onclick`, `onmouseover`, `onmouseout` y `onerror` en línea: ahora usa escuchas. | JS 5: ningún `style=` ni evento en línea, los mismos valores en el CSS y avisos del buscador con sus clases |
+| 6. Vincular | Botón «Vincular mascota de un cliente» junto a «Nuevo Registro» en Pacientes. Abre el registro de mascota (`abrirModalRegistro('mascota')`) directo en la búsqueda del propietario, con una ayuda propia y el mismo flujo de `propietario-mascota.js` (RE-1.5.1 a RE-1.5.3). Sin vínculo, la línea del servidor ahora dice qué hacer: «…pide la confirmación por correo o que se vincule desde su portal», con el botón «Pedir confirmación por correo». Sin rutas ni permisos nuevos. | JS 6: abre la pestaña y enfoca la búsqueda, aviso sin vínculo y su botón, solo las rutas de siempre; `testElAvisoSinVinculoDiceEnUnaLineaQueHacer` |
+| 7. Textos | En la línea de tiempo vacía, «Registrar consulta», con la aclaración «no hace falta una cita (HU-2.2)». «Sin cita» en el cajón, la ficha, el historial de Atención y el detalle de la lista de Consultas (la tarjeta ya lo tenía). | JS 7; `M5C3Personal` actualizado al texto nuevo |
+| 8. Pulido | `specs/pulido-interfaz.md` marca hechos los dos hallazgos del usuario, el modal, los `style=` y los pendientes del historial. RE-2.1.1, HU-2.1 y HU-2.2 dicen «Sin peso registrado» y dónde sale «Sin cita». | — |
+
+**Añadido sin pedirlo:** la impresión del veterinario también muestra los síntomas (una línea, con la misma función del historial).
+
+### Verificación
+
+- PHP completo sin host MySQL: **852 pruebas, 7182 aserciones, 44 omitidas (las de MySQL)**.
+- PHP completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y la base por defecto `zooki_test_base_v2` (MariaDB 10.4.32 de XAMPP): **852 pruebas, 7783 aserciones, ninguna omitida**.
+- JavaScript: **211/211** (204 anteriores + 7 de `M2C7Pulido.test.cjs`).
+- `git diff --check` sin errores.
+- **Pruebas existentes que cambiaron por diseño:** `M5C3Personal` («Registrar consulta») y `M2C5bTratamientos` («Sin peso registrado»).
+- No se leyó ni escribió `.env`, no se tocó `zooki_v2_prueba` ni sus contraseñas; sin commit ni push, y no se empezó F.
+
+### Prueba en el navegador (usuario, junto con C5a y C5b)
+
+En XAMPP, antes: `php scripts/migrar.php` y `php scripts/cargar_conocimiento.php`. Hacen falta las mascotas de los anexos C5a y C5b y una consulta registrada sin cita.
+
+1. [ ] **Beto Norte**, Pacientes:
+   - Usa «Vincular mascota de un cliente»: se abre el registro de mascota directo en «Propietario».
+   - Con el documento de un propietario que aún no es cliente de Norte, sale la línea con qué hacer y «Pedir confirmación por correo».
+   - Con Fabio, salen sus mascotas para vincular.
+   - En una mascota sin consultas, la línea de tiempo dice «Registrar consulta».
+2. [ ] **Beto Norte**, modal de consulta:
+   - «Signos» tiene cuatro tarjetas (con F.R.) y «Plan» tiene «Observaciones». Una F.R. de 200 avisa junto al campo.
+   - Guarda con «No se pudo pesar»: el cajón, la ficha y la impresión dicen «Sin peso registrado» y «Sin cita».
+3. [ ] **Beto Norte**, Consultas:
+   - El detalle de una consulta con síntomas muestra «Síntomas marcados»; el de una sin cita, «Sin cita».
+   - En «Atención sin cita», el buscador de pacientes se ve igual que antes (tarjetas con foto y borde al pasar el ratón).
+4. [ ] **Fabio Propietario**, portal, en el celular:
+   - El historial de la mascota muestra los síntomas de cada consulta.
+   - «Imprimir» muestra «Alergias y alertas activas» arriba, con la clínica de cada una, y los síntomas en la columna del diagnóstico.
+
+### Pendientes
+
+- Para F: lo ya anotado en `estado.md` (RN-112 con «alerta médica», AGENTS.md y el estado de las HU de M2).
+- El portal no marca «Sin cita» (no se pidió para el propietario).
+- La idea de que «Atención sin cita» cree una cita sigue en el plan de M4.
+
+### C7 — Revisión (2026-10-16)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada en código; las pruebas del navegador van con las de C5a y C5b antes del despliegue (decisión del usuario).**
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 852 pruebas y 7182 aserciones (44 omitidas); con MySQL 8.0.46 y la base por defecto, 852 pruebas y 7783 aserciones, ninguna omitida; JS 211/211; `medical-module.js` sin `style=`.
+
+**Lo que está bien:** «Sin peso registrado» para todo peso NULL; los síntomas en la lista de Consultas, el portal y su imprimible pasan por la misma regla de visibilidad (RN-113 en clínica y `exigirMascotaPropia` en el portal); alertas activas en el imprimible con su clínica; frecuencia respiratoria y observaciones en el modal, validadas en el servidor; los `style=` y los eventos en línea del buscador de «Atención sin cita» pasaron a clases y escuchas; «Vincular mascota de un cliente» reutiliza el flujo existente sin rutas ni permisos nuevos y dice qué hacer si el propietario no está vinculado; «Registrar consulta» y «Sin cita». Lo añadido sin pedirlo (síntomas en la impresión del veterinario) usa la misma función del historial y se acepta.
+
+**Siguiente:** F — 2.0.0-alpha.4 (Codex).

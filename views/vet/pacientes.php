@@ -38,6 +38,11 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
             </div>
 
             <div class="command-center-actions cc-actions-gap">
+                <?php // M2 C7 (hallazgo del usuario, 2026-10-15; RE-1.5.1 a RE-1.5.3): vincular una mascota que ya está en Zooki, a la vista. ?>
+                <button type="button" class="btn-create btn-create-outline" data-vincular-mascota-cliente>
+                    <i class="fas fa-link"></i>
+                    <span>Vincular mascota de un cliente</span>
+                </button>
                 <button data-c3-click="evento2" class="btn-create">
                     <i class="fas fa-plus-circle"></i>
                     <span>Nuevo Registro</span>

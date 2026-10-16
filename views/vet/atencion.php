@@ -26,8 +26,8 @@ $hoyIso = date('Y-m-d');
 require_once __DIR__ . '/../../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/../../helpers/ValidadorTratamiento.php';
 $avisoConsulta = fn(string $campo): string => $e(ValidadorClinico::AVISOS_CONSULTA[$campo]);
-// M2 C5b (decisión del usuario, 2026-10-15): sin peso dice «No se pudo pesar», nunca 0.
-$textoPeso = fn($peso): string => $peso === null || $peso === '' ? 'No se pudo pesar' : $e($peso) . ' kg';
+// M2 C5b y C7: un peso NULL dice «Sin peso registrado» (no se pudo pesar o no se anotó), nunca 0.
+$textoPeso = fn($peso): string => $peso === null || $peso === '' ? 'Sin peso registrado' : $e($peso) . ' kg';
 $claseCampo = 'campo';
 $claseEtiqueta = 'campo__etiqueta';
 $prefijoConsulta = 'atencion';
@@ -439,6 +439,8 @@ $prefijoConsulta = 'atencion';
                                     <span class="historial__fecha"><?= $fechaCorta($con['fecha_hora']) ?></span>
                                     <strong><?= $e($con['motivo_consulta']) ?></strong>
                                     <span class="historial__vet"><i class="fas fa-user-md"></i> <?= $e($con['veterinario'] ?? '') ?></span>
+                                    <?php // M2 C7 (HU-2.2): la consulta registrada sin cita se distingue. ?>
+                                    <?php if (empty($con['id_cita'])): ?><span class="consultation-sin-cita-badge" title="Registrada sin cita (urgencia o imprevisto)"><i class="fas fa-ambulance"></i> Sin cita</span><?php endif; ?>
                                 </div>
                                 <?php if (!empty($con['sintomas'])): ?><p><span>Síntomas:</span> <?= $e(implode(', ', array_column($con['sintomas'], 'etiqueta'))) ?></p><?php endif; ?>
                                 <p><span>Diagnóstico:</span> <?= $e($con['diagnostico']) ?></p>
