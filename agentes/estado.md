@@ -2,12 +2,15 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-15
+**Actualizado:** 2026-10-16
 
 ## Ahora
 
 - **Módulo activo:** M2 — Historia clínica y soporte a la decisión (Grafo I), previsto como `2.0.0-alpha.4`. Plan: [`specs/M2-grafo-clinico.md`](../specs/M2-grafo-clinico.md). Rama: `v2/m2-grafo`.
-- **Entrega actual de M2:** **C7 — pulido de M2: revisada y aprobada en código (2026-10-16).** Lo escribió Claude Code. Ver «Anexo C7» y «C7 — Revisión». C5b con commit `83ef9af`. Todas las etapas de construcción (B, C1–C7) revisadas; pruebas del navegador de C5a, C5b y C7 pendientes antes del despliegue.
+- **Entrega actual de M2:** **F — cierre y 2.0.0-alpha.4: revisada y aprobada (2026-10-16).** Lo escribió Codex. Ver «Anexo F» y «F — Revisión». Toda la construcción de M2 revisada; C7 con commit `ec3f8cd`.
+- **C7:** revisada y aprobada en código (2026-10-16), escrita por Claude Code; ver «C7 — Revisión». Todas las etapas de construcción de M2 están revisadas, sin dar por aprobadas sus pruebas manuales pendientes.
+- **Verificación F:** PHP 852 (7182 aserciones y 44 omitidas sin host; 7783 aserciones y ninguna omitida con MariaDB 10.4.32 temporal propia y `zooki_test_base_v2`); JS 211/211; batería 26/26; 27 diagramas renderizados; 96 HU, 427 RE, 120 RN y 52 tablas coherentes. Ocho PDF y ocho Word regenerados, índices completos e integridad/revisiones verificadas; `exportar.mjs --revisar`: «Las descargas están al día». Detalle en Anexo F.
+- **Decisión del usuario durante F (2026-10-16):** verificar migración/carga en el log completo, sin `--tail`, y comprobar `App::VERSION` dentro del contenedor y en pantalla; el arranque no imprime la versión y no se modifica para agregarla.
 - **C5b — prescripción con alertas, tratamiento y peso desconocido:** revisada y aprobada en código (2026-10-16), pendiente de las pruebas del usuario. Lo escribió Claude Code. Ver «Anexo C5b» y «C5b — Revisión». C5a con commit `f2adbcb`. C1–C4, C6 y B cerradas.
 - **C5a:** revisada y aprobada en código (2026-10-15), pendiente de las pruebas del usuario; commit `f2adbcb`. Lo escribió Claude Code. Ver «Anexo C5a» y «C5a — Revisión». C4 con commit `697cac7` (26/26). C1, C2, C3, C6 y B cerradas.
 - **C4:** revisada y aprobada (2026-10-15); la batería da 26/26 (RE-2.11.7). Lo escribió Codex. Ver «Anexo C4» y «C4 — Revisión». C3 con commit `bf87ce3`. C1, C2, C6 y B cerradas. C5 se parte en C5a y C5b.
@@ -47,10 +50,10 @@
 - **E1:** revisada, **aprobada** y con commit; el usuario pasó IP, aviso y desbloqueo. Los hallazgos posteriores de pantalla y suspensión se corrigieron en E2.
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
-- **Siguiente paso:** F — 2.0.0-alpha.4 (Codex): versión, estados de HU/RE/RN, RN-112 con «alerta médica», AGENTS.md (alpha, 52 tablas y la carga del conocimiento), revisiones y descargas. Después, el usuario prueba C5a, C5b y C7 en el navegador y se despliega. Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Siguiente paso:** el usuario hace commit de F, las cinco pruebas de «Pruebas del usuario antes del despliegue» del plan M2, el respaldo de producción (antes del push a `main`), la integración y el tag `v2.0.0-alpha.4` y las comprobaciones del VPS (log completo). Después: plan del módulo 4 (agenda y Grafo II), con la idea de «Atención sin cita» anotada abajo. Pendiente aparte: borrar los respaldos temporales del VPS.
 - **Para el plan de M4 (idea del usuario, 2026-10-15, por decidir allí):** el paciente que llega sin cita y no es urgencia debería pasar por la agenda. Recomendación del revisor: «Atención sin cita» (HU-2.2) crea por detrás una cita de llegada en curso, como sobrecupo si no hay hueco (RN-422), para que la agenda del veterinario refleje la realidad; las urgencias siguen HU-4.15. Hoy (M2) la consulta sin cita no crea cita.
   Reparto de M2: Codex C2–C4; Claude Code C5.
-  Para F: RN-112 con «alerta médica» y alertas en el historial imprimible del portal.
+  RN-112 con «alerta médica» queda documentada en F; las alertas del imprimible ya quedaron implementadas y revisadas en C7.
   En XAMPP, antes de probar: `php scripts/migrar.php` y luego `php scripts/cargar_conocimiento.php`. Pendiente aparte: borrar los respaldos temporales del VPS.
 - **Decisión del usuario durante B2 (2026-10-14):** mantener los doce predicados; obesidad de T-13 y tratamiento sin fármaco conocido de T-19 quedan como contexto.
   Usar anorexia sostenida en gatos y crisis breve habitual finalizada con epilepsia documentada, sin inferir medicamentos ni datos ausentes.

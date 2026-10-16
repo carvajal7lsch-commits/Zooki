@@ -1,5 +1,7 @@
 # Batería de casos de triage — Zooki v2.0
 
+> **Cierre M2 — 16/10/2026 (2.0.0-alpha.4)** · Batería automatizada, validación veterinaria pendiente
+
 > **Documento interno de pruebas** · No se publica en el portal de documentación · SENA ADSO — Ficha 3142784
 
 Esta batería sirve para poner a prueba el triage de 4 niveles antes y después de construirlo: en la presentación, para que cualquiera intente «corchar» al sistema con casos difíciles, y en la construcción, como casos de prueba del Grafo I. Cada caso conserva un relato ilustrativo y explicita las marcas, tiempos y datos del paciente que recibe el motor.

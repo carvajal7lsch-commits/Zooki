@@ -1,12 +1,28 @@
 # Historial de Versiones — Proyecto Zooki
 
-> Registro de versiones (v1.0.0 → v2.0.0-alpha.3; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
+> Registro de versiones (v1.0.0 → v2.0.0-alpha.4; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
 
 ## Historial de Versiones
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 2.0.0-alpha.3 (Actual)
+### Versión 2.0.0-alpha.4 (Actual)
+
+Tercer módulo de la v2: **historia clínica y apoyo a la decisión con el Grafo I**.
+La entrega queda preparada para publicar después de las pruebas del usuario; producción se actualiza al desplegar.
+
+* **Mapa del conocimiento:** la administración de la plataforma explora síntomas, diagnósticos, fármacos, sustancias y sus relaciones, con buscador, filtros, fuentes y cobertura por especie; no accede a pacientes ni edita el conocimiento.
+* **Alergias y alertas compartidas:** el veterinario registra alergias, condiciones crónicas y medicación continua; las clínicas vinculadas las ven antes de recetar, con su clínica de origen. Solo la clínica que las registró las desactiva y quedan en el historial. El propietario las ve también en su portal y al imprimir la historia.
+* **Síntomas y diagnósticos sugeridos:** se eligen síntomas del catálogo con ayuda del buscador; aparecen hasta cinco sugerencias con sus coincidencias y fuentes. El veterinario elige, edita o escribe su diagnóstico; ninguna sugerencia se acepta sola.
+* **Alertas al recetar:** se bloquean las alergias enlazadas y las toxicidades con efecto de bloqueo; las interacciones requieren decisión del veterinario. Si interviene medicación protegida de otra clínica, el aviso es genérico y pide conciliar con el propietario, sin revelar el tratamiento. Un nombre libre deja la evaluación incompleta, nunca afirma que sea seguro.
+* **Tratamiento y peso:** las filas comparten validación, fechas y observaciones en las dos entradas de consulta; el fin se calcula solo desde duraciones inequívocas y se puede corregir. El peso se pide, salvo «No se pudo pesar»; se conserva sin valor y se muestra «Sin peso registrado».
+* **Pulido clínico:** campos obligatorios y errores junto al campo, actualización sin recargar, frecuencia respiratoria y observaciones en el modal, síntomas en los historiales y sus impresiones, «Sin cita» y acceso directo para vincular una mascota existente.
+* **Triage listo para la agenda:** el motor y su buscador pasan los 26 casos automatizados; la captura en Agendar, la derivación de urgencias y el ajuste veterinario se integrarán en M4. El carnet con QR y sus alertas siguen para el final de la v2.0.
+
+**Limitación:** todo el conocimiento inicial está **pendiente de validación veterinaria**.
+Las sugerencias son apoyo y las pruebas verifican el software; no certifican validez clínica ni convierten en definitivos los casos provisionales.
+
+### Versión 2.0.0-alpha.3
 Segundo módulo de la v2: el **portal del propietario multi-clínica**. Con una sola cuenta el propietario ve todas sus mascotas y la historia de todas las clínicas donde se atienden, elige la clínica solo cuando agenda o cancela, se vincula o se desvincula de clínicas y decide qué clínica ve la historia de las otras. La clínica, a su vez, vincula una mascota que ya existe en Zooki en lugar de duplicarla. Esta alfa cierra 6 historias más de la entrega v2.0 (15 de 28).
 
 **Portal del propietario**
@@ -502,7 +518,7 @@ Zooki utiliza un esquema de versionamiento semántico adaptado a la distribució
 
 *   **`X` (Mayor):** Cambios de gran impacto en la lógica de negocio general, reestructuración masiva del sistema, cambios mayores de arquitectura o lanzamientos de nuevas versiones globales (Ej: de `1.0.0` a `2.0.0`).
 *   **`Y` (Backend / Backend + Frontend):** Cambios en la lógica del backend (controladores, modelos, migraciones de base de datos). Si un cambio en el backend requiere actualizar vistas u hojas de estilos (afectando también al frontend), este dígito se incrementará (Ej: de `1.0.0` a `1.1.0`).
-*   **Versiones alfa de la v2 (`2.0.0-alpha.N`):** la v2 cambia la arquitectura entera y se publica por módulos. **Cada entrega a producción** sube el número de la alfa (`alpha.1`, `alpha.2`…), sea un módulo terminado o un pulido (decisión del usuario, 2026-10-11): los estilos y scripts se piden con `?v=<versión>` y, si no cambia, el navegador sigue usando los archivos viejos; la versión `2.0.0` se publica cuando estén las 28 historias de la entrega v2.0 (plan de entregas de las [Historias de Usuario](HistoriasUsuario.md)).
+*   **Versiones alfa de la v2 (`2.0.0-alpha.N`):** la v2 cambia la arquitectura entera y se publica por módulos. **Cada entrega a producción** sube el número de la alfa (`alpha.1`, `alpha.2`…), sea un módulo terminado o un pulido (decisión del usuario, 2026-10-11): los estilos y scripts se piden con `?v=<versión>` y, si no cambia, el navegador sigue usando los archivos viejos; la versión `2.0.0` se publica cuando estén las 29 historias de la entrega v2.0 (plan de entregas de las [Historias de Usuario](HistoriasUsuario.md)).
 *   **`Z` (Frontend Puro):** Cambios exclusivos del frontend (mejoras de estilo CSS, animaciones, lógica JavaScript del lado del cliente, layouts) que no afectan ni modifican controladores ni bases de datos (Ej: de `1.0.0` a `1.0.1`).
 
 ---

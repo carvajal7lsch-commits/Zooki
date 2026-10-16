@@ -1,6 +1,6 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 3.3** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
+> **Revisión 3.4** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
@@ -12,12 +12,17 @@ _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.3, que cierra el módulo 5 (portal multi-clínica y vínculos): HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 pasan a «Implementada (2.0.0-alpha.3)», con las alergias y alertas de HU-2.10 en el módulo 2. La clínica registra al propietario sin aceptación presencial: el titular activa su cuenta desde un enlace de 72 horas y, si vence, lo pide él mismo o activa con Google (HU-T.19, HU-1.2, HU-T.18, HU-5.8). El propietario puede tener hasta 3 clínicas cuando se vincula él (HU-5.13); el personal lo busca también por nombre entre sus clientes (HU-1.5); el color de la mascota ya no se pide (HU-1.1); y los correos temporales se rechazan en los registros y al cambiar el correo (HU-T.5, HU-T.18, HU-5.8)._
 
+_La **Revisión 3.4** (16 de octubre de 2026) acompaña la versión 2.0.0-alpha.4: HU-2.1, HU-2.8, HU-2.9, HU-2.10 y HU-2.12 reflejan el cierre de M2 (alergias, peso, apoyo diagnóstico, prescripción y mapa); HU-2.11 queda parcial con motor, buscador y batería listos para M4. El carnet conserva su entrega al final de la v2.0 y el conocimiento está pendiente de validación veterinaria._
+
 **Índice de módulos:**
+
+**Parcial (2.0.0-alpha.4):** HU-2.11 entrega el motor, buscador y batería; su flujo operativo se completa en M4.
+Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de esta revisión describen la entrega preparada y no afirman que ya esté desplegada.
 
 - **Módulo 0** — Plataforma: clínicas, planes y suscripción *(v2.0)* · 5 historias
 - **Módulo T** — Acceso, seguridad y administración · 19 historias
 - **Módulo 1** — Mascotas y propietarios · 5 historias
-- **Módulo 2** — Historia clínica y soporte a la decisión clínica (Grafo I) · 11 historias
+- **Módulo 2** — Historia clínica y soporte a la decisión clínica (Grafo I) · 12 historias
 - **Módulo 3** — Vacunación, desparasitación y recordatorios · 6 historias
 - **Módulo 4** — Agenda de citas inteligente (Grafo II) · 19 historias
 - **Módulo 5** — Portal del propietario (multi-clínica) · 14 historias
@@ -612,7 +617,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Implementada | 8 pts | ZOOK-9 |
+| Alta | Implementada (2.0.0-alpha.4) | 8 pts | ZOOK-9 |
 
 > Como veterinario, quiero registrar una consulta médica completa para llevar la trazabilidad de la salud del paciente.
 
@@ -623,9 +628,9 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 - Se genera un número de historia clínica único en la primera consulta.
 - La consulta queda vinculada a la mascota y visible en su historial.
 - No se puede registrar una consulta sin diagnóstico.
-- _(v2.0)_ El veterinario registra las alergias y alertas médicas de la mascota (alergia, condición crónica, medicación continua); no se borran, se desactivan, y las ven todas las clínicas vinculadas y el carnet.
+- _(v2.0)_ El veterinario registra las alergias y alertas médicas de la mascota (alergia, condición crónica, medicación continua); no se borran, se desactivan, y las ven todas las clínicas vinculadas. _La presentación en el carnet se entrega al final de la v2.0 (RE-2.1.5 y RE-2.10.1)._
 
-**Reglas de negocio:** RN-201, RN-202, RN-203, RN-113 · **Dependencias:** HU-1.1
+**Reglas de negocio:** RN-201, RN-202, RN-203, RN-112, RN-113 · **Dependencias:** HU-1.1
 
 ### HU-2.2 — Atención clínica sin cita (urgencias)
 
@@ -741,7 +746,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.4) | 8 pts | v2 |
 
 > Como veterinario, quiero que al registrar los síntomas el sistema me proponga los diagnósticos probables ordenados por peso para apoyarme en el análisis sin reemplazar mi criterio.
 
@@ -759,7 +764,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.4) | 8 pts | v2 |
 
 > Como veterinario, quiero que el sistema me advierta o bloquee una prescripción peligrosa para la especie o raza del paciente, o que interactúe con su medicación vigente, para recetar con más seguridad.
 
@@ -777,13 +782,13 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Implementada (2.0.0-alpha.3) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.4) | 5 pts | v2 |
 
 > Como veterinario, quiero ver lo que otras clínicas registraron de la mascota, según lo que el propietario autorizó, para no repetir vacunas ni pasar por alto una alergia.
 
 **Criterios de aceptación:**
 
-- Siempre se muestran los datos básicos, las alergias y alertas médicas, y las vacunas y desparasitaciones de todas las clínicas, cada una con la clínica que la aplicó. _Las alergias y alertas se entregan con el módulo 2, junto a su registro (RE-2.1.5); el resto de este criterio se cierra con el módulo 5._
+- Siempre se muestran los datos básicos, las alergias y alertas médicas, y las vacunas y desparasitaciones de todas las clínicas, cada una con la clínica que la aplicó. _M5 cerró datos básicos, vacunas y desparasitaciones; M2 completa las alergias y alertas en ficha, portal e impresión. Su presentación en el carnet sigue para el final de la v2.0._
 - Las consultas, tratamientos y archivos de otra clínica solo se muestran si el propietario autorizó a esta clínica (HU-5.12); si no, no se muestran ni se indica que existan.
 - Los registros de otras clínicas son de solo lectura: solo la clínica que los creó puede modificarlos.
 - El Grafo I usa las alergias y alertas de todas las clínicas al validar una prescripción (HU-2.9).
@@ -794,9 +799,11 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Parcial (2.0.0-alpha.4; integración en M4) | 8 pts | v2 |
 
 > Como veterinario o propietario, quiero que el sistema calcule la urgencia del caso con reglas claras para que una mascota grave no quede al final de la fila y una leve no ocupe un sobrecupo.
+
+**Alcance entregado en M2:** motor, buscador y batería automatizada de 26 casos; captura en Agendar, derivación de urgencias, aislamiento y ajuste del veterinario pendientes de M4.
 
 **Criterios de aceptación:**
 
@@ -819,7 +826,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Planificada (v2.0, M2 C6) | Por estimar | Decisión del usuario, M2 |
+| Media | Implementada (2.0.0-alpha.4) | Por estimar | Decisión del usuario, M2 |
 
 > Como superadministrador, quiero recorrer el conocimiento global con sus relaciones y fuentes para revisar su cobertura y validación, sin acceder a pacientes ni editarlo.
 
@@ -1958,9 +1965,9 @@ Todo lo especificado en este documento es alcance de la v2 (salvo lo marcado com
 
 Dentro de cada entrega, la tabla sigue las dependencias principales: primero el aislamiento y la identidad, después las funciones que los usan. Las historias v1.x que ya funcionan se migran por completo cuando una historia v2 las toca.
 
-### Entrega v2.0 — imprescindible para la presentación (28 historias, 159 puntos)
+### Entrega v2.0 — imprescindible para la presentación (29 historias; 159 puntos estimados y HU-2.12 por estimar)
 
-_Avance: la versión 2.0.0-alpha.1 cierra las nueve primeras (módulo 0, 51 puntos). Cada módulo siguiente publica la alfa siguiente; la versión 2.0.0 sale cuando estén las 28._
+_Avance: la versión 2.0.0-alpha.1 cierra las nueve primeras (módulo 0, 51 puntos). Cada módulo siguiente publica la alfa siguiente; la versión 2.0.0 sale cuando estén las 29._
 
 | Historia | Título | Puntos |
 |---|---|---|
@@ -2085,7 +2092,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-109 | HU-T.18, HU-1.2, HU-5.3, HU-5.8, HU-5.9, HU-5.13 |
 | RN-110 | HU-1.1, HU-1.4, HU-1.5, HU-5.3, HU-5.10, HU-5.13 |
 | RN-111 | HU-1.1, HU-1.5 |
-| RN-112 | HU-2.10 |
+| RN-112 | HU-2.1, HU-2.10 |
 | RN-113 | HU-2.1, HU-2.5, HU-2.9, HU-2.10, HU-5.12 |
 | RN-114 | HU-5.5, HU-5.9 |
 | RN-115 | HU-5.12, HU-5.13 |

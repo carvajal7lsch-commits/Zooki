@@ -1,6 +1,6 @@
 # Ficha Técnica del Proyecto — Zooki
 
-> **Revisión 3.3** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
+> **Revisión 3.4** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
 ## Identificación del Proyecto
 
@@ -15,7 +15,7 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.0.0-alpha.3**: plataforma SaaS con el módulo 0 (clínicas, planes, identidad y aislamiento), el pulido del acceso y el portal del propietario multi-clínica (módulo 5) · el resto de la v2.0 se construye por módulos; cada entrega a producción sube la alfa |
+| Estado actual | **2.0.0-alpha.4 preparada**: módulos 0, 5 y M2 clínico/Grafo I; producción sigue en alpha.3 hasta desplegar. Motor de triage listo para M4; carnet/QR al final de la v2.0; conocimiento pendiente de validación veterinaria |
 | Versión del documento | 3.1 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
@@ -57,7 +57,8 @@ Se decidió **mantener el stack nativo** de la v1.x por ser suficiente a la esca
 | Capa | Tecnología / Herramienta | Versión | Justificación |
 |---|---|---|---|
 | Frontend | HTML5 + CSS3 (Grid + Flexbox) | Estándar | Diseño responsivo sin frameworks; control total del diseño. |
-| Frontend | JavaScript (ES6+) + Fetch API | Nativo | Lógica de cliente y comunicación asíncrona sin librerías. |
+| Frontend | JavaScript (ES6+) + Fetch API | Nativo | Componentes propios y comunicación asíncrona sin bundler. |
+| Frontend | Cytoscape.js | 3.34.3 | Mapa de conocimiento global de solo lectura, CDN con versión fija y SRI; sin datos de pacientes. |
 | Frontend | FullCalendar.js | 6.x | Renderizado del calendario de citas y vacunas. |
 | Backend | PHP nativo (MVC a mano) | 8.2+ | Dominio previo; MVC sin curva de framework. |
 | Backend | PDO (PHP Data Objects) | Incluido | Sentencias preparadas; previene inyección SQL. |
@@ -73,9 +74,9 @@ Se decidió **mantener el stack nativo** de la v1.x por ser suficiente a la esca
 | DevOps | Git + GitHub + Docker + Dokploy | — | Control de versiones, contenedores y despliegue. |
 | Pruebas | PHPUnit | 10.x | Pruebas unitarias y de integración. |
 
-El diseño de M2 contempla conocimiento global versionado con fuentes y validación veterinaria pendiente.
-HU-2.12 permite al superadministrador explorar ese conocimiento sin editarlo ni acceder a pacientes; su pantalla se entrega en C6.
-B1 prepara 52 tablas y el cargador; los archivos de conocimiento permanecen vacíos hasta B2.
+M2 entrega conocimiento global versionado con fuentes y validación veterinaria pendiente: 105 nodos, 105 aristas, 201 sinónimos, 29 reglas y 47 fuentes.
+HU-2.12 permite al superadministrador explorarlo sin editar ni acceder a pacientes; los motores apoyan el diagnóstico y la prescripción.
+El esquema tiene 52 tablas de negocio, más la tabla técnica `schema_migraciones` del migrador; el triage y su batería de 26 casos quedan listos para M4.
 
 ## 4. Arquitectura del Sistema
 
@@ -162,18 +163,18 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 
 ## 11. Estado Actual del Sistema
 
-**v1.11.0 — en producción.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
+**v1.11.0 — línea base histórica.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
 
-**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.4), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.3, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.3, 96 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.3, 427 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros, y la 2.0.0-alpha.3 trae el portal del propietario multi-clínica: todas sus mascotas e historia en todas sus clínicas, vínculos con tope de 3 clínicas y la historia compartida bajo su autorización. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
+**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.5), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.4, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.4, 96 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.4, 427 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros, y la 2.0.0-alpha.3 trae el portal del propietario multi-clínica: todas sus mascotas e historia en todas sus clínicas, vínculos con tope de 3 clínicas y la historia compartida bajo su autorización. La 2.0.0-alpha.4 prepara el cierre de M2: alergias y alertas compartidas, síntomas, apoyo diagnóstico, alertas de prescripción y mapa del conocimiento; el triage operativo queda en M4 y el carnet al final de la v2.0. Todo el conocimiento sigue pendiente de validación veterinaria. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
 
 ## 12. Entregables Finales
 
 - Código fuente completo en repositorio GitHub con [README técnico](../README.md).
 - Aplicación desplegada en el servidor propio.
 - Base de datos con datos de prueba.
-- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.4).
-- Esta Ficha Técnica del Proyecto (Revisión 3.3).
-- [Reglas de Negocio](ReglasNegocio.md) (Rev 2.2), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.2) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.2).
+- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.5).
+- Esta Ficha Técnica del Proyecto (Revisión 3.4).
+- [Reglas de Negocio](ReglasNegocio.md) (Rev 2.4), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.4) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.4).
 - [Modelo Entidad-Relación](MER.md) y [Modelos y diagramas](Modelos.md) (grafos, procesos, flujos de sistema y componentes) con su maestro draw.io.
 - [Historial de Versiones](HistorialVersiones.md) y documento de [Presupuesto y ROI](PresupuestoROI.md).
 - Manual de usuario. _(Pendiente)_

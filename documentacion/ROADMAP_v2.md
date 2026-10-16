@@ -2,6 +2,8 @@
 
 > Lista de pendientes acordada para no dejar nada suelto. Se actualiza a medida que se completa.
 
+> Actualización de cierre M2 (16/10/2026): conteo de la entrega v2.0 alineado con HU-2.12 ya incluida; sin agregar puntos estimados ni cambiar alcance.
+
 ## Estado
 - [x] Fase 2 — Diagramas / Modelos (grafos, procesos, flujos de sistema)
 - [x] Fase 3 — Historias de Usuario v2 (95 HU, módulos, esquema HU-<módulo>.<n>)
@@ -15,7 +17,7 @@
 - [x] (Usuario) Leer y pulir toda la documentación — prioridades, criterios, huecos (especificación aprobada el 2026-10-06)
 
 ## Plan de construcción de la v2
-- **Entrega v2.0 (presentación):** 28 historias, 159 puntos — multi-clínica, Grafo I (diagnósticos, toxicidad, triage), Grafo II (agenda, ausencias y cobertura, cascada, urgencias, llegada tarde), portal multi-clínica, carnet QR, registro con Google y autorización de datos.
+- **Entrega v2.0 (presentación):** 29 historias, 159 puntos estimados más HU-2.12 por estimar — multi-clínica, Grafo I (diagnósticos, toxicidad, triage), Grafo II (agenda, ausencias y cobertura, cascada, urgencias, llegada tarde), portal multi-clínica, carnet QR, registro con Google y autorización de datos.
 - **Entrega v2.1:** 16 historias, 62 puntos — suscripción y mora, re-triage, notificaciones, reputación, comunicaciones, parámetros y supresión de cuenta.
 - Detalle por historia: apéndice «Plan de entregas de la v2» de Historias de Usuario.
 

@@ -1,8 +1,8 @@
 # M2 — Historia clínica y soporte a la decisión (Grafo I)
 
-> Estado: B, C1 y C6 cerradas; C2, C3, C4, C5a y C5b revisadas y aprobadas en código; C7 entregada, pendiente de revisión (Claude Code, 2026-10-16)
+> Estado: F entregada, pendiente de revisión (Codex, 2026-10-16); pruebas del usuario de C5a/C5b/C7 y despliegue pendientes
 > Entrega: v2.0 · Fecha: 2026-10-14 · Sale como `2.0.0-alpha.4`
-> Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
+> Responsable de escritura: Codex (A, B1, inicio de B2, B2.1, C2, C3, C4, F) y Claude Code (resto de B2, C1, C5, C6) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m2-grafo`, creada desde `main` en `v2.0.0-alpha.3`.
 
 ## 1. Resultado y límites
@@ -22,16 +22,48 @@
 - Carnet y QR con las alertas (HU-5.10, HU-5.11): al final de la v2.0.
 - Editar el conocimiento desde una pantalla (v2.1 si se pide); en M2 el conocimiento vive versionado en el repositorio (§6, decisión 2).
 
-## 2. Trazabilidad
+## 2. Trazabilidad — evidencia final de M2
 
-| HU | RE | RN | Etapa | Evidencia de aceptación |
+La evidencia automática corresponde a 2.0.0-alpha.4 preparada; la comprobación visual pendiente se reúne en «Pruebas del usuario antes del despliegue».
+El carnet de RE-2.1.5/RE-2.10.1 se entrega al final de la v2.0; HU-2.11 conserva su alcance parcial de M4.
+
+| HU | RE | RN | Etapa | Evidencia final / salvedad |
 |---|---|---|---|---|
-| HU-2.1 (alergias y alertas) | RE-2.1.5 | RN-113 | C1 | Registrar y desactivar; visible en toda clínica vinculada y en el portal |
-| HU-2.10 (cierre) | RE-2.10.1 (alergias y alertas) | RN-113 | C1 | La parte que quedó pendiente en M5 |
-| HU-2.8 | RE-2.8.1–5 | RN-209, RN-210, RN-212, RN-202 | C2, C5 | C2: `MotorDiagnosticosTest`, `EvaluadorCondicionesTest`, `DiagnosticoTest` y `BaseV2MysqlTest::testC2RankingConFichaYConocimientoActivosSinGuardar`; pantalla, aceptación y guardado final en C5 |
-| HU-2.9 | RE-2.9.1–4 | RN-209, RN-211, RN-212, RN-113 | C3, C5 | C3: `MotorPrescripcionTest`, `PrescripcionTest` y `BaseV2MysqlTest::testC3PrescripcionSeRevalidaAlGuardarConAuditoriaYRollback`; toxicidad/alergia, interacción, privacidad, decisión vigente y auditoría atómica; presentación y selección del fármaco en C5 |
-| HU-2.11 | RE-2.11.1–7 | RN-411, RN-416, RN-417, RN-418, RN-424, RN-425, RN-209 | C4 | `MotorTriageTest` y fixture de 26 casos; P1–P6, tiempo y contexto sin nota; `BuscadorSintomasTest`, `TriageTest` y `BaseV2MysqlTest::testM2C4TriageConFichaPropiaYBusquedaSinEscrituras`; captura, avisos y ajuste operativo en M4 |
-| HU-2.12, mapa del grafo (aprobada en revisión de A) | RE-2.12.1–6 | RN-212, RN-209, RN-004/RN-G13 | C6 | El superadministrador explora conocimiento global con peso, signo y fuente; solo lectura y sin pacientes |
+| HU-2.1 | RE-2.1.1 | RN-201, RN-203 | C5b, C7 | `ConsultaHistorialTest::testRegistrarGuardaClinicaVeterinarioCamposTratamientoYAdjunto`; `ConsultaTratamientoTest::testLaCasillaGuardaElPesoNullYSinCasillaElPesoSePide`; `M2C7PulidoTest::testElModalGuardaFrecuenciaRespiratoriaYObservacionesValidadasEnElServidor`; JS C5b/C7; manual 1/2 |
+| HU-2.1 | RE-2.1.2 | RN-102 | Base, C5a | `ConsultaHistorialTest::testElNumeroDeHistoriaSeAsignaUnaVezYNoSeRepiteDentroDeLaClinica`; `BaseV2MysqlTest::testC4ElNumeroDeHistoriaSeAsignaBajoCandadoSinRepetirse`; manual 1 |
+| HU-2.1 | RE-2.1.3 | RN-202 | C5a | `ConsultaHistorialTest::testSinDiagnosticoNiMotivoNoSeGuarda`; `ConsultaSintomasTest::testLosErroresDelServidorDicenSuCampoYSuAvisoCorto`; JS C5a; manual 1/2 |
+| HU-2.1 | RE-2.1.4 | RN-203 | C5a, C7 | `ConsultaSintomasTest::testLosSintomasSeGuardanConLaConsultaSinRepetirYSalenEnElHistorial`; `M2C7PulidoTest::testLaListaDeConsultasTraeLosSintomasSoloDeSuClinica`; manual 1/5 |
+| HU-2.1 | RE-2.1.5 | RN-112, RN-113 | C1, C5b, C7 | `AlertaMedicaTest::testRegistrarYDesactivarEnLaPropiaClinicaSinBorrarYConAuditoria`; `BaseV2MysqlTest::testC1AlertasMedicasEnElEsquemaRealConNodoYAuditoria`; JS C1/C5b; prueba C1 aprobada por el usuario; manual 2/5 para integración e impresión. Carnet pendiente |
+| HU-2.8 | RE-2.8.1 | RN-210 | C2, C5a | `MotorDiagnosticosTest`, `DiagnosticoTest`, `BaseV2MysqlTest::testC2RankingConFichaYConocimientoActivosSinGuardar`; JS C5a recalcula hasta cinco candidatos con cobertura y fuente; manual 1/2 |
+| HU-2.8 | RE-2.8.2 | RN-202, RN-209 | C5a | `M2C5aConsulta.test.cjs`: «Usar este diagnóstico» copia sin rellenar solo y permite editar; manual 1 |
+| HU-2.8 | RE-2.8.3 | RN-202 | C2, C5a | `DiagnosticoTest`, `ConsultaHistorialTest::testSinDiagnosticoNiMotivoNoSeGuarda`; JS C5a sin candidatos y diagnóstico obligatorio; manual 1/2 |
+| HU-2.8 | RE-2.8.4 | RN-209 | C2, C5a | `MotorDiagnosticosTest`; JS C5a: coincidencias/fuentes/aviso pendiente, sin porcentajes ni elección automática; manual 1 |
+| HU-2.8 | RE-2.8.5 | RN-212 | B, C2 | `ConocimientoRealTest`, `CargadorConocimientoTest`, `DiagnosticoTest`; instantánea global y versión. Conocimiento pendiente de validación veterinaria |
+| HU-2.9 | RE-2.9.1 | RN-211, RN-113 | C3, C5b | `MotorPrescripcionTest`, `PrescripcionTest`; JS C5b fármaco elegido y nombre libre incompleto; manual 2/3/4 |
+| HU-2.9 | RE-2.9.2 | RN-211 | C3, C5b | `PrescripcionTest::testBloqueoDirectoNoGuardaNiMueveAdjuntosYDejaAuditoriaDeRechazo`; `BaseV2MysqlTest::testC3PrescripcionSeRevalidaAlGuardarConAuditoriaYRollback`; JS C5b bloqueo con especie/fuente; manual 2 |
+| HU-2.9 | RE-2.9.3 | RN-211, RN-113 | C3, C5b | `PrescripcionTest::testPrivacidadYRevocacionInvalidanLaHuellaAntesDeGuardar`, `testDecisionYConciliacionDeCadaFilaLleganPorElFormularioYSeAuditan`; recorrido recursivo del JSON protegido; JS C5b; manual 3/4 |
+| HU-2.9 | RE-2.9.4 | RN-209 | C3, C5b | `MotorPrescripcionTest`; JS C5b: bloqueo no confirmable, advertencia requiere decisión, protegida además conciliación; manual 2/3/4 |
+| HU-2.10 | RE-2.10.1 | RN-113 | M5, C1, C7 | `HistoriaCompartidaTest::testBVeLasVacunasYDesparasitacionesDeAConLaClinicaQueLasAplico`; `AlertaMedicaTest::testOtraClinicaVinculadaLaVeConLaClinicaDeOrigenYNoLaDesactiva`; `M2C7PulidoTest::testElImprimibleTraeAlergiasActivasConSuClinicaSintomasYPesoSinRegistrar`; manual 5. Carnet pendiente |
+| HU-2.10 | RE-2.10.2 | RN-113 | M5, C5a/C7 | `HistoriaCompartidaTest::testElHistorialPorPeticionDirectaNoRevelaLasConsultasDeA`; `ConsultaSintomasTest::testElHistorialMuestraSintomasSoloDeConsultasQueLaClinicaPuedeVer`; manual 4 |
+| HU-2.10 | RE-2.10.3 | RN-113 | M5, C3 | `HistoriaCompartidaTest::testSinAutorizacionBNoVeNiSabeDeLasConsultasDeA`; `PrescripcionTest` limita el aviso protegido; manual 4 |
+| HU-2.10 | RE-2.10.4 | RN-112 | M5, C1 | `HistoriaCompartidaTest::testBNoModificaNingunRegistroDeAYQuedaEnAuditoria`, `testBNoAgregaTratamientosNiAdjuntosAUnaConsultaDeA`; `AlertaMedicaTest`; manual 4 |
+| HU-2.11 (parcial) | RE-2.11.1 | RN-424 | C4 | `TriageTest` valida marcas/tiempos y rechaza nota sola; `BuscadorSintomasTest`. Captura en Agendar y almacenamiento en citas pendientes de M4 |
+| HU-2.11 (parcial) | RE-2.11.2 | RN-416 | C4 | `MotorTriageTest`: máximo, P3 una sola vez, T-04/T-17/T-18; 26/26 en el proveedor de batería |
+| HU-2.11 (parcial) | RE-2.11.3 | RN-416 | C4 | Batería T-09/T-10, T-11/T-12 y T-14/T-16; prueba de ventanas chocolate, tamaño y datos decisivos desconocidos |
+| HU-2.11 (parcial) | RE-2.11.4 | RN-417 | C4 | `MotorTriageTest::testP1TodasLasAlarmasSonUniversalesInclusoFrenteAVerdeOAmarillo`; incluye T-21 sin cobertura |
+| HU-2.11 (parcial) | RE-2.11.5 | RN-418 | C4 | `MotorTriageTest::testP6ReservasNuncaTerminanEnVerdeYConservanRevisionInmediata`; T-20 y T-22. Revisión antes de asignar horario pendiente de M4 |
+| HU-2.11 (parcial) | RE-2.11.6 | RN-425 | C4 | T-11 devuelve contagio independiente del nivel; `TriageTest`. Aviso operativo a la clínica y aislamiento pendientes de M4 |
+| HU-2.11 (parcial) | RE-2.11.7 | RN-209 | C4 | `MotorTriageTest::testBateriaConConocimientoReal`, fixture `tests/Fixtures/triage.php`: 26/26; T-16/T-20 siguen provisionales, sin certificación clínica |
+| HU-2.12 | RE-2.12.1 | RN-004, RN-G13 | C6 | `GrafoConocimientoTest::testVistaYEndpointRechazanCualquierContextoQueNoSeaPlataforma`; `AutorizacionRolTest`; prueba C6 aprobada por el usuario |
+| HU-2.12 | RE-2.12.2 | RN-212 | C6 | `M2C6Grafo.test.cjs` y Cytoscape real: tipos, signo, peso, flecha de bloqueo y advertencia; prueba C6 aprobada |
+| HU-2.12 | RE-2.12.3 | RN-212 | C6 | JS C6: etiqueta/sinónimo, especie y tipo conservando alarmas y relaciones universales; prueba C6 aprobada |
+| HU-2.12 | RE-2.12.4 | RN-212 | C6 | `MapaConocimientoTest::testReglasSeAsocianALosNodosQueNombranYNoSonAristas`; `BaseV2MysqlTest::testC6MapaDelConocimientoRealSoloActivoYConReglasEnSusNodos`; JS C6 detalle y fuentes |
+| HU-2.12 | RE-2.12.5 | RN-004, RN-G13 | C6 | `GrafoConocimientoTest::testElModeloNoConsultaTablasDePacientesNiEscribe`; `MapaConocimientoTest::testRespuestaSinClavesDePacientesNiIdsInternos`; permisos y lectura global |
+| HU-2.12 | RE-2.12.6 | RN-209, RN-212 | C6 | `GrafoConocimientoTest::testConocimientoVacioDaEstadoExplicitoYManifiestoAusenteUnaReserva`; JS C6 vacío/error/CDN con lista; prueba C6 aprobada |
+| HU-2.2 (regresión) | RE-2.2.1 | RN-203 | C7 | `M2C7Pulido.test.cjs`: acceso «Atención sin cita», «Registrar consulta» y búsqueda con el diseño conservado; manual 1/5 |
+| HU-2.2 (regresión) | RE-2.2.4 | RN-203 | C7 | JS C7: «Sin cita» en listado/detalle, cajón e impresión veterinaria; manual 1/5 |
+| HU-2.4 (regresión) | RE-2.4.1 | RN-205 | C5b | `ConsultaTratamientoTest::testFinYObservacionesSeGuardanConLaFila`; JS C5b campos, fin e índice por fila; manual 2/3 |
+| HU-2.6 (regresión) | RE-2.6.1 | RN-204, RN-206 | C5a/C5b | `ConsultaSintomasTest::testUnFalloPosteriorDeshaceTambienLosSintomas`; `ConsultaHistorialTest` y `PrescripcionTest`: rollback de consulta/tratamientos/archivos, sin éxito parcial |
 
 ## 3. Etapas y dependencias
 
@@ -47,7 +79,7 @@
 | **C4. Motor de triage** (HU-2.11) | Helper con las reglas P1–P8 (RN-416 a RN-418, RN-425) que calcula el nivel **solo con síntomas marcados**, tiempo y paciente; la opción «Otro / no sé» da 🟡 con revisión del personal (P6); el texto libre se guarda para el personal y no cambia el nivel; buscador del catálogo tolerante a errores (sugiere, el usuario confirma); la batería completa como prueba automatizada. | B2 | Codex | Claude |
 | **C5. Consulta del veterinario** | La consulta con síntomas marcados, diagnósticos sugeridos, tratamiento con sus alertas y la sección de alergias y alertas; pendientes de `pulido-interfaz.md` de la consulta. | C1–C3 | Claude Code | Claude |
 | **C6. Mapa del grafo** («cerebro de nodos») | Vista de solo lectura en el panel del superadministrador: grafo interactivo con color por tipo de nodo, aristas por signo y grosor por peso, buscador, filtro por tipo y especie, y al tocar un nodo sus relaciones con peso, signo, fuente y la marca «pendiente de validación». Conviene hacerla justo después de B2: es la forma de revisar el conocimiento a ojo. | B2 | Claude Code | Claude |
-| **F. Cierre** | `2.0.0-alpha.4`, HU implementadas, revisiones de documentos, descargas, despliegue con la migración 07 y la carga del conocimiento. | todo | | Claude |
+| **F. Cierre** | `2.0.0-alpha.4`, HU implementadas, revisiones de documentos, descargas, despliegue con la migración 07 y la carga del conocimiento. | todo | Codex | Claude |
 
 ## 4. Datos y migraciones
 
@@ -64,6 +96,9 @@
 - **Aislamiento:** el grafo es global; las alertas siguen RN-113; la interacción con un tratamiento de otra clínica sin autorización no revela el tratamiento (RE-2.9.3).
 
 ## 6. Decisiones
+
+**Decisión del usuario durante F (2026-10-16):** el arranque actual no imprime una línea con la versión de la aplicación.
+Para mantener F sin cambios de comportamiento, la guía verifica migración/carga en el log completo y comprueba `App::VERSION` dentro del contenedor y la versión visible en pantalla; no agrega mensajes al arranque.
 
 | Asunto | Decisión |
 |---|---|
@@ -108,14 +143,18 @@ La decisión «confirmar» requiere una huella opaca vigente por fila: si cambia
 - [x] C4 — Motor de triage con la batería: revisada y aprobada (Codex, 2026-10-15).
 - [x] C5a — Consulta: síntomas, diagnósticos sugeridos y obligatorios: revisada y aprobada en código (Claude Code, 2026-10-15).
 - [x] C5b — Consulta: prescripción con alertas, tratamiento y peso desconocido: revisada y aprobada en código (Claude Code, 2026-10-16).
-- [x] C7 — Pulido de M2 (pendientes de C1, C5a y C5b y hallazgos del usuario): entregada, pendiente de revisión (Claude Code, 2026-10-16).
+- [x] C7 — Pulido de M2 (pendientes de C1, C5a y C5b y hallazgos del usuario): revisada y aprobada en código (Claude Code, 2026-10-16).
 - [x] C6 — Mapa del grafo: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
-- [ ] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia.
-- [ ] F — `2.0.0-alpha.4`.
+- [x] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia; verificación final de F.
+- [x] F — `2.0.0-alpha.4`: entregada, pendiente de revisión (Codex, 2026-10-16).
+- [x] Revisiones documentales una vez por módulo y descargas regeneradas; ver Anexo F.
+- [ ] Pruebas del usuario de C5a/C5b/C7 antes del despliegue (lista consolidada abajo).
+- [ ] Respaldo, commit, integración, tag y despliegue: los realiza el usuario después de revisar y probar.
+- [ ] Comprobaciones del contenedor y producción del Anexo F (usuario).
 
-**Resultado de pruebas:** B1 en verde: 703 PHP (4284 aserciones y 34 omitidas sin host; 4692 aserciones y ninguna omitida con MariaDB temporal propia y `zooki_test_base_v2`), 167 JS y 27 diagramas renderizados; detalle en Anexo B1. B2 en verde: 717 PHP (6060 aserciones y 35 omitidas sin host; 6475 aserciones y ninguna omitida con `zooki_test_base_v2`), 167 JS y carga real repetida sin cambios; detalle en Anexo B2. Los motores siguen pendientes.
-B2.1 en verde: 724 PHP (6200 aserciones y 36 omitidas sin host; 6624 aserciones y ninguna omitida con MariaDB temporal propia y la base por defecto), 167 JS; simulación real del salto desde B2 sin escrituras, detallada en su anexo.
-C6 en verde: 738 PHP (6316 aserciones y 37 omitidas sin host; 6872 aserciones y ninguna omitida con `zooki_test_base_v2`), 176 JS; detalle en Anexo C6.
+**Resultado de pruebas (F, 2026-10-16):** suite PHP completa de 852 pruebas: sin host, 7182 aserciones y 44 omitidas de MySQL; con MariaDB 10.4.32 temporal propia y `zooki_test_base_v2`, 7783 aserciones y ninguna omitida.
+JS: 211/211; batería 26/26; 27 diagramas de Modelos/MER renderizados; 96 HU, 427 RE, 120 RN y 52 tablas coherentes entre esquema, MER y drawDB.
+Los resultados de cada etapa se conservan en sus anexos; las descargas finales y las comprobaciones previas a desplegar se detallan en Anexo F.
 
 ## Anexo A — Inventario y diseño
 
@@ -1643,3 +1682,147 @@ En XAMPP, antes: `php scripts/migrar.php` y `php scripts/cargar_conocimiento.php
 **Lo que está bien:** «Sin peso registrado» para todo peso NULL; los síntomas en la lista de Consultas, el portal y su imprimible pasan por la misma regla de visibilidad (RN-113 en clínica y `exigirMascotaPropia` en el portal); alertas activas en el imprimible con su clínica; frecuencia respiratoria y observaciones en el modal, validadas en el servidor; los `style=` y los eventos en línea del buscador de «Atención sin cita» pasaron a clases y escuchas; «Vincular mascota de un cliente» reutiliza el flujo existente sin rutas ni permisos nuevos y dice qué hacer si el propietario no está vinculado; «Registrar consulta» y «Sin cita». Lo añadido sin pedirlo (síntomas en la impresión del veterinario) usa la misma función del historial y se acepta.
 
 **Siguiente:** F — 2.0.0-alpha.4 (Codex).
+
+## Pruebas del usuario antes del despliegue
+
+Lista consolidada de C5a, C5b y C7, sin repetir sus verificaciones comunes.
+Están pendientes: esta entrega no las da por aprobadas por haber pasado las suites.
+Probar en escritorio y en el celular donde se indica, con las cuentas y contraseñas existentes de XAMPP.
+No ejecutar `scripts/dev/datos_prueba.php --si`: regeneraría las contraseñas.
+
+**Preparación en XAMPP (usuario):** encender Apache y MySQL; desde la carpeta del proyecto:
+
+```powershell
+php scripts/migrar.php
+if ($LASTEXITCODE -eq 0) {
+    php scripts/cargar_conocimiento.php
+}
+php scripts/cargar_conocimiento.php --revisar
+```
+
+La última orden debe mostrar cero altas/cambios/retiros para el conjunto ya cargado.
+No ejecutar estos comandos locales dentro de la suite automática; esta usa exclusivamente `zooki_test_base_v2`.
+
+Con **Fabio Propietario**, preparar por las pantallas existentes un gato de Norte, un perro A adulto (fecha de nacimiento de hace más de un año) solo de Norte y un perro B adulto vinculado a Norte y Sur; puede reutilizar mascotas que cumplan esas condiciones.
+El perro B servirá para comprobar la historia compartida y la medicación protegida; Fabio empieza sin autorizar a Norte a leer Sur ni a Sur a leer Norte.
+Preparar una cita del perro A para **Beto Norte** que se pueda pasar a Atención, y una mascota sin consultas para ver la línea de tiempo vacía.
+Para el aviso de vínculo, usar además un propietario de Sur que aún no sea cliente de Norte; si no existe, registrarlo por el flujo habitual de Sur y completar su activación de prueba.
+Usar datos de prueba en los campos obligatorios, sin convertir esta comprobación en una pauta clínica.
+
+1. [ ] **Beto Norte — Pacientes y consulta, escritorio.** «Vincular mascota de un cliente» abre directamente la búsqueda del propietario; con el de Sur no vinculado aparece qué hacer y «Pedir confirmación por correo», y con Fabio sus mascotas para vincular. En la ficha sin consultas aparece «Registrar consulta». En el perro A abrir consulta: motivo/diagnóstico obligatorios desde el inicio; vacíos y temperatura 80 o F.R. 200 dan aviso junto al campo y abren su pestaña, sin ventana global. Buscar «vomito» solo sugiere; marcar Vómito, Diarrea con sangre y No come crea chips quitables; aparecen hasta cinco sugerencias con coincidencias, fuentes y aviso pendiente, sin porcentajes. Vacunación «Incompleta» recalcula; «Usar este diagnóstico» copia y deja editar. Solo «No toma agua» permite comprobar la ausencia de coincidencias y sigue exigiendo diagnóstico. Guardar una consulta válida actualiza ficha, HC e historial con síntomas sin recargar.
+2. [ ] **Beto Norte — gato y Atención, celular.** En el modal están las cuatro tarjetas de signos y «Observaciones» del plan; «No se pudo pesar» vacía/deshabilita el peso, y sin casilla el peso es obligatorio. Las alergias aparecen antes de recetar. Elegir Paracetamol del catálogo bloquea con «Paciente: Gato» y fuente, sin confirmación posible; cambiarlo o quitarlo permite guardar con peso desconocido. En Atención de la cita del perro A se comparten chips, sugerencias, fila de tratamiento, alergias, peso y casilla; recargar recupera el borrador y los chips. Finalizar sin diagnóstico abre el paso correspondiente; un fin anterior al inicio avisa junto al campo. La pantalla cabe en el celular y el historial de Atención conserva los síntomas al finalizar.
+3. [ ] **Beto Norte — prescripción visible, perro A.** Registrar Prednisona del catálogo con duración «7 días»: calcula fin inclusivo y permite corregirlo. En otra consulta, Meloxicam advierte con Prednisona y fuente; sin «Confirmo la prescripción» no guarda, con ella sí. Verificar los campos de dosis, vía, duración, inicio/fin y observaciones compartidos con Atención. Un nombre libre no identificado muestra evaluación incompleta, nunca «sin interacciones».
+4. [ ] **Diego Sur, Beto Norte y Fabio — privacidad y confirmación vigente, perro B.** Diego registra Prednisona en Sur, inicio hoy y «7 días». Beto, sin permiso de historia, no ve aquella consulta y al elegir Meloxicam recibe solo el aviso genérico: sin nombre ajeno, clínica ni fuente; exige confirmación y conciliación con contador/límite 500. Antes de guardar, agregar una fila con otro medicamento invalida la confirmación y muestra «Cambió algo en la prescripción»; sin conciliación no guarda, con decisión y conciliación vigentes sí. Incluir un síntoma en esa consulta de Norte. Diego no ve la consulta de Norte hasta que Fabio autorice a Sur a leer la historia compartida; entonces aparece de solo lectura con sus síntomas. Revocar esa autorización vuelve a ocultarla.
+5. [ ] **Beto Norte y Fabio — historiales e impresiones.** Beto, desde Consultas → «Atención sin cita» en el celular, encuentra al paciente con el diseño de tarjetas y guarda una consulta sin recargar la lista. Su detalle muestra síntomas y «Sin cita»; el cajón, ficha e impresión veterinaria muestran «Sin peso registrado» cuando corresponde, con «Sin cita» y síntomas. Fabio, en el portal móvil, ve los síntomas en su historial; al imprimir aparecen arriba las alergias/alertas activas con la clínica de origen y los síntomas junto al diagnóstico. El portal no tiene obligación de mostrar «Sin cita».
+
+Si aparece un error, anotarlo con usuario, mascota, pantalla y pasos antes de integrar a `main`.
+No se repiten las pruebas C1/C6 ya aprobadas por el usuario; estas cinco cubren su integración nueva en C5/C7.
+
+## F — Alcance: cierre de M2 y 2.0.0-alpha.4 (2026-10-16)
+
+**Escribe:** Codex; **revisa:** Claude (arquitecto); **prueba y despliega:** el usuario.
+Solo metadatos de versión, documentación, evidencia y descargas; sin cambios al comportamiento, al conocimiento ni a M4.
+Estados sin inflar: HU-2.1/2.8/2.9/2.10/2.12 reflejan M2 y sus salvedades de carnet; HU-2.11 sigue parcial.
+Una revisión nueva por documento normativo durante el cierre; las pruebas del usuario y el despliegue permanecen pendientes.
+
+## Anexo F — Resultado
+
+**Estado:** entregada, pendiente de revisión (2026-10-16).
+**Autor:** lo escribió Codex; revisión independiente de Claude (arquitecto).
+
+**Qué.** Versión preparada `2.0.0-alpha.4`, historial para quien usa el sistema, estados de HU/RN con límites explícitos, RN-112 con alerta médica y matrices coherentes, AGENTS/README con 52 tablas y carga del conocimiento, §2 con evidencia por RE y lista consolidada de cinco pruebas manuales.
+Se revisaron los pendientes de C1/C5: el imprimible, los síntomas, F.R., observaciones y el pulido ya quedaron resueltos en C7; F no volvió a implementarlos.
+
+**Cierre documental.** ERS 3.5, Ficha Técnica 3.4, Historias 3.4, Requisitos 3.4 y Reglas 2.4, una sola revisión nueva por documento en M2.
+MER/Modelos y la batería interna llevan actualización de cierre fechada, sin inventar numeración de revisión que antes no tenían; README e historial se actualizaron.
+Conteos comprobados: 96 HU, 427 RE, 120 RN; 52 tablas del MER, drawDB y esquema ejecutable; `schema_migraciones` es adicional y técnica.
+Las equivalencias del apéndice no se cuentan de nuevo; se corrigió el índice del módulo 2 a doce HU y el resumen de RN que aún hablaba de la línea base v1.
+La entrega v2.0 enumera 29 historias al incluir HU-2.12: se corrigieron el encabezado, el resumen interno del roadmap y la regla vigente de versionamiento; se conservan los 159 puntos ya estimados y HU-2.12 sin estimación, sin reescribir cifras históricas de versiones anteriores.
+HU-2.11 no se declara completa; RN-419 sigue pendiente, RN-420/RN-425 parciales; carnet y QR al final de la v2.0.
+Todo el conocimiento y los esperados provisionales mantienen la validación veterinaria pendiente.
+
+**Verificación.** PHP completo: 852 pruebas, 7182 aserciones y 44 MySQL omitidas sin host; con MariaDB 10.4.32 temporal propia y solo `zooki_test_base_v2`: 852 pruebas, 7783 aserciones, ninguna omitida.
+JS 211/211; batería 26/26; 27 diagramas de Modelos/MER renderizados.
+Ocho PDF y ocho Word regenerados, con índice y tablas retocados por Word; integridad, paginación, revisiones y referencias nominales de las pruebas comprobadas.
+`node scripts/docs/exportar.mjs --revisar`: «Las descargas están al día»; Modelos no tiene descarga según la configuración del exportador y la batería/roadmap son internos.
+El único cambio de PHP es `App::VERSION`; sin cambios de conocimiento, migraciones ni comportamiento, sin leer/escribir `.env` ni tocar la base de trabajo o sus contraseñas.
+
+**Pendientes.** Revisión de Claude, cinco pruebas manuales anteriores, respaldo, commit/integración/tag/despliegue y comprobación de producción: los realiza el usuario.
+Producción sigue en alpha.3 hasta desplegar; no se empezó M4.
+
+### Antes de desplegar: respaldo del usuario
+
+Después de pasar las cinco pruebas y revisar el cierre, tomar un respaldo de producción como en los cortes anteriores y conservar también los archivos de usuarios.
+En la terminal del VPS, usando el destino de respaldos configurado previamente:
+
+```sh
+docker exec zooki_web php /var/www/html/Zooki/scripts/backup.php
+docker exec zooki_web sh -c 'ls -lt /var/backups/zooki/*.sql.gz | head -3'
+mkdir -p ~/respaldo-zooki-alpha4
+docker cp zooki_web:/var/backups/zooki/<archivo-generado>.sql.gz ~/respaldo-zooki-alpha4/
+gzip -t ~/respaldo-zooki-alpha4/<archivo-generado>.sql.gz
+```
+
+Sustituir el nombre por el archivo que produjo el respaldo y comprobar el resultado; conservarlo fuera del contenedor y verificar una restauración en una base aparte, como en M0.
+Conservar el respaldo de `uploads` por el procedimiento del corte anterior.
+No reiniciar ni vaciar la base de producción: la migración 07 actualiza la existente automáticamente y conserva registros/IDs.
+
+### Commit del cierre — PowerShell 5.1, usuario
+
+Después de la revisión, desde la carpeta del proyecto:
+
+```powershell
+git add -- AGENTS.md README.md config/App.php agentes/estado.md specs/M2-grafo-clinico.md
+git add -- documentacion/CasosTriage.md documentacion/ERS.md documentacion/FichaTecnica_Zooki.md documentacion/HistorialVersiones.md documentacion/HistoriasUsuario.md documentacion/MER.md documentacion/Modelos.md documentacion/ReglasNegocio.md documentacion/RequisitosEspecificos.md documentacion/ROADMAP_v2.md
+git add -- public/docs/descargas
+git diff --cached --stat
+git commit -m "chore(release): preparar M2 alpha.4 (HU-2.8, HU-2.9, HU-2.12)"
+```
+
+### Integración y tag — PowerShell 5.1, usuario
+
+Después del commit de F y con el árbol limpio, empezando en `v2/m2-grafo`; el push a `main` inicia el despliegue de Dokploy.
+
+```powershell
+git status --short
+git push origin v2/m2-grafo
+git checkout main
+git pull --ff-only origin main
+git merge --no-ff v2/m2-grafo -m "merge: publicar historia clinica y Grafo I (v2.0.0-alpha.4)"
+$commitAlfa4 = git rev-parse HEAD
+git tag -a v2.0.0-alpha.4 $commitAlfa4 -m "Zooki v2.0.0-alpha.4 - historia clinica y Grafo I"
+git push origin main
+git push origin v2.0.0-alpha.4
+git checkout v2/m2-grafo
+```
+
+### Comprobaciones en el VPS, después de arrancar la imagen nueva
+
+Usar el **log completo**, sin `--tail`, porque el arranque puede quedar mucho más atrás que las peticiones de Apache:
+
+```sh
+docker logs zooki_web 2>&1 | grep -E '\[migraciones\]|07_grafo_conocimiento\.sql|\[conocimiento\]'
+docker logs zooki_web 2>&1 | grep -E 'Aplicadas:.*07_grafo_conocimiento\.sql|\[conocimiento\] Carga terminada'
+docker exec zooki_web php /var/www/html/Zooki/scripts/migrar.php --revisar
+docker exec zooki_web php -r 'require "/var/www/html/Zooki/config/App.php"; echo App::VERSION, PHP_EOL;'
+```
+
+La primera publicación debe registrar `Aplicadas: ...07_grafo_conocimiento.sql...`, seguida de `[conocimiento] Carga terminada:` con la versión SHA-256 `980faceaaff142fa4c77eac28ba36aa57f2b53710f1174aaefa26cdb8edfebc9`.
+El migrador debe decir «La base está al día» y `App::VERSION` debe imprimir `2.0.0-alpha.4`.
+En un reinicio posterior la 07 ya no se aplica de nuevo y la carga del mismo conjunto debe informar cero altas/cambios/retiros.
+Si hay error de migración, carga omitida o conjunto no cargado, no darlo por aplicado porque Apache haya arrancado.
+Por decisión del usuario del 2026-10-16, la versión se verifica con `App::VERSION` y en pantalla: no hay una línea de versión en el log de arranque y F no la agregó.
+
+Tres comprobaciones finales en producción, con datos de prueba autorizados y sin hacer pruebas de toxicidad sobre registros reales:
+
+- [ ] **Versión y documentación:** pantalla en `2.0.0-alpha.4`, historial con esa entrada actual y descargas nuevas que abren; comprobar también la versión de `App` dentro de la imagen.
+- [ ] **Conocimiento y mapa:** contexto de plataforma, versión/conteos/cobertura y aviso de validación pendiente; el contexto clínico no entra al mapa. Verificar la carga del mismo hash en el log completo.
+- [ ] **Consulta e historia compartida:** con usuarios y mascotas de prueba, síntomas/sugerencias, peso desconocido y alertas compartidas, actualización sin recargar y privacidad al revocar autorización; comprobar que la agenda aún conserva su flujo actual, sin atribuirle la integración de triage de M4.
+
+### F — Revisión (2026-10-16)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada.** Pendientes del usuario, en este orden: commit de F, las cinco pruebas de «Pruebas del usuario antes del despliegue», respaldo, integración y tag, y las comprobaciones en el VPS.
+
+**Verificación propia:** el único cambio de PHP es `App::VERSION` (`git diff` sobre `*.php`), así que la suite de C7 revisada en MySQL 8.0.46 (852 pruebas, 7783 aserciones) sigue valiendo; la entrada 2.0.0-alpha.4 del historial está escrita para quien usa el sistema y declara la validación veterinaria pendiente; HU-2.11 queda parcial y RN-419/420/425 con su estado real, sin inflar; la lista de pruebas junta C5a, C5b y C7 en cinco pasos con su usuario, su preparación y sin `datos_prueba.php --si`; el respaldo usa el mismo procedimiento del corte de M0 (`scripts/backup.php`, `/var/backups/zooki`); las comprobaciones leen el log completo, no `--tail`.
+
+**Nota:** el push a `main` dispara el despliegue en Dokploy; el respaldo se toma antes de ese push.

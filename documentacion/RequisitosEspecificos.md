@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.3** · 427 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.4** · 427 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
@@ -11,6 +11,8 @@ Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **cri
 _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1: los requisitos de las historias del módulo 0 (HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8 y HU-0.1 a HU-0.4) quedan verificados con pruebas automáticas; su evidencia está en el plan del módulo (`specs/M0-T-base-saas-identidad.md`, §2). Quedan fuera, con su nota en la fila: RE-0.3.6 y RE-T.17.4 (v2.1, con HU-8.1), RE-T.19.4 (v2.1, con HU-5.14), el QR de RE-5.8.4 (módulo 5) y la clasificación de la urgencia de RE-0.4.6 (triage, módulos 2 y 4)._
 
 _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.3: los requisitos de HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10 quedan verificados con pruebas automáticas, con su evidencia en el plan del módulo (`specs/M5-portal-multiclinica.md`, §2). Se agrega RE-5.13.5 (tope de 3 clínicas, RN-116); RE-T.19.1 deja el alta del propietario por la clínica sin aceptación presencial y con la activación recuperable por el titular; RE-1.1.1 ya no exige el color; RE-T.5.7 rechaza correos temporales. Queda fuera, con su nota: las alergias y alertas de RE-2.10.1 (módulo 2, con RE-2.1.5)._
+
+_La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia final de M2 en su plan, §2; peso desconocido explícito, alergias y alertas compartidas, diagnósticos sugeridos, alertas de prescripción y mapa de conocimiento. RE-2.11.1–7 quedan verificados en cálculo, buscador y batería; la captura de agenda, las urgencias, revisión previa a asignar horario, el aviso de aislamiento y ajuste veterinario se completan en M4. El conocimiento sigue pendiente de validación veterinaria._
 
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0)*
 
@@ -367,9 +369,9 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | RE-2.1.2 | El sistema debe generar un número de HC único en la primera consulta. | Funcional | La primera consulta genera un N.° de HC único. | Alta |
 | RE-2.1.3 | El sistema debe impedir guardar una consulta sin diagnóstico. | Restricción | Guardar sin diagnóstico es rechazado. | Alta |
 | RE-2.1.4 | El sistema debe vincular la consulta a la mascota y mostrarla en su historial. | Funcional | La consulta aparece en el historial cronológico. | Alta |
-| RE-2.1.5 | _(v2.0)_ El veterinario debe poder registrar y desactivar alergias y alertas médicas de la mascota (alergia, condición crónica, medicación continua), enlazadas al nodo del Grafo I cuando exista. | Funcional | Una alerta registrada aparece en la ficha de toda clínica vinculada y en el carnet; al desactivarla deja de mostrarse, pero queda en el historial. | Alta |
+| RE-2.1.5 | _(v2.0)_ El veterinario debe poder registrar y desactivar alergias y alertas médicas de la mascota (alergia, condición crónica, medicación continua), enlazadas al nodo del Grafo I cuando exista. | Funcional | Una alerta registrada aparece en la ficha de toda clínica vinculada; al desactivarla deja de mostrarse, pero queda en el historial. _Implementado en M2 (2.0.0-alpha.4) en ficha, portal e impresión; la presentación en el carnet sigue para el final de la v2.0._ | Alta |
 
-**Reglas de negocio:** RN-201, RN-202, RN-203, RN-113
+**Reglas de negocio:** RN-201, RN-202, RN-203, RN-112, RN-113
 
 ### HU-2.2 — Atención clínica sin cita (urgencias)
 
@@ -461,7 +463,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-2.10.1 | El sistema debe mostrar siempre los datos básicos, las alergias y alertas, y las vacunas y desparasitaciones de todas las clínicas, indicando la clínica de cada registro. _Las alergias y alertas se entregan con el módulo 2, junto a su registro (RE-2.1.5); el módulo 5 cierra los datos básicos, las vacunas y las desparasitaciones._ | Funcional | Una vacuna aplicada en otra clínica aparece con el nombre de esa clínica. | Alta |
+| RE-2.10.1 | El sistema debe mostrar siempre los datos básicos, las alergias y alertas, y las vacunas y desparasitaciones de todas las clínicas, indicando la clínica de cada registro. _M5 cerró los datos básicos, vacunas y desparasitaciones; M2 completa alergias y alertas en ficha, portal e impresión (RE-2.1.5). La presentación en el carnet sigue para el final de la v2.0._ | Funcional | Una vacuna aplicada en otra clínica aparece con el nombre de esa clínica. | Alta |
 | RE-2.10.2 | Las consultas, tratamientos y archivos de otra clínica solo deben mostrarse si el propietario autorizó a la clínica que consulta. | Seguridad | Sin autorización no se ve su contenido, ni por la interfaz ni pidiéndolo directamente al servidor (403). | Alta |
 | RE-2.10.3 | Sin autorización, el sistema no debe revelar que existe historia en otras clínicas. | Seguridad | Ni la interfaz ni la respuesta del servidor incluyen ni mencionan consultas, tratamientos o archivos de otras clínicas; la autorización la da el propietario desde su portal (HU-5.12). | Media |
 | RE-2.10.4 | Los registros de otras clínicas deben ser de solo lectura. | Restricción | Intentar modificar un registro de otra clínica se rechaza (403). | Alta |
@@ -1166,7 +1168,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 | HU-1.3 | RN-105 | RE-1.3.1, RE-1.3.2, RE-1.3.3, RE-1.3.4 |
 | HU-1.4 | RN-104, RN-105, RN-108, RN-110 | RE-1.4.1, RE-1.4.2, RE-1.4.3, RE-1.4.4, RE-1.4.5 |
 | HU-1.5 | RN-003, RN-102, RN-110, RN-111 | RE-1.5.1, RE-1.5.2, RE-1.5.3 |
-| HU-2.1 | RN-201, RN-202, RN-203, RN-113 | RE-2.1.1, RE-2.1.2, RE-2.1.3, RE-2.1.4, RE-2.1.5 |
+| HU-2.1 | RN-201, RN-202, RN-203, RN-112, RN-113 | RE-2.1.1, RE-2.1.2, RE-2.1.3, RE-2.1.4, RE-2.1.5 |
 | HU-2.2 | RN-102, RN-203, RN-208 | RE-2.2.1, RE-2.2.2, RE-2.2.3, RE-2.2.4 |
 | HU-2.3 | RN-204, RN-205 | RE-2.3.1, RE-2.3.2, RE-2.3.3, RE-2.3.4 |
 | HU-2.4 | RN-205 | RE-2.4.1, RE-2.4.2, RE-2.4.3 |
