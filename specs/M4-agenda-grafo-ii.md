@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **A.1 revisada y aprobada como corrección documental (2026-10-17)**. H-A1 cerrado en su contradicción de fórmula/ejemplo; la elección de política temporal M/C y las decisiones de A.8 siguen pendientes del usuario. No empezar B.
+> Estado: **A.1 revisada y aprobada; política temporal M confirmada por el usuario (2026-10-17)**. H-A1 cerrado. Quedan las demás decisiones de A.8 y el protocolo HC antes de B.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -127,6 +127,8 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 | Conocimiento sin validación clínica | Confundir funcionamiento técnico con certificación clínica | Mantener fuentes, avisos de apoyo y reservas T-16/T-20; no modificar conocimiento como atajo de agenda. |
 
 **Decisiones y pendientes tras la respuesta del usuario (2026-10-17):**
+
+**Decisión del usuario (2026-10-17) — política temporal M:** se adopta la alternativa M revisada en A.1: el inicio real tardío y las pausas desplazan el fin nominal y su margen único; la duración activa realizada y los sellos reales se conservan. Ejemplo confirmado: inicio 09:00, servicio activo de 30 minutos, pausa 09:10–09:30 y fin clínico 09:50 dejan el extremo de ocupación a las 10:00 con margen de 10 minutos. No se reinicia el margen por pausa ni por recálculo; el exceso activo consume ese margen conforme a A.3. La alternativa C se conserva solo como antecedente descartado. B alineará los criterios/diagramas afectados antes del código; las demás propuestas de A.8 no quedan aprobadas por esta decisión.
 
 **Decisión del usuario (2026-10-17) — comandos de entrega:** no incluir `git diff --cached --stat` en los comandos para pegar; usa también CMD y pide únicamente los pasos necesarios para guardar/subir, uno por línea. Preferencia registrada en agentes/metodo.md §8; no cambia las verificaciones que debe realizar el revisor.
 
@@ -295,11 +297,11 @@ hora_inicio_real se sella una sola vez; hora_fin_real solo al completar la consu
 Las pausas conservan cada segmento, no reinician la atención ni vuelven a contar el tiempo activo ya realizado.
 Una cita futura que no se haya acordado adelantar no se estima antes de su hora pactada: evita avisar adelantos no aceptados.
 
-**Cascada por estado — corrección H-A1, propuesta pendiente de revisión.**
-La regla propuesta M desplaza el fin nominal con el inicio real y las pausas y conserva un solo margen después de ese nominal desplazado.
-Es la interpretación recomendada para conservar el resultado 10:00 del ejemplo de pausa, pero RN-412/415/427 no deciden expresamente entre esta política y consumir el margen original con la interrupción.
-La alternativa y su efecto están en «Anexo A.1 — Resultado»; ninguna queda atribuida al usuario.
-Las fórmulas y ejemplos siguientes usan exclusivamente M, condicionada a su aprobación.
+**Cascada por estado — corrección H-A1 revisada y política M confirmada.**
+La regla M desplaza el fin nominal con el inicio real y las pausas y conserva un solo margen después de ese nominal desplazado.
+**Decisión del usuario (2026-10-17):** aplicar M, conforme a §6, conservando el resultado 10:00 del ejemplo de pausa. B debe reflejar esta precisión en RN/RE/Modelos antes del código afectado.
+La alternativa C y la condición de aprobación que recoge el Anexo A.1 se conservan como evidencia histórica previa a esta elección; C no se implementa.
+Las fórmulas y ejemplos siguientes usan exclusivamente M.
 
 **Magnitudes y reconstrucción.**
 Usar instantes completos y duraciones en segundos al operar; 30 minutos se convierte una vez en 1800 segundos, sin redondear tolerancias ni segundos.
