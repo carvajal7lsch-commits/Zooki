@@ -6,6 +6,8 @@
 
 ## Ahora
 
+- **Decisiones M4 (2026-10-17):** plan aprobado por el usuario; solo agendan veterinario y propietario, el administrador no crea citas. HU-4.10/4.16/4.17 y reporte RE-4.7.3 quedan en v2.1; toda atención sin reserva crea cita de llegada y conserva ese origen; nombre/teléfono del acompañante opcionales y sin documento por defecto. Detalle en §6 del plan M4. A debe concretar capacidad del sobrecupo de llegada, retención de datos y contratos técnicos antes de implementar las etapas afectadas.
+- **Planificación M4 (2026-10-17):** Codex es arquitecto y revisor temporal. Plan aprobado en [`specs/M4-agenda-grafo-ii.md`](../specs/M4-agenda-grafo-ii.md), sin implementación ni subetapa entregada. Siguiente: el usuario guarda la planificación y crea la rama M4 desde main con M2 integrado; después se prepara el prompt solo de A según método §5. Ejecutor propuesto: Claude Code; revisión independiente: Codex en esta sesión. La rama local comprobada sigue siendo `v2/m2-grafo`.
 - **Módulo activo:** ninguno en construcción. **M2 — Historia clínica y Grafo I: cerrado y desplegado como `2.0.0-alpha.4` (2026-10-17).** Plan: [`specs/M2-grafo-clinico.md`](../specs/M2-grafo-clinico.md).
 - **Despliegue de M2 (2026-10-17):** migración 07 aplicada, conocimiento cargado (440 altas, versión `980facea…`) y base al día en producción. Ver «Despliegue de 2.0.0-alpha.4» en el plan M2.
 - **Verificación C8.2:** PHP 854 (7212 aserciones y 44 omitidas sin host; sin MySQL en la nube, el revisor la corre con MySQL 8); JS 238/238; Chromium a 360, 390, 820 y 1440 px con capturas en `specs/referencias/m2-pulido/c8-2-despues/`.
