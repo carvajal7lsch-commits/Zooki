@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **A.1 revisada y aprobada; política temporal M confirmada por el usuario (2026-10-17)**. H-A1 cerrado. Quedan las demás decisiones de A.8 y el protocolo HC antes de B.
+> Estado: **A/A.1 revisadas y decisiones de producto de agenda/urgencias/privacidad confirmadas (2026-10-17)**. H-A1 cerrado. Siguiente: B1 documental para cerrar contrato técnico y esquema mínimo; después B2 de migraciones, con revisión previa de B1.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -67,6 +67,8 @@ Los criterios normativos permanecen en `documentacion/`; no se cambian silencios
 |---|---|---|---|---|
 | **A. Inventario y contrato** | Solo lectura del código y anexo de diseño: rutas internas/portal, calendario, pacientes, atención, tipos, configuración, correos, vigilante y pruebas; regresiones conservadas; trazabilidad por RE; diferencias con Modelos §2–§8. Proponer algoritmo de intervalos/cascada, orden de candados, cierre puntual, revisión humana de triage, cola roja sin vet aún y persistencia mínima; resolver datos del acompañante y selección entre veterinarios igualmente compatibles antes de B. | Aprobación del plan | Codex | Codex independiente |
 | **B. Datos y contratos documentales** | Migraciones solo donde A demuestre huecos; MER/drawDB/esquema alineados; relleno conservador e idempotencia. Ajustes de HU/RE/RN/diagramas aprobados. No se habilitan rutas parciales. | A revisada y decisiones de datos aprobadas | Codex | Codex independiente |
+| **B1. Contrato documental y diseño de datos** | Alinear HU/RE/RN/Modelos con §6, matriz de permisos y propuesta mínima de esquema con campos/índices/relleno. Cerrar un único protocolo HC/candados. Sin SQL ejecutable ni código; revisar el diseño antes de B2. | A/A.1 revisadas y decisiones de §6 | Codex | Codex independiente |
+| **B2. Esquema y migraciones** | Ejecutar únicamente el diseño revisado de B1: migración nueva repetible, esquema ejecutable/MER/drawDB coherentes y pruebas de instalación/actualización. No habilita rutas de aplicación. | B1 revisada y decisiones de datos resueltas | Codex | Codex independiente |
 | **C1. Marca y tipos** | HU-7.4 completa: configuración, duración/margen/pausable, teléfono; propagación de marca y aislamiento; mismo diseño y validación en vivo. | B | Codex | Codex independiente |
 | **C2. Horarios** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. | C1 | Codex | Codex independiente |
 | **C3. Disponibilidad y reserva** | Una lógica de intersección, resta de ausencias/cierres y ocupación por duración+margen para sugerencias, reserva y reprogramación; candados y pruebas concurrentes; nunca disponibilidad permanente por falta de horario. Cierre de HU-4.9 y base de HU-4.6/4.8. | C2 | Codex | Codex independiente |
@@ -127,6 +129,22 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 | Conocimiento sin validación clínica | Confundir funcionamiento técnico con certificación clínica | Mantener fuentes, avisos de apoyo y reservas T-16/T-20; no modificar conocimiento como atajo de agenda. |
 
 **Decisiones y pendientes tras la respuesta del usuario (2026-10-17):**
+
+**Decisión del usuario (2026-10-17) — orden de rojos presentes:** entre varios rojos en espera, usar llegada física como orden inicial; el veterinario puede cambiarlo con motivo y auditoría. Si otro rojo espera mientras existe una atención pausada, el veterinario decide la prioridad. No automatizar interrupciones anidadas ni permitir que una derivación remota sin llegada desplace pacientes presentes. Se conserva RN-427 para reanudar la atención pausada antes de las citas siguientes cuando no medie esa decisión clínica de urgencia.
+
+**Decisión del usuario (2026-10-17) — contacto del acompañante:** nombre y teléfono se usan para atender y resolver identidad; al finalizar esa necesidad, se eliminan/anonimizan esos datos de contacto conservando ingreso, identificadores y todos los actos clínicos. Si aún es necesario conservarlos, debe quedar un motivo de conservación. No se fija un plazo automático en días. B debe precisar el disparador verificable, permisos y tratamiento de copias/auditoría sin convertir esta decisión de producto en una aprobación jurídica.
+
+**Decisión del usuario (2026-10-17) — marca e historial:** marca de cada clínica en sus correos y documentos; historial multi-clínica con cabecera de Zooki y procedencia identificada por acto. Reclasificaciones visibles al personal autorizado de la clínica sobre sus propios casos, sin ampliar acceso a casos ajenos.
+
+**Decisión del usuario (2026-10-17) — permisos de conciliación:** tras explicar la ficha provisional, confirma que tanto administrador como veterinario autorizado de la clínica pueden completar/consolidar después de verificar primero la titularidad. El propietario aporta la verificación, sin fusionar por su cuenta actos clínicos ni adjudicarse una mascota por conocer su ID. El administrador no recibe por ello permiso para registrar/modificar consultas o crear citas; completar/consolidar identidad usa su acción específica, transacción y auditoría, conservando clínica y autor de los actos. B1 debe fijar los permisos de cada acción y sus criterios de verificación antes de implementarlos.
+
+**Decisión del usuario (2026-10-17) — llegada no urgente sin hueco:** registrar la llegada y ofrecer el próximo espacio compatible u otro veterinario disponible de la misma clínica; no crear sobrecupos automáticos para verdes o amarillos ni iniciar consulta hasta crear su cita de llegada. No se aprueba la alternativa de un cupo adicional por bloque. La cita obligatoria para toda atención y la derivación roja se conservan; el orden exacto de las solicitudes en espera queda por concretar si no lo cubren las reglas vigentes.
+
+**Decisión del usuario (2026-10-17) — aprobación de ausencias:** una solicitud del veterinario permanece pendiente y no tapa disponibilidad hasta que el administrador la apruebe. La ausencia registrada directamente por el administrador es efectiva de inmediato y activa búsqueda de cobertura conforme a RN-414. B alineará HU/RE/Modelos antes del código.
+
+**Decisión del usuario (2026-10-17) — revisión previa al horario:** todo resultado de triage que requiera revisión humana debe ser revisado por un veterinario, que confirma o ajusta el nivel, antes de ofrecer un horario reservable. Incluye «Otro / no sé» y casos sin cobertura suficiente. Los rojos conservan derivación inmediata y no esperan en esa puerta para recibir el aviso/derivación de emergencia. B debe dejar explícito este orden y sus pruebas.
+
+**Decisión del usuario (2026-10-17) — bloque y consumo de cupo naranja:** después del ejemplo, confirma el funcionamiento: el tope configurable (dos por defecto) corresponde a la franja continua original del veterinario para esa fecha; una ausencia parcial no multiplica ese tope. Los sobrecupos atendidos/completados siguen consumiendo el cupo; cancelados/no_asistio lo liberan. Un tercero sobre el tope genera aviso y decisión del personal, sin inserción automática que lo eluda. La pregunta posterior sobre ausencias por horas se aclara con RE-4.12.1/2, que ya exige día completo y franja parcial; no se interpreta como decisión de retirar esa capacidad del alcance.
 
 **Decisión del usuario (2026-10-17) — política temporal M:** se adopta la alternativa M revisada en A.1: el inicio real tardío y las pausas desplazan el fin nominal y su margen único; la duración activa realizada y los sellos reales se conservan. Ejemplo confirmado: inicio 09:00, servicio activo de 30 minutos, pausa 09:10–09:30 y fin clínico 09:50 dejan el extremo de ocupación a las 10:00 con margen de 10 minutos. No se reinicia el margen por pausa ni por recálculo; el exceso activo consume ese margen conforme a A.3. La alternativa C se conserva solo como antecedente descartado. B alineará los criterios/diagramas afectados antes del código; las demás propuestas de A.8 no quedan aprobadas por esta decisión.
 
@@ -695,7 +713,7 @@ Los 26 T conservan datos y esperados originales, incluidas las reservas de T-16/
 
 Las decisiones de §6 (actores, alcance v2.1, cita obligatoria por atención sin reserva y captura opcional del acompañante) ya están confirmadas.
 Esta tabla no las reabre.
-Los siguientes detalles aún no son decisiones del usuario.
+La tabla conserva las propuestas originales y sus alternativas para trazabilidad. **Actualización (2026-10-17):** §6 ya confirma capacidad no urgente, bloque naranja, aprobación de ausencias, revisión previa, orden rojo, contacto del acompañante, permisos de conciliación y marca/reclasificaciones. Las decisiones fechadas de §6 prevalecen sobre el estado pendiente histórico de esta tabla. Quedan para B1 el cierre técnico de desempates/candados/HC, la propuesta mínima de esquema y la precisión verificable de los criterios sin inventar reglas adicionales.
 
 | Asunto | Propuesta concreta y recomendación | Naturaleza / condición |
 |---|---|---|
