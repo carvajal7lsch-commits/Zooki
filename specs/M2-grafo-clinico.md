@@ -2008,3 +2008,15 @@ No se creó `.env` ni base de trabajo.
 **Verificación propia:** suite completa en una copia limpia: sin MySQL 854 pruebas y 7212 aserciones (44 omitidas); con MySQL 8.0.46 y la base por defecto, 854 pruebas y 7813 aserciones, ninguna omitida (la sesión en la nube no tenía MySQL); JS 238/238. Capturas revisadas: cajón de Pacientes a 1440 px y Atención a 390 px: filas en una o dos líneas sin cortar palabras, fechas dd/mm/aaaa y el cajón sin huecos.
 
 **Para la prueba del usuario:** en la captura de Atención a 390 px la pestaña dice «Historial 0» aunque lista cinco registros; puede ser del arnés con respuestas simuladas. Si en la prueba real el contador no coincide, se corrige antes de desplegar. El singular de «1 tratamientos» quedó en `pulido-interfaz.md`.
+
+## Despliegue de 2.0.0-alpha.4 (2026-10-17)
+
+**Hecho por el usuario; revisado por Claude (arquitecto).** Pruebas finales del usuario pasadas, respaldo de producción, merge de `v2/m2-grafo` a `main` y tag `v2.0.0-alpha.4`.
+
+Log del contenedor (completo, sin `--tail`):
+
+- `[migraciones] Aplicadas: 07_grafo_conocimiento.sql` y semilla al día (Gran danés).
+- `[conocimiento] Carga terminada` con versión `980faceaaff142fa4c77eac28ba36aa57f2b53710f1174aaefa26cdb8edfebc9` y **440 altas**, 0 cambios, 0 retiros. Coincide con el conjunto revisado: 105 nodos + 105 aristas + 201 sinónimos + 29 reglas = 440, y el hash es el mismo que en Windows y en las pruebas (la normalización de finales de línea de B2.1 funciona).
+- `migrar.php --revisar`: «La base está al día».
+
+**M2 cerrado.** Producción en 2.0.0-alpha.4. Siguiente: plan del módulo 4 (agenda y Grafo II).
