@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **A revisada, con corrección requerida A.1 (2026-10-17)**. Inventario validado; contrato de cascada pendiente de corregir y decisiones de producto de A.8 sin aprobar. No empezar B.
+> Estado: **A.1 revisada y aprobada como corrección documental (2026-10-17)**. H-A1 cerrado en su contradicción de fórmula/ejemplo; la elección de política temporal M/C y las decisiones de A.8 siguen pendientes del usuario. No empezar B.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -127,6 +127,8 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 | Conocimiento sin validación clínica | Confundir funcionamiento técnico con certificación clínica | Mantener fuentes, avisos de apoyo y reservas T-16/T-20; no modificar conocimiento como atajo de agenda. |
 
 **Decisiones y pendientes tras la respuesta del usuario (2026-10-17):**
+
+**Decisión del usuario (2026-10-17) — comandos de entrega:** no incluir `git diff --cached --stat` en los comandos para pegar; usa también CMD y pide únicamente los pasos necesarios para guardar/subir, uno por línea. Preferencia registrada en agentes/metodo.md §8; no cambia las verificaciones que debe realizar el revisor.
 
 1. **Decisión del usuario (2026-10-17) — alcance:** HU-4.10, HU-4.16, HU-4.17 y el reporte RE-4.7.3 quedan en v2.1. Corregir la nota contradictoria de HU-4.10 al alinear documentos. No adelantar el re-triage del propietario para cerrar M4.
 2. **Decisión del usuario (2026-10-17) — quién agenda:** solo el veterinario y el propietario pueden agendar; el administrador no crea citas. Conservar sus funciones de configuración, horarios y ausencias. A inventaría todos los accesos de creación y B alinea HU-4.1/HU-4.13, RE y diagramas con esta decisión antes de que C4 retire el permiso en servidor y pantallas. No ampliar `calcular_triage_ajax` al administrador. Su capacidad actual en HU-4.1 y `Security.php` es la discrepancia a corregir, no el comportamiento aprobado para M4. No interpretar esta decisión sobre agendar como retirada de otros permisos administrativos no tratados.
@@ -285,30 +287,70 @@ La unidad de bloque y liberación de cupo son concreciones de RN-422 que B debe 
 
 **Horas pactadas, estimadas y reales.**
 fecha/hora y duración/margen guardan el compromiso original vigente; una reprogramación expresa lo cambia con auditoría del anterior.
-inicio_estimado/fin_estimado son la predicción vigente; cambiarla no reescribe el compromiso ni los sellos reales.
+inicio_estimado/fin_estimado son la predicción vigente del inicio y del fin clínico; el último no incluye margen ni sustituye hora_fin pactada.
+Tras iniciar, inicio_estimado se presenta anclado al primer inicio real; una reanudación no lo sustituye.
+Si la cita está pausada, la próxima reanudación estimada se expresa aparte como dato derivado, condicional, del caso rojo que ocupa al veterinario.
+Cambiar predicciones no reescribe el compromiso ni los sellos reales.
 hora_inicio_real se sella una sola vez; hora_fin_real solo al completar la consulta.
-Las pausas conservan cada segmento, no reinician la atención ni descuentan tiempo activo ya realizado.
+Las pausas conservan cada segmento, no reinician la atención ni vuelven a contar el tiempo activo ya realizado.
 Una cita futura que no se haya acordado adelantar no se estima antes de su hora pactada: evita avisar adelantos no aceptados.
 
-**Cascada sin descontar dos veces el margen.**
-Para una cita cuyo inicio estimado vigente es e, su fin clínico nominal es e+d.
-Mientras esté abierta, usar como límite inferior del fin observado f = máximo(e+d, ahora); al terminar, usar su fin real.
-La cola puede comenzar después de máximo(e+d+m, f).
-Eso consume el margen una sola vez: si f <= e+d+m no se agrega retraso al siguiente inicio.
-Para una siguiente cita ordinaria j: e_j = máximo(s_j, disponibilidad del predecesor); luego validar su intervalo e_j+d_j+m_j contra franjas y compromisos.
-No calcular (f − (e+d+m)) − m ni sumar de nuevo m a f después de haberlo consumido.
-El tiempo libre entre citas puede absorber más retraso; no sumar ciegamente el mismo delta a toda la lista.
-Si hay cambios en la duración restante, pausa o tipo, recalcular desde la causa con la misma base, sin acumular otra vez deltas de recálculos anteriores.
-Una cita abierta que consume todo lo previsto tiene fin desconocido; la predicción es un mínimo revisable, nunca una garantía de que terminará «ahora».
+**Cascada por estado — corrección H-A1, propuesta pendiente de revisión.**
+La regla propuesta M desplaza el fin nominal con el inicio real y las pausas y conserva un solo margen después de ese nominal desplazado.
+Es la interpretación recomendada para conservar el resultado 10:00 del ejemplo de pausa, pero RN-412/415/427 no deciden expresamente entre esta política y consumir el margen original con la interrupción.
+La alternativa y su efecto están en «Anexo A.1 — Resultado»; ninguna queda atribuida al usuario.
+Las fórmulas y ejemplos siguientes usan exclusivamente M, condicionada a su aprobación.
 
-| Ejemplo verificable | Resultado esperado |
+**Magnitudes y reconstrucción.**
+Usar instantes completos y duraciones en segundos al operar; 30 minutos se convierte una vez en 1800 segundos, sin redondear tolerancias ni segundos.
+En las fórmulas se abrevia la suma de una duración a un instante.
+
+- s: inicio pactado (fecha+hora); d: duración pactada copiada del tipo; m: margen copiado al reservar.
+- e: inicio estimado de una cita aún sin iniciar, reconstruido desde s, la cola y el reloj; no es su inicio real.
+- r: primer inicio real inmutable; f: fin real al completar, también inmutable.
+- D: objetivo de tiempo activo del servicio; en el caso explícito de servicio completo es d. Si el veterinario decidió otra duración, solo se usa la duración expresamente registrada con su decisión; si falta, queda pendiente, sin deducirla del retraso, de la tolerancia ni del tiempo de franja restante. D y d son datos distintos; d nunca se sobrescribe.
+- Pausas [a_i, b_i): a_i es inicio real y b_i reanudación real; a lo sumo una tiene b_i desconocido. Deben estar ordenadas, sin solapes, dentro de la atención y no superar f al completarla.
+- P_c: suma de duraciones de pausas cerradas; P(t): duración de todas las pausas hasta t, incluyendo solo el tramo ya transcurrido de la abierta, si existe.
+- A(t): tiempo activo transcurrido = (t − r) − P(t), con t limitado a f si ya completó. Una pausa no cuenta como trabajo. R(t) = máximo(0, D − A(t)) es el tiempo activo nominal restante, no una afirmación clínica de cuánto falta realmente.
+- N: fin clínico nominal del servicio según su base vigente; F: fin clínico estimado como límite inferior revisable; L: extremo estimado de ocupación para secuenciar la cola, incluido el margen una sola vez. L no acredita una liberación real mientras la atención o la pausa sigan abiertas.
+
+**Una fórmula de ocupación, con base definida por estado.**
+Bajo M, L = máximo(N + m, F).
+El exceso de duración que puede propagarse respecto de ese nominal es máximo(0, F − N − m), sin volver a restar m.
+El desplazamiento de inicio o por interrupción se refleja primero en N y en L; no se descuenta de nuevo al recorrer las siguientes citas.
+
+| Estado | Base nominal, fin clínico y ocupación propuestos bajo M |
 |---|---|
-| A pactada 09:00, d=30, m=10; B pactada 09:40 | Fin A 09:37: B sigue 09:40; fin A exactamente 09:40: igual; fin A 09:41: B 09:41. No 09:31 ni 09:51. |
-| A sigue abierta a las 09:45 con los datos anteriores | B estimada 09:45 como mínimo, recalculada por tarea aunque nadie abra calendario. Otro recálculo a las 09:46 da 09:46, no 09:51 por volver a sumar cinco minutos. |
-| A termina 09:47; B 09:40, d=20/m=5; C 10:20 | B pasa a 09:47, fin nominal 10:07, ocupación hasta 10:12; C conserva 10:20. El hueco absorbe el retraso. |
+| Sin iniciar | e = máximo(s, L del predecesor, ahora) para una cita que todavía espera inicio. N = e + D; F = N; L = N + m. Una reserva futura conserva s como mínimo; no reducir D para hacerla caber ni usar un resultado anterior de e como un delta que se vuelve a sumar. Si la decisión de duración está pendiente, no emitir una estimación definitiva inventada. |
+| Iniciada, sin pausa abierta | La base pasa de e a r. N = r + D + P_c. F = máximo(N, t + R(t)); L = máximo(N + m, F). Sin pausas P_c=0; un inicio real tardío con servicio completo desplaza N a r+d. |
+| Pausada | A(a) y R(a) quedan congelados al comenzar la pausa abierta en a. Si u es la reanudación estimada, con u >= ahora, N_u = r + D + P_c + (u − a); F_u = máximo(N_u, u + R(a)); L_u = máximo(N_u + m, F_u). u procede de la disponibilidad prevista para retomar tras la urgencia y es condicional. Sin u sustentada, solo puede mostrarse la cota «si retomara ahora», u=ahora, nunca anunciar liberación, completar o despachar una siguiente cita. |
+| Reanudada | Cerrar la pausa con su b real; P_c suma cada pausa cerrada una sola vez. Volver a N = r + D + P_c y F = máximo(N, t + R(t)); L = máximo(N + m, F). No hacer r=b ni N=t+R(t) en cada recálculo. El sobrepaso ya consumido antes de pausar sigue consumido al retomar. |
+| Completada | Todas las pausas deben estar cerradas; N = r + D + P_c permanece reconstruible, F = f y L = máximo(N + m, f). El reloj posterior no desplaza L. No sustituir D por la duración observada: hacerlo ocultaría el exceso y añadiría otro margen después del fin real. |
+
+Si A(t) ya alcanzó D y la atención sigue abierta, R(t)=0 solo significa que agotó el tiempo nominal: F sigue siendo un mínimo revisable y el veterinario aún está ocupado.
+Por ejemplo, tras reanudar no usar t + R(t) + m como nuevo extremo en cada tick; eso regeneraría margen aunque ya se hubiera gastado.
+Tampoco reiniciar un margen por cada pausa: solo se desplaza N por la duración de cada interrupción, conservando todo el tiempo activo anterior, incluido el exceso.
+Si D se modifica expresamente por una decisión clínica, registrar nueva versión y decisión y recalcular desde esa evidencia; el algoritmo no cambia D automáticamente para absorber un sobrepaso.
+
+Para una siguiente cita ordinaria j aún sin iniciar, reconstruir e_j desde máximo(s_j, L del predecesor, ahora) y validar su intervalo completo hasta L_j contra franjas y compromisos.
+La cita pausada sigue teniendo la dependencia de reanudarse antes de las siguientes (RN-427); su cota condicional no autoriza saltarla.
+El hueco entre citas puede absorber desplazamiento, sin sumar el mismo delta a toda la lista.
+Repetir el cálculo con los mismos hechos y reloj devuelve lo mismo; avanzar el reloj puede cambiar F y L de una atención aún abierta, pero no su N ni sus sellos por sí solo.
+Calcular toda la cola desde s, r, D, pausas y f vigentes; las estimaciones previas son salidas, no una nueva fuente de tiempo consumido.
+
+| Ejemplo verificable | Resultado esperado bajo la propuesta M |
+|---|---|
+| A pactada e iniciada 09:00, D=d=30, m=10; B pactada 09:40 | N=09:30. Fin A 09:37: L=09:40 y B sigue 09:40; fin A exactamente 09:40: igual; fin A 09:41: L=09:41 y B 09:41. No 09:31 ni 09:51. |
+| A sigue abierta a las 09:45 con los datos anteriores | A=45, R=0; N=09:30, F=09:45, L=09:45 como mínimo revisable. Repetir ese reloj devuelve 09:45; a las 09:46 da 09:46, no 09:51. No es permiso para atender B mientras A continúe abierta. |
+| A termina 09:47; B 09:40, D=d=20/m=5; C 10:20; cálculo antes de 09:47 | A deja L=09:47. B sin iniciar: e=09:47, N=10:07, L=10:12; C conserva 10:20. El hueco absorbe el retraso. Si B inicia realmente a otra hora, la base pasa a ese r. |
 | Franja hasta 12:00; cita 11:20, d=30/m=10 | Cabe exactamente; 11:21 no cabe. Si la cascada lleva la cita a 11:25, no truncar su duración: queda para reasignación/reprogramación. |
-| Consulta pausable inicia 09:00, trabaja 10 min; pausa 09:10–09:30 por rojo; d=30/m=10 | Retoma a las 09:30 antes de siguientes, quedan 20 min activos, fin nominal 09:50 y capacidad siguiente 10:00 si no hay más desvío. El inicio real permanece 09:00. |
-| Llegada 10:10 para 10:00, tolerancia=10 | Está dentro exactamente; si la duración necesaria no cabe en el tiempo restante, vet elige atender igual o reprogramar. A 10:10:01 está fuera: no_asistio/siguiente hueco/reprogramar. No reducir por defecto el servicio a lo que quede. |
+| Pactada 09:00; inicio real 09:20; vet decide servicio completo D=d=30, m=10, sin pausas | N=09:20+30=09:50; L nominal=10:00. A las 09:45: A=25/R=5, F=09:50 y L=10:00. Si completa 09:50, sigue L=10:00. Hora pactada 09:00 e inicio real 09:20 permanecen distintos. |
+| Inicio 09:00, D=d=30/m=10; pausa 09:10–09:30 | Antes de pausa A=10/R=20. Durante ella, con u condicional 09:30: N_u=09:00+30+20=09:50, F_u=09:30+20=09:50, L_u=10:00. Al reanudar realmente 09:30, P_c=20/N=09:50; si termina 09:50, L=10:00. La base ya no es 09:30, sino el fin nominal desplazado 09:50; no se reutiliza el antiguo N+m=09:40. |
+| Inicio 09:00, D=30/m=10; pausas 09:10–09:20 y 09:25–09:40 | Trabajó 10+5=15 min al comenzar la segunda; R=15. Pausas totales P_c=10+15=25; al retomar 09:40: N=09:00+30+25=09:55, F=09:55, L=10:05. Si completa 09:55, conserva L=10:05: un margen de 10, no dos de 10. |
+| Pausa única 09:10–09:30 del ejemplo anterior; sigue abierta al retomar | A las 09:59: A=39/R=0, N=09:50, F=09:59 y L=10:00. A las 10:00: A=40 y L=10:00; a las 10:01: A=41 y L=10:01. Si completa 10:05, A=45 y L=10:05, sin agregar 10 para dar 10:15. |
+| Inicio 09:00, D=30/m=10; ya trabajó 40 min al pausar 09:40–10:00 | A=40/R=0 antes de la pausa; P_c=20 y N=09:50 al retomar. L mínimo=10:00, sin un margen nuevo hasta 10:10; la atención sigue ocupada hasta su cierre. Si completa 10:02, L=10:02. El exceso anterior a la pausa no se borra. |
+| Recalcular dos veces al reloj 09:40, varias pausas del ejemplo 09:10–09:20/09:25–09:40 | En ambos: P_c=25, A=15, R=15, N=09:55 y L=10:05. Al reloj 09:45: A=20/R=10, N=09:55 y L sigue 10:05. Tras completar a las 09:55, recalcular a las 10:30 conserva N=09:55, F=09:55 y L=10:05. |
+| Llegada 10:10 para 10:00, tolerancia=10; inicio efectivo 10:10, D=d=30/m=10 solo si vet eligió servicio completo | Está dentro exactamente; N=10:40 y L=10:50 bajo M. Si no cabe, las opciones del vet permanecen; no transformar automáticamente D en 20 por la llegada. Si eligió otra duración, usar solo su valor registrado; si reprograma, no inventar inicio real. A 10:10:01 está fuera: no_asistio/siguiente hueco/reprogramar. |
 
 **Cobertura frente a reasignación en vivo.**
 Ausencia aprobada tapa el intervalo y busca cobertura sin veto, dentro de la clínica; no crea una propuesta con vencimiento para que el destino «acepte» una obligación ya asignable.
@@ -450,10 +492,10 @@ No se detecta una solución operativa ya presente para los estados faltantes sig
 | Solicitud de ausencia y su resolución | Ampliar ausencias_veterinario con estado (solicitada/aprobada/rechazada/anulada), id_solicitante/id_revisor FK usuarios, fechas de solicitud/revisión y motivo_resolucion. Índice (id_clinica, estado, fecha_hora_inicio); índice global del vet y rango para cálculo interno. Reutiliza rango/id_cobertura existentes; no duplicar tabla de solicitudes si esta extensión cubre el flujo. Solo aprobadas restan disponibilidad. |
 | Revisión humana antes de tener cita | Nueva evaluaciones_agenda: id_evaluacion, clínica/mascota/actor FK, fecha, contexto estructurado/episodios y versión/huella del cálculo, nivel_calculado, revision, revision_inmediata, contagio, estado_revision, id_revisor, fecha_revision, nivel_aprobado/motivo, cita resultante nullable. Para la propuesta de espera no urgente de A.8, origen remoto/presencial, fecha_llegada y estado_solicitud (en_evaluacion/en_espera/sin_hueco/convertida/retirada) separado de la resolución clínica; no se inicia consulta mientras falte cita. Índices por clínica+estado+fecha y por mascota; FK cita, con unicidad para impedir consumir dos veces la misma evaluación. Sin fecha límite clínica inventada: vigencia por datos/versiones. No guardar secretos ni medicación protegida. |
 | Bloque y cupo naranja | Nueva bloques_agenda con id_bloque, id_clinica/id_veterinario FK, fecha e inicio/fin originales y versión/estado de disponibilidad. Identidad única por clínica/vet/fecha/origen de franja; citas.id_bloque FK nullable para históricos, índice (id_bloque, es_sobrecupo, estado, fecha_registro, id_cita). Mantener es_sobrecupo exclusivamente como contador naranja, no como bandera de toda llegada. Cambiar horario no borra bloques usados ni reinicia cupos. |
-| Origen, estimaciones y reajuste pendiente | Ampliar citas: origen (reserva/llegada_sin_reserva/urgencia; legado al migrar), inicio_estimado/fin_estimado DATETIME, estado_reajuste (ninguno/pendiente_calculo/pendiente_revision/pendiente_reasignacion/pendiente_reprogramacion), motivo_reajuste, version_agenda y fecha_ultimo_calculo. Índice (id_clinica, estado_reajuste, fecha); ocupación por vet/mascota+estimación con índices según consultas de C3. Las marcas no sustituyen estado clínico. |
+| Origen, estimaciones y reajuste pendiente | Ampliar citas: origen (reserva/llegada_sin_reserva/urgencia; legado al migrar), inicio_estimado/fin_estimado DATETIME, estado_reajuste (ninguno/pendiente_calculo/pendiente_revision/pendiente_reasignacion/pendiente_reprogramacion), motivo_reajuste, version_agenda y fecha_ultimo_calculo. Corrección H-A1: fin_estimado representa F clínico, sin margen; N y L se derivan por estado según A.3. Proponer duracion_activa_objetivo_segundos para D cuando corresponda una duración decidida, con procedencia/autor/motivo en la auditoría; el servicio completo usa d convertido a segundos y una duración diferente requiere su valor explícito. Si falta el dato necesario, NULL/pending de duración, sin inventarlo para un histórico o una decisión incompleta. Identificar también la versión/política temporal aplicada para reconstruir cómo se calculó L cuando se apruebe una; no fijar un default de producto en A.1. Índice (id_clinica, estado_reajuste, fecha); ocupación por vet/mascota+estimación con índices según consultas de C3. Las marcas no sustituyen estado clínico ni D sustituye duracion_minutos pactada. |
 | Derivación y cola roja sin vet | Nueva urgencias_agenda: id_urgencia, id_clinica/id_mascota FK, id_evaluacion nullable, id_ingreso nullable, id_cita nullable único, origen, estado (derivada/presente_en_espera/asignada/en_atencion/finalizada/derivada_a_otro_servicio), fecha_derivacion/llegada/asignacion/fin, orden/motivo de decisión. Índice (id_clinica, estado, fecha_llegada, id_urgencia); evaluación/operación únicas evitan duplicados. No usar esa cola para pacientes remotos ausentes. Su decisión clínica y transición deben auditarse. |
 | Reasignación recuperable | Ampliar reasignaciones con id_clinica (rellenada desde cita y validada), inicio/fin propuestos, version_cita, motivo y ciclo de búsqueda. Índices clínica+estado+fecha_limite y cita+ciclo; unicidad condicional de una pendiente por cita mediante columna calculada compatible MySQL/MariaDB. Conservar intentos rechazados/vencidos y candidato de cada uno; no borrar historia para volver a proponer. |
-| Pausas/reanudaciones múltiples | Nueva pausas_cita: id_pausa, id_cita FK, id_urgencia FK, inicio/fin DATETIME nullable hasta reanudación, autor, motivo y duración activa restante al pausar. Índice cita+inicio; unicidad condicional de pausa abierta por cita. No basta con dos columnas en citas para varias interrupciones. El estado/tipo de la cita sigue siendo la autorización de pausa. |
+| Pausas/reanudaciones múltiples | Nueva pausas_cita: id_pausa, id_cita FK, id_urgencia FK, inicio DATETIME real y fin DATETIME de reanudación real, NULL mientras siga abierta, autor y motivo. Inicio real de atención, D y estos intervalos completos permiten reconstruir A/R/P_c/N/L de A.3, sin una nueva fila por recálculo. La duración activa restante al pausar, si se conserva como instantánea, se expresa en segundos y debe coincidir con máximo(0, D−A(a)); no es una segunda fuente mutable ni se resta otra vez de D al retomar. Índice cita+inicio; unicidad condicional de pausa abierta por cita; validar orden/no solape y pausas cerradas antes de completar. No reiniciar hora_inicio_real, copiar reanudación estimada a fin real de pausa ni crear un margen por interrupción. Una reanudación estimada u necesita referencia al caso rojo y corte/versión de su cálculo, como predicción condicional; no se persiste como hecho clínico. El estado/tipo de la cita sigue siendo la autorización de pausa. |
 | Control de comunicación durable | Reutilizar notificaciones para historial de envío y notificaciones_internas para destinatarios; nueva eventos_agenda para trabajo pendiente con clínica/cita o urgencia/evaluación, clave de evento única, tipo, destinatario autorizado, versión/estimación a comunicar, estado, reclamación e intentos/error/fechas. Índice por estado+fecha, clínica+recurso; sin copiar contacto provisional a payload ni a logs. En citas agregar ultima_hora_comunicada y ultimo_aviso_estimacion para RN-429, actualizados con resultado coherente del evento. No confundir aviso_atencion_abierta RN-409 con esta ventana. |
 | Doble envío de comandos | Nueva operaciones_agenda mínima de A.4, UNIQUE(clínica, actor, tipo, clave_operacion). Huella opaca y referencia al resultado; insertar junto al negocio, sin usar auditoría como tabla de exclusión. No es una nueva bitácora de correos M8. |
 | Conciliación/contacto provisional | Reutilizar ingresos_emergencia, sin pedir documento_acompanante; agregar fecha_conciliacion, id_conciliador, evidencia de mapa provisional→final y HC previas, contacto_anonimizado_en y causa de conservación excepcional si se aprueba. Índice clínica+estado+fecha_ingreso ya previsto. Nombres/teléfonos usan validadores existentes, límite servidor/HTML y acceso protegido; nunca se enlazan por similitud a una cuenta. |
@@ -510,15 +552,15 @@ La suite existente en verde no significa que los RE pendientes de M4 estén impl
 | P06 Revisión y aislamiento | T-20 sin oferta/POST reservable hasta resolución vet; T-22/T-16 según puerta aprobada. Propietario no se autoriza a sí mismo; cambio de marca, contexto, conocimiento o titularidad invalida resolución anterior. T-11 avisa aislamiento a Norte incluso si no hay cupo; agregar P1 conserva contagio con rojo. Sur no recibe aviso. |
 | P07 Naranja/tope/orden | Tope=2: dos naranjas en bloque, tercero sin inserción y con aviso; dos conexiones por último cupo dejan uno. Empate fecha_registro ordena por id_cita; cambio sin motivo falla. Editar o partir bloque por ausencia no regala dos cupos extra. O-04/05. |
 | P08 Reprogramación/cancelación | Fabio cancela/reprograma futura propia; mascota ajena, clínica desvinculada o estado ya cambiado:403/conflicto sin fuga. Intervalo completo y mes destino revalidan cuota; fracaso conserva cita original, instantáneas y vínculo. Auditoría+evento en commit; cancelar/no_asistio liberan espacio según regla. |
-| P09 Tiempo/cascada | Ejemplos A.3 con reloj fijo: margen−1, margen exacto, margen+1; hueco absorbente; franja exacta; exceso detectado durante atención sin calendario. Repetir cálculo no suma delta. Completadas y pactadas/horas reales intactas. Conflicto externo del mismo vet/mascota devuelve solo indisponibilidad. |
+| P09 Tiempo/cascada | Verificar cada estado de A.3 bajo la política temporal que se apruebe, sin mezclar alternativas: servicio completo r=09:20/D=30/m=10 da N=09:50/L=10:00 bajo M; sin pausa, fin 09:39/09:40/09:41 da L=09:40/09:40/09:41. Tras pausa 09:10–09:30, verificar L=10:00 a las 09:59 y 10:00, y L=10:01 a las 10:01; cierre 10:05 no produce 10:15. Hueco absorbente, franja exacta y exceso durante atención sin calendario. Mismos hechos/reloj repiten idéntico resultado; tras completar, avanzar reloj tampoco desplaza L. Pactadas y sellos reales intactos. Conflicto externo del mismo vet/mascota devuelve solo indisponibilidad. |
 | P10 Vencimientos | Destino correcto acepta antes del límite; otro vet/admin/Sur:403. Exactamente al límite vence; rechazo/no respuesta pasan siguiente candidato y sin ninguno dejan reprogramación pendiente. Dos conexiones aceptan/expiran o toman hueco: una transición, ningún traslado incompatible, sin dos pendientes activas. |
 | P11 Avisos/correos | Correo/evento sin JS posterior; motivo/dirección/marca de su clínica; SMTP falla y reserva queda confirmada con fallo registrado; doble worker/POST no duplica evento. Diez recálculos de +3: umbral exacto no avisa, >15 sí con ventana >=30; máximo dos en hora, cambios de vet/reprogramación siempre. Sin correo/vínculo válido o cuenta pendiente no emitir automático. |
 | P12 Ausencia/cobertura | Ausencia parcial y de día completo con extremos exactos; solicitud vet según decisión aprobada; registro/aprobación concurrente con reserva. Destino compatible recibe cobertura sin veto; sin cobertura cita pendiente y propuestas al propietario; avisos a ambos vets y propietario, auditoría y aislamiento. |
 | P13 Presencia/urgencia | Rojo remoto a las 23:00 informa cierre/teléfono/24h, no pausa ni sella llegada. Presencial enlaza una única derivación; libre→pausable→espera sin vet. Todos no pausables: cero pausas, espera roja durable y estimación honesta. Quiebre de cuota/mora no bloquea el caso ni la ficha; O-01/02/09/10. |
-| P14 Pausas | Cirugía no pausable nunca se interrumpe; vacunación pausable conserva inicio real, una pausa abierta y segmentos; vuelve antes de la siguiente tras cerrar rojo. Doble llegada/cierre/reanudación no duplica. Consulta sobre pausada se rechaza sin escribir; fallo de auditoría revierte pausa/cita/urgencia/marcas. |
+| P14 Pausas | Cirugía no pausable nunca se interrumpe; vacunación pausable conserva inicio real, una pausa abierta y segmentos; vuelve antes de la siguiente tras cerrar rojo. Bajo la propuesta M: pausa 09:10–09:30 con r=09:00/D=30/m=10 deja R=20 al retomar, N=09:50/L=10:00; dos pausas 09:10–09:20 y 09:25–09:40 suman 25, R=15 al retomar, N=09:55/L=10:05. Si ya trabajó 40 min antes de pausar 09:40–10:00, no recuperar otro margen hasta 10:10; cierre 10:02 da L=10:02. Pausa abierta sin u sustentada solo muestra cota condicional, no libera al vet. Repetición no duplica pausa ni acumula otra vez su duración; rechazar intervalos solapados o cierre con pausa abierta. Doble llegada/cierre/reanudación no duplica. Consulta sobre pausada se rechaza sin escribir; fallo de auditoría revierte pausa/cita/urgencia/marcas. |
 | P15 Identidad/conciliación | Cuatro ramas A.5, contacto vacío permitido; acompañante no se convierte en propietario/cuenta. Completar conserva ID; consolidar mueve todas las referencias enumeradas, conserva clínica/vet/HC/archivos y desactiva provisional/carnet. Titularidad falsa o ingreso Sur:403; dos conciliadores, choque HC y fallo a mitad producen rollback total, sin pérdida clínica ni reactivación de QR. |
 | P16 Ajuste de nivel | Solo vet autorizado, motivo requerido, calculado intacto y ajustado separado con autor/fecha; bajar rojo a verde permitido con motivo (O-07), subir deriva/reubica y notifica. Repeticiones visibles solo en alcance aprobado, sin puntaje punitivo ni datos de Sur. O-08. |
-| P17 Llegada/tolerancia | Llegadas con tolerancia 10 a 8, 10, 10min+1seg y 15 minutos; suficiencia/insuficiencia de tiempo, opciones y decisión del vet, auditoría y cascada. Hora futura no_asistio rechazada; al marcar no asistió se vuelve a sugerir el espacio válido. |
+| P17 Llegada/tolerancia | Llegadas con tolerancia 10 a 8, 10, 10min+1seg y 15 minutos; suficiencia/insuficiencia de tiempo, opciones y decisión del vet, auditoría y cascada. Si para cita 10:00 decide servicio completo e inicia realmente 10:10 con D=d=30/m=10, bajo M obtener N=10:40/L=10:50, sin mover hora pactada ni recortar D a 20. Si decidió otra duración, usar solo el valor registrado; falta de ese dato deja decisión/estimación pendiente, sin inventar duración efectiva. Llegada, inicio efectivo y reprogramación son hechos distintos; no sellar inicio por registrar llegada. Hora futura no_asistio rechazada; al marcar no asistió se vuelve a sugerir el espacio válido. |
 | P18 Atención sin reserva | Desde Consultas y Pacientes, nueva atención crea una sola cita con origen y enlaza consulta; doble envío devuelve misma. Sin hueco aplica solo capacidad/orden aprobados; no convertir verde en naranja ni crear consulta huérfana. Históricos NULL siguen legibles como Sin cita. |
 | P19 Marca/tipos | Norte y Sur con nombre/logo/contactos/tipos diferentes; admin ajeno no escribe, duración/margen/pausable y teléfonos validados servidor/en vivo; tipo desactivado no se usa para nueva reserva. Cambiar tipo no reescribe instantáneas anteriores. Marca por clínica en salidas acordadas, sin atribuir una sola clínica al historial global. |
 | P20 Esquema/transición | Instalación nueva y actualización alpha.4 con datos, repetir migración; faltantes quedan pendientes sin inventar triage/horarios. FK/índices/columna calculada coherentes en MySQL/MariaDB; rollback y rechazo de referencias de clínicas distintas. No reiniciar base ni alterar 03–07. |
@@ -756,3 +798,105 @@ Este hallazgo afecta a un contrato propuesto, no demuestra una regresión en pro
 **Siguiente: A.1 — corrección documental del contrato temporal**, escrita por el ejecutor y revisada de nuevo por este arquitecto. Solo plan y estado; sin código, SQL, tests nuevos ni cambios normativos. Conservar el Anexo A y esta revisión, agregar resultado de A.1 y marcarla entregada, pendiente de revisión. No hace falta repetir las suites completas por una corrección limitada a texto: usar esta línea base y comprobar diff, aritmética y trazabilidad. Después, resolver las propuestas de A.8 por grupos antes del prompt de B; ninguna se convierte aquí en «Decisión del usuario».
 
 **Prueba manual:** no corresponde una lista de pantallas en A/A.1 porque no cambia ninguna funcionalidad. Las listas de 3–5 pruebas por usuario se entregarán con las subetapas que sí modifiquen interfaz o comportamiento.
+
+## Anexo A.1 — Resultado
+
+**Fecha:** 2026-10-17.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto, en la conversación independiente.
+**Estado:** entregada, pendiente de revisión.
+**Alcance:** corrección documental de H-A1; el cierre del hallazgo corresponde al revisor.
+Se conserva íntegra «A — Revisión (2026-10-17)».
+No se implementan funcionalidades ni se empieza B.
+
+**Corrección entregada.**
+Se sustituyó la fórmula de A.3 que conservaba e+d después del inicio o la pausa por una definición explícita de N/F/L en cinco estados: sin iniciar, iniciada, pausada, reanudada y completada.
+Se distinguen s/d/m pactados, r/f reales, D como objetivo activo del servicio decidido, A como tiempo activo ya trabajado y R como restante nominal.
+Con una pausa abierta, el instante de reanudación u es una predicción condicional; nunca acredita reanudación ni libera de hecho al veterinario.
+Las estimaciones anteriores no se usan como un delta que se acumula al repetir el cálculo.
+
+**Resolución aritmética del ejemplo, bajo la propuesta recomendada M.**
+Inicio real 09:00; D=30; trabajo 09:00–09:10=10; pausa 09:10–09:30=20; restante al retomar=30−10=20.
+El fin nominal pasa de 09:00+30=09:30 a N=09:00+30+20=09:50.
+Si termina a las 09:50, F=f=09:50 y L=máximo(09:50+10, 09:50)=10:00.
+La hora de 09:50 es el fin clínico nominal/real de ese ejemplo, no el extremo de ocupación con margen bajo M.
+Antes se comparaba erróneamente con 09:00+30+10=09:40, una base que omitía la interrupción.
+Se mantiene r=09:00, la hora pactada y los dos extremos reales de la pausa; no se reinicia la consulta a las 09:30 ni se agregan dos márgenes.
+
+**Política de producto pendiente, limitada a H-A1.**
+RN-412 y RN-415 definen absorción por margen, y RN-427 exige reanudar después de la urgencia, pero no fijan expresamente si un inicio tardío/interrupción desplaza también la ubicación de ese margen.
+No se trata como una decisión ya confirmada.
+
+| Alternativa | Fórmula coherente y efecto | Valoración |
+|---|---|---|
+| M — Margen referido al nominal desplazado | Reconstruir N desde inicio real, D y pausas; L_M=máximo(N+m, F). Una sola pausa de 20 min desplaza el nominal 20 min, sin borrar tiempo activo ni crear un margen por pausa. | **Recomendada**, pendiente de aprobación: conserva el resultado 10:00 de la tabla original y la duración completa decidida; hace visible todo el desplazamiento del comienzo/interrupción. El margen solo absorbe el exceso activo respecto de ese nominal. |
+| C — Interrupción/inicio tardío consumen la ocupación pactada | Mantener el extremo pactado T=s+d+m; reconstruir el mismo fin clínico F con servicio activo y pausas, pero L_C=máximo(T, F). La interrupción o demora puede consumir el margen original; no se añade uno nuevo tras la reanudación. | Alternativa válida como política distinta: cambiaría el ejemplo original a 09:50. Requiere ajustar la tabla y el contrato si el usuario la elige; no combinarla con M dentro de una misma cita. |
+
+| Datos compartidos | Bajo M recomendada | Bajo C alternativa |
+|---|---|---|
+| s=r=09:00, d=D=30/m=10, pausa 09:10–09:30, f=09:50 | N=09:50; L=10:00. | T=09:40; L=09:50. |
+| s=09:00, r=09:20, d=D=30/m=10, sin pausa, f=09:50 | N=09:50; L=10:00. | T=09:40; L=09:50. |
+| s=r=09:00, d=D=30/m=10, pausas de 10 y 15 min, f=09:55 | N=09:55; L=10:05. | T=09:40; L=09:55. |
+
+Esta propuesta no cambia las decisiones pendientes de A.8 ni el plazo de tolerancia, el tipo pausable o la prioridad de reanudación ya definida.
+Hasta resolver la política temporal tras la revisión independiente, no usar estos ejemplos como una regla de producto aprobada para implementar B.
+Si se elige C, la modificación se hace explícitamente, conservando los mismos datos y sellos, sin convertirla silenciosamente en M durante una reanudación.
+
+**Campos que sostienen cada resultado, sin SQL nuevo.**
+
+| Magnitud | Fuente existente o propuesta |
+|---|---|
+| s/d/m y fin pactado | citas.fecha/hora, duracion_minutos, margen_minutos y hora_fin existentes. Permanecen inmutables salvo reprogramación expresa auditada. |
+| r/f y estado | citas.hora_inicio_real, hora_fin_real y estado existentes; completar exige no dejar pausa abierta. La llegada usa hora_llegada y no sustituye r. |
+| D | Propuesta de A.6: duracion_activa_objetivo_segundos con procedencia de la decisión en auditoría. Servicio completo usa d convertido a segundos; una decisión distinta necesita valor explícito. Una decisión incompleta o un legado desconocido no se rellena con una duración inventada. |
+| P_c/P(t), A/R | Propuesta pausas_cita con inicio y reanudación reales de cada pausa. Se derivan desde r y D; un restante guardado al pausar sería instantánea comprobable, no saldo que se vuelve a descontar. |
+| u en pausa abierta | Predicción de disponibilidad para reanudar, referida al caso rojo y su corte/versión; si no existe, solo cota condicional al reloj, sin inventar duración de urgencia. Nunca se escribe como reanudación real. |
+| N/F/L | N y L se reconstruyen con la política identificada y hechos del caso; F se presenta/persiste como fin_estimado clínico, sin margen. version_agenda/fecha_ultimo_calculo propuestos distinguen los cortes; no convierten una estimación anterior en causa temporal. |
+| Elección M/C | Identificar versión/política temporal aplicada cuando se apruebe para poder reconstruir resultados históricos; A.1 no introduce un default aprobado ni rellena retrospectivamente esa elección. |
+
+**Evidencia y trazabilidad.**
+RE-4.5.1 se protege conservando r/f y la distinción de horas; RE-4.5.2/4.14.1/4.14.2 y RN-412/415 con N/F/L y sus extremos; RE-4.5.3 con la reconstrucción de cola sin acumulación; RE-4.15.8 y RN-427 con intervalos activos/pausados y precedencia de reanudación.
+Se ajustaron solamente el contrato temporal de A.3, las dos filas afectadas de persistencia en A.6 y P09/P14/P17, además de cabecera, este anexo y estado.
+Los casos propuestos ahora incluyen inicio tardío con servicio completo, pausa única, varias pausas, sobrepaso antes/después de retomar, recálculo idéntico y reloj posterior a una cita completada.
+
+Se comprobaron en memoria **16 escenarios aritméticos**, sin crear archivos de tests ni ejecutar código de aplicación: todos coincidieron con N/L declarados y repitieron resultado con los mismos hechos/reloj.
+Incluyen margen exacto y excedido sin pausa; durante pausa abierta con u=09:30; pausa cerrada de 20; dos pausas que suman 25; sobrepasos de 9/10/11/15 min; margen ya consumido antes de otra pausa; inicio efectivo 09:20/10:10 y avance de reloj tras completar.
+La comprobación es aritmética de documentación, no cobertura automatizada nueva de M4.
+La comparación de alternativas usa los mismos hechos clínicos; cambia solo la política de margen declarada.
+Se verifican también por sustitución la cita sin iniciar del hueco absorbente y el final de franja exacto de A.3.
+
+**Contraste con Modelos §5–§6, sin modificarlos.**
+§5 deberá definir la base nominal por estado y distinguir fin clínico de extremo con margen; incluir inicio efectivo, pausa/reanudación, atención aún abierta y recálculo al reloj.
+Su cálculo del exceso no debe descontar m dos veces ni reconstruir N desde el último estimado.
+§6 deberá enlazar inicio/cierre de cada pausa con reanudación real antes de las siguientes y con el mismo cálculo temporal elegido; mientras la pausa siga abierta, una predicción no libera capacidad.
+El ajuste normativo posterior depende de la elección M/C; aquí no se cambian diagramas, HU, RE ni RN.
+
+**Verificación de alcance.**
+Las únicas escrituras de A.1 son specs/M4-agenda-grafo-ii.md y agentes/estado.md.
+agentes/metodo.md ya aparecía modificado al comenzar; se conserva byte a byte, al igual que A.8 y la revisión anterior.
+No se repiten suites por esta corrección documental: se conserva como línea base la verificación del revisor, PHP 854/7813 con MariaDB y JS 238/238.
+Sin acceso al archivo de entorno o a bases de datos, código, SQL, tests nuevos, versión, exportación ni operaciones Git de escritura.
+
+**Pendientes:** revisión independiente de A.1 y elección explícita de política temporal por el usuario; los demás pendientes de A.8 y protocolo HC siguen como estaban.
+No se declara A.1 aprobada ni H-A1 cerrado por el revisor.
+
+**Comandos de commit para el usuario, compatibles con CMD/PowerShell:**
+
+    git add specs/M4-agenda-grafo-ii.md agentes/estado.md
+    git commit -m "docs(agenda): corregir base temporal de cascada (RE-4.5.1, RE-4.14.2, RE-4.15.8)"
+
+### A.1 — Revisión (2026-10-17)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor de A.1. Veredicto: aprobada como corrección documental.** Se cierra H-A1 en cuanto a la contradicción y ausencia de base temporal: ahora las fórmulas fijan cinco estados y los ejemplos declaran expresamente la política usada. La aprobación técnica de esta corrección no elige M ni C por el usuario, ni autoriza B.
+
+**Verificación propia:** lectura completa del Anexo A.1, contrato A.3, filas afectadas de A.6 y P09/P14/P17; contraste con RN-412/415/427 y Modelos §5–§6. Se confirma la separación entre fin clínico y extremo con margen, la conservación del primer inicio real y la duración pactada, el tiempo activo calculado descontando pausas y el carácter condicional de una reanudación estimada. No hay una predicción que autorice por sí sola a liberar al veterinario ni una selección M/C encubierta como decisión del usuario.
+
+Se reprodujeron **17 escenarios aritméticos independientes, 17 coincidentes y repetibles** con los mismos hechos/reloj: fin antes/en/después del margen; atención abierta a 09:45/09:46; inicio real tardío abierto y completado; pausa abierta con reanudación condicional y pausa cerrada; dos pausas y avance de reloj; reloj posterior a completar; excesos tras reanudar; exceso consumido antes de otra pausa; llegada tardía con servicio completo. En particular, bajo M: inicio 09:00, trabajo 10 minutos, pausa de 20 y otros 20 activos dejan nominal/fin clínico 09:50 y extremo 10:00; dos pausas de 10+15 minutos dejan nominal 09:55 y extremo 10:05. El margen no se multiplica por el número de pausas ni se regenera con cada recálculo.
+
+La comprobación fue aritmética en memoria, sin crear código de aplicación o archivos de pruebas. No acredita cobertura automatizada del futuro motor; los casos siguen propuestos para C5/C7. Se mantiene la línea base propia de la revisión A: PHP 854/7813 con MariaDB y JS 238/238; no se repitieron suites por esta corrección exclusivamente documental, conforme al encargo. No se consultaron bases, credenciales ni pantallas.
+
+**Alcance:** solo plan y estado cambiaron por A.1; la modificación de metodo.md es la preferencia de comandos registrada previamente por el arquitecto. No hay cambios de código, esquema, conocimiento, documentos normativos ni versión. `git diff --check` sin incidencias. No se encontraron nuevos hallazgos que requieran otra corrección del ejecutor en A.1.
+
+**Decisión que sigue pendiente:** elegir si inicio tardío/pausa desplaza el nominal con su margen (M) o consume la ocupación pactada (C). Se recomienda **M**, coherente con la referencia temporal propuesta y con conservar un margen único respecto del servicio desplazado; es una recomendación de producto, no una decisión confirmada. Antes de B también deben resolverse los grupos de A.8 y fijarse el protocolo HC; ninguna de las nuevas tablas ni reglas pendientes se aprueba automáticamente por cerrar H-A1.
+
+**Siguiente:** usuario elige política temporal; registrar únicamente lo confirmado y continuar las decisiones de A.8 antes del prompt de B. El ejecutor no empieza otra etapa por haber terminado A.1. Sin pruebas manuales de navegador porque no cambió interfaz ni funcionalidad.
