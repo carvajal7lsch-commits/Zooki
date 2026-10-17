@@ -1968,3 +1968,17 @@ git add -- tests/Frontend/M2C81Celular.test.cjs tests/Frontend/M2C5aConsulta.tes
 git diff --cached --stat
 git commit -m "fix(consulta): compactar ficha e historial en celular (M2 C8.1, RE-2.5.1)"
 ```
+
+### C8.1 — Revisión (2026-10-16)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada con tres correcciones (C8.2).** Commit `0d02dad` (lo escribió Codex; el usuario hizo el commit).
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 854 pruebas y 7212 aserciones (44 omitidas); con MySQL 8.0.46 y la base por defecto, 854 pruebas y 7813 aserciones, ninguna omitida; JS 232/232. Capturas revisadas: `390-atencion-paso-3`, `390-atencion-historial-abierto` y `1440-vet_pacientes-historial-plegado`.
+
+**Lo que está bien:** en el celular la cabecera compacta deja los pasos en la primera pantalla, el indicador «3 alertas» y «Ver ficha» funcionan, el pie queda sobre la barra inferior y «Salir» ya cabe; el historial pasa a filas `details/summary` que conservan todo el contenido al expandirse; se corrigió el selector del cajón de Consultas y la carga que confundía un fallo con «cero alertas».
+
+**Correcciones (C8.2):**
+
+1. **Resumen de la fila del historial ilegible en anchos estrechos.** En el cajón de Pacientes (1440 px, el cajón mide unos 450 px) la fila queda «1/10/2026 C C G»: clínica, motivo y diagnóstico se truncan a una letra porque los chips se quedan con el ancho. En el celular, «Clínica… Control p…». El resumen debe pasar a dos líneas cuando no cabe (línea 1: fecha y diagnóstico, o motivo si no hay; línea 2: clínica y chips), sin truncar a menos de una palabra. Lo mismo en vacunas y desparasitaciones («Producto regis…», «Laboratorio regi…»).
+2. **Cajón de historial con huecos grandes** entre «Alergias y alertas», la tarjeta de número de historia, «Vacunas y desparasitaciones» y «Línea de tiempo»: espaciado compacto y continuo.
+3. **Fechas:** formato uniforme dd/mm/aaaa en las filas (hoy «1/10/2026» y «1/9/2026»).
