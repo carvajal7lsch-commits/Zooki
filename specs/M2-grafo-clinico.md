@@ -2001,3 +2001,10 @@ No se creó `.env` ni base de trabajo.
 
 **Pendiente:** revisión del arquitecto y prueba del usuario: abrir el historial en Pacientes y Consultas (escritorio y celular) y en Atención, y comprobar filas en una o dos líneas sin texto cortado, fechas dd/mm/aaaa y el cajón sin huecos. Lo ajeno (singular de «1 tratamientos», fechas del imprimible y del portal) quedó en `specs/pulido-interfaz.md`.
 
+### C8.2 — Revisión (2026-10-17)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada.** Rama `claude/m2-c8-2-historial` integrada por avance rápido en `v2/m2-grafo` (`2bb11ef`, `fa225dd`).
+
+**Verificación propia:** suite completa en una copia limpia: sin MySQL 854 pruebas y 7212 aserciones (44 omitidas); con MySQL 8.0.46 y la base por defecto, 854 pruebas y 7813 aserciones, ninguna omitida (la sesión en la nube no tenía MySQL); JS 238/238. Capturas revisadas: cajón de Pacientes a 1440 px y Atención a 390 px: filas en una o dos líneas sin cortar palabras, fechas dd/mm/aaaa y el cajón sin huecos.
+
+**Para la prueba del usuario:** en la captura de Atención a 390 px la pestaña dice «Historial 0» aunque lista cinco registros; puede ser del arnés con respuestas simuladas. Si en la prueba real el contador no coincide, se corrige antes de desplegar. El singular de «1 tratamientos» quedó en `pulido-interfaz.md`.
