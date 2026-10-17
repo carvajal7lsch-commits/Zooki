@@ -147,7 +147,8 @@ La decisión «confirmar» requiere una huella opaca vigente por fila: si cambia
 - [x] C6 — Mapa del grafo: revisada y cerrada con prueba del usuario (Claude Code, 2026-10-15).
 - [x] `vendor/bin/phpunit`, JS y cada RE de §2 con evidencia; verificación final de F.
 - [x] C8 — Rediseño visual de consulta y vínculo: revisada y aprobada en código (Claude Code; commit `7367317`).
-- [x] C8.1 — Celular y ficha/historial compactos: entregada, pendiente de revisión (Codex, 2026-10-16).
+- [x] C8.1 — Celular y ficha/historial compactos: revisada y aprobada con tres correcciones (Codex; commit `0d02dad`).
+- [x] C8.2 — Resumen del historial en dos líneas, cajón compacto y fechas dd/mm/aaaa: entregada, pendiente de revisión (Claude Code, 2026-10-17).
 - [x] F — `2.0.0-alpha.4`: entregada, pendiente de revisión (Codex, 2026-10-16).
 - [x] Revisiones documentales una vez por módulo y descargas regeneradas; ver Anexo F.
 - [ ] Pruebas del usuario de C5a/C5b/C7 antes del despliegue (lista consolidada abajo).
@@ -1982,3 +1983,21 @@ git commit -m "fix(consulta): compactar ficha e historial en celular (M2 C8.1, R
 1. **Resumen de la fila del historial ilegible en anchos estrechos.** En el cajón de Pacientes (1440 px, el cajón mide unos 450 px) la fila queda «1/10/2026 C C G»: clínica, motivo y diagnóstico se truncan a una letra porque los chips se quedan con el ancho. En el celular, «Clínica… Control p…». El resumen debe pasar a dos líneas cuando no cabe (línea 1: fecha y diagnóstico, o motivo si no hay; línea 2: clínica y chips), sin truncar a menos de una palabra. Lo mismo en vacunas y desparasitaciones («Producto regis…», «Laboratorio regi…»).
 2. **Cajón de historial con huecos grandes** entre «Alergias y alertas», la tarjeta de número de historia, «Vacunas y desparasitaciones» y «Línea de tiempo»: espaciado compacto y continuo.
 3. **Fechas:** formato uniforme dd/mm/aaaa en las filas (hoy «1/10/2026» y «1/9/2026»).
+
+## Anexo C8.2 — Resultado
+
+**Lo escribió Claude Code (sesión en la nube, 2026-10-17), en la rama `claude/m2-c8-2-historial` sacada de `v2/m2-grafo` (`6b0c89b`); entregada, pendiente de revisión de Claude (arquitecto).**
+Solo las tres correcciones de «C8.1 — Revisión». No cambian reglas, rutas, permisos, respuestas del servidor ni la versión `2.0.0-alpha.4`.
+
+| Corrección | Cambio | Prueba |
+|---|---|---|
+| 1. Resumen legible | `filaHistorialCompacto()` y las filas del servidor (`atencion.php`, `historial_procedimiento.php`) arman el resumen en dos grupos: fecha + diagnóstico (o motivo si no hay; en vacunas y desparasitaciones, el producto) y clínica + chips (laboratorio o tipo en vacunas y desparasitaciones). `flex-wrap` deja los dos grupos en una línea si caben y baja el segundo si no. Se retiraron `nowrap` y `ellipsis`: un texto largo baja por palabras completas, junto a su fecha. El motivo sigue en el detalle. | `M2C82Historial.test.cjs`: estructura de las dos líneas (JS y PHP), escape, sin `ellipsis`/`nowrap`; en Chromium, a 296/326/410/700/1100 px: dos líneas cuando no cabe, una cuando sí, ninguna palabra partida ni fuera de la fila. Mutación: volver a `nowrap` hace fallar dos pruebas. |
+| 2. Cajón compacto | `drawer-body historial-cajon` en Pacientes y Consultas: un solo espacio de 0,85 rem entre alertas, número de historia, vacunas y línea de tiempo; títulos a 0,5 rem de su lista; la línea de tiempo ya no se encoge con su propio scroll. La lista de alertas vacía no deja hueco. El número de historia no se parte en el guion en el celular. | Prueba de CSS y vistas; `c82-navegador.mjs` mide la distancia entre bloques (≤ 16 px) en 360, 390, 820 y 1440. |
+| 3. Fechas dd/mm/aaaa | `fechaHistorial()` (medical-module.js) para la fila, el inicio del tratamiento y la próxima aplicación, sin `Date` (no retrocede un día por UTC). Las filas del servidor ya usaban `date('d/m/Y')`. | `fechaHistorial` con fecha, fecha-hora, ISO y valores vacíos o inválidos; filas de consulta, vacuna y desparasitación. |
+
+**Verificación:** PHP: **no se pudo correr en la nube** (`composer install` no logró bajar PHPUnit: la red no autentica contra github.com y la descarga desde el código fuente se colgó); tampoco hubo MySQL ni MariaDB. Los cambios son de JS, CSS y vistas; `php -l` en verde en las dos vistas tocadas. El revisor la corre con MySQL 8. JS **238/238** (232 anteriores, con C5a, C5b, C7, C8 y C8.1, más 6 de C8.2). La prueba de C8.1 se ajustó al nuevo orden del resumen (el motivo pasa al detalle) y a «01/10/2026».
+Chromium sin interfaz (`node tests/Frontend/apoyo/c82-navegador.mjs`, vistas reales con respuestas simuladas): capturas en `specs/referencias/m2-pulido/c8-2-despues/` del cajón de Pacientes y Consultas a 1440 y 390, y de Atención a 360, 390, 820 y 1440, con `medidas.json`. Los iconos de Font Awesome no aparecen porque la red de la nube no carga la CDN; no afecta el diseño medido. La prueba de Chromium de la suite se omite sola si no hay navegador (`CHROME_PATH` o rutas conocidas).
+No se creó `.env` ni base de trabajo.
+
+**Pendiente:** revisión del arquitecto y prueba del usuario: abrir el historial en Pacientes y Consultas (escritorio y celular) y en Atención, y comprobar filas en una o dos líneas sin texto cortado, fechas dd/mm/aaaa y el cajón sin huecos. Lo ajeno (singular de «1 tratamientos», fechas del imprimible y del portal) quedó en `specs/pulido-interfaz.md`.
+

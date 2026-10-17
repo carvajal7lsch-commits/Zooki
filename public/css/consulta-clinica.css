@@ -1038,13 +1038,57 @@ small.cuenta-validacion[data-tratamiento-aviso]:empty {
 
 .historia-fila__resumen {
     display: grid;
-    grid-template-columns: auto minmax(0, 0.7fr) minmax(0, 1fr) minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 0.3rem 0.65rem;
-    padding: 0.6rem 0.7rem;
+    gap: 0.5rem;
+    padding: 0.55rem 0.7rem;
     font-size: 0.78rem;
     cursor: pointer;
     list-style: none;
+}
+
+/*
+ * C8.2: el resumen nunca trunca. Los dos grupos van en una línea si caben; si no,
+ * el de clínica y chips baja a la segunda (flex-wrap). Un texto largo baja de línea
+ * por palabras completas en lugar de cortarse con puntos suspensivos.
+ */
+.historia-fila__lineas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.75rem;
+    min-width: 0;
+}
+
+.historia-fila__linea {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.5rem;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+/* La fecha no se separa de su diagnóstico: si este es largo, baja de línea a su lado. */
+.historia-fila__linea--principal {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+}
+
+.historia-fila__linea--contexto {
+    flex: 0 1 auto;
+    align-items: center;
+}
+
+.historia-fila__fecha {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.historia-fila__titulo {
+    min-width: 0;
+    color: var(--z-text);
 }
 
 .historia-fila__resumen::-webkit-details-marker {
@@ -1057,13 +1101,6 @@ small.cuenta-validacion[data-tratamiento-aviso]:empty {
     border-radius: var(--z-radius-xs);
 }
 
-.historia-fila__resumen > :is(span, strong) {
-    min-width: 0;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
 .historia-fila__fecha,
 .historia-fila__clinica {
     color: var(--z-text-muted);
@@ -1073,8 +1110,7 @@ small.cuenta-validacion[data-tratamiento-aviso]:empty {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
-    overflow: visible;
-    white-space: normal;
+    min-width: 0;
 }
 
 .historia-fila__chip,
@@ -1132,6 +1168,54 @@ small.cuenta-validacion[data-tratamiento-aviso]:empty {
 
 #vaccineList.vaccine-grid {
     display: block;
+}
+
+/*
+ * C8.2: cajón de historial de Pacientes y Consultas con un solo espaciado entre
+ * alertas, número de historia, vacunas y línea de tiempo. Antes se sumaban el gap
+ * del cuerpo y los márgenes heredados de cada bloque, y la línea de tiempo se
+ * encogía con su propio scroll dentro del cajón.
+ */
+.drawer-body.historial-cajon {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.historial-cajon > *,
+.historial-cajon .alertas-medicas,
+.historial-cajon .history-pet-header,
+.historial-cajon .vaccine-grid {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.historial-cajon > .paciente-compacto__lista:not(:has(.alertas-medicas:not([hidden]))) {
+    display: none;
+}
+
+.historial-cajon .history-pet-header {
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--z-radius-xs);
+}
+
+/* El número de historia es un identificador: no se parte en el guion. */
+.historial-cajon .hc-number-badge span {
+    white-space: nowrap;
+}
+
+.historial-cajon__seccion .section-title,
+.historial-cajon__seccion .section-label {
+    margin: 0 0 0.5rem;
+}
+
+.historial-cajon .history-timeline {
+    gap: 0;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
 }
 
 @media (max-width: 767px) {
@@ -1230,17 +1314,8 @@ small.cuenta-validacion[data-tratamiento-aviso]:empty {
     }
 
     .historia-fila__resumen {
-        grid-template-columns: auto minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr) auto;
-        gap: 0.25rem 0.4rem;
         padding: 0.5rem 0.6rem;
     }
-
-    .historia-fila__fecha { grid-column: 1; }
-    .historia-fila__clinica { grid-column: 2; }
-    .historia-fila__flecha { grid-column: 5; grid-row: 1; }
-    .historia-fila__motivo { grid-column: 3; }
-    .historia-fila__diagnostico { grid-column: 4; }
-    .historia-fila__resumen .historia-fila__chips { grid-column: 1 / -1; }
 
     .historia-fila__detalle .history-treatment-table :is(thead) {
         display: none;

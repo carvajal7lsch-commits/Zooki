@@ -77,7 +77,9 @@ test('H11: fila plegada con clínica, motivo, diagnóstico y chips; detalle cons
     assert.match(html, /^<details class="historia-fila">/);
     assert.doesNotMatch(html, /<details[^>]* open/);
     const resumen = html.split('</summary>')[0];
-    assert.match(resumen, /&lt;Sur&gt;[\s\S]*Control[\s\S]*Gastritis[\s\S]*Sin cita[\s\S]*Sin peso registrado[\s\S]*1 tratamientos/);
+    // C8.2: el resumen muestra fecha y diagnóstico arriba, clínica y chips abajo; el motivo queda en el detalle.
+    assert.match(resumen, /Gastritis[\s\S]*&lt;Sur&gt;[\s\S]*Sin cita[\s\S]*Sin peso registrado[\s\S]*1 tratamientos/);
+    assert.match(html.split('</summary>')[1], /Motivo:<\/strong> Control/);
     assert.match(html, /F.R.[\s\S]*24 rpm/);
     assert.match(html, /&lt;Vómito&gt;/);
     assert.match(html, /Medicamento de prueba/);
@@ -87,7 +89,7 @@ test('H11: fila plegada con clínica, motivo, diagnóstico y chips; detalle cons
         const fila = contexto.filaHistorialCompacto({ nombre_vacuna: 'Rabia', producto: 'Producto', fecha_aplicacion: '2026-10-01', lote: '<lote>' }, tipo);
         assert.match(fila, /<details class="historia-fila">/);
         assert.match(fila, /&lt;lote&gt;/);
-        assert.match(fila, /1\/10\/2026/, 'La fecha sin hora no retrocede un día por UTC');
+        assert.match(fila, /01\/10\/2026/, 'La fecha sin hora no retrocede un día por UTC (dd/mm/aaaa desde C8.2)');
     }
     const orden = contexto.eventosHistorialCompacto({
         consultas: [{ fecha_hora: '2026-10-01 10:00:00' }],

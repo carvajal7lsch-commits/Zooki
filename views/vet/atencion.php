@@ -479,14 +479,20 @@ $obligatorio = '<span class="consulta-obligatorio" aria-hidden="true">*</span>';
                         <?php foreach ($consultas as $con): ?>
                             <li>
                                 <details class="historia-fila">
+                                    <?php // C8.2: el mismo resumen en dos grupos que filaHistorialCompacto() de medical-module.js. ?>
                                     <summary class="historia-fila__resumen">
-                                        <time class="historia-fila__fecha"><?= $fechaCorta($con['fecha_hora']) ?></time>
-                                        <span class="historia-fila__clinica"><?= $e($con['clinica_nombre'] ?? 'Clínica actual') ?></span>
-                                        <strong class="historia-fila__motivo"><?= $e($con['motivo_consulta']) ?></strong>
-                                        <span class="historia-fila__diagnostico"><?= $e($con['diagnostico']) ?></span>
-                                        <span class="historia-fila__chips">
-                                            <?php if (empty($con['id_cita'])): ?><span class="consultation-sin-cita-badge">Sin cita</span><?php endif; ?>
-                                            <span class="historia-fila__chip"><?= $textoPeso($con['peso'] ?? null) ?></span>
+                                        <span class="historia-fila__lineas">
+                                            <span class="historia-fila__linea historia-fila__linea--principal">
+                                                <time class="historia-fila__fecha"><?= $fechaCorta($con['fecha_hora']) ?></time>
+                                                <strong class="historia-fila__titulo"><?= $e(($con['diagnostico'] ?? '') !== '' ? $con['diagnostico'] : $con['motivo_consulta']) ?></strong>
+                                            </span>
+                                            <span class="historia-fila__linea historia-fila__linea--contexto">
+                                                <span class="historia-fila__clinica"><?= $e($con['clinica_nombre'] ?? 'Clínica actual') ?></span>
+                                                <span class="historia-fila__chips">
+                                                    <?php if (empty($con['id_cita'])): ?><span class="consultation-sin-cita-badge">Sin cita</span><?php endif; ?>
+                                                    <span class="historia-fila__chip"><?= $textoPeso($con['peso'] ?? null) ?></span>
+                                                </span>
+                                            </span>
                                         </span>
                                         <i class="fas fa-chevron-down historia-fila__flecha" aria-hidden="true"></i>
                                     </summary>

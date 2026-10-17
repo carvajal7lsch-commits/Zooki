@@ -74,3 +74,8 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 - El icono verde de la cabecera del cajón «Historial clínico» y otros acentos de `medical/consultas.css` conservan el diseño heredado; unificarlos en el pulido general. C8.1 solo cambia las filas del historial y el indicador móvil de alertas.
 - En tableta (820 px), Atención conserva la ficha completa encima del formulario conforme al diseño existente; el alcance aprobado compacta la cabecera por debajo de 768 px. Revisar la distribución de tableta en el pulido general si el usuario lo pide.
+
+## Observaciones fuera de M2 C8.2 (2026-10-17)
+
+- El chip de las filas del historial dice «1 tratamientos»: falta el singular («1 tratamiento»). C8.2 no cambió el texto de los chips.
+- El imprimible del historial (`imprimirHistorial` en `medical-module.js`), la fecha de nacimiento del expediente y el historial del portal del propietario siguen con `toLocaleDateString()` (formato según el navegador); unificarlos con `fechaHistorial()` (dd/mm/aaaa) si el usuario lo pide.

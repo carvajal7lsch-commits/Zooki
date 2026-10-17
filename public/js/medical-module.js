@@ -1175,7 +1175,7 @@ function tablaTratamientos(tratamientos) {
             <td data-etiqueta="Dosis">${escaparTexto(t.dosis)}</td>
             <td data-etiqueta="Vía">${escaparTexto(t.via_administracion)}</td>
             <td data-etiqueta="Duración">${escaparTexto(t.duracion)}</td>
-            <td data-etiqueta="Inicio">${t.fecha_inicio ? new Date(t.fecha_inicio + 'T00:00:00').toLocaleDateString() : '---'}</td>
+            <td data-etiqueta="Inicio">${t.fecha_inicio ? escaparTexto(fechaHistorial(t.fecha_inicio)) : '---'}</td>
         </tr>`).join('');
     return `
         <div class="clinical-section">
@@ -1215,16 +1215,32 @@ function eventosHistorialCompacto(datos) {
     return eventos.sort((a, b) => fechaLocal(b.fecha) - fechaLocal(a.fecha));
 }
 
-/** M2 C8.1 (H11): mismo resumen en Atención y en los dos cajones de historial. */
+/**
+ * M2 C8.2: una sola fecha dd/mm/aaaa para todos los historiales. Se lee la cadena
+ * del servidor sin pasar por Date para que una fecha sin hora no retroceda un día por UTC.
+ */
+function fechaHistorial(fecha) {
+    const partes = String(fecha || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!partes) return 'Sin fecha';
+    return `${partes[3]}/${partes[2]}/${partes[1]}`;
+}
+
+/**
+ * M2 C8.1 (H11) y C8.2: mismo resumen en Atención y en los dos cajones de historial.
+ * Dos grupos que el CSS deja en una línea si caben y en dos si no: arriba fecha y
+ * diagnóstico (o el motivo si no hay diagnóstico); abajo clínica y chips. Ningún texto
+ * se trunca: si no cabe, baja de línea por palabras completas.
+ */
 function filaHistorialCompacto(registro, tipo) {
     const consulta = tipo === 'consulta';
     const fecha = registro.fecha_hora || registro.fecha_aplicacion;
-    const fechaLocal = fecha && fecha.length === 10 ? fecha + 'T00:00:00' : String(fecha || '').replace(' ', 'T');
-    const fechaTexto = fecha ? new Date(fechaLocal).toLocaleDateString('es-CO') : 'Sin fecha';
+    const fechaTexto = fechaHistorial(fecha);
     const titulo = consulta ? registro.motivo_consulta : (registro.nombre_vacuna || registro.producto);
     const diagnostico = consulta ? registro.diagnostico : (registro.laboratorio || registro.tipo || '');
+    const principal = consulta ? (diagnostico || titulo || 'Sin diagnóstico') : (titulo || 'Sin registro');
     const tratamientos = Array.isArray(registro.tratamientos) ? registro.tratamientos : [];
-    const chips = consulta ? `${etiquetaSinCita(registro)}<span class="historia-fila__chip">${textoPeso(registro.peso)}</span><span class="historia-fila__chip">${tratamientos.length} tratamientos</span>` : '';
+    const chipDetalle = diagnostico ? `<span class="historia-fila__chip">${escaparTexto(diagnostico)}</span>` : '';
+    const chips = consulta ? `${etiquetaSinCita(registro)}<span class="historia-fila__chip">${textoPeso(registro.peso)}</span><span class="historia-fila__chip">${tratamientos.length} tratamientos</span>` : chipDetalle;
     const detalle = consulta ? `
         <p><strong>Veterinario:</strong> ${escaparTexto(registro.veterinario || 'Sin dato')}</p>
         ${etiquetaOrigen(registro)}
@@ -1244,19 +1260,28 @@ function filaHistorialCompacto(registro, tipo) {
         <p><strong>${tipo === 'vacuna' ? 'Vacuna' : 'Producto'}:</strong> ${escaparTexto(titulo)}</p>
         <p><strong>Detalle:</strong> ${escaparTexto(diagnostico)}</p>
         <p><strong>Lote:</strong> ${escaparTexto(registro.lote || 'Sin registro')}</p>
-        <p><strong>Próxima aplicación:</strong> ${escaparTexto(registro.fecha_proxima_dosis || registro.fecha_proxima || 'Sin programar')}</p>
+        <p><strong>Próxima aplicación:</strong> ${fechaProximaHistorial(registro.fecha_proxima_dosis || registro.fecha_proxima)}</p>
         <p>${escaparTexto(registro.observaciones || '')}</p>`;
     return `<details class="historia-fila">
         <summary class="historia-fila__resumen">
-            <time class="historia-fila__fecha">${escaparTexto(fechaTexto)}</time>
-            <span class="historia-fila__clinica">${escaparTexto(registro.clinica_nombre || 'Clínica actual')}</span>
-            <strong class="historia-fila__motivo">${escaparTexto(titulo)}</strong>
-            <span class="historia-fila__diagnostico">${escaparTexto(diagnostico)}</span>
-            <span class="historia-fila__chips">${chips}</span>
+            <span class="historia-fila__lineas">
+                <span class="historia-fila__linea historia-fila__linea--principal">
+                    <time class="historia-fila__fecha">${escaparTexto(fechaTexto)}</time>
+                    <strong class="historia-fila__titulo">${escaparTexto(principal)}</strong>
+                </span>
+                <span class="historia-fila__linea historia-fila__linea--contexto">
+                    <span class="historia-fila__clinica">${escaparTexto(registro.clinica_nombre || 'Clínica actual')}</span>
+                    <span class="historia-fila__chips">${chips}</span>
+                </span>
+            </span>
             <i class="fas fa-chevron-down historia-fila__flecha" aria-hidden="true"></i>
         </summary>
         <div class="historia-fila__detalle"><p><strong>Clínica:</strong> ${escaparTexto(registro.clinica_nombre || 'Clínica actual')}</p>${detalle}</div>
     </details>`;
+}
+
+function fechaProximaHistorial(fecha) {
+    return fecha ? escaparTexto(fechaHistorial(fecha)) : 'Sin programar';
 }
 
 // M2 C5a: el historial abierto se pone al día cuando se guarda una consulta de esa mascota.

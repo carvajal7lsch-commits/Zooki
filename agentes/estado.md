@@ -2,13 +2,14 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-16
+**Actualizado:** 2026-10-17
 
 ## Ahora
 
 - **Módulo activo:** M2 — Historia clínica y soporte a la decisión (Grafo I), previsto como `2.0.0-alpha.4`. Plan: [`specs/M2-grafo-clinico.md`](../specs/M2-grafo-clinico.md). Rama: `v2/m2-grafo`.
-- **Entrega actual de M2:** **C8.1 — celular e historial compacto: revisada y aprobada con tres correcciones (2026-10-16).** Lo escribió Codex; commit `0d02dad`. C8 en `7367317`. Ver «C8.1 — Revisión».
-- **Verificación C8.1:** PHP 854 (7212 aserciones y 44 omitidas sin host; 7813 aserciones y ninguna omitida con MariaDB 10.4.32 temporal propia y `zooki_test_base_v2`); JS 232/232. Chrome: anchos 360, 390, 414, 820 y 1440; 72 capturas de vistas reales con respuestas simuladas en `specs/referencias/m2-pulido/c8-1-despues/`. Sin cambios de reglas, permisos, rutas ni respuestas del servidor; pendiente revisión del arquitecto y comprobación del usuario en su sesión.
+- **Entrega actual de M2:** **C8.2 — resumen del historial en dos líneas, cajón compacto y fechas dd/mm/aaaa: entregada, pendiente de revisión (2026-10-17).** La escribió Claude Code en la nube, rama `claude/m2-c8-2-historial` (sale de `v2/m2-grafo`, sin merge). Ver «Anexo C8.2 — Resultado».
+- **Verificación C8.2:** PHP no se pudo correr en la nube (composer sin acceso a github.com; la corre el revisor, también con MySQL 8); JS 238/238; Chromium a 360, 390, 820 y 1440 px con capturas en `specs/referencias/m2-pulido/c8-2-despues/`.
+- **C8.1 — celular e historial compacto:** revisada y aprobada con tres correcciones (2026-10-16), que son C8.2. Lo escribió Codex; commit `0d02dad`. Ver «C8.1 — Revisión».
 - **C7:** revisada y aprobada en código (2026-10-16), escrita por Claude Code; ver «C7 — Revisión». Todas las etapas de construcción de M2 están revisadas, sin dar por aprobadas sus pruebas manuales pendientes.
 - **Verificación F:** PHP 852 (7182 aserciones y 44 omitidas sin host; 7783 aserciones y ninguna omitida con MariaDB 10.4.32 temporal propia y `zooki_test_base_v2`); JS 211/211; batería 26/26; 27 diagramas renderizados; 96 HU, 427 RE, 120 RN y 52 tablas coherentes. Ocho PDF y ocho Word regenerados, índices completos e integridad/revisiones verificadas; `exportar.mjs --revisar`: «Las descargas están al día». Detalle en Anexo F.
 - **Decisión del usuario durante F (2026-10-16):** verificar migración/carga en el log completo, sin `--tail`, y comprobar `App::VERSION` dentro del contenedor y en pantalla; el arranque no imprime la versión y no se modifica para agregarla.
@@ -52,7 +53,7 @@
 - **Decisiones durante E2 (2026-10-11):** comparación del NIT con/sin guion; solo las clínicas de prueba reconocidas se normalizan y el script se detiene ante un NIT ajeno coincidente, sin modificar datos. Reactivar personal también exige cupo en el botón de estado y el modal. Anotadas en el plan.
 - **Verificación de F:** PHP 691 en verde (sin MySQL: 4231 aserciones y 31 omitidas; con MariaDB temporal propia y `zooki_test_base_v2`: 4603 aserciones, ninguna omitida); JS 167/167. Descargas «al día»; diagrama §11 renderizado. No se leyó ni escribió `.env` ni se accedió a la base de trabajo.
 - **C8 — rediseño visual de la consulta y del vínculo: revisada y aprobada en código (2026-10-16), commit `7367317`.** Lo escribió Claude Code; revisó Claude (arquitecto). Ver «Anexo C8 — Resultado» y «C8 — Revisión». Los hallazgos H10/H11 se entregan en C8.1; no se dan por aprobadas las pruebas manuales pendientes.
-- **Siguiente paso:** C8.2 — resumen del historial legible en anchos estrechos, espaciado del cajón y fechas dd/mm/aaaa (Claude Code en sesión en la nube, por decisión del usuario). Después: el usuario repite las pruebas, respaldo, integración, tag `v2.0.0-alpha.4` y comprobación del VPS. Luego, plan de M4. Pendiente aparte: borrar los respaldos temporales del VPS.
+- **Siguiente paso:** revisar C8.2 (arquitecto, con MySQL 8) e integrar la rama `claude/m2-c8-2-historial` en `v2/m2-grafo` (usuario). Después: el usuario repite las pruebas, respaldo, integración, tag `v2.0.0-alpha.4` y comprobación del VPS. Luego, plan de M4. Pendiente aparte: borrar los respaldos temporales del VPS.
 - **Para el plan de M4 (idea del usuario, 2026-10-15, por decidir allí):** el paciente que llega sin cita y no es urgencia debería pasar por la agenda. Recomendación del revisor: «Atención sin cita» (HU-2.2) crea por detrás una cita de llegada en curso, como sobrecupo si no hay hueco (RN-422), para que la agenda del veterinario refleje la realidad; las urgencias siguen HU-4.15. Hoy (M2) la consulta sin cita no crea cita.
   Reparto de M2: Codex C2–C4; Claude Code C5.
   RN-112 con «alerta médica» queda documentada en F; las alertas del imprimible ya quedaron implementadas y revisadas en C7.

@@ -1,0 +1,482 @@
+[
+  {
+    "donde": "Atención 360",
+    "filas": [
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "vet_pacientes 360",
+    "filas": [
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "huecos vet_pacientes 360",
+    "huecos": [
+      14,
+      14,
+      14
+    ]
+  },
+  {
+    "donde": "vet_consultas 360",
+    "filas": [
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "huecos vet_consultas 360",
+    "huecos": [
+      14,
+      14
+    ]
+  },
+  {
+    "donde": "Atención 390",
+    "filas": [
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "vet_pacientes 390",
+    "filas": [
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "huecos vet_pacientes 390",
+    "huecos": [
+      14,
+      14,
+      14
+    ]
+  },
+  {
+    "donde": "vet_consultas 390",
+    "filas": [
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "huecos vet_consultas 390",
+    "huecos": [
+      14,
+      14
+    ]
+  },
+  {
+    "donde": "Atención 820",
+    "filas": [
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "vet_pacientes 820",
+    "filas": [
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "huecos vet_pacientes 820",
+    "huecos": [
+      14,
+      14,
+      14
+    ]
+  },
+  {
+    "donde": "vet_consultas 820",
+    "filas": [
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "huecos vet_consultas 820",
+    "huecos": [
+      14,
+      14
+    ]
+  },
+  {
+    "donde": "Atención 1440",
+    "filas": [
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "vet_pacientes 1440",
+    "filas": [
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "huecos vet_pacientes 1440",
+    "huecos": [
+      14,
+      14,
+      14
+    ]
+  },
+  {
+    "donde": "vet_consultas 1440",
+    "filas": [
+      {
+        "texto": "01/09/2026 Rabia Clínica Norte Laboratorio registrado",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/08/2026 Producto registrado Clínica Sur interna",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "01/10/2026 Gastritis Clínica Norte Sin cita 9.00 Kg 1 tratamientos",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "05/09/2026 Dermatitis alérgica por picadura de pulgas con infección secundaria Clínica Veterinaria del Norte de Bogotá Sin peso registrado 0 tratamientos",
+        "dosLineas": true,
+        "desborde": false,
+        "rotas": []
+      },
+      {
+        "texto": "15/08/2026 Revisión general Clínica Sur 8.70 Kg 0 tratamientos",
+        "dosLineas": false,
+        "desborde": false,
+        "rotas": []
+      }
+    ]
+  },
+  {
+    "donde": "huecos vet_consultas 1440",
+    "huecos": [
+      14,
+      14
+    ]
+  }
+]

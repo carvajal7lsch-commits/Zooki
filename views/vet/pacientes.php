@@ -902,7 +902,8 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
             <p id="historyPetName"></p>
         </div>
     </div>
-    <div class="drawer-body">
+    <?php // C8.2: historial-cajon deja las secciones juntas, con un solo espaciado. ?>
+    <div class="drawer-body historial-cajon">
         <?php // M2 C1: alergias y alertas, lo primero de la historia. ?>
         <div class="paciente-compacto__controles">
             <button type="button" class="paciente-compacto__alertas" data-paciente-alertas aria-expanded="false" aria-controls="pacientesHistorialAlertas">Cargando alertas</button>
@@ -923,15 +924,17 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
         </div>
 
         <!-- Vacunas y desparasitaciones -->
-        <div class="vaccine-summary-section">
+        <div class="vaccine-summary-section historial-cajon__seccion">
             <h4 class="section-title"><i class="fas fa-syringe"></i> Vacunas y desparasitaciones</h4>
             <div id="vaccineList" class="vaccine-grid">
                 <!-- Dinámico -->
             </div>
         </div>
 
-        <h4 class="section-title"><i class="fas fa-history"></i> Línea de Tiempo de Consultas</h4>
-        <div id="historyTimeline" class="history-timeline"></div>
+        <div class="historial-cajon__seccion">
+            <h4 class="section-title"><i class="fas fa-history"></i> Línea de Tiempo de Consultas</h4>
+            <div id="historyTimeline" class="history-timeline"></div>
+        </div>
     </div>
 </aside>
 
