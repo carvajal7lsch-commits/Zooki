@@ -1,6 +1,6 @@
 # Especificación de Requisitos de Software (ERS) — Proyecto Zooki v2
 
-> **Revisión 3.4** · Conforme al estándar **ISO/IEC/IEEE 29148:2018** · Zooki — Sistema de gestión clínica veterinaria (arquitectura SaaS multi-inquilino) · SENA ADSO — Ficha 3142784
+> **Revisión 3.5** · Conforme al estándar **ISO/IEC/IEEE 29148:2018** · Zooki — Sistema de gestión clínica veterinaria (arquitectura SaaS multi-inquilino) · SENA ADSO — Ficha 3142784
 
 | Fecha | Revisión | Estándar | Autor |
 |---|---|---|---|
@@ -11,10 +11,14 @@
 | 05/10/2026 | 3.1 | ISO/IEC/IEEE 29148:2018 | Juan Sebastián Carvajal Home |
 | 06/10/2026 | 3.2 | ISO/IEC/IEEE 29148:2018 | Juan Sebastián Carvajal Home |
 | 11/10/2026 | 3.3 | ISO/IEC/IEEE 29148:2018 | Juan Sebastián Carvajal Home |
+| 14/10/2026 | 3.4 | ISO/IEC/IEEE 29148:2018 | Juan Sebastián Carvajal Home |
+| 16/10/2026 | 3.5 | ISO/IEC/IEEE 29148:2018 | Juan Sebastián Carvajal Home |
 
 **Historial.** Las revisiones 1.0–2.1 documentaron el producto de instalación única hasta la versión estable **v1.11.0**. La **revisión 3.0** reescribe el ERS para la versión **v2.0**, que transforma Zooki en una **plataforma SaaS multi-inquilino** e incorpora dos capacidades diferenciadoras basadas en grafos (soporte a la decisión clínica y agendamiento inteligente), además de suscripción por planes, registro autónomo de clínicas, carnet digital con QR y reputación de veterinarios. Esta revisión se alinea al estándar **ISO/IEC/IEEE 29148:2018**, sucesor del IEEE 830-1998. El documento maestro que fija el alcance de este cambio es *Visión y Alcance — Zooki v2.0*. La **revisión 3.1** (5 de octubre de 2026) recoge la revisión completa de la especificación: identifica cada requisito funcional con el número de su módulo (`RF-<módulo>.<n>`) y numera los no funcionales en orden (equivalencias en §5.5); hace global a la mascota, con historia clínica compartida bajo autorización del propietario (RF-1.8, RF-2.6); introduce la identidad única por persona con varios roles (RF-T.5), el registro con Google, la autorización de tratamiento de datos y la gestión segura del perfil (RF-T.6 a RF-T.8), con un `id_usuario` numérico como clave (§5.2); especifica el cálculo del triage y la agenda inteligente completa (RF-2.12, RF-4.11 a RF-4.15, RF-7.5); protege el registro de clínicas, el carnet QR y la reputación (RF-0.3, RF-5.7, RF-5.8, RF-8.3); fija los límites del plan gratuito, el comportamiento al bajar de plan y la excepción de las urgencias (RF-0.4 a RF-0.6); agrega el derecho de supresión, el dashboard y la página pública (RF-5.9, RF-6.1, RF-6.2, RF-9.1); endurece la sesión (RNF-12 a RNF-15); completa el modelo de datos (§5.2) y registra las capas avanzadas del plan profesional como requisito futuro (RF-F.8). La **revisión 3.2** corrige las incoherencias detectadas al preparar la construcción: el alcance se reparte entre las entregas v2.0 y v2.1 y los criterios de aceptación se evalúan por entrega (§5.4); el aislamiento declara sus excepciones globales y la alerta genérica de interacción con medicación protegida de otra clínica (RNF-11); la urgencia presencial sin identidad verificada usa una ficha provisional (RF-4.10); entre sobrecupos naranja rige el orden de llegada (RF-4.7); y las ausencias del veterinario se registran por fecha y hora (§5.2). La **revisión 3.3** (11 de octubre de 2026) acompaña la versión **2.0.0-alpha.1**, la primera de la plataforma SaaS en producción (módulo 0): fija los topes del plan gratuito en 50 mascotas vinculadas, 100 citas al mes y 2 cuentas de personal (RF-0.4); aclara que el super-administrador no accede a mascotas, historias, consultas ni citas, tampoco para soporte; y lleva la protección contra intentos fallidos a 20 por IP, CAPTCHA por cuenta e IP real del cliente detrás del proxy (RNF-12). La **revisión 3.4** (14 de octubre de 2026) acompaña la versión **2.0.0-alpha.3** (módulo 5, portal multi-clínica): la cuenta del propietario que registra la clínica se activa por el titular, sin aceptación presencial (RF-T.7); el propietario tiene un tope de 3 clínicas cuando se vincula él mismo (RF-5.4); y el registro de la mascota ya no pide el color (RF-1.1, RF-1.7).
 
 ---
+
+**Revisión 3.5 (16 de octubre de 2026):** cierre de M2 en 2.0.0-alpha.4, con 96 HU, 427 RE, 120 RN y 52 tablas de negocio; `schema_migraciones` es una tabla técnica adicional del migrador. Se completan síntomas, sugerencias, prescripción, alergias y mapa; el triage operativo sigue en M4. Validación veterinaria del conocimiento pendiente.
 
 ## 1. Introducción
 
@@ -292,14 +296,16 @@ Los módulos siguen la **misma numeración en todos los documentos** ([Historias
 | RF-2.4 | Generar un número de historia clínica único por mascota en su primera consulta en cada clínica. | Media | El número no se repite dentro de la clínica. |
 | RF-2.5 | Visualizar el resumen cronológico de todas las consultas con acordeón. | Media | La vista carga en < 3 s para historiales de hasta 100 consultas. |
 | RF-2.6 | Historia clínica compartida entre clínicas: cada registro conserva la clínica y el veterinario que lo hizo y solo esa clínica lo modifica; toda clínica vinculada ve alergias, alertas, vacunas y desparasitaciones de todas las clínicas; las consultas, tratamientos y archivos de otra clínica solo con autorización del propietario, revocable. | Alta | Sin autorización, una clínica no obtiene las consultas de otra ni por la interfaz ni por petición directa (403); con autorización, las ve marcadas con su clínica de origen. |
-| RF-2.7 | Mantener el grafo de conocimiento clínico: nodos (síntomas, diagnósticos, fármacos, especies, razas, condiciones) y aristas con tipo y signo (positivo/negativo). | Alta | Es posible crear y consultar nodos y aristas con su tipo y signo. |
+| RF-2.7 | Mantener conocimiento global versionado: nodos (incluidas sustancias), aristas con signo/peso/efecto, fuentes, validación, sinónimos y reglas contextuales. El superadministrador lo explora en un mapa de solo lectura sin pacientes (HU-2.12). | Alta | La carga conserva IDs y retira lógicamente; el mapa muestra fuentes/cobertura/versión y rechaza acceso desde contextos clínicos. |
 | RF-2.8 | Al registrar los síntomas de una consulta, sugerir diagnósticos probables ordenados por peso. | Alta | La lista sugerida corresponde a las aristas síntoma→diagnóstico y su orden por peso. |
 | RF-2.9 | Al prescribir, detectar toxicidad por especie/raza y bloquear o advertir mediante aristas negativas (p. ej. paracetamol en felinos). | Alta | Prescribir un fármaco con arista negativa para la especie del paciente dispara la alerta/bloqueo. |
 | RF-2.10 | Detectar interacciones con la medicación vigente del paciente usando su historia como subgrafo. | Alta | Al prescribir un fármaco que interactúa con otro activo del paciente, se advierte. |
 | RF-2.11 | Mostrar las predisposiciones asociadas a la raza al abrir la cita. | Media | Al abrir la cita de una raza con predisposiciones cargadas, estas se muestran. |
-| RF-2.12 | Calcular el nivel de triage con reglas explícitas: captura estructurada de síntomas y tiempo, nivel máximo sin promediar, escalamiento por combinación, modificadores del paciente, alarmas universales para cualquier especie, «revisión del personal» cuando no hay cobertura y aviso de posible contagio. | Alta | Los 26 casos clínicos de la batería de triage dan su nivel esperado. |
+| RF-2.12 | Calcular el triage solo con marcas confirmadas, tiempo por evento y paciente; nota libre excluida, máximo sin promediar, combinaciones, modificadores, P1 universal, revisión sin cobertura y aviso de posible contagio. | Alta | Los 26 casos estructurados cumplen sus esperados provisionales y limitaciones; «No sé» requiere revisión si es decisivo y «No aplica» se usa solo para preventivo. |
 
 > El Grafo I es **apoyo**, no diagnóstico automático: la decisión final es del veterinario. Su cobertura depende del conocimiento cargado (acotado inicialmente a perros y gatos).
+Cada elemento tiene fuente y validación pendiente; las pruebas de software no certifican validez clínica.
+En 2.0.0-alpha.4 están implementados el formato/cargador, el conocimiento inicial con fuentes, el mapa, el apoyo diagnóstico y las alertas al prescribir. El motor de triage, buscador y batería están hechos; su captura y operación en agenda, urgencias y ajuste veterinario se integran en M4. Carnet y QR con alertas siguen para el final de la v2.0.
 
 #### 3.2.5 Módulo 3 — Vacunación, desparasitación y recordatorios *(v1.x)*
 
@@ -485,8 +491,10 @@ El modelo de la línea base v1.12.0 evoluciona con: (a) la columna `id_clinica` 
 | clinicas | Inquilino de la plataforma. (id_clinica PK, nombre, nit UK, direccion, telefono, estado [pendiente_verificacion/activa/suspendida/baja], logo, datos_contacto, id_plan FK, parámetros de la agenda) |
 | planes | Planes de suscripción. (id_plan PK, nombre, precio_mensual, precio_anual, limite_mascotas, limite_citas_mes, limite_personal) |
 | suscripciones | Estado de la suscripción por clínica. (id_suscripcion PK, id_clinica FK, id_plan FK, estado, fecha_inicio, fecha_fin, al_dia) |
-| grafo_nodos | Nodos del grafo clínico. (id_nodo PK, tipo [sintoma/diagnostico/farmaco/especie/raza/condicion], etiqueta) |
-| grafo_aristas | Aristas dirigidas con signo. (id_arista PK, id_origen FK, id_destino FK, tipo_relacion, signo [+/−], peso) |
+| grafo_nodos | Conocimiento global. (id_nodo PK, codigo UK, tipo [sintoma/diagnostico/farmaco/especie/raza/condicion/sustancia], etiqueta, activo, version_conocimiento, fuentes, estado_validacion, nivel_triage, alarma_universal, moderado, metadatos, id_especie FK, id_raza FK) |
+| grafo_aristas | Aristas dirigidas con signo, efecto y condiciones. (id_arista PK, codigo UK, id_origen FK, id_destino FK, tipo_relacion, signo [+/−], peso, efecto, condiciones, fuentes, estado_validacion, activo, version_conocimiento) |
+| grafo_sinonimos | Formas de búsqueda por nodo. (id_sinonimo PK, codigo UK, id_nodo FK, texto, normalizado, fuentes, estado_validacion, activo, version_conocimiento) |
+| grafo_reglas | Condiciones y resultados declarativos por motor, con fuentes y retiro lógico. (id_regla PK, codigo UK, motor, condiciones, resultado, fuentes, estado_validacion, activo, version_conocimiento) |
 | resenas_veterinario | Calificación por cita atendida. (id_resena PK, id_cita FK, id_veterinario FK, id_propietario FK, estrellas, comentario, oculta, motivo_moderacion, fecha) |
 | usuario_clinica | Roles de personal de cada persona en cada clínica. (id_usuario PK/FK, id_clinica PK/FK, id_rol FK, estado, fecha_vinculo) |
 | veterinario_perfil | Datos públicos del veterinario. (id_veterinario PK/FK, bio, url_foto) |

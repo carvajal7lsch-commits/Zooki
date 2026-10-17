@@ -202,7 +202,7 @@ final class M5C11VinculosTest extends TestCase
         $this->comoVeterinario(DosClinicas::NORTE, DosClinicas::VET_NORTE);
 
         $intentos = [
-            'consulta' => fn () => (new Consulta($this->db))->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], fn () => []),
+            'consulta' => fn () => (new Consulta($this->db))->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], fn () => []),
             'vacuna' => fn () => (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'Rabia', 'fecha_aplicacion' => '2026-10-01']),
         ];
         foreach ($intentos as $registro => $intento) {

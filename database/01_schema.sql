@@ -2,7 +2,7 @@
 -- Zooki v2 — Esquema ejecutable de la base de datos (plan M0, etapa B).
 --
 -- Base limpia: la v2 no migra datos de la v1, que eran pruebas (plan M0, §6).
--- Este archivo crea las 50 tablas del MER (documentacion/MER.md); el diagrama
+-- Este archivo crea las 52 tablas del MER (documentacion/MER.md); el diagrama
 -- para drawDB está en database/modelo/drawdb_schema_v2.sql.
 --
 -- Cómo se carga:
@@ -247,21 +247,49 @@ CREATE TABLE `casos_soporte` (
 
 CREATE TABLE `grafo_nodos` (
   `id_nodo` INT NOT NULL AUTO_INCREMENT,
-  `tipo` ENUM('sintoma','diagnostico','farmaco','especie','raza','condicion') NOT NULL,
+  `codigo` VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `version_conocimiento` VARCHAR(64) NOT NULL,
+  `fuentes` JSON NOT NULL,
+  `estado_validacion` ENUM('pendiente','validado','rechazado') NOT NULL DEFAULT 'pendiente',
+  `tipo` ENUM('sintoma','diagnostico','farmaco','especie','raza','condicion','sustancia') NOT NULL,
   `etiqueta` VARCHAR(150) NOT NULL,
+  `nivel_triage` ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL,
+  `alarma_universal` TINYINT(1) NOT NULL DEFAULT 0,
+  `moderado` TINYINT(1) NOT NULL DEFAULT 0,
+  `metadatos` JSON DEFAULT NULL,
+  `id_especie` INT DEFAULT NULL,
+  `id_raza` INT DEFAULT NULL,
   PRIMARY KEY (`id_nodo`),
-  KEY `idx_grafo_nodos_tipo` (`tipo`, `etiqueta`)
+  UNIQUE KEY `uq_grafo_nodos_codigo` (`codigo`),
+  UNIQUE KEY `uq_grafo_nodos_especie` (`id_especie`),
+  UNIQUE KEY `uq_grafo_nodos_raza` (`id_raza`),
+  KEY `idx_grafo_nodos_tipo` (`tipo`, `etiqueta`),
+  CONSTRAINT `ck_nodo_taxonomia` CHECK (
+    (activo = 0 AND codigo LIKE 'legado.%')
+    OR (tipo = 'especie' AND id_especie IS NOT NULL AND id_raza IS NULL)
+    OR (tipo = 'raza' AND id_raza IS NOT NULL AND id_especie IS NULL)
+    OR (tipo NOT IN ('especie','raza') AND id_especie IS NULL AND id_raza IS NULL)
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Grafo con signo: lo positivo favorece, lo negativo contraindica o veta.
 CREATE TABLE `grafo_aristas` (
   `id_arista` INT NOT NULL AUTO_INCREMENT,
+  `codigo` VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `version_conocimiento` VARCHAR(64) NOT NULL,
+  `fuentes` JSON NOT NULL,
+  `estado_validacion` ENUM('pendiente','validado','rechazado') NOT NULL DEFAULT 'pendiente',
   `id_origen` INT NOT NULL,
   `id_destino` INT NOT NULL,
   `tipo_relacion` VARCHAR(50) NOT NULL,
   `signo` ENUM('positivo','negativo') NOT NULL,
-  `peso` DECIMAL(4,3) DEFAULT 1.000,
+  `peso` DECIMAL(4,3) NOT NULL DEFAULT 1.000,
+  `efecto` ENUM('evidencia','bloqueo','advertencia') NOT NULL DEFAULT 'evidencia',
+  `condiciones` JSON DEFAULT NULL,
   PRIMARY KEY (`id_arista`),
+  UNIQUE KEY `uq_grafo_aristas_codigo` (`codigo`),
   KEY `idx_grafo_aristas_origen` (`id_origen`, `tipo_relacion`),
   CONSTRAINT `fk_arista_origen` FOREIGN KEY (`id_origen`) REFERENCES `grafo_nodos` (`id_nodo`),
   CONSTRAINT `fk_arista_destino` FOREIGN KEY (`id_destino`) REFERENCES `grafo_nodos` (`id_nodo`)
@@ -313,6 +341,38 @@ CREATE TABLE `razas` (
   PRIMARY KEY (`id_raza`),
   UNIQUE KEY `uq_raza_especie_nombre` (`id_especie`, `nombre_raza`),
   CONSTRAINT `fk_raza_especie` FOREIGN KEY (`id_especie`) REFERENCES `especies` (`id_especie`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+ALTER TABLE grafo_nodos ADD CONSTRAINT fk_nodo_especie FOREIGN KEY (id_especie) REFERENCES especies (id_especie), ADD CONSTRAINT fk_nodo_raza FOREIGN KEY (id_raza) REFERENCES razas (id_raza);
+
+CREATE TABLE `grafo_sinonimos` (
+  `id_sinonimo` INT NOT NULL AUTO_INCREMENT,
+  `codigo` VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `version_conocimiento` VARCHAR(64) NOT NULL,
+  `fuentes` JSON NOT NULL,
+  `estado_validacion` ENUM('pendiente','validado','rechazado') NOT NULL DEFAULT 'pendiente',
+  `id_nodo` INT NOT NULL,
+  `texto` VARCHAR(150) NOT NULL,
+  `normalizado` VARCHAR(150) NOT NULL,
+  PRIMARY KEY (`id_sinonimo`),
+  UNIQUE KEY `uq_grafo_sinonimos_codigo` (`codigo`),
+  KEY `idx_grafo_sinonimos_busqueda` (`normalizado`),
+  CONSTRAINT `fk_sinonimo_nodo` FOREIGN KEY (`id_nodo`) REFERENCES `grafo_nodos` (`id_nodo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `grafo_reglas` (
+  `id_regla` INT NOT NULL AUTO_INCREMENT,
+  `codigo` VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `version_conocimiento` VARCHAR(64) NOT NULL,
+  `fuentes` JSON NOT NULL,
+  `estado_validacion` ENUM('pendiente','validado','rechazado') NOT NULL DEFAULT 'pendiente',
+  `motor` ENUM('diagnosticos','prescripcion','triage') NOT NULL,
+  `condiciones` JSON NOT NULL,
+  `resultado` JSON NOT NULL,
+  PRIMARY KEY (`id_regla`),
+  UNIQUE KEY `uq_grafo_reglas_codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `colores_base` (
@@ -527,6 +587,7 @@ CREATE TABLE `ausencias_veterinario` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `citas` (
+  `contexto_triage` JSON DEFAULT NULL,
   `id_cita` INT NOT NULL AUTO_INCREMENT,
   `id_clinica` INT NOT NULL,
   `id_mascota` INT NOT NULL,
@@ -576,6 +637,7 @@ CREATE TABLE `citas` (
 
 -- Síntomas marcados del catálogo del grafo (RN-424).
 CREATE TABLE `cita_sintomas` (
+  `detalles` JSON DEFAULT NULL,
   `id_cita` INT NOT NULL,
   `id_nodo` INT NOT NULL,
   PRIMARY KEY (`id_cita`, `id_nodo`),
@@ -651,6 +713,7 @@ CREATE TABLE `consultas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `consulta_sintomas` (
+  `detalles` JSON DEFAULT NULL,
   `id_consulta` INT NOT NULL,
   `id_nodo` INT NOT NULL,
   PRIMARY KEY (`id_consulta`, `id_nodo`),

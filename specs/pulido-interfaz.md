@@ -14,22 +14,47 @@
 ## Formularios
 
 - **Validación en tiempo real** de los campos (recorrido C8/C9): el teléfono del perfil del propietario no tiene longitud máxima ni filtra caracteres mientras se escribe. Revisar el mismo patrón en todos los formularios. **El teléfono del perfil se corrige en C9.1**; el resto, en el pulido.
-- **Formulario de tratamiento** de la consulta: mejorar sus campos (dosis, duración, vía) y su presentación (recorrido C8/C9).
-- **Campos obligatorios de la consulta:** el aviso de «falta el motivo» llega al finalizar; marcar los obligatorios desde el inicio y avisar en el campo (recorrido C8/C9).
-- **Peso desconocido de la mascota:** decidir cómo registrar un peso aproximado o desconocido (pregunta del usuario, recorrido C8/C9).
-- **Modales:** mejorar su diseño en general (recorrido C8/C9).
+- **Formulario de tratamiento** de la consulta: mejorar sus campos (dosis, duración, vía) y su presentación (recorrido C8/C9). **Hecho en M2 C5b** (modal y Atención): fármaco del catálogo o nombre libre, dosis, vía de una lista, duración, inicio, fin calculado desde una duración inequívoca, observaciones y las alertas de prescripción por fila, con máximos del servidor y avisos junto al campo.
+- **Campos obligatorios de la consulta:** el aviso de «falta el motivo» llega al finalizar; marcar los obligatorios desde el inicio y avisar en el campo (recorrido C8/C9). **Hecho en M2 C5a** (modal y Atención): motivo y diagnóstico salen «Obligatorio.» desde que se abre, el aviso va junto al campo mientras se escribe y los errores del servidor (también los de los signos) salen junto a su campo. **Desde M2 C8 (hallazgo H5)** los marca el asterisco y el aviso rojo sale solo con un error: «Obligatorio.» suelto se leía como una etiqueta.
+- **Peso desconocido de la mascota:** decidir cómo registrar un peso aproximado o desconocido (pregunta del usuario, recorrido C8/C9). **Decisión del usuario (2026-10-15), hecha en M2 C5b:** casilla «No se pudo pesar»; el peso queda NULL, nunca 0, y no hay peso aproximado.
+- **Modales:** mejorar su diseño en general (recorrido C8/C9). **El de consulta, hecho en M2 C8** (secciones claras, pie siempre a la vista, hoja completa en el celular); el resto sigue para el pulido final.
+- **Modal de consulta sin frecuencia respiratoria ni observaciones** (hallazgo de M2 A.1). **Hecho en M2 C7**, con los límites y avisos de `ValidadorClinico`.
+- **`style=` restantes en `medical-module.js`** (expediente, buscador de pacientes de «Atención sin cita» e impresión) (revisión de M2 C5a). **Hecho en M2 C7:** pasaron a clases con los mismos valores; el buscador también dejó sus eventos en línea.
+- **Historial con los pendientes de M2** (revisiones de C1, C5a y C5b). **Hecho en M2 C7:** «Sin peso registrado» para todo peso NULL (cajón, ficha, impresión, Atención, detalle de Consultas y portal); síntomas marcados en el detalle de la lista de Consultas, el historial del portal y su imprimible; alergias y alertas activas, con su clínica, en el imprimible del portal.
+- **Vincular una mascota existente a la clínica está escondido** (usuario, 2026-10-15, pruebas de M2 C5a): hoy solo se llega por Pacientes → Nuevo registro → pestaña «Mascota» → buscar al propietario por documento → «Vincular a la clínica», y antes el propietario tiene que vincularse a la clínica desde su portal. Sin instrucciones no se encuentra. Propuesta: un acceso visible en Pacientes («Vincular mascota de un cliente»), que diga en una línea qué hacer si el propietario aún no está vinculado (pedir confirmación por correo). RE-1.5.1 a RE-1.5.3. **Hecho en M2 C7:** botón «Vincular mascota de un cliente» junto a «Nuevo Registro», que abre el registro de mascota directo en la búsqueda del propietario, con el mismo flujo; sin vínculo dice en una línea que se pida la confirmación por correo o que se vincule desde su portal.
+- **«Primera consulta» en la línea de tiempo vacía** (usuario, 2026-10-15): se lee como si hiciera falta una cita antes. Una consulta sin cita es válida (HU-2.2, urgencias o imprevistos); cambiar el texto a «Registrar consulta» y, si no viene de una cita, indicar «Sin cita». **Hecho en M2 C7:** «Registrar consulta», con la aclaración de que no hace falta una cita, y «Sin cita» en el detalle de la lista de Consultas y en el historial (cajón, ficha y Atención).
+
+## Rediseño de la consulta y del vínculo — M2 C8 (2026-10-16)
+
+Hallazgos H2 a H9 del usuario en las pruebas antes del despliegue (plan M2). Esta vez el usuario sí pidió rediseñar: la consulta (modal y Atención) y el vínculo de mascotas quedan al nivel del portal. Capturas antes y después en `specs/referencias/m2-pulido/c8-antes/` y `c8-despues/`.
+
+- **Identidad (H5):** `public/css/identidad.css` define las variables `--z-*` (los mismos nombres y valores del portal) y la cargan el layout clínico y el del portal. `atencion.css`, `consulta-clinica.css`, `alertas-medicas.css` y `pacientes.css` ya no tienen colores sueltos: azul de marca y neutros; rojo y ámbar solo para bloqueo/error y advertencia. «Finalizar atención» y «Guardar consulta» van en azul. La mascota se ve con el avatar azul con su inicial (o su foto) en Atención, en el modal y en el vínculo.
+- **Atención, columna izquierda (H4):** datos del paciente en una cuadrícula densa; «Alergias y alertas» con el título en una línea y su contador, «Registrar» como icono y las dos primeras alertas con «Ver todas»; propietario, motivo, pendientes y última consulta en filas cortas.
+- **Campos (H5, H9):** los de la consulta usan `consulta-campo` en las dos entradas; obligatorios con asterisco, aviso rojo solo con error y ayuda discreta (`consulta-ayuda`); «+ Agregar» pasa a «Agregar medicamento» con el botón del sistema.
+- **Signos (H8):** restricción de entrada con `data-formato="decimal"` (`interacciones.js`) y los atributos de `ValidadorClinico::atributosSigno`: el peso no deja escribir más de 3 enteros y 2 decimales ni pasar de 200; lo mismo en temperatura y frecuencias, también al pegar. La coma se toma como punto.
+- **Diagnóstico y plan (H7):** cada paso de Atención es el único que desplaza (sin listas con scroll dentro); diagnósticos sugeridos en filas compactas que se expanden; «Datos que ayudarían» en una línea; etiquetas que ya no se montan.
+- **Teclado (H6):** `public/js/combobox.js` (patrón combobox de ARIA) en los buscadores de síntomas, fármacos y nodos de alergias.
+- **Modal de consulta (H9):** secciones, pie fijo, fila de tratamiento en una cuadrícula fija y hoja completa en el celular.
+- **Vincular (H2, H3):** mini-tarjetas horizontales en un carrusel con flechas o arrastre; al vincular, Pacientes pone al día la lista, el contador del propietario y su expediente sin recargar.
+
+**Pendiente para el pulido final (fuera de C8):**
+
+- `css/portal/base.css` repite los valores de `identidad.css`; unificarlos (el portal ya carga `identidad.css`).
+- Vacuna y desparasitación de Atención conservan sus campos (`.campo`), ya con las variables; el resto de pantallas clínicas (lista de Consultas, expediente, calendario) sigue con sus hojas de siempre.
+- El aviso final de Atención («Atención finalizada») y los de SweetAlert usan `ZOOKI_COLOR_OK` (`#5560FF`) de todo el sistema, no el azul de marca.
+- En el registro de mascota, «Es otra mascota: registrar nueva» y el formulario «Registrar alergia o alerta» conservan su diseño.
 
 ## Validación reutilizable — D2 (2026-10-08)
 
 `public/js/validacion-cuenta.js` consulta `ValidadorCuenta` y `PoliticaPassword`, muestra el error junto al campo y bloquea el envío mientras valida. Desde D3, la ayuda solo comprueba formato y política, nunca existencia de una cuenta (RE-T.13.2). Aplicado a registro, completar perfil, activar personal, crear/restablecer/cambiar contraseña, correo y documento del titular, contacto del perfil, Usuarios/Clientes y alta/edición del propietario en Pacientes (incluido Fabio).
 
-Pendiente extender el patrón a los formularios del resto del sistema: mascota (**hecha: la del portal en M5 C2b y la del personal, registro y edición, en M5 C3**, con `validacion-mascota.js` y las reglas de `ValidadorMascota`), consulta (motivo, tratamiento y datos clínicos), vacunas, desparasitación, agenda (crear/reprogramar), horarios y configuración. Sus reglas siguen en sus propios helpers; no se debe usar `ValidadorCuenta` para campos clínicos. Registro de clínicas y NIT se aplican en D3. La comprobación visual en móvil y el ajuste general de media queries siguen en el pulido final.
+Pendiente extender el patrón a los formularios del resto del sistema: mascota (**hecha: la del portal en M5 C2b y la del personal, registro y edición, en M5 C3**, con `validacion-mascota.js` y las reglas de `ValidadorMascota`), consulta (motivo, diagnóstico y signos **hechos en M2 C5a**; tratamiento **hecho en M2 C5b**), vacunas, desparasitación, agenda (crear/reprogramar), horarios y configuración. Sus reglas siguen en sus propios helpers; no se debe usar `ValidadorCuenta` para campos clínicos. Registro de clínicas y NIT se aplican en D3. La comprobación visual en móvil y el ajuste general de media queries siguen en el pulido final.
 
 ## Restricción de entrada — D3.1 (2026-10-10)
 
 Aplicada con `data-caracteres` de `interacciones.js` y atributos de los helpers a registro de clínica, registro de propietarios (portal y personal), completar perfil, Datos de acceso, Usuarios y formularios de contraseña (Mi perfil, portal, cambio obligatorio, activación y restablecimiento). La activación de clínica solo tiene consentimiento y campos ocultos; conserva el diseño de enlaces del correo. Documento de hasta 15 dígitos; NIT solo dígitos y un guion antes del DV; nombres con letras, espacios, apóstrofo y guion; correo sin espacios y hasta 255; teléfono conforme a `ValidadorTelefono`. El servidor normaliza espacios y rechaza caracteres ilegales; las contraseñas conservan sus espacios y símbolos con límite de 72 bytes.
 
-Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, raza indicada y peso). Pendiente aplicar restricciones y máximos compartidos a consulta y tratamientos, vacunas, desparasitación, agenda, horarios/configuración y los formularios futuros de reputación, comunicaciones y administración de plataforma. Conservar las reglas de cada módulo y no restringir textos clínicos con la regla de nombres de persona. El filtro de servicios del portal se retiró con la sección en M5 C2a; no se introdujeron eventos ni estilos en línea en D3.1.
+Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, raza indicada y peso). Pendiente aplicar restricciones y máximos compartidos a vacunas, desparasitación, agenda, horarios/configuración y los formularios futuros de reputación, comunicaciones y administración de plataforma; la consulta y sus tratamientos ya los tienen desde M2 C5a y C5b (`ValidadorClinico` y `ValidadorTratamiento`). Conservar las reglas de cada módulo y no restringir textos clínicos con la regla de nombres de persona. El filtro de servicios del portal se retiró con la sección en M5 C2a; no se introdujeron eventos ni estilos en línea en D3.1.
 
 ## Adaptación a pantallas
 
@@ -43,3 +68,14 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 - **Motivo de la cita obligatorio** cuando exista el Grafo I: el triage necesita síntomas (módulo 4, HU-4.13 y HU-2.11).
 - **Manual de usuario:** incluir que las citas se pueden arrastrar (entregable pendiente).
+- **Interruptor «Activo» del registro de mascota en verde** (revisión de M2 C8, 2026-10-16): pasar a la identidad (azul de marca) junto con el resto del pulido general.
+
+## Observaciones fuera de M2 C8.1 (2026-10-16)
+
+- El icono verde de la cabecera del cajón «Historial clínico» y otros acentos de `medical/consultas.css` conservan el diseño heredado; unificarlos en el pulido general. C8.1 solo cambia las filas del historial y el indicador móvil de alertas.
+- En tableta (820 px), Atención conserva la ficha completa encima del formulario conforme al diseño existente; el alcance aprobado compacta la cabecera por debajo de 768 px. Revisar la distribución de tableta en el pulido general si el usuario lo pide.
+
+## Observaciones fuera de M2 C8.2 (2026-10-17)
+
+- El chip de las filas del historial dice «1 tratamientos»: falta el singular («1 tratamiento»). C8.2 no cambió el texto de los chips.
+- El imprimible del historial (`imprimirHistorial` en `medical-module.js`), la fecha de nacimiento del expediente y el historial del portal del propietario siguen con `toLocaleDateString()` (formato según el navegador); unificarlos con `fechaHistorial()` (dd/mm/aaaa) si el usuario lo pide.

@@ -1,12 +1,14 @@
 # Modelo Entidad-Relación (MER) - Zooki v2.0
 
+> **Actualización de cierre M2 — 16/10/2026:** 2.0.0-alpha.4; conocimiento global con fuentes y validación veterinaria pendiente. Esquema de 52 tablas; integración del triage con agenda y urgencias pendiente de M4.
+
 Este documento describe la estructura y relaciones de la base de datos relacional de **Zooki** en su versión **v2.0** (arquitectura SaaS multi-inquilino). El modelo incorpora el aislamiento de datos por clínica (`id_clinica`), el grafo de conocimiento clínico, la suscripción por planes y la reputación de veterinarios, además del historial clínico y la auditoría ya existentes.
 
 ---
 
 ## Aislamiento multi-inquilino
 
-Cada clínica es un **inquilino** identificado por `id_clinica`. Las tablas de negocio incorporan esa columna y toda consulta la filtra. Son **globales** (compartidas por todas las clínicas, sin `id_clinica`): los catálogos taxonómicos (`especies`, `razas`, `colores_base`), el catálogo de `planes` y `especialidades`, y el **grafo de conocimiento clínico** (`grafo_nodos`, `grafo_aristas`). El **super-administrador** no pertenece a ninguna clínica (`usuarios.es_super_admin`).
+Cada clínica es un **inquilino** identificado por `id_clinica`. Las tablas de negocio incorporan esa columna y toda consulta la filtra. Son **globales** (compartidas por todas las clínicas, sin `id_clinica`): los catálogos taxonómicos (`especies`, `razas`, `colores_base`), el catálogo de `planes` y `especialidades`, y el **grafo de conocimiento clínico** (`grafo_nodos`, `grafo_aristas`, `grafo_sinonimos`, `grafo_reglas`). El **super-administrador** no pertenece a ninguna clínica (`usuarios.es_super_admin`).
 
 Los **propietarios** también son **identidades globales**: un único registro por persona, con **correo único en toda la plataforma**. Se vinculan a una o varias clínicas mediante la tabla puente **`propietario_clinica`** (el correo se verifica al crear la cuenta; si ya inició sesión y está verificado, puede elegir otra clínica sin repetir la verificación). Una misma persona puede tener **varios roles**: su rol de propietario (por `propietario_clinica`) y, en cada clínica donde trabaja, un rol de personal (administrador o veterinario) por la tabla **`usuario_clinica`**. Así un veterinario que trabaja en dos clínicas y tiene su propio perro usa una sola cuenta. Las **mascotas** también son **globales**: pertenecen a su propietario, no a una clínica, y se vinculan a cada clínica donde se atienden mediante la tabla puente **`mascota_clinica`** (que guarda además el número de historia clínica de esa clínica). Así una mascota tiene **una sola ficha, un solo carnet y un solo QR** en toda la plataforma. La ficha provisional de urgencia es la excepción temporal: se registra sin propietario verificado y con carnet inactivo hasta completarla o consolidarla (RE-4.15.3). El aislamiento se mantiene en los **registros clínicos**: `consultas`, `vacunas` y `desparasitaciones` llevan el `id_clinica` (y el veterinario) de la clínica que los creó, y solo esa clínica puede modificarlos. Otra clínica vinculada ve siempre las alergias y alertas médicas (`alertas_medicas`), las vacunas y desparasitaciones; las consultas de otras clínicas solo si el propietario la autorizó (`propietario_clinica.autoriza_historia_compartida`). Ver [Reglas de Negocio RN-110 a RN-115](ReglasNegocio.md#módulo-1--mascotas-y-propietarios).
 
@@ -207,16 +209,56 @@ erDiagram
     }
     grafo_nodos {
         int id_nodo PK
+        varchar codigo
+        tinyint activo
+        varchar version_conocimiento
+        json fuentes
+        enum estado_validacion
         enum tipo
         varchar etiqueta
+        enum nivel_triage
+        tinyint alarma_universal
+        tinyint moderado
+        json metadatos
+        int id_especie FK
+        int id_raza FK
     }
     grafo_aristas {
         int id_arista PK
+        varchar codigo
+        tinyint activo
+        varchar version_conocimiento
+        json fuentes
+        enum estado_validacion
         int id_origen FK
         int id_destino FK
         varchar tipo_relacion
         enum signo
         decimal peso
+        enum efecto
+        json condiciones
+    }
+    grafo_sinonimos {
+        int id_sinonimo PK
+        varchar codigo
+        tinyint activo
+        varchar version_conocimiento
+        json fuentes
+        enum estado_validacion
+        int id_nodo FK
+        varchar texto
+        varchar normalizado
+    }
+    grafo_reglas {
+        int id_regla PK
+        varchar codigo
+        tinyint activo
+        varchar version_conocimiento
+        json fuentes
+        enum estado_validacion
+        enum motor
+        json condiciones
+        json resultado
     }
     especies {
         int id_especie PK
@@ -303,10 +345,12 @@ erDiagram
         datetime hora_inicio_real
         datetime hora_fin_real
         datetime aviso_atencion_abierta
+        json contexto_triage
     }
     cita_sintomas {
         int id_cita PK
         int id_nodo PK
+        json detalles
     }
     consultas {
         int id_consulta PK
@@ -320,6 +364,7 @@ erDiagram
     consulta_sintomas {
         int id_consulta PK
         int id_nodo PK
+        json detalles
     }
     tratamientos {
         int id_tratamiento PK
@@ -469,6 +514,9 @@ erDiagram
     usuarios  ||--o{ reasignaciones          : "cede (vet origen)"
     usuarios  ||--o{ reasignaciones          : "confirma (vet destino)"
 
+    especies  |o--o| grafo_nodos : "taxon especie unico"
+    razas     |o--o| grafo_nodos : "taxon raza unico"
+    grafo_nodos ||--o{ grafo_sinonimos : "tiene sinonimos"
     grafo_nodos ||--o{ grafo_aristas         : "es origen de"
     grafo_nodos ||--o{ grafo_aristas         : "es destino de"
     grafo_nodos ||--o{ alertas_medicas       : "codifica"
@@ -535,8 +583,8 @@ erDiagram
 *   **resenas_veterinario**: Calificación (`estrellas` 1–5 y comentario opcional) atada a una **cita atendida**; una reseña por cita. Alimenta el promedio del perfil y el emparejamiento del Grafo II. `oculta` marca una reseña ocultada por moderación del super-administrador; la clínica no puede editarla ni borrarla (RN-804).
 
 ### 4. Grafo de conocimiento clínico (Grafo I) — nuevo, global
-*   **grafo_nodos**: Conceptos clínicos con su `tipo` (`sintoma`, `diagnostico`, `farmaco`, `especie`, `raza`, `condicion`).
-*   **grafo_aristas**: Relaciones dirigidas entre nodos con `tipo_relacion`, `signo` (`positivo`/`negativo`) y `peso`. Es un **grafo con signo**: lo positivo favorece, lo negativo contraindica o veta. Compartido por todas las clínicas.
+*   **grafo_nodos**: Conceptos clínicos con su `tipo` (`sintoma`, `diagnostico`, `farmaco`, `especie`, `raza`, `condicion`, `sustancia`), con fuentes, validación, código estable, versión y activo.
+*   **grafo_aristas**: Relaciones dirigidas entre nodos con `tipo_relacion`, `signo` (`positivo`/`negativo`) y `peso`. Es un **grafo con signo**: lo positivo favorece; un efecto negativo puede advertir o bloquear según su semántica, no solo por su signo. Compartido por todas las clínicas.
 *   Los datos de cada paciente se cruzan con el grafo por cuatro puntos: `alertas_medicas.id_nodo`, `cita_sintomas`, `consulta_sintomas` y `tratamientos.id_nodo_farmaco`. Sin esos enlaces el triage y las advertencias de prescripción no tendrían de dónde leer.
 
 > El **Grafo II (agenda)** no guarda el grafo: lo construye en tiempo real a partir de `citas` (estado, nivel de triage, horas reales, sobrecupos), `tipos_cita` (duración, margen, pausable), `horarios_clinica`, `horarios_veterinario`, `ausencias_veterinario` y los parámetros de la clínica. Solo persiste lo que debe sobrevivir entre una petición y otra: las reasignaciones que esperan confirmación (`reasignaciones`) y las propuestas de horario (`propuestas_horario`).
@@ -579,3 +627,13 @@ Además de las claves primarias, foráneas y únicas del diagrama, el esquema ej
 *   **Doble reserva:** `citas (id_veterinario, fecha, hora, ocupa_horario)`, único y sin `id_clinica` (ver §6).
 *   **Aislamiento:** índices compuestos que empiezan por `id_clinica` en las tablas de negocio (`citas`, `consultas`, `vacunas`, `desparasitaciones`, `tipos_cita`, `horarios_veterinario`, `ausencias_veterinario`, `propuestas_horario`, catálogos por clínica, `notificaciones`, `notificaciones_internas`, `auditoria_*`, `usuario_clinica`, `propietario_clinica`, `mascota_clinica`, `suscripciones`, `plantillas_comunicacion` e `ingresos_emergencia`), para que el filtro por clínica (RNF-11) no recorra la tabla completa.
 *   Todas las tablas usan InnoDB y `utf8mb4` (`utf8mb4_general_ci`). Ninguna clave foránea borra en cascada salvo `mascota_colores`: las personas, las citas y la historia clínica no se borran (RN-G08, RN-405, RN-206).
+
+### Ampliación del Grafo I — M2 B1
+
+El conocimiento es global (RN-212), con códigos estables, retiro lógico y versión SHA-256 del conjunto cargado.
+Nodos, aristas, sinónimos y reglas conservan fuentes JSON y estado de validación; quién y cuándo validó se mantienen en el archivo versionado, sin columnas de persona en la base.
+`grafo_reglas` conserva condiciones y resultado declarativos; el evaluador pertenece a C2, no a B1.
+El nodo de especie referencia solo `id_especie`; el de raza solo `id_raza`, cuya especie se obtiene de `razas`.
+Las FK, la unicidad y `ck_nodo_taxonomia` impiden enlaces inválidos o mezclados en conocimiento nuevo; los conceptos legados inactivos conservan su tipo e ID aunque aún no tengan taxonomía; el cargador comprueba la pareja especie/raza declarada contra el catálogo.
+`consulta_sintomas.detalles`, `cita_sintomas.detalles` y `citas.contexto_triage` conservan contexto estructurado, sin interpretar notas ni copiar medicación protegida.
+El tipo `sustancia` distingue tóxicos de fármacos; ningún signo negativo implica por sí solo un bloqueo.

@@ -147,6 +147,17 @@ function etiquetaClinica(nombre) {
     return `<span class="tag-mini"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(nombre)}</span>`;
 }
 
+/** M2 C7 (RN-210, RN-G02): los síntomas marcados en una consulta de su mascota, si los hay. */
+function lineaSintomas(sintomas) {
+    if (!Array.isArray(sintomas) || sintomas.length === 0) return '';
+    return `<p><strong>Síntomas:</strong> ${sintomas.map(s => escapeHtml(s.etiqueta)).join(', ')}</p>`;
+}
+
+/** M2 C7: un peso NULL dice que no hay peso registrado, nunca « kg» ni 0. */
+function textoPesoConsulta(peso) {
+    return peso === null || peso === undefined || peso === '' ? 'Sin peso registrado' : `${peso} kg`;
+}
+
 /** Cabecera de la ficha: especie y raza, y las clínicas donde se atiende. */
 function etiquetasDeLaMascota(m, clinicas) {
     let html = `<span class="tag-mini">${escapeHtml([m.especie, m.raza].filter(Boolean).join(' · '))}</span>`;
@@ -525,6 +536,9 @@ async function verDetalle(id, opciones = {}) {
     document.getElementById('citasContent').innerHTML = '';
     document.getElementById('vacunasContent').innerHTML = '';
     document.getElementById('desparasitacionesContent').innerHTML = '';
+    // M2 C1: no se muestran las alertas de otra mascota mientras carga esta.
+    const alertasMascota = document.getElementById('alertasMascota');
+    if (alertasMascota) alertasMascota.hidden = true;
 
     try {
         const res = await (await fetch(`index.php?action=ver_detalle_mascota_propietario_ajax&id_mascota=${id}`)).json();
@@ -550,6 +564,10 @@ async function verDetalle(id, opciones = {}) {
         document.getElementById('drawerPetTags').innerHTML = etiquetasDeLaMascota(m, res.clinicas || []);
 
         renderSummary(m);
+        // M2 C1 (RE-2.10.1, RN-114): de solo lectura, con la clínica que registró cada una.
+        if (alertasMascota && window.ZookiAlertas) {
+            window.ZookiAlertas.pintar(alertasMascota, { activas: res.alertas || [], historial: [] }, { idMascota: m.id_mascota, lectura: true, iconos: 'ri' });
+        }
 
         // Historial
         if (!res.historial.length) {
@@ -587,6 +605,7 @@ async function verDetalle(id, opciones = {}) {
                         </div>
                         <div class="accordion-body">
                             ${etiquetaClinica(h.clinica_nombre)}
+                            ${lineaSintomas(h.sintomas)}
                             <p><strong>Diagnóstico:</strong> ${escapeHtml(h.diagnostico)}</p>
                             <p><strong>Tratamiento:</strong> ${escapeHtml(h.plan_tratamiento)}</p>
                             <p><strong>Veterinario:</strong> ${escapeHtml(h.veterinario)}</p>
@@ -1928,7 +1947,7 @@ async function mostrarDetalleCita(idCita) {
             sinClinicaArea.style.display = 'none';
 
             // Cargar datos de la consulta
-            document.getElementById('detClinicaPeso').textContent = `${consulta.peso || '—'} kg`;
+            document.getElementById('detClinicaPeso').textContent = textoPesoConsulta(consulta.peso);
             document.getElementById('detClinicaTemp').textContent = `${consulta.temperatura || '—'} °C`;
             document.getElementById('detClinicaFc').textContent = `${consulta.frecuencia_cardiaca || '—'} lpm`;
             document.getElementById('detClinicaMotivo').textContent = consulta.motivo_consulta || '—';

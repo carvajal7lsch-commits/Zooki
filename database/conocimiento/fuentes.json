@@ -1,0 +1,378 @@
+[
+  {
+    "codigo": "zooki.reglas_negocio",
+    "entidad": "Zooki (repositorio público del proyecto)",
+    "titulo": "Reglas de Negocio de Zooki",
+    "url": "https://github.com/carvajal7lsch-commits/Zooki/blob/main/documentacion/ReglasNegocio.md",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "RN-210, RN-416, RN-417, RN-418, RN-424 y RN-425: políticas del producto, no evidencia clínica"
+  },
+  {
+    "codigo": "zooki.casos_triage",
+    "entidad": "Zooki (repositorio público del proyecto)",
+    "titulo": "Batería de casos de triage",
+    "url": "https://github.com/carvajal7lsch-commits/Zooki/blob/main/documentacion/CasosTriage.md",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "§1 reglas P1 a P8 y §2 niveles esperados por sección; pendientes de validación veterinaria"
+  },
+  {
+    "codigo": "msd.triage_emergencias",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Initial Triage and Resuscitation of Small Animal Emergency Patients",
+    "url": "https://www.msdvetmanual.com/emergency-medicine-and-critical-care/evaluation-and-initial-treatment-of-small-animal-emergency-patients/initial-triage-and-resuscitation-of-small-animal-emergency-patients",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Introducción (problemas que requieren evaluación inmediata) y tabla «Parameters to Evaluate During Triage»"
+  },
+  {
+    "codigo": "msd.emergencias_propietarios",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "What to Do in a Dog or Cat Emergency",
+    "url": "https://www.msdvetmanual.com/special-pet-topics/emergencies/what-to-do-in-a-dog-or-cat-emergency",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Emergencias que requieren atención inmediata y signos del golpe de calor"
+  },
+  {
+    "codigo": "msd.epilepsia",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Epilepsy in Small Animals",
+    "url": "https://www.msdvetmanual.com/nervous-system/epilepsy-in-small-animals/epilepsy-in-small-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Estado epiléptico como emergencia; epilepsia idiopática; evaluación de la primera crisis"
+  },
+  {
+    "codigo": "msd.distocia",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Dystocia in Small Animals",
+    "url": "https://www.msdvetmanual.com/reproductive-system/reproductive-diseases-of-the-female-small-animal/dystocia-in-small-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Diagnosis of Dystocia in Small Animals; Treatment of Dystocia in Small Animals"
+  },
+  {
+    "codigo": "msd.dtg",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Gastric Dilation and Volvulus in Small Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/surgical-problems-of-the-gastrointestinal-tract-in-small-animals/gastric-dilation-and-volvulus-in-small-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Razas grandes y gigantes en riesgo; signos clínicos"
+  },
+  {
+    "codigo": "msd.piometra",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Cystic Endometrial Hyperplasia–Pyometra Complex in Small Animals",
+    "url": "https://www.msdvetmanual.com/reproductive-system/reproductive-diseases-of-the-female-small-animal/cystic-endometrial-hyperplasia-pyometra-complex-in-small-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Hembras enteras, diestro y signos clínicos"
+  },
+  {
+    "codigo": "msd.piometra_propietarios",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Reproductive Disorders of Female Dogs",
+    "url": "https://www.msdvetmanual.com/dog-owners/reproductive-disorders-of-dogs/reproductive-disorders-of-female-dogs",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Apartado Pyometra: 4 a 6 semanas después del celo, signos y progresión"
+  },
+  {
+    "codigo": "msd.parvovirus",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Canine Parvovirus Infection (Parvoviral Enteritis in Dogs)",
+    "url": "https://www.msdvetmanual.com/digestive-system/infectious-diseases-of-the-gastrointestinal-tract-in-small-animals/canine-parvovirus-infection-parvoviral-enteritis-in-dogs",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Perros susceptibles, signos clínicos, transmisión y aislamiento"
+  },
+  {
+    "codigo": "msd.trastornos_digestivos_perros",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Disorders of the Stomach and Intestines in Dogs",
+    "url": "https://www.msdvetmanual.com/dog-owners/digestive-disorders-of-dogs/disorders-of-the-stomach-and-intestines-in-dogs",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Apartado Hemorrhagic Gastroenteritis"
+  },
+  {
+    "codigo": "msd.gastritis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Gastritis in Small Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/diseases-of-the-stomach-in-small-animals/gastritis-in-small-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Acute Gastritis in Small Animals: signos clínicos"
+  },
+  {
+    "codigo": "cornell.panleucopenia",
+    "entidad": "Cornell Feline Health Center",
+    "titulo": "Feline Panleukopenia Virus",
+    "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/feline-panleukopenia-virus",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Gatos susceptibles, signos clínicos, contagio y aislamiento"
+  },
+  {
+    "codigo": "cornell.anorexia",
+    "entidad": "Cornell Feline Health Center",
+    "titulo": "Anorexia",
+    "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/anorexia",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Duración de la falta de apetito que afecta a un gato adulto (24 horas)"
+  },
+  {
+    "codigo": "cornell.lipidosis",
+    "entidad": "Cornell Feline Health Center",
+    "titulo": "Hepatic Lipidosis",
+    "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/hepatic-lipidosis",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Anorexia como desencadenante, obesidad como factor, gatos que se aíslan e ictericia"
+  },
+  {
+    "codigo": "cornell.flutd",
+    "entidad": "Cornell Feline Health Center",
+    "titulo": "Feline Lower Urinary Tract Disease",
+    "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/feline-lower-urinary-tract-disease",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Signos clínicos, cistitis idiopática y obstrucción uretral en machos"
+  },
+  {
+    "codigo": "cornell.boas",
+    "entidad": "Cornell Richard P. Riney Canine Health Center",
+    "titulo": "Brachycephalic Obstructive Airway Syndrome (BOAS)",
+    "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/riney-canine-health-center/canine-health-topics/brachycephalic-obstructive-airway-syndrome-boas",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "What breeds are considered brachycephalic?; Symptoms"
+  },
+  {
+    "codigo": "cornell.aspergilosis",
+    "entidad": "Cornell Feline Health Center",
+    "titulo": "Aspergillosis",
+    "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/aspergillosis",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Gatos braquicéfalos («short-nosed») como el Persa"
+  },
+  {
+    "codigo": "cam.boas",
+    "entidad": "University of Cambridge, Department of Veterinary Medicine",
+    "titulo": "About BOAS",
+    "url": "https://www.vet.cam.ac.uk/boas/about-boas",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Ejemplos de razas braquicéfalas"
+  },
+  {
+    "codigo": "msd.braquicefalos",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Table: What Is a Brachycephalic Dog Breed?",
+    "url": "https://www.msdvetmanual.com/multimedia/table/what-is-a-brachycephalic-dog-breed",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Tabla completa de razas braquicéfalas"
+  },
+  {
+    "codigo": "rvc.braquicefalia_2020",
+    "entidad": "O'Neill et al., Royal Veterinary College (PubMed Central)",
+    "titulo": "Unravelling the health status of brachycephalic dogs in the UK using multivariable analysis",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7560694/",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Methods (clasificación por forma del cráneo) y Table 2 (Labrador Retriever en el grupo mesocéfalo)"
+  },
+  {
+    "codigo": "msd.descripcion_perros",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Description of Dogs",
+    "url": "https://www.msdvetmanual.com/dog-owners/introduction-to-dogs/description-of-dogs",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "What Size Are Most Dogs?"
+  },
+  {
+    "codigo": "msd.chocolate",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Chocolate Toxicosis in Animals",
+    "url": "https://www.msdvetmanual.com/toxicology/food-hazards/chocolate-toxicosis-in-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Etiology y Clinical Findings of Chocolate Toxicosis in Animals"
+  },
+  {
+    "codigo": "msd.xilitol",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Xylitol Toxicosis in Dogs",
+    "url": "https://www.msdvetmanual.com/toxicology/food-hazards/xylitol-toxicosis-in-dogs",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Productos con xilitol, inicio de la hipoglucemia y signos clínicos"
+  },
+  {
+    "codigo": "fda.xilitol",
+    "entidad": "U.S. Food and Drug Administration",
+    "titulo": "Paws Off Xylitol; It’s Dangerous for Dogs",
+    "url": "https://www.fda.gov/consumers/consumer-updates/paws-xylitol-its-dangerous-dogs",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Hipoglucemia en perros, chicle sin azúcar y gatos"
+  },
+  {
+    "codigo": "aspca.lirio",
+    "entidad": "ASPCA Animal Poison Control Center",
+    "titulo": "Lily",
+    "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/lily",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Ficha de la planta: tóxica para gatos (Lilium), signos clínicos"
+  },
+  {
+    "codigo": "aspca.alimentos",
+    "entidad": "ASPCA Animal Poison Control Center",
+    "titulo": "People Foods to Avoid Feeding Your Pets",
+    "url": "https://www.aspca.org/pet-care/aspca-poison-control/people-foods-avoid-feeding-your-pets",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Apartados Chocolate, Xylitol, Grapes and Raisins, Onions Garlic Chives y Macadamia Nuts"
+  },
+  {
+    "codigo": "msd.uvas",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Grape, Raisin, and Tamarind (Vitis spp, Tamarindus spp) Toxicosis in Dogs",
+    "url": "https://www.msdvetmanual.com/toxicology/food-hazards/grape-raisin-and-tamarind-vitis-spp-tamarindus-spp-toxicosis-in-dogs",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Clinical Findings: signos y falla renal"
+  },
+  {
+    "codigo": "msd.allium",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Garlic and Onion (Allium spp) Toxicosis in Animals",
+    "url": "https://www.msdvetmanual.com/toxicology/food-hazards/garlic-and-onion-allium-spp-toxicosis-in-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Especies susceptibles y signos clínicos"
+  },
+  {
+    "codigo": "msd.etilenglicol",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Ethylene Glycol Toxicosis in Animals",
+    "url": "https://www.msdvetmanual.com/toxicology/ethylene-glycol-toxicosis/ethylene-glycol-toxicosis-in-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Especies afectadas, fuentes y evolución"
+  },
+  {
+    "codigo": "msd.analgesicos_humanos",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Toxicoses From Human Analgesics in Animals",
+    "url": "https://www.msdvetmanual.com/toxicology/toxicoses-from-human-analgesics/toxicoses-from-human-analgesics-in-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Acetaminophen Toxicosis y NSAID Toxicoses (Aspirin, Ibuprofen)"
+  },
+  {
+    "codigo": "msd.aine",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Nonsteroidal Anti-inflammatory Drugs in Animals",
+    "url": "https://www.msdvetmanual.com/pharmacology/inflammation/nonsteroidal-anti-inflammatory-drugs-in-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Acetaminofén contraindicado en gatos; meloxicam en gatos"
+  },
+  {
+    "codigo": "msd.ectoparasiticidas",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Ectoparasiticides Used in Small Animals",
+    "url": "https://www.msdvetmanual.com/pharmacology/ectoparasiticides/ectoparasiticides-used-in-small-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Pyrethrins and Pyrethroids for Small Animals; Formamidines for Small Animals"
+  },
+  {
+    "codigo": "fda.analgesicos",
+    "entidad": "U.S. Food and Drug Administration, Center for Veterinary Medicine",
+    "titulo": "Get the Facts about Pain Relievers for Pets",
+    "url": "https://www.fda.gov/animal-veterinary/animal-health-literacy/get-facts-about-pain-relievers-pets",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Dos AINE a la vez o un AINE con un esteroide; acetaminofén en gatos"
+  },
+  {
+    "codigo": "msd.ulceras_gi",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Gastrointestinal Ulcers in Small Animals",
+    "url": "https://www.msdvetmanual.com/digestive-system/diseases-of-the-stomach-in-small-animals/gastrointestinal-ulcers-in-small-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Etiology and Pathophysiology of Gastrointestinal Ulcers in Small Animals"
+  },
+  {
+    "codigo": "msd.corticoides",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Corticosteroids in Animals",
+    "url": "https://www.msdvetmanual.com/pharmacology/inflammation/corticosteroids-in-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Potenciación del efecto ulcerogénico de los AINE"
+  },
+  {
+    "codigo": "msd.analgesicos_uso",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Analgesics Used in Animals",
+    "url": "https://www.msdvetmanual.com/therapeutics/pain-assessment-and-management/analgesics-used-in-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Nonsteroidal Anti-inflammatory Drugs and Corticosteroids as Analgesics in Animals; Other Analgesic Agents Used in Animals"
+  },
+  {
+    "codigo": "msd.psicotropicos",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Psychotropic Agents for Treatment of Animals",
+    "url": "https://www.msdvetmanual.com/pharmacology/systemic-pharmacotherapeutics-of-the-nervous-system/psychotropic-agents-for-treatment-of-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Selective Serotonin Reuptake Inhibitors; Monoamine Oxidase Inhibitors"
+  },
+  {
+    "codigo": "wsu.mdr1",
+    "entidad": "Washington State University, Washington Animal Disease Diagnostic Laboratory",
+    "titulo": "MDR1 in Dogs",
+    "url": "https://waddl.vetmed.wsu.edu/mdr1-in-dogs/",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Razas afectadas y frecuencias; medicamentos problemáticos; prueba individual"
+  },
+  {
+    "codigo": "msd.otitis_externa",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Otitis Externa in Animals",
+    "url": "https://www.msdvetmanual.com/ear-disorders/otitis-externa/otitis-externa-in-animals",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Clinical Findings of Otitis Externa"
+  },
+  {
+    "codigo": "msd.osteoartritis",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Osteoarthritis in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/musculoskeletal-system/osteoarthritis-in-dogs-and-cats/osteoarthritis-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Signos clínicos: cojera, lentitud para levantarse"
+  },
+  {
+    "codigo": "msd.renal",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Renal Dysfunction in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/urinary-system/noninfectious-diseases-of-the-urinary-system-in-small-animals/renal-dysfunction-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Clinical Findings of Chronic Kidney Disease"
+  },
+  {
+    "codigo": "msd.diabetes",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Diabetes Mellitus in Dogs and Cats",
+    "url": "https://www.msdvetmanual.com/endocrine-system/the-pancreas/diabetes-mellitus-in-dogs-and-cats",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Clinical Findings of Diabetes Mellitus in Dogs and Cats"
+  },
+  {
+    "codigo": "msd.tos_perreras",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Kennel Cough",
+    "url": "https://www.msdvetmanual.com/respiratory-system/respiratory-diseases-of-small-animals/kennel-cough",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Signos clínicos (tos «goose honk») y contagio"
+  },
+  {
+    "codigo": "msd.aves_enfermedad",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Illness in Pet Birds",
+    "url": "https://www.msdvetmanual.com/bird-owners/routine-care-and-safety-of-birds/illness-in-pet-birds",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "How Can I Tell If My Pet Bird Is Sick?"
+  },
+  {
+    "codigo": "msd.conejos_no_infecciosas",
+    "entidad": "MSD Veterinary Manual",
+    "titulo": "Noninfectious Diseases of Rabbits",
+    "url": "https://www.msdvetmanual.com/exotic-and-laboratory-animals/rabbits/noninfectious-diseases-of-rabbits",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "Gastric Stasis, Hair Chewing, and Hairballs"
+  },
+  {
+    "codigo": "zooki.decisiones_b21",
+    "entidad": "Zooki (decisiones del dueño del producto)",
+    "titulo": "Plan M2: decisiones del usuario en la revisión de B2",
+    "url": "https://github.com/carvajal7lsch-commits/Zooki/blob/v2/m2-grafo/specs/M2-grafo-clinico.md",
+    "fecha_consulta": "2026-10-14",
+    "seccion": "B2 — Revisión: decisiones 1, 2 y 3 del usuario (2026-10-14); política del producto, no evidencia clínica"
+  }
+]

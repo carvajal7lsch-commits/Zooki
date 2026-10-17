@@ -10,9 +10,9 @@ class App {
      * sale por partes: 2.0.0-alpha.N sube con cada entrega a producción (un
      * módulo o un pulido; decisión del usuario, 2026-10-11), porque los CSS y
      * JS se piden con ?v=<versión> y sin cambiarla el navegador sigue con los
-     * archivos viejos. 2.0.0 llega con las 28 historias de la entrega v2.0.
+     * archivos viejos. 2.0.0 llega al completar la entrega v2.0 del plan de historias.
      */
-    const VERSION = '2.0.0-alpha.3';
+    const VERSION = '2.0.0-alpha.4';
 
     /** Nombre comercial del producto. */
     const NAME = 'Zooki';

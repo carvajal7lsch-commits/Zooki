@@ -563,6 +563,9 @@ foreach ((array) $todas_desparasitaciones as $d) {
         <aside id="drawerPetSummary" class="portal-drawer-summary pet-detail__ficha"></aside>
 
         <div class="pet-detail__contenido">
+            <?php // M2 C1 (RE-2.10.1): alergias y alertas de todas las clínicas, fuera de las pestañas y del filtro; solo lectura. ?>
+            <section id="alertasMascota" class="alertas-medicas alertas-medicas--portal" aria-label="Alergias y alertas" data-alertas-medicas hidden></section>
+
             <?php // RN-114: filtro por clínica cuando hay registros de varias; portal.js lo llena. ?>
             <div id="filtroClinicaMascota" class="pet-filter-chips-wrapper" role="group" aria-label="Filtrar por clínica" hidden></div>
 

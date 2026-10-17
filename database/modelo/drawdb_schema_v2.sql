@@ -69,19 +69,52 @@ CREATE TABLE `plantillas_comunicacion` (
 -- ---------- Grafo de conocimiento clínico (Grafo I) — GLOBAL ----------
 
 CREATE TABLE `grafo_nodos` (
-  `id_nodo` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `tipo` enum('sintoma','diagnostico','farmaco','especie','raza','condicion') NOT NULL,
-  `etiqueta` varchar(150) NOT NULL
-);
+  `id_nodo` INT NOT NULL AUTO_INCREMENT,
+  `codigo` VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `version_conocimiento` VARCHAR(64) NOT NULL,
+  `fuentes` JSON NOT NULL,
+  `estado_validacion` ENUM('pendiente','validado','rechazado') NOT NULL DEFAULT 'pendiente',
+  `tipo` ENUM('sintoma','diagnostico','farmaco','especie','raza','condicion','sustancia') NOT NULL,
+  `etiqueta` VARCHAR(150) NOT NULL,
+  `nivel_triage` ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL,
+  `alarma_universal` TINYINT(1) NOT NULL DEFAULT 0,
+  `moderado` TINYINT(1) NOT NULL DEFAULT 0,
+  `metadatos` JSON DEFAULT NULL,
+  `id_especie` INT DEFAULT NULL,
+  `id_raza` INT DEFAULT NULL,
+  PRIMARY KEY (`id_nodo`),
+  UNIQUE KEY `uq_grafo_nodos_codigo` (`codigo`),
+  UNIQUE KEY `uq_grafo_nodos_especie` (`id_especie`),
+  UNIQUE KEY `uq_grafo_nodos_raza` (`id_raza`),
+  KEY `idx_grafo_nodos_tipo` (`tipo`, `etiqueta`),
+  CONSTRAINT `ck_nodo_taxonomia` CHECK (
+    (activo = 0 AND codigo LIKE 'legado.%')
+    OR (tipo = 'especie' AND id_especie IS NOT NULL AND id_raza IS NULL)
+    OR (tipo = 'raza' AND id_raza IS NOT NULL AND id_especie IS NULL)
+    OR (tipo NOT IN ('especie','raza') AND id_especie IS NULL AND id_raza IS NULL)
+  )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `grafo_aristas` (
-  `id_arista` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `id_origen` int(11) NOT NULL,
-  `id_destino` int(11) NOT NULL,
-  `tipo_relacion` varchar(50) NOT NULL,
-  `signo` enum('positivo','negativo') NOT NULL,
-  `peso` decimal(4,3) DEFAULT 1.000
-);
+  `id_arista` INT NOT NULL AUTO_INCREMENT,
+  `codigo` VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `version_conocimiento` VARCHAR(64) NOT NULL,
+  `fuentes` JSON NOT NULL,
+  `estado_validacion` ENUM('pendiente','validado','rechazado') NOT NULL DEFAULT 'pendiente',
+  `id_origen` INT NOT NULL,
+  `id_destino` INT NOT NULL,
+  `tipo_relacion` VARCHAR(50) NOT NULL,
+  `signo` ENUM('positivo','negativo') NOT NULL,
+  `peso` DECIMAL(4,3) NOT NULL DEFAULT 1.000,
+  `efecto` ENUM('evidencia','bloqueo','advertencia') NOT NULL DEFAULT 'evidencia',
+  `condiciones` JSON DEFAULT NULL,
+  PRIMARY KEY (`id_arista`),
+  UNIQUE KEY `uq_grafo_aristas_codigo` (`codigo`),
+  KEY `idx_grafo_aristas_origen` (`id_origen`, `tipo_relacion`)
+  CONSTRAINT `fk_arista_destino` FOREIGN KEY (`id_destino`) REFERENCES `grafo_nodos` (`id_nodo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ---------- Reputación de veterinarios (nuevo) ----------
 
@@ -371,6 +404,7 @@ CREATE TABLE `ausencias_veterinario` (
 -- Ausencia del vet; id_cobertura = veterinario que reemplaza (intercambio = ausencia + cobertura).
 
 CREATE TABLE `citas` (
+  `contexto_triage` JSON DEFAULT NULL,
   `id_cita` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_clinica` int(11) NOT NULL,
   `id_mascota` int(11) NOT NULL,
@@ -403,6 +437,7 @@ CREATE TABLE `citas` (
 );
 
 CREATE TABLE `cita_sintomas` (
+  `detalles` JSON DEFAULT NULL,
   `id_cita` int(11) NOT NULL,
   `id_nodo` int(11) NOT NULL,                                -- nodo tipo 'sintoma'
   PRIMARY KEY (`id_cita`, `id_nodo`)
@@ -441,6 +476,7 @@ CREATE TABLE `consultas` (
 );
 
 CREATE TABLE `consulta_sintomas` (
+  `detalles` JSON DEFAULT NULL,
   `id_consulta` int(11) NOT NULL,
   `id_nodo` int(11) NOT NULL,                                -- nodo tipo 'sintoma'
   PRIMARY KEY (`id_consulta`, `id_nodo`)
@@ -755,3 +791,35 @@ ALTER TABLE `auditoria_mascotas`
 ALTER TABLE `auditoria_sistema`
   ADD CONSTRAINT `fk_audsis_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`),
   ADD CONSTRAINT `fk_audsis_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+
+CREATE TABLE IF NOT EXISTS `grafo_sinonimos` (
+  `id_sinonimo` INT NOT NULL AUTO_INCREMENT,
+  `codigo` VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `version_conocimiento` VARCHAR(64) NOT NULL,
+  `fuentes` JSON NOT NULL,
+  `estado_validacion` ENUM('pendiente','validado','rechazado') NOT NULL DEFAULT 'pendiente',
+  `id_nodo` INT NOT NULL,
+  `texto` VARCHAR(150) NOT NULL,
+  `normalizado` VARCHAR(150) NOT NULL,
+  PRIMARY KEY (`id_sinonimo`),
+  UNIQUE KEY `uq_grafo_sinonimos_codigo` (`codigo`),
+  KEY `idx_grafo_sinonimos_busqueda` (`normalizado`),
+  CONSTRAINT `fk_sinonimo_nodo` FOREIGN KEY (`id_nodo`) REFERENCES `grafo_nodos` (`id_nodo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `grafo_reglas` (
+  `id_regla` INT NOT NULL AUTO_INCREMENT,
+  `codigo` VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `version_conocimiento` VARCHAR(64) NOT NULL,
+  `fuentes` JSON NOT NULL,
+  `estado_validacion` ENUM('pendiente','validado','rechazado') NOT NULL DEFAULT 'pendiente',
+  `motor` ENUM('diagnosticos','prescripcion','triage') NOT NULL,
+  `condiciones` JSON NOT NULL,
+  `resultado` JSON NOT NULL,
+  PRIMARY KEY (`id_regla`),
+  UNIQUE KEY `uq_grafo_reglas_codigo` (`codigo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+ALTER TABLE grafo_nodos ADD CONSTRAINT fk_nodo_especie FOREIGN KEY (id_especie) REFERENCES especies (id_especie), ADD CONSTRAINT fk_nodo_raza FOREIGN KEY (id_raza) REFERENCES razas (id_raza);

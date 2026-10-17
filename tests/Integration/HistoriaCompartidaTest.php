@@ -83,7 +83,7 @@ final class HistoriaCompartidaTest extends TestCase
 
         $this->assertTrue($respuesta['success']);
         $this->assertSame([], $respuesta['consultas']);
-        $this->assertSame(['success', 'mascota', 'consultas', 'vacunas', 'desparasitaciones'], array_keys($respuesta));
+        $this->assertSame(['success', 'mascota', 'consultas', 'vacunas', 'desparasitaciones', 'alertas'], array_keys($respuesta));
         $this->assertStringNotContainsString('Otitis', json_encode($respuesta, JSON_UNESCAPED_UNICODE));
     }
 
@@ -210,7 +210,7 @@ final class HistoriaCompartidaTest extends TestCase
         $this->comoVeterinario(DosClinicas::NORTE, DosClinicas::VET_NORTE);
         $tratamiento = ['medicamento' => 'Amoxicilina', 'dosis' => '1 ml', 'via_administracion' => 'Oral', 'duracion' => '5 días', 'fecha_inicio' => '2026-10-01'];
         $guardar = fn (int $idConsulta, array $adjunto, int $indice): array => $this->metadatos('CLI_A.jpg');
-        $entrada = ['id_mascota' => self::LUNA, 'motivo' => 'Rascado de oído', 'diagnostico' => 'Otitis'];
+        $entrada = ['id_mascota' => self::LUNA, 'peso' => '8.5', 'motivo' => 'Rascado de oído', 'diagnostico' => 'Otitis'];
 
         $this->consultaDeA = (new Consulta($this->db))->registrar($entrada, [$tratamiento], [['nombre' => 'rx.jpg']], $guardar);
         $this->tratamientoDeA = (int) $this->db->query('SELECT id_tratamiento FROM tratamientos')->fetchColumn();
@@ -224,7 +224,7 @@ final class HistoriaCompartidaTest extends TestCase
 
     private function registrarConsultaEnSur(): int
     {
-        $entrada = ['id_mascota' => self::LUNA, 'motivo' => 'Control', 'diagnostico' => 'Sano'];
+        $entrada = ['id_mascota' => self::LUNA, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'];
         $sinAdjuntos = fn (): array => [];
         return (new Consulta($this->db))->registrar($entrada, [], [], $sinAdjuntos);
     }

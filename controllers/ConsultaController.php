@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/Consulta.php';
 require_once __DIR__ . '/../models/Mascota.php';
 require_once __DIR__ . '/../models/Vacuna.php';
 require_once __DIR__ . '/../models/Desparasitacion.php';
+require_once __DIR__ . '/../models/AlertaMedica.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/../helpers/RespuestaJson.php';
 
@@ -21,6 +22,7 @@ class ConsultaController
     private Mascota $mascotaModel;
     private Vacuna $vacunaModel;
     private Desparasitacion $desparasitacionModel;
+    private AlertaMedica $alertaModel;
 
     /** @var callable(string, string): bool mueve un archivo subido; las pruebas lo reemplazan */
     private $moverArchivo;
@@ -34,6 +36,7 @@ class ConsultaController
         $this->mascotaModel = new Mascota($this->db);
         $this->vacunaModel = new Vacuna($this->db);
         $this->desparasitacionModel = new Desparasitacion($this->db);
+        $this->alertaModel = new AlertaMedica($this->db);
         $this->moverArchivo = $moverArchivo ?? 'move_uploaded_file';
         $this->carpetaAdjuntos = rtrim($carpetaAdjuntos ?? self::CARPETA_ADJUNTOS, '/\\') . '/';
     }
@@ -61,14 +64,23 @@ class ConsultaController
             return;
         }
 
-        $tratamientos = $this->tratamientosDelFormulario();
+        $tratamientos = [];
         $movidos = [];
         $guardarAdjunto = function (int $idConsulta, array $adjunto, int $indice) use (&$movidos): array {
             return $this->guardarAdjunto($idConsulta, $adjunto, $indice, $movidos);
         };
 
         try {
+            $tratamientos = $this->tratamientosDelFormulario();
             $idConsulta = $this->consultaModel->registrar($_POST, $tratamientos, $adjuntos, $guardarAdjunto);
+        } catch (PrescripcionRechazada $e) {
+            $this->borrarArchivos($movidos);
+            RespuestaJson::error(422, $e->getMessage(), ['campo' => 'tratamientos.' . $e->fila, 'fila' => $e->fila, 'aviso' => $e->getMessage(), 'prescripcion' => $e->publica]);
+            return;
+        } catch (CampoInvalido $e) {
+            $this->borrarArchivos($movidos);
+            RespuestaJson::error(422, $e->getMessage(), ['campo' => $e->campo, 'aviso' => $e->aviso]);
+            return;
         } catch (AccesoDenegado $e) {
             $this->borrarArchivos($movidos);
             throw $e;
@@ -87,6 +99,8 @@ class ConsultaController
         RespuestaJson::enviar([
             'success' => true,
             'id_consulta' => $idConsulta,
+            // C5a (hallazgo de A.1): la pantalla se pone al día con esto, sin recargar.
+            'consulta' => $this->consultaModel->filaDelListado($idConsulta),
             'adjuntos_guardados' => count($adjuntos),
             'tratamientos_guardados' => count($tratamientos),
             'message' => $this->resumenDelRegistro(count($adjuntos), count($tratamientos)),
@@ -112,6 +126,8 @@ class ConsultaController
                 'consultas' => $this->consultaModel->historialDeMascota($idMascota),
                 'vacunas' => $this->vacunaModel->findByMascota($idMascota),
                 'desparasitaciones' => $this->desparasitacionModel->findByMascota($idMascota),
+                // RE-2.10.1: alergias y alertas de todas las clínicas, arriba en la historia (C1).
+                'alertas' => $this->alertaModel->deMascota($idMascota),
             ];
         } catch (AccesoDenegado $e) {
             throw $e;
@@ -266,6 +282,11 @@ class ConsultaController
                 'duracion' => $_POST['med_duracion'][$i] ?? null,
                 'fecha_inicio' => $_POST['med_inicio'][$i] ?? null,
                 'observaciones' => $_POST['med_obs'][$i] ?? null,
+                'farmaco' => $_POST['med_farmaco'][$i] ?? null,
+                'fecha_fin' => $_POST['med_fin'][$i] ?? null,
+                'decision' => $_POST['med_decision'][$i] ?? null,
+                'conciliacion' => $_POST['med_conciliacion'][$i] ?? null,
+                'huella' => $_POST['med_huella'][$i] ?? null,
             ];
         }
         return $tratamientos;

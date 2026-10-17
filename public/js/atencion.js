@@ -7,8 +7,10 @@
  * la cita en un solo paso. Nada recarga la página salvo al terminar.
  *
  * Usa de otros archivos: zookiToast/zookiAviso/zookiConfirmar y escapeHtml
- * (avisos.js), addTreatmentRow/updateFileList/avisarAdjuntosRechazados
- * (medical-module.js).
+ * (avisos.js) y, de la consulta compartida con el modal (M2 C5a y C5b),
+ * ZookiConsultaForm, updateFileList y avisarAdjuntosRechazados
+ * (consulta-formulario.js), con los síntomas, los diagnósticos sugeridos y
+ * las filas de tratamiento con sus alertas de prescripción.
  */
 (function () {
     'use strict';
@@ -23,6 +25,8 @@
 
     let hayCambiosSinGuardar = false;
     let finalizando = false;
+    // M2 C5a: síntomas, diagnósticos sugeridos y avisos junto al campo, los mismos del modal.
+    let consulta = null;
 
     // ── Alto disponible (sin scroll de página) ──────────────────────────
     function ajustarAlto() {
@@ -81,8 +85,25 @@
         });
         if (navPasos) navPasos.hidden = nombre !== 'consulta';
 
+        if (nombre === 'historial') cargarHistorialCompacto();
         if (nombre === 'vacuna') cargarCatalogosVacuna();
         if (nombre === 'desparasitacion') cargarCatalogoProductos();
+    }
+
+    let historialCargado = false;
+    async function cargarHistorialCompacto() {
+        const lista = document.getElementById('atencionHistorial');
+        if (!lista || historialCargado || typeof filaHistorialCompacto !== 'function') return;
+        try {
+            const respuesta = await fetch('index.php?action=listar_historial_ajax&id_mascota=' + encodeURIComponent(idMascota));
+            const datos = await respuesta.json();
+            if (datos.success === false) throw new Error(datos.message || 'No se pudo cargar el detalle del historial.');
+            const filas = eventosHistorialCompacto(datos);
+            if (filas.length) lista.innerHTML = filas.map(fila => '<li>' + filaHistorialCompacto(fila.registro, fila.tipo) + '</li>').join('');
+            historialCargado = true;
+        } catch (error) {
+            zookiToast('No se pudo cargar el detalle del historial. Vuelve a abrir la pestaña para reintentar.', 'error');
+        }
     }
 
     // ── Pasos de la consulta ────────────────────────────────────────────
@@ -100,22 +121,34 @@
             boton.classList.toggle('is-active', i === pasoActual);
             boton.classList.toggle('is-hecho', i < pasoActual);
         });
+        if (window.matchMedia && window.matchMedia('(max-width: 767px)').matches && botonesPaso[pasoActual]) botonesPaso[pasoActual].scrollIntoView({ block: 'nearest', inline: 'nearest' });
         if (btnAnterior) btnAnterior.disabled = pasoActual === 0;
         if (btnSiguiente) btnSiguiente.hidden = pasoActual === pasos.length - 1;
     }
 
-    // Lleva al primer error de la consulta (pestaña y paso) y dice qué falta.
-    function validarConsulta() {
-        botonesPaso.forEach((b) => b.classList.remove('tiene-error'));
-        const error = primerCampoInvalido(formConsulta);
-        if (!error) return true;
-
-        const indice = pasos.indexOf(error.campo.closest('.atencion__paso'));
+    // Lleva al paso del campo, lo marca y lo enfoca.
+    function irAlCampo(campo) {
+        const indice = pasos.indexOf(campo.closest('.atencion__paso'));
         activarPestana('consulta');
         mostrarPaso(indice);
         if (botonesPaso[indice]) botonesPaso[indice].classList.add('tiene-error');
-        marcarInvalido(error.campo);
-        error.campo.focus();
+        marcarInvalido(campo);
+        campo.focus();
+    }
+
+    // Lleva al primer error de la consulta (pestaña y paso). Motivo, diagnóstico
+    // y signos dicen su aviso junto al campo (C5a); los demás campos, en un aviso breve.
+    function validarConsulta() {
+        botonesPaso.forEach((b) => b.classList.remove('tiene-error'));
+        const conAviso = consulta ? consulta.validar() : null;
+        if (conAviso) {
+            irAlCampo(conAviso);
+            return false;
+        }
+        const error = primerCampoInvalido(formConsulta);
+        if (!error) return true;
+
+        irAlCampo(error.campo);
         zookiToast(error.mensaje, 'error');
         return false;
     }
@@ -144,6 +177,11 @@
                 const campo = formConsulta.elements[nombre];
                 if (campo) datos[nombre] = campo.value;
             });
+            // C5a: los síntomas marcados también son datos editables del borrador.
+            if (consulta && consulta.sintomas) datos.sintomas = consulta.sintomas.marcados();
+            // C5b: «No se pudo pesar» se recuerda como lo que es, no como un peso.
+            const sinPeso = formConsulta.querySelector('[data-sin-peso]');
+            if (sinPeso) datos.sin_peso = sinPeso.checked;
             const ahora = Date.now();
             localStorage.setItem(CLAVE_BORRADOR, JSON.stringify({ datos, guardado: ahora }));
             mostrarEstadoBorrador(ahora);
@@ -165,6 +203,16 @@
                     restaurado = true;
                 }
             });
+            const sinPeso = formConsulta.querySelector('[data-sin-peso]');
+            if (sinPeso && datos.sin_peso === true && !sinPeso.checked) {
+                sinPeso.checked = true;
+                sinPeso.dispatchEvent(new Event('change'));
+                restaurado = true;
+            }
+            if (consulta && consulta.sintomas && Array.isArray(datos.sintomas) && datos.sintomas.length) {
+                consulta.sintomas.poner(datos.sintomas);
+                restaurado = true;
+            }
             if (restaurado) {
                 hayCambiosSinGuardar = true;
                 zookiToast('Recuperamos el borrador que no alcanzaste a guardar.', 'info');
@@ -219,6 +267,8 @@
 
     async function finalizarAtencion() {
         const consultaRegistrada = app.dataset.consultaRegistrada === '1';
+        // C5b: las alertas de prescripción deben estar al día antes de validar.
+        if (!consultaRegistrada && consulta) await consulta.listo();
         if (!consultaRegistrada && formConsulta && !validarConsulta()) return;
 
         const mensaje = consultaRegistrada
@@ -235,8 +285,15 @@
                 // (RN-406): o quedan las dos cosas, o ninguna.
                 const res = await postJson('index.php?action=registrar_consulta_ajax', new FormData(formConsulta));
                 if (!res.success) {
-                    if (!avisarAdjuntosRechazados(res)) zookiAviso(res.message || 'No se pudo guardar la consulta.');
                     finalizando = false;
+                    if (avisarAdjuntosRechazados(res)) return;
+                    // C5a: el error de un campo va junto a ese campo, en su paso.
+                    const campo = consulta ? consulta.mostrarErrorServidor(res) : null;
+                    if (campo) {
+                        irAlCampo(campo);
+                        return;
+                    }
+                    zookiAviso(res.message || 'No se pudo guardar la consulta.');
                     return;
                 }
                 app.dataset.consultaRegistrada = '1';
@@ -278,17 +335,8 @@
     }
 
     // ── Vacuna y desparasitación (sin recargar) ─────────────────────────
-    const plantillaVacuna = (d) => `
-        <li class="registro registro--nuevo">
-            <div><strong>${escapeHtml(d.nombre_vacuna)}</strong><span>${escapeHtml(d.laboratorio || 'Sin laboratorio')}</span></div>
-            <div class="registro__fechas"><span>Aplicada ${fechaCorta(d.fecha_aplicacion)}</span>${d.fecha_proxima ? `<span>Próxima ${fechaCorta(d.fecha_proxima)}</span>` : ''}</div>
-        </li>`;
-
-    const plantillaDesparasitacion = (d) => `
-        <li class="registro registro--nuevo">
-            <div><strong>${escapeHtml(d.producto)}</strong><span>${escapeHtml(d.tipo.charAt(0).toUpperCase() + d.tipo.slice(1))} · ${escapeHtml(d.periodicidad)}</span></div>
-            <div class="registro__fechas"><span>Aplicada ${fechaCorta(d.fecha_aplicacion)}</span></div>
-        </li>`;
+    const plantillaVacuna = (d) => '<li>' + filaHistorialCompacto(d, 'vacuna') + '</li>';
+    const plantillaDesparasitacion = (d) => '<li>' + filaHistorialCompacto(d, 'desparasitacion') + '</li>';
 
     function sumarAlContador(nombre) {
         const contador = app.querySelector(`[data-contador="${nombre}"]`);
@@ -322,6 +370,7 @@
             if (vacio) vacio.remove();
             lista.insertAdjacentHTML('afterbegin', config.plantilla(Object.fromEntries(datos)));
             sumarAlContador(config.contador);
+            historialCargado = false;
 
             const fecha = form.elements.fecha_aplicacion.value;
             form.reset();
@@ -366,21 +415,12 @@
             (d) => (d.productos || []).map((p) => p.nombre_producto));
     }
 
-    // ── Medicamentos y adjuntos ─────────────────────────────────────────
+    // ── Medicamentos ────────────────────────────────────────────────────
+    // C5b: las filas, el fármaco, las alertas y la lista vacía los maneja
+    // consulta-tratamientos.js; aquí solo se marca que hay cambios.
     function iniciarTratamientos() {
-        const lista = document.getElementById('treatmentsList');
-        const vacio = document.getElementById('tratamientosVacio');
         const boton = document.getElementById('btnAgregarTratamiento');
-        if (!lista || !boton) return;
-
-        const actualizarVacio = () => { vacio.hidden = lista.children.length > 0; };
-        new MutationObserver(actualizarVacio).observe(lista, { childList: true });
-        boton.addEventListener('click', () => {
-            addTreatmentRow();
-            hayCambiosSinGuardar = true;
-            const filas = lista.querySelectorAll('.treatment-row input');
-            if (filas.length) filas[filas.length - 4]?.focus();
-        });
+        if (boton) boton.addEventListener('click', () => { hayCambiosSinGuardar = true; });
     }
 
     // ── Arranque ────────────────────────────────────────────────────────
@@ -410,6 +450,16 @@
         if (btnFinalizar) btnFinalizar.addEventListener('click', finalizarAtencion);
 
         if (formConsulta) {
+            if (window.ZookiConsultaForm) {
+                consulta = window.ZookiConsultaForm.iniciar(formConsulta, {
+                    idMascota: () => idMascota,
+                    alCambiarSintomas: () => {
+                        hayCambiosSinGuardar = true;
+                        clearTimeout(temporizadorBorrador);
+                        temporizadorBorrador = setTimeout(guardarBorrador, 600);
+                    },
+                });
+            }
             restaurarBorrador();
             formConsulta.addEventListener('input', (e) => {
                 if (e.target.type === 'file') return;

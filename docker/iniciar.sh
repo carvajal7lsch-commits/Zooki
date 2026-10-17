@@ -3,15 +3,20 @@
 #
 # 1. Aplica las migraciones de database/ que falten y la semilla
 #    (scripts/migrar.php). Se niega si la base todavía tiene el esquema v1.
-# 2. Reindexa la documentación en Algolia si los .md cambiaron
+# 2. Carga el conocimiento global únicamente si las migraciones terminaron bien.
+# 3. Reindexa la documentación en Algolia si los .md cambiaron
 #    (scripts/algolia_index.php --si-cambio; specs/buscador-documentacion.md, BD-1).
-# 3. Arranca Apache, igual que la imagen php:8.2-apache por defecto.
+# 4. Arranca Apache, igual que la imagen php:8.2-apache por defecto.
 #
 # Si una migración o el indexado fallan, Apache arranca igual para no tumbar
 # el sitio: el error queda en los logs del contenedor en Dokploy.
 
-php /var/www/html/Zooki/scripts/migrar.php \
-  || echo "[migraciones] No se aplicaron todas las migraciones; revisa el error de arriba."
+if php /var/www/html/Zooki/scripts/migrar.php; then
+  php /var/www/html/Zooki/scripts/cargar_conocimiento.php \
+    || echo "[conocimiento] No se pudo cargar el conjunto; se conserva lo anterior."
+else
+  echo "[conocimiento] Se omite la carga porque la migración falló."
+fi
 
 php /var/www/html/Zooki/scripts/algolia_index.php --si-cambio \
   || echo "[algolia] No se pudo reindexar la documentación; el portal usa el buscador local."

@@ -1,12 +1,13 @@
-/* Presentación de pacientes extraída de la vista. */
+/* Presentación de pacientes extraída de la vista.
+   M2 C8 (H5): solo las variables de identidad (css/identidad.css), sin colores sueltos. */
 .pacientes-estilo-0 { display: none; }
 .pacientes-estilo-1 { display: none; }
-.pacientes-estilo-2 { display:block; color:#666; }
+.pacientes-estilo-2 { display:block; color: var(--z-text-muted); }
 .pacientes-estilo-3 { font-size: 0.9rem; font-weight: 500; }
 .pacientes-estilo-4 { width: 100%; margin-top: 5px; }
 .pacientes-estilo-5 { font-size: 0.9rem; font-weight: 500; }
 .pacientes-estilo-6 { font-size: 0.9rem; font-weight: 500; }
-.pacientes-estilo-7 { color:#ef4444 }
+.pacientes-estilo-7 { color: var(--z-danger); }
 .pacientes-estilo-8 { font-size: 0.9rem; font-weight: 500; }
 .pacientes-estilo-9 { margin-bottom: 1.5rem; }
 .pacientes-estilo-10 { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
@@ -24,10 +25,10 @@
 .pacientes-estilo-22 { color: var(--text-muted); font-size: 0.75rem; }
 .pacientes-estilo-23 { margin-bottom: 1.5rem; }
 .pacientes-estilo-24 { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
-.pacientes-estilo-25 { background: #f0fdf4; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; color: #166534; border: 1px solid #bbf7d0; }
+.pacientes-estilo-25 { background: var(--z-primary-soft); padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; color: var(--z-primary-dark); border: 1px solid var(--z-primary-borde); }
 .pacientes-estilo-26 { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
 .pacientes-estilo-27 { margin-top: 1.5rem; }
-.pacientes-estilo-28 { background: #f0fdf4; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.85rem; color: #16a34a; }
+.pacientes-estilo-28 { background: var(--z-primary-soft); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.85rem; color: var(--z-primary); }
 .pacientes-estilo-29 { margin-top: 1.5rem; }
 /* ── M5 C3: alta del propietario y búsqueda en «Nueva mascota» ── */
 .propietario-nota {
@@ -53,7 +54,7 @@
     color: var(--text-primary);
 }
 
-.propietario-existente__aviso--error { color: var(--danger, #dc2626); }
+.propietario-existente__aviso--error { color: var(--z-danger); }
 
 .busqueda-propietario__ayuda { display: block; }
 
@@ -65,17 +66,170 @@
 
 .mascotas-existentes:empty { display: none; }
 
-.mascotas-existentes__lista {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 0.75rem;
+/* ── M2 C8 (H2): mascotas del cliente en mini-tarjetas horizontales ──
+   Una fila que se desplaza con flechas o arrastrando (con el dedo en el
+   celular), sin barra de scroll a la vista; cada tarjeta: foto o avatar azul
+   con la inicial, nombre, especie · raza y «Vincular» (RE-1.5.1). */
+.mascotas-carrusel {
+    position: relative;
+    min-width: 0;
+    /* El ancho de las tarjetas no ensancha el modal: la fila desplaza dentro de su caja. */
+    contain: inline-size;
 }
 
-.mascota-existente .avatar-mini {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+.mascotas-carrusel__pista {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.15rem 0.1rem 0.35rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 0.1rem;
+    scrollbar-width: none;
+    cursor: grab;
+}
+
+.mascotas-carrusel__pista::-webkit-scrollbar {
+    display: none;
+}
+
+.mascotas-carrusel__pista.is-arrastrando {
+    cursor: grabbing;
+    scroll-snap-type: none;
+    user-select: none;
+}
+
+.mascota-mini {
+    display: flex;
+    flex: 0 0 15.5rem;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    padding: 0.55rem 0.6rem;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-sm);
+    scroll-snap-align: start;
+}
+
+.mascota-mini__avatar.avatar-iniciales,
+.mascota-mini__foto {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+.mascota-mini__avatar.avatar-iniciales {
+    font-size: 0.9rem;
+    background: var(--z-primary);
+}
+
+.mascota-mini__foto {
     object-fit: cover;
+    background: var(--z-primary-soft);
+}
+
+.mascota-mini__texto {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+}
+
+.mascota-mini__nombre {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--z-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mascota-mini__detalle {
+    font-size: 0.74rem;
+    color: var(--z-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mascota-mini__vincular {
+    flex-shrink: 0;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--z-primary);
+    border-radius: 999px;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.mascota-mini__vincular:hover:not(:disabled) {
+    background: var(--z-primary-dark);
+}
+
+.mascota-mini__vincular:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+.mascota-mini__vinculada {
+    flex-shrink: 0;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
+    font-size: 0.74rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.mascotas-carrusel__flecha {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--z-border);
+    border-radius: 50%;
+    background: var(--z-surface);
+    color: var(--z-primary);
+    box-shadow: var(--z-shadow-lista);
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+.mascotas-carrusel__flecha[hidden] {
+    display: none;
+}
+
+.mascotas-carrusel__flecha--anterior { left: -0.6rem; }
+.mascotas-carrusel__flecha--siguiente { right: -0.6rem; }
+
+.mascotas-carrusel__flecha:hover,
+.mascotas-carrusel__flecha:focus-visible {
+    background: var(--z-primary-soft);
+    outline: none;
+}
+
+@media (max-width: 767px) {
+    .mascota-mini {
+        flex-basis: 80%;
+    }
+
+    .mascotas-carrusel__flecha {
+        display: none;
+    }
 }
 
 .input-wrapper[hidden] { display: none; }
@@ -91,7 +245,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.6rem 0.75rem;
-    border: 1px solid var(--border-color, #e2e8f0);
+    border: 1px solid var(--z-border);
     border-radius: 12px;
     box-shadow: none;
     text-align: left;
@@ -167,7 +321,7 @@
     font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    color: var(--text-secondary, #64748b);
+    color: var(--z-text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -180,11 +334,11 @@
     width: 100%;
     height: 42px;
     padding: 0 0.6rem;
-    border: 1.5px solid var(--border-color, #e2e8f0);
+    border: 1.5px solid var(--z-border);
     border-radius: 12px;
-    background: #f8fafc;
+    background: var(--z-bg-suave);
     font-size: 0.85rem;
-    color: var(--text-primary, #0f172a);
+    color: var(--z-text);
 }
 
 select.mascota-extra__control { cursor: pointer; }
@@ -192,8 +346,8 @@ select.mascota-extra__control { cursor: pointer; }
 select.mascota-extra__control:focus,
 .mascota-extra__control:focus-within {
     outline: none;
-    border-color: var(--primary, #0052ff);
-    background: #ffffff;
+    border-color: var(--z-primary);
+    background: var(--z-surface);
 }
 
 /* El interruptor, a la escala de la caja. */
@@ -231,16 +385,16 @@ select.mascota-extra__control:focus,
     gap: 0.65rem;
     width: 100%;
     padding: 0.55rem 0.75rem;
-    border: 1px solid var(--border-color, #e2e8f0);
+    border: 1px solid var(--z-border);
     border-radius: 12px;
-    background: #ffffff;
-    color: var(--text-primary, #0f172a);
+    background: var(--z-surface);
+    color: var(--z-text);
     text-align: left;
     cursor: pointer;
 }
 
 .propietario-resultado:hover,
-.propietario-resultado:focus-visible { border-color: var(--primary, #0052ff); }
+.propietario-resultado:focus-visible { border-color: var(--z-primary); }
 
 .propietario-resultado .avatar-iniciales {
     width: 34px;
@@ -264,7 +418,7 @@ select.mascota-extra__control:focus,
 
 .propietario-resultado__texto span {
     font-size: 0.78rem;
-    color: var(--text-secondary, #64748b);
+    color: var(--z-text-muted);
 }
 
 /* M5 C4b (usuario): en Propietarios los botones quedan abajo en todas las tarjetas de la fila. */
@@ -274,7 +428,7 @@ select.mascota-extra__control:focus,
 .client-card--abre { cursor: pointer; }
 
 .client-card--abre:focus-visible {
-    outline: 2px solid var(--primary, #0052ff);
+    outline: 2px solid var(--z-primary);
     outline-offset: 2px;
 }
 
@@ -290,9 +444,34 @@ select.mascota-extra__control:focus,
 .mascota-form__resumen {
     margin: 0.75rem 1.5rem 0;
     font-size: 0.85rem;
-    color: var(--danger, #dc2626);
+    color: var(--z-danger);
 }
 
 .mascota-form__resumen[hidden] { display: none; }
 
 .mascota-aviso { display: block; }
+
+/* M2 C7: antes en style= de medical-module.js; los mismos valores. */
+.dossier-sin-mascotas {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    width: 100%;
+}
+
+.dossier-sin-mascotas i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+    display: block;
+}
+
+.pet-dossier-card-hc.pet-dossier-card-hc--numero {
+    color: var(--primary);
+}
+
+/* M2 C7: «Vincular mascota de un cliente», junto a «Nuevo Registro», como acción secundaria. */
+.btn-create.btn-create-outline:hover {
+    background: var(--bg-main);
+    color: var(--text-primary);
+}

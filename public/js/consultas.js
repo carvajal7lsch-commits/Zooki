@@ -224,15 +224,24 @@
         setTimeout(() => { document.getElementById('consultaDrawerOverlay').hidden = true; }, 400);
     }
 
-    function signoVital(etiqueta, clase, icono, valor, unidad) {
+    /** sinValor (M2 C7): lo que se dice si no hay dato, sin unidad; el peso NULL es «Sin peso registrado». */
+    function signoVital(etiqueta, clase, icono, valor, unidad, sinValor = null) {
+        const vacio = valor === null || valor === undefined || valor === '';
+        const texto = vacio && sinValor ? escaparTexto(sinValor) : `${textoSeguro(valor, '--')} ${unidad}`;
         return `
             <div class="vital-sign-card">
                 <div class="vital-sign-icon ${clase}"><i class="fas ${icono}"></i></div>
                 <div class="vital-sign-info">
                     <span class="vital-sign-label">${etiqueta}</span>
-                    <span class="vital-sign-value">${textoSeguro(valor, '--')} ${unidad}</span>
+                    <span class="vital-sign-value">${texto}</span>
                 </div>
             </div>`;
+    }
+
+    /** M2 C7 (RN-210): los síntomas marcados; solo llegan los de consultas de esta clínica (RN-113). */
+    function textoSintomas(c) {
+        const sintomas = Array.isArray(c.sintomas) ? c.sintomas : [];
+        return sintomas.map((s) => s.etiqueta).join(', ');
     }
 
     function cajaDeReporte(clase, icono, titulo, texto, porDefecto) {
@@ -265,12 +274,13 @@
                 <div class="clinical-summary-meta">
                     <div class="clinical-summary-meta-doc"><i class="fas fa-user-md"></i>${textoSeguro(c.veterinario, 'Veterinario')}</div>
                     <div class="clinical-summary-meta-date"><i class="far fa-calendar-alt"></i>${fechaTexto} · ${horaTexto}</div>
+                    ${c.id_cita ? '' : '<span class="consultation-sin-cita-badge" title="Registrada sin cita (urgencia o imprevisto)"><i class="fas fa-ambulance"></i> Sin cita</span>'}
                 </div>
             </div>
 
             <h4 class="section-label">Triage / Constantes Vitales</h4>
             <div class="vital-signs-grid">
-                ${signoVital('Peso', 'weight', 'fa-weight', c.peso, 'Kg')}
+                ${signoVital('Peso', 'weight', 'fa-weight', c.peso, 'Kg', 'Sin peso registrado')}
                 ${signoVital('Temperatura', 'temp', 'fa-thermometer-half', c.temperatura, '°C')}
                 ${signoVital('Frec. Cardíaca', 'heart', 'fa-heartbeat', c.frecuencia_cardiaca, 'LPM')}
             </div>
@@ -278,6 +288,7 @@
             <h4 class="section-label consultas-reporte-titulo">Reporte Clínico</h4>
             <div class="consultas-reporte">
                 ${cajaDeReporte('default', 'fa-comment-medical', 'Motivo de Consulta', c.motivo_consulta, 'Sin especificar.')}
+                ${cajaDeReporte('default', 'fa-list-check', 'Síntomas marcados', textoSintomas(c), 'Sin síntomas marcados.')}
                 ${cajaDeReporte('default', 'fa-notes-medical', 'Anamnesis / Observaciones', c.anamnesis, 'Sin observaciones registradas.')}
                 ${cajaDeReporte('info', 'fa-microscope', 'Diagnóstico', c.diagnostico, 'Sin diagnóstico registrado.')}
                 ${cajaDeReporte('success', 'fa-pills', 'Plan de Tratamiento', c.plan_tratamiento, 'Sin plan de tratamiento registrado.')}
@@ -318,6 +329,14 @@
 
     document.querySelectorAll('[data-cerrar-modal]').forEach((boton) => {
         boton.addEventListener('click', () => closeModal(boton.dataset.cerrarModal));
+    });
+
+    // M2 C5a (hallazgo de A.1): la consulta recién guardada entra a la lista sin recargar la página.
+    document.addEventListener('zooki:consulta-registrada', (evento) => {
+        const nueva = evento.detail && evento.detail.consulta;
+        if (!nueva) return;
+        todasLasConsultas = [nueva, ...todasLasConsultas.filter((c) => String(c.id_consulta) !== String(nueva.id_consulta))];
+        filtrarConsultas();
     });
 
     filtrarConsultas();

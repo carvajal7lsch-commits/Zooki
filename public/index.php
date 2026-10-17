@@ -256,6 +256,17 @@ switch ($action) {
         (new PlataformaController())->inicio();
         break;
 
+    // HU-2.12: mapa de solo lectura del conocimiento global (RN-212).
+    case "plataforma_grafo":
+        require_once "../controllers/GrafoConocimientoController.php";
+        (new GrafoConocimientoController())->vista();
+        break;
+
+    case "obtener_grafo_conocimiento_ajax":
+        require_once "../controllers/GrafoConocimientoController.php";
+        (new GrafoConocimientoController())->datosAjax();
+        break;
+
     case "plataforma_suscripcion_ajax":
     case "plataforma_estado_ajax":
     case "plataforma_caso_ajax":
@@ -521,6 +532,46 @@ switch ($action) {
         require_once "../controllers/ConsultaController.php";
         $controller = new ConsultaController();
         $controller->listarHistorialAjax();
+        break;
+
+    case "sugerir_diagnosticos_ajax":
+        require_once "../controllers/DiagnosticoController.php";
+        (new DiagnosticoController())->sugerirAjax();
+        break;
+    case "buscar_sintomas_ajax":
+        require_once '../controllers/TriageController.php';
+        (new TriageController())->buscarAjax();
+        break;
+    case "calcular_triage_ajax":
+        require_once '../controllers/TriageController.php';
+        (new TriageController())->calcularAjax();
+        break;
+    case "validar_prescripcion_ajax":
+        require_once "../controllers/PrescripcionController.php";
+        (new PrescripcionController())->validarAjax();
+        break;
+    // M2 C5b: el medicamento de una fila se cruza con un fármaco del conocimiento.
+    case "buscar_farmaco_ajax":
+        require_once "../controllers/PrescripcionController.php";
+        (new PrescripcionController())->buscarFarmacosAjax();
+        break;
+
+    // HU-2.1, RE-2.1.5: alergias y alertas médicas de la mascota.
+    case "listar_alertas_medicas_ajax":
+        require_once "../controllers/AlertaMedicaController.php";
+        (new AlertaMedicaController())->listarAjax();
+        break;
+    case "registrar_alerta_medica_ajax":
+        require_once "../controllers/AlertaMedicaController.php";
+        (new AlertaMedicaController())->registrarAjax();
+        break;
+    case "desactivar_alerta_medica_ajax":
+        require_once "../controllers/AlertaMedicaController.php";
+        (new AlertaMedicaController())->desactivarAjax();
+        break;
+    case "buscar_nodo_alerta_ajax":
+        require_once "../controllers/AlertaMedicaController.php";
+        (new AlertaMedicaController())->buscarNodosAjax();
         break;
 
     // RUTAS SPRINT 3: VACUNACIÓN Y CALENDARIO

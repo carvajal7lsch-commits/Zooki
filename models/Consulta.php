@@ -2,6 +2,9 @@
 require_once __DIR__ . '/ModeloHistoria.php';
 require_once __DIR__ . '/ArchivoClinico.php';
 require_once __DIR__ . '/Tratamiento.php';
+require_once __DIR__ . '/ValidacionPrescripcion.php';
+require_once __DIR__ . '/ConsultaSintoma.php';
+require_once __DIR__ . '/../helpers/CampoInvalido.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 
@@ -18,6 +21,17 @@ class Consulta extends ModeloHistoria
 
     /** Segundos que se espera el candado de numeración antes de desistir. */
     protected const ESPERA_CANDADO_HC = 10;
+
+    /** Columnas del listado de consultas de la clínica activa (HU-2.2). */
+    private const SQL_LISTADO = "SELECT c.*, mc.estado AS vinculo, m.nombre AS nombre_mascota, e.nombre_especie,
+            p.nombre_completo AS nombre_propietario, u.nombre_completo AS veterinario
+        FROM consultas c
+        JOIN mascotas m ON m.id_mascota = c.id_mascota
+        JOIN mascota_clinica mc ON mc.id_mascota = c.id_mascota AND mc.id_clinica = c.id_clinica
+        LEFT JOIN especies e ON e.id_especie = m.id_especie
+        LEFT JOIN usuarios p ON p.id_usuario = m.id_propietario
+        JOIN usuarios u ON u.id_usuario = c.id_veterinario
+        WHERE c.id_clinica = ?";
 
     /**
      * Registra la consulta con sus adjuntos y tratamientos, todo o nada
@@ -41,7 +55,9 @@ class Consulta extends ModeloHistoria
         if ($datos['id_cita'] !== null) {
             $this->exigirCitaParaConsulta($datos['id_cita'], $idMascota);
         }
-        $tratamientosValidos = array_map([Tratamiento::class, 'validar'], $tratamientos);
+        // C5b: cada fila se valida con su número para mostrar el error junto a ella.
+        $tratamientos = array_values($tratamientos);
+        $tratamientosValidos = array_map([Tratamiento::class, 'validar'], $tratamientos, array_keys($tratamientos));
 
         $clinica = $this->clinica();
         $esPrimeraConsulta = $this->numeroHistoria($idMascota, $clinica) === null;
@@ -53,6 +69,12 @@ class Consulta extends ModeloHistoria
             return Transaccion::ejecutar($this->conn, function () use ($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica) {
                 return $this->escribir($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica);
             });
+        } catch (PrescripcionRechazada $e) {
+            // RN-211: el rechazo se audita después del rollback, sin perder su evidencia.
+            if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'OTHER', 'mascotas', $idMascota, null, $e->paraAuditoria(), 'Prescripción rechazada (RE-2.9.2, RE-2.9.3)')) {
+                throw new RuntimeException('No se pudo auditar el rechazo de prescripción.');
+            }
+            throw $e;
         } catch (AccesoDenegado $e) {
             // La auditoría escrita dentro de la transacción se deshizo con ella.
             $this->denegarAcceso('mascotas', $idMascota, 'Registro de consulta denegado; no se guardó nada (RN-112, RN-207)');
@@ -70,19 +92,11 @@ class Consulta extends ModeloHistoria
      */
     public function listarDeLaClinica(): array
     {
-        $sql = "SELECT c.*, mc.estado AS vinculo, m.nombre AS nombre_mascota, e.nombre_especie,
-                p.nombre_completo AS nombre_propietario, u.nombre_completo AS veterinario
-            FROM consultas c
-            JOIN mascotas m ON m.id_mascota = c.id_mascota
-            JOIN mascota_clinica mc ON mc.id_mascota = c.id_mascota AND mc.id_clinica = c.id_clinica
-            LEFT JOIN especies e ON e.id_especie = m.id_especie
-            LEFT JOIN usuarios p ON p.id_usuario = m.id_propietario
-            JOIN usuarios u ON u.id_usuario = c.id_veterinario
-            WHERE c.id_clinica = ?
-            ORDER BY c.fecha_hora DESC, c.id_consulta DESC";
+        $sql = self::SQL_LISTADO . ' ORDER BY c.fecha_hora DESC, c.id_consulta DESC';
         $consulta = $this->conn->prepare($sql);
         $consulta->execute([$this->clinica()]);
-        return $consulta->fetchAll(PDO::FETCH_ASSOC);
+        // M2 C7: el detalle de la lista muestra los síntomas marcados (RN-113 en ConsultaSintoma).
+        return $this->conSintomas($consulta->fetchAll(PDO::FETCH_ASSOC));
     }
 
     /**
@@ -120,7 +134,30 @@ class Consulta extends ModeloHistoria
             $consulta['tratamientos'] = $tratamientos[$id] ?? [];
         }
         unset($consulta);
+        return $this->conSintomas($consultas);
+    }
+
+    /**
+     * M2 C5a (RN-210): agrega los síntomas marcados a consultas que ya salieron
+     * de findByMascota; ConsultaSintoma repite la regla de visibilidad (RN-113).
+     */
+    public function conSintomas(array $consultas): array
+    {
+        $sintomas = (new ConsultaSintoma($this->conn))->deConsultas(array_column($consultas, 'id_consulta'));
+        foreach ($consultas as &$consulta) {
+            $consulta['sintomas'] = $sintomas[(int) $consulta['id_consulta']] ?? [];
+        }
+        unset($consulta);
         return $consultas;
+    }
+
+    /** M2 C5a: la fila recién guardada, con las columnas del listado, para ponerlo al día sin recargar. */
+    public function filaDelListado(int $idConsulta): ?array
+    {
+        $consulta = $this->conn->prepare(self::SQL_LISTADO . ' AND c.id_consulta = ?');
+        $consulta->execute([$this->clinica(), $idConsulta]);
+        $fila = $consulta->fetch(PDO::FETCH_ASSOC);
+        return $fila === false ? null : $this->conSintomas([$fila])[0];
     }
 
     /** Consulta de una cita de la clínica activa (una cita genera una sola consulta). */
@@ -149,7 +186,15 @@ class Consulta extends ModeloHistoria
         // RN-207: se relee dentro de la transacción, por si la mascota se dio
         // de baja o se desvinculó mientras se revisaban los adjuntos.
         $this->exigirMascotaActiva($datos['id_mascota']);
+        // RN-210 (C5a): se leen dentro de la transacción; un código retirado entre
+        // la búsqueda y el guardado da 422 junto al campo y no se escribe nada.
+        $modeloSintomas = new ConsultaSintoma($this->conn);
+        $sintomas = $modeloSintomas->nodosActivos($datos['sintomas']);
+        $seguridad = new ValidacionPrescripcion($this->conn);
+        $evaluaciones = $tratamientos === [] ? [] : $seguridad->evaluar($datos['id_mascota'], $tratamientos, new DateTimeImmutable($this->ahora(), new DateTimeZone('America/Bogota')));
+        ValidacionPrescripcion::exigirDecisiones($evaluaciones);
         $idConsulta = $this->insertar($datos, $clinica);
+        $modeloSintomas->insertarEnConsulta($idConsulta, $sintomas);
 
         $modeloArchivo = new ArchivoClinico($this->conn);
         foreach ($adjuntos as $indice => $adjunto) {
@@ -158,8 +203,9 @@ class Consulta extends ModeloHistoria
         }
 
         $modeloTratamiento = new Tratamiento($this->conn);
-        foreach ($tratamientos as $tratamiento) {
-            $modeloTratamiento->insertarEnConsulta($idConsulta, $tratamiento);
+        foreach ($tratamientos as $indice => $tratamiento) {
+            $modeloTratamiento->insertarEnConsulta($idConsulta, $tratamiento, $indice);
+            $seguridad->auditarDecision($idConsulta, $indice, $evaluaciones[$indice]);
         }
 
         if ($datos['id_cita'] !== null) {
@@ -195,18 +241,14 @@ class Consulta extends ModeloHistoria
         return (int) $this->conn->lastInsertId();
     }
 
-    /** RE-2.1.1, RE-2.1.3 (RN-202) y RE-2.2.2: campos de la consulta, validados en el servidor. */
+    /**
+     * RE-2.1.1, RE-2.1.3 (RN-202) y RE-2.2.2: campos de la consulta, validados
+     * en el servidor. Cada error dice su campo para mostrarlo junto a él (C5a).
+     */
     private function validar(array $entrada, int $idMascota): array
     {
-        $diagnostico = ValidadorClinico::textoRequerido($entrada['diagnostico'] ?? null, 5000);
-        if ($diagnostico === null) {
-            throw new InvalidArgumentException('El diagnóstico es obligatorio.');
-        }
-
-        $motivo = ValidadorClinico::textoOpcional($entrada['motivo'] ?? null, 5000);
-        if ($motivo === '') {
-            throw new InvalidArgumentException('El motivo de la consulta es obligatorio.');
-        }
+        $motivo = $this->textoObligatorio($entrada['motivo'] ?? null, 'motivo', 'El motivo de la consulta es obligatorio.');
+        $diagnostico = $this->textoObligatorio($entrada['diagnostico'] ?? null, 'diagnostico', 'El diagnóstico es obligatorio.');
 
         $idCita = null;
         if (!empty($entrada['id_cita'])) {
@@ -218,46 +260,77 @@ class Consulta extends ModeloHistoria
 
         // Un signo vital fuera de rango es un error de digitación, y
         // guardarlo ensucia la historia de forma permanente (RN-206).
-        $peso = $this->signoDecimal($entrada['peso'] ?? null, ValidadorClinico::PESO_MIN, ValidadorClinico::PESO_MAX, 'El peso debe estar entre 0.01 y 200 kg.');
-        $temperatura = $this->signoDecimal($entrada['temperatura'] ?? null, ValidadorClinico::TEMP_MIN, ValidadorClinico::TEMP_MAX, 'La temperatura debe estar entre 25 y 45 °C.');
-        $cardiaca = $this->signoEntero($entrada['frecuencia_cardiaca'] ?? null, ValidadorClinico::FC_MIN, ValidadorClinico::FC_MAX, 'La frecuencia cardíaca debe estar entre 10 y 400 lpm.');
-        $respiratoria = $this->signoEntero($entrada['frecuencia_respiratoria'] ?? null, ValidadorClinico::FR_MIN, ValidadorClinico::FR_MAX, 'La frecuencia respiratoria debe estar entre 5 y 150 rpm.');
+        $peso = $this->peso($entrada);
+        $temperatura = $this->signoDecimal($entrada['temperatura'] ?? null, ValidadorClinico::TEMP_MIN, ValidadorClinico::TEMP_MAX, 'temperatura');
+        $cardiaca = $this->signoEntero($entrada['frecuencia_cardiaca'] ?? null, ValidadorClinico::FC_MIN, ValidadorClinico::FC_MAX, 'frecuencia_cardiaca');
+        $respiratoria = $this->signoEntero($entrada['frecuencia_respiratoria'] ?? null, ValidadorClinico::FR_MIN, ValidadorClinico::FR_MAX, 'frecuencia_respiratoria');
 
         return [
             'id_mascota' => $idMascota,
             'id_cita' => $idCita,
             'motivo_consulta' => $motivo,
-            'anamnesis' => ValidadorClinico::textoOpcional($entrada['anamnesis'] ?? null, 5000),
+            'anamnesis' => ValidadorClinico::textoOpcional($entrada['anamnesis'] ?? null, ValidadorClinico::TEXTO_MAX),
             'peso' => $peso,
             'temperatura' => $temperatura,
             'frecuencia_cardiaca' => $cardiaca,
             'frecuencia_respiratoria' => $respiratoria,
             'diagnostico' => $diagnostico,
-            'plan_tratamiento' => ValidadorClinico::textoOpcional($entrada['plan_tratamiento'] ?? null, 5000),
-            'observaciones' => ValidadorClinico::textoOpcional($entrada['observaciones'] ?? null, 5000),
+            'plan_tratamiento' => ValidadorClinico::textoOpcional($entrada['plan_tratamiento'] ?? null, ValidadorClinico::TEXTO_MAX),
+            'observaciones' => ValidadorClinico::textoOpcional($entrada['observaciones'] ?? null, ValidadorClinico::TEXTO_MAX),
+            'sintomas' => ConsultaSintoma::codigosDeEntrada($entrada['sintomas'] ?? []),
         ];
     }
 
-    private function signoDecimal($crudo, float $minimo, float $maximo, string $mensaje): ?float
+    /** Motivo y diagnóstico: obligatorios y hasta TEXTO_MAX, sin recortar lo que el veterinario escribió. */
+    private function textoObligatorio($crudo, string $campo, string $mensaje): string
+    {
+        $texto = is_string($crudo) ? trim($crudo) : '';
+        if ($texto === '') {
+            throw new CampoInvalido($campo, ValidadorClinico::AVISOS_CONSULTA[$campo], $mensaje);
+        }
+        if (mb_strlen($texto) > ValidadorClinico::TEXTO_MAX) {
+            $limite = 'Admite hasta ' . ValidadorClinico::TEXTO_MAX . ' caracteres.';
+            throw new CampoInvalido($campo, $limite, $limite);
+        }
+        return $texto;
+    }
+
+    /**
+     * Decisión del usuario (2026-10-15, M2 C5b): el peso se pide; si no se pudo
+     * pesar, la casilla lo deja en NULL, nunca 0 ni un peso aproximado.
+     */
+    private function peso(array $entrada): ?float
+    {
+        if (($entrada['peso_desconocido'] ?? null) === '1') {
+            return null;
+        }
+        $crudo = $entrada['peso'] ?? null;
+        if ($crudo === null || $crudo === '') {
+            throw new CampoInvalido('peso', ValidadorClinico::AVISO_PESO_REQUERIDO, ValidadorClinico::AVISO_PESO_REQUERIDO);
+        }
+        return $this->signoDecimal($crudo, ValidadorClinico::PESO_MIN, ValidadorClinico::PESO_MAX, 'peso');
+    }
+
+    private function signoDecimal($crudo, float $minimo, float $maximo, string $campo): ?float
     {
         if ($crudo === null || $crudo === '') {
             return null;
         }
         $valor = ValidadorClinico::decimal($crudo, $minimo, $maximo);
         if ($valor === null) {
-            throw new InvalidArgumentException($mensaje);
+            throw new CampoInvalido($campo, ValidadorClinico::AVISOS_CONSULTA[$campo], ValidadorClinico::AVISOS_CONSULTA[$campo]);
         }
         return $valor;
     }
 
-    private function signoEntero($crudo, int $minimo, int $maximo, string $mensaje): ?int
+    private function signoEntero($crudo, int $minimo, int $maximo, string $campo): ?int
     {
         if ($crudo === null || $crudo === '') {
             return null;
         }
         $valor = ValidadorClinico::entero($crudo, $minimo, $maximo);
         if ($valor === null) {
-            throw new InvalidArgumentException($mensaje);
+            throw new CampoInvalido($campo, ValidadorClinico::AVISOS_CONSULTA[$campo], ValidadorClinico::AVISOS_CONSULTA[$campo]);
         }
         return $valor;
     }

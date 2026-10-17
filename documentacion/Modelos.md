@@ -1,5 +1,7 @@
 # Modelos y diagramas — Zooki v2.0
 
+> **Actualización de cierre M2 — 16/10/2026:** 2.0.0-alpha.4; conocimiento global con fuentes y validación veterinaria pendiente. Esquema de 52 tablas; integración del triage con agenda y urgencias pendiente de M4.
+
 Este documento reúne los modelos de la Fase 2: el modelo conceptual de los dos grafos (soporte a la decisión clínica y agendamiento inteligente), los diagramas de proceso de negocio (BPMN) y los flujos del sistema. Complementa al [ERS](ERS.md) y al [MER](MER.md), y se renderiza en el portal mediante Mermaid.
 
 > **Cómo verlos:** cada diagrama tiene arriba un visor con zoom, desplazamiento y pantalla completa (ajusta al ancho y al alto de la pantalla). El botón **draw.io** descarga o abre la versión con estilo (archivo con todas las hojas). Estos diagramas son la versión **detallada**: incluyen las validaciones, las ramas de error, el triage de 4 niveles, la cobertura de ausencias y el propietario multi-clínica. El detalle normativo (reglas de negocio, requisitos, diccionario de datos) vive en el ERS, el MER y las [Reglas de Negocio](ReglasNegocio.md).
@@ -72,30 +74,33 @@ flowchart TB
 
 ## 1. Grafo I — Conocimiento clínico (grafo con signo)
 
-El conocimiento clínico se modela como un **grafo dirigido, ponderado y con signo**. Los nodos son conceptos (síntomas, diagnósticos, fármacos, especies, razas, condiciones) y las aristas sus relaciones: las **positivas** (`＋ trata`) favorecen una opción y las **negativas** (`－ tóxico-para`, `contraindica`) la vetan. Los pesos en las aristas `síntoma → diagnóstico` permiten ordenar los diagnósticos probables.
-
-El siguiente ejemplo recorre un caso real: tres síntomas apuntan con distinto peso a un diagnóstico, que propone dos fármacos; el nodo *Especie: Gato* dispara una arista negativa que descarta el paracetamol antes de recetarlo.
+El conocimiento clínico es un grafo dirigido, ponderado y con signo, global para la plataforma.
+Nodos y aristas tienen código estable, fuentes, estado de validación, activo y versión SHA-256 del conjunto.
+Los tipos incluyen síntomas, diagnósticos, fármacos, especies, razas, condiciones y sustancias.
+El signo no basta para vetar: una toxicidad documentada o alergia bloquea; una interacción advierte y exige decisión del veterinario.
+Los pesos son afinidad de apoyo, no probabilidades ni prescripciones automáticas.
 
 ```mermaid
 flowchart LR
-  S1([Cojera]) -->|0.8| DX[Dolor agudo]
-  S2([Se lame la zona]) -->|0.6| DX
-  S3([Decaimiento]) -->|0.5| DX
-  DX ==>|＋ trata| F1[Buprenorfina]
-  DX -. candidato .-> F2[Paracetamol]
-  ESP{{Especie: Gato}} ==>|－ tóxico-para| F2
-
-  classDef pos fill:#E3EDF7,stroke:#2E78B8,color:#12324f;
-  classDef neg fill:#F5E4E2,stroke:#B23A34,color:#5a1f1c;
-  classDef sp fill:#EEF3F0,stroke:#5C6773,color:#26313B;
-  class F1 pos;
-  class F2 neg;
-  class ESP sp;
-  linkStyle 3 stroke:#2E78B8,stroke-width:2px;
-  linkStyle 5 stroke:#B23A34,stroke-width:2px;
+  S["Síntomas confirmados"] -->|"evidencia con peso"| D["Diagnósticos sugeridos"]
+  C["Paciente: especie, raza, edad, alertas"] --> R["Reglas: todos / alguno; máximo dos niveles"]
+  T["Tiempo por evento; desconocido explícito"] --> R
+  S --> R
+  R --> D
+  R --> TR["Triage: máximo; P1 universal; reserva y revisión"]
+  ESP["Especie o raza"] -->|"toxicidad documentada: bloqueo"| F["Fármaco o sustancia"]
+  F -->|"interacción: advertencia"| F2["Otro fármaco vigente"]
+  SRC["Fuentes y validación pendiente por elemento"] -.-> R
+  SRC -.-> D
+  SRC -.-> F
 ```
 
-**Lectura:** lo azul (positivo) suma a favor; lo rojo (negativo) veta. El motor recorre el grafo durante la consulta y, en la prescripción, cruza el fármaco con la especie, la raza, las alergias y la medicación vigente del paciente (RN-211). Se almacena como lista de aristas (`grafo_nodos`, `grafo_aristas`) y se recorre en memoria como lista de adyacencia.
+`grafo_nodos` y `grafo_aristas` conservan conceptos y relaciones; `grafo_reglas` expresa combinaciones, atributos y ventanas temporales que una arista binaria no representa.
+`grafo_sinonimos` ayuda a buscar; no interpreta notas ni marca opciones automáticamente.
+Los nodos taxonómicos enlazan por FK a especie o raza; los atributos de tamaño y cobertura pertenecen al conocimiento, no a nuevas columnas de taxonomía.
+Se carga desde archivos completos con candado/transacción y retiro lógico, conservando IDs y referencias clínicas.
+B1 entrega el esquema y el cargador con archivos vacíos; B2 aporta el conocimiento y C2–C4 implementan los motores.
+No se declara validación clínica por superar pruebas de software.
 
 ---
 
@@ -154,29 +159,37 @@ flowchart TD
   G --> G1["Guardar ficha provisional e ingreso con datos disponibles del acompañante;<br/>sin atribuir propiedad ni crear cuenta antes del consentimiento (HU-4.15)"]
   G1 --> CTX
 
-  CTX["Contexto disponible del paciente: especie, raza, edad, alergias y alertas, historia<br/>(consultas de otras clinicas solo si el propietario lo autorizo, RN-113);<br/>los datos desconocidos de una ficha provisional no se inventan"] --> H["Form Consulta: motivo, anamnesis,<br/>examen fisico y sintomas disponibles"]
-  H --> I{Campos obligatorios y rangos validos?}
+  CTX["Contexto disponible del paciente: especie, raza, edad, alergias y alertas a la vista, historia<br/>(consultas de otras clinicas solo si el propietario lo autorizo, RN-113);<br/>los datos desconocidos de una ficha provisional no se inventan"] --> H["Form Consulta: motivo, anamnesis,<br/>examen fisico (peso o No se pudo pesar: NULL, nunca 0)<br/>y sintomas confirmados del catalogo; nota libre fuera del calculo"]
+  H --> I{Captura inicial y rangos validos?}
   I -- No --> I1[/"Mensaje: corrige los campos marcados"/]
   I1 --> H
-  I -- Si --> J[Grafo I: ordena diagnosticos probables por peso segun los sintomas]
+  I -- Si --> J["Grafo I: ranking por peso y cobertura al cambiar los sintomas;<br/>maximo 5 candidatos positivos, sin porcentajes ni elegir por el vet;<br/>datos que ayudarian con nombre legible y campos opcionales"]
   J --> K{El grafo encontro coincidencias?}
   K -- No --> L[El veterinario escribe el diagnostico]
   K -- Si --> M[Mostrar diagnosticos probables rankeados]
-  M --> L
+  M -- Escribe el suyo --> L
+  M -- Usar este diagnostico --> MU["Copiar el texto al campo para que el vet lo edite;<br/>nunca se rellena solo"]
+  MU --> L
   L --> N{"Diagnostico registrado? (RN-202)"}
   N -- No --> N1[/"Mensaje: el diagnostico es obligatorio"/]
   N1 --> L
-  N -- Si --> P["El veterinario define el tratamiento:<br/>medicamento, dosis, via, duracion, observaciones"]
-  P --> Q{"Alergia registrada del paciente, toxico para la especie<br/>o contraindicado por raza? (RN-211)"}
+  N -- Si --> P["El veterinario define el tratamiento: farmaco del catalogo<br/>o nombre libre (evaluacion incompleta, nunca sin interacciones);<br/>dosis, via, duracion, inicio, fin (calculado si es inequivoco) y observaciones"]
+  P --> Q{"Alergia registrada del paciente o toxicidad de especie/raza<br/>con efecto bloqueo? (RN-211)"}
   Q -- Si --> Q1[/"Mensaje de bloqueo: elige otro farmaco"/]
   Q1 --> P
-  Q -- No --> R{Interaccion con la medicacion vigente?}
-  R -- Si --> R1[Advertencia: el vet confirma o cambia. Queda en auditoria]
+  Q -- No --> R{"Advertencia por toxicidad, regla o interaccion<br/>con medicacion vigente u otra fila nueva?"}
+  R -- Si --> RP{Aviso de medicacion protegida segun RN-113?}
+  RP -- No --> R1[Advertencia visible y decision auditada]
+  RP -- Si --> RG["Aviso generico sin farmaco, dosis ni contenido protegido"]
+  RG --> RC["Conciliar con el propietario o verificar autorizacion antes de confirmar"]
+  RC --> R1
   R -- No --> U{Agregar otro tratamiento?}
-  R1 --> U
+  R1 --> RD{Confirmar o cambiar?}
+  RD -- Cambiar --> P
+  RD -- Confirmar con huella vigente y requisitos cumplidos --> U
   U -- Si --> P
   U -- No --> AL{"Detecto una alergia o alerta nueva?"}
-  AL -- Si --> AL1["Registrarla en las alertas de la mascota<br/>(visible para toda clinica vinculada y en el carnet)"]
+  AL -- Si --> AL1["Registrarla en las alertas de la mascota, con nodo del Grafo I si existe<br/>(visible para toda clinica vinculada y en el carnet;<br/>solo la clinica que la registro la desactiva y queda en el historial)"]
   AL1 --> V
   AL -- No --> V{Adjuntar archivos?}
   V -- Si --> W{"Tipo y tamaño validos? (JPG/PNG/PDF, max 10MB, RN-204)"}
@@ -184,7 +197,12 @@ flowchart TD
   W1 --> V
   W -- Si --> X[Confirmar y guardar]
   V -- No --> X
-  X --> Y[["Guardado atomico: consulta + tratamientos + archivos;<br/>N de historia si es la 1a (RN-102);<br/>completar la cita si venia de una (RN-406)"]]
+  X --> RV["Releer permisos, alergias, medicacion, version y sintomas activos;<br/>revalidar prescripcion en servidor y huella por fila"]
+  RV --> RS{"Sintoma retirado o invalido? (RN-210)"}
+  RS -- "Si: 422 junto al campo, nada escrito" --> I1
+  RS -- No --> RB{Bloqueo o advertencia no resuelta?}
+  RB -- Si --> P
+  RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos<br/>y decisiones de prescripcion auditadas;<br/>N de historia si es la 1a (RN-102);<br/>completar la cita si venia de una (RN-406)"]]
   Y --> Y1{Guardado correcto?}
   Y1 -- No --> Y2[/"Mensaje: error al guardar, reintentar"/]
   Y2 --> X
@@ -208,8 +226,8 @@ flowchart TD
   P0 -- No --> P0a[["Completar el perfil (§13.1)"]]
   P0a --> P0b
   P0 -- Si --> P0b["Elige la clinica (entre las vinculadas) y su mascota"]
-  P0b --> P1["Marca los sintomas de la lista,<br/>texto libre opcional y cuando empezaron"]
-  ROL -- Veterinario (agenda de la clinica) --> V1["Elige mascota; registra sintomas (lista + texto) y cuando empezaron"]
+  P0b --> P1["Confirma marcas del catalogo y tiempos por evento;<br/>Otro / no se, No se o No aplica preventivo;<br/>nota opcional fuera del calculo"]
+  ROL -- Veterinario (agenda de la clinica) --> V1["Elige mascota; confirma marcas y tiempos;<br/>nota libre fuera del calculo"]
   P1 --> G1
   V1 --> G1
   G1["Grafo I calcula el nivel de triage (HU-2.11):<br/>maximo sin promediar, combinaciones, modificadores,<br/>alarmas universales; sin cobertura = amarillo con revision"]
@@ -1071,3 +1089,25 @@ flowchart TD
 
   AUD[Registrar en auditoria] --> ZF
 ```
+
+## 14. Exploración del conocimiento global — M2 C6 (HU-2.12)
+
+```mermaid
+flowchart TD
+  A["Abrir mapa del conocimiento"] --> B{Contexto de superadministrador?}
+  B -- No --> X["403 sin datos"]
+  B -- Si --> C["Leer solo conocimiento global, fuentes, cobertura y version"]
+  C --> D{Conjunto disponible?}
+  D -- No --> E["Estado vacio o error legible; sin cobertura falsa"]
+  D -- Si --> L{Cargo la libreria del mapa desde el CDN?}
+  L -- No --> M["Aviso y lista con los mismos datos, filtros y detalle"]
+  L -- Si --> F["Mapa dirigido con tipo, signo y peso; validacion pendiente visible"]
+  F --> G["Buscar y filtrar conservando relaciones universales"]
+  M --> G
+  G --> H["Detalle de nodo, arista o regla; fuentes y condiciones"]
+  H --> G
+```
+
+No hay rama de edición ni lecturas de mascotas, historia, tratamientos o citas.
+La pantalla también ofrece la lista como vista alternativa al mapa; una regla aparece en el detalle de los nodos que nombra, no como arista (C6).
+La escritura del conocimiento ocurre solo desde el cargador por consola, después de una migración exitosa; la pantalla y su endpoint se implementan en C6.

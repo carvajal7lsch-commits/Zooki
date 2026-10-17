@@ -1,0 +1,650 @@
+/*
+ * HU-2.12 — Mapa del conocimiento clínico. Usa la barra, la cabecera y el encabezado
+ * blanco del panel de plataforma (plataforma.css, usuarios.css); aquí solo lo propio
+ * del mapa. Los colores por tipo vienen del JS (--grafo-color) para que la leyenda
+ * y el mapa no se desincronicen. RNF-16: móvil < 768, tablet 768–1023, escritorio ≥ 1024.
+ */
+.grafo-filtros {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.grafo-buscador {
+    position: relative;
+    flex: 1 1 260px;
+    max-width: 360px;
+}
+
+.grafo-buscador .search-input {
+    max-width: none;
+}
+
+.grafo-sugerencias {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0.35rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.grafo-sugerencia {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.grafo-sugerencia:hover,
+.grafo-sugerencia:focus-visible {
+    background: #eff4ff;
+    outline: none;
+}
+
+.grafo-sugerencia__texto {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    font-size: 0.82rem;
+    color: #0f172a;
+}
+
+.grafo-sugerencia__texto span {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.grafo-sugerencia__tipo {
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+.grafo-tipos {
+    flex: 1 1 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.grafo-tipos__titulo {
+    margin-bottom: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.grafo-tipos__opciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.grafo-tipo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: #ffffff;
+    font-size: 0.78rem;
+    color: #334155;
+    cursor: pointer;
+}
+
+.grafo-tipo input {
+    accent-color: var(--primary);
+    margin: 0;
+}
+
+.grafo-tipo:has(input:not(:checked)) {
+    opacity: 0.55;
+}
+
+/* ── Muestras de la leyenda: misma forma que en el mapa ── */
+.grafo-muestra {
+    flex-shrink: 0;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: var(--grafo-color, #94a3b8);
+}
+
+.grafo-muestra--ellipse {
+    border-radius: 50%;
+}
+
+.grafo-muestra--round-rectangle {
+    border-radius: 3px;
+}
+
+.grafo-muestra--diamond {
+    transform: rotate(45deg) scale(0.85);
+}
+
+.grafo-muestra--triangle {
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.grafo-muestra--hexagon {
+    clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+}
+
+.grafo-muestra--round-pentagon {
+    clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%);
+}
+
+.grafo-muestra--star {
+    clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.grafo-muestra--alarma {
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #dc2626;
+}
+
+.grafo-trazo {
+    flex-shrink: 0;
+    display: inline-block;
+    width: 28px;
+    border-top: 3px solid var(--grafo-color, #94a3b8);
+}
+
+.grafo-trazo--dashed {
+    border-top-style: dashed;
+}
+
+.grafo-trazo--dotted {
+    border-top-style: dotted;
+}
+
+/* ── Franja: versión, contenido, cobertura y validación (RE-2.12.6) ── */
+.grafo-franja {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    padding: 1rem 1.15rem;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.grafo-franja__dato {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    font-size: 0.82rem;
+    color: #0f172a;
+}
+
+.grafo-franja__rotulo {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.grafo-franja__version {
+    font-size: 0.8rem;
+    color: #1e3a8a;
+}
+
+.grafo-franja__cobertura {
+    grid-column: span 2;
+}
+
+.grafo-cobertura--nula {
+    color: #64748b;
+}
+
+.grafo-franja__validacion {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 0.65rem 0.85rem;
+    border-left: 4px solid #d97706;
+    border-radius: var(--radius-md);
+    background: #fffbeb;
+    color: #78350f;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.grafo-estado {
+    margin-bottom: 1rem;
+}
+
+.grafo-estado .plataforma-boton-mini {
+    margin-top: 0.6rem;
+}
+
+.grafo-aviso {
+    margin-bottom: 1rem;
+}
+
+/* ── Mapa y detalle ── */
+.grafo-area {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.grafo-lienzo {
+    position: relative;
+    min-width: 0;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+}
+
+.grafo-lienzo__conteo {
+    position: absolute;
+    z-index: 2;
+    top: 0.6rem;
+    left: 0.8rem;
+    margin: 0;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.grafo-mapa {
+    width: 100%;
+    height: 60vh;
+    min-height: 360px;
+}
+
+.grafo-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 70vh;
+    padding: 2.4rem 1rem 1rem;
+    overflow: auto;
+}
+
+.grafo-lista__titulo {
+    margin: 0 0 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.grafo-lista__filas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.4rem;
+}
+
+.grafo-lista__fila {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: #ffffff;
+    font: inherit;
+    font-size: 0.8rem;
+    color: #0f172a;
+    text-align: left;
+    cursor: pointer;
+}
+
+.grafo-lista__fila:hover,
+.grafo-lista__fila.is-activo {
+    border-color: var(--primary);
+    background: #eff4ff;
+}
+
+.grafo-lista__etiqueta {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.grafo-ficha {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+}
+
+.grafo-ficha--alarma {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.grafo-ficha--clinico {
+    background: #eff4ff;
+    color: #1e3a8a;
+}
+
+.grafo-ficha--politica {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.grafo-ficha--heuristico {
+    background: #fffbeb;
+    color: #78350f;
+}
+
+/* Celular: el detalle es una hoja inferior sobre el mapa a todo el ancho. */
+.grafo-detalle {
+    position: fixed;
+    z-index: 40;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 72vh;
+    border-radius: 20px 20px 0 0;
+    background: #ffffff;
+    box-shadow: 0 -12px 32px rgba(15, 23, 42, 0.18);
+}
+
+.grafo-detalle[hidden] {
+    display: none;
+}
+
+.grafo-detalle__cabeza {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1.1rem 0.6rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.grafo-detalle__subtitulo {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.grafo-detalle__titulo {
+    margin: 0.15rem 0 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+}
+
+.grafo-detalle__cuerpo {
+    padding: 0.85rem 1.1rem 1.25rem;
+    overflow-y: auto;
+}
+
+.grafo-detalle__validacion {
+    margin: 0 0 0.75rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #78350f;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.grafo-detalle__validacion--validado {
+    background: #eff4ff;
+    color: #1e3a8a;
+}
+
+.grafo-detalle__datos {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.3rem 0.75rem;
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+}
+
+.grafo-detalle__datos dt {
+    color: #64748b;
+}
+
+.grafo-detalle__datos dd {
+    margin: 0;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+}
+
+.grafo-detalle__seccion {
+    margin-top: 1rem;
+}
+
+.grafo-detalle__titulo-seccion {
+    margin: 0 0 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.grafo-detalle__nota,
+.grafo-leyenda__nota {
+    margin: 0 0 0.5rem;
+    font-size: 0.74rem;
+    color: #64748b;
+}
+
+.grafo-detalle__ruta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0 0 0.75rem;
+}
+
+.grafo-enlace {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--primary);
+    text-align: left;
+    cursor: pointer;
+}
+
+.grafo-enlace:hover {
+    text-decoration: underline;
+}
+
+.grafo-relaciones,
+.grafo-fuentes,
+.grafo-leyenda__lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.grafo-relacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.8rem;
+}
+
+.grafo-relacion__sentido {
+    color: #64748b;
+}
+
+.grafo-relacion__detalle {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.grafo-sinonimos {
+    gap: 0.3rem;
+}
+
+.grafo-regla {
+    margin-bottom: 0.6rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.grafo-regla__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.74rem;
+    color: #334155;
+}
+
+.grafo-regla__fuentes summary {
+    font-size: 0.76rem;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.grafo-fuente {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.78rem;
+}
+
+.grafo-fuente p {
+    margin: 0 0 0.15rem;
+}
+
+.grafo-fuente__titulo a {
+    color: var(--primary);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.grafo-fuente__entidad,
+.grafo-fuente__fecha {
+    color: #64748b;
+}
+
+.grafo-fuente__localizador {
+    color: #334155;
+}
+
+.grafo-fuente__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.72rem;
+}
+
+/* ── Leyenda (RE-2.12.2) ── */
+.grafo-leyenda {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.5rem 1.5rem;
+    margin-top: 1rem;
+    padding: 1rem 1.15rem;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.grafo-leyenda:empty {
+    display: none;
+}
+
+.grafo-leyenda__titulo {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.grafo-leyenda__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.grafo-leyenda__lista li {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.78rem;
+    color: #334155;
+}
+
+/* Tablet y escritorio: el detalle es un panel lateral junto al mapa. */
+@media (min-width: 768px) {
+    .grafo--con-detalle .grafo-area {
+        grid-template-columns: minmax(0, 1fr) 300px;
+    }
+
+    .grafo-detalle {
+        position: sticky;
+        top: 1rem;
+        z-index: auto;
+        max-height: calc(100vh - 2rem);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .grafo-mapa {
+        height: 66vh;
+        min-height: 460px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .grafo--con-detalle .grafo-area {
+        grid-template-columns: minmax(0, 1fr) 380px;
+    }
+
+    .grafo-mapa {
+        height: calc(100vh - 300px);
+        min-height: 520px;
+    }
+}
+
+@media (max-width: 767px) {
+    .grafo-buscador {
+        max-width: none;
+    }
+
+    .grafo-franja__cobertura {
+        grid-column: auto;
+    }
+
+    .grafo-lista__filas {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

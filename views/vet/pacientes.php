@@ -38,6 +38,11 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
             </div>
 
             <div class="command-center-actions cc-actions-gap">
+                <?php // M2 C7 (hallazgo del usuario, 2026-10-15; RE-1.5.1 a RE-1.5.3): vincular una mascota que ya está en Zooki, a la vista. ?>
+                <button type="button" class="btn-create btn-create-outline" data-vincular-mascota-cliente>
+                    <i class="fas fa-link"></i>
+                    <span>Vincular mascota de un cliente</span>
+                </button>
                 <button data-c3-click="evento2" class="btn-create">
                     <i class="fas fa-plus-circle"></i>
                     <span>Nuevo Registro</span>
@@ -276,6 +281,9 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 </button>
                             </div>
                         </div>
+
+                        <?php // M2 C1 (RE-2.1.5, RE-2.10.1): arriba de la ficha, antes de las pestañas; la pinta alertas-medicas.js. ?>
+                        <section class="alertas-medicas" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-ficha hidden></section>
 
                         <!-- Tabs del Dashboard -->
                         <div class="dossier-dashboard-tabs">
@@ -880,9 +888,11 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 <!-- MODAL NUEVA CONSULTA -->
 <?php include __DIR__ . "/modal_consulta.php"; ?>
 
+<?php include __DIR__ . '/../partials/modal_alerta_medica.php'; ?>
+
 <!-- DRAWER HISTORIAL MÉDICO -->
 <div id="drawerHistorialOverlay" class="drawer-overlay" data-c3-click="evento46"></div>
-<aside id="drawerHistorial" class="drawer">
+<aside id="drawerHistorial" data-paciente-compacto class="drawer">
     <div class="drawer-header">
         <button type="button" class="drawer-close" data-c3-click="evento47" aria-label="Cerrar">
             <i class="fas fa-times"></i>
@@ -892,7 +902,16 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
             <p id="historyPetName"></p>
         </div>
     </div>
-    <div class="drawer-body">
+    <?php // C8.2: historial-cajon deja las secciones juntas, con un solo espaciado. ?>
+    <div class="drawer-body historial-cajon">
+        <?php // M2 C1: alergias y alertas, lo primero de la historia. ?>
+        <div class="paciente-compacto__controles">
+            <button type="button" class="paciente-compacto__alertas" data-paciente-alertas aria-expanded="false" aria-controls="pacientesHistorialAlertas">Cargando alertas</button>
+        </div>
+        <div class="paciente-compacto__lista" id="pacientesHistorialAlertas">
+        <section class="alertas-medicas" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-historial hidden></section>
+        </div>
+
         <!-- Encabezado de Historia Clínica -->
         <div class="history-pet-header">
             <div class="hc-number-badge">
@@ -904,16 +923,18 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
             </div>
         </div>
 
-        <!-- Resumen de Vacunación -->
-        <div class="vaccine-summary-section">
-            <h4 class="section-title"><i class="fas fa-syringe"></i> Resumen de Vacunación</h4>
+        <!-- Vacunas y desparasitaciones -->
+        <div class="vaccine-summary-section historial-cajon__seccion">
+            <h4 class="section-title"><i class="fas fa-syringe"></i> Vacunas y desparasitaciones</h4>
             <div id="vaccineList" class="vaccine-grid">
                 <!-- Dinámico -->
             </div>
         </div>
 
-        <h4 class="section-title"><i class="fas fa-history"></i> Línea de Tiempo de Consultas</h4>
-        <div id="historyTimeline" class="history-timeline"></div>
+        <div class="historial-cajon__seccion">
+            <h4 class="section-title"><i class="fas fa-history"></i> Línea de Tiempo de Consultas</h4>
+            <div id="historyTimeline" class="history-timeline"></div>
+        </div>
     </div>
 </aside>
 

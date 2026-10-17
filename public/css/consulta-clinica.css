@@ -1,0 +1,1346 @@
+/*
+ * M2 C5a — Consulta con el Grafo I (RN-210, HU-2.8): síntomas marcados,
+ * diagnósticos sugeridos y avisos junto al campo. Lo usan el modal de consulta
+ * y Atención. Sin porcentajes ni colores de alarma: es apoyo (RN-209).
+ *
+ * M2 C8 (H5 a H9) — rediseño con la identidad de Zooki: solo las variables de
+ * css/identidad.css (azul de marca y neutros; rojo y ámbar para bloqueo y
+ * advertencia), los mismos campos en el modal y en Atención, filas compactas de
+ * diagnósticos, signos con restricción de entrada y la fila de tratamiento en
+ * una cuadrícula fija. Un solo contenedor desplaza: nada de listas con scroll
+ * dentro de otro que atrapen la rueda o el dedo (H7).
+ * RNF-16: móvil < 768, tablet 768–1023, escritorio ≥ 1024.
+ */
+
+/* Avisos vacíos: no ocupan espacio. El aviso rojo sale solo con un error (H5). */
+small.cuenta-validacion[data-campo-aviso]:empty,
+small.cuenta-validacion[data-tratamiento-aviso]:empty {
+    display: none;
+}
+
+/* Error del historial (antes con style= en medical-module.js). */
+.empty-table.empty-table--error {
+    color: var(--z-danger);
+}
+
+/* ── Campos de la consulta (modal y Atención) ────────────────── */
+.consulta-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    margin: 0 0 0.9rem;
+}
+
+.consulta-campo--crece {
+    flex: 1 0 auto;
+}
+
+.consulta-campo__etiqueta {
+    display: block;
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--z-text-secondary);
+}
+
+.consulta-obligatorio {
+    margin-left: 0.1rem;
+    color: var(--z-primary);
+}
+
+.consulta-ayuda {
+    display: block;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--z-text-muted);
+}
+
+.consulta-ayuda:empty {
+    display: none;
+}
+
+.consulta-formulario :is(input[type="text"], input[type="search"], input[type="date"], select, textarea),
+.atencion :is(input[type="text"], input[type="number"], input[type="date"], select, textarea) {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    border: 1.5px solid var(--z-border);
+    border-radius: var(--z-radius-xs);
+    background: var(--z-surface);
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--z-text);
+    box-shadow: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.consulta-formulario select,
+.atencion select {
+    padding-right: 2rem;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.consulta-formulario input[type="date"],
+.atencion input[type="date"] {
+    min-height: 2.6rem;
+}
+
+.consulta-formulario textarea,
+.atencion textarea {
+    min-height: 4.5rem;
+    resize: vertical;
+}
+
+.consulta-formulario :is(input, select, textarea)::placeholder,
+.atencion :is(input, select, textarea)::placeholder {
+    color: var(--z-text-tenue);
+}
+
+.consulta-formulario :is(input, select, textarea):hover:not(:disabled),
+.atencion :is(input, select, textarea):hover:not(:disabled) {
+    border-color: var(--z-border-fuerte);
+}
+
+.consulta-formulario :is(input, select, textarea):focus,
+.atencion :is(input, select, textarea):focus {
+    outline: none;
+    border-color: var(--z-primary);
+    box-shadow: var(--z-foco);
+}
+
+.consulta-formulario :is(input, select, textarea):disabled,
+.atencion :is(input, select, textarea):disabled {
+    background: var(--z-bg-light);
+    color: var(--z-text-muted);
+    cursor: not-allowed;
+}
+
+.consulta-formulario [aria-invalid="true"],
+.atencion [aria-invalid="true"],
+.atencion .is-invalid {
+    border-color: var(--z-danger);
+    box-shadow: var(--z-foco-error);
+}
+
+.consulta-fila-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.9rem;
+}
+
+/* ── Secciones y botones ───────────────────────────────────── */
+.consulta-seccion {
+    margin: 0 0 1rem;
+}
+
+.consulta-seccion__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.6rem;
+}
+
+.consulta-seccion__titulo {
+    margin: 0 0 0.6rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--z-text);
+}
+
+.consulta-seccion__cabecera .consulta-seccion__titulo {
+    margin: 0;
+}
+
+.consulta-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.95rem;
+    border: 1px solid transparent;
+    border-radius: var(--z-radius-xs);
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.consulta-boton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.consulta-boton--suave {
+    border-color: var(--z-primary-borde);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+.consulta-boton--suave:hover:not(:disabled) {
+    background: var(--z-primary-suave);
+}
+
+.consulta-boton:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+/* ── Síntomas ──────────────────────────────────────────────── */
+.consulta-sintomas__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.consulta-sintomas__chips[hidden],
+.consulta-sintomas__sugerencias[hidden] {
+    display: none;
+}
+
+.consulta-sintoma {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.35rem 0.25rem 0.7rem;
+    border: 1px solid var(--z-primary-borde);
+    border-radius: 999px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.consulta-sintoma__quitar {
+    width: 1.4rem;
+    height: 1.4rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.consulta-sintoma__quitar:hover,
+.consulta-sintoma__quitar:focus-visible {
+    background: var(--z-primary-suave);
+    outline: none;
+}
+
+.consulta-sintomas__buscador,
+.consulta-tratamiento__buscador {
+    position: relative;
+}
+
+/* La lista flota sobre el formulario: no es un scroll anidado. */
+.consulta-sintomas__sugerencias {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
+    max-height: 15rem;
+    margin: 0;
+    padding: 0.35rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    list-style: none;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-lista);
+}
+
+.consulta-sintomas__opcion {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.65rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--z-text);
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* M2 C8 (H6): la opción activa con las flechas se ve igual que al pasar el ratón. */
+.consulta-sintomas__opcion:hover,
+.consulta-sintomas__opcion:focus-visible,
+.consulta-sintomas__opcion.is-activa {
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
+    outline: none;
+}
+
+.consulta-sintomas__opcion.is-activa {
+    box-shadow: inset 3px 0 0 var(--z-primary);
+}
+
+.consulta-sintomas__vacio {
+    padding: 0.5rem 0.65rem;
+    color: var(--z-text-muted);
+    font-size: 0.85rem;
+}
+
+/* ── Diagnósticos sugeridos (H7: filas compactas que se expanden) ── */
+.consulta-sugerencias {
+    margin-bottom: 1rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--z-primary-borde);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-primary-soft);
+}
+
+.consulta-sugerencias__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.2rem 0.75rem;
+    margin-bottom: 0.45rem;
+}
+
+.consulta-sugerencias__titulo {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--z-primary-dark);
+}
+
+.consulta-sugerencias__apoyo {
+    font-size: 0.72rem;
+    color: var(--z-text-muted);
+}
+
+.consulta-sugerencias__estado {
+    margin: 0;
+    color: var(--z-text-secondary);
+    font-size: 0.85rem;
+}
+
+.consulta-sugerencias__estado[hidden],
+.consulta-sugerencias__lista[hidden],
+.consulta-sugerencias__datos[hidden],
+.consulta-sugerencias__ficha[hidden],
+.consulta-sugerencias__dato[hidden],
+.consulta-sugerencia__detalle[hidden] {
+    display: none;
+}
+
+.consulta-sugerencias__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.consulta-sugerencia {
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-xs);
+    background: var(--z-surface);
+}
+
+.consulta-sugerencia.is-abierta {
+    border-color: var(--z-primary-borde);
+}
+
+.consulta-sugerencia__fila {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.2rem 0.3rem 0.2rem 0.2rem;
+}
+
+.consulta-sugerencia__abrir {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.15rem 0.6rem;
+    min-width: 0;
+    padding: 0.35rem 0.4rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    color: var(--z-text);
+    cursor: pointer;
+}
+
+.consulta-sugerencia__abrir:hover,
+.consulta-sugerencia__abrir:focus-visible {
+    background: var(--z-bg-suave);
+    outline: none;
+}
+
+.consulta-sugerencia__flecha {
+    flex-shrink: 0;
+    width: 0.8rem;
+    font-size: 0.7rem;
+    color: var(--z-text-muted);
+    transition: transform 0.15s ease;
+}
+
+.consulta-sugerencia.is-abierta .consulta-sugerencia__flecha {
+    transform: rotate(90deg);
+}
+
+.consulta-sugerencia__nombre {
+    font-size: 0.88rem;
+    color: var(--z-text);
+}
+
+.consulta-sugerencia__cobertura {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--z-primary-dark);
+}
+
+.consulta-sugerencia__usar {
+    flex-shrink: 0;
+    padding: 0.3rem 0.85rem;
+    border: 1px solid var(--z-primary);
+    border-radius: 999px;
+    background: var(--z-surface);
+    color: var(--z-primary);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.consulta-sugerencia__usar:hover,
+.consulta-sugerencia__usar:focus-visible {
+    background: var(--z-primary);
+    color: var(--z-surface);
+    outline: none;
+}
+
+.consulta-sugerencia__detalle {
+    padding: 0 0.75rem 0.55rem 1.85rem;
+}
+
+.consulta-sugerencia__sintomas,
+.consulta-sugerencia__fuente,
+.consulta-sugerencia__apoyo {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: var(--z-text-secondary);
+}
+
+.consulta-sugerencia__fuente a,
+.consulta-tratamiento__fuente a {
+    color: var(--z-primary);
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+}
+
+.consulta-sugerencia__apoyo {
+    font-style: italic;
+    color: var(--z-text-muted);
+}
+
+/* «Datos que ayudarían» en una sola línea compacta. */
+.consulta-sugerencias__datos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.6rem;
+    margin-top: 0.55rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--z-primary-borde);
+    font-size: 0.78rem;
+    color: var(--z-text-secondary);
+}
+
+.consulta-sugerencias__datos-titulo {
+    font-weight: 600;
+}
+
+.consulta-sugerencias__ficha {
+    display: contents;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.consulta-sugerencias__ficha li {
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: var(--z-surface);
+    color: var(--z-text-secondary);
+}
+
+.consulta-sugerencias__dato {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.consulta-formulario .consulta-sugerencias__dato :is(select, input),
+.atencion .consulta-sugerencias__dato :is(select, input) {
+    width: auto;
+    min-width: 8.5rem;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.8rem;
+}
+
+/* Adjuntos rechazados (antes con style= en el aviso). */
+.adjuntos-rechazados__texto {
+    margin-bottom: 0.75rem;
+}
+
+.adjuntos-rechazados__lista {
+    max-width: 32rem;
+    margin: 0 auto;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+/* ── Signos (H8: con la restricción de entrada de ValidadorClinico) ── */
+.consulta-signos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.consulta-signo {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-surface);
+}
+
+.consulta-signo__icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: var(--z-radius-xs);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+.consulta-signo__cuerpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.consulta-signo__entrada {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.consulta-signo__unidad {
+    flex-shrink: 0;
+    min-width: 1.8rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--z-text-muted);
+}
+
+.consulta-sin-peso {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--z-text-secondary);
+    cursor: pointer;
+}
+
+.consulta-sin-peso input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    accent-color: var(--z-primary);
+}
+
+/* Signos del detalle de Consultas (consultas.js): frecuencia respiratoria. */
+.vital-sign-icon.resp {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+/* ── Tratamientos (H9: cuadrícula fija que no se tuerce) ───── */
+.consulta-tratamientos__vacio {
+    margin: 0 0 0.6rem;
+    padding: 0.85rem;
+    border: 1.5px dashed var(--z-border);
+    border-radius: var(--z-radius-sm);
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--z-text-muted);
+}
+
+.consulta-tratamientos__vacio[hidden] {
+    display: none;
+}
+
+.consulta-tratamiento {
+    margin-bottom: 0.75rem;
+    padding: 0.85rem 0.9rem 0.75rem;
+    border: 1px solid var(--z-border);
+    border-left: 4px solid var(--z-primary-borde);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-surface);
+}
+
+.consulta-tratamiento__campos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    grid-template-areas:
+        "medicamento medicamento dosis via quitar"
+        "duracion inicio fin . ."
+        "observaciones observaciones observaciones observaciones .";
+    gap: 0.15rem 0.75rem;
+    align-items: start;
+}
+
+.consulta-tratamiento__campos .consulta-campo {
+    margin-bottom: 0.45rem;
+}
+
+.consulta-tratamiento__medicamento { grid-area: medicamento; }
+.consulta-tratamiento__dosis { grid-area: dosis; }
+.consulta-tratamiento__via { grid-area: via; }
+.consulta-tratamiento__duracion { grid-area: duracion; }
+.consulta-tratamiento__inicio { grid-area: inicio; }
+.consulta-tratamiento__fin { grid-area: fin; }
+.consulta-tratamiento__observaciones { grid-area: observaciones; }
+
+.consulta-tratamiento__quitar {
+    grid-area: quitar;
+    align-self: start;
+    width: 2.35rem;
+    height: 2.35rem;
+    margin-top: 1.35rem;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-xs);
+    background: var(--z-surface);
+    color: var(--z-text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.consulta-tratamiento__quitar:hover,
+.consulta-tratamiento__quitar:focus-visible {
+    border-color: var(--z-danger-borde);
+    background: var(--z-danger-soft);
+    color: var(--z-danger);
+    outline: none;
+}
+
+.consulta-tratamiento__cruce,
+.consulta-tratamiento__ayuda,
+.consulta-tratamiento__contador {
+    margin-top: 0.1rem;
+}
+
+.consulta-tratamiento__prescripcion {
+    margin-top: 0.2rem;
+    padding-top: 0.55rem;
+    border-top: 1px dashed var(--z-border);
+    font-size: 0.82rem;
+}
+
+.consulta-tratamiento__estado {
+    margin: 0;
+    font-weight: 600;
+    color: var(--z-text-secondary);
+}
+
+.consulta-tratamiento__alertas {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+    color: var(--z-text);
+}
+
+.consulta-tratamiento__alertas[hidden],
+.consulta-tratamiento__confirmar[hidden],
+.consulta-tratamiento__conciliacion[hidden] {
+    display: none;
+}
+
+.consulta-tratamiento__confirmar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.45rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.consulta-tratamiento__confirmar input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    accent-color: var(--z-warning-dark);
+}
+
+.consulta-tratamiento__conciliacion {
+    margin: 0.5rem 0 0;
+}
+
+/* El rojo y el ámbar son semánticos: bloqueo y advertencia (RN-211). */
+.consulta-tratamiento--bloqueo {
+    border-color: var(--z-danger-borde);
+    border-left-color: var(--z-danger);
+    background: var(--z-danger-soft);
+}
+
+.consulta-tratamiento--bloqueo .consulta-tratamiento__estado {
+    color: var(--z-danger-dark);
+}
+
+.consulta-tratamiento--advertencia {
+    border-color: var(--z-warning-borde);
+    border-left-color: var(--z-warning);
+    background: var(--z-warning-soft);
+}
+
+.consulta-tratamiento--advertencia .consulta-tratamiento__estado {
+    color: var(--z-warning-dark);
+}
+
+.consulta-tratamiento--incompleta {
+    border-left-color: var(--z-border-fuerte);
+}
+
+/* ── Adjuntos ──────────────────────────────────────────────── */
+.consulta-adjuntos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 10rem;
+    padding: 1.25rem;
+    border: 2px dashed var(--z-primary-borde);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-primary-soft);
+    color: var(--z-text-secondary);
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+}
+
+.consulta-adjuntos:hover {
+    border-color: var(--z-primary);
+}
+
+.consulta-adjuntos > i {
+    font-size: 1.8rem;
+    color: var(--z-primary);
+}
+
+.consulta-adjuntos input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.consulta-adjuntos .file-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+/* ── Avatar azul con la inicial (H5, como el portal) ───────── */
+.consulta-avatar.avatar-iniciales {
+    width: 2.6rem;
+    height: 2.6rem;
+    font-size: 0.95rem;
+    background: var(--z-primary);
+    box-shadow: none;
+}
+
+/* ── Modal de consulta (H9) ────────────────────────────────── */
+.consulta-modal .consulta-modal__panel {
+    display: flex;
+    flex-direction: column;
+    max-height: 92vh;
+    border-radius: var(--z-radius-lg);
+    background: var(--z-surface);
+}
+
+.consulta-modal .consulta-modal__cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: none;
+}
+
+.consulta-modal__paciente {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.consulta-modal__sobretitulo {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--z-text-muted);
+}
+
+.consulta-modal__titulo {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--z-text);
+    overflow-wrap: anywhere;
+}
+
+.consulta-modal .consulta-modal__pestanas {
+    flex-shrink: 0;
+    gap: 0.25rem;
+    padding: 0 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: var(--z-surface);
+    border-bottom: 1px solid var(--z-border);
+}
+
+.consulta-modal .consulta-modal__pestanas::-webkit-scrollbar {
+    display: none;
+}
+
+.consulta-modal .modal-tab-btn {
+    flex-shrink: 0;
+    padding: 0.7rem 0.9rem;
+    color: var(--z-text-muted);
+    font-size: 0.86rem;
+}
+
+.consulta-modal .modal-tab-btn:hover {
+    color: var(--z-text);
+}
+
+.consulta-modal .modal-tab-btn.active {
+    color: var(--z-primary);
+    border-bottom-color: var(--z-primary);
+}
+
+.consulta-modal #formConsulta {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.consulta-modal .consulta-modal__cuerpo {
+    flex: 1;
+    min-height: 0;
+    padding: 1.1rem 1.25rem 0.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.consulta-modal .consulta-modal__pie {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.8rem 1.25rem;
+    border-top: 1px solid var(--z-border);
+    background: var(--z-surface);
+}
+
+.consulta-modal .consulta-modal__pie .btn-modal-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--z-primary);
+}
+
+.consulta-modal .consulta-modal__pie .btn-modal-primary:hover {
+    background: var(--z-primary-dark);
+}
+
+/* ── «Atención sin cita»: buscador de pacientes (M2 C7) ───────
+   Antes en style= y onmouseover de medical-module.js; los mismos valores,
+   ahora con las variables de identidad (C8). */
+#consultaPetSuggestions .suggestion-item.paciente-resultado {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border: 1px solid var(--z-border);
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#consultaPetSuggestions .suggestion-item.paciente-resultado:hover {
+    background: var(--z-bg-suave);
+    border-color: var(--z-border-fuerte);
+}
+
+.paciente-resultado__foto {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.paciente-resultado__nombre {
+    font-weight: 700;
+    color: var(--z-text);
+    font-size: 0.95rem;
+}
+
+.paciente-resultado__dato {
+    font-size: 0.75rem;
+    color: var(--z-text-muted);
+}
+
+.empty-state-text.empty-state-text--compacto {
+    padding: 1rem;
+    font-size: inherit;
+}
+
+.empty-state-text.empty-state-text--error {
+    color: var(--z-danger);
+}
+
+/* ── Tablet ────────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+    .consulta-tratamiento__campos {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+        grid-template-areas:
+            "medicamento medicamento quitar"
+            "dosis via ."
+            "duracion duracion ."
+            "inicio fin ."
+            "observaciones observaciones .";
+    }
+}
+
+/* ── Celular: todo cabe en el ancho (RNF-16) ───────────────── */
+@media (max-width: 767px) {
+    .consulta-fila-2,
+    .consulta-signos {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .consulta-tratamiento {
+        padding: 0.75rem 0.7rem 0.6rem;
+    }
+
+    .consulta-tratamiento__campos {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+        grid-template-areas:
+            "medicamento medicamento quitar"
+            "dosis dosis dosis"
+            "via via via"
+            "duracion duracion duracion"
+            "inicio inicio inicio"
+            "fin fin fin"
+            "observaciones observaciones observaciones";
+    }
+
+    .consulta-sugerencias {
+        padding: 0.6rem 0.65rem;
+    }
+
+    .consulta-sugerencia__detalle {
+        padding-left: 0.75rem;
+    }
+
+    .consulta-sugerencias__dato {
+        flex-wrap: wrap;
+    }
+
+    .consulta-modal .consulta-modal__panel {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+
+    .consulta-modal .consulta-modal__cabecera,
+    .consulta-modal .consulta-modal__pestanas,
+    .consulta-modal .consulta-modal__cuerpo,
+    .consulta-modal .consulta-modal__pie {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .consulta-modal .consulta-modal__pie > button {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+/* iOS amplía la pantalla al enfocar un campo con letra menor a 16 px. */
+@media (pointer: coarse) {
+    .consulta-formulario :is(input[type="text"], input[type="search"], input[type="date"], select, textarea),
+    .atencion :is(input[type="text"], input[type="number"], input[type="date"], select, textarea) {
+        font-size: 16px;
+    }
+}
+
+/* M2 C8.1 (H10/H11): cabecera móvil y registros plegables sin cambiar los datos. */
+.paciente-compacto__controles,
+.atencion__paciente > .paciente-compacto__datos,
+.consulta-modal__ficha > :is(.paciente-compacto__datos, .paciente-compacto__ficha-contenido),
+.paciente-compacto__especie {
+    display: none;
+}
+
+.historia-fila {
+    min-width: 0;
+    margin-bottom: 0.4rem;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-xs);
+    background: var(--z-surface);
+    color: var(--z-text);
+}
+
+.historia-fila__resumen {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+/*
+ * C8.2: el resumen nunca trunca. Los dos grupos van en una línea si caben; si no,
+ * el de clínica y chips baja a la segunda (flex-wrap). Un texto largo baja de línea
+ * por palabras completas en lugar de cortarse con puntos suspensivos.
+ */
+.historia-fila__lineas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.75rem;
+    min-width: 0;
+}
+
+.historia-fila__linea {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.5rem;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+/* La fecha no se separa de su diagnóstico: si este es largo, baja de línea a su lado. */
+.historia-fila__linea--principal {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+}
+
+.historia-fila__linea--contexto {
+    flex: 0 1 auto;
+    align-items: center;
+}
+
+.historia-fila__fecha {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.historia-fila__titulo {
+    min-width: 0;
+    color: var(--z-text);
+}
+
+.historia-fila__resumen::-webkit-details-marker {
+    display: none;
+}
+
+.historia-fila__resumen:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+    border-radius: var(--z-radius-xs);
+}
+
+.historia-fila__fecha,
+.historia-fila__clinica {
+    color: var(--z-text-muted);
+}
+
+.historia-fila__resumen .historia-fila__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.historia-fila__chip,
+.historia-fila__chips .consultation-sin-cita-badge {
+    margin: 0;
+    padding: 0.1rem 0.35rem;
+    border-radius: 999px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary-dark);
+    font-size: 0.65rem;
+    line-height: 1.4;
+}
+
+.historia-fila__flecha {
+    color: var(--z-primary);
+    transition: transform 0.15s ease;
+}
+
+.historia-fila[open] > summary .historia-fila__flecha {
+    transform: rotate(180deg);
+}
+
+.historia-fila__detalle {
+    padding: 0.65rem 0.8rem;
+    border-top: 1px solid var(--z-border);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+}
+
+.historia-fila__detalle p {
+    margin: 0.25rem 0;
+}
+
+.historia-fila__detalle .clinical-data-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 0.5rem;
+}
+
+.historia-fila__detalle .history-treatment-table {
+    width: 100%;
+    table-layout: fixed;
+    font-size: 0.75rem;
+}
+
+.historia-fila__detalle .history-treatment-table :is(td, th) {
+    padding: 0.4rem;
+    overflow-wrap: anywhere;
+}
+
+.historia-fila__detalle .history-adjuntos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+#vaccineList.vaccine-grid {
+    display: block;
+}
+
+/*
+ * C8.2: cajón de historial de Pacientes y Consultas con un solo espaciado entre
+ * alertas, número de historia, vacunas y línea de tiempo. Antes se sumaban el gap
+ * del cuerpo y los márgenes heredados de cada bloque, y la línea de tiempo se
+ * encogía con su propio scroll dentro del cajón.
+ */
+.drawer-body.historial-cajon {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.historial-cajon > *,
+.historial-cajon .alertas-medicas,
+.historial-cajon .history-pet-header,
+.historial-cajon .vaccine-grid {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.historial-cajon > .paciente-compacto__lista:not(:has(.alertas-medicas:not([hidden]))) {
+    display: none;
+}
+
+.historial-cajon .history-pet-header {
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--z-radius-xs);
+}
+
+/* El número de historia es un identificador: no se parte en el guion. */
+.historial-cajon .hc-number-badge span {
+    white-space: nowrap;
+}
+
+.historial-cajon__seccion .section-title,
+.historial-cajon__seccion .section-label {
+    margin: 0 0 0.5rem;
+}
+
+.historial-cajon .history-timeline {
+    gap: 0;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+}
+
+@media (max-width: 767px) {
+    .paciente-compacto__controles {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .paciente-compacto__controles button {
+        min-height: 32px;
+        padding: 0.25rem 0.6rem;
+        border: 1px solid var(--z-primary-borde);
+        border-radius: 999px;
+        background: var(--z-primary-soft);
+        color: var(--z-primary);
+        font: inherit;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .paciente-compacto__controles .paciente-compacto__alertas--alergia {
+        border-color: var(--z-danger-borde);
+        background: var(--z-danger-soft);
+        color: var(--z-danger-dark);
+    }
+
+    [data-paciente-compacto] .paciente-compacto__lista,
+    [data-paciente-compacto] .paciente-compacto__ficha-contenido {
+        display: none;
+    }
+
+    [data-paciente-compacto].is-alertas-abierta .paciente-compacto__lista,
+    [data-paciente-compacto].is-ficha-abierta .paciente-compacto__ficha-contenido {
+        display: block;
+        max-height: 32dvh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .paciente-compacto__lista .alertas-medicas {
+        margin: 0.35rem 0 0;
+    }
+
+    .paciente-compacto__ficha-contenido {
+        font-size: 0.8rem;
+        overflow-wrap: anywhere;
+    }
+
+    .paciente-compacto__datos,
+    .atencion__paciente > .paciente-compacto__datos,
+    .paciente-compacto__especie {
+        display: block;
+        margin: 0;
+        font-size: 0.73rem;
+        color: var(--z-text-muted);
+        overflow-wrap: anywhere;
+    }
+
+    .consulta-modal__ficha {
+        flex-shrink: 0;
+        padding: 0 0.85rem 0.5rem;
+    }
+
+    .consulta-modal__ficha > .paciente-compacto__datos {
+        display: block;
+        margin-bottom: 0.4rem;
+    }
+
+    .consulta-modal .consulta-modal__cabecera {
+        flex-shrink: 0;
+        gap: 0.5rem;
+        padding: 0.6rem 0.85rem 0.35rem;
+    }
+
+    .consulta-modal .consulta-modal__panel {
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .consulta-modal .consulta-modal__pestanas {
+        display: flex;
+        flex-wrap: nowrap;
+        min-height: 44px;
+        padding: 0 0.5rem;
+    }
+
+    .consulta-modal .consulta-modal__pie {
+        padding-bottom: max(0.7rem, env(safe-area-inset-bottom));
+    }
+
+    .consulta-modal .consulta-modal__cuerpo {
+        padding: 0.85rem;
+    }
+
+    .historia-fila__resumen {
+        padding: 0.5rem 0.6rem;
+    }
+
+    .historia-fila__detalle .history-treatment-table :is(thead) {
+        display: none;
+    }
+
+    .historia-fila__detalle .history-treatment-table :is(tbody, tr, td) {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .historia-fila__detalle .history-treatment-table tr + tr {
+        margin-top: 0.5rem;
+        border-top: 1px solid var(--z-border);
+    }
+
+    .historia-fila__detalle .history-treatment-table td {
+        padding: 0.2rem 0;
+    }
+
+    .historia-fila__detalle .history-treatment-table td::before {
+        content: attr(data-etiqueta) ': ';
+        font-weight: 600;
+        color: var(--z-text-muted);
+    }
+}
+
+.historia-fila__chips:empty { display: none; }

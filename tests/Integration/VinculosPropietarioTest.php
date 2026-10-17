@@ -125,7 +125,7 @@ final class VinculosPropietarioTest extends TestCase
         $this->assertSame([], (new Mascota($this->db))->getAll(), 'Ya no está entre sus pacientes');
         $this->assertAccesoDenegado(fn () => (new ArchivoClinico($this->db))->paraDescargar($this->archivoDeNorte));
         $this->assertAccesoDenegado(fn () => (new Vacuna($this->db))->registrar(['id_mascota' => self::LUNA, 'nombre_vacuna' => 'X', 'fecha_aplicacion' => '2026-10-05']));
-        $this->assertAccesoDenegado(fn () => (new Consulta($this->db))->registrar(['id_mascota' => self::LUNA, 'motivo' => 'X', 'diagnostico' => 'Y'], [], [], fn (): array => []));
+        $this->assertAccesoDenegado(fn () => (new Consulta($this->db))->registrar(['id_mascota' => self::LUNA, 'peso' => '8.5', 'motivo' => 'X', 'diagnostico' => 'Y'], [], [], fn (): array => []));
         $this->assertAccesoDenegado(fn () => (new Cita($this->db))->registrar(['id_mascota' => self::LUNA, 'id_veterinario' => DosClinicas::VET_SUR, 'fecha' => '2030-01-07', 'hora' => '09:00', 'motivo' => 'X', 'id_tipo_cita' => 2]));
 
         // El propietario sigue viendo toda la historia de Luna (RN-114).
@@ -158,12 +158,12 @@ final class VinculosPropietarioTest extends TestCase
             'tipo_archivo' => 'image/jpeg', 'extension' => 'jpg', 'tamano_bytes' => 1024,
         ];
         $this->comoVeterinario(DosClinicas::NORTE, DosClinicas::VET_NORTE);
-        $this->consultaDeNorte = (new Consulta($this->db))->registrar(['id_mascota' => 1, 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [], [['nombre' => 'rx']], $conAdjunto);
+        $this->consultaDeNorte = (new Consulta($this->db))->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [], [['nombre' => 'rx']], $conAdjunto);
         $this->archivoDeNorte = (int) $this->db->query('SELECT id_archivo FROM archivos_clinicos')->fetchColumn();
         (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'Rabia', 'fecha_aplicacion' => '2026-09-01']);
 
         $this->comoVeterinario(DosClinicas::SUR, DosClinicas::VET_SUR);
-        $this->consultaDeSur = (new Consulta($this->db))->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], fn (): array => []);
+        $this->consultaDeSur = (new Consulta($this->db))->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], fn (): array => []);
         (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'Moquillo', 'fecha_aplicacion' => '2026-10-01']);
     }
 

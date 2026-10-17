@@ -165,4 +165,49 @@ class ValidadorClinicoTest extends TestCase
         $this->assertNull(ValidadorClinico::opcion('anual', $periodos), 'anual no existe en la columna');
         $this->assertNull(ValidadorClinico::opcion('quincenal', $periodos));
     }
+
+    // ------------------------------------------- M2 C8 (H8): signos ---
+
+    /**
+     * La restricción de entrada del navegador sale del mismo helper que valida:
+     * cifras de la columna (decimal(5,2) para el peso) y el máximo del servidor.
+     * Las pruebas de JS (M2C8Rediseno) usan estos mismos atributos.
+     */
+    public function testAtributosDeLosSignosTienenLasCifrasYElRangoDelServidor()
+    {
+        $peso = ValidadorClinico::atributosSigno('peso');
+        $this->assertStringContainsString('type="text" inputmode="decimal"', $peso, 'Sin las flechas ni la e del campo numérico');
+        $this->assertStringContainsString('maxlength="6"', $peso, '3 enteros, el punto y 2 decimales');
+        $this->assertStringContainsString('data-caracteres="0-9.," data-formato="decimal"', $peso);
+        $this->assertStringContainsString('data-enteros="3" data-decimales="2"', $peso);
+        $this->assertStringContainsString('data-minimo="0.01" data-maximo="200"', $peso);
+
+        $temperatura = ValidadorClinico::atributosSigno('temperatura');
+        $this->assertStringContainsString('maxlength="4"', $temperatura);
+        $this->assertStringContainsString('data-enteros="2" data-decimales="1"', $temperatura);
+        $this->assertStringContainsString('data-minimo="25" data-maximo="45"', $temperatura);
+
+        $cardiaca = ValidadorClinico::atributosSigno('frecuencia_cardiaca');
+        $this->assertStringContainsString('type="text" inputmode="numeric"', $cardiaca);
+        $this->assertStringContainsString('maxlength="3" data-caracteres="0-9"', $cardiaca, 'Sin punto: es un entero');
+        $this->assertStringContainsString('data-minimo="10" data-maximo="400"', $cardiaca);
+
+        $respiratoria = ValidadorClinico::atributosSigno('frecuencia_respiratoria');
+        $this->assertStringContainsString('data-enteros="3" data-decimales="0" data-minimo="5" data-maximo="150"', $respiratoria);
+    }
+
+    public function testLosLimitesDeLosSignosSonLosMismosQueValidaElServidor()
+    {
+        foreach (ValidadorClinico::SIGNOS as $campo => $signo) {
+            $maximo = $signo['max'];
+            $esDecimal = $signo['decimales'] > 0;
+            $valido = $esDecimal ? ValidadorClinico::decimal((string) $maximo, $signo['min'], $signo['max']) : ValidadorClinico::entero((string) $maximo, $signo['min'], $signo['max']);
+            $this->assertNotNull($valido, "$campo: el máximo que deja escribir el navegador lo acepta el servidor");
+            $this->assertLessThanOrEqual(10 ** $signo['enteros'] - 1, $maximo, "$campo: el máximo cabe en sus cifras enteras");
+        }
+        $this->assertSame('Entre 0.01 y 200 kg', ValidadorClinico::ayudaSigno('peso'));
+        $this->assertSame('Entre 25 y 45 °C', ValidadorClinico::ayudaSigno('temperatura'));
+        $this->assertSame('Entre 10 y 400 lpm', ValidadorClinico::ayudaSigno('frecuencia_cardiaca'));
+        $this->assertSame('Entre 5 y 150 rpm', ValidadorClinico::ayudaSigno('frecuencia_respiratoria'));
+    }
 }

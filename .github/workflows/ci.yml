@@ -92,7 +92,7 @@ jobs:
       run: |
         $MYSQL_CI zooki_ci < database/01_schema.sql
         $MYSQL_CI zooki_ci < database/02_semilla.sql
-        test "$($MYSQL_CI -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_ci'")" = "50"
+        test "$($MYSQL_CI -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_ci'")" = "52"
 
     # config/Database.php lee la conexión de .env; este solo existe en el CI.
     - name: Configurar la conexión del migrador
@@ -111,7 +111,7 @@ jobs:
           (SELECT COUNT(*) FROM razas), (SELECT COUNT(*) FROM colores_base), (SELECT COUNT(*) FROM especialidades),
           (SELECT COUNT(*) FROM usuarios), (SELECT COUNT(*) FROM clinicas))")
         echo "roles,planes,especies,razas,colores,especialidades,usuarios,clinicas = $conteos"
-        test "$conteos" = "4,2,6,54,9,0,0,0"
+        test "$conteos" = "4,2,6,55,9,0,0,0"
 
     - name: Pruebas PHPUnit contra MySQL 8
       env:
@@ -143,4 +143,4 @@ jobs:
         tablas=$(docker exec zooki_initdb mysql -u root -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_init'")
         roles=$(docker exec zooki_initdb mysql -u root -N -e "SELECT COUNT(*) FROM zooki_init.roles")
         echo "tablas=$tablas roles=$roles"
-        test "$tablas" = "50" && test "$roles" = "4"
+        test "$tablas" = "52" && test "$roles" = "4"

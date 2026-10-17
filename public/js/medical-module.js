@@ -140,6 +140,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// M2 C5a (hallazgo de A.1): una consulta guardada pone al día, sin recargar,
+// los pacientes y el expediente (número de historia, ficha) y el historial abierto.
+document.addEventListener('zooki:consulta-registrada', (evento) => {
+    const idMascota = String(evento.detail.idMascota);
+    if (document.getElementById('dossierView')) ponerAlDiaPacientes(idMascota);
+    if (historialAbierto && String(historialAbierto.id) === idMascota && historialEstaAbierto()) viewMedicalHistory(historialAbierto.id, historialAbierto.nombre);
+});
+
+/** Pacientes cierra su cajón también con closeDrawer: se mira el cajón, no solo la variable. */
+function historialEstaAbierto() {
+    const enPacientes = document.getElementById('drawerHistorial');
+    if (enPacientes) return enPacientes.classList.contains('is-open');
+    const enConsultas = document.getElementById('historialDrawer');
+    return Boolean(enConsultas) && enConsultas.style.transform === 'translateX(0)';
+}
+
 // --- UTILITIES ---
 function openModal(id) {
     const m = document.getElementById(id);
@@ -221,6 +237,9 @@ function switchModalTab(event, tabId) {
     modal.querySelectorAll('.modal-tab-content').forEach(c => c.classList.remove('active'));
     event.currentTarget.classList.add('active');
     document.getElementById(tabId).classList.add('active');
+    if (modal.classList.contains('consulta-modal') && window.matchMedia && window.matchMedia('(max-width: 767px)').matches) {
+        event.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
 }
 
 // recargar: false al volver a una pestaña que ya está cargada (al cerrar el
@@ -616,7 +635,7 @@ function renderOwnerDossier(owner, pets) {
     petsScroll.innerHTML = '';
 
     if (pets.length === 0) {
-        petsScroll.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-muted); width:100%;"><i class="fas fa-paw" style="font-size:3rem; margin-bottom:1rem; opacity:0.3; display:block;"></i>Este cliente aún no tiene mascotas registradas.</div>';
+        petsScroll.innerHTML = '<div class="dossier-sin-mascotas"><i class="fas fa-paw"></i>Este cliente aún no tiene mascotas registradas.</div>';
         return;
     }
 
@@ -647,7 +666,7 @@ function renderOwnerDossier(owner, pets) {
                 </div>
                 <div class="data-group right-align">
                     <label>HISTORIA</label>
-                    <span class="pet-dossier-card-hc" style="color:var(--primary);">${escaparTexto(m.numero_historia_clinica || 'SIN REGISTRO')}</span>
+                    <span class="pet-dossier-card-hc pet-dossier-card-hc--numero">${escaparTexto(m.numero_historia_clinica || 'SIN REGISTRO')}</span>
                 </div>
             </div>
             <div class="pet-dossier-status">
@@ -1083,108 +1102,24 @@ function filterTable() {
 }
 
 // --- CONSULTAS ---
-function openConsultationModal(id, nombre) {
-    document.getElementById('consultation_id_mascota').value = id;
-    document.getElementById('consultationPetName').innerText = nombre;
-    document.getElementById('formConsulta').reset();
-    document.getElementById('treatmentsList').innerHTML = '';
-    openModal('modalConsulta');
-}
-
-async function saveConsultation(e) {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    if (!fd.get('motivo') || !fd.get('diagnostico')) { zookiAviso('Motivo y Diagnóstico son obligatorios.', 'warning', 'Faltan datos'); return; }
-
-    const boton = e.target.querySelector('[type="submit"]');
-    if (boton) boton.disabled = true;
-
-    try {
-        const res = await (await fetch('index.php?action=registrar_consulta_ajax', { method: 'POST', body: fd })).json();
-
-        if (res.success) {
-            closeModal('modalConsulta');
-            zookiRecargarConAviso(res.message);
-            return;
-        }
-
-        // HU-34 — Si algún adjunto fue rechazado se dice cuál y por qué, uno
-        // por uno. Antes se descartaban en silencio dentro del bucle del
-        // servidor y la consulta se guardaba igual diciendo que los adjuntos
-        // habían entrado: se perdía evidencia clínica sin que nadie se
-        // enterara. Ahora no se guarda nada y el formulario sigue abierto con
-        // los datos escritos, para corregir y reenviar.
-        if (avisarAdjuntosRechazados(res)) return;
-
-        zookiAviso(res.message);
-    } catch (err) {
-        console.error('saveConsultation', err);
-        zookiAviso('No se pudo guardar la consulta. Intenta nuevamente.');
-    } finally {
-        if (boton) boton.disabled = false;
-    }
-}
-
-/** Fecha de hoy en el formato de <input type="date">, en la hora local del navegador. */
-function fechaDeHoy() {
-    const hoy = new Date();
-    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-    const dia = String(hoy.getDate()).padStart(2, '0');
-    return `${hoy.getFullYear()}-${mes}-${dia}`;
-}
-
-function addTreatmentRow() {
-    const list = document.getElementById('treatmentsList');
-    const row = document.createElement('div');
-    row.className = 'treatment-row';
-    // RE-2.4.1: cada tratamiento lleva su fecha de inicio (obligatoria en el servidor).
-    row.innerHTML = `
-        <div class="input-group"><label>Medicamento</label><input type="text" name="med_nombre[]" required></div>
-        <div class="input-group"><label>Dosis</label><input type="text" name="med_dosis[]" required></div>
-        <div class="input-group"><label>Vía</label><select name="med_via[]"><option value="Oral">Oral</option><option value="Subcutánea">Subcutánea</option></select></div>
-        <div class="input-group"><label>Duración</label><input type="text" name="med_duracion[]" required></div>
-        <div class="input-group"><label>Inicio</label><input type="date" name="med_inicio[]" value="${fechaDeHoy()}" required data-etiqueta="la fecha de inicio del tratamiento"></div>
-        <button type="button" class="btn-remove-treatment" title="Quitar medicamento"><i class="fas fa-trash"></i></button>
-    `;
-    // Sin onclick en el HTML (ZOOKI_REGLAS §1).
-    row.querySelector('.btn-remove-treatment').addEventListener('click', () => row.remove());
-    list.appendChild(row);
-}
+// M2 C5a y C5b: el formulario de consulta (openConsultationModal,
+// saveConsultation, addTreatmentRow, updateFileList y avisarAdjuntosRechazados)
+// vive en consulta-formulario.js y consulta-tratamientos.js, compartidos con
+// Atención; aquí queda el historial.
 
 /**
- * Muestra los nombres de los archivos elegidos en un input de adjuntos.
- * El modal de consulta la llamaba desde su input y nunca existió: elegir un
- * archivo lanzaba un error y no se veía qué se había adjuntado.
+ * M2 C5b y C7 (revisión de C5b): una consulta sin peso dice «Sin peso
+ * registrado», que es cierto tanto si no se pudo pesar como en las consultas
+ * anteriores; el peso NULL nunca se muestra ni se cuenta como 0.
  */
-function updateFileList(input) {
-    const zona = input.closest('.file-upload-zone');
-    const lista = zona ? zona.querySelector('.file-list, #fileList') : null;
-    if (!lista) return;
-    lista.innerHTML = [...input.files]
-        .map(f => `<span class="file-chip"><i class="fas ${/\.pdf$/i.test(f.name) ? 'fa-file-pdf' : 'fa-image'}"></i> ${escaparTexto(f.name)}</span>`)
-        .join('');
+function textoPeso(peso) {
+    return peso === null || peso === undefined || peso === '' ? 'Sin peso registrado' : `${escaparTexto(peso)} Kg`;
 }
 
-/**
- * HU-34 — Si el servidor rechazó adjuntos, dice cuáles y por qué, uno por
- * uno. Devuelve true si mostró el aviso. Compartida por el modal de consulta
- * y la pantalla de atención.
- */
-function avisarAdjuntosRechazados(res) {
-    if (!Array.isArray(res.adjuntos_rechazados) || !res.adjuntos_rechazados.length) return false;
-
-    const lista = res.adjuntos_rechazados
-        .map(a => `<li><strong>${escapeHtml(a.archivo)}</strong>: ${escapeHtml(a.motivo)}</li>`)
-        .join('');
-
-    Swal.fire({
-        icon: 'warning',
-        title: 'La consulta no se guardó',
-        html: `<p style="margin-bottom:.75rem;">${escapeHtml(res.message)}</p>
-               <ul style="text-align:left; margin:0 auto; max-width:32rem; font-size:.9rem;">${lista}</ul>`,
-        confirmButtonColor: '#5560FF',
-    });
-    return true;
+/** M2 C7 (HU-2.2): una consulta sin cita (urgencia o imprevisto) se distingue con «Sin cita». */
+function etiquetaSinCita(consulta) {
+    if (!consulta || consulta.id_cita) return '';
+    return '<span class="consultation-sin-cita-badge" title="Registrada sin cita (urgencia o imprevisto)"><i class="fas fa-ambulance"></i> Sin cita</span>';
 }
 
 /**
@@ -1216,15 +1151,31 @@ function avisoSoloLectura(contenedor, mascota) {
     return true;
 }
 
+/** M2 C5a (RN-210): síntomas marcados de una consulta visible, ya escapados. */
+function textoSintomas(consulta) {
+    const sintomas = Array.isArray(consulta.sintomas) ? consulta.sintomas : [];
+    return sintomas.map(s => escaparTexto(s.etiqueta)).join(', ');
+}
+
+function seccionSintomas(consulta) {
+    const texto = textoSintomas(consulta);
+    if (texto === '') return '';
+    return `
+        <div class="clinical-section">
+            <label>Síntomas marcados</label>
+            <p>${texto}</p>
+        </div>`;
+}
+
 function tablaTratamientos(tratamientos) {
     if (!Array.isArray(tratamientos) || tratamientos.length === 0) return '';
     const filas = tratamientos.map(t => `
         <tr>
-            <td>${escaparTexto(t.medicamento)}</td>
-            <td>${escaparTexto(t.dosis)}</td>
-            <td>${escaparTexto(t.via_administracion)}</td>
-            <td>${escaparTexto(t.duracion)}</td>
-            <td>${t.fecha_inicio ? new Date(t.fecha_inicio + 'T00:00:00').toLocaleDateString() : '---'}</td>
+            <td data-etiqueta="Medicamento">${escaparTexto(t.medicamento)}</td>
+            <td data-etiqueta="Dosis">${escaparTexto(t.dosis)}</td>
+            <td data-etiqueta="Vía">${escaparTexto(t.via_administracion)}</td>
+            <td data-etiqueta="Duración">${escaparTexto(t.duracion)}</td>
+            <td data-etiqueta="Inicio">${t.fecha_inicio ? escaparTexto(fechaHistorial(t.fecha_inicio)) : '---'}</td>
         </tr>`).join('');
     return `
         <div class="clinical-section">
@@ -1253,7 +1204,91 @@ function listaAdjuntos(archivos) {
         </div>`;
 }
 
+/** Orden común de consultas, vacunas y desparasitaciones (RE-2.5.1). */
+function eventosHistorialCompacto(datos) {
+    const eventos = [
+        ...(datos.consultas || []).map(registro => ({ registro, tipo: 'consulta', fecha: registro.fecha_hora })),
+        ...(datos.vacunas || []).map(registro => ({ registro, tipo: 'vacuna', fecha: registro.fecha_aplicacion })),
+        ...(datos.desparasitaciones || []).map(registro => ({ registro, tipo: 'desparasitacion', fecha: registro.fecha_aplicacion })),
+    ];
+    const fechaLocal = fecha => new Date(fecha && fecha.length === 10 ? fecha + 'T00:00:00' : String(fecha || '').replace(' ', 'T'));
+    return eventos.sort((a, b) => fechaLocal(b.fecha) - fechaLocal(a.fecha));
+}
+
+/**
+ * M2 C8.2: una sola fecha dd/mm/aaaa para todos los historiales. Se lee la cadena
+ * del servidor sin pasar por Date para que una fecha sin hora no retroceda un día por UTC.
+ */
+function fechaHistorial(fecha) {
+    const partes = String(fecha || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!partes) return 'Sin fecha';
+    return `${partes[3]}/${partes[2]}/${partes[1]}`;
+}
+
+/**
+ * M2 C8.1 (H11) y C8.2: mismo resumen en Atención y en los dos cajones de historial.
+ * Dos grupos que el CSS deja en una línea si caben y en dos si no: arriba fecha y
+ * diagnóstico (o el motivo si no hay diagnóstico); abajo clínica y chips. Ningún texto
+ * se trunca: si no cabe, baja de línea por palabras completas.
+ */
+function filaHistorialCompacto(registro, tipo) {
+    const consulta = tipo === 'consulta';
+    const fecha = registro.fecha_hora || registro.fecha_aplicacion;
+    const fechaTexto = fechaHistorial(fecha);
+    const titulo = consulta ? registro.motivo_consulta : (registro.nombre_vacuna || registro.producto);
+    const diagnostico = consulta ? registro.diagnostico : (registro.laboratorio || registro.tipo || '');
+    const principal = consulta ? (diagnostico || titulo || 'Sin diagnóstico') : (titulo || 'Sin registro');
+    const tratamientos = Array.isArray(registro.tratamientos) ? registro.tratamientos : [];
+    const chipDetalle = diagnostico ? `<span class="historia-fila__chip">${escaparTexto(diagnostico)}</span>` : '';
+    const chips = consulta ? `${etiquetaSinCita(registro)}<span class="historia-fila__chip">${textoPeso(registro.peso)}</span><span class="historia-fila__chip">${tratamientos.length} tratamientos</span>` : chipDetalle;
+    const detalle = consulta ? `
+        <p><strong>Veterinario:</strong> ${escaparTexto(registro.veterinario || 'Sin dato')}</p>
+        ${etiquetaOrigen(registro)}
+        <div class="clinical-data-grid">
+            <div class="clinical-field"><label>Peso</label><span>${textoPeso(registro.peso)}</span></div>
+            <div class="clinical-field"><label>Temp.</label><span>${escaparTexto(registro.temperatura || '—')} °C</span></div>
+            <div class="clinical-field"><label>F.C.</label><span>${escaparTexto(registro.frecuencia_cardiaca || '—')} lpm</span></div>
+            <div class="clinical-field"><label>F.R.</label><span>${escaparTexto(registro.frecuencia_respiratoria || '—')} rpm</span></div>
+        </div>
+        ${seccionSintomas(registro)}
+        <p><strong>Motivo:</strong> ${escaparTexto(titulo)}</p>
+        <p><strong>Anamnesis:</strong> ${escaparTexto(registro.anamnesis || 'Sin registro')}</p>
+        <p><strong>Diagnóstico:</strong> ${escaparTexto(diagnostico)}</p>
+        <p><strong>Plan:</strong> ${escaparTexto(registro.plan_tratamiento || 'Sin registro')}</p>
+        ${tablaTratamientos(tratamientos)}${listaAdjuntos(registro.archivos)}` : `
+        ${etiquetaOrigen(registro)}
+        <p><strong>${tipo === 'vacuna' ? 'Vacuna' : 'Producto'}:</strong> ${escaparTexto(titulo)}</p>
+        <p><strong>Detalle:</strong> ${escaparTexto(diagnostico)}</p>
+        <p><strong>Lote:</strong> ${escaparTexto(registro.lote || 'Sin registro')}</p>
+        <p><strong>Próxima aplicación:</strong> ${fechaProximaHistorial(registro.fecha_proxima_dosis || registro.fecha_proxima)}</p>
+        <p>${escaparTexto(registro.observaciones || '')}</p>`;
+    return `<details class="historia-fila">
+        <summary class="historia-fila__resumen">
+            <span class="historia-fila__lineas">
+                <span class="historia-fila__linea historia-fila__linea--principal">
+                    <time class="historia-fila__fecha">${escaparTexto(fechaTexto)}</time>
+                    <strong class="historia-fila__titulo">${escaparTexto(principal)}</strong>
+                </span>
+                <span class="historia-fila__linea historia-fila__linea--contexto">
+                    <span class="historia-fila__clinica">${escaparTexto(registro.clinica_nombre || 'Clínica actual')}</span>
+                    <span class="historia-fila__chips">${chips}</span>
+                </span>
+            </span>
+            <i class="fas fa-chevron-down historia-fila__flecha" aria-hidden="true"></i>
+        </summary>
+        <div class="historia-fila__detalle"><p><strong>Clínica:</strong> ${escaparTexto(registro.clinica_nombre || 'Clínica actual')}</p>${detalle}</div>
+    </details>`;
+}
+
+function fechaProximaHistorial(fecha) {
+    return fecha ? escaparTexto(fechaHistorial(fecha)) : 'Sin programar';
+}
+
+// M2 C5a: el historial abierto se pone al día cuando se guarda una consulta de esa mascota.
+let historialAbierto = null;
+
 async function viewMedicalHistory(id, nombre) {
+    historialAbierto = { id, nombre };
     document.getElementById('historyPetName').innerText = nombre;
     const timeline = document.getElementById('historyTimeline');
     const vaccineList = document.getElementById('vaccineList');
@@ -1263,6 +1298,10 @@ async function viewMedicalHistory(id, nombre) {
 
     timeline.innerHTML = '<div class="empty-table"><i class="fas fa-spinner fa-spin"></i><p>Cargando historial...</p></div>';
     vaccineList.innerHTML = '';
+    // M2 C1: no se muestran las alertas de la mascota anterior mientras carga la nueva.
+    const alertasHistorial = document.querySelector('[data-alertas-historial]');
+    if (alertasHistorial) alertasHistorial.hidden = true;
+    if (alertasHistorial && window.ZookiPacienteCompacto) window.ZookiPacienteCompacto.preparar(alertasHistorial.closest('[data-paciente-compacto]'));
     hcNumber.innerText = '---';
     petSpecie.innerText = '---';
     petAge.innerText = '---';
@@ -1282,75 +1321,20 @@ async function viewMedicalHistory(id, nombre) {
         // 1. Datos de Mascota
         const m = data.mascota;
         // Hueco 6: desvinculada, la clínica solo lee lo suyo y no se ofrece registrar nada.
-        const soloLectura = avisoSoloLectura(document.querySelector('#drawerHistorial .drawer-body'), m);
+        const soloLectura = avisoSoloLectura(document.querySelector('#drawerHistorial .drawer-body') || document.querySelector('#historialDrawer .drawer-body'), m);
+        // M2 C1 (RE-2.10.1): alergias y alertas de todas las clínicas, arriba de la historia.
+        if (window.ZookiAlertas) window.ZookiAlertas.pintar(alertasHistorial, data.alertas, { idMascota: id, nombreMascota: m.nombre });
         hcNumber.innerText = m.numero_historia_clinica || 'Sin asignar';
         petSpecie.innerText = m.nombre_especie || '---';
         petAge.innerText = m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : 'Edad desconocida';
 
-        // 2. Resumen de Vacunación: las de todas las clínicas (RE-2.10.1)
-        if (data.vacunas && data.vacunas.length > 0) {
-            data.vacunas.forEach(v => {
-                const vCard = document.createElement('div');
-                vCard.className = 'vaccine-card';
-                vCard.innerHTML = `
-                    <div class="vaccine-icon"><i class="fas fa-syringe"></i></div>
-                    <div class="vaccine-info">
-                        <h5>${escaparTexto(v.nombre_vacuna)}</h5>
-                        <span>${new Date(v.fecha_aplicacion).toLocaleDateString()}</span>
-                        ${etiquetaOrigen(v)}
-                    </div>
-                `;
-                vaccineList.appendChild(vCard);
-            });
-        } else {
-            vaccineList.innerHTML = '<p class="sub-text">No hay registros de vacunación.</p>';
-        }
-
-        // 3. Consultas Clínicas (Línea de Tiempo). Las de otra clínica solo
-        // llegan si el propietario autorizó a esta (RE-2.10.2).
+        // M2 C8.1 (H11): las tres clases de registro comparten filas plegables.
+        vaccineList.innerHTML = eventosHistorialCompacto(data)
+            .filter(evento => evento.tipo !== 'consulta')
+            .map(evento => filaHistorialCompacto(evento.registro, evento.tipo)).join('') || '<p class="sub-text">No hay vacunas ni desparasitaciones registradas.</p>';
         timeline.innerHTML = '';
         if (data.consultas && data.consultas.length > 0) {
-            data.consultas.forEach(c => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
-                item.innerHTML = `
-                    <div class="history-header">
-                        <div class="header-main">
-                            <h4>${escaparTexto(c.motivo_consulta)}</h4>
-                            <span class="vet-badge"><i class="fas fa-user-md"></i> ${escaparTexto(c.veterinario)}</span>
-                            ${etiquetaOrigen(c)}
-                        </div>
-                        <div class="header-side">
-                            <span class="date">${new Date(c.fecha_hora).toLocaleString()}</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                    </div>
-                    <div class="history-content">
-                        <div class="clinical-data-grid">
-                            <div class="clinical-field"><label>Peso</label><span>${escaparTexto(c.peso || '--')} Kg</span></div>
-                            <div class="clinical-field"><label>Temp.</label><span>${escaparTexto(c.temperatura || '--')} °C</span></div>
-                            <div class="clinical-field"><label>F.C.</label><span>${escaparTexto(c.frecuencia_cardiaca || '--')} LPM</span></div>
-                        </div>
-                        <div class="clinical-section">
-                            <label>Anamnesis</label>
-                            <p>${escaparTexto(c.anamnesis || 'N/A')}</p>
-                        </div>
-                        <div class="clinical-section">
-                            <label>Diagnóstico Definitivo</label>
-                            <p><strong>${escaparTexto(c.diagnostico)}</strong></p>
-                        </div>
-                        <div class="clinical-section">
-                            <label>Plan de Manejo</label>
-                            <p>${escaparTexto(c.plan_tratamiento || 'N/A')}</p>
-                        </div>
-                        ${tablaTratamientos(c.tratamientos)}
-                        ${listaAdjuntos(c.archivos)}
-                    </div>
-                `;
-                // Sin onclick en el HTML (ZOOKI_REGLAS §1).
-                item.querySelector('.history-header').addEventListener('click', () => item.classList.toggle('active'));
-                timeline.appendChild(item);
-            });
+            timeline.innerHTML = data.consultas.map(c => filaHistorialCompacto(c, 'consulta')).join('');
         } else if (m.numero_historia_clinica) {
             timeline.innerHTML = '<div class="empty-table"><i class="fas fa-folder-open"></i><p>No hay consultas registradas para esta mascota.</p></div>';
         } else {
@@ -1358,7 +1342,7 @@ async function viewMedicalHistory(id, nombre) {
         }
     } catch (e) {
         console.error(e);
-        timeline.innerHTML = '<div class="empty-table" style="color:red;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar el historial clínico.</p></div>';
+        timeline.innerHTML = '<div class="empty-table empty-table--error"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar el historial clínico.</p></div>';
     }
 }
 
@@ -1373,8 +1357,8 @@ function mostrarSinHistoria(contenedor, idMascota, nombre, alAbrirConsulta = nul
     contenedor.innerHTML = `
         <div class="empty-table">
             <i class="fas fa-folder-plus"></i>
-            <p><strong>${escaparTexto(nombre)}</strong> aún no tiene historia clínica. El número se asigna al registrar su primera consulta.</p>
-            ${puedeConsultar ? '<button type="button" class="btn-modal-primary btn-primera-consulta"><i class="fas fa-stethoscope"></i> Registrar primera consulta</button>' : ''}
+            <p><strong>${escaparTexto(nombre)}</strong> aún no tiene historia clínica. El número se asigna con su primera consulta; no hace falta una cita (HU-2.2).</p>
+            ${puedeConsultar ? '<button type="button" class="btn-modal-primary btn-primera-consulta"><i class="fas fa-stethoscope"></i> Registrar consulta</button>' : ''}
         </div>`;
 
     const boton = contenedor.querySelector('.btn-primera-consulta');
@@ -1402,6 +1386,7 @@ function openHistorialDrawer() {
 }
 
 function closeHistorialDrawer() {
+    historialAbierto = null;
     if (document.getElementById('drawerHistorial')) {
         closeDrawer('drawerHistorial');
         return;
@@ -1771,6 +1756,8 @@ function renderPetDashboard(data, id) {
         editBtn.hidden = Boolean(m.solo_lectura);
     }
     const soloLectura = avisoSoloLectura(document.getElementById('dossierPetDashboardSection'), m);
+    // M2 C1 (RE-2.10.1): alergias y alertas de todas las clínicas, arriba de la ficha.
+    if (window.ZookiAlertas) window.ZookiAlertas.pintar(document.querySelector('[data-alertas-ficha]'), data.alertas, { idMascota: id, nombreMascota: m.nombre });
 
     // 2. Pet Info Card
     const photo = document.getElementById('dashPetPhoto');
@@ -1797,86 +1784,9 @@ function renderPetDashboard(data, id) {
     // 3. Render Unified Chronological Timeline
     const timelineDiv = document.getElementById('dashHistorialTimeline');
     if (timelineDiv) {
-        const timelineEvents = [];
-
-        // Todo texto de la base se escapa: con la historia compartida
-        // (RN-113) puede venir de otra clínica.
-        if (data.consultas) {
-            data.consultas.forEach(c => {
-                const cantidadTratamientos = Array.isArray(c.tratamientos) ? c.tratamientos.length : 0;
-                timelineEvents.push({
-                    type: 'consulta',
-                    date: new Date(c.fecha_hora),
-                    title: 'Consulta Clínica',
-                    subtitle: `Dr. ${escaparTexto(c.veterinario)}`,
-                    origen: etiquetaOrigen(c),
-                    body: `<b>Motivo:</b> ${escaparTexto(c.motivo_consulta)}<br><b>Diagnóstico:</b> ${escaparTexto(c.diagnostico)}<br><b>Peso:</b> ${escaparTexto(c.peso || '--')} Kg • <b>F.C:</b> ${escaparTexto(c.frecuencia_cardiaca || '--')} LPM • <b>Temp:</b> ${escaparTexto(c.temperatura || '--')} °C`,
-                    meta: cantidadTratamientos > 0 ? `<div class="timeline-meta-tratamiento"><i class="fas fa-pills"></i> Tratamiento prescrito (${cantidadTratamientos} meds)</div>` : ''
-                });
-            });
-        }
-
-        if (data.vacunas) {
-            data.vacunas.forEach(v => {
-                const laboratorio = v.laboratorio ? ` (${escaparTexto(v.laboratorio)})` : '';
-                timelineEvents.push({
-                    type: 'vacuna',
-                    date: new Date(v.fecha_aplicacion),
-                    title: 'Vacuna Aplicada',
-                    subtitle: `Vacuna: ${escaparTexto(v.nombre_vacuna)}${laboratorio}`,
-                    origen: etiquetaOrigen(v),
-                    body: `Aplicación de dosis veterinaria. Lote: ${escaparTexto(v.lote || 'N/A')}.<br><b>Próxima dosis programada:</b> ${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : 'N/A'}`
-                });
-            });
-        }
-
-        if (data.desparasitaciones) {
-            data.desparasitaciones.forEach(d => {
-                timelineEvents.push({
-                    type: 'desparasitacion',
-                    date: new Date(d.fecha_aplicacion),
-                    title: 'Control de Parásitos',
-                    subtitle: `Producto: ${escaparTexto(d.producto)} (${escaparTexto(d.tipo)})`,
-                    origen: etiquetaOrigen(d),
-                    body: `Control antiparasitario. ${escaparTexto(d.observaciones || 'Sin observaciones.')}<br><b>Próxima dosis recomendada:</b> ${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : 'N/A'}`
-                });
-            });
-        }
-
-        // Chronological Sorting Descending
-        timelineEvents.sort((a, b) => b.date - a.date);
-
-        timelineDiv.innerHTML = '';
-        if (timelineEvents.length > 0) {
-            const container = document.createElement('div');
-            container.className = 'clinical-timeline';
-            timelineEvents.forEach(evt => {
-                const eventDiv = document.createElement('div');
-                eventDiv.className = `timeline-event event-${evt.type}`;
-
-                let iconClass = 'fa-notes-medical';
-                if (evt.type === 'consulta') iconClass = 'fa-stethoscope';
-                else if (evt.type === 'vacuna') iconClass = 'fa-syringe';
-                else if (evt.type === 'desparasitacion') iconClass = 'fa-bug';
-
-                eventDiv.innerHTML = `
-                    <div class="timeline-header">
-                        <div class="timeline-title">
-                            <i class="fas ${iconClass}"></i> ${evt.title}
-                        </div>
-                        <div class="timeline-date">
-                            ${evt.date.toLocaleDateString()}
-                        </div>
-                    </div>
-                    <div class="timeline-subtitulo">${evt.subtitle} ${evt.origen || ''}</div>
-                    <div class="timeline-body">
-                        ${evt.body}
-                    </div>
-                    ${evt.meta || ''}
-                `;
-                container.appendChild(eventDiv);
-            });
-            timelineDiv.appendChild(container);
+        const eventos = eventosHistorialCompacto(data);
+        if (eventos.length > 0) {
+            timelineDiv.innerHTML = eventos.map(evento => filaHistorialCompacto(evento.registro, evento.tipo)).join('');
         } else if (m.numero_historia_clinica) {
             timelineDiv.innerHTML = '<div class="empty-table"><i class="fas fa-history"></i><p>No hay eventos registrados en el expediente clínico.</p></div>';
         } else {
@@ -1926,6 +1836,7 @@ async function printMedicalHistory(id, nombre) {
                     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
                     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.9em; }
                     th { background-color: #f8fafc; }
+                    .pie { margin-top: 30px; font-size: 0.8em; text-align: center; color: #999; }
                     
                     /* Ocultar encabezados y pies de página por defecto del navegador al imprimir */
                     @media print {
@@ -1950,8 +1861,9 @@ async function printMedicalHistory(id, nombre) {
                     <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${escaparTexto(c.veterinario)}</h3>
                     <p><strong>Clínica:</strong> ${escaparTexto(c.clinica_nombre)}</p>
                     <p><strong>Motivo:</strong> ${escaparTexto(c.motivo_consulta)}</p>
+                    ${textoSintomas(c) ? `<p><strong>Síntomas:</strong> ${textoSintomas(c)}</p>` : ''}
                     <p><strong>Diagnóstico:</strong> ${escaparTexto(c.diagnostico)}</p>
-                    <p><strong>Peso:</strong> ${escaparTexto(c.peso || '--')} Kg | <strong>Temp:</strong> ${escaparTexto(c.temperatura || '--')} °C</p>
+                    <p><strong>Peso:</strong> ${textoPeso(c.peso)} | <strong>Temp:</strong> ${escaparTexto(c.temperatura || '--')} °C</p>
                 `;
                 if (c.tratamientos && c.tratamientos.length > 0) {
                     html += `<ul>`;
@@ -1981,7 +1893,7 @@ async function printMedicalHistory(id, nombre) {
         }
 
         html += `
-                <div style="margin-top: 30px; font-size: 0.8em; text-align: center; color: #999;">
+                <div class="pie">
                     Documento generado el ${new Date().toLocaleString()} por Zooki.
                 </div>
             </body>
@@ -2303,12 +2215,43 @@ function filterDossierPets() {
 
 window.filterDossierPets = filterDossierPets;
 
+/** Un aviso del buscador de «Atención sin cita», con las clases de la vista, sin estilos en línea. */
+function avisoBusquedaPaciente(texto, clase = '', icono = false) {
+    const aviso = document.createElement('div');
+    aviso.className = `empty-state-text ${clase}`.trim();
+    if (icono) {
+        const i = document.createElement('i');
+        i.className = 'fas fa-search icon-large';
+        aviso.append(i);
+    }
+    aviso.append(texto);
+    return aviso;
+}
+
 function openNewConsultationFlow() {
     openModal('modalSelectPetConsulta');
     const searchInput = document.getElementById('consultaPetSearch');
     if (searchInput) searchInput.value = '';
     const suggestions = document.getElementById('consultaPetSuggestions');
-    if (suggestions) suggestions.innerHTML = '<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.9rem;"><i class="fas fa-search" style="display:block; font-size:1.5rem; margin-bottom:0.5rem; opacity:0.3;"></i>Escribe para buscar un paciente...</div>';
+    if (suggestions) suggestions.replaceChildren(avisoBusquedaPaciente('Escribe para buscar un paciente...', '', true));
+}
+
+/** Un paciente encontrado: al elegirlo se abre su consulta (sin onclick ni onerror en línea). */
+function resultadoPaciente(item) {
+    const fila = document.createElement('div');
+    fila.className = 'suggestion-item paciente-resultado';
+    fila.innerHTML = `
+        <img src="${escaparTexto(fotoMascotaUrl(item.url_foto))}" class="paciente-resultado__foto" alt="">
+        <div>
+            <div class="paciente-resultado__nombre">${escaparTexto(item.nombre)}</div>
+            <!-- M1-21: HU-03 pide mostrar la especie y no aparecia. -->
+            <div class="paciente-resultado__dato">${escaparTexto(item.nombre_especie || 'Sin especie')}${item.nombre_raza ? ' · ' + escaparTexto(item.nombre_raza) : ''}</div>
+            <div class="paciente-resultado__dato">Propietario: ${escaparTexto(item.propietario_nombre || 'Sin asignar')}</div>
+        </div>`;
+    const foto = fila.querySelector('img');
+    foto.addEventListener('error', () => usarFotoPorDefecto(foto), { once: true });
+    fila.addEventListener('click', () => selectPetForConsultation(item.id_mascota, item.nombre));
+    return fila;
 }
 
 async function searchPetForConsultation(term) {
@@ -2316,30 +2259,20 @@ async function searchPetForConsultation(term) {
     // M1-15: HU-03 pide un minimo de 3 caracteres; el front pedia 2 y el
     // backend tambien, asi que la busqueda salia con menos de lo acordado.
     if (term.length < 3) {
-        suggestions.innerHTML = '<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.9rem;"><i class="fas fa-search" style="display:block; font-size:1.5rem; margin-bottom:0.5rem; opacity:0.3;"></i>Escribe al menos 3 caracteres para buscar un paciente...</div>';
+        suggestions.replaceChildren(avisoBusquedaPaciente('Escribe al menos 3 caracteres para buscar un paciente...', '', true));
         return;
     }
-    
+
     try {
         const res = await (await fetch(`index.php?action=buscar_mascotas&query=${encodeURIComponent(term)}`)).json();
-        if(res.length) {
-            suggestions.innerHTML = res.map(item => `
-                <div class="suggestion-item" style="display:flex; align-items:center; gap:1rem; padding:0.75rem; border:1px solid #e2e8f0; border-radius:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='transparent'; this.style.borderColor='#e2e8f0';" onclick="selectPetForConsultation(${item.id_mascota}, '${item.nombre.replace(/'/g, "\\'")}')">
-                    <img src="${escaparTexto(fotoMascotaUrl(item.url_foto))}" onerror="this.onerror=null;this.src='${FOTO_MASCOTA_DEFECTO}'" style="width:40px; height:40px; border-radius:10px; object-fit:cover;" alt="">
-                    <div>
-                        <div style="font-weight:700; color:var(--text-main); font-size:0.95rem;">${escaparTexto(item.nombre)}</div>
-                        <!-- M1-21: HU-03 pide mostrar la especie y no aparecia. -->
-                        <div style="font-size:0.75rem; color:var(--text-muted);">${item.nombre_especie || 'Sin especie'}${item.nombre_raza ? ' · ' + item.nombre_raza : ''}</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">Propietario: ${item.propietario_nombre || 'Sin asignar'}</div>
-                    </div>
-                </div>
-            `).join('');
+        if (res.length) {
+            suggestions.replaceChildren(...res.map(resultadoPaciente));
         } else {
-            suggestions.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted);">No se encontraron pacientes.</div>';
+            suggestions.replaceChildren(avisoBusquedaPaciente('No se encontraron pacientes.', 'empty-state-text--compacto'));
         }
-    } catch(e) { 
-        console.error('Search error', e); 
-        suggestions.innerHTML = '<div style="padding:1rem; text-align:center; color:red;">Error en la búsqueda.</div>';
+    } catch (e) {
+        console.error('Search error', e);
+        suggestions.replaceChildren(avisoBusquedaPaciente('Error en la búsqueda.', 'empty-state-text--compacto empty-state-text--error'));
     }
 }
 

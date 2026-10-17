@@ -201,6 +201,22 @@ final class DosClinicas
             producto TEXT NOT NULL, periodicidad TEXT NOT NULL, fecha_aplicacion TEXT NOT NULL, fecha_proxima TEXT NOT NULL,
             observaciones TEXT, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)');
         $db->exec('CREATE UNIQUE INDEX uq_mascota_clinica_numero_hc ON mascota_clinica (id_clinica, numero_historia_clinica)');
+        // M2 C1: alergias y alertas (RE-2.1.5) y el conocimiento mínimo al que se enlazan.
+        require_once __DIR__ . '/ConocimientoPrueba.php';
+        ConocimientoPrueba::crearGrafo($db);
+        $db->exec("CREATE TABLE alertas_medicas (id_alerta INTEGER PRIMARY KEY AUTOINCREMENT, id_mascota INTEGER NOT NULL REFERENCES mascotas,
+            id_clinica INTEGER NOT NULL REFERENCES clinicas, id_veterinario INTEGER REFERENCES usuarios,
+            tipo TEXT NOT NULL CHECK (tipo IN ('alergia', 'condicion_cronica', 'medicacion_continua', 'otra')),
+            id_nodo INTEGER REFERENCES grafo_nodos, descripcion TEXT NOT NULL, activa INTEGER NOT NULL DEFAULT 1,
+            fecha TEXT DEFAULT CURRENT_TIMESTAMP)");
+        $db->exec("INSERT INTO grafo_nodos (id_nodo, codigo, activo, tipo, etiqueta) VALUES
+            (1, 'farmaco.paracetamol', 1, 'farmaco', 'Paracetamol (acetaminofén)'), (2, 'sustancia.lilium', 1, 'sustancia', 'Lirio verdadero (Lilium)'),
+            (3, 'condicion.epilepsia', 1, 'condicion', 'Epilepsia diagnosticada'), (4, 'farmaco.retirado', 0, 'farmaco', 'Fármaco retirado'),
+            (5, 'sintoma.vomito', 1, 'sintoma', 'Vómito'), (6, 'farmaco.meloxicam', 1, 'farmaco', 'Meloxicam')");
+        $db->exec("INSERT INTO grafo_sinonimos (codigo, id_nodo, texto, activo) VALUES ('sinonimo.acetaminofen', 1, 'acetaminofén', 1), ('sinonimo.dolex', 1, 'dolex viejo', 0), ('sinonimo.lirios', 2, 'lirios', 1)");
+        // M2 C5a: síntomas marcados de la consulta (RN-210), con la clave de 01_schema.sql.
+        $db->exec('CREATE TABLE consulta_sintomas (detalles TEXT, id_consulta INTEGER NOT NULL REFERENCES consultas,
+            id_nodo INTEGER NOT NULL REFERENCES grafo_nodos, PRIMARY KEY (id_consulta, id_nodo))');
     }
 
     /**

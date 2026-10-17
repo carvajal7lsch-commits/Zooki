@@ -1,0 +1,12 @@
+{
+  "formato": 1,
+  "version": "b2-2026-10-14",
+  "archivos": [
+    "fuentes.json",
+    "nodos.json",
+    "aristas.json",
+    "sinonimos.json",
+    "reglas.json"
+  ],
+  "limitaciones": "Conocimiento inicial armado solo desde fuentes públicas reconocidas, con la fuente de cada elemento. Todo está pendiente de validación veterinaria: no hay un veterinario que lo haya revisado. Los colores de triage son políticas del producto (RN-416 a RN-418) y los pesos del ranking son heurísticos. Cobertura parcial en perros y gatos; las demás especies no tienen cobertura específica. Sin dosis ni pautas de tratamiento. Es apoyo a la decisión (RN-209): decide el veterinario."
+}

@@ -12,7 +12,7 @@ Antes de cualquier tarea, lee **[`agentes/estado.md`](agentes/estado.md)** (dón
 
 ## Estado del proyecto
 
-- **Producción y `main` están en la v2.0.0-alpha.2** (módulo 0 de la v2: varias clínicas, identidad única y aislamiento; corte del 2026-10-11 y pulido del acceso y del panel de plataforma el 2026-10-12). Cada módulo siguiente se construye en su propia rama y publica una alfa nueva (la etapa activa está en [`agentes/estado.md`](agentes/estado.md)).
+- **La versión preparada es v2.0.0-alpha.4** (M2: historia clínica y Grafo I, 2026-10-16). Producción y `main` siguen en v2.0.0-alpha.3 hasta que el usuario integre y despliegue esta entrega; producción se actualiza al desplegar. Cada módulo se construye en su propia rama y publica una alfa nueva (la etapa activa está en [`agentes/estado.md`](agentes/estado.md)).
 - **La especificación ya es la v2**: una plataforma SaaS multi-inquilino con dos grafos (soporte a la decisión clínica y agenda inteligente), repartida entre v2.0 y v2.1. Está en `documentacion/` y es la fuente de verdad.
 - **Se construye la v2 por módulos**, en el orden de dependencias del [plan de entregas](documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2): primero la entrega v2.0 (lo imprescindible), luego la v2.1. Cada módulo agrupa sus HU y RE; el avance y las pruebas se cierran por etapas pequeñas dentro del módulo.
 - Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/modelo/drawdb_schema_v2.sql` describen el destino para drawDB; el esquema ejecutable es `database/01_schema.sql`. Como los datos de la v1 eran solo pruebas, el salto a v2 reinicia la base con un esquema v2 consolidado y datos semilla, sin migrar datos ([plan M0](specs/M0-T-base-saas-identidad.md)). Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
@@ -81,6 +81,8 @@ vendor/bin/phpunit                                 # todas las pruebas
 vendor/bin/phpunit tests/Unit/ValidadorMascotaTest.php   # una sola
 php scripts/migrar.php --revisar                   # qué migraciones faltan en la base local
 php scripts/migrar.php                             # aplicarlas (y la semilla)
+php scripts/cargar_conocimiento.php --revisar      # validar el conjunto y mostrar cambios sin escribir
+php scripts/cargar_conocimiento.php               # cargar el conocimiento después de migrar (XAMPP)
 php scripts/crear_superadmin.php                   # crear el super-administrador por consola
 php scripts/dev/datos_prueba.php --si              # datos de prueba locales: dos clínicas y una persona por contexto (se niega fuera de una base local)
 node scripts/docs/exportar.mjs --revisar           # qué PDF/Word del portal están desactualizados
@@ -129,12 +131,13 @@ Son las del manifiesto `documentacion/ZOOKI_REGLAS.md` (que no se sube al reposi
 
 ## Base de datos y migraciones
 
-- La base v2 nace de `database/01_schema.sql` (las 50 tablas, sin datos) y `database/02_semilla.sql` (roles, planes y catálogos globales). La v2 **no migra datos** de la v1, que eran pruebas: las migraciones v1 (03–13) se retiraron y el migrador se niega a correr sobre una base v1. Detalle en el [plan M0](specs/M0-T-base-saas-identidad.md).
+- La base v2 nace de `database/01_schema.sql` (las 52 tablas, sin datos) y `database/02_semilla.sql` (roles, planes y catálogos globales). La v2 **no migra datos** de la v1, que eran pruebas: las migraciones v1 (03–13) se retiraron y el migrador se niega a correr sobre una base v1. Detalle en el [plan M0](specs/M0-T-base-saas-identidad.md).
 - Una migración nueva es `database/NN_nombre.sql` con el número siguiente (la primera es la `03`), y **debe poder ejecutarse dos veces sin error**: en una instalación nueva la corre MySQL al crear el volumen y luego el migrador. Se consulta `information_schema` antes de crear columnas o índices, y se revisa si la fila ya existe antes de insertarla.
 - `02_semilla.sql` se aplica en cada arranque: **solo inserta lo que falta y nunca sobrescribe** (`INSERT IGNORE` con id explícito e índice único; nada de `ON DUPLICATE KEY UPDATE` ni `REPLACE`). Una fila nueva de un catálogo global se agrega ahí con el siguiente id libre, sin cambiar ni reutilizar los existentes.
 - Solo los `.sql` del primer nivel de `database/` se ejecutan; lo que no debe correr nunca (como el modelo de drawDB) va en una subcarpeta.
 - Empieza con `SET NAMES utf8mb4;` si inserta texto con tildes. Las tablas usan InnoDB y `utf8mb4_general_ci`, que existe en MySQL 8 y en MariaDB 10.4.
 - Al desplegar se aplican solas (`docker/iniciar.sh` → `scripts/migrar.php`). Nunca se pide al usuario que entre al servidor a correrlas.
+- El conocimiento global vive en `database/conocimiento/`, con fuentes, versión y validación veterinaria pendiente; no se inserta a mano en la semilla. En Docker se carga automáticamente al arrancar, solo si la migración salió bien. En XAMPP se ejecuta `php scripts/cargar_conocimiento.php` a mano después de migrar; `--revisar` valida y muestra cambios sin escribir. Una segunda carga del mismo conjunto no duplica ni cambia IDs.
 - **No se modifican migraciones ya publicadas**: se escribe una nueva. `01_schema.sql` y `02_semilla.sql` solo cambian junto con una migración que lleve el mismo cambio a las bases existentes.
 - Las tablas y columnas nuevas salen del [MER](documentacion/MER.md). Si hace falta una que no está, primero se agrega al MER y a `database/modelo/drawdb_schema_v2.sql` y se avisa al usuario.
 

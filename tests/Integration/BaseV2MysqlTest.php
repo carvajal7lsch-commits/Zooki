@@ -22,6 +22,389 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testM2C4TriageConFichaPropiaYBusquedaSinEscrituras(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../controllers/TriageController.php';
+        require_once __DIR__ . '/../../models/CargadorConocimiento.php';
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $this->db->exec('UPDATE mascotas SET id_especie = 2, id_raza = 50 WHERE id_mascota = 1');
+        $antes = $this->contar('auditoria_sistema');
+        $this->comoVeterinario(1, 2);
+        $fecha = new DateTimeImmutable('2026-10-15T12:00:00-05:00');
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = ['id_mascota' => 1, 'sintomas' => [], 'exposiciones' => [['codigo' => 'farmaco.paracetamol', 'tiempo' => 'no_se']]];
+        foreach ([false, true] as $propietario) {
+            if ($propietario) {
+                $_SESSION = ['id_usuario' => 6];
+                Contexto::activar(Contexto::dePropietario(), 1);
+            }
+            ob_start();
+            (new TriageController($this->db, $fecha))->calcularAjax();
+            $resultado = json_decode(ob_get_clean(), true, 64, JSON_THROW_ON_ERROR);
+            $this->assertSame('rojo', $resultado['nivel']);
+            $this->assertFalse($resultado['revision']);
+        }
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = ['q' => 'bomita'];
+        ob_start();
+        (new TriageController($this->db, $fecha))->buscarAjax();
+        $respuesta = json_decode(ob_get_clean(), true, 64, JSON_THROW_ON_ERROR);
+        $this->assertContains('sintoma.vomito_sangre', array_column($respuesta['sugerencias'], 'codigo'));
+        $this->assertSame($antes, $this->contar('auditoria_sistema'));
+        foreach (['citas', 'consultas', 'cita_sintomas', 'consulta_sintomas'] as $tabla) {
+            $this->assertSame(0, $this->contar($tabla));
+        }
+        $_GET = [];
+        $_POST = [];
+        http_response_code(200);
+    }
+
+    public function testC3PrescripcionSeRevalidaAlGuardarConAuditoriaYRollback(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/ValidacionPrescripcion.php';
+        require_once __DIR__ . '/../../models/CargadorConocimiento.php';
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $this->comoVeterinario(1, 2);
+        $fecha = new DateTimeImmutable('now', new DateTimeZone('America/Bogota'));
+        $fila = ['farmaco' => 'farmaco.paracetamol', 'medicamento' => 'Nombre indicado', 'dosis' => 'Indicada', 'via_administracion' => 'Oral', 'duracion' => 'Según valoración', 'fecha_inicio' => $fecha->format('Y-m-d'), 'fecha_fin' => $fecha->modify('+1 day')->format('Y-m-d')];
+        $entrada = ['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Prueba', 'diagnostico' => 'Decisión del veterinario'];
+        $this->db->exec('UPDATE mascotas SET id_especie = 2, id_raza = 50 WHERE id_mascota = 1');
+        try {
+            (new Consulta($this->db))->registrar($entrada, [$fila], [], static fn (): array => []);
+            $this->fail('Se guardó un fármaco bloqueado.');
+        } catch (PrescripcionRechazada $error) {
+            $this->assertTrue($error->publica['bloqueada']);
+        }
+        $this->assertSame(0, $this->contar('consultas'));
+        $this->assertSame(0, $this->contar('tratamientos'));
+        $this->assertSame(0, $this->contar('archivos_clinicos'));
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion = 'Prescripción rechazada (RE-2.9.2, RE-2.9.3)'")->fetchColumn());
+        $this->db->exec('UPDATE mascotas SET id_especie = 1, id_raza = 49 WHERE id_mascota = 1');
+        $evaluacion = (new ValidacionPrescripcion($this->db))->evaluar(1, [$fila], $fecha)[0];
+        $fila += ['decision' => 'confirmar', 'huella' => $evaluacion['publica']['huella']];
+        $id = (new Consulta($this->db))->registrar($entrada, [$fila], [], static fn (): array => []);
+        $guardado = $this->db->query('SELECT t.fecha_fin, n.codigo FROM tratamientos t JOIN grafo_nodos n ON n.id_nodo = t.id_nodo_farmaco WHERE t.id_consulta = ' . $id)->fetch(PDO::FETCH_ASSOC);
+        $this->assertSame($fila['fecha_fin'], $guardado['fecha_fin']);
+        $this->assertSame($fila['farmaco'], $guardado['codigo']);
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion = 'Decisión de prescripción (RE-2.9.3)'")->fetchColumn());
+    }
+
+    public function testC2RankingConFichaYConocimientoActivosSinGuardar(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/GrafoConocimiento.php';
+        require_once __DIR__ . '/../../models/PacienteDiagnostico.php';
+        require_once __DIR__ . '/../../helpers/MotorDiagnosticos.php';
+        require_once __DIR__ . '/../../models/CargadorConocimiento.php';
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $this->comoVeterinario(1, 2);
+        $this->db->exec("UPDATE mascotas SET fecha_nacimiento = '2026-07-15', sexo = 'Macho', esterilizado = 0 WHERE id_mascota = 1");
+        $lector = new GrafoConocimiento($this->db);
+        $grafo = $lector->instantanea();
+        $this->assertSame($grafo, $lector->instantanea());
+        $fecha = new DateTimeImmutable('2026-10-15T12:00:00-05:00');
+        $contexto = (new PacienteDiagnostico($this->db))->contexto(1, $grafo, $fecha, ['vacunacion' => 'incompleta']);
+        $this->assertSame(3, $contexto['edad_meses']);
+        $this->assertFalse($contexto['esterilizado']);
+        $contexto['sintomas'] = array_fill_keys(['sintoma.vomito', 'sintoma.diarrea_sangre', 'sintoma.no_come'], ['minutos' => null]);
+        $antes = $this->contar('auditoria_sistema');
+        $resultado = MotorDiagnosticos::sugerir($grafo, $contexto, $fecha);
+        $this->assertSame('diagnostico.parvovirosis_canina', $resultado['candidatos'][0]['codigo']);
+        $this->assertSame($antes, $this->contar('auditoria_sistema'));
+        $this->assertSame(0, $this->contar('consultas'));
+        $this->assertSame(0, $this->contar('consulta_sintomas'));
+    }
+
+    public function testB1Migracion07ActualizaElEsquemaAnteriorDosVecesSinCambiarIds(): void
+    {
+        $sql = $this->db->query(file_get_contents(__DIR__ . '/../Fixtures/grafo_pre07.sql'));
+        while ($sql->nextRowset()) {
+        }
+        $sql->closeCursor();
+        $this->cargar('07_grafo_conocimiento.sql');
+        $antes = $this->db->query('SELECT * FROM grafo_nodos ORDER BY id_nodo')->fetchAll(PDO::FETCH_ASSOC);
+        $tablas = [];
+        foreach (['grafo_nodos', 'grafo_aristas', 'grafo_sinonimos', 'grafo_reglas', 'citas', 'cita_sintomas', 'consulta_sintomas'] as $tabla) {
+            $tablas[$tabla] = $this->db->query('SHOW CREATE TABLE ' . $tabla)->fetch(PDO::FETCH_NUM)[1];
+        }
+        $this->cargar('07_grafo_conocimiento.sql');
+        $this->assertSame($antes, $this->db->query('SELECT * FROM grafo_nodos ORDER BY id_nodo')->fetchAll(PDO::FETCH_ASSOC));
+        foreach ($tablas as $tabla => $ddl) {
+            $this->assertSame($ddl, $this->db->query('SHOW CREATE TABLE ' . $tabla)->fetch(PDO::FETCH_NUM)[1]);
+        }
+        $this->assertSame('especie', $antes[0]['tipo']);
+        $this->assertSame(0, (int) $antes[0]['activo']);
+        $this->assertSame(2, (int) $this->db->query('SELECT id_nodo FROM consulta_sintomas')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM razas WHERE nombre_raza = 'Gran danés'")->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE 'grafo_%' AND COLUMN_NAME IN ('validado_por','fecha_validacion')")->fetchColumn());
+    }
+
+    public function testB1CargadorRealIdempotenteConCandadoYRevisarSinEscritura(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->cargar('07_grafo_conocimiento.sql');
+        $this->cargar('07_grafo_conocimiento.sql');
+        $carpeta = ConocimientoPrueba::copiar();
+        try {
+            $cargador = new CargadorConocimiento($this->db);
+            $this->assertSame(9, $cargador->cargar($carpeta, true)['altas']);
+            $this->assertSame(0, $this->contar('auditoria_sistema'));
+            $resultado = $cargador->cargar($carpeta);
+            $antes = ConocimientoPrueba::instantanea($this->db);
+            $this->assertSame(64, strlen($resultado['version']));
+            $this->assertSame(0, $cargador->cargar($carpeta)['cambios']);
+            $this->assertSame($antes, ConocimientoPrueba::instantanea($this->db));
+            $otra = $this->otraConexion();
+            $otra->query("SELECT GET_LOCK('zooki_conocimiento', 0)");
+            $bloqueada = $this->db->query("SELECT IS_USED_LOCK('zooki_conocimiento')")->fetchColumn();
+            $this->assertNotFalse($bloqueada);
+            $otra->query("SELECT RELEASE_LOCK('zooki_conocimiento')");
+            $id = $this->db->query("SELECT id_nodo FROM grafo_nodos WHERE codigo = 'sustancia.prueba'")->fetchColumn();
+            ConocimientoPrueba::cambiar($carpeta, 'nodos', static function (array &$nodos): void {
+                $nodos[5]['etiqueta'] = 'Nueva etiqueta';
+            });
+            $antesRevision = ConocimientoPrueba::instantanea($this->db);
+            $this->assertGreaterThan(0, $cargador->cargar($carpeta, true)['cambios']);
+            $this->assertSame($antesRevision, ConocimientoPrueba::instantanea($this->db));
+            $cargador->cargar($carpeta);
+            $this->assertSame($id, $this->db->query("SELECT id_nodo FROM grafo_nodos WHERE codigo = 'sustancia.prueba'")->fetchColumn());
+            ConocimientoPrueba::cambiar($carpeta, 'nodos', static function (array &$nodos): void {
+                array_pop($nodos);
+            });
+            $this->assertSame(1, $cargador->cargar($carpeta)['retiros']);
+            copy(__DIR__ . '/../Fixtures/conocimiento/nodos.json', $carpeta . '/nodos.json');
+            $cargador->cargar($carpeta);
+            $this->assertSame(1, (int) $this->db->query('SELECT activo FROM grafo_nodos WHERE id_nodo = ' . $id)->fetchColumn());
+            $this->assertSame(55, $this->contar('razas'));
+            foreach ([[$carpeta, 0], [$carpeta . '/ausente', 1]] as [$directorio, $esperado]) {
+                $proceso = proc_open([PHP_BINARY, __DIR__ . '/../../scripts/cargar_conocimiento.php', '--revisar', '--carpeta=' . $directorio], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+                $salida = stream_get_contents($pipes[1]);
+                $error = stream_get_contents($pipes[2]);
+                fclose($pipes[1]);
+                fclose($pipes[2]);
+                $this->assertSame($esperado, proc_close($proceso), $salida . $error);
+                $this->assertStringContainsString('[conocimiento]', $salida . $error);
+            }
+        } finally {
+            ConocimientoPrueba::borrar($carpeta);
+        }
+    }
+
+    public function testB2ConocimientoRealSeCargaDosVecesSinCambios(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->cargar('07_grafo_conocimiento.sql');
+        $carpeta = self::DATABASE . '/conocimiento';
+        $cargador = new CargadorConocimiento($this->db);
+        $primera = $cargador->cargar($carpeta);
+        $this->assertGreaterThan(0, $primera['altas']);
+        $antes = ConocimientoPrueba::instantanea($this->db);
+        $segunda = $cargador->cargar($carpeta);
+        $this->assertSame([0, 0, 0], [$segunda['altas'], $segunda['cambios'], $segunda['retiros']]);
+        $this->assertSame($antes, ConocimientoPrueba::instantanea($this->db));
+        // Las razas y especies del conjunto se enlazan al catálogo real, sin crear taxonomía.
+        $this->assertSame(55, $this->contar('razas'));
+        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM grafo_nodos WHERE tipo IN ('especie', 'raza') AND id_especie IS NULL AND id_raza IS NULL")->fetchColumn());
+        $this->assertSame(55, (int) $this->db->query("SELECT id_raza FROM grafo_nodos WHERE codigo = 'raza.gran_danes'")->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query("SELECT COUNT(*) FROM grafo_nodos WHERE codigo NOT LIKE 'legado.%' AND estado_validacion <> 'pendiente'")->fetchColumn());
+    }
+
+    public function testB21RetiraPartoProlongadoSinBorrarloNiCambiarSuId(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $carpeta = ConocimientoPrueba::copiar(self::DATABASE . '/conocimiento');
+        try {
+            // Conserva la declaración anterior para demostrar el retiro sobre una carga existente.
+            $anterior = json_decode(file_get_contents(__DIR__ . '/../Fixtures/parto_regla_b2.json'), true, 64, JSON_THROW_ON_ERROR);
+            ConocimientoPrueba::cambiar($carpeta, 'reglas', static function (array &$reglas) use ($anterior): void {
+                $reglas[] = $anterior;
+            });
+            $cargador = new CargadorConocimiento($this->db);
+            $cargador->cargar($carpeta);
+            $partoAntes = $this->db->query("SELECT * FROM grafo_reglas WHERE codigo = 'triage.parto_prolongado'")->fetch(PDO::FETCH_ASSOC);
+            $antes = ConocimientoPrueba::instantanea($this->db);
+            $simulacion = $cargador->cargar(self::DATABASE . '/conocimiento', true);
+            $this->assertSame(1, $simulacion['retiros']);
+            $this->assertSame($antes, ConocimientoPrueba::instantanea($this->db));
+            $resultado = $cargador->cargar(self::DATABASE . '/conocimiento');
+            $this->assertSame(1, $resultado['retiros']);
+            $partoDespues = $this->db->query("SELECT * FROM grafo_reglas WHERE codigo = 'triage.parto_prolongado'")->fetch(PDO::FETCH_ASSOC);
+            $this->assertSame($partoAntes['id_regla'], $partoDespues['id_regla']);
+            $this->assertSame(0, (int) $partoDespues['activo']);
+            $this->assertSame($partoAntes['condiciones'], $partoDespues['condiciones']);
+            $this->assertSame(1, (int) $this->db->query("SELECT alarma_universal FROM grafo_nodos WHERE codigo = 'sintoma.parto_esfuerzo_sin_cria'")->fetchColumn());
+            $despues = ConocimientoPrueba::instantanea($this->db);
+            $repetida = $cargador->cargar(self::DATABASE . '/conocimiento');
+            $this->assertSame([0, 0, 0], [$repetida['altas'], $repetida['cambios'], $repetida['retiros']]);
+            $this->assertSame($despues, ConocimientoPrueba::instantanea($this->db));
+        } finally {
+            ConocimientoPrueba::borrar($carpeta);
+        }
+    }
+
+    public function testC1AlertasMedicasEnElEsquemaRealConNodoYAuditoria(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        require_once __DIR__ . '/../../models/AlertaMedica.php';
+        $this->prepararHistoriaClinica();
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        try {
+            $this->comoVeterinario(1, 2);
+            $modelo = new AlertaMedica($this->db);
+            $id = $modelo->registrar(['id_mascota' => 1, 'tipo' => 'alergia', 'descripcion' => 'Alergia al paracetamol', 'nodo' => 'farmaco.paracetamol']);
+            $sinNodo = $modelo->registrar(['id_mascota' => 1, 'tipo' => 'otra', 'descripcion' => 'Muerde al examinarlo']);
+            $nodo = (int) $this->db->query("SELECT id_nodo FROM grafo_nodos WHERE codigo = 'farmaco.paracetamol'")->fetchColumn();
+            $this->assertSame($nodo, (int) $this->db->query('SELECT id_nodo FROM alertas_medicas WHERE id_alerta = ' . $id)->fetchColumn());
+            $this->assertNull($this->db->query('SELECT id_nodo FROM alertas_medicas WHERE id_alerta = ' . $sinNodo)->fetchColumn());
+            $this->comoVeterinario(2, 4);
+            $sur = new AlertaMedica($this->db);
+            $this->assertSame('Clínica Norte', $sur->deMascota(1)['activas'][1]['clinica_nombre']);
+            $this->assertDenegado(fn () => $sur->desactivar($id));
+            $this->comoVeterinario(1, 2);
+            $modelo->desactivar($id);
+            $historial = $modelo->deMascota(1)['historial'];
+            $this->assertSame([$id], array_map('intval', array_column($historial, 'id_alerta')));
+            $this->assertNotNull($historial[0]['desactivada_en']);
+            $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM alertas_medicas")->fetchColumn(), 'Nunca se borra');
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada = 'alertas_medicas' AND accion = 'UPDATE' AND registro_id = '$id'")->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /** M2 C5a (RN-210): síntomas con FK real a consultas y grafo_nodos, en la transacción de la consulta. */
+    public function testC5aSintomasDeLaConsultaEnElEsquemaRealConRollback(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        require_once __DIR__ . '/../../models/Consulta.php';
+        $this->prepararHistoriaClinica();
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        try {
+            $this->comoVeterinario(1, 2);
+            $consultas = new Consulta($this->db);
+            $sinAdjuntos = fn (int $idConsulta, array $adjunto, int $indice): array => [];
+            $id = $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Vomita', 'diagnostico' => 'Gastritis', 'sintomas' => ['sintoma.vomito', 'sintoma.diarrea']], [], [], $sinAdjuntos);
+            $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM consulta_sintomas WHERE id_consulta = $id")->fetchColumn());
+            $this->assertSame(['Diarrea', 'Vómito'], array_column($consultas->historialDeMascota(1)[0]['sintomas'], 'etiqueta'));
+
+            // Retirado entre la búsqueda y el guardado: 422 en el campo y nada escrito.
+            $this->db->exec("UPDATE grafo_nodos SET activo = 0 WHERE codigo = 'sintoma.diarrea'");
+            try {
+                $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano', 'sintomas' => ['sintoma.vomito', 'sintoma.diarrea']], [], [], $sinAdjuntos);
+                $this->fail('Un síntoma retirado no se guarda.');
+            } catch (CampoInvalido $e) {
+                $this->assertSame('sintomas', $e->campo);
+            }
+            $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM consultas')->fetchColumn());
+            $this->assertSame(2, (int) $this->db->query('SELECT COUNT(*) FROM consulta_sintomas')->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /** M2 C5b: «No se pudo pesar» guarda NULL (nunca 0) y una fila con fin anterior al inicio no deja nada. */
+    public function testC5bPesoDesconocidoYFinDeLaFilaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../../models/Consulta.php';
+        $this->prepararHistoriaClinica();
+        try {
+            $this->comoVeterinario(1, 2);
+            $consultas = new Consulta($this->db);
+            $sinAdjuntos = fn (int $idConsulta, array $adjunto, int $indice): array => [];
+            $fila = ['medicamento' => 'Amoxicilina', 'dosis' => '1 tableta', 'via_administracion' => 'Oral', 'duracion' => '7 días', 'fecha_inicio' => '2026-10-15', 'fecha_fin' => '2026-10-21', 'observaciones' => 'Con comida'];
+            $id = $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano', 'peso' => '', 'peso_desconocido' => '1'], [$fila], [], $sinAdjuntos);
+            $this->assertNull($this->db->query("SELECT peso FROM consultas WHERE id_consulta = $id")->fetchColumn());
+            $this->assertSame('2026-10-21', $this->db->query("SELECT fecha_fin FROM tratamientos WHERE id_consulta = $id")->fetchColumn());
+            try {
+                $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano', 'peso' => '8.5'], [$fila, array_replace($fila, ['fecha_fin' => '2026-10-01'])], [], $sinAdjuntos);
+                $this->fail('Un fin anterior al inicio no se guarda.');
+            } catch (CampoInvalido $e) {
+                $this->assertSame('tratamientos.1.fecha_fin', $e->campo);
+            }
+            $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM consultas')->fetchColumn());
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    /** M2 C7: los síntomas en la lista de la clínica y en la historia del portal, con el esquema real. */
+    public function testC7SintomasEnLaListaYEnElPortalEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        require_once __DIR__ . '/../../models/Consulta.php';
+        require_once __DIR__ . '/../../models/HistoriaPropietario.php';
+        $this->prepararHistoriaClinica();
+        (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        try {
+            $this->comoVeterinario(1, 2);
+            $consultas = new Consulta($this->db);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '', 'peso_desconocido' => '1', 'motivo' => 'Vomita', 'diagnostico' => 'Gastritis', 'sintomas' => ['sintoma.vomito']], [], [], fn (): array => []);
+            $this->assertSame(['Vómito'], array_column($consultas->listarDeLaClinica()[0]['sintomas'], 'etiqueta'));
+            $_SESSION = ['id_usuario' => 6];
+            Contexto::activar(Contexto::dePropietario(), 1);
+            $historia = (new HistoriaPropietario($this->db))->consultas(1);
+            $this->assertSame(['Vómito'], array_column($historia[0]['sintomas'], 'etiqueta'));
+            $this->assertNull($historia[0]['peso']);
+        } finally {
+            $_SESSION = [];
+        }
+    }
+
+    public function testC6MapaDelConocimientoRealSoloActivoYConReglasEnSusNodos(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        require_once __DIR__ . '/../../models/GrafoConocimiento.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        $this->cargar('07_grafo_conocimiento.sql');
+        $carga = (new CargadorConocimiento($this->db))->cargar(self::DATABASE . '/conocimiento');
+        $mapa = (new GrafoConocimiento($this->db))->mapa();
+        $this->assertSame($carga['version'], $mapa['version']['hash']);
+        $this->assertSame((int) $this->db->query('SELECT COUNT(*) FROM grafo_nodos WHERE activo = 1')->fetchColumn(), $mapa['conteos']['nodos']);
+        $this->assertSame((int) $this->db->query('SELECT COUNT(*) FROM grafo_aristas WHERE activo = 1')->fetchColumn(), $mapa['conteos']['aristas']);
+        $this->assertSame((int) $this->db->query('SELECT COUNT(*) FROM grafo_reglas WHERE activo = 1')->fetchColumn(), $mapa['conteos']['reglas']);
+        // La regla retirada en B2.1 no forma parte del conjunto vigente; el retiro de filas se prueba en GrafoConocimientoTest.
+        $this->assertNotContains('triage.parto_prolongado', array_column($mapa['reglas'], 'codigo'));
+        $nodos = array_column($mapa['nodes'], null, 'codigo');
+        foreach ($mapa['reglas'] as $regla) {
+            $this->assertNotEmpty($regla['nodos'], $regla['codigo']);
+            foreach ($regla['nodos'] as $codigo) {
+                $this->assertContains($regla['codigo'], $nodos[$codigo]['reglas'], $codigo);
+            }
+        }
+        $this->assertSame(['especie.canino'], $nodos['raza.gran_danes']['especies']);
+        $this->assertSame(['especie.felino'], $nodos['raza.persa']['especies']);
+        $this->assertSame('parcial', array_column($mapa['cobertura'], null, 'codigo')['especie.canino']['triage']);
+        $this->assertSame('sin_cobertura', array_column($mapa['cobertura'], null, 'codigo')['especie.ave']['triage']);
+        $json = json_encode($mapa);
+        foreach (['id_mascota', 'id_consulta', 'id_cita', 'id_clinica', 'id_tratamiento', 'id_propietario', 'id_usuario', 'id_nodo'] as $clave) {
+            $this->assertStringNotContainsString('"' . $clave . '"', $json);
+        }
+    }
+
+    public function testB1TaxonomiaConFKYTiposCoherentes(): void
+    {
+        require_once __DIR__ . '/../Support/ConocimientoPrueba.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        (new CargadorConocimiento($this->db))->cargar(__DIR__ . '/../Fixtures/conocimiento');
+        foreach (["id_especie = 999999", "id_raza = 55", "id_especie = NULL"] as $cambio) {
+            try {
+                $this->db->exec("UPDATE grafo_nodos SET $cambio WHERE codigo = 'especie.prueba'");
+                $this->fail('La FK o el CHECK debió rechazar el enlace.');
+            } catch (PDOException $error) {
+                $this->assertNotSame('', $error->getMessage());
+            }
+        }
+    }
     public function testM5FTopeDeActivacionSerializaLaCuentaYSeComparteEntreConexiones(): void
     {
         $this->prepararHistoriaClinica();
@@ -516,7 +899,7 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
-    public function testElEsquemaCreaLasCincuentaTablasEnInnoDbYUtf8mb4(): void
+    public function testElEsquemaCreaLasCincuentaYDosTablasEnInnoDbYUtf8mb4(): void
     {
         $this->cargar('01_schema.sql');
 
@@ -524,7 +907,7 @@ class BaseV2MysqlTest extends TestCase
             "SELECT ENGINE, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
         )->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->assertCount(50, $tablas);
+        $this->assertCount(52, $tablas);
         foreach ($tablas as $t) {
             $this->assertSame('InnoDB', $t['ENGINE']);
             $this->assertSame('utf8mb4_general_ci', $t['TABLE_COLLATION']);
@@ -537,7 +920,7 @@ class BaseV2MysqlTest extends TestCase
         $this->cargar('02_semilla.sql');
         $this->cargar('02_semilla.sql');
 
-        $this->assertSame(['roles' => 4, 'planes' => 2, 'especies' => 6, 'razas' => 54, 'colores_base' => 9, 'especialidades' => 0], $this->conteos());
+        $this->assertSame(['roles' => 4, 'planes' => 2, 'especies' => 6, 'razas' => 55, 'colores_base' => 9, 'especialidades' => 0], $this->conteos());
         $this->assertSame(
             [1 => 'administrador', 2 => 'veterinario', 4 => 'propietario', 5 => 'super-administrador'],
             $this->db->query('SELECT id_rol, nombre_rol FROM roles ORDER BY id_rol')->fetchAll(PDO::FETCH_KEY_PAIR)
@@ -555,7 +938,7 @@ class BaseV2MysqlTest extends TestCase
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }
@@ -587,7 +970,7 @@ class BaseV2MysqlTest extends TestCase
             $datos=['id_propietario'=>6,'nombre'=>'Nueva ficha','id_especie'=>1,'id_raza'=>null,
                 'raza_indicada'=>'Raza por confirmar','fecha_nacimiento'=>'2022-01-01','peso'=>'3.20','sexo'=>'Macho','colores'=>[1,2]];
             $id=$mascotas->insert($datos); $otra=$mascotas->insert($datos);
-            $this->assertSame(54,$this->contar('razas'));
+            $this->assertSame(55, $this->contar('razas'));
             $m=$mascotas->getById($id); $this->assertNull($m['numero_historia_clinica']);
             $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/D',$m['token_carnet']);
             $this->assertNotSame($m['token_carnet'],$mascotas->getById($otra)['token_carnet']);
@@ -812,8 +1195,8 @@ class BaseV2MysqlTest extends TestCase
             $tratamiento = ['medicamento' => 'Amoxicilina', 'dosis' => '1 ml', 'via_administracion' => 'Oral', 'duracion' => '5 días', 'fecha_inicio' => '2026-10-07'];
             $guardar = fn (int $idConsulta, array $adjunto, int $indice): array => $this->metadatosDeAdjunto();
             $consultas = new Consulta($this->db);
-            $idConsulta = $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [$tratamiento], [['nombre' => 'rx.jpg']], $guardar);
-            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
+            $idConsulta = $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [$tratamiento], [['nombre' => 'rx.jpg']], $guardar);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
             $idVacuna = (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'Rabia', 'fecha_aplicacion' => '2026-10-01']);
             $idArchivo = (int) $this->db->query('SELECT id_archivo FROM archivos_clinicos')->fetchColumn();
 
@@ -824,7 +1207,7 @@ class BaseV2MysqlTest extends TestCase
             // Sin fecha de inicio en un tratamiento no queda nada (RE-2.6.1).
             unset($tratamiento['fecha_inicio']);
             try {
-                $consultas->registrar(['id_mascota' => 1, 'motivo' => 'X', 'diagnostico' => 'Y'], [$tratamiento], [], $guardar);
+                $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'X', 'diagnostico' => 'Y'], [$tratamiento], [], $guardar);
                 $this->fail('Debió rechazar el tratamiento sin fecha de inicio.');
             } catch (InvalidArgumentException $e) {
                 $this->assertStringContainsString('fecha de inicio', $e->getMessage());
@@ -847,7 +1230,7 @@ class BaseV2MysqlTest extends TestCase
             $this->db->exec('UPDATE propietario_clinica SET autoriza_historia_compartida = 0 WHERE id_propietario = 6 AND id_clinica = 2');
             $this->assertSame([], $consultas->historialDeMascota(1));
 
-            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $guardar);
             $this->assertSame('HC-000001', $this->numeroHistoria(1, 2));
             $this->assertSame('HC-000001', $this->numeroHistoria(1, 1));
             $this->assertSame(3, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = 2 AND accion = 'OTHER'")->fetchColumn());
@@ -872,11 +1255,11 @@ class BaseV2MysqlTest extends TestCase
             $this->comoVeterinario(1, 2);
             $sinAdjuntos = fn (): array => [];
             $consultas = new ConsultaConEsperaCorta($this->db);
-            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
 
             $this->assertSame(1, (int) $otraSesion->query("SELECT GET_LOCK('zooki_numero_hc_1', 0)")->fetchColumn());
             try {
-                $consultas->registrar(['id_mascota' => 2, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+                $consultas->registrar(['id_mascota' => 2, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
                 $this->fail('Debió esperar el candado de numeración.');
             } catch (RuntimeException $e) {
                 $this->assertStringContainsString('número de historia', $e->getMessage());
@@ -885,10 +1268,10 @@ class BaseV2MysqlTest extends TestCase
             $this->assertNull($this->numeroHistoria(2, 1));
 
             // Una consulta de una mascota que ya tiene número no necesita el candado.
-            $consultas->registrar(['id_mascota' => 1, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+            $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
 
             $otraSesion->query("SELECT RELEASE_LOCK('zooki_numero_hc_1')");
-            $consultas->registrar(['id_mascota' => 2, 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
+            $consultas->registrar(['id_mascota' => 2, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
             $this->assertSame('HC-000002', $this->numeroHistoria(2, 1));
             $this->assertSame(1, (int) $otraSesion->query("SELECT IS_FREE_LOCK('zooki_numero_hc_1')")->fetchColumn());
         } finally {

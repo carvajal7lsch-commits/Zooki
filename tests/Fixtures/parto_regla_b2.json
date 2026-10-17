@@ -1,0 +1,16 @@
+{
+  "codigo": "triage.parto_prolongado",
+  "motor": "triage",
+  "condiciones": {
+    "todos": [
+      {"predicado": "sintoma_marcado", "codigo": "sintoma.parto_esfuerzo_sin_cria"},
+      {"predicado": "inicio_episodio", "codigo": "sintoma.parto_esfuerzo_sin_cria", "minimo": 30, "incluye_minimo": false}
+    ]
+  },
+  "resultado": {"nivel": "rojo"},
+  "fuentes": [
+    {"codigo": "zooki.reglas_negocio", "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie", "fundamento": "politica"},
+    {"codigo": "msd.distocia", "localizador": "Treatment of Dystocia: «intense myometrial contractions for > 30 minutes without delivering a puppy or kitten»", "fundamento": "clinico"}
+  ],
+  "estado_validacion": "pendiente"
+}

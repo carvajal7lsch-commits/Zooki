@@ -72,7 +72,10 @@ function actualizarEntrada(campo, valor, posicion) {
 
 function sanearEntrada(valor, opciones, maximo) {
     if (opciones.espacios === 'normalizar') valor = String(valor).replace(/\s+/gu, ' ');
+    // M2 C8 (H8): en los signos de la consulta la coma decimal se toma como punto.
+    if (opciones.formato === 'decimal') valor = String(valor).replace(/,/g, '.');
     let limpio = limpiarCaracteres(valor, opciones.caracteres, 0);
+    if (opciones.formato === 'decimal') limpio = sanearDecimal(limpio, opciones);
     if (opciones.formato === 'nit') {
         const partes = limpio.split('-');
         limpio = partes[0] + (partes[0] && partes.length > 1 ? '-' + partes.slice(1).join('').slice(0, 1) : partes.slice(1).join(''));
@@ -95,6 +98,23 @@ function sanearEntrada(valor, opciones, maximo) {
     return limpio;
 }
 
+/**
+ * M2 C8 (H8): un número con las cifras de su columna (data-enteros y
+ * data-decimales) que no pasa de data-maximo: «20000» queda en «200» y una
+ * tecla que lo haría pasar del máximo no entra. El mínimo no se impone al
+ * escribir (para llegar a 38 hay que pasar por 3); lo valida el aviso del campo.
+ */
+function sanearDecimal(texto, opciones) {
+    const enteros = Number(opciones.enteros) || 3;
+    const decimales = Number(opciones.decimales) || 0;
+    const [parteEntera, ...resto] = String(texto).split('.');
+    let salida = parteEntera.slice(0, enteros);
+    if (decimales > 0 && resto.length > 0) salida += '.' + resto.join('').slice(0, decimales);
+    const tope = Number(opciones.maximo);
+    while (salida !== '' && tope > 0 && Number(salida) > tope) salida = salida.slice(0, -1);
+    return salida;
+}
+
 function limpiarCaracteres(valor, caracteres, maximo) {
     const fuera = new RegExp('[^' + caracteres + ']', 'gu');
     const limpio = String(valor).replace(fuera, '');
@@ -114,9 +134,6 @@ function ejecutarInteraccion(evento) {
             break;
         case 'pestana-consulta':
             switchModalTab({ target: evento.target, currentTarget: boton }, boton.dataset.tab);
-            break;
-        case 'agregar-tratamiento':
-            addTreatmentRow();
             break;
         case 'cerrar-cita':
             closeCitaModal();

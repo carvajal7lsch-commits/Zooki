@@ -1,0 +1,1807 @@
+[
+  {
+    "codigo": "especie.canino",
+    "tipo": "especie",
+    "etiqueta": "Perro",
+    "taxonomia": {
+      "especie": "Canino"
+    },
+    "metadatos": {
+      "cobertura": {
+        "diagnosticos": "parcial",
+        "prescripcion": "parcial",
+        "triage": "parcial"
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: cobertura parcial declarada por Zooki para perros y gatos; fuera de ella, revisión del personal",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "especie.felino",
+    "tipo": "especie",
+    "etiqueta": "Gato",
+    "taxonomia": {
+      "especie": "Felino"
+    },
+    "metadatos": {
+      "cobertura": {
+        "diagnosticos": "parcial",
+        "prescripcion": "parcial",
+        "triage": "parcial"
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: cobertura parcial declarada por Zooki para perros y gatos; fuera de ella, revisión del personal",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "especie.roedor",
+    "tipo": "especie",
+    "etiqueta": "Roedor (categoría heredada del catálogo)",
+    "taxonomia": {
+      "especie": "Roedor"
+    },
+    "metadatos": {
+      "cobertura": {
+        "diagnosticos": "sin_cobertura",
+        "prescripcion": "sin_cobertura",
+        "triage": "sin_cobertura"
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: especie sin cobertura específica, amarillo con revisión; las alarmas de RN-417 siguen aplicando",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "especie.ave",
+    "tipo": "especie",
+    "etiqueta": "Ave",
+    "taxonomia": {
+      "especie": "Ave"
+    },
+    "metadatos": {
+      "cobertura": {
+        "diagnosticos": "sin_cobertura",
+        "prescripcion": "sin_cobertura",
+        "triage": "sin_cobertura"
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: especie sin cobertura específica, amarillo con revisión; las alarmas de RN-417 siguen aplicando",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "especie.reptil",
+    "tipo": "especie",
+    "etiqueta": "Reptil",
+    "taxonomia": {
+      "especie": "Reptil"
+    },
+    "metadatos": {
+      "cobertura": {
+        "diagnosticos": "sin_cobertura",
+        "prescripcion": "sin_cobertura",
+        "triage": "sin_cobertura"
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: especie sin cobertura específica, amarillo con revisión; las alarmas de RN-417 siguen aplicando",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "especie.exotico",
+    "tipo": "especie",
+    "etiqueta": "Exótico",
+    "taxonomia": {
+      "especie": "Exótico"
+    },
+    "metadatos": {
+      "cobertura": {
+        "diagnosticos": "sin_cobertura",
+        "prescripcion": "sin_cobertura",
+        "triage": "sin_cobertura"
+      }
+    },
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: especie sin cobertura específica, amarillo con revisión; las alarmas de RN-417 siguen aplicando",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.gran_danes",
+    "tipo": "raza",
+    "etiqueta": "Gran danés",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Gran danés"
+    },
+    "metadatos": {
+      "tamanio": "gigante"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.descripcion_perros",
+        "localizador": "What Size Are Most Dogs?: «Giant breeds, such as the Mastiff and Great Dane»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.labrador",
+    "tipo": "raza",
+    "etiqueta": "Labrador Retriever",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Labrador Retriever"
+    },
+    "metadatos": {
+      "tamanio": "grande",
+      "braquicefalo": false
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.descripcion_perros",
+        "localizador": "What Size Are Most Dogs?: «Larger dogs, like retrievers and shepherds, can weigh 65–100 pounds»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "rvc.braquicefalia_2020",
+        "localizador": "Table 2: Labrador Retriever en el grupo mesocéfalo (no braquicéfalo)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.golden",
+    "tipo": "raza",
+    "etiqueta": "Golden Retriever",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Golden Retriever"
+    },
+    "metadatos": {
+      "tamanio": "grande"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.descripcion_perros",
+        "localizador": "What Size Are Most Dogs?: «Larger dogs, like retrievers and shepherds, can weigh 65–100 pounds»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.pastor_aleman",
+    "tipo": "raza",
+    "etiqueta": "Pastor Alemán",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Pastor Alemán"
+    },
+    "metadatos": {
+      "tamanio": "grande"
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.descripcion_perros",
+        "localizador": "What Size Are Most Dogs?: «Larger dogs, like retrievers and shepherds, can weigh 65–100 pounds»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Tabla de razas: German Shepherd, frecuencia aproximada 10 %",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.bulldog_frances",
+    "tipo": "raza",
+    "etiqueta": "Bulldog Francés",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Bulldog Francés"
+    },
+    "metadatos": {
+      "braquicefalo": true
+    },
+    "fuentes": [
+      {
+        "codigo": "cam.boas",
+        "localizador": "«The French bulldog, bulldog, pug, pekingese, shih tzu, Japanese chin, boxer and Boston terrier are all examples of brachycephalic breeds»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "cornell.boas",
+        "localizador": "What breeds are considered brachycephalic?: French bulldog",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.bulldog_ingles",
+    "tipo": "raza",
+    "etiqueta": "Bulldog Inglés",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Bulldog Inglés"
+    },
+    "metadatos": {
+      "braquicefalo": true
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.braquicefalos",
+        "localizador": "Tabla: Bulldog",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "cornell.boas",
+        "localizador": "What breeds are considered brachycephalic?: English bulldog",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.pug",
+    "tipo": "raza",
+    "etiqueta": "Pug",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Pug"
+    },
+    "metadatos": {
+      "braquicefalo": true
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.braquicefalos",
+        "localizador": "Tabla: Pug",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "cam.boas",
+        "localizador": "Ejemplos de razas braquicéfalas: pug",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.shih_tzu",
+    "tipo": "raza",
+    "etiqueta": "Shih Tzu",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Shih Tzu"
+    },
+    "metadatos": {
+      "braquicefalo": true
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.braquicefalos",
+        "localizador": "Tabla: Shih Tzu",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "cam.boas",
+        "localizador": "Ejemplos de razas braquicéfalas: shih tzu",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.boxer",
+    "tipo": "raza",
+    "etiqueta": "Boxer",
+    "taxonomia": {
+      "especie": "Canino",
+      "raza": "Boxer"
+    },
+    "metadatos": {
+      "braquicefalo": true
+    },
+    "fuentes": [
+      {
+        "codigo": "msd.braquicefalos",
+        "localizador": "Tabla: Boxer",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "cornell.boas",
+        "localizador": "What breeds are considered brachycephalic?: boxer",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "raza.persa",
+    "tipo": "raza",
+    "etiqueta": "Persa",
+    "taxonomia": {
+      "especie": "Felino",
+      "raza": "Persa"
+    },
+    "metadatos": {
+      "braquicefalo": true
+    },
+    "fuentes": [
+      {
+        "codigo": "cornell.aspergilosis",
+        "localizador": "«Brachycephalic, or short-nosed, cats, such as Persian or Himalayans»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.dificultad_respiratoria",
+    "tipo": "sintoma",
+    "etiqueta": "Dificultad para respirar",
+    "nivel_triage": "rojo",
+    "alarma_universal": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «respiratory difficulty»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.encias_azuladas",
+    "tipo": "sintoma",
+    "etiqueta": "Encías o lengua azuladas o moradas",
+    "nivel_triage": "rojo",
+    "alarma_universal": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Parameters to Evaluate During Triage: mucosas «cyanotic or muddy», hipoxemia grave",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.encias_palidas",
+    "tipo": "sintoma",
+    "etiqueta": "Encías pálidas o blancas",
+    "nivel_triage": "rojo",
+    "alarma_universal": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Parameters to Evaluate During Triage: mucosas «pale or white», anemia o shock",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.convulsion_en_curso",
+    "tipo": "sintoma",
+    "etiqueta": "Convulsión en curso (está convulsionando ahora)",
+    "nivel_triage": "rojo",
+    "alarma_universal": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «seizures»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.epilepsia",
+        "localizador": "Estado epiléptico: actividad convulsiva continua, emergencia médica",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.colapso",
+    "tipo": "sintoma",
+    "etiqueta": "Colapso, desmayo o no responde",
+    "nivel_triage": "rojo",
+    "alarma_universal": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «collapse, immobility, inability to walk, loss of consciousness»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.hemorragia_incontrolable",
+    "tipo": "sintoma",
+    "etiqueta": "Sangrado que no se detiene",
+    "nivel_triage": "rojo",
+    "alarma_universal": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «bleeding»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.emergencias_propietarios",
+        "localizador": "Emergencias: «Severe or uncontrolled bleeding»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.imposibilidad_orinar",
+    "tipo": "sintoma",
+    "etiqueta": "No puede orinar (no sale orina)",
+    "nivel_triage": "rojo",
+    "alarma_universal": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «difficulty urinating or inability to urinate in male cats»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.golpe_calor",
+    "tipo": "sintoma",
+    "etiqueta": "Golpe de calor (piel caliente, jadeo intenso, tambaleo o colapso)",
+    "nivel_triage": "rojo",
+    "alarma_universal": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «heatstroke»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.emergencias_propietarios",
+        "localizador": "Signos del golpe de calor: piel caliente, vómito, babeo, jadeo rápido, incoordinación, colapso",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.parto_esfuerzo_sin_cria",
+    "tipo": "sintoma",
+    "etiqueta": "Parto con esfuerzo sin cría: más de 30 minutos o no sé",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-417: señales de alarma universales, nivel rojo en cualquier especie",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.distocia",
+        "localizador": "Treatment of Dystocia: contracciones intensas por más de 30 minutos sin expulsar cría",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): más de 30 minutos o tiempo desconocido es alarma universal roja",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente",
+    "nivel_triage": "rojo",
+    "alarma_universal": true
+  },
+  {
+    "codigo": "sintoma.traumatismo",
+    "tipo": "sintoma",
+    "etiqueta": "Atropello, golpe fuerte o caída (traumatismo)",
+    "nivel_triage": "naranja",
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.B «Alarmas escondidas o minimizadas»: trauma que camina, nivel naranja por lesiones internas",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «trauma or open wounds»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.intentos_orinar_minimo",
+    "tipo": "sintoma",
+    "etiqueta": "Intenta orinar muchas veces y sale poco o nada",
+    "fuentes": [
+      {
+        "codigo": "cornell.flutd",
+        "localizador": "Signos: micción difícil y frecuente; obstrucción uretral en machos",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: dificultad para orinar en gatos machos",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.dolor_orinar",
+    "tipo": "sintoma",
+    "etiqueta": "Dolor o quejido al orinar",
+    "fuentes": [
+      {
+        "codigo": "cornell.flutd",
+        "localizador": "Signos: «crying out while urinating», micción dolorosa",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.arcadas_improductivas",
+    "tipo": "sintoma",
+    "etiqueta": "Arcadas: intenta vomitar y no sale nada",
+    "fuentes": [
+      {
+        "codigo": "msd.dtg",
+        "localizador": "Signos clínicos: «nonproductive retching»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «nonproductive retching»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.abdomen_distendido",
+    "tipo": "sintoma",
+    "etiqueta": "Barriga hinchada o distendida",
+    "fuentes": [
+      {
+        "codigo": "msd.dtg",
+        "localizador": "Signos clínicos: distensión abdominal aguda o progresiva",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.inquietud",
+    "tipo": "sintoma",
+    "etiqueta": "Inquietud, no encuentra posición",
+    "fuentes": [
+      {
+        "codigo": "msd.dtg",
+        "localizador": "Signos clínicos: «restlessness»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.sed_aumentada",
+    "tipo": "sintoma",
+    "etiqueta": "Toma mucha más agua de lo normal",
+    "fuentes": [
+      {
+        "codigo": "msd.piometra",
+        "localizador": "Signos: PU/PD",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.renal",
+        "localizador": "Clinical Findings of Chronic Kidney Disease: polidipsia",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Clinical Findings: polidipsia",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.decaimiento",
+    "tipo": "sintoma",
+    "etiqueta": "Decaído, débil o sin ánimo",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.E «Combinaciones y contradicciones»: cada síntoma solo sería amarillo",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: nivel más alto, combinaciones que escalan y modificadores del paciente",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.parvovirus",
+        "localizador": "Signos clínicos: letargia",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.secrecion_genital",
+    "tipo": "sintoma",
+    "etiqueta": "Flujo o secreción por la vulva",
+    "fuentes": [
+      {
+        "codigo": "msd.piometra",
+        "localizador": "Signos: exudado vaginal (cérvix abierto)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.respiracion_ruidosa_ejercicio",
+    "tipo": "sintoma",
+    "etiqueta": "Respira muy ruidoso después de ejercicio o esfuerzo",
+    "nivel_triage": "amarillo",
+    "moderado": false,
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.C «La especie, la raza o la edad cambian la gravedad»: sin factor braquicéfalo, amarillo",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.boas",
+        "localizador": "Symptoms: «Noisy breathing (e.g. snoring, wheezing, snorting)»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.cansancio_ejercicio",
+    "tipo": "sintoma",
+    "etiqueta": "Muy cansado después de ejercicio (se recupera al descansar)",
+    "nivel_triage": "amarillo",
+    "moderado": false,
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.C «La especie, la raza o la edad cambian la gravedad»: sin factor braquicéfalo, amarillo",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.boas",
+        "localizador": "Symptoms: «Reduced or inability to exercise»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.exposicion_calor",
+    "tipo": "sintoma",
+    "etiqueta": "Estuvo expuesto a calor fuerte (sol, carro cerrado, día caluroso)",
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.C: día caluroso como contexto del episodio",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.triage_emergencias",
+        "localizador": "Introducción: «heatstroke»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.vomito",
+    "tipo": "sintoma",
+    "etiqueta": "Vómito",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.C y §2.E: vómito aislado, amarillo",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis: vómito de inicio súbito",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.vomito_repetido",
+    "tipo": "sintoma",
+    "etiqueta": "Vómito repetido (varias veces el mismo día)",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.E: cada síntoma solo sería amarillo",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis: gravedad según la frecuencia del vómito",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.vomito_sangre",
+    "tipo": "sintoma",
+    "etiqueta": "Vómito con sangre",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: nivel más alto, combinaciones que escalan y modificadores del paciente",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis: el vómito puede contener sangre fresca o digerida",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.diarrea",
+    "tipo": "sintoma",
+    "etiqueta": "Diarrea",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.C: vómito y diarrea en adulto estable, amarillo",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.parvovirus",
+        "localizador": "Signos clínicos: diarrea",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.diarrea_sangre",
+    "tipo": "sintoma",
+    "etiqueta": "Diarrea con sangre",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: nivel más alto, combinaciones que escalan y modificadores del paciente",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.parvovirus",
+        "localizador": "Signos clínicos: diarrea «often hemorrhagic»",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.trastornos_digestivos_perros",
+        "localizador": "Hemorrhagic Gastroenteritis: vómito y diarrea con sangre",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.no_come",
+    "tipo": "sintoma",
+    "etiqueta": "No come o casi no come",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.C y §2.F: falta de apetito",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.anorexia",
+        "localizador": "Pérdida sostenida del apetito",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.no_bebe",
+    "tipo": "sintoma",
+    "etiqueta": "No toma agua",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.E: cada síntoma solo sería amarillo",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.encias_secas",
+    "tipo": "sintoma",
+    "etiqueta": "Encías secas o pegajosas (posible deshidratación)",
+    "nivel_triage": "amarillo",
+    "moderado": true,
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.E: juntos indican deshidratación",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: nivel más alto, combinaciones que escalan y modificadores del paciente",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "cornell.panleucopenia",
+        "localizador": "Signos clínicos: deshidratación",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.se_esconde",
+    "tipo": "sintoma",
+    "etiqueta": "Se esconde o se aísla",
+    "fuentes": [
+      {
+        "codigo": "cornell.lipidosis",
+        "localizador": "Signos: el gato se vuelve retraído y evita el plato",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.fiebre",
+    "tipo": "sintoma",
+    "etiqueta": "Fiebre referida (se siente caliente)",
+    "fuentes": [
+      {
+        "codigo": "cornell.panleucopenia",
+        "localizador": "Signos clínicos: fiebre",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.parvovirus",
+        "localizador": "Signos iniciales: fiebre",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.primera_convulsion_resuelta",
+    "tipo": "sintoma",
+    "etiqueta": "Convulsión que ya pasó, primera vez",
+    "nivel_triage": "naranja",
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.E: primera convulsión ya pasada, naranja; necesita estudio pronto",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.epilepsia",
+        "localizador": "Evaluación diagnóstica tras la primera crisis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.convulsion_habitual_resuelta",
+    "tipo": "sintoma",
+    "etiqueta": "Convulsión que ya pasó, corta y como las de siempre",
+    "fuentes": [
+      {
+        "codigo": "msd.epilepsia",
+        "localizador": "Epilepsia idiopática: crisis recurrentes",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-416: nivel más alto, combinaciones que escalan y modificadores del paciente",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.no_defeca",
+    "tipo": "sintoma",
+    "etiqueta": "No hace popó (no defeca)",
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.F «Sin cobertura y texto ambiguo»: sin apetito y sin heces",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.conejos_no_infecciosas",
+        "localizador": "Gastric Stasis: estasis digestiva en conejos",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.plumaje_erizado",
+    "tipo": "sintoma",
+    "etiqueta": "Plumas erizadas o esponjadas (ave)",
+    "fuentes": [
+      {
+        "codigo": "msd.aves_enfermedad",
+        "localizador": "How Can I Tell If My Pet Bird Is Sick?: «fluffed-up feathers»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.otro_no_se",
+    "tipo": "sintoma",
+    "etiqueta": "Otro / no sé",
+    "nivel_triage": "amarillo",
+    "fuentes": [
+      {
+        "codigo": "zooki.reglas_negocio",
+        "localizador": "RN-418: sin cobertura o sin síntoma reconocido, amarillo con revisión del personal",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.control_preventivo",
+    "tipo": "sintoma",
+    "etiqueta": "Control preventivo o vacunación, sin síntomas",
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.G «No sobre-clasificar»: consulta preventiva, verde",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.picor_oidos_leve_estable",
+    "tipo": "sintoma",
+    "etiqueta": "Se rasca las orejas, leve, y come y juega normal",
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.G: molestia leve con paciente estable, verde",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.otitis_externa",
+        "localizador": "Clinical Findings: sacudir la cabeza y prurito ótico",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.cojera_leve_estable",
+    "tipo": "sintoma",
+    "etiqueta": "Cojea un poco, estable, y mantiene su actividad",
+    "fuentes": [
+      {
+        "codigo": "zooki.casos_triage",
+        "localizador": "§2.G: molestia crónica leve y estable, verde",
+        "fundamento": "politica"
+      },
+      {
+        "codigo": "msd.osteoartritis",
+        "localizador": "Signos clínicos: cojera",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.orina_mucho",
+    "tipo": "sintoma",
+    "etiqueta": "Orina mucho más de lo normal",
+    "fuentes": [
+      {
+        "codigo": "msd.renal",
+        "localizador": "Clinical Findings of Chronic Kidney Disease: poliuria",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Clinical Findings: poliuria",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.perdida_peso",
+    "tipo": "sintoma",
+    "etiqueta": "Pérdida de peso",
+    "fuentes": [
+      {
+        "codigo": "msd.renal",
+        "localizador": "Clinical Findings of Chronic Kidney Disease: pérdida de peso",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Clinical Findings: pérdida de peso",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.hambre_aumentada",
+    "tipo": "sintoma",
+    "etiqueta": "Come mucho más de lo normal",
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Clinical Findings: polifagia",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.tos",
+    "tipo": "sintoma",
+    "etiqueta": "Tos",
+    "fuentes": [
+      {
+        "codigo": "msd.tos_perreras",
+        "localizador": "Signos clínicos: tos «goose honk»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.sacude_cabeza",
+    "tipo": "sintoma",
+    "etiqueta": "Sacude la cabeza",
+    "fuentes": [
+      {
+        "codigo": "msd.otitis_externa",
+        "localizador": "Clinical Findings: «head shaking»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.mal_olor_oidos",
+    "tipo": "sintoma",
+    "etiqueta": "Mal olor o secreción en los oídos",
+    "fuentes": [
+      {
+        "codigo": "msd.otitis_externa",
+        "localizador": "Clinical Findings: «malodor, otic discharge or exudate»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.sangre_orina",
+    "tipo": "sintoma",
+    "etiqueta": "Sangre en la orina",
+    "fuentes": [
+      {
+        "codigo": "cornell.flutd",
+        "localizador": "Signos: «blood in the urine»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.orina_fuera_caja",
+    "tipo": "sintoma",
+    "etiqueta": "Orina fuera de la caja de arena",
+    "fuentes": [
+      {
+        "codigo": "cornell.flutd",
+        "localizador": "Signos: «inappropriate urination (outside of the litter box)»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.rigidez",
+    "tipo": "sintoma",
+    "etiqueta": "Rigidez o le cuesta levantarse",
+    "fuentes": [
+      {
+        "codigo": "msd.osteoartritis",
+        "localizador": "Signos clínicos: «slowness to rise, especially after extended rest»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.ictericia",
+    "tipo": "sintoma",
+    "etiqueta": "Piel, encías u ojos amarillos (ictericia)",
+    "fuentes": [
+      {
+        "codigo": "cornell.lipidosis",
+        "localizador": "Signos: ictericia en orejas y encías",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.dolor_abdominal",
+    "tipo": "sintoma",
+    "etiqueta": "Dolor de barriga",
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis: dolor abdominal craneal",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "cornell.panleucopenia",
+        "localizador": "Signos clínicos: dolor abdominal",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "condicion.epilepsia",
+    "tipo": "condicion",
+    "etiqueta": "Epilepsia diagnosticada",
+    "fuentes": [
+      {
+        "codigo": "msd.epilepsia",
+        "localizador": "Epilepsia idiopática: crisis recurrentes no provocadas",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.lilium",
+    "tipo": "sustancia",
+    "etiqueta": "Lirio verdadero (Lilium): planta o flor",
+    "fuentes": [
+      {
+        "codigo": "aspca.lirio",
+        "localizador": "Ficha Lily: «Toxic to Cats»; signos: falla renal",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.chocolate",
+    "tipo": "sustancia",
+    "etiqueta": "Chocolate",
+    "fuentes": [
+      {
+        "codigo": "msd.chocolate",
+        "localizador": "Etiology: intoxicación más frecuente en perros",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "aspca.alimentos",
+        "localizador": "Apartado Chocolate, Coffee and Caffeine",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.xilitol",
+    "tipo": "sustancia",
+    "etiqueta": "Xilitol (endulzante)",
+    "fuentes": [
+      {
+        "codigo": "fda.xilitol",
+        "localizador": "Hipoglucemia en perros por xilitol",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.xilitol",
+        "localizador": "Productos sin azúcar con xilitol",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.posible_xilitol",
+    "tipo": "sustancia",
+    "etiqueta": "Chicle, dulce o producto sin azúcar (posible xilitol)",
+    "fuentes": [
+      {
+        "codigo": "fda.xilitol",
+        "localizador": "Productos: «sugarless chewing gum», dulces sin azúcar",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "msd.xilitol",
+        "localizador": "Productos: chicles, dulces, mentas y alimentos sin azúcar",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.uvas_pasas",
+    "tipo": "sustancia",
+    "etiqueta": "Uvas o uvas pasas",
+    "fuentes": [
+      {
+        "codigo": "msd.uvas",
+        "localizador": "Clinical Findings: vómito o diarrea y falla renal en perros",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.cebolla_ajo",
+    "tipo": "sustancia",
+    "etiqueta": "Cebolla, ajo o cebollín (Allium)",
+    "fuentes": [
+      {
+        "codigo": "msd.allium",
+        "localizador": "Gatos los más susceptibles, seguidos de los perros",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "aspca.alimentos",
+        "localizador": "Apartado Onions, Garlic, Chives",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.macadamia",
+    "tipo": "sustancia",
+    "etiqueta": "Nueces de macadamia",
+    "fuentes": [
+      {
+        "codigo": "aspca.alimentos",
+        "localizador": "Apartado Macadamia Nuts: signos en perros",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sustancia.etilenglicol",
+    "tipo": "sustancia",
+    "etiqueta": "Anticongelante (etilenglicol)",
+    "fuentes": [
+      {
+        "codigo": "msd.etilenglicol",
+        "localizador": "Perros y gatos los más afectados; a menudo fatal",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.paracetamol",
+    "tipo": "farmaco",
+    "etiqueta": "Paracetamol (acetaminofén)",
+    "fuentes": [
+      {
+        "codigo": "msd.analgesicos_humanos",
+        "localizador": "Acetaminophen Toxicosis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.ibuprofeno",
+    "tipo": "farmaco",
+    "etiqueta": "Ibuprofeno",
+    "fuentes": [
+      {
+        "codigo": "msd.analgesicos_humanos",
+        "localizador": "NSAID Toxicoses: Ibuprofen",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.aspirina",
+    "tipo": "farmaco",
+    "etiqueta": "Ácido acetilsalicílico (aspirina)",
+    "fuentes": [
+      {
+        "codigo": "msd.analgesicos_humanos",
+        "localizador": "NSAID Toxicoses: Aspirin",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.meloxicam",
+    "tipo": "farmaco",
+    "etiqueta": "Meloxicam",
+    "fuentes": [
+      {
+        "codigo": "msd.aine",
+        "localizador": "Meloxicam en gatos",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.carprofeno",
+    "tipo": "farmaco",
+    "etiqueta": "Carprofeno",
+    "fuentes": [
+      {
+        "codigo": "msd.aine",
+        "localizador": "Carprofen in Animals: AINE de la clase de los ácidos arilpropiónicos",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.prednisona",
+    "tipo": "farmaco",
+    "etiqueta": "Prednisona",
+    "fuentes": [
+      {
+        "codigo": "fda.analgesicos",
+        "localizador": "«an NSAID with a steroid such as prednisone»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.permetrina",
+    "tipo": "farmaco",
+    "etiqueta": "Permetrina",
+    "fuentes": [
+      {
+        "codigo": "msd.ectoparasiticidas",
+        "localizador": "Pyrethrins and Pyrethroids for Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.amitraz",
+    "tipo": "farmaco",
+    "etiqueta": "Amitraz",
+    "fuentes": [
+      {
+        "codigo": "msd.ectoparasiticidas",
+        "localizador": "Formamidines for Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.tramadol",
+    "tipo": "farmaco",
+    "etiqueta": "Tramadol",
+    "fuentes": [
+      {
+        "codigo": "msd.analgesicos_uso",
+        "localizador": "Other Analgesic Agents Used in Animals: tramadol",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.selegilina",
+    "tipo": "farmaco",
+    "etiqueta": "Selegilina",
+    "fuentes": [
+      {
+        "codigo": "msd.psicotropicos",
+        "localizador": "Monoamine Oxidase Inhibitors: «such as selegiline»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.fluoxetina",
+    "tipo": "farmaco",
+    "etiqueta": "Fluoxetina",
+    "fuentes": [
+      {
+        "codigo": "msd.psicotropicos",
+        "localizador": "Selective Serotonin Reuptake Inhibitors: «including fluoxetine»",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "farmaco.loperamida",
+    "tipo": "farmaco",
+    "etiqueta": "Loperamida",
+    "fuentes": [
+      {
+        "codigo": "wsu.mdr1",
+        "localizador": "Medicamentos problemáticos: Loperamide (Imodium)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.gastritis_aguda",
+    "tipo": "diagnostico",
+    "etiqueta": "Gastritis aguda",
+    "fuentes": [
+      {
+        "codigo": "msd.gastritis",
+        "localizador": "Acute Gastritis in Small Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.gastroenteritis_hemorragica",
+    "tipo": "diagnostico",
+    "etiqueta": "Gastroenteritis hemorrágica",
+    "fuentes": [
+      {
+        "codigo": "msd.trastornos_digestivos_perros",
+        "localizador": "Hemorrhagic Gastroenteritis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.parvovirosis_canina",
+    "tipo": "diagnostico",
+    "etiqueta": "Parvovirosis canina",
+    "fuentes": [
+      {
+        "codigo": "msd.parvovirus",
+        "localizador": "Canine Parvovirus Infection",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.panleucopenia_felina",
+    "tipo": "diagnostico",
+    "etiqueta": "Panleucopenia felina",
+    "fuentes": [
+      {
+        "codigo": "cornell.panleucopenia",
+        "localizador": "Feline Panleukopenia Virus",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.dilatacion_torsion_gastrica",
+    "tipo": "diagnostico",
+    "etiqueta": "Dilatación y torsión gástrica",
+    "fuentes": [
+      {
+        "codigo": "msd.dtg",
+        "localizador": "Gastric Dilation and Volvulus",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.obstruccion_uretral_felina",
+    "tipo": "diagnostico",
+    "etiqueta": "Obstrucción uretral felina",
+    "fuentes": [
+      {
+        "codigo": "cornell.flutd",
+        "localizador": "Urethral obstruction",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.cistitis_idiopatica_felina",
+    "tipo": "diagnostico",
+    "etiqueta": "Cistitis idiopática felina",
+    "fuentes": [
+      {
+        "codigo": "cornell.flutd",
+        "localizador": "Idiopathic Cystitis (FIC)",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.piometra",
+    "tipo": "diagnostico",
+    "etiqueta": "Piometra",
+    "fuentes": [
+      {
+        "codigo": "msd.piometra",
+        "localizador": "Cystic Endometrial Hyperplasia–Pyometra Complex",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.lipidosis_hepatica_felina",
+    "tipo": "diagnostico",
+    "etiqueta": "Lipidosis hepática felina",
+    "fuentes": [
+      {
+        "codigo": "cornell.lipidosis",
+        "localizador": "Hepatic Lipidosis",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.epilepsia_idiopatica",
+    "tipo": "diagnostico",
+    "etiqueta": "Epilepsia idiopática",
+    "fuentes": [
+      {
+        "codigo": "msd.epilepsia",
+        "localizador": "Idiopathic Epilepsy",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.sindrome_braquicefalico",
+    "tipo": "diagnostico",
+    "etiqueta": "Síndrome obstructivo de las vías respiratorias del braquicéfalo",
+    "fuentes": [
+      {
+        "codigo": "cornell.boas",
+        "localizador": "Brachycephalic Obstructive Airway Syndrome",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.golpe_de_calor",
+    "tipo": "diagnostico",
+    "etiqueta": "Golpe de calor",
+    "fuentes": [
+      {
+        "codigo": "msd.emergencias_propietarios",
+        "localizador": "Heat stroke",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.otitis_externa",
+    "tipo": "diagnostico",
+    "etiqueta": "Otitis externa",
+    "fuentes": [
+      {
+        "codigo": "msd.otitis_externa",
+        "localizador": "Otitis Externa in Animals",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.osteoartritis",
+    "tipo": "diagnostico",
+    "etiqueta": "Osteoartritis",
+    "fuentes": [
+      {
+        "codigo": "msd.osteoartritis",
+        "localizador": "Osteoarthritis in Dogs and Cats",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.enfermedad_renal_cronica",
+    "tipo": "diagnostico",
+    "etiqueta": "Enfermedad renal crónica",
+    "fuentes": [
+      {
+        "codigo": "msd.renal",
+        "localizador": "Chronic Kidney Disease",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.diabetes_mellitus",
+    "tipo": "diagnostico",
+    "etiqueta": "Diabetes mellitus",
+    "fuentes": [
+      {
+        "codigo": "msd.diabetes",
+        "localizador": "Diabetes Mellitus in Dogs and Cats",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "diagnostico.tos_perreras",
+    "tipo": "diagnostico",
+    "etiqueta": "Traqueobronquitis infecciosa canina (tos de las perreras)",
+    "fuentes": [
+      {
+        "codigo": "msd.tos_perreras",
+        "localizador": "Kennel Cough",
+        "fundamento": "clinico"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  },
+  {
+    "codigo": "sintoma.parto_esfuerzo_menos_30",
+    "tipo": "sintoma",
+    "etiqueta": "Parto con esfuerzo sin cría: menos de 30 minutos",
+    "nivel_triage": "naranja",
+    "fuentes": [
+      {
+        "codigo": "msd.distocia",
+        "localizador": "Treatment of Dystocia: contracciones intensas por más de 30 minutos sin expulsar cría",
+        "fundamento": "clinico"
+      },
+      {
+        "codigo": "zooki.decisiones_b21",
+        "localizador": "B2 — Revisión, decisión 3 del usuario (2026-10-14): menos de 30 minutos implica naranja con revisión; no declara un parto seguro",
+        "fundamento": "politica"
+      }
+    ],
+    "estado_validacion": "pendiente"
+  }
+]

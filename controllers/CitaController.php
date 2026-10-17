@@ -595,7 +595,8 @@ class CitaController
 
         $mascota = (new Mascota($this->db))->getById($cita['id_mascota']);
         $consultaModel = new Consulta($this->db);
-        $consultas = $consultaModel->findByMascota($cita['id_mascota']);
+        // C5a (RN-210): el historial de Atención muestra los síntomas marcados.
+        $consultas = $consultaModel->conSintomas($consultaModel->findByMascota($cita['id_mascota']));
         $vacunas = (new Vacuna($this->db))->findByMascota($cita['id_mascota']);
         $desparasitaciones = (new Desparasitacion($this->db))->findByMascota($cita['id_mascota']);
         $propietario = [

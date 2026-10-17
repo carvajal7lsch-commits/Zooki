@@ -328,3 +328,53 @@
 @media (max-width: 768px) {
     .pill-logo-img { width: 40px; height: 40px; border-radius: 10px; }
 }
+
+/* M2 C8.1 (H10): siete accesos caben en 360 px; Salir conserva su área de toque. */
+@media (max-width: 767px) {
+    /* El adorno heredado mide 350 px más el 5% izquierdo: desbordaba a 360 px. */
+    body:has(.pill-sidebar)::before,
+    body:has(.pill-sidebar)::after {
+        max-width: 90vw;
+    }
+
+    .pill-sidebar {
+        box-sizing: border-box;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: calc(100vw - 16px);
+        max-width: 414px;
+        height: 64px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        padding: 0 6px;
+        gap: 2px;
+    }
+
+    .pill-logo,
+    .pill-logout {
+        flex: 0 0 40px;
+        width: 40px;
+        height: 44px;
+        min-width: 0;
+    }
+
+    .pill-nav {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+        gap: 0;
+    }
+
+    .pill-nav-item,
+    .pill-nav-item.active {
+        flex: 1;
+        min-width: 0;
+        max-width: 44px;
+        width: auto;
+        height: 44px;
+        font-size: 1.1rem;
+    }
+
+    .pill-logo-img { width: 36px; height: 36px; }
+    .main-content { min-width: 0; }
+}

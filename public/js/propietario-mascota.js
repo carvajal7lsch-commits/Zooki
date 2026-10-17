@@ -14,6 +14,11 @@
  *   mini de Usuarios, para vincular la que ya existe en lugar de duplicarla.
  * - Vincular se pone al día en su sitio, con un aviso breve, sin recargar.
  * - Un cliente que aún no activa su cuenta lo dice, con «Reenviar enlace».
+ * - M2 C8 (H2): las mascotas del cliente van en mini-tarjetas horizontales (foto
+ *   o avatar azul con la inicial, nombre, especie · raza y «Vincular»), en una
+ *   fila que se desplaza con flechas o arrastrando, sin barra de scroll.
+ * - M2 C8 (H3): al vincular, Pacientes se pone al día sin recargar: la lista de
+ *   mascotas, la tarjeta del propietario (su contador) y su expediente abierto.
  *
  * Nada de style.display: se usan hidden y clases.
  */
@@ -26,6 +31,7 @@
     const BUSCANDO = 'Buscando…';
     const SIN_COINCIDENCIA = 'No hay una cuenta con ese dato. Regístralo en la pestaña Propietario.';
     const PENDIENTE = 'Aún no activa su cuenta';
+    const AYUDA_VINCULAR = 'Busca al propietario por nombre, documento o correo: verás sus mascotas en Zooki para vincular la que corresponde.';
 
     let espera = null;
     let turno = 0;
@@ -153,27 +159,112 @@
         panel.append(lista);
     }
 
-    /** RE-1.5.1: nombre, especie, raza y foto; sin datos clínicos. */
+    /** RE-1.5.1: nombre, especie, raza y foto; sin datos clínicos. M2 C8 (H2): mini-tarjeta horizontal. */
     function tarjetaMascota(mascota) {
-        const tarjeta = nodo('article', 'client-card person-card pet-card mascota-existente');
+        const tarjeta = nodo('article', 'mascota-mini');
         tarjeta.dataset.idMascota = String(mascota.id_mascota);
-        const cabecera = nodo('div', 'card-header-mini');
-        const foto = nodo('img', 'avatar-mini');
-        foto.src = typeof fotoMascotaUrl === 'function' ? fotoMascotaUrl(mascota.url_foto) : 'img/default-pet.svg';
-        foto.alt = '';
-        foto.addEventListener('error', () => { foto.src = 'img/default-pet.svg'; }, { once: true });
-        cabecera.append(foto);
-        const cuerpo = nodo('div', 'card-body-mini');
-        cuerpo.append(nodo('h3', 'card-title-mini', mascota.nombre));
+        tarjeta.append(avatarMascota(mascota));
+        const texto = nodo('div', 'mascota-mini__texto');
+        texto.append(nodo('h3', 'mascota-mini__nombre', mascota.nombre));
         const raza = typeof razaConIndicada === 'function' ? razaConIndicada(mascota.nombre_raza, mascota.raza_indicada) : (mascota.nombre_raza || '');
-        cuerpo.append(nodo('span', 'contact-text-mini', [mascota.nombre_especie, raza].filter(Boolean).join(' · ')));
-        const pie = nodo('div', 'card-footer-mini');
-        const vincular = boton('action-btn-mini', 'Vincular a la clínica');
+        texto.append(nodo('span', 'mascota-mini__detalle', [mascota.nombre_especie, raza].filter(Boolean).join(' · ')));
+        tarjeta.append(texto);
+        const vincular = boton('mascota-mini__vincular', 'Vincular');
         vincular.dataset.vincularMascota = String(mascota.id_mascota);
         vincular.dataset.nombre = mascota.nombre;
-        pie.append(vincular);
-        tarjeta.append(cabecera, cuerpo, pie);
+        vincular.setAttribute('aria-label', `Vincular a ${mascota.nombre} a la clínica`);
+        tarjeta.append(vincular);
         return tarjeta;
+    }
+
+    /** La foto si existe; si no, el avatar azul con la inicial, como en el portal (H5). */
+    function avatarMascota(mascota) {
+        const inicial = nodo('span', 'avatar-iniciales mascota-mini__avatar', iniciales(mascota.nombre));
+        inicial.setAttribute('aria-hidden', 'true');
+        if (!mascota.url_foto || typeof fotoMascotaUrl !== 'function') return inicial;
+        const foto = nodo('img', 'mascota-mini__foto');
+        foto.src = fotoMascotaUrl(mascota.url_foto);
+        foto.alt = '';
+        foto.addEventListener('error', () => foto.replaceWith(inicial), { once: true });
+        return foto;
+    }
+
+    /**
+     * H2: la fila de mascotas se desplaza con las flechas (que aparecen solo si
+     * hay más hacia ese lado) o arrastrando con el ratón; en el celular, con el dedo.
+     */
+    function carrusel(tarjetas) {
+        const envoltura = nodo('div', 'mascotas-carrusel');
+        const pista = nodo('div', 'mascotas-carrusel__pista');
+        pista.setAttribute('role', 'list');
+        pista.setAttribute('aria-label', 'Mascotas del propietario en Zooki');
+        tarjetas.forEach(tarjeta => {
+            tarjeta.setAttribute('role', 'listitem');
+            pista.append(tarjeta);
+        });
+        const anterior = flecha('anterior', 'fa-chevron-left', 'Mascotas anteriores');
+        const siguiente = flecha('siguiente', 'fa-chevron-right', 'Más mascotas');
+        anterior.addEventListener('click', () => moverCarrusel(pista, -1));
+        siguiente.addEventListener('click', () => moverCarrusel(pista, 1));
+        envoltura.append(pista, anterior, siguiente);
+        pista.addEventListener('scroll', () => actualizarFlechas(pista, anterior, siguiente), { passive: true });
+        arrastrar(pista);
+        if (typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(() => actualizarFlechas(pista, anterior, siguiente));
+        }
+        return envoltura;
+    }
+
+    function flecha(lado, icono, etiqueta) {
+        const control = boton(`mascotas-carrusel__flecha mascotas-carrusel__flecha--${lado}`);
+        control.dataset.carrusel = lado;
+        control.setAttribute('aria-label', etiqueta);
+        control.hidden = true;
+        const i = nodo('i', `fas ${icono}`);
+        i.setAttribute('aria-hidden', 'true');
+        control.append(i);
+        return control;
+    }
+
+    function moverCarrusel(pista, direccion) {
+        if (typeof pista.scrollBy === 'function') pista.scrollBy({ left: direccion * pista.clientWidth * 0.8, behavior: 'smooth' });
+    }
+
+    function actualizarFlechas(pista, anterior, siguiente) {
+        const maximo = pista.scrollWidth - pista.clientWidth;
+        anterior.hidden = pista.scrollLeft <= 2;
+        siguiente.hidden = pista.scrollLeft >= maximo - 2;
+    }
+
+    /** Arrastrar con el ratón desplaza la fila; si hubo arrastre, el clic que sigue no vincula. */
+    function arrastrar(pista) {
+        let inicio = null;
+        let movido = false;
+        pista.addEventListener('pointerdown', evento => {
+            if (evento.pointerType !== 'mouse' || evento.button !== 0) return;
+            inicio = { x: evento.clientX, scroll: pista.scrollLeft };
+            movido = false;
+        });
+        pista.addEventListener('pointermove', evento => {
+            if (inicio === null) return;
+            const distancia = evento.clientX - inicio.x;
+            if (Math.abs(distancia) > 5) movido = true;
+            if (!movido) return;
+            pista.classList.add('is-arrastrando');
+            pista.scrollLeft = inicio.scroll - distancia;
+        });
+        const soltar = () => {
+            inicio = null;
+            pista.classList.remove('is-arrastrando');
+        };
+        pista.addEventListener('pointerup', soltar);
+        pista.addEventListener('pointerleave', soltar);
+        pista.addEventListener('click', evento => {
+            if (!movido) return;
+            evento.preventDefault();
+            evento.stopPropagation();
+            movido = false;
+        }, true);
     }
 
     /** Lo que muestra el panel según la respuesta del servidor. */
@@ -200,9 +291,7 @@
         }
         ayuda('Si la mascota ya está en Zooki, vincúlala en lugar de registrarla otra vez.');
         panel.append(tarjetaPropietario(propietario));
-        const lista = nodo('div', 'mascotas-existentes__lista');
-        propietario.mascotas.forEach(mascota => lista.append(tarjetaMascota(mascota)));
-        panel.append(lista);
+        panel.append(carrusel(propietario.mascotas.map(tarjetaMascota)));
         const nueva = boton('btn-modal-secondary', 'Es otra mascota: registrar nueva');
         nueva.dataset.elegirPropietario = String(propietario.id_usuario);
         panel.append(nueva);
@@ -306,6 +395,19 @@
         ayuda(AYUDA);
     }
 
+    /**
+     * M2 C7 (hallazgo del usuario, 2026-10-15): el acceso visible «Vincular
+     * mascota de un cliente» abre el mismo registro de mascota, ya en la
+     * búsqueda del propietario, con el mismo flujo (RE-1.5.1 a RE-1.5.3).
+     */
+    function abrirVincular() {
+        if (typeof abrirModalRegistro === 'function') abrirModalRegistro('mascota');
+        quitarPropietario(true);
+        ayuda(AYUDA_VINCULAR);
+        const campo = document.getElementById('ownerSearchInput');
+        if (campo && typeof campo.scrollIntoView === 'function') campo.scrollIntoView({ block: 'center' });
+    }
+
     async function pedirConfirmacion(control) {
         control.disabled = true;
         const datos = new FormData();
@@ -335,14 +437,27 @@
                 zookiToast(respuesta.message || 'No se pudo vincular la mascota.', 'error');
                 return;
             }
-            const marca = nodo('span', 'tag-mini tag-mini--azul', 'Vinculada a la clínica');
+            const marca = nodo('span', 'mascota-mini__vinculada', 'Vinculada');
             control.replaceWith(marca);
             zookiToast(`${control.dataset.nombre} quedó vinculada a la clínica.`);
-            refrescarPacientes();
+            ponerAlDia(control.dataset.vincularMascota);
         } catch (error) {
             control.disabled = false;
             zookiToast('No se pudo vincular la mascota.', 'error');
         }
+    }
+
+    /**
+     * M2 C8 (H3): antes solo se repintaba la lista de mascotas; la tarjeta del
+     * propietario (su contador) y su expediente se quedaban viejos hasta recargar.
+     * ponerAlDiaPacientes (medical-module.js) pone al día las tres partes.
+     */
+    function ponerAlDia(idMascota) {
+        if (typeof ponerAlDiaPacientes === 'function') {
+            ponerAlDiaPacientes(Number(idMascota));
+            return;
+        }
+        refrescarPacientes();
     }
 
     /** M5 C3: el enlace de activación nuevo vence en 72 horas; el anterior deja de servir. */
@@ -417,9 +532,12 @@
         else if (control.dataset.elegirPropietario !== undefined) elegirPropietario(document.getElementById('mascotasExistentes').propietario);
         else if (control.dataset.quitarPropietario !== undefined) quitarPropietario(true);
         else if (control.dataset.identificadorCliente !== undefined) buscar(control.dataset.identificadorCliente);
+        else if (control.dataset.vincularMascotaCliente !== undefined) abrirVincular();
     });
 
     window.ZookiPropietarioMascota = {
+        AYUDA_VINCULAR,
+        abrirVincular,
         identificadorCompleto,
         tipoDeBusqueda,
         buscarNombre,

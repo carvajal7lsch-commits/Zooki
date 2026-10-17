@@ -196,12 +196,12 @@ final class PortalPropietarioTest extends TestCase
         $tratamiento = ['medicamento' => 'Amoxicilina', 'dosis' => '1 ml', 'via_administracion' => 'Oral', 'duracion' => '5 días', 'fecha_inicio' => '2026-10-01'];
 
         $this->comoPersonal(DosClinicas::NORTE, DosClinicas::VET_NORTE);
-        $norte = (new Consulta($this->db))->registrar(['id_mascota' => 1, 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [$tratamiento], [['nombre' => 'rx']], $conAdjunto);
+        $norte = (new Consulta($this->db))->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Oído', 'diagnostico' => 'Otitis'], [$tratamiento], [['nombre' => 'rx']], $conAdjunto);
         $this->db->exec("UPDATE consultas SET fecha_hora = '2026-09-01 10:00:00' WHERE id_consulta = $norte");
         (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'Rabia', 'fecha_aplicacion' => '2026-09-01']);
 
         $this->comoPersonal(DosClinicas::SUR, DosClinicas::VET_SUR);
-        (new Consulta($this->db))->registrar(['id_mascota' => 1, 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $sinAdjuntos);
+        (new Consulta($this->db))->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'Control', 'diagnostico' => 'Sano'], [], [], $sinAdjuntos);
         (new Vacuna($this->db))->registrar(['id_mascota' => 1, 'nombre_vacuna' => 'Moquillo', 'fecha_aplicacion' => '2026-10-01']);
     }
 

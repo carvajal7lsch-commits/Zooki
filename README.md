@@ -4,7 +4,9 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de versiones
 
-El historial completo de versiones (v1.0.0 → v2.0.0-alpha.3), la guía de la primera versión estable y el esquema de versionamiento (Zooki SemVer) se documentan aparte en **[documentacion/HistorialVersiones.md](documentacion/HistorialVersiones.md)** (pestaña «Historial de versiones» del portal), para no inflar esta sinopsis.
+El historial completo de versiones (v1.0.0 → v2.0.0-alpha.4), la guía de la primera versión estable y el esquema de versionamiento (Zooki SemVer) se documentan aparte en **[documentacion/HistorialVersiones.md](documentacion/HistorialVersiones.md)** (pestaña «Historial de versiones» del portal), para no inflar esta sinopsis.
+La alpha.4 está preparada para desplegar: incorpora alergias y alertas compartidas, síntomas y diagnósticos sugeridos, alertas al recetar y mapa del conocimiento; el motor de triage queda listo para integrarlo con la agenda en M4.
+El conocimiento está pendiente de validación veterinaria y es apoyo a la decisión, no diagnóstico automático.
 
 ## Arquitectura del Sistema
 
@@ -71,7 +73,11 @@ graph TD
     `php scripts/crear_superadmin.php` pide por consola el correo, el nombre y la contraseña (sin mostrarla) y crea la cuenta de la plataforma. Se niega si el correo ya existe. Ninguna credencial queda en el código ni en el SQL. En producción: `docker exec -it zooki_web php scripts/crear_superadmin.php`.
 ## Migraciones de la base de datos
 
-La base nace de dos archivos que no son migraciones: `database/01_schema.sql` (las 50 tablas de la v2) y `database/02_semilla.sql` (datos semilla). Las migraciones son los archivos `database/NN_nombre.sql` con número **03 o mayor**. **En el servidor se aplican solas:** al arrancar, el contenedor `web` ejecuta `docker/iniciar.sh`, que corre `scripts/migrar.php` y después inicia Apache. Como Dokploy reconstruye el contenedor en cada despliegue, basta con subir el archivo `.sql` nuevo junto con el código.
+La base nace de dos archivos que no son migraciones: `database/01_schema.sql` (las 52 tablas de la v2) y `database/02_semilla.sql` (datos semilla). Las migraciones son los archivos `database/NN_nombre.sql` con número **03 o mayor**. **En el servidor se aplican solas:** al arrancar, el contenedor `web` ejecuta `docker/iniciar.sh`, que corre `scripts/migrar.php`, carga el conocimiento si la migración terminó bien y después inicia Apache. Como Dokploy reconstruye el contenedor en cada despliegue, basta con subir el archivo `.sql` nuevo junto con el código.
+
+El Grafo I vive versionado en `database/conocimiento/`, con fuentes por elemento y validación veterinaria pendiente.
+En XAMPP, después de `php scripts/migrar.php`, ejecutar `php scripts/cargar_conocimiento.php`; con `--revisar` se valida y se muestran cambios sin escribir.
+La carga conserva IDs, retira lógicamente y no duplica al repetir el mismo conjunto.
 
 *   **Volumen nuevo:** cuando el volumen `db_data` está vacío, MySQL ejecuta en orden alfabético los `.sql` del primer nivel de `database/` (`01`, `02` y las migraciones). Las subcarpetas no se recorren: por eso el modelo de drawDB vive en `database/modelo/`.
 *   **Registro:** cada migración aplicada queda en la tabla `schema_migraciones`, así que ninguna se repite.

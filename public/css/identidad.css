@@ -1,0 +1,44 @@
+/*
+ * M2 C8 (H5) — Identidad de Zooki para el área clínica: el azul de marca y los
+ * neutros del portal del propietario (mismos nombres y valores que los --z-* de
+ * css/portal/base.css). Las hojas de la consulta, Atención, las alertas y el
+ * vínculo de mascotas usan solo estas variables, nunca colores sueltos.
+ * El rojo y el ámbar son semánticos: bloqueo o error, y advertencia.
+ */
+:root {
+    --z-primary: #0052FF;
+    --z-primary-dark: #0044d6;
+    --z-primary-soft: rgba(0, 82, 255, 0.08);
+    --z-primary-suave: rgba(0, 82, 255, 0.14);
+    --z-primary-borde: rgba(0, 82, 255, 0.25);
+
+    --z-surface: #FFFFFF;
+    --z-bg-suave: #F8FAFC;
+    --z-bg-light: #F1F5F9;
+    --z-text: #0F172A;
+    --z-text-secondary: #475569;
+    --z-text-muted: #64748B;
+    --z-text-tenue: #94A3B8;
+    --z-border: #E2E8F0;
+    --z-border-fuerte: #CBD5E1;
+
+    --z-danger: #EF4444;
+    --z-danger-dark: #B91C1C;
+    --z-danger-soft: #FEF2F2;
+    --z-danger-borde: #FECACA;
+    --z-warning: #F59E0B;
+    --z-warning-dark: #B45309;
+    --z-warning-soft: #FFFBEB;
+    --z-warning-borde: #FDE68A;
+
+    --z-radius-lg: 24px;
+    --z-radius: 16px;
+    --z-radius-sm: 12px;
+    --z-radius-xs: 10px;
+    --z-shadow: 0 10px 25px -5px rgba(0, 82, 255, 0.08), 0 8px 10px -6px rgba(0, 82, 255, 0.05);
+    --z-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+    --z-shadow-lista: 0 12px 28px rgba(15, 23, 42, 0.14);
+    --z-foco: 0 0 0 3px rgba(0, 82, 255, 0.14);
+    --z-foco-error: 0 0 0 3px rgba(239, 68, 68, 0.14);
+    --z-velo: rgba(15, 23, 42, 0.04);
+}

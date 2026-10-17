@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/ModeloPropietario.php';
+require_once __DIR__ . '/../helpers/ValidadorAlertaMedica.php';
 
 /**
  * RN-114 / RE-5.9.2: el propietario ve la historia completa de sus mascotas
@@ -27,11 +28,14 @@ final class HistoriaPropietario extends ModeloPropietario
         $ids = array_map('intval', array_column($consultas, 'id_consulta'));
         $archivos = $this->agrupar('SELECT id_archivo, id_consulta, nombre_original, extension FROM archivos_clinicos WHERE id_consulta IN (%s) ORDER BY id_archivo', $ids);
         $tratamientos = $this->agrupar('SELECT id_tratamiento, id_consulta, medicamento, dosis, via_administracion, duracion, fecha_inicio FROM tratamientos WHERE id_consulta IN (%s) ORDER BY id_tratamiento', $ids);
+        // M2 C7 (RN-G02): los síntomas marcados de las consultas de su mascota; la etiqueta aunque el nodo se haya retirado.
+        $sintomas = $this->agrupar('SELECT cs.id_consulta, n.codigo, n.etiqueta FROM consulta_sintomas cs JOIN grafo_nodos n ON n.id_nodo = cs.id_nodo WHERE cs.id_consulta IN (%s) ORDER BY cs.id_consulta, n.etiqueta, n.codigo', $ids);
 
         foreach ($consultas as &$fila) {
             $id = (int) $fila['id_consulta'];
             $fila['archivos'] = $archivos[$id] ?? [];
             $fila['tratamientos'] = $tratamientos[$id] ?? [];
+            $fila['sintomas'] = array_map(static fn (array $sintoma): array => ['codigo' => $sintoma['codigo'], 'etiqueta' => $sintoma['etiqueta']], $sintomas[$id] ?? []);
         }
         unset($fila);
         return $consultas;
@@ -55,6 +59,27 @@ final class HistoriaPropietario extends ModeloPropietario
             WHERE d.id_mascota = ? ORDER BY d.fecha_aplicacion DESC, d.id_desparasitacion DESC');
         $consulta->execute([$idMascota]);
         return $consulta->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * RE-2.10.1 y RN-114: alergias y alertas activas de su mascota en todas las
+     * clínicas, con la clínica que las registró. De solo lectura (RN-G02).
+     */
+    public function alertas(int $idMascota): array
+    {
+        $this->exigirMascotaPropia($idMascota);
+        $consulta = $this->conn->prepare('SELECT a.id_alerta, a.id_clinica, a.tipo, a.descripcion, a.fecha, cl.nombre AS clinica_nombre
+            FROM alertas_medicas a
+            JOIN clinicas cl ON cl.id_clinica = a.id_clinica
+            WHERE a.id_mascota = ? AND a.activa = 1
+            ORDER BY a.fecha DESC, a.id_alerta DESC');
+        $consulta->execute([$idMascota]);
+        $alertas = $consulta->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($alertas as &$alerta) {
+            $alerta['tipo_nombre'] = ValidadorAlertaMedica::TIPOS[$alerta['tipo']] ?? $alerta['tipo'];
+        }
+        unset($alerta);
+        return $alertas;
     }
 
     /** Citas de la mascota en todas sus clínicas, menos las canceladas. */
