@@ -1,9 +1,9 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **plan aprobado por el usuario (2026-10-17)**. Siguiente: A, inventario y contrato; las decisiones técnicas abiertas se resuelven antes de implementar B.
+> Estado: **A revisada, con corrección requerida A.1 (2026-10-17)**. Inventario validado; contrato de cascada pendiente de corregir y decisiones de producto de A.8 sin aprobar. No empezar B.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
-> Arquitecto y revisor: Codex (esta sesión, relevo temporal). Ejecutor propuesto: Claude Code, por subetapas y por turnos.
-> Rama actual comprobada: `v2/m2-grafo`. Rama propuesta del módulo: `v2/m4-agenda`, desde `main` con M2 integrado. La crea el usuario; no se cambia de rama desde el agente.
+> Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
+> Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
 
 ## 1. Resultado y límites
 
@@ -61,26 +61,26 @@ Los criterios normativos permanecen en `documentacion/`; no se cambian silencios
 
 ## 3. Etapas y dependencias
 
-**Asignación propuesta para todas las filas:** escribe Claude Code; revisa Codex arquitecto de esta sesión. Si el usuario elige un ejecutor Codex, deberá ser otra sesión y dejarse identificado en el anexo. Nunca revisará su propia entrega. Trabajo por turnos en el mismo checkout, sin agentes paralelos sobre archivos compartidos.
+**Asignación corregida por el usuario (2026-10-17):** escribe Codex; revisa Codex en una sesión independiente. El autor de A no escribe su revisión. Trabajo por turnos en el mismo checkout, sin agentes paralelos sobre archivos compartidos. La columna de autor de las etapas siguientes se entiende con esta corrección, no como un encargo a Claude Code.
 
 | Etapa | Entregable comprobable | Depende de | Escribe | Revisa |
 |---|---|---|---|---|
-| **A. Inventario y contrato** | Solo lectura del código y anexo de diseño: rutas internas/portal, calendario, pacientes, atención, tipos, configuración, correos, vigilante y pruebas; regresiones conservadas; trazabilidad por RE; diferencias con Modelos §2–§8. Proponer algoritmo de intervalos/cascada, orden de candados, cierre puntual, revisión humana de triage, cola roja sin vet aún y persistencia mínima; resolver datos del acompañante y selección entre veterinarios igualmente compatibles antes de B. | Aprobación del plan | Claude Code | Codex |
-| **B. Datos y contratos documentales** | Migraciones solo donde A demuestre huecos; MER/drawDB/esquema alineados; relleno conservador e idempotencia. Ajustes de HU/RE/RN/diagramas aprobados. No se habilitan rutas parciales. | A revisada y decisiones de datos aprobadas | Claude Code | Codex |
-| **C1. Marca y tipos** | HU-7.4 completa: configuración, duración/margen/pausable, teléfono; propagación de marca y aislamiento; mismo diseño y validación en vivo. | B | Claude Code | Codex |
-| **C2. Horarios** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. | C1 | Claude Code | Codex |
-| **C3. Disponibilidad y reserva** | Una lógica de intersección, resta de ausencias/cierres y ocupación por duración+margen para sugerencias, reserva y reprogramación; candados y pruebas concurrentes; nunca disponibilidad permanente por falta de horario. Cierre de HU-4.9 y base de HU-4.6/4.8. | C2 | Claude Code | Codex |
-| **C4a. Agendar con triage** | Interno y portal comparten captura/buscador C4 de M2; cuatro ramas, excepción roja, clínica cerrada, revisión humana y contagio, persistencia y notificaciones. Rojo deriva a circuito clínico; no crea reserva ordinaria ni promete atención por el solo cálculo remoto. | C3 | Claude Code | Codex |
-| **C4b. Sobrecupos y cambios** | Tope y orden naranja con motivo; primer espacio amarillo/elección verde; conflictos sobrevenidos; cancelación/reprogramación interna y portal con misma lógica; revisión previa al horario y registro del nivel aprobado por vet. | C4a | Claude Code | Codex |
-| **C5a. Grafo II y cascada** | Secuencia/conflicto/emparejamiento; horas estimadas sin destruir horas pactadas o reales; margen, huecos y fin de franja. Disparos durante atención y al finalizar, sin depender de abrir calendario; procesador idempotente. | C4b | Claude Code | Codex |
-| **C5b. Reasignación en vivo** | Propuesta/aceptación/rechazo/vencimiento, siguiente candidato y reprogramación con propietario; revalidación al aceptar; avisos agrupados RN-429 y auditoría. Procesa marcas de horario C2. | C5a | Claude Code | Codex |
-| **C6. Ausencias y cobertura** | Alta admin/solicitud propia vet, bloqueo exacto y cobertura sin veto; sin cobertura queda pendiente de reprogramar y se ofrecen alternativas; auditoría y avisos. No reutilizar el veto de C5b. | C5b | Claude Code | Codex |
-| **C7a. Atención roja y pausas** | Libre/pausable/espera, llegada directa y derivación del portal, identidad conocida, prioridad máxima, excepción a plan/mora; pausa y reanudación antes de siguientes; consulta y cascada coherentes. | C6 | Claude Code | Codex |
-| **C7b. Ficha provisional y conciliación** | Cuatro ramas de identidad de HU-4.15; captura mínima, tarea pendiente, completar o consolidar sin perder actos ni cuenta nueva, carnet inactivo y datos del acompañante protegidos. | C7a y contrato de datos aprobado | Claude Code | Codex |
-| **C8. Ajustes y llegada tarde** | HU-4.18 completa (más lo adelantado por revisión humana), historial de reclasificaciones; hora llegada, opciones por tolerancia y capacidad restante, no asistió y recálculo. | C7b | Claude Code | Codex |
-| **C8b. Llegada sin reserva** | HU-2.2 según decisión 3 confirmada: cita obligatoria, origen distinguible y ocupación real; nunca convertir un verde en naranja para eludir las reglas. | C8 y criterios de capacidad aprobados | Claude Code | Codex |
-| **D. Correcciones y verificación final** | Corregir hallazgos, regresión M2/agenda/portal, comparación de diagramas, aislamiento y pruebas completas; 3–5 pruebas manuales por entrega. Sin rediseño general. | Etapas anteriores revisadas | Claude Code | Codex |
-| **F. Cierre y despliegue** | Matriz final por RE, estados documentales, una revisión por documento, PDF/Word y diagramas verificados; versión/historial `2.0.0-alpha.5`; guía de respaldo, integración y comprobación de producción. El usuario ejecuta Git y despliegue. | D y pruebas del usuario | Claude Code | Codex |
+| **A. Inventario y contrato** | Solo lectura del código y anexo de diseño: rutas internas/portal, calendario, pacientes, atención, tipos, configuración, correos, vigilante y pruebas; regresiones conservadas; trazabilidad por RE; diferencias con Modelos §2–§8. Proponer algoritmo de intervalos/cascada, orden de candados, cierre puntual, revisión humana de triage, cola roja sin vet aún y persistencia mínima; resolver datos del acompañante y selección entre veterinarios igualmente compatibles antes de B. | Aprobación del plan | Codex | Codex independiente |
+| **B. Datos y contratos documentales** | Migraciones solo donde A demuestre huecos; MER/drawDB/esquema alineados; relleno conservador e idempotencia. Ajustes de HU/RE/RN/diagramas aprobados. No se habilitan rutas parciales. | A revisada y decisiones de datos aprobadas | Codex | Codex independiente |
+| **C1. Marca y tipos** | HU-7.4 completa: configuración, duración/margen/pausable, teléfono; propagación de marca y aislamiento; mismo diseño y validación en vivo. | B | Codex | Codex independiente |
+| **C2. Horarios** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. | C1 | Codex | Codex independiente |
+| **C3. Disponibilidad y reserva** | Una lógica de intersección, resta de ausencias/cierres y ocupación por duración+margen para sugerencias, reserva y reprogramación; candados y pruebas concurrentes; nunca disponibilidad permanente por falta de horario. Cierre de HU-4.9 y base de HU-4.6/4.8. | C2 | Codex | Codex independiente |
+| **C4a. Agendar con triage** | Interno y portal comparten captura/buscador C4 de M2; cuatro ramas, excepción roja, clínica cerrada, revisión humana y contagio, persistencia y notificaciones. Rojo deriva a circuito clínico; no crea reserva ordinaria ni promete atención por el solo cálculo remoto. | C3 | Codex | Codex independiente |
+| **C4b. Sobrecupos y cambios** | Tope y orden naranja con motivo; primer espacio amarillo/elección verde; conflictos sobrevenidos; cancelación/reprogramación interna y portal con misma lógica; revisión previa al horario y registro del nivel aprobado por vet. | C4a | Codex | Codex independiente |
+| **C5a. Grafo II y cascada** | Secuencia/conflicto/emparejamiento; horas estimadas sin destruir horas pactadas o reales; margen, huecos y fin de franja. Disparos durante atención y al finalizar, sin depender de abrir calendario; procesador idempotente. | C4b | Codex | Codex independiente |
+| **C5b. Reasignación en vivo** | Propuesta/aceptación/rechazo/vencimiento, siguiente candidato y reprogramación con propietario; revalidación al aceptar; avisos agrupados RN-429 y auditoría. Procesa marcas de horario C2. | C5a | Codex | Codex independiente |
+| **C6. Ausencias y cobertura** | Alta admin/solicitud propia vet, bloqueo exacto y cobertura sin veto; sin cobertura queda pendiente de reprogramar y se ofrecen alternativas; auditoría y avisos. No reutilizar el veto de C5b. | C5b | Codex | Codex independiente |
+| **C7a. Atención roja y pausas** | Libre/pausable/espera, llegada directa y derivación del portal, identidad conocida, prioridad máxima, excepción a plan/mora; pausa y reanudación antes de siguientes; consulta y cascada coherentes. | C6 | Codex | Codex independiente |
+| **C7b. Ficha provisional y conciliación** | Cuatro ramas de identidad de HU-4.15; captura mínima, tarea pendiente, completar o consolidar sin perder actos ni cuenta nueva, carnet inactivo y datos del acompañante protegidos. | C7a y contrato de datos aprobado | Codex | Codex independiente |
+| **C8. Ajustes y llegada tarde** | HU-4.18 completa (más lo adelantado por revisión humana), historial de reclasificaciones; hora llegada, opciones por tolerancia y capacidad restante, no asistió y recálculo. | C7b | Codex | Codex independiente |
+| **C8b. Llegada sin reserva** | HU-2.2 según decisión 3 confirmada: cita obligatoria, origen distinguible y ocupación real; nunca convertir un verde en naranja para eludir las reglas. | C8 y criterios de capacidad aprobados | Codex | Codex independiente |
+| **D. Correcciones y verificación final** | Corregir hallazgos, regresión M2/agenda/portal, comparación de diagramas, aislamiento y pruebas completas; 3–5 pruebas manuales por entrega. Sin rediseño general. | Etapas anteriores revisadas | Codex | Codex independiente |
+| **F. Cierre y despliegue** | Matriz final por RE, estados documentales, una revisión por documento, PDF/Word y diagramas verificados; versión/historial `2.0.0-alpha.5`; guía de respaldo, integración y comprobación de producción. El usuario ejecuta Git y despliegue. | D y pruebas del usuario | Codex | Codex independiente |
 
 Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario muestra que una fila no cabe en una entrega verificable, se divide antes de emitir el prompt; no se implementan dos por comodidad. Cada prompt sigue literalmente la estructura de `agentes/metodo.md` §5 y cita sus diagramas, alcance, exclusiones y pruebas concretas.
 
@@ -138,8 +138,8 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 ## 7. Tareas y verificación
 
 - [x] Usuario aprueba alcance/roles/llegada/captura mínima y el plan (2026-10-17); decisiones en §6.
-- [ ] Usuario crea rama del módulo; arquitecto prepara prompt **solo de A** con método §5.
-- [ ] A entregada por ejecutor y revisada de forma independiente; contratos no resueltos vuelven al usuario antes de B.
+- [x] Rama del módulo comprobada: `v2/m4-agenda`; encargo recibido **solo de A**, con la corrección de autor y revisor del usuario.
+- [x] A entregada por ejecutor y revisada de forma independiente (2026-10-17), con corrección A.1 antes de aprobar el contrato; ver revisión al final. Decisiones de producto pendientes antes de B.
 - [ ] Cada subetapa tiene anexo «Anexo X — Resultado», autor, RE con prueba, comandos y pendientes; estado «entregada, pendiente de revisión».
 - [ ] Revisor comprueba diff, riesgos y Modelos paso a paso; escribe «### X — Revisión (fecha)», veredicto, evidencia propia, hallazgos archivo/línea/RE o RN/reproducción y siguiente paso. No inventar ahora anexos o revisiones aprobadas.
 - [ ] PHP completo, con y sin host; MySQL 8 si está disponible y/o MariaDB local, siempre **`zooki_test_base_v2`**; pruebas concurrentes con conexiones separadas. Si no hay servidor, declarar omisión y repetir antes del cierre, sin presentar SQLite como prueba de concurrencia MySQL.
@@ -159,4 +159,600 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 4. [ ] **Beto Norte vet y Ana Norte admin:** ingreso rojo con ficha conocida y provisional; pausa solo de tipo pausable, reanudación y consulta; completar/consolidar sin perder historia. Fabio prueba aviso de clínica cerrada y teléfono de urgencias desde el portal.
 5. [ ] **Beto Norte vet:** llegada a los 8 y 15 minutos con tolerancia 10, opciones correctas, ajuste motivado y agenda actualizada. **Diego Sur vet y Gina Plataforma:** peticiones a una cita/ingreso de Norte rechazadas con sus contextos activos.
 
-**Resultado de pruebas en esta propuesta:** no se ejecutaron suites: no hay implementación entregada para revisar. Se leyó especificación, esquema y puntos de entrada actuales; el inventario técnico completo es A. No se leyó `.env`, no se tocó ninguna base ni se cambió código, versión o documentación normativa.
+**Resultado de la planificación inicial:** no se ejecutaron suites en esa planificación. La verificación del inventario A se registra en su anexo; no acredita implementación de M4.
+
+## Anexo A — Resultado
+
+**Fecha:** 2026-10-17.
+**Autor:** Codex, ejecutor de A en esta sesión.
+**Revisor previsto:** Codex, en otra sesión independiente.
+**Corrección expresa del usuario (2026-10-17):** «escribe Codex y revisa Codex» sustituye la asignación inicial a Claude Code.
+**Estado:** entregada, pendiente de revisión.
+No contiene una revisión ni una aprobación de esta entrega.
+
+Solo se modifican este plan y agentes/estado.md.
+El código, esquema, migraciones, conocimiento, documentación normativa, diagramas, versión y exportaciones se conservan.
+Los nombres de servicios, campos y pruebas que siguen son propuestas de diseño, no archivos ni funcionalidades implementados.
+Las diferencias normativas se dejan para resolver en B; las decisiones de producto no confirmadas no se atribuyen al usuario.
+
+### A.1. Riesgos comprobados y diferencias documentales
+
+| Evidencia actual | Diferencia o riesgo | Ajuste que debe preparar B, antes del código afectado |
+|---|---|---|
+| models/Cita.php: registrarEvaluada, exigirHorarioLibre, ocupadas, intervalos y sugerencias | Copia margen, pero compara solo duración; sugerencias recorre 08:00–18:00, sin franjas del veterinario, ausencias ni cierres. El cliente cruza dos listas distintas. | Un contrato de disponibilidad completa, incluidas mascota y ocupación entre clínicas. RE-4.6.2, RE-4.9.1/2, RE-4.13.4; Modelos §2/§4. |
+| helpers/LimitePlan.php: transaccion bloquea clinicas; uq_cita_veterinario_horario solo impide comienzos iguales | El candado actual serializa altas de la misma clínica; dos clínicas distintas pueden insertar intervalos solapados de un veterinario o mascota globales con comienzos distintos. CitaTest simula la carrera saltando una validación en una sola conexión. | Candados estables globales de A.4 y prueba con dos conexiones reales. No declarar resuelta la concurrencia por el índice. |
+| models/Recordatorio.php:91–111, citasDeManana; VinculosPropietario::desvincular | La consulta de correo no comprueba directamente propietario_clinica activo, a diferencia de ContactoPropietario. El flujo normal sí impide desvincular con citas sin resolver y desactiva los vínculos de mascotas. No se demuestra una fuga alcanzable por ese flujo; falta una defensa/prueba explícita de elegibilidad en la consulta de recordatorios. | Proponer P11 con estado inconsistente propietario_clinica inactivo/mascota_clinica activo y con cambios concurrentes; exigir cero envíos y unificar elegibilidad al tocar notificaciones en C4a/C4b. No se declara vulnerabilidad ni envío indebido confirmado. |
+| helpers/Security.php:408; CitaController::registrarAjax/veterinarioDeLaReserva; AutorizacionRolTest:243 | Administrador aún puede crear por POST directo. HU-4.1 lo admite, HU-4.13 y Modelos §4 lo excluyen. | Aplicar decisión confirmada: solo vet/propietario crean. Alinear actores, pruebas y permisos de creación. Conservar permisos administrativos restantes. |
+| RE-2.2.1 exige consulta sin cita; RN-208 propone ese acceso para atender un cambio de profesional | La decisión de crear siempre una cita de llegada cambia ese criterio. Usar el acceso para esquivar una cita activa podría duplicar ocupación. | Ajustar HU-2.2 y sus RE, RN-208 y Modelos §3: origen sin reserva, cita obligatoria nueva; si ya hay cita activa, reasignación legítima o continuidad, sin una segunda llegada. Históricos sin cita se conservan. |
+| Modelos §4 pasa de color a límite/horario; §6 asigna o pausa tras el rojo remoto | Falta puerta de revisión humana (RE-2.11.5); T-20 podría recibir horario. El rojo remoto podría pausar otra atención sin presencia física. | Introducir revisión previa y separar derivación remota, llegada acreditada y atención. §3/§4/§6 deben compartir la transición de A.5. No cambiar el amarillo esperado de T-20. |
+| Modelos §5 calcula contra fin+margen y después pregunta si supera margen | Lectura ambigua que puede descontarlo dos veces; solo dibuja finalización, aunque RE-4.5.2 y RN-412 exigen detectar durante la atención. | Expresar las fórmulas y ejemplos de A.3; disparos de reloj, inicio, fin, pausa, llegada y cambios de disponibilidad. |
+| Modelos §7 y §13.4; modelos/controladores existentes | Solo existe la configuración recurrente de la clínica; no el horario del vet ni propuestas operativas. | Implementar propuestas con aprobación y revalidación al aplicar; marcar citas afectadas atómicamente. No entregar una interfaz que aparente reajuste terminado antes de C5. |
+| Modelos §8 comienza solo con administrador; RN-414 también admite solicitud propia del vet | Falta solicitud y resolución en el flujo. Cobertura por ausencia no requiere aceptación del destino. | Agregar solicitud propia y su resolución propuesta, separadas del veto/plazo de la reasignación en vivo. Confirmar la política de aprobación de ausencia en A.8. |
+| Nota de HU-4.8 y calendario semanal | Horarios recurrentes y ausencias no representan un festivo único de toda la clínica. | Cierre puntual independiente; no apagar todos los lunes ni inventar ausencia por cada vet. RE-4.8.2/3. |
+| HU-4.10 tiene nota v2.0; plan de entregas la pone en v2.1 | Contradicción ya resuelta por el usuario. | Corregir nota; HU-4.10/4.16/4.17 y RE-4.7.3 siguen en v2.1; O-06 queda pendiente. |
+| RE-4.18.4 dice historial del propietario; aceptación dice que la clínica ve sus reclasificaciones | Ambigüedad de destinatario y alcance, sin flujo dedicado de ajuste/llegada tarde. | Propuesta: historial de casos asociados al propietario, visible al personal autorizado de esa clínica, sin sanción ni puntuación automática. Confirmar con usuario; precisar HU/RE y ramas de Modelos §4/§5/§6. No ampliar permisos por interpretación. |
+| MER §6 afirma que solo se persisten reasignaciones y propuestas | Ya existen horas reales, síntomas y avisos; además hacen falta estados operativos recuperables. | Describir persistencia mínima de A.6; el grafo sigue reconstruyéndose en memoria. |
+| specs/HU-4.15-ingreso-emergencia.md §2 habla de migración conservadora v1 | Ya se desplegó la base v2; ingresos_emergencia existe en los tres esquemas. | Sustituir la nota de transición v1 por ampliación aditiva v2, sin recrear tabla ni migrar datos de v1. |
+
+Las diferencias nuevas quedan expuestas aquí para revisión del usuario antes de decidirlas.
+A no corrige diagramas ni convierte estas propuestas en RE aprobados.
+Tampoco aplica literalmente el comentario histórico de la revisión C4 de M2 que permitía ampliar roles «si» otro personal agendaba: la decisión vigente excluye al administrador.
+
+### A.2. Inventario del código y regresiones que se conservan
+
+| Área y archivos | Métodos o entradas concretos | Funciona hoy / conservación / brecha |
+|---|---|---|
+| models/Cita.php | registrar, registrarEvaluada, tiemposDelTipo, getById, paraPropietario, listarRango, listarTodas, veterinariosActivos, getTiposCita, getTipoCitaById | Reserva verde y guarda instantánea de duración/margen; valida clínica, vínculo y veterinario; lee por contexto y propietario. Conservar denegación auditada y contactos condicionados a vínculo. No guarda aún episodios ni ejecuta las cuatro ramas. Tipo omitido usa 30 minutos; tipo inactivo merece revalidación explícita en M4. |
+| Mismo modelo | sugerencias, exigirHorarioLibre, ocupadasDelVeterinario, ocupadasDeLaMascota, ejecutarReserva, reprogramar | Detecta solapes secuenciales de vet y mascota entre clínicas; convierte duplicado en HorarioOcupado. Excluye sobrecupos por completo y no aplica margen/horarios reales a la ocupación; no basta para Grafo II. Reprogramar conserva instantáneas, pero falta transacción común, disponibilidad completa y control de cuota al cambiar mes. |
+| Mismo modelo | iniciarAtencion, completarAtencion, marcarNoAsistio, confirmar, cancelar, transicion | Transiciones condicionales evitan reactivar canceladas y doble inicio; conserva sellos reales. Pausada existe solo en ENUM, fuera de ESTADOS_EN_ATENCION; no hay pausa/reanudación ni llegada registrada. |
+| controllers/CitaController.php | registrarAjax, registrar, veterinarioDeLaReserva, fechaYHoraFuturas, exigirHorarioLaboral | Valida fecha/hora, motivo, vet propio y horario inicial de clínica; aviso por otra cita del día con ignore_warning. Solo crear cambia de roles; no inferir pérdida de supervisión/reprogramación del admin. |
+| Mismo controlador | listarSemanaAjax, eventoDeCita, listarTodasCitasAjax, getCitaAjax, listarVeterinariosAjax, listarTiposCitaAjax, getSugerenciasHorarioAjax | Calendario acota citas propias del vet y prevención de clínica; admin supervisa todas. Conservar eventos de vacunas/desparasitación, sin correos en calendario. Falta incluir prioridad, estimadas, pausas y pendientes con acceso mínimo. |
+| Mismo controlador, portal | portalVeterinariosAjax, portalTiposCitaAjax, portalHorasAjax, portalSugerenciasAjax, agendarDesdePortalAjax, clinicaDelPortal | Clínica elegida debe estar vinculada; ficha propia; alta de mascota_clinica y reserva dentro de LimitePlan, con rollback si falla. Conservar selección multi-clínica y mensaje neutral comercial. No hay reprogramación propia: reprogramarCitaAjax no admite contexto propietario. |
+| Mismo controlador, cambios y atención | reprogramarCitaAjax, cancelarAjax, confirmarAjax, iniciarAtencionAjax, marcarNoAsistioAjax, atencion | Admin reprograma/reasigna; vet solo las suyas; propietario cancela las propias con vínculo activo. Inicia solo asignado, día y ventana; continúa en_curso/sin_cerrar. Mantener cierre mediante consulta y rechazo de cerrar sin consulta. |
+| models/Consulta.php y controllers/ConsultaController.php | registrar/escribir, exigirCitaParaConsulta, completarCita, asignarNumeroHistoria, tomarCandadoNumeracion; registrarAjax, listar, listarHistorialAjax | Consulta, síntomas, tratamientos y adjuntos se guardan de forma atómica; cierre de cita y numeración HC; rollback de archivos movidos. Hoy id_cita puede ser NULL. Conservar M2 y HC por clínica; C8b cambiará solo nuevas atenciones sin reserva, sin rellenar ficticiamente las históricas. |
+| models/ConsultaSintoma.php; helpers/ValidadorClinico.php; models/ArchivoClinico.php y Tratamiento.php | codigosDeEntrada, nodosActivos, insertarEnConsulta, deConsultas; validación/adjuntos/tratamientos actuales | Síntomas de consulta opcionales, como códigos, no son todavía episodios temporales de agenda. Reutilizar buscador/validación permitida; no confundir sus dos contratos ni exigir tiempos nuevos a toda consulta por inferencia. Conservar alertas y prescripción protegida de M2. |
+| helpers/MotorTriage.php, BuscadorSintomas.php, ValidadorTriage.php, ValidadorContextoClinico.php; models/GrafoConocimiento.php, PacienteDiagnostico.php; controllers/TriageController.php | MotorTriage::calcular, BuscadorSintomas::buscar, ValidadorTriage::episodios; TriageController::buscarAjax/calcularAjax; contexto/instantanea | Cálculo puro y búsqueda probados; API sin escrituras para vet/propietario, contexto y conocimiento vigentes, alergias globales con RN-113. No tiene captura en Agendar ni revisión operativa ni avisos de aislamiento. |
+| models/ModeloClinica.php, ModeloHistoria.php, Mascota.php, MascotaPropietario.php, VinculosPropietario.php, HistoriaPropietario.php | enClinicaDelPropietario, conMismoAlcance, exigirMascotaActiva; Mascota::vincular; ficha; clinicas/horarios; citas/citasDeSusMascotas/detalleCita | Aislamiento centralizado y titularidad; autorización de historia y contactos. Conservar prueba del vínculo en cada escritura, sin confiar en id_clinica del cliente. Lectores de citas usan JOIN a usuarios vet, por eso no se propone volver nula esa FK para la cola roja. |
+| helpers/LimitePlan.php y Transaccion.php | consumir, transaccion, uso; Transaccion::ejecutar | Fila estable de clínica y savepoints; límite mensual por fecha de cita, cancelación libera cuota; rojo evaluado exceptuado, mora cae a gratuito. Conservar y ampliar orden de candados; no sustituir por un contador en JS. |
+| models/HorarioClinica.php y controllers/HorarioClinicaController.php | listar/dia/guardar/restaurar; getHorariosAjax, guardarHorariosAjax, restaurarPorDefectoAjax, validarHorarioLaboral, obtenerHorasDisponibles, obtenerHorasDisponiblesAjax | Semana propia con mañana/tarde, validación y guardado completo, restauración sin borrar filas. ValidarHorarioLaboral solo comprueba inicio; obtenerHorasDisponibles no comprueba ocupación ni duración final. No hay modelos/controladores operativos de horario vet, ausencias, propuestas o reasignaciones. |
+| models/CatalogoClinica.php, CopiaCatalogosClinica.php; helpers/ValoresInicialesClinica.php | tiposCita/tipoCita, copiar/copiarTabla; TIPOS/HORARIOS | Tipos por clínica y copia inicial sin duplicar; no hay CRUD de marca/tipos/pausable. La copia omite margen/pausable y usa defaults SQL (10/1); no acredita decisiones clínicas sobre cirugía. C1 debe hacerlos explícitos y preservar personalizaciones. |
+| views/admin/horarios.php, public/js/horarios.js; controllers/PerfilController.php | admin_configuracion; mostrar/actualizarAjax del perfil | Configuración actual solo de horario de clínica; perfil actual sin solicitud/gestión de horario o ausencia. Conservar auto-guardado, errores de franja y diseño; no agregar gestión de especialidades/reseñas v2.1. |
+| views/vet/calendario.php, public/js/calendario.js | vet_agenda; abrirCitaModal, postCita; registrar_cita_ajax, reprogramar_cita_ajax y arrastre | Calendario y panel por día, modal reserva y reprogramación; correo disparado desde cliente. Conservar arrastre con misma validación servidor y pista de uso; no duplicar el selector M2 ni calcular prioridad en JS. |
+| views/vet/pacientes.php y public/js/medical-module.js | acción rápida data-c3-click=evento20; modalCita/formCita; openAppointmentModal, loadVetsForAppointment, saveAppointment, evento58 | Evento20 hoy redirige a vet_agenda sin preseleccionar mascota. Quedan modal antiguo y funciones de envío directo a registrar_cita_ajax; no aparece otro llamador de openAppointmentModal. Ese formulario carece de tipo, triage y disponibilidad común: integrar o retirar el camino residual, no dejar puerta paralela. También comprobar buscar_mascotas y sus layouts, que comparte el personal. |
+| views/admin/citas.php y public/js/admin-citas.js | admin_citas; cargarDatosIniciales y acciones de confirmar/cancelar/reprogramar | Tablero administrativo de supervisión, sin formulario de alta localizado. Conservar filtros/estados/administración ya autorizados. No quitar todo admin_citas por la prohibición de crear. |
+| views/vet/consultas.php, modal_consulta.php, atencion.php; views/partials/consulta_*; public/js/consultas.js, consulta-formulario.js, consulta-sintomas.js, consulta-diagnosticos.js, consulta-tratamientos.js y medical-module.js | Atención sin cita, formulario compartido y atención de cita; selector expuesto como ZookiSintomas | Dos entradas clínicas usan componentes M2; muestran HC/historial/alertas/peso desconocido. Mantener ambos diseños y reglas. El selector de consulta captura códigos; extender/reutilizar en agenda con adaptador de episodios y exposiciones, sin romper el contrato de consulta. |
+| views/portal/index.php y layout.php, public/js/portal.js; controllers/PortalController.php | index, conCancelacion, verDetalleMascotaAjax, getDetalleCitaClinicaAjax, imprimirHistorial; abrirBooking/cargarCatalogos y data-agendar | Todos los accesos del menú, barra móvil y estados vacíos confluyen en un formulario; cambio de clínica invalida selección, respuestas tardías se descartan. Conserva cancelación y catálogo/mascota propia. Falta reprogramar; no equivale a agendar otra y cancelar después. |
+| controllers/CitaController.php, config/EmailService.php | avisarCita, retirarAvisosCita, enviarEmailAjax/enviarCorreoCita, responderYSeguir; obtenerPlantillaBaseHTML, enviarCorreoPersonalizado | Avisos internos tras crear/cambiar; correo en una segunda petición de JS, responde antes del SMTP. No garantiza correo sin navegador y el mensaje anuncia envío sin acreditar entrega; plantilla global Zooki, faltan motivo/dirección en cuerpo y registro durable del fallo inmediato. Proponer envío desde evento confirmado y cola de A.6, preservando no bloquear reserva. |
+| models/NotificacionInterna.php y controllers/NotificacionController.php | crearParaUsuario/crearParaRol, expirarDeCita, obtenerParaUsuario, perteneceA, marcarLeida/marcarTodasLeidas | Avisos por destinatario/rol y clínica, con vencimiento. Conservar control de acceso. No reutilizar como cola sin vet ni como historial de aceptación. |
+| scripts/send_reminders.php; models/Recordatorio.php; helpers/EnviadorRecordatorios.php, VentanaRecordatorio.php | ejecutar, citasDeManana, puedeEnviar, registrar | Recordatorio de citas de mañana, prevención con ventana/reintentos y registro en notificaciones. Conservar exclusión de inactivos y contactos legítimos; confirmación/declinación desde recordatorio queda fuera de M4. |
+| scripts/vigilar_atenciones.php; helpers/VigilanteAtenciones.php, ReglaAtencion.php; models/AtencionesEnCurso.php; scripts/zooki.cron | revisar, debeAvisarAbierta, quedaSinCerrar; listar, sellarAviso, marcarSinCerrar | Cron cada 5 minutos y respaldo al abrir calendario; aviso único y sin_cerrar. No hay procesador de cascada ni vencimientos de reasignación. Mantener RN-409 separado de RN-429; actualizar comentario viejo RN-410 cuando se toque esa tarea. |
+| Salidas de marca | views/portal/layout.php, index.php, imprimir_historial.php; config/EmailService.php y EnviadorRecordatorios::contenido | Portal global con varias clínicas e historial global: no imponer una clínica elegida arbitrariamente. Propuesta: marca en tarjeta/detalle de cada clínica, correo de su evento y documento de esa clínica; historial multi-clínica conserva cabecera de plataforma y procedencia por acto. RE-7.4.4 requiere aclararlo antes de C1/F. |
+
+**Inventario de rutas y permisos que se debe mantener explícito:**
+
+- En public/index.php y Security::actionRoles, registrar_cita_ajax hoy es ADMIN/VETERINARIO; cambiar solo su creación a VETERINARIO y exigir ese rol también al entrar al servicio.
+- portal_agendar_cita_ajax, portal_get_vets_ajax, portal_get_tipos_cita_ajax, portal_get_horas_ajax y portal_get_sugerencias_ajax son del propietario; no reutilizar reprogramar_cita_ajax sin una entrada de titularidad propia.
+- buscar_sintomas_ajax y calcular_triage_ajax conservan VETERINARIO/PROPIETARIO; plataforma y ADMIN reciben 403.
+- listar_citas_ajax, get_cita_ajax, listar_veterinarios_ajax, listar_tipos_cita_ajax, reprogramar_cita_ajax y confirmar_cita_ajax conservan sus permisos actuales de personal salvo decisión nueva explícita.
+- cancelar_cita_ajax y enviar_email_ajax admiten propietario y personal con comprobación del recurso; get_horas_disponibles_ajax/get_sugerencias_horario_ajax son compartidas hoy y deben delegar al mismo servicio con contexto validado.
+- iniciar_cita_ajax, completar_cita_ajax, marcar_no_asistio_ajax, vet_atencion y registrar_consulta_ajax siguen siendo del vet asignado o del alcance clínico definido para consulta; nunca del admin ni de plataforma.
+- admin_configuracion, guardar_horarios_clinica_ajax/restaurar_horarios_defecto_ajax, listar_todas_citas_ajax y admin_citas se conservan. Las acciones nuevas de propuesta, revisión, urgencia y conciliación se enumeran en B/C con matriz y CSRF; no se habilitan implícitamente por un rol genérico.
+
+AutorizacionRolTest::testCadaRolConservaSusAccionesHabituales actualmente admite registrar_cita_ajax al administrador y debe cambiar con C4a.
+AgendaPeticionesTest::testElPortalTodaviaNoAgenda solo niega la ruta interna bajo contexto propietario; PortalAgendaTest prueba la ruta portal que sí funciona.
+No usar el nombre antiguo del primer test como evidencia de que el portal está sin implementar.
+
+### A.3. Contrato propuesto del Grafo II
+
+**Separación de responsabilidades técnicas.**
+Proponer helpers/IntervalosAgenda.php (intersección/resta/solape), helpers/MotorAgenda.php (grafo puro y estimaciones), models/DisponibilidadAgenda.php (datos mínimos y excepción global encapsulada) y models/OperacionAgenda.php (coordinación transaccional).
+Cita conserva acceso/persistencia por clínica; MotorTriage y BuscadorSintomas no conocen cuotas ni candados.
+Los controladores y tareas llaman al mismo coordinador; las vistas solo presentan.
+No se crean estas clases en A.
+
+**Intervalos y reloj.**
+Todas las operaciones reciben un reloj y trabajan con fechas completas en la zona vigente America/Bogota, usando ZonaHoraria/ReglaAtencion; no depender de fecha UTC del navegador.
+Usar intervalos semiabiertos [inicio, fin): inicio incluido y fin excluido.
+Dos intervalos se solapan si inicioA < finB y inicioB < finA.
+Una ausencia de día completo es [día 00:00, día siguiente 00:00); una de 10:00 a 11:00 permite comenzar exactamente a las 11:00.
+Rechazar fin <= inicio y rangos inválidos, sin redondear minutos que alteren la regla.
+En C3 no se admiten reservas ordinarias que crucen el fin de una franja o la medianoche; las atenciones reales que la crucen mantienen DATETIME y continuidad.
+
+Disponibilidad = intersección de franjas activas de clínica y veterinario, menos cierres puntuales y ausencias aprobadas, menos ocupación compatible de vet y mascota.
+Sin horario de cualquiera de los dos, no se ofrece agenda ordinaria.
+Una cita de duración d y margen m necesita [s, s+d+m) contenido completamente en una sola franja restante.
+hora_fin sigue significando fin clínico pactado s+d; el extremo de ocupación se calcula con el margen, no se vuelve a almacenar como hora_fin.
+Duración/margen salen del tipo activo validado en servidor, jamás del número enviado por JS.
+La sugerencia recibe mascota y tipo, además del vet; hoy sugerencias no recibe mascota.
+
+**Aristas y prioridad.**
+
+- Secuencia: orden de ejecución de un veterinario; un caso rojo presencial y la reanudación de su cita interrumpida son dependencias explícitas. Una pausa no equivale a cancelación.
+- Conflicto: intersección incompatible por veterinario o mascota, incluidas sus otras clínicas; puede existir conflicto previsto entre capacidad ordinaria y un sobrecupo autorizado, pero nunca dos atenciones reales simultáneas del mismo vet.
+- Emparejamiento: cita ↔ veterinario activo de esa clínica, con intervalo completo compatible, disponibilidad vigente y mascota sin conflicto. No incluye afinidad, reputación ni especialidades inferidas (HU-4.16 es v2.1).
+- Rojo presencial tiene precedencia máxima; naranja usa orden de llegada fecha_registro/id_cita, salvo motivo del vet auditado; amarillo toma primer espacio y verde conserva elección. No inventar una puntuación dentro del color.
+- Una propuesta de reasignación no ocupa ni mueve todavía la cita; al aceptar se revalida. Si se quiere apartar provisionalmente un hueco, sería una regla adicional que requiere aprobación, no un bloqueo SQL abierto durante diez minutos.
+
+**Bloque y sobrecupo naranja, propuesta a confirmar.**
+Identificar un bloque por clínica, veterinario, fecha y componente continuo de la intersección recurrente antes de restar ausencias/cierres parciales.
+Restar una ausencia no duplica el tope ni crea otro bloque con contador nuevo.
+Guardar la identidad del bloque de cada naranja y no recrearla para eludir su tope al editar horarios.
+Contar los naranjas del bloque que no estén cancelados/no_asistio; completados siguen consumiendo el cupo de ese bloque.
+El tercer naranja con tope 2 genera aviso y decisión del personal, sin degradarlo a verde ni saltar al siguiente día silenciosamente.
+Sobrecupo autoriza demanda adicional en esa cola, no simultaneidad real ni cruces del profesional entre clínicas.
+La predicción de cada naranja debe incluir su duración y margen y disparar reajuste si desborda franja; no ocultarlo del grafo como hace hoy ocupadas.
+La unidad de bloque y liberación de cupo son concreciones de RN-422 que B debe hacer explícitas, pendientes de conformidad.
+
+**Horas pactadas, estimadas y reales.**
+fecha/hora y duración/margen guardan el compromiso original vigente; una reprogramación expresa lo cambia con auditoría del anterior.
+inicio_estimado/fin_estimado son la predicción vigente; cambiarla no reescribe el compromiso ni los sellos reales.
+hora_inicio_real se sella una sola vez; hora_fin_real solo al completar la consulta.
+Las pausas conservan cada segmento, no reinician la atención ni descuentan tiempo activo ya realizado.
+Una cita futura que no se haya acordado adelantar no se estima antes de su hora pactada: evita avisar adelantos no aceptados.
+
+**Cascada sin descontar dos veces el margen.**
+Para una cita cuyo inicio estimado vigente es e, su fin clínico nominal es e+d.
+Mientras esté abierta, usar como límite inferior del fin observado f = máximo(e+d, ahora); al terminar, usar su fin real.
+La cola puede comenzar después de máximo(e+d+m, f).
+Eso consume el margen una sola vez: si f <= e+d+m no se agrega retraso al siguiente inicio.
+Para una siguiente cita ordinaria j: e_j = máximo(s_j, disponibilidad del predecesor); luego validar su intervalo e_j+d_j+m_j contra franjas y compromisos.
+No calcular (f − (e+d+m)) − m ni sumar de nuevo m a f después de haberlo consumido.
+El tiempo libre entre citas puede absorber más retraso; no sumar ciegamente el mismo delta a toda la lista.
+Si hay cambios en la duración restante, pausa o tipo, recalcular desde la causa con la misma base, sin acumular otra vez deltas de recálculos anteriores.
+Una cita abierta que consume todo lo previsto tiene fin desconocido; la predicción es un mínimo revisable, nunca una garantía de que terminará «ahora».
+
+| Ejemplo verificable | Resultado esperado |
+|---|---|
+| A pactada 09:00, d=30, m=10; B pactada 09:40 | Fin A 09:37: B sigue 09:40; fin A exactamente 09:40: igual; fin A 09:41: B 09:41. No 09:31 ni 09:51. |
+| A sigue abierta a las 09:45 con los datos anteriores | B estimada 09:45 como mínimo, recalculada por tarea aunque nadie abra calendario. Otro recálculo a las 09:46 da 09:46, no 09:51 por volver a sumar cinco minutos. |
+| A termina 09:47; B 09:40, d=20/m=5; C 10:20 | B pasa a 09:47, fin nominal 10:07, ocupación hasta 10:12; C conserva 10:20. El hueco absorbe el retraso. |
+| Franja hasta 12:00; cita 11:20, d=30/m=10 | Cabe exactamente; 11:21 no cabe. Si la cascada lleva la cita a 11:25, no truncar su duración: queda para reasignación/reprogramación. |
+| Consulta pausable inicia 09:00, trabaja 10 min; pausa 09:10–09:30 por rojo; d=30/m=10 | Retoma a las 09:30 antes de siguientes, quedan 20 min activos, fin nominal 09:50 y capacidad siguiente 10:00 si no hay más desvío. El inicio real permanece 09:00. |
+| Llegada 10:10 para 10:00, tolerancia=10 | Está dentro exactamente; si la duración necesaria no cabe en el tiempo restante, vet elige atender igual o reprogramar. A 10:10:01 está fuera: no_asistio/siguiente hueco/reprogramar. No reducir por defecto el servicio a lo que quede. |
+
+**Cobertura frente a reasignación en vivo.**
+Ausencia aprobada tapa el intervalo y busca cobertura sin veto, dentro de la clínica; no crea una propuesta con vencimiento para que el destino «acepte» una obligación ya asignable.
+La reasignación por cascada sí guarda propuesta pendiente: mantiene origen hasta aceptación del destino en contexto clínico correcto, revalida y cambia atómicamente; rechazo o vencimiento prueba siguiente candidato.
+Proponer vigencia [fecha, fecha_limite): aceptar exactamente en fecha_limite cuenta como vencida; su plazo se lee de clinicas.plazo_reasignacion_min (default existente 10).
+Ese extremo temporal queda para ratificar en la revisión técnica, sin inventar otro plazo.
+
+**Avisos.**
+Guardar última estimación comunicada y último instante de aviso RN-429.
+Comparar el desplazamiento vigente contra la última hora comunicada, no contra el último recálculo ni la suma de pequeños deltas repetidos.
+Con umbral 15: a +15 no avisa; a +16 puede avisar si pasaron al menos 30 minutos; exactamente 30 habilita.
+Tomando comunicación inicial 09:00, diez recálculos +3 cada seis minutos producen primer aviso en el sexto (+18, minuto 36), y ninguno más antes del 66; cumple «como máximo dos» en una hora sin forzar dos.
+Reasignación/reprogramación siempre generan su evento y pueden actualizar la base comunicada; no se suprimen por la ventana de estimaciones.
+Un fallo SMTP no revierte una reserva ni se considera una comunicación entregada; la cola conserva fallo y permite resolver reintentos sin duplicar el evento.
+No extender a esta cola los tres intentos de recordatorios como regla nueva sin acordarlo.
+
+### A.4. Contrato transaccional propuesto
+
+**Recurso estable aunque no haya citas.**
+Usar la fila existente de clinicas para la configuración/cuota; las filas globales de usuarios de todos los veterinarios afectados para exclusión de agenda; las de mascotas para exclusión del paciente.
+Una fila de cita vacía no es el recurso de serialización.
+No hace falta crear una tabla de candados por cada hueco.
+La serialización inicial es conservadora (por profesional, incluso entre días); optimizar por día se evaluaría después con pruebas, sin cambiar la garantía.
+
+**Orden único.**
+Comprobar acceso sin revelar datos y determinar los IDs afectados; abrir una transacción corta.
+Bloquear en este orden: clínicas involucradas por id ascendente → usuarios afectados (vets y, si se cambia titularidad, titular) por id ascendente → mascotas por id ascendente → bloques fechados por id → citas por id → solicitudes/evaluaciones/reasignaciones/ingresos por id → filas de avisos.
+Ninguna operación bloquea «primero la cita» y luego intenta conseguir un profesional.
+Si durante el cálculo aparece otro recurso no bloqueado, deshacer y recomenzar con el conjunto completo ordenado, sin ampliar candados en orden inverso.
+Los cambios de plan siguen bloqueando la clínica primero; registrar/reprogramar desde portal dejan de abrir envolturas con un orden distinto.
+Transaccion y sus savepoints se reutilizan, pero un savepoint no libera candados ni hace vigente una lectura anterior.
+
+Después de los candados, releer permisos, contexto de recurso, actividad, propietario/vínculos, tipo, horario, ocupación, tope y revisión con lecturas actuales de MySQL.
+No usar una instantánea consistente abierta antes de esperar al candado bajo REPEATABLE READ.
+La implementación puede usar lecturas de bloqueo actuales y proyección mínima; no mezclar con consultas de snapshot anteriores.
+Mantener candados hasta commit/rollback; no esperar SMTP ni confirmaciones humanas.
+Evitar consultas con JOIN de contactos en el cálculo global.
+Un deadlock/timeout produce rollback completo y reintento técnico acotado del comando idempotente o respuesta de conflicto, nunca resultado parcial.
+
+**Excepciones globales encapsuladas (RNF-11).**
+DisponibilidadAgenda solo consulta internamente intervalos/estado de ocupación del mismo id_veterinario o id_mascota entre clínicas; para horario recurrente del vet, día y extremos.
+Todas las modificaciones y listados visibles siguen filtrados por clínica activa.
+El cliente recibe «No está disponible en ese horario» o «Choca con otro compromiso», nunca nombre de otra clínica, paciente, motivo, dueño o calendario ajeno.
+No ofrecer un endpoint público de ocupación global.
+Revalidar que el solicitante puede actuar sobre el vet/mascota antes de consultar esos intervalos.
+Una ausencia de otra clínica no se revela como tal; su alcance local/global requiere precisar la disponibilidad real en B si se pretende bloquear también compromisos fuera de la clínica que la registra.
+
+| Operación | Unidad atómica y revalidación |
+|---|---|
+| Reserva ordinaria | Calcular triage antes de cuota; revisión cuando proceda; bloquear clínica/vet/mascota/bloque; releer datos y buscar intervalo completo; consumir cuotas de mascota y cita solo una vez; vincular mascota si procede, guardar cita/episodios/instantánea, auditoría y evento de notificación juntos. Si falla, no deja vínculo nuevo ni cuota consumida. Rojo no atraviesa la comprobación de cuota de mascotas ni de citas. |
+| Hueco ocupado entre sugerencia y POST | Bajo los mismos candados, amarillo busca primer intervalo siguiente y naranja reevalúa bloque/tope; verde devuelve alternativas para elección, sin confirmar otra hora unilateralmente. El resultado nuevo queda revisable por el actor. |
+| Reprogramación interna/portal | Mantener la reserva original hasta confirmar la nueva; bloquear origen y destino, excluir solo la cita propia; revalidar estado abierto, duración/margen, bloque y mascota, más cuota mensual destino si cambia mes sin contar dos veces la misma cita. Actualizar una sola fila y sus marcas/eventos/auditoría. Si no cabe, rollback deja la cita original intacta. |
+| Cupo naranja | Bajo clínica+vet+bloque contar naranjas vigentes, comparar clinicas.tope_sobrecupos y asignar orden estable. Dos conexiones compitiendo por el último cupo: solo una lo consume. Reordenación exige vet autorizado y motivo, conserva fecha de registro e historia del orden. |
+| Horario, cierre o aprobación de propuesta | Bloquear clínica y todos los vets/mascotas/citas afectados con orden global; validar intersecciones y choques del vet entre clínicas; guardar configuración y marcas de reajuste en la misma operación. Invalidar ofertas anteriores. No mover horas pactadas para esconder el conflicto. Una reserva concurrente se hace íntegramente antes o después del cambio. Restaurar horarios también usa este contrato. |
+| Ausencia/cobertura | Solicitud pendiente no cambia disponibilidad en la propuesta de A.8; al aprobar/registrar, bloquear origen y candidatos antes de confirmar ausencia. Asignar cobertura sin veto por cada cita compatible, o dejar marca pendiente de reprogramar con evento para propietario. Una cobertura parcial no hace perder las otras citas; cada resultado se registra y puede retomarse idempotentemente. Ausencia y marcas de todas las afectadas se guardan juntas aunque la búsqueda se procese después. |
+| Aceptación o vencimiento de reasignación | Bloquear clínica, ambos profesionales, mascota, bloque, cita y propuesta; comprobar pendiente, destinatario, reloj < fecha_limite, versión y disponibilidad actual. Aceptar mueve y cierra propuesta conjuntamente; si perdió hueco, no mueve la cita y continúa siguiente candidato. El cron usa el mismo cambio condicional; aceptación y vencimiento concurrentes tienen un solo ganador. Candidatos intentados se conservan para no recorrer infinitamente los mismos. |
+| Inicio, pausa, reanudación y finalización | Mismo protocolo de capacidad; llegada presencial verificada antes de pausar; compare-and-set del estado esperado, una sola atención activa del vet. Guardar pausa, urgencia y marca de cascada juntas. Consulta solo completa cita reanudada/en_curso o sin_cerrar según contrato; no completa una pausada. La numeración HC actual toma GET_LOCK antes de su transacción: C7 debe integrar ese orden (candado HC antes de cualquier candado de filas en todos sus llamadores, o sustituirlo uniformemente por serialización de clínica), nunca adquirirlo tarde desde una transacción que ya tenga filas bloqueadas. |
+| Cascada/conciliación de estimaciones | Bloquear conjunto de agenda afectado y versión, recalcular desde compromisos/segmentos actuales, escribir estimaciones/marcas/eventos juntos y limpiar trabajo solo si sigue la misma versión. Otro cambio durante el proceso deja trabajo pendiente; repetir no suma el retraso dos veces ni duplica aviso. |
+| Conciliación de identidad | Ver A.5: bloquear clínica, usuarios verificados, fichas provisional/final ordenadas, actos/citas y el ingreso; releer titularidad, referencias y estado. Completar o consolidar todo con auditoría, o rollback de todo. Dos operadores conciliando el mismo ingreso no pueden duplicar el traslado. |
+
+**Idempotencia y recuperación.**
+Los POST de reserva/llegada/derivación llevan una clave opaca de operación ligada a clínica+actor+tipo de comando; mismo comando repetido devuelve el mismo resultado y otra carga con la misma clave se rechaza.
+Se propone un registro mínimo operaciones_agenda con clave única, huella de entrada, actor, clínica, tipo y referencia de resultado, escrito dentro de la transacción.
+No reutilizar CSRF como clave ni conservar datos clínicos/contactos en esa huella legible.
+El índice de citas sigue como defensa adicional; no abrir huecos en la restricción para solucionar una falla del algoritmo.
+Las tareas reclaman trabajo de forma condicional y recuperable; un proceso muerto no deja una cita eternamente «en proceso».
+La reclamación técnica y recuperación no introducen un plazo clínico nuevo; el mecanismo exacto se verifica en B/C5.
+
+### A.5. Integración con M2, rojo y conciliación
+
+Reutilizar exactamente MotorTriage::calcular, BuscadorSintomas::buscar, ValidadorTriage::episodios, ValidadorContextoClinico y el contexto de PacienteDiagnostico.
+El buscador de ZookiSintomas se comparte con un adaptador para episodios: la consulta actual envía códigos y no conserva tiempos.
+Agendar necesita además tiempo por síntoma/exposición (conocido y minutos, no_se o no_aplica solo preventivo), sustancias/fármacos confirmados y contexto permitido.
+No inferir sustancias desde nota ni duplicar en JS las reglas P1–P8.
+Las exposiciones no se fuerzan a cita_sintomas como si fueran síntomas: conservarlas en el contexto estructurado y validar su tipo con ValidadorTriage.
+El guardado vuelve a calcular en servidor con datos vigentes, código/ID de nodo, contexto, fecha de evaluación y hash de conocimiento; un color enviado desde el cliente se ignora.
+Las marcas de cita van a cita_sintomas.detalles con sus tiempos; sintomas_texto es solo nota del personal; inicio_sintomas legado no sustituye varios eventos.
+No copiar medicación protegida al JSON de la cita, al evento ni al propietario.
+
+**Revisión humana previa.**
+Evaluación con revision_inmediata (T-20) no devuelve una oferta reservable.
+Devuelve un estado pendiente y aviso al personal autorizado, sin prometer tiempo de respuesta ni asignar espacio.
+Propuesta conservadora: todo caso con revision requiere liberación veterinaria antes de reservar; T-22 y T-16 conservan amarillo provisional y revisión, sin escalarlos automáticamente.
+La extensión de esa puerta a toda revisión, más allá del mínimo obligatorio T-20, se somete al usuario en A.8.
+Un vet puede aprobar el nivel calculado o ajustarlo con motivo; guardar autor, fecha, calculado/ajustado y datos revisados.
+La resolución se liga a la huella de marcas/tiempos/contexto y versión; si cambian antes de reservar, se invalida y se revisa nuevamente.
+No vale una autorización enviada por el propietario ni una bandera «revisado» de JS.
+La revalidación de la misma evaluación no es HU-4.17: no habilita edición de síntomas de citas pendientes por el propietario en esta versión.
+
+**Aislamiento.**
+T-11 conserva contagio incluso si otra marca eleva a rojo.
+Al confirmar evaluación/derivación, generar aviso operativo para la clínica elegida y su personal, independiente del correo de confirmación y del color final.
+No esperar a que haya hueco o cupo para preparar aislamiento.
+No incluir ese aviso ni contactos en otra clínica; duplicar POST no duplica ingreso ni aislamiento.
+
+**Máquina de estados de rojo propuesta, sin acreditar presencia remota.**
+
+1. Evaluación remota roja: guardar derivación con propietario de sesión y mascota propia; notificar y mostrar urgencia. No crear reserva ordinaria, asignar capacidad, pausar una cita, sellar llegada ni iniciar consulta. Repetir el cálculo sin confirmar un comando no crea múltiples derivaciones.
+2. Clínica cerrada: informar cierre con horario y cierres puntuales, teléfono de urgencias si existe y recomendación de servicio 24 horas. Conservar el aviso; no prometer atención ni bloquear un ingreso físico efectivamente atendido por el personal.
+3. Llegada física: solo personal clínico con contexto legítimo acredita fecha_hora_llegada y enlaza la derivación cuando existe. No pedir verificación adicional al propietario ya autenticado por el mero cálculo; comprobar nuevamente que la mascota sigue siendo suya en cada comando. Una llegada sin derivación crea el caso presencial, sin duplicar el existente.
+4. Identidad conocida: reutilizar ficha/cuenta y vínculo legítimo; si no se acredita la relación sin retrasar atención, crear ficha provisional de clínica, propietario NULL, ficha_por_completar=1 y carnet inactivo, más ingresos_emergencia. Acompañante es contacto eventual, nunca titular por defecto.
+5. Capacidad presencial: libre compatible → asignar; si todos ocupados, solo tipo pausable → pausar y asignar; si ninguno, cola roja presencial sin veterinario hasta que exista capacidad. Orden propuesto entre rojos presentes: llegada física e ID, con decisión clínica motivada; confirmar en A.8. No «asignar» anticipadamente al primero que posiblemente termine.
+6. Al asignar, crear/enlazar la cita roja con el vet real, origen y llegada, antes de atención clínica; estado en_curso y sellos solo al iniciar realmente. Excepción roja a límites también en el vínculo de mascota/ficha provisional; auditar la excepción.
+7. Cierre de urgencia con consulta → reanudar la cita interrumpida antes de las siguientes; no completar dos citas con una consulta ni reiniciar hora_inicio_real de la pausada. Cada paso marca el trabajo de cascada para procesarse sin navegador.
+
+La cola de A.6 conserva la espera sin volver nulo citas.id_veterinario.
+Una mascota aún no identificable se liga a la ficha provisional, no a un ID ficticio de usuario.
+No reutilizar ingresos_emergencia para todos los rojos: su definición normativa es solo el ingreso provisional; el enlace común de derivación/llegada/espera debe ser independiente.
+
+**Cuatro ramas de identidad y conciliación.**
+
+- Portal autenticado con mascota seleccionada: mismos IDs, sin provisional ni cuenta nueva; al llegar enlaza su derivación.
+- Presencial con cuenta/ficha y titularidad verificadas: mismos IDs; no crear ingreso provisional.
+- Cuenta existente pero relación no verificada: ficha provisional, sin asignar esa cuenta como propietaria hasta verificación.
+- Sin cuenta: ficha provisional y contacto opcional; una eventual cuenta se crea por el proceso vigente de consentimiento/activación, nunca automáticamente por atender.
+
+Completar ficha nueva conserva id_mascota y registra id_mascota_final igual a la provisional; consolidar sobre existente conserva ambos IDs en ingresos_emergencia y desactiva la provisional.
+Enumerar y trasladar referencias de citas, consultas, vacunas, desparasitaciones y alertas; revisar también mascota_clinica, mascota_colores, carnet_escaneos y auditoria_mascotas.
+Los tratamientos, archivos y consulta_sintomas siguen su id_consulta; cita_sintomas y reasignaciones siguen id_cita y no deben perderse.
+Conservar clínica, autor, fechas, números de historia y documentos clínicos; si ambas fichas ya tienen HC en la misma clínica, no sobreescribir una con otra: conservar su alias/procedencia en la evidencia de consolidación.
+En mascota_clinica, unir sin degradar vínculos ni permisos; titularidad final verificada y autorización de historia permanecen explícitas.
+No reasignar indiscriminadamente la auditoría antigua ni reactivar el token público de la provisional.
+Un ingreso provisional de otra clínica no puede consolidarse desde esta: devolver 403; una inconsistencia interclínica se deriva a resolución autorizada, sin apropiarse de sus actos.
+Si existe cualquier conflicto de vínculo/HC/referencias no cubierto por el contrato revisado, rollback y tarea pendiente; nunca borrar el acto conflictivo para completar.
+La prueba debe fallar tras mover consultas y antes de finalizar para demostrar que también vuelven atrás citas, vínculos, ingreso y auditoría.
+
+### A.6. Persistencia faltante y transición propuesta
+
+**Contraste real, no implementación inferida.**
+01_schema.sql, MER y drawDB ya describen tipos con duración/margen/pausable; horario vet; propuestas; ausencias por DATETIME; prioridad calculada/ajustada y motivo; cita_sintomas y detalles; contexto_triage; sobrecupo/orden; llegada y horas reales; estado pausada; reasignación con plazo e ingresos provisionales con acompañante opcional.
+La migración 07 aporta detalles/contexto del conocimiento ya publicado.
+El MER es conceptual: omite columnas físicas como hora_fin y algunos índices; drawDB representa ocupa_horario como columna convencional comentada, mientras el ejecutable la calcula.
+Esa diferencia de representación debe seguir documentada, no convertir la columna calculada en dato editable.
+No se detecta una solución operativa ya presente para los estados faltantes siguientes en ninguno de los tres contratos.
+
+| Necesidad demostrada | Propuesta de campos/relaciones e índices, pendiente de B |
+|---|---|
+| Cierre puntual de clínica | Nueva cierres_clinica: id_cierre, id_clinica FK, inicio/fin DATETIME, motivo, activo, autor y fechas. Índice (id_clinica, activo, inicio, fin); validar fin > inicio. Un cierre local no modifica recurrencia. |
+| Solicitud de ausencia y su resolución | Ampliar ausencias_veterinario con estado (solicitada/aprobada/rechazada/anulada), id_solicitante/id_revisor FK usuarios, fechas de solicitud/revisión y motivo_resolucion. Índice (id_clinica, estado, fecha_hora_inicio); índice global del vet y rango para cálculo interno. Reutiliza rango/id_cobertura existentes; no duplicar tabla de solicitudes si esta extensión cubre el flujo. Solo aprobadas restan disponibilidad. |
+| Revisión humana antes de tener cita | Nueva evaluaciones_agenda: id_evaluacion, clínica/mascota/actor FK, fecha, contexto estructurado/episodios y versión/huella del cálculo, nivel_calculado, revision, revision_inmediata, contagio, estado_revision, id_revisor, fecha_revision, nivel_aprobado/motivo, cita resultante nullable. Para la propuesta de espera no urgente de A.8, origen remoto/presencial, fecha_llegada y estado_solicitud (en_evaluacion/en_espera/sin_hueco/convertida/retirada) separado de la resolución clínica; no se inicia consulta mientras falte cita. Índices por clínica+estado+fecha y por mascota; FK cita, con unicidad para impedir consumir dos veces la misma evaluación. Sin fecha límite clínica inventada: vigencia por datos/versiones. No guardar secretos ni medicación protegida. |
+| Bloque y cupo naranja | Nueva bloques_agenda con id_bloque, id_clinica/id_veterinario FK, fecha e inicio/fin originales y versión/estado de disponibilidad. Identidad única por clínica/vet/fecha/origen de franja; citas.id_bloque FK nullable para históricos, índice (id_bloque, es_sobrecupo, estado, fecha_registro, id_cita). Mantener es_sobrecupo exclusivamente como contador naranja, no como bandera de toda llegada. Cambiar horario no borra bloques usados ni reinicia cupos. |
+| Origen, estimaciones y reajuste pendiente | Ampliar citas: origen (reserva/llegada_sin_reserva/urgencia; legado al migrar), inicio_estimado/fin_estimado DATETIME, estado_reajuste (ninguno/pendiente_calculo/pendiente_revision/pendiente_reasignacion/pendiente_reprogramacion), motivo_reajuste, version_agenda y fecha_ultimo_calculo. Índice (id_clinica, estado_reajuste, fecha); ocupación por vet/mascota+estimación con índices según consultas de C3. Las marcas no sustituyen estado clínico. |
+| Derivación y cola roja sin vet | Nueva urgencias_agenda: id_urgencia, id_clinica/id_mascota FK, id_evaluacion nullable, id_ingreso nullable, id_cita nullable único, origen, estado (derivada/presente_en_espera/asignada/en_atencion/finalizada/derivada_a_otro_servicio), fecha_derivacion/llegada/asignacion/fin, orden/motivo de decisión. Índice (id_clinica, estado, fecha_llegada, id_urgencia); evaluación/operación únicas evitan duplicados. No usar esa cola para pacientes remotos ausentes. Su decisión clínica y transición deben auditarse. |
+| Reasignación recuperable | Ampliar reasignaciones con id_clinica (rellenada desde cita y validada), inicio/fin propuestos, version_cita, motivo y ciclo de búsqueda. Índices clínica+estado+fecha_limite y cita+ciclo; unicidad condicional de una pendiente por cita mediante columna calculada compatible MySQL/MariaDB. Conservar intentos rechazados/vencidos y candidato de cada uno; no borrar historia para volver a proponer. |
+| Pausas/reanudaciones múltiples | Nueva pausas_cita: id_pausa, id_cita FK, id_urgencia FK, inicio/fin DATETIME nullable hasta reanudación, autor, motivo y duración activa restante al pausar. Índice cita+inicio; unicidad condicional de pausa abierta por cita. No basta con dos columnas en citas para varias interrupciones. El estado/tipo de la cita sigue siendo la autorización de pausa. |
+| Control de comunicación durable | Reutilizar notificaciones para historial de envío y notificaciones_internas para destinatarios; nueva eventos_agenda para trabajo pendiente con clínica/cita o urgencia/evaluación, clave de evento única, tipo, destinatario autorizado, versión/estimación a comunicar, estado, reclamación e intentos/error/fechas. Índice por estado+fecha, clínica+recurso; sin copiar contacto provisional a payload ni a logs. En citas agregar ultima_hora_comunicada y ultimo_aviso_estimacion para RN-429, actualizados con resultado coherente del evento. No confundir aviso_atencion_abierta RN-409 con esta ventana. |
+| Doble envío de comandos | Nueva operaciones_agenda mínima de A.4, UNIQUE(clínica, actor, tipo, clave_operacion). Huella opaca y referencia al resultado; insertar junto al negocio, sin usar auditoría como tabla de exclusión. No es una nueva bitácora de correos M8. |
+| Conciliación/contacto provisional | Reutilizar ingresos_emergencia, sin pedir documento_acompanante; agregar fecha_conciliacion, id_conciliador, evidencia de mapa provisional→final y HC previas, contacto_anonimizado_en y causa de conservación excepcional si se aprueba. Índice clínica+estado+fecha_ingreso ya previsto. Nombres/teléfonos usan validadores existentes, límite servidor/HTML y acceso protegido; nunca se enlazan por similitud a una cuenta. |
+
+Cada nueva tabla de negocio lleva clínica, FK sin borrado clínico en cascada y validación de pertenencia en modelo.
+Para las tablas ligadas a cita/evaluación, comprobar que ambas referencias son de la misma clínica; una FK simple no acredita esa coherencia.
+Las restricciones de una sola pausa/propuesta activa necesitan prueba MySQL real, no asumir que SQLite reproduce columnas calculadas.
+No agregar tablas para aristas del grafo, nuevas edades, afinidad ni catálogo de reglas clínicas.
+La lista es una propuesta mínima por necesidad; la revisión puede reducirla fusionando estados con la misma semántica, sin perder recuperación ni trazabilidad.
+
+**Transición v2, sin inferir historia.**
+
+1. B prepara la siguiente migración libre, propuesta 08_agenda_contratos.sql, solo después de revisar contratos y decisiones. En A no existe ese SQL. No editar 03–07.
+2. Ampliaciones aditivas, campos nullable donde el dato histórico sea desconocido y creación repetible de tablas/índices. Sin cambios destructivos ni activación de rutas a medias.
+3. Duración histórica: conservar la ya guardada; si falta y hora_fin es válida, inferir solo su diferencia positiva sin cruce ambiguo; si no se demuestra, marcar pendiente de revisión. No copiar la duración actual de un tipo como si se conociera la antigua. El fallback técnico actual 30 no es evidencia de duración histórica. Margen 0 existente se conserva, no se sustituye por 10 automáticamente.
+4. No inventar prioridad_calculada, síntomas, tiempos, llegada, pausas o presencia para citas antiguas; origen=legado hasta clasificación demostrable. Una consulta histórica id_cita NULL sigue con su etiqueta «Sin cita». El nuevo origen distinguirá llegadas sin reserva aunque sí tengan cita.
+5. Proponer inicializar estimaciones de futuras ordinarias desde fecha/hora/duración solo cuando sean válidas, con fuente migrada; conflictos quedan marcados. Completadas y horas reales no se recolocan.
+6. No crear jornadas de vet copiando las de clínica automáticamente; hasta configuración expresa, no hay disponibilidad nueva. Publicar diagnóstico de citas futuras afectadas, sin borrarlas ni alterar el compromiso.
+7. Ausencias preexistentes representan bloqueos efectivos: rellenar estado=aprobada sin inventar aprobador; conservar ausencia y cobertura originales. Nuevos campos de autor se permiten desconocidos en legado.
+8. Sin bloques históricos demostrables para un sobrecupo, dejar pendiente de revisión; no asignarlo a un bloque nuevo que le regale cupo. No poblar revisiones humanas retrospectivas.
+9. Sincronizar 01_schema.sql, MER, drawDB y, solo si procede, inserciones faltantes de 02_semilla.sql con la migración equivalente para bases existentes. Probar instalación nueva y actualización de alpha.4 dos veces; no sobrescribir personalizaciones.
+10. Despliegue aplica migración por scripts/migrar.php, sin pedir SQL manual en producción; compatibilidad del código anterior se comprueba antes de prometer rollback. Esta A no migra ni cambia servicios.
+
+### A.7. Cobertura existente y trazabilidad individual
+
+**Alias de cobertura existente (archivos reales):**
+
+- CT = tests/Integration/CitaTest.php: registro, instantáneas, aislamiento, mascota/vet activos, solape secuencial, simulación del índice único, reprogramación y catálogos.
+- AP = tests/Integration/AgendaPeticionesTest.php: peticiones por contexto, vet propio, fechas pasadas, horario inicial, calendario, reprogramación admin/arrastre e inicio asignado.
+- CE = tests/Integration/CitaEstadoTest.php y tests/Unit/ReglaAtencionTest.php: transiciones, inicio real único, ventana de 15 minutos, aviso de 10 minutos, sin_cerrar y acción derogada.
+- PA = tests/Integration/PortalAgendaTest.php: clínica vinculada, mascota propia, alta de vínculo con rollback, catálogos, límites y mensaje neutral.
+- CC = tests/Integration/ConfiguracionClinicaTest.php y tests/Unit/HorarioAtencionTest.php: semana/bloques, aislamiento, guardado válido, restauración, cierres recurrentes y extremos de apertura.
+- CH = tests/Integration/ConsultaHistorialTest.php, ConsultaSintomasTest.php y ConsultaTratamientoTest.php: consulta normal/sin cita, HC única, consulta asignada, atómico con tratamientos/archivos y rollback.
+- TR = tests/Integration/TriageTest.php, tests/Unit/MotorTriageTest.php y BuscadorSintomasTest.php, tests/Fixtures/triage.php: validación/roles, cálculo y 26 casos T.
+- LP = tests/Integration/LimitePlanTest.php: cupos de mascota/cita, mora, rojo evaluado, mensaje neutral y rollback de vínculo.
+- NA = tests/Integration/NotificacionAccesoTest.php, pruebas existentes de recordatorios y correo: destinatario/rol/clínica, lectura/vencimiento e intentos de recordatorios. No prueban la futura entrega durable de eventos de agenda.
+- MY = tests/Integration/BaseV2MysqlTest.php: testC5AgendaEnElEsquemaReal, testC6PortalEnElEsquemaReal, testConfiguracionDeDosClinicasEnElEsquemaReal, testC8CronRealConCorreoSimuladoYDosClinicas y testLaDobleReservaSeRechazaSalvoSiLaCitaEstaLibreOEsSobrecupo. No hay aquí prueba concurrente de intervalos de distinto comienzo en dos conexiones.
+- JS = tests/Frontend/M5C2Portal.test.cjs, M5C2bPortal.test.cjs, M5C3Personal.test.cjs, M5C4aPortal.test.cjs, M2C5aConsulta.test.cjs, M2C5bTratamientos.test.cjs, M2C7Pulido.test.cjs, M2C8Rediseno.test.cjs, M2C81Celular.test.cjs y M2C82Historial.test.cjs; preservar formulario, síntomas, contactos, alertas, historial y diseño. No hay suite específica actual del motor Grafo II.
+- Acceso = tests/Unit/AutorizacionRolTest.php y pruebas de contexto/aislamiento vigentes; testCadaRolConservaSusAccionesHabituales acepta hoy creación del admin y deberá actualizarse con la decisión confirmada.
+
+La evidencia existente protege lo indicado, no cierra las brechas nuevas.
+Una prueba SQLite o la simulación de CT no demuestra serialización InnoDB.
+La suite existente en verde no significa que los RE pendientes de M4 estén implementados.
+
+**Casos propuestos, todavía sin escribir ni ejecutar:**
+
+| Caso | Preparación y resultado comprobable |
+|---|---|
+| P01 Acceso/contexto | Ana Norte admin no crea por POST ni entrada residual de Pacientes; conserva supervisión, reprogramación y configuración. Beto Norte vet y Fabio propietario crean solo dentro de su alcance. Diego Sur y Gina plataforma reciben 403 auditado ante IDs de Norte; cambiar contexto de una cuenta multirol no conserva facultades del anterior. CSRF ausente/inválido no escribe. |
+| P02 Intervalos completos | Clínica 08–12/14–18, vet 09–11: duración30+margen10; 10:20 cabe, 10:21 no; ausencia [10,11) bloquea cruce y permite 11:00 cuando exista franja siguiente; cierre único no cierra otra semana; sin horario no hay espacios. Sugerir y guardar producen el mismo resultado por mascota/tipo y rechazan parámetros adulterados. |
+| P03 Dos conexiones reales | Barrera entre validar y guardar: conexiones independientes A/B, citas 09:00/09:15 de 30+10 para el mismo vet en Norte/Sur; solo una compatible confirma. Repetir con vets distintos y misma mascota global, mismo inicio, reprogramación y reserva, y hueco inicialmente vacío. Control: dos recursos independientes pueden confirmar. Releer después de esperar; rollback del ganador permite al segundo reevaluar. |
+| P04 Horario/propuestas | Vet guarda directo:403; propone solo lo suyo en Norte; admin Sur no resuelve; aprobar/rechazar motivado en Norte; conflicto recurrente entre clínicas responde genérico. Editar/restaurar/cerrar mientras otra conexión reserva produce antes/después completo y marcas de citas afectadas, nunca una reserva oculta fuera de disponibilidad. |
+| P05 Cuatro ramas/cuota | T rojos derivan antes de límites incluso en mora y con cupo de mascotas agotado; naranja consume bloque, amarillo primer espacio, verde elige. Nivel enviado por cliente no manda. Portal al límite recibe mensaje neutral y no deja vínculo nuevo; interno recibe motivo del plan. O-01/02/03/10. |
+| P06 Revisión y aislamiento | T-20 sin oferta/POST reservable hasta resolución vet; T-22/T-16 según puerta aprobada. Propietario no se autoriza a sí mismo; cambio de marca, contexto, conocimiento o titularidad invalida resolución anterior. T-11 avisa aislamiento a Norte incluso si no hay cupo; agregar P1 conserva contagio con rojo. Sur no recibe aviso. |
+| P07 Naranja/tope/orden | Tope=2: dos naranjas en bloque, tercero sin inserción y con aviso; dos conexiones por último cupo dejan uno. Empate fecha_registro ordena por id_cita; cambio sin motivo falla. Editar o partir bloque por ausencia no regala dos cupos extra. O-04/05. |
+| P08 Reprogramación/cancelación | Fabio cancela/reprograma futura propia; mascota ajena, clínica desvinculada o estado ya cambiado:403/conflicto sin fuga. Intervalo completo y mes destino revalidan cuota; fracaso conserva cita original, instantáneas y vínculo. Auditoría+evento en commit; cancelar/no_asistio liberan espacio según regla. |
+| P09 Tiempo/cascada | Ejemplos A.3 con reloj fijo: margen−1, margen exacto, margen+1; hueco absorbente; franja exacta; exceso detectado durante atención sin calendario. Repetir cálculo no suma delta. Completadas y pactadas/horas reales intactas. Conflicto externo del mismo vet/mascota devuelve solo indisponibilidad. |
+| P10 Vencimientos | Destino correcto acepta antes del límite; otro vet/admin/Sur:403. Exactamente al límite vence; rechazo/no respuesta pasan siguiente candidato y sin ninguno dejan reprogramación pendiente. Dos conexiones aceptan/expiran o toman hueco: una transición, ningún traslado incompatible, sin dos pendientes activas. |
+| P11 Avisos/correos | Correo/evento sin JS posterior; motivo/dirección/marca de su clínica; SMTP falla y reserva queda confirmada con fallo registrado; doble worker/POST no duplica evento. Diez recálculos de +3: umbral exacto no avisa, >15 sí con ventana >=30; máximo dos en hora, cambios de vet/reprogramación siempre. Sin correo/vínculo válido o cuenta pendiente no emitir automático. |
+| P12 Ausencia/cobertura | Ausencia parcial y de día completo con extremos exactos; solicitud vet según decisión aprobada; registro/aprobación concurrente con reserva. Destino compatible recibe cobertura sin veto; sin cobertura cita pendiente y propuestas al propietario; avisos a ambos vets y propietario, auditoría y aislamiento. |
+| P13 Presencia/urgencia | Rojo remoto a las 23:00 informa cierre/teléfono/24h, no pausa ni sella llegada. Presencial enlaza una única derivación; libre→pausable→espera sin vet. Todos no pausables: cero pausas, espera roja durable y estimación honesta. Quiebre de cuota/mora no bloquea el caso ni la ficha; O-01/02/09/10. |
+| P14 Pausas | Cirugía no pausable nunca se interrumpe; vacunación pausable conserva inicio real, una pausa abierta y segmentos; vuelve antes de la siguiente tras cerrar rojo. Doble llegada/cierre/reanudación no duplica. Consulta sobre pausada se rechaza sin escribir; fallo de auditoría revierte pausa/cita/urgencia/marcas. |
+| P15 Identidad/conciliación | Cuatro ramas A.5, contacto vacío permitido; acompañante no se convierte en propietario/cuenta. Completar conserva ID; consolidar mueve todas las referencias enumeradas, conserva clínica/vet/HC/archivos y desactiva provisional/carnet. Titularidad falsa o ingreso Sur:403; dos conciliadores, choque HC y fallo a mitad producen rollback total, sin pérdida clínica ni reactivación de QR. |
+| P16 Ajuste de nivel | Solo vet autorizado, motivo requerido, calculado intacto y ajustado separado con autor/fecha; bajar rojo a verde permitido con motivo (O-07), subir deriva/reubica y notifica. Repeticiones visibles solo en alcance aprobado, sin puntaje punitivo ni datos de Sur. O-08. |
+| P17 Llegada/tolerancia | Llegadas con tolerancia 10 a 8, 10, 10min+1seg y 15 minutos; suficiencia/insuficiencia de tiempo, opciones y decisión del vet, auditoría y cascada. Hora futura no_asistio rechazada; al marcar no asistió se vuelve a sugerir el espacio válido. |
+| P18 Atención sin reserva | Desde Consultas y Pacientes, nueva atención crea una sola cita con origen y enlaza consulta; doble envío devuelve misma. Sin hueco aplica solo capacidad/orden aprobados; no convertir verde en naranja ni crear consulta huérfana. Históricos NULL siguen legibles como Sin cita. |
+| P19 Marca/tipos | Norte y Sur con nombre/logo/contactos/tipos diferentes; admin ajeno no escribe, duración/margen/pausable y teléfonos validados servidor/en vivo; tipo desactivado no se usa para nueva reserva. Cambiar tipo no reescribe instantáneas anteriores. Marca por clínica en salidas acordadas, sin atribuir una sola clínica al historial global. |
+| P20 Esquema/transición | Instalación nueva y actualización alpha.4 con datos, repetir migración; faltantes quedan pendientes sin inventar triage/horarios. FK/índices/columna calculada coherentes en MySQL/MariaDB; rollback y rechazo de referencias de clínicas distintas. No reiniciar base ni alterar 03–07. |
+| P21 Regresión clínica | Mantener pruebas CE/CH/M2: inicio asignado/ventana, cierre atómico solo con consulta, continuar sin_cerrar, alerta única RN-409 y cron sin calendario; no reaparece cerrar sin consulta; peso desconocido, alergias RN-113, adjuntos y medicación protegida sin regresión. |
+| P22 JS compartido | Reserva en calendario, Pacientes y portal usa mismo contrato: tiempos/exposiciones, nota sola, clínica/mascota cambiada, respuestas fuera de orden, revisión y doble envío. Arrastre/reprogramación servidor falla: restaura presentación y muestra error junto al campo. Conserva diseño y cortes RNF-16; verificación visual se describe en C/D, no se ejecuta en A. |
+| P23 Contacto/retención | Con política aprobada, conciliación anonimiza contacto cuando procede sin eliminar actos ni autor; custodia excepcional con motivo visible solo a personal autorizado; sin exportar contacto, copiarlo a usuario ni ponerlo en auditoría/notificaciones. Solicitud de supresión conserva referencias y conserva solo lo justificado por el procedimiento vigente. |
+
+**Trazabilidad por RE incluido.**
+Las filas distinguen estado actual, brecha, responsable de implementación y evidencia concreta existente o propuesta.
+Todas las P son futuras; A solo verifica el inventario.
+Son 107 RE únicos: 101 de dominio (incluido RE-4.3.8 derogado para proteger su retirada) y seis transversales de acceso/aislamiento.
+
+| RE | Comportamiento actual y brecha | Subetapa | Prueba existente → propuesta |
+|---|---|---|---|
+| RE-7.4.1 | Datos iniciales de clínica, sin editor de marca/teléfono urgencias operativo. | C1/C4a | CC parcial → P19/P13. |
+| RE-7.4.2 | Catálogo aislado con duración/margen, sin gestión completa. | C1 | CT/CC lectura y copia → P19. |
+| RE-7.4.3 | Margen guardado, no resta disponibilidad. | C1/C3 | CT instantánea → P02/P09. |
+| RE-7.4.4 | Cabeceras/correos globales; procedencia clínica en registros, no marca completa. Aclarar salida global. | B/C1/F | JS/M2 imprimible parcial → P19/P11. |
+| RE-7.4.5 | Lecturas aisladas y copia inicial; falta auditar edición nueva de marca/tipos. | C1 | CC/CT → P01/P19. |
+| RE-7.4.6 | Campo pausable con default, sin formulario ni ejecución de pausa. | C1/C7a | Esquema solamente → P19/P14. |
+| RE-4.11.1 | Tabla de horario vet sin escritura operativa. | C2 | CC solo clínica → P04. |
+| RE-4.11.2 | No valida franjas recurrentes del vet ni choque entre clínicas. | C2 | Sin cobertura específica → P04/P03. |
+| RE-4.11.3 | Sugerencias no leen franjas del vet. | C3 | CT parcial → P02. |
+| RE-4.11.4 | No marca citas al cambiar horario. | C2/C5 | CC parcial → P04/P09. |
+| RE-4.11.5 | No existen propuestas/aprobación funcionales. | C2 | Acceso base → P01/P04. |
+| RE-4.12.1 | Ausencias en esquema, sin bloqueo operativo por rango. | C3/C6 | Sin cobertura específica → P02/P12. |
+| RE-4.12.2 | Rango DATETIME documentado, sin validación de entrada del flujo. | C6 | Sin cobertura específica → P12. |
+| RE-4.12.3 | Sin búsqueda/asignación de cobertura; no confundir reprogramación manual admin. | C6 | AP reasignación manual → P12. |
+| RE-4.12.4 | Sin estado/propuesta pendiente al propietario cuando falta cobertura. | C6 | Sin cobertura específica → P12/P08. |
+| RE-4.12.5 | Avisos básicos de citas, sin evento de cobertura a tres destinatarios. | C6 | NA parcial → P12/P11. |
+| RE-4.13.1 | Motor/API calculan; reserva siempre entra verde. | C4a | TR → P05/P22. |
+| RE-4.13.2 | LimitePlan exceptúa rojo evaluado, ruta normal no calcula primero. | C4a/C7a | LP → P05/P13. |
+| RE-4.13.3 | No hay cuatro ramas operativas. | C4a/C4b/C7a | TR solo cálculo → P05/P13/P07. |
+| RE-4.13.4 | Horario inicial de clínica + duración; falta intersección/margen/ausencias. | C3 | CT/CC parciales → P02. |
+| RE-4.13.5 | Candado de clínica e índice por comienzo, insuficientes entre clínicas. | C3/C4b | CT/MY simulación/índice → P03/P07. |
+| RE-4.13.6 | Guarda tipo/duración/margen/prioridad y audita alta; faltan episodios y entrega fiable. | C4a | CT/PA → P05/P06/P11. |
+| RE-4.13.7 | Tope/orden existen en datos, sin consumo de bloque. | C4b | Sin cobertura específica → P07. |
+| RE-2.11.1 | API valida episodios y nota sola; captura de Agendar no integrada. | C4a | TR/BuscadorSintomasTest → P22/P06. |
+| RE-2.11.2 | Máximo y P3 implementados; conservar al reservar. | C4a | MotorTriageTest T-04/T-18 → P05. |
+| RE-2.11.3 | Contexto/modificadores y tiempo calculados; falta guardar entrada de cita. | C4a | TR T-09/10, T-11/12, T-14/16 → P05/P06. |
+| RE-2.11.4 | P1 universal probado; falta derivación real. | C4a/C7a | TR T-21 → P13. |
+| RE-2.11.5 | Motor indica revisión; no hay puerta humana previa al horario. | C4a/C4b | TR T-20/T-22 → P06. |
+| RE-2.11.6 | Bandera de contagio sí; aviso de aislamiento no. | C4a | TR T-11 y rojo+contagio → P06/P11. |
+| RE-2.11.7 | Batería automatizada de 26 ya existe; conservar sin variar esperados. | Todas/D | MotorTriageTest::testBateriaConConocimientoReal → misma batería más P05/P06. |
+| RE-4.14.1 | No hay cálculo de absorción, solo vigilante de atención abierta. | C5a | CE no equivale → P09. |
+| RE-4.14.2 | Sin estimaciones persistidas ni procesador de cascada. | C5a | Sin cobertura específica → P09. |
+| RE-4.14.3 | Sin emparejamiento de cita fuera de franja. | C5a/C5b | AP solo reasignación manual → P09/P10. |
+| RE-4.14.4 | Tabla de propuestas sin aceptación del destino. | C5b | Sin cobertura específica → P10. |
+| RE-4.14.5 | No existe estado/reprogramación concertada por cascada. | C5b | NA/AP parciales → P10/P08/P11. |
+| RE-4.14.6 | Plazo en clínica/FK en esquema, sin vencimiento operativo. | C5b | Sin cobertura específica → P10. |
+| RE-4.14.7 | Sin acumulado/base comunicada ni ventana por cita. | C5b | NA no prueba RN-429 → P11. |
+| RE-4.15.1 | Motor devuelve rojo; no registra derivación/ingreso operativo. | C4a/C7a | TR → P13. |
+| RE-4.15.2 | Sin cola/asignación/pausa; FK vet obligatoria en cita. | C7a | Esquema no basta → P13/P14. |
+| RE-4.15.3 | Ficha provisional e ingreso en esquema; no cuatro ramas ni conciliación. | C7b | CH solo actos existentes → P15/P23. |
+| RE-4.15.4 | Consulta existente no integra urgencia ni provisional. | C7a/C7b | CH → P13/P15/P21. |
+| RE-4.15.5 | Sin cascada al ocupar emergencia. | C7a | Sin cobertura específica → P13/P09. |
+| RE-4.15.6 | Horario abierto/cerrado visible en portal, sin mensaje rojo/teléfono específico. | C4a | HorarioAtencionTest → P13. |
+| RE-4.15.7 | Excepción del modelo de cuota probada, falta atravesar ficha/vínculo/urgencia. | C4a/C7a/C7b | LP → P05/P13/P15. |
+| RE-4.15.8 | Estado/campo de pausa, sin transición/reanudación. | C7a | CE no cubre pausa → P14. |
+| RE-4.18.1 | Motivo/campos existen, falta acción autorizada. | C4b/C8 | Acceso/TR parcial → P16/P06. |
+| RE-4.18.2 | Prioridades separadas en esquema, sin historial operativo. | C4b/C8 | Sin cobertura específica → P16. |
+| RE-4.18.3 | No reubica ni avisa tras ajuste. | C8 | Sin cobertura específica → P16/P09/P11. |
+| RE-4.18.4 | No historial de reclasificaciones; destinatario ambiguo. | B/C8 | Sin cobertura específica → P16/P01 tras aclaración. |
+| RE-4.19.1 | hora_llegada existe, no se sella en ruta actual. | C8 | Sin cobertura específica → P17. |
+| RE-4.19.2 | Se puede iniciar tarde el mismo día, sin duración restante/tolerancia. | C8 | ReglaAtencionTest parcial → P17. |
+| RE-4.19.3 | no_asistio existe; no conjunto de tres opciones por tolerancia. | C8 | CE/AP parcial → P17. |
+| RE-4.19.4 | Sin cálculo ni auditoría de decisión de llegada. | C8 | Sin cobertura específica → P17/P09. |
+| RE-4.1.1 | Guarda campos básicos, interno/portal; falta triage compartido y restricción admin. | C3/C4a | CT/PA/AP → P01/P05. |
+| RE-4.1.2 | Solape secuencial de vet sí; margen/carrera interclínica pendientes. | C3 | CT/MY → P02/P03. |
+| RE-4.1.3 | Solo valida hora inicial de clínica. | C3 | AP/CC → P02. |
+| RE-4.1.4 | Correo mediante POST posterior de JS; no entrega asegurada por crear. | C4a | JS parcial → P11. |
+| RE-4.1.5 | Citas en calendario por clínica/vet, con eventos preventivos. | C4a/C5/D | AP → P22/P09/P21. |
+| RE-4.2.1 | Cancelar y reprogramar internas funcionan, portal solo cancela. | C4b | AP/CT/PA parcial → P08. |
+| RE-4.2.2 | Avisos internos y correo separado dependiente de cliente. | C4b | NA/JS parcial → P11/P08. |
+| RE-4.2.3 | Cancela conservando fila y estado. | C4b/D | CE/CT → P08/P21. |
+| RE-4.2.4 | Rechaza solape secuencial; falta margen y carrera. | C3/C4b | CT/AP → P03/P08. |
+| RE-4.3.1 | Cierre condicional de en_curso/sin_cerrar, no de pendientes. | C7a/D | CE → P14/P21. |
+| RE-4.3.2 | Consulta completa cita en su transacción; incorporar pausa/urgencia sin romperlo. | C7a | CH/CE/MY → P14/P21. |
+| RE-4.3.3 | Portal separa próximas/históricas; listarRango no filtra completadas por sí mismo. | C5/D | PresentacionPortalTest/AP parcial → P21/P22 con exclusión explícita de futura. |
+| RE-4.3.4 | Solo asignado, día, desde 15 minutos antes. | C7a/D | AP/CE/Acceso → P21. |
+| RE-4.3.5 | Continuar en_curso/sin_cerrar funciona; pausada requiere reanudar primero. | C7a | CE/AP → P14/P21. |
+| RE-4.3.6 | Vigilante sella y avisa una vez diez minutos tras fin. | C5/C7a/D | CE/MY cron → P21/P14. |
+| RE-4.3.7 | Pasa a sin_cerrar al día siguiente, no borra atención. | C7a/D | CE → P21 y pausa que cruza día. |
+| RE-4.3.8 | Derogado; la acción cerrar sin consulta ya no existe. | D | CE::testYaNoExisteCerrarSinConsulta → P21; no reintroducir. |
+| RE-4.3.9 | Cron cada cinco minutos y respaldo al cargar calendario. | C5/D | MY::testC8CronRealConCorreoSimuladoYDosClinicas → P21, conservarlo junto al nuevo procesador. |
+| RE-4.4.1 | Segunda petición de navegador, no evento de servidor tras commit. | C4a | JS parcial → P11 sin segunda petición. |
+| RE-4.4.2 | Cuerpo actual omite motivo y dirección aunque select los obtiene. | C4a | Inspección enviarCorreoCita → P11. |
+| RE-4.4.3 | Responde antes de SMTP; conservar vía cola tras commit. | C4a | ResponderYSeguir inspeccionado → P11 con transporte lento/fallido. |
+| RE-4.4.4 | Boolean/error_log, sin estado durable del fallo inmediato. | C4a | NA solo recordatorios → P11. |
+| RE-4.5.1 | Inicio/fin reales se sellan, falta conservar segmentos al pausar. | C5/C7a | CE/CH → P14/P21. |
+| RE-4.5.2 | Vigilante detecta abierta tras gracia, no exceso contra margen durante atención. | C5a | CE parcial → P09. |
+| RE-4.5.3 | No mueve estimaciones siguientes. | C5a | Sin cobertura específica → P09. |
+| RE-4.6.1 | Campo margen sin gestión completa. | C1 | CT/CC parcial → P19. |
+| RE-4.6.2 | Ocupación ignora margen. | C3 | CT detecta duración → P02/P09. |
+| RE-4.7.1 | Solo asignado marca abierta cuya hora pasó. | C8/D | CE/AP → P17/P21. |
+| RE-4.7.2 | Estado libera en consultas e índice. | C3/C8 | CE/CT → P17 y nueva sugerencia completa. |
+| RE-4.8.1 | Ausencias solo en tabla, sin flujo de bloqueo por fecha. | C3/C6 | Sin cobertura específica → P12/P02. |
+| RE-4.8.2 | Día semanal inactivo sí, cierre puntual no. | B/C2/C3 | CC parcial → P02/P04. |
+| RE-4.8.3 | Excluye bloques semanales apagados, no ausencia/cierre fechado. | C3 | CC → P02. |
+| RE-4.9.1 | Cliente cruza listas; servidor valida inicio separadamente. | C3 | CT/CC/AP parciales → P02/P22. |
+| RE-4.9.2 | Duración no se comprueba contra fin de franja de clínica/vet. | C3 | AP parcial → P02. |
+| RE-4.9.3 | Índice y candado clínico no resuelven intervalo global vacío. | C3 | CT/MY índice → P03. |
+| RE-5.3.1 | Selección de mascota propia y validación servidor. | C4a/D | PA::testNoAgendaParaUnaMascotaAjenaNiConUnVeterinarioDeOtraClinica → P01. |
+| RE-5.3.2 | Selección tipo/vet/fecha/hora; integrar ramas de triage. | C4a | PA/JS → P05/P22. |
+| RE-5.3.3 | Dinámica por intersección cliente de listas incompletas. | C3/C4a | PA/JS → P02/P03/P22. |
+| RE-5.3.4 | Alta auditada, correo separado de cliente. | C4a | PA/CT → P11. |
+| RE-5.3.5 | Vincula mascota y consume plan con rollback al fallar. | C4a | PA::testAgendarConLaMascotaSinVincularLaVincula/testSiLaReservaFallaLaMascotaNoQuedaVinculada → P05/P03. |
+| RE-5.6.1 | Propietario cancela abierta propia; falta exigir futura explícitamente en servidor. | C4b | AP cancelación propia → P08 con pasada/futura. |
+| RE-5.6.2 | Portal no tiene ruta de reprogramación propia. | C4b | Sin cobertura específica → P08/P22. |
+| RE-5.6.3 | Cancelación comprueba dueño/vínculo; extender a reprogramar. | C4b | AP/PA → P01/P08. |
+| RE-5.6.4 | Cancelar avisa a clínica; no audita cambio en CitaController; reprogramación portal falta. | C4b | NA/AP parcial → P08/P11. |
+| RE-2.2.1 | Atención sin cita crea consulta id_cita NULL; criterio debe cambiar por decisión. | B/C8b | CH::testCualquierVeterinarioDeLaClinicaRegistraSinCita → P18. |
+| RE-2.2.2 | Busca paciente y exige motivo/diagnóstico; conservar en nueva cita de llegada. | C8b | CH/JS consulta → P18/P21. |
+| RE-2.2.3 | HC se asigna una vez por mascota/clínica; conservar transacción/candado. | C8b/C7b | CH numeración y MY::testC4ElNumeroDeHistoriaSeAsignaBajoCandadoSinRepetirse → P15/P18. |
+| RE-2.2.4 | Etiqueta Sin cita depende de NULL; nuevas llegadas requieren origen persistido. | B/C8b | CH/JS listados → P18, históricos y nuevos diferenciados. |
+| RE-T.10.1 | Matriz previa y cierre por defecto; cambiar creación admin y enumerar rutas nuevas. | C2–C8/D | Acceso → P01. |
+| RE-T.15.1 | Aislamiento de modelos; ocupación global es excepción técnica mínima. | C3–C8/D | CT/AP/PA/CH/NA → P01/P03/P15. |
+| RE-T.15.2 | Recurso ajeno responde 403 auditado; preservar incluso al límite. | Todas/D | CT/AP/LP → P01/P15. |
+| RE-T.15.3 | Security controla rol/CSRF/contexto; faltan acciones de M4. | Todas/D | Acceso/TR → P01/P04/P10. |
+| RE-T.15.4 | Plataforma no tiene permiso clínico; no ampliarlo con urgencias. | Todas/D | Acceso/TR → P01/P13. |
+| RE-T.15.5 | Aislamiento centralizado con fixtures Norte/Sur; ampliar a nuevas entidades. | Todas/D | DosClinicas y suites anteriores → P01/P03/P06/P12/P15. |
+
+**Alcance diferido individual:** RE-4.7.3, RE-4.10.1, RE-4.10.2, RE-4.10.3, RE-4.16.1, RE-4.16.2, RE-4.17.1, RE-4.17.2, RE-4.17.3 y RE-4.17.4 quedan fuera de esta entrega.
+No usar confirmación administrativa existente como cumplimiento de HU-4.10 ni desempate técnico como afinidad de HU-4.16.
+O-06 sigue pendiente de v2.1.
+O-01/02/09/10 se cubren operativamente en P05/P13/P15; O-03/04/05 en P07; O-07/08 en P16; O-11 conserva las alergias globales de M2 y se verifica en P05/P06/P21.
+Los 26 T conservan datos y esperados originales, incluidas las reservas de T-16/T-20; no se declara validación veterinaria por pasarlos.
+
+### A.8. Propuestas pendientes de aprobación
+
+Las decisiones de §6 (actores, alcance v2.1, cita obligatoria por atención sin reserva y captura opcional del acompañante) ya están confirmadas.
+Esta tabla no las reabre.
+Los siguientes detalles aún no son decisiones del usuario.
+
+| Asunto | Propuesta concreta y recomendación | Naturaleza / condición |
+|---|---|---|
+| Capacidad sin hueco para llegadas no urgentes | Recomiendo **cero sobrecupos no urgentes automáticos**: la llegada pasa a evaluación/espera de solicitud, ofrece primer hueco compatible u otro vet de la misma clínica y no inicia atención hasta crear su cita de llegada. Al liberarse capacidad se ordena por nivel aprobado y, dentro de cada nivel, llegada física/ID; verde no adquiere prioridad naranja. Alternativa para el usuario: autorizar **un cupo adicional de llegada por bloque**, separado del tope naranja, solo con decisión motivada del vet y propagación visible del retraso. | Regla de producto: necesita aprobación antes de B/C8b. En ambas variantes, toda atención tiene cita; esperar no es registrar una consulta oculta. La segunda variante requiere parámetro propio propuesto, clase de cupo y estado de espera explícitos; no reutilizar es_sobrecupo ni aprobar un default por este anexo. |
+| Relación del cupo de llegada con RN-422 | Los naranjas cuentan exclusivamente para el tope naranja existente. Si se elige el cupo adicional de la alternativa anterior, contador independiente; rojos conservan excepción, demás colores respetan cuota del plan y capacidad admitida. No desplazar silenciosamente reservas ya pactadas. | Nueva regla de capacidad con aceptación y prueba; falta en HU-2.2/RN actuales. No implementarla por inferencia de RN-422. |
+| Bloque y cupo consumido | Recomiendo bloque fechado de intersección recurrente sin multiplicar cupo al restar ausencias; completados consumen cupo de ese bloque, cancelados/no_asistio lo liberan. | Concreción de RN-422 de A.3, a ratificar antes de B/C4b; ajustar matriz y Modelos. |
+| Desempate de veterinarios compatibles | Para búsqueda automática, elegir inicio compatible más temprano y luego id_usuario ascendente; si el actor ya eligió vet y puede conservarlo, respetarlo. Para ausencia/en vivo, usar igual orden y saltar candidatos ya intentados en el mismo ciclo. Sin afinidad, reputación, puntuación clínica ni sorteo; no comparar nombres. | Decisión técnica determinista propuesta, revisión independiente antes de C3/C5/C6. Cualquier preferencia por carga/especialidad/rotación sería regla nueva de producto y no se da por aprobada. |
+| Solicitud de ausencia | Recomiendo que la solicitud propia quede pendiente y solo tape agenda al aprobarla el admin; registro directo del admin es efectivo. Rechazo requiere motivo. Una ausencia no puede ocultar citas afectadas durante su resolución. | RN-414 admite solicitar, pero no especifica la aprobación: requiere confirmar y plasmar en HU/RE/Modelos §8/§13.4 antes de C6. |
+| Revisión previa a reservar | Mínimo obligatorio: T-20/revision_inmediata nunca recibe horario antes de vet. Recomiendo exigir liberación también a todo revision=true, dejando T-16/T-22 amarillos provisionales hasta resolución. Sin tiempo de respuesta inventado. | La extensión a toda revisión es propuesta de seguridad de flujo, no una regla clínica nueva confirmada. Aprobar antes de B/C4a; nota libre sigue fuera del cálculo. |
+| Orden rojo presencial | Recomiendo FIFO por llegada física/ID entre rojos presentes, con prioridad de reanudación de la cita pausada al finalizar su urgencia conforme RN-427; cualquier cambio clínico de orden se motiva y audita. Una nueva alarma roja se evalúa clínicamente, sin reglas automáticas de interrupción anidada. | Falta política expresa para empates de rojos y nuevas urgencias mientras hay pausa; aprobar antes de C7a. No convertir orden técnico en una decisión clínica ya autorizada. |
+| Contacto provisional | Recomiendo usar nombre/teléfono opcionales exclusivamente para atención/conciliación; al resolver titularidad y finalizar esa necesidad, anonimizar esos campos a NULL y sellar fecha/actor/causa, conservando ingreso, IDs y actos. Si el responsable identifica una obligación de custodia o conciliación aún pendiente, conservar solo lo necesario con motivo y revisión humana; sin borrado automático por días. Alternativa: conservación justificada junto al expediente con acceso restringido y procedimiento de supresión existente. | Política local views/legal/privacidad.php §Vigencia conserva datos según cuenta/obligaciones, pero no fija plazo para acompañante sin cuenta. RN-G07/G16/G19 y plan HU-4.15 no autorizan inventar uno ni confundirlo con los 72 h de invitaciones. Requiere aprobación antes de B/C7b; esto es alineación con política existente, no dictamen jurídico ni aprobación legal. |
+| Quién concilia | Proponer vet de la clínica para ingreso/actos; admin solo para completar/conciliar identidad conforme al permiso específico aprobado; propietario aporta/verifica su titularidad, sin fusionar por sí mismo historia ni adjudicarse mascota con ID. Nunca un endpoint público. | «Personal autorizado» no enumera acciones en plan HU-4.15; fijar matriz explícita en B/C7b, sin retirar las facultades administrativas actuales ajenas a este caso. |
+| Marca y reclasificaciones | Marca por clínica en contexto/evento/documento de esa clínica; plataforma en historial multi-clínica con identificación por acto. Reclasificaciones del propietario visibles a personal de la clínica dentro de sus casos, sin sanciones automáticas. | Aclaraciones RE-7.4.4/RE-4.18.4 pendientes antes de C1/C8; cualquier vista adicional del propietario debe definirse expresamente. |
+
+Los extremos de intervalo, fórmula de margen, candados, idempotencia, proyección mínima de ocupación y separación de servicios son decisiones técnicas propuestas para revisión del contrato.
+No cambian por sí solas el alcance confirmado.
+La aprobación del plan anterior no equivale a aprobación de los defaults/reglas nuevas de esta tabla.
+
+### A.9. Dependencias: ajuste mínimo propuesto antes de implementar
+
+| Dependencia detectada | Ajuste mínimo de orden/contrato, pendiente de revisión |
+|---|---|
+| C2 marca citas para un C5 que aún no existe | B define estado/versionado y C2 muestra la marca pendiente con aviso explícito, sin movimiento automático. C5a toma esas marcas idempotentemente. Cambiar horario o restaurarlo ya usa protocolo de exclusión de C3, por lo que el coordinador básico de candados se adelanta a C2; C3 completa el cálculo. |
+| C3 debe restar ausencias que se gestionan en C6 | B fija representación y estado efectivo; C3 ya sabe restar rangos aprobados y cierres. C6 aporta solicitud/cobertura. No permitir que C3 ignore filas existentes por «etapa posterior». |
+| C4a requiere revisión humana que HU-4.18/C8 deja tarde | Adelantar a C4a la evaluación pendiente y resolución mínima motivada del vet, con calculado/ajustado y revalidación. C4b integra reubicación al reservar; C8 completa historial/reclasificación al llegar. No ofrecer horarios con una bandera sin resolución operativa. |
+| C4a exige naranja pero su tope es C4b; rojo clínico es C7 | No declarar C4a funcionalmente cerrada en cuatro ramas si solo deriva a acciones inexistentes. Separar la entrega de captura/derivación remota de la habilitación integral: integrar C4b y C7a antes de habilitar todo el nuevo agendamiento. Si se requiere desplegar C4a sola, debe acordarse explícitamente el comportamiento provisional y su aceptación, sin presentar deuda como RE cumplido. |
+| C4a promete correo fiable, RN-429 se construye en C5b | B define evento durable e idempotencia; C4a entrega productor/consumidor mínimo de confirmación/cambio y registro de fallo. C5b agrega acumulación/ventana de estimaciones. No dejar la garantía de correo básico dependiendo de una futura etapa ni de JS. |
+| C5a predice fin de franja antes de aceptación/reprogramación de C5b | C5a puede calcular y persistir estado pendiente visible, sin mover vet ni hora pactada. C5b resuelve mediante propuesta/aceptación/reprogramación y siempre revalida. La integración se considera completa al revisar ambas; no simular aceptación. |
+| C7 usa atención/llegada de HU-2.2, ubicada en C8b | Adelantar a C7a la infraestructura común de crear cita desde una llegada y conservar origen, solo con política roja ya aprobada. C8b integra el acceso no urgente y capacidad aprobada. No habilitar un atajo clínico sin cita entre esas etapas ni aplicar RN-422 a verde. |
+| Pausas interfieren con cierre de consulta/numeración actual | C7a incluye Consulta::exigirCitaParaConsulta/completarCita, VigilanteAtenciones y protocolo HC; prueba cero cierres sobre pausadas. No esperar a C8b/D para resolver el candado o perder continuidad de M2. |
+| Ficha provisional necesita contexto incompleto que M2 presupone existente | C7b incorpora adaptador de ficha por completar con datos desconocidos y vínculos/HC legítimos; mantiene los predicados M2, sin modificar conocimiento ni inventar edad/especie. La entrada roja no depende de lograr registrar una mascota ordinaria con propietario. |
+| Retención, capacidad y campos nuevos condicionan B | Revisar A y resolver A.8 antes de generar SQL/contratos normativos afectados. Si el usuario aplaza una decisión, puede avanzarse únicamente en partes independientes aprobadas; no habilitar flujos que necesiten ese dato. |
+
+La tabla de §3 conserva el recorrido aprobado, con estas propuestas de anticipación mínima de infraestructura.
+El revisor debe incorporar el ajuste preciso al preparar el prompt de B y de cada etapa; A no empieza ninguna.
+
+### A.10. Verificación de A y entrega
+
+La verificación consiste en leer código/especificación y ejecutar las suites existentes.
+No se escribieron pruebas nuevas ni se recorrieron pantallas.
+La prueba headless que ya forma parte de JS es automática y no constituye un recorrido manual de la aplicación.
+
+| Verificación ejecutada el 2026-10-17 | Resultado |
+|---|---|
+| PHP completo sin host: php vendor/phpunit/phpunit/phpunit --do-not-cache-result; ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2 y host vacío | 854 pruebas, 7212 aserciones, 44 omitidas de MySQL. Código de salida 0. Incluye la batería T de M2. |
+| PHP completo con ZOOKI_TEST_MYSQL_HOST=127.0.0.1, PORT=3306, USER=root, PASS vacío y DB=zooki_test_base_v2 | MariaDB 10.4.32: 854 pruebas, 7813 aserciones, ninguna omitida; código 0. Configuración explícita de pruebas independiente del archivo de entorno. No se instaló ni inició ningún servicio. |
+| JS existente: node --test "tests/Frontend/**/*.test.cjs" | 238/238, cero fallos, canceladas u omitidas; código 0. Incluida medición automática headless de C8.2. |
+| Diff y alcance | git diff --check sin incidencias; solo specs/M4-agenda-grafo-ii.md y agentes/estado.md modificados. Sin código de aplicación, migraciones, tests nuevos, exportación ni versión. |
+
+Los primeros intentos dentro del aislamiento no son evidencia de regresión: PHP detectó bootstrap.php como no legible y, usando un bootstrap temporal, produjo errores de acceso a recursos de OneDrive; Chrome de JS no arrancó y esa corrida se interrumpió.
+Se repitieron las suites originales fuera del aislamiento, sin editar fuentes, y dieron los resultados de la tabla.
+El intento de copia temporal de fuentes para aislar el problema no se usó como evidencia; la ejecución válida fue sobre el checkout actual.
+La disponibilidad de MariaDB se comprobó con mysql --no-defaults y SELECT VERSION(), sin seleccionar base ni consultar credenciales de la aplicación.
+Solo la suite de pruebas creó/recreó su base desechable zooki_test_base_v2 y sus fixtures; no se regeneraron cuentas o contraseñas de trabajo ni se ejecutó scripts/dev/datos_prueba.php.
+No se leyó ni escribió .env desde las acciones de esta entrega; no se usó zooki_v2_prueba.
+**Limitación:** no se verificó con MySQL 8 en esta máquina; MariaDB real sí se verificó. Las pruebas concurrentes específicas P03/P07/P10/P15 todavía deben implementarse en sus etapas.
+
+**Límite de la evidencia:** las suites existentes comprueban la base actual; P01–P23 siguen propuestos para la implementación.
+Ni tablas existentes ni casos T en verde acreditan que la agenda operativa, la concurrencia de intervalos, la revisión humana o la conciliación de M4 ya funcionen.
+
+**Siguiente:** revisión independiente de A por Codex y resolución de A.8; después preparar B.
+No hay veredicto de revisión en este anexo.
+No comenzar B ni modificar HU/RE/RN/diagramas hasta esa revisión y las aprobaciones que correspondan.
+
+**Comandos de commit para el usuario, PowerShell 5.1:**
+
+    git diff --check
+    git add -- specs/M4-agenda-grafo-ii.md agentes/estado.md
+    git commit -m "docs(agenda): inventario y contratos de A (HU-4.13, RE-4.9.3, RE-4.15.3)"
+
+Son comandos para el usuario; el agente no ejecutó add, commit, push, tag ni cambios de rama.
+
+### A — Revisión (2026-10-17)
+
+**Revisó Codex, arquitecto de esta conversación; el Anexo A fue escrito por otra sesión ejecutora de Codex. Veredicto: revisada con corrección requerida A.1.** El inventario y su trazabilidad son válidos; no se aprueba todavía el contrato completo para implementar B. La corrección es documental y corresponde al ejecutor; el revisor no reescribe su algoritmo.
+
+**Alcance y evidencia propia.** Se revisaron el diff respecto de HEAD y el anexo completo. Solo cambian este plan y agentes/estado.md: no hay código, tests, migraciones ni documentos normativos nuevos. Se comprobaron las 107 filas de RE, sin duplicados y con identificadores existentes en RequisitosEspecificos.md; las P01–P23 son propuestas de pruebas, no evidencia ejecutada de M4.
+
+Se contrastaron directamente `Cita::sugerencias/exigirHorarioLibre/ocupadas`, `LimitePlan::transaccion`, `Consulta::registrar/tomarCandadoNumeracion`, creación/reprogramación/cancelación/correos de CitaController, matriz de Security, esquema de citas y las pruebas existentes de agenda y portal. Se confirma el horario fijo de sugerencias, el margen omitido de ocupación, la serialización local por clínica y el límite del índice por comienzo; la prueba de carrera actual de CitaTest usa una sola conexión y no demuestra la garantía interclínica propuesta. También se confirma la falta de comprobación directa de propietario_clinica en Recordatorio::citasDeManana; se mantiene como defensa pendiente, sin afirmar una fuga alcanzable demostrada.
+
+**Comparación con diagramas.** Modelos §2/§4–§8 y §13.4 respaldan disponibilidad, propuestas de horario, cobertura sin veto y reasignación con aceptación. Las diferencias de A.1 son pertinentes: falta puerta humana previa al horario, el diagrama remoto rojo entra directamente en asignación/pausa, §5 no explicita el cálculo durante una atención abierta ni evita inequívocamente el doble descuento del margen, y §8 omite la solicitud del veterinario. §3 y HU-2.2 necesitan alinearse con la cita de llegada confirmada por el usuario. A hizo bien en documentarlas sin cambiar todavía los criterios ni los diagramas.
+
+**Verificación propia:**
+
+- PHP completo sin host MySQL, fuera del aislamiento de archivos de OneDrive: **854 pruebas, 7212 aserciones y 44 omitidas**, salida 0.
+- PHP completo con MariaDB local: **854 pruebas, 7813 aserciones y ninguna omitida**, salida 0 (5 min 17 s). Configuración explícita: host 127.0.0.1, puerto 3306, usuario local de pruebas y exclusivamente `zooki_test_base_v2`; versión comprobada 10.4.32-MariaDB. No se declara verificación con MySQL 8.
+- JavaScript completo, incluida la prueba automática de Chromium: **238/238, cero omitidas y cero fallos**, salida 0. El intento dentro del aislamiento quedó sin completar y se detuvo; solo se usa como evidencia la ejecución completa fuera de él.
+- `git diff --check` sin incidencias. Las suites verifican la base existente y la batería T de M2, no implementaciones futuras de M4. No se recorrieron pantallas, se leyeron credenciales de la aplicación ni se ejecutó el generador de usuarios.
+
+**Hallazgo que exige corrección antes de B:**
+
+| ID / prioridad | Archivo y líneas revisadas | RE/RN | Reproducción y efecto | Corrección exigida |
+|---|---|---|---|---|
+| H-A1 / P2 — Base temporal de cascada incompleta para pausa e inicio real | `specs/M4-agenda-grafo-ii.md:294–301`, ejemplo de pausa en línea 310 (numeración al revisar A) | RE-4.5.1–RE-4.5.3, RE-4.14.1–RE-4.14.2, RE-4.15.8; RN-412, RN-415, RN-427 | Con inicio estimado e=09:00, d=30 y m=10, la pausa 09:10–09:30 deja 20 minutos activos y fin 09:50. Aplicar literalmente `max(e+d+m, fin_real)` libera a las 09:50, pero la tabla exige 10:00. No se define qué base reemplaza e+d tras una pausa. Tampoco queda fijada la base si inicia realmente a las 09:20 y el vet decide prestar los 30 minutos completos: el fin nominal no puede seguir en 09:30. «Recalcular desde la causa» no permite implementar ni comprobar una única interpretación. | Definir por estado la base de inicio/fin nominal, tiempo activo restante y efecto de una o varias pausas; preservar hora pactada e inicio real. Unificar fórmula y ejemplos, sin sumar margen dos veces ni inventar una duración efectiva cuando el vet eligió otra opción de llegada tarde. Añadir ejemplos aritméticos de inicio tardío con servicio completo, pausa única, varias pausas, sobrepaso tras reanudar y repetición del cálculo. Indicar qué campos existentes/propuestos sostienen cada valor. |
+
+Este hallazgo afecta a un contrato propuesto, no demuestra una regresión en producción ni justifica cambiar el código actual durante A.1. La decisión de cómo absorber el margen tras una pausa debe quedar explícita: si la corrección revela una regla de producto nueva, presentarla al usuario como propuesta en lugar de elegirla por su cuenta.
+
+**Contrato técnico aceptable como dirección, con condiciones para B:** intervalos semiabiertos, separación de horas pactadas/estimadas/reales, candados sobre recursos estables, relectura vigente tras esperar, idempotencia transaccional, proyección mínima de ocupación global y separación cobertura/reasignación. Antes de escribir SQL, cerrar un único protocolo para la numeración HC y los nuevos candados: A.4 reconoce correctamente la inversión posible con GET_LOCK, pero no se implementarán simultáneamente sus dos alternativas. Las siete tablas nuevas propuestas en A.6 no quedan aprobadas automáticamente por validar el inventario: B debe justificar y revisar el esquema mínimo después de resolver las decisiones de producto.
+
+**Dependencias:** se acepta el diagnóstico de A.9. Los prompts deben adelantar coordinación básica a C2, lectura de ausencias/cierres a C3, resolución mínima de revisión y eventos de correo a C4a, y el cierre/continuidad de consulta al introducir pausas. C4a no puede declararse cierre integral de las cuatro ramas ni habilitarse con rutas inexistentes; no hay aprobación de un despliegue intermedio que degrade urgencias.
+
+**Siguiente: A.1 — corrección documental del contrato temporal**, escrita por el ejecutor y revisada de nuevo por este arquitecto. Solo plan y estado; sin código, SQL, tests nuevos ni cambios normativos. Conservar el Anexo A y esta revisión, agregar resultado de A.1 y marcarla entregada, pendiente de revisión. No hace falta repetir las suites completas por una corrección limitada a texto: usar esta línea base y comprobar diff, aritmética y trazabilidad. Después, resolver las propuestas de A.8 por grupos antes del prompt de B; ninguna se convierte aquí en «Decisión del usuario».
+
+**Prueba manual:** no corresponde una lista de pantallas en A/A.1 porque no cambia ninguna funcionalidad. Las listas de 3–5 pruebas por usuario se entregarán con las subetapas que sí modifiquen interfaz o comportamiento.
