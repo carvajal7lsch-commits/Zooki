@@ -6,12 +6,34 @@
 
 ## Ahora
 
-### Situación vigente — B1.1 (2026-10-18)
+### Situación vigente — B2.1 entregada, pendiente de revisión (2026-10-18)
+
+- **B2.1 entregada, pendiente de revisión.** Autor: Codex ejecutor; revisa Codex arquitecto en otra conversación. Solo workflow y registro en plan/estado: dos esperados actuales 52→58, ambas clases MySQL secuenciales, base explícita zooki_test_base_v2 y shell bash con detención ante error. Controles de instalación/semilla/migrador repetido/volumen conservados; fixture alpha.4 y sus 52 históricos intactos.
+- **Verificación propia B2.1:** YAML válido sin claves duplicadas; comparación estructural del workflow limitada a los cambios solicitados y propagación de fallos comprobada con Bash. Ejecución secuencial nueva en MariaDB 10.4.32, exclusivamente zooki_test_base_v2: BaseV2MysqlTest 44/613 y AgendaB2MysqlTest 8/93, total 52 pruebas/706 aserciones, sin fallos ni omitidas, salida 0. Los once archivos previos de B2 fuera de plan/estado siguen idénticos; git diff --check sin incidencias. Las suites completas de B2 siguen como antecedentes, sin nueva ejecución completa.
+- **Siguiente vigente:** revisión independiente de B2.1 y, después del push del usuario, ejecución real del trabajo MySQL 8 en GitHub, incluidos instalación y volumen vacío. MariaDB local no sustituye MySQL 8. H-B2-1/H-B2-2 no se cierran por el ejecutor; no empezar C1 ni integrar/desplegar antes de verificar CI.
+
+### Antecedente — revisión B2 y encargo B2.1 (2026-10-18)
+
+- **B2 revisada con corrección requerida B2.1.** Codex arquitecto de esta conversación revisa la entrega de Codex ejecutor independiente. Ver «B2 — Revisión» del plan M4. H-B2-1/P1: CI aún exige 52 tablas en dos pasos cuando 01 ya crea 58; el trabajo falla antes de las pruebas. H-B2-2/P2: el trabajo MySQL 8 selecciona solo BaseV2MysqlTest y deja fuera las ocho pruebas nuevas AgendaB2MysqlTest; el trabajo PHP sin host las omite.
+- **Siguiente vigente:** corrección B2.1 del workflow: ambos conteos y ejecución de ambas clases con base PHPUnit explícita zooki_test_base_v2, sin paralelizar esa base. Revisar corrección antes de guardar/subir; confirmar CI MySQL 8 real antes de integrar/desplegar. No empezar C1 ni ampliar reglas de producto.
+- **Encargo B2.1 preparado (2026-10-18):** el usuario solicita el prompt y confirma que el commit será después de corregir. Alcance H-B2-1/H-B2-2 en el workflow, conservar controles de instalación/semilla/migrador/volumen y registrar evidencia real sin atribuir una ejecución CI aún pendiente. Autor Codex ejecutor; revisión en esta conversación independiente. No implica entrega o aprobación de B2.1.
+- **Verificación propia del revisor:** PHP sin host 862/7212, 52 omitidas; con MariaDB 10.4.32 exclusivamente en zooki_test_base_v2 862/7918, cero omitidas (09:16.404); JS secuencial 238/238, salidas 0. 58 tablas y mismos campos en 01/drawDB, campos nuevos documentados en MER; fixture alpha.4 idéntica al 01 previo; 96 HU/430 RE únicos sin saltos/120 RN. Los 27 Mermaid no cambian y no se repite renderizado. Aplicación/02/03–07/versión intactas. MySQL 8 no verificado localmente; no se accede al entorno ni a la base manual.
+
+### Antecedente — entrega B2 del ejecutor (2026-10-18)
+
+- **B2 entregada, pendiente de revisión.** Autor: Codex ejecutor; revisa Codex arquitecto en conversación independiente. Anexo B2 del [plan M4](../specs/M4-agenda-grafo-ii.md): esquema 58 tablas, migración 08 repetible y pruebas de datos. No se aprueba por el autor ni empieza C1.
+- **Transición:** seis tablas nuevas y cuatro ampliadas; FK de clínica, CHECK locales y auxiliares calculadas únicas. Se conserva alpha.4 con datos/IDs/HC/configuración, se rellena solo lo demostrable y se detienen incompatibilidades con diagnóstico, sin borrar. 02/03–07 y aplicación intactas; producción sigue alpha.4/52 hasta desplegar.
+- **Verificación propia B2:** PHP sin host 862/7212, 52 omitidas; con MariaDB 10.4.32 y exclusivamente zooki_test_base_v2 862/7918, cero omitidas; JS 238/238. Salidas 0. Ocho pruebas nuevas de instalación/actualización/repetición/cortes DDL/conservación/restricciones/diagnósticos. Primer JS falló por EBUSY de Chromium; repetición completa secuencial en verde, sin cambiar pruebas.
+- **Coherencia:** 58 tablas/mismos campos en 01/MER/drawDB; 96 HU/430 RE/120 RN, sin versión/revisión/exportaciones. Fixture alpha.4 idéntica al 01 anterior. Diagramas y anexos/revisiones previos intactos.
+- **Pendientes y siguiente:** revisión independiente de B2 y MySQL 8 no verificado localmente; después planificar C1. Las carreras de reservas/HC/conciliación y la barrera SMTP pertenecen a C; no quedan resueltas por el esquema. Sin cambio de servicios, archivo de entorno, base manual, Git de escritura ni despliegue.
+
+### Antecedente inmediato — B1.1 revisada y encargo B2
 
 - **B1.1 revisada y aprobada; H-B1-1 cerrado (2026-10-18).** Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Contrato de solicitudes/citas al mismo paciente vigente, episodio histórico con procedencia, revisión activa invalidada y comandos/eventos/reintentos revalidados, sin nuevos campos/relaciones/tablas. B1 queda aprobada con esta precisión; revisión en «B1.1 — Revisión» del plan. B2 todavía no empezó.
 - **Verificación B1.1:** coherencia documental de referencias, estados, permisos, versiones y rollback en P15.1–P15.12; renderizado propio Mermaid 27/27, con cambios solo en Modelos §3/§6; 96 HU/430 RE/120 RN y 58 tablas de destino/52 ejecutables sin cambios. Anexos/revisiones previos intactos y diff limitado a seis archivos, sin incidencias de espacios. No se repiten suites ni se consulta BD: PHP 854/7813, JS 238/238 y Mermaid 27/27 de la revisión B1 son línea base histórica.
 - **Verificación propia de revisión B1.1:** doce ejemplos P15 cotejados documentalmente y Mermaid 27/27 renderizados; 96 HU/430 RE únicos sin saltos/120 RN, MER y drawDB 58 entidades iguales frente a 52 ejecutables. Anexo B1 previo intacto; diff de seis archivos y sin incidencias de espacios. Sin repetición de PHP/JS por corrección documental; se mantiene la línea base propia de B1, no como ejecución nueva. Sin acceso a bases/credenciales/pantallas ni cambios ejecutables.
 - **Siguiente vigente:** usuario guarda B1.1 y revisión; después preparar prompt solo B2 (esquema/migración nueva y pruebas de instalación/actualización/idempotencia/conservación). No habilitar rutas ni implementar lógica de aplicación en B2. No hay decisiones nuevas de producto ni ampliación de permisos por esta revisión.
+- **Encargo B2 preparado (2026-10-18):** B1.1 y revisión comprobadas en `575ff7d`; rama `v2/m4-agenda`, limpia al comprobar. Usuario solicita prompt de B2. Próxima migración libre `08_agenda_grafo_ii.sql`; esquema/MER/drawDB de 58 tablas según B1+B1.1, fixture alpha.4 y pruebas de instalación/actualización/repetición/reanudación parcial/restricciones/conservación. Solo datos y pruebas: no modificar lógica de aplicación ni retirar GET_LOCK todavía, no habilitar rutas ni marcar flujos C implementados. Pendiente de entrega del ejecutor y revisión independiente.
 
 ### Antecedente inmediato — revisión y encargo B1.1
 

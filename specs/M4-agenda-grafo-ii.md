@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **B1.1 revisada y aprobada (2026-10-18); H-B1-1 cerrado**. B1 y su diseño quedan aprobados con esta precisión de conciliación. Siguiente: B2 tras guardar la entrega; alpha.4 y SQL ejecutable aún intactos. No se declara funcionalidad implementada.
+> Estado: **B2.1 entregada, pendiente de revisión (2026-10-18)**. Workflow corregido para 58 tablas y ambas clases secuenciales con base PHPUnit explícita. H-B2-1/H-B2-2 pendientes de revisión independiente; MySQL 8 real pendiente en GitHub tras el push del usuario. No empezar C1. Esquema preparado, sin despliegue ni flujos C implementados; se conservan B1/B1.1/B2 y sus revisiones.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -72,6 +72,7 @@ Los criterios normativos permanecen en `documentacion/`; no se cambian silencios
 | **B1. Contrato documental y diseño de datos** | Alinear HU/RE/RN/Modelos con §6, matriz de permisos y propuesta mínima de esquema con campos/índices/relleno. Cerrar un único protocolo HC/candados. Sin SQL ejecutable ni código; revisar el diseño antes de B2. | A/A.1 revisadas y decisiones de §6 | Codex | Codex independiente |
 | **B1.1. Corrección de conciliación** | Contrato único de identidad vigente, solicitudes activas/terminales, contexto/revisión, eventos, idempotencia y rollback; revisada y aprobada (2026-10-18), H-B1-1 cerrado. | H-B1-1 de la revisión B1 | Codex | Codex independiente |
 | **B2. Esquema y migraciones** | Ejecutar únicamente el diseño revisado de B1: migración nueva repetible, esquema ejecutable/MER/drawDB coherentes y pruebas de instalación/actualización. No habilita rutas de aplicación. | B1 revisada y decisiones de datos resueltas | Codex | Codex independiente |
+| **B2.1. Corrección del control automático** | Conteos actuales 58 y ejecución secuencial de BaseV2MysqlTest y AgendaB2MysqlTest en MySQL 8, con zooki_test_base_v2 explícita; entregada, pendiente de revisión. Ejecución real GitHub pendiente tras push del usuario. | H-B2-1/H-B2-2 de la revisión B2 | Codex ejecutor | Codex arquitecto independiente |
 | **C1. Marca y tipos** | HU-7.4 completa: configuración, duración/margen/pausable, teléfono; propagación de marca y aislamiento; mismo diseño y validación en vivo. | B | Codex | Codex independiente |
 | **C2. Horarios** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. | C1 | Codex | Codex independiente |
 | **C3. Disponibilidad y reserva** | Una lógica de intersección, resta de ausencias/cierres y ocupación por duración+margen para sugerencias, reserva y reprogramación; candados y pruebas concurrentes; nunca disponibilidad permanente por falta de horario. Cierre de HU-4.9 y base de HU-4.6/4.8. | C2 | Codex | Codex independiente |
@@ -91,13 +92,13 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 
 ## 4. Datos y migraciones
 
-**Precisión vigente B1.1:** el Anexo B1.1 corrige exclusivamente la conciliación incompleta de B1. Todas las solicitudes afectadas usan la identidad vigente; las evaluaciones históricas conservan procedencia y no autorizan comandos sobre el nuevo contexto. No cambia campos/relaciones del destino de 58 tablas ni las 52 ejecutables.
+**Precisión vigente B1.1:** el Anexo B1.1 corrige exclusivamente la conciliación incompleta de B1. Todas las solicitudes afectadas usan la identidad vigente; las evaluaciones históricas conservan procedencia y no autorizan comandos sobre el nuevo contexto. B2 materializa ese mismo destino de 58 tablas en el ejecutable; producción alpha.4 mantiene 52 hasta desplegar.
 
-**B1 actual:** destino mínimo en MER/drawDB de 58 tablas (52 existentes + seis nuevas); no se modifican 01_schema.sql/02_semilla.sql ni 03–07. Diseño/campos/índices/rellenos concretos y protocolo único en Anexo B1; B2 solo después de su revisión. Las alternativas de A.4 quedan históricas, sin libertad de mezclar GET_LOCK y candado clínico al implementar.
+**B2 actual:** 01_schema.sql, 08_agenda_grafo_ii.sql, MER y drawDB describen las mismas 58 tablas (52 anteriores + seis nuevas). 02_semilla.sql y 03–07 permanecen intactas; B1/B1.1 son el contrato vigente. El anexo B2 documenta transición/verificación de datos, sin adelantar servicios funcionales. Las alternativas de A.4 quedan históricas, sin libertad de mezclar GET_LOCK y candado clínico al implementar.
 
 
 - **Se conserva la v2 desplegada.** No hay reinicio de base ni migración de datos v1. B1 alinea `specs/HU-4.15-ingreso-emergencia.md` con la ampliación aditiva de alpha.4.
-- `01_schema.sql` ya contiene las entidades principales; no recrearlas. La próxima migración disponible es **08**, prevista como `08_agenda_grafo_ii.sql` en B1; contenido sujeto a revisión antes de B2. Si se publica una 08 antes, se toma el siguiente número libre.
+- `01_schema.sql` ya contiene las entidades principales; no recrearlas. Se comprobó 08 libre al comenzar B2 y se creó `08_agenda_grafo_ii.sql`; cambios futuros usarán el siguiente número libre.
 - **Huecos resueltos documentalmente en B1, pendientes de implementación:** horario estimado y último aviso RN-429; marca de reajuste/reprogramación pendiente; solicitudes de ausencia; cierre puntual de clínica; pertenencia de sobrecupo a bloque; orden/prioridad de espera y pausa/reanudación; urgencia sin veterinario aún (`citas.id_veterinario` hoy es obligatorio); revisión humana antes de reservar. No se aprueban aquí columnas nuevas ni se introduce NULL en una FK sin revisar todos sus lectores.
 - Decidir qué estado debe persistir entre peticiones y qué se recalcula. No usar texto de observaciones como estado operativo ni auditoría como sustituto accidental de una cola. Toda ampliación pasa primero por MER/drawDB, criterio de aceptación y aprobación si cambia alcance.
 - Conservar instantáneas de duración/margen y triage calculado frente a ajustado, marcas y tiempos por evento, contexto/versión del conocimiento; no copiar tratamientos protegidos al contexto de la cita.
@@ -178,7 +179,8 @@ Las diferencias normativas de esta tabla se detectaron en A y se alinean documen
 - [x] Rama del módulo comprobada: `v2/m4-agenda`; encargo recibido **solo de A**, con la corrección de autor y revisor del usuario.
 - [x] A entregada por ejecutor y revisada de forma independiente (2026-10-17), con corrección A.1 antes de aprobar el contrato; ver revisión al final. Decisiones de producto pendientes antes de B.
 - [x] B1 entregada, pendiente de revisión independiente (2026-10-17); contrato y destino de datos en Anexo B1.
-- [ ] B2: no iniciada; requiere revisión de B1 antes de migración 08.
+- [x] B2 entregada y revisada independientemente con corrección requerida B2.1 (2026-10-18); H-B2-1/H-B2-2 abiertos. No habilita C1 ni despliegue.
+- [x] B2.1 entregada, pendiente de revisión (2026-10-18); corrección del workflow documentada en su anexo. MySQL 8 real pendiente en GitHub; el autor no cierra los hallazgos.
 - [ ] Cada subetapa tiene anexo «Anexo X — Resultado», autor, RE con prueba, comandos y pendientes; estado «entregada, pendiente de revisión».
 - [ ] Revisor comprueba diff, riesgos y Modelos paso a paso; escribe «### X — Revisión (fecha)», veredicto, evidencia propia, hallazgos archivo/línea/RE o RN/reproducción y siguiente paso. No inventar ahora anexos o revisiones aprobadas.
 - [ ] PHP completo, con y sin host; MySQL 8 si está disponible y/o MariaDB local, siempre **`zooki_test_base_v2`**; pruebas concurrentes con conexiones separadas. Si no hay servidor, declarar omisión y repetir antes del cierre, sin presentar SQLite como prueba de concurrencia MySQL.
@@ -1694,3 +1696,244 @@ No se encuentran nuevos hallazgos bloqueantes en esta corrección documental. La
 **Siguiente:** guardar B1.1 y esta revisión. Después, prompt solo de B2: esquema ejecutable y migración nueva conforme a B1+B1.1 revisadas, con pruebas de instalación nueva, actualización de alpha.4, repetición y conservación de datos. Sin habilitar rutas ni implementar coordinadores/consulta/SMTP en B2. Los contratos de ejecución HC/candados se integrarán uniformemente en las subetapas C correspondientes, conservando las pruebas concurrentes previstas.
 
 **Prueba manual:** no corresponde navegador en B1.1, sin interfaz o comportamiento nuevos. Se entregará la lista por usuario cuando una subetapa funcional lo requiera.
+
+
+
+## Anexo B2 — Resultado
+
+**Fecha:** 2026-10-18.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto, en la conversación independiente.
+**Estado:** entregada, pendiente de revisión.
+**Alcance:** solo esquema, transición aditiva y pruebas de datos del contrato B1/B1.1.
+El ejecutor no aprueba su entrega ni empieza C1.
+
+### B2.1. Esquema materializado y límites
+
+Se comprobó que 08 estaba libre antes de crear database/08_agenda_grafo_ii.sql.
+01_schema.sql pasa de 52 a **58 tablas de negocio**, más schema_migraciones cuando actúa el migrador.
+Se añaden cierres_clinica, bloques_agenda, solicitudes_agenda, pausas_cita, operaciones_agenda y eventos_agenda.
+Se amplían citas, ausencias_veterinario, reasignaciones e ingresos_emergencia exactamente con los campos/estados del diseño revisado.
+MER y drawDB tienen los mismos nombres de tablas y columnas que 01; no se añadió ninguna entidad/campo por comodidad.
+Se sincronizan las restricciones locales en el diccionario MER y el SQL de referencia.
+
+Las auxiliares cita_abierta/cita_pendiente se calculan STORED desde fin/estado y tienen índice único con múltiples NULL.
+En drawDB siguen siendo columnas convencionales, como exige B1.
+Se instalan las FK compuestas de clínica, índices de acceso y CHECK de intervalos, objetivo activo positivo si existe, presencia/revisión locales y destinatario usuario XOR rol.
+Una S pendiente puede conservar metadatos clínicos del episodio previo; una terminal conserva su revisión histórica conforme B1.1.
+No se exige que el JSON histórico coincida con la identidad/versiones actuales por el solo hecho de leerlo.
+
+No hay triggers ni código de disponibilidad, tope naranja, cola, adjudicación, revisión clínica, cascada, consulta/HC, conciliación, SMTP o idempotencia de comandos.
+La coherencia S/C/paciente vigente, actividad/rol/titularidad, cruces de intervalos, barrera de envío y numeración HC siguen requiriendo los escritores de C.
+La migración no mueve fichas, recalcula triage, envía avisos ni crea pausas/evaluaciones retrospectivas.
+GET_LOCK de HC y los llamadores de aplicación permanecen intactos.
+No se habilitan rutas, permisos ni pantallas; los diagramas Modelos §2–§8/§13.4 siguen siendo destino funcional.
+Sus bloques Mermaid y el diagrama MER no cambian; no se presenta un render nuevo por cambiar solo la nota de estado.
+
+### B2.2. Prevalidación, repetición y DDL parcial
+
+08 exige las tablas v2 y las claves de identidad antes de alterar tablas/datos de negocio.
+Comprueba motor/intercalación y las definiciones existentes de columnas: tipo/longitud/signo, nulabilidad, default, generación STORED/expresión y colación cuando corresponde.
+Distingue JSON nativo de MySQL y el alias LONGTEXT+JSON_VALID de MariaDB.
+Los índices se cotejan por unicidad, columnas/orden, prefijos y BTREE; las FK por columnas, destino/esquema y reglas de actualización/borrado.
+Los CHECK se cotejan por expresión normalizada y, si el motor expone ENFORCED, se rechaza una restricción no aplicada.
+Una definición incompatible no se modifica silenciosamente ni se acepta por existir su nombre.
+
+Se detectan primero ausencias inválidas, propuestas pendientes duplicadas y huérfanos de los enlaces previos afectados.
+Antes de imponer cada restricción se comprueban sus datos, unicidades y referencias de clínica.
+El diagnóstico SQLSTATE 45000 lleva prefijo M4-08, objeto y primer ID conflictivo cuando corresponde.
+MIN se usa solo para identificar el conflicto; no elige una fila para conservar ni elimina otra.
+La migración no desactiva FK/CHECK para ocultar datos incompatibles.
+
+Se usa una rutina transitoria zooki_m4_08_error para emitir SIGNAL con mensaje verificable sin DELIMITER, compatible con CLI y con el PDO multisentencia del migrador.
+No es una tabla ni un servicio de negocio; requiere permiso de rutina en el esquema.
+Se recrea al comenzar cada intento y se retira al terminar correctamente; un intento fallido puede dejarla hasta el siguiente.
+SIGNAL no se prepara directamente en MySQL: se llama la rutina desde la sentencia preparada ([referencia oficial](https://dev.mysql.com/doc/refman/8.0/en/sql-prepared-statements.html)).
+Se conserva el candado y registro automático del Migrador existente, sin modificarlo.
+
+Cada paso consulta information_schema; se admiten los cortes DDL generados por el propio orden de 08.
+reasignaciones.id_clinica se añade inicialmente nullable, se rellena desde C y se verifica antes de NOT NULL.
+La columna citas.origen se añade al cerrar el relleno de transición.
+Su presencia identifica una pasada que ya cerró ese relleno: la siguiente no vuelve a modificar citas creadas/personalizadas después.
+Si se corta antes de ese punto, los predicados de NULL/estado permiten reanudar; si se corta después, se reconstruyen índices/FK faltantes sin repetir el relleno.
+Una instalación nueva ya contiene origen en 01 y no recibe rellenos retrospectivos.
+Un esquema manual de definición incompatible produce diagnóstico, no una adivinación sobre su historia.
+
+MySQL/MariaDB confirman DDL implícitamente.
+**No hay rollback global prometido:** un error detiene el migrador sin registrarla como aplicada; los pasos ya confirmados quedan y la siguiente ejecución se reanuda tras resolver el conflicto.
+No se modifican 03–07 publicadas.
+02_semilla.sql no cambia: no hay catálogo nuevo justificado, y la semilla conserva su política de insertar solo faltantes.
+
+### B2.3. Transición de alpha.4 y conservación
+
+Fixture tests/Fixtures/agenda_alpha4.sql es copia fiel del 01 previo a 08.
+Se cotejó con HEAD anterior: ambos blobs normalizados por Git tienen hash 7bc17ed21f15126d654e262cee75b9063602ff4d.
+La fixture no se reconstruye desde el esquema nuevo ni consulta la base manual.
+Los datos de prueba son aislados: citas con instantánea propia, otra sin tipo/duración, completada con consulta/sellos, pausada sin segmentos, HC, vínculos, ausencia parcial, ingreso y propuesta previa.
+
+- Se conservan IDs de citas/actos/HC, usuarios, mascotas, vínculos, clínica, autores, prioridades, horas pactadas/reales y configuración personalizada.
+- Reasignación recibe id_clinica exclusivamente de su cita; una clínica ya guardada que contradiga C detiene la transición.
+Ausencias previamente efectivas reciben aprobada por default; solicitante/revisor/fechas desconocidos siguen NULL.
+- D se copia solo de duración positiva del snapshot propio, con fin-inicio pactados coincidentes, pendiente/confirmada, sin llegada ni inicio/fin reales y sin cálculo/versionado previo.
+Se compara en segundos; nunca se consulta la duración del tipo actual.
+En la fixture, el tipo actual dura 75 y la cita guarda 30: D resulta 1800, no 4500.
+- Duración desconocida, completada y pausada sin evidencia de objetivo activo conservan NULL; no se deduce D del tiempo observado.
+Origen queda legado y política temporal anterior desconocida NULL, sin convertirlos en una llegada/M histórica inventada.
+No se fabrican bloque original, horarios, síntomas, conocimiento, segmentos ni revisión.
+- Futuras activas con datos no demostrables quedan pendiente_revision con causa, respetando marcas/motivos ya existentes.
+Conservar política NULL exige revisión para operar bajo M4; no se escribe una estimación aparente.
+Pausas/solicitudes/bloques/eventos/operaciones nuevos permanecen vacíos durante la actualización.
+- Repetir no sobrescribe una cita personalizada ni una nueva fila creada tras la primera pasada; tampoco transforma una nueva solicitud de ausencia en aprobada.
+Los contactos del ingreso se conservan en la migración: su limpieza depende del flujo autorizado futuro de RE-4.15.10.
+
+### B2.4. RE y evidencia concreta
+
+Son pruebas de datos/preparación, no cierre funcional completo de los RE ni de las carreras de C.
+
+| RE/contrato | Prueba y resultado exigido/verificado |
+|---|---|
+| RE-4.8.2/3; RE-4.12.1/2/3 | testFkCompuestasYChecksRechazanCrucesEIncoherenciaLocal rechaza cierre invertido y bloque de vet sin vínculo; testConservaIdentidadActosSellosDesconocidosYPersonalizacionesPosteriores conserva ausencia parcial, aprobada sin autor inventado. testDuplicadosPendientesDetienenAntesDeCambiosSinElegirFila también diagnostica intervalo negativo sin borrarlo. Cobertura real queda en C6. |
+| RE-4.13.6/7; RE-4.5.1–3; RE-4.14.1/2 | testConservaIdentidadActosSellosDesconocidosYPersonalizacionesPosteriores compara columnas originales de cada cita y todas las filas clínicas/configuración/HC; conserva snapshots y D desconocido, y marca futuras. No se prueba todavía el algoritmo M ni el contador de sobrecupos. |
+| RE-4.15.8; RE-4.14.4/6 | testAuxiliaresCalculadasUnaAbiertaYVariosNull verifica una pausa abierta/propuesta pendiente por cita, múltiples NULL, cierre/cambio de estado y valor realmente calculado frente a una asignación enviada. No prueba pausa clínica, aceptación ni dos conexiones. |
+| RE-4.15.3/9/10; B1.1 | testConservaIdentidadActosSellosDesconocidosYPersonalizacionesPosteriores conserva actos, ficha, HC y contacto sin conciliar/anonimizar; testFkCompuestasYChecksRechazanCrucesEIncoherenciaLocal rechaza C/I/bloque de otra clínica, revisión incompleta y espera sin presencia; admite metadatos del episodio anterior en terminal. Conciliación/rollback real sigue en C7b. |
+| RE-4.9.3; RE-4.4.1/3/4; RE-4.14.7 | Estructura de operaciones/eventos cotejada en testInstalacionYActualizacionDanElMismoDestinoYSeRepiten; eventos rechazan destinatario doble/ausente, referencia ajena y clave duplicada en testFkCompuestasYChecksRechazanCrucesEIncoherenciaLocal. No hay ejecución de comandos/worker/SMTP en B2. |
+| Transición P20 y B1.5 | testInstalacionYActualizacionDanElMismoDestinoYSeRepiten compara tablas, tipos/defaults/generación, índices, FK y CHECK entre ruta nueva/actualización y repite 08. BaseV2MysqlTest::testElMigradorEstaAlDiaDosVecesSeguidas recorre 01+02 y migraciones 03–08 con el migrador real, y la segunda pasada queda al día. |
+| Recuperación y diagnóstico | testReanudaDdlParcialAntesYDespuesDelRelleno corta antes de columnas y después del relleno; elimina después un índice/FK de la fixture para comprobar su reconstrucción. testHuerfanoDetieneConIdSinEliminarlo conserva el huérfano diagnosticado; duplicados conservan ambas propuestas y 52 tablas. |
+| Definiciones compatibles | testDefinicionExistenteIncompatibleNoSeAceptaPorNombre altera índice, ancho de columna, CHECK y destino FK de la fixture; 08 rechaza cada objeto con su diagnóstico. |
+
+Las ocho pruebas nuevas están en tests/Integration/AgendaB2MysqlTest.php.
+La fixture de corrupción usa FOREIGN_KEY_CHECKS=0 solo para construir deliberadamente el caso huérfano y lo restablece; **08 nunca lo desactiva**.
+BaseV2MysqlTest cambia únicamente el esperado 52→58/nombre de prueba y la lista de migraciones para incluir 08.
+No se cambian esperados clínicos, casos T ni código de aplicación.
+
+### B2.5. Verificación ejecutada, límites y entrega
+
+**Motores:** PHP 8.2.12 y MariaDB 10.4.32 local, configuración de pruebas explícita con 127.0.0.1:3306 y exclusivamente zooki_test_base_v2.
+No se leyeron credenciales de la aplicación ni el archivo de entorno; no se consultó la base de trabajo ni se regeneraron sus usuarios/contraseñas.
+Las únicas altas de usuarios/datos son fixtures en la base de prueba.
+No se instalaron ni modificaron servicios.
+
+- PHP completo sin host: **862 pruebas, 7212 aserciones, 52 omitidas, salida 0**.
+Las omitidas son las pruebas de motor real, incluidas las ocho nuevas.
+- PHP completo con MariaDB: **862 pruebas, 7918 aserciones, cero omitidas, salida 0**, 11:49.780.
+Incluye instalación, actualización, repetición, recuperación, conservación y rechazos de las ocho nuevas pruebas.
+- JavaScript completo existente: **238/238, cero fallos/omisiones, salida 0**, incluida prueba Chromium.
+La ejecución inicial estándar encontró EBUSY al eliminar el perfil temporal de Chromium y quedó pendiente; se detuvieron solo sus procesos identificados.
+Se repitió con node --test --test-concurrency=1 --test-force-exit: reporte completo 1..238, sin cambiar tests ni omitir aserciones.
+- En la primera ejecución específica de las ocho nuevas, una expectativa exigía excepción al asignar una columna generada.
+MariaDB ignoró esa asignación con advertencia; se corrigió la prueba para comprobar el valor calculado real, admitiendo la excepción de MySQL, sin aceptar el 999 enviado.
+La ejecución PHP completa posterior es la evidencia final en verde.
+- MySQL 8 **no verificado**: no se identificó un servidor disponible/configurado; Workbench es cliente y no había Docker invocable.
+La consulta no privilegiada de servicios no estuvo disponible; no se cambió ni instaló ninguno.
+La compatibilidad nativa y las ramas de metadata MySQL deben confirmarse en CI/revisión; MariaDB no se presenta como sustituto de esa evidencia.
+- Mermaid de MER/Modelos permanece idéntico; solo cambia texto de estado/diccionario.
+No se recorrieron pantallas ni se regeneraron PDF/Word.
+Los conteos funcionales siguen **96 HU, 430 RE y 120 RN**, sin IDs/revisión/versión nuevos.
+- Verificación de alcance: 58 tablas y mismos campos en 01/drawDB/MER; fixture fiel; antecedentes íntegros; git diff --check sin incidencias.
+No se modifican scripts/migrar.php, helpers/Migrador.php ni docker/iniciar.sh: se conserva migración satisfactoria → carga de conocimiento.
+En XAMPP la guía sigue php scripts/migrar.php y después php scripts/cargar_conocimiento.php; no se ejecutaron contra la base de trabajo.
+
+**Archivos:** database/01_schema.sql; database/08_agenda_grafo_ii.sql; database/modelo/drawdb_schema_v2.sql; tests/Fixtures/agenda_alpha4.sql; tests/Integration/AgendaB2MysqlTest.php; tests/Integration/BaseV2MysqlTest.php; documentacion/MER.md; documentacion/ERS.md; documentacion/FichaTecnica_Zooki.md; documentacion/Modelos.md; specs/HU-4.15-ingreso-emergencia.md; specs/M4-agenda-grafo-ii.md; agentes/estado.md.
+La modificación previa del estado con el encargo del arquitecto se conserva.
+
+**Pendientes:** revisión independiente de B2, verificación MySQL 8 y pruebas de los escritores/concurrencia al integrar C.
+La migración no demuestra reservas exclusivas, HC concurrentes, legitimidad de huellas, conciliación o SMTP.
+B2 no queda aprobada por esta entrega; no se inicia C1 ni se despliega.
+
+**Comandos de commit para el usuario, uno por línea, compatibles con CMD/PowerShell:**
+
+    git add database/01_schema.sql database/08_agenda_grafo_ii.sql database/modelo/drawdb_schema_v2.sql tests/Fixtures/agenda_alpha4.sql tests/Integration/AgendaB2MysqlTest.php tests/Integration/BaseV2MysqlTest.php documentacion/MER.md documentacion/ERS.md documentacion/FichaTecnica_Zooki.md documentacion/Modelos.md specs/HU-4.15-ingreso-emergencia.md specs/M4-agenda-grafo-ii.md agentes/estado.md
+    git commit -m "feat(agenda): preparar esquema y migracion M4 (RE-4.9.3, RE-4.15.3)"
+
+### B2 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor. Veredicto: con corrección requerida B2.1; no aprobar B ni empezar C1 todavía.** Se conserva la entrega y su evidencia como antecedente. El revisor solo modifica este plan y agentes/estado.md; no corrige la implementación que revisa.
+
+**Hallazgos:**
+
+- **H-B2-1 / P1 — CI incompatible con el nuevo número de tablas.** `.github/workflows/ci.yml:95` y `:146` siguen exigiendo 52 tanto tras cargar 01+02 como al inicializar el volumen MySQL. `database/01_schema.sql` ahora crea 58. Reproducción: seguir esos dos pasos del trabajo `base-v2-mysql`; el conteo será 58 y la comparación con 52 devuelve salida 1. El primero detiene el trabajo antes de llegar al migrador/PHPUnit; el segundo también fallaría una vez corregido el primero. Afecta a la verificación de instalación/despliegue de B2, AGENTS «Definición de terminado» y transición P20 del plan. Actualizar ambos esperados coherentemente, conservando los 52 históricos de alpha.4 donde sí corresponden.
+- **H-B2-2 / P2 — las ocho pruebas nuevas nunca corren con motor real en el CI actual.** `.github/workflows/ci.yml:120` ejecuta únicamente `tests/Integration/BaseV2MysqlTest.php`. El trabajo PHP general no configura host MySQL y `AgendaB2MysqlTest::setUp()` omite sus ocho pruebas sin esa variable. Reproducción: examinar ambas invocaciones del workflow; ninguna selecciona `AgendaB2MysqlTest` con host configurado. Por tanto no quedan verificados en MySQL 8 los casos de actualización alpha.4, recuperación DDL, conservación, auxiliares y rechazo de definiciones incompatibles. Afecta al contrato B1.5/P20 y a la evidencia de datos de RE-4.9.3/RE-4.15.3, sin declarar cerrados esos flujos funcionales. Incluir ambas clases en el trabajo MySQL 8, secuencialmente y con base PHPUnit explícita `zooki_test_base_v2`; no paralelizar escritores de esa misma base.
+
+**Verificación propia del alcance y diseño:** diff y Anexo B2 cotejados con B1/B1.1, MER y Modelos §2–§8/§13.4. Se materializan seis tablas y cuatro ampliaciones; los campos de las 58 tablas coinciden entre 01 y drawDB, y los 108 campos añadidos están descritos en el MER. Los 27 bloques Mermaid permanecen idénticos a HEAD; no se repite su renderizado ni se presenta como nueva verificación funcional. Continúan 96 HU, 430 RE únicos sin saltos y 120 RN. Fixture alpha.4 y 01 previo tienen el mismo blob Git `7bc17ed21f15126d654e262cee75b9063602ff4d`. 02/03–07, aplicación, permisos, versión y conocimiento intactos; `git diff --check` sin incidencias.
+
+Se revisaron prevalidación y diagnóstico, columnas/índices/FK/CHECK, unicidad nullable generada, relleno desde snapshot propio y marcador de reanudación. Los casos nuevos comprueban estructura final por ambas rutas, repetición, cortes DDL, conservación de filas/HC/configuración, rechazos de cruces y corrupción explícita. Lo desconocido permanece NULL; la migración no inventa duración desde el tipo actual, presencia ni pausas. No se confunde integridad local SQL con permisos, huellas legítimas, titularidad, solapes, exclusión concurrente, conciliación o envío SMTP; siguen pendientes de C. El diagnóstico usa una rutina transitoria y requiere permisos de rutina, ya declarado en el anexo; el DDL no promete rollback global.
+
+**Suites propias:** PHP completo sin host: **862 pruebas / 7212 aserciones / 52 omitidas, salida 0**. PHP completo con **MariaDB 10.4.32: 862 pruebas / 7918 aserciones / cero omitidas, salida 0**, 09:16.404. JS completo secuencial con Chromium: **238/238, cero fallos u omisiones, salida 0**, sin modificar tests. MySQL 8 no disponible/verificado localmente; no se sustituye esa evidencia por MariaDB. No se consultan la base manual, credenciales ni archivo de entorno; el único destino de las pruebas con motor es `zooki_test_base_v2`.
+
+**Siguiente: B2.1, corrección de verificación.** Codex ejecutor ajusta únicamente el workflow y cualquier incompatibilidad real que demuestre el motor, sin ampliar datos o reglas por iniciativa propia. Mantener los pasos de instalación, migrador repetido y volumen vacío; añadir las ocho pruebas al trabajo MySQL 8 y distinguir evidencia local de evidencia CI pendiente. Actualizar anexo/estado y entregar a revisión independiente. Sin modificar migraciones publicadas, lógica de aplicación, diagramas, versión o descargas para resolver estos dos hallazgos. Guardar y subir tras revisar la corrección; antes de integrar/desplegar, confirmar el resultado real del trabajo MySQL 8.
+
+**Prueba manual:** no hay interfaz ni flujo nuevo en B2; no corresponde repetir pantallas o aplicar esta entrega pendiente de corrección a la base manual. Las pruebas por usuario se entregarán en C. No hay decisiones nuevas de producto que pedir o anotar como confirmadas.
+
+## Anexo B2.1 — Resultado
+
+**Fecha:** 2026-10-18.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto, en otra conversación.
+**Estado:** entregada, pendiente de revisión.
+El autor no aprueba la entrega ni declara cerrados H-B2-1/H-B2-2.
+
+### Corrección del control automático
+
+- **H-B2-1:** los dos conteos del esquema actual en .github/workflows/ci.yml pasan de 52 a 58: instalación desde 01+02 y creación desde volumen vacío.
+La fixture alpha.4 y su aserción histórica de 52 tablas permanecen intactas.
+Las comprobaciones de tablas y roles del volumen quedan en líneas separadas, conservando ambos esperados.
+- **H-B2-2:** el paso PHPUnit de base-v2-mysql ejecuta primero BaseV2MysqlTest.php y después AgendaB2MysqlTest.php, sin filtros ni paralelismo.
+ZOOKI_TEST_MYSQL_DB queda explícita como zooki_test_base_v2 en el entorno común de ambas invocaciones.
+El servicio sigue siendo mysql:8.0, con host/usuario y resto de configuración CI anteriores.
+shell: bash usa la ejecución de GitHub con -e -o pipefail: un fallo de la primera clase interrumpe el paso; un fallo de la segunda también lo hace fallar.
+No hay continue-on-error, captura que convierta un fallo en éxito ni debilitamiento de aserciones.
+
+Se conservan los pasos de instalación, conexión exclusiva del migrador CI, dos pasadas del migrador, conteos de semilla y arranque de volumen vacío.
+No se ejecutó localmente el paso CI que genera su archivo de entorno.
+No se leyó ni escribió el archivo de entorno local ni se consultó la base manual.
+
+**Trazabilidad:** transición P20 y contrato B1.5; evidencia de datos de RE-4.9.3/RE-4.15.3 conforme al Anexo B2.
+Esta corrección incorpora al control MySQL las ocho pruebas ya existentes; no implementa los flujos funcionales, permisos, concurrencia de aplicación ni conciliación B1/B1.1.
+Modelos §2–§8/§13.4 conserva íntegro su destino; no se modifican diagramas ni se anuncia un renderizado nuevo.
+
+### Evidencia propia y comandos ejecutados
+
+- YAML validado con Python/PyYAML 6.0.3, cargador con rechazo de claves duplicadas y conservación de las claves de GitHub.
+Se comprobaron servicio mysql:8.0, base explícita, orden exacto de las dos invocaciones y ausencia de tolerancia de errores.
+Comparación estructural completa contra el workflow previo: solo cambian los dos esperados, la separación de las aserciones finales y la configuración/invocación del paso PHPUnit.
+Se validó además el bloque extraído con Bash local --noprofile --norc -e -o pipefail y un comando PHPUnit simulado: fallo inicial 7 impide la segunda llamada; fallo final 9 devuelve 9; ambas llamadas correctas devuelven 0, siempre en orden.
+Es una comprobación del control del shell, no una ejecución del runner GitHub ni de MySQL 8.
+El intento aislado no inició Bash (salida 3221225794); la repetición fuera del aislamiento verificó los tres resultados.
+- Enumeración real mediante PHPUnit --list-tests: **44 pruebas BaseV2MysqlTest y ocho AgendaB2MysqlTest, 52 en total**.
+Incluye instalación/actualización/repetición, conservación, recuperación DDL, auxiliares, FK/CHECK, duplicados, huérfanos y definiciones incompatibles del Anexo B2.
+- Motor identificado mediante SELECT VERSION(): **10.4.32-MariaDB**, con PHP 8.2.12.
+La primera ejecución aislada terminó con salida 2: Cannot open bootstrap script "C:\Users\Usuario\OneDrive\Desktop\Zooki\tests/bootstrap.php".
+Se repitió fuera del aislamiento sin cambiar código, selección ni aserciones.
+La consulta VERSION() aislada devolvió error 2002/10013; fuera del aislamiento identificó el motor anterior.
+- **BaseV2MysqlTest, ejecución nueva B2.1:** 44 pruebas, 613 aserciones, sin omitidas ni fallos, salida 0; 07:26.620.
+- **AgendaB2MysqlTest, ejecución nueva B2.1:** ocho pruebas, 93 aserciones, sin omitidas ni fallos, salida 0; 02:57.553.
+Comenzó después de terminar la primera clase; total específico **52 pruebas y 706 aserciones**, salida final 0, exclusivamente en zooki_test_base_v2.
+
+Comandos de enumeración y ejecución utilizados en PowerShell, además de los scripts Python por entrada estándar (python -) para validar YAML/comparación/shell y git diff --check:
+
+```powershell
+php vendor/phpunit/phpunit/phpunit --list-tests tests/Integration/BaseV2MysqlTest.php
+php vendor/phpunit/phpunit/phpunit --list-tests tests/Integration/AgendaB2MysqlTest.php
+$env:ZOOKI_TEST_MYSQL_HOST = '127.0.0.1'
+$env:ZOOKI_TEST_MYSQL_DB = 'zooki_test_base_v2'
+php vendor/phpunit/phpunit/phpunit tests/Integration/BaseV2MysqlTest.php
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaB2MysqlTest.php
+exit $LASTEXITCODE
+```
+
+Las dos clases comparten únicamente la base de pruebas indicada y no se ejecutan simultáneamente.
+La consulta diagnóstica ejecutada fue C:\xampp\mysql\bin\mysql.exe -h 127.0.0.1 -u root -N -e "SELECT VERSION()", sin seleccionar otra base.
+
+**Antecedente, no ejecución nueva:** suites completas B2 del ejecutor, PHP sin host 862/7212 con 52 omitidas; PHP MariaDB 862/7918 sin omitidas; JS 238/238.
+Se conserva también la evidencia independiente de «B2 — Revisión»; no se repiten suites completas por cambiar solo el workflow.
+No corresponden pruebas de navegador ni exportaciones.
+
+**Alcance incremental B2.1:** únicamente .github/workflows/ci.yml, este plan y agentes/estado.md.
+Los cambios previos de B2 ya estaban presentes al comenzar y se conservan; no se añaden cambios SQL/PHP, tests, versión, servicios, credenciales ni reglas de producto.
+Comparación SHA-256 de los once archivos previos de B2 fuera de plan/estado: idénticos byte por byte, incluidos SQL, PHP, fixture y Modelos.
+Anexos y revisiones anteriores permanecen conservados.
+
+**Pendientes:** revisión independiente y ejecución real en GitHub del trabajo base-v2-mysql con MySQL 8, después del push del usuario, incluidos los controles de instalación/migrador/semilla/volumen vacío.
+MySQL 8 no está disponible/verificado localmente; MariaDB no sustituye esa evidencia.
+No se integra/despliega ni se empieza C1 por esta entrega.

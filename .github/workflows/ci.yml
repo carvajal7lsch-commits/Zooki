@@ -92,7 +92,7 @@ jobs:
       run: |
         $MYSQL_CI zooki_ci < database/01_schema.sql
         $MYSQL_CI zooki_ci < database/02_semilla.sql
-        test "$($MYSQL_CI -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_ci'")" = "52"
+        test "$($MYSQL_CI -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_ci'")" = "58"
 
     # config/Database.php lee la conexión de .env; este solo existe en el CI.
     - name: Configurar la conexión del migrador
@@ -114,10 +114,14 @@ jobs:
         test "$conteos" = "4,2,6,55,9,0,0,0"
 
     - name: Pruebas PHPUnit contra MySQL 8
+      shell: bash
       env:
         ZOOKI_TEST_MYSQL_HOST: 127.0.0.1
         ZOOKI_TEST_MYSQL_USER: root
-      run: vendor/bin/phpunit tests/Integration/BaseV2MysqlTest.php
+        ZOOKI_TEST_MYSQL_DB: zooki_test_base_v2
+      run: |
+        vendor/bin/phpunit tests/Integration/BaseV2MysqlTest.php
+        vendor/bin/phpunit tests/Integration/AgendaB2MysqlTest.php
 
     # Lo que hace producción con un volumen vacío: MySQL ejecuta los .sql del
     # primer nivel de database/ al crear la base (docker-compose.yml).
@@ -143,4 +147,5 @@ jobs:
         tablas=$(docker exec zooki_initdb mysql -u root -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_init'")
         roles=$(docker exec zooki_initdb mysql -u root -N -e "SELECT COUNT(*) FROM zooki_init.roles")
         echo "tablas=$tablas roles=$roles"
-        test "$tablas" = "52" && test "$roles" = "4"
+        test "$tablas" = "58"
+        test "$roles" = "4"
