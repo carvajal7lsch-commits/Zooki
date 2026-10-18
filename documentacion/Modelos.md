@@ -2,6 +2,8 @@
 
 > **Actualización de cierre M2 — 16/10/2026:** 2.0.0-alpha.4; conocimiento global con fuentes y validación veterinaria pendiente. Esquema de 52 tablas; integración del triage con agenda y urgencias pendiente de M4.
 
+> **Preparación M4/B1 — 2026-10-17:** diagramas de destino alineados con decisiones confirmadas; implementación de M4 pendiente. Alpha.4 mantiene su código/esquema de 52 tablas hasta B2; no se sube revisión ni versión.
+
 Este documento reúne los modelos de la Fase 2: el modelo conceptual de los dos grafos (soporte a la decisión clínica y agendamiento inteligente), los diagramas de proceso de negocio (BPMN) y los flujos del sistema. Complementa al [ERS](ERS.md) y al [MER](MER.md), y se renderiza en el portal mediante Mermaid.
 
 > **Cómo verlos:** cada diagrama tiene arriba un visor con zoom, desplazamiento y pantalla completa (ajusta al ancho y al alto de la pantalla). El botón **draw.io** descarga o abre la versión con estilo (archivo con todas las hojas). Estos diagramas son la versión **detallada**: incluyen las validaciones, las ramas de error, el triage de 4 niveles, la cobertura de ausencias y el propietario multi-clínica. El detalle normativo (reglas de negocio, requisitos, diccionario de datos) vive en el ERS, el MER y las [Reglas de Negocio](ReglasNegocio.md).
@@ -106,7 +108,7 @@ No se declara validación clínica por superar pruebas de software.
 
 ## 2. Grafo II — Agendamiento inteligente
 
-La agenda se modela como un grafo cuyos nodos son las citas del día por veterinario, con tres tipos de arista: **secuencia** (una cita depende del fin real de la anterior), **conflicto** (dos citas que chocan en horario y veterinario) y **emparejamiento** (asignación cita–veterinario, que permite reasignar). El grafo no se guarda: se construye en tiempo real desde `citas`, `tipos_cita`, los veterinarios (`usuarios`), `horarios_clinica`, `horarios_veterinario` y `ausencias_veterinario`. Solo se guardan las reasignaciones que esperan confirmación (`reasignaciones`) y las propuestas de horario (`propuestas_horario`); ver el [MER](MER.md#6-operación-clínica).
+La agenda se modela como un grafo cuyos nodos son las citas del día por veterinario, con tres tipos de arista: **secuencia** (una cita depende del fin real de la anterior), **conflicto** (dos citas que chocan en horario y veterinario) y **emparejamiento** (asignación cita–veterinario, que permite reasignar). El grafo no se guarda: se construye en tiempo real desde `citas`, `tipos_cita`, los veterinarios (`usuarios`), `horarios_clinica`, `horarios_veterinario` y `ausencias_veterinario`. Se conservan solo hechos/estados recuperables: solicitudes y revisiones previas, bloques/cupos, espera presencial, pausas, operaciones y eventos de aviso, además de reasignaciones/propuestas; el destino de datos aún no está instalado. Las aristas se reconstruyen en memoria; ver el [MER](MER.md#6-operación-clínica).
 
 El ejemplo muestra el **efecto cascada**: la cirugía de las 09:30 se extiende y el retraso se propaga por la cola del veterinario A; el sistema detecta un espacio libre en el veterinario B y **propone reasignarle** la última cita para absorberlo.
 
@@ -137,7 +139,7 @@ flowchart LR
 
 ## 3. Proceso de negocio — Consulta clínica (con Grafo I)
 
-Actores: Veterinario. Entrada desde una cita del calendario, o sin cita vía el módulo de Atención/Urgencias. Si la alerta roja se originó en el portal autenticado, ya están identificados el propietario de la sesión y la mascota que seleccionó; la verificación rápida y la ficha provisional corresponden solo a una llegada presencial sin identidad comprobada. El sistema apoya en cada paso; la decisión final es siempre del veterinario.
+Actores: Veterinario. Entrada desde una cita del calendario o sin reserva vía Atención/Urgencias; toda nueva atención crea/enlaza antes su cita de llegada, conservando origen. Si la alerta roja se originó en el portal autenticado, ya están identificados el propietario de la sesión y la mascota que seleccionó; la verificación rápida y la ficha provisional corresponden solo a una llegada presencial sin identidad comprobada. El sistema apoya en cada paso; la decisión final es siempre del veterinario.
 
 ```mermaid
 flowchart TD
@@ -149,15 +151,22 @@ flowchart TD
   C -- Si --> D[Iniciar atencion y sellar hora_inicio_real]
   D --> CTX
 
-  B -- "Sin cita / urgencia (modulo Atencion)" --> FP{El rojo vino del portal autenticado?}
-  FP -- Si --> FPP["Usar propietario de la sesion y mascota seleccionada;<br/>sin nueva verificacion"]
-  FPP --> CTX
-  FP -- "No: llegada presencial" --> F{Se identifico una ficha existente y se verifico la relacion con su propietario?}
-  F -- Si --> F1["Usar la ficha existente; vincularla a la clinica<br/>si hace falta (RN-110, RN-208)"]
-  F1 --> CTX
-  F -- No --> G["Registro rapido de emergencia: datos disponibles de la mascota<br/>y del acompanante; lo faltante no retrasa la atencion"]
-  G --> G1["Guardar ficha provisional e ingreso con datos disponibles del acompañante;<br/>sin atribuir propiedad ni crear cuenta antes del consentimiento (HU-4.15)"]
-  G1 --> CTX
+  B -- "Sin reserva / urgencia" --> PR{"Presencia fisica acreditada?"}
+  PR -- "No: rojo remoto" --> DER[/"Avisar y derivar; no iniciar, pausar ni crear reserva ordinaria"/]
+  DER --> ZF
+  PR -- Si --> F{"Ficha y titularidad verificadas con mecanismos vigentes?"}
+  F -- Si --> F1["Reutilizar ficha/cuenta y vinculo legitimo"]
+  F -- No --> RO{Rojo presencial?}
+  RO -- No --> ID[/"Completar identificacion ordinaria antes de atender"/]
+  ID --> ZF
+  RO -- Si --> G["Ficha provisional e ingreso de clinica; contacto opcional, sin documento por defecto"]
+  G --> G1["Sin atribuir propiedad, crear cuenta ni activar carnet"]
+  F1 --> LG
+  G1 --> LG[["Llegada y capacidad: agenda o urgencias (§4/§6)"]]
+  LG --> CA{"Cita de llegada asignada e iniciada por veterinario?"}
+  CA -- No --> ESP[/"Espera o alternativas; sin consulta huerfana"/]
+  ESP --> ZF
+  CA -- Si --> CTX
 
   CTX["Contexto disponible del paciente: especie, raza, edad, alergias y alertas a la vista, historia<br/>(consultas de otras clinicas solo si el propietario lo autorizo, RN-113);<br/>los datos desconocidos de una ficha provisional no se inventan"] --> H["Form Consulta: motivo, anamnesis,<br/>examen fisico (peso o No se pudo pesar: NULL, nunca 0)<br/>y sintomas confirmados del catalogo; nota libre fuera del calculo"]
   H --> I{Captura inicial y rangos validos?}
@@ -202,7 +211,7 @@ flowchart TD
   RS -- "Si: 422 junto al campo, nada escrito" --> I1
   RS -- No --> RB{Bloqueo o advertencia no resuelta?}
   RB -- Si --> P
-  RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos<br/>y decisiones de prescripcion auditadas;<br/>N de historia si es la 1a (RN-102);<br/>completar la cita si venia de una (RN-406)"]]
+  RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos<br/>y decisiones de prescripcion auditadas;<br/>N de historia si es la 1a (RN-102);<br/>completar su cita asociada (RN-406); sin crear consultas nuevas huerfanas"]]
   Y --> Y1{Guardado correcto?}
   Y1 -- No --> Y2[/"Mensaje: error al guardar, reintentar"/]
   Y2 --> X
@@ -215,128 +224,146 @@ flowchart TD
 
 ---
 
-## 4. Proceso de negocio — Agendamiento de cita (con Grafo II y triage)
+## 4. Proceso de negocio — Agendamiento y llegada sin reserva
 
-Actores: Propietario (desde su portal) y Veterinario (agenda interna de la clínica). El administrador no participa de este flujo. La prioridad (triage) la calcula el Grafo I a partir de los síntomas; el propietario no la elige.
-
-```mermaid
-flowchart TD
-  A([Agendar cita]) --> ROL{Quien agenda?}
-  ROL -- Propietario (su portal) --> P0{"Perfil completo? (RN-G20)"}
-  P0 -- No --> P0a[["Completar el perfil (§13.1)"]]
-  P0a --> P0b
-  P0 -- Si --> P0b["Elige la clinica (entre las vinculadas) y su mascota"]
-  P0b --> P1["Confirma marcas del catalogo y tiempos por evento;<br/>Otro / no se, No se o No aplica preventivo;<br/>nota opcional fuera del calculo"]
-  ROL -- Veterinario (agenda de la clinica) --> V1["Elige mascota; confirma marcas y tiempos;<br/>nota libre fuera del calculo"]
-  P1 --> G1
-  V1 --> G1
-  G1["Grafo I calcula el nivel de triage (HU-2.11):<br/>maximo sin promediar, combinaciones, modificadores,<br/>alarmas universales; sin cobertura = amarillo con revision"]
-  G1 --> TRI{Nivel de triage?}
-  TRI -- "Rojo (critico)" --> HOR{La clinica esta dentro de su horario?}
-  HOR -- No --> HOR1[/"Aviso: clinica cerrada; telefono de urgencias de la clinica<br/>y recomendacion de un servicio 24 horas"/]
-  HOR1 --> HOR2[Notificar a la clinica]
-  HOR2 --> ZF
-  HOR -- Si --> R1[/"Aviso: caso critico, no se agenda en linea"/]
-  R1 --> R2["Notificar a la clinica de inmediato y derivar<br/>(sin verificar el limite del plan)"]
-  R2 --> RSUB[["Sub-flujo: Atencion de urgencia (6)"]]
-  RSUB --> ZF
-  TRI -- "Naranja / Amarillo / Verde" --> LIM
-
-  LIM{La clinica esta dentro del limite del plan?}
-  LIM -- "No (agenda el propietario)" --> LIM1[/"Mensaje neutral: no es posible agendar en linea ahora"/]
-  LIM1 --> LIM2[Notificar a la clinica para que lo gestione]
-  LIM2 --> ZF([Fin])
-  LIM -- "No (agenda el veterinario)" --> LIM3[/"Mensaje: limite del plan alcanzado, mejora el plan"/]
-  LIM3 --> ZF
-  LIM -- Si --> DISP["Calcular disponibilidad:<br/>horario clinica ∩ horario del veterinario − ausencias,<br/>por duracion + margen segun el tipo de cita"]
-  DISP --> MODO{Como se asigna el espacio?}
-  MODO -- "Naranja (urgente): sobrecupo" --> TOP{"Queda cupo de sobrecupo en el proximo bloque?<br/>(tope configurable, por defecto 2)"}
-  TOP -- No --> TOP1[/"Aviso al personal: tope de sobrecupos alcanzado, decide"/]
-  TOP1 --> ZF
-  TOP -- Si --> N1["Ubicar por sobrecupo; entre naranjas, orden de llegada.<br/>El veterinario puede cambiarlo con motivo y auditoria"]
-  MODO -- "Amarillo (prioritario): primer espacio" --> Y1[El sistema toma el primer espacio disponible priorizado]
-  MODO -- "Verde (no urgente): eleccion" --> VE0{Hay espacios disponibles?}
-  VE0 -- No --> VE0a[/"Mensaje: no hay espacios, elige otra fecha o rango"/]
-  VE0a --> VE0b[El actor cambia la fecha o el rango]
-  VE0b --> DISP
-  VE0 -- Si --> VE1[El actor elige un espacio de los disponibles]
-
-  N1 --> RES[Reservar el espacio con bloqueo]
-  Y1 --> RES
-  VE1 --> RES
-  RES --> OK{"La reserva se concreto? (nadie lo tomo antes)"}
-  OK -- Si --> CRE["Crear la cita con tipo, duracion, margen y prioridad;<br/>guardar los sintomas y marcar si es sobrecupo"]
-  OK -- No --> RMSG[/"Ese espacio se acaba de ocupar, se busca otro"/]
-  RMSG --> REPICK["Elegir otro espacio: el sistema toma el siguiente (naranja/amarillo)<br/>o lo elige el actor (verde)"]
-  REPICK --> RES
-  CRE --> AUD[Registrar en auditoria; notificar al propietario y al veterinario]
-  AUD --> ZF
-```
-
-> **Orden del flujo:** el triage se calcula **antes** de verificar el límite del plan, porque una urgencia 🔴 nunca se bloquea por límite ni por mora (RN-420). Las pruebas del triage están en la batería de casos del repositorio (`documentacion/CasosTriage.md`).
->
-> **Niveles de triage (4):** 🔴 Rojo = crítico (no se agenda, va a urgencias), 🟠 Naranja = urgente (sobrecupo, porque la mascota puede agravarse antes del primer espacio), 🟡 Amarillo = prioritario (primer espacio disponible), 🟢 Verde = no urgente (el actor elige). El nivel lo define el Grafo I (RN-411).
-
----
-
-## 5. Proceso de negocio — Reajuste de agenda en vivo (efecto cascada)
-
-Actores: Veterinario (origen y destino). El umbral de retraso es el **margen (buffer) por tipo de cita**: mientras el retraso cabe en el margen, no pasa nada; cuando lo supera, se propaga y, si una cita **se sale del horario disponible del veterinario**, el Grafo II busca reasignarla. La reasignación la confirma el **veterinario destino** dentro de un plazo (RN-428), y los avisos al propietario se agrupan para no saturarlo (RN-429). La llegada tarde del propietario sigue la RN-426 y también dispara este recálculo.
+Solo propietario y veterinario crean citas; el administrador conserva gestión administrativa autorizada, sin crear ni atender.
+La misma disponibilidad de servidor valida sugerencias, reserva y cambios: clínica ∩ veterinario, menos cierres, ausencias efectivas y ocupación, por duración+margen, en intervalos [inicio,fin).
+No se promete atención ni se pausa por un cálculo rojo remoto.
+Las solicitudes no urgentes en espera se ordenan amarillo antes de verde y, dentro de cada color, llegada física/id_solicitud ascendentes; al asignar se revalida capacidad completa, sin sobrecupo.
 
 ```mermaid
 flowchart TD
-  A{{"Evento: una cita termina mas tarde de lo previsto"}} --> B[Calcular el retraso real contra la hora fin + margen del tipo de cita]
-  B --> C{El retraso supera el margen disponible?}
-  C -- No --> C1[El margen lo absorbe; sin cambios]
-  C1 --> ZF([Fin])
-  C -- Si --> D[Propagar el retraso por la cola de citas del veterinario]
-  D --> E{Alguna cita queda fuera del horario disponible del veterinario?}
-  E -- No --> E1[Actualizar horas estimadas; no se reasigna]
-  E -- Si --> F[Grafo II busca otro veterinario con disponibilidad para la cita afectada]
-  F --> G{Hay veterinario con espacio compatible?}
-  G -- Si --> H["Proponer la reasignacion al veterinario destino<br/>(plazo configurable, por defecto 10 min)"]
-  H --> I{El veterinario destino la confirma dentro del plazo?}
-  I -- Si --> J[Reasignar la cita y notificar al propietario y a ambos veterinarios]
-  I -- "No / sin respuesta" --> NX{Hay otro veterinario con espacio compatible?}
-  NX -- Si --> H
-  NX -- No --> RP[Reprogramar la cita con el propietario]
-  G -- No --> RP
-  E1 --> U{"El cambio acumulado supera el umbral de aviso<br/>(por defecto 15 min) y no se aviso en los ultimos 30 min?"}
-  U -- Si --> M[Avisar el nuevo horario estimado al propietario]
-  U -- No --> L([Fin])
-  J --> L
-  RP --> L
-  M --> L
+  A([Agendar o registrar llegada]) --> R{"Veterinario o propietario en contexto legitimo?"}
+  R -- No --> DEN[/"403; admin no crea citas"/]
+  R -- Si --> CAP["Mascota propia/vinculada, marcas confirmadas y tiempos por evento; nota fuera del calculo"]
+  CAP --> G["Grafo I: maximo, version y banderas; conservar 26 T"]
+  G --> RO{Rojo?}
+  RO -- Si --> HOR{Clinica abierta segun horario y cierres?}
+  HOR -- No --> CERR[/"Cerrada; telefono de urgencias si existe y servicio 24h"/]
+  HOR -- Si --> DER[/"Derivacion inmediata; no es reserva ni llegada"/]
+  CERR --> AV
+  DER --> AV["Guardar caso/aviso idempotente sin cuotas; presencia real va a §6"]
+  RO -- No --> REV{Requiere revision?}
+  REV -- Si --> PEN["Guardar solicitud pendiente y avisar al veterinario; sin horario reservable"]
+  PEN --> VET{"Veterinario confirma o ajusta con motivo?"}
+  VET -- No --> PEN
+  VET -- Si --> VAL["Revalidar entrada/contexto/version; conservar calculado y ajustado"]
+  VAL --> ROV{Nivel aprobado rojo?}
+  ROV -- Si --> HOR
+  REV -- No --> LIM
+  ROV -- No --> LIM{Limite del plan permite?}
+  LIM -- No --> MS[/"Portal: mensaje neutral; personal: motivo del limite"/]
+  LIM -- Si --> DISP["Disponibilidad unica completa; sin horario no hay huecos"]
+  DISP --> NIV{Nivel aprobado?}
+  NIV -- Naranja --> TOP{"Cupo en franja original/fecha? Default 2"}
+  TOP -- No --> TOPE[/"Avisar sin insertar; ausencia parcial no multiplica cupos"/]
+  TOP -- Si --> ORD["Sobrecupo por fecha_registro/id_cita; cambio solo vet con motivo"]
+  NIV -- Amarillo --> PRI["Primer espacio compatible"]
+  NIV -- Verde --> EL["Eleccion entre espacios compatibles"]
+  PRI --> HAY{Hay hueco?}
+  EL --> HAY
+  HAY -- No --> LLEG{Llegada presencial?}
+  LLEG -- Si --> ESP["Espera: amarillo antes de verde; dentro del color llegada fisica/id_solicitud; alternativas y revalidacion antes de cita/consulta"]
+  LLEG -- No --> OTRO[/"Otra fecha o rango"/]
+  HAY -- Si --> TX
+  ORD --> TX[["Transaccion: recursos estables, lecturas vigentes, reserva y vinculos, sintomas, auditoria y evento"]]
+  TX --> OK{Confirmada?}
+  OK -- No --> DISP
+  OK -- Si --> RES["Cita unica con tipo/duracion/margen/nivel/origen; llegada conserva origen"]
+  RES --> COR["Despachar avisos tras commit; fallo SMTP no revierte cita"]
 ```
 
 ---
 
-## 6. Proceso de negocio — Atención de urgencia (caso Rojo / llegada directa)
+## 5. Proceso de negocio — Cascada con política temporal M
 
-Actores: Veterinario y Propietario (o acompañante que trae la mascota). Se dispara cuando el Grafo I marca un caso Rojo desde el portal autenticado o cuando llega una urgencia directa a la clínica. El portal ya conoce al propietario y a la mascota seleccionada; la comprobación presencial solo aplica a la llegada directa. El uso inmediato del espacio altera la agenda, por eso enlaza con el reajuste en vivo (§5) y con la consulta (§3).
+s es inicio pactado; r/f son primer inicio real y fin real; D es servicio activo decidido, no recortado por el algoritmo; P suma pausas cerradas.
+Antes de iniciar: e=máximo(s, extremo del predecesor, ahora), N=e+D.
+En atención/reanudada: N=r+D+P; A(t)=tiempo transcurrido menos pausas; R=máximo(0,D−A); F=máximo(N,t+R).
+Completada: F=f y el reloj posterior no cambia el resultado.
+Extremo de ocupación L=máximo(N+margen único,F); si F supera N+margen se propaga el exceso, sin descontar ni sumar margen otra vez.
+Pausa abierta: u es reanudación prevista condicional, N_u=r+D+P+(u−inicio de pausa); F_u=máximo(N_u,u+R_al_pausar). Sin u sustentada solo se informa una cota, nunca libera al veterinario.
+Inicio 09:00/D=30, pausa 09:10–09:30/margen10: N=09:50/L=10:00; dos pausas 10+15: N=09:55/L=10:05.
+Se preservan pactadas, segmentos y sellos; repetición de hechos/reloj no acumula delta.
 
 ```mermaid
 flowchart TD
-  A([Caso critico: triage Rojo o llegada directa]) --> B["Notificar a la clinica y marcar prioridad maxima<br/>(sin verificar limite del plan ni mora)"]
-  B --> C{Hay veterinario disponible de inmediato?}
-  C -- Si --> D[Asignar al veterinario disponible]
-  C -- No --> PZ{"Algun veterinario tiene en curso una cita pausable?"}
-  PZ -- Si --> E["Pausar esa cita segun su tipo (RN-427);<br/>se retoma al terminar la urgencia"]
-  E --> E1[Avisar el corrimiento a los afectados]
-  PZ -- No --> E2["Asignar al primer veterinario que termine;<br/>informar el tiempo estimado y, si no puede esperar, un servicio 24 horas"]
-  E2 --> E1
-  D --> O{Origen del caso rojo?}
-  E1 --> O
-  O -- "Portal autenticado" --> FP["Usar propietario de la sesion y mascota seleccionada;<br/>sin repetir verificacion"]
-  FP --> G
-  O -- "Llegada presencial" --> F{La ficha existente y su relacion con el propietario estan verificadas?}
-  F -- Si --> F1["Usar cuenta y ficha existentes;<br/>sin retrasar la atencion"]
-  F -- No --> F2["Crear ficha provisional de emergencia e ingreso del acompanante;<br/>sin crear cuenta ni activar el carnet"]
-  F1 --> G[["Consulta clinica via modulo Atencion/Urgencias (§3)"]]
-  F2 --> G
-  G --> H{{El uso del espacio altera la agenda del dia}}
-  H --> I[["Reajuste de agenda en vivo (§5)"]]
-  I --> J([Fin])
+  A{{"Inicio, reloj durante atencion, fin, pausa/reanudacion, llegada o cambio de horario"}} --> B["Releer hechos y version bajo candados del contrato comun"]
+  B --> P{Pausa abierta?}
+  P -- Si --> PC["Calcular cota condicional; prioridad de reanudacion; no liberar vet"]
+  P -- No --> N["Calcular N, tiempo activo/restante y F segun estado"]
+  PC --> L
+  N --> L["L = maximo de N + margen unico y F"]
+  L --> COL["Reconstruir cola desde horas pactadas; huecos absorben; no sumar delta anterior"]
+  COL --> FU{Cita fuera de franja compatible?}
+  FU -- No --> EST["Guardar estimaciones y marca/version"]
+  FU -- Si --> EMP["Buscar candidato: primer inicio compatible, luego id_usuario"]
+  EMP --> HAY{Hay candidato?}
+  HAY -- No --> REP["Pendiente de reprogramar; ofrecer alternativas al propietario"]
+  HAY -- Si --> PRO["Propuesta en vivo pendiente, sin apartar hueco"]
+  PRO --> AC{"Destino acepta antes de fecha_limite?"}
+  AC -- Si --> RV{"Revalidacion atomica vigente y compatible?"}
+  RV -- Si --> MOV["Mover cita/cerrar propuesta/auditar/evento en commit"]
+  RV -- No --> SIG
+  AC -- "Rechazo o vencimiento" --> SIG["Siguiente candidato no intentado; sin ninguno reprogramar"]
+  SIG --> EMP
+  EST --> AV{"Desplazamiento acumulado mayor al umbral y 30 min desde ultimo aviso?"}
+  AV -- Si --> EVT["Evento durable de estimacion, sin duplicado por version"]
+  AV -- No --> FIN([Fin])
+  MOV --> SIEM["Reasignacion/reprogramacion siempre genera aviso"]
+  REP --> SIEM
+  SIEM --> FIN
+  EVT --> FIN
+```
+
+---
+
+## 6. Proceso de negocio — Derivación roja, llegada y conciliación
+
+El aviso rojo remoto es inmediato y sin cuota/mora, pero no acredita presencia física ni permite pausar pacientes presentes.
+Solo administrador y veterinario autorizado de la clínica completan/consolidan identidad tras verificar titularidad con sesión, cuenta y vínculos legítimos vigentes; conocer un ID o ser acompañante no acredita propiedad.
+No se inventa documento, reto o plazo adicional; sin prueba suficiente la ficha sigue provisional.
+La acción administrativa no registra/modifica consultas ni crea citas; la creación clínica de llegada corresponde al veterinario.
+Se conservan las cuatro ramas de identidad de RE-4.15.3 y el rollback de todas las referencias.
+
+```mermaid
+flowchart TD
+  A([Rojo remoto o ingreso presencial]) --> B["Caso y aviso idempotentes con prioridad maxima, sin cuota ni mora"]
+  B --> F{Presencia fisica acreditada?}
+  F -- No --> REM[/"Derivar; si cerrada, telefono y servicio 24h; no pausar/iniciar"/]
+  F -- Si --> ID{Identidad y titularidad verificadas?}
+  ID -- Si --> EX["Reutilizar ficha y cuenta; portal conserva identidad sin nueva verificacion"]
+  ID -- No --> PRO["Ficha provisional + ingreso; propietario NULL/carnet inactivo; sin cuenta nueva"]
+  PRO --> CT["Nombre/telefono opcionales; sin documento por defecto ni atribucion de propiedad"]
+  EX --> ORD
+  CT --> ORD["Cola de rojos presentes por llegada fisica/ID; cambio vet con motivo/auditoria"]
+  ORD --> NRO{"Otro rojo y atencion ya pausada?"}
+  NRO -- Si --> DEC{Decision del veterinario?}
+  NRO -- No --> CAP
+  DEC -- "Atender nuevo rojo" --> CAP{Vet libre?}
+  DEC -- "Seguir atencion anterior" --> ESP2["Nuevo rojo espera; continuar/reanudar segun decision"]
+  ESP2 --> REE{{Liberacion o reevaluacion clinica}}
+  REE --> CAP
+  CAP -- Si --> CITA
+  CAP -- No --> PA{Tipo pausable y sin otra pausa abierta del vet?}
+  PA -- Si --> SEG["Pausar con segmento real; conservar inicio y activo restante"]
+  PA -- No --> ESP["Espera durable sin vet asignado; primero compatible que se libere"]
+  ESP --> CAP
+  SEG --> CITA["Veterinario crea/enlaza cita de llegada e inicia cuando atiende realmente"]
+  CITA --> CON[["Consulta atomica (§3); cerrar urgencia y reanudar pausada antes de siguientes salvo decision de nuevo rojo"]]
+  CON --> CAS[["Cascada M (§5), no regenerar margen"]]
+  CAS --> PEND{Ficha provisional?}
+  PEND -- Si --> VER["Admin o vet verifica titularidad por mecanismos vigentes"]
+  VER --> OK{Acreditada?}
+  OK -- No --> TAR["Mantener tarea/estado provisional; sin fusion ni carnet"]
+  OK -- Si --> UN["Completar mismo ID o consolidar sobre ficha existente; transaccion con todas las referencias y HC"]
+  UN --> AUD["Conservar clinica/autor/fechas; auditoria sin copiar contacto"]
+  PEND -- No --> NEC
+  AUD --> NEC{Termino necesidad de contacto de atencion/identidad?}
+  NEC -- No --> MOT["Conservar solo necesario con motivo; sin plazo inventado"]
+  NEC -- Si --> EXT{Conservacion excepcional justificada?}
+  EXT -- Si --> MOT
+  EXT -- No --> LIM["Contacto a NULL, fecha/autor; conservar ingreso y actos; limpiar copias operativas"]
 ```
 
 ---
@@ -352,7 +379,8 @@ flowchart TD
   C --> D{"Franjas validas? (sin solapes, dentro del horario de la clinica<br/>y sin chocar con su horario en otra clinica, RN-706)"}
   D -- No --> D1[/"Mensaje: corrige las franjas (solape, fuera del horario o choque con otro compromiso del veterinario)"/]
   D1 --> C
-  D -- Si --> E[Guardar el horario recurrente del veterinario]
+  D -- Si --> TX["Candados comunes y relectura vigente; validar otra clinica sin mostrarla"]
+  TX --> E[Guardar horario y marcas afectadas en la misma transaccion]
   E --> F{Quedan citas por fuera del nuevo horario?}
   F -- Si --> G[Marcar esas citas para reasignar]
   G --> H[["Reajuste de agenda (§5)"]]
@@ -365,15 +393,20 @@ flowchart TD
 
 ## 8. Proceso de negocio — Ausencia y cobertura del veterinario
 
-Actores: Administrador (registra la ausencia) y Veterinario de cobertura (destino). Una ausencia es la excepción por fecha que tapa la disponibilidad recurrente. El "intercambio de turnos" no es una entidad nueva: es **ausencia del titular + cobertura del reemplazo** (reasignación de sus citas). La trazabilidad de quién atendió de verdad la da la historia clínica (RN-208), no la agenda.
+Actores: Veterinario titular (solicita), Administrador (aprueba o registra directamente) y Veterinario de cobertura (destino). Una ausencia es la excepción por fecha que tapa la disponibilidad recurrente. El "intercambio de turnos" no es una entidad nueva: es **ausencia del titular + cobertura del reemplazo** (reasignación de sus citas). La trazabilidad de quién atendió de verdad la da la historia clínica (RN-208), no la agenda.
 
 ```mermaid
 flowchart TD
-  A([Administrador registra una ausencia]) --> B[Selecciona al veterinario y el rango de fechas o franjas]
+  A([Ausencia]) --> ACT{Quien la solicita?}
+  ACT -- "Veterinario propio" --> SOL["Solicitud pendiente sin bloqueo"]
+  SOL --> APR{Admin aprueba?}
+  APR -- No --> RECH["Rechazar con motivo y avisar; no bloquea"]
+  APR -- Si --> B
+  ACT -- Administrador --> B[Selecciona veterinario y rango parcial o completo]
   B --> C{Rango valido?}
   C -- No --> C1[/"Mensaje: revisa las fechas de la ausencia"/]
   C1 --> B
-  C -- Si --> D[Guardar la ausencia: tapa la disponibilidad de ese rango]
+  C -- Si --> D[Guardar ausencia efectiva y marcas con candados comunes: tapa exactamente el rango]
   D --> E{Hay citas asignadas en ese rango?}
   E -- No --> F[Registrar en auditoria]
   E -- Si --> G[Grafo II busca cobertura: veterinarios con disponibilidad compatible]
@@ -1075,11 +1108,14 @@ flowchart TD
   H4 --> H5{El administrador la aprueba?}
   H5 -- No --> H6[Avisar al veterinario el rechazo y el motivo]
   H6 --> AUD
-  H5 -- Si --> H7[Aplicar el nuevo horario]
+  H5 -- Si --> H7[Revalidar y aplicar con candados; horario y marcas atomicos]
   H7 --> H8{Quedan citas fuera del nuevo horario?}
   H8 -- Si --> H9[["Marcar esas citas para reajuste (§5)"]]
   H9 --> AUD
   H8 -- No --> AUD
+
+  Q -- Solicitar ausencia --> AUS[["Solicitud propia pendiente; admin aprueba antes de bloquear (§8)"]]
+  AUS --> ZF
 
   Q -- Ver sus calificaciones --> R1{Tiene 5 o mas reseñas validas?}
   R1 -- Si --> R2[Ver su promedio y sus reseñas]

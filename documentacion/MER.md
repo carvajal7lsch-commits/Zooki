@@ -2,6 +2,8 @@
 
 > **Actualización de cierre M2 — 16/10/2026:** 2.0.0-alpha.4; conocimiento global con fuentes y validación veterinaria pendiente. Esquema de 52 tablas; integración del triage con agenda y urgencias pendiente de M4.
 
+> **Destino preparatorio M4/B1 — 2026-10-17:** este MER y drawDB proponen 58 tablas de negocio (52 existentes + 6 nuevas); database/01_schema.sql de alpha.4 conserva 52 hasta B2. Las ampliaciones descritas no están instaladas ni acreditan funcionalidades implementadas. Sin cambio de revisión ni versión.
+
 Este documento describe la estructura y relaciones de la base de datos relacional de **Zooki** en su versión **v2.0** (arquitectura SaaS multi-inquilino). El modelo incorpora el aislamiento de datos por clínica (`id_clinica`), el grafo de conocimiento clínico, la suscripción por planes y la reputación de veterinarios, además del historial clínico y la auditoría ya existentes.
 
 ---
@@ -165,6 +167,11 @@ erDiagram
         datetime fecha_hora_fin
         int id_cobertura FK
         varchar motivo
+        enum estado
+        int id_solicitante FK
+        int id_revisor FK
+        datetime fecha_revision
+        varchar motivo_resolucion
     }
     propuestas_horario {
         int id_propuesta PK
@@ -183,6 +190,13 @@ erDiagram
         enum estado
         datetime fecha_limite
         datetime fecha_respuesta
+        int id_clinica FK
+        datetime inicio_propuesto
+        datetime fin_propuesto
+        int version_cita
+        int ciclo
+        varchar motivo
+        int cita_pendiente
     }
     especialidades {
         int id_especialidad PK
@@ -298,6 +312,12 @@ erDiagram
         varchar telefono_acompanante
         enum estado
         datetime fecha_ingreso
+        int id_conciliador FK
+        datetime fecha_conciliacion
+        json evidencia_conciliacion
+        datetime necesidad_contacto_resuelta_en
+        varchar motivo_conservacion_contacto
+        datetime contacto_anonimizado_en
     }
     alertas_medicas {
         int id_alerta PK
@@ -346,6 +366,18 @@ erDiagram
         datetime hora_fin_real
         datetime aviso_atencion_abierta
         json contexto_triage
+        enum origen
+        int id_bloque FK
+        datetime inicio_estimado
+        datetime fin_estimado
+        int duracion_activa_objetivo_segundos
+        varchar politica_temporal
+        enum estado_reajuste
+        varchar motivo_reajuste
+        int version_agenda
+        datetime fecha_ultimo_calculo
+        datetime ultima_hora_comunicada
+        datetime ultimo_aviso_estimacion
     }
     cita_sintomas {
         int id_cita PK
@@ -554,6 +586,125 @@ erDiagram
     citas      ||..o{ notificaciones         : "recuerda (tipo_entidad, sin FK)"
     vacunas    ||..o{ notificaciones         : "recuerda (tipo_entidad, sin FK)"
     usuarios   ||--o{ auditoria_sistema      : "ejecuta"
+    cierres_clinica {
+        int id_cierre PK
+        int id_clinica FK
+        datetime inicio
+        datetime fin
+        varchar motivo
+        tinyint activo
+        int id_autor FK
+        datetime fecha_registro
+    }
+    bloques_agenda {
+        int id_bloque PK
+        int id_clinica FK
+        int id_veterinario FK
+        date fecha
+        char franja_origen
+        datetime inicio_original
+        datetime fin_original
+        enum estado
+    }
+    solicitudes_agenda {
+        int id_solicitud PK
+        int id_clinica FK
+        int id_mascota FK
+        int id_actor FK
+        enum origen
+        datetime fecha_registro
+        datetime fecha_llegada
+        int id_receptor FK
+        enum estado
+        enum estado_revision
+        enum nivel_calculado
+        enum nivel_aprobado
+        json contexto_triage
+        char version_conocimiento
+        char huella_entrada
+        char huella_revision
+        int id_revisor FK
+        datetime fecha_revision
+        varchar motivo_revision
+        tinyint contagio
+        bigint orden_espera
+        int id_cita FK
+        int id_ingreso FK
+        int version_solicitud
+        enum fuente_nivel
+    }
+    pausas_cita {
+        int id_pausa PK
+        int id_clinica FK
+        int id_cita FK
+        int id_solicitud_roja FK
+        datetime inicio
+        datetime fin
+        int id_autor FK
+        varchar motivo
+        int cita_abierta
+    }
+    operaciones_agenda {
+        int id_operacion PK
+        int id_clinica FK
+        int id_actor FK
+        varchar actor_clave
+        varchar accion
+        char clave_operacion
+        char huella_entrada
+        json resultado
+        datetime fecha
+    }
+    eventos_agenda {
+        int id_evento PK
+        int id_clinica FK
+        int id_cita FK
+        int id_solicitud FK
+        varchar tipo
+        char clave_evento
+        varchar destino_clave
+        int id_destinatario FK
+        int id_rol_destino FK
+        enum canal
+        int version_recurso
+        datetime hora_a_comunicar
+        enum estado
+        char reclamacion
+        datetime fecha_reclamacion
+        datetime fecha_resultado
+        int intentos
+        varchar error_tecnico
+        datetime fecha
+    }
+    clinicas ||--o{ cierres_clinica : "id_clinica"
+    usuarios ||--o{ cierres_clinica : "id_autor"
+    clinicas ||--o{ bloques_agenda : "id_clinica"
+    usuarios ||--o{ bloques_agenda : "id_veterinario"
+    usuario_clinica ||--o{ bloques_agenda : "id_veterinario,id_clinica"
+    clinicas ||--o{ solicitudes_agenda : "id_clinica"
+    mascotas ||--o{ solicitudes_agenda : "id_mascota"
+    usuarios ||--o{ solicitudes_agenda : "id_actor"
+    usuarios |o--o{ solicitudes_agenda : "id_receptor"
+    usuarios |o--o{ solicitudes_agenda : "id_revisor"
+    citas |o--o| solicitudes_agenda : "id_cita,id_clinica"
+    ingresos_emergencia |o--o{ solicitudes_agenda : "id_ingreso,id_clinica"
+    clinicas ||--o{ pausas_cita : "id_clinica"
+    citas ||--o{ pausas_cita : "id_cita,id_clinica"
+    solicitudes_agenda ||--o{ pausas_cita : "id_solicitud_roja,id_clinica"
+    usuarios ||--o{ pausas_cita : "id_autor"
+    clinicas ||--o{ operaciones_agenda : "id_clinica"
+    usuarios |o--o{ operaciones_agenda : "id_actor"
+    clinicas ||--o{ eventos_agenda : "id_clinica"
+    citas |o--o{ eventos_agenda : "id_cita,id_clinica"
+    solicitudes_agenda |o--o{ eventos_agenda : "id_solicitud,id_clinica"
+    usuarios |o--o{ eventos_agenda : "id_destinatario"
+    roles |o--o{ eventos_agenda : "id_rol_destino"
+    bloques_agenda |o--o{ citas : "id_bloque,id_clinica"
+    usuarios |o--o{ ausencias_veterinario : "id_solicitante"
+    usuarios |o--o{ ausencias_veterinario : "id_revisor"
+    clinicas ||--o{ reasignaciones : "id_clinica"
+    citas ||--o{ reasignaciones : "id_cita,id_clinica"
+    usuarios |o--o{ ingresos_emergencia : "id_conciliador"
 ```
 
 ---
@@ -587,7 +738,7 @@ erDiagram
 *   **grafo_aristas**: Relaciones dirigidas entre nodos con `tipo_relacion`, `signo` (`positivo`/`negativo`) y `peso`. Es un **grafo con signo**: lo positivo favorece; un efecto negativo puede advertir o bloquear según su semántica, no solo por su signo. Compartido por todas las clínicas.
 *   Los datos de cada paciente se cruzan con el grafo por cuatro puntos: `alertas_medicas.id_nodo`, `cita_sintomas`, `consulta_sintomas` y `tratamientos.id_nodo_farmaco`. Sin esos enlaces el triage y las advertencias de prescripción no tendrían de dónde leer.
 
-> El **Grafo II (agenda)** no guarda el grafo: lo construye en tiempo real a partir de `citas` (estado, nivel de triage, horas reales, sobrecupos), `tipos_cita` (duración, margen, pausable), `horarios_clinica`, `horarios_veterinario`, `ausencias_veterinario` y los parámetros de la clínica. Solo persiste lo que debe sobrevivir entre una petición y otra: las reasignaciones que esperan confirmación (`reasignaciones`) y las propuestas de horario (`propuestas_horario`).
+> El **Grafo II (agenda)** no guarda el grafo: lo construye en tiempo real a partir de `citas` (estado, nivel de triage, horas reales, sobrecupos), `tipos_cita` (duración, margen, pausable), `horarios_clinica`, `horarios_veterinario`, `ausencias_veterinario` y los parámetros de la clínica. Persiste hechos/estados recuperables necesarios de agenda, no sus aristas: solicitudes/revisión/espera, bloques, pausas, idempotencia y eventos, además de reasignaciones/propuestas. Ver el destino B1 al final; aún no instalado.
 
 ### 5. Pacientes y catálogos taxonómicos
 *   **mascotas**: Ficha **global** del animal, del propietario y no de una clínica (sin `id_clinica`). FKs a `especies`, `razas` y `usuarios` (propietario). En una urgencia roja sin identificación verificable, `id_propietario`, especie, raza, nombre y peso pueden quedar NULL solo con `ficha_por_completar = 1`; la aplicación exige esos datos al completar la ficha ordinaria (RE-4.15.3). `raza_indicada` guarda la raza escrita cuando no está en la lista, con el mismo largo que `razas.nombre_raza` (50 caracteres) para que pueda pasar al catálogo sin recortarse. `esterilizado` es NULL si no se sabe; el triage lo usa. `token_carnet` es aleatorio (≥ 128 bits) y nunca expone `id_mascota` en la URL (RN-502); el carnet de una ficha provisional permanece inactivo. `id_clinica_registro` guarda la clínica que la registró: junto con el propietario, es la única que puede cambiar especie, raza, sexo y fecha de nacimiento (RN-110). `carnet_activo` apaga el carnet sin borrar el token, cuando la mascota se inactiva o su propietario suprime la cuenta (RN-502, RN-G16).
@@ -637,3 +788,231 @@ El nodo de especie referencia solo `id_especie`; el de raza solo `id_raza`, cuya
 Las FK, la unicidad y `ck_nodo_taxonomia` impiden enlaces inválidos o mezclados en conocimiento nuevo; los conceptos legados inactivos conservan su tipo e ID aunque aún no tengan taxonomía; el cargador comprueba la pareja especie/raza declarada contra el catálogo.
 `consulta_sintomas.detalles`, `cita_sintomas.detalles` y `citas.contexto_triage` conservan contexto estructurado, sin interpretar notas ni copiar medicación protegida.
 El tipo `sustancia` distingue tóxicos de fármacos; ningún signo negativo implica por sí solo un bloqueo.
+
+
+## Destino preparatorio M4/B1 — diccionario mínimo y restricciones
+
+El destino amplía seis entidades y reutiliza las existentes; las siete tablas inicialmente sugeridas en A no se adoptan en bloque.
+Evaluación, derivación y espera se unifican en solicitudes_agenda, con estado de revisión separado del estado de atención.
+Citas mantiene id_veterinario obligatorio; una espera sin profesional aún no es una cita.
+Toda nueva entidad se confina por id_clinica y conserva sus datos al inactivar; ninguna FK nueva borra actos clínicos en cascada.
+Las FK compuestas de recurso+clínica evitan vincular recursos de clínicas diferentes; ser miembro activo y su rol se revalida en servidor.
+
+### cierres_clinica — destino, no instalada
+
+Cierre puntual no representable por recurrencia ni ausencia personal. RE-4.8.2/3.
+
+| Campo | Tipo de referencia |
+|---|---|
+| id_cierre | INT NOT NULL PRIMARY KEY AUTO_INCREMENT |
+| id_clinica | INT NOT NULL |
+| inicio | DATETIME NOT NULL |
+| fin | DATETIME NOT NULL |
+| motivo | VARCHAR(255) NOT NULL |
+| activo | TINYINT(1) NOT NULL DEFAULT 1 |
+| id_autor | INT NOT NULL |
+| fecha_registro | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP |
+
+**Índices:** KEY idx_cierre_rango (id_clinica, activo, inicio, fin).
+**Relaciones:** id_clinica → clinicas(id_clinica); id_autor → usuarios(id_usuario).
+**Restricciones y transición:** fin>inicio; [inicio,fin); baja lógica, sin borrar cierres usados. Transición: vacía, no inventar festivos.
+
+### bloques_agenda — destino, no instalada
+
+Identidad estable de franja original/fecha que no se multiplica al restar ausencias. RE-4.13.7.
+
+| Campo | Tipo de referencia |
+|---|---|
+| id_bloque | INT NOT NULL PRIMARY KEY AUTO_INCREMENT |
+| id_clinica | INT NOT NULL |
+| id_veterinario | INT NOT NULL |
+| fecha | DATE NOT NULL |
+| franja_origen | CHAR(64) NOT NULL |
+| inicio_original | DATETIME NOT NULL |
+| fin_original | DATETIME NOT NULL |
+| estado | ENUM('vigente','revisar','retirado') NOT NULL DEFAULT 'vigente' |
+
+**Índices:** UNIQUE KEY uq_bloque_origen (id_clinica, id_veterinario, fecha, franja_origen); UNIQUE KEY uq_bloque_clinica (id_bloque, id_clinica); KEY idx_bloque_vet_fecha (id_veterinario, fecha).
+**Relaciones:** id_clinica → clinicas(id_clinica); id_veterinario → usuarios(id_usuario); id_veterinario,id_clinica → usuario_clinica(id_usuario,id_clinica).
+**Restricciones y transición:** Identificador opaco servidor de franja original; no cambia por recortes de ausencia ni se borra/recrea para regalar cupo. Cambios recurrentes preservan bloque ya usado de esa fecha, marcan revisar y no reinician contador. Contar citas naranja salvo cancelada/no_asistio; no persistir contador duplicado ni tope histórico distinto al parámetro vigente. Transición: vacía; sobrecupos legados sin origen demostrable se marcan pendientes.
+
+### solicitudes_agenda — destino, no instalada
+
+Una sola entidad para captura/revisión, derivación remota y espera física sin cita ni veterinario; evita tablas separadas de evaluación y urgencia. RE-2.2.5, RE-2.11.5, RE-4.15.1/2/3.
+
+| Campo | Tipo de referencia |
+|---|---|
+| id_solicitud | INT NOT NULL PRIMARY KEY AUTO_INCREMENT |
+| id_clinica | INT NOT NULL |
+| id_mascota | INT NOT NULL |
+| id_actor | INT NOT NULL |
+| origen | ENUM('portal','llegada') NOT NULL |
+| fecha_registro | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP |
+| fecha_llegada | DATETIME DEFAULT NULL |
+| id_receptor | INT DEFAULT NULL |
+| estado | ENUM('abierta','derivada','espera_presencial','asignada','en_atencion','finalizada','pendiente_reprogramacion','retirada') NOT NULL DEFAULT 'abierta' |
+| estado_revision | ENUM('no_requerida','pendiente','resuelta') NOT NULL |
+| nivel_calculado | ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL |
+| nivel_aprobado | ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL |
+| contexto_triage | JSON NOT NULL |
+| version_conocimiento | CHAR(64) DEFAULT NULL |
+| huella_entrada | CHAR(64) NOT NULL |
+| huella_revision | CHAR(64) DEFAULT NULL |
+| id_revisor | INT DEFAULT NULL |
+| fecha_revision | DATETIME DEFAULT NULL |
+| motivo_revision | VARCHAR(255) DEFAULT NULL |
+| contagio | TINYINT(1) NOT NULL DEFAULT 0 |
+| orden_espera | BIGINT DEFAULT NULL |
+| id_cita | INT DEFAULT NULL |
+| id_ingreso | INT DEFAULT NULL |
+| version_solicitud | INT NOT NULL DEFAULT 0 |
+| fuente_nivel | ENUM('grafo','clinico_presencial') DEFAULT NULL |
+
+**Índices:** UNIQUE KEY uq_solicitud_clinica (id_solicitud, id_clinica); UNIQUE KEY uq_solicitud_cita (id_cita); KEY idx_solicitud_espera (id_clinica, estado, fecha_llegada, id_solicitud); KEY idx_solicitud_revision (id_clinica, estado_revision, fecha_registro); KEY idx_solicitud_mascota (id_mascota, estado).
+**Relaciones:** id_clinica → clinicas(id_clinica); id_mascota → mascotas(id_mascota); id_actor → usuarios(id_usuario); id_receptor → usuarios(id_usuario); id_revisor → usuarios(id_usuario); id_cita,id_clinica → citas(id_cita,id_clinica); id_ingreso,id_clinica → ingresos_emergencia(id_ingreso,id_clinica).
+**Restricciones y transición:** Remoto no lleva llegada/receptor ni activa atención; presencia se acredita por personal autorizado. Revisión resuelta requiere revisor/fecha/huella vigente; ajuste requiere motivo. Sin asignación id_cita=NULL y no hay vet ficticio; al asignar se crea cita en la misma transacción. Ficha provisional solo para rojo presencial sin identidad. JSON guarda episodios/tiempos y contexto permitido, nunca medicación protegida ni contacto del acompañante. orden_espera es orden explícito motivado para excepciones clínicas rojas, no puntaje; la espera no urgente se deriva de nivel aprobado (amarillo antes de verde), fecha_llegada e id_solicitud ascendentes, sin sobrecupo. Transición: vacía, sin inventar evaluaciones/presencia. Rojo presencial clínicamente declarado conserva fuente clinico_presencial/nivel_aprobado rojo/revisor y motivo, sin fingir cálculo ni versión de grafo; un registro aún sin triage no es reservable. Flujo ordinario exige cálculo del motor, huella y versión válidos.
+
+### pausas_cita — destino, no instalada
+
+Reconstruir múltiples interrupciones y tiempo activo de política M. RE-4.15.8, RE-4.5.1/2/3.
+
+| Campo | Tipo de referencia |
+|---|---|
+| id_pausa | INT NOT NULL PRIMARY KEY AUTO_INCREMENT |
+| id_clinica | INT NOT NULL |
+| id_cita | INT NOT NULL |
+| id_solicitud_roja | INT NOT NULL |
+| inicio | DATETIME NOT NULL |
+| fin | DATETIME DEFAULT NULL |
+| id_autor | INT NOT NULL |
+| motivo | VARCHAR(255) NOT NULL |
+| cita_abierta | INT DEFAULT NULL |
+
+**Índices:** UNIQUE KEY uq_pausa_abierta (cita_abierta); KEY idx_pausa_cita (id_clinica, id_cita, inicio).
+**Relaciones:** id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica); id_solicitud_roja,id_clinica → solicitudes_agenda(id_solicitud,id_clinica); id_autor → usuarios(id_usuario).
+**Restricciones y transición:** cita_abierta es calculada en B2: id_cita solo si fin IS NULL; drawDB la representa convencional por compatibilidad. fin>inicio, sin solapes, una pausa abierta, tipo pausable y rojo presente en esa clínica; cerrar antes de completar. R/N/L se derivan, sin saldo mutable ni margen por pausa. Transición: vacía; una pausada legada sin segmentos queda para revisión, sin fabricar horas.
+
+### operaciones_agenda — destino, no instalada
+
+Idempotencia atómica de comandos; no puede sustituirse por avisos con otra vida útil. RE-4.9.3, RE-4.15.3.
+
+| Campo | Tipo de referencia |
+|---|---|
+| id_operacion | INT NOT NULL PRIMARY KEY AUTO_INCREMENT |
+| id_clinica | INT NOT NULL |
+| id_actor | INT DEFAULT NULL |
+| actor_clave | VARCHAR(80) NOT NULL |
+| accion | VARCHAR(80) NOT NULL |
+| clave_operacion | CHAR(64) NOT NULL |
+| huella_entrada | CHAR(64) NOT NULL |
+| resultado | JSON NOT NULL |
+| fecha | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP |
+
+**Índices:** UNIQUE KEY uq_operacion_clave (id_clinica, actor_clave, accion, clave_operacion).
+**Relaciones:** id_clinica → clinicas(id_clinica); id_actor → usuarios(id_usuario).
+**Restricciones y transición:** actor_clave se deriva en servidor (usuario o tarea), nunca del cliente; resultado solo referencias internas/código, no datos personales. Cita/solicitud/ingreso del resultado se validan en esa clínica; relación lógica por resultado, sin FK polimórfica falsa. Misma clave/huella devuelve mismo resultado; otra huella conflicto. Comando fallido revierte su fila. Transición: vacía, claves no derivadas de CSRF.
+
+### eventos_agenda — destino, no instalada
+
+Evento durable tras commit, separación de SMTP e idempotencia de avisos, no nueva bitácora general M8. RE-4.4.1/3/4, RE-4.14.7, RE-4.12.5, RE-2.11.6.
+
+| Campo | Tipo de referencia |
+|---|---|
+| id_evento | INT NOT NULL PRIMARY KEY AUTO_INCREMENT |
+| id_clinica | INT NOT NULL |
+| id_cita | INT DEFAULT NULL |
+| id_solicitud | INT DEFAULT NULL |
+| tipo | VARCHAR(80) NOT NULL |
+| clave_evento | CHAR(64) NOT NULL |
+| destino_clave | VARCHAR(80) NOT NULL |
+| id_destinatario | INT DEFAULT NULL |
+| id_rol_destino | INT DEFAULT NULL |
+| canal | ENUM('interno','correo') NOT NULL |
+| version_recurso | INT NOT NULL |
+| hora_a_comunicar | DATETIME DEFAULT NULL |
+| estado | ENUM('pendiente','reclamado','enviado','error','incierto','omitido') NOT NULL DEFAULT 'pendiente' |
+| reclamacion | CHAR(64) DEFAULT NULL |
+| fecha_reclamacion | DATETIME DEFAULT NULL |
+| fecha_resultado | DATETIME DEFAULT NULL |
+| intentos | INT NOT NULL DEFAULT 0 |
+| error_tecnico | VARCHAR(255) DEFAULT NULL |
+| fecha | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP |
+
+**Índices:** UNIQUE KEY uq_evento_destino (id_clinica, clave_evento, destino_clave, canal); KEY idx_evento_pendiente (estado, fecha, id_evento); KEY idx_evento_cita (id_clinica, id_cita, tipo).
+**Relaciones:** id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica); id_solicitud,id_clinica → solicitudes_agenda(id_solicitud,id_clinica); id_destinatario → usuarios(id_usuario); id_rol_destino → roles(id_rol).
+**Restricciones y transición:** Una referencia al menos; destinatario usuario o rol legítimo, destino_clave generada en servidor. No guardar HTML/contacto provisional; reconstruir marca y contacto permitido al despachar. Clave semántica y versión evitan evento doble. Reclamar fuera de SMTP; incierto no reenvía automáticamente hasta resolución operativa. notificaciones registra resultado de correo, notificaciones_internas sigue entregando internos. Transición: vacía, no fabricar envíos previos.
+
+### Ampliaciones de entidades existentes — destino pendiente de B2
+
+**citas — RE-2.2.1/4, RE-4.5.1–3, RE-4.13.7, RE-4.14.7.**
+
+| Campo propuesto | Tipo |
+|---|---|
+| origen | ENUM('reserva','llegada_sin_reserva','urgencia','legado') NOT NULL DEFAULT 'legado' |
+| id_bloque | INT DEFAULT NULL |
+| inicio_estimado | DATETIME DEFAULT NULL |
+| fin_estimado | DATETIME DEFAULT NULL |
+| duracion_activa_objetivo_segundos | INT DEFAULT NULL |
+| politica_temporal | VARCHAR(16) DEFAULT NULL |
+| estado_reajuste | ENUM('ninguno','pendiente_calculo','pendiente_revision','pendiente_reasignacion','pendiente_reprogramacion') NOT NULL DEFAULT 'ninguno' |
+| motivo_reajuste | VARCHAR(255) DEFAULT NULL |
+| version_agenda | INT NOT NULL DEFAULT 0 |
+| fecha_ultimo_calculo | DATETIME DEFAULT NULL |
+| ultima_hora_comunicada | DATETIME DEFAULT NULL |
+| ultimo_aviso_estimacion | DATETIME DEFAULT NULL |
+
+Índices: UNIQUE KEY uq_cita_clinica (id_cita, id_clinica); KEY idx_cita_bloque (id_bloque, es_sobrecupo, estado, fecha_registro, id_cita); KEY idx_cita_reajuste (id_clinica, estado_reajuste, fecha); KEY idx_cita_vet_estimada (id_veterinario, inicio_estimado); KEY idx_cita_mascota_estimada (id_mascota, inicio_estimado).
+Relaciones añadidas: id_bloque,id_clinica → bloques_agenda(id_bloque,id_clinica).
+Conservar fecha/hora/hora_fin y sellos. D>0 si conocido; F clínico no incluye margen, N/L derivados con M identificada. Sin nuevas prioridades ni estados clínicos. Bloque obligatorio para naranja nuevo y de ese vet/fecha; no mezclar demanda extra con simultaneidad. Valores nuevos por defecto no acreditan historia. Legado sin dato verificable conserva NULL/legado y futura conflictiva queda pendiente; no copiar valores actuales de tipo como antiguos.
+
+**ausencias_veterinario — RE-4.12.1/2/3.**
+
+| Campo propuesto | Tipo |
+|---|---|
+| estado | ENUM('solicitada','aprobada','rechazada','anulada') NOT NULL DEFAULT 'aprobada' |
+| id_solicitante | INT DEFAULT NULL |
+| id_revisor | INT DEFAULT NULL |
+| fecha_revision | DATETIME DEFAULT NULL |
+| motivo_resolucion | VARCHAR(255) DEFAULT NULL |
+
+Índices: KEY idx_ausencia_revision (id_clinica, estado, fecha_hora_inicio); KEY idx_ausencia_vet (id_veterinario, estado, fecha_hora_inicio, fecha_hora_fin).
+Relaciones añadidas: id_solicitante → usuarios(id_usuario); id_revisor → usuarios(id_usuario).
+Solo aprobada bloquea. Nuevas solicitudes envían solicitada explícita; admin registra aprobada con autor/revisor. Legacy ya era bloqueo efectivo: aprobada sin inventar autores. Rango exacto parcial/completo, sin eliminar registros.
+
+**reasignaciones — RE-4.14.4/6.**
+
+| Campo propuesto | Tipo |
+|---|---|
+| id_clinica | INT NOT NULL |
+| inicio_propuesto | DATETIME DEFAULT NULL |
+| fin_propuesto | DATETIME DEFAULT NULL |
+| version_cita | INT DEFAULT NULL |
+| ciclo | INT NOT NULL DEFAULT 0 |
+| motivo | VARCHAR(255) DEFAULT NULL |
+| cita_pendiente | INT DEFAULT NULL |
+
+Índices: KEY idx_reasig_clinica_limite (id_clinica, estado, fecha_limite); KEY idx_reasig_intentos (id_cita, ciclo, id_veterinario_destino); UNIQUE KEY uq_reasig_pendiente (cita_pendiente).
+Relaciones añadidas: id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica).
+cita_pendiente calculada en B2=id_cita si estado pendiente, NULL en resto; drawDB convencional comentada. id_clinica demostrable desde cita; nuevas pendientes requieren intervalo y versión, no apartan capacidad. Destino miembro activo; aceptar antes del límite y releer todo. Legacy sin intervalo/versión no puede aceptarse ciegamente; se marca cita para revisión. Duplicados pendientes preexistentes hacen detener actualización con diagnóstico, no borrado automático.
+
+**ingresos_emergencia — RE-4.15.3/9/10.**
+
+| Campo propuesto | Tipo |
+|---|---|
+| id_conciliador | INT DEFAULT NULL |
+| fecha_conciliacion | DATETIME DEFAULT NULL |
+| evidencia_conciliacion | JSON DEFAULT NULL |
+| necesidad_contacto_resuelta_en | DATETIME DEFAULT NULL |
+| motivo_conservacion_contacto | VARCHAR(255) DEFAULT NULL |
+| contacto_anonimizado_en | DATETIME DEFAULT NULL |
+
+Índices: UNIQUE KEY uq_ingreso_clinica (id_ingreso, id_clinica).
+Relaciones añadidas: id_conciliador → usuarios(id_usuario).
+Solo admin/vet autorizado verificando titularidad; evidencia referencias a sesión/vínculos legítimos y mapa de IDs/HC, sin nuevo reto, documento obligatorio ni datos de contacto. Campos contacto existentes opcionales; documento_acompanante queda legado, no captura por defecto. Al cerrar atención y resolver identidad verificar necesidad: contacto a NULL salvo conservación necesaria motivada; registrar fecha/actor por auditoría sin guardar valores, limpiar copias operativas y no borrar ingreso/actos. Legacy sin evidencia no se declara conciliado ni limpiado retrospectivamente.
+
+### Reconstrucción clínica, contacto y datos legados
+
+Política temporal M: duración pactada/sellos reales permanecen; duración activa objetivo y pausas reales permiten reconstruir nominal y extremo con un solo margen. fin_estimado es clínico, no incluye margen. Datos desconocidos de alpha.4 permanecen desconocidos; no se fabrican pausas, evaluaciones, autores, llegada ni horario recurrente.
+La ficha provisional se concilia solo desde su clínica, verificando titularidad con las identidades/vínculos vigentes. Se trasladan citas, consultas, alertas, vacunas y desparasitaciones cuando corresponda; tratamientos/archivos/síntomas siguen consulta o cita. Auditoría y escaneos históricos mantienen referencias de origen, con el mapa provisional→final en ingreso. La ficha provisional queda inactiva y su carnet no se reactiva.
+La relación mascota_clinica se une conservando los dos números HC como procedencia: si final ya tiene HC, se conserva la antigua fila provisional inactiva como alias con mapa al final; si final carece de HC y la provisional tiene uno, se transfiere bajo candado clínico y la evidencia registra el origen, sin duplicar el índice único. No se inventa un HC por conciliar; se asigna en primera consulta según RN-102. Una provisional con referencias clínicas de otra clínica exige detener/derivar la conciliación, sin apropiarse de actos ajenos.
+Atención cerrada y titularidad resuelta disparan comprobación de fin de necesidad del contacto; sin necesidad o excepción justificada, nombre/teléfono y documento legado de acompañante se ponen a NULL conservando ingreso y actos. Las copias operativas/temporales/avisos no retienen esos valores; los respaldos siguen su política vigente y no se promete borrado retroactivo de copias inmutables, que permanecen restringidas y se purgan según esa política. No se introduce plazo de retención nuevo.

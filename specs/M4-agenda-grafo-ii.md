@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **A/A.1 revisadas y decisiones de producto de agenda/urgencias/privacidad confirmadas (2026-10-17)**. H-A1 cerrado. Siguiente: B1 documental para cerrar contrato técnico y esquema mínimo; después B2 de migraciones, con revisión previa de B1.
+> Estado: **B1 revisada con corrección requerida B1.1 (2026-10-18)**. Se validan alineación documental y diseño general; falta cerrar la referencia de solicitudes al conciliar la mascota. No empezar B2. Alpha.4 y SQL ejecutable intactos.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -24,7 +24,7 @@ El Grafo II se construye en memoria desde las citas y la disponibilidad: aristas
 
 **Incluido como dependencia transversal:** HU-7.4 completa (marca, teléfono de urgencias, tipos, duración, margen y pausable), la conservación de HU-7.1 y las rutas existentes de agenda; HU-5.6 completa, absorbida por la agenda según el plan de entregas. Los parámetros generales de HU-7.5 se leen por clínica con sus valores existentes; su panel general sigue en v2.1.
 
-**Fuera de esta propuesta v2.0:** reporte de ausentismo RE-4.7.3; HU-4.10 (confirmar desde recordatorio), HU-4.16 (afinidad/reputación) y HU-4.17 (actualización de síntomas por el propietario): v2.1, sujeto a resolver la contradicción de HU-4.10. O-06 se conserva como aceptación futura de HU-4.17, no se declara pasado por M4. Tampoco entran suscripción/cobro de HU-0.5, gestión general de especialidades, plantillas/bitácora de M8, carnet/QR ni rediseño global. Sí se prueba la excepción roja frente al estado de mora sin construir la suscripción.
+**Fuera de esta propuesta v2.0:** reporte de ausentismo RE-4.7.3; HU-4.10 (confirmar desde recordatorio), HU-4.16 (afinidad/reputación) y HU-4.17 (actualización de síntomas por el propietario): v2.1, conforme a la decisión confirmada de §6. O-06 se conserva como aceptación futura de HU-4.17, no se declara pasado por M4. Tampoco entran suscripción/cobro de HU-0.5, gestión general de especialidades, plantillas/bitácora de M8, carnet/QR ni rediseño global. Sí se prueba la excepción roja frente al estado de mora sin construir la suscripción.
 
 **Decisión del usuario (2026-10-17):** toda atención sin reserva debe crear una cita de llegada y conservar ese origen. La incorporación de HU-2.2 está confirmada; los criterios documentales y el tratamiento de capacidad/sobrecupo deben concretarse antes de implementar, sin permitir una consulta nueva por este acceso que quede fuera de la agenda.
 
@@ -40,7 +40,7 @@ Los rangos incluyen cada RE consecutivo del intervalo. La evidencia indicada es 
 | HU-4.13 | RE-4.13.1–RE-4.13.7 | RN-401, RN-402, RN-411, RN-415, RN-420, RN-422 | C3, C4a, C4b, C7 | Cuatro ramas; bloqueo real concurrente; tipo/duración/margen/prioridad; tope 2 por defecto y orden por fecha/ID; rojo antes del límite. |
 | HU-2.11 | RE-2.11.1–RE-2.11.7 (cierre operativo) | RN-209, RN-411, RN-416–RN-418, RN-424, RN-425, RN-113 | C4a, C4b, C7 | Marcas/tiempos/nota persistidos; nota sola rechazada; 26/26 sin alterar esperados; T-20 sin horario antes de revisión; T-11 avisa aislamiento. |
 | HU-4.14 | RE-4.14.1–RE-4.14.7 | RN-412, RN-413, RN-415, RN-428, RN-429 | C5a, C5b | Reloj controlado: margen exacto, cascada, fin de franja, aceptación/rechazo/vencimiento de propuestas; avisos acumulados y como máximo dos por hora en el caso de aceptación. |
-| HU-4.15 | RE-4.15.1–RE-4.15.8 | RN-411, RN-415, RN-420, RN-421, RN-427; RN-G19, RN-110, RN-206, RN-207 | C4a, C7a, C7b | O-01/O-02/O-09/O-10; libre → pausable → espera; sin cuotas/mora; ficha y cuenta existentes o provisional; conciliación transaccional sin perder actos. |
+| HU-4.15 | RE-4.15.1–RE-4.15.10 | RN-411, RN-415, RN-420, RN-421, RN-427; RN-G07, RN-G16, RN-G19, RN-110, RN-206, RN-207 | C4a, C7a, C7b | O-01/O-02/O-09/O-10; libre → pausable → espera; sin cuotas/mora; ficha y cuenta existentes o provisional; conciliación transaccional sin perder actos. |
 | HU-4.18 | RE-4.18.1–RE-4.18.4 | RN-419, RN-209 | C4b, C8 | Ajuste solo vet con motivo; calculado y ajustado separados; reubicación y aviso; historial de reclasificaciones visible a la clínica con aislamiento. O-07/O-08. |
 | HU-4.19 | RE-4.19.1–RE-4.19.4 | RN-426, RN-408, RN-412 | C8 | Hora llegada; debajo, en y encima de tolerancia; duración restante insuficiente; tres opciones tras tolerancia; recálculo y auditoría. |
 | HU-4.1 | RE-4.1.1–RE-4.1.5 | RN-401–RN-404 | C3, C4, D | Regresión: reserva interna/portal, calendario, duración completa, correo y protección de conflictos. |
@@ -54,12 +54,14 @@ Los rangos incluyen cada RE consecutivo del intervalo. La evidencia indicada es 
 | HU-4.9 | RE-4.9.1–RE-4.9.3 | RN-401, RN-402 | C3 | Misma lógica para sugerir/guardar; intervalo completo; dos conexiones con horas iniciales diferentes: una sola reserva compatible. |
 | HU-5.3 | RE-5.3.1–RE-5.3.5 | RN-401, RN-402, RN-501, RN-109, RN-110, RN-G02 | C4 | Regresión de agendar desde portal, clínica y mascota legítimas, confirmación y sin acceso a mascota ajena. |
 | HU-5.6 | RE-5.6.1–RE-5.6.4 | RN-405, RN-401, RN-G02 | C4b, C5b | Cancelación/reprogramación propia con disponibilidad vigente, aviso a clínica y auditoría; petición directa ajena rechazada. |
-| HU-2.2 | RE-2.2.1–RE-2.2.4 por ajustar antes de implementar | RN-102, RN-203, RN-208; RN-422 por precisar | C8b | Origen «llegada sin reserva», cita obligatoria y atención coherentes, sin duplicado ante doble envío. Capacidad/sobrecupo por concretar; conservar trazabilidad de las consultas históricas sin cita. |
+| HU-2.2 | RE-2.2.1–RE-2.2.5 | RN-102, RN-203, RN-208, RN-411, RN-415 | C8b | Origen «llegada sin reserva», cita obligatoria y atención coherentes, sin duplicado ante doble envío. Sin sobrecupo no urgente automático; espera/alternativas y origen conservado, sin modificar históricos NULL. |
 | Transversal | RE-T.10.1, alcance RNF-11/RNF-16 y requisitos de acceso ya vigentes | RN-G01, RN-G02, RN-G13, RN-G19 | Todas, D | Contexto activo, CSRF, clínica y titularidad; A concreta RE transversales adicionales; revisión de interfaz en móvil/tableta/escritorio. |
 
 Los criterios normativos permanecen en `documentacion/`; no se cambian silenciosamente en esta tabla. Las nuevas reglas de llegada y las decisiones no cubiertas requieren criterio y aprobación antes del código.
 
 ## 3. Etapas y dependencias
+
+**Contrato actual:** las propuestas históricas A/A.1 se conservan como evidencia; prevalecen §6 y el Anexo B1. M está confirmada, C descartada; no usar A.8 como fuente de pendientes ya resueltos.
 
 **Asignación corregida por el usuario (2026-10-17):** escribe Codex; revisa Codex en una sesión independiente. El autor de A no escribe su revisión. Trabajo por turnos en el mismo checkout, sin agentes paralelos sobre archivos compartidos. La columna de autor de las etapas siguientes se entiende con esta corrección, no como un encargo a Claude Code.
 
@@ -88,20 +90,23 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 
 ## 4. Datos y migraciones
 
-- **Se conserva la v2 desplegada.** No hay reinicio de base ni migración de datos v1. La nota antigua sobre v1 de `specs/HU-4.15-ingreso-emergencia.md` se debe alinear con el esquema v2 ya existente en B.
-- `01_schema.sql` ya contiene las entidades principales; no recrearlas. La próxima migración disponible es **08**, si A confirma que hace falta; su nombre y contenido se fijan en el anexo de A revisado. Si se publica una 08 antes, se toma el siguiente número libre.
-- **Huecos a resolver en A:** horario estimado y último aviso RN-429; marca de reajuste/reprogramación pendiente; solicitudes de ausencia; cierre puntual de clínica; pertenencia de sobrecupo a bloque; orden/prioridad de espera y pausa/reanudación; urgencia sin veterinario aún (`citas.id_veterinario` hoy es obligatorio); revisión humana antes de reservar. No se aprueban aquí columnas nuevas ni se introduce NULL en una FK sin revisar todos sus lectores.
+**B1 actual:** destino mínimo en MER/drawDB de 58 tablas (52 existentes + seis nuevas); no se modifican 01_schema.sql/02_semilla.sql ni 03–07. Diseño/campos/índices/rellenos concretos y protocolo único en Anexo B1; B2 solo después de su revisión. Las alternativas de A.4 quedan históricas, sin libertad de mezclar GET_LOCK y candado clínico al implementar.
+
+
+- **Se conserva la v2 desplegada.** No hay reinicio de base ni migración de datos v1. B1 alinea `specs/HU-4.15-ingreso-emergencia.md` con la ampliación aditiva de alpha.4.
+- `01_schema.sql` ya contiene las entidades principales; no recrearlas. La próxima migración disponible es **08**, prevista como `08_agenda_grafo_ii.sql` en B1; contenido sujeto a revisión antes de B2. Si se publica una 08 antes, se toma el siguiente número libre.
+- **Huecos resueltos documentalmente en B1, pendientes de implementación:** horario estimado y último aviso RN-429; marca de reajuste/reprogramación pendiente; solicitudes de ausencia; cierre puntual de clínica; pertenencia de sobrecupo a bloque; orden/prioridad de espera y pausa/reanudación; urgencia sin veterinario aún (`citas.id_veterinario` hoy es obligatorio); revisión humana antes de reservar. No se aprueban aquí columnas nuevas ni se introduce NULL en una FK sin revisar todos sus lectores.
 - Decidir qué estado debe persistir entre peticiones y qué se recalcula. No usar texto de observaciones como estado operativo ni auditoría como sustituto accidental de una cola. Toda ampliación pasa primero por MER/drawDB, criterio de aceptación y aprobación si cambia alcance.
 - Conservar instantáneas de duración/margen y triage calculado frente a ajustado, marcas y tiempos por evento, contexto/versión del conocimiento; no copiar tratamientos protegidos al contexto de la cita.
-- A propone relleno verificable para citas antiguas sin duración/tipo y para clínicas/veterinarios sin horario. No inventar síntomas ni triage retrospectivos ni asignar automáticamente jornada completa. No modificar horarios pactados ni citas completadas para hacerlas encajar.
-- **Concurrencia:** serializar la comprobación y la escritura incluso cuando no existe todavía una cita en el hueco. Un candado solo sobre citas existentes es insuficiente. A define orden estable para vet/mascota/clínica y plan, reserva, sobrecupo, aceptación y conciliación; MySQL prueba dos conexiones y rollback. Las excepciones de lectura de ocupación entre clínicas quedan encapsuladas y no devuelven datos ajenos.
+- B1 define relleno verificable para citas antiguas sin duración/tipo y para clínicas/veterinarios sin horario. No inventar síntomas ni triage retrospectivos ni asignar automáticamente jornada completa. No modificar horarios pactados ni citas completadas para hacerlas encajar.
+- **Concurrencia:** serializar la comprobación y la escritura incluso cuando no existe todavía una cita en el hueco. Un candado solo sobre citas existentes es insuficiente. B1 define orden estable para vet/mascota/clínica y plan, reserva, sobrecupo, aceptación y conciliación; MySQL prueba dos conexiones y rollback. Las excepciones de lectura de ocupación entre clínicas quedan encapsuladas y no devuelven datos ajenos.
 - Migraciones idempotentes y probadas dos veces sobre esquema nuevo y base previa con datos; sin editar 03–07 publicadas; sincronizar `01_schema.sql`, semilla si corresponde, MER y drawDB. Semilla solo inserta faltantes.
 - Despliegue automático por migrador; primero migración satisfactoria, luego conocimiento. En XAMPP el usuario ejecuta `php scripts/migrar.php` y después `php scripts/cargar_conocimiento.php`. No se lee `.env` ni se ejecutan pruebas contra `zooki_v2_prueba`.
 - Recuperación: respaldo antes del despliegue, cambios aditivos donde sea posible y comprobación de compatibilidad antes de volver al código anterior; no prometer rollback de código seguro tras modificar estados/FK sin demostrarlo.
 
 ## 5. Código, permisos y pantallas
 
-- **Modelos/helpers:** partir de `models/Cita.php`, `models/HorarioClinica.php`, `helpers/HorarioAtencion.php`, `helpers/MotorTriage.php`, validadores, límites y vigilante existentes. Separar cálculo puro del Grafo II, acceso a disponibilidad y coordinación transaccional; nombres finales y archivos nuevos se concretan en A. Reutilizar motor/buscador de M2, sin otro cálculo de triage en JS.
+- **Modelos/helpers:** partir de `models/Cita.php`, `models/HorarioClinica.php`, `helpers/HorarioAtencion.php`, `helpers/MotorTriage.php`, validadores, límites y vigilante existentes. Separar cálculo puro del Grafo II, acceso a disponibilidad y coordinación transaccional; contrato y llamadores concretos en B1.1; archivos B2 en B1.5. Reutilizar motor/buscador de M2, sin otro cálculo de triage en JS.
 - **Controladores/rutas:** `controllers/CitaController.php`, consulta y los controladores de configuración/portal implicados; registrar todas las acciones nuevas en `public/index.php` y `helpers/Security.php`. Tarea programada para vencimientos/retrasos sin navegador abierto; reaprovechar infraestructura existente sin duplicar avisos de atenciones abiertas.
 - **Administrador:** horario, aprobación de propuestas, ausencias/cobertura y configuración de su clínica. No agenda, no inicia ni completa consulta. La retirada de la creación de citas se verifica también por petición directa y en todos los accesos existentes, no solo ocultando botones.
 - **Veterinario:** sus propuestas/solicitudes y sus atenciones; ajuste/reordenación motivados y respuesta a propuestas dirigidas a él, con alcance exacto revisado en A. No guarda directamente horario recurrente. Nunca atiende con contexto de administrador.
@@ -112,6 +117,11 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 - HU-7.4 incluye comprobar la marca en todas las salidas que exige RE-7.4.4; no se declara completa solo por mostrar logo en configuración. Las descargas públicas del portal documental no pasan a ser documentos personalizados de una clínica.
 
 ## 6. Riesgos y decisiones pendientes
+
+**Lectura vigente en B1:** las confirmaciones siguientes prevalecen sobre los «pendiente» históricos. Las reglas de producto de capacidad, revisión, naranja, ausencias, política M, urgencias, contacto, marca y conciliación ya están resueltas; el orden de la espera no urgente también queda confirmado: amarillo antes de verde y llegada física/ID dentro del color. El esquema/protocolo de B1 quedan pendientes de revisión técnica, no de una aprobación clínica ficticia.
+
+
+Las diferencias normativas de esta tabla se detectaron en A y se alinean documentalmente en B1; los riesgos ejecutables persisten hasta integrar C.
 
 | Riesgo o diferencia encontrada | Efecto | Mitigación / momento de resolución |
 |---|---|---|
@@ -138,7 +148,9 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 
 **Decisión del usuario (2026-10-17) — permisos de conciliación:** tras explicar la ficha provisional, confirma que tanto administrador como veterinario autorizado de la clínica pueden completar/consolidar después de verificar primero la titularidad. El propietario aporta la verificación, sin fusionar por su cuenta actos clínicos ni adjudicarse una mascota por conocer su ID. El administrador no recibe por ello permiso para registrar/modificar consultas o crear citas; completar/consolidar identidad usa su acción específica, transacción y auditoría, conservando clínica y autor de los actos. B1 debe fijar los permisos de cada acción y sus criterios de verificación antes de implementarlos.
 
-**Decisión del usuario (2026-10-17) — llegada no urgente sin hueco:** registrar la llegada y ofrecer el próximo espacio compatible u otro veterinario disponible de la misma clínica; no crear sobrecupos automáticos para verdes o amarillos ni iniciar consulta hasta crear su cita de llegada. No se aprueba la alternativa de un cupo adicional por bloque. La cita obligatoria para toda atención y la derivación roja se conservan; el orden exacto de las solicitudes en espera queda por concretar si no lo cubren las reglas vigentes.
+**Decisión del usuario (2026-10-17) — llegada no urgente sin hueco:** registrar la llegada y ofrecer el próximo espacio compatible u otro veterinario disponible de la misma clínica; no crear sobrecupos automáticos para verdes o amarillos ni iniciar consulta hasta crear su cita de llegada. No se aprueba la alternativa de un cupo adicional por bloque. La cita obligatoria para toda atención y la derivación roja se conservan; el orden de solicitudes en espera se concreta en la confirmación posterior de este apartado.
+
+**Decisión del usuario (2026-10-17) — orden de llegadas no urgentes en espera:** amarillo antes de verde y, dentro de cada color, llegada física ascendente y luego id_solicitud ascendente para desempatar. Confirmación recibida a la pregunta de B1. No cambia el color, no crea sobrecupos ni permite consulta sin cita; se revalida capacidad completa antes de asignar.
 
 **Decisión del usuario (2026-10-17) — aprobación de ausencias:** una solicitud del veterinario permanece pendiente y no tapa disponibilidad hasta que el administrador la apruebe. La ausencia registrada directamente por el administrador es efectiva de inmediato y activa búsqueda de cobertura conforme a RN-414. B alineará HU/RE/Modelos antes del código.
 
@@ -162,6 +174,8 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 - [x] Usuario aprueba alcance/roles/llegada/captura mínima y el plan (2026-10-17); decisiones en §6.
 - [x] Rama del módulo comprobada: `v2/m4-agenda`; encargo recibido **solo de A**, con la corrección de autor y revisor del usuario.
 - [x] A entregada por ejecutor y revisada de forma independiente (2026-10-17), con corrección A.1 antes de aprobar el contrato; ver revisión al final. Decisiones de producto pendientes antes de B.
+- [x] B1 entregada, pendiente de revisión independiente (2026-10-17); contrato y destino de datos en Anexo B1.
+- [ ] B2: no iniciada; requiere revisión de B1 antes de migración 08.
 - [ ] Cada subetapa tiene anexo «Anexo X — Resultado», autor, RE con prueba, comandos y pendientes; estado «entregada, pendiente de revisión».
 - [ ] Revisor comprueba diff, riesgos y Modelos paso a paso; escribe «### X — Revisión (fecha)», veredicto, evidencia propia, hallazgos archivo/línea/RE o RN/reproducción y siguiente paso. No inventar ahora anexos o revisiones aprobadas.
 - [ ] PHP completo, con y sin host; MySQL 8 si está disponible y/o MariaDB local, siempre **`zooki_test_base_v2`**; pruebas concurrentes con conexiones separadas. Si no hay servidor, declarar omisión y repetir antes del cierre, sin presentar SQLite como prueba de concurrencia MySQL.
@@ -920,3 +934,547 @@ La comprobación fue aritmética en memoria, sin crear código de aplicación o 
 **Decisión que sigue pendiente:** elegir si inicio tardío/pausa desplaza el nominal con su margen (M) o consume la ocupación pactada (C). Se recomienda **M**, coherente con la referencia temporal propuesta y con conservar un margen único respecto del servicio desplazado; es una recomendación de producto, no una decisión confirmada. Antes de B también deben resolverse los grupos de A.8 y fijarse el protocolo HC; ninguna de las nuevas tablas ni reglas pendientes se aprueba automáticamente por cerrar H-A1.
 
 **Siguiente:** usuario elige política temporal; registrar únicamente lo confirmado y continuar las decisiones de A.8 antes del prompt de B. El ejecutor no empieza otra etapa por haber terminado A.1. Sin pruebas manuales de navegador porque no cambió interfaz ni funcionalidad.
+
+
+## Anexo B1 — Resultado
+
+**Fecha:** 2026-10-17.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto en la conversación independiente.
+**Estado:** entregada, pendiente de revisión.
+**Alcance:** contratos documentales y diseño de destino; B2 no empezó.
+No se aprueba esta entrega por su autor ni se atribuyen al usuario las elecciones técnicas siguientes.
+Las decisiones confirmadas de §6 prevalecen sobre pendientes históricos de A/A.1 y sus revisiones, que se conservan.
+
+**Aplicación de decisiones.**
+Se alinean creadores de citas y facultades administrativas restantes, cita obligatoria antes de toda nueva atención, espera/alternativas sin sobrecupo no urgente automático, tope naranja por franja original/fecha y ausencia efectiva solo tras aprobación o registro admin.
+La revisión veterinaria precede toda hora reservable; derivación roja sigue inmediata.
+Se adopta M confirmada: nominal desde inicio real y pausas con un margen único, conservando los ejemplos de A.1.
+Rojo remoto no prueba presencia; rojos físicos se ordenan por llegada/ID salvo decisión vet motivada, sin nueva interrupción anidada automática.
+Conciliación admin/vet no concede facultades clínicas ni fusión al propietario; contacto opcional y limpieza cuando termine su necesidad.
+Marca por clínica, cabecera Zooki con procedencia en historial multi-clínica y reclasificaciones solo propias.
+HU-4.10/4.16/4.17 y RE-4.7.3 continúan en v2.1.
+
+### B1.1. Protocolo técnico único para todos los llamadores
+
+**Elección:** serialización transaccional por fila de clínica y recursos globales; retirar GET_LOCK de numeración HC al integrar este contrato.
+El GET_LOCK actual es de conexión, no de transacción: rollback/savepoint no lo libera y su adquisición exterior entra en conflicto con servicios que ya tienen filas bloqueadas.
+Se sustituye uniformemente, no se permite elegir por cada llamador.
+El comentario actual de Consulta sobre choque con las FK es pertinente si se pide el candado clínico después de insertar o adquirir otros candados; el contrato nuevo lo toma primero, antes de esas escrituras y de reservar HC.
+No se introduce contador HC ni otra tabla de candados: basta la fila estable clinicas y el índice único existente de número por clínica.
+
+1. Validar sintaxis y permisos/contexto sin revelar datos; identificar conjunto inicial de recursos. Una lectura previa de autorización no sustituye la revalidación transaccional.
+2. Iniciar transacción exterior corta. Bloquear por SELECT FOR UPDATE, en orden: clínicas implicadas por ID ascendente; usuarios implicados por ID; mascotas por ID; vínculos usuario_clinica/propietario_clinica/mascota_clinica por clave; configuración/horarios/ausencias/cierres; bloques por ID; citas por ID; solicitudes, reasignaciones, ingresos y pausas por tabla/ID; operaciones y eventos. El orden de tablas del último grupo es el aquí escrito.
+3. La clínica se bloquea incluso sin citas/HC/horario; usuarios y mascotas son mutex globales que serializan sus compromisos entre Norte/Sur. Si falta otro recurso/candidato, rollback y recomenzar con el conjunto completo ordenado, sin adquirir un ID anterior tarde.
+4. Usar lecturas actuales de bloqueo después de esperar: no consumir una instantánea REPEATABLE READ creada antes del candado. Las consultas previas se descartan para decidir capacidad/cuota/titularidad. Los savepoints no renuevan lecturas ni liberan candados; una operación exterior debe entrar con este protocolo desde el comienzo.
+5. Revalidar clínica/roles/vínculos/propietario y actividad, tipo, revisión/huella/versión, franjas/cierres/ausencias, ocupación vet y mascota, bloque/tope/cuota. El triage va antes de cuota; rojo exceptúa también la creación/vínculo de mascota necesario a la atención, sin fingir prioridad enviada por cliente.
+6. Reclamar clave idempotente del comando dentro de la misma transacción. Misma clínica+actor+acción+clave y huella devuelve referencias del resultado, revalidando acceso antes de responder; carga distinta con misma clave da conflicto. CSRF sigue independiente; no se entrega un resultado de otra sesión/clínica.
+7. Guardar cita/vínculos/HC/consulta/segmentos, marcas, decisiones, auditoría y eventos en una única unidad. Fallo: rollback de todo, incluso idempotencia; adjuntos físicos conservan la compensación vigente que elimina lo movido si falla la BD.
+8. Commit antes de SMTP o esperar intervención humana. Un deadlock/timeout aborta la operación completa; el coordinador puede reintentar técnicamente de forma acotada el comando idempotente o responder conflicto. Nunca reintentar solamente la última sentencia sobre datos viejos.
+
+**Numeración HC.**
+Con la fila de clínica ya bloqueada, releer mascota_clinica actual de la ficha.
+Si ya tiene HC, conservarlo.
+Si es primera consulta y sigue sin HC, leer el último HC con formato vigente por clínica mediante lectura actual ordenada de bloqueo, incluso cuando no hay ninguno; el candado de la clínica protege ese vacío.
+Asignar el siguiente correlativo en el mismo commit de consulta y mantener UNIQUE(id_clinica, numero_historia_clinica) como defensa.
+No reservar un HC al abrir formulario, registrar espera o conciliar una ficha que nunca tuvo consulta.
+En conciliación no se recalculan números existentes: conservar alias/procedencia como indica B1.3.
+El cambio debe abarcar Consulta::registrar/asignarNumeroHistoria/tomarCandadoNumeracion/soltarCandadoNumeracion, creación de cita de llegada con consulta, y toda modificación de mascota_clinica que afecte numeración.
+Los llamadores no pueden entrar con una transacción que ya tomó otros recursos y después pedir clínica/HC.
+SQLite comprueba atomicidad funcional; la exclusión efectiva se probará con dos conexiones MySQL/MariaDB.
+
+**Disponibilidad y mutaciones.**
+Una capa de modelos calcula la misma intersección/resta e intervalos [inicio,fin) para sugerir/reservar/reprogramar/arrastrar/cubrir/aceptar.
+Duración+margen completos; inicio y fin exactos se comparan sin truncar segundos.
+Vet y mascota globales se consultan internamente con proyección de intervalos/estado, jamás pacientes, clínica ajena, motivo o contactos.
+El choque recurrente del vet entre clínicas se comprueba igual con respuesta genérica.
+Ausencias/cierres se modifican solo en la clínica a la que pertenecen; registrar una ausencia no autoriza modificar jornadas de otras clínicas.
+Una solicitud pendiente no bloquea; efectiva bloquea y marca citas afectadas en el mismo commit, sin veto para cobertura.
+Reprogramar conserva la reserva original hasta éxito; valida mes destino contra cuota sin contar dos veces esa cita, estado abierto y snapshot de duración/margen, excluyendo solo su propio ID.
+Cancelación/no_asistio liberan ocupación y cupo naranja; completada conserva consumo del bloque, aunque ya no sea atención futura.
+El bloque de fecha ya usado no se reemplaza por otro para reiniciar su tope al editar horario ni por los fragmentos que deja una ausencia.
+Las marcas de C2 quedan visibles y recuperables para C5, no como un reajuste ya resuelto.
+
+**Emparejamiento determinista.**
+Respetar selección de veterinario del actor cuando siga siendo compatible.
+En búsqueda automática, ordenar por primer inicio compatible y luego id_usuario ascendente; ignorar candidatos ya intentados en ese ciclo.
+El último criterio solo desambigua equivalentes de modo reproducible, no evalúa calidad, afinidad, reputación, carga clínica ni especialidades.
+Una propuesta en vivo no aparta hueco; acepta solo destino antes del límite y tras revalidación bajo los mismos mutex.
+Exactamente en fecha_limite ya está vencida; aceptar/vencer/reprogramar concurrentemente deja una sola transición.
+Cobertura de ausencia se asigna sin esa aceptación; ambos casos se auditan y notifican.
+
+**Eventos, fallos y ventana de aviso.**
+Productor durable en el commit clínico; despachador reclama evento+destinatario de forma condicional, libera transacción y luego envía.
+Revalida vínculo/contacto/actividad al despachar; cuenta pendiente o vínculo inactivo no recibe automático.
+Se reutilizan notificaciones para registro de envío y notificaciones_internas para avisos; eventos_agenda no pretende entregar bitácora general M8 ni confirmación desde recordatorio v2.1.
+Una misma clave semántica/versión/destino/canal no genera otro evento; reclamarlo no equivale a entregarlo.
+Fallo de SMTP se registra y no borra reserva; si el proceso cae tras posible envío y antes de confirmar resultado, estado incierto y resolución operativa, sin reenvío automático que prometa exactamente una entrega SMTP.
+No se introduce un nuevo plazo clínico ni número de intentos de producto.
+RN-429 se aplica a eventos de estimación: comparar contra última hora comunicada, umbral estricto mayor y al menos 30 minutos desde el último aviso, serializados por cita; máximo dos eventos de esa clase en una hora.
+No se reserva otra ventana por recálculo ni por un fallo; reasignación/reprogramación siempre producen su evento propio.
+La base de comunicación cambia cuando el evento se registra como entregado; un evento pendiente se coalesce por cita/versión sin crear otro envío concurrente.
+La idempotencia lógica no es una garantía de entrega física exactamente una vez del proveedor SMTP.
+
+**Integración mínima obligatoria.**
+Antes de habilitar horarios C2, el coordinador de mutex y marcas debe existir en todos sus escritores; C3 completa disponibilidad, no cambia el orden.
+Al integrar C4a se incluye revisión veterinaria y productor/despachador de correo básico; no anunciar cierre de cuatro ramas antes de C4b/C7a.
+Una nueva pausa exige tipo pausable, rojo físicamente presente y ninguna otra pausa abierta del mismo veterinario; ante otro rojo, la decisión clínica no crea automáticamente un segundo nivel de interrupción.
+C7a incluye continuidad/cierre de Consulta, VigilanteAtenciones, vínculo que no puede desactivarse con cita pausada y el protocolo HC común.
+C7b incorpora conciliación en esa misma unidad; C8b reutiliza la creación de llegada sin permitir consulta nueva id_cita NULL.
+LimitePlan, HorarioClinica::guardar/restaurar, Cita, Consulta, Mascota::vincular, VinculoClinica::desactivar y sus controladores/tareas deben delegar o respetar el mismo protocolo; no mezclar las transacciones propias de horario con una exterior incompatible.
+
+### B1.2. Permisos de destino e identidad existente
+
+Son contratos de acciones, no rutas ejecutables añadidas.
+Los nombres finales se registrarán juntos en public/index.php y Security cuando se implemente cada etapa.
+
+| Acción | Contexto autorizado y alcance |
+|---|---|
+| Crear reserva o cita de llegada/iniciar/cerrar atención | Solo veterinario dentro de su alcance; propietario crea su reserva en clínica vinculada, sin facultad de inicio clínico. Admin/plataforma no crean citas ni registran/modifican consultas. |
+| Supervisar, cancelar, confirmar y reprogramar/reasignar administrativamente | Se conservan los permisos administrativos actuales de la clínica; vet gestiona las suyas; propietario solo las propias por rutas de portal. No se interpreta prohibición de crear como retirada de estas funciones. |
+| Registrar recepción/llegada | Personal autorizado de la clínica, admin/vet: solo acredita recepción de un caso legítimo; no asigna color clínico, inicia consulta ni crea cita desde contexto admin. |
+| Calcular triage/buscar síntomas | Vet y propietario, como M2; admin/plataforma siguen denegados. Resolución/reclasificación clínica solo vet autorizado y con motivo al ajustar. |
+| Proponer horario/solicitar ausencia | Vet sobre sí y clínica activa. Admin guarda/aprueba/rechaza configuración o ausencia; no obtiene permisos clínicos por ello. |
+| Reordenar rojos/naranjas, decidir otro rojo frente a pausada | Solo vet autorizado con motivo y auditoría; sin interrupción anidada automática ni efecto presencial del rojo remoto. |
+| Aceptar reasignación en vivo | Solo vet destino, propuesta de su clínica y vigente; la cobertura de ausencia no tiene veto. |
+| Consultar/completar/consolidar provisional | Admin o vet autorizado de la clínica del ingreso, con titularidad acreditada; propietario aporta información/verificación de lo suyo pero no fusiona historias. Otras clínicas/plataforma reciben 403 auditado. |
+| Eliminar contacto al finalizar necesidad/justificar conservación | Admin o vet autorizado de la clínica del ingreso; comprobación se dispara también al cierre de atención/conciliación, con actor/sistema auditado sin valores de contacto. |
+
+Reutilizar id_usuario de sesión y mascotas.id_propietario, propietario_clinica y mascota_clinica legítimos vigentes.
+Portal autenticado con mascota propia ya satisface identidad sin nueva verificación por el color rojo; se revalida titularidad actual al comando.
+En persona, una cuenta/ficha y relación previamente verificadas se reutilizan; si se requiere vinculación/activación, se usa el flujo vigente de confirmación del titular de M5, sin nuevo documento obligatorio, CAPTCHA clínico, token, plazo o prueba inventada.
+No confundir búsqueda exacta por documento/correo con prueba de titularidad: el ID o el teléfono del acompañante tampoco la acreditan.
+El operador autorizado deja referencia de la cuenta/vínculo o confirmación existente usada; sin evidencia suficiente conserva la provisional y no consolida, sin retrasar atención roja.
+Una cuenta nueva solo se crea por el procedimiento de consentimiento/activación vigente, nunca automáticamente por el ingreso.
+
+### B1.3. Diseño mínimo de datos, relaciones y transición
+
+**Destino propuesto:** 58 tablas de negocio, 52 ya presentes más seis nuevas, sin tabla de grafo ni de candados.
+Las siete de A no se aprueban en bloque: evaluaciones_agenda y urgencias_agenda se sustituyen por solicitudes_agenda, con revisión/derivación/espera en el mismo caso y sin confundir presencia.
+No se crea tabla de solicitudes de ausencia: se amplía ausencias_veterinario.
+No se crea tabla de restante activo ni de estimaciones por tick: se derivan desde hechos/snapshots.
+La bitácora de envío y los destinatarios internos reutilizan tablas vigentes; solo falta el trabajo durable de eventos.
+Idempotencia y envío tienen distinta vida/transacción: no se fusionan operaciones_agenda con eventos_agenda.
+Los campos, tipos e índices enumerados aquí son exactamente los reflejados en MER/drawDB, no cambios instalados en alpha.4.
+
+
+#### cierres_clinica — tabla nueva
+
+**Necesidad y RE:** Cierre puntual no representable por recurrencia ni ausencia personal. RE-4.8.2/3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_cierre | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Identifica el cierre sin depender de su fecha. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| inicio | DATETIME NOT NULL | Extremo real del intervalo semiabierto. |
+| fin | DATETIME NOT NULL | Extremo exclusivo del cierre puntual; es obligatorio y posterior al inicio. |
+| motivo | VARCHAR(255) NOT NULL | Justifica cambio/interrupción; no sustituye evidencia de identidad. |
+| activo | TINYINT(1) NOT NULL DEFAULT 1 | Baja lógica sin perder referencia. |
+| id_autor | INT NOT NULL | Atribución al usuario autorizado. |
+| fecha_registro | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP | Orden y procedencia del hecho. |
+
+**Índices y necesidad:**
+
+- `KEY idx_cierre_rango (id_clinica, activo, inicio, fin)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_autor → usuarios(id_usuario).
+**Estados, restricciones y transición:** fin>inicio; [inicio,fin); baja lógica, sin borrar cierres usados. Transición: vacía, no inventar festivos.
+
+#### bloques_agenda — tabla nueva
+
+**Necesidad y RE:** Identidad estable de franja original/fecha que no se multiplica al restar ausencias. RE-4.13.7.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_bloque | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Identidad estable del bloque para consumo naranja. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_veterinario | INT NOT NULL | Recurso global y miembro de la clínica. |
+| fecha | DATE NOT NULL | Sello persistido del hecho. |
+| franja_origen | CHAR(64) NOT NULL | Identidad opaca de la franja original. |
+| inicio_original | DATETIME NOT NULL | Inicio original anterior a recortes. |
+| fin_original | DATETIME NOT NULL | Fin original anterior a recortes. |
+| estado | ENUM('vigente','revisar','retirado') NOT NULL DEFAULT 'vigente' | Máquina de estados indicada en el tipo, sin inferir cumplimiento. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_bloque_origen (id_clinica, id_veterinario, fecha, franja_origen)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `UNIQUE KEY uq_bloque_clinica (id_bloque, id_clinica)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_bloque_vet_fecha (id_veterinario, fecha)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_veterinario → usuarios(id_usuario); id_veterinario,id_clinica → usuario_clinica(id_usuario,id_clinica).
+**Estados, restricciones y transición:** Identificador opaco servidor de franja original; no cambia por recortes de ausencia ni se borra/recrea para regalar cupo. Cambios recurrentes preservan bloque ya usado de esa fecha, marcan revisar y no reinician contador. Contar citas naranja salvo cancelada/no_asistio; no persistir contador duplicado ni tope histórico distinto al parámetro vigente. Transición: vacía; sobrecupos legados sin origen demostrable se marcan pendientes.
+
+#### solicitudes_agenda — tabla nueva
+
+**Necesidad y RE:** Una sola entidad para captura/revisión, derivación remota y espera física sin cita ni veterinario; evita tablas separadas de evaluación y urgencia. RE-2.2.5, RE-2.11.5, RE-4.15.1/2/3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_solicitud | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Caso durable sin asignar un veterinario ficticio. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_mascota | INT NOT NULL | Identidad global conocida o provisional autorizada. |
+| id_actor | INT NOT NULL | Procedencia de captura, no titularidad implícita. |
+| origen | ENUM('portal','llegada') NOT NULL | Distingue reserva/llegada/legado sin reescribir historia. |
+| fecha_registro | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP | Orden y procedencia del hecho. |
+| fecha_llegada | DATETIME DEFAULT NULL | Sello de presencia física; remoto conserva NULL. |
+| id_receptor | INT DEFAULT NULL | Responsable de acreditar presencia. |
+| estado | ENUM('abierta','derivada','espera_presencial','asignada','en_atencion','finalizada','pendiente_reprogramacion','retirada') NOT NULL DEFAULT 'abierta' | Máquina de estados indicada en el tipo, sin inferir cumplimiento. |
+| estado_revision | ENUM('no_requerida','pendiente','resuelta') NOT NULL | Separa puerta clínica de la situación operativa. |
+| nivel_calculado | ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL | Salida original del motor; NULL si no existió cálculo. |
+| nivel_aprobado | ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL | Resultado clínico utilizable tras resolver revisión. |
+| contexto_triage | JSON NOT NULL | Marcas y tiempos necesarios para reproducir evaluación. |
+| version_conocimiento | CHAR(64) DEFAULT NULL | Versión real del motor usada, no inventada para declaración clínica. |
+| huella_entrada | CHAR(64) NOT NULL | Identifica contenido confirmado y evita reutilización divergente. |
+| huella_revision | CHAR(64) DEFAULT NULL | Liga la aprobación a la entrada vigente. |
+| id_revisor | INT DEFAULT NULL | Usuario que resolvió revisión/aprobación. |
+| fecha_revision | DATETIME DEFAULT NULL | Sello de resolución. |
+| motivo_revision | VARCHAR(255) DEFAULT NULL | Justifica revisión/ajuste clínico. |
+| contagio | TINYINT(1) NOT NULL DEFAULT 0 | Conserva advertencia sin cambiar automáticamente prioridad. |
+| orden_espera | BIGINT DEFAULT NULL | Orden explícito motivado, no criterio de prioridad nuevo. |
+| id_cita | INT DEFAULT NULL | Vínculo a cita una vez asignada, con la misma clínica. |
+| id_ingreso | INT DEFAULT NULL | Proveniencia de identidad provisional en la misma clínica. |
+| version_solicitud | INT NOT NULL DEFAULT 0 | Invalida decisiones sobre una versión anterior. |
+| fuente_nivel | ENUM('grafo','clinico_presencial') DEFAULT NULL | Distingue cálculo de declaración clínica presencial. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_solicitud_clinica (id_solicitud, id_clinica)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `UNIQUE KEY uq_solicitud_cita (id_cita)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_solicitud_espera (id_clinica, estado, fecha_llegada, id_solicitud)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_solicitud_revision (id_clinica, estado_revision, fecha_registro)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_solicitud_mascota (id_mascota, estado)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_mascota → mascotas(id_mascota); id_actor → usuarios(id_usuario); id_receptor → usuarios(id_usuario); id_revisor → usuarios(id_usuario); id_cita,id_clinica → citas(id_cita,id_clinica); id_ingreso,id_clinica → ingresos_emergencia(id_ingreso,id_clinica).
+**Estados, restricciones y transición:** Remoto no lleva llegada/receptor ni activa atención; presencia se acredita por personal autorizado. Revisión resuelta requiere revisor/fecha/huella vigente; ajuste requiere motivo. Sin asignación id_cita=NULL y no hay vet ficticio; al asignar se crea cita en la misma transacción. Ficha provisional solo para rojo presencial sin identidad. JSON guarda episodios/tiempos y contexto permitido, nunca medicación protegida ni contacto del acompañante. orden_espera es orden explícito motivado para excepciones clínicas rojas, no puntaje; la espera no urgente se deriva de nivel aprobado (amarillo antes de verde), fecha_llegada e id_solicitud ascendentes, sin sobrecupo. Transición: vacía, sin inventar evaluaciones/presencia. Rojo presencial clínicamente declarado conserva fuente clinico_presencial/nivel_aprobado rojo/revisor y motivo, sin fingir cálculo ni versión de grafo; un registro aún sin triage no es reservable. Flujo ordinario exige cálculo del motor, huella y versión válidos.
+
+#### pausas_cita — tabla nueva
+
+**Necesidad y RE:** Reconstruir múltiples interrupciones y tiempo activo de política M. RE-4.15.8, RE-4.5.1/2/3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_pausa | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Identifica cada segmento de una o varias pausas. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_cita | INT NOT NULL | Vínculo a cita una vez asignada, con la misma clínica. |
+| id_solicitud_roja | INT NOT NULL | Causa roja presencial comprobable. |
+| inicio | DATETIME NOT NULL | Extremo real del intervalo semiabierto. |
+| fin | DATETIME DEFAULT NULL | Cierre del intervalo; NULL solo significa pausa abierta. |
+| id_autor | INT NOT NULL | Atribución al usuario autorizado. |
+| motivo | VARCHAR(255) NOT NULL | Justifica cambio/interrupción; no sustituye evidencia de identidad. |
+| cita_abierta | INT DEFAULT NULL | Clave auxiliar de unicidad de pausa abierta. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_pausa_abierta (cita_abierta)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_pausa_cita (id_clinica, id_cita, inicio)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica); id_solicitud_roja,id_clinica → solicitudes_agenda(id_solicitud,id_clinica); id_autor → usuarios(id_usuario).
+**Estados, restricciones y transición:** cita_abierta es calculada en B2: id_cita solo si fin IS NULL; drawDB la representa convencional por compatibilidad. fin>inicio, sin solapes, una pausa abierta, tipo pausable y rojo presente en esa clínica; cerrar antes de completar. R/N/L se derivan, sin saldo mutable ni margen por pausa. Transición: vacía; una pausada legada sin segmentos queda para revisión, sin fabricar horas.
+
+#### operaciones_agenda — tabla nueva
+
+**Necesidad y RE:** Idempotencia atómica de comandos; no puede sustituirse por avisos con otra vida útil. RE-4.9.3, RE-4.15.3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_operacion | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Identifica resultado idempotente. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_actor | INT DEFAULT NULL | Procedencia de captura, no titularidad implícita. |
+| actor_clave | VARCHAR(80) NOT NULL | Desambiguación servidor de usuario/tarea. |
+| accion | VARCHAR(80) NOT NULL | Ámbito del comando idempotente. |
+| clave_operacion | CHAR(64) NOT NULL | Clave opaca de reintento independiente de CSRF. |
+| huella_entrada | CHAR(64) NOT NULL | Identifica contenido confirmado y evita reutilización divergente. |
+| resultado | JSON NOT NULL | Referencias y código de resultado; no copia datos personales. |
+| fecha | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP | Sello persistido del hecho. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_operacion_clave (id_clinica, actor_clave, accion, clave_operacion)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_actor → usuarios(id_usuario).
+**Estados, restricciones y transición:** actor_clave se deriva en servidor (usuario o tarea), nunca del cliente; resultado solo referencias internas/código, no datos personales. Cita/solicitud/ingreso del resultado se validan en esa clínica; relación lógica por resultado, sin FK polimórfica falsa. Misma clave/huella devuelve mismo resultado; otra huella conflicto. Comando fallido revierte su fila. Transición: vacía, claves no derivadas de CSRF.
+
+#### eventos_agenda — tabla nueva
+
+**Necesidad y RE:** Evento durable tras commit, separación de SMTP e idempotencia de avisos, no nueva bitácora general M8. RE-4.4.1/3/4, RE-4.14.7, RE-4.12.5, RE-2.11.6.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_evento | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Unidad durable de despacho. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_cita | INT DEFAULT NULL | Vínculo a cita una vez asignada, con la misma clínica. |
+| id_solicitud | INT DEFAULT NULL | Caso durable sin asignar un veterinario ficticio. |
+| tipo | VARCHAR(80) NOT NULL | Clase semántica del aviso. |
+| clave_evento | CHAR(64) NOT NULL | Misma causa/version no duplica evento. |
+| destino_clave | VARCHAR(80) NOT NULL | Identidad estable servidor del destinatario. |
+| id_destinatario | INT DEFAULT NULL | Usuario legítimo concreto. |
+| id_rol_destino | INT DEFAULT NULL | Destino interno por rol de la clínica. |
+| canal | ENUM('interno','correo') NOT NULL | Distingue correo de entrega interna. |
+| version_recurso | INT NOT NULL | Evita avisar como vigente una versión superada. |
+| hora_a_comunicar | DATETIME DEFAULT NULL | Estimación propuesta, sin contacto ni HTML. |
+| estado | ENUM('pendiente','reclamado','enviado','error','incierto','omitido') NOT NULL DEFAULT 'pendiente' | Máquina de estados indicada en el tipo, sin inferir cumplimiento. |
+| reclamacion | CHAR(64) DEFAULT NULL | Token del único despachador reclamante. |
+| fecha_reclamacion | DATETIME DEFAULT NULL | Diagnóstico de interrupción del envío. |
+| fecha_resultado | DATETIME DEFAULT NULL | Sello del resultado de despacho. |
+| intentos | INT NOT NULL DEFAULT 0 | Trazabilidad técnica sin inventar política de reintentos. |
+| error_tecnico | VARCHAR(255) DEFAULT NULL | Diagnóstico saneado sin credenciales ni contacto. |
+| fecha | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP | Sello persistido del hecho. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_evento_destino (id_clinica, clave_evento, destino_clave, canal)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_evento_pendiente (estado, fecha, id_evento)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_evento_cita (id_clinica, id_cita, tipo)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica); id_solicitud,id_clinica → solicitudes_agenda(id_solicitud,id_clinica); id_destinatario → usuarios(id_usuario); id_rol_destino → roles(id_rol).
+**Estados, restricciones y transición:** Una referencia al menos; destinatario usuario o rol legítimo, destino_clave generada en servidor. No guardar HTML/contacto provisional; reconstruir marca y contacto permitido al despachar. Clave semántica y versión evitan evento doble. Reclamar fuera de SMTP; incierto no reenvía automáticamente hasta resolución operativa. notificaciones registra resultado de correo, notificaciones_internas sigue entregando internos. Transición: vacía, no fabricar envíos previos.
+
+#### citas — ampliación de tabla existente
+
+**Necesidad y RE:** Completar el flujo conservando identidad y datos existentes. RE-2.2.1/4, RE-4.5.1–3, RE-4.13.7, RE-4.14.7.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| origen | ENUM('reserva','llegada_sin_reserva','urgencia','legado') NOT NULL DEFAULT 'legado' | Distingue reserva/llegada/legado sin reescribir historia. |
+| id_bloque | INT DEFAULT NULL | Identidad estable del bloque para consumo naranja. |
+| inicio_estimado | DATETIME DEFAULT NULL | Inicio operativo separado del pactado y del real. |
+| fin_estimado | DATETIME DEFAULT NULL | Fin clínico estimado sin margen. |
+| duracion_activa_objetivo_segundos | INT DEFAULT NULL | Objetivo D documentado, no tiempo descontado dos veces. |
+| politica_temporal | VARCHAR(16) DEFAULT NULL | Identifica M para reconstrucción histórica. |
+| estado_reajuste | ENUM('ninguno','pendiente_calculo','pendiente_revision','pendiente_reasignacion','pendiente_reprogramacion') NOT NULL DEFAULT 'ninguno' | Trabajo pendiente visible sin alterar estado clínico. |
+| motivo_reajuste | VARCHAR(255) DEFAULT NULL | Causa del reajuste/diagnóstico legado. |
+| version_agenda | INT NOT NULL DEFAULT 0 | Control de vigencia de propuestas y eventos. |
+| fecha_ultimo_calculo | DATETIME DEFAULT NULL | Corte del cálculo reproducible. |
+| ultima_hora_comunicada | DATETIME DEFAULT NULL | Base del umbral, solo tras entrega. |
+| ultimo_aviso_estimacion | DATETIME DEFAULT NULL | Control de ventana RN-429. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_cita_clinica (id_cita, id_clinica)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_cita_bloque (id_bloque, es_sobrecupo, estado, fecha_registro, id_cita)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_cita_reajuste (id_clinica, estado_reajuste, fecha)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_cita_vet_estimada (id_veterinario, inicio_estimado)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_cita_mascota_estimada (id_mascota, inicio_estimado)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_bloque,id_clinica → bloques_agenda(id_bloque,id_clinica).
+**Estados, restricciones y transición:** Conservar fecha/hora/hora_fin y sellos. D>0 si conocido; F clínico no incluye margen, N/L derivados con M identificada. Sin nuevas prioridades ni estados clínicos. Bloque obligatorio para naranja nuevo y de ese vet/fecha; no mezclar demanda extra con simultaneidad. Valores nuevos por defecto no acreditan historia. Legado sin dato verificable conserva NULL/legado y futura conflictiva queda pendiente; no copiar valores actuales de tipo como antiguos.
+
+#### ausencias_veterinario — ampliación de tabla existente
+
+**Necesidad y RE:** Completar el flujo conservando identidad y datos existentes. RE-4.12.1/2/3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| estado | ENUM('solicitada','aprobada','rechazada','anulada') NOT NULL DEFAULT 'aprobada' | Máquina de estados indicada en el tipo, sin inferir cumplimiento. |
+| id_solicitante | INT DEFAULT NULL | Procedencia de solicitud; legado desconocido conserva NULL. |
+| id_revisor | INT DEFAULT NULL | Usuario que resolvió revisión/aprobación. |
+| fecha_revision | DATETIME DEFAULT NULL | Sello de resolución. |
+| motivo_resolucion | VARCHAR(255) DEFAULT NULL | Motivo de aprobación/rechazo/anulación. |
+
+**Índices y necesidad:**
+
+- `KEY idx_ausencia_revision (id_clinica, estado, fecha_hora_inicio)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_ausencia_vet (id_veterinario, estado, fecha_hora_inicio, fecha_hora_fin)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_solicitante → usuarios(id_usuario); id_revisor → usuarios(id_usuario).
+**Estados, restricciones y transición:** Solo aprobada bloquea. Nuevas solicitudes envían solicitada explícita; admin registra aprobada con autor/revisor. Legacy ya era bloqueo efectivo: aprobada sin inventar autores. Rango exacto parcial/completo, sin eliminar registros.
+
+#### reasignaciones — ampliación de tabla existente
+
+**Necesidad y RE:** Completar el flujo conservando identidad y datos existentes. RE-4.14.4/6.
+**Clínica:** se añade id_clinica demostrable desde cita; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| inicio_propuesto | DATETIME DEFAULT NULL | Intervalo completo que debe revalidarse. |
+| fin_propuesto | DATETIME DEFAULT NULL | Incluye ocupación exigida, no reserva anticipada. |
+| version_cita | INT DEFAULT NULL | Versión que puede aceptar el destino. |
+| ciclo | INT NOT NULL DEFAULT 0 | Desambigua búsqueda nueva e intentos previos. |
+| motivo | VARCHAR(255) DEFAULT NULL | Justifica cambio/interrupción; no sustituye evidencia de identidad. |
+| cita_pendiente | INT DEFAULT NULL | Clave auxiliar única para propuesta pendiente. |
+
+**Índices y necesidad:**
+
+- `KEY idx_reasig_clinica_limite (id_clinica, estado, fecha_limite)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_reasig_intentos (id_cita, ciclo, id_veterinario_destino)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `UNIQUE KEY uq_reasig_pendiente (cita_pendiente)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica).
+**Estados, restricciones y transición:** cita_pendiente calculada en B2=id_cita si estado pendiente, NULL en resto; drawDB convencional comentada. id_clinica demostrable desde cita; nuevas pendientes requieren intervalo y versión, no apartan capacidad. Destino miembro activo; aceptar antes del límite y releer todo. Legacy sin intervalo/versión no puede aceptarse ciegamente; se marca cita para revisión. Duplicados pendientes preexistentes hacen detener actualización con diagnóstico, no borrado automático.
+
+#### ingresos_emergencia — ampliación de tabla existente
+
+**Necesidad y RE:** Completar el flujo conservando identidad y datos existentes. RE-4.15.3/9/10.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_conciliador | INT DEFAULT NULL | Admin/vet autorizado que acreditó titularidad. |
+| fecha_conciliacion | DATETIME DEFAULT NULL | Sello de consolidación. |
+| evidencia_conciliacion | JSON DEFAULT NULL | Referencias legítimas existentes y mapa de IDs/HC. |
+| necesidad_contacto_resuelta_en | DATETIME DEFAULT NULL | Fin de necesidad comprobado, sin plazo nuevo. |
+| motivo_conservacion_contacto | VARCHAR(255) DEFAULT NULL | Excepción necesaria y motivada. |
+| contacto_anonimizado_en | DATETIME DEFAULT NULL | Evidencia de limpieza sin conservar sus valores. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_ingreso_clinica (id_ingreso, id_clinica)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+
+**Relaciones:** id_conciliador → usuarios(id_usuario).
+**Estados, restricciones y transición:** Solo admin/vet autorizado verificando titularidad; evidencia referencias a sesión/vínculos legítimos y mapa de IDs/HC, sin nuevo reto, documento obligatorio ni datos de contacto. Campos contacto existentes opcionales; documento_acompanante queda legado, no captura por defecto. Al cerrar atención y resolver identidad verificar necesidad: contacto a NULL salvo conservación necesaria motivada; registrar fecha/actor por auditoría sin guardar valores, limpiar copias operativas y no borrar ingreso/actos. Legacy sin evidencia no se declara conciliado ni limpiado retrospectivamente.
+
+### B1.4. Conciliación y conservación sin pérdida clínica
+
+La verificación es la vigente de B1.2, no una obligación nueva de documento o de plazo.
+Antes de consolidar, bloquear ambas mascotas, sus vínculos y los actos afectados bajo B1.1; confirmar pertenencia del ingreso y autoridad del operador.
+Si aparecen recursos no previstos, reiniciar la unidad ordenada; no mover primero media historia.
+Completar la misma provisional o trasladar referencias a ficha final: citas, consultas, alertas, vacunaciones y desparasitaciones; síntomas, archivos y tratamientos siguen su padre.
+Conservar clínica, veterinario, sellos, autor y filas clínicas; auditoría y escaneos previos conservan origen con mapa explícito de IDs en ingreso.
+Desactivar provisional y no reactivar su carnet; no borrar ni cambiar propietario por conocer un ID.
+Si la final ya tiene HC, conservarlo y mantener la fila mascota_clinica provisional inactiva como alias/procedencia.
+Si la final no tiene HC y la provisional sí, transferir bajo mutex de clínica sin duplicar UNIQUE, guardando el HC/ID de origen en evidencia.
+Si ninguna tiene HC, no asignar por conciliar: hacerlo en primera consulta.
+Referencias clínicas de la provisional en otra clínica detienen la consolidación, sin apropiarse de actos ajenos.
+
+Cierre clínico y resolución de identidad disparan comprobación de fin de necesidad del contacto.
+Mientras una necesidad concreta siga vigente, se conserva solo lo necesario; al terminar, nombre/teléfono y documento legado se ponen a NULL, salvo excepción necesaria con motivo.
+Se conserva ingreso y actos; fecha/actor y motivo quedan en auditoría sin los valores eliminados.
+Evitar copiar el contacto en eventos, HTML persistido, bitácora o temporales; limpiar las copias operativas que existan.
+Respaldos siguen su política vigente restringida; no se promete borrar retroactivamente copias inmutables ni se inventa una retención nueva.
+Legado sin evidencia no queda automáticamente conciliado ni marcado como limpiado.
+
+### B1.5. B2 concreta, todavía sin ejecutar
+
+**Migración siguiente libre comprobada:** database/08_agenda_grafo_ii.sql.
+Es un nombre previsto, no archivo creado.
+B2 modifica database/01_schema.sql y añade 08 con el mismo destino; 02_semilla.sql solo cambiaría si se demuestra un dato inicial necesario, no hay catálogo global nuevo justificado por B1.
+Mantener database/modelo/drawdb_schema_v2.sql y MER sincronizados con el diseño revisado.
+Pruebas previstas en tests/Integration/BaseV2MysqlTest.php y casos de contrato específicos en tests/Integration; fixtures derivados de alpha.4, nunca base manual del usuario.
+No se habilitan rutas, permisos, cálculos ni pantallas en B2.
+
+1. Prevalidación de versión v2, columnas/índices existentes y diagnóstico de referencias huérfanas, propuestas pendientes duplicadas o bloques no demostrables.
+Un conflicto de unicidad histórico detiene la actualización con IDs y diagnóstico; no se elimina ni escoge una fila silenciosamente.
+2. Añadir tablas vacías y columnas inicialmente compatibles; rellenar solo id_clinica de reasignación desde su cita y estado aprobado de ausencias que ya eran efectivas.
+Conservar autor/fecha desconocidos en NULL; origen legado no equivale a llegada.
+No reconstruir pausas, presencia, versión de motor ni franja original desde datos que no lo demuestren.
+D se copia de snapshot propio positivo de cita solo cuando acredita el objetivo completo y no hay decisión/pausa desconocida; nunca del tipo actual.
+Si no se acredita, queda NULL y la futura cita que requiera cálculo se marca pendiente_revision, sin fabricar resultado.
+3. Validar rellenos antes de NOT NULL, índices y FK compuestas de clínica.
+Generadas cita_abierta/cita_pendiente deben proyectar exactamente la condición declarada, con índice único y NULL múltiple; en drawDB se representan convencionales por compatibilidad.
+Comprobar fin>inicio, rangos semiabiertos, D positivo, XOR destinatario usuario/rol, coherencia de revisión/presencia y nuevos estados.
+Invariantes entre filas (solapes, clínica/vet/fecha de bloque, triage aprobado, pertenencia de actores) necesitan protocolo transaccional; un CHECK local no prueba esas relaciones.
+B2 instala restricciones compatibles verificables; la aplicación de cada comando se implementa en C, sin declarar invariantes de filas legadas inexistentes.
+4. Consultar information_schema antes de cada DDL; no modificar migraciones publicadas.
+MariaDB/MySQL hacen commit implícito en DDL: la repetibilidad de cada paso recupera una ejecución parcial, no se promete rollback global del DDL.
+Conservar datos previos y configuración personalizada, sin recrear usuarios/contraseñas ni resetear la base desplegada.
+
+**Pruebas de aceptación de B2, pendientes:**
+
+| Escenario | Resultado exigido |
+|---|---|
+| Instalación nueva 01+02 y migraciones | 58 tablas de negocio; columnas, FK y auxiliares calculadas del destino revisado; semilla sin duplicados. |
+| Actualización fixture alpha.4 con citas/consulta/HC/ausencias/ingresos y configuración propia | Mismos IDs, horas pactadas/reales, actos y parámetros; 58 tablas, rellenos demostrables; NULL desconocidos conservados. |
+| 08 dos veces y reanudación tras paso DDL parcial | Segunda pasada sin error ni cambios adicionales; ningún dato propio sobrescrito. |
+| Restricciones y clínica | FK compuesta rechaza cita/solicitud/ingreso de otra clínica; una pausa abierta y propuesta pendiente por cita; rechazo de intervalos inválidos. |
+| Legado no reconstruible o duplicado | Diagnóstico verificable, sin inventar cronología o borrar actos; cita pendiente cuando haga falta, nunca habilitada por un default. |
+| Compatibilidad MySQL 8 y MariaDB disponible | Estructura y resultados equivalentes, utf8mb4_general_ci/InnoDB; no presentar SQLite como prueba de bloqueo. |
+
+Las carreras de disponibilidad, numeración HC, doble llegada, pausa/cierre, cuota y aceptación/vencimiento se automatizan al integrar C2–C8, con dos conexiones reales y barreras de sincronización.
+Deben demostrar relectura actual después de esperar, exclusión Norte/Sur para vet/mascota y HC únicos incluso con clínica inicialmente sin HC.
+La cobertura de datos de B2 no acredita que esos escritores futuros ya usan el mutex.
+
+### B1.6. Trazabilidad y evidencia documental
+
+Se mantienen 96 HU y 120 RN.
+Se conservan los 427 RE publicados y se añaden consecutivamente RE-2.2.5 y RE-4.15.9/10: **430 RE**.
+Se actualizan matrices RN→HU y RN→HU→RE, cabeceras actuales, ERS y Ficha Técnica.
+Los conteos históricos de cierres anteriores se conservan como históricos.
+Se corrige además un defecto sintáctico preexistente del drawDB: FK fk_arista_destino declarada dos veces y sin coma antes de la declaración en línea; se conserva solo la declaración ALTER existente, sin cambiar conocimiento clínico ni SQL ejecutable.
+MER/drawDB tienen 58 tablas de destino; database/01_schema.sql conserva las 52 instaladas.
+Las revisiones y la versión no se incrementan; PDF/Word del portal quedan para cierre M4.
+
+| RE/área de la matriz §2 | Evidencia de B1 | Verificación funcional futura |
+|---|---|---|
+| RE-4.1.1–3; RE-4.9.1–3; RE-4.6.1/2; RE-5.3 y RE-5.6 incluidos | HU/RE/RN-401/415; Modelos §4; B1.1/2 roles, intervalos y locks | P01–P04/P08 y regresiones de reserva/reprogramación C3/C4/D. |
+| RE-4.5.1–3; RE-4.14.1/2; RE-4.15.8 | RN-412/427; Modelos §5/6; A.1 íntegro con M confirmada | P09/P14/P17, C5/C7; no afirmar pruebas nuevas de motor. |
+| RE-4.13.1–7; RE-2.11.5/6; RE-4.18.4 | Puerta de revisión, procedencia/versiones y tope original en Modelos §4/6; RN-418/419/422 | T-01–T-26 existentes y casos O aplicables; P05–P07/P16/P21, C4/C7. |
+| RE-4.11.4; RE-4.12.1–5; RE-4.8.2/3 | Solicitud/aprobación, rangos completos y marcas en Modelos §7/8/13.4 | P02/P04/P12 y C2/C6; carrera de cambio contra reserva. |
+| RE-2.2.1/4/5; RE-4.15.1–3/9/10 | Modelos §3/6; solicitud sin vet, presencia, evidencia y contacto; plan excepcional actualizado | P13–P15/P18/P23 y C7/C8b: ninguna consulta nueva sin cita, sin adjudicación indebida y limpieza sin perder actos. |
+| RE-4.14.4/6/7; RE-4.4.1–4; RE-4.12.5 | Propuesta no ocupa; vencimiento/aceptación actual; eventos e incertidumbre SMTP B1.1 | P10/P11/P12 y C5/C6, incluido reloj límite y aviso siempre por reasignación. |
+| RE-7.4; RE-4.18; RN-G07/G16/G19/110/206/207 | Marca, procedencia, clínica propia, titularidad y privacidad en HU/RE/Modelos/MER | P16/P19/P23 en C1/C4b/C7b/D; aislamiento y datos de contacto no presentes en logs/eventos. |
+| Restantes RE de §2 | Trazabilidad de A.7 conservada; no se retira ni declara implementado su criterio | Se mantienen los casos P01–P23 y regresiones T/O para C/D; v2.1 excluida. |
+
+La tabla anterior agrupa rangos por área; el inventario de A.7 sigue detallando cada RE de la matriz original de 107, más los tres añadidos en B1.
+P01–P23 son diseño de prueba, no archivos nuevos ni casos ejecutados de M4.
+Las suites existentes validan la base actual y no prueban funcionalidades todavía propuestas.
+
+### B1.7. Verificaciones, alcance y pendientes
+
+- PHP sin host: 854 pruebas, 7212 aserciones, 44 omitidas; salida 0.
+- PHP con MariaDB 10.4.32, exclusivamente zooki_test_base_v2: 854 pruebas, 7813 aserciones, cero omitidas; salida 0.
+- JavaScript existente: 238/238, cero fallos/omisiones; salida 0, incluida prueba automatizada Chromium.
+- Mermaid 11.4.1: renderizado de los 27 bloques actuales (26 de Modelos y uno del MER), 27 SVG generados sin error.
+No se recorrieron pantallas ni se inventaron pruebas manuales.
+- Las ejecuciones válidas de suites/Chrome necesitaron salir del aislamiento local que impedía lectura/socket/arranque; no se cambiaron servicios.
+MySQL 8 no está verificado aquí.
+- Comprobación documental: 430 RE sin saltos ni IDs duplicados, matrices RN→HU y HU→RN/RE consistentes, 58 entidades iguales en MER/drawDB, campos/índices/FK propuestos cotejados y sin duplicados.
+MER es un diagrama resumido para las tablas existentes; el diccionario añadido explicita todos los campos nuevos, sin pretender que el diagrama histórico enumera cada columna legada.
+Se reprodujeron 17 escenarios aritméticos M en memoria, coincidentes y repetibles; A/A.1 y sus revisiones se compararon íntegros tras normalizar saltos de línea, sin cambios.
+Diff de alcance limitado a los once archivos listados; git diff --check sin incidencias.
+Ningún cambio ejecutable, tests nuevos, entorno, conocimiento, versión, historial ni exportaciones.
+Las verificaciones de B1 no aprueban B2 ni la entrega por el ejecutor.
+
+**Archivos cambiados:** specs/M4-agenda-grafo-ii.md; specs/HU-4.15-ingreso-emergencia.md; agentes/estado.md; documentacion/HistoriasUsuario.md; documentacion/RequisitosEspecificos.md; documentacion/ReglasNegocio.md; documentacion/Modelos.md; documentacion/MER.md; documentacion/ERS.md; documentacion/FichaTecnica_Zooki.md; database/modelo/drawdb_schema_v2.sql.
+El estado incluía el encargo previo del arquitecto y se conserva.
+
+**Pendientes:** revisión independiente de B1 y de las restricciones/rellenos propuestos antes de escribir B2.
+**Confirmación posterior del usuario (2026-10-17):** amarillo antes de verde y, dentro de cada color, llegada física/id_solicitud. Se cierra el pendiente de orden de espera y se alinean HU-2.2, RE-2.2.5, RN-208, Modelos y la explicación del MER, sin cambiar el esquema ni habilitar funcionalidad.
+Ejemplo de aceptación: verde llegado 09:00 y amarillos llegados 09:05/09:05 con IDs 21/22 se ordenan amarillo 21, amarillo 22, verde; capacidad y revisión clínica se revalidan antes de asignar.
+B1 sigue entregada, pendiente de revisión independiente; esta confirmación de producto no aprueba el diseño técnico ni inicia B2.
+
+**Comandos de commit para el usuario, compatibles con CMD/PowerShell:**
+
+    git add specs/M4-agenda-grafo-ii.md specs/HU-4.15-ingreso-emergencia.md agentes/estado.md documentacion/HistoriasUsuario.md documentacion/RequisitosEspecificos.md documentacion/ReglasNegocio.md documentacion/Modelos.md documentacion/MER.md documentacion/ERS.md documentacion/FichaTecnica_Zooki.md database/modelo/drawdb_schema_v2.sql
+    git commit -m "docs(agenda): definir contratos y datos de B1 (HU-4.13, RE-4.15.10)"
+
+### B1 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor de B1. Veredicto: revisada con corrección requerida B1.1 antes de B2.** La documentación aplica las decisiones de producto, la arquitectura propuesta es coherente en general y el SQL ejecutable no cambia. No se aprueba aún implementar el contrato de conciliación incompleto.
+
+**Verificación propia:**
+
+- PHP completo sin host: **854 pruebas, 7212 aserciones y 44 omitidas**, salida 0.
+- PHP completo con MariaDB local **10.4.32**, configuración de pruebas explícita y exclusivamente **zooki_test_base_v2**: **854 pruebas, 7813 aserciones, ninguna omitida**, salida 0. No se verificó MySQL 8 en esta máquina.
+- JavaScript completo: **238/238**, cero fallos y cero omitidas, incluida la prueba automática Chromium; salida 0.
+- Mermaid **11.4.1**, renderizado independiente con Chrome sin interfaz: **27/27** (26 Modelos y un MER), sin errores. Esto verifica diagramas, no es un recorrido de pantallas de la aplicación.
+- Conteo independiente: **96 HU, 430 RE únicos sin saltos y 120 RN**. Se conservan los 427 RE de HEAD y solo se añaden RE-2.2.5, RE-4.15.9 y RE-4.15.10. MER y drawDB describen las mismas **58 entidades**, sin diferencias de nombres; el ejecutable conserva **52**.
+- Diff de once archivos documentales/de referencia; sin código de aplicación, cambios de 01_schema.sql/02_semilla.sql, migraciones, tests, conocimiento ni versión. `git diff --check` sin incidencias. Las suites comprueban la base actual, no las futuras restricciones de las seis tablas propuestas.
+
+**Aceptado:** separación entre esquema de destino y desplegado; fusión de evaluación/urgencia en solicitudes_agenda sin vet ficticio; franjas fechadas estables para sobrecupo; segmentos de pausa y política M; eventos durables separados de idempotencia y reconocimiento de incertidumbre SMTP; FK compuestas de clínica y unicidad condicional pendiente de verificar en B2; transición que no inventa hechos clínicos. Se conserva el carácter propuesto del esquema hasta la revisión de su corrección y su comprobación real en B2.
+
+Se contrastaron los flujos de Modelos §3–§8 y §13.4 con §6: solo vet/propietario crean, admin conserva gestión autorizada y conciliación específica, revisión antes del horario, rojo remoto sin presencia, ausencias solicitadas/aprobadas y cobertura sin veto frente a reasignación confirmada. Espera no urgente usa el orden que el ejecutor documenta como confirmado por el usuario; no se introduce puntuación ni sobrecupo verde. Marca, reclasificaciones, privacidad, políticas pendientes de implementación y exclusiones v2.1 quedan expresas.
+
+**Contrato de HC:** es técnicamente admisible sustituir GET_LOCK por bloqueo de clínica antes de cualquier fila/escritura y usar lectura actual para el siguiente HC. La aceptación está condicionada a migrar uniformemente los llamadores al integrarlo, sin mezclar ambos órdenes; la concurrencia de dos primeras consultas y la transacción exterior requieren pruebas reales en la etapa ejecutora. Las suites actuales no prueban ese cambio porque todavía no existe.
+
+**Hallazgo que exige corrección documental:**
+
+| ID / prioridad | Archivo/línea al revisar | RE/RN | Reproducción y efecto | Corrección exigida |
+|---|---|---|---|---|
+| H-B1-1 / P2 — Falta el destino de la solicitud al consolidar mascota | `specs/M4-agenda-grafo-ii.md:1340`, `documentacion/MER.md:1016`, `specs/HU-4.15-ingreso-emergencia.md` contrato de conciliación; nueva FK en B1.3/solicitudes_agenda | RE-4.15.3, RN-110, RN-206, RN-207; coherencia de identidad del comando y su revisión | La solicitud S apunta a la provisional P, con revisión/huella/contexto e id_cita=C. Se consolida P en la ficha F existente según la lista documentada: C y las consultas pasan a F, P queda inactiva, pero no se define qué ocurre con S.id_mascota. Seguir literalmente esa lista permite S→P y C→F. Tampoco se fija qué validaciones, versiones y eventos pendientes quedan vigentes si F aporta otra especie/raza/alertas/titularidad. Una FK válida y una misma clínica no detectan esa incoherencia. | Definir un único contrato para solicitudes nuevas/activas/finalizadas al completar/consolidar: qué referencia se actualiza o conserva como procedencia, cómo se resuelve la identidad vigente, qué contexto/huella se invalida o conserva históricamente y cómo se revalidan comandos idempotentes/eventos pendientes. Incluir esas referencias y cambios en la misma transacción/orden de bloqueo y en el rollback. No recalcular ni reescribir decisiones clínicas históricas por inferencia. Alinear plan, MER, plan excepcional y el diagrama si hace falta; precisar P15 con solicitud+cita+ficha final y fallo intermedio. |
+
+El hallazgo no implica que se haya perdido información en producción: el modelo nuevo aún no está instalado. Es una brecha del contrato que debe quedar inequívoca antes de escribir B2/C7b. Puede conservarse procedencia en registros cerrados, pero debe indicarse explícitamente y no reutilizar una autorización ligada a la ficha/contexto anterior para comandos nuevos.
+
+**Corrección mínima del revisor:** en la tabla de cierres_clinica de B1.3 se corrigió una frase copiada de pausas («NULL solo significa pausa abierta») para indicar que fin es obligatorio y exclusivo. No se cambió el tipo DATETIME NOT NULL, el esquema ni el comportamiento aprobado.
+
+**Siguiente: B1.1 — cerrar conciliación de solicitudes y referencias operativas**, por el ejecutor, solo documentación/diseño. Conservar B1 y esta revisión; agregar resultado y marcarlo entregado, pendiente de revisión. No empezar B2 ni añadir código, SQL ejecutable o tests nuevos. Si la solución requiere cambios de campos/relaciones de destino, justificarlos y reflejarlos en MER/drawDB; el revisor no diseña ni implementa esa corrección por el autor. No hace falta repetir suites completas si el ajuste sigue siendo exclusivamente documental; sí comprobar coherencia, ejemplos, diagramas afectados y alcance.
+
+**Prueba manual:** no corresponde lista de navegador para B1/B1.1, sin pantallas ni funciones nuevas. Las verificaciones de migraciones y las listas de 3–5 pruebas por usuario se entregarán en sus etapas.

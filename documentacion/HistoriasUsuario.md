@@ -33,6 +33,8 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 ---
 
+> **Preparación M4/B1 — 2026-10-17:** criterios confirmados de destino pendientes de implementación funcional; no se cambia revisión. El ejecutable sigue en alpha.4 y los estados históricos no acreditan los nuevos flujos.
+
 ## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0)*
 
 > Arquitectura SaaS multi-inquilino: onboarding autónomo de clínicas, control de límites por plan (freemium) y administración de la plataforma por el super-administrador.
@@ -636,19 +638,23 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Implementada | 3 pts | Revisión del módulo de consultas |
+| Media | Parcial (M4 pendiente) | 3 pts | Revisión del módulo de consultas |
 
 > Como veterinario, quiero registrar la atención de un paciente que llega sin cita (una urgencia o un imprevisto) para que quede en su historia clínica igual que cualquier otra consulta.
 
 **Criterios de aceptación:**
 
+- El acceso «Atención sin cita» registra llegada y crea una cita antes de iniciar toda nueva atención; la consulta se enlaza a ella con origen «llegada sin reserva», sin duplicarla si ya tiene cita activa.
+- Sin hueco, verdes/amarillos esperan o reciben próximo espacio/otro veterinario compatible de la clínica, sin sobrecupo automático ni consulta hasta crear su cita. La espera se ordena amarillo antes de verde y, dentro de cada color, llegada física/id_solicitud; se revalida capacidad antes de asignar. Rojo sigue HU-4.15.
+- Listado, detalle e historial distinguen el origen aunque exista cita; históricos NULL conservan «Sin cita». Doble envío no duplica cita/consulta; motivo/diagnóstico y HC de primera consulta se conservan.
+
 - El flujo normal es por cita: desde el calendario se inicia la atención y la consulta queda ligada a la cita (HU-4.3, HU-4.5).
-- En Consultas Médicas, el botón «Atención sin cita» permite buscar al paciente (HU-1.3) y registrar la consulta sin cita asociada.
+- En Consultas Médicas, el botón «Atención sin cita» permite buscar al paciente (HU-1.3) y registrar llegada/cita antes de iniciar la consulta.
 - La pantalla explica cuándo usarlo y remite al calendario si el paciente tiene cita.
 - Se exigen los mismos datos que en HU-2.1 (motivo y diagnóstico) y, si es su primera consulta, se asigna el número de historia clínica (RN-102).
-- En el listado de consultas, las registradas sin cita se distinguen con la etiqueta «Sin cita»; también en su detalle y en el historial de la mascota (cajón, ficha y Atención).
+- El origen de llegada y los históricos sin cita se distinguen en listado, detalle e historial.
 
-**Reglas de negocio:** RN-102, RN-203, RN-208 · **Dependencias:** HU-1.3, HU-2.1
+**Reglas de negocio:** RN-102, RN-203, RN-208, RN-411, RN-415 · **Dependencias:** HU-1.3, HU-2.1
 
 ### HU-2.3 — Adjuntar archivos clínicos
 
@@ -806,6 +812,8 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 **Alcance entregado en M2:** motor, buscador y batería automatizada de 26 casos; captura en Agendar, derivación de urgencias, aislamiento y ajuste del veterinario pendientes de M4.
 
 **Criterios de aceptación:**
+
+- Todo resultado con revisión humana se resuelve por veterinario antes de horario reservable; confirma nivel o ajusta con motivo. Cambios de entrada/contexto/versión invalidan la resolución. Rojo conserva aviso y derivación inmediata.
 
 - Los síntomas se confirman desde el catálogo o con «Otro / no sé»; la nota libre es opcional y nunca interviene en el cálculo.
 - El buscador tolera errores y solo sugiere opciones; el usuario las confirma, sin selección automática.
@@ -974,9 +982,12 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 |---|---|---|---|
 | Alta | Implementada | 8 pts | ZOOK-17 |
 
-> Como administrador o veterinario, quiero agendar citas verificando la disponibilidad del veterinario para evitar cruces de horario.
+> Como veterinario o propietario, quiero agendar citas verificando la disponibilidad del veterinario para evitar cruces de horario.
 
 **Criterios de aceptación:**
+
+- Solo veterinario y propietario crean citas; propietario sobre sus mascotas y clínicas vinculadas. Administrador conserva supervisión, cancelación, reprogramación y configuración autorizadas, sin creación.
+- Duración más margen caben completamente en la intersección de horarios, menos ausencias aprobadas/cierres/ocupación; mismos recursos globales no se reservan dos veces entre clínicas.
 
 - Campos: fecha, hora, mascota, motivo y veterinario asignado.
 - No permite dos citas al mismo veterinario en el mismo horario.
@@ -1064,7 +1075,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 - El sistema detecta cuando una atención excede su duración planificada.
 - Alerta o recalcula el corrimiento de las citas siguientes del veterinario.
 
-**Reglas de negocio:** RN-401 · **Dependencias:** HU-4.3
+**Reglas de negocio:** RN-401, RN-412 · **Dependencias:** HU-4.3
 
 > _Nota: Deriva del análisis de vacíos (VD-AGN-01): el caso del calendario con retrasos en cascada. En v1.9.0 se cumple el primer criterio: `hora_inicio_real` y `hora_fin_real` (migración 09) se sellan al iniciar la atención y al guardar la consulta que completa la cita. Siguen pendientes la detección del exceso de duración y el aviso de corrimiento a las citas siguientes._
 
@@ -1086,7 +1097,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 - La disponibilidad lo respeta al agendar.
 - El buffer se refleja en las sugerencias de horario.
 
-**Reglas de negocio:** RN-401, RN-403 · **Dependencias:** HU-4.1
+**Reglas de negocio:** RN-401, RN-403, RN-415 · **Dependencias:** HU-4.1
 
 > _Nota: Deriva del análisis de vacíos (VD-AGN-02)._
 
@@ -1137,7 +1148,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 > _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura._
 
-> _v2.0: bloqueos y días no laborables se cubren con el horario recurrente del veterinario (HU-4.11) y las ausencias (HU-4.12)._
+> _v2.0: bloqueos y días no laborables se cubren con horario recurrente (HU-4.11), ausencias parciales/completas (HU-4.12) y cierres puntuales por fecha de la clínica._
 
 ### HU-4.9 — Endurecer la validación de disponibilidad
 
@@ -1181,7 +1192,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 > _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura._
 
 > _Nota: Función deseable propuesta (no construida)._
-> _v2.0: entra al alcance de la v2 porque ataca el ausentismo y los huecos en la agenda; la cita confirmada o declinada alimenta el Grafo II._
+> _v2.1: confirmación/declinación desde recordatorio queda diferida por decisión del usuario; la confirmación administrativa existente no cierra esta historia en M4._
 
 ### HU-4.11 — Configurar el horario recurrente del veterinario
 
@@ -1211,6 +1222,9 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 **Criterios de aceptación:**
 
+- Solicitud propia del veterinario queda pendiente y no bloquea hasta aprobación administrativa; registro directo admin efectivo. Rechazo con motivo; rangos parciales y de día completo.
+- Cobertura sin veto, revalidada antes de asignar; sin cobertura queda pendiente de reprogramar con propuestas al propietario y avisos.
+
 - La ausencia la registra el administrador o la solicita el propio veterinario; se define por un rango de fechas o franjas y tapa su disponibilidad en ese rango.
 - Si el rango es inválido, se rechaza con un mensaje para corregir las fechas.
 - Si el veterinario ausente tiene citas en ese rango, el Grafo II busca un veterinario con disponibilidad compatible y le **asigna** esas citas (sin veto: si tiene espacio y nada se lo impide, las toma).
@@ -1229,6 +1243,9 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 > Como propietario o veterinario, quiero que al agendar se calcule la prioridad del caso a partir de los síntomas para que la cita se ubique según su urgencia y no solo por orden de llegada.
 
 **Criterios de aceptación:**
+
+- Todo resultado con revisión se resuelve antes de ofrecer/guardar horario; rojo se deriva inmediatamente sin acreditar presencia física.
+- Tope naranja por franja continua original/fecha, no multiplicado por ausencias parciales; completadas consumen, canceladas/no_asistio liberan; excedente avisa sin insertarse.
 
 - Al describir el motivo y los síntomas, el **Grafo I** calcula el nivel de triage (🔴 rojo, 🟠 naranja, 🟡 amarillo, 🟢 verde); el propietario no lo elige.
 - El nivel se calcula según HU-2.11. Si es 🔴, no se verifica el límite del plan (RN-420); en los demás niveles se verifica antes de reservar (HU-0.4).
@@ -1251,6 +1268,10 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 **Criterios de aceptación:**
 
+- Política M: N desde primer inicio real, servicio activo decidido y pausas; L=máximo(N+margen único, fin clínico estimado/real). Pactadas y sellos reales se conservan; no añadir margen por pausa ni recálculo.
+- Inicio 09:00, servicio 30 y pausa 09:10–09:30: N=09:50/L=10:00 con margen 10; dos pausas 10+15 dan N=09:55/L=10:05. Detección también durante atención abierta y al pausar/reanudar, sin calendario. Una predicción no libera al veterinario.
+- La aceptación de reasignación revalida hueco, mascota y vigencia; exactamente al límite ya venció, sin apartar hueco mientras espera.
+
 - El disparador es el margen (buffer) del tipo de cita: mientras el retraso cabe en el margen, no pasa nada.
 - Cuando una atención supera su hora de fin más el margen, el retraso se propaga a las citas siguientes del mismo veterinario y se recalculan sus horas estimadas de inicio.
 - Si el retraso saca una cita del **horario disponible** del veterinario, el Grafo II busca reasignarla a otro veterinario con disponibilidad.
@@ -1270,6 +1291,12 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 **Criterios de aceptación:**
 
+- Rojo remoto registra derivación/aviso; no acredita llegada, crea reserva ordinaria, pausa ni inicia atención. Al llegar se enlaza el mismo caso y crea cita antes de atender.
+- Entre rojos presentes rige llegada física/ID; cambio clínico por vet con motivo/auditoría. Ante otro rojo con una atención pausada decide el vet, sin interrupciones anidadas automáticas.
+- Administrador y veterinario autorizado de la clínica completan/consolidan identidad tras verificar titularidad por mecanismos vigentes; propietario aporta verificación sin fusionar. Admin no crea citas ni registra/modifica actos clínicos.
+- Nombre/teléfono de acompañante opcionales, sin documento por defecto, cuenta automática ni atribución de propiedad. Al terminar su necesidad de atención/identidad se eliminan/anonimizan; conservación excepcional con motivo, sin borrar ingreso/actos ni copiar contacto a auditoría/avisos.
+- Consolidación atómica conserva referencias, clínica, autor, HC y archivos; titularidad/permiso no acreditados o fallo intermedio impiden traslado parcial.
+
 - Se dispara cuando el Grafo I marca un caso **rojo** o cuando llega una urgencia directa a la clínica; se notifica a la clínica y se marca prioridad máxima.
 - Si el caso llega desde el portal con la clínica fuera de su horario, no se promete atención: se informa que está cerrada, se muestra su teléfono de urgencias (si lo configuró) y se recomienda un servicio de urgencias 24 horas.
 - La urgencia no se bloquea por el límite del plan ni por la mora.
@@ -1282,7 +1309,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 - La atención continúa por el flujo de consulta clínica vía el módulo de Atención/Urgencias (HU-2.2).
 - Como el uso del espacio altera la agenda del día, enlaza con el reajuste en vivo (HU-4.14).
 
-**Reglas de negocio:** RN-411, RN-415, RN-420, RN-421, RN-427 · **Requisitos:** RF-4.10 · **Dependencias:** HU-2.2, HU-4.14
+**Reglas de negocio:** RN-411, RN-415, RN-420, RN-421, RN-427, RN-G07, RN-G16, RN-G19, RN-110, RN-206, RN-207 · **Requisitos:** RF-4.10 · **Dependencias:** HU-2.2, HU-4.14
 
 ---
 
@@ -1328,10 +1355,12 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 **Criterios de aceptación:**
 
+- Reclasificaciones visibles al personal autorizado solo sobre casos propios de la clínica asociados al propietario; no incluye casos ajenos ni sanciones/puntuación automáticas.
+
 - El veterinario puede subir o bajar el nivel de una cita o de un paciente que acaba de llegar, con motivo obligatorio.
 - El cambio queda en auditoría, y la diferencia entre el nivel calculado y el ajustado se guarda para mejorar el grafo.
 - Si el ajuste cambia la ubicación de la cita, la agenda se reacomoda y se notifica.
-- Las reclasificaciones quedan visibles en el historial del propietario, para que la clínica detecte si alguien exagera los síntomas de forma repetida.
+- El historial de reclasificaciones queda limitado a casos de esa clínica, con calculado/ajustado, autor, fecha y motivo.
 
 **Reglas de negocio:** RN-419, RN-209 · **Requisitos:** RF-4.12 · **Dependencias:** HU-4.13
 
@@ -1814,9 +1843,11 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 **Criterios de aceptación:**
 
+- Marca por clínica en su contexto del portal, correos y documentos; historial multi-clínica mantiene cabecera Zooki y procedencia por acto, sin atribuir todo a una clínica. Descargas documentales públicas no se personalizan.
+
 - Configuro los datos de marca de la clínica: nombre, logo y datos de contacto, incluido el teléfono de urgencias que se muestra cuando la clínica está cerrada.
 - Gestiono los tipos de cita de la clínica, cada uno con su duración, su margen (buffer), insumo del cálculo de disponibilidad (RN-415), y si es **pausable** ante una urgencia (RN-427).
-- Los datos de marca aparecen en el portal, los correos y los documentos de la clínica.
+- Los datos de marca aparecen en las salidas propias de la clínica; el historial global conserva su cabecera de plataforma.
 - Todo es propio de cada clínica (aislamiento por `id_clinica`).
 - Los cambios quedan en auditoría.
 
@@ -2050,19 +2081,19 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-G04 | HU-T.3, HU-T.12 |
 | RN-G05 | HU-T.4, HU-T.5, HU-T.8, HU-T.14, HU-T.16 |
 | RN-G06 | HU-0.1, HU-T.5, HU-T.7, HU-T.17, HU-1.2, HU-5.2, HU-5.8 |
-| RN-G07 | HU-T.5, HU-T.19, HU-5.12, HU-5.14, HU-9.1 |
+| RN-G07 | HU-T.5, HU-T.19, HU-4.15, HU-5.12, HU-5.14, HU-9.1 |
 | RN-G08 | HU-T.7, HU-T.11, HU-T.14 |
 | RN-G09 | HU-T.1 |
 | RN-G10 | HU-T.12 |
 | RN-G11 | HU-0.2, HU-T.12 |
 | RN-G12 | HU-T.12, HU-T.18 |
-| RN-G13 | HU-0.3, HU-T.15, HU-T.17, HU-5.9, HU-2.12 |
+| RN-G13 | HU-0.3, HU-T.15, HU-T.17, HU-2.12, HU-5.9 |
 | RN-G14 | HU-0.3, HU-T.15 |
 | RN-G15 | HU-0.3, HU-T.13 |
-| RN-G16 | HU-T.19, HU-5.14 |
+| RN-G16 | HU-T.19, HU-4.15, HU-5.14 |
 | RN-G17 | HU-T.16 |
 | RN-G18 | HU-T.17, HU-8.1 |
-| RN-G19 | HU-0.1, HU-T.18, HU-T.19, HU-1.2 |
+| RN-G19 | HU-0.1, HU-T.18, HU-T.19, HU-1.2, HU-4.15 |
 | RN-G20 | HU-0.1, HU-T.18 |
 | RN-G21 | HU-T.18 |
 | RN-G22 | HU-T.2 |
@@ -2090,7 +2121,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-107 | HU-1.1 |
 | RN-108 | HU-1.4, HU-5.4 |
 | RN-109 | HU-T.18, HU-1.2, HU-5.3, HU-5.8, HU-5.9, HU-5.13 |
-| RN-110 | HU-1.1, HU-1.4, HU-1.5, HU-5.3, HU-5.10, HU-5.13 |
+| RN-110 | HU-1.1, HU-1.4, HU-1.5, HU-4.15, HU-5.3, HU-5.10, HU-5.13 |
 | RN-111 | HU-1.1, HU-1.5 |
 | RN-112 | HU-2.1, HU-2.10 |
 | RN-113 | HU-2.1, HU-2.5, HU-2.9, HU-2.10, HU-5.12 |
@@ -2102,10 +2133,10 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-203 | HU-2.1, HU-2.2 |
 | RN-204 | HU-2.3, HU-2.6 |
 | RN-205 | HU-2.3, HU-2.4 |
-| RN-206 | HU-2.5, HU-2.6, HU-5.5 |
-| RN-207 | HU-2.7 |
+| RN-206 | HU-2.5, HU-2.6, HU-4.15, HU-5.5 |
+| RN-207 | HU-2.7, HU-4.15 |
 | RN-208 | HU-2.2, HU-2.7 |
-| RN-209 | HU-2.8, HU-2.9, HU-2.11, HU-4.18, HU-2.12 |
+| RN-209 | HU-2.8, HU-2.9, HU-2.11, HU-2.12, HU-4.18 |
 | RN-210 | HU-2.8 |
 | RN-211 | HU-2.9 |
 | RN-212 | HU-2.8, HU-2.9, HU-2.12 |
@@ -2126,11 +2157,11 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-408 | HU-4.7, HU-4.19, HU-6.2 |
 | RN-409 | HU-T.6, HU-4.3, HU-6.1, HU-6.2 |
 | RN-410 | HU-4.3 |
-| RN-411 | HU-2.11, HU-4.13, HU-4.15, HU-4.17 |
-| RN-412 | HU-4.14, HU-4.19 |
+| RN-411 | HU-2.2, HU-2.11, HU-4.13, HU-4.15, HU-4.17 |
+| RN-412 | HU-4.5, HU-4.14, HU-4.19 |
 | RN-413 | HU-4.14 |
 | RN-414 | HU-4.12 |
-| RN-415 | HU-4.11, HU-4.12, HU-4.13, HU-4.14, HU-4.15, HU-7.4 |
+| RN-415 | HU-2.2, HU-4.6, HU-4.11, HU-4.12, HU-4.13, HU-4.14, HU-4.15, HU-7.4 |
 | RN-416 | HU-2.11 |
 | RN-417 | HU-2.11 |
 | RN-418 | HU-2.11 |
