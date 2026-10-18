@@ -99,6 +99,7 @@ jobs:
       run: printf 'DB_HOST=127.0.0.1\nDB_NAME=zooki_ci\nDB_USER=root\nDB_PASS=\n' > .env
 
     - name: Migrador, dos veces seguidas
+      shell: bash
       run: |
         php scripts/migrar.php | tee primera.txt
         php scripts/migrar.php | tee segunda.txt

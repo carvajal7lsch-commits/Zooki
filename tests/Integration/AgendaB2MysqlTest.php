@@ -289,6 +289,72 @@ final class AgendaB2MysqlTest extends TestCase
         $this->assertSame(999, (int) $this->filas('reasignaciones')[0]['id_cita']);
     }
 
+    /** B1.5/P20: el CHECK propio debe reconocerse en cada motor, sin perder ENFORCED. */
+    public function testB22AceptaMetadataPropiaYRepiteSinAlterarla(): void
+    {
+        $this->instalar();
+        $antes = $this->estructura();
+        $clausula = $this->db->query("SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND CONSTRAINT_NAME='ck_m4_solicitud_espera'")->fetchColumn();
+        $this->assertIsString($clausula);
+        $this->assertStringContainsString('espera_presencial', $clausula);
+        $this->assertStringContainsString('en_atencion', $clausula);
+        $this->migrar();
+        $this->migrar();
+        $this->assertSame($antes, $this->estructura());
+        if (!str_contains($this->db->query('SELECT VERSION()')->fetchColumn(), 'MariaDB')) {
+            $this->assertSame('YES', $this->db->query("SELECT ENFORCED FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND CONSTRAINT_NAME='ck_m4_solicitud_espera'")->fetchColumn());
+            $this->db->exec('ALTER TABLE solicitudes_agenda ALTER CHECK ck_m4_solicitud_espera NOT ENFORCED');
+            try {
+                $this->migrar();
+                $this->fail('Admitió un CHECK correcto pero no aplicado.');
+            } catch (PDOException $e) {
+                $this->assertStringContainsString('CHECK no aplicado ck_m4_solicitud_espera', $e->getMessage());
+            }
+        }
+    }
+
+    /** RE-4.15.1/2: mismas palabras sin paréntesis no acreditan la misma espera. */
+    public function testB22RechazaContenidoYAgrupacionDeCheckDistintos(): void
+    {
+        $this->instalar();
+        $mysql = !str_contains($this->db->query('SELECT VERSION()')->fetchColumn(), 'MariaDB');
+        $variantes = [
+            "estado NOT IN ('espera_presencial','asignada') OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL)",
+            "(estado NOT IN ('espera_presencial','en_atencion') OR fecha_llegada IS NOT NULL) AND id_receptor IS NOT NULL",
+            "estado NOT IN ('espera_ presencial','en_atencion') OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL)",
+            "estado NOT IN ('espera_presencial','_utf8mb4en_atencion') OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL)",
+        ];
+        foreach ($variantes as $expresion) {
+            $this->db->exec('ALTER TABLE solicitudes_agenda DROP ' . ($mysql ? 'CHECK ' : 'CONSTRAINT ') . 'ck_m4_solicitud_espera');
+            $this->db->exec('ALTER TABLE solicitudes_agenda ADD CONSTRAINT ck_m4_solicitud_espera CHECK (' . $expresion . ')');
+            $antes = $this->estructura();
+            try {
+                $this->migrar();
+                $this->fail('Admitió otro contenido o agrupación lógica.');
+            } catch (PDOException $e) {
+                $this->assertStringContainsString('CHECK ck_m4_solicitud_espera', $e->getMessage());
+            }
+            $this->assertSame($antes, $this->estructura());
+        }
+    }
+
+    /** B1.5/P20: revisar también las dos expresiones STORED con la misma serialización. */
+    public function testB22RechazaExpresionesGeneradasDistintas(): void
+    {
+        $this->instalar();
+        foreach (['pausas_cita' => 'cita_abierta', 'reasignaciones' => 'cita_pendiente'] as $tabla => $columna) {
+            $condicion = $tabla === 'pausas_cita' ? 'fin IS NULL' : "estado = 'pendiente'";
+            $this->db->exec('ALTER TABLE ' . $tabla . ' MODIFY ' . $columna . ' INT GENERATED ALWAYS AS (CASE WHEN ' . $condicion . ' THEN id_cita ELSE 0 END) STORED');
+            try {
+                $this->migrar();
+                $this->fail('Admitió una expresión generada distinta.');
+            } catch (PDOException $e) {
+                $this->assertStringContainsString('definicion ' . $tabla . '.' . $columna, $e->getMessage());
+            }
+            $this->db->exec('ALTER TABLE ' . $tabla . ' MODIFY ' . $columna . ' INT GENERATED ALWAYS AS (CASE WHEN ' . $condicion . ' THEN id_cita ELSE NULL END) STORED');
+        }
+    }
+
     public function testDefinicionExistenteIncompatibleNoSeAceptaPorNombre(): void
     {
         $this->instalar();
