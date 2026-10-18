@@ -1016,3 +1016,55 @@ Política temporal M: duración pactada/sellos reales permanecen; duración acti
 La ficha provisional se concilia solo desde su clínica, verificando titularidad con las identidades/vínculos vigentes. Se trasladan citas, consultas, alertas, vacunas y desparasitaciones cuando corresponda; tratamientos/archivos/síntomas siguen consulta o cita. Auditoría y escaneos históricos mantienen referencias de origen, con el mapa provisional→final en ingreso. La ficha provisional queda inactiva y su carnet no se reactiva.
 La relación mascota_clinica se une conservando los dos números HC como procedencia: si final ya tiene HC, se conserva la antigua fila provisional inactiva como alias con mapa al final; si final carece de HC y la provisional tiene uno, se transfiere bajo candado clínico y la evidencia registra el origen, sin duplicar el índice único. No se inventa un HC por conciliar; se asigna en primera consulta según RN-102. Una provisional con referencias clínicas de otra clínica exige detener/derivar la conciliación, sin apropiarse de actos ajenos.
 Atención cerrada y titularidad resuelta disparan comprobación de fin de necesidad del contacto; sin necesidad o excepción justificada, nombre/teléfono y documento legado de acompañante se ponen a NULL conservando ingreso y actos. Las copias operativas/temporales/avisos no retienen esos valores; los respaldos siguen su política vigente y no se promete borrado retroactivo de copias inmutables, que permanecen restringidas y se purgan según esa política. No se introduce plazo de retención nuevo.
+
+### B1.1 — Conciliación de identidad y referencias operativas (2026-10-18)
+
+Precisión documental de RE-4.15.3/RN-110/206/207, sin ampliación de tablas, campos, relaciones o índices.
+Al completar P se conserva la misma ficha, se regulariza ficha_por_completar=0 con datos/titularidad legítimos y el ingreso guarda provisional=P/final=P, estado completado, sin activar carnet automáticamente.
+Al consolidar P sobre F, ingreso conserva provisional=P/final=F, estado consolidado; P queda inactiva/carnet inactivo.
+En ambos casos se conservan id_ingreso/id_solicitud/id_cita y los IDs de actos.
+No se sobrescriben atributos/titularidad/alertas vigentes de F con datos parciales de P; todos los ingresos afectados deben conservar un mapa compatible, o se aborta por incoherencia.
+**solicitudes_agenda.id_mascota significa identidad vigente para todas las solicitudes, incluidas las terminales.**
+Se trasladan a F todas las S de P de la clínica, con o sin C, y sus citas/actos en una transacción; si una S enlaza C, ambas deben terminar con el mismo paciente vigente del ingreso.
+Se comprueban además las S que enlazan los recursos trasladados; una contradicción con otro paciente exige rollback, no reasignación por inferencia.
+Otras solicitudes de F ajenas a P permanecen intactas.
+El mapa de ingreso sirve para procedencia/detectar pedidos obsoletos, nunca para otorgar acceso a F ni a actos ajenos.
+
+Cada conciliación efectiva incrementa version_solicitud y version_agenda de S/C afectados una sola vez, incluso al completar P→P; un reintento no incrementa nada.
+Activas son abierta/derivada/espera_presencial/asignada/en_atencion/pendiente_reprogramacion: conservan estado operativo, pero estado_revision pasa a pendiente y huella_revision a NULL.
+Finalizada/retirada conservan estado y revisión histórica, sin reabrirse ni habilitar nuevas órdenes.
+contexto_triage añade metadatos dentro de su JSON existente: id_mascota_evaluada y version_solicitud_evaluada, identificando el episodio de huella_entrada.
+La conciliación conserva contexto, huella de entrada, versión de conocimiento, niveles, contagio, fuente y autor/fecha/motivo clínicos originales; en una S activa los datos del revisor siguen siendo históricos, sin vigencia mientras la huella de revisión es NULL.
+En la terminal la revisión se conserva íntegra, ligada al episodio antiguo, no al paciente nuevo.
+La procedencia demostrable previa y el mapa de IDs/versiones se registran en evidencia_conciliacion y auditoria_sistema; no se inventan atributos ni se copia contacto provisional/medicación protegida.
+Si posteriormente el veterinario evalúa explícitamente el episodio operativo actual, el snapshot sustituido permanece en auditoría.
+No se recalculan decisiones pasadas ni se sustituye especie/raza/alertas del snapshot por los datos de F al leerlo.
+
+Los consumidores resuelven IDs estables por clínica y exigen coherencia S/C/ingreso; muestran identidad actual separada de identidad evaluada.
+Para un comando nuevo se releen identidad/titular/vínculos, datos clínicos permitidos, marcas/tiempos, conocimiento y versiones; huella vigente liga todo ese contexto.
+Un token de P/contexto anterior falla incluso con mismo actor/color; comparar atributos actuales también detecta cambios que no aumentaron la versión S.
+Solo vet resuelve la revisión necesaria; admin marca invalidez mecánica al regularizar identidad, sin permiso de triage/consulta.
+Cita operativa queda pendiente_revision en estado_reajuste, conservando estado clínico/horas/asignación; no se cancela atención roja en curso.
+Propuesta pendiente anterior conserva su versión y límite: aceptación obsoleta falla; rechazo del destino o vencimiento original la resuelven antes de otra, sin nueva espera configurable.
+Cita completada conserva sus decisiones, contexto y sellos; no se reabre.
+No se habilita HU-4.17.
+
+Eventos conservan ID/clave/refs/destino/canal; version_recurso refiere a C si existe y, si no, S.
+clave_evento conserva la causa/versión causal original; actualizar version_recurso por identidad no crea otra causa ni otro evento y el reintento reconoce la clave original.
+Pendiente/error solo se actualiza a la versión vigente tras revalidar misma causa, coherencia, destinatario original legítimo y contacto actual; el contenido se reconstruye desde identidad vigente sin afirmar una revisión vencida.
+Si depende de revisión pendiente, espera su resolución; si causa/destino ya no valen, omitido con motivo saneado, sin redirigir a otro titular.
+Enviado/incierto conservan historia y no se reenvían por conciliar.
+El worker reclama con candados comunes y relectura vigente, commit antes de SMTP.
+Conciliación con evento afectado reclamado/incierto sin resolver devuelve conflicto sin escrituras; resolución operativa exige que el worker anterior ya no pueda continuar antes de liberar la barrera.
+Así no se confirma P→F mientras sigue autorizado un envío de la identidad anterior; no se mantiene un candado SQL durante SMTP ni se bloquea atención roja.
+Las notificaciones previas conservan procedencia y sus enlaces revalidan acceso.
+
+operaciones_agenda conserva huella/carga original y resultado como referencias, no datos renderizados.
+Reintento exacto ya confirmado no escribe: reconstruye acuse con identidad/versión y acceso actuales; sin permiso, deniega sin datos.
+Carga distinta con misma clave da conflicto; clave nueva requiere autorización actual, sin redirigir silenciosamente una orden vieja sobre P.
+Dos conciliadores serializan en clínica y releen ingreso: destino ya confirmado igual produce acuse sin otro traslado; diferente, conflicto.
+
+Orden común: clínica→usuarios→mascotas→vínculos→configuración/horarios/ausencias/cierres→bloques→citas→solicitudes→reasignaciones→ingresos→pausas→consultas/alertas/vacunas/desparasitaciones y sus hijos→operaciones→eventos; claves ascendentes dentro de cada tabla.
+Incluir todas las S activas/terminales, C, I, propuestas, pausas, eventos y recursos de identidad de origen/destino; si falta recurso, rollback/reinicio ordenado.
+Fallo después de trasladar C y antes de S/I revierte también mapa/HC, actos, versiones, revisiones, eventos, auditoría nueva y operación: nunca queda confirmado S→P/C→F.
+Se mantiene la conservación/limpieza de contacto ya definida, sin destinatarios, plazo ni facultades administrativas nuevas.

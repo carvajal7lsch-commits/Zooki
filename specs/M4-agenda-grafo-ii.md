@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **B1 revisada con corrección requerida B1.1 (2026-10-18)**. Se validan alineación documental y diseño general; falta cerrar la referencia de solicitudes al conciliar la mascota. No empezar B2. Alpha.4 y SQL ejecutable intactos.
+> Estado: **B1.1 revisada y aprobada (2026-10-18); H-B1-1 cerrado**. B1 y su diseño quedan aprobados con esta precisión de conciliación. Siguiente: B2 tras guardar la entrega; alpha.4 y SQL ejecutable aún intactos. No se declara funcionalidad implementada.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -70,6 +70,7 @@ Los criterios normativos permanecen en `documentacion/`; no se cambian silencios
 | **A. Inventario y contrato** | Solo lectura del código y anexo de diseño: rutas internas/portal, calendario, pacientes, atención, tipos, configuración, correos, vigilante y pruebas; regresiones conservadas; trazabilidad por RE; diferencias con Modelos §2–§8. Proponer algoritmo de intervalos/cascada, orden de candados, cierre puntual, revisión humana de triage, cola roja sin vet aún y persistencia mínima; resolver datos del acompañante y selección entre veterinarios igualmente compatibles antes de B. | Aprobación del plan | Codex | Codex independiente |
 | **B. Datos y contratos documentales** | Migraciones solo donde A demuestre huecos; MER/drawDB/esquema alineados; relleno conservador e idempotencia. Ajustes de HU/RE/RN/diagramas aprobados. No se habilitan rutas parciales. | A revisada y decisiones de datos aprobadas | Codex | Codex independiente |
 | **B1. Contrato documental y diseño de datos** | Alinear HU/RE/RN/Modelos con §6, matriz de permisos y propuesta mínima de esquema con campos/índices/relleno. Cerrar un único protocolo HC/candados. Sin SQL ejecutable ni código; revisar el diseño antes de B2. | A/A.1 revisadas y decisiones de §6 | Codex | Codex independiente |
+| **B1.1. Corrección de conciliación** | Contrato único de identidad vigente, solicitudes activas/terminales, contexto/revisión, eventos, idempotencia y rollback; revisada y aprobada (2026-10-18), H-B1-1 cerrado. | H-B1-1 de la revisión B1 | Codex | Codex independiente |
 | **B2. Esquema y migraciones** | Ejecutar únicamente el diseño revisado de B1: migración nueva repetible, esquema ejecutable/MER/drawDB coherentes y pruebas de instalación/actualización. No habilita rutas de aplicación. | B1 revisada y decisiones de datos resueltas | Codex | Codex independiente |
 | **C1. Marca y tipos** | HU-7.4 completa: configuración, duración/margen/pausable, teléfono; propagación de marca y aislamiento; mismo diseño y validación en vivo. | B | Codex | Codex independiente |
 | **C2. Horarios** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. | C1 | Codex | Codex independiente |
@@ -89,6 +90,8 @@ Los criterios normativos permanecen en `documentacion/`; no se cambian silencios
 Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario muestra que una fila no cabe en una entrega verificable, se divide antes de emitir el prompt; no se implementan dos por comodidad. Cada prompt sigue literalmente la estructura de `agentes/metodo.md` §5 y cita sus diagramas, alcance, exclusiones y pruebas concretas.
 
 ## 4. Datos y migraciones
+
+**Precisión vigente B1.1:** el Anexo B1.1 corrige exclusivamente la conciliación incompleta de B1. Todas las solicitudes afectadas usan la identidad vigente; las evaluaciones históricas conservan procedencia y no autorizan comandos sobre el nuevo contexto. No cambia campos/relaciones del destino de 58 tablas ni las 52 ejecutables.
 
 **B1 actual:** destino mínimo en MER/drawDB de 58 tablas (52 existentes + seis nuevas); no se modifican 01_schema.sql/02_semilla.sql ni 03–07. Diseño/campos/índices/rellenos concretos y protocolo único en Anexo B1; B2 solo después de su revisión. Las alternativas de A.4 quedan históricas, sin libertad de mezclar GET_LOCK y candado clínico al implementar.
 
@@ -1478,3 +1481,216 @@ El hallazgo no implica que se haya perdido información en producción: el model
 **Siguiente: B1.1 — cerrar conciliación de solicitudes y referencias operativas**, por el ejecutor, solo documentación/diseño. Conservar B1 y esta revisión; agregar resultado y marcarlo entregado, pendiente de revisión. No empezar B2 ni añadir código, SQL ejecutable o tests nuevos. Si la solución requiere cambios de campos/relaciones de destino, justificarlos y reflejarlos en MER/drawDB; el revisor no diseña ni implementa esa corrección por el autor. No hace falta repetir suites completas si el ajuste sigue siendo exclusivamente documental; sí comprobar coherencia, ejemplos, diagramas afectados y alcance.
 
 **Prueba manual:** no corresponde lista de navegador para B1/B1.1, sin pantallas ni funciones nuevas. Las verificaciones de migraciones y las listas de 3–5 pruebas por usuario se entregarán en sus etapas.
+
+
+## Anexo B1.1 — Resultado
+
+**Fecha:** 2026-10-18.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto, en la conversación independiente.
+**Estado:** entregada, pendiente de revisión.
+**Alcance:** corrección documental de H-B1-1; no se cierra el hallazgo por el autor.
+Se conservan B1 y su revisión completos; no confundir este Anexo B1.1 con el apartado «B1.1. Protocolo técnico único» del anexo anterior.
+
+### B1.1.1. Identidad vigente, procedencia y solicitudes
+
+**Elección única:** solicitudes_agenda.id_mascota es siempre la identidad vigente, también para solicitudes finalizadas.
+No se deja S→P cuando su cita C pasa a F.
+Completar la misma ficha usa destino P y estado de ingreso completado; consolidar sobre existente usa destino F y estado consolidado.
+No se cambia el destino de una conciliación ya confirmada por un reintento.
+ingresos_emergencia.id_mascota_provisional conserva P y id_mascota_final guarda el destino; id_ingreso, id_solicitud, id_cita y todos los IDs de actos permanecen estables.
+En consolidación P queda inactiva/carnet inactivo y se conserva como procedencia, no como paciente operativo.
+En completado P es la misma ficha regularizada: ficha_por_completar=0 con sus datos/titularidad legítimos; no se duplica, no se le asigna otro ID ni se activa automáticamente su carnet.
+Al consolidar no se sobrescriben titularidad/especie/raza/alertas de F con datos parciales de P; se preservan los actos trasladados y los valores vigentes autorizados de F.
+Todos los ingresos afectados de P conservan origen y el mismo destino confirmado; uno ya resuelto hacia otro destino detiene la unidad por incoherencia.
+
+El conjunto afectado incluye todas las solicitudes de P en esa clínica, con o sin cita, y las ya apuntadas al destino que enlacen cualquiera de las citas/ingresos afectados.
+Se comprueba la pertenencia y correspondencia de cada enlace; una solicitud de otro paciente enlazada a C es un conflicto de integridad, no se corrige por inferencia.
+Se verifican referencias de P en otras clínicas antes de escribir, conforme al límite de B1.4; no se trasladan actos ajenos.
+No se mezclan las demás solicitudes de F, de otros episodios, con las de P.
+Nueva solicitud sobre una ficha ya consolidada solo se crea con F y permisos/contexto actuales; una petición nueva con P obsoleto recibe conflicto para recargar, sin autorizarla por redirección implícita.
+
+| Objeto | Completar P→P o consolidar P→F |
+|---|---|
+| Todas las solicitudes afectadas, activas o terminales | Actualizar id_mascota al destino y aumentar version_solicitud una vez por conciliación efectiva, incluso P→P porque se regulariza identidad/contexto. Conservar id_solicitud, id_cita, id_ingreso, origen, actores originales, llegada y fecha de registro. |
+| Activas: abierta, derivada, espera_presencial, asignada, en_atencion, pendiente_reprogramacion | Mantener estado operativo; poner estado_revision=pendiente y huella_revision=NULL. El último episodio clínico se conserva como histórico, sin autorización vigente. No cancelar ni iniciar atención por esta marca. |
+| Terminales: finalizada y retirada | Mantener estado y episodio clínico, incluidos estado_revision/huella_revision que documentan su decisión histórica. El aumento de versión no renueva esa aprobación: nunca habilita un comando nuevo ni reabre el caso. |
+| Citas y actos clínicos afectados | Actualizar id_mascota al destino en la misma unidad; preservar IDs, clínica, autor, prioridad/decisión histórica, síntomas, duración, horas pactadas y sellos. Aumentar version_agenda de cada cita una vez, incluidas completadas, como cambio de referencia, sin recalcular la atención. |
+| Citas aún operativas/propuestas de reasignación | Marcar estado_reajuste=pendiente_revision con causa identidad/contexto, sin alterar estado clínico. version_cita anterior deja de aceptar una propuesta; no renovar huella, aceptar ni reasignar por conciliación. La propuesta conserva pendiente y su versión antigua: aceptar falla por contexto desactualizado; solo el rechazo del destino o el vencimiento en su límite original la resuelven y permiten otra. No renovar plazo, fingir respuesta del destino ni crear otra pendiente simultánea. |
+| Ingreso, HC, vínculos, auditoría, escaneos y pausas | Preservar el mapa P→destino, HC/procedencia y referencias a IDs estables de B1.4. Pausas siguen apuntando a la misma solicitud roja/cita; no se reescriben segmentos ni auditoría previa. Registrar todas las referencias/versiones antes y después en evidencia_conciliacion y auditoria_sistema. |
+
+**Resolución de identidad para consumidores.**
+Lectura, comandos, cobertura, consulta y despacho resuelven S/C por ID estable y clínica con lecturas actuales; exigen S.id_mascota=C.id_mascota cuando haya C y que coincidan con el destino confirmado del ingreso.
+Sin conciliación efectiva se usa P; completado resuelve P; consolidado resuelve F.
+Si la igualdad/mapa falla, conflicto de integridad y nada de actuar/notificar usando la ficha encontrada primero.
+El mapa de ingreso sirve para procedencia y detección de peticiones obsoletas, no concede acceso a F ni a la historia de otra clínica.
+La autorización siempre se comprueba sobre paciente, titular, vínculos y contexto activo vigentes.
+Para historia se presenta «identidad vigente F; evaluación original de P» con acceso clínico legítimo; no se atribuye el contexto viejo a F ni se expone el contacto del acompañante.
+
+### B1.1.2. Contexto clínico y vigencia para el siguiente comando
+
+contexto_triage conserva el episodio confirmado: marcas/tiempos y atributos del paciente efectivamente usados.
+Se precisan dentro del JSON existente los metadatos id_mascota_evaluada y version_solicitud_evaluada, ligados a huella_entrada; no son nuevos síntomas ni una FK operativa.
+Una solicitud nueva registra ambos al evaluar; antes de conciliar se completa su procedencia demostrable y se conserva la copia anterior por auditoría.
+No se inventan atributos que no se hubieran capturado.
+La evidencia del ingreso enumera cada S, C, identidad y versión de antes/después; auditoria_sistema conserva el episodio anterior y su revisión con usuario/fecha, sin contacto provisional ni medicación protegida.
+No se añade tabla, columna, índice ni FK: estos metadatos/evidencia usan los JSON/bitácora ya previstos.
+
+Al conciliar se conservan sin recalcular contexto_triage, huella_entrada, version_conocimiento, niveles calculado/aprobado, fuente, contagio y datos del revisor del episodio anterior.
+En solicitudes activas id_revisor/fecha_revision/motivo_revision describen esa revisión anterior; estado pendiente y huella_revision NULL impiden presentarlos como autorización actual.
+En terminales la revisión se conserva íntegra como historia.
+La huella antigua identifica la evaluación antigua, no una confirmación de la nueva ficha.
+No sustituir especie/raza/alertas en ese snapshot por los datos de F ni modificar colores históricos por inferencia.
+
+Antes de un comando nuevo se releen destino, titularidad/vínculos, especie/raza/edad/alertas permitidas, marcas/tiempos pertinentes, versión de conocimiento y versiones S/C.
+La huella de autorización incluye ese contexto canónico y la identidad/versiones vigentes; un token anterior falla aunque usuario, síntomas o color coincidan.
+Comparar los valores actuales relevantes evita depender únicamente de version_solicitud si se modificó un atributo global por una vía legítima.
+No se ofrecen/aceptan nuevos horarios ni reasignaciones desde una revisión pendiente.
+Solo el veterinario resuelve la revisión que proceda: confirma datos actuales y evalúa explícitamente el episodio operativo necesario, o documenta su decisión clínica presencial por la vía existente.
+Una nueva evaluación explícita incrementa version_solicitud, identifica esa nueva versión en version_solicitud_evaluada y emite la huella vigente después de ese incremento; conserva el episodio sustituido en auditoría y no recalcula ni sobrescribe el pasado.
+El administrador solo regulariza identidad y marca invalidez mecánica; no calcula triage, resuelve revisión ni registra actos clínicos.
+No se exige volver a atender una cita completada; una atención roja en curso no se cancela ni espera la conciliación: continuidad/cierre por veterinario relee F y revalida el comando clínico conforme Modelos §3.
+La excepción roja y sus decisiones previas siguen conservadas; no se habilita actualización de síntomas por propietario ni HU-4.17 de v2.1.
+
+### B1.1.3. Eventos y reintentos: referencias estables, contenido vigente
+
+**Eventos aún no despachados.**
+Conservar id_evento, clave_evento, id_cita/id_solicitud, clínica, destinatario original, destino_clave y canal.
+version_recurso compara version_agenda si hay id_cita; en otro caso version_solicitud; si aparecen ambos recursos se comprueba también su coherencia vigente.
+La clave del evento identifica la causa original y su versión causal; version_recurso es el control de vigencia del recurso, no una causa nueva.
+Al renovar solo identidad no se recalcula clave_evento ni se inserta otro evento; un reintento del productor reconoce la misma causa original.
+La conciliación no copia P/contacto a otro payload ni crea un destinatario o aviso de identidad nuevo.
+En pendiente/error, antes de renovar version_recurso se demuestra que la misma causa de aviso sigue siendo aplicable y el destinatario original sigue legítimo para el recurso vigente.
+Solo entonces se reconstruye contenido desde F/P vigente y marca de la clínica.
+Si el mensaje exigiría reutilizar una revisión clínica vencida, esperar su resolución antes de despachar; no transformar datos históricos en una afirmación clínica nueva.
+Si la causa o destinatario dejó de ser válido, marcar omitido con causa saneada.
+No redirigirlo automáticamente al nuevo propietario; una comunicación futura solo surge de los comandos ya especificados y a sus destinatarios autorizados.
+enviado e incierto conservan la historia del intento, nunca se reenvían por una conciliación.
+Las notificaciones internas ya emitidas mantienen procedencia; su consulta/enlace vuelve a autorizar contra la identidad vigente.
+
+**Carrera entre conciliación y despacho.**
+El worker identifica recursos sin bloquear primero el evento; entra al mismo orden de clínica/usuarios/mascotas/.../eventos de B1.
+Bajo esos candados relee versiones, identidad, permisos/vínculo/contacto y causa antes de reclamar.
+La reclamación durable es la barrera técnica del envío: tras commit no se mantienen candados SQL durante SMTP.
+Si la conciliación encuentra un evento afectado reclamado o incierto aún sin resolución operativa, devuelve conflicto transitorio sin trasladar nada.
+No invalida a ciegas un envío que pudo salir ni permite consolidar y luego transmitir el snapshot anterior.
+El worker descarta cualquier contenido preparado antes de la revalidación y no envía si no obtuvo la reclamación vigente.
+Tras resultado conocido libera la barrera con estado final; si cae, se aplica incierto y resolución operativa ya prevista, sin nuevo plazo ni reenvío automático.
+La resolución debe acreditar que el worker anterior ya no puede continuar su envío antes de habilitar otro despacho o la conciliación.
+Así, si gana el conciliador, el worker relee F; si gana la reclamación, la conciliación no cambia identidad a mitad del envío.
+La barrera solo difiere regularización de identidad: no bloquea la atención roja ni mantiene una transacción esperando SMTP.
+No se promete deshacer un correo ya transmitido ni acceso permanente a un mensaje histórico.
+
+**Idempotencia del comando y respuesta.**
+operaciones_agenda conserva clave, huella del comando original y resultado con IDs/referencias, no una respuesta HTML/JSON personal ya renderizada.
+Para comparar un reintento se usa la carga original, sin canonicalizar P a F y hacerla pasar por una orden nueva.
+Si ya hubo commit, no repetir escrituras, versiones, decisiones ni eventos.
+Antes de responder resolver las referencias actuales, comprobar acceso a F/P vigente y reconstruir la vista autorizada; no devolver literalmente el resultado histórico ni el contacto viejo.
+Sin permiso actual, denegar sin datos; una respuesta exitosa anterior no concede acceso futuro.
+Con permiso actual, informar que la operación ya se realizó y sus referencias vigentes, con versión actual; ese acuse no equivale a ejecutar de nuevo la orden con la revisión vieja.
+Misma clave con otra carga da conflicto.
+Una clave nueva con huella/revisión/contexto anterior también falla hasta recargar/revalidar; no reaprovecha el éxito de la clave anterior.
+El reintento exacto de conciliación misma P/destino ya confirmado devuelve acuse autorizado sin otra conciliación.
+Otra clave de otro operador para el mismo destino detecta el ingreso ya resuelto y no incrementa versiones; destino diferente da conflicto.
+La respuesta queda autorizada al corte de su lectura transaccional; cualquier comando posterior vuelve a revalidar.
+
+### B1.1.4. Unidad de conciliación, candados y rollback
+
+Se conserva la elección única de B1: clínica primero, usuarios y mascotas globales por ID, vínculos, configuración/horarios/ausencias/cierres, bloques, citas, solicitudes, reasignaciones, ingresos, pausas, operaciones y eventos.
+Dentro de cada tabla usar clave ascendente.
+Incluir P, F, titulares/operadores y veterinarios afectados, todas las S activas/terminales con/sin C, sus C, ingresos, propuestas, pausas y eventos del conjunto; las demás referencias clínicas se bloquean tras el grupo de pausas y antes de operaciones/eventos, en orden consultas, alertas_medicas, vacunas, desparasitaciones y luego sus hijos por tabla/ID.
+La clínica sigue primero para todos los escritores, también si el conjunto está vacío.
+Cualquier nuevo recurso no previsto exige rollback y reinicio ordenado, nunca adquirir tarde otro usuario/mascota.
+Releer después de esperar, sin snapshot REPEATABLE READ anterior; clínica/mutex de mascotas impiden insertar una S/C afectada fuera del conjunto sin esperar.
+Usuarios y mascotas de destino se autorizan y vinculan solo por los mecanismos vigentes, no por copiar titular de P.
+
+1. Revalidar permiso específico admin/vet, titularidad acreditada, pertenencia/estado del ingreso, destino activo legítimo, mapa/HC, correspondencias S/C y barrera de envío.
+2. Guardar en evidencia/auditoría la procedencia antes de cambiar las referencias; no reescribir auditoría previa.
+3. Trasladar actos/citas y todas las S; aplicar versiones, invalidez de revisiones activas, marcas operativas, tratamiento de eventos y HC.
+4. Finalizar ingreso, mapa P→destino y estado de P; verificar todas las correspondencias y registrar resultado idempotente.
+5. Commit único; publicar/consumir respuestas y avisos solo después de él.
+
+Una excepción después de mover C pero antes de actualizar S/ingreso revierte C, actos, S, mapa/HC, versiones, revisiones, eventos y fila de operación/auditoría nueva.
+La regularización de identidad no emite SMTP ni mueve archivos clínicos; los adjuntos conservan su padre/ID.
+No hay estado intermedio confirmado C→F/S→P.
+Dos operadores de la misma clínica serializan en su fila: el segundo espera y relee el ingreso ya resuelto, no traslada otra vez ni elige otro F.
+Una lectura/petición sin autorización no recibe el destino por consultar P.
+La conservación/limpieza del contacto sigue RE-4.15.9/10; no se añade captura, destinatario, plazo ni permiso clínico.
+
+### B1.1.5. Ampliación de P15 — ejemplos propuestos
+
+Se conserva la fila P15 original de A y se amplía aquí su aceptación.
+Son escenarios documentales para C7b, no tests implementados ni ejecución de conciliaciones reales.
+Datos de referencia: clínica Norte, provisional P=101, ficha final F=202 activa/vinculada con titularidad acreditada, ingreso I=80, cita C=300 y solicitud S=40.
+S enlaza C/I; antes S.id_mascota=C.id_mascota=101, version_solicitud=5 y version_agenda=8.
+La evaluación conservada e5 tiene id_mascota_evaluada=101, version_solicitud_evaluada=5, huella hP y revisión rP, con atributos desconocidos.
+F aporta especie/raza/alertas y propietario ya verificados distintos de los datos parciales de P; no se infieren equivalencias clínicas.
+
+| Caso | Entrada y resultado exigido |
+|---|---|
+| P15.1 — Completar la misma ficha | I pasa a completado con id_mascota_provisional=id_mascota_final=101; S/C siguen en 101, versiones 6/9; sin duplicar ficha/HC/actos. Si S activa, revisión pendiente y huella_revision NULL, aunque no cambie el ID; e5/hP permanecen como episodio anterior. |
+| P15.2 — Consolidar solicitud activa asignada | I consolidado 101→202; S/C pasan a 202 en el mismo commit, IDs 40/300/80 estables, versiones 6/9. S conserva asignada, revisión pendiente/huella NULL; C conserva asignación, prioridad y horas, con reajuste pendiente_revision. P queda inactiva. Ningún consumidor operativo sigue tomando 101 como paciente. |
+| P15.3 — Espera activa sin cita | Otra S=41 de P, espera_presencial e id_cita NULL, también pasa a 202 e incrementa su propia versión; conserva llegada/ID y espera. No se crea C ni se pierde prioridad roja por conciliar; para nuevos horarios se resuelve revisión vigente. Las otras solicitudes de F ajenas a P no se alteran. |
+| P15.4 — Solicitud finalizada | Con S.finalizada/C.completada se trasladan ambas referencias a 202 y versiones a 6/9, sin reabrir estado ni cambiar rP, hP, color, conocimiento, diagnóstico o sellos. Historia muestra paciente vigente 202 y evaluación original 101/e5. Un comando nuevo no puede usar rP ni operar sobre la finalizada. Igual preservación para retirada. |
+| P15.5 — Contexto final distinto | Una orden nueva de reservar/aceptar con v5/hP/rP falla antes de escribir, aunque el actor siga siendo legítimo. Admin no resuelve revisión. Vet relee especie/raza/alertas autorizadas de 202, confirma los datos del episodio operativo y genera evaluación/huella vigente de forma explícita; e5 queda conservado. Nada recalcula el triage o actos ya finalizados; propietario no obtiene HU-4.17. |
+| P15.6 — Evento pendiente | E=90, C=300/S=40, version_recurso=8 y destinatario U=9. Tras traslado, refs y destinatario de E permanecen. Si causa/permiso/contacto actual de U siguen válidos y el contenido no depende de revisión vencida, revalidar y actualizar versión a 9, reconstruir desde 202 y despachar una vez con su clave original. Si U ya no está autorizado, omitido; no enviarlo a otro titular ni usar contacto de P. |
+| P15.7 — Worker concurrente | Si conciliación confirma primero, el worker toma identidad 202/versiones nuevas y no transmite lo preparado con 101. Si E ya está reclamado/incierto, conciliación responde conflicto sin cambios y espera nueva ejecución tras resolución del envío; no conserva un candado SQL durante SMTP. No reutilizar un token de worker descartado ni reenviar incierto automáticamente. |
+| P15.8 — Reintento de operación ya confirmada | La misma clave K/carga original devuelve acuse reconstruido de S=40/C=300 y paciente actual 202 solo si sigue autorizado; versiones permanecen 6/9 y no se duplica E. Si perdió acceso, 403 sin datos. Misma K con destino/carga distinta da conflicto; clave nueva con v5/rP no obtiene autorización. |
+| P15.9 — Fallo intermedio | Forzar fallo documentalmente después de trasladar C/consulta a 202 y antes de S/ingreso: tras rollback S/C/consulta siguen 101, versiones 5/8, revisión rP, P activa provisional, I pendiente y evento/HC intactos. No queda operación K confirmada ni auditoría parcial de éxito. Reintentar usa nuevo estado leído, no una confirmación ficticia. |
+| P15.10 — Dos conciliadores | Admin A y vet B intentan el mismo I=80. A confirma primero; B espera la clínica y relee consolidado. Mismo destino 202: acuse autorizado sin otra subida de versiones, traslado ni evento. Destino 203: conflicto sin redirigir el mapa. Un operador de Sur recibe denegación sin conocer F. |
+| P15.11 — Enlace incoherente o ingreso ajeno | S de otro paciente que enlaza C, mapa contradictorio o referencias de P de otra clínica detienen la unidad; una FK sintácticamente válida no permite aprobar el traslado. S/C no se reparan tomando indistintamente la primera identidad accesible. |
+| P15.12 — Cambio de atributos sin otro ID | Completar P o una edición legítima de datos relevantes después de la revisión exige cotejar valores actuales y huella, aunque el ID o la versión S no hayan cambiado por esa otra vía. El comando devuelve conflicto/revisión vigente; decisiones previas permanecen, sin recalcularlas al leer. |
+
+### B1.1.6. Evidencia, alcance y pendientes
+
+**Trazabilidad:** RE-4.15.3; RN-110 (identidad global y titularidad), RN-206 (acumulación/procedencia sin pérdida), RN-207 (actos nuevos sobre ficha activa).
+Se precisa solo el criterio de aceptación de RE-4.15.3; sin IDs nuevos ni cambios de referencias/matrices.
+Se conservan 96 HU, 430 RE, 120 RN, 58 tablas de destino y 52 ejecutables.
+Se cotejan estados existentes, campos JSON/versiones, mapa de identidad y ejemplos P15.1–P15.12 con MER y Modelos §3/§6.
+**Verificación propia B1.1 (2026-10-18):** Mermaid 11.4.1 con Chrome sin interfaz, 27/27 bloques renderizados y SVG válidos (26 Modelos y uno MER); solo cambian los diagramas §3/§6, el diagrama MER permanece idéntico.
+Cotejo documental de los doce ejemplos P15.1–P15.12, las ocho situaciones operativas de S y los estados existentes de ingreso/revisión/eventos; sin ejecutar comandos clínicos ni simular pruebas de BD.
+430 RE únicos y consecutivos con los mismos IDs; solo cambia el criterio de RE-4.15.3, matrices/referencias sin cambios.
+Comparación íntegra de anexos/revisiones previos tras normalizar saltos de línea; sin cambios.
+Diff limitado a seis archivos y git diff --check sin incidencias.
+Anexos A/A.1/B1 y sus revisiones, incluida «B1 — Revisión (2026-10-18)», se preservan íntegros.
+La precisión de B1.1 prevalece únicamente en los puntos de conciliación corregidos, sin reabrir §6.
+
+**Persistencia suficiente:** solicitudes usa id_mascota/version_solicitud/estado_revision/huella_revision y metadatos del JSON; citas version_agenda/marca; ingreso mapa/evidencia; auditoría snapshots permitidos; eventos reclamación/versión/estados; operaciones clave/carga/refs.
+Ninguna tabla, columna, relación ni índice nuevo; drawDB no cambia.
+No se ejecuta aplicación, consulta BD, archivo de entorno, migración, test nuevo, versión, exportación ni recorrido de pantallas.
+La línea base **del revisor B1, 2026-10-18**, es PHP 854/7813 con MariaDB, JS 238/238 y Mermaid 27/27; no se presenta como ejecución nueva ni se repiten suites completas.
+
+**Archivos de B1.1:** specs/M4-agenda-grafo-ii.md; agentes/estado.md; documentacion/MER.md; specs/HU-4.15-ingreso-emergencia.md; documentacion/RequisitosEspecificos.md; documentacion/Modelos.md.
+El estado ya contenía el encargo del arquitecto al comenzar; se conserva como antecedente.
+**Pendientes:** revisión independiente de B1.1 y verificación real de las carreras/rollback en C7b; el ejecutor no aprueba ni declara cerrado H-B1-1.
+No aparece una decisión de producto nueva: son reglas técnicas de identidad, vigencia y exclusión del envío sobre las decisiones ya confirmadas.
+B2 no se inicia.
+
+**Comandos de commit, uno por línea, compatibles con CMD/PowerShell:**
+
+    git add specs/M4-agenda-grafo-ii.md agentes/estado.md documentacion/MER.md specs/HU-4.15-ingreso-emergencia.md documentacion/RequisitosEspecificos.md documentacion/Modelos.md
+    git commit -m "docs(agenda): precisar conciliacion de solicitudes (RE-4.15.3)"
+
+### B1.1 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor de B1.1. Veredicto: aprobada; H-B1-1 cerrado.** B1 queda aprobada con la precisión de este anexo. Puede prepararse B2 después del commit del usuario; no se aprueba por ello una migración aún inexistente ni se declara implementada la conciliación.
+
+**Verificación propia:** lectura completa del Anexo B1.1 y diff de sus seis archivos, cotejados con RE-4.15.3, MER, plan excepcional de ingreso y Modelos §3/§6. Se verifican los doce casos P15.1–P15.12 como ejemplos del contrato, sin presentarlos como pruebas de aplicación/BD. No cambian tablas, columnas, índices, relaciones, código, SQL ejecutable, conocimiento, tests ni versión.
+
+Comprobación independiente de conteos: **96 HU, 430 RE únicos sin saltos, 120 RN, 58 entidades iguales en MER/drawDB y 52 tablas ejecutables**. Renderizado propio con Mermaid 11.4.1 y Chrome sin interfaz: **27/27 diagramas sin errores**. El Anexo B1 anterior se comparó con HEAD normalizando saltos de línea y permanece íntegro; su revisión se conserva. `git diff --check` sin incidencias.
+
+No se repitieron las suites PHP/JS conforme al encargo, exclusivamente documental. Se conserva la línea base propia de B1: PHP **854/7813 con MariaDB y cero omitidas**, sin host **854/7212 y 44 omitidas**, JS **238/238**. Esa línea base no es una ejecución nueva ni demuestra las futuras carreras de conciliación. No se leyeron credenciales ni se consultaron bases o pantallas en B1.1.
+
+**Aceptado para implementación posterior:**
+
+- Todas las solicitudes afectadas, activas o terminales, y sus citas resuelven el mismo paciente vigente. Completar P→P y consolidar P→F tienen efectos definidos; los IDs operativos permanecen estables y el ingreso conserva procedencia.
+- La evaluación original no se atribuye silenciosamente a F: conserva paciente/versiones evaluados, contexto y decisión histórica. Solicitudes activas invalidan autorización de revisión; terminales no se reabren. Continuidad roja y cierre clínico releen/revalidan los datos actuales sin cancelar atención ni otorgar triage al administrador.
+- Contexto y versiones anteriores no autorizan nuevos comandos; los reintentos confirmados reconstruyen un acuse con permisos actuales y no repiten escrituras/eventos. Una petición obsoleta sobre P no obtiene acceso a F por redirección implícita.
+- Eventos pendientes se revalidan sobre causa y destinatario originales legítimos; no se redirigen al nuevo propietario. La barrera de reclamación impide confirmar conciliación mientras un envío afectado pueda continuar con el contexto anterior. Su recuperación exige resolver de forma verificable el worker/estado incierto; no se mantiene SQL abierto durante SMTP ni se promete entrega exactamente una vez.
+- Conjunto de recursos, orden de bloqueo, dos conciliadores y fallo entre C/S/I tienen resultado y rollback explícitos, incluidas versiones, revisiones, HC, eventos y operación. El diseño usa los campos ya propuestos, sin ampliar el esquema.
+
+No se encuentran nuevos hallazgos bloqueantes en esta corrección documental. La verificación real de exclusión/reclamación, permisos, huellas y rollback corresponde a C7b y a las etapas de eventos/coordinación; no se acepta sustituirla por los ejemplos del anexo. Las restricciones y compatibilidad MySQL/MariaDB del destino deberán comprobarse en B2, sin suponerlas probadas por el render del MER.
+
+**Siguiente:** guardar B1.1 y esta revisión. Después, prompt solo de B2: esquema ejecutable y migración nueva conforme a B1+B1.1 revisadas, con pruebas de instalación nueva, actualización de alpha.4, repetición y conservación de datos. Sin habilitar rutas ni implementar coordinadores/consulta/SMTP en B2. Los contratos de ejecución HC/candados se integrarán uniformemente en las subetapas C correspondientes, conservando las pruebas concurrentes previstas.
+
+**Prueba manual:** no corresponde navegador en B1.1, sin interfaz o comportamiento nuevos. Se entregará la lista por usuario cuando una subetapa funcional lo requiera.

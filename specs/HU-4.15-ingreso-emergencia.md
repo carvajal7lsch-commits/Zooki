@@ -47,6 +47,38 @@
 - Conciliación bloquea clínica/usuarios/mascotas/actos en orden común, relee y preserva todas las referencias: citas/consultas/alertas/vacunas/desparasitaciones se trasladan; tratamientos/archivos/síntomas siguen sus actos. Auditoría/escaneos históricos conservan origen y el ingreso guarda mapa IDs/HC. Se conserva HC existente del final y alias/procedencia provisional, o se transfiere HC sin duplicarlo cuando final carece de él; no se inventa uno por conciliar. Una provisional con actos de otra clínica no se consolida desde esta por inferencia.
 - MER/drawDB proponen solicitudes_agenda para revisión/derivación/espera, con enlace opcional a ingreso provisional y cita; id_veterinario de cita no se vuelve NULL. Los RE-4.15.3/9/10 y el plan M4 son su aceptación trazable; no ejecutar drawDB como migración.
 
+## Precisión B1.1 — identidad de solicitudes y comandos
+
+Contrato documental de 2026-10-18, pendiente de revisión independiente e implementación.
+Se completa P→P (ingreso completado) o se consolida P→F (consolidado), con una sola identidad vigente para todas las solicitudes y citas afectadas de la clínica.
+Completar conserva P y regulariza ficha_por_completar=0 con datos/titularidad legítimos, sin activar carnet automáticamente; consolidar no sobrescribe datos/titularidad/alertas de F con datos parciales de P.
+Todos los ingresos afectados conservan mapa compatible; otro destino ya confirmado detiene la unidad.
+Incluso S finalizada/retirada actualiza id_mascota al destino y conserva su episodio clínico como procedencia; no queda S→P/C→F ni se reabre historia.
+Se conservan IDs S/C/I y actos, clínica/autor/horas, mapa P→destino/HC en ingreso y auditoría; P consolidada queda inactiva.
+Las otras S de F no pertenecientes a P no se mezclan; enlaces incoherentes o actos ajenos detienen la unidad.
+Cada S/C afectada aumenta su versión una sola vez; P→P también invalida el contexto anterior regularizado.
+Activas (abierta, derivada, espera_presencial, asignada, en_atencion, pendiente_reprogramacion) conservan estado operativo y pasan revisión a pendiente/huella_revision NULL.
+Terminales conservan revisión histórica íntegra, sin autorizar comandos nuevos.
+contexto_triage conserva id_mascota_evaluada/version_solicitud_evaluada en JSON, huella, versión de conocimiento, atributos y decisiones de su episodio; no se recalcula ni sobrescribe desde F.
+En activas, autor/fecha/motivo previos describen revisión histórica; solo vet confirma/evalúa explícitamente el nuevo contexto y conserva en auditoría el episodio sustituido.
+Admin no adquiere permiso clínico, propietario no obtiene HU-4.17 y atención roja no espera regularización de identidad.
+Nuevo comando resuelve S/C/ingreso actual, comprueba acceso/titularidad/datos permitidos/versiones y huella; revisión vieja no habilita nueva reserva, reasignación ni consulta sobre F.
+Consulta en curso sigue el flujo clínico vigente con relectura/revalidación por veterinario; una finalizada no se reabre.
+
+Eventos mantienen refs/destino/canal/clave; pendiente/error solo se reconstruye con identidad/contacto/causa y permisos actuales para el mismo destinatario.
+Con revisión clínica vencida necesaria para el mensaje, esperar resolución; con causa/destinatario inválido, omitido, sin nuevo destinatario ni aviso por el solo cambio de identidad.
+Reclamado/incierto pendiente de resolución impide confirmar conciliación y produce conflicto sin traslado; no se deja un worker enviando P tras confirmar F.
+Worker reclama con candados y corte vigente, libera SQL antes de SMTP; la resolución operativa debe excluir que el envío anterior continúe antes de liberar esa barrera.
+Enviado/incierto no se reenvía automáticamente.
+Reintento idempotente exacto conserva carga/resultado histórico por IDs, pero reconstruye acuse solo con acceso/identidad actuales y no repite cambios/versiones/eventos; clave nueva necesita revisión vigente y otra carga con misma clave es conflicto.
+Sin permiso actual no se devuelve el resultado antiguo.
+
+La unidad usa clínica primero y el orden común del plan M4, incluyendo S activas/terminales, C, I, propuestas, pausas, actos y eventos.
+Fallo después de mover C pero antes de S/I revierte todos los cambios/HC/versiones/revisión/auditoría nueva/operación.
+Dos operadores esperan/releen: mismo destino confirmado, sin segundo traslado; otro destino, conflicto.
+La ampliación P15.1–P15.12 del Anexo B1.1 concreta ejemplos de solicitud activa/finalizada, contexto distinto, evento, reintento y fallo intermedio; son propuestas, no tests implementados.
+No cambian columnas/relaciones del MER/drawDB ni SQL ejecutable.
+
 ## 4. Verificación
 
 RE-4.15.3 requiere pruebas de integración de las cuatro ramas y de la conciliación bajo fallo transaccional. Un caso del portal conserva la identidad de la sesión sin repetir la verificación. Un propietario de otra clínica no debe consultar el ingreso ni el contacto provisional. El carnet público debe responder con su mensaje genérico hasta que la ficha esté completa y activada. El flujo visual se revisa en 375 px, 820 px y 1280 px.

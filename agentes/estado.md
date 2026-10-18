@@ -6,7 +6,14 @@
 
 ## Ahora
 
-### Situación vigente — revisión B1 (2026-10-18)
+### Situación vigente — B1.1 (2026-10-18)
+
+- **B1.1 revisada y aprobada; H-B1-1 cerrado (2026-10-18).** Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Contrato de solicitudes/citas al mismo paciente vigente, episodio histórico con procedencia, revisión activa invalidada y comandos/eventos/reintentos revalidados, sin nuevos campos/relaciones/tablas. B1 queda aprobada con esta precisión; revisión en «B1.1 — Revisión» del plan. B2 todavía no empezó.
+- **Verificación B1.1:** coherencia documental de referencias, estados, permisos, versiones y rollback en P15.1–P15.12; renderizado propio Mermaid 27/27, con cambios solo en Modelos §3/§6; 96 HU/430 RE/120 RN y 58 tablas de destino/52 ejecutables sin cambios. Anexos/revisiones previos intactos y diff limitado a seis archivos, sin incidencias de espacios. No se repiten suites ni se consulta BD: PHP 854/7813, JS 238/238 y Mermaid 27/27 de la revisión B1 son línea base histórica.
+- **Verificación propia de revisión B1.1:** doce ejemplos P15 cotejados documentalmente y Mermaid 27/27 renderizados; 96 HU/430 RE únicos sin saltos/120 RN, MER y drawDB 58 entidades iguales frente a 52 ejecutables. Anexo B1 previo intacto; diff de seis archivos y sin incidencias de espacios. Sin repetición de PHP/JS por corrección documental; se mantiene la línea base propia de B1, no como ejecución nueva. Sin acceso a bases/credenciales/pantallas ni cambios ejecutables.
+- **Siguiente vigente:** usuario guarda B1.1 y revisión; después preparar prompt solo B2 (esquema/migración nueva y pruebas de instalación/actualización/idempotencia/conservación). No habilitar rutas ni implementar lógica de aplicación en B2. No hay decisiones nuevas de producto ni ampliación de permisos por esta revisión.
+
+### Antecedente inmediato — revisión y encargo B1.1
 
 - **M4 B1 revisada con corrección requerida B1.1.** Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Revisión en [M4](../specs/M4-agenda-grafo-ii.md), «B1 — Revisión (2026-10-18)». H-B1-1/P2: falta definir qué ocurre con solicitudes_agenda.id_mascota, huellas/contexto y referencias operativas al consolidar provisional en ficha existente; cita/consulta pueden pasar a la final mientras la solicitud conserva la provisional inactiva. Cerrar contrato y rollback antes de B2. La arquitectura general y alineación documental se validan, sin aprobar aún su implementación.
 - **Diseño propuesto para revisión:** serialización por clínica antes de otros recursos, usuarios/mascotas globales y lecturas actuales; sustituir uniformemente GET_LOCK de HC al integrar todos los escritores. Seis tablas nuevas y cuatro ampliadas: MER/drawDB describen 58 de destino, ejecutable alpha.4 conserva 52. B2 no empezó; siguiente libre prevista: 08.
@@ -15,6 +22,7 @@
 - **Decisión del usuario (2026-10-17):** confirmado el orden de llegadas no urgentes en espera: amarillo antes de verde y, dentro de cada color, llegada física/id_solicitud. Se cierra ese pendiente; HU-2.2, RE-2.2.5, RN-208, Modelos y MER alineados. No crea sobrecupos ni consulta sin cita; B1 sigue pendiente de revisión y B2 no empezó.
 - **Verificación propia de la revisión (2026-10-18):** PHP 854/7212/44 omitidas sin host; con MariaDB 10.4.32 y exclusivamente zooki_test_base_v2, 854/7813/cero omitidas; JS 238/238; Mermaid 27/27 renderizados independientemente. 430 RE únicos sin saltos, mismos 427 publicados más tres nuevos; MER/drawDB 58 entidades frente a 52 ejecutables. MySQL 8 no verificado. Corrección mínima del revisor: descripción de fin obligatorio en cierres_clinica, sin cambio de tipo ni esquema.
 - **Siguiente:** Codex ejecutor entrega B1.1 documental (solicitudes/identidad vigente/huellas/eventos/idempotencia y rollback de conciliación); este arquitecto la revisa. No empezar B2. Sin cambios ejecutables ni operaciones Git de escritura.
+- **Encargo B1.1 preparado (2026-10-18):** usuario pide continuar; B1 y revisión ya constan en `dce8656`, rama `v2/m4-agenda`, limpia al comprobar. Se entrega prompt solo para H-B1-1: contrato único de solicitudes/identidad vigente/procedencia, vigencia de decisiones/eventos/reintentos y rollback completo. Diseño documental, sin implementar B2 ni repetir suites completas salvo cambio de alcance o nueva evidencia que lo justifique. Pendiente de entrega del ejecutor y revisión independiente.
 
 ### Antecedentes conservados
 

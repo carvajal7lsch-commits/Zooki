@@ -139,13 +139,17 @@ flowchart LR
 
 ## 3. Proceso de negocio — Consulta clínica (con Grafo I)
 
+**Precisión B1.1:** al regularizar identidad, solicitud y cita resuelven la misma mascota vigente; el contexto anterior conserva su identidad evaluada y no autoriza comandos sobre otra ficha/contexto.
+Continuar/guardar relee paciente, titularidad, vínculos, datos clínicos permitidos y versiones bajo el contrato común; el veterinario revalida el comando actual sin recalcular actos pasados.
+Un formulario o acuse idempotente anterior no sustituye esa validación; una atención completada no se reabre ni el propietario obtiene HU-4.17.
+
 Actores: Veterinario. Entrada desde una cita del calendario o sin reserva vía Atención/Urgencias; toda nueva atención crea/enlaza antes su cita de llegada, conservando origen. Si la alerta roja se originó en el portal autenticado, ya están identificados el propietario de la sesión y la mascota que seleccionó; la verificación rápida y la ficha provisional corresponden solo a una llegada presencial sin identidad comprobada. El sistema apoya en cada paso; la decisión final es siempre del veterinario.
 
 ```mermaid
 flowchart TD
   A([Veterinario va a atender]) --> B{Como atiende?}
 
-  B -- Desde una cita (calendario) --> C{"Puede iniciar? Es el vet asignado, es el dia de la cita y faltan 15 min o menos (RN-407)"}
+  B -- Desde una cita (calendario) --> C{"Puede iniciar? Es el vet asignado, es el dia de la cita, faltan 15 min o menos e identidad/version son vigentes (RN-407)"}
   C -- No --> C1[/"Mensaje: no puede iniciar esta atencion"/]
   C1 --> ZF([Fin])
   C -- Si --> D[Iniciar atencion y sellar hora_inicio_real]
@@ -206,7 +210,14 @@ flowchart TD
   W1 --> V
   W -- Si --> X[Confirmar y guardar]
   V -- No --> X
-  X --> RV["Releer permisos, alergias, medicacion, version y sintomas activos;<br/>revalidar prescripcion en servidor y huella por fila"]
+  X --> IV["En la transaccion comun: resolver solicitud/cita/ingreso e identidad actual"]
+  IV --> IA{"Acceso actual al paciente/recurso en este contexto?"}
+  IA -- No --> IAN[/"403 sin datos ni redireccion a la ficha final"/]
+  IAN --> ZF
+  IA -- Si --> IG{"Identidad/contexto/version vigentes para esta orden?"}
+  IG -- No --> OBS[/"Contexto desactualizado; recargar con permiso actual, sin escribir"/]
+  OBS --> CTX
+  IG -- Si --> RV["Releer permisos, alergias, medicacion, version y sintomas activos;<br/>revalidar prescripcion en servidor y huella por fila"]
   RV --> RS{"Sintoma retirado o invalido? (RN-210)"}
   RS -- "Si: 422 junto al campo, nada escrito" --> I1
   RS -- No --> RB{Bloqueo o advertencia no resuelta?}
@@ -325,9 +336,15 @@ Solo administrador y veterinario autorizado de la clínica completan/consolidan 
 No se inventa documento, reto o plazo adicional; sin prueba suficiente la ficha sigue provisional.
 La acción administrativa no registra/modifica consultas ni crea citas; la creación clínica de llegada corresponde al veterinario.
 Se conservan las cuatro ramas de identidad de RE-4.15.3 y el rollback de todas las referencias.
+Completar P→P o consolidar P→F actualiza todas las solicitudes activas/terminales y citas afectadas al paciente vigente, con sus IDs estables; ingreso y evaluación conservan procedencia original.
+Activas incrementan versión y requieren revisión vigente para órdenes nuevas; finalizadas/retiradas conservan episodio y revisión históricos sin reabrirlos.
+La regularización no recalcula colores/actos pasados ni concede al admin facultades clínicas.
+Eventos y respuestas idempotentes se reconstruyen solo con acceso, contexto e identidad actuales; envío reclamado/incierto sin resolver impide confirmar la conciliación, sin bloquear atención roja ni mantener SQL durante SMTP.
+Este flujo también aplica si se regulariza mientras una solicitud sigue activa; no exige que la urgencia haya finalizado.
 
 ```mermaid
 flowchart TD
+  REG([Regularizar identidad de un ingreso existente, incluso con solicitud activa]) --> VER
   A([Rojo remoto o ingreso presencial]) --> B["Caso y aviso idempotentes con prioridad maxima, sin cuota ni mora"]
   B --> F{Presencia fisica acreditada?}
   F -- No --> REM[/"Derivar; si cerrada, telefono y servicio 24h; no pausar/iniciar"/]
@@ -356,8 +373,17 @@ flowchart TD
   PEND -- Si --> VER["Admin o vet verifica titularidad por mecanismos vigentes"]
   VER --> OK{Acreditada?}
   OK -- No --> TAR["Mantener tarea/estado provisional; sin fusion ni carnet"]
-  OK -- Si --> UN["Completar mismo ID o consolidar sobre ficha existente; transaccion con todas las referencias y HC"]
-  UN --> AUD["Conservar clinica/autor/fechas; auditoria sin copiar contacto"]
+  OK -- Si --> BLO["Transaccion y candados comunes; releer S activas/terminales, C, I, actos, HC y eventos"]
+  BLO --> ENV{"Envio afectado reclamado o incierto sin resolver?"}
+  ENV -- Si --> CE[/"Conflicto sin traslado; resolver envio antes de reintentar conciliacion"/]
+  CE --> TAR
+  ENV -- No --> UN["Completar P o consolidar en F; S y C al mismo paciente vigente; IDs estables"]
+  UN --> VERS["Incrementar versiones; activas pendientes sin huella vigente; terminales conservan revision historica"]
+  VERS --> EVE["Conservar contexto/identidad evaluada; revalidar eventos pendientes y respuestas por referencias"]
+  EVE --> UNI{"Referencias coherentes y unidad completa?"}
+  UNI -- No --> ROL["Rollback de citas/actos/S/I/HC/versiones/revision/eventos/operacion"]
+  ROL --> TAR
+  UNI -- Si --> AUD["Commit con mapa y auditoria; sin copiar contacto ni recalcular decisiones pasadas"]
   PEND -- No --> NEC
   AUD --> NEC{Termino necesidad de contacto de atencion/identidad?}
   NEC -- No --> MOT["Conservar solo necesario con motivo; sin plazo inventado"]
