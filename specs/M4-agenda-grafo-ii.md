@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **B2.2 revisada y aprobada (2026-10-18)**. H-B2-3/H-B2-4 cerrados en la implementación revisada; evidencia propia en «B2.2 — Revisión». Usuario guarda/sube corrección y registros; confirmar CI completo nuevo antes de cerrar B, comenzar C1 o integrar/desplegar. Se conserva como antecedente el fallo de 34fab4e y las revisiones anteriores.
+> Estado: **B cerrada y CI completo aprobado (2026-10-18)**. Corrección B2.2 en 663ea26 verificada en MySQL 8.0.46 Linux: migrador repetido, ambas clases y volumen vacío en verde. H-B2-1–H-B2-4 cerrados. Siguiente: guardar cierre documental y preparar C1 (marca y tipos, HU-7.4). No implica despliegue ni implementación de C.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -73,7 +73,7 @@ Los criterios normativos permanecen en `documentacion/`; no se cambian silencios
 | **B1.1. Corrección de conciliación** | Contrato único de identidad vigente, solicitudes activas/terminales, contexto/revisión, eventos, idempotencia y rollback; revisada y aprobada (2026-10-18), H-B1-1 cerrado. | H-B1-1 de la revisión B1 | Codex | Codex independiente |
 | **B2. Esquema y migraciones** | Ejecutar únicamente el diseño revisado de B1: migración nueva repetible, esquema ejecutable/MER/drawDB coherentes y pruebas de instalación/actualización. No habilita rutas de aplicación. | B1 revisada y decisiones de datos resueltas | Codex | Codex independiente |
 | **B2.1. Corrección del control automático** | Configuración revisada y aprobada por Codex arquitecto (2026-10-18); H-B2-1/H-B2-2 cerrados. Se conservan 58 tablas y ambas clases secuenciales con base explícita. Fallo nativo posterior deriva a B2.2, según revisión CI. | H-B2-1/H-B2-2 de la revisión B2 | Codex ejecutor | Codex arquitecto independiente |
-| **B2.2. Compatibilidad y fallos del migrador** | Metadata propia de CHECK/generadas aceptada en MySQL 8/MariaDB y variantes incompatibles rechazadas; shell del migrador con pipefail. Entregada, pendiente de revisión; CI completo pendiente tras push. | H-B2-3/H-B2-4 de «CI de B2 — Revisión» | Codex ejecutor | Codex arquitecto independiente |
+| **B2.2. Compatibilidad y fallos del migrador** | Metadata propia de CHECK/generadas aceptada en MySQL 8/MariaDB y variantes incompatibles rechazadas; shell del migrador con pipefail. Revisada/aprobada y CI completo verde en 663ea26 (2026-10-18); ver cierre de B al final. | H-B2-3/H-B2-4 de «CI de B2 — Revisión» | Codex ejecutor | Codex arquitecto independiente |
 | **C1. Marca y tipos** | HU-7.4 completa: configuración, duración/margen/pausable, teléfono; propagación de marca y aislamiento; mismo diseño y validación en vivo. | B | Codex | Codex independiente |
 | **C2. Horarios** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. | C1 | Codex | Codex independiente |
 | **C3. Disponibilidad y reserva** | Una lógica de intersección, resta de ausencias/cierres y ocupación por duración+margen para sugerencias, reserva y reprogramación; candados y pruebas concurrentes; nunca disponibilidad permanente por falta de horario. Cierre de HU-4.9 y base de HU-4.6/4.8. | C2 | Codex | Codex independiente |
@@ -180,9 +180,9 @@ Las diferencias normativas de esta tabla se detectaron en A y se alinean documen
 - [x] Rama del módulo comprobada: `v2/m4-agenda`; encargo recibido **solo de A**, con la corrección de autor y revisor del usuario.
 - [x] A entregada por ejecutor y revisada de forma independiente (2026-10-17), con corrección A.1 antes de aprobar el contrato; ver revisión al final. Decisiones de producto pendientes antes de B.
 - [x] B1 entregada, pendiente de revisión independiente (2026-10-17); contrato y destino de datos en Anexo B1.
-- [x] B2 entregada y revisada independientemente con corrección requerida B2.1 (2026-10-18); H-B2-1/H-B2-2 abiertos. No habilita C1 ni despliegue.
+- [x] B2 revisada y cerrada con B2.1/B2.2 y CI completo en verde (2026-10-18); hallazgos cerrados, revisiones conservadas. Esquema preparado sin despliegue.
 - [x] B2.1 revisada y aprobada por Codex arquitecto (2026-10-18); H-B2-1/H-B2-2 cerrados según su revisión conservada. La evidencia CI posterior requiere B2.2; no habilita C1.
-- [x] B2.2 entregada, pendiente de revisión (2026-10-18); corrección de metadata/pipefail y regresiones en su anexo. No cierra sus hallazgos ni autoriza C1; CI completo pendiente.
+- [x] B2.2 revisada/aprobada y CI completo MySQL 8 confirmado en 663ea26 (2026-10-18); H-B2-3/H-B2-4 cerrados. Puede prepararse C1 tras guardar el cierre documental.
 - [ ] Cada subetapa tiene anexo «Anexo X — Resultado», autor, RE con prueba, comandos y pendientes; estado «entregada, pendiente de revisión».
 - [ ] Revisor comprueba diff, riesgos y Modelos paso a paso; escribe «### X — Revisión (fecha)», veredicto, evidencia propia, hallazgos archivo/línea/RE o RN/reproducción y siguiente paso. No inventar ahora anexos o revisiones aprobadas.
 - [ ] PHP completo, con y sin host; MySQL 8 si está disponible y/o MariaDB local, siempre **`zooki_test_base_v2`**; pruebas concurrentes con conexiones separadas. Si no hay servidor, declarar omisión y repetir antes del cierre, sin presentar SQLite como prueba de concurrencia MySQL.
@@ -2134,3 +2134,15 @@ No se reejecutan trabajos remotos ni se empieza C1; no hay prueba manual de inte
 No se accede al archivo de entorno ni a la base manual. Las pruebas propias con motor usan exclusivamente zooki_test_base_v2. No hay pruebas de interfaz, nuevas decisiones de producto o cambios en sus permisos. Se conservan las revisiones anteriores como historial; la ejecución CI fallida de 34fab4e no se reescribe ni se atribuye a una corrección todavía sin push.
 
 **Siguiente:** el usuario guarda la corrección y los registros en un commit adicional, hace push y se comprueba la nueva ejecución completa: migrador dos veces, semilla, ambas clases MySQL y volumen vacío. Cierre B/prompt C1 solo tras CI verde. No se adelanta integración ni despliegue. `git diff --check` sin incidencias; el aviso LF→CRLF del archivo de pruebas es informativo y no cambia su contenido lógico.
+
+### Cierre de B — Revisión (2026-10-18)
+
+**Codex arquitecto confirma B cerrada.** Push de B2.2 comprobado en `663ea26997e8799458034261271ef7d0b54487f0`; [ejecución GitHub 39171114993 aprobada](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39171114993). Se consultó y siguió su ejecución existente mediante gh run list/view/watch; sin reejecutar trabajos, publicar código o ejecutar operaciones Git de escritura.
+
+**Evidencia del runner Linux:** trabajo `base-v2-mysql` aprobado, MySQL **8.0.46** identificado en el log. Instalación 01+02 y 58 tablas en verde; migración 08 aplicada, segunda pasada al día y semilla sin duplicados. BaseV2MysqlTest **44 pruebas/613 aserciones** y AgendaB2MysqlTest **11/113**, ambas sin omisiones y en verde: **55/726** con base PHPUnit exclusiva zooki_test_base_v2. Volumen vacío aprobado con **58 tablas y cuatro roles**. Se comprueban también los pasos posteriores, cierre del contenedor y conclusión completa del trabajo, no solo un fragmento del registro.
+
+`build-and-test` aprobado: sintaxis PHP, suite general **865/7212 con 55 omitidas sin host** y JS **238/238**, cero fallos. Las 55 de motor se ejecutan en el trabajo MySQL descrito; no se presenta como una sola invocación de 865 pruebas con host. Se mantiene la evidencia local propia MariaDB **865/7935, cero omitidas** de la revisión B2.2, sin repetirla por esta comprobación remota.
+
+H-B2-1/H-B2-2 de configuración y H-B2-3/H-B2-4 de compatibilidad/propagación quedan cerrados con esta evidencia. Se conserva como antecedente el fallo nativo de 34fab4e. Contrato y preparación de datos B1/B1.1/B2 completados; los flujos, exclusión concurrente, permisos operativos, conciliación y eventos pendientes siguen perteneciendo a C. No se declara desplegada la migración ni cerrada funcionalmente una HU por tener su esquema preparado.
+
+**Siguiente:** el usuario guarda este cierre documental; preparar prompt solo C1 (HU-7.4, marca/teléfono de urgencias y tipos con duración/margen/pausable), conforme al alcance y decisiones de §6. Sin nuevas decisiones de producto o pruebas de navegador en el cierre de B; las de interfaz se entregarán con C1.

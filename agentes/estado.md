@@ -6,7 +6,13 @@
 
 ## Ahora
 
-### Situación vigente — B2.2 revisada y aprobada, pendiente nuevo CI (2026-10-18)
+### Situación vigente — B cerrada, CI verde; sigue C1 (2026-10-18)
+
+- **B cerrada por Codex arquitecto.** B2.2 guardada y subida en 663ea26997e8799458034261271ef7d0b54487f0; ejecución GitHub 39171114993 aprobada. Enlace y evidencia en «Cierre de B — Revisión» del plan M4. H-B2-1–H-B2-4 cerrados con verificación real del runner Linux.
+- **CI MySQL 8.0.46:** instalación 01+02/58 tablas, migración 08 y segunda pasada al día, semilla, BaseV2MysqlTest 44/613 y AgendaB2MysqlTest 11/113 sin omisiones/fallos, volumen vacío 58 tablas/cuatro roles. PHP general 865/7212 con 55 omitidas sin host (ejecutadas en el trabajo MySQL); JS 238/238. Ambos trabajos completos aprobados. Sin nueva ejecución local o despliegue por esta lectura de CI.
+- **Siguiente vigente:** usuario guarda cierre documental y se prepara prompt C1: HU-7.4, marca/teléfono de urgencias y tipos de cita con duración/margen/pausable, conservando diseño, validación y aislamiento. C1 aún sin encargo de implementación ni entrega; las reglas de §6 ya confirmadas permanecen vigentes. Los flujos funcionales/concurrencia/conciliación de C no se consideran implementados por el cierre de datos B.
+
+### Antecedente — B2.2 revisada y aprobada, espera de CI (2026-10-18)
 
 - **B2.2 aprobada por Codex arquitecto independiente.** H-B2-3/H-B2-4 cerrados en implementación; revisión en el plan. Comparación de 23 condiciones de metadata: resto de 08 y sus datos/DDL/ENFORCED intactos; ocho pruebas previas idénticas y tres nuevas. Listas binarias conservan agrupación/literales/escapes. YAML sin duplicados y único cambio de shell del migrador; comprobación propia con tee propaga 7/9/0 y conserva registros.
 - **Verificación propia del revisor:** PHP completo sin host 865/7212, 55 omitidas; MariaDB 10.4.32 exclusivamente en zooki_test_base_v2 865/7935, cero omitidas (09:35.291); JS secuencial 238/238, salidas 0. Sintaxis válida, enumeración 11 pruebas Agenda, anexos previos íntegros y diff sin incidencias de espacios. La ejecución MySQL 8.0.46 865/7938 es del ejecutor y queda atribuida a su anexo; el revisor no recrea la instancia portátil ya retirada ni la presenta como CI Linux.
