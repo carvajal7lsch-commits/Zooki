@@ -20,7 +20,7 @@
 
 **Revisión 3.5 (16 de octubre de 2026):** cierre de M2 en 2.0.0-alpha.4, con 96 HU, 427 RE, 120 RN y 52 tablas de negocio; `schema_migraciones` es una tabla técnica adicional del migrador. Se completan síntomas, sugerencias, prescripción, alergias y mapa; el triage operativo sigue en M4. Validación veterinaria del conocimiento pendiente.
 
-> **Preparación M4/B1 — 2026-10-17:** 96 HU, 430 RE y 120 RN vigentes en documentación; MER/drawDB propone 58 tablas, mientras alpha.4 conserva 52 instaladas hasta B2. Criterios/diagramas nuevos pendientes de implementación. No se sube revisión ni versión.
+> **Preparación M4/B2 — 2026-10-18:** 96 HU, 430 RE y 120 RN; MER/drawDB/01 y migración 08 comparten el destino de 58 tablas, preparado y probado sin desplegar. Producción alpha.4 conserva 52 hasta desplegar; los flujos de agenda/urgencias siguen pendientes de C. No se sube revisión ni versión.
 
 ## 1. Introducción
 

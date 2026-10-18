@@ -2,7 +2,7 @@
 
 > **Revisión 3.4** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
-> **Preparación M4/B1 — 2026-10-17:** actualización documental sin revisión/versión nueva: 96 HU, 430 RE, 120 RN; 52 tablas ejecutables en alpha.4 y destino de 58 en MER/drawDB pendiente de B2. B1 no instala ni implementa esas ampliaciones.
+> **Preparación M4/B2 — 2026-10-18:** 96 HU, 430 RE y 120 RN; esquema de 58 tablas en 01/MER/drawDB y migración 08 preparados para revisión, sin despliegue ni flujos C implementados. Producción alpha.4 conserva sus 52 tablas hasta desplegar; sin nueva revisión/versión.
 
 ## Identificación del Proyecto
 
@@ -17,7 +17,7 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.0.0-alpha.4 desplegada**: módulos 0, 5 y M2 clínico/Grafo I; M4/B1 documental pendiente de revisión. Destino de agenda propuesto, todavía sin implementación; carnet/QR al final de v2.0 y conocimiento pendiente de validación veterinaria |
+| Estado actual | **2.0.0-alpha.4 desplegada**: módulos 0, 5 y M2 clínico/Grafo I; M4/B2 prepara solo datos, pendiente de revisión. Destino de agenda propuesto, todavía sin implementación; carnet/QR al final de v2.0 y conocimiento pendiente de validación veterinaria |
 | Versión del documento | 3.1 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
@@ -78,7 +78,7 @@ Se decidió **mantener el stack nativo** de la v1.x por ser suficiente a la esca
 
 M2 entrega conocimiento global versionado con fuentes y validación veterinaria pendiente: 105 nodos, 105 aristas, 201 sinónimos, 29 reglas y 47 fuentes.
 HU-2.12 permite al superadministrador explorarlo sin editar ni acceder a pacientes; los motores apoyan el diagnóstico y la prescripción.
-El esquema ejecutable alpha.4 conserva 52 tablas de negocio; el destino preparatorio M4/B1 tiene 58 y no se instalará hasta B2. Se añade aparte la tabla técnica `schema_migraciones` del migrador; el triage y su batería de 26 casos quedan listos para M4.
+El esquema preparado por B2 tiene 58 tablas de negocio; producción alpha.4 conserva 52 hasta aplicar la migración 08 al desplegar. Se añade aparte la tabla técnica `schema_migraciones` del migrador; el triage y su batería de 26 casos quedan listos para M4.
 
 ## 4. Arquitectura del Sistema
 

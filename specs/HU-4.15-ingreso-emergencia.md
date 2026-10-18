@@ -1,7 +1,7 @@
 # HU-4.15 — Ingreso presencial de emergencia sin identidad verificada
 
 > Estado: aprobado por el usuario el 2026-10-06; pendiente de implementación
-> Alineación B1 de M4 (2026-10-17): decisiones confirmadas de identidad/contacto/presencia; diseño de datos pendiente de revisión y migración B2, sin implementar este flujo.
+> Preparación B2 de M4 (2026-10-18): B1/B1.1 revisadas; datos en 01 y migración 08 preparados para revisión, sin implementar ingreso/conciliación de C7.
 > Versión prevista: v2.0 · Fecha: 2026-10-06
 
 ## 1. Especificación (qué y por qué)
@@ -21,7 +21,7 @@
 ## 2. Plan (cómo)
 
 - **Archivos:** adaptar modelos y controladores de mascota, propietario y urgencia; actualizar el flujo en `documentacion/Modelos.md` y la matriz de `helpers/Security.php` para las acciones nuevas. La clínica solo consulta sus ingresos provisionales.
-- **Datos:** ampliación aditiva e idempotente de la base v2 alpha.4 desplegada; no se migran datos v1 ni se recrean mascotas/ingresos_emergencia existentes. `mascotas` admite campos incompletos solo con `ficha_por_completar = 1`; `ingresos_emergencia` guarda clínica, ficha provisional, ficha final al conciliar, datos disponibles del acompañante y estado. El esquema de referencia está en `database/modelo/drawdb_schema_v2.sql` y el MER. La migración real se numera cuando se implemente esta historia.
+- **Datos:** ampliación aditiva e idempotente de la base v2 alpha.4 desplegada; no se migran datos v1 ni se recrean mascotas/ingresos_emergencia existentes. `mascotas` admite campos incompletos solo con `ficha_por_completar = 1`; `ingresos_emergencia` guarda clínica, ficha provisional, ficha final al conciliar, datos disponibles del acompañante y estado. El esquema de referencia está en `database/modelo/drawdb_schema_v2.sql` y el MER. La migración 08_agenda_grafo_ii.sql materializa solo datos B2; el flujo sigue pendiente de C7.
 - **Transacción de conciliación:** verificar titularidad; si la mascota ya existía, trasladar las referencias clínicas de la provisional a la ficha final, conservar `id_clinica` y `id_veterinario`, marcar la provisional inactiva y registrar el vínculo en `ingresos_emergencia`; si era nueva, completar la misma ficha. Auditar ambos caminos.
 - **Rutas y permisos:** la urgencia iniciada en el portal usa la sesión y la mascota seleccionada. Solo personal clínico autorizado crea un ingreso provisional presencial; solo administrador o veterinario autorizado de la clínica completa/consolida tras verificar titularidad con los mecanismos vigentes; propietario aporta la prueba pero no fusiona; admin no crea citas ni registra/modifica actos clínicos; ninguna petición pública obtiene los datos del acompañante.
 - **Pantallas:** captura mínima y aviso de «ficha por completar» en Atención/Urgencias; tarea de conciliación visible al personal en móvil, tablet y escritorio.
@@ -32,7 +32,7 @@
 - [x] Alinear HU, RE, MER, esquema de referencia y flujo documental.
 - [x] Aprobar el flujo: portal autenticado con identidad conocida; ingreso presencial con ficha existente verificada o ficha provisional.
 - [x] Criterios documentales de captura/contacto/permisos definidos por decisiones del usuario; implementación y pruebas pendientes de C7b, no aprobadas por esta casilla.
-- [ ] Escribir migración idempotente sin alterar migraciones publicadas.
+- [x] B2 entrega migración 08 repetible y esquema preparado, pendiente de revisión; 03–07 intactas. No acredita implementar el flujo.
 - [ ] Implementar ingreso provisional y conciliación.
 - [ ] Añadir rutas y permisos a `public/index.php` y `helpers/Security.php`.
 - [ ] Probar las ramas: portal autenticado con mascota seleccionada, ingreso presencial con cuenta y mascota verificadas, cuenta existente sin relación aún verificada, y propietario sin cuenta.

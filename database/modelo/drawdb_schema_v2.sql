@@ -11,9 +11,10 @@
 -- citas.ocupa_horario (aquí va como columna simple para que drawDB la importe).
 -- ============================================================
 
--- B1 M4: DESTINO PROPUESTO, NO INSTALADO. 58 tablas de negocio de referencia;
--- alpha.4/01_schema.sql conserva 52 hasta B2. No ejecutar este archivo.
--- Columnas auxiliares cita_abierta/cita_pendiente se calculan solo en el futuro ejecutable.
+-- M4 B2: 58 tablas coherentes con 01_schema.sql y migracion 08.
+-- Esquema preparado/probado, no despliegue ni flujos C implementados.
+-- Produccion alpha.4 conserva 52 hasta desplegar. No ejecutar este archivo.
+-- cita_abierta/cita_pendiente son convencionales aqui; 01/08 las calculan STORED.
 
 -- ---------- Plataforma / SaaS (nuevo) ----------
 
@@ -1018,3 +1019,18 @@ ALTER TABLE `ausencias_veterinario` ADD CONSTRAINT `fk_m4_ausenciasveterinario_1
 ALTER TABLE `reasignaciones` ADD CONSTRAINT `fk_m4_reasignaciones_0` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
 ALTER TABLE `reasignaciones` ADD CONSTRAINT `fk_m4_reasignaciones_1` FOREIGN KEY (`id_cita`, `id_clinica`) REFERENCES `citas` (`id_cita`, `id_clinica`);
 ALTER TABLE `ingresos_emergencia` ADD CONSTRAINT `fk_m4_ingresosemergencia_0` FOREIGN KEY (`id_conciliador`) REFERENCES `usuarios` (`id_usuario`);
+
+-- M4 B2: restricciones locales; los invariantes entre filas pertenecen a C.
+ALTER TABLE `cierres_clinica` ADD CONSTRAINT `ck_m4_cierre_intervalo` CHECK (fin > inicio);
+ALTER TABLE `bloques_agenda` ADD CONSTRAINT `ck_m4_bloque_intervalo` CHECK (fin_original > inicio_original);
+ALTER TABLE `pausas_cita` ADD CONSTRAINT `ck_m4_pausa_intervalo` CHECK (fin IS NULL OR fin > inicio);
+ALTER TABLE `citas` ADD CONSTRAINT `ck_m4_cita_objetivo` CHECK (duracion_activa_objetivo_segundos IS NULL OR duracion_activa_objetivo_segundos > 0);
+ALTER TABLE `ausencias_veterinario` ADD CONSTRAINT `ck_m4_ausencia_intervalo` CHECK (fecha_hora_fin > fecha_hora_inicio);
+ALTER TABLE `reasignaciones` ADD CONSTRAINT `ck_m4_reasig_intervalo` CHECK ((inicio_propuesto IS NULL AND fin_propuesto IS NULL) OR (inicio_propuesto IS NOT NULL AND fin_propuesto IS NOT NULL AND fin_propuesto > inicio_propuesto));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_presencia` CHECK ((fecha_llegada IS NULL AND id_receptor IS NULL) OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_espera` CHECK (estado NOT IN ('espera_presencial','en_atencion') OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_revision` CHECK (estado_revision <> 'resuelta' OR (id_revisor IS NOT NULL AND fecha_revision IS NOT NULL AND huella_revision IS NOT NULL));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_grafo` CHECK (fuente_nivel IS NULL OR fuente_nivel <> 'grafo' OR (nivel_calculado IS NOT NULL AND version_conocimiento IS NOT NULL));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_clinica` CHECK (fuente_nivel IS NULL OR fuente_nivel <> 'clinico_presencial' OR (nivel_aprobado IS NOT NULL AND nivel_aprobado = 'rojo' AND id_revisor IS NOT NULL AND motivo_revision IS NOT NULL));
+ALTER TABLE `eventos_agenda` ADD CONSTRAINT `ck_m4_evento_recurso` CHECK (id_cita IS NOT NULL OR id_solicitud IS NOT NULL);
+ALTER TABLE `eventos_agenda` ADD CONSTRAINT `ck_m4_evento_destino` CHECK ((id_destinatario IS NULL AND id_rol_destino IS NOT NULL) OR (id_destinatario IS NOT NULL AND id_rol_destino IS NULL));

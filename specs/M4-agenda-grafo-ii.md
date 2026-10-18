@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **B2.1 entregada, pendiente de revisión (2026-10-18)**. Workflow corregido para 58 tablas y ambas clases secuenciales con base PHPUnit explícita. H-B2-1/H-B2-2 pendientes de revisión independiente; MySQL 8 real pendiente en GitHub tras el push del usuario. No empezar C1. Esquema preparado, sin despliegue ni flujos C implementados; se conservan B1/B1.1/B2 y sus revisiones.
+> Estado: **B2.1 revisada y aprobada (2026-10-18)**. H-B2-1/H-B2-2 cerrados en configuración: 58 tablas y ambas clases secuenciales con base PHPUnit explícita. MySQL 8 real pendiente en GitHub tras guardar y subir los archivos B2 restantes; confirmar CI antes de empezar C1 o integrar/desplegar. Se conservan B1/B1.1/B2 y sus revisiones.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -1937,3 +1937,19 @@ Anexos y revisiones anteriores permanecen conservados.
 **Pendientes:** revisión independiente y ejecución real en GitHub del trabajo base-v2-mysql con MySQL 8, después del push del usuario, incluidos los controles de instalación/migrador/semilla/volumen vacío.
 MySQL 8 no está disponible/verificado localmente; MariaDB no sustituye esa evidencia.
 No se integra/despliega ni se empieza C1 por esta entrega.
+
+### B2.1 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor. Veredicto: aprobada la corrección; H-B2-1 y H-B2-2 cerrados en el workflow.** La validación real de MySQL 8 continúa pendiente de GitHub. No se presenta la ejecución local de MariaDB como resultado del CI ni se da por desplegado el esquema.
+
+**Verificación propia:** lectura del anexo y comparación del workflow actual con su versión anterior (`575ff7d`). YAML cargado con rechazo de claves duplicadas; comparación estructural exacta: ambos esperados 52→58, separación de comprobaciones finales y paso PHPUnit con shell bash, base explícita y dos invocaciones ordenadas. Servicio mysql:8.0 y controles de instalación, semilla, migrador doble y volumen vacío conservados. Conteo independiente de 58 CREATE TABLE actuales y 52 en la fixture histórica. No hay tolerancia de errores añadida ni cambio de diagramas/flujo clínico respecto a lo ya revisado en B2.
+
+Enumeración propia mediante PHPUnit: **44 pruebas BaseV2MysqlTest y ocho AgendaB2MysqlTest**, salida 0 en ambas. El intento dentro del aislamiento no pudo leer el bootstrap de OneDrive; se repitió fuera sin modificar código. Comprobación propia del bloque extraído con Bash y ejecutable simulado: fallo inicial 7 produce salida 7 y una llamada; fallo de segunda clase 9 produce salida 9 y dos llamadas; ambas correctas producen salida 0 y dos llamadas. Se verifica propagación y orden, no se simula una prueba de MySQL 8 ni el runner de GitHub.
+
+No se repiten pruebas de datos o suites completas por un cambio limitado al workflow: permanece la evidencia propia de la revisión B2, **PHP 862/7918 con MariaDB y cero omitidas, PHP 862/7212 sin host con 52 omitidas y JS 238/238**. La nueva ejecución específica del ejecutor en B2.1 (44/613 + 8/93) queda atribuida a su anexo, no al revisor. `git diff --check` sin incidencias. Sin acceso al archivo de entorno, base manual, credenciales ni pantallas.
+
+**Situación Git comprobada:** `e293cc9` ya contiene el workflow corregido y los registros anteriores del plan/estado, mientras once archivos B2 (incluidos migración 08, fixture y clase nueva) siguen modificados o sin seguimiento. No se atribuye quién hizo ese commit ni se presupone push. No se reescribe el historial: guardar todos esos archivos junto con esta revisión en un commit adicional antes de subir, para que GitHub reciba una entrega completa. No basta subir únicamente el commit del workflow.
+
+**Siguiente:** el usuario guarda B2 y esta revisión, hace push y se comprueba el trabajo real `base-v2-mysql`, incluidas ambas clases y la inicialización del volumen. Cierre de B y prompt C1 después de confirmar ese resultado; si aparece una incompatibilidad nativa, se registra y corrige con su error real. No hay nuevas decisiones de producto pendientes de esta corrección.
+
+**Prueba manual:** no corresponde navegador; no se modifican pantallas ni comportamientos de usuario.

@@ -2,7 +2,7 @@
 -- Zooki v2 — Esquema ejecutable de la base de datos (plan M0, etapa B).
 --
 -- Base limpia: la v2 no migra datos de la v1, que eran pruebas (plan M0, §6).
--- Este archivo crea las 52 tablas del MER (documentacion/MER.md); el diagrama
+-- Este archivo crea las 58 tablas del MER (documentacion/MER.md); el diagrama
 -- para drawDB está en database/modelo/drawdb_schema_v2.sql.
 --
 -- Cómo se carga:
@@ -473,7 +473,15 @@ CREATE TABLE `ingresos_emergencia` (
   KEY `idx_ingreso_clinica` (`id_clinica`, `estado`),
   CONSTRAINT `fk_ingreso_emergencia_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`),
   CONSTRAINT `fk_ingreso_emergencia_provisional` FOREIGN KEY (`id_mascota_provisional`) REFERENCES `mascotas` (`id_mascota`),
-  CONSTRAINT `fk_ingreso_emergencia_final` FOREIGN KEY (`id_mascota_final`) REFERENCES `mascotas` (`id_mascota`)
+  CONSTRAINT `fk_ingreso_emergencia_final` FOREIGN KEY (`id_mascota_final`) REFERENCES `mascotas` (`id_mascota`),
+  -- M4 B2: datos preparatorios; los flujos se implementan en C.
+  `id_conciliador` INT DEFAULT NULL,
+  `fecha_conciliacion` DATETIME DEFAULT NULL,
+  `evidencia_conciliacion` JSON DEFAULT NULL,
+  `necesidad_contacto_resuelta_en` DATETIME DEFAULT NULL,
+  `motivo_conservacion_contacto` VARCHAR(255) DEFAULT NULL,
+  `contacto_anonimizado_en` DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_ingreso_clinica (id_ingreso, id_clinica)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Visibles para todas las clínicas vinculadas y el carnet (RN-113, RN-503);
@@ -583,7 +591,15 @@ CREATE TABLE `ausencias_veterinario` (
   KEY `idx_ausvet_clinica` (`id_clinica`, `id_veterinario`, `fecha_hora_inicio`),
   CONSTRAINT `fk_ausvet_usuario` FOREIGN KEY (`id_veterinario`) REFERENCES `usuarios` (`id_usuario`),
   CONSTRAINT `fk_ausvet_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`),
-  CONSTRAINT `fk_ausvet_cobertura` FOREIGN KEY (`id_cobertura`) REFERENCES `usuarios` (`id_usuario`)
+  CONSTRAINT `fk_ausvet_cobertura` FOREIGN KEY (`id_cobertura`) REFERENCES `usuarios` (`id_usuario`),
+  -- M4 B2: datos preparatorios; los flujos se implementan en C.
+  `estado` ENUM('solicitada','aprobada','rechazada','anulada') NOT NULL DEFAULT 'aprobada',
+  `id_solicitante` INT DEFAULT NULL,
+  `id_revisor` INT DEFAULT NULL,
+  `fecha_revision` DATETIME DEFAULT NULL,
+  `motivo_resolucion` VARCHAR(255) DEFAULT NULL,
+  KEY idx_ausencia_revision (id_clinica, estado, fecha_hora_inicio),
+  KEY idx_ausencia_vet (id_veterinario, estado, fecha_hora_inicio, fecha_hora_fin)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `citas` (
@@ -632,7 +648,25 @@ CREATE TABLE `citas` (
   CONSTRAINT `fk_cita_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`),
   CONSTRAINT `fk_cita_mascota` FOREIGN KEY (`id_mascota`) REFERENCES `mascotas` (`id_mascota`),
   CONSTRAINT `fk_cita_veterinario` FOREIGN KEY (`id_veterinario`) REFERENCES `usuarios` (`id_usuario`),
-  CONSTRAINT `fk_cita_tipo` FOREIGN KEY (`id_tipo_cita`) REFERENCES `tipos_cita` (`id_tipo_cita`)
+  CONSTRAINT `fk_cita_tipo` FOREIGN KEY (`id_tipo_cita`) REFERENCES `tipos_cita` (`id_tipo_cita`),
+  -- M4 B2: datos preparatorios; los flujos se implementan en C.
+  `origen` ENUM('reserva','llegada_sin_reserva','urgencia','legado') NOT NULL DEFAULT 'legado',
+  `id_bloque` INT DEFAULT NULL,
+  `inicio_estimado` DATETIME DEFAULT NULL,
+  `fin_estimado` DATETIME DEFAULT NULL,
+  `duracion_activa_objetivo_segundos` INT DEFAULT NULL,
+  `politica_temporal` VARCHAR(16) DEFAULT NULL,
+  `estado_reajuste` ENUM('ninguno','pendiente_calculo','pendiente_revision','pendiente_reasignacion','pendiente_reprogramacion') NOT NULL DEFAULT 'ninguno',
+  `motivo_reajuste` VARCHAR(255) DEFAULT NULL,
+  `version_agenda` INT NOT NULL DEFAULT 0,
+  `fecha_ultimo_calculo` DATETIME DEFAULT NULL,
+  `ultima_hora_comunicada` DATETIME DEFAULT NULL,
+  `ultimo_aviso_estimacion` DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_cita_clinica (id_cita, id_clinica),
+  KEY idx_cita_bloque (id_bloque, es_sobrecupo, estado, fecha_registro, id_cita),
+  KEY idx_cita_reajuste (id_clinica, estado_reajuste, fecha),
+  KEY idx_cita_vet_estimada (id_veterinario, inicio_estimado),
+  KEY idx_cita_mascota_estimada (id_mascota, inicio_estimado)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Síntomas marcados del catálogo del grafo (RN-424).
@@ -659,7 +693,18 @@ CREATE TABLE `reasignaciones` (
   KEY `idx_reasig_estado` (`estado`, `fecha_limite`),
   CONSTRAINT `fk_reasig_cita` FOREIGN KEY (`id_cita`) REFERENCES `citas` (`id_cita`),
   CONSTRAINT `fk_reasig_origen` FOREIGN KEY (`id_veterinario_origen`) REFERENCES `usuarios` (`id_usuario`),
-  CONSTRAINT `fk_reasig_destino` FOREIGN KEY (`id_veterinario_destino`) REFERENCES `usuarios` (`id_usuario`)
+  CONSTRAINT `fk_reasig_destino` FOREIGN KEY (`id_veterinario_destino`) REFERENCES `usuarios` (`id_usuario`),
+  -- M4 B2: datos preparatorios; los flujos se implementan en C.
+  `id_clinica` INT NOT NULL,
+  `inicio_propuesto` DATETIME DEFAULT NULL,
+  `fin_propuesto` DATETIME DEFAULT NULL,
+  `version_cita` INT DEFAULT NULL,
+  `ciclo` INT NOT NULL DEFAULT 0,
+  `motivo` VARCHAR(255) DEFAULT NULL,
+  `cita_pendiente` INT GENERATED ALWAYS AS (CASE WHEN estado = 'pendiente' THEN id_cita ELSE NULL END) STORED,
+  KEY idx_reasig_clinica_limite (id_clinica, estado, fecha_limite),
+  KEY idx_reasig_intentos (id_cita, ciclo, id_veterinario_destino),
+  UNIQUE KEY uq_reasig_pendiente (cita_pendiente)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Una reseña por cita atendida (RN-801); la clínica no la edita ni la borra (RN-804).
@@ -933,3 +978,163 @@ CREATE TABLE `auditoria_sistema` (
   CONSTRAINT `fk_audsis_clinica` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`),
   CONSTRAINT `fk_audsis_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- M4 B2: cierres_clinica, contrato B1/B1.1.
+CREATE TABLE `cierres_clinica` (
+  `id_cierre` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `id_clinica` INT NOT NULL,
+  `inicio` DATETIME NOT NULL,
+  `fin` DATETIME NOT NULL,
+  `motivo` VARCHAR(255) NOT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `id_autor` INT NOT NULL,
+  `fecha_registro` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_cierre_rango (id_clinica, activo, inicio, fin)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- M4 B2: bloques_agenda, contrato B1/B1.1.
+CREATE TABLE `bloques_agenda` (
+  `id_bloque` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `id_clinica` INT NOT NULL,
+  `id_veterinario` INT NOT NULL,
+  `fecha` DATE NOT NULL,
+  `franja_origen` CHAR(64) NOT NULL,
+  `inicio_original` DATETIME NOT NULL,
+  `fin_original` DATETIME NOT NULL,
+  `estado` ENUM('vigente','revisar','retirado') NOT NULL DEFAULT 'vigente',
+  UNIQUE KEY uq_bloque_origen (id_clinica, id_veterinario, fecha, franja_origen),
+  UNIQUE KEY uq_bloque_clinica (id_bloque, id_clinica),
+  KEY idx_bloque_vet_fecha (id_veterinario, fecha)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- M4 B2: solicitudes_agenda, contrato B1/B1.1.
+CREATE TABLE `solicitudes_agenda` (
+  `id_solicitud` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `id_clinica` INT NOT NULL,
+  `id_mascota` INT NOT NULL,
+  `id_actor` INT NOT NULL,
+  `origen` ENUM('portal','llegada') NOT NULL,
+  `fecha_registro` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_llegada` DATETIME DEFAULT NULL,
+  `id_receptor` INT DEFAULT NULL,
+  `estado` ENUM('abierta','derivada','espera_presencial','asignada','en_atencion','finalizada','pendiente_reprogramacion','retirada') NOT NULL DEFAULT 'abierta',
+  `estado_revision` ENUM('no_requerida','pendiente','resuelta') NOT NULL,
+  `nivel_calculado` ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL,
+  `nivel_aprobado` ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL,
+  `contexto_triage` JSON NOT NULL,
+  `version_conocimiento` CHAR(64) DEFAULT NULL,
+  `huella_entrada` CHAR(64) NOT NULL,
+  `huella_revision` CHAR(64) DEFAULT NULL,
+  `id_revisor` INT DEFAULT NULL,
+  `fecha_revision` DATETIME DEFAULT NULL,
+  `motivo_revision` VARCHAR(255) DEFAULT NULL,
+  `contagio` TINYINT(1) NOT NULL DEFAULT 0,
+  `orden_espera` BIGINT DEFAULT NULL,
+  `id_cita` INT DEFAULT NULL,
+  `id_ingreso` INT DEFAULT NULL,
+  `version_solicitud` INT NOT NULL DEFAULT 0,
+  `fuente_nivel` ENUM('grafo','clinico_presencial') DEFAULT NULL,
+  UNIQUE KEY uq_solicitud_clinica (id_solicitud, id_clinica),
+  UNIQUE KEY uq_solicitud_cita (id_cita),
+  KEY idx_solicitud_espera (id_clinica, estado, fecha_llegada, id_solicitud),
+  KEY idx_solicitud_revision (id_clinica, estado_revision, fecha_registro),
+  KEY idx_solicitud_mascota (id_mascota, estado)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- M4 B2: pausas_cita, contrato B1/B1.1.
+CREATE TABLE `pausas_cita` (
+  `id_pausa` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `id_clinica` INT NOT NULL,
+  `id_cita` INT NOT NULL,
+  `id_solicitud_roja` INT NOT NULL,
+  `inicio` DATETIME NOT NULL,
+  `fin` DATETIME DEFAULT NULL,
+  `id_autor` INT NOT NULL,
+  `motivo` VARCHAR(255) NOT NULL,
+  `cita_abierta` INT GENERATED ALWAYS AS (CASE WHEN fin IS NULL THEN id_cita ELSE NULL END) STORED,
+  UNIQUE KEY uq_pausa_abierta (cita_abierta),
+  KEY idx_pausa_cita (id_clinica, id_cita, inicio)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- M4 B2: operaciones_agenda, contrato B1/B1.1.
+CREATE TABLE `operaciones_agenda` (
+  `id_operacion` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `id_clinica` INT NOT NULL,
+  `id_actor` INT DEFAULT NULL,
+  `actor_clave` VARCHAR(80) NOT NULL,
+  `accion` VARCHAR(80) NOT NULL,
+  `clave_operacion` CHAR(64) NOT NULL,
+  `huella_entrada` CHAR(64) NOT NULL,
+  `resultado` JSON NOT NULL,
+  `fecha` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_operacion_clave (id_clinica, actor_clave, accion, clave_operacion)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- M4 B2: eventos_agenda, contrato B1/B1.1.
+CREATE TABLE `eventos_agenda` (
+  `id_evento` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `id_clinica` INT NOT NULL,
+  `id_cita` INT DEFAULT NULL,
+  `id_solicitud` INT DEFAULT NULL,
+  `tipo` VARCHAR(80) NOT NULL,
+  `clave_evento` CHAR(64) NOT NULL,
+  `destino_clave` VARCHAR(80) NOT NULL,
+  `id_destinatario` INT DEFAULT NULL,
+  `id_rol_destino` INT DEFAULT NULL,
+  `canal` ENUM('interno','correo') NOT NULL,
+  `version_recurso` INT NOT NULL,
+  `hora_a_comunicar` DATETIME DEFAULT NULL,
+  `estado` ENUM('pendiente','reclamado','enviado','error','incierto','omitido') NOT NULL DEFAULT 'pendiente',
+  `reclamacion` CHAR(64) DEFAULT NULL,
+  `fecha_reclamacion` DATETIME DEFAULT NULL,
+  `fecha_resultado` DATETIME DEFAULT NULL,
+  `intentos` INT NOT NULL DEFAULT 0,
+  `error_tecnico` VARCHAR(255) DEFAULT NULL,
+  `fecha` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_evento_destino (id_clinica, clave_evento, destino_clave, canal),
+  KEY idx_evento_pendiente (estado, fecha, id_evento),
+  KEY idx_evento_cita (id_clinica, id_cita, tipo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+ALTER TABLE `cierres_clinica` ADD CONSTRAINT `fk_m4_cierresclinica_0` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
+ALTER TABLE `cierres_clinica` ADD CONSTRAINT `fk_m4_cierresclinica_1` FOREIGN KEY (`id_autor`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `bloques_agenda` ADD CONSTRAINT `fk_m4_bloquesagenda_0` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
+ALTER TABLE `bloques_agenda` ADD CONSTRAINT `fk_m4_bloquesagenda_1` FOREIGN KEY (`id_veterinario`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `bloques_agenda` ADD CONSTRAINT `fk_m4_bloquesagenda_2` FOREIGN KEY (`id_veterinario`, `id_clinica`) REFERENCES `usuario_clinica` (`id_usuario`, `id_clinica`);
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `fk_m4_solicitudesagenda_0` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `fk_m4_solicitudesagenda_1` FOREIGN KEY (`id_mascota`) REFERENCES `mascotas` (`id_mascota`);
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `fk_m4_solicitudesagenda_2` FOREIGN KEY (`id_actor`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `fk_m4_solicitudesagenda_3` FOREIGN KEY (`id_receptor`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `fk_m4_solicitudesagenda_4` FOREIGN KEY (`id_revisor`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `fk_m4_solicitudesagenda_5` FOREIGN KEY (`id_cita`, `id_clinica`) REFERENCES `citas` (`id_cita`, `id_clinica`);
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `fk_m4_solicitudesagenda_6` FOREIGN KEY (`id_ingreso`, `id_clinica`) REFERENCES `ingresos_emergencia` (`id_ingreso`, `id_clinica`);
+ALTER TABLE `pausas_cita` ADD CONSTRAINT `fk_m4_pausascita_0` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
+ALTER TABLE `pausas_cita` ADD CONSTRAINT `fk_m4_pausascita_1` FOREIGN KEY (`id_cita`, `id_clinica`) REFERENCES `citas` (`id_cita`, `id_clinica`);
+ALTER TABLE `pausas_cita` ADD CONSTRAINT `fk_m4_pausascita_2` FOREIGN KEY (`id_solicitud_roja`, `id_clinica`) REFERENCES `solicitudes_agenda` (`id_solicitud`, `id_clinica`);
+ALTER TABLE `pausas_cita` ADD CONSTRAINT `fk_m4_pausascita_3` FOREIGN KEY (`id_autor`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `operaciones_agenda` ADD CONSTRAINT `fk_m4_operacionesagenda_0` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
+ALTER TABLE `operaciones_agenda` ADD CONSTRAINT `fk_m4_operacionesagenda_1` FOREIGN KEY (`id_actor`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `eventos_agenda` ADD CONSTRAINT `fk_m4_eventosagenda_0` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
+ALTER TABLE `eventos_agenda` ADD CONSTRAINT `fk_m4_eventosagenda_1` FOREIGN KEY (`id_cita`, `id_clinica`) REFERENCES `citas` (`id_cita`, `id_clinica`);
+ALTER TABLE `eventos_agenda` ADD CONSTRAINT `fk_m4_eventosagenda_2` FOREIGN KEY (`id_solicitud`, `id_clinica`) REFERENCES `solicitudes_agenda` (`id_solicitud`, `id_clinica`);
+ALTER TABLE `eventos_agenda` ADD CONSTRAINT `fk_m4_eventosagenda_3` FOREIGN KEY (`id_destinatario`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `eventos_agenda` ADD CONSTRAINT `fk_m4_eventosagenda_4` FOREIGN KEY (`id_rol_destino`) REFERENCES `roles` (`id_rol`);
+ALTER TABLE `citas` ADD CONSTRAINT `fk_m4_citas_0` FOREIGN KEY (`id_bloque`, `id_clinica`) REFERENCES `bloques_agenda` (`id_bloque`, `id_clinica`);
+ALTER TABLE `ausencias_veterinario` ADD CONSTRAINT `fk_m4_ausenciasveterinario_0` FOREIGN KEY (`id_solicitante`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `ausencias_veterinario` ADD CONSTRAINT `fk_m4_ausenciasveterinario_1` FOREIGN KEY (`id_revisor`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `reasignaciones` ADD CONSTRAINT `fk_m4_reasignaciones_0` FOREIGN KEY (`id_clinica`) REFERENCES `clinicas` (`id_clinica`);
+ALTER TABLE `reasignaciones` ADD CONSTRAINT `fk_m4_reasignaciones_1` FOREIGN KEY (`id_cita`, `id_clinica`) REFERENCES `citas` (`id_cita`, `id_clinica`);
+ALTER TABLE `ingresos_emergencia` ADD CONSTRAINT `fk_m4_ingresosemergencia_0` FOREIGN KEY (`id_conciliador`) REFERENCES `usuarios` (`id_usuario`);
+ALTER TABLE `cierres_clinica` ADD CONSTRAINT `ck_m4_cierre_intervalo` CHECK (fin > inicio);
+ALTER TABLE `bloques_agenda` ADD CONSTRAINT `ck_m4_bloque_intervalo` CHECK (fin_original > inicio_original);
+ALTER TABLE `pausas_cita` ADD CONSTRAINT `ck_m4_pausa_intervalo` CHECK (fin IS NULL OR fin > inicio);
+ALTER TABLE `citas` ADD CONSTRAINT `ck_m4_cita_objetivo` CHECK (duracion_activa_objetivo_segundos IS NULL OR duracion_activa_objetivo_segundos > 0);
+ALTER TABLE `ausencias_veterinario` ADD CONSTRAINT `ck_m4_ausencia_intervalo` CHECK (fecha_hora_fin > fecha_hora_inicio);
+ALTER TABLE `reasignaciones` ADD CONSTRAINT `ck_m4_reasig_intervalo` CHECK ((inicio_propuesto IS NULL AND fin_propuesto IS NULL) OR (inicio_propuesto IS NOT NULL AND fin_propuesto IS NOT NULL AND fin_propuesto > inicio_propuesto));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_presencia` CHECK ((fecha_llegada IS NULL AND id_receptor IS NULL) OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_espera` CHECK (estado NOT IN ('espera_presencial','en_atencion') OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_revision` CHECK (estado_revision <> 'resuelta' OR (id_revisor IS NOT NULL AND fecha_revision IS NOT NULL AND huella_revision IS NOT NULL));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_grafo` CHECK (fuente_nivel IS NULL OR fuente_nivel <> 'grafo' OR (nivel_calculado IS NOT NULL AND version_conocimiento IS NOT NULL));
+ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_clinica` CHECK (fuente_nivel IS NULL OR fuente_nivel <> 'clinico_presencial' OR (nivel_aprobado IS NOT NULL AND nivel_aprobado = 'rojo' AND id_revisor IS NOT NULL AND motivo_revision IS NOT NULL));
+ALTER TABLE `eventos_agenda` ADD CONSTRAINT `ck_m4_evento_recurso` CHECK (id_cita IS NOT NULL OR id_solicitud IS NOT NULL);
+ALTER TABLE `eventos_agenda` ADD CONSTRAINT `ck_m4_evento_destino` CHECK ((id_destinatario IS NULL AND id_rol_destino IS NOT NULL) OR (id_destinatario IS NOT NULL AND id_rol_destino IS NULL));

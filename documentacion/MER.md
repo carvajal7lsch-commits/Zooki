@@ -2,7 +2,7 @@
 
 > **Actualización de cierre M2 — 16/10/2026:** 2.0.0-alpha.4; conocimiento global con fuentes y validación veterinaria pendiente. Esquema de 52 tablas; integración del triage con agenda y urgencias pendiente de M4.
 
-> **Destino preparatorio M4/B1 — 2026-10-17:** este MER y drawDB proponen 58 tablas de negocio (52 existentes + 6 nuevas); database/01_schema.sql de alpha.4 conserva 52 hasta B2. Las ampliaciones descritas no están instaladas ni acreditan funcionalidades implementadas. Sin cambio de revisión ni versión.
+> **Preparación M4/B2 — 2026-10-18:** MER/drawDB y database/01_schema.sql describen las mismas 58 tablas; 08 actualiza alpha.4 de forma aditiva y repetible. El esquema queda preparado y probado en la base exclusiva de tests, sin despliegue a producción ni flujos C implementados; producción alpha.4 conserva 52 hasta desplegar. Sin cambio de revisión ni versión.
 
 Este documento describe la estructura y relaciones de la base de datos relacional de **Zooki** en su versión **v2.0** (arquitectura SaaS multi-inquilino). El modelo incorpora el aislamiento de datos por clínica (`id_clinica`), el grafo de conocimiento clínico, la suscripción por planes y la reputación de veterinarios, además del historial clínico y la auditoría ya existentes.
 
@@ -738,7 +738,7 @@ erDiagram
 *   **grafo_aristas**: Relaciones dirigidas entre nodos con `tipo_relacion`, `signo` (`positivo`/`negativo`) y `peso`. Es un **grafo con signo**: lo positivo favorece; un efecto negativo puede advertir o bloquear según su semántica, no solo por su signo. Compartido por todas las clínicas.
 *   Los datos de cada paciente se cruzan con el grafo por cuatro puntos: `alertas_medicas.id_nodo`, `cita_sintomas`, `consulta_sintomas` y `tratamientos.id_nodo_farmaco`. Sin esos enlaces el triage y las advertencias de prescripción no tendrían de dónde leer.
 
-> El **Grafo II (agenda)** no guarda el grafo: lo construye en tiempo real a partir de `citas` (estado, nivel de triage, horas reales, sobrecupos), `tipos_cita` (duración, margen, pausable), `horarios_clinica`, `horarios_veterinario`, `ausencias_veterinario` y los parámetros de la clínica. Persiste hechos/estados recuperables necesarios de agenda, no sus aristas: solicitudes/revisión/espera, bloques, pausas, idempotencia y eventos, además de reasignaciones/propuestas. Ver el destino B1 al final; aún no instalado.
+> El **Grafo II (agenda)** no guarda el grafo: lo construye en tiempo real a partir de `citas` (estado, nivel de triage, horas reales, sobrecupos), `tipos_cita` (duración, margen, pausable), `horarios_clinica`, `horarios_veterinario`, `ausencias_veterinario` y los parámetros de la clínica. Persiste hechos/estados recuperables necesarios de agenda, no sus aristas: solicitudes/revisión/espera, bloques, pausas, idempotencia y eventos, además de reasignaciones/propuestas. Ver el contrato B1/B1.1 y su materialización de datos B2 al final; sin declarar operativos sus flujos.
 
 ### 5. Pacientes y catálogos taxonómicos
 *   **mascotas**: Ficha **global** del animal, del propietario y no de una clínica (sin `id_clinica`). FKs a `especies`, `razas` y `usuarios` (propietario). En una urgencia roja sin identificación verificable, `id_propietario`, especie, raza, nombre y peso pueden quedar NULL solo con `ficha_por_completar = 1`; la aplicación exige esos datos al completar la ficha ordinaria (RE-4.15.3). `raza_indicada` guarda la raza escrita cuando no está en la lista, con el mismo largo que `razas.nombre_raza` (50 caracteres) para que pueda pasar al catálogo sin recortarse. `esterilizado` es NULL si no se sabe; el triage lo usa. `token_carnet` es aleatorio (≥ 128 bits) y nunca expone `id_mascota` en la URL (RN-502); el carnet de una ficha provisional permanece inactivo. `id_clinica_registro` guarda la clínica que la registró: junto con el propietario, es la única que puede cambiar especie, raza, sexo y fecha de nacimiento (RN-110). `carnet_activo` apaga el carnet sin borrar el token, cuando la mascota se inactiva o su propietario suprime la cuenta (RN-502, RN-G16).
@@ -798,7 +798,7 @@ Citas mantiene id_veterinario obligatorio; una espera sin profesional aún no es
 Toda nueva entidad se confina por id_clinica y conserva sus datos al inactivar; ninguna FK nueva borra actos clínicos en cascada.
 Las FK compuestas de recurso+clínica evitan vincular recursos de clínicas diferentes; ser miembro activo y su rol se revalida en servidor.
 
-### cierres_clinica — destino, no instalada
+### cierres_clinica — esquema preparado B2, flujo pendiente
 
 Cierre puntual no representable por recurrencia ni ausencia personal. RE-4.8.2/3.
 
@@ -817,7 +817,7 @@ Cierre puntual no representable por recurrencia ni ausencia personal. RE-4.8.2/3
 **Relaciones:** id_clinica → clinicas(id_clinica); id_autor → usuarios(id_usuario).
 **Restricciones y transición:** fin>inicio; [inicio,fin); baja lógica, sin borrar cierres usados. Transición: vacía, no inventar festivos.
 
-### bloques_agenda — destino, no instalada
+### bloques_agenda — esquema preparado B2, flujo pendiente
 
 Identidad estable de franja original/fecha que no se multiplica al restar ausencias. RE-4.13.7.
 
@@ -836,7 +836,7 @@ Identidad estable de franja original/fecha que no se multiplica al restar ausenc
 **Relaciones:** id_clinica → clinicas(id_clinica); id_veterinario → usuarios(id_usuario); id_veterinario,id_clinica → usuario_clinica(id_usuario,id_clinica).
 **Restricciones y transición:** Identificador opaco servidor de franja original; no cambia por recortes de ausencia ni se borra/recrea para regalar cupo. Cambios recurrentes preservan bloque ya usado de esa fecha, marcan revisar y no reinician contador. Contar citas naranja salvo cancelada/no_asistio; no persistir contador duplicado ni tope histórico distinto al parámetro vigente. Transición: vacía; sobrecupos legados sin origen demostrable se marcan pendientes.
 
-### solicitudes_agenda — destino, no instalada
+### solicitudes_agenda — esquema preparado B2, flujo pendiente
 
 Una sola entidad para captura/revisión, derivación remota y espera física sin cita ni veterinario; evita tablas separadas de evaluación y urgencia. RE-2.2.5, RE-2.11.5, RE-4.15.1/2/3.
 
@@ -872,7 +872,7 @@ Una sola entidad para captura/revisión, derivación remota y espera física sin
 **Relaciones:** id_clinica → clinicas(id_clinica); id_mascota → mascotas(id_mascota); id_actor → usuarios(id_usuario); id_receptor → usuarios(id_usuario); id_revisor → usuarios(id_usuario); id_cita,id_clinica → citas(id_cita,id_clinica); id_ingreso,id_clinica → ingresos_emergencia(id_ingreso,id_clinica).
 **Restricciones y transición:** Remoto no lleva llegada/receptor ni activa atención; presencia se acredita por personal autorizado. Revisión resuelta requiere revisor/fecha/huella vigente; ajuste requiere motivo. Sin asignación id_cita=NULL y no hay vet ficticio; al asignar se crea cita en la misma transacción. Ficha provisional solo para rojo presencial sin identidad. JSON guarda episodios/tiempos y contexto permitido, nunca medicación protegida ni contacto del acompañante. orden_espera es orden explícito motivado para excepciones clínicas rojas, no puntaje; la espera no urgente se deriva de nivel aprobado (amarillo antes de verde), fecha_llegada e id_solicitud ascendentes, sin sobrecupo. Transición: vacía, sin inventar evaluaciones/presencia. Rojo presencial clínicamente declarado conserva fuente clinico_presencial/nivel_aprobado rojo/revisor y motivo, sin fingir cálculo ni versión de grafo; un registro aún sin triage no es reservable. Flujo ordinario exige cálculo del motor, huella y versión válidos.
 
-### pausas_cita — destino, no instalada
+### pausas_cita — esquema preparado B2, flujo pendiente
 
 Reconstruir múltiples interrupciones y tiempo activo de política M. RE-4.15.8, RE-4.5.1/2/3.
 
@@ -892,7 +892,7 @@ Reconstruir múltiples interrupciones y tiempo activo de política M. RE-4.15.8,
 **Relaciones:** id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica); id_solicitud_roja,id_clinica → solicitudes_agenda(id_solicitud,id_clinica); id_autor → usuarios(id_usuario).
 **Restricciones y transición:** cita_abierta es calculada en B2: id_cita solo si fin IS NULL; drawDB la representa convencional por compatibilidad. fin>inicio, sin solapes, una pausa abierta, tipo pausable y rojo presente en esa clínica; cerrar antes de completar. R/N/L se derivan, sin saldo mutable ni margen por pausa. Transición: vacía; una pausada legada sin segmentos queda para revisión, sin fabricar horas.
 
-### operaciones_agenda — destino, no instalada
+### operaciones_agenda — esquema preparado B2, flujo pendiente
 
 Idempotencia atómica de comandos; no puede sustituirse por avisos con otra vida útil. RE-4.9.3, RE-4.15.3.
 
@@ -912,7 +912,7 @@ Idempotencia atómica de comandos; no puede sustituirse por avisos con otra vida
 **Relaciones:** id_clinica → clinicas(id_clinica); id_actor → usuarios(id_usuario).
 **Restricciones y transición:** actor_clave se deriva en servidor (usuario o tarea), nunca del cliente; resultado solo referencias internas/código, no datos personales. Cita/solicitud/ingreso del resultado se validan en esa clínica; relación lógica por resultado, sin FK polimórfica falsa. Misma clave/huella devuelve mismo resultado; otra huella conflicto. Comando fallido revierte su fila. Transición: vacía, claves no derivadas de CSRF.
 
-### eventos_agenda — destino, no instalada
+### eventos_agenda — esquema preparado B2, flujo pendiente
 
 Evento durable tras commit, separación de SMTP e idempotencia de avisos, no nueva bitácora general M8. RE-4.4.1/3/4, RE-4.14.7, RE-4.12.5, RE-2.11.6.
 
@@ -1068,3 +1068,39 @@ Orden común: clínica→usuarios→mascotas→vínculos→configuración/horari
 Incluir todas las S activas/terminales, C, I, propuestas, pausas, eventos y recursos de identidad de origen/destino; si falta recurso, rollback/reinicio ordenado.
 Fallo después de trasladar C y antes de S/I revierte también mapa/HC, actos, versiones, revisiones, eventos, auditoría nueva y operación: nunca queda confirmado S→P/C→F.
 Se mantiene la conservación/limpieza de contacto ya definida, sin destinatarios, plazo ni facultades administrativas nuevas.
+
+### Materialización B2 — restricciones de datos (2026-10-18)
+
+01_schema.sql y 08_agenda_grafo_ii.sql contienen los mismos campos, índices y FK del destino B1/B1.1; no se agregan entidades ni campos.
+pausas_cita.cita_abierta es INT STORED calculado: id_cita si fin IS NULL, NULL en el resto.
+reasignaciones.cita_pendiente es INT STORED calculado: id_cita si estado=pendiente, NULL en el resto.
+Ambas tienen unicidad con varios NULL permitidos; drawDB mantiene su representación convencional por compatibilidad.
+Las FK compuestas comprueban clínica de cita/solicitud/ingreso/bloque; el vínculo del bloque con usuario_clinica existe, pero actividad/rol y coincidencia exacta de vet/fecha requieren el escritor transaccional futuro.
+
+| CHECK instalado | Predicado local |
+|---|---|
+| cierres_clinica.ck_m4_cierre_intervalo | fin > inicio |
+| bloques_agenda.ck_m4_bloque_intervalo | fin_original > inicio_original |
+| pausas_cita.ck_m4_pausa_intervalo | fin IS NULL OR fin > inicio |
+| citas.ck_m4_cita_objetivo | duracion_activa_objetivo_segundos IS NULL OR duracion_activa_objetivo_segundos > 0 |
+| ausencias_veterinario.ck_m4_ausencia_intervalo | fecha_hora_fin > fecha_hora_inicio |
+| reasignaciones.ck_m4_reasig_intervalo | (inicio_propuesto IS NULL AND fin_propuesto IS NULL) OR (inicio_propuesto IS NOT NULL AND fin_propuesto IS NOT NULL AND fin_propuesto > inicio_propuesto) |
+| solicitudes_agenda.ck_m4_solicitud_presencia | (fecha_llegada IS NULL AND id_receptor IS NULL) OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL) |
+| solicitudes_agenda.ck_m4_solicitud_espera | estado NOT IN ('espera_presencial','en_atencion') OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL) |
+| solicitudes_agenda.ck_m4_solicitud_revision | estado_revision <> 'resuelta' OR (id_revisor IS NOT NULL AND fecha_revision IS NOT NULL AND huella_revision IS NOT NULL) |
+| solicitudes_agenda.ck_m4_solicitud_grafo | fuente_nivel IS NULL OR fuente_nivel <> 'grafo' OR (nivel_calculado IS NOT NULL AND version_conocimiento IS NOT NULL) |
+| solicitudes_agenda.ck_m4_solicitud_clinica | fuente_nivel IS NULL OR fuente_nivel <> 'clinico_presencial' OR (nivel_aprobado IS NOT NULL AND nivel_aprobado = 'rojo' AND id_revisor IS NOT NULL AND motivo_revision IS NOT NULL) |
+| eventos_agenda.ck_m4_evento_recurso | id_cita IS NOT NULL OR id_solicitud IS NOT NULL |
+| eventos_agenda.ck_m4_evento_destino | (id_destinatario IS NULL AND id_rol_destino IS NOT NULL) OR (id_destinatario IS NOT NULL AND id_rol_destino IS NULL) |
+
+La revisión pendiente puede conservar autor/fecha del episodio anterior conforme B1.1; no se exige que metadatos históricos de JSON coincidan con la identidad/versión actual.
+Presencia acreditada y revisión completa se comprueban localmente por campos, no prueban titularidad, huellas verdaderas ni decisiones clínicas legítimas.
+No se crean triggers para solapes, tope naranja, orden, igualdad de paciente S/C, grafo, conciliación ni barrera SMTP; requieren servicios/candados de C.
+
+**Transición:** ausencia previamente efectiva queda aprobada, autores desconocidos NULL; reasignación recibe clínica desde su cita, nunca una clínica elegida.
+D se rellena solo para snapshot propio positivo con fin-inicio pactados coincidentes, sin inicio/fin real ni llegada y pendiente/confirmada; no se lee el tipo vigente.
+Completadas, pausadas o datos no demostrables conservan D NULL, sin fabricar pausas, presencia, origen, conocimiento o revisiones.
+Futuras activas con datos faltantes quedan pendiente_revision; política temporal previa desconocida permanece NULL.
+La columna origen se agrega al cerrar el relleno: su presencia distingue una pasada ya rellenada para no retocar registros/personalizaciones posteriores; un corte anterior se reanuda con predicados de NULL/estado.
+No se declara rollback global de DDL: se inspecciona definición antes de cada paso, y conflictos producen M4-08 con objeto/ID; no hay borrado o elección de duplicado.
+No se recalculan ni consolidan datos clínicos durante 08; los contratos funcionales B1.1 siguen pendientes de C.

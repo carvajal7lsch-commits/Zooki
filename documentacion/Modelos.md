@@ -2,7 +2,7 @@
 
 > **Actualización de cierre M2 — 16/10/2026:** 2.0.0-alpha.4; conocimiento global con fuentes y validación veterinaria pendiente. Esquema de 52 tablas; integración del triage con agenda y urgencias pendiente de M4.
 
-> **Preparación M4/B1 — 2026-10-17:** diagramas de destino alineados con decisiones confirmadas; implementación de M4 pendiente. Alpha.4 mantiene su código/esquema de 52 tablas hasta B2; no se sube revisión ni versión.
+> **Preparación M4/B2 — 2026-10-18:** diagramas de destino B1/B1.1 sin cambios de flujo; la rama prepara 58 tablas mediante 01/08, sin implementar C ni desplegar. Producción alpha.4 conserva 52; no se sube revisión ni versión.
 
 Este documento reúne los modelos de la Fase 2: el modelo conceptual de los dos grafos (soporte a la decisión clínica y agendamiento inteligente), los diagramas de proceso de negocio (BPMN) y los flujos del sistema. Complementa al [ERS](ERS.md) y al [MER](MER.md), y se renderiza en el portal mediante Mermaid.
 

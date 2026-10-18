@@ -6,7 +6,12 @@
 
 ## Ahora
 
-### Situación vigente — B2.1 entregada, pendiente de revisión (2026-10-18)
+### Situación vigente — B2.1 revisada y aprobada (2026-10-18)
+
+- **B2.1 aprobada por Codex arquitecto independiente.** H-B2-1/H-B2-2 cerrados en configuración; revisión en el plan M4. Verificación propia de YAML sin duplicados y comparación estructural exacta, 58 tablas actuales/52 históricas, enumeración PHPUnit 44+8 y propagación Bash de fallos inicial/final (7/9) y éxito (0). Sin nuevas ejecuciones de datos/JS por cambio exclusivo del workflow; se conserva la evidencia propia B2 862/7918 MariaDB, cero omitidas; JS 238/238. La ejecución específica B2.1 del ejecutor queda atribuida a su anexo.
+- **Git y siguiente vigente:** e293cc9 ya contiene workflow/plan/estado anteriores, pero once archivos B2 (incluidos 08, fixture y clase nueva) siguen pendientes de commit. Usuario guarda esos archivos y la revisión en un commit adicional, sin reescribir historial; después push y confirmar CI MySQL 8 real antes del cierre de B, C1 o integración/despliegue. No se presupone push ni se declara MySQL 8 verificado. Sin nuevas decisiones de producto ni pruebas manuales de pantalla.
+
+### Antecedente — entrega B2.1 del ejecutor (2026-10-18)
 
 - **B2.1 entregada, pendiente de revisión.** Autor: Codex ejecutor; revisa Codex arquitecto en otra conversación. Solo workflow y registro en plan/estado: dos esperados actuales 52→58, ambas clases MySQL secuenciales, base explícita zooki_test_base_v2 y shell bash con detención ante error. Controles de instalación/semilla/migrador repetido/volumen conservados; fixture alpha.4 y sus 52 históricos intactos.
 - **Verificación propia B2.1:** YAML válido sin claves duplicadas; comparación estructural del workflow limitada a los cambios solicitados y propagación de fallos comprobada con Bash. Ejecución secuencial nueva en MariaDB 10.4.32, exclusivamente zooki_test_base_v2: BaseV2MysqlTest 44/613 y AgendaB2MysqlTest 8/93, total 52 pruebas/706 aserciones, sin fallos ni omitidas, salida 0. Los once archivos previos de B2 fuera de plan/estado siguen idénticos; git diff --check sin incidencias. Las suites completas de B2 siguen como antecedentes, sin nueva ejecución completa.
