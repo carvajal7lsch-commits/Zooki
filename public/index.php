@@ -174,8 +174,24 @@ switch ($action) {
         break;
 
     case "admin_configuracion":
-        $content_view = "../views/admin/horarios.php";
-        require_once "../views/admin/layout.php";
+        require_once '../controllers/ConfiguracionClinicaController.php';
+        (new ConfiguracionClinicaController())->vista();
+        break;
+
+    case "get_configuracion_clinica_ajax":
+    case "guardar_marca_clinica_ajax":
+    case "guardar_tipo_cita_ajax":
+    case "cambiar_estado_tipo_cita_ajax":
+    case "validar_configuracion_clinica_ajax":
+        require_once '../controllers/ConfiguracionClinicaController.php';
+        $metodoConfiguracion = [
+            'get_configuracion_clinica_ajax' => 'obtenerAjax',
+            'guardar_marca_clinica_ajax' => 'guardarMarcaAjax',
+            'guardar_tipo_cita_ajax' => 'guardarTipoAjax',
+            'cambiar_estado_tipo_cita_ajax' => 'cambiarEstadoAjax',
+            'validar_configuracion_clinica_ajax' => 'validarCampoAjax',
+        ][$action];
+        (new ConfiguracionClinicaController())->$metodoConfiguracion();
         break;
 
     case "logout":

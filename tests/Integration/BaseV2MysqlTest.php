@@ -1143,6 +1143,44 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame(1, (int) $usuario->propietariosDeClinica(DosClinicas::NORTE)[1]['num_mascotas']);
     }
 
+    /** M4 C1, P01/P19: mismos escritores y rollback sobre el esquema y candados reales. */
+    public function testM4C1MarcaTiposYAuditoriaAtomicaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        require_once __DIR__ . '/../../models/ConfiguracionClinica.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        Auditoria::definirProxiesConfiables([]);
+        $_SESSION = ['id_usuario' => 1];
+        Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+        $modelo = new ConfiguracionClinica($this->db);
+        $marca = ['nombre' => 'Norte C1', 'direccion' => 'Calle 1', 'telefono' => '3001234567',
+            'telefono_urgencias' => '3007654321', 'email_contacto' => 'norte@example.com', 'url_logo' => 'https://example.com/norte.png'];
+        $this->assertSame('Norte C1', $modelo->guardarMarca($marca)['nombre']);
+        $tipo = $modelo->guardarTipo(null, ['nombre_tipo' => 'Cirugía C1', 'duracion_minutos' => '45', 'margen_minutos' => '0', 'pausable' => '0']);
+        $this->assertSame(0, (int) $tipo['pausable']);
+        $this->assertSame(1, (int) $tipo['activo']);
+        $this->assertSame(0, (int) $modelo->cambiarEstado((int) $tipo['id_tipo_cita'], ['activo' => '0'])['activo']);
+        $this->assertNotSame('Norte C1', $this->db->query('SELECT nombre FROM clinicas WHERE id_clinica=2')->fetchColumn());
+        $antes = $modelo->leer();
+        $auditorias = $this->contar('auditoria_sistema');
+        $this->db->exec("CREATE TRIGGER bloquear_auditoria_c1 BEFORE INSERT ON auditoria_sistema FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'auditoria C1 simulada'");
+        foreach ([fn () => $modelo->guardarMarca(array_replace($marca, ['nombre' => 'No confirmar'])),
+            fn () => $modelo->cambiarEstado((int) $tipo['id_tipo_cita'], ['activo' => '1'])] as $operacion) {
+            try {
+                $operacion();
+                $this->fail('Confirmó la configuración sin auditoría.');
+            } catch (RuntimeException $error) {
+                $this->assertStringContainsString('auditar', $error->getMessage());
+            }
+            $this->assertSame($antes, $modelo->leer());
+            $this->assertSame($auditorias, $this->contar('auditoria_sistema'));
+        }
+        $this->db->exec('DROP TRIGGER bloquear_auditoria_c1');
+        $_SESSION = [];
+    }
+
     /** C2: copia repetible, relaciones reales y restauración aislada en MySQL/MariaDB. */
     public function testConfiguracionDeDosClinicasEnElEsquemaReal(): void
     {

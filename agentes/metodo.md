@@ -83,6 +83,7 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 **Comunicación**
 - Español informal y directo («brother», «dale»). Muchas veces dicta por voz: interpretar errores de transcripción por el contexto.
 - Quiere opiniones claras con una recomendación, no análisis indecisos.
+- **Prompt en el mismo mensaje (decisión del usuario, 2026-10-18):** cuando el arquitecto indique que sigue una subetapa para el ejecutor, entregar de una vez su prompt completo con la plantilla de §5, sin esperar otra petición del usuario. Si hay un paso previo obligatorio, indicarlo junto al prompt.
 - Explicar en palabras sencillas el porqué de un error o una decisión; dar comandos listos para PowerShell.
 - **Comandos para guardar y subir (decisión del usuario, 2026-10-17):** el usuario también los pega en CMD. Entregar comandos simples, uno por línea, sin `&&`; no incluir `git diff --cached --stat` ni pasos de inspección equivalentes en los bloques que debe pegar. El agente hace la inspección necesaria y entrega solo las operaciones Git que necesita ejecutar el usuario.
 - No narrar el proceso: decir qué salió, qué se encontró y qué le toca hacer.

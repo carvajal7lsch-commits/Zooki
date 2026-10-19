@@ -41,7 +41,8 @@ class Cita extends ModeloClinica
                 ' . ContactoPropietario::columna('p.email', 'pcv', 'email') . ',
                 ' . ContactoPropietario::columna('p.telefono', 'pcv', 'propietario_telefono') . ',
                 tc.nombre_tipo AS tipo_cita_nombre,
-                cl.nombre AS clinica_nombre, cl.direccion AS clinica_direccion
+                cl.nombre AS clinica_nombre, cl.direccion AS clinica_direccion, cl.url_logo AS clinica_logo,
+                cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email
             FROM citas c
             JOIN mascotas m ON m.id_mascota = c.id_mascota
             JOIN usuarios v ON v.id_usuario = c.id_veterinario
@@ -430,7 +431,7 @@ class Cita extends ModeloClinica
             return [self::DURACION_POR_DEFECTO, 0];
         }
         $tipo = $this->catalogo()->tipoCita((int) $idTipoCita);
-        if ($tipo === null) {
+        if ($tipo === null || (int) $tipo['activo'] !== 1) {
             throw new InvalidArgumentException('Elige el tipo de cita de la lista.');
         }
         return [(int) $tipo['duracion_minutos'], (int) $tipo['margen_minutos']];

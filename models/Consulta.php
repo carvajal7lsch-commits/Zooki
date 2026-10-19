@@ -109,7 +109,7 @@ class Consulta extends ModeloHistoria
         $this->exigirMascotaVinculada($idMascota);
 
         [$visible, $parametros] = $this->consultaVisible('c');
-        $sql = "SELECT c.*, u.nombre_completo AS veterinario, cl.nombre AS clinica_nombre
+        $sql = "SELECT c.*, u.nombre_completo AS veterinario, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email
             FROM consultas c
             JOIN usuarios u ON u.id_usuario = c.id_veterinario
             JOIN clinicas cl ON cl.id_clinica = c.id_clinica

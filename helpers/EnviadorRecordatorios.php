@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../models/Recordatorio.php';
+require_once __DIR__ . '/../models/MarcaClinica.php';
 
 /** HU-3.2/3.6: correo inyectable para verificar el cron sin contactar SMTP. */
 final class EnviadorRecordatorios
@@ -26,7 +27,7 @@ final class EnviadorRecordatorios
                 continue;
             }
             [$asunto, $contenido, $cta] = $this->contenido($aviso);
-            $cuerpo = $this->correo->obtenerPlantillaBaseHTML($aviso['prop_nombre'], $asunto, $contenido, $cta, $appUrl);
+            $cuerpo = $this->correo->obtenerPlantillaBaseHTML($aviso['prop_nombre'], $asunto, $contenido, $cta, $appUrl, MarcaClinica::delRegistro($aviso));
             try {
                 $this->correo->limpiarDirecciones();
                 $enviado = $this->correo->enviarCorreoPersonalizado($aviso['email'], $aviso['prop_nombre'], $asunto, $cuerpo);

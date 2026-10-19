@@ -2,6 +2,7 @@
 require_once __DIR__ . '/ReglaAtencion.php';
 require_once __DIR__ . '/../models/AtencionesEnCurso.php';
 require_once __DIR__ . '/../models/NotificacionInterna.php';
+require_once __DIR__ . '/../models/MarcaClinica.php';
 
 /**
  * RN-409 — Vigila las atenciones que se quedan abiertas.
@@ -101,7 +102,8 @@ final class VigilanteAtenciones
                 $titulo,
                 '<p style="font-size:15px;line-height:22px;color:#454545;margin:0 0 16px 0;">' . htmlspecialchars($mensaje) . '</p>',
                 $base !== '' ? 'Abrir la atención' : null,
-                $base !== '' ? "$base/$enlace" : null
+                $base !== '' ? "$base/$enlace" : null,
+                MarcaClinica::delRegistro($cita)
             );
             $this->correo->limpiarDirecciones();
             $this->correo->enviarCorreoPersonalizado($cita['veterinario_email'], $cita['veterinario_nombre'] ?? '', $titulo, $html);

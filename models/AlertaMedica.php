@@ -82,7 +82,7 @@ class AlertaMedica extends ModeloHistoria
     {
         $mascota = $this->exigirMascotaVinculada($idMascota);
         $sql = 'SELECT a.id_alerta, a.id_clinica, a.tipo, a.descripcion, a.activa, a.fecha,
-                cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario,
+                cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email, u.nombre_completo AS veterinario,
                 n.codigo AS nodo_codigo, n.etiqueta AS nodo_etiqueta, n.tipo AS nodo_tipo
             FROM alertas_medicas a
             JOIN clinicas cl ON cl.id_clinica = a.id_clinica

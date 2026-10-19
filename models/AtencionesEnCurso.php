@@ -15,10 +15,13 @@ final class AtencionesEnCurso
     {
         $sql = "SELECT c.id_cita, c.id_clinica, c.id_veterinario, c.fecha, c.hora, c.hora_fin,
                 c.duracion_minutos, c.estado, c.aviso_atencion_abierta,
-                m.nombre AS mascota_nombre, v.nombre_completo AS veterinario_nombre, v.email AS veterinario_email
+                m.nombre AS mascota_nombre, v.nombre_completo AS veterinario_nombre, v.email AS veterinario_email,
+                cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.telefono AS clinica_telefono,
+                cl.direccion AS clinica_direccion, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email
             FROM citas c
             LEFT JOIN mascotas m ON m.id_mascota = c.id_mascota
             LEFT JOIN usuarios v ON v.id_usuario = c.id_veterinario
+            JOIN clinicas cl ON cl.id_clinica = c.id_clinica
             WHERE c.estado = 'en_curso'";
         return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }

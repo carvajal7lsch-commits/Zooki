@@ -359,6 +359,9 @@ class Security {
             'get_auditoria_ajax', 'listar_todas_citas_ajax',
             'get_horarios_clinica_ajax', 'guardar_horarios_clinica_ajax',
             'restaurar_horarios_defecto_ajax',
+            'get_configuracion_clinica_ajax', 'guardar_marca_clinica_ajax',
+            'guardar_tipo_cita_ajax', 'cambiar_estado_tipo_cita_ajax',
+            'validar_configuracion_clinica_ajax',
         ] as $a) { $matriz[$a] = $admin; }
 
         // RN-201: registrar actos clinicos y operar el area del veterinario es

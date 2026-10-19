@@ -7,6 +7,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../helpers/EntornoLocal.php';
 require_once __DIR__ . '/../helpers/EnlaceCuenta.php';
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/../models/MarcaClinica.php';
 
 class EmailService {
     private $mail;
@@ -196,7 +197,7 @@ Si no fuiste tú, ignora este mensaje.";
      * D2.1 (RE-T.19.1) — Invitación del personal: la clínica lo invita con un
      * rol; en 72 horas acepta la política y crea su contraseña.
      */
-    public function enviarInvitacionPersonal($email, $nombre, $clinica, $rol, $enlace, $horasVigencia = 72) {
+    public function enviarInvitacionPersonal($email, $nombre, $clinica, $rol, $enlace, $horasVigencia = 72, ?array $marca = null) {
         $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
         try {
             $this->mail->addAddress($email, $nombre);
@@ -211,7 +212,7 @@ Si no fuiste tú, ignora este mensaje.";
             <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
               Si no esperabas esta invitación, ignora el mensaje: sin activarla, la cuenta no se puede usar.
             </p>';
-            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Activa tu cuenta', $contenido, 'Activar mi cuenta', $enlace);
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Activa tu cuenta', $contenido, 'Activar mi cuenta', $enlace, $marca);
             $this->mail->AltBody = "Hola $nombre,\n\n$clinica te invitó a su equipo en Zooki como $rol.\nActiva tu cuenta, acepta la política de tratamiento de datos y crea tu contraseña:\n$enlace\n\nEl enlace vence en $horasVigencia horas.";
             $this->mail->isHTML(true);
             $this->entregar();
@@ -226,7 +227,7 @@ Si no fuiste tú, ignora este mensaje.";
      * D2.1 (HU-T.14) — El administrador restableció la contraseña: la
      * anterior ya no sirve y el titular crea otra con un enlace de 24 horas.
      */
-    public function enviarRestablecimientoPorAdministrador($email, $nombre, $clinica, $enlace, $horasVigencia = 24) {
+    public function enviarRestablecimientoPorAdministrador($email, $nombre, $clinica, $enlace, $horasVigencia = 24, ?array $marca = null) {
         $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
         try {
             $this->mail->addAddress($email, $nombre);
@@ -241,7 +242,7 @@ Si no fuiste tú, ignora este mensaje.";
             <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
               Si no lo pediste, habla con el administrador de tu clínica.
             </p>';
-            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Crea una nueva contraseña', $contenido, 'Crear mi contraseña', $enlace);
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Crea una nueva contraseña', $contenido, 'Crear mi contraseña', $enlace, $marca);
             $this->mail->AltBody = "Hola $nombre,\n\nEl administrador de $clinica restableció tu contraseña; la anterior ya no sirve.\nCrea una nueva:\n$enlace\n\nEl enlace vence en $horasVigencia horas.";
             $this->mail->isHTML(true);
             $this->entregar();
@@ -256,7 +257,7 @@ Si no fuiste tú, ignora este mensaje.";
      * D2.2 (RE-T.7.5) — Invitación a una persona que ya tiene cuenta: la
      * clínica solo la vincula si el titular acepta en el enlace.
      */
-    public function enviarInvitacionClinica($email, $nombre, $clinica, $rol, $enlace, $horasVigencia = 72) {
+    public function enviarInvitacionClinica($email, $nombre, $clinica, $rol, $enlace, $horasVigencia = 72, ?array $marca = null) {
         $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
         try {
             $this->mail->addAddress($email, $nombre);
@@ -271,7 +272,7 @@ Si no fuiste tú, ignora este mensaje.";
             <p style="font-size:13px;line-height:20px;color:#868686;margin:0;">
               Si no conoces a esta clínica, ignora el mensaje: sin tu aceptación no pasa nada.
             </p>';
-            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Invitación a un equipo', $contenido, 'Ver la invitación', $enlace);
+            $this->mail->Body = $this->obtenerPlantillaBaseHTML($nombre, 'Invitación a un equipo', $contenido, 'Ver la invitación', $enlace, $marca);
             $this->mail->AltBody = "Hola $nombre,\n\n$clinica te invitó a su equipo en Zooki como $rol.\nAcepta o rechaza la invitación:\n$enlace\n\nEl enlace vence en $horasVigencia horas. Si no conoces a esta clínica, ignora el mensaje.";
             $this->mail->isHTML(true);
             $this->entregar();
@@ -315,7 +316,8 @@ Si no fuiste tú, ignora este mensaje.";
      * como celda con su color, el logotipo sobre una placa blanca para que no
      * desaparezca cuando Gmail oscurece el fondo, y ancho fluido en el celular.
      */
-    public function obtenerPlantillaBaseHTML($nombre, $titulo, $contenidoHtml, $ctaTexto = null, $ctaEnlace = null) {
+    public function obtenerPlantillaBaseHTML($nombre, $titulo, $contenidoHtml, $ctaTexto = null, $ctaEnlace = null, ?array $marca = null) {
+        $marcaHtml = MarcaClinica::html($marca, true);
         $h = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
         $ctaHtml = '';
         if ($ctaTexto && $ctaEnlace) {
@@ -359,6 +361,7 @@ Si no fuiste tú, ignora este mensaje.";
                     </td>
                   </tr>
                 </table>
+                ' . $marcaHtml . '
                 <h1 style="color:#1d1c1d;font-size:26px;font-weight:800;letter-spacing:-0.5px;line-height:32px;margin:0 0 16px 0;">' . $h($titulo) . '</h1>
                 <p style="font-size:17px;line-height:26px;color:#1d1c1d;margin:0 0 20px 0;">Hola, ' . $h($nombre) . '.</p>
                 ' . $contenidoHtml . '

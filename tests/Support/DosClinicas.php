@@ -60,7 +60,7 @@ final class DosClinicas
         $db->exec("INSERT INTO roles (id_rol, nombre_rol) VALUES (1,'administrador'), (2,'veterinario'), (4,'propietario'), (5,'super-administrador')");
         $db->exec("CREATE TABLE clinicas (
             id_clinica INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, nit TEXT NOT NULL UNIQUE,
-            direccion TEXT, telefono TEXT, email_contacto TEXT, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP, id_plan INTEGER DEFAULT 2, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
+            direccion TEXT, telefono TEXT, telefono_urgencias TEXT, url_logo TEXT, email_contacto TEXT, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP, id_plan INTEGER DEFAULT 2, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
         $db->exec("CREATE TABLE usuarios (
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, documento TEXT UNIQUE, tipo_documento TEXT,
             nombre_completo TEXT, telefono TEXT, email TEXT UNIQUE, password TEXT, google_uid TEXT UNIQUE,
@@ -117,7 +117,7 @@ final class DosClinicas
         $db->exec('INSERT OR IGNORE INTO especies (id_especie) VALUES (1),(2),(3),(4),(5),(6)');
         $db->exec('CREATE TABLE tipos_cita (id_tipo_cita INTEGER PRIMARY KEY AUTOINCREMENT,
             id_clinica INTEGER NOT NULL REFERENCES clinicas, nombre_tipo TEXT, duracion_minutos INTEGER,
-            margen_minutos INTEGER DEFAULT 10, pausable INTEGER DEFAULT 1, descripcion TEXT, color TEXT, activo INTEGER)');
+            margen_minutos INTEGER DEFAULT 10, pausable INTEGER DEFAULT 1, descripcion TEXT, color TEXT DEFAULT \'#0C66E4\', activo INTEGER DEFAULT 1)');
         $db->exec('CREATE TABLE horarios_clinica (id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_clinica INTEGER NOT NULL REFERENCES clinicas, dia_semana INTEGER, activo INTEGER,
             bloque_morning_activo INTEGER, bloque_afternoon_activo INTEGER, bloque_morning_inicio TEXT,

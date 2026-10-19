@@ -79,7 +79,10 @@ test('2. los síntomas salen en el detalle de la lista de Consultas, el historia
 test('3. el imprimible del portal tiene las alergias y alertas activas con su clínica', () => {
     const vista = leer('views/portal/imprimir_historial.php');
     assert.ok(vista.indexOf('Alergias y alertas activas') < vista.indexOf('Historial de Consultas'), 'Arriba, antes de las consultas');
-    assert.match(vista, /\$alerta\['clinica_nombre'\]/);
+    assert.match(vista, /MarcaClinica::html\(MarcaClinica::delRegistro\(\$alerta\)\)/);
+    const marca = leer('models/MarcaClinica.php');
+    assert.match(marca, /'nombre' => \$fila\['clinica_nombre'\]/);
+    assert.match(marca, /htmlspecialchars\(\(string\) \$v, ENT_QUOTES/);
     assert.match(vista, /Que no haya registro no significa que no tenga/);
     assert.match(leer('controllers/PortalController.php'), /\$alertas = \$this->historia->alertas\(\$idMascota\);/);
 });
@@ -100,7 +103,8 @@ test('5. medical-module.js ya no tiene style= ni eventos en línea en su HTML', 
     assert.match(codigo, /class="dossier-sin-mascotas"/);
     assert.match(codigo, /pet-dossier-card-hc--numero/);
     assert.match(codigo, /<div class="pie">/);
-    assert.match(codigo, /\.pie \{ margin-top: 30px; font-size: 0\.8em; text-align: center; color: #999; \}/, 'La impresión conserva su pie');
+    assert.match(codigo, /css\/imprimir-historia-personal.css/);
+    assert.match(leer('public/css/imprimir-historia-personal.css'), /\.pie \{\s+margin-top: 30px;\s+font-size: 0\.8em;\s+text-align: center;\s+color: #999;\s+\}/, 'La impresión conserva su pie');
 
     // Los mismos valores que tenían los style=, ahora en clases.
     const pacientes = leer('public/css/pacientes.css');

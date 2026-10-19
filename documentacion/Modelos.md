@@ -1173,3 +1173,41 @@ flowchart TD
 No hay rama de edición ni lecturas de mascotas, historia, tratamientos o citas.
 La pantalla también ofrece la lista como vista alternativa al mapa; una regla aparece en el detalle de los nodos que nombra, no como arista (C6).
 La escritura del conocimiento ocurre solo desde el cargador por consola, después de una migración exitosa; la pantalla y su endpoint se implementan en C6.
+
+## 15. Configuración de marca y tipos de cita — M4 C1 (HU-7.4)
+
+RE-7.4.1–6 y configuración de RE-4.6.1; RN-701 y RNF-11. Conserva los horarios de HU-7.1. El margen operativo, la urgencia con clínica cerrada y la pausa real se completan en C3/C4a/C7a, respectivamente.
+
+```mermaid
+flowchart TD
+  A["Abrir Configuración o solicitar acción"] --> B{"Security: sesión y contexto administrador de clínica activa?"}
+  B -- No --> X["Denegar según §9; sin datos ni cambios"]
+  B -- Sí --> C{"Lectura o escritura?"}
+  C -- Lectura --> L["Revalidar clínica, usuario y vínculo administrador; leer marca y tipos propios, incluidos inactivos"]
+  L --> UI["Formulario de marca/tipos y horarios existentes; validación por campo y restricciones de entrada"]
+  UI --> D["Guardar marca, crear/editar tipo o cambiar estado lógico; bloquear doble envío"]
+  C -- Escritura --> E
+  D --> E{"POST y CSRF válidos?"}
+  E -- No --> F["405 o 403; conservar formulario"]
+  E -- Sí --> G{"Campos y duración/margen/pausable explícito válidos?"}
+  G -- No --> H["422 con campo y mensaje; no escribir"]
+  H --> UI
+  G -- Sí --> I{"Clínica del formulario coincide con contexto autorizado?"}
+  I -- No --> J["403 e intento auditado; sin cambios"]
+  I -- Sí --> T["Iniciar transacción exterior; bloquear clínica, usuario y vínculo en ese orden B1"]
+  T --> V{"Clínica/usuario/vínculo administrador siguen activos?"}
+  V -- No --> R["Rollback; 403 e intento auditado fuera de la transacción"]
+  V -- Sí --> K{"Marca propia, tipo nuevo o tipo existente propio bloqueado?"}
+  K -- No --> R
+  K -- Sí --> W["Guardar marca o tipo; desactivar/reactivar sin borrar ni alterar snapshots de citas"]
+  W --> AU["Registrar antes/después y actor/clínica en auditoría de la misma transacción"]
+  AU --> OK{"Escritura y auditoría correctas?"}
+  OK -- No --> ERR["Rollback completo; error sin éxito aparente; permitir reintento"]
+  OK -- Sí --> COM["Commit; devolver registro canónico; actualizar nombre de contexto si cambió"]
+  COM --> U["Actualizar formulario/lista/preview inmediatamente y luego aviso breve; rehabilitar controles"]
+  ERR --> UI
+  U --> UI
+  L --> OUT["Consumidores autorizados: marca de la clínica del contexto o del acto; global conserva Zooki"]
+```
+
+La validación remota por campo usa POST/CSRF y revalida el administrador sin escribir. El guardado repite la validación en servidor. Los tipos inactivos siguen legibles en históricos; el catálogo de reservas los excluye y el servidor rechaza usarlos en una nueva reserva. Las salidas clínicas usan la procedencia ya autorizada, sin elegir una clínica para mensajes globales ni personalizar las descargas públicas.

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 require_once __DIR__ . '/../../helpers/PresentacionPortal.php';
 require_once __DIR__ . '/../../helpers/PresentacionPlataforma.php';
 require_once __DIR__ . '/../../helpers/ValidadorMascota.php';
+require_once __DIR__ . '/../../models/MarcaClinica.php';
 
 /**
  * M5 C2 — Portal del propietario: Inicio · Citas · Clínicas · Perfil (Anexo A
@@ -402,9 +403,17 @@ foreach ((array) $todas_desparasitaciones as $d) {
                 <ul class="clinicas-lista">
                     <?php foreach ($clinicas_portal as $clinica): $idInterruptor = 'autoriza_' . (int) $clinica['id_clinica']; $abierta = (bool) $clinica['ahora']['abierta']; ?>
                         <li class="portal-clinica clinica-fila" data-id-clinica="<?= (int) $clinica['id_clinica'] ?>">
-                            <span class="avatar-mini avatar-iniciales clinica-fila__avatar" aria-hidden="true"><?= $e(PresentacionPlataforma::iniciales($clinica['nombre'])) ?></span>
+                            <?php $logoClinica = MarcaClinica::logo($clinica['url_logo'] ?? null); ?>
+                            <?php if ($logoClinica !== ''): ?>
+                                <img class="avatar-mini clinica-fila__avatar marca-clinica-logo" src="<?= $e($logoClinica) ?>" alt="Logo de <?= $e($clinica['nombre']) ?>">
+                            <?php else: ?>
+                                <span class="avatar-mini avatar-iniciales clinica-fila__avatar" aria-hidden="true"><?= $e(PresentacionPlataforma::iniciales($clinica['nombre'])) ?></span>
+                            <?php endif; ?>
                             <div class="clinica-fila__datos">
                                 <h3><?= $e($clinica['nombre']) ?></h3>
+                                <?php foreach (['telefono' => 'Teléfono', 'email_contacto' => 'Correo', 'telefono_urgencias' => 'Urgencias'] as $dato => $rotulo): ?>
+                                    <?php if (!empty($clinica[$dato])): ?><p><?= $e($rotulo . ': ' . $clinica[$dato]) ?></p><?php endif; ?>
+                                <?php endforeach; ?>
                                 <p>
                                     <span class="clinica-fila__estado<?= $abierta ? ' is-abierta' : '' ?>"><?= $e($clinica['ahora']['texto']) ?></span>
                                     <?php if (!empty($clinica['direccion'])): ?><span><?= $e($clinica['direccion']) ?></span><?php endif; ?>

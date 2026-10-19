@@ -1,0 +1,92 @@
+.configuracion-clinica {
+    display: grid;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+.configuracion-clinica form {
+    padding: 0 24px 24px;
+}
+.configuracion-campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+.configuracion-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 0;
+}
+.configuracion-campo input, .configuracion-campo select {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #dce2ea;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font: inherit;
+    background: #fff;
+    color: #1d2939;
+    box-sizing: border-box;
+}
+.configuracion-campo [aria-invalid="true"] {
+    border-color: #c62828;
+}
+.configuracion-clinica .validation-error {
+    display: block;
+    min-height: 18px;
+    font-size: 12px;
+    font-weight: 400;
+    color: #b42318;
+}
+.configuracion-aviso {
+    min-height: 20px;
+    color: #b42318;
+    font-size: 14px;
+}
+.configuracion-tipos {
+    padding: 0 24px 18px;
+    display: grid;
+    gap: 10px;
+}
+.configuracion-tipo {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #edf0f4;
+    padding: 12px 0;
+}
+.configuracion-tipo div {
+    min-width: 0;
+}
+.configuracion-tipo strong {
+    display: block;
+    overflow-wrap: anywhere;
+}
+.configuracion-tipo p {
+    font-size: 13px;
+    color: #667085;
+    margin: 6px 0;
+}
+.configuracion-tipo button {
+    min-height: 44px;
+}
+.configuracion-tipo-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+@media (max-width: 767px) {
+    .configuracion-campos {
+        grid-template-columns: 1fr;
+    }
+    .configuracion-clinica form, .configuracion-tipos {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .configuracion-tipo {
+        flex-wrap: wrap;
+    }
+}

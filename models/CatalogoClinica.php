@@ -12,9 +12,10 @@ final class CatalogoClinica extends ModeloClinica
 {
     private const TIPOS_PRODUCTO = ['interna', 'externa', 'ambas'];
 
-    public function tiposCita(): array
+    public function tiposCita(bool $incluirInactivos = false): array
     {
-        return $this->leer('SELECT * FROM tipos_cita WHERE id_clinica = ? AND activo = 1 ORDER BY duracion_minutos');
+        return $this->leer('SELECT * FROM tipos_cita WHERE id_clinica = ?'
+            . ($incluirInactivos ? '' : ' AND activo = 1') . ' ORDER BY duracion_minutos, id_tipo_cita');
     }
 
     public function tipoCita(int $id): ?array

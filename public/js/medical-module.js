@@ -1799,6 +1799,16 @@ function renderPetDashboard(data, id) {
     mostrarPestanaFicha('dashGeneral');
 }
 
+// RE-7.4.4: cada acto conserva su marca; la cabecera del historial sigue siendo Zooki.
+function marcaParaImprimir(registro) {
+    const logo = String(registro.clinica_logo || '');
+    const valido = !/[\s<>"'\\]/.test(logo) && !logo.startsWith('//')
+        && (/^https?:\/\//i.test(logo) || !logo.includes(':'));
+    const imagen = logo && valido ? `<img width="96" class="marca-clinica-logo" src="${escaparTexto(logo)}" alt="Logo de ${escaparTexto(registro.clinica_nombre)}">` : '';
+    const contacto = ['clinica_direccion', 'clinica_telefono', 'clinica_email'].filter(c => registro[c]).map(c => `<span>${escaparTexto(registro[c])}</span>`).join('');
+    return `<div class="marca-clinica">${imagen}<strong>${escaparTexto(registro.clinica_nombre)}</strong>${contacto}</div>`;
+}
+
 async function printMedicalHistory(id, nombre) {
     try {
         const response = await fetch(`index.php?action=listar_historial_ajax&id_mascota=${id}`);
@@ -1827,26 +1837,11 @@ async function printMedicalHistory(id, nombre) {
             <html>
             <head>
                 <title>Historia Clínica - ${escaparTexto(nombre)}</title>
-                <style>
-                    @page { margin: 15mm; }
-                    body { font-family: 'Arial', sans-serif; padding: 0; margin: 0; color: #333; }
-                    h1 { border-bottom: 2px solid #0066ff; padding-bottom: 10px; }
-                    .section { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-                    .meta { color: #666; font-size: 0.9em; margin-bottom: 10px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.9em; }
-                    th { background-color: #f8fafc; }
-                    .pie { margin-top: 30px; font-size: 0.8em; text-align: center; color: #999; }
-                    
-                    /* Ocultar encabezados y pies de página por defecto del navegador al imprimir */
-                    @media print {
-                        @page { margin: 0; }
-                        body { margin: 1.6cm; }
-                    }
-                </style>
+                <link rel="stylesheet" href="css/marca-clinica.css">
+                <link rel="stylesheet" href="css/imprimir-historia-personal.css">
             </head>
             <body>
-                <h1>Historia Clínica: ${escaparTexto(nombre)}</h1>
+                <h1>Zooki · Historia Clínica: ${escaparTexto(nombre)}</h1>
                 <div class="meta">
                     <strong>HC N°:</strong> ${escaparTexto(data.mascota.numero_historia_clinica || '---')} <br>
                     <strong>Especie/Raza:</strong> ${escaparTexto(data.mascota.nombre_especie)} - ${escaparTexto(razaConIndicada(data.mascota.nombre_raza, data.mascota.raza_indicada))} <br>
@@ -1859,7 +1854,7 @@ async function printMedicalHistory(id, nombre) {
             data.consultas.forEach(c => {
                 html += `
                     <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${escaparTexto(c.veterinario)}</h3>
-                    <p><strong>Clínica:</strong> ${escaparTexto(c.clinica_nombre)}</p>
+                    ${marcaParaImprimir(c)}
                     <p><strong>Motivo:</strong> ${escaparTexto(c.motivo_consulta)}</p>
                     ${textoSintomas(c) ? `<p><strong>Síntomas:</strong> ${textoSintomas(c)}</p>` : ''}
                     <p><strong>Diagnóstico:</strong> ${escaparTexto(c.diagnostico)}</p>
@@ -1879,7 +1874,7 @@ async function printMedicalHistory(id, nombre) {
         if (data.vacunas && data.vacunas.length > 0) {
             html += `<div class="section"><h2>Vacunación</h2><table><tr><th>Fecha</th><th>Vacuna</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.vacunas.forEach(v => {
-                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${escaparTexto(v.clinica_nombre)}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${marcaParaImprimir(v)}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }
@@ -1887,7 +1882,7 @@ async function printMedicalHistory(id, nombre) {
         if (data.desparasitaciones && data.desparasitaciones.length > 0) {
             html += `<div class="section"><h2>Desparasitaciones</h2><table><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.desparasitaciones.forEach(d => {
-                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${escaparTexto(d.clinica_nombre)}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${marcaParaImprimir(d)}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }

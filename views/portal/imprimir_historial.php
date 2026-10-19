@@ -1,4 +1,7 @@
-<?php require_once __DIR__ . '/../../config/App.php'; ?>
+<?php
+require_once __DIR__ . '/../../config/App.php';
+require_once __DIR__ . '/../../models/MarcaClinica.php';
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="css/imprimir-historial.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/marca-clinica.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
 
@@ -76,7 +80,7 @@
                     <tr>
                         <td><strong><?php echo htmlspecialchars($alerta['tipo_nombre']); ?></strong></td>
                         <td><?php echo htmlspecialchars($alerta['descripcion']); ?></td>
-                        <td><?php echo htmlspecialchars($alerta['clinica_nombre']); ?></td>
+                        <td><?php echo MarcaClinica::html(MarcaClinica::delRegistro($alerta)); ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -111,7 +115,7 @@
                                 <strong>Plan:</strong> <?php echo htmlspecialchars($con['plan_tratamiento']); ?>
                             </span>
                         </td>
-                        <td>Dr(a). <?php echo htmlspecialchars($con['veterinario']); ?><br><small><?php echo htmlspecialchars($con['clinica_nombre']); ?></small></td>
+                        <td>Dr(a). <?php echo htmlspecialchars($con['veterinario']); ?><br><?php echo MarcaClinica::html(MarcaClinica::delRegistro($con)); ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -136,7 +140,7 @@
                 <?php foreach ($vacunas as $v): ?>
                     <tr>
                         <td><strong><?php echo htmlspecialchars($v['nombre_vacuna']); ?></strong></td>
-                        <td><?php echo htmlspecialchars($v['laboratorio'] ?: '—'); ?><br><small><?php echo htmlspecialchars($v['clinica_nombre']); ?></small></td>
+                        <td><?php echo htmlspecialchars($v['laboratorio'] ?: '—'); ?><br><?php echo MarcaClinica::html(MarcaClinica::delRegistro($v)); ?></td>
                         <td><?php echo date('d/m/Y', strtotime($v['fecha_aplicacion'])); ?></td>
                         <td>
                             <?php echo (!empty($v['fecha_proxima_dosis']) && $v['fecha_proxima_dosis'] !== '0000-00-00') ? '<strong>' . date('d/m/Y', strtotime($v['fecha_proxima_dosis'])) . '</strong>' : '—'; ?>
@@ -165,7 +169,7 @@
                 <?php foreach ($desparasitaciones as $d): ?>
                     <tr>
                         <td><strong><?php echo htmlspecialchars($d['producto']); ?></strong></td>
-                        <td><?php echo htmlspecialchars(ucfirst((string) $d['tipo']) . ' · ' . $d['periodicidad']); ?><br><small><?php echo htmlspecialchars($d['clinica_nombre']); ?></small></td>
+                        <td><?php echo htmlspecialchars(ucfirst((string) $d['tipo']) . ' · ' . $d['periodicidad']); ?><br><?php echo MarcaClinica::html(MarcaClinica::delRegistro($d)); ?></td>
                         <td><?php echo date('d/m/Y', strtotime($d['fecha_aplicacion'])); ?></td>
                         <td>
                             <?php echo ($d['fecha_proxima'] && $d['fecha_proxima'] !== '0000-00-00') ? '<strong>' . date('d/m/Y', strtotime($d['fecha_proxima'])) . '</strong>' : '—'; ?>

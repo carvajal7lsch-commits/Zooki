@@ -61,7 +61,7 @@ class Vacuna extends ModeloHistoria
         $idMascota = (int) $idMascota;
         $mascota = $this->exigirMascotaVinculada($idMascota);
 
-        $sql = 'SELECT v.*, cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario
+        $sql = 'SELECT v.*, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email, u.nombre_completo AS veterinario
             FROM vacunas v
             JOIN clinicas cl ON cl.id_clinica = v.id_clinica
             LEFT JOIN usuarios u ON u.id_usuario = v.id_veterinario

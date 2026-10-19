@@ -689,7 +689,7 @@ class CitaController
 
         require_once __DIR__ . '/../config/EmailService.php';
         $correo = new EmailService();
-        $html = $correo->obtenerPlantillaBaseHTML($cita['propietario_nombre'], $titulo, $contenido, 'Ver en mi Portal', $this->urlApp());
+        $html = $correo->obtenerPlantillaBaseHTML($cita['propietario_nombre'], $titulo, $contenido, 'Ver en mi Portal', $this->urlApp(), MarcaClinica::delRegistro($cita));
         return $correo->enviarCorreoPersonalizado($cita['email'], $cita['propietario_nombre'], $asunto, $html);
     }
 

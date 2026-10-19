@@ -15,7 +15,7 @@ final class HistoriaPropietario extends ModeloPropietario
         $this->exigirMascotaPropia($idMascota);
 
         $sql = 'SELECT c.id_consulta, c.id_clinica, c.id_cita, c.fecha_hora, c.motivo_consulta, c.diagnostico,
-                c.plan_tratamiento, c.peso, c.temperatura, cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario
+                c.plan_tratamiento, c.peso, c.temperatura, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email, u.nombre_completo AS veterinario
             FROM consultas c
             JOIN clinicas cl ON cl.id_clinica = c.id_clinica
             JOIN usuarios u ON u.id_usuario = c.id_veterinario
@@ -44,7 +44,7 @@ final class HistoriaPropietario extends ModeloPropietario
     public function vacunas(int $idMascota): array
     {
         $this->exigirMascotaPropia($idMascota);
-        $consulta = $this->conn->prepare('SELECT v.*, cl.nombre AS clinica_nombre FROM vacunas v
+        $consulta = $this->conn->prepare('SELECT v.*, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email FROM vacunas v
             JOIN clinicas cl ON cl.id_clinica = v.id_clinica
             WHERE v.id_mascota = ? ORDER BY v.fecha_aplicacion DESC, v.id_vacuna DESC');
         $consulta->execute([$idMascota]);
@@ -54,7 +54,7 @@ final class HistoriaPropietario extends ModeloPropietario
     public function desparasitaciones(int $idMascota): array
     {
         $this->exigirMascotaPropia($idMascota);
-        $consulta = $this->conn->prepare('SELECT d.*, cl.nombre AS clinica_nombre FROM desparasitaciones d
+        $consulta = $this->conn->prepare('SELECT d.*, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email FROM desparasitaciones d
             JOIN clinicas cl ON cl.id_clinica = d.id_clinica
             WHERE d.id_mascota = ? ORDER BY d.fecha_aplicacion DESC, d.id_desparasitacion DESC');
         $consulta->execute([$idMascota]);
@@ -68,7 +68,7 @@ final class HistoriaPropietario extends ModeloPropietario
     public function alertas(int $idMascota): array
     {
         $this->exigirMascotaPropia($idMascota);
-        $consulta = $this->conn->prepare('SELECT a.id_alerta, a.id_clinica, a.tipo, a.descripcion, a.fecha, cl.nombre AS clinica_nombre
+        $consulta = $this->conn->prepare('SELECT a.id_alerta, a.id_clinica, a.tipo, a.descripcion, a.fecha, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email
             FROM alertas_medicas a
             JOIN clinicas cl ON cl.id_clinica = a.id_clinica
             WHERE a.id_mascota = ? AND a.activa = 1
@@ -87,7 +87,7 @@ final class HistoriaPropietario extends ModeloPropietario
     {
         $this->exigirMascotaPropia($idMascota);
         $consulta = $this->conn->prepare("SELECT c.id_cita, c.id_clinica, c.id_mascota, c.fecha, c.hora, c.motivo, c.estado,
-                cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario_nombre, tc.nombre_tipo
+                cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email, u.nombre_completo AS veterinario_nombre, tc.nombre_tipo
             FROM citas c
             JOIN clinicas cl ON cl.id_clinica = c.id_clinica
             JOIN usuarios u ON u.id_usuario = c.id_veterinario
@@ -105,7 +105,7 @@ final class HistoriaPropietario extends ModeloPropietario
     public function citasDeSusMascotas(): array
     {
         $consulta = $this->conn->prepare("SELECT c.id_cita, c.id_clinica, c.id_mascota, c.fecha, c.hora, c.motivo, c.estado,
-                cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario_nombre, tc.nombre_tipo
+                cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email, u.nombre_completo AS veterinario_nombre, tc.nombre_tipo
             FROM citas c
             JOIN mascotas m ON m.id_mascota = c.id_mascota
             JOIN clinicas cl ON cl.id_clinica = c.id_clinica
@@ -120,7 +120,7 @@ final class HistoriaPropietario extends ModeloPropietario
     /** Vacunas de todas sus mascotas activas, con la clínica que las aplicó (RN-114). */
     public function vacunasDeSusMascotas(): array
     {
-        $consulta = $this->conn->prepare('SELECT v.*, cl.nombre AS clinica_nombre FROM vacunas v
+        $consulta = $this->conn->prepare('SELECT v.*, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email FROM vacunas v
             JOIN mascotas m ON m.id_mascota = v.id_mascota
             JOIN clinicas cl ON cl.id_clinica = v.id_clinica
             WHERE m.id_propietario = ? AND m.estado = 1
@@ -132,7 +132,7 @@ final class HistoriaPropietario extends ModeloPropietario
     /** Desparasitaciones de todas sus mascotas activas, con la clínica que las aplicó (RN-114). */
     public function desparasitacionesDeSusMascotas(): array
     {
-        $consulta = $this->conn->prepare('SELECT d.*, cl.nombre AS clinica_nombre FROM desparasitaciones d
+        $consulta = $this->conn->prepare('SELECT d.*, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email FROM desparasitaciones d
             JOIN mascotas m ON m.id_mascota = d.id_mascota
             JOIN clinicas cl ON cl.id_clinica = d.id_clinica
             WHERE m.id_propietario = ? AND m.estado = 1
@@ -148,7 +148,7 @@ final class HistoriaPropietario extends ModeloPropietario
     public function detalleCita(int $idCita): array
     {
         $consulta = $this->conn->prepare("SELECT c.id_cita, c.id_mascota, c.fecha, c.hora, c.estado, c.motivo,
-                cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario_nombre, tc.nombre_tipo,
+                cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email, u.nombre_completo AS veterinario_nombre, tc.nombre_tipo,
                 m.nombre AS nombre_mascota, m.url_foto
             FROM citas c
             JOIN mascotas m ON m.id_mascota = c.id_mascota
