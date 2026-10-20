@@ -1,12 +1,15 @@
 <?php
 use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/ComparaRespuestaIdempotente.php';
 require_once __DIR__ . '/../../models/Cita.php';
 require_once __DIR__ . '/../../models/HorarioClinica.php';
 
 /** C2/P04: dos escritores reales, barreras observadas y lecturas tras la espera. */
 final class AgendaC2MysqlTest extends TestCase
 {
+    use ComparaRespuestaIdempotente;
+
     private PDO $db;
     private string $motor;
 
@@ -65,12 +68,12 @@ final class AgendaC2MysqlTest extends TestCase
         $this->assertSame(0,(int) $this->db->query('SELECT COUNT(*) FROM operaciones_agenda')->fetchColumn());
         $this->db->exec('DROP TRIGGER sin_auditoria_c2');
         $r = $m->guardarVeterinario(2,[['dia_semana'=>1,'hora_inicio'=>'10:00','hora_fin'=>'12:00']],str_repeat('a',64));
-        $this->assertSame($r,$m->guardarVeterinario(2,[['dia_semana'=>1,'hora_inicio'=>'10:00','hora_fin'=>'12:00']],str_repeat('a',64)));
+        $this->assertRespuestaIdempotenteIgual($r,$m->guardarVeterinario(2,[['dia_semana'=>1,'hora_inicio'=>'10:00','hora_fin'=>'12:00']],str_repeat('a',64)));
         $this->assertSame(1,(int) $this->db->query('SELECT COUNT(*) FROM operaciones_agenda')->fetchColumn());
         $cierre = $m->cerrar('2030-01-07T10:00','2030-01-07T11:00','Cierre real',str_repeat('b',64));
         $retirado = $m->retirarCierre($cierre['id_cierre'],str_repeat('c',64));
         $this->assertSame(0,$retirado['activo']);
-        $this->assertSame($retirado,$m->retirarCierre($cierre['id_cierre'],str_repeat('c',64)));
+        $this->assertRespuestaIdempotenteIgual($retirado,$m->retirarCierre($cierre['id_cierre'],str_repeat('c',64)));
         $this->assertSame(1,(int)$this->db->query('SELECT COUNT(*) FROM cierres_clinica')->fetchColumn());
     }
 

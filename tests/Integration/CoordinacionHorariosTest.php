@@ -1,6 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/ComparaRespuestaIdempotente.php';
 require_once __DIR__ . '/../../models/CoordinacionHorarios.php';
 require_once __DIR__ . '/../../models/HorarioClinica.php';
 require_once __DIR__ . '/../../models/Cita.php';
@@ -10,6 +11,8 @@ require_once __DIR__ . '/../../controllers/HorarioClinicaController.php';
 /** C2, P01/P04: permisos, vigencia, intervalos y atomicidad sobre el destino B. */
 final class CoordinacionHorariosTest extends TestCase
 {
+    use ComparaRespuestaIdempotente;
+
     private PDO $db;
 
     protected function setUp(): void
@@ -157,7 +160,7 @@ final class CoordinacionHorariosTest extends TestCase
         $this->como(1,1,Roles::ADMIN);
         $r = $m->resolver($p['id_propuesta'], true, '', str_repeat('b',64));
         $this->assertSame('aprobada', $r['estado']);
-        $this->assertSame($r, $m->resolver($p['id_propuesta'], true, '', str_repeat('b',64)));
+        $this->assertRespuestaIdempotenteIgual($r, $m->resolver($p['id_propuesta'], true, '', str_repeat('b',64)));
         $this->rechaza(fn () => $m->resolver($p['id_propuesta'], false, 'Otro comando'));
         $this->como(1,2,Roles::VETERINARIO);
         $p = $m->proponer(2, $this->franjas());
@@ -189,8 +192,8 @@ final class CoordinacionHorariosTest extends TestCase
         $r = $m->guardarVeterinario(2, $this->franjas(), str_repeat('c',64));
         $this->assertSame([$id], $r['afectadas']);
         $durable = json_decode($this->db->query("SELECT resultado FROM operaciones_agenda WHERE accion='guardar_horario_vet'")->fetchColumn(), true);
-        $this->assertSame(['id_veterinario' => 2, 'afectadas' => [$id]], $durable);
-        $this->assertSame($r, $m->guardarVeterinario(2, $this->franjas(), str_repeat('c',64)));
+        $this->assertRespuestaIdempotenteIgual(['id_veterinario' => 2, 'afectadas' => [$id]], $durable);
+        $this->assertRespuestaIdempotenteIgual($r, $m->guardarVeterinario(2, $this->franjas(), str_repeat('c',64)));
         $despues = $this->db->query('SELECT * FROM citas')->fetch(PDO::FETCH_ASSOC);
         foreach (['estado_reajuste','motivo_reajuste','version_agenda'] as $campo) {
             unset($antes[$campo],$despues[$campo]);

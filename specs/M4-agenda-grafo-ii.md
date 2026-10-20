@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **C2 y C2.1 revisadas y aprobadas en código (2026-10-20)**. H-C2-1/H-C2-2 cerrados por revisión independiente con suite completa MariaDB en verde. Pendientes comprobaciones manuales del dueño, commit/push y CI MySQL 8 nuevo antes de C3. El fallo previo de C2 y las revisiones anteriores se conservan como historial.
+> Estado: **C2.2 revisada y aprobada en pruebas (2026-10-20)**. H-C2-3 corregido en código de pruebas; confirmación MySQL 8/CI nuevo pendiente tras commit/push del usuario. H-C2-1/H-C2-2 conservan su cierre. Aplicación intacta y evidencia CI anterior conservada. C3 no habilitada hasta CI verde; pruebas manuales anteriores pendientes.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -77,6 +77,7 @@ Los criterios normativos permanecen en `documentacion/`; no se cambian silencios
 | **C1. Marca y tipos — entregada, pendiente de revisión** | Componentes C1 de HU-7.4: configuración, duración/margen/pausable, teléfono; propagación de marca en salidas existentes y aislamiento; mismo diseño y validación en vivo. La aceptación operativa de margen/urgencias/pausas se completa en C3/C4a/C7a según la matriz por RE. | B | Codex | Codex independiente |
 | **C2. Horarios — entregada, pendiente de revisión** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. Resultado y evidencia en Anexo C2; HU-4.11 continúa con C3/C5. | C1 | Codex ejecutor | Codex arquitecto independiente |
 | **C2.1. Corrección — entregada, pendiente de revisión** | H-C2-1/H-C2-2: auditoría común de lectura ajena y regresión durable; causa demostrada y corrección del sondeo de metadata sin debilitar las diez carreras. Evidencia final y pendientes en Anexo C2.1; no aprueba C2 ni inicia C3. | C2 revisada con corrección | Codex ejecutor | Codex arquitecto independiente |
+| **C2.2. Comparación JSON — entregada, pendiente de revisión** | H-C2-3: respuestas idempotentes comparadas por claves/valores/tipos sin ordenar listas; regresiones positivas/negativas y verificación en Anexo C2.2. Sin cambio de aplicación o persistencia; CI nuevo pendiente. | CI de C2/C2.1 revisado | Codex ejecutor | Codex arquitecto independiente |
 | **C3. Disponibilidad y reserva** | Una lógica de intersección, resta de ausencias/cierres y ocupación por duración+margen para sugerencias, reserva y reprogramación; candados y pruebas concurrentes; nunca disponibilidad permanente por falta de horario. Cierre de HU-4.9 y base de HU-4.6/4.8. | C2 | Codex | Codex independiente |
 | **C4a. Agendar con triage** | Interno y portal comparten captura/buscador C4 de M2; cuatro ramas, excepción roja, clínica cerrada, revisión humana y contagio, persistencia y notificaciones. Rojo deriva a circuito clínico; no crea reserva ordinaria ni promete atención por el solo cálculo remoto. | C3 | Codex | Codex independiente |
 | **C4b. Sobrecupos y cambios** | Tope y orden naranja con motivo; primer espacio amarillo/elección verde; conflictos sobrevenidos; cancelación/reprogramación interna y portal con misma lógica; revisión previa al horario y registro del nivel aprobado por vet. | C4a | Codex | Codex independiente |
@@ -2532,3 +2533,78 @@ Cuatro PHP de C2.1 pasan sintaxis y diff sin incidencias. Anexos/revisiones prev
 5. **Ana Norte (admin) y Beto Norte (vet):** reducir/restaurar horario con una cita de prueba existente. Aparece pendiente y conserva hora/snapshots; doble envío no duplica el cambio/auditoría. Comprobar perfil y Configuración utilizables en celular.
 
 **Siguiente:** dueño completa estas comprobaciones y guarda C2 junto con C2.1 y las notas pendientes del arquitecto, luego hace push. Confirmar CI nuevo completo, incluidas las tres clases MySQL 8, antes del prompt/inicio de C3. C3 completa disponibilidad, C5 procesa marcas, C6 ausencias/cobertura y C7 integración clínica; no se declara HU-4.11 totalmente operativa por este cierre. Sin decisiones nuevas de producto o despliegue en esta revisión.
+
+### CI de C2/C2.1 — Revisión (2026-10-20)
+
+**Revisó Codex arquitecto. Veredicto: corrección C2.2 requerida; C3 no habilitada.** HEAD 8ee3936066cab30f37ef0bb663b8f07763b5fdcd, commit/push del usuario confirmado y árbol limpio antes de estas notas. Leídos logs fallidos de ambas ejecuciones push del mismo SHA: [39448209773](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39448209773) y [39448209782](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39448209782). Ambas fallan en el mismo punto; no se atribuyen a una nueva ejecución local ni se reintenta CI desde el arquitecto.
+
+**H-C2-3 / P2 — comparación de replay dependiente del orden de claves JSON.** `tests/Integration/AgendaC2MysqlTest.php:68`, testAtomicidadConAuditoriaFallidaYClaveDurableEnElEsquemaReal: assertSame exige que el resultado PHP recién compuesto y el recuperado de operaciones_agenda tengan idéntico orden de claves. Diff del CI: afectadas pasa de después a antes de id_veterinario, conservando los valores mostrados. OperacionAgenda::ejecutar devuelve inicialmente el array del escritor y en replay decodifica el resultado persistido en columna JSON. MySQL normaliza las claves de objetos; su [manual oficial de JSON](https://dev.mysql.com/doc/refman/8.0/en/json.html#json-normalization) advierte que ese orden tampoco está garantizado entre versiones. La identidad del resultado funcional/idempotencia no exige ese orden de objeto. El fallo mostrado es de la aserción de verificación; no demuestra una diferencia de contenido o fallo de exclusión.
+
+La comparación análoga de retirada/replay en línea 73 tiene el mismo supuesto y debe revisarse en esta corrección; no se presenta como otro fallo ya ejecutado por el CI, pues la primera aserción detiene ese método. Mantener tipos, claves y valores exactos, orden de listas/franjas y comprobaciones de no duplicación/rollback/auditoría. Comparar mapas por contenido con una estrategia estricta y localizada en pruebas, sin ordenar listas ni sustituir todo por igualdad débil. Añadir casos negativos que prueben rechazo de valor/tipo distinto y lista reordenada, así como aceptación del mismo mapa con claves reordenadas.
+
+**Evidencia CI:** build-and-test aprobado. En el trabajo MySQL 8, BaseV2MysqlTest 45/624 y AgendaB2MysqlTest 11/113 pasan. AgendaC2MysqlTest finaliza 2/149 con un fallo; el segundo método, las diez carreras con barreras, pasa. El paso de volumen vacío posterior se omite por el fallo y no se da por verificado en esta ejecución. Los logs de auditoría simulada anteriores son esperados; el error fatal del trabajo es la aserción descrita, salida 1. H-C2-1/H-C2-2 siguen cerrados conforme a su evidencia; se añade este hallazgo de portabilidad de verificación. No se reescribe la aprobación local ni se la presenta como aprobación CI.
+
+**Encargo C2.2:** ajustar únicamente las comparaciones/soporte de pruebas necesarias para el contrato JSON de replay; revisar ambos puntos y otros equivalentes, no parchear solo la primera línea. No modificar aplicación, esquema, formato persistido o migraciones para satisfacer un orden de objeto que no es requisito. Si aparece una diferencia real de datos/tipos, reportarla antes de ampliar alcance. Conservar la selección CI de las tres clases y controles del migrador/semilla/volumen vacío, las diez carreras, auditoría, atomicidad y no duplicación. Verificar nuevas regresiones y suites pertinentes sobre la fuente final; distinguir MySQL 8 real de MariaDB. La corrección debe quedar confirmada finalmente por CI nuevo tras revisión y push del usuario; una pasada MariaDB no sustituye esa evidencia. Solo zooki_test_base_v2, sin .env/base manual. Anexo C2.2 y estado entregada pendiente de revisión; comandos de commit simples para el usuario. Sin commit/push del agente, C3, nuevas decisiones funcionales, versión/exportaciones o despliegue.
+
+Diagnóstico del arquitecto limitado a logs y fuente local/oficial; no se repiten las suites locales de 17 minutos ya verdes para volver a observar un fallo específico de MySQL 8 antes de cambiar nada. No hay prueba manual de interfaz nueva por este ajuste de verificación; se conservan pendientes las del dueño.
+
+## Anexo C2.2 — Resultado (2026-10-20)
+
+**Autor: Codex ejecutor; revisa Codex arquitecto en otra conversación. Estado: entregada, pendiente de revisión.** Ajuste exclusivamente de pruebas para H-C2-3; el ejecutor no cierra el hallazgo ni aprueba CI. Se conservan «CI de C2/C2.1 — Revisión», ambos fallos 39448209773/39448209782 de 8ee3936 y todos los anexos/revisiones anteriores. C3 no iniciada.
+
+**Causa y contrato:** la aserción anterior comparaba también el orden de inserción de claves del array PHP inicial frente al mapa recuperado de la columna JSON. El diff de MySQL 8 ya observado en CI cambia afectadas/id_veterinario de posición; esos logs son evidencia del arquitecto, no una ejecución MySQL propia nueva. B1/B1.1 exige el mismo resultado funcional y RE-4.11.4 conserva atomicidad/marcas; ninguno exige el orden de miembros del objeto. Los tipos y el orden de sus listas sí siguen siendo parte de la comprobación.
+
+**Cambios:**
+
+- Nuevo trait de soporte exclusivo de pruebas `ComparaRespuestaIdempotente`: normaliza recursivamente solo el orden de claves de los mapas y termina con assertSame. No usa igualdad débil, no convierte escalares ni reinterpreta strings JSON. Conserva las posiciones de listas y de las franjas; mantiene la categoría lista/mapa antes de ordenar claves, evitando confundirlas tras la normalización. La normalización opera en copias locales de la aserción y no modifica respuestas ni datos persistidos.
+- `AgendaC2MysqlTest`: usa el comparador en los dos replay equivalentes, guardar horario vet y retirar cierre. El método completo de carreras y sus auxiliares se compararon literalmente con HEAD: permanecen idénticos, incluidos los cinco casos/ambos órdenes, observación de espera y aserciones finales. Rollback, auditoría, conteos de operación/cierre y baja lógica conservan las aserciones anteriores.
+- Revisión adicional de equivalentes en `CoordinacionHorariosTest`: comparación del replay de aprobación, replay de guardado vet y mapa del resultado durable. Los replay que comparan un ID escalar siguen con assertSame; también permanecen las comparaciones estrictas de snapshots, franjas vigentes, estado previo/posterior y rollback, que no son equivalencias entre mapas de respuesta JSON.
+- Nueva `ComparaRespuestaIdempotenteTest`: un caso positivo verifica claves reordenadas del resultado decodificado, mapas anidados dentro de listas y respuesta de retirada. assertNotSame comprueba que esa muestra fallaría con la estrategia anterior. Once casos negativos esperan que la aserción falle: valor distinto, entero/cadena, entero/decimal, booleano/entero, null/clave ausente, clave adicional o distinta, lista reordenada, franjas reordenadas, tipo anidado distinto y mapa numérico frente a lista. Por tanto, ni igualdad débil ni ordenación de listas producirían verde.
+
+**Verificación propia sobre la fuente final:**
+
+| Ejecución | Resultado real |
+|---|---|
+| Regresiones del comparador | 12 pruebas / 25 aserciones, salida 0 (00:00.835). |
+| CoordinacionHorariosTest, SQLite | 13 pruebas / 111 aserciones, salida 0 (00:00.389); conserva auditoría durable, rollback e idempotencia. |
+| AgendaC2MysqlTest, MariaDB 10.4.32 | 2 pruebas / 153 aserciones, cero omitidas, salida 0 (00:35.893). Ambos replay y las diez carreras pasan. |
+| PHP completo sin host | 905 pruebas / 7491 aserciones, 58 omitidas de motor, salida 0 (01:34.952). Incluye las nuevas regresiones y las anteriores de SQLite. |
+| Sintaxis y alcance | Cuatro PHP de pruebas válidos; git diff --check sin incidencias. Aplicación, esquema, persistencia, interfaz, Modelos y workflow idénticos a HEAD. |
+
+Motor identificado mediante SELECT VERSION(): 10.4.32-MariaDB, no MySQL 8. Regresión de motor exclusivamente en zooki_test_base_v2, con host 127.0.0.1, puerto 3306, usuario/clave de pruebas explícitos y TRUSTED_PROXIES=127.0.0.2. El proceso sin host también fija la base de pruebas y los proxies, y omite esas 58 pruebas como corresponde. No se ejecutaron suites simultáneas que reconstruyan la misma base, ni se leyó/escribió .env, consultó la base manual, cambió servicios o envió correo real.
+
+Comandos principales ejecutados con ese entorno explícito:
+
+```powershell
+php vendor/phpunit/phpunit/phpunit tests/Unit/ComparaRespuestaIdempotenteTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/CoordinacionHorariosTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaC2MysqlTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit --colors=never --cache-directory "$env:TEMP\zooki-c22-cache-sin-host"
+php -l tests/Support/ComparaRespuestaIdempotente.php
+php -l tests/Unit/ComparaRespuestaIdempotenteTest.php
+php -l tests/Integration/CoordinacionHorariosTest.php
+php -l tests/Integration/AgendaC2MysqlTest.php
+git diff --check
+```
+
+**Conservación y pendientes:** Modelos §16 cotejado con B1/B1.1: respuesta reconstruida tras commit, acceso revalidado, operación/auditoría atómicas y reintento sin repetir cambios conservados; no cambia el flujo ni sus diagramas y no se atribuye un nuevo renderizado. Workflow idéntico a HEAD: tres clases MySQL secuenciales, base explícita y mismos controles de instalación/migrador/semilla/volumen vacío. No se repitieron BaseV2MysqlTest/AgendaB2MysqlTest con motor ni JS, al no tocar esos contratos o frontend; sus pasadas CI 45/624 y 11/113 y la evidencia JS anterior permanecen atribuidas al historial, no a ejecuciones nuevas de C2.2.
+
+No se observó una diferencia real de contenido/tipos en las verificaciones propias. MySQL 8 no se ejecutó localmente; la corrección requiere revisión independiente y confirmación de CI nuevo después del commit/push del usuario, incluidos ambos replay y volumen vacío antes omitido. No se reintenta CI remoto desde ejecución. No hay interfaz nueva que probar: todas las comprobaciones manuales anteriores sin resultado explícito siguen pendientes. Sin cambios funcionales, esquema/migraciones, formato persistido, versión o exportaciones; no aprobar H-C2-3 ni empezar C3 desde esta entrega.
+
+### C2.2 — Revisión (2026-10-20)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: aprobada en código de pruebas; H-C2-3 corregido, confirmación CI MySQL 8 pendiente.** No se aprueba todavía el cierre CI de C2 ni se inicia C3. Se conservan íntegros el diagnóstico y ambos CI fallidos de 8ee3936. El revisor solo actualiza documentación; no implementa la corrección.
+
+**Inspección:** trait exclusivo de soporte de pruebas transforma copias de arrays y conserva la clasificación lista/mapa anterior a ordenar claves, escalares sin conversión y posiciones de listas. La comparación final sigue siendo assertSame. Aplicado a los dos replay del método de motor (horario y retirada de cierre) y tres mapas equivalentes SQLite. Permanecen las comparaciones estrictas de IDs, snapshots, estado anterior, rollback y conteos. La regresión positiva usa JSON con claves reordenadas, incluidos mapas anidados dentro de listas y retirada de cierre; once casos negativos comprueban valores/tipos/claves ausentes o adicionales, listas/franjas reordenadas y mapa numérico frente a lista. La estrategia anterior falla sobre el positivo y los negativos impiden obtener verde con igualdad débil u ordenación de listas.
+
+**Verificación propia del revisor:** comparador aislado 12 pruebas / 25 aserciones, salida 0 (00:00.027). PHP completo sin host 905 pruebas / 7491 aserciones / 58 omitidas de motor, salida 0 (00:38.904). Regresión afectada AgendaC2MysqlTest contra MariaDB 10.4.32: 2 pruebas / 153 aserciones / cero omitidas, salida 0 (00:28.050), ambos replay y diez carreras. No se presenta como suite completa de motor ni como MySQL 8. Las pasadas previas BaseV2MysqlTest/AgendaB2MysqlTest de CI y JS mantienen fecha/atribución; no se repiten por este cambio limitado a comparaciones de pruebas sin frontend o aplicación afectados. La confirmación final del caso que falló requiere el CI nuevo MySQL 8.
+
+Comparación propia con HEAD: únicos archivos versionados cambiados son dos clases de pruebas y plan/estado; dos archivos nuevos son trait y su regresión. Aplicación, esquema, formato persistido, Modelos y workflow intactos. Desde esperarArchivo hasta el final de AgendaC2MysqlTest, arnés y carreras son literalmente idénticos a HEAD: conserva cinco casos, dos órdenes, metadata, barreras y aserciones finales. Cuatro PHP válidos y git diff --check salida 0; avisos de conversión LF/CRLF no cambian el contenido lógico. Modelos §16 cotejado: no cambia flujo, permisos, commit/respuesta, reintentos o auditoría; no requiere ni se atribuye otro renderizado. No se alteran versión o exportaciones.
+
+Pruebas por turnos y exclusivamente zooki_test_base_v2 para motor, variables explícitas y TRUSTED_PROXIES=127.0.0.2. No se lee/escribe .env, consulta la base manual, cambia servicios, envía SMTP real o recorre pantallas. No se usa la pasada MariaDB como sustituto de MySQL 8 ni se reintenta CI remoto desde el arquitecto.
+
+**Siguiente:** usuario guarda los seis archivos de C2.2 y su revisión, hace push y se comprueba CI completo nuevo: build-and-test, las tres clases MySQL 8, ambos replay y paso de volumen vacío antes omitido. Solo tras ese CI se prepara C3. No hay prueba manual nueva por un cambio de verificación sin interfaz; siguen pendientes las cinco comprobaciones C2/C2.1 y las anteriores sin confirmación explícita. Sin decisiones funcionales nuevas ni despliegue.
+
+### Publicación de C2.2 — Revisión (2026-10-20)
+
+**Comprobó Codex arquitecto:** tras el mensaje del usuario sobre posible CI aprobado, HEAD local y rama remota consultada por API siguen en 8ee3936066cab30f37ef0bb663b8f07763b5fdcd. Los seis archivos C2.2 están pendientes de commit local. GitHub conserva como últimas ejecuciones las dos fallidas de ese SHA; no hay ejecución nueva de C2.2 que verificar aún. Se vuelven a entregar comandos al usuario para guardar/subir la corrección aprobada; no se ejecuta escritura Git ni se inicia C3. La ausencia de correo no se registra como evidencia CI.
