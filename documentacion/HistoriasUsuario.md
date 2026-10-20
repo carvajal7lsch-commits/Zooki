@@ -1160,9 +1160,10 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 **Criterios de aceptación:**
 
-- La disponibilidad usa una sola lógica basada en horarios_clinica.
-- Valida horario + duración en el backend.
-- Usa transacción o restricción única para evitar dobles reservas.
+- Sugerir, reservar y reprogramar usan una sola lógica del servidor: apertura ∩ jornada del veterinario, menos cierres activos, ausencias aprobadas y ocupación incompatible global del veterinario y la mascota, sin revelar datos ajenos.
+- Valida duración más margen completos en una franja restante, con fechas America/Bogota, segundos exactos e intervalos [inicio, fin); sin horario no hay disponibilidad ordinaria. Al reprogramar conserva los snapshots propios, sin reconstruir el pasado desde el tipo actual.
+- Serializa sobre recursos estables con el coordinador común, incluso en un hueco vacío entre clínicas; después de esperar relee los datos y guarda reserva, vínculo, cuota, resultado idempotente y auditoría en una misma unidad. Un fracaso conserva la reserva original.
+- Decisión del usuario (2026-10-20): cuando una cita legada no tenga duración/fin de ocupación demostrables o una pausa no tenga reanudación estimable, no ofrece reservas ordinarias para el veterinario o mascota en la fecha afectada y pide revisión con mensaje genérico, sin inventar ni cambiar datos históricos.
 
 **Reglas de negocio:** RN-401, RN-402 · **Dependencias:** HU-4.1
 

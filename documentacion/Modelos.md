@@ -1270,3 +1270,60 @@ flowchart TD
 Las reservas y reprogramaciones que compiten entran por el mismo coordinador desde su transacción exterior: descartan lecturas previas, revalidan vínculos, apertura, jornada y cierres después de esperar, y guardan operación/auditoría con la cita. Si la reserva se confirma primero, el escritor de configuración descubre y marca esa cita; si cambia primero la configuración, la reserva valida contra el estado nuevo. La proyección global de conflictos recurrentes solo lee día e intervalos; no devuelve clínica, pacientes o contactos ajenos.
 
 C2 entrega estas guardias de escritura y marcas visibles. C3 completa las sugerencias/disponibilidad y RE-4.11.3/RE-4.8.3; C5 procesa las marcas. No se mueve ninguna cita ni se reinicia el bloque o su tope al editar/restaurar. Los comandos de C2 no entran en numeración HC ni abren una transacción exterior que luego adquiera GET_LOCK; la integración clínica/numeración permanece uniforme en su etapa C7a según B1.
+
+
+## 17. Disponibilidad única y reserva segura — M4 C3
+
+HU-4.9; RE-4.9.1–3, RE-4.1.2/3, RE-4.6.2, RE-7.4.3, RE-4.8.3 y RE-4.11.3, con los componentes de RE-4.2.4/RE-5.3.3.
+Conserva acceso de §9, flujo de destino de §4, fronteras de grafos de §2 y orden común de §16/B1.
+La retirada de creación al administrador continúa en C4a; C3 no amplía sus permisos actuales.
+
+```mermaid
+flowchart TD
+  A["Horas o sugerencias internas/portal; reservar o reprogramar"] --> V{"Contexto vigente, mascota propia/vinculada, vet miembro y parámetros válidos?"}
+  V -- No --> DEN["Denegación genérica auditada; sin proyección global"]
+  V -- Sí --> Q{"Consulta o escritura?"}
+  Q -- Consulta --> DAT["Tipo activo del servidor; reprogramar usa snapshot y exclusión legítima"]
+  Q -- Escritura --> TX["Coordinador común: clínica; usuarios y mascotas globales ordenados; vínculos"]
+  TX --> ACT["Lecturas actuales tras esperar; revalidar acceso y recursos"]
+  ACT --> OP{"Clave del mismo actor, clínica y acción?"}
+  OP -- "Misma huella" --> REP["Devolver referencia guardada sin repetir negocio ni auditoría"]
+  OP -- "Otra huella" --> RB["Rollback completo; conflicto"]
+  OP -- Nueva --> NUE{"Estado y tiempo válidos para un comando nuevo?"}
+  NUE -- No --> RB
+  NUE -- Sí --> DAT
+  DAT --> CAL["Un corte del reloj inyectable America/Bogota; apertura intersectada con jornada vet"]
+  CAL --> MEN["Restar cierres activos y ausencias aprobadas; proyectar ocupación global mínima vet/mascota"]
+  MEN --> INC{"Duración/fin demostrables y pausa sin incertidumbre?"}
+  INC -- No --> REV["Fecha afectada sin reservas ordinarias; revisión genérica, sin modificar legado"]
+  INC -- Sí --> LIB["Intervalos restantes semiabiertos con segundos; sin horarios no hay capacidad"]
+  LIB --> MOD{"Consulta?"}
+  MOD -- Sí --> HOR["Horas exactas HH:mm o HH:mm:ss; mismo paso, selección y envío sin truncar; no apartan capacidad"]
+  MOD -- No --> CAB{"Duración más margen completos en una franja y sin cruzar medianoche?"}
+  CAB -- No --> RB
+  CAB -- Sí --> CUO["Cuota del mes destino; reprogramar excluye solo su propia cita legítima"]
+  CUO --> GUAR["Guardar cita y vínculo si corresponde; hora_fin solo clínica; conservar snapshots y sellos"]
+  GUAR --> AUD["Resultado idempotente y auditoría en la misma transacción"]
+  AUD --> OK{"Unidad íntegra?"}
+  OK -- No --> RB
+  OK -- Sí --> COM["Commit antes de avisos existentes; respuesta canónica"]
+  REV --> MOD2{"Había transacción?"}
+  MOD2 -- Sí --> RB
+  MOD2 -- No --> ERR["Mostrar error genérico de revisión; no confundir con una consulta válida sin huecos"]
+  REP --> COM
+```
+
+Las sugerencias y las rutas de horas reciben mascota/tipo/veterinario/fecha, nunca tiempos o prioridad impuestos por JS.
+Se conserva el paso de presentación por duración del tipo, anclado en la franja original, sin crear horizontes, límites o incrementos nuevos.
+Las horas con segundos no nulos viajan y se muestran como HH:mm:ss; HH:mm abrevia únicamente segundos cero y conserva el mismo instante.
+Los clientes internos, del portal y de reprogramación seleccionan y envían literalmente la sugerencia, sin redondear.
+Una consulta válida sin huecos muestra su estado vacío; un error muestra el mensaje genérico escapado, descarta respuestas obsoletas y no habilita guardar sin selección.
+El replay HTTP de reprogramación valida sintaxis y acceso vigente antes de recuperar la operación del mismo actor/clínica/acción/huella bajo el coordinador.
+Solo un comando nuevo vuelve a validar estado, tiempo y disponibilidad; el replay confirmado no retrocede estados posteriores ni repite escritura, auditoría o notificaciones internas.
+El servidor vuelve a calcular al guardar; un resultado de consulta no equivale a una reserva.
+Una cita cancelada/no_asistio libera ocupación; un sobrecupo no se omite como si fuera un hueco libre.
+Para una atención con evidencia suficiente se reconstruye la cota de A.3 sin escribir cascada; una cota agotada o una pausa sin reanudación no acredita liberación real.
+La decisión del dueño de 2026-10-20 mantiene la fecha afectada para revisión cuando la ocupación no pueda demostrarse, sin rellenar snapshots con el tipo actual.
+Una completada con evidencia conserva N y usa máximo(N+m, fin real), sin desplazar el margen con el reloj posterior.
+Las marcas de C2 siguen pendientes de C5; no se mueven citas, reinician bloques/topes ni entregan triage, nuevos avisos, gestión de ausencias o continuidad clínica.
+Los conteos de requisitos e historias no cambian por precisar estos criterios existentes.

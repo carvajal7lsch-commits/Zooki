@@ -1669,56 +1669,6 @@ async function loadVets() {
     }
 }
 
-async function loadVetsForAppointment() {
-    const select = document.getElementById('cita_veterinario');
-    if (!select) return;
-
-    try {
-        const res = await (await fetch('index.php?action=listar_veterinarios_ajax')).json();
-        if (res && res.length > 0) {
-            select.innerHTML = res.map(v => `<option value="${escaparTexto(v.id_usuario)}">${escaparTexto(v.nombre_completo)}</option>`).join('');
-        } else {
-            select.innerHTML = '<option value="">No hay veterinarios disponibles</option>';
-        }
-    } catch(e) { 
-        console.error('Error loading vets', e); 
-        select.innerHTML = '<option value="">Error al cargar veterinarios</option>';
-    }
-}
-
-function openAppointmentModal(id, nombre) {
-    document.getElementById('cita_id_mascota').value = id;
-    document.getElementById('citaPetName').innerText = nombre;
-    document.getElementById('formCita').reset();
-    document.getElementById('cita_fecha').value = new Date().toISOString().split('T')[0];
-    loadVetsForAppointment();
-    openModal('modalCita');
-}
-
-async function saveAppointment(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agendando...';
-
-    const fd = new FormData(e.target);
-    try {
-        const res = await (await fetch('index.php?action=registrar_cita_ajax', { method: 'POST', body: fd })).json();
-        if (res.success) { 
-            closeModal('modalCita');
-            zookiRecargarConAviso(res.message);
-        } else {
-            zookiAviso(res.message);
-        }
-    } catch (e) { 
-        console.error(e); 
-        zookiAviso('No se pudo confirmar el agendado. Es posible que la cita se haya guardado pero fallara el correo: revisa la agenda antes de reintentar.');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Confirmar Cita';
-    }
-}
-
 // --- INTERACTIVE PET DASHBOARD (ESTILO OKVET) ---
 // Abre la ficha de una mascota del expediente que ya está en pantalla.
 async function loadPetDashboard(id) {
@@ -2343,8 +2293,6 @@ const eventosPacientes = {
     evento54: (event, element) => { closeDrawer('drawerDesparasitacion'); },
     evento55: (event, element) => { saveDeworming(event); },
     evento56: (event, element) => { toggleNuevoProducto(element); },
-    evento57: (event, element) => { closeModal('modalCita'); },
-    evento58: (event, element) => { saveAppointment(event); },
     evento59: (event, element) => { closeLightbox(); },
 };
 /**

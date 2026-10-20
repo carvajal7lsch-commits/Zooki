@@ -814,9 +814,9 @@ switch ($action) {
         break;
 
     case "get_horas_disponibles_ajax":
-        require_once "../controllers/HorarioClinicaController.php";
-        $controller = new HorarioClinicaController();
-        $controller->obtenerHorasDisponiblesAjax();
+        require_once "../controllers/CitaController.php";
+        $controller = new CitaController();
+        $controller->getSugerenciasHorarioAjax();
         break;
 
     // RUTAS SPRINT 6: NOTIFICACIONES INTERNAS

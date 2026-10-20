@@ -129,6 +129,7 @@ $iniciales = $iniciales ?: 'U';
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
 <script src="js/telefono-internacional.js?v=<?= $v ?>"></script>
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
+<script src="js/comando-agenda.js?v=<?= $v ?>"></script>
 <script src="js/validacion-mascota.js?v=<?= $v ?>"></script>
 <script src="js/portal.js?v=<?= $v ?>"></script>
 <?php // M2 C1: alergias y alertas de la mascota, de solo lectura; portal.js la usa al abrir la ficha. ?>

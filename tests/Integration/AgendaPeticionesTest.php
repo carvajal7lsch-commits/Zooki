@@ -4,6 +4,7 @@ use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../Support/DosClinicas.php';
 require_once __DIR__ . '/../../controllers/CitaController.php';
+require_once __DIR__ . '/../Support/ComparaRespuestaIdempotente.php';
 
 /**
  * Módulo 4 — Peticiones de la agenda (C5), por el controlador.
@@ -16,6 +17,8 @@ require_once __DIR__ . '/../../controllers/CitaController.php';
  */
 final class AgendaPeticionesTest extends TestCase
 {
+    use ComparaRespuestaIdempotente;
+
     private const FECHA = '2030-01-07';
     private const AHORA = '2030-01-07 08:00:00';
 
@@ -44,6 +47,119 @@ final class AgendaPeticionesTest extends TestCase
 
     // ── HU-4.1 ──────────────────────────────────────────────────────────
 
+    private function prepararReplayC31(): array
+    {
+        $this->ahora = '2030-01-07 07:00:00';
+        $reserva = $this->agendar();
+        $_POST = ['id_cita' => (string) $reserva['id_cita'], 'fecha' => self::FECHA,
+            'hora' => '10:00', 'clave_operacion' => str_repeat('f', 64)];
+        $respuesta = $this->ejecutar(fn ($c) => $c->reprogramarCitaAjax());
+        $this->assertTrue($respuesta['success'], $respuesta['message'] ?? '');
+        return $respuesta;
+    }
+
+    private function estadoReplayC31(): array
+    {
+        $resultado = [];
+        foreach (['citas', 'operaciones_agenda', 'notificaciones_internas', 'auditoria_sistema'] as $tabla) {
+            $resultado[$tabla] = $this->db->query('SELECT * FROM ' . $tabla)->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return $resultado;
+    }
+
+    public function testC31RespuestaPerdidaSeRecuperaTrasHoraDiaYEstadoPosteriorSinMutacion(): void
+    {
+        $primera = $this->prepararReplayC31();
+        foreach (['2030-01-07 10:00:01', '2030-01-08 07:00:00'] as $ahora) {
+            $this->ahora = $ahora;
+            $antes = $this->estadoReplayC31();
+            $repetida = $this->ejecutar(fn ($c) => $c->reprogramarCitaAjax());
+            $this->assertSame(200, http_response_code());
+            $this->assertRespuestaIdempotenteIgual($primera, $repetida);
+            $this->assertSame($antes, $this->estadoReplayC31());
+        }
+        foreach (['en_curso', 'pausada', 'completada', 'cancelada', 'no_asistio'] as $estado) {
+            $this->db->prepare('UPDATE citas SET estado=?')->execute([$estado]);
+            $antes = $this->estadoReplayC31();
+            $this->assertRespuestaIdempotenteIgual($primera, $this->ejecutar(fn ($c) => $c->reprogramarCitaAjax()));
+            $this->assertSame($antes, $this->estadoReplayC31());
+        }
+    }
+
+    public static function revocacionesReplayC31(): array
+    {
+        return [
+            'usuario' => ['UPDATE usuarios SET estado=0 WHERE id_usuario=2'],
+            'membresía' => ["UPDATE usuario_clinica SET estado='inactivo' WHERE id_clinica=1 AND id_usuario=2"],
+            'vínculo mascota' => ["UPDATE mascota_clinica SET estado='inactivo' WHERE id_clinica=1 AND id_mascota=1"],
+            'clínica' => ["UPDATE clinicas SET estado='suspendida' WHERE id_clinica=1"],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('revocacionesReplayC31')]
+    public function testC31ReplayExigeAccesoVigenteYAuditaDenegacionTrasRollback(string $revocar): void
+    {
+        $this->prepararReplayC31();
+        $this->ahora = '2030-01-08 07:00:00';
+        $this->db->exec($revocar);
+        $antes = $this->estadoReplayC31();
+        $this->assertAccesoDenegado(fn () => $this->ejecutar(fn ($c) => $c->reprogramarCitaAjax()));
+        $despues = $this->estadoReplayC31();
+        $this->assertCount(count($antes['auditoria_sistema']) + 1, $despues['auditoria_sistema']);
+        unset($antes['auditoria_sistema'], $despues['auditoria_sistema']);
+        $this->assertSame($antes, $despues);
+    }
+
+    public function testC31ClaveConOtraCargaSeRechazaAntesDeValidarEstadoOTiempoNuevos(): void
+    {
+        $this->prepararReplayC31();
+        $this->db->exec("UPDATE citas SET estado='completada'");
+        $this->ahora = '2030-01-08 07:00:00';
+        $_POST['hora'] = '11:00';
+        $antes = $this->estadoReplayC31();
+        $respuesta = $this->ejecutar(fn ($c) => $c->reprogramarCitaAjax());
+        $this->assertSame(422, http_response_code());
+        $this->assertFalse($respuesta['success']);
+        $this->assertStringContainsString('otro comando', $respuesta['message']);
+        $this->assertSame($antes, $this->estadoReplayC31());
+    }
+
+    public function testC31ReplayNoCruzaClinicaAunqueConserveClaveYCarga(): void
+    {
+        $this->prepararReplayC31();
+        $this->como(DosClinicas::SUR, DosClinicas::VET_SUR, Roles::VETERINARIO);
+        $antes = $this->estadoReplayC31();
+        $this->assertAccesoDenegado(fn () => $this->ejecutar(fn ($c) => $c->reprogramarCitaAjax()));
+        $despues = $this->estadoReplayC31();
+        $this->assertCount(count($antes['auditoria_sistema']) + 1, $despues['auditoria_sistema']);
+        unset($antes['auditoria_sistema'], $despues['auditoria_sistema']);
+        $this->assertSame($antes, $despues);
+    }
+
+    public function testC31ComandoNuevoSigueValidandoTiempoEstadoActorYAccion(): void
+    {
+        $this->prepararReplayC31();
+        $this->ahora = '2030-01-08 07:00:00';
+        $_POST['clave_operacion'] = str_repeat('e', 64);
+        $antes = $this->estadoReplayC31();
+        $this->assertFalse($this->ejecutar(fn ($c) => $c->reprogramarCitaAjax())['success']);
+        $this->assertSame($antes, $this->estadoReplayC31());
+        $_POST['clave_operacion'] = str_repeat('f', 64);
+        $this->como(1, 1, Roles::ADMIN);
+        $this->assertFalse($this->ejecutar(fn ($c) => $c->reprogramarCitaAjax())['success']);
+        $this->assertSame($antes, $this->estadoReplayC31());
+        $this->como(1, 2, Roles::VETERINARIO);
+        $this->db->exec("UPDATE operaciones_agenda SET accion='otra_accion' WHERE accion='reprogramar_cita'");
+        $antes = $this->estadoReplayC31();
+        $this->assertFalse($this->ejecutar(fn ($c) => $c->reprogramarCitaAjax())['success']);
+        $this->assertSame($antes, $this->estadoReplayC31());
+        $_POST['fecha'] = '2030-01-14';
+        $this->db->exec("UPDATE citas SET estado='completada'");
+        $antes = $this->estadoReplayC31();
+        $this->assertFalse($this->ejecutar(fn ($c) => $c->reprogramarCitaAjax())['success']);
+        $this->assertSame($antes, $this->estadoReplayC31());
+    }
+
     public function testElVeterinarioAgendaParaSiMismoYNoParaOtro(): void
     {
         $otro = $this->agendar(['id_veterinario' => (string) DosClinicas::DOBLE]);
@@ -67,13 +183,13 @@ final class AgendaPeticionesTest extends TestCase
 
         $this->assertFalse($respuesta['success']);
         $this->assertSame(422, http_response_code());
-        $this->assertStringContainsString('no está disponible', $respuesta['message']);
+        $this->assertStringContainsString('No hay disponibilidad', $respuesta['message']);
     }
 
     /** RN-402 / RE-4.1.3 y fechas pasadas: se validan en el servidor. */
     public function testFueraDelHorarioOEnElPasadoSeRechaza(): void
     {
-        $this->assertStringContainsString('fuera del horario', $this->agendar(['hora' => '12:30'])['message']);
+        $this->assertStringContainsString('No hay disponibilidad', $this->agendar(['hora' => '12:30'])['message']);
         $this->assertStringContainsString('ya pasaron', $this->agendar(['fecha' => '2030-01-06'])['message']);
         $this->assertStringContainsString('ya pasaron', $this->agendar(['hora' => '07:30'])['message']);
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM citas')->fetchColumn());
@@ -174,7 +290,7 @@ final class AgendaPeticionesTest extends TestCase
 
         $_POST = ['id_cita' => (string) $id, 'fecha' => '2030-01-08', 'hora' => '12:30'];
         $fueraDeHorario = $this->ejecutar(fn (CitaController $c) => $c->reprogramarCitaAjax());
-        $this->assertStringContainsString('fuera del horario', $fueraDeHorario['message']);
+        $this->assertStringContainsString('No hay disponibilidad', $fueraDeHorario['message']);
 
         $_POST = ['id_cita' => (string) $id, 'fecha' => '2030-01-08', 'hora' => '10:00'];
         $this->assertTrue($this->ejecutar(fn (CitaController $c) => $c->reprogramarCitaAjax())['success']);

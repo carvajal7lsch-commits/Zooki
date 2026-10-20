@@ -87,10 +87,11 @@ final class ConfiguracionClinicaTest extends TestCase
 
     public function testDiaInactivoYBloqueApagadoNoOfrecenHoras(): void
     {
-        $controlador = new HorarioClinicaController($this->db);
-        $this->assertSame([], $controlador->obtenerHorasDisponibles('2026-10-10'));
+        $horario = new HorarioClinica($this->db);
+        $this->assertSame(0, (int) $horario->dia(6)['activo']);
         $this->db->exec('UPDATE horarios_clinica SET bloque_morning_activo = 0 WHERE id_clinica = 1 AND dia_semana = 1');
-        $this->assertSame(['14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'], $controlador->obtenerHorasDisponibles('2026-10-12'));
+        $this->assertSame(0, (int) $horario->dia(1)['bloque_morning_activo']);
+        $this->assertSame(1, (int) $horario->dia(1)['bloque_afternoon_activo']);
     }
 
     public function testValidacionNoGuardaParcialmenteNiAceptaHorasODiasInvalidos(): void

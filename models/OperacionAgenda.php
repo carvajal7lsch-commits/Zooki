@@ -4,6 +4,17 @@ require_once __DIR__ . '/ModeloClinica.php';
 /** B1: resultado durable en el mismo commit; revalidar acceso antes de consultar. */
 final class OperacionAgenda extends ModeloClinica
 {
+    /** Solo orienta la advertencia visual; ejecutar vuelve a validar huella y acceso en la unidad. */
+    public function tieneResultado(string $accion, mixed $clave): bool
+    {
+        if (!is_string($clave) || !preg_match('/^[a-f0-9]{64}$/D', $clave)) {
+            return false;
+        }
+        $q = $this->conn->prepare('SELECT 1 FROM operaciones_agenda WHERE id_clinica=? AND actor_clave=? AND accion=? AND clave_operacion=?');
+        $q->execute([$this->clinica(), 'usuario:' . Contexto::idUsuario(), $accion, $clave]);
+        return $q->fetchColumn() !== false;
+    }
+
     private static function canonica(array $entrada): array
     {
         foreach ($entrada as &$valor) {

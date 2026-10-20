@@ -661,7 +661,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-4.9.1 | Sugerir, reservar y cambiar cita deben usar una lógica única de disponibilidad en servidor. | Confiabilidad | Mismos clínica, mascota, tipo, vet y corte producen los mismos intervalos; el cliente no impone duración, margen ni prioridad. | Alta |
-| RE-4.9.2 | El backend debe validar el intervalo completo de duración más margen contra horario, cierres, ausencias efectivas y ocupación. | Validación | Una ausencia parcial no permite reservar cruzándola; a su fin exacto vuelve a permitirlo si el resto de la franja cabe. | Alta |
+| RE-4.9.2 | El backend debe validar el intervalo completo de duración más margen contra horario, cierres, ausencias efectivas y ocupación. | Validación | Una ausencia parcial no permite reservar cruzándola; a su fin exacto vuelve a permitirlo si el resto de la franja cabe. Si una ocupación legada no tiene duración/fin demostrables o una pausa no tiene reanudación estimable, la fecha afectada del vet/mascota requiere revisión y no ofrece reservas ordinarias, sin inventar datos (decisión del usuario, 2026-10-20). | Alta |
 | RE-4.9.3 | Toda escritura de agenda debe serializar validación y cambio sobre recursos estables con transacción, lecturas vigentes e idempotencia. | Confiabilidad | Dos conexiones sobre hueco vacío del mismo vet o mascota global, aun en clínicas distintas, no confirman intervalos incompatibles; error o fallo de auditoría deshace cita, vínculo, marcas y evento. Repetir la clave con otra carga se rechaza. | Alta |
 
 **Reglas de negocio:** RN-401, RN-402

@@ -249,7 +249,7 @@ final class CoordinacionHorariosTest extends TestCase
         $this->assertGreaterThan(0,$this->cita('2030-01-07','08:20'));
         $this->assertGreaterThan(0,$this->cita('2030-01-07','10:00'));
         $error = $this->rechaza(fn () => $this->cita('2030-01-07','08:21'));
-        $this->assertStringContainsString('cierre',$error->getMessage());
+        $this->assertStringContainsString('No hay disponibilidad',$error->getMessage());
         $this->assertSame(0,(int)$this->db->query("SELECT COUNT(*) FROM citas WHERE estado_reajuste<>'ninguno'")->fetchColumn());
     }
 

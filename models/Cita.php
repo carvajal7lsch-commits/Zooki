@@ -2,13 +2,14 @@
 require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/CatalogoClinica.php';
 require_once __DIR__ . '/CoordinacionHorarios.php';
+require_once __DIR__ . '/DisponibilidadAgenda.php';
 require_once __DIR__ . '/../helpers/CoordinadorAgenda.php';
 require_once __DIR__ . '/../helpers/HorarioOcupado.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
 require_once __DIR__ . '/../helpers/ContactoPropietario.php';
 
 /**
- * C5: agenda v1 sobre el modelo v2. Cada cita es de la clínica activa y de un
+ * C3: disponibilidad única y escritura coordinada sobre el modelo v2. Cada cita es de un
  * veterinario por id_usuario (RN-G13); una cita de otra clínica da 403
  * auditado. El triage, los sobrecupos y el resto del Grafo II son del
  * módulo 4 de la v2: aquí toda cita es verde y no es sobrecupo.
@@ -24,11 +25,20 @@ class Cita extends ModeloClinica
     /** RN-409: atenciones iniciadas que se retoman hasta registrar su consulta. */
     public const ESTADOS_EN_ATENCION = ['en_curso', 'sin_cerrar'];
 
-    /** Estados que liberan el horario (ocupa_horario NULL en la base, D-2). */
     private const ESTADOS_LIBRES = ['cancelada', 'no_asistio'];
 
-    /** Duración que se asume si la cita no tiene tipo (como en la v1). */
-    private const DURACION_POR_DEFECTO = 30;
+    private ?Closure $reloj;
+
+    public function __construct(PDO $conn, ?callable $reloj = null)
+    {
+        parent::__construct($conn);
+        $this->reloj = $reloj === null ? null : Closure::fromCallable($reloj);
+    }
+
+    private function disponibilidad(): DisponibilidadAgenda
+    {
+        return $this->conMismoAlcance(new DisponibilidadAgenda($this->conn, $this->reloj));
+    }
 
     /**
      * Columnas comunes de una cita con sus nombres para mostrar. RN-115: el
@@ -65,6 +75,16 @@ class Cita extends ModeloClinica
         return $this->registrarEvaluada($datos, 'verde');
     }
 
+    public function reservaRepetida(mixed $clave): bool
+    {
+        return $this->conMismoAlcance(new OperacionAgenda($this->conn))->tieneResultado('reservar_cita', $clave);
+    }
+
+    public function registrarConResultado(array $datos): array
+    {
+        return $this->registrarResultado($datos, 'verde');
+    }
+
     public function coordinarReserva(array $datos, callable $accion): mixed
     {
         try {
@@ -87,6 +107,11 @@ class Cita extends ModeloClinica
     /** RN-420: punto de entrada del futuro triage, con prioridad ya evaluada en servidor. */
     public function registrarEvaluada(array $datos, string $prioridad): int
     {
+        return $this->registrarResultado($datos, $prioridad)['id_cita'];
+    }
+
+    private function registrarResultado(array $datos, string $prioridad): array
+    {
         if (!in_array($prioridad, ['verde', 'amarillo', 'naranja', 'rojo'], true)) {
             throw new InvalidArgumentException('Prioridad clínica no válida.');
         }
@@ -94,12 +119,15 @@ class Cita extends ModeloClinica
         // RN-G13: un id ajeno sigue dando 403, incluso si la clínica ya agotó su plan.
         $this->exigirMascotaActiva((int) $datos['id_mascota']);
         $this->exigirVeterinarioDeLaClinica((int) $datos['id_veterinario']);
-        return $this->coordinarReserva($datos, function () use ($datos, $prioridad, $clinica): int {
+        return $this->coordinarReserva($datos, function () use ($datos, $prioridad, $clinica): array {
             $this->exigirActorVigente((int) $datos['id_mascota']);
+            $this->disponibilidad()->autorizar((int) $datos['id_veterinario'], (int) $datos['id_mascota']);
             $operaciones = $this->conMismoAlcance(new OperacionAgenda($this->conn));
             $entrada = $datos;
             unset($entrada['clave_operacion']);
-            $resultado = $operaciones->ejecutar('reservar_cita', $datos['clave_operacion'] ?? null, [$entrada, $prioridad], function () use ($datos, $prioridad, $clinica) {
+            $nueva = false;
+            $resultado = $operaciones->ejecutar('reservar_cita', $datos['clave_operacion'] ?? null, [$entrada, $prioridad], function () use ($datos, $prioridad, $clinica, &$nueva) {
+                $nueva = true;
                 $idCita = (new LimitePlan($this->conn, $clinica))->consumir('citas', function () use ($datos, $prioridad, $clinica): int {
                     $idMascota = (int) $datos['id_mascota'];
                     $idVeterinario = (int) $datos['id_veterinario'];
@@ -110,14 +138,13 @@ class Cita extends ModeloClinica
                     $this->exigirVeterinarioDeLaClinica($idVeterinario);
                     [$duracion, $margen] = $this->tiemposDelTipo($datos['id_tipo_cita'] ?? null);
 
-                    $configuracion = $this->conMismoAlcance(new CoordinacionHorarios($this->conn));
-                    $configuracion->exigirReserva($idVeterinario, $fecha, $hora, $duracion, $margen);
-                    $this->exigirHorarioLibre($idVeterinario, $idMascota, $fecha, $hora, $duracion, null);
+                    $this->exigirDisponibilidad($idVeterinario, $idMascota, $fecha, $hora, $duracion, $margen, null);
 
                     $sql = "INSERT INTO citas
                         (id_clinica, id_mascota, id_veterinario, id_tipo_cita, fecha, hora, hora_fin, motivo,
-                         duracion_minutos, margen_minutos, prioridad, es_sobrecupo, estado)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)";
+                         duracion_minutos, margen_minutos, prioridad, es_sobrecupo, estado,
+                         origen,duracion_activa_objetivo_segundos,politica_temporal)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'reserva', ?, 'M')";
                     $parametros = [
                         $clinica,
                         $idMascota,
@@ -131,6 +158,7 @@ class Cita extends ModeloClinica
                         $margen,
                         $prioridad,
                         $datos['estado'] ?? 'confirmada',
+                        $duracion * 60,
                     ];
                     $this->ejecutarReserva($sql, $parametros);
                     $id = (int) $this->conn->lastInsertId();
@@ -141,7 +169,7 @@ class Cita extends ModeloClinica
                 }, $datos['fecha'], $prioridad);
                 return ['id_cita' => $idCita];
             });
-            return (int) $resultado['id_cita'];
+            return ['id_cita' => (int) $resultado['id_cita'], 'nueva' => $nueva];
         });
     }
 
@@ -149,30 +177,51 @@ class Cita extends ModeloClinica
      * HU-4.2: cambia fecha, hora y, si se pide, el veterinario. Conserva la
      * duración y el margen que se copiaron al reservar.
      */
-    public function reprogramar(array $cita, int $idVeterinario, string $fecha, string $hora, ?string $clave = null): void
+    public function reprogramar(array $cita, int $idVeterinario, string $fecha, string $hora, ?string $clave = null): bool
+    {
+        try {
+            return $this->reprogramarCoordinada($cita, $idVeterinario, $fecha, $hora, $clave);
+        } catch (AccesoDenegado $error) {
+            if (!$this->conn->inTransaction()) {
+                $this->denegarAcceso('citas', $cita['id_cita'], 'Reprogramación denegada tras rollback (RE-T.15.2)');
+            }
+            throw $error;
+        } catch (LimiteAlcanzado $error) {
+            if (!$this->conn->inTransaction()) {
+                (new LimitePlan($this->conn, $this->clinica()))->registrarRechazo($error);
+            }
+            throw $error;
+        }
+    }
+
+    private function reprogramarCoordinada(array $cita, int $idVeterinario, string $fecha, string $hora, ?string $clave): bool
     {
         $idCita = (int) $cita['id_cita'];
-        (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), function () use ($idCita, $idVeterinario) {
+        return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), function () use ($idCita, $idVeterinario) {
             $actual = $this->getById($idCita);
             return ['usuarios' => [$idVeterinario, (int) $actual['id_veterinario']], 'mascotas' => [(int) $actual['id_mascota']]];
-        }, function () use ($idCita, $idVeterinario, $fecha, $hora, $clave): void {
+        }, function () use ($idCita, $idVeterinario, $fecha, $hora, $clave): bool {
             $cita = $this->getById($idCita);
             $this->exigirActorVigente((int) $cita['id_mascota']);
+            $this->disponibilidad()->autorizar($idVeterinario, (int) $cita['id_mascota']);
             if (Contexto::rolActivo() === Roles::VETERINARIO && (int) $cita['id_veterinario'] !== Contexto::idUsuario()) {
                 throw new AccesoDenegado(403, 'Solo puedes reprogramar tus citas.');
             }
-            $this->conMismoAlcance(new OperacionAgenda($this->conn))->ejecutar('reprogramar_cita', $clave, [$idCita, $idVeterinario, $fecha, $hora], function () use ($cita, $idCita, $idVeterinario, $fecha, $hora) {
+            $nueva = false;
+            $this->conMismoAlcance(new OperacionAgenda($this->conn))->ejecutar('reprogramar_cita', $clave, [$idCita, $idVeterinario, $fecha, $hora], function () use ($cita, $idCita, $idVeterinario, $fecha, $hora, &$nueva) {
+                $nueva = true;
                 $hora = self::normalizarHora($hora);
                 if ($idVeterinario !== (int) $cita['id_veterinario']) {
                     $this->exigirVeterinarioDeLaClinica($idVeterinario);
                 }
-                $duracion = (int) ($cita['duracion_minutos'] ?: self::DURACION_POR_DEFECTO);
-
-                $this->conMismoAlcance(new CoordinacionHorarios($this->conn))->exigirReserva($idVeterinario, $fecha, $hora, $duracion, (int) $cita['margen_minutos']);
-                $this->exigirHorarioLibre($idVeterinario, (int) $cita['id_mascota'], $fecha, $hora, $duracion, (int) $cita['id_cita']);
+                [$duracion, $margen] = $this->snapshotReprogramable($cita);
+                $this->exigirDisponibilidad($idVeterinario, (int) $cita['id_mascota'], $fecha, $hora, $duracion, $margen, $idCita);
+                (new LimitePlan($this->conn, $this->clinica()))->comprobarReprogramacion($idCita, $fecha, $cita['prioridad']);
 
                 $marcas = $this->marcas(self::ESTADOS_ABIERTOS);
-                $sql = "UPDATE citas SET id_veterinario = ?, fecha = ?, hora = ?, hora_fin = ?, version_agenda=version_agenda+1
+                $sql = "UPDATE citas SET id_veterinario = ?, fecha = ?, hora = ?, hora_fin = ?, version_agenda=version_agenda+1,
+                    inicio_estimado=NULL,fin_estimado=NULL,fecha_ultimo_calculo=NULL,
+                    estado_reajuste='pendiente_calculo',motivo_reajuste='Reprogramación pendiente de cálculo'
                     WHERE id_cita = ? AND id_clinica = ? AND estado IN ($marcas)";
                 $parametros = [
                     $idVeterinario,
@@ -192,6 +241,7 @@ class Cita extends ModeloClinica
                 }
                 return ['id_cita' => $idCita];
             });
+            return $nueva;
         });
     }
 
@@ -331,25 +381,39 @@ class Cita extends ModeloClinica
      * v1 (la pantalla los cruza con el horario de la clínica; RE-4.9.1 es del
      * módulo 4). Cuenta sus citas en todas sus clínicas (decisión C5).
      */
-    public function sugerencias(int $idVeterinario, string $fecha, int $duracion, ?int $excluir, DateTimeImmutable $ahora): array
+    public function sugerencias(int $idVeterinario, int $idMascota, int $idTipo, string $fecha, ?int $excluir = null): array
     {
-        if (!$this->esVeterinarioDeLaClinica($idVeterinario)) {
-            return [];
+        $disponibilidad = $this->disponibilidad();
+        $disponibilidad->autorizar($idVeterinario, $idMascota);
+        if ($excluir !== null) {
+            $cita = $this->getById($excluir);
+            if ((int) $cita['id_mascota'] !== $idMascota || (int) $cita['id_tipo_cita'] !== $idTipo) {
+                $this->denegarAcceso('citas', $excluir, 'Exclusión de disponibilidad no legítima (RE-4.9.3)');
+            }
+            [$duracion, $margen] = $this->snapshotReprogramable($cita);
+        } else {
+            [$duracion, $margen] = $this->tiemposDelTipo($idTipo);
         }
-        $duracion = max($duracion, 1);
-        $ocupadas = $this->intervalos($this->ocupadasDelVeterinario($idVeterinario, $fecha, $excluir));
-        $minutoActual = $fecha === $ahora->format('Y-m-d') ? self::minutos($ahora->format('H:i:s')) : null;
+        return $disponibilidad->sugerir($idVeterinario, $idMascota, $fecha, $duracion, $margen, $excluir);
+    }
 
-        $sugerencias = [];
-        for ($inicio = 8 * 60; $inicio + $duracion <= 18 * 60; $inicio += $duracion) {
-            if ($minutoActual !== null && $inicio < $minutoActual) {
-                continue;
-            }
-            if (!self::seSolapa($ocupadas, $inicio, $inicio + $duracion)) {
-                $sugerencias[] = sprintf('%02d:%02d', intdiv($inicio, 60), $inicio % 60);
-            }
+    private function snapshotReprogramable(array $cita): array
+    {
+        if (!in_array($cita['estado'], self::ESTADOS_ABIERTOS, true)) {
+            throw new InvalidArgumentException('Solo se reprograman citas pendientes o confirmadas.');
         }
-        return $sugerencias;
+        if (Contexto::rolActivo() === Roles::VETERINARIO && (int) $cita['id_veterinario'] !== Contexto::idUsuario()) {
+            $this->denegarAcceso('citas', $cita['id_cita'], 'Reprogramación de otro veterinario (RN-G13)');
+        }
+        if ((int) $cita['duracion_minutos'] <= 0 || $cita['margen_minutos'] === null || (int) $cita['margen_minutos'] < 0) {
+            throw new InvalidArgumentException('La duración histórica requiere revisión antes de reprogramar.');
+        }
+        return [(int) $cita['duracion_minutos'], (int) $cita['margen_minutos']];
+    }
+
+    protected function exigirDisponibilidad(int $vet, int $mascota, string $fecha, string $hora, int $duracion, int $margen, ?int $excluir): void
+    {
+        $this->disponibilidad()->exigir($vet, $mascota, $fecha, $hora, $duracion, $margen, $excluir);
     }
 
     /** RN-407: inicia la atención y sella la hora real de inicio (RE-4.5.1). */
@@ -400,76 +464,6 @@ class Cita extends ModeloClinica
     }
 
     /**
-     * RN-401: el veterinario no puede tener dos citas que se solapan, en
-     * ninguna de sus clínicas, y la mascota tampoco.
-     */
-    protected function exigirHorarioLibre(int $idVeterinario, int $idMascota, string $fecha, string $hora, int $duracion, ?int $excluir): void
-    {
-        $inicio = self::minutos($hora);
-        $fin = $inicio + max($duracion, 1);
-
-        $delVeterinario = $this->intervalos($this->ocupadasDelVeterinario($idVeterinario, $fecha, $excluir));
-        if (self::seSolapa($delVeterinario, $inicio, $fin)) {
-            throw new HorarioOcupado('El veterinario no está disponible en ese horario. Hay solapamiento con otra cita.');
-        }
-
-        $deLaMascota = $this->intervalos($this->ocupadasDeLaMascota($idMascota, $fecha, $excluir));
-        if (self::seSolapa($deLaMascota, $inicio, $fin)) {
-            throw new HorarioOcupado('La mascota ya tiene otra cita que se solapa con ese horario. Elige otra hora.');
-        }
-    }
-
-    /** Solo horas: de otra clínica no se lee ni se devuelve ningún otro dato. */
-    private function ocupadasDelVeterinario(int $idVeterinario, string $fecha, ?int $excluir): array
-    {
-        return $this->ocupadas('id_veterinario', $idVeterinario, $fecha, $excluir);
-    }
-
-    private function ocupadasDeLaMascota(int $idMascota, string $fecha, ?int $excluir): array
-    {
-        return $this->ocupadas('id_mascota', $idMascota, $fecha, $excluir);
-    }
-
-    private function ocupadas(string $columna, int $id, string $fecha, ?int $excluir): array
-    {
-        $marcas = $this->marcas(self::ESTADOS_LIBRES);
-        $sql = "SELECT hora, hora_fin, duracion_minutos FROM citas
-            WHERE $columna = ? AND fecha = ? AND es_sobrecupo = 0 AND estado NOT IN ($marcas)";
-        $parametros = [$id, $fecha, ...self::ESTADOS_LIBRES];
-        if ($excluir !== null) {
-            $sql .= ' AND id_cita <> ?';
-            $parametros[] = $excluir;
-        }
-        $consulta = $this->conn->prepare($sql);
-        $consulta->execute($parametros);
-        return $consulta->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /** @return list<array{0: int, 1: int}> minutos de inicio y fin de cada cita */
-    private function intervalos(array $citas): array
-    {
-        $intervalos = [];
-        foreach ($citas as $cita) {
-            $inicio = self::minutos($cita['hora']);
-            $fin = !empty($cita['hora_fin'])
-                ? self::minutos($cita['hora_fin'])
-                : $inicio + ((int) $cita['duracion_minutos'] ?: self::DURACION_POR_DEFECTO);
-            $intervalos[] = [$inicio, $fin];
-        }
-        return $intervalos;
-    }
-
-    private static function seSolapa(array $intervalos, int $inicio, int $fin): bool
-    {
-        foreach ($intervalos as [$ocupadoDesde, $ocupadoHasta]) {
-            if ($inicio < $ocupadoHasta && $fin > $ocupadoDesde) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * Ejecuta el INSERT o el UPDATE de una reserva. Si otra reserva tomó la
      * misma hora entre la validación y la escritura, el índice único
      * uq_cita_veterinario_horario (D-2, sin id_clinica) la rechaza: se
@@ -505,14 +499,11 @@ class Cita extends ModeloClinica
         }
     }
 
-    /** RE-4.13.6: duración y margen del tipo de cita de la clínica; sin tipo, 30 minutos y sin margen. */
+    /** RE-4.9.1: la reserva ordinaria exige un tipo activo; nunca acepta tiempos del cliente. */
     private function tiemposDelTipo($idTipoCita): array
     {
-        if (empty($idTipoCita)) {
-            return [self::DURACION_POR_DEFECTO, 0];
-        }
         $tipo = $this->catalogo()->tipoCita((int) $idTipoCita);
-        if ($tipo === null || (int) $tipo['activo'] !== 1) {
+        if ($tipo === null || (int) $tipo['activo'] !== 1 || (int) $tipo['duracion_minutos'] <= 0 || (int) $tipo['margen_minutos'] < 0) {
             throw new InvalidArgumentException('Elige el tipo de cita de la lista.');
         }
         return [(int) $tipo['duracion_minutos'], (int) $tipo['margen_minutos']];
@@ -543,13 +534,7 @@ class Cita extends ModeloClinica
 
     private static function horaFin(string $hora, int $duracion): string
     {
-        $fin = self::minutos($hora) + $duracion;
-        return sprintf('%02d:%02d:00', intdiv($fin, 60) % 24, $fin % 60);
+        return IntervalosAgenda::fecha('2000-01-01 ' . $hora)->modify('+' . $duracion . ' minutes')->format('H:i:s');
     }
 
-    private static function minutos(string $hora): int
-    {
-        [$horas, $minutos] = array_map('intval', explode(':', $hora));
-        return $horas * 60 + $minutos;
-    }
 }

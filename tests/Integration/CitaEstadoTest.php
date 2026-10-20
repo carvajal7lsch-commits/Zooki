@@ -102,7 +102,10 @@ final class CitaEstadoTest extends TestCase
         DosClinicas::vincularLunaASur($this->db);
         $this->ponerEstado('en_curso');
         $this->comoVeterinario(DosClinicas::SUR, DosClinicas::VET_SUR);
-        $deSur = $this->reservar('09:30', DosClinicas::VET_SUR, 2);
+        // Pacientes distintos: una atención abierta no libera la misma mascota.
+        $this->db->exec("INSERT INTO mascotas (id_mascota,id_propietario,id_clinica_registro,token_carnet,nombre,estado) VALUES (2,9,2,'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb','Kira',1)");
+        $this->db->exec("INSERT INTO mascota_clinica (id_mascota,id_clinica) VALUES (2,2)");
+        $deSur = $this->reservar('09:30', DosClinicas::VET_SUR, 2, 2);
         $this->db->exec("UPDATE citas SET estado = 'en_curso' WHERE id_cita = $deSur");
 
         $correos = [];
@@ -150,10 +153,10 @@ final class CitaEstadoTest extends TestCase
 
     // ── Apoyo ───────────────────────────────────────────────────────────
 
-    private function reservar(string $hora, int $veterinario = DosClinicas::VET_NORTE, ?int $tipo = 1): int
+    private function reservar(string $hora, int $veterinario = DosClinicas::VET_NORTE, ?int $tipo = 1, int $mascota = 1): int
     {
         return $this->citas->registrar([
-            'id_mascota' => 1,
+            'id_mascota' => $mascota,
             'id_veterinario' => $veterinario,
             'fecha' => self::FECHA,
             'hora' => $hora,

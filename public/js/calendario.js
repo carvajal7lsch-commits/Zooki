@@ -1,3 +1,5 @@
+const comandosC3 = { registrar_cita_ajax: zookiCrearComandoAgenda(), reprogramar_cita_ajax: zookiCrearComandoAgenda() };
+const enviosC3 = { reserva: false, reprogramacion: false };
 /* ═══════════════════════════════════════════
    ZOOKI AGENDA
    Calendario, panel del día, modal de agendar y modal de reprogramar.
@@ -72,10 +74,7 @@ function formatFecha(date, opciones) {
 }
 
 function format12h(time24) {
-    if (!time24) return '';
-    const [h, m = '00'] = String(time24).split(':');
-    const horas = parseInt(h, 10);
-    return `${horas % 12 || 12}:${m.padStart(2, '0')} ${horas >= 12 ? 'PM' : 'AM'}`;
+    return zookiHoraAgenda(time24);
 }
 
 function formatHora(date) {
@@ -584,7 +583,9 @@ function manejarClicPanel(e) {
 // Acciones sobre una cita
 // ═══════════════════════════════════════
 async function postCita(accion, datos) {
-    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: new URLSearchParams(datos) });
+    const cuerpo = new URLSearchParams(datos);
+    if (comandosC3[accion]) cuerpo.set('clave_operacion', comandosC3[accion].clave(cuerpo));
+    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo });
     return res.json();
 }
 
@@ -698,7 +699,7 @@ function reprogramarPorArrastre(info) {
     postCita('reprogramar_cita_ajax', {
         id_cita: info.event.id,
         fecha: toLocalDateStr(inicio),
-        hora: `${String(inicio.getHours()).padStart(2, '0')}:${String(inicio.getMinutes()).padStart(2, '0')}`
+        hora: `${String(inicio.getHours()).padStart(2, '0')}:${String(inicio.getMinutes()).padStart(2, '0')}:${String(inicio.getSeconds()).padStart(2, '0')}`
     }).then(r => {
         if (!r.success) {
             info.revert();
@@ -737,6 +738,15 @@ function setSlotsEstado(id, estado, texto = '') {
     }
     const icono = estado === 'guia' ? 'far fa-clock' : 'far fa-calendar-times';
     cont.innerHTML = `<div class="slot-state"><i class="${icono}"></i><p>${esc(texto)}</p></div>`;
+}
+
+/** RE-4.9.2: revisión o fallo de consulta no equivale a una agenda válida sin huecos. */
+function mostrarFalloSlots(id, respuesta) {
+    if (respuesta?.success === true && Array.isArray(respuesta.sugerencias)) return false;
+    const mensaje = typeof respuesta?.message === 'string' && respuesta.message
+        ? respuesta.message : 'No se pudieron cargar los horarios. Intenta de nuevo.';
+    setSlotsEstado(id, 'error', mensaje);
+    return true;
 }
 
 /** Si la fecha es hoy, descarta las horas que ya pasaron. */
@@ -816,6 +826,7 @@ function textoGuiaSlots() {
 }
 
 function abrirCitaModal(date) {
+    comandosC3.registrar_cita_ajax.reiniciar();
     if (!date || esDiaPasado(date)) return;
     const fecha = inicioDelDia(date);
     const esVet = isUsuarioVeterinario();
@@ -879,6 +890,7 @@ async function filtrarMascotas(texto) {
 function seleccionarMascota(id, nombre, propietario) {
     _mascotaNombre = nombre;
     val('modal_mascota', id);
+    cargarSlotsModal();
     document.getElementById('cm_mascota_chip_name').textContent = propietario ? `${nombre} · ${propietario}` : nombre;
     document.getElementById('cm_mascota_chip').hidden = false;
     document.getElementById('cm_mascota_wrap').hidden = true;
@@ -890,6 +902,7 @@ function seleccionarMascota(id, nombre, propietario) {
 function limpiarMascotaSeleccionada(enfocar = false) {
     _mascotaNombre = '';
     val('modal_mascota', '');
+    cargarSlotsModal();
     val('cm_mascota_search', '');
     document.getElementById('cm_mascota_chip').hidden = true;
     document.getElementById('cm_mascota_wrap').hidden = false;
@@ -912,41 +925,30 @@ function onModalTipoCitaChange() {
 }
 
 async function cargarSlotsModal() {
+    const turno = ++_turnoSlotsCita;
     const vet = getVetModal();
     const fecha = val('modal_fecha');
-    const duracion = val('modal_duracion_minutos');
+    const mascota = val('modal_mascota');
+    const tipo = val('modal_tipo_cita');
     val('modal_hora', '');
     ocultarErrorModal();
     actualizarResumenModal();
 
-    if (!vet || !val('modal_tipo_cita') || !duracion) {
+    if (!vet || !tipo || !mascota) {
         setSlotsEstado('modal_slots_container', 'guia', textoGuiaSlots());
         return;
     }
 
     // Si el usuario cambia de tipo o de veterinario antes de que llegue la
     // respuesta, la vieja se descarta para no pintar horarios equivocados.
-    const turno = ++_turnoSlotsCita;
     setSlotsEstado('modal_slots_container', 'cargando');
 
     try {
-        const [horarios, sugerencias] = await Promise.all([
-            fetch(`index.php?action=get_horas_disponibles_ajax&fecha=${fecha}&intervalo=${duracion}`).then(r => r.json()),
-            fetch(`index.php?action=get_sugerencias_horario_ajax&id_veterinario=${encodeURIComponent(vet)}&fecha=${fecha}&duracion_minutos=${duracion}&modo=normal`).then(r => r.json())
-        ]);
+        const parametros = new URLSearchParams({ action: 'get_sugerencias_horario_ajax', id_veterinario: vet, id_mascota: mascota, id_tipo_cita: tipo, fecha });
+        const sugerencias = await fetch(`index.php?${parametros}`).then(r => r.json());
         if (turno !== _turnoSlotsCita) return;
-
-        const laborales = horarios.success && Array.isArray(horarios.horas) ? horarios.horas : [];
-        if (!laborales.length) {
-            setSlotsEstado('modal_slots_container', 'vacio', 'Este día no es laborable o no tiene horarios configurados.');
-            return;
-        }
-
-        let horas = sugerencias.success && Array.isArray(sugerencias.sugerencias) ? sugerencias.sugerencias : [];
-        const enHorario = horas.filter(h => laborales.includes(h));
-        // Si ninguna coincide exacto (formatos distintos), se muestran las sugerencias tal cual.
-        if (enHorario.length) horas = enHorario;
-        horas = quitarHorasPasadas(fecha, horas);
+        if (mostrarFalloSlots('modal_slots_container', sugerencias)) return;
+        const horas = sugerencias.sugerencias;
 
         if (!horas.length) {
             setSlotsEstado('modal_slots_container', 'vacio', 'No quedan horarios libres este día. Prueba con otro día.');
@@ -960,7 +962,7 @@ async function cargarSlotsModal() {
     } catch (e) {
         if (turno !== _turnoSlotsCita) return;
         console.error('Error al cargar horarios:', e);
-        setSlotsEstado('modal_slots_container', 'vacio', 'No se pudieron cargar los horarios. Intenta de nuevo.');
+        setSlotsEstado('modal_slots_container', 'error', 'No se pudieron cargar los horarios. Intenta de nuevo.');
     }
 }
 
@@ -978,7 +980,7 @@ function actualizarResumenModal() {
     if (!tipoSel.value) faltan.push('tipo de cita');
     if (!hora) faltan.push('horario');
 
-    submit.disabled = faltan.length > 0;
+    submit.disabled = enviosC3.reserva || faltan.length > 0;
     const tipoNombre = tipoSel.value ? (tipoSel.options[tipoSel.selectedIndex].dataset.nombre || '') : '';
     resumen.innerHTML = faltan.length
         ? `Falta: ${esc(unirLista(faltan))}.`
@@ -1000,6 +1002,7 @@ function ocultarErrorModal() {
 
 async function crearCitaModal(e) {
     e.preventDefault();
+    if (enviosC3.reserva) return;
     actualizarResumenModal();
     const submit = document.getElementById('cm_submit');
     if (submit.disabled) return;
@@ -1010,10 +1013,10 @@ async function crearCitaModal(e) {
         fecha: val('modal_fecha'),
         hora: val('modal_hora'),
         motivo: val('modal_motivo'),
-        id_tipo_cita: val('modal_tipo_cita'),
-        duracion_minutos: val('modal_duracion_minutos')
+        id_tipo_cita: val('modal_tipo_cita')
     };
 
+    enviosC3.reserva = true;
     submit.disabled = true;
     submit.textContent = 'Agendando…';
     try {
@@ -1030,6 +1033,7 @@ async function crearCitaModal(e) {
     } catch (err) {
         mostrarErrorModal('Error de conexión. Intenta nuevamente.');
     } finally {
+        enviosC3.reserva = false;
         submit.textContent = 'Agendar cita';
         actualizarResumenModal();
     }
@@ -1042,7 +1046,7 @@ let _reprogramarCitaId = null;
 let _turnoSlotsReprog = 0;
 
 function actualizarBotonReprog() {
-    document.getElementById('reprogramar_btn_confirmar').disabled = !val('reprogramar_hora');
+    document.getElementById('reprogramar_btn_confirmar').disabled = enviosC3.reprogramacion || !val('reprogramar_hora');
 }
 
 function mostrarErrorReprog(mensaje) {
@@ -1060,6 +1064,7 @@ function cerrarModalReprogramar() {
 }
 
 async function abrirModalReprogramar(idCita) {
+    comandosC3.reprogramar_cita_ajax.reiniciar();
     _reprogramarCitaId = idCita;
     ocultarErrorReprog();
     val('reprogramar_hora', '');
@@ -1087,6 +1092,7 @@ async function abrirModalReprogramar(idCita) {
             return;
         }
         const cita = datos.cita;
+        document.getElementById('reprogramar_tipo_cita').dataset.mascota = cita.id_mascota;
         const vetSel = document.getElementById('reprogramar_veterinario');
         const tipoSel = document.getElementById('reprogramar_tipo_cita');
         llenarSelect(vetSel, vets, 'Selecciona un veterinario');
@@ -1094,6 +1100,11 @@ async function abrirModalReprogramar(idCita) {
 
         vetSel.value = cita.id_veterinario ? String(cita.id_veterinario) : '';
         vetSel.disabled = isUsuarioVeterinario(); // el veterinario reprograma su propia agenda
+        if (cita.id_tipo_cita && !Array.from(tipoSel.options).some(opcion => opcion.value === String(cita.id_tipo_cita))) {
+            tipoSel.add(new Option(cita.tipo_cita_nombre || 'Tipo de la cita', String(cita.id_tipo_cita)));
+        }
+        tipoSel.dataset.tipoOriginal = cita.id_tipo_cita || '';
+        tipoSel.disabled = true;
         tipoSel.value = cita.id_tipo_cita || '';
         fechaIn.value = cita.fecha && cita.fecha >= fechaIn.min ? cita.fecha : fechaIn.min;
         cargarSlotsReprogramar();
@@ -1105,10 +1116,12 @@ async function abrirModalReprogramar(idCita) {
 }
 
 async function cargarSlotsReprogramar() {
+    const turno = ++_turnoSlotsReprog;
     const vet = val('reprogramar_veterinario');
     const fecha = val('reprogramar_fecha');
     const tipoSel = document.getElementById('reprogramar_tipo_cita');
-    const duracion = (tipoSel.options[tipoSel.selectedIndex] || {}).dataset?.duracion || '30';
+    const mascota = tipoSel.dataset.mascota;
+    const tipo = tipoSel.dataset.tipoOriginal;
     const id = 'reprogramar_slots_container';
 
     val('reprogramar_hora', '');
@@ -1124,14 +1137,13 @@ async function cargarSlotsReprogramar() {
         return;
     }
 
-    const turno = ++_turnoSlotsReprog;
     setSlotsEstado(id, 'cargando');
     try {
-        const url = `index.php?action=get_sugerencias_horario_ajax&id_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${duracion}&id_cita_excluir=${encodeURIComponent(_reprogramarCitaId || '')}`;
-        const data = await fetch(url).then(r => r.json());
+        const parametros = new URLSearchParams({ action: 'get_sugerencias_horario_ajax', id_veterinario: vet, id_mascota: mascota, id_tipo_cita: tipo, fecha, id_cita_excluir: _reprogramarCitaId || '' });
+        const data = await fetch(`index.php?${parametros}`).then(r => r.json());
         if (turno !== _turnoSlotsReprog) return;
-
-        const horas = quitarHorasPasadas(fecha, data.success && Array.isArray(data.sugerencias) ? data.sugerencias : []);
+        if (mostrarFalloSlots(id, data)) return;
+        const horas = data.sugerencias;
         if (!horas.length) {
             setSlotsEstado(id, 'vacio', 'No hay horarios libres ese día. Prueba con otra fecha o veterinario.');
             return;
@@ -1144,16 +1156,16 @@ async function cargarSlotsReprogramar() {
     } catch (e) {
         if (turno !== _turnoSlotsReprog) return;
         console.error('Error al cargar horarios:', e);
-        setSlotsEstado(id, 'vacio', 'No se pudieron cargar los horarios. Intenta de nuevo.');
+        setSlotsEstado(id, 'error', 'No se pudieron cargar los horarios. Intenta de nuevo.');
     }
 }
 
 async function confirmarReprogramacion() {
     const hora = val('reprogramar_hora');
     const fecha = val('reprogramar_fecha');
-    if (!hora) return;
-
     const btn = document.getElementById('reprogramar_btn_confirmar');
+    if (!hora || btn.disabled || enviosC3.reprogramacion) return;
+    enviosC3.reprogramacion = true;
     btn.disabled = true;
     btn.textContent = 'Reprogramando…';
     try {
@@ -1176,6 +1188,7 @@ async function confirmarReprogramacion() {
         console.error('Error al reprogramar:', e);
         mostrarErrorReprog('Error de conexión. Intenta nuevamente.');
     } finally {
+        enviosC3.reprogramacion = false;
         btn.textContent = 'Confirmar reprogramación';
         actualizarBotonReprog();
     }
@@ -1230,7 +1243,18 @@ document.addEventListener('click', e => {
     }
 });
 
+function conectarFormulariosC3() {
+    document.getElementById('formCitaModal').addEventListener('submit', crearCitaModal);
+    document.getElementById('cm_mascota_search').addEventListener('input', evento => filtrarMascotas(evento.target.value));
+    document.getElementById('modal_veterinario').addEventListener('change', onModalVeterinarioChange);
+    document.getElementById('modal_tipo_cita').addEventListener('change', onModalTipoCitaChange);
+    for (const id of ['reprogramar_fecha', 'reprogramar_veterinario', 'reprogramar_tipo_cita']) {
+        document.getElementById(id).addEventListener('change', cargarSlotsReprogramar);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    conectarFormulariosC3();
     moverModalesAlBody();
     FilterManager.init();
     conectarBarra();

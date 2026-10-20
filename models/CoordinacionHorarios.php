@@ -103,29 +103,6 @@ final class CoordinacionHorarios extends ModeloClinica
         return $this->consultar('SELECT * FROM horarios_clinica WHERE id_clinica=? ORDER BY dia_semana', [$this->clinica()]);
     }
 
-    /** Guardia de escritura C2 tras esperar; C3 sustituye las sugerencias completas. */
-    public function exigirReserva(int $vet, string $fecha, string $hora, int $duracion, int $margen): void
-    {
-        $this->veterinario($vet);
-        $inicio = new DateTimeImmutable($fecha . ' ' . $hora);
-        $fin = $inicio->modify('+' . ($duracion + $margen) . ' minutes');
-        if ($fin->format('Y-m-d') !== $fecha || !self::contiene($this->apertura(), (int) $inicio->format('N'), $inicio->format('H:i:s'), $fin->format('H:i:s'))) {
-            throw new InvalidArgumentException('El intervalo completo queda fuera del horario de apertura actual.');
-        }
-        $franjas = $this->consultar('SELECT hora_inicio,hora_fin FROM horarios_veterinario WHERE id_clinica=? AND id_veterinario=? AND dia_semana=? AND activo=1', [$this->clinica(), $vet, (int) $inicio->format('N')]);
-        $dentro = false;
-        foreach ($franjas as $f) {
-            $dentro = $dentro || ($inicio->format('H:i:s') >= $f['hora_inicio'] && $fin->format('H:i:s') <= $f['hora_fin']);
-        }
-        if (!$dentro) {
-            throw new InvalidArgumentException('El veterinario no está disponible en ese intervalo.');
-        }
-        $cierres = $this->consultar('SELECT 1 FROM cierres_clinica WHERE id_clinica=? AND activo=1 AND inicio<? AND fin>?', [$this->clinica(), $fin->format('Y-m-d H:i:s'), $inicio->format('Y-m-d H:i:s')]);
-        if ($cierres) {
-            throw new InvalidArgumentException('El intervalo coincide con un cierre de la clínica.');
-        }
-    }
-
     public static function contiene(array $apertura, int $dia, string $inicio, string $fin): bool
     {
         foreach ($apertura as $fila) {

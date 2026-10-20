@@ -54,7 +54,7 @@ final class LimitePlan
         return $plan;
     }
 
-    private function uso(string $recurso, ?string $fecha): int
+    private function uso(string $recurso, ?string $fecha, ?int $excluirCita = null): int
     {
         if ($recurso === 'personal') {
             // UNION evita contar dos veces la activación (ya tiene usuario_clinica).
@@ -74,6 +74,10 @@ final class LimitePlan
             $fin = $mes->modify('first day of next month')->format('Y-m-d');
             $sql = "SELECT COUNT(*) FROM citas WHERE id_clinica = ? AND fecha >= ? AND fecha < ? AND estado <> 'cancelada'";
             $parametros = [$this->clinica, $inicio, $fin];
+            if ($excluirCita !== null) {
+                $sql .= ' AND id_cita <> ?';
+                $parametros[] = $excluirCita;
+            }
         }
         $stmt = $this->db->prepare($sql);
         $stmt->execute($parametros);
@@ -96,6 +100,19 @@ final class LimitePlan
             }
             return $operacion();
         });
+    }
+
+    /** B1: el destino reemplaza una reserva legítima; nunca suma dos veces su ID. */
+    public function comprobarReprogramacion(int $idCita, string $fecha, string $prioridad): void
+    {
+        if (!$this->db->inTransaction()) {
+            throw new LogicException('La cuota de reprogramación exige la unidad coordinada.');
+        }
+        $limite = $this->plan()['limite_citas_mes'];
+        $uso = $this->uso('citas', $fecha, $idCita);
+        if ($prioridad !== 'rojo' && $limite !== null && $uso >= (int) $limite) {
+            throw new LimiteAlcanzado($this->clinica, 'citas', $uso, (int) $limite);
+        }
     }
 
     public function transaccion(callable $operacion): mixed

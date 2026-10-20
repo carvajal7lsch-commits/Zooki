@@ -81,7 +81,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             <button type="button" class="cal-icon-btn" data-ui-accion="cerrar-cita" aria-label="Cerrar"><i class="fas fa-times"></i></button>
         </header>
 
-        <form id="formCitaModal" class="zk-modal__split" onsubmit="crearCitaModal(event)" novalidate autocomplete="off">
+        <form id="formCitaModal" class="zk-modal__split" novalidate autocomplete="off">
             <div class="zk-modal__col">
                 <p class="zk-modal__section">Datos de la cita</p>
                 <input type="hidden" id="modal_fecha">
@@ -95,7 +95,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                     <div class="zk-search" id="cm_mascota_wrap">
                         <i class="fas fa-search"></i>
                         <input type="text" id="cm_mascota_search" class="zk-input zk-input--icon"
-                               placeholder="Busca por mascota o propietario" oninput="filtrarMascotas(this.value)">
+                               placeholder="Busca por mascota o propietario">
                         <div class="zk-dropdown" id="cm_mascota_dropdown" role="listbox"></div>
                     </div>
                     <div class="zk-selected" id="cm_mascota_chip" hidden>
@@ -107,14 +107,14 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 
                 <div class="zk-field" id="cm_vet_field" hidden>
                     <label class="zk-label" for="modal_veterinario">Veterinario</label>
-                    <select id="modal_veterinario" class="zk-input" onchange="onModalVeterinarioChange()">
+                    <select id="modal_veterinario" class="zk-input">
                         <option value="">Selecciona un veterinario</option>
                     </select>
                 </div>
 
                 <div class="zk-field">
                     <label class="zk-label" for="modal_tipo_cita">Tipo de cita</label>
-                    <select id="modal_tipo_cita" class="zk-input" onchange="onModalTipoCitaChange()">
+                    <select id="modal_tipo_cita" class="zk-input">
                         <option value="">Selecciona el tipo</option>
                     </select>
                 </div>
@@ -162,19 +162,19 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 
                 <div class="zk-field">
                     <label class="zk-label" for="reprogramar_fecha">Fecha</label>
-                    <input type="date" id="reprogramar_fecha" class="zk-input" onchange="cargarSlotsReprogramar()">
+                    <input type="date" id="reprogramar_fecha" class="zk-input">
                 </div>
 
                 <div class="zk-field">
                     <label class="zk-label" for="reprogramar_veterinario">Veterinario</label>
-                    <select id="reprogramar_veterinario" class="zk-input" onchange="cargarSlotsReprogramar()">
+                    <select id="reprogramar_veterinario" class="zk-input">
                         <option value="">Selecciona un veterinario</option>
                     </select>
                 </div>
 
                 <div class="zk-field">
                     <label class="zk-label" for="reprogramar_tipo_cita">Tipo de cita</label>
-                    <select id="reprogramar_tipo_cita" class="zk-input" onchange="cargarSlotsReprogramar()">
+                    <select id="reprogramar_tipo_cita" class="zk-input">
                         <option value="">Selecciona el tipo</option>
                     </select>
                 </div>
@@ -198,6 +198,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
+<script src="js/comando-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/calendario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 
 <!-- MODAL NUEVA CONSULTA (necesario para Iniciar Atención desde el calendario) -->

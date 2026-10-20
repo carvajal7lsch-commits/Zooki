@@ -1172,48 +1172,6 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
     </form>
 </aside>
 
-<!-- MODAL AGENDAR CITA -->
-<div id="modalCita" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="far fa-calendar-check"></i> Agendar Cita</h3>
-            <span class="close" data-c3-click="evento57">&times;</span>
-        </div>
-        <form id="formCita" data-c3-submit="evento58">
-            <input type="hidden" name="id_mascota" id="cita_id_mascota">
-            <div class="modal-body">
-                <p class="sub-text">Agendando cita para: <strong id="citaPetName"></strong></p>
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Fecha *</label>
-                        <input type="date" name="fecha" id="cita_fecha" min="<?php echo date(
-                            "Y-m-d",
-                        ); ?>" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Hora *</label>
-                        <input type="time" name="hora" required>
-                    </div>
-                    <div class="input-group full">
-                        <label>Veterinario Asignado *</label>
-                        <select name="id_veterinario" id="cita_veterinario" required>
-                            <option value="">Cargando veterinarios...</option>
-                        </select>
-                    </div>
-                    <div class="input-group full">
-                        <label>Motivo de la Cita *</label>
-                        <input type="text" name="motivo" required placeholder="Ej. Chequeo general, Vacunación, Enfermedad...">
-                    </div>
-                </div>
-                <div class="pacientes-estilo-28">
-                    <i class="fas fa-envelope"></i> Se enviará un correo de confirmación al propietario.
-                </div>
-                <button type="submit" class="pacientes-estilo-29 btn-primary full-btn">Confirmar Cita</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <div id="lightboxVisor" class="lightbox" data-c3-click="evento59">
     <img src="" alt="Vista previa">
 </div>

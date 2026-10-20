@@ -7,11 +7,13 @@ require_once __DIR__ . '/../helpers/Csrf.php';
 class HorarioClinicaController
 {
     private HorarioClinica $horario;
+    private PDO $db;
 
     /** $horario: uno ya acotado, como el de la clínica que eligió el propietario en el portal (C6). */
     public function __construct(?PDO $db = null, ?HorarioClinica $horario = null)
     {
         $db ??= (new Database())->getConnection();
+        $this->db = $db;
         $this->horario = $horario ?? new HorarioClinica($db);
     }
 
@@ -277,67 +279,10 @@ class HorarioClinicaController
         }
     }
 
-    public function obtenerHorasDisponibles($fecha, $intervalo = 30)
+    /** Compatibilidad de ruta: nunca calcula una disponibilidad alternativa. */
+    public function obtenerHorasDisponiblesAjax(): void
     {
-        try {
-            $dia_semana = date('N', strtotime($fecha));
-
-            $horario = $this->horario->dia((int) $dia_semana);
-
-            if (!$horario || $horario['activo'] != 1) {
-                return [];
-            }
-
-            $horas = [];
-            // Usar el intervalo proporcionado (por defecto 30 min para coincidir con sugerencias)
-            $intervalo = max(15, intval($intervalo));
-
-            // Generar horas del bloque de mañana
-            if ((int) $horario['bloque_morning_activo'] === 1 && $horario['bloque_morning_inicio'] && $horario['bloque_morning_fin']) {
-                $inicio = strtotime($horario['bloque_morning_inicio']);
-                $fin = strtotime($horario['bloque_morning_fin']);
-
-                while ($inicio < $fin) {
-                    $horas[] = date('H:i', $inicio);
-                    $inicio = strtotime("+$intervalo minutes", $inicio);
-                }
-            }
-
-            // Generar horas del bloque de tarde
-            if ((int) $horario['bloque_afternoon_activo'] === 1 && $horario['bloque_afternoon_inicio'] && $horario['bloque_afternoon_fin']) {
-                $inicio = strtotime($horario['bloque_afternoon_inicio']);
-                $fin = strtotime($horario['bloque_afternoon_fin']);
-
-                while ($inicio < $fin) {
-                    $horas[] = date('H:i', $inicio);
-                    $inicio = strtotime("+$intervalo minutes", $inicio);
-                }
-            }
-
-            return $horas;
-
-        } catch (AccesoDenegado $e) {
-            throw $e;
-        } catch (Exception $e) {
-            return [];
-        }
-    }
-
-    public function obtenerHorasDisponiblesAjax()
-    {
-        header("Content-Type: application/json");
-
-        $fecha = $_GET["fecha"] ?? null;
-        $intervalo = $_GET["intervalo"] ?? 30; // Intervalo en minutos (default 30)
-
-        if (!$fecha) {
-            echo json_encode(["success" => false, "message" => "Fecha no proporcionada"]);
-            return;
-        }
-
-        $horas = $this->obtenerHorasDisponibles($fecha, $intervalo);
-
-        echo json_encode(["success" => true, "horas" => $horas]);
-        return;
+        require_once __DIR__ . '/CitaController.php';
+        (new CitaController($this->db))->getSugerenciasHorarioAjax();
     }
 }

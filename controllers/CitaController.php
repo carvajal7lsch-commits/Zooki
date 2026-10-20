@@ -31,7 +31,7 @@ class CitaController
     public function __construct(?PDO $db = null, ?callable $reloj = null)
     {
         $this->db = $db ?? (new Database())->getConnection();
-        $this->citas = new Cita($this->db);
+        $this->citas = new Cita($this->db, $reloj);
         $this->reloj = $reloj ?? static fn (): DateTimeImmutable => new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
     }
 
@@ -55,7 +55,7 @@ class CitaController
             throw new InvalidArgumentException('Selecciona la mascota para la que es la cita.');
         }
 
-        [$fecha, $hora] = $this->fechaYHoraFuturas($entrada['fecha'] ?? '', $entrada['hora'] ?? '');
+        [$fecha, $hora] = $this->fechaYHoraFuturas($entrada['fecha'] ?? '', $entrada['hora'] ?? '', $this->citas->reservaRepetida($entrada['clave_operacion'] ?? null));
 
         $motivo = trim((string) ($entrada['motivo'] ?? ''));
         if (mb_strlen($motivo) > 255) {
@@ -63,10 +63,9 @@ class CitaController
         }
 
         $idVeterinario = $this->veterinarioDeLaReserva($entrada['id_veterinario'] ?? null);
-        $this->exigirHorarioLaboral($fecha, $hora);
 
         // La mascota ya tiene otra cita ese día: se pide confirmar antes de agendar.
-        if (($entrada['ignore_warning'] ?? '0') !== '1') {
+        if (($entrada['ignore_warning'] ?? '0') !== '1' && !$this->citas->reservaRepetida($entrada['clave_operacion'] ?? null)) {
             $otraHora = $this->citas->horaDeOtraCitaDelDia($idMascota, $fecha);
             if ($otraHora !== null) {
                 return [
@@ -77,7 +76,7 @@ class CitaController
             }
         }
 
-        $idCita = $this->citas->registrar([
+        $resultado = $this->citas->registrarConResultado([
             'id_mascota' => $idMascota,
             'id_veterinario' => $idVeterinario,
             'fecha' => $fecha,
@@ -88,8 +87,11 @@ class CitaController
             'estado' => 'confirmada',
         ]);
 
+        $idCita = $resultado['id_cita'];
         $cita = $this->citas->getById($idCita);
-        $this->avisarCita('NUEVA_CITA', 'Nueva cita agendada', $cita, false);
+        if ($resultado['nueva']) {
+            $this->avisarCita('NUEVA_CITA', 'Nueva cita agendada', $cita, false);
+        }
 
         return ['message' => 'Cita agendada correctamente. Se enviará un correo de confirmación.', 'id_cita' => $idCita];
     }
@@ -206,22 +208,23 @@ class CitaController
 
     public function getSugerenciasHorarioAjax(): void
     {
-        $idVeterinario = ValidadorClinico::id($_GET['id_veterinario'] ?? null);
+        RespuestaJson::consulta(function (): void {
+            $horas = $this->horasSolicitadas($this->citas);
+            RespuestaJson::enviar(['success' => true, 'sugerencias' => $horas, 'horas' => $horas]);
+        }, 'C3 disponibilidad interna');
+    }
+
+    private function horasSolicitadas(Cita $citas): array
+    {
+        $vet = ValidadorClinico::id($_GET['id_veterinario'] ?? null);
+        $mascota = ValidadorClinico::id($_GET['id_mascota'] ?? null);
+        $tipo = ValidadorClinico::id($_GET['id_tipo_cita'] ?? null);
         $fecha = ValidadorClinico::fecha($_GET['fecha'] ?? null);
-        $duracion = ValidadorClinico::entero($_GET['duracion_minutos'] ?? null, 1, 600);
-        if ($idVeterinario === null || $fecha === null || $duracion === null) {
-            RespuestaJson::error(422, 'Parámetros incompletos.');
-            return;
-        }
-
         $excluir = ValidadorClinico::id($_GET['id_cita_excluir'] ?? null);
-        if ($excluir !== null) {
-            // Solo se excluye una cita de la clínica activa.
-            $this->citas->getById($excluir);
+        if ($vet === null || $mascota === null || $fecha === null || ($tipo === null && $excluir === null)) {
+            throw new InvalidArgumentException('Selecciona mascota, tipo, veterinario y fecha.');
         }
-
-        $sugerencias = $this->citas->sugerencias($idVeterinario, $fecha, $duracion, $excluir, $this->ahora());
-        RespuestaJson::enviar(['success' => true, 'sugerencias' => $sugerencias]);
+        return $citas->sugerencias($vet, $mascota, $tipo ?? 0, $fecha, $excluir);
     }
 
     /** Supervisión del administrador: todas las citas de la clínica activa. */
@@ -291,36 +294,15 @@ class CitaController
 
     private function portalHoras(): void
     {
-        $idClinica = $this->clinicaDelPortal($_GET);
-        $fecha = ValidadorClinico::fecha($_GET['fecha'] ?? null);
-        $intervalo = ValidadorClinico::entero($_GET['intervalo'] ?? null, 5, 600) ?? 30;
-        if ($fecha === null) {
-            RespuestaJson::error(422, 'Fecha no válida.');
-            return;
-        }
-
-        $horario = (new HorarioClinica($this->db))->enClinicaDelPropietario($idClinica);
-        $horas = (new HorarioClinicaController($this->db, $horario))->obtenerHorasDisponibles($fecha, $intervalo);
-        RespuestaJson::enviar(['success' => true, 'horas' => $horas]);
+        $citas = $this->citas->enClinicaDelPropietario($this->clinicaDelPortal($_GET));
+        $horas = $this->horasSolicitadas($citas);
+        RespuestaJson::enviar(['success' => true, 'horas' => $horas, 'sugerencias' => $horas]);
     }
 
-    /** Horarios libres del veterinario en la clínica elegida (RE-5.3.3). */
+    /** RE-5.3.3: ambos accesos usan el mismo cálculo autorizado. */
     public function portalSugerenciasAjax(): void
     {
-        RespuestaJson::consulta(fn () => $this->portalSugerencias(), 'C6 portal sugerencias');
-    }
-
-    private function portalSugerencias(): void
-    {
-        $citas = $this->citas->enClinicaDelPropietario($this->clinicaDelPortal($_GET));
-        $idVeterinario = ValidadorClinico::id($_GET['id_veterinario'] ?? null);
-        $fecha = ValidadorClinico::fecha($_GET['fecha'] ?? null);
-        $duracion = ValidadorClinico::entero($_GET['duracion_minutos'] ?? null, 1, 600);
-        if ($idVeterinario === null || $fecha === null || $duracion === null) {
-            RespuestaJson::error(422, 'Parámetros incompletos.');
-            return;
-        }
-        RespuestaJson::enviar(['success' => true, 'sugerencias' => $citas->sugerencias($idVeterinario, $fecha, $duracion, null, $this->ahora())]);
+        RespuestaJson::consulta(fn () => $this->portalHoras(), 'C3 portal disponibilidad');
     }
 
     /**
@@ -345,7 +327,7 @@ class CitaController
         }
         (new MascotaPropietario($this->db))->ficha($idMascota);
 
-        [$fecha, $hora] = $this->fechaYHoraFuturas($entrada['fecha'] ?? '', $entrada['hora'] ?? '');
+        [$fecha, $hora] = $this->fechaYHoraFuturas($entrada['fecha'] ?? '', $entrada['hora'] ?? '', $citas->reservaRepetida($entrada['clave_operacion'] ?? null));
         $motivo = trim((string) ($entrada['motivo'] ?? ''));
         if (mb_strlen($motivo) > 255) {
             throw new InvalidArgumentException('El motivo no puede tener más de 255 caracteres.');
@@ -359,10 +341,8 @@ class CitaController
             throw new InvalidArgumentException('Elige uno de los veterinarios de la clínica.');
         }
 
-        $horario = (new HorarioClinica($this->db))->enClinicaDelPropietario($idClinica);
-        $this->exigirHorarioLaboral($fecha, $hora, $horario);
 
-        if (($entrada['ignore_warning'] ?? '0') !== '1') {
+        if (($entrada['ignore_warning'] ?? '0') !== '1' && !$citas->reservaRepetida($entrada['clave_operacion'] ?? null)) {
             $otraHora = $citas->horaDeOtraCitaDelDia($idMascota, $fecha);
             if ($otraHora !== null) {
                 return [
@@ -375,10 +355,10 @@ class CitaController
 
         $idPropietario = (int) Contexto::idUsuario();
         $mascotas = (new Mascota($this->db))->enClinicaDelPropietario($idClinica);
-        $idCita = $citas->coordinarReserva(['id_veterinario' => $idVeterinario, 'id_mascota' => $idMascota], function () use ($mascotas, $citas, $idMascota, $idPropietario, $idVeterinario, $fecha, $hora, $motivo, $idTipo, $entrada): int {
+        $resultado = $citas->coordinarReserva(['id_veterinario' => $idVeterinario, 'id_mascota' => $idMascota], function () use ($mascotas, $citas, $idMascota, $idPropietario, $idVeterinario, $fecha, $hora, $motivo, $idTipo, $entrada): array {
             // RN-110: la mascota se vincula a la clínica al agendar allí (si ya lo estaba, no cambia nada).
             $mascotas->vincular($idMascota, $idPropietario);
-            return $citas->registrar([
+            return $citas->registrarConResultado([
                 'id_mascota' => $idMascota,
                 'id_veterinario' => $idVeterinario,
                 'fecha' => $fecha,
@@ -390,8 +370,11 @@ class CitaController
             ]);
         });
 
+        $idCita = $resultado['id_cita'];
         $cita = $citas->getById($idCita);
-        $this->avisarCita('NUEVA_CITA', 'Nueva cita desde el portal', $cita, false);
+        if ($resultado['nueva']) {
+            $this->avisarCita('NUEVA_CITA', 'Nueva cita desde el portal', $cita, false);
+        }
 
         return ['message' => 'Tu cita quedó agendada. Te enviaremos la confirmación por correo.', 'id_cita' => $idCita];
     }
@@ -417,10 +400,9 @@ class CitaController
             if (!$esAdmin && !$this->esSuCita($cita)) {
                 throw new AccesoDenegado(403, 'Solo el administrador o el veterinario de la cita pueden reprogramarla.');
             }
-            $this->exigirAbierta($cita);
-
-            [$fecha, $hora] = $this->fechaYHoraFuturas($_POST['fecha'] ?? '', $_POST['hora'] ?? '');
-            $this->exigirHorarioLaboral($fecha, $hora);
+            // RE-4.9.3: solo el comando nuevo valida estado/tiempo dentro de la unidad.
+            // El modelo recupera antes el replay tras revalidar acceso y huella actuales.
+            [$fecha, $hora] = $this->fechaYHoraValidas($_POST['fecha'] ?? '', $_POST['hora'] ?? '');
 
             $idVeterinario = (int) $cita['id_veterinario'];
             $pedido = ValidadorClinico::id($_POST['id_veterinario'] ?? null);
@@ -428,7 +410,10 @@ class CitaController
                 $idVeterinario = $pedido;
             }
 
-            $this->citas->reprogramar($cita, $idVeterinario, $fecha, $hora, $_POST['clave_operacion'] ?? null);
+            $nueva = $this->citas->reprogramar($cita, $idVeterinario, $fecha, $hora, $_POST['clave_operacion'] ?? null);
+            if (!$nueva) {
+                return ['id_cita' => (int) $cita['id_cita'], 'message' => 'Cita reprogramada correctamente. Se notificará al propietario.'];
+            }
             $this->retirarAvisosCita((int) $cita['id_cita']);
             $this->avisarCita('CITA_REPROGRAMADA', 'Cita reprogramada', $this->citas->getById($cita['id_cita']), false);
 
@@ -835,7 +820,20 @@ class CitaController
     }
 
     /** Fecha y hora válidas que no hayan pasado (hora de la clínica). */
-    private function fechaYHoraFuturas($fecha, $hora): array
+    private function fechaYHoraFuturas($fecha, $hora, bool $repetida = false): array
+    {
+        [$fecha, $hora] = $this->fechaYHoraValidas($fecha, $hora);
+        $ahora = $this->ahora();
+        if (!$repetida && $fecha < $ahora->format('Y-m-d')) {
+            throw new InvalidArgumentException('No puedes agendar citas en fechas que ya pasaron.');
+        }
+        if (!$repetida && ReglaAtencion::inicio($fecha, $hora) < $ahora) {
+            throw new InvalidArgumentException('No puedes agendar citas en horas que ya pasaron. Son las ' . $ahora->format('H:i') . '.');
+        }
+        return [$fecha, $hora];
+    }
+
+    private function fechaYHoraValidas($fecha, $hora): array
     {
         $fecha = (string) $fecha;
         $hora = (string) $hora;
@@ -847,23 +845,7 @@ class CitaController
         }
         $hora = Cita::normalizarHora($hora);
 
-        $ahora = $this->ahora();
-        if ($fecha < $ahora->format('Y-m-d')) {
-            throw new InvalidArgumentException('No puedes agendar citas en fechas que ya pasaron.');
-        }
-        if (ReglaAtencion::inicio($fecha, $hora) < $ahora) {
-            throw new InvalidArgumentException('No puedes agendar citas en horas que ya pasaron. Son las ' . $ahora->format('H:i') . '.');
-        }
         return [$fecha, $hora];
-    }
-
-    /** RN-402: la hora cae en un bloque activo del horario de la clínica activa (C2). */
-    private function exigirHorarioLaboral(string $fecha, string $hora, ?HorarioClinica $horario = null): void
-    {
-        $validacion = (new HorarioClinicaController($this->db, $horario))->validarHorarioLaboral($fecha, $hora);
-        if (!$validacion['valido']) {
-            throw new InvalidArgumentException($validacion['mensaje']);
-        }
     }
 
     private function mensajeCitaCerrada(string $estado): string
