@@ -140,6 +140,9 @@ final class CitaTest extends TestCase
         DosClinicas::vincularLunaASur($this->db);
         $this->crearMascota(2, DosClinicas::SUR);
         $this->db->exec("INSERT INTO usuario_clinica (id_usuario, id_clinica, id_rol, estado) VALUES (2, 2, 2, 'activo')");
+        // Datos históricos incompatibles: el caso verifica la defensa de ocupación entre clínicas,
+        // aunque el nuevo editor rechaza crear estas jornadas solapadas.
+        $this->db->exec("INSERT INTO horarios_veterinario (id_clinica,id_veterinario,dia_semana,hora_inicio,hora_fin) VALUES (2,2,1,'08:00:00','12:00:00')");
         $this->reservar(DosClinicas::VET_NORTE, '09:00', 1);
 
         $this->comoAdministrador(DosClinicas::SUR, DosClinicas::ADMIN_SUR);

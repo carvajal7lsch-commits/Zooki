@@ -194,6 +194,29 @@ switch ($action) {
         (new ConfiguracionClinicaController())->$metodoConfiguracion();
         break;
 
+    case "get_coordinacion_horarios_ajax":
+        require_once '../controllers/CoordinacionHorariosController.php';
+        (new CoordinacionHorariosController())->leer();
+        break;
+
+    case "guardar_horario_vet_ajax":
+    case "proponer_horario_vet_ajax":
+    case "aprobar_horario_vet_ajax":
+    case "rechazar_horario_vet_ajax":
+    case "crear_cierre_clinica_ajax":
+    case "retirar_cierre_clinica_ajax":
+        require_once '../controllers/CoordinacionHorariosController.php';
+        $comandoHorario = [
+            'guardar_horario_vet_ajax' => 'guardar',
+            'proponer_horario_vet_ajax' => 'proponer',
+            'aprobar_horario_vet_ajax' => 'aprobar',
+            'rechazar_horario_vet_ajax' => 'rechazar',
+            'crear_cierre_clinica_ajax' => 'cerrar',
+            'retirar_cierre_clinica_ajax' => 'retirar',
+        ][$action];
+        (new CoordinacionHorariosController())->escribir($comandoHorario);
+        break;
+
     case "logout":
         require_once "../controllers/AuthController.php";
         $controller = new AuthController();

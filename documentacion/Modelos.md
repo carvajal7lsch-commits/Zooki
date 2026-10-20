@@ -398,6 +398,8 @@ flowchart TD
 
 Actores: Administrador de la clínica. Define el horario **recurrente** por día de la semana en su clínica (el veterinario solo propone cambios, §13.4); esto reemplaza el supuesto de que todos los veterinarios atienden 24/7. Si al cambiar el horario quedan citas por fuera, se marcan para reajuste (§5).
 
+La coordinación C2 de este guardado, las propuestas y los cierres puntuales se detalla en §16. Las marcas conservan las horas hasta el procesamiento C5.
+
 ```mermaid
 flowchart TD
   A([Administrador configura el horario del veterinario]) --> B[Selecciona al veterinario]
@@ -1211,3 +1213,60 @@ flowchart TD
 ```
 
 La validación remota por campo usa POST/CSRF y revalida el administrador sin escribir. El guardado repite la validación en servidor. Los tipos inactivos siguen legibles en históricos; el catálogo de reservas los excluye y el servidor rechaza usarlos en una nueva reserva. Las salidas clínicas usan la procedencia ya autorizada, sin elegir una clínica para mensajes globales ni personalizar las descargas públicas.
+
+## 16. Coordinación de horarios y cierres puntuales — M4 C2
+
+RE-4.11.1/2/4/5 y componente administrativo RE-4.8.2; RN-706/703/415 y contexto de §9. Las propuestas conservan sus franjas en JSON y los cierres sus intervalos exactos [inicio, fin). No se convierten en ausencias ni modifican la recurrencia al cerrar una fecha concreta.
+
+```mermaid
+flowchart TD
+  A["Configuracion admin o perfil del veterinario"] --> P{"Sesion y contexto autorizados segun §9?"}
+  P -- No --> DEN["Denegar sin datos ajenos; auditar intento"]
+  P -- Si --> L["Leer horario propio de clinica, propuestas y marcas; vet solo su jornada"]
+  L --> F["Editar con validacion en vivo y restricciones; clave del comando y doble envio protegido"]
+  F --> T{"POST, CSRF, contexto y sintaxis validos?"}
+  T -- No --> ERR["Error junto al campo; no escribir; permitir correccion"]
+  T -- Si --> EXT{"Transaccion exterior compatible?"}
+  EXT -- No --> REI["Rechazar entrada; reiniciar con el conjunto completo de recursos"]
+  EXT -- Si --> CL["Iniciar unidad corta; bloquear clinica antes de descubrir recursos actuales"]
+  CL --> RP["Usuarios globales ordenados, mascotas ordenadas, vinculos y configuracion; lecturas actuales tras esperar"]
+  RP --> V{"Actor, clinica y membresias siguen vigentes?"}
+  V -- No --> RB["Rollback completo; reauditar denegacion fuera de la unidad"]
+  V -- Si --> OP{"Clave y huella del comando?"}
+  OP -- "Misma clave y carga" --> ACT["Reconstruir respuesta con acceso y vista actuales; no repetir cambios"]
+  OP -- "Misma clave y carga distinta" --> CON["Conflicto; rollback sin cambios"]
+  OP -- Nueva --> ACC{"Accion autorizada?"}
+  ACC -- "Vet propone lo propio" --> VAL["Validar dia, intervalos, apertura y compromisos globales minimos"]
+  VAL --> PV{"Franjas compatibles?"}
+  PV -- No --> GEN["Error de franja; conflicto ajeno generico sin clinica ni horas"]
+  PV -- Si --> PRO["Guardar propuesta pendiente; horario y citas no cambian"]
+  ACC -- "Admin rechaza" --> MOT{"Propuesta propia pendiente, vet vigente y motivo presente?"}
+  MOT -- No --> CON
+  MOT -- Si --> RECH["Guardar rechazo, revisor, fecha y motivo"]
+  ACC -- "Admin aprueba o configura vet" --> VA["Revalidar propuesta pendiente si aplica, membresia y franjas actuales"]
+  VA --> CO{"Sin solapes propios o interclinica y dentro de apertura?"}
+  CO -- No --> GEN
+  CO -- Si --> HOR["Guardar franjas; aprobar propuesta si corresponde"]
+  ACC -- "Admin guarda o restaura apertura" --> AP["Guardar configuracion de apertura validada"]
+  ACC -- "Admin crea o retira cierre" --> CE{"Rango exacto y motivo validos; cierre de su clinica?"}
+  CE -- No --> CON
+  CE -- Si --> CIE["Guardar cierre o baja logica; conservar recurrencia y bloques usados"]
+  HOR --> MAR["Bloquear citas ordenadas y marcar afectadas; incrementar version; preservar horas y snapshots"]
+  AP --> MAR
+  CIE --> MAR
+  PRO --> AUD
+  RECH --> AUD
+  MAR --> AUD["Auditoria y resultado idempotente en la misma transaccion"]
+  AUD --> OK{"Unidad completa correcta?"}
+  OK -- No --> ROL["Rollback de horario/cierre/propuesta, marcas, versiones, operacion y auditoria"]
+  GEN --> ROL
+  OK -- Si --> COM["Commit antes de devolver resultado canonico y vista autorizada"]
+  ACT --> COM
+  COM --> UI["Actualizar formulario/listas y pendientes de reajuste antes del aviso breve"]
+  UI --> L
+  ROL --> ERR
+```
+
+Las reservas y reprogramaciones que compiten entran por el mismo coordinador desde su transacción exterior: descartan lecturas previas, revalidan vínculos, apertura, jornada y cierres después de esperar, y guardan operación/auditoría con la cita. Si la reserva se confirma primero, el escritor de configuración descubre y marca esa cita; si cambia primero la configuración, la reserva valida contra el estado nuevo. La proyección global de conflictos recurrentes solo lee día e intervalos; no devuelve clínica, pacientes o contactos ajenos.
+
+C2 entrega estas guardias de escritura y marcas visibles. C3 completa las sugerencias/disponibilidad y RE-4.11.3/RE-4.8.3; C5 procesa las marcas. No se mueve ninguna cita ni se reinicia el bloque o su tope al editar/restaurar. Los comandos de C2 no entran en numeración HC ni abren una transacción exterior que luego adquiera GET_LOCK; la integración clínica/numeración permanece uniforme en su etapa C7a según B1.

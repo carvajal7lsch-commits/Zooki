@@ -364,6 +364,12 @@ class Security {
             'validar_configuracion_clinica_ajax',
         ] as $a) { $matriz[$a] = $admin; }
 
+        $matriz['get_coordinacion_horarios_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['proponer_horario_vet_ajax'] = [Roles::VETERINARIO];
+        foreach (['guardar_horario_vet_ajax', 'aprobar_horario_vet_ajax', 'rechazar_horario_vet_ajax', 'crear_cierre_clinica_ajax', 'retirar_cierre_clinica_ajax'] as $accionHorario) {
+            $matriz[$accionHorario] = [Roles::ADMIN];
+        }
+
         // RN-201: registrar actos clinicos y operar el area del veterinario es
         // exclusivo del rol Veterinario, ni siquiera el administrador entra.
         foreach ([

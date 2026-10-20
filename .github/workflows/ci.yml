@@ -123,6 +123,7 @@ jobs:
       run: |
         vendor/bin/phpunit tests/Integration/BaseV2MysqlTest.php
         vendor/bin/phpunit tests/Integration/AgendaB2MysqlTest.php
+        vendor/bin/phpunit tests/Integration/AgendaC2MysqlTest.php
 
     # Lo que hace producción con un volumen vacío: MySQL ejecuta los .sql del
     # primer nivel de database/ al crear la base (docker-compose.yml).

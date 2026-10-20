@@ -211,7 +211,7 @@ final class LimitePlanTest extends TestCase
         $datos = $this->cita() + [];
         $datos['id_mascota'] = 100;
         try {
-            (new LimitePlan($this->db, 1))->transaccion(function () use ($mascotas, $citas, $datos): void {
+            $citas->coordinarReserva($datos, function () use ($mascotas, $citas, $datos): void {
                 $mascotas->vincular(100, 6);
                 $citas->registrar($datos);
             });

@@ -16,7 +16,10 @@ final class ConfiguracionClinicaTest extends TestCase
     protected function setUp(): void
     {
         $this->db = DosClinicas::sqlite();
+        DosClinicas::crearMascotasSqlite($this->db);
         DosClinicas::crearCatalogosSqlite($this->db);
+        DosClinicas::crearHistoriaSqlite($this->db);
+        Csrf::token();
         (new InicializadorClinica($this->db))->copiar(1);
         (new InicializadorClinica($this->db))->copiar(2);
         $this->comoAdmin(1);
@@ -35,6 +38,7 @@ final class ConfiguracionClinicaTest extends TestCase
 
     private function json(callable $accion): array
     {
+        $_POST['csrf_token'] = Csrf::token();
         ob_start();
         try { $accion(); return json_decode(ob_get_contents(), true); }
         finally { ob_end_clean(); }

@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **C1 y C1.1 revisadas y aprobadas en código (2026-10-18)**. H-C1-1 cerrado por revisión independiente de la corrección. Pendientes las comprobaciones manuales del dueño, commit/push y CI MySQL 8 de esta entrega; no iniciar C2 antes de confirmar ese CI. Las revisiones anteriores se conservan como historial; el CI de B no acredita C1.
+> Estado: **C2 y C2.1 revisadas y aprobadas en código (2026-10-20)**. H-C2-1/H-C2-2 cerrados por revisión independiente con suite completa MariaDB en verde. Pendientes comprobaciones manuales del dueño, commit/push y CI MySQL 8 nuevo antes de C3. El fallo previo de C2 y las revisiones anteriores se conservan como historial.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -75,7 +75,8 @@ Los criterios normativos permanecen en `documentacion/`; no se cambian silencios
 | **B2.1. Corrección del control automático** | Configuración revisada y aprobada por Codex arquitecto (2026-10-18); H-B2-1/H-B2-2 cerrados. Se conservan 58 tablas y ambas clases secuenciales con base explícita. Fallo nativo posterior deriva a B2.2, según revisión CI. | H-B2-1/H-B2-2 de la revisión B2 | Codex ejecutor | Codex arquitecto independiente |
 | **B2.2. Compatibilidad y fallos del migrador** | Metadata propia de CHECK/generadas aceptada en MySQL 8/MariaDB y variantes incompatibles rechazadas; shell del migrador con pipefail. Revisada/aprobada y CI completo verde en 663ea26 (2026-10-18); ver cierre de B al final. | H-B2-3/H-B2-4 de «CI de B2 — Revisión» | Codex ejecutor | Codex arquitecto independiente |
 | **C1. Marca y tipos — entregada, pendiente de revisión** | Componentes C1 de HU-7.4: configuración, duración/margen/pausable, teléfono; propagación de marca en salidas existentes y aislamiento; mismo diseño y validación en vivo. La aceptación operativa de margen/urgencias/pausas se completa en C3/C4a/C7a según la matriz por RE. | B | Codex | Codex independiente |
-| **C2. Horarios** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. | C1 | Codex | Codex independiente |
+| **C2. Horarios — entregada, pendiente de revisión** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. Resultado y evidencia en Anexo C2; HU-4.11 continúa con C3/C5. | C1 | Codex ejecutor | Codex arquitecto independiente |
+| **C2.1. Corrección — entregada, pendiente de revisión** | H-C2-1/H-C2-2: auditoría común de lectura ajena y regresión durable; causa demostrada y corrección del sondeo de metadata sin debilitar las diez carreras. Evidencia final y pendientes en Anexo C2.1; no aprueba C2 ni inicia C3. | C2 revisada con corrección | Codex ejecutor | Codex arquitecto independiente |
 | **C3. Disponibilidad y reserva** | Una lógica de intersección, resta de ausencias/cierres y ocupación por duración+margen para sugerencias, reserva y reprogramación; candados y pruebas concurrentes; nunca disponibilidad permanente por falta de horario. Cierre de HU-4.9 y base de HU-4.6/4.8. | C2 | Codex | Codex independiente |
 | **C4a. Agendar con triage** | Interno y portal comparten captura/buscador C4 de M2; cuatro ramas, excepción roja, clínica cerrada, revisión humana y contagio, persistencia y notificaciones. Rojo deriva a circuito clínico; no crea reserva ordinaria ni promete atención por el solo cálculo remoto. | C3 | Codex | Codex independiente |
 | **C4b. Sobrecupos y cambios** | Tope y orden naranja con motivo; primer espacio amarillo/elección verde; conflictos sobrevenidos; cancelación/reprogramación interna y portal con misma lógica; revisión previa al horario y registro del nivel aprobado por vet. | C4a | Codex | Codex independiente |
@@ -183,7 +184,8 @@ Las diferencias normativas de esta tabla se detectaron en A y se alinean documen
 - [x] B2 revisada y cerrada con B2.1/B2.2 y CI completo en verde (2026-10-18); hallazgos cerrados, revisiones conservadas. Esquema preparado sin despliegue.
 - [x] B2.1 revisada y aprobada por Codex arquitecto (2026-10-18); H-B2-1/H-B2-2 cerrados según su revisión conservada. La evidencia CI posterior requiere B2.2; no habilita C1.
 - [x] B2.2 revisada/aprobada y CI completo MySQL 8 confirmado en 663ea26 (2026-10-18); H-B2-3/H-B2-4 cerrados. Puede prepararse C1 tras guardar el cierre documental.
-- [x] C1 y corrección C1.1 revisadas y aprobadas en código (2026-10-18); H-C1-1 cerrado. Pendientes pruebas manuales, commit/push y CI MySQL 8 antes de C2.
+- [x] C1 y C1.1 aprobadas en código; H-C1-1 cerrado. Guardadas en 9497034 y CI completo aprobado, según cierre 2026-10-19. Pruebas manuales sin confirmación explícita siguen pendientes.
+- [x] C2 y C2.1 revisadas y aprobadas en código (2026-10-20); H-C2-1/H-C2-2 cerrados. Pendientes pruebas manuales, commit/push y CI MySQL 8 nuevo antes de C3.
 - [ ] Cada subetapa tiene anexo «Anexo X — Resultado», autor, RE con prueba, comandos y pendientes; estado «entregada, pendiente de revisión».
 - [ ] Revisor comprueba diff, riesgos y Modelos paso a paso; escribe «### X — Revisión (fecha)», veredicto, evidencia propia, hallazgos archivo/línea/RE o RN/reproducción y siguiente paso. No inventar ahora anexos o revisiones aprobadas.
 - [ ] PHP completo, con y sin host; MySQL 8 si está disponible y/o MariaDB local, siempre **`zooki_test_base_v2`**; pruebas concurrentes con conexiones separadas. Si no hay servidor, declarar omisión y repetir antes del cierre, sin presentar SQLite como prueba de concurrencia MySQL.
@@ -2308,3 +2310,225 @@ Cuatro casos, en escritorio y celular, sin ejecutarlos el agente. Usar correos l
 5. **Fabio (propietario) y Beto Norte (vet):** portal/imprimibles conservan Zooki y procedencia por acto. En muestras locales nuevas disponibles, los contactos opcionales ausentes no dejan filas vacías y un mensaje global conserva Zooki sin marca clínica heredada; no alterar configuración para provocar envíos.
 
 **Siguiente:** tras las comprobaciones manuales, el usuario guarda C1 junto con C1.1 y las anotaciones pendientes del arquitecto, y hace push. Confirmar ambos trabajos CI y las pruebas MySQL 8 de esta entrega antes de preparar/iniciar C2. Sin nueva decisión funcional, versión, exportaciones o despliegue por este cierre.
+
+### Cierre de C1 — Revisión (2026-10-19)
+
+**Revisó Codex arquitecto.** Usuario confirma commit y push; HEAD verificado 9497034b488f7eaec2e537e1dee868bde99736a8, rama v2/m4-agenda y árbol limpio antes de este registro. [CI 39202318888](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39202318888) completed/success sobre ese SHA; trabajos build-and-test y base-v2-mysql completos aprobados. Logs: PHP general 878/7349 con 56 omisiones de motor, JS 243/243; MySQL 8.0.46 BaseV2MysqlTest 45/624 y AgendaB2MysqlTest 11/113, sin fallos/omisiones de esas clases. Instalación, doble migrador, semilla y volumen vacío (58 tablas/cuatro roles) aprobados. Es evidencia CI nueva de C1; no una repetición local ni una suite PHP completa contra MySQL. No hay despliegue ni ejecución Git de escritura del arquitecto.
+
+Puede encargarse C2. Las cinco pruebas manuales de C1 siguen sin resultado explícito del usuario; no se inventa una aprobación visual a partir del commit/push.
+
+## Encargo C2 — Horarios y coordinación (2026-10-19)
+
+**Escribe Codex ejecutor; revisa Codex arquitecto en otra conversación.** Contrato: HU-4.11, RE-4.11.1/2/4/5 y parte administrativa de RE-4.8.2; RN-706/703/415 y RNF-11. RE-4.11.3 y exclusión completa RE-4.8.3 cierran en C3; marcas y procesamiento efectivo se reparten con C5. C2 no declara toda la agenda operativa.
+
+Implementar franjas recurrentes por veterinario/semana en clínica activa, dentro de sus bloques de apertura y sin solapes propios o con otras clínicas; excepción global mínima encapsulada, respuesta genérica sin revelar clínica/horario ajenos. Admin configura; vet solo propone lo propio, admin de esa clínica aprueba/rechaza con motivo donde exige el contrato. Revalidar propuesta, membresía, permisos y horario actual al resolver; pendiente no modifica disponibilidad. Cierres puntuales con inicio/fin exactos y baja lógica en cierres_clinica, sin convertirlos en recurrencia ni ausencia de cada vet.
+
+Adelantar el coordinador común B1/B1.1 y sus lecturas actuales antes de habilitar estos escritores: guardado/restauración del horario clínico, horario del vet, aprobación de propuesta y cierres. Integrar los escritores existentes de reserva/reprogramación necesarios para serializar la carrera P04 con los mismos recursos; no basta probar dos cambios de horario entre sí. No mezclar transacciones exteriores, invertir locks ni introducir un segundo protocolo HC/GET_LOCK. Si se toca numeración/entrada de consulta, respetar su migración uniforme prevista en B1, sin retirada parcial de candados. C3 conserva el cálculo completo de disponibilidad y C7a la integración clínica correspondiente.
+
+Horario/cierre, versiones/marcas de citas afectadas, operación idempotente y auditoría se guardan atómicamente; preservar horas pactadas/reales y snapshots. Marcas visibles y recuperables como pendientes para C5, sin movimientos/reasignaciones automáticos ni reset de bloque/tope. Usar esquema publicado en B; si falta un dato real, justificar contra MER antes de proponer migración nueva, sin editar 03–08.
+
+Conservar Configuración/horarios HU-7.1 y diseño de perfil vet; añadir rutas/RBAC/CSRF, validación y restricción en tiempo real, respuesta canónica inmediata y control de doble envío. Cotejar Modelos §7/§13.4/§9; cierres con §4 y contrato B1. Si falta el flujo específico, agregarlo en esta entrega y verificar Mermaid, sin exportaciones/revisión documental de cierre.
+
+**Verificación:** P01/P04 y por RE: permisos/contextos ajenos, propuesta propia/ajena, aprobación repetida/obsoleta, rechazo motivado, solapes intra/interclínica y límites exactos, cierre de un solo lunes sin afectar los demás, marcas/horas conservadas, idempotencia/carga distinta y rollback ante auditoría fallida. Dos conexiones reales con barreras para modificar/restaurar/aprobar/cerrar mientras otra reserva; resultado íntegro tras esperar y relectura actual. JS de formularios/errores/respuestas/doble envío y suites completas PHP sin/con motor y JS. Incluir realmente las pruebas nuevas de motor/concurrencia en el CI MySQL 8 si su selección actual no las recoge; distinguir omisión de ejecución. Solo zooki_test_base_v2; nunca .env/base manual.
+
+**Fuera:** cálculo completo C3, triage C4, cascada/avisos de reajuste C5, solicitudes de ausencia/cobertura C6, urgencias/conciliación C7, versión, despliegue y exportaciones. Sin decisiones funcionales nuevas, rediseños o capacidades de crear citas para el administrador. Si el alcance excede este contrato, reportar el punto concreto antes de ampliarlo. Entregar Anexo C2, estado pendiente de revisión, 3–5 pruebas manuales por usuario y comandos simples; no commit/push del agente ni inicio C3. Conservar estos registros del arquitecto.
+
+## Anexo C2 — Resultado (2026-10-19)
+
+**Autor: Codex ejecutor; revisión a cargo de Codex arquitecto en otra conversación.** Entrega limitada a horarios y coordinación del encargo C2; no aprueba su propia entrega ni inicia C3. Se conservan los anexos, revisiones y anotaciones pendientes del arquitecto, incluido el cierre de C1 en 9497034 y su CI; ese CI anterior no se presenta como prueba nueva de C2.
+
+**Estado: C2 entregada, pendiente de revisión.**
+
+### Contrato implementado
+
+- El administrador configura la semana de un veterinario activo de su clínica. Día 1–7, horas válidas con segundos conservados, inicio menor que fin, orden y ausencia de solapes; cada franja debe caber completa en un bloque abierto. Los extremos contiguos son válidos. Una semana sin franjas no significa disponibilidad permanente.
+- RN-706: el modelo encapsula la única proyección ajena necesaria, día e intervalos activos del mismo veterinario. El mutex global de usuario serializa sus cambios entre clínicas; la respuesta de conflicto no contiene clínica ni horario ajenos.
+- El veterinario solo propone sobre sí mismo en su clínica activa. Pendiente no cambia horario ni citas. El administrador resuelve una propuesta propia pendiente: rechazo con motivo, o aprobación revalidando actor, membresía, franjas, apertura y conflictos actuales. Una propuesta ya resuelta o incompatible con el contexto actual no se aplica como nueva aprobación. Misma clave/carga devuelve el resultado previo; otra carga con esa clave se rechaza.
+- `cierres_clinica` guarda el intervalo exacto [inicio, fin), motivo y autor; retirarlo modifica `activo`, conserva su fila y deja los reajustes para C5. No altera otros lunes, la recurrencia del veterinario ni las ausencias. Un cierre puede atravesar varias fechas.
+- Guardar/restaurar apertura, guardar semana vet, proponer/resolver y crear/retirar cierre comparten `CoordinadorAgenda`, `OperacionAgenda` y auditoría de la misma unidad. Primero clínica; después descubrimiento actual de usuarios/mascotas, usuarios globales ordenados, mascotas ordenadas, vínculos/configuración, citas ordenadas y resolución de propuesta/resultado. La aprobación actualiza la propuesta después de marcar las citas. Las lecturas de decisión MySQL usan READ COMMITTED solo para esa transacción; después de esperar no se reutiliza una instantánea anterior.
+- Reserva y reprogramación entran por la misma unidad exterior, con el vínculo portal y su reserva atómicos. Se descartan los datos previos de la cita al reprogramar y se comprueban otra vez actor/vínculos, apertura, jornada y cierres. Se conserva el límite existente y el registro/aviso del intento bloqueado después del rollback exterior. No se otorgan rutas nuevas de creación de citas al administrador.
+- Una transacción exterior desconocida se rechaza; la anidación reconocida solo admite la misma clínica y un subconjunto de recursos ya bloqueados. Un deadlock/timeout revierte la unidad y exige reintentar el comando completo. No se cambia Consulta/Mascota ni se introduce una entrada agenda → HC/GET_LOCK: la integración clínica uniforme continúa en C7a, conforme al encargo y B1.
+- Horario/cierre, marcas, `version_agenda`, operación y auditoría confirman o revierten juntos. Solo cambian estado/motivo de reajuste y versión en las citas afectadas; se conservan el resto de sus campos, horas pactadas/reales, snapshots, bloque y topes. Duración histórica desconocida queda `pendiente_revision`, sin duración inventada; las demás afectadas quedan `pendiente_calculo`. Retirar/restaurar no elimina marcas como si C5 las hubiese procesado.
+- La clave opaca del comando es independiente de CSRF; el servidor deriva clínica y actor y compara una huella canónica. El resultado durable conserva referencias/estado, sin copiar la semana ni la apertura. La vista autorizada y la configuración actuales se reconstruyen en la unidad y se devuelven después del commit, también en reintentos.
+- Configuración, horario HU-7.1 y perfil vet conservan sus componentes previos y añaden formularios/listas C2. Siete rutas con matriz Security, contexto, POST/CSRF y validación servidor. El formulario conserva la clínica esperada para impedir guardar desde una pestaña de otro contexto. Validación/restricción de entradas, errores junto al campo, bloqueo durante lectura/guardado y respuesta canónica antes del aviso; sin CSS/JS en línea. Los pendientes de reajuste son visibles.
+
+### Trazabilidad y pruebas
+
+| RE / caso | Evidencia de esta entrega |
+|---|---|
+| RE-4.11.1/2; RN-706/703/415; P04 | `CoordinacionHorariosTest::testIntervalosPropiosAperturaYLimitesExactos` y `testConflictoGlobalSoloDaAvisoGenerico`: días, inversión, solapes, pertenencia, intervalos contiguos y conflicto ajeno genérico. |
+| RE-4.11.5; RNF-11; P01/P04 | `testRolesContextoPertenenciaYLecturasAisladas`, `testPropuestaPendienteResolucionRepetidaYRechazoMotivado`, `testAprobacionRevalidaAperturaYMembresiaActuales`: Norte/Sur, propietario/plataforma, vet propio, denegaciones, resolución, motivo y obsolescencia. |
+| RE-4.11.4; B1/B1.1; P04/P09 | `testMarcasSnapshotsIdempotenciaYClaveConCargaDistinta`, `testFalloAuditoriaRevierteHorarioMarcasOperacionYCierre` y `testReprogramacionRevierteTambienOperacionSiFallaAuditoria`: comparación de todos los demás campos de cita, versión única, resultado mínimo y rollback de guardar/restaurar/aprobar/rechazar/cerrar/reprogramar. |
+| RE-4.8.2; Modelos §4/§16; P04 | `testCierreDeUnLunesNoEsRecurrenteYBajaLogica` y `testCierreUsaExtremosSemiabiertosYNoMarcaOtraFechaDesconocida`: otra fecha intacta, baja lógica, terminar justo al inicio del cierre o comenzar justo al fin permitido, solape de un minuto rechazado. |
+| B1/B1.1; P01/P04 | `testReenvioReservaYReprogramacionNoDuplicaNiAdmiteCargaDistinta` y `testNoSeMezclaTransaccionExteriorYControladorExigeCsrf`: misma operación sin duplicar/versionar otra vez, orden de claves de entrada indiferente, contexto de formulario obsoleto y CSRF. |
+| Concurrencia real P04; RE-4.11.4 | `AgendaC2MysqlTest`: rollback por trigger de auditoría, replay durable y cierre lógico en esquema real; diez carreras con procesos/PDO independientes y barreras: guardar vet, guardar apertura, restaurar, aprobar y cerrar, cada una en ambos órdenes frente a reservar. Un observador comprueba la espera real entre esos dos IDs de conexión; al liberar, reserva contra configuración actual o marca la cita recién confirmada, conservando hora, duración y margen. |
+| JS de formularios | `CoordinacionHorarios.test.cjs`, siete casos: validación, extremos, errores 422, clave estable independiente de CSRF, respuesta canónica y doble envío. El séptimo ejecuta los JS reales sobre HTML aislado en Chrome con respuestas simuladas: carga bloqueada, error visible, reintento y marca actualizada antes del aviso. No recorre la aplicación. |
+
+Las fixtures SQLite representan las tablas/campos ya publicados en B y siembran franjas vet explícitas para sus casos; no se inventan horarios en producción. Dos casos antiguos de ocupación interclínica reciben deliberadamente una franja histórica incompatible para seguir comprobando ocupación, sin debilitar sus aserciones; los nuevos escritores rechazan crear ese solape. El caso portal de cuota usa ahora la entrada exterior común y conserva sus comprobaciones de vínculo, rollback, auditoría y aviso.
+
+### Verificación propia y comandos ejecutados
+
+| Ejecución real | Resultado |
+|---|---|
+| PHP completo sin host, fuente final | 892 pruebas / 7431 aserciones; 58 omitidas de motor; salida 0; 00:41.493. |
+| PHP completo con MariaDB 10.4.32 | 892 pruebas / 8237 aserciones; cero omitidas; salida 0; 11:12.047. |
+| Regresión C2 SQLite después de los últimos ajustes de respuesta/campo | 12 pruebas / 76 aserciones; cero omitidas; salida 0; 00:00.093. |
+| Regresión C2 MariaDB repetida después de esos ajustes | 2 pruebas / 73 aserciones; diez carreras con espera real; cero omitidas; salida 0; 00:22.623. |
+| JS completo secuencial, incluidos siete casos C2 | 250/250; cero fallos/omisiones; salida 0; 5.752 s. |
+| Sintaxis y alcance | 24 PHP válidos; tres JS de aplicación y prueba C2 válidos; git diff --check sin incidencias; rama v2/m4-agenda conservada. |
+
+La suite completa de motor se inició antes del último ajuste que limita el resultado durable a referencias y reconstruye la configuración actual, y del campo `fin` para su error de fecha. Después se repitieron las regresiones C2 SQLite y de motor, además de la suite completa sin host sobre la fuente final; no se atribuye la nueva aserción del resultado mínimo a la ejecución completa anterior. Los mensajes de auditoría/SMTP simulados son fallos provocados por las pruebas, sin correo real.
+
+Comandos principales realmente ejecutados (cada suite con su entorno explícito, no la configuración local):
+
+```powershell
+php vendor/phpunit/phpunit/phpunit --colors=never --cache-directory "$env:TEMP\zooki-c2-cache-sin-host"
+C:\xampp\php\php.exe vendor/phpunit/phpunit/phpunit --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/CoordinacionHorariosTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaC2MysqlTest.php --colors=never
+node --test --test-concurrency=1 tests/Frontend/*.test.cjs
+node --check public/js/coordinacion-horarios.js
+node --check public/js/horarios.js
+node --check public/js/csrf.js
+node --check tests/Frontend/CoordinacionHorarios.test.cjs
+git diff --check
+```
+
+Se ejecutó también php -l por cada uno de los 24 PHP tocados, el validador YAML sin duplicados/comparación estructural, la comparación de anexos iniciales y el render local del nuevo Mermaid. Entorno: TRUSTED_PROXIES=127.0.0.2; sin host para SQLite y host/puerto/usuario/clave de pruebas explícitos para MariaDB, ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2 en todas las ejecuciones con motor. Motor observado mediante SELECT VERSION(): 10.4.32-MariaDB. No se lee/escribe .env, toca la base manual, cambia servicios, envía correo real o recorre pantallas; Chrome solo ejecuta el HTML aislado de la prueba automatizada. MySQL 8 no disponible localmente y no verificado en esta entrega; CI tras el push del usuario sigue pendiente.
+
+### Diagramas, alcance y pendientes
+
+Modelos §16 agrega el flujo específico de horarios/propuestas/cierres, sus errores, coordinación, auditoría y respuesta; §7 lo referencia. Los 27 Mermaid anteriores de Modelos siguen idénticos; el nuevo renderizó 1/1 con Mermaid CLI/Chrome. Son 28 en Modelos, sin cambios del MER/drawDB ni exportaciones. No se cambian RE/RN, sus conteos, tablas, migraciones, versión, servicios o credenciales.
+
+El workflow añade únicamente `AgendaC2MysqlTest` como tercera clase secuencial del trabajo MySQL 8: selección efectiva 45 + 11 + 2, base explícita `zooki_test_base_v2`, mismos controles de instalación/semilla/migrador/volumen vacío. YAML válido sin claves duplicadas y comparación contra HEAD confirma que el único cambio es esa invocación. No se ejecutó CI remoto; MySQL 8 nuevo queda pendiente tras el push del usuario.
+
+C3 conserva el cálculo completo de sugerencias, ausencias y ocupación con margen, y el cierre de RE-4.11.3/RE-4.8.3; las guardias actuales de escritura no se presentan como ese cálculo completo. C5 procesa las marcas; C6 cubre ausencias/cobertura y C7 la integración clínica/eventos. No se declara HU-4.11 completamente cerrada. No hay decisión nueva de producto por esta entrega. Las comprobaciones manuales de C1 que el dueño no confirmó siguen pendientes.
+
+### Cinco comprobaciones manuales del dueño, pendientes
+
+Realizarlas en escritorio y celular, con los usuarios de prueba ya disponibles; no son pruebas ejecutadas por el agente.
+
+1. **Ana Norte (admin):** en Configuración, guardar dos franjas contiguas de Beto dentro de apertura; probar una invertida, solapada y otra fuera de apertura. Verificar errores junto al grupo de franjas, persistencia y actualización inmediata; los controles de horario HU-7.1 conservan su diseño.
+2. **Beto Norte (vet) y Ana Norte (admin):** desde perfil, proponer una semana propia. Comprobar que no cambia la vigente; rechazar sin motivo debe fallar, con motivo queda rechazada. Proponer de nuevo y aprobar. Si antes cambia apertura y vuelve incompatible la propuesta, la aprobación se rechaza sin aplicarla. El vet no guarda directamente ni propone para otro.
+3. **Carla Sur (admin), Ana Norte (admin) y Elena Doble (vet en ambas):** establecer una franja de Elena en Sur e intentar solaparla desde Norte. Aviso genérico sin clínica/horas ajenas; un extremo contiguo es válido. Norte y Sur mantienen sus listas separadas. **Fabio (propietario) y Gina (plataforma):** acceso directo a gestión denegado.
+4. **Ana Norte (admin):** crear cierre de un lunes concreto y retirarlo. Verificar registro activo/retirado, sin apagar otros lunes ni generar ausencias. Una cita que termina al inicio o comienza al fin no solapa; otra que cruza el intervalo queda pendiente de reajuste.
+5. **Ana Norte (admin) y Beto Norte (vet):** con una cita de prueba existente, reducir la jornada o apertura y restaurarla. La cita aparece pendiente, conserva hora/snapshots y no se mueve automáticamente. Intentar doble envío y cambio rápido de veterinario mientras carga: no duplicar comandos ni guardar las franjas de uno sobre otro. Comprobar que perfil y Configuración siguen utilizables en celular.
+
+### C2 — Revisión (2026-10-19)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: con corrección requerida C2.1.** H-C2-1 y H-C2-2 abiertos. No se cambia código de aplicación desde esta revisión, no se aprueba C2 ni se inicia C3. Se conservan la entrega del ejecutor y sus resultados con atribución, sin reemplazarlos por los propios.
+
+**H-C2-1 / P2 — la lectura de horario ajeno deniega sin auditar.** `models/CoordinacionHorarios.php:70–96`: leer invoca veterinario, que lanza AccesoDenegado directamente en línea 75 si no encuentra el vet en la clínica; la lectura carece del tratamiento de auditoría que tiene escribir. `controllers/CoordinacionHorariosController.php:25–27` propaga esa denegación y `Security::responder` solo responde: no registra el intento. Afecta RE-T.15.2/RN-G13 y la rama de denegación auditada de Modelos §16. Reproducción propia sin pantallas ni motor externo: bootstrap de pruebas, DosClinicas SQLite + mascotas/catálogos/historia/poblarAgenda; contexto admin 1/Norte, CoordinacionHorarios::leer(4), vet de Sur. Resultado 403 «Veterinario no disponible en este contexto», auditoria_sistema 0 antes y 0 después. No hay acceso a datos ajenos demostrado; falta su registro de seguridad. Corregir con la vía de auditoría común y añadir regresión que compruebe denegación y registro durable, además de ausencia de cambios de negocio. Conservar rollback/reauditoría de escritores para que el ajuste no pierda el registro ni lo duplique en operaciones normales.
+
+**H-C2-2 / P2 — la verificación de concurrencia no es estable dentro de la suite completa.** Ejecución propia completa MariaDB: `tests/Integration/AgendaC2MysqlTest.php:161`, testDosEscritoresConBarrerasEnAmbosOrdenesYRelecturaActual, falla en la primera carrera vet al no observar espera real. Diagnóstico literal: primero.fin y segundo.fin «sin resultado»; primero.log y segundo.log vacíos. Suite completa: 892 pruebas / 8174 aserciones / un fallo, salida 1, 11:51.414. Repetición aislada posterior, sin cambios de fuente: 2 pruebas / 73 aserciones, salida 0, 00:22.612; diez carreras completas. Esto confirma diferencia de ejecución, no la causa ni una doble reserva. Afecta evidencia P04/RE-4.11.4 y la definición de terminado. Investigar preparación/estado heredado, sincronización y observador con evidencia de conexiones/bloqueos/resultado; corregir la causa demostrada en arnés o aplicación según proceda. No cerrar con la pasada aislada, omitir carreras, sustituir por sleeps, eliminar observación real o aumentar plazos a ciegas. Un intento posterior de consultar metadata encontró la base ya retirada por el teardown de esa ejecución aislada; no aporta diagnóstico de la espera y no se presenta como tal.
+
+**Resto inspeccionado:** coordinador exterior y anidación reconocida, orden clínica→usuarios→mascotas y recursos actuales, READ COMMITTED limitado a la transacción; escritores de apertura/restauración/franjas/propuestas/cierres y entradas de reserva/reprogramación, vínculo portal y cuota. Revalidaciones de actividad/contexto, aislamiento y proyección global mínima; intervalos con segundos y extremos semiabiertos; marcas/versiones atómicas con auditoría sin mover horas/snapshots/bloques. Operación durable mínima y reconstrucción de vista actual; formularios/JS bloquean lecturas/escrituras y descartan respuestas obsoletas. La rama nueva de lectura denegada es la excepción de auditoría indicada en H-C2-1. No se declara completado el cálculo C3, procesamiento C5, ausencias C6 o integración clínica C7.
+
+**Verificación propia adicional:** PHP completo sin host 892 pruebas / 7431 aserciones / 58 omitidas, salida 0 (00:39.060). JS completo secuencial con Chrome sobre HTML aislado: 250/250, cero fallos/omisiones, salida 0 (7.040 s). Sintaxis propia 24 PHP válida y diff sin incidencias. YAML válido sin claves duplicadas; comparación estructural con HEAD: único cambio tercera invocación secuencial AgendaC2MysqlTest; selección 45+11+2, base explícita y controles anteriores intactos. Los cambios de fixtures conservan las aserciones anteriores y añaden franjas explícitas; datos históricos deliberados para ocupación interclínica no simulan que el editor permita crearlos. Anexos/revisiones previos conservados íntegros.
+
+**Diagramas/diseño:** cotejados Modelos §7/§13.4/§9 y nuevo §16 con entradas, errores, transacción, respuesta y permisos; discrepancia de denegación auditada H-C2-1. Renderizado propio del nuevo §16 con Mermaid local/Chrome: 1/1 sin errores; 27 bloques previos idénticos. Configuración, horarios y perfil conservan sus componentes previos y añaden la sección C2, sin rediseño del resto. No se recorren pantallas de la aplicación; diseño responsive y comportamiento integrado quedan para el dueño.
+
+Las ejecuciones propias con motor usan exclusivamente zooki_test_base_v2 y variables explícitas, TRUSTED_PROXIES=127.0.0.2. No se lee/escribe .env ni se consulta la base manual, envía SMTP real o cambia servicios. MariaDB 10.4.32 no se presenta como MySQL 8; CI C2 pendiente después de futura corrección/revisión/push. No se cambia versión, esquema, migraciones o exportaciones desde revisión.
+
+**Encargo C2.1:** resolver ambos hallazgos con regresiones y diagnóstico atribuido, manteniendo los cinco casos/dos órdenes/espera real y la selección CI MySQL 8. Verificar la corrección en la suite PHP completa con motor, además de la aislada cuando ayude al diagnóstico, y suite PHP sin host/JS. Añadir Anexo C2.1, actualizar estado como entregada pendiente de revisión y conservar toda esta evidencia, incluido el fallo completo aunque una corrida posterior pase. Sin nuevas reglas funcionales, commit/push del agente o C3. Tras revisión de C2.1, el dueño hará las cinco comprobaciones manuales del Anexo C2 (no ejecutadas ni aprobadas por el revisor), guardará C2 junto con su corrección y comprobará el CI nuevo antes de C3.
+
+## Anexo C2.1 — Resultado (2026-10-19)
+
+**Autor: Codex ejecutor; revisa Codex arquitecto en otra conversación.** Corrección limitada a H-C2-1/H-C2-2. Se conservan íntegramente C2, su revisión y el resultado independiente fallido 892/8174, un fallo, salida 1; la pasada aislada anterior 2/73 no lo reemplaza. El ejecutor no cierra los hallazgos ni aprueba C2. No se inicia C3.
+
+**Estado: C2.1 entregada, pendiente de revisión.**
+
+### H-C2-1 — Denegación por la vía común
+
+`CoordinacionHorarios::veterinario` usa ahora `ModeloClinica::denegarAcceso` en vez de lanzar directamente AccesoDenegado. Una lectura de vet ajeno o inexistente registra el intento en el contexto del actor y devuelve el mismo mensaje genérico del mecanismo común, sin clínica/horario ajenos. Los escritores conservan su tratamiento exterior: la primera auditoría se revierte junto al negocio y el catch posterior al rollback registra una única denegación durable.
+
+Regresión nueva `CoordinacionHorariosTest::testLecturaAjenaAuditaYEscritorReauditaSoloUnaVezTrasRollback`: con admin Norte, leer 4/Sur y leer 999 devuelve 403, mismo mensaje, una fila durable por intento, actor/clínica Norte y tablas de negocio idénticas. Guardar el vet ajeno deja una sola fila aunque pase por rollback/reauditoría. Un trigger de prueba revoca al actor durante la escritura, antes de reconstruir la vista canónica: horario, vínculos, operación y auditoría de negocio revierten; queda una única denegación fuera. Guardar válidamente y repetir la misma clave no añade denegaciones ni duplica la auditoría de negocio.
+
+Antes del ajuste, esta regresión falló con salida 1: una prueba/cinco aserciones, esperaba una auditoría y obtuvo cero. Después, clase C2 SQLite completa 13 pruebas/111 aserciones, salida 0. Trazabilidad: RE-T.15.2, RN-G13 y rama de denegación auditada de Modelos §9/§16.
+
+### H-C2-2 — Causa demostrada del observador
+
+La observación anterior consultaba cada 20 ms las tablas InnoDB de MariaDB. En el [código de MariaDB 10.4.32, trx0i_s.cc](https://github.com/MariaDB/server/blob/mariadb-10.4.32/storage/innobase/trx/trx0i_s.cc#L1104-L1122), la caché compartida de esas tablas solo se renueva después de más de 100 ms sin lecturas; cada lectura actualiza su último acceso, incluso si devolvió una instantánea sin la espera nueva. El propio sondeo podía mantener esa instantánea hasta vencer su plazo. La caché pertenece al motor, no al PDO ni a la base reconstruida; por eso una preparación que recrea las tablas no garantiza metadata nueva.
+
+`segundo.listo` acredita conexión, no que su SELECT FOR UPDATE ya esté esperando. Si el primer sondeo lee antes de ese intento puede fijar una instantánea vacía; si llega después y la caché permite renovar, pasa aislada. El experimento controla esa diferencia de sincronización y reproduce el patrón del fallo; no reconstruye retrospectivamente cada intercalación de la ejecución del revisor, cuya metadata original no quedó capturada.
+
+Evidencia propia, exclusivamente en zooki_test_base_v2:
+
+- Primer experimento sin controlar el momento del segundo intento: observador 5338, escritores 5339/5340; el sondeo de 20 ms detectó la espera inmediatamente. No se presenta esa pasada como reproducción del fallo.
+- Experimento con barrera de entrada del segundo escritor y lectura de metadata justo antes de permitirlo: observador 5341, escritores 5342/5343. Preparación confirmada, cero citas/operaciones y una franja. Observador sin transacción heredada, autocommit 1; conexiones independientes sobre la base de pruebas. Durante 10.016 s el observador anterior no vio espera; ambos .fin seguían ausentes. PROCESSLIST de esos dos IDs mostró al primero reteniendo su transacción y al segundo ejecutando SELECT de clínica FOR UPDATE. Tras 125 ms sin leer esa caché, el mismo observador vio la espera real entre los mismos IDs, todavía antes de liberar al primero. Al liberar, el cambio vet confirmó y la reserva incompatible se rechazó.
+- El aislamiento de sesión observado fue REPEATABLE-READ. No se confunde con el READ COMMITTED que el coordinador configura solo para su siguiente transacción; una comprobación exploratoria que los confundía se descartó. No se cambió el aislamiento de sesión/global ni el algoritmo de candados.
+- La misma precondición se incorporó a la regresión de diez carreras: segundo escritor conectado, pero detenido por una nueva barrera de entrada; observador consulta la ausencia de esa pareja en metadata y después permite su intento. Con el sondeo anterior, falla en la primera carrera vet: una prueba/nueve aserciones, salida 1 (19.864 s), observador 5347 sin transacción, escritores 5348/5349; primer bloqueo activo, segundo SELECT FOR UPDATE, resultados ausentes y logs vacíos. Reproduce el patrón de la revisión con diagnóstico adicional; no demuestra doble reserva.
+
+Corrección del arnés: MariaDB consulta de nuevo después de 125 ms de inactividad de esa caché; MySQL 8 conserva su sondeo de 20 ms sobre performance_schema. Se mantienen el plazo total de observación de 10 s y las barreras de 20 s, sin aumentarlos. El intervalo entre consultas no sustituye la barrera ni prueba por sí mismo que haya bloqueo: éxito exige la relación real entre los dos IDs en metadata antes de liberar al primero.
+
+Se conservan los cinco comandos, ambos órdenes, procesos/PDO independientes y todas las aserciones finales de resultado, cita, versión, hora, duración y margen. Se agregan ocho comprobaciones por carrera: preparación fuera de transacción, IDs positivos/distintos del observador, base de pruebas y transacción del retenedor, autocommit y ausencia de esa pareja antes del intento. El fallo ahora incluye estado del retenedor, conexiones propias/SQL y estado transaccional del observador. No consulta negocio de otras bases. La limpieza libera ambas barreras y espera a los procesos antes de retirar sus archivos.
+
+Después del ajuste, la clase de motor completa pasó 2 pruebas/153 aserciones, sin omitidas, salida 0 (25.888 s), incluidas las diez carreras con metadata previa controlada. La fuente PHP quedó congelada antes de iniciar las suites completas de esta corrección; sus resultados finales figuran a continuación. La pasada aislada no basta para considerar resuelto H-C2-2.
+
+### Verificación final propia, sobre la misma fuente
+
+| Ejecución | Resultado real |
+|---|---|
+| Regresión C2 SQLite | 13 pruebas / 111 aserciones, salida 0 (00:00.108). |
+| Regresión C2 MariaDB 10.4.32 | 2 pruebas / 153 aserciones, diez carreras con metadata previa controlada, cero omitidas, salida 0 (00:25.888). |
+| PHP completo sin host | 893 pruebas / 7466 aserciones, 58 omitidas de motor, salida 0 (00:26.002). |
+| PHP completo MariaDB 10.4.32 | 893 pruebas / 8353 aserciones, cero omitidas, salida 0 (10:38.023). Incluye la regresión de auditoría y las diez carreras, además de todas las pruebas anteriores. |
+| JS completo secuencial | 250/250, cero fallos/omisiones, salida 0 (6.327 s); Chrome solo sobre HTML aislado. |
+| Sintaxis, diff y conservación | Cuatro PHP de C2.1 válidos; git diff --check sin incidencias. Conservadas todas las aserciones anteriores de la clase de motor y las anotaciones iniciales del arquitecto. |
+
+Comandos principales ejecutados, con TRUSTED_PROXIES=127.0.0.2 y entorno de pruebas explícito en cada proceso:
+
+```powershell
+php vendor/phpunit/phpunit/phpunit tests/Integration/CoordinacionHorariosTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaC2MysqlTest.php --filter testDosEscritores --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaC2MysqlTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit --colors=never --cache-directory "$env:TEMP\zooki-c21-cache-sin-host"
+php vendor/phpunit/phpunit/phpunit --colors=never
+node --test --test-concurrency=1 tests/Frontend/*.test.cjs
+php -l models/CoordinacionHorarios.php
+php -l tests/Integration/CoordinacionHorariosTest.php
+php -l tests/Integration/AgendaC2MysqlTest.php
+php -l tests/Support/ProcesoAgendaC2.php
+git diff --check
+```
+
+Sin host en la suite SQLite. Para motor: ZOOKI_TEST_MYSQL_HOST=127.0.0.1, puerto 3306 y usuario/clave de pruebas explícitos, ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2; los hijos heredan ese entorno y fijan el mismo nombre de base en su DSN. La regresión aislada terminó antes de iniciar la suite completa de motor; nunca se reconstruyó esa base desde dos suites simultáneas. Los diagnósticos propios quedaron en archivos temporales fuera del repositorio y sus datos relevantes se transcriben arriba. Sin lectura/escritura de .env, consulta de la base manual, cambios de servicios/credenciales, SMTP real o pantallas de aplicación. Ninguna de estas ejecuciones se presenta como MySQL 8 o CI.
+
+### Flujos, alcance y pendientes
+
+Cotejados Modelos §16, §7, §13.4 y §9: la corrección implementa la denegación auditada ya dibujada y corrige únicamente la observación de pruebas. No cambia el flujo de producto; Modelos y sus Mermaid permanecen idénticos respecto del inicio C2.1, sin nuevo renderizado atribuido a esta corrección. Sin cambios de reglas, permisos, interfaz, coordinador, esquema/migraciones, versión o exportaciones.
+
+La selección CI MySQL 8 de C2 se conserva: BaseV2MysqlTest, AgendaB2MysqlTest y AgendaC2MysqlTest secuenciales con base explícita, 45+11+2 métodos. MariaDB 10.4.32 local no sustituye MySQL 8 ni el runner Linux. CI nuevo queda pendiente tras revisión y push del usuario; no se ejecutó ni reintentó remotamente.
+
+### Cuatro comprobaciones manuales aplicables, pendientes
+
+El agente no recorre pantallas. Con usuarios de prueba, en escritorio/celular y después de la revisión independiente:
+
+1. **Ana Norte (admin):** solicitar en la instalación de prueba `?action=get_coordinacion_horarios_ajax&id_veterinario=4` (vet de Sur). Debe devolver 403 genérico; en Auditoría de Norte debe aparecer un solo intento de Ana, sin datos del horario Sur ni cambios de negocio.
+2. **Ana Norte (admin):** cargar su Configuración y guardar válidamente una semana propia; verificar que las lecturas permitidas no generan denegaciones y que un doble envío no duplica la auditoría de negocio ni el resultado visible.
+3. **Ana Norte y Beto Norte (vet), en sesiones separadas:** reservar frente a un cambio de horario o cierre. El resultado debe quedar íntegro: reserva rechazada si cambió primero la configuración, o cita visible pendiente de reajuste si se confirmó primero. Mantener sus horas; esta prueba manual no sustituye las barreras automáticas.
+4. **Carla Sur (admin), Ana Norte, Fabio (propietario) y Gina (plataforma):** confirmar que los registros/datos de Norte y Sur permanecen separados y que propietario/plataforma siguen sin acceso a gestión. Las cinco comprobaciones de C2 y las de C1 sin confirmación explícita continúan pendientes, sin darse por realizadas aquí.
+
+### C2.1 — Revisión (2026-10-20)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: aprobada en código.** H-C2-1/H-C2-2 cerrados con las verificaciones propias descritas abajo; C2 queda aprobada en código sobre su revisión previa. No se dan por realizadas las comprobaciones manuales ni el CI MySQL 8 nuevo y no se inicia C3. El fallo de la revisión C2 (892/8174, salida 1) permanece en el historial; una pasada posterior no lo borra. El revisor solo actualiza plan/estado, sin corregir código de aplicación.
+
+**H-C2-1 cerrado (RE-T.15.2/RN-G13):** comparación con el respaldo inicial C2.1: el ajuste de aplicación inspeccionado sustituye la excepción directa de veterinario por ModeloClinica::denegarAcceso. La lectura registra actor/clínica del contexto y mantiene una respuesta genérica para ajeno/inexistente. Los escritores conservan rollback y reauditoría exterior. La regresión compara todas sus tablas de negocio, una auditoría por intento y ninguna transacción abierta; además provoca una revocación durante la vista canónica, después de escribir, para comprobar rollback completo y una sola denegación durable. Guardar y repetir una clave válida no duplica auditoría. Ejecución propia de la clase SQLite: 13 pruebas / 111 aserciones, salida 0 (00:00.171), también incluida en las suites completas finales.
+
+**H-C2-2 cerrado (P04/RE-4.11.4):** se cotejó la explicación con el [código oficial MariaDB 10.4.32](https://github.com/MariaDB/server/blob/mariadb-10.4.32/storage/innobase/trx/trx0i_s.cc#L1104-L1122): la caché de tablas de transacciones/bloqueos requiere más de 100 ms desde su última lectura para renovarse; el final de cada lectura actualiza esa referencia. El sondeo anterior de 20 ms podía conservar metadata anterior. Los experimentos y mutación anteriores se mantienen atribuidos al ejecutor, no se presentan como ejecutados por este revisor ni como reconstrucción exacta de la intercalación histórica perdida.
+
+Revisión propia del arnés: segunda barrera detiene al escritor ya conectado antes de intentar entrar; el observador comprueba metadata previa sin esa relación y permite el intento. MariaDB consulta con intervalo de 125 ms; MySQL conserva 20 ms. El éxito sigue exigiendo metadata real para los IDs correctos antes de liberar al retenedor; no depende solo de un tiempo transcurrido. Comparación propia conserva todas las aserciones previas, cinco acciones, dos órdenes, procesos/conexiones distintos y plazo total de 10 s. Se añaden controles de preparación, IDs y estado del retenedor y diagnóstico de sus conexiones. Las diez carreras pasaron dentro de la suite completa propia que fallaba anteriormente, sin omisiones; no se cierra el hallazgo solo con la pasada aislada del autor. No se cambia el algoritmo de agenda para resolver un defecto del observador.
+
+**Suites propias sobre la entrega revisada:** PHP completo sin host 893 pruebas / 7466 aserciones / 58 omitidas de motor, salida 0 (01:48.926); PHP completo con MariaDB 10.4.32: 893 pruebas / 8353 aserciones / cero omitidas, salida 0 (17:25.785). Solo zooki_test_base_v2 y variables explícitas, TRUSTED_PROXIES=127.0.0.2; no hay dos suites reconstruyendo la misma base a la vez. JS inicial 249/250, salida 1, EBUSY al eliminar el perfil temporal Chrome desde el finally de la prueba DOM C2. Repetición completa justificada por ese error, sin cambiar fuente: 250/250, cero fallos/omisiones, salida 0 (13.765 s). Se conservan ambos resultados; el primer error de limpieza no se presenta como una aserción funcional demostrada ni se oculta bajo el verde posterior.
+
+Cuatro PHP de C2.1 pasan sintaxis y diff sin incidencias. Anexos/revisiones previos conservados íntegros. La selección CI conserva BaseV2MysqlTest/AgendaB2MysqlTest/AgendaC2MysqlTest secuenciales (45+11+2) y base explícita. Cotejados Modelos §16/§7/§13.4/§9: la corrección realiza la denegación auditada ya prevista y solo modifica el observador de pruebas; no requiere un nuevo flujo ni un nuevo renderizado. Se mantiene la evidencia Mermaid anterior con su fecha y atribución, sin adjudicar un render nuevo a esta corrección. Sin cambios de reglas, permisos, interfaz, esquema, migraciones, versión o exportaciones desde revisión. No se lee .env, consulta la base manual, envía SMTP real o recorre la aplicación con navegador. MySQL 8/CI C2 sigue pendiente después del push; el CI de C1 no lo sustituye.
+
+**Cinco comprobaciones del dueño, en escritorio y celular, pendientes:**
+
+1. **Ana Norte (admin):** guardar franjas contiguas de Beto dentro de apertura; probar franja invertida, solapada y fuera de apertura. Verificar errores, persistencia y controles de horarios HU-7.1.
+2. **Beto Norte (vet) y Ana Norte (admin):** proponer desde perfil, comprobar que no cambia la semana vigente y resolver con Ana; rechazo exige motivo y aprobación revalida apertura. El vet no guarda directamente ni propone para otro.
+3. **Ana Norte y Carla Sur (admin), Fabio (propietario) y Gina (plataforma):** con el ID real de Diego Sur, Ana solicita get_coordinacion_horarios_ajax&id_veterinario=<id de Diego>. Devuelve 403 genérico y deja un intento en Auditoría de Norte, sin horario Sur ni cambios de negocio. Listas Norte/Sur separadas; propietario/plataforma sin gestión. Los IDs 4/999 usados en la regresión son de su fixture automático, no se presuponen para la instalación manual.
+4. **Ana Norte (admin):** crear y retirar cierre de un lunes concreto; conserva otros lunes y no genera ausencias. Los extremos exactos son válidos; una cita que cruza el cierre queda pendiente de reajuste.
+5. **Ana Norte (admin) y Beto Norte (vet):** reducir/restaurar horario con una cita de prueba existente. Aparece pendiente y conserva hora/snapshots; doble envío no duplica el cambio/auditoría. Comprobar perfil y Configuración utilizables en celular.
+
+**Siguiente:** dueño completa estas comprobaciones y guarda C2 junto con C2.1 y las notas pendientes del arquitecto, luego hace push. Confirmar CI nuevo completo, incluidas las tres clases MySQL 8, antes del prompt/inicio de C3. C3 completa disponibilidad, C5 procesa marcas, C6 ausencias/cobertura y C7 integración clínica; no se declara HU-4.11 totalmente operativa por este cierre. Sin decisiones nuevas de producto o despliegue en esta revisión.

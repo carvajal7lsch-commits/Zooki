@@ -68,3 +68,5 @@ $marca = $configuracion['marca'];
 </div>
 <?php require __DIR__ . '/horarios.php'; ?>
 <script src="js/configuracion-clinica.js?v=<?= $e(App::assetVersion()) ?>" defer></script>
+
+<?php require __DIR__ . '/../partials/coordinacion_horarios.php'; ?>

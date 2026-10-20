@@ -1334,6 +1334,8 @@ class BaseV2MysqlTest extends TestCase
         DosClinicas::poblarAgenda($this->db);
         DosClinicas::vincularLunaASur($this->db);
         $this->db->exec("INSERT INTO usuario_clinica (id_usuario, id_clinica, id_rol, estado) VALUES (2, 2, 2, 'activo')");
+        // Estado histórico deliberadamente incompatible para probar ocupación interclínica.
+        $this->db->exec("INSERT INTO horarios_veterinario (id_clinica,id_veterinario,dia_semana,hora_inicio,hora_fin) VALUES (2,2,1,'08:00:00','12:00:00')");
         $reserva = ['id_mascota' => 1, 'id_veterinario' => 2, 'fecha' => '2030-01-07', 'hora' => '09:00', 'motivo' => 'Control', 'id_tipo_cita' => 1];
         try {
             $_SESSION = ['id_usuario' => 2];

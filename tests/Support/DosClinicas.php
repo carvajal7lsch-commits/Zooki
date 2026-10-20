@@ -103,6 +103,11 @@ final class DosClinicas
             nombre_invitado TEXT, tipo_documento_invitado TEXT, documento_invitado TEXT,
             email_invitado TEXT, telefono_invitado TEXT, token_hash TEXT NOT NULL, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP)");
+        // M4 C2: destino ya publicado en B; soporte SQLite de las pruebas funcionales.
+        $db->exec('CREATE TABLE horarios_veterinario (id INTEGER PRIMARY KEY AUTOINCREMENT,id_veterinario INTEGER NOT NULL,id_clinica INTEGER NOT NULL,dia_semana INTEGER NOT NULL,hora_inicio TEXT NOT NULL,hora_fin TEXT NOT NULL,activo INTEGER NOT NULL DEFAULT 1)');
+        $db->exec("CREATE TABLE propuestas_horario (id_propuesta INTEGER PRIMARY KEY AUTOINCREMENT,id_veterinario INTEGER NOT NULL,id_clinica INTEGER NOT NULL,franjas TEXT NOT NULL,estado TEXT NOT NULL DEFAULT 'pendiente',id_revisor INTEGER,motivo_rechazo TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP,fecha_revision TEXT)");
+        $db->exec('CREATE TABLE cierres_clinica (id_cierre INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,inicio TEXT NOT NULL,fin TEXT NOT NULL,motivo TEXT NOT NULL,activo INTEGER NOT NULL DEFAULT 1,id_autor INTEGER NOT NULL,fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)');
+        $db->exec('CREATE TABLE operaciones_agenda (id_operacion INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,id_actor INTEGER,actor_clave TEXT NOT NULL,accion TEXT NOT NULL,clave_operacion TEXT NOT NULL,huella_entrada TEXT NOT NULL,resultado TEXT NOT NULL,fecha TEXT DEFAULT CURRENT_TIMESTAMP,UNIQUE(id_clinica,actor_clave,accion,clave_operacion))');
         // M5 C3: la cuenta pendiente de un propietario se reconoce sin consentimiento (ActivacionPropietario).
         $db->exec('CREATE TABLE consentimientos_datos (id_consentimiento INTEGER PRIMARY KEY AUTOINCREMENT, id_usuario INTEGER REFERENCES usuarios,
             version_politica TEXT NOT NULL,medio TEXT NOT NULL,ip_address TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP)');
@@ -177,6 +182,7 @@ final class DosClinicas
             prioridad_calculada TEXT, motivo_ajuste_prioridad TEXT, es_sobrecupo INTEGER NOT NULL DEFAULT 0,
             orden_sobrecupo INTEGER, sintomas_texto TEXT, inicio_sintomas TEXT, estado TEXT NOT NULL DEFAULT 'pendiente',
             ocupa_horario INTEGER GENERATED ALWAYS AS (CASE WHEN estado IN ('cancelada', 'no_asistio') OR es_sobrecupo = 1 THEN NULL ELSE 1 END) STORED,
+            estado_reajuste TEXT NOT NULL DEFAULT 'ninguno',motivo_reajuste TEXT,version_agenda INTEGER NOT NULL DEFAULT 0,
             hora_llegada TEXT, hora_inicio_real TEXT, hora_fin_real TEXT, aviso_atencion_abierta TEXT, observaciones TEXT,
             fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)");
         $db->exec('CREATE UNIQUE INDEX uq_cita_veterinario_horario ON citas (id_veterinario, fecha, hora, ocupa_horario)');
@@ -241,6 +247,15 @@ final class DosClinicas
         $db->exec("INSERT INTO tipos_cita (id_tipo_cita, id_clinica, nombre_tipo, duracion_minutos, margen_minutos, pausable, activo) VALUES
             (1, 1, 'Consulta Norte', 30, 10, 1, 1),
             (2, 2, 'Control Sur', 20, 5, 1, 1)");
+        // El fixture declara jornadas reales; la aplicación no crea horarios vet implícitos.
+        $franja = $db->prepare('INSERT INTO horarios_veterinario (id_clinica,id_veterinario,dia_semana,hora_inicio,hora_fin) VALUES (?,?,?,?,?)');
+        foreach ([[1,2], [1,5], [2,4]] as [$clinicaVet,$vet]) {
+            for ($diaVet=1; $diaVet<=7; $diaVet++) {
+                foreach ([['08:00:00','12:00:00'],['14:00:00','18:00:00']] as [$desde,$hasta]) {
+                    $franja->execute([$clinicaVet,$vet,$diaVet,$desde,$hasta]);
+                }
+            }
+        }
         $horario = $db->prepare("INSERT INTO horarios_clinica (id_clinica, dia_semana, activo, bloque_morning_activo, bloque_afternoon_activo,
             bloque_morning_inicio, bloque_morning_fin, bloque_afternoon_inicio, bloque_afternoon_fin)
             VALUES (?, ?, 1, 1, 1, '08:00:00', '12:00:00', '14:00:00', '18:00:00')");

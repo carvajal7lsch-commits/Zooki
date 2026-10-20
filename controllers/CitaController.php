@@ -84,6 +84,7 @@ class CitaController
             'hora' => $hora,
             'motivo' => $motivo,
             'id_tipo_cita' => $entrada['id_tipo_cita'] ?? null,
+            'clave_operacion' => $entrada['clave_operacion'] ?? null,
             'estado' => 'confirmada',
         ]);
 
@@ -374,7 +375,7 @@ class CitaController
 
         $idPropietario = (int) Contexto::idUsuario();
         $mascotas = (new Mascota($this->db))->enClinicaDelPropietario($idClinica);
-        $idCita = (new LimitePlan($this->db, $idClinica))->transaccion(function () use ($mascotas, $citas, $idMascota, $idPropietario, $idVeterinario, $fecha, $hora, $motivo, $idTipo): int {
+        $idCita = $citas->coordinarReserva(['id_veterinario' => $idVeterinario, 'id_mascota' => $idMascota], function () use ($mascotas, $citas, $idMascota, $idPropietario, $idVeterinario, $fecha, $hora, $motivo, $idTipo, $entrada): int {
             // RN-110: la mascota se vincula a la clínica al agendar allí (si ya lo estaba, no cambia nada).
             $mascotas->vincular($idMascota, $idPropietario);
             return $citas->registrar([
@@ -384,6 +385,7 @@ class CitaController
                 'hora' => $hora,
                 'motivo' => $motivo,
                 'id_tipo_cita' => $idTipo,
+                'clave_operacion' => $entrada['clave_operacion'] ?? null,
                 'estado' => 'confirmada',
             ]);
         });
@@ -426,7 +428,7 @@ class CitaController
                 $idVeterinario = $pedido;
             }
 
-            $this->citas->reprogramar($cita, $idVeterinario, $fecha, $hora);
+            $this->citas->reprogramar($cita, $idVeterinario, $fecha, $hora, $_POST['clave_operacion'] ?? null);
             $this->retirarAvisosCita((int) $cita['id_cita']);
             $this->avisarCita('CITA_REPROGRAMADA', 'Cita reprogramada', $this->citas->getById($cita['id_cita']), false);
 

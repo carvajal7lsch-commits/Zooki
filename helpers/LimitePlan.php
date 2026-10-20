@@ -115,17 +115,23 @@ final class LimitePlan
         } catch (LimiteAlcanzado $error) {
             if ($exterior) {
                 // Fuera del rollback de negocio: el intento bloqueado debe conservarse.
-                Transaccion::ejecutar($this->db, function () use ($error): void {
-                    $datos = ['recurso' => $error->recurso, 'uso' => $error->uso, 'limite' => $error->limite];
-                    if (!(new Auditoria($this->db))->log(Contexto::idUsuario(), 'OTHER', 'planes', null, null, $datos, 'Acción bloqueada por límite del plan (RE-0.4.2/3)', $this->clinica)) {
-                        throw new RuntimeException('No se pudo auditar el límite del plan.');
-                    }
-                    if ((Contexto::actual()['tipo'] ?? null) === Contexto::PROPIETARIO) {
-                        (new NotificacionInterna($this->db))->crearParaRol($this->clinica, Roles::ADMIN, 'LIMITE_PLAN', 'Límite del plan alcanzado', "Un propietario no pudo completar una acción de {$error->recurso} ({$error->uso}/{$error->limite}). Gestiona el plan de la clínica.");
-                    }
-                });
+                $this->registrarRechazo($error);
             }
             throw $error;
         }
     }
+    /** C2: conservar el intento después del rollback exterior del coordinador. */
+    public function registrarRechazo(LimiteAlcanzado $error): void
+    {
+        Transaccion::ejecutar($this->db, function () use ($error): void {
+            $datos = ['recurso' => $error->recurso, 'uso' => $error->uso, 'limite' => $error->limite];
+            if (!(new Auditoria($this->db))->log(Contexto::idUsuario(), 'OTHER', 'planes', null, null, $datos, 'Acción bloqueada por límite del plan (RE-0.4.2/3)', $this->clinica)) {
+                throw new RuntimeException('No se pudo auditar el límite del plan.');
+            }
+            if ((Contexto::actual()['tipo'] ?? null) === Contexto::PROPIETARIO) {
+                (new NotificacionInterna($this->db))->crearParaRol($this->clinica, Roles::ADMIN, 'LIMITE_PLAN', 'Límite del plan alcanzado', "Un propietario no pudo completar una acción de {$error->recurso} ({$error->uso}/{$error->limite}). Gestiona el plan de la clínica.");
+            }
+        });
+    }
+
 }

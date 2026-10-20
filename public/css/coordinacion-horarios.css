@@ -1,0 +1,41 @@
+.horarios-coordinados {
+    padding: 24px;
+    margin-top: 24px;
+    border-radius: 12px;
+    background: var(--z-bg-superficie, #fff);
+}
+.horarios-coordinados label {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+.horarios-coordinados input, .horarios-coordinados select, .horarios-coordinados button {
+    min-height: 44px;
+    max-width: 100%;
+    padding: 8px;
+    font: inherit;
+}
+.coordinacion-franja {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 12px;
+    margin: 12px 0;
+}
+.horarios-coordinados article {
+    border-bottom: 1px solid var(--z-border, #ddd);
+    padding: 12px 0;
+    overflow-wrap: anywhere;
+}
+.coordinacion-error, .horarios-coordinados [data-aviso] {
+    display: block;
+    color: var(--danger, #b42318);
+    min-height: 20px;
+}
+@media (max-width: 767px) {
+    .horarios-coordinados {
+        padding: 16px;
+    }
+    .coordinacion-franja {
+        grid-template-columns: 1fr;
+    }
+}

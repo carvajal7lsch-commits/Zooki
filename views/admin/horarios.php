@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../config/App.php';
 $diasSemana = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
 $bloques = ['morning' => ['Mañana', '08:00', '12:00'], 'afternoon' => ['Tarde', '14:00', '18:00']];
 ?>
-<div class="horarios">
+<div class="horarios" data-clinica="<?= (int) Contexto::clinicaActiva() ?>">
 
     <section class="horarios-card horarios-semana" aria-labelledby="horariosTitulo">
         <header class="horarios-card__head">

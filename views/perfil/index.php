@@ -161,3 +161,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
 </div>
 
 <script src="js/perfil.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+
+<?php if (Contexto::rolActivo() === Roles::VETERINARIO): ?>
+    <?php require __DIR__ . '/../partials/coordinacion_horarios.php'; ?>
+<?php endif; ?>
