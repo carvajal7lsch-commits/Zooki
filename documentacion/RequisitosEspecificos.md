@@ -781,7 +781,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
 | RE-4.19.1 | El sistema debe registrar la hora de llegada del propietario. | Funcional | La cita guarda la hora de llegada. | Alta |
-| RE-4.19.2 | Dentro de la tolerancia, la cita debe atenderse en el tiempo restante; si no cabe, el veterinario elige atender igual o reprogramar. | Funcional | Con 8 minutos de retraso y tolerancia de 10, se ofrece atender; si la cita no cabe, aparecen las dos opciones. | Alta |
+| RE-4.19.2 | Dentro de la tolerancia, el veterinario decide atender el servicio completo con cascada o reprogramar; si no alcanza el tiempo, también se ofrecen duración reducida explícita si cabe y otro veterinario compatible. | Funcional | A los 8 y exactamente 10 minutos, con tolerancia 10, conserva el servicio completo salvo decisión veterinaria explícita; una reducción exige duración y capacidad, sin cambiar el snapshot original. Las alternativas no asignan automáticamente otro veterinario. | Alta |
 | RE-4.19.3 | Pasada la tolerancia, el veterinario debe poder marcar «no asistió», atender en el siguiente espacio libre o reprogramar. | Funcional | Con 15 minutos de retraso aparecen las tres opciones. | Alta |
 | RE-4.19.4 | La agenda debe recalcularse y la decisión registrarse en auditoría. | Seguridad | Las citas siguientes muestran su nueva hora estimada y la decisión queda auditada. | Media |
 

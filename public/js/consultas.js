@@ -322,7 +322,7 @@
     document.getElementById('historialDrawerOverlay').addEventListener('click', closeHistorialDrawer);
 
     const botonSinCita = document.getElementById('btnAtencionSinCita');
-    if (botonSinCita) botonSinCita.addEventListener('click', openNewConsultationFlow);
+    if (botonSinCita) botonSinCita.addEventListener('click', () => { globalThis.location.href = 'index.php?action=vet_agenda#llegadas'; });
 
     const busquedaMascota = document.getElementById('consultaPetSearch');
     if (busquedaMascota) busquedaMascota.addEventListener('input', () => searchPetForConsultation(busquedaMascota.value));

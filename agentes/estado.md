@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### C8 entregada y verificada; sigue D-F (2026-10-21)
+
+- **C8 (C8+C8b):** Codex escribió la implementación y se quedó sin tokens; Claude revisó, corrigió (saltarse la cola de espera daba error genérico), actualizó dos pruebas desactualizadas, agregó la carrera AgendaC8MysqlTest al CI y escribió el Anexo C8.
+- **Verificación con MySQL 8.0.46 local:** PHP con motor 1011/9113 sin omisiones; sin host 1011/8023; JS 278/278.
+- **Pendiente del usuario:** commit y push de C8; confirmar CI.
+- **Siguiente:** D-F. Corregir la «Lista para D», prueba manual consolidada (máx. 10), cierre documental, versión `2.0.0-alpha.5` y despliegue.
+
 ### C6-C7 aprobada con corrección C6.1; sigue C8 (2026-10-20)
 
 - **Revisó Claude.** H-C6-1/P1: la migración 10 fallaba en MySQL 8 por las comillas escapadas de la columna generada (despliegue roto); corregida y probada en MySQL 8.0.46 (volumen vacío, migrador doble, base anterior, rechazo de predicado distinto). H-C6-2/P2: AgendaB2MysqlTest ahora aplica la 10. Detalle en «C6-C7 — Revisión» del plan.

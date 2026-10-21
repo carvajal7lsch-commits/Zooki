@@ -364,6 +364,9 @@ class Security {
             'validar_configuracion_clinica_ajax',
         ] as $a) { $matriz[$a] = $admin; }
 
+        foreach (['listar_llegadas_ajax', 'registrar_llegada_ajax', 'decidir_llegada_ajax', 'ajustar_llegada_ajax', 'presentar_llegada_ajax', 'asignar_llegada_ajax'] as $accion) {
+            $matriz[$accion] = [Roles::VETERINARIO];
+        }
         $matriz['listar_urgencias_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
         $matriz['llegada_rojo_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
         $matriz['conciliar_rojo_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];

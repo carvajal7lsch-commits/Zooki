@@ -60,7 +60,7 @@ final class DosClinicas
         $db->exec("INSERT INTO roles (id_rol, nombre_rol) VALUES (1,'administrador'), (2,'veterinario'), (4,'propietario'), (5,'super-administrador')");
         $db->exec("CREATE TABLE clinicas (
             id_clinica INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, nit TEXT NOT NULL UNIQUE,
-            direccion TEXT, telefono TEXT, telefono_urgencias TEXT, url_logo TEXT, email_contacto TEXT, tope_sobrecupos INTEGER NOT NULL DEFAULT 2,plazo_reasignacion_min INTEGER NOT NULL DEFAULT 10,umbral_aviso_min INTEGER NOT NULL DEFAULT 15, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP, id_plan INTEGER DEFAULT 2, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
+            direccion TEXT, telefono TEXT, telefono_urgencias TEXT, url_logo TEXT, email_contacto TEXT, tolerancia_llegada_min INTEGER NOT NULL DEFAULT 10, tope_sobrecupos INTEGER NOT NULL DEFAULT 2,plazo_reasignacion_min INTEGER NOT NULL DEFAULT 10,umbral_aviso_min INTEGER NOT NULL DEFAULT 15, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP, id_plan INTEGER DEFAULT 2, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
         $db->exec("CREATE TABLE usuarios (
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, documento TEXT UNIQUE, tipo_documento TEXT,
             nombre_completo TEXT, telefono TEXT, email TEXT UNIQUE, password TEXT, google_uid TEXT UNIQUE,

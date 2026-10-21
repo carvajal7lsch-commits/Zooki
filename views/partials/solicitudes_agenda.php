@@ -11,3 +11,4 @@
 <?php require __DIR__ . '/reasignaciones_agenda.php'; ?>
 
 <?php require __DIR__ . '/urgencias_agenda.php'; ?>
+<?php require __DIR__ . '/llegadas_agenda.php'; ?>

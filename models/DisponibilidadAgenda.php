@@ -276,8 +276,14 @@ final class DisponibilidadAgenda extends ModeloClinica
 
     public function exigir(int $vet, int $mascota, string $fecha, string $hora, int $duracion, int $margen, ?int $excluir = null): void
     {
+        $this->exigirSegundos($vet, $mascota, $fecha, $hora, $duracion * 60, $margen * 60, $excluir);
+    }
+
+    /** RE-4.19: la duración reducida explícita conserva segundos, sin redondear ni alterar snapshots. */
+    public function exigirSegundos(int $vet, int $mascota, string $fecha, string $hora, int $duracion, int $margen, ?int $excluir = null): void
+    {
         $inicio = IntervalosAgenda::fecha($fecha . ' ' . self::hora($hora));
-        $fin = $inicio->modify('+' . ($duracion + $margen) . ' minutes');
+        $fin = $inicio->modify('+' . ($duracion + $margen) . ' seconds');
         $corte = ($this->reloj)()->getTimestamp();
         if ($duracion <= 0 || $margen < 0 || $inicio->getTimestamp() < $corte || $fin->format('Y-m-d') !== $fecha
             || !IntervalosAgenda::contiene($this->franjas($vet, $mascota, $fecha, $excluir, $corte), $inicio->getTimestamp(), $fin->getTimestamp())) {

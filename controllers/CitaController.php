@@ -470,13 +470,7 @@ class CitaController
         RespuestaJson::modificacion(function (): array {
             $cita = $this->citas->getById($this->idDeLaPeticion());
             $this->exigirVeterinarioAsignado($cita, 'Solo el veterinario asignado puede marcar la inasistencia.');
-            $this->exigirAbierta($cita);
-
-            $inicio = ReglaAtencion::inicio($cita['fecha'], $cita['hora']);
-            if ($inicio > $this->ahora()) {
-                throw new InvalidArgumentException('Todavía no es la hora de la cita: la inasistencia se marca cuando esa hora ya pasó.');
-            }
-            if (!$this->citas->marcarNoAsistio($cita)) {
+            if (!$this->citas->marcarNoAsistio($cita, $_POST['clave_operacion'] ?? null)) {
                 throw new InvalidArgumentException('No se pudo marcar la inasistencia. Intenta nuevamente.');
             }
             $this->retirarAvisosCita((int) $cita['id_cita']);

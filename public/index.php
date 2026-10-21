@@ -194,6 +194,20 @@ switch ($action) {
         (new ConfiguracionClinicaController())->$metodoConfiguracion();
         break;
 
+    case "listar_llegadas_ajax":
+        require_once '../controllers/LlegadaAgendaController.php';
+        (new LlegadaAgendaController())->leer();
+        break;
+
+    case "registrar_llegada_ajax":
+    case "decidir_llegada_ajax":
+    case "ajustar_llegada_ajax":
+    case "presentar_llegada_ajax":
+    case "asignar_llegada_ajax":
+        require_once '../controllers/LlegadaAgendaController.php';
+        (new LlegadaAgendaController())->escribir(explode('_', $action)[0]);
+        break;
+
     case "listar_urgencias_ajax":
         require_once '../controllers/UrgenciaAgendaController.php';
         (new UrgenciaAgendaController())->leer();

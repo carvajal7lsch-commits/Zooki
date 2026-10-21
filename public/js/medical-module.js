@@ -2223,7 +2223,7 @@ async function searchPetForConsultation(term) {
 
 function selectPetForConsultation(id, nombre) {
     closeModal('modalSelectPetConsulta');
-    openConsultationModal(id, nombre);
+    globalThis.location.href = 'index.php?action=vet_agenda#llegadas';
 }
 
 async function verFichaBasica(id) {

@@ -83,8 +83,14 @@ final class CitaEstadoTest extends TestCase
 
     public function testNoAsistioSoloDesdeUnaCitaAbiertaYLiberaElHorario(): void
     {
-        $this->assertTrue($this->citas->marcarNoAsistio($this->cita()));
-        $this->assertFalse($this->citas->marcarNoAsistio($this->cita()));
+        // C8 (RE-4.7.1): solo después de la hora + tolerancia (10 min por defecto).
+        $tarde = new Cita($this->db, static fn () => new DateTimeImmutable(self::FECHA . ' 09:10:01', new DateTimeZone('America/Bogota')));
+        $this->assertTrue($tarde->marcarNoAsistio($this->cita()));
+        try {
+            $tarde->marcarNoAsistio($this->cita());
+            $this->fail('Una cita ya cerrada no se vuelve a marcar.');
+        } catch (InvalidArgumentException) {
+        }
 
         $otra = $this->reservar('09:00');
 

@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **Modo acelerado (2026-10-20). C6-C7 aprobada con corrección C6.1 aplicada por Claude (ver «C6-C7 — Revisión»). Sigue C8.** C1–C5 cerradas. Agrupación de entregas y «Lista para D» al final del plan. Anexos y revisiones previos conservados como historial.
+> Estado: **Modo acelerado (2026-10-21). C8 (C8+C8b) entregada y verificada: implementación de Codex (sin tokens antes de cerrar), cierre y pruebas de Claude (Anexo C8). Sigue D-F.** C1–C7 cerradas. Agrupación de entregas y «Lista para D» al final del plan. Anexos y revisiones previos conservados como historial.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Claude como arquitecto desde el 2026-10-20 (modo acelerado, `agentes/metodo.md` §11). Hasta C3.1 revisó Codex en una sesión independiente.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -125,6 +125,8 @@ Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario mues
 - HU-7.4 incluye comprobar la marca en todas las salidas que exige RE-7.4.4; no se declara completa solo por mostrar logo en configuración. Las descargas públicas del portal documental no pasan a ser documentos personalizados de una clínica.
 
 ## 6. Riesgos y decisiones pendientes
+
+- **Decisión del usuario (2026-10-20, C8):** conservar RN-426 y añadir las alternativas del encargo. Dentro de la tolerancia, el veterinario puede decidir explícitamente servicio completo con cascada; si no alcanza el tiempo, también se ofrecen duración reducida explícita si cabe, reprogramación y otro veterinario compatible. Pasada la tolerancia siguen no asistió/siguiente hueco/reprogramar. Registrar llegada no inicia atención ni reduce automáticamente el servicio.
 
 - **Decisión del usuario (2026-10-20, C6-C7):** autoriza la migración 10 para excluir `origen=urgencia` del índice de comienzos ordinarios. Sin tablas ni campos nuevos; conservar horas pactadas/reales, `es_sobrecupo` exclusivo de naranja, coordinador y ocupación global. Sincronizar 01/MER/drawDB y verificar migrador doble e instalación vacía. La autorización no elimina controles de capacidad ni permite crear citas al administrador.
 
@@ -2855,7 +2857,7 @@ Se mantiene **todo** el alcance de M4. Arquitecto/revisor: Claude; ejecutor: Cod
 | C4 | C4a Agendar con triage + C4b Sobrecupos y cambios | Entregada y verificada (2026-10-20), Anexo C4 |
 | C5 | C5a Grafo II y cascada + C5b Reasignación en vivo | Revisada y aprobada con corrección C5.1 de Claude (2026-10-20) |
 | C6-C7 | C6 Ausencias y cobertura + C7a Atención roja y pausas + C7b Ficha provisional y conciliación | Revisada y aprobada con corrección C6.1 de Claude (2026-10-20) |
-| C8 | C8 Ajustes y llegada tarde + C8b Llegada sin reserva | Pendiente |
+| C8 | C8 Ajustes y llegada tarde + C8b Llegada sin reserva | Entregada y verificada (2026-10-21), Anexo C8 |
 | D-F | Correcciones de la Lista para D, prueba manual consolidada, cierre documental, `2.0.0-alpha.5` y despliegue | Pendiente |
 
 ### Lista para D
@@ -2868,6 +2870,9 @@ Hallazgos P2/P3 y comprobaciones manuales que se acumulan para la etapa D. Cada 
 - Prueba manual C4 (2 comprobaciones): **Fabio** agenda un verde con síntomas y luego un caso rojo (teléfono de urgencias, sin cita); **Beto** revisa un «Otro / no sé» a naranja, agenda dos naranjas, el tercero avisa sin crear cita y reordena la cola con motivo.
 - P2 (C5): cada recálculo que corre una estimación escribe una fila de auditoría por cita afectada; durante un exceso largo son muchas filas. Valorar auditar solo cambios de estado de reajuste.
 - P3 (C6-C7): mientras un rojo presente espera, `exigirInicioOrdinario` impide a **todos** los veterinarios de la clínica iniciar citas ordinarias, no solo al que lo atenderá. Confirmar con el dueño si es la regla deseada o si basta con el veterinario libre más próximo.
+- P2 (C8): `public/js/llegadas-agenda.js` no tiene prueba JS automatizada; cubrirla en D o en la prueba manual consolidada.
+- P3 (C8): ajustar una cita a rojo marca la prioridad y avisa, pero no la mete sola al flujo de Urgencias; el vet la registra allí. Confirmar si basta.
+- Prueba manual C8 (2 comprobaciones): **Beto** registra llegadas a los 8 y 15 minutos con tolerancia 10 (opciones correctas; no asistió solo pasada la tolerancia); **Beto** recibe una llegada sin reserva verde sin hueco (ofrece alternativas, no crea sobrecupo) y otra amarilla que pasa antes que la verde.
 - Prueba manual pendiente de C1-C3.1 (consolidar en máximo 3 comprobaciones): marca/tipos por clínica; horario del vet con propuesta y aprobación del admin y cierre puntual; sugerencias con duración+margen, doble envío y reprogramación conservando snapshots.
 
 - Prueba manual C5 (2 comprobaciones, solo en D): **Beto Norte** prolonga una atención y observa cascada/absorción de huecos sin alterar pactadas ni sellos; **Elena en Norte** acepta/rechaza una propuesta y **Fabio** comprueba veterinario/estimación diferenciados y alternativa de reprogramar si no hay destino.
@@ -2966,3 +2971,21 @@ Entrega agrupada C4a+C4b (modo acelerado). Escribe Codex; revisa Claude. El prom
 - **H-C6-2 / P2 — `AgendaB2MysqlTest` no aplicaba la 10** al comparar instalación y actualización; ahora `migrar()` aplica 08+09+10.
 - Resto revisado: ausencia del vet pendiente sin bloqueo y del admin efectiva, cobertura sin veto con acuerdo registrado y sin cobertura → reprogramación o revisión (atenciones en curso no se trasladan); rojo presente vs remoto, cola por llegada y reorden motivado, libre/pausable/espera, decisión explícita sin pausa anidada, reanudación en el cierre; ficha provisional sin dueño ni cuenta ni carnet, conciliación solo con titular verificado, contacto del acompañante limpiado al cerrar.
 - **Verificación de Claude con MySQL 8.0.46 local:** PHP completo con motor 998/9038 (la única falla era H-C6-2, corregida: AgendaB2MysqlTest 11/113); sin host 998/7960 (70 omitidas); JS 278/278.
+
+## Anexo C8 — Resultado (2026-10-21)
+
+**Autores:** Codex escribió la implementación y se quedó sin tokens antes de cerrar; Claude revisó, corrigió, completó pruebas y cierra el anexo (modo acelerado).
+
+**Construido:** `LlegadaAgenda` + controlador y vista del vet. Llegada física sin iniciar atención; decisión veterinaria dentro de tolerancia (completa con cascada, reducida explícita en segundos si cabe, reprogramar, otro vet, siguiente hueco); fuera de tolerancia solo siguiente hueco o reprogramación; «no asistió» solo del vet asignado y pasada hora + tolerancia, libera capacidad y recalcula. Reclasificación HU-4.18 con motivo, calculado/ajustado separados, naranja con tope y amarillo al primer espacio, historial por clínica. Llegada sin reserva: solicitud evaluada → presencia → espera (naranja, amarillo, verde; luego llegada e ID) → cita obligatoria `llegada_sin_reserva` sin sobrecupo, alternativas si no cabe. Decisión del dueño sobre RN-426/RE-4.19.2 registrada en §6.
+
+| RE / regla | Prueba |
+|---|---|
+| RE-4.19.1–4, RN-426 | AgendaC8Test: bordes de tolerancia, reducción explícita y snapshots, completa con cascada, fuera de tolerancia |
+| RE-4.7.1/2, RN-408 | AgendaC8Test: no asistió antes/en el límite/después, otro vet 403, replay, libera; CitaEstadoTest actualizado |
+| RE-4.18.1–4, O-07/O-08 | AgendaC8Test: ajuste con motivo, naranja con tope, amarillo primero |
+| RE-2.2.1–5 | AgendaC8Test: orden de espera, saltarse la cola rechazado, asignación y replay, sin hueco sin sobrecupo |
+| RE-2.2.4 concurrente | **AgendaC8MysqlTest** (procesos reales, espera observada): dos llegadas por el último hueco → una cita, la otra sigue en espera |
+
+**Corregido por Claude:** saltarse la cola de espera lanzaba `LogicException` (error genérico 500); ahora es mensaje de dominio con regresión. Pruebas desactualizadas: `CitaEstadoTest` (no asistió exige tolerancia) y `AgendaC8Test` (código 403).
+
+**Verificación (Claude, MySQL 8.0.46 local):** PHP completo con motor **1011/9113, cero omitidas** (incluidas las carreras C2–C8); sin host 1011/8023 (71 omitidas); JS 278/278.

@@ -504,9 +504,11 @@ class Cita extends ModeloClinica
     }
 
     /** RN-408: el paciente no llegó; la cita deja de ocupar su horario. */
-    public function marcarNoAsistio(array $cita): bool
+    public function marcarNoAsistio(array $cita, ?string $clave = null): bool
     {
-        return $this->transicion($cita, self::ESTADOS_ABIERTOS, "estado = 'no_asistio'", []);
+        require_once __DIR__ . '/LlegadaAgenda.php';
+        (new LlegadaAgenda($this->conn, $this->reloj))->noAsistio((int) $cita['id_cita'], $clave);
+        return true;
     }
 
     /** Solo una cita pendiente se confirma: confirmar una cancelada la reactivaba. */
