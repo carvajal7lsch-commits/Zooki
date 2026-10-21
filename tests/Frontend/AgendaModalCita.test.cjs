@@ -24,8 +24,8 @@ const tramo = (fuente, desde, hasta) => {
 const esperar = () => new Promise(resolver => setImmediate(resolver));
 
 const MASCOTAS = [
-    { id: 4, nombre: 'Luna', propietario: 'Ana Pérez' },
-    { id: 9, nombre: 'Lucas', propietario: 'Juan Gil' },
+    { id: 4, nombre: 'Luna', propietario: 'Ana Pérez', url_foto: 'luna foto.jpg' },
+    { id: 9, nombre: 'Lucas', propietario: 'Juan Gil', url_foto: 'lucas.jpg' },
     { id: 12, nombre: 'Toby', propietario: 'Lucía Mora' },
 ];
 
@@ -34,6 +34,7 @@ function listaConHtml(documento, padre) {
     const lista = colgar(padre, 'div', {}, { id: 'cm_mascota_dropdown', hidden: true });
     Object.defineProperty(lista, 'innerHTML', {
         set(html) {
+            lista.htmlRenderizado = html;
             lista.replaceChildren();
             for (const [boton] of html.matchAll(/<button[^>]*>/g)) {
                 const opcion = documento.createElement('button');
@@ -58,6 +59,7 @@ function buscadorMascota() {
     const ventana = { document: documento, console, esc: texto => String(texto), obtenerMascotas: async () => MASCOTAS };
     ventana.window = ventana;
     vm.createContext(ventana);
+    vm.runInContext(tramo(leer('public/js/medical-module.js'), "const FOTO_MASCOTA_DEFECTO =", '/** HU-15:'), ventana);
     vm.runInContext(leer('public/js/combobox.js'), ventana);
     const fuente = leer('public/js/calendario.js');
     vm.runInContext(tramo(fuente, 'function abrirListaMascotas()', 'let _mascotaFicha'), ventana);
@@ -72,6 +74,128 @@ function buscadorMascota() {
 
 const opciones = lista => lista.querySelectorAll('[role="option"]');
 const marcada = lista => opciones(lista).filter(opcion => opcion.getAttribute('aria-selected') === 'true');
+
+test('los resultados muestran foto segura o iniciales como el portal, sin franja azul', async () => {
+    const { ventana, lista } = buscadorMascota();
+    await ventana.filtrarMascotas('lu');
+    assert.match(lista.htmlRenderizado, /src="uploads\/mascotas\/luna%20foto.jpg"/);
+    assert.match(lista.htmlRenderizado, /zk-mascota-iniciales" aria-hidden="true">T<\/span>/);
+    assert.doesNotMatch(lista.htmlRenderizado, /default-pet.svg/);
+    assert.match(lista.htmlRenderizado, /class="avatar-iniciales zk-mascota-iniciales"/);
+    assert.match(leer('views/vet/calendario.php'), /id="cm_mascota_iniciales" class="avatar-iniciales zk-mascota-iniciales"/);
+    const inicialesCss = tramo(leer('public/css/calendar-modules/modals.css'), '.zk-mascota-iniciales {', '.zk-selected .zk-mascota-iniciales');
+    assert.doesNotMatch(inicialesCss, /background:|color:|border-radius:|font-weight:/, 'El formato procede del mismo componente que usa el portal');
+    assert.equal(ventana.inicialesMascotaAgenda('  Luna María '), 'LM');
+    assert.equal(ventana.inicialesMascotaAgenda('Ágata'), 'Á');
+    assert.equal(ventana.inicialesMascotaAgenda(''), '?');
+    assert.match(lista.htmlRenderizado, /class="zk-option__datos"/);
+    assert.doesNotMatch(lista.htmlRenderizado, /onerror=/);
+    const css = leer('public/css/calendar-modules/modals.css');
+    const marcada = tramo(css, '.zk-option[aria-selected="true"]', '.zk-option__datos');
+    assert.match(marcada, /box-shadow: none/);
+    assert.doesNotMatch(marcada, /inset|cal-primary/);
+});
+
+test('seleccionar muestra la foto pequeña y una respuesta anterior no reemplaza la selección actual', async () => {
+    const documento = crearDocumento();
+    const ids = ['cm_mascota_foto', 'cm_mascota_iniciales', 'cm_mascota_chip_name', 'cm_mascota_chip', 'cm_mascota_wrap', 'cm_mascota_search', 'cm_mascota_dropdown'];
+    ids.forEach(id => colgar(documento.raiz, id === 'cm_mascota_foto' ? 'img' : 'div', {}, { id }));
+    const valores = {};
+    const respuestas = [];
+    const ventana = { document: documento, obtenerMascotas: () => new Promise(resolve => respuestas.push(resolve)),
+        val(id, valor) { if (valor !== undefined) valores[id] = String(valor); return valores[id]; },
+        cargarSlotsModal() {}, ocultarErrorModal() {}, actualizarResumenModal() {}, cerrarListaMascotas() {},
+        triageModalC4: { consulta() {} } };
+    vm.createContext(ventana);
+    vm.runInContext(tramo(leer('public/js/medical-module.js'), 'const FOTO_MASCOTA_DEFECTO =', '/** HU-15:'), ventana);
+    vm.runInContext(tramo(leer('public/js/calendario.js'), 'function inicialesMascotaAgenda(', 'async function filtrarMascotas('), ventana);
+    vm.runInContext(tramo(leer('public/js/calendario.js'), 'let _mascotaFicha = null;', 'function onModalVeterinarioChange()'), ventana);
+    const foto = documento.getElementById('cm_mascota_foto');
+    ventana.seleccionarMascota(4, 'Luna', 'Ana Pérez');
+    assert.equal(foto.hidden, true);
+    assert.equal(documento.getElementById('cm_mascota_iniciales').textContent, 'L');
+    ventana.seleccionarMascota(9, 'Lucas', 'Juan Gil');
+    respuestas[1](MASCOTAS);
+    await esperar();
+    assert.equal(foto.src, 'uploads/mascotas/lucas.jpg');
+    assert.equal(foto.hidden, false);
+    assert.equal(documento.getElementById('cm_mascota_iniciales').hidden, true);
+    respuestas[0](MASCOTAS);
+    await esperar();
+    assert.equal(foto.src, 'uploads/mascotas/lucas.jpg');
+    assert.equal(documento.getElementById('cm_mascota_chip_name').textContent, 'Lucas · Juan Gil');
+    ventana.limpiarMascotaSeleccionada();
+    assert.equal(foto.hidden, true);
+    assert.equal(documento.getElementById('cm_mascota_chip').hidden, true);
+});
+
+test('si falla la foto se muestran las iniciales sin pedir el icono de huella', () => {
+    const { ventana } = buscadorMascota();
+    const iniciales = { hidden: true };
+    const foto = { hidden: false, parentElement: { querySelector: () => iniciales } };
+    ventana.mostrarInicialesMascotaAgenda(foto);
+    assert.equal(foto.hidden, true);
+    assert.equal(iniciales.hidden, false);
+    assert.equal(foto.src, undefined);
+});
+
+test('el panel derecho de horarios queda fuera de los pasos y permanece presente', () => {
+    const formulario = tramo(leer('views/vet/calendario.php'), '<form id="formCitaModal"', '</form>');
+    const confirmacion = tramo(formulario, 'data-cita-paso="2"', '</section>');
+    assert.match(confirmacion, /cm_confirmacion/);
+    assert.doesNotMatch(confirmacion, /modal_slots_container/);
+    assert.match(formulario, /<\/section>\s*<\/div>\s*<\/div>\s*<div class="zk-modal__col zk-modal__col--slots cita-horarios">/);
+    assert.match(formulario, /cita-horarios">\s*<p[^>]*>Horario disponible[\s\S]*id="modal_slots_container"/);
+    assert.match(leer('public/css/calendar-modules/modals.css'), /\.cita-distribucion\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1\.1fr\)/);
+});
+
+test('los pasos exigen paciente y triage, conservan los datos al volver y bloquean doble envío', () => {
+    const documento = crearDocumento();
+    const paneles = [0, 1, 2].map(i => {
+        const panel = colgar(documento.raiz, 'section', { citaPaso: String(i) });
+        const titulo = colgar(panel, 'h4');
+        titulo.focus = () => { documento.enfocado = titulo; };
+        return panel;
+    });
+    const indicadores = [0, 1, 2].map(i => {
+        const nodo = colgar(documento.raiz, 'li', { citaIndicador: String(i) });
+        nodo.removeAttribute = nombre => { delete nodo.atributos[nombre]; };
+        return nodo;
+    });
+    const siguiente = colgar(documento.raiz, 'button', {}, { id: 'cm_siguiente' });
+    const anterior = colgar(documento.raiz, 'button', {}, { id: 'cm_anterior' });
+    const submit = colgar(documento.raiz, 'button', {}, { id: 'cm_submit' });
+    const valores = { modal_mascota: '', modal_tipo_cita: '', modal_hora: '09:00:30' };
+    let solicitud = '';
+    const ventana = { document: documento, enviosC3: { reserva: false }, val: id => valores[id], getVetModal: () => '2',
+        triageModalC4: { consulta: () => solicitud }, ocultarErrorModal() {}, actualizarResumenModal() { ventana.actualizarPasosCita(); } };
+    vm.createContext(ventana);
+    vm.runInContext(tramo(leer('public/js/calendario.js'), 'let pasoCitaModal = 0;', 'function abrirCitaModal(date)'), ventana);
+    ventana.mostrarPasoCita(0);
+    assert.equal(siguiente.disabled, true);
+    assert.equal(anterior.hidden, true);
+    assert.equal(submit.hidden, true);
+    ventana.avanzarPasoCita();
+    assert.equal(paneles[0].hidden, false);
+    valores.modal_mascota = '4';
+    valores.modal_tipo_cita = '1';
+    ventana.avanzarPasoCita();
+    assert.equal(paneles[1].hidden, false);
+    assert.equal(siguiente.disabled, true, 'No salta revisión pendiente ni derivación roja');
+    solicitud = '123';
+    ventana.avanzarPasoCita();
+    assert.equal(paneles[2].hidden, false);
+    assert.equal(submit.hidden, false);
+    assert.equal(siguiente.hidden, true);
+    assert.equal(indicadores[2].getAttribute('aria-current'), 'step');
+    ventana.mostrarPasoCita(0);
+    assert.equal(valores.modal_mascota, '4');
+    assert.equal(valores.modal_hora, '09:00:30', 'Atrás conserva el instante exacto seleccionado');
+    ventana.enviosC3.reserva = true;
+    ventana.avanzarPasoCita();
+    assert.equal(paneles[0].hidden, false);
+    assert.equal(anterior.disabled, true);
+});
 
 test('el buscador de mascota se recorre con flechas, elige con Enter y Esc cierra solo la lista', async () => {
     const { ventana, campo, lista, elegidas } = buscadorMascota();

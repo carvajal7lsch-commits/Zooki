@@ -83,8 +83,16 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             <button type="button" class="cal-icon-btn" data-ui-accion="cerrar-cita" aria-label="Cerrar"><i class="fas fa-times"></i></button>
         </header>
 
-        <form id="formCitaModal" class="zk-modal__split" novalidate autocomplete="off">
-            <div class="zk-modal__col">
+        <form id="formCitaModal" class="cita-distribucion" novalidate autocomplete="off">
+            <div class="cita-pasos">
+            <ol class="cita-pasos__indicador" aria-label="Pasos para agendar">
+                <li data-cita-indicador="0" aria-current="step"><span>1</span>Paciente</li>
+                <li data-cita-indicador="1"><span>2</span>Síntomas</li>
+                <li data-cita-indicador="2"><span>3</span>Confirmar</li>
+            </ol>
+            <div class="cita-pasos__contenido">
+            <section class="cita-pasos__panel" data-cita-paso="0" aria-labelledby="citaPasoPaciente">
+                <h4 id="citaPasoPaciente" tabindex="-1">Paciente y atención</h4>
                 <input type="hidden" id="modal_fecha">
                 <input type="hidden" id="modal_veterinario_hidden">
                 <input type="hidden" id="modal_mascota">
@@ -100,7 +108,8 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                         <div class="zk-dropdown" id="cm_mascota_dropdown" role="listbox" hidden></div>
                     </div>
                     <div class="zk-selected" id="cm_mascota_chip" hidden>
-                        <i class="fas fa-paw"></i>
+                        <img id="cm_mascota_foto" class="zk-mascota-foto" alt="" width="32" height="32" hidden>
+                        <span id="cm_mascota_iniciales" class="avatar-iniciales zk-mascota-iniciales" aria-hidden="true"></span>
                         <span id="cm_mascota_chip_name"></span>
                         <button type="button" data-ui-accion="cambiar-mascota">Cambiar</button>
                     </div>
@@ -124,14 +133,24 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                     <label class="zk-label" for="modal_motivo">Motivo <span class="zk-optional">(opcional)</span></label>
                     <input type="text" id="modal_motivo" class="zk-input" maxlength="255" placeholder="Ej. control de peso">
                 </div>
+            </section>
+            <section class="cita-pasos__panel" data-cita-paso="1" aria-labelledby="citaPasoSintomas" hidden>
+                <h4 id="citaPasoSintomas" tabindex="-1">Síntomas y urgencia</h4>
                 <?php
                 $prefijoAgenda = 'modal_agenda';
                 $puedeRevisarAgenda = true;
                 require __DIR__ . '/../partials/triage_agenda.php';
                 ?>
-            </div>
+            </section>
 
-            <div class="zk-modal__col zk-modal__col--slots">
+            <section class="cita-pasos__panel" data-cita-paso="2" aria-labelledby="citaPasoHorario" hidden>
+                <h4 id="citaPasoHorario" tabindex="-1">Revisa y confirma</h4>
+                <p class="cita-pasos__confirmacion" id="cm_confirmacion">Elige un horario en el panel de la derecha.</p>
+                <p>Si necesitas corregir los datos o los síntomas, vuelve al paso anterior. El horario permanece a la vista.</p>
+            </section>
+            </div>
+            </div>
+            <div class="zk-modal__col zk-modal__col--slots cita-horarios">
                 <p class="zk-modal__section">Horario disponible <span class="zk-requerido" aria-hidden="true">*</span></p>
                 <div class="slot-panel" id="modal_slots_container"></div>
             </div>
@@ -144,7 +163,9 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             <p class="zk-summary" id="cm_resumen"></p>
             <div class="zk-modal__actions">
                 <button type="button" class="cal-btn cal-btn--ghost" data-ui-accion="cerrar-cita">Cancelar</button>
-                <button type="submit" form="formCitaModal" class="cal-btn cal-btn--primary" id="cm_submit" disabled>Agendar cita</button>
+                <button type="button" class="cal-btn cal-btn--ghost" id="cm_anterior" hidden>Atrás</button>
+                <button type="button" class="cal-btn cal-btn--primary" id="cm_siguiente" disabled>Continuar</button>
+                <button type="submit" form="formCitaModal" class="cal-btn cal-btn--primary" id="cm_submit" hidden disabled>Agendar cita</button>
             </div>
         </footer>
     </div>

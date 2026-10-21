@@ -172,7 +172,8 @@ select.zk-input {
 .zk-option {
     width: 100%;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 10px;
     padding: 8px 10px;
     border: 0;
     border-radius: 8px;
@@ -183,13 +184,20 @@ select.zk-input {
 }
 
 .zk-option:hover,
-.zk-option:focus-visible { background: var(--cal-primary-soft); outline: none; }
+.zk-option:focus-visible { background: var(--cal-muted-bg); outline: none; }
 
 /* La opción marcada con las flechas (aria-selected) se distingue del hover. */
 .zk-option[aria-selected="true"] {
-    background: var(--cal-primary-soft);
-    box-shadow: inset 3px 0 0 var(--cal-primary);
+    background: #EEF0F3;
+    box-shadow: none;
 }
+
+.zk-option__datos { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.zk-option__datos > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zk-mascota-foto { flex-shrink: 0; border-radius: 9px; object-fit: cover; background: var(--cal-muted-bg); }
+/* El portal usa avatar-iniciales de usuarios.css: conservar color, forma y letra compartidos. */
+.zk-mascota-iniciales { width: 40px; height: 40px; font-size: 0.85rem; box-shadow: none; }
+.zk-selected .zk-mascota-iniciales { flex: 0 0 32px; width: 32px; height: 32px; }
 
 .zk-option__name { font-size: 0.85rem; font-weight: 600; color: var(--cal-text); }
 .zk-option__sub { font-size: 0.75rem; color: var(--cal-text-2); }
@@ -206,17 +214,20 @@ select.zk-input {
     display: flex;
     align-items: center;
     gap: 10px;
-    height: 40px;
-    padding: 0 6px 0 12px;
-    border: 1px solid #BFD3FF;
+    height: 52px;
+    padding: 0 6px 0 10px;
+    border: 1px solid var(--cal-border);
     border-radius: 10px;
-    background: var(--cal-primary-soft);
+    background: var(--cal-surface);
     font-size: 0.875rem;
     font-weight: 600;
-    color: #1E3A8A;
+    color: var(--cal-text);
 }
 
-.zk-selected i { color: var(--cal-primary); font-size: 0.8rem; }
+#citaModalOverlay #cm_mascota_search:focus {
+    border-color: #94A3B8;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
 
 .zk-selected span {
     flex: 1;
@@ -235,11 +246,11 @@ select.zk-input {
     font-family: inherit;
     font-size: 0.78rem;
     font-weight: 600;
-    color: var(--cal-primary);
+    color: var(--cal-text-2);
     cursor: pointer;
 }
 
-.zk-selected button:hover { background: rgba(0, 82, 255, 0.1); }
+.zk-selected button:hover { background: var(--cal-muted-bg); }
 
 /* ── Pie: resumen o error, y acciones ── */
 .zk-modal__foot {
@@ -404,4 +415,140 @@ select.zk-input {
     .zk-modal__col--slots { min-height: 260px; border-left: 0; border-top: 1px solid var(--cal-border-soft); }
     .slot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .zk-modal__foot { flex-wrap: wrap; }
+}
+
+/* Agendar por pasos: alcance exclusivo del modal del veterinario (HU-4.13). */
+#citaModalOverlay .zk-modal {
+    max-width: 860px;
+    max-height: calc(100dvh - 48px);
+}
+
+#citaModalOverlay .zk-modal__head,
+#citaModalOverlay .zk-modal__foot {
+    flex-shrink: 0;
+}
+
+.cita-distribucion {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    height: 490px;
+    min-height: 0;
+}
+
+.cita-pasos {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.cita-pasos__indicador {
+    display: flex;
+    flex-shrink: 0;
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 20px 28px 0;
+}
+
+.cita-pasos__indicador li {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 8px;
+    padding-bottom: 14px;
+    border-bottom: 3px solid var(--cal-border);
+    color: var(--cal-text-2);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.cita-pasos__indicador span {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--cal-border);
+    border-radius: 50%;
+    font-weight: 500;
+}
+
+.cita-pasos__indicador [aria-current="step"] {
+    border-color: var(--cal-primary);
+    color: var(--cal-primary);
+}
+
+.cita-pasos__indicador [aria-current="step"] span {
+    border-color: var(--cal-primary);
+    background: var(--cal-primary);
+    color: #fff;
+}
+
+.cita-pasos__indicador .is-complete span {
+    border-color: var(--cal-text-2);
+    color: var(--cal-text);
+}
+
+.cita-pasos__contenido {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.cita-pasos__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 100%;
+    box-sizing: border-box;
+    padding: 24px 28px;
+}
+
+.cita-pasos__panel h4 {
+    margin: 0;
+    color: var(--cal-text);
+    font-size: 1rem;
+}
+
+.cita-pasos__confirmacion { margin: 0; font-weight: 600; color: var(--cal-text); }
+
+#citaModalOverlay .cita-horarios { min-height: 0; }
+
+#citaModalOverlay .triage-captura {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+#citaModalOverlay .triage-captura__titulo { display: none; }
+#citaModalOverlay .triage-captura__extra { border-top: 0; }
+#citaModalOverlay .triage-captura__enlace { color: var(--cal-text-2); }
+
+#citaModalOverlay .triage-captura__calcular {
+    border-color: var(--cal-border);
+    background: var(--cal-surface);
+    color: var(--cal-text);
+    box-shadow: none;
+}
+
+#citaModalOverlay .zk-modal__foot { flex-wrap: wrap; }
+#citaModalOverlay .zk-summary,
+#citaModalOverlay .zk-error {
+    flex-basis: 100%;
+    white-space: normal;
+}
+
+@media (max-width: 767px) {
+    #citaModalOverlay .zk-modal { max-height: calc(100dvh - 24px); }
+    .cita-distribucion { grid-template-columns: 1fr; overflow-y: auto; }
+    .cita-pasos { min-height: 400px; }
+    #citaModalOverlay .cita-horarios { min-height: 220px; }
+    .cita-pasos__indicador { gap: 8px; padding: 16px 18px 0; }
+    .cita-pasos__indicador li { gap: 6px; font-size: 0.75rem; }
+    .cita-pasos__indicador span { width: 24px; height: 24px; }
+    .cita-pasos__panel { padding: 20px 18px; }
+    #citaModalOverlay .zk-input { font-size: 1rem; }
+    #citaModalOverlay .zk-modal__actions { width: 100%; justify-content: flex-end; }
 }

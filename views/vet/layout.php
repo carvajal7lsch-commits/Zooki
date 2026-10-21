@@ -29,6 +29,9 @@
     <link rel="stylesheet" href="css/consulta-clinica.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/pill-sidebar.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <?php if (($_GET['action'] ?? '') === 'vet_pacientes'): ?>
+    <link rel="stylesheet" href="css/pacientes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
     <link rel="stylesheet" href="css/perfil.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
@@ -97,7 +100,7 @@
         <main class="main-content">
 
             <!-- Header superior -->
-            <header class="top-header">
+            <header class="top-header<?= $__action === 'vet_pacientes' ? ' top-header--pacientes' : '' ?>">
                 <div class="header-left">
                     <?php 
                         $moduleTitles = [
@@ -110,7 +113,11 @@
                         ];
                         $currentTitle = $moduleTitles[$__action] ?? 'Panel Veterinario';
                     ?>
-                    <h1 class="top-header-title"><?= htmlspecialchars($currentTitle) ?></h1>
+                    <?php if ($__action === 'vet_pacientes'): ?>
+                        <?php require __DIR__ . '/partials/cabecera_pacientes.php'; ?>
+                    <?php else: ?>
+                        <h1 class="top-header-title"><?= htmlspecialchars($currentTitle) ?></h1>
+                    <?php endif; ?>
                 </div>
                 <div class="header-right">
                     <?php include __DIR__ . "/../partials/contexto_actual.php"; ?>

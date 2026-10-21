@@ -17,8 +17,10 @@ test('C3 conecta los formularios desde el archivo JS y conserva las vistas sin e
     prepararContextoC4(contexto);
     vm.runInContext(fuente.slice(inicio, fin), contexto);
     contexto.conectarFormulariosC3();
-    assert.equal(conectados.length, 7);
+    assert.equal(conectados.length, 9);
     assert.deepEqual(conectados[0], ['formCitaModal', 'submit']);
+    assert.deepEqual(conectados[1], ['cm_siguiente', 'click']);
+    assert.deepEqual(conectados[2], ['cm_anterior', 'click']);
     assert.deepEqual(conectados.at(-1), ['reprogramar_tipo_cita', 'change']);
 });
 
@@ -338,6 +340,9 @@ for (const reprogramar of [false, true]) {
 
 // C4: estos casos C3 parten de una evaluación previa válida; la puerta negativa se cubre aparte.
 function prepararContextoC4(contexto) {
+    // Los casos de envío C3 parten del último paso, con la evaluación previa válida.
+    contexto.pasoCitaModal = 2;
+    contexto.avanzarPasoCita = () => {};
     contexto.triageModalC4 = { consulta: () => '123' };
     contexto.triageC4 = { consulta: () => '123' };
     vm.createContext(contexto);

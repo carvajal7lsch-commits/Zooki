@@ -3037,3 +3037,93 @@ Datos locales: `php scripts/dev/datos_prueba.php --si` (Ana/Beto/Elena Norte, Ca
 3. `release/v2.0.0-alpha.5` → PR a `main` → merge → tag anotado `v2.0.0-alpha.5` sobre el merge.
 4. Redeploy en Dokploy: al arrancar se aplican solas las migraciones 08, 09 y 10. Revisar el log («Aplicadas…» sin errores) y que la pantalla muestre 2.0.0-alpha.5.
 5. Opcional: `node scripts/docs/exportar.mjs` para regenerar PDF/Word del portal de documentación.
+
+## Anexo — Modal de agendar por pasos (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Encargo visual posterior al cierre de M4; el dueño autoriza pasos como el registro y exige conservar calendario y herramientas inferiores.
+
+- Solo el modal del veterinario: Paciente → Síntomas → Horario, con indicador horizontal, Atrás/Continuar y envío final.
+- Al volver se conservan mascota, síntomas, evaluación y hora exacta; las modificaciones siguen invalidando contexto/horarios con la lógica existente.
+- Continuar exige paciente/tipo y después evaluación reservable; revisión pendiente y rojo no habilitan horario ni envío.
+- Se elimina la tarjeta anidada y el borde decorativo del triage únicamente en este modal; portal, reprogramación y componentes compartidos conservan sus estilos.
+- Alto limitado con pie visible; sin scroll en los tres pasos básicos a 1366×768, 820×1180 y 390×844. A 390×450 hay desplazamiento interno accesible, sin recortar campos ni acciones; contenido clínico extenso también puede requerirlo.
+- HU-4.13/RE-4.9.1–3 → AgendaModalCita y DisponibilidadAgenda: navegación, teclado del buscador, evaluación previa, segundos y doble envío (27/27 dirigidas).
+- PHP completo sin host: 1016 pruebas/8051 aserciones, 71 omisiones de motor, salida 0. No es una ejecución MySQL/MariaDB ni CI nuevo.
+- JS completo final: 288/288; la pasada inicial detectó tres fixtures que extraían funciones sin las nuevas dependencias de pasos. Adaptados, sin cambiar las aserciones de reserva, precisión o doble envío.
+- PHP/JS sin errores de sintaxis; diff sin errores; Chrome aislado sin desbordamiento horizontal y pie visible en 12 combinaciones de tamaño/paso. Sin recorrer la aplicación ni consultar bases.
+- Pendiente de revisión visual en la aplicación con Beto Norte: avanzar/retroceder, revisar «Otro / no sé», elegir hora y guardar. Se mantiene el flujo de negocio de Modelos §4; no cambian reglas ni diagrama, versión, esquema o exportaciones.
+- No se modificaron el calendario, su espacio, panel lateral ni herramientas inferiores. Sin commits/push del agente.
+
+### Corrección de distribución solicitada por el dueño (2026-10-21)
+
+- **Codex:** interpretó mal la conservación del calendario dentro del modal. El dueño aclara que el panel derecho debe seguir presente, no convertirse en el último paso.
+- Restauradas las dos columnas y ancho original: solo la izquierda tiene Paciente → Síntomas → Confirmar. Horarios fuera de los paneles de pasos, siempre presentes; apilamiento móvil como antes. Calendario principal y herramientas inferiores intactos.
+- Verificación final dirigida 28/28; sintaxis PHP/JS y diff correctos. Chrome aislado en 12 combinaciones: panel derecho presente en todos los pasos, situado a la derecha en escritorio/tableta, sin desborde horizontal y pie visible.
+- PHP 1016/8051 y JS completo 288/288 anteriores son antecedentes, no ejecuciones nuevas de esta corrección. Entregada, pendiente de revisión visual.
+
+### Selector con foto solicitado por el dueño (2026-10-21)
+
+- **Autor: Codex. Entregada, pendiente de revisión.** Referencia: buscador de Atención sin cita. Resultados con foto de 40 px y nombre/propietario; selección con foto de 32 px, conservando Cambiar y el teclado del combobox.
+- Se reutilizan `fotoMascotaUrl`/`usarFotoPorDefecto`, sin rutas de imágenes arbitrarias ni eventos en línea; imagen local de respaldo si falta foto o falla la carga. El catálogo de la misma ruta conserva ahora `url_foto`.
+- Eliminados franja lateral, fondo azul de selección y halo azul del buscador; opción activa y foco siguen siendo visibles con tonos neutros. Textos escapados, nombres largos recortados con título completo y respuesta anterior incapaz de reemplazar la foto actual.
+- Verificación: JS completo 291/291; dirigidas finales 30/30, sintaxis PHP/JS y diff correctos; Chrome aislado a 1366/390 px con foto y nombres largos sin desborde. PHP completo anterior es antecedente, no repetición nueva.
+- Calendario/horarios derechos, pasos y herramientas inferiores conservados. Sin bases, backend, versión, exportaciones o Git de escritura.
+
+**Ajuste posterior del dueño — iniciales (Codex, 2026-10-21):** sustituir la huella de respaldo por las iniciales del nombre, con el mismo criterio del portal (hasta dos palabras). Aplica a resultados, selección y error de imagen; no solicita una imagen de respaldo. Mantiene foto cuando existe y protege de respuestas anteriores. Regresiones finales 31/31, sintaxis PHP/JS y diff correctos; Chrome aislado 1366/390 px sin desborde y con inicial visible. Entregada, pendiente de revisión; calendarios y herramientas conservados.
+
+**Corrección de formato solicitada por el dueño (Codex, 2026-10-21):** las iniciales anteriores tenían estilo neutro propio y no reproducían el portal. Resultados y selección usan ahora su mismo componente `avatar-iniciales` de usuarios.css: azul, letra blanca y forma circular; únicamente se adapta el tamaño al selector. Comparación en Chrome de fondo, color, familia, peso, tamaño de fuente y radio contra avatar compacto del portal: coincidentes a 1366/390 px. Dirigidas 31/31, sintaxis PHP/JS y diff correctos; calendarios conservados. Entregada, pendiente de revisión.
+
+## Anexo — Distribución superior de Pacientes según mockup (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Ajuste visual pedido por el dueño durante el pulido; no reabre reglas de M2 ni implementa funcionalidades nuevas.
+
+- Solo cabecera y filtros: título/pestañas junto al contexto superior; buscador/estados/especie/vista y acciones en barra inferior. Adaptable a móvil/tableta, con los componentes y colores compartidos del sistema.
+- Cabecera parcial específica de vet_pacientes y estilos cargados en head únicamente en esa ruta; las demás cabeceras y el menú lateral conservan su comportamiento.
+- RE-1.3.1/4 y RE-1.5.1/3 conservados: mismos identificadores y eventos de búsqueda, estados, especie, vistas y vinculación. «Vincular mascota» conserva el propósito completo en title y la misma acción.
+- Tarjetas, tablas, expedientes y formularios: contenido desde el contenedor principal idéntico a HEAD; CSS nuevo limitado a cabecera/barra, sin cambios de API/modelos/consultas.
+- JS completo 294/294; dirigidas finales PacientesCabecera y M2C7Pulido 9/9. Chrome aislado a 1366/1184/820/390/360 px, con alternancia real de switchModule y controles de ambas pestañas visibles/correctos, sin desbordes horizontales.
+- PHP sin host 1016 pruebas/8051 aserciones, 71 omitidas de motor; sintaxis de tres vistas finales y diff correctos. Sin MySQL/MariaDB, .env, versión, exportaciones ni Git de escritura.
+- Pendiente: revisión visual en la aplicación por el dueño. Se conservan las entregas y anotaciones anteriores, incluidos los cambios del modal de agenda.
+
+**Espaciado solicitado después de ver la pantalla (Codex, 2026-10-21):** más aire sobre el título y entre cabecera, barra y tarjetas. Cabecera 28/24 px verticales en escritorio y 20/20 móvil; separación inferior de barra 26/22 px. Cambia únicamente espaciado, conservando tarjetas, menú y distribución. Verificación dirigida de cabecera en ambas pestañas y cinco anchos; pendiente de revisión visual del dueño.
+
+**Ancho del buscador solicitado por el dueño (Codex, 2026-10-21):** máximo 400 px para campo y contenedor en escritorio, evitando estirarlo a lo ancho de la barra; estados junto al campo. Móvil conserva el ancho disponible. Sin modificar tarjetas ni funciones; comprobación dirigida adaptable en ambas pestañas y cinco anchos.
+
+**Posición original de controles superiores (Codex, corrección del dueño, 2026-10-21):** el espaciado del top-header había desplazado contexto/notificaciones/perfil. Restaurado su padding original; el bloque derecho conserva tamaño intrínseco y alineación superior. El aire se aplica al contenido izquierdo y al margen inferior, no a esos controles; en móvil, título/pestañas quedan debajo. Regresión Chrome compara x/y/ancho/alto contra cabecera original en 1366/1184/820/390/360 px: coincidentes; 2/2 pruebas dirigidas y diff correctos. Tarjetas/formularios intactos; entregada, pendiente de revisión visual.
+
+## Anexo — Detalle de propietario y mascotas según mockup (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Nuevo encargo visual del dueño, posterior al pulido del directorio.
+
+- Regreso a la pestaña de origen y ruta/nombre en la cabecera; contexto/notificaciones/perfil conservan posición.
+- Datos del propietario en una tarjeta lateral con avatar azul, estado, edición, documento/contacto y las mismas acciones Llamar/Correo/Agendar cita. Sin nuevas escrituras o permisos.
+- Mascotas en cuadrícula de tres/dos/una columnas según ancho, contador en cabecera, búsqueda y especie existentes, Nueva mascota y Ver ficha. Mantiene historia real, sexo desconocido e inactividad; fotos con iniciales de respaldo sin inventar datos clínicos.
+- Cambiar entre directorio/detalle alterna sus cabeceras y la barra de filtros; regresar no recarga el directorio. Abrir otro propietario limpia sus filtros anteriores.
+- HU-1.3/1.5 y acceso a ficha conservados → PropietarioDetalle: cinco mascotas, filtros, selección de ficha, regreso, vacío, escape y foto fallida; PacientesCabecera y M2C7Pulido conservan acciones previas.
+- JS completo propio 295/295; PHP sin host 1017 pruebas/8056 aserciones, 71 omisiones de motor. No es evidencia MySQL/MariaDB ni CI remoto.
+- Chrome aislado con HTML PHP real: 1366/1184/820/390/360 px, sin desbordes, cuadrícula y posición de controles correctas. Sintaxis PHP/JS y diff correctos.
+- Comparación contra HEAD: directorio, HTML desde ficha clínica individual hasta formularios y funciones desde mostrarSeccionDossier idénticos. Sin cambios propios de backend, esquema, versión/exportaciones o Git de escritura; cambios de agenda pendientes conservados.
+- Pendiente: revisión visual del dueño en la aplicación, sin autoaprobación.
+
+## Anexo — Ficha de mascota según mockup (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Distribución visual autorizada por el dueño mediante su mockup, después del detalle del propietario.
+
+- Conserva la tarjeta lateral; regreso a las mascotas del propietario y ruta/nombre en la cabecera, sin desplazar contexto/notificaciones/perfil.
+- Panel único con foto o iniciales, nombre, HC, estado y edición; resumen de última consulta, última vacuna y última desparasitación; pestañas e información general en seis celdas.
+- Resúmenes de registros visibles, con fechas y clínica de origen; próxima aplicación solo si consta. «Sin registros» no equivale a estar al día. No agrega consultas ni permisos.
+- Alergias/alertas conserva componente, registro e historial; se compacta y permanece antes de las pestañas para seguir visible en Historia clínica (RE-2.1.5/RE-2.10.1).
+- HU-2.5/2.10 → MascotaDetalle: orden cronológico del resumen, fecha sin retroceso UTC, datos ausentes, escape, foto fallida/iniciales, solo lectura, edición, pestañas y regreso. PropietarioDetalle/PacientesCabecera conservan filtros y controles.
+- Chrome aislado con HTML PHP y funciones reales a 1366/1184/820/390/360 px: sin desborde, tres/dos/una columnas y posición superior derecha conservada. No se recorrieron pantallas de la aplicación.
+- Verificación propia: JS completo 296/296; PHP sin host 1017 pruebas/8056 aserciones, 71 omitidas de motor. Sintaxis PHP/JS y git diff --check correctos. No es evidencia de MySQL/MariaDB o CI nuevo.
+- Comparación contra HEAD: HTML desde Historia clínica hasta formularios y JS desde impresión hasta el final idénticos; sin cambios de backend, esquema, versión ni exportaciones. Modelos §9 y los flujos clínicos se conservan, sin cambios de diagrama.
+- Pendiente del dueño: comprobar ficha con/sin foto, cambio de pestañas con alertas visibles, edición y mascota desvinculada. Sin autoaprobación ni commit/push; se conservan anexos y revisiones anteriores.
+
+**Corrección de cabecera solicitada por el dueño (Codex, 2026-10-21):** en la ficha, botón de regreso blanco con borde/texto azul y flecha visible, separador vertical, ruta con mascota en negrita y título de mayor jerarquía. Estilos limitados a la cabecera de ficha, adaptables; notificaciones/contexto/perfil no se desplazan. Regresión MascotaDetalle comprueba formato calculado, navegación y posición en cinco anchos; dirigidas 4/4, sintaxis PHP/JS y diff correctos. Suites completas anteriores son antecedente, no repetición nueva. Entregada, pendiente de revisión visual; resto de ficha conservado.
+
+**Aclaración de color del dueño (Codex, 2026-10-21):** la ruta de la ficha usa azul suave de la identidad en lugar del gris anterior; nombre de mascota y título oscuros, botón azul conservado. Regresión MascotaDetalle 1/1 en cinco anchos y diff correctos; entregada, pendiente de revisión visual. Sin cambios de posición o funciones.
+
+**Tamaño corregido por indicación del dueño (Codex, 2026-10-21):** la cabecera de mascota hereda los tamaños del ingreso al propietario: botón, ruta y título, sin ampliación específica ni botón sobredimensionado. Conserva azul suave, nombre oscuro, borde y flecha. MascotaDetalle compara estilos y altura con la cabecera del propietario en cinco anchos; dirigidas 4/4. Entregada, pendiente de revisión visual; no se repiten suites completas por este ajuste de presentación.
+
+**Botón del propietario en azul (Codex, 2026-10-21):** petición del dueño aplicada al regreso de ambos detalles: texto y flecha azules sobre blanco, mismo borde y tamaños conservados. Estilo común sin duplicar reglas. PropietarioDetalle verifica texto/flecha/fondo en cinco anchos. Se prepara un único commit de todo el pulido pendiente (modal de agenda, cabecera/directorio y fichas), a petición del dueño; el dueño ejecuta commit/push. Entregada, pendiente de revisión visual.
+Verificación final de este ajuste: JS completo 296/296, sin omisiones; git diff --check correcto. PHP completo previo queda como antecedente, sin ejecución nueva por este cambio de color.

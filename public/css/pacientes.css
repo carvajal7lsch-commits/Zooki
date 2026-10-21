@@ -1,7 +1,221 @@
 /* Presentación de pacientes extraída de la vista.
    M2 C8 (H5): solo las variables de identidad (css/identidad.css), sin colores sueltos. */
 .pacientes-estilo-0 { display: none; }
+
+/* Pulido del dueño: solo cabecera y filtros de Pacientes; conservar tarjetas y formularios. */
+.pacientes-cabecera {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px 28px;
+    margin-bottom: 18px;
+}
+
+.top-header--pacientes { margin-bottom: 20px; }
+.top-header--pacientes .header-left { min-width: 0; }
+.top-header--pacientes .header-right { align-self: flex-start; flex-shrink: 0; }
+.top-header--pacientes .pacientes-cabecera { margin-bottom: 0; padding-top: 12px; }
+
+.pacientes-cabecera .head-title-desc { position: relative; padding-left: 44px; }
+.pacientes-cabecera .users-page-title { font-size: 1.3rem; font-weight: 700; }
+.pacientes-cabecera .users-module-desc { font-size: 0.8rem; }
+.pacientes-cabecera .users-page-title > i {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--z-primary-soft);
+    font-size: 1rem;
+}
+
+.pacientes-cabecera .tabs-wrapper {
+    gap: 4px;
+    padding: 4px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-sm);
+}
+
+.pacientes-cabecera .tab-btn { margin: 0; padding: 8px 14px; border: 0; border-radius: 8px; }
+.pacientes-cabecera .tab-btn.active { background: var(--z-primary); color: var(--z-surface); }
+.pacientes-cabecera .tab-btn.active i { color: inherit; }
+
+.pacientes-barra {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 26px;
+    border-radius: 14px;
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-sm);
+}
+
+.pacientes-barra .users-controls-bar__filters.is-active {
+    display: flex;
+    align-items: center;
+    flex: 1 1 440px;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+}
+
+.pacientes-barra .head-search { flex: 1 1 180px; min-width: 0; max-width: 400px; }
+.pacientes-barra .search-input { max-width: none; box-sizing: border-box; }
+.pacientes-barra .head-search .search-input { max-width: 400px; }
+.pacientes-barra .search-input input { min-width: 0; width: 100%; font-size: 0.8rem; }
+.pacientes-barra .head-status-filters { flex-wrap: wrap; gap: 8px; }
+.pacientes-barra .segmented-control label { font-size: 0.78rem; padding: 8px 12px; }
+.pacientes-barra .head-view-toggle { flex-shrink: 0; padding-right: 10px; border-right: 1px solid var(--z-border); }
+.pacientes-barra .command-center-actions { gap: 8px; margin-left: auto; }
+.pacientes-barra .btn-create { padding: 9px 12px; font-size: 0.8rem; white-space: nowrap; }
+
+@media (max-width: 767px) {
+    .top-header--pacientes { flex-wrap: wrap; row-gap: 16px; }
+    .top-header--pacientes .header-left { order: 2; flex-basis: 100%; }
+    .top-header--pacientes .header-right { order: 1; }
+    .pacientes-barra { margin-bottom: 22px; }
+    .pacientes-cabecera { gap: 14px; }
+    .pacientes-cabecera .head-top-right { width: 100%; justify-content: flex-start; }
+    .pacientes-barra .users-controls-bar__filters.is-active { flex-basis: 100%; }
+    .pacientes-barra .head-search { flex-basis: 100%; max-width: none; }
+    .pacientes-barra .head-search .search-input { max-width: none; }
+    .pacientes-barra .head-status-filters { width: 100%; }
+    .pacientes-barra .head-view-toggle { border: 0; padding-right: 0; }
+    .pacientes-barra .command-center-actions { flex-wrap: wrap; }
+    .pacientes-barra .btn-create { font-size: 0.75rem; padding: 9px 10px; }
+}
 .pacientes-estilo-1 { display: none; }
+
+/* Detalle de propietario: tarjeta lateral y mascotas en cuadrícula, según mockup del dueño. */
+.pacientes-cabecera[hidden], .pacientes-barra[hidden] { display: none; }
+.pacientes-cabecera--detalle { gap: 14px; }
+.pacientes-cabecera--detalle .propietario-volver { font-size: 0.8rem; border: 1px solid var(--z-primary-borde); background: var(--z-surface); color: var(--z-primary); box-shadow: var(--z-shadow-sm); }
+.pacientes-cabecera--detalle .propietario-volver:hover { background: var(--z-primary-soft); }
+.propietario-ruta { border-left: 1px solid var(--z-border); padding-left: 14px; min-width: 0; }
+.propietario-ruta p { margin: 0 0 3px; font-size: 0.72rem; color: var(--z-text-muted); }
+.propietario-ruta h1 { margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--z-text); overflow-wrap: anywhere; }
+.pacientes-cabecera--ficha { width: 100%; }
+.pacientes-cabecera--ficha .propietario-volver { max-width: 100%; text-align: left; }
+.pacientes-cabecera--ficha .propietario-volver svg { flex-shrink: 0; }
+.pacientes-cabecera--ficha .propietario-ruta p { color: color-mix(in srgb, var(--z-primary) 18%, var(--z-text-muted)); overflow-wrap: anywhere; }
+.pacientes-cabecera--ficha .propietario-ruta strong { color: var(--z-text); font-weight: 700; }
+
+.propietario-detalle .dossier-layout-grid { grid-template-columns: 260px minmax(0, 1fr); gap: 16px; }
+.propietario-detalle .dossier-main-content,
+.propietario-detalle .dossier-sidebar { min-width: 0; }
+.propietario-detalle .owner-details-card,
+.propietario-detalle #dossierListSection { padding: 18px; border: 0; border-radius: 18px; background: var(--z-surface); box-shadow: var(--z-shadow-sm); }
+.propietario-detalle .owner-details-card .dossier-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 0; margin-bottom: 20px; border: 0; }
+.propietario-detalle .dossier-card-title { min-width: 0; gap: 10px; }
+.propietario-detalle .dossier-card-title .avatar-iniciales { width: 46px; height: 46px; font-size: 1rem; box-shadow: none; }
+.propietario-identidad { min-width: 0; }
+.propietario-identidad h2 { margin: 3px 0 5px; font-size: 0.9rem; line-height: 1.3; font-weight: 700; overflow-wrap: anywhere; }
+.propietario-detalle .owner-details-card .status-badge { font-size: 0.65rem; padding: 3px 8px; }
+.propietario-detalle .dossier-card-actions { flex-shrink: 0; }
+.propietario-detalle .owner-details-card .btn-icon-light { width: 32px; height: 32px; border: 1px solid var(--z-border); border-radius: 8px; background: var(--z-surface); color: var(--z-text-secondary); }
+.propietario-detalle .owner-data-list { gap: 16px; }
+.propietario-detalle .owner-data-list .data-group { position: relative; gap: 2px; padding-left: 40px; }
+.propietario-detalle .owner-data-list label { font-size: 0.7rem; font-weight: 400; color: var(--z-text-muted); text-transform: none; letter-spacing: normal; }
+.propietario-detalle .owner-data-list label i { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 30px; height: 32px; border-radius: 9px; background: var(--z-bg-light); color: var(--z-text-secondary); }
+.propietario-detalle .owner-data-list .data-value { font-size: 0.78rem; font-weight: 500; overflow-wrap: anywhere; }
+.propietario-detalle .quick-actions-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--z-border); }
+.propietario-detalle .btn-quick-action { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; padding: 12px 2px; min-width: 0; border: 1px solid var(--z-border); border-radius: 10px; background: var(--z-surface); color: var(--z-primary); font-size: 0.65rem; white-space: normal; }
+.propietario-detalle .btn-quick-action:hover { background: var(--z-bg-suave); }
+.propietario-detalle .patients-header-row { flex-wrap: wrap; gap: 14px; margin-bottom: 16px; padding-bottom: 0; border: 0; }
+.propietario-detalle .patients-title-area h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 0.95rem; }
+.propietario-detalle .patients-filters-area { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-left: auto; min-width: 0; }
+.propietario-detalle .search-box-inline { width: 210px; box-sizing: border-box; }
+.propietario-detalle .search-box-inline input { width: 100%; min-width: 0; font-size: 0.75rem; }
+.propietario-detalle .patients-filters-area select { min-width: 0; max-width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--z-border); border-radius: 9px; background: var(--z-bg-suave); color: var(--z-text); font-family: inherit; font-size: 0.75rem; }
+.propietario-detalle .btn-pill-primary { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 12px; border-radius: 9px; font-size: 0.75rem; white-space: nowrap; }
+.propietario-detalle #dossierListSection .dossier-pets-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; overflow: visible; padding: 0; width: 100%; }
+.propietario-detalle #dossierListSection .pets-carousel__nav { display: none; }
+.propietario-detalle .pet-dossier-card { display: flex; flex-direction: column; gap: 12px; width: auto; min-width: 0; padding: 14px; border: 1px solid var(--z-border); border-radius: 14px; background: var(--z-surface); box-shadow: none; cursor: pointer; }
+.propietario-detalle .pet-dossier-card:hover { border-color: var(--z-border-fuerte); box-shadow: none; transform: none; }
+.propietario-detalle .pet-dossier-card-top { align-items: center; gap: 10px; margin-bottom: 0; }
+.propietario-detalle .pet-dossier-card-photo,
+.propietario-detalle .propietario-mascota-avatar .avatar-iniciales { display: block; width: 40px; height: 40px; margin: 0; font-size: 0.85rem; box-shadow: none; }
+.propietario-detalle .propietario-mascota-avatar .avatar-iniciales { display: inline-flex; }
+.propietario-mascota-avatar { flex-shrink: 0; }
+.propietario-detalle [hidden] { display: none !important; }
+.propietario-detalle .pet-dossier-card-info { min-width: 0; }
+.propietario-detalle .pet-dossier-card-name { margin: 0 0 3px; font-size: 0.85rem; overflow-wrap: anywhere; }
+.propietario-detalle .pet-dossier-card-species { margin: 0; font-size: 0.7rem; line-height: 1.4; overflow-wrap: anywhere; }
+.propietario-detalle .pet-dossier-card-grid { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; border: 0; }
+.propietario-detalle .pet-dossier-card-grid .tag-mini { font-size: 0.65rem; padding: 3px 8px; }
+.propietario-detalle .pet-dossier-card-actions { margin-top: auto; padding: 0; border: 0; }
+.propietario-detalle .btn-ficha { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 9px; border: 1px solid var(--z-primary-borde); border-radius: 9px; background: var(--z-primary-soft); color: var(--z-primary); font-size: 0.75rem; }
+.propietario-detalle #dossierListSection .patients-footer { display: none; }
+
+@media (max-width: 1100px) {
+    .propietario-detalle .dossier-layout-grid { grid-template-columns: 230px minmax(0, 1fr); }
+    .propietario-detalle #dossierListSection .dossier-pets-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+    .propietario-detalle .dossier-layout-grid { grid-template-columns: minmax(0, 1fr); }
+    .propietario-detalle .patients-filters-area { width: 100%; margin-left: 0; }
+    .propietario-detalle .search-box-inline { width: 100%; }
+}
+@media (max-width: 500px) {
+    .propietario-detalle #dossierListSection .dossier-pets-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* Ficha individual: conserva la tarjeta del propietario y las funciones clínicas. */
+.propietario-detalle #dossierPetDashboardSection { padding: 18px; border: 0; border-radius: 18px; background: var(--z-surface); box-shadow: var(--z-shadow-sm); }
+.ficha-mascota-cabecera { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.ficha-mascota-avatar { flex-shrink: 0; }
+.ficha-mascota-foto,
+.ficha-mascota-avatar .avatar-iniciales { width: 62px; height: 62px; border-radius: 16px; object-fit: cover; font-size: 1.3rem; box-shadow: none; }
+.ficha-mascota-identidad { min-width: 0; flex: 1; }
+.ficha-mascota-nombre { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ficha-mascota-nombre h2 { margin: 0; font-size: 1.2rem; overflow-wrap: anywhere; }
+.ficha-mascota-nombre .tag-mini,
+.ficha-mascota-nombre .status-badge { padding: 3px 8px; font-size: 0.65rem; }
+.ficha-mascota-nombre .tag-mini { color: var(--z-primary); background: var(--z-primary-soft); }
+.ficha-mascota-identidad p { margin: 6px 0 0; font-size: 0.75rem; line-height: 1.5; color: var(--z-text-secondary); overflow-wrap: anywhere; }
+.ficha-mascota-editar { flex-shrink: 0; padding: 9px 12px; font-size: 0.75rem; }
+.ficha-mascota-resumen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 16px; border: 1px solid var(--z-border); border-radius: 12px; background: var(--z-bg-suave); }
+.ficha-mascota-resumen > div { display: flex; gap: 10px; align-items: flex-start; min-width: 0; padding: 14px; }
+.ficha-mascota-resumen > div + div { border-left: 1px solid var(--z-border); }
+.ficha-mascota-resumen i { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border: 1px solid var(--z-border); border-radius: 8px; background: var(--z-surface); color: var(--z-primary); }
+.ficha-mascota-resumen span { font-size: 0.65rem; color: var(--z-text-muted); }
+.ficha-mascota-resumen p { margin: 3px 0 0; font-size: 0.75rem; line-height: 1.45; color: var(--z-text); overflow-wrap: anywhere; }
+.propietario-detalle .dossier-dashboard-tabs { gap: 22px; padding: 0; border: 0; border-bottom: 1px solid var(--z-border); border-radius: 0; background: transparent; box-shadow: none; }
+.propietario-detalle .dossier-dashboard-tab { padding: 12px 0; border-radius: 0; border-bottom: 2px solid transparent; font-size: 0.75rem; font-weight: 500; }
+.propietario-detalle .dossier-dashboard-tab.active { border-bottom-color: var(--z-primary); background: transparent; }
+.propietario-detalle .dossier-dashboard-content { min-height: 0; margin-top: 16px; padding: 0; border: 0; border-radius: 0; box-shadow: none; }
+.propietario-detalle .ficha-mascota-datos .dossier-pet-details { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.propietario-detalle .dossier-pet-field { min-width: 0; padding: 14px; border-radius: 12px; background: var(--z-bg-suave); }
+.propietario-detalle .dossier-pet-field label { font-size: 0.65rem; font-weight: 400; }
+.propietario-detalle .dossier-pet-field span,
+.propietario-detalle .dossier-pet-field code { padding: 0; background: transparent; color: var(--z-text); font-family: inherit; font-size: 0.8rem; font-weight: 500; overflow-wrap: anywhere; }
+.propietario-detalle [data-alertas-ficha] { padding: 10px 14px; background: var(--z-bg-suave); }
+.propietario-detalle [data-alertas-ficha] .alertas-medicas__titulo { font-size: 0.78rem; }
+.propietario-detalle [data-alertas-ficha] .alertas-medicas__vacio { font-size: 0.7rem; }
+@media (min-width: 1024px) {
+    .propietario-detalle [data-alertas-ficha]:not(.alertas-medicas--con-alertas) { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+    .propietario-detalle [data-alertas-ficha]:not(.alertas-medicas--con-alertas) .alertas-medicas__barra { display: contents; }
+    .propietario-detalle [data-alertas-ficha]:not(.alertas-medicas--con-alertas) .alertas-medicas__titulo { flex: 0 1 auto; }
+    .propietario-detalle [data-alertas-ficha]:not(.alertas-medicas--con-alertas) .alertas-medicas__registrar { order: 2; margin-left: auto; }
+    .propietario-detalle [data-alertas-ficha] .alertas-medicas__historial { flex-basis: 100%; order: 3; }
+}
+@media (max-width: 1023px) {
+    .ficha-mascota-resumen { grid-template-columns: minmax(0, 1fr); }
+    .ficha-mascota-resumen > div + div { border-left: 0; border-top: 1px solid var(--z-border); }
+    .propietario-detalle .ficha-mascota-datos .dossier-pet-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 500px) {
+    .ficha-mascota-cabecera { flex-wrap: wrap; gap: 10px; }
+    .ficha-mascota-editar { margin-left: auto; }
+    .propietario-detalle .ficha-mascota-datos .dossier-pet-details { grid-template-columns: minmax(0, 1fr); }
+    .propietario-volver { max-width: 100%; white-space: normal; }
+}
 .pacientes-estilo-2 { display:block; color: var(--z-text-muted); }
 .pacientes-estilo-3 { font-size: 0.9rem; font-weight: 500; }
 .pacientes-estilo-4 { width: 100%; margin-top: 5px; }

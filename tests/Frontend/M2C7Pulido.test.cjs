@@ -143,8 +143,9 @@ test('5. medical-module.js ya no tiene style= ni eventos en línea en su HTML', 
 test('6. «Vincular mascota de un cliente» abre la búsqueda del propietario con el mismo flujo', () => {
     const vista = leer('views/vet/pacientes.php');
     const acceso = vista.indexOf('data-vincular-mascota-cliente');
-    assert.ok(acceso > 0 && acceso < vista.indexOf('Nuevo Registro'), 'A la vista, junto a «Nuevo Registro»');
-    assert.match(vista, /<span>Vincular mascota de un cliente<\/span>/);
+    assert.ok(acceso > 0 && acceso < vista.indexOf('Nuevo registro'), 'A la vista, junto a «Nuevo registro»');
+    assert.match(vista, /<span>Vincular mascota<\/span>/);
+    assert.match(vista, /title="Vincular mascota de un cliente"/);
 
     const documento = crearDocumento();
     for (const id of ['petOwnerDoc', 'ownerSearchWrapper', 'selectedOwnerInfo', 'mascotasExistentes', 'ownerSearchAyuda']) colgar(documento.raiz, 'div', {}, { id });
