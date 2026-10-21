@@ -254,6 +254,27 @@ final class DisponibilidadAgendaTest extends TestCase
         $this->assertNotContains('11:30', $respuesta['horas']);
     }
 
+    public function testCompletadaLegadaOcupaLoAgendadoYElAvisoNombraLaCitaQueFrena(): void
+    {
+        // Pruebas de usuario (2026-10-21): una cita completada antes de M4 (sin inicio real ni
+        // objetivo) ya no frena el día entero; ocupa lo agendado y su margen.
+        $id = $this->reservar('09:00');
+        $this->db->exec("UPDATE citas SET estado='completada',hora_inicio_real=NULL,hora_fin_real=NULL,duracion_activa_objetivo_segundos=NULL");
+        $horas = $this->citas->sugerencias(2, 1, 1, '2030-01-07');
+        $this->assertNotContains('09:00', $horas);
+        $this->assertContains('10:00', $horas, 'Después de la cita y su margen el día sigue abierto');
+        // En atención sin inicio real sí pide revisión, y el aviso dice cuál cita y por qué.
+        $this->db->exec("UPDATE citas SET estado='en_curso'");
+        try {
+            $this->citas->sugerencias(2, 1, 1, '2030-01-07');
+            $this->fail('Debía pedir revisión.');
+        } catch (HorarioOcupado $error) {
+            $this->assertStringContainsString("cita #$id", $error->getMessage());
+            $this->assertStringContainsString('09:00', $error->getMessage());
+            $this->assertStringContainsString('sin hora de inicio', $error->getMessage());
+        }
+    }
+
     public function testCompletadaReconstruyeMargenUnicoConPausaSinModificarSellos(): void
     {
         $id = $this->reservar('09:00');

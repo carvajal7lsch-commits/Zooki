@@ -118,8 +118,13 @@
     min-width: 0;
 }
 .triage-captura__tiempo-controles .triage-captura__minutos {
-    flex: 0 0 96px;
+    flex: 0 0 64px;
 }
+.triage-captura__tiempo-controles select.triage-captura__unidad {
+    flex: 0 0 104px;
+    min-width: 0;
+}
+.triage-captura__unidad[hidden],
 .triage-captura__minutos[hidden] {
     display: none;
 }

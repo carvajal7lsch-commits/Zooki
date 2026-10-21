@@ -34,6 +34,8 @@
         };
     }
 
+    const MINUTOS_POR = { minutos: 1, horas: 60, dias: 1440, semanas: 10080 };
+
     function crear(bloque, opciones) {
         const buscar = selector => bloque.querySelector(selector);
         const salida = buscar('[data-triage-resultado]');
@@ -46,6 +48,8 @@
         let ocupada = false;
         let capturaActual;
         let mascotaAnterior = '';
+        let previoRevision = null;
+        let nivelCalculado = '';
 
         function invalidar() {
             estado.invalidar();
@@ -78,37 +82,48 @@
                     const select = document.createElement('select');
                     select.className = 'zk-input';
                     select.setAttribute('aria-label', 'Desde cuándo: ' + marca.etiqueta);
-                    const alternativas = [['no_se', 'Desde: no sé'], ['conocido', 'Hace (minutos)']];
+                    const alternativas = [['no_se', 'Desde: no sé'], ['conocido', 'Hace…']];
                     if (marca.codigo === 'sintoma.control_preventivo') alternativas.push(['no_aplica', 'No aplica']);
                     for (const [valor, texto] of alternativas) select.add(new Option(texto, valor));
                     select.value = dato.tiempo;
-                    const minutos = document.createElement('input');
-                    minutos.className = 'zk-input triage-captura__minutos';
-                    minutos.type = 'text';
-                    minutos.inputMode = 'decimal';
-                    minutos.maxLength = 12;
-                    minutos.placeholder = 'min';
-                    minutos.dataset.caracteres = '0-9.';
-                    minutos.dataset.formato = 'decimal';
-                    minutos.dataset.decimales = '3';
-                    minutos.setAttribute('aria-label', 'Minutos de ' + marca.etiqueta);
-                    minutos.value = dato.minutos ?? '';
-                    minutos.hidden = dato.tiempo !== 'conocido';
+                    // Pruebas de usuario (2026-10-21): el tiempo se escribe en la unidad natural
+                    // (una fiebre de 3 días) y viaja al servidor convertido a minutos, como siempre.
+                    const cantidad = document.createElement('input');
+                    cantidad.className = 'zk-input triage-captura__minutos';
+                    cantidad.type = 'text';
+                    cantidad.inputMode = 'numeric';
+                    cantidad.maxLength = 4;
+                    cantidad.placeholder = 'Cant.';
+                    cantidad.dataset.caracteres = '0-9';
+                    cantidad.setAttribute('aria-label', 'Cuánto tiempo hace: ' + marca.etiqueta);
+                    cantidad.value = dato.cantidad ?? '';
+                    const unidad = document.createElement('select');
+                    unidad.className = 'zk-input triage-captura__unidad';
+                    unidad.setAttribute('aria-label', 'Unidad de tiempo: ' + marca.etiqueta);
+                    for (const [valor, texto] of [['minutos', 'minutos'], ['horas', 'horas'], ['dias', 'días'], ['semanas', 'semanas']]) unidad.add(new Option(texto, valor));
+                    unidad.value = dato.unidad || 'horas';
+                    const conocido = () => dato.tiempo === 'conocido';
+                    cantidad.hidden = !conocido();
+                    unidad.hidden = !conocido();
                     const cambiar = () => {
                         dato.tiempo = select.value;
-                        minutos.hidden = dato.tiempo !== 'conocido';
-                        if (dato.tiempo === 'conocido') dato.minutos = minutos.value;
+                        cantidad.hidden = !conocido();
+                        unidad.hidden = !conocido();
+                        dato.cantidad = cantidad.value;
+                        dato.unidad = unidad.value;
+                        if (conocido() && /^\d{1,4}$/.test(cantidad.value)) dato.minutos = String(Number(cantidad.value) * MINUTOS_POR[unidad.value]);
                         else delete dato.minutos;
                         dato.grupo = grupo;
                         invalidar();
-                        aviso.textContent = dato.tiempo === 'conocido' && (!minutos.value || !Number.isFinite(Number(minutos.value)) || Number(minutos.value) < 0) ? 'Indica minutos no negativos junto a cada marca.' : '';
+                        aviso.textContent = conocido() && !/^\d{1,4}$/.test(cantidad.value) ? 'Indica hace cuánto empezó cada síntoma.' : '';
                     };
                     dato.grupo = grupo;
                     select.addEventListener('change', cambiar);
-                    minutos.addEventListener('input', cambiar);
+                    cantidad.addEventListener('input', cambiar);
+                    unidad.addEventListener('change', cambiar);
                     const controlesTiempo = document.createElement('div');
                     controlesTiempo.className = 'triage-captura__tiempo-controles';
-                    controlesTiempo.append(select, minutos);
+                    controlesTiempo.append(select, cantidad, unidad);
                     fila.append(nombre, controlesTiempo);
                     contenedor.append(fila);
                 }
@@ -193,7 +208,7 @@
                 for (const episodio of episodios.values()) {
                     if (episodio.grupo !== grupo) continue;
                     for (const [campo, valor] of Object.entries(episodio)) {
-                        if (campo !== 'grupo') forma.append(`${grupo}[${indice}][${campo}]`, valor);
+                        if (!['grupo', 'cantidad', 'unidad'].includes(campo)) forma.append(`${grupo}[${indice}][${campo}]`, valor);
                     }
                     indice++;
                 }
@@ -210,11 +225,35 @@
             try {
                 const r = await (await fetch('index.php?action=' + accion, { method: 'POST', body: forma })).json();
                 estado.consultar(opciones.seleccion());
+                if (accion === 'revisar_triage_agenda_ajax' && !r.success) {
+                    // La revisión rechazada deja el cálculo vigente a la vista y el motivo bajo su campo.
+                    estado.recibir(numero, previoRevision);
+                    avisoRevision.textContent = r.message || 'No se pudo guardar la revisión.';
+                    return;
+                }
                 if (!estado.recibir(numero, r)) return;
-                pintarResultado(r, r.message || '');
-                comprobar.hidden = !r.revision;
                 const revision = buscar('[data-triage-revision]');
-                if (revision) revision.hidden = !r.revision;
+                // Quien puede revisar lo hace ahí mismo: no necesita «Comprobar si ya fue revisado».
+                pintarResultado(r, revision && r.revision ? 'Confirma el nivel abajo para ver los horarios.' : (r.message || ''));
+                comprobar.hidden = !r.revision || Boolean(revision);
+                if (revision) {
+                    if (r.revision && revision.hidden) {
+                        // Al pedir revisión se propone el nivel calculado y el motivo empieza vacío.
+                        const nivel = buscar('[data-triage-nivel]');
+                        nivelCalculado = r.nivel || '';
+                        if (nivel && r.nivel) nivel.value = r.nivel;
+                        if (motivoRevision) motivoRevision.value = '';
+                        avisoRevision.textContent = '';
+                    }
+                    const mostrar = r.revision && revision.hidden;
+                    revision.hidden = !r.revision;
+                    if (mostrar) {
+                        // La columna del modal tiene su propio scroll: se lleva la revisión a la vista
+                        // para que no quede escondida debajo y el motivo quede listo para escribir.
+                        if (typeof revision.scrollIntoView === 'function') revision.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                        if (aprobar && typeof aprobar.focus === 'function') aprobar.focus({ preventScroll: true });
+                    }
+                }
                 opciones.alCambiar(r.success && r.reservable ? r : null);
             } catch (error) {
                 estado.consultar(opciones.seleccion());
@@ -225,6 +264,7 @@
                     calcular.disabled = false;
                     comprobar.disabled = false;
                 }
+                habilitarRevision();
             }
         }
 
@@ -271,14 +311,42 @@
             }
         });
 
-        buscar('[data-triage-aprobar]')?.addEventListener('click', () => {
+        // Pruebas de usuario (2026-10-21): el aviso de la revisión va bajo su motivo, no arriba junto
+        // a «Calcular», y Confirmar solo se habilita con motivo.
+        const aprobar = buscar('[data-triage-aprobar]');
+        const motivoRevision = buscar('[data-triage-motivo]');
+        const avisoRevision = buscar('[data-triage-revision-aviso]') || aviso;
+        // Confirmar el nivel calculado es un clic; el motivo solo se exige si el veterinario lo cambia.
+        const nivelRevision = buscar('[data-triage-nivel]');
+        const MOTIVO_CONFIRMA = 'Nivel calculado confirmado por el veterinario al agendar.';
+        const cambiaNivel = () => Boolean(nivelRevision && nivelCalculado && nivelRevision.value !== nivelCalculado);
+        const habilitarRevision = () => {
+            if (!aprobar || !motivoRevision) return;
+            const texto = motivoRevision.value.trim();
+            aprobar.disabled = ocupada || texto.length > 255 || (cambiaNivel() && !texto);
+            aprobar.textContent = cambiaNivel() ? 'Guardar nivel' : 'Confirmar nivel';
+            motivoRevision.placeholder = cambiaNivel() ? 'Por qué cambias el nivel (obligatorio)' : 'Motivo (opcional)';
+        };
+        motivoRevision?.addEventListener('input', () => {
+            avisoRevision.textContent = cambiaNivel() && !motivoRevision.value.trim() ? 'Escribe por qué cambias el nivel.' : '';
+            habilitarRevision();
+        });
+        nivelRevision?.addEventListener('change', () => {
+            avisoRevision.textContent = '';
+            habilitarRevision();
+        });
+        habilitarRevision();
+        aprobar?.addEventListener('click', () => {
             if (ocupada) return;
             const actual = estado.consultar(opciones.seleccion());
-            const motivo = buscar('[data-triage-motivo]').value.trim();
+            const escrito = motivoRevision.value.trim();
+            const motivo = escrito || (cambiaNivel() ? '' : MOTIVO_CONFIRMA);
             if (!actual?.revision || !motivo || motivo.length > 255) {
-                aviso.textContent = 'Indica el motivo de la revisión (1 a 255 caracteres).';
+                avisoRevision.textContent = actual?.revision ? 'Escribe por qué cambias el nivel (máximo 255 caracteres).' : 'Vuelve a calcular el nivel antes de confirmar.';
                 return;
             }
+            avisoRevision.textContent = '';
+            previoRevision = actual;
             const forma = new FormData();
             for (const [campo, valor] of Object.entries({ id_solicitud: actual.id_solicitud, huella: actual.huella, nivel: buscar('[data-triage-nivel]').value, motivo })) forma.append(campo, valor);
             forma.append('clave_operacion', comando.clave(forma));

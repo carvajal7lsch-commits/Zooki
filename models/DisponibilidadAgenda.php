@@ -168,7 +168,7 @@ final class DisponibilidadAgenda extends ModeloClinica
     /** RN-401: excepción global mínima; nunca nombres, clínica, motivo o contactos. */
     private function ocupacionGlobal(int $vet, int $mascota, string $fecha, ?int $excluir, int $ahora, bool $sobrecupo = false, array $secuencia = [], bool $rojoPresente = false): array
     {
-        $sql = "SELECT (c.id_clinica=?) AS misma_clinica,(c.id_mascota=?) AS mismo_paciente,c.id_cita,c.fecha,c.hora,c.hora_fin,c.duracion_minutos,c.margen_minutos,c.estado,
+        $sql = "SELECT (c.id_clinica=?) AS misma_clinica,(c.id_mascota=?) AS mismo_paciente,c.id_cita,(SELECT m.nombre FROM mascotas m WHERE m.id_mascota=c.id_mascota) AS mascota,c.fecha,c.hora,c.hora_fin,c.duracion_minutos,c.margen_minutos,c.estado,
             c.hora_inicio_real,c.hora_fin_real,c.inicio_estimado,c.fin_estimado,c.duracion_activa_objetivo_segundos,
             p.inicio AS pausa_inicio,p.fin AS pausa_fin
             FROM citas c LEFT JOIN pausas_cita p ON p.id_cita=c.id_cita
@@ -211,7 +211,7 @@ final class DisponibilidadAgenda extends ModeloClinica
             $margen = $c['margen_minutos'] === null ? null : (int) $c['margen_minutos'] * 60;
             // Decisión C3 del dueño: incertidumbre no equivale a capacidad libre.
             if ($margen === null || $margen < 0) {
-                $this->requiereRevision();
+                $this->requiereRevision($c, 'tiene el margen entre citas sin definir');
             }
             if (in_array($c['estado'], ['pendiente', 'confirmada'], true)) {
                 if ($duracion > 0) {
@@ -219,10 +219,10 @@ final class DisponibilidadAgenda extends ModeloClinica
                 } elseif ($c['hora_fin'] !== null) {
                     $fin = IntervalosAgenda::fecha($c['fecha'] . ' ' . self::hora($c['hora_fin']))->getTimestamp();
                     if ($fin <= $s) {
-                        $this->requiereRevision();
+                        $this->requiereRevision($c, 'termina antes de empezar');
                     }
                 } else {
-                    $this->requiereRevision();
+                    $this->requiereRevision($c, 'no tiene duración');
                 }
                 $inicio = $c['inicio_estimado'] === null ? $s : IntervalosAgenda::fecha($c['inicio_estimado'])->getTimestamp();
                 $fin = $c['fin_estimado'] === null ? $inicio + ($fin - $s) : IntervalosAgenda::fecha($c['fin_estimado'])->getTimestamp();
@@ -232,17 +232,27 @@ final class DisponibilidadAgenda extends ModeloClinica
                 continue;
             }
             if ($c['hora_inicio_real'] === null || (int) $c['duracion_activa_objetivo_segundos'] <= 0) {
-                $this->requiereRevision();
+                // Pruebas de usuario (2026-10-21): una cita ya completada de antes de M4 no tiene
+                // inicio real ni objetivo. Ya terminó: ocupa lo que se agendó (y hasta su fin real),
+                // sin frenar el día entero. Si ni eso se sabe, sigue pidiendo revisión.
+                if ($c['estado'] === 'completada' && $duracion > 0) {
+                    $finReal = $c['hora_fin_real'] === null ? 0 : IntervalosAgenda::fecha($c['hora_fin_real'])->getTimestamp();
+                    if (!$ignorar) {
+                        $resultado[] = [$s, max($s + $duracion * 60, $finReal) + $margen];
+                    }
+                    continue;
+                }
+                $this->requiereRevision($c, $c['estado'] === 'completada' ? 'está completada pero sin duración registrada' : 'está en atención sin hora de inicio o sin duración registrada');
             }
             try {
                 $pausas = array_map(static fn ($p) => ['inicio' => $p[0], 'fin' => $p[1]], $datos['pausas']);
                 $e = PoliticaTemporalAgenda::calcular($c, $pausas, IntervalosAgenda::fecha(PoliticaTemporalAgenda::sello($ahora)));
             } catch (InvalidArgumentException $error) {
-                $this->requiereRevision();
+                $this->requiereRevision($c, 'tiene una pausa o un tiempo de atención inconsistente');
             }
             // A.3: una atención abierta no libera capacidad por agotar su estimación.
             if ($c['hora_fin_real'] === null && $ahora >= $e['extremo']) {
-                $this->requiereRevision();
+                $this->requiereRevision($c, 'sigue en atención y ya pasó su tiempo estimado: termínala para liberar la agenda');
             }
             if (!$ignorar) {
                 $resultado[] = [min($s, $e['inicio']), $e['extremo']];
@@ -251,9 +261,18 @@ final class DisponibilidadAgenda extends ModeloClinica
         return $resultado;
     }
 
-    private function requiereRevision(): never
+    /**
+     * Pruebas de usuario (2026-10-21): el aviso dice qué cita frena el día y por qué, para que
+     * el veterinario la resuelva. De otra clínica no se revela nada (RN-401).
+     */
+    private function requiereRevision(array $c, string $razon): never
     {
-        throw new HorarioOcupado('La disponibilidad de esta fecha requiere revisión.');
+        if (!(bool) $c['misma_clinica']) {
+            throw new HorarioOcupado('No se pueden ofrecer horas este día: hay una ocupación en otra clínica con datos incompletos.');
+        }
+        $hora = substr((string) $c['hora'], 0, 5);
+        $mascota = trim((string) ($c['mascota'] ?? ''));
+        throw new HorarioOcupado(sprintf('No se pueden ofrecer horas este día: la cita #%d%s del %s a las %s %s.', (int) $c['id_cita'], $mascota !== '' ? ' de ' . $mascota : '', (string) $c['fecha'], $hora, $razon));
     }
 
     /** RE-4.15.2: capacidad global mínima; cierre no impide atender a un rojo ya presente. */

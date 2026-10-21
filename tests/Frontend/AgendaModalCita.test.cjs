@@ -161,6 +161,7 @@ function filaTiempo() {
         aviso: { textContent: '' },
         invalidar() {},
         buscar: selector => documento.querySelector(selector),
+        MINUTOS_POR: { minutos: 1, horas: 60, dias: 1440, semanas: 10080 },
     };
     vm.createContext(contexto);
     vm.runInContext(tramo(leer('public/js/triage-agenda.js'), 'function tiempos()', '\n        const nombresNivel'), contexto);
@@ -184,18 +185,29 @@ test('cada marca del triage pone el nombre arriba (completo en title) y debajo e
     assert.equal(nombre.textContent, 'Colapso, desmayo o no responde');
     assert.equal(nombre.title, 'Colapso, desmayo o no responde');
     assert.equal(controles.className, 'triage-captura__tiempo-controles');
-    const [select, minutos] = controles.hijos;
+    const [select, cantidad, unidad] = controles.hijos;
     assert.equal(select.tagName, 'SELECT');
-    assert.equal(minutos.hidden, true, 'Los minutos solo se ven con «Hace (minutos)»');
-    assert.equal(minutos.dataset.caracteres, '0-9.');
+    assert.equal(cantidad.hidden, true, 'La cantidad solo se ve con «Hace…»');
+    assert.equal(unidad.hidden, true);
+    assert.equal(cantidad.dataset.caracteres, '0-9');
+    assert.equal(unidad.value, 'horas', 'La unidad por defecto es horas');
 
     select.value = 'conocido';
     select.disparar('change');
-    assert.equal(minutos.hidden, false);
-    minutos.value = '5';
-    minutos.disparar('input');
-    const enviado = JSON.parse(JSON.stringify(contexto.episodios.get('sintoma.colapso')));
-    assert.deepEqual(enviado, { codigo: 'sintoma.colapso', tiempo: 'conocido', minutos: '5', grupo: 'sintomas' });
+    assert.equal(cantidad.hidden, false);
+    assert.equal(unidad.hidden, false);
+    cantidad.value = '3';
+    unidad.value = 'dias';
+    cantidad.disparar('input');
+    const episodio = contexto.episodios.get('sintoma.colapso');
+    assert.equal(episodio.minutos, '4320', '3 días viajan como 4320 minutos');
+    assert.equal(episodio.tiempo, 'conocido');
+    unidad.value = 'semanas';
+    unidad.disparar('change');
+    assert.equal(episodio.minutos, '30240', '3 semanas');
+    cantidad.value = '';
+    cantidad.disparar('input');
+    assert.equal(episodio.minutos, undefined, 'Sin cantidad no se inventan minutos');
 });
 
 test('la fila de tiempo es de una columna con el nombre recortado, también en el celular', () => {

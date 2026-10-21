@@ -1030,8 +1030,9 @@ function actualizarResumenModal() {
     if (!val('modal_mascota')) faltan.push('mascota');
     if (!getVetModal()) faltan.push('veterinario');
     if (!tipoSel.value) faltan.push('tipo de cita');
+    // El nivel de urgencia va antes que el horario: sin él no se consultan horas.
+    if (!triageModalC4?.consulta()) faltan.push('nivel de urgencia');
     if (!hora) faltan.push('horario');
-    if (!triageModalC4?.consulta()) faltan.push('triage y revisión');
 
     submit.disabled = enviosC3.reserva || faltan.length > 0;
     const tipoNombre = tipoSel.value ? (tipoSel.options[tipoSel.selectedIndex].dataset.nombre || '') : '';

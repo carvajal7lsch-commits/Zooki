@@ -53,18 +53,19 @@ $grupoAgenda = static function (string $grupo, string $titulo, string $ayuda, bo
     <button type="button" class="triage-captura__enlace" data-triage-comprobar hidden>Comprobar si ya fue revisado</button>
     <?php if (!empty($puedeRevisarAgenda)): ?>
     <div class="triage-captura__revision" data-triage-revision hidden>
-        <span class="triage-captura__etiqueta">Tu revisión como veterinario</span>
+        <span class="triage-captura__etiqueta">Tu revisión como veterinario: confirma el nivel o cámbialo</span>
         <div class="triage-captura__fila">
             <label class="triage-captura__campo">
                 <span class="triage-captura__etiqueta">Nivel</span>
                 <select class="zk-input" data-triage-nivel><option value="amarillo">Amarillo · prioritario</option><option value="naranja">Naranja · urgente</option><option value="verde">Verde · no urgente</option><option value="rojo">Rojo · crítico</option></select>
             </label>
             <label class="triage-captura__campo triage-captura__campo--ancho">
-                <span class="triage-captura__etiqueta">Motivo</span>
-                <input class="zk-input" data-triage-motivo maxlength="255" data-caracteres="\p{L}\p{M}\p{N}\p{P}\p{S} " data-espacios="normalizar" placeholder="Por qué confirmas o cambias el nivel">
+                <span class="triage-captura__etiqueta">Motivo <span class="zk-optional">(solo si cambias el nivel)</span></span>
+                <input class="zk-input" data-triage-motivo maxlength="255" data-caracteres="\p{L}\p{M}\p{N}\p{P}\p{S} " data-espacios="normalizar" placeholder="Motivo (opcional)">
             </label>
         </div>
-        <button type="button" class="triage-captura__confirmar" data-triage-aprobar>Confirmar revisión</button>
+        <small class="cuenta-validacion triage-captura__aviso" data-triage-revision-aviso aria-live="polite"></small>
+        <button type="button" class="triage-captura__confirmar" data-triage-aprobar>Confirmar nivel</button>
     </div>
     <?php endif; ?>
 </section>
