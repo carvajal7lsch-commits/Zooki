@@ -1,12 +1,27 @@
 <?php
 require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/../helpers/IntervalosAgenda.php';
+require_once __DIR__ . '/../helpers/PoliticaTemporalAgenda.php';
 require_once __DIR__ . '/../helpers/HorarioOcupado.php';
 
 /** HU-4.9: única proyección de capacidad; no devuelve calendarios ajenos. */
 final class DisponibilidadAgenda extends ModeloClinica
 {
     private Closure $reloj;
+    private ?int $clinicaProcesador = null;
+
+    /** Capacidad interna del trabajador; nunca se construye con parámetros HTTP ni cambia la sesión. */
+    public static function paraProcesador(PDO $db, int $clinica, callable $reloj): self
+    {
+        $modelo = new self($db, $reloj);
+        $modelo->clinicaProcesador = $clinica;
+        return $modelo;
+    }
+
+    protected function clinica(): int
+    {
+        return $this->clinicaProcesador ?? parent::clinica();
+    }
 
     public function __construct(PDO $conn, ?callable $reloj = null)
     {
@@ -17,6 +32,13 @@ final class DisponibilidadAgenda extends ModeloClinica
     /** Revalida antes de cualquier lectura global, también en sugerencias. */
     public function autorizar(int $vet, int $mascota): void
     {
+        if ($this->clinicaProcesador !== null) {
+            $legitimo = $this->filas("SELECT 1 FROM clinicas c JOIN usuario_clinica uc ON uc.id_clinica=c.id_clinica JOIN usuarios u ON u.id_usuario=uc.id_usuario JOIN mascota_clinica mc ON mc.id_clinica=c.id_clinica JOIN mascotas m ON m.id_mascota=mc.id_mascota WHERE c.id_clinica=? AND c.estado='activa' AND uc.id_usuario=? AND uc.id_rol=2 AND uc.estado='activo' AND u.estado=1 AND m.id_mascota=? AND m.estado=1 AND mc.estado='activo'", [$this->clinica(), $vet, $mascota]);
+            if (!$legitimo) {
+                throw new HorarioOcupado('La disponibilidad requiere revisión.');
+            }
+            return;
+        }
         $actor = Contexto::idUsuario();
         $portal = (Contexto::actual()['tipo'] ?? '') === Contexto::PROPIETARIO;
         $sql = $portal
@@ -111,7 +133,7 @@ final class DisponibilidadAgenda extends ModeloClinica
         return strlen($hora) === 5 ? $hora . ':00' : $hora;
     }
 
-    private function franjas(int $vet, int $mascota, string $fecha, ?int $excluir, int $corte, bool $sobrecupo = false): array
+    private function franjas(int $vet, int $mascota, string $fecha, ?int $excluir, int $corte, bool $sobrecupo = false, array $secuencia = []): array
     {
         $this->autorizar($vet, $mascota);
         if ($excluir !== null) {
@@ -134,14 +156,14 @@ final class DisponibilidadAgenda extends ModeloClinica
         foreach ($this->filas("SELECT fecha_hora_inicio,fecha_hora_fin FROM ausencias_veterinario WHERE id_clinica=? AND id_veterinario=? AND estado='aprobada' AND fecha_hora_inicio<? AND fecha_hora_fin>?", [$this->clinica(), $vet, $hasta, $desde]) as $fila) {
             $ocupaciones[] = [IntervalosAgenda::fecha($fila['fecha_hora_inicio'])->getTimestamp(), IntervalosAgenda::fecha($fila['fecha_hora_fin'])->getTimestamp()];
         }
-        foreach ($this->ocupacionGlobal($vet, $mascota, $fecha, $excluir, $corte, $sobrecupo) as $intervalo) {
+        foreach ($this->ocupacionGlobal($vet, $mascota, $fecha, $excluir, $corte, $sobrecupo, $secuencia) as $intervalo) {
             $ocupaciones[] = $intervalo;
         }
         return IntervalosAgenda::restar($this->jornada($vet, $fecha), $ocupaciones);
     }
 
     /** RN-401: excepción global mínima; nunca nombres, clínica, motivo o contactos. */
-    private function ocupacionGlobal(int $vet, int $mascota, string $fecha, ?int $excluir, int $ahora, bool $sobrecupo = false): array
+    private function ocupacionGlobal(int $vet, int $mascota, string $fecha, ?int $excluir, int $ahora, bool $sobrecupo = false, array $secuencia = []): array
     {
         $sql = "SELECT (c.id_clinica=?) AS misma_clinica,(c.id_mascota=?) AS mismo_paciente,c.id_cita,c.fecha,c.hora,c.hora_fin,c.duracion_minutos,c.margen_minutos,c.estado,
             c.hora_inicio_real,c.hora_fin_real,c.inicio_estimado,c.fin_estimado,c.duracion_activa_objetivo_segundos,
@@ -156,6 +178,12 @@ final class DisponibilidadAgenda extends ModeloClinica
         if ($excluir !== null) {
             $sql .= ' AND c.id_cita<>?';
             $parametros[] = $excluir;
+        }
+        if ($secuencia) {
+            // Solo el procesador sustituye esta secuencia local por su proyección en memoria.
+            $marcas = implode(',', array_fill(0, count($secuencia), '?'));
+            $sql .= " AND NOT (c.id_clinica=? AND c.id_cita IN ($marcas))";
+            $parametros = [...$parametros, $this->clinica(), ...$secuencia];
         }
         $sql .= ' ORDER BY c.id_cita,p.inicio';
         $citas = [];
@@ -198,35 +226,18 @@ final class DisponibilidadAgenda extends ModeloClinica
             if ($c['hora_inicio_real'] === null || (int) $c['duracion_activa_objetivo_segundos'] <= 0) {
                 $this->requiereRevision();
             }
-            $r = IntervalosAgenda::fecha($c['hora_inicio_real'])->getTimestamp();
-            $nominal = $r + (int) $c['duracion_activa_objetivo_segundos'];
-            foreach ($datos['pausas'] as [$desde, $hasta]) {
-                if ($hasta === null) {
-                    $this->requiereRevision();
-                }
-                $nominal += IntervalosAgenda::fecha($hasta)->getTimestamp() - IntervalosAgenda::fecha($desde)->getTimestamp();
-            }
-            if ($c['estado'] === 'pausada') {
+            try {
+                $pausas = array_map(static fn ($p) => ['inicio' => $p[0], 'fin' => $p[1]], $datos['pausas']);
+                $e = PoliticaTemporalAgenda::calcular($c, $pausas, IntervalosAgenda::fecha(PoliticaTemporalAgenda::sello($ahora)));
+            } catch (InvalidArgumentException $error) {
                 $this->requiereRevision();
             }
-            if ($c['estado'] === 'completada' && $c['hora_fin_real'] === null) {
+            // A.3: una atención abierta no libera capacidad por agotar su estimación.
+            if ($c['hora_fin_real'] === null && $ahora >= $e['extremo']) {
                 $this->requiereRevision();
-            }
-            if ($c['hora_fin_real'] !== null) {
-                $fin = IntervalosAgenda::fecha($c['hora_fin_real'])->getTimestamp();
-            } else {
-                $restante = max(0, $nominal - $ahora);
-                $fin = max($nominal, $ahora + $restante);
-                if ($c['fin_estimado'] !== null) {
-                    $fin = max($fin, IntervalosAgenda::fecha($c['fin_estimado'])->getTimestamp());
-                }
-                // A.3: agotada la cota no se anuncia liberación sin cierre real.
-                if ($ahora >= max($nominal + $margen, $fin)) {
-                    $this->requiereRevision();
-                }
             }
             if (!$ignorar) {
-                $resultado[] = [min($s, $r), max($nominal + $margen, $fin)];
+                $resultado[] = [min($s, $e['inicio']), $e['extremo']];
             }
         }
         return $resultado;
@@ -269,6 +280,20 @@ final class DisponibilidadAgenda extends ModeloClinica
     {
         $this->autorizar($vet, $mascota);
         return $this->jornada($vet, $fecha);
+    }
+
+    /** C5: usa la misma resta global; la secuencia excluida debe ser propia, vigente y releída. */
+    public function franjasParaCascada(int $vet, int $mascota, string $fecha, array $secuencia): array
+    {
+        if ($this->clinicaProcesador === null) {
+            throw new LogicException('La proyección de secuencia pertenece al procesador.');
+        }
+        foreach ($secuencia as $id) {
+            if (!$this->filas('SELECT 1 FROM citas WHERE id_cita=? AND id_clinica=?', [$id, $this->clinica()])) {
+                throw new LogicException('La secuencia no pertenece a la clínica procesada.');
+            }
+        }
+        return $this->franjas($vet, $mascota, $fecha, null, ($this->reloj)()->getTimestamp(), false, $secuencia);
     }
 
     private function filas(string $sql, array $parametros): array

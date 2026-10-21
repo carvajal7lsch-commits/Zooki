@@ -134,6 +134,10 @@ class CitaController
         return [
             'id_cita' => (int) $cita['id_cita'],
             'prioridad' => $cita['prioridad'],
+            'inicio_estimado' => $cita['inicio_estimado'],
+            'fin_estimado' => $cita['fin_estimado'],
+            'estado_reajuste' => $cita['estado_reajuste'],
+            'motivo_reajuste' => $cita['motivo_reajuste'],
             'es_sobrecupo' => (bool) $cita['es_sobrecupo'],
             'orden_sobrecupo' => $cita['orden_sobrecupo'],
             'tipo' => 'cita',

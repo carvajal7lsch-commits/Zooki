@@ -228,7 +228,12 @@ async function cargarEventos(info, exito, fallo) {
                     motivo: e.motivo || '',
                     mascota_nombre: e.mascota_nombre || '',
                     propietario_nombre: e.propietario_nombre || '',
-                    tipo_cita_nombre: e.tipo_cita_nombre || ''
+                    tipo_cita_nombre: e.tipo_cita_nombre || '',
+                    inicio_estimado: e.inicio_estimado || '',
+                    fin_estimado: e.fin_estimado || '',
+                    estado_reajuste: e.estado_reajuste || '',
+                    prioridad: e.prioridad || '',
+                    orden_sobrecupo: e.orden_sobrecupo
                 }
             };
         }));
@@ -551,7 +556,10 @@ function mostrarDetalleCita(eventId) {
         ['Propietario', p.propietario_nombre],
         ['Veterinario', esCita ? p.veterinario : ''],
         ['Tipo', esCita ? (p.tipo_cita_nombre || 'Cita') : TIPOS_EVENTO[p.tipo]],
-        ['Motivo', p.motivo]
+        ['Motivo', p.motivo],
+        ['Inicio estimado', p.inicio_estimado],
+        ['Fin clínico estimado', p.fin_estimado],
+        ['Reajuste', p.estado_reajuste === 'pendiente_reprogramacion' ? 'Requiere reprogramar con el propietario' : p.estado_reajuste === 'pendiente_reasignacion' ? 'Esperando aceptación de otro veterinario' : p.estado_reajuste === 'pendiente_revision' ? 'Requiere revisión del personal' : '']
     ].filter(([, valor]) => valor);
 
     document.getElementById('agendaPanelHead').innerHTML = `

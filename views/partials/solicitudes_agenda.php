@@ -8,3 +8,4 @@
 </details>
 <script src="js/comando-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/agenda-solicitudes.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<?php require __DIR__ . '/reasignaciones_agenda.php'; ?>

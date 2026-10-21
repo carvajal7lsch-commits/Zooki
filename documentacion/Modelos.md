@@ -110,6 +110,8 @@ No se declara validación clínica por superar pruebas de software.
 
 La agenda se modela como un grafo cuyos nodos son las citas del día por veterinario, con tres tipos de arista: **secuencia** (una cita depende del fin real de la anterior), **conflicto** (dos citas que chocan en horario y veterinario) y **emparejamiento** (asignación cita–veterinario, que permite reasignar). El grafo no se guarda: se construye en tiempo real desde `citas`, `tipos_cita`, los veterinarios (`usuarios`), `horarios_clinica`, `horarios_veterinario` y `ausencias_veterinario`. Se conservan solo hechos/estados recuperables: solicitudes y revisiones previas, bloques/cupos, espera presencial, pausas, operaciones y eventos de aviso, además de reasignaciones/propuestas; el destino de datos aún no está instalado. Las aristas se reconstruyen en memoria; ver el [MER](MER.md#6-operación-clínica).
 
+**Implementación C5:** `GrafoAgenda` arma en memoria secuencia por veterinario/fecha, conflictos de intervalos y emparejamientos compatibles. `CascadaAgenda` relee bajo clínica → usuarios → mascotas; `DisponibilidadAgenda` conserva la única resta de apertura, jornada, cierres, ausencias aprobadas y ocupación global mínima. Las propuestas no apartan capacidad y no son cobertura de ausencia.
+
 El ejemplo muestra el **efecto cascada**: la cirugía de las 09:30 se extiende y el retraso se propaga por la cola del veterinario A; el sistema detecta un espacio libre en el veterinario B y **propone reasignarle** la última cita para absorberlo.
 
 ```mermaid
@@ -222,7 +224,7 @@ flowchart TD
   RS -- "Si: 422 junto al campo, nada escrito" --> I1
   RS -- No --> RB{Bloqueo o advertencia no resuelta?}
   RB -- Si --> P
-  RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos<br/>y decisiones de prescripcion auditadas;<br/>N de historia si es la 1a (RN-102);<br/>completar su cita asociada (RN-406); sin crear consultas nuevas huerfanas"]]
+  RB -- No --> Y[["Guardado atomico: consulta + sintomas + tratamientos + archivos<br/>y decisiones de prescripcion auditadas;<br/>N de historia si es la 1a (RN-102);<br/>completar su cita asociada y marcar version para cascada tras commit (RN-406); sin crear consultas nuevas huerfanas"]]
   Y --> Y1{Guardado correcto?}
   Y1 -- No --> Y2[/"Mensaje: error al guardar, reintentar"/]
   Y2 --> X
@@ -297,34 +299,46 @@ Pausa abierta: u es reanudación prevista condicional, N_u=r+D+P+(u−inicio de 
 Inicio 09:00/D=30, pausa 09:10–09:30/margen10: N=09:50/L=10:00; dos pausas 10+15: N=09:55/L=10:05.
 Se preservan pactadas, segmentos y sellos; repetición de hechos/reloj no acumula delta.
 
+El vigilante programado procesa atención abierta, propuestas vencidas y marcas `pendiente_calculo` sin depender del calendario.
+El inicio y cierre sellan hechos y disparan el mismo procesador; la consulta confirma su acto y marca de cálculo juntos, y procesa después del commit.
+La proyección idéntica no incrementa versión ni vuelve a auditar; un cambio de hechos invalida propuestas anteriores.
+Una pausa sin reanudación sustentada o un legado no demostrable queda en revisión, sin estimar una liberación.
+Aceptar conserva pactadas, sellos y snapshots; solo cambia veterinario, bloque naranja cuando corresponda y estimaciones aceptadas.
+La última hora comunicada y la ventana RN-429 se actualizan al confirmar entrega; un pendiente se coalesce, y un reclamado/incierto no se reenvía automáticamente.
+
 ```mermaid
 flowchart TD
-  A{{"Inicio, reloj durante atencion, fin, pausa/reanudacion, llegada o cambio de horario"}} --> B["Releer hechos y version bajo candados del contrato comun"]
-  B --> P{Pausa abierta?}
-  P -- Si --> PC["Calcular cota condicional; prioridad de reanudacion; no liberar vet"]
-  P -- No --> N["Calcular N, tiempo activo/restante y F segun estado"]
-  PC --> L
-  N --> L["L = maximo de N + margen unico y F"]
-  L --> COL["Reconstruir cola desde horas pactadas; huecos absorben; no sumar delta anterior"]
-  COL --> FU{Cita fuera de franja compatible?}
-  FU -- No --> EST["Guardar estimaciones y marca/version"]
-  FU -- Si --> EMP["Buscar candidato: primer inicio compatible, luego id_usuario"]
+  A{{"Inicio, fin, vigilante durante atencion o marca pendiente_calculo de horario"}} --> B["Clinica - usuarios - mascotas; descubrir recursos y releer hechos/version tras esperar"]
+  B --> P{Pausa abierta o historia incierta?}
+  P -- Si --> PC["Pendiente_revision; sin fin ni liberacion inventados; siguientes quedan condicionadas"]
+  PC --> FIN([Fin])
+  P -- No --> N["Politica M desde hechos: nominal, fin clinico y L=maximo de nominal+margen unico y fin"]
+  N --> COL["Secuencia desde pactadas: propagar por vet/fecha y absorber con huecos"]
+  COL --> EST["Guardar estimaciones, marca y version solo si cambian; auditar en la misma unidad"]
+  EST --> FU{Cita fuera de franja compatible?}
+  FU -- No --> AV
+  FU -- Si --> EMP["Primer inicio compatible, luego id_usuario; saltar intentados del ciclo"]
   EMP --> HAY{Hay candidato?}
-  HAY -- No --> REP["Pendiente de reprogramar; ofrecer alternativas al propietario"]
-  HAY -- Si --> PRO["Propuesta en vivo pendiente, sin apartar hueco"]
-  PRO --> AC{"Destino acepta antes de fecha_limite?"}
-  AC -- Si --> RV{"Revalidacion atomica vigente y compatible?"}
-  RV -- Si --> MOV["Mover cita/cerrar propuesta/auditar/evento en commit"]
+  HAY -- No --> REP["Pendiente_reprogramacion; avisar y ofrecer alternativas al propietario"]
+  HAY -- Si --> PRO["Propuesta durable con intervalo, version y limite; sin apartar hueco"]
+  PRO --> AC{"Destino responde antes del limite?"}
+  AC -- Acepta --> RV{"Releer permiso, version, estado, hueco y cupo naranja bajo coordinador?"}
+  RV -- Si --> MOV["Cambiar vet y estimacion; conservar pactadas/snapshots; cerrar propuesta, auditar y generar avisos en commit"]
   RV -- No --> SIG
-  AC -- "Rechazo o vencimiento" --> SIG["Siguiente candidato no intentado; sin ninguno reprogramar"]
+  AC -- "Rechaza o vence; en el limite ya vencio" --> SIG["Cerrar intento; siguiente candidato del ciclo, sin duplicarlo"]
   SIG --> EMP
-  EST --> AV{"Desplazamiento acumulado mayor al umbral y 30 min desde ultimo aviso?"}
-  AV -- Si --> EVT["Evento durable de estimacion, sin duplicado por version"]
-  AV -- No --> FIN([Fin])
-  MOV --> SIEM["Reasignacion/reprogramacion siempre genera aviso"]
+  EST --> AV{"Acumulado mayor al umbral y al menos 30 min desde ultima entrega?"}
+  AV -- Si --> EVT["Crear o coalescer evento pendiente; no consumir ventana por recalcular o fallar"]
+  AV -- No --> FIN
+  MOV --> SIEM["Reasignacion/reprogramacion siempre genera su aviso propio"]
   REP --> SIEM
-  SIEM --> FIN
-  EVT --> FIN
+  SIEM --> DES
+  EVT --> DES["Tras commit: reclamar con identidad/contacto/version vigentes; transportar sin SQL abierto"]
+  DES --> ENT{"Entrega confirmada?"}
+  ENT -- Si --> BASE["Guardar hora comunicada y ventana de estimacion bajo coordinador"]
+  ENT -- "Resultado incierto" --> INC["Estado durable incierto; sin reenvio automatico"]
+  BASE --> FIN
+  INC --> FIN
 ```
 
 ---

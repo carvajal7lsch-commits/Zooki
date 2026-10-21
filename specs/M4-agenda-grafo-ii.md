@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **Modo acelerado (2026-10-20). C4 (C4a+C4b) entregada y verificada: implementación de Codex, cierre, correcciones y pruebas de Claude (Anexo C4). Sigue C5.** C1–C3.1 aprobadas. Agrupación de entregas y «Lista para D» al final del plan. Anexos y revisiones previos conservados como historial.
+> Estado: **Modo acelerado (2026-10-20). C5 (C5a+C5b) aprobada con corrección C5.1 aplicada por Claude (ver «C5 — Revisión»). Sigue C6-C7.** C1–C4 cerradas. Agrupación de entregas y «Lista para D» al final del plan. Anexos y revisiones previos conservados como historial.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Claude como arquitecto desde el 2026-10-20 (modo acelerado, `agentes/metodo.md` §11). Hasta C3.1 revisó Codex en una sesión independiente.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -82,8 +82,8 @@ Los criterios normativos permanecen en `documentacion/`; no se cambian silencios
 | **C3.1. Correcciones — entregada, pendiente de revisión independiente** | H-C3-1/2/3: segundos exactos en sugerencia/selección/envío, replay HTTP autorizado antes de validar un comando nuevo y mensaje genérico de revisión distinguido de consulta vacía. Evidencia y pendientes en Anexo C3.1; no cierra hallazgos ni aprueba C3. | C3 revisada con corrección | Codex ejecutor | Codex arquitecto independiente |
 | **C4a. Agendar con triage** | Interno y portal comparten captura/buscador C4 de M2; cuatro ramas, excepción roja, clínica cerrada, revisión humana y contagio, persistencia y notificaciones. Rojo deriva a circuito clínico; no crea reserva ordinaria ni promete atención por el solo cálculo remoto. | C3 | Codex | Codex independiente |
 | **C4b. Sobrecupos y cambios** | Tope y orden naranja con motivo; primer espacio amarillo/elección verde; conflictos sobrevenidos; cancelación/reprogramación interna y portal con misma lógica; revisión previa al horario y registro del nivel aprobado por vet. | C4a | Codex | Codex independiente |
-| **C5a. Grafo II y cascada** | Secuencia/conflicto/emparejamiento; horas estimadas sin destruir horas pactadas o reales; margen, huecos y fin de franja. Disparos durante atención y al finalizar, sin depender de abrir calendario; procesador idempotente. | C4b | Codex | Codex independiente |
-| **C5b. Reasignación en vivo** | Propuesta/aceptación/rechazo/vencimiento, siguiente candidato y reprogramación con propietario; revalidación al aceptar; avisos agrupados RN-429 y auditoría. Procesa marcas de horario C2. | C5a | Codex | Codex independiente |
+| **C5a. Grafo II y cascada — entregada, pendiente de revisión** | Secuencia/conflicto/emparejamiento; horas estimadas sin destruir horas pactadas o reales; margen, huecos y fin de franja. Disparos durante atención y al finalizar, sin depender de abrir calendario; procesador idempotente. | C4b | Codex | Claude (arquitecto) |
+| **C5b. Reasignación en vivo — entregada, pendiente de revisión** | Propuesta/aceptación/rechazo/vencimiento, siguiente candidato y reprogramación con propietario; revalidación al aceptar; avisos agrupados RN-429 y auditoría. Procesa marcas de horario C2. | C5a | Codex | Claude (arquitecto) |
 | **C6. Ausencias y cobertura** | Alta admin/solicitud propia vet, bloqueo exacto y cobertura sin veto; sin cobertura queda pendiente de reprogramar y se ofrecen alternativas; auditoría y avisos. No reutilizar el veto de C5b. | C5b | Codex | Codex independiente |
 | **C7a. Atención roja y pausas** | Libre/pausable/espera, llegada directa y derivación del portal, identidad conocida, prioridad máxima, excepción a plan/mora; pausa y reanudación antes de siguientes; consulta y cascada coherentes. | C6 | Codex | Codex independiente |
 | **C7b. Ficha provisional y conciliación** | Cuatro ramas de identidad de HU-4.15; captura mínima, tarea pendiente, completar o consolidar sin perder actos ni cuenta nueva, carnet inactivo y datos del acompañante protegidos. | C7a y contrato de datos aprobado | Codex | Codex independiente |
@@ -2851,7 +2851,7 @@ Se mantiene **todo** el alcance de M4. Arquitecto/revisor: Claude; ejecutor: Cod
 | Entrega | Subetapas de §3 | Estado |
 |---|---|---|
 | C4 | C4a Agendar con triage + C4b Sobrecupos y cambios | Entregada y verificada (2026-10-20), Anexo C4 |
-| C5 | C5a Grafo II y cascada + C5b Reasignación en vivo | Pendiente |
+| C5 | C5a Grafo II y cascada + C5b Reasignación en vivo | Revisada y aprobada con corrección C5.1 de Claude (2026-10-20) |
 | C6-C7 | C6 Ausencias y cobertura + C7a Atención roja y pausas + C7b Ficha provisional y conciliación | Pendiente |
 | C8 | C8 Ajustes y llegada tarde + C8b Llegada sin reserva | Pendiente |
 | D-F | Correcciones de la Lista para D, prueba manual consolidada, cierre documental, `2.0.0-alpha.5` y despliegue | Pendiente |
@@ -2864,7 +2864,11 @@ Hallazgos P2/P3 y comprobaciones manuales que se acumulan para la etapa D. Cada 
 - P2 (C4): la bandeja «Revisión de triage e historial de reclasificaciones» (`views/partials/solicitudes_agenda.php`) usa details/label sin el estilo del sistema; pulirla con el diseño Zooki para celular, tableta y escritorio.
 - P3 (C4): `Cita::registrar` a nivel de modelo aún acepta contexto de administrador (la ruta y `SolicitudAgenda` lo bloquean); solo lo usan pruebas C3. Decidir si se cierra también en el modelo.
 - Prueba manual C4 (2 comprobaciones): **Fabio** agenda un verde con síntomas y luego un caso rojo (teléfono de urgencias, sin cita); **Beto** revisa un «Otro / no sé» a naranja, agenda dos naranjas, el tercero avisa sin crear cita y reordena la cola con motivo.
+- P2 (C5): cada recálculo que corre una estimación escribe una fila de auditoría por cita afectada; durante un exceso largo son muchas filas. Valorar auditar solo cambios de estado de reajuste.
 - Prueba manual pendiente de C1-C3.1 (consolidar en máximo 3 comprobaciones): marca/tipos por clínica; horario del vet con propuesta y aprobación del admin y cierre puntual; sugerencias con duración+margen, doble envío y reprogramación conservando snapshots.
+
+- Prueba manual C5 (2 comprobaciones, solo en D): **Beto Norte** prolonga una atención y observa cascada/absorción de huecos sin alterar pactadas ni sellos; **Elena en Norte** acepta/rechaza una propuesta y **Fabio** comprueba veterinario/estimación diferenciados y alternativa de reprogramar si no hay destino.
+- Incidencia de verificación C5 para D: limpieza del perfil temporal de Chrome en Windows dio EBUSY en CoordinacionHorarios.test.cjs; repetición dirigida 7/7 aprobada sin cambiar el arnés. Robustecer limpieza si reincide; no es una modificación funcional de C2 ni se presenta la pasada completa JS como verde.
 
 ## Encargo C4 — Agendar con triage, sobrecupos y cambios (2026-10-20)
 
@@ -2890,3 +2894,34 @@ Entrega agrupada C4a+C4b (modo acelerado). Escribe Codex; revisa Claude. El prom
 **Verificación (Claude, MySQL 8.0.46 local, mismo motor que el CI):** PHP sin host 948 pruebas/7730 aserciones, 61 omitidas; PHP completo con motor **948/8736, cero omitidas** (04:41); JS 270/270. Migrador dos veces («al día»), instalación por volumen vacío 58 tablas y 08→09 sobre base anterior repetible.
 
 **Pendientes para D:** ver «Lista para D».
+
+## Anexo C5 — Resultado (2026-10-20)
+
+**Autor:** Codex ejecutor; revisión pendiente de Claude (arquitecto). Base observada: 88c6a54, árbol inicialmente limpio.
+**Entrega:** Grafo II efímero con secuencia, conflictos y emparejamientos; política M compartida con disponibilidad, cascada desde hechos, huecos, revisión por incertidumbre y desborde de franja. Pactadas, snapshots y sellos conservados.
+**Coordinación:** lecturas actuales tras esperar; inicio/cierre y consulta marcan versión bajo el coordinador; consulta confirma acto/marca/auditoría juntos y procesa tras commit. Vigilante procesa atención abierta, marcas C2/C3 y vencimientos sin calendario.
+**Reasignación:** propuesta sin apartar capacidad; destino vigente acepta/rechaza, plazo semiabierto, revalidación de versión/estado/hueco/cupo; siguientes candidatos por inicio/ID e intentos conservados. Sin destino, pendiente de reprogramar con alternativas del portal existente; no es cobertura C6.
+**Avisos:** OperacionAgenda conserva respuesta/huella; EventoAgenda coalesce pendientes y actualiza hora comunicada/ventana solo tras entrega. SMTP fuera de SQL; inciertos sin reenvío automático. Interfaz y correo distinguen pactada y estimación; nuevos títulos legibles.
+
+| RE / regla | Evidencia ejecutable |
+|---|---|
+| RN-412/415; RE-4.5.2/3, RE-4.14.1/2 | PoliticaTemporalAgendaTest: nueve casos, incluido M 09:00/pausa/09:50/10:00, margen exacto, segundo de exceso y varias pausas; AgendaC5Test: tres citas/hueco y repetición sin mutación. |
+| RE-4.11.4; RE-4.3.9 | AgendaC5Test: marca de horario, procesador sin calendario y rollback de cierre/consulta/marca si falla auditoría. |
+| RE-4.14.3–6; RN-413/428 | AgendaC5Test: aceptar/replay, rechazar/siguiente, límite exacto, hueco perdido, admin/Sur/otro vet denegados y acceso revocado; AgendaC5MysqlTest: cuatro carreras, ambos órdenes y espera real. |
+| RE-4.14.7; RN-429 | Diez recálculos de tres minutos, coalescencia y límite de 30 min desde entrega; CorreoAgendaTest separa y escapa las horas; JS ejecuta bandeja, doble envío, respuesta perdida y error obsoleto. |
+
+**PHP final propio:** 974 pruebas/7833 aserciones, 65 omitidas nativas, salida 0 (00:42.348). Se repitió después de completar auditoría y presentación del correo; las pasadas intermedias no sustituyen esta fuente final, comprobada por SHA-256.
+**Motor propio:** MariaDB 10.4.32, exclusivamente zooki_test_base_v2: AgendaC5MysqlTest 4/40, salida 0 (00:38.041). El primer arnés no declaró la segunda mascota de la reserva y no alcanzó la barrera; corregidos sus recursos, conservando plazos, barreras, conexiones y observación real. Sin suite completa de MariaDB ni nueva ejecución de las clases anteriores.
+**JS:** completa 273/274; único fallo EBUSY al limpiar perfil Chrome de una prueba C2. Repetición del archivo 7/7, salida 0; nuevas C5 4/4. Se conserva el fallo ambiental, sin afirmar 274/274 en la pasada completa.
+**Otros controles:** sintaxis de 26 fuentes PHP/JS/CJS, diff --check y YAML correctos; Mermaid 29/29 renderizados en documento aislado. CI añade sexta clase MySQL secuencial y conserva instalación/migrador/semilla/volumen, comparador JSON y carreras C2–C4.
+**Pendientes:** revisión de Claude, CI nuevo completo MySQL 8 tras push del usuario y Lista para D. El motor probado localmente fue MariaDB; no se atribuye un CI nuevo ni la ejecución MySQL de C4 como propia.
+**Alcance:** sin esquema/migraciones, reglas nuevas, versión/exportaciones, .env, base manual, SMTP real, pantallas, operaciones Git de escritura o C6. C5 entregada, pendiente de revisión; no aprobada por su ejecutor.
+
+### C5 — Revisión (2026-10-20)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada con corrección C5.1, ya aplicada y verificada por Claude.**
+
+- **H-C5-1 / P1 — la propuesta de reasignación se reemitía en cada recálculo durante un exceso.** Mientras la atención previa sigue en curso, el fin estimado avanza con el reloj; `procesar` subía `version_agenda` en cada cambio de estimación, `proponer` vencía la propuesta por «cambió de versión» y creaba otra con un aviso nuevo. Reproducido: 4 propuestas y 4 avisos en 3 minutos, y aceptar la primera fallaba. Es justo el caso para el que existe la reasignación en vivo. **Corrección:** la versión solo sube cuando cambia el estado de reajuste (una estimación que se corre con el reloj no cambia la cita); al aceptar tarde, el hueco se corre a «ahora» y se revalida completo; el aviso de estimación usa como clave la hora comunicada para no depender de la versión. Regresión `AgendaC5Test::testPropuestaSobreviveRecalculosDelExcesoYSeAceptaTarde`.
+- **H-C5-2 / P2 — el vigilante recorría todas las fechas futuras con citas en cada pasada**, tomando candados de toda la clínica por cada fecha. Ahora procesa hoy, las marcas `pendiente_calculo` y las propuestas pendientes.
+- Resto revisado: política M (ejemplo confirmado 09:00/30/pausa 20 → 10:00), Grafo II en memoria sin tablas, cascada con huecos y fin de franja, disparo tras cierre con consulta y recuperación por el vigilante, aceptación con revalidación y cupo naranja, aislamiento y destino tomado de la sesión, RN-429 (ventana de 30 min).
+- **Verificación de Claude con MySQL 8.0.46 local:** PHP completo con motor **975/8885 sin omisiones** (incluidas las carreras C2–C5); sin host 975/7839 (65 omitidas); JS 274/274.

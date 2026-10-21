@@ -641,6 +641,8 @@ async function verDetalle(id, opciones = {}) {
                     <div class="portal-list-body">
                         <strong>${formatFecha(c.fecha)} · ${escapeHtml((c.hora || '').substring(0, 5))}</strong>
                         <p>${escapeHtml(c.motivo)}</p>
+                        ${c.inicio_estimado ? `<p>Inicio estimado: ${escapeHtml(c.inicio_estimado)}</p>` : ''}
+                        ${c.estado_reajuste === 'pendiente_reprogramacion' ? '<p>Contacta a la clínica o elige Reprogramar para consultar alternativas.</p>' : ''}
                         ${c.veterinario_nombre ? `<p>Veterinario: ${escapeHtml(c.veterinario_nombre)}</p>` : ''}
                         <div class="card-tags-mini">${etiquetaClinica(c.clinica_nombre)}${badgeEstado(c.estado)}</div>
                         ${cancelBtn}

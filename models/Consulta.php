@@ -66,9 +66,22 @@ class Consulta extends ModeloHistoria
         }
 
         try {
-            return Transaccion::ejecutar($this->conn, function () use ($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica) {
-                return $this->escribir($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica);
-            });
+            $escribir = fn () => Transaccion::ejecutar($this->conn, fn () => $this->escribir($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica));
+            if ($datos['id_cita'] !== null) {
+                require_once __DIR__ . '/CascadaAgenda.php';
+                $cascada = new CascadaAgenda($this->conn, fn () => IntervalosAgenda::fecha($this->ahora()));
+                $id = (new CoordinadorAgenda($this->conn))->ejecutar($clinica, fn () => $cascada->recursosDeCita($datos['id_cita']), function () use ($cascada, $escribir): int {
+                    $cascada->exigirContexto();
+                    return $escribir();
+                });
+            } else {
+                $id = $escribir();
+            }
+            if ($datos['id_cita'] !== null) {
+                require_once __DIR__ . '/CascadaAgenda.php';
+                CascadaAgenda::despuesDeAtencion($this->conn, $clinica, $datos['id_cita'], $this->ahora());
+            }
+            return $id;
         } catch (PrescripcionRechazada $e) {
             // RN-211: el rechazo se audita después del rollback, sin perder su evidencia.
             if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'OTHER', 'mascotas', $idMascota, null, $e->paraAuditoria(), 'Prescripción rechazada (RE-2.9.2, RE-2.9.3)')) {
@@ -371,15 +384,22 @@ class Consulta extends ModeloHistoria
      */
     private function completarCita(int $idCita, int $idMascota, int $clinica): void
     {
+        $leer = $this->conn->prepare('SELECT estado,version_agenda FROM citas WHERE id_cita=? AND id_clinica=?');
+        $leer->execute([$idCita, $clinica]);
+        $antes = $leer->fetch(PDO::FETCH_ASSOC);
+        $ahora = $this->ahora();
         $marcas = implode(',', array_fill(0, count(self::ESTADOS_EN_ATENCION), '?'));
-        $sql = "UPDATE citas SET estado = 'completada', hora_fin_real = ?
+        $sql = "UPDATE citas SET estado = 'completada', hora_fin_real = ?,estado_reajuste='pendiente_calculo',version_agenda=version_agenda+1
             WHERE id_cita = ? AND id_clinica = ? AND id_mascota = ? AND id_veterinario = ?
               AND estado IN ($marcas)";
         $consulta = $this->conn->prepare($sql);
-        $consulta->execute([$this->ahora(), $idCita, $clinica, $idMascota, $this->veterinarioActual(), ...self::ESTADOS_EN_ATENCION]);
+        $consulta->execute([$ahora, $idCita, $clinica, $idMascota, $this->veterinarioActual(), ...self::ESTADOS_EN_ATENCION]);
 
         if ($consulta->rowCount() !== 1) {
             throw new RuntimeException('La cita ' . $idCita . ' dejó de estar en curso antes de guardar la consulta.');
+        }
+        if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $idCita, $antes, ['estado' => 'completada', 'hora_fin_real' => $ahora, 'estado_reajuste' => 'pendiente_calculo'], 'Cierre con consulta y disparo durable de cascada (RE-4.5.1/3)', $clinica)) {
+            throw new RuntimeException('No se pudo auditar el cierre y su marca de cascada.');
         }
     }
 

@@ -39,6 +39,8 @@ $tarjetaCita = static function (array $cita) use ($e, $hoy, $avatarMascota): voi
             <p class="portal-cita__cuando">
                 <strong><?= $e($cita['nombre_mascota']) ?></strong>
                 <span><?= $e(ResumenPanel::etiquetaDia($cita['fecha'], $hoy)) ?> · <?= $e(ResumenPanel::hora($cita['hora'])) ?></span>
+                <?php if (!empty($cita['inicio_estimado'])): ?><span>Inicio estimado: <?= $e($cita['inicio_estimado']) ?></span><?php endif; ?>
+                <?php if (($cita['estado_reajuste'] ?? '') === 'pendiente_reprogramacion'): ?><span>Contacta a la clínica o elige Reprogramar para consultar alternativas.</span><?php endif; ?>
             </p>
             <p class="portal-cita__donde">
                 <span><i class="ri-hospital-line" aria-hidden="true"></i> <?= $e($cita['clinica_nombre']) ?></span>

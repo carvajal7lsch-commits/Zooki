@@ -423,6 +423,8 @@ class Security {
         // C4, decisión 2: el administrador gestiona, pero nunca crea citas.
         $matriz['registrar_cita_ajax'] = [Roles::VETERINARIO];
         $matriz['revisar_triage_agenda_ajax'] = [Roles::VETERINARIO];
+        $matriz['listar_reasignaciones_ajax'] = [Roles::VETERINARIO];
+        $matriz['responder_reasignacion_ajax'] = [Roles::VETERINARIO];
         $matriz['reordenar_sobrecupos_ajax'] = [Roles::VETERINARIO];
         $matriz['listar_solicitudes_agenda_ajax'] = [Roles::ADMIN, Roles::VETERINARIO, Roles::PROPIETARIO];
 

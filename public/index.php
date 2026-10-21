@@ -659,6 +659,14 @@ switch ($action) {
         break;
 
     // RUTAS SPRINT 4: CITAS Y AGENDA
+    case "listar_reasignaciones_ajax":
+        require_once "../controllers/ReasignacionController.php";
+        (new ReasignacionController())->listarAjax();
+        break;
+    case "responder_reasignacion_ajax":
+        require_once "../controllers/ReasignacionController.php";
+        (new ReasignacionController())->responderAjax();
+        break;
     case "reordenar_sobrecupos_ajax":
         require_once "../controllers/CitaController.php";
         (new CitaController())->reordenarSobrecupoAjax();

@@ -6,6 +6,20 @@
 
 ## Ahora
 
+### C5 aprobada con corrección C5.1; sigue C6-C7 (2026-10-20)
+
+- **Revisó Claude.** H-C5-1/P1: la propuesta de reasignación se vencía y reemitía en cada recálculo durante un exceso (avisos repetidos, aceptar fallaba). Corregido por Claude: la versión solo sube con el estado de reajuste, aceptar tarde corre el hueco a «ahora» y revalida, aviso de estimación con clave por hora comunicada. H-C5-2/P2: el vigilante ya no recorre todas las fechas futuras. Detalle en «C5 — Revisión» del plan.
+- **Verificación con MySQL 8.0.46 local:** PHP con motor 975/8885 sin omisiones; sin host 975/7839; JS 274/274.
+- **Pendiente del usuario:** commit y push de C5 + C5.1; confirmar CI.
+- **Siguiente:** entrega C6-C7 (ausencias y cobertura, atención roja y pausas, ficha provisional y conciliación). Luego C8 y D-F.
+
+### C5 entregada, pendiente de revisión (2026-10-20)
+
+- **Autor: Codex ejecutor; revisa Claude (arquitecto).** Base 88c6a54, sin cambios pendientes al comenzar. C5a+C5b: Grafo II efímero, política M compartida, cascada con huecos y disparos del vigilante/inicio/cierre/consulta; procesa marcas C2/C3 sin alterar pactadas, sellos o snapshots. Propuestas en vivo sin apartar hueco, aceptación exclusiva del destino con revalidación coordinada, rechazo/vencimiento/siguiente candidato y pendiente de reprogramar cuando no hay destino.
+- **Atomicidad y avisos:** cierre/consulta, marca y auditoría juntos; cálculo tras commit con recuperación durable por el vigilante. OperacionAgenda y EventoAgenda preservan replay y coalescencia; ventana RN-429 solo desde entrega confirmada, SMTP sin transacción y sin reenvío automático incierto. Interfaz/correo diferencian pactada y estimación.
+- **Evidencia propia final:** PHP sin host 974/7833 con 65 omisiones nativas, salida 0 (00:42.348); MariaDB 10.4.32, solo AgendaC5MysqlTest sobre zooki_test_base_v2: 4/40, salida 0, cuatro carreras con espera real. JS completo 273/274 por EBUSY de limpieza temporal Chrome/C2; archivo repetido 7/7, C5 4/4. Sintaxis 26 fuentes, YAML, diff y Mermaid 29/29 correctos. Fuente final comprobada por hash; detalle y atribución de pasadas intermedias en Anexo C5.
+- **Siguiente:** revisión de Claude y CI MySQL 8 nuevo después del commit/push del dueño; sexta clase secuencial añadida conservando controles/carreras previos. Dos comprobaciones C5 acumuladas para D y limpieza Chrome anotada. No se aprueba C5 ni se empieza C6; sin .env/base manual, esquema/migraciones, versión/exportaciones, SMTP real, pantallas o Git de escritura.
+
 ### C4 entregada y verificada; sigue C5 (2026-10-20)
 
 - **C4 (C4a+C4b):** Codex escribió la implementación y se quedó sin tokens; Claude revisó, corrigió un P1 de migración (08 rechazaba el origen `interno` → el despliegue habría fallado) y pruebas desactualizadas, completó las pruebas (10 nuevas en AgendaC4Test y la carrera AgendaC4MysqlTest en el CI) y escribió el Anexo C4.

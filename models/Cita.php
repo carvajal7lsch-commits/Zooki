@@ -459,17 +459,40 @@ class Cita extends ModeloClinica
     /** RN-407: inicia la atención y sella la hora real de inicio (RE-4.5.1). */
     public function iniciarAtencion(array $cita, string $ahora): bool
     {
-        return $this->transicion($cita, self::ESTADOS_ABIERTOS, "estado = 'en_curso', hora_inicio_real = ?", [$ahora]);
+        return $this->atencionCoordinada($cita, self::ESTADOS_ABIERTOS, "estado='en_curso',hora_inicio_real=?", $ahora);
     }
 
-    /**
-     * RN-406: completa una cita en curso o sin cerrar. Solo lo usa la cita
-     * cuya consulta ya existe y quedó abierta; lo normal es completarla al
-     * guardar la consulta (Consulta::registrar).
-     */
+    /** RE-4.5.1/3: estado, sello y marcas se confirman bajo el mismo coordinador. */
     public function completarAtencion(array $cita, string $ahora): bool
     {
-        return $this->transicion($cita, self::ESTADOS_EN_ATENCION, "estado = 'completada', hora_fin_real = ?", [$ahora]);
+        return $this->atencionCoordinada($cita, self::ESTADOS_EN_ATENCION, "estado='completada',hora_fin_real=?", $ahora);
+    }
+
+    private function atencionCoordinada(array $cita, array $estados, string $cambio, string $ahora): bool
+    {
+        require_once __DIR__ . '/CascadaAgenda.php';
+        $id = (int) $cita['id_cita'];
+        $actual = $this->getById($id);
+        $cascada = new CascadaAgenda($this->conn, static fn () => IntervalosAgenda::fecha($ahora));
+        try {
+            return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), fn () => $cascada->recursosDeCita($id), function () use ($id, $estados, $cambio, $ahora, $cascada): bool {
+                $actual = $this->getById($id);
+                $this->exigirActorVigente((int) $actual['id_mascota']);
+                if (Contexto::rolActivo() !== Roles::VETERINARIO || (int) $actual['id_veterinario'] !== Contexto::idUsuario()) {
+                    throw new AccesoDenegado(403, 'Solo el veterinario asignado registra la atención.');
+                }
+                $ok = $this->transicion($actual, $estados, $cambio . ",estado_reajuste='pendiente_calculo',version_agenda=version_agenda+1", [$ahora]);
+                if ($ok) {
+                    if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $id, ['estado' => $actual['estado']], ['sello' => $ahora], 'Disparo de cascada por atención (RE-4.5.1)', $this->clinica())) {
+                        throw new RuntimeException('No se pudo auditar la atención.');
+                    }
+                    $cascada->procesar($actual['fecha']);
+                }
+                return $ok;
+            });
+        } catch (AccesoDenegado $error) {
+            $this->denegarAcceso('citas', $id, 'Atención denegada tras rollback');
+        }
     }
 
     /** RN-408: el paciente no llegó; la cita deja de ocupar su horario. */
