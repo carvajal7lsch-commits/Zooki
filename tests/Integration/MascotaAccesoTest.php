@@ -77,6 +77,17 @@ final class MascotaAccesoTest extends TestCase
         $this->assertTrue($this->modelo->update(['id_mascota'=>1,'peso'=>'11']));
         $this->assertSame('11',(string)$this->modelo->getById(1)['peso']);
     }
+    public function testEsterilizadoSinDatoPasaANoYLuegoASi(): void
+    {
+        // Pulido de interfaz: null == 0 en comparación laxa descartaba el cambio a «No».
+        $this->db->exec('UPDATE mascotas SET esterilizado=NULL WHERE id_mascota=1');
+        foreach ([['0',0],['1',1],['',null]] as [$valor,$esperado]) {
+            $this->assertTrue($this->modelo->update(['id_mascota'=>1,'esterilizado'=>$valor]));
+            $guardado=$this->db->query('SELECT esterilizado FROM mascotas WHERE id_mascota=1')->fetchColumn();
+            $this->assertSame($esperado,$guardado === null ? null : (int)$guardado,'valor '.$valor);
+        }
+        $this->assertSame(3,(int)$this->db->query("SELECT COUNT(*) FROM auditoria_mascotas WHERE campo_modificado='esterilizado'")->fetchColumn());
+    }
     public function testVinculoConPropietarioAjenoDejaAuditoriaTrasRollback(): void
     {
         $this->rechazo(fn()=>$this->modelo->vincular(1,5));

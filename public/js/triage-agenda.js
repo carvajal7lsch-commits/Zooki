@@ -52,7 +52,7 @@
             ocupada = false;
             calcular.disabled = false;
             aviso.textContent = '';
-            salida.textContent = '';
+            pintarResultado(null);
             comprobar.hidden = true;
             buscar('[data-triage-revision]')?.setAttribute('hidden', '');
             opciones.alCambiar(null);
@@ -67,20 +67,25 @@
                 for (const marca of control.marcados()) {
                     const dato = anteriores.get(marca.codigo) || { codigo: marca.codigo, tiempo: marca.codigo === 'sintoma.control_preventivo' ? 'no_aplica' : 'no_se' };
                     episodios.set(marca.codigo, dato);
-                    const fila = document.createElement('label');
-                    fila.className = 'zk-label';
-                    fila.append(document.createTextNode(marca.etiqueta + ' · tiempo '));
+                    // Pulido de interfaz: una fila por marca, con su nombre y desde cuándo, en vez de un texto suelto.
+                    const fila = document.createElement('div');
+                    fila.className = 'triage-captura__tiempo';
+                    const nombre = document.createElement('span');
+                    nombre.className = 'triage-captura__tiempo-nombre';
+                    nombre.textContent = marca.etiqueta;
                     const select = document.createElement('select');
                     select.className = 'zk-input';
-                    const alternativas = [['no_se', 'No sé'], ['conocido', 'Minutos conocidos']];
-                    if (marca.codigo === 'sintoma.control_preventivo') alternativas.push(['no_aplica', 'No aplica (preventivo)']);
+                    select.setAttribute('aria-label', 'Desde cuándo: ' + marca.etiqueta);
+                    const alternativas = [['no_se', 'Desde: no sé'], ['conocido', 'Hace (minutos)']];
+                    if (marca.codigo === 'sintoma.control_preventivo') alternativas.push(['no_aplica', 'No aplica']);
                     for (const [valor, texto] of alternativas) select.add(new Option(texto, valor));
                     select.value = dato.tiempo;
                     const minutos = document.createElement('input');
-                    minutos.className = 'zk-input';
+                    minutos.className = 'zk-input triage-captura__minutos';
                     minutos.type = 'text';
                     minutos.inputMode = 'decimal';
                     minutos.maxLength = 12;
+                    minutos.placeholder = 'min';
                     minutos.dataset.caracteres = '0-9.';
                     minutos.dataset.formato = 'decimal';
                     minutos.dataset.decimales = '3';
@@ -99,11 +104,61 @@
                     dato.grupo = grupo;
                     select.addEventListener('change', cambiar);
                     minutos.addEventListener('input', cambiar);
-                    fila.append(select, minutos);
+                    fila.append(nombre, select, minutos);
                     contenedor.append(fila);
                 }
             }
             invalidar();
+        }
+
+        const nombresNivel = { rojo: 'Rojo · crítico', naranja: 'Naranja · urgente', amarillo: 'Amarillo · prioritario', verde: 'Verde · no urgente' };
+        function pintarResultado(r, mensaje = '') {
+            salida.replaceChildren();
+            if (!r && !mensaje) {
+                salida.hidden = true;
+                delete salida.dataset.nivel;
+                return;
+            }
+            salida.hidden = false;
+            if (r?.nivel) {
+                salida.dataset.nivel = r.nivel;
+                const nivel = document.createElement('strong');
+                nivel.className = 'triage-captura__nivel';
+                nivel.textContent = nombresNivel[r.nivel] || r.nivel;
+                salida.append(nivel);
+            } else {
+                delete salida.dataset.nivel;
+            }
+            const texto = document.createElement('span');
+            texto.textContent = mensaje;
+            salida.append(texto);
+            if (r?.telefono_urgencias) {
+                const telefono = document.createElement('a');
+                telefono.className = 'triage-captura__telefono';
+                telefono.href = 'tel:' + r.telefono_urgencias;
+                telefono.textContent = 'Urgencias: ' + r.telefono_urgencias;
+                salida.append(telefono);
+            }
+            if (r?.contagio) {
+                const contagio = document.createElement('span');
+                contagio.className = 'triage-captura__contagio';
+                contagio.textContent = 'Posible contagio: avisa al personal para preparar aislamiento.';
+                salida.append(contagio);
+            }
+        }
+
+        // El celo solo aplica a hembras sin esterilizar; si no se conoce la ficha, se deja visible.
+        const campoCelo = buscar('[data-triage-celo-campo]');
+        function actualizarCelo() {
+            if (!campoCelo) return;
+            const ficha = opciones.mascota ? opciones.mascota() : null;
+            const aplica = !ficha || !ficha.sexo || (String(ficha.sexo).toLowerCase() === 'hembra' && String(ficha.esterilizado ?? '') !== '1');
+            if (campoCelo.hidden === !aplica) return;
+            campoCelo.hidden = !aplica;
+            if (!aplica && buscar('[data-triage-celo]').value) {
+                buscar('[data-triage-celo]').value = '';
+                invalidar();
+            }
         }
 
         const controles = {};
@@ -151,14 +206,14 @@
                 const r = await (await fetch('index.php?action=' + accion, { method: 'POST', body: forma })).json();
                 estado.consultar(opciones.seleccion());
                 if (!estado.recibir(numero, r)) return;
-                salida.textContent = (r.message || '') + (r.telefono_urgencias ? ' Teléfono de urgencias: ' + r.telefono_urgencias : '') + (r.contagio ? ' Aviso: posible contagio. Avisa al personal para preparar aislamiento.' : '');
+                pintarResultado(r, r.message || '');
                 comprobar.hidden = !r.revision;
                 const revision = buscar('[data-triage-revision]');
                 if (revision) revision.hidden = !r.revision;
                 opciones.alCambiar(r.success && r.reservable ? r : null);
             } catch (error) {
                 estado.consultar(opciones.seleccion());
-                if (estado.recibir(numero, null)) salida.textContent = 'No se pudo consultar. Reintenta la misma evaluación.';
+                if (estado.recibir(numero, null)) pintarResultado(null, 'No se pudo consultar. Reintenta la misma evaluación.');
             } finally {
                 if (estado.esActual(numero)) {
                     ocupada = false;
@@ -197,12 +252,12 @@
                 const r = await (await fetch('index.php?' + parametros)).json();
                 estado.consultar(opciones.seleccion());
                 if (!estado.recibir(numero, r)) return;
-                salida.textContent = r.message || '';
+                pintarResultado(r, r.message || '');
                 comprobar.hidden = !r.revision;
                 opciones.alCambiar(r.success && r.reservable ? r : null);
             } catch (error) {
                 estado.consultar(opciones.seleccion());
-                if (estado.recibir(numero, actual)) salida.textContent = 'No se pudo comprobar la revisión.';
+                if (estado.recibir(numero, actual)) pintarResultado(actual, 'No se pudo comprobar la revisión.');
             } finally {
                 if (estado.esActual(numero)) {
                     ocupada = false;
@@ -227,6 +282,7 @@
 
         capturaActual = {
             consulta() {
+                actualizarCelo();
                 const seleccion = opciones.seleccion();
                 if (mascotaAnterior && mascotaAnterior !== seleccion.id_mascota) {
                     mascotaAnterior = seleccion.id_mascota;
@@ -244,6 +300,7 @@
                 invalidar();
             }
         };
+        actualizarCelo();
         return capturaActual;
     }
 

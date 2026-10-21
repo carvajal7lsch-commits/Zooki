@@ -1302,6 +1302,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmar = document.getElementById('booking_confirmar');
     const triageC4 = ZookiTriageAgenda.crear(form.querySelector('[data-triage-agenda]'), {
         seleccion: () => ({ id_clinica: clinicaSelect.value, id_mascota: mascotaSelect.value, id_veterinario: vetSelect.value, id_tipo_cita: tipoCitaSelect.value, fecha: dateInput.value }),
+        // Pulido de interfaz: el celo solo se pregunta a hembras sin esterilizar.
+        mascota: () => { const r = form.querySelector('[name="id_mascota"]:checked'); return r ? { sexo: r.dataset.sexo || '', esterilizado: r.dataset.esterilizado ?? '' } : null; },
         alCambiar: () => cargarHoras()
     });
     // Días sin atención en toda la jornada de cada clínica (1 = lunes … 7 = domingo); se relee tras actualizar.

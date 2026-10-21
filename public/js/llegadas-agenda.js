@@ -28,6 +28,32 @@
             return nodo;
         }
 
+        const NIVELES = { verde: 'Verde', amarillo: 'Amarillo', naranja: 'Naranja', rojo: 'Rojo' };
+        const hora = valor => String(valor || '').slice(0, 5);
+        const fechaHora = valor => {
+            const m = String(valor || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}:\d{2})/);
+            return m ? `${m[3]}/${m[2]} ${m[4]}` : String(valor || '');
+        };
+
+        function insignia(padre, nivel) {
+            const nodo = texto(padre, 'span', NIVELES[nivel] || nivel || 'Sin nivel');
+            nodo.className = 'ah-nivel';
+            nodo.dataset.nivel = nivel || '';
+            return nodo;
+        }
+
+        // Pulido de interfaz: tarjeta compacta con nombre, nivel y datos en una línea.
+        function item(lista, titulo, nivel, meta = '') {
+            const tarjeta = texto(lista, 'article', '');
+            tarjeta.className = 'ah-item';
+            const cabeza = texto(tarjeta, 'div', '');
+            cabeza.className = 'ah-item__head';
+            texto(cabeza, 'strong', titulo);
+            if (nivel) insignia(cabeza, nivel);
+            if (meta) texto(tarjeta, 'p', meta).className = 'ah-item__meta';
+            return tarjeta;
+        }
+
         function campo(form, nombre, etiqueta, opciones = null, requerido = true, tipo = 'text') {
             const label = texto(form, 'label', etiqueta);
             const nodo = document.createElement(opciones ? 'select' : 'input');
@@ -56,7 +82,8 @@
                 if (nodo.disabled) return;
                 const error = errorCampo(nodo.name, nodo.value, nodo.required);
                 const salida = form.querySelector(`[data-error-campo="${nodo.name}"]`);
-                if (salida) salida.textContent = error;
+                // El error se muestra cuando el campo ya se tocó o se intentó enviar, no al aparecer.
+                if (salida) salida.textContent = nodo.dataset.tocado === '1' || form.dataset.intento === '1' ? error : '';
                 nodo.setAttribute('aria-invalid', error ? 'true' : 'false');
                 valido = valido && !error;
             });
@@ -64,21 +91,25 @@
             return valido;
         }
 
-        function formulario(padre, titulo, accion, datos, construir = () => {}, despues = null) {
+        function formulario(padre, titulo, accion, datos, construir = () => {}, despues = null, secundario = false) {
             const form = document.createElement('form');
-            form.className = 'perfil-card';
+            form.className = 'ah-item__form';
+            form.noValidate = true;
             padre.append(form);
             const comando = global.zookiCrearComandoAgenda();
             construir(form);
             const boton = texto(form, 'button', titulo);
             boton.type = 'submit';
-            boton.className = 'btn-secondary';
+            boton.className = secundario ? 'zk-btn zk-btn--sec zk-btn--mini' : 'zk-btn zk-btn--mini';
             const mensaje = texto(form, 'p', '');
+            mensaje.className = 'ah-error';
             mensaje.setAttribute('role', 'status');
-            form.addEventListener('input', () => validar(form));
-            form.addEventListener('change', () => validar(form));
+            const tocar = evento => { if (evento.target.name) evento.target.dataset.tocado = '1'; validar(form); };
+            form.addEventListener('input', tocar);
+            form.addEventListener('change', tocar);
             form.addEventListener('submit', async evento => {
                 evento.preventDefault();
+                form.dataset.intento = '1';
                 if (escribiendo || !validar(form)) return;
                 const cuerpo = new FormData(form);
                 Object.entries(datos).forEach(([k, v]) => cuerpo.set(k, v));
@@ -111,22 +142,25 @@
 
         function decisiones(padre, id, opciones) {
             if (!opciones) return;
-            texto(padre, 'p', `Tiempo clínico restante: ${opciones.segundos_restantes} segundos. ${opciones.dentro_tolerancia ? 'Dentro de tolerancia.' : 'Tolerancia superada.'}`);
+            const minutos = Math.max(0, Math.round(opciones.segundos_restantes / 60));
+            texto(padre, 'p', `Quedan ${minutos} min de tiempo clínico · ${opciones.dentro_tolerancia ? 'dentro de la tolerancia' : 'tolerancia superada'}`).className = 'ah-item__meta';
+            const grupo = texto(padre, 'div', '');
+            grupo.className = 'ah-decisiones';
             if (opciones.dentro_tolerancia) {
-                formulario(padre, 'Atender servicio completo y propagar retraso', 'decidir', { id_cita: id, decision: 'completa' });
-                if (opciones.reducida) formulario(padre, 'Atender con duración reducida explícita', 'decidir', { id_cita: id, decision: 'reducida' }, form => {
-                    const entrada = campo(form, 'segundos', 'Duración activa decidida (segundos)');
+                formulario(grupo, 'Atender completo', 'decidir', { id_cita: id, decision: 'completa' });
+                if (opciones.reducida) formulario(grupo, 'Atender reducido', 'decidir', { id_cita: id, decision: 'reducida' }, form => {
+                    const entrada = campo(form, 'segundos', 'Duración (segundos)');
                     entrada.maxLength = String(opciones.segundos_restantes).length;
-                });
+                }, null, true);
             }
-            formulario(padre, 'Atender en siguiente hueco', 'decidir', { id_cita: id, decision: 'siguiente_hueco' });
-            formulario(padre, 'Reprogramar', 'decidir', { id_cita: id, decision: 'reprogramar' }, form => {
+            formulario(grupo, 'Siguiente hueco', 'decidir', { id_cita: id, decision: 'siguiente_hueco' }, () => {}, null, true);
+            formulario(grupo, 'Reprogramar', 'decidir', { id_cita: id, decision: 'reprogramar' }, form => {
                 campo(form, 'fecha', 'Fecha', null, true, 'date');
                 campo(form, 'hora', 'Hora', null, true, 'time').step = '1';
                 campo(form, 'id_veterinario', 'Veterinario', [[String(global.__vetLlegada), 'Veterinario asignado']]);
-            });
+            }, null, true);
             (opciones.otro_veterinario || []).forEach(v => {
-                formulario(padre, `Otro veterinario: ${v.nombre}, ${v.hora}`, 'decidir', { id_cita: id, decision: 'otro_veterinario', id_veterinario: v.id_veterinario, fecha: new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Bogota' }).format(new Date()), hora: v.hora });
+                formulario(grupo, `Con ${v.nombre} a las ${hora(v.hora)}`, 'decidir', { id_cita: id, decision: 'otro_veterinario', id_veterinario: v.id_veterinario, fecha: new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Bogota' }).format(new Date()), hora: v.hora }, () => {}, null, true);
             });
         }
 
@@ -138,26 +172,29 @@
                 if (!r.success) throw new Error(r.message || 'No se pudo consultar.');
                 for (const nombre of ['citas', 'solicitudes', 'espera', 'historial']) raiz.querySelector(`[data-llegadas-${nombre}]`).replaceChildren();
                 r.resultado.citas.forEach(c => {
-                    const tarjeta = texto(raiz.querySelector('[data-llegadas-citas]'), 'section', '');
-                    tarjeta.className = 'perfil-card';
-                    texto(tarjeta, 'h4', `${c.hora} · Cita ${c.id_cita} · ${c.prioridad} · ${c.origen === 'llegada_sin_reserva' ? 'Llegada sin reserva' : 'Reserva'}`);
-                    formulario(tarjeta, 'Registrar llegada y ver opciones', 'registrar', { id_cita: c.id_cita }, () => {}, (resultado, form) => {
+                    const tarjeta = item(raiz.querySelector('[data-llegadas-citas]'), `${hora(c.hora)} · ${c.mascota || 'Cita ' + c.id_cita}`, c.prioridad, c.origen === 'llegada_sin_reserva' ? 'Llegada sin reserva' : 'Con reserva');
+                    formulario(tarjeta, 'Registrar llegada', 'registrar', { id_cita: c.id_cita }, () => {}, (resultado, form) => {
                         form.remove();
                         decisiones(tarjeta, c.id_cita, resultado.opciones);
                     });
-                    formulario(tarjeta, 'Ajustar nivel con motivo', 'ajustar', { id_cita: c.id_cita }, form => {
-                        campo(form, 'nivel', 'Nivel ajustado', ['verde', 'amarillo', 'naranja', 'rojo'].map(n => [n, n]));
-                        campo(form, 'motivo', 'Motivo veterinario');
-                    });
+                    const ajuste = texto(tarjeta, 'details', '');
+                    ajuste.className = 'ah-mini';
+                    texto(ajuste, 'summary', 'Ajustar nivel');
+                    formulario(ajuste, 'Guardar nivel', 'ajustar', { id_cita: c.id_cita }, form => {
+                        campo(form, 'nivel', 'Nivel', ['verde', 'amarillo', 'naranja', 'rojo'].map(n => [n, NIVELES[n]]));
+                        campo(form, 'motivo', 'Motivo');
+                    }, null, true);
                 });
                 r.resultado.solicitudes.forEach(s => {
-                    formulario(raiz.querySelector('[data-llegadas-solicitudes]'), `Registrar llegada del caso ${s.id_solicitud} (${s.nivel_aprobado || s.nivel_calculado})`, 'presentar', { id_solicitud: s.id_solicitud });
+                    const tarjeta = item(raiz.querySelector('[data-llegadas-solicitudes]'), s.mascota || `Caso ${s.id_solicitud}`, s.nivel_aprobado || s.nivel_calculado);
+                    tarjeta.classList.add('ah-item--fila');
+                    formulario(tarjeta, 'Registrar llegada', 'presentar', { id_solicitud: s.id_solicitud });
                 });
                 r.resultado.espera.forEach(s => {
-                    const tarjeta = texto(raiz.querySelector('[data-llegadas-espera]'), 'section', '');
-                    texto(tarjeta, 'h4', `${s.nivel_aprobado || s.nivel_calculado} · ${s.fecha_llegada} · Caso ${s.id_solicitud}`);
-                    const boton = texto(tarjeta, 'button', 'Ver espacios y alternativas');
+                    const tarjeta = item(raiz.querySelector('[data-llegadas-espera]'), s.mascota || `Caso ${s.id_solicitud}`, s.nivel_aprobado || s.nivel_calculado, `Llegó ${fechaHora(s.fecha_llegada)}`);
+                    const boton = texto(tarjeta, 'button', 'Ver espacios');
                     boton.type = 'button';
+                    boton.className = 'zk-btn zk-btn--sec zk-btn--mini';
                     boton.addEventListener('click', async () => {
                         const actual = lectura;
                         boton.disabled = true;
@@ -167,16 +204,22 @@
                             if (!respuesta.success) throw new Error(respuesta.message || 'No se pudo consultar.');
                             boton.remove();
                             const alternativas = respuesta.resultado;
-                            if (alternativas.horas.length) formulario(tarjeta, 'Asignar cita de llegada', 'asignar', { id_solicitud: s.id_solicitud }, form => campo(form, 'hora', 'Espacio compatible', alternativas.horas.map(h => [h, h])));
-                            else texto(tarjeta, 'p', 'Sin hueco completo; permanece en espera. Reevalúa otra fecha o veterinario antes de asignar.');
-                            alternativas.otros.forEach(v => texto(tarjeta, 'p', `Disponible ${v.nombre}: ${v.hora}. Evalúa con ese veterinario para asignar.`));
+                            if (alternativas.horas.length) formulario(tarjeta, 'Asignar', 'asignar', { id_solicitud: s.id_solicitud }, form => campo(form, 'hora', 'Espacio compatible', alternativas.horas.map(h => [h, hora(h)])));
+                            else texto(tarjeta, 'p', 'Sin hueco completo hoy: sigue en espera.').className = 'ah-item__meta';
+                            alternativas.otros.forEach(v => { texto(tarjeta, 'p', `Libre con ${v.nombre} a las ${hora(v.hora)}.`).className = 'ah-item__meta'; });
                         } catch (error) {
-                            if (actual === lectura && tarjeta.isConnected) texto(tarjeta, 'p', error.message);
+                            if (actual === lectura && tarjeta.isConnected) texto(tarjeta, 'p', error.message).className = 'ah-error';
                             boton.disabled = false;
                         }
                     });
                 });
-                r.resultado.historial.forEach(h => texto(raiz.querySelector('[data-llegadas-historial]'), 'p', `${h.fecha_hora} · Cita ${h.registro_id} · Autor ${h.id_usuario} · ${h.datos_anteriores} → ${h.datos_nuevos}`));
+                r.resultado.historial.forEach(h => {
+                    let antes = {};
+                    let despues = {};
+                    try { antes = JSON.parse(h.datos_anteriores) || {}; despues = JSON.parse(h.datos_nuevos) || {}; } catch (_) { /* registro antiguo */ }
+                    const linea = texto(raiz.querySelector('[data-llegadas-historial]'), 'p', `${fechaHora(h.fecha_hora)} · Cita ${h.registro_id} · ${NIVELES[antes.nivel_anterior] || antes.nivel_anterior || '—'} → ${NIVELES[despues.nivel_ajustado] || despues.nivel_ajustado || '—'}${despues.motivo ? ' · ' + despues.motivo : ''}`);
+                    linea.className = 'ah-item__meta';
+                });
             } catch (error) {
                 if (turno === lectura) aviso.textContent = error.message;
             }

@@ -1,92 +1,237 @@
+/* HU-7.4 + pulido de interfaz (2026-10-21): pestañas, tarjetas compactas y formularios en ventana. */
+.config-tabs,
+.configuracion-clinica,
+.coordinacion {
+    --hr-primary: var(--primary, #0052FF);
+    --hr-primary-soft: #EBF1FF;
+    --hr-text: #0F172A;
+    --hr-text-2: #475569;
+    --hr-text-3: #94A3B8;
+    --hr-border: #E2E8F0;
+    --hr-border-soft: #EEF2F6;
+    --hr-surface: #FFFFFF;
+    --hr-muted: #F8FAFC;
+    --hr-error: #B42318;
+    --hr-error-bg: #FEF3F2;
+}
+
+/* ── Pestañas de la página ── */
+.config-tabs {
+    display: inline-flex;
+    gap: 4px;
+    max-width: 100%;
+    margin-bottom: 20px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--hr-surface);
+    border: 1px solid var(--hr-border);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.config-tabs::-webkit-scrollbar { display: none; }
+.config-tabs__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--hr-text-2);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.config-tabs__tab[aria-selected="true"] {
+    background: var(--hr-primary-soft);
+    color: var(--hr-primary);
+}
+.config-tabs__tab:focus-visible { outline: 2px solid var(--hr-primary); outline-offset: 2px; }
+[data-config-panel][hidden] { display: none !important; }
+
+/* ── Pestaña Clínica: dos tarjetas lado a lado ── */
 .configuracion-clinica {
     display: grid;
-    gap: 24px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    gap: 20px;
+    align-items: start;
     margin-bottom: 24px;
 }
-.configuracion-clinica form {
-    padding: 0 24px 24px;
+.configuracion-clinica .horarios-card {
+    background: var(--hr-surface);
+    border: 1px solid var(--hr-border);
 }
-.configuracion-campos {
+
+/* Vista de la marca */
+.config-marca__vista {
+    padding: 0;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+.config-marca__logo {
+    flex: 0 0 56px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: var(--hr-primary-soft);
+    color: var(--hr-primary);
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+.config-marca__logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.config-marca__datos {
+    flex: 1;
+    min-width: 0;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
+    gap: 12px 16px;
+    margin: 0;
 }
-.configuracion-campo {
+.config-marca__dato { min-width: 0; }
+.config-marca__dato:first-child { grid-column: 1 / -1; }
+.config-marca__dato dt {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--hr-text-3);
+}
+.config-marca__dato dd {
+    margin: 2px 0 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--hr-text);
+    overflow-wrap: anywhere;
+}
+.config-marca__dato:first-child dd { font-size: 1.05rem; }
+.config-marca__dato--urgencia dd { color: #B91C1C; }
+
+/* Lista de tipos de cita */
+.configuracion-tipos {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    min-width: 0;
-}
-.configuracion-campo input, .configuracion-campo select {
-    width: 100%;
-    min-height: 44px;
-    border: 1px solid #dce2ea;
-    border-radius: 10px;
-    padding: 10px 12px;
-    font: inherit;
-    background: #fff;
-    color: #1d2939;
-    box-sizing: border-box;
-}
-.configuracion-campo [aria-invalid="true"] {
-    border-color: #c62828;
-}
-.configuracion-clinica .validation-error {
-    display: block;
-    min-height: 18px;
-    font-size: 12px;
-    font-weight: 400;
-    color: #b42318;
-}
-.configuracion-aviso {
-    min-height: 20px;
-    color: #b42318;
-    font-size: 14px;
-}
-.configuracion-tipos {
-    padding: 0 24px 18px;
-    display: grid;
-    gap: 10px;
 }
 .configuracion-tipo {
     display: flex;
     gap: 12px;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #edf0f4;
-    padding: 12px 0;
+    padding: 10px 0;
+    border-top: 1px solid var(--hr-border-soft);
 }
-.configuracion-tipo div {
-    min-width: 0;
-}
-.configuracion-tipo strong {
+.configuracion-tipo:first-child { border-top: 0; padding-top: 0; }
+.configuracion-tipo--inactivo .configuracion-tipo__datos { opacity: 0.55; }
+.configuracion-tipo__datos { min-width: 0; }
+.configuracion-tipo__datos strong {
     display: block;
+    font-size: 0.9rem;
+    color: var(--hr-text);
     overflow-wrap: anywhere;
 }
-.configuracion-tipo p {
-    font-size: 13px;
-    color: #667085;
-    margin: 6px 0;
-}
-.configuracion-tipo button {
-    min-height: 44px;
-}
-.configuracion-tipo-acciones {
+.configuracion-tipo__chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
+    margin-top: 4px;
+}
+.configuracion-chip {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--hr-muted);
+    border: 1px solid var(--hr-border-soft);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--hr-text-2);
+}
+.configuracion-chip--apagado { color: var(--hr-error); background: var(--hr-error-bg); border-color: #FECDD3; }
+.configuracion-tipo-acciones {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 4px;
+}
+.configuracion-icono {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--hr-border);
+    border-radius: 10px;
+    background: var(--hr-surface);
+    color: var(--hr-text-2);
+    cursor: pointer;
+}
+.configuracion-icono:hover { border-color: var(--hr-primary); color: var(--hr-primary); }
+.configuracion-vacio { margin: 0; font-size: 0.85rem; color: var(--hr-text-3); }
+
+/* Campos de los formularios (dentro de la ventana) */
+.configuracion-campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 16px;
+}
+.configuracion-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--hr-text);
+    min-width: 0;
+}
+.configuracion-campo--ancho { grid-column: 1 / -1; }
+.configuracion-campo input, .configuracion-campo select {
+    width: 100%;
+    height: 42px;
+    border: 1px solid var(--hr-border);
+    border-radius: 10px;
+    padding: 0 12px;
+    font: inherit;
+    font-weight: 400;
+    background: #fff;
+    color: var(--hr-text);
+    box-sizing: border-box;
+}
+.configuracion-campo input:focus, .configuracion-campo select:focus {
+    outline: none;
+    border-color: var(--hr-primary);
+    box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.12);
+}
+.configuracion-campo [aria-invalid="true"] { border-color: var(--hr-error); }
+.configuracion-clinica .validation-error {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--hr-error);
+}
+.configuracion-aviso {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--hr-error);
+}
+.configuracion-aviso:empty { display: none; }
+
+@media (max-width: 1023px) {
+    .configuracion-clinica { grid-template-columns: 1fr; }
 }
 @media (max-width: 767px) {
-    .configuracion-campos {
-        grid-template-columns: 1fr;
-    }
-    .configuracion-clinica form, .configuracion-tipos {
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-    .configuracion-tipo {
-        flex-wrap: wrap;
-    }
+    .config-tabs { display: flex; margin-bottom: 16px; }
+    .config-tabs__tab { padding: 0 12px; }
+    .configuracion-campos { grid-template-columns: 1fr; }
+    .config-marca__vista { flex-direction: column; gap: 12px; }
+    .config-marca__logo { flex-basis: auto; width: 44px; height: 44px; font-size: 1.1rem; }
 }
+.configuracion-clinica .horarios-card__head { flex-wrap: nowrap; }
+.configuracion-clinica .horarios-card__head > div { flex: 1; min-width: 0; }
+@media (max-width: 767px) {
+    .configuracion-clinica .horarios-card__head { flex-wrap: wrap; }
+    .configuracion-clinica .horarios-card__head > div { flex: 1 1 180px; }
+}
+.configuracion-clinica .validation-error:empty { display: none; }
+.zk-dialogo .configuracion-campos { gap: 14px 16px; }

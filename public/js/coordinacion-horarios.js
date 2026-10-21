@@ -38,6 +38,15 @@
             raiz.querySelectorAll('input,select,button').forEach(e => { e.disabled = valor; });
         }
 
+        const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const ESTADOS = { pendiente: 'Pendiente', aprobada: 'Aprobada', rechazada: 'Rechazada', pendiente_calculo: 'Pendiente de cálculo', pendiente_reprogramacion: 'Pendiente de reprogramar', pendiente_reasignacion: 'Pendiente de reasignar', pendiente_revision: 'Requiere revisión' };
+        const hora = valor => String(valor || '').slice(0, 5);
+        // «2030-01-07 09:00:00» → «07/01/2030 09:00» sin depender de la zona del navegador.
+        const fecha = valor => {
+            const m = String(valor || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T]?(\d{2}:\d{2})?/);
+            return m ? `${m[3]}/${m[2]}/${m[1]}${m[4] ? ' ' + m[4] : ''}` : String(valor || '');
+        };
+
         function texto(contenedor, etiqueta, valor) {
             const elemento = document.createElement(etiqueta);
             elemento.textContent = valor;
@@ -48,8 +57,9 @@
         function agregarFranja(f = {}) {
             const fila = document.createElement('div');
             fila.className = 'coordinacion-franja';
-            for (const [campo, nombre] of [['dia_semana', 'Día'], ['hora_inicio', 'Inicio'], ['hora_fin', 'Fin']]) {
+            for (const [campo, nombre] of [['dia_semana', 'Día'], ['hora_inicio', 'Desde'], ['hora_fin', 'Hasta']]) {
                 const etiqueta = texto(fila, 'label', nombre);
+                etiqueta.className = 'coord-campo';
                 const entrada = document.createElement(campo === 'dia_semana' ? 'select' : 'input');
                 entrada.dataset.franjaCampo = campo;
                 if (campo === 'dia_semana') {
@@ -59,16 +69,26 @@
                     });
                 } else {
                     entrada.type = 'time';
-                    entrada.step = '1';
-                    entrada.maxLength = 8;
+                    // Pulido de interfaz: el formulario muestra HH:MM; al servidor viaja HH:MM:SS.
+                    entrada.step = '60';
+                    entrada.maxLength = 5;
                     entrada.dataset.caracteres = '0-9:';
                 }
                 entrada.required = true;
-                entrada.value = f[campo] ? String(f[campo]) : (campo === 'dia_semana' ? '1' : '');
+                entrada.value = f[campo] ? (campo === 'dia_semana' ? String(f[campo]) : String(f[campo]).slice(0, 5)) : (campo === 'dia_semana' ? '1' : '');
                 etiqueta.append(entrada);
             }
-            const quitar = texto(fila, 'button', 'Quitar franja');
+            // Pulido de interfaz: quitar es un icono al final de la fila.
+            const quitar = document.createElement('button');
             quitar.type = 'button';
+            quitar.className = 'coord-icono';
+            quitar.title = 'Quitar franja';
+            quitar.setAttribute('aria-label', 'Quitar franja');
+            const icono = document.createElement('i');
+            icono.className = 'fas fa-trash-alt';
+            icono.setAttribute('aria-hidden', 'true');
+            quitar.append(icono);
+            fila.append(quitar);
             quitar.addEventListener('click', () => {
                 if (estado.enviando) return;
                 fila.remove();
@@ -78,7 +98,7 @@
         }
 
         function franjas() {
-            return Array.from(lista.children, fila => Object.fromEntries(Array.from(fila.querySelectorAll('[data-franja-campo]'), entrada => [entrada.dataset.franjaCampo, entrada.value])));
+            return Array.from(lista.children, fila => Object.fromEntries(Array.from(fila.querySelectorAll('[data-franja-campo]'), entrada => [entrada.dataset.franjaCampo, /^\d\d:\d\d$/.test(entrada.value) ? entrada.value + ':00' : entrada.value])));
         }
 
         function validar() {
@@ -120,9 +140,10 @@
             });
         }
 
-        function boton(contenedor, nombre, accion) {
+        function boton(contenedor, nombre, accion, secundario = false) {
             const b = texto(contenedor, 'button', nombre);
             b.type = 'button';
+            b.className = secundario ? 'coord-btn coord-btn--sec coord-btn--mini' : 'coord-btn coord-btn--mini';
             b.addEventListener('click', () => {
                 if (!estado.enviando && !estado.cargando) accion();
             });
@@ -143,21 +164,28 @@
                 contenedor.replaceChildren();
                 for (const registro of filas) {
                     const fila = document.createElement('article');
+                    fila.className = 'coord-item';
                     if (nombre === 'propuestas') {
-                        texto(fila, 'p', `Propuesta ${registro.id_propuesta} · Veterinario ${registro.id_veterinario} · ${registro.estado}`);
+                        const vet = datos.veterinarios.find(v => String(v.id_usuario) === String(registro.id_veterinario));
+                        texto(fila, 'strong', `${vet ? vet.nombre_completo : 'Veterinario'} · ${ESTADOS[registro.estado] || registro.estado}`);
                         const propuestas = JSON.parse(registro.franjas);
-                        texto(fila, 'p', propuestas.map(f => `${f.dia_semana}: ${f.hora_inicio}–${f.hora_fin}`).join(' / ') || 'Sin franjas');
-                        if (registro.motivo_rechazo) texto(fila, 'p', registro.motivo_rechazo);
+                        texto(fila, 'p', propuestas.map(f => `${DIAS[Number(f.dia_semana) - 1] || f.dia_semana} ${hora(f.hora_inicio)}–${hora(f.hora_fin)}`).join(' · ') || 'Sin franjas');
+                        if (registro.motivo_rechazo) texto(fila, 'p', 'Motivo: ' + registro.motivo_rechazo);
                         if (admin && registro.estado === 'pendiente') {
+                            const acciones = document.createElement('div');
+                            acciones.className = 'coord-item__acciones';
                             const motivo = document.createElement('input');
                             motivo.maxLength = 255;
+                            motivo.placeholder = 'Motivo si la rechazas';
                             motivo.setAttribute('aria-label', 'Motivo de rechazo');
-                            fila.append(motivo);
+                            acciones.append(motivo);
+                            fila.append(acciones);
                             const aviso = texto(fila, 'span', '');
+                            aviso.className = 'coordinacion-error';
                             aviso.dataset.aviso = '';
                             motivo.addEventListener('input', () => { aviso.textContent = motivo.value.trim() ? '' : 'El rechazo necesita un motivo.'; });
                             for (const aprobar of [true, false]) {
-                                boton(fila, aprobar ? 'Aprobar' : 'Rechazar', () => {
+                                boton(acciones, aprobar ? 'Aprobar' : 'Rechazar', () => {
                                     if (!aprobar && !motivo.value.trim()) {
                                         aviso.textContent = 'El rechazo necesita un motivo.';
                                         return;
@@ -166,19 +194,22 @@
                                     cuerpo.set('id_propuesta', registro.id_propuesta);
                                     cuerpo.set('motivo', aprobar ? '' : motivo.value.trim());
                                     guardar(aprobar ? 'aprobar_horario_vet_ajax' : 'rechazar_horario_vet_ajax', cuerpo, fila);
-                                });
+                                }, !aprobar);
                             }
                         }
                     } else if (nombre === 'cierres') {
-                        texto(fila, 'p', `${registro.inicio}–${registro.fin} · ${registro.motivo} · ${Number(registro.activo) ? 'Activo' : 'Retirado'}`);
+                        texto(fila, 'strong', registro.motivo);
+                        texto(fila, 'p', `${fecha(registro.inicio)} → ${fecha(registro.fin)} · ${Number(registro.activo) ? 'Activo' : 'Retirado'}`);
+                        if (!Number(registro.activo)) fila.classList.add('coord-item--apagado');
                         texto(fila, 'p', '').dataset.aviso = '';
                         if (admin && Number(registro.activo)) boton(fila, 'Retirar cierre', () => {
                             const cuerpo = new FormData();
                             cuerpo.set('id_cierre', registro.id_cierre);
                             guardar('retirar_cierre_clinica_ajax', cuerpo, fila);
-                        });
+                        }, true);
                     } else {
-                        texto(fila, 'p', `Cita ${registro.id_cita} · ${registro.fecha} ${registro.hora} · ${registro.estado_reajuste} · ${registro.motivo_reajuste}`);
+                        texto(fila, 'strong', `Cita ${registro.id_cita} · ${fecha(registro.fecha + ' ' + registro.hora)}`);
+                        texto(fila, 'p', `${ESTADOS[registro.estado_reajuste] || registro.estado_reajuste}${registro.motivo_reajuste ? ' · ' + registro.motivo_reajuste : ''}`);
                     }
                     contenedor.append(fila);
                 }
@@ -235,7 +266,12 @@
             cierre.addEventListener('input', validarCierre);
             cierre.addEventListener('submit', evento => {
                 evento.preventDefault();
-                if (!estado.enviando && validarCierre()) guardar('crear_cierre_clinica_ajax', new FormData(cierre), cierre);
+                if (estado.enviando || !validarCierre()) return;
+                guardar('crear_cierre_clinica_ajax', new FormData(cierre), cierre).then(guardado => {
+                    if (!guardado) return;
+                    cierre.reset();
+                    if (global.zookiCerrarDialogo) global.zookiCerrarDialogo(cierre);
+                });
             });
         }
         document.addEventListener('horarios-actualizados', cargar);

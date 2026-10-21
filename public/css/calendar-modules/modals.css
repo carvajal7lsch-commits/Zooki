@@ -63,8 +63,9 @@
 .zk-modal__split {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-    height: 400px;
-    max-height: calc(100vh - 210px);
+    /* Pulido de interfaz: más alto para que síntomas y triage quepan con menos scroll. */
+    height: 540px;
+    max-height: calc(100vh - 190px);
 }
 
 .zk-modal__col {
@@ -391,7 +392,8 @@ select.zk-input {
 @media (max-width: 760px) {
     .zk-overlay { padding: 12px; }
     .zk-modal__split { grid-template-columns: 1fr; height: auto; overflow-y: auto; }
-    .zk-modal__col { overflow: visible; }
+    /* Sin min-height: 0 en el celular: si no, las filas se encogen y la columna de horarios tapa el formulario. */
+    .zk-modal__col { overflow: visible; min-height: auto; }
     .zk-modal__col--slots { min-height: 260px; border-left: 0; border-top: 1px solid var(--cal-border-soft); }
     .slot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .zk-modal__foot { flex-wrap: wrap; }

@@ -140,7 +140,7 @@ test('C2 Chrome: formulario real bloquea lecturas/doble envío y conserva error,
         await navegador.evaluar(`__vista.afectadas=[{id_cita:7,fecha:'2030-01-07',hora:'09:00',estado_reajuste:'pendiente_calculo',motivo_reajuste:'Turno'}];
             __escrituras[1].resolve({ok:true,json:async()=>({success:true,resultado:{vista:__vista}})});`);
         await navegador.esperar('__avisos.length===1');
-        assert.match(await navegador.evaluar('__avisos[0]'),/Cita 7.*pendiente_calculo/);
+        assert.match(await navegador.evaluar('__avisos[0]'),/Cita 7.*Pendiente de cálculo/);
         assert.deepEqual(navegador.errores,[]);
     } finally {
         await navegador.cerrar();

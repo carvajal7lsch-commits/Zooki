@@ -85,26 +85,47 @@
             form.querySelector('[data-aviso]').textContent = '';
         }
 
+        function abrirTipo(titulo) {
+            tipoForm.querySelector('[data-tipo-titulo]').textContent = titulo;
+            if (global.zookiAbrirDialogo) global.zookiAbrirDialogo('dialogoTipo');
+            tipoForm.elements.namedItem('nombre_tipo').focus();
+        }
+
+        // Pulido de interfaz: filas compactas con chips; editar abre la ventana del tipo.
         function renderizar() {
             lista.replaceChildren();
+            if (!tipos.length) {
+                const vacio = document.createElement('p');
+                vacio.className = 'configuracion-vacio';
+                vacio.textContent = 'Aún no hay tipos de cita. Crea el primero con «Nuevo tipo».';
+                lista.append(vacio);
+            }
             for (const tipo of tipos) {
                 const fila = document.createElement('article');
                 fila.className = 'configuracion-tipo';
+                if (!Number(tipo.activo)) fila.classList.add('configuracion-tipo--inactivo');
                 const datos = document.createElement('div');
+                datos.className = 'configuracion-tipo__datos';
                 const nombre = document.createElement('strong');
                 nombre.textContent = tipo.nombre_tipo;
-                const detalle = document.createElement('p');
-                detalle.textContent = `${tipo.duracion_minutos} min · Margen ${tipo.margen_minutos} min · ${Number(tipo.pausable) ? 'Pausable' : 'No pausable'} · ${Number(tipo.activo) ? 'Activo' : 'Inactivo'}`;
-                datos.append(nombre, detalle);
+                const chips = document.createElement('div');
+                chips.className = 'configuracion-tipo__chips';
+                for (const texto of [`${tipo.duracion_minutos} min`, `+${tipo.margen_minutos} min margen`, Number(tipo.pausable) ? 'Pausable' : 'No pausable', Number(tipo.activo) ? 'Activo' : 'Inactivo']) {
+                    const chip = document.createElement('span');
+                    chip.className = 'configuracion-chip';
+                    if (texto === 'Inactivo') chip.classList.add('configuracion-chip--apagado');
+                    chip.textContent = texto;
+                    chips.append(chip);
+                }
+                datos.append(nombre, chips);
                 const acciones = document.createElement('div');
                 acciones.className = 'configuracion-tipo-acciones';
-                for (const [texto, ejecutar] of [
-                    ['Editar', () => {
+                for (const [texto, icono, ejecutar] of [
+                    ['Editar', 'fa-pen', () => {
                         completar(tipoForm, tipo);
-                        tipoForm.querySelector('[data-tipo-titulo]').textContent = 'Editar tipo de cita';
-                        tipoForm.elements.namedItem('nombre_tipo').focus();
+                        abrirTipo('Editar tipo de cita');
                     }],
-                    [Number(tipo.activo) ? 'Desactivar' : 'Reactivar', () => {
+                    [Number(tipo.activo) ? 'Desactivar' : 'Reactivar', Number(tipo.activo) ? 'fa-eye-slash' : 'fa-eye', () => {
                         const cuerpo = new FormData();
                         cuerpo.set('id_tipo_cita', tipo.id_tipo_cita);
                         cuerpo.set('activo', Number(tipo.activo) ? '0' : '1');
@@ -115,8 +136,13 @@
                 ]) {
                     const boton = document.createElement('button');
                     boton.type = 'button';
-                    boton.className = 'horarios-btn horarios-btn--sec';
-                    boton.textContent = texto;
+                    boton.className = 'configuracion-icono';
+                    boton.title = texto;
+                    boton.setAttribute('aria-label', `${texto} ${tipo.nombre_tipo}`);
+                    const i = document.createElement('i');
+                    i.className = `fas ${icono}`;
+                    i.setAttribute('aria-hidden', 'true');
+                    boton.append(i);
                     boton.addEventListener('click', () => { if (!estado.enviando) ejecutar(); });
                     acciones.append(boton);
                 }
@@ -131,18 +157,24 @@
                 if (datos.marca) {
                     completar(marcaForm, datos.marca);
                     const vista = raiz.querySelector('[data-vista-marca]');
-                    vista.replaceChildren();
-                    if (datos.marca.url_logo) {
-                        const logo = document.createElement('img');
-                        logo.className = 'marca-clinica-logo';
-                        logo.src = datos.marca.url_logo;
-                        logo.alt = `Logo de ${datos.marca.nombre}`;
-                        vista.append(logo);
+                    for (const dato of vista.querySelectorAll('[data-marca-dato]')) {
+                        dato.textContent = datos.marca[dato.dataset.marcaDato] || 'Sin definir';
                     }
-                    const texto = document.createElement('p');
-                    texto.textContent = [datos.marca.nombre, datos.marca.direccion, datos.marca.telefono, datos.marca.email_contacto, datos.marca.telefono_urgencias].filter(Boolean).join(' · ');
-                    vista.append(texto);
+                    const logo = vista.querySelector('[data-marca-logo]');
+                    logo.replaceChildren();
+                    if (datos.marca.url_logo) {
+                        const imagen = document.createElement('img');
+                        imagen.src = datos.marca.url_logo;
+                        imagen.alt = `Logo de ${datos.marca.nombre}`;
+                        logo.append(imagen);
+                    } else {
+                        const inicial = document.createElement('span');
+                        inicial.textContent = (datos.marca.nombre || 'Z').charAt(0).toUpperCase();
+                        logo.append(inicial);
+                    }
                 }
+                // Guardado bien: la ventana se cierra; la lista o la vista ya quedaron al día.
+                if (accion !== 'cambiar_estado_tipo_cita_ajax' && global.zookiCerrarDialogo) global.zookiCerrarDialogo(form);
                 if (datos.tipo) {
                     tipos = tipos.filter(tipo => Number(tipo.id_tipo_cita) !== Number(datos.tipo.id_tipo_cita));
                     tipos.push(datos.tipo);
@@ -206,8 +238,7 @@
         raiz.querySelector('[data-nuevo-tipo]').addEventListener('click', () => {
             if (estado.enviando) return;
             completar(tipoForm, {});
-            tipoForm.querySelector('[data-tipo-titulo]').textContent = 'Nuevo tipo de cita';
-            tipoForm.elements.namedItem('nombre_tipo').focus();
+            abrirTipo('Nuevo tipo de cita');
         });
         renderizar();
     }

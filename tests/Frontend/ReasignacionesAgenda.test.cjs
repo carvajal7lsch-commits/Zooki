@@ -71,7 +71,7 @@ test('C5 bloquea doble envío y conserva clave al perder la respuesta', async ()
     await vaciar();
     p.pendientes.shift().resolver({ success: true, propuestas: [] });
     await segundo;
-    assert.equal(p.lista.textContent, 'No tienes propuestas pendientes.');
+    assert.equal(p.lista.hijos.length, 0);
     assert.equal(p.mensaje.textContent, 'Reasignación aceptada.');
 });
 

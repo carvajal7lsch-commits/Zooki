@@ -717,7 +717,7 @@ foreach ($clinicas_portal as $clinica) {
                                 <div class="portal-opciones" role="radiogroup" aria-labelledby="booking_mascota_etq">
                                     <?php foreach ($mascotas as $m): ?>
                                         <label class="portal-opcion">
-                                            <input type="radio" name="id_mascota" value="<?= (int) $m['id_mascota'] ?>" data-nombre="<?= $e($m['nombre']) ?>" required>
+                                            <input type="radio" name="id_mascota" value="<?= (int) $m['id_mascota'] ?>" data-nombre="<?= $e($m['nombre']) ?>" data-sexo="<?= $e($m['sexo'] ?? '') ?>" data-esterilizado="<?= $e($m['esterilizado'] ?? '') ?>" required>
                                             <?php $avatarMascota($m['foto'], (string) $m['nombre'], 'portal-opcion__avatar'); ?>
                                             <span class="portal-opcion__texto">
                                                 <strong><?= $e($m['nombre']) ?></strong>

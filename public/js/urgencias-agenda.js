@@ -31,6 +31,7 @@
         let escribiendo = false;
         let lectura = 0;
         let catalogos;
+        const ESTADOS = { espera_presencial: 'en espera', en_atencion: 'en atención', abierta: 'abierta', derivada: 'derivada' };
 
         function texto(padre, etiqueta, contenido) {
             const nodo = document.createElement(etiqueta);
@@ -73,7 +74,8 @@
                 if (entrada.type === 'hidden' || entrada.disabled || entrada.closest('fieldset[disabled]')) return;
                 const error = errorCampo(entrada.name, entrada.value, entrada.required, reglas);
                 const nodo = form.querySelector(`[data-error-campo="${entrada.name}"]`);
-                if (nodo) nodo.textContent = error;
+                // El error aparece al tocar el campo o al intentar enviar, no al abrir el formulario.
+                if (nodo) nodo.textContent = entrada.dataset.tocado === '1' || form.dataset.intento === '1' ? error : '';
                 entrada.setAttribute('aria-invalid', error ? 'true' : 'false');
                 valido = valido && !error;
             });
@@ -82,17 +84,26 @@
         }
 
         function preparar(form, accion, extras = () => ({})) {
-            const boton = texto(form, 'button', form.dataset.etiqueta || 'Guardar');
-            boton.type = 'submit';
-            boton.className = 'btn-secondary';
-            texto(form, 'p', '').setAttribute('data-aviso', '');
+            // El formulario de la ventana trae su botón y su aviso en el HTML; los demás los reciben aquí.
+            if (!form.querySelector('[type="submit"]')) {
+                const boton = texto(form, 'button', form.dataset.etiqueta || 'Guardar');
+                boton.type = 'submit';
+                boton.className = 'zk-btn zk-btn--mini';
+            }
+            if (!form.querySelector('[data-aviso]')) {
+                const salida = texto(form, 'p', '');
+                salida.setAttribute('data-aviso', '');
+                salida.className = 'ah-error';
+            }
             form.noValidate = true;
             const comando = global.zookiCrearComandoAgenda();
             comandos.set(form, comando);
-            form.addEventListener('input', () => validar(form));
-            form.addEventListener('change', () => validar(form));
+            const tocar = evento => { if (evento.target.name) evento.target.dataset.tocado = '1'; validar(form); };
+            form.addEventListener('input', tocar);
+            form.addEventListener('change', tocar);
             form.addEventListener('submit', async evento => {
                 evento.preventDefault();
+                form.dataset.intento = '1';
                 if (escribiendo || !validar(form)) return;
                 const cuerpo = new FormData(form);
                 const token = raiz.querySelector('[data-urgencias-csrf] input');
@@ -109,6 +120,15 @@
                     if (!respuesta.ok || datos.success === false) throw new Error(datos.message || 'No se pudo guardar.');
                     comando.reiniciar();
                     aviso.textContent = datos.message;
+                    if (form.closest('dialog')) {
+                        if (global.zookiCerrarDialogo) global.zookiCerrarDialogo(form);
+                        form.reset();
+                        delete form.dataset.intento;
+                        form.querySelectorAll('[data-tocado]').forEach(e => { delete e.dataset.tocado; });
+                        form.querySelector('[data-aviso]').textContent = '';
+                        const identidad = form.elements.namedItem('identidad');
+                        if (identidad) identidad.dispatchEvent(new Event('change'));
+                    }
                     // La lista autoritativa se relee antes de anunciar el cambio al calendario.
                     await recargar();
                     global.dispatchEvent(new Event('agenda:urgencia'));
@@ -125,7 +145,7 @@
 
         function formulario(padre, titulo, accion, datos) {
             const form = document.createElement('form');
-            form.className = 'perfil-card';
+            form.className = 'ah-item__form';
             form.dataset.etiqueta = titulo;
             padre.append(form);
             form.extras = () => datos;
@@ -137,9 +157,14 @@
             contenedor.replaceChildren();
             lista.forEach(s => {
                 const tarjeta = texto(contenedor, 'article', '');
-                tarjeta.className = 'perfil-card';
-                texto(tarjeta, 'h3', s.nombre || `Ficha #${s.id_mascota}`);
-                texto(tarjeta, 'p', s.fecha_llegada ? `Llegada ${s.fecha_llegada} · ${s.estado}` : 'Derivación remota; sin llegada acreditada');
+                tarjeta.className = 'ah-item ah-item--rojo';
+                const cabeza = texto(tarjeta, 'div', '');
+                cabeza.className = 'ah-item__head';
+                texto(cabeza, 'h3', s.nombre || `Ficha #${s.id_mascota}`);
+                const nivel = texto(cabeza, 'span', 'Rojo');
+                nivel.className = 'ah-nivel';
+                nivel.dataset.nivel = 'rojo';
+                texto(tarjeta, 'p', s.fecha_llegada ? `Llegó ${String(s.fecha_llegada).slice(11, 16)} · ${ESTADOS[s.estado] || s.estado}` : 'Aviso remoto: aún no se acredita la llegada').className = 'ah-item__meta';
                 const datos = { id_solicitud: s.id_solicitud, version: s.version_solicitud };
                 if (!s.fecha_llegada) {
                     const f = formulario(tarjeta, 'Acreditar llegada física', 'llegada_rojo_ajax', datos);
@@ -167,14 +192,20 @@
             contenedor.replaceChildren();
             lista.forEach(i => {
                 const tarjeta = texto(contenedor, 'article', '');
-                tarjeta.className = 'perfil-card';
-                texto(tarjeta, 'h3', `Ingreso #${i.id_ingreso} · ${i.nombre || 'Ficha provisional'}`);
-                texto(tarjeta, 'p', [i.nombre_acompanante, i.telefono_acompanante].filter(Boolean).join(' · '));
+                tarjeta.className = 'ah-item';
+                const cabeza = texto(tarjeta, 'div', '');
+                cabeza.className = 'ah-item__head';
+                texto(cabeza, 'h3', i.nombre || 'Ficha provisional');
+                texto(tarjeta, 'p', [`Ingreso ${i.id_ingreso}`, i.nombre_acompanante, i.telefono_acompanante].filter(Boolean).join(' · ')).className = 'ah-item__meta';
                 if (i.estado !== 'pendiente') {
-                    texto(tarjeta, 'p', 'Identidad resuelta; contacto pendiente del fin de su necesidad o conservación justificada.');
+                    texto(tarjeta, 'p', 'Identidad resuelta; el contacto se conserva solo mientras haga falta.').className = 'ah-item__meta';
                     return;
                 }
-                const f = formulario(tarjeta, 'Conciliar identidad verificada', 'conciliar_rojo_ajax', {});
+                const plegable = texto(tarjeta, 'details', '');
+                plegable.className = 'ah-mini';
+                texto(plegable, 'summary', 'Conciliar identidad');
+                const f = formulario(plegable, 'Conciliar identidad verificada', 'conciliar_rojo_ajax', {});
+                f.classList.add('ah-item__form--columna');
                 const modo = campo(f, 'modo', 'Resolver', true, 'select');
                 opciones(modo, [{ id: 'consolidar', nombre: 'Consolidar sobre ficha existente' }, { id: 'completar', nombre: 'Completar esta ficha' }], 'id', 'nombre');
                 modo.value = 'consolidar';
@@ -228,9 +259,7 @@
 
         const ingreso = raiz.querySelector('[data-ingreso-rojo]');
         if (ingreso) {
-            // El botón ya pertenece al HTML inicial; preparar crea uno solo por formulario.
-            ingreso.querySelector('[type="submit"]').remove();
-            ingreso.querySelector('[data-aviso]').remove();
+            // El botón y el aviso ya pertenecen al HTML de la ventana; preparar los reutiliza.
             ingreso.dataset.etiqueta = 'Registrar llegada roja';
             preparar(ingreso, 'ingresar_rojo_ajax');
             ingreso.elements.namedItem('identidad').addEventListener('change', () => {

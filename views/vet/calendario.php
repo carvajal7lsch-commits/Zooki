@@ -121,15 +121,15 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                     </select>
                 </div>
 
+                <div class="zk-field">
+                    <label class="zk-label" for="modal_motivo">Motivo <span class="zk-optional">(opcional)</span></label>
+                    <input type="text" id="modal_motivo" class="zk-input" maxlength="255" placeholder="Ej. control de peso">
+                </div>
                 <?php
                 $prefijoAgenda = 'modal_agenda';
                 $puedeRevisarAgenda = true;
                 require __DIR__ . '/../partials/triage_agenda.php';
                 ?>
-                <div class="zk-field">
-                    <label class="zk-label" for="modal_motivo">Motivo <span class="zk-optional">(opcional)</span></label>
-                    <input type="text" id="modal_motivo" class="zk-input" maxlength="255" placeholder="Ej. control de peso">
-                </div>
             </div>
 
             <div class="zk-modal__col zk-modal__col--slots">

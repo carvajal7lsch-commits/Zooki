@@ -143,7 +143,10 @@ const obtenerMascotas = () => catalogo('mascotas', 'index.php?action=listar_masc
     d => (Array.isArray(d) ? d : []).map(m => ({
         id: m.id_mascota,
         nombre: m.nombre || '',
-        propietario: m.propietario_nombre || m.propietario || ''
+        propietario: m.propietario_nombre || m.propietario || '',
+        // Pulido de interfaz: el triage solo pregunta por el celo a hembras sin esterilizar.
+        sexo: m.sexo || '',
+        esterilizado: m.esterilizado ?? null
     })));
 
 /** Llena un select una sola vez (si ya tiene opciones, no lo toca). */
@@ -906,8 +909,16 @@ async function filtrarMascotas(texto) {
     dropdown.classList.add('is-open');
 }
 
+let _mascotaFicha = null;
+
 function seleccionarMascota(id, nombre, propietario) {
     _mascotaNombre = nombre;
+    _mascotaFicha = null;
+    obtenerMascotas().then(lista => {
+        if (val('modal_mascota') !== String(id)) return;
+        _mascotaFicha = lista.find(m => String(m.id) === String(id)) || null;
+        triageModalC4?.consulta();
+    });
     val('modal_mascota', id);
     cargarSlotsModal();
     document.getElementById('cm_mascota_chip_name').textContent = propietario ? `${nombre} · ${propietario}` : nombre;
@@ -1283,6 +1294,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bloqueTriage = document.querySelector('#formCitaModal [data-triage-agenda]');
     if (bloqueTriage) triageModalC4 = ZookiTriageAgenda.crear(bloqueTriage, {
         seleccion: () => ({ id_mascota: val('modal_mascota'), id_veterinario: getVetModal(), id_tipo_cita: val('modal_tipo_cita'), fecha: val('modal_fecha') }),
+        mascota: () => _mascotaFicha,
         alCambiar: () => cargarSlotsModal()
     });
     conectarFormulariosC3();

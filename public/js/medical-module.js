@@ -2231,7 +2231,7 @@ async function verFichaBasica(id) {
         const mascota=await pedirJson(`index.php?action=get_mascota_ajax&id=${encodeURIComponent(id)}`);
         if (!mascota.id_mascota) throw new Error('Ficha no disponible');
         await Swal.fire({title:mascota.nombre,html:`<p>${escaparTexto(mascota.nombre_especie)} · ${escaparTexto(razaConIndicada(mascota.nombre_raza,mascota.raza_indicada))}</p>
-            <p>Propietario: ${escaparTexto(mascota.propietario_nombre)}</p><p>Peso: ${escaparTexto(mascota.peso)} kg · ${escaparTexto(mascota.sexo)}</p>
+            <p>Propietario: ${escaparTexto(mascota.propietario_nombre)}</p><p>Peso: ${escaparTexto(mascota.peso)} kg · ${escaparTexto(mascota.sexo)} · ${mascota.esterilizado === null || mascota.esterilizado === '' ? 'Esterilización sin dato' : (Number(mascota.esterilizado) === 1 ? 'Esterilizado' : 'Sin esterilizar')}</p>
             <p>Historia clínica: ${escaparTexto(mascota.numero_historia_clinica || 'Se asigna en la primera consulta')}</p>`,confirmButtonText:'Cerrar'});
     } catch (error) { zookiAviso('No se pudo abrir la ficha de esta clínica.'); }
 }

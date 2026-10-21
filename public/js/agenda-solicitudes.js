@@ -11,6 +11,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (texto) nodo.textContent = texto;
         return nodo;
     }
+    const NIVELES = { verde: 'Verde', amarillo: 'Amarillo', naranja: 'Naranja', rojo: 'Rojo' };
+    const VACUNAS = { completa: 'al día', incompleta: 'incompletas', desconocida: 'no se sabe' };
+    function insignia(nivel, titulo) {
+        const nodo = elemento('span', NIVELES[nivel] || nivel);
+        nodo.className = 'ah-nivel';
+        nodo.dataset.nivel = nivel;
+        nodo.title = titulo;
+        return nodo;
+    }
+    function episodio(e, etiquetas) {
+        const nombre = etiquetas[e.codigo] || e.codigo.split('.').at(-1).replaceAll('_', ' ');
+        if (e.tiempo === 'conocido') return nombre + ' (hace ' + e.minutos + ' min)';
+        if (e.tiempo === 'no_se') return nombre + ' (desde: no se sabe)';
+        return nombre;
+    }
+    function edad(meses) {
+        if (meses === null || meses === undefined || meses === '') return '';
+        const n = Number(meses);
+        if (n < 12) return n + (n === 1 ? ' mes' : ' meses');
+        const anios = Math.floor(n / 12);
+        return anios + (anios === 1 ? ' año' : ' años') + (n % 12 ? ' ' + (n % 12) + ' m' : '');
+    }
     async function cargar() {
         const actual = ++turno;
         aviso.textContent = '';
@@ -22,35 +44,66 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             lista.replaceChildren();
+            const etiquetas = r.etiquetas || {};
             for (const caso of r.solicitudes) {
-                const tarjeta = elemento('section');
-                tarjeta.append(elemento('h4', caso.nombre + ' · Calculado: ' + caso.nivel_calculado + (caso.nivel_aprobado ? ' · Aprobado: ' + caso.nivel_aprobado : '')));
-                const contexto = JSON.parse(caso.contexto_triage);
-                const episodios = [...(contexto.entrada.sintomas || []), ...(contexto.entrada.exposiciones || [])];
-                tarjeta.append(elemento('p', episodios.map(e => e.codigo.split('.').at(-1).replaceAll('_', ' ') + ': ' + (e.tiempo === 'conocido' ? e.minutos + ' minutos' : e.tiempo.replaceAll('_', ' '))).join('; ')));
-                tarjeta.append(elemento('p', 'Edad: ' + (contexto.paciente.edad_meses ?? 'sin dato') + ' meses · Vacunación: ' + (contexto.declarados.vacunacion || 'sin dato') + ' · Sexo: ' + (contexto.paciente.sexo || 'sin dato')));
+                // Pulido de interfaz: tarjeta compacta (nombre + nivel, síntomas legibles, datos del paciente).
+                const tarjeta = elemento('article');
+                tarjeta.className = 'ah-item';
+                const cabeza = elemento('div');
+                cabeza.className = 'ah-item__head';
+                cabeza.append(elemento('strong', caso.nombre));
+                if (caso.nivel_calculado) cabeza.append(insignia(caso.nivel_calculado, 'Calculado'));
+                if (caso.nivel_aprobado && caso.nivel_aprobado !== caso.nivel_calculado) {
+                    if (caso.nivel_calculado) cabeza.append(elemento('span', '→'));
+                    cabeza.append(insignia(caso.nivel_aprobado, 'Revisado'));
+                }
+                if (caso.nivel_aprobado) {
+                    const marca = elemento('span', 'Revisado');
+                    marca.className = 'ah-marca';
+                    cabeza.append(marca);
+                }
+                tarjeta.append(cabeza);
+                // Contextos antiguos o de llegada pueden no traer todos los bloques: se leen con tolerancia.
+                let contexto = {};
+                try { contexto = JSON.parse(caso.contexto_triage) || {}; } catch (_) { contexto = {}; }
+                const entrada = contexto.entrada || {};
+                const datosPaciente = contexto.paciente || {};
+                const declarados = contexto.declarados || {};
+                const episodios = [...(entrada.sintomas || []), ...(entrada.exposiciones || [])].filter(e => e && typeof e.codigo === 'string');
+                const sintomas = elemento('p', episodios.map(e => episodio(e, etiquetas)).join(' · ') || (contexto.motivo ? 'Ingreso presencial: ' + contexto.motivo : 'Sin síntomas registrados'));
+                sintomas.className = 'ah-item__texto';
+                const paciente = elemento('p', [edad(datosPaciente.edad_meses), datosPaciente.sexo, 'Vacunas: ' + (VACUNAS[declarados.vacunacion] || 'sin dato')].filter(Boolean).join(' · '));
+                paciente.className = 'ah-item__meta';
+                tarjeta.append(sintomas);
+                if (contexto.entrada) tarjeta.append(paciente);
                 const mensaje = elemento('small');
-                mensaje.className = 'cuenta-validacion';
+                mensaje.className = 'ah-error';
                 if (filtro.value === '1') {
                     const ver = elemento('button', 'Ver historial');
                     ver.type = 'button';
+                    ver.className = 'zk-btn zk-btn--sec zk-btn--mini';
                     ver.addEventListener('click', async () => {
                         const respuesta = await (await fetch('index.php?action=listar_solicitudes_agenda_ajax&id_solicitud=' + caso.id_solicitud)).json();
-                        mensaje.textContent = respuesta.success ? respuesta.historial.map(h => h.fecha_hora + ' · ' + h.descripcion + ' · ' + h.datos_nuevos).join('\n') : respuesta.message;
+                        mensaje.className = 'ah-item__meta ah-historial';
+                        mensaje.textContent = respuesta.success ? respuesta.historial.map(h => h.fecha_hora.slice(0, 16) + ' · ' + h.descripcion).join('\n') : respuesta.message;
                     });
                     tarjeta.append(ver, mensaje);
                 } else if (raiz.dataset.puedeRevisar === '1') {
                     const form = elemento('form');
+                    form.className = 'ah-item__form';
                     const nivel = elemento('select');
-                    for (const color of ['verde', 'amarillo', 'naranja', 'rojo']) nivel.add(new Option(color, color));
+                    for (const color of ['verde', 'amarillo', 'naranja', 'rojo']) nivel.add(new Option(NIVELES[color], color));
                     nivel.value = caso.nivel_calculado;
+                    nivel.setAttribute('aria-label', 'Nivel revisado');
                     const motivo = elemento('input');
                     motivo.maxLength = 255;
                     motivo.dataset.caracteres = '\\p{L}\\p{M}\\p{N}\\p{P}\\p{S} ';
                     motivo.dataset.espacios = 'normalizar';
+                    motivo.placeholder = 'Motivo de la revisión';
                     motivo.setAttribute('aria-label', 'Motivo de revisión');
-                    const aprobar = elemento('button', 'Confirmar revisión');
+                    const aprobar = elemento('button', 'Confirmar');
                     aprobar.type = 'submit';
+                    aprobar.className = 'zk-btn zk-btn--mini';
                     aprobar.disabled = true;
                     const clave = zookiCrearComandoAgenda();
                     let enviando = false;
@@ -58,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         aprobar.disabled = enviando || !motivo.value.trim();
                         mensaje.textContent = motivo.value.trim() ? '' : 'El motivo es obligatorio.';
                     });
-                    form.append(nivel, motivo, aprobar, mensaje);
+                    form.append(nivel, motivo, aprobar);
                     form.addEventListener('submit', async evento => {
                         evento.preventDefault();
                         if (enviando || !motivo.value.trim()) return;
@@ -77,11 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             aprobar.disabled = !motivo.value.trim();
                         }
                     });
-                    tarjeta.append(form);
+                    tarjeta.append(form, mensaje);
                 }
                 lista.append(tarjeta);
             }
-            if (!r.solicitudes.length) aviso.textContent = 'No hay solicitudes en esta vista.';
         } catch (error) {
             if (turno === actual) aviso.textContent = 'No se pudieron consultar las solicitudes.';
         }

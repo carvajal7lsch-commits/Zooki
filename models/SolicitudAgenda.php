@@ -438,6 +438,26 @@ final class SolicitudAgenda extends ModeloClinica
         $condicion = $historial ? "s.estado_revision='resuelta'" : "s.estado_revision='pendiente' AND s.estado='abierta'";
         $q = $this->conn->prepare("SELECT s.id_solicitud,m.nombre,s.nivel_calculado,s.nivel_aprobado,s.huella_entrada,s.contexto_triage FROM solicitudes_agenda s JOIN mascotas m ON m.id_mascota=s.id_mascota WHERE s.id_clinica=? AND $condicion ORDER BY s.fecha_registro,s.id_solicitud");
         $q->execute([$this->clinica()]);
-        return ['solicitudes' => $q->fetchAll(PDO::FETCH_ASSOC)];
+        $solicitudes = $q->fetchAll(PDO::FETCH_ASSOC);
+        return ['solicitudes' => $solicitudes, 'etiquetas' => $this->etiquetasTriage($solicitudes)];
+    }
+
+    /** Pulido de interfaz: nombre legible de cada síntoma o exposición para la bandeja (sin códigos). */
+    private function etiquetasTriage(array $solicitudes): array
+    {
+        $codigos = [];
+        foreach ($solicitudes as $fila) {
+            $contexto = json_decode((string) $fila['contexto_triage'], true);
+            foreach (['sintomas', 'exposiciones'] as $grupo) {
+                foreach ((array) ($contexto['entrada'][$grupo] ?? []) as $episodio) {
+                    if (is_array($episodio) && is_string($episodio['codigo'] ?? null)) $codigos[$episodio['codigo']] = true;
+                }
+            }
+        }
+        if ($codigos === []) return [];
+        $lista = array_keys($codigos);
+        $q = $this->conn->prepare('SELECT codigo, etiqueta FROM grafo_nodos WHERE codigo IN (' . implode(',', array_fill(0, count($lista), '?')) . ')');
+        $q->execute($lista);
+        return $q->fetchAll(PDO::FETCH_KEY_PAIR);
     }
 }

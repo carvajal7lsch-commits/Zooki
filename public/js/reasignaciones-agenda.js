@@ -37,14 +37,15 @@
                 lista.replaceChildren();
                 for (const propuesta of r.propuestas) {
                     const tarjeta = document.createElement('article');
-                    tarjeta.className = 'zk-card';
+                    tarjeta.className = 'ah-item ah-item--fila';
                     const texto = document.createElement('p');
-                    texto.textContent = propuesta.mascota + ' · Estimada: ' + propuesta.inicio_propuesto + ' · Responder antes de ' + propuesta.fecha_limite;
+                    texto.className = 'ah-item__texto';
+                    texto.textContent = propuesta.mascota + ' · Nueva hora estimada: ' + propuesta.inicio_propuesto + ' · Responde antes de ' + propuesta.fecha_limite;
                     tarjeta.append(texto);
                     for (const respuesta of ['aceptar', 'rechazar']) {
                         const boton = document.createElement('button');
                         boton.type = 'button';
-                        boton.className = 'btn-secondary';
+                        boton.className = respuesta === 'aceptar' ? 'zk-btn zk-btn--mini' : 'zk-btn zk-btn--sec zk-btn--mini';
                         boton.textContent = respuesta === 'aceptar' ? 'Aceptar' : 'Rechazar';
                         boton.addEventListener('click', async () => {
                             const id = String(propuesta.id_reasignacion);
@@ -71,7 +72,7 @@
                     }
                     lista.append(tarjeta);
                 }
-                if (!r.propuestas.length) lista.textContent = 'No tienes propuestas pendientes.';
+                // Sin propuestas la lista queda vacía y el CSS muestra data-vacio.
             } catch (error) {
                 if (control.vigente(numero)) mensaje.textContent = error.message || 'No se pudieron consultar las propuestas.';
             }

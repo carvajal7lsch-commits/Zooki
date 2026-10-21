@@ -270,7 +270,7 @@ final class LlegadaAgenda extends ServicioAgendaClinica
     public function espera(): array
     {
         $this->autorizar([Roles::VETERINARIO]);
-        return $this->filas("SELECT id_solicitud,id_mascota,fecha_llegada,nivel_calculado,nivel_aprobado,estado_revision FROM solicitudes_agenda WHERE id_clinica=? AND origen='llegada' AND estado='espera_presencial' AND COALESCE(nivel_aprobado,nivel_calculado)<>'rojo' ORDER BY CASE COALESCE(nivel_aprobado,nivel_calculado) WHEN 'naranja' THEN 0 WHEN 'amarillo' THEN 1 ELSE 2 END,fecha_llegada,id_solicitud", [$this->clinica()]);
+        return $this->filas("SELECT id_solicitud,id_mascota,(SELECT m.nombre FROM mascotas m WHERE m.id_mascota=solicitudes_agenda.id_mascota) AS mascota,fecha_llegada,nivel_calculado,nivel_aprobado,estado_revision FROM solicitudes_agenda WHERE id_clinica=? AND origen='llegada' AND estado='espera_presencial' AND COALESCE(nivel_aprobado,nivel_calculado)<>'rojo' ORDER BY CASE COALESCE(nivel_aprobado,nivel_calculado) WHEN 'naranja' THEN 0 WHEN 'amarillo' THEN 1 ELSE 2 END,fecha_llegada,id_solicitud", [$this->clinica()]);
     }
 
     private function solicitud(int $id): array
@@ -375,9 +375,9 @@ final class LlegadaAgenda extends ServicioAgendaClinica
     public function leer(): array
     {
         $this->autorizar([Roles::VETERINARIO]);
-        $citas = $this->filas("SELECT id_cita,fecha,hora,estado,origen,prioridad,prioridad_calculada,hora_llegada FROM citas WHERE id_clinica=? AND id_veterinario=? AND fecha=? AND estado IN ('pendiente','confirmada') ORDER BY hora,id_cita", [$this->clinica(), Contexto::idUsuario(), ($this->reloj)()->format('Y-m-d')]);
+        $citas = $this->filas("SELECT id_cita,(SELECT m.nombre FROM mascotas m WHERE m.id_mascota=citas.id_mascota) AS mascota,fecha,hora,estado,origen,prioridad,prioridad_calculada,hora_llegada FROM citas WHERE id_clinica=? AND id_veterinario=? AND fecha=? AND estado IN ('pendiente','confirmada') ORDER BY hora,id_cita", [$this->clinica(), Contexto::idUsuario(), ($this->reloj)()->format('Y-m-d')]);
         $historial = $this->filas("SELECT a.registro_id,a.id_usuario,a.fecha_hora,a.datos_anteriores,a.datos_nuevos FROM auditoria_sistema a WHERE a.id_clinica=? AND a.tabla_afectada='citas' AND a.descripcion='Reclasificación veterinaria (RE-4.18.1/4)' ORDER BY a.id_auditoria DESC", [$this->clinica()]);
-        $solicitudes = $this->filas("SELECT id_solicitud,id_mascota,nivel_calculado,nivel_aprobado,estado_revision FROM solicitudes_agenda WHERE id_clinica=? AND id_actor=? AND estado='abierta' AND id_cita IS NULL ORDER BY id_solicitud DESC", [$this->clinica(), Contexto::idUsuario()]);
+        $solicitudes = $this->filas("SELECT id_solicitud,id_mascota,(SELECT m.nombre FROM mascotas m WHERE m.id_mascota=solicitudes_agenda.id_mascota) AS mascota,nivel_calculado,nivel_aprobado,estado_revision FROM solicitudes_agenda WHERE id_clinica=? AND id_actor=? AND estado='abierta' AND id_cita IS NULL ORDER BY id_solicitud DESC", [$this->clinica(), Contexto::idUsuario()]);
         return ['citas' => $citas, 'solicitudes' => $solicitudes, 'espera' => $this->espera(), 'historial' => $historial];
     }
 }

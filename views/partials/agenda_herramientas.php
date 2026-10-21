@@ -10,6 +10,7 @@ if ($esVetHerramientas) {
 }
 $pestanasAgenda['urgencias'] = ['Urgencias', 'fas fa-exclamation-triangle'];
 ?>
+<link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <section class="agenda-herramientas" data-agenda-herramientas aria-label="Herramientas de agenda">
     <div class="agenda-herramientas__tabs" role="tablist" aria-label="Herramientas de agenda">
         <?php $primeraAgenda = true; foreach ($pestanasAgenda as $claveAgenda => [$tituloAgenda, $iconoAgenda]): ?>
@@ -25,4 +26,5 @@ $pestanasAgenda['urgencias'] = ['Urgencias', 'fas fa-exclamation-triangle'];
         <?php require __DIR__ . '/urgencias_agenda.php'; ?>
     </div>
 </section>
+<script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/agenda-herramientas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

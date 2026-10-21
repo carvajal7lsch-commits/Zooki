@@ -35,6 +35,7 @@
     <?php if (($_GET['action'] ?? '') === 'vet_agenda'): ?>
     <link rel="stylesheet" href="css/calendario.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/agenda-herramientas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/triage-captura.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
     <link rel="stylesheet" href="css/atencion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">

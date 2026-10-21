@@ -29,6 +29,12 @@
         const comandos = new WeakMap();
         let lectura = 0;
 
+        const ESTADOS = { solicitada: 'Solicitada', aprobada: 'Aprobada', rechazada: 'Rechazada' };
+        const fecha = valor => {
+            const m = String(valor || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T]?(\d{2}:\d{2})?/);
+            return m ? `${m[3]}/${m[2]}/${m[1]}${m[4] ? ' ' + m[4] : ''}` : String(valor || '');
+        };
+
         function texto(padre, etiqueta, contenido) {
             const nodo = document.createElement(etiqueta);
             nodo.textContent = contenido;
@@ -39,8 +45,11 @@
         function validar(f) {
             const datos = Object.fromEntries(new FormData(f));
             const fallos = f === form ? errores(datos) : (!datos.motivo.trim() ? { motivo: 'Indica el motivo del rechazo.' } : errores({ inicio: '2030-01-01T00:00', fin: '2030-01-02T00:00', motivo: datos.motivo }));
+            // Pulido de interfaz: el error de un campo aparece cuando ya se tocó o se intentó enviar, no al abrir.
             f.querySelectorAll('[data-error-campo]').forEach(nodo => {
-                nodo.textContent = fallos[nodo.dataset.errorCampo] || '';
+                const campo = f.elements.namedItem(nodo.dataset.errorCampo);
+                const visible = f.dataset.intento === '1' || (campo && campo.dataset.tocado === '1');
+                nodo.textContent = visible ? (fallos[nodo.dataset.errorCampo] || '') : '';
             });
             const boton = f.querySelector('[type="submit"]');
             boton.disabled = estado.enviando || Object.keys(fallos).length > 0;
@@ -48,6 +57,7 @@
         }
 
         async function guardar(f, accion, id) {
+            f.dataset.intento = '1';
             if (estado.enviando || !validar(f)) return;
             const cuerpo = new FormData(f);
             cuerpo.set('id_clinica', raiz.dataset.clinica);
@@ -61,6 +71,10 @@
             await enviar(estado, cuerpo, accion, datos => {
                 comandos.delete(f);
                 f.querySelector('[data-aviso]').textContent = datos.message;
+                if (f === form && global.zookiCerrarDialogo) {
+                    global.zookiCerrarDialogo(f);
+                    if (global.zookiToast) global.zookiToast(datos.message);
+                }
                 recargar();
                 global.dispatchEvent(new Event('agenda:ausencia'));
             }, {
@@ -75,7 +89,8 @@
         }
 
         function preparar(f) {
-            f.addEventListener('input', () => {
+            f.addEventListener('input', evento => {
+                if (evento.target.name) evento.target.dataset.tocado = '1';
                 f.querySelectorAll('input[name="motivo"]').forEach(e => { e.value = e.value.replace(/\p{C}/gu, '').slice(0, 255); });
                 validar(f);
             });
@@ -92,9 +107,9 @@
                 lista.replaceChildren();
                 for (const a of datos.ausencias) {
                     const tarjeta = texto(lista, 'article', '');
-                    tarjeta.className = 'perfil-card';
-                    texto(tarjeta, 'strong', a.veterinario);
-                    texto(tarjeta, 'p', `${a.fecha_hora_inicio} — ${a.fecha_hora_fin} · ${a.estado}`);
+                    tarjeta.className = 'coord-item';
+                    texto(tarjeta, 'strong', `${a.veterinario} · ${ESTADOS[a.estado] || a.estado}`);
+                    texto(tarjeta, 'p', `${fecha(a.fecha_hora_inicio)} → ${fecha(a.fecha_hora_fin)}`);
                     if (a.motivo) texto(tarjeta, 'p', a.motivo);
                     if (!admin || a.estado !== 'solicitada') continue;
                     const resolver = document.createElement('form');
@@ -114,6 +129,10 @@
                     rechazar.type = 'submit';
                     const aprobar = texto(resolver, 'button', 'Aprobar');
                     aprobar.type = 'button';
+                    resolver.className = 'coord-item__acciones';
+                    rechazar.className = 'coord-btn coord-btn--sec coord-btn--mini';
+                    aprobar.className = 'coord-btn coord-btn--mini';
+                    motivo.placeholder = 'Motivo si la rechazas';
                     texto(resolver, 'p', '').setAttribute('data-aviso', '');
                     resolver.addEventListener('submit', e => {
                         e.preventDefault();
