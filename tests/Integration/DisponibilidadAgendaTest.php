@@ -288,6 +288,19 @@ final class DisponibilidadAgendaTest extends TestCase
         $this->rechaza(fn () => $this->citas->sugerencias(2, 1, 1, '2030-01-07'));
     }
 
+    public function testSinHorasElAvisoDiceSiFaltaHorarioDelVeterinarioOCierraLaClinica(): void
+    {
+        // Pruebas de usuario (2026-10-21): RN-415, sin horario del veterinario no hay horas; el aviso lo explica.
+        $this->assertStringContainsString('No quedan horarios', $this->citas->motivoSinHoras(2, 1, '2030-01-07'));
+        $this->db->exec('UPDATE horarios_veterinario SET activo=0 WHERE id_clinica=1 AND id_veterinario=2 AND dia_semana=1');
+        $this->assertSame([], $this->citas->sugerencias(2, 1, 1, '2030-01-07'));
+        $motivo = $this->citas->motivoSinHoras(2, 1, '2030-01-07');
+        $this->assertStringContainsString('no tiene horario de atención los lunes', $motivo);
+        $this->assertStringContainsString('Configuración', $motivo);
+        $this->db->exec('UPDATE horarios_clinica SET activo=0 WHERE id_clinica=1 AND dia_semana=1');
+        $this->assertStringContainsString('La clínica no atiende ese día', $this->citas->motivoSinHoras(2, 1, '2030-01-07'));
+    }
+
     public function testCompletadaReconstruyeMargenUnicoConPausaSinModificarSellos(): void
     {
         $id = $this->reservar('09:00');

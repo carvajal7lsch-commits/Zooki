@@ -196,7 +196,11 @@ class CitaController
     {
         RespuestaJson::consulta(function (): void {
             $horas = $this->horasSolicitadas($this->citas);
-            RespuestaJson::enviar(['success' => true, 'sugerencias' => $horas, 'horas' => $horas]);
+            $respuesta = ['success' => true, 'sugerencias' => $horas, 'horas' => $horas];
+            if ($horas === []) {
+                $respuesta['motivo'] = $this->citas->motivoSinHoras((int) $_GET['id_veterinario'], (int) $_GET['id_mascota'], (string) $_GET['fecha']);
+            }
+            RespuestaJson::enviar($respuesta);
         }, 'C3 disponibilidad interna');
     }
 

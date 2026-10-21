@@ -437,6 +437,14 @@ class Cita extends ModeloClinica
         return $disponibilidad->sugerir($idVeterinario, $idMascota, $fecha, $duracion, $margen, $excluir);
     }
 
+    /** Pruebas de usuario (2026-10-21): por qué un día no ofrece horas. */
+    public function motivoSinHoras(int $idVeterinario, int $idMascota, string $fecha): string
+    {
+        $disponibilidad = $this->disponibilidad();
+        $disponibilidad->autorizar($idVeterinario, $idMascota);
+        return $disponibilidad->motivoSinHoras($idVeterinario, $fecha);
+    }
+
     private function snapshotReprogramable(array $cita): array
     {
         if (!in_array($cita['estado'], self::ESTADOS_ABIERTOS, true)) {

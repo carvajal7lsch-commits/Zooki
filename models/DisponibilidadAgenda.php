@@ -97,6 +97,27 @@ final class DisponibilidadAgenda extends ModeloClinica
         return IntervalosAgenda::unir($apertura);
     }
 
+    /**
+     * Pruebas de usuario (2026-10-21): sin horas, el aviso dice por qué. RN-415: sin horario del
+     * veterinario no hay disponibilidad, y eso se explica en vez de un «no quedan horarios».
+     */
+    public function motivoSinHoras(int $vet, string $fecha): string
+    {
+        if ($this->aperturaEfectiva($fecha) === []) {
+            return 'La clínica no atiende ese día (horario de la clínica o cierre puntual). Prueba con otro día.';
+        }
+        $dia = (int) IntervalosAgenda::fecha($fecha . ' 00:00:00')->format('N');
+        $franjas = $this->filas('SELECT 1 FROM horarios_veterinario WHERE id_clinica=? AND id_veterinario=? AND dia_semana=? AND activo=1', [$this->clinica(), $vet, $dia]);
+        if ($franjas === []) {
+            $nombres = [1 => 'lunes', 2 => 'martes', 3 => 'miércoles', 4 => 'jueves', 5 => 'viernes', 6 => 'sábados', 7 => 'domingos'];
+            return 'Este veterinario no tiene horario de atención los ' . $nombres[$dia] . '. El administrador lo configura en Configuración › Horarios › Horario del veterinario.';
+        }
+        if ($this->jornada($vet, $fecha) === []) {
+            return 'El horario de este veterinario no coincide con el de la clínica ese día. Revísalo en Configuración › Horarios.';
+        }
+        return 'No quedan horarios libres este día. Prueba con otro día.';
+    }
+
     public function clinicaAbiertaEnFecha(string $fecha): bool
     {
         return $this->aperturaEfectiva($fecha) !== [];
