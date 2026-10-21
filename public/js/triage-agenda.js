@@ -73,6 +73,8 @@
                     const nombre = document.createElement('span');
                     nombre.className = 'triage-captura__tiempo-nombre';
                     nombre.textContent = marca.etiqueta;
+                    // El nombre va en su propia línea y se recorta si no cabe; el completo queda en title.
+                    nombre.title = marca.etiqueta;
                     const select = document.createElement('select');
                     select.className = 'zk-input';
                     select.setAttribute('aria-label', 'Desde cuándo: ' + marca.etiqueta);
@@ -104,7 +106,10 @@
                     dato.grupo = grupo;
                     select.addEventListener('change', cambiar);
                     minutos.addEventListener('input', cambiar);
-                    fila.append(nombre, select, minutos);
+                    const controlesTiempo = document.createElement('div');
+                    controlesTiempo.className = 'triage-captura__tiempo-controles';
+                    controlesTiempo.append(select, minutos);
+                    fila.append(nombre, controlesTiempo);
                     contenedor.append(fila);
                 }
             }

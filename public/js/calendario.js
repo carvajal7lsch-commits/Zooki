@@ -883,14 +883,32 @@ function abrirCitaModal(date) {
 
 function closeCitaModal() {
     cerrarOverlay('citaModalOverlay');
-    document.getElementById('cm_mascota_dropdown').classList.remove('is-open');
+    cerrarListaMascotas();
+}
+
+// La lista de mascotas se abre y se cierra con hidden: ZookiCombobox decide con
+// él si hay una lista abierta para las flechas, Enter y Esc.
+function abrirListaMascotas() {
+    const campo = document.getElementById('cm_mascota_search');
+    document.getElementById('cm_mascota_dropdown').hidden = false;
+    campo.setAttribute('aria-expanded', 'true');
+    window.ZookiCombobox?.reiniciar(campo);
+}
+
+function cerrarListaMascotas() {
+    const campo = document.getElementById('cm_mascota_search');
+    const dropdown = document.getElementById('cm_mascota_dropdown');
+    if (!campo || !dropdown) return;
+    dropdown.hidden = true;
+    campo.setAttribute('aria-expanded', 'false');
+    window.ZookiCombobox?.reiniciar(campo);
 }
 
 async function filtrarMascotas(texto) {
     const dropdown = document.getElementById('cm_mascota_dropdown');
     const q = texto.trim().toLowerCase();
     if (!q) {
-        dropdown.classList.remove('is-open');
+        cerrarListaMascotas();
         dropdown.innerHTML = '';
         return;
     }
@@ -901,12 +919,12 @@ async function filtrarMascotas(texto) {
 
     dropdown.innerHTML = resultados.length
         ? resultados.map(m => `
-            <button type="button" class="zk-option" role="option" data-id="${esc(m.id)}" data-nombre="${esc(m.nombre)}" data-propietario="${esc(m.propietario)}">
+            <button type="button" class="zk-option" role="option" aria-selected="false" data-id="${esc(m.id)}" data-nombre="${esc(m.nombre)}" data-propietario="${esc(m.propietario)}">
                 <span class="zk-option__name">${esc(m.nombre)}</span>
                 ${m.propietario ? `<span class="zk-option__sub">${esc(m.propietario)}</span>` : ''}
             </button>`).join('')
         : '<p class="zk-dropdown__empty">Sin resultados</p>';
-    dropdown.classList.add('is-open');
+    abrirListaMascotas();
 }
 
 let _mascotaFicha = null;
@@ -924,7 +942,7 @@ function seleccionarMascota(id, nombre, propietario) {
     document.getElementById('cm_mascota_chip_name').textContent = propietario ? `${nombre} · ${propietario}` : nombre;
     document.getElementById('cm_mascota_chip').hidden = false;
     document.getElementById('cm_mascota_wrap').hidden = true;
-    document.getElementById('cm_mascota_dropdown').classList.remove('is-open');
+    cerrarListaMascotas();
     ocultarErrorModal();
     actualizarResumenModal();
 }
@@ -936,9 +954,8 @@ function limpiarMascotaSeleccionada(enfocar = false) {
     val('cm_mascota_search', '');
     document.getElementById('cm_mascota_chip').hidden = true;
     document.getElementById('cm_mascota_wrap').hidden = false;
-    const dropdown = document.getElementById('cm_mascota_dropdown');
-    dropdown.classList.remove('is-open');
-    dropdown.innerHTML = '';
+    cerrarListaMascotas();
+    document.getElementById('cm_mascota_dropdown').innerHTML = '';
     actualizarResumenModal();
     if (enfocar) document.getElementById('cm_mascota_search').focus();
 }
@@ -1275,9 +1292,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', e => {
     // Cierra la lista de mascotas al hacer clic fuera del buscador.
     const wrap = document.getElementById('cm_mascota_wrap');
-    if (wrap && !wrap.contains(e.target)) {
-        document.getElementById('cm_mascota_dropdown')?.classList.remove('is-open');
-    }
+    if (wrap && !wrap.contains(e.target)) cerrarListaMascotas();
 });
 
 function conectarFormulariosC3() {
@@ -1288,6 +1303,19 @@ function conectarFormulariosC3() {
     for (const id of ['reprogramar_fecha', 'reprogramar_veterinario', 'reprogramar_tipo_cita']) {
         document.getElementById(id).addEventListener('change', cargarSlotsReprogramar);
     }
+}
+
+// Clic o teclado (flechas, Enter y Esc con ZookiCombobox): Enter elige la mascota
+// marcada con su mismo clic y nunca envía el formulario; Esc cierra solo la lista.
+function conectarBuscadorMascota() {
+    const campo = document.getElementById('cm_mascota_search');
+    const dropdown = document.getElementById('cm_mascota_dropdown');
+    if (!campo || !dropdown) return;
+    dropdown.addEventListener('click', e => {
+        const opcion = e.target.closest('.zk-option');
+        if (opcion) seleccionarMascota(opcion.dataset.id, opcion.dataset.nombre, opcion.dataset.propietario);
+    });
+    window.ZookiCombobox?.enlazar(campo, dropdown, { cerrar: cerrarListaMascotas });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1302,10 +1330,7 @@ document.addEventListener('DOMContentLoaded', () => {
     FilterManager.init();
     conectarBarra();
     document.getElementById('agendaPanel').addEventListener('click', manejarClicPanel);
-    document.getElementById('cm_mascota_dropdown')?.addEventListener('click', e => {
-        const opcion = e.target.closest('.zk-option');
-        if (opcion) seleccionarMascota(opcion.dataset.id, opcion.dataset.nombre, opcion.dataset.propietario);
-    });
+    conectarBuscadorMascota();
     iniciarCalendario();
 });
 

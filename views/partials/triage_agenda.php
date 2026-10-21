@@ -2,11 +2,11 @@
 // C4 + pulido de interfaz (2026-10-21): captura compartida (agenda del vet y portal).
 // Todo se elige del catálogo; el nivel y la revisión los decide el servidor.
 $hAgenda = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
-$grupoAgenda = static function (string $grupo, string $titulo, string $ayuda) use ($hAgenda, $prefijoAgenda): void {
+$grupoAgenda = static function (string $grupo, string $titulo, string $ayuda, bool $requerido = false) use ($hAgenda, $prefijoAgenda): void {
     $id = $hAgenda($prefijoAgenda . '_' . $grupo);
     ?>
     <div data-triage-grupo="<?= $grupo ?>" data-sintomas data-max="30" class="consulta-sintomas triage-captura__grupo">
-        <label class="triage-captura__etiqueta" for="<?= $id ?>"><?= $titulo ?></label>
+        <label class="triage-captura__etiqueta" for="<?= $id ?>"><?= $titulo ?><?php if ($requerido): ?> <span class="zk-requerido" aria-hidden="true">*</span><?php endif; ?></label>
         <div data-sintomas-chips class="consulta-sintomas__chips" hidden></div>
         <div class="consulta-sintomas__buscador triage-captura__buscador">
             <i class="fas fa-search ri-search-line" aria-hidden="true"></i>
@@ -23,7 +23,7 @@ $grupoAgenda = static function (string $grupo, string $titulo, string $ayuda) us
         <span class="triage-captura__titulo">Síntomas y urgencia</span>
         <span class="triage-captura__nota">Elige del catálogo; el nivel lo calcula Zooki.</span>
     </div>
-    <?php $grupoAgenda('sintomas', '¿Qué le pasa?', 'Escribe y elige un síntoma (ej. vómito)'); ?>
+    <?php $grupoAgenda('sintomas', '¿Qué le pasa?', 'Escribe y elige un síntoma (ej. vómito)', true); ?>
     <button type="button" class="triage-captura__enlace" data-triage-otro>¿No aparece? Marcar «Otro / no sé»</button>
     <div class="triage-captura__tiempos" data-triage-tiempos></div>
     <details class="triage-captura__extra">

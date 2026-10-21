@@ -81,29 +81,47 @@
 .triage-captura__tiempos:empty {
     display: none;
 }
+/* Cada marca: el nombre en una línea arriba y, debajo, desde cuándo y los minutos.
+   Una sola columna en el modal y en el celular, para que un nombre largo no se parta. */
 .triage-captura__tiempo {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 150px 64px;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 8px 10px;
     border-radius: 10px;
     background: var(--cal-surface, #fff);
     border: 1px solid var(--cal-border-soft, #EEF2F6);
 }
 .triage-captura__tiempo-nombre {
+    min-width: 0;
+    /* Sin esto, el nombre en una sola línea ensancha la columna del modal en el celular. */
+    contain: inline-size;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--cal-text, #0F172A);
-    overflow-wrap: anywhere;
+}
+.triage-captura__tiempo-controles {
+    display: flex;
+    gap: 8px;
+    min-width: 0;
 }
 .triage-captura__tiempo .zk-input {
     height: 34px;
     font-size: 0.8rem;
 }
+.triage-captura__tiempo-controles select.zk-input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.triage-captura__tiempo-controles .triage-captura__minutos {
+    flex: 0 0 96px;
+}
 .triage-captura__minutos[hidden] {
-    display: block !important;
-    visibility: hidden;
+    display: none;
 }
 .triage-captura__extra {
     border-top: 1px dashed var(--cal-border, #E2E8F0);
@@ -239,11 +257,5 @@
     }
     .triage-captura__fila {
         grid-template-columns: 1fr;
-    }
-    .triage-captura__tiempo {
-        grid-template-columns: minmax(0, 1fr) 72px;
-    }
-    .triage-captura__tiempo-nombre {
-        grid-column: 1 / -1;
     }
 }

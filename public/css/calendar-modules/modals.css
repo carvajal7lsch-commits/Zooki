@@ -151,7 +151,7 @@ select.zk-input {
 .zk-input--icon { padding-left: 34px; }
 
 .zk-dropdown {
-    display: none;
+    display: block;
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
@@ -166,7 +166,8 @@ select.zk-input {
     box-shadow: 0 12px 24px -8px rgba(15, 23, 42, 0.18);
 }
 
-.zk-dropdown.is-open { display: block; }
+/* Se abre y se cierra con hidden, el estado que lee ZookiCombobox. */
+.zk-dropdown[hidden] { display: none; }
 
 .zk-option {
     width: 100%;
@@ -183,6 +184,12 @@ select.zk-input {
 
 .zk-option:hover,
 .zk-option:focus-visible { background: var(--cal-primary-soft); outline: none; }
+
+/* La opción marcada con las flechas (aria-selected) se distingue del hover. */
+.zk-option[aria-selected="true"] {
+    background: var(--cal-primary-soft);
+    box-shadow: inset 3px 0 0 var(--cal-primary);
+}
 
 .zk-option__name { font-size: 0.85rem; font-weight: 600; color: var(--cal-text); }
 .zk-option__sub { font-size: 0.75rem; color: var(--cal-text-2); }

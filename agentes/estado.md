@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Pulido del modal «Agendar cita»: entregado, pendiente de revisión (2026-10-21)
+
+- **Claude.** Buscador de mascota con teclado mediante `ZookiCombobox` (la lista se abre y se cierra con `hidden`; opción marcada visible; Enter nunca envía); asteriscos en los obligatorios y sin el título «Datos de la cita»; filas de tiempo del triage con el nombre en una línea arriba (ellipsis + `title`) y el tiempo y los minutos debajo, sin cambiar lo enviado. Se queda dentro de alpha.5 (sin subir versión, como el pulido anterior).
+- **Error «No se pudo cargar» al calcular el triage:** era la base local `zooki_v2_prueba`, a la que le faltaban las migraciones 08–10 (no existe `solicitudes_agenda`). No hubo cambio de código; el usuario corre `php scripts/migrar.php`. El log de PHP de XAMPP apunta a `C:\xampp\php\logs\`, carpeta que no existe, y por eso el error no quedó registrado.
+- **Verificación:** PHP sin host 1014/8043 (71 omitidas); JS 287/287 (nuevo `AgendaModalCita.test.cjs`); Chrome a 1366 y 390 px sin desborde.
+
 ### D-F hecho; M4 completo y alpha.5 preparada (2026-10-21)
 
 - **Claude hizo D-F** (Codex sin tokens). Decisiones del dueño: una cita reclasificada a rojo entra sola a Urgencias; se mantiene «rojo primero» (mientras un rojo espera, ningún vet libre inicia cita ordinaria). Lista para D resuelta: herramientas de agenda en pestañas con estilo del sistema, auditoría de estimaciones solo con cambio de estado, prueba JS de llegadas, limpieza robusta de Chrome en Windows. Detalle en «D-F — Resultado» del plan.

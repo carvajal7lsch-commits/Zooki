@@ -85,7 +85,6 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 
         <form id="formCitaModal" class="zk-modal__split" novalidate autocomplete="off">
             <div class="zk-modal__col">
-                <p class="zk-modal__section">Datos de la cita</p>
                 <input type="hidden" id="modal_fecha">
                 <input type="hidden" id="modal_veterinario_hidden">
                 <input type="hidden" id="modal_mascota">
@@ -93,12 +92,12 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                 <input type="hidden" id="modal_hora">
 
                 <div class="zk-field">
-                    <label class="zk-label" for="cm_mascota_search">Mascota</label>
+                    <label class="zk-label" for="cm_mascota_search">Mascota <span class="zk-requerido" aria-hidden="true">*</span></label>
                     <div class="zk-search" id="cm_mascota_wrap">
                         <i class="fas fa-search"></i>
                         <input type="text" id="cm_mascota_search" class="zk-input zk-input--icon"
                                placeholder="Busca por mascota o propietario">
-                        <div class="zk-dropdown" id="cm_mascota_dropdown" role="listbox"></div>
+                        <div class="zk-dropdown" id="cm_mascota_dropdown" role="listbox" hidden></div>
                     </div>
                     <div class="zk-selected" id="cm_mascota_chip" hidden>
                         <i class="fas fa-paw"></i>
@@ -108,14 +107,14 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                 </div>
 
                 <div class="zk-field" id="cm_vet_field" hidden>
-                    <label class="zk-label" for="modal_veterinario">Veterinario</label>
+                    <label class="zk-label" for="modal_veterinario">Veterinario <span class="zk-requerido" aria-hidden="true">*</span></label>
                     <select id="modal_veterinario" class="zk-input">
                         <option value="">Selecciona un veterinario</option>
                     </select>
                 </div>
 
                 <div class="zk-field">
-                    <label class="zk-label" for="modal_tipo_cita">Tipo de cita</label>
+                    <label class="zk-label" for="modal_tipo_cita">Tipo de cita <span class="zk-requerido" aria-hidden="true">*</span></label>
                     <select id="modal_tipo_cita" class="zk-input">
                         <option value="">Selecciona el tipo</option>
                     </select>
@@ -133,7 +132,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             </div>
 
             <div class="zk-modal__col zk-modal__col--slots">
-                <p class="zk-modal__section">Horario disponible</p>
+                <p class="zk-modal__section">Horario disponible <span class="zk-requerido" aria-hidden="true">*</span></p>
                 <div class="slot-panel" id="modal_slots_container"></div>
             </div>
         </form>
