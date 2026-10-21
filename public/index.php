@@ -194,6 +194,34 @@ switch ($action) {
         (new ConfiguracionClinicaController())->$metodoConfiguracion();
         break;
 
+    case "listar_urgencias_ajax":
+        require_once '../controllers/UrgenciaAgendaController.php';
+        (new UrgenciaAgendaController())->leer();
+        break;
+
+    case "ingresar_rojo_ajax":
+    case "llegada_rojo_ajax":
+    case "atender_rojo_ajax":
+    case "ordenar_rojo_ajax":
+    case "revisar_rojo_ajax":
+    case "conciliar_rojo_ajax":
+        require_once '../controllers/UrgenciaAgendaController.php';
+        (new UrgenciaAgendaController())->escribir(explode('_', $action)[0]);
+        break;
+
+    case "listar_ausencias_ajax":
+        require_once '../controllers/AusenciaAgendaController.php';
+        (new AusenciaAgendaController())->listar();
+        break;
+
+    case "registrar_ausencia_ajax":
+    case "aprobar_ausencia_ajax":
+    case "rechazar_ausencia_ajax":
+        require_once '../controllers/AusenciaAgendaController.php';
+        $accionAusencia = explode('_', $action)[0];
+        (new AusenciaAgendaController())->escribir($accionAusencia);
+        break;
+
     case "get_coordinacion_horarios_ajax":
         require_once '../controllers/CoordinacionHorariosController.php';
         (new CoordinacionHorariosController())->leer();

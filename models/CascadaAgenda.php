@@ -65,7 +65,7 @@ final class CascadaAgenda extends ModeloClinica
 
     public function recursos(string $fecha): array
     {
-        $citas = $this->filas('SELECT id_veterinario,id_mascota FROM citas WHERE id_clinica=? AND fecha=?', [$this->clinica(), $fecha]);
+        $citas = $this->filas("SELECT id_veterinario,id_mascota FROM citas WHERE id_clinica=? AND (fecha=? OR estado IN ('en_curso','pausada','sin_cerrar'))", [$this->clinica(), $fecha]);
         $vets = $this->filas('SELECT id_usuario FROM usuario_clinica WHERE id_clinica=? AND id_rol=2', [$this->clinica()]);
         $destinos = $this->filas('SELECT r.id_veterinario_destino FROM reasignaciones r JOIN citas c ON c.id_cita=r.id_cita AND c.id_clinica=r.id_clinica WHERE r.id_clinica=? AND c.fecha=?', [$this->clinica(), $fecha]);
         return ['usuarios' => [...array_column($vets, 'id_usuario'), ...array_column($citas, 'id_veterinario'), ...array_column($destinos, 'id_veterinario_destino')], 'mascotas' => array_column($citas, 'id_mascota')];
@@ -131,6 +131,9 @@ final class CascadaAgenda extends ModeloClinica
                         $this->retirarPropuestas($id, 'La cita ya no admite una propuesta');
                         continue;
                     }
+                    if (str_starts_with((string) $cita['motivo_reajuste'], 'Ausencia efectiva:')) {
+                        continue;
+                    }
                     $e = $estimaciones[$id];
                     $estado = 'ninguno';
                     $motivo = null;
@@ -169,7 +172,11 @@ final class CascadaAgenda extends ModeloClinica
                 foreach ($citas as $original) {
                     $cita = $this->cita((int) $original['id_cita']);
                     if (in_array($cita['estado_reajuste'], ['pendiente_reasignacion', 'pendiente_reprogramacion'], true) && in_array($cita['estado'], ['pendiente', 'confirmada'], true)) {
-                        $this->proponer($cita);
+                        if (str_starts_with((string) $cita['motivo_reajuste'], 'Ausencia efectiva:')) {
+                            $this->cubrirAusencia((int) $cita['id_cita']);
+                        } else {
+                            $this->proponer($cita);
+                        }
                     } else {
                         $this->retirarPropuestas((int) $cita['id_cita'], 'La propuesta dejó de ser necesaria');
                     }
@@ -221,7 +228,7 @@ final class CascadaAgenda extends ModeloClinica
                 continue;
             }
             // El índice histórico de comienzo sigue siendo una defensa adicional.
-            if ($this->filas("SELECT 1 FROM citas WHERE id_veterinario=? AND fecha=? AND hora=? AND estado NOT IN ('cancelada','no_asistio') AND es_sobrecupo=0 AND id_cita<>?", [$id, $cita['fecha'], $cita['hora'], $cita['id_cita']])) {
+            if ($this->filas("SELECT 1 FROM citas WHERE id_veterinario=? AND fecha=? AND hora=? AND estado NOT IN ('cancelada','no_asistio') AND es_sobrecupo=0 AND origen<>'urgencia' AND id_cita<>?", [$id, $cita['fecha'], $cita['hora'], $cita['id_cita']])) {
                 continue;
             }
             try {
@@ -344,7 +351,7 @@ final class CascadaAgenda extends ModeloClinica
                     try {
                         $libres = $this->disponibilidad()->franjasParaCascada((int) $r['id_veterinario_destino'], (int) $cita['id_mascota'], $cita['fecha'], [(int) $cita['id_cita']]);
                         $cabe = $inicio >= ($this->reloj)()->getTimestamp() && IntervalosAgenda::contiene($libres, $inicio, $fin);
-                        $mismoComienzo = $this->filas("SELECT 1 FROM citas WHERE id_veterinario=? AND fecha=? AND hora=? AND estado NOT IN ('cancelada','no_asistio') AND es_sobrecupo=0 AND id_cita<>?", [$r['id_veterinario_destino'], $cita['fecha'], $cita['hora'], $cita['id_cita']]);
+                        $mismoComienzo = $this->filas("SELECT 1 FROM citas WHERE id_veterinario=? AND fecha=? AND hora=? AND estado NOT IN ('cancelada','no_asistio') AND es_sobrecupo=0 AND origen<>'urgencia' AND id_cita<>?", [$r['id_veterinario_destino'], $cita['fecha'], $cita['hora'], $cita['id_cita']]);
                         $cabe = $cabe && !$mismoComienzo;
                     } catch (HorarioOcupado $error) {
                         $cabe = false;
@@ -354,24 +361,11 @@ final class CascadaAgenda extends ModeloClinica
                         $this->proponer($cita);
                         return ['success' => false, 'message' => 'El hueco dejó de estar disponible. La cita original se conserva.'];
                     }
-                    $eventos = new EventoAgenda($this->conn, $this->clinica());
-                    $eventos->exigirSinDespacho((int) $cita['id_cita']);
-                    $bloque = null;
-                    if ($cita['prioridad'] === 'naranja') {
-                        require_once __DIR__ . '/SolicitudAgenda.php';
-                        $bloque = (new SolicitudAgenda($this->conn, $this->reloj))->bloqueParaCambio(['id_veterinario' => (int) $r['id_veterinario_destino'], 'id_mascota' => (int) $cita['id_mascota'], 'fecha' => $cita['fecha']], substr($r['inicio_propuesto'], 11), (int) $cita['id_cita']);
-                        if ($bloque === null) {
-                            $this->resolverFila($r, 'vencida', 'El cupo naranja ya no está disponible');
-                            $this->proponer($cita);
-                            return ['success' => false, 'message' => 'El cupo cambió. La cita original se conserva.'];
-                        }
+                    if (!$this->trasladar($cita, (int) $r['id_veterinario_destino'], $inicio, $fin)) {
+                        $this->resolverFila($r, 'vencida', 'El cupo naranja ya no está disponible');
+                        $this->proponer($cita);
+                        return ['success' => false, 'message' => 'El cupo cambió. La cita original se conserva.'];
                     }
-                    $orden = null;
-                    if ($bloque !== null) {
-                        $orden = (int) $this->filas('SELECT COALESCE(MAX(orden_sobrecupo),0)+1 AS siguiente FROM citas WHERE id_clinica=? AND id_bloque=?', [$this->clinica(), $bloque])[0]['siguiente'];
-                    }
-                    $finClinico = $fin - (int) $cita['margen_minutos'] * 60;
-                    $this->conn->prepare("UPDATE citas SET id_veterinario=?,id_bloque=?,orden_sobrecupo=?,es_sobrecupo=0,inicio_estimado=?,fin_estimado=?,estado_reajuste='ninguno',motivo_reajuste=NULL,version_agenda=version_agenda+1 WHERE id_cita=? AND id_clinica=?")->execute([$r['id_veterinario_destino'], $bloque, $orden, $r['inicio_propuesto'], PoliticaTemporalAgenda::sello($finClinico), $cita['id_cita'], $this->clinica()]);
                     $this->resolverFila($r, 'aceptada', 'Disponibilidad revalidada y aceptada por el destino');
                     $actual = $this->cita((int) $cita['id_cita']);
                     $this->auditar('citas', (int) $cita['id_cita'], ['id_veterinario' => $cita['id_veterinario']], ['id_veterinario' => $actual['id_veterinario']], 'Reasignación en vivo aceptada (RE-4.14.4)');
@@ -382,6 +376,64 @@ final class CascadaAgenda extends ModeloClinica
         } catch (AccesoDenegado $error) {
             $this->denegarAcceso('reasignaciones', $id, 'Respuesta denegada tras rollback');
         }
+    }
+
+    /** Traslado común; snapshots y pactadas permanecen intactos (RN-414/428). */
+    private function trasladar(array $cita, int $destino, int $inicio, int $fin): bool
+    {
+        $eventos = new EventoAgenda($this->conn, $this->clinica());
+        $eventos->exigirSinDespacho((int) $cita['id_cita']);
+        $bloque = null;
+        if ($cita['prioridad'] === 'naranja') {
+            require_once __DIR__ . '/SolicitudAgenda.php';
+            $bloque = (new SolicitudAgenda($this->conn, $this->reloj))->bloqueParaCambio(['id_veterinario' => (int) $destino, 'id_mascota' => (int) $cita['id_mascota'], 'fecha' => $cita['fecha']], substr(PoliticaTemporalAgenda::sello($inicio), 11), (int) $cita['id_cita']);
+            if ($bloque === null) {
+                return false;
+            }
+        }
+        $orden = null;
+        if ($bloque !== null) {
+            $orden = (int) $this->filas('SELECT COALESCE(MAX(orden_sobrecupo),0)+1 AS siguiente FROM citas WHERE id_clinica=? AND id_bloque=?', [$this->clinica(), $bloque])[0]['siguiente'];
+        }
+        $finClinico = $fin - (int) $cita['margen_minutos'] * 60;
+        $this->conn->prepare("UPDATE citas SET id_veterinario=?,id_bloque=?,orden_sobrecupo=?,es_sobrecupo=0,inicio_estimado=?,fin_estimado=?,estado_reajuste='ninguno',motivo_reajuste=NULL,version_agenda=version_agenda+1 WHERE id_cita=? AND id_clinica=?")->execute([$destino, $bloque, $orden, PoliticaTemporalAgenda::sello($inicio), PoliticaTemporalAgenda::sello($finClinico), $cita['id_cita'], $this->clinica()]);
+        return true;
+    }
+
+    /** Solo dentro de la unidad que hace efectiva la ausencia; no hay propuesta ni veto. */
+    public function cubrirAusencia(int $id): void
+    {
+        $this->autorizar();
+        if (!$this->conn->inTransaction()) {
+            throw new LogicException('La cobertura exige la unidad coordinada de ausencia.');
+        }
+        $cita = $this->cita($id);
+        $this->retirarPropuestas($id, 'Cobertura efectiva por ausencia, sin veto');
+        $demostrable = (int)$cita['duracion_minutos'] > 0 && $cita['margen_minutos'] !== null;
+        if ($demostrable && in_array($cita['estado'], ['pendiente', 'confirmada'], true)) {
+            $cita['inicio_estimado'] ??= $cita['fecha'] . ' ' . PoliticaTemporalAgenda::hora($cita['hora']);
+            foreach ($this->candidatos($cita, []) as $opcion) {
+                if (!$this->trasladar($cita, $opcion['vet'], $opcion['inicio'], $opcion['fin'])) {
+                    continue;
+                }
+                $ahora = ($this->reloj)()->format('Y-m-d H:i:s');
+                $actual = $this->cita($id);
+                // Acuerdo efectivo en el historial existente: conserva el ancla temporal en recálculos.
+                $this->conn->prepare("INSERT INTO reasignaciones (id_clinica,id_cita,id_veterinario_origen,id_veterinario_destino,fecha,fecha_limite,inicio_propuesto,fin_propuesto,version_cita,ciclo,estado,fecha_respuesta,motivo) VALUES (?,?,?,?,?,?,?,?,?,1,'aceptada',?,?)")->execute([$this->clinica(),$id,$cita['id_veterinario'],$opcion['vet'],$ahora,$ahora,PoliticaTemporalAgenda::sello($opcion['inicio']),PoliticaTemporalAgenda::sello($opcion['fin']),$actual['version_agenda'],$ahora,'Cobertura por ausencia; sin veto (RN-414)']);
+                $this->auditar('citas', $id, ['id_veterinario' => $cita['id_veterinario']], ['id_veterinario' => $opcion['vet']], 'Cobertura efectiva sin veto (RE-4.12.3)');
+                $this->avisar($actual, 'CITA_REASIGNADA', (int) $cita['id_veterinario']);
+                return;
+            }
+        }
+        $estado = $demostrable && in_array($cita['estado'], ['pendiente', 'confirmada'], true) ? 'pendiente_reprogramacion' : 'pendiente_revision';
+        $motivo = 'Ausencia efectiva: requiere ' . ($estado === 'pendiente_revision' ? 'revisión clínica' : 'reprogramación con el propietario');
+        if ($cita['estado_reajuste'] === $estado && $cita['motivo_reajuste'] === $motivo) {
+            return;
+        }
+        (new EventoAgenda($this->conn, $this->clinica()))->exigirSinDespacho($id);
+        $this->conn->prepare('UPDATE citas SET estado_reajuste=?,motivo_reajuste=?,version_agenda=version_agenda+1 WHERE id_cita=? AND id_clinica=?')->execute([$estado,$motivo,$id,$this->clinica()]);
+        $this->auditar('citas', $id, null, ['estado_reajuste' => $estado], 'Ausencia sin cobertura (RE-4.12.4)');
+        $this->avisar($this->cita($id), 'REPROGRAMAR_NECESARIO');
     }
 
     private function avisar(array $cita, string $tipo, ?int $origen = null): void

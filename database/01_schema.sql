@@ -628,9 +628,9 @@ CREATE TABLE `citas` (
   `estado` ENUM('pendiente','confirmada','en_curso','pausada','sin_cerrar','cancelada','completada','no_asistio') NOT NULL DEFAULT 'pendiente',
   -- RN-401: 1 mientras la cita ocupa su horario; NULL si está libre o es
   -- sobrecupo. Un índice único admite varios NULL, así que las citas libres y
-  -- los sobrecupos no chocan, y dos reservas que ocupan la misma hora sí.
+  -- los sobrecupos y rojos presenciales no chocan por comienzo; la ocupación se coordina.
   `ocupa_horario` TINYINT(1) GENERATED ALWAYS AS (
-    CASE WHEN `estado` IN ('cancelada', 'no_asistio') OR `es_sobrecupo` = 1 THEN NULL ELSE 1 END
+    CASE WHEN `estado` IN ('cancelada', 'no_asistio') OR `es_sobrecupo` = 1 OR `origen` = 'urgencia' THEN NULL ELSE 1 END
   ) STORED,
   `hora_llegada` DATETIME DEFAULT NULL,
   `hora_inicio_real` DATETIME DEFAULT NULL,

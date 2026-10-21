@@ -6,6 +6,21 @@
 
 ## Ahora
 
+### C6-C7 aprobada con corrección C6.1; sigue C8 (2026-10-20)
+
+- **Revisó Claude.** H-C6-1/P1: la migración 10 fallaba en MySQL 8 por las comillas escapadas de la columna generada (despliegue roto); corregida y probada en MySQL 8.0.46 (volumen vacío, migrador doble, base anterior, rechazo de predicado distinto). H-C6-2/P2: AgendaB2MysqlTest ahora aplica la 10. Detalle en «C6-C7 — Revisión» del plan.
+- **Verificación con MySQL 8.0.46 local:** PHP con motor 998/9038 (falla única corregida); sin host 998/7960; JS 278/278.
+- **Pendiente del usuario:** commit y push de C6-C7 + C6.1; confirmar CI.
+- **Siguiente:** entrega C8 (ajustes HU-4.18 y llegada tarde HU-4.19, llegada sin reserva HU-2.2). Luego D-F.
+
+### C6-C7 entregada, pendiente de revisión (2026-10-20)
+
+- **Autor: Codex ejecutor; revisa Claude (arquitecto).** Base efd3943, rama v2/m4-agenda. C6: ausencia admin efectiva/solicitud propia pendiente, aprobación/rechazo y cobertura sin veto con alternativas. C7: rojo presente frente a remoto, pausa/reanudación M, provisional y conciliación P→P/P→F con referencias/revisión/versiones/HC y contactos coherentes.
+- **Decisión confirmada del usuario:** migración 10 excluye `origen=urgencia` del índice de comienzos ordinarios; preserva horas, ocupación global y sobrecupo exclusivo de naranja. Anotada en §6; 01/MER/drawDB sincronizados sin tablas/campos nuevos ni modificar 03–09. Altas clínicas y HC comparten coordinador, sin GET_LOCK de HC.
+- **Evidencia propia:** PHP sin host 998/7960, 70 omitidas, salida 0; MariaDB 10.4.32: AgendaC6MysqlTest 5/35 y BaseV2MysqlTest 45/623, secuenciales, zooki_test_base_v2. Refuerzo final de literales SQL: 2/10 nativas, migrador doble/volumen vacío correctos. Sintaxis 38 fuentes, YAML/siete clases CI, diff y Mermaid 30/30 correctos.
+- **JS y limitación real:** pasada completa 276/278 (las cuatro nuevas pasan); dos fallos EBUSY de limpieza Chrome anteriores. M2C82 dejó abierto su servidor; se terminó solo su worker validado para completar la pasada. Repetición de tres archivos/fixture portable 16/17, ahora EBUSY de limpieza de C7. Incidencia conservada para D; no se presenta JS completo verde ni se modifica el arnés común.
+- **Siguiente:** revisión independiente de Claude y CI MySQL 8 tras guardar/subir el usuario. Anexo C6-C7 del plan con RE→prueba; dos comprobaciones añadidas a Lista para D (nueve acumuladas), sin pedir pantallas ahora. C8 no iniciado; sin autoaprobación, .env/base manual, correos reales, versión/exportaciones o Git de escritura.
+
 ### C5 aprobada con corrección C5.1; sigue C6-C7 (2026-10-20)
 
 - **Revisó Claude.** H-C5-1/P1: la propuesta de reasignación se vencía y reemitía en cada recálculo durante un exceso (avisos repetidos, aceptar fallaba). Corregido por Claude: la versión solo sube con el estado de reajuste, aceptar tarde corre el hueco a «ahora» y revalida, aviso de estimación con clave por hora comunicada. H-C5-2/P2: el vigilante ya no recorre todas las fechas futuras. Detalle en «C5 — Revisión» del plan.

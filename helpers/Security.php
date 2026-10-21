@@ -364,6 +364,17 @@ class Security {
             'validar_configuracion_clinica_ajax',
         ] as $a) { $matriz[$a] = $admin; }
 
+        $matriz['listar_urgencias_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['llegada_rojo_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['conciliar_rojo_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['ingresar_rojo_ajax'] = [Roles::VETERINARIO];
+        $matriz['atender_rojo_ajax'] = [Roles::VETERINARIO];
+        $matriz['ordenar_rojo_ajax'] = [Roles::VETERINARIO];
+        $matriz['revisar_rojo_ajax'] = [Roles::VETERINARIO];
+        $matriz['listar_ausencias_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['registrar_ausencia_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['aprobar_ausencia_ajax'] = [Roles::ADMIN];
+        $matriz['rechazar_ausencia_ajax'] = [Roles::ADMIN];
         $matriz['get_coordinacion_horarios_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
         $matriz['proponer_horario_vet_ajax'] = [Roles::VETERINARIO];
         foreach (['guardar_horario_vet_ajax', 'aprobar_horario_vet_ajax', 'rechazar_horario_vet_ajax', 'crear_cierre_clinica_ajax', 'retirar_cierre_clinica_ajax'] as $accionHorario) {

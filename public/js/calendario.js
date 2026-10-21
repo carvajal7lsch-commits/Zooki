@@ -1296,3 +1296,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     iniciarCalendario();
 });
+
+window.addEventListener('agenda:urgencia', () => calendarInstance?.refetchEvents());

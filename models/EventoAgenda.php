@@ -138,6 +138,11 @@ final class EventoAgenda
                 return [];
             }
             $legitimo = (int) $e['id_propietario'] === (int) $e['id_destinatario'] && (int) $e['version_agenda'] === (int) $e['version_recurso'];
+            $revision = $this->db->prepare('SELECT * FROM solicitudes_agenda WHERE id_cita=? AND id_clinica=?');
+            $revision->execute([$e['id_cita'],$this->clinica]);
+            $solicitud = $revision->fetch(PDO::FETCH_ASSOC);
+            require_once __DIR__ . '/ConciliacionAgenda.php';
+            $legitimo = $legitimo && (!$solicitud || ConciliacionAgenda::revisionVigente($this->db,$this->clinica,$solicitud));
             $legitimo = $legitimo && $e['usuario_activo'] && $e['vinculo_activo'] && $e['clinica_activa'];
             $legitimo = $legitimo && ($e['tipo'] === 'CITA_CANCELADA' ? $e['estado_cita'] === 'cancelada' : in_array($e['estado_cita'], ['pendiente', 'confirmada'], true));
             if ($e['tipo'] === 'ESTIMACION_CITA') {

@@ -55,6 +55,18 @@ final class CoordinadorAgenda
         }
     }
 
+    /** Solo el auto-ID recién insertado por esta conexión, nunca un recurso existente tardío. */
+    public function registrarMascotaCreada(int $id): void
+    {
+        $unidad = self::$unidades[$this->db] ?? null;
+        if (!$unidad || !$this->db->inTransaction() || (int)$this->db->lastInsertId() !== $id || $id <= max([0,...$unidad['mascotas']])) {
+            throw new LogicException('La mascota debe nacer dentro de esta unidad y después de sus recursos existentes.');
+        }
+        $this->bloquear('mascotas','id_mascota',[$id]);
+        $unidad['mascotas'][] = $id;
+        self::$unidades[$this->db] = $unidad;
+    }
+
     private function ids(array $ids): array
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));

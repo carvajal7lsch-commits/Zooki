@@ -481,8 +481,16 @@ class Cita extends ModeloClinica
                 if (Contexto::rolActivo() !== Roles::VETERINARIO || (int) $actual['id_veterinario'] !== Contexto::idUsuario()) {
                     throw new AccesoDenegado(403, 'Solo el veterinario asignado registra la atención.');
                 }
+                require_once __DIR__ . '/UrgenciaAgenda.php';
+                $urgencias = new UrgenciaAgenda($this->conn, static fn () => IntervalosAgenda::fecha($ahora));
+                if (str_starts_with($cambio, "estado='en_curso'") && in_array($actual['estado'], self::ESTADOS_ABIERTOS, true)) {
+                    $urgencias->exigirInicioOrdinario((int) $actual['id_veterinario']);
+                }
                 $ok = $this->transicion($actual, $estados, $cambio . ",estado_reajuste='pendiente_calculo',version_agenda=version_agenda+1", [$ahora]);
                 if ($ok) {
+                    if (str_starts_with($cambio, "estado='completada'")) {
+                        $urgencias->despuesDeCompletar($id);
+                    }
                     if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $id, ['estado' => $actual['estado']], ['sello' => $ahora], 'Disparo de cascada por atención (RE-4.5.1)', $this->clinica())) {
                         throw new RuntimeException('No se pudo auditar la atención.');
                     }

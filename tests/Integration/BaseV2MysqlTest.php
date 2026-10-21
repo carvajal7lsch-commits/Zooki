@@ -941,7 +941,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }
@@ -1302,24 +1302,27 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
             $consultas = new ConsultaConEsperaCorta($this->db);
             $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
 
-            $this->assertSame(1, (int) $otraSesion->query("SELECT GET_LOCK('zooki_numero_hc_1', 0)")->fetchColumn());
+            $this->db->exec('SET SESSION innodb_lock_wait_timeout=1');
+            $otraSesion->beginTransaction();
+            $otraSesion->query('SELECT id_clinica FROM clinicas WHERE id_clinica=1 FOR UPDATE')->closeCursor();
             try {
                 $consultas->registrar(['id_mascota' => 2, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
-                $this->fail('Debió esperar el candado de numeración.');
-            } catch (RuntimeException $e) {
-                $this->assertStringContainsString('número de historia', $e->getMessage());
+                $this->fail('Debió esperar el candado común de clínica.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('agenda cambió', $e->getMessage());
             }
             $this->assertSame(1, $this->contar('consultas'));
             $this->assertNull($this->numeroHistoria(2, 1));
-
-            // Una consulta de una mascota que ya tiene número no necesita el candado.
+            $otraSesion->rollBack();
             $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
-
-            $otraSesion->query("SELECT RELEASE_LOCK('zooki_numero_hc_1')");
             $consultas->registrar(['id_mascota' => 2, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
             $this->assertSame('HC-000002', $this->numeroHistoria(2, 1));
-            $this->assertSame(1, (int) $otraSesion->query("SELECT IS_FREE_LOCK('zooki_numero_hc_1')")->fetchColumn());
+            $this->assertFalse($this->db->inTransaction());
         } finally {
+            if ($otraSesion->inTransaction()) {
+                $otraSesion->rollBack();
+            }
+            $this->db->exec('SET SESSION innodb_lock_wait_timeout=50');
             $_SESSION = [];
         }
     }

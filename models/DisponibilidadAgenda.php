@@ -136,6 +136,9 @@ final class DisponibilidadAgenda extends ModeloClinica
     private function franjas(int $vet, int $mascota, string $fecha, ?int $excluir, int $corte, bool $sobrecupo = false, array $secuencia = []): array
     {
         $this->autorizar($vet, $mascota);
+        if ($this->filas('SELECT 1 FROM mascotas WHERE id_mascota=? AND ficha_por_completar=1 AND id_propietario IS NULL',[$mascota])) {
+            throw new HorarioOcupado('La ficha requiere resolver la identidad antes de una reserva ordinaria.');
+        }
         if ($excluir !== null) {
             $cita = $this->filas("SELECT id_mascota,id_veterinario FROM citas WHERE id_cita=? AND id_clinica=? AND estado IN ('pendiente','confirmada')", [$excluir, $this->clinica()]);
             if (!$cita || (int) $cita[0]['id_mascota'] !== $mascota
@@ -163,7 +166,7 @@ final class DisponibilidadAgenda extends ModeloClinica
     }
 
     /** RN-401: excepción global mínima; nunca nombres, clínica, motivo o contactos. */
-    private function ocupacionGlobal(int $vet, int $mascota, string $fecha, ?int $excluir, int $ahora, bool $sobrecupo = false, array $secuencia = []): array
+    private function ocupacionGlobal(int $vet, int $mascota, string $fecha, ?int $excluir, int $ahora, bool $sobrecupo = false, array $secuencia = [], bool $rojoPresente = false): array
     {
         $sql = "SELECT (c.id_clinica=?) AS misma_clinica,(c.id_mascota=?) AS mismo_paciente,c.id_cita,c.fecha,c.hora,c.hora_fin,c.duracion_minutos,c.margen_minutos,c.estado,
             c.hora_inicio_real,c.hora_fin_real,c.inicio_estimado,c.fin_estimado,c.duracion_activa_objetivo_segundos,
@@ -197,6 +200,11 @@ final class DisponibilidadAgenda extends ModeloClinica
         $resultado = [];
         foreach ($citas as $datos) {
             $c = $datos['fila'];
+            // La atención roja presente puede interrumpir solo ocupación local de otro paciente.
+            // Ausencias y ocupación del paciente o de otra clínica siguen bloqueando.
+            if ($rojoPresente && (bool) $c['misma_clinica'] && !(bool) $c['mismo_paciente']) {
+                continue;
+            }
             $ignorar = $sobrecupo && (bool) $c['misma_clinica'] && !(bool) $c['mismo_paciente'];
             $s = IntervalosAgenda::fecha($c['fecha'] . ' ' . self::hora($c['hora']))->getTimestamp();
             $duracion = (int) $c['duracion_minutos'];
@@ -246,6 +254,24 @@ final class DisponibilidadAgenda extends ModeloClinica
     private function requiereRevision(): never
     {
         throw new HorarioOcupado('La disponibilidad de esta fecha requiere revisión.');
+    }
+
+    /** RE-4.15.2: capacidad global mínima; cierre no impide atender a un rojo ya presente. */
+    public function exigirCapacidadUrgente(int $vet, int $mascota, int $segundos): void
+    {
+        $this->autorizar($vet, $mascota);
+        $ahora = ($this->reloj)();
+        $inicio = $ahora->format('Y-m-d H:i:s');
+        $fin = PoliticaTemporalAgenda::sello($ahora->getTimestamp() + $segundos);
+        if ($this->filas("SELECT 1 FROM ausencias_veterinario WHERE id_veterinario=? AND id_clinica=? AND estado='aprobada' AND fecha_hora_inicio<? AND fecha_hora_fin>?", [$vet,$this->clinica(),$fin,$inicio])) {
+            throw new HorarioOcupado('No hay un veterinario disponible para esta atención.');
+        }
+        $ocupadas = $this->ocupacionGlobal($vet,$mascota,$ahora->format('Y-m-d'),null,$ahora->getTimestamp(),false,[],true);
+        foreach ($ocupadas as [$desde,$hasta]) {
+            if ($desde < $ahora->getTimestamp() + $segundos && $hasta > $ahora->getTimestamp()) {
+                throw new HorarioOcupado('No hay disponibilidad para esta atención.');
+            }
+        }
     }
 
     public function exigir(int $vet, int $mascota, string $fecha, string $hora, int $duracion, int $margen, ?int $excluir = null): void

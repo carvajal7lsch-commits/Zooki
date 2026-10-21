@@ -16,6 +16,15 @@ class Desparasitacion extends ModeloHistoria
     /** RE-3.4.1, RE-3.4.2 y RN-207: registra y calcula la próxima aplicación. */
     public function registrar(array $entrada): int
     {
+        $id = ValidadorClinico::id($entrada['id_mascota'] ?? null);
+        if ($id === null) {
+            throw new InvalidArgumentException('La mascota indicada no es válida.');
+        }
+        return $this->registrarEnPacienteActual($id, fn () => $this->registrarActual($entrada));
+    }
+
+    private function registrarActual(array $entrada): int
+    {
         $idMascota = ValidadorClinico::id($entrada['id_mascota'] ?? null);
         if ($idMascota === null) {
             throw new InvalidArgumentException('La mascota indicada no es válida.');

@@ -16,11 +16,16 @@ require_once __DIR__ . '/../helpers/ValidadorClinico.php';
  */
 class Consulta extends ModeloHistoria
 {
+    private Closure $reloj;
+
+    public function __construct(PDO $db, ?callable $reloj = null)
+    {
+        parent::__construct($db);
+        $this->reloj = Closure::fromCallable($reloj ?? static fn () => new DateTimeImmutable('now',new DateTimeZone('America/Bogota')));
+    }
+
     /** Estados de una cita cuya atención se documenta con la consulta (RN-409). */
     private const ESTADOS_EN_ATENCION = ['en_curso', 'sin_cerrar'];
-
-    /** Segundos que se espera el candado de numeración antes de desistir. */
-    protected const ESPERA_CANDADO_HC = 10;
 
     /** Columnas del listado de consultas de la clínica activa (HU-2.2). */
     private const SQL_LISTADO = "SELECT c.*, mc.estado AS vinculo, m.nombre AS nombre_mascota, e.nombre_especie,
@@ -60,23 +65,24 @@ class Consulta extends ModeloHistoria
         $tratamientosValidos = array_map([Tratamiento::class, 'validar'], $tratamientos, array_keys($tratamientos));
 
         $clinica = $this->clinica();
-        $esPrimeraConsulta = $this->numeroHistoria($idMascota, $clinica) === null;
-        if ($esPrimeraConsulta) {
-            $this->tomarCandadoNumeracion($clinica);
-        }
-
         try {
-            $escribir = fn () => Transaccion::ejecutar($this->conn, fn () => $this->escribir($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica));
-            if ($datos['id_cita'] !== null) {
-                require_once __DIR__ . '/CascadaAgenda.php';
-                $cascada = new CascadaAgenda($this->conn, fn () => IntervalosAgenda::fecha($this->ahora()));
-                $id = (new CoordinadorAgenda($this->conn))->ejecutar($clinica, fn () => $cascada->recursosDeCita($datos['id_cita']), function () use ($cascada, $escribir): int {
-                    $cascada->exigirContexto();
-                    return $escribir();
-                });
-            } else {
-                $id = $escribir();
-            }
+            require_once __DIR__ . '/CascadaAgenda.php';
+            $cascada = new CascadaAgenda($this->conn, fn () => IntervalosAgenda::fecha($this->ahora()));
+            $recursos = function () use ($datos, $cascada): array {
+                $r = $datos['id_cita'] === null ? ['usuarios' => [], 'mascotas' => []] : $cascada->recursosDeCita($datos['id_cita']);
+                $r['usuarios'][] = Contexto::idUsuario();
+                $r['mascotas'][] = $datos['id_mascota'];
+                return $r;
+            };
+            // C7: todos los primeros números HC usan clínica→usuarios→mascotas; sin GET_LOCK lateral.
+            $id = (new CoordinadorAgenda($this->conn))->ejecutar($clinica, $recursos, function () use ($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica, $cascada): int {
+                $cascada->exigirContexto();
+                $this->exigirMascotaActiva($datos['id_mascota']);
+                if ($datos['id_cita'] !== null) {
+                    $this->exigirCitaParaConsulta($datos['id_cita'], $datos['id_mascota']);
+                }
+                return $this->escribir($datos, $tratamientosValidos, $adjuntos, $guardarAdjunto, $clinica);
+            });
             if ($datos['id_cita'] !== null) {
                 require_once __DIR__ . '/CascadaAgenda.php';
                 CascadaAgenda::despuesDeAtencion($this->conn, $clinica, $datos['id_cita'], $this->ahora());
@@ -91,10 +97,6 @@ class Consulta extends ModeloHistoria
         } catch (AccesoDenegado $e) {
             // La auditoría escrita dentro de la transacción se deshizo con ella.
             $this->denegarAcceso('mascotas', $idMascota, 'Registro de consulta denegado; no se guardó nada (RN-112, RN-207)');
-        } finally {
-            if ($esPrimeraConsulta) {
-                $this->soltarCandadoNumeracion($clinica);
-            }
         }
     }
 
@@ -368,6 +370,13 @@ class Consulta extends ModeloHistoria
         if ((int) $cita['id_veterinario'] !== $this->veterinarioActual()) {
             throw new InvalidArgumentException('Solo el veterinario asignado puede registrar la consulta de esta cita.');
         }
+        $revision = $this->conn->prepare('SELECT * FROM solicitudes_agenda WHERE id_cita=? AND id_clinica=?');
+        $revision->execute([$idCita,$this->clinica()]);
+        $solicitud = $revision->fetch(PDO::FETCH_ASSOC);
+        require_once __DIR__ . '/ConciliacionAgenda.php';
+        if ($solicitud && !ConciliacionAgenda::revisionVigente($this->conn,$this->clinica(),$solicitud)) {
+            throw new InvalidArgumentException('Revisa el contexto vigente de la solicitud antes de guardar la consulta.');
+        }
         if ($this->findByCita($idCita)) {
             throw new InvalidArgumentException('Esta cita ya tiene una consulta registrada.');
         }
@@ -398,6 +407,8 @@ class Consulta extends ModeloHistoria
         if ($consulta->rowCount() !== 1) {
             throw new RuntimeException('La cita ' . $idCita . ' dejó de estar en curso antes de guardar la consulta.');
         }
+        require_once __DIR__ . '/UrgenciaAgenda.php';
+        (new UrgenciaAgenda($this->conn, fn () => IntervalosAgenda::fecha($ahora)))->despuesDeCompletar($idCita);
         if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $idCita, $antes, ['estado' => 'completada', 'hora_fin_real' => $ahora, 'estado_reajuste' => 'pendiente_calculo'], 'Cierre con consulta y disparo durable de cascada (RE-4.5.1/3)', $clinica)) {
             throw new RuntimeException('No se pudo auditar el cierre y su marca de cascada.');
         }
@@ -414,8 +425,8 @@ class Consulta extends ModeloHistoria
     /**
      * RF-2.4 / RN-102: el número de historia se asigna en la primera consulta
      * de la mascota en la clínica, es correlativo por clínica y no cambia
-     * después. El candado de numeración (tomado antes de abrir la
-     * transacción) hace que esta lectura ya vea el último número confirmado;
+     * después. El candado común de clínica hace que esta lectura actual
+     * vea el último número confirmado;
      * el índice único (id_clinica, numero) es la última barrera.
      */
     private function asignarNumeroHistoria(int $idMascota, int $clinica): void
@@ -436,49 +447,8 @@ class Consulta extends ModeloHistoria
         $actualizar->execute([$numero, $idMascota, $clinica]);
     }
 
-    /**
-     * Serializa las primeras consultas de una clínica. Es un candado con
-     * nombre de MySQL y no un FOR UPDATE: bloquear la fila de clinicas choca
-     * con los bloqueos compartidos que toman las FK al insertar, y contar
-     * con bloqueo de rango puede trabar dos primeras consultas entre sí. Se
-     * toma antes de abrir la transacción y se suelta después del commit, así
-     * la transacción siguiente ya lee el número confirmado. SQLite serializa
-     * las escrituras por sí mismo.
-     */
-    private function tomarCandadoNumeracion(int $clinica): void
-    {
-        if (!$this->esMysql()) {
-            return;
-        }
-        $consulta = $this->conn->prepare('SELECT GET_LOCK(?, ?)');
-        $consulta->execute([$this->nombreCandado($clinica), static::ESPERA_CANDADO_HC]);
-        if ((int) $consulta->fetchColumn() !== 1) {
-            throw new RuntimeException('No se pudo reservar el número de historia clínica: otra consulta lo está asignando.');
-        }
-    }
-
-    private function soltarCandadoNumeracion(int $clinica): void
-    {
-        if (!$this->esMysql()) {
-            return;
-        }
-        $consulta = $this->conn->prepare('SELECT RELEASE_LOCK(?)');
-        $consulta->execute([$this->nombreCandado($clinica)]);
-    }
-
-    private function nombreCandado(int $clinica): string
-    {
-        return 'zooki_numero_hc_' . $clinica;
-    }
-
-    private function esMysql(): bool
-    {
-        return $this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
-    }
-
     private function ahora(): string
     {
-        $ahora = new DateTimeImmutable('now', new DateTimeZone('America/Bogota'));
-        return $ahora->format('Y-m-d H:i:s');
+        return ($this->reloj)()->format('Y-m-d H:i:s');
     }
 }

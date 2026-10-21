@@ -82,3 +82,10 @@ No cambian columnas/relaciones del MER/drawDB ni SQL ejecutable.
 ## 4. Verificación
 
 RE-4.15.3 requiere pruebas de integración de las cuatro ramas y de la conciliación bajo fallo transaccional. Un caso del portal conserva la identidad de la sesión sin repetir la verificación. Un propietario de otra clínica no debe consultar el ingreso ni el contacto provisional. El carnet público debe responder con su mensaje genérico hasta que la ficha esté completa y activada. El flujo visual se revisa en 375 px, 820 px y 1280 px.
+
+### Implementación C6-C7 — pendiente de revisión (2026-10-20)
+
+Codex implementa presencia y cola roja separadas del aviso remoto, pausa/reanudación y conciliación P→P/P→F con el coordinador común, sin GET_LOCK de HC.
+La revisión posterior liga su huella a la ficha vigente; cambiar datos después invalida la autorización para nuevos comandos, sin recalcular episodios históricos.
+La migración 10, autorizada expresamente por el usuario, excluye origen urgencia del índice de comienzos ordinarios; mantiene ocupación global, tiempos reales y sobrecupo exclusivo de naranja.
+Evidencia y límites de la entrega en «Anexo C6-C7 — Resultado» del plan M4; no se declara aprobación del ejecutor.

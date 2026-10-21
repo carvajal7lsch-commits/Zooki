@@ -442,7 +442,7 @@ CREATE TABLE `citas` (
   `sintomas_texto` text DEFAULT NULL,                        -- texto libre opcional (RN-424)
   `inicio_sintomas` datetime DEFAULT NULL,                   -- cuándo empezaron o cuándo fue la ingesta del tóxico
   `estado` enum('pendiente','confirmada','en_curso','pausada','sin_cerrar','cancelada','completada','no_asistio') DEFAULT 'pendiente',
-  `ocupa_horario` tinyint(1) DEFAULT NULL,                   -- calculada en 01_schema.sql: NULL si está libre (cancelada, no_asistio) o es sobrecupo; 1 si ocupa el horario
+  `ocupa_horario` tinyint(1) DEFAULT NULL,                   -- calculada en 01_schema.sql: NULL si está libre (cancelada, no_asistio) o es sobrecupo o tiene origen urgencia; 1 si ocupa el horario
   `hora_llegada` datetime DEFAULT NULL,
   `hora_inicio_real` datetime DEFAULT NULL,
   `hora_fin_real` datetime DEFAULT NULL,

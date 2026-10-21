@@ -239,6 +239,7 @@
             });
         }
         document.addEventListener('horarios-actualizados', cargar);
+        global.addEventListener('agenda:ausencia', cargar);
         cargar();
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);

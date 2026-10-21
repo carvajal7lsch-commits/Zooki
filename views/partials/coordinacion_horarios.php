@@ -31,6 +31,7 @@ $esAdminHorario = Contexto::rolActivo() === Roles::ADMIN;
     <?php endif; ?>
     <h3>Cierres puntuales</h3>
     <div data-cierres></div>
+    <?php require __DIR__ . '/ausencias_agenda.php'; ?>
     <h3>Citas pendientes de reajuste</h3>
     <div data-afectadas></div>
 </section>
@@ -38,3 +39,5 @@ $esAdminHorario = Contexto::rolActivo() === Roles::ADMIN;
     <script src="js/configuracion-clinica.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <?php endif; ?>
 <script src="js/coordinacion-horarios.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+
+<script src="js/ausencias-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>

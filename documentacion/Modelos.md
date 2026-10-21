@@ -212,7 +212,7 @@ flowchart TD
   W1 --> V
   W -- Si --> X[Confirmar y guardar]
   V -- No --> X
-  X --> IV["En la transaccion comun: resolver solicitud/cita/ingreso e identidad actual"]
+  X --> IV["Coordinador: clinica, usuarios y mascotas; resolver identidad actual y HC sin GET_LOCK"]
   IV --> IA{"Acceso actual al paciente/recurso en este contexto?"}
   IA -- No --> IAN[/"403 sin datos ni redireccion a la ficha final"/]
   IAN --> ZF
@@ -381,7 +381,7 @@ flowchart TD
   PA -- No --> ESP["Espera durable sin vet asignado; primero compatible que se libere"]
   ESP --> CAP
   SEG --> CITA["Veterinario crea/enlaza cita de llegada e inicia cuando atiende realmente"]
-  CITA --> CON[["Consulta atomica (§3); cerrar urgencia y reanudar pausada antes de siguientes salvo decision de nuevo rojo"]]
+  CITA --> CON[["Consulta atomica (§3); releer revision/ficha vigente; cerrar rojo y reanudar pausa en la misma unidad"]]
   CON --> CAS[["Cascada M (§5), no regenerar margen"]]
   CAS --> PEND{Ficha provisional?}
   PEND -- Si --> VER["Admin o vet verifica titularidad por mecanismos vigentes"]
@@ -454,7 +454,7 @@ flowchart TD
   E -- Si --> G[Grafo II busca cobertura: veterinarios con disponibilidad compatible]
   G --> H{Hay veterinario que pueda cubrir?}
   H -- Si --> K[Asignar las citas al veterinario de cobertura sin veto]
-  K --> L[Notificar al propietario y a ambos veterinarios]
+  K --> L["Conservar pactadas y snapshots; registrar cobertura efectiva sin propuesta pendiente; avisar a propietario y ambos vets"]
   H -- No --> M[Ofrecer otros espacios al propietario y dejar las citas pendientes de reprogramar]
   M --> N[/"Avisar al propietario y a la clinica que no hubo cobertura"/]
   L --> F
@@ -1283,7 +1283,7 @@ flowchart TD
 
 Las reservas y reprogramaciones que compiten entran por el mismo coordinador desde su transacción exterior: descartan lecturas previas, revalidan vínculos, apertura, jornada y cierres después de esperar, y guardan operación/auditoría con la cita. Si la reserva se confirma primero, el escritor de configuración descubre y marca esa cita; si cambia primero la configuración, la reserva valida contra el estado nuevo. La proyección global de conflictos recurrentes solo lee día e intervalos; no devuelve clínica, pacientes o contactos ajenos.
 
-C2 entrega estas guardias de escritura y marcas visibles. C3 completa las sugerencias/disponibilidad y RE-4.11.3/RE-4.8.3; C5 procesa las marcas. No se mueve ninguna cita ni se reinicia el bloque o su tope al editar/restaurar. Los comandos de C2 no entran en numeración HC ni abren una transacción exterior que luego adquiera GET_LOCK; la integración clínica/numeración permanece uniforme en su etapa C7a según B1.
+C2 entrega estas guardias de escritura y marcas visibles. C3 completa las sugerencias/disponibilidad y RE-4.11.3/RE-4.8.3; C5 procesa las marcas. No se mueve ninguna cita ni se reinicia el bloque o su tope al editar/restaurar. Los comandos de C2 no entran en numeración HC ni abren una transacción exterior que luego adquiera GET_LOCK; C7 integra también toda alta clínica y numeración HC con el mismo coordinador; no queda GET_LOCK de HC paralelo.
 
 
 ## 17. Disponibilidad única y reserva segura — M4 C3
