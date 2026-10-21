@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### Modo acelerado; C3.1 aprobada; encargo C4 (2026-10-20)
+
+- **Decisión del usuario:** se hace **todo** M4 sin recortar alcance, pero más rápido. Arquitecto/revisor: Claude; ejecutor: Codex. Revisiones livianas, solo P1 bloquea, P2/P3 y pruebas manuales van a la «Lista para D» del plan. Reglas en `metodo.md` §11.
+- **C3.1 revisada y aprobada** por Claude (revisión liviana); C3 y C3.1 cerradas en código. H-C3-1/2/3 cerrados.
+- **Pendiente del usuario:** commit de estas notas y push de la rama (8cbba34 no había subido). Confirmar CI MySQL 8.
+- **Siguiente:** entrega C4 (C4a agendar con triage + C4b sobrecupos y cambios), encargada a Codex con el prompt entregado. Faltan después C5, C6-C7, C8 y D-F.
+
 ### C3.1 entregada, pendiente de revisión independiente (2026-10-20)
 
 - **Autor: Codex ejecutor; revisa Codex arquitecto en otra conversación.** H-C3-1: sugerencias y presentación conservan segundos no nulos, selección/envío literal internos/portal/reprogramación y paso previo intacto. H-C3-2: la ruta HTTP valida sintaxis y deja al modelo coordinado la recuperación autorizada por actor/clínica/acción/huella, antes de validar estado/tiempo de un comando nuevo; replay sin repetir cambios, marcas, auditoría o notificaciones. H-C3-3: ambos modales distinguen error de revisión de consulta válida vacía, escapan el mensaje y descartan errores obsoletos, sin selección ni botón habilitado.

@@ -1,8 +1,8 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **C3.1 entregada, pendiente de revisión independiente (2026-10-20)**. C3 revisada con H-C3-1/2/3 pendientes de dictamen sobre esta corrección. C2 cerrada con CI completo aprobado en e21b521; H-C2-1/H-C2-2/H-C2-3 conservan su cierre. Pruebas manuales anteriores y revisión independiente/CI de C3/C3.1 pendientes. Anexos y CI fallidos previos conservados como historial.
+> Estado: **Modo acelerado (2026-10-20). C3 y C3.1 aprobadas en código por Claude (revisión liviana); CI MySQL 8 de 8cbba34 pendiente tras el push. Encargada la entrega C4 (C4a+C4b).** Agrupación de entregas y «Lista para D» al final del plan. Anexos y revisiones previos conservados como historial.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
-> Escribe Codex; revisa Codex en una sesión independiente (corrección expresa del usuario, 2026-10-17). El autor del Anexo A y el arquitecto que firma su revisión son sesiones distintas.
+> Escribe Codex; revisa Claude como arquitecto desde el 2026-10-20 (modo acelerado, `agentes/metodo.md` §11). Hasta C3.1 revisó Codex en una sesión independiente.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
 
 ## 1. Resultado y límites
@@ -2826,3 +2826,37 @@ Las comprobaciones manuales previas permanecen pendientes hasta recibir resultad
 5. **Beto Norte y Diego Sur**, con mascota compartida y ocupación de prueba: comprobar indisponibilidad genérica sin datos ajenos; al cambiar de fecha mientras llega un error anterior, solo debe prevalecer la consulta vigente.
 
 El reloj posterior, la respuesta perdida, los estados y el acceso revocado se verifican automáticamente; no se exige al dueño manipular el reloj o las claves para aprobar las pantallas.
+
+### C3.1 — Revisión (2026-10-20)
+
+**Revisó Claude (arquitecto), revisión liviana según `agentes/metodo.md` §11. Veredicto: aprobada; C3 y C3.1 cerradas en código. H-C3-1/2/3 cerrados.**
+
+- H-C3-1: `DisponibilidadAgenda::sugerir` (línea 222) conserva `H:i:s` cuando los segundos no son cero y `exigir` compara el instante exacto; el valor viaja literal hasta la reserva.
+- H-C3-2: `CitaController::reprogramarCitaAjax` ya no valida tiempo antes del replay; `Cita::reprogramarCoordinada` revalida actor/vet/mascota bajo el coordinador, `OperacionAgenda` recupera por clave/huella y solo el comando nuevo valida tiempo (`exigir`, corte del reloj) y estado (UPDATE con estados abiertos).
+- H-C3-3: ambos modales internos distinguen error de dominio frente a lista vacía; cubierto por las regresiones JS de la entrega.
+- Evidencia: lectura del diff y del código de los tres puntos. No se repitieron suites; se toman las del ejecutor (PHP 936 sin host, MariaDB 936/8668, JS 270/270).
+- Nota P3 para D: un replay de reprogramación del admin con veterinario cambiado se deniega si ese vet ya no está activo. Es conservador y aceptable.
+- Pendiente: CI MySQL 8 de 8cbba34, que no estaba en el remoto al revisar.
+
+## Modo acelerado (decisión del usuario, 2026-10-20)
+
+Se mantiene **todo** el alcance de M4. Arquitecto/revisor: Claude; ejecutor: Codex. Reglas en `agentes/metodo.md` §11. Las subetapas de §3 se agrupan en cinco entregas:
+
+| Entrega | Subetapas de §3 | Estado |
+|---|---|---|
+| C4 | C4a Agendar con triage + C4b Sobrecupos y cambios | Encargada (2026-10-20) |
+| C5 | C5a Grafo II y cascada + C5b Reasignación en vivo | Pendiente |
+| C6-C7 | C6 Ausencias y cobertura + C7a Atención roja y pausas + C7b Ficha provisional y conciliación | Pendiente |
+| C8 | C8 Ajustes y llegada tarde + C8b Llegada sin reserva | Pendiente |
+| D-F | Correcciones de la Lista para D, prueba manual consolidada, cierre documental, `2.0.0-alpha.5` y despliegue | Pendiente |
+
+### Lista para D
+
+Hallazgos P2/P3 y comprobaciones manuales que se acumulan para la etapa D. Cada entrega agrega aquí sus líneas.
+
+- P3 (C3.1): replay de reprogramación del admin con veterinario cambiado e inactivo se deniega; decidir si se deja así.
+- Prueba manual pendiente de C1-C3.1 (consolidar en máximo 3 comprobaciones): marca/tipos por clínica; horario del vet con propuesta y aprobación del admin y cierre puntual; sugerencias con duración+margen, doble envío y reprogramación conservando snapshots.
+
+## Encargo C4 — Agendar con triage, sobrecupos y cambios (2026-10-20)
+
+Entrega agrupada C4a+C4b (modo acelerado). Escribe Codex; revisa Claude. El prompt completo se entregó al usuario en el mismo mensaje. Alcance: §3 filas C4a y C4b, §6 (decisiones 2, revisión previa al horario, bloque y consumo de cupo naranja), Anexos A.3/A.5 y B1/B1.1, Modelos §2, §4 y el inicio de §6 (derivación roja).
