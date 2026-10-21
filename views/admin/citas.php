@@ -1,6 +1,7 @@
 <?php require_once __DIR__ . '/../../config/App.php'; ?>
 <link rel="stylesheet" href="css/gestion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <link rel="stylesheet" href="css/admin-citas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+<link rel="stylesheet" href="css/agenda-herramientas.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <?php
 $nombre = explode(" ", trim($_SESSION["usuario_nombre"]))[0];
 ?>
@@ -131,4 +132,4 @@ $nombre = explode(" ", trim($_SESSION["usuario_nombre"]))[0];
 <script src="js/indicadores.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/admin-citas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 
-<?php require __DIR__ . '/../partials/solicitudes_agenda.php'; ?>
+<?php require __DIR__ . '/../partials/agenda_herramientas.php'; ?>

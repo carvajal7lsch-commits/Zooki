@@ -1,5 +1,5 @@
 <?php if (Contexto::rolActivo() === Roles::VETERINARIO): ?>
-<section class="zk-card" data-reasignaciones-agenda>
+<section class="agenda-herramientas__panel" id="agenda-panel-reasignaciones" role="tabpanel" aria-labelledby="agenda-tab-reasignaciones" hidden data-reasignaciones-agenda>
     <h3>Propuestas de reasignación</h3>
     <p>Una propuesta no reserva el espacio. Al aceptar se comprueba de nuevo la disponibilidad.</p>
     <button type="button" class="btn-secondary" data-reasignaciones-actualizar>Actualizar propuestas</button>

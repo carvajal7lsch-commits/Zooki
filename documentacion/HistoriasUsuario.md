@@ -1,6 +1,6 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 3.4** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
+> **Revisión 3.5** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
@@ -14,9 +14,11 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 _La **Revisión 3.4** (16 de octubre de 2026) acompaña la versión 2.0.0-alpha.4: HU-2.1, HU-2.8, HU-2.9, HU-2.10 y HU-2.12 reflejan el cierre de M2 (alergias, peso, apoyo diagnóstico, prescripción y mapa); HU-2.11 queda parcial con motor, buscador y batería listos para M4. El carnet conserva su entrega al final de la v2.0 y el conocimiento está pendiente de validación veterinaria._
 
+_La **Revisión 3.5** (21 de octubre de 2026) acompaña la versión 2.0.0-alpha.5, que cierra el módulo 4 (agenda inteligente y Grafo II): HU-2.2, HU-2.11, HU-4.5, HU-4.6, HU-4.8, HU-4.9, HU-4.11, HU-4.12, HU-4.13, HU-4.14, HU-4.15, HU-4.18, HU-4.19, HU-5.6 y HU-7.4 pasan a «Implementada (2.0.0-alpha.5)»; HU-4.7 queda parcial (el reporte de ausentismo RE-4.7.3 sigue en v2.1). Solo veterinario y propietario crean citas; una cita reclasificada a rojo entra sola a la cola de Urgencias; la llegada tarde ofrece servicio completo, reducido explícito, reprogramar u otro veterinario (RN-426). HU-4.10, HU-4.16 y HU-4.17 siguen en v2.1._
+
 **Índice de módulos:**
 
-**Parcial (2.0.0-alpha.4):** HU-2.11 entrega el motor, buscador y batería; su flujo operativo se completa en M4.
+**Parcial (2.0.0-alpha.5):** HU-4.7 entrega «no asistió» con tolerancia; el reporte de ausentismo (RE-4.7.3) queda para la v2.1.
 Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de esta revisión describen la entrega preparada y no afirman que ya esté desplegada.
 
 - **Módulo 0** — Plataforma: clínicas, planes y suscripción *(v2.0)* · 5 historias
@@ -638,7 +640,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Parcial (M4 pendiente) | 3 pts | Revisión del módulo de consultas |
+| Media | Implementada (2.0.0-alpha.5) | 3 pts | Revisión del módulo de consultas |
 
 > Como veterinario, quiero registrar la atención de un paciente que llega sin cita (una urgencia o un imprevisto) para que quede en su historia clínica igual que cualquier otra consulta.
 
@@ -805,7 +807,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial (2.0.0-alpha.4; integración en M4) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.5) | 8 pts | v2 |
 
 > Como veterinario o propietario, quiero que el sistema calcule la urgencia del caso con reglas claras para que una mascota grave no quede al final de la fila y una leve no ocupe un sobrecupo.
 
@@ -1065,7 +1067,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial (diferida) | 8 pts | VD-AGN-01 |
+| Alta | Implementada (2.0.0-alpha.5) | 8 pts | VD-AGN-01 |
 
 > Como veterinario, quiero registrar la hora real de inicio y fin de cada atención y que el sistema detecte los retrasos, para que la agenda coincida con la realidad y no se acumulen los choques.
 
@@ -1087,7 +1089,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Pendiente (diferida) | 3 pts | VD-AGN-02 |
+| Media | Implementada (2.0.0-alpha.5) | 3 pts | VD-AGN-02 |
 
 > Como administrador, quiero definir un tiempo de amortiguación entre citas para absorber pequeños retrasos sin generar choques.
 
@@ -1110,7 +1112,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Parcial (diferida) | 3 pts | VD-AGN-07 |
+| Media | Parcial (2.0.0-alpha.5; RE-4.7.3 en v2.1) | 3 pts | VD-AGN-07 |
 
 > Como veterinario, quiero marcar una cita como "no asistió" para liberar el espacio y medir el ausentismo.
 
@@ -1132,7 +1134,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Pendiente (diferida) | 5 pts | VD-AGN-08 |
+| Alta | Implementada (2.0.0-alpha.5) | 5 pts | VD-AGN-08 |
 
 > Como administrador, quiero registrar bloqueos del veterinario (almuerzo, permiso, incapacidad) y días festivos o cierres, para que no se agenden citas en esos periodos.
 
@@ -1154,7 +1156,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial (diferida) | 5 pts | VD-AGN-03/04/05/06 |
+| Alta | Implementada (2.0.0-alpha.5) | 5 pts | VD-AGN-03/04/05/06 |
 
 > Como responsable del sistema, quiero que toda validación de disponibilidad se haga en el backend, con una sola fuente de horario que respete la duración y sin condición de carrera, para impedir citas inválidas o dobles.
 
@@ -1199,7 +1201,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.5) | 5 pts | v2 |
 
 > Como administrador de la clínica, quiero definir el horario recurrente de cada veterinario por día de la semana para que la agenda refleje cuándo atiende realmente cada uno.
 
@@ -1217,7 +1219,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.5) | 8 pts | v2 |
 
 > Como administrador (o veterinario desde su portal), quiero registrar una ausencia y que el sistema cubra sus citas para que la agenda se mantenga sin huecos cuando alguien no puede atender.
 
@@ -1239,7 +1241,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.5) | 8 pts | v2 |
 
 > Como propietario o veterinario, quiero que al agendar se calcule la prioridad del caso a partir de los síntomas para que la cita se ubique según su urgencia y no solo por orden de llegada.
 
@@ -1263,7 +1265,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.5) | 8 pts | v2 |
 
 > Como veterinario, quiero que un retraso se propague y se reacomode solo para que la agenda del día siga siendo realista sin tener que reorganizarla a mano.
 
@@ -1286,7 +1288,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 8 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.5) | 8 pts | v2 |
 
 > Como veterinario, quiero atender de inmediato un caso crítico aunque no tenga cita para no perder tiempo en una emergencia.
 
@@ -1350,7 +1352,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 3 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.5) | 3 pts | v2 |
 
 > Como veterinario, quiero corregir el nivel de triage cuando mi criterio clínico difiere del sistema para que la agenda refleje la urgencia real.
 
@@ -1369,7 +1371,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Planificada (v2) | 5 pts | v2 |
+| Alta | Implementada (2.0.0-alpha.5) | 5 pts | v2 |
 
 > Como veterinario, quiero que la agenda sepa qué hacer cuando un propietario llega tarde para que su retraso no descuadre el resto del día sin que nadie lo decida.
 
@@ -1494,7 +1496,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial (diferida) | 5 pts | Deseable |
+| Alta | Implementada (2.0.0-alpha.5) | 5 pts | Deseable |
 
 > Como propietario, quiero cancelar o reprogramar mis propias citas desde el portal para gestionar mi tiempo sin tener que llamar a la clínica.
 
@@ -1838,7 +1840,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Planificada (v2) | 5 pts | v2 |
+| Media | Implementada (2.0.0-alpha.5) | 5 pts | v2 |
 
 > Como administrador de la clínica, quiero configurar los datos de marca de mi clínica y sus tipos de cita para que el sistema refleje mi identidad y mis tiempos de atención.
 
@@ -1999,7 +2001,7 @@ Dentro de cada entrega, la tabla sigue las dependencias principales: primero el 
 
 ### Entrega v2.0 — imprescindible para la presentación (29 historias; 159 puntos estimados y HU-2.12 por estimar)
 
-_Avance: la versión 2.0.0-alpha.1 cierra las nueve primeras (módulo 0, 51 puntos). Cada módulo siguiente publica la alfa siguiente; la versión 2.0.0 sale cuando estén las 29._
+_Avance: la versión 2.0.0-alpha.5 cierra 27 de las 29 (módulos 0, 5, 2 y 4); faltan HU-5.10 y HU-5.11 (carnet QR). Cada módulo publica la alfa siguiente; la versión 2.0.0 sale cuando estén las 29._
 
 | Historia | Título | Puntos |
 |---|---|---|

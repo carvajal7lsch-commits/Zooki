@@ -1,5 +1,5 @@
 <?php if (Contexto::rolActivo() === Roles::VETERINARIO): ?>
-<section id="llegadas" class="perfil-card" data-llegadas-agenda data-clinica="<?= (int) Contexto::clinicaActiva() ?>" data-veterinario="<?= (int) Contexto::idUsuario() ?>">
+<section id="agenda-panel-llegadas" class="agenda-herramientas__panel" role="tabpanel" aria-labelledby="agenda-tab-llegadas" hidden data-llegadas-agenda data-clinica="<?= (int) Contexto::clinicaActiva() ?>" data-veterinario="<?= (int) Contexto::idUsuario() ?>">
     <h3>Llegadas y decisiones de atención</h3>
     <p>Calcula el triage antes de registrar una llegada sin reserva. Rojo se recibe por Urgencias. La llegada no inicia atención.</p>
     <div data-llegadas-csrf hidden><?php Csrf::field(); ?></div>

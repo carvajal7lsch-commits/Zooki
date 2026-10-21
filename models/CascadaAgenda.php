@@ -165,7 +165,11 @@ final class CascadaAgenda extends ModeloClinica
                         if ($nuevaVersion === 1) {
                             $this->conn->prepare("UPDATE eventos_agenda SET version_recurso=version_recurso+1 WHERE id_clinica=? AND id_cita=? AND version_recurso=? AND canal='correo' AND estado IN ('pendiente','error') AND tipo IN ('NUEVA_CITA','CITA_REPROGRAMADA','CITA_REASIGNADA')")->execute([$this->clinica(), $id, $cita['version_agenda']]);
                         }
-                        $this->auditar('citas', $id, ['inicio_estimado' => $cita['inicio_estimado'], 'fin_estimado' => $cita['fin_estimado']], ['inicio_estimado' => $inicio, 'fin_estimado' => $fin, 'estado_reajuste' => $estado], 'Cascada política M (RE-4.14.1/2)');
+                        // D: la estimación que solo corre con el reloj ya queda en la cita (fecha_ultimo_calculo);
+                        // se audita el cambio de estado de reajuste para no escribir una fila por cita en cada minuto de exceso.
+                        if ($nuevaVersion === 1) {
+                            $this->auditar('citas', $id, ['inicio_estimado' => $cita['inicio_estimado'], 'fin_estimado' => $cita['fin_estimado']], ['inicio_estimado' => $inicio, 'fin_estimado' => $fin, 'estado_reajuste' => $estado], 'Cascada política M (RE-4.14.1/2)');
+                        }
                     }
                 }
                 // Todas las estimaciones se publican dentro de la unidad antes de emparejar candidatos.

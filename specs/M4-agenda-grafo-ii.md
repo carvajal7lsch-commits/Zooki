@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **Modo acelerado (2026-10-21). C8 (C8+C8b) entregada y verificada: implementación de Codex (sin tokens antes de cerrar), cierre y pruebas de Claude (Anexo C8). Sigue D-F.** C1–C7 cerradas. Agrupación de entregas y «Lista para D» al final del plan. Anexos y revisiones previos conservados como historial.
+> Estado: **D-F hecho por Claude (2026-10-21): M4 completo, versión `2.0.0-alpha.5` preparada. Falta la prueba manual consolidada del dueño y su despliegue** (ver «D-F — Resultado» al final). Anexos y revisiones previos conservados como historial.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Claude como arquitecto desde el 2026-10-20 (modo acelerado, `agentes/metodo.md` §11). Hasta C3.1 revisó Codex en una sesión independiente.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -2858,7 +2858,7 @@ Se mantiene **todo** el alcance de M4. Arquitecto/revisor: Claude; ejecutor: Cod
 | C5 | C5a Grafo II y cascada + C5b Reasignación en vivo | Revisada y aprobada con corrección C5.1 de Claude (2026-10-20) |
 | C6-C7 | C6 Ausencias y cobertura + C7a Atención roja y pausas + C7b Ficha provisional y conciliación | Revisada y aprobada con corrección C6.1 de Claude (2026-10-20) |
 | C8 | C8 Ajustes y llegada tarde + C8b Llegada sin reserva | Entregada y verificada (2026-10-21), Anexo C8 |
-| D-F | Correcciones de la Lista para D, prueba manual consolidada, cierre documental, `2.0.0-alpha.5` y despliegue | Pendiente |
+| D-F | Correcciones de la Lista para D, prueba manual consolidada, cierre documental, `2.0.0-alpha.5` y despliegue | Hecho por Claude (2026-10-21); faltan prueba manual y despliegue del dueño |
 
 ### Lista para D
 
@@ -2989,3 +2989,51 @@ Entrega agrupada C4a+C4b (modo acelerado). Escribe Codex; revisa Claude. El prom
 **Corregido por Claude:** saltarse la cola de espera lanzaba `LogicException` (error genérico 500); ahora es mensaje de dominio con regresión. Pruebas desactualizadas: `CitaEstadoTest` (no asistió exige tolerancia) y `AgendaC8Test` (código 403).
 
 **Verificación (Claude, MySQL 8.0.46 local):** PHP completo con motor **1011/9113, cero omitidas** (incluidas las carreras C2–C8); sin host 1011/8023 (71 omitidas); JS 278/278.
+
+## D-F — Resultado (2026-10-21)
+
+**Autor y revisor: Claude** (modo acelerado; Codex sin tokens). Decisiones del dueño del 2026-10-21 en esta conversación.
+
+**Decisiones del dueño (2026-10-21):**
+- Una cita **reclasificada a rojo entra sola a la cola de Urgencias**: con llegada registrada queda presente en espera; sin llegada queda derivada y avisa a la clínica. La cita ordinaria se cancela (no se borra) y libera su espacio; una atención en curso no se deriva.
+- **Rojo esperando:** se mantiene que, mientras un rojo presente espera, ningún veterinario libre inicia una cita ordinaria (el primero libre atiende el rojo). Explicado al dueño y aceptado como «rojo primero».
+
+**Lista para D resuelta:**
+
+| Ítem | Resolución |
+|---|---|
+| P3 C3.1 replay admin con vet inactivo | Se deja: denegar es lo conservador. |
+| P2 C4 bandeja sin estilo | Las cuatro herramientas (Triage, Llegadas, Reasignaciones, Urgencias) en un bloque con pestañas accesibles (`agenda_herramientas.php`, `agenda-herramientas.js/.css`), responsive RNF-16; cada panel conserva sus data-* y su JS. |
+| P3 C4 `Cita::registrar` acepta admin en el modelo | Se deja: la ruta (matriz) y `SolicitudAgenda` lo bloquean; solo lo usan los arneses C3. |
+| P2 C5 auditoría por cada minuto de exceso | `CascadaAgenda` audita solo el cambio de estado de reajuste; la estimación queda en la cita. |
+| P3 C6-C7 rojo esperando bloquea a todos | Se deja (decisión arriba). |
+| P2 C8 `llegadas-agenda.js` sin prueba | `AgendaHerramientas.test.cjs`: validación de llegadas, pestañas y vistas sin código en línea. |
+| P3 C8 ajuste a rojo | Implementado (decisión arriba): `UrgenciaAgenda::derivarCita` + `LlegadaAgenda::derivarARojo`, con pruebas presente/derivado/en curso. |
+| EBUSY de Chrome en Windows | `chrome-cdp.cjs` espera la salida real de Chrome y la limpieza del perfil temporal ya no hace fallar la prueba. |
+
+**Documentación y versión:** `App::VERSION` 2.0.0-alpha.5 e historial; HistoriasUsuario Revisión 3.5 con los estados de M4 (HU-4.7 parcial por RE-4.7.3 en v2.1); AGENTS.md al día.
+
+**Verificación (Claude, MySQL 8.0.46 local):** PHP completo con motor **1013/9125, cero omitidas** (incluidas todas las carreras C2–C8); sin host 1013/8035 (71 omitidas); JS 281/281.
+
+### Prueba manual consolidada (dueño, celular y escritorio)
+
+Datos locales: `php scripts/dev/datos_prueba.php --si` (Ana/Beto/Elena Norte, Carla/Diego Sur, Fabio propietario).
+
+1. **Ana Norte (admin):** teléfono de urgencias y un tipo de 30 min + 10 de margen, pausable; Beto propone su horario y Ana lo aprueba; Ana crea un cierre puntual. Ana **no** tiene botón para crear citas.
+2. **Fabio (portal, celular):** agenda un verde marcando síntomas y eligiendo hora; luego describe un caso rojo → ve el teléfono de urgencias y no se crea cita. Reprograma y cancela su cita verde.
+3. **Beto (pestaña Triage):** un «Otro / no sé» espera revisión; lo aprueba naranja con motivo. Dos naranjas entran; el tercero avisa sin crear cita; reordena la cola con motivo.
+4. **Beto y Elena:** Beto inicia una atención y la alarga; la hora estimada de su siguiente cita se corre. Si no cabe, Elena ve la propuesta en «Reasignaciones» y la acepta.
+5. **Beto y Ana:** Beto solicita una ausencia parcial; no bloquea hasta que Ana la aprueba; sus citas pasan a Elena o quedan para reprogramar.
+6. **Beto (Urgencias):** con una consulta pausable en curso registra un rojo conocido → pausa, lo atiende, cierra con consulta y se reanuda la anterior. Registra otro rojo con ficha provisional; **Ana** la completa o la une a la ficha real.
+7. **Beto (Llegadas):** registra una llegada a los 8 min (opciones dentro de tolerancia) y otra a los 15 (solo siguiente hueco/reprogramar); «no asistió» solo pasada la tolerancia.
+8. **Beto (Llegadas):** una llegada sin reserva verde sin hueco → alternativas, sin sobrecupo; una amarilla pasa antes que la verde. Reclasifica una cita a rojo → aparece en Urgencias.
+9. **Celular y tableta:** las pestañas de herramientas se ven ordenadas, sin elementos sueltos ni desbordes.
+10. **Diego Sur:** no ve solicitudes, urgencias, propuestas ni citas de Norte.
+
+### Despliegue (lo hace el dueño)
+
+1. Commit y push de la rama; esperar el CI en verde (todas las clases MySQL 8).
+2. Respaldo de la base de producción antes de integrar.
+3. `release/v2.0.0-alpha.5` → PR a `main` → merge → tag anotado `v2.0.0-alpha.5` sobre el merge.
+4. Redeploy en Dokploy: al arrancar se aplican solas las migraciones 08, 09 y 10. Revisar el log («Aplicadas…» sin errores) y que la pantalla muestre 2.0.0-alpha.5.
+5. Opcional: `node scripts/docs/exportar.mjs` para regenerar PDF/Word del portal de documentación.

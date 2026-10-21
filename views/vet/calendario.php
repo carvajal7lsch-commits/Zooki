@@ -70,7 +70,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
-<?php require __DIR__ . '/../partials/solicitudes_agenda.php'; ?>
+<?php require __DIR__ . '/../partials/agenda_herramientas.php'; ?>
 <?php if ($rolAgenda === Roles::VETERINARIO): ?>
 <!-- ══ MODAL — Agendar cita ══ -->
 <div id="citaModalOverlay" class="zk-overlay" data-ui-accion="cerrar-cita" data-ui-fondo>

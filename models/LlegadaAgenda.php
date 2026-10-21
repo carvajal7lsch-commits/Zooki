@@ -185,6 +185,9 @@ final class LlegadaAgenda extends ServicioAgendaClinica
             throw new InvalidArgumentException('Selecciona nivel y motivo de 1 a 255 caracteres.');
         }
         return $this->comando($id, 'ajustar_c8', [$nivel, $motivo], $clave, function (array $cita) use ($id, $nivel, $motivo): array {
+            if ($nivel === 'rojo') {
+                return $this->derivarARojo($cita, $motivo);
+            }
             [$duracion, $margen] = $this->tiempos($cita);
             $hora = $cita['hora'];
             $bloque = null;
@@ -233,12 +236,34 @@ final class LlegadaAgenda extends ServicioAgendaClinica
             $this->recalcular($cita, 'Reclasificación veterinaria');
             $actual = (new Cita($this->conn, $this->reloj))->getById($id);
             $eventos = new EventoAgenda($this->conn, $this->clinica());
-            $eventos->interno($nivel === 'rojo' ? 'DERIVACION_ROJA' : 'CITA_REPROGRAMADA', $id, null, (int) $actual['version_agenda'], (int) $cita['id_veterinario'], null);
+            $eventos->interno('CITA_REPROGRAMADA', $id, null, (int) $actual['version_agenda'], (int) $cita['id_veterinario'], null);
             if ($actual['id_propietario']) {
                 $eventos->correo('CITA_REPROGRAMADA', $id, (int) $actual['version_agenda'], (int) $actual['id_propietario']);
             }
-            return ['id_cita' => $id, 'message' => $nivel === 'rojo' ? 'Ajuste rojo registrado; deriva a urgencias y acredita presencia por ese flujo.' : 'Nivel ajustado y ubicación recalculada.'];
+            return ['id_cita' => $id, 'message' => 'Nivel ajustado y ubicación recalculada.'];
         }, false);
+    }
+
+    /**
+     * D (decisión del dueño, 2026-10-21): reclasificar a rojo saca la cita de la agenda ordinaria y la pone en Urgencias.
+     * La cita ordinaria se cancela (no se borra) para liberar su espacio; la atención crea su propia cita de urgencia.
+     */
+    private function derivarARojo(array $cita, string $motivo): array
+    {
+        if (in_array($cita['estado'], ['en_curso', 'pausada', 'sin_cerrar'], true)) {
+            throw new InvalidArgumentException('La atención ya está en curso; continúa la consulta en lugar de derivarla.');
+        }
+        require_once __DIR__ . '/UrgenciaAgenda.php';
+        $id = (int) $cita['id_cita'];
+        $solicitud = (new UrgenciaAgenda($this->conn, $this->reloj))->derivarCita($cita, $motivo);
+        $this->conn->prepare("UPDATE citas SET prioridad_calculada=COALESCE(prioridad_calculada,prioridad),prioridad='rojo',motivo_ajuste_prioridad=?,estado='cancelada',version_agenda=version_agenda+1 WHERE id_cita=? AND id_clinica=?")
+            ->execute([$motivo, $id, $this->clinica()]);
+        $this->auditar('citas', $id, ['nivel_calculado' => $cita['prioridad_calculada'] ?? $cita['prioridad'], 'nivel_anterior' => $cita['prioridad']], ['nivel_ajustado' => 'rojo', 'motivo' => $motivo, 'id_solicitud_urgencia' => $solicitud], 'Reclasificación veterinaria (RE-4.18.1/4)');
+        $this->recalcular($cita, 'Reclasificación a rojo: pasa a Urgencias');
+        $mensaje = $cita['hora_llegada'] !== null
+            ? 'Reclasificada a rojo: el paciente pasa a la cola de Urgencias.'
+            : 'Reclasificada a rojo: queda derivada a Urgencias y se avisó a la clínica. Registra su llegada en Urgencias.';
+        return ['id_cita' => $id, 'id_solicitud' => $solicitud, 'message' => $mensaje];
     }
 
     /** RE-2.2.5: orden clínico confirmado; ninguna notificación acredita presencia. */

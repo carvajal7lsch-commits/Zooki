@@ -1,12 +1,29 @@
 # Historial de Versiones — Proyecto Zooki
 
-> Registro de versiones (v1.0.0 → v2.0.0-alpha.4; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
+> Registro de versiones (v1.0.0 → v2.0.0-alpha.5; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
 
 ## Historial de Versiones
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 2.0.0-alpha.4 (Actual)
+### Versión 2.0.0-alpha.5 (Actual)
+
+Cuarto módulo de la v2: **agenda inteligente con el Grafo II**. La agenda calcula la urgencia de cada caso, se reorganiza sola cuando hay retrasos y atiende urgencias, ausencias y llegadas sin reserva.
+La entrega queda preparada para publicar después de las pruebas del usuario; producción se actualiza al desplegar.
+
+* **Agendar con triage:** el veterinario y el propietario marcan los síntomas antes de ver horarios y el Grafo I calcula el color. 🔴 Rojo no se agenda: muestra el teléfono de urgencias y avisa a la clínica. 🟠 Naranja toma el primer hueco o entra como sobrecupo (máximo 2 por franja; un tercero avisa al personal). 🟡 Amarillo toma el primer espacio. 🟢 Verde elige. «Otro / no sé» y los casos dudosos esperan la revisión de un veterinario antes de ver horarios. El administrador ya no crea citas.
+* **Marca y tipos por clínica:** logo, contacto y teléfono de urgencias en correos y documentos; cada tipo de cita con su duración, margen y si se puede pausar.
+* **Horarios y disponibilidad reales:** horario de cada veterinario (propuesto por él y aprobado por el administrador), cierres puntuales y una sola regla de disponibilidad para sugerir, reservar y reprogramar, sin dobles reservas aunque dos personas agenden al mismo tiempo.
+* **Grafo II en vivo:** si una consulta se alarga o empieza tarde, la agenda recalcula la hora estimada de las siguientes citas, absorbe huecos y, si una cita ya no cabe, propone pasarla a otro veterinario libre, que acepta o rechaza. Al propietario le llega como máximo un aviso cada media hora.
+* **Ausencias y cobertura:** el veterinario solicita su ausencia y el administrador la aprueba (o la registra él directamente); las citas afectadas pasan a otro veterinario o quedan para reprogramar con el propietario.
+* **Urgencias:** el rojo que llega a la clínica se atiende por orden de llegada (el veterinario puede reordenar con motivo); si el veterinario está en una consulta que se puede pausar, la pausa y la reanuda al terminar. Una mascota sin cuenta verificada se atiende con ficha provisional, que luego se completa o se une a la ficha real sin perder nada. Una cita reclasificada a rojo entra sola a la cola de Urgencias.
+* **Llegadas:** llegada tarde con tolerancia (atender completo, reducido, reprogramar u otro veterinario), «no asistió» solo pasada la tolerancia, ajuste del nivel con motivo e historial de reclasificaciones, y llegada sin reserva que siempre crea su cita, sin sobrecupos, con cola amarillo antes de verde.
+* **Herramientas de agenda en pestañas** debajo del calendario: Triage, Llegadas, Reasignaciones y Urgencias.
+
+**Base de datos:** migraciones 08, 09 y 10 (se aplican solas al desplegar y se pueden repetir).
+**Limitación:** el conocimiento clínico sigue **pendiente de validación veterinaria**; el triage es apoyo y el veterinario decide.
+
+### Versión 2.0.0-alpha.4
 
 Tercer módulo de la v2: **historia clínica y apoyo a la decisión con el Grafo I**.
 La entrega queda preparada para publicar después de las pruebas del usuario; producción se actualiza al desplegar.

@@ -6,6 +6,14 @@
 
 ## Ahora
 
+### D-F hecho; M4 completo y alpha.5 preparada (2026-10-21)
+
+- **Claude hizo D-F** (Codex sin tokens). Decisiones del dueño: una cita reclasificada a rojo entra sola a Urgencias; se mantiene «rojo primero» (mientras un rojo espera, ningún vet libre inicia cita ordinaria). Lista para D resuelta: herramientas de agenda en pestañas con estilo del sistema, auditoría de estimaciones solo con cambio de estado, prueba JS de llegadas, limpieza robusta de Chrome en Windows. Detalle en «D-F — Resultado» del plan.
+- **Versión 2.0.0-alpha.5** (App.php, HistorialVersiones, HistoriasUsuario Rev. 3.5, AGENTS.md).
+- **Verificación con MySQL 8.0.46 local:** PHP completo con motor **1013/9125, cero omitidas** (incluidas todas las carreras C2–C8); sin host 1013/8035 (71 omitidas); JS 281/281.
+- **Pendiente del dueño:** commit/push, CI verde, prueba manual consolidada (10 puntos en el plan), respaldo, release/PR/merge/tag y redeploy en Dokploy.
+- **Siguiente:** de la entrega v2.0 solo quedan HU-5.10 y HU-5.11 (carnet digital con QR de emergencia); con ellas sale la versión 2.0.0.
+
 ### C8 entregada y verificada; sigue D-F (2026-10-21)
 
 - **C8 (C8+C8b):** Codex escribió la implementación y se quedó sin tokens; Claude revisó, corrigió (saltarse la cola de espera daba error genérico), actualizó dos pruebas desactualizadas, agregó la carrera AgendaC8MysqlTest al CI y escribió el Anexo C8.

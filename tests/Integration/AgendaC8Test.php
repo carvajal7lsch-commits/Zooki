@@ -169,6 +169,42 @@ final class AgendaC8Test extends TestCase
         $this->assertSame([], $this->agenda()->leer()['historial']);
     }
 
+    /** D (decisión del dueño): reclasificar a rojo entra sola a Urgencias y libera la cita ordinaria. */
+    public function testAjusteARojoEntraAUrgenciasPresenteODerivado(): void
+    {
+        require_once __DIR__ . '/../../models/UrgenciaAgenda.php';
+        $presente = $this->cita();
+        $remota = $this->cita(2, '10:00:00');
+        $this->ahora = '2030-01-07 09:03:00';
+        $this->agenda()->llegada($presente, null);
+        $r = $this->agenda()->ajustar($presente, 'rojo', 'Dificultad respiratoria al llegar', hash('sha256', 'rojo1'));
+        $this->assertSame('cancelada', $this->fila($presente)['estado']);
+        $this->assertSame('rojo', $this->fila($presente)['prioridad']);
+        $this->assertSame('verde', $this->fila($presente)['prioridad_calculada']);
+        $s = $this->db->query('SELECT * FROM solicitudes_agenda WHERE id_solicitud=' . (int) $r['id_solicitud'])->fetch(PDO::FETCH_ASSOC);
+        $this->assertSame('espera_presencial', $s['estado']);
+        $this->assertSame('rojo', $s['nivel_aprobado']);
+        $this->assertSame('2030-01-07 09:03:00', $s['fecha_llegada']);
+        $cola = (new UrgenciaAgenda($this->db, $this->reloj()))->listar();
+        $this->assertSame([(int) $r['id_solicitud']], array_map('intval', array_column($cola, 'id_solicitud')));
+
+        $d = $this->agenda()->ajustar($remota, 'rojo', 'Llamada: convulsiones', null);
+        $this->assertSame('derivada', $this->db->query('SELECT estado FROM solicitudes_agenda WHERE id_solicitud=' . (int) $d['id_solicitud'])->fetchColumn());
+        $this->assertNull($this->db->query('SELECT fecha_llegada FROM solicitudes_agenda WHERE id_solicitud=' . (int) $d['id_solicitud'])->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM eventos_agenda WHERE tipo='DERIVACION_ROJA' AND id_solicitud=" . (int) $d['id_solicitud'])->fetchColumn());
+        // El espacio ordinario de 10:00 queda libre.
+        (new DisponibilidadAgenda($this->db, $this->reloj()))->exigir(2, 3, '2030-01-07', '10:00:00', 30, 10);
+    }
+
+    public function testAjusteARojoNoInterrumpeUnaAtencionEnCurso(): void
+    {
+        $id = $this->cita();
+        $this->db->exec("UPDATE citas SET estado='en_curso',hora_inicio_real='2030-01-07 09:00:00' WHERE id_cita=$id");
+        $this->ahora = '2030-01-07 09:05:00';
+        $this->expectException(InvalidArgumentException::class);
+        $this->agenda()->ajustar($id, 'rojo', 'Empeora en consulta', null);
+    }
+
     public function testEsperaOrdenColorLlegadaIdAsignacionYReplay(): void
     {
         $verde = $this->evaluar(1);

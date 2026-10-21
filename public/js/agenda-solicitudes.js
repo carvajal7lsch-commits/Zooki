@@ -88,7 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     raiz.querySelector('[data-solicitudes-actualizar]').addEventListener('click', cargar);
     filtro.addEventListener('change', cargar);
-    raiz.addEventListener('toggle', () => { if (raiz.open) cargar(); });
+    // D: el panel de pestañas avisa al mostrarse (antes era un <details>).
+    raiz.addEventListener('agenda:mostrar', cargar);
 });
 
 const comandosOrdenC4 = new Map();

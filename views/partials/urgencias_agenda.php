@@ -6,8 +6,8 @@ require_once __DIR__ . '/../../helpers/ValidadorMascota.php';
 $esVetUrgencia = Contexto::rolActivo() === Roles::VETERINARIO;
 $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>ValidadorCuenta::NOMBRE_CARACTERES,'telefonoMin'=>ValidadorTelefono::MIN,'telefonoMax'=>ValidadorTelefono::MAX,'mascotaMax'=>ValidadorMascota::NOMBRE_MAX];
 ?>
-<details data-urgencias-agenda data-vet="<?= $esVetUrgencia ? '1' : '0' ?>" data-clinica="<?= (int)Contexto::clinicaActiva() ?>" data-reglas="<?= htmlspecialchars(json_encode($reglasUrgencia),ENT_QUOTES,'UTF-8') ?>">
-    <summary>Urgencias presentes y fichas por completar</summary>
+<section class="agenda-herramientas__panel" id="agenda-panel-urgencias" role="tabpanel" aria-labelledby="agenda-tab-urgencias" hidden data-urgencias-agenda data-vet="<?= $esVetUrgencia ? '1' : '0' ?>" data-clinica="<?= (int)Contexto::clinicaActiva() ?>" data-reglas="<?= htmlspecialchars(json_encode($reglasUrgencia),ENT_QUOTES,'UTF-8') ?>">
+    <h3>Urgencias presentes y fichas por completar</h3>
     <p>El aviso remoto no acredita llegada. La prioridad y la interrupción las decide el veterinario.</p>
     <div data-urgencias-csrf hidden><?php Csrf::field(); ?></div>
     <?php if ($esVetUrgencia): ?>
@@ -44,5 +44,5 @@ $reglasUrgencia = ['nombreMax'=>ValidadorCuenta::NOMBRE_MAX,'nombreCaracteres'=>
             <label>Nacimiento (opcional) <input name="fecha_nacimiento" type="date"><span data-error-campo="fecha_nacimiento"></span></label>
         </fieldset>
     </template>
-</details>
+</section>
 <script src="js/urgencias-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>

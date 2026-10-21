@@ -113,6 +113,33 @@ final class UrgenciaAgenda extends ServicioAgendaClinica
         });
     }
 
+    /**
+     * D (decisión del dueño, 2026-10-21): una cita reclasificada a rojo entra sola a la cola de Urgencias.
+     * Con llegada registrada queda presente en espera; sin llegada queda derivada y avisa a la clínica.
+     * La ejecuta el comando que reclasifica, dentro de su unidad coordinada.
+     */
+    public function derivarCita(array $cita, string $motivo): int
+    {
+        if (!$this->conn->inTransaction()) {
+            throw new LogicException('La derivación roja exige la unidad del comando que reclasifica.');
+        }
+        $presente = $cita['hora_llegada'] !== null;
+        $contexto = json_encode(['id_mascota_evaluada' => (int) $cita['id_mascota'], 'fuente' => 'reclasificacion_veterinaria', 'id_cita_origen' => (int) $cita['id_cita'], 'motivo' => $motivo], JSON_THROW_ON_ERROR);
+        $ahora = ($this->reloj)()->format('Y-m-d H:i:s');
+        $this->conn->prepare("INSERT INTO solicitudes_agenda (id_clinica,id_mascota,id_actor,origen,estado,estado_revision,nivel_aprobado,contexto_triage,huella_entrada,huella_revision,id_revisor,fecha_revision,motivo_revision,fuente_nivel) VALUES (?,?,?,?,?,'resuelta','rojo',?,?,?,?,?,?,'clinico_presencial')")
+            ->execute([$this->clinica(), $cita['id_mascota'], Contexto::idUsuario(), $presente ? 'llegada' : 'interno', $presente ? 'abierta' : 'derivada', $contexto, hash('sha256', $contexto), hash('sha256', $contexto), Contexto::idUsuario(), $ahora, $motivo]);
+        $id = (int) $this->conn->lastInsertId();
+        $this->auditar('solicitudes_agenda', $id, null, ['prioridad' => 'rojo', 'id_cita_origen' => (int) $cita['id_cita'], 'presente' => $presente], 'Reclasificación a rojo: entra a Urgencias (RN-419, RN-420)');
+        if ($presente) {
+            // La llegada ya acreditada se conserva como presencia física; no se reinicia el orden.
+            $this->presencia($id);
+            $this->conn->prepare('UPDATE solicitudes_agenda SET fecha_llegada=? WHERE id_solicitud=? AND id_clinica=?')->execute([$cita['hora_llegada'], $id, $this->clinica()]);
+        } else {
+            (new EventoAgenda($this->conn, $this->clinica()))->interno('DERIVACION_ROJA', null, $id, 0, null, Roles::VETERINARIO);
+        }
+        return $id;
+    }
+
     public function revisarContexto(int $id, int $version, string $motivo, ?string $clave): array
     {
         $this->autorizar([Roles::VETERINARIO]);
