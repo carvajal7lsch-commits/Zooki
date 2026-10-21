@@ -231,6 +231,16 @@ final class DisponibilidadAgenda extends ModeloClinica
                 }
                 continue;
             }
+            // Pruebas de usuario (2026-10-21): una atención de un día anterior que nunca se cerró
+            // (olvido o dato de antes de M4) no ocupa un día posterior; se resuelve como «sin cerrar»
+            // en su propia fecha. Una que empezó tarde la noche anterior (menos de 12 h antes de
+            // este día) sí sigue ocupando, por si cruza la medianoche.
+            if (in_array($c['estado'], ['en_curso', 'pausada', 'sin_cerrar'], true) && $c['hora_fin_real'] === null && $c['fecha'] < $fecha) {
+                $limite = IntervalosAgenda::fecha($fecha . ' 00:00:00')->getTimestamp() - 12 * 3600;
+                if ($c['hora_inicio_real'] === null || IntervalosAgenda::fecha($c['hora_inicio_real'])->getTimestamp() < $limite) {
+                    continue;
+                }
+            }
             if ($c['hora_inicio_real'] === null || (int) $c['duracion_activa_objetivo_segundos'] <= 0) {
                 // Pruebas de usuario (2026-10-21): una cita ya completada de antes de M4 no tiene
                 // inicio real ni objetivo. Ya terminó: ocupa lo que se agendó (y hasta su fin real),

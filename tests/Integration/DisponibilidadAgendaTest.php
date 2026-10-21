@@ -275,6 +275,19 @@ final class DisponibilidadAgendaTest extends TestCase
         }
     }
 
+    public function testAtencionOlvidadaDeOtroDiaNoFrenaElDiaPosterior(): void
+    {
+        // Pruebas de usuario (2026-10-21): la cita #5 de hace cinco días seguía «en atención» sin
+        // inicio real y su estimación arrastrada frenaba hoy. Solo frena su propio día.
+        $this->db->exec("INSERT INTO citas (id_clinica,id_mascota,id_veterinario,fecha,hora,hora_fin,duracion_minutos,margen_minutos,motivo,estado,inicio_estimado,fin_estimado) VALUES (1,1,2,'2030-01-02','08:00:00','08:30:00',30,10,'Olvidada','en_curso','2030-01-02 08:00:00','2030-01-07 23:00:00')");
+        $this->assertContains('10:00', $this->citas->sugerencias(2, 1, 1, '2030-01-07'));
+        // Con inicio real de hace días tampoco frena; empezada anoche cerca de medianoche, sí.
+        $this->db->exec("UPDATE citas SET hora_inicio_real='2030-01-02 08:00:00',duracion_activa_objetivo_segundos=1800");
+        $this->assertContains('10:00', $this->citas->sugerencias(2, 1, 1, '2030-01-07'));
+        $this->db->exec("UPDATE citas SET fecha='2030-01-06',hora='23:30:00',hora_fin='23:59:00',hora_inicio_real='2030-01-06 23:30:00',inicio_estimado='2030-01-06 23:30:00'");
+        $this->rechaza(fn () => $this->citas->sugerencias(2, 1, 1, '2030-01-07'));
+    }
+
     public function testCompletadaReconstruyeMargenUnicoConPausaSinModificarSellos(): void
     {
         $id = $this->reservar('09:00');
