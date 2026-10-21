@@ -634,6 +634,7 @@ async function verDetalle(id, opciones = {}) {
                     cancelBtn = `<button type="button" class="portal-btn-cancel" data-ui-accion="cancelar-cita-portal" data-ui-id="${Number(c.id_cita)}"><i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita</button>`;
                 }
 
+                if (c.cancelable) cancelBtn += `<button type="button" class="portal-btn-cancel" data-ui-detener data-reprogramar-cita="${Number(c.id_cita)}">Reprogramar</button>`;
                 html += `
                 <div class="portal-list-item" data-id-clinica="${Number(c.id_clinica)}">
                     <div class="portal-list-icon portal-list-icon--cita"><i class="ri-calendar-check-line"></i></div>
@@ -1297,6 +1298,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const slots = document.getElementById('booking_slots');
     const guia = document.getElementById('booking_guia');
     const confirmar = document.getElementById('booking_confirmar');
+    const triageC4 = ZookiTriageAgenda.crear(form.querySelector('[data-triage-agenda]'), {
+        seleccion: () => ({ id_clinica: clinicaSelect.value, id_mascota: mascotaSelect.value, id_veterinario: vetSelect.value, id_tipo_cita: tipoCitaSelect.value, fecha: dateInput.value }),
+        alCambiar: () => cargarHoras()
+    });
     // Días sin atención en toda la jornada de cada clínica (1 = lunes … 7 = domingo); se relee tras actualizar.
     const diasCerrados = () => (JSON.parse(form.dataset.diasCerrados || '{}')[clinicaSelect.value]) || [];
     let turno = 0; // si el usuario cambia algo mientras cargan los horarios, se ignora la respuesta vieja
@@ -1340,7 +1345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function actualizarGuia() {
         const pendientes = faltan();
         guia.textContent = guiaParaAgendar(pendientes);
-        confirmar.disabled = pendientes.length > 0;
+        confirmar.disabled = pendientes.length > 0 || !triageC4.consulta();
     }
 
     /** Horarios repartidos en Mañana y Tarde, como en el panel del personal. */
@@ -1398,6 +1403,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const solicitud = triageC4.consulta();
+        if (!solicitud) {
+            estadoSlots('guia', 'Calcula el triage y completa la revisión antes de consultar horarios.');
+            return;
+        }
         const fecha = dateInput.value;
         const vet = vetSelect.value;
         const clinica = clinicaSelect.value;
@@ -1406,7 +1416,7 @@ document.addEventListener('DOMContentLoaded', () => {
         estadoSlots('cargando');
 
         try {
-            const parametros = new URLSearchParams({ action: 'portal_get_sugerencias_ajax', id_clinica: clinica, id_veterinario: vet, id_mascota: mascota, id_tipo_cita: tipo, fecha });
+            const parametros = new URLSearchParams({ action: 'portal_get_sugerencias_ajax', id_clinica: clinica, id_veterinario: vet, id_mascota: mascota, id_tipo_cita: tipo, fecha, id_solicitud: solicitud });
             const agenda = await fetch(`index.php?${parametros}`).then(r => r.json());
             if (miTurno !== turno) return;
             if (!agenda.success) {
@@ -1522,6 +1532,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const fd = new FormData(form);
+            fd.set('id_solicitud', triageC4.consulta() || '');
             fd.set('clave_operacion', comandoC3.clave(fd));
             if (ignoreWarning) {
                 fd.append('ignore_warning', '1');
@@ -1641,12 +1652,19 @@ function filasDeCitaEnPantalla(idCita) {
 }
 
 /* Cancelar una cita desde el portal (RN-405): es lo único irreversible del portal y se confirma. */
+const cancelacionesC4 = new Map();
+const cancelacionesEnCursoC4 = new Set();
 async function cancelarCitaPortal(idCita) {
+    if (cancelacionesEnCursoC4.has(idCita)) return;
     const confirmada = await zookiConfirmarCorto('¿Cancelar esta cita?', 'Cancelar cita', filasDeCitaEnPantalla(idCita), 'Volver');
     if (!confirmada) return;
+    if (cancelacionesEnCursoC4.has(idCita)) return;
+    cancelacionesEnCursoC4.add(idCita);
+    if (!cancelacionesC4.has(idCita)) cancelacionesC4.set(idCita, zookiCrearComandoAgenda());
     try {
         const form = new FormData();
         form.append('id_cita', idCita);
+        form.append('clave_operacion', cancelacionesC4.get(idCita).clave(form));
         const res = await (await fetch('index.php?action=cancelar_cita_ajax', {
             method: 'POST',
             body: form,
@@ -1664,6 +1682,8 @@ async function cancelarCitaPortal(idCita) {
     } catch (e) {
         console.error(e);
         zookiToast('No pudimos conectarnos con el servidor.', 'error');
+    } finally {
+        cancelacionesEnCursoC4.delete(idCita);
     }
 }
 

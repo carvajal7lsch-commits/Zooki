@@ -3,6 +3,7 @@
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
 require_once __DIR__ . '/../../controllers/CitaController.php';
 require_once __DIR__ . '/../Support/ComparaRespuestaIdempotente.php';
 
@@ -29,9 +30,11 @@ final class AgendaPeticionesTest extends TestCase
     {
         $this->db = DosClinicas::sqlite();
         DosClinicas::crearMascotasSqlite($this->db);
+        ConocimientoRealPrueba::taxonomia($this->db);
         DosClinicas::crearCatalogosSqlite($this->db);
         DosClinicas::crearHistoriaSqlite($this->db);
         DosClinicas::poblarAgenda($this->db);
+        (new CargadorConocimiento($this->db))->cargar(ConocimientoRealPrueba::CARPETA);
         $_POST = [];
         $_GET = [];
         $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -162,9 +165,7 @@ final class AgendaPeticionesTest extends TestCase
 
     public function testElVeterinarioAgendaParaSiMismoYNoParaOtro(): void
     {
-        $otro = $this->agendar(['id_veterinario' => (string) DosClinicas::DOBLE]);
-        $this->assertSame(422, http_response_code());
-        $this->assertStringContainsString('otros veterinarios', $otro['message']);
+        $this->assertAccesoDenegado(fn () => $this->agendar(['id_veterinario' => (string) DosClinicas::DOBLE]));
 
         $propia = $this->agendar();
         $this->assertTrue($propia['success'], $propia['message'] ?? '');
@@ -367,6 +368,10 @@ final class AgendaPeticionesTest extends TestCase
             'motivo' => 'Control',
             'id_tipo_cita' => '1',
         ], $cambios);
+        if (Contexto::rolActivo() === Roles::VETERINARIO) {
+            $_POST['id_veterinario'] ??= (string) Contexto::idUsuario();
+            $_POST = AgendaC4Prueba::capturar($this->db, $_POST, fn () => IntervalosAgenda::fecha($this->ahora));
+        }
         return $this->ejecutar(fn (CitaController $c) => $c->registrarAjax());
     }
 

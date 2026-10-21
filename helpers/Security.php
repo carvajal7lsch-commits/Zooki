@@ -420,6 +420,12 @@ class Security {
             'get_pendientes_ajax',
         ] as $a) { $matriz[$a] = $staff; }
 
+        // C4, decisión 2: el administrador gestiona, pero nunca crea citas.
+        $matriz['registrar_cita_ajax'] = [Roles::VETERINARIO];
+        $matriz['revisar_triage_agenda_ajax'] = [Roles::VETERINARIO];
+        $matriz['reordenar_sobrecupos_ajax'] = [Roles::VETERINARIO];
+        $matriz['listar_solicitudes_agenda_ajax'] = [Roles::ADMIN, Roles::VETERINARIO, Roles::PROPIETARIO];
+
         // Portal del propietario: solo el dueno, sobre sus propios datos.
         foreach ([
             'portal_propietario', 'portal_registrar_mascota_ajax',
@@ -433,6 +439,9 @@ class Security {
             // D1, RE-T.18.3: documento y teléfono de una cuenta de Google.
             'completar_perfil',
         ] as $a) { $matriz[$a] = $portal; }
+
+        $matriz['reprogramar_cita_ajax'] = [Roles::ADMIN, Roles::VETERINARIO, Roles::PROPIETARIO];
+        $matriz['get_cita_ajax'] = [Roles::ADMIN, Roles::VETERINARIO, Roles::PROPIETARIO];
 
         // Plataforma: el panel del super-administrador llega en la etapa E.
         $matriz['plataforma_inicio'] = $plataforma;

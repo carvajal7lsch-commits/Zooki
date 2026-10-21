@@ -70,6 +70,8 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
+<?php require __DIR__ . '/../partials/solicitudes_agenda.php'; ?>
+<?php if ($rolAgenda === Roles::VETERINARIO): ?>
 <!-- ══ MODAL — Agendar cita ══ -->
 <div id="citaModalOverlay" class="zk-overlay" data-ui-accion="cerrar-cita" data-ui-fondo>
     <div class="zk-modal" role="dialog" aria-modal="true" aria-labelledby="citaModalTitle">
@@ -119,6 +121,11 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                     </select>
                 </div>
 
+                <?php
+                $prefijoAgenda = 'modal_agenda';
+                $puedeRevisarAgenda = true;
+                require __DIR__ . '/../partials/triage_agenda.php';
+                ?>
                 <div class="zk-field">
                     <label class="zk-label" for="modal_motivo">Motivo <span class="zk-optional">(opcional)</span></label>
                     <input type="text" id="modal_motivo" class="zk-input" maxlength="255" placeholder="Ej. control de peso">
@@ -144,6 +151,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
+<?php endif; ?>
 <!-- ══ MODAL — Reprogramar cita ══ -->
 <div id="reprogramarModalOverlay" class="zk-overlay" data-ui-accion="cerrar-reprogramacion" data-ui-fondo>
     <div class="zk-modal" role="dialog" aria-modal="true" aria-labelledby="reprogTitle">
@@ -198,7 +206,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
-<script src="js/comando-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/triage-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/calendario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 
 <!-- MODAL NUEVA CONSULTA (necesario para Iniciar Atención desde el calendario) -->

@@ -103,6 +103,9 @@ final class AgendaC3MysqlTest extends TestCase
     {
         $this->db->exec('DELETE FROM operaciones_agenda');
         $this->db->exec('DELETE FROM auditoria_sistema');
+        // C4: las reservas dejan avisos durables que referencian la cita.
+        $this->db->exec('DELETE FROM eventos_agenda');
+        $this->db->exec('DELETE FROM notificaciones_internas');
         $this->db->exec('DELETE FROM citas');
         $this->db->exec("INSERT IGNORE INTO usuario_clinica (id_usuario,id_clinica,id_rol,estado) VALUES (2,2,2,'activo')");
         $this->db->exec("INSERT IGNORE INTO mascota_clinica (id_mascota,id_clinica,estado) VALUES (1,2,'activo')");

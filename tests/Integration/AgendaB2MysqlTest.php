@@ -57,6 +57,8 @@ final class AgendaB2MysqlTest extends TestCase
     private function migrar(): void
     {
         $this->cargar('database/08_agenda_grafo_ii.sql');
+        // C4: 09 completa el destino de M4 (origen interno); el legado también debe llegar ahí.
+        $this->cargar('database/09_origen_interno_agenda.sql');
     }
 
     private function instalar(bool $anterior = false): void

@@ -3,10 +3,12 @@ require_once __DIR__ . '/ModeloClinica.php';
 require_once __DIR__ . '/CatalogoClinica.php';
 require_once __DIR__ . '/CoordinacionHorarios.php';
 require_once __DIR__ . '/DisponibilidadAgenda.php';
+require_once __DIR__ . '/EventoAgenda.php';
 require_once __DIR__ . '/../helpers/CoordinadorAgenda.php';
 require_once __DIR__ . '/../helpers/HorarioOcupado.php';
 require_once __DIR__ . '/../helpers/LimitePlan.php';
 require_once __DIR__ . '/../helpers/ContactoPropietario.php';
+require_once __DIR__ . '/../helpers/ReglaAtencion.php';
 
 /**
  * C3: disponibilidad única y escritura coordinada sobre el modelo v2. Cada cita es de un
@@ -110,7 +112,16 @@ class Cita extends ModeloClinica
         return $this->registrarResultado($datos, $prioridad)['id_cita'];
     }
 
-    private function registrarResultado(array $datos, string $prioridad): array
+    /** C4: solo el servicio de triage decide la excepción naranja, nunca un campo HTTP. */
+    public function registrarClasificada(array $datos, string $prioridad, bool $sobrecupo): int
+    {
+        if ($sobrecupo && $prioridad !== 'naranja') {
+            throw new LogicException('Solo el naranja habilita esta excepción.');
+        }
+        return $this->registrarResultado($datos, $prioridad, $sobrecupo)['id_cita'];
+    }
+
+    private function registrarResultado(array $datos, string $prioridad, bool $sobrecupo = false): array
     {
         if (!in_array($prioridad, ['verde', 'amarillo', 'naranja', 'rojo'], true)) {
             throw new InvalidArgumentException('Prioridad clínica no válida.');
@@ -119,16 +130,17 @@ class Cita extends ModeloClinica
         // RN-G13: un id ajeno sigue dando 403, incluso si la clínica ya agotó su plan.
         $this->exigirMascotaActiva((int) $datos['id_mascota']);
         $this->exigirVeterinarioDeLaClinica((int) $datos['id_veterinario']);
-        return $this->coordinarReserva($datos, function () use ($datos, $prioridad, $clinica): array {
+        return $this->coordinarReserva($datos, function () use ($datos, $prioridad, $clinica, $sobrecupo): array {
             $this->exigirActorVigente((int) $datos['id_mascota']);
             $this->disponibilidad()->autorizar((int) $datos['id_veterinario'], (int) $datos['id_mascota']);
             $operaciones = $this->conMismoAlcance(new OperacionAgenda($this->conn));
             $entrada = $datos;
             unset($entrada['clave_operacion']);
             $nueva = false;
-            $resultado = $operaciones->ejecutar('reservar_cita', $datos['clave_operacion'] ?? null, [$entrada, $prioridad], function () use ($datos, $prioridad, $clinica, &$nueva) {
+            $huella = $sobrecupo ? [$entrada, $prioridad, true] : [$entrada, $prioridad];
+            $resultado = $operaciones->ejecutar('reservar_cita', $datos['clave_operacion'] ?? null, $huella, function () use ($datos, $prioridad, $clinica, $sobrecupo, &$nueva) {
                 $nueva = true;
-                $idCita = (new LimitePlan($this->conn, $clinica))->consumir('citas', function () use ($datos, $prioridad, $clinica): int {
+                $idCita = (new LimitePlan($this->conn, $clinica))->consumir('citas', function () use ($datos, $prioridad, $clinica, $sobrecupo): int {
                     $idMascota = (int) $datos['id_mascota'];
                     $idVeterinario = (int) $datos['id_veterinario'];
                     $fecha = $datos['fecha'];
@@ -138,13 +150,20 @@ class Cita extends ModeloClinica
                     $this->exigirVeterinarioDeLaClinica($idVeterinario);
                     [$duracion, $margen] = $this->tiemposDelTipo($datos['id_tipo_cita'] ?? null);
 
-                    $this->exigirDisponibilidad($idVeterinario, $idMascota, $fecha, $hora, $duracion, $margen, null);
+                    if ($sobrecupo) {
+                        $opciones = $this->disponibilidad()->sugerir($idVeterinario, $idMascota, $fecha, $duracion, $margen, null, true);
+                        if (!in_array($hora, array_map([self::class, 'normalizarHora'], $opciones), true)) {
+                            throw new HorarioOcupado('El sobrecupo ya no es compatible.');
+                        }
+                    } else {
+                        $this->exigirDisponibilidad($idVeterinario, $idMascota, $fecha, $hora, $duracion, $margen, null);
+                    }
 
                     $sql = "INSERT INTO citas
                         (id_clinica, id_mascota, id_veterinario, id_tipo_cita, fecha, hora, hora_fin, motivo,
                          duracion_minutos, margen_minutos, prioridad, es_sobrecupo, estado,
                          origen,duracion_activa_objetivo_segundos,politica_temporal)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'reserva', ?, 'M')";
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'reserva', ?, 'M')";
                     $parametros = [
                         $clinica,
                         $idMascota,
@@ -157,6 +176,7 @@ class Cita extends ModeloClinica
                         $duracion,
                         $margen,
                         $prioridad,
+                        (int) $sobrecupo,
                         $datos['estado'] ?? 'confirmada',
                         $duracion * 60,
                     ];
@@ -215,11 +235,28 @@ class Cita extends ModeloClinica
                     $this->exigirVeterinarioDeLaClinica($idVeterinario);
                 }
                 [$duracion, $margen] = $this->snapshotReprogramable($cita);
+                (new EventoAgenda($this->conn, $this->clinica()))->exigirSinDespacho($idCita);
                 $this->exigirDisponibilidad($idVeterinario, (int) $cita['id_mascota'], $fecha, $hora, $duracion, $margen, $idCita);
                 (new LimitePlan($this->conn, $this->clinica()))->comprobarReprogramacion($idCita, $fecha, $cita['prioridad']);
 
+                $bloque = null;
+                $orden = null;
+                if ($cita['prioridad'] === 'naranja') {
+                    require_once __DIR__ . '/SolicitudAgenda.php';
+                    $bloque = $this->conMismoAlcance(new SolicitudAgenda($this->conn, $this->reloj))->bloqueParaCambio(['id_veterinario' => $idVeterinario, 'id_mascota' => (int) $cita['id_mascota'], 'fecha' => $fecha], $hora, $idCita);
+                    if ($bloque === null) {
+                        throw new HorarioOcupado('El destino no tiene cupo naranja disponible.');
+                    }
+                    if ((int) $cita['id_bloque'] === $bloque) $orden = $cita['orden_sobrecupo'];
+                    else {
+                        $q = $this->conn->prepare('SELECT COALESCE(MAX(orden_sobrecupo),0)+1 FROM citas WHERE id_clinica=? AND id_bloque=?');
+                        $q->execute([$this->clinica(), $bloque]);
+                        $orden = (int) $q->fetchColumn();
+                    }
+                }
                 $marcas = $this->marcas(self::ESTADOS_ABIERTOS);
                 $sql = "UPDATE citas SET id_veterinario = ?, fecha = ?, hora = ?, hora_fin = ?, version_agenda=version_agenda+1,
+                    es_sobrecupo=0,id_bloque=?,orden_sobrecupo=?,
                     inicio_estimado=NULL,fin_estimado=NULL,fecha_ultimo_calculo=NULL,
                     estado_reajuste='pendiente_calculo',motivo_reajuste='Reprogramación pendiente de cálculo'
                     WHERE id_cita = ? AND id_clinica = ? AND estado IN ($marcas)";
@@ -228,6 +265,8 @@ class Cita extends ModeloClinica
                     $fecha,
                     $hora,
                     self::horaFin($hora, $duracion),
+                    $bloque,
+                    $orden,
                     (int) $cita['id_cita'],
                     (int) $cita['id_clinica'],
                     ...self::ESTADOS_ABIERTOS,
@@ -239,6 +278,7 @@ class Cita extends ModeloClinica
                 if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $idCita, $cita, ['fecha' => $fecha, 'hora' => $hora], 'Reprogramación coordinada (RE-4.11.4)', $this->clinica())) {
                     throw new RuntimeException('No se pudo auditar la reprogramación.');
                 }
+                $this->avisarCambio($idCita, 'CITA_REPROGRAMADA');
                 return ['id_cita' => $idCita];
             });
             return $nueva;
@@ -445,9 +485,105 @@ class Cita extends ModeloClinica
     }
 
     /** RN-405: solo se cancela una cita pendiente o confirmada; no se borra. */
-    public function cancelar(array $cita): bool
+    public function cancelar(array $cita, ?string $clave = null): bool
     {
-        return $this->transicion($cita, self::ESTADOS_ABIERTOS, "estado = 'cancelada'", []);
+        $id = (int) $cita['id_cita'];
+        try {
+            return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), function () use ($id): array {
+                $actual = $this->getById($id);
+                return ['usuarios' => [(int) $actual['id_veterinario']], 'mascotas' => [(int) $actual['id_mascota']]];
+            }, function () use ($id, $clave): bool {
+                $actual = $this->getById($id);
+                $this->exigirActorVigente((int) $actual['id_mascota']);
+                if (Contexto::rolActivo() === Roles::VETERINARIO && (int) $actual['id_veterinario'] !== Contexto::idUsuario()) {
+                    throw new AccesoDenegado(403, 'Solo puedes cancelar tus citas.');
+                }
+                $nueva = false;
+                $this->conMismoAlcance(new OperacionAgenda($this->conn))->ejecutar('cancelar_cita', $clave, [$id], function () use ($actual, $id, &$nueva): array {
+                    if (!in_array($actual['estado'], self::ESTADOS_ABIERTOS, true)) {
+                        throw new InvalidArgumentException('Solo se cancelan citas pendientes o confirmadas.');
+                    }
+                    $ahora = $this->reloj ? ($this->reloj)() : new DateTimeImmutable('now', new DateTimeZone('America/Bogota'));
+                    if (Contexto::rolActivo() === Roles::PROPIETARIO && ReglaAtencion::inicio($actual['fecha'], $actual['hora']) <= $ahora) {
+                        throw new InvalidArgumentException('Solo puedes cancelar una cita futura.');
+                    }
+                    (new EventoAgenda($this->conn, $this->clinica()))->exigirSinDespacho($id);
+                    if (!$this->transicion($actual, self::ESTADOS_ABIERTOS, "estado='cancelada',version_agenda=version_agenda+1", [])) {
+                        throw new InvalidArgumentException('La cita cambió. Recarga la agenda.');
+                    }
+                    if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $id, ['estado' => $actual['estado']], ['estado' => 'cancelada'], 'Cancelación coordinada (RE-5.6.4)', $this->clinica())) {
+                        throw new RuntimeException('No se pudo auditar la cancelación.');
+                    }
+                    $this->avisarCambio($id, 'CITA_CANCELADA');
+                    $nueva = true;
+                    return ['id_cita' => $id];
+                });
+                return $nueva;
+            });
+        } catch (AccesoDenegado $error) {
+            $this->denegarAcceso('citas', $id, 'Cancelación denegada tras rollback (RE-T.15.2)');
+        }
+    }
+
+    private function avisarCambio(int $id, string $tipo): void
+    {
+        $cita = $this->getById($id);
+        (new NotificacionInterna($this->conn))->expirarDeCita($id);
+        $eventos = new EventoAgenda($this->conn, $this->clinica());
+        if ((int) $cita['id_veterinario'] !== Contexto::idUsuario()) {
+            $eventos->interno($tipo, $id, null, (int) $cita['version_agenda'], (int) $cita['id_veterinario'], null);
+        }
+        if (Contexto::rolActivo() !== Roles::ADMIN && ($tipo === 'CITA_CANCELADA' || Contexto::rolActivo() === Roles::PROPIETARIO)) {
+            $eventos->interno($tipo, $id, null, (int) $cita['version_agenda'], null, Roles::ADMIN);
+        }
+        if ($cita['id_propietario'] && Contexto::rolActivo() !== Roles::PROPIETARIO) {
+            $eventos->correo($tipo, $id, (int) $cita['version_agenda'], (int) $cita['id_propietario']);
+        }
+    }
+
+    public function reordenarSobrecupo(int $id, int $posicion, string $motivo, ?string $clave): array
+    {
+        $cita = $this->getById($id);
+        if (Contexto::rolActivo() !== Roles::VETERINARIO || (int) $cita['id_veterinario'] !== Contexto::idUsuario()) {
+            $this->denegarAcceso('citas', $id, 'Reordenamiento solo del veterinario de la cita (RN-422)');
+        }
+        $motivo = trim($motivo);
+        if ($motivo === '' || mb_strlen($motivo) > 255 || $posicion < 1 || !$cita['id_bloque']) {
+            throw new InvalidArgumentException('Indica una posición y un motivo de 1 a 255 caracteres.');
+        }
+        $leer = function () use ($cita): array {
+            $q = $this->conn->prepare("SELECT id_cita,id_mascota FROM citas WHERE id_clinica=? AND id_bloque=? AND prioridad='naranja' AND estado IN ('pendiente','confirmada') ORDER BY COALESCE(orden_sobrecupo,id_cita),fecha_registro,id_cita");
+            $q->execute([$this->clinica(), $cita['id_bloque']]);
+            return $q->fetchAll(PDO::FETCH_ASSOC);
+        };
+        return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), fn () => [
+            'usuarios' => [(int) $cita['id_veterinario']], 'mascotas' => array_column($leer(), 'id_mascota')
+        ], function () use ($id, $posicion, $motivo, $clave, $leer): array {
+            $actual = $this->getById($id);
+            $this->exigirActorVigente((int) $actual['id_mascota']);
+            if ((int) $actual['id_veterinario'] !== Contexto::idUsuario()) {
+                throw new AccesoDenegado(403, 'La asignación cambió.');
+            }
+            return $this->conMismoAlcance(new OperacionAgenda($this->conn))->ejecutar('reordenar_naranja', $clave, [$id, $posicion, $motivo], function () use ($id, $posicion, $motivo, $leer): array {
+                $antes = array_map('intval', array_column($leer(), 'id_cita'));
+                if (!in_array($id, $antes, true) || $posicion > count($antes)) {
+                    throw new InvalidArgumentException('La cola cambió. Vuelve a consultar.');
+                }
+                $orden = array_values(array_diff($antes, [$id]));
+                array_splice($orden, $posicion - 1, 0, [$id]);
+                foreach ($orden as $indice => $idCita) {
+                    (new EventoAgenda($this->conn, $this->clinica()))->exigirSinDespacho($idCita);
+                    $this->conn->prepare('UPDATE citas SET orden_sobrecupo=?,version_agenda=version_agenda+1 WHERE id_cita=? AND id_clinica=?')->execute([$indice + 1, $idCita, $this->clinica()]);
+                    // Solo cambió el orden: misma causa, hora y destinatario pendientes.
+                    $version = (int) $this->getById($idCita)['version_agenda'];
+                    $this->conn->prepare("UPDATE eventos_agenda SET version_recurso=? WHERE id_clinica=? AND id_cita=? AND canal='correo' AND estado IN ('pendiente','error') AND tipo IN ('NUEVA_CITA','CITA_REPROGRAMADA')")->execute([$version, $this->clinica(), $idCita]);
+                }
+                if (!(new Auditoria($this->conn))->log(Contexto::idUsuario(), 'UPDATE', 'citas', $id, ['orden' => $antes], ['orden' => $orden, 'motivo' => $motivo], 'Reordenamiento naranja motivado (RN-422)', $this->clinica())) {
+                    throw new RuntimeException('No se pudo auditar el orden.');
+                }
+                return ['orden' => $orden, 'message' => 'Orden actualizado.'];
+            });
+        });
     }
 
     /**

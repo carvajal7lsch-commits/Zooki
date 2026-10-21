@@ -53,6 +53,17 @@ final class DisponibilidadAgenda extends ModeloClinica
     private function jornada(int $vet, string $fecha): array
     {
         $dia = IntervalosAgenda::fecha($fecha . ' 00:00:00');
+        $apertura = $this->apertura($fecha);
+        $jornada = [];
+        foreach ($this->filas('SELECT hora_inicio,hora_fin FROM horarios_veterinario WHERE id_clinica=? AND id_veterinario=? AND dia_semana=? AND activo=1', [$this->clinica(), $vet, (int) $dia->format('N')]) as $fila) {
+            $jornada[] = $this->intervalo($fecha, $fila['hora_inicio'], $fila['hora_fin']);
+        }
+        return IntervalosAgenda::intersecar(IntervalosAgenda::unir($apertura), IntervalosAgenda::unir($jornada));
+    }
+
+    private function apertura(string $fecha): array
+    {
+        $dia = IntervalosAgenda::fecha($fecha . ' 00:00:00');
         $apertura = [];
         foreach ($this->filas('SELECT * FROM horarios_clinica WHERE id_clinica=? AND dia_semana=? AND activo=1', [$this->clinica(), (int) $dia->format('N')]) as $fila) {
             foreach (['morning', 'afternoon'] as $bloque) {
@@ -61,11 +72,33 @@ final class DisponibilidadAgenda extends ModeloClinica
                 }
             }
         }
-        $jornada = [];
-        foreach ($this->filas('SELECT hora_inicio,hora_fin FROM horarios_veterinario WHERE id_clinica=? AND id_veterinario=? AND dia_semana=? AND activo=1', [$this->clinica(), $vet, (int) $dia->format('N')]) as $fila) {
-            $jornada[] = $this->intervalo($fecha, $fila['hora_inicio'], $fila['hora_fin']);
+        return IntervalosAgenda::unir($apertura);
+    }
+
+    public function clinicaAbiertaEnFecha(string $fecha): bool
+    {
+        return $this->aperturaEfectiva($fecha) !== [];
+    }
+
+    public function clinicaAbiertaAhora(DateTimeImmutable $ahora): bool
+    {
+        foreach ($this->aperturaEfectiva($ahora->format('Y-m-d')) as [$desde, $hasta]) {
+            if ($desde <= $ahora->getTimestamp() && $ahora->getTimestamp() < $hasta) {
+                return true;
+            }
         }
-        return IntervalosAgenda::intersecar(IntervalosAgenda::unir($apertura), IntervalosAgenda::unir($jornada));
+        return false;
+    }
+
+    private function aperturaEfectiva(string $fecha): array
+    {
+        $desde = $fecha . ' 00:00:00';
+        $hasta = IntervalosAgenda::fecha($desde)->modify('+1 day')->format('Y-m-d H:i:s');
+        $cierres = [];
+        foreach ($this->filas('SELECT inicio,fin FROM cierres_clinica WHERE id_clinica=? AND activo=1 AND inicio<? AND fin>?', [$this->clinica(), $hasta, $desde]) as $fila) {
+            $cierres[] = [IntervalosAgenda::fecha($fila['inicio'])->getTimestamp(), IntervalosAgenda::fecha($fila['fin'])->getTimestamp()];
+        }
+        return IntervalosAgenda::restar($this->apertura($fecha), $cierres);
     }
 
     private function intervalo(string $fecha, string $inicio, string $fin): array
@@ -78,14 +111,15 @@ final class DisponibilidadAgenda extends ModeloClinica
         return strlen($hora) === 5 ? $hora . ':00' : $hora;
     }
 
-    private function franjas(int $vet, int $mascota, string $fecha, ?int $excluir, int $corte): array
+    private function franjas(int $vet, int $mascota, string $fecha, ?int $excluir, int $corte, bool $sobrecupo = false): array
     {
         $this->autorizar($vet, $mascota);
         if ($excluir !== null) {
             $cita = $this->filas("SELECT id_mascota,id_veterinario FROM citas WHERE id_cita=? AND id_clinica=? AND estado IN ('pendiente','confirmada')", [$excluir, $this->clinica()]);
             if (!$cita || (int) $cita[0]['id_mascota'] !== $mascota
                 || (Contexto::rolActivo() === Roles::VETERINARIO && (int) $cita[0]['id_veterinario'] !== Contexto::idUsuario())
-                || (Contexto::actual()['tipo'] ?? '') === Contexto::PROPIETARIO) {
+                || ((Contexto::actual()['tipo'] ?? '') === Contexto::PROPIETARIO
+                    && !$this->filas('SELECT 1 FROM mascotas WHERE id_mascota=? AND id_propietario=?', [$mascota, Contexto::idUsuario()]))) {
                 $this->denegarAcceso('citas', $excluir, 'Exclusión no autorizada (RE-4.9.3)');
             }
         }
@@ -100,16 +134,16 @@ final class DisponibilidadAgenda extends ModeloClinica
         foreach ($this->filas("SELECT fecha_hora_inicio,fecha_hora_fin FROM ausencias_veterinario WHERE id_clinica=? AND id_veterinario=? AND estado='aprobada' AND fecha_hora_inicio<? AND fecha_hora_fin>?", [$this->clinica(), $vet, $hasta, $desde]) as $fila) {
             $ocupaciones[] = [IntervalosAgenda::fecha($fila['fecha_hora_inicio'])->getTimestamp(), IntervalosAgenda::fecha($fila['fecha_hora_fin'])->getTimestamp()];
         }
-        foreach ($this->ocupacionGlobal($vet, $mascota, $fecha, $excluir, $corte) as $intervalo) {
+        foreach ($this->ocupacionGlobal($vet, $mascota, $fecha, $excluir, $corte, $sobrecupo) as $intervalo) {
             $ocupaciones[] = $intervalo;
         }
         return IntervalosAgenda::restar($this->jornada($vet, $fecha), $ocupaciones);
     }
 
     /** RN-401: excepción global mínima; nunca nombres, clínica, motivo o contactos. */
-    private function ocupacionGlobal(int $vet, int $mascota, string $fecha, ?int $excluir, int $ahora): array
+    private function ocupacionGlobal(int $vet, int $mascota, string $fecha, ?int $excluir, int $ahora, bool $sobrecupo = false): array
     {
-        $sql = "SELECT c.id_cita,c.fecha,c.hora,c.hora_fin,c.duracion_minutos,c.margen_minutos,c.estado,
+        $sql = "SELECT (c.id_clinica=?) AS misma_clinica,(c.id_mascota=?) AS mismo_paciente,c.id_cita,c.fecha,c.hora,c.hora_fin,c.duracion_minutos,c.margen_minutos,c.estado,
             c.hora_inicio_real,c.hora_fin_real,c.inicio_estimado,c.fin_estimado,c.duracion_activa_objetivo_segundos,
             p.inicio AS pausa_inicio,p.fin AS pausa_fin
             FROM citas c LEFT JOIN pausas_cita p ON p.id_cita=c.id_cita
@@ -118,7 +152,7 @@ final class DisponibilidadAgenda extends ModeloClinica
                 OR (c.hora_inicio_real<? AND (c.hora_fin_real IS NULL OR c.hora_fin_real>=?))
                 OR (c.inicio_estimado<? AND c.fin_estimado>=?))";
         $finDia = IntervalosAgenda::fecha($fecha . ' 00:00:00')->modify('+1 day')->format('Y-m-d H:i:s');
-        $parametros = [$vet, $mascota, $fecha, $fecha, $finDia, $fecha . ' 00:00:00', $finDia, $fecha . ' 00:00:00'];
+        $parametros = [$this->clinica(), $mascota, $vet, $mascota, $fecha, $fecha, $finDia, $fecha . ' 00:00:00', $finDia, $fecha . ' 00:00:00'];
         if ($excluir !== null) {
             $sql .= ' AND c.id_cita<>?';
             $parametros[] = $excluir;
@@ -135,6 +169,7 @@ final class DisponibilidadAgenda extends ModeloClinica
         $resultado = [];
         foreach ($citas as $datos) {
             $c = $datos['fila'];
+            $ignorar = $sobrecupo && (bool) $c['misma_clinica'] && !(bool) $c['mismo_paciente'];
             $s = IntervalosAgenda::fecha($c['fecha'] . ' ' . self::hora($c['hora']))->getTimestamp();
             $duracion = (int) $c['duracion_minutos'];
             $margen = $c['margen_minutos'] === null ? null : (int) $c['margen_minutos'] * 60;
@@ -155,7 +190,9 @@ final class DisponibilidadAgenda extends ModeloClinica
                 }
                 $inicio = $c['inicio_estimado'] === null ? $s : IntervalosAgenda::fecha($c['inicio_estimado'])->getTimestamp();
                 $fin = $c['fin_estimado'] === null ? $inicio + ($fin - $s) : IntervalosAgenda::fecha($c['fin_estimado'])->getTimestamp();
-                $resultado[] = [min($s, $inicio), max($s + $duracion * 60, $fin) + $margen];
+                if (!$ignorar) {
+                    $resultado[] = [min($s, $inicio), max($s + $duracion * 60, $fin) + $margen];
+                }
                 continue;
             }
             if ($c['hora_inicio_real'] === null || (int) $c['duracion_activa_objetivo_segundos'] <= 0) {
@@ -188,7 +225,9 @@ final class DisponibilidadAgenda extends ModeloClinica
                     $this->requiereRevision();
                 }
             }
-            $resultado[] = [min($s, $r), max($nominal + $margen, $fin)];
+            if (!$ignorar) {
+                $resultado[] = [min($s, $r), max($nominal + $margen, $fin)];
+            }
         }
         return $resultado;
     }
@@ -209,10 +248,10 @@ final class DisponibilidadAgenda extends ModeloClinica
         }
     }
 
-    public function sugerir(int $vet, int $mascota, string $fecha, int $duracion, int $margen, ?int $excluir = null): array
+    public function sugerir(int $vet, int $mascota, string $fecha, int $duracion, int $margen, ?int $excluir = null, bool $sobrecupo = false): array
     {
         $ahora = ($this->reloj)()->getTimestamp();
-        $libres = $this->franjas($vet, $mascota, $fecha, $excluir, $ahora);
+        $libres = $this->franjas($vet, $mascota, $fecha, $excluir, $ahora, $sobrecupo);
         $horas = [];
         foreach ($this->jornada($vet, $fecha) as [$desde, $hasta]) {
             for ($inicio = $desde; $inicio + ($duracion + $margen) * 60 <= $hasta; $inicio += $duracion * 60) {
@@ -224,6 +263,12 @@ final class DisponibilidadAgenda extends ModeloClinica
             }
         }
         return array_values(array_unique($horas));
+    }
+
+    public function bloquesOriginales(int $vet, int $mascota, string $fecha): array
+    {
+        $this->autorizar($vet, $mascota);
+        return $this->jornada($vet, $fecha);
     }
 
     private function filas(string $sql, array $parametros): array

@@ -14,7 +14,7 @@ test('C3 conecta los formularios desde el archivo JS y conserva las vistas sin e
     const conectados = [];
     const contexto = { crearCitaModal() {}, filtrarMascotas() {}, onModalVeterinarioChange() {}, onModalTipoCitaChange() {}, cargarSlotsReprogramar() {},
         document: { getElementById: id => ({ addEventListener: evento => conectados.push([id, evento]) }) } };
-    vm.createContext(contexto);
+    prepararContextoC4(contexto);
     vm.runInContext(fuente.slice(inicio, fin), contexto);
     contexto.conectarFormulariosC3();
     assert.equal(conectados.length, 7);
@@ -44,7 +44,7 @@ test('C3 arrastrar conserva los segundos y revierte visualmente un rechazo del s
     let revertida = false;
     const contexto = { String, toLocalDateStr: () => '2030-01-07', mostrarToast() {},
         postCita: async (accion, datos) => { enviada = datos; return { success: false }; } };
-    vm.createContext(contexto);
+    prepararContextoC4(contexto);
     vm.runInContext(fuente.slice(inicio, fin), contexto);
     contexto.reprogramarPorArrastre({ event: { id: '8', start: new Date(2030, 0, 7, 9, 20, 7) }, revert: () => { revertida = true; } });
     await new Promise(resolve => setImmediate(resolve));
@@ -70,7 +70,7 @@ function contextoSlots(fetch) {
         ocultarErrorModal() {}, actualizarResumenModal: () => { boton.disabled = !valores.modal_hora; }, textoGuiaSlots: () => 'Guía',
         setSlotsEstado: (...args) => estados.push(args),
         renderSlots: (...args) => dibujadas.push(args), actualizarBotonModal() {} };
-    vm.createContext(contexto);
+    prepararContextoC4(contexto);
     const codigo = funcion('public/js/calendario.js', 'cargarSlotsModal', '\nfunction actualizarResumenModal');
     instalarFalloSlots(contexto);
     vm.runInContext(codigo, contexto);
@@ -108,7 +108,7 @@ function contextoReprogramar(fetch) {
         actualizarBotonReprog: () => { boton.disabled = !valores.reprogramar_hora; },
         ocultarErrorReprog() {}, esDiaPasado: () => false,
         setSlotsEstado: (...args) => estados.push(args), renderSlots: (...args) => dibujadas.push(args) };
-    vm.createContext(contexto);
+    prepararContextoC4(contexto);
     instalarFalloSlots(contexto);
     vm.runInContext(funcion('public/js/calendario.js', 'cargarSlotsReprogramar', '\nasync function confirmarReprogramacion'), contexto);
     return { contexto, valores, estados, dibujadas, boton };
@@ -165,7 +165,7 @@ test('C3.1 el mensaje de revisión se escapa en la estructura real del modal', (
     const fuente = fs.readFileSync('public/js/calendario.js', 'utf8');
     const contenedor = { innerHTML: '', onclick() {} };
     const contexto = { document: { getElementById: () => contenedor } };
-    vm.createContext(contexto);
+    prepararContextoC4(contexto);
     vm.runInContext(fuente.slice(fuente.indexOf('function esc('), fuente.indexOf('\n}', fuente.indexOf('function esc(')) + 2), contexto);
     vm.runInContext(fuente.slice(fuente.indexOf('function setSlotsEstado('), fuente.indexOf('/** Si la fecha es hoy')), contexto);
     contexto.mostrarFalloSlots('modal_slots_container', { success: false, message: '<img src=x onerror=alert(1)>' });
@@ -196,7 +196,7 @@ test('C3 protege doble envío de reprogramación y conserva su intención', asyn
         val: id => ({ reprogramar_hora: '10:00', reprogramar_fecha: '2030-01-07', reprogramar_veterinario: '2' })[id],
         postCita: () => { envios++; return new Promise(resolve => { resolver = resolve; }); },
         mostrarErrorReprog() {}, actualizarBotonReprog: () => { boton.disabled = false; } };
-    vm.createContext(contexto);
+    prepararContextoC4(contexto);
     vm.runInContext(codigo, contexto);
     const primero = contexto.confirmarReprogramacion();
     await contexto.confirmarReprogramacion();
@@ -214,7 +214,7 @@ test('C3 reserva no se duplica aunque la validación en vivo intente rehabilitar
     const contexto = { console, enviosC3: { reserva: false }, document: { getElementById: () => boton },
         val: () => '1', getVetModal: () => '2', actualizarResumenModal: () => { boton.disabled = false; },
         mostrarErrorModal() {}, postCita: () => { envios++; return new Promise(resolve => { resolver = resolve; }); } };
-    vm.createContext(contexto);
+    prepararContextoC4(contexto);
     vm.runInContext(codigo, contexto);
     const evento = { preventDefault() {} };
     const primero = contexto.crearCitaModal(evento);
@@ -241,7 +241,7 @@ test('C3 portal recibe la respuesta canónica sin intersectar ni redondear con e
             return { json: async () => ({ success: true, sugerencias: ['08:00:30', '11:20:07'] }) };
         },
         renderSlots: horas => { dibujadas = Array.from(horas); } };
-    vm.createContext(contexto);
+    prepararContextoC4(contexto);
     vm.runInContext(fuente.slice(inicio, fin), contexto);
     await contexto.cargarHoras();
     assert.deepEqual(dibujadas, ['08:00:30', '11:20:07']);
@@ -266,7 +266,7 @@ test('C3 portal bloquea doble envío y reintenta el mismo comando tras fallo de 
             horas.push(opciones.body.get('hora'));
             return new Promise(resolve => { resolver = resolve; });
         } };
-    vm.createContext(contexto);
+    prepararContextoC4(contexto);
     vm.runInContext(fuente.slice(inicio, fin) + '\nglobalThis.enviarC3 = enviarFormulario;', contexto);
     const primero = contexto.enviarC3();
     await contexto.enviarC3();
@@ -289,7 +289,7 @@ test('C3.1 los chips reales internos y del portal presentan y seleccionan el ins
         const contexto = { document: { getElementById: () => contenedor }, slots: contenedor,
             horaInput: { value: '' }, actualizarGuia() {}, zookiHoraAgenda: formatearHora,
             minutosDe: h => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5)) };
-        vm.createContext(contexto);
+        prepararContextoC4(contexto);
         const calendario = fs.readFileSync('public/js/calendario.js', 'utf8');
         vm.runInContext(calendario.slice(calendario.indexOf('function esc('), calendario.indexOf('\n}', calendario.indexOf('function esc(')) + 2), contexto);
         if (portal) {
@@ -329,9 +329,16 @@ for (const reprogramar of [false, true]) {
                 enviada = datos;
                 return { success: false, message: 'Conflicto' };
             } };
-        vm.createContext(contexto);
+        prepararContextoC4(contexto);
         vm.runInContext(funcion('public/js/calendario.js', nombre, '\n// ═'), contexto);
         await contexto[nombre]({ preventDefault() {} });
         assert.equal(enviada.hora, '08:00:30');
     });
+}
+
+// C4: estos casos C3 parten de una evaluación previa válida; la puerta negativa se cubre aparte.
+function prepararContextoC4(contexto) {
+    contexto.triageModalC4 = { consulta: () => '123' };
+    contexto.triageC4 = { consulta: () => '123' };
+    vm.createContext(contexto);
 }

@@ -411,7 +411,7 @@ SET @m4_ddl = IF(NOT EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE
 PREPARE m4_sentencia FROM @m4_ddl;
 EXECUTE m4_sentencia;
 DEALLOCATE PREPARE m4_sentencia;
-SET @m4_ddl = IF(NOT EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='solicitudes_agenda' AND COLUMN_NAME='origen') OR EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='solicitudes_agenda' AND COLUMN_NAME='origen' AND REPLACE(REPLACE(REPLACE(LOWER(COLUMN_TYPE),'int(11)','int'),'tinyint(1)','tinyint'),'bigint(20)','bigint')='enum(''portal'',''llegada'')' AND IS_NULLABLE='NO' AND COALESCE(NULLIF(LOWER(TRIM(BOTH CHAR(39) FROM COLUMN_DEFAULT)), 'null'),'#null#') IN ('#null#') AND COALESCE(GENERATION_EXPRESSION,'')='' AND LOWER(EXTRA) NOT LIKE '%auto_increment%'), 'DO 0', CONCAT('CALL zooki_m4_08_error(', QUOTE(CONCAT('M4-08 definicion solicitudes_agenda.origen')), ')'));
+SET @m4_ddl = IF(NOT EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='solicitudes_agenda' AND COLUMN_NAME='origen') OR EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='solicitudes_agenda' AND COLUMN_NAME='origen' AND REPLACE(REPLACE(REPLACE(LOWER(COLUMN_TYPE),'int(11)','int'),'tinyint(1)','tinyint'),'bigint(20)','bigint') IN ('enum(''portal'',''llegada'')','enum(''portal'',''llegada'',''interno'')') AND IS_NULLABLE='NO' AND COALESCE(NULLIF(LOWER(TRIM(BOTH CHAR(39) FROM COLUMN_DEFAULT)), 'null'),'#null#') IN ('#null#') AND COALESCE(GENERATION_EXPRESSION,'')='' AND LOWER(EXTRA) NOT LIKE '%auto_increment%'), 'DO 0', CONCAT('CALL zooki_m4_08_error(', QUOTE(CONCAT('M4-08 definicion solicitudes_agenda.origen')), ')'));
 PREPARE m4_sentencia FROM @m4_ddl;
 EXECUTE m4_sentencia;
 DEALLOCATE PREPARE m4_sentencia;
@@ -1866,7 +1866,7 @@ SET @m4_ddl = IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCH
 PREPARE m4_sentencia FROM @m4_ddl;
 EXECUTE m4_sentencia;
 DEALLOCATE PREPARE m4_sentencia;
-SET @m4_ddl = IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='solicitudes_agenda' AND COLUMN_NAME='origen' AND REPLACE(REPLACE(REPLACE(LOWER(COLUMN_TYPE),'int(11)','int'),'tinyint(1)','tinyint'),'bigint(20)','bigint')='enum(''portal'',''llegada'')' AND IS_NULLABLE='NO' AND COALESCE(NULLIF(LOWER(TRIM(BOTH CHAR(39) FROM COLUMN_DEFAULT)), 'null'),'#null#') IN ('#null#') AND COALESCE(GENERATION_EXPRESSION,'')='' AND LOWER(EXTRA) NOT LIKE '%auto_increment%'), 'DO 0', CONCAT('CALL zooki_m4_08_error(', QUOTE(CONCAT('M4-08 definicion final solicitudes_agenda.origen')), ')'));
+SET @m4_ddl = IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='solicitudes_agenda' AND COLUMN_NAME='origen' AND REPLACE(REPLACE(REPLACE(LOWER(COLUMN_TYPE),'int(11)','int'),'tinyint(1)','tinyint'),'bigint(20)','bigint') IN ('enum(''portal'',''llegada'')','enum(''portal'',''llegada'',''interno'')') AND IS_NULLABLE='NO' AND COALESCE(NULLIF(LOWER(TRIM(BOTH CHAR(39) FROM COLUMN_DEFAULT)), 'null'),'#null#') IN ('#null#') AND COALESCE(GENERATION_EXPRESSION,'')='' AND LOWER(EXTRA) NOT LIKE '%auto_increment%'), 'DO 0', CONCAT('CALL zooki_m4_08_error(', QUOTE(CONCAT('M4-08 definicion final solicitudes_agenda.origen')), ')'));
 PREPARE m4_sentencia FROM @m4_ddl;
 EXECUTE m4_sentencia;
 DEALLOCATE PREPARE m4_sentencia;

@@ -659,6 +659,18 @@ switch ($action) {
         break;
 
     // RUTAS SPRINT 4: CITAS Y AGENDA
+    case "reordenar_sobrecupos_ajax":
+        require_once "../controllers/CitaController.php";
+        (new CitaController())->reordenarSobrecupoAjax();
+        break;
+    case "revisar_triage_agenda_ajax":
+        require_once "../controllers/CitaController.php";
+        (new CitaController())->revisarTriageAjax();
+        break;
+    case "listar_solicitudes_agenda_ajax":
+        require_once "../controllers/CitaController.php";
+        (new CitaController())->listarSolicitudesAjax();
+        break;
     case "registrar_cita_ajax":
         require_once "../controllers/CitaController.php";
         $controller = new CitaController();

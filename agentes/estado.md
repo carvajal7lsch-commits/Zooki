@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### C4 entregada y verificada; sigue C5 (2026-10-20)
+
+- **C4 (C4a+C4b):** Codex escribió la implementación y se quedó sin tokens; Claude revisó, corrigió un P1 de migración (08 rechazaba el origen `interno` → el despliegue habría fallado) y pruebas desactualizadas, completó las pruebas (10 nuevas en AgendaC4Test y la carrera AgendaC4MysqlTest en el CI) y escribió el Anexo C4.
+- **Verificación de Claude con MySQL 8.0.46 local:** PHP completo con motor 948/8736 sin omisiones; sin host 948/7730 (61 omitidas); JS 270/270; migrador doble y volumen vacío correctos.
+- **Pendiente del usuario:** commit y push de C4 (y de los 2 commits anteriores que no habían subido). Confirmar CI.
+- **Siguiente:** entrega C5 (C5a Grafo II y cascada + C5b reasignación en vivo). Luego C6-C7, C8 y D-F.
+
 ### Modo acelerado; C3.1 aprobada; encargo C4 (2026-10-20)
 
 - **Decisión del usuario:** se hace **todo** M4 sin recortar alcance, pero más rápido. Arquitecto/revisor: Claude; ejecutor: Codex. Revisiones livianas, solo P1 bloquea, P2/P3 y pruebas manuales van a la «Lista para D» del plan. Reglas en `metodo.md` §11.

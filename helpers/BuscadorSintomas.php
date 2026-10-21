@@ -10,13 +10,13 @@ final class BuscadorSintomas
     public const SIMILITUD_MINIMA = 0.65;
     public const CONSULTA_MAX = 100;
 
-    public static function buscar(string $consulta, array $catalogo, ?string $especie = null): array
+    public static function buscar(string $consulta, array $catalogo, ?string $especie = null, array $tipos = ['sintoma']): array
     {
         $consulta = ArchivosConocimiento::normalizarTexto($consulta);
         $resultados = [];
         $otro = null;
         foreach ($catalogo as $nodo) {
-            if ($nodo['tipo'] !== 'sintoma' || (isset($nodo['activo']) && !$nodo['activo'])) {
+            if (!in_array($nodo['tipo'], $tipos, true) || (isset($nodo['activo']) && !$nodo['activo'])) {
                 continue;
             }
             $opcion = ['codigo' => $nodo['codigo'], 'etiqueta' => $nodo['etiqueta']];

@@ -1,6 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
 require_once __DIR__ . '/../../models/Cita.php';
 require_once __DIR__ . '/../../controllers/CitaController.php';
 
@@ -14,9 +15,11 @@ final class DisponibilidadAgendaTest extends TestCase
     {
         $this->db = DosClinicas::sqlite();
         DosClinicas::crearMascotasSqlite($this->db);
+        ConocimientoRealPrueba::taxonomia($this->db);
         DosClinicas::crearCatalogosSqlite($this->db);
         DosClinicas::crearHistoriaSqlite($this->db);
         DosClinicas::poblarAgenda($this->db);
+        (new CargadorConocimiento($this->db))->cargar(ConocimientoRealPrueba::CARPETA);
         $_SESSION = ['id_usuario' => 2];
         Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::VETERINARIO), 1);
         $this->citas = new Cita($this->db, static fn () => IntervalosAgenda::fecha('2030-01-07 08:00:01'));
@@ -61,6 +64,7 @@ final class DisponibilidadAgendaTest extends TestCase
                 ob_end_clean();
             }
         };
+        $_GET = AgendaC4Prueba::capturar($this->db, $_GET, $reloj);
         $interna = $leer(fn () => $controlador->getSugerenciasHorarioAjax());
         $this->assertTrue($interna['success']);
         $this->assertSame($esperada, $interna['sugerencias'][0]);
@@ -68,6 +72,8 @@ final class DisponibilidadAgendaTest extends TestCase
         $_SESSION = ['id_usuario' => 6];
         Contexto::activar(Contexto::dePropietario(), 1);
         $_GET['id_clinica'] = '1';
+        unset($_GET['id_solicitud']);
+        $_GET = AgendaC4Prueba::capturar($this->db, $_GET, $reloj);
         foreach (['portalHorasAjax', 'portalSugerenciasAjax'] as $ruta) {
             $portal = $leer(fn () => $controlador->$ruta());
             $this->assertTrue($portal['success']);
@@ -234,6 +240,7 @@ final class DisponibilidadAgendaTest extends TestCase
         $_GET = ['id_veterinario' => '2', 'id_mascota' => '1', 'id_tipo_cita' => '1', 'fecha' => '2030-01-07',
             'duracion_minutos' => '1', 'margen_minutos' => '0', 'prioridad' => 'rojo'];
         $controlador = new CitaController($this->db, static fn () => IntervalosAgenda::fecha('2030-01-07 08:00:01'));
+        $_GET = AgendaC4Prueba::capturar($this->db, $_GET, static fn () => IntervalosAgenda::fecha('2030-01-07 08:00:01'));
         ob_start();
         try {
             $controlador->getSugerenciasHorarioAjax();

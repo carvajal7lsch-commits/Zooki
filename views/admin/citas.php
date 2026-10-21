@@ -130,3 +130,5 @@ $nombre = explode(" ", trim($_SESSION["usuario_nombre"]))[0];
 
 <script src="js/indicadores.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/admin-citas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+
+<?php require __DIR__ . '/../partials/solicitudes_agenda.php'; ?>

@@ -735,7 +735,7 @@ CREATE TABLE `solicitudes_agenda` (
   `id_clinica` INT NOT NULL,
   `id_mascota` INT NOT NULL,
   `id_actor` INT NOT NULL,
-  `origen` ENUM('portal','llegada') NOT NULL,
+  `origen` ENUM('portal','llegada','interno') NOT NULL,
   `fecha_registro` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `fecha_llegada` DATETIME DEFAULT NULL,
   `id_receptor` INT DEFAULT NULL,

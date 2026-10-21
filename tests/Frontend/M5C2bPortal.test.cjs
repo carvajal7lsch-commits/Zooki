@@ -285,7 +285,12 @@ test('el portal no usa SweetAlert para errores de validación ni código en lín
     assert.doesNotMatch(js, /title: 'Revisa los datos'/);
     // M5 C4a: tampoco para confirmar; cancelar y la cita duplicada usan el modal de Zooki.
     assert.equal((js.match(/Swal\./g) || []).length, 0, 'Sin SweetAlert en el portal (los toasts van por zookiToast).');
-    assert.match(codigo('views/portal/layout.php'), /js\/validacion-mascota\.js\?v=<\?= \$v \?>"><\/script>\s*<script src="js\/portal\.js/);
+    // C4: entre validacion-mascota y portal.js se cargan la captura de síntomas y el triage; portal.js los usa.
+    const layout = codigo('views/portal/layout.php');
+    const pos = (js) => layout.indexOf(`<script src="js/${js}?v=<?= $v ?>"></script>`);
+    for (const previo of ['validacion-mascota.js', 'consulta-sintomas.js', 'triage-agenda.js']) {
+        assert.ok(pos(previo) > -1 && pos(previo) < pos('portal.js'), previo + ' antes de portal.js');
+    }
     for (const archivo of ['views/portal/index.php', 'views/portal/layout.php']) {
         assert.doesNotMatch(codigo(archivo), /\sstyle="|\son[a-z]+="|<script>\s*\S/, archivo);
     }

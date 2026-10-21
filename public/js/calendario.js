@@ -1,4 +1,5 @@
-const comandosC3 = { registrar_cita_ajax: zookiCrearComandoAgenda(), reprogramar_cita_ajax: zookiCrearComandoAgenda() };
+let triageModalC4 = null;
+const comandosC3 = { cancelar_cita_ajax: zookiCrearComandoAgenda(), registrar_cita_ajax: zookiCrearComandoAgenda(), reprogramar_cita_ajax: zookiCrearComandoAgenda() };
 const enviosC3 = { reserva: false, reprogramacion: false };
 /* ═══════════════════════════════════════════
    ZOOKI AGENDA
@@ -239,6 +240,7 @@ async function cargarEventos(info, exito, fallo) {
 }
 
 function mountDayAddButton(arg) {
+    if (!isUsuarioVeterinario()) return;
     if (arg.view.type !== 'dayGridMonth' || esDiaPasado(arg.date)) return;
     const top = arg.el.querySelector('.fc-daygrid-day-top');
     if (!top || top.querySelector('.fc-day-add-btn')) return;
@@ -427,7 +429,7 @@ function renderPanelDia() {
             <h3 class="agenda-panel__title">${esc(formatFecha(date, { day: 'numeric', month: 'long' }))}</h3>
             <p class="agenda-panel__meta">${_cargando ? 'Cargando…' : esc(resumenDia(citas.length, otros.length))}</p>
         </div>
-        ${pasado ? '' : '<button type="button" class="cal-btn cal-btn--primary cal-btn--sm" data-accion="agendar"><i class="fas fa-plus"></i> Agendar</button>'}`;
+        ${pasado || !isUsuarioVeterinario() ? '' : '<button type="button" class="cal-btn cal-btn--primary cal-btn--sm" data-accion="agendar"><i class="fas fa-plus"></i> Agendar</button>'}`;
 
     const body = document.getElementById('agendaPanelBody');
     if (_cargando) {
@@ -537,6 +539,13 @@ function mostrarDetalleCita(eventId) {
         acciones = `<p class="agenda-detail__note">${nota}</p>`;
     }
 
+    if (p.prioridad === 'naranja' && esSuCita && abierta) {
+        acciones += `<form data-reordenar-naranja data-cita="${esc(ev.id)}">
+            <label class="zk-label">Posición en la cola<input class="zk-input" name="posicion" value="${esc(p.orden_sobrecupo || 1)}" inputmode="numeric" data-caracteres="0-9" maxlength="9"></label>
+            <label class="zk-label">Motivo del cambio<input class="zk-input" name="motivo" maxlength="255" data-caracteres="\\p{L}\\p{M}\\p{N}\\p{P}\\p{S} " data-espacios="normalizar"></label>
+            <small data-orden-error class="cuenta-validacion" aria-live="polite"></small>
+            <button class="cal-btn cal-btn--ghost" type="submit" disabled>Guardar orden</button></form>`;
+    }
     const filas = [
         ['Fecha', `${capitalizar(formatFecha(ev.start, { weekday: 'long', day: 'numeric', month: 'long' }))} · ${formatHora(ev.start)}`],
         ['Propietario', p.propietario_nombre],
@@ -826,6 +835,8 @@ function textoGuiaSlots() {
 }
 
 function abrirCitaModal(date) {
+    if (!isUsuarioVeterinario()) return;
+    triageModalC4?.reiniciar();
     comandosC3.registrar_cita_ajax.reiniciar();
     if (!date || esDiaPasado(date)) return;
     const fecha = inicioDelDia(date);
@@ -941,10 +952,15 @@ async function cargarSlotsModal() {
 
     // Si el usuario cambia de tipo o de veterinario antes de que llegue la
     // respuesta, la vieja se descarta para no pintar horarios equivocados.
+    const solicitud = triageModalC4?.consulta();
+    if (!solicitud) {
+        setSlotsEstado('modal_slots_container', 'guia', 'Calcula el triage y completa la revisión antes de consultar horarios.');
+        return;
+    }
     setSlotsEstado('modal_slots_container', 'cargando');
 
     try {
-        const parametros = new URLSearchParams({ action: 'get_sugerencias_horario_ajax', id_veterinario: vet, id_mascota: mascota, id_tipo_cita: tipo, fecha });
+        const parametros = new URLSearchParams({ action: 'get_sugerencias_horario_ajax', id_veterinario: vet, id_mascota: mascota, id_tipo_cita: tipo, fecha, id_solicitud: solicitud });
         const sugerencias = await fetch(`index.php?${parametros}`).then(r => r.json());
         if (turno !== _turnoSlotsCita) return;
         if (mostrarFalloSlots('modal_slots_container', sugerencias)) return;
@@ -979,6 +995,7 @@ function actualizarResumenModal() {
     if (!getVetModal()) faltan.push('veterinario');
     if (!tipoSel.value) faltan.push('tipo de cita');
     if (!hora) faltan.push('horario');
+    if (!triageModalC4?.consulta()) faltan.push('triage y revisión');
 
     submit.disabled = enviosC3.reserva || faltan.length > 0;
     const tipoNombre = tipoSel.value ? (tipoSel.options[tipoSel.selectedIndex].dataset.nombre || '') : '';
@@ -1008,6 +1025,7 @@ async function crearCitaModal(e) {
     if (submit.disabled) return;
 
     const datos = {
+        id_solicitud: triageModalC4?.consulta() || '',
         id_mascota: val('modal_mascota'),
         id_veterinario: getVetModal(),
         fecha: val('modal_fecha'),
@@ -1244,22 +1262,27 @@ document.addEventListener('click', e => {
 });
 
 function conectarFormulariosC3() {
-    document.getElementById('formCitaModal').addEventListener('submit', crearCitaModal);
-    document.getElementById('cm_mascota_search').addEventListener('input', evento => filtrarMascotas(evento.target.value));
-    document.getElementById('modal_veterinario').addEventListener('change', onModalVeterinarioChange);
-    document.getElementById('modal_tipo_cita').addEventListener('change', onModalTipoCitaChange);
+    document.getElementById('formCitaModal')?.addEventListener('submit', crearCitaModal);
+    document.getElementById('cm_mascota_search')?.addEventListener('input', evento => filtrarMascotas(evento.target.value));
+    document.getElementById('modal_veterinario')?.addEventListener('change', onModalVeterinarioChange);
+    document.getElementById('modal_tipo_cita')?.addEventListener('change', onModalTipoCitaChange);
     for (const id of ['reprogramar_fecha', 'reprogramar_veterinario', 'reprogramar_tipo_cita']) {
         document.getElementById(id).addEventListener('change', cargarSlotsReprogramar);
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const bloqueTriage = document.querySelector('#formCitaModal [data-triage-agenda]');
+    if (bloqueTriage) triageModalC4 = ZookiTriageAgenda.crear(bloqueTriage, {
+        seleccion: () => ({ id_mascota: val('modal_mascota'), id_veterinario: getVetModal(), id_tipo_cita: val('modal_tipo_cita'), fecha: val('modal_fecha') }),
+        alCambiar: () => cargarSlotsModal()
+    });
     conectarFormulariosC3();
     moverModalesAlBody();
     FilterManager.init();
     conectarBarra();
     document.getElementById('agendaPanel').addEventListener('click', manejarClicPanel);
-    document.getElementById('cm_mascota_dropdown').addEventListener('click', e => {
+    document.getElementById('cm_mascota_dropdown')?.addEventListener('click', e => {
         const opcion = e.target.closest('.zk-option');
         if (opcion) seleccionarMascota(opcion.dataset.id, opcion.dataset.nombre, opcion.dataset.propietario);
     });

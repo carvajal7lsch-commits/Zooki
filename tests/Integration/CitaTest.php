@@ -83,10 +83,10 @@ final class CitaTest extends TestCase
 
         // Una fila «armada» con la clínica de B tampoco cambia la cita de A.
         $falsa = ['id_cita' => $id, 'id_clinica' => DosClinicas::SUR];
-        $this->assertFalse($this->citas->cancelar($falsa));
+        $this->assertAccesoDenegado(fn () => $this->citas->cancelar($falsa));
         $this->assertSame('confirmada', $this->fila($id)['estado']);
 
-        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = 2 AND tabla_afectada = 'citas'")->fetchColumn());
+        $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = 2 AND tabla_afectada = 'citas'")->fetchColumn());
     }
 
     public function testUnaMascotaNoVinculadaNoSeAgendaYUnaInactivaTampoco(): void

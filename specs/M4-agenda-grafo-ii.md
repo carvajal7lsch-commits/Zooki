@@ -1,6 +1,6 @@
 # M4 — Agenda inteligente y Grafo II
 
-> Estado: **Modo acelerado (2026-10-20). C3 y C3.1 aprobadas en código por Claude (revisión liviana); CI MySQL 8 de 8cbba34 pendiente tras el push. Encargada la entrega C4 (C4a+C4b).** Agrupación de entregas y «Lista para D» al final del plan. Anexos y revisiones previos conservados como historial.
+> Estado: **Modo acelerado (2026-10-20). C4 (C4a+C4b) entregada y verificada: implementación de Codex, cierre, correcciones y pruebas de Claude (Anexo C4). Sigue C5.** C1–C3.1 aprobadas. Agrupación de entregas y «Lista para D» al final del plan. Anexos y revisiones previos conservados como historial.
 > Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
 > Escribe Codex; revisa Claude como arquitecto desde el 2026-10-20 (modo acelerado, `agentes/metodo.md` §11). Hasta C3.1 revisó Codex en una sesión independiente.
 > Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
@@ -172,6 +172,10 @@ Las diferencias normativas de esta tabla se detectaron en A y se alinean documen
 Responder genéricamente que la disponibilidad requiere revisión, sin inventar duración, cambiar la cita ni completar sus snapshots desde el tipo actual.
 La confirmación corresponde a la pregunta expresa del ejecutor durante C3; no se atribuye esta regla a una decisión previa ni se habilita cascada/atención C5/C7.
 
+**Decisión del usuario (2026-10-20) — origen interno de solicitudes en C4:** autoriza añadir `interno` al origen de solicitudes_agenda y sincronizar esquema/migración/MER/drawDB.
+La captura veterinaria desde la agenda conserva fecha_llegada e id_receptor nulos; no representa una llegada física ni amplía permisos.
+La migración 09 incorpora la extensión; 08 de M4 aún sin release acepta también ese destino para permitir instalación consolidada y repetición, conservando sus otras comprobaciones y sin modificar 03–07 publicadas.
+
 **Decisión del usuario (2026-10-17) — comandos de entrega:** no incluir `git diff --cached --stat` en los comandos para pegar; usa también CMD y pide únicamente los pasos necesarios para guardar/subir, uno por línea. Preferencia registrada en agentes/metodo.md §8; no cambia las verificaciones que debe realizar el revisor.
 
 1. **Decisión del usuario (2026-10-17) — alcance:** HU-4.10, HU-4.16, HU-4.17 y el reporte RE-4.7.3 quedan en v2.1. Corregir la nota contradictoria de HU-4.10 al alinear documentos. No adelantar el re-triage del propietario para cerrar M4.
@@ -180,6 +184,8 @@ La confirmación corresponde a la pregunta expresa del ejecutor durante C3; no s
 4. **Decisión del usuario (2026-10-17) — acompañante:** nombre y teléfono opcionales, sin pedir documento por defecto. Puede traer la mascota su propietario u otra persona; ser acompañante no acredita titularidad. Si la relación ya está verificada se reutilizan cuenta y ficha; los datos provisionales se usan cuando no puede verificarse la identidad/relación sin retrasar la atención. Atender sin exigir esos datos. Se conserva el acceso por personal autorizado de la clínica; A debe presentar la retención/anonimización para aprobación antes de B/C7b, sin inventar plazo ni borrar actos clínicos. No crear cuentas automáticamente.
 
 **Decisión del usuario (2026-10-17) — aprobación del plan:** confirma dejar la propuesta con los acuerdos anteriores y guardar/subir la planificación. Quedan aprobados el plan y el inicio del inventario A; la capacidad del sobrecupo no urgente, la retención de datos y los contratos técnicos pendientes requieren su resolución antes de implementar las etapas afectadas. Las decisiones ya confirmadas en M2 y en el plan excepcional de HU-4.15 se conservan.
+
+**Decisión del usuario (C4, 2026-10-20):** el tope cuenta todos los naranjas del bloque, incluso si ocupan un hueco ordinario. `es_sobrecupo` distingue la inserción sin hueco; no delimita el consumo. Se conservan completados, liberación por cancelada/no_asistio, duración, margen y orden confirmado.
 
 ## 7. Tareas y verificación
 
@@ -2844,7 +2850,7 @@ Se mantiene **todo** el alcance de M4. Arquitecto/revisor: Claude; ejecutor: Cod
 
 | Entrega | Subetapas de §3 | Estado |
 |---|---|---|
-| C4 | C4a Agendar con triage + C4b Sobrecupos y cambios | Encargada (2026-10-20) |
+| C4 | C4a Agendar con triage + C4b Sobrecupos y cambios | Entregada y verificada (2026-10-20), Anexo C4 |
 | C5 | C5a Grafo II y cascada + C5b Reasignación en vivo | Pendiente |
 | C6-C7 | C6 Ausencias y cobertura + C7a Atención roja y pausas + C7b Ficha provisional y conciliación | Pendiente |
 | C8 | C8 Ajustes y llegada tarde + C8b Llegada sin reserva | Pendiente |
@@ -2855,8 +2861,32 @@ Se mantiene **todo** el alcance de M4. Arquitecto/revisor: Claude; ejecutor: Cod
 Hallazgos P2/P3 y comprobaciones manuales que se acumulan para la etapa D. Cada entrega agrega aquí sus líneas.
 
 - P3 (C3.1): replay de reprogramación del admin con veterinario cambiado e inactivo se deniega; decidir si se deja así.
+- P2 (C4): la bandeja «Revisión de triage e historial de reclasificaciones» (`views/partials/solicitudes_agenda.php`) usa details/label sin el estilo del sistema; pulirla con el diseño Zooki para celular, tableta y escritorio.
+- P3 (C4): `Cita::registrar` a nivel de modelo aún acepta contexto de administrador (la ruta y `SolicitudAgenda` lo bloquean); solo lo usan pruebas C3. Decidir si se cierra también en el modelo.
+- Prueba manual C4 (2 comprobaciones): **Fabio** agenda un verde con síntomas y luego un caso rojo (teléfono de urgencias, sin cita); **Beto** revisa un «Otro / no sé» a naranja, agenda dos naranjas, el tercero avisa sin crear cita y reordena la cola con motivo.
 - Prueba manual pendiente de C1-C3.1 (consolidar en máximo 3 comprobaciones): marca/tipos por clínica; horario del vet con propuesta y aprobación del admin y cierre puntual; sugerencias con duración+margen, doble envío y reprogramación conservando snapshots.
 
 ## Encargo C4 — Agendar con triage, sobrecupos y cambios (2026-10-20)
 
 Entrega agrupada C4a+C4b (modo acelerado). Escribe Codex; revisa Claude. El prompt completo se entregó al usuario en el mismo mensaje. Alcance: §3 filas C4a y C4b, §6 (decisiones 2, revisión previa al horario, bloque y consumo de cupo naranja), Anexos A.3/A.5 y B1/B1.1, Modelos §2, §4 y el inicio de §6 (derivación roja).
+
+## Anexo C4 — Resultado (2026-10-20)
+
+**Autores:** Codex escribió la implementación (se quedó sin tokens antes de cerrar); Claude la revisó, corrigió lo encontrado, completó las pruebas y cierra el anexo. Por modo acelerado no hay segunda sesión de revisión; Codex puede hacer una revisión cruzada al volver.
+
+**Construido:** captura de síntomas + triage antes de horarios en agenda interna (vet) y portal (propietario) con `solicitudes_agenda` (origen `interno`/`portal`, migración 09); cuatro ramas (rojo deriva sin reserva ni cuota con aviso único, revisión veterinaria motivada antes de horarios, amarillo primer espacio, verde elige); clínica cerrada con teléfono de urgencias; aviso de contagio; admin sin crear citas (matriz y modelo); naranja con tope por bloque original (cuentan todos los naranjas; cancelada/no_asistio liberan), sobrecupo sin hueco, tercero avisa sin insertar, reorden solo vet con motivo; cancelar/reprogramar portal con el coordinador C3; avisos/correos durables en `eventos_agenda` despachados por el vigilante.
+
+| RE / regla | Prueba |
+|---|---|
+| RE-4.13.1/2, HU-2.11 (nota sola no calcula, rojo, cerrada) | AgendaC4Test: verde con síntomas y replay, rojo sin cita ni cuota, clínica cerrada |
+| RE-4.18.1/2, revisión previa | AgendaC4Test: «Otro / no sé» exige revisión motivada y huella vigente |
+| RE-4.13.3/4/5, RN-422 | AgendaC4Test: tope + tercero + liberación + completadas consumen; sobrecupo sin hueco; amarillo primer espacio; reorden motivado |
+| RN-422 concurrente | **AgendaC4MysqlTest** (procesos reales, espera de candado observada): dos naranjas por el último cupo → una cita, un aviso de tope |
+| Decisión 2, RNF-11, RN-G02 | AgendaC4Test: admin 403 auditado; mascota ajena y solicitud de otro actor en portal; vet Sur no lee Norte. AutorizacionRolTest actualizado |
+| HU-5.6 | AgendaC4Test: propietario reprograma con replay sin duplicar |
+
+**Corregido por Claude:** (P1) `08_agenda_grafo_ii.sql` conservaba una segunda comprobación final de `origen` sin `interno`: el migrador y el volumen vacío fallaban en MySQL 8 → producción no habría arrancado. Además, pruebas desactualizadas: AutorizacionRolTest, M5C2bPortal (orden de scripts), BaseV2MysqlTest (cancelación del portal con modelo acotado), AgendaB2MysqlTest (migrar aplica 08+09) y AgendaC3MysqlTest (limpieza de avisos). Modelos §4 precisa primer hueco/sobrecupo y conteo del tope.
+
+**Verificación (Claude, MySQL 8.0.46 local, mismo motor que el CI):** PHP sin host 948 pruebas/7730 aserciones, 61 omitidas; PHP completo con motor **948/8736, cero omitidas** (04:41); JS 270/270. Migrador dos veces («al día»), instalación por volumen vacío 58 tablas y 08→09 sobre base anterior repetible.
+
+**Pendientes para D:** ver «Lista para D».

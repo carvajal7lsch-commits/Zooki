@@ -266,9 +266,9 @@ flowchart TD
   LIM -- No --> MS[/"Portal: mensaje neutral; personal: motivo del limite"/]
   LIM -- Si --> DISP["Disponibilidad unica completa; sin horario no hay huecos"]
   DISP --> NIV{Nivel aprobado?}
-  NIV -- Naranja --> TOP{"Cupo en franja original/fecha? Default 2"}
+  NIV -- Naranja --> TOP{"Cupo en franja original/fecha? Default 2; cuentan todos los naranjas del bloque"}
   TOP -- No --> TOPE[/"Avisar sin insertar; ausencia parcial no multiplica cupos"/]
-  TOP -- Si --> ORD["Sobrecupo por fecha_registro/id_cita; cambio solo vet con motivo"]
+  TOP -- Si --> ORD["Primer hueco ordinario o, si no hay, sobrecupo; cola por fecha_registro/id_cita; cambio solo vet con motivo"]
   NIV -- Amarillo --> PRI["Primer espacio compatible"]
   NIV -- Verde --> EL["Eleccion entre espacios compatibles"]
   PRI --> HAY{Hay hueco?}

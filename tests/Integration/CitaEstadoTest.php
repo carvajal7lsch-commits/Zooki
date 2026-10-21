@@ -57,7 +57,12 @@ final class CitaEstadoTest extends TestCase
         foreach (['cancelada', 'completada', 'no_asistio', 'sin_cerrar', 'en_curso'] as $estado) {
             $this->ponerEstado($estado);
             $this->assertFalse($this->citas->iniciarAtencion($this->cita(), self::FECHA . ' 09:00:00'), "No debe iniciar una cita $estado");
-            $this->assertFalse($this->citas->cancelar($this->cita()), "No debe cancelar una cita $estado");
+            try {
+                $this->citas->cancelar($this->cita());
+                $this->fail("No debe cancelar una cita $estado");
+            } catch (InvalidArgumentException $error) {
+                $this->assertStringContainsString('pendientes o confirmadas', $error->getMessage());
+            }
             $this->assertSame($estado, $this->campo('estado'));
         }
     }

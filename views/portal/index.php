@@ -49,6 +49,7 @@ $tarjetaCita = static function (array $cita) use ($e, $hoy, $avatarMascota): voi
         <span class="portal-cita__estado <?= PresentacionPortal::claseEstado($cita['estado']) ?>"><?= $e(PresentacionPortal::estado($cita['estado'])) ?></span>
         <?php // RN-405: solo se cancela en una clínica con vínculo activo; es lo único que confirma. ?>
         <?php if (!empty($cita['cancelable'])): ?>
+            <button type="button" class="portal-cita__cancelar" data-ui-detener data-reprogramar-cita="<?= (int) $cita['id_cita'] ?>" aria-label="Reprogramar la cita de <?= $e($cita['nombre_mascota']) ?>"><i class="ri-calendar-event-line" aria-hidden="true"></i><span>Reprogramar</span></button>
             <button type="button" class="portal-cita__cancelar" data-ui-accion="cancelar-cita-portal" data-ui-id="<?= (int) $cita['id_cita'] ?>" aria-label="Cancelar la cita de <?= $e($cita['nombre_mascota']) ?>" title="Cancelar cita">
                 <i class="ri-close-circle-line" aria-hidden="true"></i><span>Cancelar</span>
             </button>
@@ -657,6 +658,22 @@ foreach ($clinicas_portal as $clinica) {
 
 <!-- Ventana: agendar cita, por pasos (M5 C2b): clínica y mascota, tipo y
      veterinario, día y hora, y confirmar. -->
+<div id="portalReprogramarModal" class="portal-drawer-overlay">
+    <div class="portal-drawer" role="dialog" aria-modal="true" aria-labelledby="portalReprogramarTitulo">
+        <?php $cabeceraVentana('portalReprogramarCerrar', 'ri-calendar-event-line', 'Reprogramar cita', 'Se conservan el tipo y la duración de tu cita.', 'portalReprogramarTitulo'); ?>
+        <div class="portal-drawer-body">
+            <form class="portal-form" novalidate>
+                <input type="hidden" name="id_cita">
+                <label>Fecha<input name="fecha" type="date" required></label>
+                <label>Veterinario<select name="id_veterinario" required></select></label>
+                <label>Horario<select name="hora" required><option value="">Elige un horario</option></select></label>
+                <small class="cuenta-validacion" data-error aria-live="polite"></small>
+                <button type="submit" class="btn-primary" disabled>Guardar cambio</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div id="portalBookingModal" class="portal-drawer-overlay">
     <div class="portal-drawer portal-drawer--ancho" role="dialog" aria-modal="true" aria-labelledby="bookingTitulo">
         <?php $cabeceraVentana('btnCloseBookingModal', 'ri-calendar-event-line', 'Agendar una cita', 'Elige la clínica, tu compañero, el día y uno de los horarios libres.', 'bookingTitulo'); ?>
@@ -712,6 +729,9 @@ foreach ($clinicas_portal as $clinica) {
                         <?php
                         $campo('Tipo de cita', '<select name="id_tipo_cita" id="booking_tipo_cita" required><option value="">Elige primero la clínica</option></select>', 'ri-briefcase-line', 'booking_tipo_cita');
                         $campo('Veterinario', '<select name="id_veterinario" id="booking_veterinario" required><option value="">Elige primero la clínica</option></select>', 'ri-stethoscope-line', 'booking_veterinario');
+                        $prefijoAgenda = 'portal_agenda';
+                        $puedeRevisarAgenda = false;
+                        require __DIR__ . '/../partials/triage_agenda.php';
                         $campo('Motivo', '<textarea name="motivo" id="booking_motivo" maxlength="255" placeholder="Ej: control de peso, vómito desde ayer…" rows="2"></textarea>', '', 'booking_motivo', false);
                         ?>
                     </div>

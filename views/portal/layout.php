@@ -35,6 +35,7 @@ $iniciales = $iniciales ?: 'U';
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
     <?php // M2 C8: alertas-medicas.css usa las variables compartidas de identidad (las mismas --z-* de portal/base.css). ?>
     <link rel="stylesheet" href="css/identidad.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/consulta-clinica.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/marca-clinica.css?v=<?= $v ?>">
     <?php // M5 C2: los componentes de Usuarios (tarjetas mini, etiquetas, pestañas), con los tokens del portal. ?>
     <link rel="stylesheet" href="css/usuarios.css?v=<?= $v ?>">
@@ -131,7 +132,11 @@ $iniciales = $iniciales ?: 'U';
 <script src="js/password-policy.js?v=<?= $v ?>"></script>
 <script src="js/comando-agenda.js?v=<?= $v ?>"></script>
 <script src="js/validacion-mascota.js?v=<?= $v ?>"></script>
+<script src="js/combobox.js?v=<?= $v ?>"></script>
+<script src="js/consulta-sintomas.js?v=<?= $v ?>"></script>
+<script src="js/triage-agenda.js?v=<?= $v ?>"></script>
 <script src="js/portal.js?v=<?= $v ?>"></script>
+<script src="js/portal-reprogramar.js?v=<?= $v ?>"></script>
 <?php // M2 C1: alergias y alertas de la mascota, de solo lectura; portal.js la usa al abrir la ficha. ?>
 <script src="js/alertas-medicas.js?v=<?= $v ?>"></script>
 <script src="js/csrf.js?v=<?= $v ?>"></script>
