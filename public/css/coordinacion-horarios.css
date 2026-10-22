@@ -197,3 +197,56 @@
     .coordinacion-franja input[type="time"] { padding: 0 8px; }
 }
 .coordinacion[data-admin="0"] .coord-campo--vet { display: none; }
+
+/* HU-4.11: una fila estable por día, sin repetir etiquetas por intervalo. */
+.coord-semana { min-width: 0; border: 1px solid var(--hr-border); border-radius: 12px; overflow: hidden; }
+.coord-semana .horarios-fila { display: grid; grid-template-columns: 122px minmax(0, 1fr) 74px; align-items: center; gap: 10px; padding: 10px 12px; }
+.coord-semana__cabecera { font-size: 0.72rem; font-weight: 600; color: var(--hr-text-2); background: var(--hr-muted); }
+.coord-semana .coord-franjas { display: block; }
+.coord-dia { border-top: 1px solid var(--hr-border-soft); }
+.coord-dia__nombre { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; }
+.coord-dia__nombre input { appearance: none; width: 30px; height: 18px; border: 0; border-radius: 20px; background: var(--hr-border); cursor: pointer; position: relative; flex-shrink: 0; margin: 0; }
+.coord-dia__nombre input::before { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; border-radius: 50%; background: var(--hr-surface); }
+.coord-dia__nombre input:checked { background: var(--hr-primary); }
+.coord-dia__nombre input:checked::before { transform: translateX(12px); }
+.coord-dia__nombre input:focus-visible { outline: 2px solid var(--hr-primary); outline-offset: 3px; }
+.coord-dia__franjas { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.coord-semana .coordinacion-franja { display: grid; grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr) 30px; gap: 6px; align-items: center; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.coord-semana .coordinacion-franja input[type="hidden"] { display: none; }
+.coord-semana input[type="time"] { box-sizing: border-box; min-width: 0; width: 100%; height: 42px; border: 1px solid var(--hr-border); border-radius: 10px; padding: 0 6px; background: var(--hr-surface); font: inherit; font-size: 0.8rem; color: var(--hr-text); }
+.coord-semana input[type="time"]:focus { outline: none; border-color: var(--hr-primary); box-shadow: 0 0 0 3px var(--hr-primary-soft); }
+.coord-semana .coord-icono { width: 30px; height: 32px; }
+.coord-semana .coord-dia__agregar { padding: 0 6px; min-height: 32px; font-size: 0.73rem; }
+.coord-dia--inactivo .coordinacion-franja { display: none; }
+.coord-dia--inactivo .coord-dia__franjas::before { content: 'Sin atención'; color: var(--hr-text-3); font-size: 0.78rem; }
+@media (max-width: 767px) {
+    .coord-semana__cabecera { display: none !important; }
+    .coord-semana .coord-dia { grid-template-columns: minmax(0, 1fr) auto; padding: 9px 10px; gap: 7px; }
+    .coord-dia__nombre { grid-column: 1; }
+    .coord-dia__agregar { grid-column: 2; grid-row: 1; }
+    .coord-dia__franjas { grid-column: 1 / -1; grid-row: 2; }
+    .coord-semana .coordinacion-franja { grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr) 30px; }
+}
+
+.coord-estado { display: inline-block; margin-left: 8px; padding: 3px 8px; border-radius: 20px; background: #F1F5F9; color: #475569; font-size: .68rem; }
+.coord-estado[data-estado="aprobada"] { background: #ECFDF5; color: #047857; }
+.coord-estado[data-estado="solicitada"] { background: #FFFBEB; color: #92400E; }
+.coord-estado[data-estado="rechazada"] { background: #FFF1F2; color: #BE123C; }
+[data-lista-ausencias] .coord-item { padding: 10px 12px; }
+
+/* Calendario del sistema dentro del diálogo: el selector pertenece a su capa modal. */
+.zk-dialogo .flatpickr-wrapper { width: 100%; min-width: 0; }
+.zk-dialogo .flatpickr-calendar.static { position: relative; top: 6px; left: 0; width: 100% !important; padding: 12px 4px !important; box-shadow: none !important; border: 1px solid #E2E8F0 !important; }
+.zk-dialogo .flatpickr-innerContainer, .zk-dialogo .flatpickr-rContainer, .zk-dialogo .flatpickr-days, .zk-dialogo .dayContainer { width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
+.zk-dialogo .flatpickr-day { max-width: none; flex-basis: 14.2857%; width: 14.2857%; height: 30px; line-height: 30px; }
+.zk-dialogo .flatpickr-current-month { font-size: .8rem !important; }
+.zk-dialogo .flatpickr-weekday { font-size: .65rem !important; }
+.zk-dialogo .flatpickr-time { min-width: 0; }
+.zk-dialogo .flatpickr-time input { padding: 0; height: 38px; }
+.coord-fecha-visible { cursor: pointer; }
+.coord-card__head .coord-varios { align-self: flex-start; flex-shrink: 0; }
+/* Al desplegar el calendario, ocupa la fila completa para no recortar días ni el año. */
+.coord-dialogo-campos > .coord-campo:has(.flatpickr-calendar.open) { grid-column: 1 / -1; }
+.zk-dialogo .flatpickr-calendar.static { max-width: 320px !important; }
+.zk-dialogo .flatpickr-current-month input.cur-year { font-size: .8rem !important; padding: 0 !important; height: auto; }
+.zk-dialogo .flatpickr-day { width: 100% !important; max-width: 34px !important; }

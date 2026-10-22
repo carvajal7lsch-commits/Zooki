@@ -354,6 +354,9 @@
         });
 
         capturaActual = {
+            resultado() {
+                return estado.consultar(opciones.seleccion());
+            },
             consulta() {
                 actualizarCelo();
                 const seleccion = opciones.seleccion();

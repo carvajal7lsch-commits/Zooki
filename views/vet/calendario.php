@@ -86,9 +86,8 @@ $usuarioAgenda = (int) Contexto::idUsuario();
         <form id="formCitaModal" class="cita-distribucion" novalidate autocomplete="off">
             <div class="cita-pasos">
             <ol class="cita-pasos__indicador" aria-label="Pasos para agendar">
-                <li data-cita-indicador="0" aria-current="step"><span>1</span>Paciente</li>
-                <li data-cita-indicador="1"><span>2</span>Síntomas</li>
-                <li data-cita-indicador="2"><span>3</span>Confirmar</li>
+                <li><button type="button" data-cita-indicador="0" aria-current="step"><span>1</span>Paciente</button></li>
+                <li><button type="button" data-cita-indicador="1" disabled><span>2</span>Urgencia</button></li>
             </ol>
             <div class="cita-pasos__contenido">
             <section class="cita-pasos__panel" data-cita-paso="0" aria-labelledby="citaPasoPaciente">
@@ -133,26 +132,32 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                     <label class="zk-label" for="modal_motivo">Motivo <span class="zk-optional">(opcional)</span></label>
                     <input type="text" id="modal_motivo" class="zk-input" maxlength="255" placeholder="Ej. control de peso">
                 </div>
+                <div class="cita-pasos__acciones">
+                    <button type="button" class="cal-btn cal-btn--ghost" id="cm_cancelar" data-ui-accion="cerrar-cita">Cancelar</button>
+                    <button type="button" class="cal-btn cal-btn--primary" id="cm_siguiente" disabled>Continuar</button>
+                </div>
             </section>
-            <section class="cita-pasos__panel" data-cita-paso="1" aria-labelledby="citaPasoSintomas" hidden>
-                <h4 id="citaPasoSintomas" tabindex="-1">Síntomas y urgencia</h4>
+            <section class="cita-pasos__panel" data-cita-paso="1" aria-labelledby="citaPasoUrgencia" hidden>
+                <h4 id="citaPasoUrgencia" tabindex="-1">Urgencia</h4>
                 <?php
                 $prefijoAgenda = 'modal_agenda';
                 $puedeRevisarAgenda = true;
+                $ocultarNotaAgenda = true;
                 require __DIR__ . '/../partials/triage_agenda.php';
+                unset($ocultarNotaAgenda);
                 ?>
+                <div class="cita-pasos__acciones">
+                    <button type="button" class="cal-btn cal-btn--ghost" id="cm_anterior" hidden>Atrás</button>
+                </div>
             </section>
 
-            <section class="cita-pasos__panel" data-cita-paso="2" aria-labelledby="citaPasoHorario" hidden>
-                <h4 id="citaPasoHorario" tabindex="-1">Revisa y confirma</h4>
-                <p class="cita-pasos__confirmacion" id="cm_confirmacion">Elige un horario en el panel de la derecha.</p>
-                <p>Si necesitas corregir los datos o los síntomas, vuelve al paso anterior. El horario permanece a la vista.</p>
-            </section>
             </div>
             </div>
             <div class="zk-modal__col zk-modal__col--slots cita-horarios">
                 <p class="zk-modal__section">Horario disponible <span class="zk-requerido" aria-hidden="true">*</span></p>
+                <p class="cita-horarios__resumen" id="cm_horario_resumen" hidden></p>
                 <div class="slot-panel" id="modal_slots_container"></div>
+                <button type="button" class="cal-btn cal-btn--primary" id="cm_urgencias" hidden>Ir a Urgencias</button>
             </div>
         </form>
 
@@ -162,9 +167,6 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             </div>
             <p class="zk-summary" id="cm_resumen"></p>
             <div class="zk-modal__actions">
-                <button type="button" class="cal-btn cal-btn--ghost" data-ui-accion="cerrar-cita">Cancelar</button>
-                <button type="button" class="cal-btn cal-btn--ghost" id="cm_anterior" hidden>Atrás</button>
-                <button type="button" class="cal-btn cal-btn--primary" id="cm_siguiente" disabled>Continuar</button>
                 <button type="submit" form="formCitaModal" class="cal-btn cal-btn--primary" id="cm_submit" hidden disabled>Agendar cita</button>
             </div>
         </footer>

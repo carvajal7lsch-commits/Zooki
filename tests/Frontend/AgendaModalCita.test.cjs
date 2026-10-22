@@ -141,9 +141,9 @@ test('si falla la foto se muestran las iniciales sin pedir el icono de huella', 
 
 test('el panel derecho de horarios queda fuera de los pasos y permanece presente', () => {
     const formulario = tramo(leer('views/vet/calendario.php'), '<form id="formCitaModal"', '</form>');
-    const confirmacion = tramo(formulario, 'data-cita-paso="2"', '</section>');
-    assert.match(confirmacion, /cm_confirmacion/);
-    assert.doesNotMatch(confirmacion, /modal_slots_container/);
+    assert.doesNotMatch(formulario, /data-cita-paso="2"|cm_confirmacion/);
+    assert.equal((formulario.match(/data-cita-paso=/g) || []).length, 2);
+    assert.match(formulario, /data-cita-indicador="1"[^>]*disabled[^>]*><span>2<\/span>Urgencia/);
     assert.match(formulario, /<\/section>\s*<\/div>\s*<\/div>\s*<div class="zk-modal__col zk-modal__col--slots cita-horarios">/);
     assert.match(formulario, /cita-horarios">\s*<p[^>]*>Horario disponible[\s\S]*id="modal_slots_container"/);
     assert.match(leer('public/css/calendar-modules/modals.css'), /\.cita-distribucion\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1\.1fr\)/);
@@ -151,13 +151,13 @@ test('el panel derecho de horarios queda fuera de los pasos y permanece presente
 
 test('los pasos exigen paciente y triage, conservan los datos al volver y bloquean doble envío', () => {
     const documento = crearDocumento();
-    const paneles = [0, 1, 2].map(i => {
+    const paneles = [0, 1].map(i => {
         const panel = colgar(documento.raiz, 'section', { citaPaso: String(i) });
         const titulo = colgar(panel, 'h4');
         titulo.focus = () => { documento.enfocado = titulo; };
         return panel;
     });
-    const indicadores = [0, 1, 2].map(i => {
+    const indicadores = [0, 1].map(i => {
         const nodo = colgar(documento.raiz, 'li', { citaIndicador: String(i) });
         nodo.removeAttribute = nombre => { delete nodo.atributos[nombre]; };
         return nodo;
@@ -181,13 +181,14 @@ test('los pasos exigen paciente y triage, conservan los datos al volver y bloque
     valores.modal_tipo_cita = '1';
     ventana.avanzarPasoCita();
     assert.equal(paneles[1].hidden, false);
-    assert.equal(siguiente.disabled, true, 'No salta revisión pendiente ni derivación roja');
+    assert.equal(submit.disabled, true, 'No salta revisión pendiente ni derivación roja');
     solicitud = '123';
-    ventana.avanzarPasoCita();
-    assert.equal(paneles[2].hidden, false);
+    ventana.actualizarPasosCita();
+    assert.equal(paneles[1].hidden, false);
     assert.equal(submit.hidden, false);
     assert.equal(siguiente.hidden, true);
-    assert.equal(indicadores[2].getAttribute('aria-current'), 'step');
+    assert.equal(submit.disabled, false);
+    assert.equal(indicadores[1].getAttribute('aria-current'), 'step');
     ventana.mostrarPasoCita(0);
     assert.equal(valores.modal_mascota, '4');
     assert.equal(valores.modal_hora, '09:00:30', 'Atrás conserva el instante exacto seleccionado');

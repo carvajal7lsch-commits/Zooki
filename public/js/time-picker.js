@@ -323,6 +323,7 @@ class BlockPicker {
             minuteInterval: options.minuteInterval || 15,
             onTimeChange:   options.onTimeChange   || null,
             period:         options.period         || null,
+            compactDisplay: options.compactDisplay || false,
         };
         this._id = 'bp_' + Math.random().toString(36).substr(2, 9);
         this.init();
@@ -381,13 +382,14 @@ class BlockPicker {
 
     // ── init ─────────────────────────────────────────────────
     init() {
-        this.startInput.style.display = 'none';
-        this.endInput.style.display   = 'none';
+        this.startInput.hidden = true;
+        this.endInput.hidden = true;
 
         // Hide the dash separator between the two inputs
         let sep = this.startInput.nextSibling;
         while (sep && sep.nodeType === 3) sep = sep.nextSibling;
-        if (sep && sep.tagName === 'SPAN') sep.style.display = 'none';
+        this.separator = sep?.tagName === 'SPAN' ? sep : null;
+        if (this.separator) this.separator.hidden = true;
 
         // Create single display trigger button
         this.display = document.createElement('button');
@@ -401,11 +403,15 @@ class BlockPicker {
     }
 
     _refreshDisplay() {
+        if (this.options.compactDisplay) {
+            this.display.textContent = 'de ' + this.startInput.value + ' a ' + this.endInput.value;
+            return;
+        }
         const s = this._fmt(this.startInput.value || this._defaultStart());
         const e = this._fmt(this.endInput.value   || this._defaultEnd());
         this.display.innerHTML =
-            `<span class="bpd-from">${s}</span>` +
-            `<span class="bpd-arrow">→</span>` +
+            `<span class="bpd-from">de ${s}</span>` +
+            `<span class="bpd-arrow">a</span>` +
             `<span class="bpd-to">${e}</span>`;
     }
 
@@ -457,7 +463,7 @@ class BlockPicker {
                         </div>
                     </div>
                 </div>
-                <div class="bp-error" style="display:none;"></div>
+                <div class="bp-error" hidden></div>
                 <div class="tp-footer">
                     <span class="tp-clock-icon" title="Ingresa la hora manualmente">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -501,17 +507,17 @@ class BlockPicker {
     _applyNoonLock(hourVal, minEl, badgeEl) {
         const num = parseInt(hourVal);
         if (isNaN(num) || !minEl) return;
-        if (num === 12) {
+        if (num === 12 && this.options.period === 'morning') {
             minEl.value    = '00';
             minEl.disabled = true;
-            minEl.style.opacity = '0.5';
+
             if (badgeEl && this.options.period === 'morning') {
                 badgeEl.textContent = 'PM';
                 badgeEl.classList.replace('tp-am', 'tp-pm');
             }
         } else {
             minEl.disabled = false;
-            minEl.style.opacity = '1';
+
             if (badgeEl && this.options.period === 'morning') {
                 badgeEl.textContent = 'AM';
                 badgeEl.classList.replace('tp-pm', 'tp-am');
@@ -582,13 +588,19 @@ class BlockPicker {
         this.picker.querySelector('.tp-btn-ok').addEventListener('click', () => this.confirm());
         this.picker.addEventListener('click', e => { if (e.target === this.picker) this.close(); });
         this.picker.addEventListener('keydown', e => {
-            if (e.key === 'Escape') this.close();
-            if (e.key === 'Enter')  this.confirm();
+            if (e.key === 'Escape' || e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.key === 'Escape') this.close();
+                else this.confirm();
+            }
         });
     }
 
     // ── open / close / confirm ────────────────────────────────
     open() {
+        if (this.startInput.disabled || this.endInput.disabled || this.display.disabled) return;
+        (this.startInput.closest('dialog[open]') || document.body).append(this.picker);
         this._syncFields();
         this.picker.classList.add('tp-open');
         setTimeout(() => {
@@ -614,15 +626,17 @@ class BlockPicker {
         const start24 = this._to24(hS.value, mS.value, ampmS);
         const end24   = this._to24(hE.value, mE.value, ampmE);
 
-        // Validate: end must be after start
-        if (end24 <= start24) {
+        // El selector compartido no confirma entradas vacías ni turnos fuera de su periodo.
+        const horaValida = valor => /^([01]\d|2[0-3]):[0-5]\d$/.test(valor);
+        const fueraPeriodo = this.options.period === 'morning' ? start24 < '06:00' || end24 > '12:00' : this.options.period === 'afternoon' ? start24 < '12:00' || end24 > '21:00' : false;
+        if (!horaValida(start24) || !horaValida(end24) || end24 <= start24 || fueraPeriodo) {
             if (errEl) {
                 errEl.textContent = 'La hora fin debe ser mayor a la hora inicio';
-                errEl.style.display = 'block';
+                errEl.hidden = false;
             }
             return; // Don't close
         }
-        if (errEl) errEl.style.display = 'none';
+        if (errEl) errEl.hidden = true;
 
         this.startInput.value = start24;
         this.endInput.value   = end24;
@@ -637,7 +651,8 @@ class BlockPicker {
     destroy() {
         if (this.picker)  this.picker.remove();
         if (this.display) this.display.remove();
-        this.startInput.style.display = '';
-        this.endInput.style.display   = '';
+        this.startInput.hidden = false;
+        this.endInput.hidden = false;
+        if (this.separator) this.separator.hidden = false;
     }
 }

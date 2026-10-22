@@ -25,6 +25,25 @@
         const form = raiz.querySelector('[data-form-ausencia]');
         const lista = raiz.querySelector('[data-lista-ausencias]');
         const estado = { enviando: false };
+        // Mismo calendario del sistema; el valor enviado conserva fecha, hora y segundos.
+        if (global.SelectorFechas && typeof global.flatpickr === 'function') {
+            form.querySelectorAll('[data-fecha-ausencia]').forEach(campo => {
+                global.SelectorFechas.iniciar(campo, {
+                    maxDate: null,
+                    enableTime: true,
+                    enableSeconds: true,
+                    time_24hr: true,
+                    dateFormat: 'Y-m-d\\TH:i:S',
+                    altFormat: 'd/m/Y H:i:S',
+                    static: true,
+                    altInputClass: 'coord-fecha-visible',
+                    onChange() {
+                        campo.dataset.tocado = '1';
+                        campo.dispatchEvent(new Event('input', { bubbles: true }));
+                    },
+                });
+            });
+        }
         const admin = raiz.dataset.admin === '1';
         const comandos = new WeakMap();
         let lectura = 0;
@@ -104,11 +123,15 @@
                 const datos = await respuesta.json();
                 if (turno !== lectura) return;
                 if (!respuesta.ok || datos.success === false) throw new Error(datos.message || 'No se pudieron consultar las ausencias.');
+                raiz.dispatchEvent(new CustomEvent('ausencias:actualizadas', { bubbles: true, detail: datos.ausencias }));
                 lista.replaceChildren();
                 for (const a of datos.ausencias) {
                     const tarjeta = texto(lista, 'article', '');
                     tarjeta.className = 'coord-item';
-                    texto(tarjeta, 'strong', `${a.veterinario} · ${ESTADOS[a.estado] || a.estado}`);
+                    texto(tarjeta, 'strong', a.veterinario);
+                    const chip = texto(tarjeta, 'span', ESTADOS[a.estado] || a.estado);
+                    chip.className = 'coord-estado';
+                    chip.dataset.estado = a.estado;
                     texto(tarjeta, 'p', `${fecha(a.fecha_hora_inicio)} → ${fecha(a.fecha_hora_fin)}`);
                     if (a.motivo) texto(tarjeta, 'p', a.motivo);
                     if (!admin || a.estado !== 'solicitada') continue;

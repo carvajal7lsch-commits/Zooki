@@ -8,7 +8,7 @@
         for (const f of ordenadas) {
             if (!/^[1-7]$/.test(String(f.dia_semana)) || !/^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(f.hora_inicio) || !/^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(f.hora_fin)) return 'Completa el día y las horas válidas.';
             if (f.hora_fin <= f.hora_inicio) return 'El fin debe ser posterior al inicio.';
-            if (previa && String(previa.dia_semana) === String(f.dia_semana) && f.hora_inicio < previa.hora_fin) return 'Las franjas no pueden solaparse.';
+            if (previa && String(previa.dia_semana) === String(f.dia_semana) && f.hora_inicio < previa.hora_fin) return 'Los turnos no pueden solaparse.';
             previa = f;
         }
         return '';
@@ -36,6 +36,7 @@
 
         function bloquear(valor) {
             raiz.querySelectorAll('input,select,button').forEach(e => { e.disabled = valor; });
+            semana.bloquear(valor);
         }
 
         const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -54,52 +55,12 @@
             return elemento;
         }
 
-        function agregarFranja(f = {}) {
-            const fila = document.createElement('div');
-            fila.className = 'coordinacion-franja';
-            for (const [campo, nombre] of [['dia_semana', 'Día'], ['hora_inicio', 'Desde'], ['hora_fin', 'Hasta']]) {
-                const etiqueta = texto(fila, 'label', nombre);
-                etiqueta.className = 'coord-campo';
-                const entrada = document.createElement(campo === 'dia_semana' ? 'select' : 'input');
-                entrada.dataset.franjaCampo = campo;
-                if (campo === 'dia_semana') {
-                    ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].forEach((dia, i) => {
-                        const opcion = texto(entrada, 'option', dia);
-                        opcion.value = String(i + 1);
-                    });
-                } else {
-                    entrada.type = 'time';
-                    // Pulido de interfaz: el formulario muestra HH:MM; al servidor viaja HH:MM:SS.
-                    entrada.step = '60';
-                    entrada.maxLength = 5;
-                    entrada.dataset.caracteres = '0-9:';
-                }
-                entrada.required = true;
-                entrada.value = f[campo] ? (campo === 'dia_semana' ? String(f[campo]) : String(f[campo]).slice(0, 5)) : (campo === 'dia_semana' ? '1' : '');
-                etiqueta.append(entrada);
-            }
-            // Pulido de interfaz: quitar es un icono al final de la fila.
-            const quitar = document.createElement('button');
-            quitar.type = 'button';
-            quitar.className = 'coord-icono';
-            quitar.title = 'Quitar franja';
-            quitar.setAttribute('aria-label', 'Quitar franja');
-            const icono = document.createElement('i');
-            icono.className = 'fas fa-trash-alt';
-            icono.setAttribute('aria-hidden', 'true');
-            quitar.append(icono);
-            fila.append(quitar);
-            quitar.addEventListener('click', () => {
-                if (estado.enviando) return;
-                fila.remove();
-                validar();
-            });
-            lista.append(fila);
-        }
-
-        function franjas() {
-            return Array.from(lista.children, fila => Object.fromEntries(Array.from(fila.querySelectorAll('[data-franja-campo]'), entrada => [entrada.dataset.franjaCampo, /^\d\d:\d\d$/.test(entrada.value) ? entrada.value + ':00' : entrada.value])));
-        }
+        const semana = global.HorarioTrabajo.crear(raiz, { alCambiar: validar });
+        const pintarSemana = franjas => {
+            semana.pintar(franjas);
+            raiz.dispatchEvent(new CustomEvent('horario-trabajo:actualizado', { bubbles: true, detail: franjas }));
+        };
+        const franjas = () => semana.franjas();
 
         function validar() {
             const error = errorFranjas(franjas());
@@ -157,8 +118,7 @@
                 opcion.value = vet.id_usuario;
             }
             select.value = elegido;
-            lista.replaceChildren();
-            datos.franjas.forEach(agregarFranja);
+            pintarSemana(datos.franjas);
             for (const [nombre, filas] of [['propuestas', datos.propuestas], ['cierres', datos.cierres], ['afectadas', datos.afectadas]]) {
                 const contenedor = raiz.querySelector(`[data-${nombre}]`);
                 contenedor.replaceChildren();
@@ -244,7 +204,6 @@
         lista.addEventListener('input', validar);
         lista.addEventListener('change', validar);
         select.addEventListener('change', cargar);
-        raiz.querySelector('[data-agregar-franja]').addEventListener('click', () => agregarFranja());
         form.addEventListener('submit', evento => {
             evento.preventDefault();
             if (estado.enviando || estado.cargando || !validar()) return;

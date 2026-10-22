@@ -757,7 +757,7 @@ function setSlotsEstado(id, estado, texto = '') {
         cont.innerHTML = `<div class="slot-grid">${'<span class="slot-skeleton"></span>'.repeat(12)}</div>`;
         return;
     }
-    const icono = estado === 'guia' ? 'far fa-clock' : 'far fa-calendar-times';
+    const icono = estado === 'guia' ? 'far fa-clock' : estado === 'urgencia' ? 'fas fa-exclamation-triangle' : 'far fa-calendar-times';
     cont.innerHTML = `<div class="slot-state"><i class="${icono}"></i><p>${esc(texto)}</p></div>`;
 }
 
@@ -841,14 +841,14 @@ function getVetModal() {
 }
 
 function textoGuiaSlots() {
-    return isUsuarioVeterinario()
-        ? 'Elige el tipo de cita para ver los horarios libres.'
-        : 'Elige el veterinario y el tipo de cita para ver los horarios libres.';
+    return 'Elige mascota y tipo de cita';
 }
 
 let pasoCitaModal = 0;
 
 function mostrarPasoCita(paso, enfocar = true) {
+    if (enviosC3.reserva || ![0, 1].includes(paso)) return;
+    if (paso === 1 && !(val('modal_mascota') && val('modal_tipo_cita') && getVetModal())) return;
     pasoCitaModal = paso;
     document.querySelectorAll('[data-cita-paso]').forEach(panel => {
         panel.hidden = Number(panel.dataset.citaPaso) !== paso;
@@ -872,16 +872,23 @@ function actualizarPasosCita() {
     const submit = document.getElementById('cm_submit');
     if (!siguiente || !anterior || !submit) return;
     const pacienteListo = Boolean(val('modal_mascota') && getVetModal() && val('modal_tipo_cita'));
-    siguiente.hidden = pasoCitaModal === 2;
-    siguiente.disabled = enviosC3.reserva || !pacienteListo || (pasoCitaModal === 1 && !triageModalC4?.consulta());
+    siguiente.hidden = pasoCitaModal === 1;
+    siguiente.disabled = enviosC3.reserva || !pacienteListo;
     anterior.hidden = pasoCitaModal === 0;
     anterior.disabled = enviosC3.reserva;
-    submit.hidden = pasoCitaModal !== 2;
+    const rojo = triageModalC4?.resultado?.()?.nivel === 'rojo';
+    submit.hidden = pasoCitaModal !== 1 || rojo;
+    submit.disabled = enviosC3.reserva || !pacienteListo || !triageModalC4?.consulta() || !val('modal_hora') || pasoCitaModal !== 1 || rojo;
+    const cancelar = document.getElementById('cm_cancelar');
+    if (cancelar) cancelar.hidden = pasoCitaModal !== 0;
+    document.querySelectorAll('[data-cita-indicador]').forEach(indicador => {
+        indicador.disabled = enviosC3.reserva || (Number(indicador.dataset.citaIndicador) === 1 && !pacienteListo);
+    });
 }
 
 function avanzarPasoCita() {
     actualizarPasosCita();
-    if (document.getElementById('cm_siguiente')?.disabled || pasoCitaModal >= 2) return;
+    if (document.getElementById('cm_siguiente')?.disabled || pasoCitaModal >= 1) return;
     ocultarErrorModal();
     mostrarPasoCita(pasoCitaModal + 1);
 }
@@ -1055,6 +1062,8 @@ async function cargarSlotsModal() {
     ocultarErrorModal();
     actualizarResumenModal();
 
+    const urgencias = document.getElementById('cm_urgencias');
+    if (urgencias) urgencias.hidden = true;
     if (!vet || !tipo || !mascota) {
         setSlotsEstado('modal_slots_container', 'guia', textoGuiaSlots());
         return;
@@ -1063,8 +1072,14 @@ async function cargarSlotsModal() {
     // Si el usuario cambia de tipo o de veterinario antes de que llegue la
     // respuesta, la vieja se descarta para no pintar horarios equivocados.
     const solicitud = triageModalC4?.consulta();
+    const rojo = triageModalC4?.resultado?.()?.nivel === 'rojo';
+    if (urgencias) urgencias.hidden = !rojo;
+    if (rojo) {
+        setSlotsEstado('modal_slots_container', 'urgencia', 'Esta mascota requiere atención de urgencias. Ve a Urgencias para registrar su llegada.');
+        return;
+    }
     if (!solicitud) {
-        setSlotsEstado('modal_slots_container', 'guia', 'Calcula el triage y completa la revisión antes de consultar horarios.');
+        setSlotsEstado('modal_slots_container', 'guia', 'Calcula el nivel de urgencia para ver horarios');
         return;
     }
     setSlotsEstado('modal_slots_container', 'cargando');
@@ -1101,23 +1116,23 @@ function actualizarResumenModal() {
     if (!resumen || !submit || !tipoSel) return;
 
     const hora = val('modal_hora');
+    const solicitud = triageModalC4?.consulta();
+    const nivel = triageModalC4?.resultado?.()?.nivel || '';
     const faltan = [];
-    if (!val('modal_mascota')) faltan.push('mascota');
-    if (!getVetModal()) faltan.push('veterinario');
-    if (!tipoSel.value) faltan.push('tipo de cita');
-    // El nivel de urgencia va antes que el horario: sin él no se consultan horas.
-    if (!triageModalC4?.consulta()) faltan.push('nivel de urgencia');
-    if (!hora) faltan.push('horario');
-
-    submit.disabled = enviosC3.reserva || faltan.length > 0 || pasoCitaModal !== 2;
+    if (pasoCitaModal === 0) {
+        if (!val('modal_mascota')) faltan.push('mascota');
+        if (!tipoSel.value) faltan.push('tipo de cita');
+    } else if (nivel !== 'rojo') {
+        if (!solicitud) faltan.push('nivel de urgencia');
+        if (!hora) faltan.push('horario');
+    }
     const tipoNombre = tipoSel.value ? (tipoSel.options[tipoSel.selectedIndex].dataset.nombre || '') : '';
-    resumen.innerHTML = faltan.length
-        ? `Falta: ${esc(unirLista(faltan))}.`
-        : `<strong>${esc(_mascotaNombre)}</strong> · ${esc(tipoNombre)} · ${esc(format12h(hora))}`;
-    const confirmacion = document.getElementById('cm_confirmacion');
-    if (confirmacion) confirmacion.textContent = faltan.length
-        ? `Falta: ${unirLista(faltan)}.`
-        : `${_mascotaNombre} · ${tipoNombre} · ${format12h(hora)}`;
+    resumen.textContent = faltan.length ? `Falta: ${unirLista(faltan)}.` : '';
+    const resumenHorario = document.getElementById('cm_horario_resumen');
+    if (resumenHorario) {
+        resumenHorario.hidden = !hora || !solicitud || nivel === 'rojo';
+        resumenHorario.textContent = `${_mascotaNombre} · ${tipoNombre} · ${nivel} · ${format12h(hora)}`;
+    }
     actualizarPasosCita();
 }
 
@@ -1137,10 +1152,7 @@ function ocultarErrorModal() {
 async function crearCitaModal(e) {
     e.preventDefault();
     if (enviosC3.reserva) return;
-    if (pasoCitaModal !== 2) {
-        avanzarPasoCita();
-        return;
-    }
+    if (pasoCitaModal !== 1) return;
     actualizarResumenModal();
     const submit = document.getElementById('cm_submit');
     if (submit.disabled) return;
@@ -1382,6 +1394,11 @@ document.addEventListener('click', e => {
 
 function conectarFormulariosC3() {
     document.getElementById('formCitaModal')?.addEventListener('submit', crearCitaModal);
+    document.getElementById('citaModalOverlay')?.addEventListener('keydown', evitarEnvioCitaConEnter);
+    document.querySelectorAll('[data-cita-indicador]').forEach(indicador => {
+        indicador.addEventListener('click', () => mostrarPasoCita(Number(indicador.dataset.citaIndicador)));
+    });
+    document.getElementById('cm_urgencias')?.addEventListener('click', irAUrgenciasDesdeCita);
     document.getElementById('cm_siguiente')?.addEventListener('click', avanzarPasoCita);
     document.getElementById('cm_anterior')?.addEventListener('click', () => {
         if (!enviosC3.reserva) {
@@ -1395,6 +1412,21 @@ function conectarFormulariosC3() {
     for (const id of ['reprogramar_fecha', 'reprogramar_veterinario', 'reprogramar_tipo_cita']) {
         document.getElementById(id).addEventListener('change', cargarSlotsReprogramar);
     }
+}
+
+function evitarEnvioCitaConEnter(evento) {
+    if (evento.key !== 'Enter') return;
+    if (evento.target.closest('button[type="button"]')) return;
+    evento.preventDefault();
+}
+
+function irAUrgenciasDesdeCita() {
+    if (enviosC3.reserva || triageModalC4?.resultado?.()?.nivel !== 'rojo') return;
+    closeCitaModal();
+    const pestana = document.querySelector('[data-agenda-tab="urgencias"]');
+    pestana?.click();
+    pestana?.focus();
+    pestana?.scrollIntoView({ block: 'nearest' });
 }
 
 // Clic o teclado (flechas, Enter y Esc con ZookiCombobox): Enter elige la mascota

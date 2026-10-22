@@ -63,13 +63,15 @@
         lista.forEach((tab, indice) => {
             tab.addEventListener('click', () => activarPestana(tabs, tab.dataset.configTab, false));
             tab.addEventListener('keydown', evento => {
-                const paso = evento.key === 'ArrowRight' ? 1 : evento.key === 'ArrowLeft' ? -1 : 0;
+                const vertical = tabs.getAttribute('aria-orientation') === 'vertical';
+                const paso = evento.key === 'ArrowRight' || (vertical && evento.key === 'ArrowDown') ? 1 : evento.key === 'ArrowLeft' || (vertical && evento.key === 'ArrowUp') ? -1 : 0;
                 if (!paso) return;
                 evento.preventDefault();
                 activarPestana(tabs, lista[(indice + paso + lista.length) % lista.length].dataset.configTab, true);
             });
         });
         activarPestana(tabs, (global.location.hash || '').slice(1), false);
+        global.addEventListener('hashchange', () => activarPestana(tabs, (global.location.hash || '').slice(1), false));
     }
 
     global.zookiAbrirDialogo = abrirDialogo;

@@ -747,3 +747,58 @@
         color: var(--hr-text-3);
     }
 }
+
+/* Misma tabla semanal de la clínica y del veterinario. */
+.horario-bloque [hidden], .bloque-inputs [hidden], .bp-error[hidden] { display: none !important; }
+.horario-dia__aviso { grid-column: 1 / -1; color: #92400E; font-size: .72rem; line-height: 1.35; }
+.horario-dia__aviso[hidden] { display: none; }
+.coordinacion .horarios-fila { grid-template-columns: 110px minmax(0, 1fr) minmax(0, 1fr) 46px; gap: 10px; padding: 7px 0; }
+.coordinacion .horarios-fila--cabecera { padding-top: 0; }
+.coordinacion .horario-dia__nombre { display: flex; align-items: center; gap: 8px; font-size: .78rem; }
+.coordinacion .horario-bloque__control { gap: 6px; }
+.coordinacion .block-picker-display { font-size: .72rem; padding: 7px 6px; min-width: 0; width: 100%; white-space: normal; }
+.coordinacion .horarios-col-horas { font-size: .72rem; }
+.coordinacion .dia-cerrado .horario-bloque { visibility: hidden; }
+.coordinacion .coord-varios { justify-self: end; min-height: 32px; font-size: .75rem; }
+.horario-varios .md-days-grid { margin-bottom: 18px; }
+.horario-varios .bloque-section + .bloque-section { margin-top: 14px; }
+.tp-card.bp-card { background: #fff; border-radius: 14px; }
+@media (max-width: 767px) {
+    .coordinacion .horarios-fila { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 7px; }
+    .coordinacion .horarios-fila--cabecera { display: none; }
+    .coordinacion .horario-dia__nombre { grid-column: 1 / -1; }
+    .coordinacion .horario-bloque { grid-column: auto; }
+    .coordinacion .horario-bloque__control { align-items: center; }
+    .coordinacion .horario-dia__horas { display: none; }
+    .coordinacion .dia-cerrado .horario-bloque { display: none; }
+    .coordinacion .dia-cerrado .horario-dia__cerrado { display: block; grid-column: 1 / -1; font-size: .75rem; color: #64748B; }
+}
+.coordinacion .coord-varios { align-self: flex-end; }
+
+/* Semana en conjunto: varios días visibles, conservando los mismos controles. */
+.coordinacion .horarios-tabla { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.coordinacion .horarios-fila--cabecera { display: none; }
+.coordinacion .horario-dia { display: grid; grid-template-columns: minmax(0,1fr); align-content: start; gap: 8px; padding: 12px; border: 1px solid #E2E8F0; border-radius: 12px; }
+.coordinacion .horario-dia__nombre { justify-content: space-between; flex-direction: row-reverse; font-weight: 600; }
+.coordinacion .horario-bloque { grid-column: 1; gap: 3px; }
+.coordinacion .horario-bloque::before { content: attr(data-etiqueta); font-size: .65rem; color: #64748B; }
+.coordinacion .horario-bloque__control { min-width: 0; }
+.coordinacion .horario-dia__horas { grid-column: 1; grid-row: auto; text-align: left; font-size: .68rem; }
+.coordinacion .dia-cerrado .horario-bloque { display: none; }
+.coordinacion .horario-dia__aviso { font-size: .65rem; }
+@media (max-width: 1200px) and (min-width: 768px) { .coordinacion .horarios-tabla { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (max-width: 767px) {
+    .coordinacion .horarios-tabla { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+    .coordinacion .horario-dia { padding: 10px 8px; }
+    .coordinacion .horario-dia__nombre { grid-column: 1; font-size: .72rem; }
+    .coordinacion .horario-dia__horas { display: block; }
+    .coordinacion .block-picker-display { font-size: .65rem; }
+}
+/* Dos turnos compactos por tarjeta; no repiten AM/PM ni se parten en dos renglones. */
+@media (min-width: 768px) {
+    .coordinacion .horario-bloque { display: grid; grid-template-columns: 36px minmax(0,1fr); align-items: center; gap: 4px; }
+    .coordinacion .horario-bloque::before { grid-column: 1; }
+    .coordinacion .horario-bloque__control { grid-column: 2; gap: 4px; }
+    .coordinacion .block-picker-display { padding: 6px 3px; font-size: .65rem; white-space: nowrap; }
+    .coordinacion .horario-dia { padding: 10px; gap: 7px; }
+}

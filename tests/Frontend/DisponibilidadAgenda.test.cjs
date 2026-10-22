@@ -13,14 +13,16 @@ test('C3 conecta los formularios desde el archivo JS y conserva las vistas sin e
     const fin = fuente.indexOf("document.addEventListener('DOMContentLoaded'", inicio);
     const conectados = [];
     const contexto = { crearCitaModal() {}, filtrarMascotas() {}, onModalVeterinarioChange() {}, onModalTipoCitaChange() {}, cargarSlotsReprogramar() {},
-        document: { getElementById: id => ({ addEventListener: evento => conectados.push([id, evento]) }) } };
+        document: { querySelectorAll: () => [], getElementById: id => ({ addEventListener: evento => conectados.push([id, evento]) }) } };
     prepararContextoC4(contexto);
     vm.runInContext(fuente.slice(inicio, fin), contexto);
     contexto.conectarFormulariosC3();
-    assert.equal(conectados.length, 9);
+    assert.equal(conectados.length, 11);
     assert.deepEqual(conectados[0], ['formCitaModal', 'submit']);
-    assert.deepEqual(conectados[1], ['cm_siguiente', 'click']);
-    assert.deepEqual(conectados[2], ['cm_anterior', 'click']);
+    assert.deepEqual(conectados[1], ['citaModalOverlay', 'keydown']);
+    assert.deepEqual(conectados[2], ['cm_urgencias', 'click']);
+    assert.deepEqual(conectados[3], ['cm_siguiente', 'click']);
+    assert.deepEqual(conectados[4], ['cm_anterior', 'click']);
     assert.deepEqual(conectados.at(-1), ['reprogramar_tipo_cita', 'change']);
 });
 
@@ -67,7 +69,7 @@ function contextoSlots(fetch) {
     const estados = [];
     const dibujadas = [];
     const boton = { disabled: false };
-    const contexto = { URLSearchParams, fetch, console, _turnoSlotsCita: 0,
+    const contexto = { URLSearchParams, fetch, console, _turnoSlotsCita: 0, document: { getElementById: () => null },
         getVetModal: () => '2', val: (id, valor) => valor === undefined ? valores[id] : valores[id] = valor,
         ocultarErrorModal() {}, actualizarResumenModal: () => { boton.disabled = !valores.modal_hora; }, textoGuiaSlots: () => 'Guía',
         setSlotsEstado: (...args) => estados.push(args),
@@ -341,7 +343,7 @@ for (const reprogramar of [false, true]) {
 // C4: estos casos C3 parten de una evaluación previa válida; la puerta negativa se cubre aparte.
 function prepararContextoC4(contexto) {
     // Los casos de envío C3 parten del último paso, con la evaluación previa válida.
-    contexto.pasoCitaModal = 2;
+    contexto.pasoCitaModal = 1;
     contexto.avanzarPasoCita = () => {};
     contexto.triageModalC4 = { consulta: () => '123' };
     contexto.triageC4 = { consulta: () => '123' };

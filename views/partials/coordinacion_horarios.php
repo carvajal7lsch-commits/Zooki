@@ -5,23 +5,24 @@ $esAdminHorario = Contexto::rolActivo() === Roles::ADMIN;
 // (data-config-panel) y los formularios de cierre y ausencia abren en una ventana.
 ?>
 <link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+<link rel="stylesheet" href="css/horarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <link rel="stylesheet" href="css/coordinacion-horarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <div class="coordinacion" data-coordinacion-horarios data-admin="<?= $esAdminHorario ? '1' : '0' ?>" data-clinica="<?= (int) Contexto::clinicaActiva() ?>">
-    <section class="coord-card" data-config-panel="horarios" aria-labelledby="coordVetTitulo">
+    <section class="coord-card" id="perfilHorarios" data-config-panel="horarios" aria-labelledby="coordVetTitulo">
         <header class="coord-card__head">
             <div>
-                <h2 id="coordVetTitulo">Horario del veterinario</h2>
-                <p><?= $esAdminHorario ? 'Franjas de trabajo de cada veterinario. Las citas que queden fuera se marcan para reajuste.' : 'Propón tus franjas; cambian cuando las aprueba tu administrador.' ?></p>
+                <h2 id="coordVetTitulo">Horario de trabajo</h2>
+                <p><?= $esAdminHorario ? 'Turnos de mañana y tarde de cada veterinario. Las citas que queden fuera se marcan para reajuste.' : 'Propón tus turnos; cambian cuando las aprueba tu administrador.' ?></p>
             </div>
+            <button type="button" class="coord-btn coord-btn--sec coord-varios" data-horario-varios><i class="fas fa-calendar-week" aria-hidden="true"></i> Aplicar a varios días</button>
         </header>
         <form data-horario-vet novalidate class="coord-horario">
             <?php Csrf::field(); ?>
             <label class="coord-campo coord-campo--vet">Veterinario <select name="id_veterinario" data-veterinario required></select></label>
-            <div class="coord-franjas" data-franjas></div>
+            <?php $prefijoTablaHorario = 'vet-'; require __DIR__ . '/tabla_horario_semanal.php'; require __DIR__ . '/horario_varios_dias.php'; unset($prefijoTablaHorario); ?>
             <span data-error-campo="franjas" class="coordinacion-error" aria-live="polite"></span>
             <div class="coord-acciones">
-                <button type="button" class="coord-btn coord-btn--sec" data-agregar-franja><i class="fas fa-plus" aria-hidden="true"></i> Agregar franja</button>
-                <button type="submit" class="coord-btn"><?= $esAdminHorario ? 'Guardar horario' : 'Proponer horario' ?></button>
+                <button type="submit" class="coord-btn"><?= $esAdminHorario ? 'Guardar horario' : 'Enviar para aprobación' ?></button>
             </div>
             <p class="coord-aviso" data-aviso role="status"></p>
         </form>
@@ -46,7 +47,7 @@ $esAdminHorario = Contexto::rolActivo() === Roles::ADMIN;
             <dialog class="zk-dialogo" id="dialogoCierre" aria-labelledby="dialogoCierreTitulo">
                 <form data-cierre novalidate class="zk-dialogo__form">
                     <header class="zk-dialogo__head">
-                        <h3 id="dialogoCierreTitulo">Nuevo cierre puntual</h3>
+                        <span class="zk-dialogo__icono" aria-hidden="true"><i class="fas fa-calendar-times"></i></span><div><h3 id="dialogoCierreTitulo">Nuevo cierre puntual</h3><p>Indica cuándo no atenderá la clínica.</p></div>
                         <button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar"><i class="fas fa-times" aria-hidden="true"></i></button>
                     </header>
                     <div class="zk-dialogo__cuerpo coord-dialogo-campos">
@@ -78,8 +79,10 @@ $esAdminHorario = Contexto::rolActivo() === Roles::ADMIN;
     </section>
 </div>
 <?php if (!$esAdminHorario): ?>
+    <script src="js/time-picker.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="js/configuracion-clinica.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <?php endif; ?>
+<script src="js/horario-trabajo.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <script src="js/coordinacion-horarios.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <script src="js/ausencias-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>

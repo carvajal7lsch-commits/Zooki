@@ -451,9 +451,19 @@ select.zk-input {
 }
 
 .cita-pasos__indicador li {
+    flex: 1;
+    min-width: 0;
+}
+
+.cita-pasos__indicador button {
     display: flex;
     align-items: center;
-    flex: 1;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
     gap: 8px;
     padding-bottom: 14px;
     border-bottom: 3px solid var(--cal-border);
@@ -461,6 +471,9 @@ select.zk-input {
     font-size: 0.875rem;
     font-weight: 600;
 }
+
+.cita-pasos__indicador button:disabled { cursor: default; }
+.cita-pasos__indicador button:focus-visible { outline: 2px solid var(--cal-primary); outline-offset: 3px; }
 
 .cita-pasos__indicador span {
     display: grid;
@@ -511,7 +524,9 @@ select.zk-input {
     font-size: 1rem;
 }
 
-.cita-pasos__confirmacion { margin: 0; font-weight: 600; color: var(--cal-text); }
+.cita-pasos__acciones { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+
+.cita-horarios__resumen { margin: 0 0 12px; font-size: 0.8rem; color: var(--cal-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 #citaModalOverlay .cita-horarios { min-height: 0; }
 
@@ -523,14 +538,20 @@ select.zk-input {
 }
 
 #citaModalOverlay .triage-captura__titulo { display: none; }
+#citaModalOverlay .triage-captura__cabecera { display: none; }
 #citaModalOverlay .triage-captura__extra { border-top: 0; }
 #citaModalOverlay .triage-captura__enlace { color: var(--cal-text-2); }
 
 #citaModalOverlay .triage-captura__calcular {
-    border-color: var(--cal-border);
-    background: var(--cal-surface);
-    color: var(--cal-text);
+    border-color: var(--cal-primary);
+    background: var(--cal-primary);
+    color: #fff;
     box-shadow: none;
+}
+
+#citaModalOverlay .triage-captura__calcular:hover:not(:disabled) {
+    border-color: var(--cal-primary-hover);
+    background: var(--cal-primary-hover);
 }
 
 #citaModalOverlay .zk-modal__foot { flex-wrap: wrap; }
@@ -546,7 +567,7 @@ select.zk-input {
     .cita-pasos { min-height: 400px; }
     #citaModalOverlay .cita-horarios { min-height: 220px; }
     .cita-pasos__indicador { gap: 8px; padding: 16px 18px 0; }
-    .cita-pasos__indicador li { gap: 6px; font-size: 0.75rem; }
+    .cita-pasos__indicador button { gap: 6px; font-size: 0.75rem; }
     .cita-pasos__indicador span { width: 24px; height: 24px; }
     .cita-pasos__panel { padding: 20px 18px; }
     #citaModalOverlay .zk-input { font-size: 1rem; }

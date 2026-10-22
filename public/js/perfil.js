@@ -6,6 +6,70 @@
  * tiene una contraseña conocida (password_definida, HU-39).
  */
 (function () {
+    // HU-T.5: presentación local; no cambia lecturas, permisos ni formularios.
+    const presentacion = document.querySelector?.('[data-perfil-secciones]');
+    if (presentacion) {
+        const salida = presentacion.querySelector('.perfil-salir');
+        const lateral = presentacion.querySelector('.perfil-lateral');
+        const seguridad = document.getElementById('seguridad');
+        const movil = window.matchMedia('(max-width: 1023px)');
+        const situarSalida = () => {
+            (movil.matches ? seguridad : lateral).append(salida);
+            salida.classList.toggle('perfil-salir--seguridad', movil.matches);
+        };
+        movil.addEventListener('change', situarSalida);
+        situarSalida();
+        const eventos = Array.from(presentacion.querySelectorAll('#perfilActividad .perfil-evento'));
+        const anterior = presentacion.querySelector('[data-actividad-anterior]');
+        const siguiente = presentacion.querySelector('[data-actividad-siguiente]');
+        const paginaTexto = presentacion.querySelector('[data-actividad-pagina]');
+        let pagina = 0;
+        function paginar(cambio) {
+            pagina += cambio;
+            eventos.forEach((evento, indice) => { evento.hidden = Math.floor(indice / 5) !== pagina; });
+            anterior.disabled = pagina === 0;
+            siguiente.disabled = (pagina + 1) * 5 >= eventos.length;
+            paginaTexto.textContent = 'Página ' + (pagina + 1) + ' de ' + Math.ceil(eventos.length / 5);
+        }
+        anterior?.addEventListener('click', () => paginar(-1));
+        siguiente?.addEventListener('click', () => paginar(1));
+        presentacion.addEventListener('horario-trabajo:actualizado', evento => {
+            const lista = presentacion.querySelector('[data-resumen-semana]');
+            lista.replaceChildren();
+            ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].forEach((dia, indice) => {
+                const item = document.createElement('li');
+                const etiqueta = document.createElement('strong');
+                etiqueta.textContent = dia;
+                const texto = document.createElement('span');
+                const turnos = evento.detail.filter(f => Number(f.dia_semana) === indice + 1);
+                texto.textContent = turnos.map(f => f.hora_inicio.slice(0, 5) + '–' + f.hora_fin.slice(0, 5)).join(' / ') || 'Libre';
+                item.append(etiqueta, texto);
+                lista.append(item);
+            });
+        });
+        presentacion.addEventListener('ausencias:actualizadas', evento => {
+            const proxima = evento.detail.filter(a => !['rechazada', 'anulada'].includes(a.estado) && Date.parse(String(a.fecha_hora_fin).replace(' ', 'T') + '-05:00') >= Date.now()).sort((a, b) => String(a.fecha_hora_inicio).localeCompare(String(b.fecha_hora_inicio)))[0];
+            presentacion.querySelector('[data-resumen-ausencia]').textContent = proxima ? proxima.fecha_hora_inicio + ' · ' + proxima.estado : 'Sin ausencias';
+        });
+        const coordinacion = presentacion.querySelector('[data-coordinacion-horarios]');
+        if (coordinacion) {
+            const afectadas = coordinacion.querySelector('[data-afectadas]');
+            const tarjetaAfectadas = afectadas.closest('.coord-card');
+            const cierres = coordinacion.querySelector('[data-cierres]').closest('.coord-card');
+            // El mismo partial conserva sus formularios y oyentes: solo cambia el orden visual.
+            coordinacion.append(tarjetaAfectadas, cierres);
+            cierres.classList.add('perfil-cierres');
+            const actualizarIndicadores = () => {
+                const hayAfectadas = afectadas.querySelectorAll('.coord-item').length > 0;
+                tarjetaAfectadas.classList.toggle('perfil-sin-afectadas', !hayAfectadas);
+                presentacion.querySelector('[data-perfil-pendiente="ausencias"]').hidden = !hayAfectadas;
+                const pendiente = Array.from(coordinacion.querySelectorAll('[data-propuestas] .coord-item strong')).some(titulo => titulo.textContent.endsWith(' · Pendiente'));
+                presentacion.querySelector('[data-perfil-pendiente="horarios"]').hidden = !pendiente;
+            };
+            new MutationObserver(actualizarIndicadores).observe(coordinacion, { childList: true, subtree: true, characterData: true });
+            actualizarIndicadores();
+        }
+    }
     function mensaje(el, texto, tipo) {
         el.textContent = texto;
         el.className = 'perfil-msg' + (tipo ? ` perfil-msg--${tipo}` : '');
@@ -26,7 +90,7 @@
     const msgContacto = document.getElementById('perfilContactoMsg');
     let original = { email: email.value.trim(), telefono: telefono.value.trim() };
 
-    const hayCambios = () => email.value.trim() !== original.email || telefono.value.trim() !== original.telefono;
+    const hayCambios = () => telefono.value.trim() !== original.telefono && telefono.checkValidity();
 
     [email, telefono].forEach(campo => campo.addEventListener('input', () => {
         guardar.disabled = !hayCambios();
@@ -104,7 +168,7 @@
     formPwd.addEventListener('reset', () => setTimeout(pintarRequisitos));
 
     // Mostrar u ocultar cada contraseña.
-    formPwd.querySelectorAll('[data-ver]').forEach(boton => boton.addEventListener('click', () => {
+    (presentacion || formPwd).querySelectorAll('[data-ver]').forEach(boton => boton.addEventListener('click', () => {
         const campo = document.getElementById(boton.dataset.ver);
         const mostrar = campo.type === 'password';
         campo.type = mostrar ? 'text' : 'password';
@@ -147,5 +211,5 @@
     });
 
     // "Cambiar contraseña" en el menú del avatar llega con #seguridad.
-    if (window.location.hash === '#seguridad') (actual || nueva).focus();
+    if (!presentacion && window.location.hash === '#seguridad') (actual || nueva).focus();
 })();

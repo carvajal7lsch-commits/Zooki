@@ -18,7 +18,8 @@
     };
     let pickersModal = [];
 
-    const fila = dia => document.querySelector(`.horario-dia[data-dia="${dia}"]`);
+    const raizHorario = document.querySelector('.horarios');
+    const fila = dia => raizHorario.querySelector(`.horario-dia[data-dia="${dia}"]`);
     const toggleDia = dia => fila(dia).querySelector('.dia-activo');
     const toggleBloque = (dia, periodo) => fila(dia).querySelector(`.${periodo}-bloque-activo`);
     const entrada = (dia, periodo, extremo) => fila(dia).querySelector(`.${periodo}-${extremo}`);
@@ -358,7 +359,7 @@
             document.getElementById(`md${s}Section`).classList.remove('bloque-inactivo');
             [document.getElementById(`md${s}Inicio`).value, document.getElementById(`md${s}Fin`).value] = DEFECTO[periodo];
         });
-        modal.hidden = false;
+        modal.showModal();
 
         pickersModal.forEach(p => p.destroy());
         pickersModal = PERIODOS.map(periodo => {
@@ -367,7 +368,7 @@
         });
     }
 
-    const cerrarModal = () => { modal.hidden = true; };
+    const cerrarModal = () => { modal.close(); };
 
     function aplicarVariosDias() {
         const error = document.getElementById('mdError');
@@ -425,7 +426,7 @@
     }
 
     // ── Eventos ──
-    document.querySelector('.horarios-tabla').addEventListener('change', e => {
+    raizHorario.querySelector('.horarios-tabla').addEventListener('change', e => {
         const t = e.target;
         if (t.classList.contains('dia-activo')) alCambiarDia(Number(t.dataset.dia));
         else if (t.classList.contains('bloque-activo')) alCambiarBloque(Number(t.dataset.dia), t.dataset.periodo);
@@ -443,7 +444,7 @@
         document.getElementById(`md${s}Section`).classList.toggle('bloque-inactivo', !e.target.checked);
     });
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && !modal.hidden) cerrarModal();
+        if (e.key === 'Escape' && modal.open) cerrarModal();
     });
 
     cargar();

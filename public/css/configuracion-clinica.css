@@ -235,3 +235,8 @@
 }
 .configuracion-clinica .validation-error:empty { display: none; }
 .zk-dialogo .configuracion-campos { gap: 14px 16px; }
+
+/* La agenda de Configuración conserva sus tarjetas; el contenido largo queda dentro de la hoja. */
+@media (min-width: 1024px) {
+    .config-agenda-hoja { max-height: calc(100dvh - 180px); overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; padding-right: 4px; }
+}

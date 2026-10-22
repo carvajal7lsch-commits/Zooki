@@ -2,9 +2,57 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-21
+**Actualizado:** 2026-10-22
 
 ## Ahora
+
+### Mi perfil: botón de varios días en cabecera — entregada, pendiente de revisión (2026-10-22)
+
+- **Autor: Codex.** «Aplicar a varios días» pasa junto a «Horario de trabajo», sin ocupar una fila del formulario; conserva la ventana, el bloqueo y el mismo comportamiento compartido con Configuración.
+- Regresión de posición en escritorio y pruebas dirigidas de PerfilSecciones/CoordinacionHorarios: 12/12; sintaxis PHP y diff correctos. Las suites completas anteriores (JS 303/303 y PHP 1017/8058, 71 omitidas de motor) siguen como antecedente, no como ejecución nueva de este movimiento.
+- El dueño autoriza explícitamente a Codex a hacer el commit de todas las mejoras/correcciones pendientes de esta conversación, incluido el modal de Nueva cita y Mi perfil; esta indicación sustituye para ese commit la regla habitual de que lo ejecuta el dueño. Sin push ni tags. Se conserva la revisión independiente pendiente.
+
+### Mi perfil: ajustes visuales del dueño — entregada, pendiente de revisión (2026-10-22)
+
+- **Autor: Codex.** Cuenta alineada con el contenido, resúmenes más compactos; actividad conserva cinco lugares y la posición del paginador al cambiar de cinco eventos a tres. Semana en cuadrícula de varios días con turnos compactos y Aplicar a varios días, conservando datos/propuestas.
+- Ausencias reutiliza el calendario de Pacientes y su navegación mes/año mediante `selector-fechas.js`; mantiene nombres y valores ISO con segundos. El calendario de nacimiento conserva su límite actual, mientras ausencias permite fechas futuras. Se agrega únicamente la carga del componente al layout vet; no cambia el header ni su distribución.
+- JS completo 303/303; PHP completo sin host 1017 pruebas/8058 aserciones, 71 omitidas de motor. Calendario real comprobado en Chrome aislado, junto con admin/vet a 1920/1366/900/390 y menú a 360; sin operaciones sobre cuentas reales. No es evidencia nueva de MySQL/MariaDB/CI.
+- Detalle y archivos en `specs/pulido-interfaz.md`. Cambios anteriores preservados, sin .env, bases, commit, push ni tags. Pendiente revisión independiente y validación visual del dueño.
+
+### Mi perfil: una sola hoja — entregada, pendiente de revisión (2026-10-22)
+
+- **Autor: Codex.** Encargo A–G anotado antes de implementar en `specs/pulido-interfaz.md`; resultados anteriores conservados. Hoja única con lomo azul y desplazamiento del panel derecho; cuenta unificada, cambios de identidad en ventanas, resúmenes del vet y actividad paginada de cinco en cinco.
+- Tabla semanal y ventana de varios días compartidas con la clínica, usando BlockPicker; el adaptador conserva el JSON y los horarios especiales/segundos sin sobrescribirlos. Propuestas, motivos de rechazo, validaciones, claves y respuestas canónicas conservados. Ausencias compactas y ventanas comunes con pie blanco.
+- Verificación propia sobre fuente final: JS completo 302/302; PHPUnit sin host 1017 pruebas/8057 aserciones, 71 omitidas de motor. No corresponde a ejecución MySQL/MariaDB ni CI. Sintaxis PHP/JS y diff correctos.
+- Chrome aislado con vistas PHP reales y datos simulados: admin/vet y ventanas a 1920×1080, 1366×768, 900 y 390 px; menú también a 360. Configuración real incluye ambos horarios y ventanas. Sin desbordes horizontales; el contenido largo de Configuración se desplaza dentro de su contenedor en escritorio.
+- La actividad ya estaba limitada a ocho registros en el servidor; no se amplía la consulta ni se cambian rutas/permisos. Calendario, Pacientes y layouts preservados; sin .env, bases, commit, push ni tags. Pendientes: revisión independiente y comprobación del dueño con cuentas/datos reales antes de desplegar.
+
+### Mi perfil: pulido de horario, acceso y móvil — entregada, pendiente de revisión (2026-10-22)
+
+- **Autor: Codex.** Tabla semanal del vet compartida con Configuración, días/interruptores/franjas y mismo JSON. Datos de acceso en diálogos; inputs 42 px, requisitos ✓/✗ y guardado compacto. Pestañas móviles cortas/íconos, cierre de sesión en Seguridad y título común sin partirse.
+- JS completo 301/301; PHPUnit sin host 1017 pruebas/8056 aserciones, 71 omitidas de motor. Vistas PHP reales con datos simulados en Chrome: admin/vet y Configuración admin a 1366/900/390, menú a 360, sin desborde horizontal. Sintaxis y diff correctos.
+- Plan/evidencia en specs/pulido-interfaz.md. No se cambia servidor, rutas, permisos ni layouts; CSS compartido del header ajustado solo para evitar división/choques en móvil. Se conservan cambios ajenos de calendario/Pacientes y la entrega anterior.
+- Pendiente de revisión independiente y visual con datos reales del dueño. Sin .env, bases, commit, push ni tags.
+
+
+### Mi perfil por secciones: entregada, pendiente de revisión (2026-10-21)
+
+- **Autor: Codex.** Hero/menu lateral sticky, cuenta y acceso, seguridad con cinco eventos y Ver más local; horario/ausencias exclusivos de vet con indicadores, reajustes condicionales y cierres de solo lectura. Patrón compartido de pestañas/hash y teclado; sin cambios de rutas ni permisos.
+- Vistas PHP reales con datos simulados de admin/vet en Chrome a 1366/900/390, sin desborde horizontal; a 1366 sin scroll de página. IDs y atributos de validación conservados. JS completo 299/299; PHPUnit sin host 1017/8056, 71 omitidas de motor; sintaxis y diff correctos.
+- El servidor actual solo permite admin/vet en mi_perfil; recepción no existe en Roles. No se amplían accesos. Plan/evidencia en specs/pulido-interfaz.md; pendiente de revisión independiente y visual del dueño.
+- Sin tocar layouts ni cambios ajenos de calendario/Pacientes; sin .env, bases, commit, push o tags.
+
+
+### Nueva cita en dos pasos: entregada, pendiente de revisión (2026-10-21)
+
+- **Nuevo ajuste del dueño (Codex):** nota del catálogo eliminada del modal; Cancelar/Continuar debajo de campos de Paciente, Atrás debajo de triage y Agendar en el pie. Sin botones duplicados, Calcular azul y panel derecho conservados. Dirigidas 32/32 a 1366/390, sintaxis y diff correctos; pendiente de revisión visual, sin commit.
+
+- **Pulido pedido por el dueño (Codex):** indicación y botón Calcular en azul; navegación inferior existente siempre visible, sin duplicar botones. Dirigidas 12/12 a 1366/390, colores y pie verificados; pendiente de revisión visual.
+
+- **Autor: Codex.** Paciente y Urgencia, sin Confirmar; footer e indicadores según paso, guías de horarios, resumen y salida roja a Urgencias. Panel derecho conservado y Enter sin envío.
+- HU-4.13/RE-4.9.2: pruebas de gating, navegación, faltantes por paso, solicitud reservable/hora, rojo, Enter y doble envío. JS completo 297/297; Chrome aislado 1366/390 sin desborde horizontal. PHPUnit completo sin host: 1017 pruebas/8056 aserciones, 71 omitidas de motor; sin ejecución de base.
+- Sin commit/push ni cambios de reglas/esquema; pendiente de revisión independiente y visual del dueño.
+
 
 ### Ficha de mascota según mockup: entregada, pendiente de revisión (2026-10-21)
 

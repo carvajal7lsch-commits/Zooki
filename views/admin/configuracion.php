@@ -49,7 +49,8 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
     <dialog class="zk-dialogo" id="dialogoMarca" aria-labelledby="dialogoMarcaTitulo">
         <form data-form-marca novalidate class="zk-dialogo__form">
             <header class="zk-dialogo__head">
-                <h3 id="dialogoMarcaTitulo">Marca y contacto</h3>
+                <span class="zk-dialogo__icono" aria-hidden="true"><i class="fas fa-clinic-medical"></i></span>
+                <div><h3 id="dialogoMarcaTitulo">Marca y contacto</h3><p>Datos que identifican a tu clínica.</p></div>
                 <button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar"><i class="fas fa-times" aria-hidden="true"></i></button>
             </header>
             <div class="zk-dialogo__cuerpo">
@@ -83,7 +84,8 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
     <dialog class="zk-dialogo" id="dialogoTipo" aria-labelledby="dialogoTipoTitulo">
         <form data-form-tipo novalidate class="zk-dialogo__form">
             <header class="zk-dialogo__head">
-                <h3 id="dialogoTipoTitulo" data-tipo-titulo>Nuevo tipo de cita</h3>
+                <span class="zk-dialogo__icono" aria-hidden="true"><i class="fas fa-calendar-check"></i></span>
+                <div><h3 id="dialogoTipoTitulo" data-tipo-titulo>Nuevo tipo de cita</h3><p>Define el servicio, su duración y su margen.</p></div>
                 <button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar"><i class="fas fa-times" aria-hidden="true"></i></button>
             </header>
             <div class="zk-dialogo__cuerpo">
@@ -115,6 +117,7 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
         </form>
     </dialog>
 </div>
+<div class="config-agenda-hoja">
 <div id="config-horarios" role="tabpanel" aria-labelledby="config-tab-horarios" data-config-panel="horarios" hidden>
 <?php require __DIR__ . '/horarios.php'; ?>
 </div>
@@ -122,3 +125,4 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
 <script src="js/dialogos-zooki.js?v=<?= $e(App::assetVersion()) ?>" defer></script>
 
 <?php require __DIR__ . '/../partials/coordinacion_horarios.php'; ?>
+</div>

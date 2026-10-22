@@ -14,8 +14,10 @@ $partes = array_values(array_filter(explode(' ', trim($perfil['nombre_completo']
 $iniciales = mb_strtoupper(mb_substr($partes[0] ?? '', 0, 1) . mb_substr($partes[1] ?? '', 0, 1)) ?: 'U';
 $fallidos = (int) $cuenta['fallidos_30'];
 $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
+$esVetPerfil = Contexto::rolActivo() === Roles::VETERINARIO;
 ?>
-<div class="perfil">
+<div class="perfil perfil-secciones" data-perfil-secciones>
+    <aside class="perfil-lateral">
 
     <section class="perfil-hero">
         <div class="perfil-hero__avatar" aria-hidden="true"><?= $e($iniciales) ?></div>
@@ -36,25 +38,36 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             </ul>
         </div>
     </section>
-
-    <div class="perfil-grid">
+    <nav class="perfil-menu" data-config-tabs role="tablist" aria-label="Secciones de Mi perfil" aria-orientation="vertical">
+        <button type="button" role="tab" id="perfilTabCuenta" data-config-tab="cuenta" aria-controls="perfilCuenta" aria-selected="true" aria-label="Mi cuenta"><i class="fas fa-user" aria-hidden="true"></i><span class="perfil-tab-texto"><span class="perfil-tab-largo">Mi cuenta</span><span class="perfil-tab-corto">Cuenta</span></span></button>
+        <button type="button" role="tab" id="perfilTabSeguridad" data-config-tab="seguridad" aria-controls="seguridad" aria-selected="false" tabindex="-1" aria-label="Seguridad"><i class="fas fa-shield-alt" aria-hidden="true"></i><span class="perfil-tab-texto">Seguridad</span></button>
+        <?php if ($esVetPerfil): ?>
+        <button type="button" role="tab" id="perfilTabHorarios" data-config-tab="horarios" aria-controls="perfilHorarios" aria-selected="false" tabindex="-1" aria-label="Mi horario"><i class="fas fa-clock" aria-hidden="true"></i><span class="perfil-tab-texto"><span class="perfil-tab-largo">Mi horario</span><span class="perfil-tab-corto">Horario</span></span><span class="perfil-indicador" data-perfil-pendiente="horarios" aria-label="Propuesta de horario pendiente" hidden></span></button>
+        <button type="button" role="tab" id="perfilTabAusencias" data-config-tab="ausencias" aria-controls="perfilAusencias" aria-selected="false" tabindex="-1" aria-label="Ausencias"><i class="fas fa-calendar-times" aria-hidden="true"></i><span class="perfil-tab-texto">Ausencias</span><span class="perfil-indicador" data-perfil-pendiente="ausencias" aria-label="Citas pendientes de reajuste" hidden></span></button>
+        <?php endif; ?>
+    </nav>
+    <a href="index.php?action=logout" class="perfil-btn perfil-btn--danger perfil-salir"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar sesión</a>
+    </aside>
+    <div class="perfil-contenido">
+    <div class="perfil-panel" id="perfilCuenta" role="tabpanel" aria-labelledby="perfilTabCuenta" data-config-panel="cuenta">
 
         <!-- Datos de contacto -->
         <section class="perfil-card" aria-labelledby="perfilDatosTitulo">
             <header class="perfil-card__head">
-                <h3 id="perfilDatosTitulo">Datos de contacto</h3>
+                <h3 id="perfilDatosTitulo">Mi cuenta</h3>
                 <p>Así te contacta la clínica y te llegan los avisos.</p>
             </header>
 
-            <dl class="perfil-readonly">
-                <div><dt>Documento</dt><dd data-documento-cuenta><?= $e(trim(($perfil['tipo_documento'] ?? '') . ' ' . $perfil['documento'])) ?></dd></div>
-                <div><dt>Rol</dt><dd><?= $e($rolNombre) ?></dd></div>
-            </dl>
-
             <form id="perfilContactoForm" class="perfil-form" novalidate data-validacion-cuenta>
                 <div class="perfil-field">
+                    <label>Documento</label>
+                    <div class="perfil-campo-acceso"><span data-documento-cuenta><?= $e(trim(($perfil['tipo_documento'] ?? '') . ' ' . $perfil['documento'])) ?></span><button type="button" data-abrir-dialogo="dialogoIdentidadDocumento" aria-label="Cambiar documento">Cambiar</button></div>
+                </div>
+                <div class="perfil-field"><label for="perfilRol">Rol</label><input id="perfilRol" class="perfil-input" value="<?= $e($rolNombre) ?>" readonly></div>
+
+                <div class="perfil-field">
                     <label for="perfilEmail">Correo electrónico</label>
-                    <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="perfilEmail" readonly class="perfil-input" value="<?= $e($perfil['email']) ?>" autocomplete="email" required>
+                    <div class="perfil-campo-acceso"><input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="perfilEmail" readonly class="perfil-input" value="<?= $e($perfil['email']) ?>" autocomplete="email" required><button type="button" data-abrir-dialogo="dialogoIdentidadCorreo" aria-label="Cambiar correo">Cambiar</button></div>
                 </div>
                 <div class="perfil-field">
                     <label for="perfilTelefono">Teléfono</label>
@@ -71,8 +84,17 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             <p class="perfil-hint"><i class="fas fa-lock"></i> El rol lo gestiona el administrador. Puedes corregir tus datos de acceso confirmando tu identidad.</p>
         </section>
 
+        <?php $identidadSoloDialogos = true; require __DIR__ . '/../partials/cambios_identidad.php'; unset($identidadSoloDialogos); ?>
+        <?php if ($esVetPerfil): ?>
+        <div class="perfil-resumen">
+            <section><header><h3>Mi semana</h3><a href="#horarios">Ver horario <i class="fas fa-arrow-right" aria-hidden="true"></i></a></header><ul data-resumen-semana aria-live="polite"><li>Cargando horario…</li></ul></section>
+            <section><header><h3>Ausencias</h3><a href="#ausencias">Ver ausencias <i class="fas fa-arrow-right" aria-hidden="true"></i></a></header><p data-resumen-ausencia aria-live="polite">Cargando ausencias…</p></section>
+        </div>
+        <?php endif; ?>
+    </div>
+    <div class="perfil-panel perfil-seguridad" id="seguridad" role="tabpanel" aria-labelledby="perfilTabSeguridad" data-config-panel="seguridad" hidden>
         <!-- Contraseña -->
-        <section class="perfil-card" id="seguridad" aria-labelledby="perfilSeguridadTitulo">
+        <section class="perfil-card" aria-labelledby="perfilSeguridadTitulo">
             <header class="perfil-card__head">
                 <h3 id="perfilSeguridadTitulo"><?= $pideActual ? 'Cambiar contraseña' : 'Crear contraseña' ?></h3>
                 <p><?= $pideActual
@@ -86,7 +108,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                     <div class="perfil-field">
                         <label for="perfilPwdActual">Contraseña actual</label>
                         <div class="perfil-clave">
-                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdActual" class="perfil-input" autocomplete="current-password" required>
+                            <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdActual" class="perfil-input" placeholder="Tu contraseña actual" autocomplete="current-password" required>
                             <button type="button" class="perfil-clave__ver" data-ver="perfilPwdActual" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                         </div>
                     </div>
@@ -94,7 +116,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 <div class="perfil-field">
                     <label for="perfilPwdNueva">Nueva contraseña</label>
                     <div class="perfil-clave">
-                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdNueva" data-cuenta-ayuda="perfilPwdFeedback" class="perfil-input" autocomplete="new-password" aria-describedby="perfilPwdRequisitos" required>
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" placeholder="Nueva contraseña" id="perfilPwdNueva" data-cuenta-ayuda="perfilPwdFeedback" class="perfil-input" autocomplete="new-password" aria-describedby="perfilPwdRequisitos" required>
                         <button type="button" class="perfil-clave__ver" data-ver="perfilPwdNueva" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                     </div>
                     <ul class="perfil-requisitos" id="perfilPwdRequisitos">
@@ -108,7 +130,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                 <div class="perfil-field">
                     <label for="perfilPwdConfirmar">Confirmar contraseña</label>
                     <div class="perfil-clave">
-                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" id="perfilPwdConfirmar" data-cuenta-ayuda="perfilPwdCoincide" class="perfil-input" autocomplete="new-password" required>
+                        <input <?= ValidadorCuenta::atributosHtml('password') ?> type="password" placeholder="Repite la nueva" id="perfilPwdConfirmar" data-cuenta-ayuda="perfilPwdCoincide" class="perfil-input" autocomplete="new-password" required>
                         <button type="button" class="perfil-clave__ver" data-ver="perfilPwdConfirmar" aria-label="Mostrar contraseña" aria-pressed="false"><i class="far fa-eye"></i></button>
                     </div>
                     <small class="perfil-field__hint" id="perfilPwdCoincide" aria-live="polite"></small>
@@ -138,9 +160,9 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             <?php elseif (!$cuenta['actividad']): ?>
                 <p class="perfil-vacio">Todavía no hay actividad registrada.</p>
             <?php else: ?>
-                <ol class="perfil-actividad">
-                    <?php foreach ($cuenta['actividad'] as $a): ?>
-                        <li class="perfil-evento" data-tipo="<?= $e($a['tipo']) ?>">
+                <ol class="perfil-actividad" id="perfilActividad">
+                    <?php foreach (array_values($cuenta['actividad']) as $indiceActividad => $a): ?>
+                        <li class="perfil-evento" data-tipo="<?= $e($a['tipo']) ?>"<?= $indiceActividad >= 5 ? ' data-actividad-extra hidden' : '' ?>>
                             <span class="perfil-evento__icono" aria-hidden="true"><i class="fas <?= $iconos[$a['tipo']] ?? 'fa-circle' ?>"></i></span>
                             <div class="perfil-evento__info">
                                 <span class="perfil-evento__titulo"><?= $e($a['titulo']) ?></span>
@@ -149,19 +171,17 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                         </li>
                     <?php endforeach; ?>
                 </ol>
+                <?php if (count($cuenta['actividad']) > 5): ?>
+                <nav class="perfil-paginacion" aria-label="Páginas de actividad"><button type="button" class="perfil-btn perfil-btn--sec" data-actividad-anterior disabled>Anterior</button><span data-actividad-pagina role="status">Página 1 de <?= (int) ceil(count($cuenta['actividad']) / 5) ?></span><button type="button" class="perfil-btn perfil-btn--sec" data-actividad-siguiente>Siguiente</button></nav>
+                <?php endif; ?>
             <?php endif; ?>
 
-            <div class="perfil-logout">
-                <span>¿Terminaste por hoy?</span>
-                <a href="index.php?action=logout" class="perfil-btn perfil-btn--danger"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
-            </div>
         </section>
     </div>
-    <?php require __DIR__ . "/../partials/cambios_identidad.php"; ?>
+    <?php if ($esVetPerfil): ?>
+        <?php require __DIR__ . '/../partials/coordinacion_horarios.php'; ?>
+    <?php endif; ?>
+    </div>
 </div>
-
+<script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <script src="js/perfil.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-
-<?php if (Contexto::rolActivo() === Roles::VETERINARIO): ?>
-    <?php require __DIR__ . '/../partials/coordinacion_horarios.php'; ?>
-<?php endif; ?>

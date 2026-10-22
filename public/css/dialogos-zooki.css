@@ -90,3 +90,15 @@
     cursor: pointer;
 }
 .zk-icono:hover { border-color: var(--primary, #0052FF); color: var(--primary, #0052FF); }
+
+/* Ventanas comunes: encabezado identificable y pie sobre el mismo blanco. */
+.zk-dialogo { width: min(520px, calc(100vw - 32px)); }
+.zk-dialogo__head > div { flex: 1; min-width: 0; }
+.zk-dialogo__head p { margin: 4px 0 0; font-size: .78rem; line-height: 1.4; color: #64748B; }
+.zk-dialogo__icono { flex: 0 0 40px; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 11px; background: #EBF1FF; color: #0052FF; }
+.zk-dialogo__pie { background: #fff; }
+.zk-dialogo__campos { display: grid; grid-template-columns: minmax(100px, .7fr) minmax(0, 1.3fr); gap: 12px; }
+.zk-dialogo__campos .perfil-field label { font-size: .78rem; }
+.zk-dialogo [hidden] { display: none !important; }
+.zk-dialogo .perfil-clave { position: relative; }
+@media (max-width: 767px) { .zk-dialogo { width: 100vw; } }

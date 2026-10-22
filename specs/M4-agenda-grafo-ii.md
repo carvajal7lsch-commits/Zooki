@@ -3127,3 +3127,21 @@ Datos locales: `php scripts/dev/datos_prueba.php --si` (Ana/Beto/Elena Norte, Ca
 
 **Botón del propietario en azul (Codex, 2026-10-21):** petición del dueño aplicada al regreso de ambos detalles: texto y flecha azules sobre blanco, mismo borde y tamaños conservados. Estilo común sin duplicar reglas. PropietarioDetalle verifica texto/flecha/fondo en cinco anchos. Se prepara un único commit de todo el pulido pendiente (modal de agenda, cabecera/directorio y fichas), a petición del dueño; el dueño ejecuta commit/push. Entregada, pendiente de revisión visual.
 Verificación final de este ajuste: JS completo 296/296, sin omisiones; git diff --check correcto. PHP completo previo queda como antecedente, sin ejecución nueva por este cambio de color.
+
+## Anexo — Nueva cita en dos pasos (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Ajuste de interfaz solicitado por el dueño, sin modificar reglas de disponibilidad ni reserva.
+
+- Paciente (mascota/tipo/motivo) → Urgencia (partial existente); se elimina Confirmar. Indicadores con botones accesibles, regreso conservando datos y acceso al segundo solo con paciente completo.
+- Footer por paso: Cancelar/Continuar y Atrás/Agendar; «Falta» limitado al paso actual. Agendar exige consulta reservable, hora y ausencia de envío en curso; Enter no envía el formulario, tampoco desde el botón del footer.
+- Horarios fuera de los pasos, a la derecha en escritorio y apilados en móvil como antes. Guías mediante setSlotsEstado; resumen en una línea de mascota/tipo/nivel/hora tras seleccionar.
+- Rojo oculta Agendar, muestra aviso y botón Ir a Urgencias; cierra el modal y activa la pestaña existente. No crea llegada ni atención automáticamente.
+- El componente triage expone resultado vigente para presentación, invalidado por cambio de selección; consulta() conserva la puerta reservable. Sin duplicar cálculo, tiempos o permisos.
+- HU-4.13/RE-4.9.2 → AgendaModalCita, DisponibilidadAgenda y AgendaCitaPasos: gating, indicadores, faltantes, hora exacta, resumen, Enter, doble envío, derivación roja y descarte de respuestas obsoletas.
+- Revisión Chrome aislada con HTML PHP real a 1366/390 px, ambos pasos sin scroll horizontal; horarios presentes en ambos y a la derecha en escritorio. Sin recorrido de la aplicación ni consultas de base.
+- JS completo propio 297/297; PHPUnit completo sin host 1017 pruebas/8056 aserciones, 71 omisiones de motor. Sintaxis PHP/JS y diff correctos. Sin ejecución MySQL/MariaDB ni CI nuevo. Sin commit/push, versión, esquema ni exportaciones.
+- Pendiente: revisión independiente y visual del dueño. Se conservan registros anteriores; no se aprueba la entrega.
+
+**Pulido azul y navegación inferior (Codex, 2026-10-21):** indicación del catálogo en azul y Calcular nivel de urgencia con fondo azul principal, texto blanco y hover del sistema, únicamente en Nueva cita del vet. Se conserva el pie fijo fuera del contenido desplazable: Cancelar/Continuar y Atrás/Agendar, sin duplicar navegación. AgendaCitaPasos compara colores con los botones principales y verifica pie visible incluso al desplazar el contenido a 1366/390 px; dirigidas 12/12. Entregada, pendiente de revisión visual; suites completas anteriores son antecedente, sin repetición por este ajuste de color.
+
+**Botones junto a los campos y nota eliminada (Codex, 2026-10-21):** por petición del dueño, Cancelar/Continuar quedan inmediatamente debajo del motivo en Paciente y Atrás debajo del triage en Urgencia; Agendar permanece en el pie. Se mueven los mismos botones, sin duplicar eventos ni IDs. Nueva cita deja de generar la nota del catálogo; el partial conserva su salida habitual en los demás usos mediante opción local que se limpia tras incluirlo. Calcular sigue azul y los horarios derechos se conservan. Dirigidas 32/32, Chrome aislado 1366/390 sin desborde horizontal, sintaxis de ambas vistas y diff correctos. Entregada, pendiente de revisión visual; suites completas previas son antecedente y no una ejecución nueva. Sin commit/push.

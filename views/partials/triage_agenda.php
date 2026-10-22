@@ -21,7 +21,9 @@ $grupoAgenda = static function (string $grupo, string $titulo, string $ayuda, bo
 <section class="triage-captura" data-triage-agenda data-permite-revision="<?= !empty($puedeRevisarAgenda) ? '1' : '0' ?>" aria-label="Síntomas y nivel de urgencia">
     <div class="triage-captura__cabecera">
         <span class="triage-captura__titulo">Síntomas y urgencia</span>
+        <?php if (empty($ocultarNotaAgenda)): ?>
         <span class="triage-captura__nota">Elige del catálogo; el nivel lo calcula Zooki.</span>
+        <?php endif; ?>
     </div>
     <?php $grupoAgenda('sintomas', '¿Qué le pasa?', 'Escribe y elige un síntoma (ej. vómito)', true); ?>
     <button type="button" class="triage-captura__enlace" data-triage-otro>¿No aparece? Marcar «Otro / no sé»</button>

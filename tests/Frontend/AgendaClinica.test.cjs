@@ -88,5 +88,6 @@ test('C6 DOM real: validación en vivo y denegación de doble envío, actualizac
         await n.esperar("document.querySelector('[data-form-ausencia] [data-aviso]').textContent==='Ausencia efectiva'");
         await n.evaluar(`__lecturas.at(-1).resolve({ok:true,json:async()=>({success:true,ausencias:[{id:7,veterinario:'Beto',fecha_hora_inicio:'2030-01-07 09:00:00',fecha_hora_fin:'2030-01-07 10:00:00',estado:'aprobada'}]})})`);
         await n.esperar("document.querySelector('[data-lista-ausencias]').textContent.toLowerCase().includes('aprobada')");
+        assert.equal(await n.evaluar("document.querySelector('[data-lista-ausencias] .coord-estado').dataset.estado"),'aprobada');
     });
 });
