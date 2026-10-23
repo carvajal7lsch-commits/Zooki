@@ -648,15 +648,17 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 - El acceso «Atención sin cita» registra llegada y crea una cita antes de iniciar toda nueva atención; la consulta se enlaza a ella con origen «llegada sin reserva», sin duplicarla si ya tiene cita activa.
 - Sin hueco, verdes/amarillos esperan o reciben próximo espacio/otro veterinario compatible de la clínica, sin sobrecupo automático ni consulta hasta crear su cita. La espera se ordena amarillo antes de verde y, dentro de cada color, llegada física/id_solicitud; se revalida capacidad antes de asignar. Rojo sigue HU-4.15.
-- Listado, detalle e historial distinguen el origen aunque exista cita; históricos NULL conservan «Sin cita». Doble envío no duplica cita/consulta; motivo/diagnóstico y HC de primera consulta se conservan.
+- El historial distingue el origen aunque exista cita; históricos NULL conservan «Sin cita». Doble envío no duplica cita/consulta; motivo/diagnóstico y HC de primera consulta se conservan.
 
 - El flujo normal es por cita: desde el calendario se inicia la atención y la consulta queda ligada a la cita (HU-4.3, HU-4.5).
-- En Consultas Médicas, el botón «Atención sin cita» permite buscar al paciente (HU-1.3) y registrar llegada/cita antes de iniciar la consulta.
-- La pantalla explica cuándo usarlo y remite al calendario si el paciente tiene cita.
+- En el Inicio del veterinario, «Atención sin cita» lleva a Agenda → Llegadas, donde se registra la llegada/cita del paciente (HU-1.3) antes de iniciar la consulta.
+- La pestaña Llegadas explica que registrar la llegada no inicia la atención y que un rojo se recibe por Urgencias.
 - Se exigen los mismos datos que en HU-2.1 (motivo y diagnóstico) y, si es su primera consulta, se asigna el número de historia clínica (RN-102).
-- El origen de llegada y los históricos sin cita se distinguen en listado, detalle e historial.
+- El origen de llegada y los históricos sin cita se distinguen en el historial (Pacientes y Atención).
 
 **Reglas de negocio:** RN-102, RN-203, RN-208, RN-411, RN-415 · **Dependencias:** HU-1.3, HU-2.1
+
+> _Nota (decisión del dueño, 2026-10-22): «Consultas médicas» se retiró y el acceso «Atención sin cita» pasó al Inicio (HU-6.1). Sigue llevando a Llegadas, como ya hacía, así que no cambia lo que se guarda; el buscador modal que no se usaba se retiró._
 
 ### HU-2.3 — Adjuntar archivos clínicos
 
@@ -1690,13 +1692,19 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 - Accesos rápidos a funciones frecuentes.
 - Carga en menos de 3 segundos.
 - Datos filtrados según el usuario.
-- Destaca el siguiente paciente con el botón para iniciar o continuar la atención, habilitado desde 15 minutos antes de la cita.
+- Destaca el siguiente paciente con su nivel, su llegada y sus alergias, y con el botón para registrar su llegada y luego iniciar o continuar la atención, habilitado desde 15 minutos antes de la cita.
 - Lista las atenciones sin cerrar o abiertas de días anteriores, cada una con acceso para cerrarla.
 - No muestra datos de ejemplo: sin información, se ve un estado vacío.
+- Un calendario del mes marca los días con citas del veterinario; al tocar un día, «Tu día» muestra esa fecha.
+- «Tu día» muestra en orden de hora las citas con su estado, los huecos libres que salen de la disponibilidad real (cada uno abre el agendamiento con esa hora) y lo que corta la jornada: almuerzo, cierres puntuales y ausencias. Un día sin citas dice cuánto queda libre y cuál es el próximo día con citas.
+- Agrupa los pendientes por tipo (atenciones sin cerrar, triages por revisar, reasignaciones y próximas dosis), cada uno con su acción, y muestra los pacientes atendidos recientemente por el veterinario en la clínica.
+- «Atención sin cita» lleva a la agenda para registrar la llegada (HU-2.2).
 
-**Reglas de negocio:** RN-G01, RN-407, RN-409 · **Dependencias:** HU-T.1
+**Reglas de negocio:** RN-G01, RN-407, RN-409, RN-415, RN-426 · **Dependencias:** HU-T.1
 
 > _Nota: hasta v1.9.0 el panel mezclaba gráficas con datos inventados cuando no había información, la agenda de hoy mostraba las citas de todos los veterinarios y el "hoy" se calculaba en UTC. Desde v1.9.1 el panel se pinta en el servidor con la hora de la clínica (`PanelController`) y responde a "¿qué tengo que hacer ahora?"._
+
+> _Nota (decisión del dueño, 2026-10-22): el Inicio del veterinario se rehízo con el diseño aprobado en `specs/referencias/inicio-veterinario.dc.html` y se retiró el módulo «Consultas médicas». El historial de cada mascota sigue en Pacientes y en Atención, y la atención sin cita se registra como llegada en la agenda._
 
 ### HU-6.2 — Panel de operación del administrador
 
@@ -2164,7 +2172,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-412 | HU-4.5, HU-4.14, HU-4.19 |
 | RN-413 | HU-4.14 |
 | RN-414 | HU-4.12 |
-| RN-415 | HU-2.2, HU-4.6, HU-4.11, HU-4.12, HU-4.13, HU-4.14, HU-4.15, HU-7.4 |
+| RN-415 | HU-2.2, HU-4.6, HU-4.11, HU-4.12, HU-4.13, HU-4.14, HU-4.15, HU-6.1, HU-7.4 |
 | RN-416 | HU-2.11 |
 | RN-417 | HU-2.11 |
 | RN-418 | HU-2.11 |
@@ -2175,7 +2183,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-423 | HU-4.17 |
 | RN-424 | HU-2.11 |
 | RN-425 | HU-2.11 |
-| RN-426 | HU-4.19, HU-7.5 |
+| RN-426 | HU-4.19, HU-6.1, HU-7.5 |
 | RN-427 | HU-4.15, HU-7.4 |
 | RN-428 | HU-4.14, HU-7.5 |
 | RN-429 | HU-4.14, HU-7.5 |

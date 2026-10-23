@@ -219,3 +219,50 @@ Archivos de este ajuste: `public/css/perfil.css`, `public/css/horarios.css`, `pu
 PerfilSecciones comprueba contención y alineación vertical con el título a 1920/1366; coordinación conserva las comprobaciones de ambos roles y varios días. Pruebas dirigidas **12/12**, sintaxis PHP y `git diff --check` correctos. Suites completas de la corrección anterior: JS 303/303 y PHP 1017/8058 con 71 omitidas de motor, como antecedente sin repetirlas por este movimiento de presentación.
 
 **Autorización del dueño:** guardar en un commit todas las mejoras/correcciones pendientes de la conversación (modal Nueva cita, Mi perfil, horarios, calendario compartido, pruebas y seguimiento). Codex ejecuta este commit por la petición expresa posterior del usuario; no realiza push ni tags y no aprueba su propia entrega.
+
+## Inicio del veterinario y retiro de «Consultas médicas» — Encargo (2026-10-22)
+
+**Autor: Claude (ejecutor). HU-6.1 (RE-6.1.1 a RE-6.1.12), HU-2.2, RNF-11, RNF-16.** Referencia visual y de comportamiento aprobada por el dueño: `specs/referencias/inicio-veterinario.dc.html` (se repite su diseño, no su código).
+
+**Decisiones del dueño (2026-10-22):**
+
+- Se elimina el módulo «Consultas médicas» (`vet_consultas`): sale del menú, de la ruta, de la matriz de `Security.php` y de sus pruebas. El historial de cada mascota sigue en Pacientes y en Atención.
+- «Atención sin cita» pasa al Inicio y lleva a Agenda → pestaña Llegadas, que es lo que ya hacía el botón de Consultas (HU-2.2: se registra la llegada y se crea la cita antes de atender). No cambia lo que se guarda. Se retira el buscador modal de consultas.php, que ningún botón abría y que, al elegir una mascota, también mandaba a Llegadas sin llevarla. Abrir la consulta directa sin cita se descartó porque contradice HU-2.2.
+- «+ Agendar» en un hueco de «Tu día» abre el modal de agendar de la agenda en esa fecha (`vet_agenda&agendar=AAAA-MM-DD&hora=HH:MM`). Cuando aparecen los horarios, marca esa hora si sigue libre. El modal no se duplica en el Inicio.
+
+**Decisiones de implementación (para revisión):**
+
+- La agenda abre la pestaña de herramientas que indica el hash (`#llegadas`, `#triage`, `#reasignaciones`). Antes, `#llegadas` no la abría.
+- «Registrar llegada» del siguiente paciente usa la misma acción `registrar_llegada_ajax` de Llegadas. Si la llegada queda fuera de la tolerancia, lleva a Llegadas para decidir (RN-426), sin duplicar esas decisiones en el Inicio. Ya registrada, la tarjeta ofrece la acción de RE-6.1.5.
+- Los huecos de «Tu día» salen de `DisponibilidadAgenda::diaDelVeterinario` (jornada ∩ apertura − cierres − ausencias − ocupación, la misma resta que usan sugerir y reservar). De hoy solo se muestran desde ahora y de días pasados no se muestran. Se ocultan los huecos más cortos que el tipo de cita activo más corto de la clínica, porque no se pueden agendar.
+- Entre franjas de la jornada aparece una fila gris de almuerzo; también los cierres puntuales y las ausencias aprobadas.
+- «Pendientes» reutiliza los listados existentes: atenciones abiertas del panel, `SolicitudAgenda::listar` (triages por revisar, de la clínica) y `CascadaAgenda::listar` (reasignaciones para este vet). Las vacunas y desparasitaciones próximas se abren en una ventana del propio Inicio.
+- La acción nueva `panel_dia_ajax` es de solo lectura y exclusiva del veterinario, sobre su propia agenda: el id sale de la sesión, nunca de la petición. Devuelve los fragmentos «Tu día» o el calendario renderizados por los mismos parciales PHP del primer render.
+
+## Inicio del veterinario y retiro de «Consultas médicas» — Resultado (2026-10-22)
+
+**Autor: Claude. Entregada, pendiente de revisión.**
+
+- **Inicio (HU-6.1, RE-6.1.5 a RE-6.1.12):** `views/vet/area.php` repite el diseño del mockup aprobado. Arriba: siguiente paciente (nivel, edad, propietario, llegada, motivo y alergias; «Registrar llegada» o la acción de RE-6.1.5, y «Ver ficha»), el calendario del mes, «Atención sin cita» y «Hoy». Abajo: «Tu día», «Pendientes» y «Pacientes recientes».
+- **Primer render y AJAX:** el primer render de hoy viene del servidor. Los parciales `views/vet/partials/inicio_dia.php` e `inicio_calendario.php` sirven también a `panel_dia_ajax`, así que no hay un segundo pintor en JS.
+- **Servidor:** `DisponibilidadAgenda::diaDelVeterinario` es solo para el veterinario de la sesión. `Panel` suma días con citas, próximo día con citas, alertas activas, pacientes recientes y duración mínima de cita. `DiaVeterinario` arma las filas del día sin base de datos. `PanelController::diaAjax` valida la fecha y el mes y toma la agenda de la sesión. `panel_dia_ajax` entra en la matriz solo para el veterinario.
+- **Consultas médicas retirada:** se quitan la ruta, el menú, la matriz, `views/vet/consultas.php`, `public/js/consultas.js`, `ConsultaController::listar` y, de `medical-module.js` y `consulta-clinica.css`, el buscador modal sin uso. `Consulta::listarDeLaClinica` se conserva, porque sus pruebas de RN-113 siguen vigentes.
+- **Agenda:** abre la pestaña de herramientas del hash. Con `?agendar=&hora=` abre su modal en ese día y marca la hora cuando aparecen los horarios, si sigue libre.
+- **Estilo y responsive (RNF-16):** hoja propia `public/css/inicio-vet.css`, cargada solo en vet_area; `panel.css` queda para el administrador.
+  - Escritorio: cabe sin scroll en 1366×768 y 1440×900; solo la lista de «Tu día» se desplaza.
+  - Tableta: siguiente paciente a todo el ancho y el resto en dos columnas.
+  - Celular: una columna en el orden pedido y los cinco recientes. Bajo 480 px se ocultan el gato y el cachorro, que tapaban botones y texto.
+- **Pruebas:**
+  - Nuevas: `tests/Integration/InicioVeterinarioTest.php`, con huecos con almuerzo y cierre, huecos desde ahora y sin huecos en días pasados, día sin citas y sin jornada, aislamiento por clínica y por veterinario (un `id_veterinario` en la petición no cambia la agenda), calendario de otro mes y fechas inválidas, recientes y siguiente paciente. También `tests/Frontend/InicioVeterinario.test.cjs`.
+  - Ampliadas: `ResumenPanelTest` y `SeguridadClinicaTest`.
+  - Actualizadas por el retiro de Consultas: M2C5a, M2C7, M2C8.2, PropietarioDetalle (marcador de corte) y los arneses c81/c82. AgendaCitaPasos y DisponibilidadAgenda reciben el stub de `marcarHoraPreferida`.
+- **Evidencia propia:**
+  - `vendor/bin/phpunit`: 1027 pruebas, 8132 aserciones, 71 omitidas de motor.
+  - `node --test --test-concurrency=1 tests/Frontend/*.test.cjs`: 312/312.
+  - Consultas nuevas de `Panel` ejecutadas en MariaDB 10.4 local, solo lectura.
+  - Chrome con el layout real, `PanelController` real y fixture SQLite (día lleno, pocas citas con cierre, día sin citas y sin pendientes) a 1440×900, 1366×768, 900, 600, 390 y 360 px: sin desborde horizontal y sin scroll de página en escritorio.
+  - Interacciones comprobadas: otro día, día libre, día pasado sin huecos, otro mes y ventana de dosis, sin errores JS.
+- **Pendiente:**
+  - Revisión independiente y prueba del dueño con sus datos reales.
+  - No hay evidencia de MySQL 8 ni de CI.
+  - `panel.css` conserva reglas `panel--vet` sin uso y `medical/consultas.css` mezcla clases del cajón de historial con la lista retirada; limpiarlos queda para el pulido final.

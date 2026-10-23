@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inicio · Tu día vertical y contadores</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EDF6}
+a{color:#0052FF;text-decoration:none}a:hover{color:#003DCC}
+.tile{border-radius:22px;overflow:hidden;position:relative;min-width:0;background:#FFFFFF}
+.titulo{margin:0;font-size:14.5px;font-weight:700;color:#0F172A}
+.meta{margin:0;font-size:12px;color:#64748B}
+.nav-btn{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;color:#64748B}
+.d{height:28px;border:0;background:transparent;display:grid;place-items:center;border-radius:9px;font:inherit;font-size:12px;font-weight:600;color:#334155;position:relative;cursor:pointer;padding:0}
+.d:hover{background:#F1F5FF}
+.d.pasado{color:#CBD5E1}
+.d.vacio{visibility:hidden}
+.d.hoy{color:#0052FF;font-weight:800;box-shadow:inset 0 0 0 1.5px #0052FF}
+.d.sel{background:#0052FF;color:#FFFFFF;font-weight:800;box-shadow:none}
+.d .marca{position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:#0052FF}
+.d.sel .marca{background:#FFFFFF}
+.linea{display:grid;grid-template-columns:62px 14px minmax(0,1fr);align-items:center;gap:10px;min-height:34px}
+.hora{font-size:12px;font-weight:700;color:#475569;text-align:right;white-space:nowrap}
+.eje{width:14px;display:grid;place-items:center;position:relative;align-self:stretch}
+.eje::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:#E2E8F0}
+.nodo{position:relative;width:10px;height:10px;border-radius:50%;border:2px solid #FFFFFF}
+.cita{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 12px;border-radius:11px;font-size:13px;min-width:0}
+.hueco{padding:6px 12px;border-radius:11px;border:1.5px dashed #CBD5E1;color:#64748B;font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center;background:transparent;font-family:inherit;cursor:pointer;width:100%;box-sizing:border-box}
+.hueco:hover{border-color:#0052FF;background:#F1F5FF}
+.almuerzo{padding:6px 12px;border-radius:11px;background:repeating-linear-gradient(135deg,#F1F5F9 0 6px,#F8FAFC 6px 12px);color:#94A3B8;font-size:12px;font-weight:600}
+.estado{font-size:11px;font-weight:700;white-space:nowrap}
+.cont{display:flex;align-items:center;gap:14px;padding:0 18px;border-radius:18px;color:#0F172A;min-width:0;background:#FFFFFF;flex:1;min-height:76px}
+.cont .ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex-shrink:0}
+.cont .num{font-size:32px;font-weight:800;line-height:1;letter-spacing:-.02em;min-width:28px}
+.cont .txt{flex:1;min-width:0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cont .txt small{display:block;margin-top:3px;font-size:12px;font-weight:500;color:#64748B;overflow:hidden;text-overflow:ellipsis}
+.pest{display:flex;align-items:center;justify-content:center;gap:6px;height:38px;border:0;border-radius:10px;background:transparent;font:inherit;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;white-space:nowrap;padding:0 6px;min-width:0;overflow:hidden}
+.pest.activa{background:#FFFFFF;color:#0F172A;font-weight:700;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.pnum{min-width:20px;height:20px;border-radius:999px;display:grid;place-items:center;font-size:11px;font-weight:800;padding:0 5px;box-sizing:border-box}
+.item{display:flex;align-items:center;gap:12px;padding:7px 8px 7px 10px;border-radius:12px;background:#F8FAFC}
+.rec{display:flex;align-items:center;gap:12px;padding:7px 4px;border-bottom:1px solid #EEF2F6}
+.rec .ava{width:38px;height:38px;border-radius:12px}
+.ava{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:13px;font-weight:800;flex-shrink:0}
+.accion{display:inline-flex;align-items:center;height:34px;padding:0 13px;border:0;border-radius:10px;background:#0052FF;color:#FFFFFF;font:inherit;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer}
+.accion:hover{color:#FFFFFF;background:#003DCC}
+.accion--sec{background:#FFFFFF;color:#475569;box-shadow:inset 0 0 0 1px #E2E8F0}
+.accion--sec:hover{background:#F1F5F9;color:#0F172A}
+</style>
+</helmet>
+<div style="display: flex; min-height: 900px; font-family: Inter, system-ui, sans-serif; color: #0F172A; background: #E9EDF6">
+  <nav aria-label="Menú principal" style="width: 88px; flex-shrink: 0; background: #FFFFFF; border-radius: 0 28px 28px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 28px 0">
+    <img src="../../public/img/icon_blue.png" alt="Zooki" style="width: 44px; height: 44px; border-radius: 12px; margin-bottom: 26px">
+    <a href="#" class="nav-btn" aria-label="Inicio" style="background: #0052FF; color: #FFFFFF; box-shadow: 0 8px 18px rgba(0,82,255,.28)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg></a>
+    <a href="#" class="nav-btn" aria-label="Pacientes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="10" r="2"></circle><circle cx="9.5" cy="5.5" r="2"></circle><circle cx="14.5" cy="5.5" r="2"></circle><circle cx="18.5" cy="10" r="2"></circle><path d="M12 12c-3 0-6 4-6 6.5 0 1.5 1.5 2 3 2 1 0 2-.6 3-.6s2 .6 3 .6c1.5 0 3-.5 3-2C18 16 15 12 12 12z"></path></svg></a>
+    <a href="#" class="nav-btn" aria-label="Calendario"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"></rect><path d="M8 2.5v4M16 2.5v4M3 10h18"></path></svg></a>
+    <a href="#" class="nav-btn" aria-label="Mi perfil"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg></a>
+  </nav>
+
+  <main style="flex: 1; min-width: 0; padding: 22px 32px 26px; display: flex; flex-direction: column; gap: 16px">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+      <div>
+        <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #64748B">Miércoles 21 de octubre</p>
+        <h1 style="margin: 2px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -.02em">Buenas tardes, Beto</h1>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="padding: 7px 14px; border-radius: 999px; background: #FFFFFF; color: #0052FF; font-size: 13px; font-weight: 600">Clínica Norte · Veterinario</span>
+        <button type="button" aria-label="Notificaciones" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: #FFFFFF; display: grid; place-items: center; color: #F59E0B; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg></button>
+        <span style="width: 40px; height: 40px; border-radius: 50%; background: #0052FF; color: #FFFFFF; display: grid; place-items: center; font-size: 13px; font-weight: 700">BN</span>
+      </div>
+    </header>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 16px; height: 258px">
+      <section class="tile" aria-labelledby="tituloAhora" style="background: #0052FF; color: #FFFFFF; padding: 24px 28px; display: flex">
+        <div aria-hidden="true" style="position: absolute; right: -40px; top: -70px; width: 260px; height: 260px; border-radius: 50%; background: #3B82F6"></div>
+        <div aria-hidden="true" style="position: absolute; right: 0; bottom: 0; width: 230px; height: 160px; background: #93C5FD; border-radius: 160px 0 0 0"></div>
+        <img src="../../public/img/gato-gris.png" alt="" aria-hidden="true" style="position: absolute; right: 30px; bottom: 0; height: 226px">
+        <div style="position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; max-width: 60%">
+          <p id="tituloAhora" style="margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #BFDBFE">Siguiente · 2:00 p. m. · en 20 min</p>
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+            <h2 style="margin: 0; font-size: 38px; line-height: 1; font-weight: 800; letter-spacing: -.03em">Luna</h2>
+            <span style="padding: 4px 11px; border-radius: 999px; background: #FFEDD5; color: #C2410C; font-size: 11.5px; font-weight: 800">● Naranja</span>
+          </div>
+          <p style="margin: 0; font-size: 13px; color: #DBEAFE">Felina · 4 años · de Ana Pérez · aún no llega</p>
+          <p style="margin: 0; font-size: 13px; padding: 9px 12px; border-radius: 12px; background: rgba(255,255,255,.12)">Vómito hace 3 h · no come · <strong>alergia a penicilina</strong></p>
+          <div style="display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap">
+            <a href="#" style="display: inline-flex; align-items: center; height: 42px; padding: 0 18px; border-radius: 12px; background: #FFFFFF; color: #0052FF; font-size: 13px; font-weight: 800">Registrar llegada</a>
+            <a href="#" style="display: inline-flex; align-items: center; height: 42px; padding: 0 18px; border-radius: 12px; background: rgba(255,255,255,.16); color: #FFFFFF; font-size: 13px; font-weight: 700">Ver ficha</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="tile" aria-labelledby="tituloCal" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <h3 id="tituloCal" class="titulo">Octubre 2026</h3>
+          <div style="display: flex; gap: 4px">
+            <button type="button" aria-label="Mes anterior" style="width: 28px; height: 28px; border-radius: 8px; border: 1px solid #E2E8F0; background: #FFFFFF; color: #475569; display: grid; place-items: center; cursor: pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+            <button type="button" aria-label="Mes siguiente" style="width: 28px; height: 28px; border-radius: 8px; border: 1px solid #E2E8F0; background: #FFFFFF; color: #475569; display: grid; place-items: center; cursor: pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 10.5px; font-weight: 700; color: #94A3B8; text-align: center">
+          <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px">
+          <sc-for list="{{dias}}" as="dia" hint-placeholder-count="35">
+            <button type="button" class="{{dia.clase}}" onClick="{{dia.pick}}" aria-label="{{dia.etiqueta}}">{{dia.n}}<sc-if value="{{dia.cita}}" hint-placeholder-val="{{ false }}"><span class="marca"></span></sc-if></button>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+        <a href="#" class="tile" style="flex: 1; background: #DBEAFE; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; color: #0F172A">
+          <div aria-hidden="true" style="position: absolute; left: 0; bottom: 0; width: 96px; height: 96px; background: #93C5FD; border-radius: 0 96px 0 0"></div>
+          <img src="../../public/img/cachorro-negro.png" alt="" aria-hidden="true" style="position: absolute; right: 2px; bottom: 0; height: 104px">
+          <span style="position: relative; width: 40px; height: 40px; border-radius: 13px; background: #0052FF; color: #FFFFFF; display: grid; place-items: center; box-shadow: 0 8px 18px rgba(0,82,255,.35)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>
+          <strong style="position: relative; font-size: 15.5px; font-weight: 800">Atención sin cita</strong>
+        </a>
+        <section class="tile" aria-labelledby="tituloHoy" style="flex: 1; padding: 14px 18px; display: flex; flex-direction: column; justify-content: space-between">
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><h3 id="tituloHoy" class="titulo">Hoy</h3><p style="margin: 0; font-size: 26px; line-height: 1; font-weight: 800; color: #0052FF">6 <span style="font-size: 12px; font-weight: 600; color: #64748B">citas</span></p></div>
+          <div style="display: flex; gap: 4px" aria-hidden="true">
+            <span style="flex: 2; height: 7px; border-radius: 99px; background: #16A34A"></span>
+            <span style="flex: 1; height: 7px; border-radius: 99px; background: #DC2626"></span>
+            <span style="flex: 3; height: 7px; border-radius: 99px; background: #DBEAFE"></span>
+          </div>
+          <p class="meta"><strong style="color: #15803D">2</strong> atendidas · <strong style="color: #B91C1C">1</strong> sin cerrar · <strong style="color: #0F172A">3</strong> pendientes</p>
+        </section>
+      </div>
+    </div>
+
+    <div style="flex: 1; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; min-height: 0">
+      <section class="tile" aria-labelledby="tituloDia" style="padding: 18px 22px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+          <h3 id="tituloDia" class="titulo" style="font-size: 16px">{{tituloDia}}</h3>
+          <span class="meta">{{resumenDia}}</span>
+        </div>
+        <sc-if value="{{hayCitas}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <sc-for list="{{lineas}}" as="l" hint-placeholder-count="8">
+              <div class="linea">
+                <span class="hora">{{l.hora}}</span>
+                <span class="eje"><span class="nodo" style="background: {{l.color}}"></span></span>
+                <sc-if value="{{l.esCita}}" hint-placeholder-val="{{ true }}">
+                  <span class="cita" style="background: {{l.fondo}}"><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><strong>{{l.nombre}}</strong> <span class="meta" style="display: inline">· {{l.texto}}</span></span><span class="estado" style="color: {{l.color}}">{{l.estado}}</span></span>
+                </sc-if>
+                <sc-if value="{{l.libre}}" hint-placeholder-val="{{ false }}">
+                  <button type="button" class="hueco"><span>{{l.texto}}</span><span style="color: #0052FF">+ Agendar</span></button>
+                </sc-if>
+                <sc-if value="{{l.almuerzo}}" hint-placeholder-val="{{ false }}">
+                  <span class="almuerzo">{{l.texto}}</span>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{diaLibre}}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; border-radius: 18px; background: #F1F5FF; position: relative; overflow: hidden; display: flex; align-items: center; padding: 24px 28px">
+            <div aria-hidden="true" style="position: absolute; right: 0; bottom: 0; width: 220px; height: 170px; background: #DBEAFE; border-radius: 170px 0 0 0"></div>
+            <img src="../../public/img/golden-retriever.png" alt="" aria-hidden="true" style="position: absolute; right: 24px; bottom: 0; height: 210px">
+            <div style="position: relative; display: flex; flex-direction: column; gap: 10px; max-width: 55%">
+              <p style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em">Día libre</p>
+              <p class="meta" style="font-size: 13px">No tienes citas este día. Todo tu horario está disponible.</p>
+              <p style="margin: 0; font-size: 13px"><span class="meta" style="display: inline">Próximo día con citas:</span> <strong>{{proximo}}</strong></p>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                <a href="#" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 12px; background: #0052FF; color: #FFFFFF; font-size: 13px; font-weight: 700">Agendar cita</a>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </section>
+
+      <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0">
+        <section class="tile" aria-labelledby="tituloPend" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><h3 id="tituloPend" class="titulo">Pendientes</h3><span class="meta">{{totalPend}}</span></div>
+          <sc-if value="{{hayPend}}" hint-placeholder-val="{{ true }}">
+            <sc-for list="{{grupos}}" as="g" hint-placeholder-count="3">
+              <div class="item">
+                <span class="pnum" style="background: {{g.fondo}}; color: {{g.tinta}}; min-width: 26px; height: 26px; font-size: 12.5px">{{g.n}}</span>
+                <span style="flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><strong>{{g.texto}}</strong> <span class="meta" style="display: inline">· {{g.detalle}}</span></span>
+                <button type="button" class="accion" onClick="{{g.hacer}}">{{g.accion}}</button>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{sinPend}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #F0FDF4; color: #15803D; font-size: 13px; font-weight: 700">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg>Todo al día · no tienes nada pendiente
+            </div>
+          </sc-if>
+        </section>
+
+        <section class="tile" aria-labelledby="tituloRecientes" style="flex: 1; min-height: 0; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><h3 id="tituloRecientes" class="titulo">Pacientes recientes</h3><a href="#" style="font-size: 12px; font-weight: 600">Todos</a></div>
+          <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px">
+            <sc-for list="{{recientes}}" as="r" hint-placeholder-count="6">
+              <div class="rec">
+                <sc-if value="{{r.foto}}" hint-placeholder-val="{{ false }}"><img src="{{r.foto}}" alt="" class="ava" style="object-fit: cover; object-position: top; background: #DBEAFE"></sc-if>
+                <sc-if value="{{r.sinFoto}}" hint-placeholder-val="{{ true }}"><span class="ava" style="background: {{r.fondo}}; color: {{r.tinta}}">{{r.ini}}</span></sc-if>
+                <span style="flex: 1; min-width: 0"><strong style="display: block; font-size: 13.5px">{{r.nombre}}</strong><span class="meta" style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.detalle}}</span></span>
+                <a href="#" class="accion accion--sec">Ver ficha</a>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dia: 21, tab: 'cerrar', hechos: [] };
+  }
+  pendientes() {
+    const hechos = this.state.hechos;
+    const resolver = id => () => this.setState({ hechos: hechos.concat([id]) });
+    const todos = [
+      { id: 'c', n: 1, texto: 'Sin cerrar', detalle: 'Rocky, hoy 11:00 a. m.', accion: 'Cerrar', fondo: '#FEE2E2', tinta: '#B91C1C' },
+      { id: 't', n: 2, texto: 'Triages por revisar', detalle: 'Mia y Doki', accion: 'Revisar', fondo: '#FEF3C7', tinta: '#B45309' },
+      { id: 'r', n: 1, texto: 'Reasignación', detalle: 'Max a las 3:30 p. m.', accion: 'Responder', fondo: '#E0E7FF', tinta: '#4338CA' },
+      { id: 'v', n: 3, texto: 'Vacunas', detalle: 'Toby mañana, Kira, Mia', accion: 'Ver', fondo: '#DBEAFE', tinta: '#0052FF' }
+    ];
+    const grupos = todos.filter(g => hechos.indexOf(g.id) === -1).map(g => Object.assign({}, g, { n: String(g.n), hacer: resolver(g.id) }));
+    const total = grupos.reduce((s, g) => s + Number(g.n), 0);
+    const F = '/_blob/';
+    const recientes = [
+      { nombre: 'Mia', detalle: 'Hoy 9:30 a. m. · control · de Fabio Rojas', foto: F + '904dd318a9394de1c30546a367d70944' },
+      { nombre: 'Toby', detalle: 'Hoy 8:30 a. m. · vacunación · de Carlos Díaz', foto: F + '3f0854b8537e0324179d7c33c59e4814' },
+      { nombre: 'Bruno', detalle: 'Ayer · consulta general · de Laura Gómez', foto: F + '54c3fb02a3e5859a9ad80cdc194d2444' },
+      { nombre: 'Nala', detalle: 'Ayer · vacunación · de Sofía Ruiz', foto: '', ini: 'NA', fondo: '#FCE7F3', tinta: '#BE185D' },
+      { nombre: 'Simba', detalle: 'Ayer · control · de Andrés León', foto: '', ini: 'SI', fondo: '#FEF3C7', tinta: '#B45309' },
+      { nombre: 'Coco', detalle: 'Lun 19 · post-operatorio · de Marta Gil', foto: F + '3d2163cbf89c84e2795fa3750d58fb9f' },
+      { nombre: 'Lola', detalle: 'Lun 19 · desparasitación · de Pedro Sanz', foto: '', ini: 'LO', fondo: '#DCFCE7', tinta: '#15803D' },
+      { nombre: 'Thor', detalle: 'Vie 16 · consulta general · de Ana Mora', foto: '', ini: 'TH', fondo: '#E0E7FF', tinta: '#4338CA' }
+    ].map(r => Object.assign({ ini: '', fondo: '', tinta: '' }, r, { sinFoto: !r.foto }));
+    return {
+      grupos,
+      hayPend: grupos.length > 0,
+      sinPend: grupos.length === 0,
+      totalPend: total === 0 ? '' : total + ' por resolver',
+      recientes
+    };
+  }
+  renderVals() {
+    const C = { atendida: '#16A34A', cerrar: '#DC2626', siguiente: '#0052FF', pendiente: '#94A3B8', libre: '#CBD5E1' };
+    const F = { atendida: '#F0FDF4', cerrar: '#FEF2F2', siguiente: '#EBF1FF', pendiente: '#F8FAFC' };
+    const E = { atendida: 'Atendida', cerrar: 'Sin cerrar', siguiente: 'Siguiente', pendiente: 'Por atender' };
+    const base = { nombre: '', esCita: false, libre: false, almuerzo: false, color: C.libre, fondo: '', estado: '' };
+    const cita = (hora, nombre, texto, tipo) => Object.assign({}, base, { hora, nombre, texto, esCita: true, color: C[tipo], fondo: F[tipo], estado: E[tipo] });
+    const libre = (hora, texto) => Object.assign({}, base, { hora, texto, libre: true });
+    const almuerzo = () => Object.assign({}, base, { hora: '12:00 m.', texto: 'Almuerzo · hasta las 2:00 p. m.', almuerzo: true });
+    const agendas = {
+      20: [cita('9:00 a. m.', 'Simba', 'Control', 'atendida'), cita('10:30 a. m.', 'Nala', 'Vacunación', 'atendida'), almuerzo(), cita('3:00 p. m.', 'Bruno', 'Consulta general', 'atendida')],
+      21: [cita('8:30 a. m.', 'Toby', 'Vacunación', 'atendida'), cita('9:30 a. m.', 'Mia', 'Control', 'atendida'), libre('10:00 a. m.', 'Libre · 1 h'), cita('11:00 a. m.', 'Rocky', 'Consulta general', 'cerrar'), almuerzo(), cita('2:00 p. m.', 'Luna', 'Vómito, no come', 'siguiente'), libre('2:30 p. m.', 'Libre · 30 min'), cita('3:00 p. m.', 'Max', 'Primera visita', 'pendiente'), libre('3:45 p. m.', 'Libre · 45 min'), cita('4:30 p. m.', 'Kira', 'Desparasitación', 'pendiente')],
+      22: [cita('9:00 a. m.', 'Toby', 'Rabia, refuerzo', 'pendiente'), libre('9:30 a. m.', 'Libre · 1 h 30 min'), cita('11:00 a. m.', 'Bruno', 'Consulta general', 'pendiente'), almuerzo(), libre('2:00 p. m.', 'Libre · toda la tarde')],
+      24: [cita('10:00 a. m.', 'Kira', 'Desparasitación', 'pendiente'), libre('10:15 a. m.', 'Libre · resto de la mañana')]
+    };
+    const conCita = Object.keys(agendas).map(Number).concat([27, 28, 29]);
+    const nombres = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const semana = n => nombres[new Date(2026, 9, n).getDay()];
+    const dias = [];
+    for (let i = 0; i < 3; i++) dias.push({ n: '', clase: 'd vacio', cita: false, etiqueta: '', pick: () => {} });
+    for (let n = 1; n <= 31; n++) {
+      let clase = 'd';
+      if (n < 21) clase += ' pasado';
+      if (n === 21) clase += ' hoy';
+      if (n === this.state.dia) clase += ' sel';
+      dias.push({ n: String(n), clase, cita: conCita.indexOf(n) !== -1, etiqueta: n + ' de octubre', pick: () => this.setState({ dia: n }) });
+    }
+    dias.push({ n: '', clase: 'd vacio', cita: false, etiqueta: '', pick: () => {} });
+    const d = this.state.dia;
+    const lineas = agendas[d] || [];
+    const citas = lineas.filter(l => l.esCita).length;
+    const proximoN = conCita.filter(n => n > d).sort((a, b) => a - b)[0];
+    return {
+      ...this.pendientes(),
+      dias,
+      lineas,
+      hayCitas: citas > 0,
+      diaLibre: citas === 0,
+      proximo: proximoN ? semana(proximoN) + ' ' + proximoN : 'sin citas este mes',
+      tituloDia: d === 21 ? 'Tu día · hoy' : 'Tu día · ' + semana(d) + ' ' + d,
+      resumenDia: citas === 0 ? 'Sin citas' : citas + (citas === 1 ? ' cita' : ' citas') + ' · toca un día del calendario para ver otro'
+    };
+  }
+}
+</script>
+</body>
+</html>

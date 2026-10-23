@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.4** · 430 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.4** · 435 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 > **Preparación M4/B1 — 2026-10-17:** criterios de destino acordados, pendientes de implementación/verificación funcional. 430 RE, 96 HU y 120 RN; no se sube revisión ni versión en esta subetapa.
 
@@ -382,7 +382,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-2.2.1 | El acceso «Atención sin cita» debe crear una cita de llegada antes de iniciar toda nueva atención, enlazando después su consulta. | Funcional | Un doble envío devuelve la misma cita y consulta; ninguna nueva atención por este acceso queda con id_cita NULL. El administrador no crea la cita. | Alta |
 | RE-2.2.2 | El sistema debe permitir buscar al paciente y exigir los mismos datos que una consulta normal. | Funcional | Exige motivo y diagnóstico. | Alta |
 | RE-2.2.3 | El sistema debe asignar el número de historia clínica si es la primera consulta. | Funcional | Se genera el N.º de HC la primera vez. | Alta |
-| RE-2.2.4 | El sistema debe conservar el origen «llegada sin reserva» y distinguirlo de la reserva ordinaria y de los históricos sin cita. | Funcional | Listado, detalle e historial muestran el origen aunque exista id_cita; las consultas históricas NULL conservan la etiqueta «Sin cita». | Baja |
+| RE-2.2.4 | El sistema debe conservar el origen «llegada sin reserva» y distinguirlo de la reserva ordinaria y de los históricos sin cita. | Funcional | El historial (Pacientes y Atención) muestra el origen aunque exista id_cita; las consultas históricas NULL conservan la etiqueta «Sin cita». La lista de Consultas médicas se retiró (decisión del dueño, 2026-10-22). | Baja |
 | RE-2.2.5 | Una llegada verde/amarilla sin hueco debe registrarse en espera y recibir alternativas, sin sobrecupo automático ni consulta hasta crear su cita. | Restricción | No cambia el color para eludir capacidad; al conseguir espacio compatible se crea una sola cita con origen y se conserva la llegada. Amarillo precede a verde; dentro de cada color, fecha_llegada/id_solicitud ascendentes. Verde llegado 09:00 y amarillos 09:05 con IDs 21/22 se ordenan amarillo 21, amarillo 22, verde, revalidando capacidad antes de asignar. | Alta |
 
 **Reglas de negocio:** RN-102, RN-203, RN-208, RN-411, RN-415
@@ -966,11 +966,16 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-6.1.2 | El sistema debe ofrecer accesos rápidos a funciones frecuentes. | Usabilidad | Los accesos llevan a las funciones correctas. | Media |
 | RE-6.1.3 | El dashboard debe cargar en menos de 3 s. | Rendimiento | Carga en menos de 3 s. | Media |
 | RE-6.1.4 | El sistema debe filtrar los datos según el usuario. | Seguridad | Cada usuario ve solo lo que le corresponde. | Alta |
-| RE-6.1.5 | El panel del veterinario debe destacar el siguiente paciente con la acción disponible: iniciar, esperar la ventana de inicio o continuar. | Usabilidad | El botón respeta la ventana de 15 minutos de RN-407 y se habilita sin recargar. | Alta |
+| RE-6.1.5 | El panel del veterinario debe destacar el siguiente paciente con su nivel, su llegada, sus alergias y la acción disponible: registrar la llegada, iniciar, esperar la ventana de inicio o continuar. | Usabilidad | El botón respeta la ventana de 15 minutos de RN-407 y se habilita sin recargar. «Registrar llegada» usa la acción de Llegadas; pasada la tolerancia, la decisión se toma en Llegadas (RN-426). | Alta |
 | RE-6.1.6 | El panel del veterinario debe listar sus atenciones sin cerrar o abiertas de días anteriores. | Funcional | Cada una lleva a la pantalla de atención para cerrarla. | Alta |
 | RE-6.1.7 | El panel no debe mostrar datos de ejemplo ni valores fijos. | Restricción | Sin datos, el panel muestra un estado vacío. | Alta |
+| RE-6.1.8 | El Inicio del veterinario debe mostrar el calendario del mes con hoy resaltado y un punto en los días con sus citas de la clínica activa; al tocar un día, «Tu día» muestra esa fecha. | Funcional | La fecha y el mes se piden por una acción de solo lectura del veterinario, que toma su agenda de la sesión: un id de otro veterinario en la petición no cambia lo que ve. Una fecha o un mes inválidos responden con error, sin datos. | Alta |
+| RE-6.1.9 | «Tu día» debe listar en orden de hora las citas con su estado, los huecos libres de la disponibilidad real (RN-415) y el almuerzo, los cierres puntuales y las ausencias. | Funcional | Con jornada 8–12 y 14–18, citas a las 9:00 y 10:00 y un cierre de 15:00 a 16:00: libre 8:00, citas, libre 10:40, almuerzo 12:00, libre 14:00, cierre 15:00 y libre 16:00. Un hueco más corto que el tipo de cita más corto no se ofrece; de hoy, solo desde ahora; de un día pasado, ninguno. Cada hueco abre el agendamiento con su fecha y hora. Un día sin citas muestra lo libre y el próximo día con citas. | Alta |
+| RE-6.1.10 | El Inicio debe resumir el día (citas, atendidas, sin cerrar y pendientes) y agrupar los pendientes por tipo: atenciones sin cerrar, triages por revisar, reasignaciones y próximas dosis. | Usabilidad | Solo aparecen los tipos con algo, cada uno con su número y su acción; sin pendientes se ve «Todo al día». | Media |
+| RE-6.1.11 | El Inicio debe mostrar los pacientes que el veterinario atendió recientemente en la clínica activa. | Funcional | Una fila por mascota con su consulta más reciente, sin consultas de otro veterinario, de otra clínica ni de mascotas desvinculadas; cada una abre su ficha. | Media |
+| RE-6.1.12 | El Inicio debe caber sin desplazar la página en escritorio (1366×768) y reordenarse en tableta y celular (RNF-16). | Usabilidad | En escritorio solo la lista de «Tu día» se desplaza por dentro; en el celular el orden es siguiente paciente, atención sin cita y hoy, tu día, pendientes, calendario y recientes; sin desplazamiento horizontal en 360 px. | Media |
 
-**Reglas de negocio:** RN-G01, RN-407, RN-409
+**Reglas de negocio:** RN-G01, RN-407, RN-409, RN-415, RN-426
 
 ### HU-6.2 — Panel de operación del administrador
 
@@ -1224,7 +1229,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-5.12 | RN-113, RN-115, RN-G07 | RE-5.12.1, RE-5.12.2, RE-5.12.3, RE-5.12.4 |
 | HU-5.13 | RN-109, RN-110, RN-115, RN-116 | RE-5.13.1, RE-5.13.2, RE-5.13.3, RE-5.13.4, RE-5.13.5 |
 | HU-5.14 | RN-G16, RN-G07 | RE-5.14.1, RE-5.14.2, RE-5.14.3, RE-5.14.4, RE-5.14.5 |
-| HU-6.1 | RN-G01, RN-407, RN-409 | RE-6.1.1, RE-6.1.2, RE-6.1.3, RE-6.1.4, RE-6.1.5, RE-6.1.6, RE-6.1.7 |
+| HU-6.1 | RN-G01, RN-407, RN-409, RN-415, RN-426 | RE-6.1.1, RE-6.1.2, RE-6.1.3, RE-6.1.4, RE-6.1.5, RE-6.1.6, RE-6.1.7, RE-6.1.8, RE-6.1.9, RE-6.1.10, RE-6.1.11, RE-6.1.12 |
 | HU-6.2 | RN-G01, RN-408, RN-409 | RE-6.2.1, RE-6.2.2, RE-6.2.3, RE-6.2.4, RE-6.2.5, RE-6.2.6 |
 | HU-6.3 | RN-701 | RE-6.3.1, RE-6.3.2, RE-6.3.3, RE-6.3.4 |
 | HU-6.4 | RN-701 | RE-6.4.1, RE-6.4.2, RE-6.4.3, RE-6.4.4 |

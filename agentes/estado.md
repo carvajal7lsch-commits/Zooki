@@ -6,6 +6,16 @@
 
 ## Ahora
 
+### Inicio del veterinario y retiro de «Consultas médicas» — entregada, pendiente de revisión (2026-10-22)
+
+- **Autor: Claude.** Inicio rehecho con el mockup aprobado (`specs/referencias/inicio-veterinario.dc.html`): siguiente paciente, calendario del mes, atención sin cita, hoy, «Tu día» con huecos reales, pendientes por tipo y recientes. El día y el mes se cambian con `panel_dia_ajax`, de solo lectura y solo del vet. HU-6.1 suma RE-6.1.8 a RE-6.1.12 (435 RE) y HU-2.2 se ajusta.
+- **Decisiones del dueño (2026-10-22), anotadas en `specs/pulido-interfaz.md`:**
+  - Se retira `vet_consultas`.
+  - «Atención sin cita» lleva a Agenda → Llegadas, como ya hacía; no cambia lo que se guarda.
+  - «+ Agendar» abre el modal de la agenda con la fecha y la hora.
+- **Verificación:** PHP sin host 1027/8132 (71 omitidas de motor); JS 312/312. Chrome con layout y controlador reales sobre SQLite a 1440/1366/900/600/390/360: sin scroll horizontal y, en escritorio, sin scroll de página. Consultas nuevas probadas en MariaDB 10.4, solo lectura. Sin MySQL 8 ni CI.
+- **Pendiente:** revisión independiente, prueba del dueño con sus datos y commit del dueño. Sin subir versión (sigue alpha.5, aún sin publicar); entrada agregada en HistorialVersiones.
+
 ### Mi perfil: botón de varios días en cabecera — entregada, pendiente de revisión (2026-10-22)
 
 - **Autor: Codex.** «Aplicar a varios días» pasa junto a «Horario de trabajo», sin ocupar una fila del formulario; conserva la ventana, el bloqueo y el mismo comportamiento compartido con Configuración.
