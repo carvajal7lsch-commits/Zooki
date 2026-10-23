@@ -27,7 +27,7 @@ $resumenDia = $dia['citas'] === 0
     <p class="inicio-aviso" role="status">No se pueden mostrar los huecos libres: <?= $hDia($dia['aviso']) ?></p>
 <?php endif; ?>
 <?php if ($dia['citas'] > 0): ?>
-    <ol class="inicio-lineas" aria-label="Agenda del día">
+    <ol class="inicio-lineas<?= count($dia['lineas']) <= 3 ? ' inicio-lineas--breve' : '' ?>" aria-label="Agenda del día">
         <?php foreach ($dia['lineas'] as $linea): ?>
             <li class="inicio-linea inicio-linea--<?= $hDia($linea['tipo']) ?><?= $linea['tipo'] === 'cita' ? ' inicio-linea--' . $hDia($linea['estado']) : '' ?>">
                 <span class="inicio-linea__hora"><?= $hDia($linea['hora']) ?></span>

@@ -266,3 +266,20 @@ PerfilSecciones comprueba contención y alineación vertical con el título a 19
   - Revisión independiente y prueba del dueño con sus datos reales.
   - No hay evidencia de MySQL 8 ni de CI.
   - `panel.css` conserva reglas `panel--vet` sin uso y `medical/consultas.css` mezcla clases del cajón de historial con la lista retirada; limpiarlos queda para el pulido final.
+
+## Inicio del veterinario — Detalles menores de presentación (2026-10-22)
+
+**Autor: Codex (ejecutor). Entregada, pendiente de revisión.** Corrección de las cuatro observaciones remitidas por el dueño tras la entrega de Claude; se conserva el diseño y el contrato del Inicio.
+
+- RE-6.1.10: nombres repetidos agrupados con cantidad («Mia (2) y Doki»); los contadores siguen contando solicitudes, sin eliminar ni fusionar triages. El resumen se escapa como antes.
+- RE-6.1.11: estado vacío con la ilustración existente de Día libre, «Aún no has atendido pacientes» y explicación referida a la clínica activa. Sin activos nuevos ni carga de pacientes ajenos.
+- RE-6.1.9: las agendas de hasta tres filas se centran verticalmente en el espacio de Tu día; se conservan horas, estados, enlaces y huecos. La alineación segura evita perder la primera fila si el contenido crece. No se agrega un resumen semanal, consultas nuevas ni otro flujo.
+- RNF-16/HU-T.17: se elimina la pastilla vacía del encabezado móvil cuando su etiqueta está oculta y no existe Cambiar; con varios contextos, Cambiar sigue visible. Escritorio conserva el indicador completo. El ajuste vive en el CSS del contexto compartido, sin mover notificaciones/perfil ni editar el layout.
+- Regresiones nuevas en InicioPulido: agrupación y total, escape, imagen real decodificada, agenda corta/larga/vacía y contexto único/múltiple. Fixture con controlador/layout reales y SQLite en memoria, reloj fijo; Chrome a 1366×768, 900/390/360×844, sin desborde horizontal ni scroll de página en escritorio. Capturas y logs ignorados en scratch.
+- PHPUnit completo propio: **1027 pruebas, 8132 aserciones, 71 omitidas** de motor, sin host y con TRUSTED_PROXIES=127.0.0.2/base de pruebas explícita. No es MariaDB/MySQL ni CI nuevo.
+- Sin nuevas reglas, permisos, servidor, esquema, versión o exportaciones. Sin .env, bases reales, correos ni operaciones de negocio. Se conserva la entrega de Claude; revisión independiente y prueba visual del dueño pendientes.
+- Archivos: `views/vet/area.php`, `views/vet/partials/inicio_dia.php`, `public/css/inicio-vet.css`, `public/css/contexto.css`, `tests/Frontend/InicioPulido.test.cjs` (nuevo), `tests/Frontend/apoyo/inicio-pulido-vista.php` (nuevo), este plan y `agentes/estado.md`.
+
+**Aclaración del dueño sobre Git:** el registro anterior que presentaba 987149b como autorizado fue una interpretación errónea del agente. El dueño indicó que solicita los comandos/mensaje para verificarlos y ejecutarlos él. No ejecutar commit, push ni tags por expresiones como «dame el commit»; entregar los comandos en el chat. No se modifica el historial existente.
+
+Verificación final propia del pulido: **JavaScript 314/314**, sin omisiones; sintaxis de las dos vistas y la fixture PHP, y `git diff --check` correctos. No se ejecutaron comandos de commit, push, tags ni cambios del índice de Git.

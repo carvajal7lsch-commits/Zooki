@@ -1261,3 +1261,25 @@
         max-width: 100%;
     }
 }
+
+/* HU-6.1, RE-6.1.9/11: equilibrio de agendas cortas y estado vacío de recientes. */
+.inicio-lineas--breve { justify-content: safe center; }
+.inicio-recientes__vacio {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 130px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    background: var(--in-azul-suave);
+}
+.inicio-recientes__vacio img { flex: 0 0 88px; width: 88px; height: 110px; object-fit: contain; }
+.inicio-recientes__vacio > div { min-width: 0; max-width: 230px; }
+.inicio-recientes__titulo { margin: 0 0 6px; font-size: 14px; line-height: 1.4; font-weight: 700; }
+.inicio-recientes__vacio .inicio-meta { margin: 0; line-height: 1.5; }
+@media (max-width: 767px) {
+    .inicio-recientes__vacio { gap: 12px; padding: 12px; }
+    .inicio-recientes__vacio img { flex-basis: 72px; width: 72px; height: 94px; }
+}

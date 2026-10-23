@@ -31,6 +31,10 @@
 
 /* Móvil: solo el enlace para cambiar, sin el nombre largo de la clínica. */
 @media (max-width: 767px) {
+    /* Sin texto ni enlace no debe quedar una pastilla vacía en el encabezado. */
+    .contexto-actual:not(:has(.contexto-actual__cambiar)) {
+        display: none;
+    }
     .contexto-actual__etiqueta {
         display: none;
     }

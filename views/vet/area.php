@@ -20,9 +20,14 @@ $sig = $panel['siguiente'];
 $plural = fn(int $n, string $uno, string $varios) => $n === 1 ? $uno : $varios;
 $niveles = ['rojo' => 'Rojo', 'naranja' => 'Naranja', 'amarillo' => 'Amarillo', 'verde' => 'Verde'];
 
-/** «Mia», «Mia y Doki» o «Mia, Doki y 2 más». */
+/** Agrupa los pendientes del mismo nombre sin repetir «Mia y Mia». */
 $nombres = function (array $lista) {
     $lista = array_values(array_filter(array_map('strval', $lista), fn($n) => $n !== ''));
+    $conteos = array_count_values($lista);
+    $lista = [];
+    foreach ($conteos as $nombre => $cantidad) {
+        $lista[] = (string) $nombre . ($cantidad > 1 ? ' (' . $cantidad . ')' : '');
+    }
     if (count($lista) <= 2) {
         return implode(' y ', $lista);
     }
@@ -218,7 +223,10 @@ $iniciales = fn(string $nombre) => mb_strtoupper(mb_substr(trim($nombre), 0, 2))
                     <a class="inicio-enlace" href="index.php?action=vet_pacientes">Todos</a>
                 </div>
                 <?php if (!$panel['recientes']): ?>
-                    <p class="inicio-meta inicio-vacio">Aún no has atendido pacientes en esta clínica.</p>
+                    <div class="inicio-recientes__vacio">
+                        <img src="img/golden-retriever.png" alt="" loading="lazy" decoding="async">
+                        <div><p class="inicio-recientes__titulo">Aún no has atendido pacientes</p><p class="inicio-meta">Cuando atiendas en esta clínica, los verás aquí.</p></div>
+                    </div>
                 <?php else: ?>
                     <ul class="inicio-recientes__lista">
                         <?php foreach ($panel['recientes'] as $r): ?>

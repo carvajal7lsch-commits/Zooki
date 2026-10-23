@@ -6,6 +6,13 @@
 
 ## Ahora
 
+### Inicio del veterinario: detalles de presentación — entregada, pendiente de revisión (2026-10-22)
+
+- **Autor: Codex.** Pendientes agrupa nombres repetidos («Mia (2)») sin alterar los totales; Pacientes recientes vacío reutiliza la ilustración de Día libre y explica cuándo aparecerán pacientes. Tu día centra agendas de hasta tres filas, manteniendo las largas desplazables y completas. La pastilla de contexto se oculta en móvil si no tiene enlace Cambiar; con varios contextos conserva ese enlace.
+- HU-6.1/RE-6.1.9–11 y RNF-16; únicamente vistas y CSS. Controlador/layout reales sobre SQLite aislada a 1366/900/390/360: agrupación/escape, imagen cargada, centrado, listas largas, contexto único/múltiple y ausencia de desborde horizontal. En escritorio sin scroll de página.
+- PHP completo propio sin host: 1027 pruebas/8132 aserciones, 71 omitidas de motor. JS completo propio: 314/314. Sintaxis PHP y diff correctos; evidencia final en `specs/pulido-interfaz.md`. Sin .env, motor real, correos ni operaciones sobre cuentas reales. Pendiente revisión independiente y prueba visual del dueño.
+- **Regla confirmada por el dueño:** el agente entrega comandos y mensaje de commit en el chat; el usuario los verifica y ejecuta. No ejecutar commit/push/tags. La anotación anterior de autorización del commit 987149b fue una interpretación equivocada del agente, corregida expresamente por el usuario; no constituye autorización vigente ni precedente. Esta pasada no realiza operaciones de escritura de Git.
+
 ### Inicio del veterinario y retiro de «Consultas médicas» — entregada, pendiente de revisión (2026-10-22)
 
 - **Autor: Claude.** Inicio rehecho con el mockup aprobado (`specs/referencias/inicio-veterinario.dc.html`): siguiente paciente, calendario del mes, atención sin cita, hoy, «Tu día» con huecos reales, pendientes por tipo y recientes. El día y el mes se cambian con `panel_dia_ajax`, de solo lectura y solo del vet. HU-6.1 suma RE-6.1.8 a RE-6.1.12 (435 RE) y HU-2.2 se ajusta.
