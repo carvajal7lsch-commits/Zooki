@@ -3036,7 +3036,7 @@ Datos locales: `php scripts/dev/datos_prueba.php --si` (Ana/Beto/Elena Norte, Ca
 2. Respaldo de la base de producción antes de integrar.
 3. `release/v2.0.0-alpha.5` → PR a `main` → merge → tag anotado `v2.0.0-alpha.5` sobre el merge.
 4. Redeploy en Dokploy: al arrancar se aplican solas las migraciones 08, 09 y 10. Revisar el log («Aplicadas…» sin errores) y que la pantalla muestre 2.0.0-alpha.5.
-5. Opcional: `node scripts/docs/exportar.mjs` para regenerar PDF/Word del portal de documentación.
+5. Antes de integrar, `node scripts/docs/exportar.mjs --revisar` debe confirmar que las descargas están al día; si cambió una fuente publicada, regenerar su PDF/Word y guardarlos con ella. La guía operativa vigente de alpha.4 a alpha.5 está en el anexo de preparación del 2026-10-22 al final de este plan.
 
 ## Anexo — Modal de agendar por pasos (2026-10-21)
 
@@ -3145,3 +3145,120 @@ Verificación final de este ajuste: JS completo 296/296, sin omisiones; git diff
 **Pulido azul y navegación inferior (Codex, 2026-10-21):** indicación del catálogo en azul y Calcular nivel de urgencia con fondo azul principal, texto blanco y hover del sistema, únicamente en Nueva cita del vet. Se conserva el pie fijo fuera del contenido desplazable: Cancelar/Continuar y Atrás/Agendar, sin duplicar navegación. AgendaCitaPasos compara colores con los botones principales y verifica pie visible incluso al desplazar el contenido a 1366/390 px; dirigidas 12/12. Entregada, pendiente de revisión visual; suites completas anteriores son antecedente, sin repetición por este ajuste de color.
 
 **Botones junto a los campos y nota eliminada (Codex, 2026-10-21):** por petición del dueño, Cancelar/Continuar quedan inmediatamente debajo del motivo en Paciente y Atrás debajo del triage en Urgencia; Agendar permanece en el pie. Se mueven los mismos botones, sin duplicar eventos ni IDs. Nueva cita deja de generar la nota del catálogo; el partial conserva su salida habitual en los demás usos mediante opción local que se limpia tras incluirlo. Calcular sigue azul y los horarios derechos se conservan. Dirigidas 32/32, Chrome aislado 1366/390 sin desborde horizontal, sintaxis de ambas vistas y diff correctos. Entregada, pendiente de revisión visual; suites completas previas son antecedente y no una ejecución nueva. Sin commit/push.
+
+## Preparación de publicación alpha.5 — Resultado y guía operativa (2026-10-22)
+
+**Autor: Codex. Entregada, pendiente de revisión y ejecución del dueño.** Encargo: revisar versión, push, guías previas e integración/despliegue. No se ejecuta Git de escritura, no se abre PR ni se accede a producción/Dokploy.
+
+### Estado comprobado
+
+- Versión de `config/App.php` y del historial: **2.0.0-alpha.5**; se conserva porque aún no se publicó esta entrega. La API de GitHub confirma **alpha.4 en main**; la versión realmente desplegada debe comprobarla el dueño en el contenedor, no se deduce solo de main.
+- Rama `v2/m4-agenda`, último commit publicado `1d5c733b8e8e570d3c5a33b3e47a60946d961ade`. GitHub compara 34 commits por delante de main y cero por detrás en esta consulta. No había PR de esta rama ni rama/tag alpha.5 en remoto.
+- CI **39894312445**, [ejecución aprobada](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39894312445): ambos trabajos completos en verde sobre ese SHA. General: PHP 1027/8132 con 71 omitidas de motor; JS 314/314. MySQL 8: las ocho clases BaseV2/AgendaB2/C2/C3/C4/C5/C6/C8, en secuencia, suman 71 pruebas y 1090 aserciones, todas correctas. También pasan 58 tablas, semilla, migrador doble y volumen vacío. Es evidencia de CI, no nueva ejecución local ni prueba sobre producción.
+- La preparación corrige README (alpha.5, PHP 8.2, 58 tablas y actualización conservando base), regenera solo su PDF/Word y actualiza manifiesto/seguimiento. El CI anterior corresponde al código publicado; el dueño debe guardar/subir esta documentación y comprobar el CI del nuevo SHA/PR antes de integrar.
+- Referencias leídas: sección D-F de este plan, `specs/M0-F-corte-produccion.md`, README, Dockerfile, compose, arranque, migrador y tareas. **M0-F describe el corte histórico v1→v2: sus pasos de reinicio/restauración no son el procedimiento de esta actualización.**
+
+### 1. Guardar esta preparación y abrir el PR (Windows, dueño)
+
+En `v2/m4-agenda`, estos comandos guardan exclusivamente la preparación documental de esta pasada. No hay código, SQL, credenciales ni configuración de servicios modificados.
+
+```powershell
+git add README.md agentes/estado.md specs/M4-agenda-grafo-ii.md public/docs/descargas/readme.pdf public/docs/descargas/readme.docx public/docs/descargas/manifiesto.json
+git commit -m "docs(release): preparar despliegue de v2.0.0-alpha.5"
+git push origin v2/m4-agenda
+```
+
+Esperar ambos trabajos en verde para el nuevo SHA. Después crear la rama de publicación desde el HEAD revisado, sin cambiar de checkout:
+
+```powershell
+git branch release/v2.0.0-alpha.5
+git push -u origin release/v2.0.0-alpha.5
+gh pr create --base main --head release/v2.0.0-alpha.5 --title "Zooki 2.0.0-alpha.5: agenda inteligente y pulido de interfaz" --body "Entrega M4: disponibilidad y reserva coordinadas, triage, cascada, ausencias, urgencias y llegadas; nuevo Inicio del veterinario y pulido de agenda/perfil. Migraciones 08-10 sin reiniciar datos. Guia y evidencia en specs/M4-agenda-grafo-ii.md, anexo Preparacion de publicacion alpha.5. Integrar solo con CI completo aprobado, revision y respaldo previo."
+```
+
+El PR se revisa y sus checks deben terminar en verde; la rama main no tiene protección configurada según la consulta actual, así que no debe dependerse de un bloqueo automático de GitHub. No se marca la propia entrega como revisada.
+
+### 2. Respaldo antes del merge (VPS/Dokploy, dueño)
+
+Si Dokploy sigue main con despliegue automático, **el merge puede arrancar el despliegue**. Por eso el respaldo se hace antes, durante una ventana sin uso de la aplicación. Pausar temporalmente los Schedules que escriben datos para conservar un punto de recuperación coherente; reactivarlos después de verificar la actualización.
+
+La guía histórica indica MySQL central del VPS; comprobar que sigue siendo el destino real. No asumir que el contenedor `zooki_db` del compose guarda la base utilizada. El script de respaldo usa la conexión que ya tiene la aplicación; no copiar credenciales al chat.
+
+Comandos en el VPS (Linux), no en PowerShell local:
+
+```bash
+mkdir -p ~/respaldo-zooki-alpha5
+docker exec zooki_web php /var/www/html/Zooki/scripts/backup.php
+docker exec zooki_web sh -c 'ls -t /var/backups/zooki | head -1'
+docker inspect zooki_web --format '{{range .Mounts}}{{println .Name .Destination}}{{end}}'
+```
+
+Copiar fuera del contenedor el `.sql.gz` recién generado. Sustituir `ARCHIVO_RESPALDO.sql.gz` por el nombre confirmado y `VOLUMEN_UPLOADS` por el volumen montado realmente en `/var/www/html/Zooki/public/uploads`:
+
+```bash
+docker cp zooki_web:/var/backups/zooki/ARCHIVO_RESPALDO.sql.gz ~/respaldo-zooki-alpha5/
+docker run --rm -v VOLUMEN_UPLOADS:/datos:ro -v "$HOME/respaldo-zooki-alpha5:/destino" alpine tar czf /destino/uploads-alpha4.tar.gz -C /datos .
+gunzip -t ~/respaldo-zooki-alpha5/ARCHIVO_RESPALDO.sql.gz
+tar tzf ~/respaldo-zooki-alpha5/uploads-alpha4.tar.gz
+```
+
+Conservar también el SHA/imagen de la versión anterior y el destino real de los respaldos. Comprobar restaurabilidad en un entorno aislado conforme al procedimiento del dueño; no importar nada sobre producción para ensayar. No continuar sin copia legible y un punto de restauración identificado.
+
+### 3. Merge y etiqueta (dueño)
+
+Con respaldo confirmado, revisión realizada y CI del PR aprobado: en GitHub integrar el PR a main con **merge commit**, como en las entregas anteriores; no ejecutar squash/rebase ni cambiar la rama del servicio a una rama de pruebas.
+
+Después del merge, copiar su SHA exacto desde el PR. En los comandos siguientes reemplazar `HASH_MERGE_ALPHA5` por ese SHA, **no por el HEAD de la rama de trabajo ni por un main que ya haya avanzado**:
+
+```powershell
+git fetch origin
+git tag -a v2.0.0-alpha.5 HASH_MERGE_ALPHA5 -m "Zooki 2.0.0-alpha.5: agenda inteligente y Grafo II"
+git push origin v2.0.0-alpha.5
+```
+
+No sustituir una etiqueta que ya exista. La consulta actual no encontró alpha.5, pero esta condición debe seguir siendo cierta al ejecutarlo.
+
+### 4. Arranque y comprobación (Dokploy/VPS, dueño)
+
+- Confirmar en Dokploy el repositorio/servicio existentes y su rama main; no cambiar credenciales, dominios, proxies ni servicios por esta actualización. Si no se desplegó automáticamente con el merge, ejecutar Deploy y comprobar que usa el SHA integrado.
+- **No borrar volúmenes, no recrear la base ni importar 01/02 manualmente sobre los datos existentes.** El arranque aplica 08, 09 y 10 pendientes, semilla idempotente y luego conocimiento. Conservar uploads y respaldos montados.
+- Leer el log completo de arranque: migraciones sin `[migraciones] ERROR`, conocimiento cargado o sin cambios; si falla el conocimiento, revisar el error antes de aceptar. Algolia tiene búsqueda local de respaldo; su estado también debe revisarse. Apache puede arrancar aunque falle una migración: HTTP 200 no acredita el cierre del despliegue.
+
+Comandos de comprobación, de solo consulta, dentro del VPS:
+
+```bash
+docker logs --tail 250 zooki_web
+docker exec zooki_web php /var/www/html/Zooki/scripts/migrar.php --revisar
+docker exec zooki_web php -r 'require "/var/www/html/Zooki/config/App.php"; echo App::VERSION, PHP_EOL;'
+```
+
+Esperado: `La base está al día.`, sin nuevas migraciones por aplicar, versión `2.0.0-alpha.5` y semilla sin duplicados. Revisar también esa versión en la pantalla pública/de la aplicación y que los assets se pidan con el sufijo alpha.5. No dar por comprobados estos resultados hasta obtenerlos del VPS.
+
+Reactivar los Schedules existentes sobre el servicio web, zona **America/Bogota**; no duplicarlos:
+
+| Tarea | Periodicidad | Comando |
+|---|---|---|
+| Respaldo | 03:00 diario | `php /var/www/html/Zooki/scripts/backup.php` |
+| Recordatorios | 07:00 diario | `php /var/www/html/Zooki/scripts/send_reminders.php` |
+| Vigilante/cascada/eventos de agenda | Cada 5 minutos | `php /var/www/html/Zooki/scripts/vigilar_atenciones.php` |
+| Invitaciones vencidas | Cada hora | `php /var/www/html/Zooki/scripts/limpiar_cuentas_pendientes.php` |
+
+`vigilar_atenciones.php` ya procesa cascada, atenciones abiertas y eventos. No hace falta un segundo Schedule de `despachar_agenda.php` para esta entrega. Una ejecución del vigilante o de recordatorios puede enviar correos reales: verificar su salida programada con los destinatarios de prueba del dueño, sin dispararlos indiscriminadamente.
+
+### 5. Aceptación y recuperación
+
+Comprobaciones del dueño con sus cuentas de prueba vinculadas, sin duplicar la lista funcional consolidada D-F:
+
+1. **Beto Norte, celular y escritorio:** Inicio sin pastilla vacía, acceso a Agenda y Mi perfil; horarios/fotos/archivos existentes conservados; sin enlaces a Consultas médicas.
+2. **Ana Norte y Beto:** horario/propuesta y cierre visibles; Ana no tiene creación de citas; Beto sugiere/reserva una cita con triage y hora exacta.
+3. **Fabio en portal:** sus mascotas e historia siguen disponibles; agenda ordinaria y derivación roja mantienen los comportamientos ya aprobados.
+4. **Beto y Elena, datos controlados:** comprobar un reajuste/propuesta y que el vigilante avance sin abrir el calendario; verificar el Schedule y sus logs, no enviar avisos repetidos para probar.
+5. **Diego Sur:** conserva aislamiento respecto de Norte; comprobar una foto/adjunto anterior al despliegue y una nueva carga de prueba autorizada.
+
+Si falla una migración, mantener cerrada la ventana de uso y conservar logs; no borrar `schema_migraciones` ni reimportar el esquema consolidado. Las migraciones están diseñadas para reanudar sin duplicación, pero un reintento requiere resolver primero la causa. MySQL hace commit implícito en DDL: no hay rollback global garantizado.
+
+Si hay que volver atrás, recuperar código/imagen y base del punto respaldado, con los archivos correspondientes y sin aceptar nuevas escrituras durante la recuperación. No prometer que basta con desplegar alpha.4 sobre estados/esquema ya escritos por alpha.5. El dueño valida restauración y pérdidas posteriores al respaldo antes de ejecutarla.
+
+### Evidencia y pendientes de esta preparación
+
+README y su PDF/Word regenerados con el exportador del repositorio; `exportar.mjs --revisar` confirma descargas al día. Versión sin cambios, sin ejecutar suites por cambios exclusivamente documentales; se cita la evidencia remota del SHA confirmado. No se leyó/escribió `.env` ni se consultaron bases locales/de producción. Pendientes externos: guardar/subir esta preparación, nuevo CI/PR, revisión, respaldo confirmado, merge/tag y despliegue del dueño con sus comprobaciones. Esta guía no acredita producción actualizada.

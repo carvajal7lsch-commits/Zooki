@@ -6,6 +6,14 @@
 
 ## Ahora
 
+### Preparación de publicación alpha.5 — entregada, pendiente de revisión y ejecución del dueño (2026-10-22)
+
+- **Autor: Codex.** `App::VERSION` e historial ya están en 2.0.0-alpha.5; GitHub main sigue en alpha.4. No se vuelve a incrementar la versión de una entrega aún no publicada. La versión realmente desplegada queda por comprobar en Dokploy/VPS.
+- Último push comprobado: `1d5c733b8e8e570d3c5a33b3e47a60946d961ade`; CI **39894312445 completo aprobado**, general y MySQL 8. PHP general 1027/8132 (71 omitidas de motor), JS 314/314; las ocho clases MySQL seleccionadas suman 71/1090, con instalación, semilla, migrador doble y volumen vacío en verde. Es evidencia remota del código publicado, no ejecución local ni verificación de producción.
+- README corregido a alpha.5/PHP 8.2/58 tablas y actualización conservando datos. Su PDF y Word regenerados, índice de Word actualizado, PDF de 12 páginas con revisión visual de las secciones cambiadas y manifiesto al día. No hay cambios de código/SQL/servicios.
+- Guía vigente al final de `specs/M4-agenda-grafo-ii.md`: guardar esta preparación, nuevo CI, rama release/PR, respaldo previo al merge, merge commit, tag sobre SHA exacto, Dokploy, verificación de migraciones 08–10/conocimiento, Schedules existentes y recuperación. La guía M0-F es histórica: no repetir su reinicio de base para esta actualización.
+- Pendiente del dueño: commit/push documental, CI del nuevo SHA/PR, revisión, respaldo restaurable confirmado, merge/tag/despliegue y comprobaciones. No había PR ni rama/tag alpha.5 en remoto al consultar. El agente no ejecutó Git de escritura, PR, merge ni despliegue; no leyó .env ni consultó bases. Se conserva la regla de entregar comandos en el chat.
+
 ### Inicio del veterinario: detalles de presentación — entregada, pendiente de revisión (2026-10-22)
 
 - **Autor: Codex.** Pendientes agrupa nombres repetidos («Mia (2)») sin alterar los totales; Pacientes recientes vacío reutiliza la ilustración de Día libre y explica cuándo aparecerán pacientes. Tu día centra agendas de hasta tres filas, manteniendo las largas desplazables y completas. La pastilla de contexto se oculta en móvil si no tiene enlace Cambiar; con varios contextos conserva ese enlace.
