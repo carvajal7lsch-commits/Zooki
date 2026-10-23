@@ -401,18 +401,16 @@ switch ($action) {
         require_once "../views/vet/layout.php";
         break;
 
+    case "panel_dia_ajax":
+        // RE-6.1.8 y RE-6.1.9: otro día u otro mes del Inicio, solo de la agenda propia.
+        require_once "../controllers/PanelController.php";
+        (new PanelController())->diaAjax();
+        break;
+
     case "vet_atencion":
         require_once "../controllers/CitaController.php";
         $controller = new CitaController();
         $controller->atencion();
-        break;
-
-    case "vet_consultas":
-        require_once "../controllers/ConsultaController.php";
-        $controller = new ConsultaController();
-        $consultas = $controller->listar();
-        $content_view = "../views/vet/consultas.php";
-        require_once "../views/vet/layout.php";
         break;
 
     case "vet_pacientes":

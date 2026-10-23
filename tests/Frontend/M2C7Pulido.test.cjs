@@ -1,6 +1,6 @@
 /**
- * M2 C7 — pulido de lo que dejó M2: «Sin peso registrado», síntomas en la lista
- * de Consultas y en el portal, sin style= en medical-module.js, el acceso
+ * M2 C7 — pulido de lo que dejó M2: «Sin peso registrado», síntomas en el
+ * portal (la lista de Consultas se retiró en 2026-10-22), sin style= en medical-module.js, el acceso
  * «Vincular mascota de un cliente» y los textos «Registrar consulta» y «Sin cita».
  */
 const test = require('node:test');
@@ -12,7 +12,6 @@ const { crearDocumento, colgar } = require('./apoyo/dom-datos.cjs');
 
 const RAIZ = path.join(__dirname, '../..');
 const leer = archivo => fs.readFileSync(path.join(RAIZ, archivo), 'utf8');
-const esperar = async () => { for (let i = 0; i < 3; i++) await new Promise(resolver => setImmediate(resolver)); };
 
 /** medical-module.js con el DOM mínimo de las pruebas. */
 function medical(fetch = async () => ({ json: async () => [] })) {
@@ -59,20 +58,18 @@ test('1. el historial dice «Sin peso registrado» para cualquier peso NULL, en 
     assert.match(leer('public/js/portal.js'), /detClinicaPeso'\)\.textContent = textoPesoConsulta\(consulta\.peso\)/);
     assert.match(leer('views/vet/atencion.php'), /\$peso === '' \? 'Sin peso registrado'/);
     assert.match(leer('views/portal/imprimir_historial.php'), /'Sin peso registrado'/);
-    assert.match(leer('public/js/consultas.js'), /signoVital\('Peso', 'weight', 'fa-weight', c\.peso, 'Kg', 'Sin peso registrado'\)/);
+    // La lista de Consultas (y su detalle) se retiró por decisión del dueño (2026-10-22).
     // La casilla del formulario no cambia.
     assert.match(leer('views/vet/modal_consulta.php'), /No se pudo pesar/);
     assert.match(leer('views/vet/atencion.php'), /<span>No se pudo pesar<\/span>/);
 });
 
-test('2. los síntomas salen en el detalle de la lista de Consultas, el historial del portal y su imprimible', () => {
+test('2. los síntomas salen en el historial del portal y su imprimible', () => {
     const p = portal();
     assert.equal(p.lineaSintomas([]), '');
     assert.equal(p.lineaSintomas(undefined), '');
     assert.equal(p.lineaSintomas([{ codigo: 'sintoma.vomito', etiqueta: 'Vómito' }, { codigo: 'x', etiqueta: '<b>Tos</b>' }]), '<p><strong>Síntomas:</strong> Vómito, &lt;b&gt;Tos&lt;/b&gt;</p>');
     assert.match(leer('public/js/portal.js'), /\$\{lineaSintomas\(h\.sintomas\)\}/);
-    const consultas = leer('public/js/consultas.js');
-    assert.match(consultas, /cajaDeReporte\('default', 'fa-list-check', 'Síntomas marcados', textoSintomas\(c\), 'Sin síntomas marcados\.'\)/);
     assert.match(leer('views/portal/imprimir_historial.php'), /<strong>Síntomas:<\/strong>/);
 });
 
@@ -96,7 +93,7 @@ test('4. el modal tiene frecuencia respiratoria y observaciones con los límites
     assert.doesNotMatch(modal, /\son[a-z]+=|style=/);
 });
 
-test('5. medical-module.js ya no tiene style= ni eventos en línea en su HTML', async () => {
+test('5. medical-module.js ya no tiene style= ni eventos en línea en su HTML', () => {
     const codigo = leer('public/js/medical-module.js');
     assert.doesNotMatch(codigo, /style=/);
     assert.doesNotMatch(codigo, /onclick="|onmouseover="|onmouseout="|onerror="/);
@@ -110,34 +107,17 @@ test('5. medical-module.js ya no tiene style= ni eventos en línea en su HTML', 
     const pacientes = leer('public/css/pacientes.css');
     assert.match(pacientes, /\.dossier-sin-mascotas \{\s+text-align: center;\s+padding: 3rem;\s+color: var\(--text-muted\);\s+width: 100%;/);
     assert.match(pacientes, /\.pet-dossier-card-hc\.pet-dossier-card-hc--numero \{\s+color: var\(--primary\);/);
-    const consulta = leer('public/css/consulta-clinica.css');
-    // M2 C8 (H5): los mismos valores, ahora con las variables de identidad (#e2e8f0, #f8fafc y #cbd5e1 en css/identidad.css).
-    assert.match(consulta, /\.suggestion-item\.paciente-resultado \{\s+display: flex;\s+align-items: center;\s+gap: 1rem;\s+padding: 0\.75rem;\s+border: 1px solid var\(--z-border\);\s+border-radius: 12px;/);
-    assert.match(consulta, /\.suggestion-item\.paciente-resultado:hover \{\s+background: var\(--z-bg-suave\);\s+border-color: var\(--z-border-fuerte\);/);
     const identidad = leer('public/css/identidad.css');
     assert.match(identidad, /--z-border: #E2E8F0;/);
     assert.match(identidad, /--z-bg-suave: #F8FAFC;/);
     assert.match(identidad, /--z-border-fuerte: #CBD5E1;/);
 
-    // El buscador de «Atención sin cita» pinta sus avisos con las clases de la vista.
-    let respuesta = [];
-    const m = medical(async () => ({ json: async () => respuesta }));
-    const lista = colgar(m.documento.raiz, 'div', {}, { id: 'consultaPetSuggestions' });
-    colgar(m.documento.raiz, 'input', {}, { id: 'consultaPetSearch' });
-    m.contexto.openNewConsultationFlow();
-    assert.deepEqual(m.llamadas.modales, ['modalSelectPetConsulta']);
-    assert.equal(lista.hijos[0].className, 'empty-state-text');
-    assert.equal(lista.hijos[0].hijos[0].className, 'fas fa-search icon-large');
-    await m.contexto.searchPetForConsultation('lu');
-    assert.match(lista.textContent, /al menos 3 caracteres/);
-    await m.contexto.searchPetForConsultation('lun');
-    await esperar();
-    assert.equal(lista.hijos[0].className, 'empty-state-text empty-state-text--compacto');
-    assert.equal(lista.textContent, 'No se encontraron pacientes.');
-    respuesta = null;
-    await m.contexto.searchPetForConsultation('luna');
-    await esperar();
-    assert.equal(lista.hijos[0].className, 'empty-state-text empty-state-text--compacto empty-state-text--error');
+    // Decisión del dueño (2026-10-22): el buscador modal de «Atención sin cita» se retiró con
+    // Consultas; el acceso del Inicio lleva a Agenda → Llegadas (HU-2.2).
+    const { contexto } = medical();
+    assert.equal(typeof contexto.openNewConsultationFlow, 'undefined');
+    assert.doesNotMatch(leer('public/css/consulta-clinica.css'), /paciente-resultado/);
+    assert.match(leer('views/vet/area.php'), /href="index\.php\?action=vet_agenda#llegadas"/);
 });
 
 test('6. «Vincular mascota de un cliente» abre la búsqueda del propietario con el mismo flujo', () => {
@@ -188,6 +168,5 @@ test('7. la línea de tiempo vacía dice «Registrar consulta» y la consulta si
     assert.equal(contexto.etiquetaSinCita({ id_cita: 12 }), '');
     assert.match(contexto.filaHistorialCompacto({ id_cita: null }, 'consulta'), /Sin cita/);
     assert.doesNotMatch(contexto.filaHistorialCompacto({ id_cita: 12 }, 'consulta'), /Sin cita/);
-    assert.match(leer('public/js/consultas.js'), /c\.id_cita \? '' : '<span class="consultation-sin-cita-badge"/, 'Detalle de la lista');
     assert.match(leer('views/vet/atencion.php'), /empty\(\$con\['id_cita'\]\).*Sin cita/, 'Historial de Atención');
 });

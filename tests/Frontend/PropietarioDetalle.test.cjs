@@ -29,7 +29,7 @@ test('detalle del propietario: cuadrícula, filtros, ficha, regreso, datos desco
             ${tramo('const FOTO_MASCOTA_DEFECTO =', '/** HU-15:')}
             ${tramo('function razaConIndicada(', '/**')}
             ${tramo('function renderOwnerDossier(', 'function addNewPetFromDossier(')}
-            ${tramo('function filterDossierPets(', '/** Un aviso')}
+            ${tramo('function filterDossierPets(', 'window.filterDossierPets = ')}
             window.__owner={nombre_completo:'Fabio Propietario',documento:'1000000006',telefono:'3001112233',email:'fabio@zooki.test',estado:1};
             window.__pets=[{id_mascota:1,nombre:'Doki',especie:'Canino',raza:'Dóberman',sexo:'Macho',numero_historia_clinica:'HC-000002',estado:1},{id_mascota:2,nombre:'gato',especie:'Felino',raza:'Bengala',sexo:'Macho',numero_historia_clinica:'HC-000003',estado:1},{id_mascota:3,nombre:'Kira',especie:'Canino',raza:'Mestizo',sexo:null,numero_historia_clinica:null,estado:1},{id_mascota:4,nombre:'Luna',especie:'Canino',raza:'Sin raza definida',sexo:'Hembra',numero_historia_clinica:'HC-000001',estado:1},{id_mascota:5,nombre:'Pelusa',especie:'Felino',raza:'Mestizo',sexo:'Hembra',estado:0}];`);
         for (const width of [1366, 1184, 820, 390, 360]) {

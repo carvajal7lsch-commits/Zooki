@@ -48,6 +48,7 @@ test('Nueva cita: dos pasos reales, guía, resumen, Enter, rojo y horarios persi
             function filtrarMascotas() {}
             function onModalVeterinarioChange() {}
             function cargarSlotsReprogramar() {}
+            function marcarHoraPreferida() {}
             function closeCitaModal() { document.getElementById('citaModalOverlay').classList.remove('is-open'); }
             async function postCita() {
                 __envios++;

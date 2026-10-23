@@ -106,7 +106,8 @@ test('C8.2: el resumen no recorta texto con puntos suspensivos y el cajón tiene
     assert.match(css, /\.historia-fila__lineas \{[^}]*flex-wrap: wrap/);
     assert.match(css, /\.drawer-body\.historial-cajon \{[^}]*gap: 0\.85rem/);
     assert.match(css, /\.historial-cajon \.history-timeline \{[^}]*max-height: none/);
-    for (const vista of ['views/vet/pacientes.php', 'views/vet/consultas.php']) {
+    // «Consultas médicas» se retiró (decisión del dueño, 2026-10-22): el cajón queda en Pacientes.
+    for (const vista of ['views/vet/pacientes.php']) {
         const contenido = leer(vista);
         assert.match(contenido, /class="drawer-body historial-cajon"/, vista);
         assert.equal((contenido.match(/historial-cajon__seccion/g) || []).length, 2, vista + ': vacunas y línea de tiempo');

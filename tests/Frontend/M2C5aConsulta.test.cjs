@@ -448,9 +448,10 @@ test('las dos entradas de consulta usan los mismos componentes, sin eventos ni e
     const atencionJs = leer('public/js/atencion.js');
     assert.match(atencionJs, /ZookiConsultaForm\.iniciar\(formConsulta/);
     assert.match(atencionJs, /consulta\.mostrarErrorServidor\(res\)/, 'Atención también pone el error del servidor junto al campo');
-    // Sin recargar: Pacientes (ficha e historial) y la lista de Consultas escuchan la consulta guardada.
+    // Sin recargar: Pacientes (ficha e historial) escucha la consulta guardada. La lista de
+    // Consultas se retiró por decisión del dueño (2026-10-22).
     assert.doesNotMatch(leer('public/js/consulta-formulario.js'), /location\.reload|zookiRecargarConAviso/);
-    assert.match(leer('public/js/consultas.js'), /addEventListener\('zooki:consulta-registrada'/);
+    assert.ok(!fs.existsSync(path.join(RAIZ, 'public/js/consultas.js')), 'Consultas médicas se retiró');
     const medical = leer('public/js/medical-module.js');
     assert.match(medical, /addEventListener\('zooki:consulta-registrada'/);
     assert.doesNotMatch(medical, /function (openConsultationModal|saveConsultation|updateFileList|avisarAdjuntosRechazados)\b/);

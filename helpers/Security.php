@@ -387,7 +387,10 @@ class Security {
         // RN-201: registrar actos clinicos y operar el area del veterinario es
         // exclusivo del rol Veterinario, ni siquiera el administrador entra.
         foreach ([
-            'vet_area', 'vet_atencion', 'vet_consultas', 'vet_pacientes', 'vet_agenda',
+            // Decisión del dueño (2026-10-22): «Consultas médicas» (vet_consultas) se retiró.
+            'vet_area', 'vet_atencion', 'vet_pacientes', 'vet_agenda',
+            // HU-6.1 (RE-6.1.8, RE-6.1.9): «Tu día» y el calendario del Inicio; solo lectura de la agenda propia.
+            'panel_dia_ajax',
             'registrar_consulta_ajax', 'registrar_vacuna_ajax',
             'registrar_desparasitacion_ajax', 'registrar_nueva_vacuna_ajax',
             'registrar_nuevo_laboratorio_ajax',

@@ -41,12 +41,6 @@ class ConsultaController
         $this->carpetaAdjuntos = rtrim($carpetaAdjuntos ?? self::CARPETA_ADJUNTOS, '/\\') . '/';
     }
 
-    /** HU-2.2: listado de consultas de la clínica activa. */
-    public function listar(): array
-    {
-        return $this->consultaModel->listarDeLaClinica();
-    }
-
     /** HU-2.1, HU-2.2 y HU-2.6: registra la consulta con adjuntos y tratamientos, todo o nada. */
     public function registrarAjax(): void
     {

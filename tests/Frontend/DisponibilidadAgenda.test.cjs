@@ -73,7 +73,7 @@ function contextoSlots(fetch) {
         getVetModal: () => '2', val: (id, valor) => valor === undefined ? valores[id] : valores[id] = valor,
         ocultarErrorModal() {}, actualizarResumenModal: () => { boton.disabled = !valores.modal_hora; }, textoGuiaSlots: () => 'Guía',
         setSlotsEstado: (...args) => estados.push(args),
-        renderSlots: (...args) => dibujadas.push(args), actualizarBotonModal() {} };
+        renderSlots: (...args) => dibujadas.push(args), actualizarBotonModal() {}, marcarHoraPreferida() {} };
     prepararContextoC4(contexto);
     const codigo = funcion('public/js/calendario.js', 'cargarSlotsModal', '\nfunction actualizarResumenModal');
     instalarFalloSlots(contexto);

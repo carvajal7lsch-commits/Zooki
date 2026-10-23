@@ -358,6 +358,40 @@ final class DisponibilidadAgenda extends ModeloClinica
         return array_values(array_unique($horas));
     }
 
+    /**
+     * HU-6.1 (RE-6.1.9): el día del veterinario para su Inicio. Es la misma resta que al
+     * sugerir y reservar (jornada ∩ apertura − cierres − ausencias − ocupación), sin
+     * mascota: lo libre de verdad y lo que corta la jornada. Solo la agenda propia.
+     */
+    public function diaDelVeterinario(int $vet, string $fecha): array
+    {
+        if (Contexto::rolActivo() !== Roles::VETERINARIO || Contexto::idUsuario() !== $vet) {
+            $this->denegarAcceso('usuarios', $vet, 'Inicio de otro veterinario (RE-6.1.4)');
+        }
+        $miembro = $this->filas("SELECT 1 FROM usuario_clinica uc JOIN usuarios u ON u.id_usuario=uc.id_usuario WHERE uc.id_clinica=? AND uc.id_usuario=? AND uc.id_rol=2 AND uc.estado='activo' AND u.estado=1", [$this->clinica(), $vet]);
+        if (!$miembro) {
+            $this->denegarAcceso('usuarios', $vet, 'Inicio fuera de la clínica activa (RE-T.15.2)');
+        }
+        $desde = $fecha . ' 00:00:00';
+        $hasta = IntervalosAgenda::fecha($desde)->modify('+1 day')->format('Y-m-d H:i:s');
+        $cierres = [];
+        foreach ($this->filas('SELECT inicio,fin,motivo FROM cierres_clinica WHERE id_clinica=? AND activo=1 AND inicio<? AND fin>? ORDER BY inicio', [$this->clinica(), $hasta, $desde]) as $fila) {
+            $cierres[] = [IntervalosAgenda::fecha($fila['inicio'])->getTimestamp(), IntervalosAgenda::fecha($fila['fin'])->getTimestamp(), (string) $fila['motivo']];
+        }
+        $ausencias = [];
+        foreach ($this->filas("SELECT fecha_hora_inicio,fecha_hora_fin FROM ausencias_veterinario WHERE id_clinica=? AND id_veterinario=? AND estado='aprobada' AND fecha_hora_inicio<? AND fecha_hora_fin>? ORDER BY fecha_hora_inicio", [$this->clinica(), $vet, $hasta, $desde]) as $fila) {
+            $ausencias[] = [IntervalosAgenda::fecha($fila['fecha_hora_inicio'])->getTimestamp(), IntervalosAgenda::fecha($fila['fecha_hora_fin'])->getTimestamp()];
+        }
+        $jornada = $this->jornada($vet, $fecha);
+        $ocupaciones = array_merge(
+            array_map(static fn ($c) => [$c[0], $c[1]], $cierres),
+            $ausencias,
+            // Mascota 0: solo la ocupación del veterinario, también la de otras clínicas (RN-401: sin detalles).
+            $this->ocupacionGlobal($vet, 0, $fecha, null, ($this->reloj)()->getTimestamp())
+        );
+        return ['jornada' => $jornada, 'libres' => IntervalosAgenda::restar($jornada, $ocupaciones), 'cierres' => $cierres, 'ausencias' => $ausencias];
+    }
+
     public function bloquesOriginales(int $vet, int $mascota, string $fecha): array
     {
         $this->autorizar($vet, $mascota);

@@ -73,8 +73,48 @@ class ResumenPanelTest extends TestCase
             $this->cita('10:00:00', 'en_curso'),
             $this->cita('11:00:00', 'no_asistio'),
             $this->cita('12:00:00', 'cancelada'),
+            $this->cita('13:00:00', 'sin_cerrar'),
+            $this->cita('14:00:00', 'pausada'),
         ]);
-        $this->assertSame(['citas' => 4, 'atendidas' => 1, 'por_atender' => 2, 'no_asistio' => 1], $c);
+        // RE-6.1.10: «sin cerrar» va aparte; una atención pausada sigue por atender.
+        $this->assertSame(['citas' => 6, 'atendidas' => 1, 'por_atender' => 3, 'no_asistio' => 1, 'sin_cerrar' => 1], $c);
+    }
+
+    /** RE-6.1.8: el mes empieza en lunes; hoy, el día elegido y los días con citas se marcan. */
+    public function testElMesDelCalendarioEmpiezaEnLunes(): void
+    {
+        $mes = ResumenPanel::mes('2026-10', ['2026-10-22', '2026-10-27'], '2026-10-21', '2026-10-22');
+        $this->assertSame('Octubre 2026', $mes['titulo']);
+        $this->assertSame(['2026-09', '2026-11'], [$mes['anterior'], $mes['siguiente']]);
+        $this->assertSame([null, null, null], array_slice($mes['celdas'], 0, 3), 'El 1 de octubre de 2026 es jueves');
+        $this->assertCount(3 + 31, $mes['celdas']);
+        $dia = fn(int $n) => $mes['celdas'][2 + $n];
+        $this->assertTrue($dia(20)['pasado']);
+        $this->assertTrue($dia(21)['hoy']);
+        $this->assertTrue($dia(22)['elegido'] && $dia(22)['citas']);
+        $this->assertSame('jueves 22 de octubre, con citas', $dia(22)['etiqueta']);
+        $this->assertFalse($dia(23)['citas']);
+        $this->assertSame('Diciembre 2026', ResumenPanel::mes('2026-12', [], '2026-10-21', '2026-10-21')['titulo']);
+    }
+
+    /** RE-6.1.5, RE-6.1.9 y RE-6.1.11: duraciones, cuenta regresiva, edad y cuándo fue la consulta. */
+    public function testLosTextosDelInicio(): void
+    {
+        $this->assertSame(['30 min', '1 h', '1 h 30 min'], [ResumenPanel::duracion(30), ResumenPanel::duracion(60), ResumenPanel::duracion(90)]);
+        $ahora = $this->ahora('2026-10-21 13:40');
+        $this->assertSame('en 20 min', ResumenPanel::cuentaRegresiva('2026-10-21', '14:00:00', $ahora));
+        $this->assertSame('ahora', ResumenPanel::cuentaRegresiva('2026-10-21', '13:40:00', $ahora));
+        $this->assertSame('hace 1 h 10 min', ResumenPanel::cuentaRegresiva('2026-10-21', '12:30:00', $ahora));
+        $this->assertSame('4 años', ResumenPanel::edad('2022-01-01', $ahora));
+        $this->assertSame('1 año', ResumenPanel::edad('2025-10-21', $ahora));
+        $this->assertSame('7 meses', ResumenPanel::edad('2026-03-01', $ahora));
+        $this->assertSame('menos de 1 mes', ResumenPanel::edad('2026-10-10', $ahora));
+        $this->assertNull(ResumenPanel::edad(null, $ahora));
+        $this->assertNull(ResumenPanel::edad('2027-01-01', $ahora), 'Una fecha futura no da edad');
+        $this->assertSame('Hoy 9:30 a. m.', ResumenPanel::momentoReciente('2026-10-21 09:30:00', $ahora));
+        $this->assertSame('Ayer', ResumenPanel::momentoReciente('2026-10-20 16:00:00', $ahora));
+        $this->assertSame('lun 19 oct', ResumenPanel::momentoReciente('2026-10-19 16:00:00', $ahora));
+        $this->assertSame(['hoy', 'jueves 22'], [ResumenPanel::tituloDia('2026-10-21', $ahora), ResumenPanel::tituloDia('2026-10-22', $ahora)]);
     }
 
     /** HU-20: los recordatorios se agrupan por día, en orden. */

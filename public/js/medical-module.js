@@ -2075,71 +2075,8 @@ function filterDossierPets() {
 
 window.filterDossierPets = filterDossierPets;
 
-/** Un aviso del buscador de «Atención sin cita», con las clases de la vista, sin estilos en línea. */
-function avisoBusquedaPaciente(texto, clase = '', icono = false) {
-    const aviso = document.createElement('div');
-    aviso.className = `empty-state-text ${clase}`.trim();
-    if (icono) {
-        const i = document.createElement('i');
-        i.className = 'fas fa-search icon-large';
-        aviso.append(i);
-    }
-    aviso.append(texto);
-    return aviso;
-}
-
-function openNewConsultationFlow() {
-    openModal('modalSelectPetConsulta');
-    const searchInput = document.getElementById('consultaPetSearch');
-    if (searchInput) searchInput.value = '';
-    const suggestions = document.getElementById('consultaPetSuggestions');
-    if (suggestions) suggestions.replaceChildren(avisoBusquedaPaciente('Escribe para buscar un paciente...', '', true));
-}
-
-/** Un paciente encontrado: al elegirlo se abre su consulta (sin onclick ni onerror en línea). */
-function resultadoPaciente(item) {
-    const fila = document.createElement('div');
-    fila.className = 'suggestion-item paciente-resultado';
-    fila.innerHTML = `
-        <img src="${escaparTexto(fotoMascotaUrl(item.url_foto))}" class="paciente-resultado__foto" alt="">
-        <div>
-            <div class="paciente-resultado__nombre">${escaparTexto(item.nombre)}</div>
-            <!-- M1-21: HU-03 pide mostrar la especie y no aparecia. -->
-            <div class="paciente-resultado__dato">${escaparTexto(item.nombre_especie || 'Sin especie')}${item.nombre_raza ? ' · ' + escaparTexto(item.nombre_raza) : ''}</div>
-            <div class="paciente-resultado__dato">Propietario: ${escaparTexto(item.propietario_nombre || 'Sin asignar')}</div>
-        </div>`;
-    const foto = fila.querySelector('img');
-    foto.addEventListener('error', () => usarFotoPorDefecto(foto), { once: true });
-    fila.addEventListener('click', () => selectPetForConsultation(item.id_mascota, item.nombre));
-    return fila;
-}
-
-async function searchPetForConsultation(term) {
-    const suggestions = document.getElementById('consultaPetSuggestions');
-    // M1-15: HU-03 pide un minimo de 3 caracteres; el front pedia 2 y el
-    // backend tambien, asi que la busqueda salia con menos de lo acordado.
-    if (term.length < 3) {
-        suggestions.replaceChildren(avisoBusquedaPaciente('Escribe al menos 3 caracteres para buscar un paciente...', '', true));
-        return;
-    }
-
-    try {
-        const res = await (await fetch(`index.php?action=buscar_mascotas&query=${encodeURIComponent(term)}`)).json();
-        if (res.length) {
-            suggestions.replaceChildren(...res.map(resultadoPaciente));
-        } else {
-            suggestions.replaceChildren(avisoBusquedaPaciente('No se encontraron pacientes.', 'empty-state-text--compacto'));
-        }
-    } catch (e) {
-        console.error('Search error', e);
-        suggestions.replaceChildren(avisoBusquedaPaciente('Error en la búsqueda.', 'empty-state-text--compacto empty-state-text--error'));
-    }
-}
-
-function selectPetForConsultation(id, nombre) {
-    closeModal('modalSelectPetConsulta');
-    globalThis.location.href = 'index.php?action=vet_agenda#llegadas';
-}
+// Decisión del dueño (2026-10-22): «Atención sin cita» está en el Inicio y lleva
+// a Agenda → Llegadas (HU-2.2); el buscador modal de Consultas se retiró con ella.
 
 async function verFichaBasica(id) {
     try {

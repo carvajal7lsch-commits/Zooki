@@ -13,6 +13,8 @@ final class ResumenPanel
     private const ABIERTAS = ['pendiente', 'confirmada'];
     private const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
     private const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    private const DIAS_LARGOS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    private const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
     /**
      * Acción disponible para el veterinario sobre una cita suya:
@@ -62,10 +64,13 @@ final class ResumenPanel
         return null;
     }
 
-    /** Totales del día que muestran los contadores. Las canceladas no cuentan. */
+    /**
+     * Totales del día que muestran los contadores. Las canceladas no cuentan.
+     * RE-6.1.10: «sin cerrar» va aparte; una atención pausada sigue por atender.
+     */
     public static function contadores(array $citas): array
     {
-        $c = ['citas' => 0, 'atendidas' => 0, 'por_atender' => 0, 'no_asistio' => 0];
+        $c = ['citas' => 0, 'atendidas' => 0, 'por_atender' => 0, 'no_asistio' => 0, 'sin_cerrar' => 0];
         foreach ($citas as $cita) {
             $estado = $cita['estado'] ?? '';
             if ($estado === 'cancelada') {
@@ -76,11 +81,107 @@ final class ResumenPanel
                 $c['atendidas']++;
             } elseif ($estado === 'no_asistio') {
                 $c['no_asistio']++;
-            } elseif (in_array($estado, ['pendiente', 'confirmada', 'en_curso'], true)) {
+            } elseif ($estado === 'sin_cerrar') {
+                $c['sin_cerrar']++;
+            } elseif (in_array($estado, ['pendiente', 'confirmada', 'en_curso', 'pausada'], true)) {
                 $c['por_atender']++;
             }
         }
         return $c;
+    }
+
+    /** 30 → «30 min», 60 → «1 h», 90 → «1 h 30 min». */
+    public static function duracion(int $minutos): string
+    {
+        $horas = intdiv($minutos, 60);
+        $resto = $minutos % 60;
+        if ($horas === 0) {
+            return $resto . ' min';
+        }
+        return $horas . ' h' . ($resto > 0 ? ' ' . $resto . ' min' : '');
+    }
+
+    /** RE-6.1.5: «en 20 min», «ahora» o «hace 10 min» respecto de la hora de la cita. */
+    public static function cuentaRegresiva(string $fecha, string $hora, DateTimeImmutable $ahora): string
+    {
+        $minutos = (int) floor((ReglaAtencion::inicio($fecha, $hora)->getTimestamp() - $ahora->getTimestamp()) / 60);
+        if ($minutos === 0) {
+            return 'ahora';
+        }
+        return $minutos > 0 ? 'en ' . self::duracion($minutos) : 'hace ' . self::duracion(-$minutos);
+    }
+
+    /** Edad legible desde la fecha de nacimiento: «4 años», «1 año», «7 meses»; null sin dato. */
+    public static function edad(?string $nacimiento, DateTimeImmutable $hoy): ?string
+    {
+        if (!$nacimiento || !preg_match('/^\d{4}-\d{2}-\d{2}/', $nacimiento)) {
+            return null;
+        }
+        $diferencia = (new DateTimeImmutable(substr($nacimiento, 0, 10), $hoy->getTimezone()))->diff($hoy->setTime(0, 0));
+        if ($diferencia->invert) {
+            return null;
+        }
+        if ($diferencia->y > 0) {
+            return $diferencia->y . ($diferencia->y === 1 ? ' año' : ' años');
+        }
+        if ($diferencia->m > 0) {
+            return $diferencia->m . ($diferencia->m === 1 ? ' mes' : ' meses');
+        }
+        return 'menos de 1 mes';
+    }
+
+    /** RE-6.1.11: cuándo fue la consulta: «Hoy 9:30 a. m.», «Ayer» o «lun 19 oct». */
+    public static function momentoReciente(string $fechaHora, DateTimeImmutable $hoy): string
+    {
+        $fecha = substr($fechaHora, 0, 10);
+        $dias = (int) $hoy->setTime(0, 0)->diff(new DateTimeImmutable($fecha, $hoy->getTimezone()))->format('%r%a');
+        if ($dias === 0) {
+            return 'Hoy ' . self::hora(substr($fechaHora, 11, 5));
+        }
+        return $dias === -1 ? 'Ayer' : self::etiquetaDia($fecha, $hoy);
+    }
+
+    /** Título de «Tu día»: «hoy» o «jueves 22». */
+    public static function tituloDia(string $fecha, DateTimeImmutable $hoy): string
+    {
+        if ($fecha === $hoy->format('Y-m-d')) {
+            return 'hoy';
+        }
+        $dia = new DateTimeImmutable($fecha, $hoy->getTimezone());
+        return self::DIAS_LARGOS[(int) $dia->format('w')] . ' ' . $dia->format('j');
+    }
+
+    /**
+     * RE-6.1.8: el mes del calendario del Inicio, de lunes a domingo. Cada
+     * celda dice su fecha, si ya pasó, si es hoy, si está elegida y si el
+     * veterinario tiene citas ese día; los huecos antes del día 1 son null.
+     */
+    public static function mes(string $mes, array $diasConCitas, string $hoy, string $elegido): array
+    {
+        $primero = new DateTimeImmutable($mes . '-01', new DateTimeZone(ReglaAtencion::ZONA));
+        $conCitas = array_flip($diasConCitas);
+        $celdas = array_fill(0, (int) $primero->format('N') - 1, null);
+        for ($dia = $primero; $dia->format('Y-m') === $mes; $dia = $dia->modify('+1 day')) {
+            $fecha = $dia->format('Y-m-d');
+            $tieneCitas = isset($conCitas[$fecha]);
+            $celdas[] = [
+                'fecha' => $fecha,
+                'numero' => (int) $dia->format('j'),
+                'pasado' => $fecha < $hoy,
+                'hoy' => $fecha === $hoy,
+                'elegido' => $fecha === $elegido,
+                'citas' => $tieneCitas,
+                'etiqueta' => self::DIAS_LARGOS[(int) $dia->format('w')] . ' ' . $dia->format('j') . ' de '
+                    . self::MESES_LARGOS[(int) $dia->format('n') - 1] . ($tieneCitas ? ', con citas' : ''),
+            ];
+        }
+        return [
+            'mes' => $mes,
+            'titulo' => ucfirst(self::MESES_LARGOS[(int) $primero->format('n') - 1]) . ' ' . $primero->format('Y'),
+            'anterior' => $primero->modify('-1 month')->format('Y-m'),
+            'siguiente' => $primero->modify('+1 month')->format('Y-m'),
+            'celdas' => $celdas,
+        ];
     }
 
     /** Agrupa filas con 'fecha' en días: «Hoy», «Mañana» o «jue 17 sep». */
@@ -114,9 +215,7 @@ final class ResumenPanel
     /** Fecha larga para el encabezado: «martes 15 de septiembre». */
     public static function fechaLarga(DateTimeImmutable $dia): string
     {
-        $dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-        $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-        return $dias[(int) $dia->format('w')] . ' ' . $dia->format('j') . ' de ' . $meses[(int) $dia->format('n') - 1];
+        return self::DIAS_LARGOS[(int) $dia->format('w')] . ' ' . $dia->format('j') . ' de ' . self::MESES_LARGOS[(int) $dia->format('n') - 1];
     }
 
     /** Variación entera en porcentaje; null si no hay base con qué comparar. */

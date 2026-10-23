@@ -30,8 +30,11 @@ function iniciarHerramientasAgenda(documento) {
                 activarPanelAgenda(raiz, siguiente.dataset.agendaTab, true);
             });
         });
-        const inicial = tabs.find((tab) => tab.getAttribute('aria-selected') === 'true') || tabs[0];
+        // HU-6.1: el Inicio enlaza a una pestaña por su hash (#llegadas, #triage, #reasignaciones).
+        const pedida = tabs.find((tab) => '#' + tab.dataset.agendaTab === (documento.defaultView?.location?.hash || ''));
+        const inicial = pedida || tabs.find((tab) => tab.getAttribute('aria-selected') === 'true') || tabs[0];
         if (inicial) activarPanelAgenda(raiz, inicial.dataset.agendaTab, false);
+        if (pedida && typeof raiz.scrollIntoView === 'function') raiz.scrollIntoView({ block: 'start' });
     });
 }
 

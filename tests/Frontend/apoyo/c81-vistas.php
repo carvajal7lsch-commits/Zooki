@@ -26,5 +26,5 @@ $razas = [];
 $colores = [];
 $mascotas = [];
 $propietarios = [];
-$content_view = __DIR__ . '/../../../views/vet/' . ($_GET['action'] === 'vet_atencion' ? 'atencion.php' : ($_GET['action'] === 'vet_pacientes' ? 'pacientes.php' : 'consultas.php'));
+$content_view = __DIR__ . '/../../../views/vet/' . ($_GET['action'] === 'vet_atencion' ? 'atencion.php' : 'pacientes.php');
 require __DIR__ . '/../../../views/vet/layout.php';

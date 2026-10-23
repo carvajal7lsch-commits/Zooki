@@ -930,8 +930,39 @@ function abrirCitaModal(date) {
 }
 
 function closeCitaModal() {
+    _horaPreferidaCita = null;
     cerrarOverlay('citaModalOverlay');
     cerrarListaMascotas();
+}
+
+// HU-6.1 (RE-6.1.9): «+ Agendar» en un hueco del Inicio abre este mismo modal en ese día
+// (?agendar=AAAA-MM-DD&hora=HH:MM) y, cuando aparecen los horarios, marca esa hora si sigue libre.
+let _horaPreferidaCita = null;
+
+function abrirAgendarDesdeEnlace() {
+    const parametros = new URLSearchParams(window.location.search);
+    const fecha = parametros.get('agendar') || '';
+    const hora = parametros.get('hora') || '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !isUsuarioVeterinario()) return;
+    parametros.delete('agendar');
+    parametros.delete('hora');
+    // Al recargar la agenda no se vuelve a abrir el modal.
+    window.history.replaceState(null, '', `${window.location.pathname}?${parametros}${window.location.hash}`);
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+    abrirCitaModal(new Date(anio, mes - 1, dia));
+    _horaPreferidaCita = /^\d{2}:\d{2}$/.test(hora) ? hora : null;
+}
+
+function marcarHoraPreferida(idContenedor) {
+    if (!_horaPreferidaCita) return;
+    const chip = Array.from(document.querySelectorAll(`#${idContenedor} .slot-chip`))
+        .find(c => c.dataset.hora.slice(0, 5) === _horaPreferidaCita);
+    _horaPreferidaCita = null;
+    if (!chip) return;
+    const franja = chip.closest('.slot-grid')?.dataset.franja;
+    document.querySelector(`#${idContenedor} .slot-tab[data-franja="${franja}"]`)?.click();
+    chip.click();
+    chip.scrollIntoView({ block: 'nearest' });
 }
 
 // La lista de mascotas se abre y se cierra con hidden: ZookiCombobox decide con
@@ -1101,6 +1132,7 @@ async function cargarSlotsModal() {
             ocultarErrorModal();
             actualizarResumenModal();
         });
+        marcarHoraPreferida('modal_slots_container');
     } catch (e) {
         if (turno !== _turnoSlotsCita) return;
         console.error('Error al cargar horarios:', e);
@@ -1459,6 +1491,7 @@ document.addEventListener('DOMContentLoaded', () => {
     conectarBarra();
     document.getElementById('agendaPanel').addEventListener('click', manejarClicPanel);
     conectarBuscadorMascota();
+    abrirAgendarDesdeEnlace();
     iniciarCalendario();
 });
 

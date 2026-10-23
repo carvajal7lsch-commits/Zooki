@@ -1,0 +1,1263 @@
+/*
+ * Inicio del veterinario (HU-6.1). Diseño aprobado por el dueño (2026-10-22):
+ * specs/referencias/inicio-veterinario.dc.html. Solo se carga en vet_area.
+ *
+ * Escritorio (≥ 1024 px): dos filas que caben sin scroll en 1366×768; solo la
+ * lista de «Tu día» se desplaza por dentro. Tableta y celular (RNF-16): la
+ * página se desplaza y los bloques se reordenan con grid-template-areas.
+ */
+.inicio,
+.main-content--inicio {
+    --in-azul: #0052FF;
+    --in-azul-oscuro: #003DCC;
+    --in-azul-2: #3B82F6;
+    --in-azul-3: #93C5FD;
+    --in-azul-4: #DBEAFE;
+    --in-azul-suave: #F1F5FF;
+    --in-fondo: #E9EDF6;
+    --in-blanco: #FFFFFF;
+    --in-texto: #0F172A;
+    --in-texto-2: #334155;
+    --in-texto-3: #475569;
+    /* #64748B: el gris más claro que pasa AA (4.5:1) sobre blanco y #F8FAFC. */
+    --in-meta: #64748B;
+    --in-borde: #E2E8F0;
+    --in-borde-suave: #EEF2F6;
+    --in-gris-fondo: #F8FAFC;
+    --in-gris-nodo: #94A3B8;
+    --in-gris-linea: #CBD5E1;
+    --in-verde: #16A34A;
+    --in-verde-tinta: #15803D;
+    --in-verde-fondo: #F0FDF4;
+    --in-rojo: #DC2626;
+    --in-rojo-tinta: #B91C1C;
+    --in-rojo-fondo: #FEF2F2;
+    --in-radio: 22px;
+    --in-espacio: 16px;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.dashboard-layout:has(.main-content--inicio) {
+    background: var(--in-fondo, #E9EDF6);
+}
+
+/* ── Encabezado del layout: fecha y saludo ── */
+.inicio-encabezado__fecha {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--in-meta);
+}
+
+.inicio-encabezado__saludo {
+    margin: 2px 0 0;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--in-texto);
+}
+
+/* ── Piezas comunes ── */
+.inicio .visualmente-oculto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.inicio-tile {
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: var(--in-radio);
+    background: var(--in-blanco);
+    color: var(--in-texto);
+}
+
+.inicio-cabecera {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+}
+
+.inicio-titulo {
+    margin: 0;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--in-texto);
+}
+
+.inicio-titulo--dia {
+    font-size: 16px;
+}
+
+.inicio-meta {
+    margin: 0;
+    font-size: 12px;
+    color: var(--in-meta);
+}
+
+.inicio-meta--grande {
+    font-size: 13px;
+}
+
+.inicio-enlace {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--in-azul);
+    text-decoration: none;
+}
+
+.inicio-enlace:hover {
+    color: var(--in-azul-oscuro);
+    text-decoration: underline;
+}
+
+.inicio a:focus-visible,
+.inicio button:focus-visible {
+    outline: 2px solid var(--in-azul);
+    outline-offset: 2px;
+}
+
+.inicio-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.inicio-boton:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.inicio-boton--blanco {
+    background: var(--in-blanco);
+    color: var(--in-azul);
+}
+
+.inicio-boton--blanco:hover:not(:disabled) {
+    background: var(--in-azul-suave);
+    color: var(--in-azul-oscuro);
+}
+
+.inicio-boton--vidrio {
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--in-blanco);
+    font-weight: 700;
+}
+
+.inicio-boton--vidrio:hover {
+    background: rgba(255, 255, 255, 0.26);
+    color: var(--in-blanco);
+}
+
+.inicio-boton--primario {
+    align-self: flex-start;
+    height: 40px;
+    padding: 0 16px;
+    background: var(--in-azul);
+    color: var(--in-blanco);
+    font-weight: 700;
+}
+
+.inicio-boton--primario:hover {
+    background: var(--in-azul-oscuro);
+    color: var(--in-blanco);
+}
+
+.inicio-accion {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    height: 34px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--in-azul);
+    color: var(--in-blanco);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.inicio-accion:hover {
+    background: var(--in-azul-oscuro);
+    color: var(--in-blanco);
+}
+
+.inicio-accion--sec {
+    background: var(--in-blanco);
+    color: var(--in-texto-3);
+    box-shadow: inset 0 0 0 1px var(--in-borde);
+}
+
+.inicio-accion--sec:hover {
+    background: #F1F5F9;
+    color: var(--in-texto);
+}
+
+/* ── Siguiente paciente ── */
+.inicio-siguiente {
+    display: flex;
+    padding: 24px 28px;
+    background: var(--in-azul);
+    color: var(--in-blanco);
+}
+
+.inicio-siguiente__circulo {
+    position: absolute;
+    top: -70px;
+    right: -40px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: var(--in-azul-2);
+}
+
+.inicio-siguiente__cuarto {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 230px;
+    height: 160px;
+    border-radius: 160px 0 0 0;
+    background: var(--in-azul-3);
+}
+
+/* El PNG trae margen transparente abajo y a la derecha: se compensa para que el gato asiente. */
+.inicio-siguiente__mascota {
+    position: absolute;
+    right: -6px;
+    bottom: -28px;
+    height: 240px;
+    pointer-events: none;
+}
+
+.inicio-siguiente__contenido {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    max-width: 58%;
+}
+
+.inicio-siguiente__sobre {
+    margin: 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--in-azul-4);
+}
+
+.inicio-siguiente__nombre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    min-width: 0;
+}
+
+.inicio-siguiente__nombre h2 {
+    margin: 0;
+    overflow: hidden;
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--in-blanco);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inicio-siguiente__datos {
+    margin: 0;
+    font-size: 13px;
+    color: var(--in-azul-4);
+}
+
+.inicio-siguiente__motivo {
+    display: -webkit-box;
+    margin: 0;
+    padding: 9px 12px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 13px;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.inicio-siguiente__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+}
+
+/* Colores de nivel del sistema (RN-411). */
+.inicio-nivel {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 800;
+}
+
+.inicio-nivel::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.inicio-nivel--rojo { background: #FEE2E2; color: #B91C1C; }
+.inicio-nivel--naranja { background: #FFEDD5; color: #C2410C; }
+.inicio-nivel--amarillo { background: #FEF3C7; color: #B45309; }
+.inicio-nivel--verde { background: #DCFCE7; color: #15803D; }
+
+/* ── Calendario del mes ── */
+.inicio-cal {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 18px;
+}
+
+.inicio-cal__contenido {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+}
+
+.inicio-cal__flechas {
+    display: flex;
+    gap: 4px;
+}
+
+.inicio-cal__flecha {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--in-borde);
+    border-radius: 8px;
+    background: var(--in-blanco);
+    color: var(--in-texto-3);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.inicio-cal__flecha:hover {
+    background: var(--in-azul-suave);
+    color: var(--in-azul);
+}
+
+.inicio-cal__semana,
+.inicio-cal__dias {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px;
+}
+
+.inicio-cal__semana {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--in-meta);
+    text-align: center;
+}
+
+.inicio-cal__dias {
+    flex: 1;
+    grid-auto-rows: minmax(22px, 1fr);
+    min-height: 0;
+}
+
+.inicio-cal__dia {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--in-texto-2);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.inicio-cal__dia:hover {
+    background: var(--in-azul-suave);
+}
+
+.inicio-cal__dia.is-pasado {
+    color: var(--in-meta);
+    font-weight: 500;
+}
+
+.inicio-cal__dia.is-hoy {
+    color: var(--in-azul);
+    font-weight: 800;
+    box-shadow: inset 0 0 0 1.5px var(--in-azul);
+}
+
+.inicio-cal__dia.is-elegido {
+    background: var(--in-azul);
+    color: var(--in-blanco);
+    font-weight: 800;
+    box-shadow: none;
+}
+
+.inicio-cal__marca {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--in-azul);
+    transform: translateX(-50%);
+}
+
+.inicio-cal__dia.is-elegido .inicio-cal__marca {
+    background: var(--in-blanco);
+}
+
+/* ── Atención sin cita y Hoy ── */
+.inicio-lado {
+    display: flex;
+    flex-direction: column;
+    gap: var(--in-espacio);
+    min-width: 0;
+}
+
+.inicio-sincita {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px 18px;
+    background: var(--in-azul-4);
+    color: var(--in-texto);
+    text-decoration: none;
+}
+
+.inicio-sincita:hover {
+    background: #CFE0FD;
+    color: var(--in-texto);
+}
+
+.inicio-sincita__cuarto {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 96px;
+    height: 96px;
+    border-radius: 0 96px 0 0;
+    background: var(--in-azul-3);
+}
+
+.inicio-sincita__mascota {
+    position: absolute;
+    right: 2px;
+    bottom: -9px;
+    height: 104px;
+    pointer-events: none;
+}
+
+.inicio-sincita__icono {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+    background: var(--in-azul);
+    color: var(--in-blanco);
+    box-shadow: 0 8px 18px rgba(0, 82, 255, 0.35);
+}
+
+.inicio-sincita__texto {
+    position: relative;
+    font-size: 15.5px;
+    font-weight: 800;
+}
+
+.inicio-hoy {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 18px;
+}
+
+.inicio-hoy__total {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--in-azul);
+}
+
+.inicio-hoy__total span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--in-meta);
+}
+
+.inicio-hoy__barra {
+    display: flex;
+    gap: 4px;
+}
+
+.inicio-hoy__segmento {
+    flex: 1;
+    height: 7px;
+    border-radius: 99px;
+}
+
+.inicio-hoy__segmento--atendida { background: var(--in-verde); }
+.inicio-hoy__segmento--sin-cerrar { background: var(--in-rojo); }
+.inicio-hoy__segmento--pendiente { background: var(--in-azul-4); }
+.inicio-hoy__segmento--no-asistio { background: var(--in-gris-linea); }
+.inicio-hoy__segmento--vacio { background: var(--in-borde); }
+
+.inicio-tinta--verde { color: var(--in-verde-tinta); }
+.inicio-tinta--rojo { color: var(--in-rojo-tinta); }
+.inicio-tinta--texto { color: var(--in-texto); }
+
+/* ── Tu día ── */
+.inicio-dia {
+    display: flex;
+    flex-direction: column;
+    padding: 18px 22px;
+}
+
+.inicio-dia[aria-busy="true"] .inicio-dia__contenido {
+    opacity: 0.55;
+}
+
+.inicio-dia__contenido {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    transition: opacity 0.15s ease;
+}
+
+.inicio-aviso {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #FFFBEB;
+    color: #92400E;
+    font-size: 12px;
+}
+
+.inicio-lineas {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+    margin: 0;
+    padding: 0 4px 0 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.inicio-linea {
+    display: grid;
+    flex-shrink: 0;
+    grid-template-columns: 62px 14px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-height: 34px;
+}
+
+.inicio-linea__hora {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--in-texto-3);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.inicio-linea__eje {
+    position: relative;
+    display: grid;
+    place-items: center;
+    align-self: stretch;
+    width: 14px;
+}
+
+.inicio-linea__eje::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--in-borde);
+}
+
+.inicio-linea__nodo {
+    position: relative;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--in-blanco);
+    border-radius: 50%;
+    background: var(--in-gris-linea);
+}
+
+.inicio-linea--atendida .inicio-linea__nodo { background: var(--in-verde); }
+.inicio-linea--sin_cerrar .inicio-linea__nodo { background: var(--in-rojo); }
+.inicio-linea--siguiente .inicio-linea__nodo,
+.inicio-linea--en_atencion .inicio-linea__nodo { background: var(--in-azul); }
+.inicio-linea--por_atender .inicio-linea__nodo { background: var(--in-gris-nodo); }
+
+.inicio-cita {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+    padding: 7px 12px;
+    border-radius: 11px;
+    background: var(--in-gris-fondo);
+    color: var(--in-texto);
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.inicio-cita:hover {
+    color: var(--in-texto);
+    box-shadow: inset 0 0 0 1.5px #BFD3FF;
+}
+
+.inicio-cita__texto {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inicio-cita__estado {
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--in-meta);
+}
+
+.inicio-linea--atendida .inicio-cita { background: var(--in-verde-fondo); }
+.inicio-linea--atendida .inicio-cita__estado { color: var(--in-verde-tinta); }
+.inicio-linea--sin_cerrar .inicio-cita { background: var(--in-rojo-fondo); }
+.inicio-linea--sin_cerrar .inicio-cita__estado { color: var(--in-rojo-tinta); }
+.inicio-linea--siguiente .inicio-cita,
+.inicio-linea--en_atencion .inicio-cita { background: #EBF1FF; }
+.inicio-linea--siguiente .inicio-cita__estado,
+.inicio-linea--en_atencion .inicio-cita__estado { color: var(--in-azul); }
+
+.inicio-hueco {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 12px;
+    border: 1.5px dashed var(--in-gris-linea);
+    border-radius: 11px;
+    color: var(--in-texto-3);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.inicio-hueco:hover {
+    border-color: var(--in-azul);
+    background: var(--in-azul-suave);
+    color: var(--in-texto-3);
+}
+
+.inicio-hueco__accion {
+    color: var(--in-azul);
+    white-space: nowrap;
+}
+
+.inicio-bloqueo {
+    padding: 6px 12px;
+    border-radius: 11px;
+    background: repeating-linear-gradient(135deg, #F1F5F9 0 6px, var(--in-gris-fondo) 6px 12px);
+    color: var(--in-meta);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Día sin citas. */
+.inicio-libre {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-height: 200px;
+    padding: 24px 28px;
+    overflow: hidden;
+    border-radius: 18px;
+    background: var(--in-azul-suave);
+}
+
+.inicio-libre__cuarto {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 220px;
+    height: 170px;
+    border-radius: 170px 0 0 0;
+    background: var(--in-azul-4);
+}
+
+.inicio-libre__mascota {
+    position: absolute;
+    right: 24px;
+    bottom: 0;
+    height: 210px;
+    pointer-events: none;
+}
+
+.inicio-libre__texto {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 55%;
+}
+
+.inicio-libre__titulo {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.inicio-libre__proximo {
+    margin: 0;
+    font-size: 13px;
+}
+
+/* ── Pendientes ── */
+.inicio-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--in-espacio);
+    min-width: 0;
+    min-height: 0;
+}
+
+.inicio-pendientes {
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 18px;
+}
+
+.inicio-pendientes__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.inicio-pend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 6px 5px 10px;
+    border-radius: 12px;
+    background: var(--in-gris-fondo);
+}
+
+/* Compacto: con los cuatro tipos, a «Pacientes recientes» todavía le quedan filas en 1366×768. */
+.inicio-pend .inicio-accion {
+    height: 30px;
+    padding: 0 12px;
+}
+
+.inicio-pend__num {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 800;
+}
+
+.inicio-pend--cerrar .inicio-pend__num { background: #FEE2E2; color: #B91C1C; }
+.inicio-pend--triage .inicio-pend__num { background: #FEF3C7; color: #B45309; }
+.inicio-pend--reasignacion .inicio-pend__num { background: #E0E7FF; color: #4338CA; }
+.inicio-pend--dosis .inicio-pend__num { background: var(--in-azul-4); color: var(--in-azul); }
+
+.inicio-pend__texto {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inicio-aldia {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--in-verde-fondo);
+    color: var(--in-verde-tinta);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* ── Pacientes recientes ── */
+.inicio-recientes {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    padding: 14px 18px;
+}
+
+/* «Los que quepan»: en columna con salto, la fila que no cabe entera pasa a una
+   segunda columna que queda recortada, así nunca se ve una fila a medias. */
+.inicio-recientes__lista {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 0 24px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    list-style: none;
+}
+
+.inicio-recientes__lista > .inicio-rec {
+    width: 100%;
+}
+
+.inicio-rec {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 4px;
+    border-bottom: 1px solid var(--in-borde-suave);
+    box-sizing: border-box;
+}
+
+.inicio-rec__texto {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.inicio-rec__texto strong {
+    font-size: 13.5px;
+}
+
+.inicio-rec .inicio-accion {
+    height: 30px;
+    padding: 0 12px;
+}
+
+.inicio-rec__texto .inicio-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inicio-ava {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    overflow: hidden;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.inicio-ava--foto {
+    background: var(--in-azul-4);
+}
+
+.inicio-ava img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+.inicio-ava--0 { background: #FCE7F3; color: #BE185D; }
+.inicio-ava--1 { background: #FEF3C7; color: #B45309; }
+.inicio-ava--2 { background: #DCFCE7; color: #15803D; }
+.inicio-ava--3 { background: #E0E7FF; color: #4338CA; }
+.inicio-ava--4 { background: var(--in-azul-4); color: #1D4ED8; }
+
+.inicio-vacio {
+    padding: 8px 0;
+}
+
+/* ── Próximas dosis ── */
+.inicio-dialogo {
+    width: min(520px, calc(100vw - 32px));
+    max-height: 80vh;
+    padding: 20px 24px;
+    border: 0;
+    border-radius: var(--in-radio);
+    background: var(--in-blanco);
+    color: var(--in-texto);
+    box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.28);
+}
+
+.inicio-dialogo::backdrop {
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.inicio-dialogo__cerrar {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--in-borde);
+    border-radius: 10px;
+    background: var(--in-blanco);
+    color: var(--in-texto-3);
+    cursor: pointer;
+}
+
+.inicio-dialogo__dia {
+    margin: 14px 0 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--in-meta);
+}
+
+.inicio-dialogo__lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* ── Escritorio (≥ 1024 px): cabe en una pantalla ── */
+@media (min-width: 1024px) {
+    .main-content--inicio {
+        height: 100vh;
+        min-height: 640px;
+    }
+
+    .main-content--inicio .top-header {
+        padding-top: 14px;
+        padding-bottom: 12px;
+    }
+
+    .main-content--inicio .content-body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+        padding: 0 32px 18px;
+    }
+
+    .main-content--inicio .content-wrapper {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .inicio {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: var(--in-espacio);
+        min-width: 0;
+        min-height: 0;
+    }
+
+    .inicio__arriba {
+        display: grid;
+        flex-shrink: 0;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1.05fr) minmax(0, 0.95fr);
+        gap: var(--in-espacio);
+        height: 258px;
+    }
+
+    .inicio__abajo {
+        display: grid;
+        flex: 1;
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+        gap: var(--in-espacio);
+        min-height: 300px;
+    }
+
+    .inicio-dia {
+        min-height: 0;
+    }
+}
+
+/* ── Tableta y celular: la página se desplaza y los bloques se reordenan ── */
+@media (max-width: 1023px) {
+    .inicio {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+            "siguiente siguiente"
+            "calendario lado"
+            "dia dia"
+            "pendientes recientes";
+        gap: var(--in-espacio);
+        align-items: start;
+    }
+
+    .inicio__arriba,
+    .inicio__abajo,
+    .inicio-col {
+        display: contents;
+    }
+
+    .inicio-siguiente { grid-area: siguiente; min-height: 240px; }
+    .inicio-cal { grid-area: calendario; align-self: stretch; min-height: 270px; }
+    .inicio-lado { grid-area: lado; align-self: stretch; }
+    .inicio-dia { grid-area: dia; }
+    .inicio-pendientes { grid-area: pendientes; }
+    .inicio-recientes { grid-area: recientes; }
+
+    .inicio-lineas {
+        max-height: 460px;
+    }
+
+    .inicio-recientes__lista {
+        flex-wrap: nowrap;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 767px) {
+    .top-header:has(.inicio-encabezado) {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .top-header:has(.inicio-encabezado) .header-left {
+        flex-basis: 100%;
+        order: 2;
+    }
+
+    .inicio-encabezado__saludo {
+        font-size: 22px;
+    }
+
+    .inicio {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "siguiente"
+            "lado"
+            "dia"
+            "pendientes"
+            "calendario"
+            "recientes";
+        --in-espacio: 12px;
+    }
+
+    /* Siguiente paciente compacto. */
+    .inicio-siguiente {
+        min-height: 0;
+        padding: 18px;
+    }
+
+    .inicio-siguiente__circulo {
+        top: -60px;
+        right: -70px;
+        width: 180px;
+        height: 180px;
+    }
+
+    .inicio-siguiente__cuarto {
+        width: 120px;
+        height: 96px;
+        border-radius: 96px 0 0 0;
+    }
+
+    .inicio-siguiente__mascota {
+        right: -10px;
+        bottom: -16px;
+        height: 132px;
+    }
+
+    .inicio-siguiente__contenido {
+        max-width: 100%;
+    }
+
+    .inicio-siguiente__sobre,
+    .inicio-siguiente__nombre,
+    .inicio-siguiente__datos {
+        max-width: calc(100% - 90px);
+    }
+
+    .inicio-siguiente__nombre h2 {
+        font-size: 28px;
+    }
+
+    .inicio-siguiente__motivo {
+        max-width: calc(100% - 90px);
+    }
+
+    /* Atención sin cita y Hoy en una fila. */
+    .inicio-lado {
+        flex-direction: row;
+    }
+
+    .inicio-lado > .inicio-tile {
+        flex: 1 1 0;
+        min-height: 128px;
+    }
+
+    .inicio-sincita__mascota {
+        height: 76px;
+        bottom: -7px;
+    }
+
+    .inicio-sincita__texto {
+        max-width: 60%;
+        font-size: 14px;
+    }
+
+    .inicio-hoy {
+        padding: 14px;
+    }
+
+    .inicio-hoy .inicio-meta {
+        font-size: 11.5px;
+    }
+
+    .inicio-dia {
+        padding: 16px;
+    }
+
+    .inicio-linea {
+        grid-template-columns: 54px 12px minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .inicio-cabecera {
+        flex-wrap: wrap;
+    }
+
+    .inicio-libre {
+        padding: 20px;
+        min-height: 230px;
+        align-items: flex-start;
+    }
+
+    .inicio-libre__cuarto {
+        width: 140px;
+        height: 110px;
+        border-radius: 110px 0 0 0;
+    }
+
+    .inicio-libre__mascota {
+        right: 8px;
+        height: 130px;
+    }
+
+    .inicio-libre__texto {
+        max-width: 100%;
+    }
+
+    .inicio-libre__texto .inicio-meta,
+    .inicio-libre__proximo {
+        max-width: calc(100% - 110px);
+    }
+
+    .inicio-cal {
+        min-height: 300px;
+    }
+
+    /* El detalle de cada pendiente usa hasta dos líneas en vez de cortarse. */
+    .inicio-pend__texto {
+        display: -webkit-box;
+        white-space: normal;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    /* RE-6.1.11: en el celular, los cinco más recientes. */
+    .inicio-recientes__lista > .inicio-rec:nth-child(n + 6) {
+        display: none;
+    }
+}
+
+/* Celular angosto: el gato y el cachorro taparían botones y texto; quedan las formas y el texto. */
+@media (max-width: 479px) {
+    .inicio-siguiente__mascota,
+    .inicio-siguiente__cuarto,
+    .inicio-sincita__mascota {
+        display: none;
+    }
+
+    .inicio-sincita__texto {
+        max-width: 100%;
+    }
+
+    .inicio-siguiente__sobre,
+    .inicio-siguiente__nombre,
+    .inicio-siguiente__datos,
+    .inicio-siguiente__motivo {
+        max-width: 100%;
+    }
+}

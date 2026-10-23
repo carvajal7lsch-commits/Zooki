@@ -44,7 +44,8 @@
     <link rel="stylesheet" href="css/atencion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
-    <link rel="stylesheet" href="css/panel.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <?php // HU-6.1: el Inicio del veterinario tiene su propia hoja (diseño aprobado 2026-10-22). ?>
+    <link rel="stylesheet" href="css/inicio-vet.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
     <link rel="stylesheet" href="css/validacion-cuenta.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
@@ -83,7 +84,6 @@
                 ?>
 
                 <?= pillNavLink("index.php?action=vet_area", "fa-home", $__action === "vet_area", "Inicio / Dashboard") ?>
-                <?= pillNavLink("index.php?action=vet_consultas", "fa-file-medical-alt", $__action === "vet_consultas", "Consultas Médicas") ?>
                 <?= pillNavLink("index.php?action=vet_pacientes", "fa-paw", $__action === "vet_pacientes", "Pacientes") ?>
                 <?= pillNavLink("index.php?action=vet_agenda", "fa-calendar-alt", $__action === "vet_agenda", "Calendario") ?>
                 <?= pillNavLink("index.php?action=mi_perfil", "fa-user-circle", $__action === "mi_perfil", "Mi perfil") ?>
@@ -97,7 +97,7 @@
         </nav>
 
         <!-- ══ CONTENIDO PRINCIPAL ════════════════════════════════════════ -->
-        <main class="main-content">
+        <main class="main-content<?= isset($content_view) ? '' : ' main-content--inicio' ?>">
 
             <!-- Header superior -->
             <header class="top-header<?= $__action === 'vet_pacientes' ? ' top-header--pacientes' : '' ?>">
@@ -105,7 +105,6 @@
                     <?php 
                         $moduleTitles = [
                             'vet_area' => 'Dashboard',
-                            'vet_consultas' => '',
                             'vet_pacientes' => '',
                             'vet_agenda' => 'Calendario',
                             'vet_atencion' => '',
@@ -115,6 +114,11 @@
                     ?>
                     <?php if ($__action === 'vet_pacientes'): ?>
                         <?php require __DIR__ . '/partials/cabecera_pacientes.php'; ?>
+                    <?php elseif (!isset($content_view) && isset($panel)): ?>
+                        <div class="inicio-encabezado">
+                            <p class="inicio-encabezado__fecha"><?= htmlspecialchars($panel['fecha']) ?></p>
+                            <h1 class="inicio-encabezado__saludo"><?= htmlspecialchars($panel['saludo'] . ', ' . explode(" ", trim($__adminNombre))[0]) ?></h1>
+                        </div>
                     <?php else: ?>
                         <h1 class="top-header-title"><?= htmlspecialchars($currentTitle) ?></h1>
                     <?php endif; ?>
@@ -192,11 +196,9 @@
     <script src="js/csrf.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/sesion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/extras.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-    <?php if (($_GET['action'] ?? '') === 'vet_consultas'): ?>
-    <script src="js/consultas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-    <?php endif; ?>
     <?php if (!isset($content_view)): ?>
-    <script src="js/panel-vet.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/comando-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/inicio-vet.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>
     <script src="js/atencion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

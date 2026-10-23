@@ -130,6 +130,24 @@ class SeguridadClinicaTest extends TestCase
         $this->assertSame(403, $this->resultado('admin_usuarios'), 'En Norte no es administradora');
     }
 
+    /**
+     * HU-6.1 (RE-6.1.4): «Tu día» y el calendario del Inicio son solo del
+     * veterinario. «Consultas médicas» se retiró (decisión del dueño,
+     * 2026-10-22): su acción ya no está en la matriz y se deniega.
+     */
+    public function testElDiaDelInicioEsSoloDelVeterinario(): void
+    {
+        $this->entrarComo(DosClinicas::DOBLE, 'clinica:1:2');
+        $this->assertSame(0, $this->resultado('panel_dia_ajax'));
+        $this->assertNotSame(0, $this->resultado('vet_consultas'));
+
+        $this->entrarComo(DosClinicas::DOBLE, 'clinica:2:1');
+        $this->assertSame(403, $this->resultado('panel_dia_ajax'), 'Como administradora no tiene Inicio de veterinario');
+
+        $this->entrarComo(DosClinicas::DOBLE, 'propietario');
+        $this->assertSame(403, $this->resultado('panel_dia_ajax'));
+    }
+
     /** RN-G08: si le retiran el rol con la sesión abierta, pierde ese contexto en la siguiente petición. */
     public function testUnContextoRetiradoSeQuitaDeLaSesion(): void
     {
