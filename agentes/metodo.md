@@ -83,7 +83,9 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 **Comunicación**
 - Español informal y directo («brother», «dale»). Muchas veces dicta por voz: interpretar errores de transcripción por el contexto.
 - Quiere opiniones claras con una recomendación, no análisis indecisos.
+- **Prompt en el mismo mensaje (decisión del usuario, 2026-10-18):** cuando el arquitecto indique que sigue una subetapa para el ejecutor, entregar de una vez su prompt completo con la plantilla de §5, sin esperar otra petición del usuario. Si hay un paso previo obligatorio, indicarlo junto al prompt.
 - Explicar en palabras sencillas el porqué de un error o una decisión; dar comandos listos para PowerShell.
+- **Comandos para guardar y subir (decisión del usuario, 2026-10-17):** el usuario también los pega en CMD. Entregar comandos simples, uno por línea, sin `&&`; no incluir `git diff --cached --stat` ni pasos de inspección equivalentes en los bloques que debe pegar. El agente hace la inspección necesaria y entrega solo las operaciones Git que necesita ejecutar el usuario.
 - No narrar el proceso: decir qué salió, qué se encontró y qué le toca hacer.
 - **Las pruebas en el navegador las hace el usuario** (decisión del usuario, 2026-10-09): el revisor no recorre pantallas con el navegador integrado ni con Chrome, porque gasta demasiado. El revisor revisa código, corre las suites y entrega la lista de prueba manual; el usuario la sigue y responde con lo que falló.
 
@@ -121,3 +123,16 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 - Correr dos veces los comandos de commit mezcló subetapas: commit inmediatamente después de cada subetapa.
 - Un dato temporal desactivado (vínculo inactivo) también cuenta para la seguridad: las reglas de acceso consideran todos los vínculos, no solo los activos.
 - Hasta D2.1 los diagramas de `Modelos.md` no se comparaban con el código: §10 quedó con la contraseña temporal y §13.3 pedía cerrar las demás sesiones sin que se hiciera, y el alta de personal existente vinculaba sin consentimiento. Desde el 2026-10-09 cada prompt cita su diagrama y la revisión lo compara.
+
+## 11. Modo acelerado (decisión del usuario, 2026-10-20)
+
+El tiempo apremia y **se mantiene todo el alcance de M4** (no se recorta nada). Para avanzar más rápido:
+
+- **Roles:** arquitecto y revisor = Claude (proyecto de claude.ai); ejecutor = Codex. Ya no se exige una segunda sesión de Codex como revisor independiente.
+- **Entregas agrupadas:** el arquitecto puede juntar subetapas consecutivas del mismo flujo en una sola entrega. M4 queda en cinco entregas: **C4** (C4a+C4b), **C5** (C5a+C5b), **C6-C7** (C6+C7a+C7b), **C8** (C8+C8b) y **D-F** (correcciones, prueba manual consolidada, cierre y despliegue).
+- **Verificación del ejecutor:** al final de la entrega, una sola pasada de PHP completo sin host y JS completo. Con motor local solo las clases de concurrencia/esquema nuevas o tocadas. La suite completa en MySQL 8 la corre el CI después del push; no repetir pasadas completas de MariaDB de 10-15 minutos.
+- **Revisión liviana:** el revisor lee el diff, lo compara con el diagrama de `Modelos.md` y corre solo las pruebas de lo tocado.
+- **Hallazgos:** solo un **P1** (seguridad, aislamiento entre clínicas, pérdida de datos, flujo principal roto) bloquea y genera corrección inmediata. Los P2/P3 se anotan en la «Lista para D» del plan del módulo y la siguiente entrega avanza.
+- **Anexos cortos:** máximo ~25 líneas: qué se hizo, tabla corta RE → prueba, pendientes. Sin repetir conteos históricos, narrar comandos ni copiar anexos anteriores.
+- **Pruebas manuales al final:** todas en D, en una sola lista consolidada (máximo 10 comprobaciones para todo el módulo). Las entregas intermedias solo agregan 1-2 líneas a esa lista, sin pedírselas al usuario.
+- Commit/push del usuario después de cada entrega revisada; el prompt siguiente va en el mismo mensaje del veredicto (§8).

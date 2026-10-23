@@ -601,6 +601,7 @@ class BaseV2MysqlTest extends TestCase
     public function testD2CuentasEnElEsquemaReal(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../models/CuentaTitular.php';
         require_once __DIR__ . '/../../models/IntentoLogin.php';
         $this->cargar('01_schema.sql');
@@ -660,6 +661,7 @@ class BaseV2MysqlTest extends TestCase
     public function testMigracionD22ActualizaUnaBaseAnteriorDosVeces(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../models/VerificacionEmail.php';
         $this->cargar('01_schema.sql');
         $this->cargar('02_semilla.sql');
@@ -691,6 +693,7 @@ class BaseV2MysqlTest extends TestCase
     public function testD22InvitacionesYVersionSesionEnElEsquemaReal(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../models/InvitacionPersonal.php';
         require_once __DIR__ . '/../../models/CuentaTitular.php';
         require_once __DIR__ . '/../../helpers/CierreSesiones.php';
@@ -899,7 +902,7 @@ class BaseV2MysqlTest extends TestCase
         }
     }
 
-    public function testElEsquemaCreaLasCincuentaYDosTablasEnInnoDbYUtf8mb4(): void
+    public function testElEsquemaCreaLasCincuentaYOchoTablasEnInnoDbYUtf8mb4(): void
     {
         $this->cargar('01_schema.sql');
 
@@ -907,7 +910,7 @@ class BaseV2MysqlTest extends TestCase
             "SELECT ENGINE, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
         )->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->assertCount(52, $tablas);
+        $this->assertCount(58, $tablas);
         foreach ($tablas as $t) {
             $this->assertSame('InnoDB', $t['ENGINE']);
             $this->assertSame('utf8mb4_general_ci', $t['TABLE_COLLATION']);
@@ -938,7 +941,7 @@ class BaseV2MysqlTest extends TestCase
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }
@@ -947,6 +950,7 @@ class BaseV2MysqlTest extends TestCase
     public function testC3MascotasYConfirmacionEnElEsquemaReal(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../models/Mascota.php';
         require_once __DIR__ . '/../../models/PropietarioClinica.php';
         $this->cargar('01_schema.sql'); $this->cargar('02_semilla.sql');
@@ -1130,6 +1134,7 @@ class BaseV2MysqlTest extends TestCase
     public function testElFixtureDeDosClinicasCargaEnElEsquemaReal(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../models/Usuario.php';
         $this->cargar('01_schema.sql');
         $this->cargar('02_semilla.sql');
@@ -1143,10 +1148,50 @@ class BaseV2MysqlTest extends TestCase
         $this->assertSame(1, (int) $usuario->propietariosDeClinica(DosClinicas::NORTE)[1]['num_mascotas']);
     }
 
+    /** M4 C1, P01/P19: mismos escritores y rollback sobre el esquema y candados reales. */
+    public function testM4C1MarcaTiposYAuditoriaAtomicaEnElEsquemaReal(): void
+    {
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
+        require_once __DIR__ . '/../../models/ConfiguracionClinica.php';
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        DosClinicas::poblar($this->db);
+        Auditoria::definirProxiesConfiables([]);
+        $_SESSION = ['id_usuario' => 1];
+        Contexto::activar(Contexto::deClinica(1, 'Norte', Roles::ADMIN), 1);
+        $modelo = new ConfiguracionClinica($this->db);
+        $marca = ['nombre' => 'Norte C1', 'direccion' => 'Calle 1', 'telefono' => '3001234567',
+            'telefono_urgencias' => '3007654321', 'email_contacto' => 'norte@example.com', 'url_logo' => 'https://example.com/norte.png'];
+        $this->assertSame('Norte C1', $modelo->guardarMarca($marca)['nombre']);
+        $tipo = $modelo->guardarTipo(null, ['nombre_tipo' => 'Cirugía C1', 'duracion_minutos' => '45', 'margen_minutos' => '0', 'pausable' => '0']);
+        $this->assertSame(0, (int) $tipo['pausable']);
+        $this->assertSame(1, (int) $tipo['activo']);
+        $this->assertSame(0, (int) $modelo->cambiarEstado((int) $tipo['id_tipo_cita'], ['activo' => '0'])['activo']);
+        $this->assertNotSame('Norte C1', $this->db->query('SELECT nombre FROM clinicas WHERE id_clinica=2')->fetchColumn());
+        $antes = $modelo->leer();
+        $auditorias = $this->contar('auditoria_sistema');
+        $this->db->exec("CREATE TRIGGER bloquear_auditoria_c1 BEFORE INSERT ON auditoria_sistema FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'auditoria C1 simulada'");
+        foreach ([fn () => $modelo->guardarMarca(array_replace($marca, ['nombre' => 'No confirmar'])),
+            fn () => $modelo->cambiarEstado((int) $tipo['id_tipo_cita'], ['activo' => '1'])] as $operacion) {
+            try {
+                $operacion();
+                $this->fail('Confirmó la configuración sin auditoría.');
+            } catch (RuntimeException $error) {
+                $this->assertStringContainsString('auditar', $error->getMessage());
+            }
+            $this->assertSame($antes, $modelo->leer());
+            $this->assertSame($auditorias, $this->contar('auditoria_sistema'));
+        }
+        $this->db->exec('DROP TRIGGER bloquear_auditoria_c1');
+        $_SESSION = [];
+    }
+
     /** C2: copia repetible, relaciones reales y restauración aislada en MySQL/MariaDB. */
     public function testConfiguracionDeDosClinicasEnElEsquemaReal(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../helpers/InicializadorClinica.php';
         require_once __DIR__ . '/../../models/CatalogoClinica.php';
         require_once __DIR__ . '/../../models/HorarioClinica.php';
@@ -1257,24 +1302,27 @@ class BaseV2MysqlTest extends TestCase
             $consultas = new ConsultaConEsperaCorta($this->db);
             $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
 
-            $this->assertSame(1, (int) $otraSesion->query("SELECT GET_LOCK('zooki_numero_hc_1', 0)")->fetchColumn());
+            $this->db->exec('SET SESSION innodb_lock_wait_timeout=1');
+            $otraSesion->beginTransaction();
+            $otraSesion->query('SELECT id_clinica FROM clinicas WHERE id_clinica=1 FOR UPDATE')->closeCursor();
             try {
                 $consultas->registrar(['id_mascota' => 2, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
-                $this->fail('Debió esperar el candado de numeración.');
-            } catch (RuntimeException $e) {
-                $this->assertStringContainsString('número de historia', $e->getMessage());
+                $this->fail('Debió esperar el candado común de clínica.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('agenda cambió', $e->getMessage());
             }
             $this->assertSame(1, $this->contar('consultas'));
             $this->assertNull($this->numeroHistoria(2, 1));
-
-            // Una consulta de una mascota que ya tiene número no necesita el candado.
+            $otraSesion->rollBack();
             $consultas->registrar(['id_mascota' => 1, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
-
-            $otraSesion->query("SELECT RELEASE_LOCK('zooki_numero_hc_1')");
             $consultas->registrar(['id_mascota' => 2, 'peso' => '8.5', 'motivo' => 'A', 'diagnostico' => 'B'], [], [], $sinAdjuntos);
             $this->assertSame('HC-000002', $this->numeroHistoria(2, 1));
-            $this->assertSame(1, (int) $otraSesion->query("SELECT IS_FREE_LOCK('zooki_numero_hc_1')")->fetchColumn());
+            $this->assertFalse($this->db->inTransaction());
         } finally {
+            if ($otraSesion->inTransaction()) {
+                $otraSesion->rollBack();
+            }
+            $this->db->exec('SET SESSION innodb_lock_wait_timeout=50');
             $_SESSION = [];
         }
     }
@@ -1287,6 +1335,7 @@ class BaseV2MysqlTest extends TestCase
     public function testC5AgendaEnElEsquemaReal(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../Support/CitaSinValidacionPrevia.php';
         require_once __DIR__ . '/../../helpers/VigilanteAtenciones.php';
         $this->cargar('01_schema.sql');
@@ -1296,6 +1345,8 @@ class BaseV2MysqlTest extends TestCase
         DosClinicas::poblarAgenda($this->db);
         DosClinicas::vincularLunaASur($this->db);
         $this->db->exec("INSERT INTO usuario_clinica (id_usuario, id_clinica, id_rol, estado) VALUES (2, 2, 2, 'activo')");
+        // Estado histórico deliberadamente incompatible para probar ocupación interclínica.
+        $this->db->exec("INSERT INTO horarios_veterinario (id_clinica,id_veterinario,dia_semana,hora_inicio,hora_fin) VALUES (2,2,1,'08:00:00','12:00:00')");
         $reserva = ['id_mascota' => 1, 'id_veterinario' => 2, 'fecha' => '2030-01-07', 'hora' => '09:00', 'motivo' => 'Control', 'id_tipo_cita' => 1];
         try {
             $_SESSION = ['id_usuario' => 2];
@@ -1355,6 +1406,7 @@ class BaseV2MysqlTest extends TestCase
     public function testC6PortalEnElEsquemaReal(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../controllers/CitaController.php';
         require_once __DIR__ . '/../../models/VinculosPropietario.php';
         require_once __DIR__ . '/../../models/MascotaPropietario.php';
@@ -1372,6 +1424,8 @@ class BaseV2MysqlTest extends TestCase
             $_POST = ['id_clinica' => '2', 'id_mascota' => '1', 'id_veterinario' => '4', 'id_tipo_cita' => '2', 'fecha' => '2030-01-07', 'hora' => '09:00', 'motivo' => 'Control'];
             $_SERVER['REQUEST_METHOD'] = 'POST';
             $reloj = fn (): DateTimeImmutable => new DateTimeImmutable('2030-01-07 07:00', new DateTimeZone(ReglaAtencion::ZONA));
+            (new CargadorConocimiento($this->db))->cargar(ConocimientoRealPrueba::CARPETA);
+            $_POST = AgendaC4Prueba::capturar($this->db, $_POST, $reloj);
             ob_start();
             (new CitaController($this->db, $reloj))->agendarDesdePortalAjax();
             $respuesta = json_decode(ob_get_clean(), true);
@@ -1389,7 +1443,8 @@ class BaseV2MysqlTest extends TestCase
                 $this->assertStringContainsString('sin resolver', $e->getMessage());
             }
             $cita = (new Cita($this->db))->paraPropietario((int) $respuesta['id_cita'], 6);
-            $this->assertTrue((new Cita($this->db))->cancelar($cita));
+            // C4: el portal cancela con el modelo acotado a la clínica de la cita, como el controlador.
+            $this->assertTrue((new Cita($this->db))->enClinicaDelPropietario(2)->cancelar($cita));
             $vinculos->desvincular(2);
             $this->assertSame('inactivo', $this->db->query('SELECT estado FROM mascota_clinica WHERE id_mascota = 1 AND id_clinica = 2')->fetchColumn());
 
@@ -1416,6 +1471,7 @@ class BaseV2MysqlTest extends TestCase
     public function testC7PanelesEnElEsquemaReal(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../controllers/PanelController.php';
         $this->cargar('01_schema.sql');
         $this->cargar('02_semilla.sql');
@@ -1465,6 +1521,7 @@ class BaseV2MysqlTest extends TestCase
     public function testD1RegistroPoliticaYVinculoEnElEsquemaReal(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../models/RegistroPropietario.php';
         require_once __DIR__ . '/../../models/PropietarioClinica.php';
         require_once __DIR__ . '/../../helpers/InicioSesion.php';
@@ -1509,6 +1566,7 @@ class BaseV2MysqlTest extends TestCase
     private function prepararHistoriaClinica(): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../Support/ConsultaConEsperaCorta.php';
         require_once __DIR__ . '/../../models/Consulta.php';
         require_once __DIR__ . '/../../models/Vacuna.php';

@@ -359,12 +359,38 @@ class Security {
             'get_auditoria_ajax', 'listar_todas_citas_ajax',
             'get_horarios_clinica_ajax', 'guardar_horarios_clinica_ajax',
             'restaurar_horarios_defecto_ajax',
+            'get_configuracion_clinica_ajax', 'guardar_marca_clinica_ajax',
+            'guardar_tipo_cita_ajax', 'cambiar_estado_tipo_cita_ajax',
+            'validar_configuracion_clinica_ajax',
         ] as $a) { $matriz[$a] = $admin; }
+
+        foreach (['listar_llegadas_ajax', 'registrar_llegada_ajax', 'decidir_llegada_ajax', 'ajustar_llegada_ajax', 'presentar_llegada_ajax', 'asignar_llegada_ajax'] as $accion) {
+            $matriz[$accion] = [Roles::VETERINARIO];
+        }
+        $matriz['listar_urgencias_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['llegada_rojo_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['conciliar_rojo_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['ingresar_rojo_ajax'] = [Roles::VETERINARIO];
+        $matriz['atender_rojo_ajax'] = [Roles::VETERINARIO];
+        $matriz['ordenar_rojo_ajax'] = [Roles::VETERINARIO];
+        $matriz['revisar_rojo_ajax'] = [Roles::VETERINARIO];
+        $matriz['listar_ausencias_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['registrar_ausencia_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['aprobar_ausencia_ajax'] = [Roles::ADMIN];
+        $matriz['rechazar_ausencia_ajax'] = [Roles::ADMIN];
+        $matriz['get_coordinacion_horarios_ajax'] = [Roles::ADMIN, Roles::VETERINARIO];
+        $matriz['proponer_horario_vet_ajax'] = [Roles::VETERINARIO];
+        foreach (['guardar_horario_vet_ajax', 'aprobar_horario_vet_ajax', 'rechazar_horario_vet_ajax', 'crear_cierre_clinica_ajax', 'retirar_cierre_clinica_ajax'] as $accionHorario) {
+            $matriz[$accionHorario] = [Roles::ADMIN];
+        }
 
         // RN-201: registrar actos clinicos y operar el area del veterinario es
         // exclusivo del rol Veterinario, ni siquiera el administrador entra.
         foreach ([
-            'vet_area', 'vet_atencion', 'vet_consultas', 'vet_pacientes', 'vet_agenda',
+            // Decisión del dueño (2026-10-22): «Consultas médicas» (vet_consultas) se retiró.
+            'vet_area', 'vet_atencion', 'vet_pacientes', 'vet_agenda',
+            // HU-6.1 (RE-6.1.8, RE-6.1.9): «Tu día» y el calendario del Inicio; solo lectura de la agenda propia.
+            'panel_dia_ajax',
             'registrar_consulta_ajax', 'registrar_vacuna_ajax',
             'registrar_desparasitacion_ajax', 'registrar_nueva_vacuna_ajax',
             'registrar_nuevo_laboratorio_ajax',
@@ -411,6 +437,14 @@ class Security {
             'get_pendientes_ajax',
         ] as $a) { $matriz[$a] = $staff; }
 
+        // C4, decisión 2: el administrador gestiona, pero nunca crea citas.
+        $matriz['registrar_cita_ajax'] = [Roles::VETERINARIO];
+        $matriz['revisar_triage_agenda_ajax'] = [Roles::VETERINARIO];
+        $matriz['listar_reasignaciones_ajax'] = [Roles::VETERINARIO];
+        $matriz['responder_reasignacion_ajax'] = [Roles::VETERINARIO];
+        $matriz['reordenar_sobrecupos_ajax'] = [Roles::VETERINARIO];
+        $matriz['listar_solicitudes_agenda_ajax'] = [Roles::ADMIN, Roles::VETERINARIO, Roles::PROPIETARIO];
+
         // Portal del propietario: solo el dueno, sobre sus propios datos.
         foreach ([
             'portal_propietario', 'portal_registrar_mascota_ajax',
@@ -424,6 +458,9 @@ class Security {
             // D1, RE-T.18.3: documento y teléfono de una cuenta de Google.
             'completar_perfil',
         ] as $a) { $matriz[$a] = $portal; }
+
+        $matriz['reprogramar_cita_ajax'] = [Roles::ADMIN, Roles::VETERINARIO, Roles::PROPIETARIO];
+        $matriz['get_cita_ajax'] = [Roles::ADMIN, Roles::VETERINARIO, Roles::PROPIETARIO];
 
         // Plataforma: el panel del super-administrador llega en la etapa E.
         $matriz['plataforma_inicio'] = $plataforma;

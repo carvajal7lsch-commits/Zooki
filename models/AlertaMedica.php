@@ -22,6 +22,15 @@ class AlertaMedica extends ModeloHistoria
     /** RE-2.1.5: registra la alerta; devuelve su id. */
     public function registrar(array $entrada): int
     {
+        $id = ValidadorClinico::id($entrada['id_mascota'] ?? null);
+        if ($id === null) {
+            throw new InvalidArgumentException('La mascota indicada no es válida.');
+        }
+        return $this->registrarEnPacienteActual($id, fn () => $this->registrarActual($entrada));
+    }
+
+    private function registrarActual(array $entrada): int
+    {
         $idMascota = ValidadorClinico::id($entrada['id_mascota'] ?? null);
         if ($idMascota === null) {
             throw new InvalidArgumentException('La mascota indicada no es válida.');
@@ -82,7 +91,7 @@ class AlertaMedica extends ModeloHistoria
     {
         $mascota = $this->exigirMascotaVinculada($idMascota);
         $sql = 'SELECT a.id_alerta, a.id_clinica, a.tipo, a.descripcion, a.activa, a.fecha,
-                cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario,
+                cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email, u.nombre_completo AS veterinario,
                 n.codigo AS nodo_codigo, n.etiqueta AS nodo_etiqueta, n.tipo AS nodo_tipo
             FROM alertas_medicas a
             JOIN clinicas cl ON cl.id_clinica = a.id_clinica

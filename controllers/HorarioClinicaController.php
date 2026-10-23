@@ -2,24 +2,27 @@
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/HorarioClinica.php';
 require_once __DIR__ . '/../models/Auditoria.php';
+require_once __DIR__ . '/../helpers/Csrf.php';
 
 class HorarioClinicaController
 {
     private HorarioClinica $horario;
-    private Auditoria $auditoria;
+    private PDO $db;
 
     /** $horario: uno ya acotado, como el de la clínica que eligió el propietario en el portal (C6). */
     public function __construct(?PDO $db = null, ?HorarioClinica $horario = null)
     {
         $db ??= (new Database())->getConnection();
+        $this->db = $db;
         $this->horario = $horario ?? new HorarioClinica($db);
-        $this->auditoria = new Auditoria($db);
     }
 
-    private function auditar(string $descripcion): void
+    private function exigirFormulario(): void
     {
-        $this->auditoria->log(Contexto::idUsuario(), 'UPDATE', 'horarios_clinica', null,
-            null, null, $descripcion, Contexto::clinicaActiva());
+        $clinica = $_POST['id_clinica'] ?? null;
+        if (!Csrf::validate() || ($clinica !== null && (!is_scalar($clinica) || (string) $clinica !== (string) Contexto::clinicaActiva()))) {
+            throw new AccesoDenegado(403, 'El formulario pertenece a otro contexto o está vencido. Recarga la página.');
+        }
     }
 
     public function getHorariosAjax()
@@ -31,6 +34,8 @@ class HorarioClinicaController
             $horarios = $this->horario->listar();
 
             echo json_encode(["success" => true, "horarios" => $horarios]);
+        } catch (AccesoDenegado $e) {
+            throw $e;
         } catch (Exception $e) {
             echo json_encode([
                 "success" => false,
@@ -155,10 +160,12 @@ class HorarioClinicaController
                 $filas[] = [(int) $dia_semana, $activo, $morningActivo, $afternoonActivo,
                     $morningInicio, $morningFin, $afternoonInicio, $afternoonFin];
             }
-            $this->horario->guardar($filas);
-            $this->auditar('Horarios guardados en la clínica activa');
+            $this->exigirFormulario();
+            $resultado = $this->horario->guardar($filas, $_POST['clave_operacion'] ?? null);
 
-            echo json_encode(["success" => true, "message" => "Horarios guardados correctamente"]);
+            echo json_encode(["success" => true, "message" => "Horarios guardados correctamente"] + $resultado);
+        } catch (AccesoDenegado $e) {
+            throw $e;
         } catch (Exception $e) {
             // T-04: el detalle técnico va al log, nunca al cliente.
             error_log('Error guardando horarios: ' . $e->getMessage());
@@ -181,10 +188,12 @@ class HorarioClinicaController
         }
 
         try {
-            $this->horario->restaurar();
-            $this->auditar('Horarios restaurados en la clínica activa');
+            $this->exigirFormulario();
+            $resultado = $this->horario->restaurar($_POST['clave_operacion'] ?? null);
 
-            echo json_encode(["success" => true, "message" => "Horarios restaurados por defecto"]);
+            echo json_encode(["success" => true, "message" => "Horarios restaurados por defecto"] + $resultado);
+        } catch (AccesoDenegado $e) {
+            throw $e;
         } catch (Exception $e) {
             echo json_encode([
                 "success" => false,
@@ -201,6 +210,8 @@ class HorarioClinicaController
             if (!$horario || (int) $horario['activo'] !== 1) return null;
 
             return $horario;
+        } catch (AccesoDenegado $e) {
+            throw $e;
         } catch (Exception $e) {
             return null;
         }
@@ -258,6 +269,8 @@ class HorarioClinicaController
                 'mensaje' => 'La hora seleccionada está fuera del horario laboral'
             ];
             
+        } catch (AccesoDenegado $e) {
+            throw $e;
         } catch (Exception $e) {
             return [
                 'valido' => false,
@@ -266,65 +279,10 @@ class HorarioClinicaController
         }
     }
 
-    public function obtenerHorasDisponibles($fecha, $intervalo = 30)
+    /** Compatibilidad de ruta: nunca calcula una disponibilidad alternativa. */
+    public function obtenerHorasDisponiblesAjax(): void
     {
-        try {
-            $dia_semana = date('N', strtotime($fecha));
-
-            $horario = $this->horario->dia((int) $dia_semana);
-
-            if (!$horario || $horario['activo'] != 1) {
-                return [];
-            }
-
-            $horas = [];
-            // Usar el intervalo proporcionado (por defecto 30 min para coincidir con sugerencias)
-            $intervalo = max(15, intval($intervalo));
-
-            // Generar horas del bloque de mañana
-            if ((int) $horario['bloque_morning_activo'] === 1 && $horario['bloque_morning_inicio'] && $horario['bloque_morning_fin']) {
-                $inicio = strtotime($horario['bloque_morning_inicio']);
-                $fin = strtotime($horario['bloque_morning_fin']);
-
-                while ($inicio < $fin) {
-                    $horas[] = date('H:i', $inicio);
-                    $inicio = strtotime("+$intervalo minutes", $inicio);
-                }
-            }
-
-            // Generar horas del bloque de tarde
-            if ((int) $horario['bloque_afternoon_activo'] === 1 && $horario['bloque_afternoon_inicio'] && $horario['bloque_afternoon_fin']) {
-                $inicio = strtotime($horario['bloque_afternoon_inicio']);
-                $fin = strtotime($horario['bloque_afternoon_fin']);
-
-                while ($inicio < $fin) {
-                    $horas[] = date('H:i', $inicio);
-                    $inicio = strtotime("+$intervalo minutes", $inicio);
-                }
-            }
-
-            return $horas;
-
-        } catch (Exception $e) {
-            return [];
-        }
-    }
-
-    public function obtenerHorasDisponiblesAjax()
-    {
-        header("Content-Type: application/json");
-
-        $fecha = $_GET["fecha"] ?? null;
-        $intervalo = $_GET["intervalo"] ?? 30; // Intervalo en minutos (default 30)
-
-        if (!$fecha) {
-            echo json_encode(["success" => false, "message" => "Fecha no proporcionada"]);
-            return;
-        }
-
-        $horas = $this->obtenerHorasDisponibles($fecha, $intervalo);
-
-        echo json_encode(["success" => true, "horas" => $horas]);
-        return;
+        require_once __DIR__ . '/CitaController.php';
+        (new CitaController($this->db))->getSugerenciasHorarioAjax();
     }
 }

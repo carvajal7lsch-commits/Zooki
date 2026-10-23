@@ -17,6 +17,7 @@ require_once __DIR__ . '/../helpers/ProximaDosis.php';
 require_once __DIR__ . '/../helpers/PresentacionPortal.php';
 require_once __DIR__ . '/../helpers/PresentacionPlataforma.php';
 require_once __DIR__ . '/../helpers/ResumenPanel.php';
+require_once __DIR__ . '/../models/MarcaClinica.php';
 
 /**
  * C6: portal del propietario en el contexto «propietario» (RN-G01), sin

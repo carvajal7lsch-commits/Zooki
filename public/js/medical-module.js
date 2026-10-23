@@ -244,7 +244,17 @@ function switchModalTab(event, tabId) {
 
 // recargar: false al volver a una pestaña que ya está cargada (al cerrar el
 // expediente), para no repintar el directorio completo.
+function cambiarCabeceraPacientes(detalle) {
+    const directorio = document.querySelector('[data-pacientes-directorio]');
+    const expediente = document.querySelector('[data-pacientes-detalle]');
+    const barra = document.querySelector('.pacientes-barra');
+    if (directorio) directorio.hidden = detalle;
+    if (expediente) expediente.hidden = !detalle;
+    if (barra) barra.hidden = detalle;
+}
+
 function switchModule(module, { recargar = true } = {}) {
+    cambiarCabeceraPacientes(false);
     const globalHeader = document.querySelector('.section-header');
     if (globalHeader) globalHeader.style.display = 'flex';
 
@@ -628,6 +638,11 @@ function renderOwnerDossier(owner, pets) {
         ponerTexto('dossierOwnerEmail' + sufijo, owner.email || 'Sin email');
         ponerEstado('dossierOwnerEstado' + sufijo);
     });
+    ponerTexto('dossierOwnerAvatar', inicialesDueno(owner.nombre_completo));
+    ponerTexto('dossierOwnerTitle', owner.nombre_completo);
+    ponerTexto('dossierOwnerRuta', owner.nombre_completo);
+    ponerTexto('dossierVolverTexto', dossierOrigen === 'pets' ? 'Mascotas' : 'Propietarios');
+    ponerTexto('dossierPetsTotal', String(pets.length));
 
     const petsScroll = document.getElementById('dossierPetsScroll');
     const petsCount = document.getElementById('dossierPetsCount');
@@ -639,45 +654,41 @@ function renderOwnerDossier(owner, pets) {
         return;
     }
 
-    const SEXOS = { M: 'MACHO', Macho: 'MACHO', H: 'HEMBRA', Hembra: 'HEMBRA' };
+    const SEXOS = { M: 'Macho', Macho: 'Macho', H: 'Hembra', Hembra: 'Hembra' };
 
     pets.forEach(m => {
         const card = document.createElement('div');
         card.className = 'pet-dossier-card';
-        card.style.cursor = 'pointer';
         card.addEventListener('click', () => loadPetDashboard(m.id_mascota));
 
         // Solo se muestra lo que se sabe. Antes la etiqueta "VACUNA PENDIENTE"
         // salía de Math.random(): era un dato clínico inventado.
-        const conHistoria = Boolean(m.numero_historia_clinica);
 
         card.innerHTML = `
             <div class="pet-dossier-card-top">
-                <img src="${escaparTexto(fotoMascotaUrl(m.url_foto))}" class="pet-dossier-card-photo" alt="">
+                <span class="propietario-mascota-avatar">
+                    ${m.url_foto ? `<img src="${escaparTexto(fotoMascotaUrl(m.url_foto))}" class="pet-dossier-card-photo" alt="" width="40" height="40">` : ''}
+                    <span class="avatar-iniciales" aria-hidden="true"${m.url_foto ? ' hidden' : ''}>${escaparTexto(inicialesDueno(m.nombre))}</span>
+                </span>
                 <div class="pet-dossier-card-info">
                     <h4 class="pet-dossier-card-name">${escaparTexto(m.nombre)}</h4>
                     <p class="pet-dossier-card-species">${escaparTexto(m.especie)} • ${escaparTexto(razaConIndicada(m.raza, m.raza_indicada, 'Mestizo'))}</p>
                 </div>
             </div>
             <div class="pet-dossier-card-grid">
-                <div class="data-group">
-                    <label>GÉNERO</label>
-                    <span>${SEXOS[m.sexo] || 'DESCONOCIDO'}</span>
-                </div>
-                <div class="data-group right-align">
-                    <label>HISTORIA</label>
-                    <span class="pet-dossier-card-hc pet-dossier-card-hc--numero">${escaparTexto(m.numero_historia_clinica || 'SIN REGISTRO')}</span>
-                </div>
-            </div>
-            <div class="pet-dossier-status">
-                <span class="status-pill ${conHistoria ? 'al-dia' : 'desconocido'}">${conHistoria ? 'CON HISTORIA' : 'SIN HISTORIA'}</span>
+                <span class="tag-mini">${SEXOS[m.sexo] || 'Sexo desconocido'}</span>
+                <span class="tag-mini pet-dossier-card-hc${m.numero_historia_clinica ? ' pet-dossier-card-hc--numero' : ''}">${escaparTexto(m.numero_historia_clinica || 'Sin historia')}</span>
+                ${Number(m.estado) === 0 ? '<span class="tag-mini">Inactiva</span>' : ''}
             </div>
             <div class="pet-dossier-card-actions">
-                <button type="button" class="btn-ficha">Ver Ficha</button>
+                <button type="button" class="btn-ficha">Ver ficha <i class="fas fa-chevron-right" aria-hidden="true"></i></button>
             </div>
         `;
         const foto = card.querySelector('.pet-dossier-card-photo');
-        foto.addEventListener('error', () => usarFotoPorDefecto(foto));
+        foto?.addEventListener('error', () => {
+            foto.hidden = true;
+            foto.nextElementSibling.hidden = false;
+        }, { once: true });
         petsScroll.appendChild(card);
     });
 }
@@ -688,6 +699,7 @@ function renderOwnerDossier(owner, pets) {
  * la pestaña resaltada sigue siendo la de origen.
  */
 function mostrarDossier(seccion) {
+    cambiarCabeceraPacientes(true);
     document.getElementById('modulePets').classList.remove('active');
     document.getElementById('moduleOwners').classList.add('active');
 
@@ -718,9 +730,28 @@ function mostrarSeccionDossier(seccion) {
     if (listSection) listSection.style.display = seccion === 'listado' ? 'block' : 'none';
     const dashSection = document.getElementById('dossierPetDashboardSection');
     if (dashSection) dashSection.style.display = seccion === 'ficha' ? 'block' : 'none';
+    const propietario = document.getElementById('dossierOwnerName')?.innerText || '';
+    const mascota = document.getElementById('dashPetName')?.innerText || '';
+    const ficha = seccion === 'ficha';
+    document.querySelector('[data-pacientes-detalle]')?.classList.toggle('pacientes-cabecera--ficha', ficha);
+    const titulo = document.getElementById('dossierOwnerTitle');
+    if (titulo) titulo.innerText = ficha ? `Ficha de ${mascota}` : propietario;
+    const ruta = document.getElementById('dossierPetRuta');
+    if (ruta) {
+        const nombreRuta = document.getElementById('dossierPetRutaNombre');
+        if (nombreRuta) nombreRuta.textContent = mascota;
+        ruta.hidden = !ficha;
+    }
+    const volver = document.getElementById('dossierVolverTexto');
+    if (volver) volver.innerText = ficha ? `Mascotas de ${propietario.split(' ')[0]}` : (dossierOrigen === 'pets' ? 'Mascotas' : 'Propietarios');
 }
 
 function hideDossier() {
+    const ficha = document.getElementById('dossierPetDashboardSection');
+    if (ficha && ficha.style.display === 'block') {
+        mostrarSeccionDossier('listado');
+        return;
+    }
     switchModule(dossierOrigen, { recargar: false });
 }
 
@@ -1669,57 +1700,7 @@ async function loadVets() {
     }
 }
 
-async function loadVetsForAppointment() {
-    const select = document.getElementById('cita_veterinario');
-    if (!select) return;
-
-    try {
-        const res = await (await fetch('index.php?action=listar_veterinarios_ajax')).json();
-        if (res && res.length > 0) {
-            select.innerHTML = res.map(v => `<option value="${escaparTexto(v.id_usuario)}">${escaparTexto(v.nombre_completo)}</option>`).join('');
-        } else {
-            select.innerHTML = '<option value="">No hay veterinarios disponibles</option>';
-        }
-    } catch(e) { 
-        console.error('Error loading vets', e); 
-        select.innerHTML = '<option value="">Error al cargar veterinarios</option>';
-    }
-}
-
-function openAppointmentModal(id, nombre) {
-    document.getElementById('cita_id_mascota').value = id;
-    document.getElementById('citaPetName').innerText = nombre;
-    document.getElementById('formCita').reset();
-    document.getElementById('cita_fecha').value = new Date().toISOString().split('T')[0];
-    loadVetsForAppointment();
-    openModal('modalCita');
-}
-
-async function saveAppointment(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agendando...';
-
-    const fd = new FormData(e.target);
-    try {
-        const res = await (await fetch('index.php?action=registrar_cita_ajax', { method: 'POST', body: fd })).json();
-        if (res.success) { 
-            closeModal('modalCita');
-            zookiRecargarConAviso(res.message);
-        } else {
-            zookiAviso(res.message);
-        }
-    } catch (e) { 
-        console.error(e); 
-        zookiAviso('No se pudo confirmar el agendado. Es posible que la cita se haya guardado pero fallara el correo: revisa la agenda antes de reintentar.');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Confirmar Cita';
-    }
-}
-
-// --- INTERACTIVE PET DASHBOARD (ESTILO OKVET) ---
+// --- FICHA DE LA MASCOTA ---
 // Abre la ficha de una mascota del expediente que ya está en pantalla.
 async function loadPetDashboard(id) {
     const peticion = ++dossierPeticion;
@@ -1761,15 +1742,26 @@ function renderPetDashboard(data, id) {
 
     // 2. Pet Info Card
     const photo = document.getElementById('dashPetPhoto');
+    const iniciales = document.getElementById('dashPetIniciales');
+    if (iniciales) {
+        iniciales.textContent = inicialesDueno(m.nombre);
+        iniciales.hidden = Boolean(m.url_foto);
+    }
     if (photo) {
-        photo.onerror = () => usarFotoPorDefecto(photo);
-        photo.src = fotoMascotaUrl(m.url_foto);
+        photo.onerror = () => {
+            photo.hidden = true;
+            if (iniciales) iniciales.hidden = false;
+        };
+        photo.hidden = !m.url_foto;
+        if (m.url_foto) photo.src = fotoMascotaUrl(m.url_foto);
+        else photo.removeAttribute('src');
     }
 
     const statusDot = document.getElementById('dashPetStatus');
     if (statusDot) {
-        statusDot.style.backgroundColor = m.estado == 1 ? 'var(--success)' : 'var(--danger)';
-        statusDot.style.boxShadow = m.estado == 1 ? '0 0 10px var(--success)' : '0 0 10px var(--danger)';
+        const activa = Number(m.estado) === 1;
+        statusDot.className = 'status-badge ' + (activa ? 'active' : 'inactive');
+        statusDot.textContent = activa ? 'Activa' : 'Inactiva';
     }
 
     document.getElementById('dashPetEspecie').innerText = m.nombre_especie || '---';
@@ -1778,8 +1770,11 @@ function renderPetDashboard(data, id) {
     document.getElementById('dashPetPeso').innerText = m.peso ? m.peso + ' Kg' : '---';
     document.getElementById('dashPetHC').innerText = m.numero_historia_clinica || 'Sin asignar';
     document.getElementById('dashPetFechaNac').innerText = m.fecha_nacimiento
-        ? new Date(m.fecha_nacimiento).toLocaleDateString() + ' (' + calculateAge(m.fecha_nacimiento) + ')'
+        ? fechaHistorial(m.fecha_nacimiento) + ' · ' + calculateAge(m.fecha_nacimiento)
         : '---';
+    document.getElementById('dashPetHCBadge').textContent = m.numero_historia_clinica || 'Sin historia';
+    document.getElementById('dashPetResumen').textContent = [m.nombre_especie, razaConIndicada(m.nombre_raza, m.raza_indicada), m.sexo, m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : '', m.peso ? m.peso + ' kg' : ''].filter(Boolean).join(' · ');
+    pintarResumenFicha(data);
 
     // 3. Render Unified Chronological Timeline
     const timelineDiv = document.getElementById('dashHistorialTimeline');
@@ -1797,6 +1792,36 @@ function renderPetDashboard(data, id) {
     // 4. Cada ficha abre en "Información General"
     document.querySelectorAll('.dossier-dashboard-tab').forEach((b, i) => b.classList.toggle('active', i === 0));
     mostrarPestanaFicha('dashGeneral');
+}
+
+/** RE-2.5.1/RE-2.10.1: resumir registros visibles, sin inferir cobertura sanitaria. */
+function pintarResumenFicha(data) {
+    const eventos = eventosHistorialCompacto(data);
+    const consulta = eventos.find(e => e.tipo === 'consulta')?.registro;
+    const vacuna = eventos.find(e => e.tipo === 'vacuna')?.registro;
+    const desparasitacion = eventos.find(e => e.tipo === 'desparasitacion')?.registro;
+    const origen = registro => registro.clinica_nombre ? ` · ${registro.clinica_nombre}` : '';
+    document.getElementById('dashUltimaConsulta').textContent = consulta
+        ? `${fechaHistorial(consulta.fecha_hora)} · ${consulta.diagnostico || consulta.motivo_consulta || 'Sin diagnóstico'}${origen(consulta)}`
+        : 'Sin consultas registradas';
+    for (const [id, registro, proxima] of [
+        ['dashUltimaVacuna', vacuna, vacuna?.fecha_proxima_dosis],
+        ['dashUltimaDesparasitacion', desparasitacion, desparasitacion?.fecha_proxima],
+    ]) {
+        document.getElementById(id).textContent = registro
+            ? `${fechaHistorial(registro.fecha_aplicacion)} · ${registro.nombre_vacuna || registro.producto || 'Aplicación registrada'}${origen(registro)} · ${proxima ? 'Próxima: ' + fechaHistorial(proxima) : 'Sin próxima fecha registrada'}`
+            : 'Sin registros';
+    }
+}
+
+// RE-7.4.4: cada acto conserva su marca; la cabecera del historial sigue siendo Zooki.
+function marcaParaImprimir(registro) {
+    const logo = String(registro.clinica_logo || '');
+    const valido = !/[\s<>"'\\]/.test(logo) && !logo.startsWith('//')
+        && (/^https?:\/\//i.test(logo) || !logo.includes(':'));
+    const imagen = logo && valido ? `<img width="96" class="marca-clinica-logo" src="${escaparTexto(logo)}" alt="Logo de ${escaparTexto(registro.clinica_nombre)}">` : '';
+    const contacto = ['clinica_direccion', 'clinica_telefono', 'clinica_email'].filter(c => registro[c]).map(c => `<span>${escaparTexto(registro[c])}</span>`).join('');
+    return `<div class="marca-clinica">${imagen}<strong>${escaparTexto(registro.clinica_nombre)}</strong>${contacto}</div>`;
 }
 
 async function printMedicalHistory(id, nombre) {
@@ -1827,26 +1852,11 @@ async function printMedicalHistory(id, nombre) {
             <html>
             <head>
                 <title>Historia Clínica - ${escaparTexto(nombre)}</title>
-                <style>
-                    @page { margin: 15mm; }
-                    body { font-family: 'Arial', sans-serif; padding: 0; margin: 0; color: #333; }
-                    h1 { border-bottom: 2px solid #0066ff; padding-bottom: 10px; }
-                    .section { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-                    .meta { color: #666; font-size: 0.9em; margin-bottom: 10px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.9em; }
-                    th { background-color: #f8fafc; }
-                    .pie { margin-top: 30px; font-size: 0.8em; text-align: center; color: #999; }
-                    
-                    /* Ocultar encabezados y pies de página por defecto del navegador al imprimir */
-                    @media print {
-                        @page { margin: 0; }
-                        body { margin: 1.6cm; }
-                    }
-                </style>
+                <link rel="stylesheet" href="css/marca-clinica.css">
+                <link rel="stylesheet" href="css/imprimir-historia-personal.css">
             </head>
             <body>
-                <h1>Historia Clínica: ${escaparTexto(nombre)}</h1>
+                <h1>Zooki · Historia Clínica: ${escaparTexto(nombre)}</h1>
                 <div class="meta">
                     <strong>HC N°:</strong> ${escaparTexto(data.mascota.numero_historia_clinica || '---')} <br>
                     <strong>Especie/Raza:</strong> ${escaparTexto(data.mascota.nombre_especie)} - ${escaparTexto(razaConIndicada(data.mascota.nombre_raza, data.mascota.raza_indicada))} <br>
@@ -1859,7 +1869,7 @@ async function printMedicalHistory(id, nombre) {
             data.consultas.forEach(c => {
                 html += `
                     <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${escaparTexto(c.veterinario)}</h3>
-                    <p><strong>Clínica:</strong> ${escaparTexto(c.clinica_nombre)}</p>
+                    ${marcaParaImprimir(c)}
                     <p><strong>Motivo:</strong> ${escaparTexto(c.motivo_consulta)}</p>
                     ${textoSintomas(c) ? `<p><strong>Síntomas:</strong> ${textoSintomas(c)}</p>` : ''}
                     <p><strong>Diagnóstico:</strong> ${escaparTexto(c.diagnostico)}</p>
@@ -1879,7 +1889,7 @@ async function printMedicalHistory(id, nombre) {
         if (data.vacunas && data.vacunas.length > 0) {
             html += `<div class="section"><h2>Vacunación</h2><table><tr><th>Fecha</th><th>Vacuna</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.vacunas.forEach(v => {
-                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${escaparTexto(v.clinica_nombre)}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${marcaParaImprimir(v)}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }
@@ -1887,7 +1897,7 @@ async function printMedicalHistory(id, nombre) {
         if (data.desparasitaciones && data.desparasitaciones.length > 0) {
             html += `<div class="section"><h2>Desparasitaciones</h2><table><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.desparasitaciones.forEach(d => {
-                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${escaparTexto(d.clinica_nombre)}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${marcaParaImprimir(d)}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }
@@ -2034,157 +2044,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initDatePickers() {
-    if (typeof flatpickr === 'undefined') return;
-    try {
-        let currentLocale = "es";
-        if (flatpickr.l10ns && flatpickr.l10ns.es) {
-            currentLocale = flatpickr.l10ns.es;
-            if (currentLocale.weekdays) {
-                currentLocale.weekdays.shorthand = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
-            }
-        }
-        const fpConfig = {
-            locale: currentLocale,
-            dateFormat: "Y-m-d",
-            maxDate: "today",
-            disableMobile: true,
-            altInput: true,
-            altFormat: "Y-m-d",
-            monthSelectorType: "static",
-            onReady: function(selectedDates, dateStr, instance) {
-                const header = instance.monthNav.querySelector('.flatpickr-current-month');
-                if (header) {
-                    header.title = 'Seleccionar Mes/Año';
-                    header.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const nav = instance.calendarContainer.querySelector('.fp-win11-nav');
-                        if (nav) {
-                            nav.classList.toggle('active');
-                            const isNavActive = nav.classList.contains('active');
-                            instance.calendarContainer.querySelector('.flatpickr-prev-month').style.visibility = isNavActive ? 'hidden' : 'visible';
-                            instance.calendarContainer.querySelector('.flatpickr-next-month').style.visibility = isNavActive ? 'hidden' : 'visible';
-                            if (isNavActive) nav._renderMonthsView();
-                        }
-                    });
-                }
-
-                const nav = document.createElement('div');
-                nav.className = 'fp-win11-nav';
-                
-                const navHeader = document.createElement('div');
-                navHeader.className = 'win11-header';
-                const navTitle = document.createElement('button');
-                navTitle.className = 'win11-title';
-                navTitle.type = 'button';
-                navHeader.appendChild(navTitle);
-                nav.appendChild(navHeader);
-
-                const navContent = document.createElement('div');
-                navContent.className = 'win11-content';
-                
-                const monthsGrid = document.createElement('div');
-                monthsGrid.className = 'win11-grid';
-                
-                const yearsGrid = document.createElement('div');
-                yearsGrid.className = 'win11-grid win11-years';
-                yearsGrid.style.display = 'none';
-
-                navContent.appendChild(monthsGrid);
-                navContent.appendChild(yearsGrid);
-                nav.appendChild(navContent);
-                
-                instance.calendarContainer.appendChild(nav);
-
-                let currentView = 'months'; 
-                let viewYear = instance.currentYear;
-                const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-
-                function renderMonthsView() {
-                    currentView = 'months';
-                    monthsGrid.style.display = 'grid';
-                    yearsGrid.style.display = 'none';
-                    navTitle.innerText = viewYear;
-                    
-                    monthsGrid.innerHTML = '';
-                    const today = new Date();
-                    const currentY = today.getFullYear();
-                    const currentM = today.getMonth();
-                    
-                    monthNames.forEach((m, i) => {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'win11-btn';
-                        
-                        if (instance.currentYear === viewYear && instance.currentMonth === i) btn.classList.add('active');
-                        
-                        // Bloquear meses futuros
-                        if (viewYear > currentY || (viewYear === currentY && i > currentM)) {
-                            btn.classList.add('disabled');
-                            btn.disabled = true;
-                        }
-                        
-                        btn.innerText = m;
-                        
-                        if (!btn.disabled) {
-                            btn.onclick = (e) => {
-                                e.stopPropagation();
-                                instance.changeYear(viewYear);
-                                instance.changeMonth(i);
-                                nav.classList.remove('active');
-                                instance.calendarContainer.querySelector('.flatpickr-prev-month').style.visibility = 'visible';
-                                instance.calendarContainer.querySelector('.flatpickr-next-month').style.visibility = 'visible';
-                            };
-                        }
-                        monthsGrid.appendChild(btn);
-                    });
-                }
-
-                function renderYearsView() {
-                    currentView = 'years';
-                    monthsGrid.style.display = 'none';
-                    yearsGrid.style.display = 'grid';
-                    
-                    yearsGrid.innerHTML = '';
-                    const currentY = new Date().getFullYear();
-                    const startY = currentY - 100;
-                    navTitle.innerText = `${startY} - ${currentY}`;
-                    
-                    for (let y = currentY; y >= startY; y--) {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'win11-btn';
-                        if (y === viewYear) btn.classList.add('active');
-                        btn.innerText = y;
-                        btn.onclick = (e) => {
-                            e.stopPropagation();
-                            viewYear = y;
-                            renderMonthsView();
-                        };
-                        yearsGrid.appendChild(btn);
-                    }
-                    
-                    // Mover scroll al año activo
-                    setTimeout(() => {
-                        const activeBtn = yearsGrid.querySelector('.active');
-                        if (activeBtn) activeBtn.scrollIntoView({ block: 'center' });
-                    }, 10);
-                }
-
-                nav._renderMonthsView = renderMonthsView; // bind for use in header click
-                navTitle.onclick = (e) => {
-                    e.stopPropagation();
-                    if (currentView === 'months') {
-                        renderYearsView();
-                    } else {
-                        renderMonthsView();
-                    }
-                };
-            }
-        };
-        flatpickr(".flatpickr-date", fpConfig);
-    } catch(e) {
-        console.error("Error inicializando Flatpickr:", e);
-    }
+    return window.SelectorFechas?.iniciar();
 }
 
 
@@ -2215,78 +2075,15 @@ function filterDossierPets() {
 
 window.filterDossierPets = filterDossierPets;
 
-/** Un aviso del buscador de «Atención sin cita», con las clases de la vista, sin estilos en línea. */
-function avisoBusquedaPaciente(texto, clase = '', icono = false) {
-    const aviso = document.createElement('div');
-    aviso.className = `empty-state-text ${clase}`.trim();
-    if (icono) {
-        const i = document.createElement('i');
-        i.className = 'fas fa-search icon-large';
-        aviso.append(i);
-    }
-    aviso.append(texto);
-    return aviso;
-}
-
-function openNewConsultationFlow() {
-    openModal('modalSelectPetConsulta');
-    const searchInput = document.getElementById('consultaPetSearch');
-    if (searchInput) searchInput.value = '';
-    const suggestions = document.getElementById('consultaPetSuggestions');
-    if (suggestions) suggestions.replaceChildren(avisoBusquedaPaciente('Escribe para buscar un paciente...', '', true));
-}
-
-/** Un paciente encontrado: al elegirlo se abre su consulta (sin onclick ni onerror en línea). */
-function resultadoPaciente(item) {
-    const fila = document.createElement('div');
-    fila.className = 'suggestion-item paciente-resultado';
-    fila.innerHTML = `
-        <img src="${escaparTexto(fotoMascotaUrl(item.url_foto))}" class="paciente-resultado__foto" alt="">
-        <div>
-            <div class="paciente-resultado__nombre">${escaparTexto(item.nombre)}</div>
-            <!-- M1-21: HU-03 pide mostrar la especie y no aparecia. -->
-            <div class="paciente-resultado__dato">${escaparTexto(item.nombre_especie || 'Sin especie')}${item.nombre_raza ? ' · ' + escaparTexto(item.nombre_raza) : ''}</div>
-            <div class="paciente-resultado__dato">Propietario: ${escaparTexto(item.propietario_nombre || 'Sin asignar')}</div>
-        </div>`;
-    const foto = fila.querySelector('img');
-    foto.addEventListener('error', () => usarFotoPorDefecto(foto), { once: true });
-    fila.addEventListener('click', () => selectPetForConsultation(item.id_mascota, item.nombre));
-    return fila;
-}
-
-async function searchPetForConsultation(term) {
-    const suggestions = document.getElementById('consultaPetSuggestions');
-    // M1-15: HU-03 pide un minimo de 3 caracteres; el front pedia 2 y el
-    // backend tambien, asi que la busqueda salia con menos de lo acordado.
-    if (term.length < 3) {
-        suggestions.replaceChildren(avisoBusquedaPaciente('Escribe al menos 3 caracteres para buscar un paciente...', '', true));
-        return;
-    }
-
-    try {
-        const res = await (await fetch(`index.php?action=buscar_mascotas&query=${encodeURIComponent(term)}`)).json();
-        if (res.length) {
-            suggestions.replaceChildren(...res.map(resultadoPaciente));
-        } else {
-            suggestions.replaceChildren(avisoBusquedaPaciente('No se encontraron pacientes.', 'empty-state-text--compacto'));
-        }
-    } catch (e) {
-        console.error('Search error', e);
-        suggestions.replaceChildren(avisoBusquedaPaciente('Error en la búsqueda.', 'empty-state-text--compacto empty-state-text--error'));
-    }
-}
-
-function selectPetForConsultation(id, nombre) {
-    closeModal('modalSelectPetConsulta');
-    openConsultationModal(id, nombre);
-}
+// Decisión del dueño (2026-10-22): «Atención sin cita» está en el Inicio y lleva
+// a Agenda → Llegadas (HU-2.2); el buscador modal de Consultas se retiró con ella.
 
 async function verFichaBasica(id) {
     try {
         const mascota=await pedirJson(`index.php?action=get_mascota_ajax&id=${encodeURIComponent(id)}`);
         if (!mascota.id_mascota) throw new Error('Ficha no disponible');
         await Swal.fire({title:mascota.nombre,html:`<p>${escaparTexto(mascota.nombre_especie)} · ${escaparTexto(razaConIndicada(mascota.nombre_raza,mascota.raza_indicada))}</p>
-            <p>Propietario: ${escaparTexto(mascota.propietario_nombre)}</p><p>Peso: ${escaparTexto(mascota.peso)} kg · ${escaparTexto(mascota.sexo)}</p>
+            <p>Propietario: ${escaparTexto(mascota.propietario_nombre)}</p><p>Peso: ${escaparTexto(mascota.peso)} kg · ${escaparTexto(mascota.sexo)} · ${mascota.esterilizado === null || mascota.esterilizado === '' ? 'Esterilización sin dato' : (Number(mascota.esterilizado) === 1 ? 'Esterilizado' : 'Sin esterilizar')}</p>
             <p>Historia clínica: ${escaparTexto(mascota.numero_historia_clinica || 'Se asigna en la primera consulta')}</p>`,confirmButtonText:'Cerrar'});
     } catch (error) { zookiAviso('No se pudo abrir la ficha de esta clínica.'); }
 }
@@ -2348,8 +2145,6 @@ const eventosPacientes = {
     evento54: (event, element) => { closeDrawer('drawerDesparasitacion'); },
     evento55: (event, element) => { saveDeworming(event); },
     evento56: (event, element) => { toggleNuevoProducto(element); },
-    evento57: (event, element) => { closeModal('modalCita'); },
-    evento58: (event, element) => { saveAppointment(event); },
     evento59: (event, element) => { closeLightbox(); },
 };
 /**

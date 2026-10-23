@@ -240,7 +240,9 @@ class AutorizacionRolTest extends TestCase
     {
         $this->assertTrue($this->permite('admin_usuarios', self::ADMIN));
         $this->assertTrue($this->permite('get_auditoria_ajax', self::ADMIN));
-        $this->assertTrue($this->permite('registrar_cita_ajax', self::ADMIN));
+        // C4, decisión 2: el administrador gestiona la agenda, pero no crea citas.
+        $this->assertFalse($this->permite('registrar_cita_ajax', self::ADMIN));
+        $this->assertTrue($this->permite('registrar_cita_ajax', self::VETERINARIO));
 
         $this->assertTrue($this->permite('vet_agenda', self::VETERINARIO));
         $this->assertTrue($this->permite('registrar_consulta_ajax', self::VETERINARIO));

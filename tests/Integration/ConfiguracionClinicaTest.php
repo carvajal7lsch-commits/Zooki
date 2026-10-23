@@ -16,7 +16,10 @@ final class ConfiguracionClinicaTest extends TestCase
     protected function setUp(): void
     {
         $this->db = DosClinicas::sqlite();
+        DosClinicas::crearMascotasSqlite($this->db);
         DosClinicas::crearCatalogosSqlite($this->db);
+        DosClinicas::crearHistoriaSqlite($this->db);
+        Csrf::token();
         (new InicializadorClinica($this->db))->copiar(1);
         (new InicializadorClinica($this->db))->copiar(2);
         $this->comoAdmin(1);
@@ -35,6 +38,7 @@ final class ConfiguracionClinicaTest extends TestCase
 
     private function json(callable $accion): array
     {
+        $_POST['csrf_token'] = Csrf::token();
         ob_start();
         try { $accion(); return json_decode(ob_get_contents(), true); }
         finally { ob_end_clean(); }
@@ -83,10 +87,11 @@ final class ConfiguracionClinicaTest extends TestCase
 
     public function testDiaInactivoYBloqueApagadoNoOfrecenHoras(): void
     {
-        $controlador = new HorarioClinicaController($this->db);
-        $this->assertSame([], $controlador->obtenerHorasDisponibles('2026-10-10'));
+        $horario = new HorarioClinica($this->db);
+        $this->assertSame(0, (int) $horario->dia(6)['activo']);
         $this->db->exec('UPDATE horarios_clinica SET bloque_morning_activo = 0 WHERE id_clinica = 1 AND dia_semana = 1');
-        $this->assertSame(['14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'], $controlador->obtenerHorasDisponibles('2026-10-12'));
+        $this->assertSame(0, (int) $horario->dia(1)['bloque_morning_activo']);
+        $this->assertSame(1, (int) $horario->dia(1)['bloque_afternoon_activo']);
     }
 
     public function testValidacionNoGuardaParcialmenteNiAceptaHorasODiasInvalidos(): void

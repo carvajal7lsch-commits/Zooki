@@ -11,13 +11,14 @@ final class ValoresInicialesClinica
         [6, 0, 1, 0, '08:00:00', '12:00:00', null, null],
         [7, 0, 0, 0, null, null, null, null]
     ];
+    // RE-7.4.2/6: margen 10 y pausable 1 son los defaults existentes del MER; no se infieren del nombre.
     public const TIPOS = [
-        [1, 'Vacunación/Revisión rápida', 15, 'Vacunación rutinaria o revisión rápida de la mascota', '#10B981', 1],
-        [2, 'Consulta general/Enfermedad', 30, 'Consulta general por enfermedad o chequeo completo', '#0C66E4', 1],
-        [3, 'Primera visita/Mascota nueva', 45, 'Primera visita para mascota nueva, requiere historia clínica completa', '#8B5CF6', 1],
-        [4, 'Consulta de especialidad/Urgencia', 60, 'Consulta de especialidad o urgencia veterinaria', '#EF4444', 1],
-        [5, 'Desparasitación', 15, 'Aplicación de desparasitante interna o externa', '#F59E0B', 1],
-        [6, 'Control post-operatorio', 20, 'Control después de cirugía o procedimiento', '#6366F1', 1]
+        [1, 'Vacunación/Revisión rápida', 15, 'Vacunación rutinaria o revisión rápida de la mascota', '#10B981', 1, 10, 1],
+        [2, 'Consulta general/Enfermedad', 30, 'Consulta general por enfermedad o chequeo completo', '#0C66E4', 1, 10, 1],
+        [3, 'Primera visita/Mascota nueva', 45, 'Primera visita para mascota nueva, requiere historia clínica completa', '#8B5CF6', 1, 10, 1],
+        [4, 'Consulta de especialidad/Urgencia', 60, 'Consulta de especialidad o urgencia veterinaria', '#EF4444', 1, 10, 1],
+        [5, 'Desparasitación', 15, 'Aplicación de desparasitante interna o externa', '#F59E0B', 1, 10, 1],
+        [6, 'Control post-operatorio', 20, 'Control después de cirugía o procedimiento', '#6366F1', 1, 10, 1]
     ];
     public const VACUNAS = [
         [1, 'Pentavalente', 'Protege contra Distemper, Hepatitis, Parvovirus, Parainfluenza y Leptospirosis', 1],

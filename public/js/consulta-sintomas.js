@@ -133,7 +133,8 @@
         async function buscar(texto) {
             const numero = ++peticion;
             try {
-                const respuesta = await (await fetch(urlBusqueda(texto, idMascota()))).json();
+                const construirUrl = opciones.urlBusqueda || urlBusqueda;
+                const respuesta = await (await fetch(construirUrl(texto, idMascota()))).json();
                 if (numero !== peticion) return;
                 if (!respuesta.success) {
                     cerrarSugerencias();

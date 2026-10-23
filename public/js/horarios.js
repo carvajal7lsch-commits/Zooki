@@ -18,7 +18,8 @@
     };
     let pickersModal = [];
 
-    const fila = dia => document.querySelector(`.horario-dia[data-dia="${dia}"]`);
+    const raizHorario = document.querySelector('.horarios');
+    const fila = dia => raizHorario.querySelector(`.horario-dia[data-dia="${dia}"]`);
     const toggleDia = dia => fila(dia).querySelector('.dia-activo');
     const toggleBloque = (dia, periodo) => fila(dia).querySelector(`.${periodo}-bloque-activo`);
     const entrada = (dia, periodo, extremo) => fila(dia).querySelector(`.${periodo}-${extremo}`);
@@ -211,6 +212,20 @@
 
     // ── Guardado ──
     let guardadoPendiente = null;
+    let enviandoHorario = false;
+    let cambioPendiente = false;
+    const clavesHorario = new Map();
+
+    function claveHorario(firma) {
+        if (!clavesHorario.has(firma)) {
+            clavesHorario.set(firma, Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, '0')).join(''));
+        }
+        return clavesHorario.get(firma);
+    }
+
+    function bloquearHorario(valor) {
+        document.querySelector('.horarios').querySelectorAll('button,input').forEach(e => { e.disabled = valor; });
+    }
 
     function guardar() {
         clearTimeout(guardadoPendiente);
@@ -223,6 +238,11 @@
     }
 
     async function enviar() {
+        if (enviandoHorario) {
+            cambioPendiente = true;
+            return;
+        }
+        enviandoHorario = true;
         const datos = new FormData();
         for (let dia = 1; dia <= 7; dia++) {
             const abierto = toggleDia(dia).checked;
@@ -238,11 +258,17 @@
             });
         }
 
+        datos.set('id_clinica', document.querySelector('.horarios').dataset.clinica);
+        datos.set('clave_operacion', claveHorario(JSON.stringify(Array.from(datos.entries()))));
+        bloquearHorario(true);
         pintarEstado('guardando');
         try {
             const res = await fetch('index.php?action=guardar_horarios_clinica_ajax', { method: 'POST', body: datos });
             const r = await res.json();
             if (r.success) {
+                clavesHorario.clear();
+                if (!cambioPendiente) await cargar(r.horarios);
+                document.dispatchEvent(new Event('horarios-actualizados'));
                 pintarEstado('guardado');
             } else {
                 pintarEstado('error');
@@ -251,13 +277,20 @@
         } catch (e) {
             console.error('Horarios:', e);
             pintarEstado('error');
+        } finally {
+            enviandoHorario = false;
+            bloquearHorario(false);
+            if (cambioPendiente) {
+                cambioPendiente = false;
+                guardar();
+            }
         }
     }
 
     // ── Carga inicial ──
-    async function cargar() {
+    async function cargar(canonicos = null) {
         try {
-            const r = await (await fetch('index.php?action=get_horarios_clinica_ajax')).json();
+            const r = canonicos ? { success: true, horarios: canonicos } : await (await fetch('index.php?action=get_horarios_clinica_ajax')).json();
             if (!r.success) return;
             r.horarios.forEach(h => {
                 const dia = Number(h.dia_semana);
@@ -282,24 +315,35 @@
 
     // ── Restaurar ──
     async function restaurar() {
+        if (enviandoHorario) return;
         const ok = await zookiConfirmar(
             'Todos los días vuelven al horario inicial de la clínica. Esta acción reemplaza tu configuración actual.',
             '¿Restaurar el horario por defecto?',
             'Sí, restaurar'
         );
-        if (!ok) return;
+        if (!ok || enviandoHorario) return;
+        enviandoHorario = true;
+        bloquearHorario(true);
         try {
             // RE-7.1.3 / RE-T.15.3: el interceptor agrega CSRF al FormData.
-            const r = await (await fetch('index.php?action=restaurar_horarios_defecto_ajax', { method: 'POST', body: new FormData() })).json();
+            const cuerpo = new FormData();
+            cuerpo.set('id_clinica', document.querySelector('.horarios').dataset.clinica);
+            cuerpo.set('clave_operacion', claveHorario('restaurar:' + JSON.stringify(Array.from(document.querySelectorAll('.horarios input'), e => [e.id, e.value, e.checked]))));
+            const r = await (await fetch('index.php?action=restaurar_horarios_defecto_ajax', { method: 'POST', body: cuerpo })).json();
             if (!r.success) {
                 zookiAviso(r.message || 'No se pudo restaurar el horario.');
                 return;
             }
-            await cargar();
+            await cargar(r.horarios);
+            clavesHorario.clear();
+            document.dispatchEvent(new Event('horarios-actualizados'));
             zookiToast('Horario restaurado.');
         } catch (e) {
             console.error('Horarios:', e);
             zookiAviso('No se pudo restaurar el horario.');
+        } finally {
+            enviandoHorario = false;
+            bloquearHorario(false);
         }
     }
 
@@ -315,7 +359,7 @@
             document.getElementById(`md${s}Section`).classList.remove('bloque-inactivo');
             [document.getElementById(`md${s}Inicio`).value, document.getElementById(`md${s}Fin`).value] = DEFECTO[periodo];
         });
-        modal.hidden = false;
+        modal.showModal();
 
         pickersModal.forEach(p => p.destroy());
         pickersModal = PERIODOS.map(periodo => {
@@ -324,7 +368,7 @@
         });
     }
 
-    const cerrarModal = () => { modal.hidden = true; };
+    const cerrarModal = () => { modal.close(); };
 
     function aplicarVariosDias() {
         const error = document.getElementById('mdError');
@@ -382,7 +426,7 @@
     }
 
     // ── Eventos ──
-    document.querySelector('.horarios-tabla').addEventListener('change', e => {
+    raizHorario.querySelector('.horarios-tabla').addEventListener('change', e => {
         const t = e.target;
         if (t.classList.contains('dia-activo')) alCambiarDia(Number(t.dataset.dia));
         else if (t.classList.contains('bloque-activo')) alCambiarBloque(Number(t.dataset.dia), t.dataset.periodo);
@@ -400,7 +444,7 @@
         document.getElementById(`md${s}Section`).classList.toggle('bloque-inactivo', !e.target.checked);
     });
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && !modal.hidden) cerrarModal();
+        if (e.key === 'Escape' && modal.open) cerrarModal();
     });
 
     cargar();

@@ -54,7 +54,7 @@ final class LimitePlan
         return $plan;
     }
 
-    private function uso(string $recurso, ?string $fecha): int
+    private function uso(string $recurso, ?string $fecha, ?int $excluirCita = null): int
     {
         if ($recurso === 'personal') {
             // UNION evita contar dos veces la activación (ya tiene usuario_clinica).
@@ -74,6 +74,10 @@ final class LimitePlan
             $fin = $mes->modify('first day of next month')->format('Y-m-d');
             $sql = "SELECT COUNT(*) FROM citas WHERE id_clinica = ? AND fecha >= ? AND fecha < ? AND estado <> 'cancelada'";
             $parametros = [$this->clinica, $inicio, $fin];
+            if ($excluirCita !== null) {
+                $sql .= ' AND id_cita <> ?';
+                $parametros[] = $excluirCita;
+            }
         }
         $stmt = $this->db->prepare($sql);
         $stmt->execute($parametros);
@@ -98,6 +102,19 @@ final class LimitePlan
         });
     }
 
+    /** B1: el destino reemplaza una reserva legítima; nunca suma dos veces su ID. */
+    public function comprobarReprogramacion(int $idCita, string $fecha, string $prioridad): void
+    {
+        if (!$this->db->inTransaction()) {
+            throw new LogicException('La cuota de reprogramación exige la unidad coordinada.');
+        }
+        $limite = $this->plan()['limite_citas_mes'];
+        $uso = $this->uso('citas', $fecha, $idCita);
+        if ($prioridad !== 'rojo' && $limite !== null && $uso >= (int) $limite) {
+            throw new LimiteAlcanzado($this->clinica, 'citas', $uso, (int) $limite);
+        }
+    }
+
     public function transaccion(callable $operacion): mixed
     {
         $exterior = !$this->db->inTransaction();
@@ -115,17 +132,23 @@ final class LimitePlan
         } catch (LimiteAlcanzado $error) {
             if ($exterior) {
                 // Fuera del rollback de negocio: el intento bloqueado debe conservarse.
-                Transaccion::ejecutar($this->db, function () use ($error): void {
-                    $datos = ['recurso' => $error->recurso, 'uso' => $error->uso, 'limite' => $error->limite];
-                    if (!(new Auditoria($this->db))->log(Contexto::idUsuario(), 'OTHER', 'planes', null, null, $datos, 'Acción bloqueada por límite del plan (RE-0.4.2/3)', $this->clinica)) {
-                        throw new RuntimeException('No se pudo auditar el límite del plan.');
-                    }
-                    if ((Contexto::actual()['tipo'] ?? null) === Contexto::PROPIETARIO) {
-                        (new NotificacionInterna($this->db))->crearParaRol($this->clinica, Roles::ADMIN, 'LIMITE_PLAN', 'Límite del plan alcanzado', "Un propietario no pudo completar una acción de {$error->recurso} ({$error->uso}/{$error->limite}). Gestiona el plan de la clínica.");
-                    }
-                });
+                $this->registrarRechazo($error);
             }
             throw $error;
         }
     }
+    /** C2: conservar el intento después del rollback exterior del coordinador. */
+    public function registrarRechazo(LimiteAlcanzado $error): void
+    {
+        Transaccion::ejecutar($this->db, function () use ($error): void {
+            $datos = ['recurso' => $error->recurso, 'uso' => $error->uso, 'limite' => $error->limite];
+            if (!(new Auditoria($this->db))->log(Contexto::idUsuario(), 'OTHER', 'planes', null, null, $datos, 'Acción bloqueada por límite del plan (RE-0.4.2/3)', $this->clinica)) {
+                throw new RuntimeException('No se pudo auditar el límite del plan.');
+            }
+            if ((Contexto::actual()['tipo'] ?? null) === Contexto::PROPIETARIO) {
+                (new NotificacionInterna($this->db))->crearParaRol($this->clinica, Roles::ADMIN, 'LIMITE_PLAN', 'Límite del plan alcanzado', "Un propietario no pudo completar una acción de {$error->recurso} ({$error->uso}/{$error->limite}). Gestiona el plan de la clínica.");
+            }
+        });
+    }
+
 }

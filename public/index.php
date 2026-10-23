@@ -174,8 +174,89 @@ switch ($action) {
         break;
 
     case "admin_configuracion":
-        $content_view = "../views/admin/horarios.php";
-        require_once "../views/admin/layout.php";
+        require_once '../controllers/ConfiguracionClinicaController.php';
+        (new ConfiguracionClinicaController())->vista();
+        break;
+
+    case "get_configuracion_clinica_ajax":
+    case "guardar_marca_clinica_ajax":
+    case "guardar_tipo_cita_ajax":
+    case "cambiar_estado_tipo_cita_ajax":
+    case "validar_configuracion_clinica_ajax":
+        require_once '../controllers/ConfiguracionClinicaController.php';
+        $metodoConfiguracion = [
+            'get_configuracion_clinica_ajax' => 'obtenerAjax',
+            'guardar_marca_clinica_ajax' => 'guardarMarcaAjax',
+            'guardar_tipo_cita_ajax' => 'guardarTipoAjax',
+            'cambiar_estado_tipo_cita_ajax' => 'cambiarEstadoAjax',
+            'validar_configuracion_clinica_ajax' => 'validarCampoAjax',
+        ][$action];
+        (new ConfiguracionClinicaController())->$metodoConfiguracion();
+        break;
+
+    case "listar_llegadas_ajax":
+        require_once '../controllers/LlegadaAgendaController.php';
+        (new LlegadaAgendaController())->leer();
+        break;
+
+    case "registrar_llegada_ajax":
+    case "decidir_llegada_ajax":
+    case "ajustar_llegada_ajax":
+    case "presentar_llegada_ajax":
+    case "asignar_llegada_ajax":
+        require_once '../controllers/LlegadaAgendaController.php';
+        (new LlegadaAgendaController())->escribir(explode('_', $action)[0]);
+        break;
+
+    case "listar_urgencias_ajax":
+        require_once '../controllers/UrgenciaAgendaController.php';
+        (new UrgenciaAgendaController())->leer();
+        break;
+
+    case "ingresar_rojo_ajax":
+    case "llegada_rojo_ajax":
+    case "atender_rojo_ajax":
+    case "ordenar_rojo_ajax":
+    case "revisar_rojo_ajax":
+    case "conciliar_rojo_ajax":
+        require_once '../controllers/UrgenciaAgendaController.php';
+        (new UrgenciaAgendaController())->escribir(explode('_', $action)[0]);
+        break;
+
+    case "listar_ausencias_ajax":
+        require_once '../controllers/AusenciaAgendaController.php';
+        (new AusenciaAgendaController())->listar();
+        break;
+
+    case "registrar_ausencia_ajax":
+    case "aprobar_ausencia_ajax":
+    case "rechazar_ausencia_ajax":
+        require_once '../controllers/AusenciaAgendaController.php';
+        $accionAusencia = explode('_', $action)[0];
+        (new AusenciaAgendaController())->escribir($accionAusencia);
+        break;
+
+    case "get_coordinacion_horarios_ajax":
+        require_once '../controllers/CoordinacionHorariosController.php';
+        (new CoordinacionHorariosController())->leer();
+        break;
+
+    case "guardar_horario_vet_ajax":
+    case "proponer_horario_vet_ajax":
+    case "aprobar_horario_vet_ajax":
+    case "rechazar_horario_vet_ajax":
+    case "crear_cierre_clinica_ajax":
+    case "retirar_cierre_clinica_ajax":
+        require_once '../controllers/CoordinacionHorariosController.php';
+        $comandoHorario = [
+            'guardar_horario_vet_ajax' => 'guardar',
+            'proponer_horario_vet_ajax' => 'proponer',
+            'aprobar_horario_vet_ajax' => 'aprobar',
+            'rechazar_horario_vet_ajax' => 'rechazar',
+            'crear_cierre_clinica_ajax' => 'cerrar',
+            'retirar_cierre_clinica_ajax' => 'retirar',
+        ][$action];
+        (new CoordinacionHorariosController())->escribir($comandoHorario);
         break;
 
     case "logout":
@@ -320,18 +401,16 @@ switch ($action) {
         require_once "../views/vet/layout.php";
         break;
 
+    case "panel_dia_ajax":
+        // RE-6.1.8 y RE-6.1.9: otro día u otro mes del Inicio, solo de la agenda propia.
+        require_once "../controllers/PanelController.php";
+        (new PanelController())->diaAjax();
+        break;
+
     case "vet_atencion":
         require_once "../controllers/CitaController.php";
         $controller = new CitaController();
         $controller->atencion();
-        break;
-
-    case "vet_consultas":
-        require_once "../controllers/ConsultaController.php";
-        $controller = new ConsultaController();
-        $consultas = $controller->listar();
-        $content_view = "../views/vet/consultas.php";
-        require_once "../views/vet/layout.php";
         break;
 
     case "vet_pacientes":
@@ -620,6 +699,26 @@ switch ($action) {
         break;
 
     // RUTAS SPRINT 4: CITAS Y AGENDA
+    case "listar_reasignaciones_ajax":
+        require_once "../controllers/ReasignacionController.php";
+        (new ReasignacionController())->listarAjax();
+        break;
+    case "responder_reasignacion_ajax":
+        require_once "../controllers/ReasignacionController.php";
+        (new ReasignacionController())->responderAjax();
+        break;
+    case "reordenar_sobrecupos_ajax":
+        require_once "../controllers/CitaController.php";
+        (new CitaController())->reordenarSobrecupoAjax();
+        break;
+    case "revisar_triage_agenda_ajax":
+        require_once "../controllers/CitaController.php";
+        (new CitaController())->revisarTriageAjax();
+        break;
+    case "listar_solicitudes_agenda_ajax":
+        require_once "../controllers/CitaController.php";
+        (new CitaController())->listarSolicitudesAjax();
+        break;
     case "registrar_cita_ajax":
         require_once "../controllers/CitaController.php";
         $controller = new CitaController();
@@ -775,9 +874,9 @@ switch ($action) {
         break;
 
     case "get_horas_disponibles_ajax":
-        require_once "../controllers/HorarioClinicaController.php";
-        $controller = new HorarioClinicaController();
-        $controller->obtenerHorasDisponiblesAjax();
+        require_once "../controllers/CitaController.php";
+        $controller = new CitaController();
+        $controller->getSugerenciasHorarioAjax();
         break;
 
     // RUTAS SPRINT 6: NOTIFICACIONES INTERNAS

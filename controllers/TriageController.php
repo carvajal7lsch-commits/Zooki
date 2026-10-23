@@ -15,10 +15,12 @@ final class TriageController
     private GrafoConocimiento $grafo;
     private PacienteDiagnostico $paciente;
     private DateTimeImmutable $fecha;
+    private PDO $db;
 
     public function __construct(?PDO $db = null, ?DateTimeImmutable $fecha = null)
     {
         $db ??= (new Database())->getConnection();
+        $this->db = $db;
         $this->grafo = new GrafoConocimiento($db);
         $this->paciente = new PacienteDiagnostico($db);
         $this->fecha = $fecha ?? new DateTimeImmutable('now', new DateTimeZone(ZonaHoraria::ZONA));
@@ -45,7 +47,8 @@ final class TriageController
             } elseif ($especie !== null && (!is_string($especie) || ($nodos[$especie]['tipo'] ?? null) !== 'especie')) {
                 throw new InvalidArgumentException('Especie no válida.');
             }
-            RespuestaJson::enviar(['success' => true, 'sugerencias' => BuscadorSintomas::buscar($texto, $mapa['nodes'], $especie), 'version' => $mapa['version']['hash'] ?? null]);
+            $tipos = ($_GET['exposiciones'] ?? '') === '1' ? ['sustancia', 'farmaco'] : ['sintoma'];
+            RespuestaJson::enviar(['success' => true, 'sugerencias' => BuscadorSintomas::buscar($texto, $mapa['nodes'], $especie, $tipos), 'version' => $mapa['version']['hash'] ?? null]);
         }, 'C4 buscar síntomas');
     }
 
@@ -69,6 +72,15 @@ final class TriageController
             $id = ValidadorClinico::id($_POST['id_mascota'] ?? null);
             if ($id === null) {
                 throw new InvalidArgumentException('Mascota no válida.');
+            }
+            if (($_POST['agenda'] ?? '') === '1') {
+                require_once __DIR__ . '/../models/SolicitudAgenda.php';
+                $solicitudes = new SolicitudAgenda($this->db, fn () => $this->fecha);
+                if (Contexto::rolActivo() === Roles::PROPIETARIO) {
+                    $solicitudes = $solicitudes->enClinicaDelPropietario((int) ($_POST['id_clinica'] ?? 0));
+                }
+                RespuestaJson::enviar(['success' => true] + $solicitudes->evaluar($_POST));
+                return;
             }
             $grafo = $this->grafo->instantanea();
             $paciente = $this->paciente->contexto($id, $grafo, $this->fecha, ValidadorContextoClinico::validar($_POST));

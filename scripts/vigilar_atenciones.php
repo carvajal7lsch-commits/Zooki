@@ -14,12 +14,18 @@ require_once dirname(__DIR__) . '/helpers/ZonaHoraria.php';
 ZonaHoraria::aplicar();
 require_once dirname(__DIR__) . '/config/Database.php';
 require_once dirname(__DIR__) . '/helpers/VigilanteAtenciones.php';
+require_once dirname(__DIR__) . '/models/EventoAgenda.php';
+require_once dirname(__DIR__) . '/helpers/CorreoAgenda.php';
+require_once dirname(__DIR__) . '/models/CascadaAgenda.php';
 
 $db = (new Database())->getConnection();
 $ahora = new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
 
+$fechasAgenda = CascadaAgenda::procesarPendientes($db, static fn () => $ahora);
 $resultado = (new VigilanteAtenciones($db))->revisar($ahora);
+// B1/C4: recuperación independiente del navegador en el trabajador ya programado.
+$correosAgenda = EventoAgenda::despacharPendientes($db, [CorreoAgenda::class, 'enviar']);
 
 echo $ahora->format('Y-m-d H:i')
     . " · avisos de atención abierta: {$resultado['avisadas']}"
-    . " · pasadas a sin cerrar: {$resultado['sin_cerrar']}\n";
+    . " · pasadas a sin cerrar: {$resultado['sin_cerrar']} · correos de agenda: $correosAgenda\n";

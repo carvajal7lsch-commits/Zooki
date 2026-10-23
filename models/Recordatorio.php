@@ -33,7 +33,7 @@ class Recordatorio
         $vacunas = $this->filas(
             "SELECT 'vacuna' AS tipo_entidad, v.id_vacuna AS id_entidad, v.nombre_vacuna AS nombre_item,
                     v.fecha_proxima_dosis AS fecha_proxima, m.nombre AS mascota_nombre,
-                    v.id_clinica, cl.nombre AS clinica_nombre,
+                    v.id_clinica, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email,
                     u.id_usuario, u.nombre_completo AS prop_nombre, u.email
                FROM vacunas v
                JOIN clinicas cl ON cl.id_clinica = v.id_clinica
@@ -54,7 +54,7 @@ class Recordatorio
         $desparasitaciones = $this->filas(
             "SELECT 'desparasitacion' AS tipo_entidad, d.id_desparasitacion AS id_entidad,
                     d.tipo, d.producto, d.fecha_proxima, m.nombre AS mascota_nombre,
-                    d.id_clinica, cl.nombre AS clinica_nombre,
+                    d.id_clinica, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email,
                     u.id_usuario, u.nombre_completo AS prop_nombre, u.email
                FROM desparasitaciones d
                JOIN clinicas cl ON cl.id_clinica = d.id_clinica
@@ -92,7 +92,7 @@ class Recordatorio
     {
         return $this->filas(
             "SELECT c.id_cita, c.fecha, c.hora, c.motivo, m.nombre AS mascota_nombre,
-                    c.id_clinica, cl.nombre AS clinica_nombre,
+                    c.id_clinica, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email,
                     u.id_usuario, u.nombre_completo AS prop_nombre, u.email,
                     v.nombre_completo AS vet_nombre
                FROM citas c

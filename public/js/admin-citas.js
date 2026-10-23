@@ -626,3 +626,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.querySelector('[data-buscar-citas]').addEventListener('input', filtrarCitas);
 });
+
+window.addEventListener('agenda:urgencia', cargarDatosIniciales);

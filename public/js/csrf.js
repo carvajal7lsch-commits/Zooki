@@ -14,6 +14,11 @@
         options = options || {};
         const method = (options.method || 'GET').toUpperCase();
         if (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') {
+            // C2: la misma carga reenviada conserva su clave, independiente de CSRF.
+            if (/[?&]action=(registrar_cita_ajax|portal_agendar_cita_ajax|reprogramar_cita_ajax)(?:&|$)/.test(String(url))
+                && (options.body instanceof FormData || options.body instanceof URLSearchParams) && !options.body.has('clave_operacion')) {
+                options.body.append('clave_operacion', Array.from(window.crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, '0')).join(''));
+            }
             // Si el body es FormData o URLSearchParams, agregar el token
             if (options.body instanceof FormData) {
                 options.body.append('csrf_token', token);

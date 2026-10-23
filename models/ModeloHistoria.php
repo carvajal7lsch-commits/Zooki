@@ -20,6 +20,26 @@ require_once __DIR__ . '/ModeloClinica.php';
  */
 abstract class ModeloHistoria extends ModeloClinica
 {
+    /** B1.1: una conciliación no puede dejar que un alta clínica tardía escriba sobre P. */
+    protected function registrarEnPacienteActual(int $mascota, callable $escribir): mixed
+    {
+        require_once __DIR__ . '/../helpers/CoordinadorAgenda.php';
+        $this->exigirMascotaActiva($mascota);
+        try {
+            return (new CoordinadorAgenda($this->conn))->ejecutar($this->clinica(), fn () => ['usuarios' => [Contexto::idUsuario()], 'mascotas' => [$mascota]], function () use ($mascota,$escribir): mixed {
+                $this->exigirMascotaActiva($mascota);
+                $q = $this->conn->prepare("SELECT 1 FROM usuario_clinica uc JOIN usuarios u ON u.id_usuario=uc.id_usuario JOIN clinicas c ON c.id_clinica=uc.id_clinica WHERE uc.id_clinica=? AND uc.id_usuario=? AND uc.id_rol=2 AND uc.estado='activo' AND u.estado=1 AND c.estado='activa'");
+                $q->execute([$this->clinica(),Contexto::idUsuario()]);
+                if (Contexto::rolActivo() !== Roles::VETERINARIO || !$q->fetchColumn()) {
+                    throw new AccesoDenegado(403,'No tienes acceso a esta acción clínica.');
+                }
+                return $escribir();
+            });
+        } catch (AccesoDenegado $error) {
+            $this->denegarAcceso('mascotas',$mascota,'Alta clínica denegada después de esperar o conciliar (RN-207)');
+        }
+    }
+
     /**
      * RN-113: condición SQL para que la consulta con alias $alias sea visible
      * en la clínica activa. Devuelve la condición y sus parámetros.

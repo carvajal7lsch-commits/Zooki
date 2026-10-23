@@ -1,3 +1,6 @@
+let triageModalC4 = null;
+const comandosC3 = { cancelar_cita_ajax: zookiCrearComandoAgenda(), registrar_cita_ajax: zookiCrearComandoAgenda(), reprogramar_cita_ajax: zookiCrearComandoAgenda() };
+const enviosC3 = { reserva: false, reprogramacion: false };
 /* ═══════════════════════════════════════════
    ZOOKI AGENDA
    Calendario, panel del día, modal de agendar y modal de reprogramar.
@@ -72,10 +75,7 @@ function formatFecha(date, opciones) {
 }
 
 function format12h(time24) {
-    if (!time24) return '';
-    const [h, m = '00'] = String(time24).split(':');
-    const horas = parseInt(h, 10);
-    return `${horas % 12 || 12}:${m.padStart(2, '0')} ${horas >= 12 ? 'PM' : 'AM'}`;
+    return zookiHoraAgenda(time24);
 }
 
 function formatHora(date) {
@@ -143,7 +143,11 @@ const obtenerMascotas = () => catalogo('mascotas', 'index.php?action=listar_masc
     d => (Array.isArray(d) ? d : []).map(m => ({
         id: m.id_mascota,
         nombre: m.nombre || '',
-        propietario: m.propietario_nombre || m.propietario || ''
+        propietario: m.propietario_nombre || m.propietario || '',
+        url_foto: m.url_foto || '',
+        // Pulido de interfaz: el triage solo pregunta por el celo a hembras sin esterilizar.
+        sexo: m.sexo || '',
+        esterilizado: m.esterilizado ?? null
     })));
 
 /** Llena un select una sola vez (si ya tiene opciones, no lo toca). */
@@ -228,7 +232,12 @@ async function cargarEventos(info, exito, fallo) {
                     motivo: e.motivo || '',
                     mascota_nombre: e.mascota_nombre || '',
                     propietario_nombre: e.propietario_nombre || '',
-                    tipo_cita_nombre: e.tipo_cita_nombre || ''
+                    tipo_cita_nombre: e.tipo_cita_nombre || '',
+                    inicio_estimado: e.inicio_estimado || '',
+                    fin_estimado: e.fin_estimado || '',
+                    estado_reajuste: e.estado_reajuste || '',
+                    prioridad: e.prioridad || '',
+                    orden_sobrecupo: e.orden_sobrecupo
                 }
             };
         }));
@@ -240,6 +249,7 @@ async function cargarEventos(info, exito, fallo) {
 }
 
 function mountDayAddButton(arg) {
+    if (!isUsuarioVeterinario()) return;
     if (arg.view.type !== 'dayGridMonth' || esDiaPasado(arg.date)) return;
     const top = arg.el.querySelector('.fc-daygrid-day-top');
     if (!top || top.querySelector('.fc-day-add-btn')) return;
@@ -428,7 +438,7 @@ function renderPanelDia() {
             <h3 class="agenda-panel__title">${esc(formatFecha(date, { day: 'numeric', month: 'long' }))}</h3>
             <p class="agenda-panel__meta">${_cargando ? 'Cargando…' : esc(resumenDia(citas.length, otros.length))}</p>
         </div>
-        ${pasado ? '' : '<button type="button" class="cal-btn cal-btn--primary cal-btn--sm" data-accion="agendar"><i class="fas fa-plus"></i> Agendar</button>'}`;
+        ${pasado || !isUsuarioVeterinario() ? '' : '<button type="button" class="cal-btn cal-btn--primary cal-btn--sm" data-accion="agendar"><i class="fas fa-plus"></i> Agendar</button>'}`;
 
     const body = document.getElementById('agendaPanelBody');
     if (_cargando) {
@@ -538,12 +548,22 @@ function mostrarDetalleCita(eventId) {
         acciones = `<p class="agenda-detail__note">${nota}</p>`;
     }
 
+    if (p.prioridad === 'naranja' && esSuCita && abierta) {
+        acciones += `<form data-reordenar-naranja data-cita="${esc(ev.id)}">
+            <label class="zk-label">Posición en la cola<input class="zk-input" name="posicion" value="${esc(p.orden_sobrecupo || 1)}" inputmode="numeric" data-caracteres="0-9" maxlength="9"></label>
+            <label class="zk-label">Motivo del cambio<input class="zk-input" name="motivo" maxlength="255" data-caracteres="\\p{L}\\p{M}\\p{N}\\p{P}\\p{S} " data-espacios="normalizar"></label>
+            <small data-orden-error class="cuenta-validacion" aria-live="polite"></small>
+            <button class="cal-btn cal-btn--ghost" type="submit" disabled>Guardar orden</button></form>`;
+    }
     const filas = [
         ['Fecha', `${capitalizar(formatFecha(ev.start, { weekday: 'long', day: 'numeric', month: 'long' }))} · ${formatHora(ev.start)}`],
         ['Propietario', p.propietario_nombre],
         ['Veterinario', esCita ? p.veterinario : ''],
         ['Tipo', esCita ? (p.tipo_cita_nombre || 'Cita') : TIPOS_EVENTO[p.tipo]],
-        ['Motivo', p.motivo]
+        ['Motivo', p.motivo],
+        ['Inicio estimado', p.inicio_estimado],
+        ['Fin clínico estimado', p.fin_estimado],
+        ['Reajuste', p.estado_reajuste === 'pendiente_reprogramacion' ? 'Requiere reprogramar con el propietario' : p.estado_reajuste === 'pendiente_reasignacion' ? 'Esperando aceptación de otro veterinario' : p.estado_reajuste === 'pendiente_revision' ? 'Requiere revisión del personal' : '']
     ].filter(([, valor]) => valor);
 
     document.getElementById('agendaPanelHead').innerHTML = `
@@ -584,7 +604,9 @@ function manejarClicPanel(e) {
 // Acciones sobre una cita
 // ═══════════════════════════════════════
 async function postCita(accion, datos) {
-    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: new URLSearchParams(datos) });
+    const cuerpo = new URLSearchParams(datos);
+    if (comandosC3[accion]) cuerpo.set('clave_operacion', comandosC3[accion].clave(cuerpo));
+    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo });
     return res.json();
 }
 
@@ -698,7 +720,7 @@ function reprogramarPorArrastre(info) {
     postCita('reprogramar_cita_ajax', {
         id_cita: info.event.id,
         fecha: toLocalDateStr(inicio),
-        hora: `${String(inicio.getHours()).padStart(2, '0')}:${String(inicio.getMinutes()).padStart(2, '0')}`
+        hora: `${String(inicio.getHours()).padStart(2, '0')}:${String(inicio.getMinutes()).padStart(2, '0')}:${String(inicio.getSeconds()).padStart(2, '0')}`
     }).then(r => {
         if (!r.success) {
             info.revert();
@@ -735,8 +757,17 @@ function setSlotsEstado(id, estado, texto = '') {
         cont.innerHTML = `<div class="slot-grid">${'<span class="slot-skeleton"></span>'.repeat(12)}</div>`;
         return;
     }
-    const icono = estado === 'guia' ? 'far fa-clock' : 'far fa-calendar-times';
+    const icono = estado === 'guia' ? 'far fa-clock' : estado === 'urgencia' ? 'fas fa-exclamation-triangle' : 'far fa-calendar-times';
     cont.innerHTML = `<div class="slot-state"><i class="${icono}"></i><p>${esc(texto)}</p></div>`;
+}
+
+/** RE-4.9.2: revisión o fallo de consulta no equivale a una agenda válida sin huecos. */
+function mostrarFalloSlots(id, respuesta) {
+    if (respuesta?.success === true && Array.isArray(respuesta.sugerencias)) return false;
+    const mensaje = typeof respuesta?.message === 'string' && respuesta.message
+        ? respuesta.message : 'No se pudieron cargar los horarios. Intenta de nuevo.';
+    setSlotsEstado(id, 'error', mensaje);
+    return true;
 }
 
 /** Si la fecha es hoy, descarta las horas que ya pasaron. */
@@ -810,12 +841,62 @@ function getVetModal() {
 }
 
 function textoGuiaSlots() {
-    return isUsuarioVeterinario()
-        ? 'Elige el tipo de cita para ver los horarios libres.'
-        : 'Elige el veterinario y el tipo de cita para ver los horarios libres.';
+    return 'Elige mascota y tipo de cita';
+}
+
+let pasoCitaModal = 0;
+
+function mostrarPasoCita(paso, enfocar = true) {
+    if (enviosC3.reserva || ![0, 1].includes(paso)) return;
+    if (paso === 1 && !(val('modal_mascota') && val('modal_tipo_cita') && getVetModal())) return;
+    pasoCitaModal = paso;
+    document.querySelectorAll('[data-cita-paso]').forEach(panel => {
+        panel.hidden = Number(panel.dataset.citaPaso) !== paso;
+        if (!panel.hidden) {
+            panel.scrollTop = 0;
+            if (enfocar) panel.querySelector('h4')?.focus();
+        }
+    });
+    document.querySelectorAll('[data-cita-indicador]').forEach(indicador => {
+        const actual = Number(indicador.dataset.citaIndicador);
+        indicador.classList.toggle('is-complete', actual < paso);
+        if (actual === paso) indicador.setAttribute('aria-current', 'step');
+        else indicador.removeAttribute('aria-current');
+    });
+    actualizarResumenModal();
+}
+
+function actualizarPasosCita() {
+    const siguiente = document.getElementById('cm_siguiente');
+    const anterior = document.getElementById('cm_anterior');
+    const submit = document.getElementById('cm_submit');
+    if (!siguiente || !anterior || !submit) return;
+    const pacienteListo = Boolean(val('modal_mascota') && getVetModal() && val('modal_tipo_cita'));
+    siguiente.hidden = pasoCitaModal === 1;
+    siguiente.disabled = enviosC3.reserva || !pacienteListo;
+    anterior.hidden = pasoCitaModal === 0;
+    anterior.disabled = enviosC3.reserva;
+    const rojo = triageModalC4?.resultado?.()?.nivel === 'rojo';
+    submit.hidden = pasoCitaModal !== 1 || rojo;
+    submit.disabled = enviosC3.reserva || !pacienteListo || !triageModalC4?.consulta() || !val('modal_hora') || pasoCitaModal !== 1 || rojo;
+    const cancelar = document.getElementById('cm_cancelar');
+    if (cancelar) cancelar.hidden = pasoCitaModal !== 0;
+    document.querySelectorAll('[data-cita-indicador]').forEach(indicador => {
+        indicador.disabled = enviosC3.reserva || (Number(indicador.dataset.citaIndicador) === 1 && !pacienteListo);
+    });
+}
+
+function avanzarPasoCita() {
+    actualizarPasosCita();
+    if (document.getElementById('cm_siguiente')?.disabled || pasoCitaModal >= 1) return;
+    ocultarErrorModal();
+    mostrarPasoCita(pasoCitaModal + 1);
 }
 
 function abrirCitaModal(date) {
+    if (!isUsuarioVeterinario()) return;
+    triageModalC4?.reiniciar();
+    comandosC3.registrar_cita_ajax.reiniciar();
     if (!date || esDiaPasado(date)) return;
     const fecha = inicioDelDia(date);
     const esVet = isUsuarioVeterinario();
@@ -832,7 +913,7 @@ function abrirCitaModal(date) {
 
     ocultarErrorModal();
     setSlotsEstado('modal_slots_container', 'guia', textoGuiaSlots());
-    actualizarResumenModal();
+    mostrarPasoCita(0, false);
     abrirOverlay('citaModalOverlay');
     setTimeout(() => document.getElementById('cm_mascota_search').focus(), 60);
 
@@ -849,15 +930,89 @@ function abrirCitaModal(date) {
 }
 
 function closeCitaModal() {
+    _horaPreferidaCita = null;
     cerrarOverlay('citaModalOverlay');
-    document.getElementById('cm_mascota_dropdown').classList.remove('is-open');
+    cerrarListaMascotas();
+}
+
+// HU-6.1 (RE-6.1.9): «+ Agendar» en un hueco del Inicio abre este mismo modal en ese día
+// (?agendar=AAAA-MM-DD&hora=HH:MM) y, cuando aparecen los horarios, marca esa hora si sigue libre.
+let _horaPreferidaCita = null;
+
+function abrirAgendarDesdeEnlace() {
+    const parametros = new URLSearchParams(window.location.search);
+    const fecha = parametros.get('agendar') || '';
+    const hora = parametros.get('hora') || '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !isUsuarioVeterinario()) return;
+    parametros.delete('agendar');
+    parametros.delete('hora');
+    // Al recargar la agenda no se vuelve a abrir el modal.
+    window.history.replaceState(null, '', `${window.location.pathname}?${parametros}${window.location.hash}`);
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+    abrirCitaModal(new Date(anio, mes - 1, dia));
+    _horaPreferidaCita = /^\d{2}:\d{2}$/.test(hora) ? hora : null;
+}
+
+function marcarHoraPreferida(idContenedor) {
+    if (!_horaPreferidaCita) return;
+    const chip = Array.from(document.querySelectorAll(`#${idContenedor} .slot-chip`))
+        .find(c => c.dataset.hora.slice(0, 5) === _horaPreferidaCita);
+    _horaPreferidaCita = null;
+    if (!chip) return;
+    const franja = chip.closest('.slot-grid')?.dataset.franja;
+    document.querySelector(`#${idContenedor} .slot-tab[data-franja="${franja}"]`)?.click();
+    chip.click();
+    chip.scrollIntoView({ block: 'nearest' });
+}
+
+// La lista de mascotas se abre y se cierra con hidden: ZookiCombobox decide con
+// él si hay una lista abierta para las flechas, Enter y Esc.
+function abrirListaMascotas() {
+    const campo = document.getElementById('cm_mascota_search');
+    document.getElementById('cm_mascota_dropdown').hidden = false;
+    campo.setAttribute('aria-expanded', 'true');
+    window.ZookiCombobox?.reiniciar(campo);
+}
+
+function cerrarListaMascotas() {
+    const campo = document.getElementById('cm_mascota_search');
+    const dropdown = document.getElementById('cm_mascota_dropdown');
+    if (!campo || !dropdown) return;
+    dropdown.hidden = true;
+    campo.setAttribute('aria-expanded', 'false');
+    window.ZookiCombobox?.reiniciar(campo);
+}
+
+/** Mismo criterio del portal: primeras letras de hasta dos palabras del nombre. */
+function inicialesMascotaAgenda(nombre) {
+    return String(nombre || '?').trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase() || '?';
+}
+
+function avatarMascotaAgenda(nombre, foto) {
+    const imagen = foto ? `<img class="zk-mascota-foto" src="${esc(fotoMascotaUrl(foto))}" alt="" width="40" height="40">` : '';
+    return `${imagen}<span class="avatar-iniciales zk-mascota-iniciales" aria-hidden="true"${foto ? ' hidden' : ''}>${esc(inicialesMascotaAgenda(nombre))}</span>`;
+}
+
+function mostrarInicialesMascotaAgenda(foto) {
+    foto.hidden = true;
+    const iniciales = foto.parentElement.querySelector('.zk-mascota-iniciales');
+    if (iniciales) iniciales.hidden = false;
+}
+
+function actualizarAvatarMascotaAgenda(nombre, url) {
+    const foto = document.getElementById('cm_mascota_foto');
+    const iniciales = document.getElementById('cm_mascota_iniciales');
+    iniciales.textContent = inicialesMascotaAgenda(nombre);
+    iniciales.hidden = Boolean(url);
+    foto.hidden = !url;
+    if (url) foto.src = fotoMascotaUrl(url);
 }
 
 async function filtrarMascotas(texto) {
     const dropdown = document.getElementById('cm_mascota_dropdown');
     const q = texto.trim().toLowerCase();
     if (!q) {
-        dropdown.classList.remove('is-open');
+        cerrarListaMascotas();
         dropdown.innerHTML = '';
         return;
     }
@@ -868,21 +1023,37 @@ async function filtrarMascotas(texto) {
 
     dropdown.innerHTML = resultados.length
         ? resultados.map(m => `
-            <button type="button" class="zk-option" role="option" data-id="${esc(m.id)}" data-nombre="${esc(m.nombre)}" data-propietario="${esc(m.propietario)}">
+            <button type="button" class="zk-option" role="option" aria-selected="false" title="${esc(m.propietario ? `${m.nombre} · ${m.propietario}` : m.nombre)}" data-id="${esc(m.id)}" data-nombre="${esc(m.nombre)}" data-propietario="${esc(m.propietario)}">
+                ${avatarMascotaAgenda(m.nombre, m.url_foto)}
+                <span class="zk-option__datos">
                 <span class="zk-option__name">${esc(m.nombre)}</span>
                 ${m.propietario ? `<span class="zk-option__sub">${esc(m.propietario)}</span>` : ''}
+                </span>
             </button>`).join('')
         : '<p class="zk-dropdown__empty">Sin resultados</p>';
-    dropdown.classList.add('is-open');
+    dropdown.querySelectorAll('img').forEach(foto => foto.addEventListener('error', () => mostrarInicialesMascotaAgenda(foto), { once: true }));
+    abrirListaMascotas();
 }
+
+let _mascotaFicha = null;
 
 function seleccionarMascota(id, nombre, propietario) {
     _mascotaNombre = nombre;
+    _mascotaFicha = null;
+    obtenerMascotas().then(lista => {
+        if (val('modal_mascota') !== String(id)) return;
+        _mascotaFicha = lista.find(m => String(m.id) === String(id)) || null;
+        actualizarAvatarMascotaAgenda(nombre, _mascotaFicha?.url_foto);
+        triageModalC4?.consulta();
+    });
     val('modal_mascota', id);
+    actualizarAvatarMascotaAgenda(nombre, '');
+    cargarSlotsModal();
     document.getElementById('cm_mascota_chip_name').textContent = propietario ? `${nombre} · ${propietario}` : nombre;
+    document.getElementById('cm_mascota_chip_name').title = propietario ? `${nombre} · ${propietario}` : nombre;
     document.getElementById('cm_mascota_chip').hidden = false;
     document.getElementById('cm_mascota_wrap').hidden = true;
-    document.getElementById('cm_mascota_dropdown').classList.remove('is-open');
+    cerrarListaMascotas();
     ocultarErrorModal();
     actualizarResumenModal();
 }
@@ -890,12 +1061,13 @@ function seleccionarMascota(id, nombre, propietario) {
 function limpiarMascotaSeleccionada(enfocar = false) {
     _mascotaNombre = '';
     val('modal_mascota', '');
+    cargarSlotsModal();
     val('cm_mascota_search', '');
     document.getElementById('cm_mascota_chip').hidden = true;
     document.getElementById('cm_mascota_wrap').hidden = false;
-    const dropdown = document.getElementById('cm_mascota_dropdown');
-    dropdown.classList.remove('is-open');
-    dropdown.innerHTML = '';
+    actualizarAvatarMascotaAgenda('', '');
+    cerrarListaMascotas();
+    document.getElementById('cm_mascota_dropdown').innerHTML = '';
     actualizarResumenModal();
     if (enfocar) document.getElementById('cm_mascota_search').focus();
 }
@@ -912,44 +1084,47 @@ function onModalTipoCitaChange() {
 }
 
 async function cargarSlotsModal() {
+    const turno = ++_turnoSlotsCita;
     const vet = getVetModal();
     const fecha = val('modal_fecha');
-    const duracion = val('modal_duracion_minutos');
+    const mascota = val('modal_mascota');
+    const tipo = val('modal_tipo_cita');
     val('modal_hora', '');
     ocultarErrorModal();
     actualizarResumenModal();
 
-    if (!vet || !val('modal_tipo_cita') || !duracion) {
+    const urgencias = document.getElementById('cm_urgencias');
+    if (urgencias) urgencias.hidden = true;
+    if (!vet || !tipo || !mascota) {
         setSlotsEstado('modal_slots_container', 'guia', textoGuiaSlots());
         return;
     }
 
     // Si el usuario cambia de tipo o de veterinario antes de que llegue la
     // respuesta, la vieja se descarta para no pintar horarios equivocados.
-    const turno = ++_turnoSlotsCita;
+    const solicitud = triageModalC4?.consulta();
+    const rojo = triageModalC4?.resultado?.()?.nivel === 'rojo';
+    if (urgencias) urgencias.hidden = !rojo;
+    if (rojo) {
+        setSlotsEstado('modal_slots_container', 'urgencia', 'Esta mascota requiere atención de urgencias. Ve a Urgencias para registrar su llegada.');
+        return;
+    }
+    if (!solicitud) {
+        setSlotsEstado('modal_slots_container', 'guia', 'Calcula el nivel de urgencia para ver horarios');
+        return;
+    }
     setSlotsEstado('modal_slots_container', 'cargando');
 
     try {
-        const [horarios, sugerencias] = await Promise.all([
-            fetch(`index.php?action=get_horas_disponibles_ajax&fecha=${fecha}&intervalo=${duracion}`).then(r => r.json()),
-            fetch(`index.php?action=get_sugerencias_horario_ajax&id_veterinario=${encodeURIComponent(vet)}&fecha=${fecha}&duracion_minutos=${duracion}&modo=normal`).then(r => r.json())
-        ]);
+        const parametros = new URLSearchParams({ action: 'get_sugerencias_horario_ajax', id_veterinario: vet, id_mascota: mascota, id_tipo_cita: tipo, fecha, id_solicitud: solicitud });
+        const sugerencias = await fetch(`index.php?${parametros}`).then(r => r.json());
         if (turno !== _turnoSlotsCita) return;
-
-        const laborales = horarios.success && Array.isArray(horarios.horas) ? horarios.horas : [];
-        if (!laborales.length) {
-            setSlotsEstado('modal_slots_container', 'vacio', 'Este día no es laborable o no tiene horarios configurados.');
-            return;
-        }
-
-        let horas = sugerencias.success && Array.isArray(sugerencias.sugerencias) ? sugerencias.sugerencias : [];
-        const enHorario = horas.filter(h => laborales.includes(h));
-        // Si ninguna coincide exacto (formatos distintos), se muestran las sugerencias tal cual.
-        if (enHorario.length) horas = enHorario;
-        horas = quitarHorasPasadas(fecha, horas);
+        if (mostrarFalloSlots('modal_slots_container', sugerencias)) return;
+        const horas = sugerencias.sugerencias;
 
         if (!horas.length) {
-            setSlotsEstado('modal_slots_container', 'vacio', 'No quedan horarios libres este día. Prueba con otro día.');
+            // El servidor explica por qué no hay horas (clínica cerrada, veterinario sin horario o agenda llena).
+            setSlotsEstado('modal_slots_container', 'vacio', sugerencias.motivo || 'No quedan horarios libres este día. Prueba con otro día.');
             return;
         }
         renderSlots('modal_slots_container', horas, hora => {
@@ -957,10 +1132,11 @@ async function cargarSlotsModal() {
             ocultarErrorModal();
             actualizarResumenModal();
         });
+        marcarHoraPreferida('modal_slots_container');
     } catch (e) {
         if (turno !== _turnoSlotsCita) return;
         console.error('Error al cargar horarios:', e);
-        setSlotsEstado('modal_slots_container', 'vacio', 'No se pudieron cargar los horarios. Intenta de nuevo.');
+        setSlotsEstado('modal_slots_container', 'error', 'No se pudieron cargar los horarios. Intenta de nuevo.');
     }
 }
 
@@ -972,17 +1148,24 @@ function actualizarResumenModal() {
     if (!resumen || !submit || !tipoSel) return;
 
     const hora = val('modal_hora');
+    const solicitud = triageModalC4?.consulta();
+    const nivel = triageModalC4?.resultado?.()?.nivel || '';
     const faltan = [];
-    if (!val('modal_mascota')) faltan.push('mascota');
-    if (!getVetModal()) faltan.push('veterinario');
-    if (!tipoSel.value) faltan.push('tipo de cita');
-    if (!hora) faltan.push('horario');
-
-    submit.disabled = faltan.length > 0;
+    if (pasoCitaModal === 0) {
+        if (!val('modal_mascota')) faltan.push('mascota');
+        if (!tipoSel.value) faltan.push('tipo de cita');
+    } else if (nivel !== 'rojo') {
+        if (!solicitud) faltan.push('nivel de urgencia');
+        if (!hora) faltan.push('horario');
+    }
     const tipoNombre = tipoSel.value ? (tipoSel.options[tipoSel.selectedIndex].dataset.nombre || '') : '';
-    resumen.innerHTML = faltan.length
-        ? `Falta: ${esc(unirLista(faltan))}.`
-        : `<strong>${esc(_mascotaNombre)}</strong> · ${esc(tipoNombre)} · ${esc(format12h(hora))}`;
+    resumen.textContent = faltan.length ? `Falta: ${unirLista(faltan)}.` : '';
+    const resumenHorario = document.getElementById('cm_horario_resumen');
+    if (resumenHorario) {
+        resumenHorario.hidden = !hora || !solicitud || nivel === 'rojo';
+        resumenHorario.textContent = `${_mascotaNombre} · ${tipoNombre} · ${nivel} · ${format12h(hora)}`;
+    }
+    actualizarPasosCita();
 }
 
 function mostrarErrorModal(mensaje) {
@@ -1000,20 +1183,23 @@ function ocultarErrorModal() {
 
 async function crearCitaModal(e) {
     e.preventDefault();
+    if (enviosC3.reserva) return;
+    if (pasoCitaModal !== 1) return;
     actualizarResumenModal();
     const submit = document.getElementById('cm_submit');
     if (submit.disabled) return;
 
     const datos = {
+        id_solicitud: triageModalC4?.consulta() || '',
         id_mascota: val('modal_mascota'),
         id_veterinario: getVetModal(),
         fecha: val('modal_fecha'),
         hora: val('modal_hora'),
         motivo: val('modal_motivo'),
-        id_tipo_cita: val('modal_tipo_cita'),
-        duracion_minutos: val('modal_duracion_minutos')
+        id_tipo_cita: val('modal_tipo_cita')
     };
 
+    enviosC3.reserva = true;
     submit.disabled = true;
     submit.textContent = 'Agendando…';
     try {
@@ -1030,6 +1216,7 @@ async function crearCitaModal(e) {
     } catch (err) {
         mostrarErrorModal('Error de conexión. Intenta nuevamente.');
     } finally {
+        enviosC3.reserva = false;
         submit.textContent = 'Agendar cita';
         actualizarResumenModal();
     }
@@ -1042,7 +1229,7 @@ let _reprogramarCitaId = null;
 let _turnoSlotsReprog = 0;
 
 function actualizarBotonReprog() {
-    document.getElementById('reprogramar_btn_confirmar').disabled = !val('reprogramar_hora');
+    document.getElementById('reprogramar_btn_confirmar').disabled = enviosC3.reprogramacion || !val('reprogramar_hora');
 }
 
 function mostrarErrorReprog(mensaje) {
@@ -1060,6 +1247,7 @@ function cerrarModalReprogramar() {
 }
 
 async function abrirModalReprogramar(idCita) {
+    comandosC3.reprogramar_cita_ajax.reiniciar();
     _reprogramarCitaId = idCita;
     ocultarErrorReprog();
     val('reprogramar_hora', '');
@@ -1087,6 +1275,7 @@ async function abrirModalReprogramar(idCita) {
             return;
         }
         const cita = datos.cita;
+        document.getElementById('reprogramar_tipo_cita').dataset.mascota = cita.id_mascota;
         const vetSel = document.getElementById('reprogramar_veterinario');
         const tipoSel = document.getElementById('reprogramar_tipo_cita');
         llenarSelect(vetSel, vets, 'Selecciona un veterinario');
@@ -1094,6 +1283,11 @@ async function abrirModalReprogramar(idCita) {
 
         vetSel.value = cita.id_veterinario ? String(cita.id_veterinario) : '';
         vetSel.disabled = isUsuarioVeterinario(); // el veterinario reprograma su propia agenda
+        if (cita.id_tipo_cita && !Array.from(tipoSel.options).some(opcion => opcion.value === String(cita.id_tipo_cita))) {
+            tipoSel.add(new Option(cita.tipo_cita_nombre || 'Tipo de la cita', String(cita.id_tipo_cita)));
+        }
+        tipoSel.dataset.tipoOriginal = cita.id_tipo_cita || '';
+        tipoSel.disabled = true;
         tipoSel.value = cita.id_tipo_cita || '';
         fechaIn.value = cita.fecha && cita.fecha >= fechaIn.min ? cita.fecha : fechaIn.min;
         cargarSlotsReprogramar();
@@ -1105,10 +1299,12 @@ async function abrirModalReprogramar(idCita) {
 }
 
 async function cargarSlotsReprogramar() {
+    const turno = ++_turnoSlotsReprog;
     const vet = val('reprogramar_veterinario');
     const fecha = val('reprogramar_fecha');
     const tipoSel = document.getElementById('reprogramar_tipo_cita');
-    const duracion = (tipoSel.options[tipoSel.selectedIndex] || {}).dataset?.duracion || '30';
+    const mascota = tipoSel.dataset.mascota;
+    const tipo = tipoSel.dataset.tipoOriginal;
     const id = 'reprogramar_slots_container';
 
     val('reprogramar_hora', '');
@@ -1124,16 +1320,15 @@ async function cargarSlotsReprogramar() {
         return;
     }
 
-    const turno = ++_turnoSlotsReprog;
     setSlotsEstado(id, 'cargando');
     try {
-        const url = `index.php?action=get_sugerencias_horario_ajax&id_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${duracion}&id_cita_excluir=${encodeURIComponent(_reprogramarCitaId || '')}`;
-        const data = await fetch(url).then(r => r.json());
+        const parametros = new URLSearchParams({ action: 'get_sugerencias_horario_ajax', id_veterinario: vet, id_mascota: mascota, id_tipo_cita: tipo, fecha, id_cita_excluir: _reprogramarCitaId || '' });
+        const data = await fetch(`index.php?${parametros}`).then(r => r.json());
         if (turno !== _turnoSlotsReprog) return;
-
-        const horas = quitarHorasPasadas(fecha, data.success && Array.isArray(data.sugerencias) ? data.sugerencias : []);
+        if (mostrarFalloSlots(id, data)) return;
+        const horas = data.sugerencias;
         if (!horas.length) {
-            setSlotsEstado(id, 'vacio', 'No hay horarios libres ese día. Prueba con otra fecha o veterinario.');
+            setSlotsEstado(id, 'vacio', data.motivo || 'No hay horarios libres ese día. Prueba con otra fecha o veterinario.');
             return;
         }
         renderSlots(id, horas, hora => {
@@ -1144,16 +1339,16 @@ async function cargarSlotsReprogramar() {
     } catch (e) {
         if (turno !== _turnoSlotsReprog) return;
         console.error('Error al cargar horarios:', e);
-        setSlotsEstado(id, 'vacio', 'No se pudieron cargar los horarios. Intenta de nuevo.');
+        setSlotsEstado(id, 'error', 'No se pudieron cargar los horarios. Intenta de nuevo.');
     }
 }
 
 async function confirmarReprogramacion() {
     const hora = val('reprogramar_hora');
     const fecha = val('reprogramar_fecha');
-    if (!hora) return;
-
     const btn = document.getElementById('reprogramar_btn_confirmar');
+    if (!hora || btn.disabled || enviosC3.reprogramacion) return;
+    enviosC3.reprogramacion = true;
     btn.disabled = true;
     btn.textContent = 'Reprogramando…';
     try {
@@ -1176,6 +1371,7 @@ async function confirmarReprogramacion() {
         console.error('Error al reprogramar:', e);
         mostrarErrorReprog('Error de conexión. Intenta nuevamente.');
     } finally {
+        enviosC3.reprogramacion = false;
         btn.textContent = 'Confirmar reprogramación';
         actualizarBotonReprog();
     }
@@ -1225,19 +1421,78 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', e => {
     // Cierra la lista de mascotas al hacer clic fuera del buscador.
     const wrap = document.getElementById('cm_mascota_wrap');
-    if (wrap && !wrap.contains(e.target)) {
-        document.getElementById('cm_mascota_dropdown')?.classList.remove('is-open');
-    }
+    if (wrap && !wrap.contains(e.target)) cerrarListaMascotas();
 });
 
+function conectarFormulariosC3() {
+    document.getElementById('formCitaModal')?.addEventListener('submit', crearCitaModal);
+    document.getElementById('citaModalOverlay')?.addEventListener('keydown', evitarEnvioCitaConEnter);
+    document.querySelectorAll('[data-cita-indicador]').forEach(indicador => {
+        indicador.addEventListener('click', () => mostrarPasoCita(Number(indicador.dataset.citaIndicador)));
+    });
+    document.getElementById('cm_urgencias')?.addEventListener('click', irAUrgenciasDesdeCita);
+    document.getElementById('cm_siguiente')?.addEventListener('click', avanzarPasoCita);
+    document.getElementById('cm_anterior')?.addEventListener('click', () => {
+        if (!enviosC3.reserva) {
+            ocultarErrorModal();
+            mostrarPasoCita(Math.max(0, pasoCitaModal - 1));
+        }
+    });
+    document.getElementById('cm_mascota_search')?.addEventListener('input', evento => filtrarMascotas(evento.target.value));
+    document.getElementById('modal_veterinario')?.addEventListener('change', onModalVeterinarioChange);
+    document.getElementById('modal_tipo_cita')?.addEventListener('change', onModalTipoCitaChange);
+    for (const id of ['reprogramar_fecha', 'reprogramar_veterinario', 'reprogramar_tipo_cita']) {
+        document.getElementById(id).addEventListener('change', cargarSlotsReprogramar);
+    }
+}
+
+function evitarEnvioCitaConEnter(evento) {
+    if (evento.key !== 'Enter') return;
+    if (evento.target.closest('button[type="button"]')) return;
+    evento.preventDefault();
+}
+
+function irAUrgenciasDesdeCita() {
+    if (enviosC3.reserva || triageModalC4?.resultado?.()?.nivel !== 'rojo') return;
+    closeCitaModal();
+    const pestana = document.querySelector('[data-agenda-tab="urgencias"]');
+    pestana?.click();
+    pestana?.focus();
+    pestana?.scrollIntoView({ block: 'nearest' });
+}
+
+// Clic o teclado (flechas, Enter y Esc con ZookiCombobox): Enter elige la mascota
+// marcada con su mismo clic y nunca envía el formulario; Esc cierra solo la lista.
+function conectarBuscadorMascota() {
+    const campo = document.getElementById('cm_mascota_search');
+    const dropdown = document.getElementById('cm_mascota_dropdown');
+    if (!campo || !dropdown) return;
+    const foto = document.getElementById('cm_mascota_foto');
+    foto?.addEventListener('error', () => {
+        mostrarInicialesMascotaAgenda(foto);
+    });
+    dropdown.addEventListener('click', e => {
+        const opcion = e.target.closest('.zk-option');
+        if (opcion) seleccionarMascota(opcion.dataset.id, opcion.dataset.nombre, opcion.dataset.propietario);
+    });
+    window.ZookiCombobox?.enlazar(campo, dropdown, { cerrar: cerrarListaMascotas });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    const bloqueTriage = document.querySelector('#formCitaModal [data-triage-agenda]');
+    if (bloqueTriage) triageModalC4 = ZookiTriageAgenda.crear(bloqueTriage, {
+        seleccion: () => ({ id_mascota: val('modal_mascota'), id_veterinario: getVetModal(), id_tipo_cita: val('modal_tipo_cita'), fecha: val('modal_fecha') }),
+        mascota: () => _mascotaFicha,
+        alCambiar: () => cargarSlotsModal()
+    });
+    conectarFormulariosC3();
     moverModalesAlBody();
     FilterManager.init();
     conectarBarra();
     document.getElementById('agendaPanel').addEventListener('click', manejarClicPanel);
-    document.getElementById('cm_mascota_dropdown').addEventListener('click', e => {
-        const opcion = e.target.closest('.zk-option');
-        if (opcion) seleccionarMascota(opcion.dataset.id, opcion.dataset.nombre, opcion.dataset.propietario);
-    });
+    conectarBuscadorMascota();
+    abrirAgendarDesdeEnlace();
     iniciarCalendario();
 });
+
+window.addEventListener('agenda:urgencia', () => calendarInstance?.refetchEvents());

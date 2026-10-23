@@ -634,12 +634,15 @@ async function verDetalle(id, opciones = {}) {
                     cancelBtn = `<button type="button" class="portal-btn-cancel" data-ui-accion="cancelar-cita-portal" data-ui-id="${Number(c.id_cita)}"><i class="ri-close-circle-line" aria-hidden="true"></i> Cancelar cita</button>`;
                 }
 
+                if (c.cancelable) cancelBtn += `<button type="button" class="portal-btn-cancel" data-ui-detener data-reprogramar-cita="${Number(c.id_cita)}">Reprogramar</button>`;
                 html += `
                 <div class="portal-list-item" data-id-clinica="${Number(c.id_clinica)}">
                     <div class="portal-list-icon portal-list-icon--cita"><i class="ri-calendar-check-line"></i></div>
                     <div class="portal-list-body">
                         <strong>${formatFecha(c.fecha)} · ${escapeHtml((c.hora || '').substring(0, 5))}</strong>
                         <p>${escapeHtml(c.motivo)}</p>
+                        ${c.inicio_estimado ? `<p>Inicio estimado: ${escapeHtml(c.inicio_estimado)}</p>` : ''}
+                        ${c.estado_reajuste === 'pendiente_reprogramacion' ? '<p>Contacta a la clínica o elige Reprogramar para consultar alternativas.</p>' : ''}
                         ${c.veterinario_nombre ? `<p>Veterinario: ${escapeHtml(c.veterinario_nombre)}</p>` : ''}
                         <div class="card-tags-mini">${etiquetaClinica(c.clinica_nombre)}${badgeEstado(c.estado)}</div>
                         ${cancelBtn}
@@ -1297,13 +1300,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const slots = document.getElementById('booking_slots');
     const guia = document.getElementById('booking_guia');
     const confirmar = document.getElementById('booking_confirmar');
+    const triageC4 = ZookiTriageAgenda.crear(form.querySelector('[data-triage-agenda]'), {
+        seleccion: () => ({ id_clinica: clinicaSelect.value, id_mascota: mascotaSelect.value, id_veterinario: vetSelect.value, id_tipo_cita: tipoCitaSelect.value, fecha: dateInput.value }),
+        // Pulido de interfaz: el celo solo se pregunta a hembras sin esterilizar.
+        mascota: () => { const r = form.querySelector('[name="id_mascota"]:checked'); return r ? { sexo: r.dataset.sexo || '', esterilizado: r.dataset.esterilizado ?? '' } : null; },
+        alCambiar: () => cargarHoras()
+    });
     // Días sin atención en toda la jornada de cada clínica (1 = lunes … 7 = domingo); se relee tras actualizar.
     const diasCerrados = () => (JSON.parse(form.dataset.diasCerrados || '{}')[clinicaSelect.value]) || [];
     let turno = 0; // si el usuario cambia algo mientras cargan los horarios, se ignora la respuesta vieja
     const catalogosPorClinica = {};
 
     const minutosDe = h => { const [hh, mm] = h.split(':').map(Number); return hh * 60 + mm; };
-    const hora12 = h => { const [hh, mm] = h.split(':').map(Number); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a. m.' : 'p. m.'}`; };
+    const hora12 = h => zookiHoraAgenda(h, 'a. m.', 'p. m.');
     const hoyIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
     const calendario = typeof flatpickr !== 'undefined' ? flatpickr(dateInput, {
@@ -1340,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function actualizarGuia() {
         const pendientes = faltan();
         guia.textContent = guiaParaAgendar(pendientes);
-        confirmar.disabled = pendientes.length > 0;
+        confirmar.disabled = pendientes.length > 0 || !triageC4.consulta();
     }
 
     /** Horarios repartidos en Mañana y Tarde, como en el panel del personal. */
@@ -1385,10 +1394,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function cargarHoras() {
+        const miTurno = ++turno;
         horaInput.value = '';
         actualizarGuia();
 
-        if (!clinicaSelect.value || !tipoCitaSelect.value || !vetSelect.value) {
+        if (!clinicaSelect.value || !tipoCitaSelect.value || !vetSelect.value || !mascotaSelect.value) {
             estadoSlots('guia', 'Elige primero el tipo de cita y el veterinario.');
             return;
         }
@@ -1397,38 +1407,27 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const solicitud = triageC4.consulta();
+        if (!solicitud) {
+            estadoSlots('guia', 'Calcula el triage y completa la revisión antes de consultar horarios.');
+            return;
+        }
         const fecha = dateInput.value;
         const vet = vetSelect.value;
         const clinica = clinicaSelect.value;
-        const duracion = (tipoCitaSelect.selectedOptions[0] && tipoCitaSelect.selectedOptions[0].dataset.duracion) || 30;
-        const miTurno = ++turno;
+        const tipo = tipoCitaSelect.value;
+        const mascota = mascotaSelect.value;
         estadoSlots('cargando');
 
         try {
-            // Horas de la clínica ese día ∩ huecos libres del veterinario.
-            const [horasClinica, agendaVet] = await Promise.all([
-                fetch(`index.php?action=portal_get_horas_ajax&id_clinica=${encodeURIComponent(clinica)}&fecha=${encodeURIComponent(fecha)}&intervalo=${encodeURIComponent(duracion)}`).then(r => r.json()),
-                fetch(`index.php?action=portal_get_sugerencias_ajax&id_clinica=${encodeURIComponent(clinica)}&id_veterinario=${encodeURIComponent(vet)}&fecha=${encodeURIComponent(fecha)}&duracion_minutos=${encodeURIComponent(duracion)}`).then(r => r.json())
-            ]);
+            const parametros = new URLSearchParams({ action: 'portal_get_sugerencias_ajax', id_clinica: clinica, id_veterinario: vet, id_mascota: mascota, id_tipo_cita: tipo, fecha, id_solicitud: solicitud });
+            const agenda = await fetch(`index.php?${parametros}`).then(r => r.json());
             if (miTurno !== turno) return;
-
-            if (!horasClinica.success || !agendaVet.success) {
-                estadoSlots('vacio', 'No se pudieron cargar los horarios. Intenta de nuevo.');
+            if (!agenda.success) {
+                estadoSlots('vacio', agenda.message || 'No se pudieron cargar los horarios. Intenta de nuevo.');
                 return;
             }
-            const horasDeLaClinica = horasClinica.horas || [];
-            if (!horasDeLaClinica.length) {
-                estadoSlots('vacio', 'La clínica no atiende ese día. Elige otro día.');
-                return;
-            }
-            const libresVet = agendaVet.sugerencias || [];
-            let horas = horasDeLaClinica.filter(h => libresVet.includes(h));
-            // Hoy no se ofrecen horas que ya pasaron.
-            if (fecha === hoyIso()) {
-                const ahora = new Date();
-                const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
-                horas = horas.filter(h => minutosDe(h) > minutosAhora);
-            }
+            const horas = Array.isArray(agenda.sugerencias) ? agenda.sugerencias : [];
             if (!horas.length) {
                 estadoSlots('vacio', 'Ya no quedan horarios libres ese día con este veterinario. Prueba otro día u otro veterinario.');
                 return;
@@ -1485,7 +1484,10 @@ document.addEventListener('DOMContentLoaded', () => {
         actualizarGuia();
     }
 
+    const comandoC3 = zookiCrearComandoAgenda();
+    let enviandoC3 = false;
     const abrirBooking = async () => {
+        comandoC3.reiniciar();
         form.reset();
         horaInput.value = '';
         if (calendario) calendario.clear();
@@ -1516,11 +1518,14 @@ document.addEventListener('DOMContentLoaded', () => {
         await cargarCatalogos();
         cargarHoras();
     });
-    mascotaSelect.alCambiar(actualizarGuia);
+    mascotaSelect.alCambiar(cargarHoras);
     tipoCitaSelect.addEventListener('change', cargarHoras);
     vetSelect.addEventListener('change', cargarHoras);
 
     const enviarFormulario = async (ignoreWarning = false) => {
+        if (enviandoC3) return;
+        enviandoC3 = true;
+        let repetirAviso = false;
         const submitBtn = confirmar;
         const reactivar = () => {
             submitBtn.querySelector('span').textContent = 'Agendar';
@@ -1531,6 +1536,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const fd = new FormData(form);
+            fd.set('id_solicitud', triageC4.consulta() || '');
+            fd.set('clave_operacion', comandoC3.clave(fd));
             if (ignoreWarning) {
                 fd.append('ignore_warning', '1');
             }
@@ -1561,7 +1568,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (res.has_warning) {
                 // C9: una cita adicional del mismo día pide una decisión explícita (M5 C4a: modal de Zooki).
                 const otraIgual = await zookiConfirmarCorto(res.message || '¿Agendar otra cita el mismo día?', 'Agendar igual', [], 'Volver');
-                if (otraIgual) enviarFormulario(true);
+                if (otraIgual) {
+                    repetirAviso = true;
+                }
                 else reactivar();
             } else {
                 // El horario pudo ocuparse mientras tanto: se vuelven a pedir los horarios libres.
@@ -1573,6 +1582,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error al agendar cita:', error);
             zookiToast('No pudimos conectarnos con el servidor. Inténtalo más tarde.', 'error');
             reactivar();
+        } finally {
+            enviandoC3 = false;
+            if (repetirAviso) enviarFormulario(true);
         }
     };
 
@@ -1644,12 +1656,19 @@ function filasDeCitaEnPantalla(idCita) {
 }
 
 /* Cancelar una cita desde el portal (RN-405): es lo único irreversible del portal y se confirma. */
+const cancelacionesC4 = new Map();
+const cancelacionesEnCursoC4 = new Set();
 async function cancelarCitaPortal(idCita) {
+    if (cancelacionesEnCursoC4.has(idCita)) return;
     const confirmada = await zookiConfirmarCorto('¿Cancelar esta cita?', 'Cancelar cita', filasDeCitaEnPantalla(idCita), 'Volver');
     if (!confirmada) return;
+    if (cancelacionesEnCursoC4.has(idCita)) return;
+    cancelacionesEnCursoC4.add(idCita);
+    if (!cancelacionesC4.has(idCita)) cancelacionesC4.set(idCita, zookiCrearComandoAgenda());
     try {
         const form = new FormData();
         form.append('id_cita', idCita);
+        form.append('clave_operacion', cancelacionesC4.get(idCita).clave(form));
         const res = await (await fetch('index.php?action=cancelar_cita_ajax', {
             method: 'POST',
             body: form,
@@ -1667,6 +1686,8 @@ async function cancelarCitaPortal(idCita) {
     } catch (e) {
         console.error(e);
         zookiToast('No pudimos conectarnos con el servidor.', 'error');
+    } finally {
+        cancelacionesEnCursoC4.delete(idCita);
     }
 }
 

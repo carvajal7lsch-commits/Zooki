@@ -51,8 +51,13 @@ class UsuarioController {
     }
 
     /** Nombre de la clínica activa, para los correos al personal. */
+    private function marcaClinica(): array {
+        require_once __DIR__ . '/../models/MarcaClinica.php';
+        return (new MarcaClinica($this->db))->actual();
+    }
+
     private function nombreClinica(): string {
-        return (string) (Contexto::actual()['clinica'] ?? 'tu clínica');
+        return (string) $this->marcaClinica()['nombre'];
     }
 
     private function correo() {
@@ -201,7 +206,7 @@ class UsuarioController {
                 $idInvitacion = $alta['enlace']['id'];
                 $enlace = EnlaceCuenta::crear('activar_personal', $idInvitacion, $alta['enlace']['token']);
                 // D2.1: correo propio de invitación (la persona no se registró sola).
-                $enviado = $this->correo()->enviarInvitacionPersonal($datos['email'], $datos['nombre_completo'], $this->nombreClinica(), $rol, $enlace, CuentaTitular::ACTIVACION_HORAS);
+                $enviado = $this->correo()->enviarInvitacionPersonal($datos['email'], $datos['nombre_completo'], $this->nombreClinica(), $rol, $enlace, CuentaTitular::ACTIVACION_HORAS, $this->marcaClinica());
             } else {
                 $invitacion = $invitaciones->crear($persona, $idClinica, $datos);
                 $idInvitacion = $invitacion['id'];
@@ -261,7 +266,7 @@ class UsuarioController {
             return true;
         }
         $enlace = EnlaceCuenta::crear('invitacion_personal', $invitacion['id'], $invitacion['token']);
-        return $this->correo()->enviarInvitacionClinica($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre($idRol), $enlace, InvitacionPersonal::HORAS);
+        return $this->correo()->enviarInvitacionClinica($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre($idRol), $enlace, InvitacionPersonal::HORAS, $this->marcaClinica());
     }
 
     /** D2.2: reenvía cualquier invitación pendiente de esta clínica, con un enlace nuevo de 72 horas. */
@@ -281,7 +286,7 @@ class UsuarioController {
                 $solicitud = (new CuentaTitular($this->db))->restablecerPersonal((int) $fila['id_usuario'], $this->clinica());
                 $idNueva = $solicitud['enlace']['id'];
                 $enlace = EnlaceCuenta::crear('activar_personal', $idNueva, $solicitud['enlace']['token']);
-                $enviado = $this->correo()->enviarInvitacionPersonal($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $persona['id_rol']), $enlace, $solicitud['horas']);
+                $enviado = $this->correo()->enviarInvitacionPersonal($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $persona['id_rol']), $enlace, $solicitud['horas'], $this->marcaClinica());
             } else {
                 $nueva = $invitaciones->reenviar((int) $fila['id'], $this->clinica());
                 $idNueva = $nueva['id'];
@@ -478,8 +483,8 @@ class UsuarioController {
             $this->correo()->limpiarDirecciones();
             // D2.1: una invitación pendiente se reenvía como invitación; si no, aviso de restablecimiento.
             $enviado = $solicitud['accion'] === 'activar_personal'
-                ? $this->correo()->enviarInvitacionPersonal($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $persona['id_rol']), $enlace, $solicitud['horas'])
-                : $this->correo()->enviarRestablecimientoPorAdministrador($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), $enlace, $solicitud['horas']);
+                ? $this->correo()->enviarInvitacionPersonal($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), Roles::nombre((int) $persona['id_rol']), $enlace, $solicitud['horas'], $this->marcaClinica())
+                : $this->correo()->enviarRestablecimientoPorAdministrador($persona['email'], $persona['nombre_completo'], $this->nombreClinica(), $enlace, $solicitud['horas'], $this->marcaClinica());
             // Revisión de D2.1: con la invitación pendiente se dice lo que pasó.
             $reenvio = $solicitud['accion'] === 'activar_personal';
             if ($enviado) {

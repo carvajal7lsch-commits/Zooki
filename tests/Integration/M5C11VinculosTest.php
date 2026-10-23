@@ -2,6 +2,7 @@
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
 require_once __DIR__ . '/../../models/PropietarioClinica.php';
 require_once __DIR__ . '/../../models/RegistroPropietario.php';
 require_once __DIR__ . '/../../models/Mascota.php';
@@ -33,6 +34,7 @@ final class M5C11VinculosTest extends TestCase
     {
         $this->db = DosClinicas::sqlite();
         DosClinicas::crearMascotasSqlite($this->db);
+        ConocimientoRealPrueba::taxonomia($this->db);
         DosClinicas::crearCatalogosSqlite($this->db);
         DosClinicas::crearHistoriaSqlite($this->db);
         DosClinicas::poblarAgenda($this->db);
@@ -229,8 +231,10 @@ final class M5C11VinculosTest extends TestCase
         $this->assertSame('inactivo', $this->vinculoMascota(DosClinicas::NORTE), 'Confirmar el vínculo no reactiva sola a la mascota (RN-110).');
 
         $this->comoPropietario();
+        (new CargadorConocimiento($this->db))->cargar(ConocimientoRealPrueba::CARPETA);
         $_POST = ['id_clinica' => '1', 'id_mascota' => '1', 'id_veterinario' => '2', 'id_tipo_cita' => '1', 'fecha' => self::HOY, 'hora' => '09:00', 'motivo' => 'Control'];
         $reloj = fn (): DateTimeImmutable => new DateTimeImmutable(self::HOY . ' 07:00', new DateTimeZone(ReglaAtencion::ZONA));
+            $_POST = AgendaC4Prueba::capturar($this->db, $_POST, $reloj);
         ob_start();
         try {
             (new CitaController($this->db, $reloj))->agendarDesdePortalAjax();

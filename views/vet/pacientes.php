@@ -1,5 +1,4 @@
 <?php require_once __DIR__ . '/../../config/App.php'; ?>
-<link rel="stylesheet" href="css/pacientes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <?php
 require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 // views/mascotas/listado.php
@@ -13,49 +12,14 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 <!-- Select2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-<div class="section-card">
-    <!-- Super Header Compacto -->
-    <div class="header-container-white">
-        <!-- Area: desc -->
-        <div class="head-title-desc">
-            <h1 class="users-page-title"><i class="fas fa-paw icon-primary"></i> Gestión de Pacientes</h1>
-            <p class="users-module-desc">
-                Administra el directorio de clientes y sus mascotas, y gestiona sus expedientes clínicos de manera integrada.
-            </p>
-        </div>
-
-        <!-- Area: top -->
-        <div class="head-top-right">
-            <div class="tabs-wrapper">
-                <button data-c3-click="evento0" id="tabOwners" class="tab-btn active">
-                    <i class="fas fa-users"></i>
-                    <span>Propietarios</span>
-                </button>
-                <button data-c3-click="evento1" id="tabPets" class="tab-btn">
-                    <i class="fas fa-paw"></i>
-                    <span>Mascotas</span>
-                </button>
-            </div>
-
-            <div class="command-center-actions cc-actions-gap">
-                <?php // M2 C7 (hallazgo del usuario, 2026-10-15; RE-1.5.1 a RE-1.5.3): vincular una mascota que ya está en Zooki, a la vista. ?>
-                <button type="button" class="btn-create btn-create-outline" data-vincular-mascota-cliente>
-                    <i class="fas fa-link"></i>
-                    <span>Vincular mascota de un cliente</span>
-                </button>
-                <button data-c3-click="evento2" class="btn-create">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Nuevo Registro</span>
-                </button>
-            </div>
-        </div>
-
+<div class="section-card pacientes-modulo">
+    <div class="pacientes-barra" role="region" aria-label="Buscar y filtrar pacientes">
         <!-- Area: search and status (Filtros Propietarios) -->
         <div class="users-controls-bar__filters is-active" id="searchRowOwners">
             <div class="head-search">
                 <div class="search-input">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="ownerSearch" placeholder="Buscar propietario por nombre, documento o email..." data-c3-keyup="evento3">
+                    <input type="text" id="ownerSearch" aria-label="Buscar propietario por nombre, documento o correo" placeholder="Buscar por nombre, documento o correo" data-c3-keyup="evento3">
                 </div>
             </div>
             <div class="head-status-filters">
@@ -116,6 +80,17 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                 </button>
             </div>
         </div>
+        <div class="command-center-actions cc-actions-gap">
+            <?php // RE-1.5.1/3: misma vinculación, ahora junto a los filtros. ?>
+            <button type="button" class="btn-create btn-create-outline" data-vincular-mascota-cliente title="Vincular mascota de un cliente">
+                <i class="fas fa-link" aria-hidden="true"></i>
+                <span>Vincular mascota</span>
+            </button>
+            <button type="button" data-c3-click="evento2" class="btn-create">
+                <i class="fas fa-plus" aria-hidden="true"></i>
+                <span>Nuevo registro</span>
+            </button>
+        </div>
     </div>
 
     <!-- CONTENEDOR PRINCIPAL DEL MÓDULO -->
@@ -153,7 +128,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
         </div>
 
         <!-- VISTA 2: Expediente Detallado (Dossier) - Se muestra al elegir un cliente -->
-        <div id="dossierView" class="view-container dossier-view-active dossier-animation d-none">
+        <div id="dossierView" class="view-container dossier-view-active dossier-animation propietario-detalle d-none">
 
             <!-- CONTENEDOR 1: LISTADO DE PACIENTES (Layout Rediseñado) -->
             <div id="dossierListContainer" class="dossier-layout-grid">
@@ -164,60 +139,42 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                     <div class="dossier-card owner-details-card">
                         <div class="dossier-card-header">
                             <div class="dossier-card-title">
-                                <div class="icon-circle"><i class="fas fa-user-circle"></i></div>
-                                <h3>Propietario</h3>
+                                <span class="avatar-iniciales" id="dossierOwnerAvatar" aria-hidden="true"></span>
+                                <div class="propietario-identidad">
+                                    <h2 id="dossierOwnerName">---</h2>
+                                    <span id="dossierOwnerEstado" class="status-badge">---</span>
+                                </div>
                             </div>
                             <div class="dossier-card-actions">
-                                <button data-c3-click="evento16" class="btn-icon-light" title="Editar Propietario">
+                                <button type="button" data-c3-click="evento16" class="btn-icon-light" title="Editar propietario" aria-label="Editar propietario">
                                     <i class="fas fa-pen"></i>
-                                </button>
-                                <button data-c3-click="evento17" class="btn-icon-light" title="Volver al Directorio">
-                                    <i class="fas fa-arrow-left"></i>
                                 </button>
                             </div>
                         </div>
 
                         <div class="owner-data-list">
                             <div class="data-group">
-                                <label>NOMBRE COMPLETO</label>
-                                <span id="dossierOwnerName" class="data-value main-value">---</span>
-                            </div>
-                            <div class="data-group">
-                                <label>DOCUMENTO DE IDENTIDAD</label>
+                                <label><i class="far fa-id-card" aria-hidden="true"></i> Documento</label>
                                 <span id="dossierOwnerDoc" class="data-value">---</span>
                             </div>
                             <div class="data-group">
-                                <label>TELÉFONO DE CONTACTO</label>
+                                <label><i class="fas fa-mobile-alt" aria-hidden="true"></i> Teléfono</label>
                                 <span id="dossierOwnerPhone" class="data-value">---</span>
                             </div>
                             <div class="data-group">
-                                <label>CORREO ELECTRÓNICO</label>
+                                <label><i class="far fa-envelope" aria-hidden="true"></i> Correo</label>
                                 <span id="dossierOwnerEmail" class="data-value">---</span>
                             </div>
-                            <div class="data-group horizontal-group">
-                                <label>ESTADO</label>
-                                <span id="dossierOwnerEstado" class="status-badge">---</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tarjeta de Acciones Rápidas -->
-                    <div class="dossier-card quick-actions-card">
-                        <div class="quick-actions-header">
-                            <i class="fas fa-bolt"></i> ACCIONES RÁPIDAS
                         </div>
                         <div class="quick-actions-list">
-                            <button data-c3-click="evento18" class="btn-quick-action">
-                                <span><i class="fas fa-phone-alt"></i> Llamar Propietario</span>
-                                <i class="fas fa-chevron-right"></i>
+                            <button type="button" data-c3-click="evento18" class="btn-quick-action" title="Llamar al propietario">
+                                <i class="fas fa-phone-alt" aria-hidden="true"></i><span>Llamar</span>
                             </button>
-                            <button data-c3-click="evento19" class="btn-quick-action">
-                                <span><i class="fas fa-envelope"></i> Enviar Email</span>
-                                <i class="fas fa-chevron-right"></i>
+                            <button type="button" data-c3-click="evento19" class="btn-quick-action" title="Enviar correo al propietario">
+                                <i class="far fa-envelope" aria-hidden="true"></i><span>Correo</span>
                             </button>
-                            <button data-c3-click="evento20" class="btn-quick-action">
-                                <span><i class="far fa-calendar-alt"></i> Agendar Cita</span>
-                                <i class="fas fa-chevron-right"></i>
+                            <button type="button" data-c3-click="evento20" class="btn-quick-action">
+                                <i class="far fa-calendar-alt" aria-hidden="true"></i><span>Agendar cita</span>
                             </button>
                         </div>
                     </div>
@@ -230,15 +187,12 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                     <div class="dossier-card patients-card" id="dossierListSection">
                         <div class="patients-header-row">
                             <div class="patients-title-area">
-                                <h2><i class="fas fa-paw"></i> Pacientes</h2>
-                                <button data-c3-click="evento21" class="btn-pill-primary">
-                                    <i class="fas fa-plus"></i> Nuevo
-                                </button>
+                                <h2>Mascotas <span id="dossierPetsTotal" class="tag-mini">0</span></h2>
                             </div>
                             <div class="patients-filters-area">
                                 <div class="search-box-inline">
                                     <i class="fas fa-search"></i>
-                                    <input type="text" id="dossierPetSearch" placeholder="Buscar paciente..." data-c3-keyup="evento22">
+                                    <input type="text" id="dossierPetSearch" placeholder="Buscar mascota" aria-label="Buscar mascota por nombre, especie o historia" data-c3-keyup="evento22">
                                 </div>
                                 <select id="dossierPetSpeciesFilter" data-c3-change="evento23">
                                     <option value="">Todas las especies</option>
@@ -247,6 +201,9 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                     <option value="Roedor">Roedores</option>
                                     <option value="Ave">Aves</option>
                                 </select>
+                                <button type="button" data-c3-click="evento21" class="btn-pill-primary">
+                                    <i class="fas fa-plus" aria-hidden="true"></i> Nueva mascota
+                                </button>
                             </div>
                         </div>
 
@@ -267,31 +224,39 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
                     <!-- SECCIÓN B: EXPEDIENTE DETALLADO DE MASCOTA (Dashboard) -->
                     <div class="dossier-card patients-card dossier-pet-dashboard-section" id="dossierPetDashboardSection">
-                        <!-- Header del Dashboard -->
-                        <div class="dossier-dashboard-header dossier-dashboard-header-styled">
-                            <div class="dossier-dashboard-title">
-                                <button data-c3-click="evento26" class="command-center-btn-secondary btn-dossier-back">
-                                    <i class="fas fa-arrow-left"></i> Volver a Pacientes
-                                </button>
-                                <h4><i class="fas fa-paw"></i> <span id="dashPetName"></span></h4>
+                        <div class="ficha-mascota-cabecera">
+                            <div class="ficha-mascota-avatar">
+                                <img id="dashPetPhoto" class="ficha-mascota-foto" alt="" hidden>
+                                <span id="dashPetIniciales" class="avatar-iniciales" aria-hidden="true"></span>
                             </div>
-                            <div class="dossier-dashboard-actions">
-                                <button id="dashEditPetBtn" class="command-center-btn-secondary btn-dossier-back">
-                                    <i class="fas fa-edit"></i> Editar
-                                </button>
+                            <div class="ficha-mascota-identidad">
+                                <div class="ficha-mascota-nombre">
+                                    <h2 id="dashPetName"></h2>
+                                    <span id="dashPetHCBadge" class="tag-mini"></span>
+                                    <span id="dashPetStatus" class="status-badge"></span>
+                                </div>
+                                <p id="dashPetResumen"></p>
                             </div>
+                            <button type="button" id="dashEditPetBtn" class="btn-create btn-create-outline ficha-mascota-editar">
+                                <i class="fas fa-pen" aria-hidden="true"></i> Editar
+                            </button>
+                        </div>
+                        <div class="ficha-mascota-resumen" aria-label="Resumen del historial registrado">
+                            <div><i class="far fa-file-alt" aria-hidden="true"></i><div><span>Última consulta</span><p id="dashUltimaConsulta"></p></div></div>
+                            <div><i class="fas fa-syringe" aria-hidden="true"></i><div><span>Vacunas · último registro</span><p id="dashUltimaVacuna"></p></div></div>
+                            <div><i class="fas fa-shield-alt" aria-hidden="true"></i><div><span>Desparasitación · último registro</span><p id="dashUltimaDesparasitacion"></p></div></div>
                         </div>
 
                         <?php // M2 C1 (RE-2.1.5, RE-2.10.1): arriba de la ficha, antes de las pestañas; la pinta alertas-medicas.js. ?>
-                        <section class="alertas-medicas" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-ficha hidden></section>
+                        <section class="alertas-medicas alertas-medicas--compacta" aria-label="Alergias y alertas" data-alertas-medicas data-alertas-ficha hidden></section>
 
                         <!-- Tabs del Dashboard -->
                         <div class="dossier-dashboard-tabs">
                             <button class="dossier-dashboard-tab active" data-c3-click="evento27">
-                                <i class="fas fa-info-circle"></i> Información General
+                                Información general
                             </button>
                             <button class="dossier-dashboard-tab" data-c3-click="evento28">
-                                <i class="fas fa-notes-medical"></i> Historia Clínica
+                                Historia clínica
                             </button>
                         </div>
 
@@ -299,14 +264,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                         <div class="dossier-dashboard-content">
                             <!-- PESTAÑA: INFORMACIÓN GENERAL -->
                             <div id="dashGeneral" class="dash-tab-content active d-block">
-                                <div class="dossier-pet-info-grid">
-                                    <!-- Foto del paciente -->
-                                    <div class="pos-relative">
-                                        <img id="dashPetPhoto" src="img/default-pet.svg" class="dossier-pet-photo" alt="">
-                                        <div id="dashPetStatus" class="dash-pet-status"></div>
-                                    </div>
-
-                                    <!-- Campos de datos detallados -->
+                                <div class="ficha-mascota-datos">
                                     <div class="dossier-pet-details">
                                         <div class="dossier-pet-field">
                                             <label>Especie</label>
@@ -325,12 +283,12 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                             <span id="dashPetPeso">---</span>
                                         </div>
                                         <div class="dossier-pet-field">
-                                            <label>Historia Clínica</label>
-                                            <code id="dashPetHC" class="hc-badge">---</code>
-                                        </div>
-                                        <div class="dossier-pet-field">
                                             <label>Fecha de Nacimiento</label>
                                             <span id="dashPetFechaNac">---</span>
+                                        </div>
+                                        <div class="dossier-pet-field">
+                                            <label>Historia Clínica</label>
+                                            <code id="dashPetHC" class="hc-badge">---</code>
                                         </div>
                                     </div>
                                 </div>
@@ -1171,48 +1129,6 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
         </div>
     </form>
 </aside>
-
-<!-- MODAL AGENDAR CITA -->
-<div id="modalCita" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="far fa-calendar-check"></i> Agendar Cita</h3>
-            <span class="close" data-c3-click="evento57">&times;</span>
-        </div>
-        <form id="formCita" data-c3-submit="evento58">
-            <input type="hidden" name="id_mascota" id="cita_id_mascota">
-            <div class="modal-body">
-                <p class="sub-text">Agendando cita para: <strong id="citaPetName"></strong></p>
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Fecha *</label>
-                        <input type="date" name="fecha" id="cita_fecha" min="<?php echo date(
-                            "Y-m-d",
-                        ); ?>" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Hora *</label>
-                        <input type="time" name="hora" required>
-                    </div>
-                    <div class="input-group full">
-                        <label>Veterinario Asignado *</label>
-                        <select name="id_veterinario" id="cita_veterinario" required>
-                            <option value="">Cargando veterinarios...</option>
-                        </select>
-                    </div>
-                    <div class="input-group full">
-                        <label>Motivo de la Cita *</label>
-                        <input type="text" name="motivo" required placeholder="Ej. Chequeo general, Vacunación, Enfermedad...">
-                    </div>
-                </div>
-                <div class="pacientes-estilo-28">
-                    <i class="fas fa-envelope"></i> Se enviará un correo de confirmación al propietario.
-                </div>
-                <button type="submit" class="pacientes-estilo-29 btn-primary full-btn">Confirmar Cita</button>
-            </div>
-        </form>
-    </div>
-</div>
 
 <div id="lightboxVisor" class="lightbox" data-c3-click="evento59">
     <img src="" alt="Vista previa">

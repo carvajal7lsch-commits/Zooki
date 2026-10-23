@@ -70,6 +70,8 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
+<?php require __DIR__ . '/../partials/agenda_herramientas.php'; ?>
+<?php if ($rolAgenda === Roles::VETERINARIO): ?>
 <!-- ══ MODAL — Agendar cita ══ -->
 <div id="citaModalOverlay" class="zk-overlay" data-ui-accion="cerrar-cita" data-ui-fondo>
     <div class="zk-modal" role="dialog" aria-modal="true" aria-labelledby="citaModalTitle">
@@ -81,9 +83,15 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             <button type="button" class="cal-icon-btn" data-ui-accion="cerrar-cita" aria-label="Cerrar"><i class="fas fa-times"></i></button>
         </header>
 
-        <form id="formCitaModal" class="zk-modal__split" onsubmit="crearCitaModal(event)" novalidate autocomplete="off">
-            <div class="zk-modal__col">
-                <p class="zk-modal__section">Datos de la cita</p>
+        <form id="formCitaModal" class="cita-distribucion" novalidate autocomplete="off">
+            <div class="cita-pasos">
+            <ol class="cita-pasos__indicador" aria-label="Pasos para agendar">
+                <li><button type="button" data-cita-indicador="0" aria-current="step"><span>1</span>Paciente</button></li>
+                <li><button type="button" data-cita-indicador="1" disabled><span>2</span>Urgencia</button></li>
+            </ol>
+            <div class="cita-pasos__contenido">
+            <section class="cita-pasos__panel" data-cita-paso="0" aria-labelledby="citaPasoPaciente">
+                <h4 id="citaPasoPaciente" tabindex="-1">Paciente y atención</h4>
                 <input type="hidden" id="modal_fecha">
                 <input type="hidden" id="modal_veterinario_hidden">
                 <input type="hidden" id="modal_mascota">
@@ -91,30 +99,31 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                 <input type="hidden" id="modal_hora">
 
                 <div class="zk-field">
-                    <label class="zk-label" for="cm_mascota_search">Mascota</label>
+                    <label class="zk-label" for="cm_mascota_search">Mascota <span class="zk-requerido" aria-hidden="true">*</span></label>
                     <div class="zk-search" id="cm_mascota_wrap">
                         <i class="fas fa-search"></i>
                         <input type="text" id="cm_mascota_search" class="zk-input zk-input--icon"
-                               placeholder="Busca por mascota o propietario" oninput="filtrarMascotas(this.value)">
-                        <div class="zk-dropdown" id="cm_mascota_dropdown" role="listbox"></div>
+                               placeholder="Busca por mascota o propietario">
+                        <div class="zk-dropdown" id="cm_mascota_dropdown" role="listbox" hidden></div>
                     </div>
                     <div class="zk-selected" id="cm_mascota_chip" hidden>
-                        <i class="fas fa-paw"></i>
+                        <img id="cm_mascota_foto" class="zk-mascota-foto" alt="" width="32" height="32" hidden>
+                        <span id="cm_mascota_iniciales" class="avatar-iniciales zk-mascota-iniciales" aria-hidden="true"></span>
                         <span id="cm_mascota_chip_name"></span>
                         <button type="button" data-ui-accion="cambiar-mascota">Cambiar</button>
                     </div>
                 </div>
 
                 <div class="zk-field" id="cm_vet_field" hidden>
-                    <label class="zk-label" for="modal_veterinario">Veterinario</label>
-                    <select id="modal_veterinario" class="zk-input" onchange="onModalVeterinarioChange()">
+                    <label class="zk-label" for="modal_veterinario">Veterinario <span class="zk-requerido" aria-hidden="true">*</span></label>
+                    <select id="modal_veterinario" class="zk-input">
                         <option value="">Selecciona un veterinario</option>
                     </select>
                 </div>
 
                 <div class="zk-field">
-                    <label class="zk-label" for="modal_tipo_cita">Tipo de cita</label>
-                    <select id="modal_tipo_cita" class="zk-input" onchange="onModalTipoCitaChange()">
+                    <label class="zk-label" for="modal_tipo_cita">Tipo de cita <span class="zk-requerido" aria-hidden="true">*</span></label>
+                    <select id="modal_tipo_cita" class="zk-input">
                         <option value="">Selecciona el tipo</option>
                     </select>
                 </div>
@@ -123,11 +132,32 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                     <label class="zk-label" for="modal_motivo">Motivo <span class="zk-optional">(opcional)</span></label>
                     <input type="text" id="modal_motivo" class="zk-input" maxlength="255" placeholder="Ej. control de peso">
                 </div>
-            </div>
+                <div class="cita-pasos__acciones">
+                    <button type="button" class="cal-btn cal-btn--ghost" id="cm_cancelar" data-ui-accion="cerrar-cita">Cancelar</button>
+                    <button type="button" class="cal-btn cal-btn--primary" id="cm_siguiente" disabled>Continuar</button>
+                </div>
+            </section>
+            <section class="cita-pasos__panel" data-cita-paso="1" aria-labelledby="citaPasoUrgencia" hidden>
+                <h4 id="citaPasoUrgencia" tabindex="-1">Urgencia</h4>
+                <?php
+                $prefijoAgenda = 'modal_agenda';
+                $puedeRevisarAgenda = true;
+                $ocultarNotaAgenda = true;
+                require __DIR__ . '/../partials/triage_agenda.php';
+                unset($ocultarNotaAgenda);
+                ?>
+                <div class="cita-pasos__acciones">
+                    <button type="button" class="cal-btn cal-btn--ghost" id="cm_anterior" hidden>Atrás</button>
+                </div>
+            </section>
 
-            <div class="zk-modal__col zk-modal__col--slots">
-                <p class="zk-modal__section">Horario disponible</p>
+            </div>
+            </div>
+            <div class="zk-modal__col zk-modal__col--slots cita-horarios">
+                <p class="zk-modal__section">Horario disponible <span class="zk-requerido" aria-hidden="true">*</span></p>
+                <p class="cita-horarios__resumen" id="cm_horario_resumen" hidden></p>
                 <div class="slot-panel" id="modal_slots_container"></div>
+                <button type="button" class="cal-btn cal-btn--primary" id="cm_urgencias" hidden>Ir a Urgencias</button>
             </div>
         </form>
 
@@ -137,13 +167,13 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             </div>
             <p class="zk-summary" id="cm_resumen"></p>
             <div class="zk-modal__actions">
-                <button type="button" class="cal-btn cal-btn--ghost" data-ui-accion="cerrar-cita">Cancelar</button>
-                <button type="submit" form="formCitaModal" class="cal-btn cal-btn--primary" id="cm_submit" disabled>Agendar cita</button>
+                <button type="submit" form="formCitaModal" class="cal-btn cal-btn--primary" id="cm_submit" hidden disabled>Agendar cita</button>
             </div>
         </footer>
     </div>
 </div>
 
+<?php endif; ?>
 <!-- ══ MODAL — Reprogramar cita ══ -->
 <div id="reprogramarModalOverlay" class="zk-overlay" data-ui-accion="cerrar-reprogramacion" data-ui-fondo>
     <div class="zk-modal" role="dialog" aria-modal="true" aria-labelledby="reprogTitle">
@@ -162,19 +192,19 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 
                 <div class="zk-field">
                     <label class="zk-label" for="reprogramar_fecha">Fecha</label>
-                    <input type="date" id="reprogramar_fecha" class="zk-input" onchange="cargarSlotsReprogramar()">
+                    <input type="date" id="reprogramar_fecha" class="zk-input">
                 </div>
 
                 <div class="zk-field">
                     <label class="zk-label" for="reprogramar_veterinario">Veterinario</label>
-                    <select id="reprogramar_veterinario" class="zk-input" onchange="cargarSlotsReprogramar()">
+                    <select id="reprogramar_veterinario" class="zk-input">
                         <option value="">Selecciona un veterinario</option>
                     </select>
                 </div>
 
                 <div class="zk-field">
                     <label class="zk-label" for="reprogramar_tipo_cita">Tipo de cita</label>
-                    <select id="reprogramar_tipo_cita" class="zk-input" onchange="cargarSlotsReprogramar()">
+                    <select id="reprogramar_tipo_cita" class="zk-input">
                         <option value="">Selecciona el tipo</option>
                     </select>
                 </div>
@@ -198,6 +228,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
     </div>
 </div>
 
+<script src="js/triage-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/calendario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 
 <!-- MODAL NUEVA CONSULTA (necesario para Iniciar Atención desde el calendario) -->

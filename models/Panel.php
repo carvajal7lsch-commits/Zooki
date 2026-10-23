@@ -15,7 +15,8 @@ require_once __DIR__ . '/ModeloClinica.php';
 class Panel extends ModeloClinica
 {
     private const SELECT_CITA = "SELECT c.id_cita, c.fecha, c.hora, c.hora_fin, c.duracion_minutos, c.estado,
-                c.motivo, c.id_veterinario, c.id_mascota, m.nombre AS mascota, m.id_propietario,
+                c.motivo, c.prioridad, c.hora_llegada, c.id_veterinario, c.id_mascota, m.nombre AS mascota, m.id_propietario,
+                m.fecha_nacimiento, m.url_foto,
                 e.nombre_especie AS especie, p.nombre_completo AS propietario,
                 v.nombre_completo AS veterinario, COALESCE(tc.nombre_tipo, 'Consulta') AS tipo
             FROM citas c
@@ -84,6 +85,82 @@ class Panel extends ModeloClinica
         $clinica = $this->clinica();
         $porTabla = [$clinica, $clinica, $desde, $hasta, $clinica, $idVeterinario, $clinica, $idVeterinario];
         return $this->filas($sql, array_merge($porTabla, $porTabla));
+    }
+
+    /** HU-6.1 (RE-6.1.8): días del rango con alguna cita del veterinario, para el calendario del Inicio. */
+    public function diasConCitas(int $idVeterinario, string $desde, string $hasta): array
+    {
+        $filas = $this->filas(
+            "SELECT DISTINCT fecha FROM citas
+             WHERE id_clinica = ? AND id_veterinario = ? AND estado <> 'cancelada' AND fecha BETWEEN ? AND ?
+             ORDER BY fecha ASC",
+            [$this->clinica(), $idVeterinario, $desde, $hasta]
+        );
+        return array_map(fn($f) => substr((string) $f['fecha'], 0, 10), $filas);
+    }
+
+    /** RE-6.1.9: el primer día con citas del veterinario después de una fecha; null si no hay. */
+    public function proximoDiaConCitas(int $idVeterinario, string $despuesDe): ?string
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT MIN(fecha) FROM citas
+             WHERE id_clinica = ? AND id_veterinario = ? AND estado <> 'cancelada' AND fecha > ?"
+        );
+        $stmt->execute([$this->clinica(), $idVeterinario, $despuesDe]);
+        $fecha = $stmt->fetchColumn();
+        return $fecha ? substr((string) $fecha, 0, 10) : null;
+    }
+
+    /**
+     * RE-6.1.5: alergias y alertas activas del siguiente paciente, primero las
+     * alergias. Toda clínica vinculada las ve (RN-113); sin vínculo activo, nada.
+     */
+    public function alertasActivas(int $idMascota): array
+    {
+        return $this->filas(
+            "SELECT a.tipo, a.descripcion FROM alertas_medicas a
+             JOIN mascota_clinica mc ON mc.id_mascota = a.id_mascota AND mc.id_clinica = ? AND mc.estado = 'activo'
+             WHERE a.id_mascota = ? AND a.activa = 1
+             ORDER BY CASE WHEN a.tipo = 'alergia' THEN 0 ELSE 1 END, a.fecha DESC, a.id_alerta DESC",
+            [$this->clinica(), $idMascota]
+        );
+    }
+
+    /**
+     * RE-6.1.11: los últimos pacientes que atendió el veterinario en la clínica
+     * activa, uno por mascota con su consulta más reciente. Solo mascotas
+     * activas y vinculadas, para que «Ver ficha» abra.
+     */
+    public function pacientesRecientes(int $idVeterinario, int $limite): array
+    {
+        $limite = max(1, $limite);
+        return $this->filas(
+            "SELECT co.id_consulta, co.fecha_hora, m.id_mascota, m.nombre AS mascota, m.url_foto, m.id_propietario,
+                    p.nombre_completo AS propietario, COALESCE(tc.nombre_tipo, co.motivo_consulta) AS motivo
+             FROM consultas co
+             JOIN mascotas m ON m.id_mascota = co.id_mascota AND m.estado = 1
+             JOIN mascota_clinica mc ON mc.id_mascota = m.id_mascota AND mc.id_clinica = co.id_clinica AND mc.estado = 'activo'
+             LEFT JOIN usuarios p ON p.id_usuario = m.id_propietario
+             LEFT JOIN citas ci ON ci.id_cita = co.id_cita AND ci.id_clinica = co.id_clinica
+             LEFT JOIN tipos_cita tc ON tc.id_tipo_cita = ci.id_tipo_cita
+             WHERE co.id_clinica = ? AND co.id_veterinario = ?
+               AND co.id_consulta = (
+                   SELECT co2.id_consulta FROM consultas co2
+                   WHERE co2.id_clinica = co.id_clinica AND co2.id_veterinario = co.id_veterinario AND co2.id_mascota = co.id_mascota
+                   ORDER BY co2.fecha_hora DESC, co2.id_consulta DESC LIMIT 1)
+             ORDER BY co.fecha_hora DESC, co.id_consulta DESC
+             LIMIT " . (int) $limite,
+            [$this->clinica(), $idVeterinario]
+        );
+    }
+
+    /** RE-6.1.9: un hueco más corto que el tipo de cita activo más corto no se puede agendar. */
+    public function duracionMinimaCita(): ?int
+    {
+        $stmt = $this->conn->prepare("SELECT MIN(duracion_minutos) FROM tipos_cita WHERE id_clinica = ? AND activo = 1 AND duracion_minutos > 0");
+        $stmt->execute([$this->clinica()]);
+        $minimo = $stmt->fetchColumn();
+        return $minimo === null || $minimo === false ? null : (int) $minimo;
     }
 
     /** Consultas registradas entre dos instantes, [desde, hasta). */

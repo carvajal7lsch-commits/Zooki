@@ -57,7 +57,12 @@ final class CitaEstadoTest extends TestCase
         foreach (['cancelada', 'completada', 'no_asistio', 'sin_cerrar', 'en_curso'] as $estado) {
             $this->ponerEstado($estado);
             $this->assertFalse($this->citas->iniciarAtencion($this->cita(), self::FECHA . ' 09:00:00'), "No debe iniciar una cita $estado");
-            $this->assertFalse($this->citas->cancelar($this->cita()), "No debe cancelar una cita $estado");
+            try {
+                $this->citas->cancelar($this->cita());
+                $this->fail("No debe cancelar una cita $estado");
+            } catch (InvalidArgumentException $error) {
+                $this->assertStringContainsString('pendientes o confirmadas', $error->getMessage());
+            }
             $this->assertSame($estado, $this->campo('estado'));
         }
     }
@@ -78,8 +83,14 @@ final class CitaEstadoTest extends TestCase
 
     public function testNoAsistioSoloDesdeUnaCitaAbiertaYLiberaElHorario(): void
     {
-        $this->assertTrue($this->citas->marcarNoAsistio($this->cita()));
-        $this->assertFalse($this->citas->marcarNoAsistio($this->cita()));
+        // C8 (RE-4.7.1): solo después de la hora + tolerancia (10 min por defecto).
+        $tarde = new Cita($this->db, static fn () => new DateTimeImmutable(self::FECHA . ' 09:10:01', new DateTimeZone('America/Bogota')));
+        $this->assertTrue($tarde->marcarNoAsistio($this->cita()));
+        try {
+            $tarde->marcarNoAsistio($this->cita());
+            $this->fail('Una cita ya cerrada no se vuelve a marcar.');
+        } catch (InvalidArgumentException) {
+        }
 
         $otra = $this->reservar('09:00');
 
@@ -102,7 +113,10 @@ final class CitaEstadoTest extends TestCase
         DosClinicas::vincularLunaASur($this->db);
         $this->ponerEstado('en_curso');
         $this->comoVeterinario(DosClinicas::SUR, DosClinicas::VET_SUR);
-        $deSur = $this->reservar('09:30', DosClinicas::VET_SUR, 2);
+        // Pacientes distintos: una atención abierta no libera la misma mascota.
+        $this->db->exec("INSERT INTO mascotas (id_mascota,id_propietario,id_clinica_registro,token_carnet,nombre,estado) VALUES (2,9,2,'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb','Kira',1)");
+        $this->db->exec("INSERT INTO mascota_clinica (id_mascota,id_clinica) VALUES (2,2)");
+        $deSur = $this->reservar('09:30', DosClinicas::VET_SUR, 2, 2);
         $this->db->exec("UPDATE citas SET estado = 'en_curso' WHERE id_cita = $deSur");
 
         $correos = [];
@@ -150,10 +164,10 @@ final class CitaEstadoTest extends TestCase
 
     // ── Apoyo ───────────────────────────────────────────────────────────
 
-    private function reservar(string $hora, int $veterinario = DosClinicas::VET_NORTE, ?int $tipo = 1): int
+    private function reservar(string $hora, int $veterinario = DosClinicas::VET_NORTE, ?int $tipo = 1, int $mascota = 1): int
     {
         return $this->citas->registrar([
-            'id_mascota' => 1,
+            'id_mascota' => $mascota,
             'id_veterinario' => $veterinario,
             'fecha' => self::FECHA,
             'hora' => $hora,

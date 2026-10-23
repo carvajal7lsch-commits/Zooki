@@ -24,7 +24,7 @@ final class VinculosPropietario extends ModeloPropietario
     /** Clínicas activas con vínculo activo del propietario, con su autorización de historia. */
     public function clinicas(): array
     {
-        $consulta = $this->conn->prepare("SELECT c.id_clinica, c.nombre, c.direccion, c.telefono,
+        $consulta = $this->conn->prepare("SELECT c.id_clinica, c.nombre, c.direccion, c.telefono, c.telefono_urgencias, c.url_logo, c.email_contacto,
                 pc.autoriza_historia_compartida, pc.fecha_autorizacion
             FROM propietario_clinica pc
             JOIN clinicas c ON c.id_clinica = pc.id_clinica

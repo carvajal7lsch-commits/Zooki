@@ -74,9 +74,16 @@ async function abrirChrome(ruta) {
     };
     const cerrar = async () => {
         ws.close();
+        // D: en Windows Chrome suelta el perfil tarde (EBUSY). Esperar su salida real y limpiar sin
+        // convertir la limpieza de un temporal en un fallo de la prueba.
+        const salio = proceso.exitCode !== null ? Promise.resolve() : new Promise(resolver => proceso.once('exit', resolver));
         proceso.kill();
-        await new Promise(resolver => setTimeout(resolver, 400));
-        rmSync(perfil, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+        await Promise.race([salio, new Promise(resolver => setTimeout(resolver, 3000))]);
+        try {
+            rmSync(perfil, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
+        } catch (error) {
+            console.warn('Perfil temporal de Chrome sin borrar (' + error.code + '): ' + perfil);
+        }
     };
     await enviar('Page.enable');
     await enviar('Runtime.enable');

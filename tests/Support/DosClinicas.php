@@ -60,7 +60,7 @@ final class DosClinicas
         $db->exec("INSERT INTO roles (id_rol, nombre_rol) VALUES (1,'administrador'), (2,'veterinario'), (4,'propietario'), (5,'super-administrador')");
         $db->exec("CREATE TABLE clinicas (
             id_clinica INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, nit TEXT NOT NULL UNIQUE,
-            direccion TEXT, telefono TEXT, email_contacto TEXT, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP, id_plan INTEGER DEFAULT 2, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
+            direccion TEXT, telefono TEXT, telefono_urgencias TEXT, url_logo TEXT, email_contacto TEXT, tolerancia_llegada_min INTEGER NOT NULL DEFAULT 10, tope_sobrecupos INTEGER NOT NULL DEFAULT 2,plazo_reasignacion_min INTEGER NOT NULL DEFAULT 10,umbral_aviso_min INTEGER NOT NULL DEFAULT 15, fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP, id_plan INTEGER DEFAULT 2, estado TEXT NOT NULL DEFAULT 'pendiente_verificacion')");
         $db->exec("CREATE TABLE usuarios (
             id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, documento TEXT UNIQUE, tipo_documento TEXT,
             nombre_completo TEXT, telefono TEXT, email TEXT UNIQUE, password TEXT, google_uid TEXT UNIQUE,
@@ -103,6 +103,13 @@ final class DosClinicas
             nombre_invitado TEXT, tipo_documento_invitado TEXT, documento_invitado TEXT,
             email_invitado TEXT, telefono_invitado TEXT, token_hash TEXT NOT NULL, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP)");
+        $db->exec("CREATE TABLE ingresos_emergencia (id_ingreso INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,id_mascota_provisional INTEGER NOT NULL,id_mascota_final INTEGER,nombre_acompanante TEXT,documento_acompanante TEXT,telefono_acompanante TEXT,estado TEXT NOT NULL DEFAULT 'pendiente',fecha_ingreso TEXT,id_conciliador INTEGER,fecha_conciliacion TEXT,evidencia_conciliacion TEXT,necesidad_contacto_resuelta_en TEXT,motivo_conservacion_contacto TEXT,contacto_anonimizado_en TEXT)");
+        // M4 C2: destino ya publicado en B; soporte SQLite de las pruebas funcionales.
+        $db->exec('CREATE TABLE horarios_veterinario (id INTEGER PRIMARY KEY AUTOINCREMENT,id_veterinario INTEGER NOT NULL,id_clinica INTEGER NOT NULL,dia_semana INTEGER NOT NULL,hora_inicio TEXT NOT NULL,hora_fin TEXT NOT NULL,activo INTEGER NOT NULL DEFAULT 1)');
+        $db->exec("CREATE TABLE ausencias_veterinario (id INTEGER PRIMARY KEY AUTOINCREMENT,id_veterinario INTEGER NOT NULL,id_clinica INTEGER NOT NULL,fecha_hora_inicio TEXT NOT NULL,fecha_hora_fin TEXT NOT NULL,motivo TEXT,estado TEXT NOT NULL DEFAULT 'aprobada',id_solicitante INTEGER,id_revisor INTEGER,fecha_revision TEXT,motivo_resolucion TEXT)");
+        $db->exec("CREATE TABLE propuestas_horario (id_propuesta INTEGER PRIMARY KEY AUTOINCREMENT,id_veterinario INTEGER NOT NULL,id_clinica INTEGER NOT NULL,franjas TEXT NOT NULL,estado TEXT NOT NULL DEFAULT 'pendiente',id_revisor INTEGER,motivo_rechazo TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP,fecha_revision TEXT)");
+        $db->exec('CREATE TABLE cierres_clinica (id_cierre INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,inicio TEXT NOT NULL,fin TEXT NOT NULL,motivo TEXT NOT NULL,activo INTEGER NOT NULL DEFAULT 1,id_autor INTEGER NOT NULL,fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)');
+        $db->exec('CREATE TABLE operaciones_agenda (id_operacion INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,id_actor INTEGER,actor_clave TEXT NOT NULL,accion TEXT NOT NULL,clave_operacion TEXT NOT NULL,huella_entrada TEXT NOT NULL,resultado TEXT NOT NULL,fecha TEXT DEFAULT CURRENT_TIMESTAMP,UNIQUE(id_clinica,actor_clave,accion,clave_operacion))');
         // M5 C3: la cuenta pendiente de un propietario se reconoce sin consentimiento (ActivacionPropietario).
         $db->exec('CREATE TABLE consentimientos_datos (id_consentimiento INTEGER PRIMARY KEY AUTOINCREMENT, id_usuario INTEGER REFERENCES usuarios,
             version_politica TEXT NOT NULL,medio TEXT NOT NULL,ip_address TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP)');
@@ -117,7 +124,7 @@ final class DosClinicas
         $db->exec('INSERT OR IGNORE INTO especies (id_especie) VALUES (1),(2),(3),(4),(5),(6)');
         $db->exec('CREATE TABLE tipos_cita (id_tipo_cita INTEGER PRIMARY KEY AUTOINCREMENT,
             id_clinica INTEGER NOT NULL REFERENCES clinicas, nombre_tipo TEXT, duracion_minutos INTEGER,
-            margen_minutos INTEGER DEFAULT 10, pausable INTEGER DEFAULT 1, descripcion TEXT, color TEXT, activo INTEGER)');
+            margen_minutos INTEGER DEFAULT 10, pausable INTEGER DEFAULT 1, descripcion TEXT, color TEXT DEFAULT \'#0C66E4\', activo INTEGER DEFAULT 1)');
         $db->exec('CREATE TABLE horarios_clinica (id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_clinica INTEGER NOT NULL REFERENCES clinicas, dia_semana INTEGER, activo INTEGER,
             bloque_morning_activo INTEGER, bloque_afternoon_activo INTEGER, bloque_morning_inicio TEXT,
@@ -175,11 +182,19 @@ final class DosClinicas
             id_tipo_cita INTEGER, fecha TEXT NOT NULL, hora TEXT NOT NULL, hora_fin TEXT, motivo TEXT NOT NULL,
             duracion_minutos INTEGER, margen_minutos INTEGER NOT NULL DEFAULT 0, prioridad TEXT NOT NULL DEFAULT 'verde',
             prioridad_calculada TEXT, motivo_ajuste_prioridad TEXT, es_sobrecupo INTEGER NOT NULL DEFAULT 0,
-            orden_sobrecupo INTEGER, sintomas_texto TEXT, inicio_sintomas TEXT, estado TEXT NOT NULL DEFAULT 'pendiente',
-            ocupa_horario INTEGER GENERATED ALWAYS AS (CASE WHEN estado IN ('cancelada', 'no_asistio') OR es_sobrecupo = 1 THEN NULL ELSE 1 END) STORED,
+            orden_sobrecupo INTEGER, sintomas_texto TEXT, inicio_sintomas TEXT, contexto_triage TEXT, id_bloque INTEGER, estado TEXT NOT NULL DEFAULT 'pendiente',
+            ocupa_horario INTEGER GENERATED ALWAYS AS (CASE WHEN estado IN ('cancelada', 'no_asistio') OR es_sobrecupo = 1 OR origen = 'urgencia' THEN NULL ELSE 1 END) STORED,
+            estado_reajuste TEXT NOT NULL DEFAULT 'ninguno',motivo_reajuste TEXT,version_agenda INTEGER NOT NULL DEFAULT 0,
+            origen TEXT NOT NULL DEFAULT 'legado',inicio_estimado TEXT,fin_estimado TEXT,ultima_hora_comunicada TEXT,ultimo_aviso_estimacion TEXT,fecha_ultimo_calculo TEXT,duracion_activa_objetivo_segundos INTEGER,politica_temporal TEXT,
             hora_llegada TEXT, hora_inicio_real TEXT, hora_fin_real TEXT, aviso_atencion_abierta TEXT, observaciones TEXT,
             fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP)");
         $db->exec('CREATE UNIQUE INDEX uq_cita_veterinario_horario ON citas (id_veterinario, fecha, hora, ocupa_horario)');
+        $db->exec('CREATE TABLE pausas_cita (id_pausa INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,id_cita INTEGER NOT NULL,id_solicitud_roja INTEGER,inicio TEXT NOT NULL,fin TEXT,id_autor INTEGER,motivo TEXT)');
+        $db->exec('CREATE TABLE bloques_agenda (id_bloque INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,id_veterinario INTEGER NOT NULL,fecha TEXT NOT NULL,franja_origen TEXT NOT NULL,inicio_original TEXT NOT NULL,fin_original TEXT NOT NULL,estado TEXT DEFAULT \'vigente\',UNIQUE(id_clinica,id_veterinario,fecha,franja_origen))');
+        $db->exec('CREATE TABLE solicitudes_agenda (id_solicitud INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,id_mascota INTEGER NOT NULL,id_actor INTEGER NOT NULL,origen TEXT NOT NULL,fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP,fecha_llegada TEXT,id_receptor INTEGER,estado TEXT DEFAULT \'abierta\',estado_revision TEXT NOT NULL,nivel_calculado TEXT,nivel_aprobado TEXT,contexto_triage TEXT NOT NULL,version_conocimiento TEXT,huella_entrada TEXT NOT NULL,huella_revision TEXT,id_revisor INTEGER,fecha_revision TEXT,motivo_revision TEXT,contagio INTEGER DEFAULT 0,orden_espera INTEGER,id_cita INTEGER UNIQUE,id_ingreso INTEGER,version_solicitud INTEGER DEFAULT 0,fuente_nivel TEXT)');
+        $db->exec('CREATE TABLE eventos_agenda (id_evento INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,id_cita INTEGER,id_solicitud INTEGER,tipo TEXT NOT NULL,clave_evento TEXT NOT NULL,destino_clave TEXT NOT NULL,id_destinatario INTEGER,id_rol_destino INTEGER,canal TEXT NOT NULL,version_recurso INTEGER NOT NULL,hora_a_comunicar TEXT,estado TEXT DEFAULT \'pendiente\',reclamacion TEXT,fecha_reclamacion TEXT,fecha_resultado TEXT,intentos INTEGER DEFAULT 0,error_tecnico TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP,UNIQUE(id_clinica,clave_evento,destino_clave,canal))');
+        $db->exec("CREATE TABLE reasignaciones (id_reasignacion INTEGER PRIMARY KEY AUTOINCREMENT,id_clinica INTEGER NOT NULL,id_cita INTEGER NOT NULL,id_veterinario_origen INTEGER NOT NULL,id_veterinario_destino INTEGER NOT NULL,estado TEXT NOT NULL DEFAULT 'pendiente',fecha_limite TEXT NOT NULL,fecha_respuesta TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP,inicio_propuesto TEXT,fin_propuesto TEXT,version_cita INTEGER,ciclo INTEGER NOT NULL DEFAULT 0,motivo TEXT,cita_pendiente INTEGER GENERATED ALWAYS AS (CASE WHEN estado='pendiente' THEN id_cita ELSE NULL END) STORED,UNIQUE(cita_pendiente))");
+        $db->exec('CREATE TABLE cita_sintomas (id_cita INTEGER NOT NULL REFERENCES citas,id_nodo INTEGER NOT NULL,detalles TEXT,PRIMARY KEY(id_cita,id_nodo))');
         $db->exec('CREATE TABLE consultas (id_consulta INTEGER PRIMARY KEY AUTOINCREMENT, id_clinica INTEGER NOT NULL REFERENCES clinicas,
             id_cita INTEGER UNIQUE REFERENCES citas, id_mascota INTEGER NOT NULL REFERENCES mascotas,
             id_veterinario INTEGER NOT NULL REFERENCES usuarios, fecha_hora TEXT NOT NULL, motivo_consulta TEXT NOT NULL,
@@ -241,6 +256,15 @@ final class DosClinicas
         $db->exec("INSERT INTO tipos_cita (id_tipo_cita, id_clinica, nombre_tipo, duracion_minutos, margen_minutos, pausable, activo) VALUES
             (1, 1, 'Consulta Norte', 30, 10, 1, 1),
             (2, 2, 'Control Sur', 20, 5, 1, 1)");
+        // El fixture declara jornadas reales; la aplicación no crea horarios vet implícitos.
+        $franja = $db->prepare('INSERT INTO horarios_veterinario (id_clinica,id_veterinario,dia_semana,hora_inicio,hora_fin) VALUES (?,?,?,?,?)');
+        foreach ([[1,2], [1,5], [2,4]] as [$clinicaVet,$vet]) {
+            for ($diaVet=1; $diaVet<=7; $diaVet++) {
+                foreach ([['08:00:00','12:00:00'],['14:00:00','18:00:00']] as [$desde,$hasta]) {
+                    $franja->execute([$clinicaVet,$vet,$diaVet,$desde,$hasta]);
+                }
+            }
+        }
         $horario = $db->prepare("INSERT INTO horarios_clinica (id_clinica, dia_semana, activo, bloque_morning_activo, bloque_afternoon_activo,
             bloque_morning_inicio, bloque_morning_fin, bloque_afternoon_inicio, bloque_afternoon_fin)
             VALUES (?, ?, 1, 1, 1, '08:00:00', '12:00:00', '14:00:00', '18:00:00')");

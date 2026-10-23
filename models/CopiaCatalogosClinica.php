@@ -22,7 +22,7 @@ final class CopiaCatalogosClinica
             if ($consulta->fetchColumn() === false) throw new InvalidArgumentException('La clínica no existe.');
 
             $this->copiarTabla($idClinica, 'tipos_cita',
-                ['nombre_tipo','duracion_minutos','descripcion','color','activo'], ValoresInicialesClinica::TIPOS);
+                ['nombre_tipo','duracion_minutos','descripcion','color','activo','margen_minutos','pausable'], ValoresInicialesClinica::TIPOS);
             $this->copiarTabla($idClinica, 'horarios_clinica',
                 ['dia_semana','activo','bloque_morning_activo','bloque_afternoon_activo','bloque_morning_inicio',
                  'bloque_morning_fin','bloque_afternoon_inicio','bloque_afternoon_fin'], ValoresInicialesClinica::HORARIOS, false);

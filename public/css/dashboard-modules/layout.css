@@ -213,6 +213,8 @@ body {
 }
 
 .top-header-title {
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: 1.2rem;
   font-weight: 900;
   color: var(--text-primary);
@@ -221,6 +223,13 @@ body {
   line-height: 1;
   display: flex;
   align-items: center;
+}
+
+@media (max-width: 767px) {
+  /* El título conserva su línea; los controles pasan juntos a la siguiente si no caben. */
+  .top-header:has(.top-header-title) { flex-wrap: wrap; gap: 12px; }
+  .top-header .header-left:has(.top-header-title) { flex: 0 0 auto; }
+  .top-header:has(.top-header-title) .header-right { max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }
 }
 
 .module-title {

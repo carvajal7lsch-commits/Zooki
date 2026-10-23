@@ -3,6 +3,7 @@
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../Support/DosClinicas.php';
+require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
 require_once __DIR__ . '/../../controllers/CitaController.php';
 
 /**
@@ -24,9 +25,11 @@ final class PortalAgendaTest extends TestCase
     {
         $this->db = DosClinicas::sqlite();
         DosClinicas::crearMascotasSqlite($this->db);
+        ConocimientoRealPrueba::taxonomia($this->db);
         DosClinicas::crearCatalogosSqlite($this->db);
         DosClinicas::crearHistoriaSqlite($this->db);
         DosClinicas::poblarAgenda($this->db);
+        (new CargadorConocimiento($this->db))->cargar(ConocimientoRealPrueba::CARPETA);
         $_SESSION = ['id_usuario' => DosClinicas::PROPIETARIO];
         Contexto::activar(Contexto::dePropietario(), 1);
         $_POST = [];
@@ -78,7 +81,7 @@ final class PortalAgendaTest extends TestCase
 
         $this->assertFalse($respuesta['success']);
         $this->assertSame(422, http_response_code());
-        $this->assertStringContainsString('no está disponible', $respuesta['message']);
+        $this->assertStringContainsString('No hay disponibilidad', $respuesta['message']);
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM mascota_clinica WHERE id_mascota = 1 AND id_clinica = 2')->fetchColumn());
     }
 
@@ -91,7 +94,8 @@ final class PortalAgendaTest extends TestCase
         $this->assertSame(['Consulta Norte'], array_column($this->ejecutar(fn (CitaController $c) => $c->portalTiposCitaAjax())['tipos'], 'nombre_tipo'));
         $this->assertSame(['Beto Norte', 'Elena Doble'], array_column($this->ejecutar(fn (CitaController $c) => $c->portalVeterinariosAjax()), 'nombre_completo'));
 
-        $_GET = ['id_clinica' => (string) DosClinicas::SUR, 'fecha' => self::FECHA, 'intervalo' => '20'];
+        $_GET = ['id_clinica' => (string) DosClinicas::SUR, 'fecha' => self::FECHA, 'id_veterinario' => '4', 'id_mascota' => '1', 'id_tipo_cita' => '2'];
+        $_GET = AgendaC4Prueba::capturar($this->db, $_GET, static fn () => IntervalosAgenda::fecha('2030-01-07 07:00:00'));
         $horas = $this->ejecutar(fn (CitaController $c) => $c->portalHorasAjax())['horas'];
         $this->assertSame('08:00', $horas[0]);
 
@@ -107,22 +111,21 @@ final class PortalAgendaTest extends TestCase
 
         $this->assertAccesoDenegado(fn () => $this->agendar(DosClinicas::NORTE, DosClinicas::VET_NORTE, 1, 2));
 
-        $otroVeterinario = $this->agendar(DosClinicas::NORTE, DosClinicas::VET_SUR, 1);
-        $this->assertStringContainsString('veterinarios de la clínica', $otroVeterinario['message']);
+        $this->assertAccesoDenegado(fn () => $this->agendar(DosClinicas::NORTE, DosClinicas::VET_SUR, 1));
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM citas')->fetchColumn());
     }
 
     /** Mismas validaciones de la agenda: horario de la clínica y doble reserva. */
     public function testRespetaElHorarioYLaDobleReserva(): void
     {
-        $this->assertStringContainsString('fuera del horario', $this->agendar(DosClinicas::NORTE, DosClinicas::VET_NORTE, 1, 1, '13:00')['message']);
+        $this->assertStringContainsString('No hay disponibilidad', $this->agendar(DosClinicas::NORTE, DosClinicas::VET_NORTE, 1, 1, '13:00')['message']);
 
         $this->assertTrue($this->agendar(DosClinicas::NORTE, DosClinicas::VET_NORTE, 1)['success']);
         $this->db->exec("INSERT INTO mascotas (id_mascota, id_propietario, id_clinica_registro, token_carnet, nombre, id_especie, estado)
             VALUES (3, 6, 1, '" . str_repeat('t', 43) . "', 'Toby', 1, 1)");
         $segunda = $this->agendar(DosClinicas::NORTE, DosClinicas::VET_NORTE, 1, 3);
 
-        $this->assertStringContainsString('no está disponible', $segunda['message']);
+        $this->assertStringContainsString('No hay disponibilidad', $segunda['message']);
     }
 
     // ── Apoyo ───────────────────────────────────────────────────────────
@@ -167,9 +170,45 @@ final class PortalAgendaTest extends TestCase
         return $this->ejecutar(fn (CitaController $c) => $c->agendarDesdePortalAjax());
     }
 
-    private function ejecutar(callable $accion): array
+    public function testC3ReplayHttpConservaResultadoSinAdvertenciaNiDuplicarAuditoriaOVinculo(): void
     {
-        $reloj = fn (): DateTimeImmutable => new DateTimeImmutable('2030-01-07 07:00', new DateTimeZone(ReglaAtencion::ZONA));
+        $this->db->exec("INSERT INTO propietario_clinica (id_propietario,id_clinica) VALUES (6,2)");
+        $_POST = ['id_clinica'=>'2','id_mascota'=>'1','id_veterinario'=>'4','id_tipo_cita'=>'2','fecha'=>self::FECHA,
+            'hora'=>'09:00','motivo'=>'Control','clave_operacion'=>str_repeat('c',64)];
+        $primera = $this->ejecutar(fn ($c) => $c->agendarDesdePortalAjax());
+        $this->assertTrue($primera['success']);
+        $auditorias = $this->db->query('SELECT * FROM auditoria_sistema')->fetchAll(PDO::FETCH_ASSOC);
+        $avisos = $this->db->query('SELECT * FROM notificaciones_internas')->fetchAll(PDO::FETCH_ASSOC);
+        $segunda = $this->ejecutar(fn ($c) => $c->agendarDesdePortalAjax());
+        $this->assertSame($primera, $segunda);
+        $this->assertSame($auditorias, $this->db->query('SELECT * FROM auditoria_sistema')->fetchAll(PDO::FETCH_ASSOC));
+        $this->assertSame($avisos, $this->db->query('SELECT * FROM notificaciones_internas')->fetchAll(PDO::FETCH_ASSOC));
+        $tardia = $this->ejecutar(fn ($c) => $c->agendarDesdePortalAjax(), new DateTimeImmutable('2030-01-08 08:00', new DateTimeZone(ReglaAtencion::ZONA)));
+        $this->assertSame($primera, $tardia);
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM citas')->fetchColumn());
+        $this->assertSame(3, (int) $this->db->query('SELECT COUNT(*) FROM operaciones_agenda')->fetchColumn());
+        $_POST['hora'] = '10:00';
+        $this->assertFalse($this->ejecutar(fn ($c) => $c->agendarDesdePortalAjax())['success']);
+    }
+
+    public function testC3FalloAuditoriaRevierteTambienVinculoOperacionYCuota(): void
+    {
+        $this->db->exec("INSERT INTO propietario_clinica (id_propietario,id_clinica) VALUES (6,2)");
+        $this->db->exec("CREATE TRIGGER falla_cita_c3 BEFORE INSERT ON auditoria_sistema WHEN NEW.tabla_afectada='citas' BEGIN SELECT RAISE(ABORT,'Fallo C3'); END");
+        $respuesta = $this->agendar(2, 4, 2);
+        $this->assertFalse($respuesta['success']);
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM citas')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM operaciones_agenda')->fetchColumn(), 'Solo queda la evaluación anterior; la confirmación fallida revierte.');
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM mascota_clinica WHERE id_clinica=2')->fetchColumn());
+        $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM auditoria_mascotas WHERE id_clinica=2')->fetchColumn());
+    }
+
+    private function ejecutar(callable $accion, ?DateTimeImmutable $corte = null): array
+    {
+        $reloj = fn (): DateTimeImmutable => $corte ?? new DateTimeImmutable('2030-01-07 07:00', new DateTimeZone(ReglaAtencion::ZONA));
+        if (isset($_POST['id_mascota']) && !isset($_POST['id_solicitud'])) {
+            $_POST = AgendaC4Prueba::capturar($this->db, $_POST, $reloj);
+        }
         http_response_code(200);
         ob_start();
         try {

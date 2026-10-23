@@ -4,8 +4,8 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de versiones
 
-El historial completo de versiones (v1.0.0 → v2.0.0-alpha.4), la guía de la primera versión estable y el esquema de versionamiento (Zooki SemVer) se documentan aparte en **[documentacion/HistorialVersiones.md](documentacion/HistorialVersiones.md)** (pestaña «Historial de versiones» del portal), para no inflar esta sinopsis.
-La alpha.4 está preparada para desplegar: incorpora alergias y alertas compartidas, síntomas y diagnósticos sugeridos, alertas al recetar y mapa del conocimiento; el motor de triage queda listo para integrarlo con la agenda en M4.
+El historial completo de versiones (v1.0.0 → v2.0.0-alpha.5), la guía de la primera versión estable y el esquema de versionamiento (Zooki SemVer) se documentan aparte en **[documentacion/HistorialVersiones.md](documentacion/HistorialVersiones.md)** (pestaña «Historial de versiones» del portal), para no inflar esta sinopsis.
+La versión preparada para publicar es **2.0.0-alpha.5**: agenda con triage, disponibilidad coordinada, Grafo II, urgencias, ausencias, llegadas y el nuevo Inicio del veterinario. Su publicación requiere las verificaciones y la integración del dueño; la versión de producción se confirma después del despliegue.
 El conocimiento está pendiente de validación veterinaria y es apoyo a la decisión, no diagnóstico automático.
 
 ## Arquitectura del Sistema
@@ -40,7 +40,7 @@ graph TD
 
 ### Requisitos del Sistema
 *   Servidor web Apache o Nginx.
-*   PHP 8.0 o superior (con extensiones `pdo_mysql`, `openssl` y `json` habilitadas).
+*   PHP 8.2 o superior (con extensiones `pdo_mysql`, `openssl` y `json` habilitadas).
 *   Servidor MySQL/MariaDB.
 *   Composer (para gestión de dependencias en caso de requerirse).
 
@@ -73,7 +73,13 @@ graph TD
     `php scripts/crear_superadmin.php` pide por consola el correo, el nombre y la contraseña (sin mostrarla) y crea la cuenta de la plataforma. Se niega si el correo ya existe. Ninguna credencial queda en el código ni en el SQL. En producción: `docker exec -it zooki_web php scripts/crear_superadmin.php`.
 ## Migraciones de la base de datos
 
-La base nace de dos archivos que no son migraciones: `database/01_schema.sql` (las 52 tablas de la v2) y `database/02_semilla.sql` (datos semilla). Las migraciones son los archivos `database/NN_nombre.sql` con número **03 o mayor**. **En el servidor se aplican solas:** al arrancar, el contenedor `web` ejecuta `docker/iniciar.sh`, que corre `scripts/migrar.php`, carga el conocimiento si la migración terminó bien y después inicia Apache. Como Dokploy reconstruye el contenedor en cada despliegue, basta con subir el archivo `.sql` nuevo junto con el código.
+La base nace de dos archivos que no son migraciones: `database/01_schema.sql` (las 58 tablas del esquema actual) y `database/02_semilla.sql` (datos semilla). Las migraciones son los archivos `database/NN_nombre.sql` con número **03 o mayor**. **En el servidor se aplican solas:** al arrancar, el contenedor `web` ejecuta `docker/iniciar.sh`, que corre `scripts/migrar.php`, carga el conocimiento si la migración terminó bien y después inicia Apache. Como Dokploy reconstruye el contenedor en cada despliegue, basta con subir el archivo `.sql` nuevo junto con el código.
+
+### Actualizar una instalación v2 existente a alpha.5
+
+La actualización desde alpha.4 conserva la base y los archivos: **no se vuelve a importar 01/02 ni se reinician los volúmenes**. El arranque aplica las migraciones 08, 09 y 10 pendientes y la semilla idempotente. Antes de integrar a `main`, el dueño comprueba ambos trabajos del CI (general y MySQL 8), realiza un respaldo legible de la base y de los archivos subidos y revisa el PR de la rama de release. Si Dokploy sigue `main`, el merge puede iniciar el despliegue automáticamente.
+
+Después del despliegue se revisan los logs completos de migración y conocimiento, `php scripts/migrar.php --revisar` dentro del contenedor y la versión **2.0.0-alpha.5** en el contenedor y en pantalla. Apache también puede arrancar aunque falle una migración: que abra el sitio no acredita una actualización correcta. Se conserva el Schedule existente de `scripts/vigilar_atenciones.php` cada cinco minutos: ahora procesa también la cascada y los eventos pendientes de agenda; no depende de abrir el calendario ni requiere duplicar ese trabajador.
 
 El Grafo I vive versionado en `database/conocimiento/`, con fuentes por elemento y validación veterinaria pendiente.
 En XAMPP, después de `php scripts/migrar.php`, ejecutar `php scripts/cargar_conocimiento.php`; con `--revisar` se valida y se muestran cambios sin escribir.

@@ -16,6 +16,15 @@ class Desparasitacion extends ModeloHistoria
     /** RE-3.4.1, RE-3.4.2 y RN-207: registra y calcula la próxima aplicación. */
     public function registrar(array $entrada): int
     {
+        $id = ValidadorClinico::id($entrada['id_mascota'] ?? null);
+        if ($id === null) {
+            throw new InvalidArgumentException('La mascota indicada no es válida.');
+        }
+        return $this->registrarEnPacienteActual($id, fn () => $this->registrarActual($entrada));
+    }
+
+    private function registrarActual(array $entrada): int
+    {
         $idMascota = ValidadorClinico::id($entrada['id_mascota'] ?? null);
         if ($idMascota === null) {
             throw new InvalidArgumentException('La mascota indicada no es válida.');
@@ -68,7 +77,7 @@ class Desparasitacion extends ModeloHistoria
         $idMascota = (int) $idMascota;
         $mascota = $this->exigirMascotaVinculada($idMascota);
 
-        $sql = 'SELECT d.*, cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario
+        $sql = 'SELECT d.*, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email, u.nombre_completo AS veterinario
             FROM desparasitaciones d
             JOIN clinicas cl ON cl.id_clinica = d.id_clinica
             LEFT JOIN usuarios u ON u.id_usuario = d.id_veterinario

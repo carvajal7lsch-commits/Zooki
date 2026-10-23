@@ -56,14 +56,16 @@ final class CitaTest extends TestCase
         $this->assertSame('confirmada', $cita['estado']);
     }
 
-    public function testSinTipoUsaTreintaMinutosYUnTipoDeOtraClinicaSeRechaza(): void
+    public function testSinTipoSeRechazaSinInventarDuracion(): void
     {
-        $id = $this->reservar(DosClinicas::VET_NORTE, '09:00', null);
-        $this->assertSame(30, (int) $this->fila($id)['duracion_minutos']);
-        $this->assertSame(0, (int) $this->fila($id)['margen_minutos']);
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('tipo de cita');
+        $this->reservar(DosClinicas::VET_NORTE, '09:00', null);
+    }
+
+    public function testTipoDeOtraClinicaSeRechaza(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
         $this->reservar(DosClinicas::VET_NORTE, '11:00', 2);
     }
 
@@ -81,10 +83,10 @@ final class CitaTest extends TestCase
 
         // Una fila «armada» con la clínica de B tampoco cambia la cita de A.
         $falsa = ['id_cita' => $id, 'id_clinica' => DosClinicas::SUR];
-        $this->assertFalse($this->citas->cancelar($falsa));
+        $this->assertAccesoDenegado(fn () => $this->citas->cancelar($falsa));
         $this->assertSame('confirmada', $this->fila($id)['estado']);
 
-        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = 2 AND tabla_afectada = 'citas'")->fetchColumn());
+        $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE id_clinica = 2 AND tabla_afectada = 'citas'")->fetchColumn());
     }
 
     public function testUnaMascotaNoVinculadaNoSeAgendaYUnaInactivaTampoco(): void
@@ -117,9 +119,9 @@ final class CitaTest extends TestCase
         $this->crearMascota(2, DosClinicas::NORTE);
         $this->reservar(DosClinicas::VET_NORTE, '09:00', 1);
 
-        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_NORTE, '09:00', 1, 2), 'veterinario no está disponible');
-        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_NORTE, '09:15', 1, 2), 'veterinario no está disponible');
-        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::DOBLE, '09:15', 1), 'mascota ya tiene otra cita');
+        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_NORTE, '09:00', 1, 2), 'No hay disponibilidad');
+        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_NORTE, '09:15', 1, 2), 'No hay disponibilidad');
+        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::DOBLE, '09:15', 1), 'No hay disponibilidad');
         $this->assertSame(1, $this->contarCitas());
     }
 
@@ -140,20 +142,24 @@ final class CitaTest extends TestCase
         DosClinicas::vincularLunaASur($this->db);
         $this->crearMascota(2, DosClinicas::SUR);
         $this->db->exec("INSERT INTO usuario_clinica (id_usuario, id_clinica, id_rol, estado) VALUES (2, 2, 2, 'activo')");
+        // Datos históricos incompatibles: el caso verifica la defensa de ocupación entre clínicas,
+        // aunque el nuevo editor rechaza crear estas jornadas solapadas.
+        $this->db->exec("INSERT INTO horarios_veterinario (id_clinica,id_veterinario,dia_semana,hora_inicio,hora_fin) VALUES (2,2,1,'08:00:00','12:00:00')");
         $this->reservar(DosClinicas::VET_NORTE, '09:00', 1);
 
         $this->comoAdministrador(DosClinicas::SUR, DosClinicas::ADMIN_SUR);
-        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_NORTE, '09:00', 2, 2), 'veterinario no está disponible');
-        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_NORTE, '09:20', 2, 2), 'veterinario no está disponible');
+        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_NORTE, '09:00', 2, 2), 'No hay disponibilidad');
+        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_NORTE, '09:20', 2, 2), 'No hay disponibilidad');
         $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_NORTE, '09:00', 2, 2, new CitaSinValidacionPrevia($this->db)), 'acaba de ocuparse');
 
         // La mascota tampoco: Luna ya tiene cita a las 9 en Norte.
-        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_SUR, '09:10', 2), 'mascota ya tiene otra cita');
+        $this->assertHorarioOcupado(fn () => $this->reservar(DosClinicas::VET_SUR, '09:10', 2), 'No hay disponibilidad');
 
         // Las sugerencias de Sur no ofrecen la hora ocupada en Norte (solo horas, sin datos de Norte).
-        $sugerencias = $this->citas->sugerencias(DosClinicas::VET_NORTE, self::FECHA, 30, null, new DateTimeImmutable('2030-01-01 08:00'));
+        $sugerencias = $this->citas->sugerencias(DosClinicas::VET_NORTE, 1, 2, self::FECHA);
         $this->assertNotContains('09:00', $sugerencias);
-        $this->assertContains('09:30', $sugerencias);
+        $this->assertNotContains('09:30', $sugerencias);
+        $this->assertContains('10:00', $sugerencias);
 
         $id = $this->reservar(DosClinicas::VET_NORTE, '10:00', 2, 2);
         $this->assertSame(DosClinicas::SUR, (int) $this->fila($id)['id_clinica']);
@@ -178,7 +184,7 @@ final class CitaTest extends TestCase
         $primera = $this->reservar(DosClinicas::VET_NORTE, '09:00', 1);
         $segunda = $this->reservar(DosClinicas::DOBLE, '10:00', 1);
 
-        $this->assertHorarioOcupado(fn () => $this->citas->reprogramar($this->citas->getById($primera), DosClinicas::DOBLE, self::FECHA, '10:15'), 'veterinario no está disponible');
+        $this->assertHorarioOcupado(fn () => $this->citas->reprogramar($this->citas->getById($primera), DosClinicas::DOBLE, self::FECHA, '10:15'), 'No hay disponibilidad');
 
         $this->citas->reprogramar($this->citas->getById($primera), DosClinicas::VET_NORTE, self::FECHA, '11:00');
 

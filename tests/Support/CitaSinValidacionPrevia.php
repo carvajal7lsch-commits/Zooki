@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../models/Cita.php';
  */
 final class CitaSinValidacionPrevia extends Cita
 {
-    protected function exigirHorarioLibre(int $idVeterinario, int $idMascota, string $fecha, string $hora, int $duracion, ?int $excluir): void
+    protected function exigirDisponibilidad(int $vet, int $mascota, string $fecha, string $hora, int $duracion, int $margen, ?int $excluir): void
     {
     }
 }

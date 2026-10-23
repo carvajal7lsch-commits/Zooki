@@ -17,7 +17,7 @@
 final class VinculoClinica
 {
     /** Citas que impiden desactivar el vínculo. */
-    public const CITAS_SIN_RESOLVER = ['pendiente', 'confirmada', 'en_curso', 'sin_cerrar'];
+    public const CITAS_SIN_RESOLVER = ['pendiente', 'confirmada', 'en_curso', 'pausada', 'sin_cerrar'];
 
     public function __construct(private PDO $db) {}
 

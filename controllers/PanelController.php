@@ -1,7 +1,12 @@
 <?php
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../models/Panel.php';
+require_once __DIR__ . '/../models/DisponibilidadAgenda.php';
+require_once __DIR__ . '/../models/SolicitudAgenda.php';
+require_once __DIR__ . '/../models/CascadaAgenda.php';
 require_once __DIR__ . '/../helpers/ResumenPanel.php';
+require_once __DIR__ . '/../helpers/DiaVeterinario.php';
+require_once __DIR__ . '/../helpers/RespuestaJson.php';
 
 /**
  * Datos de los paneles de inicio. Se calculan en el servidor y la vista los
@@ -11,24 +16,62 @@ require_once __DIR__ . '/../helpers/ResumenPanel.php';
  */
 class PanelController
 {
+    /** RE-6.1.11: cuántos pacientes recientes se piden; la vista muestra los que quepan. */
+    public const RECIENTES = 8;
+
     private PDO $db;
     private Panel $panel;
+    private Closure $reloj;
 
-    public function __construct(?PDO $db = null)
+    public function __construct(?PDO $db = null, ?callable $reloj = null)
     {
         $this->db = $db ?? (new Database())->getConnection();
         $this->panel = new Panel($this->db);
+        $this->reloj = Closure::fromCallable($reloj ?? fn (): DateTimeImmutable => $this->ahora());
+    }
+
+    /**
+     * RE-6.1.8 y RE-6.1.9: «Tu día» de otra fecha (?fecha=AAAA-MM-DD) o el
+     * calendario de otro mes (?mes=AAAA-MM), con los mismos parciales del
+     * primer render. Solo lectura y solo la agenda propia: el veterinario sale
+     * de la sesión, nunca de la petición (RE-6.1.4, RNF-11).
+     */
+    public function diaAjax(): void
+    {
+        RespuestaJson::consulta(function (): void {
+            $ahora = ($this->reloj)();
+            $idVeterinario = (int) Contexto::idUsuario();
+            if (isset($_GET['mes'])) {
+                $mes = self::validarMes((string) $_GET['mes']);
+                $elegido = self::validarFecha((string) ($_GET['elegido'] ?? $ahora->format('Y-m-d')));
+                RespuestaJson::enviar(['success' => true, 'mes' => $mes, 'html' => $this->render('inicio_calendario', ['mes' => $this->mes($idVeterinario, $mes, $ahora, $elegido)])]);
+                return;
+            }
+            $fecha = self::validarFecha((string) ($_GET['fecha'] ?? ''));
+            $siguiente = $fecha === $ahora->format('Y-m-d')
+                ? ResumenPanel::siguiente($this->conAccion($this->panel->citasDelDia($fecha, $idVeterinario), $ahora), $ahora)
+                : null;
+            $dia = $this->dia($idVeterinario, $fecha, $ahora, $siguiente);
+            RespuestaJson::enviar(['success' => true, 'fecha' => $fecha, 'html' => $this->render('inicio_dia', ['dia' => $dia])]);
+        }, 'Inicio del veterinario');
     }
 
     /** HU-6.1: el día del veterinario en la clínica activa (RE-6.1.4). */
     public function datosVeterinario(int $idVeterinario, ?DateTimeImmutable $ahora = null): array
     {
-        $ahora = $ahora ?? $this->ahora();
+        $ahora = $ahora ?? ($this->reloj)();
         $this->revisarAtencionesAbiertas($ahora);
         $hoy = $ahora->format('Y-m-d');
 
         $agenda = $this->conAccion($this->panel->citasDelDia($hoy, $idVeterinario), $ahora);
         $siguiente = ResumenPanel::siguiente($agenda, $ahora);
+        if ($siguiente !== null) {
+            $siguiente += [
+                'edad' => ResumenPanel::edad($siguiente['fecha_nacimiento'] ?? null, $ahora),
+                'cuenta' => ResumenPanel::cuentaRegresiva($siguiente['fecha'], $siguiente['hora'], $ahora),
+                'alertas' => $this->panel->alertasActivas((int) $siguiente['id_mascota']),
+            ];
+        }
 
         // Las atenciones de hoy ya se ven en la agenda con su botón; aquí solo
         // se listan las que exigen algo aparte: las abiertas de días anteriores
@@ -45,15 +88,118 @@ class PanelController
         );
 
         return [
+            'hoy' => $hoy,
             'fecha' => ResumenPanel::fechaLarga($ahora),
             'saludo' => $this->saludo($ahora),
             'contadores' => ResumenPanel::contadores($agenda),
             'siguiente' => $siguiente,
             'agenda' => $agenda,
+            'dia' => $this->dia($idVeterinario, $hoy, $ahora, $siguiente),
+            'mes' => $this->mes($idVeterinario, $ahora->format('Y-m'), $ahora, $hoy),
             'pendientes' => array_map(fn($c) => $c + ['dia' => ResumenPanel::etiquetaDia($c['fecha'], $ahora)], $pendientes),
+            'triages' => $this->leerOpcional(fn () => (new SolicitudAgenda($this->db, fn () => $ahora))->listar()['solicitudes'], 'triages por revisar'),
+            'reasignaciones' => $this->leerOpcional(fn () => (new CascadaAgenda($this->db, fn () => $ahora))->listar(), 'reasignaciones'),
             'recordatorios' => ResumenPanel::agruparPorDia($recordatorios, $ahora),
             'total_recordatorios' => count($recordatorios),
+            'recientes' => array_map(
+                fn($r) => $r + ['cuando' => ResumenPanel::momentoReciente((string) $r['fecha_hora'], $ahora)],
+                $this->panel->pacientesRecientes($idVeterinario, self::RECIENTES)
+            ),
         ];
+    }
+
+    /**
+     * RE-6.1.9: las filas de «Tu día» de una fecha. Si la disponibilidad no se
+     * puede calcular (una cita con datos incompletos la frena), se muestran
+     * las citas con el motivo, sin inventar huecos.
+     */
+    private function dia(int $idVeterinario, string $fecha, DateTimeImmutable $ahora, ?array $siguiente): array
+    {
+        $citas = $this->panel->citasDelDia($fecha, $idVeterinario);
+        $disponibilidad = null;
+        $aviso = null;
+        try {
+            $disponibilidad = (new DisponibilidadAgenda($this->db, fn () => $ahora))->diaDelVeterinario($idVeterinario, $fecha);
+        } catch (HorarioOcupado $e) {
+            $aviso = $e->getMessage();
+        }
+        $lineas = DiaVeterinario::lineas(
+            $citas,
+            $disponibilidad,
+            $fecha,
+            $ahora,
+            $siguiente === null ? null : (int) $siguiente['id_cita'],
+            $this->panel->duracionMinimaCita()
+        );
+        $totalCitas = DiaVeterinario::totalCitas($lineas);
+        return [
+            'fecha' => $fecha,
+            'titulo' => ResumenPanel::tituloDia($fecha, $ahora),
+            'pasado' => $fecha < $ahora->format('Y-m-d'),
+            'lineas' => $lineas,
+            'citas' => $totalCitas,
+            'minutos_libres' => DiaVeterinario::minutosLibres($lineas),
+            'sin_jornada' => $disponibilidad !== null && $disponibilidad['jornada'] === [],
+            'aviso' => $aviso,
+            'proximo' => $totalCitas === 0 ? $this->proximo($idVeterinario, $fecha, $ahora) : null,
+        ];
+    }
+
+    private function proximo(int $idVeterinario, string $fecha, DateTimeImmutable $ahora): ?array
+    {
+        $proximo = $this->panel->proximoDiaConCitas($idVeterinario, max($fecha, $ahora->modify('-1 day')->format('Y-m-d')));
+        return $proximo === null ? null : ['fecha' => $proximo, 'texto' => ResumenPanel::tituloDia($proximo, $ahora)];
+    }
+
+    /** RE-6.1.8: el calendario de un mes con los días en que el veterinario tiene citas. */
+    private function mes(int $idVeterinario, string $mes, DateTimeImmutable $ahora, string $elegido): array
+    {
+        $primero = new DateTimeImmutable($mes . '-01', $ahora->getTimezone());
+        $dias = $this->panel->diasConCitas($idVeterinario, $primero->format('Y-m-d'), $primero->modify('last day of this month')->format('Y-m-d'));
+        return ResumenPanel::mes($mes, $dias, $ahora->format('Y-m-d'), $elegido);
+    }
+
+    /**
+     * Pendientes que vienen de otros módulos de la agenda (RE-6.1.10). Si uno
+     * falla, el Inicio sigue sin esa fila; un acceso denegado sí se propaga.
+     */
+    private function leerOpcional(callable $leer, string $que): array
+    {
+        try {
+            return $leer();
+        } catch (AccesoDenegado $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            error_log('Inicio del veterinario, ' . $que . ': ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /** Renderiza un parcial del Inicio con sus datos y devuelve el HTML. */
+    private function render(string $parcial, array $datos): string
+    {
+        extract($datos);
+        ob_start();
+        require __DIR__ . '/../views/vet/partials/' . $parcial . '.php';
+        return (string) ob_get_clean();
+    }
+
+    private static function validarFecha(string $valor): string
+    {
+        $fecha = DateTimeImmutable::createFromFormat('!Y-m-d', $valor);
+        if ($fecha === false || $fecha->format('Y-m-d') !== $valor) {
+            throw new InvalidArgumentException('La fecha no es válida.');
+        }
+        return $valor;
+    }
+
+    private static function validarMes(string $valor): string
+    {
+        $mes = DateTimeImmutable::createFromFormat('!Y-m', $valor);
+        if ($mes === false || $mes->format('Y-m') !== $valor) {
+            throw new InvalidArgumentException('El mes no es válido.');
+        }
+        return $valor;
     }
 
     /** HU-6.2 y RE-6.4.1: la operación de la clínica activa para el administrador. */

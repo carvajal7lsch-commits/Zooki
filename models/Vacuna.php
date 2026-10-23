@@ -12,6 +12,15 @@ class Vacuna extends ModeloHistoria
     /** RE-3.1.1 y RN-207: registra una vacuna sobre una mascota activa y vinculada. */
     public function registrar(array $entrada): int
     {
+        $id = ValidadorClinico::id($entrada['id_mascota'] ?? null);
+        if ($id === null) {
+            throw new InvalidArgumentException('La mascota indicada no es válida.');
+        }
+        return $this->registrarEnPacienteActual($id, fn () => $this->registrarActual($entrada));
+    }
+
+    private function registrarActual(array $entrada): int
+    {
         $idMascota = ValidadorClinico::id($entrada['id_mascota'] ?? null);
         if ($idMascota === null) {
             throw new InvalidArgumentException('La mascota indicada no es válida.');
@@ -61,7 +70,7 @@ class Vacuna extends ModeloHistoria
         $idMascota = (int) $idMascota;
         $mascota = $this->exigirMascotaVinculada($idMascota);
 
-        $sql = 'SELECT v.*, cl.nombre AS clinica_nombre, u.nombre_completo AS veterinario
+        $sql = 'SELECT v.*, cl.nombre AS clinica_nombre, cl.url_logo AS clinica_logo, cl.direccion AS clinica_direccion, cl.telefono AS clinica_telefono, cl.telefono_urgencias AS clinica_urgencias, cl.email_contacto AS clinica_email, u.nombre_completo AS veterinario
             FROM vacunas v
             JOIN clinicas cl ON cl.id_clinica = v.id_clinica
             LEFT JOIN usuarios u ON u.id_usuario = v.id_veterinario

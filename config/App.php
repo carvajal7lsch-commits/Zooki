@@ -12,7 +12,7 @@ class App {
      * JS se piden con ?v=<versión> y sin cambiarla el navegador sigue con los
      * archivos viejos. 2.0.0 llega al completar la entrega v2.0 del plan de historias.
      */
-    const VERSION = '2.0.0-alpha.4';
+    const VERSION = '2.0.0-alpha.5';
 
     /** Nombre comercial del producto. */
     const NAME = 'Zooki';
@@ -29,6 +29,12 @@ class App {
      * navegador pueda cachear los archivos entre despliegues.
      */
     public static function assetVersion(): string {
+        // Pruebas de usuario (2026-10-21): en el equipo de desarrollo (XAMPP, fuera de Docker)
+        // la versión no cambia entre ajustes y el navegador seguía con el JS viejo. Ahí cada
+        // carga pide los archivos de nuevo; en producción (Docker) se cachean por versión.
+        if (!file_exists('/.dockerenv') && !defined('ZOOKI_PRUEBAS')) {
+            return self::VERSION . '-dev' . time();
+        }
         return self::VERSION;
     }
 }

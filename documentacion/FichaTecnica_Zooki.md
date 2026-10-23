@@ -2,6 +2,8 @@
 
 > **Revisión 3.4** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
+> **Preparación M4/B2 — 2026-10-18:** 96 HU, 430 RE y 120 RN; esquema de 58 tablas en 01/MER/drawDB y migración 08 preparados para revisión, sin despliegue ni flujos C implementados. Producción alpha.4 conserva sus 52 tablas hasta desplegar; sin nueva revisión/versión.
+
 ## Identificación del Proyecto
 
 | Campo | Valor |
@@ -15,7 +17,7 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.0.0-alpha.4 preparada**: módulos 0, 5 y M2 clínico/Grafo I; producción sigue en alpha.3 hasta desplegar. Motor de triage listo para M4; carnet/QR al final de la v2.0; conocimiento pendiente de validación veterinaria |
+| Estado actual | **2.0.0-alpha.4 desplegada**: módulos 0, 5 y M2 clínico/Grafo I; M4/B2 prepara solo datos, pendiente de revisión. Destino de agenda propuesto, todavía sin implementación; carnet/QR al final de v2.0 y conocimiento pendiente de validación veterinaria |
 | Versión del documento | 3.1 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
@@ -76,7 +78,7 @@ Se decidió **mantener el stack nativo** de la v1.x por ser suficiente a la esca
 
 M2 entrega conocimiento global versionado con fuentes y validación veterinaria pendiente: 105 nodos, 105 aristas, 201 sinónimos, 29 reglas y 47 fuentes.
 HU-2.12 permite al superadministrador explorarlo sin editar ni acceder a pacientes; los motores apoyan el diagnóstico y la prescripción.
-El esquema tiene 52 tablas de negocio, más la tabla técnica `schema_migraciones` del migrador; el triage y su batería de 26 casos quedan listos para M4.
+El esquema preparado por B2 tiene 58 tablas de negocio; producción alpha.4 conserva 52 hasta aplicar la migración 08 al desplegar. Se añade aparte la tabla técnica `schema_migraciones` del migrador; el triage y su batería de 26 casos quedan listos para M4.
 
 ## 4. Arquitectura del Sistema
 
@@ -123,7 +125,7 @@ La línea base de la v1.x se organizó en cuatro sprints de una semana; luego el
 | v1 · Sprints 1–4 | Mascotas, historia clínica, agenda, portal y reportes | Sistema v1.x en producción |
 | v2 · Fase 1 | Visión y alcance; ERS (ISO/IEC/IEEE 29148) | Alcance de la v2.0 fijado |
 | v2 · Fase 2 | Modelos: grafos, procesos de negocio, flujos de sistema y diagrama de componentes | Documento de Modelos y maestro draw.io |
-| v2 · Fase 3 | Reglas de Negocio v2 (120 RN), Historias de Usuario v2 (96 HU) y Requisitos Específicos (427 RE) | Trazabilidad RN → HU → RE completa |
+| v2 · Fase 3 | Reglas de Negocio v2 (120 RN), Historias de Usuario v2 (96 HU) y Requisitos Específicos (435 RE) | Trazabilidad RN → HU → RE completa |
 | v2 · Construcción | Esquema multi-inquilino y módulos v2 | Plataforma SaaS v2.0 |
 
 ## 8. Análisis de Riesgos
@@ -165,7 +167,7 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 
 **v1.11.0 — línea base histórica.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
 
-**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.5), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.4, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.4, 96 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.4, 427 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros, y la 2.0.0-alpha.3 trae el portal del propietario multi-clínica: todas sus mascotas e historia en todas sus clínicas, vínculos con tope de 3 clínicas y la historia compartida bajo su autorización. La 2.0.0-alpha.4 prepara el cierre de M2: alergias y alertas compartidas, síntomas, apoyo diagnóstico, alertas de prescripción y mapa del conocimiento; el triage operativo queda en M4 y el carnet al final de la v2.0. Todo el conocimiento sigue pendiente de validación veterinaria. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
+**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.5), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.4, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.4, 96 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.4, 435 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros, y la 2.0.0-alpha.3 trae el portal del propietario multi-clínica: todas sus mascotas e historia en todas sus clínicas, vínculos con tope de 3 clínicas y la historia compartida bajo su autorización. La 2.0.0-alpha.4 desplegada cierra M2: alergias y alertas compartidas, síntomas, apoyo diagnóstico, alertas de prescripción y mapa del conocimiento; el triage operativo queda en M4 y el carnet al final de la v2.0. Todo el conocimiento sigue pendiente de validación veterinaria. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
 
 ## 12. Entregables Finales
 

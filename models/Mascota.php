@@ -190,7 +190,7 @@ class Mascota extends ModeloClinica
                 }
                 $cambios=[];
                 foreach ($campos as $campo=>$valor) {
-                    if ($actual[$campo] == $valor) { unset($campos[$campo]); continue; }
+                    if (self::mismoValor($actual[$campo],$valor)) { unset($campos[$campo]); continue; }
                     $cambios[]=$campo;
                 }
                 if ($campos) {
@@ -264,6 +264,17 @@ class Mascota extends ModeloClinica
         }
         $datos['colores']=array_values(array_unique(array_map('intval',$colores))); sort($datos['colores']);
         return $datos;
+    }
+    /**
+     * Comparación sin la conversión laxa de PHP: con == un «No» (0) era igual a «No se sabe» (null)
+     * y la esterilización no se guardaba. null solo es igual a null; los números se comparan como números
+     * (peso 8.50 = 8.5) y el resto como texto.
+     */
+    private static function mismoValor($actual,$nuevo): bool
+    {
+        if ($actual === null || $nuevo === null) return $actual === $nuevo;
+        if (is_numeric($actual) && is_numeric($nuevo)) return (float)$actual === (float)$nuevo;
+        return (string)$actual === (string)$nuevo;
     }
     private function escribirColores(int $id,array $colores): void
     {

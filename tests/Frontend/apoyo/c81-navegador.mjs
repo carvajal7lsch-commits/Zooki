@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 const raiz = resolve(import.meta.dirname, '../../..');
 const carpeta = join(raiz, 'specs/referencias/m2-pulido/c8-1-despues');
 mkdirSync(carpeta, { recursive: true });
-const vistas = Object.fromEntries(['vet_atencion', 'vet_consultas', 'vet_pacientes'].map(accion => [accion, execFileSync('php', [join(import.meta.dirname, 'c81-vistas.php'), accion], { cwd: raiz, encoding: 'utf8' })]));
+const vistas = Object.fromEntries(['vet_atencion', 'vet_pacientes'].map(accion => [accion, execFileSync('php', [join(import.meta.dirname, 'c81-vistas.php'), accion], { cwd: raiz, encoding: 'utf8' })]));
 const mascota = { id_mascota: 7, nombre: 'Luna', nombre_especie: 'Canino', nombre_raza: 'Mestizo', peso: '9.00', numero_historia_clinica: 'HC-000001', propietario_nombre: 'Fabio Propietario', fecha_nacimiento: '2022-01-01' };
 const activas = [
     { id_alerta: 1, tipo: 'alergia', tipo_nombre: 'Alergia', descripcion: 'Reacción cutánea con la amoxicilina', clinica_nombre: 'Clínica Norte', usuario_nombre: 'Beto Norte', fecha_registro: '2026-10-01', puede_desactivar: true },
@@ -148,7 +148,7 @@ try {
         if (ancho !== 414) await capturar(ancho + '-atencion-historial-plegado');
         await evaluar("document.querySelector('#atencionHistorial details').open = true");
         if (ancho !== 414) await capturar(ancho + '-atencion-historial-abierto');
-        for (const accion of ['vet_consultas', 'vet_pacientes']) {
+        for (const accion of ['vet_pacientes']) {
             await abrir(accion);
             await evaluar("viewMedicalHistory(7, 'Luna')");
             await esperar("document.querySelectorAll('#historyTimeline details').length === 2");

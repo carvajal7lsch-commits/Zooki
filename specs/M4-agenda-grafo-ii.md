@@ -1,0 +1,3264 @@
+# M4 — Agenda inteligente y Grafo II
+
+> Estado: **D-F hecho por Claude (2026-10-21): M4 completo, versión `2.0.0-alpha.5` preparada. Falta la prueba manual consolidada del dueño y su despliegue** (ver «D-F — Resultado» al final). Anexos y revisiones previos conservados como historial.
+> Entrega: v2.0 · Fecha: 2026-10-17 · Salida propuesta: `2.0.0-alpha.5`.
+> Escribe Codex; revisa Claude como arquitecto desde el 2026-10-20 (modo acelerado, `agentes/metodo.md` §11). Hasta C3.1 revisó Codex en una sesión independiente.
+> Rama actual comprobada: `v2/m4-agenda`. La rama la creó el usuario; el agente no ejecutó operaciones Git de escritura.
+
+## 1. Resultado y límites
+
+**Resultado:** la clínica configura cuándo trabaja cada veterinario y qué duración, margen y posibilidad de pausa tiene cada servicio. Solo el propietario y el veterinario agendan, con síntomas confirmados y prioridad calculada por el motor de M2; el administrador no agenda. La agenda ofrece disponibilidad real, reserva sin carreras, atiende sobrecupos naranjas y deriva los rojos. Refleja retrasos, ausencias, cobertura, pausas por emergencia y llegadas tarde, conservando consultas, identidad y auditoría.
+
+El Grafo II se construye en memoria desde las citas y la disponibilidad: aristas de secuencia, conflicto y emparejamiento. No se crea una base de grafos ni se persiste el grafo completo. El Grafo I calcula el triage; el Grafo II organiza la atención; el veterinario conserva la decisión clínica (RN-209).
+
+**Situación comprobada en `2.0.0-alpha.4`:**
+
+- M2 está cerrado y desplegado según `agentes/estado.md` y el cierre del plan M2. La cabecera de AGENTS.md aún describe el momento previo al despliegue; se señala como texto desactualizado, sin revertir el cierre confirmado.
+- Ya existen `citas`, `cita_sintomas`, `tipos_cita`, `horarios_clinica`, `horarios_veterinario`, `ausencias_veterinario`, `propuestas_horario`, `reasignaciones` e `ingresos_emergencia`. La existencia de tablas no acredita que sus flujos estén implementados.
+- `citas` ya admite prioridades, síntomas/contexto, duración/margen, sobrecupo, llegada, horas reales y estado `pausada`. El índice único impide comienzos iguales ordinarios, pero por sí solo no resuelve solapes de distinta hora ni carreras de sobrecupos.
+- `Cita::registrarEvaluada()` ofrece la entrada de prioridad evaluada y el límite del plan; la entrada ordinaria aún usa verde. El controlador y el modelo actuales deben inventariarse completos en A, incluido el portal y la reprogramación.
+- M2 entrega el motor, buscador y entrada estructurada, con 26 casos T automatizados. Siguen pendientes de validación veterinaria; T-16 y T-20 conservan sus limitaciones expresas. No se cambian los esperados para facilitar la agenda.
+- `calcular_triage_ajax` permite veterinario y propietario y conserva esos roles. La decisión 2 exige retirar el permiso actual del administrador para crear citas, alineando documentación, servidor y pantallas durante M4.
+
+**Destino v2:** [MER](../documentacion/MER.md), [Modelos](../documentacion/Modelos.md) §2 y §4–§8; §3 para consulta, §9–§10 para contexto y §13.4 para propuestas del veterinario. La batería interna `documentacion/CasosTriage.md` aporta T-01–T-26 y O-01–O-11.
+
+**Incluido como dependencia transversal:** HU-7.4 completa (marca, teléfono de urgencias, tipos, duración, margen y pausable), la conservación de HU-7.1 y las rutas existentes de agenda; HU-5.6 completa, absorbida por la agenda según el plan de entregas. Los parámetros generales de HU-7.5 se leen por clínica con sus valores existentes; su panel general sigue en v2.1.
+
+**Fuera de esta propuesta v2.0:** reporte de ausentismo RE-4.7.3; HU-4.10 (confirmar desde recordatorio), HU-4.16 (afinidad/reputación) y HU-4.17 (actualización de síntomas por el propietario): v2.1, conforme a la decisión confirmada de §6. O-06 se conserva como aceptación futura de HU-4.17, no se declara pasado por M4. Tampoco entran suscripción/cobro de HU-0.5, gestión general de especialidades, plantillas/bitácora de M8, carnet/QR ni rediseño global. Sí se prueba la excepción roja frente al estado de mora sin construir la suscripción.
+
+**Decisión del usuario (2026-10-17):** toda atención sin reserva debe crear una cita de llegada y conservar ese origen. La incorporación de HU-2.2 está confirmada; los criterios documentales y el tratamiento de capacidad/sobrecupo deben concretarse antes de implementar, sin permitir una consulta nueva por este acceso que quede fuera de la agenda.
+
+## 2. Trazabilidad
+
+Los rangos incluyen cada RE consecutivo del intervalo. La evidencia indicada es **prevista**, no una prueba ejecutada. A convierte esta matriz en una lista por RE con su prueba concreta y las salvedades de lo ya entregado.
+
+| HU | RE incluidos | RN/RNF | Etapa | Evidencia de aceptación prevista |
+|---|---|---|---|---|
+| HU-7.4 | RE-7.4.1–RE-7.4.6 | RN-009, RN-415, RN-421, RN-701, RN-427 | C1, C7, F | Marca y teléfono en configuración/portal/correos/documentos; tipos aislados con duración, margen y pausable; auditoría y JS de formulario. |
+| HU-4.11 | RE-4.11.1–RE-4.11.5 | RN-706, RN-703, RN-415, RNF-11 | C2, C3, C5 | Franjas válidas; rechazo de solapes incluso entre clínicas sin revelar horarios ajenos; propuesta vet pendiente y aprobación admin; citas afectadas para reajuste. |
+| HU-4.12 | RE-4.12.1–RE-4.12.5 | RN-414, RN-415 | C3, C6 | Ausencia de día completo/parcial y extremos; cobertura sin veto, alternativa pendiente del propietario, avisos y auditoría. |
+| HU-4.13 | RE-4.13.1–RE-4.13.7 | RN-401, RN-402, RN-411, RN-415, RN-420, RN-422 | C3, C4a, C4b, C7 | Cuatro ramas; bloqueo real concurrente; tipo/duración/margen/prioridad; tope 2 por defecto y orden por fecha/ID; rojo antes del límite. |
+| HU-2.11 | RE-2.11.1–RE-2.11.7 (cierre operativo) | RN-209, RN-411, RN-416–RN-418, RN-424, RN-425, RN-113 | C4a, C4b, C7 | Marcas/tiempos/nota persistidos; nota sola rechazada; 26/26 sin alterar esperados; T-20 sin horario antes de revisión; T-11 avisa aislamiento. |
+| HU-4.14 | RE-4.14.1–RE-4.14.7 | RN-412, RN-413, RN-415, RN-428, RN-429 | C5a, C5b | Reloj controlado: margen exacto, cascada, fin de franja, aceptación/rechazo/vencimiento de propuestas; avisos acumulados y como máximo dos por hora en el caso de aceptación. |
+| HU-4.15 | RE-4.15.1–RE-4.15.10 | RN-411, RN-415, RN-420, RN-421, RN-427; RN-G07, RN-G16, RN-G19, RN-110, RN-206, RN-207 | C4a, C7a, C7b | O-01/O-02/O-09/O-10; libre → pausable → espera; sin cuotas/mora; ficha y cuenta existentes o provisional; conciliación transaccional sin perder actos. |
+| HU-4.18 | RE-4.18.1–RE-4.18.4 | RN-419, RN-209 | C4b, C8 | Ajuste solo vet con motivo; calculado y ajustado separados; reubicación y aviso; historial de reclasificaciones visible a la clínica con aislamiento. O-07/O-08. |
+| HU-4.19 | RE-4.19.1–RE-4.19.4 | RN-426, RN-408, RN-412 | C8 | Hora llegada; debajo, en y encima de tolerancia; duración restante insuficiente; tres opciones tras tolerancia; recálculo y auditoría. |
+| HU-4.1 | RE-4.1.1–RE-4.1.5 | RN-401–RN-404 | C3, C4, D | Regresión: reserva interna/portal, calendario, duración completa, correo y protección de conflictos. |
+| HU-4.2 | RE-4.2.1–RE-4.2.4 | RN-405 | C3, C4b, D | Cancelar conserva fila; reprogramar usa la misma disponibilidad y candados; conserva permisos y avisa. |
+| HU-4.3 | RE-4.3.1–RE-4.3.9 (RE-4.3.8 derogado) | RN-406–RN-410 | C5, C7, D | Solo asignado inicia/continúa; cierre atómico con consulta; vigilante y sin cerrar; no reaparece cerrar sin consulta; pausa no permite cierre indebido. |
+| HU-4.4 | RE-4.4.1–RE-4.4.4 | RN-404 | C4, C5b, D | Correo tras guardar, datos correctos, fallo registrado y sin perder/bloquear reserva. |
+| HU-4.5 | RE-4.5.1–RE-4.5.3 | RN-401, RN-412 | C5 | Horas reales conservadas y exceso detectado durante la atención, además de al finalizar. |
+| HU-4.6 | RE-4.6.1–RE-4.6.2 | RN-401, RN-403, RN-415 | C1, C3 | Margen por tipo configurable y aplicado una sola vez en sugerencias y reserva. |
+| HU-4.7 (parcial) | RE-4.7.1–RE-4.7.2 | RN-405, RN-408 | C8, D | Solo vet asignado tras hora prevista; libera el espacio. RE-4.7.3 sigue en v2.1. |
+| HU-4.8 | RE-4.8.1–RE-4.8.3 | RN-402, RN-703 | C2, C3, C6 | Horario recurrente, bloqueo por fecha y cierre/festivo puntual sin citas ofrecidas. A debe resolver su representación: no basta apagar todos los lunes para cerrar un único lunes. |
+| HU-4.9 | RE-4.9.1–RE-4.9.3 | RN-401, RN-402 | C3 | Misma lógica para sugerir/guardar; intervalo completo; dos conexiones con horas iniciales diferentes: una sola reserva compatible. |
+| HU-5.3 | RE-5.3.1–RE-5.3.5 | RN-401, RN-402, RN-501, RN-109, RN-110, RN-G02 | C4 | Regresión de agendar desde portal, clínica y mascota legítimas, confirmación y sin acceso a mascota ajena. |
+| HU-5.6 | RE-5.6.1–RE-5.6.4 | RN-405, RN-401, RN-G02 | C4b, C5b | Cancelación/reprogramación propia con disponibilidad vigente, aviso a clínica y auditoría; petición directa ajena rechazada. |
+| HU-2.2 | RE-2.2.1–RE-2.2.5 | RN-102, RN-203, RN-208, RN-411, RN-415 | C8b | Origen «llegada sin reserva», cita obligatoria y atención coherentes, sin duplicado ante doble envío. Sin sobrecupo no urgente automático; espera/alternativas y origen conservado, sin modificar históricos NULL. |
+| Transversal | RE-T.10.1, alcance RNF-11/RNF-16 y requisitos de acceso ya vigentes | RN-G01, RN-G02, RN-G13, RN-G19 | Todas, D | Contexto activo, CSRF, clínica y titularidad; A concreta RE transversales adicionales; revisión de interfaz en móvil/tableta/escritorio. |
+
+Los criterios normativos permanecen en `documentacion/`; no se cambian silenciosamente en esta tabla. Las nuevas reglas de llegada y las decisiones no cubiertas requieren criterio y aprobación antes del código.
+
+## 3. Etapas y dependencias
+
+**Contrato actual:** las propuestas históricas A/A.1 se conservan como evidencia; prevalecen §6 y el Anexo B1. M está confirmada, C descartada; no usar A.8 como fuente de pendientes ya resueltos.
+
+**Asignación corregida por el usuario (2026-10-17):** escribe Codex; revisa Codex en una sesión independiente. El autor de A no escribe su revisión. Trabajo por turnos en el mismo checkout, sin agentes paralelos sobre archivos compartidos. La columna de autor de las etapas siguientes se entiende con esta corrección, no como un encargo a Claude Code.
+
+| Etapa | Entregable comprobable | Depende de | Escribe | Revisa |
+|---|---|---|---|---|
+| **A. Inventario y contrato** | Solo lectura del código y anexo de diseño: rutas internas/portal, calendario, pacientes, atención, tipos, configuración, correos, vigilante y pruebas; regresiones conservadas; trazabilidad por RE; diferencias con Modelos §2–§8. Proponer algoritmo de intervalos/cascada, orden de candados, cierre puntual, revisión humana de triage, cola roja sin vet aún y persistencia mínima; resolver datos del acompañante y selección entre veterinarios igualmente compatibles antes de B. | Aprobación del plan | Codex | Codex independiente |
+| **B. Datos y contratos documentales** | Migraciones solo donde A demuestre huecos; MER/drawDB/esquema alineados; relleno conservador e idempotencia. Ajustes de HU/RE/RN/diagramas aprobados. No se habilitan rutas parciales. | A revisada y decisiones de datos aprobadas | Codex | Codex independiente |
+| **B1. Contrato documental y diseño de datos** | Alinear HU/RE/RN/Modelos con §6, matriz de permisos y propuesta mínima de esquema con campos/índices/relleno. Cerrar un único protocolo HC/candados. Sin SQL ejecutable ni código; revisar el diseño antes de B2. | A/A.1 revisadas y decisiones de §6 | Codex | Codex independiente |
+| **B1.1. Corrección de conciliación** | Contrato único de identidad vigente, solicitudes activas/terminales, contexto/revisión, eventos, idempotencia y rollback; revisada y aprobada (2026-10-18), H-B1-1 cerrado. | H-B1-1 de la revisión B1 | Codex | Codex independiente |
+| **B2. Esquema y migraciones** | Ejecutar únicamente el diseño revisado de B1: migración nueva repetible, esquema ejecutable/MER/drawDB coherentes y pruebas de instalación/actualización. No habilita rutas de aplicación. | B1 revisada y decisiones de datos resueltas | Codex | Codex independiente |
+| **B2.1. Corrección del control automático** | Configuración revisada y aprobada por Codex arquitecto (2026-10-18); H-B2-1/H-B2-2 cerrados. Se conservan 58 tablas y ambas clases secuenciales con base explícita. Fallo nativo posterior deriva a B2.2, según revisión CI. | H-B2-1/H-B2-2 de la revisión B2 | Codex ejecutor | Codex arquitecto independiente |
+| **B2.2. Compatibilidad y fallos del migrador** | Metadata propia de CHECK/generadas aceptada en MySQL 8/MariaDB y variantes incompatibles rechazadas; shell del migrador con pipefail. Revisada/aprobada y CI completo verde en 663ea26 (2026-10-18); ver cierre de B al final. | H-B2-3/H-B2-4 de «CI de B2 — Revisión» | Codex ejecutor | Codex arquitecto independiente |
+| **C1. Marca y tipos — entregada, pendiente de revisión** | Componentes C1 de HU-7.4: configuración, duración/margen/pausable, teléfono; propagación de marca en salidas existentes y aislamiento; mismo diseño y validación en vivo. La aceptación operativa de margen/urgencias/pausas se completa en C3/C4a/C7a según la matriz por RE. | B | Codex | Codex independiente |
+| **C2. Horarios — entregada, pendiente de revisión** | HU-4.11: admin configura, vet propone y admin resuelve, privacidad entre clínicas, citas afectadas marcadas. Antes de C5 esas marcas quedan visibles como pendientes, sin fingir reajuste automático ya terminado. Resultado y evidencia en Anexo C2; HU-4.11 continúa con C3/C5. | C1 | Codex ejecutor | Codex arquitecto independiente |
+| **C2.1. Corrección — entregada, pendiente de revisión** | H-C2-1/H-C2-2: auditoría común de lectura ajena y regresión durable; causa demostrada y corrección del sondeo de metadata sin debilitar las diez carreras. Evidencia final y pendientes en Anexo C2.1; no aprueba C2 ni inicia C3. | C2 revisada con corrección | Codex ejecutor | Codex arquitecto independiente |
+| **C2.2. Comparación JSON — entregada, pendiente de revisión** | H-C2-3: respuestas idempotentes comparadas por claves/valores/tipos sin ordenar listas; regresiones positivas/negativas y verificación en Anexo C2.2. Sin cambio de aplicación o persistencia; CI nuevo pendiente. | CI de C2/C2.1 revisado | Codex ejecutor | Codex arquitecto independiente |
+| **C3. Disponibilidad y reserva — revisada; requiere C3.1** | Una lógica de intersección, resta de ausencias/cierres y ocupación por duración+margen para sugerencias, reserva y reprogramación; candados y pruebas concurrentes; nunca disponibilidad permanente por falta de horario. H-C3-1/2/3 pendientes antes de aprobar HU-4.9. | C2 | Codex | Codex independiente |
+| **C3.1. Correcciones — entregada, pendiente de revisión independiente** | H-C3-1/2/3: segundos exactos en sugerencia/selección/envío, replay HTTP autorizado antes de validar un comando nuevo y mensaje genérico de revisión distinguido de consulta vacía. Evidencia y pendientes en Anexo C3.1; no cierra hallazgos ni aprueba C3. | C3 revisada con corrección | Codex ejecutor | Codex arquitecto independiente |
+| **C4a. Agendar con triage** | Interno y portal comparten captura/buscador C4 de M2; cuatro ramas, excepción roja, clínica cerrada, revisión humana y contagio, persistencia y notificaciones. Rojo deriva a circuito clínico; no crea reserva ordinaria ni promete atención por el solo cálculo remoto. | C3 | Codex | Codex independiente |
+| **C4b. Sobrecupos y cambios** | Tope y orden naranja con motivo; primer espacio amarillo/elección verde; conflictos sobrevenidos; cancelación/reprogramación interna y portal con misma lógica; revisión previa al horario y registro del nivel aprobado por vet. | C4a | Codex | Codex independiente |
+| **C5a. Grafo II y cascada — entregada, pendiente de revisión** | Secuencia/conflicto/emparejamiento; horas estimadas sin destruir horas pactadas o reales; margen, huecos y fin de franja. Disparos durante atención y al finalizar, sin depender de abrir calendario; procesador idempotente. | C4b | Codex | Claude (arquitecto) |
+| **C5b. Reasignación en vivo — entregada, pendiente de revisión** | Propuesta/aceptación/rechazo/vencimiento, siguiente candidato y reprogramación con propietario; revalidación al aceptar; avisos agrupados RN-429 y auditoría. Procesa marcas de horario C2. | C5a | Codex | Claude (arquitecto) |
+| **C6. Ausencias y cobertura — entregada, pendiente de revisión** | Alta admin/solicitud propia vet, bloqueo exacto y cobertura sin veto; sin cobertura queda pendiente de reprogramar y se ofrecen alternativas; auditoría y avisos. No reutilizar el veto de C5b. | C5b | Codex | Claude (arquitecto) |
+| **C7a. Atención roja y pausas — entregada, pendiente de revisión** | Libre/pausable/espera, llegada directa y derivación del portal, identidad conocida, prioridad máxima, excepción a plan/mora; pausa y reanudación antes de siguientes; consulta y cascada coherentes. | C6 | Codex | Claude (arquitecto) |
+| **C7b. Ficha provisional y conciliación — entregada, pendiente de revisión** | Cuatro ramas de identidad de HU-4.15; captura mínima, tarea pendiente, completar o consolidar sin perder actos ni cuenta nueva, carnet inactivo y datos del acompañante protegidos. | C7a y contrato de datos aprobado | Codex | Claude (arquitecto) |
+| **C8. Ajustes y llegada tarde** | HU-4.18 completa (más lo adelantado por revisión humana), historial de reclasificaciones; hora llegada, opciones por tolerancia y capacidad restante, no asistió y recálculo. | C7b | Codex | Codex independiente |
+| **C8b. Llegada sin reserva** | HU-2.2 según decisión 3 confirmada: cita obligatoria, origen distinguible y ocupación real; nunca convertir un verde en naranja para eludir las reglas. | C8 y criterios de capacidad aprobados | Codex | Codex independiente |
+| **D. Correcciones y verificación final** | Corregir hallazgos, regresión M2/agenda/portal, comparación de diagramas, aislamiento y pruebas completas; 3–5 pruebas manuales por entrega. Sin rediseño general. | Etapas anteriores revisadas | Codex | Codex independiente |
+| **F. Cierre y despliegue** | Matriz final por RE, estados documentales, una revisión por documento, PDF/Word y diagramas verificados; versión/historial `2.0.0-alpha.5`; guía de respaldo, integración y comprobación de producción. El usuario ejecuta Git y despliegue. | D y pruebas del usuario | Codex | Codex independiente |
+
+Las filas C4/C5/C7 de la matriz agrupan sus subetapas a/b. Si el inventario muestra que una fila no cabe en una entrega verificable, se divide antes de emitir el prompt; no se implementan dos por comodidad. Cada prompt sigue literalmente la estructura de `agentes/metodo.md` §5 y cita sus diagramas, alcance, exclusiones y pruebas concretas.
+
+## 4. Datos y migraciones
+
+**Precisión vigente B1.1:** el Anexo B1.1 corrige exclusivamente la conciliación incompleta de B1. Todas las solicitudes afectadas usan la identidad vigente; las evaluaciones históricas conservan procedencia y no autorizan comandos sobre el nuevo contexto. B2 materializa ese mismo destino de 58 tablas en el ejecutable; producción alpha.4 mantiene 52 hasta desplegar.
+
+**B2 actual:** 01_schema.sql, 08_agenda_grafo_ii.sql, MER y drawDB describen las mismas 58 tablas (52 anteriores + seis nuevas). 02_semilla.sql y 03–07 permanecen intactas; B1/B1.1 son el contrato vigente. El anexo B2 documenta transición/verificación de datos, sin adelantar servicios funcionales. Las alternativas de A.4 quedan históricas, sin libertad de mezclar GET_LOCK y candado clínico al implementar.
+
+
+- **Se conserva la v2 desplegada.** No hay reinicio de base ni migración de datos v1. B1 alinea `specs/HU-4.15-ingreso-emergencia.md` con la ampliación aditiva de alpha.4.
+- `01_schema.sql` ya contiene las entidades principales; no recrearlas. Se comprobó 08 libre al comenzar B2 y se creó `08_agenda_grafo_ii.sql`; cambios futuros usarán el siguiente número libre.
+- **Huecos resueltos documentalmente en B1, pendientes de implementación:** horario estimado y último aviso RN-429; marca de reajuste/reprogramación pendiente; solicitudes de ausencia; cierre puntual de clínica; pertenencia de sobrecupo a bloque; orden/prioridad de espera y pausa/reanudación; urgencia sin veterinario aún (`citas.id_veterinario` hoy es obligatorio); revisión humana antes de reservar. No se aprueban aquí columnas nuevas ni se introduce NULL en una FK sin revisar todos sus lectores.
+- Decidir qué estado debe persistir entre peticiones y qué se recalcula. No usar texto de observaciones como estado operativo ni auditoría como sustituto accidental de una cola. Toda ampliación pasa primero por MER/drawDB, criterio de aceptación y aprobación si cambia alcance.
+- Conservar instantáneas de duración/margen y triage calculado frente a ajustado, marcas y tiempos por evento, contexto/versión del conocimiento; no copiar tratamientos protegidos al contexto de la cita.
+- B1 define relleno verificable para citas antiguas sin duración/tipo y para clínicas/veterinarios sin horario. No inventar síntomas ni triage retrospectivos ni asignar automáticamente jornada completa. No modificar horarios pactados ni citas completadas para hacerlas encajar.
+- **Concurrencia:** serializar la comprobación y la escritura incluso cuando no existe todavía una cita en el hueco. Un candado solo sobre citas existentes es insuficiente. B1 define orden estable para vet/mascota/clínica y plan, reserva, sobrecupo, aceptación y conciliación; MySQL prueba dos conexiones y rollback. Las excepciones de lectura de ocupación entre clínicas quedan encapsuladas y no devuelven datos ajenos.
+- Migraciones idempotentes y probadas dos veces sobre esquema nuevo y base previa con datos; sin editar 03–07 publicadas; sincronizar `01_schema.sql`, semilla si corresponde, MER y drawDB. Semilla solo inserta faltantes.
+- Despliegue automático por migrador; primero migración satisfactoria, luego conocimiento. En XAMPP el usuario ejecuta `php scripts/migrar.php` y después `php scripts/cargar_conocimiento.php`. No se lee `.env` ni se ejecutan pruebas contra `zooki_v2_prueba`.
+- Recuperación: respaldo antes del despliegue, cambios aditivos donde sea posible y comprobación de compatibilidad antes de volver al código anterior; no prometer rollback de código seguro tras modificar estados/FK sin demostrarlo.
+
+## 5. Código, permisos y pantallas
+
+- **Modelos/helpers:** partir de `models/Cita.php`, `models/HorarioClinica.php`, `helpers/HorarioAtencion.php`, `helpers/MotorTriage.php`, validadores, límites y vigilante existentes. Separar cálculo puro del Grafo II, acceso a disponibilidad y coordinación transaccional; contrato y llamadores concretos en B1.1; archivos B2 en B1.5. Reutilizar motor/buscador de M2, sin otro cálculo de triage en JS.
+- **Controladores/rutas:** `controllers/CitaController.php`, consulta y los controladores de configuración/portal implicados; registrar todas las acciones nuevas en `public/index.php` y `helpers/Security.php`. Tarea programada para vencimientos/retrasos sin navegador abierto; reaprovechar infraestructura existente sin duplicar avisos de atenciones abiertas.
+- **Administrador:** horario, aprobación de propuestas, ausencias/cobertura y configuración de su clínica. No agenda, no inicia ni completa consulta. La retirada de la creación de citas se verifica también por petición directa y en todos los accesos existentes, no solo ocultando botones.
+- **Veterinario:** sus propuestas/solicitudes y sus atenciones; ajuste/reordenación motivados y respuesta a propuestas dirigidas a él, con alcance exacto revisado en A. No guarda directamente horario recurrente. Nunca atiende con contexto de administrador.
+- **Propietario:** solo sus mascotas y citas, en clínica legítimamente vinculada; sin poder autodeclarar prioridad ni exponer estado comercial de la clínica. Revalidar vínculo, titularidad, actividad y datos del cálculo al guardar.
+- **Plataforma:** Gina no obtiene permiso clínico por ser superadministradora. Probar denegación con su contexto activo.
+- **Pantallas:** conservar calendario, gestión de citas, atención, Pacientes, formularios de configuración y portal. Reutilizar `public/js/consulta-sintomas.js` y extraer componentes compartidos cuando corresponda; no duplicar el selector. Validación/restricción en vivo, mensajes junto al campo, datos `data-*`, sin JS/CSS en línea ni confirmaciones para decisiones reversibles ya motivadas.
+- Las lecturas globales de alergias/alertas se mantienen conforme a RN-113. La ocupación y horarios de un vet de varias clínicas se verifican internamente con respuesta genérica; no amplían acceso al calendario ni historia de la otra clínica.
+- HU-7.4 incluye comprobar la marca en todas las salidas que exige RE-7.4.4; no se declara completa solo por mostrar logo en configuración. Las descargas públicas del portal documental no pasan a ser documentos personalizados de una clínica.
+
+## 6. Riesgos y decisiones pendientes
+
+- **Decisión del usuario (2026-10-20, C8):** conservar RN-426 y añadir las alternativas del encargo. Dentro de la tolerancia, el veterinario puede decidir explícitamente servicio completo con cascada; si no alcanza el tiempo, también se ofrecen duración reducida explícita si cabe, reprogramación y otro veterinario compatible. Pasada la tolerancia siguen no asistió/siguiente hueco/reprogramar. Registrar llegada no inicia atención ni reduce automáticamente el servicio.
+
+- **Decisión del usuario (2026-10-20, C6-C7):** autoriza la migración 10 para excluir `origen=urgencia` del índice de comienzos ordinarios. Sin tablas ni campos nuevos; conservar horas pactadas/reales, `es_sobrecupo` exclusivo de naranja, coordinador y ocupación global. Sincronizar 01/MER/drawDB y verificar migrador doble e instalación vacía. La autorización no elimina controles de capacidad ni permite crear citas al administrador.
+
+**Lectura vigente en B1:** las confirmaciones siguientes prevalecen sobre los «pendiente» históricos. Las reglas de producto de capacidad, revisión, naranja, ausencias, política M, urgencias, contacto, marca y conciliación ya están resueltas; el orden de la espera no urgente también queda confirmado: amarillo antes de verde y llegada física/ID dentro del color. El esquema/protocolo de B1 quedan pendientes de revisión técnica, no de una aprobación clínica ficticia.
+
+
+Las diferencias normativas de esta tabla se detectaron en A y se alinean documentalmente en B1; los riesgos ejecutables persisten hasta integrar C.
+
+| Riesgo o diferencia encontrada | Efecto | Mitigación / momento de resolución |
+|---|---|---|
+| HU-4.10 tiene nota v2.0, pero tabla de entregas v2.1 | Alcance contradictorio | Decisión 1; corregir la nota antes de implementar. |
+| HU-4.1 y permisos actuales admiten admin; Modelos §4 lo excluye | Flujo y matriz de permisos incompatibles | Decisión 2; alinear HU-4.13, RE y diagrama, sin ampliar permisos a escondidas. |
+| HU-2.2 exige consulta sin cita; la idea de llegada crearía cita | Se pierde trazabilidad «Sin cita» o se aplica mal RN-422 | Decisión 3; definir origen y tratamiento del sobrecupo no naranja antes del prompt C8b. |
+| RN-422 regula sobrecupos naranjas, no cualquier llegada | Llegadas verdes podrían saltarse tope/orden o el límite del plan | No reutilizar sin cambios la bandera naranja; reglas específicas aprobadas en A/B. Rojo mantiene su propia excepción. |
+| Modelos §4 omite la puerta explícita de revisión humana y aviso de contagio | Se ofrecería horario a T-20 sin revisión | Completar ramas en B con los RE existentes; probar T-20/T-22 y T-11 en UI y servidor. |
+| Modelos §5 ilustra el evento al terminar, RE exige detectar exceso durante la atención | Cascada tardía o margen descontado dos veces | A fija una línea temporal con ejemplos; ampliar diagrama con disparos mientras sigue abierta, conservando reglas y vigilante. |
+| Sin horario o sin cierre puntual modelado | Disponibilidad ficticia o festivo convertido en cierre recurrente | A resuelve representación y transición de datos; B aprueba antes de habilitar nueva agenda. |
+| Horario modificado, ausencia o propuesta aceptada mientras otro reserva | Doble ocupación y citas fuera de horario | Misma política de candados y revalidación para todas las escrituras; pruebas MySQL concurrentes. |
+| Cobertura y reasignación mezcladas | Veto indebido en ausencia o traslado sin aceptación en vivo | Servicios/casos separados RN-414 y RN-413/RN-428. |
+| Avisos o cálculos remotos duplican urgencias y pausas | Dos ingresos o interrupción de un paciente que aún no está en clínica | A especifica transición derivación → ingreso/atención e idempotencia; no asumir presencia física por una solicitud del portal. No alterar este significado sin aprobación. |
+| Datos del acompañante y consolidación | Atribuir propiedad, fuga o pérdida clínica | Decisión 4 y contrato de A; cuatro ramas de RE-4.15.3, permisos, FK completas y rollback. |
+| Conocimiento sin validación clínica | Confundir funcionamiento técnico con certificación clínica | Mantener fuentes, avisos de apoyo y reservas T-16/T-20; no modificar conocimiento como atajo de agenda. |
+
+**Decisiones y pendientes tras la respuesta del usuario (2026-10-17):**
+
+**Decisión del usuario (2026-10-17) — orden de rojos presentes:** entre varios rojos en espera, usar llegada física como orden inicial; el veterinario puede cambiarlo con motivo y auditoría. Si otro rojo espera mientras existe una atención pausada, el veterinario decide la prioridad. No automatizar interrupciones anidadas ni permitir que una derivación remota sin llegada desplace pacientes presentes. Se conserva RN-427 para reanudar la atención pausada antes de las citas siguientes cuando no medie esa decisión clínica de urgencia.
+
+**Decisión del usuario (2026-10-17) — contacto del acompañante:** nombre y teléfono se usan para atender y resolver identidad; al finalizar esa necesidad, se eliminan/anonimizan esos datos de contacto conservando ingreso, identificadores y todos los actos clínicos. Si aún es necesario conservarlos, debe quedar un motivo de conservación. No se fija un plazo automático en días. B debe precisar el disparador verificable, permisos y tratamiento de copias/auditoría sin convertir esta decisión de producto en una aprobación jurídica.
+
+**Decisión del usuario (2026-10-17) — marca e historial:** marca de cada clínica en sus correos y documentos; historial multi-clínica con cabecera de Zooki y procedencia identificada por acto. Reclasificaciones visibles al personal autorizado de la clínica sobre sus propios casos, sin ampliar acceso a casos ajenos.
+
+**Decisión del usuario (2026-10-17) — permisos de conciliación:** tras explicar la ficha provisional, confirma que tanto administrador como veterinario autorizado de la clínica pueden completar/consolidar después de verificar primero la titularidad. El propietario aporta la verificación, sin fusionar por su cuenta actos clínicos ni adjudicarse una mascota por conocer su ID. El administrador no recibe por ello permiso para registrar/modificar consultas o crear citas; completar/consolidar identidad usa su acción específica, transacción y auditoría, conservando clínica y autor de los actos. B1 debe fijar los permisos de cada acción y sus criterios de verificación antes de implementarlos.
+
+**Decisión del usuario (2026-10-17) — llegada no urgente sin hueco:** registrar la llegada y ofrecer el próximo espacio compatible u otro veterinario disponible de la misma clínica; no crear sobrecupos automáticos para verdes o amarillos ni iniciar consulta hasta crear su cita de llegada. No se aprueba la alternativa de un cupo adicional por bloque. La cita obligatoria para toda atención y la derivación roja se conservan; el orden de solicitudes en espera se concreta en la confirmación posterior de este apartado.
+
+**Decisión del usuario (2026-10-17) — orden de llegadas no urgentes en espera:** amarillo antes de verde y, dentro de cada color, llegada física ascendente y luego id_solicitud ascendente para desempatar. Confirmación recibida a la pregunta de B1. No cambia el color, no crea sobrecupos ni permite consulta sin cita; se revalida capacidad completa antes de asignar.
+
+**Decisión del usuario (2026-10-17) — aprobación de ausencias:** una solicitud del veterinario permanece pendiente y no tapa disponibilidad hasta que el administrador la apruebe. La ausencia registrada directamente por el administrador es efectiva de inmediato y activa búsqueda de cobertura conforme a RN-414. B alineará HU/RE/Modelos antes del código.
+
+**Decisión del usuario (2026-10-17) — revisión previa al horario:** todo resultado de triage que requiera revisión humana debe ser revisado por un veterinario, que confirma o ajusta el nivel, antes de ofrecer un horario reservable. Incluye «Otro / no sé» y casos sin cobertura suficiente. Los rojos conservan derivación inmediata y no esperan en esa puerta para recibir el aviso/derivación de emergencia. B debe dejar explícito este orden y sus pruebas.
+
+**Decisión del usuario (2026-10-17) — bloque y consumo de cupo naranja:** después del ejemplo, confirma el funcionamiento: el tope configurable (dos por defecto) corresponde a la franja continua original del veterinario para esa fecha; una ausencia parcial no multiplica ese tope. Los sobrecupos atendidos/completados siguen consumiendo el cupo; cancelados/no_asistio lo liberan. Un tercero sobre el tope genera aviso y decisión del personal, sin inserción automática que lo eluda. La pregunta posterior sobre ausencias por horas se aclara con RE-4.12.1/2, que ya exige día completo y franja parcial; no se interpreta como decisión de retirar esa capacidad del alcance.
+
+**Decisión del usuario (2026-10-17) — política temporal M:** se adopta la alternativa M revisada en A.1: el inicio real tardío y las pausas desplazan el fin nominal y su margen único; la duración activa realizada y los sellos reales se conservan. Ejemplo confirmado: inicio 09:00, servicio activo de 30 minutos, pausa 09:10–09:30 y fin clínico 09:50 dejan el extremo de ocupación a las 10:00 con margen de 10 minutos. No se reinicia el margen por pausa ni por recálculo; el exceso activo consume ese margen conforme a A.3. La alternativa C se conserva solo como antecedente descartado. B alineará los criterios/diagramas afectados antes del código; las demás propuestas de A.8 no quedan aprobadas por esta decisión.
+
+**Decisión del usuario (2026-10-20) — incertidumbre de ocupación legada en C3:** confirma bloquear la disponibilidad ordinaria del veterinario o mascota en la fecha afectada cuando una cita no permita demostrar duración/fin de ocupación, o una atención pausada no tenga reanudación estimable.
+Responder genéricamente que la disponibilidad requiere revisión, sin inventar duración, cambiar la cita ni completar sus snapshots desde el tipo actual.
+La confirmación corresponde a la pregunta expresa del ejecutor durante C3; no se atribuye esta regla a una decisión previa ni se habilita cascada/atención C5/C7.
+
+**Decisión del usuario (2026-10-20) — origen interno de solicitudes en C4:** autoriza añadir `interno` al origen de solicitudes_agenda y sincronizar esquema/migración/MER/drawDB.
+La captura veterinaria desde la agenda conserva fecha_llegada e id_receptor nulos; no representa una llegada física ni amplía permisos.
+La migración 09 incorpora la extensión; 08 de M4 aún sin release acepta también ese destino para permitir instalación consolidada y repetición, conservando sus otras comprobaciones y sin modificar 03–07 publicadas.
+
+**Decisión del usuario (2026-10-17) — comandos de entrega:** no incluir `git diff --cached --stat` en los comandos para pegar; usa también CMD y pide únicamente los pasos necesarios para guardar/subir, uno por línea. Preferencia registrada en agentes/metodo.md §8; no cambia las verificaciones que debe realizar el revisor.
+
+1. **Decisión del usuario (2026-10-17) — alcance:** HU-4.10, HU-4.16, HU-4.17 y el reporte RE-4.7.3 quedan en v2.1. Corregir la nota contradictoria de HU-4.10 al alinear documentos. No adelantar el re-triage del propietario para cerrar M4.
+2. **Decisión del usuario (2026-10-17) — quién agenda:** solo el veterinario y el propietario pueden agendar; el administrador no crea citas. Conservar sus funciones de configuración, horarios y ausencias. A inventaría todos los accesos de creación y B alinea HU-4.1/HU-4.13, RE y diagramas con esta decisión antes de que C4 retire el permiso en servidor y pantallas. No ampliar `calcular_triage_ajax` al administrador. Su capacidad actual en HU-4.1 y `Security.php` es la discrepancia a corregir, no el comportamiento aprobado para M4. No interpretar esta decisión sobre agendar como retirada de otros permisos administrativos no tratados.
+3. **Decisión del usuario (2026-10-17) — atención sin reserva:** crear **siempre** una cita de llegada detrás del acceso, conservando el origen «llegada sin reserva», para reflejar su ocupación y evitar cruces. Ajustar HU-2.2/RE y sus flujos antes del código. Rojo sigue por urgencias. A debe proponer capacidad, orden y relación con el tope naranja cuando no cabe un no rojo; RN-422 no autoriza por sí sola sobrecupos verdes ilimitados. Esa política concreta todavía no está aprobada.
+4. **Decisión del usuario (2026-10-17) — acompañante:** nombre y teléfono opcionales, sin pedir documento por defecto. Puede traer la mascota su propietario u otra persona; ser acompañante no acredita titularidad. Si la relación ya está verificada se reutilizan cuenta y ficha; los datos provisionales se usan cuando no puede verificarse la identidad/relación sin retrasar la atención. Atender sin exigir esos datos. Se conserva el acceso por personal autorizado de la clínica; A debe presentar la retención/anonimización para aprobación antes de B/C7b, sin inventar plazo ni borrar actos clínicos. No crear cuentas automáticamente.
+
+**Decisión del usuario (2026-10-17) — aprobación del plan:** confirma dejar la propuesta con los acuerdos anteriores y guardar/subir la planificación. Quedan aprobados el plan y el inicio del inventario A; la capacidad del sobrecupo no urgente, la retención de datos y los contratos técnicos pendientes requieren su resolución antes de implementar las etapas afectadas. Las decisiones ya confirmadas en M2 y en el plan excepcional de HU-4.15 se conservan.
+
+**Decisión del usuario (C4, 2026-10-20):** el tope cuenta todos los naranjas del bloque, incluso si ocupan un hueco ordinario. `es_sobrecupo` distingue la inserción sin hueco; no delimita el consumo. Se conservan completados, liberación por cancelada/no_asistio, duración, margen y orden confirmado.
+
+## 7. Tareas y verificación
+
+- [x] Usuario aprueba alcance/roles/llegada/captura mínima y el plan (2026-10-17); decisiones en §6.
+- [x] Rama del módulo comprobada: `v2/m4-agenda`; encargo recibido **solo de A**, con la corrección de autor y revisor del usuario.
+- [x] A entregada por ejecutor y revisada de forma independiente (2026-10-17), con corrección A.1 antes de aprobar el contrato; ver revisión al final. Decisiones de producto pendientes antes de B.
+- [x] B1 entregada, pendiente de revisión independiente (2026-10-17); contrato y destino de datos en Anexo B1.
+- [x] B2 revisada y cerrada con B2.1/B2.2 y CI completo en verde (2026-10-18); hallazgos cerrados, revisiones conservadas. Esquema preparado sin despliegue.
+- [x] B2.1 revisada y aprobada por Codex arquitecto (2026-10-18); H-B2-1/H-B2-2 cerrados según su revisión conservada. La evidencia CI posterior requiere B2.2; no habilita C1.
+- [x] B2.2 revisada/aprobada y CI completo MySQL 8 confirmado en 663ea26 (2026-10-18); H-B2-3/H-B2-4 cerrados. Puede prepararse C1 tras guardar el cierre documental.
+- [x] C1 y C1.1 aprobadas en código; H-C1-1 cerrado. Guardadas en 9497034 y CI completo aprobado, según cierre 2026-10-19. Pruebas manuales sin confirmación explícita siguen pendientes.
+- [x] C2 y C2.1 revisadas y aprobadas en código (2026-10-20); H-C2-1/H-C2-2 cerrados. Pendientes pruebas manuales, commit/push y CI MySQL 8 nuevo antes de C3.
+- [ ] Cada subetapa tiene anexo «Anexo X — Resultado», autor, RE con prueba, comandos y pendientes; estado «entregada, pendiente de revisión».
+- [ ] Revisor comprueba diff, riesgos y Modelos paso a paso; escribe «### X — Revisión (fecha)», veredicto, evidencia propia, hallazgos archivo/línea/RE o RN/reproducción y siguiente paso. No inventar ahora anexos o revisiones aprobadas.
+- [ ] PHP completo, con y sin host; MySQL 8 si está disponible y/o MariaDB local, siempre **`zooki_test_base_v2`**; pruebas concurrentes con conexiones separadas. Si no hay servidor, declarar omisión y repetir antes del cierre, sin presentar SQLite como prueba de concurrencia MySQL.
+- [ ] JS completo: `node --test "tests/Frontend/**/*.test.cjs"`; probar comportamiento de formularios, respuestas fuera de orden, doble envío, cambios de mascota/clínica, errores, actualización inmediata y estados de agenda. Un recorrido HTTP no sustituye JS.
+- [ ] 26 casos T y O aplicables: O-01–O-05, O-07–O-11; O-06 queda pendiente de v2.1. Flujos límite, margen y tolerancia exactos; 10 recálculos de 3 minutos; bloque lleno; todos no pausables; propuesta vencida y aceptación en carrera.
+- [ ] Migraciones repetidas, datos previos, consultas/tratamientos/adjuntos y trazabilidad de conciliación; aislamiento Norte/Sur y rechazos por contexto o titularidad.
+- [ ] El usuario hace las 3–5 pruebas manuales de cada entrega en escritorio y celular; se conservan referencias de diseño y cortes RNF-16. No recorre el navegador el revisor.
+- [ ] Antes de F: matriz RE → prueba real, HU/RE/RN/MER/Modelos coherentes, conteos y matrices actualizados si cambian criterios; una revisión documental y exportación PDF/Word al cerrar. Diagramas Mermaid renderizados.
+- [ ] Actualizar versión e historial al cierre de la alfa; no subir versión por esta propuesta documental. Entregar comandos de commit uno por línea, sin `&&`; usuario hace commit antes del prompt siguiente.
+- [ ] Respaldo, integración, tag y despliegue por usuario; revisar log completo de migración y conocimiento, base al día, `App::VERSION` en contenedor y versión en pantalla.
+
+**Pruebas manuales previstas para la aceptación final** (se ajustarán a las entregas reales, sin darlas hoy por ejecutadas):
+
+1. [ ] **Ana Norte admin y Carla Sur admin:** configurar franjas y tipos distintos; comprobar duración, margen, pausable y aislamiento. **Beto Norte vet** propone horario y no puede guardarlo directamente; Ana lo aprueba.
+2. [ ] **Fabio Propietario:** agendar un verde y un amarillo con marcas/tiempo; nota sola no calcula; cancelar/reprogramar una cita propia. Probar T-20 sin oferta de horario hasta revisión y comprobar que no aparece información comercial del plan.
+3. [ ] **Beto Norte vet:** dos naranjas y un tercero con bloque al tope, cambio de orden motivado; prolongar una atención y comprobar cascada, propuesta de cobertura en vivo y avisos. Para el destino se necesita otro veterinario de Norte habilitado como dato de prueba; **Diego Sur no cubre Norte por defecto**. Nunca se le asigna clínica ajena para evitar preparar el dato de prueba.
+4. [ ] **Beto Norte vet y Ana Norte admin:** ingreso rojo con ficha conocida y provisional; pausa solo de tipo pausable, reanudación y consulta; completar/consolidar sin perder historia. Fabio prueba aviso de clínica cerrada y teléfono de urgencias desde el portal.
+5. [ ] **Beto Norte vet:** llegada a los 8 y 15 minutos con tolerancia 10, opciones correctas, ajuste motivado y agenda actualizada. **Diego Sur vet y Gina Plataforma:** peticiones a una cita/ingreso de Norte rechazadas con sus contextos activos.
+
+**Resultado de la planificación inicial:** no se ejecutaron suites en esa planificación. La verificación del inventario A se registra en su anexo; no acredita implementación de M4.
+
+## Anexo A — Resultado
+
+**Fecha:** 2026-10-17.
+**Autor:** Codex, ejecutor de A en esta sesión.
+**Revisor previsto:** Codex, en otra sesión independiente.
+**Corrección expresa del usuario (2026-10-17):** «escribe Codex y revisa Codex» sustituye la asignación inicial a Claude Code.
+**Estado:** entregada, pendiente de revisión.
+No contiene una revisión ni una aprobación de esta entrega.
+
+Solo se modifican este plan y agentes/estado.md.
+El código, esquema, migraciones, conocimiento, documentación normativa, diagramas, versión y exportaciones se conservan.
+Los nombres de servicios, campos y pruebas que siguen son propuestas de diseño, no archivos ni funcionalidades implementados.
+Las diferencias normativas se dejan para resolver en B; las decisiones de producto no confirmadas no se atribuyen al usuario.
+
+### A.1. Riesgos comprobados y diferencias documentales
+
+| Evidencia actual | Diferencia o riesgo | Ajuste que debe preparar B, antes del código afectado |
+|---|---|---|
+| models/Cita.php: registrarEvaluada, exigirHorarioLibre, ocupadas, intervalos y sugerencias | Copia margen, pero compara solo duración; sugerencias recorre 08:00–18:00, sin franjas del veterinario, ausencias ni cierres. El cliente cruza dos listas distintas. | Un contrato de disponibilidad completa, incluidas mascota y ocupación entre clínicas. RE-4.6.2, RE-4.9.1/2, RE-4.13.4; Modelos §2/§4. |
+| helpers/LimitePlan.php: transaccion bloquea clinicas; uq_cita_veterinario_horario solo impide comienzos iguales | El candado actual serializa altas de la misma clínica; dos clínicas distintas pueden insertar intervalos solapados de un veterinario o mascota globales con comienzos distintos. CitaTest simula la carrera saltando una validación en una sola conexión. | Candados estables globales de A.4 y prueba con dos conexiones reales. No declarar resuelta la concurrencia por el índice. |
+| models/Recordatorio.php:91–111, citasDeManana; VinculosPropietario::desvincular | La consulta de correo no comprueba directamente propietario_clinica activo, a diferencia de ContactoPropietario. El flujo normal sí impide desvincular con citas sin resolver y desactiva los vínculos de mascotas. No se demuestra una fuga alcanzable por ese flujo; falta una defensa/prueba explícita de elegibilidad en la consulta de recordatorios. | Proponer P11 con estado inconsistente propietario_clinica inactivo/mascota_clinica activo y con cambios concurrentes; exigir cero envíos y unificar elegibilidad al tocar notificaciones en C4a/C4b. No se declara vulnerabilidad ni envío indebido confirmado. |
+| helpers/Security.php:408; CitaController::registrarAjax/veterinarioDeLaReserva; AutorizacionRolTest:243 | Administrador aún puede crear por POST directo. HU-4.1 lo admite, HU-4.13 y Modelos §4 lo excluyen. | Aplicar decisión confirmada: solo vet/propietario crean. Alinear actores, pruebas y permisos de creación. Conservar permisos administrativos restantes. |
+| RE-2.2.1 exige consulta sin cita; RN-208 propone ese acceso para atender un cambio de profesional | La decisión de crear siempre una cita de llegada cambia ese criterio. Usar el acceso para esquivar una cita activa podría duplicar ocupación. | Ajustar HU-2.2 y sus RE, RN-208 y Modelos §3: origen sin reserva, cita obligatoria nueva; si ya hay cita activa, reasignación legítima o continuidad, sin una segunda llegada. Históricos sin cita se conservan. |
+| Modelos §4 pasa de color a límite/horario; §6 asigna o pausa tras el rojo remoto | Falta puerta de revisión humana (RE-2.11.5); T-20 podría recibir horario. El rojo remoto podría pausar otra atención sin presencia física. | Introducir revisión previa y separar derivación remota, llegada acreditada y atención. §3/§4/§6 deben compartir la transición de A.5. No cambiar el amarillo esperado de T-20. |
+| Modelos §5 calcula contra fin+margen y después pregunta si supera margen | Lectura ambigua que puede descontarlo dos veces; solo dibuja finalización, aunque RE-4.5.2 y RN-412 exigen detectar durante la atención. | Expresar las fórmulas y ejemplos de A.3; disparos de reloj, inicio, fin, pausa, llegada y cambios de disponibilidad. |
+| Modelos §7 y §13.4; modelos/controladores existentes | Solo existe la configuración recurrente de la clínica; no el horario del vet ni propuestas operativas. | Implementar propuestas con aprobación y revalidación al aplicar; marcar citas afectadas atómicamente. No entregar una interfaz que aparente reajuste terminado antes de C5. |
+| Modelos §8 comienza solo con administrador; RN-414 también admite solicitud propia del vet | Falta solicitud y resolución en el flujo. Cobertura por ausencia no requiere aceptación del destino. | Agregar solicitud propia y su resolución propuesta, separadas del veto/plazo de la reasignación en vivo. Confirmar la política de aprobación de ausencia en A.8. |
+| Nota de HU-4.8 y calendario semanal | Horarios recurrentes y ausencias no representan un festivo único de toda la clínica. | Cierre puntual independiente; no apagar todos los lunes ni inventar ausencia por cada vet. RE-4.8.2/3. |
+| HU-4.10 tiene nota v2.0; plan de entregas la pone en v2.1 | Contradicción ya resuelta por el usuario. | Corregir nota; HU-4.10/4.16/4.17 y RE-4.7.3 siguen en v2.1; O-06 queda pendiente. |
+| RE-4.18.4 dice historial del propietario; aceptación dice que la clínica ve sus reclasificaciones | Ambigüedad de destinatario y alcance, sin flujo dedicado de ajuste/llegada tarde. | Propuesta: historial de casos asociados al propietario, visible al personal autorizado de esa clínica, sin sanción ni puntuación automática. Confirmar con usuario; precisar HU/RE y ramas de Modelos §4/§5/§6. No ampliar permisos por interpretación. |
+| MER §6 afirma que solo se persisten reasignaciones y propuestas | Ya existen horas reales, síntomas y avisos; además hacen falta estados operativos recuperables. | Describir persistencia mínima de A.6; el grafo sigue reconstruyéndose en memoria. |
+| specs/HU-4.15-ingreso-emergencia.md §2 habla de migración conservadora v1 | Ya se desplegó la base v2; ingresos_emergencia existe en los tres esquemas. | Sustituir la nota de transición v1 por ampliación aditiva v2, sin recrear tabla ni migrar datos de v1. |
+
+Las diferencias nuevas quedan expuestas aquí para revisión del usuario antes de decidirlas.
+A no corrige diagramas ni convierte estas propuestas en RE aprobados.
+Tampoco aplica literalmente el comentario histórico de la revisión C4 de M2 que permitía ampliar roles «si» otro personal agendaba: la decisión vigente excluye al administrador.
+
+### A.2. Inventario del código y regresiones que se conservan
+
+| Área y archivos | Métodos o entradas concretos | Funciona hoy / conservación / brecha |
+|---|---|---|
+| models/Cita.php | registrar, registrarEvaluada, tiemposDelTipo, getById, paraPropietario, listarRango, listarTodas, veterinariosActivos, getTiposCita, getTipoCitaById | Reserva verde y guarda instantánea de duración/margen; valida clínica, vínculo y veterinario; lee por contexto y propietario. Conservar denegación auditada y contactos condicionados a vínculo. No guarda aún episodios ni ejecuta las cuatro ramas. Tipo omitido usa 30 minutos; tipo inactivo merece revalidación explícita en M4. |
+| Mismo modelo | sugerencias, exigirHorarioLibre, ocupadasDelVeterinario, ocupadasDeLaMascota, ejecutarReserva, reprogramar | Detecta solapes secuenciales de vet y mascota entre clínicas; convierte duplicado en HorarioOcupado. Excluye sobrecupos por completo y no aplica margen/horarios reales a la ocupación; no basta para Grafo II. Reprogramar conserva instantáneas, pero falta transacción común, disponibilidad completa y control de cuota al cambiar mes. |
+| Mismo modelo | iniciarAtencion, completarAtencion, marcarNoAsistio, confirmar, cancelar, transicion | Transiciones condicionales evitan reactivar canceladas y doble inicio; conserva sellos reales. Pausada existe solo en ENUM, fuera de ESTADOS_EN_ATENCION; no hay pausa/reanudación ni llegada registrada. |
+| controllers/CitaController.php | registrarAjax, registrar, veterinarioDeLaReserva, fechaYHoraFuturas, exigirHorarioLaboral | Valida fecha/hora, motivo, vet propio y horario inicial de clínica; aviso por otra cita del día con ignore_warning. Solo crear cambia de roles; no inferir pérdida de supervisión/reprogramación del admin. |
+| Mismo controlador | listarSemanaAjax, eventoDeCita, listarTodasCitasAjax, getCitaAjax, listarVeterinariosAjax, listarTiposCitaAjax, getSugerenciasHorarioAjax | Calendario acota citas propias del vet y prevención de clínica; admin supervisa todas. Conservar eventos de vacunas/desparasitación, sin correos en calendario. Falta incluir prioridad, estimadas, pausas y pendientes con acceso mínimo. |
+| Mismo controlador, portal | portalVeterinariosAjax, portalTiposCitaAjax, portalHorasAjax, portalSugerenciasAjax, agendarDesdePortalAjax, clinicaDelPortal | Clínica elegida debe estar vinculada; ficha propia; alta de mascota_clinica y reserva dentro de LimitePlan, con rollback si falla. Conservar selección multi-clínica y mensaje neutral comercial. No hay reprogramación propia: reprogramarCitaAjax no admite contexto propietario. |
+| Mismo controlador, cambios y atención | reprogramarCitaAjax, cancelarAjax, confirmarAjax, iniciarAtencionAjax, marcarNoAsistioAjax, atencion | Admin reprograma/reasigna; vet solo las suyas; propietario cancela las propias con vínculo activo. Inicia solo asignado, día y ventana; continúa en_curso/sin_cerrar. Mantener cierre mediante consulta y rechazo de cerrar sin consulta. |
+| models/Consulta.php y controllers/ConsultaController.php | registrar/escribir, exigirCitaParaConsulta, completarCita, asignarNumeroHistoria, tomarCandadoNumeracion; registrarAjax, listar, listarHistorialAjax | Consulta, síntomas, tratamientos y adjuntos se guardan de forma atómica; cierre de cita y numeración HC; rollback de archivos movidos. Hoy id_cita puede ser NULL. Conservar M2 y HC por clínica; C8b cambiará solo nuevas atenciones sin reserva, sin rellenar ficticiamente las históricas. |
+| models/ConsultaSintoma.php; helpers/ValidadorClinico.php; models/ArchivoClinico.php y Tratamiento.php | codigosDeEntrada, nodosActivos, insertarEnConsulta, deConsultas; validación/adjuntos/tratamientos actuales | Síntomas de consulta opcionales, como códigos, no son todavía episodios temporales de agenda. Reutilizar buscador/validación permitida; no confundir sus dos contratos ni exigir tiempos nuevos a toda consulta por inferencia. Conservar alertas y prescripción protegida de M2. |
+| helpers/MotorTriage.php, BuscadorSintomas.php, ValidadorTriage.php, ValidadorContextoClinico.php; models/GrafoConocimiento.php, PacienteDiagnostico.php; controllers/TriageController.php | MotorTriage::calcular, BuscadorSintomas::buscar, ValidadorTriage::episodios; TriageController::buscarAjax/calcularAjax; contexto/instantanea | Cálculo puro y búsqueda probados; API sin escrituras para vet/propietario, contexto y conocimiento vigentes, alergias globales con RN-113. No tiene captura en Agendar ni revisión operativa ni avisos de aislamiento. |
+| models/ModeloClinica.php, ModeloHistoria.php, Mascota.php, MascotaPropietario.php, VinculosPropietario.php, HistoriaPropietario.php | enClinicaDelPropietario, conMismoAlcance, exigirMascotaActiva; Mascota::vincular; ficha; clinicas/horarios; citas/citasDeSusMascotas/detalleCita | Aislamiento centralizado y titularidad; autorización de historia y contactos. Conservar prueba del vínculo en cada escritura, sin confiar en id_clinica del cliente. Lectores de citas usan JOIN a usuarios vet, por eso no se propone volver nula esa FK para la cola roja. |
+| helpers/LimitePlan.php y Transaccion.php | consumir, transaccion, uso; Transaccion::ejecutar | Fila estable de clínica y savepoints; límite mensual por fecha de cita, cancelación libera cuota; rojo evaluado exceptuado, mora cae a gratuito. Conservar y ampliar orden de candados; no sustituir por un contador en JS. |
+| models/HorarioClinica.php y controllers/HorarioClinicaController.php | listar/dia/guardar/restaurar; getHorariosAjax, guardarHorariosAjax, restaurarPorDefectoAjax, validarHorarioLaboral, obtenerHorasDisponibles, obtenerHorasDisponiblesAjax | Semana propia con mañana/tarde, validación y guardado completo, restauración sin borrar filas. ValidarHorarioLaboral solo comprueba inicio; obtenerHorasDisponibles no comprueba ocupación ni duración final. No hay modelos/controladores operativos de horario vet, ausencias, propuestas o reasignaciones. |
+| models/CatalogoClinica.php, CopiaCatalogosClinica.php; helpers/ValoresInicialesClinica.php | tiposCita/tipoCita, copiar/copiarTabla; TIPOS/HORARIOS | Tipos por clínica y copia inicial sin duplicar; no hay CRUD de marca/tipos/pausable. La copia omite margen/pausable y usa defaults SQL (10/1); no acredita decisiones clínicas sobre cirugía. C1 debe hacerlos explícitos y preservar personalizaciones. |
+| views/admin/horarios.php, public/js/horarios.js; controllers/PerfilController.php | admin_configuracion; mostrar/actualizarAjax del perfil | Configuración actual solo de horario de clínica; perfil actual sin solicitud/gestión de horario o ausencia. Conservar auto-guardado, errores de franja y diseño; no agregar gestión de especialidades/reseñas v2.1. |
+| views/vet/calendario.php, public/js/calendario.js | vet_agenda; abrirCitaModal, postCita; registrar_cita_ajax, reprogramar_cita_ajax y arrastre | Calendario y panel por día, modal reserva y reprogramación; correo disparado desde cliente. Conservar arrastre con misma validación servidor y pista de uso; no duplicar el selector M2 ni calcular prioridad en JS. |
+| views/vet/pacientes.php y public/js/medical-module.js | acción rápida data-c3-click=evento20; modalCita/formCita; openAppointmentModal, loadVetsForAppointment, saveAppointment, evento58 | Evento20 hoy redirige a vet_agenda sin preseleccionar mascota. Quedan modal antiguo y funciones de envío directo a registrar_cita_ajax; no aparece otro llamador de openAppointmentModal. Ese formulario carece de tipo, triage y disponibilidad común: integrar o retirar el camino residual, no dejar puerta paralela. También comprobar buscar_mascotas y sus layouts, que comparte el personal. |
+| views/admin/citas.php y public/js/admin-citas.js | admin_citas; cargarDatosIniciales y acciones de confirmar/cancelar/reprogramar | Tablero administrativo de supervisión, sin formulario de alta localizado. Conservar filtros/estados/administración ya autorizados. No quitar todo admin_citas por la prohibición de crear. |
+| views/vet/consultas.php, modal_consulta.php, atencion.php; views/partials/consulta_*; public/js/consultas.js, consulta-formulario.js, consulta-sintomas.js, consulta-diagnosticos.js, consulta-tratamientos.js y medical-module.js | Atención sin cita, formulario compartido y atención de cita; selector expuesto como ZookiSintomas | Dos entradas clínicas usan componentes M2; muestran HC/historial/alertas/peso desconocido. Mantener ambos diseños y reglas. El selector de consulta captura códigos; extender/reutilizar en agenda con adaptador de episodios y exposiciones, sin romper el contrato de consulta. |
+| views/portal/index.php y layout.php, public/js/portal.js; controllers/PortalController.php | index, conCancelacion, verDetalleMascotaAjax, getDetalleCitaClinicaAjax, imprimirHistorial; abrirBooking/cargarCatalogos y data-agendar | Todos los accesos del menú, barra móvil y estados vacíos confluyen en un formulario; cambio de clínica invalida selección, respuestas tardías se descartan. Conserva cancelación y catálogo/mascota propia. Falta reprogramar; no equivale a agendar otra y cancelar después. |
+| controllers/CitaController.php, config/EmailService.php | avisarCita, retirarAvisosCita, enviarEmailAjax/enviarCorreoCita, responderYSeguir; obtenerPlantillaBaseHTML, enviarCorreoPersonalizado | Avisos internos tras crear/cambiar; correo en una segunda petición de JS, responde antes del SMTP. No garantiza correo sin navegador y el mensaje anuncia envío sin acreditar entrega; plantilla global Zooki, faltan motivo/dirección en cuerpo y registro durable del fallo inmediato. Proponer envío desde evento confirmado y cola de A.6, preservando no bloquear reserva. |
+| models/NotificacionInterna.php y controllers/NotificacionController.php | crearParaUsuario/crearParaRol, expirarDeCita, obtenerParaUsuario, perteneceA, marcarLeida/marcarTodasLeidas | Avisos por destinatario/rol y clínica, con vencimiento. Conservar control de acceso. No reutilizar como cola sin vet ni como historial de aceptación. |
+| scripts/send_reminders.php; models/Recordatorio.php; helpers/EnviadorRecordatorios.php, VentanaRecordatorio.php | ejecutar, citasDeManana, puedeEnviar, registrar | Recordatorio de citas de mañana, prevención con ventana/reintentos y registro en notificaciones. Conservar exclusión de inactivos y contactos legítimos; confirmación/declinación desde recordatorio queda fuera de M4. |
+| scripts/vigilar_atenciones.php; helpers/VigilanteAtenciones.php, ReglaAtencion.php; models/AtencionesEnCurso.php; scripts/zooki.cron | revisar, debeAvisarAbierta, quedaSinCerrar; listar, sellarAviso, marcarSinCerrar | Cron cada 5 minutos y respaldo al abrir calendario; aviso único y sin_cerrar. No hay procesador de cascada ni vencimientos de reasignación. Mantener RN-409 separado de RN-429; actualizar comentario viejo RN-410 cuando se toque esa tarea. |
+| Salidas de marca | views/portal/layout.php, index.php, imprimir_historial.php; config/EmailService.php y EnviadorRecordatorios::contenido | Portal global con varias clínicas e historial global: no imponer una clínica elegida arbitrariamente. Propuesta: marca en tarjeta/detalle de cada clínica, correo de su evento y documento de esa clínica; historial multi-clínica conserva cabecera de plataforma y procedencia por acto. RE-7.4.4 requiere aclararlo antes de C1/F. |
+
+**Inventario de rutas y permisos que se debe mantener explícito:**
+
+- En public/index.php y Security::actionRoles, registrar_cita_ajax hoy es ADMIN/VETERINARIO; cambiar solo su creación a VETERINARIO y exigir ese rol también al entrar al servicio.
+- portal_agendar_cita_ajax, portal_get_vets_ajax, portal_get_tipos_cita_ajax, portal_get_horas_ajax y portal_get_sugerencias_ajax son del propietario; no reutilizar reprogramar_cita_ajax sin una entrada de titularidad propia.
+- buscar_sintomas_ajax y calcular_triage_ajax conservan VETERINARIO/PROPIETARIO; plataforma y ADMIN reciben 403.
+- listar_citas_ajax, get_cita_ajax, listar_veterinarios_ajax, listar_tipos_cita_ajax, reprogramar_cita_ajax y confirmar_cita_ajax conservan sus permisos actuales de personal salvo decisión nueva explícita.
+- cancelar_cita_ajax y enviar_email_ajax admiten propietario y personal con comprobación del recurso; get_horas_disponibles_ajax/get_sugerencias_horario_ajax son compartidas hoy y deben delegar al mismo servicio con contexto validado.
+- iniciar_cita_ajax, completar_cita_ajax, marcar_no_asistio_ajax, vet_atencion y registrar_consulta_ajax siguen siendo del vet asignado o del alcance clínico definido para consulta; nunca del admin ni de plataforma.
+- admin_configuracion, guardar_horarios_clinica_ajax/restaurar_horarios_defecto_ajax, listar_todas_citas_ajax y admin_citas se conservan. Las acciones nuevas de propuesta, revisión, urgencia y conciliación se enumeran en B/C con matriz y CSRF; no se habilitan implícitamente por un rol genérico.
+
+AutorizacionRolTest::testCadaRolConservaSusAccionesHabituales actualmente admite registrar_cita_ajax al administrador y debe cambiar con C4a.
+AgendaPeticionesTest::testElPortalTodaviaNoAgenda solo niega la ruta interna bajo contexto propietario; PortalAgendaTest prueba la ruta portal que sí funciona.
+No usar el nombre antiguo del primer test como evidencia de que el portal está sin implementar.
+
+### A.3. Contrato propuesto del Grafo II
+
+**Separación de responsabilidades técnicas.**
+Proponer helpers/IntervalosAgenda.php (intersección/resta/solape), helpers/MotorAgenda.php (grafo puro y estimaciones), models/DisponibilidadAgenda.php (datos mínimos y excepción global encapsulada) y models/OperacionAgenda.php (coordinación transaccional).
+Cita conserva acceso/persistencia por clínica; MotorTriage y BuscadorSintomas no conocen cuotas ni candados.
+Los controladores y tareas llaman al mismo coordinador; las vistas solo presentan.
+No se crean estas clases en A.
+
+**Intervalos y reloj.**
+Todas las operaciones reciben un reloj y trabajan con fechas completas en la zona vigente America/Bogota, usando ZonaHoraria/ReglaAtencion; no depender de fecha UTC del navegador.
+Usar intervalos semiabiertos [inicio, fin): inicio incluido y fin excluido.
+Dos intervalos se solapan si inicioA < finB y inicioB < finA.
+Una ausencia de día completo es [día 00:00, día siguiente 00:00); una de 10:00 a 11:00 permite comenzar exactamente a las 11:00.
+Rechazar fin <= inicio y rangos inválidos, sin redondear minutos que alteren la regla.
+En C3 no se admiten reservas ordinarias que crucen el fin de una franja o la medianoche; las atenciones reales que la crucen mantienen DATETIME y continuidad.
+
+Disponibilidad = intersección de franjas activas de clínica y veterinario, menos cierres puntuales y ausencias aprobadas, menos ocupación compatible de vet y mascota.
+Sin horario de cualquiera de los dos, no se ofrece agenda ordinaria.
+Una cita de duración d y margen m necesita [s, s+d+m) contenido completamente en una sola franja restante.
+hora_fin sigue significando fin clínico pactado s+d; el extremo de ocupación se calcula con el margen, no se vuelve a almacenar como hora_fin.
+Duración/margen salen del tipo activo validado en servidor, jamás del número enviado por JS.
+La sugerencia recibe mascota y tipo, además del vet; hoy sugerencias no recibe mascota.
+
+**Aristas y prioridad.**
+
+- Secuencia: orden de ejecución de un veterinario; un caso rojo presencial y la reanudación de su cita interrumpida son dependencias explícitas. Una pausa no equivale a cancelación.
+- Conflicto: intersección incompatible por veterinario o mascota, incluidas sus otras clínicas; puede existir conflicto previsto entre capacidad ordinaria y un sobrecupo autorizado, pero nunca dos atenciones reales simultáneas del mismo vet.
+- Emparejamiento: cita ↔ veterinario activo de esa clínica, con intervalo completo compatible, disponibilidad vigente y mascota sin conflicto. No incluye afinidad, reputación ni especialidades inferidas (HU-4.16 es v2.1).
+- Rojo presencial tiene precedencia máxima; naranja usa orden de llegada fecha_registro/id_cita, salvo motivo del vet auditado; amarillo toma primer espacio y verde conserva elección. No inventar una puntuación dentro del color.
+- Una propuesta de reasignación no ocupa ni mueve todavía la cita; al aceptar se revalida. Si se quiere apartar provisionalmente un hueco, sería una regla adicional que requiere aprobación, no un bloqueo SQL abierto durante diez minutos.
+
+**Bloque y sobrecupo naranja, propuesta a confirmar.**
+Identificar un bloque por clínica, veterinario, fecha y componente continuo de la intersección recurrente antes de restar ausencias/cierres parciales.
+Restar una ausencia no duplica el tope ni crea otro bloque con contador nuevo.
+Guardar la identidad del bloque de cada naranja y no recrearla para eludir su tope al editar horarios.
+Contar los naranjas del bloque que no estén cancelados/no_asistio; completados siguen consumiendo el cupo de ese bloque.
+El tercer naranja con tope 2 genera aviso y decisión del personal, sin degradarlo a verde ni saltar al siguiente día silenciosamente.
+Sobrecupo autoriza demanda adicional en esa cola, no simultaneidad real ni cruces del profesional entre clínicas.
+La predicción de cada naranja debe incluir su duración y margen y disparar reajuste si desborda franja; no ocultarlo del grafo como hace hoy ocupadas.
+La unidad de bloque y liberación de cupo son concreciones de RN-422 que B debe hacer explícitas, pendientes de conformidad.
+
+**Horas pactadas, estimadas y reales.**
+fecha/hora y duración/margen guardan el compromiso original vigente; una reprogramación expresa lo cambia con auditoría del anterior.
+inicio_estimado/fin_estimado son la predicción vigente del inicio y del fin clínico; el último no incluye margen ni sustituye hora_fin pactada.
+Tras iniciar, inicio_estimado se presenta anclado al primer inicio real; una reanudación no lo sustituye.
+Si la cita está pausada, la próxima reanudación estimada se expresa aparte como dato derivado, condicional, del caso rojo que ocupa al veterinario.
+Cambiar predicciones no reescribe el compromiso ni los sellos reales.
+hora_inicio_real se sella una sola vez; hora_fin_real solo al completar la consulta.
+Las pausas conservan cada segmento, no reinician la atención ni vuelven a contar el tiempo activo ya realizado.
+Una cita futura que no se haya acordado adelantar no se estima antes de su hora pactada: evita avisar adelantos no aceptados.
+
+**Cascada por estado — corrección H-A1 revisada y política M confirmada.**
+La regla M desplaza el fin nominal con el inicio real y las pausas y conserva un solo margen después de ese nominal desplazado.
+**Decisión del usuario (2026-10-17):** aplicar M, conforme a §6, conservando el resultado 10:00 del ejemplo de pausa. B debe reflejar esta precisión en RN/RE/Modelos antes del código afectado.
+La alternativa C y la condición de aprobación que recoge el Anexo A.1 se conservan como evidencia histórica previa a esta elección; C no se implementa.
+Las fórmulas y ejemplos siguientes usan exclusivamente M.
+
+**Magnitudes y reconstrucción.**
+Usar instantes completos y duraciones en segundos al operar; 30 minutos se convierte una vez en 1800 segundos, sin redondear tolerancias ni segundos.
+En las fórmulas se abrevia la suma de una duración a un instante.
+
+- s: inicio pactado (fecha+hora); d: duración pactada copiada del tipo; m: margen copiado al reservar.
+- e: inicio estimado de una cita aún sin iniciar, reconstruido desde s, la cola y el reloj; no es su inicio real.
+- r: primer inicio real inmutable; f: fin real al completar, también inmutable.
+- D: objetivo de tiempo activo del servicio; en el caso explícito de servicio completo es d. Si el veterinario decidió otra duración, solo se usa la duración expresamente registrada con su decisión; si falta, queda pendiente, sin deducirla del retraso, de la tolerancia ni del tiempo de franja restante. D y d son datos distintos; d nunca se sobrescribe.
+- Pausas [a_i, b_i): a_i es inicio real y b_i reanudación real; a lo sumo una tiene b_i desconocido. Deben estar ordenadas, sin solapes, dentro de la atención y no superar f al completarla.
+- P_c: suma de duraciones de pausas cerradas; P(t): duración de todas las pausas hasta t, incluyendo solo el tramo ya transcurrido de la abierta, si existe.
+- A(t): tiempo activo transcurrido = (t − r) − P(t), con t limitado a f si ya completó. Una pausa no cuenta como trabajo. R(t) = máximo(0, D − A(t)) es el tiempo activo nominal restante, no una afirmación clínica de cuánto falta realmente.
+- N: fin clínico nominal del servicio según su base vigente; F: fin clínico estimado como límite inferior revisable; L: extremo estimado de ocupación para secuenciar la cola, incluido el margen una sola vez. L no acredita una liberación real mientras la atención o la pausa sigan abiertas.
+
+**Una fórmula de ocupación, con base definida por estado.**
+Bajo M, L = máximo(N + m, F).
+El exceso de duración que puede propagarse respecto de ese nominal es máximo(0, F − N − m), sin volver a restar m.
+El desplazamiento de inicio o por interrupción se refleja primero en N y en L; no se descuenta de nuevo al recorrer las siguientes citas.
+
+| Estado | Base nominal, fin clínico y ocupación propuestos bajo M |
+|---|---|
+| Sin iniciar | e = máximo(s, L del predecesor, ahora) para una cita que todavía espera inicio. N = e + D; F = N; L = N + m. Una reserva futura conserva s como mínimo; no reducir D para hacerla caber ni usar un resultado anterior de e como un delta que se vuelve a sumar. Si la decisión de duración está pendiente, no emitir una estimación definitiva inventada. |
+| Iniciada, sin pausa abierta | La base pasa de e a r. N = r + D + P_c. F = máximo(N, t + R(t)); L = máximo(N + m, F). Sin pausas P_c=0; un inicio real tardío con servicio completo desplaza N a r+d. |
+| Pausada | A(a) y R(a) quedan congelados al comenzar la pausa abierta en a. Si u es la reanudación estimada, con u >= ahora, N_u = r + D + P_c + (u − a); F_u = máximo(N_u, u + R(a)); L_u = máximo(N_u + m, F_u). u procede de la disponibilidad prevista para retomar tras la urgencia y es condicional. Sin u sustentada, solo puede mostrarse la cota «si retomara ahora», u=ahora, nunca anunciar liberación, completar o despachar una siguiente cita. |
+| Reanudada | Cerrar la pausa con su b real; P_c suma cada pausa cerrada una sola vez. Volver a N = r + D + P_c y F = máximo(N, t + R(t)); L = máximo(N + m, F). No hacer r=b ni N=t+R(t) en cada recálculo. El sobrepaso ya consumido antes de pausar sigue consumido al retomar. |
+| Completada | Todas las pausas deben estar cerradas; N = r + D + P_c permanece reconstruible, F = f y L = máximo(N + m, f). El reloj posterior no desplaza L. No sustituir D por la duración observada: hacerlo ocultaría el exceso y añadiría otro margen después del fin real. |
+
+Si A(t) ya alcanzó D y la atención sigue abierta, R(t)=0 solo significa que agotó el tiempo nominal: F sigue siendo un mínimo revisable y el veterinario aún está ocupado.
+Por ejemplo, tras reanudar no usar t + R(t) + m como nuevo extremo en cada tick; eso regeneraría margen aunque ya se hubiera gastado.
+Tampoco reiniciar un margen por cada pausa: solo se desplaza N por la duración de cada interrupción, conservando todo el tiempo activo anterior, incluido el exceso.
+Si D se modifica expresamente por una decisión clínica, registrar nueva versión y decisión y recalcular desde esa evidencia; el algoritmo no cambia D automáticamente para absorber un sobrepaso.
+
+Para una siguiente cita ordinaria j aún sin iniciar, reconstruir e_j desde máximo(s_j, L del predecesor, ahora) y validar su intervalo completo hasta L_j contra franjas y compromisos.
+La cita pausada sigue teniendo la dependencia de reanudarse antes de las siguientes (RN-427); su cota condicional no autoriza saltarla.
+El hueco entre citas puede absorber desplazamiento, sin sumar el mismo delta a toda la lista.
+Repetir el cálculo con los mismos hechos y reloj devuelve lo mismo; avanzar el reloj puede cambiar F y L de una atención aún abierta, pero no su N ni sus sellos por sí solo.
+Calcular toda la cola desde s, r, D, pausas y f vigentes; las estimaciones previas son salidas, no una nueva fuente de tiempo consumido.
+
+| Ejemplo verificable | Resultado esperado bajo la propuesta M |
+|---|---|
+| A pactada e iniciada 09:00, D=d=30, m=10; B pactada 09:40 | N=09:30. Fin A 09:37: L=09:40 y B sigue 09:40; fin A exactamente 09:40: igual; fin A 09:41: L=09:41 y B 09:41. No 09:31 ni 09:51. |
+| A sigue abierta a las 09:45 con los datos anteriores | A=45, R=0; N=09:30, F=09:45, L=09:45 como mínimo revisable. Repetir ese reloj devuelve 09:45; a las 09:46 da 09:46, no 09:51. No es permiso para atender B mientras A continúe abierta. |
+| A termina 09:47; B 09:40, D=d=20/m=5; C 10:20; cálculo antes de 09:47 | A deja L=09:47. B sin iniciar: e=09:47, N=10:07, L=10:12; C conserva 10:20. El hueco absorbe el retraso. Si B inicia realmente a otra hora, la base pasa a ese r. |
+| Franja hasta 12:00; cita 11:20, d=30/m=10 | Cabe exactamente; 11:21 no cabe. Si la cascada lleva la cita a 11:25, no truncar su duración: queda para reasignación/reprogramación. |
+| Pactada 09:00; inicio real 09:20; vet decide servicio completo D=d=30, m=10, sin pausas | N=09:20+30=09:50; L nominal=10:00. A las 09:45: A=25/R=5, F=09:50 y L=10:00. Si completa 09:50, sigue L=10:00. Hora pactada 09:00 e inicio real 09:20 permanecen distintos. |
+| Inicio 09:00, D=d=30/m=10; pausa 09:10–09:30 | Antes de pausa A=10/R=20. Durante ella, con u condicional 09:30: N_u=09:00+30+20=09:50, F_u=09:30+20=09:50, L_u=10:00. Al reanudar realmente 09:30, P_c=20/N=09:50; si termina 09:50, L=10:00. La base ya no es 09:30, sino el fin nominal desplazado 09:50; no se reutiliza el antiguo N+m=09:40. |
+| Inicio 09:00, D=30/m=10; pausas 09:10–09:20 y 09:25–09:40 | Trabajó 10+5=15 min al comenzar la segunda; R=15. Pausas totales P_c=10+15=25; al retomar 09:40: N=09:00+30+25=09:55, F=09:55, L=10:05. Si completa 09:55, conserva L=10:05: un margen de 10, no dos de 10. |
+| Pausa única 09:10–09:30 del ejemplo anterior; sigue abierta al retomar | A las 09:59: A=39/R=0, N=09:50, F=09:59 y L=10:00. A las 10:00: A=40 y L=10:00; a las 10:01: A=41 y L=10:01. Si completa 10:05, A=45 y L=10:05, sin agregar 10 para dar 10:15. |
+| Inicio 09:00, D=30/m=10; ya trabajó 40 min al pausar 09:40–10:00 | A=40/R=0 antes de la pausa; P_c=20 y N=09:50 al retomar. L mínimo=10:00, sin un margen nuevo hasta 10:10; la atención sigue ocupada hasta su cierre. Si completa 10:02, L=10:02. El exceso anterior a la pausa no se borra. |
+| Recalcular dos veces al reloj 09:40, varias pausas del ejemplo 09:10–09:20/09:25–09:40 | En ambos: P_c=25, A=15, R=15, N=09:55 y L=10:05. Al reloj 09:45: A=20/R=10, N=09:55 y L sigue 10:05. Tras completar a las 09:55, recalcular a las 10:30 conserva N=09:55, F=09:55 y L=10:05. |
+| Llegada 10:10 para 10:00, tolerancia=10; inicio efectivo 10:10, D=d=30/m=10 solo si vet eligió servicio completo | Está dentro exactamente; N=10:40 y L=10:50 bajo M. Si no cabe, las opciones del vet permanecen; no transformar automáticamente D en 20 por la llegada. Si eligió otra duración, usar solo su valor registrado; si reprograma, no inventar inicio real. A 10:10:01 está fuera: no_asistio/siguiente hueco/reprogramar. |
+
+**Cobertura frente a reasignación en vivo.**
+Ausencia aprobada tapa el intervalo y busca cobertura sin veto, dentro de la clínica; no crea una propuesta con vencimiento para que el destino «acepte» una obligación ya asignable.
+La reasignación por cascada sí guarda propuesta pendiente: mantiene origen hasta aceptación del destino en contexto clínico correcto, revalida y cambia atómicamente; rechazo o vencimiento prueba siguiente candidato.
+Proponer vigencia [fecha, fecha_limite): aceptar exactamente en fecha_limite cuenta como vencida; su plazo se lee de clinicas.plazo_reasignacion_min (default existente 10).
+Ese extremo temporal queda para ratificar en la revisión técnica, sin inventar otro plazo.
+
+**Avisos.**
+Guardar última estimación comunicada y último instante de aviso RN-429.
+Comparar el desplazamiento vigente contra la última hora comunicada, no contra el último recálculo ni la suma de pequeños deltas repetidos.
+Con umbral 15: a +15 no avisa; a +16 puede avisar si pasaron al menos 30 minutos; exactamente 30 habilita.
+Tomando comunicación inicial 09:00, diez recálculos +3 cada seis minutos producen primer aviso en el sexto (+18, minuto 36), y ninguno más antes del 66; cumple «como máximo dos» en una hora sin forzar dos.
+Reasignación/reprogramación siempre generan su evento y pueden actualizar la base comunicada; no se suprimen por la ventana de estimaciones.
+Un fallo SMTP no revierte una reserva ni se considera una comunicación entregada; la cola conserva fallo y permite resolver reintentos sin duplicar el evento.
+No extender a esta cola los tres intentos de recordatorios como regla nueva sin acordarlo.
+
+### A.4. Contrato transaccional propuesto
+
+**Recurso estable aunque no haya citas.**
+Usar la fila existente de clinicas para la configuración/cuota; las filas globales de usuarios de todos los veterinarios afectados para exclusión de agenda; las de mascotas para exclusión del paciente.
+Una fila de cita vacía no es el recurso de serialización.
+No hace falta crear una tabla de candados por cada hueco.
+La serialización inicial es conservadora (por profesional, incluso entre días); optimizar por día se evaluaría después con pruebas, sin cambiar la garantía.
+
+**Orden único.**
+Comprobar acceso sin revelar datos y determinar los IDs afectados; abrir una transacción corta.
+Bloquear en este orden: clínicas involucradas por id ascendente → usuarios afectados (vets y, si se cambia titularidad, titular) por id ascendente → mascotas por id ascendente → bloques fechados por id → citas por id → solicitudes/evaluaciones/reasignaciones/ingresos por id → filas de avisos.
+Ninguna operación bloquea «primero la cita» y luego intenta conseguir un profesional.
+Si durante el cálculo aparece otro recurso no bloqueado, deshacer y recomenzar con el conjunto completo ordenado, sin ampliar candados en orden inverso.
+Los cambios de plan siguen bloqueando la clínica primero; registrar/reprogramar desde portal dejan de abrir envolturas con un orden distinto.
+Transaccion y sus savepoints se reutilizan, pero un savepoint no libera candados ni hace vigente una lectura anterior.
+
+Después de los candados, releer permisos, contexto de recurso, actividad, propietario/vínculos, tipo, horario, ocupación, tope y revisión con lecturas actuales de MySQL.
+No usar una instantánea consistente abierta antes de esperar al candado bajo REPEATABLE READ.
+La implementación puede usar lecturas de bloqueo actuales y proyección mínima; no mezclar con consultas de snapshot anteriores.
+Mantener candados hasta commit/rollback; no esperar SMTP ni confirmaciones humanas.
+Evitar consultas con JOIN de contactos en el cálculo global.
+Un deadlock/timeout produce rollback completo y reintento técnico acotado del comando idempotente o respuesta de conflicto, nunca resultado parcial.
+
+**Excepciones globales encapsuladas (RNF-11).**
+DisponibilidadAgenda solo consulta internamente intervalos/estado de ocupación del mismo id_veterinario o id_mascota entre clínicas; para horario recurrente del vet, día y extremos.
+Todas las modificaciones y listados visibles siguen filtrados por clínica activa.
+El cliente recibe «No está disponible en ese horario» o «Choca con otro compromiso», nunca nombre de otra clínica, paciente, motivo, dueño o calendario ajeno.
+No ofrecer un endpoint público de ocupación global.
+Revalidar que el solicitante puede actuar sobre el vet/mascota antes de consultar esos intervalos.
+Una ausencia de otra clínica no se revela como tal; su alcance local/global requiere precisar la disponibilidad real en B si se pretende bloquear también compromisos fuera de la clínica que la registra.
+
+| Operación | Unidad atómica y revalidación |
+|---|---|
+| Reserva ordinaria | Calcular triage antes de cuota; revisión cuando proceda; bloquear clínica/vet/mascota/bloque; releer datos y buscar intervalo completo; consumir cuotas de mascota y cita solo una vez; vincular mascota si procede, guardar cita/episodios/instantánea, auditoría y evento de notificación juntos. Si falla, no deja vínculo nuevo ni cuota consumida. Rojo no atraviesa la comprobación de cuota de mascotas ni de citas. |
+| Hueco ocupado entre sugerencia y POST | Bajo los mismos candados, amarillo busca primer intervalo siguiente y naranja reevalúa bloque/tope; verde devuelve alternativas para elección, sin confirmar otra hora unilateralmente. El resultado nuevo queda revisable por el actor. |
+| Reprogramación interna/portal | Mantener la reserva original hasta confirmar la nueva; bloquear origen y destino, excluir solo la cita propia; revalidar estado abierto, duración/margen, bloque y mascota, más cuota mensual destino si cambia mes sin contar dos veces la misma cita. Actualizar una sola fila y sus marcas/eventos/auditoría. Si no cabe, rollback deja la cita original intacta. |
+| Cupo naranja | Bajo clínica+vet+bloque contar naranjas vigentes, comparar clinicas.tope_sobrecupos y asignar orden estable. Dos conexiones compitiendo por el último cupo: solo una lo consume. Reordenación exige vet autorizado y motivo, conserva fecha de registro e historia del orden. |
+| Horario, cierre o aprobación de propuesta | Bloquear clínica y todos los vets/mascotas/citas afectados con orden global; validar intersecciones y choques del vet entre clínicas; guardar configuración y marcas de reajuste en la misma operación. Invalidar ofertas anteriores. No mover horas pactadas para esconder el conflicto. Una reserva concurrente se hace íntegramente antes o después del cambio. Restaurar horarios también usa este contrato. |
+| Ausencia/cobertura | Solicitud pendiente no cambia disponibilidad en la propuesta de A.8; al aprobar/registrar, bloquear origen y candidatos antes de confirmar ausencia. Asignar cobertura sin veto por cada cita compatible, o dejar marca pendiente de reprogramar con evento para propietario. Una cobertura parcial no hace perder las otras citas; cada resultado se registra y puede retomarse idempotentemente. Ausencia y marcas de todas las afectadas se guardan juntas aunque la búsqueda se procese después. |
+| Aceptación o vencimiento de reasignación | Bloquear clínica, ambos profesionales, mascota, bloque, cita y propuesta; comprobar pendiente, destinatario, reloj < fecha_limite, versión y disponibilidad actual. Aceptar mueve y cierra propuesta conjuntamente; si perdió hueco, no mueve la cita y continúa siguiente candidato. El cron usa el mismo cambio condicional; aceptación y vencimiento concurrentes tienen un solo ganador. Candidatos intentados se conservan para no recorrer infinitamente los mismos. |
+| Inicio, pausa, reanudación y finalización | Mismo protocolo de capacidad; llegada presencial verificada antes de pausar; compare-and-set del estado esperado, una sola atención activa del vet. Guardar pausa, urgencia y marca de cascada juntas. Consulta solo completa cita reanudada/en_curso o sin_cerrar según contrato; no completa una pausada. La numeración HC actual toma GET_LOCK antes de su transacción: C7 debe integrar ese orden (candado HC antes de cualquier candado de filas en todos sus llamadores, o sustituirlo uniformemente por serialización de clínica), nunca adquirirlo tarde desde una transacción que ya tenga filas bloqueadas. |
+| Cascada/conciliación de estimaciones | Bloquear conjunto de agenda afectado y versión, recalcular desde compromisos/segmentos actuales, escribir estimaciones/marcas/eventos juntos y limpiar trabajo solo si sigue la misma versión. Otro cambio durante el proceso deja trabajo pendiente; repetir no suma el retraso dos veces ni duplica aviso. |
+| Conciliación de identidad | Ver A.5: bloquear clínica, usuarios verificados, fichas provisional/final ordenadas, actos/citas y el ingreso; releer titularidad, referencias y estado. Completar o consolidar todo con auditoría, o rollback de todo. Dos operadores conciliando el mismo ingreso no pueden duplicar el traslado. |
+
+**Idempotencia y recuperación.**
+Los POST de reserva/llegada/derivación llevan una clave opaca de operación ligada a clínica+actor+tipo de comando; mismo comando repetido devuelve el mismo resultado y otra carga con la misma clave se rechaza.
+Se propone un registro mínimo operaciones_agenda con clave única, huella de entrada, actor, clínica, tipo y referencia de resultado, escrito dentro de la transacción.
+No reutilizar CSRF como clave ni conservar datos clínicos/contactos en esa huella legible.
+El índice de citas sigue como defensa adicional; no abrir huecos en la restricción para solucionar una falla del algoritmo.
+Las tareas reclaman trabajo de forma condicional y recuperable; un proceso muerto no deja una cita eternamente «en proceso».
+La reclamación técnica y recuperación no introducen un plazo clínico nuevo; el mecanismo exacto se verifica en B/C5.
+
+### A.5. Integración con M2, rojo y conciliación
+
+Reutilizar exactamente MotorTriage::calcular, BuscadorSintomas::buscar, ValidadorTriage::episodios, ValidadorContextoClinico y el contexto de PacienteDiagnostico.
+El buscador de ZookiSintomas se comparte con un adaptador para episodios: la consulta actual envía códigos y no conserva tiempos.
+Agendar necesita además tiempo por síntoma/exposición (conocido y minutos, no_se o no_aplica solo preventivo), sustancias/fármacos confirmados y contexto permitido.
+No inferir sustancias desde nota ni duplicar en JS las reglas P1–P8.
+Las exposiciones no se fuerzan a cita_sintomas como si fueran síntomas: conservarlas en el contexto estructurado y validar su tipo con ValidadorTriage.
+El guardado vuelve a calcular en servidor con datos vigentes, código/ID de nodo, contexto, fecha de evaluación y hash de conocimiento; un color enviado desde el cliente se ignora.
+Las marcas de cita van a cita_sintomas.detalles con sus tiempos; sintomas_texto es solo nota del personal; inicio_sintomas legado no sustituye varios eventos.
+No copiar medicación protegida al JSON de la cita, al evento ni al propietario.
+
+**Revisión humana previa.**
+Evaluación con revision_inmediata (T-20) no devuelve una oferta reservable.
+Devuelve un estado pendiente y aviso al personal autorizado, sin prometer tiempo de respuesta ni asignar espacio.
+Propuesta conservadora: todo caso con revision requiere liberación veterinaria antes de reservar; T-22 y T-16 conservan amarillo provisional y revisión, sin escalarlos automáticamente.
+La extensión de esa puerta a toda revisión, más allá del mínimo obligatorio T-20, se somete al usuario en A.8.
+Un vet puede aprobar el nivel calculado o ajustarlo con motivo; guardar autor, fecha, calculado/ajustado y datos revisados.
+La resolución se liga a la huella de marcas/tiempos/contexto y versión; si cambian antes de reservar, se invalida y se revisa nuevamente.
+No vale una autorización enviada por el propietario ni una bandera «revisado» de JS.
+La revalidación de la misma evaluación no es HU-4.17: no habilita edición de síntomas de citas pendientes por el propietario en esta versión.
+
+**Aislamiento.**
+T-11 conserva contagio incluso si otra marca eleva a rojo.
+Al confirmar evaluación/derivación, generar aviso operativo para la clínica elegida y su personal, independiente del correo de confirmación y del color final.
+No esperar a que haya hueco o cupo para preparar aislamiento.
+No incluir ese aviso ni contactos en otra clínica; duplicar POST no duplica ingreso ni aislamiento.
+
+**Máquina de estados de rojo propuesta, sin acreditar presencia remota.**
+
+1. Evaluación remota roja: guardar derivación con propietario de sesión y mascota propia; notificar y mostrar urgencia. No crear reserva ordinaria, asignar capacidad, pausar una cita, sellar llegada ni iniciar consulta. Repetir el cálculo sin confirmar un comando no crea múltiples derivaciones.
+2. Clínica cerrada: informar cierre con horario y cierres puntuales, teléfono de urgencias si existe y recomendación de servicio 24 horas. Conservar el aviso; no prometer atención ni bloquear un ingreso físico efectivamente atendido por el personal.
+3. Llegada física: solo personal clínico con contexto legítimo acredita fecha_hora_llegada y enlaza la derivación cuando existe. No pedir verificación adicional al propietario ya autenticado por el mero cálculo; comprobar nuevamente que la mascota sigue siendo suya en cada comando. Una llegada sin derivación crea el caso presencial, sin duplicar el existente.
+4. Identidad conocida: reutilizar ficha/cuenta y vínculo legítimo; si no se acredita la relación sin retrasar atención, crear ficha provisional de clínica, propietario NULL, ficha_por_completar=1 y carnet inactivo, más ingresos_emergencia. Acompañante es contacto eventual, nunca titular por defecto.
+5. Capacidad presencial: libre compatible → asignar; si todos ocupados, solo tipo pausable → pausar y asignar; si ninguno, cola roja presencial sin veterinario hasta que exista capacidad. Orden propuesto entre rojos presentes: llegada física e ID, con decisión clínica motivada; confirmar en A.8. No «asignar» anticipadamente al primero que posiblemente termine.
+6. Al asignar, crear/enlazar la cita roja con el vet real, origen y llegada, antes de atención clínica; estado en_curso y sellos solo al iniciar realmente. Excepción roja a límites también en el vínculo de mascota/ficha provisional; auditar la excepción.
+7. Cierre de urgencia con consulta → reanudar la cita interrumpida antes de las siguientes; no completar dos citas con una consulta ni reiniciar hora_inicio_real de la pausada. Cada paso marca el trabajo de cascada para procesarse sin navegador.
+
+La cola de A.6 conserva la espera sin volver nulo citas.id_veterinario.
+Una mascota aún no identificable se liga a la ficha provisional, no a un ID ficticio de usuario.
+No reutilizar ingresos_emergencia para todos los rojos: su definición normativa es solo el ingreso provisional; el enlace común de derivación/llegada/espera debe ser independiente.
+
+**Cuatro ramas de identidad y conciliación.**
+
+- Portal autenticado con mascota seleccionada: mismos IDs, sin provisional ni cuenta nueva; al llegar enlaza su derivación.
+- Presencial con cuenta/ficha y titularidad verificadas: mismos IDs; no crear ingreso provisional.
+- Cuenta existente pero relación no verificada: ficha provisional, sin asignar esa cuenta como propietaria hasta verificación.
+- Sin cuenta: ficha provisional y contacto opcional; una eventual cuenta se crea por el proceso vigente de consentimiento/activación, nunca automáticamente por atender.
+
+Completar ficha nueva conserva id_mascota y registra id_mascota_final igual a la provisional; consolidar sobre existente conserva ambos IDs en ingresos_emergencia y desactiva la provisional.
+Enumerar y trasladar referencias de citas, consultas, vacunas, desparasitaciones y alertas; revisar también mascota_clinica, mascota_colores, carnet_escaneos y auditoria_mascotas.
+Los tratamientos, archivos y consulta_sintomas siguen su id_consulta; cita_sintomas y reasignaciones siguen id_cita y no deben perderse.
+Conservar clínica, autor, fechas, números de historia y documentos clínicos; si ambas fichas ya tienen HC en la misma clínica, no sobreescribir una con otra: conservar su alias/procedencia en la evidencia de consolidación.
+En mascota_clinica, unir sin degradar vínculos ni permisos; titularidad final verificada y autorización de historia permanecen explícitas.
+No reasignar indiscriminadamente la auditoría antigua ni reactivar el token público de la provisional.
+Un ingreso provisional de otra clínica no puede consolidarse desde esta: devolver 403; una inconsistencia interclínica se deriva a resolución autorizada, sin apropiarse de sus actos.
+Si existe cualquier conflicto de vínculo/HC/referencias no cubierto por el contrato revisado, rollback y tarea pendiente; nunca borrar el acto conflictivo para completar.
+La prueba debe fallar tras mover consultas y antes de finalizar para demostrar que también vuelven atrás citas, vínculos, ingreso y auditoría.
+
+### A.6. Persistencia faltante y transición propuesta
+
+**Contraste real, no implementación inferida.**
+01_schema.sql, MER y drawDB ya describen tipos con duración/margen/pausable; horario vet; propuestas; ausencias por DATETIME; prioridad calculada/ajustada y motivo; cita_sintomas y detalles; contexto_triage; sobrecupo/orden; llegada y horas reales; estado pausada; reasignación con plazo e ingresos provisionales con acompañante opcional.
+La migración 07 aporta detalles/contexto del conocimiento ya publicado.
+El MER es conceptual: omite columnas físicas como hora_fin y algunos índices; drawDB representa ocupa_horario como columna convencional comentada, mientras el ejecutable la calcula.
+Esa diferencia de representación debe seguir documentada, no convertir la columna calculada en dato editable.
+No se detecta una solución operativa ya presente para los estados faltantes siguientes en ninguno de los tres contratos.
+
+| Necesidad demostrada | Propuesta de campos/relaciones e índices, pendiente de B |
+|---|---|
+| Cierre puntual de clínica | Nueva cierres_clinica: id_cierre, id_clinica FK, inicio/fin DATETIME, motivo, activo, autor y fechas. Índice (id_clinica, activo, inicio, fin); validar fin > inicio. Un cierre local no modifica recurrencia. |
+| Solicitud de ausencia y su resolución | Ampliar ausencias_veterinario con estado (solicitada/aprobada/rechazada/anulada), id_solicitante/id_revisor FK usuarios, fechas de solicitud/revisión y motivo_resolucion. Índice (id_clinica, estado, fecha_hora_inicio); índice global del vet y rango para cálculo interno. Reutiliza rango/id_cobertura existentes; no duplicar tabla de solicitudes si esta extensión cubre el flujo. Solo aprobadas restan disponibilidad. |
+| Revisión humana antes de tener cita | Nueva evaluaciones_agenda: id_evaluacion, clínica/mascota/actor FK, fecha, contexto estructurado/episodios y versión/huella del cálculo, nivel_calculado, revision, revision_inmediata, contagio, estado_revision, id_revisor, fecha_revision, nivel_aprobado/motivo, cita resultante nullable. Para la propuesta de espera no urgente de A.8, origen remoto/presencial, fecha_llegada y estado_solicitud (en_evaluacion/en_espera/sin_hueco/convertida/retirada) separado de la resolución clínica; no se inicia consulta mientras falte cita. Índices por clínica+estado+fecha y por mascota; FK cita, con unicidad para impedir consumir dos veces la misma evaluación. Sin fecha límite clínica inventada: vigencia por datos/versiones. No guardar secretos ni medicación protegida. |
+| Bloque y cupo naranja | Nueva bloques_agenda con id_bloque, id_clinica/id_veterinario FK, fecha e inicio/fin originales y versión/estado de disponibilidad. Identidad única por clínica/vet/fecha/origen de franja; citas.id_bloque FK nullable para históricos, índice (id_bloque, es_sobrecupo, estado, fecha_registro, id_cita). Mantener es_sobrecupo exclusivamente como contador naranja, no como bandera de toda llegada. Cambiar horario no borra bloques usados ni reinicia cupos. |
+| Origen, estimaciones y reajuste pendiente | Ampliar citas: origen (reserva/llegada_sin_reserva/urgencia; legado al migrar), inicio_estimado/fin_estimado DATETIME, estado_reajuste (ninguno/pendiente_calculo/pendiente_revision/pendiente_reasignacion/pendiente_reprogramacion), motivo_reajuste, version_agenda y fecha_ultimo_calculo. Corrección H-A1: fin_estimado representa F clínico, sin margen; N y L se derivan por estado según A.3. Proponer duracion_activa_objetivo_segundos para D cuando corresponda una duración decidida, con procedencia/autor/motivo en la auditoría; el servicio completo usa d convertido a segundos y una duración diferente requiere su valor explícito. Si falta el dato necesario, NULL/pending de duración, sin inventarlo para un histórico o una decisión incompleta. Identificar también la versión/política temporal aplicada para reconstruir cómo se calculó L cuando se apruebe una; no fijar un default de producto en A.1. Índice (id_clinica, estado_reajuste, fecha); ocupación por vet/mascota+estimación con índices según consultas de C3. Las marcas no sustituyen estado clínico ni D sustituye duracion_minutos pactada. |
+| Derivación y cola roja sin vet | Nueva urgencias_agenda: id_urgencia, id_clinica/id_mascota FK, id_evaluacion nullable, id_ingreso nullable, id_cita nullable único, origen, estado (derivada/presente_en_espera/asignada/en_atencion/finalizada/derivada_a_otro_servicio), fecha_derivacion/llegada/asignacion/fin, orden/motivo de decisión. Índice (id_clinica, estado, fecha_llegada, id_urgencia); evaluación/operación únicas evitan duplicados. No usar esa cola para pacientes remotos ausentes. Su decisión clínica y transición deben auditarse. |
+| Reasignación recuperable | Ampliar reasignaciones con id_clinica (rellenada desde cita y validada), inicio/fin propuestos, version_cita, motivo y ciclo de búsqueda. Índices clínica+estado+fecha_limite y cita+ciclo; unicidad condicional de una pendiente por cita mediante columna calculada compatible MySQL/MariaDB. Conservar intentos rechazados/vencidos y candidato de cada uno; no borrar historia para volver a proponer. |
+| Pausas/reanudaciones múltiples | Nueva pausas_cita: id_pausa, id_cita FK, id_urgencia FK, inicio DATETIME real y fin DATETIME de reanudación real, NULL mientras siga abierta, autor y motivo. Inicio real de atención, D y estos intervalos completos permiten reconstruir A/R/P_c/N/L de A.3, sin una nueva fila por recálculo. La duración activa restante al pausar, si se conserva como instantánea, se expresa en segundos y debe coincidir con máximo(0, D−A(a)); no es una segunda fuente mutable ni se resta otra vez de D al retomar. Índice cita+inicio; unicidad condicional de pausa abierta por cita; validar orden/no solape y pausas cerradas antes de completar. No reiniciar hora_inicio_real, copiar reanudación estimada a fin real de pausa ni crear un margen por interrupción. Una reanudación estimada u necesita referencia al caso rojo y corte/versión de su cálculo, como predicción condicional; no se persiste como hecho clínico. El estado/tipo de la cita sigue siendo la autorización de pausa. |
+| Control de comunicación durable | Reutilizar notificaciones para historial de envío y notificaciones_internas para destinatarios; nueva eventos_agenda para trabajo pendiente con clínica/cita o urgencia/evaluación, clave de evento única, tipo, destinatario autorizado, versión/estimación a comunicar, estado, reclamación e intentos/error/fechas. Índice por estado+fecha, clínica+recurso; sin copiar contacto provisional a payload ni a logs. En citas agregar ultima_hora_comunicada y ultimo_aviso_estimacion para RN-429, actualizados con resultado coherente del evento. No confundir aviso_atencion_abierta RN-409 con esta ventana. |
+| Doble envío de comandos | Nueva operaciones_agenda mínima de A.4, UNIQUE(clínica, actor, tipo, clave_operacion). Huella opaca y referencia al resultado; insertar junto al negocio, sin usar auditoría como tabla de exclusión. No es una nueva bitácora de correos M8. |
+| Conciliación/contacto provisional | Reutilizar ingresos_emergencia, sin pedir documento_acompanante; agregar fecha_conciliacion, id_conciliador, evidencia de mapa provisional→final y HC previas, contacto_anonimizado_en y causa de conservación excepcional si se aprueba. Índice clínica+estado+fecha_ingreso ya previsto. Nombres/teléfonos usan validadores existentes, límite servidor/HTML y acceso protegido; nunca se enlazan por similitud a una cuenta. |
+
+Cada nueva tabla de negocio lleva clínica, FK sin borrado clínico en cascada y validación de pertenencia en modelo.
+Para las tablas ligadas a cita/evaluación, comprobar que ambas referencias son de la misma clínica; una FK simple no acredita esa coherencia.
+Las restricciones de una sola pausa/propuesta activa necesitan prueba MySQL real, no asumir que SQLite reproduce columnas calculadas.
+No agregar tablas para aristas del grafo, nuevas edades, afinidad ni catálogo de reglas clínicas.
+La lista es una propuesta mínima por necesidad; la revisión puede reducirla fusionando estados con la misma semántica, sin perder recuperación ni trazabilidad.
+
+**Transición v2, sin inferir historia.**
+
+1. B prepara la siguiente migración libre, propuesta 08_agenda_contratos.sql, solo después de revisar contratos y decisiones. En A no existe ese SQL. No editar 03–07.
+2. Ampliaciones aditivas, campos nullable donde el dato histórico sea desconocido y creación repetible de tablas/índices. Sin cambios destructivos ni activación de rutas a medias.
+3. Duración histórica: conservar la ya guardada; si falta y hora_fin es válida, inferir solo su diferencia positiva sin cruce ambiguo; si no se demuestra, marcar pendiente de revisión. No copiar la duración actual de un tipo como si se conociera la antigua. El fallback técnico actual 30 no es evidencia de duración histórica. Margen 0 existente se conserva, no se sustituye por 10 automáticamente.
+4. No inventar prioridad_calculada, síntomas, tiempos, llegada, pausas o presencia para citas antiguas; origen=legado hasta clasificación demostrable. Una consulta histórica id_cita NULL sigue con su etiqueta «Sin cita». El nuevo origen distinguirá llegadas sin reserva aunque sí tengan cita.
+5. Proponer inicializar estimaciones de futuras ordinarias desde fecha/hora/duración solo cuando sean válidas, con fuente migrada; conflictos quedan marcados. Completadas y horas reales no se recolocan.
+6. No crear jornadas de vet copiando las de clínica automáticamente; hasta configuración expresa, no hay disponibilidad nueva. Publicar diagnóstico de citas futuras afectadas, sin borrarlas ni alterar el compromiso.
+7. Ausencias preexistentes representan bloqueos efectivos: rellenar estado=aprobada sin inventar aprobador; conservar ausencia y cobertura originales. Nuevos campos de autor se permiten desconocidos en legado.
+8. Sin bloques históricos demostrables para un sobrecupo, dejar pendiente de revisión; no asignarlo a un bloque nuevo que le regale cupo. No poblar revisiones humanas retrospectivas.
+9. Sincronizar 01_schema.sql, MER, drawDB y, solo si procede, inserciones faltantes de 02_semilla.sql con la migración equivalente para bases existentes. Probar instalación nueva y actualización de alpha.4 dos veces; no sobrescribir personalizaciones.
+10. Despliegue aplica migración por scripts/migrar.php, sin pedir SQL manual en producción; compatibilidad del código anterior se comprueba antes de prometer rollback. Esta A no migra ni cambia servicios.
+
+### A.7. Cobertura existente y trazabilidad individual
+
+**Alias de cobertura existente (archivos reales):**
+
+- CT = tests/Integration/CitaTest.php: registro, instantáneas, aislamiento, mascota/vet activos, solape secuencial, simulación del índice único, reprogramación y catálogos.
+- AP = tests/Integration/AgendaPeticionesTest.php: peticiones por contexto, vet propio, fechas pasadas, horario inicial, calendario, reprogramación admin/arrastre e inicio asignado.
+- CE = tests/Integration/CitaEstadoTest.php y tests/Unit/ReglaAtencionTest.php: transiciones, inicio real único, ventana de 15 minutos, aviso de 10 minutos, sin_cerrar y acción derogada.
+- PA = tests/Integration/PortalAgendaTest.php: clínica vinculada, mascota propia, alta de vínculo con rollback, catálogos, límites y mensaje neutral.
+- CC = tests/Integration/ConfiguracionClinicaTest.php y tests/Unit/HorarioAtencionTest.php: semana/bloques, aislamiento, guardado válido, restauración, cierres recurrentes y extremos de apertura.
+- CH = tests/Integration/ConsultaHistorialTest.php, ConsultaSintomasTest.php y ConsultaTratamientoTest.php: consulta normal/sin cita, HC única, consulta asignada, atómico con tratamientos/archivos y rollback.
+- TR = tests/Integration/TriageTest.php, tests/Unit/MotorTriageTest.php y BuscadorSintomasTest.php, tests/Fixtures/triage.php: validación/roles, cálculo y 26 casos T.
+- LP = tests/Integration/LimitePlanTest.php: cupos de mascota/cita, mora, rojo evaluado, mensaje neutral y rollback de vínculo.
+- NA = tests/Integration/NotificacionAccesoTest.php, pruebas existentes de recordatorios y correo: destinatario/rol/clínica, lectura/vencimiento e intentos de recordatorios. No prueban la futura entrega durable de eventos de agenda.
+- MY = tests/Integration/BaseV2MysqlTest.php: testC5AgendaEnElEsquemaReal, testC6PortalEnElEsquemaReal, testConfiguracionDeDosClinicasEnElEsquemaReal, testC8CronRealConCorreoSimuladoYDosClinicas y testLaDobleReservaSeRechazaSalvoSiLaCitaEstaLibreOEsSobrecupo. No hay aquí prueba concurrente de intervalos de distinto comienzo en dos conexiones.
+- JS = tests/Frontend/M5C2Portal.test.cjs, M5C2bPortal.test.cjs, M5C3Personal.test.cjs, M5C4aPortal.test.cjs, M2C5aConsulta.test.cjs, M2C5bTratamientos.test.cjs, M2C7Pulido.test.cjs, M2C8Rediseno.test.cjs, M2C81Celular.test.cjs y M2C82Historial.test.cjs; preservar formulario, síntomas, contactos, alertas, historial y diseño. No hay suite específica actual del motor Grafo II.
+- Acceso = tests/Unit/AutorizacionRolTest.php y pruebas de contexto/aislamiento vigentes; testCadaRolConservaSusAccionesHabituales acepta hoy creación del admin y deberá actualizarse con la decisión confirmada.
+
+La evidencia existente protege lo indicado, no cierra las brechas nuevas.
+Una prueba SQLite o la simulación de CT no demuestra serialización InnoDB.
+La suite existente en verde no significa que los RE pendientes de M4 estén implementados.
+
+**Casos propuestos, todavía sin escribir ni ejecutar:**
+
+| Caso | Preparación y resultado comprobable |
+|---|---|
+| P01 Acceso/contexto | Ana Norte admin no crea por POST ni entrada residual de Pacientes; conserva supervisión, reprogramación y configuración. Beto Norte vet y Fabio propietario crean solo dentro de su alcance. Diego Sur y Gina plataforma reciben 403 auditado ante IDs de Norte; cambiar contexto de una cuenta multirol no conserva facultades del anterior. CSRF ausente/inválido no escribe. |
+| P02 Intervalos completos | Clínica 08–12/14–18, vet 09–11: duración30+margen10; 10:20 cabe, 10:21 no; ausencia [10,11) bloquea cruce y permite 11:00 cuando exista franja siguiente; cierre único no cierra otra semana; sin horario no hay espacios. Sugerir y guardar producen el mismo resultado por mascota/tipo y rechazan parámetros adulterados. |
+| P03 Dos conexiones reales | Barrera entre validar y guardar: conexiones independientes A/B, citas 09:00/09:15 de 30+10 para el mismo vet en Norte/Sur; solo una compatible confirma. Repetir con vets distintos y misma mascota global, mismo inicio, reprogramación y reserva, y hueco inicialmente vacío. Control: dos recursos independientes pueden confirmar. Releer después de esperar; rollback del ganador permite al segundo reevaluar. |
+| P04 Horario/propuestas | Vet guarda directo:403; propone solo lo suyo en Norte; admin Sur no resuelve; aprobar/rechazar motivado en Norte; conflicto recurrente entre clínicas responde genérico. Editar/restaurar/cerrar mientras otra conexión reserva produce antes/después completo y marcas de citas afectadas, nunca una reserva oculta fuera de disponibilidad. |
+| P05 Cuatro ramas/cuota | T rojos derivan antes de límites incluso en mora y con cupo de mascotas agotado; naranja consume bloque, amarillo primer espacio, verde elige. Nivel enviado por cliente no manda. Portal al límite recibe mensaje neutral y no deja vínculo nuevo; interno recibe motivo del plan. O-01/02/03/10. |
+| P06 Revisión y aislamiento | T-20 sin oferta/POST reservable hasta resolución vet; T-22/T-16 según puerta aprobada. Propietario no se autoriza a sí mismo; cambio de marca, contexto, conocimiento o titularidad invalida resolución anterior. T-11 avisa aislamiento a Norte incluso si no hay cupo; agregar P1 conserva contagio con rojo. Sur no recibe aviso. |
+| P07 Naranja/tope/orden | Tope=2: dos naranjas en bloque, tercero sin inserción y con aviso; dos conexiones por último cupo dejan uno. Empate fecha_registro ordena por id_cita; cambio sin motivo falla. Editar o partir bloque por ausencia no regala dos cupos extra. O-04/05. |
+| P08 Reprogramación/cancelación | Fabio cancela/reprograma futura propia; mascota ajena, clínica desvinculada o estado ya cambiado:403/conflicto sin fuga. Intervalo completo y mes destino revalidan cuota; fracaso conserva cita original, instantáneas y vínculo. Auditoría+evento en commit; cancelar/no_asistio liberan espacio según regla. |
+| P09 Tiempo/cascada | Verificar cada estado de A.3 bajo la política temporal que se apruebe, sin mezclar alternativas: servicio completo r=09:20/D=30/m=10 da N=09:50/L=10:00 bajo M; sin pausa, fin 09:39/09:40/09:41 da L=09:40/09:40/09:41. Tras pausa 09:10–09:30, verificar L=10:00 a las 09:59 y 10:00, y L=10:01 a las 10:01; cierre 10:05 no produce 10:15. Hueco absorbente, franja exacta y exceso durante atención sin calendario. Mismos hechos/reloj repiten idéntico resultado; tras completar, avanzar reloj tampoco desplaza L. Pactadas y sellos reales intactos. Conflicto externo del mismo vet/mascota devuelve solo indisponibilidad. |
+| P10 Vencimientos | Destino correcto acepta antes del límite; otro vet/admin/Sur:403. Exactamente al límite vence; rechazo/no respuesta pasan siguiente candidato y sin ninguno dejan reprogramación pendiente. Dos conexiones aceptan/expiran o toman hueco: una transición, ningún traslado incompatible, sin dos pendientes activas. |
+| P11 Avisos/correos | Correo/evento sin JS posterior; motivo/dirección/marca de su clínica; SMTP falla y reserva queda confirmada con fallo registrado; doble worker/POST no duplica evento. Diez recálculos de +3: umbral exacto no avisa, >15 sí con ventana >=30; máximo dos en hora, cambios de vet/reprogramación siempre. Sin correo/vínculo válido o cuenta pendiente no emitir automático. |
+| P12 Ausencia/cobertura | Ausencia parcial y de día completo con extremos exactos; solicitud vet según decisión aprobada; registro/aprobación concurrente con reserva. Destino compatible recibe cobertura sin veto; sin cobertura cita pendiente y propuestas al propietario; avisos a ambos vets y propietario, auditoría y aislamiento. |
+| P13 Presencia/urgencia | Rojo remoto a las 23:00 informa cierre/teléfono/24h, no pausa ni sella llegada. Presencial enlaza una única derivación; libre→pausable→espera sin vet. Todos no pausables: cero pausas, espera roja durable y estimación honesta. Quiebre de cuota/mora no bloquea el caso ni la ficha; O-01/02/09/10. |
+| P14 Pausas | Cirugía no pausable nunca se interrumpe; vacunación pausable conserva inicio real, una pausa abierta y segmentos; vuelve antes de la siguiente tras cerrar rojo. Bajo la propuesta M: pausa 09:10–09:30 con r=09:00/D=30/m=10 deja R=20 al retomar, N=09:50/L=10:00; dos pausas 09:10–09:20 y 09:25–09:40 suman 25, R=15 al retomar, N=09:55/L=10:05. Si ya trabajó 40 min antes de pausar 09:40–10:00, no recuperar otro margen hasta 10:10; cierre 10:02 da L=10:02. Pausa abierta sin u sustentada solo muestra cota condicional, no libera al vet. Repetición no duplica pausa ni acumula otra vez su duración; rechazar intervalos solapados o cierre con pausa abierta. Doble llegada/cierre/reanudación no duplica. Consulta sobre pausada se rechaza sin escribir; fallo de auditoría revierte pausa/cita/urgencia/marcas. |
+| P15 Identidad/conciliación | Cuatro ramas A.5, contacto vacío permitido; acompañante no se convierte en propietario/cuenta. Completar conserva ID; consolidar mueve todas las referencias enumeradas, conserva clínica/vet/HC/archivos y desactiva provisional/carnet. Titularidad falsa o ingreso Sur:403; dos conciliadores, choque HC y fallo a mitad producen rollback total, sin pérdida clínica ni reactivación de QR. |
+| P16 Ajuste de nivel | Solo vet autorizado, motivo requerido, calculado intacto y ajustado separado con autor/fecha; bajar rojo a verde permitido con motivo (O-07), subir deriva/reubica y notifica. Repeticiones visibles solo en alcance aprobado, sin puntaje punitivo ni datos de Sur. O-08. |
+| P17 Llegada/tolerancia | Llegadas con tolerancia 10 a 8, 10, 10min+1seg y 15 minutos; suficiencia/insuficiencia de tiempo, opciones y decisión del vet, auditoría y cascada. Si para cita 10:00 decide servicio completo e inicia realmente 10:10 con D=d=30/m=10, bajo M obtener N=10:40/L=10:50, sin mover hora pactada ni recortar D a 20. Si decidió otra duración, usar solo el valor registrado; falta de ese dato deja decisión/estimación pendiente, sin inventar duración efectiva. Llegada, inicio efectivo y reprogramación son hechos distintos; no sellar inicio por registrar llegada. Hora futura no_asistio rechazada; al marcar no asistió se vuelve a sugerir el espacio válido. |
+| P18 Atención sin reserva | Desde Consultas y Pacientes, nueva atención crea una sola cita con origen y enlaza consulta; doble envío devuelve misma. Sin hueco aplica solo capacidad/orden aprobados; no convertir verde en naranja ni crear consulta huérfana. Históricos NULL siguen legibles como Sin cita. |
+| P19 Marca/tipos | Norte y Sur con nombre/logo/contactos/tipos diferentes; admin ajeno no escribe, duración/margen/pausable y teléfonos validados servidor/en vivo; tipo desactivado no se usa para nueva reserva. Cambiar tipo no reescribe instantáneas anteriores. Marca por clínica en salidas acordadas, sin atribuir una sola clínica al historial global. |
+| P20 Esquema/transición | Instalación nueva y actualización alpha.4 con datos, repetir migración; faltantes quedan pendientes sin inventar triage/horarios. FK/índices/columna calculada coherentes en MySQL/MariaDB; rollback y rechazo de referencias de clínicas distintas. No reiniciar base ni alterar 03–07. |
+| P21 Regresión clínica | Mantener pruebas CE/CH/M2: inicio asignado/ventana, cierre atómico solo con consulta, continuar sin_cerrar, alerta única RN-409 y cron sin calendario; no reaparece cerrar sin consulta; peso desconocido, alergias RN-113, adjuntos y medicación protegida sin regresión. |
+| P22 JS compartido | Reserva en calendario, Pacientes y portal usa mismo contrato: tiempos/exposiciones, nota sola, clínica/mascota cambiada, respuestas fuera de orden, revisión y doble envío. Arrastre/reprogramación servidor falla: restaura presentación y muestra error junto al campo. Conserva diseño y cortes RNF-16; verificación visual se describe en C/D, no se ejecuta en A. |
+| P23 Contacto/retención | Con política aprobada, conciliación anonimiza contacto cuando procede sin eliminar actos ni autor; custodia excepcional con motivo visible solo a personal autorizado; sin exportar contacto, copiarlo a usuario ni ponerlo en auditoría/notificaciones. Solicitud de supresión conserva referencias y conserva solo lo justificado por el procedimiento vigente. |
+
+**Trazabilidad por RE incluido.**
+Las filas distinguen estado actual, brecha, responsable de implementación y evidencia concreta existente o propuesta.
+Todas las P son futuras; A solo verifica el inventario.
+Son 107 RE únicos: 101 de dominio (incluido RE-4.3.8 derogado para proteger su retirada) y seis transversales de acceso/aislamiento.
+
+| RE | Comportamiento actual y brecha | Subetapa | Prueba existente → propuesta |
+|---|---|---|---|
+| RE-7.4.1 | Datos iniciales de clínica, sin editor de marca/teléfono urgencias operativo. | C1/C4a | CC parcial → P19/P13. |
+| RE-7.4.2 | Catálogo aislado con duración/margen, sin gestión completa. | C1 | CT/CC lectura y copia → P19. |
+| RE-7.4.3 | Margen guardado, no resta disponibilidad. | C1/C3 | CT instantánea → P02/P09. |
+| RE-7.4.4 | Cabeceras/correos globales; procedencia clínica en registros, no marca completa. Aclarar salida global. | B/C1/F | JS/M2 imprimible parcial → P19/P11. |
+| RE-7.4.5 | Lecturas aisladas y copia inicial; falta auditar edición nueva de marca/tipos. | C1 | CC/CT → P01/P19. |
+| RE-7.4.6 | Campo pausable con default, sin formulario ni ejecución de pausa. | C1/C7a | Esquema solamente → P19/P14. |
+| RE-4.11.1 | Tabla de horario vet sin escritura operativa. | C2 | CC solo clínica → P04. |
+| RE-4.11.2 | No valida franjas recurrentes del vet ni choque entre clínicas. | C2 | Sin cobertura específica → P04/P03. |
+| RE-4.11.3 | Sugerencias no leen franjas del vet. | C3 | CT parcial → P02. |
+| RE-4.11.4 | No marca citas al cambiar horario. | C2/C5 | CC parcial → P04/P09. |
+| RE-4.11.5 | No existen propuestas/aprobación funcionales. | C2 | Acceso base → P01/P04. |
+| RE-4.12.1 | Ausencias en esquema, sin bloqueo operativo por rango. | C3/C6 | Sin cobertura específica → P02/P12. |
+| RE-4.12.2 | Rango DATETIME documentado, sin validación de entrada del flujo. | C6 | Sin cobertura específica → P12. |
+| RE-4.12.3 | Sin búsqueda/asignación de cobertura; no confundir reprogramación manual admin. | C6 | AP reasignación manual → P12. |
+| RE-4.12.4 | Sin estado/propuesta pendiente al propietario cuando falta cobertura. | C6 | Sin cobertura específica → P12/P08. |
+| RE-4.12.5 | Avisos básicos de citas, sin evento de cobertura a tres destinatarios. | C6 | NA parcial → P12/P11. |
+| RE-4.13.1 | Motor/API calculan; reserva siempre entra verde. | C4a | TR → P05/P22. |
+| RE-4.13.2 | LimitePlan exceptúa rojo evaluado, ruta normal no calcula primero. | C4a/C7a | LP → P05/P13. |
+| RE-4.13.3 | No hay cuatro ramas operativas. | C4a/C4b/C7a | TR solo cálculo → P05/P13/P07. |
+| RE-4.13.4 | Horario inicial de clínica + duración; falta intersección/margen/ausencias. | C3 | CT/CC parciales → P02. |
+| RE-4.13.5 | Candado de clínica e índice por comienzo, insuficientes entre clínicas. | C3/C4b | CT/MY simulación/índice → P03/P07. |
+| RE-4.13.6 | Guarda tipo/duración/margen/prioridad y audita alta; faltan episodios y entrega fiable. | C4a | CT/PA → P05/P06/P11. |
+| RE-4.13.7 | Tope/orden existen en datos, sin consumo de bloque. | C4b | Sin cobertura específica → P07. |
+| RE-2.11.1 | API valida episodios y nota sola; captura de Agendar no integrada. | C4a | TR/BuscadorSintomasTest → P22/P06. |
+| RE-2.11.2 | Máximo y P3 implementados; conservar al reservar. | C4a | MotorTriageTest T-04/T-18 → P05. |
+| RE-2.11.3 | Contexto/modificadores y tiempo calculados; falta guardar entrada de cita. | C4a | TR T-09/10, T-11/12, T-14/16 → P05/P06. |
+| RE-2.11.4 | P1 universal probado; falta derivación real. | C4a/C7a | TR T-21 → P13. |
+| RE-2.11.5 | Motor indica revisión; no hay puerta humana previa al horario. | C4a/C4b | TR T-20/T-22 → P06. |
+| RE-2.11.6 | Bandera de contagio sí; aviso de aislamiento no. | C4a | TR T-11 y rojo+contagio → P06/P11. |
+| RE-2.11.7 | Batería automatizada de 26 ya existe; conservar sin variar esperados. | Todas/D | MotorTriageTest::testBateriaConConocimientoReal → misma batería más P05/P06. |
+| RE-4.14.1 | No hay cálculo de absorción, solo vigilante de atención abierta. | C5a | CE no equivale → P09. |
+| RE-4.14.2 | Sin estimaciones persistidas ni procesador de cascada. | C5a | Sin cobertura específica → P09. |
+| RE-4.14.3 | Sin emparejamiento de cita fuera de franja. | C5a/C5b | AP solo reasignación manual → P09/P10. |
+| RE-4.14.4 | Tabla de propuestas sin aceptación del destino. | C5b | Sin cobertura específica → P10. |
+| RE-4.14.5 | No existe estado/reprogramación concertada por cascada. | C5b | NA/AP parciales → P10/P08/P11. |
+| RE-4.14.6 | Plazo en clínica/FK en esquema, sin vencimiento operativo. | C5b | Sin cobertura específica → P10. |
+| RE-4.14.7 | Sin acumulado/base comunicada ni ventana por cita. | C5b | NA no prueba RN-429 → P11. |
+| RE-4.15.1 | Motor devuelve rojo; no registra derivación/ingreso operativo. | C4a/C7a | TR → P13. |
+| RE-4.15.2 | Sin cola/asignación/pausa; FK vet obligatoria en cita. | C7a | Esquema no basta → P13/P14. |
+| RE-4.15.3 | Ficha provisional e ingreso en esquema; no cuatro ramas ni conciliación. | C7b | CH solo actos existentes → P15/P23. |
+| RE-4.15.4 | Consulta existente no integra urgencia ni provisional. | C7a/C7b | CH → P13/P15/P21. |
+| RE-4.15.5 | Sin cascada al ocupar emergencia. | C7a | Sin cobertura específica → P13/P09. |
+| RE-4.15.6 | Horario abierto/cerrado visible en portal, sin mensaje rojo/teléfono específico. | C4a | HorarioAtencionTest → P13. |
+| RE-4.15.7 | Excepción del modelo de cuota probada, falta atravesar ficha/vínculo/urgencia. | C4a/C7a/C7b | LP → P05/P13/P15. |
+| RE-4.15.8 | Estado/campo de pausa, sin transición/reanudación. | C7a | CE no cubre pausa → P14. |
+| RE-4.18.1 | Motivo/campos existen, falta acción autorizada. | C4b/C8 | Acceso/TR parcial → P16/P06. |
+| RE-4.18.2 | Prioridades separadas en esquema, sin historial operativo. | C4b/C8 | Sin cobertura específica → P16. |
+| RE-4.18.3 | No reubica ni avisa tras ajuste. | C8 | Sin cobertura específica → P16/P09/P11. |
+| RE-4.18.4 | No historial de reclasificaciones; destinatario ambiguo. | B/C8 | Sin cobertura específica → P16/P01 tras aclaración. |
+| RE-4.19.1 | hora_llegada existe, no se sella en ruta actual. | C8 | Sin cobertura específica → P17. |
+| RE-4.19.2 | Se puede iniciar tarde el mismo día, sin duración restante/tolerancia. | C8 | ReglaAtencionTest parcial → P17. |
+| RE-4.19.3 | no_asistio existe; no conjunto de tres opciones por tolerancia. | C8 | CE/AP parcial → P17. |
+| RE-4.19.4 | Sin cálculo ni auditoría de decisión de llegada. | C8 | Sin cobertura específica → P17/P09. |
+| RE-4.1.1 | Guarda campos básicos, interno/portal; falta triage compartido y restricción admin. | C3/C4a | CT/PA/AP → P01/P05. |
+| RE-4.1.2 | Solape secuencial de vet sí; margen/carrera interclínica pendientes. | C3 | CT/MY → P02/P03. |
+| RE-4.1.3 | Solo valida hora inicial de clínica. | C3 | AP/CC → P02. |
+| RE-4.1.4 | Correo mediante POST posterior de JS; no entrega asegurada por crear. | C4a | JS parcial → P11. |
+| RE-4.1.5 | Citas en calendario por clínica/vet, con eventos preventivos. | C4a/C5/D | AP → P22/P09/P21. |
+| RE-4.2.1 | Cancelar y reprogramar internas funcionan, portal solo cancela. | C4b | AP/CT/PA parcial → P08. |
+| RE-4.2.2 | Avisos internos y correo separado dependiente de cliente. | C4b | NA/JS parcial → P11/P08. |
+| RE-4.2.3 | Cancela conservando fila y estado. | C4b/D | CE/CT → P08/P21. |
+| RE-4.2.4 | Rechaza solape secuencial; falta margen y carrera. | C3/C4b | CT/AP → P03/P08. |
+| RE-4.3.1 | Cierre condicional de en_curso/sin_cerrar, no de pendientes. | C7a/D | CE → P14/P21. |
+| RE-4.3.2 | Consulta completa cita en su transacción; incorporar pausa/urgencia sin romperlo. | C7a | CH/CE/MY → P14/P21. |
+| RE-4.3.3 | Portal separa próximas/históricas; listarRango no filtra completadas por sí mismo. | C5/D | PresentacionPortalTest/AP parcial → P21/P22 con exclusión explícita de futura. |
+| RE-4.3.4 | Solo asignado, día, desde 15 minutos antes. | C7a/D | AP/CE/Acceso → P21. |
+| RE-4.3.5 | Continuar en_curso/sin_cerrar funciona; pausada requiere reanudar primero. | C7a | CE/AP → P14/P21. |
+| RE-4.3.6 | Vigilante sella y avisa una vez diez minutos tras fin. | C5/C7a/D | CE/MY cron → P21/P14. |
+| RE-4.3.7 | Pasa a sin_cerrar al día siguiente, no borra atención. | C7a/D | CE → P21 y pausa que cruza día. |
+| RE-4.3.8 | Derogado; la acción cerrar sin consulta ya no existe. | D | CE::testYaNoExisteCerrarSinConsulta → P21; no reintroducir. |
+| RE-4.3.9 | Cron cada cinco minutos y respaldo al cargar calendario. | C5/D | MY::testC8CronRealConCorreoSimuladoYDosClinicas → P21, conservarlo junto al nuevo procesador. |
+| RE-4.4.1 | Segunda petición de navegador, no evento de servidor tras commit. | C4a | JS parcial → P11 sin segunda petición. |
+| RE-4.4.2 | Cuerpo actual omite motivo y dirección aunque select los obtiene. | C4a | Inspección enviarCorreoCita → P11. |
+| RE-4.4.3 | Responde antes de SMTP; conservar vía cola tras commit. | C4a | ResponderYSeguir inspeccionado → P11 con transporte lento/fallido. |
+| RE-4.4.4 | Boolean/error_log, sin estado durable del fallo inmediato. | C4a | NA solo recordatorios → P11. |
+| RE-4.5.1 | Inicio/fin reales se sellan, falta conservar segmentos al pausar. | C5/C7a | CE/CH → P14/P21. |
+| RE-4.5.2 | Vigilante detecta abierta tras gracia, no exceso contra margen durante atención. | C5a | CE parcial → P09. |
+| RE-4.5.3 | No mueve estimaciones siguientes. | C5a | Sin cobertura específica → P09. |
+| RE-4.6.1 | Campo margen sin gestión completa. | C1 | CT/CC parcial → P19. |
+| RE-4.6.2 | Ocupación ignora margen. | C3 | CT detecta duración → P02/P09. |
+| RE-4.7.1 | Solo asignado marca abierta cuya hora pasó. | C8/D | CE/AP → P17/P21. |
+| RE-4.7.2 | Estado libera en consultas e índice. | C3/C8 | CE/CT → P17 y nueva sugerencia completa. |
+| RE-4.8.1 | Ausencias solo en tabla, sin flujo de bloqueo por fecha. | C3/C6 | Sin cobertura específica → P12/P02. |
+| RE-4.8.2 | Día semanal inactivo sí, cierre puntual no. | B/C2/C3 | CC parcial → P02/P04. |
+| RE-4.8.3 | Excluye bloques semanales apagados, no ausencia/cierre fechado. | C3 | CC → P02. |
+| RE-4.9.1 | Cliente cruza listas; servidor valida inicio separadamente. | C3 | CT/CC/AP parciales → P02/P22. |
+| RE-4.9.2 | Duración no se comprueba contra fin de franja de clínica/vet. | C3 | AP parcial → P02. |
+| RE-4.9.3 | Índice y candado clínico no resuelven intervalo global vacío. | C3 | CT/MY índice → P03. |
+| RE-5.3.1 | Selección de mascota propia y validación servidor. | C4a/D | PA::testNoAgendaParaUnaMascotaAjenaNiConUnVeterinarioDeOtraClinica → P01. |
+| RE-5.3.2 | Selección tipo/vet/fecha/hora; integrar ramas de triage. | C4a | PA/JS → P05/P22. |
+| RE-5.3.3 | Dinámica por intersección cliente de listas incompletas. | C3/C4a | PA/JS → P02/P03/P22. |
+| RE-5.3.4 | Alta auditada, correo separado de cliente. | C4a | PA/CT → P11. |
+| RE-5.3.5 | Vincula mascota y consume plan con rollback al fallar. | C4a | PA::testAgendarConLaMascotaSinVincularLaVincula/testSiLaReservaFallaLaMascotaNoQuedaVinculada → P05/P03. |
+| RE-5.6.1 | Propietario cancela abierta propia; falta exigir futura explícitamente en servidor. | C4b | AP cancelación propia → P08 con pasada/futura. |
+| RE-5.6.2 | Portal no tiene ruta de reprogramación propia. | C4b | Sin cobertura específica → P08/P22. |
+| RE-5.6.3 | Cancelación comprueba dueño/vínculo; extender a reprogramar. | C4b | AP/PA → P01/P08. |
+| RE-5.6.4 | Cancelar avisa a clínica; no audita cambio en CitaController; reprogramación portal falta. | C4b | NA/AP parcial → P08/P11. |
+| RE-2.2.1 | Atención sin cita crea consulta id_cita NULL; criterio debe cambiar por decisión. | B/C8b | CH::testCualquierVeterinarioDeLaClinicaRegistraSinCita → P18. |
+| RE-2.2.2 | Busca paciente y exige motivo/diagnóstico; conservar en nueva cita de llegada. | C8b | CH/JS consulta → P18/P21. |
+| RE-2.2.3 | HC se asigna una vez por mascota/clínica; conservar transacción/candado. | C8b/C7b | CH numeración y MY::testC4ElNumeroDeHistoriaSeAsignaBajoCandadoSinRepetirse → P15/P18. |
+| RE-2.2.4 | Etiqueta Sin cita depende de NULL; nuevas llegadas requieren origen persistido. | B/C8b | CH/JS listados → P18, históricos y nuevos diferenciados. |
+| RE-T.10.1 | Matriz previa y cierre por defecto; cambiar creación admin y enumerar rutas nuevas. | C2–C8/D | Acceso → P01. |
+| RE-T.15.1 | Aislamiento de modelos; ocupación global es excepción técnica mínima. | C3–C8/D | CT/AP/PA/CH/NA → P01/P03/P15. |
+| RE-T.15.2 | Recurso ajeno responde 403 auditado; preservar incluso al límite. | Todas/D | CT/AP/LP → P01/P15. |
+| RE-T.15.3 | Security controla rol/CSRF/contexto; faltan acciones de M4. | Todas/D | Acceso/TR → P01/P04/P10. |
+| RE-T.15.4 | Plataforma no tiene permiso clínico; no ampliarlo con urgencias. | Todas/D | Acceso/TR → P01/P13. |
+| RE-T.15.5 | Aislamiento centralizado con fixtures Norte/Sur; ampliar a nuevas entidades. | Todas/D | DosClinicas y suites anteriores → P01/P03/P06/P12/P15. |
+
+**Alcance diferido individual:** RE-4.7.3, RE-4.10.1, RE-4.10.2, RE-4.10.3, RE-4.16.1, RE-4.16.2, RE-4.17.1, RE-4.17.2, RE-4.17.3 y RE-4.17.4 quedan fuera de esta entrega.
+No usar confirmación administrativa existente como cumplimiento de HU-4.10 ni desempate técnico como afinidad de HU-4.16.
+O-06 sigue pendiente de v2.1.
+O-01/02/09/10 se cubren operativamente en P05/P13/P15; O-03/04/05 en P07; O-07/08 en P16; O-11 conserva las alergias globales de M2 y se verifica en P05/P06/P21.
+Los 26 T conservan datos y esperados originales, incluidas las reservas de T-16/T-20; no se declara validación veterinaria por pasarlos.
+
+### A.8. Propuestas pendientes de aprobación
+
+Las decisiones de §6 (actores, alcance v2.1, cita obligatoria por atención sin reserva y captura opcional del acompañante) ya están confirmadas.
+Esta tabla no las reabre.
+La tabla conserva las propuestas originales y sus alternativas para trazabilidad. **Actualización (2026-10-17):** §6 ya confirma capacidad no urgente, bloque naranja, aprobación de ausencias, revisión previa, orden rojo, contacto del acompañante, permisos de conciliación y marca/reclasificaciones. Las decisiones fechadas de §6 prevalecen sobre el estado pendiente histórico de esta tabla. Quedan para B1 el cierre técnico de desempates/candados/HC, la propuesta mínima de esquema y la precisión verificable de los criterios sin inventar reglas adicionales.
+
+| Asunto | Propuesta concreta y recomendación | Naturaleza / condición |
+|---|---|---|
+| Capacidad sin hueco para llegadas no urgentes | Recomiendo **cero sobrecupos no urgentes automáticos**: la llegada pasa a evaluación/espera de solicitud, ofrece primer hueco compatible u otro vet de la misma clínica y no inicia atención hasta crear su cita de llegada. Al liberarse capacidad se ordena por nivel aprobado y, dentro de cada nivel, llegada física/ID; verde no adquiere prioridad naranja. Alternativa para el usuario: autorizar **un cupo adicional de llegada por bloque**, separado del tope naranja, solo con decisión motivada del vet y propagación visible del retraso. | Regla de producto: necesita aprobación antes de B/C8b. En ambas variantes, toda atención tiene cita; esperar no es registrar una consulta oculta. La segunda variante requiere parámetro propio propuesto, clase de cupo y estado de espera explícitos; no reutilizar es_sobrecupo ni aprobar un default por este anexo. |
+| Relación del cupo de llegada con RN-422 | Los naranjas cuentan exclusivamente para el tope naranja existente. Si se elige el cupo adicional de la alternativa anterior, contador independiente; rojos conservan excepción, demás colores respetan cuota del plan y capacidad admitida. No desplazar silenciosamente reservas ya pactadas. | Nueva regla de capacidad con aceptación y prueba; falta en HU-2.2/RN actuales. No implementarla por inferencia de RN-422. |
+| Bloque y cupo consumido | Recomiendo bloque fechado de intersección recurrente sin multiplicar cupo al restar ausencias; completados consumen cupo de ese bloque, cancelados/no_asistio lo liberan. | Concreción de RN-422 de A.3, a ratificar antes de B/C4b; ajustar matriz y Modelos. |
+| Desempate de veterinarios compatibles | Para búsqueda automática, elegir inicio compatible más temprano y luego id_usuario ascendente; si el actor ya eligió vet y puede conservarlo, respetarlo. Para ausencia/en vivo, usar igual orden y saltar candidatos ya intentados en el mismo ciclo. Sin afinidad, reputación, puntuación clínica ni sorteo; no comparar nombres. | Decisión técnica determinista propuesta, revisión independiente antes de C3/C5/C6. Cualquier preferencia por carga/especialidad/rotación sería regla nueva de producto y no se da por aprobada. |
+| Solicitud de ausencia | Recomiendo que la solicitud propia quede pendiente y solo tape agenda al aprobarla el admin; registro directo del admin es efectivo. Rechazo requiere motivo. Una ausencia no puede ocultar citas afectadas durante su resolución. | RN-414 admite solicitar, pero no especifica la aprobación: requiere confirmar y plasmar en HU/RE/Modelos §8/§13.4 antes de C6. |
+| Revisión previa a reservar | Mínimo obligatorio: T-20/revision_inmediata nunca recibe horario antes de vet. Recomiendo exigir liberación también a todo revision=true, dejando T-16/T-22 amarillos provisionales hasta resolución. Sin tiempo de respuesta inventado. | La extensión a toda revisión es propuesta de seguridad de flujo, no una regla clínica nueva confirmada. Aprobar antes de B/C4a; nota libre sigue fuera del cálculo. |
+| Orden rojo presencial | Recomiendo FIFO por llegada física/ID entre rojos presentes, con prioridad de reanudación de la cita pausada al finalizar su urgencia conforme RN-427; cualquier cambio clínico de orden se motiva y audita. Una nueva alarma roja se evalúa clínicamente, sin reglas automáticas de interrupción anidada. | Falta política expresa para empates de rojos y nuevas urgencias mientras hay pausa; aprobar antes de C7a. No convertir orden técnico en una decisión clínica ya autorizada. |
+| Contacto provisional | Recomiendo usar nombre/teléfono opcionales exclusivamente para atención/conciliación; al resolver titularidad y finalizar esa necesidad, anonimizar esos campos a NULL y sellar fecha/actor/causa, conservando ingreso, IDs y actos. Si el responsable identifica una obligación de custodia o conciliación aún pendiente, conservar solo lo necesario con motivo y revisión humana; sin borrado automático por días. Alternativa: conservación justificada junto al expediente con acceso restringido y procedimiento de supresión existente. | Política local views/legal/privacidad.php §Vigencia conserva datos según cuenta/obligaciones, pero no fija plazo para acompañante sin cuenta. RN-G07/G16/G19 y plan HU-4.15 no autorizan inventar uno ni confundirlo con los 72 h de invitaciones. Requiere aprobación antes de B/C7b; esto es alineación con política existente, no dictamen jurídico ni aprobación legal. |
+| Quién concilia | Proponer vet de la clínica para ingreso/actos; admin solo para completar/conciliar identidad conforme al permiso específico aprobado; propietario aporta/verifica su titularidad, sin fusionar por sí mismo historia ni adjudicarse mascota con ID. Nunca un endpoint público. | «Personal autorizado» no enumera acciones en plan HU-4.15; fijar matriz explícita en B/C7b, sin retirar las facultades administrativas actuales ajenas a este caso. |
+| Marca y reclasificaciones | Marca por clínica en contexto/evento/documento de esa clínica; plataforma en historial multi-clínica con identificación por acto. Reclasificaciones del propietario visibles a personal de la clínica dentro de sus casos, sin sanciones automáticas. | Aclaraciones RE-7.4.4/RE-4.18.4 pendientes antes de C1/C8; cualquier vista adicional del propietario debe definirse expresamente. |
+
+Los extremos de intervalo, fórmula de margen, candados, idempotencia, proyección mínima de ocupación y separación de servicios son decisiones técnicas propuestas para revisión del contrato.
+No cambian por sí solas el alcance confirmado.
+La aprobación del plan anterior no equivale a aprobación de los defaults/reglas nuevas de esta tabla.
+
+### A.9. Dependencias: ajuste mínimo propuesto antes de implementar
+
+| Dependencia detectada | Ajuste mínimo de orden/contrato, pendiente de revisión |
+|---|---|
+| C2 marca citas para un C5 que aún no existe | B define estado/versionado y C2 muestra la marca pendiente con aviso explícito, sin movimiento automático. C5a toma esas marcas idempotentemente. Cambiar horario o restaurarlo ya usa protocolo de exclusión de C3, por lo que el coordinador básico de candados se adelanta a C2; C3 completa el cálculo. |
+| C3 debe restar ausencias que se gestionan en C6 | B fija representación y estado efectivo; C3 ya sabe restar rangos aprobados y cierres. C6 aporta solicitud/cobertura. No permitir que C3 ignore filas existentes por «etapa posterior». |
+| C4a requiere revisión humana que HU-4.18/C8 deja tarde | Adelantar a C4a la evaluación pendiente y resolución mínima motivada del vet, con calculado/ajustado y revalidación. C4b integra reubicación al reservar; C8 completa historial/reclasificación al llegar. No ofrecer horarios con una bandera sin resolución operativa. |
+| C4a exige naranja pero su tope es C4b; rojo clínico es C7 | No declarar C4a funcionalmente cerrada en cuatro ramas si solo deriva a acciones inexistentes. Separar la entrega de captura/derivación remota de la habilitación integral: integrar C4b y C7a antes de habilitar todo el nuevo agendamiento. Si se requiere desplegar C4a sola, debe acordarse explícitamente el comportamiento provisional y su aceptación, sin presentar deuda como RE cumplido. |
+| C4a promete correo fiable, RN-429 se construye en C5b | B define evento durable e idempotencia; C4a entrega productor/consumidor mínimo de confirmación/cambio y registro de fallo. C5b agrega acumulación/ventana de estimaciones. No dejar la garantía de correo básico dependiendo de una futura etapa ni de JS. |
+| C5a predice fin de franja antes de aceptación/reprogramación de C5b | C5a puede calcular y persistir estado pendiente visible, sin mover vet ni hora pactada. C5b resuelve mediante propuesta/aceptación/reprogramación y siempre revalida. La integración se considera completa al revisar ambas; no simular aceptación. |
+| C7 usa atención/llegada de HU-2.2, ubicada en C8b | Adelantar a C7a la infraestructura común de crear cita desde una llegada y conservar origen, solo con política roja ya aprobada. C8b integra el acceso no urgente y capacidad aprobada. No habilitar un atajo clínico sin cita entre esas etapas ni aplicar RN-422 a verde. |
+| Pausas interfieren con cierre de consulta/numeración actual | C7a incluye Consulta::exigirCitaParaConsulta/completarCita, VigilanteAtenciones y protocolo HC; prueba cero cierres sobre pausadas. No esperar a C8b/D para resolver el candado o perder continuidad de M2. |
+| Ficha provisional necesita contexto incompleto que M2 presupone existente | C7b incorpora adaptador de ficha por completar con datos desconocidos y vínculos/HC legítimos; mantiene los predicados M2, sin modificar conocimiento ni inventar edad/especie. La entrada roja no depende de lograr registrar una mascota ordinaria con propietario. |
+| Retención, capacidad y campos nuevos condicionan B | Revisar A y resolver A.8 antes de generar SQL/contratos normativos afectados. Si el usuario aplaza una decisión, puede avanzarse únicamente en partes independientes aprobadas; no habilitar flujos que necesiten ese dato. |
+
+La tabla de §3 conserva el recorrido aprobado, con estas propuestas de anticipación mínima de infraestructura.
+El revisor debe incorporar el ajuste preciso al preparar el prompt de B y de cada etapa; A no empieza ninguna.
+
+### A.10. Verificación de A y entrega
+
+La verificación consiste en leer código/especificación y ejecutar las suites existentes.
+No se escribieron pruebas nuevas ni se recorrieron pantallas.
+La prueba headless que ya forma parte de JS es automática y no constituye un recorrido manual de la aplicación.
+
+| Verificación ejecutada el 2026-10-17 | Resultado |
+|---|---|
+| PHP completo sin host: php vendor/phpunit/phpunit/phpunit --do-not-cache-result; ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2 y host vacío | 854 pruebas, 7212 aserciones, 44 omitidas de MySQL. Código de salida 0. Incluye la batería T de M2. |
+| PHP completo con ZOOKI_TEST_MYSQL_HOST=127.0.0.1, PORT=3306, USER=root, PASS vacío y DB=zooki_test_base_v2 | MariaDB 10.4.32: 854 pruebas, 7813 aserciones, ninguna omitida; código 0. Configuración explícita de pruebas independiente del archivo de entorno. No se instaló ni inició ningún servicio. |
+| JS existente: node --test "tests/Frontend/**/*.test.cjs" | 238/238, cero fallos, canceladas u omitidas; código 0. Incluida medición automática headless de C8.2. |
+| Diff y alcance | git diff --check sin incidencias; solo specs/M4-agenda-grafo-ii.md y agentes/estado.md modificados. Sin código de aplicación, migraciones, tests nuevos, exportación ni versión. |
+
+Los primeros intentos dentro del aislamiento no son evidencia de regresión: PHP detectó bootstrap.php como no legible y, usando un bootstrap temporal, produjo errores de acceso a recursos de OneDrive; Chrome de JS no arrancó y esa corrida se interrumpió.
+Se repitieron las suites originales fuera del aislamiento, sin editar fuentes, y dieron los resultados de la tabla.
+El intento de copia temporal de fuentes para aislar el problema no se usó como evidencia; la ejecución válida fue sobre el checkout actual.
+La disponibilidad de MariaDB se comprobó con mysql --no-defaults y SELECT VERSION(), sin seleccionar base ni consultar credenciales de la aplicación.
+Solo la suite de pruebas creó/recreó su base desechable zooki_test_base_v2 y sus fixtures; no se regeneraron cuentas o contraseñas de trabajo ni se ejecutó scripts/dev/datos_prueba.php.
+No se leyó ni escribió .env desde las acciones de esta entrega; no se usó zooki_v2_prueba.
+**Limitación:** no se verificó con MySQL 8 en esta máquina; MariaDB real sí se verificó. Las pruebas concurrentes específicas P03/P07/P10/P15 todavía deben implementarse en sus etapas.
+
+**Límite de la evidencia:** las suites existentes comprueban la base actual; P01–P23 siguen propuestos para la implementación.
+Ni tablas existentes ni casos T en verde acreditan que la agenda operativa, la concurrencia de intervalos, la revisión humana o la conciliación de M4 ya funcionen.
+
+**Siguiente:** revisión independiente de A por Codex y resolución de A.8; después preparar B.
+No hay veredicto de revisión en este anexo.
+No comenzar B ni modificar HU/RE/RN/diagramas hasta esa revisión y las aprobaciones que correspondan.
+
+**Comandos de commit para el usuario, PowerShell 5.1:**
+
+    git diff --check
+    git add -- specs/M4-agenda-grafo-ii.md agentes/estado.md
+    git commit -m "docs(agenda): inventario y contratos de A (HU-4.13, RE-4.9.3, RE-4.15.3)"
+
+Son comandos para el usuario; el agente no ejecutó add, commit, push, tag ni cambios de rama.
+
+### A — Revisión (2026-10-17)
+
+**Revisó Codex, arquitecto de esta conversación; el Anexo A fue escrito por otra sesión ejecutora de Codex. Veredicto: revisada con corrección requerida A.1.** El inventario y su trazabilidad son válidos; no se aprueba todavía el contrato completo para implementar B. La corrección es documental y corresponde al ejecutor; el revisor no reescribe su algoritmo.
+
+**Alcance y evidencia propia.** Se revisaron el diff respecto de HEAD y el anexo completo. Solo cambian este plan y agentes/estado.md: no hay código, tests, migraciones ni documentos normativos nuevos. Se comprobaron las 107 filas de RE, sin duplicados y con identificadores existentes en RequisitosEspecificos.md; las P01–P23 son propuestas de pruebas, no evidencia ejecutada de M4.
+
+Se contrastaron directamente `Cita::sugerencias/exigirHorarioLibre/ocupadas`, `LimitePlan::transaccion`, `Consulta::registrar/tomarCandadoNumeracion`, creación/reprogramación/cancelación/correos de CitaController, matriz de Security, esquema de citas y las pruebas existentes de agenda y portal. Se confirma el horario fijo de sugerencias, el margen omitido de ocupación, la serialización local por clínica y el límite del índice por comienzo; la prueba de carrera actual de CitaTest usa una sola conexión y no demuestra la garantía interclínica propuesta. También se confirma la falta de comprobación directa de propietario_clinica en Recordatorio::citasDeManana; se mantiene como defensa pendiente, sin afirmar una fuga alcanzable demostrada.
+
+**Comparación con diagramas.** Modelos §2/§4–§8 y §13.4 respaldan disponibilidad, propuestas de horario, cobertura sin veto y reasignación con aceptación. Las diferencias de A.1 son pertinentes: falta puerta humana previa al horario, el diagrama remoto rojo entra directamente en asignación/pausa, §5 no explicita el cálculo durante una atención abierta ni evita inequívocamente el doble descuento del margen, y §8 omite la solicitud del veterinario. §3 y HU-2.2 necesitan alinearse con la cita de llegada confirmada por el usuario. A hizo bien en documentarlas sin cambiar todavía los criterios ni los diagramas.
+
+**Verificación propia:**
+
+- PHP completo sin host MySQL, fuera del aislamiento de archivos de OneDrive: **854 pruebas, 7212 aserciones y 44 omitidas**, salida 0.
+- PHP completo con MariaDB local: **854 pruebas, 7813 aserciones y ninguna omitida**, salida 0 (5 min 17 s). Configuración explícita: host 127.0.0.1, puerto 3306, usuario local de pruebas y exclusivamente `zooki_test_base_v2`; versión comprobada 10.4.32-MariaDB. No se declara verificación con MySQL 8.
+- JavaScript completo, incluida la prueba automática de Chromium: **238/238, cero omitidas y cero fallos**, salida 0. El intento dentro del aislamiento quedó sin completar y se detuvo; solo se usa como evidencia la ejecución completa fuera de él.
+- `git diff --check` sin incidencias. Las suites verifican la base existente y la batería T de M2, no implementaciones futuras de M4. No se recorrieron pantallas, se leyeron credenciales de la aplicación ni se ejecutó el generador de usuarios.
+
+**Hallazgo que exige corrección antes de B:**
+
+| ID / prioridad | Archivo y líneas revisadas | RE/RN | Reproducción y efecto | Corrección exigida |
+|---|---|---|---|---|
+| H-A1 / P2 — Base temporal de cascada incompleta para pausa e inicio real | `specs/M4-agenda-grafo-ii.md:294–301`, ejemplo de pausa en línea 310 (numeración al revisar A) | RE-4.5.1–RE-4.5.3, RE-4.14.1–RE-4.14.2, RE-4.15.8; RN-412, RN-415, RN-427 | Con inicio estimado e=09:00, d=30 y m=10, la pausa 09:10–09:30 deja 20 minutos activos y fin 09:50. Aplicar literalmente `max(e+d+m, fin_real)` libera a las 09:50, pero la tabla exige 10:00. No se define qué base reemplaza e+d tras una pausa. Tampoco queda fijada la base si inicia realmente a las 09:20 y el vet decide prestar los 30 minutos completos: el fin nominal no puede seguir en 09:30. «Recalcular desde la causa» no permite implementar ni comprobar una única interpretación. | Definir por estado la base de inicio/fin nominal, tiempo activo restante y efecto de una o varias pausas; preservar hora pactada e inicio real. Unificar fórmula y ejemplos, sin sumar margen dos veces ni inventar una duración efectiva cuando el vet eligió otra opción de llegada tarde. Añadir ejemplos aritméticos de inicio tardío con servicio completo, pausa única, varias pausas, sobrepaso tras reanudar y repetición del cálculo. Indicar qué campos existentes/propuestos sostienen cada valor. |
+
+Este hallazgo afecta a un contrato propuesto, no demuestra una regresión en producción ni justifica cambiar el código actual durante A.1. La decisión de cómo absorber el margen tras una pausa debe quedar explícita: si la corrección revela una regla de producto nueva, presentarla al usuario como propuesta en lugar de elegirla por su cuenta.
+
+**Contrato técnico aceptable como dirección, con condiciones para B:** intervalos semiabiertos, separación de horas pactadas/estimadas/reales, candados sobre recursos estables, relectura vigente tras esperar, idempotencia transaccional, proyección mínima de ocupación global y separación cobertura/reasignación. Antes de escribir SQL, cerrar un único protocolo para la numeración HC y los nuevos candados: A.4 reconoce correctamente la inversión posible con GET_LOCK, pero no se implementarán simultáneamente sus dos alternativas. Las siete tablas nuevas propuestas en A.6 no quedan aprobadas automáticamente por validar el inventario: B debe justificar y revisar el esquema mínimo después de resolver las decisiones de producto.
+
+**Dependencias:** se acepta el diagnóstico de A.9. Los prompts deben adelantar coordinación básica a C2, lectura de ausencias/cierres a C3, resolución mínima de revisión y eventos de correo a C4a, y el cierre/continuidad de consulta al introducir pausas. C4a no puede declararse cierre integral de las cuatro ramas ni habilitarse con rutas inexistentes; no hay aprobación de un despliegue intermedio que degrade urgencias.
+
+**Siguiente: A.1 — corrección documental del contrato temporal**, escrita por el ejecutor y revisada de nuevo por este arquitecto. Solo plan y estado; sin código, SQL, tests nuevos ni cambios normativos. Conservar el Anexo A y esta revisión, agregar resultado de A.1 y marcarla entregada, pendiente de revisión. No hace falta repetir las suites completas por una corrección limitada a texto: usar esta línea base y comprobar diff, aritmética y trazabilidad. Después, resolver las propuestas de A.8 por grupos antes del prompt de B; ninguna se convierte aquí en «Decisión del usuario».
+
+**Prueba manual:** no corresponde una lista de pantallas en A/A.1 porque no cambia ninguna funcionalidad. Las listas de 3–5 pruebas por usuario se entregarán con las subetapas que sí modifiquen interfaz o comportamiento.
+
+## Anexo A.1 — Resultado
+
+**Fecha:** 2026-10-17.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto, en la conversación independiente.
+**Estado:** entregada, pendiente de revisión.
+**Alcance:** corrección documental de H-A1; el cierre del hallazgo corresponde al revisor.
+Se conserva íntegra «A — Revisión (2026-10-17)».
+No se implementan funcionalidades ni se empieza B.
+
+**Corrección entregada.**
+Se sustituyó la fórmula de A.3 que conservaba e+d después del inicio o la pausa por una definición explícita de N/F/L en cinco estados: sin iniciar, iniciada, pausada, reanudada y completada.
+Se distinguen s/d/m pactados, r/f reales, D como objetivo activo del servicio decidido, A como tiempo activo ya trabajado y R como restante nominal.
+Con una pausa abierta, el instante de reanudación u es una predicción condicional; nunca acredita reanudación ni libera de hecho al veterinario.
+Las estimaciones anteriores no se usan como un delta que se acumula al repetir el cálculo.
+
+**Resolución aritmética del ejemplo, bajo la propuesta recomendada M.**
+Inicio real 09:00; D=30; trabajo 09:00–09:10=10; pausa 09:10–09:30=20; restante al retomar=30−10=20.
+El fin nominal pasa de 09:00+30=09:30 a N=09:00+30+20=09:50.
+Si termina a las 09:50, F=f=09:50 y L=máximo(09:50+10, 09:50)=10:00.
+La hora de 09:50 es el fin clínico nominal/real de ese ejemplo, no el extremo de ocupación con margen bajo M.
+Antes se comparaba erróneamente con 09:00+30+10=09:40, una base que omitía la interrupción.
+Se mantiene r=09:00, la hora pactada y los dos extremos reales de la pausa; no se reinicia la consulta a las 09:30 ni se agregan dos márgenes.
+
+**Política de producto pendiente, limitada a H-A1.**
+RN-412 y RN-415 definen absorción por margen, y RN-427 exige reanudar después de la urgencia, pero no fijan expresamente si un inicio tardío/interrupción desplaza también la ubicación de ese margen.
+No se trata como una decisión ya confirmada.
+
+| Alternativa | Fórmula coherente y efecto | Valoración |
+|---|---|---|
+| M — Margen referido al nominal desplazado | Reconstruir N desde inicio real, D y pausas; L_M=máximo(N+m, F). Una sola pausa de 20 min desplaza el nominal 20 min, sin borrar tiempo activo ni crear un margen por pausa. | **Recomendada**, pendiente de aprobación: conserva el resultado 10:00 de la tabla original y la duración completa decidida; hace visible todo el desplazamiento del comienzo/interrupción. El margen solo absorbe el exceso activo respecto de ese nominal. |
+| C — Interrupción/inicio tardío consumen la ocupación pactada | Mantener el extremo pactado T=s+d+m; reconstruir el mismo fin clínico F con servicio activo y pausas, pero L_C=máximo(T, F). La interrupción o demora puede consumir el margen original; no se añade uno nuevo tras la reanudación. | Alternativa válida como política distinta: cambiaría el ejemplo original a 09:50. Requiere ajustar la tabla y el contrato si el usuario la elige; no combinarla con M dentro de una misma cita. |
+
+| Datos compartidos | Bajo M recomendada | Bajo C alternativa |
+|---|---|---|
+| s=r=09:00, d=D=30/m=10, pausa 09:10–09:30, f=09:50 | N=09:50; L=10:00. | T=09:40; L=09:50. |
+| s=09:00, r=09:20, d=D=30/m=10, sin pausa, f=09:50 | N=09:50; L=10:00. | T=09:40; L=09:50. |
+| s=r=09:00, d=D=30/m=10, pausas de 10 y 15 min, f=09:55 | N=09:55; L=10:05. | T=09:40; L=09:55. |
+
+Esta propuesta no cambia las decisiones pendientes de A.8 ni el plazo de tolerancia, el tipo pausable o la prioridad de reanudación ya definida.
+Hasta resolver la política temporal tras la revisión independiente, no usar estos ejemplos como una regla de producto aprobada para implementar B.
+Si se elige C, la modificación se hace explícitamente, conservando los mismos datos y sellos, sin convertirla silenciosamente en M durante una reanudación.
+
+**Campos que sostienen cada resultado, sin SQL nuevo.**
+
+| Magnitud | Fuente existente o propuesta |
+|---|---|
+| s/d/m y fin pactado | citas.fecha/hora, duracion_minutos, margen_minutos y hora_fin existentes. Permanecen inmutables salvo reprogramación expresa auditada. |
+| r/f y estado | citas.hora_inicio_real, hora_fin_real y estado existentes; completar exige no dejar pausa abierta. La llegada usa hora_llegada y no sustituye r. |
+| D | Propuesta de A.6: duracion_activa_objetivo_segundos con procedencia de la decisión en auditoría. Servicio completo usa d convertido a segundos; una decisión distinta necesita valor explícito. Una decisión incompleta o un legado desconocido no se rellena con una duración inventada. |
+| P_c/P(t), A/R | Propuesta pausas_cita con inicio y reanudación reales de cada pausa. Se derivan desde r y D; un restante guardado al pausar sería instantánea comprobable, no saldo que se vuelve a descontar. |
+| u en pausa abierta | Predicción de disponibilidad para reanudar, referida al caso rojo y su corte/versión; si no existe, solo cota condicional al reloj, sin inventar duración de urgencia. Nunca se escribe como reanudación real. |
+| N/F/L | N y L se reconstruyen con la política identificada y hechos del caso; F se presenta/persiste como fin_estimado clínico, sin margen. version_agenda/fecha_ultimo_calculo propuestos distinguen los cortes; no convierten una estimación anterior en causa temporal. |
+| Elección M/C | Identificar versión/política temporal aplicada cuando se apruebe para poder reconstruir resultados históricos; A.1 no introduce un default aprobado ni rellena retrospectivamente esa elección. |
+
+**Evidencia y trazabilidad.**
+RE-4.5.1 se protege conservando r/f y la distinción de horas; RE-4.5.2/4.14.1/4.14.2 y RN-412/415 con N/F/L y sus extremos; RE-4.5.3 con la reconstrucción de cola sin acumulación; RE-4.15.8 y RN-427 con intervalos activos/pausados y precedencia de reanudación.
+Se ajustaron solamente el contrato temporal de A.3, las dos filas afectadas de persistencia en A.6 y P09/P14/P17, además de cabecera, este anexo y estado.
+Los casos propuestos ahora incluyen inicio tardío con servicio completo, pausa única, varias pausas, sobrepaso antes/después de retomar, recálculo idéntico y reloj posterior a una cita completada.
+
+Se comprobaron en memoria **16 escenarios aritméticos**, sin crear archivos de tests ni ejecutar código de aplicación: todos coincidieron con N/L declarados y repitieron resultado con los mismos hechos/reloj.
+Incluyen margen exacto y excedido sin pausa; durante pausa abierta con u=09:30; pausa cerrada de 20; dos pausas que suman 25; sobrepasos de 9/10/11/15 min; margen ya consumido antes de otra pausa; inicio efectivo 09:20/10:10 y avance de reloj tras completar.
+La comprobación es aritmética de documentación, no cobertura automatizada nueva de M4.
+La comparación de alternativas usa los mismos hechos clínicos; cambia solo la política de margen declarada.
+Se verifican también por sustitución la cita sin iniciar del hueco absorbente y el final de franja exacto de A.3.
+
+**Contraste con Modelos §5–§6, sin modificarlos.**
+§5 deberá definir la base nominal por estado y distinguir fin clínico de extremo con margen; incluir inicio efectivo, pausa/reanudación, atención aún abierta y recálculo al reloj.
+Su cálculo del exceso no debe descontar m dos veces ni reconstruir N desde el último estimado.
+§6 deberá enlazar inicio/cierre de cada pausa con reanudación real antes de las siguientes y con el mismo cálculo temporal elegido; mientras la pausa siga abierta, una predicción no libera capacidad.
+El ajuste normativo posterior depende de la elección M/C; aquí no se cambian diagramas, HU, RE ni RN.
+
+**Verificación de alcance.**
+Las únicas escrituras de A.1 son specs/M4-agenda-grafo-ii.md y agentes/estado.md.
+agentes/metodo.md ya aparecía modificado al comenzar; se conserva byte a byte, al igual que A.8 y la revisión anterior.
+No se repiten suites por esta corrección documental: se conserva como línea base la verificación del revisor, PHP 854/7813 con MariaDB y JS 238/238.
+Sin acceso al archivo de entorno o a bases de datos, código, SQL, tests nuevos, versión, exportación ni operaciones Git de escritura.
+
+**Pendientes:** revisión independiente de A.1 y elección explícita de política temporal por el usuario; los demás pendientes de A.8 y protocolo HC siguen como estaban.
+No se declara A.1 aprobada ni H-A1 cerrado por el revisor.
+
+**Comandos de commit para el usuario, compatibles con CMD/PowerShell:**
+
+    git add specs/M4-agenda-grafo-ii.md agentes/estado.md
+    git commit -m "docs(agenda): corregir base temporal de cascada (RE-4.5.1, RE-4.14.2, RE-4.15.8)"
+
+### A.1 — Revisión (2026-10-17)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor de A.1. Veredicto: aprobada como corrección documental.** Se cierra H-A1 en cuanto a la contradicción y ausencia de base temporal: ahora las fórmulas fijan cinco estados y los ejemplos declaran expresamente la política usada. La aprobación técnica de esta corrección no elige M ni C por el usuario, ni autoriza B.
+
+**Verificación propia:** lectura completa del Anexo A.1, contrato A.3, filas afectadas de A.6 y P09/P14/P17; contraste con RN-412/415/427 y Modelos §5–§6. Se confirma la separación entre fin clínico y extremo con margen, la conservación del primer inicio real y la duración pactada, el tiempo activo calculado descontando pausas y el carácter condicional de una reanudación estimada. No hay una predicción que autorice por sí sola a liberar al veterinario ni una selección M/C encubierta como decisión del usuario.
+
+Se reprodujeron **17 escenarios aritméticos independientes, 17 coincidentes y repetibles** con los mismos hechos/reloj: fin antes/en/después del margen; atención abierta a 09:45/09:46; inicio real tardío abierto y completado; pausa abierta con reanudación condicional y pausa cerrada; dos pausas y avance de reloj; reloj posterior a completar; excesos tras reanudar; exceso consumido antes de otra pausa; llegada tardía con servicio completo. En particular, bajo M: inicio 09:00, trabajo 10 minutos, pausa de 20 y otros 20 activos dejan nominal/fin clínico 09:50 y extremo 10:00; dos pausas de 10+15 minutos dejan nominal 09:55 y extremo 10:05. El margen no se multiplica por el número de pausas ni se regenera con cada recálculo.
+
+La comprobación fue aritmética en memoria, sin crear código de aplicación o archivos de pruebas. No acredita cobertura automatizada del futuro motor; los casos siguen propuestos para C5/C7. Se mantiene la línea base propia de la revisión A: PHP 854/7813 con MariaDB y JS 238/238; no se repitieron suites por esta corrección exclusivamente documental, conforme al encargo. No se consultaron bases, credenciales ni pantallas.
+
+**Alcance:** solo plan y estado cambiaron por A.1; la modificación de metodo.md es la preferencia de comandos registrada previamente por el arquitecto. No hay cambios de código, esquema, conocimiento, documentos normativos ni versión. `git diff --check` sin incidencias. No se encontraron nuevos hallazgos que requieran otra corrección del ejecutor en A.1.
+
+**Decisión que sigue pendiente:** elegir si inicio tardío/pausa desplaza el nominal con su margen (M) o consume la ocupación pactada (C). Se recomienda **M**, coherente con la referencia temporal propuesta y con conservar un margen único respecto del servicio desplazado; es una recomendación de producto, no una decisión confirmada. Antes de B también deben resolverse los grupos de A.8 y fijarse el protocolo HC; ninguna de las nuevas tablas ni reglas pendientes se aprueba automáticamente por cerrar H-A1.
+
+**Siguiente:** usuario elige política temporal; registrar únicamente lo confirmado y continuar las decisiones de A.8 antes del prompt de B. El ejecutor no empieza otra etapa por haber terminado A.1. Sin pruebas manuales de navegador porque no cambió interfaz ni funcionalidad.
+
+
+## Anexo B1 — Resultado
+
+**Fecha:** 2026-10-17.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto en la conversación independiente.
+**Estado:** entregada, pendiente de revisión.
+**Alcance:** contratos documentales y diseño de destino; B2 no empezó.
+No se aprueba esta entrega por su autor ni se atribuyen al usuario las elecciones técnicas siguientes.
+Las decisiones confirmadas de §6 prevalecen sobre pendientes históricos de A/A.1 y sus revisiones, que se conservan.
+
+**Aplicación de decisiones.**
+Se alinean creadores de citas y facultades administrativas restantes, cita obligatoria antes de toda nueva atención, espera/alternativas sin sobrecupo no urgente automático, tope naranja por franja original/fecha y ausencia efectiva solo tras aprobación o registro admin.
+La revisión veterinaria precede toda hora reservable; derivación roja sigue inmediata.
+Se adopta M confirmada: nominal desde inicio real y pausas con un margen único, conservando los ejemplos de A.1.
+Rojo remoto no prueba presencia; rojos físicos se ordenan por llegada/ID salvo decisión vet motivada, sin nueva interrupción anidada automática.
+Conciliación admin/vet no concede facultades clínicas ni fusión al propietario; contacto opcional y limpieza cuando termine su necesidad.
+Marca por clínica, cabecera Zooki con procedencia en historial multi-clínica y reclasificaciones solo propias.
+HU-4.10/4.16/4.17 y RE-4.7.3 continúan en v2.1.
+
+### B1.1. Protocolo técnico único para todos los llamadores
+
+**Elección:** serialización transaccional por fila de clínica y recursos globales; retirar GET_LOCK de numeración HC al integrar este contrato.
+El GET_LOCK actual es de conexión, no de transacción: rollback/savepoint no lo libera y su adquisición exterior entra en conflicto con servicios que ya tienen filas bloqueadas.
+Se sustituye uniformemente, no se permite elegir por cada llamador.
+El comentario actual de Consulta sobre choque con las FK es pertinente si se pide el candado clínico después de insertar o adquirir otros candados; el contrato nuevo lo toma primero, antes de esas escrituras y de reservar HC.
+No se introduce contador HC ni otra tabla de candados: basta la fila estable clinicas y el índice único existente de número por clínica.
+
+1. Validar sintaxis y permisos/contexto sin revelar datos; identificar conjunto inicial de recursos. Una lectura previa de autorización no sustituye la revalidación transaccional.
+2. Iniciar transacción exterior corta. Bloquear por SELECT FOR UPDATE, en orden: clínicas implicadas por ID ascendente; usuarios implicados por ID; mascotas por ID; vínculos usuario_clinica/propietario_clinica/mascota_clinica por clave; configuración/horarios/ausencias/cierres; bloques por ID; citas por ID; solicitudes, reasignaciones, ingresos y pausas por tabla/ID; operaciones y eventos. El orden de tablas del último grupo es el aquí escrito.
+3. La clínica se bloquea incluso sin citas/HC/horario; usuarios y mascotas son mutex globales que serializan sus compromisos entre Norte/Sur. Si falta otro recurso/candidato, rollback y recomenzar con el conjunto completo ordenado, sin adquirir un ID anterior tarde.
+4. Usar lecturas actuales de bloqueo después de esperar: no consumir una instantánea REPEATABLE READ creada antes del candado. Las consultas previas se descartan para decidir capacidad/cuota/titularidad. Los savepoints no renuevan lecturas ni liberan candados; una operación exterior debe entrar con este protocolo desde el comienzo.
+5. Revalidar clínica/roles/vínculos/propietario y actividad, tipo, revisión/huella/versión, franjas/cierres/ausencias, ocupación vet y mascota, bloque/tope/cuota. El triage va antes de cuota; rojo exceptúa también la creación/vínculo de mascota necesario a la atención, sin fingir prioridad enviada por cliente.
+6. Reclamar clave idempotente del comando dentro de la misma transacción. Misma clínica+actor+acción+clave y huella devuelve referencias del resultado, revalidando acceso antes de responder; carga distinta con misma clave da conflicto. CSRF sigue independiente; no se entrega un resultado de otra sesión/clínica.
+7. Guardar cita/vínculos/HC/consulta/segmentos, marcas, decisiones, auditoría y eventos en una única unidad. Fallo: rollback de todo, incluso idempotencia; adjuntos físicos conservan la compensación vigente que elimina lo movido si falla la BD.
+8. Commit antes de SMTP o esperar intervención humana. Un deadlock/timeout aborta la operación completa; el coordinador puede reintentar técnicamente de forma acotada el comando idempotente o responder conflicto. Nunca reintentar solamente la última sentencia sobre datos viejos.
+
+**Numeración HC.**
+Con la fila de clínica ya bloqueada, releer mascota_clinica actual de la ficha.
+Si ya tiene HC, conservarlo.
+Si es primera consulta y sigue sin HC, leer el último HC con formato vigente por clínica mediante lectura actual ordenada de bloqueo, incluso cuando no hay ninguno; el candado de la clínica protege ese vacío.
+Asignar el siguiente correlativo en el mismo commit de consulta y mantener UNIQUE(id_clinica, numero_historia_clinica) como defensa.
+No reservar un HC al abrir formulario, registrar espera o conciliar una ficha que nunca tuvo consulta.
+En conciliación no se recalculan números existentes: conservar alias/procedencia como indica B1.3.
+El cambio debe abarcar Consulta::registrar/asignarNumeroHistoria/tomarCandadoNumeracion/soltarCandadoNumeracion, creación de cita de llegada con consulta, y toda modificación de mascota_clinica que afecte numeración.
+Los llamadores no pueden entrar con una transacción que ya tomó otros recursos y después pedir clínica/HC.
+SQLite comprueba atomicidad funcional; la exclusión efectiva se probará con dos conexiones MySQL/MariaDB.
+
+**Disponibilidad y mutaciones.**
+Una capa de modelos calcula la misma intersección/resta e intervalos [inicio,fin) para sugerir/reservar/reprogramar/arrastrar/cubrir/aceptar.
+Duración+margen completos; inicio y fin exactos se comparan sin truncar segundos.
+Vet y mascota globales se consultan internamente con proyección de intervalos/estado, jamás pacientes, clínica ajena, motivo o contactos.
+El choque recurrente del vet entre clínicas se comprueba igual con respuesta genérica.
+Ausencias/cierres se modifican solo en la clínica a la que pertenecen; registrar una ausencia no autoriza modificar jornadas de otras clínicas.
+Una solicitud pendiente no bloquea; efectiva bloquea y marca citas afectadas en el mismo commit, sin veto para cobertura.
+Reprogramar conserva la reserva original hasta éxito; valida mes destino contra cuota sin contar dos veces esa cita, estado abierto y snapshot de duración/margen, excluyendo solo su propio ID.
+Cancelación/no_asistio liberan ocupación y cupo naranja; completada conserva consumo del bloque, aunque ya no sea atención futura.
+El bloque de fecha ya usado no se reemplaza por otro para reiniciar su tope al editar horario ni por los fragmentos que deja una ausencia.
+Las marcas de C2 quedan visibles y recuperables para C5, no como un reajuste ya resuelto.
+
+**Emparejamiento determinista.**
+Respetar selección de veterinario del actor cuando siga siendo compatible.
+En búsqueda automática, ordenar por primer inicio compatible y luego id_usuario ascendente; ignorar candidatos ya intentados en ese ciclo.
+El último criterio solo desambigua equivalentes de modo reproducible, no evalúa calidad, afinidad, reputación, carga clínica ni especialidades.
+Una propuesta en vivo no aparta hueco; acepta solo destino antes del límite y tras revalidación bajo los mismos mutex.
+Exactamente en fecha_limite ya está vencida; aceptar/vencer/reprogramar concurrentemente deja una sola transición.
+Cobertura de ausencia se asigna sin esa aceptación; ambos casos se auditan y notifican.
+
+**Eventos, fallos y ventana de aviso.**
+Productor durable en el commit clínico; despachador reclama evento+destinatario de forma condicional, libera transacción y luego envía.
+Revalida vínculo/contacto/actividad al despachar; cuenta pendiente o vínculo inactivo no recibe automático.
+Se reutilizan notificaciones para registro de envío y notificaciones_internas para avisos; eventos_agenda no pretende entregar bitácora general M8 ni confirmación desde recordatorio v2.1.
+Una misma clave semántica/versión/destino/canal no genera otro evento; reclamarlo no equivale a entregarlo.
+Fallo de SMTP se registra y no borra reserva; si el proceso cae tras posible envío y antes de confirmar resultado, estado incierto y resolución operativa, sin reenvío automático que prometa exactamente una entrega SMTP.
+No se introduce un nuevo plazo clínico ni número de intentos de producto.
+RN-429 se aplica a eventos de estimación: comparar contra última hora comunicada, umbral estricto mayor y al menos 30 minutos desde el último aviso, serializados por cita; máximo dos eventos de esa clase en una hora.
+No se reserva otra ventana por recálculo ni por un fallo; reasignación/reprogramación siempre producen su evento propio.
+La base de comunicación cambia cuando el evento se registra como entregado; un evento pendiente se coalesce por cita/versión sin crear otro envío concurrente.
+La idempotencia lógica no es una garantía de entrega física exactamente una vez del proveedor SMTP.
+
+**Integración mínima obligatoria.**
+Antes de habilitar horarios C2, el coordinador de mutex y marcas debe existir en todos sus escritores; C3 completa disponibilidad, no cambia el orden.
+Al integrar C4a se incluye revisión veterinaria y productor/despachador de correo básico; no anunciar cierre de cuatro ramas antes de C4b/C7a.
+Una nueva pausa exige tipo pausable, rojo físicamente presente y ninguna otra pausa abierta del mismo veterinario; ante otro rojo, la decisión clínica no crea automáticamente un segundo nivel de interrupción.
+C7a incluye continuidad/cierre de Consulta, VigilanteAtenciones, vínculo que no puede desactivarse con cita pausada y el protocolo HC común.
+C7b incorpora conciliación en esa misma unidad; C8b reutiliza la creación de llegada sin permitir consulta nueva id_cita NULL.
+LimitePlan, HorarioClinica::guardar/restaurar, Cita, Consulta, Mascota::vincular, VinculoClinica::desactivar y sus controladores/tareas deben delegar o respetar el mismo protocolo; no mezclar las transacciones propias de horario con una exterior incompatible.
+
+### B1.2. Permisos de destino e identidad existente
+
+Son contratos de acciones, no rutas ejecutables añadidas.
+Los nombres finales se registrarán juntos en public/index.php y Security cuando se implemente cada etapa.
+
+| Acción | Contexto autorizado y alcance |
+|---|---|
+| Crear reserva o cita de llegada/iniciar/cerrar atención | Solo veterinario dentro de su alcance; propietario crea su reserva en clínica vinculada, sin facultad de inicio clínico. Admin/plataforma no crean citas ni registran/modifican consultas. |
+| Supervisar, cancelar, confirmar y reprogramar/reasignar administrativamente | Se conservan los permisos administrativos actuales de la clínica; vet gestiona las suyas; propietario solo las propias por rutas de portal. No se interpreta prohibición de crear como retirada de estas funciones. |
+| Registrar recepción/llegada | Personal autorizado de la clínica, admin/vet: solo acredita recepción de un caso legítimo; no asigna color clínico, inicia consulta ni crea cita desde contexto admin. |
+| Calcular triage/buscar síntomas | Vet y propietario, como M2; admin/plataforma siguen denegados. Resolución/reclasificación clínica solo vet autorizado y con motivo al ajustar. |
+| Proponer horario/solicitar ausencia | Vet sobre sí y clínica activa. Admin guarda/aprueba/rechaza configuración o ausencia; no obtiene permisos clínicos por ello. |
+| Reordenar rojos/naranjas, decidir otro rojo frente a pausada | Solo vet autorizado con motivo y auditoría; sin interrupción anidada automática ni efecto presencial del rojo remoto. |
+| Aceptar reasignación en vivo | Solo vet destino, propuesta de su clínica y vigente; la cobertura de ausencia no tiene veto. |
+| Consultar/completar/consolidar provisional | Admin o vet autorizado de la clínica del ingreso, con titularidad acreditada; propietario aporta información/verificación de lo suyo pero no fusiona historias. Otras clínicas/plataforma reciben 403 auditado. |
+| Eliminar contacto al finalizar necesidad/justificar conservación | Admin o vet autorizado de la clínica del ingreso; comprobación se dispara también al cierre de atención/conciliación, con actor/sistema auditado sin valores de contacto. |
+
+Reutilizar id_usuario de sesión y mascotas.id_propietario, propietario_clinica y mascota_clinica legítimos vigentes.
+Portal autenticado con mascota propia ya satisface identidad sin nueva verificación por el color rojo; se revalida titularidad actual al comando.
+En persona, una cuenta/ficha y relación previamente verificadas se reutilizan; si se requiere vinculación/activación, se usa el flujo vigente de confirmación del titular de M5, sin nuevo documento obligatorio, CAPTCHA clínico, token, plazo o prueba inventada.
+No confundir búsqueda exacta por documento/correo con prueba de titularidad: el ID o el teléfono del acompañante tampoco la acreditan.
+El operador autorizado deja referencia de la cuenta/vínculo o confirmación existente usada; sin evidencia suficiente conserva la provisional y no consolida, sin retrasar atención roja.
+Una cuenta nueva solo se crea por el procedimiento de consentimiento/activación vigente, nunca automáticamente por el ingreso.
+
+### B1.3. Diseño mínimo de datos, relaciones y transición
+
+**Destino propuesto:** 58 tablas de negocio, 52 ya presentes más seis nuevas, sin tabla de grafo ni de candados.
+Las siete de A no se aprueban en bloque: evaluaciones_agenda y urgencias_agenda se sustituyen por solicitudes_agenda, con revisión/derivación/espera en el mismo caso y sin confundir presencia.
+No se crea tabla de solicitudes de ausencia: se amplía ausencias_veterinario.
+No se crea tabla de restante activo ni de estimaciones por tick: se derivan desde hechos/snapshots.
+La bitácora de envío y los destinatarios internos reutilizan tablas vigentes; solo falta el trabajo durable de eventos.
+Idempotencia y envío tienen distinta vida/transacción: no se fusionan operaciones_agenda con eventos_agenda.
+Los campos, tipos e índices enumerados aquí son exactamente los reflejados en MER/drawDB, no cambios instalados en alpha.4.
+
+
+#### cierres_clinica — tabla nueva
+
+**Necesidad y RE:** Cierre puntual no representable por recurrencia ni ausencia personal. RE-4.8.2/3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_cierre | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Identifica el cierre sin depender de su fecha. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| inicio | DATETIME NOT NULL | Extremo real del intervalo semiabierto. |
+| fin | DATETIME NOT NULL | Extremo exclusivo del cierre puntual; es obligatorio y posterior al inicio. |
+| motivo | VARCHAR(255) NOT NULL | Justifica cambio/interrupción; no sustituye evidencia de identidad. |
+| activo | TINYINT(1) NOT NULL DEFAULT 1 | Baja lógica sin perder referencia. |
+| id_autor | INT NOT NULL | Atribución al usuario autorizado. |
+| fecha_registro | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP | Orden y procedencia del hecho. |
+
+**Índices y necesidad:**
+
+- `KEY idx_cierre_rango (id_clinica, activo, inicio, fin)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_autor → usuarios(id_usuario).
+**Estados, restricciones y transición:** fin>inicio; [inicio,fin); baja lógica, sin borrar cierres usados. Transición: vacía, no inventar festivos.
+
+#### bloques_agenda — tabla nueva
+
+**Necesidad y RE:** Identidad estable de franja original/fecha que no se multiplica al restar ausencias. RE-4.13.7.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_bloque | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Identidad estable del bloque para consumo naranja. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_veterinario | INT NOT NULL | Recurso global y miembro de la clínica. |
+| fecha | DATE NOT NULL | Sello persistido del hecho. |
+| franja_origen | CHAR(64) NOT NULL | Identidad opaca de la franja original. |
+| inicio_original | DATETIME NOT NULL | Inicio original anterior a recortes. |
+| fin_original | DATETIME NOT NULL | Fin original anterior a recortes. |
+| estado | ENUM('vigente','revisar','retirado') NOT NULL DEFAULT 'vigente' | Máquina de estados indicada en el tipo, sin inferir cumplimiento. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_bloque_origen (id_clinica, id_veterinario, fecha, franja_origen)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `UNIQUE KEY uq_bloque_clinica (id_bloque, id_clinica)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_bloque_vet_fecha (id_veterinario, fecha)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_veterinario → usuarios(id_usuario); id_veterinario,id_clinica → usuario_clinica(id_usuario,id_clinica).
+**Estados, restricciones y transición:** Identificador opaco servidor de franja original; no cambia por recortes de ausencia ni se borra/recrea para regalar cupo. Cambios recurrentes preservan bloque ya usado de esa fecha, marcan revisar y no reinician contador. Contar citas naranja salvo cancelada/no_asistio; no persistir contador duplicado ni tope histórico distinto al parámetro vigente. Transición: vacía; sobrecupos legados sin origen demostrable se marcan pendientes.
+
+#### solicitudes_agenda — tabla nueva
+
+**Necesidad y RE:** Una sola entidad para captura/revisión, derivación remota y espera física sin cita ni veterinario; evita tablas separadas de evaluación y urgencia. RE-2.2.5, RE-2.11.5, RE-4.15.1/2/3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_solicitud | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Caso durable sin asignar un veterinario ficticio. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_mascota | INT NOT NULL | Identidad global conocida o provisional autorizada. |
+| id_actor | INT NOT NULL | Procedencia de captura, no titularidad implícita. |
+| origen | ENUM('portal','llegada') NOT NULL | Distingue reserva/llegada/legado sin reescribir historia. |
+| fecha_registro | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP | Orden y procedencia del hecho. |
+| fecha_llegada | DATETIME DEFAULT NULL | Sello de presencia física; remoto conserva NULL. |
+| id_receptor | INT DEFAULT NULL | Responsable de acreditar presencia. |
+| estado | ENUM('abierta','derivada','espera_presencial','asignada','en_atencion','finalizada','pendiente_reprogramacion','retirada') NOT NULL DEFAULT 'abierta' | Máquina de estados indicada en el tipo, sin inferir cumplimiento. |
+| estado_revision | ENUM('no_requerida','pendiente','resuelta') NOT NULL | Separa puerta clínica de la situación operativa. |
+| nivel_calculado | ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL | Salida original del motor; NULL si no existió cálculo. |
+| nivel_aprobado | ENUM('rojo','naranja','amarillo','verde') DEFAULT NULL | Resultado clínico utilizable tras resolver revisión. |
+| contexto_triage | JSON NOT NULL | Marcas y tiempos necesarios para reproducir evaluación. |
+| version_conocimiento | CHAR(64) DEFAULT NULL | Versión real del motor usada, no inventada para declaración clínica. |
+| huella_entrada | CHAR(64) NOT NULL | Identifica contenido confirmado y evita reutilización divergente. |
+| huella_revision | CHAR(64) DEFAULT NULL | Liga la aprobación a la entrada vigente. |
+| id_revisor | INT DEFAULT NULL | Usuario que resolvió revisión/aprobación. |
+| fecha_revision | DATETIME DEFAULT NULL | Sello de resolución. |
+| motivo_revision | VARCHAR(255) DEFAULT NULL | Justifica revisión/ajuste clínico. |
+| contagio | TINYINT(1) NOT NULL DEFAULT 0 | Conserva advertencia sin cambiar automáticamente prioridad. |
+| orden_espera | BIGINT DEFAULT NULL | Orden explícito motivado, no criterio de prioridad nuevo. |
+| id_cita | INT DEFAULT NULL | Vínculo a cita una vez asignada, con la misma clínica. |
+| id_ingreso | INT DEFAULT NULL | Proveniencia de identidad provisional en la misma clínica. |
+| version_solicitud | INT NOT NULL DEFAULT 0 | Invalida decisiones sobre una versión anterior. |
+| fuente_nivel | ENUM('grafo','clinico_presencial') DEFAULT NULL | Distingue cálculo de declaración clínica presencial. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_solicitud_clinica (id_solicitud, id_clinica)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `UNIQUE KEY uq_solicitud_cita (id_cita)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_solicitud_espera (id_clinica, estado, fecha_llegada, id_solicitud)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_solicitud_revision (id_clinica, estado_revision, fecha_registro)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_solicitud_mascota (id_mascota, estado)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_mascota → mascotas(id_mascota); id_actor → usuarios(id_usuario); id_receptor → usuarios(id_usuario); id_revisor → usuarios(id_usuario); id_cita,id_clinica → citas(id_cita,id_clinica); id_ingreso,id_clinica → ingresos_emergencia(id_ingreso,id_clinica).
+**Estados, restricciones y transición:** Remoto no lleva llegada/receptor ni activa atención; presencia se acredita por personal autorizado. Revisión resuelta requiere revisor/fecha/huella vigente; ajuste requiere motivo. Sin asignación id_cita=NULL y no hay vet ficticio; al asignar se crea cita en la misma transacción. Ficha provisional solo para rojo presencial sin identidad. JSON guarda episodios/tiempos y contexto permitido, nunca medicación protegida ni contacto del acompañante. orden_espera es orden explícito motivado para excepciones clínicas rojas, no puntaje; la espera no urgente se deriva de nivel aprobado (amarillo antes de verde), fecha_llegada e id_solicitud ascendentes, sin sobrecupo. Transición: vacía, sin inventar evaluaciones/presencia. Rojo presencial clínicamente declarado conserva fuente clinico_presencial/nivel_aprobado rojo/revisor y motivo, sin fingir cálculo ni versión de grafo; un registro aún sin triage no es reservable. Flujo ordinario exige cálculo del motor, huella y versión válidos.
+
+#### pausas_cita — tabla nueva
+
+**Necesidad y RE:** Reconstruir múltiples interrupciones y tiempo activo de política M. RE-4.15.8, RE-4.5.1/2/3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_pausa | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Identifica cada segmento de una o varias pausas. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_cita | INT NOT NULL | Vínculo a cita una vez asignada, con la misma clínica. |
+| id_solicitud_roja | INT NOT NULL | Causa roja presencial comprobable. |
+| inicio | DATETIME NOT NULL | Extremo real del intervalo semiabierto. |
+| fin | DATETIME DEFAULT NULL | Cierre del intervalo; NULL solo significa pausa abierta. |
+| id_autor | INT NOT NULL | Atribución al usuario autorizado. |
+| motivo | VARCHAR(255) NOT NULL | Justifica cambio/interrupción; no sustituye evidencia de identidad. |
+| cita_abierta | INT DEFAULT NULL | Clave auxiliar de unicidad de pausa abierta. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_pausa_abierta (cita_abierta)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_pausa_cita (id_clinica, id_cita, inicio)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica); id_solicitud_roja,id_clinica → solicitudes_agenda(id_solicitud,id_clinica); id_autor → usuarios(id_usuario).
+**Estados, restricciones y transición:** cita_abierta es calculada en B2: id_cita solo si fin IS NULL; drawDB la representa convencional por compatibilidad. fin>inicio, sin solapes, una pausa abierta, tipo pausable y rojo presente en esa clínica; cerrar antes de completar. R/N/L se derivan, sin saldo mutable ni margen por pausa. Transición: vacía; una pausada legada sin segmentos queda para revisión, sin fabricar horas.
+
+#### operaciones_agenda — tabla nueva
+
+**Necesidad y RE:** Idempotencia atómica de comandos; no puede sustituirse por avisos con otra vida útil. RE-4.9.3, RE-4.15.3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_operacion | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Identifica resultado idempotente. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_actor | INT DEFAULT NULL | Procedencia de captura, no titularidad implícita. |
+| actor_clave | VARCHAR(80) NOT NULL | Desambiguación servidor de usuario/tarea. |
+| accion | VARCHAR(80) NOT NULL | Ámbito del comando idempotente. |
+| clave_operacion | CHAR(64) NOT NULL | Clave opaca de reintento independiente de CSRF. |
+| huella_entrada | CHAR(64) NOT NULL | Identifica contenido confirmado y evita reutilización divergente. |
+| resultado | JSON NOT NULL | Referencias y código de resultado; no copia datos personales. |
+| fecha | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP | Sello persistido del hecho. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_operacion_clave (id_clinica, actor_clave, accion, clave_operacion)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_actor → usuarios(id_usuario).
+**Estados, restricciones y transición:** actor_clave se deriva en servidor (usuario o tarea), nunca del cliente; resultado solo referencias internas/código, no datos personales. Cita/solicitud/ingreso del resultado se validan en esa clínica; relación lógica por resultado, sin FK polimórfica falsa. Misma clave/huella devuelve mismo resultado; otra huella conflicto. Comando fallido revierte su fila. Transición: vacía, claves no derivadas de CSRF.
+
+#### eventos_agenda — tabla nueva
+
+**Necesidad y RE:** Evento durable tras commit, separación de SMTP e idempotencia de avisos, no nueva bitácora general M8. RE-4.4.1/3/4, RE-4.14.7, RE-4.12.5, RE-2.11.6.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_evento | INT NOT NULL PRIMARY KEY AUTO_INCREMENT | Unidad durable de despacho. |
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| id_cita | INT DEFAULT NULL | Vínculo a cita una vez asignada, con la misma clínica. |
+| id_solicitud | INT DEFAULT NULL | Caso durable sin asignar un veterinario ficticio. |
+| tipo | VARCHAR(80) NOT NULL | Clase semántica del aviso. |
+| clave_evento | CHAR(64) NOT NULL | Misma causa/version no duplica evento. |
+| destino_clave | VARCHAR(80) NOT NULL | Identidad estable servidor del destinatario. |
+| id_destinatario | INT DEFAULT NULL | Usuario legítimo concreto. |
+| id_rol_destino | INT DEFAULT NULL | Destino interno por rol de la clínica. |
+| canal | ENUM('interno','correo') NOT NULL | Distingue correo de entrega interna. |
+| version_recurso | INT NOT NULL | Evita avisar como vigente una versión superada. |
+| hora_a_comunicar | DATETIME DEFAULT NULL | Estimación propuesta, sin contacto ni HTML. |
+| estado | ENUM('pendiente','reclamado','enviado','error','incierto','omitido') NOT NULL DEFAULT 'pendiente' | Máquina de estados indicada en el tipo, sin inferir cumplimiento. |
+| reclamacion | CHAR(64) DEFAULT NULL | Token del único despachador reclamante. |
+| fecha_reclamacion | DATETIME DEFAULT NULL | Diagnóstico de interrupción del envío. |
+| fecha_resultado | DATETIME DEFAULT NULL | Sello del resultado de despacho. |
+| intentos | INT NOT NULL DEFAULT 0 | Trazabilidad técnica sin inventar política de reintentos. |
+| error_tecnico | VARCHAR(255) DEFAULT NULL | Diagnóstico saneado sin credenciales ni contacto. |
+| fecha | DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP | Sello persistido del hecho. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_evento_destino (id_clinica, clave_evento, destino_clave, canal)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_evento_pendiente (estado, fecha, id_evento)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_evento_cita (id_clinica, id_cita, tipo)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica); id_solicitud,id_clinica → solicitudes_agenda(id_solicitud,id_clinica); id_destinatario → usuarios(id_usuario); id_rol_destino → roles(id_rol).
+**Estados, restricciones y transición:** Una referencia al menos; destinatario usuario o rol legítimo, destino_clave generada en servidor. No guardar HTML/contacto provisional; reconstruir marca y contacto permitido al despachar. Clave semántica y versión evitan evento doble. Reclamar fuera de SMTP; incierto no reenvía automáticamente hasta resolución operativa. notificaciones registra resultado de correo, notificaciones_internas sigue entregando internos. Transición: vacía, no fabricar envíos previos.
+
+#### citas — ampliación de tabla existente
+
+**Necesidad y RE:** Completar el flujo conservando identidad y datos existentes. RE-2.2.1/4, RE-4.5.1–3, RE-4.13.7, RE-4.14.7.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| origen | ENUM('reserva','llegada_sin_reserva','urgencia','legado') NOT NULL DEFAULT 'legado' | Distingue reserva/llegada/legado sin reescribir historia. |
+| id_bloque | INT DEFAULT NULL | Identidad estable del bloque para consumo naranja. |
+| inicio_estimado | DATETIME DEFAULT NULL | Inicio operativo separado del pactado y del real. |
+| fin_estimado | DATETIME DEFAULT NULL | Fin clínico estimado sin margen. |
+| duracion_activa_objetivo_segundos | INT DEFAULT NULL | Objetivo D documentado, no tiempo descontado dos veces. |
+| politica_temporal | VARCHAR(16) DEFAULT NULL | Identifica M para reconstrucción histórica. |
+| estado_reajuste | ENUM('ninguno','pendiente_calculo','pendiente_revision','pendiente_reasignacion','pendiente_reprogramacion') NOT NULL DEFAULT 'ninguno' | Trabajo pendiente visible sin alterar estado clínico. |
+| motivo_reajuste | VARCHAR(255) DEFAULT NULL | Causa del reajuste/diagnóstico legado. |
+| version_agenda | INT NOT NULL DEFAULT 0 | Control de vigencia de propuestas y eventos. |
+| fecha_ultimo_calculo | DATETIME DEFAULT NULL | Corte del cálculo reproducible. |
+| ultima_hora_comunicada | DATETIME DEFAULT NULL | Base del umbral, solo tras entrega. |
+| ultimo_aviso_estimacion | DATETIME DEFAULT NULL | Control de ventana RN-429. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_cita_clinica (id_cita, id_clinica)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+- `KEY idx_cita_bloque (id_bloque, es_sobrecupo, estado, fecha_registro, id_cita)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_cita_reajuste (id_clinica, estado_reajuste, fecha)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_cita_vet_estimada (id_veterinario, inicio_estimado)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_cita_mascota_estimada (id_mascota, inicio_estimado)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_bloque,id_clinica → bloques_agenda(id_bloque,id_clinica).
+**Estados, restricciones y transición:** Conservar fecha/hora/hora_fin y sellos. D>0 si conocido; F clínico no incluye margen, N/L derivados con M identificada. Sin nuevas prioridades ni estados clínicos. Bloque obligatorio para naranja nuevo y de ese vet/fecha; no mezclar demanda extra con simultaneidad. Valores nuevos por defecto no acreditan historia. Legado sin dato verificable conserva NULL/legado y futura conflictiva queda pendiente; no copiar valores actuales de tipo como antiguos.
+
+#### ausencias_veterinario — ampliación de tabla existente
+
+**Necesidad y RE:** Completar el flujo conservando identidad y datos existentes. RE-4.12.1/2/3.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| estado | ENUM('solicitada','aprobada','rechazada','anulada') NOT NULL DEFAULT 'aprobada' | Máquina de estados indicada en el tipo, sin inferir cumplimiento. |
+| id_solicitante | INT DEFAULT NULL | Procedencia de solicitud; legado desconocido conserva NULL. |
+| id_revisor | INT DEFAULT NULL | Usuario que resolvió revisión/aprobación. |
+| fecha_revision | DATETIME DEFAULT NULL | Sello de resolución. |
+| motivo_resolucion | VARCHAR(255) DEFAULT NULL | Motivo de aprobación/rechazo/anulación. |
+
+**Índices y necesidad:**
+
+- `KEY idx_ausencia_revision (id_clinica, estado, fecha_hora_inicio)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_ausencia_vet (id_veterinario, estado, fecha_hora_inicio, fecha_hora_fin)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+
+**Relaciones:** id_solicitante → usuarios(id_usuario); id_revisor → usuarios(id_usuario).
+**Estados, restricciones y transición:** Solo aprobada bloquea. Nuevas solicitudes envían solicitada explícita; admin registra aprobada con autor/revisor. Legacy ya era bloqueo efectivo: aprobada sin inventar autores. Rango exacto parcial/completo, sin eliminar registros.
+
+#### reasignaciones — ampliación de tabla existente
+
+**Necesidad y RE:** Completar el flujo conservando identidad y datos existentes. RE-4.14.4/6.
+**Clínica:** se añade id_clinica demostrable desde cita; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_clinica | INT NOT NULL | Pertenencia y mutex de clínica; no se acepta del cliente sin contexto. |
+| inicio_propuesto | DATETIME DEFAULT NULL | Intervalo completo que debe revalidarse. |
+| fin_propuesto | DATETIME DEFAULT NULL | Incluye ocupación exigida, no reserva anticipada. |
+| version_cita | INT DEFAULT NULL | Versión que puede aceptar el destino. |
+| ciclo | INT NOT NULL DEFAULT 0 | Desambigua búsqueda nueva e intentos previos. |
+| motivo | VARCHAR(255) DEFAULT NULL | Justifica cambio/interrupción; no sustituye evidencia de identidad. |
+| cita_pendiente | INT DEFAULT NULL | Clave auxiliar única para propuesta pendiente. |
+
+**Índices y necesidad:**
+
+- `KEY idx_reasig_clinica_limite (id_clinica, estado, fecha_limite)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `KEY idx_reasig_intentos (id_cita, ciclo, id_veterinario_destino)`: lectura acotada del predicado del flujo por los campos ordenados; no sustituye autorización.
+- `UNIQUE KEY uq_reasig_pendiente (cita_pendiente)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+
+**Relaciones:** id_clinica → clinicas(id_clinica); id_cita,id_clinica → citas(id_cita,id_clinica).
+**Estados, restricciones y transición:** cita_pendiente calculada en B2=id_cita si estado pendiente, NULL en resto; drawDB convencional comentada. id_clinica demostrable desde cita; nuevas pendientes requieren intervalo y versión, no apartan capacidad. Destino miembro activo; aceptar antes del límite y releer todo. Legacy sin intervalo/versión no puede aceptarse ciegamente; se marca cita para revisión. Duplicados pendientes preexistentes hacen detener actualización con diagnóstico, no borrado automático.
+
+#### ingresos_emergencia — ampliación de tabla existente
+
+**Necesidad y RE:** Completar el flujo conservando identidad y datos existentes. RE-4.15.3/9/10.
+**Clínica:** id_clinica propio, existente o añadido; todas las acciones revalidan el contexto; referencias globales no autorizan lectura ajena.
+
+| Campo propuesto | Tipo de destino | Necesidad dentro de los RE indicados |
+|---|---|---|
+| id_conciliador | INT DEFAULT NULL | Admin/vet autorizado que acreditó titularidad. |
+| fecha_conciliacion | DATETIME DEFAULT NULL | Sello de consolidación. |
+| evidencia_conciliacion | JSON DEFAULT NULL | Referencias legítimas existentes y mapa de IDs/HC. |
+| necesidad_contacto_resuelta_en | DATETIME DEFAULT NULL | Fin de necesidad comprobado, sin plazo nuevo. |
+| motivo_conservacion_contacto | VARCHAR(255) DEFAULT NULL | Excepción necesaria y motivada. |
+| contacto_anonimizado_en | DATETIME DEFAULT NULL | Evidencia de limpieza sin conservar sus valores. |
+
+**Índices y necesidad:**
+
+- `UNIQUE KEY uq_ingreso_clinica (id_ingreso, id_clinica)`: defensa de unicidad/relación de clínica descrita; no sustituye el mutex ni el intervalo completo.
+
+**Relaciones:** id_conciliador → usuarios(id_usuario).
+**Estados, restricciones y transición:** Solo admin/vet autorizado verificando titularidad; evidencia referencias a sesión/vínculos legítimos y mapa de IDs/HC, sin nuevo reto, documento obligatorio ni datos de contacto. Campos contacto existentes opcionales; documento_acompanante queda legado, no captura por defecto. Al cerrar atención y resolver identidad verificar necesidad: contacto a NULL salvo conservación necesaria motivada; registrar fecha/actor por auditoría sin guardar valores, limpiar copias operativas y no borrar ingreso/actos. Legacy sin evidencia no se declara conciliado ni limpiado retrospectivamente.
+
+### B1.4. Conciliación y conservación sin pérdida clínica
+
+La verificación es la vigente de B1.2, no una obligación nueva de documento o de plazo.
+Antes de consolidar, bloquear ambas mascotas, sus vínculos y los actos afectados bajo B1.1; confirmar pertenencia del ingreso y autoridad del operador.
+Si aparecen recursos no previstos, reiniciar la unidad ordenada; no mover primero media historia.
+Completar la misma provisional o trasladar referencias a ficha final: citas, consultas, alertas, vacunaciones y desparasitaciones; síntomas, archivos y tratamientos siguen su padre.
+Conservar clínica, veterinario, sellos, autor y filas clínicas; auditoría y escaneos previos conservan origen con mapa explícito de IDs en ingreso.
+Desactivar provisional y no reactivar su carnet; no borrar ni cambiar propietario por conocer un ID.
+Si la final ya tiene HC, conservarlo y mantener la fila mascota_clinica provisional inactiva como alias/procedencia.
+Si la final no tiene HC y la provisional sí, transferir bajo mutex de clínica sin duplicar UNIQUE, guardando el HC/ID de origen en evidencia.
+Si ninguna tiene HC, no asignar por conciliar: hacerlo en primera consulta.
+Referencias clínicas de la provisional en otra clínica detienen la consolidación, sin apropiarse de actos ajenos.
+
+Cierre clínico y resolución de identidad disparan comprobación de fin de necesidad del contacto.
+Mientras una necesidad concreta siga vigente, se conserva solo lo necesario; al terminar, nombre/teléfono y documento legado se ponen a NULL, salvo excepción necesaria con motivo.
+Se conserva ingreso y actos; fecha/actor y motivo quedan en auditoría sin los valores eliminados.
+Evitar copiar el contacto en eventos, HTML persistido, bitácora o temporales; limpiar las copias operativas que existan.
+Respaldos siguen su política vigente restringida; no se promete borrar retroactivamente copias inmutables ni se inventa una retención nueva.
+Legado sin evidencia no queda automáticamente conciliado ni marcado como limpiado.
+
+### B1.5. B2 concreta, todavía sin ejecutar
+
+**Migración siguiente libre comprobada:** database/08_agenda_grafo_ii.sql.
+Es un nombre previsto, no archivo creado.
+B2 modifica database/01_schema.sql y añade 08 con el mismo destino; 02_semilla.sql solo cambiaría si se demuestra un dato inicial necesario, no hay catálogo global nuevo justificado por B1.
+Mantener database/modelo/drawdb_schema_v2.sql y MER sincronizados con el diseño revisado.
+Pruebas previstas en tests/Integration/BaseV2MysqlTest.php y casos de contrato específicos en tests/Integration; fixtures derivados de alpha.4, nunca base manual del usuario.
+No se habilitan rutas, permisos, cálculos ni pantallas en B2.
+
+1. Prevalidación de versión v2, columnas/índices existentes y diagnóstico de referencias huérfanas, propuestas pendientes duplicadas o bloques no demostrables.
+Un conflicto de unicidad histórico detiene la actualización con IDs y diagnóstico; no se elimina ni escoge una fila silenciosamente.
+2. Añadir tablas vacías y columnas inicialmente compatibles; rellenar solo id_clinica de reasignación desde su cita y estado aprobado de ausencias que ya eran efectivas.
+Conservar autor/fecha desconocidos en NULL; origen legado no equivale a llegada.
+No reconstruir pausas, presencia, versión de motor ni franja original desde datos que no lo demuestren.
+D se copia de snapshot propio positivo de cita solo cuando acredita el objetivo completo y no hay decisión/pausa desconocida; nunca del tipo actual.
+Si no se acredita, queda NULL y la futura cita que requiera cálculo se marca pendiente_revision, sin fabricar resultado.
+3. Validar rellenos antes de NOT NULL, índices y FK compuestas de clínica.
+Generadas cita_abierta/cita_pendiente deben proyectar exactamente la condición declarada, con índice único y NULL múltiple; en drawDB se representan convencionales por compatibilidad.
+Comprobar fin>inicio, rangos semiabiertos, D positivo, XOR destinatario usuario/rol, coherencia de revisión/presencia y nuevos estados.
+Invariantes entre filas (solapes, clínica/vet/fecha de bloque, triage aprobado, pertenencia de actores) necesitan protocolo transaccional; un CHECK local no prueba esas relaciones.
+B2 instala restricciones compatibles verificables; la aplicación de cada comando se implementa en C, sin declarar invariantes de filas legadas inexistentes.
+4. Consultar information_schema antes de cada DDL; no modificar migraciones publicadas.
+MariaDB/MySQL hacen commit implícito en DDL: la repetibilidad de cada paso recupera una ejecución parcial, no se promete rollback global del DDL.
+Conservar datos previos y configuración personalizada, sin recrear usuarios/contraseñas ni resetear la base desplegada.
+
+**Pruebas de aceptación de B2, pendientes:**
+
+| Escenario | Resultado exigido |
+|---|---|
+| Instalación nueva 01+02 y migraciones | 58 tablas de negocio; columnas, FK y auxiliares calculadas del destino revisado; semilla sin duplicados. |
+| Actualización fixture alpha.4 con citas/consulta/HC/ausencias/ingresos y configuración propia | Mismos IDs, horas pactadas/reales, actos y parámetros; 58 tablas, rellenos demostrables; NULL desconocidos conservados. |
+| 08 dos veces y reanudación tras paso DDL parcial | Segunda pasada sin error ni cambios adicionales; ningún dato propio sobrescrito. |
+| Restricciones y clínica | FK compuesta rechaza cita/solicitud/ingreso de otra clínica; una pausa abierta y propuesta pendiente por cita; rechazo de intervalos inválidos. |
+| Legado no reconstruible o duplicado | Diagnóstico verificable, sin inventar cronología o borrar actos; cita pendiente cuando haga falta, nunca habilitada por un default. |
+| Compatibilidad MySQL 8 y MariaDB disponible | Estructura y resultados equivalentes, utf8mb4_general_ci/InnoDB; no presentar SQLite como prueba de bloqueo. |
+
+Las carreras de disponibilidad, numeración HC, doble llegada, pausa/cierre, cuota y aceptación/vencimiento se automatizan al integrar C2–C8, con dos conexiones reales y barreras de sincronización.
+Deben demostrar relectura actual después de esperar, exclusión Norte/Sur para vet/mascota y HC únicos incluso con clínica inicialmente sin HC.
+La cobertura de datos de B2 no acredita que esos escritores futuros ya usan el mutex.
+
+### B1.6. Trazabilidad y evidencia documental
+
+Se mantienen 96 HU y 120 RN.
+Se conservan los 427 RE publicados y se añaden consecutivamente RE-2.2.5 y RE-4.15.9/10: **430 RE**.
+Se actualizan matrices RN→HU y RN→HU→RE, cabeceras actuales, ERS y Ficha Técnica.
+Los conteos históricos de cierres anteriores se conservan como históricos.
+Se corrige además un defecto sintáctico preexistente del drawDB: FK fk_arista_destino declarada dos veces y sin coma antes de la declaración en línea; se conserva solo la declaración ALTER existente, sin cambiar conocimiento clínico ni SQL ejecutable.
+MER/drawDB tienen 58 tablas de destino; database/01_schema.sql conserva las 52 instaladas.
+Las revisiones y la versión no se incrementan; PDF/Word del portal quedan para cierre M4.
+
+| RE/área de la matriz §2 | Evidencia de B1 | Verificación funcional futura |
+|---|---|---|
+| RE-4.1.1–3; RE-4.9.1–3; RE-4.6.1/2; RE-5.3 y RE-5.6 incluidos | HU/RE/RN-401/415; Modelos §4; B1.1/2 roles, intervalos y locks | P01–P04/P08 y regresiones de reserva/reprogramación C3/C4/D. |
+| RE-4.5.1–3; RE-4.14.1/2; RE-4.15.8 | RN-412/427; Modelos §5/6; A.1 íntegro con M confirmada | P09/P14/P17, C5/C7; no afirmar pruebas nuevas de motor. |
+| RE-4.13.1–7; RE-2.11.5/6; RE-4.18.4 | Puerta de revisión, procedencia/versiones y tope original en Modelos §4/6; RN-418/419/422 | T-01–T-26 existentes y casos O aplicables; P05–P07/P16/P21, C4/C7. |
+| RE-4.11.4; RE-4.12.1–5; RE-4.8.2/3 | Solicitud/aprobación, rangos completos y marcas en Modelos §7/8/13.4 | P02/P04/P12 y C2/C6; carrera de cambio contra reserva. |
+| RE-2.2.1/4/5; RE-4.15.1–3/9/10 | Modelos §3/6; solicitud sin vet, presencia, evidencia y contacto; plan excepcional actualizado | P13–P15/P18/P23 y C7/C8b: ninguna consulta nueva sin cita, sin adjudicación indebida y limpieza sin perder actos. |
+| RE-4.14.4/6/7; RE-4.4.1–4; RE-4.12.5 | Propuesta no ocupa; vencimiento/aceptación actual; eventos e incertidumbre SMTP B1.1 | P10/P11/P12 y C5/C6, incluido reloj límite y aviso siempre por reasignación. |
+| RE-7.4; RE-4.18; RN-G07/G16/G19/110/206/207 | Marca, procedencia, clínica propia, titularidad y privacidad en HU/RE/Modelos/MER | P16/P19/P23 en C1/C4b/C7b/D; aislamiento y datos de contacto no presentes en logs/eventos. |
+| Restantes RE de §2 | Trazabilidad de A.7 conservada; no se retira ni declara implementado su criterio | Se mantienen los casos P01–P23 y regresiones T/O para C/D; v2.1 excluida. |
+
+La tabla anterior agrupa rangos por área; el inventario de A.7 sigue detallando cada RE de la matriz original de 107, más los tres añadidos en B1.
+P01–P23 son diseño de prueba, no archivos nuevos ni casos ejecutados de M4.
+Las suites existentes validan la base actual y no prueban funcionalidades todavía propuestas.
+
+### B1.7. Verificaciones, alcance y pendientes
+
+- PHP sin host: 854 pruebas, 7212 aserciones, 44 omitidas; salida 0.
+- PHP con MariaDB 10.4.32, exclusivamente zooki_test_base_v2: 854 pruebas, 7813 aserciones, cero omitidas; salida 0.
+- JavaScript existente: 238/238, cero fallos/omisiones; salida 0, incluida prueba automatizada Chromium.
+- Mermaid 11.4.1: renderizado de los 27 bloques actuales (26 de Modelos y uno del MER), 27 SVG generados sin error.
+No se recorrieron pantallas ni se inventaron pruebas manuales.
+- Las ejecuciones válidas de suites/Chrome necesitaron salir del aislamiento local que impedía lectura/socket/arranque; no se cambiaron servicios.
+MySQL 8 no está verificado aquí.
+- Comprobación documental: 430 RE sin saltos ni IDs duplicados, matrices RN→HU y HU→RN/RE consistentes, 58 entidades iguales en MER/drawDB, campos/índices/FK propuestos cotejados y sin duplicados.
+MER es un diagrama resumido para las tablas existentes; el diccionario añadido explicita todos los campos nuevos, sin pretender que el diagrama histórico enumera cada columna legada.
+Se reprodujeron 17 escenarios aritméticos M en memoria, coincidentes y repetibles; A/A.1 y sus revisiones se compararon íntegros tras normalizar saltos de línea, sin cambios.
+Diff de alcance limitado a los once archivos listados; git diff --check sin incidencias.
+Ningún cambio ejecutable, tests nuevos, entorno, conocimiento, versión, historial ni exportaciones.
+Las verificaciones de B1 no aprueban B2 ni la entrega por el ejecutor.
+
+**Archivos cambiados:** specs/M4-agenda-grafo-ii.md; specs/HU-4.15-ingreso-emergencia.md; agentes/estado.md; documentacion/HistoriasUsuario.md; documentacion/RequisitosEspecificos.md; documentacion/ReglasNegocio.md; documentacion/Modelos.md; documentacion/MER.md; documentacion/ERS.md; documentacion/FichaTecnica_Zooki.md; database/modelo/drawdb_schema_v2.sql.
+El estado incluía el encargo previo del arquitecto y se conserva.
+
+**Pendientes:** revisión independiente de B1 y de las restricciones/rellenos propuestos antes de escribir B2.
+**Confirmación posterior del usuario (2026-10-17):** amarillo antes de verde y, dentro de cada color, llegada física/id_solicitud. Se cierra el pendiente de orden de espera y se alinean HU-2.2, RE-2.2.5, RN-208, Modelos y la explicación del MER, sin cambiar el esquema ni habilitar funcionalidad.
+Ejemplo de aceptación: verde llegado 09:00 y amarillos llegados 09:05/09:05 con IDs 21/22 se ordenan amarillo 21, amarillo 22, verde; capacidad y revisión clínica se revalidan antes de asignar.
+B1 sigue entregada, pendiente de revisión independiente; esta confirmación de producto no aprueba el diseño técnico ni inicia B2.
+
+**Comandos de commit para el usuario, compatibles con CMD/PowerShell:**
+
+    git add specs/M4-agenda-grafo-ii.md specs/HU-4.15-ingreso-emergencia.md agentes/estado.md documentacion/HistoriasUsuario.md documentacion/RequisitosEspecificos.md documentacion/ReglasNegocio.md documentacion/Modelos.md documentacion/MER.md documentacion/ERS.md documentacion/FichaTecnica_Zooki.md database/modelo/drawdb_schema_v2.sql
+    git commit -m "docs(agenda): definir contratos y datos de B1 (HU-4.13, RE-4.15.10)"
+
+### B1 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor de B1. Veredicto: revisada con corrección requerida B1.1 antes de B2.** La documentación aplica las decisiones de producto, la arquitectura propuesta es coherente en general y el SQL ejecutable no cambia. No se aprueba aún implementar el contrato de conciliación incompleto.
+
+**Verificación propia:**
+
+- PHP completo sin host: **854 pruebas, 7212 aserciones y 44 omitidas**, salida 0.
+- PHP completo con MariaDB local **10.4.32**, configuración de pruebas explícita y exclusivamente **zooki_test_base_v2**: **854 pruebas, 7813 aserciones, ninguna omitida**, salida 0. No se verificó MySQL 8 en esta máquina.
+- JavaScript completo: **238/238**, cero fallos y cero omitidas, incluida la prueba automática Chromium; salida 0.
+- Mermaid **11.4.1**, renderizado independiente con Chrome sin interfaz: **27/27** (26 Modelos y un MER), sin errores. Esto verifica diagramas, no es un recorrido de pantallas de la aplicación.
+- Conteo independiente: **96 HU, 430 RE únicos sin saltos y 120 RN**. Se conservan los 427 RE de HEAD y solo se añaden RE-2.2.5, RE-4.15.9 y RE-4.15.10. MER y drawDB describen las mismas **58 entidades**, sin diferencias de nombres; el ejecutable conserva **52**.
+- Diff de once archivos documentales/de referencia; sin código de aplicación, cambios de 01_schema.sql/02_semilla.sql, migraciones, tests, conocimiento ni versión. `git diff --check` sin incidencias. Las suites comprueban la base actual, no las futuras restricciones de las seis tablas propuestas.
+
+**Aceptado:** separación entre esquema de destino y desplegado; fusión de evaluación/urgencia en solicitudes_agenda sin vet ficticio; franjas fechadas estables para sobrecupo; segmentos de pausa y política M; eventos durables separados de idempotencia y reconocimiento de incertidumbre SMTP; FK compuestas de clínica y unicidad condicional pendiente de verificar en B2; transición que no inventa hechos clínicos. Se conserva el carácter propuesto del esquema hasta la revisión de su corrección y su comprobación real en B2.
+
+Se contrastaron los flujos de Modelos §3–§8 y §13.4 con §6: solo vet/propietario crean, admin conserva gestión autorizada y conciliación específica, revisión antes del horario, rojo remoto sin presencia, ausencias solicitadas/aprobadas y cobertura sin veto frente a reasignación confirmada. Espera no urgente usa el orden que el ejecutor documenta como confirmado por el usuario; no se introduce puntuación ni sobrecupo verde. Marca, reclasificaciones, privacidad, políticas pendientes de implementación y exclusiones v2.1 quedan expresas.
+
+**Contrato de HC:** es técnicamente admisible sustituir GET_LOCK por bloqueo de clínica antes de cualquier fila/escritura y usar lectura actual para el siguiente HC. La aceptación está condicionada a migrar uniformemente los llamadores al integrarlo, sin mezclar ambos órdenes; la concurrencia de dos primeras consultas y la transacción exterior requieren pruebas reales en la etapa ejecutora. Las suites actuales no prueban ese cambio porque todavía no existe.
+
+**Hallazgo que exige corrección documental:**
+
+| ID / prioridad | Archivo/línea al revisar | RE/RN | Reproducción y efecto | Corrección exigida |
+|---|---|---|---|---|
+| H-B1-1 / P2 — Falta el destino de la solicitud al consolidar mascota | `specs/M4-agenda-grafo-ii.md:1340`, `documentacion/MER.md:1016`, `specs/HU-4.15-ingreso-emergencia.md` contrato de conciliación; nueva FK en B1.3/solicitudes_agenda | RE-4.15.3, RN-110, RN-206, RN-207; coherencia de identidad del comando y su revisión | La solicitud S apunta a la provisional P, con revisión/huella/contexto e id_cita=C. Se consolida P en la ficha F existente según la lista documentada: C y las consultas pasan a F, P queda inactiva, pero no se define qué ocurre con S.id_mascota. Seguir literalmente esa lista permite S→P y C→F. Tampoco se fija qué validaciones, versiones y eventos pendientes quedan vigentes si F aporta otra especie/raza/alertas/titularidad. Una FK válida y una misma clínica no detectan esa incoherencia. | Definir un único contrato para solicitudes nuevas/activas/finalizadas al completar/consolidar: qué referencia se actualiza o conserva como procedencia, cómo se resuelve la identidad vigente, qué contexto/huella se invalida o conserva históricamente y cómo se revalidan comandos idempotentes/eventos pendientes. Incluir esas referencias y cambios en la misma transacción/orden de bloqueo y en el rollback. No recalcular ni reescribir decisiones clínicas históricas por inferencia. Alinear plan, MER, plan excepcional y el diagrama si hace falta; precisar P15 con solicitud+cita+ficha final y fallo intermedio. |
+
+El hallazgo no implica que se haya perdido información en producción: el modelo nuevo aún no está instalado. Es una brecha del contrato que debe quedar inequívoca antes de escribir B2/C7b. Puede conservarse procedencia en registros cerrados, pero debe indicarse explícitamente y no reutilizar una autorización ligada a la ficha/contexto anterior para comandos nuevos.
+
+**Corrección mínima del revisor:** en la tabla de cierres_clinica de B1.3 se corrigió una frase copiada de pausas («NULL solo significa pausa abierta») para indicar que fin es obligatorio y exclusivo. No se cambió el tipo DATETIME NOT NULL, el esquema ni el comportamiento aprobado.
+
+**Siguiente: B1.1 — cerrar conciliación de solicitudes y referencias operativas**, por el ejecutor, solo documentación/diseño. Conservar B1 y esta revisión; agregar resultado y marcarlo entregado, pendiente de revisión. No empezar B2 ni añadir código, SQL ejecutable o tests nuevos. Si la solución requiere cambios de campos/relaciones de destino, justificarlos y reflejarlos en MER/drawDB; el revisor no diseña ni implementa esa corrección por el autor. No hace falta repetir suites completas si el ajuste sigue siendo exclusivamente documental; sí comprobar coherencia, ejemplos, diagramas afectados y alcance.
+
+**Prueba manual:** no corresponde lista de navegador para B1/B1.1, sin pantallas ni funciones nuevas. Las verificaciones de migraciones y las listas de 3–5 pruebas por usuario se entregarán en sus etapas.
+
+
+## Anexo B1.1 — Resultado
+
+**Fecha:** 2026-10-18.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto, en la conversación independiente.
+**Estado:** entregada, pendiente de revisión.
+**Alcance:** corrección documental de H-B1-1; no se cierra el hallazgo por el autor.
+Se conservan B1 y su revisión completos; no confundir este Anexo B1.1 con el apartado «B1.1. Protocolo técnico único» del anexo anterior.
+
+### B1.1.1. Identidad vigente, procedencia y solicitudes
+
+**Elección única:** solicitudes_agenda.id_mascota es siempre la identidad vigente, también para solicitudes finalizadas.
+No se deja S→P cuando su cita C pasa a F.
+Completar la misma ficha usa destino P y estado de ingreso completado; consolidar sobre existente usa destino F y estado consolidado.
+No se cambia el destino de una conciliación ya confirmada por un reintento.
+ingresos_emergencia.id_mascota_provisional conserva P y id_mascota_final guarda el destino; id_ingreso, id_solicitud, id_cita y todos los IDs de actos permanecen estables.
+En consolidación P queda inactiva/carnet inactivo y se conserva como procedencia, no como paciente operativo.
+En completado P es la misma ficha regularizada: ficha_por_completar=0 con sus datos/titularidad legítimos; no se duplica, no se le asigna otro ID ni se activa automáticamente su carnet.
+Al consolidar no se sobrescriben titularidad/especie/raza/alertas de F con datos parciales de P; se preservan los actos trasladados y los valores vigentes autorizados de F.
+Todos los ingresos afectados de P conservan origen y el mismo destino confirmado; uno ya resuelto hacia otro destino detiene la unidad por incoherencia.
+
+El conjunto afectado incluye todas las solicitudes de P en esa clínica, con o sin cita, y las ya apuntadas al destino que enlacen cualquiera de las citas/ingresos afectados.
+Se comprueba la pertenencia y correspondencia de cada enlace; una solicitud de otro paciente enlazada a C es un conflicto de integridad, no se corrige por inferencia.
+Se verifican referencias de P en otras clínicas antes de escribir, conforme al límite de B1.4; no se trasladan actos ajenos.
+No se mezclan las demás solicitudes de F, de otros episodios, con las de P.
+Nueva solicitud sobre una ficha ya consolidada solo se crea con F y permisos/contexto actuales; una petición nueva con P obsoleto recibe conflicto para recargar, sin autorizarla por redirección implícita.
+
+| Objeto | Completar P→P o consolidar P→F |
+|---|---|
+| Todas las solicitudes afectadas, activas o terminales | Actualizar id_mascota al destino y aumentar version_solicitud una vez por conciliación efectiva, incluso P→P porque se regulariza identidad/contexto. Conservar id_solicitud, id_cita, id_ingreso, origen, actores originales, llegada y fecha de registro. |
+| Activas: abierta, derivada, espera_presencial, asignada, en_atencion, pendiente_reprogramacion | Mantener estado operativo; poner estado_revision=pendiente y huella_revision=NULL. El último episodio clínico se conserva como histórico, sin autorización vigente. No cancelar ni iniciar atención por esta marca. |
+| Terminales: finalizada y retirada | Mantener estado y episodio clínico, incluidos estado_revision/huella_revision que documentan su decisión histórica. El aumento de versión no renueva esa aprobación: nunca habilita un comando nuevo ni reabre el caso. |
+| Citas y actos clínicos afectados | Actualizar id_mascota al destino en la misma unidad; preservar IDs, clínica, autor, prioridad/decisión histórica, síntomas, duración, horas pactadas y sellos. Aumentar version_agenda de cada cita una vez, incluidas completadas, como cambio de referencia, sin recalcular la atención. |
+| Citas aún operativas/propuestas de reasignación | Marcar estado_reajuste=pendiente_revision con causa identidad/contexto, sin alterar estado clínico. version_cita anterior deja de aceptar una propuesta; no renovar huella, aceptar ni reasignar por conciliación. La propuesta conserva pendiente y su versión antigua: aceptar falla por contexto desactualizado; solo el rechazo del destino o el vencimiento en su límite original la resuelven y permiten otra. No renovar plazo, fingir respuesta del destino ni crear otra pendiente simultánea. |
+| Ingreso, HC, vínculos, auditoría, escaneos y pausas | Preservar el mapa P→destino, HC/procedencia y referencias a IDs estables de B1.4. Pausas siguen apuntando a la misma solicitud roja/cita; no se reescriben segmentos ni auditoría previa. Registrar todas las referencias/versiones antes y después en evidencia_conciliacion y auditoria_sistema. |
+
+**Resolución de identidad para consumidores.**
+Lectura, comandos, cobertura, consulta y despacho resuelven S/C por ID estable y clínica con lecturas actuales; exigen S.id_mascota=C.id_mascota cuando haya C y que coincidan con el destino confirmado del ingreso.
+Sin conciliación efectiva se usa P; completado resuelve P; consolidado resuelve F.
+Si la igualdad/mapa falla, conflicto de integridad y nada de actuar/notificar usando la ficha encontrada primero.
+El mapa de ingreso sirve para procedencia y detección de peticiones obsoletas, no concede acceso a F ni a la historia de otra clínica.
+La autorización siempre se comprueba sobre paciente, titular, vínculos y contexto activo vigentes.
+Para historia se presenta «identidad vigente F; evaluación original de P» con acceso clínico legítimo; no se atribuye el contexto viejo a F ni se expone el contacto del acompañante.
+
+### B1.1.2. Contexto clínico y vigencia para el siguiente comando
+
+contexto_triage conserva el episodio confirmado: marcas/tiempos y atributos del paciente efectivamente usados.
+Se precisan dentro del JSON existente los metadatos id_mascota_evaluada y version_solicitud_evaluada, ligados a huella_entrada; no son nuevos síntomas ni una FK operativa.
+Una solicitud nueva registra ambos al evaluar; antes de conciliar se completa su procedencia demostrable y se conserva la copia anterior por auditoría.
+No se inventan atributos que no se hubieran capturado.
+La evidencia del ingreso enumera cada S, C, identidad y versión de antes/después; auditoria_sistema conserva el episodio anterior y su revisión con usuario/fecha, sin contacto provisional ni medicación protegida.
+No se añade tabla, columna, índice ni FK: estos metadatos/evidencia usan los JSON/bitácora ya previstos.
+
+Al conciliar se conservan sin recalcular contexto_triage, huella_entrada, version_conocimiento, niveles calculado/aprobado, fuente, contagio y datos del revisor del episodio anterior.
+En solicitudes activas id_revisor/fecha_revision/motivo_revision describen esa revisión anterior; estado pendiente y huella_revision NULL impiden presentarlos como autorización actual.
+En terminales la revisión se conserva íntegra como historia.
+La huella antigua identifica la evaluación antigua, no una confirmación de la nueva ficha.
+No sustituir especie/raza/alertas en ese snapshot por los datos de F ni modificar colores históricos por inferencia.
+
+Antes de un comando nuevo se releen destino, titularidad/vínculos, especie/raza/edad/alertas permitidas, marcas/tiempos pertinentes, versión de conocimiento y versiones S/C.
+La huella de autorización incluye ese contexto canónico y la identidad/versiones vigentes; un token anterior falla aunque usuario, síntomas o color coincidan.
+Comparar los valores actuales relevantes evita depender únicamente de version_solicitud si se modificó un atributo global por una vía legítima.
+No se ofrecen/aceptan nuevos horarios ni reasignaciones desde una revisión pendiente.
+Solo el veterinario resuelve la revisión que proceda: confirma datos actuales y evalúa explícitamente el episodio operativo necesario, o documenta su decisión clínica presencial por la vía existente.
+Una nueva evaluación explícita incrementa version_solicitud, identifica esa nueva versión en version_solicitud_evaluada y emite la huella vigente después de ese incremento; conserva el episodio sustituido en auditoría y no recalcula ni sobrescribe el pasado.
+El administrador solo regulariza identidad y marca invalidez mecánica; no calcula triage, resuelve revisión ni registra actos clínicos.
+No se exige volver a atender una cita completada; una atención roja en curso no se cancela ni espera la conciliación: continuidad/cierre por veterinario relee F y revalida el comando clínico conforme Modelos §3.
+La excepción roja y sus decisiones previas siguen conservadas; no se habilita actualización de síntomas por propietario ni HU-4.17 de v2.1.
+
+### B1.1.3. Eventos y reintentos: referencias estables, contenido vigente
+
+**Eventos aún no despachados.**
+Conservar id_evento, clave_evento, id_cita/id_solicitud, clínica, destinatario original, destino_clave y canal.
+version_recurso compara version_agenda si hay id_cita; en otro caso version_solicitud; si aparecen ambos recursos se comprueba también su coherencia vigente.
+La clave del evento identifica la causa original y su versión causal; version_recurso es el control de vigencia del recurso, no una causa nueva.
+Al renovar solo identidad no se recalcula clave_evento ni se inserta otro evento; un reintento del productor reconoce la misma causa original.
+La conciliación no copia P/contacto a otro payload ni crea un destinatario o aviso de identidad nuevo.
+En pendiente/error, antes de renovar version_recurso se demuestra que la misma causa de aviso sigue siendo aplicable y el destinatario original sigue legítimo para el recurso vigente.
+Solo entonces se reconstruye contenido desde F/P vigente y marca de la clínica.
+Si el mensaje exigiría reutilizar una revisión clínica vencida, esperar su resolución antes de despachar; no transformar datos históricos en una afirmación clínica nueva.
+Si la causa o destinatario dejó de ser válido, marcar omitido con causa saneada.
+No redirigirlo automáticamente al nuevo propietario; una comunicación futura solo surge de los comandos ya especificados y a sus destinatarios autorizados.
+enviado e incierto conservan la historia del intento, nunca se reenvían por una conciliación.
+Las notificaciones internas ya emitidas mantienen procedencia; su consulta/enlace vuelve a autorizar contra la identidad vigente.
+
+**Carrera entre conciliación y despacho.**
+El worker identifica recursos sin bloquear primero el evento; entra al mismo orden de clínica/usuarios/mascotas/.../eventos de B1.
+Bajo esos candados relee versiones, identidad, permisos/vínculo/contacto y causa antes de reclamar.
+La reclamación durable es la barrera técnica del envío: tras commit no se mantienen candados SQL durante SMTP.
+Si la conciliación encuentra un evento afectado reclamado o incierto aún sin resolución operativa, devuelve conflicto transitorio sin trasladar nada.
+No invalida a ciegas un envío que pudo salir ni permite consolidar y luego transmitir el snapshot anterior.
+El worker descarta cualquier contenido preparado antes de la revalidación y no envía si no obtuvo la reclamación vigente.
+Tras resultado conocido libera la barrera con estado final; si cae, se aplica incierto y resolución operativa ya prevista, sin nuevo plazo ni reenvío automático.
+La resolución debe acreditar que el worker anterior ya no puede continuar su envío antes de habilitar otro despacho o la conciliación.
+Así, si gana el conciliador, el worker relee F; si gana la reclamación, la conciliación no cambia identidad a mitad del envío.
+La barrera solo difiere regularización de identidad: no bloquea la atención roja ni mantiene una transacción esperando SMTP.
+No se promete deshacer un correo ya transmitido ni acceso permanente a un mensaje histórico.
+
+**Idempotencia del comando y respuesta.**
+operaciones_agenda conserva clave, huella del comando original y resultado con IDs/referencias, no una respuesta HTML/JSON personal ya renderizada.
+Para comparar un reintento se usa la carga original, sin canonicalizar P a F y hacerla pasar por una orden nueva.
+Si ya hubo commit, no repetir escrituras, versiones, decisiones ni eventos.
+Antes de responder resolver las referencias actuales, comprobar acceso a F/P vigente y reconstruir la vista autorizada; no devolver literalmente el resultado histórico ni el contacto viejo.
+Sin permiso actual, denegar sin datos; una respuesta exitosa anterior no concede acceso futuro.
+Con permiso actual, informar que la operación ya se realizó y sus referencias vigentes, con versión actual; ese acuse no equivale a ejecutar de nuevo la orden con la revisión vieja.
+Misma clave con otra carga da conflicto.
+Una clave nueva con huella/revisión/contexto anterior también falla hasta recargar/revalidar; no reaprovecha el éxito de la clave anterior.
+El reintento exacto de conciliación misma P/destino ya confirmado devuelve acuse autorizado sin otra conciliación.
+Otra clave de otro operador para el mismo destino detecta el ingreso ya resuelto y no incrementa versiones; destino diferente da conflicto.
+La respuesta queda autorizada al corte de su lectura transaccional; cualquier comando posterior vuelve a revalidar.
+
+### B1.1.4. Unidad de conciliación, candados y rollback
+
+Se conserva la elección única de B1: clínica primero, usuarios y mascotas globales por ID, vínculos, configuración/horarios/ausencias/cierres, bloques, citas, solicitudes, reasignaciones, ingresos, pausas, operaciones y eventos.
+Dentro de cada tabla usar clave ascendente.
+Incluir P, F, titulares/operadores y veterinarios afectados, todas las S activas/terminales con/sin C, sus C, ingresos, propuestas, pausas y eventos del conjunto; las demás referencias clínicas se bloquean tras el grupo de pausas y antes de operaciones/eventos, en orden consultas, alertas_medicas, vacunas, desparasitaciones y luego sus hijos por tabla/ID.
+La clínica sigue primero para todos los escritores, también si el conjunto está vacío.
+Cualquier nuevo recurso no previsto exige rollback y reinicio ordenado, nunca adquirir tarde otro usuario/mascota.
+Releer después de esperar, sin snapshot REPEATABLE READ anterior; clínica/mutex de mascotas impiden insertar una S/C afectada fuera del conjunto sin esperar.
+Usuarios y mascotas de destino se autorizan y vinculan solo por los mecanismos vigentes, no por copiar titular de P.
+
+1. Revalidar permiso específico admin/vet, titularidad acreditada, pertenencia/estado del ingreso, destino activo legítimo, mapa/HC, correspondencias S/C y barrera de envío.
+2. Guardar en evidencia/auditoría la procedencia antes de cambiar las referencias; no reescribir auditoría previa.
+3. Trasladar actos/citas y todas las S; aplicar versiones, invalidez de revisiones activas, marcas operativas, tratamiento de eventos y HC.
+4. Finalizar ingreso, mapa P→destino y estado de P; verificar todas las correspondencias y registrar resultado idempotente.
+5. Commit único; publicar/consumir respuestas y avisos solo después de él.
+
+Una excepción después de mover C pero antes de actualizar S/ingreso revierte C, actos, S, mapa/HC, versiones, revisiones, eventos y fila de operación/auditoría nueva.
+La regularización de identidad no emite SMTP ni mueve archivos clínicos; los adjuntos conservan su padre/ID.
+No hay estado intermedio confirmado C→F/S→P.
+Dos operadores de la misma clínica serializan en su fila: el segundo espera y relee el ingreso ya resuelto, no traslada otra vez ni elige otro F.
+Una lectura/petición sin autorización no recibe el destino por consultar P.
+La conservación/limpieza del contacto sigue RE-4.15.9/10; no se añade captura, destinatario, plazo ni permiso clínico.
+
+### B1.1.5. Ampliación de P15 — ejemplos propuestos
+
+Se conserva la fila P15 original de A y se amplía aquí su aceptación.
+Son escenarios documentales para C7b, no tests implementados ni ejecución de conciliaciones reales.
+Datos de referencia: clínica Norte, provisional P=101, ficha final F=202 activa/vinculada con titularidad acreditada, ingreso I=80, cita C=300 y solicitud S=40.
+S enlaza C/I; antes S.id_mascota=C.id_mascota=101, version_solicitud=5 y version_agenda=8.
+La evaluación conservada e5 tiene id_mascota_evaluada=101, version_solicitud_evaluada=5, huella hP y revisión rP, con atributos desconocidos.
+F aporta especie/raza/alertas y propietario ya verificados distintos de los datos parciales de P; no se infieren equivalencias clínicas.
+
+| Caso | Entrada y resultado exigido |
+|---|---|
+| P15.1 — Completar la misma ficha | I pasa a completado con id_mascota_provisional=id_mascota_final=101; S/C siguen en 101, versiones 6/9; sin duplicar ficha/HC/actos. Si S activa, revisión pendiente y huella_revision NULL, aunque no cambie el ID; e5/hP permanecen como episodio anterior. |
+| P15.2 — Consolidar solicitud activa asignada | I consolidado 101→202; S/C pasan a 202 en el mismo commit, IDs 40/300/80 estables, versiones 6/9. S conserva asignada, revisión pendiente/huella NULL; C conserva asignación, prioridad y horas, con reajuste pendiente_revision. P queda inactiva. Ningún consumidor operativo sigue tomando 101 como paciente. |
+| P15.3 — Espera activa sin cita | Otra S=41 de P, espera_presencial e id_cita NULL, también pasa a 202 e incrementa su propia versión; conserva llegada/ID y espera. No se crea C ni se pierde prioridad roja por conciliar; para nuevos horarios se resuelve revisión vigente. Las otras solicitudes de F ajenas a P no se alteran. |
+| P15.4 — Solicitud finalizada | Con S.finalizada/C.completada se trasladan ambas referencias a 202 y versiones a 6/9, sin reabrir estado ni cambiar rP, hP, color, conocimiento, diagnóstico o sellos. Historia muestra paciente vigente 202 y evaluación original 101/e5. Un comando nuevo no puede usar rP ni operar sobre la finalizada. Igual preservación para retirada. |
+| P15.5 — Contexto final distinto | Una orden nueva de reservar/aceptar con v5/hP/rP falla antes de escribir, aunque el actor siga siendo legítimo. Admin no resuelve revisión. Vet relee especie/raza/alertas autorizadas de 202, confirma los datos del episodio operativo y genera evaluación/huella vigente de forma explícita; e5 queda conservado. Nada recalcula el triage o actos ya finalizados; propietario no obtiene HU-4.17. |
+| P15.6 — Evento pendiente | E=90, C=300/S=40, version_recurso=8 y destinatario U=9. Tras traslado, refs y destinatario de E permanecen. Si causa/permiso/contacto actual de U siguen válidos y el contenido no depende de revisión vencida, revalidar y actualizar versión a 9, reconstruir desde 202 y despachar una vez con su clave original. Si U ya no está autorizado, omitido; no enviarlo a otro titular ni usar contacto de P. |
+| P15.7 — Worker concurrente | Si conciliación confirma primero, el worker toma identidad 202/versiones nuevas y no transmite lo preparado con 101. Si E ya está reclamado/incierto, conciliación responde conflicto sin cambios y espera nueva ejecución tras resolución del envío; no conserva un candado SQL durante SMTP. No reutilizar un token de worker descartado ni reenviar incierto automáticamente. |
+| P15.8 — Reintento de operación ya confirmada | La misma clave K/carga original devuelve acuse reconstruido de S=40/C=300 y paciente actual 202 solo si sigue autorizado; versiones permanecen 6/9 y no se duplica E. Si perdió acceso, 403 sin datos. Misma K con destino/carga distinta da conflicto; clave nueva con v5/rP no obtiene autorización. |
+| P15.9 — Fallo intermedio | Forzar fallo documentalmente después de trasladar C/consulta a 202 y antes de S/ingreso: tras rollback S/C/consulta siguen 101, versiones 5/8, revisión rP, P activa provisional, I pendiente y evento/HC intactos. No queda operación K confirmada ni auditoría parcial de éxito. Reintentar usa nuevo estado leído, no una confirmación ficticia. |
+| P15.10 — Dos conciliadores | Admin A y vet B intentan el mismo I=80. A confirma primero; B espera la clínica y relee consolidado. Mismo destino 202: acuse autorizado sin otra subida de versiones, traslado ni evento. Destino 203: conflicto sin redirigir el mapa. Un operador de Sur recibe denegación sin conocer F. |
+| P15.11 — Enlace incoherente o ingreso ajeno | S de otro paciente que enlaza C, mapa contradictorio o referencias de P de otra clínica detienen la unidad; una FK sintácticamente válida no permite aprobar el traslado. S/C no se reparan tomando indistintamente la primera identidad accesible. |
+| P15.12 — Cambio de atributos sin otro ID | Completar P o una edición legítima de datos relevantes después de la revisión exige cotejar valores actuales y huella, aunque el ID o la versión S no hayan cambiado por esa otra vía. El comando devuelve conflicto/revisión vigente; decisiones previas permanecen, sin recalcularlas al leer. |
+
+### B1.1.6. Evidencia, alcance y pendientes
+
+**Trazabilidad:** RE-4.15.3; RN-110 (identidad global y titularidad), RN-206 (acumulación/procedencia sin pérdida), RN-207 (actos nuevos sobre ficha activa).
+Se precisa solo el criterio de aceptación de RE-4.15.3; sin IDs nuevos ni cambios de referencias/matrices.
+Se conservan 96 HU, 430 RE, 120 RN, 58 tablas de destino y 52 ejecutables.
+Se cotejan estados existentes, campos JSON/versiones, mapa de identidad y ejemplos P15.1–P15.12 con MER y Modelos §3/§6.
+**Verificación propia B1.1 (2026-10-18):** Mermaid 11.4.1 con Chrome sin interfaz, 27/27 bloques renderizados y SVG válidos (26 Modelos y uno MER); solo cambian los diagramas §3/§6, el diagrama MER permanece idéntico.
+Cotejo documental de los doce ejemplos P15.1–P15.12, las ocho situaciones operativas de S y los estados existentes de ingreso/revisión/eventos; sin ejecutar comandos clínicos ni simular pruebas de BD.
+430 RE únicos y consecutivos con los mismos IDs; solo cambia el criterio de RE-4.15.3, matrices/referencias sin cambios.
+Comparación íntegra de anexos/revisiones previos tras normalizar saltos de línea; sin cambios.
+Diff limitado a seis archivos y git diff --check sin incidencias.
+Anexos A/A.1/B1 y sus revisiones, incluida «B1 — Revisión (2026-10-18)», se preservan íntegros.
+La precisión de B1.1 prevalece únicamente en los puntos de conciliación corregidos, sin reabrir §6.
+
+**Persistencia suficiente:** solicitudes usa id_mascota/version_solicitud/estado_revision/huella_revision y metadatos del JSON; citas version_agenda/marca; ingreso mapa/evidencia; auditoría snapshots permitidos; eventos reclamación/versión/estados; operaciones clave/carga/refs.
+Ninguna tabla, columna, relación ni índice nuevo; drawDB no cambia.
+No se ejecuta aplicación, consulta BD, archivo de entorno, migración, test nuevo, versión, exportación ni recorrido de pantallas.
+La línea base **del revisor B1, 2026-10-18**, es PHP 854/7813 con MariaDB, JS 238/238 y Mermaid 27/27; no se presenta como ejecución nueva ni se repiten suites completas.
+
+**Archivos de B1.1:** specs/M4-agenda-grafo-ii.md; agentes/estado.md; documentacion/MER.md; specs/HU-4.15-ingreso-emergencia.md; documentacion/RequisitosEspecificos.md; documentacion/Modelos.md.
+El estado ya contenía el encargo del arquitecto al comenzar; se conserva como antecedente.
+**Pendientes:** revisión independiente de B1.1 y verificación real de las carreras/rollback en C7b; el ejecutor no aprueba ni declara cerrado H-B1-1.
+No aparece una decisión de producto nueva: son reglas técnicas de identidad, vigencia y exclusión del envío sobre las decisiones ya confirmadas.
+B2 no se inicia.
+
+**Comandos de commit, uno por línea, compatibles con CMD/PowerShell:**
+
+    git add specs/M4-agenda-grafo-ii.md agentes/estado.md documentacion/MER.md specs/HU-4.15-ingreso-emergencia.md documentacion/RequisitosEspecificos.md documentacion/Modelos.md
+    git commit -m "docs(agenda): precisar conciliacion de solicitudes (RE-4.15.3)"
+
+### B1.1 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor de B1.1. Veredicto: aprobada; H-B1-1 cerrado.** B1 queda aprobada con la precisión de este anexo. Puede prepararse B2 después del commit del usuario; no se aprueba por ello una migración aún inexistente ni se declara implementada la conciliación.
+
+**Verificación propia:** lectura completa del Anexo B1.1 y diff de sus seis archivos, cotejados con RE-4.15.3, MER, plan excepcional de ingreso y Modelos §3/§6. Se verifican los doce casos P15.1–P15.12 como ejemplos del contrato, sin presentarlos como pruebas de aplicación/BD. No cambian tablas, columnas, índices, relaciones, código, SQL ejecutable, conocimiento, tests ni versión.
+
+Comprobación independiente de conteos: **96 HU, 430 RE únicos sin saltos, 120 RN, 58 entidades iguales en MER/drawDB y 52 tablas ejecutables**. Renderizado propio con Mermaid 11.4.1 y Chrome sin interfaz: **27/27 diagramas sin errores**. El Anexo B1 anterior se comparó con HEAD normalizando saltos de línea y permanece íntegro; su revisión se conserva. `git diff --check` sin incidencias.
+
+No se repitieron las suites PHP/JS conforme al encargo, exclusivamente documental. Se conserva la línea base propia de B1: PHP **854/7813 con MariaDB y cero omitidas**, sin host **854/7212 y 44 omitidas**, JS **238/238**. Esa línea base no es una ejecución nueva ni demuestra las futuras carreras de conciliación. No se leyeron credenciales ni se consultaron bases o pantallas en B1.1.
+
+**Aceptado para implementación posterior:**
+
+- Todas las solicitudes afectadas, activas o terminales, y sus citas resuelven el mismo paciente vigente. Completar P→P y consolidar P→F tienen efectos definidos; los IDs operativos permanecen estables y el ingreso conserva procedencia.
+- La evaluación original no se atribuye silenciosamente a F: conserva paciente/versiones evaluados, contexto y decisión histórica. Solicitudes activas invalidan autorización de revisión; terminales no se reabren. Continuidad roja y cierre clínico releen/revalidan los datos actuales sin cancelar atención ni otorgar triage al administrador.
+- Contexto y versiones anteriores no autorizan nuevos comandos; los reintentos confirmados reconstruyen un acuse con permisos actuales y no repiten escrituras/eventos. Una petición obsoleta sobre P no obtiene acceso a F por redirección implícita.
+- Eventos pendientes se revalidan sobre causa y destinatario originales legítimos; no se redirigen al nuevo propietario. La barrera de reclamación impide confirmar conciliación mientras un envío afectado pueda continuar con el contexto anterior. Su recuperación exige resolver de forma verificable el worker/estado incierto; no se mantiene SQL abierto durante SMTP ni se promete entrega exactamente una vez.
+- Conjunto de recursos, orden de bloqueo, dos conciliadores y fallo entre C/S/I tienen resultado y rollback explícitos, incluidas versiones, revisiones, HC, eventos y operación. El diseño usa los campos ya propuestos, sin ampliar el esquema.
+
+No se encuentran nuevos hallazgos bloqueantes en esta corrección documental. La verificación real de exclusión/reclamación, permisos, huellas y rollback corresponde a C7b y a las etapas de eventos/coordinación; no se acepta sustituirla por los ejemplos del anexo. Las restricciones y compatibilidad MySQL/MariaDB del destino deberán comprobarse en B2, sin suponerlas probadas por el render del MER.
+
+**Siguiente:** guardar B1.1 y esta revisión. Después, prompt solo de B2: esquema ejecutable y migración nueva conforme a B1+B1.1 revisadas, con pruebas de instalación nueva, actualización de alpha.4, repetición y conservación de datos. Sin habilitar rutas ni implementar coordinadores/consulta/SMTP en B2. Los contratos de ejecución HC/candados se integrarán uniformemente en las subetapas C correspondientes, conservando las pruebas concurrentes previstas.
+
+**Prueba manual:** no corresponde navegador en B1.1, sin interfaz o comportamiento nuevos. Se entregará la lista por usuario cuando una subetapa funcional lo requiera.
+
+
+
+## Anexo B2 — Resultado
+
+**Fecha:** 2026-10-18.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto, en la conversación independiente.
+**Estado:** entregada, pendiente de revisión.
+**Alcance:** solo esquema, transición aditiva y pruebas de datos del contrato B1/B1.1.
+El ejecutor no aprueba su entrega ni empieza C1.
+
+### B2.1. Esquema materializado y límites
+
+Se comprobó que 08 estaba libre antes de crear database/08_agenda_grafo_ii.sql.
+01_schema.sql pasa de 52 a **58 tablas de negocio**, más schema_migraciones cuando actúa el migrador.
+Se añaden cierres_clinica, bloques_agenda, solicitudes_agenda, pausas_cita, operaciones_agenda y eventos_agenda.
+Se amplían citas, ausencias_veterinario, reasignaciones e ingresos_emergencia exactamente con los campos/estados del diseño revisado.
+MER y drawDB tienen los mismos nombres de tablas y columnas que 01; no se añadió ninguna entidad/campo por comodidad.
+Se sincronizan las restricciones locales en el diccionario MER y el SQL de referencia.
+
+Las auxiliares cita_abierta/cita_pendiente se calculan STORED desde fin/estado y tienen índice único con múltiples NULL.
+En drawDB siguen siendo columnas convencionales, como exige B1.
+Se instalan las FK compuestas de clínica, índices de acceso y CHECK de intervalos, objetivo activo positivo si existe, presencia/revisión locales y destinatario usuario XOR rol.
+Una S pendiente puede conservar metadatos clínicos del episodio previo; una terminal conserva su revisión histórica conforme B1.1.
+No se exige que el JSON histórico coincida con la identidad/versiones actuales por el solo hecho de leerlo.
+
+No hay triggers ni código de disponibilidad, tope naranja, cola, adjudicación, revisión clínica, cascada, consulta/HC, conciliación, SMTP o idempotencia de comandos.
+La coherencia S/C/paciente vigente, actividad/rol/titularidad, cruces de intervalos, barrera de envío y numeración HC siguen requiriendo los escritores de C.
+La migración no mueve fichas, recalcula triage, envía avisos ni crea pausas/evaluaciones retrospectivas.
+GET_LOCK de HC y los llamadores de aplicación permanecen intactos.
+No se habilitan rutas, permisos ni pantallas; los diagramas Modelos §2–§8/§13.4 siguen siendo destino funcional.
+Sus bloques Mermaid y el diagrama MER no cambian; no se presenta un render nuevo por cambiar solo la nota de estado.
+
+### B2.2. Prevalidación, repetición y DDL parcial
+
+08 exige las tablas v2 y las claves de identidad antes de alterar tablas/datos de negocio.
+Comprueba motor/intercalación y las definiciones existentes de columnas: tipo/longitud/signo, nulabilidad, default, generación STORED/expresión y colación cuando corresponde.
+Distingue JSON nativo de MySQL y el alias LONGTEXT+JSON_VALID de MariaDB.
+Los índices se cotejan por unicidad, columnas/orden, prefijos y BTREE; las FK por columnas, destino/esquema y reglas de actualización/borrado.
+Los CHECK se cotejan por expresión normalizada y, si el motor expone ENFORCED, se rechaza una restricción no aplicada.
+Una definición incompatible no se modifica silenciosamente ni se acepta por existir su nombre.
+
+Se detectan primero ausencias inválidas, propuestas pendientes duplicadas y huérfanos de los enlaces previos afectados.
+Antes de imponer cada restricción se comprueban sus datos, unicidades y referencias de clínica.
+El diagnóstico SQLSTATE 45000 lleva prefijo M4-08, objeto y primer ID conflictivo cuando corresponde.
+MIN se usa solo para identificar el conflicto; no elige una fila para conservar ni elimina otra.
+La migración no desactiva FK/CHECK para ocultar datos incompatibles.
+
+Se usa una rutina transitoria zooki_m4_08_error para emitir SIGNAL con mensaje verificable sin DELIMITER, compatible con CLI y con el PDO multisentencia del migrador.
+No es una tabla ni un servicio de negocio; requiere permiso de rutina en el esquema.
+Se recrea al comenzar cada intento y se retira al terminar correctamente; un intento fallido puede dejarla hasta el siguiente.
+SIGNAL no se prepara directamente en MySQL: se llama la rutina desde la sentencia preparada ([referencia oficial](https://dev.mysql.com/doc/refman/8.0/en/sql-prepared-statements.html)).
+Se conserva el candado y registro automático del Migrador existente, sin modificarlo.
+
+Cada paso consulta information_schema; se admiten los cortes DDL generados por el propio orden de 08.
+reasignaciones.id_clinica se añade inicialmente nullable, se rellena desde C y se verifica antes de NOT NULL.
+La columna citas.origen se añade al cerrar el relleno de transición.
+Su presencia identifica una pasada que ya cerró ese relleno: la siguiente no vuelve a modificar citas creadas/personalizadas después.
+Si se corta antes de ese punto, los predicados de NULL/estado permiten reanudar; si se corta después, se reconstruyen índices/FK faltantes sin repetir el relleno.
+Una instalación nueva ya contiene origen en 01 y no recibe rellenos retrospectivos.
+Un esquema manual de definición incompatible produce diagnóstico, no una adivinación sobre su historia.
+
+MySQL/MariaDB confirman DDL implícitamente.
+**No hay rollback global prometido:** un error detiene el migrador sin registrarla como aplicada; los pasos ya confirmados quedan y la siguiente ejecución se reanuda tras resolver el conflicto.
+No se modifican 03–07 publicadas.
+02_semilla.sql no cambia: no hay catálogo nuevo justificado, y la semilla conserva su política de insertar solo faltantes.
+
+### B2.3. Transición de alpha.4 y conservación
+
+Fixture tests/Fixtures/agenda_alpha4.sql es copia fiel del 01 previo a 08.
+Se cotejó con HEAD anterior: ambos blobs normalizados por Git tienen hash 7bc17ed21f15126d654e262cee75b9063602ff4d.
+La fixture no se reconstruye desde el esquema nuevo ni consulta la base manual.
+Los datos de prueba son aislados: citas con instantánea propia, otra sin tipo/duración, completada con consulta/sellos, pausada sin segmentos, HC, vínculos, ausencia parcial, ingreso y propuesta previa.
+
+- Se conservan IDs de citas/actos/HC, usuarios, mascotas, vínculos, clínica, autores, prioridades, horas pactadas/reales y configuración personalizada.
+- Reasignación recibe id_clinica exclusivamente de su cita; una clínica ya guardada que contradiga C detiene la transición.
+Ausencias previamente efectivas reciben aprobada por default; solicitante/revisor/fechas desconocidos siguen NULL.
+- D se copia solo de duración positiva del snapshot propio, con fin-inicio pactados coincidentes, pendiente/confirmada, sin llegada ni inicio/fin reales y sin cálculo/versionado previo.
+Se compara en segundos; nunca se consulta la duración del tipo actual.
+En la fixture, el tipo actual dura 75 y la cita guarda 30: D resulta 1800, no 4500.
+- Duración desconocida, completada y pausada sin evidencia de objetivo activo conservan NULL; no se deduce D del tiempo observado.
+Origen queda legado y política temporal anterior desconocida NULL, sin convertirlos en una llegada/M histórica inventada.
+No se fabrican bloque original, horarios, síntomas, conocimiento, segmentos ni revisión.
+- Futuras activas con datos no demostrables quedan pendiente_revision con causa, respetando marcas/motivos ya existentes.
+Conservar política NULL exige revisión para operar bajo M4; no se escribe una estimación aparente.
+Pausas/solicitudes/bloques/eventos/operaciones nuevos permanecen vacíos durante la actualización.
+- Repetir no sobrescribe una cita personalizada ni una nueva fila creada tras la primera pasada; tampoco transforma una nueva solicitud de ausencia en aprobada.
+Los contactos del ingreso se conservan en la migración: su limpieza depende del flujo autorizado futuro de RE-4.15.10.
+
+### B2.4. RE y evidencia concreta
+
+Son pruebas de datos/preparación, no cierre funcional completo de los RE ni de las carreras de C.
+
+| RE/contrato | Prueba y resultado exigido/verificado |
+|---|---|
+| RE-4.8.2/3; RE-4.12.1/2/3 | testFkCompuestasYChecksRechazanCrucesEIncoherenciaLocal rechaza cierre invertido y bloque de vet sin vínculo; testConservaIdentidadActosSellosDesconocidosYPersonalizacionesPosteriores conserva ausencia parcial, aprobada sin autor inventado. testDuplicadosPendientesDetienenAntesDeCambiosSinElegirFila también diagnostica intervalo negativo sin borrarlo. Cobertura real queda en C6. |
+| RE-4.13.6/7; RE-4.5.1–3; RE-4.14.1/2 | testConservaIdentidadActosSellosDesconocidosYPersonalizacionesPosteriores compara columnas originales de cada cita y todas las filas clínicas/configuración/HC; conserva snapshots y D desconocido, y marca futuras. No se prueba todavía el algoritmo M ni el contador de sobrecupos. |
+| RE-4.15.8; RE-4.14.4/6 | testAuxiliaresCalculadasUnaAbiertaYVariosNull verifica una pausa abierta/propuesta pendiente por cita, múltiples NULL, cierre/cambio de estado y valor realmente calculado frente a una asignación enviada. No prueba pausa clínica, aceptación ni dos conexiones. |
+| RE-4.15.3/9/10; B1.1 | testConservaIdentidadActosSellosDesconocidosYPersonalizacionesPosteriores conserva actos, ficha, HC y contacto sin conciliar/anonimizar; testFkCompuestasYChecksRechazanCrucesEIncoherenciaLocal rechaza C/I/bloque de otra clínica, revisión incompleta y espera sin presencia; admite metadatos del episodio anterior en terminal. Conciliación/rollback real sigue en C7b. |
+| RE-4.9.3; RE-4.4.1/3/4; RE-4.14.7 | Estructura de operaciones/eventos cotejada en testInstalacionYActualizacionDanElMismoDestinoYSeRepiten; eventos rechazan destinatario doble/ausente, referencia ajena y clave duplicada en testFkCompuestasYChecksRechazanCrucesEIncoherenciaLocal. No hay ejecución de comandos/worker/SMTP en B2. |
+| Transición P20 y B1.5 | testInstalacionYActualizacionDanElMismoDestinoYSeRepiten compara tablas, tipos/defaults/generación, índices, FK y CHECK entre ruta nueva/actualización y repite 08. BaseV2MysqlTest::testElMigradorEstaAlDiaDosVecesSeguidas recorre 01+02 y migraciones 03–08 con el migrador real, y la segunda pasada queda al día. |
+| Recuperación y diagnóstico | testReanudaDdlParcialAntesYDespuesDelRelleno corta antes de columnas y después del relleno; elimina después un índice/FK de la fixture para comprobar su reconstrucción. testHuerfanoDetieneConIdSinEliminarlo conserva el huérfano diagnosticado; duplicados conservan ambas propuestas y 52 tablas. |
+| Definiciones compatibles | testDefinicionExistenteIncompatibleNoSeAceptaPorNombre altera índice, ancho de columna, CHECK y destino FK de la fixture; 08 rechaza cada objeto con su diagnóstico. |
+
+Las ocho pruebas nuevas están en tests/Integration/AgendaB2MysqlTest.php.
+La fixture de corrupción usa FOREIGN_KEY_CHECKS=0 solo para construir deliberadamente el caso huérfano y lo restablece; **08 nunca lo desactiva**.
+BaseV2MysqlTest cambia únicamente el esperado 52→58/nombre de prueba y la lista de migraciones para incluir 08.
+No se cambian esperados clínicos, casos T ni código de aplicación.
+
+### B2.5. Verificación ejecutada, límites y entrega
+
+**Motores:** PHP 8.2.12 y MariaDB 10.4.32 local, configuración de pruebas explícita con 127.0.0.1:3306 y exclusivamente zooki_test_base_v2.
+No se leyeron credenciales de la aplicación ni el archivo de entorno; no se consultó la base de trabajo ni se regeneraron sus usuarios/contraseñas.
+Las únicas altas de usuarios/datos son fixtures en la base de prueba.
+No se instalaron ni modificaron servicios.
+
+- PHP completo sin host: **862 pruebas, 7212 aserciones, 52 omitidas, salida 0**.
+Las omitidas son las pruebas de motor real, incluidas las ocho nuevas.
+- PHP completo con MariaDB: **862 pruebas, 7918 aserciones, cero omitidas, salida 0**, 11:49.780.
+Incluye instalación, actualización, repetición, recuperación, conservación y rechazos de las ocho nuevas pruebas.
+- JavaScript completo existente: **238/238, cero fallos/omisiones, salida 0**, incluida prueba Chromium.
+La ejecución inicial estándar encontró EBUSY al eliminar el perfil temporal de Chromium y quedó pendiente; se detuvieron solo sus procesos identificados.
+Se repitió con node --test --test-concurrency=1 --test-force-exit: reporte completo 1..238, sin cambiar tests ni omitir aserciones.
+- En la primera ejecución específica de las ocho nuevas, una expectativa exigía excepción al asignar una columna generada.
+MariaDB ignoró esa asignación con advertencia; se corrigió la prueba para comprobar el valor calculado real, admitiendo la excepción de MySQL, sin aceptar el 999 enviado.
+La ejecución PHP completa posterior es la evidencia final en verde.
+- MySQL 8 **no verificado**: no se identificó un servidor disponible/configurado; Workbench es cliente y no había Docker invocable.
+La consulta no privilegiada de servicios no estuvo disponible; no se cambió ni instaló ninguno.
+La compatibilidad nativa y las ramas de metadata MySQL deben confirmarse en CI/revisión; MariaDB no se presenta como sustituto de esa evidencia.
+- Mermaid de MER/Modelos permanece idéntico; solo cambia texto de estado/diccionario.
+No se recorrieron pantallas ni se regeneraron PDF/Word.
+Los conteos funcionales siguen **96 HU, 430 RE y 120 RN**, sin IDs/revisión/versión nuevos.
+- Verificación de alcance: 58 tablas y mismos campos en 01/drawDB/MER; fixture fiel; antecedentes íntegros; git diff --check sin incidencias.
+No se modifican scripts/migrar.php, helpers/Migrador.php ni docker/iniciar.sh: se conserva migración satisfactoria → carga de conocimiento.
+En XAMPP la guía sigue php scripts/migrar.php y después php scripts/cargar_conocimiento.php; no se ejecutaron contra la base de trabajo.
+
+**Archivos:** database/01_schema.sql; database/08_agenda_grafo_ii.sql; database/modelo/drawdb_schema_v2.sql; tests/Fixtures/agenda_alpha4.sql; tests/Integration/AgendaB2MysqlTest.php; tests/Integration/BaseV2MysqlTest.php; documentacion/MER.md; documentacion/ERS.md; documentacion/FichaTecnica_Zooki.md; documentacion/Modelos.md; specs/HU-4.15-ingreso-emergencia.md; specs/M4-agenda-grafo-ii.md; agentes/estado.md.
+La modificación previa del estado con el encargo del arquitecto se conserva.
+
+**Pendientes:** revisión independiente de B2, verificación MySQL 8 y pruebas de los escritores/concurrencia al integrar C.
+La migración no demuestra reservas exclusivas, HC concurrentes, legitimidad de huellas, conciliación o SMTP.
+B2 no queda aprobada por esta entrega; no se inicia C1 ni se despliega.
+
+**Comandos de commit para el usuario, uno por línea, compatibles con CMD/PowerShell:**
+
+    git add database/01_schema.sql database/08_agenda_grafo_ii.sql database/modelo/drawdb_schema_v2.sql tests/Fixtures/agenda_alpha4.sql tests/Integration/AgendaB2MysqlTest.php tests/Integration/BaseV2MysqlTest.php documentacion/MER.md documentacion/ERS.md documentacion/FichaTecnica_Zooki.md documentacion/Modelos.md specs/HU-4.15-ingreso-emergencia.md specs/M4-agenda-grafo-ii.md agentes/estado.md
+    git commit -m "feat(agenda): preparar esquema y migracion M4 (RE-4.9.3, RE-4.15.3)"
+
+### B2 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor. Veredicto: con corrección requerida B2.1; no aprobar B ni empezar C1 todavía.** Se conserva la entrega y su evidencia como antecedente. El revisor solo modifica este plan y agentes/estado.md; no corrige la implementación que revisa.
+
+**Hallazgos:**
+
+- **H-B2-1 / P1 — CI incompatible con el nuevo número de tablas.** `.github/workflows/ci.yml:95` y `:146` siguen exigiendo 52 tanto tras cargar 01+02 como al inicializar el volumen MySQL. `database/01_schema.sql` ahora crea 58. Reproducción: seguir esos dos pasos del trabajo `base-v2-mysql`; el conteo será 58 y la comparación con 52 devuelve salida 1. El primero detiene el trabajo antes de llegar al migrador/PHPUnit; el segundo también fallaría una vez corregido el primero. Afecta a la verificación de instalación/despliegue de B2, AGENTS «Definición de terminado» y transición P20 del plan. Actualizar ambos esperados coherentemente, conservando los 52 históricos de alpha.4 donde sí corresponden.
+- **H-B2-2 / P2 — las ocho pruebas nuevas nunca corren con motor real en el CI actual.** `.github/workflows/ci.yml:120` ejecuta únicamente `tests/Integration/BaseV2MysqlTest.php`. El trabajo PHP general no configura host MySQL y `AgendaB2MysqlTest::setUp()` omite sus ocho pruebas sin esa variable. Reproducción: examinar ambas invocaciones del workflow; ninguna selecciona `AgendaB2MysqlTest` con host configurado. Por tanto no quedan verificados en MySQL 8 los casos de actualización alpha.4, recuperación DDL, conservación, auxiliares y rechazo de definiciones incompatibles. Afecta al contrato B1.5/P20 y a la evidencia de datos de RE-4.9.3/RE-4.15.3, sin declarar cerrados esos flujos funcionales. Incluir ambas clases en el trabajo MySQL 8, secuencialmente y con base PHPUnit explícita `zooki_test_base_v2`; no paralelizar escritores de esa misma base.
+
+**Verificación propia del alcance y diseño:** diff y Anexo B2 cotejados con B1/B1.1, MER y Modelos §2–§8/§13.4. Se materializan seis tablas y cuatro ampliaciones; los campos de las 58 tablas coinciden entre 01 y drawDB, y los 108 campos añadidos están descritos en el MER. Los 27 bloques Mermaid permanecen idénticos a HEAD; no se repite su renderizado ni se presenta como nueva verificación funcional. Continúan 96 HU, 430 RE únicos sin saltos y 120 RN. Fixture alpha.4 y 01 previo tienen el mismo blob Git `7bc17ed21f15126d654e262cee75b9063602ff4d`. 02/03–07, aplicación, permisos, versión y conocimiento intactos; `git diff --check` sin incidencias.
+
+Se revisaron prevalidación y diagnóstico, columnas/índices/FK/CHECK, unicidad nullable generada, relleno desde snapshot propio y marcador de reanudación. Los casos nuevos comprueban estructura final por ambas rutas, repetición, cortes DDL, conservación de filas/HC/configuración, rechazos de cruces y corrupción explícita. Lo desconocido permanece NULL; la migración no inventa duración desde el tipo actual, presencia ni pausas. No se confunde integridad local SQL con permisos, huellas legítimas, titularidad, solapes, exclusión concurrente, conciliación o envío SMTP; siguen pendientes de C. El diagnóstico usa una rutina transitoria y requiere permisos de rutina, ya declarado en el anexo; el DDL no promete rollback global.
+
+**Suites propias:** PHP completo sin host: **862 pruebas / 7212 aserciones / 52 omitidas, salida 0**. PHP completo con **MariaDB 10.4.32: 862 pruebas / 7918 aserciones / cero omitidas, salida 0**, 09:16.404. JS completo secuencial con Chromium: **238/238, cero fallos u omisiones, salida 0**, sin modificar tests. MySQL 8 no disponible/verificado localmente; no se sustituye esa evidencia por MariaDB. No se consultan la base manual, credenciales ni archivo de entorno; el único destino de las pruebas con motor es `zooki_test_base_v2`.
+
+**Siguiente: B2.1, corrección de verificación.** Codex ejecutor ajusta únicamente el workflow y cualquier incompatibilidad real que demuestre el motor, sin ampliar datos o reglas por iniciativa propia. Mantener los pasos de instalación, migrador repetido y volumen vacío; añadir las ocho pruebas al trabajo MySQL 8 y distinguir evidencia local de evidencia CI pendiente. Actualizar anexo/estado y entregar a revisión independiente. Sin modificar migraciones publicadas, lógica de aplicación, diagramas, versión o descargas para resolver estos dos hallazgos. Guardar y subir tras revisar la corrección; antes de integrar/desplegar, confirmar el resultado real del trabajo MySQL 8.
+
+**Prueba manual:** no hay interfaz ni flujo nuevo en B2; no corresponde repetir pantallas o aplicar esta entrega pendiente de corrección a la base manual. Las pruebas por usuario se entregarán en C. No hay decisiones nuevas de producto que pedir o anotar como confirmadas.
+
+## Anexo B2.1 — Resultado
+
+**Fecha:** 2026-10-18.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto, en otra conversación.
+**Estado:** entregada, pendiente de revisión.
+El autor no aprueba la entrega ni declara cerrados H-B2-1/H-B2-2.
+
+### Corrección del control automático
+
+- **H-B2-1:** los dos conteos del esquema actual en .github/workflows/ci.yml pasan de 52 a 58: instalación desde 01+02 y creación desde volumen vacío.
+La fixture alpha.4 y su aserción histórica de 52 tablas permanecen intactas.
+Las comprobaciones de tablas y roles del volumen quedan en líneas separadas, conservando ambos esperados.
+- **H-B2-2:** el paso PHPUnit de base-v2-mysql ejecuta primero BaseV2MysqlTest.php y después AgendaB2MysqlTest.php, sin filtros ni paralelismo.
+ZOOKI_TEST_MYSQL_DB queda explícita como zooki_test_base_v2 en el entorno común de ambas invocaciones.
+El servicio sigue siendo mysql:8.0, con host/usuario y resto de configuración CI anteriores.
+shell: bash usa la ejecución de GitHub con -e -o pipefail: un fallo de la primera clase interrumpe el paso; un fallo de la segunda también lo hace fallar.
+No hay continue-on-error, captura que convierta un fallo en éxito ni debilitamiento de aserciones.
+
+Se conservan los pasos de instalación, conexión exclusiva del migrador CI, dos pasadas del migrador, conteos de semilla y arranque de volumen vacío.
+No se ejecutó localmente el paso CI que genera su archivo de entorno.
+No se leyó ni escribió el archivo de entorno local ni se consultó la base manual.
+
+**Trazabilidad:** transición P20 y contrato B1.5; evidencia de datos de RE-4.9.3/RE-4.15.3 conforme al Anexo B2.
+Esta corrección incorpora al control MySQL las ocho pruebas ya existentes; no implementa los flujos funcionales, permisos, concurrencia de aplicación ni conciliación B1/B1.1.
+Modelos §2–§8/§13.4 conserva íntegro su destino; no se modifican diagramas ni se anuncia un renderizado nuevo.
+
+### Evidencia propia y comandos ejecutados
+
+- YAML validado con Python/PyYAML 6.0.3, cargador con rechazo de claves duplicadas y conservación de las claves de GitHub.
+Se comprobaron servicio mysql:8.0, base explícita, orden exacto de las dos invocaciones y ausencia de tolerancia de errores.
+Comparación estructural completa contra el workflow previo: solo cambian los dos esperados, la separación de las aserciones finales y la configuración/invocación del paso PHPUnit.
+Se validó además el bloque extraído con Bash local --noprofile --norc -e -o pipefail y un comando PHPUnit simulado: fallo inicial 7 impide la segunda llamada; fallo final 9 devuelve 9; ambas llamadas correctas devuelven 0, siempre en orden.
+Es una comprobación del control del shell, no una ejecución del runner GitHub ni de MySQL 8.
+El intento aislado no inició Bash (salida 3221225794); la repetición fuera del aislamiento verificó los tres resultados.
+- Enumeración real mediante PHPUnit --list-tests: **44 pruebas BaseV2MysqlTest y ocho AgendaB2MysqlTest, 52 en total**.
+Incluye instalación/actualización/repetición, conservación, recuperación DDL, auxiliares, FK/CHECK, duplicados, huérfanos y definiciones incompatibles del Anexo B2.
+- Motor identificado mediante SELECT VERSION(): **10.4.32-MariaDB**, con PHP 8.2.12.
+La primera ejecución aislada terminó con salida 2: Cannot open bootstrap script "C:\Users\Usuario\OneDrive\Desktop\Zooki\tests/bootstrap.php".
+Se repitió fuera del aislamiento sin cambiar código, selección ni aserciones.
+La consulta VERSION() aislada devolvió error 2002/10013; fuera del aislamiento identificó el motor anterior.
+- **BaseV2MysqlTest, ejecución nueva B2.1:** 44 pruebas, 613 aserciones, sin omitidas ni fallos, salida 0; 07:26.620.
+- **AgendaB2MysqlTest, ejecución nueva B2.1:** ocho pruebas, 93 aserciones, sin omitidas ni fallos, salida 0; 02:57.553.
+Comenzó después de terminar la primera clase; total específico **52 pruebas y 706 aserciones**, salida final 0, exclusivamente en zooki_test_base_v2.
+
+Comandos de enumeración y ejecución utilizados en PowerShell, además de los scripts Python por entrada estándar (python -) para validar YAML/comparación/shell y git diff --check:
+
+```powershell
+php vendor/phpunit/phpunit/phpunit --list-tests tests/Integration/BaseV2MysqlTest.php
+php vendor/phpunit/phpunit/phpunit --list-tests tests/Integration/AgendaB2MysqlTest.php
+$env:ZOOKI_TEST_MYSQL_HOST = '127.0.0.1'
+$env:ZOOKI_TEST_MYSQL_DB = 'zooki_test_base_v2'
+php vendor/phpunit/phpunit/phpunit tests/Integration/BaseV2MysqlTest.php
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaB2MysqlTest.php
+exit $LASTEXITCODE
+```
+
+Las dos clases comparten únicamente la base de pruebas indicada y no se ejecutan simultáneamente.
+La consulta diagnóstica ejecutada fue C:\xampp\mysql\bin\mysql.exe -h 127.0.0.1 -u root -N -e "SELECT VERSION()", sin seleccionar otra base.
+
+**Antecedente, no ejecución nueva:** suites completas B2 del ejecutor, PHP sin host 862/7212 con 52 omitidas; PHP MariaDB 862/7918 sin omitidas; JS 238/238.
+Se conserva también la evidencia independiente de «B2 — Revisión»; no se repiten suites completas por cambiar solo el workflow.
+No corresponden pruebas de navegador ni exportaciones.
+
+**Alcance incremental B2.1:** únicamente .github/workflows/ci.yml, este plan y agentes/estado.md.
+Los cambios previos de B2 ya estaban presentes al comenzar y se conservan; no se añaden cambios SQL/PHP, tests, versión, servicios, credenciales ni reglas de producto.
+Comparación SHA-256 de los once archivos previos de B2 fuera de plan/estado: idénticos byte por byte, incluidos SQL, PHP, fixture y Modelos.
+Anexos y revisiones anteriores permanecen conservados.
+
+**Pendientes:** revisión independiente y ejecución real en GitHub del trabajo base-v2-mysql con MySQL 8, después del push del usuario, incluidos los controles de instalación/migrador/semilla/volumen vacío.
+MySQL 8 no está disponible/verificado localmente; MariaDB no sustituye esa evidencia.
+No se integra/despliega ni se empieza C1 por esta entrega.
+
+### B2.1 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del Codex ejecutor. Veredicto: aprobada la corrección; H-B2-1 y H-B2-2 cerrados en el workflow.** La validación real de MySQL 8 continúa pendiente de GitHub. No se presenta la ejecución local de MariaDB como resultado del CI ni se da por desplegado el esquema.
+
+**Verificación propia:** lectura del anexo y comparación del workflow actual con su versión anterior (`575ff7d`). YAML cargado con rechazo de claves duplicadas; comparación estructural exacta: ambos esperados 52→58, separación de comprobaciones finales y paso PHPUnit con shell bash, base explícita y dos invocaciones ordenadas. Servicio mysql:8.0 y controles de instalación, semilla, migrador doble y volumen vacío conservados. Conteo independiente de 58 CREATE TABLE actuales y 52 en la fixture histórica. No hay tolerancia de errores añadida ni cambio de diagramas/flujo clínico respecto a lo ya revisado en B2.
+
+Enumeración propia mediante PHPUnit: **44 pruebas BaseV2MysqlTest y ocho AgendaB2MysqlTest**, salida 0 en ambas. El intento dentro del aislamiento no pudo leer el bootstrap de OneDrive; se repitió fuera sin modificar código. Comprobación propia del bloque extraído con Bash y ejecutable simulado: fallo inicial 7 produce salida 7 y una llamada; fallo de segunda clase 9 produce salida 9 y dos llamadas; ambas correctas producen salida 0 y dos llamadas. Se verifica propagación y orden, no se simula una prueba de MySQL 8 ni el runner de GitHub.
+
+No se repiten pruebas de datos o suites completas por un cambio limitado al workflow: permanece la evidencia propia de la revisión B2, **PHP 862/7918 con MariaDB y cero omitidas, PHP 862/7212 sin host con 52 omitidas y JS 238/238**. La nueva ejecución específica del ejecutor en B2.1 (44/613 + 8/93) queda atribuida a su anexo, no al revisor. `git diff --check` sin incidencias. Sin acceso al archivo de entorno, base manual, credenciales ni pantallas.
+
+**Situación Git comprobada:** `e293cc9` ya contiene el workflow corregido y los registros anteriores del plan/estado, mientras once archivos B2 (incluidos migración 08, fixture y clase nueva) siguen modificados o sin seguimiento. No se atribuye quién hizo ese commit ni se presupone push. No se reescribe el historial: guardar todos esos archivos junto con esta revisión en un commit adicional antes de subir, para que GitHub reciba una entrega completa. No basta subir únicamente el commit del workflow.
+
+**Siguiente:** el usuario guarda B2 y esta revisión, hace push y se comprueba el trabajo real `base-v2-mysql`, incluidas ambas clases y la inicialización del volumen. Cierre de B y prompt C1 después de confirmar ese resultado; si aparece una incompatibilidad nativa, se registra y corrige con su error real. No hay nuevas decisiones de producto pendientes de esta corrección.
+
+**Prueba manual:** no corresponde navegador; no se modifican pantallas ni comportamientos de usuario.
+
+### CI de B2 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación. Resultado: fallo nativo confirmado; se requiere B2.2 antes de cerrar B o comenzar C1.** Se consultó GitHub con `gh run list/view`, sin escribir en el repositorio remoto, reejecutar trabajos ni acceder al archivo de entorno. Push confirmado por la ejecución de `34fab4ecbdad160c27b87159144a5a2364a4f5c9`. [Ejecución 39167461641](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39167461641); [trabajo base-v2-mysql](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39167461641/job/117793293152).
+
+**Evidencia real de GitHub:** `build-and-test` aprobado (sintaxis, PHPUnit general y JS). En `base-v2-mysql`, instalación de 01+02 y conteo de 58 aprobados. El paso «Migrador, dos veces seguidas» falla en ambas pasadas de 08 con `SQLSTATE[45000]: 1644 M4-08 CHECK ck_m4_solicitud_espera`. Se omiten por ese fallo semilla, ambas clases PHPUnit con MySQL 8 y volumen vacío. No es evidencia de fallo de las ocho pruebas: todavía no se ejecutaron allí. La aprobación de B2.1 cerraba sus dos hallazgos de configuración, no la compatibilidad nativa aún pendiente.
+
+- **H-B2-3 / P1 — falso rechazo del CHECK recién instalado por la propia entrega en MySQL 8.** `database/08_agenda_grafo_ii.sql:560` exige una cadena normalizada concreta de `CHECK_CLAUSE` para `ck_m4_solicitud_espera`. La definición válida viene del mismo `01_schema.sql:1135`, que acaba de cargarse correctamente; sin datos de negocio todavía, 08 la rechaza al prevalidar. Reproducción confirmada: en MySQL 8 del CI, instalar 01+02 y ejecutar el migrador; se detiene en ese objeto en las dos pasadas. Afecta a B1.5/P20, repetición de instalación y RE-4.15.1/2 (espera sin presencia). Diagnóstico confirmado hasta la comparación incompatible de metadata; **el log no muestra el valor exacto de CHECK_CLAUSE**, por lo que no se afirma una transformación concreta de NOT IN ni se prescribe reemplazo textual a ciegas. B2.2 debe obtener la expresión real y su normalización en MySQL 8, compararla con MariaDB y corregir el reconocimiento conservando semántica, ENFORCED y rechazo de restricciones diferentes. Revisar asimismo las otras comparaciones de CHECK/expresiones generadas para evitar una cadena de parches sin verificar.
+- **H-B2-4 / P2 — las tuberías del paso del migrador ocultan el primer código de error.** `.github/workflows/ci.yml`, paso «Migrador, dos veces seguidas»: el log confirma shell `/usr/bin/bash -e {0}`, sin pipefail, con `php ... | tee ...`. Las dos invocaciones PHP fallan pero la segunda se ejecuta; el paso finalmente sale 1 por no encontrar el texto esperado con grep. Si la segunda consiguiera terminar, la primera podría quedar ocultada. B2.2 debe hacer que cada pasada propague el fallo del migrador manteniendo el log y la comprobación de segunda pasada al día; verificar con fallo simulado antes de atribuir éxito al control de repetición.
+
+**Encargo técnico B2.2:** corregir compatibilidad y añadir regresión de aceptación del CHECK propio/repetición con MySQL 8 y MariaDB, más rechazo de una variante incorrecta (incluida una agrupación lógica distinta si se modifica el normalizador). No eliminar el CHECK, saltarse su validación, aceptar cualquier objeto por nombre ni desactivar restricciones para obtener verde. Mantener fixture alpha.4, conservación, instalación nueva/actualización/repetición/reanudación y permisos. La migración 08 forma parte de M4 todavía sin release/despliegue; una 09 no resolvería un bloqueo que impide terminar 08. Preservar 03–07 publicadas y documentar la corrección de esta entrega en curso, sin reescribir Git. No hay cambio de reglas clínicas, modelo de datos o decisiones de producto.
+
+**Verificación y siguiente:** el ejecutor entrega B2.2 con metadata/error/pruebas reales y anexo, para revisión independiente; usuario hace commit/push y se confirma CI completo antes de C1. Usar exclusivamente zooki_test_base_v2 para las pruebas PHPUnit y nunca la base manual/archivo de entorno. No se repiten suites locales ya verdes para diagnosticar un fallo que solo se ha observado en el motor nativo del CI; la corrección SQL sí requerirá repetir sus pruebas y las suites pertinentes. Sin prueba manual de interfaz ni despliegue en esta revisión.
+
+
+## Anexo B2.2 — Resultado
+
+**Fecha:** 2026-10-18.
+**Autor:** Codex ejecutor, en esta sesión.
+**Revisor previsto:** Codex arquitecto, en otra conversación.
+**Estado:** entregada, pendiente de revisión.
+El autor no aprueba la entrega ni declara cerrados H-B2-3/H-B2-4.
+Se conserva íntegra «CI de B2 — Revisión (2026-10-18)», además de anexos/revisiones anteriores y los cambios pendientes del arquitecto.
+
+### Causa demostrada y metadata observada — H-B2-3
+
+La evidencia GitHub de 34fab4ecbdad160c27b87159144a5a2364a4f5c9 se conserva en la revisión precedente; no se reejecutó ningún trabajo remoto.
+Para obtener metadata real se descargó el ZIP portátil oficial mysql-8.0.46-winx64.zip del CDN de MySQL a una carpeta temporal fuera del repositorio.
+Se inició MySQL 8.0.46 como proceso temporal, con --no-defaults, datos propios y escucha solo en 127.0.0.1:3308, sin registrar/modificar servicios ni leer configuración local.
+MariaDB 10.4.32 existente permanece en 127.0.0.1:3306.
+En ambos motores, todas las instalaciones, alteraciones deliberadas, migraciones y pruebas de esta sesión usan exclusivamente zooki_test_base_v2.
+No se leyó/escribió el archivo de entorno local, se consultó la base manual ni se cambiaron sus credenciales.
+
+**Reproducción anterior a la corrección:** cargar 01_schema.sql + 02_semilla.sql y recorrer todas las sentencias de 08 mediante PDO/nextRowset().
+MySQL 8.0.46 devuelve SQLSTATE[45000]: 1644 M4-08 CHECK ck_m4_solicitud_espera; MariaDB 10.4.32 termina correctamente.
+El CHECK de 01 es estado NOT IN ('espera_presencial','en_atencion') OR (fecha_llegada IS NOT NULL AND id_receptor IS NOT NULL).
+Las cadenas siguientes son metadata leída del motor; la barra inversa visible es un carácter de la cadena, no una transformación supuesta de NOT IN.
+
+**8.0.46: CHECK_CLAUSE y resultado del normalizador anterior, respectivamente:**
+
+```text
+((`estado` not in (_utf8mb4\'espera_presencial\',_utf8mb4\'en_atencion\')) or ((`fecha_llegada` is not null) and (`id_receptor` is not null)))
+estadonotin\'espera_presencial\',\'en_atencion\'orfecha_llegadaisnotnullandid_receptorisnotnull
+```
+
+**10.4.32-MariaDB: CHECK_CLAUSE y resultado del normalizador anterior, respectivamente:**
+
+```text
+`estado` not in ('espera_presencial','en_atencion') or `fecha_llegada` is not null and `id_receptor` is not null
+estadonotin'espera_presencial','en_atencion'orfecha_llegadaisnotnullandid_receptorisnotnull
+```
+
+NOT IN permanece en ambos resultados observados.
+La comparación anterior eliminaba backticks, espacios, paréntesis e introducciones _utf8mb4, pero no los escapes ante comillas que devuelve MySQL.
+Por eso la cadena de MySQL no coincidía con el esperado escrito desde MariaDB.
+Borrar además los escapes indiscriminadamente tampoco sería correcto: la normalización anterior ya podía confundir agrupaciones o espacios/introducciones dentro de literales.
+
+**Corrección de 08, todavía parte de M4 sin release/despliegue:** los 13 CHECK de negocio comparan CHECK_CLAUSE binariamente con las dos serializaciones completas observadas para cada definición propia.
+No se borran paréntesis, escapes, espacios ni fragmentos dentro de literales, ni se decide compatibilidad por nombre solamente.
+Las barras inversas de la serialización MySQL se representan mediante CHAR(92), sin depender del escape de literales del modo SQL de la sesión.
+Una forma no reconocida se rechaza conservadoramente: no se pretende demostrar equivalencia de cualquier expresión SQL alternativa.
+ENFORCED=YES se sigue comprobando donde el motor expone esa metadata; una definición correcta NOT ENFORCED se rechaza.
+Se mantiene exactamente el CHECK declarado en 01 y la semántica clínica; no cambian los DDL de creación, datos, columnas, relaciones ni restricciones.
+
+**Revisión del mismo origen:** 23 comparaciones inspeccionadas/corregidas: 13 CHECK, cuatro verificaciones de las dos expresiones STORED (previas/finales) y seis comprobaciones del alias JSON de MariaDB (previas/finales).
+Las dos generadas también usan comparación binaria con metadata observada, conservando la exigencia STORED y el resto de su definición.
+JSON_VALID(columna) conserva sus paréntesis y la columna concreta; solo compacta formato de esa expresión sin literales.
+No se introduce un parser general ni se desactiva comprobación alguna.
+
+Metadata observada de las generadas:
+
+**8.0.46:**
+
+```text
+pausas_cita.cita_abierta = (case when (`fin` is null) then `id_cita` else NULL end)
+reasignaciones.cita_pendiente = (case when (`estado` = _utf8mb4\'pendiente\') then `id_cita` else NULL end)
+```
+
+**10.4.32-MariaDB:**
+
+```text
+pausas_cita.cita_abierta = case when `fin` is null then `id_cita` else NULL end
+reasignaciones.cita_pendiente = case when `estado` = 'pendiente' then `id_cita` else NULL end
+```
+
+También se observaron escapes en los CHECK solicitud_revision, solicitud_grafo y solicitud_clinica: se corrigen en la misma entrega, sin esperar a que fallen sucesivamente.
+La metadata y las expresiones correctas provienen de 01 sin modificarlo; no se inventa metadata del runner Linux de GitHub a partir de la observación Windows.
+
+### Propagación del migrador — H-B2-4
+
+El paso «Migrador, dos veces seguidas» declara shell: bash, que GitHub ejecuta con -e -o pipefail.
+Conserva php scripts/migrar.php | tee primera.txt, la segunda pasada con segunda.txt y grep de «La base está al día».
+Si PHP falla, tee ya no convierte la tubería en éxito y el paso se detiene antes de la siguiente sentencia.
+No se añade continue-on-error ni captura que oculte fallos.
+
+Comprobación local del bloque extraído del YAML mediante Bash --noprofile --norc -e -o pipefail y PHP simulado, en carpetas temporales:
+
+| Primera pasada | Segunda pasada prevista | Resultado observado |
+|---|---|---|
+| 7 | 0 | Salida 7; primera.txt conservado; segunda no se invoca. |
+| 0 | 9 | Salida 9; ambas invocaciones y registros conservados; grep no convierte el fallo en éxito. |
+| 0 | 0, con «La base está al día» | Salida 0; ambos registros y comprobación final correctos. |
+
+Se validó YAML y que el resto del workflow coincide con el aprobado en B2.1: 58 en ambos conteos actuales, fixture alpha.4/52 intacta, servicio mysql:8.0, ambas clases PHPUnit secuenciales y ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2 explícita.
+No se ejecuta localmente el paso CI que crea su archivo de entorno.
+
+### Regresiones, trazabilidad y resultados reales
+
+Se añaden tres pruebas en AgendaB2MysqlTest, que pasa de ocho a once; BaseV2MysqlTest conserva 44, sin cambios.
+Enumeración real final con PHPUnit --list-tests: 44 + 11 = 55 pruebas seleccionadas por las dos invocaciones del trabajo MySQL, incluidas las ocho anteriores de Agenda y las tres regresiones.
+
+| Prueba nueva | Evidencia exigida |
+|---|---|
+| testB22AceptaMetadataPropiaYRepiteSinAlterarla | Aceptar la metadata de 01, ejecutar 08 dos veces y conservar toda la estructura; MySQL rechaza luego NOT ENFORCED. |
+| testB22RechazaContenidoYAgrupacionDeCheckDistintos | Rechazar otro estado, los mismos tokens con agrupación distinta, un espacio dentro del literal y un fragmento _utf8mb4 dentro del literal; estructura incompatible intacta tras el rechazo. |
+| testB22RechazaExpresionesGeneradasDistintas | Rechazar ELSE 0 en cada generada y restaurar ELSE NULL entre casos; no admitir definición por nombre. |
+
+Se conservan las ocho pruebas anteriores: instalación nueva, actualización alpha.4, repetición, recuperación DDL parcial, conservación de IDs/HC/horas/configuración, unicidad y FK/CHECK entre clínicas, huérfanos y diagnóstico de definiciones incompatibles.
+Trazabilidad: B1.5/P20; RE-4.15.1/2, RN-411/420/421/427 y la integridad de espera presencial; evidencia de datos B2 de RE-4.9.3/RE-4.15.3.
+No se implementan sus comandos funcionales, conciliación ni reglas de C; B1/B1.1 y Modelos §2–§8/§13.4 se conservan.
+No se añaden HU/RE/RN, tablas o cambios de producto.
+
+**Resultados propios B2.2:**
+
+- PHP completo sin host: 865 pruebas, 7212 aserciones, 55 omitidas (clases de motor real), salida 0.
+- JS completo existente: 238/238, sin fallos/omisiones, salida 0; ejecución secuencial con --test-force-exit e inclusión de la prueba automática Chromium, sin recorrido de pantallas.
+- Regresiones B2.2 específicas en MariaDB 10.4.32: tres pruebas, 17 aserciones, sin omitidas/fallos, salida 0.
+- Suite PHP completa MySQL 8.0.46: **865 pruebas, 7938 aserciones, sin omitidas/fallos, salida 0**, 12:31.420.
+- Suite PHP completa MariaDB 10.4.32: **865 pruebas, 7935 aserciones, sin omitidas/fallos, salida 0**, 09:48.894.
+
+La diferencia de tres aserciones entre motores corresponde a las dos comprobaciones exclusivas de ENFORCED en la regresión nueva y al comportamiento ya cubierto de asignación a una columna generada (MySQL lanza excepción; MariaDB conserva el valor calculado con advertencia).
+
+Comandos de pruebas ejecutados con PHP 8.2.12 (PowerShell), sin variables tomadas del entorno de la aplicación:
+
+```powershell
+php vendor/phpunit/phpunit/phpunit
+$env:ZOOKI_TEST_MYSQL_HOST = '127.0.0.1'
+$env:ZOOKI_TEST_MYSQL_DB = 'zooki_test_base_v2'
+$env:ZOOKI_TEST_MYSQL_PORT = '3308'
+php vendor/phpunit/phpunit/phpunit
+$env:ZOOKI_TEST_MYSQL_PORT = '3306'
+php vendor/phpunit/phpunit/phpunit
+node --test --test-concurrency=1 --test-force-exit "tests/Frontend/**/*.test.cjs"
+php -l tests/Integration/AgendaB2MysqlTest.php
+git diff --check
+```
+
+Las suites de cada motor se ejecutan por turnos; no hay dos escritores simultáneos de la misma base ni dos suites completas compartiendo archivos temporales.
+Se ejecutaron además las clases/regresiones específicas descritas, captura PDO de metadata en 3308/3306 y validaciones Python de YAML/shell; son comprobaciones locales, no un CI remoto nuevo.
+
+**Alcance incremental:** database/08_agenda_grafo_ii.sql, tests/Integration/AgendaB2MysqlTest.php, .github/workflows/ci.yml, este plan y agentes/estado.md.
+Verificación final: diff limitado a esos cinco archivos, ocho pruebas previas intactas, comparaciones ajenas a metadata/DDL/datos de 08 sin cambios, anexos/revisiones anteriores conservados y git diff --check sin incidencias.
+08 es la corrección de la entrega M4 en curso; no se crea 09 ni se modifica 03–07.
+01/02, fixture alpha.4, aplicación, permisos, MER/drawDB/Modelos, conocimiento, versión y exportaciones intactos.
+Se conserva el trabajo pendiente del arquitecto y no se reescribe Git.
+
+**Pendientes:** revisión independiente de B2.2 y ejecución completa de CI después del commit/push del usuario: migrador dos veces, semilla, ambas clases MySQL y volumen vacío.
+La evidencia nativa local de MySQL 8.0.46 Windows no equivale a una ejecución nueva del runner MySQL 8 Linux de GitHub.
+El proceso portátil de MySQL 8 se cerró tras terminar su suite, verificando PID/ruta antes del cierre; no se registró ningún servicio.
+Después se retiraron exclusivamente su ZIP, binarios y datos temporales, comprobando la ruta exacta y la ausencia del proceso antes de borrar la carpeta creada para B2.2.
+No se reejecutan trabajos remotos ni se empieza C1; no hay prueba manual de interfaz.
+
+### B2.2 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: aprobada; H-B2-3/H-B2-4 cerrados en la implementación revisada, sin nuevos hallazgos bloqueantes.** No se implementa ni corrige SQL desde la sesión revisora. Sigue pendiente confirmar la nueva ejecución completa de GitHub antes de cerrar B o preparar C1.
+
+**Alcance comprobado:** cinco archivos: migración 08, clase AgendaB2MysqlTest, workflow y registros en plan/estado. Comparación automatizada con HEAD: fuera de las 23 condiciones de metadata y tres comentarios nuevos, 08 permanece idéntica, incluidos DDL, relleno, índices, FK, controles ENFORCED y diagnóstico. Se cotejan las 13 listas de CHECK y las dos generadas (verificación previa/final) con la definición de 01 y la metadata transcrita en el anexo. Las otras seis condiciones corresponden al alias JSON de MariaDB. No hay cambios de datos/modelo de negocio, aplicación, permisos, 01/02/03–07, fixture histórica, MER/drawDB, Modelos, versión o descargas.
+
+**H-B2-3:** las comparaciones binarias reconocen únicamente las dos formas documentadas y conservan paréntesis, literales, espacios y escapes, sin el normalizador destructivo anterior. CHAR(92) representa las barras de la forma MySQL sin depender del escape de una cadena SQL literal. Se mantiene la exigencia de aplicación efectiva y de generación STORED. Una serialización futura no reconocida se rechazará conservadoramente: la solución no promete aceptar toda expresión SQL equivalente. No cambia la regla de espera presencial ni los flujos Modelos §2–§8/§13.4; sigue siendo preparación de datos B1.5/P20, no implementación de C.
+
+**Pruebas revisadas:** comparación independiente confirma que las ocho pruebas anteriores son idénticas; se agregan exactamente tres métodos. Cubren estructura inalterada tras repetición, NOT ENFORCED en MySQL, estado/literal/agrupación distintos y ELSE 0 en ambas generadas. Comprobación propia del normalizador anterior sobre las variantes nuevas demuestra que la agrupación cambiada, el espacio dentro del estado y el fragmento _utf8mb4 dentro del literal colisionaban con la cadena correcta; los nuevos comparadores ya conservan esas diferencias. Enumeración propia de Agenda: **11 métodos**, salida 0; sintaxis PHP válida. El trabajo CI mantiene las dos clases secuenciales, que seleccionan 44+11 casos.
+
+**H-B2-4:** comparación estructural propia del YAML: el único cambio es shell bash en el paso del migrador; YAML sin claves duplicadas. Se ejecuta el bloque extraído con PHP simulado y tee bajo Bash -e -o pipefail: error inicial 7 devuelve 7 y una llamada; error posterior 9 devuelve 9 y dos llamadas; ambas correctas devuelven 0 y dos llamadas. Se verifica conservación de primera.txt/segunda.txt y que la segunda no se crea si falla la primera. Los temporales de esta comprobación quedan fuera del repositorio y dentro de la raíz de revisión verificada antes de su retirada. Sin ejecución ni escritura remota de CI.
+
+**Suites propias del revisor:** PHP completo sin host **865 pruebas / 7212 aserciones / 55 omitidas, salida 0** (43.480 s); PHP completo con **MariaDB 10.4.32: 865 pruebas / 7935 aserciones / cero omitidas, salida 0** (09:35.291); JS completo secuencial con Chromium **238/238, cero fallos/omisiones, salida 0**. La ejecución nueva MySQL 8.0.46 **865/7938** y MariaDB **865/7935** del ejecutor se conserva atribuida al Anexo B2.2. El revisor no repite MySQL 8: la instancia portátil fue retirada por el ejecutor; se requiere confirmar de todas formas el runner Linux de GitHub después del push. No se presenta evidencia del ejecutor como ejecución independiente del revisor ni como CI nuevo.
+
+No se accede al archivo de entorno ni a la base manual. Las pruebas propias con motor usan exclusivamente zooki_test_base_v2. No hay pruebas de interfaz, nuevas decisiones de producto o cambios en sus permisos. Se conservan las revisiones anteriores como historial; la ejecución CI fallida de 34fab4e no se reescribe ni se atribuye a una corrección todavía sin push.
+
+**Siguiente:** el usuario guarda la corrección y los registros en un commit adicional, hace push y se comprueba la nueva ejecución completa: migrador dos veces, semilla, ambas clases MySQL y volumen vacío. Cierre B/prompt C1 solo tras CI verde. No se adelanta integración ni despliegue. `git diff --check` sin incidencias; el aviso LF→CRLF del archivo de pruebas es informativo y no cambia su contenido lógico.
+
+### Cierre de B — Revisión (2026-10-18)
+
+**Codex arquitecto confirma B cerrada.** Push de B2.2 comprobado en `663ea26997e8799458034261271ef7d0b54487f0`; [ejecución GitHub 39171114993 aprobada](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39171114993). Se consultó y siguió su ejecución existente mediante gh run list/view/watch; sin reejecutar trabajos, publicar código o ejecutar operaciones Git de escritura.
+
+**Evidencia del runner Linux:** trabajo `base-v2-mysql` aprobado, MySQL **8.0.46** identificado en el log. Instalación 01+02 y 58 tablas en verde; migración 08 aplicada, segunda pasada al día y semilla sin duplicados. BaseV2MysqlTest **44 pruebas/613 aserciones** y AgendaB2MysqlTest **11/113**, ambas sin omisiones y en verde: **55/726** con base PHPUnit exclusiva zooki_test_base_v2. Volumen vacío aprobado con **58 tablas y cuatro roles**. Se comprueban también los pasos posteriores, cierre del contenedor y conclusión completa del trabajo, no solo un fragmento del registro.
+
+`build-and-test` aprobado: sintaxis PHP, suite general **865/7212 con 55 omitidas sin host** y JS **238/238**, cero fallos. Las 55 de motor se ejecutan en el trabajo MySQL descrito; no se presenta como una sola invocación de 865 pruebas con host. Se mantiene la evidencia local propia MariaDB **865/7935, cero omitidas** de la revisión B2.2, sin repetirla por esta comprobación remota.
+
+H-B2-1/H-B2-2 de configuración y H-B2-3/H-B2-4 de compatibilidad/propagación quedan cerrados con esta evidencia. Se conserva como antecedente el fallo nativo de 34fab4e. Contrato y preparación de datos B1/B1.1/B2 completados; los flujos, exclusión concurrente, permisos operativos, conciliación y eventos pendientes siguen perteneciendo a C. No se declara desplegada la migración ni cerrada funcionalmente una HU por tener su esquema preparado.
+
+**Siguiente:** el usuario guarda este cierre documental; preparar prompt solo C1 (HU-7.4, marca/teléfono de urgencias y tipos con duración/margen/pausable), conforme al alcance y decisiones de §6. Sin nuevas decisiones de producto o pruebas de navegador en el cierre de B; las de interfaz se entregarán con C1.
+
+## Encargo C1 — Marca y tipos (2026-10-18)
+
+Preparado por Codex arquitecto a petición del usuario. B cerrada y su cierre guardado en 72c4e72; rama v2/m4-agenda limpia al comprobar antes de registrar este encargo. Escribe Codex ejecutor, revisa esta conversación independiente. No es entrega o aprobación de C1; el commit de su implementación será después de revisión.
+
+**Alcance:** componentes C1 de HU-7.4/RE-7.4.1–6 y configuración de RE-4.6.1, con RN-009/415/421/701/427, RNF-11 y decisiones de marca de §6. Administrador de la clínica activa gestiona nombre/logo/contacto/teléfono de urgencias y altas/edición/estado lógico de tipos con duración positiva, margen no negativo y pausable explícito. Validación compartida, aislamiento, rutas/RBAC/CSRF y auditoría atómica. Conservar datos y diseño de Configuración/HU-7.1; no extender su pantalla a horarios del veterinario, motor, suscripciones o parámetros HU-7.5.
+
+Marca en salidas existentes propias de cada clínica, correos y documentos, sin elegir una clínica arbitraria para un contexto global; historial multi-clínica conserva Zooki y procedencia por acto, portal público documental sin personalización. No crear nuevos canales/motores de correo ni descargar recursos remotos en servidor para resolver el logo. Partir de la representación existente y validadores/patrones del proyecto; cualquier regla de producto no resuelta se plantea con propuesta, no se registra como confirmada.
+
+Gestionar tipos sin borrado físico ni reescritura de snapshots; un tipo inactivo no se ofrece ni se admite para una nueva reserva por petición manipulada, conservando lectura histórica. Revisar copia inicial para transportar explícitamente los campos documentados sin sobrescribir clínicas existentes ni inferir pausable del nombre. Usar el contrato transaccional B1 para los nuevos escritores de configuración, sin adelantar la sustitución de todos los escritores clínicos o GET_LOCK de HC.
+
+**Límites de aceptación:** no declarar HU-7.4 completamente operativa por construir su formulario. RE-7.4.3 depende del cálculo real de C3; la rama cerrada de urgencias de RE-7.4.1 sigue en C4a y el respeto operativo de pausable de RE-7.4.6 en C7a. Entregar sus datos/lecturas y pruebas C1, manteniendo pendientes esas partes, sin simularlas en producción. La precisión de la fila C1 recoge la matriz por RE ya existente, sin cambiar decisiones o alcance del módulo.
+
+**Modelo de proceso:** Modelos §9 rige contexto/aislamiento; §2/§4/§6 consumen marca/teléfono/tipos en etapas posteriores. Falta un diagrama específico de edición de marca/tipos: añadirlo en Modelos durante C1, con permisos, validación/CSRF, transacción/auditoría y ramas de error reales. No modificar los otros flujos para justificar un alcance no pedido.
+
+**Verificación/entrega:** P01/P19 y trazabilidad por RE, Norte/Sur y contexto propietario/veterinario/superadmin rechazados para gestionar, inactivos y preservación histórica, rollback ante fallo de auditoría, copia inicial y marca correcta por salida. JS de formularios/errores/actualización inmediata y suites PHP completas con/sin host y JS; motor real exclusivamente zooki_test_base_v2, MySQL 8/MariaDB identificados y CI diferenciado. Anexo C1, estado entregada pendiente de revisión, 3–5 pruebas manuales por usuario en escritorio/celular y comandos simples de commit después de revisión. Sin versión/exportaciones de cierre, nuevas migraciones por comodidad, commit/push del agente o inicio de C2.
+
+## Anexo C1 — Resultado (2026-10-18)
+
+**Autor: Codex ejecutor. Estado: entregada, pendiente de revisión por Codex arquitecto en otra conversación.** No es aprobación ni cierre de toda HU-7.4. Se conservan los anexos/revisiones anteriores y el encargo pendiente del arquitecto. Alcance exclusivo C1; C2 no iniciada.
+
+### Implementación y contrato preservado
+
+- `ConfiguracionClinica` resuelve la clínica desde el contexto, exige administrador y revalida clínica/usuario/vínculo activos. Las cinco rutas AJAX nuevas y la vista pasan por `Security`; POST/CSRF y validación servidor para cada escritura. Un formulario con otra clínica se rechaza, no cambia el contexto. Los IDs de tipos se buscan siempre dentro del alcance autorizado; veterinario, propietario y superadministrador no adquieren gestión por invocar el modelo/ruta.
+- Nuevos escritores: transacción exterior, candados de clínica → usuario actor → vínculo → configuración/tipo y relecturas actuales. Cambio y auditoría antes/después se confirman juntos; si falla auditoría, rollback completo. No se cambia el protocolo global de HC/GET_LOCK ni se acredita la concurrencia operativa de C3 con estas pruebas.
+- Nombre/logo/contacto/urgencias usan los campos existentes de `clinicas`. Se reutilizan validadores de clínica/teléfono/correo; tamaños de tipo/logo e INT salen del esquema. El logo conserva representación URL/ruta en `url_logo`, con salida escapada y rechazo de esquemas ejecutables; no se descargan imágenes en servidor ni se crea un canal de subida. Contactos opcionales se guardan como NULL si están vacíos.
+- Altas/ediciones de tipos guardan duración positiva, margen no negativo y pausable elegido expresamente; se desactiva/reactiva sin DELETE. Los cambios no recorren ni reescriben snapshots de citas. Catálogo de nuevas reservas excluye inactivos y servidor los rechaza por petición manipulada; lectura histórica sigue disponible. La copia inicial transporta explícitamente margen 10/pausable 1, defaults existentes de 01/MER, sin inferencia por nombre ni sobrescritura de personalizaciones, incluso al repetirla.
+- Configuración agrega tarjetas con el diseño existente y conserva la vista/scripts de horarios HU-7.1. Límites y caracteres compartidos, validación local/remota mientras se escribe, mensajes por campo, respuesta canónica aplicada antes del toast, protección de doble envío y recuperación tras error. Guardar/desactivar/reactivar no añaden confirmaciones. La clínica oculta del formulario permite detectar un cambio de contexto entre lectura y guardado.
+- `MarcaClinica` compone salidas desde la clínica autorizada o la fila del acto ya autorizado. Portal muestra marca/contactos por clínica vinculada. Correos existentes de citas, recordatorios, vigilante, aviso de ficha e invitaciones/restablecimientos del personal reciben la marca de su evento/contexto, sin cambiar destinatarios/procesos. La plantilla recibe marca opcional por llamada: mensajes globales conservan Zooki y no heredan una marca anterior.
+- Los estilos existentes del imprimible del personal se extraen a CSS externo conservando todas sus reglas, sin CSS/JS en línea nuevo. Documentos clínicos existentes del portal y del personal conservan Zooki como cabecera global y marca/procedencia por acto, incluso cuando hay Norte y Sur. Se enriquecen los JOIN autorizados con campos de presentación, conservando los filtros y permisos anteriores. Descargas públicas documentales sin personalización.
+- Nuevo diagrama específico `Modelos.md` §15 con permisos, validación, CSRF, orden transaccional, auditoría, rollback y estados de interfaz. Los 26 bloques Mermaid previos permanecen idénticos. Sin nuevos RE/RN/campos/tablas/migraciones, versión, revisión documental o exportaciones de cierre.
+
+### Trazabilidad C1 → evidencia real (P01/P19)
+
+`MTC` = `tests/Integration/MarcaTiposClinicaTest.php` (ocho casos). `CJS` = `tests/Frontend/ConfiguracionClinica.test.cjs` (cinco casos). Son pruebas implementadas, a diferencia de las P operativas todavía propuestas del inventario A.
+
+| RE / reglas | Componente entregado y prueba | Parte que permanece pendiente |
+|---|---|---|
+| RE-7.4.1; RN-009/421 | Editor y portal con nombre/logo/contactos/teléfono de urgencias. MTC `testMarcaYTiposSoloCambianEnClinicaActivaConAuditoria`, `testControladorExigeCsrfYDevuelveEstadoCanonico`, `testMarcaEnPortalCorreoYDocumentoSinImponerClinicaGlobal`; CJS validación/actualización/error. | Aviso de urgencia con clínica cerrada: C4a/P13. |
+| RE-7.4.2; RN-009/427 | CRUD lógico, duración/margen/pausable explícitos; MTC `testEditarYDesactivarConservaSnapshotsEImpideReservarConTipoInactivo`, `testValidacionServidorPorCampoNoEscribe`, `testCopiaExplicitaRepetibleRespetaPersonalizaciones`; CJS límites/doble envío. | Revisión independiente y prueba manual; sin reescritura histórica ni borrado físico. |
+| RE-7.4.3 y configuración RE-4.6.1; RN-415 | Campo margen configurable y lectura/snapshot existente preservados. MTC validación, copia y conservación de snapshots; prueba real BaseV2 C1 acepta margen 0. | Consumo efectivo del margen en disponibilidad/cascada: C3/P02/P09; no cerrado por este formulario. |
+| RE-7.4.4 | Marca opcional por llamada/evento y procedencia por acto. MTC `testMarcaEnPortalCorreoYDocumentoSinImponerClinicaGlobal` verifica datos del portal, HTML de correo, llamada global posterior y documento renderizado con Norte/Sur/Zooki. Regresiones de recordatorios, portal, invitaciones e imprimible en las suites completas. La aserción JS anterior de clínica de alerta sigue la composición compartida y comprueba nombre/escape. | Comprobación visual del usuario en salidas existentes y cierre F; futuros flujos mantienen sus respectivas etapas. |
+| RE-7.4.5; RN-701/RNF-11 | MTC aislamiento Norte/Sur, IDs ajenos, contextos/roles, CSRF, auditoría y rollback de marca/alta/edición/estado; matriz de rutas incluida en suite. BaseV2 `testM4C1MarcaTiposYAuditoriaAtomicaEnElEsquemaReal` verifica escritura/aislamiento y rollback real con trigger que rechaza auditoría. | Revisión independiente; exclusión concurrente del motor/otros escritores en C3 y etapas correspondientes. |
+| RE-7.4.6; RN-427 | Elección explícita, persistencia y lectura de pausable; cirugía con pausable 0 y margen 0 sin inferencia clínica. MTC/CJS y BaseV2 C1. | Respeto de pausable en interrupción/reanudación real: C7a/P14. |
+
+### Comprobaciones manuales propuestas al usuario
+
+Realizar estas cinco comprobaciones en escritorio y celular, después de la revisión; no ejecutadas por el agente. Usar usuarios/datos de prueba existentes, sin regenerar contraseñas ni tocar bases mediante comandos de esta entrega.
+
+1. **Ana Norte:** Configuración → cambiar nombre, logo URL/ruta y contactos de Norte. Guardar y comprobar preview/formulario inmediatos, volver a cargar y verificar persistencia. Dejar un nombre demasiado corto y un teléfono con letras: restricción al escribir/pegar y mensaje junto al campo. Los horarios anteriores siguen visibles y operativos.
+2. **Carla Sur:** comprobar marca/tipos propios; editar contacto de Sur y confirmar que Norte con Ana conserva los suyos. No debe verse un tipo creado en Norte dentro de Configuración de Sur.
+3. **Ana Norte:** crear un tipo con duración 30, margen 0 y pausable No; editarlo, desactivar y reactivar. Aviso breve y lista inmediata sin confirmación adicional ni duplicado al pulsar dos veces. Con Beto, un tipo desactivado no se ofrece para una reserva nueva; la cita previa conserva hora/duración/margen originales.
+4. **Beto Norte:** abrir directamente `index.php?action=admin_configuracion`: acceso denegado. Imprimir la historia de una mascota autorizada: cabecera Zooki y marca de la clínica de cada acto; la edición de marca no atribuye actos ajenos a Norte.
+5. **Fabio/Gina:** Fabio ve la marca de cada clínica vinculada en su portal y Zooki con procedencia por acto al imprimir una historia global autorizada. Abrir un correo existente de un evento Norte y otro Sur cuando los haya: marca correspondiente, sin mezclas. Fabio y Gina no pueden gestionar Configuración por URL directa. Las descargas públicas del portal documental siguen siendo globales.
+
+### Verificación propia de C1
+
+- PHP completo con motor real **MariaDB 10.4.32**, exclusivamente en `zooki_test_base_v2`: **874 pruebas / 8017 aserciones / cero omitidas, salida 0**, 09:57.240. Incluye 45 casos BaseV2MysqlTest y 11 AgendaB2MysqlTest; el caso nuevo C1 usa el esquema real y comprueba rollback ante fallo de auditoría. No se presenta como MySQL 8.
+
+- PHP 8.2.12, suite completa sin host: **874 pruebas / 7283 aserciones / 56 omitidas de motor, salida 0**, 00:40.964. Incluye las ocho pruebas C1 de SQLite; las pruebas de motor no se atribuyen a SQLite.
+- JS completo secuencial: **243/243, cero fallos/omisiones, salida 0**, 4.731 s, incluidos los cinco casos C1 y las regresiones existentes con Chrome automático sin interfaz. No se recorren pantallas de la aplicación.
+- Sintaxis: **33 PHP modificados/nuevos válidos**. Diagrama nuevo de Modelos §15 renderizado a SVG con Mermaid CLI 12.0.0 y Chrome; **1/1**, sin regenerar documentos del portal. Comparación de los 26 bloques previos: idénticos; matriz de inventario con **107 RE únicos** conservada. Reglas CSS previas del imprimible del personal comparadas sin comentarios/espacios: idénticas tras la extracción.
+- Comandos ejecutados: `php vendor/phpunit/phpunit/phpunit` con host ausente y luego con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1`, puerto 3306, usuario de pruebas local y `ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2` explícito; `TRUSTED_PROXIES=127.0.0.2` evita la lectura de configuración local de auditoría. `node --test --test-concurrency=1 "tests/Frontend/**/*.test.cjs"`; sintaxis mediante `php -l` de cada PHP cambiado; CLI Mermaid sobre el bloque nuevo con salida temporal fuera del repositorio; `git diff --check` sin incidencias.
+- Se corrigieron durante verificación dos acoplamientos de pruebas: el enumerador de rutas requiere comillas dobles como el enrutador existente, y el test nuevo del imprimible se aísla en proceso propio para no consumir el require_once de una regresión anterior. Las comprobaciones JS de procedencia/pie siguen los helpers/CSS externos manteniendo sus aserciones de nombre, escape y reglas. Los resultados anteriores son de la ejecución final, no de las pasadas de desarrollo que detectaron esos problemas.
+- Alcance inspeccionado: **43 archivos** de configuración, consumidores, presentación, pruebas y registros. Sin cambios en 01/02/03–08, MER/drawDB, credenciales, servicios, versión, conocimiento clínico o descargas. No se lee/escribe `.env` ni se consulta la base manual. No se hace commit/push/merge/tag ni cambios de rama.
+
+**Pendientes:** revisión independiente de C1, las cinco comprobaciones visuales del usuario y CI completo de esta entrega tras su commit/push. MySQL 8 no se ejecuta localmente para C1: la instancia portátil previa fue retirada; el servidor local disponible se identifica como MariaDB. El CI verde MySQL 8 de B/72c4e72 es antecedente, no evidencia nueva de C1. Permanecen las dependencias C3/C4a/C7a indicadas en la tabla; no hay nuevas decisiones de producto ni aprobación propia.
+
+### C1 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: con corrección requerida C1.1; H-C1-1 abierto.** No se cambia código de aplicación desde la revisión; solo se actualizan plan/estado. Revisión cerrada con las suites completas propias y la corrección pendiente descrita abajo.
+
+**H-C1-1 / P2 — el bloque de marca de los correos pierde la separación de sus datos.** `models/MarcaClinica.php:58–65` concatena strong/span sin separadores y `config/EmailService.php:320/364` inserta ese mismo bloque con correo=true, pero la plantilla no incluye las reglas de `public/css/marca-clinica.css` que convierten el contenedor web en grid. Los elementos strong/span son en línea: en el correo el nombre, dirección, teléfono y correo quedan pegados; tampoco se transportan los límites de altura/object-fit del logo. Reproducción propia, sin SMTP o pantallas: componer MarcaClinica::html con Clinica Norte, Calle 10, 3001234567, norte@example.com y urgencias 3007654321 devuelve contactos contiguos, cuyo texto es `Clinica NorteCalle 103001234567norte@example.comUrgencias: 3007654321`. La inspección de la plantilla confirma que no existe estilo/carga de esas clases en el correo; no se deduce el fallo de una captura no realizada. Afecta a RE-7.4.1/RE-7.4.4 y a la composición legible de las salidas existentes acordadas en C1.
+
+**Corrección C1.1:** separar visualmente nombre y cada contacto con estructura apta para correo y dimensionar el logo en esa salida, sin depender de CSS externo, cambiar la identidad global o rediseñar las pantallas. Reutilizar validación/escape y composición por clínica, conservando la marca opcional por llamada y Zooki en mensajes globales; no añadir una marca mutable al servicio ni cambiar destinatarios. Añadir regresión sobre el HTML de correo real que compruebe separación estructural, logo, escapes y Norte/Sur/global; comprobar solo que los textos existen no detecta este fallo. No cambiar SQL, permisos o reglas de agenda para resolverlo.
+
+**Verificación del resto de C1:** leídos el anexo, los cuatro PHP nuevos y sus consumidores, formulario/JS/CSS, rutas/RBAC y diffs de los modelos clínicos/portal/correos. Las proyecciones de marca conservan los filtros previos de autorización y procedencia; el nuevo JOIN de vigilante usa id_clinica del acto. Gestión deriva la clínica del contexto, rechaza formulario de otra clínica, revalida clínica/usuario/vínculo/rol y bloquea clínica→usuario→vínculo→tipo antes de decidir/escribir. Cambio/auditoría comparten transacción y se reaudita una denegación tras rollback. No se cambia HC/GET_LOCK ni se declara probada la exclusión de todos los escritores futuros de C3.
+
+Los tipos conservan lectura histórica y snapshots, rechazan inactivos en reserva nueva y se gestionan sin DELETE. Copia inicial pasa margen/pausable explícitos con defaults documentados, sin sobreescribir personalizaciones o inferir por nombre. Se conservan horarios HU-7.1; formularios usan validadores compartidos, límites del esquema, CSRF, respuesta canónica antes del aviso y bloqueo de doble envío. Las validaciones remotas usan versiones para descartar respuestas fuera de orden. Las cinco pruebas JS nuevas ejercitan validación/envío/errores; la vinculación DOM se inspecciona en código y se deja para la comprobación manual del usuario, sin atribuir a una prueba estática un recorrido del navegador.
+
+Se cotejó paso a paso Modelos §15 con lectura/validación/transacción/auditoría/rollback/respuesta, junto con §9 para contexto. Renderizado propio del diagrama nuevo con Mermaid 11.4.1 y Chrome sin interfaz: **1/1**; comparación propia: los **26 Mermaid previos idénticos**. Sintaxis propia de **33 PHP modificados/nuevos válida**; todas las reglas CSS previas del imprimible del personal se comparan iguales al normalizar comentarios/espacios tras la extracción. Anexos/revisiones previos conservados íntegros y diff sin incidencias de espacios. No se recorren pantallas. Continúan pendientes el consumo operativo del margen C3, la urgencia cerrada C4a y la pausa C7a: C1 no cierra toda HU-7.4.
+
+**Suites propias:** PHP completo sin host **874 pruebas / 7283 aserciones / 56 omitidas, salida 0** (00:37.421); PHP completo con **MariaDB 10.4.32: 874 pruebas / 8017 aserciones / cero omitidas, salida 0** (09:55.828); JS completo secuencial con Chromium **243/243, cero fallos/omisiones, salida 0**. Variables explícitas para base de pruebas y proxies, sin leer el archivo de entorno ni consultar la base manual. MySQL 8/CI de esta entrega sigue pendiente después del push del usuario; el verde de B no acredita C1. Sin versión, migraciones, descargas o cambios en los diagramas anteriores.
+
+**Prueba manual del usuario tras corregir C1.1, en escritorio y celular (cinco casos):**
+
+1. **Ana Norte:** editar marca/contactos y un logo válido; guardar, comprobar actualización/persistencia y errores junto al campo. Horarios HU-7.1 siguen operativos.
+2. **Carla Sur y Ana Norte:** modificar Sur y comprobar que Norte conserva marca/tipos; un tipo de Norte no aparece en la configuración de Sur.
+3. **Ana y Beto Norte:** crear tipo con duración 30/margen 0/pausable No, reservar con Beto y luego editar/desactivar con Ana; la cita previa conserva sus tiempos y el tipo inactivo no se ofrece para una nueva reserva. Reactivar actualiza inmediatamente, sin confirmación extra ni duplicación al pulsar dos veces.
+4. **Beto/Fabio/Gina:** invocar admin_configuracion directamente: gestión denegada; los contextos autorizados del propietario/veterinario conservan sus lecturas habituales.
+5. **Fabio y Beto:** portal e imprimibles mantienen Zooki/procedencia por acto, con marca Norte/Sur donde corresponde. En correos locales de eventos de ambas clínicas, nombre/contactos quedan separados y logo proporcionado; sin marca heredada en mensajes globales ni personalización del portal documental.
+
+**Siguiente:** entregar y revisar C1.1 antes de guardar/subir la implementación C1. No empezar C2, inventar nuevas reglas de producto o abrir un rediseño. No hay decisiones funcionales nuevas que pedir al usuario por este hallazgo.
+
+**Decisión del usuario (2026-10-18):** cuando el arquitecto anuncie el siguiente trabajo del ejecutor, entrega el prompt completo en ese mismo mensaje, sin esperar otra petición. Preferencia incorporada a agentes/metodo.md §8. Se prepara el encargo C1.1 con el alcance de esta revisión; aún sin entrega ni aprobación de la corrección.
+
+## Anexo C1.1 — Resultado (2026-10-18)
+
+**Autor: Codex ejecutor. Estado: C1.1 entregada, pendiente de revisión por Codex arquitecto en otra conversación.** H-C1-1 permanece abierto para el revisor; el ejecutor no aprueba C1. Se conservan C1, su anexo, «C1 — Revisión» y las anotaciones pendientes del arquitecto, incluida la preferencia de agentes/metodo.md. C2 no iniciada.
+
+### Cambio y decisión confirmada
+
+- **RE-7.4.1/RE-7.4.4, H-C1-1:** `MarcaClinica::html` deriva únicamente la salida con correo=true a una composición de correo: tabla con role=presentation y una fila/celda independiente para nombre y cada contacto presente. El logo válido ocupa otra fila. No depende del grid ni de CSS externo; no añade CSS/JS en línea. Campos opcionales ausentes y logos rechazados no generan filas vacías.
+- **Decisión del usuario (2026-10-18): «Ancho 96 px y altura proporcional».** Se explicó que una URL no aporta dimensiones conocidas y que fijar ancho/alto puede deformar; limitar ambos manteniendo proporción exigiría conocer o procesar la imagen. El usuario eligió ancho HTML 96 px y altura natural, sin descargar imágenes. Por eso el correo no fija height ni promete el máximo web de 48 px. No se atribuye esa decisión al revisor ni se inventa una relación de aspecto.
+- La validación/resolución de URL y el escape ENT_QUOTES siguen siendo los existentes, compartidos por ambas salidas. La rama HTML web conserva exactamente sus elementos, clases, valores y dimensiones; no se tocan sus CSS, pantallas o documentos. `EmailService` mantiene su marca opcional por llamada, sin nuevo estado mutable, transporte o cambio de destinatarios. Ningún consumidor selecciona otra clínica.
+- Se cotejan Modelos §9 y §15: no cambia un paso, permiso, decisión, transacción o destino de datos; solo la estructura de presentación del bloque de correo. No se modifican diagramas ni se atribuye un nuevo renderizado a C1.1. Permanecen fuera SQL/migraciones, permisos, agenda, C2, versión y exportaciones.
+
+### Regresión y evidencia propia
+
+Archivo nuevo `tests/Unit/MarcaCorreoTest.php`, cuatro casos / **66 aserciones**, salida 0 (00:00.027). Instancia EmailService con configuración explícita de pruebas y llama a su composición HTML real; no envía SMTP, no abre pantallas ni consulta bases.
+
+1. **Composición completa:** DOM del HTML devuelto por EmailService, no una concatenación de textos esperados. Tabla de presentación única; seis filas/celdas independientes para logo, nombre y cuatro contactos; contenido exacto en la celda correspondiente. Imagen en su fila con width=96, sin height impuesto, src/alt correctos. Datos y atributos escapados; sin elementos b/script inyectados, CSS nuevo en línea o dependencia de marca-clinica.css.
+2. **Opcionales/URL:** con contactos ausentes/vacíos y logo vacío, javascript o URL de red sin esquema, queda únicamente la fila de nombre y ninguna imagen/fila vacía.
+3. **Aislamiento por llamada:** sobre la misma instancia se componen Norte → Sur → global → Norte → global. Se comprueban nombre, logo y correo en su estructura, ausencia de datos de la otra clínica y ausencia total del bloque clínico en global; Zooki se conserva.
+4. **Compatibilidad web:** comparación exacta con el HTML anterior de MarcaClinica::html en web, además de marca null sin bloque. La revisión de fuente también confirma que el tramo web permanece idéntico respecto de la copia inicial de C1.
+
+**Prueba contra la implementación previa:** antes de cambiar MarcaClinica, la regresión ejecutada falla en tres de cuatro casos (tabla inexistente, ausencia de estructura separada); el caso de compatibilidad web pasa. Esos mismos puntos de fallo permanecen en la prueba final. Tras la corrección, cuatro casos/66 aserciones pasan; no se rebajan aserciones para obtener verde.
+
+**Suites nuevas de C1.1:**
+
+- PHP completo con **MariaDB 10.4.32**, exclusivamente en `zooki_test_base_v2`: **878 pruebas / 8083 aserciones / cero omitidas, salida 0** (11:29.736). Host, puerto, usuario, contraseña de pruebas y base explícitos; no es una ejecución MySQL 8 ni CI remoto.
+
+- PHP completo sin host: **878 pruebas / 7349 aserciones / 56 omitidas de motor, salida 0** (00:41.525). No se atribuyen a SQLite las pruebas omitidas del motor.
+- JS completo secuencial con Chrome automático sin interfaz: **243/243, cero fallos/omisiones, salida 0** (7.136 s). Sin cambios JS de esta corrección ni recorrido de pantallas.
+- Sintaxis de los dos PHP propios de C1.1 (MarcaClinica y su prueba): válida. Comparación respecto del inicio de esta tarea: EmailService, consumidores, HTML web, CSS y Modelos intactos; anexos/revisiones previos y cambios pendientes C1/arquitecto conservados. Alcance propio: MarcaClinica, nueva regresión, plan y estado.
+
+**Comandos/entorno:** `php vendor/phpunit/phpunit/phpunit tests/Unit/MarcaCorreoTest.php` (antes y después), `php vendor/phpunit/phpunit/phpunit` sin host y con host explícito, `node --test --test-concurrency=1 "tests/Frontend/**/*.test.cjs"`, `php -l models/MarcaClinica.php`, `php -l tests/Unit/MarcaCorreoTest.php`, `git diff --check`. Para PHP: TRUSTED_PROXIES=127.0.0.2 y ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2; la ejecución real usa HOST=127.0.0.1/PORT=3306/USER=root/PASS vacío explícitos. No se lee/escribe .env, se cambia una credencial o servicio ni se consulta la base manual. No hay commit/push/merge/tag/cambio de rama.
+
+### Comprobaciones manuales propuestas al dueño
+
+Cuatro casos, en escritorio y celular, sin ejecutarlos el agente. Usar correos locales generados con esta corrección por los flujos existentes y el modo de archivo ya configurado; un HTML guardado antes de C1.1 conserva la composición anterior y no sirve para verificar el cambio. Sin cambiar configuración ni enviar correos reales para esta verificación.
+
+1. **Ana Norte / Fabio:** abrir un correo local de un evento de Norte con sus datos completos. Nombre, dirección, teléfono, correo y urgencias aparecen en líneas separadas; no se pegan al nombre ni al contenido principal. El logo mide 96 px de ancho y conserva su proporción.
+2. **Carla Sur / Fabio:** abrir un correo local de Sur, seguido de uno de Norte. Cada uno conserva nombre, contactos y logo de su clínica; no aparece marca de la otra.
+3. **Ana o Carla:** comprobar un correo local de clínica con contactos opcionales vacíos y, si ya existe una muestra, sin logo. No aparecen filas/huecos correspondientes a datos ausentes; el nombre sigue legible. No modificar datos fuera de las pruebas autorizadas para producir la muestra.
+4. **Fabio / Beto:** abrir un mensaje global de cuenta disponible: conserva Zooki sin marca clínica heredada. Comparar Configuración/portal e imprimible con C1: mismos estilos web y procedencia por acto.
+
+**Pendientes:** revisión independiente de C1.1/H-C1-1 y de C1, cuatro comprobaciones manuales y CI MySQL 8 tras el commit/push del usuario. El motor local es MariaDB, no MySQL; el verde anterior de B/C1 no constituye ejecución nueva de esta corrección. Siguen C3/C4a/C7a según el plan. No se cierra H-C1-1 ni se autoriza C2 por esta entrega.
+
+
+### C1.1 — Revisión (2026-10-18)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: aprobada en código; H-C1-1 cerrado.** La corrección resuelve el único hallazgo de la revisión C1 previa, por lo que C1 queda también aprobada en código. Las comprobaciones manuales del dueño y CI MySQL 8 nuevo permanecen pendientes; no se atribuyen como ejecutadas ni se inicia C2.
+
+**Alcance y trazabilidad:** RE-7.4.1/RE-7.4.4. Comparación propia con el respaldo del inicio C1.1: el único código de aplicación cambiado es MarcaClinica; se añade MarcaCorreoTest y se actualizan plan/estado. EmailService, consumidores, permisos, SQL, CSS, JS, Modelos y demás archivos de C1 conservan sus huellas. Rama HTML web comparada idéntica y anexos/revisiones previos conservados íntegros. No se edita código de aplicación desde la revisión.
+
+**Cierre de H-C1-1:** la rama correo devuelve tabla de presentación con nombre y cada contacto presente en filas independientes; no depende del grid ni del CSS web. El logo válido ocupa su propia fila, width=96 y altura natural; datos/atributos conservan htmlspecialchars y la validación/resolución previa de URL. No se descargan imágenes. La elección del usuario sobre el ancho/altura se comprobó directamente en su respuesta de la conversación del ejecutor, no solo en el anexo. No hay marca mutable en EmailService ni cambio de destinatarios. La prueba llama a obtenerPlantillaBaseHTML real e inspecciona DOM: campos en celdas distintas, logo/escape, opcionales y URL inválida, secuencia Norte-Sur-global-Norte-global sobre una instancia y compatibilidad web. Con la rama anterior no existe la tabla exigida, por lo que esas aserciones detectan el error; la ejecución previa fallida del ejecutor queda atribuida a su anexo, sin presentarla como mutación propia del revisor.
+
+**Diagramas:** cotejados Modelos §9 y §15; la corrección afecta únicamente la presentación del bloque de correo. No altera autorizaciones, validación, transacción, auditoría, respuesta o selección de clínica del flujo ya revisado. Modelos idéntico respecto del inicio C1.1; no se requiere ni se atribuye un nuevo renderizado a esta corrección.
+
+**Verificación propia del revisor:** regresión aislada **4 pruebas / 66 aserciones, salida 0** (00:00.041); PHP completo sin host **878 / 7349, 56 omitidas, salida 0** (00:37.878); PHP completo con **MariaDB 10.4.32: 878 / 8083, cero omitidas, salida 0** (11:28.460); JS completo secuencial **243/243, cero fallos/omisiones, salida 0** (10.289 s). Sintaxis de MarcaClinica y MarcaCorreoTest válida; git diff --check sin incidencias. Variables explícitas y TRUSTED_PROXIES=127.0.0.2; único destino de motor zooki_test_base_v2. No se lee .env, se consulta la base manual, se envía SMTP real o se recorren pantallas. MySQL 8 no se reejecuta localmente; el CI de B no sustituye la validación nueva tras el push.
+
+**Cinco comprobaciones del dueño en escritorio y celular, pendientes:**
+
+1. **Ana Norte (admin):** cambiar marca/contactos/logo, guardar y recargar; comprobar persistencia, errores junto al campo y que los horarios existentes siguen visibles/operativos.
+2. **Carla Sur (admin) y Ana Norte (admin):** editar Sur y comprobar que Norte conserva sus datos/tipos. Abrir correos locales nuevos de eventos de ambas clínicas, generados después de C1.1 si el modo de archivo ya está configurado: cada dato en línea separada, logo de ancho 96 con proporción conservada y ninguna marca cruzada. Un archivo anterior a la corrección no sirve para verificarla; no enviar correos reales para esta prueba.
+3. **Ana Norte (admin) y Beto Norte (vet):** crear un tipo 30/margen 0/pausable No, reservar, editar/desactivar y reactivar. La cita previa conserva snapshots, el tipo inactivo no se ofrece para una reserva nueva y la lista se actualiza sin duplicación.
+4. **Beto Norte (vet), Fabio (propietario) y Gina (plataforma):** intentar abrir admin_configuracion directamente; gestión denegada en esos contextos y lecturas habituales autorizadas conservadas.
+5. **Fabio (propietario) y Beto Norte (vet):** portal/imprimibles conservan Zooki y procedencia por acto. En muestras locales nuevas disponibles, los contactos opcionales ausentes no dejan filas vacías y un mensaje global conserva Zooki sin marca clínica heredada; no alterar configuración para provocar envíos.
+
+**Siguiente:** tras las comprobaciones manuales, el usuario guarda C1 junto con C1.1 y las anotaciones pendientes del arquitecto, y hace push. Confirmar ambos trabajos CI y las pruebas MySQL 8 de esta entrega antes de preparar/iniciar C2. Sin nueva decisión funcional, versión, exportaciones o despliegue por este cierre.
+
+### Cierre de C1 — Revisión (2026-10-19)
+
+**Revisó Codex arquitecto.** Usuario confirma commit y push; HEAD verificado 9497034b488f7eaec2e537e1dee868bde99736a8, rama v2/m4-agenda y árbol limpio antes de este registro. [CI 39202318888](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39202318888) completed/success sobre ese SHA; trabajos build-and-test y base-v2-mysql completos aprobados. Logs: PHP general 878/7349 con 56 omisiones de motor, JS 243/243; MySQL 8.0.46 BaseV2MysqlTest 45/624 y AgendaB2MysqlTest 11/113, sin fallos/omisiones de esas clases. Instalación, doble migrador, semilla y volumen vacío (58 tablas/cuatro roles) aprobados. Es evidencia CI nueva de C1; no una repetición local ni una suite PHP completa contra MySQL. No hay despliegue ni ejecución Git de escritura del arquitecto.
+
+Puede encargarse C2. Las cinco pruebas manuales de C1 siguen sin resultado explícito del usuario; no se inventa una aprobación visual a partir del commit/push.
+
+## Encargo C2 — Horarios y coordinación (2026-10-19)
+
+**Escribe Codex ejecutor; revisa Codex arquitecto en otra conversación.** Contrato: HU-4.11, RE-4.11.1/2/4/5 y parte administrativa de RE-4.8.2; RN-706/703/415 y RNF-11. RE-4.11.3 y exclusión completa RE-4.8.3 cierran en C3; marcas y procesamiento efectivo se reparten con C5. C2 no declara toda la agenda operativa.
+
+Implementar franjas recurrentes por veterinario/semana en clínica activa, dentro de sus bloques de apertura y sin solapes propios o con otras clínicas; excepción global mínima encapsulada, respuesta genérica sin revelar clínica/horario ajenos. Admin configura; vet solo propone lo propio, admin de esa clínica aprueba/rechaza con motivo donde exige el contrato. Revalidar propuesta, membresía, permisos y horario actual al resolver; pendiente no modifica disponibilidad. Cierres puntuales con inicio/fin exactos y baja lógica en cierres_clinica, sin convertirlos en recurrencia ni ausencia de cada vet.
+
+Adelantar el coordinador común B1/B1.1 y sus lecturas actuales antes de habilitar estos escritores: guardado/restauración del horario clínico, horario del vet, aprobación de propuesta y cierres. Integrar los escritores existentes de reserva/reprogramación necesarios para serializar la carrera P04 con los mismos recursos; no basta probar dos cambios de horario entre sí. No mezclar transacciones exteriores, invertir locks ni introducir un segundo protocolo HC/GET_LOCK. Si se toca numeración/entrada de consulta, respetar su migración uniforme prevista en B1, sin retirada parcial de candados. C3 conserva el cálculo completo de disponibilidad y C7a la integración clínica correspondiente.
+
+Horario/cierre, versiones/marcas de citas afectadas, operación idempotente y auditoría se guardan atómicamente; preservar horas pactadas/reales y snapshots. Marcas visibles y recuperables como pendientes para C5, sin movimientos/reasignaciones automáticos ni reset de bloque/tope. Usar esquema publicado en B; si falta un dato real, justificar contra MER antes de proponer migración nueva, sin editar 03–08.
+
+Conservar Configuración/horarios HU-7.1 y diseño de perfil vet; añadir rutas/RBAC/CSRF, validación y restricción en tiempo real, respuesta canónica inmediata y control de doble envío. Cotejar Modelos §7/§13.4/§9; cierres con §4 y contrato B1. Si falta el flujo específico, agregarlo en esta entrega y verificar Mermaid, sin exportaciones/revisión documental de cierre.
+
+**Verificación:** P01/P04 y por RE: permisos/contextos ajenos, propuesta propia/ajena, aprobación repetida/obsoleta, rechazo motivado, solapes intra/interclínica y límites exactos, cierre de un solo lunes sin afectar los demás, marcas/horas conservadas, idempotencia/carga distinta y rollback ante auditoría fallida. Dos conexiones reales con barreras para modificar/restaurar/aprobar/cerrar mientras otra reserva; resultado íntegro tras esperar y relectura actual. JS de formularios/errores/respuestas/doble envío y suites completas PHP sin/con motor y JS. Incluir realmente las pruebas nuevas de motor/concurrencia en el CI MySQL 8 si su selección actual no las recoge; distinguir omisión de ejecución. Solo zooki_test_base_v2; nunca .env/base manual.
+
+**Fuera:** cálculo completo C3, triage C4, cascada/avisos de reajuste C5, solicitudes de ausencia/cobertura C6, urgencias/conciliación C7, versión, despliegue y exportaciones. Sin decisiones funcionales nuevas, rediseños o capacidades de crear citas para el administrador. Si el alcance excede este contrato, reportar el punto concreto antes de ampliarlo. Entregar Anexo C2, estado pendiente de revisión, 3–5 pruebas manuales por usuario y comandos simples; no commit/push del agente ni inicio C3. Conservar estos registros del arquitecto.
+
+## Anexo C2 — Resultado (2026-10-19)
+
+**Autor: Codex ejecutor; revisión a cargo de Codex arquitecto en otra conversación.** Entrega limitada a horarios y coordinación del encargo C2; no aprueba su propia entrega ni inicia C3. Se conservan los anexos, revisiones y anotaciones pendientes del arquitecto, incluido el cierre de C1 en 9497034 y su CI; ese CI anterior no se presenta como prueba nueva de C2.
+
+**Estado: C2 entregada, pendiente de revisión.**
+
+### Contrato implementado
+
+- El administrador configura la semana de un veterinario activo de su clínica. Día 1–7, horas válidas con segundos conservados, inicio menor que fin, orden y ausencia de solapes; cada franja debe caber completa en un bloque abierto. Los extremos contiguos son válidos. Una semana sin franjas no significa disponibilidad permanente.
+- RN-706: el modelo encapsula la única proyección ajena necesaria, día e intervalos activos del mismo veterinario. El mutex global de usuario serializa sus cambios entre clínicas; la respuesta de conflicto no contiene clínica ni horario ajenos.
+- El veterinario solo propone sobre sí mismo en su clínica activa. Pendiente no cambia horario ni citas. El administrador resuelve una propuesta propia pendiente: rechazo con motivo, o aprobación revalidando actor, membresía, franjas, apertura y conflictos actuales. Una propuesta ya resuelta o incompatible con el contexto actual no se aplica como nueva aprobación. Misma clave/carga devuelve el resultado previo; otra carga con esa clave se rechaza.
+- `cierres_clinica` guarda el intervalo exacto [inicio, fin), motivo y autor; retirarlo modifica `activo`, conserva su fila y deja los reajustes para C5. No altera otros lunes, la recurrencia del veterinario ni las ausencias. Un cierre puede atravesar varias fechas.
+- Guardar/restaurar apertura, guardar semana vet, proponer/resolver y crear/retirar cierre comparten `CoordinadorAgenda`, `OperacionAgenda` y auditoría de la misma unidad. Primero clínica; después descubrimiento actual de usuarios/mascotas, usuarios globales ordenados, mascotas ordenadas, vínculos/configuración, citas ordenadas y resolución de propuesta/resultado. La aprobación actualiza la propuesta después de marcar las citas. Las lecturas de decisión MySQL usan READ COMMITTED solo para esa transacción; después de esperar no se reutiliza una instantánea anterior.
+- Reserva y reprogramación entran por la misma unidad exterior, con el vínculo portal y su reserva atómicos. Se descartan los datos previos de la cita al reprogramar y se comprueban otra vez actor/vínculos, apertura, jornada y cierres. Se conserva el límite existente y el registro/aviso del intento bloqueado después del rollback exterior. No se otorgan rutas nuevas de creación de citas al administrador.
+- Una transacción exterior desconocida se rechaza; la anidación reconocida solo admite la misma clínica y un subconjunto de recursos ya bloqueados. Un deadlock/timeout revierte la unidad y exige reintentar el comando completo. No se cambia Consulta/Mascota ni se introduce una entrada agenda → HC/GET_LOCK: la integración clínica uniforme continúa en C7a, conforme al encargo y B1.
+- Horario/cierre, marcas, `version_agenda`, operación y auditoría confirman o revierten juntos. Solo cambian estado/motivo de reajuste y versión en las citas afectadas; se conservan el resto de sus campos, horas pactadas/reales, snapshots, bloque y topes. Duración histórica desconocida queda `pendiente_revision`, sin duración inventada; las demás afectadas quedan `pendiente_calculo`. Retirar/restaurar no elimina marcas como si C5 las hubiese procesado.
+- La clave opaca del comando es independiente de CSRF; el servidor deriva clínica y actor y compara una huella canónica. El resultado durable conserva referencias/estado, sin copiar la semana ni la apertura. La vista autorizada y la configuración actuales se reconstruyen en la unidad y se devuelven después del commit, también en reintentos.
+- Configuración, horario HU-7.1 y perfil vet conservan sus componentes previos y añaden formularios/listas C2. Siete rutas con matriz Security, contexto, POST/CSRF y validación servidor. El formulario conserva la clínica esperada para impedir guardar desde una pestaña de otro contexto. Validación/restricción de entradas, errores junto al campo, bloqueo durante lectura/guardado y respuesta canónica antes del aviso; sin CSS/JS en línea. Los pendientes de reajuste son visibles.
+
+### Trazabilidad y pruebas
+
+| RE / caso | Evidencia de esta entrega |
+|---|---|
+| RE-4.11.1/2; RN-706/703/415; P04 | `CoordinacionHorariosTest::testIntervalosPropiosAperturaYLimitesExactos` y `testConflictoGlobalSoloDaAvisoGenerico`: días, inversión, solapes, pertenencia, intervalos contiguos y conflicto ajeno genérico. |
+| RE-4.11.5; RNF-11; P01/P04 | `testRolesContextoPertenenciaYLecturasAisladas`, `testPropuestaPendienteResolucionRepetidaYRechazoMotivado`, `testAprobacionRevalidaAperturaYMembresiaActuales`: Norte/Sur, propietario/plataforma, vet propio, denegaciones, resolución, motivo y obsolescencia. |
+| RE-4.11.4; B1/B1.1; P04/P09 | `testMarcasSnapshotsIdempotenciaYClaveConCargaDistinta`, `testFalloAuditoriaRevierteHorarioMarcasOperacionYCierre` y `testReprogramacionRevierteTambienOperacionSiFallaAuditoria`: comparación de todos los demás campos de cita, versión única, resultado mínimo y rollback de guardar/restaurar/aprobar/rechazar/cerrar/reprogramar. |
+| RE-4.8.2; Modelos §4/§16; P04 | `testCierreDeUnLunesNoEsRecurrenteYBajaLogica` y `testCierreUsaExtremosSemiabiertosYNoMarcaOtraFechaDesconocida`: otra fecha intacta, baja lógica, terminar justo al inicio del cierre o comenzar justo al fin permitido, solape de un minuto rechazado. |
+| B1/B1.1; P01/P04 | `testReenvioReservaYReprogramacionNoDuplicaNiAdmiteCargaDistinta` y `testNoSeMezclaTransaccionExteriorYControladorExigeCsrf`: misma operación sin duplicar/versionar otra vez, orden de claves de entrada indiferente, contexto de formulario obsoleto y CSRF. |
+| Concurrencia real P04; RE-4.11.4 | `AgendaC2MysqlTest`: rollback por trigger de auditoría, replay durable y cierre lógico en esquema real; diez carreras con procesos/PDO independientes y barreras: guardar vet, guardar apertura, restaurar, aprobar y cerrar, cada una en ambos órdenes frente a reservar. Un observador comprueba la espera real entre esos dos IDs de conexión; al liberar, reserva contra configuración actual o marca la cita recién confirmada, conservando hora, duración y margen. |
+| JS de formularios | `CoordinacionHorarios.test.cjs`, siete casos: validación, extremos, errores 422, clave estable independiente de CSRF, respuesta canónica y doble envío. El séptimo ejecuta los JS reales sobre HTML aislado en Chrome con respuestas simuladas: carga bloqueada, error visible, reintento y marca actualizada antes del aviso. No recorre la aplicación. |
+
+Las fixtures SQLite representan las tablas/campos ya publicados en B y siembran franjas vet explícitas para sus casos; no se inventan horarios en producción. Dos casos antiguos de ocupación interclínica reciben deliberadamente una franja histórica incompatible para seguir comprobando ocupación, sin debilitar sus aserciones; los nuevos escritores rechazan crear ese solape. El caso portal de cuota usa ahora la entrada exterior común y conserva sus comprobaciones de vínculo, rollback, auditoría y aviso.
+
+### Verificación propia y comandos ejecutados
+
+| Ejecución real | Resultado |
+|---|---|
+| PHP completo sin host, fuente final | 892 pruebas / 7431 aserciones; 58 omitidas de motor; salida 0; 00:41.493. |
+| PHP completo con MariaDB 10.4.32 | 892 pruebas / 8237 aserciones; cero omitidas; salida 0; 11:12.047. |
+| Regresión C2 SQLite después de los últimos ajustes de respuesta/campo | 12 pruebas / 76 aserciones; cero omitidas; salida 0; 00:00.093. |
+| Regresión C2 MariaDB repetida después de esos ajustes | 2 pruebas / 73 aserciones; diez carreras con espera real; cero omitidas; salida 0; 00:22.623. |
+| JS completo secuencial, incluidos siete casos C2 | 250/250; cero fallos/omisiones; salida 0; 5.752 s. |
+| Sintaxis y alcance | 24 PHP válidos; tres JS de aplicación y prueba C2 válidos; git diff --check sin incidencias; rama v2/m4-agenda conservada. |
+
+La suite completa de motor se inició antes del último ajuste que limita el resultado durable a referencias y reconstruye la configuración actual, y del campo `fin` para su error de fecha. Después se repitieron las regresiones C2 SQLite y de motor, además de la suite completa sin host sobre la fuente final; no se atribuye la nueva aserción del resultado mínimo a la ejecución completa anterior. Los mensajes de auditoría/SMTP simulados son fallos provocados por las pruebas, sin correo real.
+
+Comandos principales realmente ejecutados (cada suite con su entorno explícito, no la configuración local):
+
+```powershell
+php vendor/phpunit/phpunit/phpunit --colors=never --cache-directory "$env:TEMP\zooki-c2-cache-sin-host"
+C:\xampp\php\php.exe vendor/phpunit/phpunit/phpunit --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/CoordinacionHorariosTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaC2MysqlTest.php --colors=never
+node --test --test-concurrency=1 tests/Frontend/*.test.cjs
+node --check public/js/coordinacion-horarios.js
+node --check public/js/horarios.js
+node --check public/js/csrf.js
+node --check tests/Frontend/CoordinacionHorarios.test.cjs
+git diff --check
+```
+
+Se ejecutó también php -l por cada uno de los 24 PHP tocados, el validador YAML sin duplicados/comparación estructural, la comparación de anexos iniciales y el render local del nuevo Mermaid. Entorno: TRUSTED_PROXIES=127.0.0.2; sin host para SQLite y host/puerto/usuario/clave de pruebas explícitos para MariaDB, ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2 en todas las ejecuciones con motor. Motor observado mediante SELECT VERSION(): 10.4.32-MariaDB. No se lee/escribe .env, toca la base manual, cambia servicios, envía correo real o recorre pantallas; Chrome solo ejecuta el HTML aislado de la prueba automatizada. MySQL 8 no disponible localmente y no verificado en esta entrega; CI tras el push del usuario sigue pendiente.
+
+### Diagramas, alcance y pendientes
+
+Modelos §16 agrega el flujo específico de horarios/propuestas/cierres, sus errores, coordinación, auditoría y respuesta; §7 lo referencia. Los 27 Mermaid anteriores de Modelos siguen idénticos; el nuevo renderizó 1/1 con Mermaid CLI/Chrome. Son 28 en Modelos, sin cambios del MER/drawDB ni exportaciones. No se cambian RE/RN, sus conteos, tablas, migraciones, versión, servicios o credenciales.
+
+El workflow añade únicamente `AgendaC2MysqlTest` como tercera clase secuencial del trabajo MySQL 8: selección efectiva 45 + 11 + 2, base explícita `zooki_test_base_v2`, mismos controles de instalación/semilla/migrador/volumen vacío. YAML válido sin claves duplicadas y comparación contra HEAD confirma que el único cambio es esa invocación. No se ejecutó CI remoto; MySQL 8 nuevo queda pendiente tras el push del usuario.
+
+C3 conserva el cálculo completo de sugerencias, ausencias y ocupación con margen, y el cierre de RE-4.11.3/RE-4.8.3; las guardias actuales de escritura no se presentan como ese cálculo completo. C5 procesa las marcas; C6 cubre ausencias/cobertura y C7 la integración clínica/eventos. No se declara HU-4.11 completamente cerrada. No hay decisión nueva de producto por esta entrega. Las comprobaciones manuales de C1 que el dueño no confirmó siguen pendientes.
+
+### Cinco comprobaciones manuales del dueño, pendientes
+
+Realizarlas en escritorio y celular, con los usuarios de prueba ya disponibles; no son pruebas ejecutadas por el agente.
+
+1. **Ana Norte (admin):** en Configuración, guardar dos franjas contiguas de Beto dentro de apertura; probar una invertida, solapada y otra fuera de apertura. Verificar errores junto al grupo de franjas, persistencia y actualización inmediata; los controles de horario HU-7.1 conservan su diseño.
+2. **Beto Norte (vet) y Ana Norte (admin):** desde perfil, proponer una semana propia. Comprobar que no cambia la vigente; rechazar sin motivo debe fallar, con motivo queda rechazada. Proponer de nuevo y aprobar. Si antes cambia apertura y vuelve incompatible la propuesta, la aprobación se rechaza sin aplicarla. El vet no guarda directamente ni propone para otro.
+3. **Carla Sur (admin), Ana Norte (admin) y Elena Doble (vet en ambas):** establecer una franja de Elena en Sur e intentar solaparla desde Norte. Aviso genérico sin clínica/horas ajenas; un extremo contiguo es válido. Norte y Sur mantienen sus listas separadas. **Fabio (propietario) y Gina (plataforma):** acceso directo a gestión denegado.
+4. **Ana Norte (admin):** crear cierre de un lunes concreto y retirarlo. Verificar registro activo/retirado, sin apagar otros lunes ni generar ausencias. Una cita que termina al inicio o comienza al fin no solapa; otra que cruza el intervalo queda pendiente de reajuste.
+5. **Ana Norte (admin) y Beto Norte (vet):** con una cita de prueba existente, reducir la jornada o apertura y restaurarla. La cita aparece pendiente, conserva hora/snapshots y no se mueve automáticamente. Intentar doble envío y cambio rápido de veterinario mientras carga: no duplicar comandos ni guardar las franjas de uno sobre otro. Comprobar que perfil y Configuración siguen utilizables en celular.
+
+### C2 — Revisión (2026-10-19)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: con corrección requerida C2.1.** H-C2-1 y H-C2-2 abiertos. No se cambia código de aplicación desde esta revisión, no se aprueba C2 ni se inicia C3. Se conservan la entrega del ejecutor y sus resultados con atribución, sin reemplazarlos por los propios.
+
+**H-C2-1 / P2 — la lectura de horario ajeno deniega sin auditar.** `models/CoordinacionHorarios.php:70–96`: leer invoca veterinario, que lanza AccesoDenegado directamente en línea 75 si no encuentra el vet en la clínica; la lectura carece del tratamiento de auditoría que tiene escribir. `controllers/CoordinacionHorariosController.php:25–27` propaga esa denegación y `Security::responder` solo responde: no registra el intento. Afecta RE-T.15.2/RN-G13 y la rama de denegación auditada de Modelos §16. Reproducción propia sin pantallas ni motor externo: bootstrap de pruebas, DosClinicas SQLite + mascotas/catálogos/historia/poblarAgenda; contexto admin 1/Norte, CoordinacionHorarios::leer(4), vet de Sur. Resultado 403 «Veterinario no disponible en este contexto», auditoria_sistema 0 antes y 0 después. No hay acceso a datos ajenos demostrado; falta su registro de seguridad. Corregir con la vía de auditoría común y añadir regresión que compruebe denegación y registro durable, además de ausencia de cambios de negocio. Conservar rollback/reauditoría de escritores para que el ajuste no pierda el registro ni lo duplique en operaciones normales.
+
+**H-C2-2 / P2 — la verificación de concurrencia no es estable dentro de la suite completa.** Ejecución propia completa MariaDB: `tests/Integration/AgendaC2MysqlTest.php:161`, testDosEscritoresConBarrerasEnAmbosOrdenesYRelecturaActual, falla en la primera carrera vet al no observar espera real. Diagnóstico literal: primero.fin y segundo.fin «sin resultado»; primero.log y segundo.log vacíos. Suite completa: 892 pruebas / 8174 aserciones / un fallo, salida 1, 11:51.414. Repetición aislada posterior, sin cambios de fuente: 2 pruebas / 73 aserciones, salida 0, 00:22.612; diez carreras completas. Esto confirma diferencia de ejecución, no la causa ni una doble reserva. Afecta evidencia P04/RE-4.11.4 y la definición de terminado. Investigar preparación/estado heredado, sincronización y observador con evidencia de conexiones/bloqueos/resultado; corregir la causa demostrada en arnés o aplicación según proceda. No cerrar con la pasada aislada, omitir carreras, sustituir por sleeps, eliminar observación real o aumentar plazos a ciegas. Un intento posterior de consultar metadata encontró la base ya retirada por el teardown de esa ejecución aislada; no aporta diagnóstico de la espera y no se presenta como tal.
+
+**Resto inspeccionado:** coordinador exterior y anidación reconocida, orden clínica→usuarios→mascotas y recursos actuales, READ COMMITTED limitado a la transacción; escritores de apertura/restauración/franjas/propuestas/cierres y entradas de reserva/reprogramación, vínculo portal y cuota. Revalidaciones de actividad/contexto, aislamiento y proyección global mínima; intervalos con segundos y extremos semiabiertos; marcas/versiones atómicas con auditoría sin mover horas/snapshots/bloques. Operación durable mínima y reconstrucción de vista actual; formularios/JS bloquean lecturas/escrituras y descartan respuestas obsoletas. La rama nueva de lectura denegada es la excepción de auditoría indicada en H-C2-1. No se declara completado el cálculo C3, procesamiento C5, ausencias C6 o integración clínica C7.
+
+**Verificación propia adicional:** PHP completo sin host 892 pruebas / 7431 aserciones / 58 omitidas, salida 0 (00:39.060). JS completo secuencial con Chrome sobre HTML aislado: 250/250, cero fallos/omisiones, salida 0 (7.040 s). Sintaxis propia 24 PHP válida y diff sin incidencias. YAML válido sin claves duplicadas; comparación estructural con HEAD: único cambio tercera invocación secuencial AgendaC2MysqlTest; selección 45+11+2, base explícita y controles anteriores intactos. Los cambios de fixtures conservan las aserciones anteriores y añaden franjas explícitas; datos históricos deliberados para ocupación interclínica no simulan que el editor permita crearlos. Anexos/revisiones previos conservados íntegros.
+
+**Diagramas/diseño:** cotejados Modelos §7/§13.4/§9 y nuevo §16 con entradas, errores, transacción, respuesta y permisos; discrepancia de denegación auditada H-C2-1. Renderizado propio del nuevo §16 con Mermaid local/Chrome: 1/1 sin errores; 27 bloques previos idénticos. Configuración, horarios y perfil conservan sus componentes previos y añaden la sección C2, sin rediseño del resto. No se recorren pantallas de la aplicación; diseño responsive y comportamiento integrado quedan para el dueño.
+
+Las ejecuciones propias con motor usan exclusivamente zooki_test_base_v2 y variables explícitas, TRUSTED_PROXIES=127.0.0.2. No se lee/escribe .env ni se consulta la base manual, envía SMTP real o cambia servicios. MariaDB 10.4.32 no se presenta como MySQL 8; CI C2 pendiente después de futura corrección/revisión/push. No se cambia versión, esquema, migraciones o exportaciones desde revisión.
+
+**Encargo C2.1:** resolver ambos hallazgos con regresiones y diagnóstico atribuido, manteniendo los cinco casos/dos órdenes/espera real y la selección CI MySQL 8. Verificar la corrección en la suite PHP completa con motor, además de la aislada cuando ayude al diagnóstico, y suite PHP sin host/JS. Añadir Anexo C2.1, actualizar estado como entregada pendiente de revisión y conservar toda esta evidencia, incluido el fallo completo aunque una corrida posterior pase. Sin nuevas reglas funcionales, commit/push del agente o C3. Tras revisión de C2.1, el dueño hará las cinco comprobaciones manuales del Anexo C2 (no ejecutadas ni aprobadas por el revisor), guardará C2 junto con su corrección y comprobará el CI nuevo antes de C3.
+
+## Anexo C2.1 — Resultado (2026-10-19)
+
+**Autor: Codex ejecutor; revisa Codex arquitecto en otra conversación.** Corrección limitada a H-C2-1/H-C2-2. Se conservan íntegramente C2, su revisión y el resultado independiente fallido 892/8174, un fallo, salida 1; la pasada aislada anterior 2/73 no lo reemplaza. El ejecutor no cierra los hallazgos ni aprueba C2. No se inicia C3.
+
+**Estado: C2.1 entregada, pendiente de revisión.**
+
+### H-C2-1 — Denegación por la vía común
+
+`CoordinacionHorarios::veterinario` usa ahora `ModeloClinica::denegarAcceso` en vez de lanzar directamente AccesoDenegado. Una lectura de vet ajeno o inexistente registra el intento en el contexto del actor y devuelve el mismo mensaje genérico del mecanismo común, sin clínica/horario ajenos. Los escritores conservan su tratamiento exterior: la primera auditoría se revierte junto al negocio y el catch posterior al rollback registra una única denegación durable.
+
+Regresión nueva `CoordinacionHorariosTest::testLecturaAjenaAuditaYEscritorReauditaSoloUnaVezTrasRollback`: con admin Norte, leer 4/Sur y leer 999 devuelve 403, mismo mensaje, una fila durable por intento, actor/clínica Norte y tablas de negocio idénticas. Guardar el vet ajeno deja una sola fila aunque pase por rollback/reauditoría. Un trigger de prueba revoca al actor durante la escritura, antes de reconstruir la vista canónica: horario, vínculos, operación y auditoría de negocio revierten; queda una única denegación fuera. Guardar válidamente y repetir la misma clave no añade denegaciones ni duplica la auditoría de negocio.
+
+Antes del ajuste, esta regresión falló con salida 1: una prueba/cinco aserciones, esperaba una auditoría y obtuvo cero. Después, clase C2 SQLite completa 13 pruebas/111 aserciones, salida 0. Trazabilidad: RE-T.15.2, RN-G13 y rama de denegación auditada de Modelos §9/§16.
+
+### H-C2-2 — Causa demostrada del observador
+
+La observación anterior consultaba cada 20 ms las tablas InnoDB de MariaDB. En el [código de MariaDB 10.4.32, trx0i_s.cc](https://github.com/MariaDB/server/blob/mariadb-10.4.32/storage/innobase/trx/trx0i_s.cc#L1104-L1122), la caché compartida de esas tablas solo se renueva después de más de 100 ms sin lecturas; cada lectura actualiza su último acceso, incluso si devolvió una instantánea sin la espera nueva. El propio sondeo podía mantener esa instantánea hasta vencer su plazo. La caché pertenece al motor, no al PDO ni a la base reconstruida; por eso una preparación que recrea las tablas no garantiza metadata nueva.
+
+`segundo.listo` acredita conexión, no que su SELECT FOR UPDATE ya esté esperando. Si el primer sondeo lee antes de ese intento puede fijar una instantánea vacía; si llega después y la caché permite renovar, pasa aislada. El experimento controla esa diferencia de sincronización y reproduce el patrón del fallo; no reconstruye retrospectivamente cada intercalación de la ejecución del revisor, cuya metadata original no quedó capturada.
+
+Evidencia propia, exclusivamente en zooki_test_base_v2:
+
+- Primer experimento sin controlar el momento del segundo intento: observador 5338, escritores 5339/5340; el sondeo de 20 ms detectó la espera inmediatamente. No se presenta esa pasada como reproducción del fallo.
+- Experimento con barrera de entrada del segundo escritor y lectura de metadata justo antes de permitirlo: observador 5341, escritores 5342/5343. Preparación confirmada, cero citas/operaciones y una franja. Observador sin transacción heredada, autocommit 1; conexiones independientes sobre la base de pruebas. Durante 10.016 s el observador anterior no vio espera; ambos .fin seguían ausentes. PROCESSLIST de esos dos IDs mostró al primero reteniendo su transacción y al segundo ejecutando SELECT de clínica FOR UPDATE. Tras 125 ms sin leer esa caché, el mismo observador vio la espera real entre los mismos IDs, todavía antes de liberar al primero. Al liberar, el cambio vet confirmó y la reserva incompatible se rechazó.
+- El aislamiento de sesión observado fue REPEATABLE-READ. No se confunde con el READ COMMITTED que el coordinador configura solo para su siguiente transacción; una comprobación exploratoria que los confundía se descartó. No se cambió el aislamiento de sesión/global ni el algoritmo de candados.
+- La misma precondición se incorporó a la regresión de diez carreras: segundo escritor conectado, pero detenido por una nueva barrera de entrada; observador consulta la ausencia de esa pareja en metadata y después permite su intento. Con el sondeo anterior, falla en la primera carrera vet: una prueba/nueve aserciones, salida 1 (19.864 s), observador 5347 sin transacción, escritores 5348/5349; primer bloqueo activo, segundo SELECT FOR UPDATE, resultados ausentes y logs vacíos. Reproduce el patrón de la revisión con diagnóstico adicional; no demuestra doble reserva.
+
+Corrección del arnés: MariaDB consulta de nuevo después de 125 ms de inactividad de esa caché; MySQL 8 conserva su sondeo de 20 ms sobre performance_schema. Se mantienen el plazo total de observación de 10 s y las barreras de 20 s, sin aumentarlos. El intervalo entre consultas no sustituye la barrera ni prueba por sí mismo que haya bloqueo: éxito exige la relación real entre los dos IDs en metadata antes de liberar al primero.
+
+Se conservan los cinco comandos, ambos órdenes, procesos/PDO independientes y todas las aserciones finales de resultado, cita, versión, hora, duración y margen. Se agregan ocho comprobaciones por carrera: preparación fuera de transacción, IDs positivos/distintos del observador, base de pruebas y transacción del retenedor, autocommit y ausencia de esa pareja antes del intento. El fallo ahora incluye estado del retenedor, conexiones propias/SQL y estado transaccional del observador. No consulta negocio de otras bases. La limpieza libera ambas barreras y espera a los procesos antes de retirar sus archivos.
+
+Después del ajuste, la clase de motor completa pasó 2 pruebas/153 aserciones, sin omitidas, salida 0 (25.888 s), incluidas las diez carreras con metadata previa controlada. La fuente PHP quedó congelada antes de iniciar las suites completas de esta corrección; sus resultados finales figuran a continuación. La pasada aislada no basta para considerar resuelto H-C2-2.
+
+### Verificación final propia, sobre la misma fuente
+
+| Ejecución | Resultado real |
+|---|---|
+| Regresión C2 SQLite | 13 pruebas / 111 aserciones, salida 0 (00:00.108). |
+| Regresión C2 MariaDB 10.4.32 | 2 pruebas / 153 aserciones, diez carreras con metadata previa controlada, cero omitidas, salida 0 (00:25.888). |
+| PHP completo sin host | 893 pruebas / 7466 aserciones, 58 omitidas de motor, salida 0 (00:26.002). |
+| PHP completo MariaDB 10.4.32 | 893 pruebas / 8353 aserciones, cero omitidas, salida 0 (10:38.023). Incluye la regresión de auditoría y las diez carreras, además de todas las pruebas anteriores. |
+| JS completo secuencial | 250/250, cero fallos/omisiones, salida 0 (6.327 s); Chrome solo sobre HTML aislado. |
+| Sintaxis, diff y conservación | Cuatro PHP de C2.1 válidos; git diff --check sin incidencias. Conservadas todas las aserciones anteriores de la clase de motor y las anotaciones iniciales del arquitecto. |
+
+Comandos principales ejecutados, con TRUSTED_PROXIES=127.0.0.2 y entorno de pruebas explícito en cada proceso:
+
+```powershell
+php vendor/phpunit/phpunit/phpunit tests/Integration/CoordinacionHorariosTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaC2MysqlTest.php --filter testDosEscritores --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaC2MysqlTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit --colors=never --cache-directory "$env:TEMP\zooki-c21-cache-sin-host"
+php vendor/phpunit/phpunit/phpunit --colors=never
+node --test --test-concurrency=1 tests/Frontend/*.test.cjs
+php -l models/CoordinacionHorarios.php
+php -l tests/Integration/CoordinacionHorariosTest.php
+php -l tests/Integration/AgendaC2MysqlTest.php
+php -l tests/Support/ProcesoAgendaC2.php
+git diff --check
+```
+
+Sin host en la suite SQLite. Para motor: ZOOKI_TEST_MYSQL_HOST=127.0.0.1, puerto 3306 y usuario/clave de pruebas explícitos, ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2; los hijos heredan ese entorno y fijan el mismo nombre de base en su DSN. La regresión aislada terminó antes de iniciar la suite completa de motor; nunca se reconstruyó esa base desde dos suites simultáneas. Los diagnósticos propios quedaron en archivos temporales fuera del repositorio y sus datos relevantes se transcriben arriba. Sin lectura/escritura de .env, consulta de la base manual, cambios de servicios/credenciales, SMTP real o pantallas de aplicación. Ninguna de estas ejecuciones se presenta como MySQL 8 o CI.
+
+### Flujos, alcance y pendientes
+
+Cotejados Modelos §16, §7, §13.4 y §9: la corrección implementa la denegación auditada ya dibujada y corrige únicamente la observación de pruebas. No cambia el flujo de producto; Modelos y sus Mermaid permanecen idénticos respecto del inicio C2.1, sin nuevo renderizado atribuido a esta corrección. Sin cambios de reglas, permisos, interfaz, coordinador, esquema/migraciones, versión o exportaciones.
+
+La selección CI MySQL 8 de C2 se conserva: BaseV2MysqlTest, AgendaB2MysqlTest y AgendaC2MysqlTest secuenciales con base explícita, 45+11+2 métodos. MariaDB 10.4.32 local no sustituye MySQL 8 ni el runner Linux. CI nuevo queda pendiente tras revisión y push del usuario; no se ejecutó ni reintentó remotamente.
+
+### Cuatro comprobaciones manuales aplicables, pendientes
+
+El agente no recorre pantallas. Con usuarios de prueba, en escritorio/celular y después de la revisión independiente:
+
+1. **Ana Norte (admin):** solicitar en la instalación de prueba `?action=get_coordinacion_horarios_ajax&id_veterinario=4` (vet de Sur). Debe devolver 403 genérico; en Auditoría de Norte debe aparecer un solo intento de Ana, sin datos del horario Sur ni cambios de negocio.
+2. **Ana Norte (admin):** cargar su Configuración y guardar válidamente una semana propia; verificar que las lecturas permitidas no generan denegaciones y que un doble envío no duplica la auditoría de negocio ni el resultado visible.
+3. **Ana Norte y Beto Norte (vet), en sesiones separadas:** reservar frente a un cambio de horario o cierre. El resultado debe quedar íntegro: reserva rechazada si cambió primero la configuración, o cita visible pendiente de reajuste si se confirmó primero. Mantener sus horas; esta prueba manual no sustituye las barreras automáticas.
+4. **Carla Sur (admin), Ana Norte, Fabio (propietario) y Gina (plataforma):** confirmar que los registros/datos de Norte y Sur permanecen separados y que propietario/plataforma siguen sin acceso a gestión. Las cinco comprobaciones de C2 y las de C1 sin confirmación explícita continúan pendientes, sin darse por realizadas aquí.
+
+### C2.1 — Revisión (2026-10-20)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: aprobada en código.** H-C2-1/H-C2-2 cerrados con las verificaciones propias descritas abajo; C2 queda aprobada en código sobre su revisión previa. No se dan por realizadas las comprobaciones manuales ni el CI MySQL 8 nuevo y no se inicia C3. El fallo de la revisión C2 (892/8174, salida 1) permanece en el historial; una pasada posterior no lo borra. El revisor solo actualiza plan/estado, sin corregir código de aplicación.
+
+**H-C2-1 cerrado (RE-T.15.2/RN-G13):** comparación con el respaldo inicial C2.1: el ajuste de aplicación inspeccionado sustituye la excepción directa de veterinario por ModeloClinica::denegarAcceso. La lectura registra actor/clínica del contexto y mantiene una respuesta genérica para ajeno/inexistente. Los escritores conservan rollback y reauditoría exterior. La regresión compara todas sus tablas de negocio, una auditoría por intento y ninguna transacción abierta; además provoca una revocación durante la vista canónica, después de escribir, para comprobar rollback completo y una sola denegación durable. Guardar y repetir una clave válida no duplica auditoría. Ejecución propia de la clase SQLite: 13 pruebas / 111 aserciones, salida 0 (00:00.171), también incluida en las suites completas finales.
+
+**H-C2-2 cerrado (P04/RE-4.11.4):** se cotejó la explicación con el [código oficial MariaDB 10.4.32](https://github.com/MariaDB/server/blob/mariadb-10.4.32/storage/innobase/trx/trx0i_s.cc#L1104-L1122): la caché de tablas de transacciones/bloqueos requiere más de 100 ms desde su última lectura para renovarse; el final de cada lectura actualiza esa referencia. El sondeo anterior de 20 ms podía conservar metadata anterior. Los experimentos y mutación anteriores se mantienen atribuidos al ejecutor, no se presentan como ejecutados por este revisor ni como reconstrucción exacta de la intercalación histórica perdida.
+
+Revisión propia del arnés: segunda barrera detiene al escritor ya conectado antes de intentar entrar; el observador comprueba metadata previa sin esa relación y permite el intento. MariaDB consulta con intervalo de 125 ms; MySQL conserva 20 ms. El éxito sigue exigiendo metadata real para los IDs correctos antes de liberar al retenedor; no depende solo de un tiempo transcurrido. Comparación propia conserva todas las aserciones previas, cinco acciones, dos órdenes, procesos/conexiones distintos y plazo total de 10 s. Se añaden controles de preparación, IDs y estado del retenedor y diagnóstico de sus conexiones. Las diez carreras pasaron dentro de la suite completa propia que fallaba anteriormente, sin omisiones; no se cierra el hallazgo solo con la pasada aislada del autor. No se cambia el algoritmo de agenda para resolver un defecto del observador.
+
+**Suites propias sobre la entrega revisada:** PHP completo sin host 893 pruebas / 7466 aserciones / 58 omitidas de motor, salida 0 (01:48.926); PHP completo con MariaDB 10.4.32: 893 pruebas / 8353 aserciones / cero omitidas, salida 0 (17:25.785). Solo zooki_test_base_v2 y variables explícitas, TRUSTED_PROXIES=127.0.0.2; no hay dos suites reconstruyendo la misma base a la vez. JS inicial 249/250, salida 1, EBUSY al eliminar el perfil temporal Chrome desde el finally de la prueba DOM C2. Repetición completa justificada por ese error, sin cambiar fuente: 250/250, cero fallos/omisiones, salida 0 (13.765 s). Se conservan ambos resultados; el primer error de limpieza no se presenta como una aserción funcional demostrada ni se oculta bajo el verde posterior.
+
+Cuatro PHP de C2.1 pasan sintaxis y diff sin incidencias. Anexos/revisiones previos conservados íntegros. La selección CI conserva BaseV2MysqlTest/AgendaB2MysqlTest/AgendaC2MysqlTest secuenciales (45+11+2) y base explícita. Cotejados Modelos §16/§7/§13.4/§9: la corrección realiza la denegación auditada ya prevista y solo modifica el observador de pruebas; no requiere un nuevo flujo ni un nuevo renderizado. Se mantiene la evidencia Mermaid anterior con su fecha y atribución, sin adjudicar un render nuevo a esta corrección. Sin cambios de reglas, permisos, interfaz, esquema, migraciones, versión o exportaciones desde revisión. No se lee .env, consulta la base manual, envía SMTP real o recorre la aplicación con navegador. MySQL 8/CI C2 sigue pendiente después del push; el CI de C1 no lo sustituye.
+
+**Cinco comprobaciones del dueño, en escritorio y celular, pendientes:**
+
+1. **Ana Norte (admin):** guardar franjas contiguas de Beto dentro de apertura; probar franja invertida, solapada y fuera de apertura. Verificar errores, persistencia y controles de horarios HU-7.1.
+2. **Beto Norte (vet) y Ana Norte (admin):** proponer desde perfil, comprobar que no cambia la semana vigente y resolver con Ana; rechazo exige motivo y aprobación revalida apertura. El vet no guarda directamente ni propone para otro.
+3. **Ana Norte y Carla Sur (admin), Fabio (propietario) y Gina (plataforma):** con el ID real de Diego Sur, Ana solicita get_coordinacion_horarios_ajax&id_veterinario=<id de Diego>. Devuelve 403 genérico y deja un intento en Auditoría de Norte, sin horario Sur ni cambios de negocio. Listas Norte/Sur separadas; propietario/plataforma sin gestión. Los IDs 4/999 usados en la regresión son de su fixture automático, no se presuponen para la instalación manual.
+4. **Ana Norte (admin):** crear y retirar cierre de un lunes concreto; conserva otros lunes y no genera ausencias. Los extremos exactos son válidos; una cita que cruza el cierre queda pendiente de reajuste.
+5. **Ana Norte (admin) y Beto Norte (vet):** reducir/restaurar horario con una cita de prueba existente. Aparece pendiente y conserva hora/snapshots; doble envío no duplica el cambio/auditoría. Comprobar perfil y Configuración utilizables en celular.
+
+**Siguiente:** dueño completa estas comprobaciones y guarda C2 junto con C2.1 y las notas pendientes del arquitecto, luego hace push. Confirmar CI nuevo completo, incluidas las tres clases MySQL 8, antes del prompt/inicio de C3. C3 completa disponibilidad, C5 procesa marcas, C6 ausencias/cobertura y C7 integración clínica; no se declara HU-4.11 totalmente operativa por este cierre. Sin decisiones nuevas de producto o despliegue en esta revisión.
+
+### CI de C2/C2.1 — Revisión (2026-10-20)
+
+**Revisó Codex arquitecto. Veredicto: corrección C2.2 requerida; C3 no habilitada.** HEAD 8ee3936066cab30f37ef0bb663b8f07763b5fdcd, commit/push del usuario confirmado y árbol limpio antes de estas notas. Leídos logs fallidos de ambas ejecuciones push del mismo SHA: [39448209773](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39448209773) y [39448209782](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39448209782). Ambas fallan en el mismo punto; no se atribuyen a una nueva ejecución local ni se reintenta CI desde el arquitecto.
+
+**H-C2-3 / P2 — comparación de replay dependiente del orden de claves JSON.** `tests/Integration/AgendaC2MysqlTest.php:68`, testAtomicidadConAuditoriaFallidaYClaveDurableEnElEsquemaReal: assertSame exige que el resultado PHP recién compuesto y el recuperado de operaciones_agenda tengan idéntico orden de claves. Diff del CI: afectadas pasa de después a antes de id_veterinario, conservando los valores mostrados. OperacionAgenda::ejecutar devuelve inicialmente el array del escritor y en replay decodifica el resultado persistido en columna JSON. MySQL normaliza las claves de objetos; su [manual oficial de JSON](https://dev.mysql.com/doc/refman/8.0/en/json.html#json-normalization) advierte que ese orden tampoco está garantizado entre versiones. La identidad del resultado funcional/idempotencia no exige ese orden de objeto. El fallo mostrado es de la aserción de verificación; no demuestra una diferencia de contenido o fallo de exclusión.
+
+La comparación análoga de retirada/replay en línea 73 tiene el mismo supuesto y debe revisarse en esta corrección; no se presenta como otro fallo ya ejecutado por el CI, pues la primera aserción detiene ese método. Mantener tipos, claves y valores exactos, orden de listas/franjas y comprobaciones de no duplicación/rollback/auditoría. Comparar mapas por contenido con una estrategia estricta y localizada en pruebas, sin ordenar listas ni sustituir todo por igualdad débil. Añadir casos negativos que prueben rechazo de valor/tipo distinto y lista reordenada, así como aceptación del mismo mapa con claves reordenadas.
+
+**Evidencia CI:** build-and-test aprobado. En el trabajo MySQL 8, BaseV2MysqlTest 45/624 y AgendaB2MysqlTest 11/113 pasan. AgendaC2MysqlTest finaliza 2/149 con un fallo; el segundo método, las diez carreras con barreras, pasa. El paso de volumen vacío posterior se omite por el fallo y no se da por verificado en esta ejecución. Los logs de auditoría simulada anteriores son esperados; el error fatal del trabajo es la aserción descrita, salida 1. H-C2-1/H-C2-2 siguen cerrados conforme a su evidencia; se añade este hallazgo de portabilidad de verificación. No se reescribe la aprobación local ni se la presenta como aprobación CI.
+
+**Encargo C2.2:** ajustar únicamente las comparaciones/soporte de pruebas necesarias para el contrato JSON de replay; revisar ambos puntos y otros equivalentes, no parchear solo la primera línea. No modificar aplicación, esquema, formato persistido o migraciones para satisfacer un orden de objeto que no es requisito. Si aparece una diferencia real de datos/tipos, reportarla antes de ampliar alcance. Conservar la selección CI de las tres clases y controles del migrador/semilla/volumen vacío, las diez carreras, auditoría, atomicidad y no duplicación. Verificar nuevas regresiones y suites pertinentes sobre la fuente final; distinguir MySQL 8 real de MariaDB. La corrección debe quedar confirmada finalmente por CI nuevo tras revisión y push del usuario; una pasada MariaDB no sustituye esa evidencia. Solo zooki_test_base_v2, sin .env/base manual. Anexo C2.2 y estado entregada pendiente de revisión; comandos de commit simples para el usuario. Sin commit/push del agente, C3, nuevas decisiones funcionales, versión/exportaciones o despliegue.
+
+Diagnóstico del arquitecto limitado a logs y fuente local/oficial; no se repiten las suites locales de 17 minutos ya verdes para volver a observar un fallo específico de MySQL 8 antes de cambiar nada. No hay prueba manual de interfaz nueva por este ajuste de verificación; se conservan pendientes las del dueño.
+
+## Anexo C2.2 — Resultado (2026-10-20)
+
+**Autor: Codex ejecutor; revisa Codex arquitecto en otra conversación. Estado: entregada, pendiente de revisión.** Ajuste exclusivamente de pruebas para H-C2-3; el ejecutor no cierra el hallazgo ni aprueba CI. Se conservan «CI de C2/C2.1 — Revisión», ambos fallos 39448209773/39448209782 de 8ee3936 y todos los anexos/revisiones anteriores. C3 no iniciada.
+
+**Causa y contrato:** la aserción anterior comparaba también el orden de inserción de claves del array PHP inicial frente al mapa recuperado de la columna JSON. El diff de MySQL 8 ya observado en CI cambia afectadas/id_veterinario de posición; esos logs son evidencia del arquitecto, no una ejecución MySQL propia nueva. B1/B1.1 exige el mismo resultado funcional y RE-4.11.4 conserva atomicidad/marcas; ninguno exige el orden de miembros del objeto. Los tipos y el orden de sus listas sí siguen siendo parte de la comprobación.
+
+**Cambios:**
+
+- Nuevo trait de soporte exclusivo de pruebas `ComparaRespuestaIdempotente`: normaliza recursivamente solo el orden de claves de los mapas y termina con assertSame. No usa igualdad débil, no convierte escalares ni reinterpreta strings JSON. Conserva las posiciones de listas y de las franjas; mantiene la categoría lista/mapa antes de ordenar claves, evitando confundirlas tras la normalización. La normalización opera en copias locales de la aserción y no modifica respuestas ni datos persistidos.
+- `AgendaC2MysqlTest`: usa el comparador en los dos replay equivalentes, guardar horario vet y retirar cierre. El método completo de carreras y sus auxiliares se compararon literalmente con HEAD: permanecen idénticos, incluidos los cinco casos/ambos órdenes, observación de espera y aserciones finales. Rollback, auditoría, conteos de operación/cierre y baja lógica conservan las aserciones anteriores.
+- Revisión adicional de equivalentes en `CoordinacionHorariosTest`: comparación del replay de aprobación, replay de guardado vet y mapa del resultado durable. Los replay que comparan un ID escalar siguen con assertSame; también permanecen las comparaciones estrictas de snapshots, franjas vigentes, estado previo/posterior y rollback, que no son equivalencias entre mapas de respuesta JSON.
+- Nueva `ComparaRespuestaIdempotenteTest`: un caso positivo verifica claves reordenadas del resultado decodificado, mapas anidados dentro de listas y respuesta de retirada. assertNotSame comprueba que esa muestra fallaría con la estrategia anterior. Once casos negativos esperan que la aserción falle: valor distinto, entero/cadena, entero/decimal, booleano/entero, null/clave ausente, clave adicional o distinta, lista reordenada, franjas reordenadas, tipo anidado distinto y mapa numérico frente a lista. Por tanto, ni igualdad débil ni ordenación de listas producirían verde.
+
+**Verificación propia sobre la fuente final:**
+
+| Ejecución | Resultado real |
+|---|---|
+| Regresiones del comparador | 12 pruebas / 25 aserciones, salida 0 (00:00.835). |
+| CoordinacionHorariosTest, SQLite | 13 pruebas / 111 aserciones, salida 0 (00:00.389); conserva auditoría durable, rollback e idempotencia. |
+| AgendaC2MysqlTest, MariaDB 10.4.32 | 2 pruebas / 153 aserciones, cero omitidas, salida 0 (00:35.893). Ambos replay y las diez carreras pasan. |
+| PHP completo sin host | 905 pruebas / 7491 aserciones, 58 omitidas de motor, salida 0 (01:34.952). Incluye las nuevas regresiones y las anteriores de SQLite. |
+| Sintaxis y alcance | Cuatro PHP de pruebas válidos; git diff --check sin incidencias. Aplicación, esquema, persistencia, interfaz, Modelos y workflow idénticos a HEAD. |
+
+Motor identificado mediante SELECT VERSION(): 10.4.32-MariaDB, no MySQL 8. Regresión de motor exclusivamente en zooki_test_base_v2, con host 127.0.0.1, puerto 3306, usuario/clave de pruebas explícitos y TRUSTED_PROXIES=127.0.0.2. El proceso sin host también fija la base de pruebas y los proxies, y omite esas 58 pruebas como corresponde. No se ejecutaron suites simultáneas que reconstruyan la misma base, ni se leyó/escribió .env, consultó la base manual, cambió servicios o envió correo real.
+
+Comandos principales ejecutados con ese entorno explícito:
+
+```powershell
+php vendor/phpunit/phpunit/phpunit tests/Unit/ComparaRespuestaIdempotenteTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/CoordinacionHorariosTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit tests/Integration/AgendaC2MysqlTest.php --colors=never
+php vendor/phpunit/phpunit/phpunit --colors=never --cache-directory "$env:TEMP\zooki-c22-cache-sin-host"
+php -l tests/Support/ComparaRespuestaIdempotente.php
+php -l tests/Unit/ComparaRespuestaIdempotenteTest.php
+php -l tests/Integration/CoordinacionHorariosTest.php
+php -l tests/Integration/AgendaC2MysqlTest.php
+git diff --check
+```
+
+**Conservación y pendientes:** Modelos §16 cotejado con B1/B1.1: respuesta reconstruida tras commit, acceso revalidado, operación/auditoría atómicas y reintento sin repetir cambios conservados; no cambia el flujo ni sus diagramas y no se atribuye un nuevo renderizado. Workflow idéntico a HEAD: tres clases MySQL secuenciales, base explícita y mismos controles de instalación/migrador/semilla/volumen vacío. No se repitieron BaseV2MysqlTest/AgendaB2MysqlTest con motor ni JS, al no tocar esos contratos o frontend; sus pasadas CI 45/624 y 11/113 y la evidencia JS anterior permanecen atribuidas al historial, no a ejecuciones nuevas de C2.2.
+
+No se observó una diferencia real de contenido/tipos en las verificaciones propias. MySQL 8 no se ejecutó localmente; la corrección requiere revisión independiente y confirmación de CI nuevo después del commit/push del usuario, incluidos ambos replay y volumen vacío antes omitido. No se reintenta CI remoto desde ejecución. No hay interfaz nueva que probar: todas las comprobaciones manuales anteriores sin resultado explícito siguen pendientes. Sin cambios funcionales, esquema/migraciones, formato persistido, versión o exportaciones; no aprobar H-C2-3 ni empezar C3 desde esta entrega.
+
+### C2.2 — Revisión (2026-10-20)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: aprobada en código de pruebas; H-C2-3 corregido, confirmación CI MySQL 8 pendiente.** No se aprueba todavía el cierre CI de C2 ni se inicia C3. Se conservan íntegros el diagnóstico y ambos CI fallidos de 8ee3936. El revisor solo actualiza documentación; no implementa la corrección.
+
+**Inspección:** trait exclusivo de soporte de pruebas transforma copias de arrays y conserva la clasificación lista/mapa anterior a ordenar claves, escalares sin conversión y posiciones de listas. La comparación final sigue siendo assertSame. Aplicado a los dos replay del método de motor (horario y retirada de cierre) y tres mapas equivalentes SQLite. Permanecen las comparaciones estrictas de IDs, snapshots, estado anterior, rollback y conteos. La regresión positiva usa JSON con claves reordenadas, incluidos mapas anidados dentro de listas y retirada de cierre; once casos negativos comprueban valores/tipos/claves ausentes o adicionales, listas/franjas reordenadas y mapa numérico frente a lista. La estrategia anterior falla sobre el positivo y los negativos impiden obtener verde con igualdad débil u ordenación de listas.
+
+**Verificación propia del revisor:** comparador aislado 12 pruebas / 25 aserciones, salida 0 (00:00.027). PHP completo sin host 905 pruebas / 7491 aserciones / 58 omitidas de motor, salida 0 (00:38.904). Regresión afectada AgendaC2MysqlTest contra MariaDB 10.4.32: 2 pruebas / 153 aserciones / cero omitidas, salida 0 (00:28.050), ambos replay y diez carreras. No se presenta como suite completa de motor ni como MySQL 8. Las pasadas previas BaseV2MysqlTest/AgendaB2MysqlTest de CI y JS mantienen fecha/atribución; no se repiten por este cambio limitado a comparaciones de pruebas sin frontend o aplicación afectados. La confirmación final del caso que falló requiere el CI nuevo MySQL 8.
+
+Comparación propia con HEAD: únicos archivos versionados cambiados son dos clases de pruebas y plan/estado; dos archivos nuevos son trait y su regresión. Aplicación, esquema, formato persistido, Modelos y workflow intactos. Desde esperarArchivo hasta el final de AgendaC2MysqlTest, arnés y carreras son literalmente idénticos a HEAD: conserva cinco casos, dos órdenes, metadata, barreras y aserciones finales. Cuatro PHP válidos y git diff --check salida 0; avisos de conversión LF/CRLF no cambian el contenido lógico. Modelos §16 cotejado: no cambia flujo, permisos, commit/respuesta, reintentos o auditoría; no requiere ni se atribuye otro renderizado. No se alteran versión o exportaciones.
+
+Pruebas por turnos y exclusivamente zooki_test_base_v2 para motor, variables explícitas y TRUSTED_PROXIES=127.0.0.2. No se lee/escribe .env, consulta la base manual, cambia servicios, envía SMTP real o recorre pantallas. No se usa la pasada MariaDB como sustituto de MySQL 8 ni se reintenta CI remoto desde el arquitecto.
+
+**Siguiente:** usuario guarda los seis archivos de C2.2 y su revisión, hace push y se comprueba CI completo nuevo: build-and-test, las tres clases MySQL 8, ambos replay y paso de volumen vacío antes omitido. Solo tras ese CI se prepara C3. No hay prueba manual nueva por un cambio de verificación sin interfaz; siguen pendientes las cinco comprobaciones C2/C2.1 y las anteriores sin confirmación explícita. Sin decisiones funcionales nuevas ni despliegue.
+
+### Publicación de C2.2 — Revisión (2026-10-20)
+
+**Comprobó Codex arquitecto:** tras el mensaje del usuario sobre posible CI aprobado, HEAD local y rama remota consultada por API siguen en 8ee3936066cab30f37ef0bb663b8f07763b5fdcd. Los seis archivos C2.2 están pendientes de commit local. GitHub conserva como últimas ejecuciones las dos fallidas de ese SHA; no hay ejecución nueva de C2.2 que verificar aún. Se vuelven a entregar comandos al usuario para guardar/subir la corrección aprobada; no se ejecuta escritura Git ni se inicia C3. La ausencia de correo no se registra como evidencia CI.
+
+### Cierre de C2 — Revisión (2026-10-20)
+
+**Revisó Codex arquitecto:** nuevo HEAD e21b5216d202c1e8852425ece482c03a260def50 y árbol limpio antes de estas notas. [CI 39468646150](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39468646150) completed/success sobre ese SHA; trabajos build-and-test/base-v2-mysql íntegros success, sin pasos fallidos u omitidos. Logs: PHP general 905/7491 con 58 omisiones de motor, JS 250/250; clases MySQL BaseV2MysqlTest 45/624, AgendaB2MysqlTest 11/113 y AgendaC2MysqlTest 2/153, sin fallos/omisiones. Pasa ambos replay, las diez carreras y volumen vacío (58 tablas/cuatro roles), además de instalación/migrador doble/semilla. No se presenta como suite PHP completa ejecutada con MySQL. H-C2-3 cerrado con CI nuevo; H-C2-1/H-C2-2 conservan su cierre. C2 puede continuar a C3 según el encargo siguiente. Sin despliegue o escrituras Git del arquitecto; pruebas manuales sin resultado explícito siguen pendientes.
+
+## Encargo C3 — Disponibilidad única y reserva segura (2026-10-20)
+
+**Escribe Codex ejecutor; revisa Codex arquitecto en otra conversación.** Base e21b521 con CI aprobado. Contrato A.3/A.4 y B1/B1.1 revisados, decisiones §6 vigentes sobre pendientes históricos. Trazabilidad: RE-4.9.1/2 y componente de serialización/idempotencia de RE-4.9.3; RE-4.1.2/3, RE-4.6.2, RE-7.4.3, RE-4.8.3, RE-4.11.3; componentes de disponibilidad de RE-4.2.4/RE-5.3.3. RN-401/402/403/415/703/706, RNF-11 y RN-G02. No declarar cerrados eventos/revisión/triage C4 ni todo HU-4.2/HU-5.6 por entregar este cálculo.
+
+Crear o reutilizar helpers puros de intervalos y un modelo/servicio único de disponibilidad. Mismos clínica autorizada, mascota, tipo, vet, fecha/rango y reloj producen el mismo cálculo para sugerencias, reserva y reprogramación. Intersecar apertura y jornada vet, restar cierres activos y ausencias aprobadas, restar ocupación incompatible global de vet/mascota con proyección mínima encapsulada; nunca datos/contactos/calendario ajenos en la respuesta. Sin jornada/apertura no hay disponibilidad ordinaria. Solicitudes de ausencia pendientes/rechazadas/anuladas no bloquean; C3 lee datos existentes, C6 entrega su gestión.
+
+Fechas completas America/Bogota, reloj inyectable, intervalos [inicio,fin) y segundos exactos. Duración y margen del tipo activo desde servidor al reservar; snapshots propios al reprogramar. Necesita todo [s,s+d+m) dentro de una sola franja restante y sin cruzar medianoche para una reserva ordinaria. hora_fin conserva fin clínico s+d. Los clientes envían mascota/tipo y reciben intervalos autorizados; eliminar cálculos alternativos o dependencias de duración/prioridad impuesta por JS en las rutas actuales. Conservar el paso de presentación vigente sin inventar nuevos topes, horizontes o incrementos de producto. Aplicar el contrato B1 para legado desconocido, sin completar snapshots con el tipo actual ni inventar duración histórica; reportar cualquier caso que el contrato no resuelva antes de decidirlo.
+
+Integrar en rutas internas/portal existentes de horas/sugerencias, registrar y reprogramar (arrastre si usa ese comando), actualizando todos sus clientes en la misma entrega. Mantener diseño y lecturas administrativas legítimas para supervisión/reprogramación; no ampliar permisos ni habilitar creación clínica/triage al admin. El resto del contrato de captura/roles de agendamiento se integra en C4a; reprogramación nueva del portal permanece C4b. Conservar validación/CSRF/titularidad/vínculos y casos de límite del plan, sin vínculo residual cuando falla la reserva.
+
+Reutilizar CoordinadorAgenda/OperacionAgenda C2 y orden B1, recursos estables globales, lecturas actuales tras esperar y rollback íntegro. Excluir solo la cita legítima que se reprograma; revalidar estado y permiso actuales y mes destino contra cuota sin contar dos veces la misma cita. No liberar reserva anterior hasta éxito. No introducir escritor lateral, transacción exterior incompatible, otro protocolo HC/GET_LOCK o locks SQL durante SMTP. Cancelada/no_asistio liberan según regla; conservar estados en atención/pausa y contrato de ocupación de B1, sin presentar una pausa como hueco libre. C5/C7 completan estimaciones y continuidad clínica.
+
+Cotejar Modelos §4/§9/§16 y §2 para separación de grafos; añadir el diagrama específico de cálculo/transacción si falta, con ramas de conflicto/error/rollback, sin cambiar el contrato de producto. Conservar UI y pruebas anteriores, incluidos comparador JSON y sondeo de metadata C2.1. Sin esquema nuevo por comodidad, revisión documental/versión/exportaciones de cierre o código del arquitecto.
+
+**Pruebas P01/P02/P03/P04 y parte P08:** bordes exactos y un segundo fuera, duración+margen, franja discontinua, sin horario, cierre puntual y ausencia parcial/aprobada frente a pendiente, ocupación vet y mascota entre clínicas con privacidad, tipo/parámetros adulterados, sugerir/guardar coherentes con mismo reloj, exclusión propia legítima, reprogramación con cuota/fracaso que conserva original, cancelada/no_asistio liberando, auditoría/operación/vínculo revertidos ante fallo. Dos procesos/PDO independientes con barreras y espera real: vet compartido Norte/Sur en hueco vacío e inicios distintos que se solapan; misma mascota con vets diferentes; mismo inicio; reserva frente a reprogramación; control de recursos independientes y reevaluación después de rollback. Integrar las nuevas clases realmente en CI MySQL 8 secuencial y base explícita, sin perder C2 ni controles de instalación. SQLite no sustituye las carreras de motor.
+
+**Entrega:** suites completas PHP sin/con motor disponible y JS sobre fuente final, identificando MariaDB/MySQL/CI; único destino de pruebas zooki_test_base_v2, TRUSTED_PROXIES=127.0.0.2, sin .env/base manual o pantallas del agente. Anexo C3 con autor y RE→prueba, estado entregada pendiente de revisión, 3–5 pruebas manuales indicando usuarios y comandos simples para el dueño. Conservar estas notas pendientes. No commit/push/merge/tag/cambio de rama del agente ni C4a. Si el alcance o una regla no encajan, reportar el punto concreto antes de ampliarlos.
+
+
+## Anexo C3 — Resultado (2026-10-20)
+
+**Autor: Codex ejecutor.**
+Revisa Codex arquitecto en otra conversación independiente.
+**C3 entregada, pendiente de revisión.**
+Se conserva el cierre C2/e21b521, el encargo C3 y todos los anexos/revisiones anteriores; el ejecutor no aprueba la entrega.
+
+### Contrato implementado
+
+- `DisponibilidadAgenda` y el helper puro `IntervalosAgenda` calculan apertura ∩ jornada vet, menos cierres activos, ausencias aprobadas y ocupación incompatible global de vet/mascota.
+La proyección global es privada y mínima; se revalida contexto, propietario/vínculo, actividad y membresía antes de consultarla.
+No incorpora pacientes, contactos, clínica ajena o motivos a las respuestas de disponibilidad.
+Ausencias solicitadas/rechazadas/anuladas no bloquean; C3 no entrega su gestión.
+- Un corte de reloj inyectable por cálculo, fechas completas America/Bogota, intervalos [inicio,fin) y segundos exactos.
+Necesita duración+margen en una sola franja restante y dentro de la fecha; sin apertura/jornada no hay oferta ordinaria.
+Se conserva el paso por duración del tipo y se ancla en la franja base, sin un paso, horizonte o tope nuevo de producto.
+`hora_fin` es inicio+duración clínica, con los segundos originales; el margen se aplica solo a ocupación.
+Nueva reserva exige tipo propio activo y toma duración/margen del servidor; ignora duración, margen y prioridad adulterados.
+Registra `origen=reserva`, objetivo explícito de servicio completo d×60 y política M en campos existentes; nunca rellena históricos ni decide una duración clínica diferente.
+- Reprogramar verifica cita propia/alcance, estado abierto y snapshots propios, incluso si se desactivó/editó el tipo.
+Excluye únicamente su cita legítima, conserva duración/margen/objetivo/sellos y valida cuota del mes destino sin contarse dos veces.
+Las estimaciones derivadas del destino anterior se invalidan y se deja marca pendiente_calculo para C5; no se ejecuta cascada.
+Un rechazo conserva la cita original; denegación/límite se auditan después del rollback según la vía común, sin duplicar la auditoría de negocio.
+Una clave repetida revalida acceso y devuelve la referencia guardada; otra carga con esa clave da conflicto.
+Los reintentos HTTP no vuelven a mostrar como nueva reserva la advertencia de otra cita del día ni duplican las notificaciones internas existentes.
+No se implementa el nuevo circuito durable de avisos C4 ni se presenta la deduplicación SMTP como entregada por C3.
+- Todas las rutas existentes internas/portal de horas y sugerencias delegan al mismo cálculo; desaparecen los cálculos alternativos de apertura y ocupación por minutos.
+Calendario y portal envían mascota/tipo, usan la respuesta canónica y descartan respuestas atrasadas al cambiar selección.
+Los comandos conservan clave ante fallo de red y bloquean doble envío.
+Se conserva diseño, CSRF, titularidad y permisos; el formulario residual sin acceso de pacientes y su escritor JS incompleto se retiran, manteniendo el acceso vigente al calendario.
+El administrador no recibe permisos nuevos; la retirada pendiente de su creación actual corresponde a C4a.
+- Reserva/reprogramación conservan `CoordinadorAgenda`/`OperacionAgenda`: clínica → usuarios globales ordenados → mascotas → vínculos y lecturas actuales después de esperar.
+Se guarda cita/vínculo/cuota/operación/auditoría en la unidad reconocida; fallo de auditoría o capacidad revierte todo.
+No se introduce un escritor paralelo, transacción exterior desconocida o protocolo HC/GET_LOCK nuevo.
+C2 conserva íntegros sus diez casos de carrera y el comparador JSON; el workflow agrega C3 como cuarta clase MySQL 8 secuencial y mantiene instalación, semilla, migrador y volumen vacío.
+- Cancelada/no_asistio liberan ocupación; un sobrecupo no se salta como si permitiera atención simultánea.
+La cota de ocupación usa A.3 y snapshots/segmentos existentes, sin escribir cascada ni cambiar horas pactadas/reales.
+La completada con evidencia usa máximo(N+m, fin real); una atención abierta con cota agotada no se declara libre.
+La regla de incertidumbre legada/pausa sin reanudación fue preguntada y confirmada por el dueño durante C3; está anotada en §6 y precisada en HU-4.9/RE-4.9.2.
+No se inventan tiempos ni se cambia la cita al pedir revisión de la fecha afectada.
+
+### Trazabilidad RE → prueba
+
+| RE/componente | Evidencia automatizada |
+|---|---|
+| RE-4.9.1; RE-4.1.3; RE-4.6.2; RE-7.4.3 | `DisponibilidadAgendaTest`: bordes exactos/+1s, fin clínico sin margen, segundos conservados, parámetros adulterados, tipo activo/snapshot desactivado, reloj común sugerir/guardar y rutas canónicas; `IntervalosAgendaTest`: intersección/resta/unión, límites semiabiertos y fecha estricta Bogota. |
+| RE-4.11.3; RE-4.8.3; RE-4.9.2 | Sin jornada/apertura no hay horas; franja discontinua, cierre puntual sin afectar otra fecha, ausencia parcial aprobada frente a solicitada/rechazada/anulada y extremo exacto; completada con pausa 09:10–09:30 libera 10:00 con margen único, sin modificar sellos. |
+| RE-4.1.2; RE-4.2.4; RE-5.3.3 | Ocupación interclínica genérica, cancelada/no_asistio, exclusión propia legítima y rechazo de exclusión ajena, snapshots y cuota del mes destino; portal conserva titularidad/vínculo y usa las mismas horas. |
+| RE-4.9.3; B1/B1.1 | `AgendaC3MysqlTest` y `ProcesoAgendaC3`: siete escenarios de dos procesos/PDO, observador independiente y barreras; seis esperas reales y control de recursos independientes, ambas direcciones reserva/reprogramación y reevaluación después de rollback. Resultado final, operación y auditoría se comprueban tras cada carrera. |
+| RE-4.9.3; RNF-11; RN-G02/G13 | Replay de reserva/reprogramación sobre motor, comparador de mapas/tipos intacto, HTTP sin advertencia/duplicación, fallo de auditoría con rollback de cita/vínculo/operación y conservación de original; suites anteriores de aislamiento/seguridad conservadas. |
+| Clientes existentes | `DisponibilidadAgenda.test.cjs`: claves estables y nueva intención, una sola consulta mascota/tipo sin tiempos/prioridad, respuesta vieja descartada, respuesta canónica portal, doble envío incluso con revalidación en vivo, arrastre con segundos/reversión y reintento de red. |
+
+### Verificación y pendientes
+
+| Verificación propia del ejecutor | Resultado real sobre la entrega |
+|---|---|
+| PHP completo sin host | **925 pruebas / 7587 aserciones / 60 omitidas de motor**, salida 0 (00:30.606). |
+| PHP completo con motor disponible | **925 pruebas / 8581 aserciones / cero omisiones**, salida 0 (11:06.881), **MariaDB 10.4.32**; incluye las diez carreras C2 y siete escenarios C3, sin reconstrucciones simultáneas de la misma base. |
+| JS completo secuencial | **259/259**, cero fallos/omisiones, salida 0 (16.673 s), incluido arrastre que conserva segundos y revierte visualmente el rechazo. |
+| Sintaxis y diff | **24 PHP y cinco JS válidos**; `git diff --check` sin incidencias. |
+| Mermaid | **29/29 renderizados**; los 28 diagramas previos son idénticos a HEAD y el añadido es §17. |
+| CI y alcance | YAML sin claves duplicadas; BaseV2MysqlTest, AgendaB2MysqlTest, AgendaC2MysqlTest y AgendaC3MysqlTest secuenciales, base explícita y proxies de pruebas; demás instalación/migrador/semilla/volumen idénticos. Sin cambios de aplicación en Security, esquema/migraciones, versión o exportaciones. |
+
+Los PHP de aplicación/pruebas permanecieron idénticos durante la suite final de motor y al cerrar la entrega; la última corrección exclusiva de JS/segundos se verificó con la suite JS completa y sintaxis.
+Se conservaron huellas de la fuente en el material de verificación local, no versionado.
+La primera pasada completa MariaDB, **922/8560**, salida 0 (11:44.811), es intermedia y no sustituye la final.
+La integración inicial sin host detectó siete expectativas de mensajes/peticiones anteriores y una fixture que reservaba la misma mascota ya en atención; se adaptaron al contrato actual manteniendo las comprobaciones de negocio y añadiendo cobertura directa de bloques inactivos/ocupación.
+No se ocultan esos ajustes bajo una atribución al CI previo.
+Las regresiones de auditoría generan errores simulados intencionales; las suites finales terminaron sin errores, fallos o warnings PHPUnit.
+
+**Comandos ejecutados:** `php vendor/phpunit/phpunit/phpunit --colors=never` sin host y con motor; selecciones de DisponibilidadAgendaTest/IntervalosAgendaTest/PortalAgendaTest/AgendaPeticionesTest/CitaTest/CoordinacionHorariosTest y ejecución nativa preliminar de AgendaC3MysqlTest; `node --test --test-concurrency=1 tests/Frontend/*.test.cjs`; `php -l` por PHP tocado, `node --check` por JS tocado, validador YAML/selección/conservación de controles y `git diff --check`.
+Render mediante el navegador automático de documentación sobre un documento aislado, no pantallas de Zooki.
+**Entorno explícito:** TRUSTED_PROXIES=127.0.0.2 y ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2; para motor HOST=127.0.0.1, PORT=3306, USER=root y PASS vacío de pruebas; la pasada sin host elimina HOST.
+Motor observado con SELECT VERSION(): **10.4.32-MariaDB**; no se presenta como MySQL 8.
+Sin leer/escribir .env, consultar la base manual, cambiar credenciales/servicios o enviar SMTP real.
+No se presentan los resultados de e21b521 como ejecuciones nuevas.
+MySQL 8/CI completo deberán confirmarse después de revisión y push del usuario; no se reejecutan trabajos remotos.
+El dueño conserva las comprobaciones manuales anteriores pendientes y las de esta entrega.
+C4a/C4b, C5, C6 y C7 siguen pendientes: triage/revisión/nuevos avisos, nueva reprogramación del portal, cascada, gestión de ausencias/cobertura e integración clínica, respectivamente.
+Sin versión, migraciones, exportaciones del portal, despliegue o aprobación propia.
+
+### Comprobaciones manuales del dueño
+
+1. **Ana Norte** configura apertura y jornada de **Beto Norte** con mañana/tarde separadas; **Beto Norte** agenda un tipo de prueba de 30 minutos con margen de 30.
+Con jornada hasta 12:00 debe ofrecer 11:00 como último comienzo completo, conservar fin clínico 11:30 y no ofrecer 11:30, el descanso ni un día sin jornada; los bordes de un segundo se comprueban automáticamente.
+2. **Ana Norte** crea un cierre puntual; **Beto Norte** y **Fabio Propietario** consultan esa fecha y la misma semana siguiente.
+La fecha cerrada pierde esos huecos; la otra conserva su horario y no aparecen ausencias recurrentes inventadas.
+3. **Fabio Propietario** elige mascota/tipo/vet en su clínica vinculada y cambia rápidamente mascota o tipo.
+Las horas corresponden a la última selección, el doble envío produce una sola cita y el formulario mantiene su diseño y mensajes junto al campo.
+4. **Ana Norte** reprograma una cita de **Beto Norte** después de desactivar/editar su tipo.
+Se conserva el tipo/snapshot histórico, el margen y la reserva anterior si el destino resulta ocupado o sin cuota; no se concede creación nueva al administrador por C3.
+5. Con datos de prueba preparados, **Beto Norte** y **Diego Sur** consultan una mascota compartida que ya tiene cita, y una cita legada de duración desconocida o pausada.
+El conflicto no revela clínica/paciente/contactos ajenos; la incertidumbre pide revisión de la fecha afectada y no altera horas o snapshots.
+
+### C3 — Revisión (2026-10-20)
+
+**Revisó Codex arquitecto de esta conversación, independiente del ejecutor. Veredicto: con corrección requerida C3.1.** H-C3-1/2/3 abiertos; no se aprueba C3 ni se inicia C4a. El revisor solo modifica plan/estado. Se conservan la entrega, resultados y confirmación del dueño con su atribución. La decisión sobre incertidumbre se comprobó también en la respuesta directa del usuario en la conversación del ejecutor: «Confirmo: bloquear esa fecha y requerir revisión»; no es una decisión inventada por el agente.
+
+**H-C3-1 / P2 — La hora sugerida pierde los segundos antes de reservar.** `models/DisponibilidadAgenda.php:220`, RE-4.9.1/2 y contrato de segundos exactos A.3. Reproducción independiente sobre SQLite, fixture DosClinicas, Beto Norte, reloj `2030-01-07 07:00:00`: cambiar el inicio de su jornada del lunes a `08:00:30`; `Cita::sugerencias(2,1,1,'2030-01-07')` devuelve `08:00`. Reservar literalmente esa sugerencia lanza HorarioOcupado («No hay disponibilidad para el intervalo completo»); reservar `08:00:30` sí guarda. El cálculo comprueba el instante exacto y luego lo transforma con H:i, por lo que el cliente recibe otro instante. Conservar los segundos en el valor transportado de principio a fin, sin redondear el horario ni cambiar el paso de presentación. Cubrir apertura y jornada con segundos, rutas internas/portal, reprogramación y JS que envía la selección.
+
+**H-C3-2 / P2 — El reintento HTTP de reprogramación no recupera un resultado ya guardado si pasó la hora destino.** `controllers/CitaController.php:403–405`, RE-4.9.3, B1/B1.1 y rama de replay de Modelos §17. Reproducción independiente SQLite, Beto Norte: reservar 09:00 y, a las 07:00, reprogramar a 10:00 con clave `f` repetida 64 veces. Primera respuesta HTTP 200/success; repetir exactamente la petición con reloj 10:00:01 devuelve 422 («No puedes agendar citas en horas que ya pasaron»), aunque la operación ya existe. La validación temporal se ejecuta antes de consultar el resultado durable. Aplicar recuperación idempotente también en esta ruta, conservando autorización vigente, clínica/actor/acción/huella y rechazo de claves reutilizadas con otra carga. Solo un comando nuevo valida estado/tiempo/capacidad para volver a escribir; el replay no debe repetir negocio, marcas, auditoría o notificaciones internas. Probar también cambio de estado posterior y revocación de acceso, sin convertir el replay en una autorización nueva ni retroceder el estado actual.
+
+**H-C3-3 / P2 — El calendario interno oculta el motivo de revisión de disponibilidad.** `public/js/calendario.js:944–947` y `1138–1140`, RE-4.9.2 y decisión confirmada del 2026-10-20. Ejecución independiente de cargarSlotsModal en VM, con respuesta `{success:false,message:'La disponibilidad de esta fecha requiere revisión.'}`: termina mostrando «No quedan horarios libres este día. Prueba con otro día». El modal de reprogramación tiene la misma rama. Se confunde un fallo de dominio que necesita revisión con una consulta válida sin huecos. Conservar y presentar el mensaje genérico del servidor de forma segura en ambos formularios; distinguir error de consulta frente a success con lista vacía, descartar respuestas obsoletas y mantener el botón sin selección. El portal ya conserva el mensaje. Añadir regresiones ejecutables de JS, incluida una respuesta obsoleta de error.
+
+**Resto inspeccionado:** helper de intervalos, intersección apertura/jornada y resta de cierres/ausencias aprobadas; autorización previa a la proyección global mínima vet/mascota; ocupación con segundos, margen único, pausas y completadas; snapshots y fin clínico; coordinación común y lecturas actuales, cuota del destino, rollback de vínculo/cita/operación/auditoría; exclusión legítima y tipos inactivos al reprogramar. Revisados clientes, rutas y matriz de permisos existente, cambios en fixtures/expectativas y arnés de siete escenarios C3 con barreras/observador, conservando diez carreras C2 y comparador JSON. La creación administrativa residual sigue delimitada para C4a, sin ampliación en C3. Diseño conservado y retirada del modal residual sin entrada visible. Cotejados Modelos §4/§9/§16/§17 y contrato A.3; §17 renderiza correctamente en un documento aislado. El flujo de replay dibujado no se cumple en el borde HTTP de H-C3-2.
+
+**Verificación propia del revisor:** PHP completo sin host 925 pruebas/7587 aserciones, 60 omisiones de motor, salida 0 (00:59.062); PHP completo con MariaDB 10.4.32 exclusivamente en zooki_test_base_v2: **925/8581, cero omisiones, salida 0 (13:45.623)**, incluidas las diez carreras C2 y siete escenarios C3; JS completo 259/259, cero omisiones, salida 0 (17.531 s); 24 PHP/cinco JS con sintaxis válida y diff sin incidencias. YAML validado sin claves duplicadas, selección CI secuencial de cuatro clases de motor y controles de instalación/migrador doble/semilla/volumen vacío idénticos a HEAD. Las suites con/sin motor fueron secuenciales; la fuente PHP/JS no cambió durante la revisión. Los verdes de las suites existentes no cubren las tres reproducciones negativas anteriores. Sin leer/escribir .env, base manual, SMTP real, pantallas del revisor o ejecución CI nueva. MySQL 8 permanece pendiente del CI posterior al push del usuario.
+
+**Encargo C3.1:** corregir exclusivamente H-C3-1/2/3 con regresiones, conservar coordinación/privacidad/snapshots y actualizar Modelos si cambia el flujo. Verificar suites completas PHP sin host/con motor disponible y JS sobre fuente final, sin reconstrucciones simultáneas. Identificar MariaDB frente a MySQL 8/CI. Entregar Anexo C3.1 con autor, RE→prueba y resultados; estado entregada pendiente de revisión independiente, sin cerrar hallazgos desde ejecución. No empezar C4a ni hacer commit/push/merge/tag/cambio de rama. No se propone nueva regla de producto, esquema, versión o exportación.
+
+**Pruebas manuales tras la corrección, pendientes del dueño:**
+
+1. **Beto Norte:** agendar con un tipo de 30 minutos y margen de 30, jornada hasta 12:00: último comienzo 11:00, fin clínico 11:30, sin descanso ni horarios fuera de jornada.
+2. **Ana Norte y Beto Norte:** Ana crea un cierre puntual; Beto consulta ese día y la semana siguiente: solo se bloquea la fecha del cierre.
+3. **Fabio Propietario:** cambiar rápidamente mascota/tipo/vet y reservar; horas de la selección vigente, una sola cita ante doble envío y diseño conservado.
+4. **Ana Norte:** reprogramar después de editar/desactivar el tipo; conservar snapshots y reserva anterior cuando el destino falla.
+5. **Beto Norte y Diego Sur:** con datos de prueba preparados, conflicto global de una mascota y legado/pausa inciertos; sin datos ajenos y con aviso explícito de revisión. No modificar históricos para conseguir un hueco.
+
+Las comprobaciones anteriores sin resultado explícito permanecen pendientes. Guardado/push de C3 junto con su corrección después de revisión; confirmar CI MySQL 8 nuevo completo. No se atribuye aprobación visual o CI a esta revisión local.
+
+## Anexo C3.1 — Resultado (2026-10-20)
+
+**Autor: Codex ejecutor de esta conversación.** Revisa Codex arquitecto en otra conversación independiente.
+**Estado: entregada, pendiente de revisión independiente.** H-C3-1/2/3 conservan su estado pendiente de dictamen del revisor; el ejecutor no los cierra ni aprueba C3.
+Se conservan literalmente los anexos y las revisiones anteriores, incluido el resultado verde previo que no cubría estos tres errores.
+La entrega corrige exclusivamente esos errores; no introduce decisiones de producto ni empieza C4a.
+
+### Corrección y trazabilidad RE → prueba
+
+| Hallazgo y contrato | Corrección | Regresión ejecutable |
+|---|---|---|
+| H-C3-1; HU-4.9, RE-4.9.1/2, A.3 | DisponibilidadAgenda conserva segundos no nulos en HH:mm:ss; HH:mm abrevia únicamente segundos cero, sin cambiar el instante ni el paso por duración. El formateador compartido muestra esos segundos, con el estilo previo de cada pantalla; los chips y los envíos conservan literalmente el valor interno/portal/reprogramación. | DisponibilidadAgendaTest::testC31SugerenciaLiteralConSegundosSeReservaYReprograma, con apertura 08:00:30, jornada 08:00:30 e intersección 08:01:07, reloj común 2030-01-07 07:00:00; rutas internas/ambas rutas portal, selección literal guardable y reprogramación con snapshot, fin clínico y margen conservados. Frontend: formato, chips/clic reales internos/portal, consulta portal con segundos, ambos envíos internos y FormData portal con reintento conservan el instante. |
+| H-C3-2; RE-4.9.3, B1/B1.1 | CitaController valida sintaxis y acceso por contexto sin rechazar anticipadamente estado/tiempo. Cita::reprogramar conserva el protocolo existente: autorización vigente y lecturas actuales bajo el coordinador, ledger por actor/clínica/acción/huella, recuperación del confirmado y validación de estado/tiempo/disponibilidad solo para el comando nuevo. Un replay confirmado devuelve antes de retirar/crear notificaciones. No se cambia el modelo, el ledger ni su formato persistido. | AgendaPeticionesTest: respuesta perdida y replay HTTP después de 10:00:01 y del día destino; estados posteriores en_curso/pausada/completada/cancelada/no_asistio; mismo contenido/tipos sin exigir orden de claves; todas las filas de cita/operación/auditoría/notificación intactas. Revocación de usuario/membresía/vínculo/clínica y contexto Sur denegados con una auditoría durable, sin escritura de negocio. Misma clave con otra carga responde 422; otro actor/acción/clave no recupera el resultado ajeno y el comando nuevo sigue rechazando tiempo/estado inválidos. |
+| H-C3-3; RE-4.9.2 y decisión confirmada de revisión | Ambos cargadores internos distinguen success con lista vacía de error de dominio/transporte. El mensaje genérico del servidor se escapa con la estructura HTML existente. El control de respuesta vigente precede al tratamiento del error; se limpia la selección y se mantiene bloqueado guardar. El portal ya preservaba ese error. | DisponibilidadAgenda.test.cjs: para reservar y reprogramar, revisión explícita, consulta válida vacía y error obsoleto posterior a una respuesta vigente; no se dibujan horas ante error ni queda selección. Prueba de la estructura real setSlotsEstado con mensaje malicioso escapado; pruebas de chips y envíos reales. |
+
+Modelos §17 precisa la validación de estado/tiempo en la rama de comando nuevo, el transporte exacto y la distinción entre consulta vacía y error.
+§4/§9/§16 y los otros 28 diagramas permanecen idénticos al comienzo de C3.1; no se cambia su flujo.
+No se altera coordinación, snapshots, margen único, cuota, rollback, aislamiento, permiso administrativo ni cálculo de disponibilidad.
+Las nuevas comprobaciones se integran en los archivos de pruebas existentes de C3; no se modifica esquema, migraciones, versión o exportaciones.
+
+### Verificación propia sobre fuente final
+
+- Regresiones C3.1 PHP: **11 pruebas / 87 aserciones**, salida 0, 00:00.347, SQLite sin host.
+- PHP completo sin host: **936 pruebas / 7674 aserciones / 60 omitidas de motor**, salida 0, 00:40.672.
+- PHP completo con **MariaDB 10.4.32**: **936 pruebas / 8668 aserciones / cero omitidas**, salida 0, 12:18.190, exclusivamente zooki_test_base_v2; incluidas diez carreras C2 y siete escenarios C3. Fuente PHP idéntica antes y después de esta pasada.
+- JS completo final: **270/270**, cero omitidas y salida 0, 6.843 s; archivo de disponibilidad aislado **20/20**.
+- Sintaxis válida de los **24 PHP** de la entrega acumulada y cinco archivos JS/CJS comprobados; diff --check salida 0, únicamente aviso Git de conversión futura de fin de línea en OperacionAgenda, intacto en C3.1.
+- Mermaid: **29/29 renderizados** en un documento aislado; sin recorrer pantallas de la aplicación.
+- Comparación SHA-256 contra la fuente al iniciar C3.1: cambios limitados a once archivos previstos, preservando el resto de C3 y todas las anotaciones del arquitecto. Fuente PHP fija durante la pasada nativa.
+- Workflow intacto en C3.1: cuatro clases MySQL secuenciales con base explícita, controles de instalación/migrador doble/semilla/volumen vacío conservados; comparador JSON, diez carreras C2 y siete escenarios C3 sin modificaciones.
+
+Configuración de pruebas explícita: TRUSTED_PROXIES=127.0.0.2; ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2.
+Sin host se retira ZOOKI_TEST_MYSQL_HOST; con motor se fijan host 127.0.0.1, puerto 3306 y usuario/contraseña de pruebas explícitos para la instancia local disponible.
+No se lee/escribe .env ni se consulta la base manual; no se cambian servicios o credenciales.
+No hubo SMTP real, pantallas, reconstrucciones simultáneas de la base, operaciones Git de escritura o ejecuciones remotas.
+
+Comandos de verificación ejecutados, con esas variables de prueba:
+
+```text
+C:\xampp\php\php.exe vendor/phpunit/phpunit/phpunit --filter C31 --colors=never
+C:\xampp\php\php.exe vendor/phpunit/phpunit/phpunit --colors=never
+node --test tests/Frontend/DisponibilidadAgenda.test.cjs
+node --test --test-concurrency=1 tests/Frontend/*.test.cjs
+php -l <cada PHP de la entrega>
+node --check <cada JS/CJS comprobado>
+node scratch/c31-diagramas.mjs documentacion/Modelos.md
+node scratch/c31-verificar.cjs
+git diff --check
+```
+
+El comando completo PHP se ejecutó primero sin host y después con MariaDB, nunca reconstruyendo la misma base en paralelo.
+Los scripts/registros locales scratch/c31-* son evidencia de trabajo excluida de Git; no son archivos del producto ni nuevas pruebas publicadas.
+Los resultados de C3 y de su revisión siguen atribuidos a sus autores, sin presentarlos como nuevas ejecuciones de C3.1.
+
+### Pendientes y comprobaciones manuales del dueño
+
+Revisión independiente de C3.1 y posterior guardado/push por el usuario de C3 junto con esta corrección.
+**MySQL 8 no se verificó nativamente en local**: el motor disponible es MariaDB 10.4.32, sin Docker local disponible.
+Se requiere CI nuevo completo de MySQL 8 después de la revisión y del push del usuario, con las cuatro clases, carreras y controles existentes.
+No se atribuye el CI aprobado de e21b521 a esta fuente sin publicar.
+Las comprobaciones manuales previas permanecen pendientes hasta recibir resultado explícito del dueño.
+
+1. **Beto Norte**, con una jornada de prueba precargada que empiece a las 08:00:30: seleccionar la sugerencia, comprobar que muestra los segundos y guardar esa misma hora; fin clínico y margen separados, sin redondeo.
+2. **Fabio Propietario**, con su mascota y clínica vinculadas: seleccionar una sugerencia con segundos y reservar; cambiar rápidamente mascota/tipo/vet y comprobar que solo queda la respuesta vigente, sin doble envío.
+3. **Ana Norte**, reprogramando una cita de Beto: comprobar segundos en selección y guardado; si el destino falla, conservar la cita original y los snapshots.
+4. **Beto Norte**, con una atención pausada sin reanudación estimable de prueba: abrir tanto agendar como reprogramar; ambos deben decir que la fecha requiere revisión, sin sustituirlo por falta de huecos ni habilitar guardar.
+5. **Beto Norte y Diego Sur**, con mascota compartida y ocupación de prueba: comprobar indisponibilidad genérica sin datos ajenos; al cambiar de fecha mientras llega un error anterior, solo debe prevalecer la consulta vigente.
+
+El reloj posterior, la respuesta perdida, los estados y el acceso revocado se verifican automáticamente; no se exige al dueño manipular el reloj o las claves para aprobar las pantallas.
+
+### C3.1 — Revisión (2026-10-20)
+
+**Revisó Claude (arquitecto), revisión liviana según `agentes/metodo.md` §11. Veredicto: aprobada; C3 y C3.1 cerradas en código. H-C3-1/2/3 cerrados.**
+
+- H-C3-1: `DisponibilidadAgenda::sugerir` (línea 222) conserva `H:i:s` cuando los segundos no son cero y `exigir` compara el instante exacto; el valor viaja literal hasta la reserva.
+- H-C3-2: `CitaController::reprogramarCitaAjax` ya no valida tiempo antes del replay; `Cita::reprogramarCoordinada` revalida actor/vet/mascota bajo el coordinador, `OperacionAgenda` recupera por clave/huella y solo el comando nuevo valida tiempo (`exigir`, corte del reloj) y estado (UPDATE con estados abiertos).
+- H-C3-3: ambos modales internos distinguen error de dominio frente a lista vacía; cubierto por las regresiones JS de la entrega.
+- Evidencia: lectura del diff y del código de los tres puntos. No se repitieron suites; se toman las del ejecutor (PHP 936 sin host, MariaDB 936/8668, JS 270/270).
+- Nota P3 para D: un replay de reprogramación del admin con veterinario cambiado se deniega si ese vet ya no está activo. Es conservador y aceptable.
+- Pendiente: CI MySQL 8 de 8cbba34, que no estaba en el remoto al revisar.
+
+## Modo acelerado (decisión del usuario, 2026-10-20)
+
+Se mantiene **todo** el alcance de M4. Arquitecto/revisor: Claude; ejecutor: Codex. Reglas en `agentes/metodo.md` §11. Las subetapas de §3 se agrupan en cinco entregas:
+
+| Entrega | Subetapas de §3 | Estado |
+|---|---|---|
+| C4 | C4a Agendar con triage + C4b Sobrecupos y cambios | Entregada y verificada (2026-10-20), Anexo C4 |
+| C5 | C5a Grafo II y cascada + C5b Reasignación en vivo | Revisada y aprobada con corrección C5.1 de Claude (2026-10-20) |
+| C6-C7 | C6 Ausencias y cobertura + C7a Atención roja y pausas + C7b Ficha provisional y conciliación | Revisada y aprobada con corrección C6.1 de Claude (2026-10-20) |
+| C8 | C8 Ajustes y llegada tarde + C8b Llegada sin reserva | Entregada y verificada (2026-10-21), Anexo C8 |
+| D-F | Correcciones de la Lista para D, prueba manual consolidada, cierre documental, `2.0.0-alpha.5` y despliegue | Hecho por Claude (2026-10-21); faltan prueba manual y despliegue del dueño |
+
+### Lista para D
+
+Hallazgos P2/P3 y comprobaciones manuales que se acumulan para la etapa D. Cada entrega agrega aquí sus líneas.
+
+- P3 (C3.1): replay de reprogramación del admin con veterinario cambiado e inactivo se deniega; decidir si se deja así.
+- P2 (C4): la bandeja «Revisión de triage e historial de reclasificaciones» (`views/partials/solicitudes_agenda.php`) usa details/label sin el estilo del sistema; pulirla con el diseño Zooki para celular, tableta y escritorio.
+- P3 (C4): `Cita::registrar` a nivel de modelo aún acepta contexto de administrador (la ruta y `SolicitudAgenda` lo bloquean); solo lo usan pruebas C3. Decidir si se cierra también en el modelo.
+- Prueba manual C4 (2 comprobaciones): **Fabio** agenda un verde con síntomas y luego un caso rojo (teléfono de urgencias, sin cita); **Beto** revisa un «Otro / no sé» a naranja, agenda dos naranjas, el tercero avisa sin crear cita y reordena la cola con motivo.
+- P2 (C5): cada recálculo que corre una estimación escribe una fila de auditoría por cita afectada; durante un exceso largo son muchas filas. Valorar auditar solo cambios de estado de reajuste.
+- P3 (C6-C7): mientras un rojo presente espera, `exigirInicioOrdinario` impide a **todos** los veterinarios de la clínica iniciar citas ordinarias, no solo al que lo atenderá. Confirmar con el dueño si es la regla deseada o si basta con el veterinario libre más próximo.
+- P2 (C8): `public/js/llegadas-agenda.js` no tiene prueba JS automatizada; cubrirla en D o en la prueba manual consolidada.
+- P3 (C8): ajustar una cita a rojo marca la prioridad y avisa, pero no la mete sola al flujo de Urgencias; el vet la registra allí. Confirmar si basta.
+- Prueba manual C8 (2 comprobaciones): **Beto** registra llegadas a los 8 y 15 minutos con tolerancia 10 (opciones correctas; no asistió solo pasada la tolerancia); **Beto** recibe una llegada sin reserva verde sin hueco (ofrece alternativas, no crea sobrecupo) y otra amarilla que pasa antes que la verde.
+- Prueba manual pendiente de C1-C3.1 (consolidar en máximo 3 comprobaciones): marca/tipos por clínica; horario del vet con propuesta y aprobación del admin y cierre puntual; sugerencias con duración+margen, doble envío y reprogramación conservando snapshots.
+
+- Prueba manual C5 (2 comprobaciones, solo en D): **Beto Norte** prolonga una atención y observa cascada/absorción de huecos sin alterar pactadas ni sellos; **Elena en Norte** acepta/rechaza una propuesta y **Fabio** comprueba veterinario/estimación diferenciados y alternativa de reprogramar si no hay destino.
+- Incidencia de verificación C5 para D: limpieza del perfil temporal de Chrome en Windows dio EBUSY en CoordinacionHorarios.test.cjs; repetición dirigida 7/7 aprobada sin cambiar el arnés. Robustecer limpieza si reincide; no es una modificación funcional de C2 ni se presenta la pasada completa JS como verde.
+
+- Prueba manual C6-C7 (1/2, solo en D): **Beto Norte** solicita ausencia parcial; **Ana Norte** aprueba y registra otra de día completo; **Elena Norte** recibe cobertura sin veto y **Fabio** consulta alternativas en Reprogramar cuando no hay destino. Revisar extremos y aislamiento con **Carla Sur**.
+- Prueba manual C6-C7 (2/2, solo en D): **Beto Norte** registra un rojo conocido y otro provisional con contacto opcional, pausa y cierra con consulta; comprobar reanudación/M y orden motivado. **Ana Norte** concilia con cuenta/vínculos verificados; conservar historia/HC y limpiar contacto al acabar la necesidad; Sur no accede.
+- Verificación C6-C7 para D: EBUSY de limpieza Chrome reapareció en CoordinacionHorarios y M2C82Historial; en este último impidió cerrar el servidor del arnés y hubo que finalizar solo su worker validado. Pasada completa 276/278; repetición de ambos archivos anteriores más nueva prueba 16/17, ahora EBUSY de limpieza del nuevo DOM C7. No se cambió el arnés común ni se declaró JS completo verde; las cuatro pruebas nuevas pasaron en la pasada completa.
+
+## Encargo C4 — Agendar con triage, sobrecupos y cambios (2026-10-20)
+
+Entrega agrupada C4a+C4b (modo acelerado). Escribe Codex; revisa Claude. El prompt completo se entregó al usuario en el mismo mensaje. Alcance: §3 filas C4a y C4b, §6 (decisiones 2, revisión previa al horario, bloque y consumo de cupo naranja), Anexos A.3/A.5 y B1/B1.1, Modelos §2, §4 y el inicio de §6 (derivación roja).
+
+## Anexo C4 — Resultado (2026-10-20)
+
+**Autores:** Codex escribió la implementación (se quedó sin tokens antes de cerrar); Claude la revisó, corrigió lo encontrado, completó las pruebas y cierra el anexo. Por modo acelerado no hay segunda sesión de revisión; Codex puede hacer una revisión cruzada al volver.
+
+**Construido:** captura de síntomas + triage antes de horarios en agenda interna (vet) y portal (propietario) con `solicitudes_agenda` (origen `interno`/`portal`, migración 09); cuatro ramas (rojo deriva sin reserva ni cuota con aviso único, revisión veterinaria motivada antes de horarios, amarillo primer espacio, verde elige); clínica cerrada con teléfono de urgencias; aviso de contagio; admin sin crear citas (matriz y modelo); naranja con tope por bloque original (cuentan todos los naranjas; cancelada/no_asistio liberan), sobrecupo sin hueco, tercero avisa sin insertar, reorden solo vet con motivo; cancelar/reprogramar portal con el coordinador C3; avisos/correos durables en `eventos_agenda` despachados por el vigilante.
+
+| RE / regla | Prueba |
+|---|---|
+| RE-4.13.1/2, HU-2.11 (nota sola no calcula, rojo, cerrada) | AgendaC4Test: verde con síntomas y replay, rojo sin cita ni cuota, clínica cerrada |
+| RE-4.18.1/2, revisión previa | AgendaC4Test: «Otro / no sé» exige revisión motivada y huella vigente |
+| RE-4.13.3/4/5, RN-422 | AgendaC4Test: tope + tercero + liberación + completadas consumen; sobrecupo sin hueco; amarillo primer espacio; reorden motivado |
+| RN-422 concurrente | **AgendaC4MysqlTest** (procesos reales, espera de candado observada): dos naranjas por el último cupo → una cita, un aviso de tope |
+| Decisión 2, RNF-11, RN-G02 | AgendaC4Test: admin 403 auditado; mascota ajena y solicitud de otro actor en portal; vet Sur no lee Norte. AutorizacionRolTest actualizado |
+| HU-5.6 | AgendaC4Test: propietario reprograma con replay sin duplicar |
+
+**Corregido por Claude:** (P1) `08_agenda_grafo_ii.sql` conservaba una segunda comprobación final de `origen` sin `interno`: el migrador y el volumen vacío fallaban en MySQL 8 → producción no habría arrancado. Además, pruebas desactualizadas: AutorizacionRolTest, M5C2bPortal (orden de scripts), BaseV2MysqlTest (cancelación del portal con modelo acotado), AgendaB2MysqlTest (migrar aplica 08+09) y AgendaC3MysqlTest (limpieza de avisos). Modelos §4 precisa primer hueco/sobrecupo y conteo del tope.
+
+**Verificación (Claude, MySQL 8.0.46 local, mismo motor que el CI):** PHP sin host 948 pruebas/7730 aserciones, 61 omitidas; PHP completo con motor **948/8736, cero omitidas** (04:41); JS 270/270. Migrador dos veces («al día»), instalación por volumen vacío 58 tablas y 08→09 sobre base anterior repetible.
+
+**Pendientes para D:** ver «Lista para D».
+
+## Anexo C5 — Resultado (2026-10-20)
+
+**Autor:** Codex ejecutor; revisión pendiente de Claude (arquitecto). Base observada: 88c6a54, árbol inicialmente limpio.
+**Entrega:** Grafo II efímero con secuencia, conflictos y emparejamientos; política M compartida con disponibilidad, cascada desde hechos, huecos, revisión por incertidumbre y desborde de franja. Pactadas, snapshots y sellos conservados.
+**Coordinación:** lecturas actuales tras esperar; inicio/cierre y consulta marcan versión bajo el coordinador; consulta confirma acto/marca/auditoría juntos y procesa tras commit. Vigilante procesa atención abierta, marcas C2/C3 y vencimientos sin calendario.
+**Reasignación:** propuesta sin apartar capacidad; destino vigente acepta/rechaza, plazo semiabierto, revalidación de versión/estado/hueco/cupo; siguientes candidatos por inicio/ID e intentos conservados. Sin destino, pendiente de reprogramar con alternativas del portal existente; no es cobertura C6.
+**Avisos:** OperacionAgenda conserva respuesta/huella; EventoAgenda coalesce pendientes y actualiza hora comunicada/ventana solo tras entrega. SMTP fuera de SQL; inciertos sin reenvío automático. Interfaz y correo distinguen pactada y estimación; nuevos títulos legibles.
+
+| RE / regla | Evidencia ejecutable |
+|---|---|
+| RN-412/415; RE-4.5.2/3, RE-4.14.1/2 | PoliticaTemporalAgendaTest: nueve casos, incluido M 09:00/pausa/09:50/10:00, margen exacto, segundo de exceso y varias pausas; AgendaC5Test: tres citas/hueco y repetición sin mutación. |
+| RE-4.11.4; RE-4.3.9 | AgendaC5Test: marca de horario, procesador sin calendario y rollback de cierre/consulta/marca si falla auditoría. |
+| RE-4.14.3–6; RN-413/428 | AgendaC5Test: aceptar/replay, rechazar/siguiente, límite exacto, hueco perdido, admin/Sur/otro vet denegados y acceso revocado; AgendaC5MysqlTest: cuatro carreras, ambos órdenes y espera real. |
+| RE-4.14.7; RN-429 | Diez recálculos de tres minutos, coalescencia y límite de 30 min desde entrega; CorreoAgendaTest separa y escapa las horas; JS ejecuta bandeja, doble envío, respuesta perdida y error obsoleto. |
+
+**PHP final propio:** 974 pruebas/7833 aserciones, 65 omitidas nativas, salida 0 (00:42.348). Se repitió después de completar auditoría y presentación del correo; las pasadas intermedias no sustituyen esta fuente final, comprobada por SHA-256.
+**Motor propio:** MariaDB 10.4.32, exclusivamente zooki_test_base_v2: AgendaC5MysqlTest 4/40, salida 0 (00:38.041). El primer arnés no declaró la segunda mascota de la reserva y no alcanzó la barrera; corregidos sus recursos, conservando plazos, barreras, conexiones y observación real. Sin suite completa de MariaDB ni nueva ejecución de las clases anteriores.
+**JS:** completa 273/274; único fallo EBUSY al limpiar perfil Chrome de una prueba C2. Repetición del archivo 7/7, salida 0; nuevas C5 4/4. Se conserva el fallo ambiental, sin afirmar 274/274 en la pasada completa.
+**Otros controles:** sintaxis de 26 fuentes PHP/JS/CJS, diff --check y YAML correctos; Mermaid 29/29 renderizados en documento aislado. CI añade sexta clase MySQL secuencial y conserva instalación/migrador/semilla/volumen, comparador JSON y carreras C2–C4.
+**Pendientes:** revisión de Claude, CI nuevo completo MySQL 8 tras push del usuario y Lista para D. El motor probado localmente fue MariaDB; no se atribuye un CI nuevo ni la ejecución MySQL de C4 como propia.
+**Alcance:** sin esquema/migraciones, reglas nuevas, versión/exportaciones, .env, base manual, SMTP real, pantallas, operaciones Git de escritura o C6. C5 entregada, pendiente de revisión; no aprobada por su ejecutor.
+
+### C5 — Revisión (2026-10-20)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada con corrección C5.1, ya aplicada y verificada por Claude.**
+
+- **H-C5-1 / P1 — la propuesta de reasignación se reemitía en cada recálculo durante un exceso.** Mientras la atención previa sigue en curso, el fin estimado avanza con el reloj; `procesar` subía `version_agenda` en cada cambio de estimación, `proponer` vencía la propuesta por «cambió de versión» y creaba otra con un aviso nuevo. Reproducido: 4 propuestas y 4 avisos en 3 minutos, y aceptar la primera fallaba. Es justo el caso para el que existe la reasignación en vivo. **Corrección:** la versión solo sube cuando cambia el estado de reajuste (una estimación que se corre con el reloj no cambia la cita); al aceptar tarde, el hueco se corre a «ahora» y se revalida completo; el aviso de estimación usa como clave la hora comunicada para no depender de la versión. Regresión `AgendaC5Test::testPropuestaSobreviveRecalculosDelExcesoYSeAceptaTarde`.
+- **H-C5-2 / P2 — el vigilante recorría todas las fechas futuras con citas en cada pasada**, tomando candados de toda la clínica por cada fecha. Ahora procesa hoy, las marcas `pendiente_calculo` y las propuestas pendientes.
+- Resto revisado: política M (ejemplo confirmado 09:00/30/pausa 20 → 10:00), Grafo II en memoria sin tablas, cascada con huecos y fin de franja, disparo tras cierre con consulta y recuperación por el vigilante, aceptación con revalidación y cupo naranja, aislamiento y destino tomado de la sesión, RN-429 (ventana de 30 min).
+- **Verificación de Claude con MySQL 8.0.46 local:** PHP completo con motor **975/8885 sin omisiones** (incluidas las carreras C2–C5); sin host 975/7839 (65 omitidas); JS 274/274.
+
+## Anexo C6-C7 — Resultado (2026-10-20)
+
+**Autor:** Codex ejecutor; revisa Claude (arquitecto). Base efd3943, rama v2/m4-agenda; C6, C7a y C7b entregadas, pendientes de revisión.
+**C6:** solicitud propia sin bloqueo, registro/aprobación admin efectivos; rangos [inicio,fin), rechazo motivado, cobertura inmediata compatible sin veto, sin destino pendiente de reprogramar y alternativas del portal existente. Auditoría/avisos/operación atómicos.
+**C7a:** caso remoto separado de presencia, cola por llegada/ID y reorden motivado; libre/pausable/espera, decisión explícita sin pausa anidada; consulta/cierre reanudan la interrumpida antes de las siguientes, conservando M, pactadas y sellos. Rojo no consume cuotas ni se bloquea por mora.
+**C7b:** identidad conocida verificada o provisional sin dueño/cuenta/carnet; contacto opcional validado. Completar P→P o consolidar P→F exige cuenta/vínculos vigentes y referencia del operador; sin evidencia suficiente no fusiona. Actos, autores, clínicas, HC/alias y evaluación histórica permanecen.
+**Identidad vigente:** S activas/terminales y citas se trasladan juntas y suben versión; activas requieren nueva revisión ligada a ficha actual, terminales conservan su episodio. Replay no autoriza un contexto posterior cambiado. Eventos pendientes se omiten al invalidarse, sin cambiar destinatario; reclamados/inciertos impiden conciliar.
+**Coordinación:** clínica→usuarios→mascotas y relectura; todos los registros de consulta/alerta/vacuna/desparasitación coordinados; numeración HC sin GET_LOCK lateral. Auditoría fallida revierte ausencia/cobertura o conciliación/actos/HC/S/C/ingreso/eventos/operación. El contacto se limpia tras terminar atención e identidad, salvo motivo registrado; no se copia a avisos/resultados/auditoría.
+**Esquema autorizado:** migración 10 excluye origen urgencia del índice de comienzos ordinarios; no reutiliza es_sobrecupo ni cambia campos/tablas. 01/MER/drawDB sincronizados, 58 tablas; 03–09 intactas. Normalización exclusiva de esta disyunción positiva, validando literales antes de compactar; rechaza AND/literal incompatible.
+**Metadata observada (MariaDB 10.4.32):** `case when estado in ('cancelada','no_asistio') or es_sobrecupo = 1 or origen = 'urgencia' then NULL else 1 end` (backticks omitidos aquí); también observada la expresión previa sin origen. No se atribuye metadata nativa a MySQL 8.
+
+| RE / regla | Pruebas |
+|---|---|
+| RE-4.12.1–5, RN-414/415 | AgendaC6Test: solicitud/aprobación/rechazo, extremos/día completo, cobertura sin veto, avisos/replay, sin destino, aislamiento y rollback. AgendaC6MysqlTest: ausencia/reserva en ambos órdenes, dos procesos y espera real. |
+| RE-4.15.1/2/4/5/7/8, RN-420/421/427; HU-4.3/7.4 | AgendaC7Test: libre/pausable/no pausable, remoto/presente, orden motivado y otra pausa, mora/cupo agotado, cierre con consulta y ejemplo M 09:00/09:10–09:30/09:50/10:00. Nativa: rojo y ordinaria con mismo comienzo. |
+| RE-4.15.3/9/10; HU-2.11; RN-G16/110/206/207; B1.1 | AgendaC7Test: portal/cuenta verificada/provisional sin relación acreditada, P→P/P→F, S activas/terminales/contextos, revisión obsoleta/replay, HC y autores, barrera de envío, contactos, Sur/admin y rollback; nativa de conciliación. |
+| Índice/arranque y formularios | AgendaC6MysqlTest: propio/anterior, repetición, AND y literal distintos, volumen vacío/migrador doble; BaseV2MysqlTest: HC con candado clínico. AgendaClinica.test.cjs: validación, HTML real seguro, opcionales, doble envío, replay y respuesta canónica; fixture PHP portable. |
+
+**PHP completo sin host:** 998 pruebas/7960 aserciones, 70 omisiones nativas, salida 0 (02:33.262); una pasada sobre la aplicación final. Dirigidas intermedias 40/269.
+**MariaDB local:** AgendaC6MysqlTest 5/35 (02:42.323) y BaseV2MysqlTest 45/623 (10:52.428), salidas 0, secuenciales y solo zooki_test_base_v2. Tras reforzar exclusivamente el guardado de literales de 10: dos casos nativos de migración/volumen repetidos 2/10 (00:56.611), salida 0.
+**JS:** una completa 276/278, salida 1 por dos EBUSY del arnés previo; cuatro nuevas 4/4 en esa pasada. Repetición dirigida y ajuste de portabilidad de fixture: 16/17, único fallo EBUSY al limpiar C7; comportamiento comprobado antes de la limpieza, sin declarar verde la completa.
+**Otros:** sintaxis 38 fuentes, YAML sin duplicados, CI con siete clases MySQL secuenciales/base explícita, diff --check y Mermaid 30/30 (MER + Modelos) correctos; controles previos y carreras C2–C5 conservados.
+**Pendientes:** dictamen de Claude, CI completo MySQL 8 después del push del dueño y Lista para D (nueve comprobaciones manuales acumuladas); MariaDB no sustituye MySQL. No se aprueba la entrega ni se inicia C8.
+**Límites:** sin .env/base manual, cuentas automáticas, SMTP real, pantallas, versión/exportaciones, despliegue ni operaciones Git de escritura; decisión del índice registrada en §6.
+
+### C6-C7 — Revisión (2026-10-20)
+
+**Revisó Claude (arquitecto). Veredicto: aprobada con corrección C6.1, ya aplicada y verificada por Claude.**
+
+- **H-C6-1 / P1 — la migración 10 fallaba en MySQL 8.** MySQL 8 guarda los literales de la columna generada como `_utf8mb4\'cancelada\'` (con barra), igual que pasó con CHECK_CLAUSE en B2.2; la normalización solo se había observado en MariaDB y la migración se detenía con «M4-10 índice de comienzos incompatible». Instalación nueva, migrador y despliegue habrían fallado. **Corrección:** normalizar `\'` → `'` antes de validar. Comprobado en MySQL 8.0.46: instalación desde volumen vacío (01–10) y migrador después, migrador dos veces («al día»), base anterior sin urgencia → 10 la actualiza y se repite, predicado adulterado rechazado.
+- **H-C6-2 / P2 — `AgendaB2MysqlTest` no aplicaba la 10** al comparar instalación y actualización; ahora `migrar()` aplica 08+09+10.
+- Resto revisado: ausencia del vet pendiente sin bloqueo y del admin efectiva, cobertura sin veto con acuerdo registrado y sin cobertura → reprogramación o revisión (atenciones en curso no se trasladan); rojo presente vs remoto, cola por llegada y reorden motivado, libre/pausable/espera, decisión explícita sin pausa anidada, reanudación en el cierre; ficha provisional sin dueño ni cuenta ni carnet, conciliación solo con titular verificado, contacto del acompañante limpiado al cerrar.
+- **Verificación de Claude con MySQL 8.0.46 local:** PHP completo con motor 998/9038 (la única falla era H-C6-2, corregida: AgendaB2MysqlTest 11/113); sin host 998/7960 (70 omitidas); JS 278/278.
+
+## Anexo C8 — Resultado (2026-10-21)
+
+**Autores:** Codex escribió la implementación y se quedó sin tokens antes de cerrar; Claude revisó, corrigió, completó pruebas y cierra el anexo (modo acelerado).
+
+**Construido:** `LlegadaAgenda` + controlador y vista del vet. Llegada física sin iniciar atención; decisión veterinaria dentro de tolerancia (completa con cascada, reducida explícita en segundos si cabe, reprogramar, otro vet, siguiente hueco); fuera de tolerancia solo siguiente hueco o reprogramación; «no asistió» solo del vet asignado y pasada hora + tolerancia, libera capacidad y recalcula. Reclasificación HU-4.18 con motivo, calculado/ajustado separados, naranja con tope y amarillo al primer espacio, historial por clínica. Llegada sin reserva: solicitud evaluada → presencia → espera (naranja, amarillo, verde; luego llegada e ID) → cita obligatoria `llegada_sin_reserva` sin sobrecupo, alternativas si no cabe. Decisión del dueño sobre RN-426/RE-4.19.2 registrada en §6.
+
+| RE / regla | Prueba |
+|---|---|
+| RE-4.19.1–4, RN-426 | AgendaC8Test: bordes de tolerancia, reducción explícita y snapshots, completa con cascada, fuera de tolerancia |
+| RE-4.7.1/2, RN-408 | AgendaC8Test: no asistió antes/en el límite/después, otro vet 403, replay, libera; CitaEstadoTest actualizado |
+| RE-4.18.1–4, O-07/O-08 | AgendaC8Test: ajuste con motivo, naranja con tope, amarillo primero |
+| RE-2.2.1–5 | AgendaC8Test: orden de espera, saltarse la cola rechazado, asignación y replay, sin hueco sin sobrecupo |
+| RE-2.2.4 concurrente | **AgendaC8MysqlTest** (procesos reales, espera observada): dos llegadas por el último hueco → una cita, la otra sigue en espera |
+
+**Corregido por Claude:** saltarse la cola de espera lanzaba `LogicException` (error genérico 500); ahora es mensaje de dominio con regresión. Pruebas desactualizadas: `CitaEstadoTest` (no asistió exige tolerancia) y `AgendaC8Test` (código 403).
+
+**Verificación (Claude, MySQL 8.0.46 local):** PHP completo con motor **1011/9113, cero omitidas** (incluidas las carreras C2–C8); sin host 1011/8023 (71 omitidas); JS 278/278.
+
+## D-F — Resultado (2026-10-21)
+
+**Autor y revisor: Claude** (modo acelerado; Codex sin tokens). Decisiones del dueño del 2026-10-21 en esta conversación.
+
+**Decisiones del dueño (2026-10-21):**
+- Una cita **reclasificada a rojo entra sola a la cola de Urgencias**: con llegada registrada queda presente en espera; sin llegada queda derivada y avisa a la clínica. La cita ordinaria se cancela (no se borra) y libera su espacio; una atención en curso no se deriva.
+- **Rojo esperando:** se mantiene que, mientras un rojo presente espera, ningún veterinario libre inicia una cita ordinaria (el primero libre atiende el rojo). Explicado al dueño y aceptado como «rojo primero».
+
+**Lista para D resuelta:**
+
+| Ítem | Resolución |
+|---|---|
+| P3 C3.1 replay admin con vet inactivo | Se deja: denegar es lo conservador. |
+| P2 C4 bandeja sin estilo | Las cuatro herramientas (Triage, Llegadas, Reasignaciones, Urgencias) en un bloque con pestañas accesibles (`agenda_herramientas.php`, `agenda-herramientas.js/.css`), responsive RNF-16; cada panel conserva sus data-* y su JS. |
+| P3 C4 `Cita::registrar` acepta admin en el modelo | Se deja: la ruta (matriz) y `SolicitudAgenda` lo bloquean; solo lo usan los arneses C3. |
+| P2 C5 auditoría por cada minuto de exceso | `CascadaAgenda` audita solo el cambio de estado de reajuste; la estimación queda en la cita. |
+| P3 C6-C7 rojo esperando bloquea a todos | Se deja (decisión arriba). |
+| P2 C8 `llegadas-agenda.js` sin prueba | `AgendaHerramientas.test.cjs`: validación de llegadas, pestañas y vistas sin código en línea. |
+| P3 C8 ajuste a rojo | Implementado (decisión arriba): `UrgenciaAgenda::derivarCita` + `LlegadaAgenda::derivarARojo`, con pruebas presente/derivado/en curso. |
+| EBUSY de Chrome en Windows | `chrome-cdp.cjs` espera la salida real de Chrome y la limpieza del perfil temporal ya no hace fallar la prueba. |
+
+**Documentación y versión:** `App::VERSION` 2.0.0-alpha.5 e historial; HistoriasUsuario Revisión 3.5 con los estados de M4 (HU-4.7 parcial por RE-4.7.3 en v2.1); AGENTS.md al día.
+
+**Verificación (Claude, MySQL 8.0.46 local):** PHP completo con motor **1013/9125, cero omitidas** (incluidas todas las carreras C2–C8); sin host 1013/8035 (71 omitidas); JS 281/281.
+
+### Prueba manual consolidada (dueño, celular y escritorio)
+
+Datos locales: `php scripts/dev/datos_prueba.php --si` (Ana/Beto/Elena Norte, Carla/Diego Sur, Fabio propietario).
+
+1. **Ana Norte (admin):** teléfono de urgencias y un tipo de 30 min + 10 de margen, pausable; Beto propone su horario y Ana lo aprueba; Ana crea un cierre puntual. Ana **no** tiene botón para crear citas.
+2. **Fabio (portal, celular):** agenda un verde marcando síntomas y eligiendo hora; luego describe un caso rojo → ve el teléfono de urgencias y no se crea cita. Reprograma y cancela su cita verde.
+3. **Beto (pestaña Triage):** un «Otro / no sé» espera revisión; lo aprueba naranja con motivo. Dos naranjas entran; el tercero avisa sin crear cita; reordena la cola con motivo.
+4. **Beto y Elena:** Beto inicia una atención y la alarga; la hora estimada de su siguiente cita se corre. Si no cabe, Elena ve la propuesta en «Reasignaciones» y la acepta.
+5. **Beto y Ana:** Beto solicita una ausencia parcial; no bloquea hasta que Ana la aprueba; sus citas pasan a Elena o quedan para reprogramar.
+6. **Beto (Urgencias):** con una consulta pausable en curso registra un rojo conocido → pausa, lo atiende, cierra con consulta y se reanuda la anterior. Registra otro rojo con ficha provisional; **Ana** la completa o la une a la ficha real.
+7. **Beto (Llegadas):** registra una llegada a los 8 min (opciones dentro de tolerancia) y otra a los 15 (solo siguiente hueco/reprogramar); «no asistió» solo pasada la tolerancia.
+8. **Beto (Llegadas):** una llegada sin reserva verde sin hueco → alternativas, sin sobrecupo; una amarilla pasa antes que la verde. Reclasifica una cita a rojo → aparece en Urgencias.
+9. **Celular y tableta:** las pestañas de herramientas se ven ordenadas, sin elementos sueltos ni desbordes.
+10. **Diego Sur:** no ve solicitudes, urgencias, propuestas ni citas de Norte.
+
+### Despliegue (lo hace el dueño)
+
+1. Commit y push de la rama; esperar el CI en verde (todas las clases MySQL 8).
+2. Respaldo de la base de producción antes de integrar.
+3. `release/v2.0.0-alpha.5` → PR a `main` → merge → tag anotado `v2.0.0-alpha.5` sobre el merge.
+4. Redeploy en Dokploy: al arrancar se aplican solas las migraciones 08, 09 y 10. Revisar el log («Aplicadas…» sin errores) y que la pantalla muestre 2.0.0-alpha.5.
+5. Antes de integrar, `node scripts/docs/exportar.mjs --revisar` debe confirmar que las descargas están al día; si cambió una fuente publicada, regenerar su PDF/Word y guardarlos con ella. La guía operativa vigente de alpha.4 a alpha.5 está en el anexo de preparación del 2026-10-22 al final de este plan.
+
+## Anexo — Modal de agendar por pasos (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Encargo visual posterior al cierre de M4; el dueño autoriza pasos como el registro y exige conservar calendario y herramientas inferiores.
+
+- Solo el modal del veterinario: Paciente → Síntomas → Horario, con indicador horizontal, Atrás/Continuar y envío final.
+- Al volver se conservan mascota, síntomas, evaluación y hora exacta; las modificaciones siguen invalidando contexto/horarios con la lógica existente.
+- Continuar exige paciente/tipo y después evaluación reservable; revisión pendiente y rojo no habilitan horario ni envío.
+- Se elimina la tarjeta anidada y el borde decorativo del triage únicamente en este modal; portal, reprogramación y componentes compartidos conservan sus estilos.
+- Alto limitado con pie visible; sin scroll en los tres pasos básicos a 1366×768, 820×1180 y 390×844. A 390×450 hay desplazamiento interno accesible, sin recortar campos ni acciones; contenido clínico extenso también puede requerirlo.
+- HU-4.13/RE-4.9.1–3 → AgendaModalCita y DisponibilidadAgenda: navegación, teclado del buscador, evaluación previa, segundos y doble envío (27/27 dirigidas).
+- PHP completo sin host: 1016 pruebas/8051 aserciones, 71 omisiones de motor, salida 0. No es una ejecución MySQL/MariaDB ni CI nuevo.
+- JS completo final: 288/288; la pasada inicial detectó tres fixtures que extraían funciones sin las nuevas dependencias de pasos. Adaptados, sin cambiar las aserciones de reserva, precisión o doble envío.
+- PHP/JS sin errores de sintaxis; diff sin errores; Chrome aislado sin desbordamiento horizontal y pie visible en 12 combinaciones de tamaño/paso. Sin recorrer la aplicación ni consultar bases.
+- Pendiente de revisión visual en la aplicación con Beto Norte: avanzar/retroceder, revisar «Otro / no sé», elegir hora y guardar. Se mantiene el flujo de negocio de Modelos §4; no cambian reglas ni diagrama, versión, esquema o exportaciones.
+- No se modificaron el calendario, su espacio, panel lateral ni herramientas inferiores. Sin commits/push del agente.
+
+### Corrección de distribución solicitada por el dueño (2026-10-21)
+
+- **Codex:** interpretó mal la conservación del calendario dentro del modal. El dueño aclara que el panel derecho debe seguir presente, no convertirse en el último paso.
+- Restauradas las dos columnas y ancho original: solo la izquierda tiene Paciente → Síntomas → Confirmar. Horarios fuera de los paneles de pasos, siempre presentes; apilamiento móvil como antes. Calendario principal y herramientas inferiores intactos.
+- Verificación final dirigida 28/28; sintaxis PHP/JS y diff correctos. Chrome aislado en 12 combinaciones: panel derecho presente en todos los pasos, situado a la derecha en escritorio/tableta, sin desborde horizontal y pie visible.
+- PHP 1016/8051 y JS completo 288/288 anteriores son antecedentes, no ejecuciones nuevas de esta corrección. Entregada, pendiente de revisión visual.
+
+### Selector con foto solicitado por el dueño (2026-10-21)
+
+- **Autor: Codex. Entregada, pendiente de revisión.** Referencia: buscador de Atención sin cita. Resultados con foto de 40 px y nombre/propietario; selección con foto de 32 px, conservando Cambiar y el teclado del combobox.
+- Se reutilizan `fotoMascotaUrl`/`usarFotoPorDefecto`, sin rutas de imágenes arbitrarias ni eventos en línea; imagen local de respaldo si falta foto o falla la carga. El catálogo de la misma ruta conserva ahora `url_foto`.
+- Eliminados franja lateral, fondo azul de selección y halo azul del buscador; opción activa y foco siguen siendo visibles con tonos neutros. Textos escapados, nombres largos recortados con título completo y respuesta anterior incapaz de reemplazar la foto actual.
+- Verificación: JS completo 291/291; dirigidas finales 30/30, sintaxis PHP/JS y diff correctos; Chrome aislado a 1366/390 px con foto y nombres largos sin desborde. PHP completo anterior es antecedente, no repetición nueva.
+- Calendario/horarios derechos, pasos y herramientas inferiores conservados. Sin bases, backend, versión, exportaciones o Git de escritura.
+
+**Ajuste posterior del dueño — iniciales (Codex, 2026-10-21):** sustituir la huella de respaldo por las iniciales del nombre, con el mismo criterio del portal (hasta dos palabras). Aplica a resultados, selección y error de imagen; no solicita una imagen de respaldo. Mantiene foto cuando existe y protege de respuestas anteriores. Regresiones finales 31/31, sintaxis PHP/JS y diff correctos; Chrome aislado 1366/390 px sin desborde y con inicial visible. Entregada, pendiente de revisión; calendarios y herramientas conservados.
+
+**Corrección de formato solicitada por el dueño (Codex, 2026-10-21):** las iniciales anteriores tenían estilo neutro propio y no reproducían el portal. Resultados y selección usan ahora su mismo componente `avatar-iniciales` de usuarios.css: azul, letra blanca y forma circular; únicamente se adapta el tamaño al selector. Comparación en Chrome de fondo, color, familia, peso, tamaño de fuente y radio contra avatar compacto del portal: coincidentes a 1366/390 px. Dirigidas 31/31, sintaxis PHP/JS y diff correctos; calendarios conservados. Entregada, pendiente de revisión.
+
+## Anexo — Distribución superior de Pacientes según mockup (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Ajuste visual pedido por el dueño durante el pulido; no reabre reglas de M2 ni implementa funcionalidades nuevas.
+
+- Solo cabecera y filtros: título/pestañas junto al contexto superior; buscador/estados/especie/vista y acciones en barra inferior. Adaptable a móvil/tableta, con los componentes y colores compartidos del sistema.
+- Cabecera parcial específica de vet_pacientes y estilos cargados en head únicamente en esa ruta; las demás cabeceras y el menú lateral conservan su comportamiento.
+- RE-1.3.1/4 y RE-1.5.1/3 conservados: mismos identificadores y eventos de búsqueda, estados, especie, vistas y vinculación. «Vincular mascota» conserva el propósito completo en title y la misma acción.
+- Tarjetas, tablas, expedientes y formularios: contenido desde el contenedor principal idéntico a HEAD; CSS nuevo limitado a cabecera/barra, sin cambios de API/modelos/consultas.
+- JS completo 294/294; dirigidas finales PacientesCabecera y M2C7Pulido 9/9. Chrome aislado a 1366/1184/820/390/360 px, con alternancia real de switchModule y controles de ambas pestañas visibles/correctos, sin desbordes horizontales.
+- PHP sin host 1016 pruebas/8051 aserciones, 71 omitidas de motor; sintaxis de tres vistas finales y diff correctos. Sin MySQL/MariaDB, .env, versión, exportaciones ni Git de escritura.
+- Pendiente: revisión visual en la aplicación por el dueño. Se conservan las entregas y anotaciones anteriores, incluidos los cambios del modal de agenda.
+
+**Espaciado solicitado después de ver la pantalla (Codex, 2026-10-21):** más aire sobre el título y entre cabecera, barra y tarjetas. Cabecera 28/24 px verticales en escritorio y 20/20 móvil; separación inferior de barra 26/22 px. Cambia únicamente espaciado, conservando tarjetas, menú y distribución. Verificación dirigida de cabecera en ambas pestañas y cinco anchos; pendiente de revisión visual del dueño.
+
+**Ancho del buscador solicitado por el dueño (Codex, 2026-10-21):** máximo 400 px para campo y contenedor en escritorio, evitando estirarlo a lo ancho de la barra; estados junto al campo. Móvil conserva el ancho disponible. Sin modificar tarjetas ni funciones; comprobación dirigida adaptable en ambas pestañas y cinco anchos.
+
+**Posición original de controles superiores (Codex, corrección del dueño, 2026-10-21):** el espaciado del top-header había desplazado contexto/notificaciones/perfil. Restaurado su padding original; el bloque derecho conserva tamaño intrínseco y alineación superior. El aire se aplica al contenido izquierdo y al margen inferior, no a esos controles; en móvil, título/pestañas quedan debajo. Regresión Chrome compara x/y/ancho/alto contra cabecera original en 1366/1184/820/390/360 px: coincidentes; 2/2 pruebas dirigidas y diff correctos. Tarjetas/formularios intactos; entregada, pendiente de revisión visual.
+
+## Anexo — Detalle de propietario y mascotas según mockup (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Nuevo encargo visual del dueño, posterior al pulido del directorio.
+
+- Regreso a la pestaña de origen y ruta/nombre en la cabecera; contexto/notificaciones/perfil conservan posición.
+- Datos del propietario en una tarjeta lateral con avatar azul, estado, edición, documento/contacto y las mismas acciones Llamar/Correo/Agendar cita. Sin nuevas escrituras o permisos.
+- Mascotas en cuadrícula de tres/dos/una columnas según ancho, contador en cabecera, búsqueda y especie existentes, Nueva mascota y Ver ficha. Mantiene historia real, sexo desconocido e inactividad; fotos con iniciales de respaldo sin inventar datos clínicos.
+- Cambiar entre directorio/detalle alterna sus cabeceras y la barra de filtros; regresar no recarga el directorio. Abrir otro propietario limpia sus filtros anteriores.
+- HU-1.3/1.5 y acceso a ficha conservados → PropietarioDetalle: cinco mascotas, filtros, selección de ficha, regreso, vacío, escape y foto fallida; PacientesCabecera y M2C7Pulido conservan acciones previas.
+- JS completo propio 295/295; PHP sin host 1017 pruebas/8056 aserciones, 71 omisiones de motor. No es evidencia MySQL/MariaDB ni CI remoto.
+- Chrome aislado con HTML PHP real: 1366/1184/820/390/360 px, sin desbordes, cuadrícula y posición de controles correctas. Sintaxis PHP/JS y diff correctos.
+- Comparación contra HEAD: directorio, HTML desde ficha clínica individual hasta formularios y funciones desde mostrarSeccionDossier idénticos. Sin cambios propios de backend, esquema, versión/exportaciones o Git de escritura; cambios de agenda pendientes conservados.
+- Pendiente: revisión visual del dueño en la aplicación, sin autoaprobación.
+
+## Anexo — Ficha de mascota según mockup (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Distribución visual autorizada por el dueño mediante su mockup, después del detalle del propietario.
+
+- Conserva la tarjeta lateral; regreso a las mascotas del propietario y ruta/nombre en la cabecera, sin desplazar contexto/notificaciones/perfil.
+- Panel único con foto o iniciales, nombre, HC, estado y edición; resumen de última consulta, última vacuna y última desparasitación; pestañas e información general en seis celdas.
+- Resúmenes de registros visibles, con fechas y clínica de origen; próxima aplicación solo si consta. «Sin registros» no equivale a estar al día. No agrega consultas ni permisos.
+- Alergias/alertas conserva componente, registro e historial; se compacta y permanece antes de las pestañas para seguir visible en Historia clínica (RE-2.1.5/RE-2.10.1).
+- HU-2.5/2.10 → MascotaDetalle: orden cronológico del resumen, fecha sin retroceso UTC, datos ausentes, escape, foto fallida/iniciales, solo lectura, edición, pestañas y regreso. PropietarioDetalle/PacientesCabecera conservan filtros y controles.
+- Chrome aislado con HTML PHP y funciones reales a 1366/1184/820/390/360 px: sin desborde, tres/dos/una columnas y posición superior derecha conservada. No se recorrieron pantallas de la aplicación.
+- Verificación propia: JS completo 296/296; PHP sin host 1017 pruebas/8056 aserciones, 71 omitidas de motor. Sintaxis PHP/JS y git diff --check correctos. No es evidencia de MySQL/MariaDB o CI nuevo.
+- Comparación contra HEAD: HTML desde Historia clínica hasta formularios y JS desde impresión hasta el final idénticos; sin cambios de backend, esquema, versión ni exportaciones. Modelos §9 y los flujos clínicos se conservan, sin cambios de diagrama.
+- Pendiente del dueño: comprobar ficha con/sin foto, cambio de pestañas con alertas visibles, edición y mascota desvinculada. Sin autoaprobación ni commit/push; se conservan anexos y revisiones anteriores.
+
+**Corrección de cabecera solicitada por el dueño (Codex, 2026-10-21):** en la ficha, botón de regreso blanco con borde/texto azul y flecha visible, separador vertical, ruta con mascota en negrita y título de mayor jerarquía. Estilos limitados a la cabecera de ficha, adaptables; notificaciones/contexto/perfil no se desplazan. Regresión MascotaDetalle comprueba formato calculado, navegación y posición en cinco anchos; dirigidas 4/4, sintaxis PHP/JS y diff correctos. Suites completas anteriores son antecedente, no repetición nueva. Entregada, pendiente de revisión visual; resto de ficha conservado.
+
+**Aclaración de color del dueño (Codex, 2026-10-21):** la ruta de la ficha usa azul suave de la identidad en lugar del gris anterior; nombre de mascota y título oscuros, botón azul conservado. Regresión MascotaDetalle 1/1 en cinco anchos y diff correctos; entregada, pendiente de revisión visual. Sin cambios de posición o funciones.
+
+**Tamaño corregido por indicación del dueño (Codex, 2026-10-21):** la cabecera de mascota hereda los tamaños del ingreso al propietario: botón, ruta y título, sin ampliación específica ni botón sobredimensionado. Conserva azul suave, nombre oscuro, borde y flecha. MascotaDetalle compara estilos y altura con la cabecera del propietario en cinco anchos; dirigidas 4/4. Entregada, pendiente de revisión visual; no se repiten suites completas por este ajuste de presentación.
+
+**Botón del propietario en azul (Codex, 2026-10-21):** petición del dueño aplicada al regreso de ambos detalles: texto y flecha azules sobre blanco, mismo borde y tamaños conservados. Estilo común sin duplicar reglas. PropietarioDetalle verifica texto/flecha/fondo en cinco anchos. Se prepara un único commit de todo el pulido pendiente (modal de agenda, cabecera/directorio y fichas), a petición del dueño; el dueño ejecuta commit/push. Entregada, pendiente de revisión visual.
+Verificación final de este ajuste: JS completo 296/296, sin omisiones; git diff --check correcto. PHP completo previo queda como antecedente, sin ejecución nueva por este cambio de color.
+
+## Anexo — Nueva cita en dos pasos (2026-10-21)
+
+**Autor: Codex. Entregada, pendiente de revisión.** Ajuste de interfaz solicitado por el dueño, sin modificar reglas de disponibilidad ni reserva.
+
+- Paciente (mascota/tipo/motivo) → Urgencia (partial existente); se elimina Confirmar. Indicadores con botones accesibles, regreso conservando datos y acceso al segundo solo con paciente completo.
+- Footer por paso: Cancelar/Continuar y Atrás/Agendar; «Falta» limitado al paso actual. Agendar exige consulta reservable, hora y ausencia de envío en curso; Enter no envía el formulario, tampoco desde el botón del footer.
+- Horarios fuera de los pasos, a la derecha en escritorio y apilados en móvil como antes. Guías mediante setSlotsEstado; resumen en una línea de mascota/tipo/nivel/hora tras seleccionar.
+- Rojo oculta Agendar, muestra aviso y botón Ir a Urgencias; cierra el modal y activa la pestaña existente. No crea llegada ni atención automáticamente.
+- El componente triage expone resultado vigente para presentación, invalidado por cambio de selección; consulta() conserva la puerta reservable. Sin duplicar cálculo, tiempos o permisos.
+- HU-4.13/RE-4.9.2 → AgendaModalCita, DisponibilidadAgenda y AgendaCitaPasos: gating, indicadores, faltantes, hora exacta, resumen, Enter, doble envío, derivación roja y descarte de respuestas obsoletas.
+- Revisión Chrome aislada con HTML PHP real a 1366/390 px, ambos pasos sin scroll horizontal; horarios presentes en ambos y a la derecha en escritorio. Sin recorrido de la aplicación ni consultas de base.
+- JS completo propio 297/297; PHPUnit completo sin host 1017 pruebas/8056 aserciones, 71 omisiones de motor. Sintaxis PHP/JS y diff correctos. Sin ejecución MySQL/MariaDB ni CI nuevo. Sin commit/push, versión, esquema ni exportaciones.
+- Pendiente: revisión independiente y visual del dueño. Se conservan registros anteriores; no se aprueba la entrega.
+
+**Pulido azul y navegación inferior (Codex, 2026-10-21):** indicación del catálogo en azul y Calcular nivel de urgencia con fondo azul principal, texto blanco y hover del sistema, únicamente en Nueva cita del vet. Se conserva el pie fijo fuera del contenido desplazable: Cancelar/Continuar y Atrás/Agendar, sin duplicar navegación. AgendaCitaPasos compara colores con los botones principales y verifica pie visible incluso al desplazar el contenido a 1366/390 px; dirigidas 12/12. Entregada, pendiente de revisión visual; suites completas anteriores son antecedente, sin repetición por este ajuste de color.
+
+**Botones junto a los campos y nota eliminada (Codex, 2026-10-21):** por petición del dueño, Cancelar/Continuar quedan inmediatamente debajo del motivo en Paciente y Atrás debajo del triage en Urgencia; Agendar permanece en el pie. Se mueven los mismos botones, sin duplicar eventos ni IDs. Nueva cita deja de generar la nota del catálogo; el partial conserva su salida habitual en los demás usos mediante opción local que se limpia tras incluirlo. Calcular sigue azul y los horarios derechos se conservan. Dirigidas 32/32, Chrome aislado 1366/390 sin desborde horizontal, sintaxis de ambas vistas y diff correctos. Entregada, pendiente de revisión visual; suites completas previas son antecedente y no una ejecución nueva. Sin commit/push.
+
+## Preparación de publicación alpha.5 — Resultado y guía operativa (2026-10-22)
+
+**Autor: Codex. Entregada, pendiente de revisión y ejecución del dueño.** Encargo: revisar versión, push, guías previas e integración/despliegue. No se ejecuta Git de escritura, no se abre PR ni se accede a producción/Dokploy.
+
+### Estado comprobado
+
+- Versión de `config/App.php` y del historial: **2.0.0-alpha.5**; se conserva porque aún no se publicó esta entrega. La API de GitHub confirma **alpha.4 en main**; la versión realmente desplegada debe comprobarla el dueño en el contenedor, no se deduce solo de main.
+- Rama `v2/m4-agenda`, último commit publicado `1d5c733b8e8e570d3c5a33b3e47a60946d961ade`. GitHub compara 34 commits por delante de main y cero por detrás en esta consulta. No había PR de esta rama ni rama/tag alpha.5 en remoto.
+- CI **39894312445**, [ejecución aprobada](https://github.com/carvajal7lsch-commits/Zooki/actions/runs/39894312445): ambos trabajos completos en verde sobre ese SHA. General: PHP 1027/8132 con 71 omitidas de motor; JS 314/314. MySQL 8: las ocho clases BaseV2/AgendaB2/C2/C3/C4/C5/C6/C8, en secuencia, suman 71 pruebas y 1090 aserciones, todas correctas. También pasan 58 tablas, semilla, migrador doble y volumen vacío. Es evidencia de CI, no nueva ejecución local ni prueba sobre producción.
+- La preparación corrige README (alpha.5, PHP 8.2, 58 tablas y actualización conservando base), regenera solo su PDF/Word y actualiza manifiesto/seguimiento. El CI anterior corresponde al código publicado; el dueño debe guardar/subir esta documentación y comprobar el CI del nuevo SHA/PR antes de integrar.
+- Referencias leídas: sección D-F de este plan, `specs/M0-F-corte-produccion.md`, README, Dockerfile, compose, arranque, migrador y tareas. **M0-F describe el corte histórico v1→v2: sus pasos de reinicio/restauración no son el procedimiento de esta actualización.**
+
+### 1. Guardar esta preparación y abrir el PR (Windows, dueño)
+
+En `v2/m4-agenda`, estos comandos guardan exclusivamente la preparación documental de esta pasada. No hay código, SQL, credenciales ni configuración de servicios modificados.
+
+```powershell
+git add README.md agentes/estado.md specs/M4-agenda-grafo-ii.md public/docs/descargas/readme.pdf public/docs/descargas/readme.docx public/docs/descargas/manifiesto.json
+git commit -m "docs(release): preparar despliegue de v2.0.0-alpha.5"
+git push origin v2/m4-agenda
+```
+
+Esperar ambos trabajos en verde para el nuevo SHA. Después crear la rama de publicación desde el HEAD revisado, sin cambiar de checkout:
+
+```powershell
+git branch release/v2.0.0-alpha.5
+git push -u origin release/v2.0.0-alpha.5
+gh pr create --base main --head release/v2.0.0-alpha.5 --title "Zooki 2.0.0-alpha.5: agenda inteligente y pulido de interfaz" --body "Entrega M4: disponibilidad y reserva coordinadas, triage, cascada, ausencias, urgencias y llegadas; nuevo Inicio del veterinario y pulido de agenda/perfil. Migraciones 08-10 sin reiniciar datos. Guia y evidencia en specs/M4-agenda-grafo-ii.md, anexo Preparacion de publicacion alpha.5. Integrar solo con CI completo aprobado, revision y respaldo previo."
+```
+
+El PR se revisa y sus checks deben terminar en verde; la rama main no tiene protección configurada según la consulta actual, así que no debe dependerse de un bloqueo automático de GitHub. No se marca la propia entrega como revisada.
+
+### 2. Respaldo antes del merge (VPS/Dokploy, dueño)
+
+Si Dokploy sigue main con despliegue automático, **el merge puede arrancar el despliegue**. Por eso el respaldo se hace antes, durante una ventana sin uso de la aplicación. Pausar temporalmente los Schedules que escriben datos para conservar un punto de recuperación coherente; reactivarlos después de verificar la actualización.
+
+La guía histórica indica MySQL central del VPS; comprobar que sigue siendo el destino real. No asumir que el contenedor `zooki_db` del compose guarda la base utilizada. El script de respaldo usa la conexión que ya tiene la aplicación; no copiar credenciales al chat.
+
+Comandos en el VPS (Linux), no en PowerShell local:
+
+```bash
+mkdir -p ~/respaldo-zooki-alpha5
+docker exec zooki_web php /var/www/html/Zooki/scripts/backup.php
+docker exec zooki_web sh -c 'ls -t /var/backups/zooki | head -1'
+docker inspect zooki_web --format '{{range .Mounts}}{{println .Name .Destination}}{{end}}'
+```
+
+Copiar fuera del contenedor el `.sql.gz` recién generado. Sustituir `ARCHIVO_RESPALDO.sql.gz` por el nombre confirmado y `VOLUMEN_UPLOADS` por el volumen montado realmente en `/var/www/html/Zooki/public/uploads`:
+
+```bash
+docker cp zooki_web:/var/backups/zooki/ARCHIVO_RESPALDO.sql.gz ~/respaldo-zooki-alpha5/
+docker run --rm -v VOLUMEN_UPLOADS:/datos:ro -v "$HOME/respaldo-zooki-alpha5:/destino" alpine tar czf /destino/uploads-alpha4.tar.gz -C /datos .
+gunzip -t ~/respaldo-zooki-alpha5/ARCHIVO_RESPALDO.sql.gz
+tar tzf ~/respaldo-zooki-alpha5/uploads-alpha4.tar.gz
+```
+
+Conservar también el SHA/imagen de la versión anterior y el destino real de los respaldos. Comprobar restaurabilidad en un entorno aislado conforme al procedimiento del dueño; no importar nada sobre producción para ensayar. No continuar sin copia legible y un punto de restauración identificado.
+
+### 3. Merge y etiqueta (dueño)
+
+Con respaldo confirmado, revisión realizada y CI del PR aprobado: en GitHub integrar el PR a main con **merge commit**, como en las entregas anteriores; no ejecutar squash/rebase ni cambiar la rama del servicio a una rama de pruebas.
+
+Después del merge, copiar su SHA exacto desde el PR. En los comandos siguientes reemplazar `HASH_MERGE_ALPHA5` por ese SHA, **no por el HEAD de la rama de trabajo ni por un main que ya haya avanzado**:
+
+```powershell
+git fetch origin
+git tag -a v2.0.0-alpha.5 HASH_MERGE_ALPHA5 -m "Zooki 2.0.0-alpha.5: agenda inteligente y Grafo II"
+git push origin v2.0.0-alpha.5
+```
+
+No sustituir una etiqueta que ya exista. La consulta actual no encontró alpha.5, pero esta condición debe seguir siendo cierta al ejecutarlo.
+
+### 4. Arranque y comprobación (Dokploy/VPS, dueño)
+
+- Confirmar en Dokploy el repositorio/servicio existentes y su rama main; no cambiar credenciales, dominios, proxies ni servicios por esta actualización. Si no se desplegó automáticamente con el merge, ejecutar Deploy y comprobar que usa el SHA integrado.
+- **No borrar volúmenes, no recrear la base ni importar 01/02 manualmente sobre los datos existentes.** El arranque aplica 08, 09 y 10 pendientes, semilla idempotente y luego conocimiento. Conservar uploads y respaldos montados.
+- Leer el log completo de arranque: migraciones sin `[migraciones] ERROR`, conocimiento cargado o sin cambios; si falla el conocimiento, revisar el error antes de aceptar. Algolia tiene búsqueda local de respaldo; su estado también debe revisarse. Apache puede arrancar aunque falle una migración: HTTP 200 no acredita el cierre del despliegue.
+
+Comandos de comprobación, de solo consulta, dentro del VPS:
+
+```bash
+docker logs --tail 250 zooki_web
+docker exec zooki_web php /var/www/html/Zooki/scripts/migrar.php --revisar
+docker exec zooki_web php -r 'require "/var/www/html/Zooki/config/App.php"; echo App::VERSION, PHP_EOL;'
+```
+
+Esperado: `La base está al día.`, sin nuevas migraciones por aplicar, versión `2.0.0-alpha.5` y semilla sin duplicados. Revisar también esa versión en la pantalla pública/de la aplicación y que los assets se pidan con el sufijo alpha.5. No dar por comprobados estos resultados hasta obtenerlos del VPS.
+
+Reactivar los Schedules existentes sobre el servicio web, zona **America/Bogota**; no duplicarlos:
+
+| Tarea | Periodicidad | Comando |
+|---|---|---|
+| Respaldo | 03:00 diario | `php /var/www/html/Zooki/scripts/backup.php` |
+| Recordatorios | 07:00 diario | `php /var/www/html/Zooki/scripts/send_reminders.php` |
+| Vigilante/cascada/eventos de agenda | Cada 5 minutos | `php /var/www/html/Zooki/scripts/vigilar_atenciones.php` |
+| Invitaciones vencidas | Cada hora | `php /var/www/html/Zooki/scripts/limpiar_cuentas_pendientes.php` |
+
+`vigilar_atenciones.php` ya procesa cascada, atenciones abiertas y eventos. No hace falta un segundo Schedule de `despachar_agenda.php` para esta entrega. Una ejecución del vigilante o de recordatorios puede enviar correos reales: verificar su salida programada con los destinatarios de prueba del dueño, sin dispararlos indiscriminadamente.
+
+### 5. Aceptación y recuperación
+
+Comprobaciones del dueño con sus cuentas de prueba vinculadas, sin duplicar la lista funcional consolidada D-F:
+
+1. **Beto Norte, celular y escritorio:** Inicio sin pastilla vacía, acceso a Agenda y Mi perfil; horarios/fotos/archivos existentes conservados; sin enlaces a Consultas médicas.
+2. **Ana Norte y Beto:** horario/propuesta y cierre visibles; Ana no tiene creación de citas; Beto sugiere/reserva una cita con triage y hora exacta.
+3. **Fabio en portal:** sus mascotas e historia siguen disponibles; agenda ordinaria y derivación roja mantienen los comportamientos ya aprobados.
+4. **Beto y Elena, datos controlados:** comprobar un reajuste/propuesta y que el vigilante avance sin abrir el calendario; verificar el Schedule y sus logs, no enviar avisos repetidos para probar.
+5. **Diego Sur:** conserva aislamiento respecto de Norte; comprobar una foto/adjunto anterior al despliegue y una nueva carga de prueba autorizada.
+
+Si falla una migración, mantener cerrada la ventana de uso y conservar logs; no borrar `schema_migraciones` ni reimportar el esquema consolidado. Las migraciones están diseñadas para reanudar sin duplicación, pero un reintento requiere resolver primero la causa. MySQL hace commit implícito en DDL: no hay rollback global garantizado.
+
+Si hay que volver atrás, recuperar código/imagen y base del punto respaldado, con los archivos correspondientes y sin aceptar nuevas escrituras durante la recuperación. No prometer que basta con desplegar alpha.4 sobre estados/esquema ya escritos por alpha.5. El dueño valida restauración y pérdidas posteriores al respaldo antes de ejecutarla.
+
+### Evidencia y pendientes de esta preparación
+
+README y su PDF/Word regenerados con el exportador del repositorio; `exportar.mjs --revisar` confirma descargas al día. Versión sin cambios, sin ejecutar suites por cambios exclusivamente documentales; se cita la evidencia remota del SHA confirmado. No se leyó/escribió `.env` ni se consultaron bases locales/de producción. Pendientes externos: guardar/subir esta preparación, nuevo CI/PR, revisión, respaldo confirmado, merge/tag y despliegue del dueño con sus comprobaciones. Esta guía no acredita producción actualizada.
