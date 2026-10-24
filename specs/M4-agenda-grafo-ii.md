@@ -3262,3 +3262,15 @@ Si hay que volver atrás, recuperar código/imagen y base del punto respaldado, 
 ### Evidencia y pendientes de esta preparación
 
 README y su PDF/Word regenerados con el exportador del repositorio; `exportar.mjs --revisar` confirma descargas al día. Versión sin cambios, sin ejecutar suites por cambios exclusivamente documentales; se cita la evidencia remota del SHA confirmado. No se leyó/escribió `.env` ni se consultaron bases locales/de producción. Pendientes externos: guardar/subir esta preparación, nuevo CI/PR, revisión, respaldo confirmado, merge/tag y despliegue del dueño con sus comprobaciones. Esta guía no acredita producción actualizada.
+
+### Recomprobación previa al merge solicitada por el dueño (2026-10-22)
+
+**Autor: Codex. Entregada, pendiente de revisión y comprobaciones del VPS.** Sin ejecutar Git de escritura, SQL ni tareas de producción.
+
+- Sí hay migraciones: 08 incorpora el contrato de agenda y transición conservadora de legados; 09 admite solicitudes de origen interno; 10 ajusta la columna generada que gobierna la unicidad de comienzos para urgencias. Las tres se aplican desde el arranque, no manualmente antes de publicar.
+- `AgendaB2MysqlTest` carga la fixture alpha.4 con datos, ejecuta 08/09/10 y comprueba conservación/recuperación; el CI registrado previamente es evidencia de MySQL 8 desechable, no del estado real del VPS ni una nueva ejecución.
+- Las migraciones crean y eliminan procedimientos auxiliares: confirmar permisos efectivos para ello y para DDL/DML sobre la base de la aplicación antes de integrar. El CI usa root; su éxito no prueba los permisos de producción. No cambiar credenciales ni otorgar permisos globales por inferencia.
+- El workflow versionado solo ejecuta verificaciones; el disparador de despliegue pertenece a Dokploy y no se puede confirmar con estos archivos. Abrir PR no cambia main; comprobar además que Dokploy no publique ramas de prueba ni previews sobre la base productiva.
+- Antes del merge: confirmar versión/motor/destino reales, respaldo restaurable de base y archivos, imagen anterior, pausa de escritores y configuración de despliegue. Conservar volúmenes y no reimportar 01/02. No declarar cumplidos estos puntos sin evidencia del dueño/VPS.
+- `--revisar` en el contenedor viejo solo enumera sus propios archivos: un «al día» de alpha.4 no demuestra que alpha.5 no necesite migraciones. No sirve como simulación de 08–10 sobre los datos reales.
+- Tras arrancar alpha.5: comprobar logs sin error, migraciones registradas y revisión al día sin omisión por otro migrador activo. Apache arranca aunque falle migrar; no habilitar uso ni Schedules hasta confirmar el esquema. DDL puede quedar parcialmente aplicado; volver solo al código anterior no garantiza recuperación.
