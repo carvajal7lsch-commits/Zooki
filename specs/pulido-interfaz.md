@@ -283,3 +283,12 @@ PerfilSecciones comprueba contención y alineación vertical con el título a 19
 **Aclaración del dueño sobre Git:** el registro anterior que presentaba 987149b como autorizado fue una interpretación errónea del agente. El dueño indicó que solicita los comandos/mensaje para verificarlos y ejecutarlos él. No ejecutar commit, push ni tags por expresiones como «dame el commit»; entregar los comandos en el chat. No se modifica el historial existente.
 
 Verificación final propia del pulido: **JavaScript 314/314**, sin omisiones; sintaxis de las dos vistas y la fixture PHP, y `git diff --check` correctos. No se ejecutaron comandos de commit, push, tags ni cambios del índice de Git.
+
+## Casos de soporte del super-administrador (prueba del dueño en producción, 2026-10-24)
+
+Registro con Google y una cédula que ya es de otra cuenta: abre el caso `documento_duplicado` como dice Modelos §13.1 (funciona). Pendiente de pulido, sin cambiar la regla:
+
+- **Aviso por correo al super-administrador** cuando se abre un caso (decisión del dueño: lo quiere recibir). Sin datos del titular en el asunto.
+- **Detalle del caso:** hoy la tarjeta no deja ver el detalle (qué cuenta lo pidió, cuándo, la cuenta dueña del documento) ni ofrece acciones claras.
+- **Sin códigos internos en la descripción:** quitar «(al completar el perfil, RE-T.18.3)» del texto que ve el super-administrador; el RE va en la auditoría o en el código, no en la interfaz.
+- El mensaje al titular («No se pudo completar el perfil. Revisa los datos o contacta a soporte.») se conserva (decisión del dueño).
