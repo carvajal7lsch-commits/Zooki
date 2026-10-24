@@ -1,6 +1,6 @@
 # Reglas de Negocio — Proyecto Zooki
 
-> **Revisión 2.4** · Catálogo de reglas por módulos · Arquitectura SaaS multi-inquilino (v2.0) · SENA ADSO — Ficha 3142784
+> **Revisión 2.5** · Catálogo de reglas por módulos · Arquitectura SaaS multi-inquilino (v2.0) · SENA ADSO — Ficha 3142784
 
 Este documento reúne las reglas de negocio de Zooki: las políticas, restricciones y cálculos que rigen el comportamiento del dominio (gestión clínica veterinaria), con independencia de la tecnología con que se implementen. Es la base de la que se derivan las [Historias de Usuario](HistoriasUsuario.md) y los [Requisitos específicos](RequisitosEspecificos.md). Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) → Requisito específico (RE)**.
 
@@ -12,9 +12,11 @@ Este documento reúne las reglas de negocio de Zooki: las políticas, restriccio
 
 ## Convenciones
 
+La **Revisión 2.5 (23/10/2026)** prepara 2.0.0: RN-502–505 aplicadas al carnet público, avisos por correo agrupados durante 30 minutos, ubicación consentida y límite compartido por IP. Se conservan las 120 reglas e identificadores.
+
 **Tipos de regla:** `Restricción` (condición que el sistema hace cumplir), `Cálculo` (deriva un valor), `Proceso` (comportamiento automático), `Estructura` (hecho o relación del dominio).
 
-**Estados:** `Aplicada` (se cumple en la versión indicada; actual preparada: 2.0.0-alpha.4), `Parcial` (se cumple con una excepción que se indica), `Planificada (v2)` (regla nueva del cambio de arquitectura, por implementar en la v2.0), `Derogada (v2)` (regla que deja de aplicarse en la v2.0), `Futuro` (evolución prevista sin fecha), `Por confirmar` (verificar en el código).
+**Estados:** `Aplicada` (se cumple en la versión indicada; actual preparada: 2.0.0), `Parcial` (se cumple con una excepción que se indica), `Planificada (v2)` (regla nueva del cambio de arquitectura, por implementar en la v2.0), `Derogada (v2)` (regla que deja de aplicarse en la v2.0), `Futuro` (evolución prevista sin fecha), `Por confirmar` (verificar en el código).
 
 > _La **Revisión 2.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1: marca como aplicadas las reglas del módulo 0 (plataforma, identidad y aislamiento) y deja escritas las decisiones tomadas al construirlo: 20 fallos por IP y CAPTCHA por cuenta con la IP real del cliente (RN-G15), invitación con aceptación para el personal que ya tiene cuenta (RN-G06, RN-705), topes del gratuito en 2/50/100 (RN-003, RN-005) y un super-administrador que solo ve agregados del uso del plan (RN-004)._
 
@@ -160,10 +162,10 @@ Este documento reúne las reglas de negocio de Zooki: las políticas, restriccio
 | ID | Regla de negocio | Tipo | Estado |
 |---|---|---|---|
 | RN-501 | El propietario puede auto-registrarse y agendar, cancelar o reprogramar citas para sus mascotas desde su portal, respetando las mismas reglas de disponibilidad y horario. | Proceso | Aplicada |
-| RN-502 | El carnet público de la mascota se identifica con un token aleatorio no predecible, nunca con el identificador interno de la mascota. El propietario puede regenerarlo, y el token anterior deja de funcionar al instante. Si la mascota se marca inactiva, el carnet deja de mostrarse. | Restricción | Planificada (v2) |
-| RN-503 | El carnet público muestra solo datos de emergencia: nombre, foto, especie y raza, alergias y alertas médicas, vacunas vigentes con la clínica que las aplicó, un teléfono de contacto del propietario y el de la clínica. Nunca muestra dirección, correo, documento ni la historia clínica. | Restricción | Planificada (v2) |
-| RN-504 | Cada escaneo del carnet público se notifica al propietario con la fecha y la hora; quien escanea puede, si quiere, compartir su ubicación con el dueño. Los avisos se agrupan para no saturar al propietario con escaneos repetidos. | Proceso | Planificada (v2) |
-| RN-505 | El acceso al carnet público admite como máximo 30 consultas por hora desde una misma IP y la página no es indexable por buscadores. | Restricción | Planificada (v2) |
+| RN-502 | El carnet público de la mascota se identifica con un token aleatorio no predecible, nunca con el identificador interno de la mascota. El propietario puede regenerarlo, y el token anterior deja de funcionar al instante. Si la mascota se marca inactiva, el carnet deja de mostrarse. | Restricción | Aplicada (2.0.0) |
+| RN-503 | El carnet público muestra solo datos de emergencia: nombre, foto, especie y raza, alergias y alertas médicas, vacunas vigentes con la clínica que las aplicó, un teléfono de contacto del propietario y el de la clínica. Nunca muestra dirección, correo, documento ni la historia clínica. | Restricción | Aplicada (2.0.0) |
+| RN-504 | Cada escaneo del carnet público se notifica al propietario con la fecha y la hora; quien escanea puede, si quiere, compartir su ubicación con el dueño. El primer escaneo avisa por correo; los de los 30 minutos siguientes se registran sin otro aviso. La ubicación aceptada genera un correo aparte y solo se guarda una vez en el último escaneo desde la misma IP, dentro de sus 30 minutos. | Proceso | Aplicada (2.0.0) |
+| RN-505 | El acceso al carnet público admite como máximo 30 consultas por hora desde una misma IP, contando tokens válidos, inválidos y peticiones de ubicación; la consulta 31 responde 429. Las páginas no son indexables ni se cachean. | Restricción | Aplicada (2.0.0) |
 
 ## Módulo 7 — Configuración del sistema
 

@@ -6,6 +6,18 @@
 
 ## Ahora
 
+### Carnet B — revisada: aprobada con cinco correcciones del revisor (2026-10-23)
+
+- **Revisión (Claude):** ver «Carnet B — Revisión» al final de M5. Antes de desplegar: `CARNET_IP_SECRETO` (32+ caracteres) en Dokploy. Sigue la prueba del dueño, el PR de `release/v2.0.0` y el tag `v2.0.0`; después, el Inicio del administrador y v2.1.
+
+#### Entrega de Codex
+
+- **Escribió Codex; revisa Claude (arquitecto).** Acceso público sin sesión y solo con datos RN-503; tokens inválidos/regenerados/inactivos/provisionales dan el mismo 404, cuerpo, cabeceras y consultas. Noindex/no-store/no-referrer, foto por token y QR sin id. Comparación exacta del token incluso con `general_ci`.
+- **Escaneos y seguridad:** cada vista válida se registra con HMAC de IP; primer correo inmediato y siguientes agrupados 30 minutos con bloqueo de mascota, fallo SMTP sin romper la página. Ubicación solo con clic y permiso, último escaneo de la misma IP/token dentro de 30 minutos, una vez y con correo aparte. Contador global 30/hora/IP antes de validar, incluye ubicación/invalidos; 31 da 429. Migración 11 agrega `carnet_accesos` sin token ni mascota y se aplica sola al arrancar. Últimos diez escaneos solo para el dueño y retorno del login resuelto en servidor.
+- **Ajustes de A:** contactos sin clínicas en baja (suspendidas conservadas), fecha DD/MM/AAAA, Imprimir igual a los otros botones, Historia primera/activa y Carnet al final.
+- **Verificación final:** PHP sin host 1056/8387 (74 omitidas de motor); completo con MariaDB 10.4.32, exclusivamente `zooki_test_base_v2`: 1056/9498, ninguna omitida. JS 326/326. Concurrencia con dos procesos y migración 11 repetida en verde. Chrome 1366/390 y vista de impresión sin desbordes; tres diagramas de Modelos §12.5 y MER renderizados. 96 HU, 435 RE, 120 RN, 59 tablas; revisiones documentales y descargas regeneradas. Evidencia, archivos y cinco pruebas del dueño en el Anexo Carnet B del plan M5.
+- **Despliegue y salvedad:** 2.0.0 preparada; requiere `CARNET_IP_SECRETO` aleatorio de al menos 32 caracteres en el entorno de PHP, o el carnet público responde 503. `.env` y la base de trabajo no se tocaron; sin SMTP real, build Docker ni MySQL 8 local. Decisión confirmada del dueño: QR del portal en el correo de alta (RE-5.8.4/RF-5.3) queda para otra entrega; HU-5.10/HU-5.11 sí se cierran. Falta revisión independiente, prueba del dueño, CI/MySQL 8 e integración/despliegue por el dueño. Sin commit, push, tags ni cambio de rama. No se empezó otra tarea.
+
 ### Carnet A — revisada: aprobada con tres ajustes menores que van en B (2026-10-23)
 
 - **Revisión (Claude):** ver «Carnet A — Revisión» al final de M5. Ajustes para B: excluir clínicas en baja de los contactos, fecha DD/MM/AAAA en vacunas, botón Imprimir con el estilo de los demás y pestaña Carnet al final. Sigue la prueba del dueño y el prompt de B.

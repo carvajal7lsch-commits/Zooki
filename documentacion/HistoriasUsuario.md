@@ -1,12 +1,12 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **Revisión 3.5** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
+> **Revisión 3.6** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
 Cadena de trazabilidad: **Regla de Negocio (RN) → Historia de Usuario (HU) → Requisito específico (RE)**. Origen: `ZOOK-xx` (backlog Jira), `Nuevo` (funcionalidad existente ya documentada), `VD-xxx` (derivada del análisis de vacíos), `Deseable` (propuesta aún no construida), `v2` (derivada de los modelos de proceso de la Fase 2).
 
-Estado **Implementada (2.0.0-alpha.N)**: historia de la v2 terminada y probada en esa versión de la plataforma. Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir, asignada a v2.0 o v2.1 según el plan de entregas. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma según el plan de entregas.
+Estado **Implementada (2.0.0 o 2.0.0-alpha.N)**: historia de la v2 terminada y probada en esa versión de la plataforma. Estado **Planificada (v2)**: historia de la arquitectura SaaS aún por construir, asignada a v2.0 o v2.1 según el plan de entregas. Las historias de la v1.x cuyo actor era el recepcionista se reasignaron al administrador o al veterinario, porque ese rol se elimina en la v2. Estado **diferida**: historia de la v1.x cuyo módulo se rehace con el cambio de arquitectura; conserva sus criterios y se retoma según el plan de entregas.
 
 _La **Revisión 3.2** (11 de octubre de 2026) acompaña la versión 2.0.0-alpha.1, que cierra el módulo 0 (plataforma, identidad y aislamiento): HU-T.15, HU-T.16, HU-T.17, HU-T.19, HU-5.8, HU-0.1, HU-0.2, HU-0.3 y HU-0.4 pasan a «Implementada (2.0.0-alpha.1)»; el alta de personal invita a la persona y solo la vincula si acepta (HU-T.7); los topes del plan gratuito quedan en 2 cuentas de personal, 50 mascotas vinculadas y 100 citas al mes (HU-0.4); la moderación de reseñas de HU-0.3 y la regla de no calificarse a sí mismo de HU-T.17 se entregan en la v2.1 con HU-8.1, la revocación de HU-T.19 con HU-5.14, el QR del portal de HU-5.8 con el carnet QR del módulo 5 y la clasificación de la urgencia de HU-0.4 con el triage. Las historias de otros módulos que M0 dejó construidas en parte (HU-T.18, HU-5.9, HU-1.5, HU-5.12, HU-5.13 y HU-2.10) se cierran con su módulo._
 
@@ -16,10 +16,14 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 _La **Revisión 3.5** (21 de octubre de 2026) acompaña la versión 2.0.0-alpha.5, que cierra el módulo 4 (agenda inteligente y Grafo II): HU-2.2, HU-2.11, HU-4.5, HU-4.6, HU-4.8, HU-4.9, HU-4.11, HU-4.12, HU-4.13, HU-4.14, HU-4.15, HU-4.18, HU-4.19, HU-5.6 y HU-7.4 pasan a «Implementada (2.0.0-alpha.5)»; HU-4.7 queda parcial (el reporte de ausentismo RE-4.7.3 sigue en v2.1). Solo veterinario y propietario crean citas; una cita reclasificada a rojo entra sola a la cola de Urgencias; la llegada tarde ofrece servicio completo, reducido explícito, reprogramar u otro veterinario (RN-426). HU-4.10, HU-4.16 y HU-4.17 siguen en v2.1._
 
+**Revisión 3.6 (23 de octubre de 2026):** carnet QR privado y público implementado en 2.0.0, con avisos por correo agrupados durante 30 minutos, ubicación consentida y límite de 30 consultas por hora e IP. Se conservan 96 HU, 435 RE y 120 RN, sin nuevos identificadores.
+
+**Salvedad acordada por el dueño (23/10/2026):** RE-5.8.4 conserva pendiente el QR del portal en el correo de alta, para una entrega aparte. El correo sí lleva el enlace de acceso. El carnet de emergencia de la mascota de HU-5.10/HU-5.11 queda implementado; no se amplía Carnet B con ese otro QR.
+
 **Índice de módulos:**
 
 **Parcial (2.0.0-alpha.5):** HU-4.7 entrega «no asistió» con tolerancia; el reporte de ausentismo (RE-4.7.3) queda para la v2.1.
-Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de esta revisión describen la entrega preparada y no afirman que ya esté desplegada.
+HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entrega preparada y no afirman que ya esté desplegada.
 
 - **Módulo 0** — Plataforma: clínicas, planes y suscripción *(v2.0)* · 5 historias
 - **Módulo T** — Acceso, seguridad y administración · 19 historias
@@ -1584,7 +1588,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Planificada (v2) | 5 pts | v2 |
+| Media | Implementada (2.0.0) | 5 pts | v2 |
 
 > Como propietario, quiero un carnet digital con QR de mi mascota para que, ante una emergencia, cualquiera pueda ver su información vital.
 
@@ -1602,7 +1606,7 @@ Las salvedades de carnet y QR se conservan al final de la v2.0; los estados de e
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Planificada (v2) | 5 pts | v2 |
+| Media | Implementada (2.0.0) | 5 pts | v2 |
 
 > Como rescatista o persona que encuentra a la mascota, quiero escanear su QR y ver su información de emergencia sin iniciar sesión para ayudarla rápido.
 
@@ -2009,7 +2013,7 @@ Dentro de cada entrega, la tabla sigue las dependencias principales: primero el 
 
 ### Entrega v2.0 — imprescindible para la presentación (29 historias; 159 puntos estimados y HU-2.12 por estimar)
 
-_Avance: la versión 2.0.0-alpha.5 cierra 27 de las 29 (módulos 0, 5, 2 y 4); faltan HU-5.10 y HU-5.11 (carnet QR). Cada módulo publica la alfa siguiente; la versión 2.0.0 sale cuando estén las 29._
+_Avance: la entrega 2.0.0 cierra las 29 HU de la v2.0, incluidas HU-5.10 y HU-5.11. La integración y el despliegue los realiza el dueño después de la revisión._
 
 | Historia | Título | Puntos |
 |---|---|---|

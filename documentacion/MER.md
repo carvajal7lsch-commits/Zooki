@@ -1,5 +1,7 @@
 # Modelo Entidad-Relación (MER) - Zooki v2.0
 
+> **Carnet B — 2026-10-23:** 59 tablas. `carnet_accesos` cuenta también tokens inválidos sin guardar mascota ni token; `carnet_escaneos` conserva solo vistas válidas y ubicaciones consentidas. La IP se seudonimiza con HMAC-SHA256 y un secreto del entorno.
+
 > **Actualización de cierre M2 — 16/10/2026:** 2.0.0-alpha.4; conocimiento global con fuentes y validación veterinaria pendiente. Esquema de 52 tablas; integración del triage con agenda y urgencias pendiente de M4.
 
 > **Preparación M4/B2 — 2026-10-18:** MER/drawDB y database/01_schema.sql describen las mismas 58 tablas; 08 actualiza alpha.4 de forma aditiva y repetible. El esquema queda preparado y probado en la base exclusiva de tests, sin despliegue a producción ni flujos C implementados; producción alpha.4 conserva 52 hasta desplegar. Sin cambio de revisión ni versión.
@@ -149,6 +151,12 @@ erDiagram
         char ip_hash
         decimal latitud
         decimal longitud
+        tinyint notificado
+    }
+    carnet_accesos {
+        int id_acceso PK
+        char ip_hash
+        datetime fecha
     }
     horarios_veterinario {
         int id PK
@@ -745,7 +753,8 @@ erDiagram
 *   **ingresos_emergencia**: Guarda el ingreso **presencial** provisional de una urgencia roja con `id_clinica`, la mascota provisional y los datos disponibles del acompañante, sin atribuirle la propiedad ni crearle una cuenta. `id_mascota_final` identifica la misma mascota al completar la ficha o una ficha existente después de verificar su titularidad y consolidar los actos clínicos en una transacción; la ficha provisional queda inactiva y el ingreso conserva la trazabilidad. Un rojo iniciado en el portal autenticado usa el propietario de la sesión y la mascota seleccionada. También en un ingreso presencial con relación verificada se usan los registros existentes: ninguno de esos casos crea un ingreso provisional (RE-4.15.3, RN-G19, RN-420).
 *   **alertas_medicas**: Alergias, condiciones crónicas y medicación continua de la mascota (`tipo`). Cada alerta guarda la clínica y el veterinario que la registró y, si existe, el nodo del Grafo I al que corresponde (`id_nodo`), para que el triage y la prescripción la crucen con el grafo. Es global para la mascota: la ven todas las clínicas vinculadas y el carnet público (RN-113, RN-416, RN-503). Una alerta no se borra: se desactiva (`activa = 0`).
 *   **mascota_clinica**: Tabla puente mascota↔clínica. Se crea al registrar o vincular la mascota en una clínica; `numero_historia_clinica` se asigna al guardar la primera consulta en esa clínica (RN-102) y es único por `id_clinica`. Es la base del límite de mascotas del plan.
-*   **carnet_escaneos**: Registro de cada escaneo del carnet público: fecha, IP anonimizada (hash) y ubicación solo si quien escanea la comparte. Alimenta el aviso al propietario y el límite de consultas por IP (RN-504, RN-505).
+*   **carnet_escaneos**: Registro de cada vista válida del carnet público: fecha, IP seudonimizada con HMAC y ubicación solo si quien escanea la comparte. `notificado = 1` indica que se procesó el aviso, también cuando se agrupó con el anterior (30 minutos). Alimenta los últimos diez escaneos visibles solo para el dueño (RN-504).
+*   **carnet_accesos**: `id_acceso`, `ip_hash CHAR(64)`, `fecha DATETIME` e índices `(ip_hash, fecha)` y `(fecha)`. Cuenta toda petición a carnet y ubicación antes de resolver el token, incluso las inválidas. Sin FK, mascota ni token; máximo 30 por hora; por encima del límite no se registra la petición, y se eliminan oportunistamente las de más de 24 horas (RN-505).
 *   **especies**, **razas**, **colores_base** y **mascota_colores**: Catálogos **globales** de taxonomía y la relación N:M de colores. _Desde M5 (decisión del usuario, 2026-10-13) los formularios ya no piden el color: `colores_base` y `mascota_colores` quedan en la base sin uso, sin migración (RN-107)._
 
 ### 6. Operación clínica
