@@ -33,7 +33,9 @@
     <link rel="stylesheet" href="css/marca-clinica.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
-    <link rel="stylesheet" href="css/panel.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <?php // HU-6.2: el Inicio del administrador, encima de las piezas comunes con el del veterinario (diseño aprobado 2026-10-24). ?>
+    <link rel="stylesheet" href="css/inicio-comun.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/inicio-admin.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <link rel="stylesheet" href="css/validacion-cuenta.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
@@ -86,7 +88,7 @@
         </nav>
 
         <!-- ══ CONTENIDO PRINCIPAL ════════════════════════════════════════ -->
-        <main class="main-content">
+        <main class="main-content<?= isset($content_view) ? '' : ' main-content--inicio' ?>">
 
             <!-- Header superior -->
             <header class="top-header">
@@ -103,7 +105,14 @@
                             default: $tituloModulo = "Zooki"; break;
                         }
                     ?>
-                    <h1 class="top-header-title"><?= $tituloModulo ?></h1>
+                    <?php if (!isset($content_view) && isset($panel)): ?>
+                        <div class="inicio-encabezado">
+                            <p class="inicio-encabezado__fecha"><?= htmlspecialchars($panel['fecha']) ?></p>
+                            <h1 class="inicio-encabezado__saludo"><?= htmlspecialchars($panel['saludo'] . ', ' . explode(" ", trim($__adminNombre))[0]) ?></h1>
+                        </div>
+                    <?php else: ?>
+                        <h1 class="top-header-title"><?= $tituloModulo ?></h1>
+                    <?php endif; ?>
                 </div>
                 <div class="header-right">
                     <?php include __DIR__ . "/../partials/contexto_actual.php"; ?>
@@ -159,7 +168,8 @@
     <script src="js/sesion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/extras.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php if (!isset($content_view)): ?>
-    <script src="js/panel-admin.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/inicio-comun.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/inicio-admin.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php endif; ?>
 <script src="js/interacciones.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . "/../partials/validacion_cuenta.php"; ?>

@@ -44,7 +44,8 @@
     <link rel="stylesheet" href="css/atencion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
-    <?php // HU-6.1: el Inicio del veterinario tiene su propia hoja (diseño aprobado 2026-10-22). ?>
+    <?php // HU-6.1: el Inicio del veterinario tiene su propia hoja (diseño aprobado 2026-10-22), encima de la común con el del administrador. ?>
+    <link rel="stylesheet" href="css/inicio-comun.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/inicio-vet.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
@@ -198,6 +199,7 @@
     <script src="js/extras.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php if (!isset($content_view)): ?>
     <script src="js/comando-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/inicio-comun.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/inicio-vet.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_atencion'): ?>

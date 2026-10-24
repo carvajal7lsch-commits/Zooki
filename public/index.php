@@ -382,6 +382,12 @@ switch ($action) {
         require_once "../views/admin/layout.php";
         break;
 
+    case "panel_admin_dia_ajax":
+        // RE-6.2.8 y RE-6.2.9: otro día u otro mes del Inicio del administrador, de su clínica.
+        require_once "../controllers/PanelController.php";
+        (new PanelController())->diaAdminAjax();
+        break;
+
     case "admin_usuarios":
         require_once "../controllers/UsuarioController.php";
         $controller = new UsuarioController();

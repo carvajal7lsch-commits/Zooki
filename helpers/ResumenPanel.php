@@ -90,6 +90,55 @@ final class ResumenPanel
         return $c;
     }
 
+    /** RE-6.2.10: desde este porcentaje de uso, el Inicio del administrador advierte. */
+    public const AVISO_PLAN = 80;
+
+    /**
+     * RE-6.2.10: cada recurso del plan con su uso, su límite, el porcentaje y
+     * el nivel: «libre» sin límite, «ok», «aviso» desde AVISO_PLAN o «limite».
+     */
+    public static function usoDelPlan(array $resumen): array
+    {
+        $uso = [];
+        foreach ($resumen as $recurso => $valores) {
+            $limite = $valores['limite'];
+            $porcentaje = $limite === null || $limite <= 0 ? null : min(100, (int) round($valores['uso'] / $limite * 100));
+            if ($porcentaje === null) {
+                $nivel = 'libre';
+            } elseif ($valores['uso'] >= $limite) {
+                $nivel = 'limite';
+            } elseif ($porcentaje >= self::AVISO_PLAN) {
+                $nivel = 'aviso';
+            } else {
+                $nivel = 'ok';
+            }
+            $uso[$recurso] = ['uso' => (int) $valores['uso'], 'limite' => $limite, 'porcentaje' => $porcentaje, 'nivel' => $nivel];
+        }
+        return $uso;
+    }
+
+    /**
+     * Las barras del Inicio no usan estilos en línea: su largo va en clases
+     * de 5 en 5 (inicio-ancho--0 … inicio-ancho--100). Redondea a esa escala.
+     */
+    public static function escala5(?int $porcentaje): int
+    {
+        return (int) (round(max(0, min(100, (int) $porcentaje)) / 5) * 5);
+    }
+
+    /** «Beto Norte» → «BN»; una sola palabra da su inicial. */
+    public static function iniciales(string $nombre): string
+    {
+        $partes = array_slice(preg_split('/\s+/', trim($nombre), -1, PREG_SPLIT_NO_EMPTY), 0, 2);
+        return mb_strtoupper(implode('', array_map(fn($parte) => mb_substr($parte, 0, 1), $partes)));
+    }
+
+    /** RE-6.2.12: porcentaje entero de una parte; 0 si no hay total. */
+    public static function porcentaje(int $parte, int $total): int
+    {
+        return $total <= 0 ? 0 : (int) round($parte / $total * 100);
+    }
+
     /** 30 → «30 min», 60 → «1 h», 90 → «1 h 30 min». */
     public static function duracion(int $minutos): string
     {

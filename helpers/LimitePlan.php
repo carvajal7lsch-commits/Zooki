@@ -33,6 +33,12 @@ final class LimitePlan
         return $resultado;
     }
 
+    /** RE-6.2.10: el plan vigente que aplica (el gratuito si no hay suscripción de pago al día). */
+    public function nombrePlan(): string
+    {
+        return (string) $this->plan()['nombre'];
+    }
+
     private function plan(): array
     {
         $stmt = $this->db->prepare('SELECT p.*, c.id_plan FROM clinicas c LEFT JOIN planes p ON p.id_plan = c.id_plan WHERE c.id_clinica = ?');

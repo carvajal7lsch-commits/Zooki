@@ -88,14 +88,17 @@ class Panel extends ModeloClinica
     }
 
     /** HU-6.1 (RE-6.1.8): días del rango con alguna cita del veterinario, para el calendario del Inicio. */
-    public function diasConCitas(int $idVeterinario, string $desde, string $hasta): array
+    public function diasConCitas(?int $idVeterinario, string $desde, string $hasta): array
     {
-        $filas = $this->filas(
-            "SELECT DISTINCT fecha FROM citas
-             WHERE id_clinica = ? AND id_veterinario = ? AND estado <> 'cancelada' AND fecha BETWEEN ? AND ?
-             ORDER BY fecha ASC",
-            [$this->clinica(), $idVeterinario, $desde, $hasta]
-        );
+        // RE-6.2.8: sin veterinario, los días con citas de toda la clínica (Inicio del administrador).
+        $sql = "SELECT DISTINCT fecha FROM citas
+             WHERE id_clinica = ? AND estado <> 'cancelada' AND fecha BETWEEN ? AND ?";
+        $params = [$this->clinica(), $desde, $hasta];
+        if ($idVeterinario !== null) {
+            $sql .= " AND id_veterinario = ?";
+            $params[] = $idVeterinario;
+        }
+        $filas = $this->filas($sql . " ORDER BY fecha ASC", $params);
         return array_map(fn($f) => substr((string) $f['fecha'], 0, 10), $filas);
     }
 
@@ -257,6 +260,102 @@ class Panel extends ModeloClinica
              WHERE pc.id_clinica = ? AND pc.estado = 'activo' AND u.estado = 1",
             [$this->clinica()]
         );
+    }
+
+    /**
+     * RE-6.2.7: en espera = citas de hoy con la llegada registrada que aún no
+     * empiezan, más las llegadas sin reserva en espera presencial de hoy.
+     * $desde y $hasta son el inicio de hoy y de mañana: [desde, hasta).
+     */
+    public function contarEnEspera(string $hoy, string $desde, string $hasta): int
+    {
+        $citas = $this->contar(
+            "SELECT COUNT(*) FROM citas
+             WHERE id_clinica = ? AND fecha = ? AND estado IN ('pendiente', 'confirmada') AND hora_llegada IS NOT NULL",
+            [$this->clinica(), $hoy]
+        );
+        $sinReserva = $this->contar(
+            "SELECT COUNT(*) FROM solicitudes_agenda
+             WHERE id_clinica = ? AND estado = 'espera_presencial' AND fecha_llegada >= ? AND fecha_llegada < ?",
+            [$this->clinica(), $desde, $hasta]
+        );
+        return $citas + $sinReserva;
+    }
+
+    /**
+     * RE-6.2.7: urgencias = casos rojos de hoy, atendidos o en cola: las citas
+     * rojas de hoy no canceladas y los casos rojos de hoy en la cola de
+     * Urgencias que todavía no tienen cita (los que la tienen ya cuentan arriba).
+     */
+    public function contarUrgencias(string $hoy, string $desde, string $hasta): int
+    {
+        $citas = $this->contar(
+            "SELECT COUNT(*) FROM citas
+             WHERE id_clinica = ? AND fecha = ? AND prioridad = 'rojo' AND estado <> 'cancelada'",
+            [$this->clinica(), $hoy]
+        );
+        $enCola = $this->contar(
+            "SELECT COUNT(*) FROM solicitudes_agenda
+             WHERE id_clinica = ? AND COALESCE(nivel_aprobado, nivel_calculado) = 'rojo'
+               AND estado NOT IN ('finalizada', 'retirada') AND id_cita IS NULL
+               AND fecha_registro >= ? AND fecha_registro < ?",
+            [$this->clinica(), $desde, $hasta]
+        );
+        return $citas + $enCola;
+    }
+
+    /** RE-6.2.11 (RN-414): ausencias solicitadas por veterinarios que esperan aprobación. */
+    public function ausenciasPorAprobar(): array
+    {
+        return $this->filas(
+            "SELECT a.id, a.fecha_hora_inicio, a.fecha_hora_fin, u.nombre_completo AS veterinario
+             FROM ausencias_veterinario a
+             JOIN usuarios u ON u.id_usuario = a.id_veterinario
+             WHERE a.id_clinica = ? AND a.estado = 'solicitada'
+             ORDER BY a.fecha_hora_inicio ASC, a.id ASC",
+            [$this->clinica()]
+        );
+    }
+
+    /** RE-6.2.11 (HU-4.11): horarios propuestos por veterinarios que esperan aprobación. */
+    public function propuestasPorAprobar(): array
+    {
+        return $this->filas(
+            "SELECT p.id_propuesta, p.fecha, u.nombre_completo AS veterinario
+             FROM propuestas_horario p
+             JOIN usuarios u ON u.id_usuario = p.id_veterinario
+             WHERE p.id_clinica = ? AND p.estado = 'pendiente'
+             ORDER BY p.fecha ASC, p.id_propuesta ASC",
+            [$this->clinica()]
+        );
+    }
+
+    /** RE-6.2.12: propietarios que se vincularon a la clínica en [desde, hasta), con vínculo y cuenta activos. */
+    public function contarPropietariosNuevos(string $desde, string $hasta): int
+    {
+        return $this->contar(
+            "SELECT COUNT(*) FROM propietario_clinica pc
+             JOIN usuarios u ON u.id_usuario = pc.id_propietario
+             WHERE pc.id_clinica = ? AND pc.estado = 'activo' AND u.estado = 1
+               AND pc.fecha_vinculo >= ? AND pc.fecha_vinculo < ?",
+            [$this->clinica(), $desde, $hasta]
+        );
+    }
+
+    /**
+     * RE-6.2.12: citas «no asistió» y citas agendadas (sin canceladas) entre
+     * dos días, ambos incluidos. El porcentaje lo calcula ResumenPanel.
+     */
+    public function asistenciaDelPeriodo(string $desde, string $hasta): array
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT SUM(CASE WHEN estado = 'no_asistio' THEN 1 ELSE 0 END) AS no_asistio, COUNT(*) AS agendadas
+             FROM citas
+             WHERE id_clinica = ? AND fecha BETWEEN ? AND ? AND estado <> 'cancelada'"
+        );
+        $stmt->execute([$this->clinica(), $desde, $hasta]);
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        return ['no_asistio' => (int) ($fila['no_asistio'] ?? 0), 'agendadas' => (int) ($fila['agendadas'] ?? 0)];
     }
 
     private function filas(string $sql, array $params): array
