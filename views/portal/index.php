@@ -582,6 +582,9 @@ foreach ((array) $todas_desparasitaciones as $d) {
             <div id="filtroClinicaMascota" class="pet-filter-chips-wrapper" role="group" aria-label="Filtrar por clínica" hidden></div>
 
             <nav class="tabs-wrapper portal-pestanas" role="tablist" aria-label="Información de la mascota" data-pestanas="mascota">
+                <button type="button" class="tab-btn" data-pestana="tab-carnet" role="tab" aria-selected="false" aria-controls="tab-carnet">
+                    <i class="ri-qr-code-line" aria-hidden="true"></i> Carnet
+                </button>
                 <button type="button" class="tab-btn active" data-pestana="tab-historial" role="tab" aria-selected="true" aria-controls="tab-historial">
                     <i class="ri-history-line" aria-hidden="true"></i> Historia
                 </button>
@@ -597,6 +600,9 @@ foreach ((array) $todas_desparasitaciones as $d) {
             </nav>
 
             <div class="pet-detail__paneles">
+                <div id="tab-carnet" class="portal-panel" role="tabpanel" aria-label="Carnet" hidden>
+                    <div id="carnetContenido" aria-live="polite"></div>
+                </div>
                 <div id="tab-historial" class="portal-panel" role="tabpanel">
                     <div id="historialContent"><div class="portal-loading">Cargando historia…</div></div>
                 </div>

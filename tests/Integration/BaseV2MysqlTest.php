@@ -405,6 +405,54 @@ class BaseV2MysqlTest extends TestCase
             }
         }
     }
+    public function testCarnetASerializaLaRegeneracionYDescartaElDobleEnvioConUnaInstantaneaAnterior(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/CarnetPropietario.php';
+        $baseAnterior = getenv('APP_URL');
+        putenv('APP_URL=https://zooki.example');
+        Auditoria::definirProxiesConfiables([]);
+        $_SESSION = ['id_usuario' => 6];
+        Contexto::activar(Contexto::dePropietario(), 1);
+        $otra = $this->otraConexion();
+        $otra->exec('SET SESSION innodb_lock_wait_timeout = 1');
+        $token = (string) $this->db->query('SELECT token_carnet FROM mascotas WHERE id_mascota = 1')->fetchColumn();
+        try {
+            $this->db->beginTransaction();
+            $this->db->query('SELECT id_mascota FROM mascotas WHERE id_mascota = 1 FOR UPDATE')->fetchColumn();
+            try {
+                (new CarnetPropietario($otra))->regenerar(1, $token);
+                $this->fail('Debe esperar el bloqueo de la mascota.');
+            } catch (PDOException $error) {
+                $this->assertSame(1205, (int) $error->errorInfo[1]);
+                $this->assertFalse($otra->inTransaction());
+            } finally {
+                $this->db->rollBack();
+            }
+            $otra->beginTransaction();
+            try {
+                $this->assertSame($token, $otra->query('SELECT token_carnet FROM mascotas WHERE id_mascota = 1')->fetchColumn());
+                $nuevo = (new CarnetPropietario($this->db))->regenerar(1, $token);
+                $repetido = (new CarnetPropietario($otra))->regenerar(1, $token);
+                $this->assertTrue($nuevo['regenerado']);
+                $this->assertFalse($repetido['regenerado']);
+                $this->assertSame($nuevo['token'], $repetido['token']);
+                $this->assertNotSame($token, $nuevo['token']);
+                $otra->commit();
+            } finally {
+                if ($otra->inTransaction()) $otra->rollBack();
+            }
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion LIKE '%RE-5.10.5%'")->fetchColumn());
+            $this->assertSame($nuevo['token'], $this->db->query('SELECT token_carnet FROM mascotas WHERE id_mascota = 1')->fetchColumn());
+            $datos = (new CarnetMascota($this->db))->datosEmergencia(1);
+            $this->assertSame('Luna', $datos['nombre']);
+            $this->assertArrayNotHasKey('token_carnet', $datos);
+        } finally {
+            putenv($baseAnterior === false ? 'APP_URL' : 'APP_URL=' . $baseAnterior);
+            $_SESSION = [];
+        }
+    }
+
     public function testM5FTopeDeActivacionSerializaLaCuentaYSeComparteEntreConexiones(): void
     {
         $this->prepararHistoriaClinica();

@@ -533,6 +533,7 @@ async function verDetalle(id, opciones = {}) {
     }
     document.getElementById('drawerPetSummary').innerHTML = '';
     document.getElementById('historialContent').innerHTML = '<div class="portal-loading">Cargando historial…</div>';
+    if (window.ZookiCarnet) window.ZookiCarnet.cargar(id);
     document.getElementById('citasContent').innerHTML = '';
     document.getElementById('vacunasContent').innerHTML = '';
     document.getElementById('desparasitacionesContent').innerHTML = '';

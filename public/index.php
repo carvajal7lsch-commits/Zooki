@@ -468,6 +468,26 @@ switch ($action) {
         (new PortalController())->imprimirHistorial();
         break;
 
+    case "portal_carnet_ajax":
+        require_once "../controllers/CarnetController.php";
+        (new CarnetController())->vistaAjax();
+        break;
+
+    case "portal_carnet_svg":
+        require_once "../controllers/CarnetController.php";
+        (new CarnetController())->svg();
+        break;
+
+    case "portal_imprimir_carnet":
+        require_once "../controllers/CarnetController.php";
+        (new CarnetController())->imprimir();
+        break;
+
+    case "portal_regenerar_carnet_ajax":
+        require_once "../controllers/CarnetController.php";
+        (new CarnetController())->regenerarAjax();
+        break;
+
     case "portal_actualizar_datos_contacto_ajax":
         require_once "../controllers/PortalController.php";
         (new PortalController())->actualizarDatosContactoAjax();
