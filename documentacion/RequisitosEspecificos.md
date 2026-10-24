@@ -1,6 +1,6 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.5** · 435 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.5** · 442 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 > **Preparación M4/B1 — 2026-10-17:** criterios de destino acordados, pendientes de implementación/verificación funcional. 430 RE, 96 HU y 120 RN; no se sube revisión ni versión en esta subetapa.
 
@@ -989,10 +989,17 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-6.2.2 | El sistema debe mostrar la carga del día por veterinario activo. | Funcional | Aparecen todos los veterinarios activos, incluso sin citas. | Media |
 | RE-6.2.3 | El sistema debe listar los pendientes de la operación: atenciones sin cerrar por veterinario, citas pasadas sin marcar y citas por confirmar. | Funcional | Cada conteo coincide con los estados de las citas. | Alta |
 | RE-6.2.4 | El sistema debe graficar las citas atendidas y no asistidas de los últimos 6 meses. | Funcional | Los meses sin citas aparecen en cero y los datos tienen una tabla accesible. | Media |
-| RE-6.2.5 | El sistema debe listar las citas de hoy con un filtro por estado. | Funcional | Al filtrar por «en curso», solo aparecen las citas de hoy en ese estado. | Media |
+| RE-6.2.5 | El sistema debe listar las citas de hoy con un filtro por estado en Gestión de citas; el Inicio muestra la agenda por veterinario (decisión del dueño con el mockup aprobado, 2026-10-24). | Funcional | En Gestión de citas, al filtrar hoy por «en curso», solo aparecen las citas de hoy en ese estado. El Inicio enlaza a Gestión de citas. | Media |
 | RE-6.2.6 | El panel no debe mostrar datos de ejemplo ni valores fijos. | Restricción | Con la base de datos vacía, todos los indicadores muestran cero. | Media |
+| RE-6.2.7 | La tarjeta «Hoy en la clínica» debe mostrar citas de hoy, atendidas, en espera y urgencias de la clínica activa, con acceso a Gestión de citas. | Funcional | En espera = citas de hoy con llegada registrada que aún no empiezan + llegadas sin reserva en espera presencial; urgencias = casos rojos de hoy, atendidos o en cola. Las canceladas no cuentan. No hay botón para agendar: el administrador no crea citas (RN-401). | Alta |
+| RE-6.2.8 | El Inicio del administrador debe mostrar el calendario del mes con hoy resaltado y un punto en los días con citas de la clínica activa; al tocar un día, la agenda por veterinario muestra esa fecha. | Funcional | El día y el mes se piden por una acción de solo lectura del administrador; el veterinario y el propietario reciben 403. Una fecha o un mes inválidos responden con error, sin datos. | Alta |
+| RE-6.2.9 | La agenda del día debe mostrar una columna por veterinario activo, incluso sin citas, con sus citas y su estado, los huecos libres reales (RN-415), el almuerzo, las ausencias y su porcentaje de ocupación. | Funcional | Los huecos, el almuerzo y las ausencias son los mismos del Inicio del veterinario para esa fecha; de hoy, los huecos solo desde ahora. Ocupación = tiempo no libre / jornada efectiva (jornada − cierres − ausencias). Con más de tres veterinarios, la agenda se desplaza en horizontal dentro de la tarjeta (decisión del dueño). | Alta |
+| RE-6.2.10 | El Inicio debe mostrar el uso del plan (mascotas, citas del mes y personal contra su límite, HU-0.4) y accesos a Usuarios y Configuración. | Funcional | Los valores son los de LimitePlan para la clínica activa; un plan sin límite muestra el uso sin barra de tope. Al 80 % se advierte y al 100 % se marca «al límite». | Media |
+| RE-6.2.11 | El Inicio debe agrupar los pendientes de la clínica con su acción: sin cerrar (con su veterinario), citas sin marcar, por confirmar, ausencias por aprobar y propuestas de horario por aprobar. | Funcional | Solo aparecen los tipos con algo; cada acción lleva a una pantalla existente (Gestión de citas o Configuración). Sin pendientes, la tarjeta se encoge y «Este mes» ocupa el espacio (decisión del dueño). | Alta |
+| RE-6.2.12 | «Este mes» debe mostrar las consultas frente al mismo tramo del mes anterior, una minigráfica de 6 meses con tabla accesible (cumple RE-6.2.4), pacientes activos, propietarios nuevos del mes y el porcentaje de no asistencia del mes. | Funcional | No asistencia = citas «no asistió» del mes hasta hoy / citas agendadas del mes hasta hoy (sin canceladas); sin citas, 0 %. Propietarios nuevos = vínculos con la clínica creados en el mes. | Media |
+| RE-6.2.13 | El Inicio del administrador debe caber sin desplazar la página en escritorio (1366×768) y reordenarse en tableta y celular (RNF-16). | Usabilidad | En escritorio solo se desplazan por dentro la agenda y, si hace falta, los pendientes; sin desplazamiento horizontal de la página en 390 px. | Media |
 
-**Reglas de negocio:** RN-G01, RN-408, RN-409
+**Reglas de negocio:** RN-G01, RN-003, RN-408, RN-409, RN-414, RN-415
 
 ### HU-6.3 — Generar reportes en PDF
 
@@ -1234,7 +1241,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-5.13 | RN-109, RN-110, RN-115, RN-116 | RE-5.13.1, RE-5.13.2, RE-5.13.3, RE-5.13.4, RE-5.13.5 |
 | HU-5.14 | RN-G16, RN-G07 | RE-5.14.1, RE-5.14.2, RE-5.14.3, RE-5.14.4, RE-5.14.5 |
 | HU-6.1 | RN-G01, RN-407, RN-409, RN-415, RN-426 | RE-6.1.1, RE-6.1.2, RE-6.1.3, RE-6.1.4, RE-6.1.5, RE-6.1.6, RE-6.1.7, RE-6.1.8, RE-6.1.9, RE-6.1.10, RE-6.1.11, RE-6.1.12 |
-| HU-6.2 | RN-G01, RN-408, RN-409 | RE-6.2.1, RE-6.2.2, RE-6.2.3, RE-6.2.4, RE-6.2.5, RE-6.2.6 |
+| HU-6.2 | RN-G01, RN-003, RN-408, RN-409, RN-414, RN-415 | RE-6.2.1, RE-6.2.2, RE-6.2.3, RE-6.2.4, RE-6.2.5, RE-6.2.6, RE-6.2.7, RE-6.2.8, RE-6.2.9, RE-6.2.10, RE-6.2.11, RE-6.2.12, RE-6.2.13 |
 | HU-6.3 | RN-701 | RE-6.3.1, RE-6.3.2, RE-6.3.3, RE-6.3.4 |
 | HU-6.4 | RN-701 | RE-6.4.1, RE-6.4.2, RE-6.4.3, RE-6.4.4 |
 | HU-6.5 | RN-701 | RE-6.5.1, RE-6.5.2, RE-6.5.3 |

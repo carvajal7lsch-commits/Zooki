@@ -2,9 +2,31 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-23
+**Actualizado:** 2026-10-24
 
 ## Ahora
+
+### Inicio del administrador (HU-6.2) — revisada: aprobada (2026-10-24)
+
+- **Revisión (Claude):** ver «Inicio del administrador — Revisión» en pulido-interfaz.md. MySQL 8: 1068/9587 en verde. Dos detalles al pulido final. Sigue la prueba del dueño y M0-S S1.
+
+#### Entrega de Claude Code
+
+- **Escribió Claude Code; revisa Claude (arquitecto).** Rama `release/v2.1.0`. Inicio del admin con el mockup aprobado: hoy en la clínica, calendario, uso del plan, agenda por veterinario con huecos reales y ausencias, pendientes (también ausencias y propuestas) y «Este mes». `panel_admin_dia_ajax` es solo del administrador. Piezas comunes con el Inicio del vet en `inicio-comun.css/js` y `views/partials/inicio_calendario.php`; se retiran `panel.css` y `panel-admin.js`.
+- **Decisiones del dueño (2026-10-24), en `specs/pulido-interfaz.md`:** sin botón «Agendar» (RN-401); la minigráfica muestra atendidas + no asistidas; «en espera» = llegados que no empiezan + espera presencial; «urgencias» = rojos de hoy. Especificación: RE-6.2.5 cambia; RE-6.2.7 a RE-6.2.13 nuevos (442 RE).
+- **Verificación:** PHP sin motor 1068/8472 (74 omitidas); con MariaDB 10.4.32 y `zooki_test_base_v2`, 1068/9583 sin omitidas; JS 331/331; capturas en Chrome a 1366/1024/390. Sin subir versión ni regenerar descargas (van al cerrar la entrega).
+- **Pendiente:** revisión, prueba del dueño y commit del dueño.
+
+### Plan M0-S — revisado: aprobable con cuatro ajustes; esperando decisiones del dueño (2026-10-24)
+
+- **Revisión (Claude):** ver §9 del plan. IVA resuelto (no responsable, precios sin IVA); parámetros simplificados; S1, S2, S3 y S4 sin mitades. Faltan D2–D7 y D9 (recomendadas como §6). S1 arranca tras integrar el Inicio del administrador.
+
+#### Entrega de Codex
+
+- **Escribió Codex; revisa Claude (arquitecto).** Plan de suscripción y cobro con Wompi en [`M0-S-suscripcion-pagos.md`](../specs/M0-S-suscripcion-pagos.md), rama `release/v2.1.0`: S1 vigencia/gracia/avisos, S2 botón y eventos, S3 automático mensual, S4 plataforma y cierre. Incluye textos propuestos de HU/RE/RN/RF/MER/Modelos, migración 12 prevista, permisos, seguridad, tareas Docker/Dokploy/XAMPP y pruebas con cliente falso.
+- **Decisiones confirmadas del 24/10:** Wompi, botón antes de automático; profesional 89.990 COP/mes o 899.900/año sin alterar periodos pagados; gracia parametrizada de 3 días y correos 7/1/congelación/fallo automático. Se conserva RN-420 y la tarjeta Uso del plan del Inicio concurrente.
+- **Pendientes D1–D10 del plan:** IVA/desglose, calendario y renovación en gracia, cambio de ciclo, reintentos, cobros duplicados/anulados, legado, destinatarios, habilitación/consentimientos Wompi, identidad local del evento e incertidumbre, conservación financiera. Cada punto tiene recomendación y etapa bloqueada; todavía no están aprobados.
+- **Solo planificación:** documentación oficial Wompi consultada y citada; sin llamadas a su API, código, migraciones ejecutadas, cambios en `documentacion/`, versión ni operaciones Git de escritura. Se preserva el trabajo simultáneo de Claude Code en Inicio. Sigue aprobación del dueño y revisión de Claude; no se empieza S1.
 
 ### Carnet B — revisada: aprobada con cinco correcciones del revisor (2026-10-23)
 

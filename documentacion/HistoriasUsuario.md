@@ -1722,12 +1722,21 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 - Muestra citas de hoy, atendidas, no asistidas y consultas del mes comparadas con el mismo periodo del mes anterior.
 - Muestra la carga del día por veterinario activo.
-- Lista las citas de hoy con filtro por estado.
+- La lista de citas de hoy con filtro por estado está en Gestión de citas; el Inicio muestra la agenda por veterinario.
 - Señala las atenciones sin cerrar por veterinario, las citas pasadas sin marcar y las citas por confirmar de los próximos 7 días.
 - Grafica las citas atendidas y no asistidas de los últimos 6 meses.
 - No muestra datos de ejemplo ni valores fijos.
+- «Hoy en la clínica» resume citas de hoy, atendidas, en espera y urgencias, con acceso a Gestión de citas.
+- Un calendario del mes marca los días con citas de la clínica; al tocar un día, la agenda por veterinario muestra esa fecha.
+- La agenda del día tiene una columna por veterinario activo, incluso sin citas, con sus citas y su estado, los huecos libres reales, el almuerzo, las ausencias y su porcentaje de ocupación.
+- Muestra el uso del plan (mascotas, citas del mes y personal contra su límite) y accesos a Usuarios y Configuración.
+- Los pendientes incluyen las ausencias y las propuestas de horario por aprobar, cada uno con su acción.
+- «Este mes» compara las consultas con el mismo tramo del mes anterior y muestra pacientes activos, propietarios nuevos y el porcentaje de no asistencia.
+- Cabe en una pantalla de escritorio y se reordena en tableta y celular.
 
-**Reglas de negocio:** RN-G01, RN-408, RN-409 · **Dependencias:** HU-6.1, HU-4.3
+**Reglas de negocio:** RN-G01, RN-003, RN-408, RN-409, RN-414, RN-415 · **Dependencias:** HU-6.1, HU-4.3, HU-0.4, HU-4.11, HU-4.12
+
+> _Nota (decisión del dueño, 2026-10-24): el Inicio del administrador se rehízo con el diseño aprobado en `specs/referencias/inicio-administrador.dc.html`. La lista filtrable de citas de hoy pasó a Gestión de citas. Por RN-401 el administrador no crea citas, así que «Hoy en la clínica» no tiene el botón «Agendar» del mockup. «En espera» son las citas de hoy con la llegada registrada que aún no empiezan, más las llegadas sin reserva en espera presencial; «urgencias», los casos rojos de hoy, atendidos o en cola. La minigráfica de «Este mes» muestra atendidas y no asistidas por mes (RE-6.2.4)._
 
 ### HU-6.3 — Generar reportes en PDF
 
@@ -2116,7 +2125,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-G24 | HU-T.5 |
 | RN-001 | HU-0.1, HU-T.15 |
 | RN-002 | HU-0.1, HU-0.2 |
-| RN-003 | HU-0.2, HU-0.4, HU-1.5 |
+| RN-003 | HU-0.2, HU-0.4, HU-1.5, HU-6.2 |
 | RN-004 | HU-0.3, HU-T.15, HU-2.12 |
 | RN-005 | HU-0.2, HU-0.4 |
 | RN-006 | HU-0.4 |
@@ -2175,8 +2184,8 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-411 | HU-2.2, HU-2.11, HU-4.13, HU-4.15, HU-4.17 |
 | RN-412 | HU-4.5, HU-4.14, HU-4.19 |
 | RN-413 | HU-4.14 |
-| RN-414 | HU-4.12 |
-| RN-415 | HU-2.2, HU-4.6, HU-4.11, HU-4.12, HU-4.13, HU-4.14, HU-4.15, HU-6.1, HU-7.4 |
+| RN-414 | HU-4.12, HU-6.2 |
+| RN-415 | HU-2.2, HU-4.6, HU-4.11, HU-4.12, HU-4.13, HU-4.14, HU-4.15, HU-6.1, HU-6.2, HU-7.4 |
 | RN-416 | HU-2.11 |
 | RN-417 | HU-2.11 |
 | RN-418 | HU-2.11 |
