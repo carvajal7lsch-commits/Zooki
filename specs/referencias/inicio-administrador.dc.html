@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inicio del administrador</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EDF6}
+a{color:#0052FF;text-decoration:none}a:hover{color:#003DCC}
+.tile{border-radius:22px;overflow:hidden;position:relative;min-width:0;background:#FFFFFF}
+.titulo{margin:0;font-size:14.5px;font-weight:700;color:#0F172A}
+.meta{margin:0;font-size:12px;color:#64748B}
+.nav-btn{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;color:#64748B}
+.d{height:28px;border:0;background:transparent;display:grid;place-items:center;border-radius:9px;font:inherit;font-size:12px;font-weight:600;color:#334155;position:relative;cursor:pointer;padding:0}
+.d:hover{background:#F1F5FF}
+.d.pasado{color:#CBD5E1}
+.d.vacio{visibility:hidden}
+.d.hoy{color:#0052FF;font-weight:800;box-shadow:inset 0 0 0 1.5px #0052FF}
+.d.sel{background:#0052FF;color:#FFFFFF;font-weight:800;box-shadow:none}
+.d .marca{position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:#0052FF}
+.d.sel .marca{background:#FFFFFF}
+.cifra{margin:0;font-size:30px;line-height:1;font-weight:800;letter-spacing:-.02em}
+.cifra-txt{margin:4px 0 0;font-size:12px;color:#DBEAFE}
+.uso{display:flex;flex-direction:column;gap:5px}
+.uso-fila{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#334155}
+.barra{height:7px;border-radius:99px;background:#EEF2F6;overflow:hidden}
+.barra span{display:block;height:100%;border-radius:99px}
+.rapido{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;border-radius:11px;background:#F1F5FF;color:#0052FF;font-size:12.5px;font-weight:700}
+.vetcol{display:flex;flex-direction:column;gap:4px;min-width:0}
+.vethead{display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid #EEF2F6;margin-bottom:4px}
+.vetava{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0}
+.fila{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;align-items:center;min-height:30px}
+.hora{font-size:11.5px;font-weight:700;color:#475569;text-align:right;white-space:nowrap}
+.cita{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 9px;border-radius:9px;font-size:12px;min-width:0}
+.cita strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hueco{padding:4px 9px;border-radius:9px;border:1.5px dashed #CBD5E1;color:#64748B;font-size:11.5px;font-weight:600}
+.ausente{padding:5px 9px;border-radius:9px;background:repeating-linear-gradient(135deg,#FEF3C7 0 6px,#FFFBEB 6px 12px);color:#92400E;font-size:11.5px;font-weight:700}
+.punto{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.item{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 10px;border-radius:12px;background:#F8FAFC}
+.pnum{min-width:26px;height:26px;border-radius:999px;display:grid;place-items:center;font-size:12.5px;font-weight:800;padding:0 5px;box-sizing:border-box}
+.accion{display:inline-flex;align-items:center;height:32px;padding:0 12px;border:0;border-radius:10px;background:#0052FF;color:#FFFFFF;font:inherit;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
+.accion:hover{color:#FFFFFF;background:#003DCC}
+.dato{flex:1;padding:10px 12px;border-radius:12px;background:#F8FAFC;min-width:0}
+.dato strong{display:block;font-size:20px;font-weight:800;line-height:1.1}
+</style>
+</helmet>
+<div style="display: flex; min-height: 900px; font-family: Inter, system-ui, sans-serif; color: #0F172A; background: #E9EDF6">
+  <nav aria-label="Menú principal" style="width: 88px; flex-shrink: 0; background: #FFFFFF; border-radius: 0 28px 28px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 28px 0">
+    <img src="../../public/img/icon_blue.png" alt="Zooki" style="width: 44px; height: 44px; border-radius: 12px; margin-bottom: 26px">
+    <a href="#" class="nav-btn" aria-label="Inicio" style="background: #0052FF; color: #FFFFFF; box-shadow: 0 8px 18px rgba(0,82,255,.28)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg></a>
+    <a href="#" class="nav-btn" aria-label="Usuarios"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c1-3.5 3.6-5.5 6.5-5.5s5.5 2 6.5 5.5"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"></path></svg></a>
+    <a href="#" class="nav-btn" aria-label="Gestión de citas"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"></rect><path d="M8 2.5v4M16 2.5v4M3 10h18"></path></svg></a>
+    <a href="#" class="nav-btn" aria-label="Auditoría"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.5 3.2 8 7.5 9.5 4.3-1.5 7.5-5 7.5-9.5V6z"></path></svg></a>
+    <a href="#" class="nav-btn" aria-label="Configuración"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></a>
+    <a href="#" class="nav-btn" aria-label="Mi perfil"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg></a>
+  </nav>
+
+  <main style="flex: 1; min-width: 0; padding: 22px 32px 26px; display: flex; flex-direction: column; gap: 16px">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+      <div>
+        <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #64748B">Viernes 23 de octubre</p>
+        <h1 style="margin: 2px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -.02em">Buenas tardes, Ana</h1>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="padding: 7px 14px; border-radius: 999px; background: #FFFFFF; color: #0052FF; font-size: 13px; font-weight: 600">Clínica Norte · Administrador</span>
+        <button type="button" aria-label="Notificaciones" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: #FFFFFF; display: grid; place-items: center; color: #F59E0B; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg></button>
+        <span style="width: 40px; height: 40px; border-radius: 50%; background: #0052FF; color: #FFFFFF; display: grid; place-items: center; font-size: 13px; font-weight: 700">AN</span>
+      </div>
+    </header>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 16px; height: 258px">
+      <section class="tile" aria-labelledby="tituloClinica" style="background: #0052FF; color: #FFFFFF; padding: 24px 28px; display: flex">
+        <div aria-hidden="true" style="position: absolute; right: -40px; top: -70px; width: 260px; height: 260px; border-radius: 50%; background: #3B82F6"></div>
+        <div aria-hidden="true" style="position: absolute; right: 0; bottom: 0; width: 230px; height: 160px; background: #93C5FD; border-radius: 160px 0 0 0"></div>
+        <img src="../../public/img/golden-retriever.png" alt="" aria-hidden="true" style="position: absolute; right: 24px; bottom: 0; height: 232px">
+        <div style="position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px; max-width: 64%">
+          <div>
+            <p id="tituloClinica" style="margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #BFDBFE">Hoy en la clínica</p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #DBEAFE">2 veterinarios atendiendo · abierta hasta las 6:00 p. m.</p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+            <div><p class="cifra">14</p><p class="cifra-txt">citas hoy</p></div>
+            <div><p class="cifra">6</p><p class="cifra-txt">atendidas</p></div>
+            <div><p class="cifra">2</p><p class="cifra-txt">en espera</p></div>
+            <div><p class="cifra" style="color: #FECACA">1</p><p class="cifra-txt">urgencia</p></div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap">
+            <a href="#" style="display: inline-flex; align-items: center; height: 42px; padding: 0 18px; border-radius: 12px; background: #FFFFFF; color: #0052FF; font-size: 13px; font-weight: 800">Gestión de citas</a>
+            <a href="#" style="display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 18px; border-radius: 12px; background: rgba(255,255,255,.16); color: #FFFFFF; font-size: 13px; font-weight: 700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Agendar cita</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="tile" aria-labelledby="tituloCal" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <h3 id="tituloCal" class="titulo">Octubre 2026</h3>
+          <div style="display: flex; gap: 4px">
+            <button type="button" aria-label="Mes anterior" style="width: 28px; height: 28px; border-radius: 8px; border: 1px solid #E2E8F0; background: #FFFFFF; color: #475569; display: grid; place-items: center; cursor: pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+            <button type="button" aria-label="Mes siguiente" style="width: 28px; height: 28px; border-radius: 8px; border: 1px solid #E2E8F0; background: #FFFFFF; color: #475569; display: grid; place-items: center; cursor: pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 10.5px; font-weight: 700; color: #94A3B8; text-align: center">
+          <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px">
+          <sc-for list="{{dias}}" as="dia" hint-placeholder-count="35">
+            <button type="button" class="{{dia.clase}}" onClick="{{dia.pick}}" aria-label="{{dia.etiqueta}}">{{dia.n}}<sc-if value="{{dia.cita}}" hint-placeholder-val="{{ false }}"><span class="marca"></span></sc-if></button>
+          </sc-for>
+        </div>
+      </section>
+
+      <section class="tile" aria-labelledby="tituloPlan" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline"><h3 id="tituloPlan" class="titulo">Uso del plan</h3><span style="padding: 2px 8px; border-radius: 999px; background: #F1F5F9; color: #475569; font-size: 11px; font-weight: 700">Gratuito</span></div>
+        <div class="uso"><div class="uso-fila"><span>Mascotas</span><span>38 / 50</span></div><div class="barra"><span style="width: 76%; background: #0052FF"></span></div></div>
+        <div class="uso"><div class="uso-fila"><span>Citas de octubre</span><span style="color: #B45309">86 / 100</span></div><div class="barra"><span style="width: 86%; background: #F59E0B"></span></div></div>
+        <div class="uso"><div class="uso-fila"><span>Personal</span><span style="color: #B91C1C">2 / 2 · al límite</span></div><div class="barra"><span style="width: 100%; background: #DC2626"></span></div></div>
+        <a href="#" style="font-size: 12px; font-weight: 700">Ver planes</a>
+        <div style="display: flex; gap: 8px; margin-top: auto">
+          <a href="#" class="rapido"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c1-3.5 3.6-5.5 6.5-5.5s5.5 2 6.5 5.5"></path></svg>Usuarios</a>
+          <a href="#" class="rapido"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg>Configuración</a>
+        </div>
+      </section>
+    </div>
+
+    <div style="flex: 1; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; min-height: 0">
+      <section class="tile" aria-labelledby="tituloAgenda" style="padding: 18px 22px; display: flex; flex-direction: column; gap: 12px; min-height: 0">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px">
+          <h3 id="tituloAgenda" class="titulo" style="font-size: 16px">{{tituloDia}}</h3>
+          <span class="meta">{{resumenDia}}</span>
+        </div>
+        <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; overflow: hidden">
+          <sc-for list="{{vets}}" as="v" hint-placeholder-count="3">
+            <div class="vetcol">
+              <div class="vethead">
+                <span class="vetava" style="background: {{v.fondo}}; color: {{v.tinta}}">{{v.ini}}</span>
+                <span style="flex: 1; min-width: 0"><strong style="display: block; font-size: 13.5px">{{v.nombre}}</strong><span class="meta">{{v.resumen}}</span></span>
+              </div>
+              <div class="barra" aria-hidden="true" style="margin-bottom: 6px"><span style="width: {{v.carga}}%; background: {{v.colorCarga}}"></span></div>
+              <sc-for list="{{v.filas}}" as="f" hint-placeholder-count="5">
+                <div class="fila">
+                  <span class="hora">{{f.hora}}</span>
+                  <sc-if value="{{f.esCita}}" hint-placeholder-val="{{ true }}">
+                    <span class="cita" style="background: {{f.fondo}}"><strong>{{f.nombre}}</strong><span class="punto" style="background: {{f.color}}" title="{{f.estado}}"></span></span>
+                  </sc-if>
+                  <sc-if value="{{f.libre}}" hint-placeholder-val="{{ false }}"><span class="hueco">{{f.texto}}</span></sc-if>
+                  <sc-if value="{{f.ausente}}" hint-placeholder-val="{{ false }}"><span class="ausente">{{f.texto}}</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0">
+        <section class="tile" aria-labelledby="tituloPend" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 7px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><h3 id="tituloPend" class="titulo">Pendientes de la clínica</h3><span class="meta">10 por resolver</span></div>
+          <div class="item"><span class="pnum" style="background: #FEE2E2; color: #B91C1C">1</span><span style="flex: 1; min-width: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><strong>Sin cerrar</strong> <span class="meta" style="display: inline">· Rocky, de Beto (ayer)</span></span><button type="button" class="accion">Ver</button></div>
+          <div class="item"><span class="pnum" style="background: #FEF3C7; color: #B45309">3</span><span style="flex: 1; min-width: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><strong>Citas sin marcar</strong> <span class="meta" style="display: inline">· últimos 30 días</span></span><button type="button" class="accion">Revisar</button></div>
+          <div class="item"><span class="pnum" style="background: #DBEAFE; color: #0052FF">4</span><span style="flex: 1; min-width: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><strong>Por confirmar</strong> <span class="meta" style="display: inline">· próximos 7 días</span></span><button type="button" class="accion">Ver</button></div>
+          <div class="item"><span class="pnum" style="background: #E0E7FF; color: #4338CA">1</span><span style="flex: 1; min-width: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><strong>Ausencia por aprobar</strong> <span class="meta" style="display: inline">· Elena, 28 oct</span></span><button type="button" class="accion">Revisar</button></div>
+          <div class="item"><span class="pnum" style="background: #E0E7FF; color: #4338CA">1</span><span style="flex: 1; min-width: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><strong>Horario propuesto</strong> <span class="meta" style="display: inline">· Beto, desde el lunes</span></span><button type="button" class="accion">Revisar</button></div>
+        </section>
+
+        <section class="tile" aria-labelledby="tituloMes" style="flex: 1; min-height: 0; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><h3 id="tituloMes" class="titulo">Este mes</h3><span class="meta">octubre</span></div>
+          <div style="display: flex; gap: 14px; align-items: flex-end">
+            <div style="flex: 1">
+              <p style="margin: 0; font-size: 30px; line-height: 1; font-weight: 800; color: #0052FF">64 <span style="font-size: 12px; font-weight: 600; color: #64748B">consultas</span></p>
+              <p style="margin: 6px 0 0; font-size: 12px; font-weight: 700; color: #15803D">▲ 12 % frente a septiembre</p>
+            </div>
+            <div role="img" aria-label="Consultas de mayo a octubre: 41, 48, 45, 52, 57 y 64" style="display: flex; align-items: flex-end; gap: 6px; height: 64px">
+              <span style="width: 16px; height: 41%; border-radius: 5px; background: #DBEAFE"></span>
+              <span style="width: 16px; height: 48%; border-radius: 5px; background: #DBEAFE"></span>
+              <span style="width: 16px; height: 45%; border-radius: 5px; background: #DBEAFE"></span>
+              <span style="width: 16px; height: 52%; border-radius: 5px; background: #BFDBFE"></span>
+              <span style="width: 16px; height: 57%; border-radius: 5px; background: #93C5FD"></span>
+              <span style="width: 16px; height: 64%; border-radius: 5px; background: #0052FF"></span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: auto">
+            <div class="dato"><strong>38</strong><span class="meta">pacientes activos</span></div>
+            <div class="dato"><strong>9</strong><span class="meta">propietarios nuevos</span></div>
+            <div class="dato"><strong>4 %</strong><span class="meta">no asistieron</span></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dia: 23 };
+  }
+  renderVals() {
+    const C = { atendida: '#16A34A', cerrar: '#DC2626', curso: '#0052FF', pendiente: '#94A3B8', urgencia: '#DC2626' };
+    const F = { atendida: '#F0FDF4', cerrar: '#FEF2F2', curso: '#EBF1FF', pendiente: '#F8FAFC', urgencia: '#FEE2E2' };
+    const E = { atendida: 'Atendida', cerrar: 'Sin cerrar', curso: 'En atención', pendiente: 'Por atender', urgencia: 'Urgencia' };
+    const base = { nombre: '', texto: '', esCita: false, libre: false, ausente: false, color: '', fondo: '', estado: '' };
+    const c = (hora, nombre, tipo) => Object.assign({}, base, { hora, nombre, esCita: true, color: C[tipo], fondo: F[tipo], estado: E[tipo] });
+    const l = (hora, texto) => Object.assign({}, base, { hora, texto, libre: true });
+    const a = (hora, texto) => Object.assign({}, base, { hora, texto, ausente: true });
+    const agendas = {
+      23: [
+        { ini: 'BN', nombre: 'Beto Norte', fondo: '#DBEAFE', tinta: '#0052FF', carga: 85, filas: [c('8:30', 'Toby · Vacunación', 'atendida'), c('9:30', 'Mia · Control', 'atendida'), c('11:00', 'Rocky · Consulta', 'cerrar'), c('2:00', 'Luna · Vómito', 'curso'), c('3:00', 'Max · Primera visita', 'pendiente'), l('3:45', 'Libre · 45 min'), c('4:30', 'Kira · Desparasitación', 'pendiente')] },
+        { ini: 'ED', nombre: 'Elena Doble', fondo: '#FCE7F3', tinta: '#BE185D', carga: 55, filas: [c('8:00', 'Simba · Control', 'atendida'), l('8:30', 'Libre · 1 h 30 min'), c('10:00', 'Nala · Vacunación', 'atendida'), c('1:40', 'Bruno · Urgencia', 'urgencia'), a('2:00', 'Ausente 2:00–4:00 · capacitación'), c('4:30', 'Coco · Post-operatorio', 'pendiente')] },
+        { ini: 'CR', nombre: 'Camilo Ríos', fondo: '#DCFCE7', tinta: '#15803D', carga: 30, filas: [c('9:00', 'Thor · Consulta', 'atendida'), l('9:30', 'Libre · hasta el almuerzo'), c('2:30', 'Lola · Vacunación', 'pendiente'), l('3:00', 'Libre · resto de la tarde')] }
+      ],
+      26: [
+        { ini: 'BN', nombre: 'Beto Norte', fondo: '#DBEAFE', tinta: '#0052FF', carga: 40, filas: [c('9:00', 'Toby · Rabia', 'pendiente'), l('9:30', 'Libre · 1 h 30 min'), c('11:00', 'Bruno · Consulta', 'pendiente'), l('2:00', 'Libre · toda la tarde')] },
+        { ini: 'ED', nombre: 'Elena Doble', fondo: '#FCE7F3', tinta: '#BE185D', carga: 0, filas: [a('8:00', 'Ausente todo el día · vacaciones')] },
+        { ini: 'CR', nombre: 'Camilo Ríos', fondo: '#DCFCE7', tinta: '#15803D', carga: 20, filas: [c('3:00', 'Coco · Control', 'pendiente'), l('3:30', 'Libre · resto de la tarde')] }
+      ]
+    };
+    const conCita = [20, 21, 22, 23, 24, 26, 27, 28, 29, 30];
+    const nombresDia = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const dias = [];
+    for (let i = 0; i < 3; i++) dias.push({ n: '', clase: 'd vacio', cita: false, etiqueta: '', pick: () => {} });
+    for (let n = 1; n <= 31; n++) {
+      let clase = 'd';
+      if (n < 23) clase += ' pasado';
+      if (n === 23) clase += ' hoy';
+      if (n === this.state.dia) clase += ' sel';
+      dias.push({ n: String(n), clase, cita: conCita.indexOf(n) !== -1, etiqueta: n + ' de octubre', pick: () => this.setState({ dia: n }) });
+    }
+    dias.push({ n: '', clase: 'd vacio', cita: false, etiqueta: '', pick: () => {} });
+    const d = this.state.dia;
+    const grupo = agendas[d] || [
+      { ini: 'BN', nombre: 'Beto Norte', fondo: '#DBEAFE', tinta: '#0052FF', carga: 0, filas: [l('8:00', 'Libre · todo el día')] },
+      { ini: 'ED', nombre: 'Elena Doble', fondo: '#FCE7F3', tinta: '#BE185D', carga: 0, filas: [l('8:00', 'Libre · todo el día')] },
+      { ini: 'CR', nombre: 'Camilo Ríos', fondo: '#DCFCE7', tinta: '#15803D', carga: 0, filas: [l('8:00', 'Libre · todo el día')] }
+    ];
+    let total = 0;
+    const vets = grupo.map(v => {
+      const n = v.filas.filter(f => f.esCita).length;
+      total += n;
+      return Object.assign({}, v, {
+        resumen: n === 0 ? 'sin citas' : n + (n === 1 ? ' cita' : ' citas') + ' · ' + v.carga + ' % ocupado',
+        colorCarga: v.carga >= 80 ? '#F59E0B' : '#0052FF'
+      });
+    });
+    const semana = nombresDia[new Date(2026, 9, d).getDay()];
+    return {
+      dias,
+      vets,
+      tituloDia: d === 23 ? 'Agenda de hoy por veterinario' : 'Agenda del ' + semana + ' ' + d + ' por veterinario',
+      resumenDia: total + (total === 1 ? ' cita' : ' citas') + ' · toca un día del calendario'
+    };
+  }
+}
+</script>
+</body>
+</html>
