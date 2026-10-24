@@ -1142,3 +1142,9 @@ El arranque ejecuta `scripts/migrar.php` automáticamente. Los logs deben inclui
 - **Ajuste 2 (formato):** la próxima dosis sale `AAAA-MM-DD`; mostrarla `DD/MM/AAAA`, igual que el resto del portal.
 - **Ajuste 3 (visual):** «Imprimir» es un enlace subrayado junto a dos botones; igualar su estilo. La pestaña Carnet va al final (Historia sigue siendo la primera y la activa).
 - **Anotado, no bloquea:** `composer.lock` sigue ignorado por la política del repositorio; producción resuelve `~5.0` en cada build. Conviene versionarlo en un `chore` aparte.
+
+**Decisiones del dueño para B (2026-10-23):**
+- **Agrupar avisos:** el primer escaneo avisa al momento; los de los 30 minutos siguientes de la misma mascota solo se registran (`notificado = 1`, sin aviso nuevo). Diez escaneos seguidos dan un solo aviso (RE-5.11.4).
+- **Ubicación:** botón explícito «Compartir mi ubicación con el dueño»; si quien escanea acepta, se manda un aviso aparte con el enlace al mapa, sin agrupar. Una sola ubicación por escaneo, desde la misma IP y dentro de los 30 minutos del escaneo (RE-5.11.5).
+- **Límite de 30 por hora:** cuenta todas las visitas por IP, también las de tokens inválidos, en una tabla nueva `carnet_accesos` (migración 11, MER y drawDB). Superado el límite, 429 para todos por igual (RE-5.11.6).
+- **Canal del aviso:** correo al propietario, registrado en `notificaciones`; el portal muestra en la pestaña Carnet los últimos escaneos con fecha, hora y mapa si hubo ubicación.
