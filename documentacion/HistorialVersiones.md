@@ -6,7 +6,22 @@
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 2.0.0-alpha.5 (Actual)
+### Versión 2.0.0 (Actual)
+
+Primera entrega estable de la plataforma SaaS v2, preparada el 23 de octubre de 2026. Producción se actualiza cuando el dueño integre y despliegue esta entrega.
+
+* **Base SaaS y acceso (alpha.1–alpha.2):** clínicas y planes, identidad única con varios contextos, aislamiento por clínica, activación de cuentas y aceptación de la política de datos.
+* **Portal multi-clínica (alpha.3):** una cuenta para todas las mascotas y clínicas; vínculos y autorización de historia compartida, con registro y agendamiento desde el portal.
+* **Historia clínica y Grafo I (alpha.4):** alergias y alertas compartidas, apoyo diagnóstico, validación de prescripciones y mapa del conocimiento.
+* **Agenda y Grafo II (alpha.5):** triage de cuatro niveles, disponibilidad coordinada, reajustes, urgencias, ausencias, llegadas y el Inicio del veterinario.
+* **Carnet de emergencia:** tarjeta con QR opaco para imprimir y compartir; acceso público sin sesión con datos de emergencia, vacunas vigentes y contactos. El dueño puede regenerarlo: el anterior deja de servir inmediatamente.
+* **Escaneos y ubicación opcional:** primer escaneo por correo, siguientes agrupados durante 30 minutos; ubicación solo tras pulsar el botón y aceptar el permiso, con un aviso aparte y enlace al mapa. El dueño ve sus diez últimos escaneos. Límite de 30 consultas por hora e IP y páginas no indexables.
+
+**Despliegue:** migración 11 automática y repetible, sin borrar datos; configurar `CARNET_IP_SECRETO` en el entorno de PHP para el HMAC. Si falta, el carnet público responde temporalmente no disponible. El conocimiento clínico conserva su validación veterinaria pendiente; los grafos apoyan la decisión profesional.
+
+**Salvedad acordada con el dueño (23/10/2026):** el correo de alta conserva el enlace de acceso; el QR del portal en ese correo (RE-5.8.4) sigue pendiente de una entrega aparte. Este cierre entrega el QR de emergencia de la mascota.
+
+### Versión 2.0.0-alpha.5
 
 Cuarto módulo de la v2: **agenda inteligente con el Grafo II**. La agenda calcula la urgencia de cada caso, se reorganiza sola cuando hay retrasos y atiende urgencias, ausencias y llegadas sin reserva.
 La entrega queda preparada para publicar después de las pruebas del usuario; producción se actualiza al desplegar.

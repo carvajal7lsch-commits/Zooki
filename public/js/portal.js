@@ -331,6 +331,13 @@ window.addEventListener('popstate', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    const retornoCarnet = document.getElementById('portalRetornoCarnet');
+    if (retornoCarnet) {
+        const id = Number(retornoCarnet.dataset.mascota);
+        verDetalle(id, { historial: false });
+        history.replaceState({ zkMascota: id }, '', '#inicio');
+        return;
+    }
     const destino = seccionDesdeHash(location.hash);
     if (destino.mascota) verDetalle(destino.mascota, { historial: false });
     else if (destino.tab !== 'home') switchTab(destino.tab, { historial: false });
@@ -533,6 +540,7 @@ async function verDetalle(id, opciones = {}) {
     }
     document.getElementById('drawerPetSummary').innerHTML = '';
     document.getElementById('historialContent').innerHTML = '<div class="portal-loading">Cargando historial…</div>';
+    if (window.ZookiCarnet) window.ZookiCarnet.cargar(id);
     document.getElementById('citasContent').innerHTML = '';
     document.getElementById('vacunasContent').innerHTML = '';
     document.getElementById('desparasitacionesContent').innerHTML = '';

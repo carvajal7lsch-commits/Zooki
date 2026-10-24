@@ -6,6 +6,7 @@ require_once __DIR__ . '/../models/Usuario.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../models/ConsentimientoDatos.php';
 require_once __DIR__ . '/../controllers/ContextoController.php';
+require_once __DIR__ . '/RetornoCarnet.php';
 
 /**
  * Abre la sesión de una identidad ya autenticada (contraseña, Google o
@@ -43,7 +44,10 @@ final class InicioSesion
         $_SESSION['perfil_incompleto'] = (int) ($usuario['perfil_completo'] ?? 1) === 1 ? 0 : 1;
 
         $disponibles = (new Usuario($this->db))->contextosDe($idUsuario) ?? [];
-        if (count($disponibles) === 1) {
+        $retornoCarnet = RetornoCarnet::contexto($disponibles);
+        if ($retornoCarnet !== null) {
+            ContextoController::entrar($retornoCarnet, $disponibles, $auditoria);
+        } elseif (count($disponibles) === 1) {
             ContextoController::entrar($disponibles[0], $disponibles, $auditoria);
         }
 
@@ -54,7 +58,7 @@ final class InicioSesion
         if ((int) $usuario['debe_cambiar_password'] === 1) {
             return 'cambiar_password';
         }
-        return count($disponibles) === 1 ? Contexto::destino($disponibles[0]) : 'seleccionar_contexto';
+        return $retornoCarnet !== null ? 'portal_propietario' : (count($disponibles) === 1 ? Contexto::destino($disponibles[0]) : 'seleccionar_contexto');
     }
 
     private function debeAceptarPolitica(array $usuario): bool

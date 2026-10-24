@@ -120,6 +120,18 @@ class AutorizacionRolTest extends TestCase
         }
     }
 
+    public function testCarnetSoloEsDelPropietarioYNoEsPublico(): void
+    {
+        foreach (['portal_carnet_ajax', 'portal_carnet_svg', 'portal_imprimir_carnet', 'portal_regenerar_carnet_ajax'] as $accion) {
+            $this->assertTrue($this->permite($accion, self::PROPIETARIO));
+            foreach ([self::ADMIN, self::VETERINARIO, self::SUPER_ADMIN] as $rol) {
+                $this->assertFalse($this->permite($accion, $rol));
+            }
+            $this->assertNotContains($accion, self::lista('publicActions'));
+        }
+        $this->assertContains('carnet', self::lista('publicActions'));
+    }
+
     public function testPropietarioNoAccedeADatosClinicosNiDeOtrosDuenos()
     {
         foreach (['registrar_consulta_ajax', 'registrar_vacuna_ajax', 'listar_historial_ajax', 'listar_propietarios_ajax', 'listar_mascotas_ajax'] as $accion) {

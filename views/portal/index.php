@@ -18,6 +18,9 @@ require_once __DIR__ . '/../../models/MarcaClinica.php';
 $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 $hoy = new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
 $mascotaPorId = array_column($mascotas, null, 'id_mascota');
+if (!empty($mascota_carnet_inicial)): ?>
+<div id="portalRetornoCarnet" data-mascota="<?= (int) $mascota_carnet_inicial ?>" hidden></div>
+<?php endif;
 
 /** Avatar de la mascota: su foto o sus iniciales, como las tarjetas de Usuarios. */
 $avatarMascota = static function (?string $foto, string $nombre, string $extra = '') use ($e): void {
@@ -594,9 +597,15 @@ foreach ((array) $todas_desparasitaciones as $d) {
                 <button type="button" class="tab-btn" data-pestana="tab-citas" role="tab" aria-selected="false" aria-controls="tab-citas">
                     <i class="ri-calendar-line" aria-hidden="true"></i> Citas
                 </button>
+                <button type="button" class="tab-btn" data-pestana="tab-carnet" role="tab" aria-selected="false" aria-controls="tab-carnet">
+                    <i class="ri-qr-code-line" aria-hidden="true"></i> Carnet
+                </button>
             </nav>
 
             <div class="pet-detail__paneles">
+                <div id="tab-carnet" class="portal-panel" role="tabpanel" aria-label="Carnet" hidden>
+                    <div id="carnetContenido" aria-live="polite"></div>
+                </div>
                 <div id="tab-historial" class="portal-panel" role="tabpanel">
                     <div id="historialContent"><div class="portal-loading">Cargando historia…</div></div>
                 </div>

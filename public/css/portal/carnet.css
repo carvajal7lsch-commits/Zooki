@@ -1,0 +1,67 @@
+.carnet-tarjeta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 156px;
+    gap: 16px;
+    width: 100%;
+    max-width: 650px;
+    box-sizing: border-box;
+    padding: 22px;
+    color: #25324b;
+    background: #fff;
+    border: 1px solid #dbe4ef;
+    border-radius: 18px;
+    font-family: Inter, Arial, sans-serif;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+.carnet-identidad { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.carnet-identidad h3 { font-size: 24px; margin: 6px 0; }
+.carnet-tarjeta p { margin: 5px 0; line-height: 1.5; }
+.carnet-foto { width: 62px; height: 62px; border-radius: 14px; object-fit: cover; flex-shrink: 0; }
+.carnet-foto--iniciales { display: inline-flex; align-items: center; justify-content: center; background: #edf3ff; color: #0052ff; font-size: 26px; font-weight: 700; }
+.carnet-qr { grid-column: 2; grid-row: 1 / 4; width: 156px; height: 156px; max-width: 100%; align-self: start; background: white; }
+.carnet-alertas { display: flex; flex-wrap: wrap; gap: 6px; }
+.carnet-chip { border-radius: 8px; background: #fff5dd; color: #755414; padding: 5px 8px; }
+.carnet-chip--alergia { background: #fee2e2; color: #a71930; }
+.carnet-vacunas { grid-column: 1 / -1; border-top: 1px solid #dbe4ef; padding-top: 10px; }
+.carnet-vacunas h4 { margin: 0 0 8px; }
+.carnet-nota-vacunas { color: #61718b; font-size: 0.9em; }
+.carnet-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.carnet-acciones a { text-decoration: none; font-family: inherit; }
+.carnet-escaneos { margin-top: 24px; font-size: 14px; color: #475569; }
+.carnet-escaneos a { margin-left: 12px; color: #0052ff; }
+.carnet-ayuda, .carnet-aviso { color: #61718b; line-height: 1.5; font-size: 13px; }
+.carnet-impresion { background: #f5f7fb; margin: 24px; font-family: Arial, sans-serif; }
+.carnet-barra-impresion { max-width: 650px; margin-bottom: 20px; }
+.carnet-barra-impresion button { padding: 10px 20px; cursor: pointer; }
+@media (max-width: 767px) {
+    .carnet-tarjeta { grid-template-columns: minmax(0, 1fr) 108px; padding: 14px; gap: 12px; }
+    .carnet-identidad { grid-column: 1 / -1; }
+    .carnet-identidad h3 { font-size: 21px; }
+    .carnet-qr { grid-row: 2 / 4; width: 108px; height: 108px; }
+    .carnet-acciones > * { flex: 1 1 auto; justify-content: center; }
+    .carnet-impresion { margin: 12px; }
+}
+@page { size: A4; margin: 12mm; }
+@media print {
+    .carnet-impresion { margin: 0; background: white; }
+    .carnet-barra-impresion, .carnet-acciones, .carnet-ayuda { display: none !important; }
+    .carnet-tarjeta {
+        width: 148mm;
+        min-height: 105mm;
+        max-width: none;
+        grid-template-columns: minmax(0, 1fr) 32mm;
+        padding: 6mm;
+        gap: 3mm;
+        border-radius: 4mm;
+        font-size: 9pt;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+    .carnet-identidad { grid-column: 1; }
+    .carnet-qr { grid-row: 1 / 4; width: 32mm; height: 32mm; }
+    .carnet-identidad h3 { font-size: 16pt; }
+    .carnet-foto { width: 15mm; height: 15mm; }
+    .carnet-contactos p, .carnet-vacunas p, .carnet-chip { break-inside: avoid; }
+}
+.carnet-telefono { color: #0052ff; font-weight: 600; text-decoration: none; }

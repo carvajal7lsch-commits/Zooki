@@ -20,6 +20,7 @@ class Security {
      * Lista de acciones públicas (no requieren CSRF ni sesión)
      */
     private static array $publicActions = [
+        'carnet', 'carnet_ubicacion', 'carnet_foto',
         'landing', 'privacidad', 'terminos', 'cookies', 'login', 'solicitar_reset_password_ajax', 'reset_password',
         'procesar_reset_password_ajax', 'register', 'process_register', 'verificar_email', 'estado_verificacion_ajax',
         'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax',
@@ -451,6 +452,7 @@ class Security {
             'portal_actualizar_mascota_ajax', 'portal_actualizar_datos_contacto_ajax',
             'portal_agendar_cita_ajax', 'portal_get_vets_ajax', 'portal_get_tipos_cita_ajax',
             'portal_get_detalle_cita_clinica_ajax', 'portal_imprimir_historial',
+            'portal_carnet_ajax', 'portal_carnet_svg', 'portal_imprimir_carnet', 'portal_regenerar_carnet_ajax',
             'ver_detalle_mascota_propietario_ajax',
             // C6: catálogos de la clínica elegida, HU-5.12 y HU-5.13.
             'portal_get_horas_ajax', 'portal_get_sugerencias_ajax',

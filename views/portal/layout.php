@@ -29,6 +29,7 @@ $iniciales = $iniciales ?: 'U';
     <link rel="icon" type="image/png" href="img/icon_blue.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/portal/carnet.css?v=<?= $v ?>">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <?php // M5 C4a (punto 11): teléfono con bandera, el mismo de Usuarios y Pacientes. ?>
@@ -137,6 +138,7 @@ $iniciales = $iniciales ?: 'U';
 <script src="js/consulta-sintomas.js?v=<?= $v ?>"></script>
 <script src="js/triage-agenda.js?v=<?= $v ?>"></script>
 <script src="js/portal.js?v=<?= $v ?>"></script>
+<script src="js/carnet.js?v=<?= $v ?>"></script>
 <script src="js/portal-reprogramar.js?v=<?= $v ?>"></script>
 <?php // M2 C1: alergias y alertas de la mascota, de solo lectura; portal.js la usa al abrir la ficha. ?>
 <script src="js/alertas-medicas.js?v=<?= $v ?>"></script>

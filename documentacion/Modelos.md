@@ -962,28 +962,77 @@ flowchart TD
 
 El QR lleva un **token aleatorio**, nunca el id de la mascota; el propietario puede regenerarlo ([RN-502 a RN-505](ReglasNegocio.md#módulo-5--portal-del-propietario-multi-clínica)).
 
+**Subetapa A — portal del propietario (HU-5.10):** lectura de emergencia compartida con el flujo público siguiente, que corresponde a la subetapa B. Impresión en tarjeta A6 (148 × 105 mm), ampliable verticalmente para conservar todos los registros. El SVG es privado y se genera en el servidor; el enlace absoluto usa la misma base de los correos.
+
 ```mermaid
 flowchart TD
-  A([Escanear el QR de la mascota]) --> L{"Supera el limite de consultas desde su IP?"}
-  L -- Si --> L1[/"Respuesta 429: intentalo mas tarde"/]
-  L1 --> ZF([Fin])
-  L -- No --> B{"El token es valido, el carnet esta activo y la mascota tambien?"}
-  B -- No --> B1[/"Mensaje generico: carnet no disponible (no revela si la mascota existe)"/]
-  B1 --> ZF
-  B -- Si --> C["Abrir el carnet en modo solo lectura (pagina no indexable)"]
-  C --> D["Mostrar solo datos de emergencia: nombre, foto, especie/raza, alergias y alertas,<br/>vacunas vigentes con su clinica, telefono del propietario y de la clinica"]
-  D --> N["Registrar el escaneo y avisar al propietario (fecha y hora;<br/>escaneos seguidos se agrupan en un solo aviso)"]
-  N --> U{Quien escanea comparte su ubicacion?}
-  U -- Si --> U1[Enviar la ubicacion al propietario]
-  U -- No --> E
-  U1 --> E{El propietario quiere ver o editar la ficha completa?}
-  E -- No --> E1([Fin: vista de emergencia])
-  E -- Si --> F[Solicitar inicio de sesion del propietario]
-  F --> G{Autenticacion correcta?}
-  G -- No --> G1[/"Mensaje: credenciales invalidas"/]
-  G1 --> F
-  G -- Si --> H["Abrir la ficha completa (lectura y edicion)"]
-  H --> ZF
+  P([Abrir Carnet en la ficha]) --> O{Contexto propietario y mascota propia?}
+  O -- No --> X[Denegar 401 o 403]
+  O -- Si --> A{Mascota activa, titular verificado y carnet activo?}
+  A -- No --> N[Explicar por que no esta disponible, sin QR]
+  A -- Si --> D[Leer solo datos de emergencia RN-503]
+  D --> T[Tarjeta con SVG privado, imprimir y compartir o copiar enlace]
+  T --> R{Regenerar QR?}
+  R -- No --> F([Fin])
+  R -- Si --> C{Confirma en el modal de Zooki?}
+  C -- No --> F
+  C -- Si --> B[Bloquear mascota y volver a comprobar propietario y estado]
+  B --> V{Coincide el token visto?}
+  V -- No --> U[Devolver el carnet actual sin otro cambio ni auditoria]
+  V -- Si --> G[Generar token aleatorio de 32 bytes, actualizar token y fecha]
+  G --> H{Auditoria guardada?}
+  H -- No --> E[Revertir y responder error generico]
+  H -- Si --> I[Confirmar transaccion: token anterior invalidado]
+  I --> T
+  U --> T
+```
+
+**Subetapa B — acceso público y escaneos (HU-5.11, 2.0.0).** Las respuestas válidas, genéricas y 429 llevan `noindex, nofollow`, `no-store` y `no-referrer`. No se abre sesión en las rutas públicas. La IP común con auditoría respeta `TRUSTED_PROXIES` y se guarda solo como HMAC-SHA256 con `CARNET_IP_SECRETO`; si falta, se responde 503 sin datos. Los tokens no disponibles hacen la misma consulta de índice antes del mismo 404. La foto se sirve por token y el SVG se entrega sin identificadores internos.
+
+```mermaid
+flowchart TD
+  A([Escanear el QR]) --> I[Resolver IP confiable y calcular HMAC]
+  I --> L[Serializar contador por IP, insertar acceso y limpiar los de mas de 24 horas]
+  L --> C{Mas de 30 accesos en la ultima hora?}
+  C -- Si --> R[429 generico, sin escaneo ni aviso]
+  C -- No --> B[Normalizar formato y buscar token bajo bloqueo de mascota]
+  B --> V{Token vigente, mascota y carnet activos, con titular?}
+  V -- No --> N[404 con cuerpo y cabeceras identicos para todos los casos]
+  V -- Si --> D[Leer proyeccion RN-503, registrar escaneo con notificado igual a 1]
+  D --> U{Hay aviso de esa mascota en los ultimos 30 minutos?}
+  U -- Si --> T[Confirmar sin otro aviso]
+  U -- No --> S[Reservar notificacion de correo sin token, con id_clinica nulo]
+  S --> K[Confirmar transaccion y enviar correo]
+  K --> E{Correo enviado?}
+  E -- Si --> F[Notificacion enviada]
+  E -- No --> G[Notificacion con error]
+  F --> P[Mostrar tarjeta publica y comprobante opaco del escaneo]
+  G --> P
+  T --> P
+  P --> O[Ofrecer ubicacion optativa y acceso del dueno]
+```
+
+La ventana de agrupación se mide desde el aviso reservado, incluso si el correo falla; los escaneos intermedios no prolongan la ventana. No se bloquea la información de emergencia por un fallo de SMTP. El propietario consulta sus diez últimos escaneos después de comprobar propiedad en el servidor.
+
+```mermaid
+flowchart TD
+  A([Tocar Compartir mi ubicacion]) --> P{El navegador tiene geolocalizacion y el visitante acepta?}
+  P -- No --> N[Mensaje junto al boton, sin transmitir ubicacion]
+  P -- Si --> E[POST con token, coordenadas a seis decimales y comprobante firmado]
+  E --> L[Contar acceso por IP antes de validar]
+  L --> T{Supera 30 por hora?}
+  T -- Si --> R[429 generico]
+  T -- No --> V[Validar coordenadas y bloquear mascota del token vigente]
+  V --> C{Ultimo escaneo de esa IP, comprobante de ese token, hasta 30 minutos y sin ubicacion?}
+  C -- No --> G[Respuesta generica, sin guardar]
+  C -- Si --> U[Guardar ubicacion y reservar correo aparte, sin agrupar]
+  U --> K[Confirmar, enviar mapa y registrar enviado o error]
+  K --> G
+  D([Soy el dueno]) --> S[Guardar token en sesion del acceso y pedir login]
+  S --> H[Autenticar y aplicar politica, permisos y contexto propietario]
+  H --> O{El token vigente pertenece a esa persona?}
+  O -- Si --> F[Abrir ficha en el portal, con id resuelto en servidor y sin id en la URL de retorno]
+  O -- No --> Q[Abrir su portal normal sin datos ajenos]
 ```
 
 ### 12.6 Calificación del veterinario — Módulo 8

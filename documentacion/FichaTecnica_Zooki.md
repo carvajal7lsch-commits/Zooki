@@ -1,6 +1,6 @@
 # Ficha Técnica del Proyecto — Zooki
 
-> **Revisión 3.4** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
+> **Revisión 3.5** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
 > **Preparación M4/B2 — 2026-10-18:** 96 HU, 430 RE y 120 RN; esquema de 58 tablas en 01/MER/drawDB y migración 08 preparados para revisión, sin despliegue ni flujos C implementados. Producción alpha.4 conserva sus 52 tablas hasta desplegar; sin nueva revisión/versión.
 
@@ -17,8 +17,8 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.0.0-alpha.4 desplegada**: módulos 0, 5 y M2 clínico/Grafo I; M4/B2 prepara solo datos, pendiente de revisión. Destino de agenda propuesto, todavía sin implementación; carnet/QR al final de v2.0 y conocimiento pendiente de validación veterinaria |
-| Versión del documento | 3.1 — Octubre 2026 |
+| Estado actual | **2.0.0 preparada para revisión e integración**: base SaaS, portal multi-clínica, historia clínica/Grafo I, agenda/Grafo II y carnet QR público con escaneos y ubicación consentida. Producción se confirma tras desplegar; conocimiento pendiente de validación veterinaria |
+| Versión del documento | 3.5 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
 
@@ -78,7 +78,9 @@ Se decidió **mantener el stack nativo** de la v1.x por ser suficiente a la esca
 
 M2 entrega conocimiento global versionado con fuentes y validación veterinaria pendiente: 105 nodos, 105 aristas, 201 sinónimos, 29 reglas y 47 fuentes.
 HU-2.12 permite al superadministrador explorarlo sin editar ni acceder a pacientes; los motores apoyan el diagnóstico y la prescripción.
-El esquema preparado por B2 tiene 58 tablas de negocio; producción alpha.4 conserva 52 hasta aplicar la migración 08 al desplegar. Se añade aparte la tabla técnica `schema_migraciones` del migrador; el triage y su batería de 26 casos quedan listos para M4.
+El esquema de 2.0.0 tiene 59 tablas de negocio, incluida carnet_accesos para limitar consultas públicas sin guardar mascota ni token. Se añade aparte la tabla técnica `schema_migraciones` del migrador. La migración 11 es automática y repetible. Se mantienen 96 HU, 435 RE y 120 RN; el carnet cierra las 29 HU de la entrega v2.0.
+
+Salvedad acordada con el dueño el 23/10/2026: el QR del portal en el correo de alta (RE-5.8.4) queda para una entrega aparte; el correo ya incluye el enlace de acceso. El QR de emergencia de cada mascota sí se entrega en este cierre.
 
 ## 4. Arquitectura del Sistema
 
@@ -174,9 +176,9 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 - Código fuente completo en repositorio GitHub con [README técnico](../README.md).
 - Aplicación desplegada en el servidor propio.
 - Base de datos con datos de prueba.
-- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.5).
-- Esta Ficha Técnica del Proyecto (Revisión 3.4).
-- [Reglas de Negocio](ReglasNegocio.md) (Rev 2.4), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.4) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.4).
+- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.6).
+- Esta Ficha Técnica del Proyecto (Revisión 3.5).
+- [Reglas de Negocio](ReglasNegocio.md) (Rev 2.5), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.6) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.5).
 - [Modelo Entidad-Relación](MER.md) y [Modelos y diagramas](Modelos.md) (grafos, procesos, flujos de sistema y componentes) con su maestro draw.io.
 - [Historial de Versiones](HistorialVersiones.md) y documento de [Presupuesto y ROI](PresupuestoROI.md).
 - Manual de usuario. _(Pendiente)_

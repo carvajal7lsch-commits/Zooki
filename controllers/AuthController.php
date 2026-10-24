@@ -46,6 +46,9 @@ class AuthController {
     }
 
     public function login() {
+        if (isset($_GET['carnet'])) {
+            RetornoCarnet::recordar($_GET['carnet']);
+        }
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Validar token CSRF
             if (!Csrf::validate('login')) {

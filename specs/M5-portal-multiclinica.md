@@ -1,6 +1,22 @@
 # M5 — Portal multi-clínica y vínculos
 
-> Estado: F entregada, pendiente de revisión (2026-10-14); despliegue pendiente del usuario
+## Carnet QR — reapertura para v2.0.0 (2026-10-23)
+
+M4 cerrado y alpha.5 publicada, según confirmación del dueño. A fue aprobada por Claude con tres ajustes para B. El encargo vigente es **solo Carnet B**, en `release/v2.0.0`; escribe Codex y revisa Claude (arquitecto). B prepara la versión 2.0.0 y agrega la migración 11 para contar accesos públicos, conservando los datos existentes. Modelos §12.5 refleja los recorridos privado y público. El despliegue lo hace el dueño tras la revisión.
+
+**Decisiones del dueño (2026-10-23):** SVG en servidor con `chillerlan/php-qrcode`, instalada mediante Composer como dependencia de producción; verificar Dockerfile. URL absoluta con `EnlaceCuenta::base()`/`APP_URL`, `index.php?action=carnet&t=<token>`, nunca id interno. Regenerar invalida los impresos: confirmación con `zookiConfirmarCorto` y auditoría. Subetapas separadas; la lectura RN-503 queda reutilizable. Sin commit, push ni tags por el agente.
+
+**Vigencia de vacunas — decisión confirmada por el dueño (2026-10-23):** mostrar la última aplicación de cada vacuna cuya próxima dosis sea hoy o posterior; sin próxima dosis, vigencia sin confirmar y fuera de la lista de vigentes. La tarjeta lo explica sin revelar registros sin vigencia en la proyección pública. Una aplicación futura no cuenta y una dosis posterior reemplaza la anterior, incluso si la nueva no tiene fecha próxima.
+
+| Subetapa | Alcance y trazabilidad | Archivos previstos | Verificación |
+|---|---|---|---|
+| **A — carnet del propietario** | HU-5.10, RE-5.10.1–5, RF-5.7; RN-110, RN-113, RN-502, RN-503, RN-G02; RNF-16. Proyección explícita de datos de emergencia; QR privado; tarjeta, impresión y compartir; renovación con comparación del token visto y bloqueo transaccional para doble clic, fecha y auditoría atómicas. Inactiva o provisional sin titular: no disponible con explicación. | `models/CarnetMascota.php`, `models/CarnetPropietario.php`, `helpers/QrCarnet.php`, controlador/rutas/matriz del portal, vista compartida de tarjeta e impresión, `public/js/carnet.js`, `public/css/portal/carnet.css`, Composer/Dockerfile, pruebas PHP/JS. | Datos permitidos y prohibidos, clínicas/alertas globales y vacunas, aislamiento de lectura/SVG/renovación, inactiva/provisional, token viejo invalidado, auditoría/rollback y doble clic; compartir/copiar, imprimir y escape. Suites completas PHP/JS; navegador 1366 y 390 px e impresión. |
+| **B — acceso público** | HU-5.11, RE-5.11.1–6, RF-5.8; RN-110/113/502–505 y RN-G02. Proyección de A tras resolver token válido/activo; 404 genérico, escaneos y aviso agrupado por mascota durante 30 minutos, ubicación optativa con aviso aparte, 30 accesos/hora/IP y noindex. Últimos diez escaneos privados. Ajustes de A y validación pública de RE-5.10.5; versión 2.0.0 preparada. | `CarnetPublicoController`, `CarnetPublico`, `AccesosCarnet`, `AvisosCarnet`; helpers de IP/HMAC/correo/ubicación/retorno/fechas; vista, JS y CSS públicos; tarjeta privada compartida y retorno del login; migración 11, esquema/MER/drawDB/CI, pruebas y documentos. | `CarnetPublicoTest`, `BaseV2MysqlTest`, `CarnetPublico.test.cjs`, `CarnetPublicoHttp.test.cjs` y regresiones `Carnet.test.cjs`: privacidad, respuestas genéricas, noindex, 30/31, agrupación/concurrencia, consentimiento y rechazo de ubicación, correo fallido, retorno/aislamiento, tres ajustes de A. Suites completas y Chrome 1366/390/impresión. |
+
+**Riesgos:** datos privados por proyecciones amplias (prohibir `SELECT *` en lectura de emergencia); caché tras renovar (no-store); tokens base64url comparados exactamente aunque MySQL use `general_ci`; concurrencia (bloqueo de mascota para renovación/avisos/ubicación y candado por IP para el contador); auditoría fallida (rollback). `CARNET_IP_SECRETO` exige al menos 32 caracteres en el entorno de PHP y su ausencia responde 503 sin datos; `.env` no se modifica. La ubicación requiere además un comprobante opaco ligado al escaneo, token e IP para impedir usar uno anterior a la regeneración. No se inventa una duración para vacunas sin próxima dosis. QR del portal en correo de alta: salvedad aprobada de RE-5.8.4/RF-5.3, fuera de B.
+
+
+> Entrega inicial de M5: cerrada y desplegada como alpha.3 (2026-10-14). Reapertura Carnet QR: A aprobada con ajustes; **Carnet B — entregada, pendiente de revisión** (2026-10-23). Los apartados de alpha.3 siguientes son históricos.
 > Entrega: v2.0 · Fecha: 2026-10-12 · Sale como `2.0.0-alpha.3`
 > Responsable de escritura: Claude Code (implementación y avance de F); Codex (retoma y completa F, 2026-10-14) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m5-portal`, creada desde `v2/m0` (que ya contiene todo M0 y su pulido).
@@ -27,7 +43,7 @@ Lo que falta es, sobre todo: verificar cada RE contra el código actual (M0 camb
 **Fuera de alcance:**
 - Calificar al veterinario (HU-5.9 la nombra; es del módulo 8).
 - Reprogramar desde el portal (HU-5.6, diferida desde C5: el propietario solo cancela).
-- Carnet y QR (HU-5.10, HU-5.11, QR de RE-5.8.4): módulo 5 al final de la v2.0.
+- Carnet y QR se retomaron al final de v2.0 en la reapertura de este plan; queda fuera el QR del portal en el correo de RE-5.8.4/RF-5.3, salvedad confirmada por el dueño durante B.
 - Uso de alergias y alertas por el Grafo I al prescribir (criterio 4 de HU-2.10): módulo 2 (HU-2.9).
 - Paneles del veterinario y de la clínica fuera de lo que tocan HU-1.5 y HU-2.10: se rehacen en los módulos 2 y 4.
 - Eliminar la cuenta (HU-5.14, v2.1).
@@ -1096,3 +1112,103 @@ El arranque ejecuta `scripts/migrar.php` automáticamente. Los logs deben inclui
 **Revisó:** Claude (arquitecto). **Resultado: aprobada.** PHP 691 pruebas en verde en una copia limpia sin `.env` (31 MySQL omitidas); JS 167/167. El tope de activación bloquea la fila de la cuenta y lee el contador con `FOR UPDATE` (también dentro de la transacción del autorregistro), no reemplaza el enlace vigente al bloquear y no limita el reenvío de la clínica; `created_at` lo pone PHP para medir con la misma hora. Versión `2.0.0-alpha.3`, seis HU implementadas y una revisión por documento, como en el cierre de M0. Escribieron Claude Code y Codex (anotado en el Anexo). Sigue el despliegue por el usuario.
 
 **Despliegue de 2.0.0-alpha.3 (2026-10-14).** El usuario hizo el merge `v2/m5-portal` → `main` y el tag `v2.0.0-alpha.3`. En producción: migración 06 aplicada (`[migraciones] Aplicadas: 06_medio_activacion_propietario.sql`), `--revisar` dice que la base está al día (la semilla se revisa en cada arranque, por diseño) y la aplicación responde `2.0.0-alpha.3`. **M5 cerrado.**
+
+## Anexo Carnet A — Resultado (2026-10-23)
+
+**Escribió Codex. Entregada, pendiente de revisión.** HU-5.10/RE-5.10.1–5; la resolución pública del enlace antiguo/nuevo se verificará en B. Sin migración, subida de versión ni operaciones Git de escritura. No se implementó B.
+
+| RE / riesgo | Evidencia |
+|---|---|
+| RE-5.10.1/2, RN-110/502 | Token de alta existente conservado; `CarnetMascotaTest` prueba estabilidad, enlace absoluto sin id y un carnet con dos clínicas; SVG real del servidor. |
+| RE-5.10.3, RN-503/113 | Proyección cerrada de `CarnetMascota`, listas exactas de claves y marcadores privados ausentes; alertas activas de dos clínicas y contactos solo de vínculos activos. Última vacuna, vencida, sin fecha, renovada sin fecha, aplicación futura y fecha límite de hoy. |
+| RN-G02, RN-110, RE-4.15.3 | Las cuatro rutas privadas niegan mascota ajena; matriz solo propietario; CSRF, método/ids/tokens validados; inactiva, carnet desactivado y provisional sin titular sin datos/QR. |
+| RE-5.10.4/5 | `Carnet.test.cjs`: Web Share, copiar, cancelar/errores, imprimir, doble clic, descartar respuestas al cambiar mascota y modal real; `CarnetMascotaTest`: token anterior ausente de la base, fecha, auditoría única y rollback si falla. |
+| Concurrencia real | `BaseV2MysqlTest::testCarnetASerializaLaRegeneracionYDescartaElDobleEnvioConUnaInstantaneaAnterior`: MariaDB 10.4 local, 1/11 en verde; espera el candado y un replay con instantánea anterior devuelve el token actual sin otro cambio. CI ejecutará esa misma clase en MySQL 8. |
+
+**Verificación:** suites finales PHP/JS en verde (conteos abajo); Chrome real con controlador/layout del propietario a 1366 y 390 px, navegación/pestaña, modal de confirmar/cancelar e impresión A6 148 × 105 mm ampliable, sin desbordes. SVG cargado en la vista de impresión; capturas en `scratch/carnet-a/`. Los dos diagramas de §12.5 renderizan. `exportar.mjs --revisar`: descargas al día (Modelos no tiene descarga configurada). Composer: QR 5.0.5 en `require`, requisitos de producción cumplidos; Dockerfile agrega libonig/mbstring y ya ejecuta Composer `--no-dev`. Sin build Docker local. `composer.lock` sigue ignorado por las reglas existentes del repositorio; no se modifica esa política.
+
+**Conteos finales:** `vendor/bin/phpunit`: 1041 pruebas, 8249 aserciones, 72 omitidas de motor sin host, sin fallos. `node --test --test-concurrency=1 tests/Frontend/*.test.cjs`: 321/321, ninguna omitida. Motor dirigido adicional: 1/11 en verde en MariaDB; no es una pasada de MySQL 8 local. Sintaxis y `git diff --check` correctos.
+
+**Archivos de la entrega (24):** `Dockerfile`, `composer.json`, `controllers/CarnetController.php`, `helpers/QrCarnet.php`, `helpers/Security.php`, `models/CarnetMascota.php`, `models/CarnetPropietario.php`, `public/index.php`, `public/js/portal.js`, `public/js/carnet.js`, `public/css/portal/carnet.css`, `views/portal/index.php`, `views/portal/layout.php`, `views/portal/carnet.php`, `views/portal/imprimir_carnet.php`, `tests/Integration/CarnetMascotaTest.php`, `tests/Integration/BaseV2MysqlTest.php`, `tests/Unit/AutorizacionRolTest.php`, `tests/Support/CarnetPrueba.php`, `tests/Frontend/Carnet.test.cjs`, `tests/Frontend/apoyo/carnet-vista.php`, `documentacion/Modelos.md`, `specs/M5-portal-multiclinica.md`, `agentes/estado.md`. El cambio previo de `specs/M4-agenda-grafo-ii.md` se conserva sin tocar.
+
+**Prueba del dueño tras revisión:** (1) propietario, ficha → Carnet, compartir/copiar e imprimir en computador/celular; (2) cancelar regeneración conserva QR, confirmar exige reimprimir y cambia enlace; (3) petición directa a una mascota ajena o inactiva: sin carnet. Los escaneos y las respuestas públicas se probarán en B. Siguiente: revisión independiente de A; después HU-5.11 y cierre v2.0.0.
+
+### Carnet A — Revisión (2026-10-23)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada con tres ajustes menores, que entran en el prompt de B** (no hace falta otra vuelta de A).
+
+- **Verificado:** proyección cerrada de `CarnetMascota` (sin `SELECT *`, solo los campos de RN-503); alertas y clínicas globales (RN-113); token de 43 caracteres base64url de `random_bytes(32)` (RE-5.10.2); las cuatro rutas solo para propietario y con `exigirMascotaPropia` (RN-G02); regeneración con `FOR UPDATE`, comparación del token visto, auditoría sin token y rollback (RE-5.10.5); SVG con `no-store` y URL de imagen que cambia al regenerar; confirmación con `zookiConfirmarCorto`. PHP completo en copia limpia: 1041 pruebas, la única falla es el SVG porque esa copia no tiene la librería (sin acceso a Packagist); JS de carnet 6/7 por la misma causa. Capturas a 1366 y 390 px y medio de impresión sin desbordes.
+- **Ajuste 1 (dato público):** `datosEmergencia()` lista clínicas en `baja`. Filtrar `c.estado <> 'baja'` para no dar el teléfono de una clínica cerrada; una suspendida se conserva porque sigue atendiendo urgencias (RN-420).
+- **Ajuste 2 (formato):** la próxima dosis sale `AAAA-MM-DD`; mostrarla `DD/MM/AAAA`, igual que el resto del portal.
+- **Ajuste 3 (visual):** «Imprimir» es un enlace subrayado junto a dos botones; igualar su estilo. La pestaña Carnet va al final (Historia sigue siendo la primera y la activa).
+- **Anotado, no bloquea:** `composer.lock` sigue ignorado por la política del repositorio; producción resuelve `~5.0` en cada build. Conviene versionarlo en un `chore` aparte.
+
+**Decisiones del dueño para B (2026-10-23):**
+- **Salvedad confirmada durante B:** conservar pendiente el QR del portal en el correo de alta de RE-5.8.4/RF-5.3, para una entrega aparte. Carnet B no amplía ese envío; cierra HU-5.10 y HU-5.11. La salvedad se conserva explícita en el cierre de 2.0.0.
+- **Agrupar avisos:** el primer escaneo avisa al momento; los de los 30 minutos siguientes de la misma mascota solo se registran (`notificado = 1`, sin aviso nuevo). Diez escaneos seguidos dan un solo aviso (RE-5.11.4).
+- **Ubicación:** botón explícito «Compartir mi ubicación con el dueño»; si quien escanea acepta, se manda un aviso aparte con el enlace al mapa, sin agrupar. Una sola ubicación por escaneo, desde la misma IP y dentro de los 30 minutos del escaneo (RE-5.11.5).
+- **Límite de 30 por hora:** cuenta todas las visitas por IP, también las de tokens inválidos, en una tabla nueva `carnet_accesos` (migración 11, MER y drawDB). Superado el límite, 429 para todos por igual (RE-5.11.6).
+- **Canal del aviso:** correo al propietario, registrado en `notificaciones`; el portal muestra en la pestaña Carnet los últimos escaneos con fecha, hora y mapa si hubo ubicación.
+
+## Anexo Carnet B — Resultado (2026-10-23)
+
+**Escribió Codex. Carnet B — entregada, pendiente de revisión. Revisa Claude (arquitecto).** HU-5.10/HU-5.11 y RF-5.7/RF-5.8 construidos; versión 2.0.0 preparada, sin despliegue ni operaciones Git de escritura.
+
+**Qué y riesgos.** Acceso sin sesión con la proyección cerrada RN-503 y tarjeta compartida; tokens inválidos dan el mismo 404, cuerpo, cabeceras y consultas. Tokens sensibles a mayúsculas incluso con `general_ci`; foto servida por token y QR sin id. Escaneos y agrupación bajo bloqueo de mascota; ubicación ligada al último escaneo, token e IP mediante comprobante opaco, una vez durante 30 minutos y con aviso aparte. Contador de 30/hora bajo candado por IP, antes de validar, sin mascota/token y con limpieza de 24 horas. Noindex, no-store y no-referrer también en errores y 429. Es obligatorio configurar `CARNET_IP_SECRETO` en el entorno de PHP (32 caracteres aleatorios o más); sin él responde 503. Migración 11 automática/repetible, sin reiniciar datos.
+
+| RE / RN | Evidencia |
+|---|---|
+| RE-5.11.1/2, RN-110/502/503/113 | `CarnetPublicoTest`: claves exactas, marcadores privados ausentes, tokens malformados/inexistentes/regenerados/inactivos/provisionales con igualdad de cuerpo/código/consultas. `CarnetPublicoHttp.test.cjs`: cabeceras HTTP reales e inexistencia de cookie. |
+| RE-5.11.3, RN-G02 | `testTrasLoginElDuenoAbreSuFichaYOtroPropietarioSuPortalSinDatosAjenos`: token de retorno consumido en servidor; el id no viaja en la URL. `testUltimosDiezEscaneosSoloSonDelDueno`: diez recientes y rechazo de mascota ajena. |
+| RE-5.11.4, RN-504 | `testDiezEscaneosAgrupanUnCorreoYOtroTras31Minutos`, correo fallido con página 200 y notificación en error. `BaseV2MysqlTest::testCarnetBDosEscaneosSimultaneosGuardanDosVistasYUnSoloAviso`: dos procesos, espera real del bloqueo, dos vistas y un aviso. |
+| RE-5.11.5 | `CarnetPublicoTest`: acepta coordenadas válidas; rechaza ausencia de escaneo, otra IP, vencido, repetido, fuera de rango, comprobante anterior y token regenerado; respuesta genérica común. `CarnetPublico.test.cjs`: permiso solo al clic, aceptación, denegación, sin soporte, red y 429. |
+| RE-5.11.6, RN-505 | Límite compartido 30/31, tokens válidos/invalidos, ubicación, reinicio tras una hora y limpieza de 24 horas; no escaneos/avisos al bloquear. Pruebas PHP y HTTP real. Migración 11 repetida sobre esquema nuevo y tabla instalada, con datos conservados y columnas exactas en `BaseV2MysqlTest`. |
+| Ajustes de A, RE-5.10.4/5 | Clínica en baja excluida y suspendida conservada; fecha DD/MM/AAAA en tarjeta compartida. JS verifica orden de pestañas y estilo de Imprimir; `Carnet.test.cjs` conserva compartir/copiar, modal, impresión y doble clic. El token anterior a la regeneración devuelve 404 público. |
+
+**Verificación automática:** PHP completo sin host: 1056 pruebas, 8387 aserciones, 74 de motor omitidas; con MariaDB 10.4.32 y exclusivamente `zooki_test_base_v2`: **1056 pruebas, 9498 aserciones, ninguna omitida**. JS completo con concurrencia 1: **326/326**, sin omisiones. Se corrigieron tres expectativas históricas de tablas/migraciones que todavía no contaban la 11; ambas suites finales pasan. Chrome aislado con datos sintéticos y controlador/layout reales a 1366/390 px: página pública, genérica, pestaña privada con diez escaneos, modal y vista de impresión; sin desbordamiento horizontal, QR cargado. No se accedió a la base de trabajo, a sus contraseñas ni a `.env`; los correos de las pruebas son simulados. Sintaxis PHP y diff correctos. Modelos §12.5 (tres diagramas) y MER renderizados; 96 HU, 435 RE, 120 RN y 59 tablas coherentes, sin nuevos identificadores ni cambios de membresía de matrices.
+
+**Descargas:** nueve PDF y nueve Word regenerados con la plantilla y el exportador existentes; `exportar.mjs --revisar`: «Las descargas están al día». ZIP/XML de los nueve Word íntegros, índices poblados y referencias a marcadores existentes. Inspección con Poppler de los PDF y con gráficos nativos de Word sobre copias temporales (312 rangos de página, con resultados de campos conservados para revisar los índices). El renderizador empaquetado no encontró LibreOffice y la conversión PDF nativa de Word se bloqueó; la comprobación gráfica usó EMF, no ese PDF. Los bloqueos de OneDrive de las últimas descargas se resolvieron exportando fuera de la carpeta sincronizada y comprobando hashes tras copiarlas. Evidencia local en `scratch/carnet-b/`; no se cambió el exportador.
+
+**Cierre y pendientes.** RN-502–505 aplicadas y HU-5.10/HU-5.11 implementadas en 2.0.0. Salvedad aprobada: QR del portal en correo de alta de RE-5.8.4/RF-5.3 queda para una entrega aparte; el correo conserva el enlace. Falta revisión independiente de Claude, prueba del dueño, CI/MySQL 8 y despliegue. La ejecución local del motor es MariaDB 10.4.32 y no acredita MySQL 8 ni SMTP real. No se construyó imagen Docker. No se comenzó Inicio del administrador, Sonar ni v2.1.
+
+### Cinco pruebas del dueño tras la revisión
+
+- [ ] **Propietario, computador y celular:** ficha con Historia activa y Carnet al final; revisar contactos y vacunas, Imprimir con el mismo estilo, compartir/copiar, diez escaneos y mapa. Una mascota aún sin escaneos dice «Nadie ha escaneado este carnet todavía».
+- [ ] **QR impreso en local:** configurar `APP_URL` con la base del sitio accesible desde el celular (misma Wi-Fi, dirección LAN y ruta de Zooki; no `localhost`) y `CARNET_IP_SECRETO` en el entorno de PHP. Regenerar/imprimir después de cambiar la base. Escanear con la cámara: abre sin login, muestra solo emergencia. La geolocalización en el celular requiere un origen seguro HTTPS; el resto del carnet se puede probar por HTTP local.
+- [ ] **Regeneración y regreso al portal:** cancelar conserva el enlace; confirmar invalida el impreso al instante y el anterior da «Carnet no disponible». Desde el nuevo enlace, «Soy el dueño» abre la ficha tras login; otra cuenta entra a su portal normal. Inactiva/provisional: mismo mensaje público genérico.
+- [ ] **Avisos y ubicación:** con el transporte local a archivo ya configurado, primer acceso da un correo sin token; diez accesos seguidos, uno solo; a los 31 minutos, otro. Denegar ubicación no envía nada; aceptar guarda mapa y genera correo aparte. Repetir no vuelve a guardar/avisar.
+- [ ] **Límite y despliegue:** desde una IP de prueba, mezclar enlaces válidos/inválidos y ubicación: la petición 31 da 429 con noindex y sin escaneo/correo; tras una hora vuelve a admitir. Al desplegar, revisar logs completos de migración 11 y conocimiento, base al día, versión 2.0.0 y secreto disponible en PHP, conservando volúmenes/datos.
+
+### Archivos de Carnet B (74)
+
+Inventario del diff de esta subetapa; incluye archivos nuevos y modificados. La lista exacta para Git queda también en scratch/archivos-carnet-b.txt (material local, no versionado).
+
+| Ámbito | Archivos |
+|---|---|
+| .github | `.github/workflows/ci.yml` |
+| agentes | `agentes/estado.md` |
+| config | `config/App.php` |
+| controllers | `controllers/AuthController.php`, `controllers/CarnetPublicoController.php`, `controllers/PortalController.php` |
+| database | `database/01_schema.sql`, `database/11_accesos_carnet.sql`, `database/modelo/drawdb_schema_v2.sql` |
+| Descargas | PDF y Word de readme, ficha, ers, reglas, hu, re, mer, historial y roi; manifiesto.json (19 archivos). |
+| documentacion | `documentacion/ERS.md`, `documentacion/FichaTecnica_Zooki.md`, `documentacion/HistorialVersiones.md`, `documentacion/HistoriasUsuario.md`, `documentacion/MER.md`, `documentacion/Modelos.md`, `documentacion/ReglasNegocio.md`, `documentacion/RequisitosEspecificos.md` |
+| helpers | `helpers/CorreoCarnet.php`, `helpers/InicioSesion.php`, `helpers/IpCliente.php`, `helpers/PresentacionCarnet.php`, `helpers/PrivacidadCarnet.php`, `helpers/RetornoCarnet.php`, `helpers/Security.php`, `helpers/UbicacionCarnet.php` |
+| models | `models/AccesosCarnet.php`, `models/Auditoria.php`, `models/AvisosCarnet.php`, `models/CarnetMascota.php`, `models/CarnetPropietario.php`, `models/CarnetPublico.php` |
+| public | `public/css/carnet-publico.css`, `public/css/portal/carnet.css`, `public/index.php`, `public/js/carnet-publico.js`, `public/js/portal.js` |
+| Raíz | `.env.example`, `AGENTS.md`, `README.md` |
+| specs | `specs/M5-portal-multiclinica.md` |
+| tests | `tests/Frontend/apoyo/carnet-publico-router.php`, `tests/Frontend/apoyo/carnet-vista.php`, `tests/Frontend/Carnet.test.cjs`, `tests/Frontend/CarnetPublico.test.cjs`, `tests/Frontend/CarnetPublicoHttp.test.cjs`, `tests/Integration/AgendaB2MysqlTest.php`, `tests/Integration/AgendaC6MysqlTest.php`, `tests/Integration/BaseV2MysqlTest.php`, `tests/Integration/CarnetPublicoTest.php`, `tests/Support/CarnetPrueba.php`, `tests/Support/ProcesoCarnetB.php`, `tests/Unit/AutorizacionRolTest.php` |
+| views | `views/portal/carnet.php`, `views/portal/index.php`, `views/publico/carnet.php` |
+
+### Carnet B — Revisión (2026-10-23)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada con cinco correcciones que hizo el revisor** (cambios pequeños y verificados; no hizo falta otra vuelta).
+
+- **Verificado:** respuesta genérica igual (404, cuerpo y cabeceras) para token mal formado, inexistente, regenerado, inactiva y provisional; noindex en 200, 404 y 429; límite 30/31 por IP con tokens válidos e inválidos; aviso agrupado bajo el bloqueo de la mascota; ubicación atada al escaneo con un comprobante HMAC, misma IP, 30 minutos y una sola vez; retorno del dueño tras el login sin id en la URL; los ajustes de A (clínicas en baja, fecha DD/MM/AAAA, Imprimir y pestaña al final). Página pública a 390 y 1366 px.
+- **Corrección 1 (bloqueaba la prueba local):** `CARNET_IP_SECRETO` solo se leía con `getenv`; en XAMPP el `.env` no llega al entorno y el carnet respondía 503. Ahora se lee también del `.env`, igual que `TRUSTED_PROXIES` y `APP_URL`. Producción (Dokploy) necesita la variable antes de desplegar.
+- **Corrección 2 (espera en una emergencia):** el correo del primer escaneo salía antes de pintar la página; con SMTP lento, quien escanea esperaba hasta el `Timeout` de 10 s. Ahora la página se entrega primero (`ob_flush`/`flush`, con `ignore_user_abort`) y el correo sale después. `CarnetPublico::escanear` acepta `$diferirAviso` y expone `enviarAviso()`.
+- **Corrección 3 (crecimiento de la tabla):** por encima del límite ya no se inserta en `carnet_accesos`; una inundación no hace crecer la tabla y el límite sigue siendo 30 por hora. La prueba ahora exige 30 filas tras el intento 31.
+- **Corrección 4 (rendimiento):** índice `(fecha)` para la limpieza de más de 24 horas, en la migración 11 (aún no publicada), `01_schema.sql`, drawDB y MER.
+- **Corrección 5 (emergencia):** los teléfonos del dueño y de las clínicas son enlaces `tel:` para marcar con un toque.
+- **Anotado, no bloquea:** `carnet_foto` no cuenta en el límite; con tokens de 256 bits no sirve para adivinar, y contarla dejaría 15 escaneos por hora. El QR también se muestra en la página pública (inofensivo).
+- **Verificación del revisor:** PHP sin host 1056 en verde; migración 11 dos veces con sus dos índices; límite por HTTP (29 inválidos + 1 válido pasan, 31 y 32 dan 429, 30 filas); correo diferido marcado `enviado`.

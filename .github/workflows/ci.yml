@@ -95,7 +95,7 @@ jobs:
       run: |
         $MYSQL_CI zooki_ci < database/01_schema.sql
         $MYSQL_CI zooki_ci < database/02_semilla.sql
-        test "$($MYSQL_CI -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_ci'")" = "58"
+        test "$($MYSQL_CI -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_ci'")" = "59"
 
     # config/Database.php lee la conexión de .env; este solo existe en el CI.
     - name: Configurar la conexión del migrador
@@ -158,5 +158,5 @@ jobs:
         tablas=$(docker exec zooki_initdb mysql -u root -N -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'zooki_init'")
         roles=$(docker exec zooki_initdb mysql -u root -N -e "SELECT COUNT(*) FROM zooki_init.roles")
         echo "tablas=$tablas roles=$roles"
-        test "$tablas" = "58"
+        test "$tablas" = "59"
         test "$roles" = "4"

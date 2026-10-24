@@ -5,7 +5,9 @@
 require_once "../helpers/ZonaHoraria.php";
 ZonaHoraria::aplicar();
 require_once "../helpers/Sesion.php";
-Sesion::iniciar();
+if (!in_array($_GET['action'] ?? '', ['carnet', 'carnet_ubicacion', 'carnet_foto'], true)) {
+    Sesion::iniciar();
+}
 $esHttps = Sesion::esHttps($_SERVER);
 
 // TR-04: cabeceras de seguridad para toda respuesta. Se emiten aqui, en el
@@ -34,6 +36,20 @@ Security::check($action);
 // lanza AccesoDenegado (Security::denegarRecursoAjeno) y aquí se responde 403.
 try {
 switch ($action) {
+    case "carnet":
+        require_once '../controllers/CarnetPublicoController.php';
+        (new CarnetPublicoController())->mostrar();
+        break;
+
+    case "carnet_ubicacion":
+        require_once '../controllers/CarnetPublicoController.php';
+        (new CarnetPublicoController())->ubicacion();
+        break;
+
+    case "carnet_foto":
+        require_once '../controllers/CarnetPublicoController.php';
+        (new CarnetPublicoController())->foto();
+        break;
     case "confirmar_vinculo_propietario":
         require_once '../controllers/PropietarioController.php';
         (new PropietarioController())->confirmarVinculo();
@@ -466,6 +482,26 @@ switch ($action) {
     case "portal_imprimir_historial":
         require_once "../controllers/PortalController.php";
         (new PortalController())->imprimirHistorial();
+        break;
+
+    case "portal_carnet_ajax":
+        require_once "../controllers/CarnetController.php";
+        (new CarnetController())->vistaAjax();
+        break;
+
+    case "portal_carnet_svg":
+        require_once "../controllers/CarnetController.php";
+        (new CarnetController())->svg();
+        break;
+
+    case "portal_imprimir_carnet":
+        require_once "../controllers/CarnetController.php";
+        (new CarnetController())->imprimir();
+        break;
+
+    case "portal_regenerar_carnet_ajax":
+        require_once "../controllers/CarnetController.php";
+        (new CarnetController())->regenerarAjax();
         break;
 
     case "portal_actualizar_datos_contacto_ajax":

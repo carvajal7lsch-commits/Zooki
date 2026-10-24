@@ -1,12 +1,14 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.4** · 435 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Revisión 3.5** · 435 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 > **Preparación M4/B1 — 2026-10-17:** criterios de destino acordados, pendientes de implementación/verificación funcional. 430 RE, 96 HU y 120 RN; no se sube revisión ni versión en esta subetapa.
 
 Cada requisito (`RE-<módulo>.<n>.<k>`) incluye su tipo, su prioridad y su **criterio de aceptación** verificable. El identificador del requisito espeja el de su historia (p. ej. los requisitos de `HU-4.13` son `RE-4.13.1`, `RE-4.13.2`…).
 
 **Tipos de requisito:** `Funcional` (lo que el sistema hace), `Validación` (datos de entrada), `Restricción` (límites y reglas que el sistema hace cumplir), `Seguridad` (autenticación, autorización, privacidad y auditoría), `Cálculo` (valores derivados), `Integración` (servicios externos), `Usabilidad`, `Rendimiento`, `Confiabilidad` (reintentos, concurrencia e integridad de datos) y `Verificación` (cómo se comprueba un conjunto de requisitos).
+
+La **Revisión 3.5 (23/10/2026)** prepara 2.0.0: verifica RE-5.10.1–5 y RE-5.11.1–6; concreta la agrupación de avisos, la ubicación consentida y el límite por IP. RE-5.8.4 conserva la salvedad confirmada del QR del portal en el correo de alta, fuera de Carnet B.
 
 **Criterio de aceptación:** describe una prueba concreta, con su entrada y el resultado esperado, que permite decir si el requisito se cumple.
 
@@ -879,7 +881,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-5.8.1 | El sistema debe permitir el registro por tres vías, siempre en el contexto de una clínica. | Funcional | Un propietario puede registrarse por cada una de las tres vías y queda vinculado a la clínica de esa vía. | Alta |
 | RE-5.8.2 | El correo debe ser único en la plataforma; si ya existe, no se duplica la identidad. | Restricción | Registrar un correo que ya existe no crea otra cuenta: tras verificar al dueño, liga la cuenta existente a la nueva clínica. | Alta |
 | RE-5.8.3 | Si el correo ya existe, el sistema debe verificar que es el dueño y ligarlo a la clínica. | Seguridad | Se liga previa verificación del dueño; el autorregistro responde igual sin revelar existencia. Si el correo es nuevo y el documento ya pertenece a una cuenta, la confirmación se dirige al correo registrado de su titular. | Alta |
-| RE-5.8.4 | En un registro nuevo, el sistema debe crear la identidad, ligarla, verificar el correo y enviar el enlace de acceso y el QR del portal. _En 2.0.0-alpha.1 el correo lleva el enlace; el QR llega con el carnet QR (HU-5.10 y HU-5.11, módulo 5; decisión del usuario, 2026-10-11)._ | Funcional | Se activa y recibe acceso y QR. | Alta |
+| RE-5.8.4 | En un registro nuevo, el sistema debe crear la identidad, ligarla, verificar el correo y enviar el enlace de acceso y el QR del portal. _Salvedad confirmada por el dueño, 2026-10-23: el correo lleva el enlace; el QR del portal por correo sigue pendiente de una entrega aparte. Carnet B cierra el QR de emergencia de la mascota (HU-5.10/HU-5.11), sin ampliar ese envío._ | Funcional | Se activa y recibe acceso y QR. | Alta |
 | RE-5.8.5 | Cada clínica debe ver solo sus propietarios; el alta queda en auditoría. | Seguridad | La clínica B no ve a un propietario vinculado solo a la clínica A; el alta queda en auditoría. | Alta |
 | RE-5.8.6 | El autorregistro del propietario por formulario debe verificar Turnstile en el servidor. | Seguridad | Un token ausente o inválido no crea ni vincula cuentas; un token válido permite seguir el registro y la respuesta no revela si la identidad existe. | Alta |
 
@@ -895,6 +897,8 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-5.9.4 | Cada acción propia de una clínica debe quedar acotada a la id_clinica de esa clínica. | Seguridad | Una cita agendada en la clínica A no aparece en la agenda de la clínica B. | Alta |
 
 **Reglas de negocio:** RN-109, RN-114, RN-G13
+
+**Cierre 2.0.0 (23/10/2026):** RE-5.10.1–5 y RE-5.11.1–6 implementados. Se conservan 435 RE para 96 HU; la trazabilidad y los identificadores no cambian.
 
 ### HU-5.10 — Carnet digital de la mascota con QR de emergencia
 
@@ -915,9 +919,9 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-5.11.1 | Escanear el QR debe abrir el carnet en modo solo lectura sin iniciar sesión. | Funcional | Escanear el QR desde un navegador sin sesión muestra el carnet y ninguna opción de edición. | Media |
 | RE-5.11.2 | Un token inválido, regenerado o de una mascota inactiva debe mostrar un mensaje genérico que no revele si la mascota existe. | Seguridad | Los tres casos muestran el mismo mensaje y el mismo código de respuesta. | Alta |
 | RE-5.11.3 | Para ver o editar la ficha completa, el sistema debe solicitar inicio de sesión. | Seguridad | Intentar editar desde el carnet redirige al inicio de sesión; tras iniciar sesión como propietario se abre la ficha completa. | Media |
-| RE-5.11.4 | Cada escaneo debe notificar al propietario con fecha y hora, agrupando los escaneos repetidos en un periodo corto. | Funcional | Diez escaneos seguidos generan un solo aviso. | Media |
-| RE-5.11.5 | Quien escanea debe poder compartir su ubicación con el dueño solo si la acepta expresamente. | Seguridad | Sin aceptar, no se envía ubicación; al aceptar, el dueño la recibe en el aviso. | Media |
-| RE-5.11.6 | El acceso al carnet debe admitir como máximo 30 consultas por hora desde una misma IP y marcar la página como no indexable. | Seguridad | Superado el límite se responde 429; la página incluye la directiva noindex. | Alta |
+| RE-5.11.4 | Cada escaneo debe notificar al propietario con fecha y hora, agrupando los escaneos de una misma mascota durante 30 minutos desde el último aviso. El canal es correo registrado en notificaciones. | Funcional | Diez escaneos seguidos generan un solo aviso. | Media |
+| RE-5.11.5 | Quien escanea debe poder compartir su ubicación con el dueño solo si la acepta expresamente. | Seguridad | Sin aceptar, no se envía ubicación. Al aceptar, solo el último escaneo de ese token y esa IP, de los últimos 30 minutos y todavía sin ubicación, admite una ubicación; se envía un correo aparte con el mapa. | Media |
+| RE-5.11.6 | El acceso al carnet debe admitir como máximo 30 consultas por hora desde una misma IP y marcar la página como no indexable. | Seguridad | Se cuentan también tokens inválidos y peticiones de ubicación. La consulta 31 responde 429 sin escaneo ni aviso; todas las respuestas incluyen noindex, nofollow y no-store. | Alta |
 
 **Reglas de negocio:** RN-502, RN-503, RN-504, RN-505
 

@@ -12,7 +12,7 @@ class App {
      * JS se piden con ?v=<versión> y sin cambiarla el navegador sigue con los
      * archivos viejos. 2.0.0 llega al completar la entrega v2.0 del plan de historias.
      */
-    const VERSION = '2.0.0-alpha.5';
+    const VERSION = '2.0.0';
 
     /** Nombre comercial del producto. */
     const NAME = 'Zooki';
