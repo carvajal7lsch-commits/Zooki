@@ -20,6 +20,7 @@ class Security {
      * Lista de acciones públicas (no requieren CSRF ni sesión)
      */
     private static array $publicActions = [
+        'carnet', 'carnet_ubicacion', 'carnet_foto',
         'landing', 'privacidad', 'terminos', 'cookies', 'login', 'solicitar_reset_password_ajax', 'reset_password',
         'procesar_reset_password_ajax', 'register', 'process_register', 'verificar_email', 'estado_verificacion_ajax',
         'check_document_ajax', 'check_email_ajax', 'google_login_ajax', 'complete_google_register_ajax',

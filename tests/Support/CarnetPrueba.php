@@ -9,6 +9,8 @@ final class CarnetPrueba
         $db = DosClinicas::sqlite();
         DosClinicas::crearMascotasSqlite($db);
         DosClinicas::crearHistoriaSqlite($db);
+        $db->exec('CREATE TABLE carnet_escaneos (id_escaneo INTEGER PRIMARY KEY AUTOINCREMENT, id_mascota INTEGER NOT NULL, fecha TEXT, ip_hash TEXT NOT NULL, latitud NUMERIC, longitud NUMERIC, notificado INTEGER DEFAULT 0)');
+        $db->exec('CREATE TABLE carnet_accesos (id_acceso INTEGER PRIMARY KEY AUTOINCREMENT, ip_hash TEXT NOT NULL, fecha TEXT NOT NULL)');
         $db->exec('ALTER TABLE mascotas ADD COLUMN token_carnet_fecha TEXT DEFAULT NULL');
         $db->exec('ALTER TABLE usuarios ADD COLUMN direccion TEXT');
         $db->exec("UPDATE mascotas SET id_especie = 1, id_raza = 49, raza_indicada = 'Mestiza', token_carnet_fecha = '2020-01-01 00:00:00' WHERE id_mascota = 1");

@@ -118,6 +118,9 @@ test('Imprimir delega en window.print sin estilos ni eventos en línea', () => {
 test('Carnet del propietario en Chrome a 1366/390 px e impresión A6', { skip: !buscarChrome() }, async () => {
     const php = process.env.PHP_BINARY || (process.platform === 'win32' ? 'C:/xampp/php/php.exe' : 'php');
     const vistas = JSON.parse(execFileSync(php, ['tests/Frontend/apoyo/carnet-vista.php'], { encoding: 'utf8' }));
+    assert.equal((vistas.tarjeta.match(/<time>/g) || []).length, 10);
+    assert.match(vistas.tarjeta, /Ver en el mapa/);
+    assert.match(vistas.tarjeta, /23\/10\/2026 12:11:00/);
     assert.doesNotMatch(vistas.tarjeta, /\s(?:style|on\w+)\s*=/i);
     const navegador = await abrirChrome(buscarChrome());
     try {

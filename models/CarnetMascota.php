@@ -44,7 +44,7 @@ final class CarnetMascota
         $datos['alertas'] = $alertas->fetchAll(PDO::FETCH_ASSOC);
         $clinicas = $this->db->prepare("SELECT c.nombre, COALESCE(NULLIF(c.telefono_urgencias, ''), c.telefono) AS telefono
             FROM mascota_clinica mc JOIN clinicas c ON c.id_clinica = mc.id_clinica
-            WHERE mc.id_mascota = ? AND mc.estado = 'activo' ORDER BY c.nombre");
+            WHERE mc.id_mascota = ? AND mc.estado = 'activo' AND c.estado <> 'baja' ORDER BY c.nombre");
         $clinicas->execute([$idMascota]);
         $datos['clinicas'] = $clinicas->fetchAll(PDO::FETCH_ASSOC);
         $datos['vacunas'] = $this->vacunasVigentes($idMascota);

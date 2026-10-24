@@ -22,6 +22,93 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testCarnetBMigracion11SeRepiteSinPerderAccesosNiGuardarTokenOMascota(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('11_accesos_carnet.sql');
+        $this->db->exec("INSERT INTO carnet_accesos (ip_hash, fecha) VALUES (REPEAT('a', 64), '2026-10-23 12:00:00')");
+        $this->cargar('11_accesos_carnet.sql');
+        $this->assertSame(1, $this->contar('carnet_accesos'));
+        $columnas = $this->db->query('SHOW COLUMNS FROM carnet_accesos')->fetchAll(PDO::FETCH_COLUMN);
+        $this->assertSame(['id_acceso', 'ip_hash', 'fecha'], $columnas);
+        $this->db->exec('DROP TABLE carnet_accesos');
+        $this->cargar('11_accesos_carnet.sql');
+        $this->cargar('11_accesos_carnet.sql');
+        $this->assertSame(0, $this->contar('carnet_accesos'));
+    }
+
+    public function testCarnetBDosEscaneosSimultaneosGuardanDosVistasYUnSoloAviso(): void
+    {
+        $this->prepararHistoriaClinica();
+        $this->db->prepare('UPDATE mascotas SET token_carnet = ? WHERE id_mascota = 1')->execute([str_repeat('a', 43)]);
+        require_once __DIR__ . '/../../models/CarnetPublico.php';
+        $publico = new CarnetPublico($this->db, static fn (): bool => true);
+        $this->assertSame(1, $publico->resolver(str_repeat('a', 43)));
+        $this->assertNull($publico->resolver(str_repeat('A', 43)), 'general_ci no debe hacer equivalentes dos tokens distintos.');
+        $secretoAnterior = getenv('CARNET_IP_SECRETO');
+        $baseAnterior = getenv('ZOOKI_TEST_MYSQL_DB');
+        putenv('CARNET_IP_SECRETO=' . str_repeat('s', 64));
+        putenv('ZOOKI_TEST_MYSQL_DB=zooki_test_base_v2');
+        $this->carpetaTemporal = sys_get_temp_dir() . '/zooki_carnet_b_' . bin2hex(random_bytes(8));
+        mkdir($this->carpetaTemporal);
+        $procesos = [];
+        $esperar = function (string $archivo): void {
+            $limite = microtime(true) + 20;
+            while (!is_file($this->carpetaTemporal . '/' . $archivo)) {
+                if (microtime(true) > $limite) {
+                    $this->fail('No se alcanzó la barrera del carnet: ' . $archivo);
+                }
+                usleep(10000);
+            }
+        };
+        $lanzar = function (string $nombre) {
+            $proceso = proc_open([PHP_BINARY, __DIR__ . '/../Support/ProcesoCarnetB.php', $this->carpetaTemporal, $nombre], [0 => ['pipe', 'r'], 1 => ['file', $this->carpetaTemporal . '/' . $nombre . '.log', 'a'], 2 => ['file', $this->carpetaTemporal . '/' . $nombre . '.log', 'a']], $tuberias);
+            if (!is_resource($proceso)) {
+                throw new RuntimeException('No se pudo abrir el escáner de prueba.');
+            }
+            fclose($tuberias[0]);
+            return $proceso;
+        };
+        try {
+            $procesos[] = $lanzar('primero');
+            $esperar('bloqueado');
+            $procesos[] = $lanzar('segundo');
+            $esperar('segundo.conexion');
+            $primero = (int) file_get_contents($this->carpetaTemporal . '/primero.conexion');
+            $segundo = (int) file_get_contents($this->carpetaTemporal . '/segundo.conexion');
+            $maria = str_contains((string) $this->db->query('SELECT VERSION()')->fetchColumn(), 'MariaDB');
+            $sql = $maria ? 'SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX r ON r.trx_id=w.requesting_trx_id JOIN information_schema.INNODB_TRX b ON b.trx_id=w.blocking_trx_id WHERE r.trx_mysql_thread_id=? AND b.trx_mysql_thread_id=?'
+                : 'SELECT COUNT(*) FROM performance_schema.data_lock_waits w JOIN performance_schema.threads r ON r.THREAD_ID=w.REQUESTING_THREAD_ID JOIN performance_schema.threads b ON b.THREAD_ID=w.BLOCKING_THREAD_ID WHERE r.PROCESSLIST_ID=? AND b.PROCESSLIST_ID=?';
+            $consulta = $this->db->prepare($sql);
+            $limite = microtime(true) + 10;
+            do {
+                $consulta->execute([$segundo, $primero]);
+                $espera = (int) $consulta->fetchColumn() > 0;
+                $consulta->closeCursor();
+                if (!$espera) {
+                    usleep($maria ? 125000 : 20000);
+                }
+            } while (!$espera && microtime(true) < $limite);
+            $this->assertTrue($espera, 'El segundo escaneo debe esperar el bloqueo real de la mascota.');
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach (['primero', 'segundo'] as $nombre) {
+                $esperar($nombre . '.fin');
+                $resultado = json_decode(file_get_contents($this->carpetaTemporal . '/' . $nombre . '.fin'), true);
+                $this->assertTrue($resultado['ok'], json_encode($resultado));
+            }
+            $this->assertSame(2, $this->contar('carnet_escaneos'));
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM notificaciones WHERE tipo_notificacion = 'carnet_escaneo'")->fetchColumn());
+            $this->assertCount(1, glob($this->carpetaTemporal . '/correo-*'));
+        } finally {
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach ($procesos as $proceso) {
+                proc_close($proceso);
+            }
+            putenv($secretoAnterior === false ? 'CARNET_IP_SECRETO' : 'CARNET_IP_SECRETO=' . $secretoAnterior);
+            putenv($baseAnterior === false ? 'ZOOKI_TEST_MYSQL_DB' : 'ZOOKI_TEST_MYSQL_DB=' . $baseAnterior);
+        }
+    }
+
     public function testM2C4TriageConFichaPropiaYBusquedaSinEscrituras(): void
     {
         $this->prepararHistoriaClinica();
@@ -950,7 +1037,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         }
     }
 
-    public function testElEsquemaCreaLasCincuentaYOchoTablasEnInnoDbYUtf8mb4(): void
+    public function testElEsquemaCreaLasCincuentaYNueveTablasEnInnoDbYUtf8mb4(): void
     {
         $this->cargar('01_schema.sql');
 
@@ -958,7 +1045,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
             "SELECT ENGINE, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
         )->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->assertCount(58, $tablas);
+        $this->assertCount(59, $tablas);
         foreach ($tablas as $t) {
             $this->assertSame('InnoDB', $t['ENGINE']);
             $this->assertSame('utf8mb4_general_ci', $t['TABLE_COLLATION']);
@@ -989,7 +1076,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }

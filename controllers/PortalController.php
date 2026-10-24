@@ -18,6 +18,7 @@ require_once __DIR__ . '/../helpers/PresentacionPortal.php';
 require_once __DIR__ . '/../helpers/PresentacionPlataforma.php';
 require_once __DIR__ . '/../helpers/ResumenPanel.php';
 require_once __DIR__ . '/../models/MarcaClinica.php';
+require_once __DIR__ . '/../helpers/RetornoCarnet.php';
 
 /**
  * C6: portal del propietario en el contexto «propietario» (RN-G01), sin
@@ -52,6 +53,7 @@ class PortalController
      */
     public function index(): void
     {
+        $mascota_carnet_inicial = RetornoCarnet::consumir($this->db);
         $ahora = new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
         $hoy = $ahora->format('Y-m-d');
         $clinicas = $this->vinculos->clinicas();

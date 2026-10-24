@@ -3,6 +3,7 @@ require_once __DIR__ . '/ModeloPropietario.php';
 require_once __DIR__ . '/CarnetMascota.php';
 require_once __DIR__ . '/../helpers/QrCarnet.php';
 require_once __DIR__ . '/../helpers/Transaccion.php';
+require_once __DIR__ . '/../helpers/UbicacionCarnet.php';
 
 /** RN-G02: único acceso privado al carnet, también para SVG e impresión. */
 final class CarnetPropietario extends ModeloPropietario
@@ -28,7 +29,19 @@ final class CarnetPropietario extends ModeloPropietario
             'token' => $mascota['token_carnet'],
             'enlace' => QrCarnet::enlace($mascota['token_carnet']),
             'datos' => $datos,
+            'escaneos' => $this->ultimosEscaneos($idMascota),
         ];
+    }
+
+    public function ultimosEscaneos(int $idMascota): array
+    {
+        $this->exigirMascotaPropia($idMascota);
+        $consulta = $this->conn->prepare('SELECT fecha, latitud, longitud FROM carnet_escaneos WHERE id_mascota = ? ORDER BY fecha DESC, id_escaneo DESC LIMIT 10');
+        $consulta->execute([$idMascota]);
+        return array_map(static fn (array $fila): array => [
+            'fecha' => $fila['fecha'],
+            'mapa' => $fila['latitud'] !== null && $fila['longitud'] !== null ? UbicacionCarnet::mapa($fila['latitud'], $fila['longitud']) : null,
+        ], $consulta->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function regenerar(int $idMascota, mixed $tokenVisto): array

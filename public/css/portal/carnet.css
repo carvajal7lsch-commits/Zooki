@@ -27,6 +27,9 @@
 .carnet-vacunas h4 { margin: 0 0 8px; }
 .carnet-nota-vacunas { color: #61718b; font-size: 0.9em; }
 .carnet-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.carnet-acciones a { text-decoration: none; font-family: inherit; }
+.carnet-escaneos { margin-top: 24px; font-size: 14px; color: #475569; }
+.carnet-escaneos a { margin-left: 12px; color: #0052ff; }
 .carnet-ayuda, .carnet-aviso { color: #61718b; line-height: 1.5; font-size: 13px; }
 .carnet-impresion { background: #f5f7fb; margin: 24px; font-family: Arial, sans-serif; }
 .carnet-barra-impresion { max-width: 650px; margin-bottom: 20px; }
@@ -61,3 +64,4 @@
     .carnet-foto { width: 15mm; height: 15mm; }
     .carnet-contactos p, .carnet-vacunas p, .carnet-chip { break-inside: avoid; }
 }
+.carnet-telefono { color: #0052ff; font-weight: 600; text-decoration: none; }

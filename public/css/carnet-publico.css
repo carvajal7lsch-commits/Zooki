@@ -1,0 +1,71 @@
+.carnet-publico {
+    margin: 0;
+    background: #f6f8ff;
+    color: #25324b;
+    font-family: Arial, sans-serif;
+}
+.carnet-publico__hoja {
+    max-width: 650px;
+    margin: 40px auto;
+    padding: 0 20px 32px;
+}
+.carnet-publico__cabecera {
+    margin-bottom: 24px;
+}
+.carnet-publico__cabecera span {
+    color: #0052ff;
+    font-size: 24px;
+    font-weight: 700;
+}
+.carnet-publico__cabecera h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+.carnet-publico__cabecera p, .carnet-publico__ubicacion p {
+    line-height: 1.6;
+    color: #61718b;
+}
+.carnet-publico__ubicacion {
+    margin: 24px 0;
+    padding: 20px;
+    background: white;
+    border: 1px solid #dbe4ef;
+    border-radius: 16px;
+}
+.carnet-publico__ubicacion h2 {
+    font-size: 18px;
+}
+.carnet-publico__ubicacion button {
+    background: #0052ff;
+    color: white;
+    border: 0;
+    border-radius: 10px;
+    padding: 14px 20px;
+    font: inherit;
+    cursor: pointer;
+    width: 100%;
+}
+.carnet-publico__ubicacion button:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+.carnet-publico__dueno {
+    color: #0052ff;
+    display: inline-block;
+    padding: 8px 0;
+}
+.carnet-publico__aviso {
+    background: white;
+    padding: 28px;
+    border: 1px solid #dbe4ef;
+    border-radius: 16px;
+}
+@media (max-width: 767px) {
+    .carnet-publico__hoja {
+        margin: 24px auto;
+        padding: 0 14px 24px;
+    }
+    .carnet-publico__cabecera h1 {
+        font-size: 24px;
+    }
+}

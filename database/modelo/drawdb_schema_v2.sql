@@ -266,6 +266,14 @@ CREATE TABLE `mascota_clinica` (
   UNIQUE KEY `uq_mascota_clinica_numero_hc` (`id_clinica`, `numero_historia_clinica`),
   KEY `idx_mascota_clinica_estado` (`id_clinica`, `estado`)
 );
+CREATE TABLE `carnet_accesos` (
+  `id_acceso` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `ip_hash` char(64) NOT NULL,
+  `fecha` datetime NOT NULL,
+  KEY `idx_carnet_accesos_ip_fecha` (`ip_hash`, `fecha`),
+  KEY `idx_carnet_accesos_fecha` (`fecha`)
+);
+
 CREATE TABLE `carnet_escaneos` (
   `id_escaneo` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `id_mascota` int(11) NOT NULL,

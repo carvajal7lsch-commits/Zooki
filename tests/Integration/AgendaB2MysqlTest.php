@@ -60,6 +60,7 @@ final class AgendaB2MysqlTest extends TestCase
         // C4: 09 completa el destino de M4 (origen interno); el legado también debe llegar ahí.
         $this->cargar('database/09_origen_interno_agenda.sql');
         $this->cargar('database/10_comienzos_urgencia.sql');
+        $this->cargar('database/11_accesos_carnet.sql');
     }
 
     private function instalar(bool $anterior = false): void
@@ -120,7 +121,7 @@ final class AgendaB2MysqlTest extends TestCase
         $this->instalar();
         $this->migrar();
         $nueva = $this->estructura();
-        $this->assertCount(58, $nueva[0]);
+        $this->assertCount(59, $nueva[0]);
         $this->migrar();
         $this->assertSame($nueva, $this->estructura());
         $this->reiniciar();

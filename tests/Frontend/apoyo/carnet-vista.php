@@ -10,6 +10,10 @@ require_once __DIR__ . '/../../../controllers/CarnetController.php';
 require_once __DIR__ . '/../../../controllers/PortalController.php';
 Auditoria::definirProxiesConfiables([]);
 $db = CarnetPrueba::crear();
+$insertarEscaneo = $db->prepare('INSERT INTO carnet_escaneos (id_mascota, fecha, ip_hash, latitud, longitud, notificado) VALUES (1, ?, ?, ?, ?, 1)');
+for ($indiceEscaneo = 0; $indiceEscaneo < 12; $indiceEscaneo++) {
+    $insertarEscaneo->execute(['2026-10-23 12:' . str_pad((string) $indiceEscaneo, 2, '0', STR_PAD_LEFT) . ':00', str_repeat('e', 64), $indiceEscaneo === 11 ? 2.123456 : null, $indiceEscaneo === 11 ? -75.987654 : null]);
+}
 DosClinicas::crearCatalogosSqlite($db);
 DosClinicas::poblarAgenda($db);
 $_SESSION = ['id_usuario' => 6, 'usuario_nombre' => 'Fabio'];

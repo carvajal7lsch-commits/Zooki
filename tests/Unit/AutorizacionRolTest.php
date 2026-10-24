@@ -129,7 +129,7 @@ class AutorizacionRolTest extends TestCase
             }
             $this->assertNotContains($accion, self::lista('publicActions'));
         }
-        $this->assertNotContains('carnet', self::lista('publicActions'));
+        $this->assertContains('carnet', self::lista('publicActions'));
     }
 
     public function testPropietarioNoAccedeADatosClinicosNiDeOtrosDuenos()
