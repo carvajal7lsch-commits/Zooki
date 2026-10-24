@@ -2,12 +2,32 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-22
+**Actualizado:** 2026-10-23
 
 ## Ahora
 
+### Carnet A — revisada: aprobada con tres ajustes menores que van en B (2026-10-23)
+
+- **Revisión (Claude):** ver «Carnet A — Revisión» al final de M5. Ajustes para B: excluir clínicas en baja de los contactos, fecha DD/MM/AAAA en vacunas, botón Imprimir con el estilo de los demás y pestaña Carnet al final. Sigue la prueba del dueño y el prompt de B.
+
+#### Entrega de Codex
+
+- **Autor: Codex.** HU-5.10/RE-5.10.1–5, RN-110/113/502/503 y RN-G02: proyección de emergencia explícita reutilizable por B, tarjeta privada del portal, SVG del servidor, compartir/copiar, impresión A6 y regeneración con modal de Zooki. Bloqueo de mascota y comparación del token visto evitan otra rotación por doble envío; fecha y auditoría atómicas, sin tokens en el registro. Inactiva/provisional sin titular: sin carnet.
+- **Decisiones del dueño (2026-10-23), en M5:** `chillerlan/php-qrcode`, URL absoluta con la base del correo, confirmar/auditar la regeneración; última aplicación con próxima dosis hoy o posterior, sin fecha = vigencia sin confirmar y fuera de vigentes. Composer instala 5.0.5; Docker instala `mbstring` y Composer sin dependencias de desarrollo. No se ha construido una imagen Docker local.
+- **Verificación:** PHP completo: 1041 pruebas/8249 aserciones, 72 omitidas de motor sin host; JS completo: 321/321, sin omisiones. Evidencia y desglose en el Anexo Carnet A del plan. MariaDB local: bloqueo, reenvío con instantánea anterior y proyección real (1 prueba, 11 aserciones), solo `zooki_test_base_v2`. Chrome aislado con controlador/layout reales como propietario a 1366/390 px, modal real y media de impresión: sin desborde; Mermaid §12.5 renderiza. Sin acceso a la base de trabajo ni lectura/escritura de `.env`.
+- **Sigue:** revisión independiente de A y prueba del dueño; después B (HU-5.11: página pública, escaneos, avisos agrupados, ubicación opcional, límite por IP y noindex). El enlace compartido queda preparado para B y todavía no ofrece acceso público. Sin subir versión; alpha.5 publicada y M4 cerrado según confirmación del dueño. Sin commit, push, tags ni cambio de rama por el agente. Se preservan los cambios previos de estado y M4.
+
+### Evaluación de Sonar del PR #25 — entregada, pendiente de revisión (2026-10-22)
+
+- **Autor: Codex.** Revisión de solo lectura del análisis de `54118fb`: 777 hallazgos abiertos, 54 BUG (39 `php:S2003`, 15 `javascript:S9383`) y 723 CODE_SMELL; sin entradas VULNERABILITY en esta consulta, lo cual no acredita ausencia de vulnerabilidades ni revisión de hotspots. El CI del PR 39899608188 pasa general y MySQL 8; Sonar sigue fallando fiabilidad C y duplicación 8,5 %.
+- Contrastado con código: `PanelController::render()` debe volver a ejecutar el partial; cambiar su require por require_once rompería el render repetido. Tabla semanal compartida se incluye varias veces con datos diferentes. Las promesas señaladas en recarga de horarios/ausencias/portal y consulta de horas tienen captura interna de errores de red; el aviso no demuestra por sí solo una operación fallida. Recomendación: endurecer límites asíncronos en una corrección acotada, sin sustituir indiscriminadamente require ni silenciar con void.
+- El analizador SQL reporta reglas `plsql:*` sobre MySQL; los saltos de línea de literales no demuestran SQL inválido (las migraciones pasan CI nativo). Duplicación concentrada en fixture alpha.4 (909 líneas nuevas duplicadas), modelo drawDB (127), esquema (126) y preparación de pruebas. No reescribir fixture histórica ni migraciones para satisfacer esa métrica. Complejidad, selectores CSS repetidos y labels de datos de solo lectura quedan para mantenimiento/accesibilidad. No se reproduce un bloqueo funcional de despliegue a partir de estos hallazgos; no se aprueba globalmente el código ni se marca Sonar aceptado.
+- Evidencia aportada por el dueño del VPS: alpha.4, MySQL 8.0.46, 03–07 registradas, 53 tablas incl. registro, `zooki_user` con ALL sobre la base; no acredita por sí sola que sea la cuenta efectiva de la aplicación. Volúmenes persistentes de base/uploads/respaldos. Respaldo fresco `zooki_db_2026-10-22_23-16-39.sql.gz` (53 tablas), gzip y tar legibles, copias fuera de volúmenes e identificador de imagen; restauración no ensayada. Main autodespliega según confirmación del dueño. Pausa de Schedules aún sin confirmar.
+- Sin cambios de aplicación, configuración de Sonar, SQL, tests o Git; no se repiten suites por evaluación documental. Evidencia de API en scratch (no versionada). Pendientes: decisión del dueño sobre corrección acotada/configuración del análisis y revisión; no se ejecuta merge/despliegue.
+
 ### Preparación de publicación alpha.5 — entregada, pendiente de revisión y ejecución del dueño (2026-10-22)
 
+- **Recomprobación previa al merge (Codex, 2026-10-22):** existen migraciones 08/09/10, automáticas al arrancar; no es una publicación solo visual. La revisión del repositorio y el CI no verifican el VPS real. Antes de integrar faltan confirmar destino/versión/permisos MySQL (incluidos procedimientos usados por las migraciones), respaldo restaurable y disparador de Dokploy; el workflow del repositorio solo prueba, no despliega. Apache arranca incluso si falla migrar: mantener ventana sin uso hasta comprobar logs y esquema. Un `--revisar` del contenedor alpha.4 no descubre archivos 08–10 que aún no contiene. Sin acceso al VPS ni ejecución de SQL; no se acredita producción lista.
 - **Autor: Codex.** `App::VERSION` e historial ya están en 2.0.0-alpha.5; GitHub main sigue en alpha.4. No se vuelve a incrementar la versión de una entrega aún no publicada. La versión realmente desplegada queda por comprobar en Dokploy/VPS.
 - Último push comprobado: `1d5c733b8e8e570d3c5a33b3e47a60946d961ade`; CI **39894312445 completo aprobado**, general y MySQL 8. PHP general 1027/8132 (71 omitidas de motor), JS 314/314; las ocho clases MySQL seleccionadas suman 71/1090, con instalación, semilla, migrador doble y volumen vacío en verde. Es evidencia remota del código publicado, no ejecución local ni verificación de producción.
 - README corregido a alpha.5/PHP 8.2/58 tablas y actualización conservando datos. Su PDF y Word regenerados, índice de Word actualizado, PDF de 12 páginas con revisión visual de las secciones cambiadas y manifiesto al día. No hay cambios de código/SQL/servicios.

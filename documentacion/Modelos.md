@@ -962,6 +962,33 @@ flowchart TD
 
 El QR lleva un **token aleatorio**, nunca el id de la mascota; el propietario puede regenerarlo ([RN-502 a RN-505](ReglasNegocio.md#módulo-5--portal-del-propietario-multi-clínica)).
 
+**Subetapa A — portal del propietario (HU-5.10):** lectura de emergencia compartida con el flujo público siguiente, que corresponde a la subetapa B. Impresión en tarjeta A6 (148 × 105 mm), ampliable verticalmente para conservar todos los registros. El SVG es privado y se genera en el servidor; el enlace absoluto usa la misma base de los correos.
+
+```mermaid
+flowchart TD
+  P([Abrir Carnet en la ficha]) --> O{Contexto propietario y mascota propia?}
+  O -- No --> X[Denegar 401 o 403]
+  O -- Si --> A{Mascota activa, titular verificado y carnet activo?}
+  A -- No --> N[Explicar por que no esta disponible, sin QR]
+  A -- Si --> D[Leer solo datos de emergencia RN-503]
+  D --> T[Tarjeta con SVG privado, imprimir y compartir o copiar enlace]
+  T --> R{Regenerar QR?}
+  R -- No --> F([Fin])
+  R -- Si --> C{Confirma en el modal de Zooki?}
+  C -- No --> F
+  C -- Si --> B[Bloquear mascota y volver a comprobar propietario y estado]
+  B --> V{Coincide el token visto?}
+  V -- No --> U[Devolver el carnet actual sin otro cambio ni auditoria]
+  V -- Si --> G[Generar token aleatorio de 32 bytes, actualizar token y fecha]
+  G --> H{Auditoria guardada?}
+  H -- No --> E[Revertir y responder error generico]
+  H -- Si --> I[Confirmar transaccion: token anterior invalidado]
+  I --> T
+  U --> T
+```
+
+**Subetapa B — pendiente:** acceso público, escaneos, avisos, ubicación y límite por IP.
+
 ```mermaid
 flowchart TD
   A([Escanear el QR de la mascota]) --> L{"Supera el limite de consultas desde su IP?"}

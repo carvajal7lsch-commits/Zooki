@@ -1,6 +1,22 @@
 # M5 — Portal multi-clínica y vínculos
 
-> Estado: F entregada, pendiente de revisión (2026-10-14); despliegue pendiente del usuario
+## Carnet QR — reapertura para v2.0.0 (2026-10-23)
+
+M4 cerrado y alpha.5 publicada, según confirmación del dueño. Encargo aprobado en este prompt: **solo A**; escribe Codex, revisión independiente posterior. Sin subir versión hasta cerrar B. El esquema ya incluye token único y fecha; no se prevé migración. Flujo existente: Modelos §12.5; se añadirá el recorrido privado de A.
+
+**Decisiones del dueño (2026-10-23):** SVG en servidor con `chillerlan/php-qrcode`, instalada mediante Composer como dependencia de producción; verificar Dockerfile. URL absoluta con `EnlaceCuenta::base()`/`APP_URL`, `index.php?action=carnet&t=<token>`, nunca id interno. Regenerar invalida los impresos: confirmación con `zookiConfirmarCorto` y auditoría. Subetapas separadas; la lectura RN-503 queda reutilizable. Sin commit, push ni tags por el agente.
+
+**Vigencia de vacunas — decisión confirmada por el dueño (2026-10-23):** mostrar la última aplicación de cada vacuna cuya próxima dosis sea hoy o posterior; sin próxima dosis, vigencia sin confirmar y fuera de la lista de vigentes. La tarjeta lo explica sin revelar registros sin vigencia en la proyección pública. Una aplicación futura no cuenta y una dosis posterior reemplaza la anterior, incluso si la nueva no tiene fecha próxima.
+
+| Subetapa | Alcance y trazabilidad | Archivos previstos | Verificación |
+|---|---|---|---|
+| **A — carnet del propietario** | HU-5.10, RE-5.10.1–5, RF-5.7; RN-110, RN-113, RN-502, RN-503, RN-G02; RNF-16. Proyección explícita de datos de emergencia; QR privado; tarjeta, impresión y compartir; renovación con comparación del token visto y bloqueo transaccional para doble clic, fecha y auditoría atómicas. Inactiva o provisional sin titular: no disponible con explicación. | `models/CarnetMascota.php`, `models/CarnetPropietario.php`, `helpers/QrCarnet.php`, controlador/rutas/matriz del portal, vista compartida de tarjeta e impresión, `public/js/carnet.js`, `public/css/portal/carnet.css`, Composer/Dockerfile, pruebas PHP/JS. | Datos permitidos y prohibidos, clínicas/alertas globales y vacunas, aislamiento de lectura/SVG/renovación, inactiva/provisional, token viejo invalidado, auditoría/rollback y doble clic; compartir/copiar, imprimir y escape. Suites completas PHP/JS; navegador 1366 y 390 px e impresión. |
+| **B — acceso público (pendiente, fuera de esta entrega)** | HU-5.11, RE-5.11.1–6, RF-5.8; RN-502–505. Reutilizar proyección de A tras resolver token válido/activo; respuesta genérica indistinguible, escaneos, aviso agrupado al dueño, ubicación optativa, 30 accesos/hora/IP y noindex. Cerrar validación pública de RE-5.10.5 y publicar v2.0.0. | Controlador/vista públicos, `CarnetMascota`, Security, registro/agrupación de escaneos y notificaciones según MER, pruebas, documentación y cierre de versión. | Sin sesión y solo lectura, tokens inválidos/regenerados/inactivos indistinguibles, agrupación, consentimiento de ubicación, límite 429/noindex, regresiones de A y suites completas. |
+
+**Riesgos:** datos privados por proyecciones amplias (prohibir `SELECT *` en lectura de emergencia); caché del SVG tras renovar (no-store y URL de imagen renovada); dos POST simultáneos (bloqueo y comparación del token observado, solo uno cambia y audita); auditoría fallida (rollback). El enlace compartido abrirá la página pública al implementar B. No se inventa una duración para vacunas sin próxima dosis.
+
+
+> Entrega inicial de M5: cerrada y desplegada como alpha.3 (2026-10-14). Reapertura Carnet QR: A entregada, pendiente de revisión (2026-10-23); B pendiente.
 > Entrega: v2.0 · Fecha: 2026-10-12 · Sale como `2.0.0-alpha.3`
 > Responsable de escritura: Claude Code (implementación y avance de F); Codex (retoma y completa F, 2026-10-14) · Revisión independiente: Claude (arquitecto)
 > Rama: `v2/m5-portal`, creada desde `v2/m0` (que ya contiene todo M0 y su pulido).
@@ -1096,3 +1112,33 @@ El arranque ejecuta `scripts/migrar.php` automáticamente. Los logs deben inclui
 **Revisó:** Claude (arquitecto). **Resultado: aprobada.** PHP 691 pruebas en verde en una copia limpia sin `.env` (31 MySQL omitidas); JS 167/167. El tope de activación bloquea la fila de la cuenta y lee el contador con `FOR UPDATE` (también dentro de la transacción del autorregistro), no reemplaza el enlace vigente al bloquear y no limita el reenvío de la clínica; `created_at` lo pone PHP para medir con la misma hora. Versión `2.0.0-alpha.3`, seis HU implementadas y una revisión por documento, como en el cierre de M0. Escribieron Claude Code y Codex (anotado en el Anexo). Sigue el despliegue por el usuario.
 
 **Despliegue de 2.0.0-alpha.3 (2026-10-14).** El usuario hizo el merge `v2/m5-portal` → `main` y el tag `v2.0.0-alpha.3`. En producción: migración 06 aplicada (`[migraciones] Aplicadas: 06_medio_activacion_propietario.sql`), `--revisar` dice que la base está al día (la semilla se revisa en cada arranque, por diseño) y la aplicación responde `2.0.0-alpha.3`. **M5 cerrado.**
+
+## Anexo Carnet A — Resultado (2026-10-23)
+
+**Escribió Codex. Entregada, pendiente de revisión.** HU-5.10/RE-5.10.1–5; la resolución pública del enlace antiguo/nuevo se verificará en B. Sin migración, subida de versión ni operaciones Git de escritura. No se implementó B.
+
+| RE / riesgo | Evidencia |
+|---|---|
+| RE-5.10.1/2, RN-110/502 | Token de alta existente conservado; `CarnetMascotaTest` prueba estabilidad, enlace absoluto sin id y un carnet con dos clínicas; SVG real del servidor. |
+| RE-5.10.3, RN-503/113 | Proyección cerrada de `CarnetMascota`, listas exactas de claves y marcadores privados ausentes; alertas activas de dos clínicas y contactos solo de vínculos activos. Última vacuna, vencida, sin fecha, renovada sin fecha, aplicación futura y fecha límite de hoy. |
+| RN-G02, RN-110, RE-4.15.3 | Las cuatro rutas privadas niegan mascota ajena; matriz solo propietario; CSRF, método/ids/tokens validados; inactiva, carnet desactivado y provisional sin titular sin datos/QR. |
+| RE-5.10.4/5 | `Carnet.test.cjs`: Web Share, copiar, cancelar/errores, imprimir, doble clic, descartar respuestas al cambiar mascota y modal real; `CarnetMascotaTest`: token anterior ausente de la base, fecha, auditoría única y rollback si falla. |
+| Concurrencia real | `BaseV2MysqlTest::testCarnetASerializaLaRegeneracionYDescartaElDobleEnvioConUnaInstantaneaAnterior`: MariaDB 10.4 local, 1/11 en verde; espera el candado y un replay con instantánea anterior devuelve el token actual sin otro cambio. CI ejecutará esa misma clase en MySQL 8. |
+
+**Verificación:** suites finales PHP/JS en verde (conteos abajo); Chrome real con controlador/layout del propietario a 1366 y 390 px, navegación/pestaña, modal de confirmar/cancelar e impresión A6 148 × 105 mm ampliable, sin desbordes. SVG cargado en la vista de impresión; capturas en `scratch/carnet-a/`. Los dos diagramas de §12.5 renderizan. `exportar.mjs --revisar`: descargas al día (Modelos no tiene descarga configurada). Composer: QR 5.0.5 en `require`, requisitos de producción cumplidos; Dockerfile agrega libonig/mbstring y ya ejecuta Composer `--no-dev`. Sin build Docker local. `composer.lock` sigue ignorado por las reglas existentes del repositorio; no se modifica esa política.
+
+**Conteos finales:** `vendor/bin/phpunit`: 1041 pruebas, 8249 aserciones, 72 omitidas de motor sin host, sin fallos. `node --test --test-concurrency=1 tests/Frontend/*.test.cjs`: 321/321, ninguna omitida. Motor dirigido adicional: 1/11 en verde en MariaDB; no es una pasada de MySQL 8 local. Sintaxis y `git diff --check` correctos.
+
+**Archivos de la entrega (24):** `Dockerfile`, `composer.json`, `controllers/CarnetController.php`, `helpers/QrCarnet.php`, `helpers/Security.php`, `models/CarnetMascota.php`, `models/CarnetPropietario.php`, `public/index.php`, `public/js/portal.js`, `public/js/carnet.js`, `public/css/portal/carnet.css`, `views/portal/index.php`, `views/portal/layout.php`, `views/portal/carnet.php`, `views/portal/imprimir_carnet.php`, `tests/Integration/CarnetMascotaTest.php`, `tests/Integration/BaseV2MysqlTest.php`, `tests/Unit/AutorizacionRolTest.php`, `tests/Support/CarnetPrueba.php`, `tests/Frontend/Carnet.test.cjs`, `tests/Frontend/apoyo/carnet-vista.php`, `documentacion/Modelos.md`, `specs/M5-portal-multiclinica.md`, `agentes/estado.md`. El cambio previo de `specs/M4-agenda-grafo-ii.md` se conserva sin tocar.
+
+**Prueba del dueño tras revisión:** (1) propietario, ficha → Carnet, compartir/copiar e imprimir en computador/celular; (2) cancelar regeneración conserva QR, confirmar exige reimprimir y cambia enlace; (3) petición directa a una mascota ajena o inactiva: sin carnet. Los escaneos y las respuestas públicas se probarán en B. Siguiente: revisión independiente de A; después HU-5.11 y cierre v2.0.0.
+
+### Carnet A — Revisión (2026-10-23)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada con tres ajustes menores, que entran en el prompt de B** (no hace falta otra vuelta de A).
+
+- **Verificado:** proyección cerrada de `CarnetMascota` (sin `SELECT *`, solo los campos de RN-503); alertas y clínicas globales (RN-113); token de 43 caracteres base64url de `random_bytes(32)` (RE-5.10.2); las cuatro rutas solo para propietario y con `exigirMascotaPropia` (RN-G02); regeneración con `FOR UPDATE`, comparación del token visto, auditoría sin token y rollback (RE-5.10.5); SVG con `no-store` y URL de imagen que cambia al regenerar; confirmación con `zookiConfirmarCorto`. PHP completo en copia limpia: 1041 pruebas, la única falla es el SVG porque esa copia no tiene la librería (sin acceso a Packagist); JS de carnet 6/7 por la misma causa. Capturas a 1366 y 390 px y medio de impresión sin desbordes.
+- **Ajuste 1 (dato público):** `datosEmergencia()` lista clínicas en `baja`. Filtrar `c.estado <> 'baja'` para no dar el teléfono de una clínica cerrada; una suspendida se conserva porque sigue atendiendo urgencias (RN-420).
+- **Ajuste 2 (formato):** la próxima dosis sale `AAAA-MM-DD`; mostrarla `DD/MM/AAAA`, igual que el resto del portal.
+- **Ajuste 3 (visual):** «Imprimir» es un enlace subrayado junto a dos botones; igualar su estilo. La pestaña Carnet va al final (Historia sigue siendo la primera y la activa).
+- **Anotado, no bloquea:** `composer.lock` sigue ignorado por la política del repositorio; producción resuelve `~5.0` en cada build. Conviene versionarlo en un `chore` aparte.
