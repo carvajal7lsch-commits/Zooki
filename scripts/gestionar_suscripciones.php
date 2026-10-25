@@ -1,5 +1,5 @@
 <?php
-/** S1: cada cinco minutos en Dokploy o Programador de tareas; sin pasarela. */
+/** S1/S2: cada cinco minutos; conciliación GET, sin cobros automáticos. */
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
@@ -14,10 +14,10 @@ try {
     foreach (array_slice($argv, 1) as $argumento) {
         if ($argumento === '--revisar') {
             $revisar = true;
-        } elseif (in_array($argumento, ['--solo=vencimientos', '--solo=avisos'], true)) {
+        } elseif (in_array($argumento, ['--solo=vencimientos', '--solo=avisos', '--solo=conciliacion'], true)) {
             $solo = substr($argumento, 7);
         } else {
-            throw new InvalidArgumentException('Uso: --revisar y --solo=vencimientos|avisos. S1 no admite cobros.');
+            throw new InvalidArgumentException('Uso: --revisar y --solo=vencimientos|avisos|conciliacion. S1 no admite cobros; S2 tampoco emite cargos automáticos.');
         }
     }
     $configuracion = Database::enPruebas() ? Database::configuracionPruebas() : null;

@@ -15,6 +15,15 @@
 .suscripcion__precio { font-size: 26px; font-weight: 700; }
 .suscripcion__precio span { font-size: 15px; font-weight: 400; }
 .suscripcion__pagar { display: block; width: 100%; padding: 13px; border: 0; border-radius: 10px; background: #dce5ed; color: #53697b; font: inherit; cursor: not-allowed; margin-top: 25px; }
+.suscripcion__pagar:not(:disabled) { background: #146b9b; color: #fff; cursor: pointer; }
+.suscripcion__consultar { margin-top: 12px; padding: 10px 16px; border: 1px solid #c3d2df; border-radius: 10px; color: #146b9b; background: #fff; font: inherit; cursor: pointer; }
+.suscripcion__ciclos { padding: 14px; border: 1px solid #e3eaf1; border-radius: 10px; margin-top: 18px; }
+.suscripcion__ciclos label { display: block; padding: 8px 0; cursor: pointer; }
+.suscripcion__historial { margin-top: 22px; }
+.suscripcion__pagos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap: 16px; }
+.suscripcion__pago { border: 1px solid #e3eaf1; border-radius: 12px; padding: 14px; min-width: 0; }
+.suscripcion__referencia { overflow-wrap: anywhere; font-size: 13px; }
+.suscripcion__paginacion { display: flex; justify-content: space-between; margin-top: 18px; }
 @media (max-width: 767px) {
     .suscripcion__tarjetas { grid-template-columns: 1fr; gap: 16px; }
     .suscripcion__cabecera { align-items: flex-start; flex-direction: column; gap: 10px; }

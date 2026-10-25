@@ -5,7 +5,7 @@
 require_once "../helpers/ZonaHoraria.php";
 ZonaHoraria::aplicar();
 require_once "../helpers/Sesion.php";
-if (!in_array($_GET['action'] ?? '', ['carnet', 'carnet_ubicacion', 'carnet_foto'], true)) {
+if (!in_array($_GET['action'] ?? '', ['carnet', 'carnet_ubicacion', 'carnet_foto', 'wompi_eventos_test', 'wompi_eventos_prod'], true)) {
     Sesion::iniciar();
 }
 $esHttps = Sesion::esHttps($_SERVER);
@@ -36,6 +36,24 @@ Security::check($action);
 // lanza AccesoDenegado (Security::denegarRecursoAjeno) y aquí se responde 403.
 try {
 switch ($action) {
+    case "wompi_eventos_test":
+    case "wompi_eventos_prod":
+        require_once '../controllers/WompiEventosController.php';
+        (new WompiEventosController())->recibir($action === 'wompi_eventos_test' ? 'test' : 'prod');
+        break;
+    case "suscripcion_pagar_ajax":
+    case "suscripcion_estado_ajax":
+    case "suscripcion_historial_ajax":
+    case "suscripcion_retorno":
+        require_once '../controllers/SuscripcionController.php';
+        $suscripcionController = new SuscripcionController((new Database())->getConnection());
+        match ($action) {
+            'suscripcion_pagar_ajax' => $suscripcionController->pagar(),
+            'suscripcion_estado_ajax' => $suscripcionController->estado(),
+            'suscripcion_historial_ajax' => $suscripcionController->historial(),
+            'suscripcion_retorno' => $suscripcionController->retorno(),
+        };
+        break;
     case "carnet":
         require_once '../controllers/CarnetPublicoController.php';
         (new CarnetPublicoController())->mostrar();

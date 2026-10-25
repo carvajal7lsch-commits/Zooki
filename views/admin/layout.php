@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="css/usuarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/pill-sidebar.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
-    <?php if (($_GET['action'] ?? '') === 'admin_suscripcion'): ?>
+    <?php if (in_array($_GET['action'] ?? '', ['admin_suscripcion', 'suscripcion_retorno'], true)): ?>
     <link rel="stylesheet" href="css/suscripcion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
@@ -170,7 +170,10 @@
     <script src="js/csrf.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/sesion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/extras.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-    <?php if (($_GET['action'] ?? '') === 'admin_suscripcion'): ?>
+    <?php if (in_array($_GET['action'] ?? '', ['admin_suscripcion', 'suscripcion_retorno'], true)): ?>
+    <?php if (!empty($pagoDisponible)): ?>
+    <script src="https://checkout.wompi.co/widget.js"></script>
+    <?php endif; ?>
     <script src="js/suscripcion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>

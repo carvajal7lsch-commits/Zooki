@@ -22,6 +22,99 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testS2DosProcesosDosPestanasUnaOrdenYUnIntento(): void
+    {
+        $this->prepararHistoriaClinica();
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        $resultados = $this->competirS2('reserva');
+        $this->assertSame($resultados[0]['resultado'], $resultados[1]['resultado']);
+        $this->assertSame(1, $this->contar('pagos_suscripcion'));
+        $this->assertSame(1, $this->contar('intentos_pago'));
+        $this->assertSame(0, $this->contar('suscripcion_periodos'));
+        $this->assertSame(8999000, $resultados[0]['resultado']['total_centavos']);
+    }
+
+    public function testS2DosEventosConcurrentesAcreditanUnaVezConAuditoria(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../Support/ClienteWompiFalso.php';
+        require_once __DIR__ . '/../../models/PagoSuscripcion.php';
+        require_once __DIR__ . '/../../models/EventoWompi.php';
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        $urlAnterior = getenv('APP_URL');
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            $orden = (new PagoSuscripcion($this->db, 1, ClienteWompiFalso::configuracion(), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00')))->reservar('mensual', 0, 1);
+        } finally {
+            putenv($urlAnterior === false ? 'APP_URL' : 'APP_URL=' . $urlAnterior);
+        }
+        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+        foreach ([1, 2] as $timestamp) {
+            (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx, 'test', $timestamp), '', 'test', 'test_events_falso'));
+        }
+        $this->competirS2('acreditar');
+        $this->assertSame(1, $this->contar('suscripcion_periodos'));
+        $this->assertSame('2026-11-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query('SELECT version_periodo FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM wompi_eventos WHERE estado='procesado'")->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='suscripcion_periodos' AND accion='INSERT'")->fetchColumn());
+    }
+
+    private function competirS2(string $fase): array
+    {
+        $this->carpetaTemporal = sys_get_temp_dir() . '/zooki_pago_s2_' . bin2hex(random_bytes(8));
+        mkdir($this->carpetaTemporal);
+        $esperar = function (string $archivo): void {
+            $hasta = microtime(true) + 20;
+            while (!is_file($this->carpetaTemporal . '/' . $archivo)) {
+                if (microtime(true) > $hasta) {
+                    $this->fail('Barrera de pago no alcanzada: ' . $archivo);
+                }
+                usleep(10000);
+            }
+        };
+        $procesos = [];
+        $resultados = [];
+        try {
+            foreach (['primero' => 1, 'segundo' => 2] as $nombre => $evento) {
+                $proceso = proc_open([PHP_BINARY, __DIR__ . '/../Support/ProcesoPagoS2.php', $this->carpetaTemporal, $nombre, $fase, (string) $evento], [0 => ['pipe', 'r'], 1 => ['file', $this->carpetaTemporal . '/' . $nombre . '.log', 'a'], 2 => ['file', $this->carpetaTemporal . '/' . $nombre . '.log', 'a']], $tuberias);
+                $this->assertIsResource($proceso);
+                fclose($tuberias[0]);
+                $procesos[] = $proceso;
+                $esperar($nombre === 'primero' ? 'bloqueado' : 'segundo.conexion');
+            }
+            $a = (int) file_get_contents($this->carpetaTemporal . '/primero.conexion');
+            $b = (int) file_get_contents($this->carpetaTemporal . '/segundo.conexion');
+            $maria = str_contains((string) $this->db->query('SELECT VERSION()')->fetchColumn(), 'MariaDB');
+            $sql = $maria ? 'SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX r ON r.trx_id=w.requesting_trx_id JOIN information_schema.INNODB_TRX b ON b.trx_id=w.blocking_trx_id WHERE r.trx_mysql_thread_id=? AND b.trx_mysql_thread_id=?'
+                : 'SELECT COUNT(*) FROM performance_schema.data_lock_waits w JOIN performance_schema.threads r ON r.THREAD_ID=w.REQUESTING_THREAD_ID JOIN performance_schema.threads b ON b.THREAD_ID=w.BLOCKING_THREAD_ID WHERE r.PROCESSLIST_ID=? AND b.PROCESSLIST_ID=?';
+            $q = $this->db->prepare($sql);
+            $hasta = microtime(true) + 10;
+            do {
+                $q->execute([$b, $a]);
+                $espera = (int) $q->fetchColumn() > 0;
+                $q->closeCursor();
+                if (!$espera) {
+                    usleep($maria ? 125000 : 20000);
+                }
+            } while (!$espera && microtime(true) < $hasta);
+            $this->assertTrue($espera, 'Las dos peticiones deben competir por el candado real de la clínica.');
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach (['primero', 'segundo'] as $nombre) {
+                $esperar($nombre . '.fin');
+                $r = json_decode(file_get_contents($this->carpetaTemporal . '/' . $nombre . '.fin'), true, 64, JSON_THROW_ON_ERROR);
+                $this->assertTrue($r['ok'], json_encode($r));
+                $resultados[] = $r;
+            }
+        } finally {
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach ($procesos as $proceso) {
+                proc_close($proceso);
+            }
+        }
+        return $resultados;
+    }
+
     public function testS1CliRealRevisarNoModificaNiEnviaYNoAdmiteCobros(): void
     {
         $this->prepararHistoriaClinica();

@@ -20,6 +20,7 @@ class Security {
      * Lista de acciones públicas (no requieren CSRF ni sesión)
      */
     private static array $publicActions = [
+        'wompi_eventos_test', 'wompi_eventos_prod',
         'carnet', 'carnet_ubicacion', 'carnet_foto',
         'landing', 'privacidad', 'terminos', 'cookies', 'login', 'solicitar_reset_password_ajax', 'reset_password',
         'procesar_reset_password_ajax', 'register', 'process_register', 'verificar_email', 'estado_verificacion_ajax',
@@ -352,6 +353,7 @@ class Security {
             // HU-6.2 (RE-6.2.8, RE-6.2.9): agenda por veterinario y calendario del Inicio; solo lectura.
             'panel_admin_dia_ajax',
             'admin_auditoria', 'admin_configuracion', 'admin_suscripcion',
+            'suscripcion_pagar_ajax', 'suscripcion_estado_ajax', 'suscripcion_historial_ajax', 'suscripcion_retorno',
             'registrar_usuario_ajax', 'actualizar_usuario_ajax',
             'get_usuario_ajax', 'cambiar_estado_usuario_ajax',
             'resetear_password_usuario_ajax',
