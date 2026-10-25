@@ -1,6 +1,6 @@
 # M0-S — Suscripción y cobro con Wompi
 
-> Estado: **Plan M0-S entregado, pendiente de aprobación del dueño** · Borrador, no autoriza implementación
+> Estado: **S1 entregada, pendiente de revisión** · Aprobación y ajustes vinculantes en §9/§9.1
 > Entrega: v2.1 · Fecha: 2026-10-24 · Rama comprobada: `release/v2.1.0`
 > Escribe: **Codex** · Revisa: **Claude (arquitecto)** · Aprueba, integra y despliega: dueño del producto
 
@@ -450,3 +450,75 @@ No se presupone que Wompi programe los cargos por guardar una fuente, que la ref
 - **Énfasis del dueño (requisito, no sugerencia):** un doble clic, dos pestañas o dos peticiones simultáneas de la misma clínica **nunca** generan dos cobros. Se cumple en dos capas: el botón se deshabilita al primer clic hasta que responde el servidor, y el servidor devuelve la misma orden para la misma obligación (RE-0.5.10, RE-0.5.14). La prueba de concurrencia de S2 lo demuestra con dos procesos reales.
 - **D5 aclarada:** solo cubre lo que Zooki no puede impedir. Un caso es que la clínica pague por dos caminos distintos fuera del botón, o que el banco apruebe dos veces. El otro es un contracargo: el titular de la tarjeta desconoce el pago y el banco devuelve la plata. En ambos casos queda una incidencia en el panel del super-administrador y la devolución se gestiona en Wompi.
 - **D6 aclarada:** las clínicas que hoy tienen el profesional asignado a mano no tienen fecha de vencimiento. No se congelan ni se les cobra automáticamente por una fecha inventada. El super-administrador les fija el vencimiento desde el panel y desde ahí pagan con el botón como cualquiera. Pueden pagar cuando quieran. Las clínicas en plan gratuito no cambian y pueden pasar al profesional pagando.
+
+### 9.2 Decisión del dueño durante S1 — 2026-10-24
+
+- **Sin red:** se dejan pendientes las descargas PDF/Word del portal. El exportador actual carga marked/Mermaid desde CDN; el dueño confirmó conservar «sin llamadas de red», en lugar de autorizar esas dependencias. No se modifica el manifiesto para aparentar una exportación. Las fuentes Markdown, MER y drawDB sí forman parte de S1; no se sube versión ni revisión documental. Se conserva como pendiente operativo para el cierre, junto con la renderización nueva del MER cuando estén disponibles las dependencias locales o se autorice la exportación.
+
+## Anexo S1 — Resultado (2026-10-24)
+
+**Escribió: Codex. Revisa: Claude (arquitecto).** S1a y S1b se entregan juntas conforme al ajuste 3 de §9. La verificación de este anexo es del ejecutor; no reemplaza la revisión independiente ni la prueba del dueño.
+
+### Resultado construido
+
+- **Especificación primero:** HU-0.5, RF-0.5/RF-0.7 y equivalencia RF-F.1, los 26 RE de HU-0.5 y RE-0.3.7, RN-007/008/013–019, precisiones de HU-0.3/HU-0.4 y sus matrices, MER/drawDB y Modelos §12.1.1/12.2/12.7. Tras el Inicio integrado la base real era **442 RE**, no los 435 del inventario inicial del plan: con los 22 nuevos quedan **464 RE, 96 HU, 126 RN y 65 tablas**. S2/S3/S4 continúan planificadas; HU-0.5 no se declara cerrada.
+- **Datos:** migración 12 repetible y retomable, consolidado 01/02 y drawDB sincronizados. Solo tres parámetros por clínica; hora, reintentos y cotización están en `PoliticaSuscripcion` con su RN. Las cuatro entidades de pasarela (`pagos_suscripcion`, `intentos_pago`, `wompi_eventos`, `fuentes_pago`) se crean vacías. `suscripcion_periodos` solo registra concesiones administrativas de S1, sin id de pago ni importe cobrado; los avisos usan su outbox. La migración no crea concesiones, correos ni pagos.
+- **Vigencia única:** `VigenciaSuscripcion` sin PDO y `Suscripcion` calculan contratado/efectivo, intervalo exclusivo, gracia y congelación con reloj inyectable. `LimitePlan`, el Inicio y `Plataforma` usan el servicio. Se conserva RN-420 y el estado administrativo de clínica. El legado sin fecha conserva sus condiciones, incluido profesional con tarifa personalizada cero: la identidad del plan no se deduce del precio.
+- **Ajuste manual:** plataforma exige motivo y fecha fin del profesional; valida fecha/ciclo en servidor y calendario en vivo, audita y conserva el origen administrativo. Una concesión no fabrica un pago ni modifica un periodo Wompi vigente. La cuenta de plataforma se comprueba en base y la mutación sigue pasando por POST/CSRF.
+- **Avisos:** outbox única por clínica/suscripción/fin/tipo/destinatario; todos los administradores activos verificados, incluidos sus avisos financieros si la clínica está suspendida operativamente. Previos desde las 07:00 y congelación al siguiente despacho (D7). Solo se reclama bajo bloqueo, SMTP después del commit. Aviso obsoleto no se envía; reclamación vencida o SMTP de resultado desconocido pasa a incierto y no se reenvía a ciegas. El CLI informa incidencias y devuelve salida no cero ante errores/entregas inciertas.
+- **Interfaz:** `admin_suscripcion` muestra plan, vigencia, estado, ciclo y catálogo; Pagar/Renovar permanece deshabilitado con «Disponible pronto». Uso del plan conserva su estructura y estilos; su acceso enlaza a Suscripción. La lista existente de plataforma muestra vigencia/efectivo y permite regularizar el legado; no se construye el panel de pagos de S4.
+
+### RE y evidencia
+
+| RE / regla | Evidencia de S1 |
+|---|---|
+| RE-0.5.1 (parcial), RN-008 | `VigenciaSuscripcionTest::testTarifasEnCentavosSinIvaYCatalogoPersonalizado`; 8.999.000 / 89.990.000 centavos e impuesto 0. Sin acreditar compras. |
+| RE-0.5.2/16, RN-007/014 | Bordes antes/en/después de fin/gracia, gracia cero, cron retrasado, ancla de mes/año/bisiesto e inicio de renovación anticipada/en gracia/tras congelar en `VigenciaSuscripcionTest`. |
+| RE-0.4.1/6/7, RE-0.5.5, RN-003/013/420 | `LimitePlanTest` (50/51, 100/101, atención/edición existente); `SuscripcionTest::testCronRetrasadoInicioYOperacionesCoincidenConRojoExento`; regresiones de agenda/urgencias de la suite completa. |
+| RE-0.5.3/6/7 (parte de S1), RN-017/G05 | `SuscripcionTest`: revisar sin escrituras/envío, 07:00, varios destinatarios, verificación, suspensión operativa, repetición, obsolescencia, SMTP fuera de transacción e incierto. `BaseV2MysqlTest::testS1DosTrabajadoresConcurrentesUnaTransicionYUnAviso`: dos procesos y espera real observada en InnoDB, un cambio y un aviso por destinatario. |
+| RE-0.5.9/25, RE-0.3.1/2, D6 | `SuscripcionTest`: legado sin fecha, tarifa personalizada intacta, regularización con fecha/motivo, clínica ajena intacta y rollback de auditoría. `PlataformaTest`, `M021GestionarTest` y prueba E1 en MySQL; fuente y UI verificadas sin campos clínicos nuevos. |
+| RE-0.5.8 (vista/ajuste de S1), RN-G13/019 | `SuscripcionTest::testPermisosDosClinicasYCsrfDeAjuste`: ADMIN autorizado, vet/propietario/plataforma denegados en pantalla clínica; petición a otra clínica y POST de plataforma sin CSRF rechazados. Matriz completa sin acciones fantasma. |
+| Migración 12 y compatibilidad | Cuatro casos S1 en `BaseV2MysqlTest`: esquema anterior con datos, ejecución doble, DDL parcial, metadatos incompatibles, legado/fecha fiable, precio personalizado y CLI real. `AgendaB2MysqlTest` compara instalación/actualización y conserva exactamente datos previos más los tres parámetros nuevos; `AgendaC6MysqlTest` incluye 12 y el migrador repetido. |
+| UI / RNF-16 | `Suscripcion.test.cjs`, `E1Plataforma.test.cjs` e `InicioAdministrador.test.cjs`. Chrome con controlador/layout reales y SQLite a 1366/390: gracia, congelada y legado; salida escapada, pago deshabilitado y sin desborde. Inicio también a 1024 y con cuatro veterinarios. Capturas revisadas en `scratch/s1-suscripcion-1366.png`, `s1-suscripcion-390.png`, `s1-inicio-1366.png` y `s1-inicio-390.png` (material local, no se integra). |
+
+### Verificación y límites
+
+- PHP 8.2.12 / PHPUnit 10.5.64: pasada completa sin motor **1084 pruebas, 8556 aserciones, 78 omitidas de motor**; el ajuste final de avisos en suspensión se comprobó además en sus 7 pruebas dirigidas (48 aserciones).
+- Node 22.16: `node --test --test-concurrency=1 tests/Frontend/*.test.cjs`, **334/334**, ninguna omitida. Sintaxis de los 31 PHP modificados y de ambos scripts comprobada; diff sin errores de espacios.
+- `vendor/bin/phpunit` completo con `ZOOKI_TEST_MYSQL_HOST=127.0.0.1` y base `zooki_test_base_v2`: **1084 pruebas, 9714 aserciones, ninguna omitida**, en MariaDB 10.4.32. Las pasadas completas sin/con motor se iniciaron antes de añadir la comprobación final de D7 en suspensión operativa; esa rama se verificó después en `SuscripcionTest` completo, **7 pruebas / 48 aserciones**, sin cambiar el SQL ni la concurrencia ya probados. MySQL 8 corresponde al CI.
+- El arranque de PHPUnit se alinea con `ZonaHoraria::aplicar()`, igual que la aplicación. Se reprodujo que el php.ini de XAMPP (`Europe/Berlin`) podía formatear ahora y ahora+1 h con la misma hora durante el retroceso del 25/10; los tres casos de enlaces temporales pasan al usar Bogotá. No se cambian las reglas de acceso ni la hora del equipo.
+- No se leyó ni escribió `.env`, no se accedió a la base de trabajo ni a `zooki_v2_prueba`, no se enviaron correos reales ni se llamó a Wompi/otra API externa. No se inspeccionó el catálogo de producción: el precio personalizado se conserva y aparece en `tarifas_personalizadas` del CLI para revisión del dueño.
+- PDF/Word y nuevo render del MER pendientes por decisión §9.2. Se mantienen sin cambios versión, revisiones y manifiesto de descargas; las fuentes quedan actualizadas. S2 no se empieza.
+
+### Programación operativa
+
+`scripts/zooki.cron` contiene la definición versionada: **un Schedule de Dokploy cada 5 minutos**, TZ America/Bogota, `php /var/www/html/Zooki/scripts/gestionar_suscripciones.php`. El contenedor no instala cron ni cobra al iniciar. Conservar las tareas existentes sin duplicar esta. En Windows: Programa `C:\xampp\php\php.exe`, argumento con ruta absoluta a `scripts\gestionar_suscripciones.php`, inicio en el repo, cada cinco minutos y no iniciar otra instancia. `--revisar` no escribe ni envía; `--solo=vencimientos` o `--solo=avisos` limita el trabajo. No se instalaron tareas en el equipo ni en Dokploy durante esta entrega.
+
+### Cinco pruebas del dueño — pendientes
+
+1. [ ] Como administrador, abrir Inicio a 1366 y 390: Uso del plan conserva su diseño y Suscripción abre la pantalla propia; Pagar/Renovar está deshabilitado con «Disponible pronto».
+2. [ ] En una clínica de prueba con profesional legado sin fecha, comprobar que conserva sus beneficios. Como plataforma, regularizarla con motivo y fin; sin motivo/fecha se rechaza y otra clínica no cambia.
+3. [ ] Con los estados de prueba preparados (vigente, gracia y congelada), comparar la pantalla con Uso del plan. Al congelar, datos/atención existentes permanecen y nuevas altas aplican 50/100/2; rojo sigue permitido. La suspensión administrativa se presenta aparte y no se levanta por una concesión.
+4. [ ] Revisar los avisos del transporte de prueba para 7/1 días y congelación, con varios administradores activos verificados. Repetir la tarea no repite avisos; renovar el fin vuelve obsoletos los anteriores. Una entrega incierta queda señalada para revisión, sin reenvío automático.
+5. [ ] Ejecutar `--revisar` en el entorno de prueba y contrastar estados, legado y tarifas personalizadas; no cambia datos ni envía. Confirmar el Schedule/Programador de tareas cuando el dueño integre y despliegue S1.
+
+## S1 — Revisión (2026-10-24)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada.**
+
+- **Verificado:**
+  - `VigenciaSuscripcion` (cálculo puro, fin exclusivo, gracia, ancla de mes) es la única fuente: `LimitePlan` delega en `Suscripcion::estado()` y ya no lee `al_dia`.
+  - El legado sin fecha conserva sus beneficios (D6).
+  - La suspensión administrativa prevalece sobre la mora.
+  - El precio pasa a 89.990 / 899.900 solo si seguía en 100.000 / 960.000.
+  - Hay tres parámetros por clínica y las políticas fijas están en `PoliticaSuscripcion` (ajuste 2).
+  - El ajuste de plataforma exige super-administrador activo, motivo y fecha, no toca un periodo Wompi vigente y audita.
+  - `admin_suscripcion` es solo para el administrador, con el botón deshabilitado.
+- **Pruebas del revisor:**
+  - PHPUnit sin motor: 1084 (78 omitidas de motor).
+  - **PHPUnit completo con MySQL 8: 1084 pruebas, 9720 aserciones, sin fallos.**
+  - JS de Suscripción, Plataforma e Inicio del administrador: 15/15.
+  - Migración 12 aplicada dos veces sobre una base con datos.
+  - `gestionar_suscripciones.php --revisar` sin escrituras.
+  - Capturas a 1366 y 390 sin desborde.
+- **Menor, no bloquea:** en las filas legadas `estado_cobro` queda `sin_vigencia` aunque el servicio calcula `al_dia`. Ningún lector usa esa columna, pero conviene que la migración o la regularización la dejen coherente, o documentar que en el legado no se materializa.

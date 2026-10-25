@@ -1,5 +1,7 @@
 # Historias de Usuario — Proyecto Zooki
 
+> **M0-S / S1 — 2026-10-24:** destino aprobado de v2.1: 96 HU, 464 RE, 126 RN y 65 tablas. S1 entrega vigencia, gracia, legado y avisos; cobro y panel financiero continúan planificados. Sin nueva revisión ni versión.
+
 > **Revisión 3.6** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
@@ -41,7 +43,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 > **Preparación M4/B1 — 2026-10-17:** criterios confirmados de destino pendientes de implementación funcional; no se cambia revisión. El ejecutable sigue en alpha.4 y los estados históricos no acreditan los nuevos flujos.
 
-## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0)*
+## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0/v2.1)*
 
 > Arquitectura SaaS multi-inquilino: onboarding autónomo de clínicas, control de límites por plan (freemium) y administración de la plataforma por el super-administrador.
 
@@ -94,6 +96,9 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 **Criterios de aceptación:**
 
+- Muestra plan contratado/efectivo y vigencia/gracia calculados; una concesión manual exige motivo y fecha fin, sin fabricar pagos.
+- **Planificada S4:** consulta historial de pagos e incidencias por clínica como metadatos, sin entrar en datos clínicos ni cobrar una fuente.
+
 - Lista de clínicas registradas con su estado, plan y estado de suscripción; se busca por nombre o NIT y se filtra por estado y plan.
 - Puede cambiar el plan de una clínica y el estado de su suscripción, con motivo obligatorio.
 - **No** accede a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte.
@@ -104,7 +109,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo. _Este criterio (RE-0.3.6) se entrega en la v2.1 junto con HU-8.1, porque en la v2.0 todavía no hay reseñas; el resto de la historia está en 2.0.0-alpha.1._
 - Toda acción queda registrada en auditoría.
 
-**Reglas de negocio:** RN-004, RN-010, RN-012, RN-804, RN-G13, RN-G14, RN-G15 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5 · **Dependencias:** —
+**Reglas de negocio:** RN-004, RN-010, RN-012, RN-019, RN-804, RN-G05, RN-G13, RN-G14, RN-G15 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5 · **Dependencias:** —
 
 ### HU-0.4 — Control de límites del plan (freemium)
 
@@ -116,6 +121,8 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 **Criterios de aceptación:**
 
+- El plan efectivo se calcula en servidor por fecha actual, incluida la gracia, aunque la tarea programada se retrase.
+
 - Antes de una acción que consume cupo (crear o vincular una mascota, crear una cita, invitar o reactivar personal) se lee el plan y el estado de suscripción de la clínica. Reactivar consume cupo si la persona no lo tenía reservado por una invitación vigente; cambiar datos de alguien ya activo no consume otro cupo.
 - Dentro del límite: la acción se ejecuta y queda en auditoría.
 - Alcanzado el límite: la acción se impide y se informa el motivo invitando a mejorar el plan.
@@ -126,26 +133,29 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - Límites del plan gratuito: 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal; el plan profesional no tiene límites de volumen.
 - El plan gratuito incluye las capacidades del sistema (incluidos los grafos) en funcionamiento, pero limitadas por volumen.
 
-**Reglas de negocio:** RN-003, RN-005, RN-006, RN-420 · **Requisitos:** RF-0.4 · **Dependencias:** HU-0.2
+**Reglas de negocio:** RN-003, RN-005, RN-006, RN-014, RN-015, RN-420 · **Requisitos:** RF-0.4 · **Dependencias:** HU-0.2
 
-### HU-0.5 — Suscripción y congelación por mora
+### HU-0.5 — Suscripción, pagos y congelación por mora
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Planificada (v2) | 5 pts | v2 |
+| Alta | Parcial S1 (v2.1); pagos S2/S3 planificados | Por reestimar | v2.1 |
 
-> Como super-administrador, quiero congelar los beneficios del plan de pago cuando la suscripción de una clínica no está al día para incentivar su regularización sin borrar los datos de la clínica.
+> Como administrador de una clínica, quiero contratar o renovar el plan profesional, consultar mis pagos y autorizar o retirar su cobro automático mensual para conservar sus beneficios y conocer cuándo vence, sin perder datos si no renuevo.
 
 **Criterios de aceptación:**
 
-- Cada clínica tiene una suscripción con pago mensual o anual; el pago anual aplica un precio con descuento frente a doce mensualidades.
-- Si la suscripción no está al día, se congelan los beneficios del plan de pago (vuelven a aplicar los límites del plan gratuito para crear o vincular registros nuevos, RN-013) hasta regularizar; los datos de la clínica no se eliminan.
-- Al bajar al plan gratuito o caer en mora no se oculta ni se borra ningún dato: se siguen atendiendo las mascotas que ya tiene y consultando su historia; solo se bloquea crear o vincular mascotas, crear citas o dar de alta personal por encima de los límites del plan gratuito.
-- El control de vencimiento de suscripciones corre como tarea programada (cron).
-- El cobro real mediante pasarela de pago queda fuera de esta versión (requisito futuro RF-F.1).
-- Los cambios de estado de la suscripción quedan en auditoría.
+- Muestra plan contratado y efectivo, ciclo, precio total, fecha de fin y congelación, al día/en gracia/congelada. El gratuito no vence ni genera cobros.
+- Conserva los beneficios durante la gracia parametrizada, por defecto 3 días; luego aplica 50 mascotas, 100 citas/mes y 2 cuentas solo a nuevas altas. No oculta datos ni bloquea urgencias rojas.
+- Profesional: 89.990 COP/mes o 899.900 COP/año, total sin IVA. Un precio nuevo no altera periodos comprados. Mes/año calendario con ancla; renovación anticipada o en gracia desde fin anterior y tras congelar desde acreditación; sin prorrateos al cambiar de ciclo.
+- La tarea programada actualiza estados y avisa por correo a todos los administradores activos verificados, a 7 y 1 días del fin y al congelar. Repetir no duplica transición ni aviso.
+- El profesional legado sin fecha conserva sus condiciones y no se cobra ni congela por una fecha inventada. Plataforma regulariza con motivo y fecha de fin, sin inventar pagos ni levantar suspensión administrativa.
+- **Planificada S2:** Pagar/Renovar abre Wompi por importe del servidor y referencia única. Solo evento firmado más consulta API concordante concede periodo una vez; la redirección no acredita. Doble clic, dos pestañas o peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Historial propio sin datos completos del medio.
+- **Planificada S3:** fuente guardada y autorización mensual separadas; retirar detiene cargos futuros sin reducir lo pagado. Inicial/+24/+48 h, solo fallos terminales, con aviso de fallo; no reintentar cargos inciertos.
+- Cada transición se audita. **Planificada S4:** plataforma consulta pagos e incidencias sin datos clínicos; los ajustes manuales siguen separados de pagos.
+- S1 muestra Pagar/Renovar deshabilitado con «Disponible pronto»; Uso del plan enlaza aquí conservando su diseño.
 
-**Reglas de negocio:** RN-007, RN-008, RN-013 · **Requisitos:** RF-0.5 · **Dependencias:** HU-0.3
+**Reglas de negocio:** RN-003, RN-007, RN-008, RN-013, RN-014, RN-015, RN-016, RN-017, RN-018, RN-019, RN-420, RN-G05, RN-G13 · **Requisitos:** RF-0.5, RF-0.7 · **Dependencias:** HU-0.3, HU-0.4
 
 
 ---
@@ -2060,7 +2070,7 @@ _Avance: la entrega 2.0.0 cierra las 29 HU de la v2.0, incluidas HU-5.10 y HU-5.
 
 | Historia | Título | Puntos |
 |---|---|---|
-| HU-0.5 | Suscripción y congelación por mora | 5 |
+| HU-0.5 | Suscripción, pagos y congelación por mora | Por reestimar (base: 5) |
 | HU-3.5 | Panel de vacunaciones pendientes | 3 |
 | HU-4.7 | Estado "no asistió" y ausentismo | 3 |
 | HU-4.10 | Confirmar asistencia a la cita desde el recordatorio | 3 |
@@ -2091,7 +2101,7 @@ Mientras llega la v2.1, la solicitud de eliminación de cuenta (HU-5.14) se atie
 
 ## Apéndice — Cobertura y trazabilidad (RN → HU)
 
-Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** están cubiertas por al menos una historia de usuario.
+Auditoría automática de la Fase 3: de **126 reglas de negocio**, **126** están cubiertas por al menos una historia de usuario.
 
 **Reglas sin historia asociada:** — ninguna: cobertura total —
 
@@ -2103,7 +2113,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-G02 | HU-T.6, HU-T.10, HU-2.7, HU-5.1, HU-5.4, HU-5.5, HU-5.6, HU-5.7 |
 | RN-G03 | HU-T.1, HU-T.2, HU-T.12, HU-T.13 |
 | RN-G04 | HU-T.3, HU-T.12 |
-| RN-G05 | HU-T.4, HU-T.5, HU-T.8, HU-T.14, HU-T.16 |
+| RN-G05 |HU-T.4, HU-T.5, HU-T.8, HU-T.14, HU-T.16, HU-0.3, HU-0.5 |
 | RN-G06 | HU-0.1, HU-T.5, HU-T.7, HU-T.17, HU-1.2, HU-5.2, HU-5.8 |
 | RN-G07 | HU-T.5, HU-T.19, HU-4.15, HU-5.12, HU-5.14, HU-9.1 |
 | RN-G08 | HU-T.7, HU-T.11, HU-T.14 |
@@ -2125,7 +2135,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-G24 | HU-T.5 |
 | RN-001 | HU-0.1, HU-T.15 |
 | RN-002 | HU-0.1, HU-0.2 |
-| RN-003 | HU-0.2, HU-0.4, HU-1.5, HU-6.2 |
+| RN-003 |HU-0.2, HU-0.4, HU-1.5, HU-6.2, HU-0.5 |
 | RN-004 | HU-0.3, HU-T.15, HU-2.12 |
 | RN-005 | HU-0.2, HU-0.4 |
 | RN-006 | HU-0.4 |
@@ -2136,6 +2146,12 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-011 | HU-0.1 |
 | RN-012 | HU-0.3 |
 | RN-013 | HU-0.5 |
+| RN-014 | HU-0.4, HU-0.5 |
+| RN-015 | HU-0.4, HU-0.5 |
+| RN-016 | HU-0.5 |
+| RN-017 | HU-0.5 |
+| RN-018 | HU-0.5 |
+| RN-019 | HU-0.3, HU-0.5 |
 | RN-101 | HU-1.1, HU-1.2, HU-5.2 |
 | RN-102 | HU-1.1, HU-1.5, HU-2.2 |
 | RN-103 | HU-1.2 |
@@ -2190,7 +2206,7 @@ Auditoría automática de la Fase 3: de **120 reglas de negocio**, **120** está
 | RN-417 | HU-2.11 |
 | RN-418 | HU-2.11 |
 | RN-419 | HU-4.18 |
-| RN-420 | HU-0.4, HU-4.13, HU-4.15 |
+| RN-420 |HU-0.4, HU-4.13, HU-4.15, HU-0.5 |
 | RN-421 | HU-4.15, HU-7.4, HU-7.5 |
 | RN-422 | HU-4.13, HU-7.5 |
 | RN-423 | HU-4.17 |
@@ -2230,7 +2246,7 @@ Puente de trazabilidad: los comentarios del código y los documentos `AuditoriaM
 | HU-0.2 | HU-59 | Verificar el correo y activar la clínica |
 | HU-0.3 | HU-60 | Panel del super-administrador |
 | HU-0.4 | HU-61 | Control de límites del plan (freemium) |
-| HU-0.5 | HU-62 | Suscripción y congelación por mora |
+| HU-0.5 | HU-62 | Suscripción, pagos y congelación por mora |
 | HU-T.1 | HU-17 | Iniciar sesión y autenticación |
 | HU-T.2 | HU-39 | Cambiar mi contraseña |
 | HU-T.3 | HU-40 | Recuperar contraseña olvidada |

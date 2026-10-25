@@ -1,5 +1,7 @@
 # Ficha Técnica del Proyecto — Zooki
 
+> **M0-S / S1 — 2026-10-24:** 96 HU, 464 RE, 126 RN, 65 tablas; migración 12 aditiva, vigencia/gracia/legado/avisos. Estructuras de pagos preparatorias vacías; Wompi planificado. Versión y revisiones sin cambios.
+
 > **Revisión 3.5** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
 > **Preparación M4/B2 — 2026-10-18:** 96 HU, 430 RE y 120 RN; esquema de 58 tablas en 01/MER/drawDB y migración 08 preparados para revisión, sin despliegue ni flujos C implementados. Producción alpha.4 conserva sus 52 tablas hasta desplegar; sin nueva revisión/versión.
@@ -127,7 +129,7 @@ La línea base de la v1.x se organizó en cuatro sprints de una semana; luego el
 | v1 · Sprints 1–4 | Mascotas, historia clínica, agenda, portal y reportes | Sistema v1.x en producción |
 | v2 · Fase 1 | Visión y alcance; ERS (ISO/IEC/IEEE 29148) | Alcance de la v2.0 fijado |
 | v2 · Fase 2 | Modelos: grafos, procesos de negocio, flujos de sistema y diagrama de componentes | Documento de Modelos y maestro draw.io |
-| v2 · Fase 3 | Reglas de Negocio v2 (120 RN), Historias de Usuario v2 (96 HU) y Requisitos Específicos (442 RE) | Trazabilidad RN → HU → RE completa |
+| v2 · Fase 3 | Reglas de Negocio v2 (126 RN), Historias de Usuario v2 (96 HU) y Requisitos Específicos (464 RE) | Trazabilidad RN → HU → RE completa |
 | v2 · Construcción | Esquema multi-inquilino y módulos v2 | Plataforma SaaS v2.0 |
 
 ## 8. Análisis de Riesgos

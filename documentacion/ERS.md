@@ -1,5 +1,7 @@
 # Especificación de Requisitos de Software (ERS) — Proyecto Zooki v2
 
+> **M0-S / S1 — 2026-10-24:** 96 HU, 464 RE, 126 RN y 65 tablas de destino. RF-0.5 en S1; RF-0.7 planificado S2/S3. Sin cambio de versión ni revisión.
+
 > **Revisión 3.6** · Conforme al estándar **ISO/IEC/IEEE 29148:2018** · Zooki — Sistema de gestión clínica veterinaria (arquitectura SaaS multi-inquilino) · SENA ADSO — Ficha 3142784
 
 | Fecha | Revisión | Estándar | Autor |
@@ -199,7 +201,6 @@ No forman parte de la línea base de la v2.0; se registran para preservar la tra
 
 | ID | Descripción | Prioridad |
 |---|---|---|
-| RF-F.1 | Cobro real de la suscripción mediante pasarela de pago. | Futura |
 | RF-F.2 | Recordatorios por WhatsApp Business API como canal adicional al correo. | Futura |
 | RF-F.3 | Recetas / fórmulas médicas exportables en PDF. | Deseable |
 | RF-F.4 | Motor de salud preventiva por protocolos (esquemas por especie y edad). | Deseable |
@@ -262,8 +263,9 @@ Los módulos siguen la **misma numeración en todos los documentos** ([Historias
 | RF-0.2 | Panel del super-administrador para listar, activar, suspender y reactivar clínicas. | Alta | Una clínica suspendida no permite el acceso de sus usuarios. |
 | RF-0.3 | Proteger el registro público de clínicas contra el abuso del plan gratuito: NIT único validado con el dígito de verificación de la DIAN, verificación anti-bot (CAPTCHA), rechazo de correos de dominios desechables y límite de registros por IP. | Alta | Un NIT inválido o repetido, un envío sin CAPTCHA válido o un correo desechable se rechazan; superado el límite por IP, el registro se bloquea temporalmente. |
 | RF-0.4 | Definir planes con sus límites y precios: el gratuito admite 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal; el profesional, sin límites de volumen. | Alta | Los planes existen con esos límites y son asignables a una clínica. |
-| RF-0.5 | Asignar y controlar el estado de la suscripción por clínica; congelar beneficios si no está al día. Al bajar de plan o caer en mora no se oculta ni se borra ningún dato: solo se bloquea lo nuevo por encima de los límites del plan gratuito. | Alta | Una clínica en mora ve restringidas las funciones del plan de pago, pero sigue atendiendo a sus mascotas actuales. |
+| RF-0.5 | Asignar y controlar por clínica el plan contratado y el efectivo, su vigencia y gracia parametrizada; congelar los beneficios de pago al terminar la gracia y recuperarlos al acreditar un periodo. La mora o la bajada al gratuito no ocultan ni borran datos: solo limitan nuevas altas a los cupos gratuitos, con excepción de urgencias rojas | Alta | Bordes de vigencia/gracia y gratuito efectivo sin depender de cron; suspensión administrativa intacta. |
 | RF-0.6 | Aplicar los límites del plan al operar (p. ej. máximo de mascotas y de citas/consultas por período en el plan gratuito), excepto en las urgencias 🔴, que nunca se bloquean por límite ni por mora. | Alta | Al superar el límite, el sistema impide la acción e informa el motivo; un caso 🔴 se atiende igual. |
+| RF-0.7 | Cobrar la suscripción mediante Wompi: primero pago voluntario con botón y, posteriormente, renovación automática mensual autorizada con fuente guardada; verificar y conciliar transacciones en servidor, aplicar cada periodo una sola vez y mostrar el historial al administrador y al super-administrador _Planificada S2/S3 (v2.1)._ | Alta | Evento firmado y API concordante; pago una vez y cliente falso. |
 
 #### 3.2.2 Módulo T — Acceso, seguridad y administración *(v1.x, con multi-inquilino)*
 
@@ -465,7 +467,7 @@ Cada caso de uso agrupa los requisitos funcionales que lo realizan; todo RF de l
 | CU-ID | Nombre | Actor principal | Módulo | RF relacionados |
 |---|---|---|---|---|
 | CU-01 | Registrar una clínica (self-service) | Visitante (responsable de la clínica) | 0 | RF-0.1, RF-0.3 |
-| CU-02 | Administrar clínicas, planes, suscripciones y límites | Super-administrador | 0 | RF-0.2, RF-0.4, RF-0.5, RF-0.6 |
+| CU-02 | Administrar clínicas, planes, suscripciones y límites | Super-administrador (gestión); administrador de clínica (solo su suscripción) | 0 | RF-0.2, RF-0.4, RF-0.5, RF-0.6, RF-0.7 |
 | CU-03 | Iniciar sesión y recuperar el acceso | Usuario con cuenta | T | RF-T.1, RF-T.2, RF-T.4, RF-T.5, RF-T.6, RF-T.7, RF-T.8 |
 | CU-04 | Recibir notificaciones internas | Administrador / Veterinario | T | RF-T.3 |
 | CU-05 | Registrar o vincular mascota y propietario | Veterinario / Administrador | 1 | RF-1.1, RF-1.2, RF-1.3, RF-1.4, RF-1.5, RF-1.6, RF-1.7, RF-1.8 |
@@ -622,3 +624,5 @@ Desde la Revisión 3.1 cada RF lleva el número de su módulo. Los documentos de
 ---
 
 _Fin del ERS, revisión 3.4. Los modelos referenciados (MER v2, procesos de negocio, flujos del sistema y modelo de los grafos) están en [MER](MER.md) y [Modelos y diagramas](Modelos.md)._
+
+**Equivalencia M0-S:** RF-F.1 → RF-0.7 (v2.1); se retira del catálogo futuro sin renumerar RF-F.2–8. El administrador clínico paga; el super-administrador solo consulta metadatos y ajusta concesiones.

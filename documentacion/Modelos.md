@@ -829,6 +829,8 @@ flowchart TD
 
 ### 12.1.1 Panel del super-administrador — Módulo 0
 
+M0-S/S1: el plan contratado y el efectivo, la vigencia y la gracia se leen del servicio único. Regularizar el profesional legado exige motivo y último día incluido; la concesión administrativa se distingue de un pago y no levanta una suspensión de clínica. El historial financiero sigue planificado para S4.
+
 ```mermaid
 flowchart TD
   A([Plataforma Zooki]) --> S{"Sesion y contexto plataforma vigentes?"}
@@ -843,9 +845,9 @@ flowchart TD
   CONF -- Si --> Q{"Confirma el super-administrador?"}
   Q -- No --> L
   Q -- Si --> M
-  CONF -- No --> M{"POST, CSRF, motivo y transicion validos?"}
+  CONF -- No --> M{"POST, CSRF, motivo, transicion y fecha fin de concesion validos?"}
   M -- No --> ERR["Rechazar sin modificar; corregir formulario"]
-  M -- Si --> TX["Transaccion: bloquear clinica, cambiar plan/suscripcion<br/>o estado y auditar; rollback si falla auditoria"]
+  M -- Si --> TX["Transaccion: bloquear clinica; delegar plan/suscripcion al servicio de vigencia<br/>Concesion con fecha y motivo, sin fabricar pagos ni cambiar suspension<br/>Cambiar estado administrativo solo por su accion; auditar y rollback si falla"]
   TX --> R["Actualizar panel antes del aviso breve<br/>Personal pierde contexto en siguiente peticion, segun §9<br/>Clinica inactiva no aparece para registro ni agenda"]
   CAS["Casos: resolver o descartar con nota, sin otra confirmacion<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos"]
   IP["IP: vencimiento, cuentas LOGIN_FAIL en ventana<br/>y sus clinicas; sin atribuir la IP a una sola clinica"]
@@ -868,8 +870,8 @@ flowchart TD
   T --> LOCK["Transaccion: bloquear fila de la clinica<br/>Misma exclusion para comprobacion, alta y cambio de plan"]
   LOCK --> U{"Prioridad evaluada roja?"}
   U -- Si --> E
-  U -- No --> B["Leer plan y ultima suscripcion de esa clinica"]
-  B --> C{"Suscripcion activa y al dia?"}
+  U -- No --> B["Servicio unico: plan contratado y efectivo con fecha actual"]
+  B --> C{"Beneficios vigentes o en gracia?"}
   C -- No --> C1["Usar gratuito: 2 personal, 50 mascotas, 100 citas/mes<br/>Conservar datos existentes; RN-007/013"]
   C -- Si --> P["Usar limites del plan; NULL significa sin limite"]
   P --> D
@@ -1390,3 +1392,33 @@ La decisión del dueño de 2026-10-20 mantiene la fecha afectada para revisión 
 Una completada con evidencia conserva N y usa máximo(N+m, fin real), sin desplazar el margen con el reloj posterior.
 Las marcas de C2 siguen pendientes de C5; no se mueven citas, reinician bloques/topes ni entregan triage, nuevos avisos, gestión de ausencias o continuidad clínica.
 Los conteos de requisitos e historias no cambian por precisar estos criterios existentes.
+
+
+### 12.7 Suscripción y vigencia — Módulo 0 (S1)
+
+El servidor calcula por clínica la vigencia y gracia con la fecha actual, aunque el trabajador se retrase. Los intervalos incluyen inicio y excluyen fin. La mora no suspende administrativamente la clínica. Un profesional legado sin fecha conserva su condición hasta regularización por plataforma con motivo y vencimiento; no crea un pago. Mes/año con ancla y sin prorrateos: pago en gracia desde el fin anterior; tras congelar desde acreditación local.
+
+S1 implementa vencimiento, gracia, congelación y avisos; las ramas de pago del siguiente destino siguen **planificadas S2/S3**. El botón permanece deshabilitado.
+
+```mermaid
+flowchart TD
+  A["Periodo vigente de pago"] --> AV["Avisos previstos a 7 y 1 dias"]
+  AV --> V{"Llego fin exclusivo sin renovar?"}
+  V -- No --> A
+  V -- Si --> G["Gracia configurada, por defecto tres dias\nMantener beneficios; sin marcar clinica suspendida"]
+  G --> F{"Termino gracia sin pago acreditado?"}
+  F -- No --> PAG{"Se acredito renovacion?"}
+  PAG -- Si --> R["Conceder periodo segun D2; auditar"]
+  PAG -- No --> G
+  F -- Si --> CONG["Congelar beneficios y avisar\nPlan efectivo gratuito, datos conservados"]
+  CONG --> OP{"Nueva operacion clinica?"}
+  OP -- "Roja evaluada en servidor" --> ROJO["Atender y registrar; no bloquear por mora/cupo"]
+  OP -- Ordinaria --> CUPO["Conservar atencion e historia existentes\nComprobar cupos gratuitos para nuevas altas"]
+  CONG --> PAGO["Boton o cargo ya autorizado; flujo B"]
+  PAGO --> R
+  R --> ACT{"Clinica administrativamente activa?"}
+  ACT -- Si --> A
+  ACT -- No --> SUS["Pago registrado; suspension o baja se conserva"]
+```
+
+**Avisos:** una tarea cada cinco minutos bloquea clínica y suscripción, materializa transición y reserva outbox por destinatario/fin/tipo. Los previos salen desde las 07:00 a 7/1 días; congelación al siguiente despacho. SMTP ocurre después del commit, bajo reclamación durable. Una entrega incierta no se reenvía a ciegas. Una renovación vuelve obsoletos los avisos pendientes del fin anterior.

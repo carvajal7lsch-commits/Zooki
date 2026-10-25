@@ -6,6 +6,18 @@
 
 ## Ahora
 
+### M0-S — S1 revisada: aprobada (2026-10-24)
+
+- **Revisión (Claude):** ver «S1 — Revisión» en el plan M0-S. MySQL 8: 1084/9720 en verde. Sigue S2 (botón Wompi y eventos) con cliente falso; el dueño ya tiene comercio Wompi y llaves de prueba.
+
+#### Entrega de Codex
+
+- **Escribió Codex; revisa Claude (arquitecto).** S1a+S1b juntas en [`M0-S-suscripcion-pagos.md`](../specs/M0-S-suscripcion-pagos.md), «Anexo S1 — Resultado»: especificación aprobada, migración 12, servicio único de vigencia, legado, gracia, congelación, avisos y pantalla administrativa. D1–D7/D9 confirmadas en §9/§9.1; D8/D10 solo bloquean dinero real. S2 no se empieza.
+- **Datos y límites:** 65 tablas, 96 HU, 464 RE y 126 RN; las partes S2/S3/S4 siguen planificadas. Tres parámetros por clínica; constantes de plataforma para hora/reintentos/cotización. Precio inicial 89.990/899.900 solo sustituye 100.000/960.000; tarifa personalizada conservada y reportada por CLI. Legado sin fecha conserva condiciones, incluso tarifa cero. Ajuste manual con motivo/fin y auditoría, separado de pagos. RN-420 y suspensión administrativa intactas.
+- **Avisos y UI:** outbox con clave única, administradores activos verificados, SMTP después del commit y estado incierto sin reenvío ciego. `gestionar_suscripciones.php --revisar` sin escrituras/envío; solo vencimientos/avisos. `admin_suscripcion` y acceso desde Uso del plan conservando el diseño; Pagar/Renovar deshabilitado. Schedule Dokploy/Windows documentado, sin instalarlo.
+- **Verificación:** PHPUnit completo sin motor 1084/8556, 78 omitidas de motor; con MariaDB 10.4.32 y solo `zooki_test_base_v2`, 1084/9714 sin omitidas. Ajuste final de D7 en suspensión: 7 pruebas dirigidas/48 aserciones. JS completo 334/334. Migración doble, esquema previo, DDL parcial y dos trabajadores reales en InnoDB en verde. Chrome con vistas/controladores reales y SQLite: Suscripción e Inicio a 1366/390, sin desborde; pruebas de Inicio también a 1024 y cuatro veterinarios. Sintaxis PHP/JS y diff correctos. Bootstrap de pruebas alineado a Bogotá para evitar la hora repetida de XAMPP/Berlín.
+- **Pendiente:** revisión de Claude, cinco pruebas del dueño del anexo y CI/MySQL 8. PDF/Word y render nuevo del MER pendientes por decisión explícita del dueño (§9.2, sin red). Sin cambio de versión/revisiones, `.env`, base de trabajo, correos reales, Wompi, commit, push, tags ni cambio de rama.
+
 ### Inicio del administrador (HU-6.2) — revisada: aprobada (2026-10-24)
 
 - **Revisión (Claude):** ver «Inicio del administrador — Revisión» en pulido-interfaz.md. MySQL 8: 1068/9587 en verde. Dos detalles al pulido final. Sigue la prueba del dueño y M0-S S1.
@@ -17,9 +29,9 @@
 - **Verificación:** PHP sin motor 1068/8472 (74 omitidas); con MariaDB 10.4.32 y `zooki_test_base_v2`, 1068/9583 sin omitidas; JS 331/331; capturas en Chrome a 1366/1024/390. Sin subir versión ni regenerar descargas (van al cerrar la entrega).
 - **Pendiente:** revisión, prueba del dueño y commit del dueño.
 
-### Plan M0-S — revisado: aprobable con cuatro ajustes; esperando decisiones del dueño (2026-10-24)
+### Plan M0-S — aprobado con cuatro ajustes y decisiones del dueño (2026-10-24)
 
-- **Revisión (Claude):** ver §9 del plan. IVA resuelto (no responsable, precios sin IVA); parámetros simplificados; S1, S2, S3 y S4 sin mitades. Faltan D2–D7 y D9 (recomendadas como §6). S1 arranca tras integrar el Inicio del administrador.
+- **Revisión (Claude) y aprobación del dueño:** ver §9/§9.1 del plan. IVA resuelto (no responsable, precios sin IVA); parámetros simplificados; S1, S2, S3 y S4 sin mitades. D2–D7/D9 confirmadas; D8/D10 pendientes para dinero real. El Inicio ya está integrado y S1 se entrega arriba.
 
 #### Entrega de Codex
 
