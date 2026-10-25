@@ -1,6 +1,6 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **M0-S / S1 — 2026-10-24:** destino aprobado de v2.1: 96 HU, 464 RE, 126 RN y 65 tablas. S1 entrega vigencia, gracia, legado y avisos; cobro y panel financiero continúan planificados. Sin nueva revisión ni versión.
+> **M0-S / S1–S2 — 2026-10-24:** 96 HU, 464 RE, 126 RN y 65 tablas. Vigencia, avisos, botón Wompi, eventos e historial propio implementados; automático y panel financiero siguen planificados S3/S4. Sin nueva revisión ni versión.
 
 > **Revisión 3.6** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
@@ -139,7 +139,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial S1 (v2.1); pagos S2/S3 planificados | Por reestimar | v2.1 |
+| Alta | Parcial S1/S2 (v2.1); S3/S4 planificados | Por reestimar | v2.1 |
 
 > Como administrador de una clínica, quiero contratar o renovar el plan profesional, consultar mis pagos y autorizar o retirar su cobro automático mensual para conservar sus beneficios y conocer cuándo vence, sin perder datos si no renuevo.
 
@@ -150,10 +150,10 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - Profesional: 89.990 COP/mes o 899.900 COP/año, total sin IVA. Un precio nuevo no altera periodos comprados. Mes/año calendario con ancla; renovación anticipada o en gracia desde fin anterior y tras congelar desde acreditación; sin prorrateos al cambiar de ciclo.
 - La tarea programada actualiza estados y avisa por correo a todos los administradores activos verificados, a 7 y 1 días del fin y al congelar. Repetir no duplica transición ni aviso.
 - El profesional legado sin fecha conserva sus condiciones y no se cobra ni congela por una fecha inventada. Plataforma regulariza con motivo y fecha de fin, sin inventar pagos ni levantar suspensión administrativa.
-- **Planificada S2:** Pagar/Renovar abre Wompi por importe del servidor y referencia única. Solo evento firmado más consulta API concordante concede periodo una vez; la redirección no acredita. Doble clic, dos pestañas o peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Historial propio sin datos completos del medio.
+- **S2:** Pagar/Renovar abre Wompi por importe del servidor y referencia única. Solo evento firmado más consulta API concordante concede periodo una vez; la redirección no acredita. Doble clic, dos pestañas o peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Historial propio sin datos completos del medio. Una cotización vencida solo se libera tras fallo terminal confirmado; la siguiente usa tarifa vigente y conserva la evidencia anterior.
 - **Planificada S3:** fuente guardada y autorización mensual separadas; retirar detiene cargos futuros sin reducir lo pagado. Inicial/+24/+48 h, solo fallos terminales, con aviso de fallo; no reintentar cargos inciertos.
 - Cada transición se audita. **Planificada S4:** plataforma consulta pagos e incidencias sin datos clínicos; los ajustes manuales siguen separados de pagos.
-- S1 muestra Pagar/Renovar deshabilitado con «Disponible pronto»; Uso del plan enlaza aquí conservando su diseño.
+- Uso del plan enlaza aquí conservando su diseño. Si faltan credenciales, están cruzadas o los cobros están apagados, Pagar/Renovar permanece deshabilitado con explicación; la atención no depende de Wompi.
 
 **Reglas de negocio:** RN-003, RN-007, RN-008, RN-013, RN-014, RN-015, RN-016, RN-017, RN-018, RN-019, RN-420, RN-G05, RN-G13 · **Requisitos:** RF-0.5, RF-0.7 · **Dependencias:** HU-0.3, HU-0.4
 

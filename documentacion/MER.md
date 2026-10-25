@@ -1,5 +1,7 @@
 # Modelo Entidad-Relación (MER) - Zooki v2.0
 
+> **M0-S / S2 — 2026-10-24:** se utilizan las 65 tablas integradas en S1, sin DDL nuevo. Una obligación activa comparte orden y referencia entre pestañas. Al cerrar una cotización vencida con fallo terminal confirmado, sus claves locales se retiran con otra huella única; no se borran la orden, el intento ni la referencia del proveedor. Una nueva cotización conserva la versión base para detectar pagos tardíos duplicados. La evidencia de un cargo externo adicional se registra como intento/incidencia, sin emitir otra transacción. Fuentes de pago siguen vacías hasta S3.
+
 > **Carnet B — 2026-10-23:** 59 tablas. `carnet_accesos` cuenta también tokens inválidos sin guardar mascota ni token; `carnet_escaneos` conserva solo vistas válidas y ubicaciones consentidas. La IP se seudonimiza con HMAC-SHA256 y un secreto del entorno.
 
 > **Actualización de cierre M2 — 16/10/2026:** 2.0.0-alpha.4; conocimiento global con fuentes y validación veterinaria pendiente. Esquema de 52 tablas; integración del triage con agenda y urgencias pendiente de M4.

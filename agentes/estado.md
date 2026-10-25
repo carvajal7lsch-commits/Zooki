@@ -6,6 +6,17 @@
 
 ## Ahora
 
+### M0-S — S2 revisada: aprobada con tres ajustes para S3 (2026-10-24)
+
+- **Revisión (Claude):** ver «S2 — Revisión» en el plan. MySQL 8: 1105/9903 en verde. Ajustes: acreditar en línea tras el 200, textos sin jerga y fecha incluida, revisar extensiones duplicadas en Docker. Sigue la prueba en sandbox (despliegue aparte) y S3.
+
+#### Entrega de Codex
+
+- **Escribe Codex; revisa Claude (arquitecto).** Botón y eventos de S2a/S2b juntos: orden compartida por clínica/versionado, firma, inbox, GET privado, acreditación única, retorno informativo e historial propio. S1 está aprobada e integrada. Fuentes/automático y panel de plataforma siguen fuera de S2.
+- **Decisiones nuevas del dueño:** §9.3 del plan conserva una cotización fallida y vencida, cierra su obligación y permite cotizar al precio actual solo con rechazo/error confirmado; pendiente/incierto nunca libera otro cobro. El algoritmo SHA256 prevalece sobre el resultado incorrecto del ejemplo oficial, comprobado con PHP y .NET.
+- **Verificación:** PHP completo sin motor 1105/8721 (80 omitidas de motor); completo con MariaDB 10.4.32, solo `zooki_test_base_v2`, 1105/9897 sin omitidas. Ajuste final del receptor sin llave API: dirigido S1/S2 26/203 y completo sin motor posteriores; el completo con motor se había iniciado antes. JS completo 336/336. Chrome a 1366/390 con pago activo, deshabilitado e historial, sin desborde ni red externa. Dos procesos reales: una orden/intento y una concesión. Reserva sin contrato sin beneficios y lote de reintentos futuros sin tapar pagos nuevos. 21 PHP y JS con sintaxis correcta; diff correcto.
+- **Operación pendiente:** revisión de Claude, CI/MySQL 8 y cinco pruebas del dueño en sandbox separado (§9.5). URLs de eventos, variables vacías, Schedule y Windows en §9.4; sin configuración remota, llamadas reales ni acceso a `.env`/base de trabajo. D8/D10 siguen bloqueando dinero real. PDF/Word y render documental pendientes según §9.2. Sin cambios de versión, migración 12 ni Inicio; no se empieza S3.
+
 ### M0-S — S1 revisada: aprobada (2026-10-24)
 
 - **Revisión (Claude):** ver «S1 — Revisión» en el plan M0-S. MySQL 8: 1084/9720 en verde. Sigue S2 (botón Wompi y eventos) con cliente falso; el dueño ya tiene comercio Wompi y llaves de prueba.

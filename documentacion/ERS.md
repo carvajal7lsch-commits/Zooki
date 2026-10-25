@@ -1,6 +1,6 @@
 # Especificación de Requisitos de Software (ERS) — Proyecto Zooki v2
 
-> **M0-S / S1 — 2026-10-24:** 96 HU, 464 RE, 126 RN y 65 tablas de destino. RF-0.5 en S1; RF-0.7 planificado S2/S3. Sin cambio de versión ni revisión.
+> **M0-S / S1–S2 — 2026-10-24:** 96 HU, 464 RE, 126 RN y 65 tablas. RF-0.5 implementado; RF-0.7 con botón/eventos/historial propio S2, automático y plataforma pendientes S3/S4. Sin cambio de versión ni revisión.
 
 > **Revisión 3.6** · Conforme al estándar **ISO/IEC/IEEE 29148:2018** · Zooki — Sistema de gestión clínica veterinaria (arquitectura SaaS multi-inquilino) · SENA ADSO — Ficha 3142784
 
@@ -265,7 +265,7 @@ Los módulos siguen la **misma numeración en todos los documentos** ([Historias
 | RF-0.4 | Definir planes con sus límites y precios: el gratuito admite 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal; el profesional, sin límites de volumen. | Alta | Los planes existen con esos límites y son asignables a una clínica. |
 | RF-0.5 | Asignar y controlar por clínica el plan contratado y el efectivo, su vigencia y gracia parametrizada; congelar los beneficios de pago al terminar la gracia y recuperarlos al acreditar un periodo. La mora o la bajada al gratuito no ocultan ni borran datos: solo limitan nuevas altas a los cupos gratuitos, con excepción de urgencias rojas | Alta | Bordes de vigencia/gracia y gratuito efectivo sin depender de cron; suspensión administrativa intacta. |
 | RF-0.6 | Aplicar los límites del plan al operar (p. ej. máximo de mascotas y de citas/consultas por período en el plan gratuito), excepto en las urgencias 🔴, que nunca se bloquean por límite ni por mora. | Alta | Al superar el límite, el sistema impide la acción e informa el motivo; un caso 🔴 se atiende igual. |
-| RF-0.7 | Cobrar la suscripción mediante Wompi: primero pago voluntario con botón y, posteriormente, renovación automática mensual autorizada con fuente guardada; verificar y conciliar transacciones en servidor, aplicar cada periodo una sola vez y mostrar el historial al administrador y al super-administrador _Planificada S2/S3 (v2.1)._ | Alta | Evento firmado y API concordante; pago una vez y cliente falso. |
+| RF-0.7 | Cobrar la suscripción mediante Wompi: primero pago voluntario con botón y, posteriormente, renovación automática mensual autorizada con fuente guardada; verificar y conciliar transacciones en servidor, aplicar cada periodo una sola vez y mostrar el historial al administrador y al super-administrador _Parcial S2; S3/S4 planificadas (v2.1)._ | Alta | Evento firmado y API concordante; pago una vez y cliente falso. |
 
 #### 3.2.2 Módulo T — Acceso, seguridad y administración *(v1.x, con multi-inquilino)*
 

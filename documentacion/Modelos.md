@@ -1394,11 +1394,51 @@ Las marcas de C2 siguen pendientes de C5; no se mueven citas, reinician bloques/
 Los conteos de requisitos e historias no cambian por precisar estos criterios existentes.
 
 
-### 12.7 Suscripción y vigencia — Módulo 0 (S1)
+### 12.7 Suscripción, vigencia y pago voluntario — Módulo 0 (S1/S2)
 
 El servidor calcula por clínica la vigencia y gracia con la fecha actual, aunque el trabajador se retrase. Los intervalos incluyen inicio y excluyen fin. La mora no suspende administrativamente la clínica. Un profesional legado sin fecha conserva su condición hasta regularización por plataforma con motivo y vencimiento; no crea un pago. Mes/año con ancla y sin prorrateos: pago en gracia desde el fin anterior; tras congelar desde acreditación local.
 
-S1 implementa vencimiento, gracia, congelación y avisos; las ramas de pago del siguiente destino siguen **planificadas S2/S3**. El botón permanece deshabilitado.
+S1 implementa vencimiento, gracia, congelación y avisos. S2 implementa el botón con eventos verificados; cobro automático sigue **planificado S3**. Falta de configuración o cobros apagados deshabilitan el botón, sin afectar la atención.
+
+**A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar o volver no cancela ni acredita. Cotización vencida sin resultado remoto queda incierta; solo un rechazo/error confirmado permite cerrar la obligación fallida y volver a cotizar con tarifa vigente, conservando la evidencia. Las concesiones legadas sin fin requieren regularización previa.
+
+```mermaid
+flowchart TD
+  A["Administrador: Pagar o Renovar"] --> B{"Contexto, CSRF y ciclo validos?"}
+  B -- No --> X["Rechazar sin crear cargo"]
+  B -- Si --> C["Calcular tarifa; bloquear clinica\nReutilizar o reservar orden e intento unicos; commit"]
+  C --> D["Firmar configuracion; JS externo abre Widget Wompi"]
+  D --> E["Tarjeta, PSE o Nequi en Wompi"]
+  E --> F["Retorno o cierre: consultar solo estado local propio"]
+  E -. "Evento independiente" .-> G["Flujo B: verificar y conciliar"]
+  G --> F
+```
+
+**B — Evento y acreditación.** Inbox durable antes del HTTP 200; duplicados 200, firma inválida 401 y base caída 503. Huella canónica D9, whitelist sin cuerpo íntegro ni PII. La consulta privada usa host del entorno; si informa comercio se coteja con `/merchants/info`. HTTP queda fuera de transacción. La concesión y su auditoría son atómicas, con periodo único por orden. Un GET pendiente/404/caído se reanuda por `--solo=conciliacion`; el retorno nunca dispara esa consulta. Anulación, discrepancia o segundo cargo real generan incidencia conservada para S4, sin borrar vigencia ni devolver automáticamente.
+
+```mermaid
+flowchart TD
+  A["POST evento sin sesion ni CSRF"] --> B{"Tamano, esquema, entorno y checksum validos?"}
+  B -- No --> N["400, 401 o 413; sin efecto financiero"]
+  B -- Si --> C["Persistir inbox y auditoria; commit"]
+  C --> D{"Duplicado o fallo?"}
+  D -- Duplicado --> OK["200; no reaplicar"]
+  D -- Fallo --> ERR["503; no confirmar recepcion"]
+  D -- Nuevo --> ACK["200; worker reclama evento con lease y commit"]
+  ACK --> API["GET privado fuera de transaccion\nTransaccion y comercio si se informa"]
+  API --> V{"Concordancia con orden y APPROVED?"}
+  V -- "API caida o PENDING" --> RET["Conservar pendiente; conciliar despues"]
+  V -- "Fallo terminal" --> EST["Registrar y auditar sin conceder"]
+  V -- "Discrepancia o VOIDED" --> REV["Incidencia financiera para S4"]
+  V -- Si --> LOCK["Bloquear clinica; revalidar orden, version y lease"]
+  LOCK --> P{"Ya hay periodo o cargo aprobado?"}
+  P -- "Mismo pago" --> DUP["No-op; evento procesado"]
+  P -- "Otro cargo" --> REV
+  P -- No --> TX["Insertar periodo unico; actualizar vigencia y plan\nAuditar y finalizar evento; commit"]
+  TX --> FIN["Suspension administrativa intacta"]
+```
+
+**D — Vigencia y recuperación.**
 
 ```mermaid
 flowchart TD

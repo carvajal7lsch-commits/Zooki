@@ -1,6 +1,6 @@
 # M0-S — Suscripción y cobro con Wompi
 
-> Estado: **S1 entregada, pendiente de revisión** · Aprobación y ajustes vinculantes en §9/§9.1
+> Estado: **S2 entregada, pendiente de revisión** · S1 aprobada e integrada · Aprobación y ajustes vinculantes en §9/§9.1
 > Entrega: v2.1 · Fecha: 2026-10-24 · Rama comprobada: `release/v2.1.0`
 > Escribe: **Codex** · Revisa: **Claude (arquitecto)** · Aprueba, integra y despliega: dueño del producto
 
@@ -8,7 +8,7 @@
 
 **Resultado:** el administrador de una clínica podrá contratar o renovar el profesional con Wompi, ver vigencia e historial y, después de esa primera entrega, autorizar el cobro automático mensual mediante una fuente guardada. La plataforma aplicará vencimiento, gracia, congelación de beneficios y recuperación del plan sin borrar información ni impedir urgencias rojas. El super-administrador verá estados y pagos, sin entrar en datos clínicos.
 
-**Esta entrega es solo planificación.** Se escribe este archivo y la anotación pedida en `agentes/estado.md`. No se modifica código, SQL, `.env`, `.env.example` ni `documentacion/`; no se ejecutan migraciones, pruebas de negocio, llamadas a la API de pagos ni operaciones Git de escritura. Claude Code trabaja simultáneamente en el Inicio del administrador en este checkout: su diff queda fuera de esta entrega. Los textos de §2 y §4 son propuestas para trasladar después de aprobar el plan; no son todavía la especificación vigente. No se incrementa versión.
+**Registro histórico de la entrega inicial de planificación:** se escribió este archivo y la anotación pedida en `agentes/estado.md`, sin código, SQL ni cambios en `documentacion/`. Claude Code trabajaba simultáneamente en el Inicio del administrador. Las propuestas se aprobaron después en §9/§9.1 y S1 trasladó la especificación; los anexos de S1/S2 describen la implementación y su verificación actuales. No se incrementa versión en estas subetapas.
 
 ### 1.1 Decisiones confirmadas del dueño — 2026-10-24
 
@@ -363,7 +363,7 @@ Las cuatro funciones pueden correr secuencialmente en un Schedule del mismo CLI.
 
 ## 6. Riesgos y decisiones pendientes para el dueño
 
-Las recomendaciones **no están confirmadas**. Ninguna etapa dependiente empieza por silencio. Aprobar el plan no significa habilitar dinero real: D8 requiere habilitación operativa posterior.
+Esta tabla conserva las propuestas originales; **§9/§9.1 registra las decisiones aprobadas y prevalece sobre ella**. D8/D10 siguen pendientes para dinero real. Ninguna etapa dependiente empieza por silencio y aprobar el plan no habilita producción.
 
 | Decisión | Riesgo / alcance | Recomendación concreta | Antes de |
 |---|---|---|---|
@@ -432,6 +432,16 @@ Fuentes primarias Colombia; se volverán a comprobar al implementar. Los enlaces
 
 No se presupone que Wompi programe los cargos por guardar una fuente, que la referencia convierta cualquier POST repetido en seguro, ni que quitar una fuente local la elimine del proveedor. Esas diferencias se reflejan en el cliente inyectable, estados inciertos y decisiones pendientes.
 
+### 8.1 Reconsulta previa a S2 — 2026-10-24 (Codex)
+
+Se volvieron a consultar las secciones oficiales enlazadas en §8: Widget (firma, expiración, botón personalizado y eventos), Eventos (checksum y reenvíos), Transacciones (GET autenticado), Ambientes y Tokens de aceptación (`/merchants/info`). No se detectó un cambio del contrato descrito en §8. No se llamó a las APIs ni se usaron llaves reales.
+
+- **Precisión de implementación, sin cambio de contrato:** el ejemplo actual del GET de transacciones no incluye `environment` ni comercio. La procedencia se verifica mediante el host fijo y llave privada del entorno, más el entorno del evento firmado; si la respuesta incorpora entorno/comercio, también se cotejan. No se inventan campos obligatorios que el proveedor no publica.
+- **Aceptaciones:** S2 abre el Widget hospedado, que recoge las aceptaciones y el medio. El adaptador usa `/merchants/info` con `x-merchant-public-key`; no incorpora el endpoint anterior. S3 implementará fuentes/mandato propio, sin anticiparlo en S2.
+- **Cierre:** el SDK documenta `open(callback)` al finalizar, sin contrato de evento de cierre independiente. Cerrar no cancela la orden; consultar estado o volver a abrir reutiliza la misma referencia. Una cotización vencida sin resultado remoto queda incierta, sin crear otro intento a ciegas.
+- **CSP:** revisar cabeceras existentes antes de añadir orígenes; el único script externo añadido es `https://checkout.wompi.co/widget.js`. Pruebas de navegador interceptan ese recurso con un SDK falso y bloquean toda red externa.
+- **Diferencia detectada al comprobar el vector oficial:** [Eventos, pasos 3/4](https://docs.wompi.co/docs/colombia/eventos/#paso-3-concatena-tu-secreto) publica una cadena cuyo SHA256 real es `5a18ec5e8fdb7df463e9f94774cba8f583ba21bd04a09ceff2ea68a4bc0aefbe`, distinto al resultado `3476dda5…` impreso en esa misma guía. Se comprobó con PHP y una implementación independiente de .NET. No se copia ese resultado erróneo como firma válida; se sigue el algoritmo de concatenación descrito. **El dueño confirmó este criterio durante S2** (ver §9.3).
+
 ## 9. Revisión del arquitecto — 2026-10-24
 
 **Revisó:** Claude (arquitecto). **Resultado: plan aprobable con cuatro ajustes**; falta la confirmación del dueño en D2–D7 y D9 (D8 y D10 bloquean solo la activación con dinero real).
@@ -454,6 +464,38 @@ No se presupone que Wompi programe los cargos por guardar una fuente, que la ref
 ### 9.2 Decisión del dueño durante S1 — 2026-10-24
 
 - **Sin red:** se dejan pendientes las descargas PDF/Word del portal. El exportador actual carga marked/Mermaid desde CDN; el dueño confirmó conservar «sin llamadas de red», en lugar de autorizar esas dependencias. No se modifica el manifiesto para aparentar una exportación. Las fuentes Markdown, MER y drawDB sí forman parte de S1; no se sube versión ni revisión documental. Se conserva como pendiente operativo para el cierre, junto con la renderización nueva del MER cuando estén disponibles las dependencias locales o se autorice la exportación.
+
+### 9.3 Decisión del dueño durante S2 — 2026-10-24
+
+- Ante rechazo/error **confirmado por GET tras evento verificado**, si ya venció la cotización de 15 minutos, conservar orden/intento como evidencia, cerrar esa obligación fallida y permitir una nueva cotización con tarifa vigente. Mientras exista PENDING, incertidumbre o ausencia de resultado confirmado, no crear otro intento ni otra orden. Dentro de la cotización, el reintento de un fallo terminal conserva precio/orden y tiene referencia nueva. La exclusión por clínica impide que dos peticiones abran dos renovaciones. Cerrar/volver del Widget nunca equivale a un rechazo.
+- El dueño aprueba aplicar el algoritmo SHA256 documentado y anotar el resultado incorrecto del ejemplo oficial de eventos (§8.1). Los vectores se verifican independientemente; nunca se acepta una firma por coincidir con el ejemplo erróneo.
+
+### 9.4 Operación de S2 para el dueño — sin configurar servicios externos
+
+En **cada despliegue**, usar `APP_URL` como URL pública absoluta de esa instalación (la misma base de los correos, incluyendo su subcarpeta si existe). Zooki agrega `index.php` cuando falta. Las URLs que se registran en el panel de comercios Wompi son:
+
+| Ambiente del panel Wompi | URL de eventos de Zooki |
+|---|---|
+| Sandbox | `https://TU-DESPLIEGUE-DE-PRUEBAS/index.php?action=wompi_eventos_test` |
+| Producción | `https://TU-DESPLIEGUE-PRODUCTIVO/index.php?action=wompi_eventos_prod` |
+
+Los nombres anteriores son marcadores, no dominios configurados. Si `APP_URL` ya termina en `index.php`, solo agregar la consulta `?action=...`. Nunca registrar sandbox sobre la base de producción. `WOMPI_ENTORNO` admite `sandbox` o `produccion`; llave pública/privada y secretos deben corresponder todos al mismo entorno (`test`/`prod`). Los siete nombres están vacíos en `.env.example`: apagados por defecto. `WOMPI_COBROS_HABILITADOS=1` permite el botón con configuración completa; `WOMPI_AUTOMATICOS_HABILITADOS` no tiene efecto en S2. Desactivar nuevos cobros no detiene la recepción ni conciliación de los ya iniciados.
+
+**Sandbox manual:** crear aparte un despliegue HTTPS con base y credenciales propias, datos sintéticos y llaves test; configurar allí la URL test. Instalar la misma imagen y sus migraciones de manera normal, sin apuntar jamás a la base productiva. El dueño configura llaves/secretos y eventos desde Dokploy/Wompi; el agente no lo hace. Usar los medios de prueba publicados por Wompi, nunca datos de tarjeta en formularios de Zooki. Las suites automáticas usan siempre cliente/SDK falsos y no sustituyen esta comprobación manual del proveedor. D8/D10 y aprobación operativa siguen bloqueando dinero real.
+
+**Conciliación:** el Schedule existente cada cinco minutos corre el mismo `scripts/gestionar_suscripciones.php`; ahora también atiende el inbox. `--solo=conciliacion` hace únicamente GET de eventos pendientes del entorno configurado; `--revisar --solo=conciliacion` solo cuenta, sin API, escritura ni correo. No instalar otro Schedule duplicado. La tarea Windows conserva programa, directorio inicial y frecuencia de §5.5. Una reserva vencida sin id remoto no habilita un nuevo cobro: requiere evento tardío o revisión operativa, sin inventar búsqueda por referencia. Las incidencias quedan auditadas y persistidas para S4; S2 no construye ese panel.
+
+El receptor solo requiere entorno y secreto de eventos válidos: la ausencia de llave privada/integridad o el apagado del botón no impiden guardar evidencia auténtica. La consulta API y la acreditación esperan configuración de servidor válida; no se acredita mientras falte. Sin secreto de eventos no se puede verificar autenticidad y se responde 503.
+
+**CSP y producción:** no se encontró una cabecera Content-Security-Policy en el front controller, layouts, configuración o Apache del repositorio; no se introduce una política global que cambie otras pantallas. El único script añadido es `https://checkout.wompi.co/widget.js`, cargado por `src` solo al poder pagar. Si el proxy impone CSP externa, el dueño debe comprobarla en sandbox: permitir ese script y el frame `https://checkout.wompi.co`, sin abrir comodines globales. No se inspeccionó ni cambió la configuración remota. El adaptador servidor usa cURL con TLS, hosts fijos, límite de respuesta y sin redirecciones; el Dockerfile instala la extensión cURL.
+
+### 9.5 Pruebas del dueño en sandbox — pendientes, sin tocar producción
+
+1. [ ] En el despliegue HTTPS de pruebas con base propia, ADMIN a 1366/390: elegir mes/año, ver importe correcto y abrir Widget. Con cobros apagados/configuración incompleta, queda deshabilitado con explicación; Inicio y atención continúan. Confirmar tarjeta/PSE/Nequi habilitados por Wompi para ese comercio.
+2. [ ] Abrir dos pestañas de la misma clínica y pagar con doble clic: ambas deben conservar la misma orden/referencia. Cerrar la ventana y volver no concede periodo ni habilita otra obligación. Cambiar mensual/anual con una orden pendiente no cambia su importe; se informa el ciclo realmente reservado.
+3. [ ] Aprobar con un medio oficial de prueba: antes de evento/conciliación el retorno solo informa; tras el Schedule aparece un periodo y el historial propio, una sola vez. Repetir el evento no duplica. Otro ADMIN de otra clínica no ve esa referencia/historial.
+4. [ ] Enviar desde sandbox un rechazo confirmado y volver a intentar: dentro de cotización conserva orden/precio con referencia nueva; tras vencer la cotización crea otra al precio vigente conservando la fallida. PENDING o falta de resultado impiden nuevo cobro. En la misma instalación sandbox, probar ese evento contra la acción `wompi_eventos_prod`: se rechaza por entorno. No cambiar llaves ni contactar el despliegue productivo.
+5. [ ] Usar estados sintéticos vigente/gracia/congelada y cambio mensual→anual: fechas D2/D3, sin perder saldo ni prorratear. Pago recibido después de suspensión administrativa queda registrado sin reactivar la clínica. Si falla la API, el evento queda pendiente y `--solo=conciliacion` lo retoma al recuperarla. No habilitar dinero real sin D8/D10 y aprobación operativa.
 
 ## Anexo S1 — Resultado (2026-10-24)
 
@@ -522,3 +564,45 @@ No se presupone que Wompi programe los cargos por guardar una fuente, que la ref
   - `gestionar_suscripciones.php --revisar` sin escrituras.
   - Capturas a 1366 y 390 sin desborde.
 - **Menor, no bloquea:** en las filas legadas `estado_cobro` queda `sin_vigencia` aunque el servicio calcula `al_dia`. Ningún lector usa esa columna, pero conviene que la migración o la regularización la dejen coherente, o documentar que en el legado no se materializa.
+
+## Anexo S2 — Resultado (2026-10-24)
+
+**Escribió: Codex. Revisa: Claude (arquitecto). Estado: S2 entregada, pendiente de revisión.** S2a/S2b juntas; S1 aprobada e integrada. Sin iniciar S3/S4, subir versión ni modificar la migración 12.
+
+Se implementaron `ConfiguracionWompi`, `FirmaWompi`, interfaz/cliente HTTP GET con cURL en Docker; `PagoSuscripcion`, `EventoWompi`, `ConciliadorPago` y receptor público sin sesión/CSRF. Suscripción permite elegir ciclo, pagar y consultar historial propio; retorno solo local. Security/rutas, CLI `--solo=conciliacion`, `.env.example` y documentación sincronizados. La reserva comparte obligación/referencia entre pestañas; no concede beneficios si faltaba contrato. Inbox durable antes del 200; acreditación/auditoría/evento atómicos bajo bloqueo de clínica, sin HTTP dentro. Caducidad incierta no libera otro cobro. Las decisiones nuevas y la diferencia del ejemplo oficial están en §8.1/§9.3.
+
+| RE / regla | Prueba y evidencia |
+|---|---|
+| .4/.8/.10/.11/.17; RN-019/G13 | `FirmaWompiTest`, `PagoSuscripcionTest`: vectores PHP/.NET, configuración cerrada, secretos ausentes, rol/CSRF/dos clínicas, monto manipulado ignorado, historial y retorno falso. `Suscripcion.test.cjs`: primer clic, doble clic, error, cierre y SDK falso. |
+| .12/.13; RN-015 | Propiedades variables/orden, checksum discordante, id firmado, entorno cruzado, 401/413/503, inbox repetido; GET privado y `/merchants/info` con transporte falso, API caída/404, referencia/id/moneda/importe/comercio discordantes. |
+| .14/.15; RN-G05 | Dos pruebas `testS2...` de `BaseV2MysqlTest`: dos procesos con espera InnoDB observada, una orden/intento y un periodo. Duplicados/desordenados, evento antes de respuesta, auditoría fallida/recuperación y lote de 100 reintentos futuros sin tapar pagos nuevos. |
+| .1/.7/.16/.23/.24; D2/D3/D5 | Precio comprado inmutable, gracia/tras congelar, ancla 31 y mensual→anual, reserva sin contrato sin beneficios; suspensión intacta, VOIDED y dos cargos reales preservados como incidencias, sin segundo periodo. |
+
+**Verificación:** PHPUnit completo sin motor: **1105 pruebas / 8721 aserciones**, 80 omitidas de motor; completo con **MariaDB 10.4.32**, solo `zooki_test_base_v2`: **1105 / 9897**, ninguna omitida (22 min 45 s). La pasada con motor empezó antes del ajuste final que permite recibir eventos sin llave API; ese ajuste se comprobó después en las **26 pruebas / 203 aserciones** dirigidas S1/S2 y en el completo sin motor. JS completo **336/336**, sin omitidas. Chrome con controlador/layout reales, SQLite y red externa bloqueada: activo, deshabilitado e historial a **1366/390**, sin desborde; capturas locales `scratch/s2-suscripcion-*.png` revisadas. Sintaxis de 21 PHP y JS, y diff correctos.
+
+**Pendiente:** revisión independiente de Claude, CI/MySQL 8, cinco pruebas manuales del dueño en sandbox (§9.5), D8/D10 antes de dinero real. URLs, variables y operación en §9.4; ningún servicio externo fue configurado, no se accedió a `.env` ni a la base de trabajo, no hubo API/SMTP reales ni commits/push. Fuentes/automático y panel financiero siguen S3/S4; PDF/Word/render documental pendientes según §9.2. Los 36 archivos propios están enumerados en `scratch/s2-archivos.txt` (manifiesto local, no se integra).
+
+## S2 — Revisión (2026-10-24)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada con tres ajustes para el inicio de S3.**
+
+- **Verificado:**
+  - Firma de integridad SHA256 en servidor.
+  - Checksum de eventos según `signature.properties` + timestamp + secreto, comparado con `hash_equals`; el id de la transacción debe estar firmado; cuerpo limitado a 64 KB.
+  - Rutas `test` y `prod` separadas, y el entorno del evento debe coincidir con la configuración.
+  - Inbox durable antes del 200, con duplicados idempotentes.
+  - GET autenticado con llave privada fuera de la transacción: cURL con TLS verificado, hosts fijos, sin redirecciones y respuesta limitada.
+  - El beneficiario se localiza solo por la referencia del GET.
+  - Acreditación única bajo el bloqueo de la clínica, con comprobación de versión del periodo.
+  - VOIDED, duplicados y discrepancias quedan como incidencia.
+  - Configuración cerrada por defecto y llaves con prefijo del entorno.
+  - La reserva comparte la obligación entre clics y pestañas (requisito del dueño).
+- **Pruebas del revisor:**
+  - PHPUnit sin motor: 1105 (80 omitidas de motor).
+  - **PHPUnit completo con MySQL 8: 1105 pruebas, 9903 aserciones, sin fallos.**
+  - `Suscripcion.test.cjs` 4/4.
+  - Pantalla a 1366 con botón activo, ciclos mensual y anual e historial vacío.
+- **Ajustes (entran en S3, punto 0):**
+  1. **Acreditación inmediata.** Hoy el periodo solo se acredita cuando corre el Schedule cada 5 minutos: sin el Schedule configurado, un pago aprobado nunca activa el plan. Tras guardar el evento y responder 200 (`ignore_user_abort` + `flush`), el receptor debe intentar `ConciliadorPago::procesar` de ese mismo evento. El Schedule queda como respaldo. La concurrencia ya la cubren la reclamación con lease y el bloqueo de la clínica.
+  2. **Textos para el administrador.** Cambiar «El pago se confirma mediante un evento verificado, nunca por el retorno» por un texto sin jerga, por ejemplo «Tu plan se activa en cuanto Wompi confirme el pago; puede tardar unos minutos». Mostrar el fin del periodo como el último día incluido (25/10/2026) y no como 26/10 00:00. Lo mismo aplica a «Congelación sin renovar».
+  3. **Dockerfile.** `php:8.2-apache` ya trae cURL y mbstring compilados. Revisar en el log del primer arranque si aparece «Module "curl" is already loaded» (o «mbstring»); si aparece, quitar esas extensiones de `docker-php-ext-install`.
