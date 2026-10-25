@@ -39,3 +39,13 @@ PATH=/usr/local/bin:/usr/bin:/bin
 
 # D2/D3: altas de personal y clínicas pendientes vencidas, preservando otras cuentas.
 0 * * * * cd /RUTA_ZOOKI && php scripts/limpiar_cuentas_pendientes.php >> logs/cuentas_pendientes.log 2>&1
+
+# M0-S S1 / RN-007/017: vencimientos, gracia y avisos. Nunca cobra en S1.
+# Dokploy: Schedule del servicio web, cada cinco minutos, TZ America/Bogota:
+# php /var/www/html/Zooki/scripts/gestionar_suscripciones.php
+# El contenedor no instala cron. No duplicar con otro Schedule para este CLI.
+# Windows: Programa C:\xampp\php\php.exe; argumento ruta absoluta a
+# scripts\gestionar_suscripciones.php; iniciar en el repo; repetir cada 5 minutos;
+# no iniciar otra instancia. --revisar no escribe ni envía; --solo=vencimientos
+# o --solo=avisos limita el trabajo. SMTP siempre después del commit.
+*/5 * * * * cd /RUTA_ZOOKI && php scripts/gestionar_suscripciones.php >> logs/suscripciones.log 2>&1

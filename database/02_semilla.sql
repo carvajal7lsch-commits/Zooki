@@ -29,7 +29,7 @@ INSERT IGNORE INTO `roles` (`id_rol`, `nombre_rol`) VALUES
 -- Planes (RN-003, RN-008). NULL en un límite = sin límite.
 INSERT IGNORE INTO `planes` (`id_plan`, `nombre`, `precio_mensual`, `precio_anual`, `limite_mascotas`, `limite_citas_mes`, `limite_personal`, `estado`) VALUES
 (1, 'Gratuito', 0, NULL, 50, 100, 2, 1),
-(2, 'Profesional', 100000, 960000, NULL, NULL, NULL, 1);
+(2, 'Profesional', 89990, 899900, NULL, NULL, NULL, 1);
 
 -- Especies (sin la especie de prueba «PAN», D-4).
 INSERT IGNORE INTO `especies` (`id_especie`, `nombre_especie`) VALUES

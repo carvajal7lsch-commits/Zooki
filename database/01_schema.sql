@@ -2,7 +2,7 @@
 -- Zooki v2 — Esquema ejecutable de la base de datos (plan M0, etapa B).
 --
 -- Base limpia: la v2 no migra datos de la v1, que eran pruebas (plan M0, §6).
--- Este archivo crea las 58 tablas del MER (documentacion/MER.md); el diagrama
+-- Este archivo crea las 65 tablas del MER (documentacion/MER.md); el diagrama
 -- para drawDB está en database/modelo/drawdb_schema_v2.sql.
 --
 -- Cómo se carga:
@@ -41,6 +41,9 @@ CREATE TABLE `planes` (
 
 CREATE TABLE `clinicas` (
   `id_clinica` INT NOT NULL AUTO_INCREMENT,
+  `suscripcion_gracia_dias` INT NOT NULL DEFAULT 3,
+  `aviso_vencimiento_1_dias` INT NOT NULL DEFAULT 7,
+  `aviso_vencimiento_2_dias` INT NOT NULL DEFAULT 1,
   `nombre` VARCHAR(150) NOT NULL,
   `nit` VARCHAR(15) NOT NULL,
   `direccion` VARCHAR(255) DEFAULT NULL,
@@ -65,6 +68,17 @@ CREATE TABLE `clinicas` (
 
 CREATE TABLE `suscripciones` (
   `id_suscripcion` INT NOT NULL AUTO_INCREMENT,
+  `gestion_cobro` ENUM('legado','gestionada') NOT NULL DEFAULT 'legado',
+  `periodo_inicio` DATETIME DEFAULT NULL,
+  `periodo_fin` DATETIME DEFAULT NULL,
+  `estado_cobro` ENUM('sin_vigencia','al_dia','gracia','congelada') NOT NULL DEFAULT 'sin_vigencia',
+  `version_periodo` INT NOT NULL DEFAULT 0,
+  `cobro_automatico` TINYINT NOT NULL DEFAULT 0,
+  `id_fuente_activa` BIGINT DEFAULT NULL,
+  `autorizado_por` INT DEFAULT NULL,
+  `autorizado_en` DATETIME DEFAULT NULL,
+  `retirado_en` DATETIME DEFAULT NULL,
+  `cambio_ciclo_siguiente` ENUM('mensual','anual') DEFAULT NULL,
   `id_clinica` INT NOT NULL,
   `id_plan` INT NOT NULL,
   `estado` ENUM('activa','suspendida','cancelada') NOT NULL DEFAULT 'activa',
@@ -1148,3 +1162,165 @@ ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_grafo` CHECK (f
 ALTER TABLE `solicitudes_agenda` ADD CONSTRAINT `ck_m4_solicitud_clinica` CHECK (fuente_nivel IS NULL OR fuente_nivel <> 'clinico_presencial' OR (nivel_aprobado IS NOT NULL AND nivel_aprobado = 'rojo' AND id_revisor IS NOT NULL AND motivo_revision IS NOT NULL));
 ALTER TABLE `eventos_agenda` ADD CONSTRAINT `ck_m4_evento_recurso` CHECK (id_cita IS NOT NULL OR id_solicitud IS NOT NULL);
 ALTER TABLE `eventos_agenda` ADD CONSTRAINT `ck_m4_evento_destino` CHECK ((id_destinatario IS NULL AND id_rol_destino IS NOT NULL) OR (id_destinatario IS NOT NULL AND id_rol_destino IS NULL));
+
+-- M0-S S1: estructuras futuras vacías.
+CREATE TABLE fuentes_pago (
+ id_fuente BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_clinica INT NOT NULL,
+ entorno ENUM('test','prod') NOT NULL,
+ id_fuente_wompi VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ tipo ENUM('CARD','NEQUI') NOT NULL,
+ marca VARCHAR(30) DEFAULT NULL,
+ ultimos_cuatro CHAR(4) DEFAULT NULL,
+ estado ENUM('pendiente','disponible','retirada','error') NOT NULL DEFAULT 'pendiente',
+ creada_por INT NOT NULL,
+ creada_en DATETIME NOT NULL,
+ retirada_en DATETIME DEFAULT NULL,
+ consentida_en DATETIME DEFAULT NULL,
+ version_contratos VARCHAR(128) DEFAULT NULL,
+ contratos_json JSON DEFAULT NULL,
+ version_autorizacion VARCHAR(128) DEFAULT NULL,
+ importe_mensual_autorizado_centavos BIGINT DEFAULT NULL,
+ UNIQUE KEY uq_fuente_externa (entorno,id_fuente_wompi),
+ KEY idx_fuente_clinica (id_clinica,estado),
+ CONSTRAINT fk_fuente_clinica FOREIGN KEY (id_clinica) REFERENCES clinicas (id_clinica),
+ CONSTRAINT fk_fuente_actor FOREIGN KEY (creada_por) REFERENCES usuarios (id_usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE pagos_suscripcion (
+ id_pago BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_clinica INT NOT NULL,
+ id_suscripcion INT NOT NULL,
+ id_plan INT NOT NULL,
+ clave_obligacion CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ version_periodo_base INT NOT NULL,
+ ciclo ENUM('mensual','anual') NOT NULL,
+ moneda CHAR(3) NOT NULL DEFAULT 'COP',
+ subtotal_centavos BIGINT NOT NULL,
+ impuesto_centavos BIGINT NOT NULL DEFAULT 0,
+ total_centavos BIGINT NOT NULL,
+ tarifa_version VARCHAR(50) NOT NULL,
+ clave_operacion CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ cotizacion_hasta DATETIME NOT NULL,
+ estado ENUM('pendiente','confirmado','cancelado','revision') NOT NULL DEFAULT 'pendiente',
+ proximo_intento DATETIME DEFAULT NULL,
+ id_usuario_solicitante INT DEFAULT NULL,
+ creado_en DATETIME NOT NULL,
+ confirmado_en DATETIME DEFAULT NULL,
+ UNIQUE KEY uq_pago_obligacion (clave_obligacion),
+ UNIQUE KEY uq_pago_operacion (id_clinica,clave_operacion),
+ KEY idx_pago_clinica (id_clinica,creado_en),
+ KEY idx_pago_proximo (estado,proximo_intento),
+ CONSTRAINT fk_pago_clinica FOREIGN KEY (id_clinica) REFERENCES clinicas (id_clinica),
+ CONSTRAINT fk_pago_suscripcion FOREIGN KEY (id_suscripcion) REFERENCES suscripciones (id_suscripcion),
+ CONSTRAINT fk_pago_plan FOREIGN KEY (id_plan) REFERENCES planes (id_plan),
+ CONSTRAINT fk_pago_actor FOREIGN KEY (id_usuario_solicitante) REFERENCES usuarios (id_usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE intentos_pago (
+ id_intento BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_pago BIGINT NOT NULL,
+ numero INT NOT NULL,
+ entorno ENUM('test','prod') NOT NULL,
+ referencia VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ id_transaccion_wompi VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ id_fuente BIGINT DEFAULT NULL,
+ origen ENUM('boton','automatico') NOT NULL,
+ estado ENUM('creado','enviando','pendiente','aprobado','declinado','error','anulado','incierto') NOT NULL DEFAULT 'creado',
+ codigo_error VARCHAR(80) DEFAULT NULL,
+ creado_en DATETIME NOT NULL,
+ enviado_en DATETIME DEFAULT NULL,
+ consultado_en DATETIME DEFAULT NULL,
+ lease_token CHAR(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ lease_hasta DATETIME DEFAULT NULL,
+ UNIQUE KEY uq_intento_numero (id_pago,numero),
+ UNIQUE KEY uq_intento_referencia (entorno,referencia),
+ UNIQUE KEY uq_intento_transaccion (entorno,id_transaccion_wompi),
+ KEY idx_intento_estado (estado,lease_hasta),
+ CONSTRAINT fk_intento_pago FOREIGN KEY (id_pago) REFERENCES pagos_suscripcion (id_pago),
+ CONSTRAINT fk_intento_fuente FOREIGN KEY (id_fuente) REFERENCES fuentes_pago (id_fuente)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE wompi_eventos (
+ id_evento BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ clave_evento CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ id_evento_proveedor VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ entorno ENUM('test','prod') NOT NULL,
+ tipo VARCHAR(80) NOT NULL,
+ id_transaccion_wompi VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ timestamp_proveedor BIGINT NOT NULL,
+ checksum CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ huella_datos_firmados CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ datos_minimos JSON DEFAULT NULL,
+ id_intento BIGINT DEFAULT NULL,
+ estado ENUM('pendiente','procesando','procesado','ignorado','error','revision') NOT NULL DEFAULT 'pendiente',
+ recibido_en DATETIME NOT NULL,
+ procesado_en DATETIME DEFAULT NULL,
+ lease_token CHAR(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ lease_hasta DATETIME DEFAULT NULL,
+ intentos_proceso INT NOT NULL DEFAULT 0,
+ proxima_revision DATETIME DEFAULT NULL,
+ codigo_error VARCHAR(80) DEFAULT NULL,
+ UNIQUE KEY uq_wompi_evento (entorno,clave_evento),
+ KEY idx_wompi_transaccion (entorno,id_transaccion_wompi),
+ KEY idx_wompi_revision (estado,proxima_revision),
+ CONSTRAINT fk_evento_intento FOREIGN KEY (id_intento) REFERENCES intentos_pago (id_intento)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE suscripcion_periodos (
+ id_periodo BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_clinica INT NOT NULL,
+ id_suscripcion INT NOT NULL,
+ id_plan INT NOT NULL,
+ id_pago BIGINT DEFAULT NULL,
+ origen ENUM('wompi','administrativo','legado') NOT NULL,
+ ciclo ENUM('mensual','anual') NOT NULL,
+ inicio DATETIME NOT NULL,
+ fin DATETIME NOT NULL,
+ dia_ancla INT NOT NULL,
+ mes_ancla INT NOT NULL,
+ hora_ancla TIME NOT NULL,
+ total_centavos BIGINT DEFAULT NULL,
+ moneda CHAR(3) NOT NULL DEFAULT 'COP',
+ creado_en DATETIME NOT NULL,
+ id_usuario_actor INT DEFAULT NULL,
+ motivo TEXT DEFAULT NULL,
+ UNIQUE KEY uq_periodo_pago (id_pago),
+ KEY idx_periodo_suscripcion (id_suscripcion,inicio,fin),
+ KEY idx_periodo_clinica (id_clinica,fin),
+ CONSTRAINT fk_periodo_clinica FOREIGN KEY (id_clinica) REFERENCES clinicas (id_clinica),
+ CONSTRAINT fk_periodo_suscripcion FOREIGN KEY (id_suscripcion) REFERENCES suscripciones (id_suscripcion),
+ CONSTRAINT fk_periodo_plan FOREIGN KEY (id_plan) REFERENCES planes (id_plan),
+ CONSTRAINT fk_periodo_pago FOREIGN KEY (id_pago) REFERENCES pagos_suscripcion (id_pago),
+ CONSTRAINT fk_periodo_actor FOREIGN KEY (id_usuario_actor) REFERENCES usuarios (id_usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE avisos_suscripcion (
+ id_aviso BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_clinica INT NOT NULL,
+ id_suscripcion INT NOT NULL,
+ id_pago BIGINT DEFAULT NULL,
+ id_intento BIGINT DEFAULT NULL,
+ id_usuario_destinatario INT NOT NULL,
+ tipo ENUM('vence_7','vence_1','congelada','cobro_fallido') NOT NULL,
+ clave_aviso CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ vencimiento_objetivo DATETIME NOT NULL,
+ programado_en DATETIME NOT NULL,
+ estado ENUM('pendiente','reclamado','enviado','error','incierto','obsoleto') NOT NULL DEFAULT 'pendiente',
+ id_notificacion INT DEFAULT NULL,
+ lease_token CHAR(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ lease_hasta DATETIME DEFAULT NULL,
+ intentos INT NOT NULL DEFAULT 0,
+ enviado_en DATETIME DEFAULT NULL,
+ UNIQUE KEY uq_aviso_suscripcion (clave_aviso),
+ KEY idx_aviso_programado (estado,programado_en),
+ KEY idx_aviso_clinica (id_clinica,programado_en),
+ CONSTRAINT fk_aviso_clinica FOREIGN KEY (id_clinica) REFERENCES clinicas (id_clinica),
+ CONSTRAINT fk_aviso_suscripcion FOREIGN KEY (id_suscripcion) REFERENCES suscripciones (id_suscripcion),
+ CONSTRAINT fk_aviso_pago FOREIGN KEY (id_pago) REFERENCES pagos_suscripcion (id_pago),
+ CONSTRAINT fk_aviso_intento FOREIGN KEY (id_intento) REFERENCES intentos_pago (id_intento),
+ CONSTRAINT fk_aviso_usuario FOREIGN KEY (id_usuario_destinatario) REFERENCES usuarios (id_usuario),
+ CONSTRAINT fk_aviso_notificacion FOREIGN KEY (id_notificacion) REFERENCES notificaciones (id_notificacion)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+ALTER TABLE suscripciones ADD CONSTRAINT fk_suscripcion_fuente FOREIGN KEY (id_fuente_activa) REFERENCES fuentes_pago (id_fuente);
+ALTER TABLE suscripciones ADD CONSTRAINT fk_suscripcion_autor FOREIGN KEY (autorizado_por) REFERENCES usuarios (id_usuario);

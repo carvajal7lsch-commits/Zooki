@@ -189,6 +189,11 @@ switch ($action) {
         $controller->cambiarPasswordAjax();
         break;
 
+    case "admin_suscripcion":
+        require_once '../controllers/SuscripcionController.php';
+        (new SuscripcionController((new Database())->getConnection()))->vista();
+        break;
+
     case "admin_configuracion":
         require_once '../controllers/ConfiguracionClinicaController.php';
         (new ConfiguracionClinicaController())->vista();

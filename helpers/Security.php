@@ -351,7 +351,7 @@ class Security {
             'admin_panel', 'admin_usuarios', 'admin_citas',
             // HU-6.2 (RE-6.2.8, RE-6.2.9): agenda por veterinario y calendario del Inicio; solo lectura.
             'panel_admin_dia_ajax',
-            'admin_auditoria', 'admin_configuracion',
+            'admin_auditoria', 'admin_configuracion', 'admin_suscripcion',
             'registrar_usuario_ajax', 'actualizar_usuario_ajax',
             'get_usuario_ajax', 'cambiar_estado_usuario_ajax',
             'resetear_password_usuario_ajax',

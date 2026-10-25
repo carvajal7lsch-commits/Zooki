@@ -1,0 +1,23 @@
+.suscripcion { max-width: 1050px; margin: 0 auto; color: #183b56; }
+.suscripcion__cabecera { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.suscripcion__cabecera h1 { margin: 4px 0; font-size: 28px; }
+.suscripcion__contexto, .suscripcion__ayuda { color: #62788c; line-height: 1.6; }
+.suscripcion__volver { color: #146b9b; text-decoration: none; }
+.suscripcion__tarjetas { display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; }
+.suscripcion__tarjeta { background: #fff; border: 1px solid #e3eaf1; border-radius: 18px; padding: 26px; min-width: 0; overflow-wrap: anywhere; }
+.suscripcion__tarjeta h2 { margin: 0 0 22px; font-size: 20px; }
+.suscripcion__tarjeta p { line-height: 1.6; }
+.suscripcion__datos { margin: 0; }
+.suscripcion__datos div { display: flex; justify-content: space-between; gap: 18px; padding: 11px 0; border-bottom: 1px solid #edf2f7; }
+.suscripcion__datos dt { color: #62788c; }
+.suscripcion__datos dd { margin: 0; text-align: right; font-weight: 600; }
+.suscripcion__nota { padding: 14px; border-radius: 10px; background: #fff6df; color: #765500; }
+.suscripcion__precio { font-size: 26px; font-weight: 700; }
+.suscripcion__precio span { font-size: 15px; font-weight: 400; }
+.suscripcion__pagar { display: block; width: 100%; padding: 13px; border: 0; border-radius: 10px; background: #dce5ed; color: #53697b; font: inherit; cursor: not-allowed; margin-top: 25px; }
+@media (max-width: 767px) {
+    .suscripcion__tarjetas { grid-template-columns: 1fr; gap: 16px; }
+    .suscripcion__cabecera { align-items: flex-start; flex-direction: column; gap: 10px; }
+    .suscripcion__tarjeta { padding: 20px; }
+    .suscripcion__datos div { gap: 10px; }
+}

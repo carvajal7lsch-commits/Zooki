@@ -22,6 +22,155 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testS1CliRealRevisarNoModificaNiEnviaYNoAdmiteCobros(): void
+    {
+        $this->prepararHistoriaClinica();
+        $antes = $this->db->query('SELECT * FROM suscripciones ORDER BY id_suscripcion')->fetchAll(PDO::FETCH_ASSOC);
+        $auditoria = $this->contar('auditoria_sistema');
+        $correo = $this->contar('notificaciones');
+        foreach ([['--revisar','--solo=avisos'],['--solo=cobros']] as $argumentos) {
+            $proceso = proc_open(array_merge([PHP_BINARY, __DIR__ . '/../../scripts/gestionar_suscripciones.php'], $argumentos), [0 => ['pipe','r'], 1 => ['pipe','w'], 2 => ['pipe','w']], $tuberias);
+            $this->assertIsResource($proceso);
+            fclose($tuberias[0]);
+            $salida = stream_get_contents($tuberias[1]);
+            $error = stream_get_contents($tuberias[2]);
+            fclose($tuberias[1]);
+            fclose($tuberias[2]);
+            $codigo = proc_close($proceso);
+            if (in_array('--revisar', $argumentos, true)) {
+                $this->assertSame(0, $codigo, $error);
+                $r = json_decode($salida, true, 64, JSON_THROW_ON_ERROR);
+                $this->assertSame(0, $r['enviados']);
+                $this->assertSame(0, $r['transiciones']);
+                $this->assertNotEmpty($r['revision']);
+            } else {
+                $this->assertSame(1, $codigo);
+                $this->assertStringContainsString('S1 no admite cobros', $error);
+            }
+        }
+        $this->assertSame($antes, $this->db->query('SELECT * FROM suscripciones ORDER BY id_suscripcion')->fetchAll(PDO::FETCH_ASSOC));
+        $this->assertSame($auditoria, $this->contar('auditoria_sistema'));
+        $this->assertSame($correo, $this->contar('notificaciones'));
+    }
+
+    public function testS1MigracionDesdeElEsquemaAnteriorConDatos(): void
+    {
+        $sql = file_get_contents(self::DATABASE . '/01_schema.sql');
+        $fin = strpos($sql, '-- M0-S S1: estructuras futuras vacías.');
+        $this->assertNotFalse($fin);
+        $sql = substr($sql, 0, $fin);
+        foreach (['suscripcion_gracia_dias','aviso_vencimiento_1_dias','aviso_vencimiento_2_dias','gestion_cobro','periodo_inicio','periodo_fin','estado_cobro','version_periodo','cobro_automatico','id_fuente_activa','autorizado_por','autorizado_en','retirado_en','cambio_ciclo_siguiente'] as $columna) {
+            $sql = preg_replace('/^  `' . $columna . '`[^\r\n]*\r?\n/m', '', $sql);
+        }
+        $st = $this->db->query($sql);
+        while ($st->nextRowset()) {
+        }
+        $st->closeCursor();
+        $this->cargar('02_semilla.sql');
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        DosClinicas::poblar($this->db);
+        $this->db->exec("UPDATE suscripciones SET fecha_fin='2026-10-24' WHERE id_clinica=1");
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->db->exec('UPDATE clinicas SET suscripcion_gracia_dias=5 WHERE id_clinica=1');
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->assertSame('2026-10-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame('legado', $this->db->query('SELECT gestion_cobro FROM suscripciones WHERE id_clinica=2')->fetchColumn());
+        $this->assertSame(5, (int) $this->db->query('SELECT suscripcion_gracia_dias FROM clinicas WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame(0, $this->contar('pagos_suscripcion'));
+    }
+
+    public function testS1Migracion12LegadoPrecioPersonalizadoYRecuperacionParcial(): void
+    {
+        $this->prepararHistoriaClinica();
+        $this->db->exec("UPDATE planes SET precio_mensual=100000,precio_anual=960000 WHERE id_plan=2");
+        $this->db->exec("UPDATE suscripciones SET fecha_fin='2026-10-24' WHERE id_clinica=1");
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->assertSame('2026-10-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertNull($this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=2')->fetchColumn());
+        $this->assertSame([89990,899900], array_map('intval', $this->db->query('SELECT precio_mensual,precio_anual FROM planes WHERE id_plan=2')->fetch(PDO::FETCH_NUM)));
+        $this->db->exec('UPDATE planes SET precio_mensual=123456,precio_anual=1234560 WHERE id_plan=2');
+        $this->db->exec('ALTER TABLE clinicas DROP COLUMN aviso_vencimiento_2_dias');
+        $this->db->exec('DROP TABLE wompi_eventos');
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->assertSame(123456, (int) $this->db->query('SELECT precio_mensual FROM planes WHERE id_plan=2')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query('SELECT aviso_vencimiento_2_dias FROM clinicas WHERE id_clinica=1')->fetchColumn());
+        foreach (['pagos_suscripcion','intentos_pago','wompi_eventos','fuentes_pago','suscripcion_periodos','avisos_suscripcion'] as $tabla) {
+            $this->assertSame(0, $this->contar($tabla));
+        }
+        $this->db->exec('ALTER TABLE pagos_suscripcion DROP INDEX uq_pago_obligacion');
+        try {
+            $this->cargar('12_suscripcion_pagos.sql');
+            $this->fail('Una tabla incompatible no puede pasar como existente.');
+        } catch (PDOException $error) {
+            $this->assertStringContainsString('S1 indice incompatible', $error->getMessage());
+        }
+    }
+
+    public function testS1DosTrabajadoresConcurrentesUnaTransicionYUnAviso(): void
+    {
+        $this->prepararHistoriaClinica();
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        $this->carpetaTemporal = sys_get_temp_dir() . '/zooki_s1_' . bin2hex(random_bytes(8));
+        mkdir($this->carpetaTemporal);
+        $esperar = function (string $archivo): void {
+            $limite = microtime(true) + 20;
+            while (!is_file($this->carpetaTemporal . '/' . $archivo)) {
+                if (microtime(true) > $limite) {
+                    $this->fail('No se alcanzó la barrera S1: ' . $archivo);
+                }
+                usleep(10000);
+            }
+        };
+        $procesos = [];
+        $lanzar = function (string $nombre) {
+            $proceso = proc_open([PHP_BINARY, __DIR__ . '/../Support/ProcesoSuscripcion.php', $this->carpetaTemporal, $nombre], [0 => ['pipe','r'], 1 => ['file',$this->carpetaTemporal . '/' . $nombre . '.log','a'], 2 => ['file',$this->carpetaTemporal . '/' . $nombre . '.log','a']], $tuberias);
+            if (!is_resource($proceso)) {
+                throw new RuntimeException('No se pudo abrir el trabajador S1.');
+            }
+            fclose($tuberias[0]);
+            return $proceso;
+        };
+        try {
+            $procesos[] = $lanzar('primero');
+            $esperar('bloqueado');
+            $procesos[] = $lanzar('segundo');
+            $esperar('segundo.conexion');
+            $primero = (int) file_get_contents($this->carpetaTemporal . '/primero.conexion');
+            $segundo = (int) file_get_contents($this->carpetaTemporal . '/segundo.conexion');
+            $maria = str_contains((string) $this->db->query('SELECT VERSION()')->fetchColumn(), 'MariaDB');
+            $sql = $maria ? 'SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX r ON r.trx_id=w.requesting_trx_id JOIN information_schema.INNODB_TRX b ON b.trx_id=w.blocking_trx_id WHERE r.trx_mysql_thread_id=? AND b.trx_mysql_thread_id=?'
+                : 'SELECT COUNT(*) FROM performance_schema.data_lock_waits w JOIN performance_schema.threads r ON r.THREAD_ID=w.REQUESTING_THREAD_ID JOIN performance_schema.threads b ON b.THREAD_ID=w.BLOCKING_THREAD_ID WHERE r.PROCESSLIST_ID=? AND b.PROCESSLIST_ID=?';
+            $consulta = $this->db->prepare($sql);
+            $limite = microtime(true) + 10;
+            do {
+                $consulta->execute([$segundo, $primero]);
+                $espera = (int) $consulta->fetchColumn() > 0;
+                $consulta->closeCursor();
+                if (!$espera) {
+                    usleep(125000);
+                }
+            } while (!$espera && microtime(true) < $limite);
+            $this->assertTrue($espera, 'El segundo trabajador espera el bloqueo real de clínica.');
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach (['primero','segundo'] as $nombre) {
+                $esperar($nombre . '.fin');
+                $r = json_decode(file_get_contents($this->carpetaTemporal . '/' . $nombre . '.fin'), true);
+                $this->assertSame(0, $r['errores'] ?? $r, json_encode($r));
+            }
+            $this->assertSame(1, $this->contar('avisos_suscripcion'));
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='suscripciones' AND datos_nuevos LIKE '%congelada%'")->fetchColumn());
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM notificaciones WHERE tipo_notificacion='suscripcion_congelada'")->fetchColumn());
+            $this->assertCount(1, glob($this->carpetaTemporal . '/correo-*'));
+        } finally {
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach ($procesos as $proceso) {
+                proc_close($proceso);
+            }
+        }
+    }
+
     public function testCarnetBMigracion11SeRepiteSinPerderAccesosNiGuardarTokenOMascota(): void
     {
         $this->cargar('01_schema.sql');
@@ -590,7 +739,7 @@ class BaseV2MysqlTest extends TestCase
         $this->cargar('05_limites_plan_gratuito.sql');
         $this->cargar('02_semilla.sql');
         $this->assertSame([17, 30, 2], array_map('intval', $this->db->query("SELECT limite_mascotas, limite_citas_mes, limite_personal FROM planes WHERE nombre = 'Gratuito'")->fetch(PDO::FETCH_NUM)));
-        $this->assertSame(100000, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
+        $this->assertSame(89990, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
     }
 
     public function testE2CuotasYBloqueoDeClinicaEnElEsquemaReal(): void
@@ -683,8 +832,8 @@ class BaseV2MysqlTest extends TestCase
         try {
             $modelo = new Plataforma($this->db);
             $this->assertCount(4, $modelo->clinicas());
-            $modelo->cambiarSuscripcion(1, 2, 'activa', 'Cambio solicitado');
-            $modelo->cambiarSuscripcion(1, 2, 'cancelada', 'Cancelación solicitada');
+            $modelo->cambiarSuscripcion(1, 2, 'activa', 'Cambio solicitado', '2099-12-31');
+            $modelo->cambiarSuscripcion(1, 2, 'cancelada', 'Cancelación solicitada', '2099-12-31');
             $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM suscripciones')->fetchColumn());
             $this->assertSame('cancelada', $this->db->query('SELECT estado FROM suscripciones')->fetchColumn());
             $this->assertSame(2, (int) $this->db->query('SELECT id_plan FROM clinicas WHERE id_clinica = 1')->fetchColumn());
@@ -1045,7 +1194,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
             "SELECT ENGINE, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
         )->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->assertCount(59, $tablas);
+        $this->assertCount(65, $tablas);
         foreach ($tablas as $t) {
             $this->assertSame('InnoDB', $t['ENGINE']);
             $this->assertSame('utf8mb4_general_ci', $t['TABLE_COLLATION']);
@@ -1076,7 +1225,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }

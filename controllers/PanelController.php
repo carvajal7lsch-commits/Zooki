@@ -353,7 +353,7 @@ class PanelController
     private function usoDelPlan(string $hoy): ?array
     {
         try {
-            $limite = new LimitePlan($this->db, (int) Contexto::clinicaActiva());
+            $limite = new LimitePlan($this->db, (int) Contexto::clinicaActiva(), $this->reloj);
             return ['nombre' => $limite->nombrePlan(), 'recursos' => ResumenPanel::usoDelPlan($limite->resumen($hoy))];
         } catch (AccesoDenegado $e) {
             throw $e;

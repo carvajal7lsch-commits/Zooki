@@ -142,7 +142,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
             <?php endif; ?>
             <div class="inicio-plan__accesos">
                 <a class="inicio-rapido" href="index.php?action=admin_usuarios"><i class="fas fa-users" aria-hidden="true"></i> Usuarios</a>
-                <a class="inicio-rapido" href="index.php?action=admin_configuracion"><i class="fas fa-cog" aria-hidden="true"></i> Configuración</a>
+                <a class="inicio-rapido" href="index.php?action=admin_suscripcion"><i class="fas fa-credit-card" aria-hidden="true"></i> Suscripción</a>
             </div>
         </section>
     </div>

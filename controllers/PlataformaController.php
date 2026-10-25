@@ -51,7 +51,7 @@ final class PlataformaController
             $mensaje = 'Cambio guardado.';
             switch ($accion) {
                 case 'plataforma_suscripcion_ajax':
-                    $this->modelo->cambiarSuscripcion($id, (int) ($_POST['id_plan'] ?? 0), (string) ($_POST['estado'] ?? ''), (string) ($_POST['motivo'] ?? ''));
+                    $this->modelo->cambiarSuscripcion($id, (int) ($_POST['id_plan'] ?? 0), (string) ($_POST['estado'] ?? ''), (string) ($_POST['motivo'] ?? ''), (string) ($_POST['fecha_fin'] ?? ''), (string) ($_POST['ciclo'] ?? 'mensual'));
                     break;
                 case 'plataforma_estado_ajax':
                     $this->modelo->cambiarEstado($id, (string) ($_POST['estado'] ?? ''), (string) ($_POST['motivo'] ?? ''));
