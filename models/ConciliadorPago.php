@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/EventoWompi.php';
 require_once __DIR__ . '/Suscripcion.php';
+require_once __DIR__ . '/AvisoSuscripcion.php';
 require_once __DIR__ . '/../helpers/ClienteWompi.php';
 require_once __DIR__ . '/../helpers/ConfiguracionWompi.php';
 
@@ -128,6 +129,9 @@ final class ConciliadorPago
                     $this->acreditar($s, $pago, $estado);
                 }
             }
+            if (in_array($status, ['DECLINED', 'ERROR'], true) && $intento['origen'] === 'automatico') {
+                (new AvisoSuscripcion($this->db, (int) $pago['id_clinica'], $this->reloj))->reservarFallo($pago, $intento);
+            }
             $inbox->terminar($evento, $status === 'PENDING' ? 'pendiente' : 'procesado', null, (int) $intento['id_intento'], (int) $pago['id_clinica']);
             return true;
         });
@@ -162,12 +166,14 @@ final class ConciliadorPago
         if (!in_array($estado['situacion'], ['al_dia', 'gracia'], true)) {
             $desde = $inicio->format('Y-m-d H:i:s');
         }
-        $this->db->prepare("UPDATE suscripciones SET id_plan=?,estado='activa',ciclo=?,gestion_cobro='gestionada',periodo_inicio=?,periodo_fin=?,fecha_inicio=?,fecha_fin=?,estado_cobro='al_dia',al_dia=1,version_periodo=version_periodo+1 WHERE id_suscripcion=? AND id_clinica=?")
-            ->execute([$pago['id_plan'], $pago['ciclo'], $desde, $fin->format('Y-m-d H:i:s'), substr($desde, 0, 10), $fin->modify('-1 second')->format('Y-m-d'), $pago['id_suscripcion'], $pago['id_clinica']]);
+        $automatico = $pago['ciclo'] === 'anual' ? 0 : (int) $estado['suscripcion']['cobro_automatico'];
+        $retirado = $pago['ciclo'] === 'anual' && (int) $estado['suscripcion']['cobro_automatico'] === 1 ? $ahora->format('Y-m-d H:i:s') : $estado['suscripcion']['retirado_en'];
+        $this->db->prepare("UPDATE suscripciones SET id_plan=?,estado='activa',ciclo=?,gestion_cobro='gestionada',periodo_inicio=?,periodo_fin=?,fecha_inicio=?,fecha_fin=?,estado_cobro='al_dia',al_dia=1,version_periodo=version_periodo+1,cobro_automatico=?,retirado_en=? WHERE id_suscripcion=? AND id_clinica=?")
+            ->execute([$pago['id_plan'], $pago['ciclo'], $desde, $fin->format('Y-m-d H:i:s'), substr($desde, 0, 10), $fin->modify('-1 second')->format('Y-m-d'), $automatico, $retirado, $pago['id_suscripcion'], $pago['id_clinica']]);
         $this->db->prepare('UPDATE clinicas SET id_plan=? WHERE id_clinica=?')->execute([$pago['id_plan'], $pago['id_clinica']]);
         $this->db->prepare("UPDATE pagos_suscripcion SET estado='confirmado',confirmado_en=? WHERE id_pago=? AND id_clinica=?")
             ->execute([$ahora->format('Y-m-d H:i:s'), $pago['id_pago'], $pago['id_clinica']]);
-        $s->auditar('suscripciones', (int) $pago['id_suscripcion'], ['version' => $pago['version_periodo_base']], ['fin' => $fin->format('Y-m-d H:i:s'), 'id_pago' => $pago['id_pago']], 'Acreditación Wompi sin cambiar suspensión administrativa');
+        $s->auditar('suscripciones', (int) $pago['id_suscripcion'], ['version' => $pago['version_periodo_base'], 'automatico' => (int) $estado['suscripcion']['cobro_automatico']], ['fin' => $fin->format('Y-m-d H:i:s'), 'id_pago' => $pago['id_pago'], 'automatico' => $automatico], 'Acreditación Wompi sin cambiar suspensión administrativa');
         $s->auditar('pagos_suscripcion', (int) $pago['id_pago'], ['estado' => $pago['estado']], ['estado' => 'confirmado'], 'Pago confirmado por evento verificado');
         if ($estado['clinica']['estado'] !== 'activa') {
             $s->auditar('clinicas', (int) $pago['id_clinica'], [], ['incidencia' => 'PAGO_CON_CLINICA_NO_ACTIVA'], 'Pago conservado; suspensión/baja administrativa intacta');

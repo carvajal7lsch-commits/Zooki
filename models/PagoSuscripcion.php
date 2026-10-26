@@ -14,20 +14,35 @@ final class PagoSuscripcion
 
     public function reservar(string $ciclo, int $version, int $actor): array
     {
+        return $this->reserva($ciclo, $version, $actor);
+    }
+
+    /** El trabajador revalida el mandato bajo el mismo candado antes de llamar. */
+    public function reservarAutomatico(int $version, int $fuente): array
+    {
+        if (!$this->db->inTransaction()) {
+            throw new LogicException('El automático requiere el bloqueo de clínica.');
+        }
+        $this->configuracion->validarAutomaticos();
+        return $this->reserva('mensual', $version, null, $fuente);
+    }
+
+    private function reserva(string $ciclo, int $version, ?int $actor, ?int $fuente = null): array
+    {
         $this->configuracion->validar();
         if (!in_array($ciclo, ['mensual', 'anual'], true) || $version < 0) {
             throw new InvalidArgumentException('Revisa el ciclo y actualiza la pantalla.');
         }
         $base = EnlaceCuenta::base();
         $s = new Suscripcion($this->db, $this->clinica, $this->reloj);
-        return $s->bloqueada(function () use ($s, $ciclo, $version, $actor, $base): array {
+        return $s->bloqueada(function () use ($s, $ciclo, $version, $actor, $base, $fuente): array {
             $estado = $s->estado();
             if ($estado['clinica']['estado'] !== 'activa' || $estado['legado_sin_fecha']) {
                 throw new InvalidArgumentException('La clínica requiere regularización administrativa antes de pagar.');
             }
             $q = $this->db->prepare("SELECT 1 FROM usuario_clinica WHERE id_clinica=? AND id_usuario=? AND id_rol=? AND estado='activo'");
             $q->execute([$this->clinica, $actor, Roles::ADMIN]);
-            if (!$q->fetchColumn()) {
+            if ($fuente === null && !$q->fetchColumn()) {
                 throw new AccesoDenegado(403, 'Solo el administrador de la clínica puede pagar.');
             }
             $contrato = $estado['suscripcion'];
@@ -57,7 +72,7 @@ final class PagoSuscripcion
                     $orden = false;
                 } else {
                     if (in_array($intento['estado'], ['declinado', 'error'], true)) {
-                        $intento = $this->crearIntento($orden, (int) $intento['numero'] + 1, $s, $actor);
+                        $intento = $this->crearIntento($orden, (int) $intento['numero'] + 1, $s, $actor, $fuente);
                     } elseif ($intento['estado'] === 'creado' && VigenciaSuscripcion::fecha($orden['cotizacion_hasta']) <= $s->ahora()) {
                         $this->db->prepare("UPDATE intentos_pago SET estado='incierto' WHERE id_intento=? AND id_pago=?")->execute([$intento['id_intento'], $orden['id_pago']]);
                         $s->auditar('intentos_pago', (int) $intento['id_intento'], ['estado' => 'creado'], ['estado' => 'incierto'], 'Cotización vencida sin resultado confirmado', $actor);
@@ -83,16 +98,16 @@ final class PagoSuscripcion
             $q = $this->db->prepare('SELECT * FROM pagos_suscripcion WHERE id_pago=? AND id_clinica=?');
             $q->execute([$id, $this->clinica]);
             $orden = $q->fetch(PDO::FETCH_ASSOC);
-            return $this->respuesta($orden, $this->crearIntento($orden, 1, $s, $actor), $base, $s->ahora());
+            return $this->respuesta($orden, $this->crearIntento($orden, 1, $s, $actor, $fuente), $base, $s->ahora());
         });
     }
 
-    private function crearIntento(array $orden, int $numero, Suscripcion $s, int $actor): array
+    private function crearIntento(array $orden, int $numero, Suscripcion $s, ?int $actor, ?int $fuente = null): array
     {
         $referencia = 'zk_' . bin2hex(random_bytes(24));
-        $this->db->prepare("INSERT INTO intentos_pago (id_pago,numero,entorno,referencia,origen,estado,creado_en) VALUES (?,?,?,?,'boton','creado',?)")
-            ->execute([$orden['id_pago'], $numero, $this->configuracion->entorno(), $referencia, $s->ahora()->format('Y-m-d H:i:s')]);
-        $s->auditar('intentos_pago', (int) $this->db->lastInsertId(), [], ['estado' => 'creado', 'referencia' => $referencia], 'Reserva única para Widget', $actor, 'INSERT');
+        $this->db->prepare("INSERT INTO intentos_pago (id_pago,numero,entorno,referencia,origen,id_fuente,estado,creado_en) VALUES (?,?,?,?,?,?,'creado',?)")
+            ->execute([$orden['id_pago'], $numero, $this->configuracion->entorno(), $referencia, $fuente === null ? 'boton' : 'automatico', $fuente, $s->ahora()->format('Y-m-d H:i:s')]);
+        $s->auditar('intentos_pago', (int) $this->db->lastInsertId(), [], ['estado' => 'creado', 'referencia' => $referencia], $fuente === null ? 'Reserva única para Widget' : 'Reserva automática (RN-016)', $actor, 'INSERT');
         return $this->ultimoIntento((int) $orden['id_pago']);
     }
 
@@ -109,7 +124,7 @@ final class PagoSuscripcion
             throw new RuntimeException('La orden pertenece a otro entorno. Revisa el despliegue antes de pagar.');
         }
         $expiracion = VigenciaSuscripcion::fecha($orden['cotizacion_hasta'])->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s.000\Z');
-        $abrir = $orden['estado'] === 'pendiente' && $intento['estado'] === 'creado' && VigenciaSuscripcion::fecha($orden['cotizacion_hasta']) > $ahora;
+        $abrir = $intento['origen'] === 'boton' && $orden['estado'] === 'pendiente' && $intento['estado'] === 'creado' && VigenciaSuscripcion::fecha($orden['cotizacion_hasta']) > $ahora;
         $resumen = 'Orden ' . $orden['ciclo'] . ' por $' . number_format(intdiv((int) $orden['total_centavos'], 100), 0, ',', '.') . ' COP. ';
         $resultado = ['orden' => (int) $orden['id_pago'], 'estado' => $orden['estado'], 'intento' => $intento['estado'], 'ciclo' => $orden['ciclo'],
             'total_centavos' => (int) $orden['total_centavos'], 'abrir' => $abrir,
@@ -137,7 +152,8 @@ final class PagoSuscripcion
     public function estadoLocal(?string $referencia = null): array
     {
         $s = (new Suscripcion($this->db, $this->clinica, $this->reloj))->estado();
-        $resultado = ['situacion' => $s['situacion'], 'plan' => $s['plan_efectivo']['nombre'], 'fin' => $s['periodo_fin']];
+        $resultado = ['situacion' => $s['situacion'], 'plan' => $s['plan_efectivo']['nombre'], 'fin' => $s['periodo_fin'],
+            'fin_incluido' => VigenciaSuscripcion::fechaIncluida($s['periodo_fin'])];
         if ($referencia !== null) {
             $q = $this->db->prepare('SELECT p.estado,i.estado AS intento FROM intentos_pago i JOIN pagos_suscripcion p ON p.id_pago=i.id_pago WHERE p.id_clinica=? AND i.referencia=?');
             $q->execute([$this->clinica, $referencia]);

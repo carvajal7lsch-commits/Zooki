@@ -45,6 +45,10 @@ switch ($action) {
     case "suscripcion_estado_ajax":
     case "suscripcion_historial_ajax":
     case "suscripcion_retorno":
+    case "suscripcion_fuente_preparar_ajax":
+    case "suscripcion_fuente_ajax":
+    case "suscripcion_automatico_ajax":
+    case "suscripcion_retirar_fuente_ajax":
         require_once '../controllers/SuscripcionController.php';
         $suscripcionController = new SuscripcionController((new Database())->getConnection());
         match ($action) {
@@ -52,6 +56,10 @@ switch ($action) {
             'suscripcion_estado_ajax' => $suscripcionController->estado(),
             'suscripcion_historial_ajax' => $suscripcionController->historial(),
             'suscripcion_retorno' => $suscripcionController->retorno(),
+            'suscripcion_fuente_preparar_ajax' => $suscripcionController->prepararFuente(),
+            'suscripcion_fuente_ajax' => $suscripcionController->guardarFuente(),
+            'suscripcion_automatico_ajax' => $suscripcionController->automatico(),
+            'suscripcion_retirar_fuente_ajax' => $suscripcionController->quitarFuente(),
         };
         break;
     case "carnet":

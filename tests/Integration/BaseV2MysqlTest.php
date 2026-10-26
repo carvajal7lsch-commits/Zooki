@@ -22,6 +22,86 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    private function prepararCobroS3(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/CobroAutomatico.php';
+        require_once __DIR__ . '/../Support/ClienteWompiFalso.php';
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        $cliente = new ClienteWompiFalso();
+        $cliente->datosComercio = ClienteWompiFalso::contratos();
+        $fuente = new FuentePago($this->db, 1, $cliente, ClienteWompiFalso::configuracion('test', '1', '1'), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00'));
+        $version = AutorizacionCobro::contratos($cliente->datosComercio)['version'];
+        $fuente->guardar('CARD', 'tok_test_mysql', true, true, $version, 1);
+        $fuente->automatico(true, $version, 8999000, 1);
+    }
+
+    public function testS3DosTrabajadoresUnSoloPost(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_workers');
+        $this->assertSame(1, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertSame(1, $this->contar('pagos_suscripcion'));
+        $this->assertSame(1, $this->contar('intentos_pago'));
+        $this->assertSame('pendiente', $this->db->query('SELECT estado FROM intentos_pago')->fetchColumn());
+    }
+
+    public function testS3BotonPrimeroExcluyeAutomatico(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_manual');
+        $this->assertSame(0, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertSame(1, $this->contar('pagos_suscripcion'));
+        $this->assertSame(1, $this->contar('intentos_pago'));
+        $this->assertSame('boton', $this->db->query('SELECT origen FROM intentos_pago')->fetchColumn());
+    }
+
+    public function testS3AutomaticoPrimeroExcluyeWidget(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_auto_manual');
+        $this->assertSame(1, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertFalse($r[1]['resultado']['operacion']['abrir']);
+        $this->assertSame(1, $this->contar('pagos_suscripcion'));
+        $this->assertSame(1, $this->contar('intentos_pago'));
+    }
+
+    public function testS3RetiroConcurrenteAntesDeReclamarEvitaPost(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_retiro');
+        $this->assertSame(0, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertSame(0, $this->contar('intentos_pago'));
+        $this->assertSame(0, (int) $this->db->query('SELECT cobro_automatico FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+    }
+
+    public function testS3RetiroTrasReclamacionDetieneSiguientesYConservaCargo(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_auto_retiro');
+        $this->assertSame(1, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertStringContainsString('cargo en curso', $r[1]['resultado']['operacion']['mensaje']);
+        $this->assertSame('retirada', $this->db->query('SELECT estado FROM fuentes_pago')->fetchColumn());
+        $this->assertSame(1, $this->contar('intentos_pago'));
+    }
+
+    public function testS3DosReceptoresAcreditanSinCliUnaVez(): void
+    {
+        $this->prepararCobroS3();
+        $url = getenv('APP_URL');
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            (new PagoSuscripcion($this->db, 1, ClienteWompiFalso::configuracion(), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00')))->reservar('mensual', 0, 1);
+        } finally {
+            putenv($url === false ? 'APP_URL' : 'APP_URL=' . $url);
+        }
+        $r = $this->competirS2('s3_receptor');
+        $this->assertSame([200, 200], array_column(array_column($r, 'resultado'), 'codigo'));
+        $this->assertSame(1, $this->contar('suscripcion_periodos'));
+        $this->assertSame(2, $this->contar('wompi_eventos'));
+        $this->assertSame(1, (int) $this->db->query('SELECT version_periodo FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+    }
+
     public function testS2DosProcesosDosPestanasUnaOrdenYUnIntento(): void
     {
         $this->prepararHistoriaClinica();
@@ -115,7 +195,7 @@ class BaseV2MysqlTest extends TestCase
         return $resultados;
     }
 
-    public function testS1CliRealRevisarNoModificaNiEnviaYNoAdmiteCobros(): void
+    public function testS1CliRealRevisarNoModificaNiEnviaYS3ApagadaNoCobra(): void
     {
         $this->prepararHistoriaClinica();
         $antes = $this->db->query('SELECT * FROM suscripciones ORDER BY id_suscripcion')->fetchAll(PDO::FETCH_ASSOC);
@@ -137,8 +217,10 @@ class BaseV2MysqlTest extends TestCase
                 $this->assertSame(0, $r['transiciones']);
                 $this->assertNotEmpty($r['revision']);
             } else {
-                $this->assertSame(1, $codigo);
-                $this->assertStringContainsString('S1 no admite cobros', $error);
+                $this->assertSame(0, $codigo, $error);
+                $r = json_decode($salida, true, 64, JSON_THROW_ON_ERROR);
+                $this->assertFalse($r['cobros']['habilitado']);
+                $this->assertSame(0, $r['cobros']['enviados']);
             }
         }
         $this->assertSame($antes, $this->db->query('SELECT * FROM suscripciones ORDER BY id_suscripcion')->fetchAll(PDO::FETCH_ASSOC));

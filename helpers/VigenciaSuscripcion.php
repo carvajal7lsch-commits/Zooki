@@ -7,6 +7,12 @@ final class VigenciaSuscripcion
     // El fin exclusivo del día siguiente debe seguir dentro de DATETIME de MySQL.
     public const FECHA_FIN_MAX = '9999-12-30';
 
+    /** Presentación del intervalo exclusivo, S2 revisión; no cambia la vigencia. */
+    public static function fechaIncluida(?string $fin): string
+    {
+        return $fin === null ? 'Sin fecha' : self::fecha($fin)->modify('-1 second')->format('d/m/Y');
+    }
+
     public static function fecha(string $valor): DateTimeImmutable
     {
         $fecha = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $valor, new DateTimeZone(PoliticaSuscripcion::ZONA));

@@ -354,6 +354,7 @@ class Security {
             'panel_admin_dia_ajax',
             'admin_auditoria', 'admin_configuracion', 'admin_suscripcion',
             'suscripcion_pagar_ajax', 'suscripcion_estado_ajax', 'suscripcion_historial_ajax', 'suscripcion_retorno',
+            'suscripcion_fuente_preparar_ajax', 'suscripcion_fuente_ajax', 'suscripcion_automatico_ajax', 'suscripcion_retirar_fuente_ajax',
             'registrar_usuario_ajax', 'actualizar_usuario_ajax',
             'get_usuario_ajax', 'cambiar_estado_usuario_ajax',
             'resetear_password_usuario_ajax',

@@ -11,7 +11,7 @@ final class ConfiguracionWompi
             $this->valores = $valores;
             return;
         }
-        $nombres = ['ENTORNO', 'LLAVE_PUBLICA', 'LLAVE_PRIVADA', 'SECRETO_EVENTOS', 'SECRETO_INTEGRIDAD', 'COBROS_HABILITADOS'];
+        $nombres = ['ENTORNO', 'LLAVE_PUBLICA', 'LLAVE_PRIVADA', 'SECRETO_EVENTOS', 'SECRETO_INTEGRIDAD', 'COBROS_HABILITADOS', 'AUTOMATICOS_HABILITADOS'];
         $archivo = [];
         $faltantes = array_filter($nombres, static fn ($nombre) => getenv('WOMPI_' . $nombre) === false);
         if ($faltantes && !defined('ZOOKI_PRUEBAS') && getenv('ZOOKI_ENTORNO_PRUEBAS') !== '1' && is_file(__DIR__ . '/../.env')) {
@@ -58,6 +58,14 @@ final class ConfiguracionWompi
         $prefijo = $this->entorno() . '_events_';
         if (!str_starts_with($this->valor('SECRETO_EVENTOS'), $prefijo) || strlen($this->valor('SECRETO_EVENTOS')) <= strlen($prefijo)) {
             throw new RuntimeException('No está configurada la verificación de eventos.');
+        }
+    }
+
+    public function validarAutomaticos(): void
+    {
+        $this->validar();
+        if ($this->valor('AUTOMATICOS_HABILITADOS') !== '1') {
+            throw new RuntimeException('El cobro automático está deshabilitado temporalmente. Puedes pagar con el botón.');
         }
     }
 

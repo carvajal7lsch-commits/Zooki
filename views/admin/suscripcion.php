@@ -3,7 +3,8 @@ $h = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'
 $s = $estadoSuscripcion;
 $contrato = $s['plan_contratado'];
 $precio = static fn ($p): string => $p === null ? 'No disponible' : '$' . number_format((int) $p, 0, ',', '.') . ' COP';
-$fecha = static fn ($f): string => $f === null ? 'Sin fecha' : VigenciaSuscripcion::fecha($f)->format('d/m/Y H:i');
+$fecha = static fn ($f): string => $f === null ? 'Sin fecha' : VigenciaSuscripcion::fecha($f)->format('d/m/Y');
+$incluida = static fn ($f): string => VigenciaSuscripcion::fechaIncluida($f);
 $etiquetas = ['sin_vigencia' => 'Sin vigencia de pago', 'al_dia' => 'Al día', 'gracia' => 'En gracia', 'congelada' => 'Beneficios congelados'];
 ?>
 <section class="suscripcion" aria-labelledby="suscripcionTitulo" data-suscripcion-pantalla data-pago-habilitado="<?= !empty($pagoDisponible) ? '1' : '0' ?>" data-version="<?= (int) ($s['suscripcion']['version_periodo'] ?? 0) ?>">
@@ -19,8 +20,8 @@ $etiquetas = ['sin_vigencia' => 'Sin vigencia de pago', 'al_dia' => 'Al día', '
                 <div><dt>Efectivo hoy</dt><dd data-suscripcion-plan><?= $h($s['plan_efectivo']['nombre']) ?></dd></div>
                 <div><dt>Estado</dt><dd data-suscripcion-estado><?= $h((int) $contrato['id_plan'] === (int) $s['plan_gratuito']['id_plan'] ? 'Gratuito · sin vencimiento' : $etiquetas[$s['situacion']]) ?></dd></div>
                 <div><dt>Ciclo</dt><dd><?= $h($s['ciclo'] === 'anual' ? 'Anual' : 'Mensual') ?></dd></div>
-                <div><dt>Fin del periodo</dt><dd data-suscripcion-fin><?= $h($fecha($s['periodo_fin'])) ?></dd></div>
-                <div><dt>Congelación sin renovar</dt><dd><?= $h($fecha($s['gracia_hasta'])) ?></dd></div>
+                <div><dt>Último día del periodo</dt><dd data-suscripcion-fin><?= $h($incluida($s['periodo_fin'])) ?></dd></div>
+                <div><dt>Último día con beneficios sin renovar</dt><dd><?= $h($incluida($s['gracia_hasta'])) ?></dd></div>
             </dl>
             <?php if ($s['legado_sin_fecha']): ?>
             <p class="suscripcion__nota" role="status">Tu plan fue asignado manualmente y aún no tiene vencimiento. Conserva sus condiciones; el super-administrador debe fijar la fecha antes de iniciar renovaciones.</p>
@@ -48,8 +49,30 @@ $etiquetas = ['sin_vigencia' => 'Sin vigencia de pago', 'al_dia' => 'Al día', '
         </article>
     </div>
     <?php if ($retornoPago !== null): ?>
-    <p class="suscripcion__nota" role="status">Retorno de Wompi: <?= $h($retornoPago['pago']['estado']) ?>. Volver aquí no acredita el pago. Consulta el estado local mientras llega la confirmación.</p>
+    <p class="suscripcion__nota" role="status">Tu pago está <?= $h($retornoPago['pago']['estado']) ?>. Tu plan se activa en cuanto Wompi confirme el pago; puede tardar unos minutos. Puedes consultar su estado.</p>
     <?php endif; ?>
+    <article class="suscripcion__tarjeta suscripcion__fuente" data-fuente-pantalla data-automatico-habilitado="<?= $automaticoDisponible ? '1' : '0' ?>">
+        <h2>Medio de pago y renovación mensual</h2>
+        <p data-fuente-resumen><?= $h($fuentePago ? ($fuentePago['tipo'] === 'NEQUI' ? 'Nequi' : (($fuentePago['marca'] ?: 'Tarjeta') . ($fuentePago['ultimos_cuatro'] ? ' · termina en ' . $fuentePago['ultimos_cuatro'] : ''))) : 'No tienes un medio guardado.') ?></p>
+        <p data-fuente-estado><?= $h($fuentePago ? ($fuentePago['estado'] === 'disponible' ? 'Disponible' : 'No disponible') : '') ?></p>
+        <p data-automatico-estado><?= $h($requiereAceptacion ? 'El precio cambió. Acepta el nuevo importe antes de renovar automáticamente.' : ($fuentePago && (int) $fuentePago['cobro_automatico'] === 1 ? 'Cobro mensual autorizado.' : 'Cobro automático desactivado.')) ?></p>
+        <p><?= $h($mensajeAutomatico) ?></p>
+        <p>Importe por renovación mensual: <strong data-importe-mensual><?= $h($precio($profesional['precio_mensual'])) ?></strong>. El cobro anual no es automático.</p>
+        <button class="suscripcion__consultar" type="button" data-fuente-preparar <?= empty($pagoDisponible) ? 'disabled' : '' ?>>Consultar condiciones</button>
+        <fieldset class="suscripcion__ciclos" data-fuente-condiciones hidden>
+            <legend>Aceptaciones de Wompi</legend>
+            <label><input type="checkbox" data-acepta-politica> He leído y acepto <a data-contrato-politica target="_blank" rel="noopener noreferrer">la política de Wompi</a>.</label>
+            <label><input type="checkbox" data-acepta-datos> He leído y acepto <a data-contrato-datos target="_blank" rel="noopener noreferrer">el tratamiento de datos de Wompi</a>.</label>
+            <p data-fuente-validacion class="suscripcion__ayuda" aria-live="polite"></p>
+            <button class="suscripcion__consultar" type="button" data-fuente-guardar disabled>Guardar tarjeta o Nequi con Wompi</button>
+            <label><input type="checkbox" data-acepta-mensual> Autorizo un cargo de <span data-mandato-importe><?= $h($precio($profesional['precio_mensual'])) ?></span> cada mes al vencer mi plan. Puedo retirar esta autorización.</label>
+            <button class="suscripcion__consultar" type="button" data-automatico-autorizar disabled>Autorizar cobro mensual</button>
+        </fieldset>
+        <button class="suscripcion__consultar" type="button" data-nequi-comprobar hidden>Comprobar Nequi</button>
+        <button class="suscripcion__consultar" type="button" data-automatico-retirar <?= !$fuentePago || !(int) $fuentePago['cobro_automatico'] ? 'hidden' : '' ?>>Retirar cobro automático</button>
+        <button class="suscripcion__consultar" type="button" data-fuente-quitar <?= !$fuentePago ? 'hidden' : '' ?>>Quitar medio de pago</button>
+        <p class="suscripcion__ayuda" role="status" aria-live="polite" data-fuente-mensaje></p>
+    </article>
     <article class="suscripcion__tarjeta suscripcion__historial">
         <h2>Historial de pagos</h2>
         <?php if (!$historialPagos['filas']): ?>
@@ -61,7 +84,7 @@ $etiquetas = ['sin_vigencia' => 'Sin vigencia de pago', 'al_dia' => 'Al día', '
                 <p><strong><?= $h($precio(intdiv((int) $pago['total_centavos'], 100))) ?></strong> · <?= $h($pago['ciclo'] === 'anual' ? 'Anual' : 'Mensual') ?></p>
                 <p><?= $h($pago['creado_en']) ?> · <?= $h($pago['estado']) ?> · <?= $h($pago['estado_intento']) ?></p>
                 <p class="suscripcion__referencia">Referencia: <?= $h($pago['referencia']) ?></p>
-                <?php if ($pago['inicio'] !== null): ?><p>Periodo: <?= $h($fecha($pago['inicio'])) ?> — <?= $h($fecha($pago['fin'])) ?></p><?php endif; ?>
+                <?php if ($pago['inicio'] !== null): ?><p>Periodo: <?= $h($fecha($pago['inicio'])) ?> — <?= $h($incluida($pago['fin'])) ?> (incluido)</p><?php endif; ?>
                 <?php if ($pago['codigo_error'] !== null): ?><p>En revisión: <?= $h($pago['codigo_error']) ?></p><?php endif; ?>
             </article>
         <?php endforeach; ?>
@@ -71,5 +94,5 @@ $etiquetas = ['sin_vigencia' => 'Sin vigencia de pago', 'al_dia' => 'Al día', '
             <?php if ($historialPagos['mas']): ?><a href="index.php?action=admin_suscripcion&amp;pagina=<?= (int) $historialPagos['pagina'] + 1 ?>">Siguiente</a><?php endif; ?>
         </nav>
     </article>
-    <p class="suscripcion__ayuda">El periodo termina a la fecha y hora indicadas. Tus datos e historia se conservan al congelar beneficios; las urgencias rojas siempre se atienden. Una suspensión de la clínica se gestiona aparte.</p>
+    <p class="suscripcion__ayuda">Las fechas muestran el último día incluido. Tus datos e historia se conservan al congelar beneficios; las urgencias rojas siempre se atienden. Una suspensión de la clínica se gestiona aparte.</p>
 </section>

@@ -3,10 +3,11 @@ require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../helpers/Security.php';
 require_once __DIR__ . '/../models/Suscripcion.php';
 require_once __DIR__ . '/../models/PagoSuscripcion.php';
+require_once __DIR__ . '/../models/FuentePago.php';
 
 final class SuscripcionController
 {
-    public function __construct(private PDO $db, private mixed $reloj = null, private ?ConfiguracionWompi $configuracion = null)
+    public function __construct(private PDO $db, private mixed $reloj = null, private ?ConfiguracionWompi $configuracion = null, private ?ClienteWompi $cliente = null)
     {
         $this->configuracion ??= new ConfiguracionWompi();
     }
@@ -28,11 +29,24 @@ final class SuscripcionController
             $this->configuracion->validar();
             EnlaceCuenta::base();
             $pagoDisponible = !$estadoSuscripcion['legado_sin_fecha'];
-            $mensajePago = $pagoDisponible ? 'El pago se confirma mediante un evento verificado, nunca por el retorno.' : 'Primero solicita la fecha de fin al super-administrador.';
+            $mensajePago = $pagoDisponible ? 'Tu plan se activa en cuanto Wompi confirme el pago; puede tardar unos minutos.' : 'Primero solicita la fecha de fin al super-administrador.';
         } catch (RuntimeException $error) {
             $mensajePago = $error->getMessage();
         }
         $historialPagos = $this->pagos()->historial($this->pagina());
+        $fuentePago = $this->fuentes()->actual();
+        $automaticoDisponible = false;
+        $mensajeAutomatico = '';
+        try {
+            $this->configuracion->validarAutomaticos();
+            $automaticoDisponible = $estadoSuscripcion['ciclo'] === 'mensual' && !$estadoSuscripcion['legado_sin_fecha'] && $estadoSuscripcion['periodo_fin'] !== null
+                && (int) $estadoSuscripcion['plan_contratado']['id_plan'] !== (int) $estadoSuscripcion['plan_gratuito']['id_plan'];
+            $mensajeAutomatico = $automaticoDisponible ? 'Guardar el medio no autoriza cargos. Autoriza aparte cada mes por el importe indicado.' : 'El automático requiere un plan profesional mensual con vencimiento. El anual se renueva con el botón.';
+        } catch (RuntimeException $error) {
+            $mensajeAutomatico = $error->getMessage();
+        }
+        $importeMensual = TarifaSuscripcion::calcular($profesionalSuscripcion, 'mensual')['total_centavos'];
+        $requiereAceptacion = $fuentePago && (int) $fuentePago['cobro_automatico'] === 1 && (int) $fuentePago['importe_mensual_autorizado_centavos'] !== $importeMensual;
         $retornoPago = null;
         if (isset($_GET['referencia'])) {
             $retornoPago = $this->pagos()->estadoLocal($this->referencia());
@@ -44,6 +58,100 @@ final class SuscripcionController
     private function pagos(): PagoSuscripcion
     {
         return new PagoSuscripcion($this->db, (int) Contexto::clinicaActiva(), $this->configuracion, $this->reloj);
+    }
+
+    private function fuentes(): FuentePago
+    {
+        return new FuentePago($this->db, (int) Contexto::clinicaActiva(), $this->cliente ?? new ClienteWompiHttp($this->configuracion), $this->configuracion, $this->reloj);
+    }
+
+    public function prepararFuente(): void
+    {
+        Security::autorizar('suscripcion_fuente_preparar_ajax');
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
+            http_response_code(405);
+            return;
+        }
+        $this->operacionFuente(function (): array {
+            $datos = $this->fuentes()->preparar((int) Contexto::idUsuario());
+            $nonce = bin2hex(random_bytes(32));
+            $_SESSION['suscripcion_aceptacion'] = ['nonce' => $nonce, 'clinica' => Contexto::clinicaActiva(), 'actor' => Contexto::idUsuario(),
+                'version' => $datos['version'], 'importe' => $datos['importe'], 'hasta' => time() + PoliticaSuscripcion::COTIZACION_MINUTOS * 60];
+            return $datos + ['nonce' => $nonce];
+        });
+    }
+
+    private function aceptacion(bool $mensual = false): array
+    {
+        $prueba = $_SESSION['suscripcion_aceptacion'] ?? [];
+        $nonce = $_POST['nonce'] ?? '';
+        if (!is_string($nonce) || !isset($prueba['nonce']) || !hash_equals($prueba['nonce'], $nonce) || $prueba['hasta'] <= time()
+            || $prueba['clinica'] !== Contexto::clinicaActiva() || $prueba['actor'] !== Contexto::idUsuario()
+            || ($_POST['acepta_politica'] ?? '') !== '1' || ($_POST['acepta_datos'] ?? '') !== '1'
+            || ($mensual && ($_POST['acepta_mensual'] ?? '') !== '1')) {
+            throw new InvalidArgumentException('Consulta y acepta las condiciones antes de continuar.');
+        }
+        return $prueba;
+    }
+
+    public function guardarFuente(): void
+    {
+        Security::autorizar('suscripcion_fuente_ajax');
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            http_response_code(405);
+            return;
+        }
+        $this->operacionFuente(function (): array {
+            $prueba = $this->aceptacion();
+            $tipo = $_POST['tipo'] ?? null;
+            $token = $_POST['token'] ?? null;
+            if (!is_string($tipo) || !is_string($token)) {
+                throw new InvalidArgumentException('Completa el medio de pago en Wompi.');
+            }
+            return $this->fuentes()->guardar($tipo, $token, true, true, $prueba['version'], (int) Contexto::idUsuario());
+        });
+    }
+
+    public function automatico(): void
+    {
+        Security::autorizar('suscripcion_automatico_ajax');
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            http_response_code(405);
+            return;
+        }
+        $this->operacionFuente(function (): array {
+            if (!in_array($_POST['autorizar'] ?? null, ['0', '1'], true)) {
+                throw new InvalidArgumentException('Elige autorizar o retirar el automático.');
+            }
+            $autorizar = $_POST['autorizar'] === '1';
+            $prueba = $autorizar ? $this->aceptacion(true) : [];
+            return $this->fuentes()->automatico($autorizar, $prueba['version'] ?? '', (int) ($prueba['importe'] ?? 0), (int) Contexto::idUsuario());
+        });
+    }
+
+    public function quitarFuente(): void
+    {
+        Security::autorizar('suscripcion_retirar_fuente_ajax');
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            http_response_code(405);
+            return;
+        }
+        $this->operacionFuente(fn (): array => $this->fuentes()->quitar((int) Contexto::idUsuario()));
+    }
+
+    private function operacionFuente(callable $operacion): void
+    {
+        try {
+            $resultado = $operacion();
+            $this->json(['ok' => true, 'resultado' => $resultado + ['fuente' => $this->fuentes()->actual()]]);
+        } catch (Throwable $error) {
+            if ($error instanceof AccesoDenegado) {
+                throw $error;
+            }
+            http_response_code(422);
+            $mensaje = $error instanceof InvalidArgumentException ? $error->getMessage() : 'No se pudo completar la solicitud. Consulta el estado antes de reintentar.';
+            $this->json(['ok' => false, 'mensaje' => $mensaje]);
+        }
     }
 
     private function pagina(): int

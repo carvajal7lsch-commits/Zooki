@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../models/AvisoSuscripcion.php';
 require_once __DIR__ . '/../models/ConciliadorPago.php';
+require_once __DIR__ . '/../models/CobroAutomatico.php';
 require_once __DIR__ . '/ClienteWompiHttp.php';
 
 /** RE-0.5.3/6: trabajador de metadatos; nunca usa una sesión de administrador. */
@@ -12,10 +13,19 @@ final class MantenimientoSuscripciones
 
     public function ejecutar(bool $revisar = false, ?string $solo = null, ?callable $transportar = null): array
     {
-        if (!in_array($solo, [null, 'vencimientos', 'avisos', 'conciliacion'], true)) {
-            throw new InvalidArgumentException('Solo se admite vencimientos, avisos o conciliacion.');
+        if (!in_array($solo, [null, 'vencimientos', 'avisos', 'conciliacion', 'cobros'], true)) {
+            throw new InvalidArgumentException('Solo se admite vencimientos, avisos, conciliacion o cobros.');
         }
         $resultado = ['transiciones' => 0, 'avisos_reservados' => 0, 'enviados' => 0, 'errores' => 0, 'inciertos' => 0, 'revision' => [], 'tarifas_personalizadas' => []];
+        if ($solo === null || $solo === 'cobros') {
+            $config = $this->configuracion ?? new ConfiguracionWompi();
+            $resultado['cobros'] = (new CobroAutomatico($this->db, $this->cliente ?? new ClienteWompiHttp($config), $config, $this->reloj))->ejecutar($revisar);
+            $resultado['errores'] += $resultado['cobros']['errores'];
+            $resultado['inciertos'] += $resultado['cobros']['inciertos'];
+            if ($solo === 'cobros') {
+                return $resultado;
+            }
+        }
         if ($solo === null || $solo === 'conciliacion') {
             $resultado['conciliacion'] = ['pendientes' => 0, 'conciliados' => 0, 'errores' => 0];
             if ((int) $this->db->query("SELECT COUNT(*) FROM wompi_eventos WHERE estado IN ('pendiente','procesando','error')")->fetchColumn() > 0) {

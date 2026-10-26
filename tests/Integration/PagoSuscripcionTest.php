@@ -113,7 +113,10 @@ final class PagoSuscripcionTest extends TestCase
         ob_start();
         (new SuscripcionController($this->db, fn () => $this->ahora, $this->config))->retorno();
         $html = ob_get_clean();
-        $this->assertStringContainsString('no acredita el pago', $html);
+        $this->assertStringContainsString('Tu plan se activa en cuanto Wompi confirme el pago', $html);
+        $this->assertStringContainsString('24/10/2026', $html);
+        $this->assertStringContainsString('27/10/2026', $html);
+        $this->assertStringNotContainsString('evento verificado, nunca por el retorno', $html);
         $this->assertStringNotContainsString('prv_test_falsa', $html);
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM suscripcion_periodos')->fetchColumn());
         $this->assertSame([], $this->cliente->consultas);

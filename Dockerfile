@@ -12,9 +12,7 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
-    libonig-dev \
-    libcurl4-openssl-dev \
-    && docker-php-ext-install pdo pdo_mysql zip mbstring curl
+    && docker-php-ext-install pdo_mysql zip
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

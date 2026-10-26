@@ -19,7 +19,22 @@ if ($escenario !== 'legado') {
     $db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
 }
 $ahora = VigenciaSuscripcion::fecha($escenario === 'congelada' ? '2026-10-28 00:00:00' : '2026-10-26 12:00:00');
-$config = in_array($escenario, ['activa', 'historial'], true) ? ClienteWompiFalso::configuracion() : new ConfiguracionWompi([]);
+$config = in_array($escenario, ['activa', 'historial', 'fuente', 'automatico', 'nequi'], true) ? ClienteWompiFalso::configuracion('test', '1', '1') : new ConfiguracionWompi([]);
+$cliente = new ClienteWompiFalso();
+$cliente->datosComercio = ClienteWompiFalso::contratos();
+if (in_array($escenario, ['fuente', 'automatico', 'nequi'], true)) {
+    $fuentes = new FuentePago($db, 1, $cliente, $config, static fn () => $ahora);
+    $version = AutorizacionCobro::contratos($cliente->datosComercio)['version'];
+    if ($escenario === 'nequi') {
+        $cliente->fuente = ['id' => 99, 'type' => 'NEQUI', 'status' => 'AVAILABLE'];
+        $fuentes->guardar('NEQUI', 'nequi_test_visual', true, true, $version, 1);
+    } else {
+        $fuentes->guardar('CARD', 'tok_test_visual', true, true, $version, 1);
+    }
+    if ($escenario === 'automatico') {
+        $fuentes->automatico(true, $version, 8999000, 1);
+    }
+}
 if ($escenario === 'historial') {
     putenv('APP_URL=http://localhost/Zooki/public');
     $pago = (new PagoSuscripcion($db, 1, $config, static fn () => $ahora))->reservar('mensual', 0, 1);
@@ -29,4 +44,4 @@ if ($escenario === 'historial') {
     (new EventoWompi($db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx), '', 'test', 'test_events_falso'));
     (new ConciliadorPago($db, $cliente, $config, static fn () => $ahora))->procesar(1);
 }
-(new SuscripcionController($db, static fn () => $ahora, $config))->vista();
+(new SuscripcionController($db, static fn () => $ahora, $config, $cliente))->vista();

@@ -79,6 +79,38 @@ final class AvisoSuscripcion
         return $reservados;
     }
 
+    public function reservarFallo(array $pago, array $intento): int
+    {
+        if (!$this->db->inTransaction() || (int) $pago['id_clinica'] !== $this->clinica) {
+            throw new LogicException('El fallo se reserva al conciliar bajo bloqueo de clínica.');
+        }
+        $usuarios = $this->destinatarios();
+        $reservados = 0;
+        foreach ($usuarios as $usuario) {
+            $clave = hash('sha256', json_encode([$this->clinica, (int) $intento['id_intento'], 'cobro_fallido', (int) $usuario['id_usuario']], JSON_THROW_ON_ERROR));
+            $q = $this->db->prepare('SELECT 1 FROM avisos_suscripcion WHERE clave_aviso=? AND id_clinica=?');
+            $q->execute([$clave, $this->clinica]);
+            if ($q->fetchColumn()) {
+                continue;
+            }
+            $s = $this->servicio();
+            $fin = $s->estado()['periodo_fin'];
+            $this->db->prepare("INSERT INTO avisos_suscripcion (id_clinica,id_suscripcion,id_pago,id_intento,id_usuario_destinatario,tipo,clave_aviso,vencimiento_objetivo,programado_en) VALUES (?,?,?,?,?,'cobro_fallido',?,?,?)")
+                ->execute([$this->clinica, $pago['id_suscripcion'], $pago['id_pago'], $intento['id_intento'], $usuario['id_usuario'], $clave, $fin, $s->ahora()->format('Y-m-d H:i:s')]);
+            $s->auditar('avisos_suscripcion', (int) $this->db->lastInsertId(), [], ['tipo' => 'cobro_fallido', 'intento' => (int) $intento['id_intento']], 'Fallo confirmado; un aviso por destinatario (RE-0.5.22)', null, 'INSERT');
+            $reservados++;
+        }
+        if (!$usuarios) {
+            $motivo = 'RN-017 sin destinatario para intento ' . (int) $intento['id_intento'];
+            $q = $this->db->prepare('SELECT 1 FROM auditoria_sistema WHERE id_clinica=? AND descripcion=?');
+            $q->execute([$this->clinica, $motivo]);
+            if (!$q->fetchColumn()) {
+                $this->servicio()->auditar('intentos_pago', (int) $intento['id_intento'], [], ['incidencia' => 'sin_destinatario'], $motivo);
+            }
+        }
+        return $reservados;
+    }
+
     public function despachar(int $id, callable $transportar): bool
     {
         if ($this->db->inTransaction()) {
@@ -105,12 +137,16 @@ final class AvisoSuscripcion
             $destinatarios = array_column($this->destinatarios(), null, 'id_usuario');
             $usuario = $destinatarios[$aviso['id_usuario_destinatario']] ?? null;
             // Una reserva anterior no puede avisar del fin antiguo tras una renovación.
-            if (!$usuario || $aviso['vencimiento_objetivo'] !== $estado['periodo_fin'] || self::tipo($estado, $servicio->ahora()) !== $aviso['tipo']) {
+            if (!$usuario || ($aviso['tipo'] !== 'cobro_fallido' && ($aviso['vencimiento_objetivo'] !== $estado['periodo_fin'] || self::tipo($estado, $servicio->ahora()) !== $aviso['tipo']))) {
                 $this->cambiarEstado($aviso, 'obsoleto');
                 return null;
             }
             $asunto = $aviso['tipo'] === 'congelada' ? 'Beneficios del plan congelados' : 'Tu suscripción vence pronto';
             $mensaje = $asunto . '. Clínica: ' . $estado['clinica']['nombre'] . '. Fin del periodo: ' . $estado['periodo_fin'] . '. Fin de gracia: ' . $estado['gracia_hasta'] . '. Tus datos se conservan.';
+            if ($aviso['tipo'] === 'cobro_fallido') {
+                $asunto = 'No se pudo renovar tu plan automáticamente';
+                $mensaje = 'Wompi confirmó que un intento de renovación no fue aprobado. Clínica: ' . $estado['clinica']['nombre'] . '. Revisa Suscripción para consultar el resultado y pagar. Conservas tus datos; un cobro pendiente nunca se repite a ciegas.';
+            }
             $this->db->prepare("INSERT INTO notificaciones (id_clinica,id_usuario,tipo_entidad,id_entidad,destinatario_email,tipo_notificacion,asunto,mensaje,estado) VALUES (?,?,'suscripcion',?,?,?,?,?,'pendiente')")
                 ->execute([$this->clinica, $usuario['id_usuario'], $aviso['id_suscripcion'], $usuario['email'], 'suscripcion_' . $aviso['tipo'], $asunto, $mensaje]);
             $notificacion = (int) $this->db->lastInsertId();

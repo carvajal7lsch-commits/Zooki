@@ -3,10 +3,12 @@ require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../helpers/ConfiguracionWompi.php';
 require_once __DIR__ . '/../helpers/FirmaWompi.php';
 require_once __DIR__ . '/../models/EventoWompi.php';
+require_once __DIR__ . '/../models/ConciliadorPago.php';
+require_once __DIR__ . '/../helpers/ClienteWompiHttp.php';
 
 final class WompiEventosController
 {
-    public function __construct(private ?PDO $db = null, private ?ConfiguracionWompi $configuracion = null)
+    public function __construct(private ?PDO $db = null, private ?ConfiguracionWompi $configuracion = null, private ?ClienteWompi $cliente = null, private mixed $reloj = null)
     {
         $this->configuracion ??= new ConfiguracionWompi();
     }
@@ -57,11 +59,29 @@ final class WompiEventosController
             } finally {
                 ob_end_clean();
             }
-            (new EventoWompi($db))->recibir($evento);
+            $nuevo = (new EventoWompi($db, $this->reloj))->recibir($evento);
             http_response_code(200);
         } catch (Throwable $error) {
             error_log('Wompi: no se confirmó el almacenamiento del evento.');
             http_response_code(503);
+            return;
+        }
+        if (!$nuevo || $evento['tipo'] !== 'transaction.updated') {
+            return;
+        }
+        // S2 revisión: confirmar recepción durable antes de HTTP; no tocar búferes ajenos/de pruebas.
+        if (!defined('ZOOKI_PRUEBAS') && getenv('ZOOKI_ENTORNO_PRUEBAS') !== '1') {
+            ignore_user_abort(true);
+            header('Content-Length: 0');
+            flush();
+        }
+        try {
+            $q = $db->prepare('SELECT id_evento FROM wompi_eventos WHERE entorno=? AND clave_evento=?');
+            $q->execute([$evento['entorno'], $evento['clave_evento']]);
+            (new ConciliadorPago($db, $this->cliente ?? new ClienteWompiHttp($this->configuracion), $this->configuracion, $this->reloj))->procesar((int) $q->fetchColumn());
+        } catch (Throwable $error) {
+            // El 200 ya reconoce el inbox. Schedule recupera errores sin exigir reenvío del proveedor.
+            error_log('Wompi: evento conservado para conciliación posterior.');
         }
     }
 }

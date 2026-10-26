@@ -78,12 +78,26 @@ function cssLocal(archivo) {
     return fs.readFileSync(archivo,'utf8').replace(/@import\s+url\(['"]?([^'"\)]+)['"]?\);/g,(_,ruta)=>/^https?:/.test(ruta)?'':cssLocal(path.join(path.dirname(archivo),ruta.split('?')[0])));
 }
 
+test('actualizar estado muestra la fecha incluida del servidor sin medianoche ni jerga',async()=>{
+    const fin={textContent:''};
+    const mensaje={textContent:''};
+    const contexto={module:{exports:{}},URLSearchParams,document:{querySelector:()=>null}};
+    vm.runInNewContext(leer('public/js/suscripcion.js'),contexto);
+    const raiz={dataset:{pagoHabilitado:'0'},querySelector:s=>s==='[data-suscripcion-fin]'?fin:s==='#suscripcionMensaje'?mensaje:null};
+    const ui=contexto.module.exports.iniciar(raiz,{fetch:async()=>({ok:true,json:async()=>({ok:true,estado:{plan:'Profesional',situacion:'gracia',fin:'2026-10-25 00:00:00',fin_incluido:'24/10/2026'}})})});
+    await ui.estado();
+    assert.equal(fin.textContent,'24/10/2026');
+    assert.doesNotMatch(fin.textContent,/00:00/);
+    assert.match(mensaje.textContent,/En gracia/);
+    assert.doesNotMatch(mensaje.textContent,/al_dia|confirmación local/);
+});
+
 test('Chrome: pantalla real activa, deshabilitada e historial a 1366 y 390 sin red', {skip:!buscarChrome()}, async () => {
     const nav = await abrirChrome(buscarChrome());
     try {
         await nav.enviar('Network.enable');
         await nav.enviar('Network.setBlockedURLs',{urls:['http://*','https://*']});
-        for(const escenario of ['gracia','congelada','legado','activa','historial']) {
+        for(const escenario of ['gracia','congelada','legado','activa','historial','fuente','automatico','nequi']) {
             let html = vista(escenario);
             assert.doesNotMatch(html,/Fatal error|Warning:|Notice:/);
             assert.match(html,/Clínica Norte &lt;prueba&gt;/);
@@ -95,12 +109,20 @@ test('Chrome: pantalla real activa, deshabilitada e historial a 1366 y 390 sin r
                 await nav.enviar('Page.setDocumentContent',{frameId:arbol.frameTree.frame.id,html});
                 const estado=await nav.evaluar(`({cabe:document.documentElement.scrollWidth<=innerWidth,pago:document.querySelector('.suscripcion__pagar').disabled,texto:document.querySelector('[data-suscripcion-estado]').textContent})`);
                 assert.equal(estado.cabe,true,JSON.stringify({escenario,ancho,estado}));
-                assert.equal(estado.pago,!['activa','historial'].includes(escenario));
-                assert.match(estado.texto,escenario==='congelada'?/congelados/:['gracia','activa'].includes(escenario)?/gracia/:/Al día/);
+                assert.equal(estado.pago,!['activa','historial','fuente','automatico','nequi'].includes(escenario));
+                assert.match(estado.texto,escenario==='congelada'?/congelados/:['gracia','activa','fuente','automatico','nequi'].includes(escenario)?/gracia/:/Al día/);
+                if(['fuente','automatico'].includes(escenario)) assert.match(html,/VISA · termina en 4242/);
+                if(escenario==='automatico') assert.match(html,/Cobro mensual autorizado/);
+                if(escenario==='nequi') assert.match(html,/>Nequi</);
                 if(escenario==='historial') assert.match(html,/confirmado/);
                 if(process.env.ZOOKI_CAPTURAR_S2==='1' && ['gracia','activa','historial'].includes(escenario)) {
                     const captura=await nav.enviar('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});
                     fs.writeFileSync(path.join(RAIZ,'scratch','s2-suscripcion-'+escenario+'-'+ancho+'.png'),Buffer.from(captura.data,'base64'));
+                }
+                if(process.env.ZOOKI_CAPTURAR_S3==='1' && ['activa','fuente','automatico','nequi'].includes(escenario)) {
+                    const metricas=await nav.enviar('Page.getLayoutMetrics');
+                    const captura=await nav.enviar('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:ancho,height:metricas.cssContentSize.height,scale:1}});
+                    fs.writeFileSync(path.join(RAIZ,'scratch','s3-suscripcion-'+escenario+'-'+ancho+'.png'),Buffer.from(captura.data,'base64'));
                 }
             }
         }

@@ -10,7 +10,7 @@
 .suscripcion__datos { margin: 0; }
 .suscripcion__datos div { display: flex; justify-content: space-between; gap: 18px; padding: 11px 0; border-bottom: 1px solid #edf2f7; }
 .suscripcion__datos dt { color: #62788c; }
-.suscripcion__datos dd { margin: 0; text-align: right; font-weight: 600; }
+.suscripcion__datos dd { margin: 0; text-align: right; font-weight: 600; flex-shrink: 0; }
 .suscripcion__nota { padding: 14px; border-radius: 10px; background: #fff6df; color: #765500; }
 .suscripcion__precio { font-size: 26px; font-weight: 700; }
 .suscripcion__precio span { font-size: 15px; font-weight: 400; }
@@ -20,6 +20,8 @@
 .suscripcion__ciclos { padding: 14px; border: 1px solid #e3eaf1; border-radius: 10px; margin-top: 18px; }
 .suscripcion__ciclos label { display: block; padding: 8px 0; cursor: pointer; }
 .suscripcion__historial { margin-top: 22px; }
+.suscripcion__fuente { margin-top: 22px; }
+.suscripcion [hidden] { display: none; }
 .suscripcion__pagos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap: 16px; }
 .suscripcion__pago { border: 1px solid #e3eaf1; border-radius: 12px; padding: 14px; min-width: 0; }
 .suscripcion__referencia { overflow-wrap: anywhere; font-size: 13px; }

@@ -1,5 +1,5 @@
 <?php
-/** S1/S2: cada cinco minutos; conciliación GET, sin cobros automáticos. */
+/** S1–S3: cada cinco minutos; cobros solo con mandato y activación explícita. */
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
@@ -14,10 +14,10 @@ try {
     foreach (array_slice($argv, 1) as $argumento) {
         if ($argumento === '--revisar') {
             $revisar = true;
-        } elseif (in_array($argumento, ['--solo=vencimientos', '--solo=avisos', '--solo=conciliacion'], true)) {
+        } elseif (in_array($argumento, ['--solo=vencimientos', '--solo=avisos', '--solo=conciliacion', '--solo=cobros'], true)) {
             $solo = substr($argumento, 7);
         } else {
-            throw new InvalidArgumentException('Uso: --revisar y --solo=vencimientos|avisos|conciliacion. S1 no admite cobros; S2 tampoco emite cargos automáticos.');
+            throw new InvalidArgumentException('Uso: --revisar y --solo=vencimientos|avisos|conciliacion|cobros.');
         }
     }
     $configuracion = Database::enPruebas() ? Database::configuracionPruebas() : null;

@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../config/Database.php';
 require_once __DIR__ . '/../../models/PagoSuscripcion.php';
 require_once __DIR__ . '/../../models/ConciliadorPago.php';
 require_once __DIR__ . '/ClienteWompiFalso.php';
+require_once __DIR__ . '/../../models/CobroAutomatico.php';
+require_once __DIR__ . '/../../controllers/WompiEventosController.php';
 
 /** La barrera observa el candado real del servicio, sin cambiar su código. */
 final class BarreraPagoS2 extends PDOStatement
@@ -42,9 +44,27 @@ $db->setAttribute(PDO::ATTR_STATEMENT_CLASS, [BarreraPagoS2::class, [function ()
     }
 }]]);
 $reloj = static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00');
-$config = ClienteWompiFalso::configuracion();
+$config = ClienteWompiFalso::configuracion('test', '1', str_starts_with($fase, 's3_') ? '1' : '0');
 try {
-    if ($fase === 'reserva') {
+    if (in_array($fase, ['s3_workers', 's3_manual', 's3_auto_manual', 's3_retiro', 's3_auto_retiro'], true)) {
+        $cliente = new ClienteWompiFalso();
+        $cliente->datosComercio = ClienteWompiFalso::contratos();
+        $cliente->antesDeConsultar = static function () use ($db): void {
+            if ($db->inTransaction()) {
+                throw new RuntimeException('HTTP dentro del candado.');
+            }
+        };
+        $manual = ($fase === 's3_manual' && $nombre === 'primero') || ($fase === 's3_auto_manual' && $nombre === 'segundo');
+        $retiro = ($fase === 's3_retiro' && $nombre === 'primero') || ($fase === 's3_auto_retiro' && $nombre === 'segundo');
+        if ($manual) {
+            $r = (new PagoSuscripcion($db, 1, $config, $reloj))->reservar('mensual', 0, 1);
+        } elseif ($retiro) {
+            $r = (new FuentePago($db, 1, $cliente, $config, $reloj))->quitar(1);
+        } else {
+            $r = ['enviado' => (new CobroAutomatico($db, $cliente, $config, $reloj))->procesar(1)];
+        }
+        $resultado = ['operacion' => $r, 'posts' => count($cliente->creaciones)];
+    } elseif ($fase === 'reserva') {
         $resultado = (new PagoSuscripcion($db, 1, $config, $reloj))->reservar($nombre === 'primero' ? 'mensual' : 'anual', 0, 1);
     } else {
         $cliente = new ClienteWompiFalso();
@@ -55,7 +75,14 @@ try {
                 throw new RuntimeException('GET con transacción abierta.');
             }
         };
-        $resultado = ['acreditado' => (new ConciliadorPago($db, $cliente, $config, $reloj))->procesar((int) $evento)];
+        if ($fase === 's3_receptor') {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $_SERVER['CONTENT_TYPE'] = 'application/json';
+            (new WompiEventosController($db, $config, $cliente, $reloj))->recibir('test', ClienteWompiFalso::cuerpo($cliente->respuestas['tx_simultanea'], 'test', (int) $evento));
+            $resultado = ['codigo' => http_response_code()];
+        } else {
+            $resultado = ['acreditado' => (new ConciliadorPago($db, $cliente, $config, $reloj))->procesar((int) $evento)];
+        }
     }
     file_put_contents($carpeta . '/' . $nombre . '.fin', json_encode(['ok' => true, 'resultado' => $resultado], JSON_THROW_ON_ERROR));
     exit(0);

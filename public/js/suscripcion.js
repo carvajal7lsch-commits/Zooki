@@ -23,11 +23,11 @@
                 if (!respuesta.ok || !datos.ok) throw new Error('No se pudo consultar el pago.');
                 const pago = datos.estado.pago;
                 const etiquetas = {al_dia:'Al día',gracia:'En gracia',congelada:'Beneficios congelados',sin_vigencia:'Sin vigencia de pago'};
-                for (const [selector,texto] of [['[data-suscripcion-plan]',datos.estado.plan],['[data-suscripcion-fin]',datos.estado.fin || 'Sin fecha'],['[data-suscripcion-estado]',etiquetas[datos.estado.situacion]]]) {
+                for (const [selector,texto] of [['[data-suscripcion-plan]',datos.estado.plan],['[data-suscripcion-fin]',datos.estado.fin_incluido || 'Sin fecha'],['[data-suscripcion-estado]',etiquetas[datos.estado.situacion]]]) {
                     const nodo = raiz.querySelector(selector);
                     if (nodo && texto) nodo.textContent = texto;
                 }
-                avisar(pago ? 'Pago: ' + pago.estado + ' · ' + pago.intento + '. Actualiza para ver el historial completo.' : 'Plan: ' + datos.estado.plan + ' · ' + datos.estado.situacion + '.');
+                avisar(pago ? 'Pago: ' + pago.estado + ' · ' + pago.intento + '. Actualiza para ver el historial completo.' : 'Plan: ' + datos.estado.plan + ' · ' + (etiquetas[datos.estado.situacion] || 'Consulta el estado') + '.');
                 return datos;
             } catch (error) {
                 avisar('No se pudo consultar. La orden sigue reservada; vuelve a consultar antes de pagar.');
@@ -50,7 +50,7 @@
                     referencia = datos.pago.checkout.reference;
                     const checkout = widget(datos.pago.checkout);
                     checkout.open(() => {
-                        avisar('La ventana terminó. Consultando la confirmación local…');
+                        avisar('La ventana terminó. Consultando la confirmación…');
                         estado();
                     });
                 }

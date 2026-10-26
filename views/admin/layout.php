@@ -175,6 +175,7 @@
     <script src="https://checkout.wompi.co/widget.js"></script>
     <?php endif; ?>
     <script src="js/suscripcion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/fuente-suscripcion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
     <script src="js/inicio-comun.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
