@@ -3274,3 +3274,7 @@ README y su PDF/Word regenerados con el exportador del repositorio; `exportar.mj
 - Antes del merge: confirmar versión/motor/destino reales, respaldo restaurable de base y archivos, imagen anterior, pausa de escritores y configuración de despliegue. Conservar volúmenes y no reimportar 01/02. No declarar cumplidos estos puntos sin evidencia del dueño/VPS.
 - `--revisar` en el contenedor viejo solo enumera sus propios archivos: un «al día» de alpha.4 no demuestra que alpha.5 no necesite migraciones. No sirve como simulación de 08–10 sobre los datos reales.
 - Tras arrancar alpha.5: comprobar logs sin error, migraciones registradas y revisión al día sin omisión por otro migrador activo. Apache arranca aunque falle migrar; no habilitar uso ni Schedules hasta confirmar el esquema. DDL puede quedar parcialmente aplicado; volver solo al código anterior no garantiza recuperación.
+
+### Cierre de HU-4.7 en 2.1.0 (2026-10-26)
+
+**Autor: Claude (arquitecto). Solo documentación.** RE-4.7.3 (tasa de ausentismo), que esta entrega dejó para v2.1, se cumple con el porcentaje de no asistencia del mes del Inicio del administrador (HU-6.2, RE-6.2.12; `Panel::asistenciaDelPeriodo` y `InicioAdministradorTest::testEsteMesPropietariosNuevosYNoAsistencia`). Por decisión del dueño no se construye un reporte aparte; HU-4.7 queda «Implementada (2.1.0)». HU-4.10, HU-4.16 y HU-4.17 siguen planificadas, fuera de la entrega de la presentación.

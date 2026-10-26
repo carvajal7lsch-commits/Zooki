@@ -2,15 +2,21 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-25
+**Actualizado:** 2026-10-26
 
 ## Ahora
+
+### Cierre de alcance y pulido final (2026-10-26)
+
+- **HU-4.7 cerrada en documentación (Claude):** RE-4.7.3 (tasa de ausentismo) ya lo cumple el indicador «no asistieron» del Inicio del administrador (RE-6.2.12, con prueba). HU-4.7 pasa a «Implementada (2.1.0)» en historias, requisitos y plan M4. Sin código, migración ni despliegue.
+- **Decisión del dueño:** no se empieza nada grande nuevo antes de la presentación. HU-4.10, HU-3.5, HU-5.7, HU-8.3 y HU-8.4 quedan planificadas y fuera de esta entrega.
+- **Sigue:** pulido de pantallas, interfaz y diseño responsive con la lista de [`pulido-interfaz.md`](../specs/pulido-interfaz.md) (unos 2 días, hasta el 27–28/10). Después, datos semilla realistas de todo el sistema para la presentación, cargados en la copia de pruebas y no en la base de producción. Luego, preparar la presentación.
 
 ### v2.1.0 en producción (2026-10-26)
 
 - **Confirmado por el dueño:** merge y despliegue de 2.1.0, URL de eventos de Wompi producción configurada, Schedule `gestionar_suscripciones.php` cada 5 minutos (shell `sh`, Run con JSON correcto), clínicas legadas regularizadas, `WOMPI_COBROS_HABILITADOS=1` con redeploy: el botón Pagar abre la pasarela de producción.
 - **Sin pago real de prueba** (decisión del dueño): el primer pago de una clínica real es la verificación de punta a punta en producción. Si su evento no llega, se recupera por el retorno o con «Recuperar un pago de Wompi» en plataforma.
-- **Pendiente:** `WOMPI_AUTOMATICOS_HABILITADOS` sigue en 0 hasta ver pagos reales con el botón; D8 y D10 del plan M0-S. Sigue: HU de v2.1 que quedan (HU-4.7, HU-4.10, HU-3.5, HU-5.7; HU-8.3 y HU-8.4 si alcanza el tiempo) y el pulido final.
+- **Pendiente:** `WOMPI_AUTOMATICOS_HABILITADOS` sigue en 0 hasta ver pagos reales con el botón; D8 y D10 del plan M0-S. Sigue: el pulido final (ver arriba).
 
 ### M0-S — S4 y cierre 2.1.0 revisados: aprobados (2026-10-26)
 

@@ -24,7 +24,7 @@ _La **Revisión 3.5** (21 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 **Índice de módulos:**
 
-**Parcial (2.0.0-alpha.5):** HU-4.7 entrega «no asistió» con tolerancia; el reporte de ausentismo (RE-4.7.3) queda para la v2.1.
+**Cierre de HU-4.7 (2.1.0, 26/10/2026):** HU-4.7 pasa a implementada. El reporte de ausentismo (RE-4.7.3) es el porcentaje de no asistencia del mes que muestra el Inicio del administrador (RE-6.2.12); no hizo falta código nuevo.
 HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entrega preparada y no afirman que ya esté desplegada.
 
 - **Módulo 0** — Plataforma: clínicas, planes y suscripción *(v2.0)* · 5 historias
@@ -1130,7 +1130,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Media | Parcial (2.0.0-alpha.5; RE-4.7.3 en v2.1) | 3 pts | VD-AGN-07 |
+| Media | Implementada (2.1.0) | 3 pts | VD-AGN-07 |
 
 > Como veterinario, quiero marcar una cita como "no asistió" para liberar el espacio y medir el ausentismo.
 
@@ -1147,6 +1147,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 > _Nota: diferida en v1.11.0: la agenda se rehace con la nueva arquitectura. Falta RE-4.7.3 (tasa de ausentismo)._
 > _v2.1: se completa el reporte propio de la tasa de ausentismo. El estado `no_asistio` y la liberación del espacio ya existen desde v1.9.0 y se conservan al migrar la agenda en v2.0; HU-4.19 depende solo de esa base operativa._
+> _2.1.0 (decisión del dueño, 26/10/2026): RE-4.7.3 se cumple con el indicador «no asistieron» de «Este mes» en el Inicio del administrador (HU-6.2, RE-6.2.12): citas «no asistió» entre las citas agendadas sin canceladas, del día 1 del mes hasta hoy, solo de la clínica activa. No se construye un reporte aparte. Prueba: `InicioAdministradorTest::testEsteMesPropietariosNuevosYNoAsistencia`._
 
 ### HU-4.8 — Bloqueos de agenda del veterinario y días no laborables
 

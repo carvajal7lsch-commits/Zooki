@@ -668,9 +668,11 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 |---|---|---|---|---|
 | RE-4.7.1 | El sistema debe permitir marcar una cita como "no asistió". | Funcional | Se marca la cita como no asistida. | Media |
 | RE-4.7.2 | El sistema debe liberar el espacio de una cita no asistida. | Funcional | Tras marcar «no asistió», esa franja vuelve a ofrecerse como disponible al agendar. | Media |
-| RE-4.7.3 | El sistema debe permitir reportar la tasa de ausentismo. | Funcional | Se obtiene la tasa de ausentismo. | Baja |
+| RE-4.7.3 | El sistema debe permitir reportar la tasa de ausentismo. | Funcional | El administrador ve en el Inicio el porcentaje de no asistencia del mes de su clínica (RE-6.2.12). | Baja |
 
 **Reglas de negocio:** RN-405, RN-408
+
+> _2.1.0: RE-4.7.3 se cumple con el indicador de RE-6.2.12; no hay un reporte aparte (decisión del dueño, 26/10/2026)._
 
 ### HU-4.8 — Bloqueos de agenda del veterinario y días no laborables
 
