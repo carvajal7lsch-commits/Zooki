@@ -1,8 +1,9 @@
 <?php
 /**
- * Calendario del mes del Inicio del veterinario (HU-6.1, RE-6.1.8): hoy
- * resaltado, el día elegido y un punto en los días con sus citas. Lo pintan el
- * primer render y PanelController::diaAjax al cambiar de mes.
+ * Calendario del mes de los Inicios del veterinario (HU-6.1, RE-6.1.8) y del
+ * administrador (HU-6.2, RE-6.2.8): hoy resaltado, el día elegido y un punto
+ * en los días con citas (las del veterinario o las de la clínica). Lo pintan
+ * el primer render y las acciones AJAX del Inicio al cambiar de mes.
  * Recibe $mes de ResumenPanel::mes().
  */
 $hCal = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');

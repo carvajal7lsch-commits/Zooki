@@ -4,6 +4,7 @@ require_once __DIR__ . '/Contexto.php';
 require_once __DIR__ . '/Roles.php';
 require_once __DIR__ . '/../models/Auditoria.php';
 require_once __DIR__ . '/../models/NotificacionInterna.php';
+require_once __DIR__ . '/../models/Suscripcion.php';
 
 final class LimiteAlcanzado extends InvalidArgumentException
 {
@@ -19,7 +20,7 @@ final class LimitePlan
 {
     private const COLUMNAS = ['personal' => 'limite_personal', 'mascotas' => 'limite_mascotas', 'citas' => 'limite_citas_mes'];
 
-    public function __construct(private PDO $db, private int $clinica)
+    public function __construct(private PDO $db, private int $clinica, private mixed $reloj = null)
     {
     }
 
@@ -33,25 +34,15 @@ final class LimitePlan
         return $resultado;
     }
 
+    /** RE-6.2.10: el plan vigente que aplica (el gratuito si no hay suscripción de pago al día). */
+    public function nombrePlan(): string
+    {
+        return (string) $this->plan()['nombre'];
+    }
+
     private function plan(): array
     {
-        $stmt = $this->db->prepare('SELECT p.*, c.id_plan FROM clinicas c LEFT JOIN planes p ON p.id_plan = c.id_plan WHERE c.id_clinica = ?');
-        $stmt->execute([$this->clinica]);
-        $plan = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$plan) {
-            throw new InvalidArgumentException('Clínica no disponible.');
-        }
-        $suscripcion = $this->db->prepare('SELECT estado, al_dia FROM suscripciones WHERE id_clinica = ? ORDER BY id_suscripcion DESC LIMIT 1');
-        $suscripcion->execute([$this->clinica]);
-        $fila = $suscripcion->fetch(PDO::FETCH_ASSOC);
-        // Sin suscripción de pago vigente, RN-007/013 conserva los datos y usa el gratuito.
-        if (!$fila || $fila['estado'] !== 'activa' || (int) $fila['al_dia'] !== 1 || !$plan['id_plan']) {
-            $plan = $this->db->query("SELECT * FROM planes WHERE nombre = 'Gratuito'")->fetch(PDO::FETCH_ASSOC);
-        }
-        if (!$plan) {
-            throw new RuntimeException('Falta el plan gratuito en la semilla.');
-        }
-        return $plan;
+        return (new Suscripcion($this->db, $this->clinica, $this->reloj))->estado()['plan_efectivo'];
     }
 
     private function uso(string $recurso, ?string $fecha, ?int $excluirCita = null): int

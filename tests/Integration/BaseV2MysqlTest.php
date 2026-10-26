@@ -22,6 +22,442 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testS4ArranqueDockerSqlCompletoSeguidoDeMigrador(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        foreach (glob(self::DATABASE . '/*.sql') as $ruta) {
+            if (preg_match('/^(\d+)_/', basename($ruta), $numero) && (int) $numero[1] >= 3) {
+                $this->cargar(basename($ruta));
+            }
+        }
+        // Docker primero ejecuta SQL sin bitácora; PHP después repite las migraciones.
+        $this->migrador()->migrar();
+        $this->assertSame(['ejecutadas' => [], 'semilla' => true], $this->migrador()->migrar());
+        $tipo = $this->db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='avisos_suscripcion' AND COLUMN_NAME='tipo'")->fetchColumn();
+        $this->assertStringContainsString('pago_confirmado', $tipo);
+        $this->assertSame(0, $this->contar('avisos_suscripcion'));
+    }
+
+    public static function ordenesRecuperacionS4(): array
+    {
+        return [['s4_retorno_evento'], ['s4_evento_retorno']];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('ordenesRecuperacionS4')]
+    public function testS4RetornoYEventoConcurrentesUnPeriodoYUnRecibo(string $fase): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../Support/ClienteWompiFalso.php';
+        require_once __DIR__ . '/../../models/PagoSuscripcion.php';
+        require_once __DIR__ . '/../../models/EventoWompi.php';
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            $orden = (new PagoSuscripcion($this->db, 1, ClienteWompiFalso::configuracion(), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00')))->reservar('mensual', 0, 1);
+        } finally {
+            putenv('APP_URL');
+        }
+        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+        foreach ([1, 2] as $timestamp) {
+            (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx, 'test', $timestamp), '', 'test', 'test_events_falso'));
+        }
+        $this->competirS2($fase);
+        $this->assertSame(1, $this->contar('suscripcion_periodos'));
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM avisos_suscripcion WHERE tipo='pago_confirmado'")->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query('SELECT version_periodo FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='suscripcion_periodos' AND accion='INSERT'")->fetchColumn());
+    }
+
+    public function testS4Migracion14DobleParcialPreservaOutboxYDespachaRecibo(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../Support/FinanzasFixture.php';
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            FinanzasFixture::datos($this->db);
+            $this->db->exec("DELETE FROM avisos_suscripcion WHERE tipo='pago_confirmado'");
+            $this->db->exec('ALTER TABLE avisos_suscripcion DROP COLUMN medio_pago');
+            $this->db->exec("ALTER TABLE avisos_suscripcion MODIFY tipo ENUM('vence_7','vence_1','congelada','cobro_fallido') NOT NULL");
+            // Fallo parcial tras agregar la columna, antes de ampliar el ENUM.
+            $this->db->exec('ALTER TABLE avisos_suscripcion ADD COLUMN medio_pago VARCHAR(32) DEFAULT NULL');
+            $this->cargar('14_aviso_pago_confirmado.sql');
+            $this->cargar('14_aviso_pago_confirmado.sql');
+            $this->db->exec("INSERT INTO avisos_suscripcion(id_clinica,id_suscripcion,id_pago,id_intento,id_usuario_destinatario,tipo,medio_pago,clave_aviso,vencimiento_objetivo,programado_en) VALUES(1,1,1,1,1,'pago_confirmado','Nequi','recibo_mysql','2026-11-25 00:00:00','2026-10-26 08:00:00')");
+            $id = (int) $this->db->lastInsertId();
+            $enviados = 0;
+            $aviso = new AvisoSuscripcion($this->db, 1, static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00'));
+            $smtp = function (array $correo) use (&$enviados): bool {
+                $this->assertFalse($this->db->inTransaction());
+                $this->assertSame('Recibimos tu pago', $correo['asunto']);
+                $this->assertStringContainsString('Nequi', $correo['mensaje']);
+                $enviados++;
+                return true;
+            };
+            $this->assertTrue($aviso->despachar($id, $smtp));
+            $this->assertFalse($aviso->despachar($id, $smtp));
+            $this->assertSame(1, $enviados);
+            $this->assertSame(1, $this->contar('suscripcion_periodos'));
+        } finally {
+            putenv('APP_URL');
+            $_SESSION = [];
+        }
+    }
+
+    public function testS4MigracionRepetidaParcialYRevisionAuditadaConDatosReales(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../Support/FinanzasFixture.php';
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            FinanzasFixture::datos($this->db);
+            FinanzasFixture::plataforma();
+            $this->db->exec('ALTER TABLE wompi_eventos DROP FOREIGN KEY fk_evento_revisor');
+            $this->db->exec('ALTER TABLE wompi_eventos DROP COLUMN revisado_por, DROP COLUMN revisado_en, DROP COLUMN nota_revision');
+            $this->db->exec('ALTER TABLE suscripciones DROP COLUMN motivo_automatico_apagado');
+            // Simula interrupción después del primer DDL, sin pérdida de pagos existentes.
+            $this->db->exec('ALTER TABLE suscripciones ADD COLUMN motivo_automatico_apagado VARCHAR(40) DEFAULT NULL');
+            $this->cargar('13_plataforma_finanzas.sql');
+            $this->cargar('13_plataforma_finanzas.sql');
+            $panel = new Plataforma($this->db);
+            $id = (int) $panel->finanzas(1)['incidencias'][0]['id_evento'];
+            $panel->revisarIncidencia($id, 1, 'Revisada en MySQL');
+            $panel->revisarIncidencia($id, 1, 'Doble clic');
+            $this->assertSame('Revisada en MySQL', $panel->finanzas(1)['incidencias'][0]['nota_revision']);
+            $this->assertSame([], $panel->finanzas(2)['pagos']);
+            $this->assertSame(1, $this->contar('suscripcion_periodos'));
+            $this->assertSame(1, $this->contar('pagos_suscripcion'));
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion='Revisión financiera sin alterar el pago (RE-0.3.7)'")->fetchColumn());
+        } finally {
+            putenv('APP_URL');
+            $_SESSION = [];
+        }
+    }
+
+    private function prepararCobroS3(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../../models/CobroAutomatico.php';
+        require_once __DIR__ . '/../Support/ClienteWompiFalso.php';
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        $cliente = new ClienteWompiFalso();
+        $cliente->datosComercio = ClienteWompiFalso::contratos();
+        $fuente = new FuentePago($this->db, 1, $cliente, ClienteWompiFalso::configuracion('test', '1', '1'), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00'));
+        $version = AutorizacionCobro::contratos($cliente->datosComercio)['version'];
+        $fuente->guardar('CARD', 'tok_test_mysql', true, true, $version, 1);
+        $fuente->automatico(true, $version, 8999000, 1);
+    }
+
+    public function testS3DosTrabajadoresUnSoloPost(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_workers');
+        $this->assertSame(1, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertSame(1, $this->contar('pagos_suscripcion'));
+        $this->assertSame(1, $this->contar('intentos_pago'));
+        $this->assertSame('pendiente', $this->db->query('SELECT estado FROM intentos_pago')->fetchColumn());
+    }
+
+    public function testS3BotonPrimeroExcluyeAutomatico(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_manual');
+        $this->assertSame(0, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertSame(1, $this->contar('pagos_suscripcion'));
+        $this->assertSame(1, $this->contar('intentos_pago'));
+        $this->assertSame('boton', $this->db->query('SELECT origen FROM intentos_pago')->fetchColumn());
+    }
+
+    public function testS3AutomaticoPrimeroExcluyeWidget(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_auto_manual');
+        $this->assertSame(1, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertFalse($r[1]['resultado']['operacion']['abrir']);
+        $this->assertSame(1, $this->contar('pagos_suscripcion'));
+        $this->assertSame(1, $this->contar('intentos_pago'));
+    }
+
+    public function testS3RetiroConcurrenteAntesDeReclamarEvitaPost(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_retiro');
+        $this->assertSame(0, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertSame(0, $this->contar('intentos_pago'));
+        $this->assertSame(0, (int) $this->db->query('SELECT cobro_automatico FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+    }
+
+    public function testS3RetiroTrasReclamacionDetieneSiguientesYConservaCargo(): void
+    {
+        $this->prepararCobroS3();
+        $r = $this->competirS2('s3_auto_retiro');
+        $this->assertSame(1, array_sum(array_column(array_column($r, 'resultado'), 'posts')));
+        $this->assertStringContainsString('cargo en curso', $r[1]['resultado']['operacion']['mensaje']);
+        $this->assertSame('retirada', $this->db->query('SELECT estado FROM fuentes_pago')->fetchColumn());
+        $this->assertSame(1, $this->contar('intentos_pago'));
+    }
+
+    public function testS3DosReceptoresAcreditanSinCliUnaVez(): void
+    {
+        $this->prepararCobroS3();
+        $url = getenv('APP_URL');
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            (new PagoSuscripcion($this->db, 1, ClienteWompiFalso::configuracion(), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00')))->reservar('mensual', 0, 1);
+        } finally {
+            putenv($url === false ? 'APP_URL' : 'APP_URL=' . $url);
+        }
+        $r = $this->competirS2('s3_receptor');
+        $this->assertSame([200, 200], array_column(array_column($r, 'resultado'), 'codigo'));
+        $this->assertSame(1, $this->contar('suscripcion_periodos'));
+        $this->assertSame(2, $this->contar('wompi_eventos'));
+        $this->assertSame(1, (int) $this->db->query('SELECT version_periodo FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+    }
+
+    public function testS2DosProcesosDosPestanasUnaOrdenYUnIntento(): void
+    {
+        $this->prepararHistoriaClinica();
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        $resultados = $this->competirS2('reserva');
+        $this->assertSame($resultados[0]['resultado'], $resultados[1]['resultado']);
+        $this->assertSame(1, $this->contar('pagos_suscripcion'));
+        $this->assertSame(1, $this->contar('intentos_pago'));
+        $this->assertSame(0, $this->contar('suscripcion_periodos'));
+        $this->assertSame(8999000, $resultados[0]['resultado']['total_centavos']);
+    }
+
+    public function testS2DosEventosConcurrentesAcreditanUnaVezConAuditoria(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../Support/ClienteWompiFalso.php';
+        require_once __DIR__ . '/../../models/PagoSuscripcion.php';
+        require_once __DIR__ . '/../../models/EventoWompi.php';
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        $urlAnterior = getenv('APP_URL');
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            $orden = (new PagoSuscripcion($this->db, 1, ClienteWompiFalso::configuracion(), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00')))->reservar('mensual', 0, 1);
+        } finally {
+            putenv($urlAnterior === false ? 'APP_URL' : 'APP_URL=' . $urlAnterior);
+        }
+        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+        foreach ([1, 2] as $timestamp) {
+            (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx, 'test', $timestamp), '', 'test', 'test_events_falso'));
+        }
+        $this->competirS2('acreditar');
+        $this->assertSame(1, $this->contar('suscripcion_periodos'));
+        $this->assertSame('2026-11-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query('SELECT version_periodo FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame(2, (int) $this->db->query("SELECT COUNT(*) FROM wompi_eventos WHERE estado='procesado'")->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='suscripcion_periodos' AND accion='INSERT'")->fetchColumn());
+    }
+
+    private function competirS2(string $fase): array
+    {
+        $this->carpetaTemporal = sys_get_temp_dir() . '/zooki_pago_s2_' . bin2hex(random_bytes(8));
+        mkdir($this->carpetaTemporal);
+        $esperar = function (string $archivo): void {
+            $hasta = microtime(true) + 20;
+            while (!is_file($this->carpetaTemporal . '/' . $archivo)) {
+                if (microtime(true) > $hasta) {
+                    $this->fail('Barrera de pago no alcanzada: ' . $archivo);
+                }
+                usleep(10000);
+            }
+        };
+        $procesos = [];
+        $resultados = [];
+        try {
+            foreach (['primero' => 1, 'segundo' => 2] as $nombre => $evento) {
+                $proceso = proc_open([PHP_BINARY, __DIR__ . '/../Support/ProcesoPagoS2.php', $this->carpetaTemporal, $nombre, $fase, (string) $evento], [0 => ['pipe', 'r'], 1 => ['file', $this->carpetaTemporal . '/' . $nombre . '.log', 'a'], 2 => ['file', $this->carpetaTemporal . '/' . $nombre . '.log', 'a']], $tuberias);
+                $this->assertIsResource($proceso);
+                fclose($tuberias[0]);
+                $procesos[] = $proceso;
+                $esperar($nombre === 'primero' ? 'bloqueado' : 'segundo.conexion');
+            }
+            $a = (int) file_get_contents($this->carpetaTemporal . '/primero.conexion');
+            $b = (int) file_get_contents($this->carpetaTemporal . '/segundo.conexion');
+            $maria = str_contains((string) $this->db->query('SELECT VERSION()')->fetchColumn(), 'MariaDB');
+            $sql = $maria ? 'SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX r ON r.trx_id=w.requesting_trx_id JOIN information_schema.INNODB_TRX b ON b.trx_id=w.blocking_trx_id WHERE r.trx_mysql_thread_id=? AND b.trx_mysql_thread_id=?'
+                : 'SELECT COUNT(*) FROM performance_schema.data_lock_waits w JOIN performance_schema.threads r ON r.THREAD_ID=w.REQUESTING_THREAD_ID JOIN performance_schema.threads b ON b.THREAD_ID=w.BLOCKING_THREAD_ID WHERE r.PROCESSLIST_ID=? AND b.PROCESSLIST_ID=?';
+            $q = $this->db->prepare($sql);
+            $hasta = microtime(true) + 10;
+            do {
+                $q->execute([$b, $a]);
+                $espera = (int) $q->fetchColumn() > 0;
+                $q->closeCursor();
+                if (!$espera) {
+                    usleep($maria ? 125000 : 20000);
+                }
+            } while (!$espera && microtime(true) < $hasta);
+            $this->assertTrue($espera, 'Las dos peticiones deben competir por el candado real de la clínica.');
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach (['primero', 'segundo'] as $nombre) {
+                $esperar($nombre . '.fin');
+                $r = json_decode(file_get_contents($this->carpetaTemporal . '/' . $nombre . '.fin'), true, 64, JSON_THROW_ON_ERROR);
+                $this->assertTrue($r['ok'], json_encode($r));
+                $resultados[] = $r;
+            }
+        } finally {
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach ($procesos as $proceso) {
+                proc_close($proceso);
+            }
+        }
+        return $resultados;
+    }
+
+    public function testS1CliRealRevisarNoModificaNiEnviaYS3ApagadaNoCobra(): void
+    {
+        $this->prepararHistoriaClinica();
+        $antes = $this->db->query('SELECT * FROM suscripciones ORDER BY id_suscripcion')->fetchAll(PDO::FETCH_ASSOC);
+        $auditoria = $this->contar('auditoria_sistema');
+        $correo = $this->contar('notificaciones');
+        foreach ([['--revisar','--solo=avisos'],['--solo=cobros']] as $argumentos) {
+            $proceso = proc_open(array_merge([PHP_BINARY, __DIR__ . '/../../scripts/gestionar_suscripciones.php'], $argumentos), [0 => ['pipe','r'], 1 => ['pipe','w'], 2 => ['pipe','w']], $tuberias);
+            $this->assertIsResource($proceso);
+            fclose($tuberias[0]);
+            $salida = stream_get_contents($tuberias[1]);
+            $error = stream_get_contents($tuberias[2]);
+            fclose($tuberias[1]);
+            fclose($tuberias[2]);
+            $codigo = proc_close($proceso);
+            if (in_array('--revisar', $argumentos, true)) {
+                $this->assertSame(0, $codigo, $error);
+                $r = json_decode($salida, true, 64, JSON_THROW_ON_ERROR);
+                $this->assertSame(0, $r['enviados']);
+                $this->assertSame(0, $r['transiciones']);
+                $this->assertNotEmpty($r['revision']);
+            } else {
+                $this->assertSame(0, $codigo, $error);
+                $r = json_decode($salida, true, 64, JSON_THROW_ON_ERROR);
+                $this->assertFalse($r['cobros']['habilitado']);
+                $this->assertSame(0, $r['cobros']['enviados']);
+            }
+        }
+        $this->assertSame($antes, $this->db->query('SELECT * FROM suscripciones ORDER BY id_suscripcion')->fetchAll(PDO::FETCH_ASSOC));
+        $this->assertSame($auditoria, $this->contar('auditoria_sistema'));
+        $this->assertSame($correo, $this->contar('notificaciones'));
+    }
+
+    public function testS1MigracionDesdeElEsquemaAnteriorConDatos(): void
+    {
+        $sql = file_get_contents(self::DATABASE . '/01_schema.sql');
+        $fin = strpos($sql, '-- M0-S S1: estructuras futuras vacías.');
+        $this->assertNotFalse($fin);
+        $sql = substr($sql, 0, $fin);
+        foreach (['suscripcion_gracia_dias','aviso_vencimiento_1_dias','aviso_vencimiento_2_dias','gestion_cobro','periodo_inicio','periodo_fin','estado_cobro','version_periodo','cobro_automatico','id_fuente_activa','autorizado_por','autorizado_en','retirado_en','cambio_ciclo_siguiente'] as $columna) {
+            $sql = preg_replace('/^  `' . $columna . '`[^\r\n]*\r?\n/m', '', $sql);
+        }
+        $st = $this->db->query($sql);
+        while ($st->nextRowset()) {
+        }
+        $st->closeCursor();
+        $this->cargar('02_semilla.sql');
+        require_once __DIR__ . '/../Support/DosClinicas.php';
+        DosClinicas::poblar($this->db);
+        $this->db->exec("UPDATE suscripciones SET fecha_fin='2026-10-24' WHERE id_clinica=1");
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->db->exec('UPDATE clinicas SET suscripcion_gracia_dias=5 WHERE id_clinica=1');
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->assertSame('2026-10-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame('legado', $this->db->query('SELECT gestion_cobro FROM suscripciones WHERE id_clinica=2')->fetchColumn());
+        $this->assertSame(5, (int) $this->db->query('SELECT suscripcion_gracia_dias FROM clinicas WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame(0, $this->contar('pagos_suscripcion'));
+    }
+
+    public function testS1Migracion12LegadoPrecioPersonalizadoYRecuperacionParcial(): void
+    {
+        $this->prepararHistoriaClinica(false);
+        $this->db->exec("UPDATE planes SET precio_mensual=100000,precio_anual=960000 WHERE id_plan=2");
+        $this->db->exec("UPDATE suscripciones SET fecha_fin='2026-10-24' WHERE id_clinica=1");
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->assertSame('2026-10-25 00:00:00', $this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertNull($this->db->query('SELECT periodo_fin FROM suscripciones WHERE id_clinica=2')->fetchColumn());
+        $this->assertSame([89990,899900], array_map('intval', $this->db->query('SELECT precio_mensual,precio_anual FROM planes WHERE id_plan=2')->fetch(PDO::FETCH_NUM)));
+        $this->db->exec('UPDATE planes SET precio_mensual=123456,precio_anual=1234560 WHERE id_plan=2');
+        $this->db->exec('ALTER TABLE clinicas DROP COLUMN aviso_vencimiento_2_dias');
+        $this->db->exec('DROP TABLE wompi_eventos');
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->cargar('12_suscripcion_pagos.sql');
+        $this->assertSame(123456, (int) $this->db->query('SELECT precio_mensual FROM planes WHERE id_plan=2')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query('SELECT aviso_vencimiento_2_dias FROM clinicas WHERE id_clinica=1')->fetchColumn());
+        foreach (['pagos_suscripcion','intentos_pago','wompi_eventos','fuentes_pago','suscripcion_periodos','avisos_suscripcion'] as $tabla) {
+            $this->assertSame(0, $this->contar($tabla));
+        }
+        $this->db->exec('ALTER TABLE pagos_suscripcion DROP INDEX uq_pago_obligacion');
+        try {
+            $this->cargar('12_suscripcion_pagos.sql');
+            $this->fail('Una tabla incompatible no puede pasar como existente.');
+        } catch (PDOException $error) {
+            $this->assertStringContainsString('S1 indice incompatible', $error->getMessage());
+        }
+    }
+
+    public function testS1DosTrabajadoresConcurrentesUnaTransicionYUnAviso(): void
+    {
+        $this->prepararHistoriaClinica();
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        $this->carpetaTemporal = sys_get_temp_dir() . '/zooki_s1_' . bin2hex(random_bytes(8));
+        mkdir($this->carpetaTemporal);
+        $esperar = function (string $archivo): void {
+            $limite = microtime(true) + 20;
+            while (!is_file($this->carpetaTemporal . '/' . $archivo)) {
+                if (microtime(true) > $limite) {
+                    $this->fail('No se alcanzó la barrera S1: ' . $archivo);
+                }
+                usleep(10000);
+            }
+        };
+        $procesos = [];
+        $lanzar = function (string $nombre) {
+            $proceso = proc_open([PHP_BINARY, __DIR__ . '/../Support/ProcesoSuscripcion.php', $this->carpetaTemporal, $nombre], [0 => ['pipe','r'], 1 => ['file',$this->carpetaTemporal . '/' . $nombre . '.log','a'], 2 => ['file',$this->carpetaTemporal . '/' . $nombre . '.log','a']], $tuberias);
+            if (!is_resource($proceso)) {
+                throw new RuntimeException('No se pudo abrir el trabajador S1.');
+            }
+            fclose($tuberias[0]);
+            return $proceso;
+        };
+        try {
+            $procesos[] = $lanzar('primero');
+            $esperar('bloqueado');
+            $procesos[] = $lanzar('segundo');
+            $esperar('segundo.conexion');
+            $primero = (int) file_get_contents($this->carpetaTemporal . '/primero.conexion');
+            $segundo = (int) file_get_contents($this->carpetaTemporal . '/segundo.conexion');
+            $maria = str_contains((string) $this->db->query('SELECT VERSION()')->fetchColumn(), 'MariaDB');
+            $sql = $maria ? 'SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX r ON r.trx_id=w.requesting_trx_id JOIN information_schema.INNODB_TRX b ON b.trx_id=w.blocking_trx_id WHERE r.trx_mysql_thread_id=? AND b.trx_mysql_thread_id=?'
+                : 'SELECT COUNT(*) FROM performance_schema.data_lock_waits w JOIN performance_schema.threads r ON r.THREAD_ID=w.REQUESTING_THREAD_ID JOIN performance_schema.threads b ON b.THREAD_ID=w.BLOCKING_THREAD_ID WHERE r.PROCESSLIST_ID=? AND b.PROCESSLIST_ID=?';
+            $consulta = $this->db->prepare($sql);
+            $limite = microtime(true) + 10;
+            do {
+                $consulta->execute([$segundo, $primero]);
+                $espera = (int) $consulta->fetchColumn() > 0;
+                $consulta->closeCursor();
+                if (!$espera) {
+                    usleep(125000);
+                }
+            } while (!$espera && microtime(true) < $limite);
+            $this->assertTrue($espera, 'El segundo trabajador espera el bloqueo real de clínica.');
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach (['primero','segundo'] as $nombre) {
+                $esperar($nombre . '.fin');
+                $r = json_decode(file_get_contents($this->carpetaTemporal . '/' . $nombre . '.fin'), true);
+                $this->assertSame(0, $r['errores'] ?? $r, json_encode($r));
+            }
+            $this->assertSame(1, $this->contar('avisos_suscripcion'));
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='suscripciones' AND datos_nuevos LIKE '%congelada%'")->fetchColumn());
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM notificaciones WHERE tipo_notificacion='suscripcion_congelada'")->fetchColumn());
+            $this->assertCount(1, glob($this->carpetaTemporal . '/correo-*'));
+        } finally {
+            file_put_contents($this->carpetaTemporal . '/liberar', '1');
+            foreach ($procesos as $proceso) {
+                proc_close($proceso);
+            }
+        }
+    }
+
     public function testCarnetBMigracion11SeRepiteSinPerderAccesosNiGuardarTokenOMascota(): void
     {
         $this->cargar('01_schema.sql');
@@ -590,7 +1026,7 @@ class BaseV2MysqlTest extends TestCase
         $this->cargar('05_limites_plan_gratuito.sql');
         $this->cargar('02_semilla.sql');
         $this->assertSame([17, 30, 2], array_map('intval', $this->db->query("SELECT limite_mascotas, limite_citas_mes, limite_personal FROM planes WHERE nombre = 'Gratuito'")->fetch(PDO::FETCH_NUM)));
-        $this->assertSame(100000, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
+        $this->assertSame(89990, (int) $this->db->query("SELECT precio_mensual FROM planes WHERE nombre = 'Profesional'")->fetchColumn());
     }
 
     public function testE2CuotasYBloqueoDeClinicaEnElEsquemaReal(): void
@@ -683,8 +1119,8 @@ class BaseV2MysqlTest extends TestCase
         try {
             $modelo = new Plataforma($this->db);
             $this->assertCount(4, $modelo->clinicas());
-            $modelo->cambiarSuscripcion(1, 2, 'activa', 'Cambio solicitado');
-            $modelo->cambiarSuscripcion(1, 2, 'cancelada', 'Cancelación solicitada');
+            $modelo->cambiarSuscripcion(1, 2, 'activa', 'Cambio solicitado', '2099-12-31');
+            $modelo->cambiarSuscripcion(1, 2, 'cancelada', 'Cancelación solicitada', '2099-12-31');
             $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM suscripciones')->fetchColumn());
             $this->assertSame('cancelada', $this->db->query('SELECT estado FROM suscripciones')->fetchColumn());
             $this->assertSame(2, (int) $this->db->query('SELECT id_plan FROM clinicas WHERE id_clinica = 1')->fetchColumn());
@@ -1045,7 +1481,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
             "SELECT ENGINE, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
         )->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->assertCount(59, $tablas);
+        $this->assertCount(65, $tablas);
         foreach ($tablas as $t) {
             $this->assertSame('InnoDB', $t['ENGINE']);
             $this->assertSame('utf8mb4_general_ci', $t['TABLE_COLLATION']);
@@ -1076,7 +1512,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }
@@ -1698,7 +2134,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         }
     }
 
-    private function prepararHistoriaClinica(): void
+    private function prepararHistoriaClinica(bool $aplicarMigracionesPosteriores = true): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
 require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
@@ -1707,6 +2143,9 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../models/Vacuna.php';
         $this->cargar('01_schema.sql');
         $this->cargar('02_semilla.sql');
+        if ($aplicarMigracionesPosteriores) {
+            $this->cargar('14_aviso_pago_confirmado.sql');
+        }
         DosClinicas::poblar($this->db);
         DosClinicas::completarMascota($this->db);
         DosClinicas::vincularLunaASur($this->db);

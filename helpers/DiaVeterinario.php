@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/ResumenPanel.php';
+require_once __DIR__ . '/IntervalosAgenda.php';
 
 /**
  * «Tu día» del Inicio del veterinario (HU-6.1, RE-6.1.9): las filas de un día
@@ -51,6 +52,8 @@ final class DiaVeterinario
                 'etiqueta' => self::ESTADOS[$estado],
                 'mascota' => (string) $cita['mascota'],
                 'texto' => trim((string) ($cita['motivo'] ?? '')) !== '' ? (string) $cita['motivo'] : (string) ($cita['tipo'] ?? ''),
+                // RE-6.2.9: un caso rojo se distingue en la agenda del administrador.
+                'urgencia' => ($cita['prioridad'] ?? '') === 'rojo',
                 'cita' => $cita,
             ];
         }
@@ -96,6 +99,21 @@ final class DiaVeterinario
             }
         }
         return $total;
+    }
+
+    /**
+     * RE-6.2.9: porcentaje de la jornada efectiva (jornada − cierres −
+     * ausencias) que no está libre; null si ese día no hay jornada.
+     */
+    public static function ocupacion(array $dia): ?int
+    {
+        $cortes = array_merge(array_map(static fn ($c) => [$c[0], $c[1]], $dia['cierres']), $dia['ausencias']);
+        $efectiva = self::segundos(IntervalosAgenda::restar($dia['jornada'], $cortes));
+        if ($efectiva === 0) {
+            return null;
+        }
+        $ocupada = max(0, $efectiva - self::segundos($dia['libres']));
+        return (int) round($ocupada / $efectiva * 100);
     }
 
     /** Cuántas citas hay en las filas. */
@@ -146,27 +164,33 @@ final class DiaVeterinario
         }
         $lineas = [];
         for ($i = 1, $n = count($jornada); $i < $n; $i++) {
-            $lineas[] = self::bloqueo($jornada[$i - 1][1], $jornada[$i][0], 'Almuerzo · hasta las ' . self::horaDe($jornada[$i][0]));
+            $lineas[] = self::bloqueo($jornada[$i - 1][1], $jornada[$i][0], 'Almuerzo · hasta las ' . self::horaDe($jornada[$i][0]), 'almuerzo');
         }
         $primero = $jornada[0][0];
         $ultimo = $jornada[count($jornada) - 1][1];
         $cortes = array_merge(
-            array_map(static fn ($c) => [$c[0], $c[1], 'Clínica cerrada' . (trim($c[2]) !== '' ? ' · ' . trim($c[2]) : '')], $dia['cierres']),
-            array_map(static fn ($a) => [$a[0], $a[1], 'Ausencia'], $dia['ausencias'])
+            array_map(static fn ($c) => [$c[0], $c[1], 'Clínica cerrada' . (trim($c[2]) !== '' ? ' · ' . trim($c[2]) : ''), 'cierre'], $dia['cierres']),
+            array_map(static fn ($a) => [$a[0], $a[1], 'Ausencia', 'ausencia'], $dia['ausencias'])
         );
-        foreach ($cortes as [$desde, $hasta, $texto]) {
+        foreach ($cortes as [$desde, $hasta, $texto, $clase]) {
             $desde = max($desde, $primero);
             if ($desde >= min($hasta, $ultimo)) {
                 continue;
             }
-            $lineas[] = self::bloqueo($desde, $hasta, $texto . ($hasta >= $ultimo ? ' · resto del día' : ' · hasta las ' . self::horaDe($hasta)));
+            $lineas[] = self::bloqueo($desde, $hasta, $texto . ($hasta >= $ultimo ? ' · resto del día' : ' · hasta las ' . self::horaDe($hasta)), $clase);
         }
         return $lineas;
     }
 
-    private static function bloqueo(int $desde, int $hasta, string $texto): array
+    /** $clase: almuerzo, cierre o ausencia, para que cada pantalla los distinga. */
+    private static function bloqueo(int $desde, int $hasta, string $texto, string $clase): array
     {
-        return ['tipo' => 'bloqueo', 'inicio' => $desde, 'fin' => $hasta, 'hora' => self::horaDe($desde), 'texto' => $texto];
+        return ['tipo' => 'bloqueo', 'clase' => $clase, 'inicio' => $desde, 'fin' => $hasta, 'hora' => self::horaDe($desde), 'texto' => $texto];
+    }
+
+    private static function segundos(array $intervalos): int
+    {
+        return array_sum(array_map(static fn ($i) => $i[1] - $i[0], $intervalos));
     }
 
     private static function horaDe(int $instante): string

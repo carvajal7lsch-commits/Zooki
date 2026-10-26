@@ -5,7 +5,7 @@
 require_once "../helpers/ZonaHoraria.php";
 ZonaHoraria::aplicar();
 require_once "../helpers/Sesion.php";
-if (!in_array($_GET['action'] ?? '', ['carnet', 'carnet_ubicacion', 'carnet_foto'], true)) {
+if (!in_array($_GET['action'] ?? '', ['carnet', 'carnet_ubicacion', 'carnet_foto', 'wompi_eventos_test', 'wompi_eventos_prod'], true)) {
     Sesion::iniciar();
 }
 $esHttps = Sesion::esHttps($_SERVER);
@@ -36,6 +36,32 @@ Security::check($action);
 // lanza AccesoDenegado (Security::denegarRecursoAjeno) y aquí se responde 403.
 try {
 switch ($action) {
+    case "wompi_eventos_test":
+    case "wompi_eventos_prod":
+        require_once '../controllers/WompiEventosController.php';
+        (new WompiEventosController())->recibir($action === 'wompi_eventos_test' ? 'test' : 'prod');
+        break;
+    case "suscripcion_pagar_ajax":
+    case "suscripcion_estado_ajax":
+    case "suscripcion_historial_ajax":
+    case "suscripcion_retorno":
+    case "suscripcion_fuente_preparar_ajax":
+    case "suscripcion_fuente_ajax":
+    case "suscripcion_automatico_ajax":
+    case "suscripcion_retirar_fuente_ajax":
+        require_once '../controllers/SuscripcionController.php';
+        $suscripcionController = new SuscripcionController((new Database())->getConnection());
+        match ($action) {
+            'suscripcion_pagar_ajax' => $suscripcionController->pagar(),
+            'suscripcion_estado_ajax' => $suscripcionController->estado(),
+            'suscripcion_historial_ajax' => $suscripcionController->historial(),
+            'suscripcion_retorno' => $suscripcionController->retorno(),
+            'suscripcion_fuente_preparar_ajax' => $suscripcionController->prepararFuente(),
+            'suscripcion_fuente_ajax' => $suscripcionController->guardarFuente(),
+            'suscripcion_automatico_ajax' => $suscripcionController->automatico(),
+            'suscripcion_retirar_fuente_ajax' => $suscripcionController->quitarFuente(),
+        };
+        break;
     case "carnet":
         require_once '../controllers/CarnetPublicoController.php';
         (new CarnetPublicoController())->mostrar();
@@ -187,6 +213,11 @@ switch ($action) {
         require_once "../controllers/AuthController.php";
         $controller = new AuthController();
         $controller->cambiarPasswordAjax();
+        break;
+
+    case "admin_suscripcion":
+        require_once '../controllers/SuscripcionController.php';
+        (new SuscripcionController((new Database())->getConnection()))->vista();
         break;
 
     case "admin_configuracion":
@@ -353,6 +384,11 @@ switch ($action) {
         (new PlataformaController())->inicio();
         break;
 
+    case "plataforma_pagos_ajax":
+        require_once __DIR__ . '/../controllers/PlataformaController.php';
+        (new PlataformaController())->pagos();
+        break;
+
     // HU-2.12: mapa de solo lectura del conocimiento global (RN-212).
     case "plataforma_grafo":
         require_once "../controllers/GrafoConocimientoController.php";
@@ -365,6 +401,8 @@ switch ($action) {
         break;
 
     case "plataforma_suscripcion_ajax":
+    case "plataforma_incidencia_ajax":
+    case "plataforma_conciliar_ajax":
     case "plataforma_estado_ajax":
     case "plataforma_caso_ajax":
     case "plataforma_desbloquear_ajax":
@@ -380,6 +418,12 @@ switch ($action) {
         require_once "../controllers/PanelController.php";
         $panel = (new PanelController())->datosAdministrador();
         require_once "../views/admin/layout.php";
+        break;
+
+    case "panel_admin_dia_ajax":
+        // RE-6.2.8 y RE-6.2.9: otro día u otro mes del Inicio del administrador, de su clínica.
+        require_once "../controllers/PanelController.php";
+        (new PanelController())->diaAdminAjax();
         break;
 
     case "admin_usuarios":

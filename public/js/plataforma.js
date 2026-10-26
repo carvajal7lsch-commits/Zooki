@@ -110,6 +110,18 @@
         return !error;
     }
 
+    function validarFechaConcesion(campo) {
+        const valor = campo.value;
+        const fecha = new Date(valor + 'T00:00:00Z');
+        const valida = campo.disabled || (!campo.required && !valor) || (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(valor) && valor >= '0001-01-01' && (!campo.max || valor <= campo.max) && !Number.isNaN(fecha.getTime()) && fecha.toISOString().slice(0, 10) === valor);
+        const mensaje = valida ? '' : 'Indica el último día incluido de la concesión.';
+        campo.setCustomValidity(mensaje);
+        campo.setAttribute('aria-invalid', String(!valida));
+        const salida = campo.parentElement.querySelector('[data-error-campo]');
+        if (salida) salida.textContent = mensaje;
+        return valida;
+    }
+
     function confirmacion(form) {
         if (form.dataset.plataformaAccion === 'plataforma_estado_ajax') {
             if (form.elements.estado.value === 'baja') return 'Dar de baja impide operar a esta clínica y no permite reactivarla desde el panel. Sus registros se conservan.';
@@ -135,6 +147,8 @@
     }
 
     async function enviar(form, boton) {
+        const fechaFin = form.querySelector('[data-suscripcion-fin]');
+        if (fechaFin && !validarFechaConcesion(fechaFin)) return;
         const campos = Array.from(form.querySelectorAll('textarea[data-caracteres]'));
         if (!campos.map(validar).every(Boolean) || !form.reportValidity() || form.dataset.enviando === '1') return;
         form.dataset.enviando = '1';
@@ -232,6 +246,12 @@
         const inactiva = form.querySelector('input[name="suscripcion_inactiva"]:checked');
         const valor = form.querySelector('[data-suscripcion-valor]');
         if (valor) valor.value = gratuito || activa ? 'activa' : (inactiva ? inactiva.value : 'suspendida');
+        const fecha = form.querySelector('[data-suscripcion-fin]');
+        if (fecha) {
+            fecha.required = !gratuito;
+            fecha.disabled = gratuito;
+            fecha.parentElement.hidden = gratuito;
+        }
         return valor ? valor.value : 'activa';
     }
 
@@ -255,6 +275,11 @@
         if (guardar) guardar.disabled = sinPlan;
         const aviso = dialogo.querySelector('[data-aviso-plan]');
         if (aviso) aviso.hidden = !sinPlan;
+        const fecha = plan.querySelector('[data-suscripcion-fin]');
+        if (fecha) fecha.value = boton.dataset.fechaFin || '';
+        plan.querySelectorAll('input[name="ciclo"]').forEach(campo => {
+            campo.checked = campo.value === (boton.dataset.ciclo || 'mensual');
+        });
         actualizarSuscripcion(plan);
         return sinPlan;
     }
@@ -357,6 +382,7 @@
     document.addEventListener('DOMContentLoaded', iniciar);
     document.addEventListener('input', evento => {
         if (evento.target.matches('textarea[data-caracteres]')) validar(evento.target);
+        if (evento.target.matches('[data-suscripcion-fin]')) validarFechaConcesion(evento.target);
         if (evento.target.matches('[data-filtro-buscar]')) filtrar();
     });
     document.addEventListener('change', evento => {
@@ -393,5 +419,5 @@
         evento.preventDefault();
         enviar(form, evento.submitter || form.querySelector('button[type="submit"]'));
     });
-    window.ZookiPlataforma = { validar, confirmacion, vista, pestana, filtrar, pestanaModal, accionesEstado, actualizarSuscripcion, enviar };
+    window.ZookiPlataforma = { validarFechaConcesion, validar, confirmacion, vista, pestana, filtrar, pestanaModal, accionesEstado, actualizarSuscripcion, enviar };
 }());

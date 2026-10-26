@@ -118,6 +118,17 @@ final class DisponibilidadAgenda extends ModeloClinica
         return 'No quedan horarios libres este día. Prueba con otro día.';
     }
 
+    /** RE-6.2.7: hasta qué hora atiende la clínica ese día (horario menos cierres); null si no abre. */
+    public function finDeApertura(string $fecha): ?DateTimeImmutable
+    {
+        $apertura = $this->aperturaEfectiva($fecha);
+        if ($apertura === []) {
+            return null;
+        }
+        $fin = $apertura[count($apertura) - 1][1];
+        return (new DateTimeImmutable('@' . $fin))->setTimezone(new DateTimeZone('America/Bogota'));
+    }
+
     public function clinicaAbiertaEnFecha(string $fecha): bool
     {
         return $this->aperturaEfectiva($fecha) !== [];
@@ -361,11 +372,15 @@ final class DisponibilidadAgenda extends ModeloClinica
     /**
      * HU-6.1 (RE-6.1.9): el día del veterinario para su Inicio. Es la misma resta que al
      * sugerir y reservar (jornada ∩ apertura − cierres − ausencias − ocupación), sin
-     * mascota: lo libre de verdad y lo que corta la jornada. Solo la agenda propia.
+     * mascota: lo libre de verdad y lo que corta la jornada. El veterinario lee
+     * solo la suya; el administrador, la de cada veterinario de su clínica
+     * (HU-6.2, RE-6.2.9).
      */
     public function diaDelVeterinario(int $vet, string $fecha): array
     {
-        if (Contexto::rolActivo() !== Roles::VETERINARIO || Contexto::idUsuario() !== $vet) {
+        $propia = Contexto::rolActivo() === Roles::VETERINARIO && Contexto::idUsuario() === $vet;
+        $administrador = Contexto::rolActivo() === Roles::ADMIN;
+        if (!$propia && !$administrador) {
             $this->denegarAcceso('usuarios', $vet, 'Inicio de otro veterinario (RE-6.1.4)');
         }
         $miembro = $this->filas("SELECT 1 FROM usuario_clinica uc JOIN usuarios u ON u.id_usuario=uc.id_usuario WHERE uc.id_clinica=? AND uc.id_usuario=? AND uc.id_rol=2 AND uc.estado='activo' AND u.estado=1", [$this->clinica(), $vet]);

@@ -39,7 +39,7 @@ function pagina() {
         const salida = { textContent: '' };
         return {
             dataset: { plataformaAccion: accion }, elements: { estado: { value: estado } },
-            querySelectorAll: () => [], querySelector: () => salida, reportValidity: () => true,
+            querySelectorAll: () => [], querySelector: selector => selector === '[data-resultado]' ? salida : null, reportValidity: () => true,
         };
     }
     return { contexto, eventos, solicitudes, confirmaciones, memoria, tarjetas, tabla, form, api: contexto.window.ZookiPlataforma, actualizado: () => actualizado };
@@ -69,6 +69,21 @@ test('E1: motivo valida mientras se escribe y el máximo también cuenta bytes',
     assert.equal(campo.error, '');
     campo.value = 'ñ'.repeat(32768);
     assert.equal(p.api.validar(campo), false);
+});
+
+test('S1: fecha fin valida en vivo el calendario, incluido bisiesto, y respeta gratuito', () => {
+    const p = pagina();
+    const salida = {};
+    const campo = { value: '', required: true, disabled: false, parentElement: { querySelector: () => salida }, setCustomValidity: valor => { campo.error = valor; }, setAttribute() {} };
+    assert.equal(p.api.validarFechaConcesion(campo), false);
+    campo.value = '2026-02-29';
+    assert.equal(p.api.validarFechaConcesion(campo), false);
+    campo.value = '2028-02-29';
+    assert.equal(p.api.validarFechaConcesion(campo), true);
+    campo.value = '';
+    campo.disabled = true;
+    assert.equal(p.api.validarFechaConcesion(campo), true);
+    assert.equal(campo.error, '');
 });
 
 test('E1: destructivas confirman y reactivar usa aviso breve', () => {

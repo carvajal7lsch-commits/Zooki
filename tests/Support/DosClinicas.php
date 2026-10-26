@@ -113,6 +113,8 @@ final class DosClinicas
         // M5 C3: la cuenta pendiente de un propietario se reconoce sin consentimiento (ActivacionPropietario).
         $db->exec('CREATE TABLE consentimientos_datos (id_consentimiento INTEGER PRIMARY KEY AUTOINCREMENT, id_usuario INTEGER REFERENCES usuarios,
             version_politica TEXT NOT NULL,medio TEXT NOT NULL,ip_address TEXT,fecha TEXT DEFAULT CURRENT_TIMESTAMP)');
+        require_once __DIR__ . '/EsquemaSuscripcion.php';
+        EsquemaSuscripcion::completar($db);
     }
 
     /** C2: mismas columnas de los catálogos reales, con FK para probar rollback. */

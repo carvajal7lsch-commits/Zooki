@@ -2,9 +2,76 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-23
+**Actualizado:** 2026-10-25
 
 ## Ahora
+
+### M0-S — S4 y cierre 2.1.0 revisados: aprobados (2026-10-26)
+
+- **Revisión (Claude):** ver «S4 y cierre 2.1.0 — Revisión» en el plan. MySQL 8: 1158/10556 en verde. Sigue: commit, push, prueba en la copia de pruebas (recuperación y recibo), PR, merge, tag v2.1.0 y puesta en producción según §10 con los cobros apagados.
+
+#### Entrega de Codex
+
+- **Escribió Codex; revisa Claude (arquitecto).** Panel financiero y cierre S4 conservados; hallazgo sandbox corregido con recuperación por ID del retorno y conciliación manual auditada, sin elegir clínica ni crear cargos.
+- Correo «Recibimos tu pago» por la outbox de S1, único por pago/administrador D7; migración 14 y excepción aprobada de una sola validación en la 12 para el doble arranque Docker. MER/drawDB/fuentes sincronizados, versión 2.1.0 conservada.
+- **Verificado:** PHP sin motor 1158/9287 (91 omitidas de motor); completo MariaDB 10.4.32: 1158/10552, ninguna omitida, solo `zooki_test_base_v2`; JS 345/345. Dos procesos retorno/evento en ambos órdenes, arranque SQL+migrador, outbox y Chrome 1366/390; flujo Mermaid renderizado.
+- PDF/Word actualizados y manifiesto al día; PDF en muestra visual y DOCX ZIP/XML/TOC correctos, revisión visual Word pendiente por falta de LibreOffice. Anexo S4 y tres pruebas nuevas del dueño (§12.1) en el plan.
+- **Sigue:** revisión de Claude, CI/MySQL 8 y sandbox de recuperación/recibo; D8/D10 antes de dinero real. La lectura de JWT real ya pasó según la prueba del dueño conservada al final del plan. `specs/pulido-interfaz.md`, ese relato y `docker-compose.pruebas.yml` ajenos intactos. Sin `.env`, base de trabajo, API/SMTP reales, cambios remotos ni commit/push/tags.
+
+### M0-S — S3 revisada: aprobada (2026-10-25)
+
+- **Revisión (Claude):** ver «S3 — Revisión» en el plan. MySQL 8: 1132/10250 en verde. Primera prueba manual en sandbox: guardar una fuente (lectura del JWT de aceptación). Sigue S4.
+
+#### Entrega de Codex
+
+- **Escribe Codex; revisa Claude (arquitecto).** Fuente hospedada y autorización mensual separadas; obligación común, tres intentos terminales dentro de gracia, aviso único por fallo y retirada sin acortar lo pagado. Incluye los tres ajustes de S2. Anexo S3 en el plan; S4 no se empieza.
+- **Verificado:** PHP sin motor 1132/9014 (86 omitidas), dirigido S1/S2/S3 52/521, MySQL dirigido 7/65 con dos procesos reales, JS final 341/341, Chrome 1366/390 e interacción real con SDK falso, sin red externa. PHP completo con MariaDB 10.4.32: 1132/10246 sin omitidas, 44 min 49 s, exclusivamente `zooki_test_base_v2`. Sintaxis de 26 PHP y diff correctos. 42 archivos propios en el manifiesto local `scratch/s3-archivos.txt`.
+- **Pendientes:** revisión de Claude, CI/MySQL 8 y sandbox del dueño (§9.7); D8/D10 antes de dinero real, descargas/render documental según §9.2. Sin `.env`, base de trabajo, API/SMTP reales, cambios de versión ni operaciones Git de escritura.
+
+### M0-S — S2 revisada: aprobada con tres ajustes para S3 (2026-10-24)
+
+- **Revisión (Claude):** ver «S2 — Revisión» en el plan. MySQL 8: 1105/9903 en verde. Ajustes: acreditar en línea tras el 200, textos sin jerga y fecha incluida, revisar extensiones duplicadas en Docker. Sigue la prueba en sandbox (despliegue aparte) y S3.
+
+#### Entrega de Codex
+
+- **Escribe Codex; revisa Claude (arquitecto).** Botón y eventos de S2a/S2b juntos: orden compartida por clínica/versionado, firma, inbox, GET privado, acreditación única, retorno informativo e historial propio. S1 está aprobada e integrada. Fuentes/automático y panel de plataforma siguen fuera de S2.
+- **Decisiones nuevas del dueño:** §9.3 del plan conserva una cotización fallida y vencida, cierra su obligación y permite cotizar al precio actual solo con rechazo/error confirmado; pendiente/incierto nunca libera otro cobro. El algoritmo SHA256 prevalece sobre el resultado incorrecto del ejemplo oficial, comprobado con PHP y .NET.
+- **Verificación:** PHP completo sin motor 1105/8721 (80 omitidas de motor); completo con MariaDB 10.4.32, solo `zooki_test_base_v2`, 1105/9897 sin omitidas. Ajuste final del receptor sin llave API: dirigido S1/S2 26/203 y completo sin motor posteriores; el completo con motor se había iniciado antes. JS completo 336/336. Chrome a 1366/390 con pago activo, deshabilitado e historial, sin desborde ni red externa. Dos procesos reales: una orden/intento y una concesión. Reserva sin contrato sin beneficios y lote de reintentos futuros sin tapar pagos nuevos. 21 PHP y JS con sintaxis correcta; diff correcto.
+- **Operación pendiente:** revisión de Claude, CI/MySQL 8 y cinco pruebas del dueño en sandbox separado (§9.5). URLs de eventos, variables vacías, Schedule y Windows en §9.4; sin configuración remota, llamadas reales ni acceso a `.env`/base de trabajo. D8/D10 siguen bloqueando dinero real. PDF/Word y render documental pendientes según §9.2. Sin cambios de versión, migración 12 ni Inicio; no se empieza S3.
+
+### M0-S — S1 revisada: aprobada (2026-10-24)
+
+- **Revisión (Claude):** ver «S1 — Revisión» en el plan M0-S. MySQL 8: 1084/9720 en verde. Sigue S2 (botón Wompi y eventos) con cliente falso; el dueño ya tiene comercio Wompi y llaves de prueba.
+
+#### Entrega de Codex
+
+- **Escribió Codex; revisa Claude (arquitecto).** S1a+S1b juntas en [`M0-S-suscripcion-pagos.md`](../specs/M0-S-suscripcion-pagos.md), «Anexo S1 — Resultado»: especificación aprobada, migración 12, servicio único de vigencia, legado, gracia, congelación, avisos y pantalla administrativa. D1–D7/D9 confirmadas en §9/§9.1; D8/D10 solo bloquean dinero real. S2 no se empieza.
+- **Datos y límites:** 65 tablas, 96 HU, 464 RE y 126 RN; las partes S2/S3/S4 siguen planificadas. Tres parámetros por clínica; constantes de plataforma para hora/reintentos/cotización. Precio inicial 89.990/899.900 solo sustituye 100.000/960.000; tarifa personalizada conservada y reportada por CLI. Legado sin fecha conserva condiciones, incluso tarifa cero. Ajuste manual con motivo/fin y auditoría, separado de pagos. RN-420 y suspensión administrativa intactas.
+- **Avisos y UI:** outbox con clave única, administradores activos verificados, SMTP después del commit y estado incierto sin reenvío ciego. `gestionar_suscripciones.php --revisar` sin escrituras/envío; solo vencimientos/avisos. `admin_suscripcion` y acceso desde Uso del plan conservando el diseño; Pagar/Renovar deshabilitado. Schedule Dokploy/Windows documentado, sin instalarlo.
+- **Verificación:** PHPUnit completo sin motor 1084/8556, 78 omitidas de motor; con MariaDB 10.4.32 y solo `zooki_test_base_v2`, 1084/9714 sin omitidas. Ajuste final de D7 en suspensión: 7 pruebas dirigidas/48 aserciones. JS completo 334/334. Migración doble, esquema previo, DDL parcial y dos trabajadores reales en InnoDB en verde. Chrome con vistas/controladores reales y SQLite: Suscripción e Inicio a 1366/390, sin desborde; pruebas de Inicio también a 1024 y cuatro veterinarios. Sintaxis PHP/JS y diff correctos. Bootstrap de pruebas alineado a Bogotá para evitar la hora repetida de XAMPP/Berlín.
+- **Pendiente:** revisión de Claude, cinco pruebas del dueño del anexo y CI/MySQL 8. PDF/Word y render nuevo del MER pendientes por decisión explícita del dueño (§9.2, sin red). Sin cambio de versión/revisiones, `.env`, base de trabajo, correos reales, Wompi, commit, push, tags ni cambio de rama.
+
+### Inicio del administrador (HU-6.2) — revisada: aprobada (2026-10-24)
+
+- **Revisión (Claude):** ver «Inicio del administrador — Revisión» en pulido-interfaz.md. MySQL 8: 1068/9587 en verde. Dos detalles al pulido final. Sigue la prueba del dueño y M0-S S1.
+
+#### Entrega de Claude Code
+
+- **Escribió Claude Code; revisa Claude (arquitecto).** Rama `release/v2.1.0`. Inicio del admin con el mockup aprobado: hoy en la clínica, calendario, uso del plan, agenda por veterinario con huecos reales y ausencias, pendientes (también ausencias y propuestas) y «Este mes». `panel_admin_dia_ajax` es solo del administrador. Piezas comunes con el Inicio del vet en `inicio-comun.css/js` y `views/partials/inicio_calendario.php`; se retiran `panel.css` y `panel-admin.js`.
+- **Decisiones del dueño (2026-10-24), en `specs/pulido-interfaz.md`:** sin botón «Agendar» (RN-401); la minigráfica muestra atendidas + no asistidas; «en espera» = llegados que no empiezan + espera presencial; «urgencias» = rojos de hoy. Especificación: RE-6.2.5 cambia; RE-6.2.7 a RE-6.2.13 nuevos (442 RE).
+- **Verificación:** PHP sin motor 1068/8472 (74 omitidas); con MariaDB 10.4.32 y `zooki_test_base_v2`, 1068/9583 sin omitidas; JS 331/331; capturas en Chrome a 1366/1024/390. Sin subir versión ni regenerar descargas (van al cerrar la entrega).
+- **Pendiente:** revisión, prueba del dueño y commit del dueño.
+
+### Plan M0-S — aprobado con cuatro ajustes y decisiones del dueño (2026-10-24)
+
+- **Revisión (Claude) y aprobación del dueño:** ver §9/§9.1 del plan. IVA resuelto (no responsable, precios sin IVA); parámetros simplificados; S1, S2, S3 y S4 sin mitades. D2–D7/D9 confirmadas; D8/D10 pendientes para dinero real. El Inicio ya está integrado y S1 se entrega arriba.
+
+#### Entrega de Codex
+
+- **Escribió Codex; revisa Claude (arquitecto).** Plan de suscripción y cobro con Wompi en [`M0-S-suscripcion-pagos.md`](../specs/M0-S-suscripcion-pagos.md), rama `release/v2.1.0`: S1 vigencia/gracia/avisos, S2 botón y eventos, S3 automático mensual, S4 plataforma y cierre. Incluye textos propuestos de HU/RE/RN/RF/MER/Modelos, migración 12 prevista, permisos, seguridad, tareas Docker/Dokploy/XAMPP y pruebas con cliente falso.
+- **Decisiones confirmadas del 24/10:** Wompi, botón antes de automático; profesional 89.990 COP/mes o 899.900/año sin alterar periodos pagados; gracia parametrizada de 3 días y correos 7/1/congelación/fallo automático. Se conserva RN-420 y la tarjeta Uso del plan del Inicio concurrente.
+- **Pendientes D1–D10 del plan:** IVA/desglose, calendario y renovación en gracia, cambio de ciclo, reintentos, cobros duplicados/anulados, legado, destinatarios, habilitación/consentimientos Wompi, identidad local del evento e incertidumbre, conservación financiera. Cada punto tiene recomendación y etapa bloqueada; todavía no están aprobados.
+- **Solo planificación:** documentación oficial Wompi consultada y citada; sin llamadas a su API, código, migraciones ejecutadas, cambios en `documentacion/`, versión ni operaciones Git de escritura. Se preserva el trabajo simultáneo de Claude Code en Inicio. Sigue aprobación del dueño y revisión de Claude; no se empieza S1.
 
 ### Carnet B — revisada: aprobada con cinco correcciones del revisor (2026-10-23)
 

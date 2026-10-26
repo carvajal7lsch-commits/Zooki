@@ -38,11 +38,10 @@ final class Plataforma
             throw new InvalidArgumentException('Revisa la búsqueda, el estado y el plan.');
         }
         $sql = "SELECT c.id_clinica, c.nombre, c.nit, c.estado, c.fecha_registro, c.id_plan, p.nombre AS plan,
-            s.estado AS suscripcion,
+            NULL AS suscripcion,
             (SELECT u.email FROM usuario_clinica uc JOIN usuarios u ON u.id_usuario = uc.id_usuario WHERE uc.id_clinica = c.id_clinica AND uc.id_rol = 1 AND uc.estado = 'activo' AND u.estado = 1 ORDER BY u.id_usuario LIMIT 1) AS administrador,
             (SELECT v.email FROM verificaciones_email v WHERE v.id_clinica_vinculo = c.id_clinica AND v.proposito IN ('registro_clinica','vinculo_admin_clinica') AND v.used = 0 ORDER BY v.id DESC LIMIT 1) AS administrador_pendiente
             FROM clinicas c LEFT JOIN planes p ON p.id_plan = c.id_plan
-            LEFT JOIN suscripciones s ON s.id_suscripcion = (SELECT MAX(ss.id_suscripcion) FROM suscripciones ss WHERE ss.id_clinica = c.id_clinica)
             WHERE (? = '' OR c.estado = ?) AND (? = '' OR c.id_plan = ?) AND (? = '' OR c.nombre LIKE ? ESCAPE '!' OR c.nit LIKE ? ESCAPE '!') ORDER BY c.fecha_registro DESC, c.id_clinica DESC";
         $patron = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $buscar) . '%';
         $stmt = $this->db->prepare($sql);
@@ -52,6 +51,11 @@ final class Plataforma
         $clinicas = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($clinicas as &$clinica) {
             // E2: excepción explícita de plataforma para números, sin fichas ni citas.
+            $vigencia = (new Suscripcion($this->db, (int) $clinica['id_clinica']))->estado();
+            $clinica['suscripcion'] = $vigencia['suscripcion']['estado'] ?? null;
+            $clinica['vigencia'] = $vigencia;
+            $clinica['plan_efectivo'] = $vigencia['plan_efectivo']['nombre'];
+            $clinica['fecha_fin_suscripcion'] = $vigencia['suscripcion']['fecha_fin'] ?? '';
             $clinica['uso_plan'] = (new LimitePlan($this->db, (int) $clinica['id_clinica']))->resumen();
         }
         return $clinicas;
@@ -61,7 +65,80 @@ final class Plataforma
     {
         $this->exigirPlataforma();
         // M0.2.1: los topes se muestran en las tarjetas de plan del modal (metadatos, RN-004).
-        return $this->db->query('SELECT id_plan, nombre, precio_mensual, limite_personal, limite_mascotas, limite_citas_mes FROM planes WHERE estado = 1 ORDER BY id_plan')->fetchAll(PDO::FETCH_ASSOC);
+        return $this->db->query('SELECT id_plan, nombre, precio_mensual, precio_anual, limite_personal, limite_mascotas, limite_citas_mes FROM planes WHERE estado = 1 ORDER BY id_plan')->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** RE-0.3.7: excepción global de plataforma, solo columnas financieras permitidas. */
+    public function finanzas(int $id, int $pagina = 1): array
+    {
+        $this->exigirPlataforma();
+        if ($id < 0 || $pagina < 1 || $pagina > 1000000) {
+            throw new InvalidArgumentException('La clínica o la página no son válidas.');
+        }
+        $resumen = null;
+        $pagos = [];
+        $ajustes = [];
+        $total = 0;
+        if ($id > 0) {
+            $vigencia = (new Suscripcion($this->db, $id))->estado();
+            $s = $vigencia['suscripcion'];
+            $motivo = $s['motivo_automatico_apagado'] ?? null;
+            if (!$motivo && $s && !(int) $s['cobro_automatico']) {
+                // S3 auditaba la causa combinada; no atribuir una causa histórica más precisa.
+                $q = $this->db->prepare("SELECT descripcion FROM auditoria_sistema WHERE tabla_afectada='suscripciones' AND registro_id=? AND id_clinica=? ORDER BY id_auditoria DESC LIMIT 1");
+                $q->execute([(string) $s['id_suscripcion'], $id]);
+                if ($q->fetchColumn() === 'Importe o condiciones cambiaron (RE-0.5.26)') {
+                    $motivo = 'precio_o_condiciones';
+                }
+            }
+            $resumen = [
+                'id_clinica' => $id,
+                'nombre' => $vigencia['clinica']['nombre'],
+                'contratado' => $vigencia['plan_contratado']['nombre'],
+                'efectivo' => $vigencia['plan_efectivo']['nombre'],
+                'situacion' => $vigencia['legado_sin_fecha'] ? 'legado_sin_fecha' : $vigencia['situacion'],
+                'fin' => VigenciaSuscripcion::fechaIncluida($vigencia['periodo_fin']),
+                'automatico' => (bool) ($s['cobro_automatico'] ?? false),
+                'motivo_apagado' => $motivo,
+            ];
+            $q = $this->db->prepare('SELECT COUNT(*) FROM intentos_pago i JOIN pagos_suscripcion p ON p.id_pago=i.id_pago WHERE p.id_clinica=?');
+            $q->execute([$id]);
+            $total = (int) $q->fetchColumn();
+            $q = $this->db->prepare('SELECT i.creado_en AS fecha,i.referencia,i.entorno,i.estado,p.ciclo,p.total_centavos,p.moneda,r.inicio,r.fin FROM intentos_pago i JOIN pagos_suscripcion p ON p.id_pago=i.id_pago LEFT JOIN suscripcion_periodos r ON r.id_pago=p.id_pago AND r.id_clinica=p.id_clinica AND i.estado=\'aprobado\' WHERE p.id_clinica=? ORDER BY i.creado_en DESC,i.id_intento DESC LIMIT 20 OFFSET ' . (($pagina - 1) * 20));
+            $q->execute([$id]);
+            $pagos = $q->fetchAll(PDO::FETCH_ASSOC);
+            $q = $this->db->prepare("SELECT creado_en,inicio,fin,ciclo,motivo,origen FROM suscripcion_periodos WHERE id_clinica=? AND origen IN ('administrativo','legado') ORDER BY creado_en DESC,id_periodo DESC");
+            $q->execute([$id]);
+            $ajustes = $q->fetchAll(PDO::FETCH_ASSOC);
+        }
+        $q = $this->db->prepare("SELECT e.id_evento,e.id_transaccion_wompi,e.recibido_en,e.codigo_error,e.entorno,e.revisado_en,e.nota_revision,e.revisado_por,i.referencia FROM wompi_eventos e LEFT JOIN intentos_pago i ON i.id_intento=e.id_intento LEFT JOIN pagos_suscripcion p ON p.id_pago=i.id_pago WHERE e.estado='revision' AND " . ($id === 0 ? 'p.id_clinica IS NULL' : 'p.id_clinica=?') . ' ORDER BY e.recibido_en DESC,e.id_evento DESC');
+        $q->execute($id === 0 ? [] : [$id]);
+        return ['resumen' => $resumen, 'pagos' => $pagos, 'ajustes' => $ajustes, 'incidencias' => $q->fetchAll(PDO::FETCH_ASSOC), 'pagina' => $pagina, 'hay_mas' => $pagina * 20 < $total, 'id_clinica' => $id];
+    }
+
+    /** Revisar no altera la conciliación ni concede o retira periodos (D5). */
+    public function revisarIncidencia(int $id, int $clinica, string $nota): void
+    {
+        $this->exigirPlataforma();
+        $nota = ValidadorPlataforma::texto($nota);
+        if ($id <= 0 || $clinica < 0) {
+            throw new InvalidArgumentException('La incidencia no está disponible.');
+        }
+        Transaccion::ejecutar($this->db, function () use ($id, $clinica, $nota): void {
+            $this->exigirPlataforma();
+            $q = $this->db->prepare("SELECT e.id_evento,e.estado,e.revisado_en,e.codigo_error,p.id_clinica FROM wompi_eventos e LEFT JOIN intentos_pago i ON i.id_intento=e.id_intento LEFT JOIN pagos_suscripcion p ON p.id_pago=i.id_pago WHERE e.id_evento=?" . $this->bloqueo());
+            $q->execute([$id]);
+            $evento = $q->fetch(PDO::FETCH_ASSOC);
+            if (!$evento || $evento['estado'] !== 'revision' || (int) ($evento['id_clinica'] ?? 0) !== $clinica) {
+                throw new InvalidArgumentException('La incidencia no pertenece a esta sección.');
+            }
+            if ($evento['revisado_en'] !== null) {
+                return;
+            }
+            $nuevo = ['revisado_por' => Contexto::idUsuario(), 'revisado_en' => date('Y-m-d H:i:s'), 'nota_revision' => $nota];
+            $this->db->prepare('UPDATE wompi_eventos SET revisado_por=?,revisado_en=?,nota_revision=? WHERE id_evento=? AND revisado_en IS NULL')->execute([$nuevo['revisado_por'], $nuevo['revisado_en'], $nota, $id]);
+            $this->auditar('wompi_eventos', $id, $evento['id_clinica'] === null ? null : (int) $evento['id_clinica'], ['revisado_en' => null, 'codigo_error' => $evento['codigo_error']], $nuevo, 'Revisión financiera sin alterar el pago (RE-0.3.7)');
+        });
     }
 
     private function clinica(int $id): array
@@ -78,35 +155,23 @@ final class Plataforma
         }
     }
 
-    public function cambiarSuscripcion(int $id, int $plan, string $estado, string $motivo): void
+    public function cambiarSuscripcion(int $id, int $plan, string $estado, string $motivo, ?string $fechaFin = null, string $ciclo = 'mensual'): void
+    {
+        $this->exigirPlataforma();
+        (new Suscripcion($this->db, $id))->ajustar($plan, $estado, $motivo, $fechaFin, $ciclo);
+    }
+
+    /** RE-0.3.7/0.5.13: nunca aceptar una clínica indicada por el formulario. */
+    public function conciliarPago(string $id, string $motivo, ConciliadorPago $conciliador): bool
     {
         $this->exigirPlataforma();
         $motivo = ValidadorPlataforma::texto($motivo);
-        if (!in_array($estado, ['activa', 'suspendida', 'cancelada'], true)) {
-            throw new InvalidArgumentException('Elige un estado de suscripción válido.');
+        if (!FirmaWompi::idValido($id)) {
+            throw new InvalidArgumentException('Revisa el ID de transacción Wompi.');
         }
-        Transaccion::ejecutar($this->db, function () use ($id, $plan, $estado, $motivo): void {
-            $antes = $this->clinica($id);
-            if ($antes['estado'] === 'pendiente_verificacion' || $antes['estado'] === 'baja') {
-                throw new InvalidArgumentException('La clínica debe estar verificada y no dada de baja.');
-            }
-            $stmt = $this->db->prepare('SELECT id_plan FROM planes WHERE id_plan = ? AND estado = 1');
-            $stmt->execute([$plan]);
-            if (!$stmt->fetchColumn()) {
-                throw new InvalidArgumentException('Elige un plan vigente.');
-            }
-            $stmt = $this->db->prepare('SELECT * FROM suscripciones WHERE id_clinica = ? ORDER BY id_suscripcion DESC LIMIT 1' . $this->bloqueo());
-            $stmt->execute([$id]);
-            $suscripcion = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($suscripcion) {
-                $this->db->prepare('UPDATE suscripciones SET id_plan = ?, estado = ? WHERE id_suscripcion = ?')->execute([$plan, $estado, $suscripcion['id_suscripcion']]);
-            } else {
-                // El gratuito no crea suscripción al activar (D3); se usan los valores del MER.
-                $this->db->prepare('INSERT INTO suscripciones (id_clinica, id_plan, estado, fecha_inicio) VALUES (?, ?, ?, ?)')->execute([$id, $plan, $estado, date('Y-m-d')]);
-            }
-            $this->db->prepare('UPDATE clinicas SET id_plan = ? WHERE id_clinica = ?')->execute([$plan, $id]);
-            $this->auditar('clinicas', $id, $id, $antes + ['suscripcion' => $suscripcion], ['id_plan' => $plan, 'suscripcion' => $estado], $motivo);
-        });
+        // Registrar también consultas fallidas; sin auditoría no se consulta ni se acredita.
+        $this->auditar('wompi_eventos', 0, null, [], ['id_transaccion' => $id, 'origen' => 'conciliacion_manual'], $motivo);
+        return $conciliador->recuperar($id);
     }
 
     public function cambiarEstado(int $id, string $estado, string $motivo): void

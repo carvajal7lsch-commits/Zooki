@@ -113,17 +113,17 @@ $segmentos = array_merge(
 $colorAvatar = fn(array $r) => 'inicio-ava--' . ((int) $r['id_mascota'] % 5);
 $iniciales = fn(string $nombre) => mb_strtoupper(mb_substr(trim($nombre), 0, 2));
 ?>
-<div class="inicio" data-inicio data-hoy="<?= $e($panel['hoy']) ?>" data-clinica="<?= (int) Contexto::clinicaActiva() ?>">
+<div class="inicio" data-inicio data-inicio-accion="panel_dia_ajax" data-hoy="<?= $e($panel['hoy']) ?>" data-clinica="<?= (int) Contexto::clinicaActiva() ?>">
 
     <div class="inicio__arriba">
         <!-- Siguiente paciente (RE-6.1.5) -->
-        <section class="inicio-tile inicio-siguiente" aria-labelledby="inicioTituloSiguiente">
-            <span class="inicio-siguiente__circulo" aria-hidden="true"></span>
-            <span class="inicio-siguiente__cuarto" aria-hidden="true"></span>
-            <img class="inicio-siguiente__mascota" src="img/gato-gris.png" alt="" decoding="async">
-            <div class="inicio-siguiente__contenido">
+        <section class="inicio-tile inicio-hero inicio-siguiente" aria-labelledby="inicioTituloSiguiente">
+            <span class="inicio-hero__circulo" aria-hidden="true"></span>
+            <span class="inicio-hero__cuarto" aria-hidden="true"></span>
+            <img class="inicio-hero__mascota inicio-siguiente__mascota" src="img/gato-gris.png" alt="" decoding="async">
+            <div class="inicio-hero__contenido">
                 <?php if ($sig): ?>
-                    <p class="inicio-siguiente__sobre" id="inicioTituloSiguiente"><?= $e($sobreSiguiente) ?></p>
+                    <p class="inicio-hero__sobre" id="inicioTituloSiguiente"><?= $e($sobreSiguiente) ?></p>
                     <div class="inicio-siguiente__nombre">
                         <h2><?= $e($sig['mascota']) ?></h2>
                         <?php if (isset($niveles[$sig['prioridad'] ?? ''])): ?>
@@ -134,7 +134,7 @@ $iniciales = fn(string $nombre) => mb_strtoupper(mb_substr(trim($nombre), 0, 2))
                     <?php if (trim((string) $sig['motivo']) !== '' || $alergias): ?>
                         <p class="inicio-siguiente__motivo"><?= $e(trim((string) $sig['motivo'])) ?><?php if (trim((string) $sig['motivo']) !== '' && $alergias): ?> · <?php endif; ?><?php if ($alergias): ?><strong><?= $e(implode(' · ', $alergias)) ?></strong><?php endif; ?></p>
                     <?php endif; ?>
-                    <div class="inicio-siguiente__acciones">
+                    <div class="inicio-hero__acciones">
                         <?php if ($puedeLlegar): ?>
                             <button type="button" class="inicio-boton inicio-boton--blanco" data-inicio-llegada="<?= (int) $sig['id_cita'] ?>">Registrar llegada</button>
                         <?php else: ?>
@@ -143,10 +143,10 @@ $iniciales = fn(string $nombre) => mb_strtoupper(mb_substr(trim($nombre), 0, 2))
                         <a class="inicio-boton inicio-boton--vidrio" href="<?= $e($fichaUrl($sig)) ?>">Ver ficha</a>
                     </div>
                 <?php else: ?>
-                    <p class="inicio-siguiente__sobre" id="inicioTituloSiguiente">Siguiente paciente</p>
+                    <p class="inicio-hero__sobre" id="inicioTituloSiguiente">Siguiente paciente</p>
                     <div class="inicio-siguiente__nombre"><h2><?= $cont['citas'] > 0 ? 'Todo atendido' : 'Sin citas hoy' ?></h2></div>
                     <p class="inicio-siguiente__datos"><?= $cont['citas'] > 0 ? 'No te quedan pacientes por atender hoy.' : 'No tienes citas agendadas para hoy.' ?></p>
-                    <div class="inicio-siguiente__acciones">
+                    <div class="inicio-hero__acciones">
                         <a class="inicio-boton inicio-boton--blanco" href="index.php?action=vet_agenda">Ver agenda</a>
                     </div>
                 <?php endif; ?>
@@ -156,7 +156,7 @@ $iniciales = fn(string $nombre) => mb_strtoupper(mb_substr(trim($nombre), 0, 2))
         <!-- Calendario del mes (RE-6.1.8) -->
         <section class="inicio-tile inicio-cal" aria-labelledby="inicioTituloCal" data-inicio-calendario data-elegido="<?= $e($panel['hoy']) ?>">
             <div class="inicio-cal__contenido" data-inicio-calendario-contenido>
-                <?php $mes = $panel['mes']; require __DIR__ . '/partials/inicio_calendario.php'; ?>
+                <?php $mes = $panel['mes']; require __DIR__ . '/../partials/inicio_calendario.php'; ?>
             </div>
         </section>
 

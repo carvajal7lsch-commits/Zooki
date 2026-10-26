@@ -61,12 +61,19 @@ final class AgendaB2MysqlTest extends TestCase
         $this->cargar('database/09_origen_interno_agenda.sql');
         $this->cargar('database/10_comienzos_urgencia.sql');
         $this->cargar('database/11_accesos_carnet.sql');
+        $this->cargar('database/12_suscripcion_pagos.sql');
+        $this->cargar('database/13_plataforma_finanzas.sql');
+        $this->cargar('database/14_aviso_pago_confirmado.sql');
     }
 
     private function instalar(bool $anterior = false): void
     {
         $this->cargar($anterior ? 'tests/Fixtures/agenda_alpha4.sql' : 'database/01_schema.sql');
         $this->cargar('database/02_semilla.sql');
+        if (!$anterior) {
+            // La foto de una instalación actual incluye el dominio ampliado de la outbox.
+            $this->cargar('database/14_aviso_pago_confirmado.sql');
+        }
         DosClinicas::poblar($this->db);
         DosClinicas::poblarAgenda($this->db);
     }
@@ -121,7 +128,7 @@ final class AgendaB2MysqlTest extends TestCase
         $this->instalar();
         $this->migrar();
         $nueva = $this->estructura();
-        $this->assertCount(59, $nueva[0]);
+        $this->assertCount(65, $nueva[0]);
         $this->migrar();
         $this->assertSame($nueva, $this->estructura());
         $this->reiniciar();
@@ -146,6 +153,10 @@ final class AgendaB2MysqlTest extends TestCase
         $citas = $this->filas('citas');
         $this->migrar();
         foreach ($tablas as $t) {
+            if ($t === 'clinicas') {
+                // S1 añade solo estos parámetros; el resto del registro debe conservarse.
+                $previas[$t] = array_map(static fn (array $c): array => $c + ['suscripcion_gracia_dias' => 3, 'aviso_vencimiento_1_dias' => 7, 'aviso_vencimiento_2_dias' => 1], $previas[$t]);
+            }
             $this->assertSame($previas[$t], $this->filas($t), $t);
         }
         $posteriores = $this->filas('citas');

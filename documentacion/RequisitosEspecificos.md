@@ -1,6 +1,8 @@
 # Requisitos Específicos por Historia de Usuario — Proyecto Zooki
 
-> **Revisión 3.5** · 435 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
+> **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
+
+> **Revisión 3.6** · 464 requisitos específicos para 96 historias de usuario · Desglose por módulos · Trazabilidad RN → HU → RE · SENA ADSO — Ficha 3142784
 
 > **Preparación M4/B1 — 2026-10-17:** criterios de destino acordados, pendientes de implementación/verificación funcional. 430 RE, 96 HU y 120 RN; no se sube revisión ni versión en esta subetapa.
 
@@ -18,7 +20,7 @@ _La **Revisión 3.3** (14 de octubre de 2026) acompaña la versión 2.0.0-alpha.
 
 _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia final de M2 en su plan, §2; peso desconocido explícito, alergias y alertas compartidas, diagnósticos sugeridos, alertas de prescripción y mapa de conocimiento. RE-2.11.1–7 quedan verificados en cálculo, buscador y batería; la captura de agenda, las urgencias, revisión previa a asignar horario, el aviso de aislamiento y ajuste veterinario se completan en M4. El conocimiento sigue pendiente de validación veterinaria._
 
-## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0)*
+## Módulo 0 — Plataforma: clínicas, planes y suscripción *(v2.0/v2.1)*
 
 ### HU-0.1 — Registrar una clínica (self-service)
 
@@ -53,40 +55,62 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-0.3.1 | El sistema debe listar las clínicas con su estado, plan y estado de suscripción. | Funcional | Con tres clínicas registradas (activa, pendiente y suspendida), el listado muestra las tres con su plan y el estado de su suscripción. | Alta |
-| RE-0.3.2 | El sistema debe permitir cambiar el plan y el estado de la suscripción de una clínica con motivo obligatorio. | Funcional | Sin motivo se rechaza; el plan y la suscripción se actualizan juntos y quedan en auditoría. Los límites del nuevo plan se aplican en la siguiente acción (HU-0.4). | Alta |
+| RE-0.3.1 | Listar clínicas con estado administrativo, plan contratado/efectivo, vigencia, gracia y estado de cobro diferenciados. | Funcional | Dos clínicas con estado distinto muestran el cálculo actual, aun con cron retrasado; no se confunde mora con suspensión administrativa. | Alta |
+| RE-0.3.2 | Cambiar plan o conceder/retirar un beneficio administrativo exige motivo, fecha de efecto y vencimiento cuando corresponda; conserva periodos pagados y origen. | Funcional | Sin motivo o sin fecha fin del profesional se rechaza; se audita y no inventa pagos ni altera el estado administrativo. El legado sin fecha se conserva hasta regularizar. | Alta |
 | RE-0.3.3 | El super-administrador no debe acceder a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte. | Seguridad | El panel solo muestra metadatos de plataforma y las acciones clínicas responden 403 al contexto de plataforma. | Alta |
 | RE-0.3.4 | El super-administrador debe operar como rol de plataforma, no filtrado por una sola id_clinica. | Seguridad | Opera sobre los metadatos de todas las clínicas, los casos de soporte y las IP bloqueadas; ninguna acción del panel se permite a otro rol. | Alta |
 | RE-0.3.5 | El super-administrador debe poder suspender o dar de baja una clínica indicando el motivo y confirmar la acción; reactivar una suspendida exige motivo. | Funcional | Suspendida o dada de baja no opera ni se ofrece para registro o agenda; su personal pierde el contexto en la siguiente petición. Reactivar una suspendida devuelve el contexto disponible. Todo queda en auditoría y ningún cambio sin motivo se aplica. | Media |
 | RE-0.3.6 | El super-administrador debe poder ocultar una reseña por moderación indicando el motivo. _Se entrega en la v2.1 con HU-8.1: en la v2.0 aún no hay reseñas._ | Funcional | La reseña oculta no se muestra ni cuenta en el promedio; el motivo queda en auditoría. | Media |
+| RE-0.3.7 | Permitir al super-administrador consultar pagos, vigencias e incidencias de cada clínica como metadatos de plataforma. _Implementada (2.1.0)._ | Seguridad | Ve la lista de clínicas con estado y pagos/incidencias, sin filtros avanzados, exportación, enlaces clínicos ni credenciales/fuentes completas; otros roles reciben 403. Cada incidencia se revisa con nota, actor y fecha auditados sin modificar el pago; referencias desconocidas en «Sin clínica identificada». Ajustes separados y auditados no marcan un pago como aprobado. La conciliación manual exige ID de transacción y motivo auditado, resuelve la clínica exclusivamente por referencia del GET privado y reutiliza los cotejos y concesión única, sin crear cargos. | Media |
 
-**Reglas de negocio:** RN-004, RN-010, RN-012, RN-804, RN-G13, RN-G14, RN-G15
+**Reglas de negocio:** RN-004, RN-010, RN-012, RN-019, RN-804, RN-G05, RN-G13, RN-G14, RN-G15
 
 ### HU-0.4 — Control de límites del plan (freemium)
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-0.4.1 | El sistema debe leer el plan y la suscripción antes de una acción que consume cupo. | Funcional | Se evalúa por clínica antes de crear o vincular una mascota, crear una cita, invitar o reactivar personal; suscripción no al día aplica el gratuito. Comprobación y alta se serializan por clínica; una invitación vigente ya reserva el cupo de su titular. | Alta |
+| RE-0.4.1 | Leer el plan efectivo a la fecha actual del servicio único de vigencia, incluida la gracia; comprobar cupo y alta bajo bloqueo de clínica. | Funcional | Inicio y operación coinciden aunque el cron no corra; una invitación vigente reserva cupo; al terminar la gracia aplica el gratuito. | Alta |
 | RE-0.4.2 | Dentro del límite, la acción debe ejecutarse; alcanzado el límite, el sistema debe impedirla e informar el motivo. | Restricción | Al límite, la acción se bloquea con un mensaje. | Alta |
 | RE-0.4.3 | El mensaje al propietario debe ser neutral y notificar a la clínica; al personal, indicar el límite y la mejora de plan. | Funcional | Al llegar al límite, el propietario ve «no es posible completar la acción ahora» y la clínica recibe un aviso; el personal ve el límite alcanzado y la opción de mejorar el plan. | Media |
 | RE-0.4.4 | El plan gratuito debe incluir las capacidades limitadas por volumen. | Restricción | Las capacidades funcionan dentro del límite. | Media |
 | RE-0.4.5 | El límite de mascotas debe contar las mascotas vinculadas a la clínica, incluidas las que ya existían en la plataforma. | Restricción | Vincular una mascota existente consume cupo igual que crear una nueva. | Alta |
-| RE-0.4.6 | Una urgencia 🔴 no debe bloquearse por el límite del plan ni por la mora. _En 2.0.0-alpha.1 el límite ya deja pasar una cita roja evaluada en el servidor; el triage que la clasifica llega con los módulos 2 y 4._ | Restricción | Con la clínica al límite y en mora, un caso 🔴 se registra y se atiende. | Alta |
+| RE-0.4.6 | Una urgencia 🔴 no debe bloquearse por el límite del plan ni por la mora. _Triage operativo integrado en M4; S1 verifica la regresión de rojo en mora._ | Restricción | Con la clínica al límite y en mora, un caso 🔴 se registra y se atiende. | Alta |
 | RE-0.4.7 | El plan gratuito debe limitar a 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal. | Restricción | La mascota 51 creada o vinculada, la cita 101 del mes calendario (sin canceladas) y la tercera cuenta de personal activo o invitación/activación pendiente vigente se rechazan con el mensaje del límite; el administrador cuenta y los propietarios no tienen límite. | Alta |
 
-**Reglas de negocio:** RN-003, RN-005, RN-006, RN-420
+**Reglas de negocio:** RN-003, RN-005, RN-006, RN-014, RN-015, RN-420
 
-### HU-0.5 — Suscripción y congelación por mora
+### HU-0.5 — Suscripción, pagos y congelación por mora
 
 | ID | Requisito específico | Tipo | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|
-| RE-0.5.1 | El sistema debe registrar la suscripción mensual o anual, con descuento en la anual. | Funcional | Se registra la periodicidad y el precio. | Media |
-| RE-0.5.2 | En mora, el sistema debe aplicar temporalmente los límites del plan gratuito a las acciones nuevas, sin ocultar ni borrar datos. | Restricción | La clínica sigue atendiendo a sus mascotas y consultando su historia; solo se bloquean las altas que superen los límites gratuitos, salvo urgencias rojas. | Alta |
-| RE-0.5.3 | El control de vencimiento debe ejecutarse como tarea programada. | Funcional | El cron marca las suscripciones vencidas. | Media |
-| RE-0.5.4 | El cobro real por pasarela no debe implementarse en esta versión (queda como RF-F.1). | Restricción | Documentado como requisito futuro (RF-F.1). | Baja |
-| RE-0.5.5 | Al bajar al plan gratuito o caer en mora, el sistema no debe ocultar ni borrar datos; solo debe bloquear lo nuevo por encima de los límites del plan gratuito. | Restricción | Una clínica con 40 mascotas que baja al plan gratuito sigue atendiéndolas, pero no puede vincular una nueva. | Alta |
+| RE-0.5.1 | Registrar ciclo mensual o anual, vigencia y precio contratado sin modificar periodos pagados. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Cálculo | 89.990 COP genera 8.999.000 centavos; 899.900 genera 89.990.000. Un cambio posterior de catálogo conserva importe y fechas anteriores. | Alta |
+| RE-0.5.2 | Mantener beneficios de pago durante la gracia configurada y aplicar luego el gratuito a nuevas altas. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Cálculo | Con fin exclusivo 25/10/2026 00:00 y gracia 3, profesional hasta antes del 28/10 00:00; desde ese instante gratuito efectivo aunque el cron se retrase. | Alta |
+| RE-0.5.3 | Ejecutar vencimiento, congelación y reserva de avisos mediante tarea programada, sin depender de visitas. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Dos ejecuciones y dos trabajadores simultáneos materializan una transición y un aviso por destinatario; reloj inyectado cubre días omitidos por caída del trabajador. | Alta |
+| RE-0.5.4 | Permitir en v2.1 pagar o renovar con botón Wompi mediante tarjeta, PSE o Nequi habilitados para el comercio. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Integración | Abre la ventana con configuración del servidor; pago pendiente/declinado o cierre no amplían vigencia. El anterior veto RF-F.1 queda sustituido. | Alta |
+| RE-0.5.5 | Conservar datos y atención de mascotas existentes al caer al gratuito, limitando solo nuevas altas sobre su cupo. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Con 40 mascotas permite 41…50; rechaza 51. Con 60 existentes permite consultarlas y atenderlas sin borrar/desvincular diez; rojo se registra aun al límite. | Alta |
+| RE-0.5.6 | Emitir los avisos de vencimiento con anticipaciones configuradas, por defecto 7 y 1 días, y al congelar. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Fecha, clínica, destinatario y vencimiento correctos; gratuito/pagada renovación no reciben aviso obsoleto; ejecutar dos veces no repite. | Media |
+| RE-0.5.7 | Auditar atómicamente los cambios de suscripción, pago, fuente y autorización, sin secretos ni datos de tarjeta. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Seguridad | Auditoría fallida revierte periodo/estado local; trabajador identifica origen automático y clínica; ningún registro contiene llaves, tokens de medio, PAN o CVC. | Alta |
+| RE-0.5.8 | Autorizar pagos y gestión de fuentes solo al administrador del contexto clínico activo. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Seguridad | Vet, propietario, plataforma como pagador y administrador de otra clínica reciben 403; POST sin CSRF se rechaza. No se toma id_clinica del formulario como autoridad. | Alta |
+| RE-0.5.9 | Mostrar estado contractual y efectivo, próxima fecha y opciones pertinentes sin rediseñar Uso del plan. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Usabilidad | Escritorio y móvil: al día, gracia y congelada coherentes con los límites; Pagar/Renovar lleva al módulo. Concesión antigua sin fecha se identifica sin inventarla. | Media |
+| RE-0.5.10 | Crear orden e intento con referencia única y clave de operación, calculando moneda, precio y centavos en servidor. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Dos clics/dos pestañas con la misma versión devuelven la misma orden; manipular monto, clínica, plan, ciclo o firma no permite otra tarifa ni otro beneficiario. | Alta |
+| RE-0.5.11 | Generar firma de integridad en servidor para cada transacción y mantener secretos fuera del navegador. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Seguridad | Vector SHA256 conocido y variaciones de monto/referencia/expiración; HTML/JS/respuestas/logs no incluyen llave privada ni secretos. Configuración incompleta deshabilita cobros, no la atención. | Alta |
+| RE-0.5.12 | Validar la firma y el entorno de cada evento antes de aceptarlo como evidencia. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Seguridad | Firma inválida, propiedad ausente/no escalar o id no cubierto por firma no consulta API ni altera negocio. Propiedades adicionales válidas respetan su orden; sandbox nunca acredita producción. | Alta |
+| RE-0.5.13 | Consultar la transacción en la API de Wompi y cotejarla con el intento local antes de acreditar. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Integración | Solo APPROVED concordante en id, comercio cuando se informe, referencia, importe, moneda, entorno y beneficiario local concede periodo. API caída conserva evidencia pendiente. Si falta el evento, el retorno aporta solo un ID validado: el GET privado debe localizar un intento de la clínica activa antes de conciliar con idénticos cotejos e idempotencia. Plataforma puede conciliar por ID y motivo auditado, sin elegir la clínica; ID ajeno, inventado o API caída no acreditan. | Alta |
+| RE-0.5.14 | Deduplicar eventos e intentos y aplicar cada pago lógico una sola vez, incluso con concurrencia. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Confiabilidad | Dos clics, dos pestañas y dos peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Eventos repetidos o distintos del mismo pago conceden un periodo. D5 solo cubre caminos externos o doble aprobación del banco, no doble envío de Zooki. | Alta |
+| RE-0.5.15 | Conservar estados pendientes/inciertos y conciliar sin repetir un cargo de resultado desconocido. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Confiabilidad | Corte después de POST remoto, antes de guardar su id, no dispara otro POST. Un evento tardío recupera el intento por su referencia; un evento viejo no revierte un aprobado. | Alta |
+| RE-0.5.16 | Calcular periodos con calendario y ancla contractual, conservando saldo temporal al renovar. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Cálculo | 31/01 → último día de febrero → 31/03; anual desde 29/02 conserva regla de año bisiesto. Renovación anticipada no pierde días. Caso de gracia y cambio de ciclo se fija con D2/D3. | Alta |
+| RE-0.5.17 | Mostrar historial financiero propio sin fuentes completas ni datos clínicos. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Solo clínica autorizada; paginación estable y salida escapada de fecha, referencia, ciclo, importe, estado y periodo; id de otra clínica denegado. | Media |
+| RE-0.5.18 | Registrar fuentes de tarjeta o Nequi mediante tokenización Wompi y aceptación explícita. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Seguridad | Sin las dos aceptaciones o sin fuente verificada del servidor no se guarda. Solo id externo, tipo y marca/últimos 4 disponibles, más metadatos de vínculo/consentimiento; PAN/CVC/teléfono Nequi no persisten en la fuente. | Alta |
+| RE-0.5.19 | Exigir autorización separada del automático mensual y permitir retirarla o quitar la fuente. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Seguridad | Guardar no activa el automático. Retirar antes de reclamar trabajo evita el cargo; retirar tras envío informa cargo en curso y detiene los siguientes. Lo pagado conserva su vigencia. | Alta |
+| RE-0.5.20 | Generar un único cobro automático por obligación mensual vencida y autorizada. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Dos workers y pago manual concurrente comparten la obligación; no emiten dos envíos automáticos ni otro mientras el manual está en curso. Plan gratuito, anual, fuente ajena/inactiva o clínica no elegible no generan cargos. Un duplicado externo sigue .14/.24 y D5. | Alta |
+| RE-0.5.21 | Reintentar solo fallos terminales confirmados, con calendario y máximo fijos de plataforma. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Confiabilidad | Inicial y +24/+48 h desde el vencimiento, tres intentos totales: cada intento tiene nueva referencia; PENDING/resultado incierto no habilita otro. Se detiene al pagar, retirar consentimiento o agotar ventana. | Alta |
+| RE-0.5.22 | Avisar por correo de cada intento automático fallido confirmado y de cada periodo acreditado, sin duplicarlo por repetir eventos o tareas. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Dos eventos del mismo intento producen un aviso; no se comunica “rechazo” ante mero timeout, y el cuerpo no revela medios completos ni secretos. Al acreditar por botón, automático, retorno o conciliación manual se reserva «Recibimos tu pago» a todos los administradores activos verificados (D7), una vez por pago y destinatario: valor, ciclo, medio mínimo, referencia y último día incluido; SMTP después del commit. | Media |
+| RE-0.5.23 | Descongelar beneficios al acreditar el periodo sin levantar una suspensión administrativa. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Funcional | Pago aprobado restaura profesional en clínica activa; en suspendida/baja conserva el pago e incidencia, pero no cambia estado de clínica ni habilita contextos. | Alta |
+| RE-0.5.24 | Separar entornos y conciliar anulaciones o discrepancias sin borrar evidencia financiera. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Confiabilidad | Id de transacción reutilizado en otro entorno no colisiona ni concede acceso real; VOIDED después de un aprobado e importe divergente generan incidencia auditada para revisión, sin repetir concesión. Plataforma conserva fecha y nota auditada de revisión, sin cambiar la clasificación ni conceder o retirar un periodo. | Alta |
+| RE-0.5.25 | Conservar suscripciones legadas y distinguir concesiones administrativas de periodos pagados. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Confiabilidad | Filas sin fecha no se cobran ni congelan por adivinar un vencimiento; precio personalizado no se sobrescribe; super-admin regulariza con motivo y fecha, nunca con transacción Wompi inventada. | Alta |
+| RE-0.5.26 | Conservar prueba del consentimiento y exigir renovación si cambia el importe autorizado o los términos aplicables. _Implementada (2.1.0); evidencia por RE en el plan M0-S._ | Seguridad | Cambiar catálogo no cobra automáticamente el nuevo importe sin aceptación; tokens de aceptación vencidos no se reutilizan. El historial conserva actor, fecha, condiciones e importe consentido. Plataforma ve el motivo del apagado: precio, condiciones de Wompi o ambos; exige una nueva aceptación. | Alta |
 
-**Reglas de negocio:** RN-007, RN-008, RN-013
+**Reglas de negocio:** RN-003, RN-007, RN-008, RN-013–019, RN-420, RN-G05, RN-G13
 
 ## Módulo T — Acceso, seguridad y administración
 
@@ -989,10 +1013,17 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-6.2.2 | El sistema debe mostrar la carga del día por veterinario activo. | Funcional | Aparecen todos los veterinarios activos, incluso sin citas. | Media |
 | RE-6.2.3 | El sistema debe listar los pendientes de la operación: atenciones sin cerrar por veterinario, citas pasadas sin marcar y citas por confirmar. | Funcional | Cada conteo coincide con los estados de las citas. | Alta |
 | RE-6.2.4 | El sistema debe graficar las citas atendidas y no asistidas de los últimos 6 meses. | Funcional | Los meses sin citas aparecen en cero y los datos tienen una tabla accesible. | Media |
-| RE-6.2.5 | El sistema debe listar las citas de hoy con un filtro por estado. | Funcional | Al filtrar por «en curso», solo aparecen las citas de hoy en ese estado. | Media |
+| RE-6.2.5 | El sistema debe listar las citas de hoy con un filtro por estado en Gestión de citas; el Inicio muestra la agenda por veterinario (decisión del dueño con el mockup aprobado, 2026-10-24). | Funcional | En Gestión de citas, al filtrar hoy por «en curso», solo aparecen las citas de hoy en ese estado. El Inicio enlaza a Gestión de citas. | Media |
 | RE-6.2.6 | El panel no debe mostrar datos de ejemplo ni valores fijos. | Restricción | Con la base de datos vacía, todos los indicadores muestran cero. | Media |
+| RE-6.2.7 | La tarjeta «Hoy en la clínica» debe mostrar citas de hoy, atendidas, en espera y urgencias de la clínica activa, con acceso a Gestión de citas. | Funcional | En espera = citas de hoy con llegada registrada que aún no empiezan + llegadas sin reserva en espera presencial; urgencias = casos rojos de hoy, atendidos o en cola. Las canceladas no cuentan. No hay botón para agendar: el administrador no crea citas (RN-401). | Alta |
+| RE-6.2.8 | El Inicio del administrador debe mostrar el calendario del mes con hoy resaltado y un punto en los días con citas de la clínica activa; al tocar un día, la agenda por veterinario muestra esa fecha. | Funcional | El día y el mes se piden por una acción de solo lectura del administrador; el veterinario y el propietario reciben 403. Una fecha o un mes inválidos responden con error, sin datos. | Alta |
+| RE-6.2.9 | La agenda del día debe mostrar una columna por veterinario activo, incluso sin citas, con sus citas y su estado, los huecos libres reales (RN-415), el almuerzo, las ausencias y su porcentaje de ocupación. | Funcional | Los huecos, el almuerzo y las ausencias son los mismos del Inicio del veterinario para esa fecha; de hoy, los huecos solo desde ahora. Ocupación = tiempo no libre / jornada efectiva (jornada − cierres − ausencias). Con más de tres veterinarios, la agenda se desplaza en horizontal dentro de la tarjeta (decisión del dueño). | Alta |
+| RE-6.2.10 | El Inicio debe mostrar el uso del plan (mascotas, citas del mes y personal contra su límite, HU-0.4) y accesos a Usuarios y Configuración. | Funcional | Los valores son los de LimitePlan para la clínica activa; un plan sin límite muestra el uso sin barra de tope. Al 80 % se advierte y al 100 % se marca «al límite». | Media |
+| RE-6.2.11 | El Inicio debe agrupar los pendientes de la clínica con su acción: sin cerrar (con su veterinario), citas sin marcar, por confirmar, ausencias por aprobar y propuestas de horario por aprobar. | Funcional | Solo aparecen los tipos con algo; cada acción lleva a una pantalla existente (Gestión de citas o Configuración). Sin pendientes, la tarjeta se encoge y «Este mes» ocupa el espacio (decisión del dueño). | Alta |
+| RE-6.2.12 | «Este mes» debe mostrar las consultas frente al mismo tramo del mes anterior, una minigráfica de 6 meses con tabla accesible (cumple RE-6.2.4), pacientes activos, propietarios nuevos del mes y el porcentaje de no asistencia del mes. | Funcional | No asistencia = citas «no asistió» del mes hasta hoy / citas agendadas del mes hasta hoy (sin canceladas); sin citas, 0 %. Propietarios nuevos = vínculos con la clínica creados en el mes. | Media |
+| RE-6.2.13 | El Inicio del administrador debe caber sin desplazar la página en escritorio (1366×768) y reordenarse en tableta y celular (RNF-16). | Usabilidad | En escritorio solo se desplazan por dentro la agenda y, si hace falta, los pendientes; sin desplazamiento horizontal de la página en 390 px. | Media |
 
-**Reglas de negocio:** RN-G01, RN-408, RN-409
+**Reglas de negocio:** RN-G01, RN-003, RN-408, RN-409, RN-414, RN-415
 
 ### HU-6.3 — Generar reportes en PDF
 
@@ -1155,9 +1186,9 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 |---|---|---|
 | HU-0.1 | RN-001, RN-002, RN-010, RN-011, RN-G06, RN-G19, RN-G20 | RE-0.1.1, RE-0.1.2, RE-0.1.3, RE-0.1.4, RE-0.1.5, RE-0.1.6, RE-0.1.7, RE-0.1.8, RE-0.1.9, RE-0.1.10 |
 | HU-0.2 | RN-002, RN-003, RN-005, RN-G11 | RE-0.2.1, RE-0.2.2, RE-0.2.3, RE-0.2.4, RE-0.2.5 |
-| HU-0.3 | RN-004, RN-010, RN-012, RN-804, RN-G13, RN-G14, RN-G15 | RE-0.3.1, RE-0.3.2, RE-0.3.3, RE-0.3.4, RE-0.3.5, RE-0.3.6 |
-| HU-0.4 | RN-003, RN-005, RN-006, RN-420 | RE-0.4.1, RE-0.4.2, RE-0.4.3, RE-0.4.4, RE-0.4.5, RE-0.4.6, RE-0.4.7 |
-| HU-0.5 | RN-007, RN-008, RN-013 | RE-0.5.1, RE-0.5.2, RE-0.5.3, RE-0.5.4, RE-0.5.5 |
+| HU-0.3 | RN-004, RN-010, RN-012, RN-804, RN-019, RN-G05, RN-G13, RN-G14, RN-G15 | RE-0.3.1, RE-0.3.2, RE-0.3.3, RE-0.3.4, RE-0.3.5, RE-0.3.6, RE-0.3.7 |
+| HU-0.4 | RN-003, RN-005, RN-006, RN-014, RN-015, RN-420 | RE-0.4.1, RE-0.4.2, RE-0.4.3, RE-0.4.4, RE-0.4.5, RE-0.4.6, RE-0.4.7 |
+| HU-0.5 | RN-003, RN-007, RN-008, RN-013, RN-014, RN-015, RN-016, RN-017, RN-018, RN-019, RN-420, RN-G05, RN-G13 | RE-0.5.1, RE-0.5.2, RE-0.5.3, RE-0.5.4, RE-0.5.5, RE-0.5.6, RE-0.5.7, RE-0.5.8, RE-0.5.9, RE-0.5.10, RE-0.5.11, RE-0.5.12, RE-0.5.13, RE-0.5.14, RE-0.5.15, RE-0.5.16, RE-0.5.17, RE-0.5.18, RE-0.5.19, RE-0.5.20, RE-0.5.21, RE-0.5.22, RE-0.5.23, RE-0.5.24, RE-0.5.25, RE-0.5.26 |
 | HU-T.1 | RN-G01, RN-G03, RN-G09 | RE-T.1.1, RE-T.1.2, RE-T.1.3, RE-T.1.4, RE-T.1.5 |
 | HU-T.2 | RN-G03, RN-G22 | RE-T.2.1, RE-T.2.2, RE-T.2.3, RE-T.2.4, RE-T.2.5 |
 | HU-T.3 | RN-G04 | RE-T.3.1, RE-T.3.2, RE-T.3.3, RE-T.3.4 |
@@ -1234,7 +1265,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | HU-5.13 | RN-109, RN-110, RN-115, RN-116 | RE-5.13.1, RE-5.13.2, RE-5.13.3, RE-5.13.4, RE-5.13.5 |
 | HU-5.14 | RN-G16, RN-G07 | RE-5.14.1, RE-5.14.2, RE-5.14.3, RE-5.14.4, RE-5.14.5 |
 | HU-6.1 | RN-G01, RN-407, RN-409, RN-415, RN-426 | RE-6.1.1, RE-6.1.2, RE-6.1.3, RE-6.1.4, RE-6.1.5, RE-6.1.6, RE-6.1.7, RE-6.1.8, RE-6.1.9, RE-6.1.10, RE-6.1.11, RE-6.1.12 |
-| HU-6.2 | RN-G01, RN-408, RN-409 | RE-6.2.1, RE-6.2.2, RE-6.2.3, RE-6.2.4, RE-6.2.5, RE-6.2.6 |
+| HU-6.2 | RN-G01, RN-003, RN-408, RN-409, RN-414, RN-415 | RE-6.2.1, RE-6.2.2, RE-6.2.3, RE-6.2.4, RE-6.2.5, RE-6.2.6, RE-6.2.7, RE-6.2.8, RE-6.2.9, RE-6.2.10, RE-6.2.11, RE-6.2.12, RE-6.2.13 |
 | HU-6.3 | RN-701 | RE-6.3.1, RE-6.3.2, RE-6.3.3, RE-6.3.4 |
 | HU-6.4 | RN-701 | RE-6.4.1, RE-6.4.2, RE-6.4.3, RE-6.4.4 |
 | HU-6.5 | RN-701 | RE-6.5.1, RE-6.5.2, RE-6.5.3 |

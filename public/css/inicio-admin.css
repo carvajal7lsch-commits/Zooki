@@ -1,0 +1,627 @@
+/*
+ * Inicio del administrador (HU-6.2). Diseño aprobado por el dueño (2026-10-24):
+ * specs/referencias/inicio-administrador.dc.html. Solo se carga en
+ * admin_panel, encima de inicio-comun.css, que tiene las piezas que comparte
+ * con el Inicio del veterinario.
+ *
+ * Escritorio (≥ 1024 px): cabe sin scroll en 1366×768; solo se desplazan por
+ * dentro la agenda por veterinario y, si hace falta, los pendientes
+ * (RE-6.2.13). Tableta y celular (RNF-16): la página se desplaza y los
+ * bloques se reordenan con grid-template-areas.
+ */
+
+/* ── Barras sin estilos en línea: largo en clases de 5 en 5 (ResumenPanel::escala5) ── */
+.inicio-barra {
+    display: block;
+    flex-shrink: 0;
+    height: 7px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: var(--in-borde-suave);
+}
+
+.inicio-barra__relleno {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--in-azul);
+}
+
+.inicio-barra__relleno--aviso { background: #F59E0B; }
+
+.inicio-ancho--0 { width: 0%; }
+.inicio-ancho--5 { width: 5%; }
+.inicio-ancho--10 { width: 10%; }
+.inicio-ancho--15 { width: 15%; }
+.inicio-ancho--20 { width: 20%; }
+.inicio-ancho--25 { width: 25%; }
+.inicio-ancho--30 { width: 30%; }
+.inicio-ancho--35 { width: 35%; }
+.inicio-ancho--40 { width: 40%; }
+.inicio-ancho--45 { width: 45%; }
+.inicio-ancho--50 { width: 50%; }
+.inicio-ancho--55 { width: 55%; }
+.inicio-ancho--60 { width: 60%; }
+.inicio-ancho--65 { width: 65%; }
+.inicio-ancho--70 { width: 70%; }
+.inicio-ancho--75 { width: 75%; }
+.inicio-ancho--80 { width: 80%; }
+.inicio-ancho--85 { width: 85%; }
+.inicio-ancho--90 { width: 90%; }
+.inicio-ancho--95 { width: 95%; }
+.inicio-ancho--100 { width: 100%; }
+.inicio-alto--0 { height: 0%; }
+.inicio-alto--5 { height: 5%; }
+.inicio-alto--10 { height: 10%; }
+.inicio-alto--15 { height: 15%; }
+.inicio-alto--20 { height: 20%; }
+.inicio-alto--25 { height: 25%; }
+.inicio-alto--30 { height: 30%; }
+.inicio-alto--35 { height: 35%; }
+.inicio-alto--40 { height: 40%; }
+.inicio-alto--45 { height: 45%; }
+.inicio-alto--50 { height: 50%; }
+.inicio-alto--55 { height: 55%; }
+.inicio-alto--60 { height: 60%; }
+.inicio-alto--65 { height: 65%; }
+.inicio-alto--70 { height: 70%; }
+.inicio-alto--75 { height: 75%; }
+.inicio-alto--80 { height: 80%; }
+.inicio-alto--85 { height: 85%; }
+.inicio-alto--90 { height: 90%; }
+.inicio-alto--95 { height: 95%; }
+.inicio-alto--100 { height: 100%; }
+
+/* ── Hoy en la clínica (sobre .inicio-hero) ── */
+.inicio-clinica__contenido {
+    gap: 16px;
+    max-width: 64%;
+}
+
+/* El golden llena su PNG hasta abajo: se apoya en el borde de la tarjeta. */
+.inicio-clinica__mascota {
+    right: 24px;
+    bottom: 0;
+    height: 232px;
+}
+
+.inicio-clinica__sub {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--in-azul-4);
+}
+
+.inicio-clinica__cifras {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.inicio-clinica__cifra strong {
+    display: block;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.inicio-clinica__cifra span {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--in-azul-4);
+}
+
+.inicio-clinica__cifra--urgente strong { color: #FECACA; }
+
+/* ── Uso del plan ── */
+.inicio-plan {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 18px;
+}
+
+.inicio-plan__nombre {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #F1F5F9;
+    color: var(--in-texto-3);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.inicio-plan__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.inicio-plan__uso {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.inicio-plan__fila {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--in-texto-2);
+}
+
+.inicio-plan__uso--aviso .inicio-plan__valor { color: #B45309; }
+.inicio-plan__uso--aviso .inicio-barra__relleno { background: #F59E0B; }
+.inicio-plan__uso--limite .inicio-plan__valor { color: var(--in-rojo-tinta); }
+.inicio-plan__uso--limite .inicio-barra__relleno { background: var(--in-rojo); }
+
+.inicio-plan__accesos {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.inicio-rapido {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--in-azul-suave);
+    color: var(--in-azul);
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.inicio-rapido:hover {
+    background: var(--in-azul-4);
+    color: var(--in-azul-oscuro);
+}
+
+/* ── Agenda del día por veterinario ── */
+.inicio-agenda-tile .inicio-dia__contenido {
+    gap: 12px;
+}
+
+.inicio-agenda {
+    display: grid;
+    flex: 1;
+    align-items: start;
+    gap: 18px;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.inicio-agenda--1 { grid-template-columns: minmax(0, 1fr); }
+.inicio-agenda--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.inicio-agenda--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Decisión del dueño (2026-10-24): con más de tres veterinarios se ven tres y la agenda se desplaza a los lados. */
+.inicio-agenda--muchas {
+    grid-auto-columns: calc((100% - 36px) / 3);
+    grid-auto-flow: column;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+}
+
+.inicio-agenda--muchas .inicio-agenda__vet {
+    scroll-snap-align: start;
+}
+
+.inicio-agenda__vet {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+/* El nombre queda a la vista al desplazar la agenda hacia abajo. */
+.inicio-agenda__cabeza {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--in-borde-suave);
+    background: var(--in-blanco);
+}
+
+.inicio-agenda__quien {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.inicio-agenda__quien strong {
+    overflow: hidden;
+    font-size: 13.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inicio-agenda__vet > .inicio-barra {
+    margin-bottom: 6px;
+}
+
+.inicio-agenda__filas {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.inicio-agenda__fila {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-height: 30px;
+}
+
+.inicio-agenda__hora {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--in-texto-3);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.inicio-agenda__vacio {
+    padding: 6px 0;
+}
+
+.inicio-cita--compacta {
+    gap: 6px;
+    padding: 5px 9px;
+    border-radius: 9px;
+    font-size: 12px;
+}
+
+.inicio-cita--compacta:hover {
+    box-shadow: none;
+}
+
+.inicio-cita--compacta strong {
+    white-space: nowrap;
+}
+
+.inicio-agenda__punto {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--in-gris-nodo);
+}
+
+.inicio-linea--atendida .inicio-agenda__punto { background: var(--in-verde); }
+.inicio-linea--sin_cerrar .inicio-agenda__punto { background: var(--in-rojo); }
+.inicio-linea--en_atencion .inicio-agenda__punto { background: var(--in-azul); }
+.inicio-linea--no_asistio .inicio-agenda__punto { background: var(--in-gris-linea); }
+
+/* RE-6.2.9: un caso rojo se distingue en la agenda. */
+.inicio-linea--por_atender .inicio-cita--urgencia,
+.inicio-linea--en_atencion .inicio-cita--urgencia { background: #FEE2E2; }
+.inicio-cita--urgencia .inicio-agenda__punto { background: var(--in-rojo); }
+
+.inicio-hueco--compacto {
+    padding: 4px 9px;
+    border-radius: 9px;
+    font-size: 11.5px;
+}
+
+/* En la agenda del administrador el hueco informa; no es un enlace para agendar (RN-401). */
+.inicio-hueco--compacto:hover {
+    border-color: var(--in-gris-linea);
+    background: transparent;
+}
+
+.inicio-bloqueo--compacto {
+    padding: 5px 9px;
+    border-radius: 9px;
+    font-size: 11.5px;
+}
+
+.inicio-bloqueo--ausencia {
+    background: repeating-linear-gradient(135deg, #FEF3C7 0 6px, #FFFBEB 6px 12px);
+    color: #92400E;
+    font-weight: 700;
+}
+
+/* ── Pendientes de la clínica ── */
+.inicio-pendientes--vacio {
+    gap: 6px;
+}
+
+/* ── Este mes ── */
+.inicio-mes {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    padding: 14px 18px;
+}
+
+.inicio-mes__resumen {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+}
+
+.inicio-mes__consultas {
+    flex: 1;
+    min-width: 0;
+}
+
+.inicio-mes__cifra {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--in-azul);
+}
+
+.inicio-mes__cifra span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--in-meta);
+}
+
+.inicio-mes__variacion {
+    margin: 6px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--in-meta);
+}
+
+.inicio-mes__variacion--sube { color: var(--in-verde-tinta); }
+.inicio-mes__variacion--baja { color: var(--in-rojo-tinta); }
+
+/* RE-6.2.4: atendidas abajo y no asistidas encima, en una escala común a los 6 meses. */
+.inicio-grafica {
+    display: flex;
+    flex-shrink: 0;
+    align-items: stretch;
+    gap: 6px;
+    height: 64px;
+}
+
+.inicio-grafica__mes {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: 16px;
+}
+
+.inicio-grafica__barra {
+    display: block;
+    border-radius: 5px;
+    background: #BFDBFE;
+}
+
+.inicio-grafica__barra--no-asistio {
+    background: var(--in-gris-linea);
+}
+
+.inicio-grafica__mes--actual .inicio-grafica__barra:not(.inicio-grafica__barra--no-asistio) {
+    background: var(--in-azul);
+}
+
+.inicio-mes__datos {
+    display: flex;
+    gap: 10px;
+    margin: auto 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.inicio-dato {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--in-gris-fondo);
+}
+
+.inicio-dato strong {
+    display: block;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+/* ── Escritorio: solo la agenda y, si hace falta, los pendientes se desplazan ── */
+@media (min-width: 1024px) {
+    .inicio-agenda-tile {
+        min-height: 0;
+    }
+
+    .inicio--admin .inicio-pendientes {
+        flex: 0 1 auto;
+        min-height: 0;
+    }
+
+    .inicio--admin .inicio-pendientes__lista {
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .inicio--admin .inicio-mes {
+        flex: 1 0 auto;
+    }
+
+    /* Compacto: con los cinco tipos de pendiente, en 1366×768 caben cuatro filas enteras y la lista se desplaza. */
+    .inicio--admin .inicio-pend {
+        padding: 3px 6px 3px 10px;
+    }
+
+    .inicio--admin .inicio-pend .inicio-accion {
+        height: 28px;
+    }
+
+    .inicio--admin .inicio-pendientes__lista {
+        gap: 4px;
+        scroll-snap-type: y proximity;
+    }
+
+    .inicio--admin .inicio-pend {
+        scroll-snap-align: start;
+    }
+
+    .inicio-mes {
+        gap: 8px;
+        padding: 12px 18px;
+    }
+
+    .inicio-mes__cifra {
+        font-size: 26px;
+    }
+
+    .inicio-grafica {
+        height: 52px;
+    }
+
+    .inicio-dato {
+        padding: 6px 10px;
+    }
+
+    .inicio-dato strong {
+        font-size: 18px;
+    }
+}
+
+/* Escritorio angosto (1024–1279 px): el golden taparía las cifras; quedan las formas y los accesos se apilan. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .inicio-clinica__mascota,
+    .inicio-clinica .inicio-hero__cuarto {
+        display: none;
+    }
+
+    .inicio-clinica__contenido {
+        max-width: 100%;
+    }
+
+    .inicio-plan__accesos {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .inicio-rapido {
+        flex: 0 0 auto;
+        height: 32px;
+    }
+
+    /* Tres columnas de ~140 px cortan nombres y citas: se ven dos y las demás se deslizan. */
+    .inicio-agenda--3,
+    .inicio-agenda--muchas {
+        grid-template-columns: none;
+        grid-auto-columns: calc((100% - 18px) / 2);
+        grid-auto-flow: column;
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+    }
+
+    .inicio-agenda--3 .inicio-agenda__vet {
+        scroll-snap-align: start;
+    }
+}
+
+/* ── Tableta y celular ── */
+@media (max-width: 1023px) {
+    .inicio--admin {
+        grid-template-areas:
+            "clinica clinica"
+            "calendario plan"
+            "dia dia"
+            "pendientes mes";
+    }
+
+    .inicio-clinica { grid-area: clinica; min-height: 240px; }
+    .inicio-plan { grid-area: plan; align-self: stretch; }
+    .inicio-mes { grid-area: mes; align-self: stretch; }
+
+    .inicio-agenda {
+        max-height: 460px;
+    }
+}
+
+@media (max-width: 767px) {
+    .inicio--admin {
+        grid-template-areas:
+            "clinica"
+            "pendientes"
+            "dia"
+            "calendario"
+            "plan"
+            "mes";
+    }
+
+    .inicio-clinica {
+        min-height: 0;
+    }
+
+    .inicio-clinica__mascota {
+        right: 0;
+        height: 130px;
+    }
+
+    .inicio-clinica__sub {
+        max-width: calc(100% - 90px);
+    }
+
+    .inicio-clinica__cifras {
+        max-width: calc(100% - 90px);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inicio-clinica__cifra strong {
+        font-size: 24px;
+    }
+
+    /* En el celular cada veterinario ocupa casi todo el ancho y se pasa de uno a otro de lado. */
+    .inicio-agenda--2,
+    .inicio-agenda--3,
+    .inicio-agenda--muchas {
+        grid-template-columns: none;
+        grid-auto-columns: 85%;
+        grid-auto-flow: column;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+    }
+
+    .inicio-agenda__vet {
+        scroll-snap-align: start;
+    }
+
+    .inicio-mes__datos {
+        flex-wrap: wrap;
+    }
+
+    .inicio-dato {
+        flex-basis: calc(50% - 5px);
+    }
+}
+
+@media (max-width: 479px) {
+    .inicio-clinica__sub,
+    .inicio-clinica__cifras {
+        max-width: 100%;
+    }
+}

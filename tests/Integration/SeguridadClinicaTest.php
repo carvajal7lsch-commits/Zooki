@@ -148,6 +148,19 @@ class SeguridadClinicaTest extends TestCase
         $this->assertSame(403, $this->resultado('panel_dia_ajax'));
     }
 
+    /** HU-6.2 (RE-6.2.8): el cambio de día del Inicio del administrador es solo del administrador. */
+    public function testElDiaDelInicioDelAdministradorEsSoloDelAdministrador(): void
+    {
+        $this->entrarComo(DosClinicas::DOBLE, 'clinica:2:1');
+        $this->assertSame(0, $this->resultado('panel_admin_dia_ajax'));
+
+        $this->entrarComo(DosClinicas::DOBLE, 'clinica:1:2');
+        $this->assertSame(403, $this->resultado('panel_admin_dia_ajax'), 'Como veterinaria no tiene Inicio de administrador');
+
+        $this->entrarComo(DosClinicas::DOBLE, 'propietario');
+        $this->assertSame(403, $this->resultado('panel_admin_dia_ajax'));
+    }
+
     /** RN-G08: si le retiran el rol con la sesión abierta, pierde ese contexto en la siguiente petición. */
     public function testUnContextoRetiradoSeQuitaDeLaSesion(): void
     {

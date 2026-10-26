@@ -1,80 +1,20 @@
 /**
  * Inicio del veterinario (HU-6.1, views/vet/area.php).
  *
- * La vista llega pintada desde el servidor. Aquí se cambia de día y de mes en
- * el calendario (panel_dia_ajax devuelve los mismos parciales PHP), se
- * registra la llegada del siguiente paciente, se inicia la atención cuando
- * llega su ventana (RN-407) y se abren las próximas dosis. Los datos de la
- * base llegan ya escapados en el HTML del servidor.
+ * Lo común con el Inicio del administrador (cambiar de día y de mes, las
+ * ventanas y recargar al volver) está en inicio-comun.js, que se carga antes.
+ * Aquí queda lo del veterinario: registrar la llegada del siguiente paciente,
+ * iniciar la atención cuando llega su ventana (RN-407) y las fotos de los
+ * pacientes recientes.
  */
 (function (global) {
     'use strict';
 
     const REVISAR_CADA_MS = 20 * 1000;
-    const REFRESCAR_TRAS_MS = 5 * 60 * 1000;
-
-    /** Pide un fragmento del Inicio; null si la respuesta no sirve. */
-    async function pedirFragmento(parametros) {
-        const respuesta = await fetch('index.php?action=panel_dia_ajax&' + new URLSearchParams(parametros));
-        const datos = await respuesta.json();
-        if (!datos || !datos.success || typeof datos.html !== 'string') {
-            throw new Error((datos && datos.message) || 'No se pudo cargar.');
-        }
-        return datos.html;
-    }
 
     function iniciar(raiz) {
-        const calendario = raiz.querySelector('[data-inicio-calendario]');
-        const contenidoCalendario = raiz.querySelector('[data-inicio-calendario-contenido]');
-        const dia = raiz.querySelector('[data-inicio-dia]');
-        const contenidoDia = raiz.querySelector('[data-inicio-dia-contenido]');
-        let turnoDia = 0;
-        let turnoMes = 0;
-
-        /** RE-6.1.9: «Tu día» del día tocado; la respuesta vieja se descarta. */
-        async function mostrarDia(fecha) {
-            const turno = ++turnoDia;
-            calendario.dataset.elegido = fecha;
-            contenidoCalendario.querySelectorAll('[data-inicio-fecha]').forEach((boton) => {
-                const elegido = boton.dataset.inicioFecha === fecha;
-                boton.classList.toggle('is-elegido', elegido);
-                boton.setAttribute('aria-pressed', elegido ? 'true' : 'false');
-            });
-            dia.setAttribute('aria-busy', 'true');
-            try {
-                const html = await pedirFragmento({ fecha });
-                if (turno !== turnoDia) return;
-                contenidoDia.innerHTML = html;
-                contenidoDia.scrollTop = 0;
-            } catch (error) {
-                if (turno !== turnoDia) return;
-                global.zookiAviso?.('No se pudo cargar ese día. Intenta nuevamente.');
-            } finally {
-                if (turno === turnoDia) dia.setAttribute('aria-busy', 'false');
-            }
-        }
-
-        /** RE-6.1.8: otro mes, con el día elegido todavía marcado. */
-        async function mostrarMes(mes) {
-            const turno = ++turnoMes;
-            try {
-                const html = await pedirFragmento({ mes, elegido: calendario.dataset.elegido });
-                if (turno !== turnoMes) return;
-                contenidoCalendario.innerHTML = html;
-            } catch (error) {
-                if (turno === turnoMes) global.zookiAviso?.('No se pudo cargar ese mes. Intenta nuevamente.');
-            }
-        }
-
-        contenidoCalendario.addEventListener('click', (evento) => {
-            const dia = evento.target.closest('[data-inicio-fecha]');
-            if (dia) {
-                mostrarDia(dia.dataset.inicioFecha);
-                return;
-            }
-            const flecha = evento.target.closest('[data-inicio-mes]');
-            if (flecha) mostrarMes(flecha.dataset.inicioMes);
-        });
+        global.ZookiInicio.iniciarCalendario(raiz);
+        global.ZookiInicio.iniciarDialogos(raiz);
 
         raiz.addEventListener('click', (evento) => {
             const iniciarBoton = evento.target.closest('[data-iniciar]');
@@ -83,24 +23,7 @@
                 return;
             }
             const llegada = evento.target.closest('[data-inicio-llegada]');
-            if (llegada && !llegada.disabled) {
-                registrarLlegada(raiz, llegada);
-                return;
-            }
-            const abrir = evento.target.closest('[data-inicio-abrir]');
-            if (abrir) {
-                const dialogo = global.document.getElementById(abrir.dataset.inicioAbrir);
-                if (dialogo && typeof dialogo.showModal === 'function') dialogo.showModal();
-                return;
-            }
-            if (evento.target.closest('[data-inicio-cerrar]')) evento.target.closest('[data-inicio-dialogo]')?.close();
-        });
-
-        // Clic en el fondo del diálogo: el objetivo es el propio <dialog>, no su contenido.
-        raiz.querySelectorAll('[data-inicio-dialogo]').forEach((dialogo) => {
-            dialogo.addEventListener('click', (evento) => {
-                if (evento.target === dialogo) dialogo.close();
-            });
+            if (llegada && !llegada.disabled) registrarLlegada(raiz, llegada);
         });
 
         // Si la foto de un paciente reciente no está, se ven sus iniciales. Puede haber
@@ -196,15 +119,5 @@
     iniciar(raiz);
     habilitarBotonesListos(raiz);
     global.setInterval(() => habilitarBotonesListos(raiz), REVISAR_CADA_MS);
-
-    // La agenda cambia durante el día: si la pestaña estuvo oculta un buen
-    // rato, al volver se recarga para no mostrar estados viejos.
-    let ocultaDesde = null;
-    global.document.addEventListener('visibilitychange', () => {
-        if (global.document.hidden) {
-            ocultaDesde = Date.now();
-        } else if (ocultaDesde && Date.now() - ocultaDesde > REFRESCAR_TRAS_MS) {
-            global.location.reload();
-        }
-    });
+    global.ZookiInicio.recargarAlVolver(global.document);
 })(globalThis);

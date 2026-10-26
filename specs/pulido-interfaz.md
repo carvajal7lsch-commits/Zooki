@@ -283,3 +283,82 @@ PerfilSecciones comprueba contención y alineación vertical con el título a 19
 **Aclaración del dueño sobre Git:** el registro anterior que presentaba 987149b como autorizado fue una interpretación errónea del agente. El dueño indicó que solicita los comandos/mensaje para verificarlos y ejecutarlos él. No ejecutar commit, push ni tags por expresiones como «dame el commit»; entregar los comandos en el chat. No se modifica el historial existente.
 
 Verificación final propia del pulido: **JavaScript 314/314**, sin omisiones; sintaxis de las dos vistas y la fixture PHP, y `git diff --check` correctos. No se ejecutaron comandos de commit, push, tags ni cambios del índice de Git.
+
+## Casos de soporte del super-administrador (prueba del dueño en producción, 2026-10-24)
+
+Registro con Google y una cédula que ya es de otra cuenta: abre el caso `documento_duplicado` como dice Modelos §13.1 (funciona). Pendiente de pulido, sin cambiar la regla:
+
+- **Aviso por correo al super-administrador** cuando se abre un caso (decisión del dueño: lo quiere recibir). Sin datos del titular en el asunto.
+- **Detalle del caso:** hoy la tarjeta no deja ver el detalle (qué cuenta lo pidió, cuándo, la cuenta dueña del documento) ni ofrece acciones claras.
+- **Sin códigos internos en la descripción:** quitar «(al completar el perfil, RE-T.18.3)» del texto que ve el super-administrador; el RE va en la auditoría o en el código, no en la interfaz.
+- El mensaje al titular («No se pudo completar el perfil. Revisa los datos o contacta a soporte.») se conserva (decisión del dueño).
+
+## Inicio del administrador — Encargo (2026-10-24)
+
+**Escribe: Claude Code (ejecutor). Revisa: Claude (arquitecto). HU-6.2 (RE-6.2.5 y RE-6.2.7 a RE-6.2.13), RN-415, RN-G01, RNF-11, RNF-16.** Referencia aprobada por el dueño: `specs/referencias/inicio-administrador.dc.html`. Es el gemelo del Inicio del veterinario y reutiliza sus piezas desde archivos comunes.
+
+**Decisiones del dueño (2026-10-24):**
+
+- Mockup aprobado: la lista filtrable de citas de hoy pasa a Gestión de citas (cambia RE-6.2.5); con más de tres veterinarios, la agenda se desplaza en horizontal dentro de la tarjeta; sin pendientes, la tarjeta se encoge y «Este mes» ocupa el espacio; «Este mes» muestra el % de no asistencia.
+- Sin botón «Agendar» en «Hoy en la clínica»: por RN-401 el administrador no crea citas (`registrar_cita_ajax` es solo del veterinario).
+- La minigráfica de «Este mes» muestra por mes las atendidas con las no asistidas encima, y su tabla accesible trae las dos cifras (cumple RE-6.2.4).
+- «En espera»: citas de hoy con la llegada registrada que aún no empiezan, más las llegadas sin reserva en espera presencial. «Urgencias»: casos rojos de hoy, atendidos o en cola.
+
+**Decisiones de implementación (para revisión):**
+
+- Sin pantalla de planes para el administrador, «Ver planes» no se pone.
+- Los botones de pendientes van a Gestión de citas (`admin_citas`, que no acepta filtros por URL) o a Configuración (`#horarios` para propuestas y `#ausencias` para ausencias; las pestañas ya se abren por hash).
+- El hoy de «no asistieron» (RE-6.2.1) va en el subtítulo de «Hoy en la clínica» cuando es mayor que cero.
+- Las ausencias se muestran como «Ausente · hasta las …», sin el motivo del mockup.
+
+## Inicio del administrador — Resultado (2026-10-24)
+
+**Escribió: Claude Code (ejecutor). Revisa: Claude (arquitecto). Entregada, pendiente de revisión.**
+
+- **Qué:** `views/admin/panel.php` repite el mockup aprobado con las decisiones del encargo:
+  - «Hoy en la clínica» (sin «Agendar»), calendario, uso del plan con accesos, agenda por veterinario, pendientes y «Este mes».
+  - La agenda sale de `PanelController::filasDelDia`, que ahora comparte con «Tu día» del vet (sin duplicar huecos ni ausencias). `DisponibilidadAgenda::diaDelVeterinario` admite al administrador para los veterinarios activos de su clínica.
+  - Lo común con el Inicio del vet pasó a archivos compartidos: `inicio-comun.css` y `inicio-comun.js` (tarjeta azul `inicio-hero`, calendario, filas, pendientes, esqueleto) y `views/partials/inicio_calendario.php`.
+  - Se retiran `panel.css` y `panel-admin.js`. Sin cambios de esquema.
+- **Decisión de implementación nueva:** entre 1024 y 1279 px, con tres o más veterinarios se ven dos columnas y el resto se desliza (tres columnas de ~140 px cortaban nombres y citas). En ese rango también se oculta el golden, que tapaba las cifras.
+
+| RE | Prueba |
+|---|---|
+| RE-6.2.5 (cambia), RE-6.2.6 | `InicioAdministradorTest::testEstadosVacios`; `InicioAdministrador.test.cjs` (sin «Agendar», sin lista filtrable) |
+| RE-6.2.7 | `testElInicioDeNorteNoTraeNadaDeSur` (en espera y urgencias por clínica) |
+| RE-6.2.8 | `testCambioDeDiaYDeMesPorLaAccionDelAdministrador`; `SeguridadClinicaTest::testElDiaDelInicioDelAdministradorEsSoloDelAdministrador`; JS: cambio de día, mes y descarte de respuestas viejas |
+| RE-6.2.9 | `testUnVeterinarioSinCitasApareceEnLaAgenda`, `testHuecosYAusenciasIgualesALaDisponibilidadReal`, `testElAdministradorSoloLeeVeterinariosDeSuClinica`; Chrome: 4 veterinarios se desplazan a los lados |
+| RE-6.2.10 | `testUsoDelPlanContraLimitePlan`; `ResumenPanelTest::testElUsoDelPlanTieneSuNivel` |
+| RE-6.2.11 | `testConteosDePendientes` |
+| RE-6.2.12 | `testEsteMesPropietariosNuevosYNoAsistencia` |
+| RE-6.2.13 | Chrome en `InicioAdministrador.test.cjs` (1366/1024/390) y capturas |
+
+- **Verificación:**
+  - PHPUnit sin motor: 1068 pruebas, 8472 aserciones, 74 omitidas de motor.
+  - PHPUnit completo con MariaDB 10.4.32 local, solo `zooki_test_base_v2`: 1068 pruebas, 9583 aserciones, ninguna omitida (incluye `BaseV2MysqlTest`, que ejecuta `datosAdministrador` sobre el esquema real).
+  - JS: 331/331.
+  - Capturas en Chrome con layout y controlador reales sobre SQLite: 2 y 4 veterinarios, con y sin pendientes, a 1366×768, 1024×768 y 390×844, más la clínica vacía. Sin desborde horizontal de página y sin scroll de página en escritorio.
+  - El Inicio del vet, revisado otra vez a 1440/1366/900/390, quedó igual tras partir la hoja.
+- **Pendientes:**
+  - Revisión independiente y prueba del dueño.
+  - Sin MySQL 8 ni CI propios.
+  - Las descargas de documentos se regeneran al cerrar la entrega (método §4).
+  - Gestión de citas no acepta filtros por URL, así que los botones de pendientes abren la pantalla sin filtrar.
+  - Las ausencias se ven como «Ausencia · hasta las …», sin el motivo del mockup.
+  - En 1366×768, con los cinco tipos de pendiente, caben cuatro filas enteras y la lista se desplaza.
+
+## Inicio del administrador — Revisión (2026-10-24)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada.**
+
+- **Verificado:** diseño fiel al mockup en 1366×768 (sin scroll de página), 1024 y 390 px; cambio de día por el calendario; agenda por veterinario con citas, huecos, ocupación y ausencias desde la misma lógica del Inicio del vet; pendientes vacíos encogen la tarjeta. `diaDelVeterinario` admite al administrador solo para veterinarios activos de su clínica (sigue la comprobación de membresía); `panel_admin_dia_ajax` solo para el administrador. Las decisiones del encargo (sin «Agendar» por RN-401, sin «Ver planes» mientras no exista la pantalla, botones de pendientes a pantallas existentes) son correctas.
+- **Pruebas del revisor:** PHPUnit sin motor 1068 en verde (74 omitidas de motor); PHPUnit completo con MySQL 8, base `zooki_test_base_v2`: **1068 pruebas, 9587 aserciones, sin fallos**.
+- **Para el pulido final (no bloquean):**
+  - Con la serie de 6 meses en cero, la minigráfica no se ve y deja un hueco; mostrar línea base y las iniciales de los meses (RE-6.2.4: los meses sin citas aparecen en cero).
+  - `DisponibilidadAgenda::finDeApertura` escribe `America/Bogota`; usar `ReglaAtencion::ZONA`.
+
+## Registro: el freno de comprobaciones parece un error del campo (prueba del dueño, 2026-10-25)
+
+- Al registrar una clínica con muchas comprobaciones seguidas, `validar_cuenta_ajax` responde «espera un momento» y el formulario lo muestra como error del campo que tocaba (resumen: «Revisa estos campos… Correo de contacto: espera un momento antes de seguir comprobando»). Parece que el correo es inválido.
+- Pulido: si la respuesta es el límite de comprobaciones, mostrar un aviso general («Hiciste muchas comprobaciones seguidas. Espera unos segundos y vuelve a intentar») sin marcar el campo en rojo ni incluirlo en el resumen, y reintentar la comprobación al enviar.
+- Revisar el tope: `Security::MAX_VERIFICACIONES` = 20 comprobaciones por IP en 15 minutos (bloqueo de 15 min) se agota fácil en el registro de clínica, que comprueba NIT, DV y tres correos. Proponer un tope mayor o contar solo valores nuevos, sin abrir la enumeración (RE-T.13.2).

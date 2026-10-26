@@ -30,7 +30,7 @@ const tramo = (fuente, desde, hasta) => {
 /** El Inicio con el DOM mínimo: calendario, «Tu día», la tarjeta del siguiente y el diálogo de dosis. */
 function inicio(responder) {
     const documento = crearDocumento();
-    const raiz = colgar(documento.raiz, 'div', { inicio: '', clinica: '1' });
+    const raiz = colgar(documento.raiz, 'div', { inicio: '', inicioAccion: 'panel_dia_ajax', clinica: '1' });
     const calendario = colgar(raiz, 'section', { inicioCalendario: '', elegido: '2026-10-21' });
     const contenidoCalendario = colgar(calendario, 'div', { inicioCalendarioContenido: '' });
     const dias = ['2026-10-21', '2026-10-22', '2026-10-23'].map(fecha => colgar(contenidoCalendario, 'button', { inicioFecha: fecha }));
@@ -57,6 +57,8 @@ function inicio(responder) {
     };
     contexto.zookiCrearComandoAgenda = () => ({ clave: () => 'a'.repeat(64) });
     vm.createContext(contexto);
+    // HU-6.2: lo común con el Inicio del administrador se carga antes, como en el layout.
+    vm.runInContext(leer('public/js/inicio-comun.js'), contexto);
     vm.runInContext(leer('public/js/inicio-vet.js'), contexto);
     contexto.module.exports.iniciar(raiz);
     return { contexto, raiz, dias, flecha, dia, contenidoDia, contenidoCalendario, llegada, abrir, dialogo, cerrar, avatar, llamadas };
@@ -195,19 +197,21 @@ test('«+ Agendar» abre el modal de la agenda en ese día y marca la hora si si
 });
 
 test('el Inicio no usa estilos ni scripts en línea, carga su hoja propia y ya no enlaza a Consultas', () => {
-    const vistas = ['views/vet/area.php', 'views/vet/partials/inicio_dia.php', 'views/vet/partials/inicio_calendario.php'];
+    const vistas = ['views/vet/area.php', 'views/vet/partials/inicio_dia.php', 'views/partials/inicio_calendario.php'];
     for (const vista of vistas) {
         assert.doesNotMatch(leer(vista), /\sstyle=|\son[a-z]+=|<script/i, vista);
     }
     const layout = leer('views/vet/layout.php');
-    assert.match(layout, /<\?php if \(!isset\(\$content_view\)\): \?>\n.*\n    <link rel="stylesheet" href="css\/inicio-vet\.css/);
-    assert.match(layout, /js\/inicio-vet\.js/);
+    assert.match(layout, /<\?php if \(!isset\(\$content_view\)\): \?>\n.*\n    <link rel="stylesheet" href="css\/inicio-comun\.css[^\n]*\n    <link rel="stylesheet" href="css\/inicio-vet\.css/);
+    assert.match(layout, /js\/inicio-comun\.js[^\n]*\n    <script src="js\/inicio-vet\.js/);
     assert.doesNotMatch(layout, /vet_consultas|consultas\.js|panel-vet\.js/);
     assert.doesNotMatch(leer('public/index.php'), /case "vet_consultas"/);
     assert.ok(!fs.existsSync(path.join(RAIZ, 'views/vet/consultas.php')));
     assert.match(leer('views/vet/area.php'), /href="index\.php\?action=vet_agenda#llegadas"/, 'HU-2.2: la atención sin cita se registra como llegada');
+    // HU-6.2: el esqueleto de escritorio lo comparten los dos Inicios.
+    const comun = leer('public/css/inicio-comun.css');
+    assert.match(comun, /grid-template-columns: minmax\(0, 2fr\) minmax\(0, 1\.05fr\) minmax\(0, 0\.95fr\);/);
+    assert.match(comun, /height: 258px;/);
     const css = leer('public/css/inicio-vet.css');
-    assert.match(css, /grid-template-columns: minmax\(0, 2fr\) minmax\(0, 1\.05fr\) minmax\(0, 0\.95fr\);/);
-    assert.match(css, /height: 258px;/);
     assert.match(css, /"siguiente"\s+"lado"\s+"dia"\s+"pendientes"\s+"calendario"\s+"recientes"/, 'RNF-16: orden del celular');
 });

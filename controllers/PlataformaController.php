@@ -4,15 +4,21 @@ require_once __DIR__ . '/../config/EmailService.php';
 require_once __DIR__ . '/../models/Plataforma.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/PresentacionPlataforma.php';
+require_once __DIR__ . '/../models/ConciliadorPago.php';
+require_once __DIR__ . '/../helpers/ClienteWompiHttp.php';
 
 final class PlataformaController
 {
     private Plataforma $modelo;
 
-    public function __construct(?PDO $db = null, private mixed $correo = null)
+    public function __construct(?PDO $db = null, private mixed $correo = null, private ?ConciliadorPago $conciliador = null)
     {
-        $this->modelo = new Plataforma($db ?? (new Database())->getConnection());
+        $db ??= (new Database())->getConnection();
+        $this->modelo = new Plataforma($db);
+        $this->db = $db;
     }
+
+    private PDO $db;
 
     public function inicio(): void
     {
@@ -50,8 +56,26 @@ final class PlataformaController
             $id = (int) ($_POST['id_clinica'] ?? 0);
             $mensaje = 'Cambio guardado.';
             switch ($accion) {
+                case 'plataforma_conciliar_ajax':
+                    if (!is_string($_POST['id_transaccion'] ?? null) || !is_string($_POST['motivo'] ?? null)) {
+                        throw new InvalidArgumentException('Completa el ID de transacción Wompi y el motivo.');
+                    }
+                    $configuracion = new ConfiguracionWompi();
+                    $conciliador = $this->conciliador ?? new ConciliadorPago($this->db, new ClienteWompiHttp($configuracion), $configuracion);
+                    $resuelto = $this->modelo->conciliarPago($_POST['id_transaccion'], $_POST['motivo'], $conciliador);
+                    $mensaje = $resuelto ? 'Consulta completada. Revisa el estado del pago y el periodo concedido.' : 'Sin nueva acreditación. El pago puede seguir pendiente o requerir revisión; consulta el historial.';
+                    break;
+                case 'plataforma_incidencia_ajax':
+                    $evento = filter_var($_POST['id_evento'] ?? '', FILTER_VALIDATE_INT);
+                    $clinica = filter_var($_POST['id_clinica'] ?? '', FILTER_VALIDATE_INT);
+                    if ($evento === false || $clinica === false || !is_string($_POST['motivo'] ?? null)) {
+                        throw new InvalidArgumentException('Revisa la incidencia, la clínica y la nota.');
+                    }
+                    $this->modelo->revisarIncidencia($evento, $clinica, $_POST['motivo']);
+                    $mensaje = 'Incidencia marcada como revisada.';
+                    break;
                 case 'plataforma_suscripcion_ajax':
-                    $this->modelo->cambiarSuscripcion($id, (int) ($_POST['id_plan'] ?? 0), (string) ($_POST['estado'] ?? ''), (string) ($_POST['motivo'] ?? ''));
+                    $this->modelo->cambiarSuscripcion($id, (int) ($_POST['id_plan'] ?? 0), (string) ($_POST['estado'] ?? ''), (string) ($_POST['motivo'] ?? ''), (string) ($_POST['fecha_fin'] ?? ''), (string) ($_POST['ciclo'] ?? 'mensual'));
                     break;
                 case 'plataforma_estado_ajax':
                     $this->modelo->cambiarEstado($id, (string) ($_POST['estado'] ?? ''), (string) ($_POST['motivo'] ?? ''));
@@ -88,6 +112,33 @@ final class PlataformaController
             error_log('E1 plataforma: ' . $e->getMessage());
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'No se pudo completar la operación. Inténtalo nuevamente.']);
+        }
+    }
+
+    public function pagos(): void
+    {
+        header('Content-Type: text/html; charset=utf-8');
+        try {
+            if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
+                throw new AccesoDenegado(403, 'La consulta requiere GET.');
+            }
+            $id = filter_var($_GET['id_clinica'] ?? '', FILTER_VALIDATE_INT);
+            $pagina = filter_var($_GET['pagina'] ?? 1, FILTER_VALIDATE_INT);
+            if ($id === false || $pagina === false) {
+                throw new InvalidArgumentException('La clínica o la página no son válidas.');
+            }
+            $finanzas = $this->modelo->finanzas($id, $pagina);
+            require __DIR__ . '/../views/plataforma/pagos.php';
+        } catch (InvalidArgumentException $error) {
+            http_response_code(422);
+            echo htmlspecialchars($error->getMessage(), ENT_QUOTES, 'UTF-8');
+        } catch (AccesoDenegado $error) {
+            http_response_code(403);
+            echo 'Esta consulta requiere plataforma.';
+        } catch (Throwable $error) {
+            http_response_code(500);
+            error_log('S4: no se pudo consultar el panel financiero.');
+            echo 'No se pudo consultar el historial. Inténtalo nuevamente.';
         }
     }
 }

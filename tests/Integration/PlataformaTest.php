@@ -65,7 +65,7 @@ final class PlataformaTest extends TestCase
 
     public function testPlanSuscripcionMotivoYAuditoriaAtomica(): void
     {
-        $this->panel->cambiarSuscripcion(1, 2, 'suspendida', '  Cambio   solicitado ');
+        $this->panel->cambiarSuscripcion(1, 2, 'suspendida', '  Cambio   solicitado ', '2099-12-31');
         $this->assertSame(2, (int) $this->db->query('SELECT id_plan FROM clinicas WHERE id_clinica = 1')->fetchColumn());
         $this->assertSame('suspendida', $this->db->query('SELECT estado FROM suscripciones')->fetchColumn());
         $this->assertSame('Cambio solicitado', $this->db->query("SELECT descripcion FROM auditoria_sistema WHERE tabla_afectada = 'clinicas'")->fetchColumn());
@@ -80,7 +80,7 @@ final class PlataformaTest extends TestCase
         }
         $this->db->exec("CREATE TRIGGER rechazar_auditoria BEFORE INSERT ON auditoria_sistema BEGIN SELECT RAISE(ABORT, 'auditoria no disponible'); END");
         try {
-            $this->panel->cambiarSuscripcion(1, 2, 'cancelada', 'No debe persistir');
+            $this->panel->cambiarSuscripcion(1, 2, 'cancelada', 'No debe persistir', '2099-12-31');
             $this->fail('Sin auditoría debe revertir.');
         } catch (RuntimeException $e) {
             $this->assertSame(1, (int) $this->db->query('SELECT id_plan FROM clinicas WHERE id_clinica = 1')->fetchColumn());

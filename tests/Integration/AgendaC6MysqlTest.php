@@ -200,7 +200,7 @@ final class AgendaC6MysqlTest extends TestCase
         foreach ($archivos as $archivo) {
             $this->sqlArchivo(basename($archivo));
         }
-        $this->assertSame(59,(int)$this->db->query('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()')->fetchColumn());
+        $this->assertSame(65,(int)$this->db->query('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()')->fetchColumn());
         require_once __DIR__.'/../../helpers/Migrador.php';
         $migrador = new Migrador($this->db,__DIR__.'/../../database');
         $migrador->migrar();

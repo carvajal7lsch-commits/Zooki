@@ -97,6 +97,29 @@ class ResumenPanelTest extends TestCase
         $this->assertSame('Diciembre 2026', ResumenPanel::mes('2026-12', [], '2026-10-21', '2026-10-21')['titulo']);
     }
 
+    /** RE-6.2.10: uso del plan con su nivel; sin límite no hay porcentaje. */
+    public function testElUsoDelPlanTieneSuNivel(): void
+    {
+        $uso = ResumenPanel::usoDelPlan([
+            'mascotas' => ['uso' => 38, 'limite' => 50],
+            'citas' => ['uso' => 80, 'limite' => 100],
+            'personal' => ['uso' => 3, 'limite' => 2],
+            'libre' => ['uso' => 120, 'limite' => null],
+        ]);
+        $this->assertSame(['uso' => 38, 'limite' => 50, 'porcentaje' => 76, 'nivel' => 'ok'], $uso['mascotas']);
+        $this->assertSame(['aviso', 80], [$uso['citas']['nivel'], $uso['citas']['porcentaje']]);
+        $this->assertSame(['limite', 100], [$uso['personal']['nivel'], $uso['personal']['porcentaje']], 'Pasado del límite se marca al límite, sin superar 100 %');
+        $this->assertSame([null, 'libre'], [$uso['libre']['porcentaje'], $uso['libre']['nivel']]);
+    }
+
+    /** Las barras usan clases de 5 en 5; las iniciales y el porcentaje del Inicio del administrador. */
+    public function testEscalaInicialesYPorcentaje(): void
+    {
+        $this->assertSame([0, 0, 40, 45, 100, 100], array_map([ResumenPanel::class, 'escala5'], [null, 2, 42, 43, 100, 130]));
+        $this->assertSame(['BN', 'Á', 'ER'], [ResumenPanel::iniciales('Beto Norte'), ResumenPanel::iniciales(' ángela '), ResumenPanel::iniciales('Elena Ríos Mora')]);
+        $this->assertSame([0, 33, 8], [ResumenPanel::porcentaje(1, 0), ResumenPanel::porcentaje(1, 3), ResumenPanel::porcentaje(1, 13)]);
+    }
+
     /** RE-6.1.5, RE-6.1.9 y RE-6.1.11: duraciones, cuenta regresiva, edad y cuándo fue la consulta. */
     public function testLosTextosDelInicio(): void
     {

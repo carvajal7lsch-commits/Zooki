@@ -1,4 +1,6 @@
-# Modelo Entidad-Relación (MER) - Zooki v2.0
+# Modelo Entidad-Relación (MER) - Zooki v2.1
+
+> **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
 > **Carnet B — 2026-10-23:** 59 tablas. `carnet_accesos` cuenta también tokens inválidos sin guardar mascota ni token; `carnet_escaneos` conserva solo vistas válidas y ubicaciones consentidas. La IP se seudonimiza con HMAC-SHA256 y un secreto del entorno.
 
@@ -22,6 +24,124 @@ Escrito en Mermaid; se versiona junto al código y se renderiza a cualquier nive
 
 ```mermaid
 erDiagram
+    fuentes_pago {
+        bigint id_fuente PK
+        int id_clinica
+        enum entorno
+        varchar id_fuente_wompi
+        enum tipo
+        varchar marca
+        char ultimos_cuatro
+        enum estado
+        int creada_por
+        datetime creada_en
+        datetime retirada_en
+        datetime consentida_en
+        varchar version_contratos
+        json contratos_json
+        varchar version_autorizacion
+        bigint importe_mensual_autorizado_centavos
+    }
+    pagos_suscripcion {
+        bigint id_pago PK
+        int id_clinica
+        int id_suscripcion
+        int id_plan
+        char clave_obligacion
+        int version_periodo_base
+        enum ciclo
+        char moneda
+        bigint subtotal_centavos
+        bigint impuesto_centavos
+        bigint total_centavos
+        varchar tarifa_version
+        char clave_operacion
+        datetime cotizacion_hasta
+        enum estado
+        datetime proximo_intento
+        int id_usuario_solicitante
+        datetime creado_en
+        datetime confirmado_en
+    }
+    intentos_pago {
+        bigint id_intento PK
+        bigint id_pago
+        int numero
+        enum entorno
+        varchar referencia
+        varchar id_transaccion_wompi
+        bigint id_fuente
+        enum origen
+        enum estado
+        varchar codigo_error
+        datetime creado_en
+        datetime enviado_en
+        datetime consultado_en
+        char lease_token
+        datetime lease_hasta
+    }
+    wompi_eventos {
+        bigint id_evento PK
+        char clave_evento
+        varchar id_evento_proveedor
+        enum entorno
+        varchar tipo
+        varchar id_transaccion_wompi
+        bigint timestamp_proveedor
+        char checksum
+        char huella_datos_firmados
+        json datos_minimos
+        bigint id_intento
+        enum estado
+        datetime recibido_en
+        datetime procesado_en
+        int revisado_por FK
+        datetime revisado_en
+        text nota_revision
+        char lease_token
+        datetime lease_hasta
+        int intentos_proceso
+        datetime proxima_revision
+        varchar codigo_error
+    }
+    suscripcion_periodos {
+        bigint id_periodo PK
+        int id_clinica
+        int id_suscripcion
+        int id_plan
+        bigint id_pago
+        enum origen
+        enum ciclo
+        datetime inicio
+        datetime fin
+        int dia_ancla
+        int mes_ancla
+        time hora_ancla
+        bigint total_centavos
+        char moneda
+        datetime creado_en
+        int id_usuario_actor
+        text motivo
+    }
+    avisos_suscripcion {
+        bigint id_aviso PK
+        int id_clinica
+        int id_suscripcion
+        bigint id_pago
+        bigint id_intento
+        int id_usuario_destinatario
+        enum tipo
+        varchar medio_pago
+        char clave_aviso
+        datetime vencimiento_objetivo
+        datetime programado_en
+        enum estado
+        int id_notificacion
+        char lease_token
+        datetime lease_hasta
+        int intentos
+        datetime enviado_en
+    }
     planes {
         int id_plan PK
         varchar nombre
@@ -44,6 +164,9 @@ erDiagram
         int plazo_reasignacion_min
         int umbral_aviso_min
         int tope_sobrecupos
+        int suscripcion_gracia_dias
+        int aviso_vencimiento_1_dias
+        int aviso_vencimiento_2_dias
     }
     suscripciones {
         int id_suscripcion PK
@@ -54,6 +177,18 @@ erDiagram
         tinyint al_dia
         date fecha_inicio
         date fecha_fin
+        enum gestion_cobro
+        datetime periodo_inicio
+        datetime periodo_fin
+        enum estado_cobro
+        int version_periodo
+        int cobro_automatico
+        int id_fuente_activa
+        int autorizado_por
+        datetime autorizado_en
+        datetime retirado_en
+        varchar motivo_automatico_apagado
+        enum cambio_ciclo_siguiente
     }
     plantillas_comunicacion {
         int id_plantilla PK
@@ -713,6 +848,29 @@ erDiagram
     clinicas ||--o{ reasignaciones : "id_clinica"
     citas ||--o{ reasignaciones : "id_cita,id_clinica"
     usuarios |o--o{ ingresos_emergencia : "id_conciliador"
+    clinicas ||--o{ fuentes_pago : "id_clinica"
+    usuarios ||--o{ fuentes_pago : "creada_por"
+    clinicas ||--o{ pagos_suscripcion : "id_clinica"
+    usuarios ||--o{ wompi_eventos : "revisado_por"
+    suscripciones ||--o{ pagos_suscripcion : "id_suscripcion"
+    planes ||--o{ pagos_suscripcion : "id_plan"
+    usuarios o|--o{ pagos_suscripcion : "id_usuario_solicitante"
+    pagos_suscripcion ||--o{ intentos_pago : "id_pago"
+    fuentes_pago o|--o{ intentos_pago : "id_fuente"
+    intentos_pago o|--o{ wompi_eventos : "id_intento"
+    clinicas ||--o{ suscripcion_periodos : "id_clinica"
+    suscripciones ||--o{ suscripcion_periodos : "id_suscripcion"
+    planes ||--o{ suscripcion_periodos : "id_plan"
+    pagos_suscripcion o|--o{ suscripcion_periodos : "id_pago"
+    usuarios o|--o{ suscripcion_periodos : "id_usuario_actor"
+    clinicas ||--o{ avisos_suscripcion : "id_clinica"
+    suscripciones ||--o{ avisos_suscripcion : "id_suscripcion"
+    pagos_suscripcion o|--o{ avisos_suscripcion : "id_pago"
+    intentos_pago o|--o{ avisos_suscripcion : "id_intento"
+    usuarios ||--o{ avisos_suscripcion : "id_usuario_destinatario"
+    notificaciones o|--o{ avisos_suscripcion : "id_notificacion"
+    fuentes_pago o|--o{ suscripciones : "fuente_activa"
+    usuarios o|--o{ suscripciones : "autoriza"
 ```
 
 ---
@@ -1113,3 +1271,193 @@ Futuras activas con datos faltantes quedan pendiente_revision; política tempora
 La columna origen se agrega al cerrar el relleno: su presencia distingue una pasada ya rellenada para no retocar registros/personalizaciones posteriores; un corte anterior se reanuda con predicados de NULL/estado.
 No se declara rollback global de DDL: se inspecciona definición antes de cada paso, y conflictos producen M4-08 con objeto/ID; no hay borrado o elección de duplicado.
 No se recalculan ni consolidan datos clínicos durante 08; los contratos funcionales B1.1 siguen pendientes de C.
+
+
+## Suscripción y cobro — M0-S S1 (65 tablas)
+
+La suscripción expresa contrato y acceso efectivo. Una orden representa una obligación con varios intentos y concede un solo periodo inmutable. S2 utiliza pagos/eventos y S3 fuentes/consentimientos, sin modificar la migración 12 publicada. No se guarda PAN, CVC ni token del medio; solo id externo, tipo, marca/últimos cuatro y metadatos de vínculo/consentimiento. Outbox por clínica, vencimiento, tipo y destinatario. Dinero BIGINT en centavos COP, impuesto cero; fechas America/Bogota con inicio incluido y fin excluido. Claves/referencias externas ASCII con comparación binaria; FKs RESTRICT. El trabajador y plataforma son excepciones expresas para metadatos RN-G13/019; sin datos clínicos.
+
+**Atributos nuevos existentes:**
+
+- clinicas: `suscripcion_gracia_dias` INT NOT NULL DEFAULT 3, `aviso_vencimiento_1_dias` INT NOT NULL DEFAULT 7, `aviso_vencimiento_2_dias` INT NOT NULL DEFAULT 1.
+- suscripciones: `gestion_cobro` ENUM('legado','gestionada') NOT NULL DEFAULT 'legado', `periodo_inicio` DATETIME DEFAULT NULL, `periodo_fin` DATETIME DEFAULT NULL, `estado_cobro` ENUM('sin_vigencia','al_dia','gracia','congelada') NOT NULL DEFAULT 'sin_vigencia', `version_periodo` INT NOT NULL DEFAULT 0, `cobro_automatico` TINYINT NOT NULL DEFAULT 0, `id_fuente_activa` BIGINT DEFAULT NULL, `autorizado_por` INT DEFAULT NULL, `autorizado_en` DATETIME DEFAULT NULL, `retirado_en` DATETIME DEFAULT NULL, `cambio_ciclo_siguiente` ENUM('mensual','anual') DEFAULT NULL.
+
+Hora 07:00, reintentos +24/+48 h (tres totales), cotización 15 minutos: constantes de PoliticaSuscripcion, RN-014/016/017. El legado sin fecha conserva condiciones, no inventa pago ni vencimiento. Al final se enlazan suscripciones.id_fuente_activa con fuentes_pago.id_fuente y autorizado_por con usuarios.id_usuario.
+
+**S4, migración 13 (RE-0.3.7/RE-0.5.24/26):** `suscripciones.motivo_automatico_apagado` VARCHAR(40) NULL identifica `precio`, `condiciones` o `precio_y_condiciones`.
+`wompi_eventos.revisado_por` INT NULL referencia `usuarios.id_usuario` con RESTRICT, `revisado_en` DATETIME NULL y `nota_revision` TEXT NULL conservan la revisión financiera auditada.
+No cambia la clasificación original del evento, sus importes ni periodos; no se guarda contenido clínico.
+
+```sql
+CREATE TABLE IF NOT EXISTS fuentes_pago (
+ id_fuente BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_clinica INT NOT NULL,
+ entorno ENUM('test','prod') NOT NULL,
+ id_fuente_wompi VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ tipo ENUM('CARD','NEQUI') NOT NULL,
+ marca VARCHAR(30) DEFAULT NULL,
+ ultimos_cuatro CHAR(4) DEFAULT NULL,
+ estado ENUM('pendiente','disponible','retirada','error') NOT NULL DEFAULT 'pendiente',
+ creada_por INT NOT NULL,
+ creada_en DATETIME NOT NULL,
+ retirada_en DATETIME DEFAULT NULL,
+ consentida_en DATETIME DEFAULT NULL,
+ version_contratos VARCHAR(128) DEFAULT NULL,
+ contratos_json JSON DEFAULT NULL,
+ version_autorizacion VARCHAR(128) DEFAULT NULL,
+ importe_mensual_autorizado_centavos BIGINT DEFAULT NULL,
+ UNIQUE KEY uq_fuente_externa (entorno,id_fuente_wompi),
+ KEY idx_fuente_clinica (id_clinica,estado),
+ CONSTRAINT fk_fuente_clinica FOREIGN KEY (id_clinica) REFERENCES clinicas (id_clinica),
+ CONSTRAINT fk_fuente_actor FOREIGN KEY (creada_por) REFERENCES usuarios (id_usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS pagos_suscripcion (
+ id_pago BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_clinica INT NOT NULL,
+ id_suscripcion INT NOT NULL,
+ id_plan INT NOT NULL,
+ clave_obligacion CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ version_periodo_base INT NOT NULL,
+ ciclo ENUM('mensual','anual') NOT NULL,
+ moneda CHAR(3) NOT NULL DEFAULT 'COP',
+ subtotal_centavos BIGINT NOT NULL,
+ impuesto_centavos BIGINT NOT NULL DEFAULT 0,
+ total_centavos BIGINT NOT NULL,
+ tarifa_version VARCHAR(50) NOT NULL,
+ clave_operacion CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ cotizacion_hasta DATETIME NOT NULL,
+ estado ENUM('pendiente','confirmado','cancelado','revision') NOT NULL DEFAULT 'pendiente',
+ proximo_intento DATETIME DEFAULT NULL,
+ id_usuario_solicitante INT DEFAULT NULL,
+ creado_en DATETIME NOT NULL,
+ confirmado_en DATETIME DEFAULT NULL,
+ UNIQUE KEY uq_pago_obligacion (clave_obligacion),
+ UNIQUE KEY uq_pago_operacion (id_clinica,clave_operacion),
+ KEY idx_pago_clinica (id_clinica,creado_en),
+ KEY idx_pago_proximo (estado,proximo_intento),
+ CONSTRAINT fk_pago_clinica FOREIGN KEY (id_clinica) REFERENCES clinicas (id_clinica),
+ CONSTRAINT fk_pago_suscripcion FOREIGN KEY (id_suscripcion) REFERENCES suscripciones (id_suscripcion),
+ CONSTRAINT fk_pago_plan FOREIGN KEY (id_plan) REFERENCES planes (id_plan),
+ CONSTRAINT fk_pago_actor FOREIGN KEY (id_usuario_solicitante) REFERENCES usuarios (id_usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS intentos_pago (
+ id_intento BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_pago BIGINT NOT NULL,
+ numero INT NOT NULL,
+ entorno ENUM('test','prod') NOT NULL,
+ referencia VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ id_transaccion_wompi VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ id_fuente BIGINT DEFAULT NULL,
+ origen ENUM('boton','automatico') NOT NULL,
+ estado ENUM('creado','enviando','pendiente','aprobado','declinado','error','anulado','incierto') NOT NULL DEFAULT 'creado',
+ codigo_error VARCHAR(80) DEFAULT NULL,
+ creado_en DATETIME NOT NULL,
+ enviado_en DATETIME DEFAULT NULL,
+ consultado_en DATETIME DEFAULT NULL,
+ lease_token CHAR(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ lease_hasta DATETIME DEFAULT NULL,
+ UNIQUE KEY uq_intento_numero (id_pago,numero),
+ UNIQUE KEY uq_intento_referencia (entorno,referencia),
+ UNIQUE KEY uq_intento_transaccion (entorno,id_transaccion_wompi),
+ KEY idx_intento_estado (estado,lease_hasta),
+ CONSTRAINT fk_intento_pago FOREIGN KEY (id_pago) REFERENCES pagos_suscripcion (id_pago),
+ CONSTRAINT fk_intento_fuente FOREIGN KEY (id_fuente) REFERENCES fuentes_pago (id_fuente)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS wompi_eventos (
+ id_evento BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ clave_evento CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ id_evento_proveedor VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ entorno ENUM('test','prod') NOT NULL,
+ tipo VARCHAR(80) NOT NULL,
+ id_transaccion_wompi VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ timestamp_proveedor BIGINT NOT NULL,
+ checksum CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ huella_datos_firmados CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ datos_minimos JSON DEFAULT NULL,
+ id_intento BIGINT DEFAULT NULL,
+ estado ENUM('pendiente','procesando','procesado','ignorado','error','revision') NOT NULL DEFAULT 'pendiente',
+ recibido_en DATETIME NOT NULL,
+ procesado_en DATETIME DEFAULT NULL,
+ revisado_por INT DEFAULT NULL,
+ revisado_en DATETIME DEFAULT NULL,
+ nota_revision TEXT DEFAULT NULL,
+ lease_token CHAR(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ lease_hasta DATETIME DEFAULT NULL,
+ intentos_proceso INT NOT NULL DEFAULT 0,
+ proxima_revision DATETIME DEFAULT NULL,
+ codigo_error VARCHAR(80) DEFAULT NULL,
+ UNIQUE KEY uq_wompi_evento (entorno,clave_evento),
+ KEY idx_wompi_transaccion (entorno,id_transaccion_wompi),
+ KEY idx_wompi_revision (estado,proxima_revision),
+ CONSTRAINT fk_evento_revisor FOREIGN KEY (revisado_por) REFERENCES usuarios (id_usuario),
+ CONSTRAINT fk_evento_intento FOREIGN KEY (id_intento) REFERENCES intentos_pago (id_intento)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS suscripcion_periodos (
+ id_periodo BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_clinica INT NOT NULL,
+ id_suscripcion INT NOT NULL,
+ id_plan INT NOT NULL,
+ id_pago BIGINT DEFAULT NULL,
+ origen ENUM('wompi','administrativo','legado') NOT NULL,
+ ciclo ENUM('mensual','anual') NOT NULL,
+ inicio DATETIME NOT NULL,
+ fin DATETIME NOT NULL,
+ dia_ancla INT NOT NULL,
+ mes_ancla INT NOT NULL,
+ hora_ancla TIME NOT NULL,
+ total_centavos BIGINT DEFAULT NULL,
+ moneda CHAR(3) NOT NULL DEFAULT 'COP',
+ creado_en DATETIME NOT NULL,
+ id_usuario_actor INT DEFAULT NULL,
+ motivo TEXT DEFAULT NULL,
+ UNIQUE KEY uq_periodo_pago (id_pago),
+ KEY idx_periodo_suscripcion (id_suscripcion,inicio,fin),
+ KEY idx_periodo_clinica (id_clinica,fin),
+ CONSTRAINT fk_periodo_clinica FOREIGN KEY (id_clinica) REFERENCES clinicas (id_clinica),
+ CONSTRAINT fk_periodo_suscripcion FOREIGN KEY (id_suscripcion) REFERENCES suscripciones (id_suscripcion),
+ CONSTRAINT fk_periodo_plan FOREIGN KEY (id_plan) REFERENCES planes (id_plan),
+ CONSTRAINT fk_periodo_pago FOREIGN KEY (id_pago) REFERENCES pagos_suscripcion (id_pago),
+ CONSTRAINT fk_periodo_actor FOREIGN KEY (id_usuario_actor) REFERENCES usuarios (id_usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS avisos_suscripcion (
+ id_aviso BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ id_clinica INT NOT NULL,
+ id_suscripcion INT NOT NULL,
+ id_pago BIGINT DEFAULT NULL,
+ id_intento BIGINT DEFAULT NULL,
+ id_usuario_destinatario INT NOT NULL,
+ tipo ENUM('vence_7','vence_1','congelada','cobro_fallido','pago_confirmado') NOT NULL,
+ medio_pago VARCHAR(32) DEFAULT NULL,
+ clave_aviso CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ vencimiento_objetivo DATETIME NOT NULL,
+ programado_en DATETIME NOT NULL,
+ estado ENUM('pendiente','reclamado','enviado','error','incierto','obsoleto') NOT NULL DEFAULT 'pendiente',
+ id_notificacion INT DEFAULT NULL,
+ lease_token CHAR(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+ lease_hasta DATETIME DEFAULT NULL,
+ intentos INT NOT NULL DEFAULT 0,
+ enviado_en DATETIME DEFAULT NULL,
+ UNIQUE KEY uq_aviso_suscripcion (clave_aviso),
+ KEY idx_aviso_programado (estado,programado_en),
+ KEY idx_aviso_clinica (id_clinica,programado_en),
+ CONSTRAINT fk_aviso_clinica FOREIGN KEY (id_clinica) REFERENCES clinicas (id_clinica),
+ CONSTRAINT fk_aviso_suscripcion FOREIGN KEY (id_suscripcion) REFERENCES suscripciones (id_suscripcion),
+ CONSTRAINT fk_aviso_pago FOREIGN KEY (id_pago) REFERENCES pagos_suscripcion (id_pago),
+ CONSTRAINT fk_aviso_intento FOREIGN KEY (id_intento) REFERENCES intentos_pago (id_intento),
+ CONSTRAINT fk_aviso_usuario FOREIGN KEY (id_usuario_destinatario) REFERENCES usuarios (id_usuario),
+ CONSTRAINT fk_aviso_notificacion FOREIGN KEY (id_notificacion) REFERENCES notificaciones (id_notificacion)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+ALTER TABLE suscripciones ADD CONSTRAINT fk_suscripcion_fuente FOREIGN KEY (id_fuente_activa) REFERENCES fuentes_pago (id_fuente);
+ALTER TABLE suscripciones ADD CONSTRAINT fk_suscripcion_autor FOREIGN KEY (autorizado_por) REFERENCES usuarios (id_usuario);
+```
+
+**S4 — correo confirmado (migración 14):** `avisos_suscripcion.tipo` admite `pago_confirmado` y `medio_pago VARCHAR(32) NULL` conserva exclusivamente la etiqueta saneada del medio; el fin objetivo es el concedido por ese pago. La clave única por pago/destinatario evita duplicar correos. `wompi_eventos.tipo=transaction.consultada` identifica evidencia interna de GET autenticado, sin confundirla con una firma del proveedor.
+
+**Excepción de instalación aprobada por el dueño (2026-10-25):** `01_schema.sql` conserva el ENUM original de avisos para pasar la validación exacta de la migración 12 publicada. La 14 lo amplía a `pago_confirmado` antes de servir la aplicación; este MER y drawDB representan ese destino final.
+
+El dueño autorizó además (2026-10-25) que únicamente esa validación de la migración 12 acepte el dominio original o el ampliado; así admite la segunda pasada del migrador tras la inicialización SQL de Docker. No cambia datos ni ninguna otra lógica de la migración publicada.

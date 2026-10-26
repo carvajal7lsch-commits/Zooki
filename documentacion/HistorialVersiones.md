@@ -1,12 +1,26 @@
 # Historial de Versiones — Proyecto Zooki
 
-> Registro de versiones (v1.0.0 → v2.0.0-alpha.5; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
+> Registro de versiones (v1.0.0 → v2.1.0; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
 
 ## Historial de Versiones
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 2.0.0 (Actual)
+### Versión 2.1.0 (Actual)
+
+Entrega preparada el 25 de octubre de 2026; el dueño revisa, integra y despliega.
+No cierra las otras historias pendientes de v2.1.
+
+* **Inicio del administrador (HU-6.2):** resumen operativo y Uso del plan enlazado a Suscripción, conservando el diseño integrado.
+* **Suscripción y pagos (HU-0.5):** profesional por 89.990 COP/mes o 899.900 COP/año, total sin IVA; calendario con ancla, tres días de gracia y congelación sin pérdida de datos ni bloqueo de urgencias rojas.
+* **Wompi:** botón con firma del servidor; inbox de eventos verificados y consulta privada antes de acreditar una sola vez; recuperación por ID del retorno o consulta manual auditada sin evento, obligación compartida entre pestañas y automático. Fuentes hospedadas, autorización mensual separada, tres intentos terminales dentro de gracia y avisos sin duplicación; resultado incierto nunca repite un cargo.
+* **Correo confirmado (RN-017):** «Recibimos tu pago» por cada periodo acreditado, con valor, ciclo, medio mínimo, referencia y último día incluido; outbox única por pago/destinatario y SMTP después del commit.
+* **Plataforma:** pagos, periodos e incidencias por clínica; revisión con nota auditada, referencias desconocidas sin asignar y motivo del apagado automático. Concesiones manuales y legado separados de pagos, sin cobros ni devoluciones desde plataforma.
+* **Despliegue:** migraciones 12, 13 y 14 aditivas/repetibles, configuración WOMPI_*, un Schedule de suscripciones cada cinco minutos y URL de eventos separada por entorno. Activar cobros solo después de D8/D10 y de las comprobaciones de sandbox; apagar nuevos cargos conserva recepción y conciliación.
+
+Las suites usan cliente Wompi falso, también para sandbox; la validación comercial y de aceptación con el proveedor real es una comprobación operativa pendiente.
+
+### Versión 2.0.0
 
 Primera entrega estable de la plataforma SaaS v2, preparada el 23 de octubre de 2026. Producción se actualiza cuando el dueño integre y despliegue esta entrega.
 
