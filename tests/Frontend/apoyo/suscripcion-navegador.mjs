@@ -60,19 +60,28 @@ const cargar = async (escenario, ancho, alto, desde = '') => {
 const medir = () => nav.evaluar(`({ cabe: document.documentElement.scrollWidth <= innerWidth, alto: document.documentElement.scrollHeight, volver: document.querySelector('.encabezado-pagina__volver')?.textContent.trim() })`);
 const informe = [];
 try {
+    // v2: cada pestaña cabe sin scroll en 1366×768.
+    const sinScroll = () => nav.evaluar('document.documentElement.scrollHeight <= innerHeight + 1');
     for (const [ancho, alto] of [[1440, 900], [1366, 768]]) {
         for (const escenario of ['historial', 'automatico', 'gracia', 'congelada']) {
             await cargar(escenario, ancho, alto);
             const m = await medir();
             assert.ok(m.cabe, 'Sin desborde ' + escenario + ' ' + ancho);
+            if (escenario !== 'gracia') assert.ok(await sinScroll(), 'Mi plan sin scroll ' + escenario + ' ' + ancho + 'x' + alto);
             informe.push({ escenario, ancho, ...m });
             await capturar(ancho + '-' + escenario);
         }
+        await cargar('historial', ancho, alto);
+        await nav.evaluar("document.querySelector('[data-suscripcion-pestana=historial]').click(); true");
+        assert.ok(await sinScroll(), 'Historial sin scroll ' + ancho);
+        await capturar(ancho + '-pestana-historial');
+        await nav.evaluar("document.querySelector('[data-suscripcion-pestana=plan]').click(); document.querySelector('.suscripcion__abrir-renovar').click(); true");
+        await capturar(ancho + '-ventana-pagar');
     }
     await cargar('historial', 1440, 900, 'configuracion');
     assert.equal((await medir()).volver, 'Configuración');
     await capturar('1440-desde-configuracion');
-    await nav.evaluar("document.querySelector('[data-fuente-preparar]').disabled = false; document.querySelector('[data-fuente-preparar]').click(); document.querySelector('[data-fuente-condiciones]').hidden = false; true");
+    await nav.evaluar("document.querySelector('.suscripcion__accion--medio').click(); document.querySelector('[data-fuente-condiciones]').hidden = false; true");
     await capturar('1440-ventana-medio');
     for (const ancho of [390, 360]) {
         await cargar('historial', ancho, 844);
@@ -80,14 +89,14 @@ try {
         assert.ok(m.cabe, 'Sin desborde celular ' + ancho);
         informe.push({ escenario: 'historial', ancho, ...m });
         await capturar(ancho + '-mi-plan');
-        await nav.evaluar("document.querySelector('[data-suscripcion-abrir]').click(); true");
+        await nav.evaluar("document.querySelector('.suscripcion__abrir-renovar').click(); true");
         await capturar(ancho + '-hoja-pagar');
-        await nav.evaluar("document.querySelector('.suscripcion__cerrar').click(); document.querySelector('[data-suscripcion-pestana=historial]').click(); true");
+        await nav.evaluar("document.querySelector('#suscripcionRenovarDialogo [data-cerrar-dialogo]').click(); document.querySelector('[data-suscripcion-pestana=historial]').click(); true");
         await capturar(ancho + '-historial');
     }
     await cargar('automatico', 390, 844);
     await capturar('390-mi-plan-con-medio');
-    await nav.evaluar("document.querySelector('[data-fuente-preparar]').click(); document.querySelector('[data-fuente-condiciones]').hidden = false; true");
+    await nav.evaluar("document.querySelector('.suscripcion__accion--medio').click(); document.querySelector('[data-fuente-condiciones]').hidden = false; true");
     await capturar('390-ventana-medio');
     assert.deepEqual(nav.errores, []);
     writeFileSync(join(carpeta, 'medidas.json'), JSON.stringify(informe, null, 2));

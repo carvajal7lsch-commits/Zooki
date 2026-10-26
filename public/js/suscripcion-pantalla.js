@@ -1,18 +1,17 @@
 /*
- * Rediseño de Suscripción (2026-10-26): solo presentación. En el celular, pestañas
- * «Mi plan»/«Historial» y «Pagar o renovar» como hoja inferior; el total sigue al ciclo
- * elegido. La lógica de pago sigue en suscripcion.js y fuente-suscripcion.js.
+ * Rediseño v2 de Suscripción (2026-10-26): solo presentación. Pestañas «Mi plan» e
+ * «Historial de pagos» (con #historial para volver a ella al paginar) y el total que sigue
+ * al ciclo elegido. Las ventanas las abre dialogos-zooki.js; la lógica de pago sigue en
+ * suscripcion.js y fuente-suscripcion.js.
  */
 (() => {
     'use strict';
-    function iniciar(raiz) {
+    function iniciar(raiz, entorno = globalThis) {
         if (!raiz) return;
         const pestanas = Array.from(raiz.querySelectorAll('[data-suscripcion-pestana]'));
-        const hoja = raiz.querySelector('[data-suscripcion-hoja="renovar"]');
-        const abrir = raiz.querySelector('[data-suscripcion-abrir="renovar"]');
-        let anteriorFoco = null;
 
         function activar(clave, enfocar) {
+            if (!pestanas.some(pestana => pestana.dataset.suscripcionPestana === clave)) clave = 'plan';
             raiz.dataset.pestana = clave;
             for (const pestana of pestanas) {
                 const activa = pestana.dataset.suscripcionPestana === clave;
@@ -20,18 +19,11 @@
                 pestana.tabIndex = activa ? 0 : -1;
                 if (activa && enfocar) pestana.focus();
             }
-        }
-
-        function abrirHoja() {
-            anteriorFoco = document.activeElement;
-            raiz.classList.add('is-renovar-abierta');
-            raiz.querySelector('[data-suscripcion-cerrar]:not(.suscripcion__velo)')?.focus();
-        }
-
-        function cerrarHoja() {
-            if (!raiz.classList.contains('is-renovar-abierta')) return;
-            raiz.classList.remove('is-renovar-abierta');
-            anteriorFoco?.focus?.();
+            try {
+                entorno.history?.replaceState(null, '', clave === 'plan' ? entorno.location.pathname + entorno.location.search : '#' + clave);
+            } catch (_) {
+                // Sin historial (vista embebida): la pestaña igual cambia.
+            }
         }
 
         function actualizarTotal() {
@@ -52,12 +44,7 @@
                 activar(pestanas[(indice + paso + pestanas.length) % pestanas.length].dataset.suscripcionPestana, true);
             });
         });
-        if (pestanas.length) activar('plan', false);
-        abrir?.addEventListener('click', abrirHoja);
-        for (const cerrar of raiz.querySelectorAll('[data-suscripcion-cerrar]')) cerrar.addEventListener('click', cerrarHoja);
-        raiz.addEventListener('keydown', evento => {
-            if (evento.key === 'Escape') cerrarHoja();
-        });
+        if (pestanas.length) activar((entorno.location?.hash || '').slice(1), false);
         for (const ciclo of raiz.querySelectorAll('input[name="suscripcion_ciclo"]')) ciclo.addEventListener('change', actualizarTotal);
         actualizarTotal();
 
@@ -69,7 +56,7 @@
             dialogo.close();
             dialogo.show();
         });
-        return { activar, abrirHoja, cerrarHoja, actualizarTotal };
+        return { activar, actualizarTotal };
     }
     if (typeof module !== 'undefined') module.exports = { iniciar };
     if (typeof document !== 'undefined') iniciar(document.querySelector('[data-suscripcion-pantalla]'));

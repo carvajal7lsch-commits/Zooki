@@ -8,7 +8,7 @@
 
 ### Etapa C — Suscripción rediseñada: entregada, pendiente de revisión (2026-10-26)
 
-- **Escribió Claude Code (nube) con el dueño aprobando mockups**; rama `claude/suscripcion-rediseno`. Suscripción en una hoja, ventana de tres pasos para el medio, celular con pestañas y hojas inferiores, entrada desde Configuración con volver según el origen, barra del celular con nombres y «Más», y pago de Wompi a pantalla completa. Skill nueva `.claude/skills/zooki-interfaz` con los criterios de diseño del dueño.
+- **Escribió Claude Code (nube) con el dueño aprobando mockups**; rama `claude/suscripcion-rediseno`. Suscripción v2 con pestañas «Mi plan» e «Historial de pagos» en todos los anchos (sin scroll en 1366×768), pagar y medio de pago en ventanas (hojas en el celular), entrada desde Configuración con volver según el origen, barra del celular con nombres y «Más», y pago de Wompi a pantalla completa. Skill nueva `.claude/skills/zooki-interfaz` con los criterios de diseño del dueño.
 - **Verificación:** PHP sin host 1165/9352 (91 omitidas); JS 358/358; capturas en `specs/referencias/rediseno-suscripcion/`. Detalle y prueba manual (5 puntos) en `specs/pulido-interfaz.md` («Etapa C — Suscripción…»).
 - **Pendiente:** revisión, CI/MySQL 8, prueba del dueño (sandbox de Wompi) y regenerar descargas del portal. Sigue la etapa C con la siguiente pantalla que elija el dueño.
 

@@ -1,10 +1,14 @@
 /*
- * Suscripción del administrador (HU-0.5). Rediseño aprobado por el dueño (2026-10-26):
- * una sola hoja con cuatro secciones; en el celular, pestañas «Mi plan» e «Historial»
- * y «Pagar o renovar» como hoja inferior. Solo variables --z-* de identidad.css.
+ * Suscripción del administrador (HU-0.5). Rediseño v2 aprobado por el dueño (2026-10-26):
+ * pestañas «Mi plan» e «Historial de pagos» en todos los anchos, una sola tarjeta por vista
+ * y las acciones (pagar o renovar, medio de pago) en ventanas zk-dialogo, que en el celular
+ * son hojas inferiores. Cada vista cabe sin scroll en 1366×768. Solo variables --z-*.
  * RNF-16: celular < 768 px, tableta 768–1023 px, escritorio ≥ 1024 px.
  */
 .suscripcion {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
     color: var(--z-text);
     font-family: 'Inter', system-ui, sans-serif;
 }
@@ -13,12 +17,7 @@
     display: none !important;
 }
 
-.suscripcion h2 {
-    margin: 0;
-    font-size: 17px;
-    font-weight: 700;
-}
-
+.suscripcion h2,
 .suscripcion p {
     margin: 0;
 }
@@ -52,8 +51,78 @@
     line-height: 1.5;
 }
 
-.suscripcion > .suscripcion__aviso {
-    margin-bottom: 16px;
+/* ── Pestañas: conmutador en escritorio, pasos del registro en el celular ── */
+.suscripcion-pestanas {
+    display: inline-flex;
+    align-self: flex-start;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-sm);
+}
+
+.suscripcion-pestanas__pestana {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--z-text-secondary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.suscripcion-pestanas__icono {
+    display: none;
+}
+
+.suscripcion-pestanas__conteo {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--z-bg-light);
+    color: var(--z-text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.suscripcion-pestanas__pestana[aria-selected="true"] {
+    background: var(--z-primary);
+    color: var(--z-surface);
+}
+
+.suscripcion-pestanas__pestana[aria-selected="true"] .suscripcion-pestanas__conteo {
+    background: var(--z-surface);
+    color: var(--z-primary-dark);
+}
+
+/* Sin JavaScript (sin data-pestana) se ven las dos vistas, una debajo de otra. */
+.suscripcion[data-pestana="plan"] [data-suscripcion-panel="historial"],
+.suscripcion[data-pestana="historial"] [data-suscripcion-panel="plan"] {
+    display: none;
+}
+
+.suscripcion__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.suscripcion__tarjeta {
+    overflow: hidden;
+    border-radius: 22px;
+    background: var(--z-surface);
+    box-shadow: var(--z-shadow-sm);
+}
+
+.suscripcion__pie {
+    padding: 0 4px;
+    font-size: 12px;
 }
 
 /* ── Chips de estado: azul al día, ámbar pendiente, rojo congelado, gris neutro ── */
@@ -75,6 +144,7 @@
 
 .suscripcion-chip--ok::before {
     content: '';
+    flex: none;
     width: 7px;
     height: 7px;
     border-radius: 50%;
@@ -96,53 +166,31 @@
     color: var(--z-text-secondary);
 }
 
-/* ── La hoja: dos columnas que se alinean arriba y abajo ── */
-.suscripcion__hoja {
-    display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-    overflow: hidden;
-    border-radius: 22px;
-    background: var(--z-surface);
-    box-shadow: var(--z-shadow-sm);
-}
-
-.suscripcion__seccion {
+/* ── Mi plan ── */
+.suscripcion__plan {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    min-width: 0;
-    padding: 24px;
+    gap: 20px;
+    padding: 26px 28px;
 }
 
-.suscripcion__renovar,
-.suscripcion__fuente {
-    border-left: 1px solid var(--z-border);
-    background: var(--z-bg-suave);
-}
-
-.suscripcion__historial,
-.suscripcion__fuente {
-    border-top: 1px solid var(--z-border);
-}
-
-/* ── Tu plan ── */
 .suscripcion__plan-cabecera {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px 14px;
+    gap: 10px 16px;
 }
 
 .suscripcion__plan-icono {
     display: grid;
     place-items: center;
     flex: none;
-    width: 52px;
-    height: 52px;
+    width: 56px;
+    height: 56px;
     border-radius: 16px;
     background: var(--z-primary);
     color: var(--z-surface);
-    font-size: 20px;
+    font-size: 21px;
 }
 
 .suscripcion__plan-nombre {
@@ -160,7 +208,7 @@
 
 .suscripcion__plan-nombre h2 {
     margin-top: 2px;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 800;
     letter-spacing: -0.01em;
 }
@@ -176,7 +224,7 @@
 
 .suscripcion__franja > div {
     min-width: 0;
-    padding: 14px 18px;
+    padding: 16px 20px;
 }
 
 .suscripcion__franja > div + div {
@@ -190,7 +238,7 @@
 
 .suscripcion__franja dd {
     margin: 4px 0 0;
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
@@ -203,7 +251,7 @@
 .suscripcion__beneficios {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 22px;
+    gap: 8px 26px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -222,20 +270,257 @@
     font-size: 13px;
 }
 
-.suscripcion__abrir-renovar {
+/* ── Acciones al pie de la tarjeta ── */
+.suscripcion__acciones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--z-border);
+    background: var(--z-bg-suave);
+}
+
+.suscripcion__accion {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+    padding: 20px 28px;
+}
+
+.suscripcion__accion-texto {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+}
+
+.suscripcion__accion-titulo {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--z-text);
+}
+
+.suscripcion__abrir-renovar,
+.suscripcion__pagar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex: none;
+    min-height: 48px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--z-shadow);
+}
+
+.suscripcion__abrir-renovar:hover,
+.suscripcion__pagar:hover:not(:disabled) {
+    background: var(--z-primary-dark);
+}
+
+.suscripcion__pagar:disabled {
+    background: var(--z-border-fuerte);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.suscripcion__fuente {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border-left: 1px solid var(--z-border);
+}
+
+/* La fila del medio de pago es un botón entero que abre su ventana. */
+.suscripcion__accion--medio {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.suscripcion__accion--medio:hover {
+    background: var(--z-primary-soft);
+}
+
+.suscripcion__medio-icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--z-border);
+    border-radius: 12px;
+    background: var(--z-surface);
+    color: var(--z-text-muted);
+}
+
+.suscripcion__accion--guardado .suscripcion__medio-icono {
+    border-color: var(--z-primary-borde);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+
+.suscripcion__medio-estado:empty {
     display: none;
 }
 
-/* ── Pagar o renovar ── */
-.suscripcion__renovar-cabecera {
+.suscripcion__medio-estado::before {
+    content: '· ';
+}
+
+.suscripcion__automatico-chip {
+    margin-top: 3px;
+    padding: 2px 9px;
+    font-size: 11.5px;
+}
+
+.suscripcion__gestionar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    color: var(--z-primary);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.suscripcion__mensaje-tarjeta {
+    padding: 0 28px 14px;
+}
+
+.suscripcion__abrir-renovar:focus-visible,
+.suscripcion__accion--medio:focus-visible,
+.suscripcion__pagar:focus-visible,
+.suscripcion__consultar:focus-visible,
+.suscripcion__boton-suave:focus-visible,
+.suscripcion__boton-texto:focus-visible,
+.suscripcion__pagina:focus-visible,
+.suscripcion-pestanas__pestana:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+/* ── Historial ── */
+.suscripcion__historial {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 22px 28px 16px;
+}
+
+.suscripcion__vacio {
+    padding: 18px 0;
+    font-size: 14px;
+    color: var(--z-text-muted);
+}
+
+.suscripcion__tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.suscripcion__tabla th {
+    padding: 8px 12px 10px;
+    border-bottom: 1px solid var(--z-border);
+    color: var(--z-text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.suscripcion__tabla td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--z-border);
+    color: var(--z-text-secondary);
+    font-variant-numeric: tabular-nums;
+    vertical-align: top;
+}
+
+.suscripcion__tabla :is(th, td):first-child {
+    padding-left: 0;
+}
+
+.suscripcion__tabla :is(th, td):last-child {
+    padding-right: 0;
+}
+
+.suscripcion__tabla td:first-child {
+    color: var(--z-text);
+}
+
+.suscripcion__tabla .suscripcion__valor {
+    text-align: right;
+    font-weight: 600;
+    color: var(--z-text);
+}
+
+/* La referencia es técnica (soporte): una línea, completa en el title. */
+.suscripcion__referencia {
+    display: block;
+    max-width: 22ch;
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--z-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.suscripcion__intento {
+    display: block;
+    margin-top: 3px;
+    font-size: 11.5px;
+    color: var(--z-text-muted);
+    overflow-wrap: anywhere;
+}
+
+.suscripcion__historial-pie {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    padding-top: 6px;
 }
 
-.suscripcion__cerrar {
-    display: none;
+.suscripcion__paginacion {
+    display: flex;
+    gap: 6px;
+}
+
+.suscripcion__pagina {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-xs);
+    color: var(--z-text-secondary);
+    text-decoration: none;
+}
+
+.suscripcion__pagina:hover {
+    border-color: var(--z-primary);
+    color: var(--z-primary);
+}
+
+/* ── Ventana «Pagar o renovar» ── */
+.suscripcion-renovar__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .suscripcion__ciclos {
@@ -325,61 +610,14 @@
     color: var(--z-text);
 }
 
-.suscripcion__nota-precio {
-    margin-top: -8px;
-    font-size: 12px;
-    color: var(--z-text-muted);
+.suscripcion__mensaje {
+    padding: 10px 12px;
+    border-radius: var(--z-radius-xs);
+    background: var(--z-bg-suave);
 }
 
-.suscripcion__pagar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    min-height: 50px;
-    border: 0;
-    border-radius: 14px;
-    background: var(--z-primary);
-    color: var(--z-surface);
-    font: inherit;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: var(--z-shadow);
-}
-
-.suscripcion__pagar:hover:not(:disabled) {
-    background: var(--z-primary-dark);
-}
-
-.suscripcion__pagar:disabled {
-    background: var(--z-border-fuerte);
-    box-shadow: none;
-    cursor: not-allowed;
-}
-
-.suscripcion__pagar:focus-visible,
-.suscripcion__consultar:focus-visible,
-.suscripcion__boton-suave:focus-visible,
-.suscripcion__boton-texto:focus-visible,
-.suscripcion__abrir-renovar:focus-visible,
-.suscripcion__pagina:focus-visible,
-.suscripcion-pestanas__pestana:focus-visible {
-    outline: 2px solid var(--z-primary);
-    outline-offset: 2px;
-}
-
-.suscripcion__renovar-pie {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+.suscripcion-renovar__pie {
     justify-content: space-between;
-    gap: 6px 12px;
-}
-
-.suscripcion__renovar-pie .suscripcion__ayuda {
-    flex: 1 1 200px;
 }
 
 .suscripcion__consultar,
@@ -387,7 +625,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    min-height: 36px;
+    min-height: 40px;
     padding: 0;
     border: 0;
     background: transparent;
@@ -432,207 +670,33 @@
     min-height: 44px;
 }
 
-/* ── Historial ── */
-.suscripcion__historial {
-    gap: 10px;
-}
-
-.suscripcion__historial-cabecera {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.suscripcion__paginacion {
-    display: flex;
-    gap: 6px;
-}
-
-.suscripcion__pagina {
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border: 1px solid var(--z-border);
-    border-radius: var(--z-radius-xs);
-    color: var(--z-text-secondary);
-    text-decoration: none;
-}
-
-.suscripcion__pagina:hover {
-    border-color: var(--z-primary);
-    color: var(--z-primary);
-}
-
-.suscripcion__vacio {
-    padding: 18px 0;
-    font-size: 14px;
-    color: var(--z-text-muted);
-}
-
-.suscripcion__tabla {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.suscripcion__tabla th {
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--z-border);
-    color: var(--z-text-muted);
-    font-size: 12px;
-    font-weight: 600;
-    text-align: left;
-}
-
-.suscripcion__tabla td {
-    padding: 11px 10px;
-    border-bottom: 1px solid var(--z-border);
-    color: var(--z-text-secondary);
-    font-variant-numeric: tabular-nums;
-    vertical-align: top;
-}
-
-.suscripcion__tabla :is(th, td):first-child {
-    padding-left: 0;
-}
-
-.suscripcion__tabla :is(th, td):last-child {
-    padding-right: 0;
-}
-
-.suscripcion__tabla td:first-child {
-    color: var(--z-text);
-}
-
-.suscripcion__tabla .suscripcion__valor {
-    text-align: right;
-    font-weight: 600;
-    color: var(--z-text);
-}
-
-.suscripcion__referencia,
-.suscripcion__intento {
-    display: block;
-    margin-top: 3px;
-    font-size: 11.5px;
-    color: var(--z-text-muted);
-    overflow-wrap: anywhere;
-}
-
-/* La referencia es técnica (soporte): una línea, completa en el title. */
-.suscripcion__referencia {
-    max-width: 24ch;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* ── Medio de pago ── */
-.suscripcion__medio {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    border: 1px dashed var(--z-border-fuerte);
-    border-radius: 14px;
-    background: var(--z-surface);
-}
-
-.suscripcion__medio--guardado {
-    border-style: solid;
-    border-color: var(--z-border);
-}
-
-.suscripcion__medio-icono {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: var(--z-bg-light);
-    color: var(--z-text-muted);
-}
-
-.suscripcion__medio--guardado .suscripcion__medio-icono {
-    background: var(--z-primary-soft);
-    color: var(--z-primary);
-}
-
-.suscripcion__medio-datos {
-    flex: 1;
-    min-width: 0;
-}
-
-.suscripcion__medio-resumen {
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.suscripcion__medio-estado {
-    margin-top: 2px;
-    font-size: 13px;
-    color: var(--z-text-muted);
-}
-
-.suscripcion__medio-estado:empty {
-    display: none;
-}
-
-.suscripcion__automatico {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.suscripcion__automatico > div {
-    flex: 1;
-    min-width: 0;
-}
-
-.suscripcion__automatico-titulo {
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.suscripcion__automatico .suscripcion-chip {
-    max-width: 50%;
-}
-
-.suscripcion__medio-acciones {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 18px;
-}
-
-.suscripcion__medio-acciones:not(:has(button:not([hidden]))) {
-    display: none;
-}
-
-.suscripcion__pie {
-    padding-top: 14px;
-    border-top: 1px solid var(--z-border);
-    font-size: 12px;
-}
-
-/* ── Ventana del medio de pago (zk-dialogo; hoja inferior en el celular) ── */
+/* ── Ventana del medio de pago ── */
 .suscripcion-medio .zk-dialogo__cuerpo {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
 }
 
-.suscripcion-medio:has([data-fuente-condiciones]:not([hidden])) [data-fuente-cargando],
-.suscripcion-medio:has([data-fuente-mensaje]:not(:empty)) [data-fuente-cargando] {
-    display: none;
+.suscripcion-medio__resumen {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.suscripcion-medio__botones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+    margin-top: 4px;
 }
 
 .suscripcion-medio__pasos {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--z-border);
 }
 
 .suscripcion-medio__paso {
@@ -731,40 +795,46 @@
     box-shadow: var(--z-shadow-lista);
 }
 
-/* ── Pestañas y hoja inferior: solo en el celular ── */
-.suscripcion-pestanas,
-.suscripcion__velo {
-    display: none;
-}
-
 @media (max-width: 1023px) {
-    .suscripcion__hoja {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    .suscripcion__acciones {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .suscripcion__fuente {
+        border-top: 1px solid var(--z-border);
+        border-left: 0;
     }
 }
 
 @media (max-width: 767px) {
-    .suscripcion-pestanas {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 14px;
+    .suscripcion {
+        gap: 14px;
     }
 
-    .suscripcion-pestanas__pestana {
+    /* Pestañas con el estilo de los pasos del registro. */
+    .suscripcion-pestanas {
         display: flex;
-        flex: 1;
-        align-items: center;
+        align-self: stretch;
         gap: 8px;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .suscripcion-pestanas__pestana,
+    .suscripcion-pestanas__pestana[aria-selected="true"] {
+        flex: 1;
         min-height: 44px;
         padding: 0 0 10px;
-        border: 0;
         border-bottom: 3px solid var(--z-border-fuerte);
+        border-radius: 0;
         background: transparent;
         color: var(--z-text-muted);
-        font: inherit;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
+    }
+
+    .suscripcion-pestanas__largo {
+        display: none;
     }
 
     .suscripcion-pestanas__icono {
@@ -779,15 +849,6 @@
         font-size: 12px;
     }
 
-    .suscripcion-pestanas__conteo {
-        padding: 1px 7px;
-        border-radius: 999px;
-        background: var(--z-border);
-        color: var(--z-text-secondary);
-        font-size: 11px;
-        font-weight: 700;
-    }
-
     .suscripcion-pestanas__pestana[aria-selected="true"] {
         border-bottom-color: var(--z-primary);
         color: var(--z-primary);
@@ -800,32 +861,21 @@
         color: var(--z-surface);
     }
 
+    .suscripcion-pestanas__conteo,
     .suscripcion-pestanas__pestana[aria-selected="true"] .suscripcion-pestanas__conteo {
+        padding: 1px 7px;
         background: var(--z-primary-suave);
         color: var(--z-primary-dark);
+        font-size: 11px;
     }
 
-    /* Sin JavaScript (sin data-pestana) se ve todo, en una columna. */
-    .suscripcion[data-pestana="plan"] [data-suscripcion-panel="historial"],
-    .suscripcion[data-pestana="historial"] [data-suscripcion-panel="plan"] {
-        display: none;
-    }
-
-    .suscripcion__hoja {
-        grid-template-columns: minmax(0, 1fr);
+    .suscripcion__tarjeta {
         border-radius: 20px;
     }
 
-    .suscripcion__seccion {
+    .suscripcion__plan {
+        gap: 14px;
         padding: 18px;
-    }
-
-    .suscripcion__fuente {
-        border-left: 0;
-    }
-
-    .suscripcion[data-pestana="historial"] .suscripcion__historial {
-        border-top: 0;
     }
 
     .suscripcion__plan-icono {
@@ -839,7 +889,8 @@
         font-size: 19px;
     }
 
-    .suscripcion__plan-cabecera .suscripcion-chip--ciclo {
+    .suscripcion__plan-cabecera .suscripcion-chip--ciclo,
+    .suscripcion__beneficios {
         display: none;
     }
 
@@ -871,89 +922,39 @@
         display: block;
     }
 
-    .suscripcion__beneficios {
+    .suscripcion__accion {
+        padding: 14px 18px;
+    }
+
+    .suscripcion__accion:not(.suscripcion__accion--medio) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .suscripcion__accion:not(.suscripcion__accion--medio) .suscripcion__accion-texto {
         display: none;
     }
 
     .suscripcion__abrir-renovar {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
+        width: 100%;
         min-height: 50px;
-        border: 0;
-        border-radius: 14px;
-        background: var(--z-primary);
-        color: var(--z-surface);
-        font: inherit;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        box-shadow: var(--z-shadow);
     }
 
-    /* «Pagar o renovar» como hoja inferior. */
-    .suscripcion__renovar {
-        position: fixed;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        z-index: 1001;
-        max-height: 88dvh;
-        overflow-y: auto;
-        padding: 10px 18px calc(24px + env(safe-area-inset-bottom));
-        border: 0;
-        border-radius: 26px 26px 0 0;
-        background: var(--z-surface);
-        box-shadow: var(--z-shadow-lista);
-        transform: translateY(105%);
-        visibility: hidden;
-        transition: transform 0.22s ease, visibility 0s linear 0.22s;
+    .suscripcion__gestionar {
+        font-size: 0;
     }
 
-    .suscripcion__renovar::before {
-        content: '';
-        align-self: center;
-        flex: none;
-        width: 44px;
-        height: 5px;
-        border-radius: 999px;
-        background: var(--z-border-fuerte);
+    .suscripcion__gestionar i {
+        font-size: 14px;
     }
 
-    .suscripcion.is-renovar-abierta .suscripcion__renovar {
-        transform: none;
-        visibility: visible;
-        transition: transform 0.22s ease;
+    .suscripcion__mensaje-tarjeta {
+        padding: 0 18px 12px;
     }
 
-    .suscripcion__renovar h2 {
-        font-size: 18px;
-        font-weight: 800;
-    }
-
-    .suscripcion__cerrar {
-        display: grid;
-        place-items: center;
-        width: 40px;
-        height: 40px;
-        border: 0;
-        border-radius: 12px;
-        background: var(--z-bg-light);
-        color: var(--z-text-secondary);
-        cursor: pointer;
-    }
-
-    .suscripcion.is-renovar-abierta .suscripcion__velo {
-        display: block;
-        position: fixed;
-        inset: 0;
-        z-index: 1000;
-        background: var(--z-velo-modal);
-    }
-
-    .suscripcion__medio {
-        padding: 12px 14px;
+    .suscripcion__historial {
+        padding: 6px 18px 12px;
     }
 
     /* Historial en filas: valor y estado arriba, fecha y periodo abajo. */
@@ -1014,39 +1015,30 @@
         content: 'Periodo ';
     }
 
-    .suscripcion__referencia {
-        display: inline-block;
-        max-width: 16ch;
-        margin: 0 0 0 6px;
-        vertical-align: bottom;
-    }
-
-    /* Medio de pago compacto: lo largo queda en la ventana de tres pasos. */
-    .suscripcion__automatico .suscripcion__ayuda,
-    .suscripcion__ayuda--automatico {
+    .suscripcion__tabla td[data-etiqueta="Referencia"] {
         display: none;
     }
 
-    .suscripcion__automatico {
-        flex-wrap: wrap;
-        gap: 6px;
+    .suscripcion__historial-pie {
+        flex-direction: column;
+        align-items: stretch;
     }
 
-    .suscripcion__automatico > div {
-        flex-basis: 100%;
+    .suscripcion__paginacion {
+        justify-content: space-between;
     }
 
-    .suscripcion__automatico .suscripcion-chip {
-        max-width: none;
+    .suscripcion-renovar__pie {
+        flex-direction: column-reverse;
+        align-items: stretch;
     }
 
-    .suscripcion__pie {
-        padding-top: 12px;
+    .suscripcion__pagar {
+        width: 100%;
+        min-height: 52px;
     }
-}
 
-@media (prefers-reduced-motion: reduce) {
-    .suscripcion__renovar {
-        transition: none;
+    .suscripcion__consultar {
+        justify-content: center;
     }
 }

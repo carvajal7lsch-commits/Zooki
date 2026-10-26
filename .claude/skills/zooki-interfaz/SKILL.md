@@ -31,7 +31,7 @@ Lee también `AGENTS.md` (reglas de código) y `agentes/metodo.md` §8. Esto res
 - **Agrupar controles en una sola fila** de la misma altura (44 px): buscador, filtros, conmutadores y acciones juntos, no regados en tres alturas.
 - **Un solo título por pantalla.** El título va en la barra superior del layout (`top-header-title`); la página no lo repite ni repite el nombre de la clínica.
 - Lo secundario se compacta: datos de referencia en filas «etiqueta gris pequeña + valor en negrita»; resúmenes en franjas de 3 columnas con separador; estados en chips.
-- En escritorio la pantalla idealmente **cabe sin scroll** en 1440×900 (y no se rompe en 1366×768). Si hay mucho contenido, se prioriza y lo raro va a un modal o a un desplegable.
+- En escritorio la pantalla **cabe sin scroll en 1366×768**. Si junta más de dos bloques importantes o hace scroll, se parte en pestañas (el mismo patrón en escritorio y celular) y las acciones con formulario van en ventanas. Una tarjeta por vista mejor que cuatro juntas (decisión del dueño en Suscripción, 2026-10-26).
 
 ## 4. Jerarquía y acciones
 

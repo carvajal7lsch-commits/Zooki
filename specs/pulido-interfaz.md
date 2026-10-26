@@ -437,3 +437,12 @@ Registro con Google y una cédula que ya es de otra cuenta: abre el caso `docume
 3. Agregar un medio: la ventana de tres pasos; al abrir Wompi para guardarlo, su ventana queda encima y se puede usar.
 4. Celular: pestañas Mi plan/Historial, hoja «Pagar o renovar» (cerrar con la X, el velo o Atrás) y barra con «Más» (Auditoría, Mi perfil, Cerrar sesión).
 5. Veterinario en el celular: barra con Inicio, Pacientes, Agenda, Perfil y Salir.
+
+### Etapa C — Suscripción v2 (decisión del dueño, 2026-10-26)
+
+Al revisar la primera versión, el dueño vio las cuatro secciones demasiado juntas y scroll en 1366×768. **Decisión:** en escritorio el mismo patrón del celular: pestañas «Mi plan» e «Historial de pagos»; Mi plan es una sola tarjeta (plan, estado, fechas y beneficios) con dos acciones al pie: «Pagar o renovar» abre su ventana y «Medio de pago» (fila con su estado) abre la ventana del medio, que ahora también reúne retirar el cobro automático y quitar el medio. El historial va a todo el ancho con la referencia en su columna; la paginación vuelve a la pestaña (`#historial`).
+
+- Ambas ventanas son `zk-dialogo` (hojas inferiores en el celular), así que se retiró la hoja hecha a mano de la v1.
+- **Verificación:** PHP sin host 1165/9352 (91 omitidas); JS 358/358. `RedisenoSuscripcion` comprueba ahora pestañas en escritorio, ventanas, `#historial` y que Mi plan e Historial caben **sin scroll en 1366×768**; el arnés de capturas lo exige en cada escenario salvo gracia (que suma su aviso). Capturas regeneradas en `specs/referencias/rediseno-suscripcion/`.
+- **Prueba manual (reemplaza el punto 4 de arriba):** en escritorio y celular, cambiar de pestaña, paginar el historial y volver a la misma pestaña; abrir y cerrar «Pagar o renovar» y «Medio de pago» (X, fondo y Esc).
+
