@@ -24,6 +24,8 @@
     <link rel="stylesheet" href="css/usuarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/pill-sidebar.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/encabezado-pagina.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php if (in_array($_GET['action'] ?? '', ['admin_suscripcion', 'suscripcion_retorno'], true)): ?>
     <link rel="stylesheet" href="css/suscripcion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
@@ -49,47 +51,32 @@
     <div class="dashboard-layout">
 
         <!-- ══ PILL SIDEBAR ════════════════════════════════════════════════════ -->
-        <nav class="pill-sidebar">
-            <a href="index.php?action=admin_panel" class="pill-logo" title="Ir al inicio">
-                <img src="img/icon_blue.png" alt="Zooki" class="pill-logo-img">
-            </a>
-
-            <div class="pill-nav">
-                <?php
-                $__action = $_GET["action"] ?? "admin_panel";
-                $__adminNombre = $_SESSION["usuario_nombre"] ?? "Administrador";
-                $__adminRol = Roles::nombre((int) Contexto::rolActivo());
-                $__adminIniciales = "";
-                foreach (array_filter(explode(" ", trim($__adminNombre))) as $__i => $__parte) {
-                    if ($__i > 1) {
-                        break;
-                    }
-                    $__adminIniciales .= strtoupper(substr($__parte, 0, 1));
-                }
-                if ($__adminIniciales === "") {
-                    $__adminIniciales = "A";
-                }
-                function pillNavLink($href, $icon, $active)
-                {
-                    $cls = $active ? "pill-nav-item active" : "pill-nav-item";
-                    return "<a href=\"$href\" class=\"$cls\"><i class=\"fas $icon\"></i></a>";
-                }
-                ?>
-
-                <?= pillNavLink("index.php?action=admin_panel", "fa-th-large", $__action === "admin_panel") ?>
-                <?= pillNavLink("index.php?action=admin_usuarios", "fa-users", $__action === "admin_usuarios") ?>
-                <?= pillNavLink("index.php?action=admin_citas", "fa-calendar-alt", $__action === "admin_citas") ?>
-                <?php echo pillNavLink("index.php?action=admin_auditoria", "fa-shield-alt", $__action === "admin_auditoria"); ?>
-                <?= pillNavLink("index.php?action=admin_configuracion", "fa-cog", $__action === "admin_configuracion") ?>
-                <?= pillNavLink("index.php?action=mi_perfil", "fa-user-circle", $__action === "mi_perfil") ?>
-            </div>
-
-            <div class="pill-divider"></div>
-
-            <a href="index.php?action=logout" class="pill-logout" title="Cerrar Sesión">
-                <i class="fas fa-sign-out-alt"></i>
-            </a>
-        </nav>
+        <?php
+        $__action = $_GET["action"] ?? "admin_panel";
+        $__adminNombre = $_SESSION["usuario_nombre"] ?? "Administrador";
+        $__adminRol = Roles::nombre((int) Contexto::rolActivo());
+        $__adminIniciales = "";
+        foreach (array_filter(explode(" ", trim($__adminNombre))) as $__i => $__parte) {
+            if ($__i > 1) {
+                break;
+            }
+            $__adminIniciales .= strtoupper(substr($__parte, 0, 1));
+        }
+        if ($__adminIniciales === "") {
+            $__adminIniciales = "A";
+        }
+        // Rediseño (2026-10-26): en el celular se ven Inicio, Usuarios, Citas y Ajustes; Auditoría y Mi perfil van en «Más».
+        $barraInicio = "index.php?action=admin_panel";
+        $barraItems = [
+            ["href" => "index.php?action=admin_panel", "icono" => "fas fa-th-large", "titulo" => "Inicio", "corto" => "Inicio", "activo" => $__action === "admin_panel", "principal" => true],
+            ["href" => "index.php?action=admin_usuarios", "icono" => "fas fa-users", "titulo" => "Usuarios", "corto" => "Usuarios", "activo" => $__action === "admin_usuarios", "principal" => true],
+            ["href" => "index.php?action=admin_citas", "icono" => "fas fa-calendar-alt", "titulo" => "Citas", "corto" => "Citas", "activo" => $__action === "admin_citas", "principal" => true],
+            ["href" => "index.php?action=admin_auditoria", "icono" => "fas fa-shield-alt", "titulo" => "Auditoría", "corto" => "Auditoría", "activo" => $__action === "admin_auditoria", "principal" => false],
+            ["href" => "index.php?action=admin_configuracion", "icono" => "fas fa-cog", "titulo" => "Configuración", "corto" => "Ajustes", "activo" => in_array($__action, ["admin_configuracion", "admin_suscripcion", "suscripcion_retorno"], true), "principal" => true],
+            ["href" => "index.php?action=mi_perfil", "icono" => "fas fa-user-circle", "titulo" => "Mi perfil", "corto" => "Perfil", "activo" => $__action === "mi_perfil", "principal" => false],
+        ];
+        include __DIR__ . "/../partials/barra_navegacion.php";
+        ?>
 
         <!-- ══ CONTENIDO PRINCIPAL ════════════════════════════════════════ -->
         <main class="main-content<?= isset($content_view) ? '' : ' main-content--inicio' ?>">
@@ -114,6 +101,8 @@
                             <p class="inicio-encabezado__fecha"><?= htmlspecialchars($panel['fecha']) ?></p>
                             <h1 class="inicio-encabezado__saludo"><?= htmlspecialchars($panel['saludo'] . ', ' . explode(" ", trim($__adminNombre))[0]) ?></h1>
                         </div>
+                    <?php elseif (isset($encabezadoPagina)): ?>
+                        <?php include __DIR__ . '/../partials/encabezado_pagina.php'; ?>
                     <?php else: ?>
                         <h1 class="top-header-title"><?= $tituloModulo ?></h1>
                     <?php endif; ?>
@@ -171,11 +160,13 @@
     <script src="js/csrf.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/sesion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/extras.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php if (in_array($_GET['action'] ?? '', ['admin_suscripcion', 'suscripcion_retorno'], true)): ?>
     <?php if (!empty($pagoDisponible)): ?>
     <script src="https://checkout.wompi.co/widget.js"></script>
     <?php endif; ?>
     <script src="js/suscripcion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/suscripcion-pantalla.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/fuente-suscripcion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>

@@ -29,6 +29,27 @@
     scrollbar-width: none;
 }
 .config-tabs::-webkit-scrollbar { display: none; }
+/* Rediseño (2026-10-26): entrada a Suscripción junto a las pestañas, con el plan en un chip. */
+.config-tabs-fila { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-bottom: 20px; }
+.config-tabs-fila .config-tabs { margin-bottom: 0; }
+.config-tabs__enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 50px;
+    padding: 0 12px 0 16px;
+    box-sizing: border-box;
+    border: 1px solid var(--z-border);
+    border-radius: 12px;
+    background: var(--z-surface);
+    color: var(--z-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.config-tabs__enlace:hover { border-color: var(--z-primary); color: var(--z-primary); }
+.config-tabs__enlace:focus-visible { outline: 2px solid var(--z-primary); outline-offset: 2px; }
+.config-tabs__plan { padding: 2px 8px; border-radius: 999px; background: var(--z-primary-soft); color: var(--z-primary); font-size: 0.7rem; font-weight: 700; }
 .config-tabs__tab {
     display: inline-flex;
     align-items: center;
@@ -222,6 +243,9 @@
 }
 @media (max-width: 767px) {
     .config-tabs { display: flex; margin-bottom: 16px; }
+    .config-tabs-fila { margin-bottom: 16px; }
+    .config-tabs-fila .config-tabs { flex: 1 1 100%; }
+    .config-tabs__enlace { flex: 1 1 100%; min-height: 44px; }
     .config-tabs__tab { padding: 0 12px; }
     .configuracion-campos { grid-template-columns: 1fr; }
     .config-marca__vista { flex-direction: column; gap: 12px; }

@@ -57,45 +57,30 @@
     <div class="dashboard-layout">
 
         <!-- ══ PILL SIDEBAR ════════════════════════════════════════════════════ -->
-        <nav class="pill-sidebar">
-            <a href="index.php?action=vet_area" class="pill-logo" title="Ir al inicio">
-                <img src="img/icon_blue.png" alt="Zooki" class="pill-logo-img">
-            </a>
-
-            <div class="pill-nav">
-                <?php
-                $__action = $_GET["action"] ?? "vet_area";
-                $__adminNombre = $_SESSION["usuario_nombre"] ?? "Veterinario";
-                $__adminRol = Roles::nombre((int) Contexto::rolActivo());
-                $__adminIniciales = "";
-                foreach (array_filter(explode(" ", trim($__adminNombre))) as $__i => $__parte) {
-                    if ($__i > 1) {
-                        break;
-                    }
-                    $__adminIniciales .= strtoupper(substr($__parte, 0, 1));
-                }
-                if ($__adminIniciales === "") {
-                    $__adminIniciales = "V";
-                }
-                function pillNavLink($href, $icon, $active, $title)
-                {
-                    $cls = $active ? "pill-nav-item active" : "pill-nav-item";
-                    return "<a href=\"$href\" class=\"$cls\" title=\"$title\"><i class=\"fas $icon\"></i></a>";
-                }
-                ?>
-
-                <?= pillNavLink("index.php?action=vet_area", "fa-home", $__action === "vet_area", "Inicio / Dashboard") ?>
-                <?= pillNavLink("index.php?action=vet_pacientes", "fa-paw", $__action === "vet_pacientes", "Pacientes") ?>
-                <?= pillNavLink("index.php?action=vet_agenda", "fa-calendar-alt", $__action === "vet_agenda", "Calendario") ?>
-                <?= pillNavLink("index.php?action=mi_perfil", "fa-user-circle", $__action === "mi_perfil", "Mi perfil") ?>
-            </div>
-
-            <div class="pill-divider"></div>
-
-            <a href="index.php?action=logout" class="pill-logout" title="Cerrar Sesión">
-                <i class="fas fa-sign-out-alt"></i>
-            </a>
-        </nav>
+        <?php
+        $__action = $_GET["action"] ?? "vet_area";
+        $__adminNombre = $_SESSION["usuario_nombre"] ?? "Veterinario";
+        $__adminRol = Roles::nombre((int) Contexto::rolActivo());
+        $__adminIniciales = "";
+        foreach (array_filter(explode(" ", trim($__adminNombre))) as $__i => $__parte) {
+            if ($__i > 1) {
+                break;
+            }
+            $__adminIniciales .= strtoupper(substr($__parte, 0, 1));
+        }
+        if ($__adminIniciales === "") {
+            $__adminIniciales = "V";
+        }
+        // Rediseño (2026-10-26): los cuatro destinos caben con su nombre en el celular; Salir queda de quinto.
+        $barraInicio = "index.php?action=vet_area";
+        $barraItems = [
+            ["href" => "index.php?action=vet_area", "icono" => "fas fa-home", "titulo" => "Inicio / Dashboard", "corto" => "Inicio", "activo" => $__action === "vet_area", "principal" => true],
+            ["href" => "index.php?action=vet_pacientes", "icono" => "fas fa-paw", "titulo" => "Pacientes", "corto" => "Pacientes", "activo" => $__action === "vet_pacientes", "principal" => true],
+            ["href" => "index.php?action=vet_agenda", "icono" => "fas fa-calendar-alt", "titulo" => "Calendario", "corto" => "Agenda", "activo" => $__action === "vet_agenda", "principal" => true],
+            ["href" => "index.php?action=mi_perfil", "icono" => "fas fa-user-circle", "titulo" => "Mi perfil", "corto" => "Perfil", "activo" => $__action === "mi_perfil", "principal" => true],
+        ];
+        include __DIR__ . "/../partials/barra_navegacion.php";
+        ?>
 
         <!-- ══ CONTENIDO PRINCIPAL ════════════════════════════════════════ -->
         <main class="main-content<?= isset($content_view) ? '' : ' main-content--inicio' ?>">

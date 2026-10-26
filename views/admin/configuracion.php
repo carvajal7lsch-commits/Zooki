@@ -12,11 +12,15 @@ $marca = $configuracion['marca'];
 $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 'telefono_urgencias' => 'Teléfono de urgencias', 'email_contacto' => 'Correo de contacto', 'direccion' => 'Dirección', 'url_logo' => 'URL o ruta del logo'];
 ?>
 <?php // Pulido de interfaz (2026-10-21): la configuración en tres pestañas y los formularios en ventanas, para no apilar todo en un solo scroll. ?>
+<?php // Rediseño (2026-10-26): Suscripción es otra pantalla; se entra junto a las pestañas y su botón vuelve aquí. ?>
+<div class="config-tabs-fila">
 <nav class="config-tabs" role="tablist" aria-label="Secciones de configuración" data-config-tabs>
     <button type="button" role="tab" class="config-tabs__tab" id="config-tab-clinica" aria-controls="config-clinica" aria-selected="true" data-config-tab="clinica"><i class="fas fa-hospital" aria-hidden="true"></i> Clínica</button>
     <button type="button" role="tab" class="config-tabs__tab" id="config-tab-horarios" aria-controls="config-horarios" aria-selected="false" tabindex="-1" data-config-tab="horarios"><i class="fas fa-clock" aria-hidden="true"></i> Horarios</button>
     <button type="button" role="tab" class="config-tabs__tab" id="config-tab-ausencias" aria-controls="config-ausencias" aria-selected="false" tabindex="-1" data-config-tab="ausencias"><i class="fas fa-calendar-times" aria-hidden="true"></i> Ausencias y cierres</button>
 </nav>
+<a class="config-tabs__enlace" href="index.php?action=admin_suscripcion&amp;desde=configuracion"><i class="fas fa-crown" aria-hidden="true"></i> Suscripción<?php if (!empty($planSuscripcion)): ?> <span class="config-tabs__plan"><?= $e($planSuscripcion) ?></span><?php endif; ?></a>
+</div>
 <div class="configuracion-clinica" id="config-clinica" role="tabpanel" aria-labelledby="config-tab-clinica" data-config-panel="clinica" data-configuracion-clinica data-reglas="<?= $e(json_encode($reglas)) ?>" data-tipos="<?= $e(json_encode($configuracion['tipos'])) ?>">
     <section class="horarios-card config-marca" aria-labelledby="marcaTitulo">
         <header class="horarios-card__head">

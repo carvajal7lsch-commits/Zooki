@@ -407,3 +407,33 @@ Registro con Google y una cédula que ya es de otra cuenta: abre el caso `docume
 - **Pruebas del revisor:** PHPUnit sin motor 1165/9352 (91 omitidas de motor); JS 352/352; MySQL 8 dirigido: `PulidoP1SoporteTest` 7/43 y `BaseV2MysqlTest` 65/801. La suite completa en MySQL 8 la corre el CI.
 - **Corrección del revisor (P2):** `CasoSoporte::programarAviso` medía Content-Length solo con su búfer. Con `output_buffering` del php.ini (XAMPP), una salida anterior quedaba en el búfer de abajo y el navegador recortaba el JSON. Ahora junta los búferes antes de medir. Comprobado con un servidor PHP con búfer previo (longitud exacta) y con `PulidoP1SoporteHttp` y `PulidoP1SoporteTest`.
 - **Para después (no bloquea):** `tipoVisible` muestra «Solicitud de soporte» para cuenta_duplicada, abuso_plan y otro. D (bloquear al arrastrar) queda pendiente.
+
+## Etapa C — Suscripción, entrada desde Configuración y barra del celular (2026-10-26)
+
+**Escribió Claude Code (sesión en la nube), con el dueño supervisando por mockups; entregada, pendiente de revisión.** Rama `claude/suscripcion-rediseno` (sale de `release/v2.2.0` más la skill `zooki-interfaz`).
+
+**Decisiones del dueño (2026-10-26), sobre el lienzo de mockups:**
+- Suscripción en una sola hoja con cuatro secciones (no tarjetas sueltas); la columna derecha agrupa pagar y medio de pago.
+- Aceptaciones de Wompi, guardar el medio y autorizar el cobro mensual en una ventana de Zooki en tres pasos (el tercero opcional).
+- Celular: pestañas «Mi plan» e «Historial» con el estilo de los pasos del registro; «Pagar o renovar» y el medio de pago en hojas inferiores.
+- Entrada a Suscripción también desde Configuración (junto a sus pestañas, con el plan en un chip); el botón de volver dice y lleva al origen (Inicio o Configuración).
+- Barra inferior del celular potenciada: destinos principales con nombre, activo resaltado y el resto en «Más»; el escritorio no cambia.
+- El pago de Wompi a pantalla completa en vez de la ventana del widget.
+
+**Qué se hizo:**
+- `views/admin/suscripcion.php` y `public/css/suscripcion.css` rehechos; solo variables `--z-*`. Se conservan todos los ganchos de `suscripcion.js` y `fuente-suscripcion.js`. Nueva `--z-velo-modal` en `identidad.css`.
+- `public/js/suscripcion-pantalla.js` (solo presentación): pestañas, hoja inferior con Esc y velo, total según el ciclo y la ventana del medio que deja de ser modal mientras se abre el widget de Wompi para no quedar inerte debajo.
+- `suscripcion.js`: Pagar lleva a `checkout.wompi.co/p/` con los datos que firma el servidor (llave pública, monto, referencia, integridad, vencimiento y retorno a `suscripcion_retorno`); sin datos firmados no sale de Zooki. El servidor no cambia. Guardar un medio sigue con el widget (Wompi no tokeniza en página completa). Modelos §12.7 actualizado.
+- `fuente-suscripcion.js`: el mensaje también se escribe en la tarjeta cuando la ventana está cerrada.
+- Encabezado común `views/partials/encabezado_pagina.php` + `encabezado-pagina.css` (volver con texto, un solo título y subtítulo), que el controlador arma en `$encabezadoPagina`.
+- Configuración: enlace «Suscripción» con el plan efectivo (`ConfiguracionClinicaController::planEfectivo`, que no rompe la pantalla si no se puede leer).
+- Barra común `views/partials/barra_navegacion.php` para administrador, veterinario y plataforma. Administrador: Inicio, Usuarios, Citas y Ajustes, con Auditoría y Mi perfil en «Más» (Suscripción marca Ajustes). Veterinario y plataforma caben sin «Más» y conservan Salir. Plataforma ahora carga `identidad.css`.
+
+**Verificación:** PHP sin host 1165/9352 (91 omitidas de motor; sin MySQL en la nube). JS 358/358, incluidas `Suscripcion`, `FuenteSuscripcion` (actualizadas al pago en pantalla completa y al chip «Confirmado») y la nueva `RedisenoSuscripcion` (ganchos, volver según el origen, barra y recorrido en Chromium a 390 y 1440). Capturas reales en `specs/referencias/rediseno-suscripcion/` (1440, 1366, 390 y 360; estados al día, gracia, congelada, con medio y automático; hoja, ventana e historial), sin desborde horizontal. Los íconos de Font Awesome no aparecen en las capturas porque la nube no carga la CDN. PDF/Word del portal pendientes de regenerar (Modelos e Historial cambiaron; aquí no hay Pandoc ni Word).
+
+**Prueba manual del dueño:**
+1. Inicio → Suscripción → «← Inicio»; Configuración → Suscripción → «← Configuración».
+2. Pagar con Wompi (sandbox): se abre el checkout a pantalla completa y al terminar vuelve a Suscripción con el estado del pago.
+3. Agregar un medio: la ventana de tres pasos; al abrir Wompi para guardarlo, su ventana queda encima y se puede usar.
+4. Celular: pestañas Mi plan/Historial, hoja «Pagar o renovar» (cerrar con la X, el velo o Atrás) y barra con «Más» (Auditoría, Mi perfil, Cerrar sesión).
+5. Veterinario en el celular: barra con Inicio, Pacientes, Agenda, Perfil y Salir.

@@ -1,0 +1,96 @@
+/*
+ * Encabezado de pantallas internas (views/partials/encabezado_pagina.php), rediseño 2026-10-26:
+ * volver visible con el nombre del destino y un solo título. Solo variables --z-*.
+ */
+.encabezado-pagina {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.encabezado-pagina__volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    min-height: 44px;
+    padding: 0 16px 0 13px;
+    border: 1px solid var(--z-primary-borde);
+    border-radius: var(--z-radius-sm);
+    background: var(--z-surface);
+    color: var(--z-primary);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: var(--z-shadow-sm);
+}
+
+.encabezado-pagina__volver:hover {
+    border-color: var(--z-primary);
+    background: var(--z-primary-soft);
+}
+
+.encabezado-pagina__volver:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+
+.encabezado-pagina__separador {
+    flex: none;
+    width: 1px;
+    height: 36px;
+    background: var(--z-border-fuerte);
+}
+
+.encabezado-pagina__textos {
+    min-width: 0;
+}
+
+.encabezado-pagina__titulo {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--z-text);
+}
+
+.encabezado-pagina__subtitulo {
+    margin: 2px 0 0;
+    overflow: hidden;
+    font-size: 13px;
+    color: var(--z-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+    .encabezado-pagina {
+        gap: 12px;
+    }
+
+    .encabezado-pagina__volver {
+        width: 44px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .encabezado-pagina__volver-texto {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    .encabezado-pagina__separador {
+        display: none;
+    }
+
+    .encabezado-pagina__titulo {
+        font-size: 21px;
+    }
+}

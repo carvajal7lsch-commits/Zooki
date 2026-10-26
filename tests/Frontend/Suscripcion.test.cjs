@@ -30,43 +30,50 @@ function interfaz(servicios) {
     return {ui:contexto.module.exports.iniciar(raiz,servicios),boton,mensaje};
 }
 
-test('primer clic deshabilita, doble clic no repite y cierre solo consulta estado local',async()=>{
+const checkoutFirmado = {reference:'ref_falsa',publicKey:'pub_test_falsa',currency:'COP',amountInCents:8999000,expirationTime:'2026-10-26T17:15:00.000Z',
+    signature:{integrity:'firma_falsa'},redirectUrl:'http://localhost/Zooki/public/index.php?action=suscripcion_retorno&referencia=ref_falsa'};
+
+test('rediseño: primer clic deshabilita, doble clic no repite y lleva al checkout web de Wompi a pantalla completa',async()=>{
     let resolver;
     let llamadas=0;
-    let cerrar;
+    const destinos=[];
     const servicios={fetch:(url,opciones)=>{
         llamadas++;
-        if(url.includes('pagar')) {
-            assert.equal(pantalla.boton.disabled,true);
-            assert.match(opciones.body.toString(),/csrf_token=csrf-falso/);
-            return new Promise(r=>resolver=r);
-        }
-        return Promise.resolve({ok:true,json:async()=>({ok:true,estado:{pago:{estado:'pendiente',intento:'pendiente'}}})});
-    },widget:datos=>({open:callback=>{
-        assert.equal(datos.reference,'ref_falsa');
-        cerrar=callback;
-    }})};
+        assert.match(url,/suscripcion_pagar_ajax/);
+        assert.equal(pantalla.boton.disabled,true);
+        assert.match(opciones.body.toString(),/csrf_token=csrf-falso/);
+        return new Promise(r=>resolver=r);
+    },redirigir:url=>destinos.push(url)};
     const pantalla=interfaz(servicios);
     const primero=pantalla.ui.pagar();
     const segundo=pantalla.ui.pagar();
     assert.equal(llamadas,1);
-    assert.equal(pantalla.boton.disabled,true);
-    resolver({ok:true,json:async()=>({ok:true,pago:{abrir:true,mensaje:'Completa',checkout:{reference:'ref_falsa'}}})});
+    resolver({ok:true,json:async()=>({ok:true,pago:{abrir:true,mensaje:'Completa',checkout:checkoutFirmado}})});
     await Promise.all([primero,segundo]);
-    assert.equal(pantalla.boton.disabled,false);
-    cerrar(undefined);
-    await new Promise(r=>setImmediate(r));
-    assert.equal(llamadas,2);
-    assert.match(pantalla.mensaje.textContent,/pendiente/);
+    assert.equal(destinos.length,1);
+    const url=new URL(destinos[0]);
+    assert.equal(url.origin+url.pathname,'https://checkout.wompi.co/p/');
+    assert.equal(url.searchParams.get('public-key'),'pub_test_falsa');
+    assert.equal(url.searchParams.get('amount-in-cents'),'8999000');
+    assert.equal(url.searchParams.get('reference'),'ref_falsa');
+    assert.equal(url.searchParams.get('signature:integrity'),'firma_falsa');
+    assert.equal(url.searchParams.get('expiration-time'),checkoutFirmado.expirationTime);
+    assert.match(url.searchParams.get('redirect-url'),/action=suscripcion_retorno&referencia=ref_falsa/);
+    assert.equal(pantalla.boton.disabled,true,'Mientras sale hacia Wompi no se puede reservar otra vez');
+    assert.match(pantalla.mensaje.textContent,/Abriendo Wompi/);
 });
 
-test('error de reserva o SDK restaura botón y muestra mensaje sin acreditar',async()=>{
-    for(const fetchFalso of [async()=>{throw new Error('Sin conexión');},async()=>({ok:false,json:async()=>({ok:false,mensaje:'No disponible'})}),async()=>({ok:true,json:async()=>({ok:true,pago:{abrir:true,checkout:{},mensaje:'Abrir'}})})]) {
-        const pantalla=interfaz({fetch:fetchFalso,widget:()=>{throw new Error('SDK no disponible');}});
+test('rediseño: sin datos firmados no sale de Zooki; errores restauran el botón y muestran mensaje sin acreditar',async()=>{
+    for(const fetchFalso of [async()=>{throw new Error('Sin conexión');},async()=>({ok:false,json:async()=>({ok:false,mensaje:'No disponible'})}),async()=>({ok:true,json:async()=>({ok:true,pago:{abrir:true,checkout:{reference:'ref'},mensaje:'Abrir'}})})]) {
+        const destinos=[];
+        const pantalla=interfaz({fetch:fetchFalso,redirigir:url=>destinos.push(url)});
         await pantalla.ui.pagar();
+        assert.equal(destinos.length,0);
         assert.equal(pantalla.boton.disabled,false);
-        assert.match(pantalla.mensaje.textContent,/Sin conexión|No disponible|SDK no disponible/);
+        assert.match(pantalla.mensaje.textContent,/Sin conexión|No disponible|No se pudo preparar el pago/);
     }
+    const urlSinVencimiento=vm.runInNewContext(leer('public/js/suscripcion.js')+';module.exports.urlCheckout',{module:{exports:{}},URLSearchParams})({...checkoutFirmado,expirationTime:null});
+    assert.equal(new URL(urlSinVencimiento).searchParams.has('expiration-time'),false);
 });
 
 function vista(escenario) {
@@ -114,7 +121,7 @@ test('Chrome: pantalla real activa, deshabilitada e historial a 1366 y 390 sin r
                 if(['fuente','automatico'].includes(escenario)) assert.match(html,/VISA · termina en 4242/);
                 if(escenario==='automatico') assert.match(html,/Cobro mensual autorizado/);
                 if(escenario==='nequi') assert.match(html,/>Nequi</);
-                if(escenario==='historial') assert.match(html,/confirmado/);
+                if(escenario==='historial') assert.match(html,/Confirmado/);
                 if(process.env.ZOOKI_CAPTURAR_S2==='1' && ['gracia','activa','historial'].includes(escenario)) {
                     const captura=await nav.enviar('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});
                     fs.writeFileSync(path.join(RAIZ,'scratch','s2-suscripcion-'+escenario+'-'+ancho+'.png'),Buffer.from(captura.data,'base64'));

@@ -26,6 +26,7 @@ $plan = $plan ?? '';
     <link rel="stylesheet" href="css/styles.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/dashboard.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/usuarios.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="css/identidad.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/pill-sidebar.css?v=<?= $v ?>">
     <link rel="stylesheet" href="css/contexto.css?v=<?= $v ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
