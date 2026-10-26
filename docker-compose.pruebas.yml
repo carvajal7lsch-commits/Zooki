@@ -1,0 +1,52 @@
+# Copia de PRUEBAS (sandbox de Wompi) en Dokploy, M0-S S2/S3, 2026-10-25.
+# Igual a docker-compose.yml pero sin container_name: los nombres fijos
+# zooki_web/zooki_db chocarian con los contenedores de produccion. Dokploy
+# le pone a cada servicio y volumen el nombre de este proyecto, asi que la
+# base, las fotos y los respaldos de pruebas quedan separados de produccion.
+# Nunca apuntar estas variables a la base de produccion.
+
+version: '3.8'
+services:
+  web:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      - db
+    # Las fotos de mascotas y los adjuntos clinicos no van en git ni en la
+    # imagen: sin este volumen se pierden en cada reconstruccion y la base
+    # queda apuntando a archivos que ya no existen.
+    # Los respaldos (HU-23) tampoco pueden vivir dentro del contenedor: se
+    # borrarian con cada despliegue. BACKUP_DIR debe apuntar a esta ruta.
+    # F0 (decisión del usuario, 2026-10-11): el .env no entra en la imagen
+    # (.dockerignore); la aplicación lo lee como archivo, así que se monta de
+    # solo lectura al arrancar. Dokploy lo escribe junto a este compose con
+    # las variables de su pestaña Environment.
+    volumes:
+      - ./.env:/var/www/html/Zooki/.env:ro
+      - uploads:/var/www/html/Zooki/public/uploads
+      - respaldos:/var/backups/zooki
+    restart: always
+  db:
+    image: mysql:8.0
+    environment:
+      # La clave de root sale del .env: no se escribe en un archivo versionado.
+      # MySQL solo la usa al crear la base; cambiarla aqui no cambia la de una
+      # base que ya existe.
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    # Solo con el volumen db_data vacío, MySQL ejecuta en orden alfabético los
+    # .sql del primer nivel de database/: 01_schema.sql, 02_semilla.sql y las
+    # migraciones 03 en adelante. Las subcarpetas no se recorren, por eso el
+    # modelo de drawDB vive en database/modelo/ (ejecutarlo fallaría por
+    # tablas repetidas y abortaría la creación de la base).
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+    restart: always
+volumes:
+  db_data:
+  uploads:
+  respaldos:
