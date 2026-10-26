@@ -26,7 +26,7 @@ final class DisponibilidadAgenda extends ModeloClinica
     public function __construct(PDO $conn, ?callable $reloj = null)
     {
         parent::__construct($conn);
-        $this->reloj = Closure::fromCallable($reloj ?? static fn () => new DateTimeImmutable('now', new DateTimeZone('America/Bogota')));
+        $this->reloj = Closure::fromCallable($reloj ?? static fn () => new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA)));
     }
 
     /** Revalida antes de cualquier lectura global, también en sugerencias. */
@@ -126,7 +126,7 @@ final class DisponibilidadAgenda extends ModeloClinica
             return null;
         }
         $fin = $apertura[count($apertura) - 1][1];
-        return (new DateTimeImmutable('@' . $fin))->setTimezone(new DateTimeZone('America/Bogota'));
+        return (new DateTimeImmutable('@' . $fin))->setTimezone(new DateTimeZone(ReglaAtencion::ZONA));
     }
 
     public function clinicaAbiertaEnFecha(string $fecha): bool
@@ -360,7 +360,7 @@ final class DisponibilidadAgenda extends ModeloClinica
         foreach ($this->jornada($vet, $fecha) as [$desde, $hasta]) {
             for ($inicio = $desde; $inicio + ($duracion + $margen) * 60 <= $hasta; $inicio += $duracion * 60) {
                 if ($inicio >= $ahora && IntervalosAgenda::contiene($libres, $inicio, $inicio + ($duracion + $margen) * 60)) {
-                    $instante = (new DateTimeImmutable('@' . $inicio))->setTimezone(new DateTimeZone('America/Bogota'));
+                    $instante = (new DateTimeImmutable('@' . $inicio))->setTimezone(new DateTimeZone(ReglaAtencion::ZONA));
                     // RE-4.9.1/2: HH:mm solo abrevia segundos cero, nunca redondea la sugerencia.
                     $horas[] = $instante->format($instante->format('s') === '00' ? 'H:i' : 'H:i:s');
                 }

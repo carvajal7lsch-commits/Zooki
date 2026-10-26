@@ -625,3 +625,16 @@
         max-width: 100%;
     }
 }
+
+/* RE-6.2.4: el cero conserva su base y los seis meses, sin aparentar citas. */
+.inicio-grafica--vacia { border-bottom: 1px solid var(--z-border-fuerte); }
+.inicio-grafica--vacia .inicio-grafica__mes { position: relative; }
+.inicio-grafica--vacia .inicio-grafica__mes::after {
+    content: attr(data-inicial);
+    position: absolute;
+    top: 100%;
+    width: 100%;
+    text-align: center;
+    font-size: 10px;
+    color: var(--z-text-muted);
+}

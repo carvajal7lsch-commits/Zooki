@@ -311,7 +311,7 @@ final class M5C1HuecosTest extends TestCase
         $this->assertSame('documento_duplicado', $casos[0]['tipo']);
         $this->assertSame(DosClinicas::GOOGLE, (int) $casos[0]['id_usuario']);
         $this->assertStringContainsString('1000000006', $casos[0]['descripcion']);
-        $this->assertStringContainsString('RE-T.18.3', $casos[0]['descripcion']);
+        $this->assertStringNotContainsString('RE-T.18.3', $casos[0]['descripcion']);
         $this->assertSame(0, (int) $this->db->query('SELECT perfil_completo FROM usuarios WHERE id_usuario = 9')->fetchColumn());
     }
 }

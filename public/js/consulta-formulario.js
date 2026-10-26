@@ -334,7 +334,7 @@
             title: 'La consulta no se guardó',
             html: `<p class="adjuntos-rechazados__texto">${escapeHtml(res.message)}</p>
                    <ul class="adjuntos-rechazados__lista">${lista}</ul>`,
-            confirmButtonColor: '#5560FF',
+            confirmButtonColor: '#0052FF',
         });
         return true;
     }

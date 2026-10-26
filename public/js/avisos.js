@@ -14,7 +14,7 @@
  * degrada a consola en vez de romper el flujo.
  */
 
-const ZOOKI_COLOR_OK = '#5560FF';
+const ZOOKI_COLOR_OK = '#0052FF';
 const ZOOKI_COLOR_ERR = '#EF4444';
 
 /** Aviso breve, no bloqueante, en la esquina superior derecha. */
@@ -28,6 +28,7 @@ function zookiToast(mensaje, tipo = 'success') {
         toast: true,
         position: 'top-end',
         icon: tipo,
+        iconColor: tipo === 'success' ? ZOOKI_COLOR_OK : undefined,
         title: mensaje,
         showConfirmButton: false,
         timer: tipo === 'error' ? 4000 : 2600,
@@ -87,6 +88,7 @@ function zookiAviso(mensaje, tipo = 'error', titulo = null) {
 
     Swal.fire({
         icon: tipo,
+        iconColor: tipo === 'success' ? ZOOKI_COLOR_OK : undefined,
         title: titulo || (tipo === 'error' ? 'Algo salió mal' : 'Listo'),
         text: mensaje,
         confirmButtonColor: tipo === 'error' ? ZOOKI_COLOR_ERR : ZOOKI_COLOR_OK,
@@ -95,23 +97,7 @@ function zookiAviso(mensaje, tipo = 'error', titulo = null) {
 
 /** Confirmación sí/no. Devuelve una promesa que resuelve a booleano. */
 async function zookiConfirmar(mensaje, titulo = '¿Confirmas?', textoBoton = 'Sí, continuar') {
-    if (!window.Swal) {
-        console.error('No está disponible la confirmación de la acción.');
-        return false;
-    }
-
-    const r = await Swal.fire({
-        icon: 'question',
-        title: titulo,
-        text: mensaje,
-        showCancelButton: true,
-        confirmButtonText: textoBoton,
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: ZOOKI_COLOR_OK,
-        cancelButtonColor: '#94A3B8',
-    });
-
-    return r.isConfirmed;
+    return zookiConfirmarCorto(mensaje, textoBoton);
 }
 
 /**

@@ -273,7 +273,7 @@
     // Desactivar pide confirmación (revoca el acceso); activar no.
     async function confirmarDesactivar(interruptor, texto) {
         if (interruptor.checked) return true;
-        const ok = await zookiConfirmar(texto, '¿Desactivar?', 'Desactivar');
+        const ok = await zookiConfirmarCorto(texto, 'Desactivar');
         if (!ok) interruptor.checked = true;
         return ok;
     }
@@ -314,12 +314,6 @@
     // D1 (RN-109): la clínica desactiva el vínculo, pero no lo reactiva; para
     // reactivarlo se envía la solicitud y el titular la confirma por correo.
     async function solicitarVinculo(c, nombre) {
-        const ok = await zookiConfirmar(
-            'Le enviaremos a ' + nombre + ' un correo para que confirme el vínculo con esta clínica. Quedará activo cuando lo confirme.',
-            '¿Enviar la solicitud?',
-            'Enviar'
-        );
-        if (!ok) return null;
         const datos = new FormData();
         // RN-115: con el vínculo inactivo la clínica ya no ve el correo; el servidor lo busca por el id.
         datos.append('id_usuario', c.id_usuario);
@@ -452,7 +446,7 @@
     }
 
     async function cancelarInvitacion(boton) {
-        const ok = await zookiConfirmar('La invitación de ' + boton.dataset.nombre + ' dejará de servir. Si la necesitas, invítala otra vez.', '¿Cancelar la invitación?', 'Cancelar invitación');
+        const ok = await zookiConfirmarCorto('La invitación de ' + boton.dataset.nombre + ' dejará de servir. Si la necesitas, invítala otra vez.', 'Cancelar invitación');
         if (!ok) return;
         const datos = new FormData();
         datos.append('id_invitacion', boton.dataset.id);
@@ -549,15 +543,8 @@
         } else if (boton.dataset.accion === 'cancelar-invitacion') {
             cancelarInvitacion(boton);
         } else if (boton.dataset.accion === 'restablecer') {
-            const ok = await Swal.fire({
-                icon: 'warning',
-                text: 'Se invalidará la contraseña actual de ' + boton.dataset.nombre + ', se cerrarán sus sesiones abiertas y se enviará un enlace para que el titular cree otra.',
-                showCancelButton: true,
-                confirmButtonText: 'Restablecer',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#0052FF',
-            });
-            if (!ok.isConfirmed) return;
+            const ok = await zookiConfirmarCorto('Se invalidará la contraseña actual de ' + boton.dataset.nombre + ', se cerrarán sus sesiones abiertas y se enviará un enlace para que el titular cree otra.', 'Restablecer');
+            if (!ok) return;
             const datos = new FormData();
             datos.append('id_usuario', id);
             const r = await pedir('index.php?action=resetear_password_usuario_ajax', datos);

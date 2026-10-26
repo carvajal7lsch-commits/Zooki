@@ -1250,11 +1250,7 @@ function eventosHistorialCompacto(datos) {
  * M2 C8.2: una sola fecha dd/mm/aaaa para todos los historiales. Se lee la cadena
  * del servidor sin pasar por Date para que una fecha sin hora no retroceda un día por UTC.
  */
-function fechaHistorial(fecha) {
-    const partes = String(fecha || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (!partes) return 'Sin fecha';
-    return `${partes[3]}/${partes[2]}/${partes[1]}`;
-}
+// fechaHistorial se comparte con el portal en fechas.js.
 
 /**
  * M2 C8.1 (H11) y C8.2: mismo resumen en Atención y en los dos cajones de historial.
@@ -1271,7 +1267,7 @@ function filaHistorialCompacto(registro, tipo) {
     const principal = consulta ? (diagnostico || titulo || 'Sin diagnóstico') : (titulo || 'Sin registro');
     const tratamientos = Array.isArray(registro.tratamientos) ? registro.tratamientos : [];
     const chipDetalle = diagnostico ? `<span class="historia-fila__chip">${escaparTexto(diagnostico)}</span>` : '';
-    const chips = consulta ? `${etiquetaSinCita(registro)}<span class="historia-fila__chip">${textoPeso(registro.peso)}</span><span class="historia-fila__chip">${tratamientos.length} tratamientos</span>` : chipDetalle;
+    const chips = consulta ? `${etiquetaSinCita(registro)}<span class="historia-fila__chip">${textoPeso(registro.peso)}</span><span class="historia-fila__chip">${tratamientos.length} ${tratamientos.length === 1 ? 'tratamiento' : 'tratamientos'}</span>` : chipDetalle;
     const detalle = consulta ? `
         <p><strong>Veterinario:</strong> ${escaparTexto(registro.veterinario || 'Sin dato')}</p>
         ${etiquetaOrigen(registro)}
@@ -1868,7 +1864,7 @@ async function printMedicalHistory(id, nombre) {
             html += `<div class="section"><h2>Consultas Clínicas</h2>`;
             data.consultas.forEach(c => {
                 html += `
-                    <h3>Fecha: ${new Date(c.fecha_hora).toLocaleDateString()} - Dr. ${escaparTexto(c.veterinario)}</h3>
+                    <h3>Fecha: ${fechaHistorial(c.fecha_hora)} - Dr. ${escaparTexto(c.veterinario)}</h3>
                     ${marcaParaImprimir(c)}
                     <p><strong>Motivo:</strong> ${escaparTexto(c.motivo_consulta)}</p>
                     ${textoSintomas(c) ? `<p><strong>Síntomas:</strong> ${textoSintomas(c)}</p>` : ''}
@@ -1889,7 +1885,7 @@ async function printMedicalHistory(id, nombre) {
         if (data.vacunas && data.vacunas.length > 0) {
             html += `<div class="section"><h2>Vacunación</h2><table><tr><th>Fecha</th><th>Vacuna</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.vacunas.forEach(v => {
-                html += `<tr><td>${new Date(v.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${marcaParaImprimir(v)}</td><td>${v.fecha_proxima_dosis ? new Date(v.fecha_proxima_dosis).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${fechaHistorial(v.fecha_aplicacion)}</td><td>${escaparTexto(v.nombre_vacuna)}</td><td>${marcaParaImprimir(v)}</td><td>${v.fecha_proxima_dosis ? fechaHistorial(v.fecha_proxima_dosis) : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }
@@ -1897,7 +1893,7 @@ async function printMedicalHistory(id, nombre) {
         if (data.desparasitaciones && data.desparasitaciones.length > 0) {
             html += `<div class="section"><h2>Desparasitaciones</h2><table><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Clínica</th><th>Próxima Dosis</th></tr>`;
             data.desparasitaciones.forEach(d => {
-                html += `<tr><td>${new Date(d.fecha_aplicacion).toLocaleDateString()}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${marcaParaImprimir(d)}</td><td>${d.fecha_proxima ? new Date(d.fecha_proxima).toLocaleDateString() : '---'}</td></tr>`;
+                html += `<tr><td>${fechaHistorial(d.fecha_aplicacion)}</td><td>${escaparTexto(d.producto)}</td><td>${escaparTexto(d.tipo)}</td><td>${marcaParaImprimir(d)}</td><td>${d.fecha_proxima ? fechaHistorial(d.fecha_proxima) : '---'}</td></tr>`;
             });
             html += `</table></div>`;
         }

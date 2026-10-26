@@ -103,13 +103,13 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - Puede cambiar el plan de una clínica y el estado de su suscripción, con motivo obligatorio.
 - **No** accede a mascotas, historias, consultas ni citas de ninguna clínica, tampoco para soporte.
 - El super-administrador es un rol de plataforma: sus acciones no se filtran por una sola `id_clinica` (única excepción al aislamiento, RN-G13).
-- Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo y confirmando la acción; puede reactivar una suspendida con motivo. El personal pierde el contexto suspendido o dado de baja en la siguiente petición.
-- Lista casos de soporte y los cierra como resueltos o descartados con nota auditada, sin enlaces a datos clínicos (RN-010).
-- Lista IP bloqueadas vigentes, su vencimiento y las cuentas que fallaron en la ventana con sus clínicas. Permite desbloquear con confirmación y auditoría. El aviso por correo solo se envía cuando el super-administrador elige al administrador de una clínica asociada, revisa o edita el texto y confirma el envío; nunca es automático (RN-G15).
+- Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo; solo dar de baja pide confirmación, y puede reactivar una suspendida con motivo. El personal pierde el contexto suspendido o dado de baja en la siguiente petición.
+- Lista casos de soporte con tipo, fecha, cuenta solicitante por id_usuario y cuenta que actualmente tiene el documento si los datos guardados permiten obtenerla; los cierra como resueltos o descartados con nota auditada y aviso breve, sin confirmación adicional ni enlaces clínicos (RN-010). Al abrir un caso se avisa individualmente a cada super-administrador activo y verificado después del commit y de responder al titular: asunto `Zooki: nuevo caso de soporte #<id>`, cuerpo solo con tipo, fecha y enlace al panel con sesión. No incluye documento, nombre ni correo del titular. El fallo se registra, conserva el caso y no altera la respuesta (decisión del dueño, 2026-10-26).
+- Lista IP bloqueadas vigentes, su vencimiento y las cuentas que fallaron en la ventana con sus clínicas. Permite desbloquear directamente, con aviso breve y auditoría. El aviso por correo solo se envía cuando el super-administrador elige al administrador de una clínica asociada, revisa o edita el texto y pulsa Enviar aviso; nunca es automático (RN-G15).
 - Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo. _Este criterio (RE-0.3.6) se entrega junto con HU-8.1; la base del panel está en 2.0.0-alpha.1 y la consulta financiera RE-0.3.7 en 2.1.0._
 - Toda acción queda registrada en auditoría.
 
-**Reglas de negocio:** RN-004, RN-010, RN-012, RN-019, RN-804, RN-G05, RN-G13, RN-G14, RN-G15 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5, RF-0.7 · **Dependencias:** —
+**Reglas de negocio:** RN-004, RN-010, RN-012, RN-019, RN-804, RN-G05, RN-G13, RN-G14, RN-G15, RN-G24 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5, RF-0.7 · **Dependencias:** —
 
 ### HU-0.4 — Control de límites del plan (freemium)
 
@@ -2138,7 +2138,7 @@ Auditoría automática de la Fase 3: de **126 reglas de negocio**, **126** está
 | RN-G21 | HU-T.18 |
 | RN-G22 | HU-T.2 |
 | RN-G23 | HU-T.5 |
-| RN-G24 | HU-T.5 |
+| RN-G24 | HU-T.5, HU-0.3 |
 | RN-001 | HU-0.1, HU-T.15 |
 | RN-002 | HU-0.1, HU-0.2 |
 | RN-003 |HU-0.2, HU-0.4, HU-1.5, HU-6.2, HU-0.5 |

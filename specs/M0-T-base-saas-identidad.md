@@ -2386,3 +2386,9 @@ Mutaciones comprobadas:
 **Verificado.** PHP 608 pruebas en verde en una copia limpia sin `.env` (29 MySQL omitidas); JS 108/108 en el equipo del usuario; `views/plataforma` sin `style=`, `on…=` ni `<script>` con código. Las acciones que ofrece el modal coinciden con las transiciones que acepta `Plataforma::cambiarEstado` (activa y pendiente → suspendida o baja; suspendida → activa, solo si el registro se verificó, o baja; baja → nada), y el servidor rechaza por POST las demás sin cambiar ni auditar. Las revisiones del usuario durante la subetapa (tarjetas de plan, interruptor de suscripción, «Dar de baja» como acción, sugerencias de motivo, Soporte y Seguridad en tarjetas) quedan anotadas en el Anexo.
 
 **Despliegue de 2.0.0-alpha.2 (2026-10-12).** El usuario probó M0.1, M0.2 y M0.2.1 en local, hizo el merge `v2/m0` → `main` (`875d035`) y el tag `v2.0.0-alpha.2`; Dokploy desplegó sin tocar la base. **Pulido de M0 cerrado.**
+
+### Pulido P1 — decisiones del dueño (2026-10-26)
+
+RE-0.3.4, RE-T.18.3, RE-T.5.8 y RN-G24: el alcance y la evidencia del soporte completo se registran en `specs/pulido-interfaz.md`, encargo y resultado P1. Correo privado a plataforma después del commit y de responder, detalle con identidades existentes sin esquema nuevo, sin códigos internos y cierre con nota/toast directo. RE-T.13.2: tope público de 40 comprobaciones por IP/15 minutos. Solo la baja grave requiere confirmación en plataforma. Versión 2.2.0; C queda fuera de P1 por decisión del dueño y D queda pendiente. Escribe Codex; revisa Claude.
+
+Estado de P1: entregada, pendiente de revisión de Claude; verificación y salvedad visual de DOCX en el resultado de specs/pulido-interfaz.md. PHP 1165/9351 (91 omitidas de motor), JS definitivo 354/354; CI/MySQL 8 y prueba del dueño pendientes.

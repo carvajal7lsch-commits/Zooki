@@ -857,7 +857,7 @@ flowchart TD
   M -- No --> ERR["Rechazar sin modificar; corregir formulario"]
   M -- Si --> TX["Transaccion: bloquear clinica; delegar plan/suscripcion al servicio de vigencia<br/>Concesion con fecha y motivo, sin fabricar pagos ni cambiar suspension<br/>Cambiar estado administrativo solo por su accion; auditar y rollback si falla"]
   TX --> R["Actualizar panel antes del aviso breve<br/>Personal pierde contexto en siguiente peticion, segun §9<br/>Clinica inactiva no aparece para registro ni agenda"]
-  CAS["Casos: resolver o descartar con nota, sin otra confirmacion<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos"]
+  CAS["Detalle del caso: tipo, fecha, solicitante por id_usuario<br/>y cuenta actual del documento cuando los datos existentes permiten obtenerla<br/>Resolver o descartar con nota, sin otra confirmacion<br/>POST, CSRF y auditoria atomica; sin enlaces clinicos ni codigos internos"]
   IP["IP: vencimiento, cuentas LOGIN_FAIL en ventana<br/>y sus clinicas; sin atribuir la IP a una sola clinica"]
   IP --> DES["Desbloquear directo: POST y CSRF<br/>borrar solo contador de esa IP y auditar en transaccion"]
   IP --> AV["Elegir administrador asociado, ver y editar texto<br/>Enviar solo al pulsar el boton, sin segunda confirmacion"]
@@ -1090,9 +1090,11 @@ flowchart TD
   C -- No --> C1[/"Mensaje: corrige los campos marcados"/]
   C1 --> B
   C -- Si --> D{El documento ya pertenece a otra cuenta?}
-  D -- Si --> D1[/"Mensaje: no se pudo completar el perfil; revisa datos o contacta soporte"/]
-  D1 --> D2["Crear el caso para el super-administrador: posible cuenta duplicada<br/>(uno abierto por titular y documento; no se repite)"]
-  D2 --> ZF([Fin: el perfil sigue incompleto])
+  D -- Si --> D2["Crear y confirmar el caso para el super-administrador<br/>(uno abierto por titular y documento; no se repite)"]
+  D2 --> D1[/"Responder: no se pudo completar el perfil; revisa datos o contacta soporte"/]
+  D1 --> ZF([Fin: el perfil sigue incompleto])
+  D1 --> N["Despues de responder y del commit: correo individual a cada super-administrador activo/verificado<br/>solo tipo, fecha y enlace al panel con sesion; sin identidad del titular"]
+  N --> NF["Si falla, registrar en log; el caso sigue abierto y la respuesta no cambia"]
   D -- No --> E[Guardar documento y telefono]
   E --> F[Marcar el perfil como completo]
   F --> G[Registrar en auditoria]
@@ -1142,6 +1144,7 @@ flowchart TD
   D6 -- Si --> D7["No se aplica; crear el caso para el super-administrador<br/>(posible cuenta duplicada)"]
   D7 --> DG[/"Mensaje generico: no se pudo aplicar el cambio; revisa datos o contacta soporte"/]
   DG --> ZF
+  DG --> NS["Despues de responder y del commit: aviso privado de soporte como en 13.1<br/>si falla, log sin cambiar el caso ni la respuesta"]
   D6 -- No --> D8[Aplicar el documento nuevo]
   D8 --> D9[Avisar por correo al titular]
   D9 --> AUD

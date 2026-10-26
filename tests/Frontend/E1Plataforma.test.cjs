@@ -28,7 +28,7 @@ function pagina() {
             parseFromString() { return { getElementById: () => ({}) }; }
         },
         FormData: class { constructor(form) { this.form = form; } },
-        Swal: { fire: async opciones => { confirmaciones.push(opciones); return { isConfirmed: true }; } },
+        zookiConfirmarCorto: async (...opciones) => { confirmaciones.push(opciones); return true; },
         fetch: async (url, opciones) => {
             solicitudes.push([url, opciones]);
             return { ok: true, json: async () => ({ success: true, message: 'Guardado' }), text: async () => '' };
@@ -56,6 +56,21 @@ test('E1: cargar y elegir vista no envía correo ni hace peticiones', () => {
     p.eventos.DOMContentLoaded();
     assert.equal(p.tarjetas.hidden, true);
     assert.equal(p.tabla.hidden, false);
+});
+
+test('P1: el enlace del correo abre Soporte y después conserva la pestaña que el usuario elige', () => {
+    const p = pagina();
+    p.contexto.window.location.hash = '#soporte';
+    p.contexto.window.location.href += '#soporte';
+    p.contexto.window.history = { replaceState: (_estado, _titulo, url) => {
+        p.contexto.window.location.href = url;
+        p.contexto.window.location.hash = '';
+    } };
+    p.eventos.DOMContentLoaded();
+    assert.equal(p.memoria.get('zooki-plataforma-pestana'), 'soporte');
+    p.api.pestana('clinicas');
+    p.eventos.DOMContentLoaded();
+    assert.equal(p.memoria.get('zooki-plataforma-pestana'), 'clinicas');
 });
 
 test('E1: motivo valida mientras se escribe y el máximo también cuenta bytes', () => {
@@ -98,7 +113,7 @@ test('E1: destructivas confirman y reactivar usa aviso breve', () => {
 
 test('E1: cancelar confirmación no modifica ni envía avisos', async () => {
     const p = pagina();
-    p.contexto.Swal.fire = async () => ({ isConfirmed: false });
+    p.contexto.zookiConfirmarCorto = async () => false;
     const form = p.form('plataforma_estado_ajax', 'baja');
     form.closest = () => null;
     p.contexto.document.body = {};
@@ -120,13 +135,13 @@ test('E1: envío explícito actualiza el panel antes del toast y usa POST', asyn
 test('E1: doble envío no repite la petición mientras espera confirmación', async () => {
     const p = pagina();
     let resolver;
-    p.contexto.Swal.fire = () => new Promise(resolve => { resolver = resolve; });
+    p.contexto.zookiConfirmarCorto = () => new Promise(resolve => { resolver = resolve; });
     const form = p.form('plataforma_estado_ajax', 'baja');
     form.closest = () => null;
     p.contexto.document.body = {};
     const primero = p.api.enviar(form, { disabled: false });
     await p.api.enviar(form, { disabled: false });
-    resolver({ isConfirmed: true });
+    resolver(true);
     await primero;
     assert.equal(p.solicitudes.filter(([, opciones]) => opciones.method === 'POST').length, 1);
 });

@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('registroClinicaForm');
     if (!form) return;
     const reporte = document.getElementById('reportarNit');
+    form.addEventListener('cuenta:limitada', () => {
+        window.ZookiRegistro.mostrarResumen(form, 'Hiciste muchas comprobaciones seguidas. Espera unos segundos y vuelve a intentar');
+    });
     form.addEventListener('cuenta:validada', evento => {
         if (evento.detail.campo === 'dv') reporte.hidden = !evento.detail.nitDuplicado;
     });

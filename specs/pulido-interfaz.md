@@ -1,5 +1,16 @@
 # Pulido de interfaz — pendientes
 
+## Pulido final P1 — Encargo (2026-10-26)
+
+**Escribe Codex; revisa Claude (arquitecto). Aprobado por el dueño.** Versión 2.2.0 por cambios de servidor; el dueño renombra la rama. Sin esquema nuevo, migraciones ni operaciones Git de escritura.
+
+- **Orden A.1–A.4:** freno general de comprobaciones sin error de campo ni resumen, reintento al enviar y 40 por IP/15 minutos (RE-T.13.2, RN-G15); minigráfica en cero con base/iniciales (RE-6.2.4), zona de ReglaAtencion; singular del tratamiento y fechas dd/mm/aaaa del historial (RE-2.5.2, RE-5.5.1, RE-5.9.2).
+- **A.5 completo, después de A.1–A.4 (cambio del dueño):** al abrir un caso, correo individual a cada super-administrador activo/verificado después del commit y de responder; mailer existente, sin envíos reales bajo ZOOKI_PRUEBAS. Asunto `Zooki: nuevo caso de soporte #<id>`; cuerpo solo tipo en palabras, fecha y enlace al panel con sesión, sin identidad del titular. Un fallo se registra y no altera el caso ni la respuesta. Detalle con fecha, tipo, solicitante por id_usuario y cuenta actual del documento usando datos existentes; sin códigos internos visibles, resolución/descarte directo con toast. HU-0.3, RE-0.3.4, RE-T.18.3, RN-G24, RN-G15. Si requiere columna nueva, consultar al dueño.
+- **B.6–B.10:** identidad compartida en portal/avisos/registro de mascota/historial; modal Zooki solo para acciones graves y toast directo en reversibles; actualización sin esperar avisos y revisión de carga al mover/reprogramar; borrar únicamente CSS demostrado sin uso. Conservar diseño aprobado y RE de cada pantalla.
+- **C fuera de P1 por decisión del dueño (2026-10-26):** responsive completo se hará en otra etapa, pantalla por pantalla con supervisión del dueño. No agregar media queries ni cambiar distribución por ancho. RNF-16: comprobar únicamente que A/B no desborden horizontalmente a 1366 y 390 px.
+- **D opcional:** bloqueo visual previo al soltar citas, solo si sobra tiempo. Fuera: P2, HU nuevas, semillas de presentación, validación/restricción de vacunas, desparasitación, agenda y horarios; adaptación de Atención a tableta.
+- **Verificación:** pruebas de comportamiento JS (freno, minigráfica, modal y actualización inmediata), PHP del tope y soporte (destinatarios, privacidad, fallo, respuesta constante y acceso exclusivo de plataforma); suites PHP sin host/JS completas una vez, sintaxis y diff; CI MySQL 8 tras push. Exportar PDF/Word del portal. Resultado y estado «entregada, pendiente de revisión»; máximo ocho comprobaciones manuales; commits a cargo del dueño.
+
 > Lista viva de mejoras de interfaz que el usuario detecta en las pruebas manuales y que **no** bloquean la etapa en curso. Se atienden en una etapa final de pulido (después de que estén las funciones nuevas de la v2.0, para no ajustar dos veces), salvo que el usuario pida adelantar alguna. Cada punto dice de dónde salió.
 
 ## Agenda
@@ -362,3 +373,37 @@ Registro con Google y una cédula que ya es de otra cuenta: abre el caso `docume
 - Al registrar una clínica con muchas comprobaciones seguidas, `validar_cuenta_ajax` responde «espera un momento» y el formulario lo muestra como error del campo que tocaba (resumen: «Revisa estos campos… Correo de contacto: espera un momento antes de seguir comprobando»). Parece que el correo es inválido.
 - Pulido: si la respuesta es el límite de comprobaciones, mostrar un aviso general («Hiciste muchas comprobaciones seguidas. Espera unos segundos y vuelve a intentar») sin marcar el campo en rojo ni incluirlo en el resumen, y reintentar la comprobación al enviar.
 - Revisar el tope: `Security::MAX_VERIFICACIONES` = 20 comprobaciones por IP en 15 minutos (bloqueo de 15 min) se agota fácil en el registro de clínica, que comprueba NIT, DV y tres correos. Proponer un tope mayor o contar solo valores nuevos, sin abrir la enumeración (RE-T.13.2).
+
+## Pulido final P1 — Resultado (2026-10-26)
+
+**Escribió Codex; revisa Claude (arquitecto). Entregada, pendiente de revisión.** Versión preparada 2.2.0; rama actual release/v2.2.0. Sin esquema nuevo ni migraciones.
+- A.1–A.4 primero: 40 comprobaciones por IP/15 minutos, freno general sin rojo/resumen de campos y reintento al enviar; base/iniciales de seis meses vacíos; zona común; singular y fechas compartidas dd/mm/aaaa.
+- A.5 después: correo individual a super-administradores activos/verificados tras commit y respuesta completa; fallo aislado/log, sin identidad del titular ni SMTP real en pruebas. Reporte de NIT comparte CasoSoporte. Duplicados antiguos no abren otro caso ni reavisan.
+- Detalle privado, también de cerrados: fecha/tipo, solicitante por id_usuario y cuenta actual del documento extraído solo del formato conocido; ausencia explícita si no se identifica. Códigos históricos ocultos sin alterar datos; resolver/descartar con nota y toast directo. Matriz existente solo de plataforma, revalidada por el modelo.
+- B: tokens comunes del portal desde identidad.css; marca en avisos, mascota e historial; modal Zooki para acciones graves (también agenda), vínculo/restantes acciones reversibles directos; Atención actualiza sin esperar aviso y reprogramación usa indicador local. Se retiran 22 reglas sin consumidores comprobados; panel--vet ya no existía.
+- **C fuera de P1 por decisión del dueño (2026-10-26):** otra etapa, pantalla por pantalla con supervisión. No se agregaron media queries ni cambios de distribución por ancho. D queda pendiente; no se empieza P2.
+- **RNF-16:** nueve pantallas reales con datos simulados, solo 1366/390, sin desborde horizontal; detalle de soporte abierto. Capturas/medidas en scratch/p1. No es una aprobación del responsive completo.
+- **Trazabilidad:** RE-T.13.2 → D21Correccion/RegistroClinica + D2ValidacionCuenta; RE-6.2.4/7 → InicioAdministrador/PulidoP1Visual; RE-2.5.2/RE-5.5.1/RE-5.9.2 → M2C82Historial/MascotaDetalle; RE-1.1.1 → comprobación visual de Pacientes; RE-T.14.1/RE-7.1.3/RE-4.2.1/RE-4.3.2 → D21Interfaz/PulidoP1Interacciones/CoordinacionHorarios; RE-0.3.4/RE-T.18.3/RE-T.5.8/RN-G24 → PulidoP1SoporteTest + HTTP.
+- **Verificación:** PHP completo sin host 1165 pruebas/9351 aserciones, 91 omitidas de motor; JS final 354/354, sin omisiones. Cinco arneses antiguos adaptados tras la primera pasada JS; afectados 14/14 y completa en verde y cierre posterior al ajuste del enlace. Sintaxis y diff correctos. SMTP falso lento de 1,5 s: JSON idéntico recibido antes del envío, también al fallar. CI/MySQL 8 queda al push.
+- Documentación HU/RE/Modelos, matriz RN-G24 y plan M0 coherentes, sin nuevos IDs ni conteos. Descargas del portal regeneradas con la plantilla, incluido el cierre HU-4.7; nueve PDF leídos y muestra visual revisada, nueve DOCX ZIP/XML correctos e índices actualizados con Word en copias fuera de OneDrive. LibreOffice no está instalado y Word no terminó de exportar la muestra en dos intentos: revisión visual de DOCX pendiente; fuentes finales conservadas. Evidencia en scratch/p1-documentos.
+- Pendiente: revisión de Claude y prueba del dueño; integración/despliegue a cargo del dueño. Sin .env, base de trabajo, SMTP/API reales ni operaciones Git de escritura. Archivos y comandos en scratch/p1-entrega.md.
+
+### P1 — Prueba manual del dueño (máximo ocho comprobaciones)
+
+1. Registro de clínica: agotar comprobaciones, ver el aviso general sin campo rojo; esperar y enviar de nuevo.
+2. Inicio del administrador sin citas en seis meses: línea base e iniciales, también en celular.
+3. Historial, expediente e imprimible: «1 tratamiento», fechas dd/mm/aaaa y acentos de marca; contrastar el historial del portal.
+4. Atención: cancelar el modal grave no guarda; finalizar actualiza el resumen sin esperar un aviso. Restaurar horarios y restablecer contraseña usan el modal de Zooki.
+5. Pedir un documento ocupado desde perfil Google y desde Datos de acceso: mensaje genérico conservado, un caso abierto por titular/documento; correo privado a plataforma con asunto/cuerpo sin identidad del titular.
+6. Plataforma → Soporte: ver cuentas/fecha/tipo, resolver o descartar con nota sin segunda confirmación y con toast; otros roles no acceden. Reabrir el detalle de un caso cerrado.
+7. Portal: vincular/desvincular clínica, cancelar cita y registrar mascota actualizan al responder; reprogramar o arrastrar en agenda no mantiene el velo global mientras se envía el correo.
+8. Repetir las pantallas anteriores en escritorio y celular: comprobar desborde horizontal a 1366/390. El pulido responsive completo C se hará aparte con el dueño.
+
+## Pulido final P1 — Revisión (2026-10-26)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada**, con una corrección hecha por el revisor.
+
+- **Verificado:** diff de PHP, vistas, JS y documentos. Tope 40/IP/15 min sin cambiar la respuesta genérica (RE-T.13.2). El freno ya no marca el campo y se reintenta al enviar. Correo de soporte después del commit, solo a super-administradores activos y verificados, sin identidad del titular; si el caso se deshizo, no se avisa. Detalle del caso con solicitante y cuenta dueña del documento, solo en plataforma. `ZOOKI_COLOR_OK` = `--z-primary`. `zookiConfirmar` delega en el modal de Zooki.
+- **Pruebas del revisor:** PHPUnit sin motor 1165/9352 (91 omitidas de motor); JS 352/352; MySQL 8 dirigido: `PulidoP1SoporteTest` 7/43 y `BaseV2MysqlTest` 65/801. La suite completa en MySQL 8 la corre el CI.
+- **Corrección del revisor (P2):** `CasoSoporte::programarAviso` medía Content-Length solo con su búfer. Con `output_buffering` del php.ini (XAMPP), una salida anterior quedaba en el búfer de abajo y el navegador recortaba el JSON. Ahora junta los búferes antes de medir. Comprobado con un servidor PHP con búfer previo (longitud exacta) y con `PulidoP1SoporteHttp` y `PulidoP1SoporteTest`.
+- **Para después (no bloquea):** `tipoVisible` muestra «Solicitud de soporte» para cuenta_duplicada, abuso_plan y otro. D (bloquear al arrastrar) queda pendiente.

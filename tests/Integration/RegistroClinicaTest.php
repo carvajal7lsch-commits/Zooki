@@ -45,7 +45,7 @@ final class RegistroClinicaTest extends TestCase
         $this->assertArrayNotHasKey('email', $respuesta);
         $this->assertArrayNotHasKey('id_clinica', $respuesta);
         $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM clinicas WHERE nit = '" . ValidadorNit::normalizar($entrada['nit'] . '-' . $entrada['dv']) . "'")->fetchColumn());
-        for ($numero = 1; $numero < 20; $numero++) {
+        for ($numero = 1; $numero < 40; $numero++) {
             $_SESSION = ['id_usuario' => 1, 'csrf_cuenta_validacion' => 'validacion'];
             ob_start();
             $controller->validar();

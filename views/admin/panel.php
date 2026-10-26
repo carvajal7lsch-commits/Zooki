@@ -200,9 +200,9 @@ $ultimoMes = count($panel['tendencia']) - 1;
                             </p>
                         <?php endif; ?>
                     </div>
-                    <div class="inicio-grafica" aria-hidden="true">
+                    <div class="inicio-grafica<?= $maximoSerie === 1 && array_sum(array_column($panel['tendencia'], 'atendidas')) + array_sum(array_column($panel['tendencia'], 'no_asistidas')) === 0 ? ' inicio-grafica--vacia' : '' ?>" aria-hidden="true">
                         <?php foreach ($panel['tendencia'] as $i => $m): ?>
-                            <span class="inicio-grafica__mes<?= $i === $ultimoMes ? ' inicio-grafica__mes--actual' : '' ?>" title="<?= $e($m['etiqueta'] . ': ' . (int) $m['atendidas'] . ' atendidas, ' . (int) $m['no_asistidas'] . ' no asistieron') ?>">
+                            <span class="inicio-grafica__mes<?= $i === $ultimoMes ? ' inicio-grafica__mes--actual' : '' ?>" data-inicial="<?= $e(mb_substr($m['etiqueta'], 0, 1)) ?>" title="<?= $e($m['etiqueta'] . ': ' . (int) $m['atendidas'] . ' atendidas, ' . (int) $m['no_asistidas'] . ' no asistieron') ?>">
                                 <span class="inicio-grafica__barra inicio-grafica__barra--no-asistio inicio-alto--<?= ResumenPanel::escala5(ResumenPanel::porcentaje((int) $m['no_asistidas'], $maximoSerie)) ?>"></span>
                                 <span class="inicio-grafica__barra inicio-alto--<?= ResumenPanel::escala5(ResumenPanel::porcentaje((int) $m['atendidas'], $maximoSerie)) ?>"></span>
                             </span>

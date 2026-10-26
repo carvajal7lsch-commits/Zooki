@@ -316,11 +316,8 @@
     // ── Restaurar ──
     async function restaurar() {
         if (enviandoHorario) return;
-        const ok = await zookiConfirmar(
-            'Todos los días vuelven al horario inicial de la clínica. Esta acción reemplaza tu configuración actual.',
-            '¿Restaurar el horario por defecto?',
-            'Sí, restaurar'
-        );
+        // RE-7.1.3: reemplazar la configuración actual descarta sus franjas, sin deshacer.
+        const ok = await zookiConfirmarCorto('Todos los días vuelven al horario inicial de la clínica. Se reemplazará tu configuración actual.', 'Restaurar');
         if (!ok || enviandoHorario) return;
         enviandoHorario = true;
         bloquearHorario(true);

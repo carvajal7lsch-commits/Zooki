@@ -74,6 +74,7 @@ function panel(memoriaInicial = {}) {
     };
     const contexto = {
         TextEncoder,
+        location: { hash: '' },
         document: {
             addEventListener: (tipo, callback) => { eventos[tipo] = callback; },
             querySelectorAll: selector => selectores[selector] || [],

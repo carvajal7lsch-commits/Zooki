@@ -25,6 +25,7 @@ test('ficha de mascota: resumen real, navegación, permisos, foto e información
 margin:auto}*,*::before,*::after{transition:none!important;
 animation:none!important}</style></head><body><div class="prueba">${html}</div></body></html>` });
         await navegador.evaluar(fs.readFileSync('public/js/alertas-medicas.js', 'utf8'));
+        await navegador.evaluar(fs.readFileSync('public/js/fechas.js', 'utf8'));
         await navegador.evaluar(`window.scrollTo=()=>{};
 window.loadOwners=()=>{};
 let dossierOrigen='owners';

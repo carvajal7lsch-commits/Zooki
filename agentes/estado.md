@@ -6,11 +6,24 @@
 
 ## Ahora
 
+### Pulido final P1 — revisada: aprobada (2026-10-26)
+
+- **Revisión (Claude):** ver «Pulido final P1 — Revisión» en `specs/pulido-interfaz.md`. Una corrección hecha por el revisor en `CasoSoporte::programarAviso` (Content-Length con el búfer de XAMPP). Sigue: commit y push del dueño, CI/MySQL 8, prueba manual (8 puntos) y etapa R (responsive) con Claude Code y el dueño.
+
+#### Entrega de Codex
+
+
+- **Escribe Codex; revisa Claude (arquitecto).** Versión preparada 2.2.0, sin esquema ni migraciones; rama actual release/v2.2.0. A.1–A.4, después A.5 completo de soporte y B cerrados; encargo/resultado y ocho pruebas manuales en `specs/pulido-interfaz.md`.
+- **Soporte:** avisos individuales privados después del commit y de responder, fallos sin cambiar el caso ni al titular; detalle con identidades existentes y cierre directo auditado. Sin SMTP real en pruebas. Tope público 40/IP/15 minutos, fechas/minigráfica/identidad/modal Zooki y respuesta inmediata.
+- **Decisión del dueño (2026-10-26): C queda fuera de P1.** Responsive completo en etapa separada por pantalla, supervisada por el dueño. Sin media queries ni distribución por ancho nuevas; solo ausencia de desborde en A/B a 1366/390. D pendiente; no se empieza P2.
+- **Verificación:** PHP sin host 1165/9351, 91 omitidas de motor; JS final 354/354; nueve vistas reales simuladas a ambos anchos, HTTP con correo falso lento y respuesta idéntica, sintaxis/diff correctos. Descargas regeneradas e índices Word actualizados fuera de OneDrive; PDF en muestra visual y DOCX ZIP/XML correctos. Vista final DOCX pendiente (LibreOffice ausente y muestra de Word no terminada). Sin .env, base de trabajo, correos reales ni operaciones Git de escritura.
+- **Sigue:** revisión de Claude, prueba del dueño, CI/MySQL 8 al push e integración/despliegue del dueño. Después, etapa C aparte y semillas de presentación solo en la copia de pruebas. Detalle y comandos en scratch/p1-entrega.md.
+
 ### Cierre de alcance y pulido final (2026-10-26)
 
 - **HU-4.7 cerrada en documentación (Claude):** RE-4.7.3 (tasa de ausentismo) ya lo cumple el indicador «no asistieron» del Inicio del administrador (RE-6.2.12, con prueba). HU-4.7 pasa a «Implementada (2.1.0)» en historias, requisitos y plan M4. Sin código, migración ni despliegue.
 - **Decisión del dueño:** no se empieza nada grande nuevo antes de la presentación. HU-4.10, HU-3.5, HU-5.7, HU-8.3 y HU-8.4 quedan planificadas y fuera de esta entrega.
-- **Sigue:** pulido de pantallas, interfaz y diseño responsive con la lista de [`pulido-interfaz.md`](../specs/pulido-interfaz.md) (unos 2 días, hasta el 27–28/10). Después, datos semilla realistas de todo el sistema para la presentación, cargados en la copia de pruebas y no en la base de producción. Luego, preparar la presentación.
+- **Sigue:** revisión de P1 (A/B) y prueba del dueño. C (responsive completo) se hará con él en una etapa aparte, pantalla por pantalla. Después, semillas de presentación solo en la copia de pruebas y preparación de la presentación.
 
 ### v2.1.0 en producción (2026-10-26)
 

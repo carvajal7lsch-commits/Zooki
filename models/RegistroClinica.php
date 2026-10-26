@@ -207,8 +207,8 @@ final class RegistroClinica
         // RN-010: solo se abre el caso; la resolución pertenece al panel de la etapa E.
         Transaccion::ejecutar($this->db, function () use ($clinica, $nit, $email): void {
             $this->contarRegistro(Auditoria::ipCliente(), 'reporte-nit', self::REPORTES_DIARIOS);
-            $this->db->prepare("INSERT INTO casos_soporte (tipo, id_clinica, descripcion) VALUES ('clinica_duplicada', ?, ?)")
-                ->execute([$clinica['id_clinica'], 'Reporte público de NIT ' . $nit . '. Contacto: ' . $email . '. IP: ' . Auditoria::ipCliente()]);
+            require_once __DIR__ . '/CasoSoporte.php';
+            (new CasoSoporte($this->db))->clinicaDuplicada((int) $clinica['id_clinica'], 'Reporte público de NIT ' . $nit . '. Contacto: ' . $email . '. IP: ' . Auditoria::ipCliente());
         });
     }
 

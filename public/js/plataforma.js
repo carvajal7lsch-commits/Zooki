@@ -59,7 +59,10 @@
     }
 
     function restaurarPestana() {
-        pestana(leer(CLAVE_PESTANA) || 'clinicas');
+        const desdeCorreo = window.location.hash === '#soporte';
+        pestana(desdeCorreo ? 'soporte' : (leer(CLAVE_PESTANA) || 'clinicas'));
+        // El enlace abre Soporte una vez; después las acciones conservan la pestaña elegida.
+        if (desdeCorreo) window.history?.replaceState(null, '', window.location.href.replace(/#soporte$/, ''));
     }
 
     function filtros() {
@@ -156,8 +159,7 @@
         try {
             const texto = confirmacion(form);
             if (texto) {
-                const respuesta = await Swal.fire({ target: form.closest('.users-modal') || document.body, title: 'Confirmar acción', text: texto, icon: 'warning', showCancelButton: true, confirmButtonText: 'Confirmar', cancelButtonText: 'Cancelar' });
-                if (!respuesta.isConfirmed) return;
+                if (!(await zookiConfirmarCorto(texto, 'Dar de baja'))) return;
             }
             boton.disabled = true;
             const respuesta = await fetch('index.php?action=' + form.dataset.plataformaAccion, { method: 'POST', body: new FormData(form) });

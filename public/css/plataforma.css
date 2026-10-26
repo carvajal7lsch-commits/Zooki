@@ -866,3 +866,8 @@
     flex-wrap: wrap;
     margin-top: .75rem;
 }
+
+/* HU-0.3: contacto legible también con correos largos. */
+.plataforma-caso__datos { overflow-wrap: anywhere; margin-bottom: 1rem; }
+.plataforma-caso__datos dt { font-weight: 600; margin-top: .75rem; }
+.plataforma-caso__datos dd { margin: 0; }

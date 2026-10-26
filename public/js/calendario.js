@@ -606,7 +606,8 @@ function manejarClicPanel(e) {
 async function postCita(accion, datos) {
     const cuerpo = new URLSearchParams(datos);
     if (comandosC3[accion]) cuerpo.set('clave_operacion', comandosC3[accion].clave(cuerpo));
-    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo });
+    // B.9: el botón ya indica la reprogramación; el velo global tapaba el resultado.
+    const res = await fetch(`index.php?action=${accion}`, { method: 'POST', body: cuerpo, sinLoader: accion === 'reprogramar_cita_ajax' });
     return res.json();
 }
 
@@ -654,17 +655,7 @@ async function confirmarCita(idCita) {
 
 // RN-408: el paciente no llegó. La cita se cierra y libera su espacio.
 async function marcarNoAsistio(idCita) {
-    const confirmacion = await Swal.fire({
-        title: '¿Marcar como no asistió?',
-        text: 'La cita quedará cerrada y su espacio en la agenda se libera.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#0052FF',
-        cancelButtonColor: '#64748B',
-        confirmButtonText: 'Sí, no asistió',
-        cancelButtonText: 'Volver'
-    });
-    if (!confirmacion.isConfirmed) return;
+    if (!(await zookiConfirmarCorto('La cita quedará cerrada y su espacio en la agenda se libera. ¿Marcar como no asistió?', 'Sí, no asistió', [], 'Volver'))) return;
 
     try {
         const r = await postCita('marcar_no_asistio_ajax', { id_cita: idCita });
@@ -677,17 +668,7 @@ async function marcarNoAsistio(idCita) {
 }
 
 async function cancelarCita(idCita) {
-    const confirmacion = await Swal.fire({
-        title: '¿Cancelar la cita?',
-        text: 'Se notificará al propietario. Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DC2626',
-        cancelButtonColor: '#64748B',
-        confirmButtonText: 'Sí, cancelar',
-        cancelButtonText: 'No, mantener'
-    });
-    if (!confirmacion.isConfirmed) return;
+    if (!(await zookiConfirmarCorto('¿Cancelar la cita? Se notificará al propietario y no se puede deshacer.', 'Cancelar cita', [], 'Mantener cita'))) return;
 
     try {
         const r = await postCita('cancelar_cita_ajax', { id_cita: idCita });

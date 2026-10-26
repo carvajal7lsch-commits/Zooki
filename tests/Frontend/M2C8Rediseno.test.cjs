@@ -75,7 +75,7 @@ function pacientes() {
     };
     contexto.window.document = documento;
     vm.createContext(contexto);
-    vm.runInContext(leer('public/js/medical-module.js'), contexto);
+    vm.runInContext(leer('public/js/fechas.js') + '\n' + leer('public/js/medical-module.js'), contexto);
     vm.runInContext(leer('public/js/propietario-mascota.js'), contexto);
     // El expediente se pinta con su función de siempre; aquí solo se observa qué mascotas recibe.
     const expedientes = [];

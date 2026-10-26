@@ -689,3 +689,6 @@ select.mascota-extra__control:focus,
     background: var(--bg-main);
     color: var(--text-primary);
 }
+/* HU-1.1: estado activo con la marca, también después de editar la mascota. */
+#modalNuevoRegistro .text-success,
+#modalEditarMascota .text-success { color: var(--z-primary) !important; }

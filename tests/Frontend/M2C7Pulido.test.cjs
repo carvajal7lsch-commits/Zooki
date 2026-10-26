@@ -19,7 +19,7 @@ function medical(fetch = async () => ({ json: async () => [] })) {
     const llamadas = { modales: [] };
     const contexto = { console, window: {}, document: documento, fetch, openModal: id => llamadas.modales.push(id) };
     vm.createContext(contexto);
-    vm.runInContext(leer('public/js/medical-module.js'), contexto);
+    vm.runInContext(leer('public/js/fechas.js') + '\n' + leer('public/js/medical-module.js'), contexto);
     // openModal es de medical-module; se observa sin cambiar lo demás.
     contexto.openModal = id => llamadas.modales.push(id);
     return { contexto, documento, llamadas };

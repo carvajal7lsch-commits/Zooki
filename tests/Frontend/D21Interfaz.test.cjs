@@ -258,7 +258,7 @@ function paginaUsuarios(usuario, responder = () => ({ success: true, usuario }))
             return { status: 200, json: async () => responder(url) };
         },
         zookiToast(texto, icono) { toasts.push({ texto, icono }); },
-        zookiConfirmar: async () => true,
+        zookiConfirmarCorto: async () => true,
         zookiRecargarConAviso(texto) { recargas.push(texto); },
     };
     vm.createContext(contexto);

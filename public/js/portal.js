@@ -605,7 +605,7 @@ async function verDetalle(id, opciones = {}) {
 
                 html += `
                 <div class="portal-timeline-item" data-id-clinica="${Number(h.id_clinica)}">
-                    <div class="portal-timeline-date">${formatFechaHora(h.fecha_hora)}</div>
+                    <div class="portal-timeline-date">${escapeHtml(fechaHistorial(h.fecha_hora))} · ${escapeHtml(String(h.fecha_hora || '').slice(11, 16))}</div>
                     <div class="portal-timeline-card accordion-card" role="button" tabindex="0" aria-expanded="false" data-ui-accion="acordeon-historia">
                         <div class="accordion-header">
                             <h3>${escapeHtml(h.motivo_consulta)}</h3>

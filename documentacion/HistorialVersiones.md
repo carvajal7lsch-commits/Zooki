@@ -1,12 +1,21 @@
 # Historial de Versiones — Proyecto Zooki
 
-> Registro de versiones (v1.0.0 → v2.1.0; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
+> Registro de versiones (v1.0.0 → v2.2.0; la v2.0 se publica por partes y su alcance lo fija el [ERS](ERS.md)), guía de la primera versión estable y esquema de versionamiento (**Zooki SemVer**). Se separó del README y de las intros de los demás documentos para mantener sus sinopsis cortas. · SENA ADSO — Ficha 3142784
 
 ## Historial de Versiones
 
 > _Las versiones hasta la 1.11.0 citan las historias con su identificador anterior (`HU-23`, `HU-42`…); su equivalencia con el actual está en el [apéndice de las Historias de Usuario](HistoriasUsuario.md#apéndice--equivalencia-de-identificadores-nuevo-anterior). Las reglas (RN) y los requisitos no funcionales (RNF) citados conservan su número._
 
-### Versión 2.1.0 (Actual)
+### Versión 2.2.0 (Actual)
+
+Pulido final P1, preparado el 26 de octubre de 2026; pendiente de revisión e integración. El dueño renombra la rama y realiza el despliegue.
+
+* **Registro de clínica:** 40 comprobaciones por IP en 15 minutos; el freno temporal se avisa de forma general, sin invalidar el campo, y se vuelve a comprobar al enviar (RE-T.13.2, RN-G15).
+* **Soporte de plataforma:** correo individual a super-administradores activos y verificados después del commit y de responder, sin identidad del titular; un fallo se registra y conserva el caso abierto. Detalle privado con solicitante y cuenta actual del documento cuando los datos existentes permiten identificarla; resolución o descarte con nota y toast (RE-0.3.4, RE-T.18.3, RN-G24). Sin esquema nuevo.
+* **Interfaz:** minigráfica en cero con línea base y meses, fechas del historial dd/mm/aaaa, tratamiento en singular, identidad compartida y confirmaciones graves con el modal de Zooki. Las acciones reversibles y sus actualizaciones no esperan al aviso.
+* **Alcance:** C (responsive completo) queda fuera de P1 por decisión del dueño del 26/10/2026. No se agregan media queries ni cambios de distribución por ancho; solo se comprueba desborde horizontal de A/B a 1366 y 390 px (RNF-16). D queda pendiente.
+
+### Versión 2.1.0
 
 Entrega preparada el 25 de octubre de 2026; el dueño revisa, integra y despliega.
 No cierra las otras historias pendientes de v2.1.

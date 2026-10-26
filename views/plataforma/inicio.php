@@ -171,34 +171,43 @@ $plan = $plan ?? '';
                     <span class="tag-mini plataforma-estado <?= $abierto ? 'plataforma-estado--activa' : '' ?>"><i class="bi <?= $abierto ? 'bi-envelope-open' : 'bi-check2-circle' ?>" aria-hidden="true"></i> <?= $e(ucfirst($caso['estado'])) ?></span>
                 </div>
                 <div class="card-body-mini">
-                    <h3 class="card-title-mini" title="Caso <?= (int) $caso['id_caso'] ?>">Caso <?= (int) $caso['id_caso'] ?> · <?= $e(ucfirst(str_replace('_', ' ', $caso['tipo']))) ?></h3>
+                    <h3 class="card-title-mini" title="Caso <?= (int) $caso['id_caso'] ?>">Caso <?= (int) $caso['id_caso'] ?> · <?= $e(CasoSoporte::tipoVisible($caso['tipo'])) ?></h3>
                     <div class="card-contact-mini">
                         <span class="contact-text-mini"><i class="bi bi-buildings" aria-hidden="true"></i> <span class="plataforma-recorte"><?= $e($caso['clinica'] ?? 'Sin clínica') ?></span></span>
                         <span class="contact-text-mini"><i class="bi bi-calendar3" aria-hidden="true"></i> <?= $e($p::fecha($caso['fecha'])) ?></span>
                     </div>
                     <p class="plataforma-tarjeta__texto"><?= $e($caso['descripcion']) ?></p>
                 </div>
-                <?php if ($abierto): ?>
                 <div class="card-footer-mini">
-                    <button type="button" class="plataforma-boton-mini" data-abrir-dialogo="casoModal<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Cerrar caso</button>
+                    <button type="button" class="plataforma-boton-mini" data-abrir-dialogo="casoModal<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Ver detalle</button>
                 </div>
-                <?php endif; ?>
             </article>
             <?php endforeach; ?>
         </div>
         <?php // Fuera de las tarjetas: su animación (transform) encerraría el fondo fijo del modal. ?>
         <?php foreach ($casos as $caso): ?>
-            <?php if ($caso['estado'] !== 'abierto') continue; ?>
+            <?php $abierto = $caso['estado'] === 'abierto'; ?>
             <div class="users-modal plataforma-dialogo" id="casoModal<?= (int) $caso['id_caso'] ?>" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="casoTitulo<?= (int) $caso['id_caso'] ?>">
                 <div class="modal-content users-modal__panel plataforma-modal plataforma-modal--angosto">
                     <div class="modal-header">
                         <div class="plataforma-modal__cabeza">
-                            <h3 id="casoTitulo<?= (int) $caso['id_caso'] ?>">Cerrar el caso <?= (int) $caso['id_caso'] ?></h3>
-                            <p class="plataforma-modal__datos"><?= $e(ucfirst(str_replace('_', ' ', $caso['tipo']))) ?><span class="plataforma-modal__separador" aria-hidden="true">·</span><?= $e($caso['clinica'] ?? 'Sin clínica') ?></p>
+                            <h3 id="casoTitulo<?= (int) $caso['id_caso'] ?>">Detalle del caso <?= (int) $caso['id_caso'] ?></h3>
+                            <p class="plataforma-modal__datos"><?= $e(CasoSoporte::tipoVisible($caso['tipo'])) ?><span class="plataforma-modal__separador" aria-hidden="true">·</span><?= $e($caso['clinica'] ?? 'Sin clínica') ?></p>
                         </div>
                         <button type="button" data-cerrar-dialogo class="close-modal" aria-label="Cerrar">×</button>
                     </div>
                     <div class="users-modal__body">
+                        <dl class="plataforma-caso__datos">
+                            <dt>Tipo</dt><dd><?= $e(CasoSoporte::tipoVisible($caso['tipo'])) ?></dd>
+                            <dt>Fecha</dt><dd><?= $e($p::fecha($caso['fecha'])) ?></dd>
+                            <dt>Cuenta que lo pidió</dt><dd><?= $e($caso['solicitante_nombre'] ?? 'No identificada') ?> · <?= $e($caso['solicitante_email'] ?? 'Sin correo disponible') ?><?php if ($caso['id_usuario'] !== null): ?> · Cuenta #<?= (int) $caso['id_usuario'] ?><?php endif; ?></dd>
+                            <?php if ($caso['tipo'] === 'documento_duplicado'): ?>
+                            <dt>Cuenta que actualmente tiene el documento</dt><dd><?php if ($caso['cuenta_documento'] !== null): ?><?= $e($caso['cuenta_documento']['nombre_completo'] ?? 'Sin nombre') ?> · <?= $e($caso['cuenta_documento']['email'] ?? 'Sin correo disponible') ?> · Cuenta #<?= (int) $caso['cuenta_documento']['id_usuario'] ?><?php else: ?>No se pudo identificar con los datos disponibles.<?php endif; ?></dd>
+                            <?php endif; ?>
+                            <dt>Descripción</dt><dd><?= $e($caso['descripcion']) ?></dd>
+                            <dt>Estado</dt><dd><?= $e(ucfirst($caso['estado'])) ?></dd>
+                        </dl>
+                        <?php if ($abierto): ?>
                         <form class="plataforma-form" id="casoForm<?= (int) $caso['id_caso'] ?>" data-plataforma-accion="plataforma_caso_ajax">
                             <?php Csrf::field(); ?><input type="hidden" name="id_caso" value="<?= (int) $caso['id_caso'] ?>">
                             <fieldset class="plataforma-grupo">
@@ -214,10 +223,13 @@ $plan = $plan ?? '';
                             </div>
                             <p class="plataforma-form__resultado" data-resultado role="status"></p>
                         </form>
+                        <?php endif; ?>
                     </div>
                     <div class="users-modal__footer">
                         <button type="button" class="btn-modal-secondary" data-cerrar-dialogo>Cancelar</button>
-                        <button type="submit" class="btn-modal-primary" form="casoForm<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Cerrar caso</button>
+                        <?php if ($abierto): ?>
+                        <button type="submit" class="btn-modal-primary" form="casoForm<?= (int) $caso['id_caso'] ?>"><i class="bi bi-check2-square" aria-hidden="true"></i> Guardar resultado</button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

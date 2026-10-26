@@ -65,6 +65,44 @@ function pagina(nombres, responder, ayudas = {}) {
 
 const respuesta = (datos = {}) => ({ ok: true, json: async () => ({ success: true, error: null, exists: false, ...datos }) });
 
+test('P1: el freno avisa sin invalidar el campo y se vuelve a consultar al enviar', async () => {
+    const p = pagina(['email'], (_, numero) => numero === 1
+        ? { ok: false, status: 429, json: async () => ({ success: false, message: 'Espera un momento.' }) }
+        : respuesta());
+    p.form.id = 'registroClinicaForm';
+    const avisos = [];
+    p.form.dispatchEvent = evento => avisos.push(evento.tipo);
+    p.campos[0].value = 'correo@zooki.test';
+    assert.equal(await p.api.comprobar(p.form, p.campos[0]), false);
+    assert.equal(p.campos[0].error, '');
+    assert.equal(p.campos[0].atributos['aria-invalid'], 'false');
+    assert.deepEqual(avisos, ['cuenta:limitada']);
+    await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() {} });
+    assert.equal(p.llamadas.length, 2);
+    for (const ejecutar of p.temporizadores) ejecutar();
+    assert.equal(p.form.enviado, true);
+    assert.equal(avisos.includes('cuenta:invalida'), false);
+});
+
+test('P1: si el freno continúa al enviar, no hay resumen de campos ni envío', async () => {
+    const p = pagina(['email'], () => ({ ok: false, status: 429, json: async () => ({ success: false }) }));
+    p.form.id = 'registroClinicaForm';
+    const avisos = [];
+    p.form.dispatchEvent = evento => avisos.push(evento.tipo);
+    p.campos[0].value = 'correo@zooki.test';
+    await p.eventos.submit({ preventDefault() {}, stopImmediatePropagation() {} });
+    assert.deepEqual(avisos, ['cuenta:limitada']);
+    assert.equal(p.campos[0].error, '');
+    assert.equal(p.form.enviado, undefined);
+});
+
+test('P1: otros formularios conservan su aviso previo si no cargan el resumen del registro de clínica', async () => {
+    const p = pagina(['email'], () => ({ ok: false, status: 429, json: async () => ({ success: false, message: 'Espera un momento antes de seguir comprobando.' }) }));
+    p.campos[0].value = 'correo@zooki.test';
+    assert.equal(await p.api.comprobar(p.form, p.campos[0]), false);
+    assert.equal(p.campos[0].error, 'Espera un momento antes de seguir comprobando.');
+});
+
 test('el rechazo de la política del servidor aparece junto al campo mientras se escribe', async () => {
     const p = pagina(['password'], () => respuesta({ error: 'La contraseña contiene tu nombre.' }));
     p.campos[0].value = 'Fabio#Seguro2026';

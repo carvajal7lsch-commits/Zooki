@@ -134,7 +134,7 @@ function pagina() {
             createElement: () => elemento(),
             getElementById: id => (id === 'gestionarClinica' ? dialogo : null),
         },
-        Swal: { fire: async opciones => { confirmaciones.push(opciones); return { isConfirmed: true }; } },
+        zookiConfirmarCorto: async (...opciones) => { confirmaciones.push(opciones); return true; },
         fetch: async (url, opciones) => {
             solicitudes.push([url, opciones]);
             return { ok: true, json: async () => ({ success: false, message: 'Rechazado en la prueba' }), text: async () => '' };
