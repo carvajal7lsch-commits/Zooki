@@ -61,6 +61,8 @@ Lee también `AGENTS.md` (reglas de código) y `agentes/metodo.md` §8. Esto res
 
 - Cortes: celular < 768 px, tableta 768–1023 px, escritorio ≥ 1024 px.
 - En el celular: una columna, filas de herramientas que se apilan, tablas que pasan a filas, acciones accesibles abajo y **sin desborde horizontal** (verificar 390 y 360 px).
+- **Nada de muchas tarjetas apiladas en el celular.** Se divide la pantalla en pestañas con el estilo de los pasos del registro (ícono o número en círculo, nombre y línea inferior azul en la activa), y cada pestaña cabe sin scroll si se puede.
+- Las acciones con formulario (pagar, agregar un medio, editar) pasan a **hojas inferiores** que se abren desde un botón o una fila con su estado; no ocupan la pantalla de forma fija.
 
 ## 8. Antes de entregar
 
