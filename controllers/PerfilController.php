@@ -161,28 +161,46 @@ class PerfilController
     }
 
     /**
+     * Datos de la cuenta en sesión que pinta la vista de la cuenta (HU-T.5): $perfil, $rolNombre,
+     * $cuentaGoogle, $pideActual y $cuenta. Los usan Mi perfil del veterinario y Ajustes del administrador.
+     */
+    public function datosVista(): ?array
+    {
+        $idUsuario = Contexto::idUsuario();
+        $perfil = $idUsuario !== null ? $this->usuario->buscarPorId($idUsuario) : null;
+        if (!$perfil) {
+            return null;
+        }
+        return [
+            'perfil' => $perfil,
+            'rolNombre' => Roles::nombre((int) Contexto::rolActivo()),
+            'cuentaGoogle' => (int) $perfil['tiene_google'] === 1 || ($_SESSION['login_method'] ?? 'password') === 'google',
+            // HU-39: sin contraseña (cuenta creada con Google, password NULL) no se pide la actual.
+            'pideActual' => (int) $perfil['tiene_password'] === 1,
+            'cuenta' => $this->resumenDeCuenta($idUsuario),
+        ];
+    }
+
+    /**
      * Panel "Mi perfil" del personal (HU-T.5 y HU-T.2): datos de la cuenta,
      * contacto editable y cambio de contraseña. Se pinta dentro del layout del
      * rol del contexto activo; el propietario tiene su perfil en el portal.
+     * Rediseño (2026-10-26): el administrador lo tiene dentro de Ajustes, en «Mi cuenta».
      */
     public function mostrar(): void
     {
-        $layouts = [Roles::ADMIN => 'admin', Roles::VETERINARIO => 'vet'];
         $idRol = (int) Contexto::rolActivo();
-        $idUsuario = Contexto::idUsuario();
-
-        $perfil = ($idUsuario !== null && isset($layouts[$idRol])) ? $this->usuario->buscarPorId($idUsuario) : null;
-        if (!$perfil) {
+        if ($idRol === Roles::ADMIN) {
+            header('Location: index.php?action=admin_configuracion#cuenta');
+            exit;
+        }
+        $datos = $idRol === Roles::VETERINARIO ? $this->datosVista() : null;
+        if ($datos === null) {
             header('Location: index.php?action=dashboard');
             exit;
         }
-
-        $rolNombre    = Roles::nombre($idRol);
-        $cuentaGoogle = (int) $perfil['tiene_google'] === 1 || ($_SESSION['login_method'] ?? 'password') === 'google';
-        // HU-39: sin contraseña (cuenta creada con Google, password NULL) no se pide la actual.
-        $pideActual   = (int) $perfil['tiene_password'] === 1;
-        $cuenta       = $this->resumenDeCuenta($idUsuario);
+        ['perfil' => $perfil, 'rolNombre' => $rolNombre, 'cuentaGoogle' => $cuentaGoogle, 'pideActual' => $pideActual, 'cuenta' => $cuenta] = $datos;
         $content_view = __DIR__ . '/../views/perfil/index.php';
-        require __DIR__ . '/../views/' . $layouts[$idRol] . '/layout.php';
+        require __DIR__ . '/../views/vet/layout.php';
     }
 }

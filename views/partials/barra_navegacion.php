@@ -7,13 +7,14 @@
  * Espera:
  *   $barraInicio  enlace del logo.
  *   $barraItems   lista de ['href', 'icono', 'titulo', 'corto', 'activo' => bool, 'principal' => bool].
+ *   $barraSalirEnPantalla  (opcional) true si una pantalla propia ofrece Cerrar sesión; el celular no lo repite.
  * Requiere dialogos-zooki.css/js para la hoja de «Más».
  */
 $__bh = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $__secundarios = array_values(array_filter($barraItems, static fn (array $item): bool => empty($item['principal'])));
 $__masActivo = (bool) array_filter($__secundarios, static fn (array $item): bool => !empty($item['activo']));
 ?>
-<nav class="pill-sidebar pill-sidebar--etiquetas<?= $__secundarios ? ' pill-sidebar--con-mas' : '' ?>" aria-label="Menú principal">
+<nav class="pill-sidebar pill-sidebar--etiquetas<?= $__secundarios ? ' pill-sidebar--con-mas' : '' ?><?= !empty($barraSalirEnPantalla) ? ' pill-sidebar--sin-salir' : '' ?>" aria-label="Menú principal">
     <a href="<?= $__bh($barraInicio) ?>" class="pill-logo" title="Ir al inicio">
         <img src="img/icon_blue.png" alt="Zooki" class="pill-logo-img">
     </a>

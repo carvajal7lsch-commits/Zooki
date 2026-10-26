@@ -17,10 +17,19 @@ final class ConfiguracionClinicaController
         $this->configuracion = new ConfiguracionClinica($this->db);
     }
 
+    /** Rediseño (2026-10-26): «Ajustes» reúne la configuración de la clínica y la cuenta del administrador. */
     public function vista(): void
     {
+        require_once __DIR__ . '/PerfilController.php';
+        $datosCuenta = (new PerfilController($this->db))->datosVista();
+        if ($datosCuenta === null) {
+            header('Location: index.php?action=dashboard');
+            exit;
+        }
+        ['perfil' => $perfil, 'rolNombre' => $rolNombre, 'cuentaGoogle' => $cuentaGoogle, 'pideActual' => $pideActual, 'cuenta' => $cuenta] = $datosCuenta;
         $configuracion = $this->configuracion->leer();
         $planSuscripcion = $this->planEfectivo();
+        $encabezadoPagina = ['titulo' => 'Ajustes', 'subtitulo' => 'La clínica y tu cuenta'];
         $content_view = __DIR__ . '/../views/admin/configuracion.php';
         require __DIR__ . '/../views/admin/layout.php';
     }

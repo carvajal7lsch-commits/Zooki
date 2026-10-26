@@ -9,18 +9,49 @@ $reglas = ['nombreMin' => ValidadorClinica::NOMBRE_MIN, 'nombreMax' => Validador
     'telefonoMax' => ValidadorTelefono::MAX, 'correoMax' => ValidadorCuenta::CORREO_MAX,
     'enteroMax' => ValidadorConfiguracionClinica::ENTERO_MAX, 'caracteresTexto' => ValidadorClinica::TEXTO_CARACTERES];
 $marca = $configuracion['marca'];
+$partesNombre = array_values(array_filter(explode(' ', trim($perfil['nombre_completo'] ?? ''))));
+$iniciales = mb_strtoupper(mb_substr($partesNombre[0] ?? '', 0, 1) . mb_substr($partesNombre[1] ?? '', 0, 1)) ?: 'A';
+$esVetPerfil = false;
 $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 'telefono_urgencias' => 'Teléfono de urgencias', 'email_contacto' => 'Correo de contacto', 'direccion' => 'Dirección', 'url_logo' => 'URL o ruta del logo'];
 ?>
-<?php // Pulido de interfaz (2026-10-21): la configuración en tres pestañas y los formularios en ventanas, para no apilar todo en un solo scroll. ?>
-<?php // Rediseño (2026-10-26): Suscripción es otra pantalla; se entra junto a las pestañas y su botón vuelve aquí. ?>
-<div class="config-tabs-fila">
-<nav class="config-tabs" role="tablist" aria-label="Secciones de configuración" data-config-tabs>
-    <button type="button" role="tab" class="config-tabs__tab" id="config-tab-clinica" aria-controls="config-clinica" aria-selected="true" data-config-tab="clinica"><i class="fas fa-hospital" aria-hidden="true"></i> Clínica</button>
-    <button type="button" role="tab" class="config-tabs__tab" id="config-tab-horarios" aria-controls="config-horarios" aria-selected="false" tabindex="-1" data-config-tab="horarios"><i class="fas fa-clock" aria-hidden="true"></i> Horarios</button>
-    <button type="button" role="tab" class="config-tabs__tab" id="config-tab-ausencias" aria-controls="config-ausencias" aria-selected="false" tabindex="-1" data-config-tab="ausencias"><i class="fas fa-calendar-times" aria-hidden="true"></i> Ausencias y cierres</button>
-</nav>
-<a class="config-tabs__enlace" href="index.php?action=admin_suscripcion&amp;desde=configuracion"><i class="fas fa-crown" aria-hidden="true"></i> Suscripción<?php if (!empty($planSuscripcion)): ?> <span class="config-tabs__plan"><?= $e($planSuscripcion) ?></span><?php endif; ?></a>
-</div>
+<?php // Pulido de interfaz (2026-10-21): la configuración en pestañas y los formularios en ventanas, para no apilar todo en un solo scroll. ?>
+<?php // Rediseño (2026-10-26): «Ajustes» reúne Configuración y Mi perfil del administrador en una hoja con menú lateral blanco. ?>
+<?php // En el celular el menú es una lista agrupada y cada sección se abre con «← Ajustes» (public/js/ajustes.js). ?>
+<div class="perfil-secciones ajustes" data-perfil-secciones data-ajustes>
+    <aside class="perfil-lateral ajustes-lateral">
+        <div class="ajustes-identidad">
+            <span class="ajustes-identidad__avatar" aria-hidden="true"><?= $e($iniciales) ?></span>
+            <div class="ajustes-identidad__texto">
+                <p class="ajustes-identidad__nombre"><?= $e($perfil['nombre_completo']) ?></p>
+                <p class="ajustes-identidad__rol"><?= $e($rolNombre) ?> · <?= $e($marca['nombre']) ?></p>
+            </div>
+        </div>
+        <nav class="ajustes-menu" data-config-tabs aria-label="Secciones de Ajustes" aria-orientation="vertical">
+            <p class="ajustes-menu__grupo" id="ajustesGrupoClinica">La clínica</p>
+            <div class="ajustes-menu__caja">
+            <div class="ajustes-menu__lista" role="tablist" aria-labelledby="ajustesGrupoClinica" aria-orientation="vertical">
+                <button type="button" role="tab" class="ajustes-menu__item" id="config-tab-clinica" aria-controls="config-clinica" aria-selected="true" data-config-tab="clinica"><i class="fas fa-hospital" aria-hidden="true"></i><span>Datos de la clínica</span><i class="fas fa-chevron-right ajustes-menu__flecha" aria-hidden="true"></i></button>
+                <button type="button" role="tab" class="ajustes-menu__item" id="config-tab-horarios" aria-controls="config-horarios" aria-selected="false" tabindex="-1" data-config-tab="horarios"><i class="fas fa-clock" aria-hidden="true"></i><span>Horarios</span><i class="fas fa-chevron-right ajustes-menu__flecha" aria-hidden="true"></i></button>
+                <button type="button" role="tab" class="ajustes-menu__item" id="config-tab-ausencias" aria-controls="config-ausencias" aria-selected="false" tabindex="-1" data-config-tab="ausencias"><i class="fas fa-calendar-times" aria-hidden="true"></i><span>Ausencias y cierres</span><i class="fas fa-chevron-right ajustes-menu__flecha" aria-hidden="true"></i></button>
+            </div>
+            <?php // Suscripción es su propia pantalla; su botón vuelve aquí con «← Ajustes». ?>
+            <a class="ajustes-menu__item ajustes-menu__item--enlace" href="index.php?action=admin_suscripcion&amp;desde=configuracion"><i class="fas fa-crown" aria-hidden="true"></i><span>Suscripción</span><?php if (!empty($planSuscripcion)): ?><span class="ajustes-menu__plan"><?= $e($planSuscripcion) ?></span><?php endif; ?><i class="fas fa-chevron-right ajustes-menu__flecha" aria-hidden="true"></i></a>
+            </div>
+            <p class="ajustes-menu__grupo" id="ajustesGrupoCuenta">Mi cuenta</p>
+            <div class="ajustes-menu__caja">
+            <div class="ajustes-menu__lista" role="tablist" aria-labelledby="ajustesGrupoCuenta" aria-orientation="vertical">
+                <button type="button" role="tab" class="ajustes-menu__item" id="perfilTabCuenta" aria-controls="perfilCuenta" aria-selected="false" tabindex="-1" data-config-tab="cuenta"><i class="fas fa-user" aria-hidden="true"></i><span>Mi cuenta</span><i class="fas fa-chevron-right ajustes-menu__flecha" aria-hidden="true"></i></button>
+                <button type="button" role="tab" class="ajustes-menu__item" id="perfilTabSeguridad" aria-controls="seguridad" aria-selected="false" tabindex="-1" data-config-tab="seguridad"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Seguridad</span><i class="fas fa-chevron-right ajustes-menu__flecha" aria-hidden="true"></i></button>
+            </div>
+            </div>
+        </nav>
+        <a href="index.php?action=logout" class="ajustes-salir"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar sesión</a>
+    </aside>
+    <div class="perfil-contenido ajustes-contenido">
+        <div class="ajustes-seccion">
+            <button type="button" class="ajustes-seccion__volver" data-ajustes-volver><i class="fas fa-arrow-left" aria-hidden="true"></i> Ajustes</button>
+            <h2 class="ajustes-seccion__titulo" data-ajustes-titulo>Datos de la clínica</h2>
+        </div>
 <div class="configuracion-clinica" id="config-clinica" role="tabpanel" aria-labelledby="config-tab-clinica" data-config-panel="clinica" data-configuracion-clinica data-reglas="<?= $e(json_encode($reglas)) ?>" data-tipos="<?= $e(json_encode($configuracion['tipos'])) ?>">
     <section class="horarios-card config-marca" aria-labelledby="marcaTitulo">
         <header class="horarios-card__head">
@@ -127,6 +158,13 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
 </div>
 <script src="js/configuracion-clinica.js?v=<?= $e(App::assetVersion()) ?>" defer></script>
 <script src="js/dialogos-zooki.js?v=<?= $e(App::assetVersion()) ?>" defer></script>
-
 <?php require __DIR__ . '/../partials/coordinacion_horarios.php'; ?>
 </div>
+        <div class="perfil ajustes-cuenta">
+            <?php require __DIR__ . '/../perfil/paneles_cuenta.php'; ?>
+        </div>
+    </div>
+</div>
+<?php // Sin defer: ajustes.js lee la sección pedida en la dirección antes de que dialogos-zooki.js (diferido) escriba la primera. ?>
+<script src="js/ajustes.js?v=<?= $e(App::assetVersion()) ?>"></script>
+<script src="js/perfil.js?v=<?= $e(App::assetVersion()) ?>" defer></script>

@@ -8,7 +8,9 @@
 (function () {
     // HU-T.5: presentación local; no cambia lecturas, permisos ni formularios.
     const presentacion = document.querySelector?.('[data-perfil-secciones]');
-    if (presentacion) {
+    // Rediseño (2026-10-26): en Ajustes del administrador el menú y Cerrar sesión los maneja ajustes.js.
+    const enAjustes = !!presentacion && presentacion.hasAttribute('data-ajustes');
+    if (presentacion && !enAjustes) {
         const salida = presentacion.querySelector('.perfil-salir');
         const lateral = presentacion.querySelector('.perfil-lateral');
         const seguridad = document.getElementById('seguridad');
@@ -19,6 +21,8 @@
         };
         movil.addEventListener('change', situarSalida);
         situarSalida();
+    }
+    if (presentacion) {
         const eventos = Array.from(presentacion.querySelectorAll('#perfilActividad .perfil-evento'));
         const anterior = presentacion.querySelector('[data-actividad-anterior]');
         const siguiente = presentacion.querySelector('[data-actividad-siguiente]');
@@ -35,6 +39,7 @@
         siguiente?.addEventListener('click', () => paginar(1));
         presentacion.addEventListener('horario-trabajo:actualizado', evento => {
             const lista = presentacion.querySelector('[data-resumen-semana]');
+            if (!lista) return;
             lista.replaceChildren();
             ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].forEach((dia, indice) => {
                 const item = document.createElement('li');
@@ -48,11 +53,13 @@
             });
         });
         presentacion.addEventListener('ausencias:actualizadas', evento => {
+            const resumen = presentacion.querySelector('[data-resumen-ausencia]');
+            if (!resumen) return;
             const proxima = evento.detail.filter(a => !['rechazada', 'anulada'].includes(a.estado) && Date.parse(String(a.fecha_hora_fin).replace(' ', 'T') + '-05:00') >= Date.now()).sort((a, b) => String(a.fecha_hora_inicio).localeCompare(String(b.fecha_hora_inicio)))[0];
-            presentacion.querySelector('[data-resumen-ausencia]').textContent = proxima ? proxima.fecha_hora_inicio + ' · ' + proxima.estado : 'Sin ausencias';
+            resumen.textContent = proxima ? proxima.fecha_hora_inicio + ' · ' + proxima.estado : 'Sin ausencias';
         });
         const coordinacion = presentacion.querySelector('[data-coordinacion-horarios]');
-        if (coordinacion) {
+        if (coordinacion && !enAjustes) {
             const afectadas = coordinacion.querySelector('[data-afectadas]');
             const tarjetaAfectadas = afectadas.closest('.coord-card');
             const cierres = coordinacion.querySelector('[data-cierres]').closest('.coord-card');

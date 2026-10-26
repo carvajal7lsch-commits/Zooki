@@ -20,6 +20,7 @@ Lee también `AGENTS.md` (reglas de código) y `agentes/metodo.md` §8. Esto res
 - Letra **Inter**. Azul de marca **#0052FF** (`--z-primary`), fondo de la aplicación **#E9ECF5**, superficies blancas.
 - Colores solo con las variables `--z-*` de `public/css/identidad.css` (o las `--in-*` del Inicio en sus pantallas). Nada de colores sueltos ni azules viejos (`#146b9b`, `#183b56`).
 - **Rojo y ámbar son semánticos:** rojo para error o bloqueo, ámbar para advertencia o pendiente. El estado positivo va en azul suave, no en verde, salvo donde el Inicio ya lo usa (propuesta pendiente de confirmar por el dueño).
+- **Nada de paneles enteros en azul.** El azul marca lo activo o lo principal (avatar, botón, ítem seleccionado en azul suave), no rellena menús ni columnas: el dueño rechazó el menú lateral azul de Ajustes (2026-10-26) y se hizo blanco.
 - Tarjetas: radio 16–22 px, borde `--z-border` o sombra suave `--z-shadow-sm`; nunca las dos fuertes a la vez.
 - Iconos de Font Awesome, como el resto de la plataforma; nada de emojis.
 
@@ -62,6 +63,7 @@ Lee también `AGENTS.md` (reglas de código) y `agentes/metodo.md` §8. Esto res
 - Cortes: celular < 768 px, tableta 768–1023 px, escritorio ≥ 1024 px.
 - En el celular: una columna, filas de herramientas que se apilan, tablas que pasan a filas, acciones accesibles abajo y **sin desborde horizontal** (verificar 390 y 360 px).
 - **Nada de muchas tarjetas apiladas en el celular.** Se divide la pantalla en pestañas con el estilo de los pasos del registro (ícono o número en círculo, nombre y línea inferior azul en la activa), y cada pestaña cabe sin scroll si se puede.
+- **Pantallas con menú lateral** (como Ajustes): en el celular el menú es una lista agrupada estilo ajustes del teléfono y cada fila abre su sección con «← <pantalla>».
 - Las acciones con formulario (pagar, agregar un medio, editar) pasan a **hojas inferiores** que se abren desde un botón o una fila con su estado; no ocupan la pantalla de forma fija.
 
 ## 8. Antes de entregar

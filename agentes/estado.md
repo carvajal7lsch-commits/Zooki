@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Etapa C — Ajustes del administrador: entregada, pendiente de revisión (2026-10-26)
+
+- **Escribió Claude Code (nube) con mockup aprobado por el dueño** (menú lateral blanco en vez del azul); rama `claude/ajustes-admin`, sobre `claude/suscripcion-rediseno`. Configuración y Mi perfil del administrador en una pantalla «Ajustes»; barra del celular con cinco destinos sin «Más» y Cerrar sesión dentro de Ajustes. El veterinario conserva su Mi perfil.
+- **Verificación:** PHP sin host 1165/9353 (91 omitidas); JS 362/362; capturas en `specs/referencias/ajustes/`. Detalle y prueba manual (5 puntos) en `specs/pulido-interfaz.md` («Etapa C — Ajustes…»).
+- **Pendiente:** revisión, CI/MySQL 8, prueba del dueño y merge de ambas ramas.
+
 ### Etapa C — Suscripción rediseñada: entregada, pendiente de revisión (2026-10-26)
 
 - **Escribió Claude Code (nube) con el dueño aprobando mockups**; rama `claude/suscripcion-rediseno`. Suscripción v2 con pestañas «Mi plan» e «Historial de pagos» en todos los anchos (sin scroll en 1366×768), pagar y medio de pago en ventanas (hojas en el celular), entrada desde Configuración con volver según el origen, barra del celular con nombres y «Más», y pago de Wompi a pantalla completa. Skill nueva `.claude/skills/zooki-interfaz` con los criterios de diseño del dueño.

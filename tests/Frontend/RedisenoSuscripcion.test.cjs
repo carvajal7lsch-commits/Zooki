@@ -1,4 +1,4 @@
-/** Rediseño de Suscripción, entrada desde Configuración y barra con nombres (aprobado 2026-10-26). */
+/** Rediseño de Suscripción, entrada desde Ajustes y barra con nombres (aprobado 2026-10-26). */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -26,25 +26,25 @@ test('la vista conserva los ganchos de pago y no lleva estilos ni scripts en lí
     for (const variable of css.matchAll(/var\((--z-[\w-]+)/g)) assert.ok(identidad.includes(variable[1] + ':'), variable[1]);
 });
 
-test('volver dice a dónde vuelve: Inicio por defecto y Configuración si se entró desde allí; la paginación conserva el origen', () => {
+test('volver dice a dónde vuelve: Inicio por defecto y Ajustes si se entró desde allí; la paginación conserva el origen', () => {
     const desdeInicio = vista('historial');
     assert.match(desdeInicio, /class="encabezado-pagina__volver" href="index\.php\?action=admin_panel"[\s\S]*?>Inicio</);
     const desdeConfiguracion = vista('historial', 'configuracion');
-    assert.match(desdeConfiguracion, /class="encabezado-pagina__volver" href="index\.php\?action=admin_configuracion"[\s\S]*?>Configuración</);
+    assert.match(desdeConfiguracion, /class="encabezado-pagina__volver" href="index\.php\?action=admin_configuracion"[\s\S]*?>Ajustes</);
     assert.match(desdeConfiguracion, /<h1 class="encabezado-pagina__titulo">Suscripción<\/h1>/);
     assert.equal((desdeConfiguracion.match(/<h1\b/g) || []).length, 1, 'Un solo título por pantalla');
     assert.match(vista('historial', '<script>'), /class="encabezado-pagina__volver" href="index\.php\?action=admin_panel"/, 'Un origen desconocido vuelve al Inicio');
     assert.match(leer('views/admin/suscripcion.php'), /'desde' => \$origenSuscripcion/);
-    assert.match(leer('views/admin/configuracion.php'), /class="config-tabs__enlace" href="index\.php\?action=admin_suscripcion&amp;desde=configuracion"/);
+    assert.match(leer('views/admin/configuracion.php'), /class="ajustes-menu__item ajustes-menu__item--enlace" href="index\.php\?action=admin_suscripcion&amp;desde=configuracion"/);
 });
 
-test('barra: el administrador lleva Auditoría y Mi perfil a «Más»; el veterinario cabe sin «Más» y conserva Salir', () => {
+test('barra: el administrador tiene cinco destinos sin «Más» y Cerrar sesión en Ajustes; el veterinario cabe sin «Más» y conserva Salir', () => {
     const admin = vista('historial');
-    assert.match(admin, /class="pill-sidebar pill-sidebar--etiquetas pill-sidebar--con-mas"/);
-    assert.match(admin, /pill-nav-item--secundario" href="index\.php\?action=admin_auditoria"/);
-    assert.match(admin, /pill-nav-item--secundario" href="index\.php\?action=mi_perfil"/);
-    assert.match(admin, /class="pill-nav-item active" href="index\.php\?action=admin_configuracion"[^>]*aria-current="page"/, 'Suscripción vive en Configuración');
-    assert.match(admin, /<dialog class="zk-dialogo barra-mas" id="barraNavegacionMas"[\s\S]*admin_auditoria[\s\S]*mi_perfil[\s\S]*Cerrar sesión/);
+    assert.match(admin, /class="pill-sidebar pill-sidebar--etiquetas pill-sidebar--sin-salir"/);
+    assert.doesNotMatch(admin, /pill-nav-item--secundario|barraNavegacionMas|action=mi_perfil/);
+    assert.match(admin, /href="index\.php\?action=admin_auditoria"/);
+    assert.match(admin, /class="pill-nav-item active" href="index\.php\?action=admin_configuracion"[^>]*aria-label="Ajustes" aria-current="page"/, 'Suscripción vive en Ajustes');
+    assert.match(admin, /class="header-user" href="index\.php\?action=admin_configuracion#cuenta"/);
     const vet = execFileSync(php, ['tests/Frontend/apoyo/c81-vistas.php', 'vet_pacientes'], { cwd: RAIZ, encoding: 'utf8' });
     assert.doesNotMatch(vet, /pill-sidebar--con-mas|barraNavegacionMas/);
     assert.match(vet, /class="pill-logout"[\s\S]*?>Salir</);
@@ -103,10 +103,8 @@ test('Chrome (v2): pestañas en todos los anchos, ventana «Pagar o renovar», t
             const visibles = [...document.querySelectorAll('.pill-sidebar :is(.pill-nav-item, .pill-logout)')].filter(n => getComputedStyle(n).display !== 'none');
             return { textos: visibles.map(n => n.textContent.trim()), dentro: visibles.every(n => { const r = n.getBoundingClientRect(); return r.left >= barra.left - 1 && r.right <= barra.right + 1; }) };
         })()`);
-        assert.deepEqual(barra.textos, ['Inicio', 'Usuarios', 'Citas', 'Ajustes', 'Más']);
+        assert.deepEqual(barra.textos, ['Inicio', 'Usuarios', 'Citas', 'Auditoría', 'Ajustes']);
         assert.equal(barra.dentro, true);
-        await nav.evaluar("document.querySelector('.pill-nav-mas').click(); true");
-        await nav.esperar("document.getElementById('barraNavegacionMas').open");
 
         await nav.enviar('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
         await nav.enviar('Page.reload');
@@ -117,8 +115,7 @@ test('Chrome (v2): pestañas en todos los anchos, ventana «Pagar o renovar», t
         await nav.evaluar("document.querySelector('[data-suscripcion-pestana=plan]').click(); true");
         assert.equal(await nav.evaluar(visible('.suscripcion__plan')), true);
         assert.equal(await nav.evaluar('document.documentElement.scrollHeight <= innerHeight + 1'), true, 'Mi plan sin scroll en 1366×768');
-        assert.equal(await nav.evaluar(visible('.pill-nav-mas')), false, 'La barra lateral de escritorio no cambia');
-        assert.equal(await nav.evaluar(visible('.pill-nav-item--secundario')), true);
+        assert.equal(await nav.evaluar(visible('.pill-logout')), true, 'En escritorio la barra lateral conserva Salir');
         assert.deepEqual(nav.errores, []);
     } finally {
         await nav.cerrar();

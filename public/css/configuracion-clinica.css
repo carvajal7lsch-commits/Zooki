@@ -1,5 +1,4 @@
-/* HU-7.4 + pulido de interfaz (2026-10-21): pestañas, tarjetas compactas y formularios en ventana. */
-.config-tabs,
+/* HU-7.4 + pulido de interfaz (2026-10-21): tarjetas compactas y formularios en ventana. */
 .configuracion-clinica,
 .coordinacion {
     --hr-primary: var(--primary, #0052FF);
@@ -15,62 +14,7 @@
     --hr-error-bg: #FEF3F2;
 }
 
-/* ── Pestañas de la página ── */
-.config-tabs {
-    display: inline-flex;
-    gap: 4px;
-    max-width: 100%;
-    margin-bottom: 20px;
-    padding: 4px;
-    border-radius: 12px;
-    background: var(--hr-surface);
-    border: 1px solid var(--hr-border);
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-.config-tabs::-webkit-scrollbar { display: none; }
-/* Rediseño (2026-10-26): entrada a Suscripción junto a las pestañas, con el plan en un chip. */
-.config-tabs-fila { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-bottom: 20px; }
-.config-tabs-fila .config-tabs { margin-bottom: 0; }
-.config-tabs__enlace {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 50px;
-    padding: 0 12px 0 16px;
-    box-sizing: border-box;
-    border: 1px solid var(--z-border);
-    border-radius: 12px;
-    background: var(--z-surface);
-    color: var(--z-text-secondary);
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-decoration: none;
-}
-.config-tabs__enlace:hover { border-color: var(--z-primary); color: var(--z-primary); }
-.config-tabs__enlace:focus-visible { outline: 2px solid var(--z-primary); outline-offset: 2px; }
-.config-tabs__plan { padding: 2px 8px; border-radius: 999px; background: var(--z-primary-soft); color: var(--z-primary); font-size: 0.7rem; font-weight: 700; }
-.config-tabs__tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    flex: 0 0 auto;
-    min-height: 40px;
-    padding: 0 16px;
-    border: 0;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--hr-text-2);
-    font: inherit;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-.config-tabs__tab[aria-selected="true"] {
-    background: var(--hr-primary-soft);
-    color: var(--hr-primary);
-}
-.config-tabs__tab:focus-visible { outline: 2px solid var(--hr-primary); outline-offset: 2px; }
+/* Rediseño (2026-10-26): las pestañas viven en el menú de Ajustes (ajustes.css). */
 [data-config-panel][hidden] { display: none !important; }
 
 /* ── Pestaña Clínica: dos tarjetas lado a lado ── */
@@ -242,11 +186,6 @@
     .configuracion-clinica { grid-template-columns: 1fr; }
 }
 @media (max-width: 767px) {
-    .config-tabs { display: flex; margin-bottom: 16px; }
-    .config-tabs-fila { margin-bottom: 16px; }
-    .config-tabs-fila .config-tabs { flex: 1 1 100%; }
-    .config-tabs__enlace { flex: 1 1 100%; min-height: 44px; }
-    .config-tabs__tab { padding: 0 12px; }
     .configuracion-campos { grid-template-columns: 1fr; }
     .config-marca__vista { flex-direction: column; gap: 12px; }
     .config-marca__logo { flex-basis: auto; width: 44px; height: 44px; font-size: 1.1rem; }

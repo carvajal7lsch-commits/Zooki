@@ -446,3 +446,18 @@ Al revisar la primera versión, el dueño vio las cuatro secciones demasiado jun
 - **Verificación:** PHP sin host 1165/9352 (91 omitidas); JS 358/358. `RedisenoSuscripcion` comprueba ahora pestañas en escritorio, ventanas, `#historial` y que Mi plan e Historial caben **sin scroll en 1366×768**; el arnés de capturas lo exige en cada escenario salvo gracia (que suma su aviso). Capturas regeneradas en `specs/referencias/rediseno-suscripcion/`.
 - **Prueba manual (reemplaza el punto 4 de arriba):** en escritorio y celular, cambiar de pestaña, paginar el historial y volver a la misma pestaña; abrir y cerrar «Pagar o renovar» y «Medio de pago» (X, fondo y Esc).
 
+## Etapa C — Ajustes del administrador: Configuración y Mi perfil en una pantalla (2026-10-26)
+
+**Decisión del dueño:** Configuración y Mi perfil del administrador son lo mismo («ajustes»), así que se unen. Mockup aprobado con un cambio: el menú lateral **blanco**, no el panel azul de Mi perfil. El veterinario conserva su Mi perfil.
+
+- **Escritorio:** una hoja con menú lateral blanco (identidad arriba con avatar azul; grupos «La clínica» y «Mi cuenta»; la sección activa con fondo azul suave) y la sección al lado. La clínica: Datos de la clínica, Horarios, Ausencias y cierres y Suscripción (enlace con el plan; su pantalla vuelve con «← Ajustes»). Mi cuenta: Mi cuenta y Seguridad, con los mismos formularios de Mi perfil. Cerrar sesión al pie del menú. Cada sección cabe sin scroll de página en 1366×768; lo largo (horarios) se desplaza dentro de la hoja. En Horarios el resumen semanal pasa debajo de la tabla cuando la sección es angosta (consulta de contenedor).
+- **Celular y tableta (< 1024 px):** Ajustes abre una lista agrupada; tocar una fila abre la sección con «← Ajustes» y su título (sin repetir el de la página). La barra inferior queda con cinco destinos y sin «Más»: Inicio, Usuarios, Citas, Auditoría y Ajustes. Cerrar sesión pasa al final de Ajustes. Un enlace con sección (`#horarios`, `#ausencias`, `#cuenta`) la abre directo; volver a la lista quita la sección de la dirección.
+- **Rutas y permisos sin cambios:** `admin_configuracion` pinta Ajustes con los datos de la cuenta (`PerfilController::datosVista()`); `mi_perfil` del administrador redirige a `admin_configuracion#cuenta`. Los paneles de cuenta salieron a `views/perfil/paneles_cuenta.php`, que comparten ambas vistas. Se retiraron los estilos de las pestañas viejas de Configuración.
+- **Verificación:** PHP sin host 1165/9353 (91 omitidas); JS 362/362. `AjustesAdmin` comprueba estructura, redirección, variables `--z-*` y en Chrome: cinco secciones sin scroll en 1366×768 con menú blanco; a 390 lista, sección con «← Ajustes», barra de cinco y `#cuenta` directo. Capturas en `specs/referencias/ajustes/`.
+- **Prueba manual (máximo cinco comprobaciones):**
+  1. Escritorio: recorrer las cinco secciones de Ajustes; ninguna deja scroll de página.
+  2. Abrir Suscripción desde Ajustes y volver con «← Ajustes».
+  3. Celular: Ajustes abre la lista; entrar a una sección y volver; Cerrar sesión al final.
+  4. Desde el Inicio, «Revisar» ausencias u horarios abre esa sección directo.
+  5. El avatar del encabezado y un enlace viejo a `mi_perfil` llevan a Ajustes › Mi cuenta; el veterinario sigue con su Mi perfil.
+
