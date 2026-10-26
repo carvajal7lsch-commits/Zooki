@@ -5,6 +5,13 @@ final class FirmaWompi
 {
     public const EVENTO_MAX_BYTES = 65536;
     public const PROPIEDADES_MAX = 64;
+    public const ID_MAX = 128;
+    public const ID_PATRON = '[a-zA-Z0-9_\-]{1,128}';
+
+    public static function idValido(mixed $id): bool
+    {
+        return is_string($id) && preg_match('/^' . self::ID_PATRON . '$/D', $id) === 1;
+    }
 
     public static function integridad(string $referencia, int $centavos, string $moneda, string $secreto, string $expiracion = ''): string
     {
@@ -57,7 +64,7 @@ final class FirmaWompi
             throw new UnexpectedValueException('Firma inválida.');
         }
         $id = $evento['data']['transaction']['id'] ?? '';
-        if ($evento['event'] === 'transaction.updated' && (!is_string($id) || !preg_match('/^[a-zA-Z0-9_-]{1,128}$/D', $id)
+        if ($evento['event'] === 'transaction.updated' && (!self::idValido($id)
             || !in_array('transaction.id', $propiedades, true))) {
             throw new InvalidArgumentException('El identificador debe estar firmado.');
         }

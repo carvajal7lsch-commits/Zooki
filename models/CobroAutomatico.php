@@ -68,9 +68,12 @@ final class CobroAutomatico
             $tarifa = TarifaSuscripcion::calcular($s->profesional(), 'mensual');
             if ((int) $fuente['importe_mensual_autorizado_centavos'] !== $tarifa['total_centavos']
                 || $fuente['version_autorizacion'] !== AutorizacionCobro::VERSION || !hash_equals($fuente['version_contratos'], $contratos['version'])) {
-                $this->db->prepare('UPDATE suscripciones SET cobro_automatico=0,retirado_en=? WHERE id_clinica=? AND id_suscripcion=?')
-                    ->execute([$s->ahora()->format('Y-m-d H:i:s'), $clinica, $contrato['id_suscripcion']]);
-                $s->auditar('suscripciones', (int) $contrato['id_suscripcion'], ['automatico' => true], ['automatico' => false, 'requiere_aceptacion' => true], 'Importe o condiciones cambiaron (RE-0.5.26)');
+                $precioCambio = (int) $fuente['importe_mensual_autorizado_centavos'] !== $tarifa['total_centavos'];
+                $condicionesCambio = $fuente['version_autorizacion'] !== AutorizacionCobro::VERSION || !hash_equals($fuente['version_contratos'], $contratos['version']);
+                $motivo = $precioCambio ? ($condicionesCambio ? 'precio_y_condiciones' : 'precio') : 'condiciones';
+                $this->db->prepare('UPDATE suscripciones SET cobro_automatico=0,retirado_en=?,motivo_automatico_apagado=? WHERE id_clinica=? AND id_suscripcion=?')
+                    ->execute([$s->ahora()->format('Y-m-d H:i:s'), $motivo, $clinica, $contrato['id_suscripcion']]);
+                $s->auditar('suscripciones', (int) $contrato['id_suscripcion'], ['automatico' => true], ['automatico' => false, 'requiere_aceptacion' => true, 'motivo_automatico_apagado' => $motivo], 'Importe o condiciones cambiaron (RE-0.5.26)');
                 return null;
             }
             $q = $this->db->prepare('SELECT i.*,p.estado AS estado_pago,p.total_centavos,p.ciclo,p.cotizacion_hasta FROM pagos_suscripcion p JOIN intentos_pago i ON i.id_pago=p.id_pago WHERE p.id_clinica=? AND p.id_suscripcion=? AND p.version_periodo_base=? ORDER BY i.id_intento DESC');

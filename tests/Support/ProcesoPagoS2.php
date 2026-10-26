@@ -75,7 +75,10 @@ try {
                 throw new RuntimeException('GET con transacción abierta.');
             }
         };
-        if ($fase === 's3_receptor') {
+        $recuperar = ($fase === 's4_retorno_evento' && $nombre === 'primero') || ($fase === 's4_evento_retorno' && $nombre === 'segundo');
+        if ($recuperar) {
+            $resultado = ['acreditado' => (new ConciliadorPago($db, $cliente, $config, $reloj))->recuperar('tx_simultanea', 1)];
+        } elseif ($fase === 's3_receptor') {
             $_SERVER['REQUEST_METHOD'] = 'POST';
             $_SERVER['CONTENT_TYPE'] = 'application/json';
             (new WompiEventosController($db, $config, $cliente, $reloj))->recibir('test', ClienteWompiFalso::cuerpo($cliente->respuestas['tx_simultanea'], 'test', (int) $evento));

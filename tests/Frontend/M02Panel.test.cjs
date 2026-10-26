@@ -145,7 +145,8 @@ test('M0.2: la vista del panel sin JS ni CSS en línea y con un contador por pes
     // M0.2.1: el rojo solo en la zona de riesgo de «Dar de baja» (alcance aprobado por el usuario).
     const css = codigo('public/css/plataforma.css').replace(/\.(?:plataforma-riesgo|plataforma-opcion--riesgo|btn-modal-peligro)[^{]*\{[^}]*\}/g, '');
     assert.doesNotMatch(css, /#(?:067647|ECFDF3|B54708|FFFAEB|B42318|FEF3F2|5925DC|F4F3FF|d92d20|fecaca|fff5f5)/i, 'Sin verdes, ámbar, rojos ni violetas fuera de la zona de riesgo.');
-    assert.equal((vista.match(/data-modal-pestana=/g) || []).length, 2);
+    assert.equal((vista.match(/data-modal-pestana=/g) || []).length, 3);
+    assert.match(vista, /data-modal-pestana="pagos"/);
     assert.doesNotMatch(vista, /\?v=e2|\?v=d\d/);
 });
 

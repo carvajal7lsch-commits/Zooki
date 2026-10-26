@@ -45,8 +45,55 @@ final class ConciliadorPago
         if (!$evento) {
             return false;
         }
+        return $this->conciliarEvento($inbox, $evento);
+    }
+
+    /** RE-0.5.13/14: el retorno aporta solo el ID; la referencia privada fija el beneficiario. */
+    public function recuperar(string $id, ?int $clinica = null, ?int $actor = null, ?string $motivo = null): bool
+    {
+        if (!FirmaWompi::idValido($id)) {
+            throw new InvalidArgumentException('Revisa el ID de transacción Wompi.');
+        }
+        if ($this->db->inTransaction()) {
+            throw new LogicException('La consulta Wompi requiere una transacción independiente.');
+        }
+        $this->configuracion->validar(false);
         try {
-            $remoto = $this->cliente->transaccion($evento['id_transaccion_wompi']);
+            $remoto = $this->cliente->transaccion($id);
+        } catch (Throwable $error) {
+            return false;
+        }
+        if (($remoto['id'] ?? null) !== $id || !is_string($remoto['reference'] ?? null)) {
+            return false;
+        }
+        $q = $this->db->prepare('SELECT p.id_clinica FROM intentos_pago i JOIN pagos_suscripcion p ON p.id_pago=i.id_pago WHERE i.entorno=? AND i.referencia=?');
+        $q->execute([$this->configuracion->entorno(), $remoto['reference']]);
+        $beneficiario = $q->fetchColumn();
+        if (!$beneficiario || ($clinica !== null && (int) $beneficiario !== $clinica)) {
+            return false;
+        }
+        // Huella interna de metadatos consultados; nunca simula una firma de eventos del proveedor.
+        $metadatos = array_intersect_key($remoto, array_flip(['id', 'reference', 'status', 'amount_in_cents', 'currency', 'environment', 'merchant_id', 'merchant']));
+        $huella = hash('sha256', json_encode($metadatos, JSON_THROW_ON_ERROR));
+        $clave = hash('sha256', 'consulta_privada|' . $this->configuracion->entorno() . '|' . $id . '|' . $huella);
+        $inbox = new EventoWompi($this->db, $this->reloj);
+        Transaccion::ejecutar($this->db, function () use ($inbox, $id, $clave, $huella, $actor, $motivo, $beneficiario): void {
+            if ($actor !== null && !(new Auditoria($this->db))->log($actor, 'UPDATE', 'wompi_eventos', null, [], ['id_transaccion' => $id, 'origen' => 'consulta_privada'], $motivo, (int) $beneficiario)) {
+                throw new RuntimeException('No se pudo auditar la conciliación manual.');
+            }
+            $inbox->recibir(['clave_evento' => $clave, 'entorno' => $this->configuracion->entorno(), 'tipo' => 'transaction.consultada',
+                'id_transaccion_wompi' => $id, 'timestamp_proveedor' => 0, 'checksum' => $huella, 'huella_datos_firmados' => $huella], true);
+        });
+        $q = $this->db->prepare('SELECT id_evento FROM wompi_eventos WHERE entorno=? AND clave_evento=?');
+        $q->execute([$this->configuracion->entorno(), $clave]);
+        $evento = $inbox->reclamar((int) $q->fetchColumn(), $this->configuracion->entorno());
+        return $evento ? $this->conciliarEvento($inbox, $evento, $remoto) : false;
+    }
+
+    private function conciliarEvento(EventoWompi $inbox, array $evento, ?array $remoto = null): bool
+    {
+        try {
+            $remoto ??= $this->cliente->transaccion($evento['id_transaccion_wompi']);
             $comercioConcordante = true;
             $comercioRemoto = $remoto['merchant_id'] ?? ($remoto['merchant']['id'] ?? null);
             if ($comercioRemoto !== null) {
@@ -126,7 +173,8 @@ final class ConciliadorPago
                     if ($q->fetchColumn()) {
                         return $this->incidencia($s, $inbox, $evento, $pago, $intento, 'COBRO_DUPLICADO');
                     }
-                    $this->acreditar($s, $pago, $estado);
+                    $fin = $this->acreditar($s, $pago, $estado);
+                    (new AvisoSuscripcion($this->db, (int) $pago['id_clinica'], $this->reloj))->reservarConfirmacion($pago, $intento, $fin, $remoto);
                 }
             }
             if (in_array($status, ['DECLINED', 'ERROR'], true) && $intento['origen'] === 'automatico') {
@@ -137,7 +185,7 @@ final class ConciliadorPago
         });
     }
 
-    private function acreditar(Suscripcion $s, array $pago, array $estado): void
+    private function acreditar(Suscripcion $s, array $pago, array $estado): string
     {
         $ahora = $s->ahora();
         $inicio = VigenciaSuscripcion::inicioRenovacion($estado, $ahora);
@@ -160,24 +208,26 @@ final class ConciliadorPago
         }
         $this->db->prepare("INSERT INTO suscripcion_periodos (id_clinica,id_suscripcion,id_plan,id_pago,origen,ciclo,inicio,fin,dia_ancla,mes_ancla,hora_ancla,total_centavos,moneda,creado_en) VALUES (?,?,?,?,'wompi',?,?,?,?,?,?,?,?,?)")
             ->execute([$pago['id_clinica'], $pago['id_suscripcion'], $pago['id_plan'], $pago['id_pago'], $pago['ciclo'], $inicio->format('Y-m-d H:i:s'), $fin->format('Y-m-d H:i:s'), $dia, $mes, $inicio->format('H:i:s'), $pago['total_centavos'], $pago['moneda'], $ahora->format('Y-m-d H:i:s')]);
-        $s->auditar('suscripcion_periodos', (int) $this->db->lastInsertId(), [], ['id_pago' => $pago['id_pago'], 'inicio' => $inicio->format('Y-m-d H:i:s'), 'fin' => $fin->format('Y-m-d H:i:s')], 'Periodo acreditado por evento y GET Wompi', null, 'INSERT');
+        $s->auditar('suscripcion_periodos', (int) $this->db->lastInsertId(), [], ['id_pago' => $pago['id_pago'], 'inicio' => $inicio->format('Y-m-d H:i:s'), 'fin' => $fin->format('Y-m-d H:i:s')], 'Periodo acreditado por GET autenticado Wompi', null, 'INSERT');
         // Una renovación anticipada no mueve el inicio efectivo al futuro ni levanta la suspensión clínica.
         $desde = $estado['suscripcion']['periodo_inicio'] ?? $ahora->format('Y-m-d H:i:s');
         if (!in_array($estado['situacion'], ['al_dia', 'gracia'], true)) {
             $desde = $inicio->format('Y-m-d H:i:s');
         }
         $automatico = $pago['ciclo'] === 'anual' ? 0 : (int) $estado['suscripcion']['cobro_automatico'];
+        $motivoApagado = $pago['ciclo'] === 'anual' ? null : ($estado['suscripcion']['motivo_automatico_apagado'] ?? null);
         $retirado = $pago['ciclo'] === 'anual' && (int) $estado['suscripcion']['cobro_automatico'] === 1 ? $ahora->format('Y-m-d H:i:s') : $estado['suscripcion']['retirado_en'];
-        $this->db->prepare("UPDATE suscripciones SET id_plan=?,estado='activa',ciclo=?,gestion_cobro='gestionada',periodo_inicio=?,periodo_fin=?,fecha_inicio=?,fecha_fin=?,estado_cobro='al_dia',al_dia=1,version_periodo=version_periodo+1,cobro_automatico=?,retirado_en=? WHERE id_suscripcion=? AND id_clinica=?")
-            ->execute([$pago['id_plan'], $pago['ciclo'], $desde, $fin->format('Y-m-d H:i:s'), substr($desde, 0, 10), $fin->modify('-1 second')->format('Y-m-d'), $automatico, $retirado, $pago['id_suscripcion'], $pago['id_clinica']]);
+        $this->db->prepare("UPDATE suscripciones SET id_plan=?,estado='activa',ciclo=?,gestion_cobro='gestionada',periodo_inicio=?,periodo_fin=?,fecha_inicio=?,fecha_fin=?,estado_cobro='al_dia',al_dia=1,version_periodo=version_periodo+1,cobro_automatico=?,retirado_en=?,motivo_automatico_apagado=? WHERE id_suscripcion=? AND id_clinica=?")
+            ->execute([$pago['id_plan'], $pago['ciclo'], $desde, $fin->format('Y-m-d H:i:s'), substr($desde, 0, 10), $fin->modify('-1 second')->format('Y-m-d'), $automatico, $retirado, $motivoApagado, $pago['id_suscripcion'], $pago['id_clinica']]);
         $this->db->prepare('UPDATE clinicas SET id_plan=? WHERE id_clinica=?')->execute([$pago['id_plan'], $pago['id_clinica']]);
         $this->db->prepare("UPDATE pagos_suscripcion SET estado='confirmado',confirmado_en=? WHERE id_pago=? AND id_clinica=?")
             ->execute([$ahora->format('Y-m-d H:i:s'), $pago['id_pago'], $pago['id_clinica']]);
         $s->auditar('suscripciones', (int) $pago['id_suscripcion'], ['version' => $pago['version_periodo_base'], 'automatico' => (int) $estado['suscripcion']['cobro_automatico']], ['fin' => $fin->format('Y-m-d H:i:s'), 'id_pago' => $pago['id_pago'], 'automatico' => $automatico], 'Acreditación Wompi sin cambiar suspensión administrativa');
-        $s->auditar('pagos_suscripcion', (int) $pago['id_pago'], ['estado' => $pago['estado']], ['estado' => 'confirmado'], 'Pago confirmado por evento verificado');
+        $s->auditar('pagos_suscripcion', (int) $pago['id_pago'], ['estado' => $pago['estado']], ['estado' => 'confirmado'], 'Pago confirmado por GET autenticado Wompi');
         if ($estado['clinica']['estado'] !== 'activa') {
             $s->auditar('clinicas', (int) $pago['id_clinica'], [], ['incidencia' => 'PAGO_CON_CLINICA_NO_ACTIVA'], 'Pago conservado; suspensión/baja administrativa intacta');
         }
+        return $fin->format('Y-m-d H:i:s');
     }
 
     private function incidencia(Suscripcion $s, EventoWompi $inbox, array $evento, array $pago, array $intento, string $codigo): bool

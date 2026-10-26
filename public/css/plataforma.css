@@ -826,3 +826,43 @@
     }
 
 }
+/* S4: los registros financieros usan el modal existente y se apilan en móvil. */
+.plataforma-finanzas {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+}
+.plataforma-finanzas h4 {
+    margin: 0 0 .6rem;
+}
+.plataforma-finanzas p {
+    margin: .4rem 0;
+    overflow-wrap: anywhere;
+}
+.plataforma-finanzas__resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: .75rem;
+    margin: 0;
+}
+.plataforma-finanzas__resumen dt {
+    color: #64748b;
+    font-size: .8rem;
+}
+.plataforma-finanzas__resumen dd {
+    margin: .25rem 0 0;
+    font-weight: 600;
+}
+.plataforma-finanzas__registro {
+    border-bottom: 1px solid #e2e8f0;
+    padding: .8rem 0;
+    font-size: .875rem;
+}
+.plataforma-finanzas__paginas {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: .75rem;
+}

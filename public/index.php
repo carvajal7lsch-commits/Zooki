@@ -384,6 +384,11 @@ switch ($action) {
         (new PlataformaController())->inicio();
         break;
 
+    case "plataforma_pagos_ajax":
+        require_once __DIR__ . '/../controllers/PlataformaController.php';
+        (new PlataformaController())->pagos();
+        break;
+
     // HU-2.12: mapa de solo lectura del conocimiento global (RN-212).
     case "plataforma_grafo":
         require_once "../controllers/GrafoConocimientoController.php";
@@ -396,6 +401,8 @@ switch ($action) {
         break;
 
     case "plataforma_suscripcion_ajax":
+    case "plataforma_incidencia_ajax":
+    case "plataforma_conciliar_ajax":
     case "plataforma_estado_ajax":
     case "plataforma_caso_ajax":
     case "plataforma_desbloquear_ajax":

@@ -87,8 +87,9 @@ final class M02PanelEnlacesTest extends TestCase
         $this->assertStringNotContainsString('2026-10-11 18:35:45', $html);
         $this->assertStringNotContainsString('<i class="bi bi-credit-card" aria-hidden="true"></i> Sin suscripción', $html, 'La tarjeta no dice «Sin suscripción» de un gratuito.');
         $this->assertMatchesRegularExpression('/<progress class="plataforma-uso__barra" max="2" value="\d">/', $html);
-        // El modal tiene dos pestañas: el aviso sigue en Seguridad (decisión del usuario, 2026-10-11).
-        $this->assertSame(2, substr_count($html, 'data-modal-pestana='));
+        // S4 añade finanzas sin mover el aviso de Seguridad ni rediseñar el modal.
+        $this->assertSame(3, substr_count($html, 'data-modal-pestana='));
+        $this->assertStringContainsString('data-modal-pestana="pagos"', $html);
         $this->assertStringNotContainsString('Aviso al administrador', $html);
         // RN-G13: ningún dato clínico individual ni enlace a pantallas clínicas.
         $this->assertStringNotContainsString('Luna', $html);

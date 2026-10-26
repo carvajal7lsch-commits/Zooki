@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/ClienteWompi.php';
 require_once __DIR__ . '/ConfiguracionWompi.php';
+require_once __DIR__ . '/FirmaWompi.php';
 
 /** Hosts fijos; las pruebas siempre inyectan transporte (RE-0.5.15/18). */
 final class ClienteWompiHttp implements ClienteWompi
@@ -11,7 +12,7 @@ final class ClienteWompiHttp implements ClienteWompi
 
     public function transaccion(string $id): array
     {
-        if (!preg_match('/^[a-zA-Z0-9_-]{1,128}$/D', $id)) {
+        if (!FirmaWompi::idValido($id)) {
             throw new InvalidArgumentException('Identificador de transacción inválido.');
         }
         return $this->get('/transactions/' . rawurlencode($id), ['Authorization: Bearer ' . $this->configuracion->valor('LLAVE_PRIVADA')]);

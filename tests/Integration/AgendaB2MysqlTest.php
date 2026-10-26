@@ -62,12 +62,18 @@ final class AgendaB2MysqlTest extends TestCase
         $this->cargar('database/10_comienzos_urgencia.sql');
         $this->cargar('database/11_accesos_carnet.sql');
         $this->cargar('database/12_suscripcion_pagos.sql');
+        $this->cargar('database/13_plataforma_finanzas.sql');
+        $this->cargar('database/14_aviso_pago_confirmado.sql');
     }
 
     private function instalar(bool $anterior = false): void
     {
         $this->cargar($anterior ? 'tests/Fixtures/agenda_alpha4.sql' : 'database/01_schema.sql');
         $this->cargar('database/02_semilla.sql');
+        if (!$anterior) {
+            // La foto de una instalación actual incluye el dominio ampliado de la outbox.
+            $this->cargar('database/14_aviso_pago_confirmado.sql');
+        }
         DosClinicas::poblar($this->db);
         DosClinicas::poblarAgenda($this->db);
     }

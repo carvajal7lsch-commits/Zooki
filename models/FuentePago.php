@@ -101,7 +101,7 @@ final class FuentePago
                 ->execute([$this->clinica, $this->configuracion->entorno(), (string) $id, $tipo, $marca, $cuatro, $actor, $s->ahora()->format('Y-m-d H:i:s'), $s->ahora()->format('Y-m-d H:i:s'), $contratos['version'], json_encode($contratos['prueba'], JSON_THROW_ON_ERROR)]);
             $local = (int) $this->db->lastInsertId();
             $s->auditar('fuentes_pago', $local, [], ['estado' => 'disponible', 'tipo' => $tipo, 'contratos' => $contratos['prueba']], 'Fuente guardada; sin autorización automática', $actor, 'INSERT');
-            $this->db->prepare('UPDATE suscripciones SET id_fuente_activa=?,cobro_automatico=0,retirado_en=? WHERE id_suscripcion=? AND id_clinica=?')
+            $this->db->prepare('UPDATE suscripciones SET id_fuente_activa=?,motivo_automatico_apagado=NULL,cobro_automatico=0,retirado_en=? WHERE id_suscripcion=? AND id_clinica=?')
                 ->execute([$local, $s->ahora()->format('Y-m-d H:i:s'), $contrato['id_suscripcion'], $this->clinica]);
             $s->auditar('suscripciones', (int) $contrato['id_suscripcion'], ['fuente' => $contrato['id_fuente_activa']], ['fuente' => $local, 'automatico' => false], 'Guardar no autoriza (RN-016)', $actor);
             return ['pendiente' => false, 'mensaje' => 'Medio guardado. El cobro automático sigue desactivado.'];
@@ -141,7 +141,7 @@ final class FuentePago
                 $s->auditar('fuentes_pago', (int) $fuente['id_fuente'], [], ['contratos' => $actuales['prueba'], 'importe_centavos' => $importe, 'periodicidad' => 'mensual', 'version' => AutorizacionCobro::VERSION], 'Autorización mensual explícita (RE-0.5.26)', $actor);
             }
             $ahora = $s->ahora()->format('Y-m-d H:i:s');
-            $this->db->prepare('UPDATE suscripciones SET cobro_automatico=?,autorizado_por=?,autorizado_en=?,retirado_en=? WHERE id_suscripcion=? AND id_clinica=?')
+            $this->db->prepare('UPDATE suscripciones SET motivo_automatico_apagado=NULL,cobro_automatico=?,autorizado_por=?,autorizado_en=?,retirado_en=? WHERE id_suscripcion=? AND id_clinica=?')
                 ->execute([(int) $autorizar, $autorizar ? $actor : $contrato['autorizado_por'], $autorizar ? $ahora : $contrato['autorizado_en'], $autorizar ? null : $ahora, $contrato['id_suscripcion'], $this->clinica]);
             $s->auditar('suscripciones', (int) $contrato['id_suscripcion'], ['automatico' => (int) $contrato['cobro_automatico']], ['automatico' => $autorizar, 'importe_centavos' => $autorizar ? $importe : null], $autorizar ? 'Autorizar mensual' : 'Retirar automático sin acortar lo pagado', $actor);
             return ['mensaje' => $autorizar ? 'Cobro mensual autorizado.' : $this->mensajeRetiro()];

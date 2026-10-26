@@ -15,6 +15,14 @@ final class PresentacionPlataforma
 
     private const RECURSOS = ['personal' => 'Personal', 'mascotas' => 'Mascotas', 'citas' => 'Citas del mes'];
 
+    public static function situacion(array $vigencia): string
+    {
+        if ($vigencia['legado_sin_fecha']) {
+            return 'Legado sin fecha';
+        }
+        return ['al_dia' => 'Al día', 'gracia' => 'En gracia', 'congelada' => 'Congelada', 'sin_vigencia' => 'Sin periodo de pago'][$vigencia['situacion']] ?? 'Sin periodo de pago';
+    }
+
     private const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
     /** Desde este porcentaje la barra avisa que el cupo se está acabando. */

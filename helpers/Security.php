@@ -41,7 +41,7 @@ class Security {
 
     /** RE-T.19.3: lo único que se puede hacer antes de aceptar la versión vigente de la política. */
     private static array $accionesSinPoliticaAceptada = ['aceptar_politica', 'logout'];
-    public const ACCIONES_PLATAFORMA = ['plataforma_suscripcion_ajax', 'plataforma_estado_ajax', 'plataforma_caso_ajax', 'plataforma_desbloquear_ajax', 'plataforma_aviso_ajax'];
+    public const ACCIONES_PLATAFORMA = ['plataforma_suscripcion_ajax', 'plataforma_estado_ajax', 'plataforma_caso_ajax', 'plataforma_desbloquear_ajax', 'plataforma_aviso_ajax', 'plataforma_incidencia_ajax', 'plataforma_conciliar_ajax'];
 
     /** RE-T.18.3: en el portal, con el perfil incompleto, solo se completa el perfil. */
     private static array $accionesConPerfilIncompleto = ['completar_perfil'];
@@ -471,6 +471,7 @@ class Security {
 
         // Plataforma: el panel del super-administrador llega en la etapa E.
         $matriz['plataforma_inicio'] = $plataforma;
+        $matriz['plataforma_pagos_ajax'] = $plataforma;
         // HU-2.12, RE-2.12.1: solo el contexto de plataforma; una superadministradora en una clínica tiene el rol de esa clínica.
         $matriz['plataforma_grafo'] = $plataforma;
         $matriz['obtener_grafo_conocimiento_ajax'] = $plataforma;

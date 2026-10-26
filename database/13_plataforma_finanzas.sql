@@ -1,0 +1,22 @@
+SET NAMES utf8mb4;
+-- S4: metadatos aditivos; conserva cargos, periodos y clasificación de incidencias.
+SET @s4_ddl=IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='suscripciones' AND COLUMN_NAME='motivo_automatico_apagado'),'DO 0','ALTER TABLE suscripciones ADD COLUMN motivo_automatico_apagado VARCHAR(40) DEFAULT NULL');
+PREPARE s4_sentencia FROM @s4_ddl;
+EXECUTE s4_sentencia;
+DEALLOCATE PREPARE s4_sentencia;
+SET @s4_ddl=IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='wompi_eventos' AND COLUMN_NAME='revisado_por'),'DO 0','ALTER TABLE wompi_eventos ADD COLUMN revisado_por INT DEFAULT NULL');
+PREPARE s4_sentencia FROM @s4_ddl;
+EXECUTE s4_sentencia;
+DEALLOCATE PREPARE s4_sentencia;
+SET @s4_ddl=IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='wompi_eventos' AND COLUMN_NAME='revisado_en'),'DO 0','ALTER TABLE wompi_eventos ADD COLUMN revisado_en DATETIME DEFAULT NULL');
+PREPARE s4_sentencia FROM @s4_ddl;
+EXECUTE s4_sentencia;
+DEALLOCATE PREPARE s4_sentencia;
+SET @s4_ddl=IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='wompi_eventos' AND COLUMN_NAME='nota_revision'),'DO 0','ALTER TABLE wompi_eventos ADD COLUMN nota_revision TEXT DEFAULT NULL');
+PREPARE s4_sentencia FROM @s4_ddl;
+EXECUTE s4_sentencia;
+DEALLOCATE PREPARE s4_sentencia;
+SET @s4_ddl=IF(EXISTS(SELECT 1 FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME='wompi_eventos' AND CONSTRAINT_NAME='fk_evento_revisor'),'DO 0','ALTER TABLE wompi_eventos ADD CONSTRAINT fk_evento_revisor FOREIGN KEY (revisado_por) REFERENCES usuarios (id_usuario)');
+PREPARE s4_sentencia FROM @s4_ddl;
+EXECUTE s4_sentencia;
+DEALLOCATE PREPARE s4_sentencia;

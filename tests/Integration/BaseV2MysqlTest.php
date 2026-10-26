@@ -22,6 +22,118 @@ require_once __DIR__ . '/../../helpers/CreadorSuperAdmin.php';
  */
 class BaseV2MysqlTest extends TestCase
 {
+    public function testS4ArranqueDockerSqlCompletoSeguidoDeMigrador(): void
+    {
+        $this->cargar('01_schema.sql');
+        $this->cargar('02_semilla.sql');
+        foreach (glob(self::DATABASE . '/*.sql') as $ruta) {
+            if (preg_match('/^(\d+)_/', basename($ruta), $numero) && (int) $numero[1] >= 3) {
+                $this->cargar(basename($ruta));
+            }
+        }
+        // Docker primero ejecuta SQL sin bitácora; PHP después repite las migraciones.
+        $this->migrador()->migrar();
+        $this->assertSame(['ejecutadas' => [], 'semilla' => true], $this->migrador()->migrar());
+        $tipo = $this->db->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='avisos_suscripcion' AND COLUMN_NAME='tipo'")->fetchColumn();
+        $this->assertStringContainsString('pago_confirmado', $tipo);
+        $this->assertSame(0, $this->contar('avisos_suscripcion'));
+    }
+
+    public static function ordenesRecuperacionS4(): array
+    {
+        return [['s4_retorno_evento'], ['s4_evento_retorno']];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('ordenesRecuperacionS4')]
+    public function testS4RetornoYEventoConcurrentesUnPeriodoYUnRecibo(string $fase): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../Support/ClienteWompiFalso.php';
+        require_once __DIR__ . '/../../models/PagoSuscripcion.php';
+        require_once __DIR__ . '/../../models/EventoWompi.php';
+        $this->db->exec("UPDATE suscripciones SET gestion_cobro='gestionada',periodo_inicio='2026-09-25 00:00:00',periodo_fin='2026-10-25 00:00:00' WHERE id_clinica=1");
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            $orden = (new PagoSuscripcion($this->db, 1, ClienteWompiFalso::configuracion(), static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00')))->reservar('mensual', 0, 1);
+        } finally {
+            putenv('APP_URL');
+        }
+        $tx = ['id' => 'tx_simultanea', 'reference' => $orden['checkout']['reference'], 'status' => 'APPROVED', 'amount_in_cents' => 8999000, 'currency' => 'COP'];
+        foreach ([1, 2] as $timestamp) {
+            (new EventoWompi($this->db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx, 'test', $timestamp), '', 'test', 'test_events_falso'));
+        }
+        $this->competirS2($fase);
+        $this->assertSame(1, $this->contar('suscripcion_periodos'));
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM avisos_suscripcion WHERE tipo='pago_confirmado'")->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query('SELECT version_periodo FROM suscripciones WHERE id_clinica=1')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE tabla_afectada='suscripcion_periodos' AND accion='INSERT'")->fetchColumn());
+    }
+
+    public function testS4Migracion14DobleParcialPreservaOutboxYDespachaRecibo(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../Support/FinanzasFixture.php';
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            FinanzasFixture::datos($this->db);
+            $this->db->exec("DELETE FROM avisos_suscripcion WHERE tipo='pago_confirmado'");
+            $this->db->exec('ALTER TABLE avisos_suscripcion DROP COLUMN medio_pago');
+            $this->db->exec("ALTER TABLE avisos_suscripcion MODIFY tipo ENUM('vence_7','vence_1','congelada','cobro_fallido') NOT NULL");
+            // Fallo parcial tras agregar la columna, antes de ampliar el ENUM.
+            $this->db->exec('ALTER TABLE avisos_suscripcion ADD COLUMN medio_pago VARCHAR(32) DEFAULT NULL');
+            $this->cargar('14_aviso_pago_confirmado.sql');
+            $this->cargar('14_aviso_pago_confirmado.sql');
+            $this->db->exec("INSERT INTO avisos_suscripcion(id_clinica,id_suscripcion,id_pago,id_intento,id_usuario_destinatario,tipo,medio_pago,clave_aviso,vencimiento_objetivo,programado_en) VALUES(1,1,1,1,1,'pago_confirmado','Nequi','recibo_mysql','2026-11-25 00:00:00','2026-10-26 08:00:00')");
+            $id = (int) $this->db->lastInsertId();
+            $enviados = 0;
+            $aviso = new AvisoSuscripcion($this->db, 1, static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00'));
+            $smtp = function (array $correo) use (&$enviados): bool {
+                $this->assertFalse($this->db->inTransaction());
+                $this->assertSame('Recibimos tu pago', $correo['asunto']);
+                $this->assertStringContainsString('Nequi', $correo['mensaje']);
+                $enviados++;
+                return true;
+            };
+            $this->assertTrue($aviso->despachar($id, $smtp));
+            $this->assertFalse($aviso->despachar($id, $smtp));
+            $this->assertSame(1, $enviados);
+            $this->assertSame(1, $this->contar('suscripcion_periodos'));
+        } finally {
+            putenv('APP_URL');
+            $_SESSION = [];
+        }
+    }
+
+    public function testS4MigracionRepetidaParcialYRevisionAuditadaConDatosReales(): void
+    {
+        $this->prepararHistoriaClinica();
+        require_once __DIR__ . '/../Support/FinanzasFixture.php';
+        putenv('APP_URL=http://localhost/Zooki/public');
+        try {
+            FinanzasFixture::datos($this->db);
+            FinanzasFixture::plataforma();
+            $this->db->exec('ALTER TABLE wompi_eventos DROP FOREIGN KEY fk_evento_revisor');
+            $this->db->exec('ALTER TABLE wompi_eventos DROP COLUMN revisado_por, DROP COLUMN revisado_en, DROP COLUMN nota_revision');
+            $this->db->exec('ALTER TABLE suscripciones DROP COLUMN motivo_automatico_apagado');
+            // Simula interrupción después del primer DDL, sin pérdida de pagos existentes.
+            $this->db->exec('ALTER TABLE suscripciones ADD COLUMN motivo_automatico_apagado VARCHAR(40) DEFAULT NULL');
+            $this->cargar('13_plataforma_finanzas.sql');
+            $this->cargar('13_plataforma_finanzas.sql');
+            $panel = new Plataforma($this->db);
+            $id = (int) $panel->finanzas(1)['incidencias'][0]['id_evento'];
+            $panel->revisarIncidencia($id, 1, 'Revisada en MySQL');
+            $panel->revisarIncidencia($id, 1, 'Doble clic');
+            $this->assertSame('Revisada en MySQL', $panel->finanzas(1)['incidencias'][0]['nota_revision']);
+            $this->assertSame([], $panel->finanzas(2)['pagos']);
+            $this->assertSame(1, $this->contar('suscripcion_periodos'));
+            $this->assertSame(1, $this->contar('pagos_suscripcion'));
+            $this->assertSame(1, (int) $this->db->query("SELECT COUNT(*) FROM auditoria_sistema WHERE descripcion='Revisión financiera sin alterar el pago (RE-0.3.7)'")->fetchColumn());
+        } finally {
+            putenv('APP_URL');
+            $_SESSION = [];
+        }
+    }
+
     private function prepararCobroS3(): void
     {
         $this->prepararHistoriaClinica();
@@ -256,7 +368,7 @@ class BaseV2MysqlTest extends TestCase
 
     public function testS1Migracion12LegadoPrecioPersonalizadoYRecuperacionParcial(): void
     {
-        $this->prepararHistoriaClinica();
+        $this->prepararHistoriaClinica(false);
         $this->db->exec("UPDATE planes SET precio_mensual=100000,precio_anual=960000 WHERE id_plan=2");
         $this->db->exec("UPDATE suscripciones SET fecha_fin='2026-10-24' WHERE id_clinica=1");
         $this->cargar('12_suscripcion_pagos.sql');
@@ -1400,7 +1512,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         $primera = $this->migrador()->migrar();
         $segunda = $this->migrador()->migrar();
 
-        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql'], 'semilla' => true], $primera);
+        $this->assertSame(['ejecutadas' => ['03_confirmacion_vinculo_propietario.sql', '04_invitacion_personal_y_sesiones.sql', '05_limites_plan_gratuito.sql', '06_medio_activacion_propietario.sql', '07_grafo_conocimiento.sql', '08_agenda_grafo_ii.sql', '09_origen_interno_agenda.sql', '10_comienzos_urgencia.sql', '11_accesos_carnet.sql', '12_suscripcion_pagos.sql', '13_plataforma_finanzas.sql', '14_aviso_pago_confirmado.sql'], 'semilla' => true], $primera);
         $this->assertSame(['ejecutadas' => [], 'semilla' => true], $segunda);
         $this->assertSame($antes, $this->conteos());
     }
@@ -2022,7 +2134,7 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         }
     }
 
-    private function prepararHistoriaClinica(): void
+    private function prepararHistoriaClinica(bool $aplicarMigracionesPosteriores = true): void
     {
         require_once __DIR__ . '/../Support/DosClinicas.php';
 require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
@@ -2031,6 +2143,9 @@ require_once __DIR__ . '/../Support/AgendaC4Prueba.php';
         require_once __DIR__ . '/../../models/Vacuna.php';
         $this->cargar('01_schema.sql');
         $this->cargar('02_semilla.sql');
+        if ($aplicarMigracionesPosteriores) {
+            $this->cargar('14_aviso_pago_confirmado.sql');
+        }
         DosClinicas::poblar($this->db);
         DosClinicas::completarMascota($this->db);
         DosClinicas::vincularLunaASur($this->db);

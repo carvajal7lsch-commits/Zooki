@@ -16,16 +16,16 @@ final class EventoWompi
         return $this->reloj ? ($this->reloj)()->setTimezone(new DateTimeZone(PoliticaSuscripcion::ZONA)) : new DateTimeImmutable('now', new DateTimeZone(PoliticaSuscripcion::ZONA));
     }
 
-    public function recibir(array $evento): bool
+    public function recibir(array $evento, bool $consultaPrivada = false): bool
     {
         try {
-            return Transaccion::ejecutar($this->db, function () use ($evento): bool {
+            return Transaccion::ejecutar($this->db, function () use ($evento, $consultaPrivada): bool {
                 $q = $this->db->prepare('SELECT 1 FROM wompi_eventos WHERE entorno=? AND clave_evento=?');
                 $q->execute([$evento['entorno'], $evento['clave_evento']]);
                 if ($q->fetchColumn()) {
                     return false;
                 }
-                $estado = $evento['tipo'] === 'transaction.updated' ? 'pendiente' : 'ignorado';
+                $estado = $evento['tipo'] === 'transaction.updated' || ($consultaPrivada && $evento['tipo'] === 'transaction.consultada') ? 'pendiente' : 'ignorado';
                 $this->db->prepare('INSERT INTO wompi_eventos (clave_evento,entorno,tipo,id_transaccion_wompi,timestamp_proveedor,checksum,huella_datos_firmados,datos_minimos,estado,recibido_en) VALUES (?,?,?,?,?,?,?,?,?,?)')
                     ->execute([$evento['clave_evento'], $evento['entorno'], $evento['tipo'], $evento['id_transaccion_wompi'], $evento['timestamp_proveedor'], $evento['checksum'], $evento['huella_datos_firmados'], '{}', $estado, $this->ahora()->format('Y-m-d H:i:s')]);
                 $this->auditar((int) $this->db->lastInsertId(), [], ['estado' => $estado], null);

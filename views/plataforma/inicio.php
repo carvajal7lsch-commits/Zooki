@@ -35,6 +35,7 @@ $plan = $plan ?? '';
     <script src="js/interacciones.js?v=<?= $v ?>" defer></script>
     <script src="js/avisos.js?v=<?= $v ?>" defer></script>
     <script src="js/plataforma.js?v=<?= $v ?>" defer></script>
+    <script src="js/pagos-plataforma.js?v=<?= $v ?>" defer></script>
 </head>
 <body>
 <div class="dashboard-layout">
@@ -110,7 +111,8 @@ $plan = $plan ?? '';
                         <span class="contact-text-mini"><i class="bi bi-upc" aria-hidden="true"></i> NIT <?= $e($p::nit($clinica['nit'])) ?></span>
                         <span class="contact-text-mini" title="<?= $e($p::administrador($clinica)) ?>"><i class="bi bi-person" aria-hidden="true"></i> <span class="plataforma-recorte"><?= $e($p::administrador($clinica)) ?></span></span>
                         <span class="contact-text-mini"><i class="bi bi-credit-card" aria-hidden="true"></i> <?= $e($p::suscripcion($clinica['plan'], $clinica['suscripcion'])) ?></span>
-                        <span class="contact-text-mini">Efectivo: <?= $e($clinica['plan_efectivo']) ?> · <?= $e($clinica['vigencia']['legado_sin_fecha'] ? 'Legado sin fecha' : $clinica['vigencia']['situacion']) ?></span>
+                        <span class="contact-text-mini">Efectivo: <?= $e($clinica['plan_efectivo']) ?> · <?= $e($p::situacion($clinica['vigencia'])) ?></span>
+                        <span class="contact-text-mini">Automático: <?= !empty($clinica['vigencia']['suscripcion']['cobro_automatico']) ? 'Sí' : 'No' ?></span>
                         <span class="contact-text-mini">Fin: <?= $e($clinica['fecha_fin_suscripcion'] ?: 'sin fecha') ?></span>
                         <span class="contact-text-mini"><i class="bi bi-calendar3" aria-hidden="true"></i> Registro: <?= $e($p::fecha($clinica['fecha_registro'])) ?></span>
                     </div>
@@ -128,7 +130,7 @@ $plan = $plan ?? '';
                     <tr data-clinica-fila data-buscar="<?= $e($p::buscable($clinica)) ?>" data-estado="<?= $e($clinica['estado']) ?>" data-plan="<?= $e($clinica['id_plan']) ?>">
                         <td><div class="table-user"><span class="avatar-iniciales avatar-iniciales--tabla" aria-hidden="true"><?= $e($p::iniciales($clinica['nombre'])) ?></span><div><strong><?= $e($clinica['nombre']) ?></strong><span class="plataforma-nit">NIT <?= $e($p::nit($clinica['nit'])) ?></span></div></div></td>
                         <td><?php require __DIR__ . '/estado_clinica.php'; ?></td>
-                        <td><?= $e($p::plan($clinica['plan'], $clinica['suscripcion'])) ?><span class="plataforma-nit">Efectivo: <?= $e($clinica['plan_efectivo']) ?> · <?= $e($clinica['vigencia']['situacion']) ?></span><span class="plataforma-nit">Fin: <?= $e($clinica['fecha_fin_suscripcion'] ?: 'sin fecha') ?></span></td>
+                        <td><?= $e($p::plan($clinica['plan'], $clinica['suscripcion'])) ?><span class="plataforma-nit">Efectivo: <?= $e($clinica['plan_efectivo']) ?> · <?= $e($p::situacion($clinica['vigencia'])) ?></span><span class="plataforma-nit">Fin: <?= $e($clinica['fecha_fin_suscripcion'] ?: 'sin fecha') ?></span><span class="plataforma-nit">Automático: <?= !empty($clinica['vigencia']['suscripcion']['cobro_automatico']) ? 'Sí' : 'No' ?></span></td>
                         <td><?= $e($p::administrador($clinica)) ?></td>
                         <td><?= $e($p::fecha($clinica['fecha_registro'])) ?></td>
                         <td><?php require __DIR__ . '/uso_plan.php'; ?></td>
@@ -138,7 +140,15 @@ $plan = $plan ?? '';
                 </tbody>
             </table>
         </div>
+        <button type="button" class="btn-modal-secondary" data-abrir-dialogo="incidenciasSinClinica" data-finanzas-global>Incidencias · Sin clínica identificada</button>
     </section>
+
+    <div class="users-modal plataforma-dialogo" id="incidenciasSinClinica" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="incidenciasSinClinicaTitulo">
+        <div class="modal-content users-modal__panel plataforma-modal">
+            <div class="modal-header"><h3 id="incidenciasSinClinicaTitulo">Sin clínica identificada</h3><button type="button" data-cerrar-dialogo class="close-modal" aria-label="Cerrar">×</button></div>
+            <div class="users-modal__body" data-finanzas-destino data-clinica="0"></div>
+        </div>
+    </div>
 
     <?php
     // Revisión del usuario (2026-10-12): Soporte y Seguridad en tarjetas de Usuarios, en cuadrícula
@@ -308,6 +318,7 @@ $plan = $plan ?? '';
             <div class="plataforma-modal__pestanas" role="tablist" aria-label="Gestionar la clínica">
                 <button type="button" role="tab" class="plataforma-modal__pestana active" aria-selected="true" data-modal-pestana="plan">Plan y suscripción</button>
                 <button type="button" role="tab" class="plataforma-modal__pestana" aria-selected="false" data-modal-pestana="estado">Estado</button>
+                <button type="button" role="tab" class="plataforma-modal__pestana" aria-selected="false" data-modal-pestana="pagos">Pagos e incidencias</button>
             </div>
 
             <?php
@@ -361,6 +372,10 @@ $plan = $plan ?? '';
                     <button type="button" class="btn-modal-secondary" data-cerrar-dialogo>Cancelar</button>
                     <button type="submit" class="btn-modal-primary" form="plataformaPlanForm" data-guardar-plan><i class="bi bi-floppy" aria-hidden="true"></i> Guardar plan</button>
                 </div>
+            </div>
+
+            <div class="plataforma-modal__panel" data-modal-panel="pagos" hidden>
+                <div class="users-modal__body" data-finanzas-destino></div>
             </div>
 
             <div class="plataforma-modal__panel" data-modal-panel="estado" hidden>

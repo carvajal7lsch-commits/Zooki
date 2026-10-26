@@ -111,15 +111,15 @@ final class PagoSuscripcionTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_GET = ['action' => 'suscripcion_retorno', 'referencia' => $respuesta['pago']['checkout']['reference'], 'id' => 'id_falso', 'status' => 'APPROVED'];
         ob_start();
-        (new SuscripcionController($this->db, fn () => $this->ahora, $this->config))->retorno();
+        (new SuscripcionController($this->db, fn () => $this->ahora, $this->config, $this->cliente))->retorno();
         $html = ob_get_clean();
-        $this->assertStringContainsString('Tu plan se activa en cuanto Wompi confirme el pago', $html);
+        $this->assertStringContainsString('El pago sigue pendiente de confirmación', $html);
         $this->assertStringContainsString('24/10/2026', $html);
         $this->assertStringContainsString('27/10/2026', $html);
         $this->assertStringNotContainsString('evento verificado, nunca por el retorno', $html);
         $this->assertStringNotContainsString('prv_test_falsa', $html);
         $this->assertSame(0, (int) $this->db->query('SELECT COUNT(*) FROM suscripcion_periodos')->fetchColumn());
-        $this->assertSame([], $this->cliente->consultas);
+        $this->assertSame(['id_falso'], $this->cliente->consultas);
     }
 
     public function testRevisarConciliacionNoConsultaNiEscribeYComandoNormalRetoma(): void

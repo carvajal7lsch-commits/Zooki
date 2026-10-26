@@ -4,9 +4,12 @@ require_once __DIR__ . '/../helpers/Security.php';
 require_once __DIR__ . '/../models/Suscripcion.php';
 require_once __DIR__ . '/../models/PagoSuscripcion.php';
 require_once __DIR__ . '/../models/FuentePago.php';
+require_once __DIR__ . '/../models/ConciliadorPago.php';
 
 final class SuscripcionController
 {
+    private ?string $mensajeRetorno = null;
+
     public function __construct(private PDO $db, private mixed $reloj = null, private ?ConfiguracionWompi $configuracion = null, private ?ClienteWompi $cliente = null)
     {
         $this->configuracion ??= new ConfiguracionWompi();
@@ -33,6 +36,9 @@ final class SuscripcionController
         } catch (RuntimeException $error) {
             $mensajePago = $error->getMessage();
         }
+        if (isset($this->mensajeRetorno)) {
+            $mensajePago = $this->mensajeRetorno;
+        }
         $historialPagos = $this->pagos()->historial($this->pagina());
         $fuentePago = $this->fuentes()->actual();
         $automaticoDisponible = false;
@@ -48,7 +54,7 @@ final class SuscripcionController
         $importeMensual = TarifaSuscripcion::calcular($profesionalSuscripcion, 'mensual')['total_centavos'];
         $requiereAceptacion = $fuentePago && (int) $fuentePago['cobro_automatico'] === 1 && (int) $fuentePago['importe_mensual_autorizado_centavos'] !== $importeMensual;
         $retornoPago = null;
-        if (isset($_GET['referencia'])) {
+        if ($this->mensajeRetorno === null && isset($_GET['referencia'])) {
             $retornoPago = $this->pagos()->estadoLocal($this->referencia());
         }
         $content_view = __DIR__ . '/../views/admin/suscripcion.php';
@@ -214,6 +220,22 @@ final class SuscripcionController
     public function retorno(): void
     {
         Security::autorizar('suscripcion_retorno');
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
+            http_response_code(405);
+            return;
+        }
+        $this->mensajeRetorno = 'El pago sigue pendiente de confirmación. Puedes consultar su estado.';
+        $id = $_GET['id'] ?? null;
+        if (FirmaWompi::idValido($id)) {
+            try {
+                $conciliador = new ConciliadorPago($this->db, $this->cliente ?? new ClienteWompiHttp($this->configuracion), $this->configuracion, $this->reloj);
+                $resuelto = $conciliador->recuperar($id, (int) Contexto::clinicaActiva());
+                $this->mensajeRetorno = $resuelto ? 'Consulta completada. Revisa el estado de tu plan y el historial de pagos.' : 'El pago sigue pendiente de confirmación o requiere revisión. Puedes consultar su estado.';
+            } catch (Throwable $error) {
+                // No mostrar errores del proveedor ni datos de una referencia ajena.
+                $this->mensajeRetorno = 'No se pudo confirmar el pago. Sigue pendiente; vuelve a consultar más tarde.';
+            }
+        }
         $this->vista();
     }
 

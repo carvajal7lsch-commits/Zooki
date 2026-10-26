@@ -111,6 +111,45 @@ final class AvisoSuscripcion
         return $reservados;
     }
 
+    /** RN-017 / RE-0.5.22: misma transacción que el periodo; SMTP solo por el despachador. */
+    public function reservarConfirmacion(array $pago, array $intento, string $fin, array $remoto): int
+    {
+        if (!$this->db->inTransaction() || (int) $pago['id_clinica'] !== $this->clinica) {
+            throw new LogicException('El recibo se reserva al acreditar bajo bloqueo de clínica.');
+        }
+        $medio = self::medio($remoto);
+        $reservados = 0;
+        foreach ($this->destinatarios() as $usuario) {
+            $clave = hash('sha256', json_encode([$this->clinica, (int) $pago['id_pago'], 'pago_confirmado', (int) $usuario['id_usuario']], JSON_THROW_ON_ERROR));
+            $q = $this->db->prepare('SELECT 1 FROM avisos_suscripcion WHERE clave_aviso=? AND id_clinica=?');
+            $q->execute([$clave, $this->clinica]);
+            if ($q->fetchColumn()) {
+                continue;
+            }
+            $this->db->prepare("INSERT INTO avisos_suscripcion (id_clinica,id_suscripcion,id_pago,id_intento,id_usuario_destinatario,tipo,medio_pago,clave_aviso,vencimiento_objetivo,programado_en) VALUES (?,?,?,?,?,'pago_confirmado',?,?,?,?)")
+                ->execute([$this->clinica, $pago['id_suscripcion'], $pago['id_pago'], $intento['id_intento'], $usuario['id_usuario'], $medio, $clave, $fin, $this->servicio()->ahora()->format('Y-m-d H:i:s')]);
+            $this->servicio()->auditar('avisos_suscripcion', (int) $this->db->lastInsertId(), [], ['tipo' => 'pago_confirmado', 'id_pago' => (int) $pago['id_pago']], 'Recibo de pago por destinatario (RN-017)', null, 'INSERT');
+            $reservados++;
+        }
+        return $reservados;
+    }
+
+    private static function medio(array $remoto): string
+    {
+        $tipo = $remoto['payment_method']['type'] ?? ($remoto['payment_method_type'] ?? null);
+        if ($tipo === 'NEQUI') {
+            return 'Nequi';
+        }
+        if ($tipo === 'PSE') {
+            return 'PSE';
+        }
+        if ($tipo === 'CARD') {
+            $cuatro = $remoto['payment_method']['extra']['last_four'] ?? null;
+            return is_string($cuatro) && preg_match('/^[0-9]{4}$/D', $cuatro) ? 'Tarjeta ···' . $cuatro : 'Tarjeta';
+        }
+        return 'Medio no informado';
+    }
+
     public function despachar(int $id, callable $transportar): bool
     {
         if ($this->db->inTransaction()) {
@@ -137,7 +176,7 @@ final class AvisoSuscripcion
             $destinatarios = array_column($this->destinatarios(), null, 'id_usuario');
             $usuario = $destinatarios[$aviso['id_usuario_destinatario']] ?? null;
             // Una reserva anterior no puede avisar del fin antiguo tras una renovación.
-            if (!$usuario || ($aviso['tipo'] !== 'cobro_fallido' && ($aviso['vencimiento_objetivo'] !== $estado['periodo_fin'] || self::tipo($estado, $servicio->ahora()) !== $aviso['tipo']))) {
+            if (!$usuario || (!in_array($aviso['tipo'], ['cobro_fallido', 'pago_confirmado'], true) && ($aviso['vencimiento_objetivo'] !== $estado['periodo_fin'] || self::tipo($estado, $servicio->ahora()) !== $aviso['tipo']))) {
                 $this->cambiarEstado($aviso, 'obsoleto');
                 return null;
             }
@@ -146,6 +185,21 @@ final class AvisoSuscripcion
             if ($aviso['tipo'] === 'cobro_fallido') {
                 $asunto = 'No se pudo renovar tu plan automáticamente';
                 $mensaje = 'Wompi confirmó que un intento de renovación no fue aprobado. Clínica: ' . $estado['clinica']['nombre'] . '. Revisa Suscripción para consultar el resultado y pagar. Conservas tus datos; un cobro pendiente nunca se repite a ciegas.';
+            }
+            if ($aviso['tipo'] === 'pago_confirmado') {
+                $q = $this->db->prepare("SELECT p.total_centavos,p.ciclo,i.referencia FROM pagos_suscripcion p JOIN intentos_pago i ON i.id_pago=p.id_pago WHERE p.id_pago=? AND p.id_clinica=? AND i.id_intento=? AND p.estado='confirmado'");
+                $q->execute([$aviso['id_pago'], $this->clinica, $aviso['id_intento']]);
+                $pago = $q->fetch(PDO::FETCH_ASSOC);
+                if (!$pago) {
+                    $this->cambiarEstado($aviso, 'obsoleto');
+                    return null;
+                }
+                $asunto = 'Recibimos tu pago';
+                $centavos = (int) $pago['total_centavos'];
+                $valor = '$' . number_format($centavos / 100, $centavos % 100 === 0 ? 0 : 2, ',', '.') . ' COP';
+                $mensaje = $asunto . '. Valor: ' . $valor . '. Ciclo: ' . ($pago['ciclo'] === 'anual' ? 'Anual' : 'Mensual')
+                    . '. Medio: ' . $aviso['medio_pago'] . '. Referencia: ' . $pago['referencia']
+                    . '. Nuevo último día del periodo: ' . VigenciaSuscripcion::fechaIncluida($aviso['vencimiento_objetivo']) . '.';
             }
             $this->db->prepare("INSERT INTO notificaciones (id_clinica,id_usuario,tipo_entidad,id_entidad,destinatario_email,tipo_notificacion,asunto,mensaje,estado) VALUES (?,?,'suscripcion',?,?,?,?,?,'pendiente')")
                 ->execute([$this->clinica, $usuario['id_usuario'], $aviso['id_suscripcion'], $usuario['email'], 'suscripcion_' . $aviso['tipo'], $asunto, $mensaje]);

@@ -712,7 +712,7 @@ SET @s1_ddl=IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEM
 PREPARE s1_sentencia FROM @s1_ddl;
 EXECUTE s1_sentencia;
 DEALLOCATE PREPARE s1_sentencia;
-SET @s1_ddl=IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='avisos_suscripcion' AND COLUMN_NAME='tipo' AND DATA_TYPE IN ('enum') AND IS_NULLABLE='NO' AND BINARY COLUMN_TYPE=BINARY 'enum(''vence_7'',''vence_1'',''congelada'',''cobro_fallido'')'),'DO 0','CALL zooki_s1_error(''S1 columna incompatible avisos_suscripcion.tipo'')');
+SET @s1_ddl=IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='avisos_suscripcion' AND COLUMN_NAME='tipo' AND DATA_TYPE IN ('enum') AND IS_NULLABLE='NO' AND (BINARY COLUMN_TYPE=BINARY 'enum(''vence_7'',''vence_1'',''congelada'',''cobro_fallido'')' OR BINARY COLUMN_TYPE=BINARY 'enum(''vence_7'',''vence_1'',''congelada'',''cobro_fallido'',''pago_confirmado'')')),'DO 0','CALL zooki_s1_error(''S1 columna incompatible avisos_suscripcion.tipo'')');
 PREPARE s1_sentencia FROM @s1_ddl;
 EXECUTE s1_sentencia;
 DEALLOCATE PREPARE s1_sentencia;

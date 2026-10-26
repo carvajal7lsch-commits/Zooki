@@ -123,7 +123,7 @@ final class Suscripcion
                 $this->db->prepare('INSERT INTO suscripciones (id_clinica,id_plan,fecha_inicio) VALUES (?,?,?)')->execute([$this->clinica, $plan, $ahora->format('Y-m-d')]);
                 $s = ['id_suscripcion' => (int) $this->db->lastInsertId()];
             }
-            $this->db->prepare("UPDATE suscripciones SET id_plan=?,estado=?,ciclo=?,gestion_cobro='gestionada',periodo_inicio=?,periodo_fin=?,fecha_fin=?,version_periodo=version_periodo+1,cobro_automatico=0 WHERE id_suscripcion=? AND id_clinica=?")
+            $this->db->prepare("UPDATE suscripciones SET id_plan=?,estado=?,ciclo=?,gestion_cobro='gestionada',periodo_inicio=?,periodo_fin=?,fecha_fin=?,version_periodo=version_periodo+1,cobro_automatico=0,motivo_automatico_apagado=NULL WHERE id_suscripcion=? AND id_clinica=?")
                 ->execute([$plan, $estado, $ciclo, $inicio, $fin?->format('Y-m-d H:i:s'), $pago ? $fechaFin : null, $s['id_suscripcion'], $this->clinica]);
             $this->db->prepare('UPDATE clinicas SET id_plan=? WHERE id_clinica=?')->execute([$plan, $this->clinica]);
             if ($fin !== null && $fin > $ahora) {

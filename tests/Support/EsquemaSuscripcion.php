@@ -13,7 +13,7 @@ final class EsquemaSuscripcion
         $columnas = ['gestion_cobro' => "TEXT NOT NULL DEFAULT 'legado'", 'periodo_inicio' => 'TEXT', 'periodo_fin' => 'TEXT',
             'estado_cobro' => "TEXT NOT NULL DEFAULT 'sin_vigencia'", 'version_periodo' => 'INTEGER NOT NULL DEFAULT 0',
             'cobro_automatico' => 'INTEGER NOT NULL DEFAULT 0', 'id_fuente_activa' => 'INTEGER', 'autorizado_por' => 'INTEGER',
-            'autorizado_en' => 'TEXT', 'retirado_en' => 'TEXT', 'cambio_ciclo_siguiente' => 'TEXT'];
+            'autorizado_en' => 'TEXT', 'retirado_en' => 'TEXT', 'motivo_automatico_apagado' => 'TEXT', 'cambio_ciclo_siguiente' => 'TEXT'];
         foreach ($columnas as $campo => $tipo) {
             $db->exec("ALTER TABLE suscripciones ADD COLUMN $campo $tipo");
         }

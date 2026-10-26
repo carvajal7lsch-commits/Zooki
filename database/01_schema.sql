@@ -78,6 +78,7 @@ CREATE TABLE `suscripciones` (
   `autorizado_por` INT DEFAULT NULL,
   `autorizado_en` DATETIME DEFAULT NULL,
   `retirado_en` DATETIME DEFAULT NULL,
+  `motivo_automatico_apagado` VARCHAR(40) DEFAULT NULL,
   `cambio_ciclo_siguiente` ENUM('mensual','anual') DEFAULT NULL,
   `id_clinica` INT NOT NULL,
   `id_plan` INT NOT NULL,
@@ -1256,6 +1257,9 @@ CREATE TABLE wompi_eventos (
  estado ENUM('pendiente','procesando','procesado','ignorado','error','revision') NOT NULL DEFAULT 'pendiente',
  recibido_en DATETIME NOT NULL,
  procesado_en DATETIME DEFAULT NULL,
+ revisado_por INT DEFAULT NULL,
+ revisado_en DATETIME DEFAULT NULL,
+ nota_revision TEXT DEFAULT NULL,
  lease_token CHAR(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
  lease_hasta DATETIME DEFAULT NULL,
  intentos_proceso INT NOT NULL DEFAULT 0,
@@ -1264,6 +1268,7 @@ CREATE TABLE wompi_eventos (
  UNIQUE KEY uq_wompi_evento (entorno,clave_evento),
  KEY idx_wompi_transaccion (entorno,id_transaccion_wompi),
  KEY idx_wompi_revision (estado,proxima_revision),
+ CONSTRAINT fk_evento_revisor FOREIGN KEY (revisado_por) REFERENCES usuarios (id_usuario),
  CONSTRAINT fk_evento_intento FOREIGN KEY (id_intento) REFERENCES intentos_pago (id_intento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -1302,7 +1307,9 @@ CREATE TABLE avisos_suscripcion (
  id_pago BIGINT DEFAULT NULL,
  id_intento BIGINT DEFAULT NULL,
  id_usuario_destinatario INT NOT NULL,
+ -- Excepción aprobada 2026-10-25: conservar dominio de la 12; la 14 agrega pago_confirmado antes de servir.
  tipo ENUM('vence_7','vence_1','congelada','cobro_fallido') NOT NULL,
+ medio_pago VARCHAR(32) DEFAULT NULL,
  clave_aviso CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
  vencimiento_objetivo DATETIME NOT NULL,
  programado_en DATETIME NOT NULL,
