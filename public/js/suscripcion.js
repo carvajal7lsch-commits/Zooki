@@ -1,15 +1,38 @@
-/* S2: el navegador abre el Widget; solo consulta evidencia local, nunca acredita. */
+/* S2: el navegador solo lleva a Wompi y consulta evidencia local; nunca acredita.
+   Rediseño (2026-10-26): el pago usa el checkout web de Wompi a pantalla completa en vez del
+   widget en ventana; vuelve por suscripcion_retorno con la misma referencia firmada. */
 (() => {
     'use strict';
+    const CHECKOUT_WEB = 'https://checkout.wompi.co/p/';
+
+    // Mismos datos que firmó el servidor (PagoSuscripcion::reservar); sin ellos no se sale de Zooki.
+    function urlCheckout(checkout) {
+        const integridad = checkout?.signature?.integrity;
+        if (!checkout?.publicKey || !checkout.reference || !integridad || !Number.isSafeInteger(checkout.amountInCents)) {
+            throw new Error('No se pudo preparar el pago. Consulta el estado antes de intentarlo de nuevo.');
+        }
+        const parametros = new URLSearchParams({
+            'public-key': checkout.publicKey,
+            currency: checkout.currency,
+            'amount-in-cents': String(checkout.amountInCents),
+            reference: checkout.reference,
+            'signature:integrity': integridad,
+            'redirect-url': checkout.redirectUrl,
+        });
+        if (checkout.expirationTime) parametros.set('expiration-time', checkout.expirationTime);
+        return CHECKOUT_WEB + '?' + parametros.toString();
+    }
+
     function iniciar(raiz, servicios = {}) {
         if (!raiz) return;
         const boton = raiz.querySelector('.suscripcion__pagar');
         const consultar = raiz.querySelector('.suscripcion__consultar');
         const mensaje = raiz.querySelector('#suscripcionMensaje');
         const solicitar = servicios.fetch || globalThis.fetch;
-        const widget = servicios.widget || (datos => new globalThis.WidgetCheckout(datos));
+        const redirigir = servicios.redirigir || (url => globalThis.location.assign(url));
         const habilitado = raiz.dataset?.pagoHabilitado === '1';
         let ocupado = false;
+        let saliendo = false;
         let referencia = '';
         const avisar = texto => {
             if (mensaje) mensaje.textContent = texto;
@@ -48,24 +71,23 @@
                 avisar(datos.pago.mensaje);
                 if (datos.pago.abrir) {
                     referencia = datos.pago.checkout.reference;
-                    const checkout = widget(datos.pago.checkout);
-                    checkout.open(() => {
-                        avisar('La ventana terminó. Consultando la confirmación…');
-                        estado();
-                    });
+                    const url = urlCheckout(datos.pago.checkout);
+                    avisar('Abriendo Wompi…');
+                    saliendo = true;
+                    redirigir(url);
                 }
             } catch (error) {
                 avisar(error.message || 'No se pudo abrir Wompi. Consulta el estado antes de intentarlo de nuevo.');
             } finally {
                 // Una reapertura, incluso desde otra pestaña, obtiene la misma obligación del servidor.
                 ocupado = false;
-                boton.disabled = !habilitado;
+                boton.disabled = !habilitado || saliendo;
             }
         }
         boton?.addEventListener('click', pagar);
         consultar?.addEventListener('click', estado);
         return {pagar, estado};
     }
-    if (typeof module !== 'undefined') module.exports = { iniciar };
+    if (typeof module !== 'undefined') module.exports = { iniciar, urlCheckout };
     if (typeof document !== 'undefined') iniciar(document.querySelector('[data-suscripcion-pantalla]'));
 })();

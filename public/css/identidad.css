@@ -41,6 +41,7 @@
     --z-foco: 0 0 0 3px rgba(0, 82, 255, 0.14);
     --z-foco-error: 0 0 0 3px rgba(239, 68, 68, 0.14);
     --z-velo: rgba(15, 23, 42, 0.04);
+    --z-velo-modal: rgba(15, 23, 42, 0.45);
 }
 
 /* Marca de campo obligatorio, compartida por la agenda del vet y el portal. */

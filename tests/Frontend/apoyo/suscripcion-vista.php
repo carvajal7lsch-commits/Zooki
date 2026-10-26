@@ -12,7 +12,7 @@ $contexto = Contexto::deClinica(1, 'Clínica Norte', Roles::ADMIN);
 Contexto::activar($contexto, 1);
 Security::definirFuenteDeContextos(static fn (): array => [$contexto]);
 $_SERVER['REQUEST_METHOD'] = 'GET';
-$_GET = ['action' => 'admin_suscripcion'];
+$_GET = ['action' => 'admin_suscripcion'] + (($argv[2] ?? '') !== '' ? ['desde' => $argv[2]] : []);
 $db->exec("UPDATE clinicas SET nombre='Clínica Norte <prueba>' WHERE id_clinica=1");
 $escenario = $argv[1] ?? 'gracia';
 if ($escenario !== 'legado') {

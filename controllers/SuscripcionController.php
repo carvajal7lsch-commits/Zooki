@@ -57,6 +57,12 @@ final class SuscripcionController
         if ($this->mensajeRetorno === null && isset($_GET['referencia'])) {
             $retornoPago = $this->pagos()->estadoLocal($this->referencia());
         }
+        // Rediseño (2026-10-26): se llega desde el Inicio o desde Configuración; volver lleva al mismo sitio.
+        $origenSuscripcion = ($_GET['desde'] ?? '') === 'configuracion' ? 'configuracion' : '';
+        $encabezadoPagina = ['titulo' => 'Suscripción', 'subtitulo' => 'Plan y pagos de ' . $estadoSuscripcion['clinica']['nombre'],
+            'volver' => $origenSuscripcion === 'configuracion'
+                ? ['href' => 'index.php?action=admin_configuracion', 'texto' => 'Configuración']
+                : ['href' => 'index.php?action=admin_panel', 'texto' => 'Inicio']];
         $content_view = __DIR__ . '/../views/admin/suscripcion.php';
         require __DIR__ . '/../views/admin/layout.php';
     }

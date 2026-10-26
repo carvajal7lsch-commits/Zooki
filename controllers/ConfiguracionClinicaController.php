@@ -9,17 +9,32 @@ require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 final class ConfiguracionClinicaController
 {
     private ConfiguracionClinica $configuracion;
+    private PDO $db;
 
     public function __construct(?PDO $db = null)
     {
-        $this->configuracion = new ConfiguracionClinica($db ?? (new Database())->getConnection());
+        $this->db = $db ?? (new Database())->getConnection();
+        $this->configuracion = new ConfiguracionClinica($this->db);
     }
 
     public function vista(): void
     {
         $configuracion = $this->configuracion->leer();
+        $planSuscripcion = $this->planEfectivo();
         $content_view = __DIR__ . '/../views/admin/configuracion.php';
         require __DIR__ . '/../views/admin/layout.php';
+    }
+
+    /** Rediseño (2026-10-26): la entrada a Suscripción muestra el plan; si no se puede leer, la entrada sigue sin él. */
+    private function planEfectivo(): ?string
+    {
+        require_once __DIR__ . '/../models/Suscripcion.php';
+        try {
+            return (new Suscripcion($this->db, (int) Contexto::clinicaActiva()))->estado()['plan_efectivo']['nombre'];
+        } catch (Throwable $error) {
+            error_log('Configuración: plan de la suscripción: ' . $error->getMessage());
+            return null;
+        }
     }
 
     public function obtenerAjax(): void

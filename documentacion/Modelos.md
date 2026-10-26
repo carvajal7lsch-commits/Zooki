@@ -1411,14 +1411,14 @@ El servidor calcula por clínica la vigencia y gracia con la fecha actual, aunqu
 
 S1 implementa vencimiento, gracia, congelación y avisos. S2 implementa el botón con eventos verificados; S3 añade fuente hospedada y autorización mensual separada. Falta de configuración o cobros apagados deshabilitan el botón, sin afectar la atención.
 
-**A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar no cancela ni acredita; volver con un ID permite recuperar por GET privado y referencia de la clínica activa. Cotización vencida sin resultado remoto queda incierta; solo un rechazo/error confirmado permite cerrar la obligación fallida y volver a cotizar con tarifa vigente, conservando la evidencia. Las concesiones legadas sin fin requieren regularización previa.
+**A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Desde 2.2.0 el pago abre el checkout web de Wompi a pantalla completa con los mismos datos firmados (decisión del dueño, 2026-10-26); guardar la tarjeta o Nequi sigue con el widget hospedado. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar no cancela ni acredita; volver con un ID permite recuperar por GET privado y referencia de la clínica activa. Cotización vencida sin resultado remoto queda incierta; solo un rechazo/error confirmado permite cerrar la obligación fallida y volver a cotizar con tarifa vigente, conservando la evidencia. Las concesiones legadas sin fin requieren regularización previa.
 
 ```mermaid
 flowchart TD
   A["Administrador: Pagar o Renovar"] --> B{"Contexto, CSRF y ciclo validos?"}
   B -- No --> X["Rechazar sin crear cargo"]
   B -- Si --> C["Calcular tarifa; bloquear clinica\nReutilizar o reservar orden e intento unicos; commit"]
-  C --> D["Firmar configuracion; JS externo abre Widget Wompi"]
+  C --> D["Firmar configuracion; el navegador abre el checkout web de Wompi a pantalla completa"]
   D --> E["Tarjeta, PSE o Nequi en Wompi"]
   E --> F["Retorno con id: GET privado y referencia de clinica propia; cierre: estado local"]
   E -. "Evento independiente" .-> G["Flujo B: verificar y conciliar"]
