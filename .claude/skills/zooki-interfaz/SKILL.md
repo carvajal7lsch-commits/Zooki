@@ -27,6 +27,7 @@ Lee también `AGENTS.md` (reglas de código) y `agentes/metodo.md` §8. Esto res
 
 - **Cada pixel trabaja.** Nada de huecos sin razón entre bloques, ni títulos con aire de sobra arriba.
 - **Nunca estirar contenedores para «llenar» la pantalla.** Una tarjeta mide lo que mide su contenido. Si sobra espacio, se queda como fondo; una caja blanca vacía se ve peor.
+- **Nada de tarjetas sueltas flotando.** Varias secciones relacionadas van en una sola hoja blanca, separadas por líneas y con columnas alineadas; una zona de acciones puede llevar un fondo apenas distinto.
 - **Agrupar controles en una sola fila** de la misma altura (44 px): buscador, filtros, conmutadores y acciones juntos, no regados en tres alturas.
 - **Un solo título por pantalla.** El título va en la barra superior del layout (`top-header-title`); la página no lo repite ni repite el nombre de la clínica.
 - Lo secundario se compacta: datos de referencia en filas «etiqueta gris pequeña + valor en negrita»; resúmenes en franjas de 3 columnas con separador; estados en chips.
@@ -36,7 +37,8 @@ Lee también `AGENTS.md` (reglas de código) y `agentes/metodo.md` §8. Esto res
 
 - **Un solo botón primario azul por zona.** Los demás, secundarios (borde) o de texto. Cinco botones azules llenos compiten entre sí.
 - Las acciones van junto a lo que afectan (en la cabecera de su tarjeta o al lado del título), no sueltas al final.
-- **Volver siempre visible:** botón con flecha y texto que dice a dónde vuelve («← Propietarios», «← Inicio»), a la izquierda del título. La ruta pequeña (migas) se puede dejar como ubicación.
+- **Volver siempre visible:** botón con flecha y texto que dice a dónde vuelve («← Propietarios», «← Inicio»), a la izquierda del título. Si a la pantalla se llega desde varios sitios, el texto y el destino cambian según el origen.
+- Cada pantalla debe tener una entrada natural en el menú o en la sección a la que pertenece (por ejemplo, Suscripción como pestaña de Configuración), no solo un atajo del Inicio. La ruta pequeña (migas) se puede dejar como ubicación.
 - Flujos de varios pasos (aceptar condiciones, guardar un medio de pago, autorizar) van en un **modal de Zooki** paso a paso, no como un formulario desplegado en la página.
 - Confirmación solo para lo grave (`zookiConfirmarCorto`); lo demás, directo y con toast (`zookiToast`). Nunca `alert`.
 
