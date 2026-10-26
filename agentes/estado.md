@@ -6,6 +6,18 @@
 
 ## Ahora
 
+### M0-S — S4 y cierre 2.1.0 revisados: aprobados (2026-10-26)
+
+- **Revisión (Claude):** ver «S4 y cierre 2.1.0 — Revisión» en el plan. MySQL 8: 1158/10556 en verde. Sigue: commit, push, prueba en la copia de pruebas (recuperación y recibo), PR, merge, tag v2.1.0 y puesta en producción según §10 con los cobros apagados.
+
+#### Entrega de Codex
+
+- **Escribió Codex; revisa Claude (arquitecto).** Panel financiero y cierre S4 conservados; hallazgo sandbox corregido con recuperación por ID del retorno y conciliación manual auditada, sin elegir clínica ni crear cargos.
+- Correo «Recibimos tu pago» por la outbox de S1, único por pago/administrador D7; migración 14 y excepción aprobada de una sola validación en la 12 para el doble arranque Docker. MER/drawDB/fuentes sincronizados, versión 2.1.0 conservada.
+- **Verificado:** PHP sin motor 1158/9287 (91 omitidas de motor); completo MariaDB 10.4.32: 1158/10552, ninguna omitida, solo `zooki_test_base_v2`; JS 345/345. Dos procesos retorno/evento en ambos órdenes, arranque SQL+migrador, outbox y Chrome 1366/390; flujo Mermaid renderizado.
+- PDF/Word actualizados y manifiesto al día; PDF en muestra visual y DOCX ZIP/XML/TOC correctos, revisión visual Word pendiente por falta de LibreOffice. Anexo S4 y tres pruebas nuevas del dueño (§12.1) en el plan.
+- **Sigue:** revisión de Claude, CI/MySQL 8 y sandbox de recuperación/recibo; D8/D10 antes de dinero real. La lectura de JWT real ya pasó según la prueba del dueño conservada al final del plan. `specs/pulido-interfaz.md`, ese relato y `docker-compose.pruebas.yml` ajenos intactos. Sin `.env`, base de trabajo, API/SMTP reales, cambios remotos ni commit/push/tags.
+
 ### M0-S — S3 revisada: aprobada (2026-10-25)
 
 - **Revisión (Claude):** ver «S3 — Revisión» en el plan. MySQL 8: 1132/10250 en verde. Primera prueba manual en sandbox: guardar una fuente (lectura del JWT de aceptación). Sigue S4.

@@ -1,4 +1,7 @@
-# Modelos y diagramas — Zooki v2.0
+# Modelos y diagramas — Zooki v2.1
+
+> **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
+
 
 > **Actualización de cierre M2 — 16/10/2026:** 2.0.0-alpha.4; conocimiento global con fuentes y validación veterinaria pendiente. Esquema de 52 tablas; integración del triage con agenda y urgencias pendiente de M4.
 
@@ -829,7 +832,10 @@ flowchart TD
 
 ### 12.1.1 Panel del super-administrador — Módulo 0
 
-M0-S/S1: el plan contratado y el efectivo, la vigencia y la gracia se leen del servicio único. Regularizar el profesional legado exige motivo y último día incluido; la concesión administrativa se distingue de un pago y no levanta una suspensión de clínica. El historial financiero sigue planificado para S4.
+M0-S/S1–S4: el plan contratado y el efectivo, la vigencia y la gracia se leen del servicio único.
+Regularizar el profesional legado exige motivo y último día incluido; la concesión administrativa se distingue de un pago y no levanta una suspensión de clínica.
+«Pagos e incidencias» dentro de Gestionar consulta metadatos financieros de esa clínica; «Sin clínica identificada» muestra las referencias desconocidas sin asignarlas por suposición.
+La revisión con nota, actor y fecha es atómica con su auditoría y no modifica el pago ni el periodo; flujo detallado en §12.7.E.
 
 ```mermaid
 flowchart TD
@@ -841,6 +847,8 @@ flowchart TD
   PES -- Soporte --> CAS
   PES -- Seguridad --> IP
   F --> GES["Gestionar: tarjeta del plan actual marcada e interruptor de suscripcion;<br/>deshabilitado con nota si esta pendiente o de baja<br/>Estado: tarjetas solo con las acciones del estado actual (activa o pendiente: suspender;<br/>suspendida verificada: reactivar; de baja: ninguna) y Dar de baja en rojo"]
+  GES --> FINAN["Pagos e incidencias: lectura financiera de la clinica\nPlanes, fin incluido, automatico y motivo del apagado\nPagos, incidencias y concesiones en bloques separados"]
+  FINAN --> REVFIN["Revision con nota: flujo 12.7.E; sin cobrar ni devolver dinero"]
   GES --> CONF{"Dar de baja?"}
   CONF -- Si --> Q{"Confirma el super-administrador?"}
   Q -- No --> L
@@ -1394,13 +1402,13 @@ Las marcas de C2 siguen pendientes de C5; no se mueven citas, reinician bloques/
 Los conteos de requisitos e historias no cambian por precisar estos criterios existentes.
 
 
-### 12.7 Suscripción, vigencia y cobro — Módulo 0 (S1/S2/S3)
+### 12.7 Suscripción, vigencia y cobro — Módulo 0 (S1–S4)
 
 El servidor calcula por clínica la vigencia y gracia con la fecha actual, aunque el trabajador se retrase. Los intervalos incluyen inicio y excluyen fin. La mora no suspende administrativamente la clínica. Un profesional legado sin fecha conserva su condición hasta regularización por plataforma con motivo y vencimiento; no crea un pago. Mes/año con ancla y sin prorrateos: pago en gracia desde el fin anterior; tras congelar desde acreditación local.
 
 S1 implementa vencimiento, gracia, congelación y avisos. S2 implementa el botón con eventos verificados; S3 añade fuente hospedada y autorización mensual separada. Falta de configuración o cobros apagados deshabilitan el botón, sin afectar la atención.
 
-**A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar o volver no cancela ni acredita. Cotización vencida sin resultado remoto queda incierta; solo un rechazo/error confirmado permite cerrar la obligación fallida y volver a cotizar con tarifa vigente, conservando la evidencia. Las concesiones legadas sin fin requieren regularización previa.
+**A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar no cancela ni acredita; volver con un ID permite recuperar por GET privado y referencia de la clínica activa. Cotización vencida sin resultado remoto queda incierta; solo un rechazo/error confirmado permite cerrar la obligación fallida y volver a cotizar con tarifa vigente, conservando la evidencia. Las concesiones legadas sin fin requieren regularización previa.
 
 ```mermaid
 flowchart TD
@@ -1409,12 +1417,12 @@ flowchart TD
   B -- Si --> C["Calcular tarifa; bloquear clinica\nReutilizar o reservar orden e intento unicos; commit"]
   C --> D["Firmar configuracion; JS externo abre Widget Wompi"]
   D --> E["Tarjeta, PSE o Nequi en Wompi"]
-  E --> F["Retorno o cierre: consultar solo estado local propio"]
+  E --> F["Retorno con id: GET privado y referencia de clinica propia; cierre: estado local"]
   E -. "Evento independiente" .-> G["Flujo B: verificar y conciliar"]
   G --> F
 ```
 
-**B — Evento y acreditación.** Inbox durable antes del HTTP 200; duplicados 200, firma inválida 401 y base caída 503. Tras el 200 durable, el receptor intenta conciliar ese evento; Schedule queda de respaldo. No se cierran ni vacían búferes ajenos o de pruebas. Huella canónica D9, whitelist sin cuerpo íntegro ni PII. La consulta privada usa host del entorno; si informa comercio se coteja con `/merchants/info`. HTTP queda fuera de transacción. La concesión y su auditoría son atómicas, con periodo único por orden. Un GET pendiente/404/caído se reanuda por `--solo=conciliacion`; el retorno nunca dispara esa consulta. Anulación, discrepancia o segundo cargo real generan incidencia conservada para S4, sin borrar vigencia ni devolver automáticamente.
+**B — Evento y acreditación.** Inbox durable antes del HTTP 200; duplicados 200, firma inválida 401 y base caída 503. Tras el 200 durable, el receptor intenta conciliar ese evento; Schedule queda de respaldo. No se cierran ni vacían búferes ajenos o de pruebas. Huella canónica D9, whitelist sin cuerpo íntegro ni PII. La consulta privada usa host del entorno; si informa comercio se coteja con `/merchants/info`. HTTP queda fuera de transacción. La concesión y su auditoría son atómicas, con periodo único por orden. Un GET pendiente/404/caído se reanuda por `--solo=conciliacion`; el retorno con ID válido también puede recuperarlo por GET privado, solo si su referencia pertenece a la clínica activa. Anulación, discrepancia o segundo cargo real generan incidencia conservada para S4, sin borrar vigencia ni devolver automáticamente.
 
 ```mermaid
 flowchart TD
@@ -1434,7 +1442,7 @@ flowchart TD
   LOCK --> P{"Ya hay periodo o cargo aprobado?"}
   P -- "Mismo pago" --> DUP["No-op; evento procesado"]
   P -- "Otro cargo" --> REV
-  P -- No --> TX["Insertar periodo unico; actualizar vigencia y plan\nAuditar y finalizar evento; commit"]
+  P -- No --> TX["Insertar periodo unico; actualizar vigencia y plan\nReservar recibo por pago y destinatario; auditar; commit"]
   TX --> FIN["Suspension administrativa intacta"]
 ```
 
@@ -1494,3 +1502,55 @@ flowchart TD
   TRES -- Si --> FIN
   TRES -- No --> A
 ```
+
+**12.7.E — consulta financiera y revisión de incidencias (S4, RE-0.3.7/RE-0.5.24/25/26).**
+No consulta fichas ni historia; no muestra identificadores de fuentes.
+El motivo del apagado automático distingue precio, condiciones o ambos; nuevas aceptaciones y retiradas explícitas limpian la proyección, sin borrar su auditoría.
+
+```mermaid
+flowchart TD
+  A["Plataforma: Gestionar clinica / Pagos e incidencias"] --> B{"Sesion y cuenta super-administradora activas?"}
+  B -- No --> X["403; ningun metadato financiero"]
+  B -- Si --> L["Servicio unico: contratado, efectivo, vigencia y automatico\nHistorial paginado por clinica; concesiones separadas"]
+  L --> I["Incidencias vinculadas por intento y orden locales\nDesconocidas: seccion global sin clinica identificada"]
+  I --> R{"Marcar revisada con nota?"}
+  R -- No --> FIN["Solo lectura; nunca cobrar ni devolver"]
+  R -- Si --> V{"POST, CSRF, nota y pertenencia de seccion validos?"}
+  V -- No --> ERR["403/422; conservar formulario"]
+  V -- Si --> TX["Bloquear evento en transaccion; revalidar plataforma"]
+  TX --> YA{"Ya revisado?"}
+  YA -- Si --> KEEP["Conservar primera nota; sin escritura ni auditoria duplicada"]
+  KEEP --> FIN
+  YA -- No --> AU["Guardar revisor, fecha y nota; auditar en la misma transaccion"]
+  AU --> OK{"Escritura y auditoria correctas?"}
+  OK -- No --> RB["Rollback; incidencia sigue sin revisar"]
+  OK -- Si --> C["Commit; actualizar historial y aviso breve\nConservar estado, codigo, pago y periodo"]
+```
+
+
+**12.7.F — recuperación de evento perdido (S4, RE-0.5.13/14/24 y RE-0.3.7).**
+El navegador solo proporciona el ID validado; referencia, estado, importe y beneficiario proceden del GET privado.
+La evidencia interna `transaction.consultada` se distingue de un evento firmado y comparte su conciliador y recuperación por Schedule.
+Plataforma exige motivo auditado y no elige una clínica de destino.
+
+```mermaid
+flowchart TD
+  R[Retorno del administrador con id] --> V{Formato valido?}
+  M[Plataforma: ID y motivo] --> S{Rol, POST, CSRF y motivo validos?}
+  S -- Si --> V
+  S -- No --> X[Rechazar sin efecto financiero]
+  V -- No --> X
+  V -- Si --> GET[GET privado fuera de transaccion]
+  GET --> C{Referencia local del entorno?}
+  GET -- API caida o 404 --> P[Informar pendiente; sin acreditar]
+  C -- No --> P
+  C -- Si --> A{Retorno de la misma clinica o plataforma?}
+  A -- No --> P
+  A -- Si --> I[Auditar consulta manual; inbox interno durable]
+  I --> B[Conciliador comun: cotejos y bloqueo de clinica]
+  B --> U{APPROVED concordante y periodo aun no concedido?}
+  U -- Si --> FIN[Periodo unico, recibo y auditoria atomica; commit]
+  U -- No --> E[Pendiente, no-op o incidencia; Schedule de respaldo]
+```
+
+El correo «Recibimos tu pago» usa la outbox de S1: se reserva al acreditar bajo bloqueo de clínica y clave única por pago/administrador D7, y se despacha tras commit. Incluye valor, ciclo, referencia, medio mínimo saneado del GET y fin incluido de ese pago, aunque haya otra renovación posterior. SMTP incierto no se repite a ciegas ni invalida el periodo.

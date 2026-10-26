@@ -1,8 +1,8 @@
 # Ficha Técnica del Proyecto — Zooki
 
-> **M0-S / S1–S3 — 2026-10-25:** 96 HU, 464 RE, 126 RN, 65 tablas; migración 12 integrada. Botón Wompi, eventos verificados, acreditación única e historial propio. Fuentes y mandato mensual separado, tres intentos terminales y avisos S3 implementados. Panel financiero S4 pendiente; sin migración adicional. Versión y revisiones sin cambios.
+> **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
-> **Revisión 3.5** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
+> **Revisión 3.6** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
 > **Preparación M4/B2 — 2026-10-18:** 96 HU, 430 RE y 120 RN; esquema de 58 tablas en 01/MER/drawDB y migración 08 preparados para revisión, sin despliegue ni flujos C implementados. Producción alpha.4 conserva sus 52 tablas hasta desplegar; sin nueva revisión/versión.
 
@@ -19,8 +19,8 @@
 | Programa Formativo | Análisis y Desarrollo de Software (ADSO) |
 | Ficha | 3142784 |
 | Metodología | Scrum + Tablero Kanban |
-| Estado actual | **2.0.0 preparada para revisión e integración**: base SaaS, portal multi-clínica, historia clínica/Grafo I, agenda/Grafo II y carnet QR público con escaneos y ubicación consentida. Producción se confirma tras desplegar; conocimiento pendiente de validación veterinaria |
-| Versión del documento | 3.5 — Octubre 2026 |
+| Estado actual | **2.1.0 preparada para revisión e integración**: Inicio del administrador y suscripción con Wompi, vigencia, avisos, automático mensual y panel financiero. D8/D10 pendientes antes de dinero real. Producción se confirma al desplegar; conocimiento pendiente de validación veterinaria |
+| Versión del documento | 3.6 — Octubre 2026 |
 
 ## 1. Descripción General del Proyecto
 
@@ -171,16 +171,16 @@ Proyecto formativo desarrollado por un único aprendiz. Se distinguen la **inver
 
 **v1.11.0 — línea base histórica.** Línea base completa y endurecida (seguridad, recordatorios robustos, respaldos, panel de operación). El historial detallado de versiones (v1.0.0 → v1.11.0) está en el documento [Historial de Versiones](HistorialVersiones.md).
 
-**v2.0 — en construcción por módulos.** La especificación documentación-primero está completa: Visión y Alcance, [ERS](ERS.md) (ISO/IEC/IEEE 29148, Rev 3.5), [Reglas de Negocio](ReglasNegocio.md) (Rev 2.4, 120 RN), [MER](MER.md), [Modelos y diagramas](Modelos.md) (Fase 2, con los dos grafos y el diagrama de componentes), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.4, 96 HU) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.4, 442 RE). La versión **2.0.0-alpha.1** pone en producción el módulo 0: registro y activación de clínicas, planes con sus límites, panel del super-administrador, una identidad por persona con roles por clínica y el aislamiento de los datos de cada clínica. La 2.0.0-alpha.2 pule el inicio de sesión y los registros, y la 2.0.0-alpha.3 trae el portal del propietario multi-clínica: todas sus mascotas e historia en todas sus clínicas, vínculos con tope de 3 clínicas y la historia compartida bajo su autorización. La 2.0.0-alpha.4 desplegada cierra M2: alergias y alertas compartidas, síntomas, apoyo diagnóstico, alertas de prescripción y mapa del conocimiento; el triage operativo queda en M4 y el carnet al final de la v2.0. Todo el conocimiento sigue pendiente de validación veterinaria. Cada entrega a producción publica la alfa siguiente hasta la 2.0.0.
+**v2.1.0 — cierre M0-S.** La base estable 2.0.0 conserva portal, grafos, agenda y carnet QR. Esta entrega añade el Inicio del administrador (HU-6.2) y cierra HU-0.5 con vigencia/gracia, avisos, pagos Wompi verificados, fuentes, mandato mensual y panel financiero. El esquema tiene 65 tablas; migraciones 12 y 13 repetibles. La especificación mantiene 96 HU, 464 RE y 126 RN. Las otras HU de v2.1 siguen planificadas; no se activa dinero real mientras falten D8/D10 y las comprobaciones del proveedor en sandbox.
 
 ## 12. Entregables Finales
 
 - Código fuente completo en repositorio GitHub con [README técnico](../README.md).
 - Aplicación desplegada en el servidor propio.
 - Base de datos con datos de prueba.
-- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.6).
-- Esta Ficha Técnica del Proyecto (Revisión 3.5).
-- [Reglas de Negocio](ReglasNegocio.md) (Rev 2.5), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.6) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.5).
+- [Documento ERS](ERS.md) conforme a **ISO/IEC/IEEE 29148:2018** (Revisión 3.7).
+- Esta Ficha Técnica del Proyecto (Revisión 3.6).
+- [Reglas de Negocio](ReglasNegocio.md) (Rev 2.6), [Historias de Usuario](HistoriasUsuario.md) (Rev 3.7) y [Requisitos Específicos](RequisitosEspecificos.md) (Rev 3.6).
 - [Modelo Entidad-Relación](MER.md) y [Modelos y diagramas](Modelos.md) (grafos, procesos, flujos de sistema y componentes) con su maestro draw.io.
 - [Historial de Versiones](HistorialVersiones.md) y documento de [Presupuesto y ROI](PresupuestoROI.md).
 - Manual de usuario. _(Pendiente)_

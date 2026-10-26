@@ -1,6 +1,6 @@
-# Modelo Entidad-Relación (MER) - Zooki v2.0
+# Modelo Entidad-Relación (MER) - Zooki v2.1
 
-> **M0-S / S2–S3 — 2026-10-25:** se utilizan las 65 tablas integradas en S1, sin DDL nuevo. Una obligación activa comparte orden y referencia entre pestañas. Al cerrar una cotización vencida con fallo terminal confirmado, sus claves locales se retiran con otra huella única; no se borran la orden, el intento ni la referencia del proveedor. Una nueva cotización conserva la versión base para detectar pagos tardíos duplicados. La evidencia de un cargo externo adicional se registra como intento/incidencia, sin emitir otra transacción. S3 usa fuentes y mandatos aprobados sin DDL nuevo; el token Nequi pendiente no se persiste y no se crea fuente hasta APPROVED. Los JWT solo viven durante la petición; contratos_json conserva enlaces e identidades de contratos, no tokens. La auditoría conserva las sucesivas aceptaciones, actor e importe. La suscripción canónica vincula la fuente activa; un envío durable en curso permanece conciliable tras retirar el mandato.
+> **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
 > **Carnet B — 2026-10-23:** 59 tablas. `carnet_accesos` cuenta también tokens inválidos sin guardar mascota ni token; `carnet_escaneos` conserva solo vistas válidas y ubicaciones consentidas. La IP se seudonimiza con HMAC-SHA256 y un secreto del entorno.
 
@@ -95,6 +95,9 @@ erDiagram
         enum estado
         datetime recibido_en
         datetime procesado_en
+        int revisado_por FK
+        datetime revisado_en
+        text nota_revision
         char lease_token
         datetime lease_hasta
         int intentos_proceso
@@ -128,6 +131,7 @@ erDiagram
         bigint id_intento
         int id_usuario_destinatario
         enum tipo
+        varchar medio_pago
         char clave_aviso
         datetime vencimiento_objetivo
         datetime programado_en
@@ -183,6 +187,7 @@ erDiagram
         int autorizado_por
         datetime autorizado_en
         datetime retirado_en
+        varchar motivo_automatico_apagado
         enum cambio_ciclo_siguiente
     }
     plantillas_comunicacion {
@@ -846,6 +851,7 @@ erDiagram
     clinicas ||--o{ fuentes_pago : "id_clinica"
     usuarios ||--o{ fuentes_pago : "creada_por"
     clinicas ||--o{ pagos_suscripcion : "id_clinica"
+    usuarios ||--o{ wompi_eventos : "revisado_por"
     suscripciones ||--o{ pagos_suscripcion : "id_suscripcion"
     planes ||--o{ pagos_suscripcion : "id_plan"
     usuarios o|--o{ pagos_suscripcion : "id_usuario_solicitante"
@@ -1278,6 +1284,10 @@ La suscripción expresa contrato y acceso efectivo. Una orden representa una obl
 
 Hora 07:00, reintentos +24/+48 h (tres totales), cotización 15 minutos: constantes de PoliticaSuscripcion, RN-014/016/017. El legado sin fecha conserva condiciones, no inventa pago ni vencimiento. Al final se enlazan suscripciones.id_fuente_activa con fuentes_pago.id_fuente y autorizado_por con usuarios.id_usuario.
 
+**S4, migración 13 (RE-0.3.7/RE-0.5.24/26):** `suscripciones.motivo_automatico_apagado` VARCHAR(40) NULL identifica `precio`, `condiciones` o `precio_y_condiciones`.
+`wompi_eventos.revisado_por` INT NULL referencia `usuarios.id_usuario` con RESTRICT, `revisado_en` DATETIME NULL y `nota_revision` TEXT NULL conservan la revisión financiera auditada.
+No cambia la clasificación original del evento, sus importes ni periodos; no se guarda contenido clínico.
+
 ```sql
 CREATE TABLE IF NOT EXISTS fuentes_pago (
  id_fuente BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -1371,6 +1381,9 @@ CREATE TABLE IF NOT EXISTS wompi_eventos (
  estado ENUM('pendiente','procesando','procesado','ignorado','error','revision') NOT NULL DEFAULT 'pendiente',
  recibido_en DATETIME NOT NULL,
  procesado_en DATETIME DEFAULT NULL,
+ revisado_por INT DEFAULT NULL,
+ revisado_en DATETIME DEFAULT NULL,
+ nota_revision TEXT DEFAULT NULL,
  lease_token CHAR(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
  lease_hasta DATETIME DEFAULT NULL,
  intentos_proceso INT NOT NULL DEFAULT 0,
@@ -1379,6 +1392,7 @@ CREATE TABLE IF NOT EXISTS wompi_eventos (
  UNIQUE KEY uq_wompi_evento (entorno,clave_evento),
  KEY idx_wompi_transaccion (entorno,id_transaccion_wompi),
  KEY idx_wompi_revision (estado,proxima_revision),
+ CONSTRAINT fk_evento_revisor FOREIGN KEY (revisado_por) REFERENCES usuarios (id_usuario),
  CONSTRAINT fk_evento_intento FOREIGN KEY (id_intento) REFERENCES intentos_pago (id_intento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -1417,7 +1431,8 @@ CREATE TABLE IF NOT EXISTS avisos_suscripcion (
  id_pago BIGINT DEFAULT NULL,
  id_intento BIGINT DEFAULT NULL,
  id_usuario_destinatario INT NOT NULL,
- tipo ENUM('vence_7','vence_1','congelada','cobro_fallido') NOT NULL,
+ tipo ENUM('vence_7','vence_1','congelada','cobro_fallido','pago_confirmado') NOT NULL,
+ medio_pago VARCHAR(32) DEFAULT NULL,
  clave_aviso CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
  vencimiento_objetivo DATETIME NOT NULL,
  programado_en DATETIME NOT NULL,
@@ -1440,3 +1455,9 @@ CREATE TABLE IF NOT EXISTS avisos_suscripcion (
 ALTER TABLE suscripciones ADD CONSTRAINT fk_suscripcion_fuente FOREIGN KEY (id_fuente_activa) REFERENCES fuentes_pago (id_fuente);
 ALTER TABLE suscripciones ADD CONSTRAINT fk_suscripcion_autor FOREIGN KEY (autorizado_por) REFERENCES usuarios (id_usuario);
 ```
+
+**S4 — correo confirmado (migración 14):** `avisos_suscripcion.tipo` admite `pago_confirmado` y `medio_pago VARCHAR(32) NULL` conserva exclusivamente la etiqueta saneada del medio; el fin objetivo es el concedido por ese pago. La clave única por pago/destinatario evita duplicar correos. `wompi_eventos.tipo=transaction.consultada` identifica evidencia interna de GET autenticado, sin confundirla con una firma del proveedor.
+
+**Excepción de instalación aprobada por el dueño (2026-10-25):** `01_schema.sql` conserva el ENUM original de avisos para pasar la validación exacta de la migración 12 publicada. La 14 lo amplía a `pago_confirmado` antes de servir la aplicación; este MER y drawDB representan ese destino final.
+
+El dueño autorizó además (2026-10-25) que únicamente esa validación de la migración 12 acepte el dominio original o el ampliado; así admite la segunda pasada del migrador tras la inicialización SQL de Docker. No cambia datos ni ninguna otra lógica de la migración publicada.

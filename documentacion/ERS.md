@@ -1,8 +1,8 @@
 # Especificación de Requisitos de Software (ERS) — Proyecto Zooki v2
 
-> **M0-S / S1–S3 — 2026-10-25:** 96 HU, 464 RE, 126 RN y 65 tablas. RF-0.5 implementado; RF-0.7 con botón, eventos, historial propio y automático mensual S2/S3; plataforma S4 pendiente. Sin cambio de versión ni revisión.
+> **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
-> **Revisión 3.6** · Conforme al estándar **ISO/IEC/IEEE 29148:2018** · Zooki — Sistema de gestión clínica veterinaria (arquitectura SaaS multi-inquilino) · SENA ADSO — Ficha 3142784
+> **Revisión 3.7** · Conforme al estándar **ISO/IEC/IEEE 29148:2018** · Zooki — Sistema de gestión clínica veterinaria (arquitectura SaaS multi-inquilino) · SENA ADSO — Ficha 3142784
 
 | Fecha | Revisión | Estándar | Autor |
 |---|---|---|---|
@@ -16,6 +16,7 @@
 | 14/10/2026 | 3.4 | ISO/IEC/IEEE 29148:2018 | Juan Sebastián Carvajal Home |
 | 16/10/2026 | 3.5 | ISO/IEC/IEEE 29148:2018 | Juan Sebastián Carvajal Home |
 | 23/10/2026 | 3.6 | ISO/IEC/IEEE 29148:2018 | Juan Sebastián Carvajal Home |
+| 25/10/2026 | 3.7 | ISO/IEC/IEEE 29148:2018 | Juan Sebastián Carvajal Home |
 
 **Historial.** Las revisiones 1.0–2.1 documentaron el producto de instalación única hasta la versión estable **v1.11.0**. La **revisión 3.0** reescribe el ERS para la versión **v2.0**, que transforma Zooki en una **plataforma SaaS multi-inquilino** e incorpora dos capacidades diferenciadoras basadas en grafos (soporte a la decisión clínica y agendamiento inteligente), además de suscripción por planes, registro autónomo de clínicas, carnet digital con QR y reputación de veterinarios. Esta revisión se alinea al estándar **ISO/IEC/IEEE 29148:2018**, sucesor del IEEE 830-1998. El documento maestro que fija el alcance de este cambio es *Visión y Alcance — Zooki v2.0*. La **revisión 3.1** (5 de octubre de 2026) recoge la revisión completa de la especificación: identifica cada requisito funcional con el número de su módulo (`RF-<módulo>.<n>`) y numera los no funcionales en orden (equivalencias en §5.5); hace global a la mascota, con historia clínica compartida bajo autorización del propietario (RF-1.8, RF-2.6); introduce la identidad única por persona con varios roles (RF-T.5), el registro con Google, la autorización de tratamiento de datos y la gestión segura del perfil (RF-T.6 a RF-T.8), con un `id_usuario` numérico como clave (§5.2); especifica el cálculo del triage y la agenda inteligente completa (RF-2.12, RF-4.11 a RF-4.15, RF-7.5); protege el registro de clínicas, el carnet QR y la reputación (RF-0.3, RF-5.7, RF-5.8, RF-8.3); fija los límites del plan gratuito, el comportamiento al bajar de plan y la excepción de las urgencias (RF-0.4 a RF-0.6); agrega el derecho de supresión, el dashboard y la página pública (RF-5.9, RF-6.1, RF-6.2, RF-9.1); endurece la sesión (RNF-12 a RNF-15); completa el modelo de datos (§5.2) y registra las capas avanzadas del plan profesional como requisito futuro (RF-F.8). La **revisión 3.2** corrige las incoherencias detectadas al preparar la construcción: el alcance se reparte entre las entregas v2.0 y v2.1 y los criterios de aceptación se evalúan por entrega (§5.4); el aislamiento declara sus excepciones globales y la alerta genérica de interacción con medicación protegida de otra clínica (RNF-11); la urgencia presencial sin identidad verificada usa una ficha provisional (RF-4.10); entre sobrecupos naranja rige el orden de llegada (RF-4.7); y las ausencias del veterinario se registran por fecha y hora (§5.2). La **revisión 3.3** (11 de octubre de 2026) acompaña la versión **2.0.0-alpha.1**, la primera de la plataforma SaaS en producción (módulo 0): fija los topes del plan gratuito en 50 mascotas vinculadas, 100 citas al mes y 2 cuentas de personal (RF-0.4); aclara que el super-administrador no accede a mascotas, historias, consultas ni citas, tampoco para soporte; y lleva la protección contra intentos fallidos a 20 por IP, CAPTCHA por cuenta e IP real del cliente detrás del proxy (RNF-12). La **revisión 3.4** (14 de octubre de 2026) acompaña la versión **2.0.0-alpha.3** (módulo 5, portal multi-clínica): la cuenta del propietario que registra la clínica se activa por el titular, sin aceptación presencial (RF-T.7); el propietario tiene un tope de 3 clínicas cuando se vincula él mismo (RF-5.4); y el registro de la mascota ya no pide el color (RF-1.1, RF-1.7).
 
@@ -49,7 +50,10 @@ Zooki es una **aplicación web SaaS multi-inquilino** que permite a varias clín
 - **Reputación:** perfil y calificación de veterinarios a partir de una encuesta breve posterior a la consulta.
 - **Acceso y seguridad:** autenticación local y federada (Google), control de acceso por roles y **aislamiento de datos por clínica**.
 
-**Fuera del alcance de la v2:** inventario de medicamentos completo, facturación electrónica / punto de venta y telemedicina con video. El **cobro real mediante pasarela de pago** y los entregables *deseables* (recetas en PDF, motor de salud preventiva por protocolos y PWA instalable) se contemplan como evolución (§2.6).
+**Fuera del alcance de la v2:** inventario de medicamentos completo, facturación electrónica / punto de venta y telemedicina con video.
+Los entregables *deseables* (recetas en PDF, motor de salud preventiva por protocolos y PWA instalable) se contemplan como evolución (§2.6).
+El cobro de suscripción con Wompi es RF-0.7, implementado en 2.1.0; sustituye la exclusión anterior de RF-F.1.
+La activación con dinero real requiere resolver D8/D10 y la validación operativa del proveedor.
 
 ### 1.3 Personal involucrado
 
@@ -265,7 +269,7 @@ Los módulos siguen la **misma numeración en todos los documentos** ([Historias
 | RF-0.4 | Definir planes con sus límites y precios: el gratuito admite 50 mascotas vinculadas, 100 citas por mes y 2 cuentas de personal; el profesional, sin límites de volumen. | Alta | Los planes existen con esos límites y son asignables a una clínica. |
 | RF-0.5 | Asignar y controlar por clínica el plan contratado y el efectivo, su vigencia y gracia parametrizada; congelar los beneficios de pago al terminar la gracia y recuperarlos al acreditar un periodo. La mora o la bajada al gratuito no ocultan ni borran datos: solo limitan nuevas altas a los cupos gratuitos, con excepción de urgencias rojas | Alta | Bordes de vigencia/gracia y gratuito efectivo sin depender de cron; suspensión administrativa intacta. |
 | RF-0.6 | Aplicar los límites del plan al operar (p. ej. máximo de mascotas y de citas/consultas por período en el plan gratuito), excepto en las urgencias 🔴, que nunca se bloquean por límite ni por mora. | Alta | Al superar el límite, el sistema impide la acción e informa el motivo; un caso 🔴 se atiende igual. |
-| RF-0.7 | Cobrar la suscripción mediante Wompi: primero pago voluntario con botón y, posteriormente, renovación automática mensual autorizada con fuente guardada; verificar y conciliar transacciones en servidor, aplicar cada periodo una sola vez y mostrar el historial al administrador y al super-administrador _Parcial S2/S3; S4 planificada (v2.1)._ | Alta | Evento firmado y API concordante; pago una vez y cliente falso. |
+| RF-0.7 | Cobrar la suscripción mediante Wompi: primero pago voluntario con botón y, posteriormente, renovación automática mensual autorizada con fuente guardada; verificar y conciliar transacciones en servidor, aplicar cada periodo una sola vez y mostrar el historial al administrador y al super-administrador _Implementado (2.1.0)._ | Alta | Evento firmado o recuperación por ID desde retorno propio/plataforma, siempre con API privada concordante; periodo único, recibo por outbox y cliente falso. |
 
 #### 3.2.2 Módulo T — Acceso, seguridad y administración *(v1.x, con multi-inquilino)*
 
@@ -499,7 +503,13 @@ El modelo de la línea base v1.12.0 evoluciona con: (a) la columna `id_clinica` 
 |---|---|
 | clinicas | Inquilino de la plataforma. (id_clinica PK, nombre, nit UK, direccion, telefono, estado [pendiente_verificacion/activa/suspendida/baja], logo, datos_contacto, id_plan FK, parámetros de la agenda) |
 | planes | Planes de suscripción. (id_plan PK, nombre, precio_mensual, precio_anual, limite_mascotas, limite_citas_mes, limite_personal) |
-| suscripciones | Estado de la suscripción por clínica. (id_suscripcion PK, id_clinica FK, id_plan FK, estado, fecha_inicio, fecha_fin, al_dia) |
+| suscripciones | Contrato y proyección de vigencia por clínica. (id_suscripcion PK, id_clinica FK, id_plan FK, estado, ciclo, gestion_cobro, periodo_inicio/fin exclusivo, estado_cobro, version_periodo, cobro_automatico, motivo_automatico_apagado, id_fuente_activa FK, autorizado_por FK, autorizado_en, retirado_en; fechas y al_dia compatibles) |
+| pagos_suscripcion | Obligación y cotización inmutables, clínica/suscripción/plan, ciclo, moneda y centavos calculados en servidor; claves únicas de obligación y operación. |
+| intentos_pago | Intentos de la orden con referencia y transacción únicas por entorno, origen manual/automático, estado e incertidumbre; nunca datos completos del medio. |
+| wompi_eventos | Inbox durable deduplicado por huella canónica, entorno, transacción, checksum verificado y estado; vínculo a intento local. Revisión con revisado_por FK, fecha y nota, sin borrar la incidencia. |
+| fuentes_pago | Vínculo de clínica y fuente externa CARD/NEQUI, marca/últimos cuatro y prueba de aceptación/mandato; sin PAN, CVC, teléfono, tokens efímeros ni JWT. |
+| suscripcion_periodos | Libro de concesiones inmutables por clínica/suscripción; origen Wompi, administrativo o legado. Un solo periodo por pago; motivo y actor en concesiones manuales. |
+| avisos_suscripcion | Outbox con unicidad por destinatario/tipo/obligación, programación, reclamación durable y resultado; SMTP posterior al commit. |
 | grafo_nodos | Conocimiento global. (id_nodo PK, codigo UK, tipo [sintoma/diagnostico/farmaco/especie/raza/condicion/sustancia], etiqueta, activo, version_conocimiento, fuentes, estado_validacion, nivel_triage, alarma_universal, moderado, metadatos, id_especie FK, id_raza FK) |
 | grafo_aristas | Aristas dirigidas con signo, efecto y condiciones. (id_arista PK, codigo UK, id_origen FK, id_destino FK, tipo_relacion, signo [+/−], peso, efecto, condiciones, fuentes, estado_validacion, activo, version_conocimiento) |
 | grafo_sinonimos | Formas de búsqueda por nodo. (id_sinonimo PK, codigo UK, id_nodo FK, texto, normalizado, fuentes, estado_validacion, activo, version_conocimiento) |
@@ -625,4 +635,4 @@ Desde la Revisión 3.1 cada RF lleva el número de su módulo. Los documentos de
 
 _Fin del ERS, revisión 3.4. Los modelos referenciados (MER v2, procesos de negocio, flujos del sistema y modelo de los grafos) están en [MER](MER.md) y [Modelos y diagramas](Modelos.md)._
 
-**Equivalencia M0-S:** RF-F.1 → RF-0.7 (v2.1); se retira del catálogo futuro sin renumerar RF-F.2–8. El administrador clínico paga; el super-administrador solo consulta metadatos y ajusta concesiones.
+**Equivalencia M0-S:** RF-F.1 → RF-0.7 (v2.1); se retira del catálogo futuro sin renumerar RF-F.2–8. El administrador clínico paga; el super-administrador consulta metadatos, ajusta concesiones y recupera pagos existentes por ID y motivo mediante API privada, sin elegir clínica ni crear cargos.

@@ -356,3 +356,9 @@ Registro con Google y una cédula que ya es de otra cuenta: abre el caso `docume
 - **Para el pulido final (no bloquean):**
   - Con la serie de 6 meses en cero, la minigráfica no se ve y deja un hueco; mostrar línea base y las iniciales de los meses (RE-6.2.4: los meses sin citas aparecen en cero).
   - `DisponibilidadAgenda::finDeApertura` escribe `America/Bogota`; usar `ReglaAtencion::ZONA`.
+
+## Registro: el freno de comprobaciones parece un error del campo (prueba del dueño, 2026-10-25)
+
+- Al registrar una clínica con muchas comprobaciones seguidas, `validar_cuenta_ajax` responde «espera un momento» y el formulario lo muestra como error del campo que tocaba (resumen: «Revisa estos campos… Correo de contacto: espera un momento antes de seguir comprobando»). Parece que el correo es inválido.
+- Pulido: si la respuesta es el límite de comprobaciones, mostrar un aviso general («Hiciste muchas comprobaciones seguidas. Espera unos segundos y vuelve a intentar») sin marcar el campo en rojo ni incluirlo en el resumen, y reintentar la comprobación al enviar.
+- Revisar el tope: `Security::MAX_VERIFICACIONES` = 20 comprobaciones por IP en 15 minutos (bloqueo de 15 min) se agota fácil en el registro de clínica, que comprueba NIT, DV y tres correos. Proponer un tope mayor o contar solo valores nuevos, sin abrir la enumeración (RE-T.13.2).

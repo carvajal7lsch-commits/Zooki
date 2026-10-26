@@ -4,8 +4,8 @@ Zooki es un sistema web moderno, robusto y eficiente diseñado para la gestión 
 
 ## Historial de versiones
 
-El historial completo de versiones (v1.0.0 → v2.0.0), la guía de la primera versión estable y el esquema de versionamiento (Zooki SemVer) se documentan aparte en **[documentacion/HistorialVersiones.md](documentacion/HistorialVersiones.md)** (pestaña «Historial de versiones» del portal), para no inflar esta sinopsis.
-La versión preparada para publicar es **2.0.0**: plataforma SaaS, portal multi-clínica, historia clínica y Grafo I, agenda inteligente con Grafo II y carnet público de emergencia con QR, escaneos y ubicación optativa. Su publicación requiere la revisión e integración del dueño; la versión de producción se confirma después del despliegue.
+El historial completo de versiones (v1.0.0 → v2.1.0), la guía de la primera versión estable y el esquema de versionamiento (Zooki SemVer) se documentan aparte en **[documentacion/HistorialVersiones.md](documentacion/HistorialVersiones.md)** (pestaña «Historial de versiones» del portal), para no inflar esta sinopsis.
+La versión preparada para publicar es **2.1.0**: añade el Inicio del administrador (HU-6.2) y cierra la suscripción con Wompi (HU-0.5). Requiere revisión, integración y despliegue del dueño; D8/D10 y las pruebas manuales de sandbox siguen pendientes antes de cobrar dinero real. Las otras HU de v2.1 no se incluyen.
 El conocimiento está pendiente de validación veterinaria y es apoyo a la decisión, no diagnóstico automático.
 
 Salvedad acordada para el cierre: el QR del portal en el correo de alta (RE-5.8.4) se entregará aparte; el correo conserva el enlace de acceso. El carnet QR de emergencia de la mascota sí está incluido en 2.0.0.
@@ -75,15 +75,69 @@ graph TD
     `php scripts/crear_superadmin.php` pide por consola el correo, el nombre y la contraseña (sin mostrarla) y crea la cuenta de la plataforma. Se niega si el correo ya existe. Ninguna credencial queda en el código ni en el SQL. En producción: `docker exec -it zooki_web php scripts/crear_superadmin.php`.
 ## Migraciones de la base de datos
 
-La base nace de dos archivos que no son migraciones: `database/01_schema.sql` (las 59 tablas del esquema actual) y `database/02_semilla.sql` (datos semilla). Las migraciones son los archivos `database/NN_nombre.sql` con número **03 o mayor**. **En el servidor se aplican solas:** al arrancar, el contenedor `web` ejecuta `docker/iniciar.sh`, que corre `scripts/migrar.php`, carga el conocimiento si la migración terminó bien y después inicia Apache. Como Dokploy reconstruye el contenedor en cada despliegue, basta con subir el archivo `.sql` nuevo junto con el código.
+La base nace de dos archivos que no son migraciones: `database/01_schema.sql` (las 65 tablas del esquema actual) y `database/02_semilla.sql` (datos semilla). Las migraciones son los archivos `database/NN_nombre.sql` con número **03 o mayor**. **En el servidor se aplican solas:** al arrancar, el contenedor `web` ejecuta `docker/iniciar.sh`, que corre `scripts/migrar.php`, carga el conocimiento si la migración terminó bien y después inicia Apache. Como Dokploy reconstruye el contenedor en cada despliegue, basta con subir el archivo `.sql` nuevo junto con el código.
 
 El carnet público requiere `CARNET_IP_SECRETO` como variable del entorno de PHP (XAMPP o Dokploy), con al menos 32 caracteres aleatorios. Se usa para el HMAC de IP y el comprobante de ubicación; no se publica ni se escribe su valor en el repositorio. La migración 11 crea el contador de accesos sin mascota ni token. Sin el secreto el acceso público falla de forma segura con 503; las demás funciones conservan su acceso habitual.
 
-### Actualizar una instalación v2 existente a 2.0.0
+### Actualizar una instalación v2 existente a 2.1.0
 
-La actualización desde alpha.5 conserva la base y los archivos: **no se vuelve a importar 01/02 ni se reinician los volúmenes**. El arranque aplica la migración 11 pendiente y la semilla idempotente; si se parte de una alfa anterior, también aplica sus migraciones pendientes. Antes de integrar a `main`, el dueño comprueba ambos trabajos del CI (general y MySQL 8), realiza un respaldo legible de la base y de los archivos subidos y revisa el PR de la rama de release. Si Dokploy sigue `main`, el merge puede iniciar el despliegue automáticamente.
+La actualización desde 2.0.0 conserva la base y los archivos: **no se vuelve a importar 01/02 ni se reinician los volúmenes**.
+El arranque aplica las migraciones 12 y 13 pendientes y la semilla idempotente; si se parte de una alfa anterior, también aplica sus migraciones pendientes.
+Antes de integrar a `main`, el dueño comprueba ambos trabajos del CI (general y MySQL 8), realiza un respaldo legible de la base y de los archivos subidos y revisa el PR de la rama de release.
+Si Dokploy sigue `main`, el merge puede iniciar el despliegue automáticamente.
 
-Después del despliegue se revisan los logs completos de migración y conocimiento, `php scripts/migrar.php --revisar` dentro del contenedor y la versión **2.0.0** en el contenedor y en pantalla. Apache también puede arrancar aunque falle una migración: que abra el sitio no acredita una actualización correcta. Se conserva el Schedule existente de `scripts/vigilar_atenciones.php` cada cinco minutos; no depende de abrir el calendario ni requiere duplicar ese trabajador. El carnet usa el correo configurado y exige `CARNET_IP_SECRETO` en el entorno de PHP antes de probar su acceso público.
+Después del despliegue se revisan los logs completos de migración y conocimiento, `php scripts/migrar.php --revisar` dentro del contenedor y la versión **2.1.0** en el contenedor y en pantalla.
+Apache también puede arrancar aunque falle una migración: que abra el sitio no acredita una actualización correcta.
+Se conserva el Schedule existente de `scripts/vigilar_atenciones.php` cada cinco minutos, además de la tarea financiera descrita a continuación; no se duplican.
+El carnet usa el correo configurado y exige `CARNET_IP_SECRETO` en el entorno de PHP antes de probar su acceso público.
+
+### Suscripciones y Wompi en Docker/Dokploy y XAMPP
+
+Las siete variables de `.env.example` se configuran por el dueño en el entorno de PHP/Dokploy, sin publicar sus valores:
+
+| Variable | Uso |
+|---|---|
+| `WOMPI_ENTORNO` | `sandbox` o `produccion`, con base y despliegue separados. |
+| `WOMPI_LLAVE_PUBLICA` | Llave del comercio para Widget; debe corresponder al entorno. |
+| `WOMPI_LLAVE_PRIVADA` | Consultas y operaciones del servidor; nunca llega al navegador. |
+| `WOMPI_SECRETO_EVENTOS` | Verificación del checksum del receptor. |
+| `WOMPI_SECRETO_INTEGRIDAD` | Firma del servidor para cada transacción. |
+| `WOMPI_COBROS_HABILITADOS` | Apagado salvo valor `1`; instalar y verificar inicialmente con `0`. |
+| `WOMPI_AUTOMATICOS_HABILITADOS` | Apagado salvo valor `1`; habilitar después del botón y de aprobar el mandato mensual. |
+
+Crear **un** Schedule de Dokploy cada cinco minutos, zona America/Bogota, comando `php /var/www/html/Zooki/scripts/gestionar_suscripciones.php`.
+`scripts/zooki.cron` contiene la definición; el contenedor web no instala cron ni cobra al arrancar.
+En Windows, Programador de tareas: programa `C:\xampp\php\php.exe`, argumento con ruta absoluta a `scripts\gestionar_suscripciones.php`, directorio inicial del proyecto, repetir cada cinco minutos y no iniciar otra instancia.
+`--revisar` es de solo lectura; `--solo=vencimientos|avisos|conciliacion|cobros` restringe el trabajo.
+
+Registrar en Wompi las URLs absolutas basadas en `APP_URL` de cada despliegue:
+
+Sandbox aparte:
+
+```text
+https://TU-DESPLIEGUE-DE-PRUEBAS/index.php?action=wompi_eventos_test
+```
+
+Producción:
+
+```text
+https://TU-DESPLIEGUE-PRODUCTIVO/index.php?action=wompi_eventos_prod
+```
+
+Conservar la subcarpeta pública si la base la incluye, sin repetir `index.php` si ya estaba en `APP_URL`.
+Los dominios anteriores son marcadores; el dueño configura sus URLs reales, llaves y comercio.
+Las pruebas automáticas nunca contactan Wompi, ni siquiera sandbox.
+Antes de dinero real deben resolverse D8 (comercio, métodos, aceptación/COF/3RI y revocación) y D10 (conservación financiera), y comprobar en sandbox los campos `contract_id`/`file_hash` de los JWT de aceptación.
+Regularizar desde plataforma las clínicas profesionales legadas con motivo y fecha, sin inventar pagos ni congelarlas por una fecha supuesta.
+La guía ordenada de activación está en `specs/M0-S-suscripcion-pagos.md`, §10.
+
+Ante una incidencia, poner ambos interruptores de cobro en `0` y reiniciar el servicio con ese entorno.
+Conservar llaves/secretos, receptor y Schedule: los eventos de pagos ya iniciados siguen verificándose y conciliándose.
+Si el evento no llegó, el retorno con `id` recupera el pago por GET privado del servidor, solo para la clínica propia.
+En plataforma, Pagos e incidencias → ID de transacción Wompi y motivo → Conciliar; no se elige clínica y no se crea un cargo.
+El Schedule envía «Recibimos tu pago» por la outbox una vez por pago/administrador verificado, con medio mínimo y último día incluido.
+La migración 14 amplía esa outbox sin modificar las migraciones publicadas.
+No repetir un POST incierto, borrar el inbox ni restaurar una instantánea antigua sin conciliar cargos ocurridos después.
 
 El Grafo I vive versionado en `database/conocimiento/`, con fuentes por elemento y validación veterinaria pendiente.
 En XAMPP, después de `php scripts/migrar.php`, ejecutar `php scripts/cargar_conocimiento.php`; con `--revisar` se valida y se muestran cambios sin escribir.

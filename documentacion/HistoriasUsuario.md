@@ -1,8 +1,8 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **M0-S / S1–S3 — 2026-10-25:** 96 HU, 464 RE, 126 RN y 65 tablas. Vigencia, avisos, botón, eventos, fuentes y automático mensual implementados S1–S3; panel financiero S4 planificado. Sin nueva revisión ni versión.
+> **Cierre M0-S — 2026-10-25:** versión 2.1.0 preparada para revisión e integración; HU-0.5 implementada, 96 HU, 464 RE, 126 RN y 65 tablas. Migraciones 12/13, Inicio del administrador (HU-6.2) y panel financiero de plataforma. D8/D10 pendientes antes de dinero real.
 
-> **Revisión 3.6** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
+> **Revisión 3.7** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
 > **Identificador:** `HU-<módulo>.<n>` — p. ej. `HU-4.3` es la tercera historia del Módulo 4. Dentro de cada módulo van en orden. La equivalencia con los identificadores anteriores (y la referencia Jira) está en el apéndice. Los módulos siguen la misma numeración en todos los documentos ([Reglas de Negocio](ReglasNegocio.md), [Requisitos Específicos](RequisitosEspecificos.md), [ERS](ERS.md) y [Modelos](Modelos.md)).
 
@@ -97,7 +97,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 **Criterios de aceptación:**
 
 - Muestra plan contratado/efectivo y vigencia/gracia calculados; una concesión manual exige motivo y fecha fin, sin fabricar pagos.
-- **Planificada S4:** consulta historial de pagos e incidencias por clínica como metadatos, sin entrar en datos clínicos ni cobrar una fuente.
+- **Implementada (2.1.0):** consulta historial de pagos e incidencias por clínica como metadatos, sin entrar en datos clínicos ni cobrar una fuente; revisa con nota auditada sin alterar pagos o periodos.
 
 - Lista de clínicas registradas con su estado, plan y estado de suscripción; se busca por nombre o NIT y se filtra por estado y plan.
 - Puede cambiar el plan de una clínica y el estado de su suscripción, con motivo obligatorio.
@@ -106,10 +106,10 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - Puede suspender o dar de baja una clínica sospechosa de duplicidad o abuso del plan gratuito, indicando el motivo y confirmando la acción; puede reactivar una suspendida con motivo. El personal pierde el contexto suspendido o dado de baja en la siguiente petición.
 - Lista casos de soporte y los cierra como resueltos o descartados con nota auditada, sin enlaces a datos clínicos (RN-010).
 - Lista IP bloqueadas vigentes, su vencimiento y las cuentas que fallaron en la ventana con sus clínicas. Permite desbloquear con confirmación y auditoría. El aviso por correo solo se envía cuando el super-administrador elige al administrador de una clínica asociada, revisa o edita el texto y confirma el envío; nunca es automático (RN-G15).
-- Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo. _Este criterio (RE-0.3.6) se entrega en la v2.1 junto con HU-8.1, porque en la v2.0 todavía no hay reseñas; el resto de la historia está en 2.0.0-alpha.1._
+- Puede ocultar una reseña por moderación (lenguaje ofensivo o datos personales), indicando el motivo; es el único que puede hacerlo. _Este criterio (RE-0.3.6) se entrega junto con HU-8.1; la base del panel está en 2.0.0-alpha.1 y la consulta financiera RE-0.3.7 en 2.1.0._
 - Toda acción queda registrada en auditoría.
 
-**Reglas de negocio:** RN-004, RN-010, RN-012, RN-019, RN-804, RN-G05, RN-G13, RN-G14, RN-G15 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5 · **Dependencias:** —
+**Reglas de negocio:** RN-004, RN-010, RN-012, RN-019, RN-804, RN-G05, RN-G13, RN-G14, RN-G15 · **Requisitos:** RF-0.2, RF-0.4, RF-0.5, RF-0.7 · **Dependencias:** —
 
 ### HU-0.4 — Control de límites del plan (freemium)
 
@@ -139,7 +139,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial S1/S2/S3 (v2.1); S4 planificada | Por reestimar | v2.1 |
+| Alta | Implementada (2.1.0) | Por reestimar | v2.1 |
 
 > Como administrador de una clínica, quiero contratar o renovar el plan profesional, consultar mis pagos y autorizar o retirar su cobro automático mensual para conservar sus beneficios y conocer cuándo vence, sin perder datos si no renuevo.
 
@@ -150,10 +150,12 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - Profesional: 89.990 COP/mes o 899.900 COP/año, total sin IVA. Un precio nuevo no altera periodos comprados. Mes/año calendario con ancla; renovación anticipada o en gracia desde fin anterior y tras congelar desde acreditación; sin prorrateos al cambiar de ciclo.
 - La tarea programada actualiza estados y avisa por correo a todos los administradores activos verificados, a 7 y 1 días del fin y al congelar. Repetir no duplica transición ni aviso.
 - El profesional legado sin fecha conserva sus condiciones y no se cobra ni congela por una fecha inventada. Plataforma regulariza con motivo y fecha de fin, sin inventar pagos ni levantar suspensión administrativa.
-- **S2:** Pagar/Renovar abre Wompi por importe del servidor y referencia única. Solo evento firmado más consulta API concordante concede periodo una vez; la redirección no acredita. Doble clic, dos pestañas o peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Historial propio sin datos completos del medio. Una cotización vencida solo se libera tras fallo terminal confirmado; la siguiente usa tarifa vigente y conserva la evidencia anterior.
+- **S2:** Pagar/Renovar abre Wompi por importe del servidor y referencia única. La consulta API privada concordante concede periodo una vez, por evento verificado o recuperación del ID del retorno limitada a la clínica propia; los datos del navegador nunca acreditan por sí solos. Doble clic, dos pestañas o peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Historial propio sin datos completos del medio. Una cotización vencida solo se libera tras fallo terminal confirmado; la siguiente usa tarifa vigente y conserva la evidencia anterior.
 - **Implementada S3:** fuente guardada y autorización mensual separadas; retirar detiene cargos futuros sin reducir lo pagado. Inicial/+24/+48 h, solo fallos terminales, con aviso de fallo; no reintentar cargos inciertos.
-- Cada transición se audita. **Planificada S4:** plataforma consulta pagos e incidencias sin datos clínicos; los ajustes manuales siguen separados de pagos.
+- Cada transición se audita. **Implementada (2.1.0):** plataforma consulta pagos e incidencias sin datos clínicos; las revisa con nota auditada, conservando la evidencia. Los ajustes manuales siguen separados de pagos.
 - Uso del plan enlaza aquí conservando su diseño. Si faltan credenciales, están cruzadas o los cobros están apagados, Pagar/Renovar permanece deshabilitado con explicación; la atención no depende de Wompi.
+
+Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referencia y último día incluido al acreditarse un periodo por cualquier vía, sin duplicados.
 
 **Reglas de negocio:** RN-003, RN-007, RN-008, RN-013, RN-014, RN-015, RN-016, RN-017, RN-018, RN-019, RN-420, RN-G05, RN-G13 · **Requisitos:** RF-0.5, RF-0.7 · **Dependencias:** HU-0.3, HU-0.4
 
@@ -2066,11 +2068,14 @@ _Avance: la entrega 2.0.0 cierra las 29 HU de la v2.0, incluidas HU-5.10 y HU-5.
 | HU-5.10 | Carnet digital de la mascota con QR de emergencia | 5 |
 | HU-5.11 | Acceder al carnet por QR en modo solo lectura | 5 |
 
-### Entrega v2.1 — completa el alcance (16 historias, 62 puntos)
+### Entrega v2.1 — completa el alcance (16 historias; estimación de HU-0.5 pendiente)
+
+2.1.0 entrega HU-0.5 y el Inicio del administrador (HU-6.2), sin cerrar las otras 15 historias de esta lista.
+La evidencia de los 26 RE de HU-0.5 está en el plan M0-S; D8/D10 son pendientes operativos antes de cobrar dinero real.
 
 | Historia | Título | Puntos |
 |---|---|---|
-| HU-0.5 | Suscripción, pagos y congelación por mora | Por reestimar (base: 5) |
+| HU-0.5 | Suscripción, pagos y congelación por mora — Implementada (2.1.0) | Por reestimar (base: 5) |
 | HU-3.5 | Panel de vacunaciones pendientes | 3 |
 | HU-4.7 | Estado "no asistió" y ausentismo | 3 |
 | HU-4.10 | Confirmar asistencia a la cita desde el recordatorio | 3 |

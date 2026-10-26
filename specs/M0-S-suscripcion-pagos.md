@@ -1,6 +1,6 @@
 # M0-S — Suscripción y cobro con Wompi
 
-> Estado: **S3 entregada, pendiente de revisión** · S1 y S2 aprobadas e integradas · Aprobación y ajustes vinculantes en §9/§9.1
+> Estado: **S4 y cierre 2.1.0 entregados, pendientes de revisión** · S1, S2 y S3 aprobadas e integradas · Aprobación y ajustes vinculantes en §9/§9.1
 > Entrega: v2.1 · Fecha: 2026-10-24 · Rama comprobada: `release/v2.1.0`
 > Escribe: **Codex** · Revisa: **Claude (arquitecto)** · Aprueba, integra y despliega: dueño del producto
 
@@ -99,7 +99,7 @@ Se reemplazan RE-0.5.1–5; se añaden consecutivamente RE-0.5.6–26 y RE-0.3.7
 | RE-0.5.19 | Exigir autorización separada del automático mensual y permitir retirarla o quitar la fuente. | Guardar no activa el automático. Retirar antes de reclamar trabajo evita el cargo; retirar tras envío informa cargo en curso y detiene los siguientes. Lo pagado conserva su vigencia. | S3 |
 | RE-0.5.20 | Generar un único cobro automático por obligación mensual vencida y autorizada. | Dos workers y pago manual concurrente comparten la obligación; no emiten dos envíos automáticos ni otro mientras el manual está en curso. Plan gratuito, anual, fuente ajena/inactiva o clínica no elegible no generan cargos. Un duplicado externo sigue .14/.24 y D5. | S3 |
 | RE-0.5.21 | Reintentar solo fallos terminales confirmados, con calendario y máximo configurados. | Propuesta inicial +24/+48 h, tres intentos totales: cada intento tiene nueva referencia; PENDING/resultado incierto no habilita otro. Se detiene al pagar, retirar consentimiento o agotar ventana. | S3 |
-| RE-0.5.22 | Avisar por correo de cada intento automático fallido confirmado sin duplicarlo por repetir el evento. | Dos eventos del mismo intento producen un aviso; no se comunica “rechazo” ante mero timeout, y el cuerpo no revela medios completos ni secretos. | S3 |
+| RE-0.5.22 | Avisar del fallo automático y enviar «Recibimos tu pago» al acreditar por cualquier vía, sin duplicados. | Un aviso por intento fallido/destinatario y un recibo por pago/administrador D7: valor, ciclo, medio mínimo, referencia y último día incluido. SMTP tras commit, sin revelar datos completos ni comunicar rechazo ante timeout. | S3/S4 |
 | RE-0.5.23 | Descongelar beneficios al acreditar el periodo sin levantar una suspensión administrativa. | Pago aprobado restaura profesional en clínica activa; en suspendida/baja conserva el pago e incidencia, pero no cambia estado de clínica ni habilita contextos. | S2 |
 | RE-0.5.24 | Separar entornos y conciliar anulaciones o discrepancias sin borrar evidencia financiera. | Id de transacción reutilizado en otro entorno no colisiona ni concede acceso real; VOIDED después de un aprobado e importe divergente generan incidencia auditada para revisión, sin repetir concesión. | S2/S4 |
 | RE-0.5.25 | Conservar suscripciones legadas y distinguir concesiones administrativas de periodos pagados. | Filas sin fecha no se cobran ni congelan por adivinar un vencimiento; precio personalizado no se sobrescribe; super-admin regulariza con motivo y fecha, nunca con transacción Wompi inventada. | S1/S4 |
@@ -125,7 +125,7 @@ Tipos de los nuevos RE: Seguridad para .7/.8/.11/.12/.18/.19/.26; Confiabilidad 
 | RN-014 (nueva) | El acceso por suscripción se calcula por clínica con fecha actual y parámetros persistidos, sin depender del navegador ni del último cron. Los periodos usan intervalos de inicio incluido y fin excluido; la suspensión administrativa de la clínica prevalece sobre un pago. | Cálculo / Planificada (v2.1) |
 | RN-015 (nueva) | Un pago solo acredita beneficios después de verificación del proveedor en servidor y coincidencia con la obligación local. Una obligación concede periodo una sola vez; duplicados, estados inciertos o discrepancias se concilian sin emitir otro cargo a ciegas ni borrar evidencia. | Restricción / Planificada (v2.1) |
 | RN-016 (nueva) | El cobro automático es mensual, voluntario y requiere fuente disponible y autorización explícita del administrador. Guardar una fuente no autoriza cargos; quitarla o retirar autorización detiene los futuros. Los reintentos son limitados, configurados por clínica y solo siguen fallos terminales confirmados. | Proceso / Planificada (v2.1) |
-| RN-017 (nueva) | La plataforma avisa por correo al administrador antes del vencimiento, por defecto a 7 y 1 días, al congelar y ante cobro automático fallido. Cada aviso se identifica por clínica, obligación o vencimiento, tipo y destinatario para no duplicarlo al repetir eventos o tareas; un fallo de correo no invalida un pago ni bloquea atención. | Proceso / Planificada (v2.1) |
+| RN-017 (nueva) | La plataforma avisa por correo antes del vencimiento (7/1 días por defecto), al congelar, ante fallo automático y al acreditar un periodo por cualquier vía. «Recibimos tu pago» incluye valor, ciclo, medio mínimo, referencia y último día incluido; outbox única por pago y administrador activo verificado D7, SMTP tras commit. Repetir evento/tarea no duplica; fallo de correo no invalida pago ni bloquea atención. | Proceso / Aplicada (2.1.0) |
 | RN-018 (nueva) | Zooki conserva de la fuente externa únicamente su identificador, tipo y marca/últimos cuatro cuando existan, además del vínculo y prueba de consentimiento. Su servidor no recibe números completos, CVC ni credenciales del medio; recibe el token efímero para crear la fuente, pero no lo persiste ni registra. Los secretos de integración permanecen en el servidor. | Restricción / Planificada (v2.1) |
 | RN-019 (nueva) | Solo el administrador de la clínica en su contexto activo contrata, paga y administra su autorización automática. El super-administrador consulta metadatos financieros y realiza ajustes administrativos identificados, con motivo y auditoría; no usa fuentes de una clínica para iniciar cobros ni accede a datos clínicos. | Restricción / Planificada (v2.1) |
 
@@ -175,7 +175,7 @@ InnoDB/utf8mb4_general_ci; ids internos BIGINT autoincrementales para las seis t
 | `wompi_eventos` | `id_evento` local, `clave_evento` CHAR(64), `id_evento_proveedor` VARCHAR(128) nullable, `entorno`, `tipo` VARCHAR(80), `id_transaccion_wompi` VARCHAR(128), `timestamp_proveedor` BIGINT, `checksum` CHAR(64), `huella_datos_firmados` CHAR(64), `datos_minimos` JSON, `id_intento` nullable, `estado` pendiente/procesando/procesado/ignorado/error/revision, `recibido_en`, `procesado_en`, `lease_token`, `lease_hasta`, `intentos_proceso`, `proxima_revision`, `codigo_error` nullable. | UNIQUE (entorno, clave_evento); índices entorno/transacción y estado/proxima_revision. FK intento tras resolución; ninguna id_clinica recibida del webhook determina permisos. No se guarda el cuerpo íntegro ni correo/teléfono de Wompi; whitelist de datos mínimos ya verificados. |
 | `fuentes_pago` | `id_fuente`, `id_clinica`, `entorno`, `id_fuente_wompi` VARCHAR(128), `tipo` CARD/NEQUI, `marca` VARCHAR(30) nullable, `ultimos_cuatro` CHAR(4) nullable, `estado` pendiente/disponible/retirada/error, `creada_por` usuario, `creada_en`, `retirada_en` nullable; `consentida_en`, `version_contratos` VARCHAR(128), enlaces/huellas de contratos, `version_autorizacion`, `importe_mensual_autorizado_centavos` nullable. | UNIQUE (entorno, id_fuente_wompi); FK clínica/usuario; índice clínica/estado. Ningún PAN, CVC, fecha de tarjeta, teléfono/cuenta Nequi, token de tokenización ni JWT de aceptación persistido. El identificador externo es interno de servidor, no un identificador para elegir libremente desde el navegador. |
 | `suscripcion_periodos` | `id_periodo`, `id_clinica`, `id_suscripcion`, `id_plan`, `id_pago` nullable, `origen` wompi/administrativo/legado, `ciclo`, `inicio`, `fin`, `dia_ancla`, `mes_ancla`, `hora_ancla`, `total_centavos` nullable, `moneda`, `creado_en`, `id_usuario_actor` nullable, `motivo` nullable. | UNIQUE id_pago para una concesión por orden; índices suscripción/inicio/fin y clínica/fin. FKs clínica/suscripción/plan/pago/usuario; comprobar no solapamiento bajo bloqueo de clínica. Un ajuste no sobrescribe la prueba de pago ni el periodo histórico. |
-| `avisos_suscripcion` | `id_aviso`, `id_clinica`, `id_suscripcion`, `id_pago`/`id_intento` nullable, `id_usuario_destinatario`, `tipo` vence_7/vence_1/congelada/cobro_fallido, `clave_aviso` CHAR(64), `vencimiento_objetivo`, `programado_en`, `estado` pendiente/reclamado/enviado/error/incierto/obsoleto, `id_notificacion` nullable, `lease_token`, `lease_hasta`, `intentos`, `enviado_en` nullable. | UNIQUE clave_aviso; índices estado/programado_en y clínica/fecha. FKs de metadatos y a `notificaciones`; esta última conserva id_clinica y el registro de correo. El número del tipo es nombre estable, la anticipación se lee del parámetro. |
+| `avisos_suscripcion` | `id_aviso`, `id_clinica`, `id_suscripcion`, `id_pago`/`id_intento` nullable, `id_usuario_destinatario`, `tipo` vence_7/vence_1/congelada/cobro_fallido/pago_confirmado, `medio_pago` VARCHAR(32) nullable (solo etiqueta mínima del GET), `clave_aviso` CHAR(64), `vencimiento_objetivo`, `programado_en`, `estado` pendiente/reclamado/enviado/error/incierto/obsoleto, `id_notificacion` nullable, `lease_token`, `lease_hasta`, `intentos`, `enviado_en` nullable. | UNIQUE clave_aviso; índices estado/programado_en y clínica/fecha. FKs de metadatos y a `notificaciones`; esta última conserva id_clinica y el registro de correo. El número del tipo es nombre estable, la anticipación se lee del parámetro. |
 
 **Unicidad clínica:** las consultas de clínica siempre parten de su id del contexto; órdenes/periodos/fuentes se autorizan por esa misma clínica aunque el llamante conozca un id interno. La consulta global de plataforma y el trabajador de eventos son excepciones expresas RN-G13, limitadas a metadatos y probadas con dos clínicas. Nuevas FKs de negocio usan RESTRICT, no cascada destructiva.
 
@@ -208,9 +208,9 @@ Pruebas: instalación nueva 01+02+12, base v2 existente con datos y dos ejecucio
 | `admin_suscripcion`, `suscripcion_estado_ajax`, `suscripcion_historial_ajax` | GET, contexto **ADMIN clínico activo**, clínica tomada de sesión; solo metadatos propios. |
 | `suscripcion_pagar_ajax` | POST + CSRF, ADMIN, operación/versión y ciclo válidos; importe e id de clínica no son autoridad del cliente. |
 | `suscripcion_fuente_ajax`, `suscripcion_automatico_ajax`, `suscripcion_retirar_fuente_ajax` | POST + CSRF, ADMIN; tokenización/consentimiento y fuente ligada a la clínica; serialización contra worker. |
-| `suscripcion_retorno` | ADMIN, vista informativa del intento propio con código opaco. No aplica pagos ni llama API con una id arbitraria del navegador. Si requiere login reutiliza retorno interno seguro, sin redirect externo. |
+| `suscripcion_retorno` | ADMIN, retorno con ID validado: GET privado y referencia de un intento de su clínica antes de la conciliación común (§9.9). El estado y la referencia aportados por el navegador no son autoridad. Si requiere login reutiliza retorno interno seguro, sin redirect externo. |
 | `wompi_eventos_test`, `wompi_eventos_prod` | POST público **sin sesión ni CSRF de navegador**, únicamente receptor de eventos con firma/entorno, tamaño y esquema validados. No es una API de consulta ni acepta elección de clínica. Entorno no desplegado rechaza; solo producción concede derechos reales. |
-| `plataforma_pagos_ajax`, `plataforma_suscripcion_ajuste_ajax` | Solo contexto plataforma; consulta de metadatos cross-clínica explícita y ajuste POST + CSRF + motivo/fechas. Ninguna ruta cobra una fuente desde plataforma. |
+| `plataforma_pagos_ajax`, `plataforma_suscripcion_ajuste_ajax` | Solo contexto plataforma; consulta de metadatos cross-clínica explícita y ajuste POST + CSRF + motivo/fechas. `plataforma_conciliar_ajax` recupera por ID y motivo, sin elegir clínica ni crear cargos. Ninguna ruta cobra una fuente desde plataforma. |
 
 Cada acción nueva se registra en la matriz y se prueba por rol/contexto; no basta ocultar botones. Validación junto al campo y en servidor, selección de ciclos por lista permitida, importes del servidor y salida escapada. Scripts de interfaz propios, datos por `data-*`, nunca JS/CSS en línea; el SDK externo se incluye por `src`. Confirmación Zooki solo para acciones graves según política vigente; guardar/quitar una autorización reversible se comunica con aviso breve y actualiza la pantalla antes del toast.
 
@@ -385,15 +385,15 @@ Esta tabla conserva las propuestas originales; **§9/§9.1 registra las decision
 ## 7. Tareas y verificación
 
 - [ ] Dueño aprueba este plan y responde D1–D10 en los puntos que bloquean cada etapa; se incorporan las respuestas al mismo archivo.
-- [ ] Claude revisa coherencia de RE/RN/datos/diagramas, idempotencia y convivencia con Inicio; acordar turno exclusivo para archivos compartidos antes de S1.
-- [ ] S1 traslada a HU/RE/RN/ERS/MER/drawDB los textos aprobados y ajusta Modelos en la misma entrega, sin subir revisión documental hasta cierre; ninguna nueva columna nace solo en código.
-- [ ] S1a/S1b verificadas y revisadas antes de integrar cobros; S2a/S2b verificadas y revisadas antes de S3; S3a/S3b y S4 con sus anexos/evidencia.
-- [ ] Cada RE tiene prueba significativa o verificación visual indicada, incluido el ajuste de RE-0.5.5 y el comportamiento rojo; no cambiar esperados para ocultar contradicciones.
+- [x] Claude revisó el plan y S1/S2/S3; se respetó el turno de integración del Inicio. La revisión independiente de S4 sigue pendiente.
+- [x] S1 trasladó a HU/RE/RN/ERS/MER/drawDB los textos aprobados y ajustó Modelos; revisión documental publicada una sola vez en este cierre.
+- [x] S1/S2/S3 aprobadas antes de S4; S4 tiene anexo y evidencia, sin anticipar su revisión.
+- [x] Cada RE tiene prueba significativa o verificación visual indicada en §11, incluidos límites, rojo, aislamiento y auditoría.
 - [ ] Migración 12 repetida en instalación nueva/existente y fallo parcial; probar MySQL 8 del CI y MariaDB local, siempre en `zooki_test_base_v2`, nunca en la base de trabajo.
-- [ ] Suites de implementación: `vendor/bin/phpunit` completo sin host y `node --test --test-concurrency=1 tests/Frontend/*.test.cjs`; motor local dirigido a esquema/concurrencia nuevos, CI completo con MySQL 8 conforme al método vigente. No repetir suites ahora por un plan documental.
-- [ ] Cierre con conteos/matrices, revisiones una vez, Ficha/historial y PDF/Word del portal; versión de v2.1 según publicación aprobada, no una subida por plan.
+- [x] Suites completas PHP sin/con motor local y JS en verde; cifras y motor exactos en el anexo S4. CI/MySQL 8 de la entrega final pendiente del push del dueño.
+- [x] Cierre con conteos/matrices, revisiones una vez, Ficha/historial y nueve PDF/Word regenerados; versión 2.1.0. Alcance visual de las descargas explicitado en el anexo.
 - [ ] Validación operativa futura de variables/HTTPS/Schedules con cobros aún apagados; el dueño aprueba pasar a sandbox manual y después a producción como pasos distintos. No confundir sandbox con dinero real.
-- [ ] Entregar comandos Git explícitos solo de los archivos propios; el dueño hace commit/push/tags.
+- [x] Comandos Git con manifiesto de archivos propios; sin commit/push/tags del agente.
 
 ### 7.1 Batería prevista con cliente Wompi falso
 
@@ -648,6 +648,21 @@ Usar únicamente el despliegue HTTPS aparte de §9.4, con base/llaves test propi
 5. [ ] Retirar automático y quitar medio (solo quitar pide confirmación Zooki): detiene futuros cargos y conserva lo pagado. Si ya había cargo en curso se informa y puede confirmarse; otra clínica no ve ni usa ese medio. No activar dinero real sin resolver D8/D10 y aprobar la operación.
 
 
+### 9.8 Contrato de implementación de S4 — 2026-10-25 (Codex)
+
+S1, S2 y S3 están aprobadas e integradas.
+S4 conserva la pantalla y el diseño de plataforma: la gestión de cada clínica incorpora pagos, incidencias y concesiones administrativas en bloques separados.
+RE-0.3.7 y RE-0.5.24 se precisan con revisión de incidencia mediante nota obligatoria, actor y fecha, auditada atómicamente; revisar no resuelve el cargo, modifica el periodo ni elimina la evidencia.
+RE-0.5.26 se precisa con motivo visible del apagado automático: precio, condiciones o ambos; una nueva autorización o retirada explícita limpia ese indicador, conservando su auditoría.
+La migración siguiente, **13**, añade `suscripciones.motivo_automatico_apagado` VARCHAR(40) nullable y `wompi_eventos.revisado_por` INT nullable, `revisado_en` DATETIME nullable y `nota_revision` TEXT nullable, con FK del revisor a usuarios y sin nuevas tablas.
+Son metadatos aprobados por el encargo S4; se reflejan primero en MER/drawDB y en el esquema consolidado, sin modificar la migración 12 publicada.
+La revisión preserva `estado=revision` y `codigo_error`, y no reincorpora el evento al trabajador.
+Las incidencias se vinculan a una clínica únicamente a través del intento y la orden local; nunca mediante datos de clínica aportados por el proveedor.
+**Decisión del dueño (2026-10-25):** las referencias desconocidas se muestran en una sección global «Sin clínica identificada», dentro de plataforma, y pueden revisarse con nota sin asignarlas a una clínica por suposición.
+No se muestran ids de fuentes, contratos JWT, contenido clínico, credenciales ni cuerpos de eventos.
+Los apagados anteriores a S4 que solo tengan auditoría combinada se muestran como «Cambio de precio o condiciones; requiere nueva aceptación», sin inventar cuál fue la causa.
+La consulta financiera y la revisión solo admiten plataforma activa; la escritura exige POST, CSRF y nota validada también en servidor.
+
 ## Anexo S3 — Resultado (2026-10-25)
 
 **Escribió: Codex. Revisa: Claude (arquitecto). Estado: S3 entregada, pendiente de revisión.** S3a/S3b juntas; S1/S2 aprobadas e integradas. S4 no se empieza.
@@ -686,3 +701,190 @@ Se incluyen los tres ajustes de S2: conciliación inmediata tras 200 durable, te
 - **A comprobar en sandbox (no se puede sin el proveedor real):**
   - `AutorizacionCobro::contratos` lee `contract_id` y `file_hash` del JWT de aceptación. Si el JWT real de Wompi no trae esos campos, guardar la fuente falla con «No se pudieron consultar las condiciones». Es la primera prueba manual de S3.
   - Si Wompi publica una versión nueva de sus términos, el automático se apaga y la clínica vuelve al botón con los avisos de vencimiento. Así lo pide RE-0.5.26; en S4 conviene que el super-administrador vea ese motivo.
+
+## 10. Puesta en producción de 2.1.0 — guía del dueño
+
+Es una entrega preparada para revisión, no una activación de dinero real.
+D8 y D10 siguen pendientes.
+La lectura real de `contract_id` y `file_hash` ya pasó en el sandbox del dueño del 2026-10-25; el comercio productivo conserva las comprobaciones operativas de D8.
+Las pruebas automáticas siempre usan clientes/medios falsos y no acreditan esa compatibilidad comercial.
+
+1. **Respaldo:** guardar y comprobar una copia legible de base y archivos subidos; registrar imagen/revisión actual y revisar CI con MySQL 8.
+2. **Variables con cobros apagados:** el dueño configura en Dokploy/PHP `WOMPI_ENTORNO=produccion`, llave pública/privada y secretos de eventos/integridad del mismo comercio, junto con `APP_URL` absoluto correcto.
+   Mantener `WOMPI_COBROS_HABILITADOS=0` y `WOMPI_AUTOMATICOS_HABILITADOS=0`; no copiar datos ni credenciales de sandbox.
+3. **Despliegue:** integrar la release aprobada y desplegar conservando volúmenes y archivos.
+   `docker/iniciar.sh` aplica automáticamente 12/13/14 pendientes y semilla; no importar 01/02 sobre una instalación existente.
+   Revisar logs completos, ausencia de migraciones pendientes y versión 2.1.0; Apache abierto no prueba que el migrador terminara bien.
+4. **Schedule:** conservar los existentes y crear o actualizar una sola tarea financiera cada cinco minutos, TZ America/Bogota, `php /var/www/html/Zooki/scripts/gestionar_suscripciones.php`.
+   Comprobar primero `--revisar`, que no escribe, envía ni consulta API; sin interruptores no se generan cargos.
+   En XAMPP se conserva la tarea de Windows de §5.5, con directorio inicial, rutas absolutas y sin otra instancia.
+5. **Eventos:** el dueño registra en Wompi producción la URL `APP_URL/index.php?action=wompi_eventos_prod`, sin duplicar `/index.php` y conservando la subcarpeta de la instalación.
+   Ejemplo de forma: `https://TU-DESPLIEGUE-PRODUCTIVO/index.php?action=wompi_eventos_prod`.
+   Sandbox usa otro despliegue HTTPS/base/llaves test y `https://TU-DESPLIEGUE-DE-PRUEBAS/index.php?action=wompi_eventos_test`; nunca apuntarlo a producción.
+6. **Legado:** plataforma identifica el profesional sin fecha, acuerda con cada clínica su fin y regulariza con motivo/fecha, separado de pagos.
+   No asignar fechas masivas inventadas, congelar por adivinación ni sobrescribir tarifas personalizadas; revisar `tarifas_personalizadas` del CLI.
+7. **Habilitar botón:** después de resolver D8/D10, superar la comprobación sandbox y aprobar la operación, poner `WOMPI_COBROS_HABILITADOS=1` y aplicar el entorno al servicio.
+   Comprobar el flujo completo por evento y GET, con una sola orden entre pestañas, e historial/plataforma coherentes.
+8. **Habilitar automático después:** solo tras verificar fuentes, aceptaciones reales, mandato, retirada y conciliación, poner `WOMPI_AUTOMATICOS_HABILITADOS=1`.
+   No activa mandatos por sí solo: cada administrador autoriza aparte el importe mensual; anual y legado no cobran automáticamente.
+
+**Si algo falla:** poner ambos interruptores en `0` y aplicar ese entorno al servicio; impide nuevos cargos de Zooki.
+Conservar credenciales válidas, URLs de eventos, inbox y Schedule para recibir y conciliar pagos ya iniciados; una ventana del proveedor abierta previamente todavía puede confirmarse.
+`--solo=conciliacion` permite recuperar el inbox; `--revisar --solo=conciliacion` solo cuenta.
+No borrar eventos/órdenes, repetir un POST incierto ni restaurar un libro financiero antiguo ignorando cargos posteriores al respaldo.
+Si falta un evento, volver desde Wompi con su ID permite recuperar por GET privado; plataforma puede consultar ese ID con motivo, sin asignar una clínica manualmente.
+El Schedule despacha «Recibimos tu pago» una sola vez por pago/administrador después del commit.
+Revisar incidencias en plataforma con nota; devoluciones y controversias se gestionan en Wompi, sin botones de cobrar o devolver en Zooki.
+No se configuran servicios externos en esta entrega.
+
+## 11. Cierre de HU-0.5 — evidencia por RE
+
+HU-0.5 y RF-0.7 quedan implementados en 2.1.0; RN-007/008/013–019 aplicadas.
+Se mantienen 96 HU, 464 RE, 126 RN y 65 tablas, sin nuevos identificadores ni ampliación de las otras HU de v2.1.
+Las matrices RN → HU y RN → HU → RE conservan todos los vínculos de S1; la revisión de incidencias precisa RE existentes.
+El encargo S4 autoriza regenerar las descargas pendientes de §9.2 mediante el exportador existente; las suites continúan sin red externa.
+
+| RE-0.5 | Evidencia automática del cierre |
+|---|---|
+| .1 | `VigenciaSuscripcionTest`, `PagoSuscripcionTest`: centavos, tarifa comprada y calendario. |
+| .2 | `VigenciaSuscripcionTest`, `SuscripcionTest`: bordes de vencimiento/gracia y cron retrasado. |
+| .3 | `SuscripcionTest`, `BaseV2MysqlTest` S1: transición y outbox con trabajadores reales. |
+| .4 | `PagoSuscripcionTest`, `Suscripcion.test.cjs`: Widget falso, cierre y pago pendiente. |
+| .5 | `SuscripcionTest`, regresión de límites: 50/51, 100/101 y rojo exento. |
+| .6 | `SuscripcionTest`: 7/1 días, 07:00, destinatarios y aviso obsoleto. |
+| .7 | `SuscripcionTest`, `PagoSuscripcionTest`, `CobroAutomaticoTest`, `PagosPlataformaTest`: auditoría atómica y sin secretos. |
+| .8 | Los mismos modelos/controladores y `AutorizacionRolTest`: rol, clínica y CSRF. |
+| .9 | `Suscripcion.test.cjs`, `PagosPlataformaTest`, `PagosPlataforma.test.cjs`: vigencia/legado, Inicio conservado y 1366/390. |
+| .10 | `PagoSuscripcionTest`, `BaseV2MysqlTest` S2/S3: orden compartida entre pestañas y trabajador. |
+| .11 | `FirmaWompiTest`: integridad, configuración cerrada y secretos ausentes. |
+| .12 | `FirmaWompiTest`, `PagoSuscripcionTest`: propiedades, checksum, entorno e inbox. |
+| .13 | `PagoSuscripcionTest`, `RecuperacionPagoTest`: API falsa privada, cotejos, caída/404 y evento perdido recuperado por retorno/manual sin cruzar clínica. |
+| .14 | `BaseV2MysqlTest` S2/S3/S4 y `PagoSuscripcionTest`: procesos reales, duplicados y un periodo también ante retorno/evento simultáneos. |
+| .15 | `CobroAutomaticoTest`, `PagoSuscripcionTest`: incertidumbre y evento adelantado sin repetir cargo. |
+| .16 | `VigenciaSuscripcionTest`, `PagoSuscripcionTest`: ancla 31/bisiesto, gracia/congelación y ciclo sin prorrateo. |
+| .17 | `PagoSuscripcionTest`, `Suscripcion.test.cjs`: historial propio, permisos y escape. |
+| .18 | `CobroAutomaticoTest`, `AutorizacionCobroTest`: Nequi pendiente, fuente propia y dos aceptaciones. |
+| .19 | `CobroAutomaticoTest`, `BaseV2MysqlTest` S3: consentimiento separado y retirada concurrente. |
+| .20 | `BaseV2MysqlTest` S3: trabajadores simultáneos y manual contra automático con candado real. |
+| .21 | `CobroAutomaticoTest`: tres intentos, sin cuarto ni reintento incierto. |
+| .22 | `CobroAutomaticoTest`, `RecuperacionPagoTest`: fallo automático y recibo por las cuatro vías, clave única por pago/destinatario, D7 y SMTP falso tras commit. |
+| .23 | `PagoSuscripcionTest`: descongelación con suspensión administrativa intacta. |
+| .24 | `PagoSuscripcionTest`, `PagosPlataformaTest`: anulación/duplicado/discrepancia, nota auditada y evidencia conservada. |
+| .25 | `SuscripcionTest`, `PagosPlataformaTest`, `BaseV2MysqlTest` S4: legado, precio personalizado y concesión fuera de pagos. |
+| .26 | `CobroAutomaticoTest`, `AutorizacionCobroTest`, `PagosPlataformaTest`: precio/condiciones, prueba de consentimiento y motivo del apagado. |
+
+RE-0.3.7: `PagosPlataformaTest`, `AutorizacionRolTest`, `BaseV2MysqlTest` S4 y `PagosPlataforma.test.cjs`: dos clínicas, sin clínica supuesta, sin datos clínicos/fuentes completas, nota atómica, migración repetida/parcial y móvil/escritorio.
+
+## 12. Pruebas del dueño de S4 — pendientes
+
+1. [ ] Como plataforma, abrir Gestionar → Pagos e incidencias a 1366 y 390: contratado/efectivo, estado y último día incluido; pagos con referencia/ciclo/importe/periodo. Cambiar de clínica y comprobar que conserva su historial propio, sin datos clínicos ni fuentes completas.
+2. [ ] Revisar una incidencia sintética con nota: vacía se rechaza; al guardar aparece revisada, con fecha/nota, sin modificar estado del pago ni periodo. Repetir no reemplaza la primera nota; comprobar la auditoría.
+3. [ ] Abrir «Sin clínica identificada»: referencia desconocida visible con transacción y fecha, revisable con nota sin asignarla a una clínica.
+4. [ ] Contrastar legado sin fecha y concesión manual con motivo/fecha en su bloque separado; no aparecen como pagos. En datos de prueba, comprobar apagado del automático por precio y por condiciones de Wompi, con su motivo visible.
+5. [ ] Como ADMIN, vet y propietario, intentar las rutas financieras de plataforma: 403. Como dueño, revisar §10 y mantener cobros reales apagados hasta D8/D10 y las comprobaciones sandbox de S2/S3; abrir las descargas Word y contrastar su presentación e índice.
+
+### 12.1 Pruebas del dueño — recuperación y recibo (sandbox aparte)
+
+1. [ ] Con un pago sandbox aprobado sin evento, volver desde Wompi: el GET privado acredita una vez; abrir nuevamente ese retorno y luego entregar el evento no repite periodo ni correo. Un administrador de otra clínica no puede recuperarlo ni ver su referencia.
+2. [ ] En plataforma → Pagos e incidencias, usar el ID real de un pago previo con evento perdido y motivo: recupera para la clínica identificada por Wompi, sin elegir destino. Motivo vacío, ID inventado o una consulta fallida no conceden periodo; comprobar la auditoría.
+3. [ ] Comprobar «Recibimos tu pago» tras el Schedule en todos los administradores activos verificados: valor, ciclo, tarjeta con solo últimos cuatro o Nequi, referencia y último día incluido. Repetir evento/tarea no repite el correo; un PENDING o rechazo no lo recibe. Probar una renovación anual voluntaria y una automática mensual.
+
+## 9.9 Recuperación de evento perdido — decisión del dueño (2026-10-25)
+
+El hallazgo sandbox del final se conserva íntegro.
+El dueño autoriza recuperar por GET privado desde el retorno y desde plataforma, sin crear un cargo ni consultar por referencia.
+Se reconsultó [Widget & Checkout Web, paso 4 y parámetro redirect-url](https://docs.wompi.co/docs/colombia/widget-checkout-web/#paso-4-url-de-redirecci%C3%B3n) el 2026-10-25: Wompi agrega `id` a la URL de retorno; el servidor consulta `/v1/transactions/{id}` con su llave privada.
+La consulta desde el navegador ya no está soportada; el retorno solo aporta el identificador, nunca un estado o beneficiario confiable.
+Esta decisión sustituye exclusivamente las afirmaciones anteriores que impedían consultar/acreditar desde el retorno: la acreditación sigue dependiendo del GET autenticado y de todos los cotejos existentes.
+RE-0.5.13/14/15/24 y RE-0.3.7 se precisan sin nuevos identificadores ni cambios de versión; la ampliación posterior de correo agrega la migración 14 (§9.10).
+El ID admite exclusivamente letras ASCII, dígitos, guion y guion bajo, de 1 a 128 caracteres, igual que el cliente HTTP existente.
+En retorno, la referencia del GET debe identificar un intento del entorno configurado y de la clínica activa antes de reservar evidencia o modificar datos.
+Plataforma exige POST, CSRF y motivo; no acepta una clínica de destino, que solo se resuelve por la referencia del GET.
+Las consultas recuperadas se distinguen de eventos firmados por `tipo=transaction.consultada` en el inbox existente; su huella es interna, no un checksum del proveedor.
+El Schedule puede retomar su estado PENDING o un fallo posterior; no se persisten cuerpos remotos ni datos de pago sensibles.
+La concesión comparte el bloqueo de clínica, auditoría atómica y periodo único con eventos, incluso si llegan simultáneamente.
+API caída, 404, ID inválido/ajeno o referencia desconocida nunca acreditan por suposición; la orden original sigue pendiente.
+La conciliación manual se audita con actor, ID y motivo antes de aplicar cambios financieros; si la auditoría falla, no se acredita.
+Pruebas: evento perdido por ambas entradas, aislamiento, formato/404/API/PENDING, discrepancias y retorno/evento en dos procesos MySQL, más rol/CSRF, motivo y JS.
+
+## 9.10 Correo de pago confirmado — decisión del dueño (2026-10-25)
+
+Al acreditar un periodo por botón, automático, retorno o conciliación manual se reserva «Recibimos tu pago» para todos los administradores activos verificados de D7.
+Incluye valor en COP, ciclo, medio mínimo, referencia y nuevo último día incluido; la clave única es por pago y destinatario.
+SMTP se ejecuta por la outbox de S1 después del commit, sin duplicar eventos/tareas ni invalidar el pago por fallo de correo.
+RN-017 y RE-0.5.22 se amplían con ese criterio aprobado; no hay nuevos identificadores ni cambio de versión.
+Migración 14 repetible: ampliar `avisos_suscripcion.tipo` con `pago_confirmado` y agregar `medio_pago VARCHAR(32) NULL`, snapshot saneado de la etiqueta mínima del GET; schema/MER/drawDB/SQLite sincronizados.
+El GET de [Métodos de pago — tarjeta](https://docs.wompi.co/docs/colombia/metodos-de-pago/) documenta `payment_method.type` y `payment_method.extra.last_four`; solo se conserva una etiqueta «Tarjeta ···1234», «Nequi» o «PSE», nunca cuerpos completos ni IDs de fuentes.
+Si Wompi omite los últimos cuatro se muestra «Tarjeta»; si no identifica el medio se informa «Medio no informado» sin inventarlo.
+El fin guardado es el de ese pago, aunque se renueve otra vez antes de despachar el correo.
+Pruebas: un correo por pago/destinatario en las cuatro vías, exclusión de cuentas no verificadas/inactivas, medio mínimo, rechazo/PENDING sin correo, repetición, SMTP fuera de transacción, fallo de auditoría y migración 14 doble/parcial.
+
+**Decisión inicial del dueño (2026-10-25), precisada a continuación:** conservar la migración 12 publicada, que validaba el ENUM original exacto.
+Como excepción explícita al consolidado, `01_schema.sql` mantiene esos cuatro tipos iniciales; la migración 14 agrega `pago_confirmado` automáticamente antes de servir la aplicación.
+MER/drawDB describen el destino final; las pruebas de instalación ejecutan también la 14 y el migrador completo corre dos veces.
+
+**Decisión final del dueño (2026-10-25):** autoriza modificar únicamente la validación de compatibilidad de `avisos_suscripcion.tipo` en la migración 12 publicada para aceptar exactamente el ENUM original o el ampliado con `pago_confirmado`.
+El arranque Docker ejecuta los SQL y después el migrador los repite; mantener solo el ENUM inicial en 01 no resolvía ese segundo pase.
+La excepción no cambia DDL, datos, precios ni ninguna otra lógica de la 12; tampoco escribe registros de migración por suposición ni modifica los compose.
+Se conserva el ENUM inicial en 01 conforme a la decisión anterior; 14 describe su ampliación, y MER/drawDB el destino final.
+Prueba obligatoria: SQL 01–14 completos sin bitácora, migrador PHP y segunda ejecución del migrador, además de 14 repetida/parcial.
+
+## Anexo S4 — Resultado (2026-10-25)
+
+**Escribió: Codex. Revisa: Claude (arquitecto). Estado: S4 y cierre 2.1.0 entregados, pendientes de revisión.**
+Panel financiero original conservado: pagos, incidencias con nota auditada, legado/concesiones separadas y motivo del apagado; migración 13 y cierre documental 2.1.0.
+Se corrige el hallazgo sandbox: retorno con ID validado y consulta manual de plataforma con motivo recuperan por GET privado, sin crear cargos ni elegir clínica; comparten conciliación, cotejos y bloqueo de clínica.
+Decisiones del dueño en §9.9/§9.10: recibo por outbox y migración 14; excepción autorizada de una sola validación en la 12 para admitir el ENUM original o ampliado durante el doble arranque Docker.
+
+| RE / regla | Evidencia final |
+|---|---|
+| RE-0.3.7/.5.7/.8/.9/.17/.24–26; RN-G05/G13 | `PagosPlataformaTest`, `AutorizacionRolTest` y regresión S1–S3: rol/CSRF, metadatos, dos clínicas, nota atómica y concesión separada. |
+| RE-0.5.13/14/15/24; RN-015/019 | `RecuperacionPagoTest`: evento perdido por retorno/manual, HTTP ajeno, ID inválido/inventado, API caída, PENDING retomado por CLI, discrepancias, motivo y fallo de auditoría. |
+| RE-0.5.14; RN-015/G05 | `BaseV2MysqlTest` S4: dos procesos en ambos órdenes, retorno/evento con espera InnoDB observada, un periodo y un recibo. |
+| RE-0.5.22; RN-017/D7 | `RecuperacionPagoTest`: cuatro vías, varios administradores, exclusión de no verificados/inactivos, valor/ciclo/medio mínimo/referencia/fin propio, outbox única, SMTP tras commit e incierto sin repetición. |
+| Migraciones 12/13/14 | `BaseV2MysqlTest` y `AgendaB2MysqlTest`: instalación/actualización equivalentes, 14 doble/parcial y SQL completo de Docker seguido del migrador y su repetición. |
+| UI / RNF-16 | `PagosPlataforma.test.cjs`: ID/motivo en vivo, doble envío/error y Chrome 1366/390 con formulario, pagos/incidencias/legado y revisión, red bloqueada. |
+
+**Verificación:** PHP completo sin motor 1158/9287 (91 omitidas de motor); completo con MariaDB 10.4.32: 1158/10552, ninguna omitida, solo `zooki_test_base_v2`; JS completo 345/345. Sintaxis/diff y conteos 96 HU/464 RE/126 RN/65 tablas coherentes; flujo Mermaid de recuperación renderizado.
+**Documentación:** HU/RE/RN-017/ERS/MER/drawDB/Modelos/README/historial sincronizados, sin nueva versión. PDF/Word actualizados y manifiesto al día; PDF nuevos revisados visualmente en muestra y DOCX con ZIP/XML/TOC comprobados. Revisión visual Word pendiente: renderer sin LibreOffice; no se declara verificada.
+**Pendientes:** revisión de Claude, CI/MySQL 8 y tres pruebas del dueño de recuperación/recibo (§12.1); D8/D10 antes de dinero real. La lectura del JWT real ya pasó en la prueba del dueño conservada al final.
+**Conservados:** `specs/pulido-interfaz.md`, relato sandbox al final y `docker-compose.pruebas.yml`; los ajenos quedan fuera del manifiesto salvo el relato que permanece íntegro en el plan. Sin `.env`, base de trabajo, API/SMTP reales, configuración externa ni commit/push/tags. Archivos propios en `scratch/s4-archivos.txt`.
+
+## Prueba del dueño en sandbox — 2026-10-25
+
+Despliegue aparte en Dokploy (`zooki-pruebas.secarvajal.com`, compose `docker-compose.pruebas.yml`, base propia), llaves y secretos de prueba de Wompi, Schedule cada 5 minutos.
+
+- **Pasaron:**
+  - Pago con botón y tarjeta aprobada: evento verificado, periodo acreditado una vez.
+  - Pago en gracia según D2: desde el vencimiento anterior hasta el 24/11, con gracia al 27/11.
+  - Doble clic y dos pestañas: misma orden.
+  - Tarjeta rechazada: sin acreditar.
+  - Guardar la tarjeta (el JWT real de aceptación se leyó bien), autorizar el automático y cobro automático en gracia por el Schedule (`cobros.enviados: 1`), acreditado.
+  - Retirar la autorización y quitar la fuente conservan el periodo pagado.
+  - Avisos de vencimiento enviados por el Schedule.
+  - El ajuste de plataforma no pisa un periodo Wompi vigente.
+- **Hallazgos de configuración (no son del código):**
+  - Llaves de producción pegadas en sandbox: Zooki las rechazó por prefijo, como debía.
+  - Turnstile de producción no sirve en otro dominio: en pruebas se usan las llaves de prueba de Cloudflare.
+- **Hallazgo real, va a S4:** un pago aprobado en Wompi cuyo evento no llegó (URL de eventos sin configurar en modo pruebas) dejó la orden pendiente. Al volver a pagar, Wompi responde «la referencia ya ha sido usada» y la clínica no puede renovar sin el super-administrador. Wompi solo documenta la consulta por id, no por referencia. S4 agrega la recuperación por el id del retorno y la conciliación manual por id en el panel de plataforma.
+
+## S4 y cierre 2.1.0 — Revisión (2026-10-26)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada. HU-0.5 queda cerrada en 2.1.0.**
+
+- **Verificado:**
+  - **Panel de plataforma:** plan contratado/efectivo, estado, último día incluido, automático y su motivo de apagado, historial, incidencias con nota auditada y concesiones aparte de los pagos. Solo para plataforma, sin datos clínicos.
+  - **Recuperación de evento perdido:** `ConciliadorPago::recuperar` consulta por GET privado, ubica la orden solo por la referencia que devuelve Wompi, exige que sea de la clínica en el retorno y entra por la misma conciliación con su idempotencia. La vía manual pide motivo y queda auditada.
+  - **Correo «Recibimos tu pago»:** por la outbox, una vez por pago y administrador.
+  - **Migraciones 13 y 14:** solo columnas, sin tablas nuevas (siguen 65 en `01_schema`); probadas dos veces.
+  - **Cambio en la 12 publicada:** solo amplía su validación de compatibilidad al ENUM con `pago_confirmado`, para que una instalación nueva por Docker no falle al repetir la 12. Lo autorizó el dueño (§9.10) y la 12 no ha llegado a producción.
+  - **Versión:** 2.1.0.
+- **Pruebas del revisor:**
+  - PHPUnit sin motor: 1158 (91 omitidas de motor).
+  - **PHPUnit completo con MySQL 8: 1158 pruebas, 10556 aserciones, sin fallos.**
+  - JS de Pagos de plataforma, Suscripción, Fuente y Panel: 21/21.
+  - Panel a 1366 y 390 sin desborde.
+- **Para el pulido (no bloquea):**
+  - «Recuperar un pago de Wompi» aparece dentro del modal de una clínica, aunque la clínica la decide la referencia de Wompi. Conviene una acción general en el panel para no confundir.
+  - El recibo sale con el Schedule: hasta 5 minutos después del pago.
+- **Antes de dinero real:** D8 (condiciones del comercio productivo) y D10 (conservación de datos financieros) siguen pendientes, como dice §10. Las pruebas del dueño de §12.1 se hacen en la copia de pruebas tras desplegar esta rama.

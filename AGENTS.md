@@ -12,7 +12,7 @@ Antes de cualquier tarea, lee **[`agentes/estado.md`](agentes/estado.md)** (dón
 
 ## Estado del proyecto
 
-- **La versión preparada es v2.0.0** (carnet QR y cierre de la entrega v2.0, 2026-10-23), pendiente de revisión e integración. Alpha.5 es la publicación anterior confirmada por el dueño; producción se actualiza al desplegar. La etapa activa está en [`agentes/estado.md`](agentes/estado.md).
+- **La versión preparada es v2.1.0** (Inicio del administrador y suscripción con Wompi, 2026-10-25), pendiente de revisión e integración. Producción se confirma tras desplegar; D8/D10 del plan M0-S siguen pendientes antes de activar dinero real. Las demás HU de v2.1 conservan su alcance pendiente. La etapa activa está en [`agentes/estado.md`](agentes/estado.md).
 - **La especificación ya es la v2**: una plataforma SaaS multi-inquilino con dos grafos (soporte a la decisión clínica y agenda inteligente), repartida entre v2.0 y v2.1. Está en `documentacion/` y es la fuente de verdad.
 - **Se construye la v2 por módulos**, en el orden de dependencias del [plan de entregas](documentacion/HistoriasUsuario.md#plan-de-entregas-de-la-v2): primero la entrega v2.0 (lo imprescindible), luego la v2.1. Cada módulo agrupa sus HU y RE; el avance y las pruebas se cierran por etapas pequeñas dentro del módulo.
 - Lo nuevo se escribe con el modelo v2 ([MER](documentacion/MER.md)). El MER y `database/modelo/drawdb_schema_v2.sql` describen el destino para drawDB; el esquema ejecutable es `database/01_schema.sql`. Como los datos de la v1 eran solo pruebas, el salto a v2 reinicia la base con un esquema v2 consolidado y datos semilla, sin migrar datos ([plan M0](specs/M0-T-base-saas-identidad.md)). Ninguna etapa se entrega con lecturas o permisos que mezclen a medias los identificadores v1 y v2.
@@ -131,7 +131,7 @@ Son las del manifiesto `documentacion/ZOOKI_REGLAS.md` (que no se sube al reposi
 
 ## Base de datos y migraciones
 
-- La base v2 nace de `database/01_schema.sql` (las 52 tablas, sin datos) y `database/02_semilla.sql` (roles, planes y catálogos globales). La v2 **no migra datos** de la v1, que eran pruebas: las migraciones v1 (03–13) se retiraron y el migrador se niega a correr sobre una base v1. Detalle en el [plan M0](specs/M0-T-base-saas-identidad.md).
+- La base v2 nace de `database/01_schema.sql` (las 65 tablas, sin datos) y `database/02_semilla.sql` (roles, planes y catálogos globales). La v2 **no migra datos** de la v1, que eran pruebas: las migraciones v1 (03–13) se retiraron y el migrador se niega a correr sobre una base v1. Detalle en el [plan M0](specs/M0-T-base-saas-identidad.md).
 - Una migración nueva es `database/NN_nombre.sql` con el número siguiente (la primera es la `03`), y **debe poder ejecutarse dos veces sin error**: en una instalación nueva la corre MySQL al crear el volumen y luego el migrador. Se consulta `information_schema` antes de crear columnas o índices, y se revisa si la fila ya existe antes de insertarla.
 - `02_semilla.sql` se aplica en cada arranque: **solo inserta lo que falta y nunca sobrescribe** (`INSERT IGNORE` con id explícito e índice único; nada de `ON DUPLICATE KEY UPDATE` ni `REPLACE`). Una fila nueva de un catálogo global se agrega ahí con el siguiente id libre, sin cambiar ni reutilizar los existentes.
 - Solo los `.sql` del primer nivel de `database/` se ejecutan; lo que no debe correr nunca (como el modelo de drawDB) va en una subcarpeta.
