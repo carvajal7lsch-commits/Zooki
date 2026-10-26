@@ -1411,13 +1411,14 @@ El servidor calcula por clínica la vigencia y gracia con la fecha actual, aunqu
 
 S1 implementa vencimiento, gracia, congelación y avisos. S2 implementa el botón con eventos verificados; S3 añade fuente hospedada y autorización mensual separada. Falta de configuración o cobros apagados deshabilitan el botón, sin afectar la atención.
 
-**A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Desde 2.2.0 el pago abre el checkout web de Wompi a pantalla completa con los mismos datos firmados (decisión del dueño, 2026-10-26); guardar la tarjeta o Nequi sigue con el widget hospedado. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar no cancela ni acredita; volver con un ID permite recuperar por GET privado y referencia de la clínica activa. Cotización vencida sin resultado remoto queda incierta; solo un rechazo/error confirmado permite cerrar la obligación fallida y volver a cotizar con tarifa vigente, conservando la evidencia. Las concesiones legadas sin fin requieren regularización previa.
+**A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Desde 2.2.0 el pago abre el checkout web de Wompi a pantalla completa con los mismos datos firmados (decisión del dueño, 2026-10-26); guardar la tarjeta o Nequi sigue con el widget hospedado. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar no cancela ni acredita; volver con un ID permite recuperar por GET privado y referencia de la clínica activa. La cotización vencida se cierra tras rechazo/error confirmado o ausencia confirmada por búsqueda privada completa de un checkout manual abandonado, según A.1; conserva la evidencia y vuelve a cotizar con tarifa vigente. Las concesiones legadas sin fin requieren regularización previa.
 
 ```mermaid
 flowchart TD
   A["Administrador: Pagar o Renovar"] --> B{"Contexto, CSRF y ciclo validos?"}
   B -- No --> X["Rechazar sin crear cargo"]
-  B -- Si --> C["Calcular tarifa; bloquear clinica\nReutilizar o reservar orden e intento unicos; commit"]
+  B -- Si --> R["Comprobar checkout vencido sin emitir cargos: flujo A.1"]
+  R --> C["Calcular tarifa; bloquear clinica\nReutilizar o reservar orden e intento unicos; commit"]
   C --> D["Firmar configuracion; el navegador abre el checkout web de Wompi a pantalla completa"]
   D --> E["Tarjeta, PSE o Nequi en Wompi"]
   E --> F["Retorno con id: GET privado y referencia de clinica propia; cierre: estado local"]
@@ -1425,7 +1426,29 @@ flowchart TD
   G --> F
 ```
 
-**B — Evento y acreditación.** Inbox durable antes del HTTP 200; duplicados 200, firma inválida 401 y base caída 503. Tras el 200 durable, el receptor intenta conciliar ese evento; Schedule queda de respaldo. No se cierran ni vacían búferes ajenos o de pruebas. Huella canónica D9, whitelist sin cuerpo íntegro ni PII. La consulta privada usa host del entorno; si informa comercio se coteja con `/merchants/info`. HTTP queda fuera de transacción. La concesión y su auditoría son atómicas, con periodo único por orden. Un GET pendiente/404/caído se reanuda por `--solo=conciliacion`; el retorno con ID válido también puede recuperarlo por GET privado, solo si su referencia pertenece a la clínica activa. Anulación, discrepancia o segundo cargo real generan incidencia conservada para S4, sin borrar vigencia ni devolver automáticamente.
+**A.1 — Recuperación automática de checkout abandonado (RE-0.5.15, decisión del dueño, 2026-10-26).** Se ejecuta antes de reservar al pulsar Pagar y desde el Schedule existente de cinco minutos, también sin webhook. `--revisar` solo enumera candidatos, sin HTTP ni escrituras. Solo considera órdenes pendientes vencidas de la clínica/entorno: todos sus intentos manuales, anteriores terminales negativos y último creado/incierto sin ID; si tiene ID se consulta mediante el conciliador. GET privado `/transactions?reference=...` sin filtros de estado ni fechas; solo 200 con lista válida completa vacía prueba ausencia. Errores, 404, objetos en lugar de listas o paginación desconocida conservan la reserva. Sin credenciales reales en las pruebas.
+
+```mermaid
+flowchart TD
+  A["Pagar con rol y CSRF / Schedule"] --> C{"Orden manual pendiente y vencida del entorno?"}
+  C -- No --> FIN["Conservar estado; no emitir cargos"]
+  C -- Si --> ID{"Ultimo intento tiene ID?"}
+  ID -- Si --> REC["GET por ID; conciliador comun fuera del candado"]
+  ID -- No --> EL{"Ultimo creado o incierto y anteriores terminales negativos?"}
+  EL -- No --> FIN
+  EL -- Si --> GET["GET privado por referencia fuera del candado"]
+  GET --> R{"Respuesta valida completa?"}
+  R -- No --> FIN
+  R -- "Con transacciones" --> REC
+  R -- "Lista vacia" --> LOCK["Bloquear clinica; comparar orden y todos los intentos con instantanea"]
+  LOCK --> CAM{"Todo sigue igual y cotizacion vencida?"}
+  CAM -- No --> FIN
+  CAM -- Si --> TX["Cerrar orden y liberar claves logicas; conservar intentos; auditar en misma transaccion"]
+  TX --> OK["Commit; permite nueva cotizacion sin conceder vigencia"]
+  TX -- "Auditoria falla" --> RB["Rollback; reserva sigue protegida"]
+```
+
+**B — Evento y acreditación.** Inbox durable antes del HTTP 200; duplicados 200, firma inválida 401 y base caída 503. Tras el 200 durable, el receptor intenta conciliar ese evento; Schedule queda de respaldo. No se cierran ni vacían búferes ajenos o de pruebas. Huella canónica D9, whitelist sin cuerpo íntegro ni PII. La consulta privada usa host del entorno; si informa comercio se coteja con `/merchants/info`. HTTP queda fuera de transacción. La concesión y su auditoría son atómicas, con periodo único por orden. Un GET pendiente/404/caído se reanuda por `--solo=conciliacion`; el retorno con ID válido también puede recuperarlo por GET privado, solo si su referencia pertenece a la clínica activa. Anulación, discrepancia, segundo cargo real o aprobado tardío de una orden cerrada generan incidencia conservada para S4, sin borrar vigencia ni devolver automáticamente; el aprobado tardío de la orden cerrada conserva su evidencia sin conceder periodo automáticamente.
 
 ```mermaid
 flowchart TD
@@ -1443,6 +1466,7 @@ flowchart TD
   V -- "Discrepancia o VOIDED" --> REV["Incidencia financiera para S4"]
   V -- Si --> LOCK["Bloquear clinica; revalidar orden, version y lease"]
   LOCK --> P{"Ya hay periodo o cargo aprobado?"}
+  LOCK -- "Orden cerrada: aprobado tardio" --> REV
   P -- "Mismo pago" --> DUP["No-op; evento procesado"]
   P -- "Otro cargo" --> REV
   P -- No --> TX["Insertar periodo unico; actualizar vigencia y plan\nReservar recibo por pago y destinatario; auditar; commit"]

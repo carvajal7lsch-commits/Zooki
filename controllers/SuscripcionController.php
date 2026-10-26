@@ -5,6 +5,7 @@ require_once __DIR__ . '/../models/Suscripcion.php';
 require_once __DIR__ . '/../models/PagoSuscripcion.php';
 require_once __DIR__ . '/../models/FuentePago.php';
 require_once __DIR__ . '/../models/ConciliadorPago.php';
+require_once __DIR__ . '/../models/RecuperadorCheckout.php';
 
 final class SuscripcionController
 {
@@ -190,9 +191,12 @@ final class SuscripcionController
         try {
             $version = filter_var($_POST['version'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
             $ciclo = $_POST['ciclo'] ?? null;
-            if ($version === false || !is_string($ciclo)) {
+            if ($version === false || !in_array($ciclo, ['mensual', 'anual'], true)) {
                 throw new InvalidArgumentException('Revisa el ciclo y la vigencia.');
             }
+            $this->configuracion->validar();
+            (new RecuperadorCheckout($this->db, $this->cliente ?? new ClienteWompiHttp($this->configuracion), $this->configuracion, $this->reloj))
+                ->ejecutar(false, (int) Contexto::clinicaActiva(), (int) Contexto::idUsuario());
             $this->json(['ok' => true, 'pago' => $this->pagos()->reservar($ciclo, $version, (int) Contexto::idUsuario())]);
         } catch (InvalidArgumentException | RuntimeException $error) {
             if ($error instanceof AccesoDenegado) {

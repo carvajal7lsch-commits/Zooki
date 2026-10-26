@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../models/AvisoSuscripcion.php';
 require_once __DIR__ . '/../models/ConciliadorPago.php';
+require_once __DIR__ . '/../models/RecuperadorCheckout.php';
 require_once __DIR__ . '/../models/CobroAutomatico.php';
 require_once __DIR__ . '/ClienteWompiHttp.php';
 
@@ -27,6 +28,14 @@ final class MantenimientoSuscripciones
             }
         }
         if ($solo === null || $solo === 'conciliacion') {
+            $resultado['checkout'] = ['pendientes' => 0, 'cerradas' => 0, 'errores' => 0];
+            try {
+                $config = $this->configuracion ?? new ConfiguracionWompi();
+                $resultado['checkout'] = (new RecuperadorCheckout($this->db, $this->cliente ?? new ClienteWompiHttp($config), $config, $this->reloj))->ejecutar($revisar);
+                $resultado['errores'] += $resultado['checkout']['errores'];
+            } catch (Throwable $error) {
+                $resultado['errores']++;
+            }
             $resultado['conciliacion'] = ['pendientes' => 0, 'conciliados' => 0, 'errores' => 0];
             if ((int) $this->db->query("SELECT COUNT(*) FROM wompi_eventos WHERE estado IN ('pendiente','procesando','error')")->fetchColumn() > 0) {
                 try {

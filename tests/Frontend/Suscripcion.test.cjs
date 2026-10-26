@@ -76,6 +76,49 @@ test('rediseño: sin datos firmados no sale de Zooki; errores restauran el botó
     assert.equal(new URL(urlSinVencimiento).searchParams.has('expiration-time'),false);
 });
 
+test('recargar sin referencia muestra la orden vencida aunque el plan esté al día', async () => {
+    const pantalla = interfaz({ fetch: async (url, opciones) => {
+        assert.equal(url, 'index.php?action=suscripcion_estado_ajax');
+        assert.equal(opciones.method, undefined, 'Consulta de lectura, sin reservar otro pago.');
+        return { ok: true, json: async () => ({ ok: true, estado: {
+            plan: 'Profesional', situacion: 'al_dia',
+            pago: { estado: 'pendiente', intento: 'incierto', cotizacion_vencida: true },
+        } }) };
+    } });
+    await pantalla.ui.estado();
+    assert.match(pantalla.mensaje.textContent, /Plan: Profesional · Al día/);
+    assert.match(pantalla.mensaje.textContent, /Última orden: pendiente/);
+    assert.match(pantalla.mensaje.textContent, /cotización venció sin confirmación/);
+    assert.doesNotMatch(pantalla.mensaje.textContent, /incierto|creado/);
+});
+
+test('volver por Atrás restaura el botón del checkout y consulta, sin repetir el POST', async () => {
+    const escuchas = {};
+    const llamadas = [];
+    const destinos = [];
+    const pantalla = interfaz({
+        eventos: { addEventListener: (nombre, callback) => { escuchas[nombre] = callback; } },
+        redirigir: url => destinos.push(url),
+        fetch: async (url, opciones) => {
+            llamadas.push({ url, metodo: opciones.method || 'GET' });
+            const datos = opciones.method === 'POST'
+                ? { ok: true, pago: { abrir: true, mensaje: 'Completa', checkout: checkoutFirmado } }
+                : { ok: true, estado: { plan: 'Profesional', situacion: 'al_dia', pago: { estado: 'pendiente', intento: 'creado', cotizacion_vencida: true } } };
+            return { ok: true, json: async () => datos };
+        },
+    });
+    await pantalla.ui.pagar();
+    assert.equal(pantalla.boton.disabled, true);
+    await escuchas.pageshow({ persisted: false });
+    assert.equal(llamadas.length, 1);
+    await escuchas.pageshow({ persisted: true });
+    assert.equal(pantalla.boton.disabled, false);
+    assert.deepEqual(llamadas.map(llamada => llamada.metodo), ['POST', 'GET']);
+    assert.equal(destinos.length, 1);
+    assert.match(pantalla.mensaje.textContent, /Última orden: pendiente/);
+    assert.match(pantalla.mensaje.textContent, /comprobaremos el intento con Wompi/);
+});
+
 function vista(escenario) {
     const php = process.env.PHP_BINARY || (process.platform === 'win32' ? 'C:/xampp/php/php.exe' : 'php');
     return execFileSync(php,['tests/Frontend/apoyo/suscripcion-vista.php',escenario],{cwd:RAIZ,encoding:'utf8',env:{...process.env,ZOOKI_TEST_MYSQL_HOST:'',ZOOKI_TEST_MYSQL_DB:'zooki_test_base_v2'}});

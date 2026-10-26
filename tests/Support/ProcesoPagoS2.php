@@ -3,6 +3,7 @@ require __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../../config/Database.php';
 require_once __DIR__ . '/../../models/PagoSuscripcion.php';
 require_once __DIR__ . '/../../models/ConciliadorPago.php';
+require_once __DIR__ . '/../../models/RecuperadorCheckout.php';
 require_once __DIR__ . '/ClienteWompiFalso.php';
 require_once __DIR__ . '/../../models/CobroAutomatico.php';
 require_once __DIR__ . '/../../controllers/WompiEventosController.php';
@@ -44,9 +45,25 @@ $db->setAttribute(PDO::ATTR_STATEMENT_CLASS, [BarreraPagoS2::class, [function ()
     }
 }]]);
 $reloj = static fn () => VigenciaSuscripcion::fecha('2026-10-26 08:00:00');
+if (str_starts_with($fase, 'checkout_')) {
+    $reloj = static fn () => VigenciaSuscripcion::fecha('2026-10-26 10:00:00');
+}
 $config = ClienteWompiFalso::configuracion('test', '1', str_starts_with($fase, 's3_') ? '1' : '0');
 try {
-    if (in_array($fase, ['s3_workers', 's3_manual', 's3_auto_manual', 's3_retiro', 's3_auto_retiro'], true)) {
+    if (str_starts_with($fase, 'checkout_')) {
+        $cliente = new ClienteWompiFalso();
+        $referencia = $db->query('SELECT referencia FROM intentos_pago ORDER BY id_intento LIMIT 1')->fetchColumn();
+        $cliente->porReferencia[$referencia] = [];
+        $cliente->respuestas['tx_simultanea'] = ['id' => 'tx_simultanea', 'status' => 'APPROVED', 'reference' => $referencia, 'currency' => 'COP', 'amount_in_cents' => 8999000];
+        $cliente->antesDeConsultar = static function () use ($db): void {
+            if ($db->inTransaction()) {
+                throw new RuntimeException('HTTP dentro del candado.');
+            }
+        };
+        $acreditar = ($fase === 'checkout_evento_primero' && $nombre === 'primero') || ($fase === 'checkout_cierre_primero' && $nombre === 'segundo');
+        $resultado = $acreditar ? ['acreditado' => (new ConciliadorPago($db, $cliente, $config, $reloj))->procesar(1)]
+            : (new RecuperadorCheckout($db, $cliente, $config, $reloj))->ejecutar(false, 1);
+    } elseif (in_array($fase, ['s3_workers', 's3_manual', 's3_auto_manual', 's3_retiro', 's3_auto_retiro'], true)) {
         $cliente = new ClienteWompiFalso();
         $cliente->datosComercio = ClienteWompiFalso::contratos();
         $cliente->antesDeConsultar = static function () use ($db): void {

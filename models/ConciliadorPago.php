@@ -2,6 +2,7 @@
 require_once __DIR__ . '/EventoWompi.php';
 require_once __DIR__ . '/Suscripcion.php';
 require_once __DIR__ . '/AvisoSuscripcion.php';
+require_once __DIR__ . '/PagoSuscripcion.php';
 require_once __DIR__ . '/../helpers/ClienteWompi.php';
 require_once __DIR__ . '/../helpers/ConfiguracionWompi.php';
 
@@ -155,6 +156,11 @@ final class ConciliadorPago
                 $s->auditar('intentos_pago', (int) $intento['id_intento'], ['estado' => $intento['estado']], ['estado' => $nuevo, 'id_transaccion' => $remoto['id']], 'GET autenticado Wompi');
             }
             if ($status === 'APPROVED') {
+                $operacion = PagoSuscripcion::claveOperacion((int) $pago['id_clinica'], (int) $pago['id_suscripcion'], (int) $pago['version_periodo_base']);
+                if ($pago['estado'] === 'cancelado' || hash_equals(PagoSuscripcion::claveCerrada($operacion, (int) $pago['id_pago']), $pago['clave_operacion'])) {
+                    // RE-0.5.15: conservar evidencia tardía de una reserva cerrada, sin acreditar otro periodo.
+                    return $this->incidencia($s, $inbox, $evento, $pago, $intento, 'PAGO_TRAS_CIERRE');
+                }
                 $q = $this->db->prepare("SELECT 1 FROM intentos_pago WHERE id_pago=? AND id_intento<>? AND estado='aprobado' AND id_transaccion_wompi<>? LIMIT 1");
                 $q->execute([$pago['id_pago'], $intento['id_intento'], $remoto['id']]);
                 if ($q->fetchColumn()) {

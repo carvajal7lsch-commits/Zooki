@@ -6,6 +6,19 @@
 
 ## Ahora
 
+### Suscripción v2 de Claude — revisada, aprobada para integrar (2026-10-26)
+
+- **Escribió Claude Code; revisó Codex por petición del dueño.** Nuevo commit `a1e4904` en `origin/claude/suscripcion-rediseno`, posterior al rediseño ya integrado en `5695a64`. Pestañas Mi plan/Historial en todos los anchos; pagar y gestionar el medio en ventanas Zooki; paginación conserva `#historial` y el origen. No modifica backend, rutas, permisos, esquema ni versión.
+- **Revisión sin bloqueantes:** diff y ganchos de pago/fuente revisados, salida escapada, sin JS/CSS en línea; ventanas delegadas al componente existente. Rama de Claude aislada: 26 PHP/215 aserciones y 13 JS correctas. Combinación simulada con la recuperación automática pendiente: 45 PHP/337 y 16 JS correctas; Mi plan/Historial sin desborde a 360/390/820/1366, fixture sin scroll a 1366×768. Sin pruebas de cobro real ni bases de trabajo. Detalle en specs/pulido-interfaz.md.
+- **Sigue:** el dueño debe guardar primero los cambios locales de recuperación automática y pruebas de NIT; aún no están en commit. Después integrar la rama de Claude. Simulación prevé conflictos solo en agentes/estado.md, documentacion/HistorialVersiones.md y specs/pulido-interfaz.md: conservar ambas entregas y actualizar las descargas tras resolver. No se hizo merge, commit, push ni cambio de rama. La recuperación automática de Codex sigue pendiente de revisión de Claude; R completa permanece abierta y la prueba visual final la hace el dueño.
+
+### Incidencia al abandonar Wompi — entregada, pendiente de revisión (2026-10-26)
+
+- **Escribió Codex; revisión de Claude pendiente.** Reporte del dueño en producción: abre Wompi, sale y vuelve unas dos horas después; el intento no se reabre y Consultar estado solo indica el plan al día. El dueño confirma que no aparece una transacción correspondiente en Wompi.
+- **Decisión del dueño:** recuperación automática; descarta la salida exclusivamente manual de plataforma. Búsqueda privada oficial por referencia antes de reservar y en Schedule existente: solo una lista completa y vacía permite cerrar una reserva manual vencida, con candado, revalidación de todos los intentos y auditoría. Si aparece una transacción se concilia por ID; errores, 404 y resultados dudosos conservan la reserva. Un aprobado tardío de una orden cerrada genera incidencia sin conceder otro periodo.
+- **Corregido localmente en 2.2.0:** lo anterior, última orden/intento de clínica y entorno sin referencia, mensaje separado del plan y controles al volver con Atrás sin repetir POST. PHP completo sin host 1198 pruebas/9545 aserciones (94 omitidas de motor); JS completo 363/363. Pruebas de recuperación, API simulada, aislamiento, rollback, Schedule sin webhook y carreras reales de cierre/conciliación en zooki_test_base_v2. Dos expectativas antiguas de NIT actualizadas a la regla aprobada, sin tocar su comportamiento. Sin esquema, .env, base de trabajo ni API/SMTP real. El dueño guardó el merge de Suscripción como 5695a64.
+- **Pendiente:** revisión de Claude, CI/MySQL 8 y despliegue por el dueño; la reserva de producción sigue intacta hasta desplegar. Resultado y comprobaciones en specs/M0-S-suscripcion-pagos.md. No se hace commit ni push. R completa sigue abierta.
+
 ### Etapa R — en curso; Registro de clínica entregada, pendiente de revisión (2026-10-26)
 
 - **Escribe Codex; supervisa cada pantalla el dueño; revisa Claude (arquitecto).** Rama release/v2.2.0, versión 2.2.0 sin publicar. Una pantalla por turno de supervisión; no avanzar hasta «listo». Encargo y evidencia en «Etapa R — Responsive» de `specs/pulido-interfaz.md`.

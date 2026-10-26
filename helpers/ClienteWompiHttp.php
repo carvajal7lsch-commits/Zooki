@@ -23,6 +23,23 @@ final class ClienteWompiHttp implements ClienteWompi
         return $this->get('/merchants/info', ['x-merchant-public-key: ' . $this->configuracion->valor('LLAVE_PUBLICA')]);
     }
 
+    public function transaccionesPorReferencia(string $referencia): array
+    {
+        if (!FirmaWompi::idValido($referencia)) {
+            throw new InvalidArgumentException('Referencia de pago inválida.');
+        }
+        // RE-0.5.15: búsqueda privada sin filtros que oculten pagos en curso (OpenAPI Wompi 1.2.0).
+        $lista = $this->peticion('/transactions?reference=' . rawurlencode($referencia), ['Authorization: Bearer ' . $this->configuracion->valor('LLAVE_PRIVADA')], null, true);
+        foreach ($lista as $transaccion) {
+            if (!is_array($transaccion) || ($transaccion['reference'] ?? null) !== $referencia
+                || !FirmaWompi::idValido($transaccion['id'] ?? null)
+                || !in_array($transaccion['status'] ?? null, ['PENDING', 'APPROVED', 'DECLINED', 'ERROR', 'VOIDED'], true)) {
+                throw new RuntimeException('Búsqueda Wompi no concluyente.');
+            }
+        }
+        return $lista;
+    }
+
     public function tokenNequi(string $token): array
     {
         if (!preg_match('/^nequi_' . $this->configuracion->entorno() . '_[a-zA-Z0-9_-]{1,180}$/D', $token)) {
@@ -47,7 +64,7 @@ final class ClienteWompiHttp implements ClienteWompi
         return $this->peticion($ruta, $cabeceras);
     }
 
-    private function peticion(string $ruta, array $cabeceras, ?array $datos = null): array
+    private function peticion(string $ruta, array $cabeceras, ?array $datos = null, bool $listaCompleta = false): array
     {
         $this->configuracion->validar(false);
         $url = $this->configuracion->baseApi() . $ruta;
@@ -94,6 +111,14 @@ final class ClienteWompiHttp implements ClienteWompi
             throw new RuntimeException('Respuesta Wompi inválida.');
         }
         $json = json_decode($respuesta['cuerpo'], true, 32, JSON_THROW_ON_ERROR);
+        if ($listaCompleta) {
+            $objeto = json_decode($respuesta['cuerpo'], false, 32, JSON_THROW_ON_ERROR);
+            // {} no es []; metadatos de paginación desconocidos no prueban una lista completa.
+            if (!is_array($objeto->data ?? null) || !empty($json['meta'])
+                || array_diff(array_keys($json), ['data', 'meta'])) {
+                throw new RuntimeException('Búsqueda Wompi incompleta.');
+            }
+        }
         if (!is_array($json['data'] ?? null)) {
             throw new RuntimeException('Respuesta Wompi inválida.');
         }

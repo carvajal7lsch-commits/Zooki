@@ -50,7 +50,19 @@
                     const nodo = raiz.querySelector(selector);
                     if (nodo && texto) nodo.textContent = texto;
                 }
-                avisar(pago ? 'Pago: ' + pago.estado + ' · ' + pago.intento + '. Actualiza para ver el historial completo.' : 'Plan: ' + datos.estado.plan + ' · ' + (etiquetas[datos.estado.situacion] || 'Consulta el estado') + '.');
+                let texto = 'Plan: ' + datos.estado.plan + ' · ' + (etiquetas[datos.estado.situacion] || 'Consulta el estado') + '.';
+                if (pago) {
+                    const estadosOrden = { pendiente: 'pendiente', confirmado: 'confirmada', cancelado: 'cancelada', revision: 'en revisión' };
+                    texto += ' Última orden: ' + (estadosOrden[pago.estado] || 'en revisión') + '.';
+                    const estadosIntento = { creado: 'sin confirmación', incierto: 'sin confirmación', enviando: 'en proceso', pendiente: 'pendiente en Wompi', aprobado: 'aprobado', anulado: 'anulado', declinado: 'rechazado', error: 'con error' };
+                    texto += ' Intento: ' + (estadosIntento[pago.intento] || 'en revisión') + '.';
+                    if (pago.estado === 'pendiente' && ['creado', 'incierto'].includes(pago.intento)) {
+                        texto += pago.cotizacion_vencida
+                            ? ' La cotización venció sin confirmación del pago. Al volver a pagar comprobaremos el intento con Wompi.'
+                            : ' Aún no hay confirmación del pago.';
+                    }
+                }
+                avisar(texto);
                 return datos;
             } catch (error) {
                 avisar('No se pudo consultar. La orden sigue reservada; vuelve a consultar antes de pagar.');
@@ -86,6 +98,15 @@
         }
         boton?.addEventListener('click', pagar);
         consultar?.addEventListener('click', estado);
+        // RE-0.5.17: Atrás puede restaurar el botón bloqueado al salir hacia Wompi; solo consultar.
+        const eventos = servicios.eventos || globalThis;
+        eventos.addEventListener?.('pageshow', evento => {
+            if (!evento.persisted) return;
+            saliendo = false;
+            ocupado = false;
+            if (boton) boton.disabled = !habilitado;
+            return estado();
+        });
         return {pagar, estado};
     }
     if (typeof module !== 'undefined') module.exports = { iniciar, urlCheckout };
