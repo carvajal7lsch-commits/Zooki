@@ -22,9 +22,9 @@
         confirmar_password: 'confirm_password', password_confirmation: 'confirm_password',
         perfilPwdConfirmar: 'confirm_password', portal_confirm_password: 'confirm_password'
     };
-    const camposCuenta = new Set(['nombre_completo', 'documento', 'email', 'telefono', 'password', 'confirm_password', 'nit', 'dv', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
+    const camposCuenta = new Set(['nombre_completo', 'documento', 'email', 'telefono', 'password', 'confirm_password', 'nit', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
     // El servidor comprueba formato y política completa; nunca informa si existe la cuenta.
-    const consultanServidor = new Set(['documento', 'email', 'password', 'nit', 'dv', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
+    const consultanServidor = new Set(['documento', 'email', 'password', 'nit', 'nombre_clinica', 'direccion', 'email_clinica', 'email_administrador']);
     const UNICOS = new Set(['documento', 'email']);
 
     // Mismos mensajes que helpers/ValidadorCuenta.php, ValidadorClinica y ValidadorTelefono (M0.1: una línea).
@@ -34,8 +34,7 @@
         nombre_completo: 'Nombre de 3 a 100 caracteres.',
         nombre_caracteres: "Nombre: letras, espacios, ' y -.",
         telefono: 'Teléfono de 7 a 20 caracteres.',
-        nit: 'NIT de 1 a 14 dígitos, sin el DV.',
-        dv: 'El DV es un solo dígito.',
+        nit: 'El dígito de verificación no corresponde. Revísalo en tu RUT.',
     };
 
     function tipo(campo) {
@@ -133,8 +132,11 @@
         if (clave === 'nombre_completo' && (valor.trim().length < 3 || valor.trim().length > 100)) {
             return { error: MENSAJES.nombre_completo };
         }
-        if (clave === 'nit' && !/^[0-9]{1,14}$/.test(valor.trim())) return { error: MENSAJES.nit };
-        if (clave === 'dv' && !/^[0-9]$/.test(valor.trim())) return { error: MENSAJES.dv };
+        if (clave === 'nit') {
+            const limite = Number(campo.dataset.nitNumeroMax) || 14;
+            const patron = '^(?:[0-9]{2,' + limite + '}|[0-9]{1,' + limite + '}-[0-9])$';
+            if (!(new RegExp(patron)).test(valor.trim())) return { error: MENSAJES.nit };
+        }
         if (clave === 'nombre_completo' && !/^[\p{L}\p{M} '’\-]+$/u.test(valor.trim())) {
             return { error: MENSAJES.nombre_caracteres };
         }
@@ -194,7 +196,7 @@
         estado.secuencias.set(campo, numero);
         if (!mostrarLocal(form, campo, final)) return false;
         if (valor === '' || clave === 'confirm_password' || sinUnicidad(form, clave)) return true;
-        const firma = JSON.stringify([valor, ...campos(form).filter(elemento => ['documento', 'email', 'email_administrador', 'nombre_completo', 'nit', 'dv'].includes(tipo(elemento))).map(elemento => elemento.value), form.elements.id_usuario?.value]);
+        const firma = JSON.stringify([valor, ...campos(form).filter(elemento => ['documento', 'email', 'email_administrador', 'nombre_completo', 'nit'].includes(tipo(elemento))).map(elemento => elemento.value), form.elements.id_usuario?.value]);
         if (estado.cache.get(campo)?.firma === firma) {
             return estado.cache.get(campo).valido;
         }
@@ -262,14 +264,6 @@
         if (clave === 'password') {
             const confirmacion = campoDe(form, 'confirm_password');
             if (confirmacion && confirmacion.value) mostrarLocal(form, confirmacion);
-        }
-        if (clave === 'nit') {
-            const dv = campoDe(form, 'dv');
-            if (dv && dv.value) {
-                estado.cache.delete(dv);
-                estado.secuencias.set(dv, (estado.secuencias.get(dv) || 0) + 1);
-                programar(form, dv);
-            }
         }
         // El documento y el correo forman parte de la política completa de la contraseña.
         if (['documento', 'email', 'email_administrador', 'nombre_completo'].includes(clave)) {

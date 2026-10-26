@@ -1146,7 +1146,7 @@ class BaseV2MysqlTest extends TestCase
             $registro = new RegistroClinica($this->db);
             $_SERVER['REMOTE_ADDR'] = '192.0.2.50';
             Auditoria::definirProxiesConfiables([]);
-            $reporte = ['nit' => '900123456', 'dv' => '8', 'email' => 'titular@zooki.test'];
+            $reporte = ['nit' => '900123456-8', 'email' => 'titular@zooki.test'];
             for ($i = 0; $i < 5; $i++) {
                 $registro->reportarNit($reporte);
             }

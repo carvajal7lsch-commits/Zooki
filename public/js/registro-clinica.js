@@ -7,15 +7,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('registroClinicaForm');
     if (!form) return;
+    // RNF-16: sin pasos de JavaScript se conservan las acciones en el flujo normal.
+    if (window.ZookiPasos) {
+        form.querySelectorAll('.registro-acciones').forEach(acciones => acciones.classList.add('z-barra-inferior'));
+    }
     const reporte = document.getElementById('reportarNit');
     form.addEventListener('cuenta:limitada', () => {
         window.ZookiRegistro.mostrarResumen(form, 'Hiciste muchas comprobaciones seguidas. Espera unos segundos y vuelve a intentar');
     });
     form.addEventListener('cuenta:validada', evento => {
-        if (evento.detail.campo === 'dv') reporte.hidden = !evento.detail.nitDuplicado;
+        if (evento.detail.campo === 'nit') reporte.hidden = !evento.detail.nitDuplicado;
     });
     form.addEventListener('input', evento => {
-        if (['nit', 'dv'].includes(evento.target.name)) reporte.hidden = true;
+        if (evento.target.name === 'nit') reporte.hidden = true;
     });
     form.addEventListener('submit', async evento => {
         evento.preventDefault();

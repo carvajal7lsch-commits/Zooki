@@ -789,7 +789,7 @@ Detalle del funcionamiento de cada proceso de módulo. Cada flujo se corresponde
 
 ```mermaid
 flowchart TD
-  A([Registro publico de clinica]) --> P1["Paso 1, datos de la clinica:<br/>NIT numerico y DV en casillas separadas"]
+  A([Registro publico de clinica]) --> P1["Paso 1, datos de la clinica:<br/>NIT o cedula: sin guion calcula DV;<br/>con guion comprueba el DV escrito"]
   P1 --> P1V{"Campos del paso validos?"}
   P1V -- No --> P1
   P1V -- Si --> P2["Paso 2, administrador: nombre, tipo y documento,<br/>telefono, correo y contraseña"]
@@ -799,14 +799,14 @@ flowchart TD
   P2V -- Si --> B["Paso 3: aceptar politica y Registrar clinica; sin Google<br/>(sin JavaScript se ven los tres pasos y se envia todo junto)"]
   B -. Atras sin perder lo escrito .-> P2
   B --> C{"CAPTCHA valido en servidor?"}
-  P1 -. NIT y DV validos al escribir .-> UNI["Consultar unicidad por IP limitada<br/>Avisar junto al campo y habilitar Reportar a soporte<br/>Sin revelar cuentas ni contactos; repetir control al enviar"]
+  P1 -. NIT valido al escribir .-> UNI["Consultar unicidad por IP limitada<br/>Avisar junto al campo y habilitar Reportar a soporte<br/>Sin revelar cuentas ni contactos; repetir control al enviar"]
   C -- No --> ERR[Corregir verificacion]
   ERR --> B
   C -- Si --> V{"Formato, NIT DIAN y correos permanentes validos?"}
   V -- No --> E[Corregir campos]
   E --> B
   V -- Si --> N{"NIT duplicado?"}
-  N -- Si --> SOP["Avisar duplicidad; ofrecer reporte a soporte<br/>NIT numerico y DV separado; POST con CSRF y CAPTCHA<br/>maximo 5 reportes diarios por IP real; crear caso"]
+  N -- Si --> SOP["Avisar duplicidad; ofrecer reporte a soporte<br/>Misma entrada: calcula DV sin guion o valida el escrito; POST con CSRF y CAPTCHA<br/>maximo 5 reportes diarios por IP real; crear caso"]
   N -- No --> R{"Menos de 3 altas hoy por IP real?"}
   R -- No --> LIM[Intentalo mañana]
   R -- Si --> T[Iniciar transaccion y reservar contador diario por IP]

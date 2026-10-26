@@ -6,6 +6,15 @@
 
 ## Ahora
 
+### Etapa R — en curso; Registro de clínica entregada, pendiente de revisión (2026-10-26)
+
+- **Escribe Codex; supervisa cada pantalla el dueño; revisa Claude (arquitecto).** Rama release/v2.2.0, versión 2.2.0 sin publicar. Una pantalla por turno de supervisión; no avanzar hasta «listo». Encargo y evidencia en «Etapa R — Responsive» de `specs/pulido-interfaz.md`.
+- **Decisiones expresas del dueño:** Registro de clínica primero; preparación del giro antes del primer pintado y NIT único con DV opcional: sin guion conserva todo el número y calcula el DV; con guion comprueba el escrito. Reemplaza la obligación inicial de escribir el DV. Se autoriza la excepción de PHP para separar/validar el NIT en registro, AJAX y reporte, sin esquema ni migración. Sustituye las casillas separadas del 10/10. Propuesta responsive aprobada: márgenes/cabecera compactos, texto/controles mayores, acción inferior, adorno sin desborde y formulario más arriba en tableta.
+- **Escribió Codex; Registro de clínica aceptado por el dueño («listo», 2026-10-26), entregado y pendiente de revisión de Claude:** tres pasos del registro, barra móvil reutilizable en identidad.css y giro de ida/vuelta sin fundido superpuesto. Capturas PHP reales con datos simulados en los cuatro tamaños acordados, cuadros del giro y pruebas de acceso directo/movimiento reducido en `scratch/r/`. Escritorio conserva su distribución.
+- **Corrección del dueño sobre esta pantalla — escribió Codex:** ayuda del NIT junto al input, sin reserva duplicada, y aclaración de cédula/NIT sin DV (cálculo automático), o DV explícito con guion; cabecera móvil con 12 px entre flecha/título y título/párrafo. Prueba dirigida de diseño correcta y capturas de los cuatro tamaños en `scratch/r/registro-clinica/ajuste-espaciado/`; corrección aceptada por el dueño.
+- **Verificación dirigida:** PHP sin host 48 pruebas/379 aserciones; JS dirigido 55/55, incluida ausencia de desborde a 360/390/1366, acción visible y entradas de 16 px; avance al segundo paso con cédula sola, validada por el controlador PHP real en SQLite efímero. Últimas capturas en `scratch/r/registro-clinica/nit-opcional/`. Sintaxis y diff correctos. No se leyó .env ni se usó la base de trabajo. Suites completas, exportación de documentos y actualización final del Historial/estado quedan para el cierre de R; solo Registro de clínica está cerrado por el dueño.
+- **Sigue, por petición del dueño:** guardar esta entrega mediante commit del dueño antes de integrar `claude/suscripcion-rediseno` en release/v2.2.0. El agente no ejecuta commit, push ni merge. Revisar y verificar la integración, y después preguntar qué pantalla de R sigue. La etapa completa aún no se entrega.
+
 ### Pulido final P1 — revisada: aprobada (2026-10-26)
 
 - **Revisión (Claude):** ver «Pulido final P1 — Revisión» en `specs/pulido-interfaz.md`. Una corrección hecha por el revisor en `CasoSoporte::programarAviso` (Content-Length con el búfer de XAMPP). Sigue: commit y push del dueño, CI/MySQL 8, prueba manual (8 puntos) y etapa R (responsive) con Claude Code y el dueño.

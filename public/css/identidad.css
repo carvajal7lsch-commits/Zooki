@@ -48,3 +48,20 @@
     font-weight: 600;
     color: var(--z-danger);
 }
+
+/* RNF-16: acción única al alcance del pulgar; las pantallas reservan su espacio. */
+@media (max-width: 767px) {
+    .z-barra-inferior {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+        border-top: 1px solid var(--z-border);
+        background: var(--z-surface);
+    }
+}

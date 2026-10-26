@@ -5,26 +5,28 @@
     margin: auto 0;
 }
 
-/* NIT y DV en casillas separadas (RE-0.1.3), con su ayuda y el duplicado debajo. */
+/* RE-0.1.3 (26/10/2026): un NIT con DV final, ayuda y duplicado debajo. */
 .registro-clinica-nit {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 88px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0 0.75rem;
     min-width: 0;
     margin-bottom: 0.75rem;
 }
 
-.registro-clinica-nit .input-group {
+.registro-clinica-page .registro-clinica-nit .input-group {
     min-width: 0;
     margin-bottom: 0;
+    /* La validación de este campo vive fuera del grupo, debajo de su ayuda. */
+    padding-bottom: 0;
 }
 
-.registro-clinica-nit #dvAyuda,
+.registro-clinica-nit #nitAyuda,
 .registro-clinica-nit .registro-nit-aviso {
     grid-column: 1 / -1;
 }
 
-.registro-clinica-nit #dvAyuda {
+.registro-clinica-nit #nitAyuda {
     margin: 0.3rem 0 0;
 }
 
@@ -34,12 +36,14 @@
     align-items: center;
     gap: 0.5rem;
     min-width: 0;
-    height: 1.4rem;
+    min-height: 1.4rem;
 }
 
 .registro-nit-aviso #nitUnicidad {
     flex: 1;
     min-width: 0;
+    white-space: normal;
+    overflow: visible;
 }
 
 .registro-reportar {
@@ -59,8 +63,114 @@
     text-decoration: underline;
 }
 
+/* Etapa R, RNF-16: distribución aprobada por el dueño para esta pantalla. */
 @media (max-width: 767px) {
-    .registro-clinica-nit {
-        grid-template-columns: minmax(0, 1fr) 72px;
+    .registro-clinica-page::before,
+    .registro-clinica-page::after {
+        content: none;
+    }
+
+    .registro-clinica-page .login-form-area {
+        padding: 0.75rem 1rem;
+    }
+
+    .registro-clinica-page .login-topbar {
+        margin-bottom: 1rem;
+    }
+
+    .registro-clinica-page .login-brand {
+        min-height: 40px;
+    }
+
+    .registro-clinica-page .form-wrapper {
+        margin: 0;
+    }
+
+    .registro-clinica-page .form-header {
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .registro-clinica-page .form-header h2 {
+        font-size: 1.375rem;
+    }
+
+    .registro-clinica-page .login-back,
+    .registro-clinica-page .btn-back-top,
+    .registro-clinica-page .toggle-password {
+        min-width: 40px;
+        min-height: 40px;
+        flex-shrink: 0;
+    }
+
+    .registro-clinica-page .toggle-password {
+        right: 0.25rem;
+    }
+
+    .registro-clinica-page .input-wrapper input,
+    .registro-clinica-page .input-wrapper select {
+        min-height: 44px;
+        padding: 0.6rem 0.75rem;
+        font-size: 1rem;
+    }
+
+    .registro-clinica-page input[autocomplete="new-password"] {
+        padding-right: 3rem;
+    }
+
+    .registro-clinica-page .form-subtitle,
+    .registro-clinica-page .input-group label,
+    .registro-clinica-page .registro-nota,
+    .registro-clinica-page .registro-pasos li,
+    .registro-clinica-page .registro-pasos-numero,
+    .registro-clinica-page .cuenta-validacion,
+    .registro-clinica-page .registro-reportar,
+    .registro-clinica-page .consent-check,
+    .registro-clinica-page .registro-resumen {
+        font-size: 0.875rem;
+    }
+
+    .registro-clinica-page .form-subtitle {
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .registro-clinica-page .registro-pasos {
+        margin-bottom: 0.75rem;
+    }
+
+    .registro-clinica-page .registro-pasos li {
+        gap: 0.2rem;
+        padding-bottom: 0.4rem;
+    }
+
+    .registro-clinica-page .input-group {
+        margin-bottom: 0;
+        padding-bottom: 1.25rem;
+    }
+
+    .registro-clinica-page .cuenta-validacion {
+        line-height: 1.25rem;
+    }
+
+    .registro-clinica-page .registro-paso legend {
+        margin-bottom: 0.5rem;
+    }
+
+    .registro-clinica-page .registro-por-pasos {
+        padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    }
+
+    .registro-clinica-page .registro-reportar,
+    .registro-clinica-page .consent-check a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .registro-clinica-page .form-wrapper {
+        margin: 2rem 0 0;
     }
 }
