@@ -70,7 +70,7 @@ function servidor(html) {
     });
 }
 
-test('Chrome: celular con pestañas y hoja «Pagar o renovar»; total según el ciclo; barra con nombres sin desborde', { skip: buscarChrome() ? false : 'Sin Chrome ni Chromium' }, async () => {
+test('Chrome (v2): pestañas en todos los anchos, ventana «Pagar o renovar», total según el ciclo, barra con nombres y sin scroll en 1366×768', { skip: buscarChrome() ? false : 'Sin Chrome ni Chromium' }, async () => {
     const srv = servidor(vista('historial'));
     await new Promise(r => srv.listen(0, '127.0.0.1', r));
     const nav = await abrirChrome(buscarChrome());
@@ -82,18 +82,22 @@ test('Chrome: celular con pestañas y hoja «Pagar o renovar»; total según el 
         assert.equal(await nav.evaluar('document.documentElement.scrollWidth <= innerWidth'), true, 'Sin desborde a 390');
         assert.equal(await nav.evaluar(visible('.suscripcion__plan')), true);
         assert.equal(await nav.evaluar(visible('.suscripcion__historial')), false, 'El historial va en su pestaña');
-        assert.equal(await nav.evaluar("document.querySelector('.suscripcion__renovar').getBoundingClientRect().top >= innerHeight - 1"), true, 'La hoja empieza cerrada');
-        await nav.evaluar("document.querySelector('[data-suscripcion-abrir]').click(); true");
-        await nav.esperar("document.querySelector('.suscripcion__renovar').getBoundingClientRect().bottom <= innerHeight + 1");
+        assert.equal(await nav.evaluar("document.getElementById('suscripcionRenovarDialogo').open"), false);
+        await nav.evaluar("document.querySelector('.suscripcion__abrir-renovar').click(); true");
+        await nav.esperar("document.getElementById('suscripcionRenovarDialogo').open");
+        assert.equal(await nav.evaluar("document.querySelector('#suscripcionRenovarDialogo').getBoundingClientRect().bottom <= innerHeight + 1"), true, 'Hoja inferior dentro de la pantalla');
         await nav.evaluar("document.querySelector('input[value=anual]').click(); true");
         assert.match(await nav.evaluar("document.querySelector('[data-suscripcion-total]').textContent"), /899\.900/);
         assert.match(await nav.evaluar("document.querySelector('[data-suscripcion-unidad]').textContent"), /año/);
-        await nav.evaluar("document.querySelector('.suscripcion__renovar').dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true})); true");
-        await nav.esperar("!document.querySelector('[data-suscripcion-pantalla]').classList.contains('is-renovar-abierta')");
+        await nav.evaluar("document.querySelector('#suscripcionRenovarDialogo [data-cerrar-dialogo]').click(); true");
+        await nav.esperar("!document.getElementById('suscripcionRenovarDialogo').open");
+        await nav.evaluar("document.querySelector('.suscripcion__accion--medio').click(); true");
+        await nav.esperar("document.getElementById('suscripcionMedioDialogo').open");
+        await nav.evaluar("document.querySelector('#suscripcionMedioDialogo [data-cerrar-dialogo]').click(); true");
         await nav.evaluar("document.querySelector('[data-suscripcion-pestana=historial]').click(); true");
         assert.equal(await nav.evaluar(visible('.suscripcion__historial')), true);
         assert.equal(await nav.evaluar(visible('.suscripcion__plan')), false);
-        assert.equal(await nav.evaluar("document.querySelector('[data-suscripcion-pestana=historial]').getAttribute('aria-selected')"), 'true');
+        assert.equal(await nav.evaluar('location.hash'), '#historial', 'La pestaña queda en la dirección para volver a ella');
         const barra = await nav.evaluar(`(() => {
             const barra = document.querySelector('.pill-sidebar').getBoundingClientRect();
             const visibles = [...document.querySelectorAll('.pill-sidebar :is(.pill-nav-item, .pill-logout)')].filter(n => getComputedStyle(n).display !== 'none');
@@ -103,11 +107,16 @@ test('Chrome: celular con pestañas y hoja «Pagar o renovar»; total según el 
         assert.equal(barra.dentro, true);
         await nav.evaluar("document.querySelector('.pill-nav-mas').click(); true");
         await nav.esperar("document.getElementById('barraNavegacionMas').open");
-        await nav.enviar('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+
+        await nav.enviar('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
         await nav.enviar('Page.reload');
-        await nav.esperar("document.readyState === 'complete' && document.querySelector('[data-suscripcion-pantalla]')");
-        assert.equal(await nav.evaluar(visible('.suscripcion__historial')), true, 'En escritorio se ve todo junto');
-        assert.equal(await nav.evaluar(visible('.suscripcion-pestanas')), false);
+        await nav.esperar("document.readyState === 'complete' && document.querySelector('[data-suscripcion-pantalla]').dataset.pestana === 'historial'");
+        assert.equal(await nav.evaluar(visible('.suscripcion-pestanas')), true, 'También en escritorio hay pestañas');
+        assert.equal(await nav.evaluar(visible('.suscripcion__plan')), false);
+        assert.equal(await nav.evaluar('document.documentElement.scrollHeight <= innerHeight + 1'), true, 'Historial sin scroll en 1366×768');
+        await nav.evaluar("document.querySelector('[data-suscripcion-pestana=plan]').click(); true");
+        assert.equal(await nav.evaluar(visible('.suscripcion__plan')), true);
+        assert.equal(await nav.evaluar('document.documentElement.scrollHeight <= innerHeight + 1'), true, 'Mi plan sin scroll en 1366×768');
         assert.equal(await nav.evaluar(visible('.pill-nav-mas')), false, 'La barra lateral de escritorio no cambia');
         assert.equal(await nav.evaluar(visible('.pill-nav-item--secundario')), true);
         assert.deepEqual(nav.errores, []);

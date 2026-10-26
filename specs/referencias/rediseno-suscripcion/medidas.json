@@ -31,42 +31,42 @@
     "escenario": "historial",
     "ancho": 1366,
     "cabe": true,
-    "alto": 863,
+    "alto": 768,
     "volver": "Inicio"
   },
   {
     "escenario": "automatico",
     "ancho": 1366,
     "cabe": true,
-    "alto": 895,
+    "alto": 768,
     "volver": "Inicio"
   },
   {
     "escenario": "gracia",
     "ancho": 1366,
     "cabe": true,
-    "alto": 840,
+    "alto": 768,
     "volver": "Inicio"
   },
   {
     "escenario": "congelada",
     "ancho": 1366,
     "cabe": true,
-    "alto": 840,
+    "alto": 768,
     "volver": "Inicio"
   },
   {
     "escenario": "historial",
     "ancho": 390,
     "cabe": true,
-    "alto": 893,
+    "alto": 844,
     "volver": "Inicio"
   },
   {
     "escenario": "historial",
     "ancho": 360,
     "cabe": true,
-    "alto": 918,
+    "alto": 844,
     "volver": "Inicio"
   }
 ]

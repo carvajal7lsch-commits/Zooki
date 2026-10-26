@@ -450,6 +450,13 @@ Registro con Google y una cédula que ya es de otra cuenta: abre el caso `docume
 4. Celular: pestañas Mi plan/Historial, hoja «Pagar o renovar» (cerrar con la X, el velo o Atrás) y barra con «Más» (Auditoría, Mi perfil, Cerrar sesión).
 5. Veterinario en el celular: barra con Inicio, Pacientes, Agenda, Perfil y Salir.
 
+### Etapa C — Suscripción v2 (decisión del dueño, 2026-10-26)
+
+Al revisar la primera versión, el dueño vio las cuatro secciones demasiado juntas y scroll en 1366×768. **Decisión:** en escritorio el mismo patrón del celular: pestañas «Mi plan» e «Historial de pagos»; Mi plan es una sola tarjeta (plan, estado, fechas y beneficios) con dos acciones al pie: «Pagar o renovar» abre su ventana y «Medio de pago» (fila con su estado) abre la ventana del medio, que ahora también reúne retirar el cobro automático y quitar el medio. El historial va a todo el ancho con la referencia en su columna; la paginación vuelve a la pestaña (`#historial`).
+
+- Ambas ventanas son `zk-dialogo` (hojas inferiores en el celular), así que se retiró la hoja hecha a mano de la v1.
+- **Verificación:** PHP sin host 1165/9352 (91 omitidas); JS 358/358. `RedisenoSuscripcion` comprueba ahora pestañas en escritorio, ventanas, `#historial` y que Mi plan e Historial caben **sin scroll en 1366×768**; el arnés de capturas lo exige en cada escenario salvo gracia (que suma su aviso). Capturas regeneradas en `specs/referencias/rediseno-suscripcion/`.
+- **Prueba manual (reemplaza el punto 4 de arriba):** en escritorio y celular, cambiar de pestaña, paginar el historial y volver a la misma pestaña; abrir y cerrar «Pagar o renovar» y «Medio de pago» (X, fondo y Esc).
 
 ### Etapa C — Revisión de integración (Codex, 2026-10-26)
 
@@ -471,3 +478,9 @@ El dueño reporta en producción una vuelta unas dos horas después de cerrar Wo
 - Integración pendiente: los cambios locales de recuperación automática aún no tienen commit. Simulación de combinación, normalizando finales de línea, prevé conflictos en `agentes/estado.md`, `documentacion/HistorialVersiones.md` y este plan; conservar rediseño v2 y recuperación automática/R. Las modificaciones de código de ambas entregas son disjuntas. Actualizar descargas tras resolver el Historial; no se modifica ahora para evitar adelantar contenido aún no integrado.
 - Prueba del dueño después de integrar: (1) cambiar Mi plan/Historial y paginar conservando pestaña y origen; (2) abrir/cerrar Pagar y Medio en escritorio/celular; (3) comprobar el mensaje de estado al volver de Wompi con la recuperación automática. Solo pagos simulados en esta revisión; las validaciones operativas con Wompi siguen por el plan M0-S.
 - Evidencia local en `scratch/revision-claude-a1e4904/` (primero rama original; después combinación de código) y `scratch/revision-claude-integracion/` (simulación de conflictos). Sin merge, commit, push ni aprobación de la recuperación escrita por Codex: esa revisión independiente corresponde a Claude. R completa sigue abierta.
+
+### Suscripción v2 — Resolución del merge (Codex, 2026-10-26)
+
+- El dueño guardó los cambios de NIT (`e91338b`) y recuperación automática (`92e0fba`), e inició el merge de `a1e4904`. **Codex resolvió los tres conflictos** en estado, Historial y este plan conservando ambas entregas, sus decisiones, la etapa R, el diagnóstico local resuelto y las revisiones previas. Sin cambios adicionales de aplicación, backend, esquema o versión.
+- Verificación sobre la combinación real: 45 PHP/337 aserciones y 15 JS correctas; sin host MySQL, API/SMTP reales ni base de trabajo. Sin marcadores pendientes en los archivos ni errores de diff. PDF/Word del Historial regenerados con ambas entradas e índice actualizado; manifiesto sincronizado.
+- Resolución entregada, pendiente de guardar el merge por el dueño mediante git add/commit; no se ejecutan esas operaciones ni push desde el agente. Recuperación automática pendiente de revisión de Claude; R completa y aceptación visual del dueño siguen abiertas.
