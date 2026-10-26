@@ -1394,11 +1394,11 @@ Las marcas de C2 siguen pendientes de C5; no se mueven citas, reinician bloques/
 Los conteos de requisitos e historias no cambian por precisar estos criterios existentes.
 
 
-### 12.7 Suscripción, vigencia y pago voluntario — Módulo 0 (S1/S2)
+### 12.7 Suscripción, vigencia y cobro — Módulo 0 (S1/S2/S3)
 
 El servidor calcula por clínica la vigencia y gracia con la fecha actual, aunque el trabajador se retrase. Los intervalos incluyen inicio y excluyen fin. La mora no suspende administrativamente la clínica. Un profesional legado sin fecha conserva su condición hasta regularización por plataforma con motivo y vencimiento; no crea un pago. Mes/año con ancla y sin prorrateos: pago en gracia desde el fin anterior; tras congelar desde acreditación local.
 
-S1 implementa vencimiento, gracia, congelación y avisos. S2 implementa el botón con eventos verificados; cobro automático sigue **planificado S3**. Falta de configuración o cobros apagados deshabilitan el botón, sin afectar la atención.
+S1 implementa vencimiento, gracia, congelación y avisos. S2 implementa el botón con eventos verificados; S3 añade fuente hospedada y autorización mensual separada. Falta de configuración o cobros apagados deshabilitan el botón, sin afectar la atención.
 
 **A — Pagar/Renovar.** Precio y centavos calculados en servidor; clínica, CSRF y ciclo verificados. Una obligación se comparte entre pestañas aunque elijan distinto ciclo. Cerrar o volver no cancela ni acredita. Cotización vencida sin resultado remoto queda incierta; solo un rechazo/error confirmado permite cerrar la obligación fallida y volver a cotizar con tarifa vigente, conservando la evidencia. Las concesiones legadas sin fin requieren regularización previa.
 
@@ -1414,7 +1414,7 @@ flowchart TD
   G --> F
 ```
 
-**B — Evento y acreditación.** Inbox durable antes del HTTP 200; duplicados 200, firma inválida 401 y base caída 503. Huella canónica D9, whitelist sin cuerpo íntegro ni PII. La consulta privada usa host del entorno; si informa comercio se coteja con `/merchants/info`. HTTP queda fuera de transacción. La concesión y su auditoría son atómicas, con periodo único por orden. Un GET pendiente/404/caído se reanuda por `--solo=conciliacion`; el retorno nunca dispara esa consulta. Anulación, discrepancia o segundo cargo real generan incidencia conservada para S4, sin borrar vigencia ni devolver automáticamente.
+**B — Evento y acreditación.** Inbox durable antes del HTTP 200; duplicados 200, firma inválida 401 y base caída 503. Tras el 200 durable, el receptor intenta conciliar ese evento; Schedule queda de respaldo. No se cierran ni vacían búferes ajenos o de pruebas. Huella canónica D9, whitelist sin cuerpo íntegro ni PII. La consulta privada usa host del entorno; si informa comercio se coteja con `/merchants/info`. HTTP queda fuera de transacción. La concesión y su auditoría son atómicas, con periodo único por orden. Un GET pendiente/404/caído se reanuda por `--solo=conciliacion`; el retorno nunca dispara esa consulta. Anulación, discrepancia o segundo cargo real generan incidencia conservada para S4, sin borrar vigencia ni devolver automáticamente.
 
 ```mermaid
 flowchart TD
@@ -1424,7 +1424,7 @@ flowchart TD
   C --> D{"Duplicado o fallo?"}
   D -- Duplicado --> OK["200; no reaplicar"]
   D -- Fallo --> ERR["503; no confirmar recepcion"]
-  D -- Nuevo --> ACK["200; worker reclama evento con lease y commit"]
+  D -- Nuevo --> ACK["200; intentar conciliar en linea\nSchedule recupera pendientes con lease"]
   ACK --> API["GET privado fuera de transaccion\nTransaccion y comercio si se informa"]
   API --> V{"Concordancia con orden y APPROVED?"}
   V -- "API caida o PENDING" --> RET["Conservar pendiente; conciliar despues"]
@@ -1462,3 +1462,35 @@ flowchart TD
 ```
 
 **Avisos:** una tarea cada cinco minutos bloquea clínica y suscripción, materializa transición y reserva outbox por destinatario/fin/tipo. Los previos salen desde las 07:00 a 7/1 días; congelación al siguiente despacho. SMTP ocurre después del commit, bajo reclamación durable. Una entrega incierta no se reenvía a ciegas. Una renovación vuelve obsoletos los avisos pendientes del fin anterior.
+
+
+**12.7.C — fuente y cobro automático mensual (S3, RN-016/018).**
+El widget hospedado entrega un token efímero; Nequi PENDING se comprueba sin persistirlo y no crea fuente hasta APPROVED.
+El servidor consulta `/merchants/info`, exige ambas aceptaciones y conserva solo prueba de contratos y metadatos mínimos de la fuente.
+Guardar no autoriza cargos: el administrador acepta aparte importe mensual, condiciones y periodicidad; el anual no tiene automático.
+Retirar o quitar detiene cargos futuros, sin acortar lo pagado; una reserva de envío confirmada sigue conciliándose como cargo en curso.
+Los tokens de aceptación actuales se usan en la petición y no se guardan; cambios de condiciones o importe requieren nueva autorización.
+
+```mermaid
+flowchart TD
+  A["Trabajador cada cinco minutos"] --> B{"Habilitado y hay mandato declarado?"}
+  B -- No --> FIN["No cobrar"]
+  B -- Si --> API["Consultar contratos actuales fuera de transaccion"]
+  API --> C["Bloquear clinica; revalidar mensual vencida en gracia\nFuente propia, retiro, tarifa y condiciones"]
+  C --> D{"Obligacion compartida con boton en curso o incierta?"}
+  D -- Si --> REC["No emitir otro POST; conciliar por eventos"]
+  D -- No --> E{"Sin intento previo o fallo terminal?\nTurno inicial, +24 o +48 h; menos de tres"}
+  E -- No --> FIN
+  E -- Si --> RES["Reservar referencia unica; marcar enviando; auditar y commit"]
+  RES --> POST["POST firmado con payment_source_id; fuera de transaccion"]
+  POST --> R{"Respuesta conocida?"}
+  R -- No --> INC["Incierto; nunca repetir envio"]
+  R -- Si --> ID["Guardar id sin degradar evento adelantado; no acreditar"]
+  ID --> EV["Evento firmado y GET privado: flujo B"]
+  EV --> FALL{"Rechazo terminal confirmado?"}
+  FALL -- No --> REC
+  FALL -- Si --> AV["Outbox unico de fallo por intento y administrador verificado"]
+  AV --> TRES{"Tres intentos o fuera de gracia o mandato retirado?"}
+  TRES -- Si --> FIN
+  TRES -- No --> A
+```

@@ -2,9 +2,19 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-24
+**Actualizado:** 2026-10-25
 
 ## Ahora
+
+### M0-S — S3 revisada: aprobada (2026-10-25)
+
+- **Revisión (Claude):** ver «S3 — Revisión» en el plan. MySQL 8: 1132/10250 en verde. Primera prueba manual en sandbox: guardar una fuente (lectura del JWT de aceptación). Sigue S4.
+
+#### Entrega de Codex
+
+- **Escribe Codex; revisa Claude (arquitecto).** Fuente hospedada y autorización mensual separadas; obligación común, tres intentos terminales dentro de gracia, aviso único por fallo y retirada sin acortar lo pagado. Incluye los tres ajustes de S2. Anexo S3 en el plan; S4 no se empieza.
+- **Verificado:** PHP sin motor 1132/9014 (86 omitidas), dirigido S1/S2/S3 52/521, MySQL dirigido 7/65 con dos procesos reales, JS final 341/341, Chrome 1366/390 e interacción real con SDK falso, sin red externa. PHP completo con MariaDB 10.4.32: 1132/10246 sin omitidas, 44 min 49 s, exclusivamente `zooki_test_base_v2`. Sintaxis de 26 PHP y diff correctos. 42 archivos propios en el manifiesto local `scratch/s3-archivos.txt`.
+- **Pendientes:** revisión de Claude, CI/MySQL 8 y sandbox del dueño (§9.7); D8/D10 antes de dinero real, descargas/render documental según §9.2. Sin `.env`, base de trabajo, API/SMTP reales, cambios de versión ni operaciones Git de escritura.
 
 ### M0-S — S2 revisada: aprobada con tres ajustes para S3 (2026-10-24)
 

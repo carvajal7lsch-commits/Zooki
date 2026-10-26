@@ -1,6 +1,6 @@
 # Historias de Usuario — Proyecto Zooki
 
-> **M0-S / S1–S2 — 2026-10-24:** 96 HU, 464 RE, 126 RN y 65 tablas. Vigencia, avisos, botón Wompi, eventos e historial propio implementados; automático y panel financiero siguen planificados S3/S4. Sin nueva revisión ni versión.
+> **M0-S / S1–S3 — 2026-10-25:** 96 HU, 464 RE, 126 RN y 65 tablas. Vigencia, avisos, botón, eventos, fuentes y automático mensual implementados S1–S3; panel financiero S4 planificado. Sin nueva revisión ni versión.
 
 > **Revisión 3.6** · 96 historias de usuario organizadas por módulos (54 de la v1.x + 42 nuevas de la v2, repartidas entre v2.0 y v2.1) · SENA ADSO — Ficha 3142784
 >
@@ -139,7 +139,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 
 | Prioridad | Estado | Estimación | Origen |
 |---|---|---|---|
-| Alta | Parcial S1/S2 (v2.1); S3/S4 planificados | Por reestimar | v2.1 |
+| Alta | Parcial S1/S2/S3 (v2.1); S4 planificada | Por reestimar | v2.1 |
 
 > Como administrador de una clínica, quiero contratar o renovar el plan profesional, consultar mis pagos y autorizar o retirar su cobro automático mensual para conservar sus beneficios y conocer cuándo vence, sin perder datos si no renuevo.
 
@@ -151,7 +151,7 @@ HU-5.10 y HU-5.11 cierran el carnet QR en 2.0.0; los estados describen la entreg
 - La tarea programada actualiza estados y avisa por correo a todos los administradores activos verificados, a 7 y 1 días del fin y al congelar. Repetir no duplica transición ni aviso.
 - El profesional legado sin fecha conserva sus condiciones y no se cobra ni congela por una fecha inventada. Plataforma regulariza con motivo y fecha de fin, sin inventar pagos ni levantar suspensión administrativa.
 - **S2:** Pagar/Renovar abre Wompi por importe del servidor y referencia única. Solo evento firmado más consulta API concordante concede periodo una vez; la redirección no acredita. Doble clic, dos pestañas o peticiones simultáneas devuelven la misma orden y nunca originan dos cobros desde Zooki. Historial propio sin datos completos del medio. Una cotización vencida solo se libera tras fallo terminal confirmado; la siguiente usa tarifa vigente y conserva la evidencia anterior.
-- **Planificada S3:** fuente guardada y autorización mensual separadas; retirar detiene cargos futuros sin reducir lo pagado. Inicial/+24/+48 h, solo fallos terminales, con aviso de fallo; no reintentar cargos inciertos.
+- **Implementada S3:** fuente guardada y autorización mensual separadas; retirar detiene cargos futuros sin reducir lo pagado. Inicial/+24/+48 h, solo fallos terminales, con aviso de fallo; no reintentar cargos inciertos.
 - Cada transición se audita. **Planificada S4:** plataforma consulta pagos e incidencias sin datos clínicos; los ajustes manuales siguen separados de pagos.
 - Uso del plan enlaza aquí conservando su diseño. Si faltan credenciales, están cruzadas o los cobros están apagados, Pagar/Renovar permanece deshabilitado con explicación; la atención no depende de Wompi.
 

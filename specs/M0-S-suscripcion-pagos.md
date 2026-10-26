@@ -1,6 +1,6 @@
 # M0-S — Suscripción y cobro con Wompi
 
-> Estado: **S2 entregada, pendiente de revisión** · S1 aprobada e integrada · Aprobación y ajustes vinculantes en §9/§9.1
+> Estado: **S3 entregada, pendiente de revisión** · S1 y S2 aprobadas e integradas · Aprobación y ajustes vinculantes en §9/§9.1
 > Entrega: v2.1 · Fecha: 2026-10-24 · Rama comprobada: `release/v2.1.0`
 > Escribe: **Codex** · Revisa: **Claude (arquitecto)** · Aprueba, integra y despliega: dueño del producto
 
@@ -284,7 +284,7 @@ flowchart TD
   C --> D{"Duplicado o almacenamiento fallido?"}
   D -- Duplicado --> OK["200; no reaplicar"]
   D -- Fallo --> ERR["503; no confirmar recepcion"]
-  D -- Nuevo --> ACK["200 tras persistir; trabajador reclama evento"]
+  D -- Nuevo --> ACK["200 tras persistir; conciliar en linea\nSchedule recupera pendientes"]
   ACK --> API["GET transaccion Wompi desde servidor\nFuera de transaccion de base"]
   API --> V{"Concordancia con orden y APPROVED?"}
   V -- "API no disponible" --> RET["Conservar pendiente para conciliar"]
@@ -441,6 +441,21 @@ Se volvieron a consultar las secciones oficiales enlazadas en §8: Widget (firma
 - **Cierre:** el SDK documenta `open(callback)` al finalizar, sin contrato de evento de cierre independiente. Cerrar no cancela la orden; consultar estado o volver a abrir reutiliza la misma referencia. Una cotización vencida sin resultado remoto queda incierta, sin crear otro intento a ciegas.
 - **CSP:** revisar cabeceras existentes antes de añadir orígenes; el único script externo añadido es `https://checkout.wompi.co/widget.js`. Pruebas de navegador interceptan ese recurso con un SDK falso y bloquean toda red externa.
 - **Diferencia detectada al comprobar el vector oficial:** [Eventos, pasos 3/4](https://docs.wompi.co/docs/colombia/eventos/#paso-3-concatena-tu-secreto) publica una cadena cuyo SHA256 real es `5a18ec5e8fdb7df463e9f94774cba8f583ba21bd04a09ceff2ea68a4bc0aefbe`, distinto al resultado `3476dda5…` impreso en esa misma guía. Se comprobó con PHP y una implementación independiente de .NET. No se copia ese resultado erróneo como firma válida; se sigue el algoritmo de concatenación descrito. **El dueño confirmó este criterio durante S2** (ver §9.3).
+
+### 8.2 Reconsulta previa a S3 — 2026-10-25 (Codex)
+
+Consulta previa a programar: [Fuentes, pasos 1–3 y widget](https://docs.wompi.co/docs/colombia/fuentes-de-pago/), [aceptaciones](https://docs.wompi.co/docs/colombia/tokens-de-aceptacion/), [Transacciones](https://docs.wompi.co/docs/colombia/transacciones/) y [transporte del widget](https://docs.wompi.co/docs/colombia/transporte-postmessage-widget/).
+Se conserva el contrato de §8, con estas precisiones de implementación:
+
+- Nequi pendiente corresponde al **token**, todavía no a una fuente disponible: consultar `/tokens/nequi/{token}` y crear la fuente únicamente después de APPROVED. El token permanece temporalmente en la memoria del navegador; el servidor lo usa durante la petición, sin persistirlo ni registrarlo. Cerrar la pantalla no autoriza ni deja un cargo pendiente.
+- El widget hospedado documenta `data-widget-operation="tokenize"`. Se comprobó también el SDK público `https://checkout.wompi.co/widget.js`: `widgetOperation: 'tokenize'` y `open(callback)` entregan `payment_source: {token,type}`; su formulario equivalente envía `payment_source_token` y `payment_source_type`. El resultado solo sirve para solicitar la creación al servidor, nunca como prueba de fuente disponible.
+- `/merchants/info` conserva ambos contratos. Antes de crear fuente y antes de cada cargo se obtienen tokens actuales; se comparan las condiciones con la prueba aceptada, sin guardar JWT. Un cambio de condiciones o importe impide el automático hasta nueva aceptación. Guardar, autorizar y retirar son actos separados.
+- POST `/payment_sources` y POST `/transactions` con `payment_source_id` usan llave privada. Se envían firma, referencia e importe del servidor, una cuota para CARD y los dos tokens de aceptación; la respuesta del POST no acredita. No se presupone idempotencia remota, búsqueda por referencia, ni revocación remota para CARD/NEQUI.
+- [Wompi JS](https://docs.wompi.co/docs/colombia/latest-version/) recomienda fingerprinting; no sustituye al widget ni lo declara requisito obligatorio de esta integración hospedada. COF/3RI y habilitación comercial siguen en D8 antes de dinero real.
+- [Dockerfile oficial PHP 8.2 Apache](https://github.com/docker-library/php/blob/master/8.2/bookworm/apache/Dockerfile) compila `--with-curl`, `--enable-mbstring` y PDO/SQLite. Se eliminará su reinstalación y las dependencias de compilación sobrantes; Zooki añade solo `pdo_mysql` y `zip`. No se consultaron logs productivos ni se llamó a la API Wompi.
+
+Los tres ajustes de «S2 — Revisión» entran en S3: conciliación inmediata después del 200 durable (sin vaciar búferes ajenos ni de pruebas), fechas visibles como último día incluido y textos comprensibles, y extensiones Docker sin duplicación.
+El trabajador y el botón comparten la misma obligación; una reclamación de envío confirmada representa un cargo en curso, aunque una interrupción impida saber si salió el POST. Retirarlo detiene siguientes cargos y no repite ese envío incierto.
 
 ## 9. Revisión del arquitecto — 2026-10-24
 
@@ -606,3 +621,68 @@ Se implementaron `ConfiguracionWompi`, `FirmaWompi`, interfaz/cliente HTTP GET c
   1. **Acreditación inmediata.** Hoy el periodo solo se acredita cuando corre el Schedule cada 5 minutos: sin el Schedule configurado, un pago aprobado nunca activa el plan. Tras guardar el evento y responder 200 (`ignore_user_abort` + `flush`), el receptor debe intentar `ConciliadorPago::procesar` de ese mismo evento. El Schedule queda como respaldo. La concurrencia ya la cubren la reclamación con lease y el bloqueo de la clínica.
   2. **Textos para el administrador.** Cambiar «El pago se confirma mediante un evento verificado, nunca por el retorno» por un texto sin jerga, por ejemplo «Tu plan se activa en cuanto Wompi confirme el pago; puede tardar unos minutos». Mostrar el fin del periodo como el último día incluido (25/10/2026) y no como 26/10 00:00. Lo mismo aplica a «Congelación sin renovar».
   3. **Dockerfile.** `php:8.2-apache` ya trae cURL y mbstring compilados. Revisar en el log del primer arranque si aparece «Module "curl" is already loaded» (o «mbstring»); si aparece, quitar esas extensiones de `docker-php-ext-install`.
+
+
+### 9.6 Operación de S3 — 2026-10-25 (Codex)
+
+Se conserva un solo Schedule/tarea Windows de §5.5 y `scripts/zooki.cron`, cada cinco minutos.
+`--solo=cobros` ejecuta únicamente el trabajador mensual; `--revisar --solo=cobros` cuenta candidatas, sin HTTP, cambios ni correo.
+`WOMPI_AUTOMATICOS_HABILITADOS=1` habilita el automático solo junto con `WOMPI_COBROS_HABILITADOS=1`, configuración completa y mandato mensual vigente; no basta guardar una fuente.
+Las siete variables ya existían vacías en `.env.example`; no se añadieron secretos ni se accedió a `.env`.
+El receptor intenta acreditar después del 200 durable, sin depender del Schedule; este recupera eventos ante caída/API no disponible.
+Los reintentos corresponden a las horas 0/24/48 desde el vencimiento, como RN-016; un trabajador tardío no inventa un cuarto intento ni sale de la gracia.
+Una reclamación `enviando` confirmada es cargo en curso: al perder la respuesta se conserva incierta y nunca se repite el POST.
+Un importe/contrato nuevo detiene el mandato hasta otra aceptación; una cotización anterior de distinto importe no se carga usando esa autorización.
+Un pago anual acreditado retira el mandato mensual, conserva su prueba y mantiene íntegra la vigencia comprada.
+Quitar es una retirada local: no se promete borrado en Wompi ni se implementa una revocación remota sin contrato documentado para CARD/NEQUI (D8).
+No se configuraron servicios, Schedules ni eventos externos; tampoco se hizo build Docker ni se inspeccionaron logs productivos.
+
+### 9.7 Pruebas del dueño de S3 en sandbox — pendientes
+
+Usar únicamente el despliegue HTTPS aparte de §9.4, con base/llaves test propias y medios oficiales de prueba; nunca producción.
+
+1. [ ] ADMIN a 1366/390: sin medio, con tarjeta y con Nequi; condiciones sin premarcar, importe mensual visible y fechas como último día incluido. Guardar no autoriza; el anual no ofrece automático.
+2. [ ] Aprobar un pago de prueba: se acredita sin ejecutar CLI. Con API temporalmente indisponible en ese despliegue, el inbox conserva el evento y el Schedule lo retoma; repetirlo no suma otro periodo.
+3. [ ] Guardar Nequi y aprobar la solicitud en el celular: mientras siga pendiente no queda una fuente disponible. Autorizar aparte el mensual y comprobar un único cargo con `--solo=cobros` repetido y botón concurrente.
+4. [ ] Con reloj/cliente de prueba aislados, simular rechazo confirmado en horas 0/24/48: tres intentos, un correo por intento/destinatario, sin cuarto ni reintento de PENDING/incierto. Cambiar precio/condiciones exige aceptar de nuevo.
+5. [ ] Retirar automático y quitar medio (solo quitar pide confirmación Zooki): detiene futuros cargos y conserva lo pagado. Si ya había cargo en curso se informa y puede confirmarse; otra clínica no ve ni usa ese medio. No activar dinero real sin resolver D8/D10 y aprobar la operación.
+
+
+## Anexo S3 — Resultado (2026-10-25)
+
+**Escribió: Codex. Revisa: Claude (arquitecto). Estado: S3 entregada, pendiente de revisión.** S3a/S3b juntas; S1/S2 aprobadas e integradas. S4 no se empieza.
+Fuente hospedada CARD/NEQUI, aceptaciones actuales, mandato mensual separado, retirada local y tres intentos terminales dentro de gracia. Obligación común con el botón y envío durable antes del POST; sin repetir ante incertidumbre. Avisos D7 por intento/destinatario y SMTP tras commit. Cambiar precio/condiciones exige nueva aceptación; una cotización antigua no carga un importe distinto al autorizado. Anual sin automático; pago tras retirar conserva su periodo.
+Se incluyen los tres ajustes de S2: conciliación inmediata tras 200 durable, textos/fechas incluidas y Docker sin recompilar curl/mbstring/PDO. Documentación fuente actualizada, 96 HU/464 RE/126 RN/65 tablas y matrices sin nuevos IDs; no se modifica la migración 12, esquema/drawDB ni versión. Reconsulta y precisiones del SDK oficial en §8.2; operación y prueba del dueño en §9.6/§9.7.
+
+| RE / regla | Prueba y evidencia |
+|---|---|
+| .18/.26, RN-018 | `CobroAutomaticoTest`, `AutorizacionCobroTest`: fuente verificada, dos aceptaciones, Nequi pendiente, entorno/propiedad, contratos/importe, sin token/PAN/teléfono/JWT persistidos y adaptador HTTP sin red. |
+| .7/.8/.19, RN-G05/019 | HTTP con sesión en memoria, rol/CSRF/dos clínicas y monto/id manipulados; guardar no autoriza, retiro/quitar, fallo de auditoría y vigencia intacta. |
+| .20/.21/.15, RN-016 | Seis casos `testS3...` en `BaseV2MysqlTest`: dos procesos con espera InnoDB observada, trabajadores, manual/automático en ambos órdenes, retiro antes/después y receptores simultáneos. SQLite: tres intentos sin cuarto, PENDING/incierto sin repetición, cortes antes/después del POST y evento adelantado. |
+| .22, RN-017 | Fallo terminal por evento+GET, dos huellas de evento por intento, un aviso por destinatario; SMTP falso después del commit y despachos repetidos sin duplicar. |
+| Ajustes S2, .13/.14/.16 | Receptor acredita sin CLI, caída API recuperada por conciliación, búfer del llamante intacto; fechas PHP/JS incluidas en bordes/bisiesto/año y mensaje sin jerga. Docker contrastado con Dockerfile oficial, sin build remoto. |
+| UI / RNF-16 | `FuenteSuscripcion.test.cjs` y `Suscripcion.test.cjs`: aceptaciones, importe, mandato separado, confirmación solo al quitar, error/doble clic; Chrome real con controlador/layout+SQLite a 1366/390 sin fuente/con fuente/Nequi/mandato, sin desborde, más interacción del JS real con SDK/HTTP falsos. |
+
+**Verificación:** PHP completo sin motor: 1132 pruebas / 9014 aserciones, 86 omitidas de motor; dirigido S1/S2/S3: 52/521. MySQL dirigido: 7/65 en MariaDB 10.4.32, dos procesos reales y solo `zooki_test_base_v2`. JS completo final: 341/341, sin omitidas. Sintaxis de 26 PHP y diff correctos; capturas locales `scratch/s3-suscripcion-*.png` y `scratch/s3-condiciones-*.png` revisadas. **PHP completo con MariaDB 10.4.32: 1132 pruebas / 10246 aserciones, ninguna omitida, 44 min 49 s; exclusivamente `zooki_test_base_v2`.**
+**Pendientes:** revisión de Claude, CI/MySQL 8 y las cinco pruebas del dueño en sandbox aparte (§9.7); D8/D10 antes de dinero real. PDF/Word/render documental según §9.2. No API/SMTP reales, configuración remota, `.env`, base de trabajo, commit/push/tag ni versión. Sin S4. Los 42 archivos propios están en `scratch/s3-archivos.txt` (manifiesto local, no se integra).
+
+## S3 — Revisión (2026-10-25)
+
+**Revisó:** Claude (arquitecto). **Resultado: aprobada.**
+
+- **Verificado:**
+  - **Los tres ajustes de S2:**
+    - El receptor concilia en línea después del 200 durable, con el Schedule de respaldo y sin vaciar búferes en pruebas.
+    - Las fechas se muestran como último día incluido y los textos van sin jerga.
+    - El Dockerfile solo instala `pdo_mysql` y `zip`; ya no recompila las extensiones de la imagen.
+  - **Fuente de pago:** los tokens de aceptación se obtienen de `/merchants/info` en el servidor. Se guarda solo la identidad del contrato, sin JWT; el token del medio vive solo en la llamada. Nequi queda pendiente hasta aprobarse y el entorno se comprueba por prefijo.
+  - **Mandato:** es separado de la fuente. Si cambia el importe o las condiciones, el automático se apaga y se audita.
+  - **Cobro automático:** solo mensual, en gracia, con la clínica activa y el administrador vigente. La obligación es común con el botón y el envío es durable antes del POST.
+  - **Interruptor:** todo apagado sin `WOMPI_AUTOMATICOS_HABILITADOS=1`.
+- **Pruebas del revisor:**
+  - PHPUnit sin motor: 1132 (86 omitidas de motor).
+  - **PHPUnit completo con MySQL 8: 1132 pruebas, 10250 aserciones, sin fallos.**
+  - JS de Suscripción y Fuente: 9/9.
+- **A comprobar en sandbox (no se puede sin el proveedor real):**
+  - `AutorizacionCobro::contratos` lee `contract_id` y `file_hash` del JWT de aceptación. Si el JWT real de Wompi no trae esos campos, guardar la fuente falla con «No se pudieron consultar las condiciones». Es la primera prueba manual de S3.
+  - Si Wompi publica una versión nueva de sus términos, el automático se apaga y la clínica vuelve al botón con los avisos de vencimiento. Así lo pide RE-0.5.26; en S4 conviene que el super-administrador vea ese motivo.

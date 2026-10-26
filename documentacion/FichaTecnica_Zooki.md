@@ -1,6 +1,6 @@
 # Ficha Técnica del Proyecto — Zooki
 
-> **M0-S / S1–S2 — 2026-10-24:** 96 HU, 464 RE, 126 RN, 65 tablas; migración 12 integrada. Botón Wompi, eventos verificados, acreditación única e historial propio. Sin migración adicional; fuentes y automático S3 y panel financiero S4 pendientes. Versión y revisiones sin cambios.
+> **M0-S / S1–S3 — 2026-10-25:** 96 HU, 464 RE, 126 RN, 65 tablas; migración 12 integrada. Botón Wompi, eventos verificados, acreditación única e historial propio. Fuentes y mandato mensual separado, tres intentos terminales y avisos S3 implementados. Panel financiero S4 pendiente; sin migración adicional. Versión y revisiones sin cambios.
 
 > **Revisión 3.5** · Documento alineado con la plataforma **v2.0** (SaaS multi-inquilino) · Sistema de Gestión Clínica Veterinaria · SENA ADSO — Ficha 3142784
 
