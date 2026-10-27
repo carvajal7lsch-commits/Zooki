@@ -15,7 +15,7 @@ test('S2 deshabilitada no reserva, sin estilos ni scripts en línea', () => {
     vm.runInNewContext(leer('public/js/suscripcion.js'), contexto);
     assert.equal(boton.disabled,true);
     assert.doesNotMatch(leer('views/admin/suscripcion.php'), /\sstyle=|\son[a-z]+=|<script/i);
-    assert.match(leer('views/admin/panel.php'), /class="inicio-rapido" href="index\.php\?action=admin_suscripcion"/);
+    assert.match(leer('views/admin/panel.php'), /class="inicio-rapido" href="index\.php\?action=admin_configuracion&amp;seccion=suscripcion&amp;desde=inicio#suscripcion"/);
     assert.match(leer('views/admin/layout.php'), /src="https:\/\/checkout.wompi.co\/widget.js"/);
 });
 
@@ -157,6 +157,7 @@ test('Chrome: pantalla real activa, deshabilitada e historial a 1366 y 390 sin r
                 await nav.enviar('Emulation.setDeviceMetricsOverride',{width:ancho,height:844,deviceScaleFactor:1,mobile:ancho<768});
                 const arbol=await nav.enviar('Page.getFrameTree');
                 await nav.enviar('Page.setDocumentContent',{frameId:arbol.frameTree.frame.id,html});
+                await nav.evaluar(`document.querySelectorAll('[data-config-panel]').forEach(p => p.hidden = p.dataset.configPanel !== 'suscripcion'); document.querySelector('[data-ajustes]').dataset.ajustesVista='seccion'; true`);
                 const estado=await nav.evaluar(`({cabe:document.documentElement.scrollWidth<=innerWidth,pago:document.querySelector('.suscripcion__pagar').disabled,texto:document.querySelector('[data-suscripcion-estado]').textContent})`);
                 assert.equal(estado.cabe,true,JSON.stringify({escenario,ancho,estado}));
                 assert.equal(estado.pago,!['activa','historial','fuente','automatico','nequi'].includes(escenario));

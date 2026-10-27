@@ -6,6 +6,20 @@
 
 ## Ahora
 
+### Suscripción dentro de Ajustes — entregada, pendiente de revisión (2026-10-26)
+
+- **Escribió Codex; revisa Claude; supervisa el dueño.** Petición expresa posterior al mockup de Claude: quitar el subtítulo de Ajustes e incorporar Suscripción como sección de su misma hoja. El Inicio abre esa sección con regreso a Inicio; enlaces antiguos, paginación y retorno de Wompi conservan el destino y el origen. Pestañas interiores sin sustituir la sección de Ajustes; mismos formularios y acciones de cobro, sin esquema ni migración. Se conserva 2.2.0, todavía sin publicar.
+- **Integración:** el dueño inició el merge de `origin/claude/ajustes-admin` después de guardar cabecera y contacto en 855a950/882d863. Codex resolvió el contenido de los cuatro conflictos conservando ambas entregas y sus pruebas; el índice sigue pendiente de git add y commit del dueño. No hubo commit, push ni cambio de rama del agente.
+- **Verificación:** navegación, permisos y aislamiento con SQLite y pasarela simulada; Chrome sin desborde a 360/390/820/1366, escritorio sin scroll a 1366×768. Capturas completas antes/después en `scratch/r/ajustes-suscripcion/`. PHP completo sin host 1203/9587 (94 omitidas de motor), JS completo 368/368; PDF/Word de HU, RE e Historial regenerados e índices actualizados. Detalle en specs/pulido-interfaz.md.
+- **Sigue:** aceptación visual del dueño y revisión de Claude. No avanzar a otra sección hasta «listo». R completa sigue abierta; la revisión de la recuperación automática de pagos sigue pendiente de Claude.
+
+
+### Etapa C — Ajustes del administrador: entregada, pendiente de revisión (2026-10-26)
+
+- **Escribió Claude Code (nube) con mockup aprobado por el dueño** (menú lateral blanco en vez del azul); rama `claude/ajustes-admin`, sobre `claude/suscripcion-rediseno`. Configuración y Mi perfil del administrador en una pantalla «Ajustes»; barra del celular con cinco destinos sin «Más» y Cerrar sesión dentro de Ajustes. El veterinario conserva su Mi perfil.
+- **Verificación:** PHP sin host 1165/9353 (91 omitidas); JS 362/362; capturas en `specs/referencias/ajustes/`. Detalle y prueba manual (5 puntos) en `specs/pulido-interfaz.md` («Etapa C — Ajustes…»).
+- **Pendiente:** revisión, CI/MySQL 8, prueba del dueño y merge de ambas ramas.
+
 ### Ajustes del administrador de Claude — revisada con corrección mínima; preparada para integrar (2026-10-26)
 
 - **Escribió Claude Code; revisó Codex por petición del dueño.** Rama `origin/claude/ajustes-admin`, commit `3afdceb`, basada en `a1e4904` de Suscripción, ya integrado en esta release. Mockup aprobado en la sesión del dueño con Claude; Configuración y Mi perfil del administrador se reúnen en Ajustes, el veterinario conserva su perfil. Sin rutas, permisos, esquema ni versión nuevos; sí composición de datos de vista en controladores.

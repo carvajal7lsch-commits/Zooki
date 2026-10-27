@@ -76,7 +76,7 @@
             try {
                 const ciclo = raiz.querySelector('input[name="suscripcion_ciclo"]:checked')?.value;
                 const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
-                const formulario = new URLSearchParams({ciclo:ciclo || '', version:raiz.dataset.version, csrf_token:token});
+                const formulario = new URLSearchParams({ciclo:ciclo || '', version:raiz.dataset.version, csrf_token:token, desde:raiz.dataset.suscripcionOrigen || ''});
                 const respuesta = await solicitar('index.php?action=suscripcion_pagar_ajax', {method:'POST', credentials:'same-origin', headers:{Accept:'application/json','Content-Type':'application/x-www-form-urlencoded','X-CSRF-Token':token}, body:formulario});
                 const datos = await respuesta.json();
                 if (!respuesta.ok || !datos.ok) throw new Error(datos.mensaje || 'No se pudo preparar el pago.');

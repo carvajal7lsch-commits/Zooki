@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/ConfiguracionClinica.php';
 require_once __DIR__ . '/../helpers/RespuestaJson.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
+require_once __DIR__ . '/SuscripcionController.php';
 
 /** C1: rutas administrativas, con la clínica resuelta por el modelo autorizado. */
 final class ConfiguracionClinicaController
@@ -11,30 +12,34 @@ final class ConfiguracionClinicaController
     private ConfiguracionClinica $configuracion;
     private PDO $db;
 
-    public function __construct(?PDO $db = null)
+    public function __construct(?PDO $db = null, private mixed $reloj = null, private ?ConfiguracionWompi $configuracionWompi = null, private ?ClienteWompi $clienteWompi = null)
     {
         $this->db = $db ?? (new Database())->getConnection();
         $this->configuracion = new ConfiguracionClinica($this->db);
     }
 
+    /** Rediseño (2026-10-26): «Ajustes» reúne la configuración de la clínica y la cuenta del administrador. */
     public function vista(): void
     {
+        header('Cache-Control: no-store');
+        require_once __DIR__ . '/PerfilController.php';
+        $datosCuenta = (new PerfilController($this->db))->datosVista();
+        if ($datosCuenta === null) {
+            header('Location: index.php?action=dashboard');
+            exit;
+        }
+        ['perfil' => $perfil, 'rolNombre' => $rolNombre, 'cuentaGoogle' => $cuentaGoogle, 'pideActual' => $pideActual, 'cuenta' => $cuenta] = $datosCuenta;
         $configuracion = $this->configuracion->leer();
-        $planSuscripcion = $this->planEfectivo();
+        $datosSuscripcion = (new SuscripcionController($this->db, $this->reloj, $this->configuracionWompi, $this->clienteWompi))->datosVista();
+        $planSuscripcion = $datosSuscripcion['estadoSuscripcion']['plan_efectivo']['nombre'];
+        $origenAjustes = ($_GET['desde'] ?? null) === 'inicio' ? 'inicio' : '';
+        $seccionInicialAjustes = ($_GET['seccion'] ?? null) === 'suscripcion' ? 'suscripcion' : '';
+        $encabezadoPagina = ['titulo' => 'Ajustes'];
+        if ($origenAjustes === 'inicio') {
+            $encabezadoPagina['volver'] = ['href' => 'index.php?action=admin_panel', 'texto' => 'Inicio'];
+        }
         $content_view = __DIR__ . '/../views/admin/configuracion.php';
         require __DIR__ . '/../views/admin/layout.php';
-    }
-
-    /** Rediseño (2026-10-26): la entrada a Suscripción muestra el plan; si no se puede leer, la entrada sigue sin él. */
-    private function planEfectivo(): ?string
-    {
-        require_once __DIR__ . '/../models/Suscripcion.php';
-        try {
-            return (new Suscripcion($this->db, (int) Contexto::clinicaActiva()))->estado()['plan_efectivo']['nombre'];
-        } catch (Throwable $error) {
-            error_log('Configuración: plan de la suscripción: ' . $error->getMessage());
-            return null;
-        }
     }
 
     public function obtenerAjax(): void

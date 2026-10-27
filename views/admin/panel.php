@@ -64,13 +64,13 @@ if ($panel['ausencias_por_aprobar']) {
     $n = count($panel['ausencias_por_aprobar']);
     $pendientes[] = ['clave' => 'ausencia', 'n' => $n, 'texto' => $plural($n, 'Ausencia por aprobar', 'Ausencias por aprobar'),
         'detalle' => ResumenPanel::primerNombre($primera['veterinario']) . ', ' . mb_strtolower($primera['dia']) . ($n > 1 ? ' y ' . ($n - 1) . ' más' : ''),
-        'accion' => 'Revisar', 'etiqueta' => 'Revisar las ausencias en Configuración', 'href' => 'index.php?action=admin_configuracion#ausencias'];
+        'accion' => 'Revisar', 'etiqueta' => 'Revisar las ausencias en Ajustes', 'href' => 'index.php?action=admin_configuracion#ausencias'];
 }
 if ($panel['propuestas_por_aprobar']) {
     $n = count($panel['propuestas_por_aprobar']);
     $pendientes[] = ['clave' => 'horario', 'n' => $n, 'texto' => $plural($n, 'Horario propuesto', 'Horarios propuestos'),
         'detalle' => $nombres(array_map(fn($p) => ResumenPanel::primerNombre($p['veterinario']), $panel['propuestas_por_aprobar'])),
-        'accion' => 'Revisar', 'etiqueta' => 'Revisar los horarios propuestos en Configuración', 'href' => 'index.php?action=admin_configuracion#horarios'];
+        'accion' => 'Revisar', 'etiqueta' => 'Revisar los horarios propuestos en Ajustes', 'href' => 'index.php?action=admin_configuracion#horarios'];
 }
 $totalPendientes = array_sum(array_column($pendientes, 'n'));
 
@@ -142,7 +142,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
             <?php endif; ?>
             <div class="inicio-plan__accesos">
                 <a class="inicio-rapido" href="index.php?action=admin_usuarios"><i class="fas fa-users" aria-hidden="true"></i> Usuarios</a>
-                <a class="inicio-rapido" href="index.php?action=admin_suscripcion"><i class="fas fa-credit-card" aria-hidden="true"></i> Suscripción</a>
+                <a class="inicio-rapido" href="index.php?action=admin_configuracion&amp;seccion=suscripcion&amp;desde=inicio#suscripcion"><i class="fas fa-credit-card" aria-hidden="true"></i> Suscripción</a>
             </div>
         </section>
     </div>

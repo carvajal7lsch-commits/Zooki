@@ -2,17 +2,25 @@
 require __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../Support/DosClinicas.php';
 require_once __DIR__ . '/../../../controllers/SuscripcionController.php';
+require_once __DIR__ . '/../../../controllers/ConfiguracionClinicaController.php';
 require_once __DIR__ . '/../../Support/ClienteWompiFalso.php';
 require_once __DIR__ . '/../../../models/ConciliadorPago.php';
 session_set_save_handler(static fn () => true, static fn () => true, static fn () => '', static fn () => true, static fn () => true, static fn () => 0);
 session_start();
 $db = DosClinicas::sqlite();
+DosClinicas::crearMascotasSqlite($db);
+DosClinicas::crearCatalogosSqlite($db);
+DosClinicas::crearHistoriaSqlite($db);
+DosClinicas::poblarAgenda($db);
 $_SESSION = ['id_usuario' => 1, 'usuario_nombre' => 'Ana Norte'];
 $contexto = Contexto::deClinica(1, 'Clínica Norte', Roles::ADMIN);
 Contexto::activar($contexto, 1);
 Security::definirFuenteDeContextos(static fn (): array => [$contexto]);
 $_SERVER['REQUEST_METHOD'] = 'GET';
-$_GET = ['action' => 'admin_suscripcion'] + (($argv[2] ?? '') !== '' ? ['desde' => $argv[2]] : []);
+$_GET = ['action' => 'admin_configuracion', 'seccion' => 'suscripcion', 'desde' => $argv[2] ?? 'inicio'];
+if ($_GET['desde'] === '') {
+    $_GET['desde'] = 'inicio';
+}
 $db->exec("UPDATE clinicas SET nombre='Clínica Norte <prueba>' WHERE id_clinica=1");
 $escenario = $argv[1] ?? 'gracia';
 if ($escenario !== 'legado') {
@@ -44,4 +52,4 @@ if ($escenario === 'historial') {
     (new EventoWompi($db))->recibir(FirmaWompi::evento(ClienteWompiFalso::cuerpo($tx), '', 'test', 'test_events_falso'));
     (new ConciliadorPago($db, $cliente, $config, static fn () => $ahora))->procesar(1);
 }
-(new SuscripcionController($db, static fn () => $ahora, $config, $cliente))->vista();
+(new ConfiguracionClinicaController($db, static fn () => $ahora, $config, $cliente))->vista();

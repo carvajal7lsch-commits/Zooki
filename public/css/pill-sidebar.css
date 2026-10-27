@@ -406,7 +406,8 @@
     .pill-sidebar--etiquetas .pill-logo,
     .pill-sidebar--etiquetas .pill-divider,
     .pill-sidebar.pill-sidebar--etiquetas .pill-nav-item.pill-nav-item--secundario,
-    .pill-sidebar--etiquetas.pill-sidebar--con-mas .pill-logout {
+    .pill-sidebar--etiquetas.pill-sidebar--con-mas .pill-logout,
+    .pill-sidebar--etiquetas.pill-sidebar--sin-salir .pill-logout {
         display: none;
     }
 

@@ -13,14 +13,14 @@ $gratuito = (int) $contrato['id_plan'] === (int) $s['plan_gratuito']['id_plan'];
 $tonoEstado = $gratuito ? 'neutro' : (['al_dia' => 'ok', 'gracia' => 'aviso', 'congelada' => 'alerta', 'sin_vigencia' => 'neutro'][$s['situacion']] ?? 'neutro');
 $pagos = $historialPagos['filas'];
 $estadosPago = ['pendiente' => ['Pendiente', 'aviso'], 'confirmado' => ['Confirmado', 'ok'], 'cancelado' => ['Cancelado', 'neutro'], 'revision' => ['En revisión', 'aviso']];
-// La paginación vuelve a la pestaña Historial (#historial) y conserva el origen del botón volver.
-$paginaHistorial = static fn (int $pagina): string => 'index.php?' . http_build_query(array_filter(['action' => 'admin_suscripcion', 'desde' => $origenSuscripcion, 'pagina' => $pagina])) . '#historial';
+// La paginación vuelve a Ajustes › Suscripción › Historial y conserva el origen del botón volver.
+$paginaHistorial = static fn (int $pagina): string => EnlaceAjustes::suscripcion(['desde' => $origenSuscripcion, 'pagina' => $pagina, 'vista_suscripcion' => 'historial']);
 $medioTexto = $fuentePago ? ($fuentePago['tipo'] === 'NEQUI' ? 'Nequi' : (($fuentePago['marca'] ?: 'Tarjeta') . ($fuentePago['ultimos_cuatro'] ? ' · termina en ' . $fuentePago['ultimos_cuatro'] : ''))) : 'No tienes un medio guardado.';
 $automaticoActivo = $fuentePago && (int) $fuentePago['cobro_automatico'] === 1;
 $anualConAhorro = (int) $profesional['precio_anual'] === (int) $profesional['precio_mensual'] * 10;
 ?>
 <?php // Rediseño v2 (aprobado 2026-10-26): «Mi plan» e «Historial de pagos» en pestañas; pagar y el medio de pago en ventanas. ?>
-<section class="suscripcion" aria-label="Suscripción" data-suscripcion-pantalla data-pago-habilitado="<?= !empty($pagoDisponible) ? '1' : '0' ?>" data-version="<?= (int) ($s['suscripcion']['version_periodo'] ?? 0) ?>">
+<section class="suscripcion" aria-label="Suscripción" data-suscripcion-pantalla data-suscripcion-origen="<?= $h($origenSuscripcion) ?>" data-pago-habilitado="<?= !empty($pagoDisponible) ? '1' : '0' ?>" data-version="<?= (int) ($s['suscripcion']['version_periodo'] ?? 0) ?>">
 
     <div class="suscripcion-pestanas" role="tablist" aria-label="Secciones de la suscripción" data-suscripcion-pestanas>
         <button type="button" role="tab" class="suscripcion-pestanas__pestana" id="suscripcionPestanaPlan" aria-controls="suscripcionPlan" aria-selected="true" data-suscripcion-pestana="plan">

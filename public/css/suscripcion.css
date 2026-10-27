@@ -5,11 +5,6 @@
  * son hojas inferiores. Cada vista cabe sin scroll en 1366×768. Solo variables --z-*.
  * RNF-16: celular < 768 px, tableta 768–1023 px, escritorio ≥ 1024 px.
  */
-/* El contexto superior ya identifica la clínica; evitar repetirlo bajo el título. */
-.main-content:has(.suscripcion) .encabezado-pagina__subtitulo {
-    display: none;
-}
-
 .suscripcion {
     display: flex;
     flex-direction: column;

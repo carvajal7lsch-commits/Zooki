@@ -26,10 +26,10 @@
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/encabezado-pagina.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
-    <?php if (in_array($_GET['action'] ?? '', ['admin_suscripcion', 'suscripcion_retorno'], true)): ?>
+    <?php if (($_GET['action'] ?? '') === 'admin_configuracion'): ?>
     <link rel="stylesheet" href="css/suscripcion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
-    <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
+    <?php if (($_GET['action'] ?? '') === 'admin_configuracion'): ?>
     <link rel="stylesheet" href="css/perfil.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <meta name="csrf-token" content="<?php require_once __DIR__ . '/../../helpers/Csrf.php'; echo Csrf::token('default'); ?>">
@@ -37,6 +37,7 @@
     <link rel="stylesheet" href="css/horarios.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/configuracion-clinica.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/marca-clinica.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/ajustes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (!isset($content_view)): ?>
     <?php // HU-6.2: el Inicio del administrador, encima de las piezas comunes con el del veterinario (diseño aprobado 2026-10-24). ?>
@@ -65,16 +66,17 @@
         if ($__adminIniciales === "") {
             $__adminIniciales = "A";
         }
-        // Rediseño (2026-10-26): en el celular se ven Inicio, Usuarios, Citas y Ajustes; Auditoría y Mi perfil van en «Más».
+        // Rediseño (2026-10-26): Configuración y Mi perfil son una sola pantalla, «Ajustes». Caben cinco destinos
+        // sin «Más» y Cerrar sesión vive al final de Ajustes en el celular.
         $barraInicio = "index.php?action=admin_panel";
         $barraItems = [
             ["href" => "index.php?action=admin_panel", "icono" => "fas fa-th-large", "titulo" => "Inicio", "corto" => "Inicio", "activo" => $__action === "admin_panel", "principal" => true],
             ["href" => "index.php?action=admin_usuarios", "icono" => "fas fa-users", "titulo" => "Usuarios", "corto" => "Usuarios", "activo" => $__action === "admin_usuarios", "principal" => true],
             ["href" => "index.php?action=admin_citas", "icono" => "fas fa-calendar-alt", "titulo" => "Citas", "corto" => "Citas", "activo" => $__action === "admin_citas", "principal" => true],
-            ["href" => "index.php?action=admin_auditoria", "icono" => "fas fa-shield-alt", "titulo" => "Auditoría", "corto" => "Auditoría", "activo" => $__action === "admin_auditoria", "principal" => false],
-            ["href" => "index.php?action=admin_configuracion", "icono" => "fas fa-cog", "titulo" => "Configuración", "corto" => "Ajustes", "activo" => in_array($__action, ["admin_configuracion", "admin_suscripcion", "suscripcion_retorno"], true), "principal" => true],
-            ["href" => "index.php?action=mi_perfil", "icono" => "fas fa-user-circle", "titulo" => "Mi perfil", "corto" => "Perfil", "activo" => $__action === "mi_perfil", "principal" => false],
+            ["href" => "index.php?action=admin_auditoria", "icono" => "fas fa-shield-alt", "titulo" => "Auditoría", "corto" => "Auditoría", "activo" => $__action === "admin_auditoria", "principal" => true],
+            ["href" => "index.php?action=admin_configuracion", "icono" => "fas fa-cog", "titulo" => "Ajustes", "corto" => "Ajustes", "activo" => in_array($__action, ["admin_configuracion", "admin_suscripcion", "suscripcion_retorno"], true), "principal" => true],
         ];
+        $barraSalirEnPantalla = true;
         include __DIR__ . "/../partials/barra_navegacion.php";
         ?>
 
@@ -89,10 +91,9 @@
                         switch($__action) {
                             case "admin_usuarios": $tituloModulo = ""; break;
                             case "admin_citas": $tituloModulo = ""; break;
-                            case "admin_configuracion": $tituloModulo = "Configuración"; break;
+                            case "admin_configuracion": $tituloModulo = "Ajustes"; break;
                             case "admin_auditoria": $tituloModulo = "Auditoría"; break;
                             case "admin_panel": $tituloModulo = "Dashboard"; break;
-                            case "mi_perfil": $tituloModulo = "Mi perfil"; break;
                             default: $tituloModulo = "Zooki"; break;
                         }
                     ?>
@@ -127,7 +128,7 @@
                         </div>
                     </div>
                     <div class="header-user-wrapper">
-                        <a class="header-user" href="index.php?action=mi_perfil" title="Mi perfil">
+                        <a class="header-user" href="index.php?action=admin_configuracion#cuenta" title="Mi cuenta">
                             <div class="header-user__avatar"><?= htmlspecialchars($__adminIniciales) ?></div>
                             <div class="header-user__info">
                                 <span class="header-user__name"><?= htmlspecialchars(explode(" ", trim($__adminNombre))[0]) ?></span>
@@ -161,8 +162,8 @@
     <script src="js/sesion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/extras.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-    <?php if (in_array($_GET['action'] ?? '', ['admin_suscripcion', 'suscripcion_retorno'], true)): ?>
-    <?php if (!empty($pagoDisponible)): ?>
+    <?php if (($_GET['action'] ?? '') === 'admin_configuracion'): ?>
+    <?php if (!empty($datosSuscripcion['pagoDisponible'])): ?>
     <script src="https://checkout.wompi.co/widget.js"></script>
     <?php endif; ?>
     <script src="js/suscripcion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

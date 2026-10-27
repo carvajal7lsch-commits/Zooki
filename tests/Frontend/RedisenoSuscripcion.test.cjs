@@ -1,4 +1,4 @@
-/** Rediseño de Suscripción, entrada desde Configuración y barra con nombres (aprobado 2026-10-26). */
+/** Rediseño de Suscripción, entrada desde Ajustes y barra con nombres (aprobado 2026-10-26). */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -26,25 +26,27 @@ test('la vista conserva los ganchos de pago y no lleva estilos ni scripts en lí
     for (const variable of css.matchAll(/var\((--z-[\w-]+)/g)) assert.ok(identidad.includes(variable[1] + ':'), variable[1]);
 });
 
-test('volver dice a dónde vuelve: Inicio por defecto y Configuración si se entró desde allí; la paginación conserva el origen', () => {
+test('Suscripción comparte Ajustes y solo conserva Inicio al entrar desde el dashboard', () => {
     const desdeInicio = vista('historial');
     assert.match(desdeInicio, /class="encabezado-pagina__volver" href="index\.php\?action=admin_panel"[\s\S]*?>Inicio</);
     const desdeConfiguracion = vista('historial', 'configuracion');
-    assert.match(desdeConfiguracion, /class="encabezado-pagina__volver" href="index\.php\?action=admin_configuracion"[\s\S]*?>Configuración</);
-    assert.match(desdeConfiguracion, /<h1 class="encabezado-pagina__titulo top-header-title">Suscripción<\/h1>/);
+    assert.doesNotMatch(desdeConfiguracion, /class="encabezado-pagina__volver"/);
+    assert.match(desdeConfiguracion, /<h1 class="encabezado-pagina__titulo top-header-title">Ajustes<\/h1>/);
     assert.equal((desdeConfiguracion.match(/<h1\b/g) || []).length, 1, 'Un solo título por pantalla');
-    assert.match(vista('historial', '<script>'), /class="encabezado-pagina__volver" href="index\.php\?action=admin_panel"/, 'Un origen desconocido vuelve al Inicio');
+    assert.doesNotMatch(desdeConfiguracion, /encabezado-pagina__subtitulo/);
+    assert.doesNotMatch(vista('historial', '<script>'), /class="encabezado-pagina__volver"/, 'Un origen desconocido no agrega un destino');
     assert.match(leer('views/admin/suscripcion.php'), /'desde' => \$origenSuscripcion/);
-    assert.match(leer('views/admin/configuracion.php'), /class="config-tabs__enlace" href="index\.php\?action=admin_suscripcion&amp;desde=configuracion"/);
+    assert.match(desdeConfiguracion, /data-config-panel="suscripcion"[\s\S]*data-suscripcion-pantalla/);
+    assert.match(desdeConfiguracion, /data-config-tab="suscripcion"/);
 });
 
-test('barra: el administrador lleva Auditoría y Mi perfil a «Más»; el veterinario cabe sin «Más» y conserva Salir', () => {
+test('barra: el administrador tiene cinco destinos sin «Más» y Cerrar sesión en Ajustes; el veterinario cabe sin «Más» y conserva Salir', () => {
     const admin = vista('historial');
-    assert.match(admin, /class="pill-sidebar pill-sidebar--etiquetas pill-sidebar--con-mas"/);
-    assert.match(admin, /pill-nav-item--secundario" href="index\.php\?action=admin_auditoria"/);
-    assert.match(admin, /pill-nav-item--secundario" href="index\.php\?action=mi_perfil"/);
-    assert.match(admin, /class="pill-nav-item active" href="index\.php\?action=admin_configuracion"[^>]*aria-current="page"/, 'Suscripción vive en Configuración');
-    assert.match(admin, /<dialog class="zk-dialogo barra-mas" id="barraNavegacionMas"[\s\S]*admin_auditoria[\s\S]*mi_perfil[\s\S]*Cerrar sesión/);
+    assert.match(admin, /class="pill-sidebar pill-sidebar--etiquetas pill-sidebar--sin-salir"/);
+    assert.doesNotMatch(admin, /pill-nav-item--secundario|barraNavegacionMas|action=mi_perfil/);
+    assert.match(admin, /href="index\.php\?action=admin_auditoria"/);
+    assert.match(admin, /class="pill-nav-item active" href="index\.php\?action=admin_configuracion"[^>]*aria-label="Ajustes" aria-current="page"/, 'Suscripción vive en Ajustes');
+    assert.match(admin, /class="header-user" href="index\.php\?action=admin_configuracion#cuenta"/);
     const vet = execFileSync(php, ['tests/Frontend/apoyo/c81-vistas.php', 'vet_pacientes'], { cwd: RAIZ, encoding: 'utf8' });
     assert.doesNotMatch(vet, /pill-sidebar--con-mas|barraNavegacionMas/);
     assert.match(vet, /class="pill-logout"[\s\S]*?>Salir</);
@@ -54,9 +56,14 @@ function servidor(html) {
     const tipos = { '.css': 'text/css', '.js': 'application/javascript', '.png': 'image/png', '.svg': 'image/svg+xml' };
     return http.createServer((req, res) => {
         const url = new URL(req.url, 'http://localhost');
+        if (url.pathname === '/index.php' && url.searchParams.get('action') === 'get_horarios_clinica_ajax') {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: true, horarios: [] }));
+            return;
+        }
         if (url.pathname === '/') {
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.end(html.replace(/<script[^>]+src="https:[^>]*><\/script>/g, '').replace(/<link[^>]+href="https:[^>]*>/g, ''));
+            res.end(html.replace(/data-ajustes-seccion-inicial="[^"]*"/, 'data-ajustes-seccion-inicial="' + (url.searchParams.get('seccion') === 'suscripcion' ? 'suscripcion' : '') + '"').replace(/<script[^>]+src="https:[^>]*><\/script>/g, '').replace(/<link[^>]+href="https:[^>]*>/g, ''));
             return;
         }
         const ruta = path.join(RAIZ, 'public', path.normalize(decodeURIComponent(url.pathname)).replace(/^([/\\])+/, ''));
@@ -76,11 +83,13 @@ test('Chrome (v2): pestañas en todos los anchos, ventana «Pagar o renovar», t
     const nav = await abrirChrome(buscarChrome());
     try {
         await nav.enviar('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-        await nav.enviar('Page.navigate', { url: 'http://127.0.0.1:' + srv.address().port + '/' });
+        await nav.enviar('Page.navigate', { url: 'http://127.0.0.1:' + srv.address().port + '/?seccion=suscripcion' });
         await nav.esperar("document.readyState === 'complete' && document.querySelector('[data-suscripcion-pantalla]').dataset.pestana === 'plan'");
         const visible = selector => `(() => { const n = document.querySelector('${selector}'); return !!n && getComputedStyle(n).display !== 'none' && n.getBoundingClientRect().height > 0; })()`;
         assert.equal(await nav.evaluar('document.documentElement.scrollWidth <= innerWidth'), true, 'Sin desborde a 390');
         assert.equal(await nav.evaluar(visible('.suscripcion__plan')), true);
+        assert.equal(await nav.evaluar(visible('[data-ajustes-volver-inicio]')), true, 'El atajo de Inicio conserva su regreso en el celular');
+        assert.equal(await nav.evaluar("document.querySelector('[data-ajustes-volver-inicio]').getAttribute('href')"), 'index.php?action=admin_panel');
         assert.equal(await nav.evaluar(visible('.suscripcion__historial')), false, 'El historial va en su pestaña');
         assert.equal(await nav.evaluar("document.getElementById('suscripcionRenovarDialogo').open"), false);
         await nav.evaluar("document.querySelector('.suscripcion__abrir-renovar').click(); true");
@@ -97,28 +106,27 @@ test('Chrome (v2): pestañas en todos los anchos, ventana «Pagar o renovar», t
         await nav.evaluar("document.querySelector('[data-suscripcion-pestana=historial]').click(); true");
         assert.equal(await nav.evaluar(visible('.suscripcion__historial')), true);
         assert.equal(await nav.evaluar(visible('.suscripcion__plan')), false);
-        assert.equal(await nav.evaluar('location.hash'), '#historial', 'La pestaña queda en la dirección para volver a ella');
+        assert.equal(await nav.evaluar('location.hash'), '#suscripcion', 'La pestaña interior conserva la sección');
+        assert.equal(await nav.evaluar("new URLSearchParams(location.search).get('vista_suscripcion')"), 'historial');
         const barra = await nav.evaluar(`(() => {
             const barra = document.querySelector('.pill-sidebar').getBoundingClientRect();
             const visibles = [...document.querySelectorAll('.pill-sidebar :is(.pill-nav-item, .pill-logout)')].filter(n => getComputedStyle(n).display !== 'none');
             return { textos: visibles.map(n => n.textContent.trim()), dentro: visibles.every(n => { const r = n.getBoundingClientRect(); return r.left >= barra.left - 1 && r.right <= barra.right + 1; }) };
         })()`);
-        assert.deepEqual(barra.textos, ['Inicio', 'Usuarios', 'Citas', 'Ajustes', 'Más']);
+        assert.deepEqual(barra.textos, ['Inicio', 'Usuarios', 'Citas', 'Auditoría', 'Ajustes']);
         assert.equal(barra.dentro, true);
-        await nav.evaluar("document.querySelector('.pill-nav-mas').click(); true");
-        await nav.esperar("document.getElementById('barraNavegacionMas').open");
 
         await nav.enviar('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
         await nav.enviar('Page.reload');
         await nav.esperar("document.readyState === 'complete' && document.querySelector('[data-suscripcion-pantalla]').dataset.pestana === 'historial'");
         assert.equal(await nav.evaluar(visible('.suscripcion-pestanas')), true, 'También en escritorio hay pestañas');
+        assert.equal(await nav.evaluar(visible('.ajustes-lateral')), true, 'El menú de Ajustes sigue junto a Suscripción');
         assert.equal(await nav.evaluar(visible('.suscripcion__plan')), false);
         assert.equal(await nav.evaluar('document.documentElement.scrollHeight <= innerHeight + 1'), true, 'Historial sin scroll en 1366×768');
         await nav.evaluar("document.querySelector('[data-suscripcion-pestana=plan]').click(); true");
         assert.equal(await nav.evaluar(visible('.suscripcion__plan')), true);
         assert.equal(await nav.evaluar('document.documentElement.scrollHeight <= innerHeight + 1'), true, 'Mi plan sin scroll en 1366×768');
-        assert.equal(await nav.evaluar(visible('.pill-nav-mas')), false, 'La barra lateral de escritorio no cambia');
-        assert.equal(await nav.evaluar(visible('.pill-nav-item--secundario')), true);
+        assert.equal(await nav.evaluar(visible('.pill-logout')), true, 'En escritorio la barra lateral conserva Salir');
         const cabecera = await nav.evaluar(`(() => {
             const normal = document.createElement('h1');
             normal.className = 'top-header-title';
@@ -127,7 +135,7 @@ test('Chrome (v2): pestañas en todos los anchos, ventana «Pagar o renovar», t
             const titulo = document.querySelector('.encabezado-pagina__titulo');
             const coinciden = getComputedStyle(titulo).fontSize === getComputedStyle(normal).fontSize;
             normal.remove();
-            return { tituloNormal: coinciden, subtituloVisible: document.querySelector('.encabezado-pagina__subtitulo').getClientRects().length > 0, volverAlto: document.querySelector('.encabezado-pagina__volver').getBoundingClientRect().height };
+            return { tituloNormal: coinciden, subtituloVisible: !!document.querySelector('.encabezado-pagina__subtitulo'), volverAlto: document.querySelector('.encabezado-pagina__volver').getBoundingClientRect().height };
         })()`);
         assert.equal(cabecera.tituloNormal, true, 'Título del mismo tamaño que el encabezado habitual');
         assert.equal(cabecera.subtituloVisible, false, 'La cabecera no repite el contexto de clínica');
@@ -143,6 +151,14 @@ test('Chrome (v2): pestañas en todos los anchos, ventana «Pagar o renovar», t
             }
             await nav.evaluar("document.querySelector('[data-suscripcion-pestana=plan]').click(); true");
         }
+        await nav.evaluar("document.querySelector('[data-config-tab=cuenta]').click(); true");
+        await nav.enviar('Page.reload');
+        await nav.esperar("document.readyState === 'complete' && !document.querySelector('#perfilCuenta').hidden");
+        assert.equal(await nav.evaluar('location.hash'), '#cuenta', 'Suscripción no roba la sección al recargar Ajustes');
+        await nav.evaluar("document.querySelector('[data-ajustes-volver]').click(); true");
+        await nav.enviar('Page.reload');
+        await nav.esperar("document.readyState === 'complete' && document.querySelector('[data-ajustes]').dataset.ajustesVista === 'menu'");
+        assert.equal(await nav.evaluar('location.hash'), '', 'Volver a la lista no deja una sección activa en la dirección');
         assert.deepEqual(nav.errores, []);
     } finally {
         await nav.cerrar();

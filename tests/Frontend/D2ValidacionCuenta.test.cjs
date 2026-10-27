@@ -301,7 +301,7 @@ test('las pantallas de contraseña y el portal no conservan validación en líne
     ['views/auth/reset_password.php', 'views/auth/cambiar_password.php'].forEach(archivo => {
         assert.doesNotMatch(fs.readFileSync(path.join(raiz, archivo), 'utf8'), /<script>\s*\S|<style>|\son(?:submit|input)=/);
     });
-    ['views/auth/login.php', 'views/auth/completar_perfil.php', 'views/perfil/index.php', 'views/portal/index.php', 'views/admin/usuarios.php', 'views/vet/pacientes.php'].forEach(archivo => {
+    ['views/auth/login.php', 'views/auth/completar_perfil.php', 'views/perfil/paneles_cuenta.php', 'views/portal/index.php', 'views/admin/usuarios.php', 'views/vet/pacientes.php'].forEach(archivo => {
         assert.match(fs.readFileSync(path.join(raiz, archivo), 'utf8'), /data-validacion-cuenta/);
     });
 });
