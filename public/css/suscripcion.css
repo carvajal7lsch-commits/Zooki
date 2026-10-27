@@ -270,6 +270,50 @@
     color: var(--z-primary);
     font-size: 13px;
 }
+.suscripcion__inteligencia {
+    display: grid;
+    gap: 10px;
+}
+.suscripcion__inteligencia h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--z-text);
+}
+.suscripcion__grafos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.suscripcion__grafos li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.45;
+}
+.suscripcion__grafos i {
+    padding-top: 3px;
+    color: var(--z-primary);
+}
+.suscripcion__grafos strong {
+    color: var(--z-text);
+}
+.suscripcion__grafos p,
+.suscripcion__alcance {
+    margin: 3px 0 0;
+    font-size: 14px;
+    color: var(--z-text-secondary);
+    line-height: 1.45;
+}
+@media (max-width: 767px) {
+    .suscripcion__grafos {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
 
 /* ── Acciones al pie de la tarjeta ── */
 .suscripcion__acciones {
@@ -890,8 +934,7 @@
         font-size: 19px;
     }
 
-    .suscripcion__plan-cabecera .suscripcion-chip--ciclo,
-    .suscripcion__beneficios {
+    .suscripcion__plan-cabecera .suscripcion-chip--ciclo {
         display: none;
     }
 

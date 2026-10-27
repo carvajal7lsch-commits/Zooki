@@ -802,3 +802,358 @@
     .coordinacion .block-picker-display { padding: 6px 3px; font-size: .65rem; white-space: nowrap; }
     .coordinacion .horario-dia { padding: 10px; gap: 7px; }
 }
+
+/* Etapa R — Horarios de Ajustes, propuesta aprobada por el dueño (2026-10-26). */
+.ajustes-horarios__tabs {
+    display: flex;
+    gap: 6px;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--z-border);
+}
+.ajustes-horarios__tabs button {
+    min-height: 42px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--z-radius-xs);
+    background: transparent;
+    color: var(--z-text-secondary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.ajustes-horarios__tabs [aria-selected="true"] {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+.ajustes .ajustes-horarios .horarios {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.ajustes .ajustes-horarios .horarios-card,
+.ajustes .ajustes-horarios #perfilHorarios {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    width: 100%;
+}
+.ajustes .ajustes-horarios .horarios-card__head,
+.ajustes .ajustes-horarios #perfilHorarios > .coord-card__head {
+    align-items: center;
+    margin-bottom: 0;
+}
+.ajustes .ajustes-horarios .horarios-card__head > div:first-child > p,
+.ajustes .ajustes-horarios #perfilHorarios > .coord-card__head > div:first-child > p {
+    display: none;
+}
+.ajustes .ajustes-horarios .horarios-resumen {
+    order: -1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--z-border);
+    border-radius: 0;
+}
+.ajustes .ajustes-horarios .horarios-resumen > header,
+.ajustes .ajustes-horarios .horarios-resumen__pie,
+.ajustes .ajustes-horarios .horarios-notas {
+    display: none;
+}
+.ajustes .ajustes-horarios .horarios-resumen__cifras {
+    display: flex;
+    gap: 16px;
+    flex-shrink: 0;
+}
+.ajustes .ajustes-horarios .horarios-cifra {
+    flex-direction: row;
+    align-items: baseline;
+    padding: 0;
+    gap: 5px;
+    background: none;
+}
+.ajustes .ajustes-horarios .horarios-cifra__valor {
+    font-size: 18px;
+}
+.ajustes .ajustes-horarios .horarios-cifra__etiqueta {
+    font-size: 13px;
+}
+.ajustes .ajustes-horarios .horarios-hoy {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    padding: 0 0 0 16px;
+    border: 0;
+    border-left: 1px solid var(--z-border);
+    border-radius: 0;
+    background: none;
+}
+.ajustes .ajustes-horarios .horarios-hoy__estado {
+    font-size: 13px;
+    color: var(--z-primary);
+    background: var(--z-primary-soft);
+    border-radius: 999px;
+    padding: 3px 8px;
+}
+.ajustes .ajustes-horarios .horarios-hoy[data-abierto] .horarios-hoy__estado {
+    color: var(--z-primary);
+}
+.ajustes .ajustes-horarios .horarios-hoy[data-abierto] {
+    background: transparent;
+    border-left-color: var(--z-border);
+}
+.ajustes .ajustes-horarios .horarios-hoy__detalle {
+    font-size: 13px;
+}
+.ajustes .ajustes-horarios .horarios-card__acciones {
+    gap: 8px;
+}
+.ajustes .ajustes-horarios .horarios-estado {
+    padding: 0;
+    background: none;
+    font-size: 12px;
+}
+.ajustes .ajustes-horarios .horarios-tabla {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+.ajustes .ajustes-horarios .horarios-fila--cabecera {
+    display: none;
+}
+.ajustes .ajustes-horarios .horario-dia {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px;
+    min-width: 0;
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius-sm);
+}
+.ajustes .ajustes-horarios .horario-dia__nombre {
+    justify-content: space-between;
+    flex-direction: row-reverse;
+    font-size: 14px;
+}
+.ajustes .ajustes-horarios .horario-bloque {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: center;
+    gap: 4px;
+}
+.ajustes .ajustes-horarios .horario-bloque::before {
+    content: attr(data-etiqueta);
+    color: var(--z-text-muted);
+    font-size: 12px;
+}
+.ajustes .ajustes-horarios .horario-bloque__control {
+    display: flex;
+    gap: 5px;
+    min-width: 0;
+}
+.ajustes .ajustes-horarios .block-picker-display {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 5px;
+    white-space: nowrap;
+    font-size: 12px;
+    border-color: var(--z-border);
+    background: var(--z-bg-suave);
+    color: var(--z-text);
+}
+.ajustes .ajustes-horarios .horario-dia__horas {
+    text-align: left;
+    font-size: 12px;
+    color: var(--z-text-muted);
+}
+.ajustes .ajustes-horarios .horario-dia.inactivo .horario-bloque {
+    display: none;
+}
+.ajustes .ajustes-horarios .horario-dia.inactivo,
+.ajustes .ajustes-horarios .horario-dia.dia-cerrado {
+    align-self: start;
+}
+.ajustes .ajustes-horarios details[open] .horarios-notas {
+    display: flex;
+    margin-top: 10px;
+}
+.ajustes .ajustes-horarios .horario-dia.inactivo .horario-dia__cerrado {
+    display: block;
+    padding: 0;
+    border: 0;
+    height: auto;
+    font-size: 14px;
+}
+.ajustes .ajustes-horarios .coordinacion {
+    margin: 0;
+}
+.ajustes-horarios__barra {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin: 0 0 8px;
+}
+.ajustes-horarios__barra .coord-campo--vet {
+    flex: 1;
+    max-width: none;
+}
+.ajustes-horarios__barra .coord-varios {
+    min-height: 42px;
+    font-size: 13px;
+}
+.ajustes-horarios__opciones {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--z-text-muted);
+}
+.ajustes-horarios__opciones summary {
+    cursor: pointer;
+}
+.ajustes-horarios__opciones #btnRestaurar {
+    width: auto;
+    padding: 6px 0;
+    border: 0;
+    font-size: 13px;
+    background: none;
+    color: var(--z-text-secondary);
+}
+.ajustes-horarios__dia {
+    border-bottom: 1px solid var(--z-border);
+}
+.ajustes-horarios__dia > summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 13px 0;
+    cursor: pointer;
+    font-size: 14px;
+    list-style: none;
+}
+.ajustes-horarios__dia > summary > span {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.ajustes-horarios__dia small {
+    font-size: 14px;
+    color: var(--z-text-muted);
+}
+@media (max-width: 1023px) {
+    .ajustes .ajustes-horarios .horarios-tabla {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@media (max-width: 767px) {
+    .ajustes-horarios__tabs {
+        margin-bottom: 14px;
+        gap: 2px;
+    }
+    .ajustes-horarios__tabs button {
+        flex: 1;
+        padding: 8px;
+    }
+    .ajustes .ajustes-horarios .horarios-resumen {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .ajustes .ajustes-horarios .horarios-hoy {
+        flex: 1 1 100%;
+        border: 0;
+        padding: 0;
+    }
+    .ajustes .ajustes-horarios .horarios-card__head {
+        gap: 12px;
+    }
+    .ajustes .ajustes-horarios .horarios-tabla {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+    .ajustes .ajustes-horarios .horario-dia {
+        margin-bottom: 12px;
+    }
+    .ajustes .ajustes-horarios .horario-bloque {
+        grid-template-columns: 65px minmax(0, 1fr);
+    }
+    .ajustes .ajustes-horarios .horario-bloque::before,
+    .ajustes .ajustes-horarios .block-picker-display {
+        font-size: 14px;
+    }
+    .ajustes .ajustes-horarios .block-picker-display {
+        min-height: 40px;
+    }
+    .ajustes-horarios__barra {
+        flex-wrap: wrap;
+    }
+    .ajustes-horarios__barra .coord-campo--vet {
+        flex: 1 1 100%;
+    }
+    .ajustes-horarios__opciones {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+.ajustes-horarios__panel[hidden] {
+    display: none !important;
+}
+.ajustes-horarios__panel {
+    min-width: 0;
+    grid-column: 1 / -1;
+}
+.ajustes-horarios__dia > summary::-webkit-details-marker {
+    display: none;
+}
+.ajustes-horarios__dia > summary:focus-visible,
+.ajustes-horarios__tabs button:focus-visible {
+    outline: 2px solid var(--z-primary);
+    outline-offset: 2px;
+}
+.ajustes-horarios__dia > summary > i {
+    align-self: center;
+    color: var(--z-text-muted);
+}
+.ajustes .ajustes-horarios .coord-varios {
+    align-self: auto;
+}
+/* El ancho útil depende también del menú: no se comprimen cuatro días en un panel estrecho. */
+@container (max-width: 780px) {
+    .ajustes .ajustes-horarios .horarios-tabla {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@container (max-width: 600px) {
+    .ajustes .ajustes-horarios .horarios-tabla {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 767px) {
+    .ajustes .ajustes-horarios .horarios-cifra__etiqueta,
+    .ajustes .ajustes-horarios .horarios-hoy__titulo,
+    .ajustes .ajustes-horarios .horarios-hoy__detalle,
+    .ajustes .ajustes-horarios .horarios-hoy__estado,
+    .ajustes .ajustes-horarios .horarios-estado,
+    .ajustes-horarios__opciones {
+        font-size: 14px;
+    }
+    .ajustes-horarios__barra select {
+        font-size: 16px;
+    }
+    .ajustes .ajustes-horarios .coord-varios,
+    .ajustes .ajustes-horarios .horarios-btn {
+        min-height: 40px;
+        font-size: 14px;
+    }
+}

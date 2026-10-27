@@ -29,11 +29,13 @@
     <link rel="stylesheet" href="css/consulta-clinica.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/pill-sidebar.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/contexto.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/dialogos-zooki.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php if (($_GET['action'] ?? '') === 'vet_pacientes'): ?>
     <link rel="stylesheet" href="css/pacientes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
     <link rel="stylesheet" href="css/perfil.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/ajustes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_agenda'): ?>
     <link rel="stylesheet" href="css/calendario.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
@@ -109,40 +111,7 @@
                         <h1 class="top-header-title"><?= htmlspecialchars($currentTitle) ?></h1>
                     <?php endif; ?>
                 </div>
-                <div class="header-right">
-                    <?php include __DIR__ . "/../partials/contexto_actual.php"; ?>
-                    <div class="notifications-wrapper">
-                        <button class="notif-btn" id="notifBell">
-                            <i class="far fa-bell"></i>
-                            <span class="notif-badge" id="notifBadge" hidden></span>
-                        </button>
-                        <div class="notif-dropdown" id="notifDropdown">
-                            <div class="notif-header">
-                                <h3>Alertas Clínicas</h3>
-                                <span id="notifCount">0 nuevas</span>
-                                <!-- HU-45: marcar todas como leidas -->
-                                <button type="button" class="notif-mark-all" id="notifMarkAll" hidden>
-                                    <i class="fas fa-check-double"></i> Marcar todas
-                                </button>
-                            </div>
-                            <div id="pendingVaccinesList" class="notif-body"></div>
-                        </div>
-                    </div>
-                    
-                    <button class="help-btn">
-                        <i class="far fa-question-circle"></i>
-                    </button>
-
-                    <div class="header-user-wrapper">
-                        <a class="header-user" href="index.php?action=mi_perfil" title="Mi perfil">
-                            <div class="header-user__avatar"><?= htmlspecialchars($__adminIniciales) ?></div>
-                            <div class="header-user__info">
-                                <span class="header-user__name"><?= htmlspecialchars(explode(" ", trim($__adminNombre))[0]) ?></span>
-                                <span class="header-user__role">Veterinario</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
+                <?php require __DIR__ . '/../partials/cabecera_cuenta.php'; ?>
             </header>
 
             <!-- Cuerpo del contenido -->
@@ -164,6 +133,8 @@
     <script src="js/avisos.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/fechas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/password-policy.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/cabecera-cuenta.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/dashboard.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/selector-fechas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
     <script src="js/medical-module.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

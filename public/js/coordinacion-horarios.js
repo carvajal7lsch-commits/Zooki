@@ -122,6 +122,7 @@
             for (const [nombre, filas] of [['propuestas', datos.propuestas], ['cierres', datos.cierres], ['afectadas', datos.afectadas]]) {
                 const contenedor = raiz.querySelector(`[data-${nombre}]`);
                 contenedor.replaceChildren();
+                if (nombre === 'propuestas') contenedor.dataset.pendientes = String(filas.filter(fila => fila.estado === 'pendiente').length);
                 for (const registro of filas) {
                     const fila = document.createElement('article');
                     fila.className = 'coord-item';
@@ -214,6 +215,15 @@
         });
         const cierre = raiz.querySelector('[data-cierre]');
         if (cierre) {
+            if (global.SelectorFechas && typeof global.flatpickr === 'function') {
+                cierre.querySelectorAll('[data-fecha-cierre]').forEach(campo => {
+                    global.SelectorFechas.iniciarFechaHora(campo, {
+                        onChange() {
+                            campo.dispatchEvent(new Event('input', { bubbles: true }));
+                        },
+                    });
+                });
+            }
             function validarCierre() {
                 const inicio = cierre.elements.namedItem('inicio').value;
                 const fin = cierre.elements.namedItem('fin').value;

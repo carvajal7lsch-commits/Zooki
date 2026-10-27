@@ -48,13 +48,17 @@ $esAdminHorario = Contexto::rolActivo() === Roles::ADMIN;
                 <form data-cierre novalidate class="zk-dialogo__form">
                     <header class="zk-dialogo__head">
                         <span class="zk-dialogo__icono" aria-hidden="true"><i class="fas fa-calendar-times"></i></span><div><h3 id="dialogoCierreTitulo">Nuevo cierre puntual</h3><p>Indica cuándo no atenderá la clínica.</p></div>
-                        <button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar"><i class="fas fa-times" aria-hidden="true"></i></button>
+                        <button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar" autofocus><i class="fas fa-times" aria-hidden="true"></i></button>
                     </header>
                     <div class="zk-dialogo__cuerpo coord-dialogo-campos">
                         <?php Csrf::field(); ?>
-                        <label class="coord-campo">Desde <input type="datetime-local" name="inicio" step="1" required><span data-error-campo="inicio" class="coordinacion-error"></span></label>
-                        <label class="coord-campo">Hasta <input type="datetime-local" name="fin" step="1" required><span data-error-campo="fin" class="coordinacion-error"></span></label>
-                        <label class="coord-campo coord-campo--ancho">Motivo <input name="motivo" maxlength="255" data-espacios="normalizar" placeholder="Ej. Festivo" required><span data-error-campo="motivo" class="coordinacion-error"></span></label>
+                        <label class="coord-campo">Desde <input type="text" data-fecha-cierre placeholder="Selecciona fecha y hora" autocomplete="off" name="inicio" required><span data-error-campo="inicio" class="coordinacion-error"></span></label>
+                        <label class="coord-campo">Hasta <input type="text" data-fecha-cierre placeholder="Selecciona fecha y hora" autocomplete="off" name="fin" required><span data-error-campo="fin" class="coordinacion-error"></span></label>
+                        <?php
+                        $motivoOpcional = false;
+                        $opcionesMotivo = ['Festivo', 'Mantenimiento'];
+                        require __DIR__ . '/motivo_agenda.php';
+                        ?>
                         <p class="coord-aviso coord-campo--ancho" data-aviso role="status"></p>
                     </div>
                     <footer class="zk-dialogo__pie">

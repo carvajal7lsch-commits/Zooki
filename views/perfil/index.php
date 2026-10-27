@@ -14,10 +14,10 @@ $partes = array_values(array_filter(explode(' ', trim($perfil['nombre_completo']
 $iniciales = mb_strtoupper(mb_substr($partes[0] ?? '', 0, 1) . mb_substr($partes[1] ?? '', 0, 1)) ?: 'U';
 $esVetPerfil = Contexto::rolActivo() === Roles::VETERINARIO;
 ?>
-<div class="perfil perfil-secciones" data-perfil-secciones>
-    <aside class="perfil-lateral">
+<div class="perfil perfil-secciones ajustes ajustes--vet" data-perfil-secciones data-ajustes>
+    <aside class="perfil-lateral ajustes-lateral">
 
-    <section class="perfil-hero">
+    <section class="perfil-hero ajustes-identidad">
         <div class="perfil-hero__avatar" aria-hidden="true"><?= $e($iniciales) ?></div>
         <div class="perfil-hero__info">
             <span class="perfil-hero__rol"><?= $e($rolNombre) ?></span>
@@ -36,7 +36,7 @@ $esVetPerfil = Contexto::rolActivo() === Roles::VETERINARIO;
             </ul>
         </div>
     </section>
-    <nav class="perfil-menu" data-config-tabs role="tablist" aria-label="Secciones de Mi perfil" aria-orientation="vertical">
+    <nav class="perfil-menu ajustes-menu__caja" data-config-tabs role="tablist" aria-label="Secciones de Mi perfil" aria-orientation="vertical">
         <button type="button" role="tab" id="perfilTabCuenta" data-config-tab="cuenta" aria-controls="perfilCuenta" aria-selected="true" aria-label="Mi cuenta"><i class="fas fa-user" aria-hidden="true"></i><span class="perfil-tab-texto"><span class="perfil-tab-largo">Mi cuenta</span><span class="perfil-tab-corto">Cuenta</span></span></button>
         <button type="button" role="tab" id="perfilTabSeguridad" data-config-tab="seguridad" aria-controls="seguridad" aria-selected="false" tabindex="-1" aria-label="Seguridad"><i class="fas fa-shield-alt" aria-hidden="true"></i><span class="perfil-tab-texto">Seguridad</span></button>
         <?php if ($esVetPerfil): ?>
@@ -44,14 +44,21 @@ $esVetPerfil = Contexto::rolActivo() === Roles::VETERINARIO;
         <button type="button" role="tab" id="perfilTabAusencias" data-config-tab="ausencias" aria-controls="perfilAusencias" aria-selected="false" tabindex="-1" aria-label="Ausencias"><i class="fas fa-calendar-times" aria-hidden="true"></i><span class="perfil-tab-texto">Ausencias</span><span class="perfil-indicador" data-perfil-pendiente="ausencias" aria-label="Citas pendientes de reajuste" hidden></span></button>
         <?php endif; ?>
     </nav>
-    <a href="index.php?action=logout" class="perfil-btn perfil-btn--danger perfil-salir"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar sesión</a>
+    <a href="index.php?action=logout" class="perfil-btn perfil-btn--danger perfil-salir ajustes-salir"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar sesión</a>
     </aside>
-    <div class="perfil-contenido">
+    <div class="perfil-contenido ajustes-contenido">
+    <div class="ajustes-seccion">
+        <button type="button" class="ajustes-seccion__volver" data-ajustes-volver aria-label="Volver a Mi perfil"><i class="fas fa-arrow-left" aria-hidden="true"></i><span>Mi perfil</span></button>
+        <h2 class="ajustes-seccion__titulo" data-ajustes-titulo>Mi cuenta</h2>
+    </div>
     <?php require __DIR__ . '/paneles_cuenta.php'; ?>
     <?php if ($esVetPerfil): ?>
+        <div class="config-agenda-hoja">
         <?php require __DIR__ . '/../partials/coordinacion_horarios.php'; ?>
+        </div>
     <?php endif; ?>
     </div>
 </div>
+<script src="js/ajustes.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/dialogos-zooki.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>" defer></script>
 <script src="js/perfil.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>

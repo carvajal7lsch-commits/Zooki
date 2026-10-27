@@ -119,6 +119,27 @@
 
 .perfil-hint { margin: 0; font-size: 0.76rem; color: var(--pf-text-3); }
 .perfil-hint i { margin-right: 4px; }
+.perfil-cuenta-titulo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-bottom: 6px;
+}
+.perfil-cuenta-titulo h3 {
+    margin: 0;
+}
+.perfil-rol {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-size: 14px;
+    font-weight: 600;
+}
 
 /* ── Formularios ── */
 .perfil-form { display: flex; flex-direction: column; gap: 12px; }

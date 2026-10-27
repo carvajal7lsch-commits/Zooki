@@ -22,16 +22,17 @@
 
         function rotular() {
             const activa = raiz.querySelector('[data-config-tab][aria-selected="true"]');
-            if (activa) titulo.textContent = activa.dataset.ajustesEtiqueta || activa.textContent.trim();
+            if (activa) titulo.textContent = activa.dataset.ajustesEtiqueta || activa.getAttribute?.('aria-label') || activa.textContent.trim();
             const volverInicio = raiz.dataset.ajustesOrigen === 'inicio' && activa?.dataset.configTab === 'suscripcion';
             raiz.querySelector('[data-ajustes-volver]').hidden = volverInicio;
-            raiz.querySelector('[data-ajustes-volver-inicio]').hidden = !volverInicio;
+            const volver = raiz.querySelector('[data-ajustes-volver-inicio]');
+            if (volver) volver.hidden = !volverInicio;
         }
 
         function quitarSeccionDeLaDireccion() {
             try {
                 const url = new URL(ventana.location.href);
-                for (const clave of ['seccion', 'vista_suscripcion', 'pagina']) url.searchParams.delete(clave);
+                for (const clave of ['seccion', 'vista_suscripcion', 'vista_horarios', 'pagina']) url.searchParams.delete(clave);
                 ventana.history.replaceState(null, '', url.pathname + url.search);
             } catch (_) {
                 // Sin historial (vista embebida): la lista igual se muestra.

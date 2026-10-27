@@ -2,17 +2,22 @@
 require_once __DIR__ . '/../../helpers/ValidadorConfiguracionClinica.php';
 require_once __DIR__ . '/../../helpers/Csrf.php';
 require_once __DIR__ . '/../../models/MarcaClinica.php';
+require_once __DIR__ . '/../../helpers/LogoClinica.php';
 $e = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 $reglas = ['nombreMin' => ValidadorClinica::NOMBRE_MIN, 'nombreMax' => ValidadorClinica::NOMBRE_MAX,
     'tipoMax' => ValidadorConfiguracionClinica::TIPO_MAX, 'direccionMax' => ValidadorClinica::DIRECCION_MAX,
     'logoMax' => ValidadorConfiguracionClinica::LOGO_MAX, 'telefonoMin' => ValidadorTelefono::MIN,
     'telefonoMax' => ValidadorTelefono::MAX, 'correoMax' => ValidadorCuenta::CORREO_MAX,
-    'enteroMax' => ValidadorConfiguracionClinica::ENTERO_MAX, 'caracteresTexto' => ValidadorClinica::TEXTO_CARACTERES];
+    'duracionMax' => ValidadorConfiguracionClinica::DURACION_MAX, 'margenMax' => ValidadorConfiguracionClinica::MARGEN_MAX,
+    'logoMaxBytes' => LogoClinica::MAX_BYTES, 'caracteresTexto' => ValidadorClinica::TEXTO_CARACTERES];
 $marca = $configuracion['marca'];
 $partesNombre = array_values(array_filter(explode(' ', trim($perfil['nombre_completo'] ?? ''))));
 $iniciales = mb_strtoupper(mb_substr($partesNombre[0] ?? '', 0, 1) . mb_substr($partesNombre[1] ?? '', 0, 1)) ?: 'A';
 $esVetPerfil = false;
-$camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 'telefono_urgencias' => 'Teléfono de urgencias', 'email_contacto' => 'Correo de contacto', 'direccion' => 'Dirección', 'url_logo' => 'URL o ruta del logo'];
+$camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 'telefono_urgencias' => 'Teléfono de urgencias', 'email_contacto' => 'Correo de contacto', 'direccion' => 'Dirección'];
+$ejemplosMarca = ['nombre' => 'Ej. Clínica Veterinaria Norte', 'telefono' => 'Ej. 300 123 4567',
+    'telefono_urgencias' => 'Ej. 310 987 6543', 'email_contacto' => 'Ej. contacto@tuclinica.com',
+    'direccion' => 'Ej. Calle 10 # 5-20', 'url_logo' => 'Ej. https://tuclinica.com/logo.png'];
 ?>
 <?php // Pulido de interfaz (2026-10-21): la configuración en pestañas y los formularios en ventanas, para no apilar todo en un solo scroll. ?>
 <?php // Rediseño (2026-10-26): «Ajustes» reúne Configuración y Mi perfil del administrador en una hoja con menú lateral blanco. ?>
@@ -48,26 +53,29 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
     </aside>
     <div class="perfil-contenido ajustes-contenido">
         <div class="ajustes-seccion">
-            <button type="button" class="ajustes-seccion__volver" data-ajustes-volver><i class="fas fa-arrow-left" aria-hidden="true"></i> Ajustes</button>
-            <a class="ajustes-seccion__volver" href="index.php?action=admin_panel" data-ajustes-volver-inicio hidden><i class="fas fa-arrow-left" aria-hidden="true"></i> Inicio</a>
+            <button type="button" class="ajustes-seccion__volver" data-ajustes-volver aria-label="Volver a Ajustes"><i class="fas fa-arrow-left" aria-hidden="true"></i><span>Ajustes</span></button>
+            <a class="ajustes-seccion__volver" href="index.php?action=admin_panel" data-ajustes-volver-inicio aria-label="Volver a Inicio" hidden><i class="fas fa-arrow-left" aria-hidden="true"></i><span>Inicio</span></a>
             <h2 class="ajustes-seccion__titulo" data-ajustes-titulo>Datos de la clínica</h2>
         </div>
 <div class="configuracion-clinica" id="config-clinica" role="tabpanel" aria-labelledby="config-tab-clinica" data-config-panel="clinica" data-configuracion-clinica data-reglas="<?= $e(json_encode($reglas)) ?>" data-tipos="<?= $e(json_encode($configuracion['tipos'])) ?>">
     <section class="horarios-card config-marca" aria-labelledby="marcaTitulo">
         <header class="horarios-card__head">
-            <div><h2 id="marcaTitulo">Marca y contacto</h2><p>Así aparece la clínica en el portal, los correos y los documentos.</p></div>
+            <div><h2 id="marcaTitulo">Marca y contacto</h2></div>
             <button type="button" class="coord-btn coord-btn--sec" data-abrir-dialogo="dialogoMarca"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button>
         </header>
         <div class="config-marca__vista" data-vista-marca>
             <?php $inicial = mb_strtoupper(mb_substr((string) ($marca['nombre'] ?? 'Z'), 0, 1)); ?>
+            <div class="config-marca__identidad">
             <div class="config-marca__logo" data-marca-logo>
                 <?php if (!empty($marca['url_logo'])): ?><img src="<?= $e($marca['url_logo']) ?>" alt="Logo de <?= $e($marca['nombre']) ?>"><?php else: ?><span><?= $e($inicial) ?></span><?php endif; ?>
             </div>
+            <div><p class="config-marca__etiqueta">Nombre de la clínica</p><strong class="config-marca__nombre" data-marca-dato="nombre"><?= $e($marca['nombre']) ?></strong></div>
+            </div>
             <dl class="config-marca__datos">
-                <?php foreach (['nombre' => 'Clínica', 'telefono' => 'Teléfono', 'telefono_urgencias' => 'Urgencias', 'email_contacto' => 'Correo', 'direccion' => 'Dirección'] as $campo => $etiqueta): ?>
-                    <div class="config-marca__dato<?= $campo === 'telefono_urgencias' ? ' config-marca__dato--urgencia' : '' ?>">
-                        <dt><?= $e($etiqueta) ?></dt>
-                        <dd data-marca-dato="<?= $e($campo) ?>"><?= $e(($marca[$campo] ?? '') !== '' ? $marca[$campo] : 'Sin definir') ?></dd>
+                <?php foreach (['telefono' => ['Teléfono', 'fa-phone'], 'telefono_urgencias' => ['Urgencias', 'fa-phone-volume'], 'email_contacto' => ['Correo', 'fa-envelope'], 'direccion' => ['Dirección', 'fa-map-marker-alt']] as $campo => [$etiqueta, $icono]): ?>
+                    <div class="config-marca__dato">
+                        <dt><i class="fas <?= $e($icono) ?>" aria-hidden="true"></i><?= $e($etiqueta) ?></dt>
+                        <dd data-marca-dato="<?= $e($campo) ?>"><?= $e(($marca[$campo] ?? '') ?: 'Sin registrar') ?></dd>
                     </div>
                 <?php endforeach; ?>
             </dl>
@@ -82,7 +90,7 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
     </section>
 
     <dialog class="zk-dialogo" id="dialogoMarca" aria-labelledby="dialogoMarcaTitulo">
-        <form data-form-marca novalidate class="zk-dialogo__form">
+        <form data-form-marca novalidate class="zk-dialogo__form" enctype="multipart/form-data">
             <header class="zk-dialogo__head">
                 <span class="zk-dialogo__icono" aria-hidden="true"><i class="fas fa-clinic-medical"></i></span>
                 <div><h3 id="dialogoMarcaTitulo">Marca y contacto</h3><p>Datos que identifican a tu clínica.</p></div>
@@ -91,14 +99,15 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
             <div class="zk-dialogo__cuerpo">
                 <?php Csrf::field(); ?>
                 <input type="hidden" name="id_clinica" value="<?= (int) $marca['id_clinica'] ?>">
+                <input type="hidden" name="url_logo" value="<?= $e($marca['url_logo'] ?? '') ?>" data-config-campo>
                 <div class="configuracion-campos">
                     <?php foreach ($camposMarca as $campo => $etiqueta): ?>
                         <label class="configuracion-campo<?= in_array($campo, ['direccion', 'url_logo'], true) ? ' configuracion-campo--ancho' : '' ?>"><?= $e($etiqueta) ?>
-                            <input name="<?= $e($campo) ?>" value="<?= $e($marca[$campo] ?? '') ?>" data-config-campo
+                            <input name="<?= $e($campo) ?>" value="<?= $e($marca[$campo] ?? '') ?>" placeholder="<?= $e($ejemplosMarca[$campo]) ?>" data-config-campo
                                 <?php if ($campo === 'nombre' || $campo === 'direccion'): ?>
                                     <?= ValidadorClinica::atributosHtml($campo === 'nombre' ? 'nombre_clinica' : 'direccion') ?>
                                 <?php elseif (str_starts_with($campo, 'telefono')): ?>
-                                    <?= ValidadorTelefono::atributosHtml() ?>
+                                    type="tel" autocomplete="tel" data-telefono-internacional data-telefono-prefijo-separado="1" <?= ValidadorTelefono::atributosHtml() ?>
                                 <?php else: ?>
                                     maxlength="<?= $campo === 'url_logo' ? ValidadorConfiguracionClinica::LOGO_MAX : ValidadorCuenta::CORREO_MAX ?>" data-caracteres="\S" inputmode="<?= $campo === 'url_logo' ? 'url' : 'email' ?>"
                                 <?php endif; ?>
@@ -106,6 +115,16 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
                             <span class="validation-error" id="marca-error-<?= $e($campo) ?>" data-error-campo="<?= $e($campo) ?>" aria-live="polite"></span>
                         </label>
                     <?php endforeach; ?>
+                    <div class="config-logo">
+                        <label for="marcaLogoArchivo">Logo de la clínica <span>(opcional)</span></label>
+                        <input type="file" id="marcaLogoArchivo" name="logo_archivo" accept="image/jpeg,image/png,image/webp" data-logo-archivo aria-describedby="marcaLogoAyuda marca-error-logo_archivo" hidden>
+                        <button type="button" class="config-logo__soltar" data-logo-soltar>
+                            <span class="config-logo__vista"><img data-logo-vista alt="Vista previa del logo" hidden><i class="fas fa-cloud-upload-alt" data-logo-icono aria-hidden="true"></i></span>
+                            <span><strong>Arrastra una imagen o elige un archivo</strong><span id="marcaLogoAyuda">JPG, PNG o WebP · hasta 5 MB</span></span>
+                        </button>
+                        <button type="button" class="config-logo__cancelar" data-logo-cancelar hidden>Cancelar cambio del logo</button>
+                        <span class="validation-error" id="marca-error-logo_archivo" data-error-campo="logo_archivo" aria-live="polite"></span>
+                    </div>
                 </div>
                 <p class="configuracion-aviso" data-aviso role="status" aria-live="polite"></p>
             </div>
@@ -134,7 +153,9 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
                     </label>
                     <?php foreach (['duracion_minutos' => 'Duración (minutos)', 'margen_minutos' => 'Margen después (minutos)'] as $campo => $etiqueta): ?>
                         <label class="configuracion-campo"><?= $e($etiqueta) ?>
-                            <input name="<?= $e($campo) ?>" required data-config-campo inputmode="numeric" maxlength="10" data-caracteres="0-9" aria-describedby="tipo-error-<?= $e($campo) ?>">
+                            <?php $topeMinutos = $campo === 'duracion_minutos' ? ValidadorConfiguracionClinica::DURACION_MAX : ValidadorConfiguracionClinica::MARGEN_MAX; ?>
+                            <input name="<?= $e($campo) ?>" required data-config-campo inputmode="numeric" maxlength="3" data-caracteres="0-9" data-formato="decimal" data-enteros="3" data-decimales="0" data-maximo="<?= $topeMinutos ?>" placeholder="<?= $campo === 'duracion_minutos' ? 'Ej. 30' : 'Ej. 10' ?>" aria-describedby="tipo-ayuda-<?= $e($campo) ?> tipo-error-<?= $e($campo) ?>">
+                            <span class="configuracion-ayuda" id="tipo-ayuda-<?= $e($campo) ?>"><?= $campo === 'duracion_minutos' ? 'De 1 a ' . $topeMinutos . ' min (12 horas).' : 'De 0 a ' . $topeMinutos . ' min entre citas.' ?></span>
                             <span class="validation-error" id="tipo-error-<?= $e($campo) ?>" data-error-campo="<?= $e($campo) ?>" aria-live="polite"></span>
                         </label>
                     <?php endforeach; ?>
@@ -152,13 +173,15 @@ $camposMarca = ['nombre' => 'Nombre de la clínica', 'telefono' => 'Teléfono', 
         </form>
     </dialog>
 </div>
-<div class="config-agenda-hoja">
+<div class="config-agenda-hoja" data-ajustes-horarios>
 <div id="config-horarios" role="tabpanel" aria-labelledby="config-tab-horarios" data-config-panel="horarios" hidden>
 <?php require __DIR__ . '/horarios.php'; ?>
 </div>
+<script src="js/logo-clinica.js?v=<?= $e(App::assetVersion()) ?>" defer></script>
 <script src="js/configuracion-clinica.js?v=<?= $e(App::assetVersion()) ?>" defer></script>
 <script src="js/dialogos-zooki.js?v=<?= $e(App::assetVersion()) ?>" defer></script>
 <?php require __DIR__ . '/../partials/coordinacion_horarios.php'; ?>
+<script src="js/ajustes-horarios.js?v=<?= $e(App::assetVersion()) ?>" defer></script>
 </div>
         <div class="perfil ajustes-cuenta">
             <?php require __DIR__ . '/../perfil/paneles_cuenta.php'; ?>

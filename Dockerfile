@@ -6,6 +6,7 @@ RUN a2enmod rewrite
 # F0 (B.5): Apache sirve solo public/ (docker/apache-zooki.conf). La raíz del
 # contenedor deja de exponer .env, composer.json, database/ o tests/.
 COPY docker/apache-zooki.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/subidas.ini /usr/local/etc/php/conf.d/zooki-subidas.ini
 
 # Instalar dependencias del sistema y extensiones de PHP necesarias
 RUN apt-get update && apt-get install -y \
@@ -29,7 +30,7 @@ RUN if [ -f "composer.json" ]; then composer install --no-dev --optimize-autoloa
 # Las carpetas de archivos subidos deben existir en la imagen: el volumen
 # "uploads" hereda su dueño al crearse, y si no existen nace de root y Apache
 # no puede escribir en él.
-RUN mkdir -p public/uploads/mascotas public/uploads/clinicos
+RUN mkdir -p public/uploads/mascotas public/uploads/clinicos public/uploads/logos
 
 # Destino de los respaldos (HU-23): lo cubre el volumen "respaldos" de
 # docker-compose.yml y se configura con BACKUP_DIR. Existe en la imagen por la

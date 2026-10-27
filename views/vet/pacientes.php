@@ -13,7 +13,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <div class="section-card pacientes-modulo">
-    <div class="pacientes-barra" role="region" aria-label="Buscar y filtrar pacientes">
+    <div class="pacientes-barra directorio-barra" role="region" aria-label="Buscar y filtrar pacientes">
         <!-- Area: search and status (Filtros Propietarios) -->
         <div class="users-controls-bar__filters is-active" id="searchRowOwners">
             <div class="head-search">

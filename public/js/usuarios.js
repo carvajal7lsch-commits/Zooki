@@ -16,8 +16,11 @@
 
     // C9: preferencia local; la primera visita conserva las tarjetas de v1.12.0.
     const claveVista = 'zooki.usuarios.vista';
-    function cambiarVista(vista) {
-        const elegida = vista === 'tabla' ? 'tabla' : 'tarjetas';
+    const movilUsuarios = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width: 767px)') : null;
+    let preferenciaVista = 'tarjetas';
+    function cambiarVista(vista, persistir = true) {
+        preferenciaVista = vista === 'tabla' ? 'tabla' : 'tarjetas';
+        const elegida = movilUsuarios?.matches ? 'tarjetas' : preferenciaVista;
         modulo.dataset.vista = elegida;
         modulo.querySelectorAll('[data-vista-contenido]').forEach((panel) => {
             panel.hidden = panel.dataset.vistaContenido !== elegida;
@@ -28,7 +31,7 @@
             boton.setAttribute('aria-pressed', String(activo));
         });
         try {
-            localStorage.setItem(claveVista, elegida);
+            if (persistir) localStorage.setItem(claveVista, preferenciaVista);
         } catch (error) {
             console.debug('Preferencia de vista no disponible.', error);
         }
@@ -40,6 +43,7 @@
         console.debug('Preferencia de vista no disponible.', error);
     }
     cambiarVista(vistaGuardada);
+    movilUsuarios?.addEventListener('change', () => cambiarVista(preferenciaVista, false));
     modulo.querySelectorAll('[data-vista-usuarios]').forEach((boton) => {
         boton.addEventListener('click', () => cambiarVista(boton.dataset.vistaUsuarios));
     });
@@ -72,10 +76,11 @@
     }
 
     // ── Pestañas ──────────────────────────────────────────────────────────
-    modulo.querySelectorAll('.tab-btn').forEach((boton) => {
+    const pestanasUsuarios = Array.from(modulo.querySelectorAll('.tab-btn'));
+    pestanasUsuarios.forEach((boton) => {
         boton.addEventListener('click', () => {
             const pestana = boton.dataset.tab;
-            modulo.querySelectorAll('.tab-btn').forEach((b) => {
+            pestanasUsuarios.forEach((b) => {
                 b.classList.toggle('active', b === boton);
                 b.setAttribute('aria-selected', b === boton ? 'true' : 'false');
             });
@@ -188,6 +193,7 @@
     }
 
     function abrirModal(esAlta, persona = null) {
+        modal.dataset.alta = String(esAlta);
         modoCliente(false);
         titulo.textContent = esAlta ? 'Nuevo Usuario' : 'Editar Usuario';
         const icono = modal.querySelector('[data-icono-titulo]');
@@ -335,7 +341,7 @@
                 return;
             }
             actual.innerHTML = nuevo.innerHTML;
-            cambiarVista(modulo.dataset.vista);
+            cambiarVista(preferenciaVista);
             filtrar('clientes');
         } catch (error) {
             console.error('Usuarios:', error);
@@ -543,7 +549,8 @@
         } else if (boton.dataset.accion === 'cancelar-invitacion') {
             cancelarInvitacion(boton);
         } else if (boton.dataset.accion === 'restablecer') {
-            const ok = await zookiConfirmarCorto('Se invalidará la contraseña actual de ' + boton.dataset.nombre + ', se cerrarán sus sesiones abiertas y se enviará un enlace para que el titular cree otra.', 'Restablecer');
+            const descripcion = 'Se invalidará la contraseña actual de ' + boton.dataset.nombre + ', se cerrarán sus sesiones abiertas y se enviará un enlace para que el titular cree otra.';
+            const ok = await zookiConfirmarCorto('¿Restablecer contraseña?', 'Restablecer', [], 'Cancelar', descripcion);
             if (!ok) return;
             const datos = new FormData();
             datos.append('id_usuario', id);

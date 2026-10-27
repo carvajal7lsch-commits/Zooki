@@ -102,8 +102,8 @@ async function zookiConfirmar(mensaje, titulo = '¿Confirmas?', textoBoton = 'S�
 
 /**
  * M5 C3 (decisión del usuario): confirmación corta con el estilo de Zooki.
- * Solo la pregunta, unas filas opcionales [etiqueta, valor] y los botones,
- * sin icono ni explicación. Resuelve a booleano. textoVolver nombra el botón
+ * Pregunta, filas opcionales [etiqueta, valor], descripción opcional y botones.
+ * Resuelve a booleano. textoVolver nombra el botón
  * que no hace nada («Volver» cuando la acción misma es «Cancelar cita»).
  *
  * M5 C4a (decisión del usuario, 2026-10-13): es el modal de Zooki en todo el
@@ -112,7 +112,7 @@ async function zookiConfirmar(mensaje, titulo = '¿Confirmas?', textoBoton = 'S�
  * el foco no sale de la ventana y vuelve a quien la abrió. Los textos van con
  * textContent, sin armar HTML.
  */
-function zookiConfirmarCorto(pregunta, textoBoton, filas = [], textoVolver = 'Cancelar') {
+function zookiConfirmarCorto(pregunta, textoBoton, filas = [], textoVolver = 'Cancelar', descripcion = '') {
     const previo = document.activeElement;
     const crear = (etiqueta, clase, texto) => {
         const nodo = document.createElement(etiqueta);
@@ -128,7 +128,19 @@ function zookiConfirmarCorto(pregunta, textoBoton, filas = [], textoVolver = 'Ca
     panel.setAttribute('aria-labelledby', 'zookiConfirmacionTitulo');
     const titulo = crear('h2', 'zooki-confirmacion__titulo', pregunta);
     titulo.id = 'zookiConfirmacionTitulo';
-    panel.appendChild(titulo);
+    const cabecera = crear('div', 'zooki-confirmacion__cabecera');
+    const cerrarBoton = crear('button', 'zooki-confirmacion__cerrar', '×');
+    cerrarBoton.type = 'button';
+    cerrarBoton.setAttribute('aria-label', 'Cerrar');
+    cabecera.appendChild(titulo);
+    cabecera.appendChild(cerrarBoton);
+    panel.appendChild(cabecera);
+    if (descripcion) {
+        const detalle = crear('p', 'zooki-confirmacion__descripcion', descripcion);
+        detalle.id = 'zookiConfirmacionDescripcion';
+        panel.setAttribute('aria-describedby', detalle.id);
+        panel.appendChild(detalle);
+    }
     if (filas.length) {
         const lista = crear('dl', 'zooki-confirmacion__filas');
         filas.forEach(([etiqueta, valor]) => {
@@ -166,10 +178,12 @@ function zookiConfirmarCorto(pregunta, textoBoton, filas = [], textoVolver = 'Ca
             }
             if (evento.key === 'Tab') {
                 evento.preventDefault();
-                const siguiente = document.activeElement === aceptar ? cancelar : aceptar;
-                siguiente.focus();
+                const controles = [cerrarBoton, cancelar, aceptar];
+                const indice = controles.indexOf(document.activeElement);
+                controles[(indice + (evento.shiftKey ? -1 : 1) + controles.length) % controles.length].focus();
             }
         }
+        cerrarBoton.addEventListener('click', () => cerrar(false));
         cancelar.addEventListener('click', () => cerrar(false));
         aceptar.addEventListener('click', () => cerrar(true));
         fondo.addEventListener('click', (evento) => {

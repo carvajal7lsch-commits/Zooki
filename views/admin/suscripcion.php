@@ -62,7 +62,16 @@ $anualConAhorro = (int) $profesional['precio_anual'] === (int) $profesional['pre
                 <?php if ($s['situacion'] === 'gracia'): ?>
                 <p class="suscripcion__aviso" role="status">Conservas los beneficios durante <?= (int) $s['clinica']['suscripcion_gracia_dias'] ?> días de gracia. Después se aplican los límites gratuitos a nuevas altas.</p>
                 <?php endif; ?>
-                <ul class="suscripcion__beneficios" aria-label="Incluye el plan Profesional">
+                <?php // RN-005: los grafos están en ambos planes; Profesional elimina los límites de volumen. ?>
+                <section class="suscripcion__inteligencia" aria-labelledby="suscripcionInteligenciaTitulo">
+                    <h3 id="suscripcionInteligenciaTitulo">Más apoyo en tu día a día</h3>
+                    <ul class="suscripcion__grafos">
+                        <li><i class="fas fa-stethoscope" aria-hidden="true"></i><div><strong>Apoyo en cada consulta</strong><p>Relaciona síntomas y antecedentes para orientar tu evaluación.</p></div></li>
+                        <li><i class="fas fa-calendar-check" aria-hidden="true"></i><div><strong>Una agenda que prioriza urgencias</strong><p>Encuentra espacios según la prioridad y la disponibilidad del equipo.</p></div></li>
+                    </ul>
+                    <p class="suscripcion__alcance">Incluido en ambos planes. Con Profesional, sin límites de uso.</p>
+                </section>
+                <ul class="suscripcion__beneficios" aria-label="Sin límites con el plan Profesional">
                     <li><i class="fas fa-check" aria-hidden="true"></i>Mascotas sin límite</li>
                     <li><i class="fas fa-check" aria-hidden="true"></i>Citas sin límite</li>
                     <li><i class="fas fa-check" aria-hidden="true"></i>Cuentas de personal sin límite</li>

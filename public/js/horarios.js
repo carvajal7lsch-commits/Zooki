@@ -52,6 +52,7 @@
                 pickers.push(new BlockPicker(entrada(dia, periodo, 'inicio'), entrada(dia, periodo, 'fin'), {
                     minuteInterval: 15,
                     period: periodo,
+                    compactDisplay: raizHorario.closest('[data-ajustes-horarios]') ? 'rango' : false,
                     onTimeChange: () => { actualizarResumen(); guardar(); },
                 }));
             });

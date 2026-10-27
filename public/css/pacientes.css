@@ -3,93 +3,15 @@
 .pacientes-estilo-0 { display: none; }
 
 /* Pulido del dueño: solo cabecera y filtros de Pacientes; conservar tarjetas y formularios. */
-.pacientes-cabecera {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px 28px;
-    margin-bottom: 18px;
-}
-
+/* Distribución de directorios compartida en usuarios.css. */
 .top-header--pacientes { margin-bottom: 20px; }
 .top-header--pacientes .header-left { min-width: 0; }
 .top-header--pacientes .header-right { align-self: flex-start; flex-shrink: 0; }
 .top-header--pacientes .pacientes-cabecera { margin-bottom: 0; padding-top: 12px; }
-
-.pacientes-cabecera .head-title-desc { position: relative; padding-left: 44px; }
-.pacientes-cabecera .users-page-title { font-size: 1.3rem; font-weight: 700; }
-.pacientes-cabecera .users-module-desc { font-size: 0.8rem; }
-.pacientes-cabecera .users-page-title > i {
-    position: absolute;
-    left: 0;
-    top: 4px;
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: var(--z-primary-soft);
-    font-size: 1rem;
-}
-
-.pacientes-cabecera .tabs-wrapper {
-    gap: 4px;
-    padding: 4px;
-    border: 0;
-    border-radius: 12px;
-    background: var(--z-surface);
-    box-shadow: var(--z-shadow-sm);
-}
-
-.pacientes-cabecera .tab-btn { margin: 0; padding: 8px 14px; border: 0; border-radius: 8px; }
-.pacientes-cabecera .tab-btn.active { background: var(--z-primary); color: var(--z-surface); }
-.pacientes-cabecera .tab-btn.active i { color: inherit; }
-
-.pacientes-barra {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px;
-    margin-bottom: 26px;
-    border-radius: 14px;
-    background: var(--z-surface);
-    box-shadow: var(--z-shadow-sm);
-}
-
-.pacientes-barra .users-controls-bar__filters.is-active {
-    display: flex;
-    align-items: center;
-    flex: 1 1 440px;
-    flex-wrap: wrap;
-    gap: 10px;
-    min-width: 0;
-}
-
-.pacientes-barra .head-search { flex: 1 1 180px; min-width: 0; max-width: 400px; }
-.pacientes-barra .search-input { max-width: none; box-sizing: border-box; }
-.pacientes-barra .head-search .search-input { max-width: 400px; }
-.pacientes-barra .search-input input { min-width: 0; width: 100%; font-size: 0.8rem; }
-.pacientes-barra .head-status-filters { flex-wrap: wrap; gap: 8px; }
-.pacientes-barra .segmented-control label { font-size: 0.78rem; padding: 8px 12px; }
-.pacientes-barra .head-view-toggle { flex-shrink: 0; padding-right: 10px; border-right: 1px solid var(--z-border); }
-.pacientes-barra .command-center-actions { gap: 8px; margin-left: auto; }
-.pacientes-barra .btn-create { padding: 9px 12px; font-size: 0.8rem; white-space: nowrap; }
-
 @media (max-width: 767px) {
-    .top-header--pacientes { flex-wrap: wrap; row-gap: 16px; }
-    .top-header--pacientes .header-left { order: 2; flex-basis: 100%; }
-    .top-header--pacientes .header-right { order: 1; }
-    .pacientes-barra { margin-bottom: 22px; }
-    .pacientes-cabecera { gap: 14px; }
-    .pacientes-cabecera .head-top-right { width: 100%; justify-content: flex-start; }
-    .pacientes-barra .users-controls-bar__filters.is-active { flex-basis: 100%; }
-    .pacientes-barra .head-search { flex-basis: 100%; max-width: none; }
-    .pacientes-barra .head-search .search-input { max-width: none; }
-    .pacientes-barra .head-status-filters { width: 100%; }
-    .pacientes-barra .head-view-toggle { border: 0; padding-right: 0; }
-    .pacientes-barra .command-center-actions { flex-wrap: wrap; }
-    .pacientes-barra .btn-create { font-size: 0.75rem; padding: 9px 10px; }
+.top-header--pacientes { flex-wrap: wrap; row-gap: 16px; }
+.top-header--pacientes .header-left { order: 2; flex-basis: 100%; }
+.top-header--pacientes .header-right { order: 1; }
 }
 .pacientes-estilo-1 { display: none; }
 

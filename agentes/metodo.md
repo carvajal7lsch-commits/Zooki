@@ -126,6 +126,10 @@ Al terminar: marca <Xn> en el plan y en agentes/estado.md como "entregada, pendi
 
 ## 11. Modo acelerado (decisión del usuario, 2026-10-20)
 
+**Ajuste del dueño para el pulido de interfaz (2026-10-26):** los retoques visuales llevan revisión puntual y solo las capturas necesarias; si cambia funcionamiento, pruebas dirigidas de lo tocado. Suites completas y PDF/Word se reservan para el cierre del bloque de trabajo. Ante un fallo se repite la comprobación afectada, sin volver a recorrer todo por costumbre. Esta decisión posterior prima sobre la frecuencia de verificación anterior para estas iteraciones de R.
+
+**Reafirmación del dueño (2026-10-27):** en los retoques finales de Ajustes, anotar la verificación funcional/visual pendiente y hacer una pasada consolidada al cerrar el bloque, sin repetir capturas ni reconstrucciones en cada detalle. Durante el retoque, revisión del código y sintaxis de lo editado.
+
 El tiempo apremia y **se mantiene todo el alcance de M4** (no se recorta nada). Para avanzar más rápido:
 
 - **Roles:** arquitecto y revisor = Claude (proyecto de claude.ai); ejecutor = Codex. Ya no se exige una segunda sesión de Codex como revisor independiente.

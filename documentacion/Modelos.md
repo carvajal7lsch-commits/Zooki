@@ -1254,7 +1254,7 @@ La escritura del conocimiento ocurre solo desde el cargador por consola, despué
 
 ## 15. Configuración de marca y tipos de cita — M4 C1 (HU-7.4)
 
-RE-7.4.1–6 y configuración de RE-4.6.1; RN-701 y RNF-11. Conserva los horarios de HU-7.1. El margen operativo, la urgencia con clínica cerrada y la pausa real se completan en C3/C4a/C7a, respectivamente.
+RE-7.4.1–6 y configuración de RE-4.6.1; RN-701 y RNF-11. Desde la decisión del dueño del 2026-10-26: duración de 1 a 720 minutos, margen de 0 a 120 y logo por elección/arrastre con vista previa (JPG/PNG/WebP reales de hasta 5 MB). Correo de contacto validado por formato, sin unicidad de cuenta. Conserva los horarios de HU-7.1. El margen operativo, la urgencia con clínica cerrada y la pausa real se completan en C3/C4a/C7a, respectivamente.
 
 ```mermaid
 flowchart TD
@@ -1272,17 +1272,23 @@ flowchart TD
   H --> UI
   G -- Sí --> I{"Clínica del formulario coincide con contexto autorizado?"}
   I -- No --> J["403 e intento auditado; sin cambios"]
-  I -- Sí --> T["Iniciar transacción exterior; bloquear clínica, usuario y vínculo en ese orden B1"]
+  I -- Sí --> LO{"Logo nuevo en la marca?"}
+  LO -- No --> T
+  LO -- Sí --> LV{"Peso y contenido real de imagen validos?"}
+  LV -- No --> H
+  LV -- Sí --> LG["Guardar logo con nombre generado por clinica; sin borrar el anterior"]
+  LG --> T["Iniciar transacción exterior; bloquear clínica, usuario y vínculo en ese orden B1"]
   T --> V{"Clínica/usuario/vínculo administrador siguen activos?"}
-  V -- No --> R["Rollback; 403 e intento auditado fuera de la transacción"]
+  V -- No --> R["Rollback; retirar solo logo nuevo si existe; 403 e intento auditado fuera de la transacción"]
   V -- Sí --> K{"Marca propia, tipo nuevo o tipo existente propio bloqueado?"}
   K -- No --> R
   K -- Sí --> W["Guardar marca o tipo; desactivar/reactivar sin borrar ni alterar snapshots de citas"]
   W --> AU["Registrar antes/después y actor/clínica en auditoría de la misma transacción"]
   AU --> OK{"Escritura y auditoría correctas?"}
-  OK -- No --> ERR["Rollback completo; error sin éxito aparente; permitir reintento"]
+  OK -- No --> ERR["Rollback completo y retirar solo logo nuevo; error sin exito aparente; permitir reintento"]
   OK -- Sí --> COM["Commit; devolver registro canónico; actualizar nombre de contexto si cambió"]
-  COM --> U["Actualizar formulario/lista/preview inmediatamente y luego aviso breve; rehabilitar controles"]
+  COM --> LC["Confirmar logo nuevo; persistir ruta en url_logo sin esquema nuevo"]
+  LC --> U["Actualizar formulario/lista/preview inmediatamente y luego aviso breve; rehabilitar controles"]
   ERR --> UI
   U --> UI
   L --> OUT["Consumidores autorizados: marca de la clínica del contexto o del acto; global conserva Zooki"]

@@ -2,9 +2,68 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-26
+**Actualizado:** 2026-10-27
 
 ## Ahora
+
+### Usuarios móvil y barra superior — entregada, pendiente de revisión (2026-10-27)
+
+- **Corrección móvil tras comparación del dueño, escribió Codex:** alta solo «+» de 40×40, sin subtítulo ni clínica repetida bajo los títulos compartidos admin/vet; contexto dentro de Cuenta conservado. Usuarios con márgenes de 16 px y filas de 64 px; búsqueda de Clientes completa y espacio para la navegación inferior. Persona/Cuenta recuperan asas de cierre sin X adicional; alta/edición conservan X con borde y asa decorativa según mockup. RUsuariosCabecera correcta en ambos roles y 360/390/820/1366, PHP/JS/diff correctos; capturas puntuales revisadas en scratch/r/usuarios-cabecera/despues. Entregada, pendiente de revisión de Claude y aceptación del dueño; R abierta, sin suites completas ni exportaciones.
+
+- **Retoques de ventanas, escribió Codex:** confirmación compartida con X que cancela y descripción opcional; Restablecer contraseña usa título corto y explicación normal. Editar usuario alinea nombre/documento debajo del título. 41 pruebas dirigidas correctas (cancelación, foco, texto seguro y formularios), sintaxis PHP/JS correcta; sin capturas ni suites completas repetidas. Entregada, pendiente de revisión de Claude y revisión visual del dueño; R abierta.
+
+- **Altura de tarjetas, escribió Codex:** cuadrículas de Personal/Clientes desde 768 px con filas de igual altura y acciones al pie; avisos completos, sin altura fija. Solo CSS acotado a Usuarios, sin cambiar filas móviles ni tabla. Revisión puntual de cascada/diff; validación visual del dueño y cierre consolidado de R pendientes, sin repetir suites/capturas. Entregada, pendiente de revisión de Claude.
+
+- **Adaptación posterior de escritorio, escribió Codex:** Usuarios toma la cabecera de Pacientes/Clientes del veterinario: título y pestañas arriba, búsqueda/filtros/vista/Nuevo en una barra blanca. Reglas CSS compartidas; mismos controles, tarjetas y acciones, con el móvil aprobado conservado. 18 comprobaciones dirigidas correctas, PHP/JS sin errores y sin desborde a 360/390/820/1366; capturas revisadas en scratch/r/usuarios-cabecera/despues (1366-personal.png y 390-personal.png). Entregada, pendiente de revisión de Claude y aceptación del dueño; R abierta, sin suites completas ni exportaciones en este ajuste.
+
+- **Corrección posterior de Codex:** correo largo que desbordaba la tarjeta compartida de Clientes/Propietarios; ahora se parte dentro de su ancho, completo y sin encoger el icono. Solo CSS. RContactoClientes correcta en tarjetas 220/266 px y pantallas 360/390; sin repetir otras suites o capturas. Pendiente de revisión de Claude y aceptación del dueño.
+
+- **Escribió Codex; mockups aportados y autorizados por el dueño; revisa Claude.** Personal/Clientes en filas móviles compactas con hoja de acciones existentes, conteos/filtros y formulario inferior. Cabecera de admin/vet según la nueva lámina: clínica/rol una vez, campana y avatar con menú de escritorio/hoja móvil; reemplaza los tres puntos de la iteración anterior. Iconos de navegación ligeros en reposo y rellenos activos; logo conservado. No se concede Usuarios al veterinario ni se cambian permisos.
+- **Verificación dirigida:** 37 pruebas existentes de Usuarios correctas y RUsuariosCabecera correcta en 360/390/820/1366 con PHP real, SQLite efímero y servidor simulado. Sin desborde, acciones/invitación/autodesactivación/RN-115, búsqueda, alta y cuenta/contexto/salir en ambos roles. Sintaxis PHP/JS correcta; capturas revisadas en scratch/r/usuarios-cabecera/despues. Detalle en specs/pulido-interfaz.md; sin suites completas ni exportaciones documentales.
+- **Sigue:** aceptación del dueño y revisión de Claude; no pasar a otra pantalla sin indicación. Auditoría y cierre consolidado de Ajustes conservan sus pendientes; R abierta, 2.2.0 sin publicar. Sin backend, esquema, rutas nuevas, .env, base de trabajo, servicios reales, commit ni push. Cambios anteriores conservados.
+
+### Auditoría — rediseño entregado, pendiente de revisión (2026-10-27)
+
+- **Escribió Codex; mockups aportados y autorizados por el dueño; revisa Claude.** Una hoja con herramientas compactas, periodos/filtros existentes, acciones y módulos en palabras; filas de dos líneas en celular. Detalle lateral/inferior con cambios reales de solo lectura, datos protegidos y filtros en hoja inferior. Exportación Excel/PDF agrupada y completa sobre el lote del servidor; navegación a todos los lotes conservada.
+- **Verificación dirigida:** RAuditoria, 2 pruebas correctas con PHP real/SQLite efímero/Chrome: 360/390/820/1366 sin desborde, escritorio sin scroll de página, detalle/escape/secretos, filtros/periodo, exportaciones simuladas completas, cruce de lote y vacío. Capturas finales en scratch/r/auditoria/despues. Resultado/trazabilidad en specs/pulido-interfaz.md. No se repitieron suites completas ni exportaciones documentales.
+- **Sigue:** prueba del dueño y revisión de Claude. La pasada consolidada de Ajustes sigue pendiente; el dueño autorizó pasar a Auditoría con su mockup. R abierta y 2.2.0 sin publicar; no avanzar a otra pantalla sin indicación. Sin backend, esquema o permisos nuevos, .env, base de trabajo, commit ni push; cambios anteriores conservados.
+
+### Acabado móvil de Ajustes/perfil y cabecera común — entregada, pendiente de revisión (2026-10-27)
+
+- **Texto de Suscripción ajustado por Codex a petición del dueño:** beneficios breves de apoyo en consulta y prioridad de urgencias, sin mencionar grafos al usuario. Sin cambios de planes, funciones o precios; revisión de fuente/sintaxis, incluida en la pasada pendiente de Ajustes.
+
+- **Escribió Codex; supervisa el dueño; revisa Claude.** Por petición expresa del dueño se agrupa el barrido de piezas comunes: superficie/márgenes de Horarios, Ausencias y Suscripción; regreso solo con flecha; perfil del veterinario con el mismo patrón de menú/secciones y sus permisos actuales. Cabecera compartida de todas las vistas admin/vet: controles agrupados en tres puntos en celular, junto al título al abrir una sección de Ajustes/perfil; escritorio con controles visibles. Notificaciones, cuenta y contexto siguen accesibles.
+- **Verificación pendiente al cierre de Ajustes:** pruebas ampliadas AjustesAdmin/PerfilSecciones, vistas 360/390/tableta/escritorio, calendario por pasos, ambos roles, encabezados compartidos y navegación de avisos/contexto. Solo revisión de código y sintaxis en esta iteración; no se afirma validación visual en navegador. Registro y decisión del dueño en specs/pulido-interfaz.md.
+- **Sigue:** prueba del dueño, pasada consolidada de Ajustes cuando la indique y revisión de Claude. R abierta; 2.2.0 sin publicar. Sin cambios de backend, esquema o permisos; cambios anteriores conservados, sin commit ni push.
+
+### Retoques finales de Ajustes — entregada, pendiente de revisión (2026-10-27)
+
+- **Escribió Codex; supervisa el dueño; revisa Claude.** El calendario ya no recibe el foco al entrar al modal; hora HH:mm con controles separados y Listo, conservando los segundos enviados. Mi cuenta integra el rol como insignia en su encabezado y la nota de asignación de roles corresponde al contexto. Suscripción destaca los grafos clínico y de agenda también en celular; el dueño confirmó conservar RN-005, capacidades en ambos planes y Profesional sin límites de volumen.
+- **Por petición expresa del dueño:** revisión de código y sintaxis en este retoque; prueba funcional/visual consolidada al cerrar Ajustes, anotada en specs/pulido-interfaz.md, sin repetir capturas, suites ni exportaciones en cada detalle. RAusenciasCierres ampliada y pendiente de ejecución. No se da por verificado en navegador este último ajuste.
+- **Corrección posterior de Codex (2026-10-27):** reproducido el cierre accidental con clic real en la fecha. Al abrirse el popover entre pointerdown y pointerup, el clic podía tener como destino el diálogo; ahora solo cierra si el gesto empieza y termina fuera de su rectángulo. Prueba dirigida RAusenciasCierres correcta en ambos modales y cuatro anchos, sin repetir suites ni capturas; Mi cuenta/Suscripción siguen pendientes de la pasada final.
+- **Último ajuste solicitado, escribió Codex (2026-10-27):** fecha y hora en dos pasos; al elegir el día se oculta el calendario y aparece un panel más pequeño con la fecha, Cambiar día y HH:mm/Listo. Entrada de dos dígitos, horas 00–23 y minutos 00–59, también al pegar; conserva los segundos del valor enviado. Revisión de código/sintaxis realizada; ampliación de RAusenciasCierres pendiente de ejecución en el cierre de Ajustes, según la decisión de velocidad del dueño. Sin capturas ni suites repetidas en este retoque.
+- **Sigue:** aceptación visual del dueño, pasada de cierre de Ajustes cuando la indique y revisión de Claude. R abierta, versión 2.2.0 sin publicar; sin backend, esquema, permisos, commit ni push. Se conservaron los cambios anteriores.
+
+### Ausencias y cierres — entregada, pendiente de revisión (2026-10-27)
+
+- **Escribió Codex; supervisa el dueño; revisa Claude.** Retoques solicitados tras Horarios: tres secciones unidas por separadores en la hoja de Ajustes, calendario del sistema también en Nuevo cierre y selector flotante que no cambia la altura del modal. Motivos sugeridos con Otro motivo libre y «(opcional)» al lado de Motivo; se conserva el campo de texto y sus validaciones existentes.
+- **Verificación dirigida:** 12 pruebas de CoordinacionHorarios, SelectorFechas y RAusenciasCierres correctas (una expectativa antigua actualizada al parcial compartido y repetida por separado). Chrome con calendario real a 360/390/820/1366: sin desborde, ventana estable, calendario interactivo dentro del viewport, guardado simulado de ambos formularios y motivos libres. Tres vistas PHP sin errores de sintaxis; capturas en `scratch/r/ajustes-ausencias/despues/`.
+- **Sigue:** aceptación visual del dueño y revisión de Claude. R abierta, C fuera de P1 por decisión del dueño (2026-10-26) y versión 2.2.0 sin publicar. Sin backend, esquema, rutas ni permisos nuevos; sin suites completas ni exportaciones en este retoque. Cambios anteriores conservados; sin commit ni push.
+
+### Horarios — entregada, pendiente de revisión (2026-10-26)
+
+- **Escribió Codex; propuesta aprobada por el dueño («Aplicar la propuesta»); revisa Claude.** Dos pestañas interiores, atención/equipo, semana por bloques con rangos que caben, resumen en franja sin verde, selector de veterinario junto a Aplicar a varios días y solicitudes existentes en ventana con contador. Celular con filas plegables; cambiar de ancho conserva los mismos controles y los turnos.
+- **Verificación dirigida:** 15 pruebas existentes de CoordinacionHorarios/AjustesAdmin correctas y nueva RHorariosAjustes para 360/390/820/1024/1366, rangos dentro del control, rotación sin duplicar, guardados/solicitudes y recarga. Capturas reales simuladas en `scratch/r/ajustes-horarios/despues/` a 360/390/820/1366/1440; clínica y equipo sin scroll interior en 1366×768. Resultado en specs/pulido-interfaz.md.
+- **Sigue:** aceptación visual del dueño y revisión de Claude; no pasar a otra pantalla hasta «listo». R abierta y versión 2.2.0 sin publicar. Sin backend, esquema, permisos ni endpoints nuevos; tampoco .env, base de trabajo, API/SMTP, suites completas, PDF/Word, commit ni push en esta iteración. Se conservaron los cambios anteriores pendientes.
+- **Velocidad:** revisión puntual para retoques, pruebas dirigidas para funcionamiento y suites/descargas al cerrar el bloque, según la decisión del dueño registrada en metodo.md §11.
+
+### Datos de la clínica — entregada, pendiente de revisión (2026-10-26)
+
+- **Escribió Codex; supervisa el dueño; revisa Claude.** Suscripción anterior aceptada por el dueño y guardada en 0f61328. En esta entrega se aplica la propuesta aprobada de Marca y contacto: nombre/logo juntos, contacto en filas, selección o arrastre de JPG/PNG/WebP de hasta 5 MB, vista previa y conservación del anterior al cancelar o fallar. Placeholders, teléfonos con +57 y errores a la izquierda; un error sustituye a la ayuda y no se duplica en el pie.
+- **Decisiones expresas del dueño:** duración de 1 a 720 minutos y margen de 0 a 120, compartidos en entrada/AJAX/servidor. Correo de contacto validado por formato, sin unicidad de cuenta. Recepción del logo por el guardado existente, permisos/contexto/CSRF y limpieza solo del archivo nuevo tras rollback; sin esquema ni migración, versión 2.2.0 sin publicar. Docker admite los logos sin reducir el tope de los adjuntos clínicos existentes.
+- **Verificación:** PHP completo sin host 1205 pruebas/9601 aserciones (94 omitidas de motor); pruebas HTTP reales sobre SQLite efímero para 5 MB, MIME, permisos, CSRF y auditoría fallida. Tres formatos por selección/arrastre, FormData y cancelación en Chrome. Capturas antes/propuesta/después a 360/390/820/1366/1440 en `scratch/r/ajustes-clinica/`, sin desborde ni errores JS. JS completo 372/372; montajes manuales de Horarios adaptados al componente y guardado canónico del teléfono comprobado sin repetir +57. HU/RE/Modelos/Historial y PDF/Word actualizados, índices correctos. Detalle en specs/pulido-interfaz.md.
+- **Sigue:** revisión de Claude y aceptación del dueño; no empezar Horarios ni otra pantalla hasta «listo». R completa sigue abierta, C quedó fuera de P1 por decisión del dueño del 2026-10-26. Sin commit ni push; sin .env, base de trabajo ni API/SMTP reales.
+
 
 ### Suscripción dentro de Ajustes — entregada, pendiente de revisión (2026-10-26)
 

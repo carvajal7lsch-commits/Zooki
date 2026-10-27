@@ -1,197 +1,112 @@
-<?php require_once __DIR__ . '/../../config/App.php'; ?>
-<link rel="stylesheet" href="css/gestion.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
-<link rel="stylesheet" href="css/auditoria.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
 <?php
-/**
- * HU-T.8 — Auditoría de la clínica activa. AuditoriaController entrega $logs,
- * $total, $page, $acciones, $tablas y $stats_hoy, ya filtrados por clínica.
- */
-$accionIcons = [
-    'LOGIN' => 'fa-sign-in-alt', 'LOGIN_FAIL' => 'fa-user-lock', 'LOGOUT' => 'fa-sign-out-alt',
-    'INSERT' => 'fa-plus-circle', 'UPDATE' => 'fa-edit', 'DELETE' => 'fa-trash-alt',
-    'VIEW' => 'fa-eye', 'OTHER' => 'fa-cog'
-];
-
-// Estadísticas de hoy para los KPIs de seguridad
-if (!isset($stats_hoy) || !is_array($stats_hoy)) {
-    $stats_hoy = [];
-}
-$alertas_criticas = ($stats_hoy['DELETE'] ?? 0) + ($stats_hoy['LOGIN_FAIL'] ?? 0);
-$intentos_fallidos = $stats_hoy['LOGIN_FAIL'] ?? 0;
-$total_acciones = array_sum($stats_hoy);
-
-$perPage = 50; // O el valor que tenga en el controlador
-$totalPages = isset($total) ? ceil($total / $perPage) : 1;
-
-if (!isset($acciones) || !is_array($acciones)) $acciones = [];
-if (!isset($tablas) || !is_array($tablas)) $tablas = [];
-if (!isset($logs) || !is_array($logs)) $logs = [];
+require_once __DIR__ . '/../../config/App.php';
+// HU-T.8 / RE-T.8.2–4: presentación de los datos ya acotados por el controlador.
+$e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
+$etiquetasAccion = ['LOGIN' => 'Inicio de sesión', 'LOGIN_FAIL' => 'Acceso fallido', 'LOGOUT' => 'Cierre de sesión', 'INSERT' => 'Creó', 'UPDATE' => 'Editó', 'DELETE' => 'Eliminó', 'VIEW' => 'Consultó', 'OTHER' => 'Otro'];
+$etiquetasModulo = ['usuarios' => 'Usuarios', 'usuario_clinica' => 'Equipo', 'clinicas' => 'Clínica', 'citas' => 'Citas', 'mascotas' => 'Pacientes', 'consultas' => 'Consultas', 'tipos_cita' => 'Tipos de cita', 'horarios_clinica' => 'Horarios de la clínica', 'horarios_veterinario' => 'Horarios del equipo', 'propuestas_horario' => 'Propuestas de horario', 'ausencias_veterinario' => 'Ausencias', 'cierres_clinica' => 'Cierres de la clínica', 'suscripciones' => 'Suscripción'];
+$nombreModulo = static fn ($tabla): string => $etiquetasModulo[$tabla ?? ''] ?? ($tabla ? ucfirst(str_replace('_', ' ', $tabla)) : 'Sistema');
+// El detalle es de lectura: no se publican claves o tokens dentro del marcado de la página.
+$ocultarSecretos = static function ($valor) use (&$ocultarSecretos) {
+    if (!is_array($valor)) return $valor;
+    foreach ($valor as $clave => $dato) {
+        $valor[$clave] = preg_match('/password|contrasen|token|secret|credencial|authorization|cookie|api.?key|llave|firma|hash/i', (string) $clave) ? '[Protegido]' : $ocultarSecretos($dato);
+    }
+    return $valor;
+};
+$leerCambios = static function ($valor) use ($ocultarSecretos): array {
+    $datos = is_array($valor) ? $valor : json_decode((string) $valor, true);
+    return is_array($datos) ? $ocultarSecretos($datos) : [];
+};
+$logs = $logs ?? [];
+$acciones = $acciones ?? [];
+$tablas = $tablas ?? [];
+$stats_hoy = $stats_hoy ?? [];
+$total = (int) ($total ?? 0);
+$page = max(1, (int) ($page ?? 1));
+$perPage = (int) ($perPage ?? 50);
+$totalPages = max(1, (int) ceil($total / $perPage));
+$baseFiltros = array_intersect_key($_GET, array_flip(['usuario', 'accion', 'tabla', 'fecha_desde', 'fecha_hasta']));
+$paginaAuditoria = static fn (int $numero): string => 'index.php?' . http_build_query(array_merge($baseFiltros, ['action' => 'admin_auditoria', 'page' => $numero]));
+$filtrosActivos = count(array_filter($baseFiltros, static fn ($valor): bool => (string) $valor !== ''));
 ?>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
-
-<div class="animate__animated animate__fadeIn">
-    <!-- Header de Seguridad -->
-    <div class="header-container-white gestion-cabecera">
-        <div class="head-title-desc gestion-descripcion">
-            <h1 class="users-page-title gestion-titulo"><i class="fas fa-shield-alt gestion-icono-azul"></i> Centro de Seguridad</h1>
-            <p class="users-module-desc gestion-subtitulo">Monitorización de actividad y cumplimiento</p>
+<link rel="stylesheet" href="css/auditoria.css?v=<?= $e(App::assetVersion()) ?>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js" defer></script>
+<section class="auditoria" data-auditoria data-total="<?= $total ?>" data-offset="<?= ($page - 1) * $perPage ?>" aria-label="Registro de auditoría">
+    <form id="auditoriaFiltros" action="index.php" method="get" class="auditoria-herramientas">
+        <input type="hidden" name="action" value="admin_auditoria">
+        <div class="auditoria-periodos" role="group" aria-label="Periodo">
+            <?php foreach (['hoy' => 'Hoy', '7' => '7 días', '30' => '30 días', 'rango' => 'Rango'] as $clave => $periodo): ?>
+                <button type="button" data-periodo="<?= $e($clave) ?>" aria-pressed="<?= $clave === 'rango' ? 'true' : 'false' ?>"><?= $e($periodo) ?></button>
+            <?php endforeach; ?>
         </div>
-        
-        <!-- Mini KPIs Compactos Integrados -->
-        <div class="mini-kpis-container gestion-indicadores">
-            <div class="mini-kpi">
-                <svg id="kpi-eventos-spark" data-auditoria-spark data-valor="<?= (int) $total_acciones ?>" data-color="#0052FF" class="kpi-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
-                <div class="mini-kpi-content">
-                    <span class="mini-kpi-value" id="kpi-eventos"><?= number_format($total_acciones) ?></span>
-                    <span class="mini-kpi-label">Total Eventos</span>
-                </div>
-            </div>
-            <div class="kpi-divider"></div>
-            <div class="mini-kpi">
-                <svg id="kpi-criticas-spark" data-auditoria-spark data-valor="<?= (int) $alertas_criticas ?>" data-color="#EF4444" class="kpi-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
-                <div class="mini-kpi-content">
-                    <span class="mini-kpi-value" id="kpi-criticas"><?= number_format($alertas_criticas) ?></span>
-                    <span class="mini-kpi-label">Alertas Críticas</span>
-                </div>
-            </div>
-            <div class="kpi-divider"></div>
-            <div class="mini-kpi">
-                <svg id="kpi-fallidos-spark" data-auditoria-spark data-valor="<?= (int) $intentos_fallidos ?>" data-color="#F59E0B" class="kpi-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
-                <div class="mini-kpi-content">
-                    <span class="mini-kpi-value" id="kpi-fallidos"><?= number_format($intentos_fallidos) ?></span>
-                    <span class="mini-kpi-label">Logins Fallidos</span>
-                </div>
+        <label class="auditoria-buscador"><i class="fas fa-search" aria-hidden="true"></i><input type="search" name="usuario" value="<?= $e($_GET['usuario'] ?? '') ?>" placeholder="Buscar persona" aria-label="Persona: nombre, documento o correo"></label>
+        <div class="auditoria-selectores" data-filtros-escritorio>
+            <div class="auditoria-selectores__campos" data-selectores>
+                <label><span class="auditoria-sr">Acción</span><select name="accion" form="auditoriaFiltros" aria-label="Acción"><option value="">Todas las acciones</option><?php foreach ($acciones as $accion): ?><option value="<?= $e($accion) ?>" <?= ($_GET['accion'] ?? '') === $accion ? 'selected' : '' ?>><?= $e($etiquetasAccion[$accion] ?? 'Otra acción') ?></option><?php endforeach; ?></select></label>
+                <label><span class="auditoria-sr">Módulo</span><select name="tabla" form="auditoriaFiltros" aria-label="Módulo"><option value="">Todos los módulos</option><?php foreach ($tablas as $tabla): ?><option value="<?= $e($tabla) ?>" <?= ($_GET['tabla'] ?? '') === $tabla ? 'selected' : '' ?>><?= $e($nombreModulo($tabla)) ?></option><?php endforeach; ?></select></label>
             </div>
         </div>
-
-        <div class="header-actions gestion-acciones">
-            <button class="btn-secondary" data-ui-accion="exportar-auditoria-excel">
-                <i class="fas fa-file-excel gestion-icono-azul"></i> Excel
-            </button>
-            <button class="btn-secondary" data-ui-accion="exportar-auditoria-pdf">
-                <i class="fas fa-file-pdf gestion-icono-azul"></i> PDF
-            </button>
+        <button type="button" class="auditoria-boton auditoria-filtros-abrir" data-abrir-dialogo="auditoriaFiltrosDialogo"><i class="fas fa-filter" aria-hidden="true"></i> Filtros<span class="auditoria-conteo" data-filtros-conteo <?= $filtrosActivos ? '' : 'hidden' ?>><?= $filtrosActivos ?></span></button>
+        <div data-exportar-escritorio>
+            <details class="auditoria-exportar" data-exportar><summary class="auditoria-boton"><i class="fas fa-download" aria-hidden="true"></i> Exportar<i class="fas fa-chevron-down" aria-hidden="true"></i></summary><div class="auditoria-exportar__opciones"><button type="button" data-ui-accion="exportar-auditoria-excel">Excel</button><button type="button" data-ui-accion="exportar-auditoria-pdf">PDF</button></div></details>
         </div>
+        <button type="submit" class="auditoria-sr">Buscar</button>
+    </form>
+    <div class="auditoria-resumen" aria-label="Actividad de las últimas 24 horas">
+        <span><strong><?= number_format(array_sum($stats_hoy), 0, ',', '.') ?> eventos</strong> <span class="auditoria-resumen__periodo">en las últimas 24 h</span></span>
+        <button type="button" class="auditoria-resumen__chip" data-accion-rapida="DELETE"><?= (int) ($stats_hoy['DELETE'] ?? 0) ?> eliminaciones</button>
+        <button type="button" class="auditoria-resumen__chip" data-accion-rapida="LOGIN_FAIL"><?= (int) ($stats_hoy['LOGIN_FAIL'] ?? 0) ?> accesos fallidos</button>
+        <a href="index.php?action=admin_auditoria" class="auditoria-limpiar" <?= $filtrosActivos ? '' : 'hidden' ?>>Limpiar filtros</a>
     </div>
-
-    <!-- Filtros -->
-    <div class="auditoria-filtros-caja">
-        <form method="GET" action="index.php" class="auditoria-filtros">
-            <input type="hidden" name="action" value="admin_auditoria">
-            
-            <div class="auditoria-filtro">
-                <label class="auditoria-filtro-etiqueta">Persona</label>
-                <input type="text" name="usuario" value="<?=htmlspecialchars($_GET['usuario']??'')?>" placeholder="Nombre, documento o correo" class="auditoria-campo">
-            </div>
-            
-            <div class="auditoria-filtro">
-                <label class="auditoria-filtro-etiqueta">Tipo Acción</label>
-                <select name="accion" class="auditoria-select">
-                    <option value="">Todas</option>
-                    <?php foreach($acciones as $a): ?>
-                        <option value="<?=$a?>" <?=($_GET['accion']??'')===$a?'selected':''?>><?=$a?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
-            <div class="auditoria-filtro">
-                <label class="auditoria-filtro-etiqueta">Tabla Afectada</label>
-                <select name="tabla" class="auditoria-select">
-                    <option value="">Todas</option>
-                    <?php foreach($tablas as $t): ?>
-                        <option value="<?=$t?>" <?=($_GET['tabla']??'')===$t?'selected':''?>><?=$t?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
-            <div class="auditoria-filtro">
-                <label class="auditoria-filtro-etiqueta">Desde</label>
-                <input type="date" name="fecha_desde" value="<?=htmlspecialchars($_GET['fecha_desde']??'')?>" class="auditoria-campo">
-            </div>
-            
-            <div class="auditoria-filtro">
-                <label class="auditoria-filtro-etiqueta">Hasta</label>
-                <input type="date" name="fecha_hasta" value="<?=htmlspecialchars($_GET['fecha_hasta']??'')?>" class="auditoria-campo">
-            </div>
-            
-            <button type="submit" class="auditoria-buscar"><i class="fas fa-search"></i> Buscar</button>
-            <a href="index.php?action=admin_auditoria" class="auditoria-limpiar"><i class="fas fa-eraser"></i> Limpiar</a>
-        </form>
-    </div>
-
-    <!-- Tabla Estilizada -->
-    <div class="auditoria-tabla-caja">
-        <div class="table-responsive auditoria-tabla-scroll">
-            <table class="data-table auditoria-tabla" id="tablaAuditoria">
-                <thead class="auditoria-tabla-cabecera">
-                    <tr>
-                        <th class="auditoria-tabla-etiqueta">Fecha/Hora</th>
-                        <th class="auditoria-tabla-etiqueta">Usuario</th>
-                        <th class="auditoria-tabla-etiqueta">Acción</th>
-                        <th class="auditoria-tabla-etiqueta">Tabla</th>
-                        <th class="auditoria-tabla-etiqueta">Descripción</th>
-                        <th class="auditoria-tabla-etiqueta">IP</th>
+    <div class="auditoria-listado">
+        <table class="auditoria-tabla" id="tablaAuditoria">
+            <thead><tr><th>Cuándo</th><th>Quién</th><th>Acción</th><th>Qué</th><th><span class="auditoria-sr">Ver detalle</span></th></tr></thead>
+            <tbody>
+                <?php if (!$logs): ?>
+                    <tr><td colspan="5" class="auditoria-vacia"><i class="fas fa-search" aria-hidden="true"></i><p>No hay eventos para estos filtros.</p><a href="index.php?action=admin_auditoria">Limpiar filtros</a></td></tr>
+                <?php endif; ?>
+                <?php foreach ($logs as $log):
+                    $nombre = $log['usuario_nombre'] ?? 'Sistema';
+                    $partes = array_values(array_filter(explode(' ', trim($nombre))));
+                    $iniciales = mb_strtoupper(mb_substr($partes[0] ?? 'S', 0, 1) . mb_substr($partes[1] ?? '', 0, 1));
+                    $fecha = strtotime($log['fecha_hora']);
+                    $datosDetalle = ['fecha' => date('d/m/Y H:i', $fecha), 'persona' => $nombre, 'accion' => $log['accion'], 'etiqueta' => $etiquetasAccion[$log['accion']] ?? 'Otra acción', 'modulo' => $nombreModulo($log['tabla_afectada'] ?? null), 'tabla' => $log['tabla_afectada'] ?? '—', 'descripcion' => $log['descripcion'] ?? 'Sin descripción', 'ip' => $log['ip_address'] ?? '—', 'registro' => $log['registro_id'] ?? null, 'antes' => $leerCambios($log['datos_anteriores'] ?? null), 'despues' => $leerCambios($log['datos_nuevos'] ?? null)];
+                ?>
+                    <tr class="auditoria-fila" data-evento="<?= $e(json_encode($datosDetalle, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)) ?>" tabindex="0" aria-label="<?= $e('Ver evento de ' . $nombre . ', ' . $datosDetalle['fecha']) ?>">
+                        <td class="auditoria-cuando"><span class="auditoria-fecha-dia"><?= date('d/m/Y', $fecha) ?></span><span class="auditoria-hora"><?= date('H:i', $fecha) ?></span></td>
+                        <td class="auditoria-persona"><span class="auditoria-avatar" aria-hidden="true"><?= $e($iniciales) ?></span><span><?= $e($nombre) ?></span></td>
+                        <td class="auditoria-accion"><span class="auditoria-insignia" data-accion="<?= $e($log['accion']) ?>"><?= $e($datosDetalle['etiqueta']) ?></span></td>
+                        <td class="auditoria-que"><strong><?= $e($datosDetalle['modulo']) ?></strong><span> · <?= $e($datosDetalle['descripcion']) ?></span></td>
+                        <td class="auditoria-ver"><button type="button" class="auditoria-ver__boton" aria-label="<?= $e('Ver detalle del evento de ' . $nombre) ?>"><i class="fas fa-chevron-right" aria-hidden="true"></i></button></td>
                     </tr>
-                </thead>
-                <tbody>
-                    <?php if(empty($logs)): ?>
-                        <tr><td colspan="6" class="auditoria-vacia"><i class="fas fa-search auditoria-vacia-icono"></i><br>No hay registros de auditoría para estos filtros.</td></tr>
-                    <?php else: ?>
-                        <?php foreach($logs as $log): 
-                            $icon = $accionIcons[$log['accion']] ?? 'fa-circle';
-                        ?>
-                            <tr class="auditoria-fila">
-                                <td class="auditoria-fecha">
-                                    <i class="far fa-clock auditoria-reloj"></i>
-                                    <?= date('d/m/Y H:i', strtotime($log['fecha_hora'])) ?>
-                                </td>
-                                <td class="auditoria-persona">
-                                    <?= htmlspecialchars($log['usuario_nombre'] ?? 'Sistema') ?>
-                                </td>
-                                <td class="auditoria-celda">
-                                    <span data-accion="<?= htmlspecialchars($log['accion'], ENT_QUOTES, 'UTF-8') ?>" class="auditoria-insignia">
-                                        <i class="fas <?= $icon ?>"></i> <?= htmlspecialchars($log['accion'], ENT_QUOTES, 'UTF-8') ?>
-                                    </span>
-                                </td>
-                                <td class="auditoria-entidad">
-                                    <?= htmlspecialchars($log['tabla_afectada'] ?? '—') ?>
-                                </td>
-                                <td class="auditoria-descripcion-evento">
-                                    <?= htmlspecialchars($log['descripcion'] ?? 'Sin descripción') ?>
-                                    <?php if(!empty($log['registro_id'])): ?>
-                                        <br><small class="auditoria-gris">ID: <?= htmlspecialchars($log['registro_id']) ?></small>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="auditoria-ip">
-                                    <?= htmlspecialchars($log['ip_address'] ?? '—') ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
-
-    <!-- Paginación -->
-    <?php if($totalPages > 1): ?>
-        <div class="auditoria-paginacion">
-            <?php for($i=1; $i<=$totalPages; $i++): ?>
-                <a href="index.php?action=admin_auditoria&page=<?=$i?>&usuario=<?=urlencode($_GET['usuario']??'')?>&accion=<?=urlencode($_GET['accion']??'')?>&tabla=<?=urlencode($_GET['tabla']??'')?>&fecha_desde=<?=urlencode($_GET['fecha_desde']??'')?>&fecha_hasta=<?=urlencode($_GET['fecha_hasta']??'')?>"
-                   class="auditoria-pagina <?= $page == $i ? 'is-activa' : '' ?>">
-                    <?=$i?>
-                </a>
-            <?php endfor; ?>
+    <footer class="auditoria-pie">
+        <span data-auditoria-contador role="status"><?= count($logs) ? (($page - 1) * $perPage + 1) . '–' . (($page - 1) * $perPage + count($logs)) : '0' ?> de <?= $total ?> eventos</span>
+        <nav aria-label="Páginas de auditoría"><a class="auditoria-boton" href="<?= $e($paginaAuditoria(max(1, $page - 1))) ?>" data-auditoria-anterior aria-disabled="<?= $page <= 1 ? 'true' : 'false' ?>">Anterior</a><a class="auditoria-boton" href="<?= $e($paginaAuditoria(min($totalPages, $page + 1))) ?>" data-auditoria-siguiente aria-disabled="<?= $page >= $totalPages ? 'true' : 'false' ?>">Siguiente</a></nav>
+    </footer>
+</section>
+<dialog class="zk-dialogo auditoria-dialogo-filtros" id="auditoriaFiltrosDialogo" aria-labelledby="auditoriaFiltrosTitulo">
+    <div class="zk-dialogo__form">
+        <header class="zk-dialogo__head"><h2 id="auditoriaFiltrosTitulo">Filtros</h2><button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar" autofocus><i class="fas fa-times" aria-hidden="true"></i></button></header>
+        <div class="zk-dialogo__cuerpo auditoria-filtros-cuerpo">
+            <div data-filtros-movil></div>
+            <div class="auditoria-fechas"><label>Desde<input type="date" name="fecha_desde" form="auditoriaFiltros" value="<?= $e($_GET['fecha_desde'] ?? '') ?>"></label><label>Hasta<input type="date" name="fecha_hasta" form="auditoriaFiltros" value="<?= $e($_GET['fecha_hasta'] ?? '') ?>"></label></div>
+            <p>Las fechas reemplazan el periodo (Rango).</p>
+            <p class="auditoria-error" data-error-fechas role="status"></p>
+            <a href="index.php?action=admin_auditoria">Limpiar filtros</a>
         </div>
-    <?php endif; ?>
-
-    <p class="auditoria-total">
-        Mostrando <?= count($logs) ?> de <?= $total ?> registros de seguridad
-    </p>
-</div>
-
-<script src="js/indicadores.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
-<script src="js/auditoria.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+        <footer class="zk-dialogo__pie"><div data-exportar-movil></div><button type="submit" form="auditoriaFiltros" class="auditoria-boton auditoria-boton--principal">Ver eventos</button></footer>
+    </div>
+</dialog>
+<dialog class="zk-dialogo auditoria-detalle" id="auditoriaDetalle" aria-labelledby="auditoriaDetalleTitulo">
+    <div class="zk-dialogo__form">
+        <header class="zk-dialogo__head"><div><span class="auditoria-insignia" data-detalle-accion></span><h2 id="auditoriaDetalleTitulo" data-detalle-titulo>Detalle del evento</h2><p data-detalle-descripcion></p></div><button type="button" class="zk-dialogo__cerrar" data-cerrar-dialogo aria-label="Cerrar" autofocus><i class="fas fa-times" aria-hidden="true"></i></button></header>
+        <div class="zk-dialogo__cuerpo"><dl class="auditoria-detalle__datos"><div><dt>Quién</dt><dd data-detalle-persona></dd></div><div><dt>Cuándo</dt><dd data-detalle-fecha></dd></div><div><dt>Módulo</dt><dd data-detalle-modulo></dd></div><div><dt>IP</dt><dd data-detalle-ip></dd></div></dl><section class="auditoria-cambios"><h3>Qué cambió</h3><table><thead><tr><th>Campo</th><th>Antes</th><th>Después</th></tr></thead><tbody data-detalle-cambios></tbody></table><p data-detalle-sin-cambios hidden>No se registraron cambios de campos para este evento.</p></section><p class="auditoria-solo-lectura">Solo lectura: la auditoría no se edita ni se borra.</p></div>
+    </div>
+</dialog>
+<script src="js/auditoria.js?v=<?= $e(App::assetVersion()) ?>" defer></script>

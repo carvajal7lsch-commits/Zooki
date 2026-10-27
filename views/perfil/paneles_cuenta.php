@@ -16,8 +16,11 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
 
         <!-- Datos de contacto -->
         <section class="perfil-card" aria-labelledby="perfilDatosTitulo">
-            <header class="perfil-card__head">
-                <h3 id="perfilDatosTitulo">Mi cuenta</h3>
+            <header class="perfil-card__head perfil-card__head--cuenta">
+                <div class="perfil-cuenta-titulo">
+                    <h3 id="perfilDatosTitulo">Mi cuenta</h3>
+                    <span class="perfil-rol" id="perfilRol"><i class="fas fa-user-shield" aria-hidden="true"></i><?= $e($rolNombre) ?></span>
+                </div>
                 <p>Así te contacta la clínica y te llegan los avisos.</p>
             </header>
 
@@ -26,7 +29,6 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
                     <label>Documento</label>
                     <div class="perfil-campo-acceso"><span data-documento-cuenta><?= $e(trim(($perfil['tipo_documento'] ?? '') . ' ' . $perfil['documento'])) ?></span><button type="button" data-abrir-dialogo="dialogoIdentidadDocumento" aria-label="Cambiar documento">Cambiar</button></div>
                 </div>
-                <div class="perfil-field"><label for="perfilRol">Rol</label><input id="perfilRol" class="perfil-input" value="<?= $e($rolNombre) ?>" readonly></div>
 
                 <div class="perfil-field">
                     <label for="perfilEmail">Correo electrónico</label>
@@ -44,7 +46,7 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
             </form>
 
             <!-- Solo lectura a propósito: el rol lo asigna el administrador (RN-701). -->
-            <p class="perfil-hint"><i class="fas fa-lock"></i> El rol lo gestiona el administrador. Puedes corregir tus datos de acceso confirmando tu identidad.</p>
+            <p class="perfil-hint"><i class="fas fa-lock" aria-hidden="true"></i> <?= $esVetPerfil ? 'Tu rol en esta clínica lo gestiona su administrador. ' : '' ?>Puedes corregir tus datos de acceso confirmando tu identidad.</p>
         </section>
 
         <?php $identidadSoloDialogos = true; require __DIR__ . '/../partials/cambios_identidad.php'; unset($identidadSoloDialogos); ?>

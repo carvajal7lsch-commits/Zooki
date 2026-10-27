@@ -5,6 +5,7 @@ require_once __DIR__ . '/../helpers/RespuestaJson.php';
 require_once __DIR__ . '/../helpers/Csrf.php';
 require_once __DIR__ . '/../helpers/ValidadorClinico.php';
 require_once __DIR__ . '/SuscripcionController.php';
+require_once __DIR__ . '/../helpers/LogoClinica.php';
 
 /** C1: rutas administrativas, con la clínica resuelta por el modelo autorizado. */
 final class ConfiguracionClinicaController
@@ -12,7 +13,7 @@ final class ConfiguracionClinicaController
     private ConfiguracionClinica $configuracion;
     private PDO $db;
 
-    public function __construct(?PDO $db = null, private mixed $reloj = null, private ?ConfiguracionWompi $configuracionWompi = null, private ?ClienteWompi $clienteWompi = null)
+    public function __construct(?PDO $db = null, private mixed $reloj = null, private ?ConfiguracionWompi $configuracionWompi = null, private ?ClienteWompi $clienteWompi = null, private ?LogoClinica $logos = null)
     {
         $this->db = $db ?? (new Database())->getConnection();
         $this->configuracion = new ConfiguracionClinica($this->db);
@@ -73,7 +74,24 @@ final class ConfiguracionClinicaController
     public function guardarMarcaAjax(): void
     {
         $this->modificar(function (): array {
-            $marca = $this->configuracion->guardarMarca($_POST);
+            // RE-7.4.5: resolver permisos y validar campos antes de escribir un archivo.
+            $this->configuracion->leer();
+            $clinica = ValidadorClinico::id($_POST['id_clinica'] ?? Contexto::clinicaActiva());
+            Security::exigirMismaClinica($clinica, 'clinicas', $clinica);
+            ValidadorConfiguracionClinica::datos($_POST);
+            $logos = $this->logos ?? new LogoClinica();
+            $nueva = $logos->guardar($_FILES['logo_archivo'] ?? null, (int) Contexto::clinicaActiva());
+            try {
+                $entrada = $_POST;
+                if ($nueva !== null) {
+                    $entrada['url_logo'] = $nueva;
+                }
+                $marca = $this->configuracion->guardarMarca($entrada);
+                $logos->confirmar($nueva);
+            } catch (Throwable $error) {
+                $logos->descartar($nueva);
+                throw $error;
+            }
             $_SESSION['contexto']['clinica'] = $marca['nombre'];
             return ['marca' => $marca, 'message' => 'Datos de la clínica guardados.'];
         });

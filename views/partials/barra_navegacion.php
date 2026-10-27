@@ -22,7 +22,7 @@ $__masActivo = (bool) array_filter($__secundarios, static fn (array $item): bool
     <div class="pill-nav">
         <?php foreach ($barraItems as $__item): ?>
         <a class="pill-nav-item<?= !empty($__item['activo']) ? ' active' : '' ?><?= empty($__item['principal']) ? ' pill-nav-item--secundario' : '' ?>" href="<?= $__bh($__item['href']) ?>" title="<?= $__bh($__item['titulo']) ?>" aria-label="<?= $__bh($__item['titulo']) ?>"<?= !empty($__item['activo']) ? ' aria-current="page"' : '' ?>>
-            <i class="<?= $__bh($__item['icono']) ?>" aria-hidden="true"></i><span class="pill-nav-texto" aria-hidden="true"><?= $__bh($__item['corto']) ?></span>
+            <?php require __DIR__ . '/icono_navegacion.php'; ?><span class="pill-nav-texto" aria-hidden="true"><?= $__bh($__item['corto']) ?></span>
         </a>
         <?php endforeach; ?>
         <?php if ($__secundarios): ?>
@@ -47,7 +47,7 @@ $__masActivo = (bool) array_filter($__secundarios, static fn (array $item): bool
         </div>
         <div class="zk-dialogo__cuerpo barra-mas__lista">
             <?php foreach ($__secundarios as $__item): ?>
-            <a class="barra-mas__enlace<?= !empty($__item['activo']) ? ' is-activo' : '' ?>" href="<?= $__bh($__item['href']) ?>"<?= !empty($__item['activo']) ? ' aria-current="page"' : '' ?>><span class="barra-mas__icono" aria-hidden="true"><i class="<?= $__bh($__item['icono']) ?>"></i></span><?= $__bh($__item['titulo']) ?><i class="fas fa-chevron-right barra-mas__flecha" aria-hidden="true"></i></a>
+            <a class="barra-mas__enlace<?= !empty($__item['activo']) ? ' is-activo' : '' ?>" href="<?= $__bh($__item['href']) ?>"<?= !empty($__item['activo']) ? ' aria-current="page"' : '' ?>><span class="barra-mas__icono" aria-hidden="true"><?php require __DIR__ . '/icono_navegacion.php'; ?></span><?= $__bh($__item['titulo']) ?><i class="fas fa-chevron-right barra-mas__flecha" aria-hidden="true"></i></a>
             <?php endforeach; ?>
             <a class="barra-mas__enlace barra-mas__enlace--salir" href="index.php?action=logout"><span class="barra-mas__icono" aria-hidden="true"><i class="fas fa-sign-out-alt"></i></span>Cerrar sesión</a>
         </div>

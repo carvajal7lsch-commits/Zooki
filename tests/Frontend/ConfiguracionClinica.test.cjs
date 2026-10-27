@@ -5,7 +5,7 @@ const path = require('node:path');
 const { errorCampo, enviar } = require('../../public/js/configuracion-clinica.js');
 
 const reglas = { nombreMin: 3, nombreMax: 150, tipoMax: 100, direccionMax: 255, logoMax: 255,
-    telefonoMin: 7, telefonoMax: 20, correoMax: 255, enteroMax: 2147483647,
+    telefonoMin: 7, telefonoMax: 20, correoMax: 255, duracionMax: 720, margenMax: 120,
     caracteresTexto: "\\p{L}\\p{M}\\p{N} .,'’&()+/#:\\-" };
 
 test('C1 valida mientras se escribe con límites de marca, teléfono, tipos y pausable explícito', () => {

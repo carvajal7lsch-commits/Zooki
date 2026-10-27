@@ -23,7 +23,8 @@
             }
         }
         if (nombre === 'duracion_minutos' || nombre === 'margen_minutos') {
-            if (!/^\d{1,10}$/.test(valor) || Number(valor) < (nombre === 'duracion_minutos' ? 1 : 0) || Number(valor) > reglas.enteroMax) return nombre === 'duracion_minutos' ? 'Duración entera positiva.' : 'Margen entero no negativo.';
+            const maximo = nombre === 'duracion_minutos' ? reglas.duracionMax : reglas.margenMax;
+            if (!/^\d{1,3}$/.test(valor) || Number(valor) < (nombre === 'duracion_minutos' ? 1 : 0) || Number(valor) > maximo) return nombre === 'duracion_minutos' ? `La duración debe ser de 1 a ${maximo} minutos.` : `El margen debe ser de 0 a ${maximo} minutos.`;
         }
         if ((nombre === 'pausable' || nombre === 'activo') && !['0', '1'].includes(valor)) return 'Elige Sí o No.';
         return '';
@@ -64,6 +65,7 @@
         const reglas = JSON.parse(raiz.dataset.reglas);
         const marcaForm = raiz.querySelector('[data-form-marca]');
         const tipoForm = raiz.querySelector('[data-form-tipo]');
+        const logoUI = global.LogoClinicaUI.iniciar(marcaForm, reglas);
         const lista = raiz.querySelector('[data-lista-tipos]');
         const estado = { enviando: false };
         const versiones = new WeakMap();
@@ -74,11 +76,15 @@
             const entrada = form.elements.namedItem(campo);
             if (aviso) aviso.textContent = mensaje;
             if (entrada) entrada.setAttribute('aria-invalid', mensaje ? 'true' : 'false');
+            const ayuda = form.querySelector(`#tipo-ayuda-${campo}`);
+            if (ayuda) ayuda.hidden = !!mensaje;
         }
 
         function completar(form, datos) {
             for (const entrada of form.querySelectorAll('[data-config-campo], [name="id_tipo_cita"]')) {
                 entrada.value = datos[entrada.name] ?? '';
+                // El selector con prefijo separado debe recibir también el número canónico del guardado.
+                if (entrada.zookiTelefono) entrada.zookiTelefono.setNumber(entrada.value);
                 versiones.set(entrada, (versiones.get(entrada) || 0) + 1);
                 mostrarError(form, entrada.name, '');
             }
@@ -156,9 +162,10 @@
             return enviar(estado, cuerpo, accion, datos => {
                 if (datos.marca) {
                     completar(marcaForm, datos.marca);
+                    logoUI.restablecer();
                     const vista = raiz.querySelector('[data-vista-marca]');
                     for (const dato of vista.querySelectorAll('[data-marca-dato]')) {
-                        dato.textContent = datos.marca[dato.dataset.marcaDato] || 'Sin definir';
+                        dato.textContent = datos.marca[dato.dataset.marcaDato] || 'Sin registrar';
                     }
                     const logo = vista.querySelector('[data-marca-logo]');
                     logo.replaceChildren();
@@ -187,8 +194,9 @@
                 bloquear: bloqueado => raiz.querySelectorAll('input, select, button').forEach(elemento => { elemento.disabled = bloqueado; }),
                 aviso: mensaje => { if (typeof global.zookiToast === 'function') global.zookiToast(mensaje); },
                 error: datos => {
-                    form.querySelector('[data-aviso]').textContent = datos.message || 'No se pudo guardar.';
-                    if (datos.campo && form.elements.namedItem(datos.campo)) mostrarError(form, datos.campo, datos.aviso || datos.message);
+                    const juntoAlCampo = datos.campo && form.elements.namedItem(datos.campo);
+                    form.querySelector('[data-aviso]').textContent = juntoAlCampo ? '' : (datos.message || 'No se pudo guardar.');
+                    if (juntoAlCampo) mostrarError(form, datos.campo, datos.aviso || datos.message);
                 }
             });
         }
@@ -231,6 +239,7 @@
                     mostrarError(form, entrada.name, error);
                     if (error) valido = false;
                 }
+                if (form === marcaForm && !logoUI.valido()) valido = false;
                 if (!valido) return;
                 guardar(form, new FormData(form), form === marcaForm ? 'guardar_marca_clinica_ajax' : 'guardar_tipo_cita_ajax');
             });

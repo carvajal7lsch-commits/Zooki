@@ -136,6 +136,21 @@ test('revision: Ajustes sin desborde en cuatro anchos y contacto sin cabecera an
             for (const seccion of ['clinica','horarios','ausencias','suscripcion','cuenta','seguridad']) {
                 await nav.evaluar(`document.querySelector('[data-config-tab=${seccion}]').click(); true`);
                 assert.equal(await nav.evaluar('document.documentElement.scrollWidth<=innerWidth'),true,`${seccion} a ${width}`);
+                if (width < 768) {
+                    const cabecera = await nav.evaluar(`(() => {
+                        const raiz = document.querySelector('[data-cabecera-cuenta]');
+                        const boton = raiz.querySelector('[data-cabecera-cuenta-boton]');
+                        const flecha = document.querySelector('[data-ajustes-volver]');
+                        const soloFlecha = getComputedStyle(flecha.querySelector('span')).display === 'none';
+                        boton.click();
+                        const panel = raiz.querySelector('.header-right');
+                        const rect = panel.getBoundingClientRect();
+                        const resultado = { juntoAlTitulo: !!raiz.closest('.ajustes-seccion'), soloFlecha, abierto: boton.getAttribute('aria-expanded') === 'true', dentro: rect.left >= 0 && rect.right <= innerWidth, cuenta: !!panel.querySelector('.header-user'), avisos: !!panel.querySelector('#notifBell') };
+                        boton.click();
+                        return resultado;
+                    })()`);
+                    assert.deepEqual(cabecera, { juntoAlTitulo: true, soloFlecha: true, abierto: true, dentro: true, cuenta: true, avisos: true });
+                }
                 if(width<1024) await nav.evaluar("document.querySelector('[data-ajustes-volver]').click(); true");
             }
         }

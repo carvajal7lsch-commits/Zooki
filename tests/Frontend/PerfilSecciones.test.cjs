@@ -18,13 +18,14 @@ for (const rol of ['admin', 'vet']) {
         const html = vista.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<link\b[^>]*>/gi, '');
         const calendarioReal = process.env.ZOOKI_CALENDARIO_REAL === '1';
         const cssCalendario = calendarioReal ? `<style>${fs.readFileSync('scratch/flatpickr.min.css','utf8')}</style>` : '';
-        const css = cssCalendario + ['styles.css', 'dashboard-modules/layout.css', 'usuarios.css', 'horarios.css', 'perfil.css', 'dialogos-zooki.css', 'portal/calendario.css', 'coordinacion-horarios.css'].map(p => `<style>${fs.readFileSync('public/css/' + p, 'utf8').replace(/@import[^;]+;/g, '')}</style>`).join('');
+        const css = cssCalendario + ['identidad.css', 'styles.css', 'dashboard-modules/layout.css', 'usuarios.css', 'horarios.css', 'perfil.css', 'dialogos-zooki.css', 'portal/calendario.css', 'coordinacion-horarios.css', 'ajustes.css'].map(p => `<style>${fs.readFileSync('public/css/' + p, 'utf8').replace(/@import[^;]+;/g, '')}</style>`).join('');
         const nav = await abrirChrome(buscarChrome());
         try {
             const arbol = await nav.enviar('Page.getFrameTree');
             await nav.enviar('Page.setDocumentContent', { frameId: arbol.frameTree.frame.id, html: `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">${css}<style>body{margin:0}.perfil-prueba{margin-left:112px;padding:100px 32px 24px}.perfil-header-prueba{position:absolute;top:0;left:112px;right:0}@media(max-width:1023px){.perfil-prueba{margin-left:80px;padding:100px 24px 24px}.perfil-header-prueba{left:80px}}@media(max-width:767px){.perfil-prueba{margin-left:0;padding:110px 16px 16px}.perfil-header-prueba{left:0}}</style></head><body><header class="top-header perfil-header-prueba"><div class="header-left"><h1 class="top-header-title">Mi perfil</h1></div><div class="header-right"><button type="button">Notificaciones</button><button type="button">Fabio</button></div></header><main class="perfil-prueba">${html}</main></body></html>` });
             await nav.evaluar(`window.__consultas=0;window.fetch=()=>{window.__consultas++;throw Error('Esta prueba no consulta el servidor');};`);
             await nav.evaluar(fs.readFileSync('public/js/perfil.js', 'utf8'));
+            await nav.evaluar(fs.readFileSync('public/js/ajustes.js', 'utf8'));
             await nav.evaluar(fs.readFileSync('public/js/dialogos-zooki.js', 'utf8'));
             assert.equal(await nav.evaluar(`document.querySelector('[aria-selected="true"]').dataset.configTab`), 'cuenta');
             assert.deepEqual(await nav.evaluar(`[...document.querySelectorAll('[data-config-tab]')].map(t=>t.dataset.configTab)`), rol === 'vet' ? ['cuenta', 'seguridad', 'horarios', 'ausencias'] : ['cuenta', 'seguridad']);
@@ -48,7 +49,7 @@ for (const rol of ['admin', 'vet']) {
             }
             for (const width of [1920, 1366, 900, 390, 360]) {
                 await nav.enviar('Emulation.setDeviceMetricsOverride', { width, height: width === 1920 ? 1080 : width === 1366 ? 768 : 844, deviceScaleFactor: 1, mobile: width < 768 });
-                await nav.esperar(`Boolean(document.querySelector('.perfil-salir').closest('#seguridad')) === ${width < 1024}`);
+                assert.equal(await nav.evaluar("!!document.querySelector('.perfil-salir').closest('.ajustes-lateral')"), true);
                 for (const clave of clases) {
                     const resultado = await nav.evaluar(`(() => {
                         document.querySelector('[data-config-tab="${clave}"]').click();
@@ -80,7 +81,7 @@ for (const rol of ['admin', 'vet']) {
                         const titulo=document.querySelector('.top-header-title');
                         return {menuCompleto:menu.scrollWidth<=menu.clientWidth,seguridadSalida:!!salir.closest('#seguridad'),alto:getComputedStyle(campo).height,radio:getComputedStyle(campo).borderRadius,titulo:getComputedStyle(titulo).whiteSpace,boton:boton.getBoundingClientRect().width,formulario:document.getElementById('perfilContactoForm').getBoundingClientRect().width};
                     })()`);
-                    assert.equal(pulido.seguridadSalida,width<1024);
+                    assert.equal(pulido.seguridadSalida,false);
                     if (width<768) assert.equal(pulido.menuCompleto,true,'Las cuatro pestañas caben sin recortarse');
                     assert.equal(pulido.alto,'42px');
                     assert.equal(pulido.radio,'10px');

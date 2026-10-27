@@ -59,7 +59,7 @@
             resumen.textContent = proxima ? proxima.fecha_hora_inicio + ' · ' + proxima.estado : 'Sin ausencias';
         });
         const coordinacion = presentacion.querySelector('[data-coordinacion-horarios]');
-        if (coordinacion && !enAjustes) {
+        if (coordinacion && (!enAjustes || presentacion.classList.contains('ajustes--vet'))) {
             const afectadas = coordinacion.querySelector('[data-afectadas]');
             const tarjetaAfectadas = afectadas.closest('.coord-card');
             const cierres = coordinacion.querySelector('[data-cierres]').closest('.coord-card');

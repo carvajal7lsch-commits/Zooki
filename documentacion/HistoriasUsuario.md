@@ -1882,8 +1882,8 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 
 - Marca por clínica en su contexto del portal, correos y documentos; historial multi-clínica mantiene cabecera Zooki y procedencia por acto, sin atribuir todo a una clínica. Descargas documentales públicas no se personalizan.
 
-- Configuro los datos de marca de la clínica: nombre, logo y datos de contacto, incluido el teléfono de urgencias que se muestra cuando la clínica está cerrada.
-- Gestiono los tipos de cita de la clínica, cada uno con su duración, su margen (buffer), insumo del cálculo de disponibilidad (RN-415), y si es **pausable** ante una urgencia (RN-427).
+- Configuro los datos de marca de la clínica: nombre, logo y datos de contacto, incluido el teléfono de urgencias que se muestra cuando la clínica está cerrada. Elijo o arrastro el logo con vista previa (JPG, PNG o WebP de hasta 5 MB); teléfonos con selector de país, correo de contacto válido sin unicidad de cuenta y errores junto al inicio de cada campo.
+- Gestiono los tipos de cita de la clínica, cada uno con su duración de 1 a 720 minutos y su margen (buffer) de 0 a 120 minutos (decisión del dueño, 2026-10-26), insumo del cálculo de disponibilidad (RN-415), y si es **pausable** ante una urgencia (RN-427).
 - Los datos de marca aparecen en las salidas propias de la clínica; el historial global conserva su cabecera de plataforma.
 - Todo es propio de cada clínica (aislamiento por `id_clinica`).
 - Los cambios quedan en auditoría.

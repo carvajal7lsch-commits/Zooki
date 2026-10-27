@@ -184,6 +184,51 @@
 .ajustes .ajustes-cuenta {
     display: contents;
 }
+.ajustes--vet .perfil-hero {
+    padding: 0 8px 16px;
+    margin-bottom: 4px;
+    align-items: flex-start;
+}
+.ajustes--vet .perfil-hero__avatar {
+    flex: 0 0 48px;
+    height: 48px;
+    width: 48px;
+    font-size: 18px;
+    background: var(--z-primary);
+    color: var(--z-surface);
+    box-shadow: none;
+}
+.ajustes--vet .perfil-hero__nombre {
+    font-size: 16px;
+    color: var(--z-text);
+}
+.ajustes--vet .perfil-hero__datos,
+.ajustes--vet .perfil-hero__rol {
+    color: var(--z-text-secondary);
+}
+.ajustes--vet .perfil-hero__datos {
+    font-size: 14px;
+}
+.ajustes--vet .perfil-menu {
+    flex-direction: column;
+    overflow: visible;
+}
+.ajustes--vet .perfil-menu button {
+    justify-content: flex-start;
+    min-height: 44px;
+    padding: 10px 12px;
+    color: var(--z-text-secondary);
+    font-size: 14px;
+}
+.ajustes--vet .perfil-menu button[aria-selected="true"] {
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+}
+.ajustes--vet .ajustes-salir {
+    color: var(--z-danger);
+    border-color: var(--z-danger-borde);
+    background: var(--z-surface);
+}
 
 /* HU-0.5: Suscripción comparte la hoja de Ajustes y conserva sus ventanas de pago. */
 .ajustes .suscripcion__tarjeta {
@@ -378,5 +423,46 @@
         padding: 16px;
         border-radius: var(--z-radius);
         background: var(--z-surface);
+    }
+    .ajustes .config-agenda-hoja:has([data-config-panel]:not([hidden])),
+    .ajustes #config-suscripcion:not([hidden]) {
+        padding: 16px;
+        border-radius: var(--z-radius);
+        background: var(--z-surface);
+    }
+    .ajustes .coordinacion {
+        margin-top: 0;
+    }
+    .ajustes--vet .perfil-menu button {
+        min-height: 54px;
+        padding: 0 16px;
+        border-radius: 0;
+        border-bottom: 1px solid var(--z-bg-light);
+        background: transparent;
+        color: var(--z-text);
+        font-size: 16px;
+    }
+    .ajustes--vet .perfil-menu i {
+        display: inline-block;
+    }
+    .ajustes--vet .perfil-hero__rol {
+        display: none;
+    }
+}
+@media (max-width: 767px) {
+    .ajustes-seccion__volver {
+        flex: 0 0 44px;
+        width: 44px;
+        padding: 0;
+        justify-content: center;
+    }
+    .ajustes-seccion__volver > span {
+        display: none;
+    }
+    .ajustes-seccion__titulo {
+        flex: 1;
+        min-width: 0;
+        font-size: 18px;
+        overflow-wrap: anywhere;
     }
 }

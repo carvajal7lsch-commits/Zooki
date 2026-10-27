@@ -157,5 +157,130 @@ function iniciar(selector = ".flatpickr-date", opciones = {}) {
         console.error("Error inicializando Flatpickr:", e);
     }
 }
-    global.SelectorFechas = { iniciar };
+    /** Calendario de fecha/hora flotante: comparte la navegación, sin ocupar altura del formulario. */
+    function iniciarFechaHora(campo, opciones = {}) {
+        const dialogo = campo.closest('dialog');
+        function colocar(instancia) {
+            const calendario = instancia.calendarContainer;
+            const ancla = instancia.altInput || campo;
+            const rect = ancla.getBoundingClientRect();
+            const ancho = calendario.offsetWidth;
+            const alto = calendario.offsetHeight;
+            const debajo = rect.bottom + 6;
+            const arriba = rect.top - alto - 6;
+            const superior = debajo + alto <= global.innerHeight - 12 ? debajo : Math.max(12, arriba);
+            calendario.style.setProperty('--selector-fecha-x', Math.max(12, Math.min(rect.left, global.innerWidth - ancho - 12)) + 'px');
+            calendario.style.setProperty('--selector-fecha-y', Math.min(superior, Math.max(12, global.innerHeight - alto - 12)) + 'px');
+        }
+        const instancia = iniciar(campo, {
+            maxDate: null,
+            enableTime: true,
+            enableSeconds: true,
+            time_24hr: true,
+            dateFormat: 'Y-m-d\\TH:i:S',
+            altFormat: 'd/m/Y H:i',
+            altInputClass: 'coord-fecha-visible',
+            ...opciones,
+            static: false,
+            appendTo: dialogo || document.body,
+            position: colocar,
+        });
+        if (!instancia) return;
+        const calendario = instancia.calendarContainer;
+        calendario.classList.add('selector-fechas-flotante');
+        const cabeceraHora = document.createElement('div');
+        cabeceraHora.className = 'selector-fechas-dia';
+        const cambiarDia = document.createElement('button');
+        cambiarDia.type = 'button';
+        cambiarDia.className = 'selector-fechas-cambiar';
+        cambiarDia.textContent = 'Cambiar día';
+        const diaElegido = document.createElement('strong');
+        cabeceraHora.append(diaElegido, cambiarDia);
+        calendario.prepend(cabeceraHora);
+        function mostrarPaso(paso) {
+            calendario.dataset.paso = paso;
+            if (paso === 'hora') diaElegido.textContent = instancia.formatDate(instancia.selectedDates[0], 'd/m/Y');
+            colocar(instancia);
+        }
+        cambiarDia.addEventListener('click', () => mostrarPaso('fecha'));
+        const reloj = calendario.querySelector('.flatpickr-time');
+        const etiquetaHora = document.createElement('span');
+        etiquetaHora.className = 'selector-fechas-hora';
+        etiquetaHora.textContent = 'Hora (24 h)';
+        reloj.prepend(etiquetaHora);
+        // La precisión original sigue en el valor enviado; el control visible se lee como HH:mm.
+        const segundos = calendario.querySelector('.flatpickr-second');
+        segundos.parentElement.classList.add('selector-fechas-segundos');
+        segundos.parentElement.previousElementSibling.classList.add('selector-fechas-segundos');
+        const horas = calendario.querySelector('.flatpickr-hour');
+        const minutos = calendario.querySelector('.flatpickr-minute');
+        for (const [entrada, maximo] of [[horas, 23], [minutos, 59]]) {
+            entrada.type = 'text';
+            entrada.inputMode = 'numeric';
+            entrada.maxLength = 2;
+            entrada.setAttribute('aria-label', entrada === horas ? 'Horas, de 00 a 23' : 'Minutos, de 00 a 59');
+            entrada.addEventListener('beforeinput', evento => {
+                if (!evento.data || evento.inputType.startsWith('delete')) return;
+                const valor = entrada.value.slice(0, entrada.selectionStart) + evento.data + entrada.value.slice(entrada.selectionEnd);
+                if (!/^\d{0,2}$/.test(valor) || Number(valor) > maximo) evento.preventDefault();
+            });
+            function limitar() {
+                const valor = entrada.value.replace(/\D/g, '').slice(0, 2);
+                entrada.value = valor === '' ? '' : String(Math.min(maximo, Number(valor)));
+                if (valor.length === 2) entrada.value = entrada.value.padStart(2, '0');
+            }
+            entrada.addEventListener('input', limitar, true);
+            entrada.addEventListener('paste', evento => {
+                evento.preventDefault();
+                entrada.value = evento.clipboardData.getData('text');
+                limitar();
+                entrada.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        }
+        const terminar = document.createElement('button');
+        terminar.type = 'button';
+        terminar.className = 'selector-fechas-listo';
+        terminar.textContent = 'Listo';
+        terminar.addEventListener('click', () => {
+            if (!instancia.selectedDates.length) return;
+            const fecha = new Date(instancia.selectedDates[0]);
+            fecha.setHours(Math.min(23, Number(horas.value) || 0), Math.min(59, Number(minutos.value) || 0));
+            instancia.setDate(fecha, true);
+            instancia.altInput.focus({ preventScroll: true });
+            instancia.close();
+        });
+        reloj.append(terminar);
+        // El popover permanece en el diálogo en el DOM y sube a su propia capa, sin quedar inerte detrás.
+        if (typeof calendario.showPopover === 'function') calendario.setAttribute('popover', 'manual');
+        instancia.config.onOpen.push(() => {
+            mostrarPaso('fecha');
+            if (calendario.hasAttribute('popover') && !calendario.matches(':popover-open')) calendario.showPopover();
+            colocar(instancia);
+        });
+        instancia.config.onChange.push(() => {
+            if (!instancia.isOpen || !instancia.selectedDates.length) return;
+            const pasaAHora = calendario.dataset.paso !== 'hora';
+            mostrarPaso('hora');
+            if (pasaAHora) {
+                horas.focus({ preventScroll: true });
+                horas.select();
+            }
+        });
+        instancia.config.onClose.push(() => {
+            if (calendario.hasAttribute('popover') && calendario.matches(':popover-open')) calendario.hidePopover();
+        });
+        const recolocar = () => {
+            if (instancia.isOpen) colocar(instancia);
+        };
+        global.addEventListener('resize', recolocar);
+        dialogo?.addEventListener('scroll', recolocar, true);
+        dialogo?.addEventListener('close', () => instancia.close());
+        dialogo?.addEventListener('cancel', evento => {
+            if (!instancia.isOpen) return;
+            evento.preventDefault();
+            instancia.close();
+        });
+        return instancia;
+    }
+    global.SelectorFechas = { iniciar, iniciarFechaHora };
 })(typeof window !== 'undefined' ? window : globalThis);

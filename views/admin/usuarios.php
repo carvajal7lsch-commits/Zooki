@@ -31,14 +31,8 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
 ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
 <div class="users-container" id="usuariosModulo" data-vista="tarjetas">
-    <div class="header-container-white">
-        <div class="head-title-desc">
-            <h1 class="users-page-title">Gestión de Usuarios</h1>
-            <p class="users-module-desc">
-                Administra las cuentas del personal de <?= $e($contexto['clinica'] ?? 'la clínica') ?> y gestiona a los clientes y sus mascotas.
-            </p>
-        </div>
-        <div class="head-top-right">
+    <div class="header-container-white directorio-barra usuarios-barra">
+        <div class="head-top-right" data-usuarios-origen-pestanas>
             <div class="tabs-wrapper" role="tablist">
                 <button type="button" class="tab-btn active" data-tab="personal" role="tab" aria-selected="true">
                     <i class="fas fa-users-cog" aria-hidden="true"></i><span>Personal</span>
@@ -102,6 +96,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                 <button type="button" class="view-toggle-btn active" data-vista-usuarios="tarjetas" aria-pressed="true" title="Vista de tarjetas"><i class="bi bi-grid" aria-hidden="true"></i></button>
             </div>
         </div>
+        <div class="command-center-actions" data-usuarios-barra-acciones></div>
     </div>
 
     <!-- Personal de la clínica -->
@@ -312,24 +307,28 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
     </section>
 </div>
 
+<?php require __DIR__ . '/partials/acciones_usuario_movil.php'; ?>
 <!-- Alta y edición de personal y edición de clientes. D2.1: diseño de v1.12.0
      (modalUsuarioGestion, specs/referencias/usuarios-modal-editar-v1.png) con las
      reglas v2: alta por invitación de 72 horas e identidad compartida de C1.7.
      D2.2: como en producción, el cliente usa este mismo modal con el rol oculto. -->
 <div class="users-modal" id="usuarioModal" role="dialog" aria-modal="true" aria-labelledby="usuarioModalTitulo" data-yo="<?= (int) $yo ?>">
     <div class="modal-content users-modal__panel">
+        <span class="zk-hoja__asa zk-hoja__asa--adorno" aria-hidden="true"></span>
         <div class="modal-header">
-            <h3 id="usuarioModalTitulo">
-                <i class="fas fa-user-plus" aria-hidden="true" data-icono-titulo></i>
-                <span data-titulo>Nuevo Usuario</span>
+            <div class="usuario-modal-identidad">
+                <h3 id="usuarioModalTitulo">
+                    <i class="fas fa-user-plus" aria-hidden="true" data-icono-titulo></i>
+                    <span data-titulo>Nuevo Usuario</span>
+                </h3>
                 <span class="modal-subtitle" data-subtitulo hidden>
                     <i class="bi bi-person" aria-hidden="true"></i> <span data-subtitulo-nombre></span>
                     &nbsp;&bull;&nbsp;
                     <i class="bi bi-card-text" aria-hidden="true"></i> <span data-subtitulo-documento></span>
                 </span>
-            </h3>
+            </div>
             <button type="button" class="close-modal" data-accion="cerrar" aria-label="Cerrar">
-                <i class="fas fa-times" aria-hidden="true"></i>
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
         </div>
         <?php // D2.2 (RE-T.7.5): el alta no consulta si la cuenta existe; al editar sí se comprueba la unicidad. ?>
@@ -367,7 +366,7 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
                         <input <?= ValidadorCuenta::atributosHtml('email') ?> type="email" id="usuarioEmail" name="email" required placeholder="correo@ejemplo.com">
                     </div>
                     <div class="input-group">
-                        <label for="usuarioTelefono">Teléfono</label>
+                        <label for="usuarioTelefono">Teléfono <span class="usuario-opcional">(opcional)</span></label>
                         <input type="tel" id="usuarioTelefono" name="telefono" placeholder="Ej: 3001234567" minlength="<?= ValidadorTelefono::MIN ?>" <?= $telefonoHtml ?>>
                     </div>
                     <div class="input-group">
@@ -426,3 +425,5 @@ $nombresDocumento = ['CC' => 'Cédula de Ciudadanía', 'TI' => 'Tarjeta de Ident
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
 <script src="js/telefono-internacional.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/usuarios.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/usuarios-movil.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/usuarios-distribucion.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
