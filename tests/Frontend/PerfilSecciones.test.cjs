@@ -210,6 +210,22 @@ for (const rol of ['admin', 'vet']) {
             assert.equal(await nav.evaluar(`!document.getElementById('seguridad').hidden&&document.querySelector('[data-config-tab="seguridad"]').getAttribute('aria-selected')==='true'`),true);
             const campos=await nav.evaluar(`(() => {const n=document.getElementById('perfilPwdNueva');n.value='Bosque2026';n.dispatchEvent(new Event('input'));return {validacion:document.getElementById('perfilContactoForm').hasAttribute('data-validacion-cuenta'),requisitos:document.querySelectorAll('[data-requisito].is-ok').length,acceso:document.querySelectorAll('[data-identidad-accion]').length};})()`);
             assert.deepEqual(campos,{validacion:true,requisitos:4,acceso:2});
+            // HU-T.5: Ajustes no muestra el correo en una cabecera de perfil; guardar contacto debe seguir funcionando.
+            const guardado = await nav.evaluar(`(async () => {
+                if (${JSON.stringify(rol)} === 'admin') document.getElementById('perfilEmailHero').remove();
+                const llamadas = [];
+                window.fetch = async (url, opciones) => {
+                    llamadas.push({ url, telefono: opciones.body.get('telefono') });
+                    return { json: async () => ({ success: true }) };
+                };
+                const telefono = document.getElementById('perfilTelefono');
+                telefono.value = '3001112299';
+                telefono.dispatchEvent(new Event('input'));
+                document.getElementById('perfilContactoForm').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                await new Promise(r => setTimeout(r, 0));
+                return { llamadas, mensaje: document.getElementById('perfilContactoMsg').textContent, guardado: document.getElementById('perfilContactoGuardar').disabled };
+            })()`);
+            assert.deepEqual(guardado, { llamadas: [{ url: 'index.php?action=actualizar_mi_perfil_ajax', telefono: '3001112299' }], mensaje: 'Datos actualizados.', guardado: true });
         } finally {
             await nav.cerrar();
         }

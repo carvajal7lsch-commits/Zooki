@@ -123,7 +123,8 @@
                 return;
             }
             original = nuevo;
-            document.getElementById('perfilEmailHero').textContent = nuevo.email;
+            // HU-T.5: Ajustes comparte el formulario sin la cabecera de Mi perfil.
+            if (document.getElementById('perfilEmailHero')) document.getElementById('perfilEmailHero').textContent = nuevo.email;
             mensaje(msgContacto, 'Datos actualizados.', 'ok');
         } catch (err) {
             console.error('Perfil:', err);
