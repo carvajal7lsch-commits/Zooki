@@ -1,11 +1,12 @@
 /*
  * Encabezado de pantallas internas (views/partials/encabezado_pagina.php), rediseño 2026-10-26:
- * volver visible con el nombre del destino y un solo título. Solo variables --z-*.
+ * Volver discreto y título con la clase habitual top-header-title (pulido del dueño, 2026-10-26).
+ * Solo variables --z-*; esta pieza la usa actualmente Suscripción.
  */
 .encabezado-pagina {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     min-width: 0;
     font-family: 'Inter', system-ui, sans-serif;
 }
@@ -13,22 +14,21 @@
 .encabezado-pagina__volver {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     flex: none;
-    min-height: 44px;
-    padding: 0 16px 0 13px;
-    border: 1px solid var(--z-primary-borde);
-    border-radius: var(--z-radius-sm);
-    background: var(--z-surface);
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
     color: var(--z-primary);
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     text-decoration: none;
-    box-shadow: var(--z-shadow-sm);
+    box-shadow: none;
 }
 
 .encabezado-pagina__volver:hover {
-    border-color: var(--z-primary);
     background: var(--z-primary-soft);
 }
 
@@ -38,23 +38,11 @@
 }
 
 .encabezado-pagina__separador {
-    flex: none;
-    width: 1px;
-    height: 36px;
-    background: var(--z-border-fuerte);
+    display: none;
 }
 
 .encabezado-pagina__textos {
     min-width: 0;
-}
-
-.encabezado-pagina__titulo {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 800;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: var(--z-text);
 }
 
 .encabezado-pagina__subtitulo {
@@ -84,13 +72,5 @@
         overflow: hidden;
         clip: rect(0, 0, 0, 0);
         white-space: nowrap;
-    }
-
-    .encabezado-pagina__separador {
-        display: none;
-    }
-
-    .encabezado-pagina__titulo {
-        font-size: 21px;
     }
 }

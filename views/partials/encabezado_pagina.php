@@ -12,7 +12,7 @@ $__eh = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF
     <span class="encabezado-pagina__separador" aria-hidden="true"></span>
     <?php endif; ?>
     <div class="encabezado-pagina__textos">
-        <h1 class="encabezado-pagina__titulo"><?= $__eh($encabezadoPagina['titulo']) ?></h1>
+        <h1 class="encabezado-pagina__titulo top-header-title"><?= $__eh($encabezadoPagina['titulo']) ?></h1>
         <?php if (!empty($encabezadoPagina['subtitulo'])): ?>
         <p class="encabezado-pagina__subtitulo"><?= $__eh($encabezadoPagina['subtitulo']) ?></p>
         <?php endif; ?>

@@ -5,6 +5,11 @@
  * son hojas inferiores. Cada vista cabe sin scroll en 1366×768. Solo variables --z-*.
  * RNF-16: celular < 768 px, tableta 768–1023 px, escritorio ≥ 1024 px.
  */
+/* El contexto superior ya identifica la clínica; evitar repetirlo bajo el título. */
+.main-content:has(.suscripcion) .encabezado-pagina__subtitulo {
+    display: none;
+}
+
 .suscripcion {
     display: flex;
     flex-direction: column;
@@ -51,15 +56,15 @@
     line-height: 1.5;
 }
 
-/* ── Pestañas: conmutador en escritorio, pasos del registro en el celular ── */
+/* Pulido del dueño (2026-10-26): pestañas discretas, sin competir con Pagar. */
 .suscripcion-pestanas {
     display: inline-flex;
     align-self: flex-start;
     gap: 4px;
-    padding: 4px;
-    border-radius: 14px;
-    background: var(--z-surface);
-    box-shadow: var(--z-shadow-sm);
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .suscripcion-pestanas__pestana {
@@ -67,14 +72,14 @@
     align-items: center;
     gap: 8px;
     min-height: 40px;
-    padding: 0 16px;
+    padding: 0 12px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 8px;
     background: transparent;
     color: var(--z-text-secondary);
     font: inherit;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
 }
 
@@ -83,21 +88,22 @@
 }
 
 .suscripcion-pestanas__conteo {
-    padding: 1px 8px;
+    padding: 1px 6px;
     border-radius: 999px;
     background: var(--z-bg-light);
     color: var(--z-text-secondary);
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .suscripcion-pestanas__pestana[aria-selected="true"] {
-    background: var(--z-primary);
-    color: var(--z-surface);
+    background: var(--z-primary-soft);
+    color: var(--z-primary);
+    font-weight: 600;
 }
 
 .suscripcion-pestanas__pestana[aria-selected="true"] .suscripcion-pestanas__conteo {
-    background: var(--z-surface);
+    background: transparent;
     color: var(--z-primary-dark);
 }
 

@@ -31,7 +31,7 @@ test('volver dice a dónde vuelve: Inicio por defecto y Configuración si se ent
     assert.match(desdeInicio, /class="encabezado-pagina__volver" href="index\.php\?action=admin_panel"[\s\S]*?>Inicio</);
     const desdeConfiguracion = vista('historial', 'configuracion');
     assert.match(desdeConfiguracion, /class="encabezado-pagina__volver" href="index\.php\?action=admin_configuracion"[\s\S]*?>Configuración</);
-    assert.match(desdeConfiguracion, /<h1 class="encabezado-pagina__titulo">Suscripción<\/h1>/);
+    assert.match(desdeConfiguracion, /<h1 class="encabezado-pagina__titulo top-header-title">Suscripción<\/h1>/);
     assert.equal((desdeConfiguracion.match(/<h1\b/g) || []).length, 1, 'Un solo título por pantalla');
     assert.match(vista('historial', '<script>'), /class="encabezado-pagina__volver" href="index\.php\?action=admin_panel"/, 'Un origen desconocido vuelve al Inicio');
     assert.match(leer('views/admin/suscripcion.php'), /'desde' => \$origenSuscripcion/);
@@ -119,6 +119,30 @@ test('Chrome (v2): pestañas en todos los anchos, ventana «Pagar o renovar», t
         assert.equal(await nav.evaluar('document.documentElement.scrollHeight <= innerHeight + 1'), true, 'Mi plan sin scroll en 1366×768');
         assert.equal(await nav.evaluar(visible('.pill-nav-mas')), false, 'La barra lateral de escritorio no cambia');
         assert.equal(await nav.evaluar(visible('.pill-nav-item--secundario')), true);
+        const cabecera = await nav.evaluar(`(() => {
+            const normal = document.createElement('h1');
+            normal.className = 'top-header-title';
+            normal.textContent = 'Configuración';
+            document.body.append(normal);
+            const titulo = document.querySelector('.encabezado-pagina__titulo');
+            const coinciden = getComputedStyle(titulo).fontSize === getComputedStyle(normal).fontSize;
+            normal.remove();
+            return { tituloNormal: coinciden, subtituloVisible: document.querySelector('.encabezado-pagina__subtitulo').getClientRects().length > 0, volverAlto: document.querySelector('.encabezado-pagina__volver').getBoundingClientRect().height };
+        })()`);
+        assert.equal(cabecera.tituloNormal, true, 'Título del mismo tamaño que el encabezado habitual');
+        assert.equal(cabecera.subtituloVisible, false, 'La cabecera no repite el contexto de clínica');
+        assert.ok(cabecera.volverAlto >= 40, 'Volver mantiene un área táctil cómoda');
+        for (const [width, height] of [[360, 800], [390, 844], [820, 1180]]) {
+            await nav.enviar('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 768 });
+            await nav.enviar('Page.reload');
+            await nav.esperar("document.readyState === 'complete' && document.querySelector('[data-suscripcion-pantalla]').dataset.pestana === 'plan'");
+            for (const pesta of ['plan', 'historial']) {
+                await nav.evaluar(`document.querySelector('[data-suscripcion-pestana=${pesta}]').click(); true`);
+                assert.equal(await nav.evaluar('document.documentElement.scrollWidth <= innerWidth'), true, `${pesta} sin desborde a ${width}`);
+                assert.equal(await nav.evaluar("[...document.querySelectorAll('[data-suscripcion-pestana]')].every(n => n.getBoundingClientRect().height >= 40)"), true, `Pestañas accesibles a ${width}`);
+            }
+            await nav.evaluar("document.querySelector('[data-suscripcion-pestana=plan]').click(); true");
+        }
         assert.deepEqual(nav.errores, []);
     } finally {
         await nav.cerrar();
