@@ -479,7 +479,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
 
 <!-- MODAL NUEVO REGISTRO UNIFICADO -->
-<div id="modalNuevoRegistro" class="users-modal d-none close-modal-backdrop" data-modal="modalNuevoRegistro">
+<div id="modalNuevoRegistro" class="users-modal pacientes-hoja d-none close-modal-backdrop" data-modal="modalNuevoRegistro">
     <div class="modal-content users-modal__panel modal-lg">
         <div class="modal-header">
             <div class="header-left-group">
@@ -707,7 +707,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
     </div>
 </div>
 
-<div id="modalEditarMascota" class="users-modal d-none close-modal-backdrop" data-modal="modalEditarMascota">
+<div id="modalEditarMascota" class="users-modal pacientes-hoja d-none close-modal-backdrop" data-modal="modalEditarMascota">
     <div class="modal-content users-modal__panel modal-lg">
         <div class="modal-header">
             <h3><i class="fas fa-edit"></i> Editar Mascota</h3>
@@ -863,7 +863,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
 <!-- DRAWER HISTORIAL MÉDICO -->
 <div id="drawerHistorialOverlay" class="drawer-overlay" data-c3-click="evento46"></div>
-<aside id="drawerHistorial" data-paciente-compacto class="drawer">
+<aside id="drawerHistorial" data-paciente-compacto class="drawer pacientes-hoja">
     <div class="drawer-header">
         <button type="button" class="drawer-close" data-c3-click="evento47" aria-label="Cerrar">
             <i class="fas fa-times"></i>
@@ -910,7 +910,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 </aside>
 
 <!-- MODAL EDITAR PROPIETARIO -->
-<div id="modalEditarPropietario" class="users-modal d-none close-modal-backdrop" data-modal="modalEditarPropietario">
+<div id="modalEditarPropietario" class="users-modal pacientes-hoja d-none close-modal-backdrop" data-modal="modalEditarPropietario">
     <div class="modal-content users-modal__panel modal-lg">
         <div class="modal-header">
             <h3><i class="fas fa-user-edit"></i> Editar Propietario</h3>
@@ -990,7 +990,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
 <!-- DRAWER REGISTRAR VACUNA -->
 <div id="drawerVacunaOverlay" class="drawer-overlay" data-c3-click="evento48"></div>
-<aside id="drawerVacuna" class="drawer">
+<aside id="drawerVacuna" class="drawer pacientes-hoja">
     <div class="drawer-header">
         <button type="button" class="drawer-close" data-c3-click="evento49" aria-label="Cerrar">
             <i class="fas fa-times"></i>
@@ -1068,7 +1068,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
 <!-- DRAWER REGISTRAR DESPARASITACIÓN -->
 <div id="drawerDesparasitacionOverlay" class="drawer-overlay" data-c3-click="evento53"></div>
-<aside id="drawerDesparasitacion" class="drawer">
+<aside id="drawerDesparasitacion" class="drawer pacientes-hoja">
     <div class="drawer-header">
         <button type="button" class="drawer-close" data-c3-click="evento54" aria-label="Cerrar">
             <i class="fas fa-times"></i>
@@ -1159,4 +1159,5 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <script src="js/pacientes-directorio.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/pacientes-hojas.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 

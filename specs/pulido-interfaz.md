@@ -92,7 +92,14 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 ### Modales de Pacientes en el celular (2026-10-28)
 
-**Parte B; encargada a Codex; revisa Claude (arquitecto).** Solo después de cerrar/verificar A. Nuevo registro, Vincular mascota, Editar propietario/mascota: reutilizar el patrón de Usuarios/Nueva cita, hoja casi completa desde abajo, título/cerrar40, cuerpo desplazable de una columna y pie fijo con Cancelar de texto/un primario. Revisar/listar también los modales de ficha/historia/vacunas/desparasitación y adaptar los que tengan el mismo problema. Alertas/Revisar alerta se conserva como referencia. Mismos campos/validaciones/envíos/respuestas; ≥768 intacto. Chrome390 abre cada modal y comprueba no desborde, pie visible, cerrar y enviar. Capturas antes/después por modal en scratch/r/pacientes-modales.
+**Parte B; entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Solo después de cerrar/verificar A. Nuevo registro, Vincular mascota, Editar propietario/mascota: reutilizar el patrón de Usuarios/Nueva cita, hoja casi completa desde abajo, título/cerrar40, cuerpo desplazable de una columna y pie fijo con Cancelar de texto/un primario. Revisar/listar también los modales de ficha/historia/vacunas/desparasitación y adaptar los que tengan el mismo problema. Alertas/Revisar alerta se conserva como referencia. Mismos campos/validaciones/envíos/respuestas; ≥768 intacto. Chrome390 abre cada modal y comprueba no desborde, pie visible, cerrar y enviar. Capturas antes/después por modal en scratch/r/pacientes-modales.
+
+### Modales de Pacientes — Resultado
+
+**B: entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Se reutilizan las piezas users-modal de Usuarios y el pie separado de Nueva cita: Nuevo registro (propietario/mascota), Vincular (misma entrada a Nueva mascota), Editar propietario/mascota, Historia, Vacunación y Desparasitación son hojas móviles. Cuerpo desplazable, campos en columna, cerrar40 y pie visible Cancelar/un primario; los botones originales de vacunas/desparasitación se reubican solo <768 y vuelven al lugar original al ampliar. Consulta y Alertas/Revisar alerta ya usan el patrón y se conservan; visor de foto a pantalla completa conservado.
+
+- **Verificación dirigida:** PacientesHojas correcta: ocho entradas a390 sin desborde, cierre/scroll/pie, POST simulados originales de Nuevo/Editar propietario y Nuevo/Editar mascota, vacuna y desparasitación; retorno del mismo botón al cuerpo de escritorio a820. Capturas antes/después de las ocho entradas y Consulta en scratch/r/pacientes-modales. Sin servidor/permisos/campos/validaciones nuevos; ≥768 conserva las reglas anteriores.
+- **Dueño:** abrir Nuevo y cambiar Propietario/Mascota; abrir Vincular y buscar; editar ambos tipos; bajar hasta los últimos campos y guardar/cancelar con el pie visible; recorrer Historia/Vacuna/Desparasitación y cerrar. La prueba usa respuestas simuladas, sin envíos reales. Sigue C tras este cierre; suite completa única al final.
 
 ### Mi perfil del veterinario igual al del administrador (2026-10-28)
 

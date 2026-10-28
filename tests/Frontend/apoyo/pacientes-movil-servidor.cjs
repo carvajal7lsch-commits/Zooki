@@ -68,6 +68,12 @@ async function servidorPacientes({ directorio = false } = {}) {
                 get_notificaciones_ajax: { success: true, notificaciones: [] },
                 cuenta_reglas_ajax: { success: true }
             };
+            respuestas.listar_especies_ajax = [{ id_especie: 1, nombre_especie: 'Canino' }];
+            respuestas.listar_razas_ajax = [{ id_raza: 1, nombre_raza: 'Dóberman' }];
+            respuestas.get_mascota_ajax = { ...respuestas.get_mascota_ajax, id_especie: 1, id_raza: 1, identidad_editable: true, propietario: propietario.nombre_completo };
+            respuestas.get_vacunas_por_especie_ajax = { success: true, vacunas: [{ nombre_vacuna: 'Rabia' }] };
+            respuestas.get_laboratorios_ajax = { success: true, laboratorios: [{ nombre_laboratorio: 'Laboratorio' }] };
+            respuestas.get_productos_desparasitacion_ajax = { success: true, productos: [{ nombre_producto: 'Producto' }] };
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(respuestas[accion] || []));
             return;

@@ -9,6 +9,7 @@
 ### Pacientes escritorio, modales móviles y perfil del veterinario — encargada a Codex (A, B y C) (2026-10-28)
 
 - **Escribe Codex; revisa Claude (arquitecto).** Encargo A→B→C registrado en specs/pulido-interfaz.md, Etapa R. A: directorio/detalle propietario ≥768 según mockups, sin cambiar móvil aprobado. B: hojas de modales Pacientes <768, conservando Alertas. C: perfil vet igual al admin más Mi horario/Ausencias, con comparación de ambos roles; mockup perfil-vet-movil descartado. Cada parte se termina/verifica antes de la siguiente y se conserva por separado para revisión/commit. Pruebas dirigidas por parte, una sola pasada completa PHP sin host/JS con Chrome al final. Sin .env, base de trabajo, servicios reales, commit ni push; R abierta, 2.2.0 sin publicar.
+- **B entregada, pendiente de revisión:** escribió Codex. Hojas móviles de Nuevo/Vincular/Editar, Historia/Vacuna/Desparasitación; Consulta y Alertas conservadas. Chrome390: ocho entradas, pies/cierre/scroll y seis POST originales con respuestas simuladas correctos; retorno del mismo botón a820. Evidencia en scratch/r/pacientes-modales. Sigue C, comparación de ambos perfiles antes de tocarlo.
 
 ### Pacientes en el celular — entregada, pendiente de revisión (2026-10-28)
 
