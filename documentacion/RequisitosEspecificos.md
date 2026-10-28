@@ -522,7 +522,7 @@ _La **Revisión 3.4** (16 de octubre de 2026) acompaña 2.0.0-alpha.4: evidencia
 | RE-2.12.3 | Buscar y filtrar por tipo y especie conservando relaciones universales. | Funcional | Buscar un nodo y filtrar conserva sus conexiones universales. | Media |
 | RE-2.12.4 | Mostrar detalle de nodo, arista y regla con relación, peso cuando aplique, signo, efecto, condiciones, fuente y validación. | Funcional | El detalle coincide con el conocimiento cargado y distingue reglas de varias condiciones de una arista simple. | Media |
 | RE-2.12.5 | Ofrecer solo lectura del conocimiento global sin datos individuales de pacientes ni escritura del conocimiento. | Seguridad | No consulta ni responde mascotas, consultas, tratamientos o citas; no hay acción de edición. | Media |
-| RE-2.12.6 | Mostrar versión, cobertura y validación pendiente, con estados legibles ante conjunto vacío o fallo del CDN. | Usabilidad | Se informa la limitación; un fallo o conjunto vacío no se presenta como cobertura clínica. | Media |
+| RE-2.12.6 | Mostrar versión, cobertura y validación pendiente, con estados legibles ante conjunto vacío o fallo de la biblioteca 3D local o de WebGL. | Usabilidad | Se informa la limitación; un fallo o conjunto vacío no se presenta como cobertura clínica. | Media |
 
 **Reglas de negocio:** RN-212, RN-209, RN-004, RN-G13
 

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Conocimiento clínico · mapa 3D</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{width:1440px;height:900px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;display:flex;box-sizing:border-box;overflow:hidden}
+.app *{box-sizing:border-box}
+.side{width:96px;flex:none;background:#fff;border-radius:0 32px 32px 0;display:flex;flex-direction:column;align-items:center;padding:28px 0 24px;gap:10px}
+.logo{width:50px;height:50px;border-radius:14px;margin-bottom:34px;display:block}
+.nav{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#64748B}
+.nav.on{align-self:flex-end;width:76px;border-radius:24px 0 0 24px;background:#0052FF;color:#fff;justify-content:flex-start;padding-left:14px}
+.salir{margin-top:auto;width:48px;height:48px;border-radius:14px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center;border:0}
+.main{flex:1;min-width:0;padding:22px 40px 24px 36px;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;align-items:center;gap:12px;height:52px}
+.ttl{display:flex;align-items:center;gap:12px;margin-right:auto}
+.ttl-ico{width:40px;height:40px;border-radius:12px;background:rgba(0,82,255,.08);color:#0052FF;display:flex;align-items:center;justify-content:center}
+h1{margin:0;font-size:20px;font-weight:700}
+.sub{font-size:13px;color:#64748B;margin-top:2px}
+.chip{height:28px;border-radius:14px;padding:0 11px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;white-space:nowrap}
+.azul{background:rgba(0,82,255,.08);color:#0052FF}
+.gris{background:#fff;color:#475569;border:1px solid #E2E8F0}
+.redondo{width:40px;height:40px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center}
+.yo{width:40px;height:40px;border-radius:50%;border:0;background:#0052FF;color:#fff;font:700 13px Inter,sans-serif}
+.cuerpo{flex:1;min-height:0;display:grid;grid-template-columns:250px minmax(0,1fr) 330px;gap:16px}
+.sheet{background:#fff;border-radius:22px;box-shadow:0 2px 8px rgba(15,23,42,.06);min-height:0;overflow:hidden}
+.filtros{padding:18px;display:flex;flex-direction:column;gap:18px}
+.search{height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;gap:10px;padding:0 12px;color:#94A3B8;font-size:13px}
+.sel{height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:13px}
+.et{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#64748B;margin:0 0 8px}
+.tipos{display:flex;flex-direction:column;gap:2px}
+.tipo{display:flex;align-items:center;gap:10px;height:34px;padding:0 8px;border-radius:10px;font-size:13px;font-weight:500;border:0;background:transparent;font-family:inherit;color:#0F172A;text-align:left}
+.tipo i{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(15,23,42,.12)}
+.tipo b{margin-left:auto;font-size:12px;color:#64748B;font-weight:600}
+.tipo.off{color:#94A3B8}
+.tipo.off i{opacity:.3}
+.ley{display:flex;flex-direction:column;gap:8px;font-size:12px;color:#334155}
+.ley div{display:flex;align-items:center;gap:10px}
+.cob{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#334155}
+.cob div{display:flex;justify-content:space-between}
+.cob b{font-weight:600;color:#475569}
+.mapa{position:relative;background:#fff}
+.mapa img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.mbar{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:8px;padding:14px 14px 30px 18px;background:linear-gradient(#fff 45%,rgba(255,255,255,0))}
+.mbar p{margin:0 auto 0 0;font-size:13px;color:#64748B}
+.mbar p b{color:#0F172A;font-weight:600}
+.oseg{display:flex;background:#F1F5F9;border-radius:12px;padding:3px;gap:2px}
+.oseg button{height:32px;padding:0 13px;border:0;border-radius:9px;background:transparent;font:600 13px Inter,sans-serif;color:#64748B}
+.oseg button.on{background:#fff;color:#0052FF;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.octl{height:38px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;color:#0F172A;font:600 13px Inter,sans-serif;padding:0 12px;display:flex;align-items:center;gap:6px}
+.foco{position:absolute;left:16px;bottom:16px;height:36px;border-radius:18px;background:#0F172A;color:#fff;font-size:12px;font-weight:500;display:flex;align-items:center;gap:10px;padding:0 6px 0 14px}
+.foco button{height:26px;border-radius:13px;border:0;background:rgba(255,255,255,.16);color:#fff;font:600 12px Inter,sans-serif;padding:0 10px}
+.ayuda{position:absolute;right:16px;bottom:22px;font-size:11px;color:#64748B}
+.det{display:flex;flex-direction:column;position:relative}
+.dh{padding:18px 18px 14px;border-bottom:1px solid #EEF2F7;display:flex;flex-direction:column;gap:6px}
+.ojo{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#7C3AED}
+.ojo i{width:10px;height:10px;border-radius:50%;background:#7C3AED}
+.dh h2{margin:0;font-size:19px;font-weight:700;padding-right:40px}
+.dh .cs{display:flex;gap:6px;margin-top:4px}
+.dh .chip{height:24px;font-size:11px}
+.cerrar{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center}
+.db{padding:16px 18px;display:flex;flex-direction:column;gap:18px;overflow:hidden}
+.rel{display:flex;flex-direction:column;gap:2px}
+.r{display:grid;grid-template-columns:minmax(0,1fr) 64px 28px;gap:10px;align-items:center;font-size:13px;padding:7px 8px;margin:0 -8px;border-radius:10px;border:0;background:transparent;font-family:inherit;color:inherit;text-align:left}
+.r.hover{background:#F5F8FF}
+.r span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+.r span i{width:8px;height:8px;border-radius:50%;background:#2F6BFF;flex:none}
+.peso{height:6px;border-radius:3px;background:#EEF2F7;overflow:hidden}
+.peso b{display:block;height:100%;background:#0052FF;border-radius:3px}
+.r em{font-style:normal;font-size:12px;color:#64748B;text-align:right;font-variant-numeric:tabular-nums}
+.fuente{border:1px solid #EEF2F7;border-radius:12px;padding:10px 12px;font-size:12px;color:#334155;display:flex;flex-direction:column;gap:3px}
+.fuente b{font-size:13px;color:#0F172A}
+.nota{font-size:12px;color:#64748B;line-height:1.5;background:#F8FAFC;border-radius:12px;padding:10px 12px;margin:0}
+</style>
+</helmet>
+<div class="app">
+  <nav class="side" aria-label="Menú de la plataforma">
+    <img class="logo" src="/_blob/b0bbd5a85bb08e4f78849d618a5b4d2b" alt="Zooki">
+    <a class="nav" href="Main.dc.html" aria-label="Plataforma"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/></svg></a>
+    <a class="nav on" href="#" aria-label="Conocimiento clínico" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.3 7.2l7.2.2M7.3 8.2l3.6 7.6M16.9 9.2l-3.7 6.6"/></svg></a>
+    <button class="salir" type="button" aria-label="Cerrar sesión"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </nav>
+  <main class="main">
+    <header class="top">
+      <div class="ttl">
+        <span class="ttl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.3 7.2l7.2.2M7.3 8.2l3.6 7.6M16.9 9.2l-3.7 6.6"/></svg></span>
+        <div><h1>Conocimiento clínico</h1><div class="sub">Mapa de solo lectura que usan los motores de apoyo · decide el veterinario</div></div>
+      </div>
+      <span class="chip azul">Versión b2 · 14 oct 2026</span>
+      <span class="chip gris"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Validación veterinaria pendiente</span>
+      <button class="redondo" type="button" aria-label="Notificaciones"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></button>
+      <button class="yo" type="button" aria-label="Mi cuenta">SC</button>
+    </header>
+    <div class="cuerpo">
+      <aside class="sheet filtros" aria-label="Filtros del mapa">
+        <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Buscar síntoma, fármaco, raza…</div>
+        <div class="sel">Todas las especies<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div>
+          <p class="et">Tipos</p>
+          <div class="tipos">
+            <button class="tipo" type="button" aria-pressed="true"><i style="background:#7C3AED"></i>Diagnósticos<b>17</b></button>
+            <button class="tipo" type="button" aria-pressed="true"><i style="background:#2F6BFF"></i>Síntomas<b>51</b></button>
+            <button class="tipo" type="button" aria-pressed="true"><i style="background:#0D9488"></i>Fármacos<b>12</b></button>
+            <button class="tipo" type="button" aria-pressed="true"><i style="background:#DB2777"></i>Sustancias tóxicas<b>8</b></button>
+            <button class="tipo" type="button" aria-pressed="true"><i style="background:#334155"></i>Especies<b>6</b></button>
+            <button class="tipo off" type="button" aria-pressed="false"><i style="background:#94A3B8"></i>Razas<b>10</b></button>
+            <button class="tipo" type="button" aria-pressed="true"><i style="background:#0891B2"></i>Condiciones<b>1</b></button>
+          </div>
+        </div>
+        <div>
+          <p class="et">En el mapa</p>
+          <div class="ley">
+            <div><svg width="34" height="12" aria-hidden="true"><line x1="0" y1="6" x2="34" y2="6" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/></svg>Grosor = peso de la evidencia</div>
+            <div><svg width="34" height="12" aria-hidden="true"><line x1="0" y1="6" x2="34" y2="6" stroke="#F87171" stroke-width="3" stroke-linecap="round"/></svg>Bloqueo</div>
+            <div><svg width="34" height="12" aria-hidden="true"><circle cx="6" cy="6" r="2" fill="#2F6BFF"/><circle cx="17" cy="6" r="2" fill="#2F6BFF"/><circle cx="28" cy="6" r="2" fill="#2F6BFF"/></svg>Partículas = sentido</div>
+            <div><svg width="34" height="12" aria-hidden="true"><circle cx="17" cy="6" r="4" fill="#F87171"/></svg>Punto rojo = señal de alarma</div>
+          </div>
+        </div>
+        <div>
+          <p class="et">Cobertura</p>
+          <div class="cob"><div>Perro<b>Parcial</b></div><div>Gato<b>Parcial</b></div><div>Otras especies<b>Sin cobertura</b></div></div>
+        </div>
+      </aside>
+      <section class="sheet mapa" aria-label="Mapa 3D del conocimiento">
+        <img src="/_blob/c46ed8650d859be082461598a889ffad" alt="Mapa 3D con Parvovirosis canina enfocada y sus seis síntomas conectados; el resto del conocimiento atenuado al fondo">
+        <div class="mbar">
+          <p><b>105 nodos</b> · 105 relaciones · 29 reglas</p>
+          <div class="oseg" role="group" aria-label="Vista"><button class="on" type="button">3D</button><button type="button">Plano</button><button type="button">Lista</button></div>
+          <button class="octl" type="button" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>Girar</button>
+          <button class="octl" type="button" aria-label="Ver el mapa en pantalla completa" title="Pantalla completa"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Pantalla completa</button>
+        </div>
+        <div class="foco">Enfocado: Parvovirosis canina<button type="button">Ver todo</button></div>
+        <p class="ayuda" style="margin:0">Arrastra para girar · rueda para acercar</p>
+      </section>
+      <aside class="sheet det" aria-labelledby="detTitulo">
+        <div class="dh">
+          <span class="ojo"><i></i>Diagnóstico</span>
+          <h2 id="detTitulo">Parvovirosis canina</h2>
+          <div class="cs"><span class="chip azul">6 relaciones</span><span class="chip gris">Validación pendiente</span></div>
+        </div>
+        <button class="cerrar" type="button" aria-label="Cerrar la ficha"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <div class="db">
+          <div>
+            <p class="et">Lo sugieren · 6</p>
+            <div class="rel">
+              <button class="r hover" type="button"><span><i></i>Diarrea con sangre</span><span class="peso"><b style="width:80%"></b></span><em>0,8</em></button>
+              <button class="r" type="button"><span><i></i>Vómito</span><span class="peso"><b style="width:60%"></b></span><em>0,6</em></button>
+              <button class="r" type="button"><span><i></i>Diarrea</span><span class="peso"><b style="width:50%"></b></span><em>0,5</em></button>
+              <button class="r" type="button"><span><i></i>No come o casi no come</span><span class="peso"><b style="width:50%"></b></span><em>0,5</em></button>
+              <button class="r" type="button"><span><i></i>Decaído, débil o sin ánimo</span><span class="peso"><b style="width:50%"></b></span><em>0,5</em></button>
+              <button class="r" type="button"><span><i></i>Fiebre referida</span><span class="peso"><b style="width:40%"></b></span><em>0,4</em></button>
+            </div>
+          </div>
+          <div>
+            <p class="et">Fuentes</p>
+            <div class="fuente"><b>MSD Veterinary Manual</b>Canine Parvovirus Infection (Parvoviral Enteritis in Dogs)</div>
+          </div>
+          <p class="nota">Pendiente de validación veterinaria. Es apoyo a la decisión: ordena posibilidades, decide el veterinario (RN-209).</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

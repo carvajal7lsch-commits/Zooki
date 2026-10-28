@@ -131,13 +131,13 @@ test('S4 Chrome: plataforma real a 1366/390, pagos, incidencias, legado y revisi
                     fs.writeFileSync(path.join(RAIZ, `scratch/s4-plataforma-${id}-${ancho}.png`), Buffer.from(captura.data, 'base64'));
                 }
                 if (id === 1) {
-                    await nav.evaluar(`(()=>{const f=document.querySelector('[data-finanzas-revision]');f.querySelector('textarea').value='Revisión de prueba sin modificar el pago';f.querySelector('textarea').dispatchEvent(new Event('input',{bubbles:true}));f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));})()`);
+                    await nav.evaluar(`(()=>{const f=document.querySelector('#gestionarClinica [data-finanzas-revision]');f.querySelector('textarea').value='Revisión de prueba sin modificar el pago';f.querySelector('textarea').dispatchEvent(new Event('input',{bubbles:true}));f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));})()`);
                     await nav.esperar(`document.querySelector('#gestionarClinica [data-finanzas-destino]').textContent.includes('Revisada el')`);
                 }
                 if (id === 1) {
-                    await nav.evaluar(`(()=>{const f=document.querySelector('[data-finanzas-conciliar]');const id=f.querySelector('input[name="id_transaccion"]');id.value='../inventado';id.dispatchEvent(new Event('input',{bubbles:true}));})()`);
-                    assert.equal(await nav.evaluar(`document.querySelector('[data-finanzas-conciliar] input[name="id_transaccion"]').checkValidity()`), false);
-                    await nav.evaluar(`(()=>{const f=document.querySelector('[data-finanzas-conciliar]');const id=f.querySelector('input[name="id_transaccion"]');id.value='01-1531231271-19365';id.dispatchEvent(new Event('input',{bubbles:true}));f.querySelector('textarea').value='Recuperar evento perdido';f.querySelector('textarea').dispatchEvent(new Event('input',{bubbles:true}));f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));})()`);
+                    await nav.evaluar(`(()=>{const f=document.querySelector('#gestionarClinica [data-finanzas-conciliar]');const id=f.querySelector('input[name="id_transaccion"]');id.value='../inventado';id.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+                    assert.equal(await nav.evaluar(`document.querySelector('#gestionarClinica [data-finanzas-conciliar] input[name="id_transaccion"]').checkValidity()`), false);
+                    await nav.evaluar(`(()=>{const f=document.querySelector('#gestionarClinica [data-finanzas-conciliar]');const id=f.querySelector('input[name="id_transaccion"]');id.value='01-1531231271-19365';id.dispatchEvent(new Event('input',{bubbles:true}));f.querySelector('textarea').value='Recuperar evento perdido';f.querySelector('textarea').dispatchEvent(new Event('input',{bubbles:true}));f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));})()`);
                     await nav.esperar(`window.s4UltimoPost?.url.includes('plataforma_conciliar_ajax')`);
                     assert.equal(await nav.evaluar(`window.s4UltimoPost.clinica`), null);
                     await nav.esperar(`document.querySelector('#gestionarClinica [data-finanzas-conciliar]')!==null`);

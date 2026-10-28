@@ -169,14 +169,15 @@ final class GrafoConocimientoTest extends TestCase
         $this->assertArrayNotHasKey('datos', $respuesta);
     }
 
-    public function testLaVistaUsaElPanelYCytoscapeConVersionFijaYSri(): void
+    public function testLaVistaUsaElPanelYBiblioteca3DLocalConVersionFija(): void
     {
         PlataformaFixture::plataforma();
         ob_start();
         (new GrafoConocimientoController(ConocimientoPrueba::sqlite(), self::MANIFIESTO))->vista();
         $html = (string) ob_get_clean();
-        $this->assertStringContainsString('https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.34.3/cytoscape.min.js', $html);
-        $this->assertStringContainsString('integrity="sha512-SQebVa91Tn1DeP45Wo74monK/I9wiQg59uKc7P8vp3T7KQ9l5e8IMjZ1GJTgZehUVQt7eS61DTqldQUb1EHfnw=="', $html);
+        $this->assertStringContainsString('src="js/vendor/3d-force-graph-1.80.0.min.js', $html);
+        $this->assertStringNotContainsString('cytoscape', $html);
+        $this->assertFileExists(__DIR__ . '/../../public/js/vendor/3d-force-graph-LICENSE.txt');
         $this->assertStringNotContainsString('latest', $html);
         $this->assertStringContainsString('class="pill-nav-item active" href="index.php?action=plataforma_grafo"', $html);
         $this->assertStringContainsString('href="index.php?action=plataforma_inicio"', $html);

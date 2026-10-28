@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Plataforma · Clínicas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{width:1440px;height:900px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;display:flex;box-sizing:border-box;overflow:hidden}
+.app *{box-sizing:border-box}
+.side{width:96px;flex:none;background:#fff;border-radius:0 32px 32px 0;display:flex;flex-direction:column;align-items:center;padding:28px 0 24px;gap:10px}
+.logo{width:50px;height:50px;border-radius:14px;margin-bottom:34px;display:block}
+.nav{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#64748B}
+.nav.on{align-self:flex-end;width:76px;border-radius:24px 0 0 24px;background:#0052FF;color:#fff;justify-content:flex-start;padding-left:14px}
+.salir{margin-top:auto;width:48px;height:48px;border-radius:14px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center;border:0}
+.main{flex:1;min-width:0;padding:22px 40px 24px 36px;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;align-items:center;gap:12px;height:52px}
+.ttl{display:flex;align-items:center;gap:12px;margin-right:auto}
+.ttl-ico{width:40px;height:40px;border-radius:12px;background:rgba(0,82,255,.08);color:#0052FF;display:flex;align-items:center;justify-content:center}
+h1{margin:0;font-size:20px;font-weight:700}
+.sub{font-size:13px;color:#64748B;margin-top:2px}
+.rol{height:40px;border-radius:20px;border:1px solid #E2E8F0;background:#fff;display:flex;align-items:center;gap:8px;padding:0 14px 0 6px;font-size:13px;font-weight:600}
+.rol i{width:28px;height:28px;border-radius:50%;background:rgba(0,82,255,.1);color:#0052FF;display:flex;align-items:center;justify-content:center;font-style:normal}
+.redondo{width:40px;height:40px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center;position:relative}
+.badge{position:absolute;top:-4px;right:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#EF4444;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #E9ECF5}
+.yo{width:40px;height:40px;border-radius:50%;border:0;background:#0052FF;color:#fff;font:700 13px Inter,sans-serif}
+.sheet{background:#fff;border-radius:22px;box-shadow:0 2px 8px rgba(15,23,42,.06);display:flex;flex-direction:column;flex:1;min-height:0}
+.cab{display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid #EEF2F7;height:60px}
+.utabs{display:flex;gap:24px;align-self:stretch;margin-right:auto}
+.utabs a{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#64748B;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+.utabs a.on{color:#0052FF;border-bottom-color:#0052FF}
+.cnt{min-width:22px;height:20px;border-radius:10px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 7px}
+.on .cnt{background:rgba(0,82,255,.1);color:#0052FF}
+.cnt.alerta{background:#FEE2E2;color:#B91C1C}
+.btn{height:40px;border-radius:12px;font:600 14px Inter,sans-serif;padding:0 16px;display:inline-flex;gap:8px;align-items:center;white-space:nowrap}
+.btn.sec{background:#fff;color:#0F172A;border:1px solid #E2E8F0}
+.btn.sec svg{color:#0052FF}
+.tools{display:flex;align-items:center;gap:10px;padding:14px 20px 6px}
+.search{flex:1;height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;gap:10px;padding:0 14px;color:#94A3B8;font-size:14px}
+.sel{height:40px;width:170px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 14px;font-size:14px;color:#0F172A}
+.dseg{display:flex;background:#F1F5F9;border-radius:12px;padding:3px;gap:2px}
+.dseg button{width:36px;height:34px;border:0;border-radius:9px;background:transparent;color:#64748B;display:flex;align-items:center;justify-content:center}
+.dseg button.on{background:#fff;color:#0052FF;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.sum{padding:8px 20px 12px;font-size:13px;color:#64748B}
+.sum b{color:#0F172A}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 20px 20px}
+.card{border:1px solid #E2E8F0;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;text-decoration:none;color:inherit}
+.card.hover{border-color:rgba(0,82,255,.35);box-shadow:0 8px 24px rgba(0,82,255,.10)}
+.idn{display:flex;align-items:center;gap:12px;min-width:0}
+.av{width:44px;height:44px;border-radius:14px;background:rgba(0,82,255,.1);color:#0052FF;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex:none}
+.nom{min-width:0}
+.nom strong{display:block;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nom span{display:block;font-size:12px;color:#64748B;margin-top:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:22px;border-radius:11px;padding:0 9px;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;white-space:nowrap}
+.azul{background:rgba(0,82,255,.08);color:#0052FF}
+.gris{background:#F1F5F9;color:#475569}
+.verde{background:#ECFDF5;color:#047857}
+.rojo{background:#FEF2F2;color:#B91C1C}
+.datos{display:flex;flex-direction:column;gap:7px}
+.dt{display:flex;align-items:center;gap:9px;font-size:13px;color:#334155;white-space:nowrap;overflow:hidden}
+.dt svg{color:#94A3B8;flex:none}
+.uso{display:flex;flex-direction:column;gap:6px}
+.uso div{display:flex;justify-content:space-between;font-size:12px;color:#64748B}
+.uso b{color:#0F172A;font-weight:600}
+.barra{height:6px;border-radius:3px;background:#EEF2F7;overflow:hidden}
+.barra i{display:block;height:100%;border-radius:3px;background:#0052FF}
+.pie{display:flex;align-items:center;border-top:1px solid #F1F5F9;padding-top:12px;font-size:12px;color:#64748B;margin-top:auto}
+.pie span{margin-right:auto}
+.go{color:#94A3B8;display:flex}
+.hover .go{color:#0052FF}
+</style>
+</helmet>
+<div class="app">
+  <nav class="side" aria-label="Menú de la plataforma">
+    <img class="logo" src="/_blob/b0bbd5a85bb08e4f78849d618a5b4d2b" alt="Zooki">
+    <a class="nav on" href="#" aria-label="Plataforma" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/></svg></a>
+    <a class="nav" href="Grafo.dc.html" aria-label="Conocimiento clínico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.3 7.2l7.2.2M7.3 8.2l3.6 7.6M16.9 9.2l-3.7 6.6"/></svg></a>
+    <button class="salir" type="button" aria-label="Cerrar sesión"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </nav>
+  <main class="main">
+    <header class="top">
+      <div class="ttl">
+        <span class="ttl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/></svg></span>
+        <div><h1>Plataforma</h1><div class="sub">Clínicas, soporte y seguridad de Zooki</div></div>
+      </div>
+      <span class="rol"><i>Z</i>Super-administrador</span>
+      <button class="redondo" type="button" aria-label="Notificaciones, 2 sin leer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="badge">2</span></button>
+      <button class="yo" type="button" aria-label="Mi cuenta">SC</button>
+    </header>
+    <section class="sheet">
+      <div class="cab">
+        <nav class="utabs" aria-label="Secciones de la plataforma">
+          <a class="on" href="#">Clínicas <span class="cnt">12</span></a>
+          <a href="#">Soporte <span class="cnt">2</span></a>
+          <a href="#">Seguridad <span class="cnt alerta">1</span></a>
+        </nav>
+        <button class="btn sec" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg>Pagos sin clínica <span class="cnt">3</span></button>
+      </div>
+      <div class="tools">
+        <div class="search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Buscar por nombre o NIT</div>
+        <div class="sel">Todos los estados<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="sel">Todos los planes<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="dseg" role="group" aria-label="Tipo de vista"><button class="on" type="button" aria-label="Tarjetas"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button><button type="button" aria-label="Tabla"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></button></div>
+      </div>
+      <div class="sum"><b>12 clínicas</b> · 9 al día · 2 en gracia · 1 suspendida</div>
+      <div class="grid">
+        <a class="card hover" href="Clinica.dc.html" aria-label="Gestionar Clínica Norte">
+          <div class="idn"><span class="av">CN</span><div class="nom"><strong>Clínica Norte</strong><span>NIT 900.123.456-7</span></div></div>
+          <div class="chips"><span class="chip azul">Profesional</span><span class="chip verde">Al día</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Ana Norte</div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Renueva el 25 nov · automático</div>
+          </div>
+          <div class="uso"><div><span>Veterinarios</span><b>3 de 10</b></div><span class="barra"><i style="width:30%"></i></span></div>
+          <div class="pie"><span>Desde 12 sep 2026</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </a>
+        <a class="card" href="Clinica.dc.html" aria-label="Gestionar Clínica Sur">
+          <div class="idn"><span class="av">CS</span><div class="nom"><strong>Clínica Sur</strong><span>NIT 901.552.310-2</span></div></div>
+          <div class="chips"><span class="chip gris">Gratuito</span><span class="chip verde">Al día</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Diego Sánchez</div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Plan sin vencimiento</div>
+          </div>
+          <div class="uso"><div><span>Veterinarios</span><b>2 de 2</b></div><span class="barra"><i style="width:100%"></i></span></div>
+          <div class="pie"><span>Desde 3 oct 2026</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </a>
+        <a class="card" href="Clinica.dc.html" aria-label="Gestionar Veterinaria El Bosque">
+          <div class="idn"><span class="av">VB</span><div class="nom"><strong>Veterinaria El Bosque</strong><span>NIT 900.884.120-1</span></div></div>
+          <div class="chips"><span class="chip azul">Profesional</span><span class="chip gris">En gracia · 3 días</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Laura Gómez</div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Venció el 24 oct · manual</div>
+          </div>
+          <div class="uso"><div><span>Veterinarios</span><b>5 de 10</b></div><span class="barra"><i style="width:50%"></i></span></div>
+          <div class="pie"><span>Desde 1 ago 2026</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </a>
+        <a class="card" href="Clinica.dc.html" aria-label="Gestionar Mascotas Felices">
+          <div class="idn"><span class="av">MF</span><div class="nom"><strong>Mascotas Felices</strong><span>NIT 901.003.774-9</span></div></div>
+          <div class="chips"><span class="chip azul">Profesional</span><span class="chip rojo">Suspendida</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Carlos Pérez</div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Suspendida el 10 oct · falta de pago</div>
+          </div>
+          <div class="uso"><div><span>Veterinarios</span><b>4 de 10</b></div><span class="barra"><i style="width:40%"></i></span></div>
+          <div class="pie"><span>Desde 20 jun 2026</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </a>
+        <a class="card" href="Clinica.dc.html" aria-label="Gestionar Centro Veterinario Andes">
+          <div class="idn"><span class="av">CA</span><div class="nom"><strong>Centro Veterinario Andes</strong><span>NIT 900.771.204-5</span></div></div>
+          <div class="chips"><span class="chip azul">Profesional</span><span class="chip verde">Al día</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Andrés Ruiz</div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Renueva el 2 dic · automático</div>
+          </div>
+          <div class="uso"><div><span>Veterinarios</span><b>7 de 10</b></div><span class="barra"><i style="width:70%"></i></span></div>
+          <div class="pie"><span>Desde 15 may 2026</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </a>
+        <a class="card" href="Clinica.dc.html" aria-label="Gestionar Huellitas del Caquetá">
+          <div class="idn"><span class="av">HC</span><div class="nom"><strong>Huellitas del Caquetá</strong><span>NIT 901.640.118-3</span></div></div>
+          <div class="chips"><span class="chip gris">Gratuito</span><span class="chip gris">Sin verificar</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Sofía Martínez</div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Registrada hace 2 días</div>
+          </div>
+          <div class="uso"><div><span>Veterinarios</span><b>1 de 2</b></div><span class="barra"><i style="width:50%"></i></span></div>
+          <div class="pie"><span>Desde 26 oct 2026</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </a>
+        <a class="card" href="Clinica.dc.html" aria-label="Gestionar Pet Center Florencia">
+          <div class="idn"><span class="av">PF</span><div class="nom"><strong>Pet Center Florencia</strong><span>NIT 900.318.552-8</span></div></div>
+          <div class="chips"><span class="chip azul">Profesional</span><span class="chip verde">Al día</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Diego Torres</div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Renueva el 9 nov · automático</div>
+          </div>
+          <div class="uso"><div><span>Veterinarios</span><b>2 de 10</b></div><span class="barra"><i style="width:20%"></i></span></div>
+          <div class="pie"><span>Desde 8 jul 2026</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </a>
+        <a class="card" href="Clinica.dc.html" aria-label="Gestionar Vet Amazonía">
+          <div class="idn"><span class="av">VA</span><div class="nom"><strong>Vet Amazonía</strong><span>NIT 901.220.907-0</span></div></div>
+          <div class="chips"><span class="chip azul">Profesional</span><span class="chip gris">En gracia · 1 día</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Mariana López</div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Cobro rechazado el 26 oct</div>
+          </div>
+          <div class="uso"><div><span>Veterinarios</span><b>6 de 10</b></div><span class="barra"><i style="width:60%"></i></span></div>
+          <div class="pie"><span>Desde 30 mar 2026</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </a>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

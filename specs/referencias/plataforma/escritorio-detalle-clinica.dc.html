@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Plataforma · Detalle de la clínica</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{width:1440px;height:900px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;display:flex;box-sizing:border-box;overflow:hidden;position:relative}
+.app *{box-sizing:border-box}
+.side{width:96px;flex:none;background:#fff;border-radius:0 32px 32px 0}
+.fondo{flex:1;padding:22px 40px 24px 36px;display:flex;flex-direction:column;gap:18px}
+.fondo .t{height:52px;display:flex;align-items:center;font-size:20px;font-weight:700}
+.fondo .s{flex:1;background:#fff;border-radius:22px}
+.velo{position:absolute;inset:0;background:rgba(15,23,42,.38)}
+.hoja{position:absolute;top:12px;right:12px;bottom:12px;width:540px;background:#fff;border-radius:22px;box-shadow:0 24px 60px rgba(15,23,42,.25);display:flex;flex-direction:column;overflow:hidden}
+.hc{display:flex;align-items:center;gap:14px;padding:20px 20px 16px}
+.av{width:52px;height:52px;border-radius:16px;background:rgba(0,82,255,.1);color:#0052FF;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
+.hc h2{margin:0;font-size:18px;font-weight:700}
+.hc p{margin:3px 0 0;font-size:13px;color:#64748B}
+.cerrar{margin-left:auto;width:40px;height:40px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center;flex:none;align-self:flex-start}
+.chips{display:flex;gap:6px;padding:0 20px 14px}
+.chip{height:24px;border-radius:12px;padding:0 10px;display:inline-flex;align-items:center;font-size:12px;font-weight:600}
+.azul{background:rgba(0,82,255,.08);color:#0052FF}
+.verde{background:#ECFDF5;color:#047857}
+.gris{background:#F1F5F9;color:#475569}
+.utabs{display:flex;gap:24px;padding:0 20px;border-bottom:1px solid #EEF2F7;height:48px}
+.utabs a{display:flex;align-items:center;font-size:14px;font-weight:600;color:#64748B;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+.utabs a.on{color:#0052FF;border-bottom-color:#0052FF}
+.cuerpo{flex:1;overflow:hidden;padding:18px 20px;display:flex;flex-direction:column;gap:18px}
+.filas{display:flex;flex-direction:column}
+.fl{display:flex;justify-content:space-between;padding:11px 0;border-top:1px solid #F1F5F9;font-size:14px}
+.fl:first-child{border-top:0}
+.fl span{color:#64748B}
+.fl b{font-weight:600}
+.et{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748B;margin:0 0 8px}
+.planes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.plan{border:1px solid #E2E8F0;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;background:#fff;text-align:left;font-family:inherit;color:inherit}
+.plan.on{border-color:#0052FF;box-shadow:0 0 0 3px rgba(0,82,255,.12)}
+.plan strong{font-size:14px}
+.plan span{font-size:12px;color:#64748B}
+.sug{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.sug button{height:30px;border-radius:15px;border:1px solid #E2E8F0;background:#fff;font:500 12px Inter,sans-serif;color:#334155;padding:0 12px}
+.sug button.on{border-color:rgba(0,82,255,.4);background:rgba(0,82,255,.06);color:#0052FF}
+textarea{width:100%;height:72px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;font:400 14px Inter,sans-serif;padding:10px 12px;resize:none;color:#0F172A}
+label.ll{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.pie{display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid #EEF2F7}
+.txt{border:0;background:none;font:600 14px Inter,sans-serif;color:#475569;margin-right:auto;height:40px}
+.prim{height:40px;border-radius:12px;border:0;background:#0052FF;color:#fff;font:600 14px Inter,sans-serif;padding:0 18px}
+.peligro{height:40px;border-radius:12px;border:1px solid #FECACA;background:#fff;color:#B91C1C;font:600 14px Inter,sans-serif;padding:0 14px}
+</style>
+</helmet>
+<div class="app">
+  <div class="side"></div>
+  <div class="fondo"><div class="t">Plataforma</div><div class="s"></div></div>
+  <div class="velo"></div>
+  <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="tituloClinica">
+    <div class="hc">
+      <span class="av">CN</span>
+      <div><h2 id="tituloClinica">Clínica Norte</h2><p>NIT 900.123.456-7 · Ana Norte · ana.norte@zooki.test</p></div>
+      <button class="cerrar" type="button" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="chips"><span class="chip azul">Profesional</span><span class="chip verde">Al día</span><span class="chip gris">Verificada</span></div>
+    <nav class="utabs" aria-label="Gestionar la clínica">
+      <a class="on" href="#">Plan y suscripción</a>
+      <a href="#">Estado</a>
+      <a href="#">Pagos e incidencias</a>
+    </nav>
+    <div class="cuerpo">
+      <div class="filas">
+        <div class="fl"><span>Plan contratado</span><b>Profesional · mensual</b></div>
+        <div class="fl"><span>Plan efectivo</span><b>Profesional</b></div>
+        <div class="fl"><span>Último día incluido</span><b>25 nov 2026</b></div>
+        <div class="fl"><span>Cobro automático</span><b>Sí</b></div>
+        <div class="fl"><span>Uso</span><b>3 de 10 veterinarios</b></div>
+      </div>
+      <div>
+        <p class="et">Cambiar plan</p>
+        <div class="planes">
+          <button class="plan" type="button"><strong>Gratuito</strong><span>2 veterinarios · sin cobro</span></button>
+          <button class="plan on" type="button" aria-pressed="true"><strong>Profesional</strong><span>10 veterinarios · $89.990 al mes</span></button>
+        </div>
+      </div>
+      <div>
+        <label class="ll" for="motivoPlan">Motivo</label>
+        <div class="sug" role="group" aria-label="Motivos frecuentes"><button type="button">Pago recibido</button><button type="button">Cambio pedido por la clínica</button><button type="button">Fin del periodo de prueba</button><button type="button">Falta de pago</button></div>
+        <textarea id="motivoPlan" placeholder="Escribe el motivo; queda en la auditoría"></textarea>
+      </div>
+    </div>
+    <div class="pie">
+      <button class="txt" type="button">Cancelar</button>
+      <button class="prim" type="button">Guardar cambio</button>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -46,16 +46,13 @@ $plan = $plan ?? '';
 <main id="plataformaContenido" class="content-body plataforma">
     <?php // Revisión del usuario (2026-10-12): la misma cabecera, filtros y tarjeta de Usuarios; sin franja de cifras. ?>
     <div class="header-container-white plataforma-encabezado">
-        <div class="head-title-desc">
-            <h2 class="users-page-title">Administración de la plataforma</h2>
-            <p class="users-module-desc">Gestiona las clínicas, sus planes y suscripciones, los casos de soporte y las IP bloqueadas.</p>
-        </div>
         <div class="head-top-right">
             <div class="tabs-wrapper" role="tablist" aria-label="Secciones del panel">
-                <button type="button" class="tab-btn active" role="tab" id="pestanaClinicas" aria-controls="panelClinicas" aria-selected="true" data-pestana="clinicas"><i class="bi bi-buildings" aria-hidden="true"></i><span>Clínicas</span></button>
+                <button type="button" class="tab-btn active" role="tab" id="pestanaClinicas" aria-controls="panelClinicas" aria-selected="true" data-pestana="clinicas"><i class="bi bi-buildings" aria-hidden="true"></i><span>Clínicas</span><span class="plataforma-contador"><?= count($clinicas) ?></span></button>
                 <button type="button" class="tab-btn" role="tab" id="pestanaSoporte" aria-controls="panelSoporte" aria-selected="false" data-pestana="soporte"><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Soporte</span><span class="plataforma-contador" data-contador-soporte><?= (int) $contadores['casos'] ?></span></button>
-                <button type="button" class="tab-btn" role="tab" id="pestanaSeguridad" aria-controls="panelSeguridad" aria-selected="false" data-pestana="seguridad"><i class="bi bi-shield-lock" aria-hidden="true"></i><span>Seguridad</span><span class="plataforma-contador" data-contador-seguridad><?= (int) $contadores['ips'] ?></span></button>
+                <button type="button" class="tab-btn" role="tab" id="pestanaSeguridad" aria-controls="panelSeguridad" aria-selected="false" data-pestana="seguridad"><i class="bi bi-shield-lock" aria-hidden="true"></i><span>Seguridad</span><span class="plataforma-contador" data-contador-seguridad data-alerta="<?= $contadores['ips'] > 0 ? '1' : '0' ?>"><?= (int) $contadores['ips'] ?></span></button>
             </div>
+            <button type="button" class="btn-modal-secondary plataforma-pagos-global" data-abrir-dialogo="incidenciasSinClinica" data-finanzas-global>Pagos sin clínica <span class="plataforma-contador" data-finanzas-conteo aria-label="Pendientes sin consultar">—</span></button>
         </div>
         <?php // Sin JavaScript el formulario filtra en el servidor; con él, al escribir. Solo se ve en la pestaña Clínicas. ?>
         <form method="GET" class="users-controls-bar__filters is-active plataforma-filtros" data-filtros-clinicas>
@@ -90,6 +87,7 @@ $plan = $plan ?? '';
         </form>
     </div>
 
+    <p class="plataforma-resumen" data-plataforma-resumen data-solo-clinicas role="status"></p>
     <section class="plataforma-panel" id="panelClinicas" role="tabpanel" aria-labelledby="pestanaClinicas" data-panel="clinicas">
         <?php if ($error !== null): ?><p class="plataforma-alerta" role="alert"><?= $e($error) ?></p><?php endif; ?>
         <div class="plataforma-vacio" data-sin-resultados <?= $clinicas ? 'hidden' : '' ?>>
@@ -98,7 +96,7 @@ $plan = $plan ?? '';
         </div>
         <div class="personal-grid view-grid plataforma-tarjetas" data-lista-vista="tarjetas">
             <?php foreach ($clinicas as $clinica): ?>
-            <article class="person-card plataforma-tarjeta" data-clinica-fila data-buscar="<?= $e($p::buscable($clinica)) ?>" data-estado="<?= $e($clinica['estado']) ?>" data-plan="<?= $e($clinica['id_plan']) ?>">
+            <article class="person-card plataforma-tarjeta" tabindex="0" role="button" aria-label="<?= $e('Abrir detalle de ' . $clinica['nombre']) ?>" data-clinica-fila data-buscar="<?= $e($p::buscable($clinica)) ?>" data-estado="<?= $e($clinica['estado']) ?>" data-plan="<?= $e($clinica['id_plan']) ?>">
                 <div class="card-header-mini">
                     <span class="avatar-mini avatar-iniciales" aria-hidden="true"><?= $e($p::iniciales($clinica['nombre'])) ?></span>
                 </div>
@@ -106,6 +104,7 @@ $plan = $plan ?? '';
                     <h3 class="card-title-mini" title="<?= $e($clinica['nombre']) ?>"><?= $e($clinica['nombre']) ?></h3>
                     <div class="card-tags-mini">
                         <?php require __DIR__ . '/estado_clinica.php'; ?>
+                        <span class="tag-mini plataforma-pago" data-situacion="<?= $e(!empty($clinica['vigencia']['legado_sin_fecha']) ? 'legado_sin_fecha' : $clinica['vigencia']['situacion']) ?>"><?= $e($clinica['estado'] === 'pendiente_verificacion' ? 'Sin verificar' : ($clinica['estado'] === 'suspendida' ? 'Suspendida' : $p::situacion($clinica['vigencia']))) ?></span>
                         <span class="tag-mini"><i class="bi bi-gem" aria-hidden="true"></i> <?= $e($clinica['plan'] ?? 'Sin plan') ?></span>
                     </div>
                     <div class="card-contact-mini">
@@ -119,7 +118,7 @@ $plan = $plan ?? '';
                     </div>
                     <?php require __DIR__ . '/uso_plan.php'; ?>
                 </div>
-                <div class="card-footer-mini"><?php require __DIR__ . '/boton_clinica.php'; ?></div>
+                <div class="card-footer-mini"><span>Desde <?= $e($p::fecha($clinica['fecha_registro'])) ?></span><?php require __DIR__ . '/boton_clinica.php'; ?><i class="bi bi-chevron-right" aria-hidden="true"></i></div>
             </article>
             <?php endforeach; ?>
         </div>
@@ -141,7 +140,6 @@ $plan = $plan ?? '';
                 </tbody>
             </table>
         </div>
-        <button type="button" class="btn-modal-secondary" data-abrir-dialogo="incidenciasSinClinica" data-finanzas-global>Incidencias · Sin clínica identificada</button>
     </section>
 
     <div class="users-modal plataforma-dialogo" id="incidenciasSinClinica" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="incidenciasSinClinicaTitulo">
@@ -319,6 +317,7 @@ $plan = $plan ?? '';
     <div class="users-modal" id="gestionarClinica" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="clinicaModalTitulo">
         <div class="modal-content users-modal__panel plataforma-modal">
             <div class="modal-header">
+                <span class="plataforma-modal__avatar" data-clinica-avatar aria-hidden="true"></span>
                 <div class="plataforma-modal__cabeza">
                     <div class="plataforma-modal__titulo">
                         <h3 id="clinicaModalTitulo" data-clinica-titulo></h3>

@@ -6,6 +6,11 @@
 
 ## Ahora
 
+### Panel de plataforma y mapa 3D — entregada, pendiente de revisión (2026-10-28)
+
+- **Escribió Codex; revisa Claude (arquitecto).** Encargo y resultado en specs/pulido-interfaz.md, Etapa R. Hoja Clínicas/Soporte/Seguridad, detalle lateral 540/inferior y mapa 3D local 1.80.0/licencia; foco, filtros, relaciones/fuentes, Plano/Lista y respaldo sin WebGL. Campana con pendientes de plataforma aprobada por el dueño, sin ampliar permisos; conserva datos/rutas/respuestas y funciones puras, sin motores ni otros roles.
+- **Verificación:** dirigidas y Chrome 360/390/820/1366 correctos, sin desborde ni barra tapando mapa/ficha. Una pasada JS completa 403/403; PHP sin host 1207/9574, 94 omitidas: tres expectativas del HTML/Cytoscape anteriores actualizadas y sus dos clases reverificadas 25/25,308 aserciones. Retoque final dirigido 13/13 y margen móvil 2/2, sin repetir suites completas. HU/RE y PDF/Word actualizados; antes/después 390/1366, 3D real, anexo de Codex/logs/comandos en scratch/r/plataforma. Sigue revisión de Claude y cinco comprobaciones del dueño; R abierta, 2.2.0 sin publicar. Sin .env, base de trabajo, servicios reales, commit/push ni otra pantalla.
+
 ### Pacientes — retoques de revisión: entregada, pendiente de revisión (2026-10-28)
 
 - **Escribió Codex; revisa Claude.** Solo R, HU-1.2/1.3/1.4: buscador flexible sin topes400/200, segmentado centrado, sin raya suelta, especie gris170×40; pie «Sin mascotas aún» y separación nombre/conteo2px; detalle con Edad140 sin saltos y avatares azul suave. Nueva/Editar mascota móviles con Estado/Esterilización a todo el ancho, sin recortes. Sin datos/permisos/rutas/respuestas nuevos.

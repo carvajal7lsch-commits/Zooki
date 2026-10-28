@@ -865,7 +865,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - Buscar y filtrar por tipo y especie conservando relaciones universales.
 - Mostrar detalle de nodo, arista y regla con relación, peso cuando aplique, signo, efecto, condiciones, fuente y validación.
 - Ofrecer solo lectura del conocimiento global sin datos individuales de pacientes ni escritura del conocimiento.
-- Mostrar versión, cobertura y validación pendiente, con estados legibles ante conjunto vacío o fallo del CDN.
+- Mostrar versión, cobertura y validación pendiente, con estados legibles ante conjunto vacío o fallo de la biblioteca 3D local o de WebGL.
 
 **Reglas de negocio:** RN-212, RN-209, RN-004, RN-G13 · **Requisitos:** RF-2.7, RNF-16 · **Dependencias:** conocimiento cargado de M2 B2
 

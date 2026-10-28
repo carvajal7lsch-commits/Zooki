@@ -55,14 +55,16 @@
         });
         // Buscador, filtros y vista son de las clínicas (como en Usuarios, por pestaña).
         document.querySelector('[data-filtros-clinicas]')?.classList.toggle('is-active', elegida === 'clinicas');
+        document.querySelectorAll('[data-solo-clinicas]').forEach(nodo => { nodo.hidden = elegida !== 'clinicas'; });
         guardar(CLAVE_PESTANA, elegida);
     }
 
     function restaurarPestana() {
-        const desdeCorreo = window.location.hash === '#soporte';
-        pestana(desdeCorreo ? 'soporte' : (leer(CLAVE_PESTANA) || 'clinicas'));
-        // El enlace abre Soporte una vez; después las acciones conservan la pestaña elegida.
-        if (desdeCorreo) window.history?.replaceState(null, '', window.location.href.replace(/#soporte$/, ''));
+        const pedida = window.location.hash?.slice(1);
+        const desdeCorreo = ['soporte', 'seguridad'].includes(pedida);
+        pestana(desdeCorreo ? pedida : (leer(CLAVE_PESTANA) || 'clinicas'));
+        // La campana abre la sección pedida una vez; después se conserva la pestaña elegida.
+        if (desdeCorreo) window.history?.replaceState(null, '', window.location.href.replace(/#(?:soporte|seguridad)$/, ''));
     }
 
     function filtros() {
@@ -90,6 +92,13 @@
         });
         const vacio = document.querySelector('[data-sin-resultados]');
         if (vacio) vacio.hidden = visibles > 0;
+        const resumen = document.querySelector('[data-plataforma-resumen]');
+        if (resumen) {
+            const filas = [...document.querySelectorAll('[data-lista-vista="tarjetas"] [data-clinica-fila]')].filter(fila => !fila.hidden);
+            const activas = filas.filter(fila => fila.dataset.estado === 'activa').length;
+            const suspendidas = filas.filter(fila => fila.dataset.estado === 'suspendida').length;
+            resumen.textContent = visibles + (visibles === 1 ? ' clínica' : ' clínicas') + ' · ' + activas + ' activas · ' + suspendidas + ' suspendidas';
+        }
         return visibles;
     }
 
@@ -213,6 +222,8 @@
 
     function cabecera(dialogo, boton) {
         dialogo.querySelector('[data-clinica-titulo]').textContent = boton.dataset.nombre;
+        const avatar = dialogo.querySelector('[data-clinica-avatar]');
+        if (avatar) avatar.textContent = (boton.dataset.nombre || '').split(/\s+/).slice(0, 2).map(p => p.slice(0, 1)).join('').toUpperCase();
         // La misma etiqueta de estado de la tarjeta (tag-mini con su icono).
         const insignia = dialogo.querySelector('[data-clinica-estado]');
         if (insignia) {
@@ -382,6 +393,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', iniciar);
+    window.addEventListener?.('hashchange', restaurarPestana);
     document.addEventListener('input', evento => {
         if (evento.target.matches('textarea[data-caracteres]')) validar(evento.target);
         if (evento.target.matches('[data-suscripcion-fin]')) validarFechaConcesion(evento.target);
@@ -394,13 +406,22 @@
         if (form && form.matches('[data-estado-acciones]') && evento.target.name === 'estado') elegirAccion(document.getElementById('gestionarClinica'), evento.target.value);
     });
     document.addEventListener('keydown', evento => {
+        const fila = evento.target.closest?.('[data-clinica-fila]');
+        if (fila && evento.target === fila && ['Enter', ' '].includes(evento.key)) {
+            evento.preventDefault();
+            abrirGestion(fila.querySelector('[data-gestionar-clinica]'));
+            return;
+        }
         if (evento.key !== 'Escape') return;
-        const abierto = document.querySelector('.users-modal.is-open');
-        if (abierto) cerrarDialogo(abierto);
+        document.querySelectorAll('.users-modal.is-open').forEach(cerrarDialogo);
     });
     document.addEventListener('click', evento => {
         const boton = evento.target.closest('button');
-        if (!boton) return;
+        if (!boton) {
+            const fila = evento.target.closest?.('[data-clinica-fila]');
+            if (fila) abrirGestion(fila.querySelector('[data-gestionar-clinica]'));
+            return;
+        }
         if (boton.dataset.motivoSugerido) sugerirMotivo(boton);
         if (boton.dataset.abrirDialogo) abrirDialogo(boton.dataset.abrirDialogo);
         if (boton.dataset.vista) vista(boton.dataset.vista);

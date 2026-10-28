@@ -75,7 +75,14 @@ async function servidorPacientes({ directorio = false, htmlVista = null, respues
             respuestas.get_laboratorios_ajax = { success: true, laboratorios: [{ nombre_laboratorio: 'Laboratorio' }] };
             respuestas.get_productos_desparasitacion_ajax = { success: true, productos: [{ nombre_producto: 'Producto' }] };
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(respuestasVista[accion] ?? respuestas[accion] ?? []));
+            const recibida = respuestasVista[accion] ?? respuestas[accion] ?? [];
+            const salida = typeof recibida === 'function' ? recibida(url) : recibida;
+            if (typeof salida === 'string') {
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                res.end(salida);
+            } else {
+                res.end(JSON.stringify(salida));
+            }
             return;
         }
         const archivo = path.resolve(raiz, 'public', '.' + url.pathname);
