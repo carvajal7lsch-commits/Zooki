@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Agenda del veterinario en el celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tel{width:390px;height:844px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;position:relative;overflow:hidden;box-sizing:border-box}
+.tel *{box-sizing:border-box}
+.cont{padding:14px 16px 0;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;gap:8px;height:44px}
+.top h1{margin:0 auto 0 0;font-size:20px;font-weight:700}
+.mas{width:44px;height:44px;border-radius:14px;border:0;background:#0052FF;color:#fff;display:flex;align-items:center;justify-content:center}
+.ib{width:44px;height:44px;border-radius:14px;background:#fff;border:0;color:#475569;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.badge{position:absolute;top:-5px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#EF4444;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #E9ECF5}
+.av{width:44px;height:44px;border-radius:50%;background:#0052FF;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;border:0}
+.tabs{display:flex;background:#fff;border-radius:14px;overflow:hidden;padding:0 4px}
+.tabs a{flex:none;height:42px;padding:0 10px;display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#475569;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+.tabs a.on{color:#0052FF;border-bottom-color:#0052FF}
+.n{min-width:18px;height:18px;border-radius:9px;padding:0 5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;background:#F1F5F9;color:#475569}
+.n.amb{background:rgba(0,82,255,.1);color:#0052FF}
+.n.roj{background:#FEE2E2;color:#B91C1C}
+.hoja{background:#fff;border-radius:16px;overflow:hidden}
+.semana{display:flex;align-items:center;gap:4px;padding:8px 8px 4px 12px}
+.mes{font-size:13px;font-weight:700;display:flex;align-items:center;gap:4px;text-decoration:none;color:#0F172A;height:32px;margin-right:auto}
+.flecha{width:32px;height:32px;border-radius:10px;border:1px solid #E2E8F0;background:#fff;color:#475569;display:flex;align-items:center;justify-content:center}
+.hoy{height:32px;border-radius:10px;border:1px solid #E2E8F0;background:#fff;font:600 12px Inter,sans-serif;color:#0F172A;padding:0 10px}
+.fil{width:32px;height:32px;border-radius:10px;border:1px solid #E2E8F0;background:#fff;color:#475569;display:flex;align-items:center;justify-content:center;position:relative}
+.fil i{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#0052FF}
+.dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));padding:2px 6px 8px;border-bottom:1px solid #F1F5F9}
+.dia{display:flex;flex-direction:column;align-items:center;gap:2px;height:52px;justify-content:center;border-radius:12px;border:0;background:transparent;font-family:inherit;color:#0F172A}
+.dia small{font-size:10px;font-weight:600;color:#94A3B8}
+.dia b{font-size:15px;font-weight:600}
+.dia i{width:4px;height:4px;border-radius:50%;background:#0052FF}
+.dia.sel{background:#0052FF;color:#fff}
+.dia.sel small{color:rgba(255,255,255,.8)}
+.dia.sel i{background:#fff}
+.dh{display:flex;justify-content:space-between;padding:10px 14px 4px;font-size:12px;color:#64748B}
+.dh b{color:#0F172A;font-size:13px}
+.row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 14px;border-top:1px solid #F1F5F9;min-height:54px;text-decoration:none;color:inherit}
+.hr{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:5px}
+.tri{width:7px;height:7px;border-radius:50%}
+.pet{font-size:14px;font-weight:700}
+.own{font-size:12px;color:#64748B;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st{height:22px;border-radius:11px;padding:0 8px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;white-space:nowrap}
+.st-completada{background:#D1FAE5;color:#065F46}
+.st-confirmada{background:#DBEAFE;color:#1E40AF}
+.st-pendiente{background:#FEF3C7;color:#92400E}
+.st-vacuna{background:#F3E8FF;color:#6B21A8}
+.hecha .pet,.hecha .hr{color:#64748B}
+.barra{position:absolute;left:8px;right:8px;bottom:8px;height:76px;background:#fff;border-radius:24px;box-shadow:0 -4px 20px rgba(15,23,42,.08);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;padding:0 6px}
+.barra a{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#475569;text-decoration:none}
+.barra a span{width:48px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.barra a.on{color:#0052FF}
+.barra a.on span{background:rgba(0,82,255,.1)}
+</style>
+</helmet>
+<div class="tel">
+  <div class="cont">
+    <header class="top">
+      <h1>Agenda</h1>
+      <a class="mas" href="Agendar1.dc.html" aria-label="Nueva cita"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
+      <button class="ib" type="button" aria-label="Notificaciones, 2 nuevas"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="badge">2</span></button>
+      <button class="av" type="button" aria-label="Mi cuenta">BN</button>
+    </header>
+
+    <nav class="tabs" aria-label="Secciones de la Agenda">
+      <a class="on" href="#" aria-current="page">Agenda</a>
+      <a href="Triage.dc.html">Triage <span class="n amb">1</span></a>
+      <a href="Llegadas.dc.html">Llegadas <span class="n">2</span></a>
+      <a href="Reasignaciones.dc.html">Reasignar <span class="n">1</span></a>
+      <a href="#">Urgencias <span class="n roj">1</span></a>
+    </nav>
+
+    <section class="hoja" aria-label="Agenda del día">
+      <div class="semana">
+        <a class="mes" href="#">Octubre 2026<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
+        <button class="hoy" type="button">Hoy</button>
+        <button class="flecha" type="button" aria-label="Semana anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="flecha" type="button" aria-label="Semana siguiente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="fil" type="button" aria-label="Filtros: citas, vacunas, desparasitación y veterinario"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></button>
+      </div>
+      <div class="dias" role="group" aria-label="Días de la semana">
+        <button class="dia" type="button"><small>L</small><b>19</b><i></i></button>
+        <button class="dia" type="button"><small>M</small><b>20</b></button>
+        <button class="dia" type="button"><small>M</small><b>21</b><i></i></button>
+        <button class="dia" type="button"><small>J</small><b>22</b><i></i></button>
+        <button class="dia sel" type="button" aria-pressed="true"><small>V</small><b>23</b><i></i></button>
+        <button class="dia" type="button"><small>S</small><b>24</b></button>
+        <button class="dia" type="button"><small>D</small><b>25</b></button>
+      </div>
+      <div class="dh"><b>Viernes 23/10</b><span>6 en la agenda · 2 atendidas</span></div>
+      <sc-for list="{{filas}}" as="f" hint-placeholder-count="6">
+        <a class="row {{f.extra}}" href="#"><span class="hr"><sc-if value="{{f.tri}}" hint-placeholder-val="{{false}}"><i class="tri" style="background: {{f.tri}}"></i></sc-if>{{f.hora}}</span><span style="min-width: 0"><div class="pet">{{f.pet}}</div><div class="own">{{f.det}}</div></span><span class="st st-{{f.est}}">{{f.etq}}</span></a>
+      </sc-for>
+    </section>
+  </div>
+
+  <nav class="barra" aria-label="Menú principal">
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>Inicio</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="2.4"/><path d="M7 20c0-3 2.2-5 5-5s5 2 5 5"/></svg></span>Pacientes</a>
+    <a class="on" href="#" aria-current="page"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2.5a1 1 0 0 1 1 1V4h8v-.5a1 1 0 1 1 2 0V4h.5A2.5 2.5 0 0 1 21 6.5V9H3V6.5A2.5 2.5 0 0 1 5.5 4H6v-.5a1 1 0 0 1 1-1zM3 10.5h18v8A2.5 2.5 0 0 1 18.5 21h-13A2.5 2.5 0 0 1 3 18.5z"/></svg></span>Agenda</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Perfil</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      filas: [
+        { hora: '8:30', pet: 'Toby', det: 'Vacunación · Marta Ríos', est: 'completada', etq: 'Completada', tri: '', extra: 'hecha' },
+        { hora: '9:30', pet: 'Mia', det: 'Control · Fabio Propietario', est: 'completada', etq: 'Completada', tri: '', extra: 'hecha' },
+        { hora: '2:00', pet: 'Luna', det: 'Vómito · Fabio Propietario', est: 'confirmada', etq: 'Confirmada', tri: '#B45309', extra: '' },
+        { hora: '3:00', pet: 'Max', det: 'Primera visita · Laura Gómez', est: 'pendiente', etq: 'Pendiente', tri: '', extra: '' },
+        { hora: '4:00', pet: 'Rocky', det: 'Refuerzo de rabia · recordatorio', est: 'vacuna', etq: 'Vacuna', tri: '', extra: '' },
+        { hora: '4:30', pet: 'Kira', det: 'Desparasitación · Fabio Propietario', est: 'pendiente', etq: 'Pendiente', tri: '#F59E0B', extra: '' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

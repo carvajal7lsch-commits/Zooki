@@ -119,6 +119,35 @@
     }
 
     /** RNF-16: componentes móviles optativos; no se activan por el rol ni por el ancho solos. */
+    function pintarFranjaSemana(interfaz, fechas, elegido, hoy, conEventos) {
+        const documento = global.document;
+        const franja = interfaz.querySelector('[data-inicio-semana-dias]');
+        franja.replaceChildren();
+        fechas.forEach((fecha, indice) => {
+            const boton = documento.createElement('button');
+            boton.type = 'button';
+            boton.className = 'inicio-semana__dia';
+            boton.dataset.inicioSemanaFecha = fecha;
+            boton.setAttribute('aria-pressed', String(fecha === elegido));
+            if (fecha === hoy) boton.setAttribute('aria-current', 'date');
+            const tieneCitas = conEventos(fecha);
+            const etiqueta = new Date(fecha + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+            boton.setAttribute('aria-label', etiqueta + (tieneCitas ? ', con citas' : ''));
+            const nombre = documento.createElement('small');
+            nombre.textContent = ['L', 'M', 'M', 'J', 'V', 'S', 'D'][indice];
+            const numero = documento.createElement('strong');
+            numero.textContent = Number(fecha.slice(8));
+            boton.append(nombre, numero);
+            if (tieneCitas) {
+                const punto = documento.createElement('span');
+                punto.className = 'inicio-semana__punto';
+                punto.setAttribute('aria-hidden', 'true');
+                boton.append(punto);
+            }
+            franja.append(boton);
+        });
+    }
+
     function iniciarMovil(raiz, calendarioApi) {
         if (typeof global.matchMedia !== 'function' || !raiz.hasAttribute('data-inicio-movil-habilitado')) return;
         const documento = global.document;
@@ -193,31 +222,7 @@
                 await Promise.all(claves.map(asegurarMes));
                 if (!activo || turno !== turnoSemana) return;
                 interfaz.querySelector('[data-inicio-semana-mes]').textContent = meses.get(elegido.slice(0, 7))?.titulo || '';
-                const franja = interfaz.querySelector('[data-inicio-semana-dias]');
-                franja.replaceChildren();
-                fechas.forEach((fecha, indice) => {
-                    const boton = documento.createElement('button');
-                    boton.type = 'button';
-                    boton.className = 'inicio-semana__dia';
-                    boton.dataset.inicioSemanaFecha = fecha;
-                    boton.setAttribute('aria-pressed', String(fecha === elegido));
-                    if (fecha === raiz.dataset.hoy) boton.setAttribute('aria-current', 'date');
-                    const tieneCitas = meses.get(fecha.slice(0, 7))?.puntos.has(fecha);
-                    const etiqueta = fechaDesdeTexto(fecha).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
-                    boton.setAttribute('aria-label', etiqueta + (tieneCitas ? ', con citas' : ''));
-                    const nombre = documento.createElement('small');
-                    nombre.textContent = ['L', 'M', 'M', 'J', 'V', 'S', 'D'][indice];
-                    const numero = documento.createElement('strong');
-                    numero.textContent = Number(fecha.slice(8));
-                    boton.append(nombre, numero);
-                    if (tieneCitas) {
-                        const punto = documento.createElement('span');
-                        punto.className = 'inicio-semana__punto';
-                        punto.setAttribute('aria-hidden', 'true');
-                        boton.append(punto);
-                    }
-                    franja.append(boton);
-                });
+                pintarFranjaSemana(interfaz, fechas, elegido, raiz.dataset.hoy, fecha => meses.get(fecha.slice(0, 7))?.puntos.has(fecha));
             } catch (_) {
                 if (turno === turnoSemana) global.zookiToast?.('No se pudo cargar la semana. Intenta nuevamente.', 'error');
             }
@@ -348,7 +353,7 @@
         ajustar();
     }
 
-    const api = { iniciarCalendario, iniciarDialogos, recargarAlVolver, iniciarMovil };
+    const api = { pintarSemana: pintarFranjaSemana, iniciarCalendario, iniciarDialogos, recargarAlVolver, iniciarMovil };
     global.ZookiInicio = api;
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(globalThis);

@@ -139,18 +139,20 @@ test('si falla la foto se muestran las iniciales sin pedir el icono de huella', 
     assert.equal(foto.src, undefined);
 });
 
-test('el panel derecho de horarios queda fuera de los pasos y permanece presente', () => {
+test('horarios conserva su columna de escritorio y constituye el tercer paso móvil', () => {
     const formulario = tramo(leer('views/vet/calendario.php'), '<form id="formCitaModal"', '</form>');
-    assert.doesNotMatch(formulario, /data-cita-paso="2"|cm_confirmacion/);
-    assert.equal((formulario.match(/data-cita-paso=/g) || []).length, 2);
+    assert.doesNotMatch(formulario, /cm_confirmacion/);
+    assert.equal((formulario.match(/data-cita-paso=/g) || []).length, 3);
     assert.match(formulario, /data-cita-indicador="1"[^>]*disabled[^>]*><span>2<\/span>Urgencia/);
-    assert.match(formulario, /<\/section>\s*<\/div>\s*<\/div>\s*<div class="zk-modal__col zk-modal__col--slots cita-horarios">/);
-    assert.match(formulario, /cita-horarios">\s*<p[^>]*>Horario disponible[\s\S]*id="modal_slots_container"/);
+    assert.match(formulario, /<\/section>\s*<\/div>\s*<\/div>\s*<div class="zk-modal__col zk-modal__col--slots cita-horarios" data-cita-paso="2">/);
+    assert.match(formulario, /cita-horarios" data-cita-paso="2">[\s\S]*Horario disponible[\s\S]*id="modal_slots_container"/);
+    assert.match(formulario, /class="cita-solo-movil"><button type="button" data-cita-indicador="2"/);
     assert.match(leer('public/css/calendar-modules/modals.css'), /\.cita-distribucion\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1\.1fr\)/);
 });
 
 test('los pasos exigen paciente y triage, conservan los datos al volver y bloquean doble envío', () => {
     const documento = crearDocumento();
+    colgar(documento.raiz, 'div', {}, { id: 'citaModalOverlay' });
     const paneles = [0, 1].map(i => {
         const panel = colgar(documento.raiz, 'section', { citaPaso: String(i) });
         const titulo = colgar(panel, 'h4');
@@ -167,7 +169,7 @@ test('los pasos exigen paciente y triage, conservan los datos al volver y bloque
     const submit = colgar(documento.raiz, 'button', {}, { id: 'cm_submit' });
     const valores = { modal_mascota: '', modal_tipo_cita: '', modal_hora: '09:00:30' };
     let solicitud = '';
-    const ventana = { document: documento, enviosC3: { reserva: false }, val: id => valores[id], getVetModal: () => '2',
+    const ventana = { document: documento, window: { matchMedia: () => ({ matches: false }) }, enviosC3: { reserva: false }, val: id => valores[id], getVetModal: () => '2',
         triageModalC4: { consulta: () => solicitud }, ocultarErrorModal() {}, actualizarResumenModal() { ventana.actualizarPasosCita(); } };
     vm.createContext(ventana);
     vm.runInContext(tramo(leer('public/js/calendario.js'), 'let pasoCitaModal = 0;', 'function abrirCitaModal(date)'), ventana);

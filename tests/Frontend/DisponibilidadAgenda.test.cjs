@@ -285,7 +285,7 @@ test('C3 portal bloquea doble envío y reintenta el mismo comando tras fallo de 
     assert.deepEqual(horas, ['09:00:30', '09:00:30']);
 });
 
-test('C3.1 los chips reales internos y del portal presentan y seleccionan el instante literal', () => {
+test('C3.1 los chips conservan el instante literal aunque Agenda presente la hora sin segundos', () => {
     for (const portal of [false, true]) {
         let seleccionada = '';
         let clic;
@@ -307,13 +307,15 @@ test('C3.1 los chips reales internos y del portal presentan y seleccionan el ins
         } else {
             const inicio = calendario.indexOf('function format12h(');
             vm.runInContext(calendario.slice(inicio, calendario.indexOf('\n}', inicio) + 2), contexto);
+            const formato = calendario.indexOf('function formatearHoraReserva(');
+            vm.runInContext(calendario.slice(formato, calendario.indexOf('\n}', formato) + 2), contexto);
             const render = calendario.indexOf('function renderSlots(');
             vm.runInContext(calendario.slice(render, calendario.indexOf('// ═', render)), contexto);
             contexto.renderSlots('modal_slots_container', ['08:00:30'], hora => { seleccionada = hora; });
             clic = contenedor.onclick;
         }
         assert.match(contenedor.innerHTML, /data-hora="08:00:30"/);
-        assert.match(contenedor.innerHTML, /8:00:30 (?:AM|a\. m\.)/);
+        assert.match(contenedor.innerHTML, portal ? /8:00:30 (?:AM|a\. m\.)/ : /8:00 a\. m\./);
         const chip = { dataset: { hora: '08:00:30' } };
         clic({ target: { closest: selector => selector === '.slot-chip' ? chip : null } });
         assert.equal(portal ? contexto.horaInput.value : seleccionada, '08:00:30');
@@ -344,6 +346,8 @@ for (const reprogramar of [false, true]) {
 function prepararContextoC4(contexto) {
     // Los casos de envío C3 parten del último paso, con la evaluación previa válida.
     contexto.pasoCitaModal = 1;
+    contexto.citaEsMovil = () => false;
+    contexto.window = { matchMedia: () => ({ matches: false }) };
     contexto.avanzarPasoCita = () => {};
     contexto.triageModalC4 = { consulta: () => '123' };
     contexto.triageC4 = { consulta: () => '123' };

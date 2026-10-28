@@ -66,3 +66,92 @@
         background: var(--z-surface);
     }
 }
+
+/* RNF-16: franja compartida por Inicio y Agenda. */
+@media (max-width: 767px) {
+    .inicio-semana {
+        padding: 6px 12px 10px;
+    }
+    .inicio-semana__cabecera {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .inicio-semana__mes {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        min-height: 40px;
+        padding: 0 2px;
+        border: 0;
+        background: transparent;
+        color: var(--z-text);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .inicio-semana__flecha {
+        display: grid;
+        place-items: center;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--z-text-secondary);
+        cursor: pointer;
+    }
+    .inicio-semana__dias {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 4px;
+    }
+    .inicio-semana__dia {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        min-width: 0;
+        min-height: 52px;
+        padding: 4px 0 10px;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        color: var(--z-text-secondary);
+        font: inherit;
+        cursor: pointer;
+    }
+    .inicio-semana__dia small {
+        font-size: 11px;
+        color: var(--z-text-muted);
+    }
+    .inicio-semana__dia strong {
+        font-size: 15px;
+        font-weight: 600;
+    }
+    .inicio-semana__punto {
+        position: absolute;
+        bottom: 5px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--z-primary);
+    }
+    .inicio-semana__dia[aria-pressed="true"] {
+        background: var(--z-primary);
+        color: var(--z-surface);
+    }
+    .inicio-semana__dia[aria-pressed="true"] small {
+        color: var(--z-surface);
+    }
+    .inicio-semana__dia[aria-pressed="true"] .inicio-semana__punto {
+        background: var(--z-surface);
+    }
+}

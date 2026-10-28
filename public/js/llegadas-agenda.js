@@ -143,7 +143,8 @@
         function decisiones(padre, id, opciones) {
             if (!opciones) return;
             const minutos = Math.max(0, Math.round(opciones.segundos_restantes / 60));
-            texto(padre, 'p', `Quedan ${minutos} min de tiempo clínico · ${opciones.dentro_tolerancia ? 'dentro de la tolerancia' : 'tolerancia superada'}`).className = 'ah-item__meta';
+            const estado = texto(padre, 'p', `Quedan ${minutos} min de tiempo clínico · ${opciones.dentro_tolerancia ? 'dentro de la tolerancia' : 'tolerancia superada'}`);
+            estado.className = 'ah-item__meta' + (opciones.dentro_tolerancia ? '' : ' ah-retraso');
             const grupo = texto(padre, 'div', '');
             grupo.className = 'ah-decisiones';
             if (opciones.dentro_tolerancia) {

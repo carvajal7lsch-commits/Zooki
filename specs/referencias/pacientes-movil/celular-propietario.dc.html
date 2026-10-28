@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ficha del propietario en el celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tel{width:390px;height:844px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;position:relative;overflow:hidden;box-sizing:border-box}
+.tel *{box-sizing:border-box}
+.cont{padding:14px 16px 0;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;gap:8px;height:44px}
+.volver{width:40px;height:40px;border-radius:12px;border:0;background:#fff;color:#0F172A;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(15,23,42,.06);flex:none}
+.top h1{margin:0;font-size:18px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{width:40px;height:40px;border-radius:12px;border:0;background:#fff;color:#475569;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(15,23,42,.06);flex:none}
+.hoja{background:#fff;border-radius:16px;overflow:hidden}
+.prop{display:flex;align-items:center;gap:12px;padding:14px 14px 10px}
+.av{width:44px;height:44px;border-radius:50%;background:#0052FF;color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex:none}
+.nm{font-size:16px;font-weight:700}
+.act{height:22px;border-radius:11px;padding:0 8px;background:rgba(0,82,255,.08);color:#0052FF;font-size:11px;font-weight:700;display:inline-flex;align-items:center;margin-top:3px}
+.dato{display:flex;justify-content:space-between;gap:12px;padding:9px 14px;border-top:1px solid #F1F5F9;font-size:14px}
+.dato span{color:#64748B}
+.dato b{font-weight:600;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acciones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px 14px 14px;border-top:1px solid #F1F5F9}
+.b2{height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;font:600 13px Inter,sans-serif;color:#0F172A;display:flex;align-items:center;justify-content:center;gap:6px}
+.b1{height:40px;border-radius:12px;border:0;background:#0052FF;font:700 13px Inter,sans-serif;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px}
+.mh{display:flex;align-items:center;gap:8px;padding:12px 14px 8px}
+.mh h2{margin:0;font-size:15px;font-weight:700}
+.cnt{min-width:20px;height:20px;border-radius:10px;padding:0 6px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.nueva{margin-left:auto;height:34px;border-radius:10px;border:1px solid rgba(0,82,255,.25);background:rgba(0,82,255,.06);color:#0052FF;font:700 13px Inter,sans-serif;padding:0 10px;display:flex;align-items:center;gap:4px}
+.fila{display:flex;gap:8px;padding:0 14px 10px}
+.search{flex:1;min-width:0;height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;gap:8px;padding:0 12px;color:#94A3B8;font-size:15px}
+.sel{height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;gap:6px;padding:0 10px;font:500 14px Inter,sans-serif;color:#0F172A}
+.pet{display:grid;grid-template-columns:40px minmax(0,1fr) auto 16px;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid #F1F5F9;text-decoration:none;color:inherit;min-height:60px}
+.pav{width:40px;height:40px;border-radius:12px;background:rgba(0,82,255,.1);color:#0052FF;font-weight:700;display:flex;align-items:center;justify-content:center}
+.pn{font-size:15px;font-weight:700}
+.pd{font-size:13px;color:#64748B;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hc{height:22px;border-radius:11px;padding:0 8px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;background:rgba(0,82,255,.08);color:#0052FF;white-space:nowrap}
+.hc.gris{background:#F1F5F9;color:#475569}
+.inact .pn,.inact .pav{opacity:.55}
+.barra{position:absolute;left:8px;right:8px;bottom:8px;height:76px;background:#fff;border-radius:24px;box-shadow:0 -4px 20px rgba(15,23,42,.08);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;padding:0 6px}
+.barra a{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#475569;text-decoration:none}
+.barra a span{width:48px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.barra a.on{color:#0052FF}
+.barra a.on span{background:rgba(0,82,255,.1)}
+</style>
+</helmet>
+<div class="tel">
+  <div class="cont">
+    <header class="top">
+      <a class="volver" href="#" aria-label="Volver a Propietarios"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
+      <h1>Fabio Propietario</h1>
+      <button class="ib" type="button" aria-label="Editar propietario"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+    </header>
+
+    <section class="hoja" aria-label="Datos del propietario">
+      <div class="prop"><span class="av">FP</span><div><div class="nm">Fabio Propietario</div><span class="act">Activo</span></div></div>
+      <div class="dato"><span>Documento</span><b>1000000006</b></div>
+      <div class="dato"><span>Teléfono</span><b>300 111 2233</b></div>
+      <div class="dato"><span>Correo</span><b>fabio@zooki.test</b></div>
+      <div class="acciones">
+        <a class="b2" href="#" style="text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>Llamar</a>
+        <a class="b2" href="#" style="text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Correo</a>
+        <button class="b1" type="button">Agendar</button>
+      </div>
+    </section>
+
+    <section class="hoja" aria-label="Mascotas">
+      <div class="mh"><h2>Mascotas</h2><span class="cnt">5</span><button class="nueva" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nueva</button></div>
+      <div class="fila">
+        <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>Buscar mascota</span></label>
+        <button class="sel" type="button">Especie<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
+      <a class="pet" href="Mascota.dc.html"><span class="pav">D</span><span style="min-width: 0"><div class="pn">Doki</div><div class="pd">Canino · Dóberman · Macho</div></span><span class="hc">HC-000002</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="pet" href="#"><span class="pav">G</span><span style="min-width: 0"><div class="pn">gato</div><div class="pd">Felino · Bengala · Macho</div></span><span class="hc">HC-000003</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="pet" href="#"><span class="pav">K</span><span style="min-width: 0"><div class="pn">Kira</div><div class="pd">Canino · Mestizo · Sexo desconocido</div></span><span class="hc gris">Sin historia</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="pet" href="#"><span class="pav">L</span><span style="min-width: 0"><div class="pn">Luna</div><div class="pd">Canino · Sin raza definida · Hembra</div></span><span class="hc">HC-000001</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="pet inact" href="#"><span class="pav">P</span><span style="min-width: 0"><div class="pn">Pelusa</div><div class="pd">Felino · Mestizo · Hembra</div></span><span class="hc gris">Inactiva</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    </section>
+  </div>
+
+  <nav class="barra" aria-label="Menú principal">
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>Inicio</a>
+    <a class="on" href="#" aria-current="page"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="6.5" cy="9" rx="2" ry="2.6"/><ellipse cx="17.5" cy="9" rx="2" ry="2.6"/><ellipse cx="10" cy="5.5" rx="2" ry="2.6"/><ellipse cx="14" cy="5.5" rx="2" ry="2.6"/><path d="M12 11.5c-3 0-5.5 3.4-5.5 5.6 0 1.6 1.3 2.4 2.8 2.4 1.2 0 1.8-.6 2.7-.6s1.5.6 2.7.6c1.5 0 2.8-.8 2.8-2.4 0-2.2-2.5-5.6-5.5-5.6z"/></svg></span>Pacientes</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>Agenda</a>
+    <a href="#"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Perfil</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

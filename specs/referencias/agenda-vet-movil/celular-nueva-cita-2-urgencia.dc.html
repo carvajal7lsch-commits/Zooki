@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nueva cita · paso 2 urgencia en el celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tel{width:390px;height:844px;background:#C9CDD8;font-family:Inter,sans-serif;color:#0F172A;position:relative;overflow:hidden;box-sizing:border-box}
+.tel *{box-sizing:border-box}
+.hoja{position:absolute;left:0;right:0;bottom:0;top:36px;background:#fff;border-radius:24px 24px 0 0;display:flex;flex-direction:column;box-shadow:0 -12px 32px rgba(15,23,42,.18)}
+.asa{width:44px;height:5px;border-radius:3px;background:#CBD5E1;margin:10px auto 6px;border:0;display:block}
+.head{padding:4px 16px 10px}
+h2{margin:0;font-size:19px;font-weight:700}
+.sub{font-size:13px;color:#64748B;margin-top:2px}
+.pasos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid #E2E8F0;padding:0 8px}
+.paso{display:flex;align-items:center;justify-content:center;gap:6px;height:44px;font-size:13px;font-weight:600;color:#64748B;border-bottom:3px solid transparent}
+.paso b{width:22px;height:22px;border-radius:50%;border:1.5px solid #CBD5E1;font-size:12px;display:flex;align-items:center;justify-content:center}
+.paso.on{color:#0052FF;border-bottom-color:#0052FF}
+.paso.on b{background:#0052FF;border-color:#0052FF;color:#fff}
+.paso.ok b{background:rgba(0,82,255,.1);border-color:transparent;color:#0052FF}
+.cuerpo{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.campo{display:flex;flex-direction:column;gap:8px}
+.et{font-size:13px;font-weight:600;color:#475569}
+.req{color:#EF4444}
+.op{font-weight:500;color:#94A3B8}
+.ctrl{height:48px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;gap:8px;padding:0 14px;font:500 15px Inter,sans-serif;color:#94A3B8}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{height:32px;border-radius:16px;background:rgba(0,82,255,.08);color:#0052FF;font:600 13px Inter,sans-serif;padding:0 6px 0 12px;display:flex;align-items:center;gap:4px;border:0}
+.chip span{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.link{border:0;background:none;padding:0;font:600 13px Inter,sans-serif;color:#475569;text-align:left;height:28px}
+.mas{display:flex;align-items:center;gap:6px;height:40px;font-size:13px;font-weight:600;color:#0F172A;border-top:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9}
+.res{border-radius:14px;background:#FFF7ED;border:1px solid #FED7AA;padding:12px 14px;display:flex;gap:12px;align-items:flex-start}
+.res i{width:12px;height:12px;border-radius:50%;background:#EA580C;margin-top:4px;flex:none}
+.res b{display:block;font-size:15px;color:#C2410C}
+.res span{font-size:13px;color:#7C2D12;line-height:1.4}
+.recalc{border:0;background:none;color:#0052FF;font:600 13px Inter,sans-serif;padding:0;height:28px;text-align:left}
+.pie{display:flex;gap:10px;align-items:center;padding:12px 16px 20px;border-top:1px solid #F1F5F9}
+.txt{height:48px;padding:0 14px;border:0;background:none;font:600 15px Inter,sans-serif;color:#475569}
+.prim{flex:1;height:48px;border-radius:14px;border:0;background:#0052FF;color:#fff;font:700 15px Inter,sans-serif}
+</style>
+</helmet>
+<div class="tel">
+  <section class="hoja" role="dialog" aria-labelledby="ncTitulo2">
+    <button class="asa" type="button" aria-label="Cerrar"></button>
+    <div class="head"><h2 id="ncTitulo2">Nueva cita</h2><div class="sub">Doki · Viernes 30/10/2026</div></div>
+    <nav class="pasos" aria-label="Pasos"><span class="paso ok"><b>1</b>Paciente</span><span class="paso on" aria-current="step"><b>2</b>Urgencia</span><span class="paso"><b>3</b>Horario</span></nav>
+    <div class="cuerpo">
+      <div class="campo"><span class="et">¿Qué le pasa? <span class="req">*</span></span>
+        <span class="ctrl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Escribe y elige un síntoma</span>
+        <div class="chips"><button class="chip" type="button">Vómito · 2 días<span aria-label="Quitar">×</span></button><button class="chip" type="button">Decaimiento · 1 día<span aria-label="Quitar">×</span></button></div>
+        <button class="link" type="button">¿No aparece? Marcar «Otro / no sé»</button>
+      </div>
+      <div class="mas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0052FF" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Exposición a sustancias y otros datos <span class="op">(opcional)</span></div>
+      <div class="res" role="status"><i></i><div><b>Naranja · urgente</b><span>Se agenda con prioridad. Puedes ajustar el nivel en Triage.</span></div></div>
+      <button class="recalc" type="button">Volver a calcular</button>
+    </div>
+    <div class="pie"><a class="txt" href="Agendar1.dc.html" style="display: flex; align-items: center; text-decoration: none">Atrás</a><a class="prim" href="Agendar3.dc.html" style="display: flex; align-items: center; justify-content: center; text-decoration: none">Continuar</a></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Agenda del veterinario y Nueva cita en el celular — entregada, pendiente de revisión (2026-10-27)
+
+- **Escribió Codex; revisa Claude; mockups aprobados por el dueño.** Encargo y resultado en specs/pulido-interfaz.md, Etapa R («Agenda del veterinario en el celular — Resultado»). Solo <768: cinco pestañas con conteos, semana compartida con Inicio, mes/filtros/detalle en hojas, filas desde la fuente del calendario, triage/llegadas/reasignaciones/urgencias y Nueva cita con tres pasos/pie fijo. Reprogramar también es hoja. Al cambiar día se conserva la captura y se invalida la evaluación anterior con el mecanismo existente. Horarios y resumen legibles en todos los anchos, conservando segundos en el envío; medidas de escritorio/tableta iguales con la misma caché de fuentes.
+- **Verificación:** PHP completo sin host 1206/9612, 94 omitidas por motor. Una pasada JS completa con Chrome: 384/389; cinco expectativas/mocks antiguos de dos pasos/formato se actualizaron y se reverificaron sus tres archivos: 35/35 correctas. Sin fallos conocidos pendientes; no se repitió la batería completa. AgendaVetMovil nueva (4 pruebas Chrome, 360/390/820/1366) y regresiones dirigidas de Agenda/Citas/Inicios correctas; capturas antes/después y logs en scratch/r/agenda-vet-movil. El log global conserva los cinco fallos iniciales, resueltos en la reverificación dirigida documentada.
+- **Sigue:** revisión de Claude y cinco comprobaciones móviles del dueño en el resultado. R abierta, C fuera de P1 por decisión del dueño (2026-10-26), 2.2.0 sin publicar; sin servidor/esquema/rutas/permisos nuevos, .env, base de trabajo, servicios reales, commit ni push. No se inició otra pantalla.
+
 ### Cabecera minimalista y notificaciones — entregada, pendiente de revisión (2026-10-27)
 
 - **Escribió Claude Code; revisa Claude (arquitecto); mockup aprobado por el dueño** en specs/referencias/cabecera-notificaciones/. Cabecera de admin/vet con clínica en pastilla, campana y avatar de 40 px; contador rojo de no leídas (1…9, «9+»), sin timbre ni ámbar; ventana de 380 px con «N sin leer» y marcar todas por icono, hoja inferior en celular; avisos como botones con delegación de eventos y rojo solo en cita cancelada/límite del plan; icono azul del título de Usuarios/Citas/Pacientes. Sin servidor, rutas ni permisos.

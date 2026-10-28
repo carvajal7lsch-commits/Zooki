@@ -44,6 +44,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 
     <p class="agenda-arrastre"><i class="fas fa-hand-pointer" aria-hidden="true"></i> Puedes arrastrar tus citas pendientes o confirmadas para reprogramarlas. En móvil también puedes usar el detalle de la cita.</p>
 
+    <?php if ($rolAgenda === Roles::VETERINARIO) require __DIR__ . '/partials/agenda_movil.php'; ?>
     <div class="agenda-layout">
         <section class="agenda-calendar" aria-label="Calendario">
             <div id="calendar"></div>
@@ -88,6 +89,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
             <ol class="cita-pasos__indicador" aria-label="Pasos para agendar">
                 <li><button type="button" data-cita-indicador="0" aria-current="step"><span>1</span>Paciente</button></li>
                 <li><button type="button" data-cita-indicador="1" disabled><span>2</span>Urgencia</button></li>
+                        <li class="cita-solo-movil"><button type="button" data-cita-indicador="2" disabled><span>3</span>Horario</button></li>
             </ol>
             <div class="cita-pasos__contenido">
             <section class="cita-pasos__panel" data-cita-paso="0" aria-labelledby="citaPasoPaciente">
@@ -153,7 +155,8 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 
             </div>
             </div>
-            <div class="zk-modal__col zk-modal__col--slots cita-horarios">
+            <div class="zk-modal__col zk-modal__col--slots cita-horarios" data-cita-paso="2">
+                    <div class="cita-solo-movil cita-fecha"><span data-cita-fecha></span><button type="button" data-cita-cambiar-dia>Cambiar día</button></div>
                 <p class="zk-modal__section">Horario disponible <span class="zk-requerido" aria-hidden="true">*</span></p>
                 <p class="cita-horarios__resumen" id="cm_horario_resumen" hidden></p>
                 <div class="slot-panel" id="modal_slots_container"></div>
@@ -166,7 +169,7 @@ $usuarioAgenda = (int) Contexto::idUsuario();
                 <i class="fas fa-exclamation-circle"></i><span id="modal_error_message"></span>
             </div>
             <p class="zk-summary" id="cm_resumen"></p>
-            <div class="zk-modal__actions">
+            <div class="zk-modal__actions" data-cita-pie>
                 <button type="submit" form="formCitaModal" class="cal-btn cal-btn--primary" id="cm_submit" hidden disabled>Agendar cita</button>
             </div>
         </footer>
@@ -229,6 +232,8 @@ $usuarioAgenda = (int) Contexto::idUsuario();
 </div>
 
 <script src="js/triage-agenda.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/inicio-comun.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="js/agenda-movil.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="js/calendario.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 
 <!-- MODAL NUEVA CONSULTA (necesario para Iniciar Atención desde el calendario) -->

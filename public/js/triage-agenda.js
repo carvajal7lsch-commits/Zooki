@@ -354,6 +354,8 @@
         });
 
         capturaActual = {
+            // RNF-16: cambiar el día invalida la evaluación conservando las marcas escritas.
+            refrescarSeleccion: invalidar,
             resultado() {
                 return estado.consultar(opciones.seleccion());
             },

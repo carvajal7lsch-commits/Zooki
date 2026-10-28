@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Triage · revisar nivel en hoja inferior</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.tel{width:390px;height:844px;background:#C9CDD8;font-family:Inter,sans-serif;color:#0F172A;position:relative;overflow:hidden;box-sizing:border-box}
+.tel *{box-sizing:border-box}
+.hoja{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:8px 16px 20px;box-shadow:0 -12px 32px rgba(15,23,42,.18);display:flex;flex-direction:column;gap:14px}
+.asa{width:44px;height:5px;border-radius:3px;background:#CBD5E1;margin:4px auto 0;border:0;display:block}
+h2{margin:0;font-size:18px;font-weight:700}
+.caso{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.txt{font-size:14px}
+.meta{font-size:12px;color:#64748B}
+.et{font-size:13px;font-weight:600;color:#475569;margin-bottom:8px;display:block}
+.niveles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.nv{height:44px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;font:700 13px Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;color:#475569}
+.nv i{width:9px;height:9px;border-radius:50%}
+.nv.on{border-width:2px}
+.calc{font-size:12px;color:#64748B;margin-top:6px}
+.inp{height:48px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;padding:0 14px;font-size:15px;color:#94A3B8}
+.req{color:#EF4444}
+.err{font-size:12px;color:#B91C1C;margin-top:6px}
+.pie{display:flex;gap:10px;align-items:center}
+.txtb{height:48px;padding:0 14px;border:0;background:none;font:600 15px Inter,sans-serif;color:#475569}
+.prim{flex:1;height:48px;border-radius:14px;border:0;background:#0052FF;color:#fff;font:700 15px Inter,sans-serif}
+</style>
+</helmet>
+<div class="tel">
+  <section class="hoja" role="dialog" aria-labelledby="revTitulo">
+    <button class="asa" type="button" aria-label="Cerrar revisión"></button>
+    <h2 id="revTitulo">Revisar nivel · Rocky</h2>
+    <div class="caso">
+      <div class="txt">Vómito, desde hace 2 días · Decaimiento, desde ayer</div>
+      <div class="meta">3 años · Macho · Vacunas: al día</div>
+    </div>
+    <div role="group" aria-label="Nivel revisado">
+      <span class="et">Nivel revisado</span>
+      <div class="niveles">
+        <button class="nv" type="button"><i style="background: #16A34A"></i>Verde</button>
+        <button class="nv" type="button"><i style="background: #CA8A04"></i>Amarillo</button>
+        <button class="nv on" type="button" aria-pressed="true" style="border-color: #C2410C; background: #FFF7ED; color: #C2410C"><i style="background: #EA580C"></i>Naranja</button>
+        <button class="nv" type="button"><i style="background: #DC2626"></i>Rojo</button>
+      </div>
+      <div class="calc">El grafo calculó Naranja.</div>
+    </div>
+    <label><span class="et">Motivo <span class="req">*</span></span><span class="inp">Ej. mejoró con hidratación en casa</span><div class="err">El motivo es obligatorio.</div></label>
+    <div class="pie">
+      <button class="txtb" type="button">Cancelar</button>
+      <button class="prim" type="button">Confirmar nivel</button>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
