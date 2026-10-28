@@ -48,7 +48,7 @@ jobs:
       with:
         node-version: '22'
 
-       # Tope de 20 minutos: una prueba de Chrome colgada dejó el job 6 horas (2026-10-27).
+    # Tope de 20 minutos: una prueba de Chrome colgada dejó el job 6 horas (2026-10-27).
     # Si algo falla, cada prueba en rojo sale como anotación del job, legible sin
     # descargar el registro completo.
     - name: Pruebas de JS (node --test)
