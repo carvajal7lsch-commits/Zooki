@@ -106,6 +106,9 @@ test('R Citas admin: filtros originales, métricas, triage, detalle accesible y 
         await captura(nav,'1366-urgencias');
         await nav.evaluar("document.querySelector('[data-agenda-tab=agenda]').click();true");
         await nav.enviar('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+        // situar() corre al cambiar el ancho y cierra la hoja de filtros: se espera a que
+        // termine antes de abrirla (con el CI cargado el clic llegaba primero y la hoja se cerraba).
+        await nav.esperar("document.querySelector('[data-citas-selectores-destino] [data-citas-selectores]')");
         await nav.evaluar("document.querySelector('[data-abrir-dialogo=citasFiltros]').click();true");
         assert.equal(await nav.evaluar("document.getElementById('citasFiltros').open"),true);
         assert.equal(await nav.evaluar("document.getElementById('citasFiltros').contains(document.getElementById('filtroTipoCita'))"),true);

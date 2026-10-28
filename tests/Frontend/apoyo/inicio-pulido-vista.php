@@ -16,7 +16,8 @@ $_SESSION = ['id_usuario' => DosClinicas::VET_NORTE, 'usuario_nombre' => 'Beto N
 Contexto::activar(Contexto::deClinica(DosClinicas::NORTE, 'Clínica Norte', Roles::VETERINARIO), ($argv[2] ?? '') === 'varios' ? 2 : 1);
 $_GET = ['action' => 'vet_area'];
 $caso = $argv[1] ?? 'breve';
-$cantidad = $caso === 'muchas' ? 8 : ($caso === 'vacio' ? 0 : 1);
+// 14 citas: con 8, sin la fuente Inter (CI) la lista cabía entera y no había scroll que probar.
+$cantidad = $caso === 'muchas' ? 14 : ($caso === 'vacio' ? 0 : 1);
 for ($i = 0; $i < $cantidad; $i++) {
     $db->prepare("INSERT INTO citas (id_clinica,id_mascota,id_veterinario,id_tipo_cita,fecha,hora,motivo,estado,duracion_minutos,margen_minutos,prioridad) VALUES (1,1,2,1,'2030-01-07',?,'Control','pendiente',30,10,'verde')")
         ->execute([sprintf('%02d:00:00', 9 + $i)]);
