@@ -3,9 +3,13 @@
     'use strict';
 
     function iniciar() {
-        const raiz = document.querySelector('[data-ajustes-horarios]');
+        const raiz = document.querySelector('[data-ajustes-horarios], [data-perfil-horarios]');
         if (!raiz) return;
         raiz.classList.add('ajustes-horarios');
+        if (raiz.hasAttribute('data-perfil-horarios')) {
+            iniciarFilas(raiz);
+            return;
+        }
         const clinica = raiz.querySelector('#config-horarios');
         const equipo = raiz.querySelector('#perfilHorarios');
         const pestañas = document.createElement('div');
@@ -97,6 +101,10 @@
         opciones.append(reglas, clinica.querySelector('#btnRestaurar'));
         clinica.querySelector('.horarios').append(opciones);
 
+        iniciarFilas(raiz);
+    }
+
+    function iniciarFilas(raiz) {
         const movil = matchMedia('(max-width: 767px)');
         const filas = [...raiz.querySelectorAll('.horario-dia')].map(fila => {
             const desplegable = document.createElement('details');

@@ -5,6 +5,7 @@ require __DIR__ . '/../../../helpers/Csrf.php';
 session_set_save_handler(static fn () => true, static fn () => true, static fn () => '', static fn () => true, static fn () => true, static fn () => 0);
 session_start();
 $_SESSION = ['id_usuario' => 2];
+$_SESSION['usuario_nombre'] = 'Fabio Propietario';
 $rolPrueba = ($argv[1] ?? '') === 'vet' ? Roles::VETERINARIO : Roles::ADMIN;
 Contexto::activar(Contexto::deClinica(1, 'Norte', $rolPrueba), 1);
 $rolNombre = Roles::nombre($rolPrueba);
@@ -28,7 +29,20 @@ if (($argv[1] ?? '') === 'config') {
     Security::definirFuenteDeContextos(static fn (): array => [$contexto]);
     $datosSuscripcion = (new SuscripcionController(DosClinicas::sqlite(), null, new ConfiguracionWompi([])))->datosVista();
     $planSuscripcion = $datosSuscripcion['estadoSuscripcion']['plan_efectivo']['nombre'];
+    if (($argv[2] ?? '') === 'layout') {
+        $_GET = ['action' => 'admin_configuracion'];
+        $encabezadoPagina = ['titulo' => 'Ajustes'];
+        $content_view = __DIR__ . '/../../../views/admin/configuracion.php';
+        require __DIR__ . '/../../../views/admin/layout.php';
+        exit;
+    }
     require __DIR__ . '/../../../views/admin/configuracion.php';
     exit;
 }
-require __DIR__ . '/../../../views/perfil/index.php';
+if (($argv[2] ?? '') === 'layout') {
+    $_GET = ['action' => 'mi_perfil'];
+    $content_view = __DIR__ . '/../../../views/perfil/index.php';
+    require __DIR__ . '/../../../views/vet/layout.php';
+} else {
+    require __DIR__ . '/../../../views/perfil/index.php';
+}

@@ -24,13 +24,10 @@ $ejemplosMarca = ['nombre' => 'Ej. Clínica Veterinaria Norte', 'telefono' => 'E
 <?php // En el celular el menú es una lista agrupada y cada sección se abre con «← Ajustes» (public/js/ajustes.js). ?>
 <div class="perfil-secciones ajustes" data-perfil-secciones data-ajustes data-ajustes-origen="<?= $e($origenAjustes ?? '') ?>" data-ajustes-seccion-inicial="<?= $e($seccionInicialAjustes ?? '') ?>">
     <aside class="perfil-lateral ajustes-lateral">
-        <div class="ajustes-identidad">
-            <span class="ajustes-identidad__avatar" aria-hidden="true"><?= $e($iniciales) ?></span>
-            <div class="ajustes-identidad__texto">
-                <p class="ajustes-identidad__nombre"><?= $e($perfil['nombre_completo']) ?></p>
-                <p class="ajustes-identidad__rol"><?= $e($rolNombre) ?> · <?= $e($marca['nombre']) ?></p>
-            </div>
-        </div>
+        <?php
+        $nombreClinicaPerfil = $marca['nombre'];
+        require __DIR__ . '/../perfil/identidad.php';
+        ?>
         <nav class="ajustes-menu" data-config-tabs aria-label="Secciones de Ajustes" aria-orientation="vertical">
             <p class="ajustes-menu__grupo" id="ajustesGrupoClinica">La clínica</p>
             <div class="ajustes-menu__caja">
@@ -41,13 +38,7 @@ $ejemplosMarca = ['nombre' => 'Ej. Clínica Veterinaria Norte', 'telefono' => 'E
                 <button type="button" role="tab" class="ajustes-menu__item" id="config-tab-suscripcion" aria-controls="config-suscripcion" aria-selected="false" tabindex="-1" data-config-tab="suscripcion" data-ajustes-etiqueta="Suscripción"><i class="fas fa-crown" aria-hidden="true"></i><span>Suscripción</span><?php if (!empty($planSuscripcion)): ?><span class="ajustes-menu__plan"><?= $e($planSuscripcion) ?></span><?php endif; ?><i class="fas fa-chevron-right ajustes-menu__flecha" aria-hidden="true"></i></button>
             </div>
             </div>
-            <p class="ajustes-menu__grupo" id="ajustesGrupoCuenta">Mi cuenta</p>
-            <div class="ajustes-menu__caja">
-            <div class="ajustes-menu__lista" role="tablist" aria-labelledby="ajustesGrupoCuenta" aria-orientation="vertical">
-                <button type="button" role="tab" class="ajustes-menu__item" id="perfilTabCuenta" aria-controls="perfilCuenta" aria-selected="false" tabindex="-1" data-config-tab="cuenta"><i class="fas fa-user" aria-hidden="true"></i><span>Mi cuenta</span><i class="fas fa-chevron-right ajustes-menu__flecha" aria-hidden="true"></i></button>
-                <button type="button" role="tab" class="ajustes-menu__item" id="perfilTabSeguridad" aria-controls="seguridad" aria-selected="false" tabindex="-1" data-config-tab="seguridad"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Seguridad</span><i class="fas fa-chevron-right ajustes-menu__flecha" aria-hidden="true"></i></button>
-            </div>
-            </div>
+            <?php require __DIR__ . '/../perfil/menu_cuenta.php'; ?>
         </nav>
         <a href="index.php?action=logout" class="ajustes-salir"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Cerrar sesión</a>
     </aside>

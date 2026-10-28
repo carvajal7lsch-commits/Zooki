@@ -36,6 +36,7 @@
     <?php if (($_GET['action'] ?? '') === 'mi_perfil'): ?>
     <link rel="stylesheet" href="css/perfil.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="stylesheet" href="css/ajustes.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="stylesheet" href="css/encabezado-pagina.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <?php if (($_GET['action'] ?? '') === 'vet_agenda'): ?>
     <link rel="stylesheet" href="css/calendario.css?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>">
@@ -102,6 +103,11 @@
                     ?>
                     <?php if ($__action === 'vet_pacientes'): ?>
                         <?php require __DIR__ . '/partials/cabecera_pacientes.php'; ?>
+                    <?php elseif ($__action === 'mi_perfil'): ?>
+                        <?php
+                        $encabezadoPagina = ['titulo' => 'Mi perfil'];
+                        require __DIR__ . '/../partials/encabezado_pagina.php';
+                        ?>
                     <?php elseif (!isset($content_view) && isset($panel)): ?>
                         <div class="inicio-encabezado">
                             <p class="inicio-encabezado__fecha"><?= htmlspecialchars($panel['fecha']) ?></p>

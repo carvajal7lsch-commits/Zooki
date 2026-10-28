@@ -224,11 +224,6 @@
     background: var(--z-primary-soft);
     color: var(--z-primary);
 }
-.ajustes--vet .ajustes-salir {
-    color: var(--z-danger);
-    border-color: var(--z-danger-borde);
-    background: var(--z-surface);
-}
 
 /* HU-0.5: Suscripción comparte la hoja de Ajustes y conserva sus ventanas de pago. */
 .ajustes .suscripcion__tarjeta {

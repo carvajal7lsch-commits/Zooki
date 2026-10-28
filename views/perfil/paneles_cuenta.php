@@ -4,7 +4,7 @@
  *
  * Los incluyen Mi perfil del veterinario (views/perfil/index.php) y Ajustes del
  * administrador (views/admin/configuracion.php). Esperan $perfil, $rolNombre,
- * $pideActual, $cuenta y $esVetPerfil (el resumen de horario y ausencias es del veterinario).
+ * $pideActual, $cuenta y $esVetPerfil. Horario y ausencias tienen sus propias secciones.
  */
 require_once __DIR__ . '/../../helpers/ValidadorCuenta.php';
 require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
@@ -50,12 +50,6 @@ $iconos = ['acceso' => 'fa-check', 'fallo' => 'fa-times', 'cambio' => 'fa-pen'];
         </section>
 
         <?php $identidadSoloDialogos = true; require __DIR__ . '/../partials/cambios_identidad.php'; unset($identidadSoloDialogos); ?>
-        <?php if ($esVetPerfil): ?>
-        <div class="perfil-resumen">
-            <section><header><h3>Mi semana</h3><a href="#horarios">Ver horario <i class="fas fa-arrow-right" aria-hidden="true"></i></a></header><ul data-resumen-semana aria-live="polite"><li>Cargando horario…</li></ul></section>
-            <section><header><h3>Ausencias</h3><a href="#ausencias">Ver ausencias <i class="fas fa-arrow-right" aria-hidden="true"></i></a></header><p data-resumen-ausencia aria-live="polite">Cargando ausencias…</p></section>
-        </div>
-        <?php endif; ?>
     </div>
     <div class="perfil-panel perfil-seguridad" id="seguridad" role="tabpanel" aria-labelledby="perfilTabSeguridad" data-config-panel="seguridad" hidden>
         <!-- Contraseña -->

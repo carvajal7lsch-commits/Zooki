@@ -3,8 +3,8 @@ const path = require('node:path');
 const http = require('node:http');
 const { execFileSync } = require('node:child_process');
 const raiz = path.resolve(__dirname, '../../..');
-async function servidorPacientes({ directorio = false } = {}) {
-    const html = execFileSync(process.platform === 'win32' ? 'C:/xampp/php/php.exe' : 'php', [path.join(__dirname, 'pacientes-movil-vista.php'), directorio ? 'directorio' : ''], { encoding: 'utf8', env: { ...process.env, ZOOKI_TEST_MYSQL_HOST: '', ZOOKI_TEST_MYSQL_DB: 'zooki_test_base_v2' } });
+async function servidorPacientes({ directorio = false, htmlVista = null, respuestasVista = {} } = {}) {
+    const html = htmlVista ?? execFileSync(process.platform === 'win32' ? 'C:/xampp/php/php.exe' : 'php', [path.join(__dirname, 'pacientes-movil-vista.php'), directorio ? 'directorio' : ''], { encoding: 'utf8', env: { ...process.env, ZOOKI_TEST_MYSQL_HOST: '', ZOOKI_TEST_MYSQL_DB: 'zooki_test_base_v2' } });
     const propietario = { id_usuario: 6, nombre_completo: 'Fabio Propietario', documento: '1000000006', telefono: '3001112233', email: 'fabio@zooki.test', estado: 1, total_mascotas: 5 };
     const propietarios = directorio ? [propietario, ...['Juanito Ramiro', 'Mariana López', 'Carlos Pérez', 'Laura Gómez', 'Andrés Ruiz', 'Diego Torres'].map((nombre, i) => ({ ...propietario, id_usuario: i + 11, nombre_completo: nombre, total_mascotas: i % 3, pendiente_activacion: i < 2 ? 1 : 0 })), { id_usuario: 20, nombre_completo: 'Sofía Martínez', estado: 0, total_mascotas: 0 }] : [propietario];
     if (directorio) propietarios.filter(p => p.estado === 1).forEach(p => { p.mascotas_resumen = ['Doki', 'Gato', 'Kira'].slice(0, p.total_mascotas); });
@@ -75,7 +75,7 @@ async function servidorPacientes({ directorio = false } = {}) {
             respuestas.get_laboratorios_ajax = { success: true, laboratorios: [{ nombre_laboratorio: 'Laboratorio' }] };
             respuestas.get_productos_desparasitacion_ajax = { success: true, productos: [{ nombre_producto: 'Producto' }] };
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(respuestas[accion] || []));
+            res.end(JSON.stringify(respuestasVista[accion] ?? respuestas[accion] ?? []));
             return;
         }
         const archivo = path.resolve(raiz, 'public', '.' + url.pathname);

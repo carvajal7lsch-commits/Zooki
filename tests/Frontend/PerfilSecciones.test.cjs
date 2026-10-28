@@ -36,27 +36,27 @@ for (const rol of ['admin', 'vet']) {
                 await nav.evaluar(fs.readFileSync('public/js/time-picker.js','utf8'));
                 await nav.evaluar(fs.readFileSync('public/js/horario-trabajo.js','utf8'));
                 await nav.evaluar(fs.readFileSync('public/js/coordinacion-horarios.js','utf8'));
-                await nav.esperar(`document.querySelector('[data-resumen-semana]').children.length===7`);
+                assert.equal(await nav.evaluar(`document.querySelector('[data-resumen-semana]')===null`), true);
                 if(calendarioReal) {
                     await nav.evaluar(fs.readFileSync('scratch/flatpickr.min.js','utf8'));
                     await nav.evaluar(fs.readFileSync('scratch/flatpickr-es.js','utf8'));
                     await nav.evaluar(fs.readFileSync('public/js/selector-fechas.js','utf8'));
                 }
                 await nav.evaluar(fs.readFileSync('public/js/ausencias-agenda.js','utf8'));
-                await nav.esperar(`document.querySelector('[data-resumen-ausencia]').textContent==='Sin ausencias'`);
+                assert.equal(await nav.evaluar(`document.querySelector('[data-resumen-ausencia]')===null`), true);
                 await nav.esperar(`document.querySelectorAll('[data-dia-semana]').length===7`);
                 await nav.evaluar('window.__consultas=0;');
             }
             for (const width of [1920, 1366, 900, 390, 360]) {
                 await nav.enviar('Emulation.setDeviceMetricsOverride', { width, height: width === 1920 ? 1080 : width === 1366 ? 768 : 844, deviceScaleFactor: 1, mobile: width < 768 });
-                assert.equal(await nav.evaluar("!!document.querySelector('.perfil-salir').closest('.ajustes-lateral')"), true);
+                assert.equal(await nav.evaluar("!!document.querySelector('.ajustes-salir').closest('.ajustes-lateral')"), true);
                 for (const clave of clases) {
                     const resultado = await nav.evaluar(`(() => {
                         document.querySelector('[data-config-tab="${clave}"]').click();
                         const lateral=getComputedStyle(document.querySelector('.perfil-lateral'));
                         const cuenta=document.querySelector('[data-config-panel="${clave}"]');
                         const rect=cuenta.getBoundingClientRect();
-                        return {horizontal:document.documentElement.scrollWidth<=innerWidth,pagina:document.documentElement.scrollHeight<=innerHeight,hash:location.hash,visible:!cuenta.hidden,sticky:lateral.position,ocultos:[...document.querySelectorAll('[data-config-panel]')].filter(p=>p.dataset.configPanel!=='${clave}').every(p=>p.hidden),datosMovil:getComputedStyle(document.querySelector('.perfil-hero__datos')).display,seguridad:getComputedStyle(document.querySelector('.perfil-seguridad')).gridTemplateColumns,rect:[rect.top,rect.bottom]};
+                        return {horizontal:document.documentElement.scrollWidth<=innerWidth,pagina:document.documentElement.scrollHeight<=innerHeight,hash:location.hash,visible:!cuenta.hidden,sticky:lateral.position,ocultos:[...document.querySelectorAll('[data-config-panel]')].filter(p=>p.dataset.configPanel!=='${clave}').every(p=>p.hidden),datosMovil:getComputedStyle(document.querySelector('.ajustes-identidad__texto')).display,seguridad:getComputedStyle(document.querySelector('.perfil-seguridad')).gridTemplateColumns,rect:[rect.top,rect.bottom]};
                     })()`);
                     assert.equal(resultado.horizontal, true, JSON.stringify({ rol, width, clave, resultado }));
                     if (width >= 1024) assert.equal(resultado.pagina, true, JSON.stringify({ rol, width, clave, resultado }));
@@ -72,10 +72,10 @@ for (const rol of ['admin', 'vet']) {
                         assert.deepEqual(cabecera,{dentro:true,alineado:true});
                     }
                     assert.equal(resultado.sticky, width >= 1024 ? 'sticky' : 'static');
-                    if (width < 768) assert.equal(resultado.datosMovil, 'none');
+                    if (width < 768) assert.equal(resultado.datosMovil, 'block');
                     const pulido = await nav.evaluar(`(() => {
-                        const menu=document.querySelector('.perfil-menu');
-                        const salir=document.querySelector('.perfil-salir');
+                        const menu=document.querySelector('.ajustes-menu');
+                        const salir=document.querySelector('.ajustes-salir');
                         const campo=document.getElementById('perfilTelefono');
                         const boton=document.getElementById('perfilContactoGuardar');
                         const titulo=document.querySelector('.top-header-title');
@@ -215,7 +215,7 @@ for (const rol of ['admin', 'vet']) {
             assert.deepEqual(campos,{validacion:true,requisitos:4,acceso:2});
             // HU-T.5: Ajustes no muestra el correo en una cabecera de perfil; guardar contacto debe seguir funcionando.
             const guardado = await nav.evaluar(`(async () => {
-                if (${JSON.stringify(rol)} === 'admin') document.getElementById('perfilEmailHero').remove();
+                if (${JSON.stringify(rol)} === 'admin') document.getElementById('perfilEmailHero')?.remove();
                 const llamadas = [];
                 window.fetch = async (url, opciones) => {
                     llamadas.push({ url, telefono: opciones.body.get('telefono') });

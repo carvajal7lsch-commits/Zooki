@@ -333,7 +333,7 @@
 .perfil-menu button[aria-selected="true"] { background: var(--primary-soft, #EBF1FF); color: var(--pf-primary); font-weight: 600; }
 .perfil-menu button:focus-visible { outline: 2px solid var(--pf-primary); outline-offset: -2px; }
 .perfil-menu i { width: 18px; text-align: center; }
-.perfil-indicador { width: 7px; height: 7px; margin-left: auto; border-radius: 50%; background: var(--pf-primary); flex-shrink: 0; }
+.perfil-indicador { width: 7px; height: 7px; margin-left: auto; border-radius: 50%; background: var(--z-primary); flex-shrink: 0; }
 .perfil-salir { width: 100%; }
 .perfil-contenido { min-width: 0; }
 .perfil-panel { display: grid; gap: 16px; min-width: 0; }
@@ -479,6 +479,14 @@
 }
 
 /* Ajuste solicitado por el dueño: cuenta alineada con el resto del contenido. */
+.ajustes--vet .coord-estado[data-estado] {
+    color: var(--z-text-secondary);
+    background: var(--z-bg-light);
+}
+.ajustes--vet .coord-estado[data-estado="aprobada"] {
+    color: var(--z-primary-dark);
+    background: var(--z-primary-soft);
+}
 #perfilCuenta { margin-left: 0; margin-right: 0; max-width: 900px; gap: 24px; }
 .perfil-contenido { padding: 28px 32px; }
 .perfil-resumen { grid-template-columns: 1.3fr 1fr; align-items: start; }
