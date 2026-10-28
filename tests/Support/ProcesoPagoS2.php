@@ -104,9 +104,16 @@ try {
             $resultado = ['acreditado' => (new ConciliadorPago($db, $cliente, $config, $reloj))->procesar((int) $evento)];
         }
     }
-    file_put_contents($carpeta . '/' . $nombre . '.fin', json_encode(['ok' => true, 'resultado' => $resultado], JSON_THROW_ON_ERROR));
+    publicarPagoS2($carpeta . '/' . $nombre . '.fin', json_encode(['ok' => true, 'resultado' => $resultado], JSON_THROW_ON_ERROR));
     exit(0);
 } catch (Throwable $error) {
-    file_put_contents($carpeta . '/' . $nombre . '.fin', json_encode(['ok' => false, 'error' => $error->getMessage()]));
+    publicarPagoS2($carpeta . '/' . $nombre . '.fin', json_encode(['ok' => false, 'error' => $error->getMessage()]));
     exit(1);
+}
+
+/** Publica el resultado de golpe: el padre lo lee en cuanto existe el archivo (S4 leía un .fin a medio escribir). */
+function publicarPagoS2(string $ruta, string $contenido): void
+{
+    file_put_contents($ruta . '.tmp', $contenido);
+    rename($ruta . '.tmp', $ruta);
 }
