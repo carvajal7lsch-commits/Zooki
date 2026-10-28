@@ -6,6 +6,25 @@
 
 ## Ahora
 
+### Gestión de Citas del administrador — entregada, pendiente de revisión (2026-10-27)
+
+- **Escribió Codex; revisa Claude; mockups aprobados por el dueño.** Citas con cabecera/pestañas y conteos, herramientas/franja/tablero en una hoja, detalle nativo, hoja móvil de filtros y chips de veterinario. Paneles compartidos conservados; admin no decide triage. Decisiones del dueño aplicadas: prioridad en la respuesta/punto de triage y conciliación en ventana con el mismo formulario/envío para ambos roles; calendario del vet, Llegadas/Reasignaciones intactos.
+- **Verificación:** CitasAdminPrioridadTest correcta (campo y aislamiento, 5 aserciones). PHP completo sin host 1206/9611 (94 omitidas de motor); JS completo con Chrome 381/381. Retoques finales comprobados solo con RCitasAdmin: filtros/custom, métricas, escape, teclado/cierre, exportación simulada, filtros/chips, conciliación admin/vet y 360/390/820/1366/1440 sin desborde; 1366 sin scroll de página con cuatro citas por columna. Un timeout final del arnés vet repetido por separado, correcto. Sintaxis/diff correctos; capturas antes/después revisadas en scratch/r/citas-admin.
+- **Sigue:** revisión de Claude y cinco comprobaciones manuales en specs/pulido-interfaz.md, Resultado de Citas. R abierta, C fuera de P1 por decisión del dueño (2026-10-26), 2.2.0 sin publicar; sin esquema/migración, .env, base de trabajo, servicios reales, commit/push ni otra pantalla. Cambios anteriores conservados; Historial final y PDF/Word al cierre de R.
+
+### Densidad móvil de Auditoría — entregada, pendiente de revisión (2026-10-27)
+
+- **Escribió Codex; revisa Claude.** Corrección pedida por el dueño al comparar con su mockup: resumen en franja sin salto forzado, márgenes de 16 px, filas de 64 px y paginación en una sola línea. Periodo abreviado «24 h» conserva la semántica real; acciones de filtrado y navegación completas. RAuditoria correcta (2 pruebas), incluidos 360/390/820/1366 sin desborde, resumen/altura/pie; capturas móviles puntuales revisadas en scratch/r/auditoria/despues. Solo CSS/marcado, sin backend ni cambios de escritorio. Pendiente de revisión de Claude y aceptación del dueño; R abierta, sin suites completas ni exportaciones documentales.
+
+### Espacio de cabecera en Editar usuario — entregada, pendiente de revisión (2026-10-27)
+
+- **Escribió Codex; revisa Claude.** Se elimina el margen inferior de 1.75rem heredado del subtítulo de acceso y se compacta el padding de la cabecera del modal de Usuarios a 16 px (móvil conserva 14 px). Solo CSS y revisión puntual de cascada/diff; sin repetir suites/capturas. Pendiente de aceptación visual del dueño, sin cambiar la revisión previa de Claude ni los cambios concurrentes del checkout.
+
+### Entregas de R del 26 y 27 de octubre — revisadas: aprobadas con corrección del revisor (2026-10-27)
+
+- **Revisó Claude el commit `f8ac09d`** (Datos de la clínica, Horarios, Ausencias, retoques de Ajustes, cabecera común, Auditoría y Usuarios). Sin hallazgos P1. PHPUnit sin host 1205/9606; JS completo con Chrome real __JS_FINAL__ tras corregir 5 pruebas: 4 desactualizadas frente a la cabecera común y una de Horarios › Equipo, a la que sobraban 5 px a 1366×768 (se quitó un margen de 8 px). Detalle, P3 y prueba manual de 5 pasos en `specs/pulido-interfaz.md` («Revisión de Claude — entregas de R…»).
+- **Sigue:** el dueño hace el commit de la corrección y la prueba manual. Decide qué pantallas de la demo pasan por R y la fecha tope para pasar a las semillas de presentación (recomendación: 30 de octubre). Al desplegar 2.2.0 hay que reconstruir la imagen (Dockerfile y `subidas.ini`).
+
 ### Usuarios móvil y barra superior — entregada, pendiente de revisión (2026-10-27)
 
 - **Corrección móvil tras comparación del dueño, escribió Codex:** alta solo «+» de 40×40, sin subtítulo ni clínica repetida bajo los títulos compartidos admin/vet; contexto dentro de Cuenta conservado. Usuarios con márgenes de 16 px y filas de 64 px; búsqueda de Clientes completa y espacio para la navegación inferior. Persona/Cuenta recuperan asas de cierre sin X adicional; alta/edición conservan X con borde y asa decorativa según mockup. RUsuariosCabecera correcta en ambos roles y 360/390/820/1366, PHP/JS/diff correctos; capturas puntuales revisadas en scratch/r/usuarios-cabecera/despues. Entregada, pendiente de revisión de Claude y aceptación del dueño; R abierta, sin suites completas ni exportaciones.

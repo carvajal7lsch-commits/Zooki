@@ -132,6 +132,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     tarjeta.append(form, mensaje);
                 }
+                if (raiz.dataset.puedeRevisar !== '1' && document.getElementById('citasAdmin')) {
+                    const niveles = elemento('div');
+                    niveles.className = 'citas-niveles';
+                    Array.from(cabeza.children).filter(n => n.tagName !== 'STRONG').forEach(n => niveles.append(n));
+                    const etiqueta = elemento('small', caso.nivel_aprobado ? 'Revisado' : 'Calculado');
+                    niveles.append(etiqueta);
+                    tarjeta.prepend(niveles);
+                    if (filtro.value === '0') {
+                        const espera = elemento('span', 'Espera al veterinario');
+                        espera.className = 'citas-espera';
+                        tarjeta.append(espera);
+                    }
+                }
                 lista.append(tarjeta);
             }
         } catch (error) {

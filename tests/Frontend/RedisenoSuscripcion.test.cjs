@@ -46,7 +46,8 @@ test('barra: el administrador tiene cinco destinos sin «Más» y Cerrar sesión
     assert.doesNotMatch(admin, /pill-nav-item--secundario|barraNavegacionMas|action=mi_perfil/);
     assert.match(admin, /href="index\.php\?action=admin_auditoria"/);
     assert.match(admin, /class="pill-nav-item active" href="index\.php\?action=admin_configuracion"[^>]*aria-label="Ajustes" aria-current="page"/, 'Suscripción vive en Ajustes');
-    assert.match(admin, /class="header-user" href="index\.php\?action=admin_configuracion#cuenta"/);
+    // Desde la cabecera común (R, 2026-10-27) la cuenta del administrador se abre en el menú del avatar.
+    assert.match(admin, /href="index\.php\?action=admin_configuracion#cuenta" data-cuenta-destino/);
     const vet = execFileSync(php, ['tests/Frontend/apoyo/c81-vistas.php', 'vet_pacientes'], { cwd: RAIZ, encoding: 'utf8' });
     assert.doesNotMatch(vet, /pill-sidebar--con-mas|barraNavegacionMas/);
     assert.match(vet, /class="pill-logout"[\s\S]*?>Salir</);

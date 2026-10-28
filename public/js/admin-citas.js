@@ -1,132 +1,269 @@
-/** C9: tablero de citas de la clínica activa; RE-T.15.1. */
+/** RE-6.2.5 / HU-4.13: supervisión de citas de la clínica activa. */
 let todasLasCitas = [];
 let citasFiltradasGlobal = [];
 let veterinariosMap = {};
 let veterinariosArray = [];
 let tiposCita = [];
+const estadosCitasAdmin = { pendiente: 'Pendiente', confirmada: 'Confirmada', en_curso: 'En curso', completada: 'Completada', no_asistio: 'No asistió', sin_cerrar: 'Sin cerrar', cancelada: 'Cancelada' };
+const campoCitas = id => document.getElementById(id);
+const movilCitas = window.matchMedia('(max-width: 767px)');
+let lecturaCitas = 0;
+let rangoPeriodoCitas = 'Todas las fechas';
 
-document.addEventListener('DOMContentLoaded', function() {
-    cargarDatosIniciales();
-    
-    document.getElementById('filtroFecha').addEventListener('change', function() {
-        const customInput = document.getElementById('filtroFechaCustom');
-        customInput.hidden = this.value !== 'custom';
-    });
-
-    const kanbanWrapper = document.getElementById('kanbanWrapper');
-    if (kanbanWrapper) {
-        kanbanWrapper.addEventListener('scroll', checkScrollButtons);
-        window.addEventListener('resize', checkScrollButtons);
-
-        // Lógica de arrastre para scroll
-        let isDown = false;
-        let startX;
-        let scrollLeft;
-
-        kanbanWrapper.addEventListener('mousedown', (e) => {
-            isDown = true;
-            kanbanWrapper.style.cursor = 'grabbing';
-            startX = e.pageX - kanbanWrapper.offsetLeft;
-            scrollLeft = kanbanWrapper.scrollLeft;
-        });
-
-        kanbanWrapper.addEventListener('mouseleave', () => {
-            isDown = false;
-            kanbanWrapper.style.cursor = 'grab';
-        });
-
-        kanbanWrapper.addEventListener('mouseup', () => {
-            isDown = false;
-            kanbanWrapper.style.cursor = 'grab';
-        });
-
-        kanbanWrapper.addEventListener('mousemove', (e) => {
-            if (!isDown) return;
-            e.preventDefault();
-            const x = e.pageX - kanbanWrapper.offsetLeft;
-            const walk = (x - startX) * 2; // Multiplicador de velocidad
-            kanbanWrapper.scrollLeft = scrollLeft - walk;
-        });
-        
-        kanbanWrapper.style.cursor = 'grab';
-    }
-});
-
-function scrollKanban(direction) {
-    const wrapper = document.getElementById('kanbanWrapper');
-    const scrollAmount = 340; // Approx one column width + gap
-    if (direction === 'left') {
-        wrapper.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-    } else {
-        wrapper.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-}
-
-function checkScrollButtons() {
-    const wrapper = document.getElementById('kanbanWrapper');
-    const btnLeft = document.getElementById('btnScrollLeft');
-    const btnRight = document.getElementById('btnScrollRight');
-    
-    if (!wrapper || !btnLeft || !btnRight) return;
-    
-    if (wrapper.scrollWidth > wrapper.clientWidth) {
-        btnLeft.hidden = wrapper.scrollLeft <= 0;
-        btnRight.hidden = wrapper.scrollLeft >= wrapper.scrollWidth - wrapper.clientWidth - 5;
-    } else {
-        btnLeft.hidden = true;
-        btnRight.hidden = true;
-    }
-}
-
-async function cargarDatosIniciales() {
-    try {
-        const [citasRes, vetsRes] = await Promise.all([
-            fetch('index.php?action=listar_todas_citas_ajax'),
-            fetch('index.php?action=listar_veterinarios_ajax')
-        ]);
-        
-        const citasData = await citasRes.json();
-        const vetsData = await vetsRes.json();
-        
-        if (!citasData.success) {
-            document.getElementById('kanbanBoard').innerHTML = 
-                `<div class="kanban-empty">Error al cargar las citas: ${citasData.message}</div>`;
-            return;
-        }
-        
-        todasLasCitas = citasData.citas;
-        
-        const selectVet = document.getElementById('filtroVet');
-        if (Array.isArray(vetsData)) {
-            veterinariosArray = vetsData;
-            vetsData.forEach(v => {
-                veterinariosMap[String(v.id_usuario)] = v.nombre_completo;
-                selectVet.innerHTML += `<option value="${String(v.id_usuario)}">Dr. ${v.nombre_completo.split(' ')[0]}</option>`;
+document.addEventListener('DOMContentLoaded', () => {
+    const selectores = document.querySelector('[data-citas-selectores]');
+    const fecha = document.querySelector('[data-citas-fecha]');
+    const exportar = document.querySelector('[data-citas-exportar]');
+    function situar() {
+        const dialogo = campoCitas('citasFiltros');
+        if (dialogo.open) dialogo.close();
+        document.querySelector(movilCitas.matches ? '[data-citas-selectores-destino]' : '[data-citas-selectores-origen]').append(selectores);
+        document.querySelector(movilCitas.matches ? '[data-citas-fecha-destino]' : '[data-citas-fecha-origen]').append(fecha);
+        document.querySelector(movilCitas.matches ? '.top-header--citas .header-left' : '[data-citas-exportar-origen]').append(exportar);
+        const entrada = campoCitas('filtroFechaCustom');
+        if (entrada._flatpickr) entrada._flatpickr.destroy();
+        if (window.flatpickr && window.SelectorFechas) {
+            SelectorFechas.iniciar('#filtroFechaCustom', {
+                maxDate: null,
+                altFormat: 'd/m/Y',
+                appendTo: movilCitas.matches ? dialogo : document.body,
+                position: instancia => {
+                    const calendario = instancia.calendarContainer;
+                    const ancla = (instancia.altInput || entrada).getBoundingClientRect();
+                    calendario.classList.add('citas-calendario');
+                    calendario.style.left = Math.max(8, Math.min(ancla.left, window.innerWidth - calendario.offsetWidth - 8)) + 'px';
+                    calendario.style.top = Math.max(8, Math.min(ancla.bottom + 6, window.innerHeight - calendario.offsetHeight - 8)) + 'px';
+                },
+                onChange: () => {
+                    campoCitas('filtroFecha').value = entrada.value ? 'custom' : 'hoy';
+                    aplicarFiltros();
+                }
             });
         }
-        
-        const tiposUnicos = new Set();
-        todasLasCitas.forEach(cita => {
-            if (cita.tipo_cita_nombre) tiposUnicos.add(cita.tipo_cita_nombre);
+        checkScrollButtons();
+    }
+    document.querySelectorAll('[data-citas-periodo]').forEach(boton => {
+        boton.addEventListener('click', () => {
+            campoCitas('filtroFecha').value = boton.dataset.citasPeriodo;
+            aplicarFiltros();
         });
-        
-        const selectTipo = document.getElementById('filtroTipoCita');
-        tiposUnicos.forEach(tipo => {
-            selectTipo.innerHTML += `<option value="${tipo}">${tipo}</option>`;
+    });
+    document.querySelector('[data-citas-calendario]').addEventListener('click', () => {
+        const fecha = campoCitas('filtroFechaCustom');
+        if (fecha._flatpickr) fecha._flatpickr.open();
+        else {
+            fecha.type = 'date';
+            fecha.showPicker?.();
+        }
+    });
+    document.querySelectorAll('[data-filtrar-citas]').forEach(campo => campo.addEventListener('change', () => {
+        if (campo.id === 'filtroFechaCustom') campoCitas('filtroFecha').value = campo.value ? 'custom' : 'hoy';
+        aplicarFiltros();
+    }));
+    campoCitas('filtroSearch').addEventListener('input', aplicarFiltros);
+    const estados = document.querySelector('[data-citas-estados]');
+    for (const opcion of campoCitas('filtroEstado').options) {
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.dataset.citasEstado = opcion.value;
+        boton.textContent = opcion.value ? opcion.textContent : 'Todos';
+        boton.addEventListener('click', () => {
+            campoCitas('filtroEstado').value = opcion.value;
+            aplicarFiltros();
         });
-        
-        // Cargar por defecto las de HOY
+        estados.append(boton);
+    }
+    campoCitas('kanbanWrapper').addEventListener('scroll', checkScrollButtons);
+    document.querySelector('[data-citas-veterinarios]').addEventListener('click', evento => {
+        const boton = evento.target.closest('[data-citas-vet]');
+        if (!boton) return;
+        campoCitas('filtroVet').value = boton.dataset.citasVet;
+        aplicarFiltros();
+    });
+    const contarPaneles = () => {
+        const solicitudes = document.querySelector('[data-solicitudes-lista]');
+        const pendientes = campoCitas('agenda-panel-triage').querySelector('[data-solicitudes-filtro]').value === '0';
+        if (pendientes) document.querySelector('[data-citas-conteo="triage"]').textContent = solicitudes.children.length;
+        document.querySelector('[data-citas-conteo="urgencias"]').textContent = document.querySelector('[data-rojos-lista]').children.length;
+    };
+    new MutationObserver(contarPaneles).observe(campoCitas('citasAdmin'), { childList: true, subtree: true });
+    // Carga los conteos al entrar sin cambiar el panel seleccionado ni la autorización.
+    campoCitas('agenda-panel-triage').dispatchEvent(new CustomEvent('agenda:mostrar'));
+    document.querySelector('[data-solicitudes-filtro]').addEventListener('change', contarPaneles);
+    const originalFiltro = document.querySelector('[data-solicitudes-filtro]');
+    const segmento = document.createElement('div');
+    segmento.className = 'citas-triage-filtros';
+    for (const opcion of originalFiltro.options) {
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.textContent = opcion.textContent;
+        boton.dataset.citasRevision = opcion.value;
+        boton.addEventListener('click', () => {
+            originalFiltro.value = opcion.value;
+            originalFiltro.dispatchEvent(new Event('change'));
+            segmento.querySelectorAll('button').forEach(n => n.setAttribute('aria-pressed', String(n === boton)));
+        });
+        boton.setAttribute('aria-pressed', String(opcion.value === originalFiltro.value));
+        segmento.append(boton);
+    }
+    originalFiltro.closest('label').hidden = true;
+    originalFiltro.closest('.ah-acciones').prepend(segmento);
+    movilCitas.addEventListener('change', situar);
+    window.addEventListener('resize', checkScrollButtons);
+    document.addEventListener('click', evento => {
+        if (!evento.target.closest('[data-citas-exportar]') || evento.target.closest('[data-ui-accion]')) exportar.open = false;
+    });
+    situar();
+    cargarDatosIniciales();
+});
+
+async function cargarDatosIniciales() {
+    const lectura = ++lecturaCitas;
+    try {
+        const respuestas = await Promise.all([fetch('index.php?action=listar_todas_citas_ajax'), fetch('index.php?action=listar_veterinarios_ajax')]);
+        const datos = await Promise.all(respuestas.map(r => r.json()));
+        if (lectura !== lecturaCitas) return;
+        if (!datos[0].success) throw new Error(datos[0].message || 'No se pudieron cargar las citas.');
+        todasLasCitas = datos[0].citas;
+        veterinariosArray = Array.isArray(datos[1]) ? datos[1] : [];
+        veterinariosMap = Object.fromEntries(veterinariosArray.map(v => [String(v.id_usuario), v.nombre_completo]));
+        const vet = campoCitas('filtroVet');
+        const previoVet = vet.value;
+        vet.replaceChildren(new Option('Todo el equipo', ''));
+        veterinariosArray.forEach(v => vet.add(new Option(v.nombre_completo, String(v.id_usuario))));
+        vet.value = veterinariosArray.some(v => String(v.id_usuario) === previoVet) ? previoVet : '';
+        const tipo = campoCitas('filtroTipoCita');
+        const previoTipo = tipo.value;
+        tiposCita = [...new Set(todasLasCitas.map(c => c.tipo_cita_nombre).filter(Boolean))];
+        tipo.replaceChildren(new Option('Todos los tipos', ''));
+        tiposCita.forEach(nombre => tipo.add(new Option(nombre, nombre)));
+        tipo.value = tiposCita.includes(previoTipo) ? previoTipo : '';
         aplicarFiltros();
     } catch (error) {
-        console.error('Error cargando datos:', error);
-        document.getElementById('kanbanBoard').innerHTML = 
-            `<div class="kanban-empty">Error de conexión: ${error.message}</div>`;
+        const salida = document.createElement('p');
+        salida.className = 'citas-vacio';
+        salida.setAttribute('role', 'status');
+        salida.textContent = 'Error al cargar las citas: ' + error.message;
+        campoCitas('kanbanBoard').replaceChildren(salida);
     }
 }
-
 function filtrarCitas() {
     aplicarFiltros();
 }
+function scrollKanban(direccion) {
+    const wrapper = campoCitas('kanbanWrapper');
+    wrapper.scrollBy({ left: (direccion === 'left' ? -1 : 1) * (wrapper.querySelector('.kanban-col')?.clientWidth || 300), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+function checkScrollButtons() {
+    const wrapper = campoCitas('kanbanWrapper');
+    campoCitas('btnScrollLeft').hidden = movilCitas.matches || wrapper.scrollLeft <= 0;
+    campoCitas('btnScrollRight').hidden = movilCitas.matches || wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth - 2;
+}
+function fechaCitasTexto(fecha) {
+    return String(fecha || '').split('-').reverse().join('/');
+}
+function actualizarMétricas(citas) {
+    campoCitas('kpi-total').textContent = citas.length;
+    campoCitas('kpi-pendientes').textContent = citas.filter(c => ['pendiente', 'confirmada'].includes(c.estado)).length;
+    campoCitas('kpi-completadas').textContent = citas.filter(c => c.estado === 'completada').length;
+    campoCitas('kpi-canceladas').textContent = citas.filter(c => c.estado === 'cancelada').length;
+    for (const [id, singular, plural] of [['total', 'cita', 'citas'], ['pendientes', 'pendiente', 'pendientes'], ['completadas', 'completada', 'completadas'], ['canceladas', 'cancelada', 'canceladas']]) {
+        const numero = campoCitas('kpi-' + id);
+        numero.nextSibling.textContent = ' ' + (numero.textContent === '1' ? singular : plural);
+    }
+}
+function actualizarControlesCitas(citas, vetFiltro) {
+    const periodo = campoCitas('filtroFecha').value;
+    const etiquetas = { hoy: 'Hoy · ' + fechaCitasTexto(fechaLocalCitas(new Date())), ayer: 'Ayer', semana: 'Esta semana', mes: 'Este mes', custom: fechaCitasTexto(campoCitas('filtroFechaCustom').value), '': 'Todas las fechas' };
+    document.querySelector('[data-citas-periodo-texto]').textContent = ['', 'custom', 'hoy'].includes(periodo) ? (periodo === 'hoy' ? etiquetas.hoy : rangoPeriodoCitas) : etiquetas[periodo] + ' · ' + rangoPeriodoCitas;
+    document.querySelectorAll('[data-citas-periodo]').forEach(n => n.setAttribute('aria-pressed', String(n.dataset.citasPeriodo === periodo)));
+    document.querySelectorAll('[data-citas-estado]').forEach(n => n.setAttribute('aria-pressed', String(n.dataset.citasEstado === campoCitas('filtroEstado').value)));
+    document.querySelector('[data-citas-conteo="agenda"]').textContent = citas.length;
+    const cantidad = Number(periodo !== 'hoy') + ['filtroTipoCita', 'filtroEstado', 'filtroVet', 'filtroSearch'].filter(id => campoCitas(id).value !== '').length;
+    const conteo = document.querySelector('[data-citas-filtros-conteo]');
+    conteo.textContent = cantidad;
+    conteo.hidden = !cantidad;
+    document.querySelector('.citas-resumen [data-ui-accion="limpiar-citas"]').hidden = !cantidad;
+    document.querySelector('[data-citas-ver]').textContent = 'Ver ' + citas.length + (citas.length === 1 ? ' cita' : ' citas');
+    // Los chips ofrecen cambiar de veterinario sin perder los otros filtros.
+    const sinVet = citasBaseSinVet;
+    const contenedor = document.querySelector('[data-citas-veterinarios]');
+    contenedor.replaceChildren();
+    for (const v of [{ id_usuario: '', nombre_completo: 'Todos' }, ...veterinariosArray]) {
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.dataset.citasVet = String(v.id_usuario);
+        boton.setAttribute('aria-pressed', String(String(v.id_usuario) === vetFiltro));
+        const cantidad = sinVet.filter(c => !v.id_usuario || String(c.id_veterinario) === String(v.id_usuario)).length;
+        boton.textContent = (v.id_usuario ? v.nombre_completo.split(' ')[0] : 'Todos') + ' ' + cantidad;
+        contenedor.append(boton);
+    }
+}
+function fechaLocalCitas(fecha) {
+    return fecha.getFullYear() + '-' + String(fecha.getMonth()+1).padStart(2, '0') + '-' + String(fecha.getDate()).padStart(2, '0');
+}
+let citasBaseSinVet = [];
+function renderizarKanban(citas, vetFiltro) {
+    const board = campoCitas('kanbanBoard');
+    const vets = vetFiltro ? veterinariosArray.filter(v => String(v.id_usuario) === vetFiltro) : veterinariosArray;
+    board.classList.toggle('kanban-board--varias', vets.length >= 4);
+    board.replaceChildren();
+    if (!vets.length) {
+        const vacio = document.createElement('p');
+        vacio.className = 'citas-vacio';
+        vacio.textContent = 'No hay veterinarios registrados.';
+        board.append(vacio);
+    }
+    for (const vet of vets) {
+        const filas = citas.filter(c => String(c.id_veterinario) === String(vet.id_usuario));
+        const pendientes = filas.filter(c => ['pendiente', 'confirmada'].includes(c.estado)).length;
+        const iniciales = vet.nombre_completo.trim().split(/\s+/).slice(0, 2).map(n => n[0]).join('');
+        const columna = document.createElement('section');
+        columna.className = 'kanban-col';
+        columna.setAttribute('aria-label', vet.nombre_completo);
+        columna.innerHTML = '<header class="kb-col-header"><span class="kb-avatar">' + escapeHtml(iniciales) + '</span><div><h2 class="kb-vet-name">' + escapeHtml(vet.nombre_completo) + '</h2><p class="kb-vet-count">' + filas.length + (filas.length === 1 ? ' cita · ' : ' citas · ') + pendientes + (pendientes === 1 ? ' pendiente' : ' pendientes') + '</p></div></header><div class="kb-col-body"></div>';
+        const cuerpo = columna.querySelector('.kb-col-body');
+        if (!filas.length) cuerpo.innerHTML = '<p class="citas-vacio">Sin citas</p>';
+        for (const cita of filas) {
+            const fila = document.createElement('div');
+            fila.className = 'kb-card';
+            fila.dataset.uiAccion = 'detalle-cita-admin';
+            fila.dataset.uiId = String(Number(cita.id_cita));
+            fila.dataset.estado = cita.estado;
+            fila.setAttribute('role', 'button');
+            fila.tabIndex = 0;
+            const nivel = ['rojo', 'naranja', 'amarillo'].includes(cita.prioridad) ? '<span class="citas-triage-punto" data-nivel="' + cita.prioridad + '" role="img" aria-label="Triage ' + cita.prioridad + '"></span>' : '';
+            const dia = ['', 'semana', 'mes'].includes(campoCitas('filtroFecha').value) ? '<small class="kb-date">' + escapeHtml(fechaCitasTexto(cita.fecha).slice(0, 5)) + '</small>' : '';
+            fila.innerHTML = '<div class="kb-time">' + nivel + '<span>' + escapeHtml((cita.hora || '').slice(0, 5)) + dia + '</span></div><div class="kb-paciente"><strong>' + escapeHtml(cita.mascota_nombre || '—') + '</strong><span>' + escapeHtml(cita.propietario_nombre || '—') + ' · ' + escapeHtml(cita.tipo_cita_nombre || 'Consulta') + '</span></div><span class="kb-status" data-estado="' + escapeHtml(cita.estado) + '">' + escapeHtml(estadosCitasAdmin[cita.estado] || cita.estado) + '</span>';
+            cuerpo.append(fila);
+        }
+        board.append(columna);
+    }
+    requestAnimationFrame(checkScrollButtons);
+}
+function verDetalle(id) {
+    const cita = todasLasCitas.find(c => String(c.id_cita) === String(id));
+    if (!cita) return;
+    const dialogo = campoCitas('citasDetalle');
+    dialogo.querySelectorAll('[data-cita-detalle]').forEach(n => {
+        const clave = n.dataset.citaDetalle;
+        n.textContent = cita[clave] || (clave === 'veterinario_nombre' ? veterinariosMap[cita.id_veterinario] : clave === 'motivo' ? 'Sin observaciones' : '—');
+    });
+    const estado = dialogo.querySelector('[data-cita-detalle-estado]');
+    estado.dataset.estado = cita.estado;
+    estado.textContent = estadosCitasAdmin[cita.estado] || cita.estado;
+    dialogo.querySelector('[data-cita-detalle-fecha]').textContent = fechaCitasTexto(cita.fecha) + ' · ' + (cita.hora || '').slice(0, 5) + ' · ' + (cita.tipo_cita_nombre || 'Consulta');
+    zookiAbrirDialogo('citasDetalle');
+}
+function limpiarFiltros() {
+    campoCitas('filtroFecha').value = 'hoy';
+    const fecha = campoCitas('filtroFechaCustom');
+    if (fecha._flatpickr) fecha._flatpickr.clear(false);
+    fecha.value = '';
+    for (const id of ['filtroTipoCita', 'filtroEstado', 'filtroVet', 'filtroSearch']) campoCitas(id).value = '';
+    aplicarFiltros();
+}
+window.addEventListener('agenda:urgencia', cargarDatosIniciales);
 
 function aplicarFiltros() {
     const fecha = document.getElementById('filtroFecha').value;
@@ -135,14 +272,16 @@ function aplicarFiltros() {
     const estado = document.getElementById('filtroEstado').value;
     const vetFiltro = document.getElementById('filtroVet').value;
     const search = document.getElementById('filtroSearch').value.toLowerCase();
-    
+
     let citasFiltradas = [...todasLasCitas];
-    
+    rangoPeriodoCitas = 'Todas las fechas';
+
     if (fecha) {
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
-        let fechaInicio, fechaFin;
-        
+        let fechaInicio;
+        let fechaFin;
+
         switch(fecha) {
             case 'hoy':
                 fechaInicio = hoy;
@@ -173,8 +312,11 @@ function aplicarFiltros() {
                 }
                 break;
         }
-        
+
         if (fechaInicio && fechaFin) {
+            const inicioTexto = fechaCitasTexto(fechaLocalCitas(fechaInicio));
+            const finTexto = fechaCitasTexto(fechaLocalCitas(fechaFin));
+            rangoPeriodoCitas = inicioTexto === finTexto ? inicioTexto : inicioTexto + ' – ' + finTexto;
             fechaFin.setHours(23, 59, 59, 999);
             citasFiltradas = citasFiltradas.filter(c => {
                 // Ensure correct parsing of local date
@@ -184,223 +326,43 @@ function aplicarFiltros() {
             });
         }
     }
-    
+
     if (tipoCita) citasFiltradas = citasFiltradas.filter(c => c.tipo_cita_nombre === tipoCita);
     if (estado) citasFiltradas = citasFiltradas.filter(c => c.estado === estado);
-    if (vetFiltro) citasFiltradas = citasFiltradas.filter(c => String(c.id_veterinario) === vetFiltro);
+
     if (search) {
-        citasFiltradas = citasFiltradas.filter(c => 
+        citasFiltradas = citasFiltradas.filter(c =>
             (c.mascota_nombre && c.mascota_nombre.toLowerCase().includes(search)) ||
             (c.propietario_nombre && c.propietario_nombre.toLowerCase().includes(search)) ||
             (c.motivo && c.motivo.toLowerCase().includes(search))
         );
     }
-    
-    // Order by date and time
+
+    citasBaseSinVet = [...citasFiltradas];
+    if (vetFiltro) citasFiltradas = citasFiltradas.filter(c => String(c.id_veterinario) === vetFiltro);
+    // Orden por fecha y hora
     citasFiltradas.sort((a, b) => {
         const fechaA = new Date(a.fecha + 'T' + (a.hora || '00:00:00'));
         const fechaB = new Date(b.fecha + 'T' + (b.hora || '00:00:00'));
         return fechaA - fechaB; // Ascending order
     });
-    
+
     actualizarMétricas(citasFiltradas);
     renderizarKanban(citasFiltradas, vetFiltro);
     citasFiltradasGlobal = citasFiltradas;
+    actualizarControlesCitas(citasFiltradas, vetFiltro);
 }
-
-function actualizarMétricas(citasFiltradas) {
-    const total = citasFiltradas.length;
-    let pendientes = 0, completadas = 0, canceladas = 0;
-    
-    citasFiltradas.forEach(c => {
-        if (c.estado === 'pendiente' || c.estado === 'confirmada') pendientes++;
-        else if (c.estado === 'completada') completadas++;
-        else if (c.estado === 'cancelada') canceladas++;
-    });
-    
-    document.getElementById('kpi-total').textContent = total;
-    document.getElementById('kpi-pendientes').textContent = pendientes;
-    document.getElementById('kpi-completadas').textContent = completadas;
-    document.getElementById('kpi-canceladas').textContent = canceladas;
-
-    dibujarIndicador('kpi-total-spark', total, total, '#0052FF');
-    dibujarIndicador('kpi-pendientes-spark', pendientes, total, '#F59E0B');
-    dibujarIndicador('kpi-completadas-spark', completadas, total, '#10B981');
-    dibujarIndicador('kpi-canceladas-spark', canceladas, total, '#EF4444');
-}
-
-function renderizarKanban(citas, vetFiltro) {
-    const board = document.getElementById('kanbanBoard');
-    board.innerHTML = '';
-    
-    // Filter veterinarians if one is selected in the dropdown
-    let vetsToRender = veterinariosArray;
-    if (vetFiltro) {
-        vetsToRender = veterinariosArray.filter(v => String(v.id_usuario) === vetFiltro);
-    }
-    
-    if (vetsToRender.length === 0) {
-        board.innerHTML = `<div class="kanban-empty">No hay veterinarios registrados.</div>`;
-        return;
-    }
-    
-    // Agrupar citas por veterinario
-    const agrupadas = {};
-    vetsToRender.forEach(v => agrupadas[String(v.id_usuario)] = []);
-    
-    citas.forEach(c => {
-        if (agrupadas[String(c.id_veterinario)]) {
-            agrupadas[String(c.id_veterinario)].push(c);
-        }
-    });
-    
-    
-    vetsToRender.forEach(vet => {
-        const vetCitas = agrupadas[String(vet.id_usuario)];
-        const initial = vet.nombre_completo.charAt(0);
-        const firstName = vet.nombre_completo.split(' ')[0];
-        const numCitas = vetCitas.length;
-        
-        let columnHtml = `
-            <div class="kanban-col">
-                <div class="kb-col-header">
-                    <div class="kb-vet-info">
-                        <div class="kb-avatar">${escapeHtml(initial)}</div>
-                        <div>
-                            <div class="kb-vet-name">Dr. ${escapeHtml(firstName)}</div>
-                            <div class="kb-vet-count">${numCitas} cita(s)</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="kb-col-body">
-        `;
-        
-        if (numCitas === 0) {
-            columnHtml += `
-                <div class="kb-empty-state">
-                    <i class="far fa-calendar-times"></i>
-                    <p>Sin citas para mostrar</p>
-                </div>
-            `;
-        } else {
-            vetCitas.forEach(cita => {
-                const horaStr = cita.hora ? cita.hora.substring(0, 5) : '—';
-                const fechaParts = cita.fecha.split('-');
-                const diaMesStr = `${fechaParts[2]}/${fechaParts[1]}`;
-                
-                columnHtml += `
-                    <div class="kb-card" data-ui-accion="detalle-cita-admin" data-ui-id="${Number(cita.id_cita)}" role="button" tabindex="0">
-                        <div class="kb-card-header">
-                            <span class="kb-time"><i class="far fa-clock"></i> ${horaStr} <span class="kb-date">(${diaMesStr})</span></span>
-                            <span class="kb-status" data-estado="${escapeHtml(cita.estado)}">${escapeHtml(cita.estado)}</span>
-                        </div>
-                        <div class="kb-patient-name">${escapeHtml(cita.mascota_nombre || '—')}</div>
-                        <div class="kb-owner-name"><i class="far fa-user"></i> ${escapeHtml(cita.propietario_nombre || '—')}</div>
-                        <div class="kb-reason">${escapeHtml(cita.tipo_cita_nombre || 'Consulta')}</div>
-                    </div>
-                `;
-            });
-        }
-        
-        columnHtml += `</div></div>`; // Cierre kb-col-body y kanban-col
-        board.innerHTML += columnHtml;
-    });
-    
-    setTimeout(checkScrollButtons, 100);
-}
-
-function verDetalle(idCita) {
-    const cita = todasLasCitas.find(c => c.id_cita == idCita);
-    if (!cita) return;
-    
-    
-    Swal.fire({
-        html: `
-            <div class="cita-modal-container">
-                <div class="cita-modal-header citas-detalle-cabecera">
-                    <div class="citas-detalle-fila">
-                        <h3 class="citas-detalle-titulo">Detalle de la Cita</h3>
-                        <span data-estado="${escapeHtml(cita.estado)}" class="citas-detalle-estado">${escapeHtml(cita.estado)}</span>
-                    </div>
-                    <p class="citas-detalle-fecha"><i class="far fa-calendar-alt"></i> ${cita.fecha} &nbsp;&bull;&nbsp; <i class="far fa-clock"></i> ${cita.horaStr || cita.hora}</p>
-                </div>
-
-                <div class="cita-modal-body citas-detalle-cuerpo">
-                    <div class="citas-detalle-grid">
-                        <div class="modal-info-box citas-detalle-caja">
-                            <p class="citas-detalle-etiqueta">Paciente</p>
-                            <p class="citas-detalle-valor"><i class="fas fa-paw citas-detalle-icono-azul"></i> ${escapeHtml(cita.mascota_nombre || 'No especificado')}</p>
-                        </div>
-                        <div class="modal-info-box citas-detalle-caja">
-                            <p class="citas-detalle-etiqueta">Propietario</p>
-                            <p class="citas-detalle-valor"><i class="far fa-user citas-detalle-icono-azul"></i> ${escapeHtml(cita.propietario_nombre || 'No especificado')}</p>
-                        </div>
-                    </div>
-
-                    <div class="citas-detalle-grid">
-                        <div class="citas-detalle-veterinario">
-                            <p class="citas-detalle-etiqueta-secundaria">Veterinario Asignado</p>
-                            <p class="citas-detalle-valor-secundario"><i class="fas fa-user-md citas-detalle-icono-gris"></i> Dr. ${escapeHtml(cita.veterinario_nombre || (veterinariosMap[String(cita.id_veterinario)]))}</p>
-                        </div>
-                        <div class="citas-detalle-tipo">
-                            <p class="citas-detalle-etiqueta-secundaria">Tipo de Cita</p>
-                            <p class="citas-detalle-valor-secundario"><i class="fas fa-clipboard-list citas-detalle-icono-gris"></i> ${escapeHtml(cita.tipo_cita_nombre)}</p>
-                        </div>
-                    </div>
-
-                    <div class="citas-detalle-notas">
-                        <p class="citas-detalle-notas-etiqueta"><i class="far fa-comment-alt citas-detalle-notas-icono"></i> Motivo / Notas Adicionales</p>
-                        <p class="citas-detalle-notas-texto">"${escapeHtml(cita.motivo || 'Sin observaciones adicionales.')}"</p>
-                    </div>
-                </div>
-            </div>
-        `,
-        showCloseButton: true,
-        showConfirmButton: false,
-        padding: '0',
-        customClass: {
-            popup: 'premium-modal',
-            htmlContainer: 'premium-html-container',
-            closeButton: 'premium-close-btn'
-        },
-        width: '600px'
-    });
-}
-
-function limpiarFiltros() {
-    document.getElementById('filtroFecha').value = 'hoy';
-    document.getElementById('filtroFechaCustom').value = '';
-    document.getElementById('filtroFechaCustom').hidden = true;
-    document.getElementById('filtroTipoCita').value = '';
-    document.getElementById('filtroEstado').value = '';
-    document.getElementById('filtroVet').value = '';
-    document.getElementById('filtroSearch').value = '';
-    aplicarFiltros();
-}
-
 
 
 async function exportarCitas() {
     if (citasFiltradasGlobal.length === 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Sin datos',
-            text: 'No hay citas para exportar con los filtros aplicados actualmente.',
-            confirmButtonColor: '#0052FF'
-        });
+        zookiToast('No hay citas para exportar con estos filtros.', 'warning');
         return;
     }
 
     try {
         // Mostrar cargando mientras procesa la librería (en caso de que sean muchas filas)
-        Swal.fire({
-            title: 'Generando Excel...',
-            text: 'Dando formato corporativo a los datos.',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+        zookiToast('Generando archivo…', 'info');
 
         // Crear libro y hoja
         const workbook = new ExcelJS.Workbook();
@@ -429,7 +391,7 @@ async function exportarCitas() {
 
         // Fila 4: Encabezados de Columna
         const headerRow = sheet.addRow([
-            'ID', 'Paciente', 'Propietario', 'Veterinario', 
+            'ID', 'Paciente', 'Propietario', 'Veterinario',
             'Fecha', 'Hora', 'Estado', 'Tipo de Cita', 'Motivo'
         ]);
 
@@ -443,7 +405,7 @@ async function exportarCitas() {
         // Insertar los Datos
         citasFiltradasGlobal.forEach(c => {
             const estadoTexto = c.estado.toUpperCase();
-            
+
             const row = sheet.addRow([
                 c.id_cita,
                 c.mascota_nombre || '—',
@@ -460,7 +422,7 @@ async function exportarCitas() {
             row.eachCell((cell, colNumber) => {
                 cell.font = { name: 'Arial', size: 10 };
                 cell.alignment = { vertical: 'middle' };
-                
+
                 // Centrar ciertas columnas (ID, Fecha, Hora)
                 if (colNumber === 1 || colNumber === 5 || colNumber === 6) {
                     cell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -470,7 +432,7 @@ async function exportarCitas() {
                 if (colNumber === 7) {
                     cell.font.bold = true;
                     cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                    
+
                     if (estadoTexto === 'PENDIENTE') cell.font.color = { argb: 'FFF59E0B' }; // Naranja
                     else if (estadoTexto === 'COMPLETADA') cell.font.color = { argb: 'FF10B981' }; // Verde
                     else if (estadoTexto === 'CONFIRMADA') cell.font.color = { argb: 'FF5560FF' }; // Azul clarito
@@ -496,9 +458,9 @@ async function exportarCitas() {
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = URL.createObjectURL(blob);
-        
+
         const fechaStr = new Date().toISOString().split('T')[0];
-        
+
         const link = document.createElement("a");
         link.setAttribute("href", url);
         link.setAttribute("download", `Zooki_Reporte_Citas_${fechaStr}.xlsx`);
@@ -507,39 +469,24 @@ async function exportarCitas() {
         document.body.removeChild(link);
 
         // Cerrar alerta de carga y mostrar éxito
-        Swal.close();
-        
-        const Toast = Swal.mixin({
-            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true
-        });
-        Toast.fire({ icon: 'success', title: 'Excel Exportado Correctamente' });
+
+
+        zookiToast('Excel Exportado Correctamente', 'success');
 
     } catch (error) {
         console.error('Error al generar Excel:', error);
-        Swal.fire('Error', 'Hubo un problema al generar el archivo Excel. Revisa tu consola.', 'error');
+        zookiToast('Hubo un problema al generar el archivo Excel. Revisa tu consola.', 'error');
     }
 }
 
 function exportarCitasPDF() {
     if (citasFiltradasGlobal.length === 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Sin datos',
-            text: 'No hay citas para exportar con los filtros aplicados actualmente.',
-            confirmButtonColor: '#0052FF'
-        });
+        zookiToast('No hay citas para exportar con estos filtros.', 'warning');
         return;
     }
 
     try {
-        Swal.fire({
-            title: 'Generando PDF...',
-            text: 'Preparando documento corporativo.',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+        zookiToast('Generando archivo…', 'info');
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('landscape');
@@ -551,7 +498,7 @@ function exportarCitasPDF() {
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
         doc.text('ZOOKI - REPORTE DE CITAS', 14, 16);
-        
+
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         doc.text(`Generado el: ${new Date().toLocaleString()}`, doc.internal.pageSize.width - 14, 16, { align: 'right' });
@@ -607,24 +554,12 @@ function exportarCitasPDF() {
         const fechaStr = new Date().toISOString().split('T')[0];
         doc.save(`Zooki_Reporte_Citas_${fechaStr}.pdf`);
 
-        Swal.close();
-        
-        const Toast = Swal.mixin({
-            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true
-        });
-        Toast.fire({ icon: 'success', title: 'PDF Exportado Correctamente' });
+
+
+        zookiToast('PDF Exportado Correctamente', 'success');
 
     } catch (error) {
         console.error('Error al generar PDF:', error);
-        Swal.fire('Error', 'Hubo un problema al generar el PDF.', 'error');
+        zookiToast('Hubo un problema al generar el PDF.', 'error');
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-filtrar-citas]').forEach((campo) => {
-        campo.addEventListener('change', filtrarCitas);
-    });
-    document.querySelector('[data-buscar-citas]').addEventListener('input', filtrarCitas);
-});
-
-window.addEventListener('agenda:urgencia', cargarDatosIniciales);

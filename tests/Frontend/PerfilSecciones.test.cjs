@@ -178,6 +178,8 @@ for (const rol of ['admin', 'vet']) {
             assert.equal(acceso.cerrados,true);
             assert.deepEqual([acceso.actual,acceso.nueva,acceso.repite],['Tu contraseña actual','Nueva contraseña','Repite la nueva']);
             assert.match(acceso.marca,/✗/);
+            // Las flechas recorren el menú lateral de escritorio; en el celular el menú se oculta al abrir una sección (RNF-16).
+            await nav.enviar('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false });
             const teclado = await nav.evaluar(`(() => {
                 const tab=document.querySelector('[data-config-tab="cuenta"]');
                 tab.focus();

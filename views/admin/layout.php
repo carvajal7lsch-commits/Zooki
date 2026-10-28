@@ -82,10 +82,10 @@
         ?>
 
         <!-- ══ CONTENIDO PRINCIPAL ════════════════════════════════════════ -->
-        <main class="main-content<?= isset($content_view) ? '' : ' main-content--inicio' ?>">
+        <main class="main-content<?= isset($content_view) ? '' : ' main-content--inicio' ?>"<?= $__action === 'admin_citas' ? ' data-agenda-herramientas' : '' ?>>
 
             <!-- Header superior -->
-            <header class="top-header<?= $__action === 'admin_usuarios' ? ' top-header--usuarios' : '' ?>">
+            <header class="top-header<?= $__action === 'admin_usuarios' ? ' top-header--usuarios' : ($__action === 'admin_citas' ? ' top-header--citas' : '') ?>">
                 <div class="header-left">
                     <?php
                         $tituloModulo = "";
@@ -98,7 +98,9 @@
                             default: $tituloModulo = "Zooki"; break;
                         }
                     ?>
-                    <?php if ($__action === 'admin_usuarios'): ?>
+                    <?php if ($__action === 'admin_citas'): ?>
+                        <?php require __DIR__ . '/partials/cabecera_citas.php'; ?>
+                    <?php elseif ($__action === 'admin_usuarios'): ?>
                         <?php require __DIR__ . '/partials/cabecera_usuarios.php'; ?>
                     <?php elseif (!isset($content_view) && isset($panel)): ?>
                         <div class="inicio-encabezado">

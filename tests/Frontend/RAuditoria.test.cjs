@@ -54,6 +54,7 @@ test('R Auditoría: filtros, detalle, exportaciones completas y paginación en 3
     const base = 'http://127.0.0.1:' + servidor.address().port;
     const capturar = async nombre => {
         if (process.env.ZOOKI_CAPTURAR_AUDITORIA !== '1') return;
+        if (process.env.ZOOKI_CAPTURAR_RETOQUE === '1' && !['360-auditoria', '390-auditoria'].includes(nombre)) return;
         const carpeta = path.join(RAIZ, 'scratch/r/auditoria/despues');
         fs.mkdirSync(carpeta, { recursive: true });
         const captura = await nav.enviar('Page.captureScreenshot', { format: 'png' });
@@ -64,11 +65,21 @@ test('R Auditoría: filtros, detalle, exportaciones completas y paginación en 3
         await nav.esperar("document.readyState === 'complete' && document.querySelectorAll('[data-evento][hidden]').length > 0");
         for (const [width, height] of [[1366, 768], [820, 1180], [360, 800], [390, 844]]) {
             await nav.enviar('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 768 });
-            await nav.evaluar("Promise.all(document.getAnimations().filter(a=>a.effect.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})))");
+            await nav.evaluar("Promise.all(document.querySelector('.pill-sidebar').getAnimations().map(a=>a.finished.catch(()=>{})))");
             const estado = await nav.evaluar(`(() => ({ desborde: document.documentElement.scrollWidth > innerWidth, pagina: document.documentElement.scrollHeight > innerHeight + 1, visibles: document.querySelectorAll('[data-evento]:not([hidden])').length }))()`);
             assert.equal(estado.desborde, false, 'Sin desborde a ' + width);
             if (width === 1366) assert.equal(estado.pagina, false, 'Escritorio sin scroll de página');
             assert.ok(estado.visibles > 0 && estado.visibles <= (width < 768 ? 6 : 10));
+            if (width < 768) {
+                const medidas = await nav.evaluar(`(() => {
+                    const resumen = document.querySelector('.auditoria-resumen');
+                    const elementos = [...resumen.children].filter(n=>!n.hidden);
+                    const pie = document.querySelector('.auditoria-pie');
+                    const centros = [...pie.querySelectorAll('a,[data-auditoria-contador]')].map(n=>{const r=n.getBoundingClientRect();return r.top+r.height/2;});
+                    return { franja: Math.max(...elementos.map(n=>n.getBoundingClientRect().top)) - Math.min(...elementos.map(n=>n.getBoundingClientRect().top)) < 20, altura: document.querySelector('[data-evento]:not([hidden])').getBoundingClientRect().height, pie: Math.max(...centros)-Math.min(...centros)<1 };
+                })()`);
+                assert.deepEqual(medidas, { franja: true, altura: 64, pie: true }, 'Resumen compacto y paginación en una fila a ' + width);
+            }
             await nav.evaluar("document.querySelector('[data-evento]:not([hidden]) button').click(); true");
             const detalle = await nav.evaluar(`(() => {
                 const d = document.getElementById('auditoriaDetalle');

@@ -236,6 +236,7 @@ class CitaController
                 'hora' => $cita['hora'],
                 'motivo' => $cita['motivo'],
                 'estado' => $cita['estado'],
+                'prioridad' => $cita['prioridad'],
                 'id_veterinario' => (int) $cita['id_veterinario'],
                 'id_tipo_cita' => $cita['id_tipo_cita'],
                 'mascota_nombre' => $cita['mascota_nombre'],

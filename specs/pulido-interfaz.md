@@ -73,7 +73,72 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 ## Etapa R — Responsive (2026-10-26)
 
+### Gestión de Citas del administrador — mockup aprobado (2026-10-27)
+
+**Encargo del dueño; escribe Codex; revisa Claude (arquitecto).** Referencias aprobadas en specs/referencias/citas-admin: escritorio-agenda, escritorio-triage, escritorio-urgencias, escritorio-detalle, celular-agenda, celular-filtros y celular-detalle. Sus datos son ilustrativos; la aplicación conserva los reales. RE-6.2.5, HU-4.13 y HU-4.15; RNF-11/RNF-16.
+
+1. Cabecera compartida como Usuarios: título único «Citas», subtítulo «Agenda de la clínica por veterinario» y pestañas Agenda/Triage/Urgencias con conteos de citas filtradas, solicitudes pendientes y rojos activos. Paneles existentes en la misma hoja, con data-* y JS conservados. No cambiar calendario.php ni las pestañas Llegadas/Reasignaciones del veterinario.
+2. Herramientas de 44 px: Hoy/Ayer/Semana/Mes/Todas; fecha específica con SelectorFechas (custom); búsqueda de paciente/propietario/motivo; tipos, estados y equipo; Exportar con menú Excel/PDF y las funciones existentes. Conservar la semántica de aplicarFiltros.
+3. Franja con fecha del periodo y N citas/pendientes/completadas/canceladas usando actualizarMétricas. Limpiar filtros solo si difieren del inicial. Retirar KPI grandes, sparklines y código sin uso.
+4. Tablero en grid por veterinario, separado por líneas, con desplazamiento interior/flechas cuando cuatro columnas no quepan. Dos iniciales, nombre completo sin Dr., N citas/N pendientes. Filas con hora y dd/mm para periodos de varios días, mascota, propietario/tipo y estado mediante data-estado/estados-cita.css; canceladas/no asistidas atenuadas. Vacío «Sin citas». Detalle por clic/Enter/espacio y salida escapada.
+5. **Decisión 1 del dueño:** punto de triage solo rojo/naranja/amarillo junto a la hora y aria-label «Triage <nivel>». Agregar prioridad a listarTodasCitasAjax desde c.*, sin esquema/migración ni cambiar aislamiento por clínica; prueba PHP del campo y aislamiento.
+6. Detalle en dialog de Zooki, hoja inferior móvil: mascota y estado, dd/mm/aaaa · HH:mm · tipo; Paciente/Propietario/Veterinario/Tipo y Motivo o «Sin observaciones». Solo lectura, mismos datos; sustituye Swal.fire.
+7. Triage con Pendientes/Revisadas, Actualizar, ayuda gris, filas de nivel calculado/revisado, nombre, síntomas, edad/sexo/vacunas y «Espera al veterinario» para admin. Urgencias con Rojos activos/Identidad pendiente lado a lado en escritorio y apilados en móvil; conservar Acreditar llegada. **Decisión 2 del dueño:** Conciliar identidad abre ventana de Zooki con el formulario/validación/envío existentes en ambos roles, en lugar del details; preservar pruebas y comportamiento del veterinario.
+8. Móvil: Citas y Exportar de icono con campana/avatar comunes; pestañas con número/subrayado; periodo en fila; buscador/Filtros con conteo y hoja inferior de fecha opcional/tipo/estados en chips/Limpiar/Ver N citas; chips por veterinario para el mismo filtro; lista agrupada, sin desborde a 360/390 y última fila accesible sobre navegación.
+9. Agenda a 1366×768 sin scroll de página hasta cuatro citas por columna; más citas con scroll interior. Tableta 820 sin desborde. Mismas rutas/permisos/respuestas salvo prioridad. Fuera: calendario del veterinario, Inicio, lógica de triage/urgencias/reasignaciones y otras pantallas.
+
+**Verificación autorizada:** pruebas dirigidas PHP/JS de filtros (incluido custom), métricas/Limpiar/puntos, detalle seguro por ratón/teclado y cierre, paneles/admin de solo lectura, conciliación en ambos roles, hoja/chips y regresión de agenda veterinaria/urgencias. Chrome 360/390/820/1366, capturas antes/después a 390/1366/1440 en scratch/r/citas-admin. Una pasada final de PHP sin host y JS completo con Chrome; MySQL solo zooki_test_base_v2 si hiciera falta, nunca la base de trabajo. Sin .env, esquema, migración, servicios reales, commit ni push. Estilo en español, una sentencia por línea, sin CSS/JS en línea, variables --z-* y estados-cita.css, SweetAlert solo toasts. Se conserva 2.2.0 sin publicar, C fuera de P1 por decisión del dueño (2026-10-26). Al entregar: resultado con autor/trazabilidad/pruebas/pendientes, 3–5 comprobaciones manuales y comandos de commit; no iniciar otra pantalla.
+
+#### Gestión de Citas del administrador — Resultado (2026-10-27)
+
+**Escribió Codex; entregada, pendiente de revisión de Claude y aceptación visual del dueño.**
+
+- Cabecera única Citas/Agenda/Triage/Urgencias con conteos; herramientas compactas, calendario de SelectorFechas, exportación agrupada, periodo/franja de métricas y tablero en una hoja. Columnas con iniciales/nombre completo, filas/estados compartidos, vacíos breves y scroll interior. Sin KPI grandes/sparklines ni SweetAlert de detalle/exportación (solo toasts).
+- Celular: cabecera común, exportación de icono, periodos, buscador/hoja de filtros, chips de estado/veterinario y grupos de filas; navegación inferior sin impedir llegar al final. Detalle nativo seguro con fecha dd/mm/aaaa, cierre por teclado/X/fondo y hoja inferior; el calendario cabe dentro de la hoja.
+- **Cambios compartidos autorizados:** conciliación en diálogo para ambos roles, con el mismo formulario, validación, comando, CSRF y envío. Triage del administrador sigue en solo lectura; los paneles conservan data-* y rutas. calendario.php, Llegadas/Reasignaciones y reglas clínicas intactos. Paneles del admin integrados mediante una opción explícita del parcial, sin cambiar la estructura del vet.
+- **Backend:** único campo agregado, prioridad, de c.* a listarTodasCitasAjax; sin consulta, permiso, esquema ni migración nuevos. CitasAdminPrioridadTest correcta: prioridad naranja y solo citas de la clínica activa (5 aserciones).
+- **RE-6.2.5 / HU-4.13 / HU-4.15 / RNF-16:** RCitasAdmin verifica filtros originales/custom y búsqueda, métricas/Limpiar, chips/veterinarios, puntos solo rojo/naranja/amarillo, detalle por clic/Enter/espacio, texto malicioso literal, Esc/X/fondo, exportación Excel/PDF simulada, Triage solo lectura y conciliación validada/enviada en admin/vet, incluida alternancia completar/consolidar y ventana a 360 px. Sin desborde 360/390/820/1366/1440; escritorio sin scroll de página con cuatro citas por columna. AgendaHerramientas y AgendaClinica correctas.
+- **Pasada completa única:** PHP sin host, 1206 pruebas / 9611 aserciones, 94 omitidas de motor; JS con Chrome, 381/381. Retoques posteriores de periodo, calendario y presentación verificados solo con los casos nuevos afectados. La última ejecución agotó 30 s en Chrome del vet; repetido únicamente ese caso, correcto en 2,7 s, con margen de prueba ajustado a 45 s. Sintaxis PHP/JS y diff correctos.
+- **Capturas reales simuladas:** `C:\Users\Usuario\OneDrive\Desktop\Zooki\scratch\r\citas-admin\antes\` (390.png, 1366.png, 1440.png) y `C:\Users\Usuario\OneDrive\Desktop\Zooki\scratch\r\citas-admin\despues\` (390-agenda.png, 1366-agenda.png, 1440-agenda.png, 1366-triage.png, 1366-urgencias.png, 1366-detalle.png, 390-filtros.png, 390-detalle.png). Revisadas; librerías de calendario/iconos cacheadas solo en scratch para el arnés, servicios simulados y SQLite efímero.
+- **Pendiente:** revisión de Claude y las cinco comprobaciones del dueño de abajo. R abierta, C fuera de P1 por decisión del dueño (2026-10-26), versión 2.2.0 sin publicar; sin .env, base de trabajo, servicios reales, commit/push ni otra pantalla. Cambios previos del dueño/Claude conservados; Historial final/PDF/Word quedan para el cierre de R.
+
+**Prueba manual del dueño (5):**
+
+1. Admin, Citas en escritorio: Hoy/Ayer/Semana/Mes/Todas y fecha específica; combinar estado/tipo/búsqueda, comprobar conteos y Limpiar. Exportar el conjunto filtrado.
+2. Admin a 360/390: abrir Filtros, escoger una fecha y un estado, Ver N citas y cambiar de veterinario con los chips; comprobar que la última fila se alcanza sobre la navegación.
+3. Abrir una cita por clic y por Enter/espacio: datos/estado y fecha correctos; cerrar con X, Escape y fondo. En celular, detalle como hoja inferior.
+4. Admin, Triage: alternar Pendientes/Revisadas y Actualizar; niveles/datos legibles, sin controles de decisión clínica. Urgencias: grupos y Acreditar llegada conservados.
+5. Admin y vet, una identidad pendiente de prueba: Conciliar identidad abre ventana; alternar completar/consolidar, verificar errores junto a campos y guardar una conciliación acreditada. En vet, Llegadas/Reasignaciones y agenda siguen funcionando.
+
+### Revisión de Claude — entregas de R del 26 y 27 de octubre (2026-10-27)
+
+**Resultado: aprobadas, con una corrección del revisor.** Se revisó el commit `f8ac09d`: Datos de la clínica, Horarios, Ausencias y cierres, retoques de Ajustes, acabado móvil con la cabecera común, Auditoría, y Usuarios con la barra superior. Revisión liviana (metodo.md §11): diff, puntos de riesgo y suites completas una vez.
+
+- **Verificado:** PHPUnit completo sin host 1205 pruebas/9606 aserciones (94 omitidas de motor). JS completo con Chrome real: 373 de 378 antes de la corrección. Los 5 fallos no eran de lógica ni de seguridad (ver abajo); después de corregirlos, __JS_FINAL__.
+- **Logo (RE-7.4.1, RE-7.4.5):** valida permisos y clínica antes de escribir el archivo; comprueba el tipo real (finfo + getimagesize); genera el nombre en el servidor; tope de 5 MB; si falla el guardado, retira solo el logo nuevo. Coincide con el flujo de marca de Modelos.md. `Dockerfile` + `docker/subidas.ini`: al desplegar 2.2.0 hay que reconstruir la imagen.
+- **Cabecera común (HU-T.5, HU-T.17):** conserva el contexto («Cambiar» solo si `puedeCambiar`), la campana, la cuenta y Cerrar sesión. Sin permisos nuevos: `admin_usuarios` sigue solo en la matriz del administrador. Las acciones móviles de Usuarios reutilizan los botones que ya pinta el servidor.
+- **Auditoría:** el detalle se pinta con `textContent` y los secretos salen como «[Protegido]» desde el servidor. No queda JS que apunte a los KPI retirados. Las vistas no llevan `style=`, `onclick=` ni scripts en línea.
+- **Corrección del revisor:** 5 pruebas en rojo habrían hecho fallar el CI, que corre con Chrome.
+  1. `InicioPulido`: buscaba `.contexto-actual`, que la cabecera común reemplazó. Ahora comprueba la clínica de escritorio de `cabecera_cuenta` y su enlace «Cambiar».
+  2. `PerfilSecciones` (admin y vet): la prueba de flechas corría a 390 px, donde el menú se oculta al abrir una sección. Se mide a 1366 px, y ahí el teclado funciona.
+  3. `RedisenoSuscripcion`: esperaba el avatar como enlace. Ahora busca «Mi cuenta» dentro del menú del avatar (`data-cuenta-destino`).
+  4. `RHorariosAjustes`: en Equipo sobraban 5 px a 1366×768. Se quitó el margen inferior de 8 px de `.ajustes-horarios__barra` (el formulario ya separa con 12 px). Es el único cambio visual.
+- **Lista para después (P3, no bloquea):** intl-tel-input se carga dos veces en Usuarios (en el layout y en la vista). El selector de hora pone 00:00 si se borra la hora y se pulsa Listo, y deja 12:00 si se cierra sin pulsar Listo. `usuarios-movil.js` deduce el rol y el estado leyendo iconos y textos de la fila (mejor con `data-*`). El logo anterior queda en disco (decisión documentada). Hay `#fff` y `#64748b` sueltos en el CSS de Usuarios.
+- **Sigue del cierre de R (pendiente de Codex):** Historial 2.2.0 final, exportación PDF/Word y CI con MySQL 8 después del push.
+
+#### Prueba manual del dueño (5)
+
+1. **Ana Norte, Ajustes › Datos de la clínica:** arrastra un PNG, guarda y recarga; el logo se ve. Renombra un PDF a `.png`: debe salir un error junto al campo y no guardarse.
+2. **Ana, en el celular, Ajustes › Ausencias y Nuevo cierre:** elige el día y después la hora (no deja escribir 25), pulsa Listo y guarda; la lista muestra la fecha y la hora elegidas.
+3. **Ana, en el celular, Usuarios:** toca una fila; se abre la hoja con las acciones. Restablece una contraseña, o desactiva a alguien y vuelve a activarlo.
+4. **Elena Doble, cabecera en escritorio y celular:** el avatar abre el menú o la hoja, «Cambiar» lleva al selector de contexto y la campana abre los avisos. **Beto (vet):** no ve Usuarios.
+5. **Ana, Auditoría:** abre el detalle de un cambio de contraseña; debe salir «[Protegido]». Exporta a Excel.
+
+Dime solo lo que falló, con el número del paso.
+
 ### Usuarios móvil y barra superior — mockups aprobados (2026-10-27)
+
+**Espacio bajo Editar usuario — escribió Codex (2026-10-27); entregada, pendiente de revisión de Claude.** Hallazgo visual del dueño: el subtítulo heredaba de styles.css un margin-bottom de 1.75rem usado en acceso. Se restablecen sus márgenes en la identidad del modal (4 px arriba, cero abajo), interlineado 1.4 y padding vertical de cabecera de 16 px; móvil conserva sus 14 px existentes. Solo CSS de Usuarios, sin tocar el formulario ni sus acciones. Revisión puntual de cascada/diff; validación visual del dueño pendiente, sin repetir suites ni capturas.
 
 **Corrección móvil pedida por el dueño (2026-10-27), escribe Codex.** Última indicación prevalece sobre el texto del mockup: alta solo «+» accesible y sin subtítulo ni nombre repetido de clínica bajo el título. Aplicar el ocultamiento de subtítulos en la cabecera común admin/vet; compactar Usuarios conforme a la lámina, sin cambiar permisos o escritorio. Las hojas de persona/cuenta recuperan el asa de cierre del mockup, sin X adicional; el formulario conserva su X original con borde y añade el asa decorativa que figura en la referencia. Resto de ventanas conserva sus controles de cierre existentes. Verificación dirigida al botón, hojas/cierre, ambos roles y desborde a 360/390, sin pasada completa.
 
@@ -109,6 +174,8 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 - **Sigue:** prueba del dueño y revisión de Claude, sin avanzar a otra pantalla sin indicación. R abierta, cierre consolidado de Ajustes pendiente y versión 2.2.0 sin publicar; C fuera de P1 por decisión del dueño (2026-10-26). Sin .env, base de trabajo, SMTP/API reales, commit ni push; cambios anteriores conservados.
 
 ### Auditoría — rediseño aprobado por mockups del dueño (2026-10-27)
+
+**Corrección de densidad móvil — escribió Codex (2026-10-27); entregada, pendiente de revisión de Claude.** El dueño compara la vista real con su mockup y pide corregir el mismo exceso de espacio: se elimina el salto forzado del total del resumen, que junto con los botones de 40 px generaba dos líneas. Resumen en una franja con periodo abreviado «(24 h)», manteniendo el intervalo real y las acciones de filtrar eliminaciones/accesos fallidos; desplazamiento interior si las cifras crecen, sin desbordar página. Márgenes laterales de 16 px, separaciones de 8 px, filas de 64 px y Anterior/contador/Siguiente en una misma fila, con espacio para alcanzar el pie sobre la navegación. Solo CSS y marcado de vista; escritorio, permisos, consultas y filtros conservados. RAuditoria correcta (2 pruebas): sin desborde a 360/390/820/1366, franja/filas/pie comprobados, detalle, filtros, exportación y navegación entre lotes conservados. Capturas puntuales revisadas en `C:\Users\Usuario\OneDrive\Desktop\Zooki\scratch\r\auditoria\despues\360-auditoria.png` y `C:\Users\Usuario\OneDrive\Desktop\Zooki\scratch\r\auditoria\despues\390-auditoria.png`. Sin suites completas ni exportaciones documentales; R abierta, 2.2.0 sin publicar y C fuera de P1 por decisión del dueño (2026-10-26).
 
 **Escribe Codex; supervisa el dueño; revisa Claude.** El dueño entrega `Zooki · Auditoría rediseño.html` (escritorio 1366×768, detalle, celular 390×844 y filtros móviles) y pide implementarlo, aplicando la skill zooki-interfaz. Autoriza pasar a Auditoría; Ajustes conserva su pasada consolidada pendiente. HU-T.8 / RE-T.8.2–4, RN-G05, RNF-16; solo presentación, sin backend, esquema, rutas ni permisos nuevos.
 

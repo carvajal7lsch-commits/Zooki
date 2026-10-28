@@ -3,6 +3,13 @@
 // en vez de cuatro secciones sueltas debajo del calendario. Cada panel conserva sus data-* y su JS.
 require_once __DIR__ . '/../../config/App.php';
 $esVetHerramientas = Contexto::rolActivo() === Roles::VETERINARIO;
+// R: admin integra las herramientas en su hoja; el calendario del vet conserva su estructura.
+if (!empty($agendaAdminIntegrada) && !$esVetHerramientas) {
+    require __DIR__ . '/solicitudes_agenda.php';
+    require __DIR__ . '/urgencias_agenda.php';
+    echo '<script src="js/agenda-herramientas.js?v=' . htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') . '"></script>';
+    return;
+}
 $pestanasAgenda = ['triage' => ['Triage', 'fas fa-stethoscope']];
 if ($esVetHerramientas) {
     $pestanasAgenda['llegadas'] = ['Llegadas', 'fas fa-door-open'];

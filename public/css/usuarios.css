@@ -736,7 +736,7 @@
 
 .users-modal__panel .modal-header {
     margin-bottom: 0;
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
     background: var(--bg-surface);
     flex-shrink: 0;
@@ -759,7 +759,9 @@
 }
 
 .usuario-modal-identidad .modal-subtitle {
-    margin-left: 0;
+    /* El subtítulo de acceso usa un margen inferior que no corresponde a esta cabecera. */
+    margin: 4px 0 0;
+    line-height: 1.4;
     overflow-wrap: anywhere;
 }
 

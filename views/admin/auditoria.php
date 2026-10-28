@@ -55,7 +55,7 @@ $filtrosActivos = count(array_filter($baseFiltros, static fn ($valor): bool => (
         <button type="submit" class="auditoria-sr">Buscar</button>
     </form>
     <div class="auditoria-resumen" aria-label="Actividad de las últimas 24 horas">
-        <span><strong><?= number_format(array_sum($stats_hoy), 0, ',', '.') ?> eventos</strong> <span class="auditoria-resumen__periodo">en las últimas 24 h</span></span>
+        <span><strong><?= number_format(array_sum($stats_hoy), 0, ',', '.') ?> eventos</strong> <span class="auditoria-resumen__periodo">en las últimas 24 h</span><span class="auditoria-resumen__periodo--movil"> (24 h)</span></span>
         <button type="button" class="auditoria-resumen__chip" data-accion-rapida="DELETE"><?= (int) ($stats_hoy['DELETE'] ?? 0) ?> eliminaciones</button>
         <button type="button" class="auditoria-resumen__chip" data-accion-rapida="LOGIN_FAIL"><?= (int) ($stats_hoy['LOGIN_FAIL'] ?? 0) ?> accesos fallidos</button>
         <a href="index.php?action=admin_auditoria" class="auditoria-limpiar" <?= $filtrosActivos ? '' : 'hidden' ?>>Limpiar filtros</a>
