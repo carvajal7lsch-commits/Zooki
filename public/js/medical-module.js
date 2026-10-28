@@ -369,6 +369,8 @@ function tarjetaDueno(o) {
     const activo = Number(o.estado) === 1;
     const tarjeta = nodoDueno('article', 'client-card person-card');
     tarjeta.dataset.estado = String(o.estado);
+    tarjeta.dataset.pendienteActivacion = String(o.pendiente_activacion || 0);
+    tarjeta.dataset.totalMascotas = String(Number(o.total_mascotas) || 0);
     const cabecera = nodoDueno('div', 'card-header-mini');
     const avatar = nodoDueno('span', 'avatar-mini avatar-iniciales avatar-iniciales--cliente', inicialesDueno(o.nombre_completo));
     avatar.setAttribute('aria-hidden', 'true');
@@ -379,11 +381,13 @@ function tarjetaDueno(o) {
     if (!activo) cabecera.append(etiquetaDueno('Desvinculado', 'bi-link-45deg'));
     const cuerpo = nodoDueno('div', 'card-body-mini');
     cuerpo.append(nodoDueno('h3', 'card-title-mini', o.nombre_completo));
+    cuerpo.append(nodoDueno('span', 'paciente-solo-escritorio propietario-cantidad', Number(o.total_mascotas) + (Number(o.total_mascotas) === 1 ? ' mascota' : ' mascotas')));
     const etiquetas = nodoDueno('div', 'card-tags-mini');
     etiquetas.append(etiquetaDueno(`${Number(o.total_mascotas)} mascota(s)`, 'bi-heart'));
     if (o.telefono) etiquetas.append(etiquetaDueno(o.telefono, 'bi-phone'));
     cuerpo.append(etiquetas);
     const datosContacto = [];
+    if (o.telefono) datosContacto.push(etiquetaDueno(o.telefono, 'bi-telephone', 'contact-text-mini paciente-solo-escritorio propietario-telefono'));
     if (o.documento) datosContacto.push(etiquetaDueno(o.documento, 'bi-person-badge', 'contact-text-mini'));
     if (o.email) datosContacto.push(etiquetaDueno(o.email, 'bi-envelope', 'contact-text-mini'));
     if (datosContacto.length) {
@@ -391,8 +395,18 @@ function tarjetaDueno(o) {
         contacto.append(...datosContacto);
         cuerpo.append(contacto);
     }
+    if (!activo) cuerpo.append(nodoDueno('p', 'paciente-solo-escritorio propietario-nota', 'La cuenta ya no está vinculada a esta clínica.'));
     const pie = nodoDueno('div', 'card-footer-mini');
     pie.append(...accionesDueno(o));
+    const resumen = nodoDueno('div', 'paciente-solo-escritorio propietario-mascotas');
+    const nombres = activo && Array.isArray(o.mascotas_resumen) ? o.mascotas_resumen.slice(0, 3) : [];
+    const iniciales = nodoDueno('span', 'propietario-mascotas__iniciales');
+    nombres.forEach(nombre => iniciales.append(nodoDueno('span', '', inicialesDueno(nombre))));
+    resumen.append(iniciales, nodoDueno('span', 'propietario-mascotas__nombres', nombres.length ? nombres.join(', ') : Number(o.total_mascotas) + (Number(o.total_mascotas) === 1 ? ' mascota' : ' mascotas')));
+    pie.append(resumen, nodoDueno('i', 'fas fa-chevron-right paciente-solo-escritorio propietario-ir'));
+    pie.querySelectorAll('[data-reenviar-activacion]').forEach(boton => {
+        boton.append(nodoDueno('span', 'paciente-solo-escritorio', 'Reenviar enlace'));
+    });
     tarjeta.append(cabecera, cuerpo, pie);
     abrirDetalleConLaTarjeta(tarjeta, o);
     return tarjeta;
@@ -429,6 +443,7 @@ function filaDueno(o) {
     const celda = nodoDueno('td', 'acciones-mini');
     celda.append(...accionesDueno(o));
     fila.append(celda);
+    abrirDetalleConLaTarjeta(fila, o);
     return fila;
 }
 
@@ -646,6 +661,7 @@ function renderOwnerDossier(owner, pets) {
     ponerTexto('dossierOwnerRuta', owner.nombre_completo);
     ponerTexto('dossierVolverTexto', dossierOrigen === 'pets' ? 'Mascotas' : 'Propietarios');
     ponerTexto('dossierPetsTotal', String(pets.length));
+    ponerTexto('dossierOwnerPetsCount', String(pets.length));
 
     const petsScroll = document.getElementById('dossierPetsScroll');
     const petsCount = document.getElementById('dossierPetsCount');
@@ -683,7 +699,7 @@ function renderOwnerDossier(owner, pets) {
                 </span>
                 <div class="pet-dossier-card-info">
                     <h4 class="pet-dossier-card-name">${escaparTexto(m.nombre)}</h4>
-                    <p class="pet-dossier-card-species">${escaparTexto(m.especie)} • ${escaparTexto(razaConIndicada(m.raza, m.raza_indicada, 'Mestizo'))}<span class="pacientes-texto-movil"> · ${SEXOS[m.sexo] || 'Sexo desconocido'}</span></p>
+                    <p class="pet-dossier-card-species">${escaparTexto(m.especie)} • ${escaparTexto(razaConIndicada(m.raza, m.raza_indicada, 'Mestizo'))}<span class="pacientes-texto-movil paciente-sexo-detalle"> · ${SEXOS[m.sexo] || 'Sexo desconocido'}</span></p>
                 </div>
             </div>
             <div class="pet-dossier-card-grid">
@@ -694,6 +710,7 @@ function renderOwnerDossier(owner, pets) {
             <div class="pet-dossier-card-actions">
                 <button type="button" class="btn-ficha">Ver ficha <i class="fas fa-chevron-right" aria-hidden="true"></i></button>
             </div>
+            <span class="paciente-solo-escritorio propietario-mascota-edad"><small>Edad</small>${escaparTexto(m.fecha_nacimiento ? calculateAge(m.fecha_nacimiento) : 'Sin dato')}</span>
             <i class="fas fa-chevron-right pet-dossier-card-flecha" aria-hidden="true"></i>
         `;
         const foto = card.querySelector('.pet-dossier-card-photo');
@@ -747,6 +764,8 @@ function mostrarSeccionDossier(seccion) {
     const propietario = document.getElementById('dossierOwnerName')?.innerText || '';
     const mascota = document.getElementById('dashPetName')?.innerText || '';
     const ficha = seccion === 'ficha';
+    const rutaPropietario = document.getElementById('dossierOwnerRuta');
+    if (rutaPropietario) rutaPropietario.textContent = !ficha && window.matchMedia('(min-width: 768px)').matches ? 'Propietarios' : propietario;
     document.querySelector('[data-pacientes-detalle]')?.classList.toggle('pacientes-cabecera--ficha', ficha);
     const titulo = document.getElementById('dossierOwnerTitle');
     if (titulo) titulo.innerText = ficha ? `Ficha de ${mascota}` : propietario;
@@ -2417,18 +2436,19 @@ function validarEmail(input) {
 // Search owners directory locally using real-time search
 function filterOwners() {
     const term = document.getElementById('ownerSearch').value.toLowerCase();
+    const estado = document.querySelector('input[name="estado_propietarios"]:checked')?.value || '';
 
     // Filter grid cards
     const cards = document.querySelectorAll('#ownerGridView .client-card');
     cards.forEach(card => {
         const txt = card.innerText.toLowerCase();
-        card.style.display = txt.includes(term) ? '' : 'none';
+        card.style.display = txt.includes(term) && (!estado || card.dataset.estado === estado) ? '' : 'none';
     });
 
     // Filter table rows
     const rows = document.querySelectorAll('#ownersTable tbody tr');
     rows.forEach(row => {
         const txt = row.innerText.toLowerCase();
-        row.style.display = txt.includes(term) ? '' : 'none';
+        row.style.display = txt.includes(term) && (!estado || row.dataset.estado === estado) ? '' : 'none';
     });
 }

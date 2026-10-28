@@ -6,7 +6,13 @@
 
 ## Ahora
 
+### Pacientes escritorio, modales móviles y perfil del veterinario — encargada a Codex (A, B y C) (2026-10-28)
+
+- **Escribe Codex; revisa Claude (arquitecto).** Encargo A→B→C registrado en specs/pulido-interfaz.md, Etapa R. A: directorio/detalle propietario ≥768 según mockups, sin cambiar móvil aprobado. B: hojas de modales Pacientes <768, conservando Alertas. C: perfil vet igual al admin más Mi horario/Ausencias, con comparación de ambos roles; mockup perfil-vet-movil descartado. Cada parte se termina/verifica antes de la siguiente y se conserva por separado para revisión/commit. Pruebas dirigidas por parte, una sola pasada completa PHP sin host/JS con Chrome al final. Sin .env, base de trabajo, servicios reales, commit ni push; R abierta, 2.2.0 sin publicar.
+
 ### Pacientes en el celular — entregada, pendiente de revisión (2026-10-28)
+
+- **Encargo A/B/C actual:** A entregada, pendiente de revisión por Claude; escribió Codex. Directorio ≥768 y detalle propietario según mockups, campo de solo lectura hasta tres mascotas con aislamiento/RN-115 probado. 11 JS y 9 PHP/86 aserciones dirigidas correctas; Chrome820/1024/1366 y control390. Resultado/evidencia en el plan y scratch/r/pacientes-escritorio. Sigue B, después C; batería completa única al final. Cambios ajenos en tests/Support/ProcesoPagoS2.php y ProcesoSuscripcion.php conservados y excluidos de los parches de este encargo.
 
 - **Escribió Codex; revisa Claude (arquitecto); mockups aprobados por el dueño.** Encargo y «Pacientes en el celular — Resultado» en specs/pulido-interfaz.md, Etapa R. Detalle móvil del propietario en hoja/filas y ficha con propietario tocable, resumen compacto, general de dos columnas y botones existentes en cabecera; escritorio/tableta conservan medidas, salvo texto de edad autorizado. Edad por meses cumplidos con singular/plural y fecha civil local; al navegar en móvil la sección empieza en su cabecera. Listado, filtros, formularios, historia, permisos/rutas/respuestas conservados.
 - **Verificación:** 8/8 dirigidas; PHP completo sin host 1206/9612 (94 omitidas por motor); JS completo con Chrome **393/393**. Nuevo PacientesMovil verifica navegación, acciones, escape, foto/respaldo, edad y 360/390/820/1366; PropietarioDetalle/MascotaDetalle/PacientesCabecera correctas. Capturas antes/después, medidas y logs en scratch/r/pacientes-movil; sintaxis/diff correctos. Retoque de posición inicial al navegar móvil comprobado aparte.

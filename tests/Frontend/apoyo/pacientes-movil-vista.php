@@ -12,5 +12,9 @@ Contexto::activar($contexto, 1);
 Security::definirFuenteDeContextos(static fn (): array => [$contexto]);
 $_GET = ['action' => 'vet_pacientes'];
 $mascotas = [];
+if (($argv[1] ?? '') === 'directorio') {
+    require __DIR__ . '/pacientes-directorio-datos.php';
+    $mascotas = pacientesDirectorioDatos();
+}
 $content_view = __DIR__ . '/../../../views/vet/pacientes.php';
 require __DIR__ . '/../../../views/vet/layout.php';

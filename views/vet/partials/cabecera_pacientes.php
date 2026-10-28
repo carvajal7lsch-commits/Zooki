@@ -1,15 +1,15 @@
 <div class="pacientes-cabecera directorio-cabecera" data-pacientes-directorio>
     <div class="head-title-desc">
         <h1 class="users-page-title"><i class="fas fa-paw icon-primary" aria-hidden="true"></i> Pacientes</h1>
-        <p class="users-module-desc">Directorio de clientes y sus mascotas</p>
+        <p class="users-module-desc">Propietarios y mascotas de la clínica</p>
     </div>
     <div class="head-top-right">
         <div class="tabs-wrapper">
             <button type="button" data-c3-click="evento0" id="tabOwners" class="tab-btn active">
-                <i class="fas fa-users" aria-hidden="true"></i><span>Propietarios</span>
+                <i class="fas fa-users" aria-hidden="true"></i><span>Propietarios</span><span class="paciente-solo-escritorio pacientes-conteo" data-pacientes-conteo="owners">0</span>
             </button>
             <button type="button" data-c3-click="evento1" id="tabPets" class="tab-btn">
-                <i class="fas fa-paw" aria-hidden="true"></i><span>Mascotas</span>
+                <i class="fas fa-paw" aria-hidden="true"></i><span>Mascotas</span><span class="paciente-solo-escritorio pacientes-conteo" data-pacientes-conteo="pets">0</span>
             </button>
         </div>
     </div>

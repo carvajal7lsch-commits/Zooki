@@ -13,6 +13,10 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <div class="section-card pacientes-modulo">
+    <div class="pacientes-hoja-cabecera" data-pacientes-hoja-cabecera hidden>
+        <div data-pacientes-pestanas-destino></div>
+        <div data-pacientes-acciones-destino></div>
+    </div>
     <div class="pacientes-barra directorio-barra" role="region" aria-label="Buscar y filtrar pacientes">
         <!-- Area: search and status (Filtros Propietarios) -->
         <div class="users-controls-bar__filters is-active" id="searchRowOwners">
@@ -29,7 +33,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                     <input type="radio" name="estado_propietarios" id="eprop_activos" value="1" data-c3-change="evento5">
                     <label for="eprop_activos">Activos</label>
                     <input type="radio" name="estado_propietarios" id="eprop_inactivos" value="0" data-c3-change="evento6">
-                    <label for="eprop_inactivos">Inactivos</label>
+                    <label for="eprop_inactivos"><span class="pacientes-texto-movil">Inactivos</span><span class="paciente-solo-escritorio">Desvinculados</span></label>
                 </div>
             </div>
         </div>
@@ -50,11 +54,11 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                 </select>
                 <div class="segmented-control" id="filterEstadoMascotas">
                     <input type="radio" name="estado_mascotas" id="emasc_todos" value="" data-c3-change="evento9">
-                    <label for="emasc_todos">Todos</label>
+                    <label for="emasc_todos"><span class="pacientes-texto-movil">Todos</span><span class="paciente-solo-escritorio">Todas</span></label>
                     <input type="radio" name="estado_mascotas" id="emasc_activos" value="1" checked data-c3-change="evento10">
-                    <label for="emasc_activos">Activos</label>
+                    <label for="emasc_activos"><span class="pacientes-texto-movil">Activos</span><span class="paciente-solo-escritorio">Activas</span></label>
                     <input type="radio" name="estado_mascotas" id="emasc_inactivos" value="0" data-c3-change="evento11">
-                    <label for="emasc_inactivos">Inactivos</label>
+                    <label for="emasc_inactivos"><span class="pacientes-texto-movil">Inactivos</span><span class="paciente-solo-escritorio">Inactivas</span></label>
                 </div>
             </div>
         </div>
@@ -94,6 +98,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
     </div>
 
     <!-- CONTENEDOR PRINCIPAL DEL MÓDULO -->
+    <p class="pacientes-resumen paciente-solo-escritorio" data-pacientes-resumen aria-live="polite"></p>
     <div id="moduleOwners" class="module-section active">
 
         <!-- VISTA 1: Directorio de Clientes -->
@@ -170,6 +175,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <label><i class="far fa-envelope" aria-hidden="true"></i> Correo</label>
                                 <span id="dossierOwnerEmail" class="data-value">---</span>
                             </div>
+                            <div class="data-group paciente-solo-escritorio propietario-total-mascotas"><label>Mascotas</label><span id="dossierOwnerPetsCount" class="data-value">0</span></div>
                         </div>
                         <div class="quick-actions-list">
                             <button type="button" data-c3-click="evento18" class="btn-quick-action" title="Llamar al propietario">
@@ -340,7 +346,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                     <tbody id="petsTableBody">
                         <?php if (count($mascotas) > 0): ?>
                             <?php foreach ($mascotas as $m): ?>
-                                <tr data-id="<?php echo htmlspecialchars((string)($m["id_mascota"]), ENT_QUOTES, 'UTF-8'); ?>" data-estado="<?php echo htmlspecialchars((string)($m["estado"]), ENT_QUOTES, 'UTF-8'); ?>">
+                                <tr data-id="<?php echo htmlspecialchars((string)($m["id_mascota"]), ENT_QUOTES, 'UTF-8'); ?>" data-estado="<?php echo htmlspecialchars((string)($m["estado"]), ENT_QUOTES, 'UTF-8'); ?>" data-propietario="<?= (int) $m['id_propietario'] ?>">
                                     <td>
                                         <img src="<?php echo htmlspecialchars($m["url_foto"] ? "uploads/mascotas/" . rawurlencode($m["url_foto"]) : "img/default-pet.svg"); ?>"
                                              class="table-thumb"
@@ -421,7 +427,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
         <div id="gridView" class="view-container active">
             <div class="pets-grid" id="petsGrid">
                 <?php foreach ($mascotas as $m): ?>
-                    <div class="client-card person-card pet-card" data-id="<?php echo htmlspecialchars((string)($m["id_mascota"]), ENT_QUOTES, 'UTF-8'); ?>" data-species="<?php echo htmlspecialchars((string)($m["nombre_especie"]), ENT_QUOTES, 'UTF-8'); ?>" data-estado="<?php echo htmlspecialchars((string)($m["estado"]), ENT_QUOTES, 'UTF-8'); ?>">
+                    <div class="client-card person-card pet-card" data-id="<?php echo htmlspecialchars((string)($m["id_mascota"]), ENT_QUOTES, 'UTF-8'); ?>" data-species="<?php echo htmlspecialchars((string)($m["nombre_especie"]), ENT_QUOTES, 'UTF-8'); ?>" data-estado="<?php echo htmlspecialchars((string)($m["estado"]), ENT_QUOTES, 'UTF-8'); ?>" data-propietario="<?= (int) $m['id_propietario'] ?>" data-sin-historia="<?= empty($m['numero_historia_clinica']) ? '1' : '0' ?>">
                         <div class="card-header-mini">
                             <div class="avatar-mini cursor-pointer" data-c3-click="evento34" data-c3-arg0="<?php echo (int) $m['id_mascota']; ?>">
                                 <img src="<?php echo htmlspecialchars($m["url_foto"] ? "uploads/mascotas/" . rawurlencode($m["url_foto"]) : "img/default-pet.svg"); ?>"
@@ -438,6 +444,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                         <div class="card-body-mini cursor-pointer" data-c3-click="evento37" data-c3-arg0="<?php echo (int) $m['id_mascota']; ?>">
                             <h3 class="card-title-mini"><?php echo htmlspecialchars($m["nombre"]); ?></h3>
                             <div class="card-tags-mini">
+                                <span class="paciente-solo-escritorio paciente-hc <?= empty($m['numero_historia_clinica']) ? 'paciente-hc--vacia' : '' ?>"><?= htmlspecialchars($m['numero_historia_clinica'] ?: 'Sin historia', ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php if($m['estado'] == 0): ?>
                                     <span class="tag-mini"><i class="bi bi-moon-stars"></i> Inactivo</span>
                                 <?php endif; ?>
@@ -445,6 +452,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <span class="tag-mini"><i class="fas fa-venus-mars"></i> <?php echo htmlspecialchars($m["sexo"]); ?></span>
                             </div>
                             <div class="card-contact-mini">
+                                <span class="contact-text-mini paciente-solo-escritorio paciente-edad"><i class="fas fa-venus-mars" aria-hidden="true"></i><span data-paciente-nacimiento="<?= htmlspecialchars((string) ($m['fecha_nacimiento'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-paciente-sexo="<?= htmlspecialchars((string) ($m['sexo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></span></span>
                                 <span class="contact-text-mini"><i class="bi bi-person"></i> <?php echo htmlspecialchars($m["propietario_nombre"]); ?></span>
                                 <span class="contact-text-mini"><i class="bi bi-file-medical"></i> HC: <?php echo htmlspecialchars($m["numero_historia_clinica"] ?: 'Sin asignar'); ?></span>
                             </div>
@@ -1150,4 +1158,5 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 <!-- Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script src="js/pacientes-directorio.js?v=<?= htmlspecialchars(App::assetVersion(), ENT_QUOTES, 'UTF-8') ?>"></script>
 

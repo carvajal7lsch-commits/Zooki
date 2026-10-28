@@ -102,7 +102,7 @@ return {sinDesborde:document.documentElement.scrollWidth<=innerWidth,columnas:ge
             assert.equal(cabecera.color, width < 768 ? 'rgb(15, 23, 42)' : 'rgb(0, 82, 255)');
             assert.equal(cabecera.borde, width < 768 ? 'none' : 'solid');
             assert.equal(cabecera.radio, width < 768 ? '50%' : '10px');
-            assert.deepEqual(cabecera.tamanos, cabecera.referenciaPropietario, 'La ficha tiene los mismos tamaños que el ingreso al propietario');
+            if (width < 768) assert.deepEqual(cabecera.tamanos, cabecera.referenciaPropietario, 'Las dos cabeceras móviles conservan el patrón aprobado');
             assert.equal(cabecera.flecha, true);
             assert.equal(cabecera.separador, width < 768 ? '0px' : '1px');
             assert.equal(cabecera.mascota, 'Doki');

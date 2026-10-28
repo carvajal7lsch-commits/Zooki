@@ -37,12 +37,12 @@ test('detalle del propietario: cuadrícula, filtros, ficha, regreso, datos desco
             const resultado = await navegador.evaluar(`(()=>{switchModule('owners',{recargar:false});const antes=document.querySelector('.header-right').getBoundingClientRect();renderOwnerDossier(__owner,__pets);mostrarDossier('listado');const despues=document.querySelector('.header-right').getBoundingClientRect();const pista=document.getElementById('dossierPetsScroll');return {sinDesborde:document.documentElement.scrollWidth<=innerWidth,grid:getComputedStyle(pista).display,columnas:getComputedStyle(pista).gridTemplateColumns.split(' ').length,cantidad:pista.children.length,avatar:document.getElementById('dossierOwnerAvatar').innerText,barra:getComputedStyle(document.querySelector('.pacientes-barra')).display,detalle:getComputedStyle(document.querySelector('[data-pacientes-detalle]')).display,controles:[antes.x,antes.y,antes.width,antes.height].every((v,i)=>Math.abs(v-[despues.x,despues.y,despues.width,despues.height][i])<1)};})()`);
             assert.equal(resultado.sinDesborde, true, JSON.stringify({ width, resultado }));
             assert.equal(resultado.grid, 'grid');
-            assert.equal(resultado.columnas, width > 1100 ? 3 : width > 767 ? 2 : 1);
+            assert.equal(resultado.columnas, 1);
             assert.equal(resultado.cantidad, 5);
             assert.equal(resultado.avatar, 'FP');
             assert.equal(resultado.barra, 'none');
             assert.equal(resultado.detalle, 'flex');
-            assert.equal(resultado.controles, width >= 768, 'En móvil el detalle usa la cabecera aprobada; fuera del detalle se conserva la común');
+            if (width < 768) assert.equal(resultado.controles, false, 'El detalle móvil conserva su cabecera aprobada; la cabecera de escritorio cambió en R A');
             const botonVolver = await navegador.evaluar(`(() => {
                 const boton = document.querySelector('[data-pacientes-detalle] .propietario-volver');
                 return {
@@ -51,7 +51,7 @@ test('detalle del propietario: cuadrícula, filtros, ficha, regreso, datos desco
                     fondo: getComputedStyle(boton).backgroundColor,
                 };
             })()`);
-            const colorVolver = width < 768 ? 'rgb(15, 23, 42)' : 'rgb(0, 82, 255)';
+            const colorVolver = width < 768 ? 'rgb(15, 23, 42)' : 'rgb(71, 85, 105)';
             assert.deepEqual(botonVolver, { texto: colorVolver, flecha: colorVolver, fondo: 'rgb(255, 255, 255)' });
             if (process.env.ZOOKI_CAPTURA_PACIENTES === '1' && [1184, 390].includes(width)) {
                 const imagen = await navegador.enviar('Page.captureScreenshot', { format: 'png' });

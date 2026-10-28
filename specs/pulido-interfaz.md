@@ -73,6 +73,33 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 ## Etapa R — Responsive (2026-10-26)
 
+### Pacientes en escritorio — mockup aprobado (2026-10-28)
+
+**Parte A; entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Referencias aprobadas en specs/referencias/pacientes-escritorio: escritorio-propietarios, escritorio-mascotas y escritorio-detalle-propietario. Datos reales, HU-1.2/1.3/1.4; preservar celular <768 aprobado salvo B. Se cierra y verifica A antes de B, y B antes de C.
+
+- A1: ≥768, cabecera común Pacientes/subtítulo y una hoja blanca de radio 22. Pestañas subrayadas con conteos, Vincular/Nuevo a la derecha; buscador/especie/estado/vista, resumen cliente con total y sin activar/sin HC; cuadrícula 2/3/4 columnas a 820/1024/1366 y separación 14.
+- A2: propietario con avatar azul suave de 44, nombre, plural de mascotas, lápiz discreto, contacto en tres líneas con icono gris y elipsis. Pie con hasta tres mascotas/iniciales si el endpoint puede aportar sus nombres con el mismo aislamiento y prueba PHP; si complica, solo N mascotas y aviso al dueño. Cuenta sin activar en gris/reenvío azul; desvinculado atenuado, sin contacto (RN-115). Tarjeta tocable/teclado, sin ojo; Editar/Reenviar no abren detalle.
+- A3/A4: mascota con foto/respaldo 52/radio16, nombre/especie/raza/HC o Sin historia, Inactiva gris, dueño y sexo/edad; pie con el mismo toggle/listener y acciones HC (solo con HC, RN-102)/Editar de 34. Tarjetas/filas abren ficha por clic/Enter/Espacio y muestran foco; acciones internas no abren ficha. Tabla dentro de la hoja, cabecera gris, filas56/acciones34 y mismas columnas/datos.
+- A5: detalle propietario con volver redondo, nombre y Pacientes › Propietarios. Hojas 360/resto; datos/estado/editar, mascotas en filas etiqueta–valor; Llamar/Correo secundarios y Agendar primario a lo ancho. Hoja mascotas con conteo/búsqueda/Nueva, filas70 con foto/nombre/especie-raza-sexo/edad/HC-estado/flecha. Apiladas a 820. No rediseñar ficha de mascota de escritorio.
+- A6/verificación: mismos datos/permisos/rutas/respuestas/data-*/IDs/filtros/búsqueda/vistas/modales. Chrome 820/1024/1366 sin desborde y control idéntico a390; pruebas de clic/teclado/acciones aisladas, conteos/plural/filtros/RN-115/escape y regresiones PacientesCabecera/PropietarioDetalle/MascotaDetalle/PacientesMovil. Capturas antes/después 1366/820 y control390 en scratch/r/pacientes-escritorio.
+
+### Pacientes en escritorio — Resultado
+
+**A: entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Una hoja con pestañas/conteos, herramientas, cuadrículas 2/3/4, tablas y tarjetas tocables por teclado, y detalle del propietario en hojas/filas. El único cambio de servidor es el resumen de hasta tres mascotas por propietario: misma clínica, solo vínculos activos, sin nombres/contacto de desvinculados (RN-115). La ficha de escritorio conserva su diseño; el control móvil conserva geometría y contenido (detalle a390 idéntico píxel a píxel).
+
+- **Verificación dirigida:** 11 JS correctas (PacientesEscritorio, PacientesMovil, PacientesCabecera, PropietarioDetalle y MascotaDetalle); 9 PHP/86 aserciones (PropietarioResumenMascotas y PropietarioClinica). Chrome820/1024/1366: 2/3/4 columnas sin desborde, acciones internas separadas, mismo input/listener de estado y tarjetas/filas tras guardar sin recargar; control390. Capturas antes/después en scratch/r/pacientes-escritorio. B comienza después de este cierre; batería completa única al terminar C.
+- **Dueño:** cambiar tarjeta/lista y filtrar; abrir propietario y volver al origen; abrir mascota y probar Editar/HC/toggle por separado; revisar desvinculado sin contacto y Reenviar sin abrir detalle. Reenvío y guardado se verificaron con respuestas simuladas, sin correos reales.
+
+### Modales de Pacientes en el celular (2026-10-28)
+
+**Parte B; encargada a Codex; revisa Claude (arquitecto).** Solo después de cerrar/verificar A. Nuevo registro, Vincular mascota, Editar propietario/mascota: reutilizar el patrón de Usuarios/Nueva cita, hoja casi completa desde abajo, título/cerrar40, cuerpo desplazable de una columna y pie fijo con Cancelar de texto/un primario. Revisar/listar también los modales de ficha/historia/vacunas/desparasitación y adaptar los que tengan el mismo problema. Alertas/Revisar alerta se conserva como referencia. Mismos campos/validaciones/envíos/respuestas; ≥768 intacto. Chrome390 abre cada modal y comprueba no desborde, pie visible, cerrar y enviar. Capturas antes/después por modal en scratch/r/pacientes-modales.
+
+### Mi perfil del veterinario igual al del administrador (2026-10-28)
+
+**Parte C; encargada a Codex; revisa Claude (arquitecto).** Solo después de cerrar/verificar B. Se descarta/ignora specs/referencias/perfil-vet-movil. Primero capturar menú y cada sección admin/vet a390/820/1366 y listar diferencias. Vet con el mismo encabezado/menú/hojas/comportamiento móvil menú→sección/volver del admin; únicas opciones extra Mi horario y Ausencias, con las mismas clases/parciales y lenguaje aprobado de Ajustes › Horarios/Ausencias (filas/días, hojas y controles40). Quitar resúmenes de Mi cuenta que el admin no tiene y duplican esas opciones; conservar indicadores pendientes. Mismos datos/permisos/rutas/envíos/validaciones/respuestas; admin idéntico antes/después. PerfilSecciones y horario/ausencias del vet correctas, prueba de estructura común más dos opciones y Chrome360/390/820/1366 sin desborde. Capturas de ambos roles en scratch/r/perfil-vet.
+
+**Reglas comunes A/B/C:** una sentencia por línea, sin CSS/JS en línea, colores --z-* (azul/grises, rojo grave; sin naranja/amarillo fuera del triage, salvo estado activo verde suave explícito en A5). Sin .env, base de trabajo, dinero/correos/servicios reales ni MySQL ajeno a zooki_test_base_v2. Pruebas dirigidas al cerrar cada parte y una sola pasada PHP completa sin host/JS completa con Chrome al final. Resultados/autor/riesgos/3–5 comprobaciones por parte y comandos de commit separados, con archivos/parches por parte. No commit/push ni otra pantalla. Fuera Inicio vet, Agenda, Atención, portal propietario y resto del panel admin. R abierta, C del P1 original excluida por el dueño (2026-10-26); esta parte C de perfil es un encargo distinto. Versión 2.2.0 sin publicar.
+
 ### Pacientes en el celular — mockup aprobado (2026-10-28)
 
 **Encargo del dueño; escribe Codex; revisa Claude (arquitecto).** Referencias aprobadas en specs/referencias/pacientes-movil/celular-propietario.dc.html y celular-mascota.dc.html; sus datos son ilustrativos. Solo detalle del propietario y ficha de mascota en vet_pacientes; sin nuevas HU ni cambios de datos/permisos/rutas/respuestas.
