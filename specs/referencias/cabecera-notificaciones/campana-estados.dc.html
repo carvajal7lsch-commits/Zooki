@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Campana · estados del contador</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.lam{width:720px;height:300px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;box-sizing:border-box;padding:40px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:center}
+.lam *{box-sizing:border-box}
+.est{display:flex;flex-direction:column;align-items:center;gap:14px}
+.bell{width:48px;height:48px;border-radius:14px;background:#fff;border:0;color:#475569;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.badge{position:absolute;top:-5px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#EF4444;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #E9ECF5;line-height:1}
+.et{font-size:13px;font-weight:600;color:#475569;text-align:center}
+.et small{display:block;font-size:12px;font-weight:500;color:#64748B;margin-top:2px}
+</style>
+</helmet>
+<div class="lam">
+  <div class="est">
+    <button class="bell" type="button" aria-label="Notificaciones, ninguna nueva"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></button>
+    <div class="et">Sin nuevas<small>campana gris, sin contador</small></div>
+  </div>
+  <div class="est">
+    <button class="bell" type="button" aria-label="Notificaciones, 1 nueva"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="badge">1</span></button>
+    <div class="et">1 nueva<small>contador rojo</small></div>
+  </div>
+  <div class="est">
+    <button class="bell" type="button" aria-label="Notificaciones, 3 nuevas"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="badge">3</span></button>
+    <div class="et">3 nuevas<small>el número exacto</small></div>
+  </div>
+  <div class="est">
+    <button class="bell" type="button" aria-label="Notificaciones, más de 9 nuevas"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="badge">9+</span></button>
+    <div class="et">Más de 9<small>tope «9+»</small></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":720,"height":300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

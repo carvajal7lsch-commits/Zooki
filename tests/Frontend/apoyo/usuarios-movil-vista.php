@@ -15,7 +15,8 @@ $rolPrueba = $esVetPrueba ? Roles::VETERINARIO : Roles::ADMIN;
 $_SESSION = ['id_usuario' => $esVetPrueba ? 2 : 1, 'usuario_nombre' => $esVetPrueba ? 'Beto Norte' : 'Ana Norte'];
 $contexto = Contexto::deClinica(1, 'Clínica Norte (prueba)', $rolPrueba);
 Contexto::activar($contexto, 1);
-$_SESSION['contextos_total'] = 2;
+// Con «uno» la persona solo tiene este contexto: la pastilla de la clínica no es enlace.
+$_SESSION['contextos_total'] = ($argv[2] ?? '') === 'uno' ? 1 : 2;
 Security::definirFuenteDeContextos(static fn (): array => [$contexto, Contexto::deClinica(2, 'Clínica Sur', $rolPrueba)]);
 if ($esVetPrueba) {
     define('ZOOKI_CABECERA_VET_PRUEBA', true);

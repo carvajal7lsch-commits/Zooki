@@ -2066,6 +2066,8 @@
     height: 34px;
     border-radius: 10px;
     background: var(--z-primary-soft);
+    /* .icon-primary vive en medical/forms-modals.css, que el administrador no carga: sin esto salía negro. */
+    color: var(--z-primary);
     font-size: 1rem;
 }
 .directorio-cabecera .tabs-wrapper {

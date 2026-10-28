@@ -59,10 +59,11 @@ window.fetch = async (...args) => {
 // explicita con zookiToast/zookiAviso/zookiConfirmar (public/js/avisos.js).
 
 // ── Init ─────────────────────────────────────────────────────────────────
+// La campana se abre y se cierra en cabecera-cuenta.js (menú o hoja inferior);
+// aquí viven los datos de las notificaciones.
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("notifBell")?.addEventListener("click", toggleNotifications);
   loadSystemNotifications();
-  initNotifClose();
+  initNotifItems();
   initNotifMarkAll();
 
   // Fix z-index overlapping with sidebar
@@ -78,11 +79,34 @@ function escNotif(valor) {
   return String(valor ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+// Mockup aprobado (2026-10-27): todo en azul suave; rojo solo para lo grave.
 const NOTIF_ICONOS = {
-  NUEVA_CITA: { icon: "fa-calendar-plus", clase: "tipo-nueva" },
-  CITA_REPROGRAMADA: { icon: "fa-calendar-alt", clase: "tipo-reprogramada" },
-  CITA_CANCELADA: { icon: "fa-calendar-times", clase: "tipo-cancelada" },
+  NUEVA_CITA: "bi-calendar-plus",
+  CITA_REPROGRAMADA: "bi-calendar-event",
+  CITA_CANCELADA: "bi-calendar-x",
+  CITA_REASIGNADA: "bi-arrow-left-right",
+  REPROGRAMAR_NECESARIO: "bi-calendar-event",
+  LIMITE_PLAN: "bi-exclamation-triangle",
+  ausencia: "bi-clock",
+  ATENCION_ABIERTA: "bi-clipboard2-pulse",
+  ATENCION_SIN_CERRAR: "bi-clipboard2-pulse",
 };
+const NOTIF_GRAVES = ["CITA_CANCELADA", "LIMITE_PLAN"];
+
+function iconoNotif(tipo) {
+  if (String(tipo).startsWith("PROPUESTA_REASIGNACION_")) return NOTIF_ICONOS.CITA_REASIGNADA;
+  return NOTIF_ICONOS[tipo] || "bi-bell";
+}
+
+// El contador muestra el número exacto hasta 9; desde 10, «9+».
+function contadorNotif(noLeidas) {
+  return noLeidas > 9 ? "9+" : String(noLeidas);
+}
+
+function etiquetaCampana(noLeidas) {
+  if (noLeidas <= 0) return "Notificaciones, ninguna nueva";
+  return `Notificaciones, ${noLeidas} ${noLeidas === 1 ? "nueva" : "nuevas"}`;
+}
 
 // "hace 5 min", "hace 3 h", "hace 2 días"; más de una semana, la fecha corta.
 function tiempoRelativo(fechaSql) {
@@ -100,55 +124,55 @@ function tiempoRelativo(fechaSql) {
   return fecha.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
 }
 
+// Cada aviso es un botón con su id y su enlace en data-*: el clic lo atiende
+// un solo oyente de la lista, sin onclick en el HTML generado.
+function filaNotif(item) {
+  const noLeida = !Number(item.leida);
+  const grave = NOTIF_GRAVES.includes(item.tipo);
+  const creada = item.fecha_creacion
+    ? new Date(String(item.fecha_creacion).replace(" ", "T")).toLocaleString("es-CO")
+    : "";
+  return `<button type="button" class="notif-item${noLeida ? " is-unread" : ""}" data-notif-id="${Number(item.id)}" data-notif-enlace="${escNotif(item.enlace || "#")}">
+      <span class="notif-item__icon${grave ? " is-grave" : ""}"><i class="bi ${iconoNotif(item.tipo)}" aria-hidden="true"></i></span>
+      <span class="notif-item__text">
+        <span class="notif-item__title">${escNotif(item.titulo)}</span>
+        <span class="notif-item__msg">${escNotif(item.mensaje)}</span>
+        <span class="notif-item__time" title="${escNotif(creada)}">${escNotif(tiempoRelativo(item.fecha_creacion))}</span>
+      </span>
+      ${noLeida ? '<span class="notif-item__dot" aria-label="No leída"></span>' : ""}
+    </button>`;
+}
+
 async function loadSystemNotifications() {
   const listMain = document.getElementById("pendingVaccinesList");
   if (!listMain) return;
   try {
     const res = await fetch("index.php?action=get_notificaciones_ajax");
     const data = await res.json();
-    
+
     if (!data.success) return;
 
-    const noLeidas = data.no_leidas;
-    const notificaciones = data.notificaciones;
+    const noLeidas = Number(data.no_leidas) || 0;
+    const notificaciones = data.notificaciones || [];
 
     const badge = document.getElementById("notifBadge");
     const countEl = document.getElementById("notifCount");
     const bell = document.getElementById("notifBell");
-    
-    if (badge) badge.hidden = noLeidas <= 0;
-    if (countEl) countEl.textContent = `${noLeidas} ${noLeidas === 1 ? "nueva" : "nuevas"}`;
-    if (bell) bell.classList.toggle("ringing", noLeidas > 0);
+
+    if (badge) {
+      badge.hidden = noLeidas <= 0;
+      badge.textContent = noLeidas > 0 ? contadorNotif(noLeidas) : "";
+    }
+    if (countEl) countEl.textContent = `${noLeidas} sin leer`;
+    if (bell) bell.setAttribute("aria-label", etiquetaCampana(noLeidas));
 
     // HU-45: el boton de "marcar todas" solo tiene sentido si hay pendientes.
     const markAll = document.getElementById("notifMarkAll");
     if (markAll) markAll.hidden = noLeidas === 0;
 
-    const mainHtml = notificaciones.length
-      ? notificaciones
-          .map(
-            (item) => {
-              const noLeida = !Number(item.leida);
-              const { icon, clase } = NOTIF_ICONOS[item.tipo] || { icon: "fa-bell", clase: "" };
-              const creada = item.fecha_creacion
-                ? new Date(item.fecha_creacion.replace(" ", "T")).toLocaleString("es-CO")
-                : "";
-
-              return `<div class="notif-item${noLeida ? " is-unread" : ""}" onclick="marcarNotificacionLeida(${Number(item.id)}, '${escNotif(item.enlace || '#')}')">
-                <div class="notif-item__icon ${clase}"><i class="fas ${icon}"></i></div>
-                <div class="notif-item__text">
-                    <span class="notif-item__title">${escNotif(item.titulo)}</span>
-                    <div class="notif-item__msg">${escNotif(item.mensaje)}</div>
-                    <span class="notif-item__time" title="${escNotif(creada)}">${escNotif(tiempoRelativo(item.fecha_creacion))}</span>
-                </div>
-                ${noLeida ? '<span class="notif-item__dot" aria-label="No leída"></span>' : ""}
-              </div>`;
-            }
-          )
-          .join("")
-      : '<div class="notif-empty"><i class="far fa-bell-slash"></i>No tienes notificaciones pendientes</div>';
-
-    if (listMain) listMain.innerHTML = mainHtml;
+    listMain.innerHTML = notificaciones.length
+      ? notificaciones.map(filaNotif).join("")
+      : '<div class="notif-empty"><i class="bi bi-bell-slash" aria-hidden="true"></i>No tienes notificaciones</div>';
   } catch (e) {
     console.error("loadSystemNotifications", e);
   }
@@ -158,12 +182,12 @@ async function marcarNotificacionLeida(id, enlace) {
     try {
         const formData = new FormData();
         formData.append('id', id);
-        
+
         await fetch("index.php?action=marcar_notificacion_leida_ajax", {
             method: 'POST',
             body: formData
         });
-        
+
         if (enlace && enlace !== '#') {
             window.location.href = enlace;
         } else {
@@ -172,6 +196,16 @@ async function marcarNotificacionLeida(id, enlace) {
     } catch (e) {
         console.error("Error al marcar como leída", e);
     }
+}
+
+function initNotifItems() {
+    const lista = document.getElementById("pendingVaccinesList");
+    if (!lista) return;
+    lista.addEventListener("click", (e) => {
+        const fila = e.target.closest("[data-notif-id]");
+        if (!fila) return;
+        marcarNotificacionLeida(Number(fila.dataset.notifId), fila.dataset.notifEnlace);
+    });
 }
 
 /**
@@ -214,21 +248,5 @@ async function marcarTodasNotificacionesLeidas() {
 function initNotifMarkAll() {
     const boton = document.getElementById("notifMarkAll");
     if (!boton) return;
-    boton.addEventListener("click", (e) => {
-        // El dropdown se cierra al hacer clic fuera; este clic es dentro.
-        e.stopPropagation();
-        marcarTodasNotificacionesLeidas();
-    });
-}
-
-// ── Notifications ─────────────────────────────────────────────────────────
-function toggleNotifications() {
-  document.getElementById("notifDropdown").classList.toggle("active");
-}
-function initNotifClose() {
-  document.addEventListener("click", (e) => {
-    const w = document.querySelector(".notifications-wrapper");
-    const d = document.getElementById("notifDropdown");
-    if (w && d && !w.contains(e.target)) d.classList.remove("active");
-  });
+    boton.addEventListener("click", marcarTodasNotificacionesLeidas);
 }

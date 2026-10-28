@@ -91,6 +91,8 @@ test('R Usuarios y cabecera: filas, acciones permitidas, cuenta de ambos roles e
                 assert.equal(cuenta.dentro, true);
                 assert.equal(cuenta.salir, true);
                 assert.equal(cuenta.cambiar, true);
+                // Cabecera minimalista (2026-10-27): el avatar lleva solo las iniciales, sin nombre ni flecha.
+                assert.equal(await nav.evaluar("document.querySelector('[data-cabecera-cuenta-boton]').innerText.trim()"), rol === 'admin' ? 'AN' : 'BN');
                 assert.match(cuenta.ruta, rol === 'admin' ? /admin_configuracion#cuenta/ : /mi_perfil/);
                 if (width === 390 || width === 1366) await capturar(rol + '-' + width + '-cuenta');
                 if (width < 768) {

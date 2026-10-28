@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Cabecera minimalista y notificaciones — entregada, pendiente de revisión (2026-10-27)
+
+- **Escribió Claude Code; revisa Claude (arquitecto); mockup aprobado por el dueño** en specs/referencias/cabecera-notificaciones/. Cabecera de admin/vet con clínica en pastilla, campana y avatar de 40 px; contador rojo de no leídas (1…9, «9+»), sin timbre ni ámbar; ventana de 380 px con «N sin leer» y marcar todas por icono, hoja inferior en celular; avisos como botones con delegación de eventos y rojo solo en cita cancelada/límite del plan; icono azul del título de Usuarios/Citas/Pacientes. Sin servidor, rutas ni permisos.
+- **Verificación:** RCabeceraNotificaciones nueva (2 pruebas) y RUsuariosCabecera/InicioPulido/RedisenoSuscripcion/AjustesAdmin/PerfilSecciones correctas. PHP completo sin host 1206/9611 (94 omitidas de motor); JS completo con Chrome 385/385. Capturas antes/después en scratch/r/cabecera-notificaciones.
+- **Sigue:** revisión de Claude y cinco comprobaciones del dueño en specs/pulido-interfaz.md («Cabecera minimalista y notificaciones — Resultado»). Decisión pendiente: Auditoría no tiene icono en su título; no se agregó. R abierta, 2.2.0 sin publicar; sin commit ni push.
+
 ### Inicio del administrador en el celular — entregada, pendiente de revisión (2026-10-27)
 
 - **Escribió Codex; revisa Claude; mockups aprobados por el dueño.** Solo móvil <768: cabecera/tarjeta compactas, pestañas Agenda/Pendientes/Este mes con recuerdo, franja semanal/puntos reales, calendario en hoja y selector de vet con ocupación. Piezas genéricas optativas compartidas sin habilitarlas en el vet; escritorio y tableta conservados, sin servidor/rutas/permisos nuevos. HU-6.2 y RE-6.2.9 aclaran la presentación móvil aprobada.
