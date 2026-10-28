@@ -402,7 +402,8 @@ function tarjetaDueno(o) {
     const nombres = activo && Array.isArray(o.mascotas_resumen) ? o.mascotas_resumen.slice(0, 3) : [];
     const iniciales = nodoDueno('span', 'propietario-mascotas__iniciales');
     nombres.forEach(nombre => iniciales.append(nodoDueno('span', '', inicialesDueno(nombre))));
-    resumen.append(iniciales, nodoDueno('span', 'propietario-mascotas__nombres', nombres.length ? nombres.join(', ') : Number(o.total_mascotas) + (Number(o.total_mascotas) === 1 ? ' mascota' : ' mascotas')));
+    const resumenTexto = nombres.length ? nombres.join(', ') : Number(o.total_mascotas) === 0 ? 'Sin mascotas aún' : Number(o.total_mascotas) + (Number(o.total_mascotas) === 1 ? ' mascota' : ' mascotas');
+    resumen.append(iniciales, nodoDueno('span', 'propietario-mascotas__nombres', resumenTexto));
     pie.append(resumen, nodoDueno('i', 'fas fa-chevron-right paciente-solo-escritorio propietario-ir'));
     pie.querySelectorAll('[data-reenviar-activacion]').forEach(boton => {
         boton.append(nodoDueno('span', 'paciente-solo-escritorio', 'Reenviar enlace'));

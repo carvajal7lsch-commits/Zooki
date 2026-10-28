@@ -1274,7 +1274,10 @@ select.mascota-extra__control:focus,
     flex:0 0 auto
 }
 
-.pacientes-escritorio .pacientes-barra .search-input {
+.pacientes-escritorio .pacientes-barra .head-search .search-input {
+    width:100%;
+    min-width:0;
+    max-width:none;
     height:40px;
     background:var(--z-bg-suave);
     border-radius:12px
@@ -1293,6 +1296,9 @@ select.mascota-extra__control:focus,
 }
 
 .pacientes-escritorio .pacientes-barra .segmented-control label {
+    display:flex;
+    align-items:center;
+    justify-content:center;
     min-height:34px;
     padding:0 11px;
     font-size:12px;
@@ -1307,10 +1313,23 @@ select.mascota-extra__control:focus,
 }
 
 .pacientes-escritorio .pacientes-barra .command-center-filter-select {
-    width:132px;
+    width:170px;
+    flex:0 0 170px;
     min-width:0;
     height:40px;
-    font-size:13px
+    padding:0 12px;
+    border:1px solid var(--z-border);
+    border-radius:12px;
+    background:var(--z-bg-suave);
+    color:var(--z-text-secondary);
+    font-size:14px;
+    font-weight:400;
+    appearance:auto
+}
+
+.pacientes-escritorio .pacientes-barra .head-view-toggle {
+    padding-right:0;
+    border-right:0
 }
 
 .pacientes-escritorio .pacientes-barra .pacientes-texto-movil {
@@ -1373,7 +1392,8 @@ select.mascota-extra__control:focus,
 .pacientes-escritorio #ownersGrid .client-card {
     display:grid;
     grid-template-columns:44px minmax(0,1fr);
-    gap:4px 12px
+    grid-template-rows:24px 18px;
+    gap:2px 12px
 }
 
 .pacientes-escritorio #ownersGrid .card-header-mini,.pacientes-escritorio #ownersGrid .card-body-mini {
@@ -1398,6 +1418,8 @@ select.mascota-extra__control:focus,
     margin:0;
     padding-right:15px;
     font-size:15px;
+    line-height:20px;
+    align-self:end;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis
@@ -1407,7 +1429,9 @@ select.mascota-extra__control:focus,
     grid-column:2;
     grid-row:2;
     color:var(--z-text-muted);
-    font-size:12px
+    font-size:12px;
+    line-height:18px;
+    align-self:start
 }
 
 .pacientes-escritorio #ownersGrid .card-tags-mini {
@@ -1926,7 +1950,9 @@ select.mascota-extra__control:focus,
 }
 
 .propietario-detalle[data-seccion="listado"] .patients-filters-area select {
-    max-width:135px;
+    width:170px;
+    max-width:none;
+    flex:0 0 170px;
     height:40px
 }
 
@@ -1945,7 +1971,7 @@ select.mascota-extra__control:focus,
 
 .propietario-detalle[data-seccion="listado"] .pet-dossier-card {
     display:grid;
-    grid-template-columns:46px minmax(0,1fr) 72px auto 14px;
+    grid-template-columns:46px minmax(0,1fr) 140px auto 14px;
     align-items:center;
     gap:12px;
     min-height:70px;
@@ -1977,6 +2003,11 @@ select.mascota-extra__control:focus,
     height:46px;
     border-radius:14px;
     object-fit:cover
+}
+
+.propietario-detalle[data-seccion="listado"] .propietario-mascota-avatar .avatar-iniciales {
+    background:var(--z-primary-soft);
+    color:var(--z-primary)
 }
 
 .propietario-detalle[data-seccion="listado"] .pet-dossier-card-name {
@@ -2020,7 +2051,8 @@ select.mascota-extra__control:focus,
     grid-row:1;
     font-size:13px;
     font-weight:600;
-    color:var(--z-text)
+    color:var(--z-text);
+    white-space:nowrap
 }
 
 .propietario-mascota-edad small {
@@ -2360,5 +2392,24 @@ select.mascota-extra__control:focus,
     }
     .pacientes-hoja .photo-side .preview-box > i {
         font-size: 28px;
+    }
+    .pacientes-hoja .photo-side {
+        width: 100%;
+        max-width: none;
+    }
+    .pacientes-hoja .mascota-extra {
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+    .pacientes-hoja .mascota-extra__etiqueta {
+        overflow: visible;
+        text-overflow: clip;
+        font-size: 14px;
+        letter-spacing: normal;
+        text-transform: none;
+    }
+    .pacientes-hoja .mascota-extra__control {
+        font-size: 16px;
     }
 }

@@ -6,6 +6,11 @@
 
 ## Ahora
 
+### Pacientes — retoques de revisión: entregada, pendiente de revisión (2026-10-28)
+
+- **Escribió Codex; revisa Claude.** Solo R, HU-1.2/1.3/1.4: buscador flexible sin topes400/200, segmentado centrado, sin raya suelta, especie gris170×40; pie «Sin mascotas aún» y separación nombre/conteo2px; detalle con Edad140 sin saltos y avatares azul suave. Nueva/Editar mascota móviles con Estado/Esterilización a todo el ancho, sin recortes. Sin datos/permisos/rutas/respuestas nuevos.
+- **Verificación:** PacientesEscritorio/PacientesHojas5/5, Chrome390/820/1366 sin desborde, once capturas y medidas en scratch/r/pacientes-retoques. Encargo/resultado y tres comprobaciones del dueño en specs/pulido-interfaz.md. Pruebas dirigidas, sin repetir la batería completa; 2.2.0 sin publicar, sin .env, base de trabajo, servicios reales, commit/push ni otra pantalla. Sigue revisión de Claude.
+
 ### Pacientes escritorio, modales móviles y perfil del veterinario — entregadas, pendientes de revisión (A, B y C) (2026-10-28)
 
 - **Escribe Codex; revisa Claude (arquitecto).** Encargo A→B→C registrado en specs/pulido-interfaz.md, Etapa R. A: directorio/detalle propietario ≥768 según mockups, sin cambiar móvil aprobado. B: hojas de modales Pacientes <768, conservando Alertas. C: perfil vet igual al admin más Mi horario/Ausencias, con comparación de ambos roles; mockup perfil-vet-movil descartado. Cada parte se termina/verifica antes de la siguiente y se conserva por separado para revisión/commit. Pruebas dirigidas por parte, una sola pasada completa PHP sin host/JS con Chrome al final. Sin .env, base de trabajo, servicios reales, commit ni push; R abierta, 2.2.0 sin publicar.

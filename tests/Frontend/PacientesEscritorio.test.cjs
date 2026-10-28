@@ -20,6 +20,53 @@ async function conDirectorio(ejecutar) {
 }
 const pintar = nav => nav.evaluar('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
 
+test('R retoques: buscador completo, controles centrados, tarjetas y detalle legibles a820/1366', { skip: !buscarChrome() }, async () => {
+    await conDirectorio(async nav => {
+        for (const width of [820, 1366]) {
+            await nav.enviar('Emulation.setDeviceMetricsOverride', { width, height: width === 820 ? 1180 : 768, deviceScaleFactor: 1, mobile: false });
+            await pintar(nav);
+            for (const modulo of ['owners', 'pets']) {
+                await nav.evaluar(`switchModule('${modulo}',{recargar:false})`);
+                await pintar(nav);
+                const controles = await nav.evaluar(`(() => {
+                    const fila = document.querySelector('#${modulo === 'owners' ? 'searchRowOwners' : 'searchRowPets'}');
+                    const caja = fila.querySelector('.search-input').getBoundingClientRect();
+                    const espacio = fila.querySelector('.head-search').getBoundingClientRect();
+                    const filtro = fila.querySelector('.head-status-filters').getBoundingClientRect();
+                    const selector = fila.querySelector('select');
+                    const estilo = selector && getComputedStyle(selector);
+                    return { desborde:document.documentElement.scrollWidth > innerWidth, ancho:caja.width, libre:espacio.width, hueco:filtro.left-caja.right, centrado:[...fila.querySelectorAll('.segmented-control label')].every(e=>getComputedStyle(e).alignItems==='center'), raya:getComputedStyle(document.querySelector('.head-view-toggle')).borderRightWidth, selector:selector && { ancho:selector.getBoundingClientRect().width, alto:selector.getBoundingClientRect().height, color:estilo.color, fondo:estilo.backgroundColor } };
+                })()`);
+                assert.equal(controles.desborde, false, width + '/' + modulo);
+                assert.ok(Math.abs(controles.ancho - controles.libre) < 1, JSON.stringify(controles));
+                assert.ok(Math.abs(controles.hueco - 10) < 1, JSON.stringify(controles));
+                assert.equal(controles.centrado, true);
+                assert.equal(controles.raya, '0px');
+                if (modulo === 'pets') assert.deepEqual(controles.selector, { ancho:170, alto:40, color:'rgb(71, 85, 105)', fondo:'rgb(248, 250, 252)' });
+            }
+            await nav.evaluar("switchModule('owners',{recargar:false})");
+            const tarjetas = await nav.evaluar(`(() => {
+                const vacias = [...document.querySelectorAll('#ownersGrid [data-total-mascotas="0"]')];
+                return { vacias:vacias.length>0 && vacias.every(e=>e.querySelector('.propietario-mascotas__nombres').textContent==='Sin mascotas aún'), espacios:[...document.querySelectorAll('#ownersGrid .client-card')].map(e=>e.querySelector('.propietario-cantidad').getBoundingClientRect().top-e.querySelector('.card-title-mini').getBoundingClientRect().bottom) };
+            })()`);
+            assert.equal(tarjetas.vacias, true);
+            assert.ok(tarjetas.espacios.every(g => Math.abs(g - 2) < 1), JSON.stringify(tarjetas));
+            await nav.evaluar('openOwnerDossier(6)');
+            const detalle = await nav.evaluar(`(() => {
+                const edad = document.querySelector('.propietario-mascota-edad');
+                const avatar = document.querySelector('.propietario-mascota-avatar .avatar-iniciales');
+                return { desborde:document.documentElement.scrollWidth>innerWidth, edad:edad.getBoundingClientRect().width, salto:getComputedStyle(edad).whiteSpace, fondo:getComputedStyle(avatar).backgroundColor, tarjeta:getComputedStyle(document.querySelector('#ownersGrid .avatar-mini')).backgroundColor, selector:document.getElementById('dossierPetSpeciesFilter').getBoundingClientRect().width };
+            })()`);
+            assert.equal(detalle.desborde, false, JSON.stringify(detalle));
+            assert.equal(detalle.edad, 140);
+            assert.equal(detalle.salto, 'nowrap');
+            assert.equal(detalle.fondo, detalle.tarjeta);
+            assert.equal(detalle.selector, 170);
+            await nav.evaluar('hideDossier()');
+        }
+    });
+});
+
 test('R A: al guardar y repintar sin recargar, las tarjetas y filas nuevas conservan ficha y un solo toggle', { skip: !buscarChrome() }, async () => {
     await conDirectorio(async (nav, servidor) => {
         await nav.evaluar("switchModule('pets',{recargar:false});window.__anterior=document.querySelector('#petsGrid .pet-card input[type=checkbox]')");

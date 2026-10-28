@@ -29,8 +29,13 @@ test('R B: ocho entradas en hojas sin desborde, cuerpo desplazable, pie y cierre
                 const pie = [...raiz.querySelectorAll('.users-modal__footer')].find(e => e.getBoundingClientRect().height);
                 const p = pie?.getBoundingClientRect();
                 const cuerpo = [...raiz.querySelectorAll('.users-modal__body, .drawer-body')].find(e => e.getBoundingClientRect().height);
+                const extra = [...raiz.querySelectorAll('.mascota-extra')].find(e => e.getBoundingClientRect().height);
+                const esterilizacion = extra?.querySelector('select');
+                const camposCompletos = !extra || getComputedStyle(extra).gridTemplateColumns.split(' ').length === 1
+                    && [...extra.querySelectorAll('.mascota-extra__etiqueta')].every(e => e.scrollWidth <= e.clientWidth)
+                    && esterilizacion.getBoundingClientRect().width >= cuerpo.clientWidth - 34;
                 cuerpo.scrollTop = cuerpo.scrollHeight;
-                return { ancho: r.width, izquierda: r.left, fondo: r.bottom, alto: r.height, cerrar: cierre.width >= 40 && cierre.right <= innerWidth, pie: !p || p.bottom <= innerHeight && p.top > r.top, desborde: cuerpo.scrollWidth > cuerpo.clientWidth, pagina: document.documentElement.scrollWidth > innerWidth };
+                return { ancho: r.width, izquierda: r.left, fondo: r.bottom, alto: r.height, cerrar: cierre.width >= 40 && cierre.right <= innerWidth, pie: !p || p.bottom <= innerHeight && p.top > r.top, desborde: cuerpo.scrollWidth > cuerpo.clientWidth, pagina: document.documentElement.scrollWidth > innerWidth, camposCompletos };
             })()`);
             assert.equal(medidas.ancho, 390, selector);
             assert.equal(medidas.izquierda, 0, selector);
@@ -39,6 +44,7 @@ test('R B: ocho entradas en hojas sin desborde, cuerpo desplazable, pie y cierre
             assert.equal(medidas.pie, true, selector);
             assert.equal(medidas.desborde, false, selector);
             assert.equal(medidas.pagina, false, selector);
+            assert.equal(medidas.camposCompletos, true, selector + ': Estado/Esterilización en filas completas sin recortes');
             await n.evaluar(`document.querySelector('${selector} .close-modal, ${selector} .drawer-close').click()`);
             assert.equal(await n.evaluar(`(()=>{const e=document.querySelector('${selector}');return e.classList.contains('d-none')||!e.classList.contains('is-open')})()`), true);
         }
