@@ -12,7 +12,8 @@
     'use strict';
 
     function iniciar(raiz) {
-        global.ZookiInicio.iniciarCalendario(raiz);
+        const calendario = global.ZookiInicio.iniciarCalendario(raiz);
+        global.ZookiInicio.iniciarMovil(raiz, calendario);
         global.ZookiInicio.iniciarDialogos(raiz);
     }
 

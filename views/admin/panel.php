@@ -81,11 +81,11 @@ $recursosPlan = ['mascotas' => 'Mascotas', 'citas' => 'Citas de ' . $panel['mes_
 $maximoSerie = max(1, ...array_map(fn($m) => (int) $m['atendidas'] + (int) $m['no_asistidas'], $panel['tendencia']));
 $ultimoMes = count($panel['tendencia']) - 1;
 ?>
-<div class="inicio inicio--admin" data-inicio data-inicio-accion="panel_admin_dia_ajax" data-hoy="<?= $e($panel['hoy']) ?>">
+<div class="inicio inicio--admin" data-inicio data-inicio-accion="panel_admin_dia_ajax" data-hoy="<?= $e($panel['hoy']) ?>" data-inicio-movil-habilitado>
 
     <div class="inicio__arriba">
         <!-- Hoy en la clínica (RE-6.2.7) -->
-        <section class="inicio-tile inicio-hero inicio-clinica" aria-labelledby="inicioTituloClinica">
+        <section class="inicio-tile inicio-hero inicio-clinica" aria-labelledby="inicioTituloClinica" data-inicio-bloque="clinica">
             <span class="inicio-hero__circulo" aria-hidden="true"></span>
             <span class="inicio-hero__cuarto" aria-hidden="true"></span>
             <img class="inicio-hero__mascota inicio-clinica__mascota" src="img/golden-retriever.png" alt="" decoding="async">
@@ -104,7 +104,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
                 </ul>
                 <div class="inicio-hero__acciones">
                     <!-- RN-401: el administrador no crea citas; desde aquí las gestiona. -->
-                    <a class="inicio-boton inicio-boton--blanco" href="index.php?action=admin_citas">Gestión de citas</a>
+                    <a class="inicio-boton inicio-boton--blanco" href="index.php?action=admin_citas"><span class="inicio-solo-escritorio">Gestión de citas</span><span class="inicio-solo-movil">Citas ›</span></a>
                 </div>
             </div>
         </section>
@@ -117,7 +117,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
         </section>
 
         <!-- Uso del plan (RE-6.2.10, HU-0.4) -->
-        <section class="inicio-tile inicio-plan" aria-labelledby="inicioTituloPlan">
+        <section class="inicio-tile inicio-plan" aria-labelledby="inicioTituloPlan" data-inicio-bloque="plan">
             <div class="inicio-cabecera">
                 <h2 class="inicio-titulo" id="inicioTituloPlan">Uso del plan</h2>
                 <?php if ($panel['plan'] !== null): ?><span class="inicio-plan__nombre"><?= $e($panel['plan']['nombre']) ?></span><?php endif; ?>
@@ -147,9 +147,14 @@ $ultimoMes = count($panel['tendencia']) - 1;
         </section>
     </div>
 
+    <?php
+    $conteoInicioMovil = $totalPendientes;
+    require __DIR__ . '/../partials/inicio_movil.php';
+    ?>
+
     <div class="inicio__abajo">
         <!-- Agenda del día por veterinario (RE-6.2.9) -->
-        <section class="inicio-tile inicio-dia inicio-agenda-tile" aria-labelledby="inicioTituloDia" data-inicio-dia aria-busy="false">
+        <section class="inicio-tile inicio-dia inicio-agenda-tile" aria-labelledby="inicioTituloDia" data-inicio-dia data-inicio-bloque="agenda" aria-busy="false">
             <div class="inicio-dia__contenido" data-inicio-dia-contenido>
                 <?php $agenda = $panel['agenda']; require __DIR__ . '/partials/inicio_agenda.php'; ?>
             </div>
@@ -157,7 +162,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
 
         <div class="inicio-col">
             <!-- Pendientes de la clínica (RE-6.2.3, RE-6.2.11) -->
-            <section class="inicio-tile inicio-pendientes<?= $pendientes ? '' : ' inicio-pendientes--vacio' ?>" aria-labelledby="inicioTituloPendientes">
+            <section class="inicio-tile inicio-pendientes<?= $pendientes ? '' : ' inicio-pendientes--vacio' ?>" aria-labelledby="inicioTituloPendientes" data-inicio-bloque="pendientes">
                 <div class="inicio-cabecera">
                     <h2 class="inicio-titulo" id="inicioTituloPendientes">Pendientes de la clínica</h2>
                     <?php if ($totalPendientes > 0): ?><span class="inicio-meta"><?= (int) $totalPendientes ?> por resolver</span><?php endif; ?>
@@ -178,7 +183,7 @@ $ultimoMes = count($panel['tendencia']) - 1;
             </section>
 
             <!-- Este mes (RE-6.2.1, RE-6.2.4, RE-6.2.12, RE-6.4.1) -->
-            <section class="inicio-tile inicio-mes" aria-labelledby="inicioTituloMes">
+            <section class="inicio-tile inicio-mes" aria-labelledby="inicioTituloMes" data-inicio-bloque="mes">
                 <div class="inicio-cabecera">
                     <h2 class="inicio-titulo" id="inicioTituloMes">Este mes</h2>
                     <span class="inicio-meta"><?= $e($panel['mes_actual']) ?></span>

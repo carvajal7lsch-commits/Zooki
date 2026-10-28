@@ -8,7 +8,7 @@
  */
 $hCal = static fn ($v): string => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 ?>
-<div class="inicio-cabecera">
+<div class="inicio-cabecera" data-inicio-mes-actual="<?= $hCal($mes['mes']) ?>">
     <h2 class="inicio-titulo" id="inicioTituloCal" aria-live="polite"><?= $hCal($mes['titulo']) ?></h2>
     <div class="inicio-cal__flechas">
         <button type="button" class="inicio-cal__flecha" data-inicio-mes="<?= $hCal($mes['anterior']) ?>" aria-label="Mes anterior"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>

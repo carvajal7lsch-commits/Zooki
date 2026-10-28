@@ -638,3 +638,269 @@
     font-size: 10px;
     color: var(--z-text-muted);
 }
+/* Etapa R: solo el Inicio del administrador en celular;
+escritorio/tableta conservados. */
+@media (max-width: 767px) {
+    .main-content--inicio:has([data-inicio-movil-habilitado]) .top-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding: 12px 16px;
+        background: var(--in-fondo);
+    }
+    .main-content--inicio:has([data-inicio-movil-habilitado]) .top-header .header-left {
+        flex: 1;
+        flex-basis: auto;
+        order: 0;
+    }
+    .main-content--inicio:has([data-inicio-movil-habilitado]) .inicio-encabezado {
+        min-width: 0;
+    }
+    .main-content--inicio:has([data-inicio-movil-habilitado]) .inicio-encabezado__saludo {
+        font-size: 20px;
+    }
+    .main-content--inicio:has([data-inicio-movil-habilitado]) .inicio-encabezado__fecha {
+        font-size: 11px;
+    }
+    .main-content--inicio:has([data-inicio-movil-habilitado]) .content-body {
+        padding: 0 16px calc(100px + env(safe-area-inset-bottom));
+    }
+    .inicio--admin[data-inicio-movil-habilitado] {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .inicio--admin .inicio-solo-escritorio {
+        display: none;
+    }
+    .inicio--admin .inicio-solo-movil {
+        display: inline;
+    }
+    .inicio--admin .inicio-hero__circulo, .inicio--admin .inicio-hero__cuarto, .inicio--admin .inicio-clinica__mascota {
+        display: none;
+    }
+    .inicio--admin .inicio-clinica {
+        min-height: 0;
+        padding: 12px 16px;
+        border-radius: 18px;
+    }
+    .inicio--admin .inicio-clinica__contenido {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px 8px;
+        max-width: none;
+        width: 100%;
+    }
+    .inicio--admin .inicio-clinica__contenido > div:first-child {
+        display: contents;
+    }
+    .inicio--admin .inicio-hero__sobre {
+        grid-column: 1;
+        grid-row: 1;
+        max-width: none;
+        align-self: center;
+        margin: 0;
+        font-size: 12px;
+    }
+    .inicio--admin .inicio-clinica__sub {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        max-width: none;
+        margin: 0;
+        font-size: 12px;
+    }
+    .inicio--admin .inicio-clinica__cifras {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+        max-width: none;
+        margin-top: 4px;
+    }
+    .inicio--admin .inicio-clinica__cifra strong {
+        font-size: 22px;
+    }
+    .inicio--admin .inicio-clinica__cifra span {
+        margin-top: 2px;
+        font-size: 12px;
+    }
+    .inicio--admin .inicio-hero__acciones {
+        grid-column: 2;
+        grid-row: 1;
+        margin: 0;
+    }
+    .inicio--admin .inicio-hero__acciones .inicio-boton {
+        min-height: 40px;
+        height: auto;
+        padding: 0 10px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--in-azul-2);
+        color: var(--in-blanco);
+        font-size: 14px;
+    }
+    .inicio--admin .inicio-movil .inicio-agenda-tile {
+        padding: 0 12px 12px;
+        border-radius: 0;
+        background: transparent;
+    }
+    .inicio--admin .inicio-movil .inicio-dia__contenido {
+        gap: 0;
+        overflow: visible;
+    }
+    .inicio--admin .inicio-movil .inicio-dia__contenido > .inicio-cabecera {
+        display: none;
+    }
+    .inicio--admin .inicio-movil .inicio-agenda {
+        display: block;
+        grid-template-columns: none;
+        max-height: none;
+        overflow: visible;
+    }
+    .inicio--admin .inicio-movil .inicio-agenda__vet {
+        gap: 6px;
+    }
+    .inicio--admin .inicio-movil .inicio-agenda__cabeza {
+        display: none;
+        position: static;
+    }
+    .inicio--admin .inicio-movil__panel:has([data-inicio-selector-vet][hidden]) .inicio-agenda__cabeza {
+        display: flex;
+        padding: 10px 0 6px;
+    }
+    .inicio--admin .inicio-movil .inicio-agenda__filas {
+        gap: 4px;
+    }
+    .inicio--admin .inicio-movil .inicio-agenda__fila {
+        grid-template-columns: 70px minmax(0, 1fr);
+        gap: 8px;
+        min-height: 32px;
+    }
+    .inicio--admin .inicio-movil .inicio-agenda__hora {
+        font-size: 12px;
+        text-align: left;
+    }
+    .inicio--admin .inicio-movil .inicio-cita--compacta {
+        min-width: 0;
+        padding: 6px 8px;
+        font-size: 14px;
+    }
+    .inicio--admin .inicio-movil .inicio-cita__texto {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .inicio--admin .inicio-movil .inicio-bloqueo--compacto, .inicio--admin .inicio-movil .inicio-hueco--compacto {
+        font-size: 14px;
+        padding: 6px 8px;
+    }
+    .inicio--admin .inicio-movil .inicio-pendientes {
+        padding: 12px;
+        border-radius: 16px;
+    }
+    .inicio--admin .inicio-movil .inicio-pendientes > .inicio-cabecera {
+        display: none;
+    }
+    .inicio--admin .inicio-movil .inicio-pendientes__lista {
+        gap: 0;
+        max-height: none;
+        overflow: visible;
+    }
+    .inicio--admin .inicio-movil .inicio-pend {
+        grid-template-columns: 30px minmax(0, 1fr) auto;
+        gap: 8px;
+        min-height: 68px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--in-borde-suave);
+    }
+    .inicio--admin .inicio-movil .inicio-pend:last-child {
+        border-bottom: 0;
+    }
+    .inicio--admin .inicio-movil .inicio-pend__texto {
+        display: block;
+        min-width: 0;
+    }
+    .inicio--admin .inicio-movil .inicio-pend__texto strong, .inicio--admin .inicio-movil .inicio-pend__texto .inicio-meta {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .inicio--admin .inicio-movil .inicio-pend__texto strong {
+        font-size: 14px;
+    }
+    .inicio--admin .inicio-movil .inicio-pend__texto .inicio-meta {
+        font-size: 12px;
+    }
+    .inicio--admin .inicio-movil .inicio-pend .inicio-accion {
+        min-height: 40px;
+        height: auto;
+        padding: 0 10px;
+        border-radius: 10px;
+        background: var(--in-azul-suave);
+        color: var(--in-azul);
+        font-size: 14px;
+    }
+    .inicio--admin .inicio-movil .inicio-mes, .inicio--admin .inicio-movil .inicio-plan {
+        padding: 14px;
+        border-radius: 0;
+        background: transparent;
+    }
+    .inicio--admin .inicio-movil .inicio-plan {
+        border-top: 1px solid var(--in-borde);
+    }
+    .inicio--admin .inicio-movil .inicio-mes__datos {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0;
+        margin-top: 12px;
+    }
+    .inicio--admin .inicio-movil .inicio-dato {
+        min-width: 0;
+        padding: 0 8px;
+        border-left: 1px solid var(--in-borde);
+        border-radius: 0;
+        background: transparent;
+    }
+    .inicio--admin .inicio-movil .inicio-dato:first-child {
+        padding-left: 0;
+        border-left: 0;
+    }
+    .inicio--admin .inicio-movil .inicio-dato .inicio-meta {
+        font-size: 12px;
+    }
+    .inicio--admin .inicio-movil .inicio-plan__fila {
+        font-size: 13px;
+    }
+    .inicio--admin .inicio-movil .inicio-plan__accesos {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin-top: 8px;
+        border-top: 1px solid var(--in-borde-suave);
+    }
+    .inicio--admin .inicio-movil .inicio-rapido {
+        flex: 0 0 auto;
+        justify-content: flex-start;
+        min-height: 44px;
+        height: auto;
+        border-radius: 0;
+        background: transparent;
+        color: var(--in-texto-2);
+        font-size: 14px;
+    }
+    .inicio--admin .inicio-movil .inicio-rapido + .inicio-rapido {
+        border-top: 1px solid var(--in-borde-suave);
+    }
+    .inicio--admin .inicio-movil .inicio-rapido::after {
+        content: '›';
+        margin-left: auto;
+        color: var(--in-azul);
+        font-size: 22px;
+    }
+}

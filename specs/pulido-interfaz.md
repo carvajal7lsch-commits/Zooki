@@ -73,6 +73,41 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 ## Etapa R — Responsive (2026-10-26)
 
+### Inicio del administrador en el celular — mockup aprobado (2026-10-27)
+
+**Encargo del dueño; escribe Codex; revisa Claude.** Referencias: specs/referencias/inicio-admin-movil/celular-agenda.dc.html, celular-pendientes.dc.html, celular-mes.dc.html y celular-calendario.dc.html; escritorio aprobado en inicio-administrador.dc.html. HU-6.2 / RE-6.2.5–13 y RNF-16. Datos reales, sin valores de ejemplo.
+
+1. Solo <768 px: fecha pequeña en mayúsculas y saludo de 20 px, fijos arriba con campana/avatar comunes. Tarjeta azul compacta Hoy en la clínica, veterinarios/horario, Citas › y cuatro cifras en una fila; sin decoración circular.
+2. Pestañas Agenda/Pendientes (conteo)/Este mes según Usuarios/Citas, con línea inferior; mostrar un bloque y recordar la selección en hash o sessionStorage protegido por try/catch.
+3. Agenda: franja de siete días con elegido/puntos y flechas de semana; mes abre calendario completo en hoja inferior con flechas existentes. Elegir día conserva panel_admin_dia_ajax y defensa ante respuestas viejas, y cierra la hoja. Puntos de los mismos datos del calendario; al cruzar mes, petición mensual existente. Selector por vet con avatar/nombre/citas/ocupación y barra; una sola agenda visible, sin carrusel lateral, selector oculto con un vet. Filas de hoy sin cambios de significado.
+4. Pendientes: misma lista/conteos/destinos, título y detalle en una línea y acción secundaria azul suave a la derecha.
+5. Este mes: una hoja, secciones Este mes/Uso del plan separadas por línea. Consultas/minigráfica/comparación y franja de tres datos; barras del plan y al límite rojo; Usuarios/Suscripción como filas con flecha y mismos enlaces.
+6. Pestañas, franja semanal y hoja del calendario reutilizables mediante inicio-comun.css/js y parcial común con data-* genéricos. No activar la adaptación en el Inicio del vet todavía; comprobar su aspecto y funcionamiento en celular y escritorio.
+7. Sin servidor/rutas/permisos/respuestas nuevos. Sin desborde 360/390 ni navegación inferior tapando el final. Escritorio 1366×768 sin scroll y tableta 820 idénticos. Fuera: Inicio/Agenda del vet, Pacientes y otras pantallas.
+
+**Verificación:** pruebas dirigidas de pestaña/recuerdo, puntos/semana/cruce de mes, hoja/selección, AJAX y respuestas viejas, selector/ocultamiento con uno, enlaces/acciones y no desborde. Conservar comprobaciones de InicioAdministrador, InicioVeterinario e InicioPulido. Capturas antes/después a 390 (tres pestañas/hoja) y 1366 en scratch/r/inicio-admin-movil; una pasada final PHP completo sin host y JS completo con Chrome. MySQL solo zooki_test_base_v2 si fuera necesario; nunca .env, base de trabajo o servicios reales. Una sentencia por línea, sin JS/CSS en línea, variables --z-*/--in-*, SweetAlert solo toasts. R abierta; C fuera de P1 por decisión del dueño (2026-10-26); 2.2.0 sin publicar. Entregar autor/resultado/pruebas/pendientes, 3–5 comprobaciones móviles y comandos de commit; no hacer commit/push ni empezar otra pantalla.
+
+#### Inicio del administrador en el celular — Resultado (2026-10-27)
+
+**Escribió Codex; entregada, pendiente de revisión de Claude y aceptación visual del dueño.**
+
+- Solo <768: cabecera fija con saludo de 20 px y cuenta/campana comunes; tarjeta Hoy compacta sin decoración y cuatro cifras en fila. Agenda/Pendientes/Este mes conservan la pestaña por hash y sessionStorage protegidos por separado.
+- Agenda con franja semanal y puntos del calendario real, cruces de mes mediante la petición mensual existente y mes completo en hoja inferior. Selección de día conserva panel_admin_dia_ajax y la defensa ante respuestas antiguas; la hoja se cierra al elegir. Selector de vet con nombre/citas/ocupación y barra original; solo una agenda visible, selector oculto con uno. Sin cambiar el significado de las filas.
+- Pendientes mantiene lista/conteos/destinos; Este mes agrupa cifras/gráfica, plan y accesos en una hoja. Sin servidor/rutas/permisos/JSON nuevos; solo marcado de los parciales existentes para leer metadatos ya disponibles. HU-6.2 y RE-6.2.9 aclaran la excepción móvil aprobada por el dueño; IDs, conteos y matrices documentales conservados.
+- Piezas optativas en inicio-comun.css/js e inicio_movil.php, con data-* genéricos, claves de pestaña y destinos derivados del marcado. El Inicio del vet no las habilita y conserva sus vistas/acciones. Escritorio/tableta no se reorganizan.
+- **RE-6.2.5–13 / RNF-16:** RInicioAdminMovil correcta (2 casos Chrome): pestañas/recuerdo incluso con almacenamiento bloqueado, semana/puntos/selección, cruce de mes y hoja, respuesta vieja ignorada, selector por vet/ocultamiento con uno, enlaces, último elemento accesible y sin desborde a 360/390. InicioAdministrador mantiene sus comprobaciones de escritorio/cuatro columnas y comprueba ahora la selección móvil real. InicioVeterinario e InicioPulido en verde.
+- **Verificación completa única:** PHP sin host 1206 pruebas / 9611 aserciones, 94 omitidas de motor; JS con Chrome 383/383. Sintaxis PHP/JS y diff correctos. Comparación local de capturas PNG y medidas idénticas antes/después a 820 y 1366, con 1366×768 sin scroll de página. El primer caso de semana exigió recarga real del arnés (cambiar solo el hash conservaba noviembre); corregido el arnés y repetida solo la prueba afectada antes de la pasada completa.
+- **Capturas:** `C:\Users\Usuario\OneDrive\Desktop\Zooki\scratch\r\inicio-admin-movil\antes\` (390.png, 390-pendientes.png, 390-mes.png, 390-calendario.png, 1366.png, 820.png) y `C:\Users\Usuario\OneDrive\Desktop\Zooki\scratch\r\inicio-admin-movil\despues\` (390-agenda.png, 390-pendientes.png, 390-mes.png, 390-calendario.png, 1366.png, 820.png). Antes no existían pestañas: se capturaron los bloques equivalentes. Vistas/controlador reales con SQLite efímero; revisadas las cuatro vistas móviles.
+- **Pendiente:** revisión de Claude y las cinco comprobaciones del dueño de abajo. R abierta, C fuera de P1 por decisión del dueño (2026-10-26); 2.2.0 sin publicar. PDF/Word e Historial consolidado al cierre de R. Sin .env, base de trabajo, servicios reales, commit/push ni otra pantalla; cambios previos conservados.
+
+**Prueba manual del dueño en el celular (5):**
+
+1. Alternar Agenda/Pendientes/Este mes y recargar: conserva la pestaña y no repite bloques ni títulos.
+2. Cambiar de semana hasta cruzar de mes; abrir el nombre del mes, mover sus flechas y elegir un día: cierra la hoja y aparece esa agenda.
+3. Elegir otro veterinario: solo se ve su agenda, citas/ocupación y barra; al volver a otra fecha no quedan filas de la anterior.
+4. En Pendientes, comprobar conteos y tocar Ver/Revisar: abre el destino correspondiente.
+5. En Este mes, comprobar cifras/plan y llegar a Usuarios/Suscripción sin que la navegación tape el último acceso.
+
 ### Gestión de Citas del administrador — mockup aprobado (2026-10-27)
 
 **Encargo del dueño; escribe Codex; revisa Claude (arquitecto).** Referencias aprobadas en specs/referencias/citas-admin: escritorio-agenda, escritorio-triage, escritorio-urgencias, escritorio-detalle, celular-agenda, celular-filtros y celular-detalle. Sus datos son ilustrativos; la aplicación conserva los reales. RE-6.2.5, HU-4.13 y HU-4.15; RNF-11/RNF-16.

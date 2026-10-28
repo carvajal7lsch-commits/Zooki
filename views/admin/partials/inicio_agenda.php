@@ -42,7 +42,7 @@ if ($muchosVeterinarios) {
             }
             $cargaAlta = $columna['ocupacion'] !== null && $columna['ocupacion'] >= ResumenPanel::AVISO_PLAN;
             ?>
-            <section class="inicio-agenda__vet" aria-label="Agenda de <?= $hAg($columna['nombre']) ?>">
+            <section class="inicio-agenda__vet" aria-label="Agenda de <?= $hAg($columna['nombre']) ?>" data-inicio-veterinario="<?= (int) $columna['id'] ?>" data-inicio-citas="<?= (int) $columna['citas'] ?>" data-inicio-ocupacion="<?= $columna['ocupacion'] === null ? '' : (int) $columna['ocupacion'] ?>">
                 <header class="inicio-agenda__cabeza">
                     <span class="inicio-ava inicio-ava--<?= (int) $columna['id'] % 5 ?>" aria-hidden="true"><?= $hAg(ResumenPanel::iniciales($columna['nombre'])) ?></span>
                     <span class="inicio-agenda__quien">

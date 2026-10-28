@@ -6,6 +6,12 @@
 
 ## Ahora
 
+### Inicio del administrador en el celular — entregada, pendiente de revisión (2026-10-27)
+
+- **Escribió Codex; revisa Claude; mockups aprobados por el dueño.** Solo móvil <768: cabecera/tarjeta compactas, pestañas Agenda/Pendientes/Este mes con recuerdo, franja semanal/puntos reales, calendario en hoja y selector de vet con ocupación. Piezas genéricas optativas compartidas sin habilitarlas en el vet; escritorio y tableta conservados, sin servidor/rutas/permisos nuevos. HU-6.2 y RE-6.2.9 aclaran la presentación móvil aprobada.
+- **Verificación:** RInicioAdminMovil y InicioAdministrador correctas (semana/cruce de mes, hoja/día, respuesta vieja ignorada, recuerdo, selector/uno solo, enlaces y 360/390 sin desborde). InicioVeterinario e InicioPulido en verde. Capturas y medidas a 820/1366 idénticas píxel por píxel respecto al antes; 1366×768 sin scroll de página. PHP completo sin host 1206/9611 (94 omitidas de motor); JS completo con Chrome 383/383; sintaxis/diff correctos. Capturas antes/después revisadas en scratch/r/inicio-admin-movil.
+- **Sigue:** revisión de Claude y cinco comprobaciones móviles del dueño en specs/pulido-interfaz.md, Resultado de Inicio admin móvil. R abierta, C fuera de P1 por decisión del dueño (2026-10-26), 2.2.0 sin publicar; PDF/Word e Historial final al cierre de R. Sin .env, base de trabajo, servicios reales, commit/push ni otra pantalla; cambios anteriores conservados.
+
 ### Gestión de Citas del administrador — entregada, pendiente de revisión (2026-10-27)
 
 - **Escribió Codex; revisa Claude; mockups aprobados por el dueño.** Citas con cabecera/pestañas y conteos, herramientas/franja/tablero en una hoja, detalle nativo, hoja móvil de filtros y chips de veterinario. Paneles compartidos conservados; admin no decide triage. Decisiones del dueño aplicadas: prioridad en la respuesta/punto de triage y conciliación en ventana con el mismo formulario/envío para ambos roles; calendario del vet, Llegadas/Reasignaciones intactos.

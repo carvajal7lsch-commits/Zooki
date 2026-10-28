@@ -1741,7 +1741,7 @@ Recibo un correo «Recibimos tu pago» con valor, ciclo, medio mínimo, referenc
 - No muestra datos de ejemplo ni valores fijos.
 - «Hoy en la clínica» resume citas de hoy, atendidas, en espera y urgencias, con acceso a Gestión de citas.
 - Un calendario del mes marca los días con citas de la clínica; al tocar un día, la agenda por veterinario muestra esa fecha.
-- La agenda del día tiene una columna por veterinario activo, incluso sin citas, con sus citas y su estado, los huecos libres reales, el almuerzo, las ausencias y su porcentaje de ocupación.
+- La agenda del día muestra cada veterinario activo, incluso sin citas, con sus citas y su estado, los huecos libres reales, el almuerzo, las ausencias y su porcentaje de ocupación. En escritorio y tableta conserva las columnas; en celular se elige un veterinario para ver solo su agenda, sin selector cuando hay uno solo (decisión del dueño, 2026-10-27).
 - Muestra el uso del plan (mascotas, citas del mes y personal contra su límite) y accesos a Usuarios y Configuración.
 - Los pendientes incluyen las ausencias y las propuestas de horario por aprobar, cada uno con su acción.
 - «Este mes» compara las consultas con el mismo tramo del mes anterior y muestra pacientes activos, propietarios nuevos y el porcentaje de no asistencia.
