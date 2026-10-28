@@ -129,6 +129,11 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
 
         <!-- VISTA 2: Expediente Detallado (Dossier) - Se muestra al elegir un cliente -->
         <div id="dossierView" class="view-container dossier-view-active dossier-animation propietario-detalle d-none">
+            <button type="button" class="ficha-propietario-movil" data-c3-click="evento26">
+                <span class="avatar-iniciales" id="fichaPropietarioAvatar" aria-hidden="true"></span>
+                <span class="ficha-propietario-movil__nombre"><strong id="fichaPropietarioNombre"></strong><small> · propietario</small></span>
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            </button>
 
             <!-- CONTENEDOR 1: LISTADO DE PACIENTES (Layout Rediseñado) -->
             <div id="dossierListContainer" class="dossier-layout-grid">
@@ -174,7 +179,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                 <i class="far fa-envelope" aria-hidden="true"></i><span>Correo</span>
                             </button>
                             <button type="button" data-c3-click="evento20" class="btn-quick-action">
-                                <i class="far fa-calendar-alt" aria-hidden="true"></i><span>Agendar cita</span>
+                                <i class="far fa-calendar-alt" aria-hidden="true"></i><span class="pacientes-texto-escritorio">Agendar cita</span><span class="pacientes-texto-movil">Agendar</span>
                             </button>
                         </div>
                     </div>
@@ -202,7 +207,7 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                                     <option value="Ave">Aves</option>
                                 </select>
                                 <button type="button" data-c3-click="evento21" class="btn-pill-primary">
-                                    <i class="fas fa-plus" aria-hidden="true"></i> Nueva mascota
+                                    <i class="fas fa-plus" aria-hidden="true"></i><span class="pacientes-texto-escritorio">Nueva mascota</span><span class="pacientes-texto-movil">Nueva</span>
                                 </button>
                             </div>
                         </div>
@@ -243,8 +248,8 @@ require_once __DIR__ . '/../../helpers/ValidadorTelefono.php';
                         </div>
                         <div class="ficha-mascota-resumen" aria-label="Resumen del historial registrado">
                             <div><i class="far fa-file-alt" aria-hidden="true"></i><div><span>Última consulta</span><p id="dashUltimaConsulta"></p></div></div>
-                            <div><i class="fas fa-syringe" aria-hidden="true"></i><div><span>Vacunas · último registro</span><p id="dashUltimaVacuna"></p></div></div>
-                            <div><i class="fas fa-shield-alt" aria-hidden="true"></i><div><span>Desparasitación · último registro</span><p id="dashUltimaDesparasitacion"></p></div></div>
+                            <div><i class="fas fa-syringe" aria-hidden="true"></i><div><span><span class="pacientes-texto-escritorio">Vacunas · último registro</span><span class="pacientes-texto-movil">Vacunas</span></span><p id="dashUltimaVacuna"></p></div></div>
+                            <div><i class="fas fa-shield-alt" aria-hidden="true"></i><div><span><span class="pacientes-texto-escritorio">Desparasitación · último registro</span><span class="pacientes-texto-movil">Desparasitación</span></span><p id="dashUltimaDesparasitacion"></p></div></div>
                         </div>
 
                         <?php // M2 C1 (RE-2.1.5, RE-2.10.1): arriba de la ficha, antes de las pestañas; la pinta alertas-medicas.js. ?>

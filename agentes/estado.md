@@ -2,9 +2,15 @@
 
 > Lo actualiza el arquitecto al final de cada revisión. Una sesión nueva empieza leyendo este archivo, [`metodo.md`](metodo.md) y el plan activo.
 
-**Actualizado:** 2026-10-27
+**Actualizado:** 2026-10-28
 
 ## Ahora
+
+### Pacientes en el celular — entregada, pendiente de revisión (2026-10-28)
+
+- **Escribió Codex; revisa Claude (arquitecto); mockups aprobados por el dueño.** Encargo y «Pacientes en el celular — Resultado» en specs/pulido-interfaz.md, Etapa R. Detalle móvil del propietario en hoja/filas y ficha con propietario tocable, resumen compacto, general de dos columnas y botones existentes en cabecera; escritorio/tableta conservan medidas, salvo texto de edad autorizado. Edad por meses cumplidos con singular/plural y fecha civil local; al navegar en móvil la sección empieza en su cabecera. Listado, filtros, formularios, historia, permisos/rutas/respuestas conservados.
+- **Verificación:** 8/8 dirigidas; PHP completo sin host 1206/9612 (94 omitidas por motor); JS completo con Chrome **393/393**. Nuevo PacientesMovil verifica navegación, acciones, escape, foto/respaldo, edad y 360/390/820/1366; PropietarioDetalle/MascotaDetalle/PacientesCabecera correctas. Capturas antes/después, medidas y logs en scratch/r/pacientes-movil; sintaxis/diff correctos. Retoque de posición inicial al navegar móvil comprobado aparte.
+- **Sigue:** revisión de Claude y cinco comprobaciones del dueño en el resultado. Sin .env, base de trabajo, servicios reales, servidor/esquema/rutas nuevos, commit ni push. R abierta, C fuera de P1 por decisión del dueño (2026-10-26), 2.2.0 sin publicar; no se inició otra pantalla. Comandos de commit en scratch/r/pacientes-movil/comandos-commit.txt.
 
 ### Agenda del veterinario y Nueva cita en el celular — entregada, pendiente de revisión (2026-10-27)
 

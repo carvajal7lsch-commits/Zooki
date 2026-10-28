@@ -42,7 +42,7 @@ test('detalle del propietario: cuadrícula, filtros, ficha, regreso, datos desco
             assert.equal(resultado.avatar, 'FP');
             assert.equal(resultado.barra, 'none');
             assert.equal(resultado.detalle, 'flex');
-            assert.equal(resultado.controles, true, 'Notificaciones/perfil no deben desplazarse');
+            assert.equal(resultado.controles, width >= 768, 'En móvil el detalle usa la cabecera aprobada; fuera del detalle se conserva la común');
             const botonVolver = await navegador.evaluar(`(() => {
                 const boton = document.querySelector('[data-pacientes-detalle] .propietario-volver');
                 return {
@@ -51,7 +51,8 @@ test('detalle del propietario: cuadrícula, filtros, ficha, regreso, datos desco
                     fondo: getComputedStyle(boton).backgroundColor,
                 };
             })()`);
-            assert.deepEqual(botonVolver, { texto: 'rgb(0, 82, 255)', flecha: 'rgb(0, 82, 255)', fondo: 'rgb(255, 255, 255)' });
+            const colorVolver = width < 768 ? 'rgb(15, 23, 42)' : 'rgb(0, 82, 255)';
+            assert.deepEqual(botonVolver, { texto: colorVolver, flecha: colorVolver, fondo: 'rgb(255, 255, 255)' });
             if (process.env.ZOOKI_CAPTURA_PACIENTES === '1' && [1184, 390].includes(width)) {
                 const imagen = await navegador.enviar('Page.captureScreenshot', { format: 'png' });
                 fs.writeFileSync(`scratch/propietario-detalle-${width}.png`, Buffer.from(imagen.data, 'base64'));

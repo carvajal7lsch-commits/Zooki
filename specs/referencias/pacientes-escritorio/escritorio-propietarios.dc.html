@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Pacientes · Propietarios en escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{width:1440px;height:900px;background:#E9ECF5;font-family:Inter,sans-serif;color:#0F172A;display:flex;box-sizing:border-box;overflow:hidden}
+.app *{box-sizing:border-box}
+.side{width:96px;flex:none;background:#fff;border-radius:0 32px 32px 0;display:flex;flex-direction:column;align-items:center;padding:28px 0 24px;gap:10px}
+.logo{width:50px;height:50px;border-radius:14px;margin-bottom:34px;display:block}
+.nav{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#64748B}
+.nav.on{align-self:flex-end;width:76px;border-radius:24px 0 0 24px;background:#0052FF;color:#fff;justify-content:flex-start;padding-left:14px}
+.salir{margin-top:auto;width:48px;height:48px;border-radius:14px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center;border:0}
+.main{flex:1;min-width:0;padding:22px 40px 24px 36px;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;align-items:center;gap:12px;height:52px}
+.ttl{display:flex;align-items:center;gap:12px;margin-right:auto;min-width:0}
+.ttl-ico{width:40px;height:40px;border-radius:12px;background:rgba(0,82,255,.08);color:#0052FF;display:flex;align-items:center;justify-content:center;flex:none}
+h1{margin:0;font-size:20px;font-weight:700;line-height:1.2}
+.sub{font-size:13px;color:#64748B;margin-top:2px}
+.sub a{color:#64748B;text-decoration:none}
+.clinica{height:40px;border-radius:20px;border:1px solid #E2E8F0;background:#fff;display:flex;align-items:center;gap:8px;padding:0 12px 0 6px;font:600 13px Inter,sans-serif;color:#0F172A}
+.cn{width:28px;height:28px;border-radius:50%;background:rgba(0,82,255,.1);color:#0052FF;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.redondo{width:40px;height:40px;border-radius:50%;border:1px solid #E2E8F0;background:#fff;color:#334155;display:flex;align-items:center;justify-content:center;position:relative;flex:none}
+.badge{position:absolute;top:-4px;right:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#EF4444;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #E9ECF5}
+.yo{width:40px;height:40px;border-radius:50%;border:0;background:#0052FF;color:#fff;font:700 13px Inter,sans-serif;display:flex;align-items:center;justify-content:center}
+.sheet{background:#fff;border-radius:22px;box-shadow:0 2px 8px rgba(15,23,42,.06);display:flex;flex-direction:column;min-height:0}
+.fill{flex:1}
+.cab{display:flex;align-items:center;gap:10px;padding:0 20px;border-bottom:1px solid #EEF2F7;height:60px}
+.utabs{display:flex;gap:24px;align-self:stretch;margin-right:auto}
+.utabs a{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#64748B;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+.utabs a.on{color:#0052FF;border-bottom-color:#0052FF}
+.cnt{min-width:22px;height:20px;border-radius:10px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 7px}
+.on .cnt{background:rgba(0,82,255,.1);color:#0052FF}
+.btn{height:40px;border-radius:12px;font:600 14px Inter,sans-serif;padding:0 16px;display:inline-flex;gap:8px;align-items:center;white-space:nowrap;flex:none}
+.btn.prim{background:#0052FF;color:#fff;border:0}
+.btn.sec{background:#fff;color:#0F172A;border:1px solid #E2E8F0}
+.btn.sec svg{color:#0052FF}
+.tools{display:flex;align-items:center;gap:10px;padding:14px 20px 6px}
+.search{flex:1;min-width:0;height:40px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;gap:10px;padding:0 14px;color:#94A3B8;font-size:14px}
+.dseg{display:flex;background:#F1F5F9;border-radius:12px;padding:3px;gap:2px;flex:none}
+.dseg button{height:34px;padding:0 13px;border:0;border-radius:9px;background:transparent;font:600 13px Inter,sans-serif;color:#64748B;display:flex;align-items:center;gap:6px}
+.dseg button.on{background:#fff;color:#0052FF;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.dseg.ico button{width:36px;padding:0;justify-content:center}
+.sel{height:40px;flex:none;width:170px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 14px;font:500 14px Inter,sans-serif;color:#0F172A}
+.sum{padding:8px 20px 12px;font-size:13px;color:#64748B}
+.sum b{color:#0F172A}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 20px 20px}
+.card{border:1px solid #E2E8F0;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;background:#fff;position:relative}
+.card.hover{border-color:rgba(0,82,255,.35);box-shadow:0 8px 24px rgba(0,82,255,.10)}
+.card.apagada{background:#FAFBFC}
+.card.apagada .nom,.card.apagada .av{opacity:.55}
+.idn{display:flex;align-items:center;gap:12px;min-width:0}
+.av{width:44px;height:44px;border-radius:50%;background:rgba(0,82,255,.1);color:#0052FF;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex:none}
+.nom{min-width:0}
+.nom strong{display:block;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nom span{display:block;font-size:12px;color:#64748B;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:10px;border:0;background:transparent;color:#94A3B8;display:flex;align-items:center;justify-content:center}
+.card.hover .mini{background:#F1F5F9;color:#0052FF}
+.datos{display:flex;flex-direction:column;gap:7px}
+.dt{display:flex;align-items:center;gap:9px;font-size:13px;color:#334155;min-width:0}
+.dt svg{color:#94A3B8;flex:none}
+.dt span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dt.nota span{white-space:normal;color:#64748B}
+.pie{display:flex;align-items:center;gap:8px;border-top:1px solid #F1F5F9;padding-top:12px;min-height:45px;margin-top:auto}
+.pets{display:flex;align-items:center;margin-right:auto;min-width:0;gap:8px}
+.stack{display:flex}
+.stack i{width:26px;height:26px;border-radius:50%;border:2px solid #fff;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:10px;font-weight:700}
+.stack i:first-child{margin-left:0}
+.pets small{font-size:12px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.go{color:#94A3B8;display:flex}
+.card.hover .go{color:#0052FF}
+.chip{height:22px;border-radius:11px;padding:0 9px;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;white-space:nowrap;flex:none}
+.chip.gris{background:#F1F5F9;color:#475569}
+.chip.azul{background:rgba(0,82,255,.08);color:#0052FF}
+.chip.verde{background:#ECFDF5;color:#047857}
+.link{border:0;background:none;font:600 13px Inter,sans-serif;color:#0052FF;display:inline-flex;align-items:center;gap:6px;padding:0;white-space:nowrap}
+.t1{background:#E0EAFF;color:#0042CC}.t2{background:#E6F6EF;color:#047857}.t3{background:#F3E8FF;color:#7E22CE}.t4{background:#FFEDE5;color:#C2410C}.t5{background:#E0F2FE;color:#0369A1}
+.foto{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex:none;font-weight:800;font-size:18px}
+.sw{width:34px;height:20px;border-radius:10px;background:#0052FF;position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.sw.off{background:#CBD5E1}.sw.off::after{right:auto;left:2px}
+.swl{font-size:12px;font-weight:600;color:#475569;margin-right:auto;display:flex;align-items:center;gap:8px}
+.ib{width:34px;height:34px;border-radius:10px;border:1px solid #E2E8F0;background:#fff;color:#475569;display:flex;align-items:center;justify-content:center;flex:none}
+.duo{display:grid;grid-template-columns:360px minmax(0,1fr);gap:18px;flex:1;min-height:0;align-items:start}
+.ficha{padding:22px;display:flex;flex-direction:column;gap:18px}
+.fid{display:flex;align-items:center;gap:14px}
+.fid .av{width:60px;height:60px;font-size:20px}
+.fid strong{display:block;font-size:18px;font-weight:700}
+.filas{display:flex;flex-direction:column}
+.fl{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid #F1F5F9;font-size:14px}
+.fl span{color:#64748B}
+.fl b{font-weight:600;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acc .btn{justify-content:center}
+.acc .btn.prim{grid-column:1/-1}
+.lista{display:flex;flex-direction:column;padding:4px 8px 10px}
+.fila{text-decoration:none;color:inherit;display:flex;align-items:center;gap:14px;padding:12px;border-radius:14px}
+.fila.hover{background:#F5F8FF}
+.fila .foto{width:46px;height:46px;border-radius:14px;font-size:16px}
+.fila .nom{flex:1}
+.cols{display:flex;gap:28px;font-size:13px;color:#64748B;flex:none}
+.cols div{display:flex;flex-direction:column;gap:2px;width:130px}
+.cols b{font-size:13px;font-weight:600;color:#0F172A}
+.h2{font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;margin-right:auto}
+.sch{width:260px;flex:none}
+</style>
+</helmet>
+<div class="app">
+  <nav class="side" aria-label="Menú principal">
+    <img class="logo" src="/_blob/9a706094b16871564b26168bd83be148" alt="Zooki">
+    <a class="nav" href="#" aria-label="Inicio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v11h14V9"/></svg></a>
+    <a class="nav on" href="#" aria-label="Pacientes" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="10" r="2"/><circle cx="10" cy="5.5" r="2"/><circle cx="14" cy="5.5" r="2"/><circle cx="18" cy="10" r="2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg></a>
+    <a class="nav" href="#" aria-label="Agenda"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></a>
+    <a class="nav" href="#" aria-label="Mi perfil"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></a>
+    <button class="salir" type="button" aria-label="Cerrar sesión"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </nav>
+  <main class="main">
+    <header class="top">
+      <div class="ttl"><span class="ttl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="10" r="2"/><circle cx="10" cy="5.5" r="2"/><circle cx="14" cy="5.5" r="2"/><circle cx="18" cy="10" r="2"/><path d="M8 17c0-2.5 1.8-5 4-5s4 2.5 4 5c0 2-1.5 3-4 3s-4-1-4-3z"/></svg></span><div><h1>Pacientes</h1><div class="sub">Propietarios y mascotas de la clínica</div></div></div>
+      <button class="clinica" type="button" aria-label="Cambiar de clínica o rol"><span class="cn">CS</span>Clínica Sur (prueba)<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button class="redondo" type="button" aria-label="Notificaciones, 1 sin leer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="badge">1</span></button>
+      <button class="yo" type="button" aria-label="Mi cuenta: Diego Sánchez">DS</button>
+    </header>
+    <section class="sheet fill">
+      <div class="cab">
+        <nav class="utabs" aria-label="Secciones de Pacientes">
+          <a class="on" href="#">Propietarios <span class="cnt">8</span></a>
+          <a class="" href="#">Mascotas <span class="cnt">11</span></a>
+        </nav>
+        <button class="btn sec" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Vincular mascota</button>
+        <button class="btn prim" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo registro</button>
+      </div>
+      <div class="tools">
+        <div class="search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Buscar por nombre, documento o correo</div>
+        <div class="dseg" role="group" aria-label="Estado"><button class="on" type="button">Todos</button><button type="button">Activos</button><button type="button">Desvinculados</button></div>
+        <div class="dseg ico" role="group" aria-label="Tipo de vista"><button class="on" type="button" aria-label="Tarjetas"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button><button type="button" aria-label="Lista"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/></svg></button></div>
+      </div>
+      <div class="sum"><b>8 propietarios</b> · 2 sin activar su cuenta</div>
+      <div class="grid">
+        <article class="card hover" role="button" tabindex="0" aria-label="Ver a Fabio Propietario y sus mascotas">
+          <button class="mini" type="button" aria-label="Editar a Fabio Propietario"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+          <div class="idn"><span class="av">FP</span><div class="nom"><strong>Fabio Propietario</strong><span>1 mascota</span></div></div>
+          
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg><span>300 111 2233</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M15 10h3M15 13.5h3"/></svg><span>CC 1000000006</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg><span>fabio.propietario@zooki.test</span></div>
+          </div>
+          <div class="pie"><div class="pets"><span class="stack"><i class="t2">L</i></span><small>Luna</small></div><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </article><article class="card" role="button" tabindex="0" aria-label="Ver a Juanito Ramiro y sus mascotas">
+          <button class="mini" type="button" aria-label="Editar a Juanito Ramiro"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+          <div class="idn"><span class="av">JR</span><div class="nom"><strong>Juanito Ramiro</strong><span>Sin mascotas</span></div></div>
+          <div><span class="chip gris"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Cuenta sin activar</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg><span>+57 311 526 5529</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M15 10h3M15 13.5h3"/></svg><span>CC 1080361990</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg><span>juancarlosquesadaome@gmail.com</span></div>
+          </div>
+          <div class="pie"><div class="pets"><small>Sin mascotas aún</small></div><button class="link" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L10 14"/><path d="M21 3l-7 18-4-7-7-4z"/></svg>Reenviar enlace</button></div>
+        </article><article class="card" role="button" tabindex="0" aria-label="Ver a Mariana López y sus mascotas">
+          <button class="mini" type="button" aria-label="Editar a Mariana López"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+          <div class="idn"><span class="av">ML</span><div class="nom"><strong>Mariana López</strong><span>2 mascotas</span></div></div>
+          
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg><span>315 402 7781</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M15 10h3M15 13.5h3"/></svg><span>CC 52890114</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg><span>mariana.lopez@correo.com</span></div>
+          </div>
+          <div class="pie"><div class="pets"><span class="stack"><i class="t1">T</i><i class="t3">M</i></span><small>Toby, Mía</small></div><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </article><article class="card" role="button" tabindex="0" aria-label="Ver a Carlos Pérez y sus mascotas">
+          <button class="mini" type="button" aria-label="Editar a Carlos Pérez"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+          <div class="idn"><span class="av">CP</span><div class="nom"><strong>Carlos Pérez</strong><span>1 mascota</span></div></div>
+          
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg><span>301 778 9902</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M15 10h3M15 13.5h3"/></svg><span>CE 7765021</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg><span>carlos.perez@correo.com</span></div>
+          </div>
+          <div class="pie"><div class="pets"><span class="stack"><i class="t4">R</i></span><small>Rocky</small></div><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </article><article class="card" role="button" tabindex="0" aria-label="Ver a Laura Gómez y sus mascotas">
+          <button class="mini" type="button" aria-label="Editar a Laura Gómez"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+          <div class="idn"><span class="av">LG</span><div class="nom"><strong>Laura Gómez</strong><span>3 mascotas</span></div></div>
+          
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg><span>320 115 4410</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M15 10h3M15 13.5h3"/></svg><span>CC 1019283746</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg><span>laura.gomez@correo.com</span></div>
+          </div>
+          <div class="pie"><div class="pets"><span class="stack"><i class="t5">K</i><i class="t2">N</i><i class="t1">B</i></span><small>Kira, Nala, Bruno</small></div><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </article><article class="card" role="button" tabindex="0" aria-label="Ver a Andrés Ruiz y sus mascotas">
+          <button class="mini" type="button" aria-label="Editar a Andrés Ruiz"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+          <div class="idn"><span class="av">AR</span><div class="nom"><strong>Andrés Ruiz</strong><span>1 mascota</span></div></div>
+          
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg><span>310 660 1288</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M15 10h3M15 13.5h3"/></svg><span>CC 80123456</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg><span>andres.ruiz@correo.com</span></div>
+          </div>
+          <div class="pie"><div class="pets"><span class="stack"><i class="t3">S</i></span><small>Simba</small></div><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </article><article class="card" role="button" tabindex="0" aria-label="Ver a Diego Torres y sus mascotas">
+          <button class="mini" type="button" aria-label="Editar a Diego Torres"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+          <div class="idn"><span class="av">DT</span><div class="nom"><strong>Diego Torres</strong><span>1 mascota</span></div></div>
+          <div><span class="chip gris"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Cuenta sin activar</span></div>
+          <div class="datos">
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg><span>318 220 4471</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M15 10h3M15 13.5h3"/></svg><span>CC 1032456789</span></div>
+            <div class="dt"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg><span>diego.torres@correo.com</span></div>
+          </div>
+          <div class="pie"><div class="pets"><span class="stack"><i class="t4">C</i></span><small>Coco</small></div><button class="link" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L10 14"/><path d="M21 3l-7 18-4-7-7-4z"/></svg>Reenviar enlace</button></div>
+        </article><article class="card apagada" role="button" tabindex="0" aria-label="Ver a Sofía Martínez y sus mascotas">
+          
+          <div class="idn"><span class="av">SM</span><div class="nom"><strong>Sofía Martínez</strong><span>Desvinculada</span></div></div>
+          <div><span class="chip gris">Desvinculada</span></div>
+          <div class="datos"><div class="dt nota"><span>Ya no está vinculada a la clínica. Su historial se conserva.</span></div></div>
+          <div class="pie"><div class="pets"></div><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </article>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

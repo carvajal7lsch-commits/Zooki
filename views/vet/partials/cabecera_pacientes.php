@@ -22,4 +22,5 @@
         <p>Pacientes <span aria-hidden="true">›</span> <span id="dossierOwnerRuta"></span><span id="dossierPetRuta" hidden> <span aria-hidden="true">›</span> <strong id="dossierPetRutaNombre"></strong></span></p>
         <h1 id="dossierOwnerTitle"></h1>
     </div>
+    <div class="pacientes-edicion-movil" data-pacientes-editar></div>
 </div>

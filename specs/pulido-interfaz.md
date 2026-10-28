@@ -73,6 +73,36 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 ## Etapa R — Responsive (2026-10-26)
 
+### Pacientes en el celular — mockup aprobado (2026-10-28)
+
+**Encargo del dueño; escribe Codex; revisa Claude (arquitecto).** Referencias aprobadas en specs/referencias/pacientes-movil/celular-propietario.dc.html y celular-mascota.dc.html; sus datos son ilustrativos. Solo detalle del propietario y ficha de mascota en vet_pacientes; sin nuevas HU ni cambios de datos/permisos/rutas/respuestas.
+
+1. Propietario móvil: cabecera con volver redondo de 40 px a la pestaña de origen, nombre y Editar existente; sin migas. Hoja con avatar/nombre/estado, documento/teléfono/correo en filas etiqueta–valor y Llamar/Correo/Agendar en una fila de 40 px. Mascotas con conteo/+ Nueva secundario, búsqueda/especie en fila y filas completas tocables con foto/respaldo, nombre, especie/raza/sexo, HC o Sin historia, estado inactivo atenuado y flecha; sin Ver ficha en móvil.
+2. Mascota móvil: volver a mascotas del propietario, Ficha de nombre y Editar; propietario en una fila tocable. Encabezado con foto/avatar/nombre/HC/estado y especie/raza/sexo/edad/peso; resumen clínico y preventivo en filas etiqueta–valor, alergias/alertas con conteo y Registrar. Pestañas existentes; Información general en dos columnas compactas.
+3. Conservar listado, filtros, formularios e historia clínica; no tapar el final con la navegación ni desbordar 360/390. Tableta y escritorio sin cambios de diseño.
+4. Excepción autorizada para todos los anchos: edad con singular/plural correctos (1 año, 10 meses; 2 años; 1 mes).
+
+**Verificación prevista:** JS para regreso al origen, filas mascota/propietario, acciones conservadas, escape, respaldo de foto y edad; PropietarioDetalle/MascotaDetalle/PacientesCabecera correctas con ajustes solo del diseño aprobado. Chrome 360/390/820/1366; capturas antes/después 390/1366 en scratch/r/pacientes-movil. Una pasada completa final PHP sin host y JS con Chrome; MySQL únicamente zooki_test_base_v2. Fuera Mi perfil, Inicio del vet, Atención y otras pantallas. Sin .env, CSS/JS en línea, servicios reales, commit/push; colores --z-* y una sentencia por línea. R abierta, C fuera de P1 por decisión del dueño (2026-10-26), 2.2.0 sin publicar. Resultado con autor, riesgos, pruebas, pendientes y 3–5 comprobaciones del dueño; sin iniciar otra pantalla.
+
+### Pacientes en el celular — Resultado
+
+**Entregada, pendiente de revisión (2026-10-28). Escribió Codex; revisa Claude (arquitecto); el dueño supervisa en su celular.**
+
+- **Mayor cuidado:** los botones de edición son los nodos originales trasladados a la cabecera móvil, con sus listeners/permisos y restauración al crecer a tableta/escritorio. La ficha de solo lectura conserva el aviso y oculta Editar/Registrar; las alertas registradas siguen visibles. Regreso al origen y fila del propietario usan la navegación existente, sin pedir datos adicionales ni cambiar respuestas. Al cambiar de sección móvil se empieza en su cabecera.
+- **Qué cambió:** propietario con volver de 40 px, título/editar, contacto en filas y acciones de 40 px; mascotas como filas completas, foto con respaldo, HC/estado y filtros en una fila. Ficha con propietario tocable, encabezado compacto, resumen clínico/preventivo en filas, alergias/alertas con conteo y general en dos columnas. El cajón cerrado ya no proyecta sombra sobre el detalle móvil. En todos los anchos la edad usa singular/plural, omite meses cero tras años completos y calcula meses cumplidos con fecha civil local.
+- **Trazabilidad:** HU-1.2 / RE-1.2.3 y HU-1.3 / RE-1.3.3 → PropietarioDetalle y PacientesMovil: mascotas, filtros, filas, estado, foto/respaldo y nombres escapados. HU-1.4 / RE-1.4.1 → MascotaDetalle/PacientesMovil: edición existente y solo lectura. HU-2.5 / RE-2.5.1/2 y HU-2.10 / RE-2.10.1/4 → MascotaDetalle: resumen de consulta/vacunas/desparasitación con fecha y clínica, pestañas e historia conservadas; sin inferir «Al día». RNF-16 → PacientesMovil a 360/390/820/1366, fila final libre de navegación y restauración de botones; edad/destinos Llamar/Correo/Agendar con pruebas JS separadas. Sin nuevas HU, reglas ni cambios del servidor.
+- **Verificación:** 8/8 dirigidas (PropietarioDetalle, MascotaDetalle, PacientesCabecera, PacientesMovil). Una pasada PHP completa sin host MySQL: **1206 pruebas, 9612 aserciones, 94 omitidas por motor**; una pasada JS completa con Chrome: **393/393**, sin omitidas ni fallos. El retoque móvil de volver al inicio de la sección se comprobó también con la prueba dirigida de navegación. Sintaxis PHP/JS y git diff --check correctos. SQLite efímera, datos simulados y vistas/layout PHP reales; sin .env, base de trabajo, correos ni servicios externos reales.
+- **Capturas:** carpeta C:\Users\Usuario\OneDrive\Desktop\Zooki\scratch\r\pacientes-movil\; antes-390-propietario.png, antes-390-mascota.png, despues-390-propietario.png y despues-390-mascota.png; los mismos nombres con 1366 y 820. Archivos JSON de geometría por vista/ancho: posiciones y tamaños iguales a 820/1366 antes/después (descontando la clase de estado, que no cambia su diseño). Chrome sin excepciones; sin desborde a 360/390/820/1366. Logs dirigidas.log, php-completo.log y js-completo.log en esa carpeta.
+- **Pendiente:** revisión de Claude y las cinco comprobaciones del dueño de abajo. Sin commit ni push; comandos en scratch/r/pacientes-movil/comandos-commit.txt. R abierta, **C fuera de P1 por decisión del dueño (2026-10-26)** y versión 2.2.0 sin publicar. Historial/PDF/Word y cierre general de R se consolidan al cerrar R. No se inició otra pantalla.
+
+Comprobaciones del dueño en su celular:
+
+1. Entrar al detalle desde Propietarios y desde Mascotas; usar la flecha hasta volver a la pestaña de origen.
+2. Buscar/filtrar mascotas, abrir una fila (también una inactiva) y tocar la fila del propietario para regresar a sus mascotas.
+3. Probar Llamar, Correo, Agendar, Editar y + Nueva: deben abrir sus acciones habituales.
+4. Revisar general/historia, el resumen preventivo con sus clínicas y una mascota con alertas activas; Registrar/Editar deben respetar el modo de solo lectura.
+5. Comprobar foto/respaldo, edad (1 año/1 mes), nombres largos y que la última fila quede sobre la barra inferior al desplazarse.
+
 ### Agenda del veterinario y Nueva cita en el celular — mockup aprobado (2026-10-27)
 
 **Encargo del dueño; escribe Codex; revisa Claude.** Referencias en specs/referencias/agenda-vet-movil: celular-agenda, celular-triage, celular-triage-revisar, celular-llegadas, celular-reasignaciones y celular-nueva-cita-1-paciente/2-urgencia/3-horario. Datos reales; HU-4.13, HU-4.15 y RE de reserva/llegadas/reasignaciones. Flujo de Modelos.md sin cambios.

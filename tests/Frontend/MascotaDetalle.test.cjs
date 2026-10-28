@@ -64,12 +64,12 @@ const b=document.querySelector('.header-right').getBoundingClientRect();
 return {sinDesborde:document.documentElement.scrollWidth<=innerWidth,columnas:getComputedStyle(document.querySelector('.ficha-mascota-datos .dossier-pet-details')).gridTemplateColumns.split(' ').length,titulo:document.getElementById('dossierOwnerTitle').innerText,volver:document.getElementById('dossierVolverTexto').innerText,fecha:document.getElementById('dashPetFechaNac').innerText,inicial:document.getElementById('dashPetIniciales').textContent,controles:[a.x,a.y,a.width,a.height].every((v,i)=>Math.abs(v-[b.x,b.y,b.width,b.height][i])<1),consulta:document.getElementById('dashUltimaConsulta').textContent,vacuna:document.getElementById('dashUltimaVacuna').textContent,desparasita:document.getElementById('dashUltimaDesparasitacion').textContent};
 })()`);
             assert.equal(resultado.sinDesborde, true, JSON.stringify({ width, resultado }));
-            assert.equal(resultado.columnas, width >= 1024 ? 3 : width > 500 ? 2 : 1);
+            assert.equal(resultado.columnas, width >= 1024 ? 3 : 2);
             assert.equal(resultado.titulo, 'Ficha de Doki');
             assert.equal(resultado.volver, 'Mascotas de Fabio');
             assert.match(resultado.fecha, /^31\/12\/2024/);
             assert.equal(resultado.inicial, 'D');
-            assert.equal(resultado.controles, true, 'El bloque derecho conserva su posición');
+            assert.equal(resultado.controles, width >= 768, 'La cabecera móvil de ficha solo incluye volver/título/editar');
             const cabecera = await navegador.evaluar(`(() => {
                 const boton = document.querySelector('.pacientes-cabecera--ficha .propietario-volver');
                 const estilo = getComputedStyle(boton);
@@ -99,12 +99,12 @@ return {sinDesborde:document.documentElement.scrollWidth<=innerWidth,columnas:ge
                     referenciaPropietario,
                 };
             })()`);
-            assert.equal(cabecera.color, 'rgb(0, 82, 255)');
-            assert.equal(cabecera.borde, 'solid');
-            assert.equal(cabecera.radio, '10px');
+            assert.equal(cabecera.color, width < 768 ? 'rgb(15, 23, 42)' : 'rgb(0, 82, 255)');
+            assert.equal(cabecera.borde, width < 768 ? 'none' : 'solid');
+            assert.equal(cabecera.radio, width < 768 ? '50%' : '10px');
             assert.deepEqual(cabecera.tamanos, cabecera.referenciaPropietario, 'La ficha tiene los mismos tamaños que el ingreso al propietario');
             assert.equal(cabecera.flecha, true);
-            assert.equal(cabecera.separador, '1px');
+            assert.equal(cabecera.separador, width < 768 ? '0px' : '1px');
             assert.equal(cabecera.mascota, 'Doki');
             assert.equal(cabecera.peso, '700');
             assert.notEqual(cabecera.colorRuta, 'rgb(100, 116, 139)', 'La ruta usa el azul suave solicitado, no el gris anterior');
