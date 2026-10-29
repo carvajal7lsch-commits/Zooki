@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Portal · Idea 2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{width:1440px;height:900px;font-family:Inter,sans-serif;color:#0F172A;display:flex;box-sizing:border-box;overflow:hidden;background:#F4F6FB radial-gradient(at 0% 0%,rgba(0,82,255,.07) 0,transparent 45%)}
+.app *{box-sizing:border-box}
+.rail{width:262px;flex:none;background:#fff;border-right:1px solid #E8ECF4;display:flex;flex-direction:column;padding:28px 20px 22px}
+.marca{display:flex;align-items:center;gap:12px;font-size:22px;font-weight:800;margin:0 0 26px 6px}
+.marca img{width:40px;height:40px;border-radius:12px}
+.agendar{height:54px;border-radius:14px;border:0;background:linear-gradient(135deg,#0052FF,#0041CC);color:#fff;font:700 15px Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 24px rgba(0,82,255,.28);margin-bottom:24px}
+.it{height:50px;border-radius:14px;display:flex;align-items:center;gap:14px;padding:0 16px;font-size:15px;font-weight:600;color:#475569;text-decoration:none;margin-bottom:4px}
+.it svg{color:#64748B}
+.it.on{background:#EAF1FF;color:#0052FF}
+.it.on svg{color:#0052FF}
+.yo{margin-top:auto;border-top:1px solid #E8ECF4;padding-top:16px;display:flex;flex-direction:column;gap:10px}
+.yo .f{display:flex;align-items:center;gap:10px}
+.av{width:42px;height:42px;border-radius:50%;background:#0052FF;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none}
+.yo strong{display:block;font-size:14px}
+.yo span{font-size:12px;color:#64748B}
+.yo a{font-size:14px;font-weight:600;color:#0052FF;text-decoration:none;text-align:center}
+.main{flex:1;min-width:0;padding:30px 36px 0 40px;display:grid;grid-template-columns:minmax(0,1fr) 340px;column-gap:32px;row-gap:22px;align-content:start}
+.bloque-cita{position:relative;display:flex;flex-direction:column;gap:18px;margin-top:-4px}
+.bloque-cita .card{position:relative;z-index:1}
+/* El cachorro se asoma sobre la tarjeta: las patas quedan apoyadas en su borde superior. */
+.cachorro{position:absolute;right:44px;bottom:calc(100% - 60px);width:230px;height:auto;z-index:2;pointer-events:none;filter:drop-shadow(0 8px 14px rgba(15,23,42,.10))}
+.hola{font-size:15px;color:#64748B}
+h1{margin:4px 0 0;font-size:30px;font-weight:800;letter-spacing:-.01em}
+h2{margin:0;font-size:21px;font-weight:700;display:flex;align-items:center;gap:10px}
+.cnt{min-width:24px;height:22px;border-radius:11px;background:#EEF2F8;color:#475569;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;padding:0 7px}
+.izq{display:flex;flex-direction:column;gap:18px}
+.der{display:flex;flex-direction:column;gap:16px}
+.saludo{display:flex;align-items:flex-end;gap:18px}
+.saludo .t{margin-right:auto}
+.res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:470px}
+.dato{background:#fff;border-radius:16px;box-shadow:0 2px 10px rgba(15,23,42,.05);padding:12px 14px;display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.dato i{width:38px;height:38px;border-radius:12px;background:#EAF1FF;color:#0052FF;display:flex;align-items:center;justify-content:center;flex:none;font-style:normal}
+.dato b{display:block;font-size:20px;font-weight:800;line-height:1.1}
+.dato span{font-size:12px;color:#64748B}
+.marcado{outline:2px dashed rgba(0,82,255,.45);outline-offset:8px;border-radius:18px}
+.card{background:#fff;border-radius:18px;box-shadow:0 2px 10px rgba(15,23,42,.05)}
+.cita{display:flex;align-items:center;gap:14px;padding:22px 20px 18px}
+.cav{width:48px;height:48px;border-radius:50%;background:#0052FF;color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
+.ci{flex:1;min-width:0}
+.ci strong{font-size:16px}
+.ci b{color:#0052FF;font-size:16px;margin-left:8px}
+.ci p{margin:4px 0 0;font-size:14px;color:#64748B}
+.vacio{display:flex;align-items:center;gap:18px;padding:22px 24px}
+.vacio i{width:48px;height:48px;border-radius:50%;background:#EEF3FF;color:#0052FF;display:flex;align-items:center;justify-content:center;font-style:normal;flex:none}
+.vacio strong{display:block;font-size:17px}
+.vacio p{margin:4px 0 6px;font-size:14px;color:#64748B}
+.vacio a{font-size:14px;font-weight:700;color:#0052FF;text-decoration:none}
+.fila{display:flex;align-items:center}
+.fila h2{margin-right:auto}
+.sec{height:44px;border-radius:12px;border:1px solid #DCE3EE;background:#fff;font:600 14px Inter,sans-serif;color:#0F172A;padding:0 16px;display:flex;align-items:center;gap:8px}
+.mascotas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.masc{background:#fff;border:1px solid #E5EAF3;border-radius:18px;padding:20px 14px 16px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.ring{width:72px;height:72px;border-radius:50%;background:#0052FF;color:#fff;font-weight:800;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff,0 0 0 5px #E3EAF7;margin-bottom:6px}
+.masc strong{font-size:16px}
+.masc .r{font-size:13px;color:#64748B}
+.chip{height:24px;border-radius:12px;padding:0 10px;display:inline-flex;align-items:center;font-size:12px;font-weight:600;background:#EAF1FF;color:#0052FF;margin:4px 0}
+.dosis{font-size:13px;color:#64748B}
+.dosis.si{color:#0052FF;font-weight:600}
+.dh{display:flex;align-items:center;justify-content:space-between}
+.hc{padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.hc .t{display:flex;align-items:center;justify-content:space-between}
+.hc strong{font-size:17px}
+.hc p{margin:0;font-size:14px;color:#64748B}
+.hc a{font-size:14px;font-weight:700;color:#0052FF;text-decoration:none}
+.lk{font-size:14px;font-weight:700;color:#0052FF;text-decoration:none}
+.salud{display:flex;align-items:center;gap:12px;padding:16px 18px}
+.salud i{width:38px;height:38px;border-radius:12px;background:#F1F5F9;color:#475569;display:flex;align-items:center;justify-content:center;font-style:normal;flex:none}
+.salud strong{display:block;font-size:15px}
+.salud span{font-size:13px;color:#64748B}
+
+/* Franja del collage del login en el hueco del saludo: mismas figuras y colores (--bento-*). */
+/* El saludo y el título de la cita comparten la altura de la franja: la tarjeta sube. */
+.saludo{align-items:stretch}
+/* Saludo como en los Inicios de admin y vet: fecha arriba, saludo por la hora y el nombre en azul de marca. */
+.fecha{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#64748B}
+.saludo h1{margin:4px 0 0;font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.nombre{color:#0052FF}
+/* Idea 2: el saludo vive en una figura azul clara del collage del login. */
+.f-saludo{flex:1;min-width:0;background:#DBEAFE;border-radius:0 0 0 56px;display:flex;flex-direction:column;justify-content:center;padding:0 28px}
+.f-saludo .fecha{color:#3B5BA9}
+.f-saludo h1{font-size:30px;margin:4px 0 0}
+.saludo .t{display:flex;flex-direction:column;justify-content:space-between}
+.collage{display:flex;align-items:flex-end;gap:10px;height:112px}
+.fig{height:112px;flex:none;position:relative}
+.f-perro{width:170px;background:#3B82F6;border-radius:0 50% 0 0}
+/* El PNG trae ~8,6 % de transparencia bajo las patas: se compensa para que las uñas toquen el borde inferior, como si saliera de abajo. */
+.f-perro{overflow:visible}
+.f-perro img{position:absolute;left:-2px;bottom:-15px;width:176px;height:auto;filter:drop-shadow(0 4px 6px rgba(15,23,42,.18))}
+.f-clara{width:112px;background:#DBEAFE;border-radius:0 0 0 50%}
+.f-circulo{width:112px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(15,23,42,.05)}
+.f-hoja{width:112px;background:#93C5FD;border-radius:50% 0 50% 0}
+</style>
+</helmet>
+<div class="app">
+  <nav class="rail" aria-label="Menú del portal">
+    <div class="marca"><img src="/_blob/6afe62e12231e755546693fa25175e83" alt="">Zooki</div>
+    <button class="agendar" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M12 13v5M9.5 15.5h5"/></svg>Agendar cita</button>
+    <a class="it on" href="#" aria-current="page"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9v11h14V9"/></svg>Inicio</a>
+    <a class="it" href="#"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Citas</a>
+    <a class="it" href="#"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5h16v16M9 21v-5h6v5M10 9h4M12 7v4"/></svg>Clínicas</a>
+    <a class="it" href="#"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Perfil</a>
+    <div class="yo"><div class="f"><span class="av">FP</span><div><strong>Fabio Propietario</strong><span>Propietario</span></div></div><a href="#">Cambiar de perfil</a></div>
+  </nav>
+  <main class="main">
+    <div class="izq">
+      <div class="saludo">
+        <div class="collage" style="flex:1">
+          <div class="fig f-saludo"><span class="fecha">Jueves 29 de octubre</span><h1>Buenos días, <span class="nombre">Fabio</span></h1></div>
+          <span class="fig f-perro"><img src="/_blob/0efbebfcc82a336f5e17eae727e0bc71" alt=""></span>
+          <span class="fig f-circulo"><svg width="56" height="56" viewBox="0 0 100 100"><rect x="35" y="10" width="30" height="80" rx="15" fill="#93C5FD"/><rect x="10" y="35" width="80" height="30" rx="15" fill="#93C5FD"/><line x1="15" y1="15" x2="85" y2="85" stroke="white" stroke-width="8"/></svg></span>
+        </div>
+      </div>
+      <h2>Próxima cita</h2>
+      <div class="bloque-cita">
+        <div class="card cita"><span class="cav">L</span><div class="ci"><div><strong>Luna</strong><b>Mañana · 9:30 a. m.</b></div><p>Clínica Norte (prueba) · Vacunación · Ana Norte</p></div><span class="chip">Activa</span><button class="sec" type="button">Reprogramar</button><button class="sec" type="button">Cancelar</button></div>
+      </div>
+      <div class="fila"><h2>Mis mascotas <span class="cnt">6</span></h2><button class="sec" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Agregar mascota</button></div>
+      <div class="mascotas">
+        <div class="masc"><span class="ring">K</span><strong>Kira</strong><span class="r">Canino</span><span class="chip">Clínica Norte (prueba)</span><span class="dosis">Sin dosis pendientes</span></div>
+        <div class="masc"><span class="ring">PA</span><strong>perro A</strong><span class="r">Canino · Criollo (Mestizo)</span><span class="chip">Clínica Norte (prueba)</span><span class="dosis">Sin dosis pendientes</span></div>
+        <div class="masc"><span class="ring">T</span><strong>toby</strong><span class="r">Canino · Pinscher</span><span class="chip">Clínica Norte (prueba)</span><span class="dosis">Sin dosis pendientes</span></div>
+        <div class="masc"><span class="ring">D</span><strong>Doki</strong><span class="r">Canino · Dóberman</span><span class="chip">Clínica Norte (prueba)</span><span class="dosis">Sin dosis pendientes</span></div>
+        <div class="masc"><span class="ring">G</span><strong>gato</strong><span class="r">Felino · Bengala</span><span class="chip">Clínica Norte (prueba)</span><span class="dosis">Sin dosis pendientes</span></div>
+        <div class="masc"><span class="ring">L</span><strong>Luna</strong><span class="r">Canino · Sin raza definida</span><span class="chip">Clínica Norte (prueba)</span><span class="dosis si">Próxima dosis: Rabia · 1 oct 2027</span></div>
+      </div>
+    </div>
+    <div class="der">
+      <h2>Horario de hoy</h2>
+      <div class="card hc"><div class="t"><strong>Clínica Norte (prueba)</strong><span class="chip">Abierta</span></div><p>Hasta las 12:00 p. m.</p><a href="#">Horario de la semana ⌄</a></div>
+      <div class="card hc"><div class="t"><strong>Clínica Sur (prueba)</strong><span class="chip">Abierta</span></div><p>Hasta las 12:00 p. m.</p><a href="#">Horario de la semana ⌄</a></div>
+      <div class="dh" style="margin-top:8px"><h2>Próximo en salud</h2><a class="lk" href="#">Calendario ›</a></div>
+      <div class="card salud"><i style="background:#EAF1FF;color:#0052FF"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></i><div><strong>Vacunación · Luna</strong><span>Mañana · 9:30 a. m. · Clínica Norte (prueba)</span></div></div>
+      <div class="card salud"><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2l4 4M17 7l3-3M19 9L9 19l-4 1 1-4L16 6zM11 13l-2-2"/></svg></i><div><strong>Rabia · Luna</strong><span>vie 1 oct · Clínica Norte (prueba)</span></div></div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

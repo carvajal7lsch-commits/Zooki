@@ -17,6 +17,8 @@ require_once __DIR__ . '/../../models/MarcaClinica.php';
  */
 $e = static fn ($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 $hoy = new DateTimeImmutable('now', new DateTimeZone(ReglaAtencion::ZONA));
+$horaBienvenida = (int) $hoy->format('G');
+$saludoBienvenida = $horaBienvenida < 12 ? 'Buenos días' : ($horaBienvenida < 19 ? 'Buenas tardes' : 'Buenas noches');
 $mascotaPorId = array_column($mascotas, null, 'id_mascota');
 if (!empty($mascota_carnet_inicial)): ?>
 <div id="portalRetornoCarnet" data-mascota="<?= (int) $mascota_carnet_inicial ?>" hidden></div>
@@ -82,11 +84,22 @@ $botonAgregarMascota = '<button type="button" class="btn-primary btn-primary--co
     <div class="home-grid">
         <div class="home-grid__principal">
             <?php // M5 C4a: el saludo va en la columna principal; así la lateral sube hasta arriba y no queda un hueco a su lado. ?>
-            <header class="portal-cabecera home-cabecera">
-                <div>
-                    <p class="portal-cabecera__ayuda">Hola,</p>
-                    <h1 id="homeSaludo" class="portal-cabecera__titulo"><?= $e($primer_nombre) ?></h1>
+            <header class="portal-cabecera home-cabecera home-bienvenida">
+                <div class="home-bienvenida__saludo">
+                    <p class="portal-cabecera__ayuda home-bienvenida__actual">Hola,</p>
+                    <p class="home-bienvenida__fecha"><?= $e(ResumenPanel::fechaLarga($hoy)) ?></p>
+                    <h1 id="homeSaludo" class="portal-cabecera__titulo"><span class="home-bienvenida__franja"><?= $e($saludoBienvenida) ?>, </span><span class="home-bienvenida__nombre"><?= $e($primer_nombre) ?></span></h1>
                 </div>
+                <span class="home-bienvenida__perro" aria-hidden="true">
+                    <img src="img/portal-bienvenida.png" alt="" aria-hidden="true" draggable="false">
+                </span>
+                <span class="home-bienvenida__cruz" aria-hidden="true">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                        <rect x="35" y="10" width="30" height="80" rx="15" />
+                        <rect x="10" y="35" width="80" height="30" rx="15" />
+                        <line x1="15" y1="15" x2="85" y2="85" />
+                    </svg>
+                </span>
             </header>
 
             <section aria-labelledby="tituloProxima">

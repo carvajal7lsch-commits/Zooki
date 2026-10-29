@@ -6,6 +6,10 @@
 
 ## Ahora
 
+### Portal: bienvenida de Inicio en escritorio — entregada, pendiente de revisión (2026-10-29)
+
+- **Escribió Codex; revisa Claude (arquitecto).** Banner de112px con saludo por hora de Bogotá/fecha/primer nombre, perro sustituible y cruz del login, según specs/referencias/portal-inicio/escritorio-inicio-bienvenida.dc.html; referencia portal/ descartada. El dueño aprobó compactar solo el banner a1024–1279 (20px/perro90×76/círculo64), conservando medidas del mockup desde1280. Identidad, columnas y resto del portal conservados;390/820 idénticos al saludo anterior. Dirigidas JS37/37, PHP16/109; única pasada JS completa418/419 con el único comparador visual nuevo corregido y reverificado2/2, sin fallos pendientes conocidos. Chrome1024/1280/1366/1440/1920 sin desborde; ambas patas fuera tras la captura del dueño: imagen bajada20px respecto al apoyo inicial (último ajuste de4px), sin agrandarla; retoque conjunto Chrome2/2 correcto y controles390/820 idénticos. Resultado con autor, capturas/medidas/logs y comandos propios en scratch/r/portal-bienvenida. Sigue revisión de Claude y tres comprobaciones del dueño; sin datos/permisos/rutas/respuestas nuevos, .env, base de trabajo, versión nueva, commit/push ni otra pantalla; R sigue abierta.
+
 ### Navegación interna y ayudas de iconos — entregadas, pendientes de revisión (2026-10-29)
 
 - **Retoque del dueño, escribió Codex; pendiente de revisión:** etiquetas ancladas a14px del icono en los tres roles, conservando teclado y móvil. Comprobación conjunta con el perro2/2, captura ayuda-cercana-1366.png y comandos actualizados; sin repetir suite completa.
