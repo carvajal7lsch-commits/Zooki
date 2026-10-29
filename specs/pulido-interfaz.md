@@ -115,6 +115,15 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 - Las medidas de estas cuatro vistas también son idénticas a820. Se conservan fondo, carrusel, avatares/anillos, chips, menú y botón central. Sin nuevas HU, flujo, datos, permisos, rutas, respuestas, esquema ni versión;2.2.0 sin publicar. R sigue abierta y C fuera de P1 por decisión del dueño (2026-10-26).
 - **Prueba del dueño (máximo7):** Inicio con6 mascotas y deslizamiento interior; Citas próximas/pasadas/Vacunas y sus acciones; Clínicas con(i)/Llamar/interruptor/buscador; Perfil con4 hojas/validación/Guardar/Cambiar de perfil; Mascota con2×2/chips/Imprimir/Editar; Agendar y Reprogramar con un día cerrado y pie accesible; control de las4 vistas a1366. Resultado/anexo con autor y comandos separados en scratch/r/portal-movil/; no se hizo commit/push ni se empezó otra pantalla.
 
+#### Portal en el celular — Revisión (2026-10-29)
+
+**Revisó Claude (arquitecto). Aprobada con una corrección del revisor.**
+
+- **Verificado:** las 7 entregas (grafo A/B, navegación y skeleton, bienvenida, Usuarios/Pacientes y portal móvil) aplican en orden desde c6031e3 y dejan el índice idéntico a la carpeta. Sin CSS/JS en línea en views/portal. En Linux con Chrome: suite JS completa 428/429; PortalMovil, PortalBienvenida y M5C2/M5C2b/M5C4a 42/43. Capturas propias a 390 con 6 mascotas: Inicio, Citas, Clínicas, Perfil y Mascota sin desborde (antes Inicio medía 1001 px); hojas de Teléfono, Contraseña, ayuda (i), Reprogramar con flatpickr y Agendar compacto correctas.
+- **Hallazgo corregido por el revisor:** la prueba «medidas de Inicio, Citas, Clínicas y Perfil conservadas» comparaba alturas exactas medidas en Windows; en Linux (como CI, sin Inter) el texto se parte distinto y fallaba (820/citas: 128,6 frente a 107,5 px) sin cambio de distribución. Ahora compara posición y ancho (geometria() en PortalMovil.test.cjs); pasa en Linux y falla ante una mutación de 8 px en .portal-cita.
+- **Registro (no bloquea):** los commits 526d53e y 3c465ae del dueño solo llevaron los archivos nuevos porque se ejecutaron sin los bloques anteriores de comandos-todos.txt; se rehacen con git reset c6031e3 y la secuencia completa (remoto sin push).
+- **Detalles menores para después, sin encargo:** el documento aparece en la cabecera del Perfil y otra vez en su fila; la hoja de ayuda de Clínicas repite su título en negrita; el pie de Agendar conserva la ayuda de dos líneas.
+
 ### Usuarios y Pacientes unificados con paginación — mockup aprobado (2026-10-29)
 
 **Entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Decisión del dueño: combinar tarjetas actuales de Usuarios con el orden superior de Pacientes. Referencias escritorio-usuarios-admin.dc.html y escritorio-pacientes-vet.dc.html en specs/referencias/usuarios-pacientes/. Datos reales, sin cambios de datos/permisos/rutas/respuestas. HU-T.7, HU-1.2/1.3/1.4, RNF-16; sin HU nuevas.
