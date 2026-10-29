@@ -362,3 +362,48 @@
     .portal-form__fila { grid-template-columns: 1fr; }
     .portal-ayuda--fila { margin-top: -0.5rem; }
 }
+
+@media (max-width: 767px) {
+    #portalBookingForm .portal-opciones {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+    }
+    #portalBookingForm .portal-opcion {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 56px;
+        padding: 8px 12px;
+    }
+    #portalBookingForm .portal-opcion__avatar {
+        flex: none;
+        width: 36px;
+        height: 36px;
+    }
+    #portalBookingForm .portal-opcion__texto {
+        min-width: 0;
+        font-size: 14px;
+    }
+    #portalBookingForm .portal-opcion__texto > span {
+        overflow: hidden;
+        font-size: 12px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    #portalBookingForm .booking__pie {
+        align-items: center;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 767px) {
+    /* RNF-16: estas hojas no provocan el zoom automático de iOS al enfocar. */
+    #portalTelefonoModal input,
+    #portalReprogramarModal input:not([type="hidden"]),
+    #portalReprogramarModal select {
+        font-size: 16px;
+    }
+    #portalTelefonoModal .search-input-wrapper {
+        min-height: 44px;
+    }
+}

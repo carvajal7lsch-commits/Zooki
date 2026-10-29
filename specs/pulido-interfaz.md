@@ -73,6 +73,48 @@ Las de mascota quedan hechas (**portal en M5 C2b y personal en M5 C3**: nombre, 
 
 ## Etapa R — Responsive (2026-10-26)
 
+### Portal del propietario en el celular — encargo del dueño (2026-10-29)
+
+**Entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Solo presentación, HU-5.1/5.3/5.6/5.12/5.13, HU-T.5 y RNF-16; sin flujo nuevo en Modelos.md. Conserva identidad, fondo, carrusel, avatares, chips y barra inferior central. No usar specs/referencias/portal/ (descartado); bienvenida Idea2 existente y encargos móviles de Pacientes/Agenda como referencia de forma.
+
+1. Inicio: grillas con columna minmax(0,1fr) para contener el carrusel de6 mascotas; deslizamiento dentro del contenedor.
+2. Bienvenida mini<768 con el mismo HTML/PNG de escritorio: franja≈88px, saludo20/fecha11, azul claro/esquina40, perro≈104/imagen108/bottom≈−9, sin cruz ni recorte a360. Desde768 se conserva el estado anterior.
+3. Citas e Inicio: hora en una línea, estado junto al nombre, clínica con elipsis, acciones de icono36 a la derecha. Tercera pestaña móvil Vacunas con aria-label completo; dosis sin desborde.
+4. Clínicas móvil: ayuda existente en hoja corta por botón(i); tarjeta con logo/nombre/estado/llamar36, horario/dirección en una línea, autorización con interruptor, desvincular al pie. Otras clínicas con buscador completo, nombre sin recorte, dirección con elipsis y Vincular compacto.
+5. Perfil móvil: cabecera avatar48/nombre/Propietario/documento y una lista Documento/Correo/Teléfono/Contraseña que abre formularios existentes con validación; teléfono con intl-tel-input en hoja. Cambiar de perfil solo con Contexto::puedeCambiar(), misma ruta, y Cerrar sesión. Escritorio conserva tres tarjetas.
+6. Mascota móvil: cabecera en dos niveles (volver/avatar/nombre/imprimir/editar36, especie/raza), clínicas en tira desplazable y cuatro datos en2×2 sin partir valores/HC.
+7. Reprogramar en todos los anchos: mismos campos de Agendar, etiquetas/input-group/select/fecha flatpickr con cierres de la clínica y pie de hoja. Conserva flujo/endpoints/validación de horarios.
+8. Agendar móvil: opciones mascota/clínica≈56px y pie como Registrar mascota.
+9. No tocar Editar mascota, Detalle de cita, Registrar mascota, Cancelar cita ni barra inferior; tableta/escritorio iguales salvo Reprogramar. Sin textos/datos/endpoints/rutas/permisos nuevos, JS/CSS en línea ni .env.
+10. PortalMovil con Chrome360/390 y6 mascotas,2 próximas/3 pasadas,2 clínicas vinculadas/2 disponibles: desborde, patas±2/alto≤96, líneas, ayuda/tarjetas, hojas/validación/guardar/cambio de perfil, HC y flatpickr. Comparar medidas1366 antes/después y control820. Regresiones M5C2/M5C2b/M5C4a; cierre completo PHP también con host MySQL y base exclusiva zooki_test_base_v2, JS y capturas360/390/1366 en scratch/r/portal-movil/. Resultado/anexo con autor, máximo8 comprobaciones, comandos por tema; sin commit/push ni otra pantalla,2.2.0 sin publicar.
+
+#### Portal en el celular — Resultado (2026-10-29)
+
+**Escribió Codex; revisa Claude (arquitecto). Entregada, pendiente de revisión.** Lo delicado fue trasladar el formulario real del teléfono y los estados de cita, conservando sus validaciones, oyentes y restauración a≥768; se verificó también el repintado posterior a guardar. Reprogramar conserva el POST/clave de operación y corrige la lectura de los campos ya existentes id_usuario/nombre_completo del veterinario; sin cambiar la respuesta del servidor.
+
+| Punto | Resultado y prueba dirigida |
+|---|---|
+| 1–2 Inicio | Columna minmax(0,1fr), carrusel interior y mismo banner de88px, saludo20/fecha11/PNG108 sin cruz. Patas a≈1,15px del borde (bottom−8 ajustado al alfa real del PNG). PortalMovil:360/390,6 mascotas, sin desborde ni recorte. |
+| 3–5 Citas | Estado junto al nombre, hora sin salto, clínica con elipsis y acciones36; Vacunas accesible como Vacunas y controles; dosis ajustadas. PortalMovil:2 próximas/3 pasadas/3 pestañas. Avisos largos de reajuste siguen completos y envueltos, sin heredar nowrap de la hora. |
+| 6 Clínicas | Ayuda original en hoja por(i), tres filas más pie, Llamar tel:36, autorización intacta; buscador completo y nombres de otras clínicas sin recorte. PortalMovil:2 vinculadas/2 disponibles, ayuda sin duplicar tras repintar. |
+| 7 Perfil | Cabecera48 y lista de4 filas; los mismos formularios abren sus hojas y guardan con su validación actual, incluido teléfono/intl-tel-input. Cambiar de perfil condicionado por Contexto::puedeCambiar() y Cerrar sesión. PortalMovil:errores, cuatro POST, una instancia/campo y restauración; inputs nuevos16px para iOS. |
+| 8 Mascota | Cabecera en dos niveles, chips en tira y datos2×2 sin partir HC. PortalMovil:360/390 y HC-000001 simulado. Dato previo fuera de este ajuste: la API actual no incluye numero_historia_clinica; se conserva «—» cuando no llega, sin inventar ni cambiar la respuesta. |
+| 9 Reprogramar | Campos del portal, pie común y flatpickr con minDate/días cerrados por clínica; selector con nombres reales. PortalMovil:360/390/820/1366, domingo cerrado configurado, carga de horarios y mismo POST. |
+| 10 Agendar | Opciones de mascota/clínica de≈56px, mismos avatares/textos y pie compartido con Registrar mascota. PortalMovil comprueba filas≤64px. Las cuatro hojas excluidas y la barra inferior no se editaron. |
+
+- **Verificación:** M5C2/M5C2b/M5C4a35/35, sin modificar esas pruebas. PortalMovil/Bienvenida7/7 y cierre dirigido ampliado8/8, incluyendo reajuste. Una pasada JS completa428/428 con Chrome; sin repetirla tras los retoques dirigidos. PortalBienvenida solo actualiza la expectativa antigua de390: ahora ve la mini bienvenida;820 conserva el control anterior idéntico. Bibliotecas ya usadas por CDN fijadas con sus licencias solo en tests/Frontend/apoyo/portal-dependencias para ejecutar las pruebas sin red externa; producción conserva su carga.
+- **PHP completo con motor local, base exclusiva zooki_test_base_v2:** 1207 pruebas/10922 aserciones, sin fallos ni omitidas; MariaDB10.4 de XAMPP, una sola pasada de19m38s. Sin .env ni base de trabajo. Capturas360/390/1366 de cada vista, pestañas y hojas, más control820, en C:\Users\Usuario\OneDrive\Desktop\Zooki\scratch\r\portal-movil\. Antes/después en antes/despues-medidas.json; comparación y logs en esa carpeta.
+
+| Vista a1366 | x / y antes→después | Ancho antes→después | Alto antes→después |
+|---|---|---|---|
+| Inicio | 288 /36→288 /36 | 1023→1023 | 761,59→761,59 |
+| Citas | 288 /36→288 /36 | 1038→1038 | 562,20→562,20 |
+| Clínicas | 288 /36→288 /36 | 1038→1038 | 429,56→429,56 |
+| Perfil | 288 /36→288 /36 | 1038→1038 | 438,70→438,70 |
+
+- Las medidas de estas cuatro vistas también son idénticas a820. Se conservan fondo, carrusel, avatares/anillos, chips, menú y botón central. Sin nuevas HU, flujo, datos, permisos, rutas, respuestas, esquema ni versión;2.2.0 sin publicar. R sigue abierta y C fuera de P1 por decisión del dueño (2026-10-26).
+- **Prueba del dueño (máximo7):** Inicio con6 mascotas y deslizamiento interior; Citas próximas/pasadas/Vacunas y sus acciones; Clínicas con(i)/Llamar/interruptor/buscador; Perfil con4 hojas/validación/Guardar/Cambiar de perfil; Mascota con2×2/chips/Imprimir/Editar; Agendar y Reprogramar con un día cerrado y pie accesible; control de las4 vistas a1366. Resultado/anexo con autor y comandos separados en scratch/r/portal-movil/; no se hizo commit/push ni se empezó otra pantalla.
+
 ### Usuarios y Pacientes unificados con paginación — mockup aprobado (2026-10-29)
 
 **Entregada, pendiente de revisión. Escribió Codex; revisa Claude (arquitecto).** Decisión del dueño: combinar tarjetas actuales de Usuarios con el orden superior de Pacientes. Referencias escritorio-usuarios-admin.dc.html y escritorio-pacientes-vet.dc.html en specs/referencias/usuarios-pacientes/. Datos reales, sin cambios de datos/permisos/rutas/respuestas. HU-T.7, HU-1.2/1.3/1.4, RNF-16; sin HU nuevas.

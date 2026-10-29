@@ -389,3 +389,42 @@
         gap: 2rem;
     }
 }
+
+/* RNF-16: tres pestañas y las dosis permanecen dentro de su columna. */
+@media (max-width: 767px) {
+    #screen-citas .portal-pestanas {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 2px;
+    }
+    #screen-citas .portal-pestanas .tab-btn {
+        justify-content: center;
+        gap: 4px;
+        min-width: 0;
+        padding: 8px 4px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    #screen-citas .portal-pestanas .tab-btn i {
+        display: none;
+    }
+    .citas-vista,
+    .citas-vista__lista,
+    .agenda-salud-listas,
+    .agenda-list-item,
+    .agenda-item-next {
+        min-width: 0;
+    }
+    .agenda-item-next {
+        flex-shrink: 1;
+        max-width: 110px;
+    }
+    .agenda-item-next .tag-mini,
+    .agenda-item-next .next-date {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+}

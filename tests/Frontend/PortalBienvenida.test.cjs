@@ -27,7 +27,7 @@ test('Bienvenida: saludo en la hora de Bogotá, límites de mañana/tarde/noche 
     assert.ok(fs.statSync('public/img/portal-bienvenida.png').size > 0, 'La imagen sustituible existe; puede cambiar de raza sin editar la vista');
 });
 
-test('Bienvenida en Chrome: medidas, patas salidas y control idéntico en celular/tableta', { skip: !buscarChrome() }, async () => {
+test('Bienvenida en Chrome: medidas, patas salidas, mini móvil y control idéntico en tableta', { skip: !buscarChrome() }, async () => {
     const servidor = await servidorPortalInicio();
     const nav = await abrirChrome(buscarChrome());
     try {
@@ -87,6 +87,12 @@ test('Bienvenida en Chrome: medidas, patas salidas y control idéntico en celula
                     assert.equal(medida.cruz.height, 112);
                     assert.equal(medida.fuente, '30px');
                 }
+            } else if (width < 768) {
+                // Etapa R móvil: ahora usa el mismo collage; solo tableta conserva el saludo anterior.
+                assert.equal(medida.figuraVisible, true);
+                assert.equal(medida.banner.height, 88);
+                assert.equal(medida.saludoAnteriorVisible, false);
+                assert.ok(Math.abs(medida.unas - medida.figura.bottom) <= 2);
             } else {
                 assert.equal(medida.figuraVisible, false);
                 assert.equal(medida.fechaVisible, false);

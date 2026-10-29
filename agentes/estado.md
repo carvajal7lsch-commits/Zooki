@@ -6,6 +6,11 @@
 
 ## Ahora
 
+### Portal del propietario en el celular — entregada, pendiente de revisión (2026-10-29)
+
+- **Escribió Codex; revisa Claude (arquitecto).** Presentación<768 conservando identidad: carrusel contenido, bienvenida mini88, citas/hora/estados/pestañas/dosis compactos, clínicas con ayuda/llamar/tres filas, Perfil por4 filas con formularios originales y teléfono en hoja, ficha2×2/chips y Agendar compacto. Reprogramar estilizado en todos los anchos, flatpickr/días cerrados y lectura correcta de los nombres/id que ya entrega el endpoint de veterinarios. Misma validación, rutas, permisos, respuestas y POST; HC conserva «—» si la API no lo entrega (dato previo, sin ampliar backend).
+- Regresiones M5C2/M5C2b/M5C4a35/35 sin editar; dirigidas7/7 y ampliación final8/8 (incluye reajuste largo y inputs16px). Una pasada JS completa428/428 con Chrome; una pasada PHP completa con host127.0.0.1 y base exclusiva zooki_test_base_v2:1207/10922, sin fallos ni omitidas (MariaDB10.4,19m38s). Chrome360/390 sin desborde; medidas principales idénticas820/1366. Capturas, comparación, anexo de Codex/logs y secuencia de commits actualizada en scratch/r/portal-movil. Sigue revisión de Claude y siete comprobaciones del dueño. R abierta, C fuera de P1 por decisión del dueño (2026-10-26);2.2.0 sin publicar. Sin .env, base de trabajo, commit/push ni otra pantalla.
+
 ### Usuarios y Pacientes unificados con paginación — entregada, pendiente de revisión (2026-10-29)
 
 - **Escribió Codex; revisa Claude (arquitecto).** Directorios admin/vet a≥768 según specs/referencias/usuarios-pacientes/: hoja de controles, tarjetas compartidas y paginación local de12 para tarjetas/tablas en todos los anchos. Resúmenes/conteos filtrados completos, reinicio en búsqueda/filtros/pestaña y recuperación de un solo pie al repintar Clientes. Celular conserva distribución; detalles/fichas/modales, acciones, POST/permisos/rutas/respuestas intactos.

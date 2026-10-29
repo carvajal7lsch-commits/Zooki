@@ -43,7 +43,7 @@ $tarjetaCita = static function (array $cita) use ($e, $hoy, $avatarMascota): voi
         <div class="portal-cita__texto">
             <p class="portal-cita__cuando">
                 <strong><?= $e($cita['nombre_mascota']) ?></strong>
-                <span><?= $e(ResumenPanel::etiquetaDia($cita['fecha'], $hoy)) ?> · <?= $e(ResumenPanel::hora($cita['hora'])) ?></span>
+                <span class="portal-cita__hora"><?= $e(ResumenPanel::etiquetaDia($cita['fecha'], $hoy)) ?> · <?= $e(ResumenPanel::hora($cita['hora'])) ?></span>
                 <?php if (!empty($cita['inicio_estimado'])): ?><span>Inicio estimado: <?= $e($cita['inicio_estimado']) ?></span><?php endif; ?>
                 <?php if (($cita['estado_reajuste'] ?? '') === 'pendiente_reprogramacion'): ?><span>Contacta a la clínica o elige Reprogramar para consultar alternativas.</span><?php endif; ?>
             </p>
@@ -255,8 +255,8 @@ $botonAgregarMascota = '<button type="button" class="btn-primary btn-primary--co
                 <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="citas-pasadas" data-pestana="citas-pasadas">
                     <i class="ri-history-line" aria-hidden="true"></i> Pasadas
                 </button>
-                <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="agenda-salud" data-pestana="agenda-salud">
-                    <i class="ri-syringe-line" aria-hidden="true"></i> Vacunas y controles
+                <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="agenda-salud" data-pestana="agenda-salud" aria-label="Vacunas y controles">
+                    <i class="ri-syringe-line" aria-hidden="true"></i> <span class="portal-texto-completo">Vacunas y controles</span><span class="portal-solo-movil" aria-hidden="true">Vacunas</span>
                 </button>
             </div>
 
@@ -409,6 +409,9 @@ foreach ((array) $todas_desparasitaciones as $d) {
             <div class="portal-subtitulo-fila">
                 <h2 class="portal-subtitulo" id="tituloMias">Mis clínicas</h2>
                 <?php if ($clinicas_portal): ?>
+                    <button type="button" class="portal-boton-texto portal-solo-movil clinicas-ayuda-abrir" data-portal-hoja="portalClinicasAyudaModal" aria-label="Cómo funciona la historia compartida" aria-controls="portalClinicasAyudaModal"><i class="ri-information-line" aria-hidden="true"></i></button>
+                <?php endif; ?>
+                <?php if ($clinicas_portal): ?>
                     <span class="tag-mini"><?= count($clinicas_portal) ?> de <?= VinculosPropietario::TOPE_CLINICAS ?></span>
                 <?php endif; ?>
             </div>
@@ -431,13 +434,18 @@ foreach ((array) $todas_desparasitaciones as $d) {
                             <div class="clinica-fila__datos">
                                 <h3><?= $e($clinica['nombre']) ?></h3>
                                 <?php foreach (['telefono' => 'Teléfono', 'email_contacto' => 'Correo', 'telefono_urgencias' => 'Urgencias'] as $dato => $rotulo): ?>
-                                    <?php if (!empty($clinica[$dato])): ?><p><?= $e($rotulo . ': ' . $clinica[$dato]) ?></p><?php endif; ?>
+                                    <?php if (!empty($clinica[$dato])): ?><p class="clinica-fila__contacto"><?= $e($rotulo . ': ' . $clinica[$dato]) ?></p><?php endif; ?>
                                 <?php endforeach; ?>
-                                <p>
+                                <p class="clinica-fila__detalle">
                                     <span class="clinica-fila__estado<?= $abierta ? ' is-abierta' : '' ?>"><?= $e($clinica['ahora']['texto']) ?></span>
+                                    <span class="portal-solo-movil clinica-fila__horario-movil"><?= $e($clinica['ahora']['detalle']) ?></span>
                                     <?php if (!empty($clinica['direccion'])): ?><span><?= $e($clinica['direccion']) ?></span><?php endif; ?>
                                 </p>
                             </div>
+                            <span class="tag-mini portal-solo-movil clinica-fila__abierta<?= $abierta ? ' tag-mini--azul' : '' ?>"><?= $abierta ? 'Abierta' : 'Cerrada' ?></span>
+                            <?php if (!empty($clinica['telefono'])): ?>
+                                <a class="portal-boton-secundario portal-solo-movil clinica-fila__llamar" href="tel:<?= $e(preg_replace('/[^+0-9]/', '', $clinica['telefono'])) ?>" aria-label="Llamar a <?= $e($clinica['nombre']) ?>"><i class="ri-phone-line" aria-hidden="true"></i></a>
+                            <?php endif; ?>
                             <?php // RE-5.12.1/2: aplica de inmediato, sin confirmación (se revoca igual de fácil). ?>
                             <label class="portal-interruptor clinica-fila__interruptor" for="<?= $idInterruptor ?>">
                                 <span class="toggle-switch">
@@ -481,7 +489,7 @@ foreach ((array) $todas_desparasitaciones as $d) {
                                 <?php endif; ?>
                             </div>
                             <button type="button" class="btn-primary btn-primary--compacto clinica-fila__accion" data-vincular-clinica="<?= (int) $clinica['id_clinica'] ?>" data-nombre="<?= $e($clinica['nombre']) ?>"<?= $al_tope_clinicas ? ' disabled' : '' ?>>
-                                <i class="ri-link" aria-hidden="true"></i> Vincularme
+                                <i class="ri-link" aria-hidden="true"></i> <span class="portal-texto-completo">Vincularme</span><span class="portal-solo-movil">Vincular</span>
                             </button>
                             <p class="cuenta-validacion portal-aviso clinica-fila__aviso" role="status" data-aviso-clinica></p>
                         </li>
@@ -504,6 +512,36 @@ foreach ((array) $todas_desparasitaciones as $d) {
         </div>
     </header>
 
+    <?php // HU-T.5 / RNF-16: acceso compacto a los mismos formularios; no se duplican campos. ?>
+    <div class="portal-solo-movil portal-perfil-movil">
+        <div class="portal-perfil">
+            <span class="avatar-mini avatar-iniciales" aria-hidden="true"><?= $e($iniciales) ?></span>
+            <div>
+                <h2 class="card-title-mini"><?= $e($_SESSION['usuario_nombre'] ?? 'Propietario') ?></h2>
+                <span class="tag-mini">Propietario</span>
+                <p class="portal-perfil-movil__documento" data-documento-cuenta><?= $e($usuarioData['documento'] ?? '—') ?></p>
+            </div>
+        </div>
+        <div class="portal-perfil-lista">
+            <?php foreach ([
+                ['ri-profile-line', 'Documento', $usuarioData['documento'] ?? '—', 'portalDocumentoModal'],
+                ['ri-mail-line', 'Correo', $usuarioData['email'] ?? 'No registrado', 'portalCorreoModal'],
+                ['ri-phone-line', 'Teléfono', $usuarioData['telefono'] ?? '—', 'portalTelefonoModal'],
+                ['ri-lock-password-line', 'Contraseña', $tienePassword ? '••••••••' : 'Entras con Google', 'portalPasswordModal'],
+            ] as [$icono, $etiqueta, $valor, $modalPerfil]): ?>
+                <button type="button" class="portal-perfil-fila" data-portal-hoja="<?= $modalPerfil ?>" aria-controls="<?= $modalPerfil ?>">
+                    <i class="<?= $icono ?>" aria-hidden="true"></i>
+                    <span><?= $etiqueta ?></span>
+                    <strong<?= $etiqueta === 'Teléfono' ? ' data-portal-telefono' : '' ?><?= $etiqueta === 'Documento' ? ' data-documento-cuenta' : '' ?>><?= $e($valor) ?></strong>
+                    <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+                </button>
+            <?php endforeach; ?>
+            <?php if (Contexto::puedeCambiar()): ?>
+                <a class="portal-perfil-fila" href="index.php?action=seleccionar_contexto"><i class="ri-arrow-left-right-line" aria-hidden="true"></i><span>Cambiar de perfil</span><i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
+            <?php endif; ?>
+        </div>
+        <a href="index.php?action=logout" class="portal-boton-secundario perfil-salir"><i class="ri-logout-box-r-line" aria-hidden="true"></i> Cerrar sesión</a>
+    </div>
     <div class="perfil-grid">
         <section class="profile-card perfil-tarjeta perfil-tarjeta--datos" aria-labelledby="tituloMisDatos">
             <div class="portal-perfil">
@@ -686,13 +724,17 @@ foreach ($clinicas_portal as $clinica) {
     <div class="portal-drawer" role="dialog" aria-modal="true" aria-labelledby="portalReprogramarTitulo">
         <?php $cabeceraVentana('portalReprogramarCerrar', 'ri-calendar-event-line', 'Reprogramar cita', 'Se conservan el tipo y la duración de tu cita.', 'portalReprogramarTitulo'); ?>
         <div class="portal-drawer-body">
-            <form class="portal-form" novalidate>
+            <form id="portalReprogramarForm" class="portal-form" novalidate data-dias-cerrados="<?= $e(json_encode($diasCerradosPorClinica)) ?>">
                 <input type="hidden" name="id_cita">
-                <label>Fecha<input name="fecha" type="date" required></label>
-                <label>Veterinario<select name="id_veterinario" required></select></label>
-                <label>Horario<select name="hora" required><option value="">Elige un horario</option></select></label>
+                <?php
+                $campo('Fecha', '<input name="fecha" id="reprogramarFecha" type="text" required readonly>', 'ri-calendar-line', 'reprogramarFecha');
+                $campo('Veterinario', '<select name="id_veterinario" id="reprogramarVeterinario" required></select>', 'ri-stethoscope-line', 'reprogramarVeterinario');
+                $campo('Horario', '<select name="hora" id="reprogramarHora" required><option value="">Elige un horario</option></select>', 'ri-time-line', 'reprogramarHora');
+                ?>
                 <small class="cuenta-validacion" data-error aria-live="polite"></small>
-                <button type="submit" class="btn-primary" disabled>Guardar cambio</button>
+                <div class="users-modal__footer portal-modal__pie">
+                    <button type="submit" class="btn-primary" disabled>Guardar cambio</button>
+                </div>
             </form>
         </div>
     </div>
@@ -893,6 +935,22 @@ $formularioMascota = function (string $p, bool $editar) use ($campo, $leyenda, $
 
 <!-- M5 C4a (puntos 9 y 10): lo que pide confirmar la identidad, en los modales de Zooki
      (hoja en el celular, ventana centrada desde tableta). Modelos §13.2. -->
+<div id="portalClinicasAyudaModal" class="portal-drawer-overlay">
+    <div class="portal-drawer" role="dialog" aria-modal="true" aria-labelledby="clinicasAyudaTitulo">
+        <?php $cabeceraVentana('portalClinicasAyudaCerrar', 'ri-information-line', 'Ve la historia de otras clínicas', '', 'clinicasAyudaTitulo'); ?>
+        <div class="portal-drawer-body" data-portal-ayuda-destino></div>
+    </div>
+</div>
+<div id="portalTelefonoModal" class="portal-drawer-overlay">
+    <div class="portal-drawer" role="dialog" aria-modal="true" aria-labelledby="telefonoTitulo">
+        <?php $cabeceraVentana('portalTelefonoCerrar', 'ri-phone-line', 'Teléfono', '', 'telefonoTitulo'); ?>
+        <div class="portal-drawer-body">
+            <div data-portal-telefono-destino></div>
+            <div class="users-modal__footer portal-modal__pie" data-portal-telefono-pie></div>
+        </div>
+    </div>
+</div>
+
 <div id="portalCorreoModal" class="portal-drawer-overlay">
     <div class="portal-drawer portal-drawer--completa" role="dialog" aria-modal="true" aria-labelledby="correoTitulo">
         <?php $cabeceraVentana('btnCloseCorreoModal', 'ri-mail-line', 'Cambiar correo', 'Confirma tu identidad. El correo actual sigue vigente hasta que verifiques el nuevo.', 'correoTitulo'); ?>

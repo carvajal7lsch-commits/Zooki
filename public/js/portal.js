@@ -160,11 +160,11 @@ function textoPesoConsulta(peso) {
 
 /** Cabecera de la ficha: especie y raza, y las clínicas donde se atiende. */
 function etiquetasDeLaMascota(m, clinicas) {
-    let html = `<span class="tag-mini">${escapeHtml([m.especie, m.raza].filter(Boolean).join(' · '))}</span>`;
+    let html = `<span class="tag-mini pet-detail__especie">${escapeHtml([m.especie, m.raza].filter(Boolean).join(' · '))}</span><span class="pet-detail__clinicas">`;
     clinicas.forEach(c => {
         html += `<span class="tag-mini tag-mini--azul"><i class="ri-hospital-line" aria-hidden="true"></i> ${escapeHtml(c.nombre)}</span>`;
     });
-    return html;
+    return html + '</span>';
 }
 
 /** Clínicas distintas entre todos los registros de la ficha, en orden de aparición. */
@@ -391,6 +391,7 @@ async function submitContactEditPortal() {
         if (res.success) {
             zookiToast(res.message || 'Datos de contacto actualizados.', 'success');
             if (resultado) resultado.textContent = '';
+            document.getElementById('portalContactEditForm').dispatchEvent(new CustomEvent('portal:telefono-guardado', { bubbles: true, detail: { telefono: campo.value } }));
         } else if (resultado) {
             // Un error del campo va junto a él, no en una ventana (M0.1).
             resultado.textContent = res.message || 'No se pudo actualizar el teléfono.';
